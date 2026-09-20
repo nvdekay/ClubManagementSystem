@@ -1,0 +1,47 @@
+@startuml D5_ReportingEvaluation
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D5 - Reporting, Compliance & Evaluation (UC46-UC50)
+
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC46 as "UC46
+  Submit the periodic activity report"
+  usecase UC47 as "UC47
+  Assess the periodic activity report"
+  usecase UC48 as "UC48
+  Manage violation/compliance cases"
+  usecase UC49 as "UC49
+  Generate the club performance evaluation draft"
+  usecase UC50 as "UC50
+  Review, finalize and publish the evaluation"
+}
+
+CMB -- UC46
+
+ICPDP -- UC47
+ICPDP -- UC48
+ICPDP -- UC49
+ICPDP -- UC50
+
+note bottom of UC49
+  Consumes data produced by UC21, UC34, UC37, UC45,
+  UC47, UC48, UC52, UC54 and UC57. Those are data
+  flows (section 10.5), not use case relationships,
+  so they are not drawn as associations.
+end note
+@enduml

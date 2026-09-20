@@ -1,0 +1,60 @@
+@startuml D3a_EventApproval
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D3a - Event Approval (UC24-UC30, UC35)
+
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC24 as "UC24
+  Submit an event proposal"
+  usecase UC25 as "UC25
+  Detect event conflicts"
+  usecase UC26 as "UC26
+  Assess the event proposal"
+  usecase UC27 as "UC27
+  Request event proposal revisions"
+  usecase UC28 as "UC28
+  Resubmit the event proposal"
+  usecase UC29 as "UC29
+  Approve/Reject the event"
+  usecase UC30 as "UC30
+  Publish the event and open registration"
+  usecase UC35 as "UC35
+  Cancel/Reschedule an event"
+  usecase UC51 as "UC51
+  Submit a property booking request
+  (see D6)"
+}
+
+UC24 ..> UC25 : <<include>>
+UC51 ..> UC24 : <<extend>>
+
+CMB -- UC24
+CMB -- UC28
+CMB -- UC30
+CMB -- UC35
+
+ICPDP -- UC26
+ICPDP -- UC27
+ICPDP -- UC29
+ICPDP -- UC35
+
+note bottom of UC25
+  Triggered by the system, not by an actor:
+  it only exists as an included use case.
+end note
+@enduml

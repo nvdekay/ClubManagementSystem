@@ -1,0 +1,39 @@
+@startuml D6_PropertyBooking
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D6 - Property & Facility Booking (UC51-UC53)
+
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC51 as "UC51
+  Submit a property booking request"
+  usecase UC52 as "UC52
+  Approve/Reject the property booking request"
+  usecase UC53 as "UC53
+  Track and cancel/release a booked property"
+  usecase UC25 as "UC25
+  Detect event conflicts
+  (see D3a)"
+}
+
+UC51 ..> UC25 : <<include>>
+
+CMB -- UC51
+CMB -- UC53
+
+ICPDP -- UC52
+@enduml
