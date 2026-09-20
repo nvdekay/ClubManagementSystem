@@ -4,7 +4,8 @@
 > **Loại tài liệu:** Business & System Analysis / Requirement Baseline  
 > **Mục tiêu:** Làm nền tảng cho SRS, Use Case Diagram, Use Case Specification, Activity Diagram, Sequence Diagram, ERD, Database Design, API Design, UI/UX, Test Case, Product Backlog và Sprint Backlog.  
 > **Nguyên tắc thiết kế:** Business Problem → Business Process → Actor → Requirement → Use Case.  
-> **Quy mô mục tiêu:** 4 actor chính, 10 module nghiệp vụ, 50 business use case có liên kết end-to-end.
+> **Quy mô mục tiêu:** 3 actor chính, 2 external system, 12 module nghiệp vụ, 57 business use case có liên kết end-to-end.  
+> **Nguồn chốt scope:** Context Diagram đã được team thống nhất (Student, ICPDP Officer, Club's Admin, Google OAuth, Google SMTP Service).
 
 ---
 
@@ -106,7 +107,24 @@ Recruitment
 ```
 
 ```text
-Violation
+Property Booking
+→ Approved Resource
+→ Event Execution
+→ Utilization Metric
+→ Evaluation
+```
+
+```text
+Event Feedback
+→ Feedback Summary
+→ Post-event Report
+→ Evaluation
+```
+
+```text
+Student Complaint
+→ Triage
+→ Violation
 → Compliance History
 → Evaluation
 ```
@@ -191,6 +209,10 @@ Không có quan hệ dữ liệu chính thức giữa chúng.
 | BP13 | Đánh giá CLB cuối kỳ phụ thuộc vào việc tổng hợp dữ liệu thủ công. |
 | BP14 | Deadline báo cáo, đối soát ngân sách và chuyển giao nhiệm kỳ phụ thuộc vào nhắc việc thủ công. |
 | BP15 | Thiếu audit trail để xác định ai đã duyệt, từ chối hoặc thay đổi một quyết định quan trọng. |
+| BP16 | Việc mượn phòng/cơ sở vật chất cho hoạt động CLB xin qua email hoặc giấy tờ rời, không gắn với hồ sơ sự kiện và không phát hiện được trùng lịch sử dụng. |
+| BP17 | Phản hồi của người tham gia sau sự kiện không được thu thập có cấu trúc nên không dùng được làm dữ liệu đánh giá chất lượng hoạt động. |
+| BP18 | Sinh viên không có kênh chính thức để khiếu nại về CLB; phản ánh đi qua kênh không chính thức và không để lại vết xử lý. |
+| BP19 | Mỗi hệ thống nội bộ tự quản lý tài khoản riêng, sinh viên phải nhớ thêm một bộ credential ngoài tài khoản trường. |
 
 ---
 
@@ -208,8 +230,10 @@ Không có state machine thống nhất cho:
 - Event Proposal
 - Budget Request
 - Recruitment Application
+- Property Booking
 - Report
 - Violation
+- Student Complaint
 - Evaluation
 
 ### RC03 – Weak Traceability
@@ -261,14 +285,16 @@ Deadline nằm trong email, file Excel hoặc lịch cá nhân.
 - khó tìm CLB phù hợp;
 - khó biết CLB nào đang tuyển;
 - khó theo dõi application;
-- trải nghiệm event bị phân tán.
+- trải nghiệm event bị phân tán;
+- không có kênh chính thức để góp ý hoặc khiếu nại.
 
 ### Đối với nhà trường
 
 - thiếu khả năng governance;
 - thiếu dữ liệu đánh giá chất lượng CLB;
 - tăng financial/compliance risk;
-- khó hoạch định hoạt động sinh viên.
+- khó hoạch định hoạt động sinh viên;
+- cơ sở vật chất bị cấp trùng hoặc cấp rồi không dùng mà không ai phát hiện.
 
 ---
 
@@ -312,6 +338,27 @@ Recruitment
 → Engagement Metric
 ```
 
+### Luồng cơ sở vật chất
+
+```text
+Property Booking Request
+→ Availability & Conflict Check
+→ ICPDP Review
+→ Approved / Rejected
+→ Booking Status
+→ Event Execution
+```
+
+### Luồng phản hồi và khiếu nại
+
+```text
+Event Feedback / Club Complaint
+→ Routing
+→ Club Response hoặc Compliance Case
+→ Resolution
+→ Evaluation Input
+```
+
 ---
 
 # 3. STAKEHOLDER ANALYSIS
@@ -319,12 +366,13 @@ Recruitment
 | Stakeholder | Mối quan tâm | Mức ảnh hưởng | Tương tác |
 |---|---|---:|---|
 | Ban lãnh đạo nhà trường | Governance, risk, chất lượng hoạt động sinh viên | Cao | Tiêu thụ báo cáo/KPI |
-| ICPDP | Quản trị toàn bộ hoạt động CLB | Rất cao | Trực tiếp |
+| ICPDP | Quản trị toàn bộ hoạt động CLB; **đại diện duy nhất của nhà trường trong hệ thống** | Rất cao | Trực tiếp |
 | Ban chủ nhiệm CLB | Vận hành CLB | Cao | Trực tiếp |
 | Thành viên CLB | Tham gia hoạt động | Trung bình | Trực tiếp |
 | Sinh viên toàn trường | Tìm CLB, ứng tuyển, đăng ký event | Trung bình | Trực tiếp |
-| Finance/Facility/Security/... | Review một số request | Trung bình | Supporting |
+| Các phòng ban hỗ trợ (Finance, Facility, Security) | Kinh phí, cơ sở vật chất, an toàn sự kiện | Trung bình | **Gián tiếp** – ý kiến được ICPDP tổng hợp ngoài hệ thống |
 | IT/System Admin | Vận hành kỹ thuật | Trung bình | Technical |
+| Google (OAuth, SMTP) | Cung cấp dịch vụ xác thực và gửi email | Thấp | External system |
 
 ---
 
@@ -345,13 +393,17 @@ Bao gồm:
 - theo dõi application;
 - đăng ký event;
 - check-in;
-- xem membership.
+- xem membership và xin rời CLB;
+- gửi phản hồi sau sự kiện;
+- gửi khiếu nại về CLB.
 
 ### Dữ liệu tạo ra
 
 - RecruitmentApplication
 - EventRegistration
 - Attendance
+- EventFeedback
+- Complaint
 - ClubApplication nếu là founding student
 
 ### Dữ liệu tiêu thụ
@@ -360,12 +412,14 @@ Bao gồm:
 - RecruitmentCampaign
 - Event
 - ApplicationStatus
+- Membership status
+- StudentProfile (đồng bộ từ Google OAuth)
 
 ---
 
-## A2 – Club Management Board
+## A2 – Club Management Board (Club's Admin)
 
-Đại diện cho **Ban chủ nhiệm/Ban điều hành CLB**.
+Đại diện cho **Ban chủ nhiệm/Ban điều hành CLB**. Trên Context Diagram, actor này được đặt tên là **Club's Admin**.
 
 Không tách các vai trò sau thành actor độc lập:
 
@@ -384,79 +438,106 @@ Các vai trò này được xử lý bằng **RBAC**.
 - tuyển thành viên;
 - quản lý membership;
 - submit event;
+- gửi yêu cầu đặt cơ sở vật chất;
 - quản lý attendance;
 - submit budget;
 - ghi expense;
 - nộp báo cáo;
+- xem và xử lý feedback sự kiện;
+- phản hồi compliance case;
 - chuẩn bị chuyển giao nhiệm kỳ.
 
 ---
 
 ## A3 – ICPDP Officer
 
-Actor đại diện phía nhà trường.
+Actor **đại diện duy nhất của nhà trường** trong hệ thống và nắm **quyền cao nhất**.
+
+Mọi quyết định quản trị cuối cùng — thành lập, đình chỉ, giải thể CLB, phê duyệt sự kiện,
+phê duyệt ngân sách, cấp cơ sở vật chất, xử lý vi phạm, chốt đánh giá — đều kết thúc ở ICPDP.
+Không có actor nào khác có thể override hoặc phủ quyết quyết định của ICPDP.
+
+### Vì sao không tách thêm actor phía nhà trường
+
+Các phòng ban như Finance Office, Facility Management, Security hay Faculty Advisor **không
+tương tác trực tiếp** với UCMS. Khi một request cần ý kiến chuyên môn của họ, ICPDP lấy ý
+kiến **ngoài hệ thống** và ghi nhận kết quả vào quyết định của mình. Hệ quả thiết kế:
+
+- hệ thống chỉ có **một** approval authority duy nhất phía nhà trường;
+- approval routing là **đa cấp trong nội bộ ICPDP** (theo request type/ngưỡng giá trị/mức rủi ro),
+  không phải đa phòng ban;
+- phân cấp trong ICPDP (officer, senior officer, head) xử lý bằng **RBAC**, không tạo actor mới.
 
 ### Trách nhiệm
 
 - xét duyệt thành lập CLB;
-- quản lý lifecycle CLB;
-- xác nhận Ban chủ nhiệm;
+- quản lý lifecycle CLB (active/suspend/reactivate/dissolve);
+- xác nhận Ban chủ nhiệm và chuyển giao nhiệm kỳ;
 - phê duyệt sự kiện;
-- xét duyệt ngân sách;
+- xét duyệt ngân sách và giải ngân;
+- phê duyệt yêu cầu đặt cơ sở vật chất;
 - quản lý compliance;
-- xử lý vi phạm;
-- đánh giá CLB;
-- theo dõi báo cáo;
-- cấu hình chính sách.
+- tiếp nhận khiếu nại của sinh viên và xử lý vi phạm;
+- theo dõi báo cáo định kỳ và báo cáo sau sự kiện;
+- xem tổng hợp feedback CLB/sự kiện;
+- chấm điểm và công bố đánh giá CLB;
+- cấu hình chính sách, deadline, evaluation scheme và RBAC.
+
+### Dữ liệu tạo ra
+
+- ApprovalDecision (club, event, budget, property booking)
+- Violation, CorrectiveAction
+- Evaluation, EvaluationScheme
+- Policy/Configuration
+
+### Dữ liệu tiêu thụ
+
+- Club's leadership information
+- Event registration list
+- Club recruitment result
+- Club and event feedback
+- Club evaluation report
+- Property booking request
+- Periodic reports
+- Club transition notification
 
 ---
 
-## A4 – School Supporting Reviewer
+## External Systems
 
-> **Assumption:** Một số request có thể cần ý kiến từ phòng ban khác.
+Hai hệ thống ngoài tham gia luồng dữ liệu nhưng **không phải actor nghiệp vụ** — chúng không
+ra quyết định và không sở hữu business outcome nào.
 
-Ví dụ:
+### ES1 – Google OAuth
 
-- Finance Office
-- Facility Management
-- Security
-- Academic Department
-- Faculty Advisor
+- **Vai trò:** nhà cung cấp danh tính. UCMS không tự quản lý mật khẩu.
+- **Luồng vào:** UCMS gửi `Authentication request`.
+- **Luồng ra:** Google OAuth trả `Authentication data` (email, họ tên, ảnh đại diện).
+- **Hệ quả:** tài khoản được nhận diện theo email trường; domain hợp lệ là configurable business rule.
 
-Không tạo nhiều actor riêng mà tổng quát thành:
+### ES2 – Google SMTP Service
 
-**School Supporting Reviewer**
+- **Vai trò:** kênh gửi email.
+- **Luồng vào:** UCMS gửi `Send email request` cho mọi notification có channel Email.
+- **Hệ quả:** notification in-app do UCMS tự lưu; notification email phụ thuộc dịch vụ ngoài
+  nên cần retry/log trạng thái gửi.
 
-với role/permission tương ứng.
+---
 
-Ví dụ:
+## Kết luận actor
 
-```text
-Normal Event
-→ ICPDP
-
-Large Event
-→ ICPDP
-→ Facility
-→ Security
-```
-
-```text
-High Budget Request
-→ ICPDP
-→ Finance Reviewer
-```
-
-### Kết luận actor
-
-4 actor:
+**3 actor:**
 
 1. Student
-2. Club Management Board
+2. Club Management Board (Club's Admin)
 3. ICPDP Officer
-4. School Supporting Reviewer
 
-Actor 4 có thể đưa sang V2 nếu quy trình thực tế của trường chỉ do ICPDP xử lý.
+**2 external system:** Google OAuth, Google SMTP Service.
+
+> **Thay đổi so với bản trước:** actor `School Supporting Reviewer` đã bị **loại bỏ**.
+> Quy trình thực tế của trường do ICPDP xử lý toàn bộ; ICPDP là quyền cao nhất và đại diện
+> cho nhà trường. Ý kiến của Finance/Facility/Security được ICPDP thu thập ngoài hệ thống và
+> phản ánh vào quyết định cuối cùng của chính ICPDP.
 
 ---
 
@@ -464,7 +545,7 @@ Actor 4 có thể đưa sang V2 nếu quy trình thực tế của trường ch�
 
 ## 5.1 In Scope
 
-- Authentication
+- Authentication qua **Google OAuth**
 - Authorization / RBAC
 - Club establishment
 - Club lifecycle
@@ -475,15 +556,18 @@ Actor 4 có thể đưa sang V2 nếu quy trình thực tế của trường ch�
 - Event approval
 - Event registration
 - Attendance
+- **Property booking cho hoạt động CLB** (request → ICPDP duyệt → status)
 - Budget request
 - Expense
 - Financial evidence
 - Financial reconciliation
 - Periodic reporting
+- **Event feedback**
+- **Student complaint intake**
 - Compliance
 - Violation
 - Club performance evaluation
-- Notification
+- Notification (in-app + email qua **Google SMTP**)
 - Deadline reminder
 - Audit log
 - Dashboard
@@ -497,13 +581,16 @@ Actor 4 có thể đưa sang V2 nếu quy trình thực tế của trường ch�
 - tuition/payment;
 - mạng xã hội/chat riêng;
 - LMS;
-- room booking engine toàn trường;
+- room booking engine toàn trường (UCMS chỉ quản lý booking phục vụ **hoạt động CLB**, không thay thế hệ thống đặt phòng chung của nhà trường);
 - inventory ERP;
 - payment gateway;
 - sponsorship marketplace;
 - native mobile app;
 - facial recognition attendance;
-- AI chatbot bắt buộc.
+- AI chatbot bắt buộc;
+- cơ chế xác thực tự xây (username/password nội bộ) — đã thay bằng Google OAuth;
+- mail server riêng — dùng Google SMTP;
+- quy trình phê duyệt đa phòng ban (Finance/Facility/Security review trực tiếp trên hệ thống) — ICPDP là điểm duyệt duy nhất.
 
 ---
 
@@ -511,16 +598,21 @@ Actor 4 có thể đưa sang V2 nếu quy trình thực tế của trường ch�
 
 | Module | Mục tiêu | Actor | Dữ liệu chính | Liên kết |
 |---|---|---|---|---|
-| M01 Identity & RBAC | Kiểm soát tài khoản và quyền | All | User, Role, Permission | Tất cả |
+| M01 Identity & RBAC | Xác thực qua Google OAuth, kiểm soát tài khoản và quyền | All | User, StudentProfile, Role, Permission | Tất cả |
 | M02 Club Lifecycle & Governance | Quản lý vòng đời CLB | CMB, ICPDP | Club, ClubApplication | M03, M04, M09 |
 | M03 Leadership & Term | Quản lý nhiệm kỳ | CMB, ICPDP | ClubTerm, Position | M01, M02 |
 | M04 Recruitment & Membership | Tuyển/quản lý thành viên | Student, CMB | Campaign, Application, Membership | M06, M09 |
-| M05 Event & Activity | Quản trị sự kiện | CMB, ICPDP | EventProposal, Event | M06, M07, M08 |
+| M05 Event & Activity | Quản trị sự kiện | CMB, ICPDP | EventProposal, Event | M06, M07, M08, M11 |
 | M06 Registration & Attendance | Đăng ký/điểm danh | Student, CMB | Registration, Attendance | M05, M08, M09 |
 | M07 Finance & Budget | Quản trị ngân sách/chi tiêu | CMB, ICPDP | BudgetRequest, Expense, Evidence | M05, M09 |
-| M08 Reporting & Compliance | Báo cáo và tuân thủ | CMB, ICPDP | Report, Violation | M05, M07, M09 |
-| M09 Performance Evaluation | Đánh giá CLB | ICPDP | Evaluation, Criteria | M02–M08 |
+| M08 Reporting & Compliance | Báo cáo và tuân thủ | CMB, ICPDP | Report, Violation | M05, M07, M09, M12 |
+| M09 Performance Evaluation | Đánh giá CLB | ICPDP | Evaluation, Criteria | M02–M08, M11, M12 |
 | M10 Workflow, Notification & Audit | Governance xuyên module | All | ApprovalTask, Notification, AuditLog | Tất cả |
+| M11 Property & Facility Booking | Xin và cấp cơ sở vật chất cho hoạt động CLB | CMB, ICPDP | Property, PropertyBooking | M05, M09 |
+| M12 Feedback & Complaint | Thu thập phản hồi sự kiện và khiếu nại về CLB | Student, CMB, ICPDP | EventFeedback, Complaint | M06, M08, M09 |
+
+Hai module M11 và M12 được bổ sung theo Context Diagram đã chốt
+(`Property booking request` / `Property booking status`, `Event feedback`, `Club complaint`).
 
 ---
 
@@ -572,6 +664,7 @@ Create Recruitment Campaign
 ```text
 Event Proposal
 → Conflict Check
+→ Property Booking Request (nếu cần cơ sở vật chất)
 → ICPDP Review
 → Revision nếu cần
 → Approval
@@ -580,6 +673,7 @@ Event Proposal
 → Check-in
 → Attendance Finalization
 → Post-event Report
+→ Event Feedback
 → ICPDP Close
 → Evaluation Input
 ```
@@ -600,7 +694,8 @@ Budget Request
 ## Flow 6 – Compliance
 
 ```text
-Issue / Violation
+Student Complaint / Issue / Violation
+→ Triage
 → Compliance Case
 → Investigation
 → Club Response
@@ -619,6 +714,8 @@ Events
 + Reports
 + Finance
 + Violations
++ Event Feedback
++ Complaint History
 → Evaluation Draft
 → ICPDP Review
 → Finalize
@@ -642,6 +739,41 @@ hoặc
 → Revoke Management Permission
 ```
 
+## Flow 9 – Property Booking
+
+```text
+CMB Submit Property Booking Request
+→ Availability & Conflict Check
+→ ICPDP Review
+→ Approved / Rejected
+→ Booking Status trả về CMB
+→ Sử dụng trong Event
+→ Release / Cancel
+```
+
+## Flow 10 – Feedback
+
+```text
+Event Closed hoặc Attendance Finalized
+→ Feedback Window mở
+→ Student Submit Event Feedback
+→ Aggregate
+→ CMB xem kết quả
+→ ICPDP xem tổng hợp Club and Event Feedback
+→ Evaluation Input
+```
+
+## Flow 11 – Authentication
+
+```text
+User chọn đăng nhập
+→ UCMS gửi Authentication request → Google OAuth
+→ Google OAuth trả Authentication data
+→ UCMS map email → User + StudentProfile
+→ Load role/permission
+→ Workspace tương ứng
+```
+
 ---
 
 # 8. MASTER USE CASE LIST
@@ -650,7 +782,7 @@ hoặc
 
 | ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
 |---|---|---|---|---|---|---|
-| UC01 | Xác thực và truy cập workspace theo quyền | All | M01 | Truy cập an toàn | All | Must |
+| UC01 | Xác thực qua Google OAuth và truy cập workspace theo quyền | All | M01 | Truy cập an toàn | All | Must |
 | UC02 | Gửi hồ sơ đề nghị thành lập CLB | Student | M02 | Đề xuất CLB mới | UC03 | Must |
 | UC03 | Thẩm định hồ sơ thành lập CLB | ICPDP | M02 | Kiểm tra hồ sơ | UC04, UC06 | Must |
 | UC04 | Yêu cầu bổ sung/chỉnh sửa hồ sơ | ICPDP | M02 | Hoàn thiện hồ sơ | UC05 | Must |
@@ -683,7 +815,7 @@ hoặc
 
 | ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
 |---|---|---|---|---|---|---|
-| UC24 | Gửi đề xuất tổ chức sự kiện | CMB | M05 | Xin phép tổ chức | UC25–29 | Must |
+| UC24 | Gửi đề xuất tổ chức sự kiện | CMB | M05 | Xin phép tổ chức | UC25–29, UC51 | Must |
 | UC25 | Phát hiện xung đột sự kiện | System/CMB | M05 | Tránh trùng lịch/địa điểm | UC24, UC29 | Should |
 | UC26 | Thẩm định đề xuất sự kiện | ICPDP | M05 | Kiểm tra proposal | UC27, UC29 | Must |
 | UC27 | Yêu cầu chỉnh sửa đề xuất sự kiện | ICPDP | M05 | Hoàn thiện proposal | UC28 | Must |
@@ -717,29 +849,56 @@ hoặc
 |---|---|---|---|---|---|---|
 | UC46 | Nộp báo cáo hoạt động định kỳ | CMB | M08 | Hoàn thành nghĩa vụ báo cáo | UC47 | Must |
 | UC47 | Thẩm định báo cáo hoạt động định kỳ | ICPDP | M08 | Xác thực báo cáo | UC49 | Must |
-| UC48 | Quản lý vụ việc vi phạm/tuân thủ | ICPDP | M08 | Kiểm soát compliance | UC49 | Must |
+| UC48 | Quản lý vụ việc vi phạm/tuân thủ | ICPDP | M08 | Kiểm soát compliance | UC49, UC57 | Must |
 | UC49 | Tạo bản nháp đánh giá hiệu quả CLB | ICPDP | M09 | Tổng hợp dữ liệu performance | UC50 | Should |
 | UC50 | Review, chốt và công bố đánh giá | ICPDP | M09 | Đánh giá chính thức | UC49 | Should |
 
-**Tổng cộng: 50 business use case.**
+## 8.6 Property & Facility Booking
+
+| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
+|---|---|---|---|---|---|---|
+| UC51 | Gửi yêu cầu đặt cơ sở vật chất | CMB | M11 | Xin phòng/thiết bị cho hoạt động CLB | UC24, UC52 | Must |
+| UC52 | Phê duyệt/Từ chối yêu cầu đặt cơ sở vật chất | ICPDP | M11 | Cấp phát tài nguyên có kiểm soát | UC51, UC53 | Must |
+| UC53 | Theo dõi và hủy/trả cơ sở vật chất đã đặt | CMB | M11 | Giải phóng tài nguyên không dùng | UC35, UC52 | Should |
+
+## 8.7 Feedback & Complaint
+
+| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
+|---|---|---|---|---|---|---|
+| UC54 | Gửi phản hồi sau sự kiện | Student | M12 | Thu thập đánh giá người tham gia | UC34, UC55 | Should |
+| UC55 | Xem và xử lý phản hồi sự kiện | CMB | M12 | Cải thiện chất lượng hoạt động | UC54, UC36 | Should |
+| UC56 | Gửi khiếu nại về CLB | Student | M12 | Kênh phản ánh chính thức | UC57 | Should |
+| UC57 | Tiếp nhận, phân loại và chuyển khiếu nại thành compliance case | ICPDP | M12 | Xử lý khiếu nại có vết | UC48, UC56 | Should |
+
+**Tổng cộng: 57 business use case** (UC01–UC50 giữ nguyên đánh số từ bản trước; UC51–UC57 bổ sung theo Context Diagram).
 
 ---
 
 # 9. DETAILED USE CASE SPECIFICATION
 
-## UC01 – Xác thực và truy cập workspace theo quyền
+## UC01 – Xác thực qua Google OAuth và truy cập workspace theo quyền
 
 - **Primary Actor:** All
-- **Business Goal:** Chỉ cho phép người dùng truy cập đúng dữ liệu/chức năng theo vai trò.
-- **Trigger:** Người dùng đăng nhập.
-- **Preconditions:** Tài khoản tồn tại và còn hiệu lực.
+- **Supporting System:** Google OAuth (ES1)
+- **Business Goal:** Chỉ cho phép người dùng truy cập đúng dữ liệu/chức năng theo vai trò, không tự quản lý mật khẩu.
+- **Trigger:** Người dùng chọn đăng nhập.
+- **Preconditions:** Người dùng có tài khoản Google thuộc domain được nhà trường cho phép.
 - **Main Flow:**
-  1. Người dùng gửi thông tin xác thực.
-  2. Hệ thống xác minh.
-  3. Hệ thống tải role/permission.
-  4. Hệ thống điều hướng tới workspace tương ứng.
-- **Exception:** Tài khoản bị khóa hoặc không hợp lệ.
-- **Postcondition:** Session hợp lệ được tạo.
+  1. Hệ thống gửi `Authentication request` tới Google OAuth.
+  2. Người dùng xác thực trên Google.
+  3. Google OAuth trả `Authentication data` (email, họ tên, ảnh đại diện).
+  4. Hệ thống kiểm tra domain email theo policy.
+  5. Hệ thống map email tới User; nếu chưa có thì tạo User + StudentProfile ở lần đăng nhập đầu.
+  6. Hệ thống tải role/permission hiện hành.
+  7. Hệ thống điều hướng tới workspace tương ứng (Student / Club's Admin / ICPDP).
+- **Alternative:** Một người dùng có thể có nhiều context (vừa là Student, vừa là Club's Admin của một CLB) và chọn workspace.
+- **Exception:**
+  - email ngoài domain cho phép → từ chối truy cập;
+  - tài khoản bị khóa → từ chối và ghi audit;
+  - Google OAuth không phản hồi → báo lỗi, không tạo session.
+- **Postcondition:** Session hợp lệ được tạo; `StudentProfile` được đồng bộ.
+- **Rule:** Hệ thống **không** lưu mật khẩu người dùng.
+- **Pain Point:** BP19.
 - **Priority:** Must.
 
 ## UC02 – Gửi hồ sơ đề nghị thành lập CLB
@@ -775,7 +934,7 @@ hoặc
   4. Kiểm tra document.
   5. Kiểm tra version history.
   6. Chọn Approve / Revision / Reject.
-- **Alternative:** Giao Supporting Reviewer.
+- **Alternative:** Chuyển hồ sơ lên cấp cao hơn trong ICPDP nếu vượt thẩm quyền của officer đang xử lý (RBAC, không phải actor khác).
 - **Postcondition:** Kết quả review được ghi nhận.
 - **Related:** UC04, UC06.
 
@@ -936,20 +1095,23 @@ hoặc
 
 - **Primary Actor:** CMB
 - **Precondition:** Club Active và người dùng có quyền.
-- **Input:** mục tiêu, thời gian, địa điểm, audience, capacity, plan, risk, budget estimate.
-- **Flow:** Validate → UC25 conflict check → Submitted/Pending Approval.
+- **Input:** mục tiêu, thời gian, địa điểm, audience, capacity, plan, risk, budget estimate, nhu cầu cơ sở vật chất.
+- **Flow:** Validate → UC25 conflict check → (tùy chọn) UC51 property booking request → Submitted/Pending Approval.
+- **Related:** UC25, UC26, UC51.
 
 ## UC25 – Phát hiện xung đột sự kiện
 
 - **Actor:** System/CMB
-- **Input:** venue, start time, end time, event status.
+- **Input:** venue/property, start time, end time, event status, booking status.
 - **Output:** No Conflict / Warning / Blocking Conflict.
 - **Rule:** Không tự reject nếu policy chỉ cảnh báo.
+- **Scope:** Dùng chung cho cả Event (UC24) và Property Booking (UC51).
 
 ## UC26 – Thẩm định đề xuất sự kiện
 
 - **Primary Actor:** ICPDP
-- **Review:** compliance, venue, time, budget, safety, overdue obligations.
+- **Review:** compliance, venue, time, budget, safety, overdue obligations, property booking đi kèm.
+- **Rule:** ICPDP là điểm duyệt duy nhất. Ý kiến Facility/Security/Finance (nếu cần) được ICPDP thu thập ngoài hệ thống và ghi vào review note.
 - **Outcome:** Revision hoặc UC29.
 
 ## UC27 – Yêu cầu chỉnh sửa đề xuất sự kiện
@@ -1001,7 +1163,7 @@ hoặc
 ## UC35 – Hủy/Đổi lịch sự kiện
 
 - **Primary Actor:** CMB/ICPDP
-- **Flow:** nhập reason → conflict check nếu đổi lịch → notify registrants → cập nhật deadline/report/budget impact.
+- **Flow:** nhập reason → conflict check nếu đổi lịch → cập nhật/hủy property booking liên quan (UC53) → notify registrants → cập nhật deadline/report/budget impact.
 
 ## UC36 – Nộp báo cáo sau sự kiện
 
@@ -1083,13 +1245,14 @@ hoặc
 ## UC48 – Quản lý vụ việc vi phạm/tuân thủ
 
 - **Primary Actor:** ICPDP
-- **Trigger:** manual report, overdue report, financial issue, unauthorized event, policy breach.
+- **Trigger:** khiếu nại của sinh viên (UC57), manual report, overdue report, financial issue, unauthorized event, policy breach.
 - **Lifecycle:** Open → Investigation → Club Response → Decision → Corrective Action → Resolved.
+- **Rule:** Mỗi case phải ghi nguồn khởi tạo; case xuất phát từ khiếu nại phải liên kết tới Complaint gốc.
 
 ## UC49 – Tạo bản nháp đánh giá hiệu quả CLB
 
 - **Primary Actor:** ICPDP
-- **Input:** activity, attendance, membership, finance, reports, violations.
+- **Input:** activity, attendance, membership, finance, reports, violations, event feedback, complaint history, property booking compliance.
 - **Processing:** Áp dụng evaluation scheme hiện hành.
 - **Output:** Evaluation Draft.
 
@@ -1098,6 +1261,135 @@ hoặc
 - **Primary Actor:** ICPDP
 - **Flow:** Review source data → xử lý anomaly → manual dimension nếu được phép → finalize → publish.
 - **Rule:** Published Evaluation không sửa trực tiếp; tạo revision/snapshot mới.
+
+## UC51 – Gửi yêu cầu đặt cơ sở vật chất
+
+- **Primary Actor:** CMB
+- **Business Goal:** Xin phòng/thiết bị phục vụ hoạt động CLB theo một quy trình có vết.
+- **Trigger:** CLB cần địa điểm hoặc thiết bị cho sự kiện/sinh hoạt định kỳ.
+- **Preconditions:** Club Active; người dùng có quyền tương ứng.
+- **Input:** property, mục đích sử dụng, ngày/giờ bắt đầu–kết thúc, số người dự kiến, thiết bị kèm theo, event liên quan (nếu có).
+- **Main Flow:**
+  1. CMB chọn property từ danh mục do ICPDP quản lý.
+  2. Hệ thống hiển thị tình trạng khả dụng.
+  3. CMB nhập thông tin sử dụng.
+  4. Hệ thống chạy conflict check (UC25).
+  5. CMB submit.
+  6. Status → `Requested`; ICPDP nhận review task.
+- **Alternative:** Lưu Draft; gắn booking vào một Event Proposal đang soạn.
+- **Exception:** Property đã bị đặt trong khung giờ đó và policy chặn overbooking.
+- **Postcondition:** PropertyBooking ở trạng thái `Requested`.
+- **Related:** UC24, UC25, UC52.
+- **Pain Point:** BP16.
+- **Priority:** Must.
+
+## UC52 – Phê duyệt/Từ chối yêu cầu đặt cơ sở vật chất
+
+- **Primary Actor:** ICPDP
+- **Business Goal:** Cấp phát tài nguyên của nhà trường có kiểm soát.
+- **Preconditions:** Booking ở trạng thái `Requested`.
+- **Main Flow:**
+  1. ICPDP mở yêu cầu.
+  2. Kiểm tra tình trạng CLB, mục đích, conflict, nghĩa vụ quá hạn.
+  3. Chọn Approve / Reject / Request Revision.
+  4. Nhập reason khi Reject hoặc Revision.
+  5. Hệ thống ghi audit và cập nhật trạng thái.
+  6. Hệ thống gửi `Property booking status` cho CMB.
+- **Rule:**
+  - chỉ ICPDP có quyền quyết định;
+  - Approved booking khóa khung giờ của property đó;
+  - CLB đang Suspended không được cấp booking mới.
+- **Postcondition:** Booking → `Approved` hoặc `Rejected`.
+- **Related:** UC51, UC53, UC26.
+- **Priority:** Must.
+
+## UC53 – Theo dõi và hủy/trả cơ sở vật chất đã đặt
+
+- **Primary Actor:** CMB
+- **Business Goal:** Giải phóng tài nguyên không còn dùng để CLB khác có thể đặt.
+- **Trigger:** Sự kiện bị hủy/đổi lịch (UC35), hoặc CLB không còn nhu cầu.
+- **Main Flow:**
+  1. CMB mở booking đang `Approved`.
+  2. Chọn Cancel và nhập reason.
+  3. Hệ thống giải phóng khung giờ.
+  4. ICPDP nhận notification.
+- **Rule:** Hủy sát giờ sử dụng có thể bị ghi nhận là vi phạm theo policy (liên kết UC48).
+- **Postcondition:** Booking → `Cancelled` hoặc `Released`.
+- **Related:** UC35, UC52, UC48.
+- **Priority:** Should.
+
+## UC54 – Gửi phản hồi sau sự kiện
+
+- **Primary Actor:** Student
+- **Business Goal:** Thu thập đánh giá của người tham gia làm dữ liệu cải tiến và đánh giá CLB.
+- **Trigger:** Feedback window mở sau khi attendance được chốt.
+- **Preconditions:** Student có attendance record hợp lệ của sự kiện đó.
+- **Input:** điểm theo tiêu chí, nhận xét tự do, tùy chọn ẩn danh.
+- **Main Flow:**
+  1. Student mở sự kiện đã tham gia.
+  2. Điền form feedback.
+  3. Submit.
+  4. Hệ thống lưu và cập nhật thống kê tổng hợp.
+- **Rule:**
+  - mỗi student chỉ gửi **một** feedback cho một sự kiện;
+  - feedback chỉ nhận trong feedback window (configurable);
+  - feedback ẩn danh không hiển thị danh tính cho CMB nhưng vẫn lưu liên kết nội bộ để chống spam.
+- **Postcondition:** EventFeedback được tạo.
+- **Related:** UC34, UC55, UC49.
+- **Pain Point:** BP17.
+- **Priority:** Should.
+
+## UC55 – Xem và xử lý phản hồi sự kiện
+
+- **Primary Actor:** CMB
+- **Business Goal:** Dùng phản hồi để cải thiện chất lượng hoạt động.
+- **Main Flow:**
+  1. CMB mở bảng tổng hợp feedback theo sự kiện.
+  2. Xem điểm trung bình theo tiêu chí và phân bố.
+  3. Đọc nhận xét.
+  4. Ghi nhận lessons learned vào post-event report (UC36).
+- **Rule:** CMB không được sửa hoặc xóa feedback của người tham gia.
+- **Output:** Feedback summary; input cho UC36 và UC49.
+- **Related:** UC54, UC36, UC49.
+- **Priority:** Should.
+
+## UC56 – Gửi khiếu nại về CLB
+
+- **Primary Actor:** Student
+- **Business Goal:** Cho sinh viên một kênh phản ánh chính thức, có vết xử lý.
+- **Trigger:** Sinh viên gặp vấn đề với một CLB hoặc một hoạt động của CLB.
+- **Input:** CLB liên quan, event liên quan (nếu có), loại khiếu nại, mô tả, evidence đính kèm.
+- **Main Flow:**
+  1. Student chọn CLB/sự kiện.
+  2. Chọn loại khiếu nại.
+  3. Mô tả và đính kèm evidence.
+  4. Submit.
+  5. Status → `Submitted`; ICPDP nhận task.
+- **Rule:** Khiếu nại gửi thẳng tới **ICPDP**, không đi qua CLB bị khiếu nại.
+- **Postcondition:** Complaint ở trạng thái `Submitted`; student theo dõi được trạng thái xử lý.
+- **Related:** UC57, UC48.
+- **Pain Point:** BP18.
+- **Priority:** Should.
+
+## UC57 – Tiếp nhận, phân loại và chuyển khiếu nại thành compliance case
+
+- **Primary Actor:** ICPDP
+- **Business Goal:** Sàng lọc khiếu nại và chỉ mở compliance case khi có cơ sở.
+- **Preconditions:** Complaint ở trạng thái `Submitted`.
+- **Main Flow:**
+  1. ICPDP mở khiếu nại.
+  2. Phân loại mức độ và tính hợp lệ.
+  3. Chọn một trong:
+     - `Dismissed` – không có cơ sở, ghi reason;
+     - `Forwarded` – chuyển CLB xử lý và phản hồi;
+     - `Escalated` – mở Violation case qua UC48.
+  4. Hệ thống ghi audit và thông báo cho người khiếu nại.
+- **Rule:**
+  - mọi quyết định phải có reason;
+  - chỉ ICPDP có quyền dismiss hoặc escalate.
+- **Postcondition:** Complaint → `Dismissed` / `Forwarded` / `Escalated`; nếu Escalated thì một Violation được tạo và liên kết ngược tới Complaint.
+- **Related:** UC56, UC48, UC49.
+- **Priority:** Should.
 
 ---
 
@@ -1136,7 +1428,8 @@ UC15 Recruitment Campaign
 
 ```text
 UC24 Event Proposal
-├─ include → UC25 Conflict Detection
+├─ include  → UC25 Conflict Detection
+├─ extend   → UC51 Property Booking Request
 → UC26 Review
    ├─→ UC27 Revision Request
    │    → UC28 Resubmit
@@ -1148,11 +1441,12 @@ UC24 Event Proposal
         → UC33 Check-in
         → UC34 Attendance
         → UC36 Post-event Report
+        → UC54 Event Feedback
         → UC37 Review/Close
         → UC49 Evaluation
 ```
 
-UC35 có thể tác động từ UC30 đến UC36.
+UC35 có thể tác động từ UC30 đến UC36, và kéo theo UC53 nếu có property booking.
 
 ## 10.4 Finance
 
@@ -1178,15 +1472,53 @@ UC47 Periodic Report
 UC21 Membership Data
 UC34 Attendance Data
 UC48 Violation Data
+UC52 Property Booking Compliance
+UC54 Event Feedback Data
+UC57 Complaint Outcome
         ↓
 UC49 Evaluation Draft
         ↓
 UC50 Final Evaluation
 ```
 
+## 10.6 Property Booking
+
+```text
+UC51 Property Booking Request
+├─ include → UC25 Conflict Detection
+→ UC52 ICPDP Decision
+   ├─→ Approved
+   │    → UC53 Track / Cancel / Release
+   │    → UC24 Event Execution
+   └─→ Rejected
+        → UC51 Resubmit
+```
+
+## 10.7 Feedback & Complaint
+
+```text
+UC34 Attendance Finalized
+→ UC54 Student Event Feedback
+   ├─→ UC55 CMB Review Feedback
+   │    → UC36 Post-event Report
+   └─→ UC49 Evaluation
+```
+
+```text
+UC56 Student Complaint
+→ UC57 ICPDP Triage
+   ├─→ Dismissed
+   ├─→ Forwarded → CMB Response
+   └─→ Escalated → UC48 Violation Case
+                    → UC49 Evaluation
+```
+
 ---
 
 # 11. ACTOR → USE CASE MAPPING
+
+> Hệ thống có **3 actor**. Actor `School Supporting Reviewer` đã bị loại bỏ — toàn bộ thẩm
+> quyền phía nhà trường nằm ở ICPDP Officer.
 
 ## Student
 
@@ -1197,6 +1529,8 @@ UC50 Final Evaluation
 - UC23
 - UC31
 - UC33
+- UC54
+- UC56
 
 ## Club Management Board
 
@@ -1212,6 +1546,9 @@ UC50 Final Evaluation
 - UC38
 - UC40
 - UC43–UC46
+- UC51
+- UC53
+- UC55
 
 ## ICPDP Officer
 
@@ -1227,17 +1564,20 @@ UC50 Final Evaluation
 - UC41–UC42
 - UC45
 - UC47–UC50
+- UC52
+- UC57
 
-## School Supporting Reviewer
+ICPDP là **quyền cao nhất**: mọi quyết định approve/reject/suspend/dissolve/finalize trong
+hệ thống đều thuộc actor này, không có actor nào khác review song song hay phủ quyết.
 
-Supporting actor trong:
+## External Systems
 
-- UC03
-- UC26
-- UC39
-- UC48
+Không phải actor, chỉ tham gia luồng dữ liệu:
 
-khi approval routing yêu cầu.
+| System | Use Case liên quan | Luồng |
+|---|---|---|
+| Google OAuth | UC01 | Authentication request → / ← Authentication data |
+| Google SMTP Service | Mọi UC có notification channel Email (§19) | Send email request → |
 
 ---
 
@@ -1418,6 +1758,36 @@ I want suspension to immediately restrict prohibited operations,
 I want evaluation history by semester/year,  
 **so that** tôi theo dõi được xu hướng phát triển của CLB.
 
+## US36
+**As a Club Leader,**  
+I want to request rooms and equipment inside the same system as my event proposal,  
+**so that** tôi không phải xin cơ sở vật chất qua email tách rời khỏi hồ sơ sự kiện.
+
+## US37
+**As an ICPDP Officer,**  
+I want to see property booking conflicts before approving,  
+**so that** hai CLB không được cấp cùng một phòng trong cùng khung giờ.
+
+## US38
+**As a Student,**  
+I want to give feedback after an event I attended,  
+**so that** ý kiến của tôi được ghi nhận thay vì chỉ nói miệng.
+
+## US39
+**As a Club Leader,**  
+I want to see aggregated event feedback,  
+**so that** tôi biết cần cải thiện điều gì ở sự kiện tiếp theo.
+
+## US40
+**As a Student,**  
+I want to send a complaint about a club directly to ICPDP,  
+**so that** phản ánh của tôi không bị chính CLB bị khiếu nại chặn lại.
+
+## US41
+**As any user,**  
+I want to log in with my school Google account,  
+**so that** tôi không phải nhớ thêm một mật khẩu riêng cho hệ thống này.
+
 ---
 
 # 13. ACCEPTANCE CRITERIA
@@ -1527,6 +1897,51 @@ I want evaluation history by semester/year,
 **When** ICPDP generate draft  
 **Then** mỗi dimension phải truy vết được source data.
 
+## AC16 – Property Booking Conflict
+
+**Given** property P đã có booking `Approved` từ 14:00–16:00 ngày D  
+**When** CLB khác submit booking cho P từ 15:00–17:00 ngày D  
+**Then** hệ thống trả Blocking Conflict  
+**And** booking không thể chuyển sang `Approved` nếu policy không cho overbooking.
+
+## AC17 – Property Booking Authority
+
+**Given** một booking đang `Requested`  
+**When** một người dùng không phải ICPDP cố phê duyệt  
+**Then** hệ thống từ chối thao tác  
+**And** ghi audit lần thử truy cập trái quyền.
+
+## AC18 – Event Feedback
+
+**Given** student có finalized attendance của event E và feedback window đang mở  
+**When** student submit feedback lần đầu  
+**Then** một EventFeedback record được tạo.
+
+**When** cùng student submit lần hai cho E  
+**Then** hệ thống từ chối duplicate feedback.
+
+**Given** feedback window đã đóng  
+**When** student submit feedback  
+**Then** hệ thống từ chối.
+
+## AC19 – Complaint Routing
+
+**Given** student submit khiếu nại về CLB X  
+**When** khiếu nại được tạo  
+**Then** chỉ ICPDP nhìn thấy nội dung gốc  
+**And** CLB X không nhận được khiếu nại cho tới khi ICPDP chọn `Forwarded`  
+**And** khi ICPDP chọn `Escalated` thì một Violation được tạo và trỏ ngược về Complaint.
+
+## AC20 – Google OAuth Login
+
+**Given** người dùng xác thực thành công trên Google  
+**When** email trả về **không** thuộc domain được cấu hình  
+**Then** hệ thống từ chối tạo session  
+**And** không tạo User record.
+
+**When** email thuộc domain hợp lệ và chưa có User  
+**Then** đúng một User + StudentProfile được tạo.
+
 ---
 
 # 14. BUSINESS RULES
@@ -1548,7 +1963,7 @@ I want evaluation history by semester/year,
 | BR13 | Membership chỉ tạo từ accepted candidate hoặc authorized manual onboarding. |
 | BR14 | Event chỉ được public sau khi Approved. |
 | BR15 | Conflict threshold là configurable. |
-| BR16 | Event có risk category nhất định có thể yêu cầu Supporting Reviewer. |
+| BR16 | Event có risk category cao hơn ngưỡng cấu hình phải được duyệt ở cấp ICPDP cao hơn (RBAC nội bộ ICPDP), không chuyển sang actor khác. |
 | BR17 | Confirmed registration không vượt capacity nếu policy không cho phép overbooking. |
 | BR18 | Một participant chỉ có một official attendance record/event. |
 | BR19 | Finalized attendance chỉ được unlock bởi role đặc biệt. |
@@ -1563,6 +1978,15 @@ I want evaluation history by semester/year,
 | BR28 | Violation decision phải có reason/evidence. |
 | BR29 | Tổng evaluation weight phải hợp lệ trước khi scheme được activate. |
 | BR30 | Published Evaluation không sửa trực tiếp; phải tạo revision/snapshot mới. |
+| BR31 | ICPDP là approval authority duy nhất; không có quyết định nào trong hệ thống được duyệt bởi actor khác. |
+| BR32 | Hệ thống chỉ chấp nhận đăng nhập qua Google OAuth với email thuộc domain được cấu hình. |
+| BR33 | Một property không được có hai booking `Approved` trùng khung giờ nếu policy không cho overbooking. |
+| BR34 | Suspended Club không được cấp property booking mới. |
+| BR35 | Property booking chỉ được `Approved` bởi ICPDP và tự động giải phóng khi event liên quan bị hủy. |
+| BR36 | Mỗi participant chỉ gửi được một event feedback cho một sự kiện, trong feedback window cấu hình được. |
+| BR37 | CMB không được sửa hoặc xóa event feedback; chỉ được xem ở dạng tổng hợp. |
+| BR38 | Khiếu nại của sinh viên đi thẳng tới ICPDP; CLB bị khiếu nại chỉ tiếp cận được sau khi ICPDP chuyển. |
+| BR39 | Mọi quyết định với khiếu nại (dismiss/forward/escalate) phải có reason và được audit. |
 
 ---
 
@@ -1682,6 +2106,68 @@ Draft
 → Published
 ```
 
+## 15.9 Property Booking
+
+```text
+Draft
+→ Requested
+→ Under Review
+→ Revision Requested
+→ Requested
+→ Approved / Rejected
+→ In Use
+→ Completed
+```
+
+Exceptional:
+
+```text
+Requested / Approved
+→ Cancelled
+
+Approved
+→ Released (khi event liên quan bị hủy)
+```
+
+| Transition | Actor | UC |
+|---|---|---|
+| Draft → Requested | CMB | UC51 |
+| Requested → Under Review | ICPDP | UC52 |
+| Under Review → Approved/Rejected | ICPDP | UC52 |
+| Approved → Cancelled/Released | CMB | UC53 |
+| Approved → In Use → Completed | System | UC52, UC35 |
+
+## 15.10 Complaint
+
+```text
+Submitted
+→ Under Triage
+→ Dismissed
+
+hoặc → Forwarded → Club Responded → Closed
+
+hoặc → Escalated → Violation (15.7)
+```
+
+| Transition | Actor | UC |
+|---|---|---|
+| — → Submitted | Student | UC56 |
+| Submitted → Under Triage | ICPDP | UC57 |
+| Under Triage → Dismissed/Forwarded/Escalated | ICPDP | UC57 |
+| Forwarded → Club Responded | CMB | UC57 |
+| Escalated → Violation Open | ICPDP | UC48 |
+
+## 15.11 Event Feedback
+
+```text
+Window Open
+→ Submitted
+→ Aggregated
+→ Window Closed
+```
+
+Feedback không có bước phê duyệt: đã submit thì không sửa, không xóa (BR37).
+
 ---
 
 # 16. DOMAIN MODEL
@@ -1714,6 +2200,10 @@ Draft
 - FinancialEvidence
 - FinancialReconciliation
 - PeriodicReport
+- Property
+- PropertyBooking
+- EventFeedback
+- Complaint
 - Violation
 - CorrectiveAction
 - Evaluation
@@ -1723,11 +2213,15 @@ Draft
 - ApprovalTask
 - ApprovalDecision
 - Notification
+- EmailDeliveryLog
 - AuditLog
 
 ## 16.2 Relationships
 
 ```text
+User
+1 --- 1 StudentProfile
+
 User
 1 --- N ClubMembership
 
@@ -1788,6 +2282,38 @@ BudgetRequest
 1 --- 0..1 FinancialReconciliation
 ```
 
+### Property Booking
+
+```text
+Property
+1 --- N PropertyBooking
+
+Club
+1 --- N PropertyBooking
+
+Event
+0..1 --- N PropertyBooking
+```
+
+### Feedback & Complaint
+
+```text
+Event
+1 --- N EventFeedback
+
+EventRegistration
+1 --- 0..1 EventFeedback
+
+User
+1 --- N Complaint
+
+Club
+1 --- N Complaint
+
+Complaint
+1 --- 0..1 Violation
+```
+
 ### Compliance & Evaluation
 
 ```text
@@ -1832,7 +2358,9 @@ Thay vào đó xây dựng **Evaluation Framework có thể cấu hình**.
 - approved events;
 - completed events;
 - cancelled events;
-- post-event reports.
+- post-event reports;
+- property booking được cấp vs. thực sử dụng;
+- điểm feedback trung bình của sự kiện.
 
 **Business Question:**
 
@@ -1845,7 +2373,8 @@ Thay vào đó xây dựng **Evaluation Framework có thể cấu hình**.
 - active members;
 - attendance;
 - retention;
-- participation rate.
+- participation rate;
+- feedback response rate.
 
 **Business Question:**
 
@@ -1898,7 +2427,9 @@ Thay vào đó xây dựng **Evaluation Framework có thể cấu hình**.
 - violation count;
 - severity;
 - unresolved cases;
-- corrective actions.
+- corrective actions;
+- số khiếu nại được ICPDP escalate;
+- số lần hủy property booking sát giờ.
 
 **Business Question:**
 
@@ -1954,8 +2485,12 @@ Reporting Compliance
 | Upcoming Events | Sự kiện nào sắp diễn ra? |
 | Conflict Alerts | Có sự kiện nào trùng lịch/địa điểm? |
 | Budget Exposure | Tổng approved/disbursed/reconciled là bao nhiêu? |
+| Property Booking Queue | Yêu cầu đặt cơ sở vật chất nào đang chờ duyệt? |
+| Property Utilization | Phòng/thiết bị nào được cấp nhưng không sử dụng? |
 | Overdue Reports | CLB nào chưa hoàn thành nghĩa vụ? |
+| Open Complaints | Khiếu nại nào của sinh viên chưa được phân loại? |
 | Open Violations | Compliance case nào chưa xử lý? |
+| Feedback Summary | Điểm feedback trung bình của CLB/sự kiện trong kỳ là bao nhiêu? |
 | Club Health | CLB nào có tín hiệu rủi ro? |
 | Evaluation Distribution | Chất lượng CLB trong kỳ như thế nào? |
 
@@ -1970,6 +2505,8 @@ Trả lời các câu hỏi:
 - Budget còn bao nhiêu?
 - Expense nào thiếu evidence?
 - Report nào sắp quá hạn?
+- Booking cơ sở vật chất nào đang chờ duyệt/đã được duyệt?
+- Feedback sự kiện gần nhất ra sao?
 - Có open violation không?
 - Nhiệm kỳ còn bao lâu?
 - Transition task nào chưa hoàn thành?
@@ -1983,13 +2520,11 @@ Trả lời các câu hỏi:
 - Event nào tôi đã đăng ký?
 - Event sắp tới của tôi?
 - Attendance history?
+- Sự kiện nào tôi chưa gửi feedback?
+- Khiếu nại của tôi đang ở trạng thái nào?
 
-## 18.4 Supporting Reviewer Dashboard
-
-- Request nào được assign?
-- SLA còn bao lâu?
-- Request nào đã review?
-- Recommendation nào đang chờ ICPDP quyết định?
+> **Lưu ý:** Dashboard dành cho `School Supporting Reviewer` ở bản trước đã bị **loại bỏ**
+> cùng với actor đó. Toàn bộ approval queue nằm ở ICPDP Dashboard (§18.1).
 
 ---
 
@@ -2005,14 +2540,26 @@ Trả lời các câu hỏi:
 | Event Approved/Rejected | CMB | In-app + Email |
 | Event Rescheduled | Registered Students | In-app |
 | Event Reminder | Participants | In-app |
+| Property Booking Submitted | ICPDP | In-app |
+| Property Booking Approved/Rejected | CMB | In-app + Email |
+| Property Booking Cancelled | ICPDP | In-app |
+| Feedback Window Opened | Participants | In-app |
+| New Event Feedback Received | CMB | In-app |
 | Post-event Report Due Soon | CMB | Reminder |
 | Budget Approved | CMB | In-app |
 | Expense Missing Evidence | Treasurer/CMB | Reminder |
 | Reconciliation Overdue | CMB + ICPDP | Escalation |
 | Periodic Report Due | CMB | Reminder |
+| Complaint Submitted | ICPDP | In-app + Email |
+| Complaint Triaged | Người khiếu nại | In-app |
+| Complaint Forwarded | CMB | In-app + Email |
 | Violation Opened | CMB | In-app + Email |
 | Leadership Term Near Expiry | CMB + ICPDP | Reminder |
 | Evaluation Published | CMB | In-app |
+
+**Kênh Email:** mọi notification có channel Email được gửi qua **Google SMTP Service**
+(`Send email request`). Hệ thống phải lưu `EmailDeliveryLog` và retry khi gửi thất bại;
+thất bại gửi email không được làm hỏng business transaction đã commit.
 
 ## Configurable Deadline Escalation
 
@@ -2054,10 +2601,13 @@ Bắt buộc audit mạnh cho:
 - Leadership Transition
 - Event Approval
 - Budget Approval
+- Property Booking Decision
 - Expense/Evidence Modification
+- Complaint Triage Decision
 - Violation
 - Evaluation
 - RBAC Change
+- Login qua Google OAuth bị từ chối (sai domain / tài khoản khóa)
 
 Ví dụ:
 
@@ -2092,6 +2642,10 @@ Timestamp: ...
 | BP13 | Data-driven evaluation | UC49–50 | ICPDP | US27–29, US35 | BR29–30 |
 | BP15 | Auditability | Cross-module | ICPDP | US32 | BR05 |
 | BP01 | Club lifecycle control | UC14 | ICPDP | US34 | BR09–10 |
+| BP16 | Property booking có kiểm soát | UC51–53 | CMB/ICPDP | US36–37 | BR33–35 |
+| BP17 | Structured event feedback | UC54–55 | Student/CMB | US38–39 | BR36–37 |
+| BP18 | Kênh khiếu nại chính thức | UC56–57 | Student/ICPDP | US40 | BR38–39 |
+| BP19 | Single sign-on bằng tài khoản trường | UC01 | All | US41 | BR32 |
 
 ---
 
@@ -2099,7 +2653,7 @@ Timestamp: ...
 
 ## 22.1 MVP
 
-MVP nên tập trung khoảng 25–30 UC core.
+MVP nên tập trung khoảng 30–34 UC core trên tổng 57.
 
 ### Club Establishment
 
@@ -2128,13 +2682,23 @@ MVP nên tập trung khoảng 25–30 UC core.
 
 - UC46–UC47
 
-MVP phải chứng minh được ít nhất 4 lifecycle:
+### Property Booking
+
+- UC51–UC52
+
+### Feedback & Complaint
+
+- UC54
+- UC56–UC57
+
+MVP phải chứng minh được ít nhất 5 lifecycle:
 
 ```text
 Club
 Recruitment
 Event
 Finance
+Property Booking
 ```
 
 ## 22.2 Version 2
@@ -2154,6 +2718,8 @@ Có thể defer:
 - UC42 – Detailed disbursement tracking
 - UC48 – Full compliance case management
 - UC49–50 – Fully configurable performance evaluation
+- UC53 – Hủy/trả property booking có ràng buộc thời hạn và ghi nhận vi phạm
+- UC55 – Dashboard phân tích feedback nâng cao (trend, sentiment)
 
 ---
 
@@ -2163,33 +2729,42 @@ Có thể defer:
 
 ### Bài toán
 
-Không phải mọi request đều có cùng approval path.
+Không phải mọi request đều có cùng approval path — nhưng mọi path đều kết thúc ở **ICPDP**.
+Điều thay đổi là **cấp thẩm quyền trong ICPDP**, không phải phòng ban nào tham gia.
 
 ### Input
 
 - request type;
 - amount;
 - event risk;
-- venue;
-- club status.
+- property/venue;
+- club status và lịch sử compliance.
 
 ### Processing
 
-Rule-based routing:
+Rule-based routing **trong nội bộ ICPDP** (phân cấp bằng RBAC):
 
 ```text
 Normal Event
-→ ICPDP
+→ ICPDP Officer
 
-Large Event
-→ ICPDP
-→ Facility
-→ Security
+High-risk / Large Event
+→ ICPDP Officer
+→ ICPDP Head
 
-High Budget
-→ ICPDP
-→ Finance
+Budget ≤ ngưỡng
+→ ICPDP Officer
+
+Budget > ngưỡng
+→ ICPDP Officer
+→ ICPDP Head
+
+Property Booking
+→ ICPDP Officer
 ```
+
+Ý kiến chuyên môn của Finance/Facility/Security được ICPDP thu thập **ngoài hệ thống** và
+ghi vào review note của chính quyết định đó, nên không sinh thêm actor hay approval node.
 
 ### Output
 
@@ -2201,11 +2776,12 @@ High Budget
 
 ### Business Value
 
-Giảm hard-code và phản ánh được governance thực tế.
+Giảm hard-code, phản ánh được phân cấp thẩm quyền thực tế mà vẫn giữ **một** điểm chịu
+trách nhiệm cuối cùng.
 
 ### Related UC
 
-UC03, UC06, UC26, UC29, UC39, UC41.
+UC03, UC06, UC26, UC29, UC39, UC41, UC52.
 
 ---
 
@@ -2213,18 +2789,19 @@ UC03, UC06, UC26, UC29, UC39, UC41.
 
 ### Input
 
-- venue;
+- venue/property;
 - start time;
 - end time;
 - status;
-- capacity.
+- capacity;
+- property booking hiện có.
 
 ### Processing
 
 ```text
 Overlap time?
-AND same venue?
-AND existing event blocks?
+AND same venue/property?
+AND existing event hoặc approved booking blocks?
 ```
 
 ### Output
@@ -2243,7 +2820,9 @@ Không cần AI. Deterministic business logic là phù hợp hơn.
 
 ### Related UC
 
-UC24, UC25, UC29, UC35.
+UC24, UC25, UC29, UC35, UC51, UC52.
+
+Engine này dùng chung cho cả lịch sự kiện và lịch sử dụng cơ sở vật chất (M11).
 
 ---
 
@@ -2293,6 +2872,9 @@ Attendance
 Finance
 Reports
 Violations
+Event Feedback
+Complaints
+Property Booking Utilization
 ```
 
 ### Processing
@@ -2348,6 +2930,49 @@ Nếu có đủ dữ liệu lịch sử, sau này mới cân nhắc ML để d�
 
 ---
 
+## Feature 6 – Closed-loop Feedback & Complaint
+
+### Bài toán
+
+Phản hồi và khiếu nại của sinh viên thường dừng ở kênh không chính thức: không ai chịu trách
+nhiệm, không có trạng thái, không dùng được làm dữ liệu đánh giá.
+
+### Input
+
+- event feedback (điểm theo tiêu chí + nhận xét, có thể ẩn danh);
+- club complaint (loại, mô tả, evidence).
+
+### Processing
+
+```text
+Feedback
+→ chỉ nhận từ người có finalized attendance
+→ aggregate theo sự kiện và theo CLB
+
+Complaint
+→ gửi thẳng ICPDP
+→ triage: Dismissed / Forwarded / Escalated
+→ Escalated → Violation case
+```
+
+### Output
+
+- feedback summary cho CMB;
+- `Club and event feedback` tổng hợp cho ICPDP;
+- trạng thái xử lý trả về người khiếu nại;
+- input cho D1, D2 và D6 của evaluation model.
+
+### Business Value
+
+Biến ý kiến rời rạc của sinh viên thành dữ liệu governance có vết xử lý, và đóng vòng lặp
+giữa người tham gia — CLB — nhà trường.
+
+### Related UC
+
+UC54–UC57, UC48, UC49.
+
+---
+
 # 24. FINAL REVIEW
 
 ## 24.1 Hệ thống đang giải quyết bài toán gì?
@@ -2364,7 +2989,9 @@ Hệ thống giải quyết:
 - reporting;
 - compliance;
 - evaluation;
-- leadership continuity.
+- leadership continuity;
+- cấp phát và kiểm soát cơ sở vật chất;
+- phản hồi và khiếu nại của sinh viên.
 
 Đây không phải website quản lý danh mục CLB.
 
@@ -2401,39 +3028,54 @@ Event A
 
 ---
 
-## 24.3 4 actor có hợp lý không?
+## 24.3 3 actor có hợp lý không?
 
-Có.
+Có, và đây là thay đổi so với bản trước.
 
-Ba actor chắc chắn:
+Ba actor:
 
-1. Student
-2. Club Management Board
-3. ICPDP Officer
+1. **Student** – người tiêu thụ dịch vụ của CLB và là nguồn dữ liệu đầu vào (ứng tuyển, đăng ký, attendance, feedback, khiếu nại).
+2. **Club Management Board (Club's Admin)** – người vận hành CLB và là người submit mọi hồ sơ.
+3. **ICPDP Officer** – **quyền cao nhất**, đại diện duy nhất của nhà trường, là người quyết định cuối cùng ở mọi luồng phê duyệt.
 
-Actor thứ tư:
+### Vì sao bỏ School Supporting Reviewer
 
-4. School Supporting Reviewer
+Bản trước giả định có approval đa phòng ban (Facility, Security, Finance review trực tiếp
+trên hệ thống). Context Diagram đã chốt cho thấy giả định đó **không đúng với quy trình thực
+tế của trường**: chỉ ICPDP tương tác với hệ thống ở phía nhà trường.
 
-hợp lý nếu có approval đa phòng ban.
+Hệ quả:
 
-Nếu business thực tế không có, actor này có thể giảm vai trò hoặc đưa sang V2.
+- bỏ actor A4 khỏi §4, §11, §18 và §23 Feature 1;
+- approval routing chuyển từ **đa phòng ban** sang **đa cấp trong nội bộ ICPDP** (RBAC);
+- ý kiến chuyên môn của các phòng ban được ICPDP thu thập ngoài hệ thống và ghi vào review note;
+- hệ thống có đúng **một** approval authority, giúp state machine và audit trail đơn giản và chặt hơn.
+
+Hai thực thể ngoài — **Google OAuth** và **Google SMTP Service** — tham gia luồng dữ liệu
+nhưng không phải actor: chúng không ra quyết định và không sở hữu business outcome.
 
 ---
 
-## 24.4 50 use case có bị artificial không?
+## 24.4 57 use case có bị artificial không?
 
 Không đáng kể.
 
-Use case được hình thành từ 5 nhóm lifecycle:
+Use case được hình thành từ 7 nhóm lifecycle:
 
 ```text
 Club Governance
 Recruitment & Membership
 Event
 Finance
+Property Booking
+Feedback & Complaint
 Reporting / Compliance / Evaluation
 ```
+
+UC51–UC57 không phải để tăng số lượng: chúng đến trực tiếp từ các luồng dữ liệu đã chốt trên
+Context Diagram (`Property booking request`, `Property booking status`, `Event feedback`,
+`Club and event feedback`, `Club complaint`) và mỗi UC đều có state transition hoặc quyết
+định riêng.
 
 Các use case như Request Revision, Resubmit và Approve được tách vì:
 
@@ -2454,6 +3096,8 @@ Nhóm quan trọng nhất:
 - UC31–UC37 – Event Execution
 - UC38–UC45 – Finance
 - UC46–UC50 – Reporting & Evaluation
+- UC51–UC53 – Property Booking
+- UC54–UC57 – Feedback & Complaint
 
 ---
 
@@ -2492,6 +3136,25 @@ UC38
 ```
 
 ```text
+UC24
+→ UC51
+→ UC52
+→ UC53
+```
+
+```text
+UC34
+→ UC54
+→ UC55
+```
+
+```text
+UC56
+→ UC57
+→ UC48
+```
+
+```text
 UC37
 UC45
 UC47
@@ -2512,7 +3175,10 @@ UC50
 
 ### Về architecture
 
-**Identity + Workflow + Audit**
+**Identity (Google OAuth) + Workflow + Audit**
+
+Vì chỉ có một approval authority (ICPDP), workflow engine không cần parallel approval
+node — độ phức tạp dồn vào **phân cấp RBAC** và **state machine**, không vào routing đa bên.
 
 ### Về differentiation
 
@@ -2549,7 +3215,24 @@ Budget Request
 ```
 
 ```text
-Violation
+Property Booking
+→ Approved Resource
+→ Event Execution
+→ Utilization Metric
+→ Evaluation
+```
+
+```text
+Event Feedback
+→ Feedback Summary
+→ Post-event Report
+→ Evaluation
+```
+
+```text
+Student Complaint
+→ ICPDP Triage
+→ Violation
 → Compliance History
 → Evaluation
 ```
@@ -2568,11 +3251,12 @@ Leadership
 
 Nên ưu tiên:
 
-1. Approval Workflow Engine
-2. Event Conflict Detection
+1. Approval Workflow Engine (ICPDP đa cấp)
+2. Event & Property Conflict Detection
 3. Budget Reconciliation
 4. Club Performance Evaluation
-5. Leadership Transition / Risk Monitoring
+5. Closed-loop Feedback & Complaint
+6. Leadership Transition / Risk Monitoring
 
 ---
 
@@ -2598,20 +3282,23 @@ Chiến lược:
 ## 24.11 Nếu phải cắt scope, bỏ gì trước?
 
 1. AI/Predictive Club Health.
-2. Multi-department approval quá phức tạp.
-3. Advanced waitlist.
-4. Voluntary suspension workflow.
-5. Advanced transition checklist.
-6. Recruitment rubric phức tạp.
-7. Automated risk scoring.
+2. Advanced waitlist.
+3. Voluntary suspension workflow.
+4. Advanced transition checklist.
+5. Recruitment rubric phức tạp.
+6. Automated risk scoring.
+7. Feedback analytics nâng cao (trend/sentiment).
+8. Hủy/trả property booking có ràng buộc phạt (UC53).
 
 Không nên cắt:
 
 - Club Establishment;
 - Event Approval;
+- Property Booking (UC51–52);
 - Attendance;
 - Budget/Expense;
-- Reporting.
+- Reporting;
+- Complaint intake (UC56–57).
 
 ---
 
@@ -2623,8 +3310,10 @@ Hệ thống có:
 
 - multi-actor workflow;
 - state machines;
-- RBAC;
+- RBAC đa cấp trong một authority duy nhất;
+- tích hợp external system (Google OAuth, Google SMTP);
 - approval routing;
+- resource booking với conflict detection;
 - transactional business rules;
 - versioning;
 - conflict detection;
@@ -2667,21 +3356,22 @@ Mô hình tổng thể:
 ```text
                   UNIVERSITY CLUB
                         │
-         ┌──────────────┼──────────────┐
-         ↓              ↓              ↓
-     Membership       Events        Finance
-         │              │              │
-         ↓              ↓              ↓
-     Engagement      Attendance     Evidence
-         │              │              │
-         └───────┬──────┴──────┬───────┘
-                 ↓             ↓
-              Reports      Compliance
-                 └─────┬───────┘
+    ┌───────────┬───────┼───────┬───────────┐
+    ↓           ↓       ↓       ↓           ↓
+Membership   Events  Property Finance   Feedback
+    │           │       │       │           │
+    ↓           ↓       ↓       ↓           ↓
+Engagement  Attendance Booking Evidence  Complaint
+    │           │       │       │           │
+    └─────┬─────┴───────┴───┬───┴─────┬─────┘
+          ↓                 ↓         ↓
+       Reports         Compliance   Feedback
+                                    Summary
+          └────────────┬────────────────┘
                        ↓
                   Evaluation
                        ↓
-              Governance Decision
+        Governance Decision (ICPDP – quyền cao nhất)
 ```
 
 Đây chính là yếu tố biến đề tài từ một website CRUD thành một **Software Engineering Graduation Project có business logic, workflow, state, rule, audit và cross-module data rõ ràng**.
