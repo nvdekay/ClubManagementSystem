@@ -1,0 +1,222 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    lineHops: arc
+  themeCSS: |
+    path[id*="id_Notification_AuditLog_"],
+    path[id*="id_BudgetRequest_BudgetRequestStatus_"],
+    path[id*="id_ApprovalTask_ApprovalTaskStatus_"],
+    path[id*="id_ApprovalDecision_ApprovalDecisionType_"],
+    path[id*="id_FinancialEvidence_EvidenceType_"],
+    path[id*="id_FinancialReconciliation_ReconciliationStatus_"] {
+      visibility: hidden;
+    }
+---
+
+classDiagram
+direction LR
+
+class Club {
+    -id: UUID
+    -name: String
+}
+
+class Event {
+    -id: UUID
+    -title: String
+}
+
+class User {
+    -id: UUID
+    -email: String
+    -fullName: String
+}
+
+class BudgetRequest {
+    -id: UUID
+    -category: String
+    -requestedAmount: Decimal
+    -approvedAmount: Decimal
+    -purpose: String
+    -expectedExpense: String
+    -status: BudgetRequestStatus
+    -createdAt: DateTime
+    -submittedAt: DateTime
+    +submit() void
+    +resubmit() void
+}
+
+class BudgetRequestVersion {
+    -id: UUID
+    -versionNo: Integer
+    -category: String
+    -requestedAmount: Decimal
+    -purpose: String
+    -expectedExpense: String
+    -createdAt: DateTime
+    +createRevision() BudgetRequestVersion
+}
+
+class ApprovalTask {
+    -id: UUID
+    -status: ApprovalTaskStatus
+    -createdAt: DateTime
+    -completedAt: DateTime
+    +startReview() void
+    +approve(approvedAmount: Decimal, reason: String) ApprovalDecision
+    +reject(reason: String) ApprovalDecision
+    +requestRevision(reason: String) ApprovalDecision
+    +complete() void
+}
+
+class ApprovalDecision {
+    -id: UUID
+    -decision: ApprovalDecisionType
+    -approvedAmount: Decimal
+    -reason: String
+    -decidedAt: DateTime
+}
+
+class BudgetDisbursement {
+    -id: UUID
+    -approvedAmount: Decimal
+    -disbursedAmount: Decimal
+    -disbursementDate: Date
+    -reference: String
+    +recordDisbursement(amount: Decimal, date: Date, reference: String) Boolean
+}
+
+class Expense {
+    -id: UUID
+    -category: String
+    -amount: Decimal
+    -expenseDate: Date
+    -description: String
+    -createdAt: DateTime
+}
+
+class FinancialEvidence {
+    -id: UUID
+    -type: EvidenceType
+    -reference: String
+    -submittedAt: DateTime
+}
+
+class FinancialReconciliation {
+    -id: UUID
+    -approvedAmount: Decimal
+    -disbursedAmount: Decimal
+    -/recordedExpenses: Decimal
+    -/supportedExpenses: Decimal
+    -/unsupportedExpenses: Decimal
+    -/remainingBalance: Decimal
+    -status: ReconciliationStatus
+    -reconciledAt: DateTime
+    +calculateBalance() Decimal
+    +reconcile() Boolean
+    +markException(reason: String) void
+}
+
+class ExpenseManagementService {
+    <<service>>
+    +recordExpense(request: BudgetRequest, expense: Expense) Boolean
+    +submitEvidence(expense: Expense, evidence: FinancialEvidence) Boolean
+}
+
+class AuditLog {
+    -id: UUID
+    -entityType: String
+    -entityId: UUID
+    -action: String
+    -oldState: String
+    -newState: String
+    -reason: String
+    -createdAt: DateTime
+}
+
+class Notification {
+    -id: UUID
+    -type: String
+    -title: String
+    -content: String
+    -createdAt: DateTime
+    +send() void
+}
+
+class BudgetRequestStatus {
+    <<enumeration>>
+    Draft
+    Submitted
+    UnderReview
+    RevisionRequested
+    Resubmitted
+    Approved
+    Rejected
+    Disbursed
+    ReconciliationPending
+    Reconciled
+    Closed
+}
+
+class ApprovalTaskStatus {
+    <<enumeration>>
+    Pending
+    InReview
+    Completed
+}
+
+class ApprovalDecisionType {
+    <<enumeration>>
+    Approved
+    Rejected
+    RevisionRequested
+}
+
+class EvidenceType {
+    <<enumeration>>
+    Invoice
+    Receipt
+    Proof
+}
+
+class ReconciliationStatus {
+    <<enumeration>>
+    Reconciled
+    Exception
+}
+
+Club "1" -- "0..*" BudgetRequest : requests
+Event "0..1" -- "0..*" BudgetRequest : funding for
+
+BudgetRequest "1" *-- "1..*" BudgetRequestVersion : versions
+User "1" -- "0..*" BudgetRequestVersion : creates
+
+BudgetRequest "1" *-- "0..*" ApprovalTask : approval tasks
+User "1" -- "0..*" ApprovalTask : assigned reviewer
+ApprovalTask "1" *-- "0..*" ApprovalDecision : decisions
+User "1" -- "0..*" ApprovalDecision : decides
+
+BudgetRequest "1" *-- "0..*" BudgetDisbursement : disbursements
+BudgetRequest "1" *-- "0..*" Expense : expenses
+Expense "1" *-- "0..*" FinancialEvidence : evidence
+User "1" -- "0..*" Expense : records
+User "1" -- "0..*" FinancialEvidence : submits
+
+BudgetRequest "1" *-- "0..1" FinancialReconciliation : reconciliation
+
+Expense <.. ExpenseManagementService : records
+FinancialEvidence <.. ExpenseManagementService : creates
+
+BudgetRequest "1" -- "0..*" Notification : generates
+User "1" -- "0..*" Notification : receives
+
+%% Layout-only relations. Their paths are hidden by themeCSS above.
+Notification -- AuditLog
+BudgetRequest -- BudgetRequestStatus
+ApprovalTask -- ApprovalTaskStatus
+ApprovalDecision -- ApprovalDecisionType
+FinancialEvidence -- EvidenceType
+FinancialReconciliation -- ReconciliationStatus

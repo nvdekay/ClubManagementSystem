@@ -1,0 +1,297 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    lineHops: arc
+  themeCSS: |
+    path[id*="id_Notification_AuditLog_"],
+    path[id*="id_Club_ClubStatus_"],
+    path[id*="id_PeriodicReport_PeriodicReportStatus_"],
+    path[id*="id_Violation_ViolationStatus_"],
+    path[id*="id_Violation_ViolationSource_"],
+    path[id*="id_Violation_ViolationSeverity_"],
+    path[id*="id_CorrectiveAction_CorrectiveActionStatus_"],
+    path[id*="id_Complaint_ComplaintStatus_"],
+    path[id*="id_Evaluation_EvaluationStatus_"],
+    path[id*="id_ApprovalTask_ApprovalTaskStatus_"],
+    path[id*="id_ApprovalDecision_ApprovalDecisionType_"] {
+      visibility: hidden;
+    }
+---
+
+classDiagram
+direction LR
+
+class Club {
+    -id: UUID
+    -name: String
+    -status: ClubStatus
+}
+
+class User {
+    -id: UUID
+    -email: String
+    -fullName: String
+}
+
+class Approvable {
+    <<interface>>
+    +submitForApproval() void
+}
+
+class PeriodicReport {
+    -id: UUID
+    -period: String
+    -narrative: String
+    -evidence: String
+    -status: PeriodicReportStatus
+    -dueDate: DateTime
+    -submittedAt: DateTime
+    -reviewedAt: DateTime
+    +submit(narrative: String, evidence: String) Boolean
+    +resubmit(narrative: String, evidence: String) Boolean
+}
+
+class Violation {
+    -id: UUID
+    -source: ViolationSource
+    -severity: ViolationSeverity
+    -description: String
+    -status: ViolationStatus
+    -openedAt: DateTime
+    -resolvedAt: DateTime
+    +open(description: String) void
+    +startInvestigation() void
+    +requestClubResponse(dueDate: DateTime) void
+    +issueDecision(reason: String) void
+    +resolve(resolution: String) void
+}
+
+class CorrectiveAction {
+    -id: UUID
+    -description: String
+    -dueDate: DateTime
+    -status: CorrectiveActionStatus
+    -completedAt: DateTime
+    +assign(assignee: User, dueDate: DateTime) void
+    +complete(evidence: String) Boolean
+}
+
+class Complaint {
+    -id: UUID
+    -subject: String
+    -description: String
+    -status: ComplaintStatus
+    -submittedAt: DateTime
+    -resolvedAt: DateTime
+    +submit() void
+    +withdraw(reason: String) Boolean
+    +resolve(resolution: String) void
+}
+
+class Evaluation {
+    -id: UUID
+    -period: String
+    -status: EvaluationStatus
+    -totalScore: Decimal
+    -revisionNo: Integer
+    -createdAt: DateTime
+    -finalizedAt: DateTime
+    -publishedAt: DateTime
+    +finalize() Boolean
+    +publish() void
+    +createRevision() Evaluation
+}
+
+class EvaluationScheme {
+    -id: UUID
+    -name: String
+    -version: String
+    -effectiveFrom: DateTime
+    -effectiveTo: DateTime
+    -active: Boolean
+}
+
+class EvaluationDimension {
+    -id: UUID
+    -code: String
+    -name: String
+    -weight: Decimal
+    -calculationRule: String
+}
+
+class EvaluationDimensionResult {
+    -id: UUID
+    -score: Decimal
+    -note: String
+    -manuallyAdjusted: Boolean
+}
+
+class EvaluationService {
+    <<service>>
+    +generateDraft(club: Club, scheme: EvaluationScheme, period: String) Evaluation
+    +calculateResults(evaluation: Evaluation) Decimal
+}
+
+class ApprovalTask {
+    -id: UUID
+    -status: ApprovalTaskStatus
+    -createdAt: DateTime
+    -completedAt: DateTime
+    +startReview() void
+    +accept(reason: String) ApprovalDecision
+    +requestCorrection(reason: String) ApprovalDecision
+    +complete() void
+}
+
+class ApprovalDecision {
+    -id: UUID
+    -decision: ApprovalDecisionType
+    -reason: String
+    -decidedAt: DateTime
+}
+
+class AuditLog {
+    -id: UUID
+    -entityType: String
+    -entityId: UUID
+    -action: String
+    -oldState: String
+    -newState: String
+    -reason: String
+    -createdAt: DateTime
+}
+
+class Notification {
+    -id: UUID
+    -type: String
+    -title: String
+    -content: String
+    -createdAt: DateTime
+    +send() void
+}
+
+class ClubStatus {
+    <<enumeration>>
+    Active
+    Suspended
+}
+
+class PeriodicReportStatus {
+    <<enumeration>>
+    Draft
+    Submitted
+    UnderReview
+    CorrectionRequested
+    Accepted
+}
+
+class ViolationStatus {
+    <<enumeration>>
+    Open
+    UnderInvestigation
+    AwaitingClubResponse
+    DecisionIssued
+    CorrectiveAction
+    Resolved
+}
+
+class ViolationSource {
+    <<enumeration>>
+    Complaint
+    ManualReport
+    OverdueReport
+    FinancialIssue
+    UnauthorizedEvent
+    PolicyBreach
+}
+
+class ViolationSeverity {
+    <<enumeration>>
+    Low
+    Medium
+    High
+    Critical
+}
+
+class CorrectiveActionStatus {
+    <<enumeration>>
+    Pending
+    InProgress
+    Completed
+    Overdue
+}
+
+class ComplaintStatus {
+    <<enumeration>>
+    Submitted
+    UnderReview
+    Escalated
+    Resolved
+    Withdrawn
+}
+
+class EvaluationStatus {
+    <<enumeration>>
+    Draft
+    DataReady
+    UnderReview
+    Finalized
+    Published
+}
+
+class ApprovalTaskStatus {
+    <<enumeration>>
+    Pending
+    InReview
+    Completed
+}
+
+class ApprovalDecisionType {
+    <<enumeration>>
+    Accepted
+    CorrectionRequested
+}
+
+Club "1" *-- "0..*" PeriodicReport : reports
+Club "1" *-- "0..*" Violation : compliance cases
+Club "1" -- "0..*" Complaint : receives
+Violation "1" *-- "0..*" CorrectiveAction : actions
+User "1" -- "0..*" CorrectiveAction : assignee
+Complaint "0..1" -- "0..1" Violation : escalates to
+
+Club "1" *-- "0..*" Evaluation : evaluations
+EvaluationScheme "1" *-- "1..*" EvaluationDimension : dimensions
+EvaluationScheme "1" -- "0..*" Evaluation : applied to
+Evaluation "1" *-- "1..*" EvaluationDimensionResult : results
+EvaluationDimension "1" -- "0..*" EvaluationDimensionResult : scored by
+
+Approvable <|.. PeriodicReport
+Approvable <|.. Evaluation
+Approvable "1" -- "0..*" ApprovalTask : review workflow
+User "1" -- "0..*" ApprovalTask : assigned reviewer
+ApprovalTask "1" *-- "0..*" ApprovalDecision : decisions
+User "1" -- "0..*" ApprovalDecision : decides
+
+Evaluation <.. EvaluationService : generates
+EvaluationScheme <.. EvaluationService : applies
+
+PeriodicReport "1" -- "0..*" Notification : generates
+Violation "1" -- "0..*" Notification : generates
+Evaluation "1" -- "0..*" Notification : generates
+User "1" -- "0..*" Notification : receives
+
+%% Layout-only relations. Their paths are hidden by themeCSS above.
+Notification -- AuditLog
+Club -- ClubStatus
+PeriodicReport -- PeriodicReportStatus
+Violation -- ViolationStatus
+Violation -- ViolationSource
+Violation -- ViolationSeverity
+CorrectiveAction -- CorrectiveActionStatus
+Complaint -- ComplaintStatus
+Evaluation -- EvaluationStatus
+ApprovalTask -- ApprovalTaskStatus
+ApprovalDecision -- ApprovalDecisionType

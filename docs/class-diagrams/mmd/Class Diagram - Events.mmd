@@ -1,0 +1,344 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    lineHops: arc
+  themeCSS: |
+    path[id*="id_Notification_AuditLog_"],
+    path[id*="id_Club_ClubStatus_"],
+    path[id*="id_Event_EventStatus_"],
+    path[id*="id_EventProposalVersion_ProposalStatus_"],
+    path[id*="id_EventRegistration_RegistrationStatus_"],
+    path[id*="id_Attendance_AttendanceStatus_"],
+    path[id*="id_Attendance_CheckInMethod_"],
+    path[id*="id_ApprovalTask_ApprovalTaskStatus_"],
+    path[id*="id_ApprovalDecision_ApprovalDecisionType_"],
+    path[id*="id_EventConflict_ConflictType_"],
+    path[id*="id_EventConflict_ConflictSeverity_"],
+    path[id*="id_PostEventReport_ReportStatus_"],
+    path[id*="id_PropertyBooking_BookingStatus_"] {
+      visibility: hidden;
+    }
+---
+
+classDiagram
+direction LR
+
+class Club {
+    -id: UUID
+    -name: String
+    -status: ClubStatus
+}
+
+class User {
+    -id: UUID
+    -email: String
+    -fullName: String
+}
+
+class Event {
+    -id: UUID
+    -title: String
+    -description: String
+    -objective: String
+    -startTime: DateTime
+    -endTime: DateTime
+    -venue: String
+    -audience: String
+    -capacity: Integer
+    -riskLevel: String
+    -status: EventStatus
+    -registrationStart: DateTime
+    -registrationEnd: DateTime
+    +submitProposal() void
+    +publish() Boolean
+    +openRegistration() Boolean
+    +reschedule(newStartTime: DateTime, newEndTime: DateTime) Boolean
+    +cancel(reason: String) void
+    +complete() void
+    +close() Boolean
+}
+
+class EventProposalVersion {
+    -id: UUID
+    -versionNo: Integer
+    -objective: String
+    -proposedStartTime: DateTime
+    -proposedEndTime: DateTime
+    -proposedVenue: String
+    -audience: String
+    -proposedCapacity: Integer
+    -plan: String
+    -risk: String
+    -budgetEstimate: Decimal
+    -facilityRequirement: String
+    -status: ProposalStatus
+    -createdAt: DateTime
+    +createRevision() EventProposalVersion
+    +submit() void
+}
+
+class EventConflict {
+    -id: UUID
+    -type: ConflictType
+    -severity: ConflictSeverity
+    -description: String
+    -detectedAt: DateTime
+}
+
+class ConflictDetectionService {
+    <<service>>
+    +detectConflicts(event: Event) EventConflict[]
+}
+
+class ApprovalTask {
+    -id: UUID
+    -status: ApprovalTaskStatus
+    -createdAt: DateTime
+    -completedAt: DateTime
+    +startReview() void
+    +approve(reason: String, reviewNote: String) ApprovalDecision
+    +reject(reason: String, reviewNote: String) ApprovalDecision
+    +requestRevision(reason: String, reviewNote: String) ApprovalDecision
+    +complete() void
+}
+
+class ApprovalDecision {
+    -id: UUID
+    -decision: ApprovalDecisionType
+    -reason: String
+    -reviewNote: String
+    -decidedAt: DateTime
+}
+
+class EventRegistration {
+    -id: UUID
+    -status: RegistrationStatus
+    -registeredAt: DateTime
+    -waitlistPosition: Integer
+    +register() Boolean
+    +moveToWaitlist(position: Integer) void
+    +promoteFromWaitlist() void
+    +cancel(reason: String) void
+}
+
+class Attendance {
+    -id: UUID
+    -checkInTime: DateTime
+    -checkInMethod: CheckInMethod
+    -status: AttendanceStatus
+    -finalized: Boolean
+    +checkIn(method: CheckInMethod, checkedInBy: User) Boolean
+    +markAbsent() void
+    +finalize() void
+}
+
+class EventFeedback {
+    -id: UUID
+    -rating: Integer
+    -comment: String
+    -createdAt: DateTime
+}
+
+class PostEventReport {
+    -id: UUID
+    -actualResult: String
+    -evidence: String
+    -incident: String
+    -lessonsLearned: String
+    -status: ReportStatus
+    -submittedAt: DateTime
+    -closedAt: DateTime
+    +submit() void
+    +requestCorrection(reason: String) void
+    +accept() void
+}
+
+class Property {
+    -id: UUID
+    -name: String
+    -location: String
+    -capacity: Integer
+}
+
+class PropertyBooking {
+    -id: UUID
+    -startTime: DateTime
+    -endTime: DateTime
+    -status: BookingStatus
+    +cancel(reason: String) void
+    +release() void
+    +reschedule(newStartTime: DateTime, newEndTime: DateTime) Boolean
+}
+
+class Notification {
+    -id: UUID
+    -type: String
+    -title: String
+    -content: String
+    -createdAt: DateTime
+    -readAt: DateTime
+    +send() void
+}
+
+class AuditLog {
+    -id: UUID
+    -entityType: String
+    -entityId: UUID
+    -action: String
+    -oldState: String
+    -newState: String
+    -reason: String
+    -createdAt: DateTime
+}
+
+class ClubStatus {
+    <<enumeration>>
+    Active
+    Inactive
+    Pending
+}
+
+class EventStatus {
+    <<enumeration>>
+    Draft
+    PendingApproval
+    UnderReview
+    RevisionRequested
+    Resubmitted
+    Approved
+    OpenForRegistration
+    Ongoing
+    Completed
+    ReportSubmitted
+    Closed
+    Cancelled
+}
+
+class ProposalStatus {
+    <<enumeration>>
+    Draft
+    Submitted
+    UnderReview
+    RevisionRequested
+    Resubmitted
+    Approved
+    Rejected
+}
+
+class RegistrationStatus {
+    <<enumeration>>
+    Confirmed
+    Waitlisted
+    Cancelled
+}
+
+class AttendanceStatus {
+    <<enumeration>>
+    CheckedIn
+    Absent
+}
+
+class CheckInMethod {
+    <<enumeration>>
+    QR
+    Code
+    Manual
+}
+
+class ApprovalDecisionType {
+    <<enumeration>>
+    Approved
+    Rejected
+    RevisionRequested
+}
+
+class ApprovalTaskStatus {
+    <<enumeration>>
+    Pending
+    InReview
+    Completed
+}
+
+class ConflictType {
+    <<enumeration>>
+    Time
+    Venue
+    Property
+}
+
+class ConflictSeverity {
+    <<enumeration>>
+    Warning
+    Blocking
+}
+
+class ReportStatus {
+    <<enumeration>>
+    Draft
+    Submitted
+    CorrectionRequested
+    Accepted
+    Closed
+}
+
+class BookingStatus {
+    <<enumeration>>
+    Draft
+    Requested
+    UnderReview
+    Approved
+    Rejected
+    Cancelled
+    Released
+    InUse
+    Completed
+}
+
+Club "1" -- "0..*" Event : organizes
+Event "1" *-- "1..*" EventProposalVersion : versions
+User "1" -- "0..*" EventProposalVersion : creates
+Event "1" *-- "0..*" EventConflict : conflicts
+Event "0..1" -- "0..*" EventConflict : conflicting event
+EventConflict "0..*" -- "0..1" PropertyBooking : conflicting booking
+Event <.. ConflictDetectionService : analyzes
+EventConflict <.. ConflictDetectionService : creates
+
+Event "1" *-- "0..*" ApprovalTask : approval tasks
+User "1" -- "0..*" ApprovalTask : assigned reviewer
+ApprovalTask "1" *-- "0..*" ApprovalDecision : decisions
+User "1" -- "0..*" ApprovalDecision : decides
+
+Event "1" *-- "0..*" EventRegistration : registrations
+User "1" -- "0..*" EventRegistration : registers
+EventRegistration "1" *-- "0..1" Attendance : attendance
+User "1" -- "0..*" Attendance : checks in
+Event "1" *-- "0..*" EventFeedback : feedback
+EventRegistration "1" -- "0..1" EventFeedback : submits
+
+Event "1" *-- "0..1" PostEventReport : report
+User "1" -- "0..*" PostEventReport : submits
+EventFeedback "0..*" -- "0..1" PostEventReport : informs
+
+Event "1" *-- "0..*" PropertyBooking : property bookings
+Property "1" -- "0..*" PropertyBooking : reservations
+
+Event "1" -- "0..*" Notification : generates
+User "1" -- "0..*" Notification : receives
+
+%% Layout-only relations. Their paths are hidden by themeCSS above.
+Notification -- AuditLog
+Club -- ClubStatus
+Event -- EventStatus
+EventProposalVersion -- ProposalStatus
+EventRegistration -- RegistrationStatus
+Attendance -- AttendanceStatus
+Attendance -- CheckInMethod
+ApprovalTask -- ApprovalTaskStatus
+ApprovalDecision -- ApprovalDecisionType
+EventConflict -- ConflictType
+EventConflict -- ConflictSeverity
+PostEventReport -- ReportStatus
+PropertyBooking -- BookingStatus

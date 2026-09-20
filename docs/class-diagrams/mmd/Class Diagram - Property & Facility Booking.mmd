@@ -1,0 +1,167 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    lineHops: arc
+  themeCSS: |
+    path[id*="id_Notification_AuditLog_"],
+    path[id*="id_Club_ClubStatus_"],
+    path[id*="id_Event_EventStatus_"],
+    path[id*="id_PropertyBooking_PropertyBookingStatus_"],
+    path[id*="id_ApprovalTask_ApprovalTaskStatus_"],
+    path[id*="id_ApprovalDecision_ApprovalDecisionType_"] {
+      visibility: hidden;
+    }
+---
+
+classDiagram
+direction LR
+
+class Club {
+    -id: UUID
+    -name: String
+    -status: ClubStatus
+}
+
+class Event {
+    -id: UUID
+    -title: String
+    -status: EventStatus
+}
+
+class User {
+    -id: UUID
+    -email: String
+    -fullName: String
+}
+
+class Property {
+    -id: UUID
+    -name: String
+    -description: String
+}
+
+class PropertyBooking {
+    -id: UUID
+    -purpose: String
+    -startTime: DateTime
+    -endTime: DateTime
+    -expectedParticipants: Integer
+    -equipmentRequirement: String
+    -status: PropertyBookingStatus
+    -reason: String
+    -createdAt: DateTime
+    -submittedAt: DateTime
+    +submit() void
+    +resubmit() void
+    +cancel(reason: String) Boolean
+    +checkIn(actualStartTime: DateTime) Boolean
+    +checkOut(actualEndTime: DateTime) Boolean
+}
+
+class ApprovalTask {
+    -id: UUID
+    -status: ApprovalTaskStatus
+    -createdAt: DateTime
+    -completedAt: DateTime
+    +startReview() void
+    +approve(reason: String) ApprovalDecision
+    +reject(reason: String) ApprovalDecision
+    +requestRevision(reason: String) ApprovalDecision
+    +complete() void
+}
+
+class ApprovalDecision {
+    -id: UUID
+    -decision: ApprovalDecisionType
+    -reason: String
+    -decidedAt: DateTime
+}
+
+class AuditLog {
+    -id: UUID
+    -entityType: String
+    -entityId: UUID
+    -action: String
+    -oldState: String
+    -newState: String
+    -reason: String
+    -createdAt: DateTime
+}
+
+class Notification {
+    -id: UUID
+    -type: String
+    -title: String
+    -content: String
+    -createdAt: DateTime
+    -readAt: DateTime
+    +send() void
+}
+
+class PropertyBookingStatus {
+    <<enumeration>>
+    Draft
+    Requested
+    UnderReview
+    RevisionRequested
+    Approved
+    Rejected
+    InUse
+    Completed
+    Cancelled
+    Released
+}
+
+class ApprovalTaskStatus {
+    <<enumeration>>
+    Pending
+    InReview
+    Completed
+}
+
+class ApprovalDecisionType {
+    <<enumeration>>
+    Approved
+    Rejected
+    RevisionRequested
+}
+
+class ClubStatus {
+    <<enumeration>>
+    Active
+    Suspended
+}
+
+class EventStatus {
+    <<enumeration>>
+    Draft
+    Approved
+    Ongoing
+    Completed
+    Cancelled
+}
+
+Property "1" -- "0..*" PropertyBooking : reservations
+Club "1" -- "0..*" PropertyBooking : requests
+Event "0..1" -- "0..*" PropertyBooking : uses
+
+PropertyBooking "1" *-- "0..*" ApprovalTask : approval tasks
+User "1" -- "0..*" ApprovalTask : assigned reviewer
+ApprovalTask "1" *-- "0..*" ApprovalDecision : decisions
+User "1" -- "0..*" ApprovalDecision : decides
+
+PropertyBooking "0..*" -- "0..*" PropertyBooking : conflicts with
+
+PropertyBooking "1" -- "0..*" Notification : generates
+User "1" -- "0..*" Notification : receives
+
+%% Layout-only relations. Their paths are hidden by themeCSS above.
+Notification -- AuditLog
+Club -- ClubStatus
+Event -- EventStatus
+PropertyBooking -- PropertyBookingStatus
+ApprovalTask -- ApprovalTaskStatus
+ApprovalDecision -- ApprovalDecisionType

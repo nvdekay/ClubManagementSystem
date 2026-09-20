@@ -1,4 +1,5 @@
 # UNIVERSITY CLUB MANAGEMENT SYSTEM
+
 ## University Club Management System (UCMS)
 
 > **Document type:** Business & System Analysis / Requirement Baseline  
@@ -201,27 +202,27 @@ None of these carry a formal data relationship to each other.
 
 ## 2.2 Pain Points
 
-| ID | Business problem |
-|---|---|
-| BP01 | ICPDP has no centralized data source telling which clubs are Active, Suspended or no longer operating. |
-| BP02 | The real number of active members per club at a given point in time cannot be determined accurately. |
-| BP03 | Management board history and term history are not managed in a structured way. |
-| BP04 | Club establishment applications and their revision/approval history are scattered across files and emails. |
-| BP05 | Event registration and approval lack a unified workflow. |
-| BP06 | There is no centralized mechanism to detect event time or venue clashes. |
-| BP07 | Event registration and attendance are detached from the event record itself. |
-| BP08 | It is hard to tell whether an approved event actually took place and whether its report was completed. |
-| BP09 | Budget Request, Expense and Financial Evidence are not linked end-to-end. |
-| BP10 | Overspending against budget, or expenses without supporting evidence, are hard to detect. |
-| BP11 | Recruitment is usually run through standalone forms that are not linked to Membership. |
-| BP12 | Club violations and warnings have no structured compliance history. |
-| BP13 | End-of-term club evaluation depends on manual data consolidation. |
-| BP14 | Reporting deadlines, budget reconciliation and leadership transition rely on manual reminders. |
-| BP15 | There is no audit trail to establish who approved, rejected or changed an important decision. |
+| ID   | Business problem                                                                                                                                      |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BP01 | ICPDP has no centralized data source telling which clubs are Active, Suspended or no longer operating.                                                |
+| BP02 | The real number of active members per club at a given point in time cannot be determined accurately.                                                  |
+| BP03 | Management board history and term history are not managed in a structured way.                                                                        |
+| BP04 | Club establishment applications and their revision/approval history are scattered across files and emails.                                            |
+| BP05 | Event registration and approval lack a unified workflow.                                                                                              |
+| BP06 | There is no centralized mechanism to detect event time or venue clashes.                                                                              |
+| BP07 | Event registration and attendance are detached from the event record itself.                                                                          |
+| BP08 | It is hard to tell whether an approved event actually took place and whether its report was completed.                                                |
+| BP09 | Budget Request, Expense and Financial Evidence are not linked end-to-end.                                                                             |
+| BP10 | Overspending against budget, or expenses without supporting evidence, are hard to detect.                                                             |
+| BP11 | Recruitment is usually run through standalone forms that are not linked to Membership.                                                                |
+| BP12 | Club violations and warnings have no structured compliance history.                                                                                   |
+| BP13 | End-of-term club evaluation depends on manual data consolidation.                                                                                     |
+| BP14 | Reporting deadlines, budget reconciliation and leadership transition rely on manual reminders.                                                        |
+| BP15 | There is no audit trail to establish who approved, rejected or changed an important decision.                                                         |
 | BP16 | Rooms and facilities for club activity are requested by email or on paper, are not linked to the event record, and clashing usage cannot be detected. |
-| BP17 | Participant feedback after an event is not collected in a structured way, so it cannot be used as activity quality data. |
-| BP18 | Students have no official channel to complain about a club; concerns travel through informal channels and leave no processing trail. |
-| BP19 | Each internal system manages its own accounts, forcing students to remember another credential beyond their university account. |
+| BP17 | Participant feedback after an event is not collected in a structured way, so it cannot be used as activity quality data.                              |
+| BP18 | Students have no official channel to complain about a club; concerns travel through informal channels and leave no processing trail.                  |
+| BP19 | Each internal system manages its own accounts, forcing students to remember another credential beyond their university account.                       |
 
 ---
 
@@ -372,16 +373,16 @@ Event Feedback / Club Complaint
 
 # 3. STAKEHOLDER ANALYSIS
 
-| Stakeholder | Interest | Influence | Interaction |
-|---|---|---:|---|
-| University leadership | Governance, risk, quality of student activity | High | Consumes reports/KPIs |
-| ICPDP | Governs all club activity; **the sole representative of the university inside the system** | Very high | Direct |
-| Club Management Board | Runs the club | High | Direct |
-| Club members | Take part in activities | Medium | Direct |
-| All students | Discover clubs, apply, register for events | Medium | Direct |
-| Supporting departments (Finance, Facility, Security) | Funding, facilities, event safety | Medium | **Indirect** – their input is consolidated by ICPDP outside the system |
-| IT/System Admin | Technical operation | Medium | Technical |
-| Google (OAuth, SMTP) | Provides authentication and email delivery | Low | External system |
+| Stakeholder                                          | Interest                                                                                   | Influence | Interaction                                                            |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------: | ---------------------------------------------------------------------- |
+| University leadership                                | Governance, risk, quality of student activity                                              |      High | Consumes reports/KPIs                                                  |
+| ICPDP                                                | Governs all club activity; **the sole representative of the university inside the system** | Very high | Direct                                                                 |
+| Club Management Board                                | Runs the club                                                                              |      High | Direct                                                                 |
+| Club members                                         | Take part in activities                                                                    |    Medium | Direct                                                                 |
+| All students                                         | Discover clubs, apply, register for events                                                 |    Medium | Direct                                                                 |
+| Supporting departments (Finance, Facility, Security) | Funding, facilities, event safety                                                          |    Medium | **Indirect** – their input is consolidated by ICPDP outside the system |
+| IT/System Admin                                      | Technical operation                                                                        |    Medium | Technical                                                              |
+| Google (OAuth, SMTP)                                 | Provides authentication and email delivery                                                 |       Low | External system                                                        |
 
 ---
 
@@ -611,23 +612,21 @@ To keep the system from turning into an ERP:
 
 # 6. MODULE DECOMPOSITION
 
-| Module | Goal | Actor | Key data | Links |
-|---|---|---|---|---|
-| M01 Identity & RBAC | Authenticate via Google OAuth, control accounts and permissions | All | User, StudentProfile, Role, Permission | All |
-| M02 Club Lifecycle & Governance | Manage the club lifecycle | CMB, ICPDP | Club, ClubApplication | M03, M04, M09 |
-| M03 Leadership & Term | Manage terms | CMB, ICPDP | ClubTerm, Position | M01, M02 |
-| M04 Recruitment & Membership | Recruit and manage members | Student, CMB | Campaign, Application, Membership | M06, M09 |
-| M05 Event & Activity | Govern events | CMB, ICPDP | EventProposal, Event | M06, M07, M08, M11 |
-| M06 Registration & Attendance | Registration and check-in | Student, CMB | Registration, Attendance | M05, M08, M09 |
-| M07 Finance & Budget | Govern budget and spending | CMB, ICPDP | BudgetRequest, Expense, Evidence | M05, M09 |
-| M08 Reporting & Compliance | Reporting and compliance | CMB, ICPDP | Report, Violation | M05, M07, M09, M12 |
-| M09 Performance Evaluation | Evaluate clubs | ICPDP | Evaluation, Criteria | M02–M08, M11, M12 |
-| M10 Workflow, Notification & Audit | Cross-module governance | All | ApprovalTask, Notification, AuditLog | All |
-| M11 Property & Facility Booking | Request and allocate facilities for club activity | CMB, ICPDP | Property, PropertyBooking | M05, M09 |
-| M12 Feedback & Complaint | Collect event feedback and club complaints | Student, CMB, ICPDP | EventFeedback, Complaint | M06, M08, M09 |
+| Module                             | Goal                                                            | Actor        | Key data                               | Links              |
+| ---------------------------------- | --------------------------------------------------------------- | ------------ | -------------------------------------- | ------------------ |
+| M01 Identity & RBAC                | Authenticate via Google OAuth, control accounts and permissions | All          | User, StudentProfile, Role, Permission | All                |
+| M02 Club Lifecycle & Governance    | Manage the club lifecycle                                       | CMB, ICPDP   | Club, ClubApplication                  | M03, M04, M09      |
+| M03 Leadership & Term              | Manage terms                                                    | CMB, ICPDP   | ClubTerm, Position                     | M01, M02           |
+| M04 Recruitment & Membership       | Recruit and manage members                                      | Student, CMB | Campaign, Application, Membership      | M06, M09           |
+| M05 Event & Activity               | Govern events                                                   | CMB, ICPDP   | EventProposal, Event, EventFeedback    | M06, M07, M08, M11 |
+| M06 Registration & Attendance      | Registration and check-in                                       | Student, CMB | Registration, Attendance               | M05, M08, M09      |
+| M07 Finance & Budget               | Govern budget and spending                                      | CMB, ICPDP   | BudgetRequest, Expense, Evidence       | M05, M09           |
+| M08 Reporting & Compliance         | Reporting and compliance                                        | CMB, ICPDP   | Report, Violation, Complaint           | M05, M07, M09      |
+| M09 Performance Evaluation         | Evaluate clubs                                                  | ICPDP        | Evaluation, Criteria                   | M02–M08, M11       |
+| M10 Workflow, Notification & Audit | Cross-module governance                                         | All          | ApprovalTask, Notification, AuditLog   | All                |
+| M11 Property & Facility Booking    | Request and allocate facilities for club activity               | CMB, ICPDP   | Property, PropertyBooking              | M05, M09           |
 
-Modules M11 and M12 were added from the agreed Context Diagram
-(`Property booking request` / `Property booking status`, `Event feedback`, `Club complaint`).
+M11 was added from the agreed Context Diagram (`Property booking request` / `Property booking status`).
 
 ---
 
@@ -795,95 +794,95 @@ User chooses to sign in
 
 ## 8.1 Club Lifecycle & Governance
 
-| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
-|---|---|---|---|---|---|---|
-| UC01 | Authenticate via Google OAuth and access the workspace by permission | All | M01 | Secure access | All | Must |
-| UC02 | Submit a club establishment application | Student | M02 | Propose a new club | UC03 | Must |
-| UC03 | Assess the club establishment application | ICPDP | M02 | Verify the application | UC04, UC06 | Must |
-| UC04 | Request additions/corrections to the application | ICPDP | M02 | Complete the application | UC05 | Must |
-| UC05 | Resubmit the application after revision | Student | M02 | Respond to the revision request | UC03 | Must |
-| UC06 | Approve/Reject club establishment | ICPDP | M02 | Formal decision | UC07 | Must |
-| UC07 | Configure the club operating profile | CMB | M02 | Set up operating information | UC08 | Must |
-| UC08 | Configure the club organization structure | CMB | M03 | Define the internal structure | UC09 | Should |
-| UC09 | Nominate the club management board | CMB | M03 | Establish leadership | UC10 | Must |
-| UC10 | Confirm the management board | ICPDP | M03 | Confirm authority | UC09 | Must |
-| UC11 | Plan the leadership transition | CMB | M03 | Prepare the handover | UC12 | Should |
-| UC12 | Confirm the leadership transition | ICPDP | M03 | Transfer authority safely | UC11 | Should |
-| UC13 | Request club activity suspension | CMB | M02 | Valid voluntary pause | UC14 | Could |
-| UC14 | Suspend/Reactivate/Dissolve a club | ICPDP | M02 | Control the lifecycle | UC48–50 | Must |
+| ID   | Use Case                                                             | Actor   | Module | Business Goal                   | Related UC | Priority |
+| ---- | -------------------------------------------------------------------- | ------- | ------ | ------------------------------- | ---------- | -------- |
+| UC01 | Authenticate via Google OAuth and access the workspace by permission | All     | M01    | Secure access                   | All        | Must     |
+| UC02 | Submit a club establishment application                              | Student | M02    | Propose a new club              | UC03       | Must     |
+| UC03 | Assess the club establishment application                            | ICPDP   | M02    | Verify the application          | UC04, UC06 | Must     |
+| UC04 | Request additions/corrections to the application                     | ICPDP   | M02    | Complete the application        | UC05       | Must     |
+| UC05 | Resubmit the application after revision                              | Student | M02    | Respond to the revision request | UC03       | Must     |
+| UC06 | Approve/Reject club establishment                                    | ICPDP   | M02    | Formal decision                 | UC07       | Must     |
+| UC07 | Configure the club operating profile                                 | CMB     | M02    | Set up operating information    | UC08       | Must     |
+| UC08 | Configure the club organization structure                            | CMB     | M03    | Define the internal structure   | UC09       | Should   |
+| UC09 | Nominate the club management board                                   | CMB     | M03    | Establish leadership            | UC10       | Must     |
+| UC10 | Confirm the management board                                         | ICPDP   | M03    | Confirm authority               | UC09       | Must     |
+| UC11 | Plan the leadership transition                                       | CMB     | M03    | Prepare the handover            | UC12       | Should   |
+| UC12 | Confirm the leadership transition                                    | ICPDP   | M03    | Transfer authority safely       | UC11       | Should   |
+| UC13 | Request club activity suspension                                     | CMB     | M02    | Valid voluntary pause           | UC14       | Could    |
+| UC14 | Suspend/Reactivate/Dissolve a club                                   | ICPDP   | M02    | Control the lifecycle           | UC48–50    | Must     |
 
 ## 8.2 Recruitment & Membership
 
-| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
-|---|---|---|---|---|---|---|
-| UC15 | Create and publish a recruitment campaign | CMB | M04 | Recruit members | UC16 | Must |
-| UC16 | Submit a club membership application | Student | M04 | Apply | UC17 | Must |
-| UC17 | Screen membership applications | CMB | M04 | Shortlist | UC18 | Must |
-| UC18 | Record candidate evaluation | CMB | M04 | Structured assessment | UC19 | Should |
-| UC19 | Decide on a membership application | CMB | M04 | Accept/Reject | UC20 | Must |
-| UC20 | Onboard accepted candidates | CMB | M04 | Create membership | UC21 | Must |
-| UC21 | Manage member status | CMB | M04 | Keep the roster accurate | UC22 | Must |
-| UC22 | Assign positions inside the club | CMB | M03/M04 | Internal authorization | UC09 | Should |
-| UC23 | Leave a club / Remove a member | Student/CMB | M04 | End a membership | UC21 | Should |
+| ID   | Use Case                                  | Actor       | Module  | Business Goal            | Related UC | Priority |
+| ---- | ----------------------------------------- | ----------- | ------- | ------------------------ | ---------- | -------- |
+| UC15 | Create and publish a recruitment campaign | CMB         | M04     | Recruit members          | UC16       | Must     |
+| UC16 | Submit a club membership application      | Student     | M04     | Apply                    | UC17       | Must     |
+| UC17 | Screen membership applications            | CMB         | M04     | Shortlist                | UC18       | Must     |
+| UC18 | Record candidate evaluation               | CMB         | M04     | Structured assessment    | UC19       | Should   |
+| UC19 | Decide on a membership application        | CMB         | M04     | Accept/Reject            | UC20       | Must     |
+| UC20 | Onboard accepted candidates               | CMB         | M04     | Create membership        | UC21       | Must     |
+| UC21 | Manage member status                      | CMB         | M04     | Keep the roster accurate | UC22       | Must     |
+| UC22 | Assign positions inside the club          | CMB         | M03/M04 | Internal authorization   | UC09       | Should   |
+| UC23 | Leave a club / Remove a member            | Student/CMB | M04     | End a membership         | UC21       | Should   |
 
 ## 8.3 Event
 
-| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
-|---|---|---|---|---|---|---|
-| UC24 | Submit an event proposal | CMB | M05 | Request permission to hold an event | UC25–29, UC51 | Must |
-| UC25 | Detect event conflicts | System/CMB | M05 | Avoid time/venue clashes | UC24, UC29 | Should |
-| UC26 | Assess the event proposal | ICPDP | M05 | Verify the proposal | UC27, UC29 | Must |
-| UC27 | Request event proposal revisions | ICPDP | M05 | Complete the proposal | UC28 | Must |
-| UC28 | Resubmit the event proposal | CMB | M05 | Respond to the review | UC26 | Must |
-| UC29 | Approve/Reject the event | ICPDP | M05 | Authorize the event | UC30 | Must |
-| UC30 | Publish the event and open registration | CMB | M05 | Allow participation | UC31 | Must |
-| UC31 | Register for an event | Student | M06 | Record participants | UC32 | Must |
-| UC32 | Manage capacity and waitlist | CMB | M06 | Control headcount | UC31 | Should |
-| UC33 | Check in participants | Student/CMB | M06 | Verify attendance | UC34 | Must |
-| UC34 | Finalize event attendance | CMB | M06 | Produce official attendance | UC36 | Must |
-| UC35 | Cancel/Reschedule an event | CMB/ICPDP | M05 | Handle changes | UC29–34 | Should |
-| UC36 | Submit the post-event report | CMB | M08 | Complete accountability | UC37 | Must |
-| UC37 | Assess and close the event report | ICPDP | M08 | Close the event lifecycle | UC49 | Must |
+| ID   | Use Case                                | Actor       | Module | Business Goal                       | Related UC    | Priority |
+| ---- | --------------------------------------- | ----------- | ------ | ----------------------------------- | ------------- | -------- |
+| UC24 | Submit an event proposal                | CMB         | M05    | Request permission to hold an event | UC25–29, UC51 | Must     |
+| UC25 | Detect event conflicts                  | System/CMB  | M05    | Avoid time/venue clashes            | UC24, UC29    | Should   |
+| UC26 | Assess the event proposal               | ICPDP       | M05    | Verify the proposal                 | UC27, UC29    | Must     |
+| UC27 | Request event proposal revisions        | ICPDP       | M05    | Complete the proposal               | UC28          | Must     |
+| UC28 | Resubmit the event proposal             | CMB         | M05    | Respond to the review               | UC26          | Must     |
+| UC29 | Approve/Reject the event                | ICPDP       | M05    | Authorize the event                 | UC30          | Must     |
+| UC30 | Publish the event and open registration | CMB         | M05    | Allow participation                 | UC31          | Must     |
+| UC31 | Register for an event                   | Student     | M06    | Record participants                 | UC32          | Must     |
+| UC32 | Manage capacity and waitlist            | CMB         | M06    | Control headcount                   | UC31          | Should   |
+| UC33 | Check in participants                   | Student/CMB | M06    | Verify attendance                   | UC34          | Must     |
+| UC34 | Finalize event attendance               | CMB         | M06    | Produce official attendance         | UC36          | Must     |
+| UC35 | Cancel/Reschedule an event              | CMB/ICPDP   | M05    | Handle changes                      | UC29–34       | Should   |
+| UC36 | Submit the post-event report            | CMB         | M08    | Complete accountability             | UC37          | Must     |
+| UC37 | Assess and close the event report       | ICPDP       | M08    | Close the event lifecycle           | UC49          | Must     |
 
 ## 8.4 Finance
 
-| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
-|---|---|---|---|---|---|---|
-| UC38 | Submit a budget request | CMB | M07 | Request funding | UC39 | Must |
-| UC39 | Assess the budget request | ICPDP | M07 | Verify the funding request | UC40, UC41 | Must |
-| UC40 | Revise and resubmit the budget request | CMB | M07 | Amend the request | UC39 | Should |
-| UC41 | Approve/Reject the budget request | ICPDP | M07 | Funding decision | UC42 | Must |
-| UC42 | Record disbursement | ICPDP | M07 | Track funds released | UC43 | Should |
-| UC43 | Record an expense | CMB | M07 | Track actual spending | UC44 | Must |
-| UC44 | Submit financial evidence | CMB | M07 | Substantiate the spending | UC45 | Must |
-| UC45 | Reconcile budget and spending | ICPDP/CMB | M07 | Ensure accountability | UC49 | Must |
+| ID   | Use Case                               | Actor     | Module | Business Goal              | Related UC | Priority |
+| ---- | -------------------------------------- | --------- | ------ | -------------------------- | ---------- | -------- |
+| UC38 | Submit a budget request                | CMB       | M07    | Request funding            | UC39       | Must     |
+| UC39 | Assess the budget request              | ICPDP     | M07    | Verify the funding request | UC40, UC41 | Must     |
+| UC40 | Revise and resubmit the budget request | CMB       | M07    | Amend the request          | UC39       | Should   |
+| UC41 | Approve/Reject the budget request      | ICPDP     | M07    | Funding decision           | UC42       | Must     |
+| UC42 | Record disbursement                    | ICPDP     | M07    | Track funds released       | UC43       | Should   |
+| UC43 | Record an expense                      | CMB       | M07    | Track actual spending      | UC44       | Must     |
+| UC44 | Submit financial evidence              | CMB       | M07    | Substantiate the spending  | UC45       | Must     |
+| UC45 | Reconcile budget and spending          | ICPDP/CMB | M07    | Ensure accountability      | UC49       | Must     |
 
 ## 8.5 Reporting, Compliance & Evaluation
 
-| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
-|---|---|---|---|---|---|---|
-| UC46 | Submit the periodic activity report | CMB | M08 | Fulfil the reporting obligation | UC47 | Must |
-| UC47 | Assess the periodic activity report | ICPDP | M08 | Validate the report | UC49 | Must |
-| UC48 | Manage violation/compliance cases | ICPDP | M08 | Control compliance | UC49, UC57 | Must |
-| UC49 | Generate the club performance evaluation draft | ICPDP | M09 | Consolidate performance data | UC50 | Should |
-| UC50 | Review, finalize and publish the evaluation | ICPDP | M09 | Official evaluation | UC49 | Should |
+| ID   | Use Case                                       | Actor | Module | Business Goal                   | Related UC | Priority |
+| ---- | ---------------------------------------------- | ----- | ------ | ------------------------------- | ---------- | -------- |
+| UC46 | Submit the periodic activity report            | CMB   | M08    | Fulfil the reporting obligation | UC47       | Must     |
+| UC47 | Assess the periodic activity report            | ICPDP | M08    | Validate the report             | UC49       | Must     |
+| UC48 | Manage violation/compliance cases              | ICPDP | M08    | Control compliance              | UC49, UC57 | Must     |
+| UC49 | Generate the club performance evaluation draft | ICPDP | M09    | Consolidate performance data    | UC50       | Should   |
+| UC50 | Review, finalize and publish the evaluation    | ICPDP | M09    | Official evaluation             | UC49       | Should   |
 
 ## 8.6 Property & Facility Booking
 
-| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
-|---|---|---|---|---|---|---|
-| UC51 | Submit a property booking request | CMB | M11 | Request rooms/equipment for club activity | UC24, UC52 | Must |
-| UC52 | Approve/Reject the property booking request | ICPDP | M11 | Controlled resource allocation | UC51, UC53 | Must |
-| UC53 | Track and cancel/release a booked property | CMB | M11 | Free unused resources | UC35, UC52 | Should |
+| ID   | Use Case                                    | Actor | Module | Business Goal                             | Related UC | Priority |
+| ---- | ------------------------------------------- | ----- | ------ | ----------------------------------------- | ---------- | -------- |
+| UC51 | Submit a property booking request           | CMB   | M11    | Request rooms/equipment for club activity | UC24, UC52 | Must     |
+| UC52 | Approve/Reject the property booking request | ICPDP | M11    | Controlled resource allocation            | UC51, UC53 | Must     |
+| UC53 | Track and cancel/release a booked property  | CMB   | M11    | Free unused resources                     | UC35, UC52 | Should   |
 
 ## 8.7 Feedback & Complaint
 
-| ID | Use Case | Actor | Module | Business Goal | Related UC | Priority |
-|---|---|---|---|---|---|---|
-| UC54 | Submit post-event feedback | Student | M12 | Collect participant assessment | UC34, UC55 | Should |
-| UC55 | Review and act on event feedback | CMB | M12 | Improve activity quality | UC54, UC36 | Should |
-| UC56 | Submit a complaint about a club | Student | M12 | Official escalation channel | UC57 | Should |
-| UC57 | Receive, triage and escalate a complaint into a compliance case | ICPDP | M12 | Handle complaints with a trail | UC48, UC56 | Should |
+| ID   | Use Case                                                        | Actor   | Module | Business Goal                  | Related UC | Priority |
+| ---- | --------------------------------------------------------------- | ------- | ------ | ------------------------------ | ---------- | -------- |
+| UC54 | Submit post-event feedback                                      | Student | M12    | Collect participant assessment | UC34, UC55 | Should   |
+| UC55 | Review and act on event feedback                                | CMB     | M12    | Improve activity quality       | UC54, UC36 | Should   |
+| UC56 | Submit a complaint about a club                                 | Student | M12    | Official escalation channel    | UC57       | Should   |
+| UC57 | Receive, triage and escalate a complaint into a compliance case | ICPDP   | M12    | Handle complaints with a trail | UC48, UC56 | Should   |
 
 **Total: 57 business use cases** (UC01–UC50 keep their numbering from the previous version;
 UC51–UC57 were added from the Context Diagram).
@@ -1590,216 +1589,257 @@ in the system belongs to this actor, with no other actor reviewing in parallel o
 
 Not actors — they only take part in data flows:
 
-| System | Related use cases | Flow |
-|---|---|---|
-| Google OAuth | UC01 | Authentication request → / ← Authentication data |
-| Google SMTP Service | Every UC with an Email notification channel (§19) | Send email request → |
+| System              | Related use cases                                 | Flow                                             |
+| ------------------- | ------------------------------------------------- | ------------------------------------------------ |
+| Google OAuth        | UC01                                              | Authentication request → / ← Authentication data |
+| Google SMTP Service | Every UC with an Email notification channel (§19) | Send email request →                             |
 
 ---
 
 # 12. USER STORIES
 
 ## US01
+
 **As a Student,**  
 I want to submit a club establishment application digitally,  
 **so that** I don't have to juggle files and emails while applying to found a club.
 
 ## US02
+
 **As an ICPDP Officer,**  
 I want to review all versions of a club application,  
 **so that** I know exactly what the applicant changed before I approve it.
 
 ## US03
+
 **As an ICPDP Officer,**  
 I want to request corrections on specific sections,  
 **so that** the applicant knows exactly what to fix instead of receiving vague feedback.
 
 ## US04
+
 **As a Club Leader,**  
 I want to maintain the club organization structure,  
 **so that** authority and responsibility inside the club are transparent.
 
 ## US05
+
 **As an ICPDP Officer,**  
 I want leadership terms to be formally recorded,  
 **so that** the university can tell who represents a club at any point in time.
 
 ## US06
+
 **As an outgoing Club Leader,**  
 I want to create a structured transition plan,  
 **so that** outstanding work is not lost between two terms.
 
 ## US07
+
 **As a Club Leader,**  
 I want to publish recruitment campaigns,  
 **so that** student applications are collected through one consistent process.
 
 ## US08
+
 **As a Student,**  
 I want to track my recruitment application status,  
 **so that** I don't have to chase the club manually for a result.
 
 ## US09
+
 **As a Club Leader,**  
 I want to evaluate candidates using a defined process,  
 **so that** recruitment decisions are more consistent.
 
 ## US10
+
 **As a Club Leader,**  
 I want accepted candidates to become members without duplicate data entry,  
 **so that** the member roster stays in sync.
 
 ## US11
+
 **As a Club Leader,**  
 I want to submit event proposals online,  
 **so that** ICPDP can review them through a unified workflow.
 
 ## US12
+
 **As a Club Leader,**  
 I want the system to warn about event conflicts,  
 **so that** venue/time clashes surface before the event is approved.
 
 ## US13
+
 **As an ICPDP Officer,**  
 I want to request event revisions instead of immediately rejecting,  
 **so that** a viable proposal gets a chance to be completed.
 
 ## US14
+
 **As a Student,**  
 I want to register for approved events,  
 **so that** my participation is recorded centrally.
 
 ## US15
+
 **As a Club Leader,**  
 I want to manage capacity and waiting lists,  
 **so that** attendance does not exceed what we can host.
 
 ## US16
+
 **As a Club Leader,**  
 I want attendance linked to registrations,  
 **so that** post-event statistics are trustworthy.
 
 ## US17
+
 **As a Club Leader,**  
 I want post-event reports to reuse registration and attendance data,  
 **so that** I don't have to consolidate it by hand.
 
 ## US18
+
 **As an ICPDP Officer,**  
 I want events to remain incomplete until required reports are submitted,  
 **so that** clubs stay accountable after being granted permission to run an event.
 
 ## US19
+
 **As a Club Treasurer,**  
 I want to submit structured budget requests,  
 **so that** funding decisions are traceable.
 
 ## US20
+
 **As an ICPDP Officer,**  
 I want budget requests linked to events/activities,  
 **so that** I understand clearly what the funding is for.
 
 ## US21
+
 **As a Club Treasurer,**  
 I want each expense linked to evidence,  
 **so that** reconciliation is fast and transparent.
 
 ## US22
+
 **As an ICPDP Officer,**  
 I want to compare approved funding with supported expenses,  
 **so that** I can assess financial compliance.
 
 ## US23
+
 **As a Club Leader,**  
 I want periodic reports pre-populated with system data,  
 **so that** I only enter what the system does not already know.
 
 ## US24
+
 **As an ICPDP Officer,**  
 I want overdue obligations to be visible,  
 **so that** I can intervene before the problem becomes serious.
 
 ## US25
+
 **As an ICPDP Officer,**  
 I want violations stored as structured cases,  
 **so that** warnings and decisions rest on evidence.
 
 ## US26
+
 **As a Club Leader,**  
 I want to respond to compliance cases,  
 **so that** the club gets a chance to explain and provide evidence.
 
 ## US27
+
 **As an ICPDP Officer,**  
 I want evaluation data collected automatically from other modules,  
 **so that** evaluation does not depend on manual spreadsheet consolidation.
 
 ## US28
+
 **As an ICPDP Officer,**  
 I want evaluation dimensions and weights configurable,  
 **so that** a policy change does not require a code change.
 
 ## US29
+
 **As an ICPDP Officer,**  
 I want to review evaluation drafts before publication,  
 **so that** anomalous data can be checked.
 
 ## US30
+
 **As a Club Leader,**  
 I want to see reporting and finance deadlines,  
 **so that** the club avoids violations caused by forgetting a deadline.
 
 ## US31
+
 **As an ICPDP Officer,**  
 I want a dashboard of pending approvals,  
 **so that** no request is forgotten.
 
 ## US32
+
 **As an ICPDP Officer,**  
 I want every approval decision audited,  
 **so that** disputes can be investigated objectively.
 
 ## US33
+
 **As a Student,**  
 I want to see only active clubs and valid recruitment campaigns,  
 **so that** I don't apply to a club that no longer operates.
 
 ## US34
+
 **As an ICPDP Officer,**  
 I want suspension to immediately restrict prohibited operations,  
 **so that** the governance decision is actually enforced.
 
 ## US35
+
 **As an ICPDP Officer,**  
 I want evaluation history by semester/year,  
 **so that** I can follow how a club develops over time.
 
 ## US36
+
 **As a Club Leader,**  
 I want to request rooms and equipment inside the same system as my event proposal,  
 **so that** I don't have to request facilities by email, detached from the event record.
 
 ## US37
+
 **As an ICPDP Officer,**  
 I want to see property booking conflicts before approving,  
 **so that** two clubs are never granted the same room in the same time slot.
 
 ## US38
+
 **As a Student,**  
 I want to give feedback after an event I attended,  
 **so that** my opinion is recorded instead of only being said out loud.
 
 ## US39
+
 **As a Club Leader,**  
 I want to see aggregated event feedback,  
 **so that** I know what to improve at the next event.
 
 ## US40
+
 **As a Student,**  
 I want to send a complaint about a club directly to ICPDP,  
 **so that** my concern cannot be blocked by the very club I am complaining about.
 
 ## US41
+
 **As any user,**  
 I want to log in with my school Google account,  
 **so that** I don't have to remember another password for this system.
@@ -1962,47 +2002,47 @@ I want to log in with my school Google account,
 
 # 14. BUSINESS RULES
 
-| Rule | Statement |
-|---|---|
-| BR01 | Only an Active Club may create a new recruitment campaign or event proposal. |
-| BR02 | A Club Application must carry the mandatory documents ICPDP configures. |
-| BR03 | The minimum number of founding members is a configurable business rule. |
-| BR04 | A submitted application version is never overwritten. |
-| BR05 | Approve/Reject must store the actor, timestamp and, where applicable, the reason. |
-| BR06 | There must be no overlapping President in the same period unless policy allows it. |
-| BR07 | Eligibility to hold a leadership position is configurable. |
-| BR08 | New permissions take effect only once the leadership transition is confirmed. |
-| BR09 | A Suspended Club may not open a new recruitment campaign. |
-| BR10 | A Suspended Club may not submit a new event proposal. |
-| BR11 | Recruitment accepts applications only inside the application window. |
-| BR12 | A student may not submit a duplicate application to the same campaign. |
-| BR13 | Membership is created only from an accepted candidate or an authorized manual onboarding. |
-| BR14 | An event may only be made public after it is Approved. |
-| BR15 | The conflict threshold is configurable. |
+| Rule | Statement                                                                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| BR01 | Only an Active Club may create a new recruitment campaign or event proposal.                                                                                 |
+| BR02 | A Club Application must carry the mandatory documents ICPDP configures.                                                                                      |
+| BR03 | The minimum number of founding members is a configurable business rule.                                                                                      |
+| BR04 | A submitted application version is never overwritten.                                                                                                        |
+| BR05 | Approve/Reject must store the actor, timestamp and, where applicable, the reason.                                                                            |
+| BR06 | There must be no overlapping President in the same period unless policy allows it.                                                                           |
+| BR07 | Eligibility to hold a leadership position is configurable.                                                                                                   |
+| BR08 | New permissions take effect only once the leadership transition is confirmed.                                                                                |
+| BR09 | A Suspended Club may not open a new recruitment campaign.                                                                                                    |
+| BR10 | A Suspended Club may not submit a new event proposal.                                                                                                        |
+| BR11 | Recruitment accepts applications only inside the application window.                                                                                         |
+| BR12 | A student may not submit a duplicate application to the same campaign.                                                                                       |
+| BR13 | Membership is created only from an accepted candidate or an authorized manual onboarding.                                                                    |
+| BR14 | An event may only be made public after it is Approved.                                                                                                       |
+| BR15 | The conflict threshold is configurable.                                                                                                                      |
 | BR16 | An event whose risk category exceeds the configured threshold must be approved at a higher ICPDP level (internal ICPDP RBAC), never handed to another actor. |
-| BR17 | Confirmed registrations do not exceed capacity unless policy allows overbooking. |
-| BR18 | A participant has exactly one official attendance record per event. |
-| BR19 | Finalized attendance may only be unlocked by a special role. |
-| BR20 | The post-event report deadline is configurable. |
-| BR21 | A club overdue on a mandatory report may be blocked from new events when policy enables enforcement. |
-| BR22 | A Budget Request must be tied to a valid business purpose. |
-| BR23 | The Disbursed Amount may not exceed the Approved Amount without an amendment. |
-| BR24 | An expense outside the approved category must be flagged as an exception. |
-| BR25 | Evidence requirements per expense category are configurable. |
-| BR26 | Reconciliation must be complete before a budget case can be closed. |
-| BR27 | The violation severity taxonomy is configured by ICPDP. |
-| BR28 | A violation decision must carry a reason and evidence. |
-| BR29 | Total evaluation weight must be valid before a scheme can be activated. |
-| BR30 | A Published Evaluation is never edited in place; a new revision/snapshot must be created. |
-| BR31 | ICPDP is the only approval authority; no decision in the system is approved by another actor. |
-| BR32 | The system accepts sign-in only through Google OAuth with an email in the configured domain. |
-| BR33 | A property may not hold two `Approved` bookings in overlapping time slots unless policy allows overbooking. |
-| BR34 | A Suspended Club receives no new property booking. |
-| BR35 | A property booking is `Approved` only by ICPDP and is released automatically when the related event is cancelled. |
-| BR36 | A participant may submit exactly one event feedback per event, inside a configurable feedback window. |
-| BR37 | CMB may not edit or delete event feedback; it is visible only in aggregate. |
-| BR38 | Student complaints go directly to ICPDP; the club complained about gains access only after ICPDP forwards it. |
-| BR39 | Every complaint decision (dismiss/forward/escalate) must carry a reason and be audited. |
+| BR17 | Confirmed registrations do not exceed capacity unless policy allows overbooking.                                                                             |
+| BR18 | A participant has exactly one official attendance record per event.                                                                                          |
+| BR19 | Finalized attendance may only be unlocked by a special role.                                                                                                 |
+| BR20 | The post-event report deadline is configurable.                                                                                                              |
+| BR21 | A club overdue on a mandatory report may be blocked from new events when policy enables enforcement.                                                         |
+| BR22 | A Budget Request must be tied to a valid business purpose.                                                                                                   |
+| BR23 | The Disbursed Amount may not exceed the Approved Amount without an amendment.                                                                                |
+| BR24 | An expense outside the approved category must be flagged as an exception.                                                                                    |
+| BR25 | Evidence requirements per expense category are configurable.                                                                                                 |
+| BR26 | Reconciliation must be complete before a budget case can be closed.                                                                                          |
+| BR27 | The violation severity taxonomy is configured by ICPDP.                                                                                                      |
+| BR28 | A violation decision must carry a reason and evidence.                                                                                                       |
+| BR29 | Total evaluation weight must be valid before a scheme can be activated.                                                                                      |
+| BR30 | A Published Evaluation is never edited in place; a new revision/snapshot must be created.                                                                    |
+| BR31 | ICPDP is the only approval authority; no decision in the system is approved by another actor.                                                                |
+| BR32 | The system accepts sign-in only through Google OAuth with an email in the configured domain.                                                                 |
+| BR33 | A property may not hold two `Approved` bookings in overlapping time slots unless policy allows overbooking.                                                  |
+| BR34 | A Suspended Club receives no new property booking.                                                                                                           |
+| BR35 | A property booking is `Approved` only by ICPDP and is released automatically when the related event is cancelled.                                            |
+| BR36 | A participant may submit exactly one event feedback per event, inside a configurable feedback window.                                                        |
+| BR37 | CMB may not edit or delete event feedback; it is visible only in aggregate.                                                                                  |
+| BR38 | Student complaints go directly to ICPDP; the club complained about gains access only after ICPDP forwards it.                                                |
+| BR39 | Every complaint decision (dismiss/forward/escalate) must carry a reason and be audited.                                                                      |
 
 ---
 
@@ -2020,13 +2060,13 @@ Draft
 → Approved / Rejected
 ```
 
-| Transition | Actor | UC |
-|---|---|---|
-| Draft → Submitted | Student | UC02 |
-| Submitted → Under Review | ICPDP | UC03 |
-| Under Review → Revision Requested | ICPDP | UC04 |
-| Revision Requested → Resubmitted | Student | UC05 |
-| Under Review → Approved/Rejected | ICPDP | UC06 |
+| Transition                        | Actor   | UC   |
+| --------------------------------- | ------- | ---- |
+| Draft → Submitted                 | Student | UC02 |
+| Submitted → Under Review          | ICPDP   | UC03 |
+| Under Review → Revision Requested | ICPDP   | UC04 |
+| Revision Requested → Resubmitted  | Student | UC05 |
+| Under Review → Approved/Rejected  | ICPDP   | UC06 |
 
 ## 15.2 Club
 
@@ -2145,13 +2185,13 @@ Approved
 → Released (when the related event is cancelled)
 ```
 
-| Transition | Actor | UC |
-|---|---|---|
-| Draft → Requested | CMB | UC51 |
-| Requested → Under Review | ICPDP | UC52 |
-| Under Review → Approved/Rejected | ICPDP | UC52 |
-| Approved → Cancelled/Released | CMB | UC53 |
-| Approved → In Use → Completed | System | UC52, UC35 |
+| Transition                       | Actor  | UC         |
+| -------------------------------- | ------ | ---------- |
+| Draft → Requested                | CMB    | UC51       |
+| Requested → Under Review         | ICPDP  | UC52       |
+| Under Review → Approved/Rejected | ICPDP  | UC52       |
+| Approved → Cancelled/Released    | CMB    | UC53       |
+| Approved → In Use → Completed    | System | UC52, UC35 |
 
 ## 15.10 Complaint
 
@@ -2165,13 +2205,13 @@ or → Forwarded → Club Responded → Closed
 or → Escalated → Violation (15.7)
 ```
 
-| Transition | Actor | UC |
-|---|---|---|
-| — → Submitted | Student | UC56 |
-| Submitted → Under Triage | ICPDP | UC57 |
-| Under Triage → Dismissed/Forwarded/Escalated | ICPDP | UC57 |
-| Forwarded → Club Responded | CMB | UC57 |
-| Escalated → Violation Open | ICPDP | UC48 |
+| Transition                                   | Actor   | UC   |
+| -------------------------------------------- | ------- | ---- |
+| — → Submitted                                | Student | UC56 |
+| Submitted → Under Triage                     | ICPDP   | UC57 |
+| Under Triage → Dismissed/Forwarded/Escalated | ICPDP   | UC57 |
+| Forwarded → Club Responded                   | CMB     | UC57 |
+| Escalated → Violation Open                   | ICPDP   | UC48 |
 
 ## 15.11 Event Feedback
 
@@ -2493,22 +2533,22 @@ Reporting Compliance
 
 ## 18.1 ICPDP Dashboard
 
-| Widget | Business Question |
-|---|---|
-| Active/Suspended Clubs | How many clubs are legitimately operating right now? |
-| Pending Approvals | Which requests are waiting on ICPDP? |
-| Approval Aging | Which requests have been waiting too long? |
-| Upcoming Events | Which events are coming up? |
-| Conflict Alerts | Are any events clashing in time or venue? |
-| Budget Exposure | What is the total approved/disbursed/reconciled? |
-| Property Booking Queue | Which facility requests are awaiting approval? |
-| Property Utilization | Which rooms/equipment were granted but never used? |
-| Overdue Reports | Which clubs have not met their obligations? |
-| Open Complaints | Which student complaints have not been triaged? |
-| Open Violations | Which compliance cases are unresolved? |
-| Club Health | Which clubs show risk signals? |
-| Feedback Summary | What is the average club/event feedback score this period? |
-| Evaluation Distribution | What is the overall club quality this period? |
+| Widget                  | Business Question                                          |
+| ----------------------- | ---------------------------------------------------------- |
+| Active/Suspended Clubs  | How many clubs are legitimately operating right now?       |
+| Pending Approvals       | Which requests are waiting on ICPDP?                       |
+| Approval Aging          | Which requests have been waiting too long?                 |
+| Upcoming Events         | Which events are coming up?                                |
+| Conflict Alerts         | Are any events clashing in time or venue?                  |
+| Budget Exposure         | What is the total approved/disbursed/reconciled?           |
+| Property Booking Queue  | Which facility requests are awaiting approval?             |
+| Property Utilization    | Which rooms/equipment were granted but never used?         |
+| Overdue Reports         | Which clubs have not met their obligations?                |
+| Open Complaints         | Which student complaints have not been triaged?            |
+| Open Violations         | Which compliance cases are unresolved?                     |
+| Club Health             | Which clubs show risk signals?                             |
+| Feedback Summary        | What is the average club/event feedback score this period? |
+| Evaluation Distribution | What is the overall club quality this period?              |
 
 ## 18.2 Club Management Dashboard
 
@@ -2546,32 +2586,32 @@ Answers:
 
 # 19. NOTIFICATION & DEADLINE RULES
 
-| Business Event | Recipient | Channel |
-|---|---|---|
-| Club Application Submitted | ICPDP | In-app |
-| Club Application Revision Requested | Applicant | In-app + Email |
-| Club Approved | Applicant/CMB | In-app + Email |
-| Recruitment Decision | Student | In-app |
-| Event Proposal Submitted | ICPDP | In-app |
-| Event Approved/Rejected | CMB | In-app + Email |
-| Event Rescheduled | Registered Students | In-app |
-| Event Reminder | Participants | In-app |
-| Property Booking Submitted | ICPDP | In-app |
-| Property Booking Approved/Rejected | CMB | In-app + Email |
-| Property Booking Cancelled | ICPDP | In-app |
-| Feedback Window Opened | Participants | In-app |
-| New Event Feedback Received | CMB | In-app |
-| Post-event Report Due Soon | CMB | Reminder |
-| Budget Approved | CMB | In-app |
-| Expense Missing Evidence | Treasurer/CMB | Reminder |
-| Reconciliation Overdue | CMB + ICPDP | Escalation |
-| Periodic Report Due | CMB | Reminder |
-| Complaint Submitted | ICPDP | In-app + Email |
-| Complaint Triaged | Complainant | In-app |
-| Complaint Forwarded | CMB | In-app + Email |
-| Violation Opened | CMB | In-app + Email |
-| Leadership Term Near Expiry | CMB + ICPDP | Reminder |
-| Evaluation Published | CMB | In-app |
+| Business Event                      | Recipient           | Channel        |
+| ----------------------------------- | ------------------- | -------------- |
+| Club Application Submitted          | ICPDP               | In-app         |
+| Club Application Revision Requested | Applicant           | In-app + Email |
+| Club Approved                       | Applicant/CMB       | In-app + Email |
+| Recruitment Decision                | Student             | In-app         |
+| Event Proposal Submitted            | ICPDP               | In-app         |
+| Event Approved/Rejected             | CMB                 | In-app + Email |
+| Event Rescheduled                   | Registered Students | In-app         |
+| Event Reminder                      | Participants        | In-app         |
+| Property Booking Submitted          | ICPDP               | In-app         |
+| Property Booking Approved/Rejected  | CMB                 | In-app + Email |
+| Property Booking Cancelled          | ICPDP               | In-app         |
+| Feedback Window Opened              | Participants        | In-app         |
+| New Event Feedback Received         | CMB                 | In-app         |
+| Post-event Report Due Soon          | CMB                 | Reminder       |
+| Budget Approved                     | CMB                 | In-app         |
+| Expense Missing Evidence            | Treasurer/CMB       | Reminder       |
+| Reconciliation Overdue              | CMB + ICPDP         | Escalation     |
+| Periodic Report Due                 | CMB                 | Reminder       |
+| Complaint Submitted                 | ICPDP               | In-app + Email |
+| Complaint Triaged                   | Complainant         | In-app         |
+| Complaint Forwarded                 | CMB                 | In-app + Email |
+| Violation Opened                    | CMB                 | In-app + Email |
+| Leadership Term Near Expiry         | CMB + ICPDP         | Reminder       |
+| Evaluation Published                | CMB                 | In-app         |
 
 **Email channel:** every notification whose channel is Email is sent through the **Google SMTP
 Service** (`Send email request`). The system must store an `EmailDeliveryLog` and retry on
@@ -2641,27 +2681,27 @@ Timestamp: ...
 
 # 21. REQUIREMENT TRACEABILITY MATRIX
 
-| Business Problem | Requirement | Use Case | Actor | User Story | Rule |
-|---|---|---|---|---|---|
-| BP04 | Standardized club establishment workflow | UC02–06 | Student/ICPDP | US01–03 | BR02–05 |
-| BP03 | Leadership history | UC08–12 | CMB/ICPDP | US04–06 | BR06–08 |
-| BP11 | Central recruitment | UC15–20 | Student/CMB | US07–10 | BR11–13 |
-| BP02 | Accurate membership lifecycle | UC20–23 | CMB | US10 | BR13 |
-| BP05 | Event approval workflow | UC24–30 | CMB/ICPDP | US11–13 | BR14–16 |
-| BP06 | Conflict detection | UC25 | CMB/System | US12 | BR15 |
-| BP07 | Registration & attendance | UC31–34 | Student/CMB | US14–16 | BR17–19 |
-| BP08 | Post-event accountability | UC36–37 | CMB/ICPDP | US17–18 | BR20–21 |
-| BP09 | Budget lifecycle | UC38–45 | CMB/ICPDP | US19–22 | BR22–26 |
-| BP10 | Financial reconciliation | UC45 | ICPDP | US22 | BR23–26 |
-| BP14 | Deadline management | UC36, UC45, UC46 | All | US24, US30 | BR20–21 |
-| BP12 | Structured compliance cases | UC48 | ICPDP | US25–26 | BR27–28 |
-| BP13 | Data-driven evaluation | UC49–50 | ICPDP | US27–29, US35 | BR29–30 |
-| BP15 | Auditability | Cross-module | ICPDP | US32 | BR05 |
-| BP01 | Club lifecycle control | UC14 | ICPDP | US34 | BR09–10 |
-| BP16 | Controlled property booking | UC51–53 | CMB/ICPDP | US36–37 | BR33–35 |
-| BP17 | Structured event feedback | UC54–55 | Student/CMB | US38–39 | BR36–37 |
-| BP18 | Official complaint channel | UC56–57 | Student/ICPDP | US40 | BR38–39 |
-| BP19 | Single sign-on with the university account | UC01 | All | US41 | BR32 |
+| Business Problem | Requirement                                | Use Case         | Actor         | User Story    | Rule    |
+| ---------------- | ------------------------------------------ | ---------------- | ------------- | ------------- | ------- |
+| BP04             | Standardized club establishment workflow   | UC02–06          | Student/ICPDP | US01–03       | BR02–05 |
+| BP03             | Leadership history                         | UC08–12          | CMB/ICPDP     | US04–06       | BR06–08 |
+| BP11             | Central recruitment                        | UC15–20          | Student/CMB   | US07–10       | BR11–13 |
+| BP02             | Accurate membership lifecycle              | UC20–23          | CMB           | US10          | BR13    |
+| BP05             | Event approval workflow                    | UC24–30          | CMB/ICPDP     | US11–13       | BR14–16 |
+| BP06             | Conflict detection                         | UC25             | CMB/System    | US12          | BR15    |
+| BP07             | Registration & attendance                  | UC31–34          | Student/CMB   | US14–16       | BR17–19 |
+| BP08             | Post-event accountability                  | UC36–37          | CMB/ICPDP     | US17–18       | BR20–21 |
+| BP09             | Budget lifecycle                           | UC38–45          | CMB/ICPDP     | US19–22       | BR22–26 |
+| BP10             | Financial reconciliation                   | UC45             | ICPDP         | US22          | BR23–26 |
+| BP14             | Deadline management                        | UC36, UC45, UC46 | All           | US24, US30    | BR20–21 |
+| BP12             | Structured compliance cases                | UC48             | ICPDP         | US25–26       | BR27–28 |
+| BP13             | Data-driven evaluation                     | UC49–50          | ICPDP         | US27–29, US35 | BR29–30 |
+| BP15             | Auditability                               | Cross-module     | ICPDP         | US32          | BR05    |
+| BP01             | Club lifecycle control                     | UC14             | ICPDP         | US34          | BR09–10 |
+| BP16             | Controlled property booking                | UC51–53          | CMB/ICPDP     | US36–37       | BR33–35 |
+| BP17             | Structured event feedback                  | UC54–55          | Student/CMB   | US38–39       | BR36–37 |
+| BP18             | Official complaint channel                 | UC56–57          | Student/ICPDP | US40          | BR38–39 |
+| BP19             | Single sign-on with the university account | UC01             | All           | US41          | BR32    |
 
 ---
 
