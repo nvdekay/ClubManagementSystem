@@ -1,0 +1,79 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventProposalReviewController {
+        <<boundary>>
+        +openAssessment(UUID proposalId) EventAssessmentView
+        +recordAssessment(UUID proposalId, AssessmentCommand command) EventAssessment
+        +routeProposal(UUID proposalId, ReviewRoute route) void
+    }
+    class EventProposalReviewService {
+        <<service>>
+        +loadAssessmentContext(UUID proposalId, UUID officerId) EventAssessmentView
+        +assess(UUID proposalId, UUID officerId, AssessmentCommand command) EventAssessment
+        +route(UUID proposalId, ReviewRoute route) ReviewTask
+    }
+    class IEventProposalRepository {
+        <<interface>>
+        +findSubmittedVersion(UUID proposalId) Optional~EventProposalVersion~
+        +saveAssessment(EventAssessment assessment) void
+        +changeStatus(UUID proposalId, ProposalStatus status) void
+    }
+    class IReviewContextRepository {
+        <<interface>>
+        +getConflictResult(UUID proposalId) ConflictResult
+        +getObligationSummary(UUID clubId) ObligationSummary
+        +getPropertyBooking(UUID proposalId) Optional~PropertyBooking~
+    }
+    class EventProposalVersion {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -int versionNumber
+        -RiskLevel riskLevel
+        -ProposalStatus status
+        +isAssessable() boolean
+    }
+    class EventAssessment {
+        <<entity>>
+        -UUID id
+        -UUID proposalVersionId
+        -UUID officerId
+        -String reviewNote
+        -ReviewRoute route
+        -Instant assessedAt
+    }
+    class EventAssessmentView {
+        <<record>>
+        +EventProposalVersion proposal
+        +ConflictResult conflict
+        +ObligationSummary obligations
+        +Optional~PropertyBooking~ booking
+    }
+    class PropertyBooking {
+        <<entity>>
+        -UUID id
+        -BookingStatus status
+        -TimeWindow timeWindow
+    }
+
+    EventProposalReviewController ..> EventProposalReviewService : delegates
+    EventProposalReviewService ..> IEventProposalRepository : persists through
+    EventProposalReviewService ..> IReviewContextRepository : reads context through
+    EventProposalReviewService ..> EventAssessmentView : returns
+    IEventProposalRepository ..> EventProposalVersion : loads
+    IEventProposalRepository ..> EventAssessment : persists
+    IReviewContextRepository ..> PropertyBooking : loads
+    EventProposalVersion "1" --> "0..*" EventAssessment : reviewed by
+    EventAssessmentView "1" --> "1" EventProposalVersion : presents
+    EventAssessmentView "1" --> "0..1" PropertyBooking : includes

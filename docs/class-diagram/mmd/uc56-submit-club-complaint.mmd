@@ -1,0 +1,75 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class ComplaintSubmissionController {
+        <<boundary>>
+        +openForm(UUID clubId) ComplaintFormView
+        +submit(UUID clubId, ComplaintCommand command) ComplaintReceipt
+        +track(String trackingReference) ComplaintStatusView
+    }
+    class ComplaintSubmissionService {
+        <<service>>
+        +prepare(UUID clubId, UUID studentId) ComplaintFormView
+        +submit(UUID clubId, UUID studentId, ComplaintCommand command) ComplaintReceipt
+        +track(String trackingReference, UUID studentId) ComplaintStatusView
+    }
+    class IComplaintRepository {
+        <<interface>>
+        +save(Complaint complaint) Complaint
+        +findByTrackingReference(String reference) Optional~Complaint~
+    }
+    class IComplaintRoutingService {
+        <<interface>>
+        +routeDirectlyToICPDP(UUID complaintId) ReviewTask
+    }
+    class Complaint {
+        <<entity>>
+        -UUID id
+        -UUID complainantId
+        -UUID clubId
+        -Optional~UUID~ eventId
+        -ComplaintType type
+        -String description
+        -ComplaintStatus status
+        -EvidenceLevel evidenceLevel
+        -String trackingReference
+        -Instant submittedAt
+    }
+    class ComplaintEvidence {
+        <<entity>>
+        -UUID id
+        -UUID complaintId
+        -EvidenceType type
+        -String storageReference
+        -Map~String, String~ metadata
+    }
+    class ComplaintReceipt {
+        <<record>>
+        +String trackingReference
+        +ComplaintStatus status
+        +Instant submittedAt
+    }
+    class ComplaintStatusView {
+        <<record>>
+        +String trackingReference
+        +ComplaintStatus status
+        +Instant lastUpdatedAt
+    }
+
+    ComplaintSubmissionController ..> ComplaintSubmissionService : delegates
+    ComplaintSubmissionService ..> IComplaintRepository : persists through
+    ComplaintSubmissionService ..> IComplaintRoutingService : routes through
+    IComplaintRepository ..> Complaint : persists
+    Complaint "1" *-- "0..*" ComplaintEvidence : supports
+    Complaint "1" ..> ComplaintReceipt : acknowledges with
+    Complaint "1" ..> ComplaintStatusView : exposes as

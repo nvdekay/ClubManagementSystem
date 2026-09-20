@@ -1,0 +1,80 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class AttendanceFinalizationController {
+        <<boundary>>
+        +openAttendance(UUID eventId) AttendanceReviewView
+        +resolveFlag(UUID attendanceId, AttendanceCorrection correction) AttendanceRecord
+        +finalize(UUID eventId) OfficialAttendance
+        +unlock(UUID eventId, String reason) OfficialAttendance
+    }
+    class AttendanceFinalizationService {
+        <<service>>
+        +loadReview(UUID eventId) AttendanceReviewView
+        +resolveFlag(UUID attendanceId, UUID actorId, AttendanceCorrection correction) AttendanceRecord
+        +finalize(UUID eventId, UUID actorId) OfficialAttendance
+        +unlock(UUID eventId, UUID actorId, String reason) OfficialAttendance
+    }
+    class IAttendanceRepository {
+        <<interface>>
+        +listByEvent(UUID eventId) List~AttendanceRecord~
+        +save(AttendanceRecord attendance) void
+        +saveOfficial(OfficialAttendance attendance) OfficialAttendance
+    }
+    class IAuthorizationPolicy {
+        <<interface>>
+        +canUnlockAttendance(UUID actorId, UUID eventId) boolean
+    }
+    class AttendanceRecord {
+        <<entity>>
+        -UUID id
+        -UUID studentId
+        -Instant checkedInAt
+        -CheckInMethod method
+        -AttendanceFlag flag
+        -Optional~String~ resolutionNote
+        +isResolved() boolean
+    }
+    class AttendanceCorrection {
+        <<record>>
+        +AttendanceStatus correctedStatus
+        +String reason
+    }
+    class OfficialAttendance {
+        <<entity>>
+        -UUID eventId
+        -AttendanceDatasetStatus status
+        -Instant finalizedAt
+        -UUID finalizedBy
+        -boolean locked
+        +finalizeDataset() void
+        +unlock(String reason) void
+    }
+    class AttendanceAuditEntry {
+        <<entity>>
+        -UUID id
+        -UUID attendanceId
+        -UUID actorId
+        -String action
+        -String reason
+        -Instant occurredAt
+    }
+
+    AttendanceFinalizationController ..> AttendanceFinalizationService : delegates
+    AttendanceFinalizationService ..> IAttendanceRepository : persists through
+    AttendanceFinalizationService ..> IAuthorizationPolicy : authorizes through
+    IAttendanceRepository ..> AttendanceRecord : persists
+    IAttendanceRepository ..> OfficialAttendance : persists
+    OfficialAttendance "1" *-- "0..*" AttendanceRecord : locks
+    AttendanceRecord "1" --> "0..*" AttendanceAuditEntry : audited by
+    AttendanceCorrection "1" ..> AttendanceRecord : updates

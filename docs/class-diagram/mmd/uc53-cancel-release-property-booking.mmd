@@ -1,0 +1,72 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class PropertyBookingReleaseController {
+        <<boundary>>
+        +openRelease(UUID bookingId) BookingReleaseView
+        +cancel(UUID bookingId, BookingReleaseCommand command) BookingRelease
+    }
+    class PropertyBookingReleaseService {
+        <<service>>
+        +loadContext(UUID bookingId) BookingReleaseView
+        +cancel(UUID bookingId, UUID memberId, String reason) BookingRelease
+        +releaseForEventCancellation(UUID eventId, String reason) List~BookingRelease~
+    }
+    class IPropertyBookingRepository {
+        <<interface>>
+        +findApproved(UUID bookingId) Optional~PropertyBooking~
+        +findByEvent(UUID eventId) List~PropertyBooking~
+        +applyRelease(UUID bookingId, BookingRelease release) void
+    }
+    class IPropertySlotRepository {
+        <<interface>>
+        +releaseByBooking(UUID bookingId) void
+    }
+    class IComplianceCaseService {
+        <<interface>>
+        +openForLateCancellation(UUID bookingId, String reason) UUID
+    }
+    class PropertyBooking {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -Optional~UUID~ eventId
+        -TimeWindow timeWindow
+        -BookingStatus status
+        +canCancel(Instant at) boolean
+    }
+    class BookingRelease {
+        <<entity>>
+        -UUID id
+        -UUID bookingId
+        -BookingReleaseType type
+        -String reason
+        -boolean lateCancellation
+        -UUID releasedBy
+        -Instant releasedAt
+    }
+    class BookingReleaseView {
+        <<record>>
+        +PropertyBooking booking
+        +Duration timeUntilUse
+        +CancellationPolicy policy
+    }
+
+    PropertyBookingReleaseController ..> PropertyBookingReleaseService : delegates
+    PropertyBookingReleaseService ..> IPropertyBookingRepository : updates through
+    PropertyBookingReleaseService ..> IPropertySlotRepository : frees through
+    PropertyBookingReleaseService ..> IComplianceCaseService : escalates through
+    IPropertyBookingRepository ..> PropertyBooking : loads
+    IPropertyBookingRepository ..> BookingRelease : persists
+    PropertyBooking "1" --> "0..1" BookingRelease : terminated by
+    BookingReleaseView "1" --> "1" PropertyBooking : presents

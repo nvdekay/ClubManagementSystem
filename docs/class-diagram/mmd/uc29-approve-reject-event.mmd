@@ -1,0 +1,77 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventDecisionController {
+        <<boundary>>
+        +openDecision(UUID proposalId) EventDecisionView
+        +decide(UUID proposalId, EventDecisionCommand command) EventDecision
+    }
+    class EventDecisionService {
+        <<service>>
+        +loadDecisionContext(UUID proposalId, UUID officerId) EventDecisionView
+        +decide(UUID proposalId, UUID officerId, EventDecisionCommand command) EventDecision
+    }
+    class IEventProposalRepository {
+        <<interface>>
+        +findAssessed(UUID proposalId) Optional~EventProposalVersion~
+        +applyDecision(UUID proposalId, EventDecision decision) void
+    }
+    class IConflictCheckService {
+        <<interface>>
+        +recheck(UUID proposalId) ConflictResult
+    }
+    class IPropertyBookingService {
+        <<interface>>
+        +continueApproval(UUID bookingId) void
+        +releaseHold(UUID bookingId) void
+    }
+    class EventProposalVersion {
+        <<entity>>
+        -UUID id
+        -RiskLevel riskLevel
+        -ProposalStatus status
+        +isDecisionReady() boolean
+    }
+    class EventAssessment {
+        <<entity>>
+        -UUID id
+        -ReviewRoute route
+        -String reviewNote
+    }
+    class EventDecision {
+        <<entity>>
+        -UUID id
+        -DecisionOutcome outcome
+        -String reason
+        -List~String~ conditions
+        -UUID decidedBy
+        -Instant decidedAt
+        +requiresReason() boolean
+    }
+    class EventDecisionView {
+        <<record>>
+        +EventProposalVersion proposal
+        +EventAssessment assessment
+        +ConflictResult conflict
+        +Optional~BookingStatus~ bookingStatus
+    }
+
+    EventDecisionController ..> EventDecisionService : delegates
+    EventDecisionService ..> IEventProposalRepository : persists through
+    EventDecisionService ..> IConflictCheckService : verifies through
+    EventDecisionService ..> IPropertyBookingService : coordinates through
+    IEventProposalRepository ..> EventProposalVersion : loads
+    IEventProposalRepository ..> EventDecision : persists
+    EventProposalVersion "1" --> "1" EventAssessment : has
+    EventProposalVersion "1" --> "0..1" EventDecision : resolved by
+    EventDecisionView "1" --> "1" EventProposalVersion : presents

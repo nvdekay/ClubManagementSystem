@@ -1,0 +1,74 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class ParticipantCheckInController {
+        <<boundary>>
+        +openConsole(UUID eventId) CheckInConsoleView
+        +checkIn(UUID eventId, CheckInCommand command) CheckInResult
+        +manualCheckIn(UUID eventId, ManualCheckInCommand command) CheckInResult
+    }
+    class ParticipantCheckInService {
+        <<service>>
+        +checkIn(UUID eventId, CheckInCommand command) CheckInResult
+        +manualCheckIn(UUID eventId, UUID operatorId, UUID studentId, String reason) CheckInResult
+    }
+    class IEventRegistrationRepository {
+        <<interface>>
+        +findByCredential(UUID eventId, String credential) Optional~EventRegistration~
+        +findConfirmed(UUID eventId, UUID studentId) Optional~EventRegistration~
+    }
+    class IAttendanceRepository {
+        <<interface>>
+        +findByEventAndStudent(UUID eventId, UUID studentId) Optional~AttendanceRecord~
+        +save(AttendanceRecord attendance) AttendanceRecord
+    }
+    class EventRegistration {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -UUID studentId
+        -RegistrationStatus status
+        -CheckInCredential credential
+        +isConfirmed() boolean
+    }
+    class AttendanceRecord {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -UUID studentId
+        -CheckInMethod method
+        -Instant checkedInAt
+        -Optional~UUID~ operatorId
+        -Optional~String~ manualReason
+    }
+    class CheckInWindow {
+        <<value object>>
+        -Instant opensAt
+        -Instant closesAt
+        +contains(Instant at) boolean
+    }
+    class CheckInResult {
+        <<record>>
+        +CheckInOutcome outcome
+        +AttendanceRecord attendance
+        +boolean duplicate
+    }
+
+    ParticipantCheckInController ..> ParticipantCheckInService : delegates
+    ParticipantCheckInService ..> IEventRegistrationRepository : resolves through
+    ParticipantCheckInService ..> IAttendanceRepository : persists through
+    ParticipantCheckInService ..> CheckInWindow : validates
+    IEventRegistrationRepository ..> EventRegistration : loads
+    IAttendanceRepository ..> AttendanceRecord : persists
+    EventRegistration "1" --> "0..1" AttendanceRecord : produces
+    CheckInResult "1" --> "1" AttendanceRecord : reports

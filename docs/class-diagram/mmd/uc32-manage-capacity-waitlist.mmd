@@ -1,0 +1,76 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class CapacityWaitlistController {
+        <<boundary>>
+        +openRegistrationPanel(UUID eventId) CapacityView
+        +changeCapacity(UUID eventId, CapacityChangeCommand command) CapacityView
+        +promoteNext(UUID eventId) PromotionResult
+    }
+    class CapacityWaitlistService {
+        <<service>>
+        +changeCapacity(UUID eventId, UUID memberId, int newCapacity) CapacityView
+        +handleFreedSlot(UUID eventId) PromotionResult
+        +expireOffer(UUID offerId) PromotionResult
+    }
+    class IEventRepository {
+        <<interface>>
+        +findPublished(UUID eventId) Optional~PublishedEvent~
+        +updateCapacity(UUID eventId, int capacity) void
+    }
+    class IEventRegistrationRepository {
+        <<interface>>
+        +listConfirmed(UUID eventId) List~EventRegistration~
+        +listWaitlisted(UUID eventId) List~EventRegistration~
+        +save(EventRegistration registration) void
+    }
+    class IWaitlistPromotionPolicy {
+        <<interface>>
+        +selectNext(List~EventRegistration~ candidates) EventRegistration
+        +requiresAcceptance() boolean
+        +offerDuration() Duration
+    }
+    class PublishedEvent {
+        <<entity>>
+        -UUID eventId
+        -int approvedCapacity
+        -int currentCapacity
+        +canSetCapacity(int value, int confirmedCount) boolean
+    }
+    class EventRegistration {
+        <<entity>>
+        -UUID id
+        -UUID studentId
+        -RegistrationStatus status
+        -int waitlistPosition
+        +promote() void
+    }
+    class WaitlistOffer {
+        <<entity>>
+        -UUID id
+        -UUID registrationId
+        -Instant expiresAt
+        -OfferStatus status
+        +accept() void
+        +expire() void
+    }
+
+    CapacityWaitlistController ..> CapacityWaitlistService : delegates
+    CapacityWaitlistService ..> IEventRepository : updates through
+    CapacityWaitlistService ..> IEventRegistrationRepository : reorders through
+    CapacityWaitlistService ..> IWaitlistPromotionPolicy : applies
+    IEventRepository ..> PublishedEvent : persists
+    IEventRegistrationRepository ..> EventRegistration : persists
+    IWaitlistPromotionPolicy ..> EventRegistration : selects
+    PublishedEvent "1" --> "0..*" EventRegistration : controls
+    EventRegistration "1" --> "0..1" WaitlistOffer : receives

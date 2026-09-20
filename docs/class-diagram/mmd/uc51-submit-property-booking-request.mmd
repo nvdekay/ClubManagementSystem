@@ -1,0 +1,77 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class PropertyBookingRequestController {
+        <<boundary>>
+        +browseCatalogue(PropertySearchQuery query) List~PropertyAvailability~
+        +saveDraft(UUID clubId, PropertyBookingCommand command) PropertyBooking
+        +submit(UUID clubId, PropertyBookingCommand command) PropertyBooking
+    }
+    class PropertyBookingRequestService {
+        <<service>>
+        +search(PropertySearchQuery query) List~PropertyAvailability~
+        +saveDraft(UUID clubId, UUID memberId, PropertyBookingCommand command) PropertyBooking
+        +submit(UUID clubId, UUID memberId, PropertyBookingCommand command) PropertyBooking
+    }
+    class IPropertyCatalogueRepository {
+        <<interface>>
+        +findById(UUID propertyId) Optional~Property~
+        +search(PropertySearchQuery query) List~Property~
+    }
+    class IPropertyBookingRepository {
+        <<interface>>
+        +save(PropertyBooking booking) PropertyBooking
+        +findOverlapping(UUID propertyId, TimeWindow window) List~PropertyBooking~
+    }
+    class IBookingConflictPolicy {
+        <<interface>>
+        +evaluate(Property property, TimeWindow window, List~PropertyBooking~ existing) ConflictResult
+    }
+    class Property {
+        <<entity>>
+        -UUID id
+        -String name
+        -PropertyType type
+        -int capacity
+        -List~String~ attachedEquipment
+        +canHost(int headcount) boolean
+    }
+    class PropertyBooking {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -UUID propertyId
+        -Optional~UUID~ eventId
+        -TimeWindow timeWindow
+        -String purpose
+        -int expectedHeadcount
+        -BookingStatus status
+        +submit() void
+    }
+    class PropertyAvailability {
+        <<record>>
+        +Property property
+        +TimeWindow requestedWindow
+        +ConflictResult conflict
+    }
+
+    PropertyBookingRequestController ..> PropertyBookingRequestService : delegates
+    PropertyBookingRequestService ..> IPropertyCatalogueRepository : reads through
+    PropertyBookingRequestService ..> IPropertyBookingRepository : persists through
+    PropertyBookingRequestService ..> IBookingConflictPolicy : checks through
+    IPropertyCatalogueRepository ..> Property : loads
+    IPropertyBookingRepository ..> PropertyBooking : persists
+    IBookingConflictPolicy ..> Property : evaluates
+    IBookingConflictPolicy ..> PropertyBooking : compares
+    Property "1" --> "0..*" PropertyBooking : reserved by
+    PropertyAvailability "1" --> "1" Property : describes

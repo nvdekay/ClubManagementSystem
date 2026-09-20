@@ -1,0 +1,75 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class BudgetRevisionController {
+        <<boundary>>
+        +openRevision(UUID requestId) BudgetRevisionView
+        +resubmit(UUID requestId, BudgetRevisionCommand command) BudgetRequestVersion
+        +withdraw(UUID requestId, String reason) BudgetRequest
+    }
+    class BudgetRevisionService {
+        <<service>>
+        +prepare(UUID requestId, UUID memberId) BudgetRevisionView
+        +resubmit(UUID requestId, UUID memberId, BudgetRevisionCommand command) BudgetRequestVersion
+        +withdraw(UUID requestId, UUID memberId, String reason) BudgetRequest
+    }
+    class IBudgetRequestRepository {
+        <<interface>>
+        +findRevisionRequested(UUID requestId) Optional~BudgetRequest~
+        +appendVersion(UUID requestId, BudgetRequestVersion version) BudgetRequestVersion
+        +withdraw(UUID requestId, String reason) void
+    }
+    class IAllocationService {
+        <<interface>>
+        +releaseCommitment(UUID requestId) void
+    }
+    class BudgetRequest {
+        <<entity>>
+        -UUID id
+        -BudgetRequestStatus status
+        -BusinessPurpose purpose
+        -Instant revisionDeadline
+        +canRevise(Instant at) boolean
+    }
+    class BudgetRequestVersion {
+        <<entity>>
+        -UUID id
+        -UUID requestId
+        -int versionNumber
+        -List~BudgetLine~ lines
+        -Money requestedTotal
+        -Instant createdAt
+    }
+    class BudgetAssessment {
+        <<entity>>
+        -UUID id
+        -List~RevisionComment~ comments
+        -Instant assessedAt
+    }
+    class ApprovalHistoryEntry {
+        <<entity>>
+        -UUID id
+        -DecisionOutcome outcome
+        -UUID actorId
+        -Instant occurredAt
+        -String reason
+    }
+
+    BudgetRevisionController ..> BudgetRevisionService : delegates
+    BudgetRevisionService ..> IBudgetRequestRepository : appends through
+    BudgetRevisionService ..> IAllocationService : releases through
+    IBudgetRequestRepository ..> BudgetRequest : loads
+    IBudgetRequestRepository ..> BudgetRequestVersion : persists
+    BudgetRequest "1" *-- "1..*" BudgetRequestVersion : versions
+    BudgetRequest "1" --> "0..*" BudgetAssessment : receives
+    BudgetRequest "1" --> "0..*" ApprovalHistoryEntry : preserves

@@ -1,0 +1,79 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class BudgetRequestController {
+        <<boundary>>
+        +openForm(UUID clubId) BudgetRequestView
+        +saveDraft(UUID clubId, BudgetRequestCommand command) BudgetRequest
+        +submit(UUID clubId, BudgetRequestCommand command) BudgetRequest
+    }
+    class BudgetRequestService {
+        <<service>>
+        +prepare(UUID clubId, UUID memberId) BudgetRequestView
+        +saveDraft(UUID clubId, BudgetRequestCommand command) BudgetRequest
+        +submit(UUID clubId, UUID memberId, BudgetRequestCommand command) BudgetRequest
+    }
+    class IBudgetRequestRepository {
+        <<interface>>
+        +findDuplicate(UUID clubId, BusinessPurpose purpose, ReportingPeriod period) Optional~BudgetRequest~
+        +save(BudgetRequest request) BudgetRequest
+    }
+    class IAllocationQuery {
+        <<interface>>
+        +getAvailableAllocation(UUID clubId, ReportingPeriod period) Money
+    }
+    class IBusinessPurposePolicy {
+        <<interface>>
+        +validate(UUID clubId, BusinessPurpose purpose) PurposeValidation
+    }
+    class BudgetRequest {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -BusinessPurpose purpose
+        -ReportingPeriod period
+        -String justification
+        -BudgetRequestStatus status
+        -Money requestedTotal
+        +calculateTotal() Money
+        +submit() void
+    }
+    class BudgetLine {
+        <<entity>>
+        -UUID id
+        -ExpenseCategory category
+        -Money amount
+        -String expectedExpense
+        +isValid() boolean
+    }
+    class BusinessPurpose {
+        <<value object>>
+        -PurposeType type
+        -UUID referenceId
+    }
+    class BudgetRequestView {
+        <<record>>
+        +Money remainingAllocation
+        +List~ExpenseCategory~ allowedCategories
+        +List~BusinessPurpose~ availablePurposes
+    }
+
+    BudgetRequestController ..> BudgetRequestService : delegates
+    BudgetRequestService ..> IBudgetRequestRepository : persists through
+    BudgetRequestService ..> IAllocationQuery : queries through
+    BudgetRequestService ..> IBusinessPurposePolicy : validates through
+    IBudgetRequestRepository ..> BudgetRequest : persists
+    IBudgetRequestRepository ..> BusinessPurpose : queries by
+    IBusinessPurposePolicy ..> BusinessPurpose : validates
+    BudgetRequest "1" *-- "1..*" BudgetLine : itemizes
+    BudgetRequest "1" --> "1" BusinessPurpose : funds

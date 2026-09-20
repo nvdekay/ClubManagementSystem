@@ -1,0 +1,77 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class BudgetReconciliationController {
+        <<boundary>>
+        +openReconciliation(UUID requestId) ReconciliationView
+        +requestEvidence(UUID requestId, List~UUID~ expenseIds) void
+        +complete(UUID requestId, ReconciliationCommand command) BudgetReconciliation
+    }
+    class BudgetReconciliationService {
+        <<service>>
+        +calculate(UUID requestId) ReconciliationView
+        +requestMissingEvidence(UUID requestId, List~UUID~ expenseIds) void
+        +complete(UUID requestId, UUID officerId, ReconciliationCommand command) BudgetReconciliation
+    }
+    class IFinanceLedgerQuery {
+        <<interface>>
+        +getApprovedAmount(UUID requestId) Money
+        +sumDisbursements(UUID requestId) Money
+        +listExpenses(UUID requestId) List~Expense~
+    }
+    class IBudgetReconciliationRepository {
+        <<interface>>
+        +findByRequest(UUID requestId) Optional~BudgetReconciliation~
+        +save(BudgetReconciliation reconciliation) BudgetReconciliation
+    }
+    class IComplianceCaseService {
+        <<interface>>
+        +openForBudget(UUID requestId, String reason) UUID
+    }
+    class Expense {
+        <<entity>>
+        -UUID id
+        -Money amount
+        -ExpenseSupportStatus supportStatus
+        -boolean categoryException
+        +isException() boolean
+    }
+    class ReconciliationSummary {
+        <<value object>>
+        +Money approved
+        +Money disbursed
+        +Money recorded
+        +Money supported
+        +Money unsupported
+        +Money remaining
+        +Money amountToReturn
+    }
+    class BudgetReconciliation {
+        <<entity>>
+        -UUID id
+        -UUID requestId
+        -ReconciliationStatus status
+        -ReconciliationSummary summary
+        -Optional~String~ note
+        -Instant completedAt
+        +hasUnresolvedExceptions() boolean
+    }
+
+    BudgetReconciliationController ..> BudgetReconciliationService : delegates
+    BudgetReconciliationService ..> IFinanceLedgerQuery : calculates through
+    BudgetReconciliationService ..> IBudgetReconciliationRepository : persists through
+    BudgetReconciliationService ..> IComplianceCaseService : escalates through
+    IFinanceLedgerQuery ..> Expense : loads
+    IBudgetReconciliationRepository ..> BudgetReconciliation : persists
+    BudgetReconciliation "1" *-- "1" ReconciliationSummary : captures
+    BudgetReconciliation "1" --> "0..*" Expense : reviews

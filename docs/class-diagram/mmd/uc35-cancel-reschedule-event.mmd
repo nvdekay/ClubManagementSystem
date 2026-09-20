@@ -1,0 +1,75 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventChangeController {
+        <<boundary>>
+        +previewChange(UUID eventId, EventChangeCommand command) EventImpactView
+        +applyChange(UUID eventId, EventChangeCommand command) EventChange
+    }
+    class EventChangeService {
+        <<service>>
+        +previewImpact(UUID eventId, EventChangeCommand command) EventImpactView
+        +cancel(UUID eventId, UUID actorId, String reason) EventChange
+        +reschedule(UUID eventId, UUID actorId, EventSchedule schedule, String reason) EventChange
+    }
+    class IEventRepository {
+        <<interface>>
+        +findChangeable(UUID eventId) Optional~Event~
+        +applyChange(UUID eventId, EventChange change) Event
+    }
+    class IConflictCheckService {
+        <<interface>>
+        +check(EventSchedule schedule) ConflictResult
+    }
+    class IEventChangeCoordinator {
+        <<interface>>
+        +releaseOrUpdateBooking(UUID eventId, EventChange change) void
+        +releaseRegistrations(UUID eventId) void
+        +recalculateObligations(UUID eventId, EventChange change) void
+        +notifyRegistrants(UUID eventId, EventChange change) void
+    }
+    class Event {
+        <<entity>>
+        -UUID id
+        -EventStatus status
+        -EventSchedule schedule
+        -RiskLevel riskLevel
+        +canChange(Instant now) boolean
+    }
+    class EventChange {
+        <<entity>>
+        -UUID id
+        -EventChangeType type
+        -String reason
+        -Optional~EventSchedule~ newSchedule
+        -boolean requiresReapproval
+        -UUID changedBy
+        -Instant changedAt
+    }
+    class EventImpactView {
+        <<record>>
+        +int registrationCount
+        +Optional~BookingStatus~ bookingStatus
+        +Money budgetImpact
+        +Optional~Instant~ reportDeadline
+    }
+
+    EventChangeController ..> EventChangeService : delegates
+    EventChangeService ..> IEventRepository : persists through
+    EventChangeService ..> IConflictCheckService : rechecks through
+    EventChangeService ..> IEventChangeCoordinator : coordinates through
+    IEventRepository ..> Event : loads
+    IEventRepository ..> EventChange : persists
+    IEventChangeCoordinator ..> EventChange : coordinates
+    Event "1" --> "0..*" EventChange : changed by
+    EventChange "1" ..> EventImpactView : produces

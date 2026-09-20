@@ -1,0 +1,77 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class PeriodicReportAssessmentController {
+        <<boundary>>
+        +openAssessment(UUID reportId) PeriodicReportAssessmentView
+        +assess(UUID reportId, PeriodicAssessmentCommand command) PeriodicReportAssessment
+    }
+    class PeriodicReportAssessmentService {
+        <<service>>
+        +loadContext(UUID reportId, UUID officerId) PeriodicReportAssessmentView
+        +assess(UUID reportId, UUID officerId, PeriodicAssessmentCommand command) PeriodicReportAssessment
+    }
+    class IPeriodicReportRepository {
+        <<interface>>
+        +findSubmitted(UUID reportId) Optional~PeriodicActivityReport~
+        +applyAssessment(UUID reportId, PeriodicReportAssessment assessment) void
+    }
+    class IEvaluationInputService {
+        <<interface>>
+        +releaseAcceptedReport(UUID reportId) void
+    }
+    class IComplianceCaseService {
+        <<interface>>
+        +openForReport(UUID reportId, String reason) UUID
+    }
+    class PeriodicActivityReport {
+        <<entity>>
+        -UUID id
+        -ReportStatus status
+        -List~MetricSnapshot~ metrics
+        -Map~String, String~ narratives
+        +isSubmitted() boolean
+    }
+    class PeriodicReportAssessment {
+        <<entity>>
+        -UUID id
+        -ReportOutcome outcome
+        -List~RevisionComment~ comments
+        -Optional~Instant~ correctionDeadline
+        -UUID assessedBy
+        -Instant assessedAt
+        +requiresComments() boolean
+    }
+    class ReportInconsistency {
+        <<value object>>
+        -String section
+        -String systemValue
+        -String narrativeValue
+        -FindingSeverity severity
+    }
+    class PeriodicReportAssessmentView {
+        <<record>>
+        +PeriodicActivityReport report
+        +List~ReportInconsistency~ inconsistencies
+        +EvidenceChecklist checklist
+    }
+
+    PeriodicReportAssessmentController ..> PeriodicReportAssessmentService : delegates
+    PeriodicReportAssessmentService ..> IPeriodicReportRepository : persists through
+    PeriodicReportAssessmentService ..> IEvaluationInputService : releases through
+    PeriodicReportAssessmentService ..> IComplianceCaseService : escalates through
+    IPeriodicReportRepository ..> PeriodicActivityReport : loads
+    IPeriodicReportRepository ..> PeriodicReportAssessment : persists
+    PeriodicActivityReport "1" --> "0..*" PeriodicReportAssessment : assessed by
+    PeriodicReportAssessmentView "1" --> "1" PeriodicActivityReport : presents
+    PeriodicReportAssessmentView "1" *-- "0..*" ReportInconsistency : highlights

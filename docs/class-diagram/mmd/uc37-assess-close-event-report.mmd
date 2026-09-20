@@ -1,0 +1,73 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventReportAssessmentController {
+        <<boundary>>
+        +openAssessment(UUID reportId) EventReportAssessmentView
+        +assess(UUID reportId, ReportAssessmentCommand command) ReportAssessment
+    }
+    class EventReportAssessmentService {
+        <<service>>
+        +loadContext(UUID reportId, UUID officerId) EventReportAssessmentView
+        +assess(UUID reportId, UUID officerId, ReportAssessmentCommand command) ReportAssessment
+    }
+    class IPostEventReportRepository {
+        <<interface>>
+        +findSubmitted(UUID reportId) Optional~PostEventReport~
+        +applyAssessment(UUID reportId, ReportAssessment assessment) void
+    }
+    class IEventClosureCoordinator {
+        <<interface>>
+        +closeEvent(UUID eventId) void
+        +requestCorrection(UUID reportId, List~RevisionComment~ comments, Instant deadline) void
+        +raiseComplianceCase(UUID eventId, UUID reportId, String reason) UUID
+    }
+    class IReconciliationQuery {
+        <<interface>>
+        +getEventFinanceStatus(UUID eventId) ReconciliationStatus
+    }
+    class PostEventReport {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -ReportStatus status
+        -String actualResult
+        +isSubmitted() boolean
+    }
+    class ReportAssessment {
+        <<entity>>
+        -UUID id
+        -ReportOutcome outcome
+        -Optional~String~ reason
+        -List~RevisionComment~ comments
+        -UUID assessedBy
+        -Instant assessedAt
+        +requiresReason() boolean
+    }
+    class EventReportAssessmentView {
+        <<record>>
+        +PostEventReport report
+        +PlanActualComparison comparison
+        +OfficialAttendance attendance
+        +FinanceSummary finance
+        +ReconciliationStatus reconciliationStatus
+    }
+
+    EventReportAssessmentController ..> EventReportAssessmentService : delegates
+    EventReportAssessmentService ..> IPostEventReportRepository : persists through
+    EventReportAssessmentService ..> IEventClosureCoordinator : routes through
+    EventReportAssessmentService ..> IReconciliationQuery : checks through
+    IPostEventReportRepository ..> PostEventReport : loads
+    IPostEventReportRepository ..> ReportAssessment : persists
+    PostEventReport "1" --> "0..*" ReportAssessment : assessed by
+    EventReportAssessmentView "1" --> "1" PostEventReport : presents

@@ -1,0 +1,86 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EvaluationGenerationController {
+        <<boundary>>
+        +previewRun(UUID periodId, List~UUID~ clubIds) EvaluationRunView
+        +generate(UUID periodId, List~UUID~ clubIds) List~EvaluationDraft~
+    }
+    class EvaluationGenerationService {
+        <<service>>
+        +validateScheme(UUID periodId) EvaluationScheme
+        +generate(UUID periodId, List~UUID~ clubIds) List~EvaluationDraft~
+        +regenerate(UUID draftId, String reason) EvaluationDraft
+    }
+    class IEvaluationSourceQuery {
+        <<interface>>
+        +collectVerifiedInputs(UUID clubId, ReportingPeriod period) List~EvaluationInput~
+    }
+    class IEvaluationDraftRepository {
+        <<interface>>
+        +findByClubAndPeriod(UUID clubId, UUID periodId) Optional~EvaluationDraft~
+        +save(EvaluationDraft draft) EvaluationDraft
+        +supersede(UUID previousDraftId, UUID newDraftId) void
+    }
+    class EvaluationScheme {
+        <<entity>>
+        -UUID id
+        -String name
+        -SchemeStatus status
+        -List~EvaluationDimension~ dimensions
+        +hasValidTotalWeight() boolean
+    }
+    class EvaluationDimension {
+        <<entity>>
+        -UUID id
+        -String name
+        -Decimal weight
+        -ScoringRule scoringRule
+        +score(List~EvaluationInput~ inputs) DimensionScore
+    }
+    class EvaluationInput {
+        <<record>>
+        +InputType type
+        +String sourceReference
+        +Decimal value
+        +boolean verified
+    }
+    class DimensionScore {
+        <<value object>>
+        -UUID dimensionId
+        -Optional~Decimal~ rawScore
+        -Optional~Decimal~ weightedScore
+        -ScoreStatus status
+        -List~String~ sourceReferences
+    }
+    class EvaluationDraft {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -ReportingPeriod period
+        -List~DimensionScore~ scores
+        -Optional~Decimal~ totalScore
+        -List~String~ anomalyFlags
+        -DraftStatus status
+        +recalculate() void
+    }
+
+    EvaluationGenerationController ..> EvaluationGenerationService : delegates
+    EvaluationGenerationService ..> IEvaluationSourceQuery : collects through
+    EvaluationGenerationService ..> IEvaluationDraftRepository : persists through
+    EvaluationGenerationService ..> EvaluationScheme : applies
+    IEvaluationSourceQuery ..> EvaluationInput : supplies
+    IEvaluationDraftRepository ..> EvaluationDraft : persists
+    EvaluationScheme "1" *-- "1..*" EvaluationDimension : defines
+    EvaluationDimension "1" ..> EvaluationInput : scores
+    EvaluationDraft "1" *-- "1..*" DimensionScore : contains

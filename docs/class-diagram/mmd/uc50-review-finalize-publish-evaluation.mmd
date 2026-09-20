@@ -1,0 +1,88 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EvaluationPublicationController {
+        <<boundary>>
+        +openReview(UUID draftId) EvaluationReviewView
+        +adjustScore(UUID draftId, ScoreAdjustmentCommand command) EvaluationDraft
+        +finalize(UUID draftId) Evaluation
+        +publish(UUID evaluationId) EvaluationSnapshot
+        +revise(UUID evaluationId, String reason) EvaluationDraft
+    }
+    class EvaluationPublicationService {
+        <<service>>
+        +review(UUID draftId) EvaluationReviewView
+        +adjust(UUID draftId, UUID officerId, ScoreAdjustmentCommand command) EvaluationDraft
+        +finalize(UUID draftId, UUID officerId) Evaluation
+        +publish(UUID evaluationId, UUID officerId) EvaluationSnapshot
+        +createRevision(UUID evaluationId, UUID officerId, String reason) EvaluationDraft
+    }
+    class IEvaluationRepository {
+        <<interface>>
+        +findDraft(UUID draftId) Optional~EvaluationDraft~
+        +saveEvaluation(Evaluation evaluation) Evaluation
+        +saveSnapshot(EvaluationSnapshot snapshot) EvaluationSnapshot
+        +appendRevision(EvaluationDraft draft) EvaluationDraft
+    }
+    class IEvaluationSourceQuery {
+        <<interface>>
+        +drillDown(List~String~ sourceReferences) List~EvaluationInput~
+    }
+    class EvaluationDraft {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -List~DimensionScore~ scores
+        -List~String~ anomalyFlags
+        -DraftStatus status
+        +recalculate() Decimal
+        +hasUnresolvedAnomalies() boolean
+    }
+    class ScoreAdjustment {
+        <<entity>>
+        -UUID id
+        -UUID dimensionId
+        -Decimal originalValue
+        -Decimal adjustedValue
+        -String justification
+        -UUID adjustedBy
+        -Instant adjustedAt
+    }
+    class Evaluation {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -int revisionNumber
+        -Decimal totalScore
+        -EvaluationStatus status
+        -Instant finalizedAt
+        +lock() void
+    }
+    class EvaluationSnapshot {
+        <<entity>>
+        -UUID id
+        -UUID evaluationId
+        -int revisionNumber
+        -String contentHash
+        -Instant publishedAt
+    }
+
+    EvaluationPublicationController ..> EvaluationPublicationService : delegates
+    EvaluationPublicationService ..> IEvaluationRepository : persists through
+    EvaluationPublicationService ..> IEvaluationSourceQuery : verifies through
+    IEvaluationRepository ..> EvaluationDraft : loads
+    IEvaluationRepository ..> Evaluation : persists
+    IEvaluationRepository ..> EvaluationSnapshot : persists
+    EvaluationDraft "1" *-- "0..*" ScoreAdjustment : records
+    EvaluationDraft "1" --> "0..1" Evaluation : finalized as
+    Evaluation "1" *-- "1..*" EvaluationSnapshot : published as

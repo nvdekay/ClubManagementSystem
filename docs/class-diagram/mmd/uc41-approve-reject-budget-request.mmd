@@ -1,0 +1,81 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class BudgetDecisionController {
+        <<boundary>>
+        +openDecision(UUID requestId) BudgetDecisionView
+        +decide(UUID requestId, BudgetDecisionCommand command) BudgetDecision
+    }
+    class BudgetDecisionService {
+        <<service>>
+        +loadDecisionContext(UUID requestId, UUID officerId) BudgetDecisionView
+        +decide(UUID requestId, UUID officerId, BudgetDecisionCommand command) BudgetDecision
+    }
+    class IBudgetRequestRepository {
+        <<interface>>
+        +findAssessed(UUID requestId) Optional~BudgetRequest~
+        +applyDecision(UUID requestId, BudgetDecision decision) void
+    }
+    class IAllocationService {
+        <<interface>>
+        +getRemaining(UUID clubId, ReportingPeriod period) Money
+        +commit(UUID requestId, Money amount) AllocationCommitment
+    }
+    class IApprovalAuthorityPolicy {
+        <<interface>>
+        +canApprove(UUID officerId, Money amount) boolean
+    }
+    class BudgetRequest {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -Money requestedAmount
+        -BudgetRequestStatus status
+        -ReportingPeriod period
+        +isDecisionReady() boolean
+    }
+    class BudgetDecision {
+        <<entity>>
+        -UUID id
+        -DecisionOutcome outcome
+        -Money approvedAmount
+        -Optional~String~ reason
+        -UUID decidedBy
+        -Instant decidedAt
+        +requiresReason(Money requestedAmount) boolean
+    }
+    class AllocationCommitment {
+        <<entity>>
+        -UUID id
+        -UUID requestId
+        -Money amount
+        -Instant committedAt
+    }
+    class BudgetDecisionView {
+        <<record>>
+        +BudgetRequest request
+        +BudgetAssessment assessment
+        +Money remainingAllocation
+        +Money officerApprovalLimit
+    }
+
+    BudgetDecisionController ..> BudgetDecisionService : delegates
+    BudgetDecisionService ..> IBudgetRequestRepository : persists through
+    BudgetDecisionService ..> IAllocationService : commits through
+    BudgetDecisionService ..> IApprovalAuthorityPolicy : authorizes through
+    IBudgetRequestRepository ..> BudgetRequest : loads
+    IBudgetRequestRepository ..> BudgetDecision : persists
+    IAllocationService ..> AllocationCommitment : creates
+    BudgetRequest "1" --> "0..1" BudgetDecision : resolved by
+    BudgetDecision "1" --> "0..1" AllocationCommitment : creates
+    BudgetDecisionView "1" --> "1" BudgetRequest : presents

@@ -1,0 +1,71 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventPublicationController {
+        <<boundary>>
+        +openPublication(UUID eventId) PublicationView
+        +publish(UUID eventId, PublicationCommand command) PublishedEvent
+    }
+    class EventPublicationService {
+        <<service>>
+        +publish(UUID eventId, UUID memberId, PublicationCommand command) PublishedEvent
+        +activateRegistration(UUID eventId, Instant now) void
+    }
+    class IEventRepository {
+        <<interface>>
+        +findApproved(UUID eventId) Optional~Event~
+        +savePublished(PublishedEvent event) PublishedEvent
+    }
+    class INotificationService {
+        <<interface>>
+        +notifyAudience(UUID eventId, Audience audience) void
+    }
+    class Event {
+        <<entity>>
+        -UUID id
+        -EventStatus status
+        -Instant startsAt
+        -int approvedCapacity
+        -Audience audience
+        +canPublish() boolean
+    }
+    class PublishedEvent {
+        <<entity>>
+        -UUID eventId
+        -RegistrationWindow registrationWindow
+        -int capacity
+        -PublicationStatus publicationStatus
+        -Instant publishedAt
+        +acceptsRegistration(Instant at) boolean
+    }
+    class RegistrationWindow {
+        <<value object>>
+        -Instant opensAt
+        -Instant closesAt
+        +isValidFor(Instant eventStartsAt) boolean
+        +contains(Instant at) boolean
+    }
+    class PublicationCommand {
+        <<record>>
+        +RegistrationWindow registrationWindow
+        +int capacity
+    }
+
+    EventPublicationController ..> EventPublicationService : delegates
+    EventPublicationService ..> IEventRepository : persists through
+    EventPublicationService ..> INotificationService : announces through
+    IEventRepository ..> Event : loads
+    IEventRepository ..> PublishedEvent : persists
+    Event "1" --> "0..1" PublishedEvent : published as
+    PublishedEvent "1" *-- "1" RegistrationWindow : governs
+    PublicationCommand "1" --> "1" RegistrationWindow : carries

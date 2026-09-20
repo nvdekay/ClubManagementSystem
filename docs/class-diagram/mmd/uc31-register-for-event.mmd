@@ -1,0 +1,71 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventRegistrationController {
+        <<boundary>>
+        +openRegistration(UUID eventId) RegistrationView
+        +register(UUID eventId, RegistrationCommand command) EventRegistration
+    }
+    class EventRegistrationService {
+        <<service>>
+        +register(UUID eventId, UUID studentId, RegistrationCommand command) EventRegistration
+        +determineOutcome(PublishedEvent event, UUID studentId) RegistrationStatus
+    }
+    class IEventRepository {
+        <<interface>>
+        +findPublished(UUID eventId) Optional~PublishedEvent~
+    }
+    class IEventRegistrationRepository {
+        <<interface>>
+        +exists(UUID eventId, UUID studentId) boolean
+        +countConfirmed(UUID eventId) int
+        +nextWaitlistPosition(UUID eventId) int
+        +save(EventRegistration registration) EventRegistration
+    }
+    class IEligibilityPolicy {
+        <<interface>>
+        +isEligible(UUID studentId, Audience audience) boolean
+    }
+    class PublishedEvent {
+        <<entity>>
+        -UUID eventId
+        -RegistrationWindow registrationWindow
+        -int capacity
+        -Audience audience
+        +hasCapacity(int confirmedCount) boolean
+    }
+    class EventRegistration {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -UUID studentId
+        -RegistrationStatus status
+        -Optional~int~ waitlistPosition
+        -Optional~CheckInCredential~ credential
+        -Instant registeredAt
+    }
+    class CheckInCredential {
+        <<value object>>
+        -String token
+        -Instant expiresAt
+        +isValidAt(Instant at) boolean
+    }
+
+    EventRegistrationController ..> EventRegistrationService : delegates
+    EventRegistrationService ..> IEventRepository : reads through
+    EventRegistrationService ..> IEventRegistrationRepository : persists through
+    EventRegistrationService ..> IEligibilityPolicy : checks through
+    IEventRepository ..> PublishedEvent : loads
+    IEventRegistrationRepository ..> EventRegistration : persists
+    PublishedEvent "1" --> "0..*" EventRegistration : receives
+    EventRegistration "1" --> "0..1" CheckInCredential : issues

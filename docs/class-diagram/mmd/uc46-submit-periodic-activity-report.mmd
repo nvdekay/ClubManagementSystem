@@ -1,0 +1,75 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class PeriodicReportController {
+        <<boundary>>
+        +openReport(UUID clubId, UUID periodId) PeriodicReportView
+        +saveDraft(UUID clubId, UUID periodId, PeriodicReportCommand command) PeriodicActivityReport
+        +submit(UUID clubId, UUID periodId, PeriodicReportCommand command) PeriodicActivityReport
+    }
+    class PeriodicReportService {
+        <<service>>
+        +prepare(UUID clubId, UUID periodId) PeriodicReportView
+        +saveDraft(UUID clubId, UUID periodId, PeriodicReportCommand command) PeriodicActivityReport
+        +submit(UUID clubId, UUID periodId, UUID memberId, PeriodicReportCommand command) PeriodicActivityReport
+    }
+    class IPeriodicReportRepository {
+        <<interface>>
+        +findByClubAndPeriod(UUID clubId, UUID periodId) Optional~PeriodicActivityReport~
+        +save(PeriodicActivityReport report) PeriodicActivityReport
+    }
+    class IPeriodicReportDataSource {
+        <<interface>>
+        +getEventSummary(UUID clubId, ReportingPeriod period) MetricSnapshot
+        +getMembershipSummary(UUID clubId, ReportingPeriod period) MetricSnapshot
+        +getAttendanceSummary(UUID clubId, ReportingPeriod period) MetricSnapshot
+        +getFinanceSummary(UUID clubId, ReportingPeriod period) MetricSnapshot
+    }
+    class PeriodicActivityReport {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -ReportingPeriod period
+        -ReportStatus status
+        -Map~String, String~ narratives
+        -Instant deadline
+        -boolean late
+        +isComplete() boolean
+    }
+    class MetricSnapshot {
+        <<record>>
+        +String metricName
+        +Decimal value
+        +String sourceReference
+    }
+    class ReportEvidence {
+        <<entity>>
+        -UUID id
+        -EvidenceType type
+        -String storageReference
+    }
+    class ExplanatoryNote {
+        <<entity>>
+        -UUID id
+        -String metricName
+        -String explanation
+    }
+
+    PeriodicReportController ..> PeriodicReportService : delegates
+    PeriodicReportService ..> IPeriodicReportRepository : persists through
+    PeriodicReportService ..> IPeriodicReportDataSource : preloads through
+    IPeriodicReportRepository ..> PeriodicActivityReport : persists
+    IPeriodicReportDataSource ..> MetricSnapshot : supplies
+    PeriodicActivityReport "1" *-- "1..*" MetricSnapshot : snapshots
+    PeriodicActivityReport "1" *-- "0..*" ReportEvidence : supports
+    PeriodicActivityReport "1" *-- "0..*" ExplanatoryNote : annotates

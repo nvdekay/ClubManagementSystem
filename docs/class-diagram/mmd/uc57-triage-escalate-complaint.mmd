@@ -1,0 +1,80 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class ComplaintTriageController {
+        <<boundary>>
+        +openTriage(UUID complaintId) ComplaintTriageView
+        +decide(UUID complaintId, ComplaintDecisionCommand command) ComplaintDecision
+    }
+    class ComplaintTriageService {
+        <<service>>
+        +loadContext(UUID complaintId, UUID officerId) ComplaintTriageView
+        +decide(UUID complaintId, UUID officerId, ComplaintDecisionCommand command) ComplaintDecision
+    }
+    class IComplaintRepository {
+        <<interface>>
+        +findSubmitted(UUID complaintId) Optional~Complaint~
+        +applyDecision(UUID complaintId, ComplaintDecision decision) void
+    }
+    class IComplianceCaseService {
+        <<interface>>
+        +openFromComplaint(UUID complaintId, UUID clubId, Severity severity, String reason) ComplianceCase
+    }
+    class IClubResponseService {
+        <<interface>>
+        +grantComplaintAccess(UUID complaintId, UUID clubId) void
+        +openResponseWindow(UUID complaintId, Instant deadline) void
+    }
+    class Complaint {
+        <<entity>>
+        -UUID id
+        -UUID complainantId
+        -UUID clubId
+        -Optional~UUID~ eventId
+        -ComplaintStatus status
+        -List~ComplaintEvidence~ evidence
+        +isTriageable() boolean
+    }
+    class ComplaintClassification {
+        <<value object>>
+        -Severity severity
+        -Validity validity
+        -Instant handlingDeadline
+    }
+    class ComplaintDecision {
+        <<entity>>
+        -UUID id
+        -ComplaintOutcome outcome
+        -String reason
+        -ComplaintClassification classification
+        -UUID decidedBy
+        -Instant decidedAt
+    }
+    class ComplianceCase {
+        <<entity>>
+        -UUID id
+        -CaseOrigin origin
+        -UUID originReferenceId
+        -CaseStatus status
+    }
+
+    ComplaintTriageController ..> ComplaintTriageService : delegates
+    ComplaintTriageService ..> IComplaintRepository : persists through
+    ComplaintTriageService ..> IComplianceCaseService : escalates through
+    ComplaintTriageService ..> IClubResponseService : forwards through
+    IComplaintRepository ..> Complaint : loads
+    IComplaintRepository ..> ComplaintDecision : persists
+    IComplianceCaseService ..> ComplianceCase : creates
+    Complaint "1" --> "0..1" ComplaintDecision : resolved by
+    ComplaintDecision "1" --> "1" ComplaintClassification : records
+    Complaint "1" --> "0..1" ComplianceCase : originates

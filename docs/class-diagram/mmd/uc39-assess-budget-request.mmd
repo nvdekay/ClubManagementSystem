@@ -1,0 +1,76 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class BudgetAssessmentController {
+        <<boundary>>
+        +openAssessment(UUID requestId) BudgetAssessmentView
+        +recordAssessment(UUID requestId, BudgetAssessmentCommand command) BudgetAssessment
+    }
+    class BudgetAssessmentService {
+        <<service>>
+        +loadContext(UUID requestId, UUID officerId) BudgetAssessmentView
+        +assess(UUID requestId, UUID officerId, BudgetAssessmentCommand command) BudgetAssessment
+    }
+    class IBudgetRequestRepository {
+        <<interface>>
+        +findSubmitted(UUID requestId) Optional~BudgetRequest~
+        +saveAssessment(BudgetAssessment assessment) void
+        +changeStatus(UUID requestId, BudgetRequestStatus status) void
+    }
+    class IBudgetReviewQuery {
+        <<interface>>
+        +getAllocation(UUID clubId, ReportingPeriod period) AllocationSummary
+        +findPotentialDuplicates(UUID requestId) List~BudgetRequest~
+        +getPurposeStatus(BusinessPurpose purpose) PurposeStatus
+    }
+    class BudgetRequest {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -BusinessPurpose purpose
+        -Money requestedTotal
+        -BudgetRequestStatus status
+        +isAssessable() boolean
+    }
+    class BudgetAssessment {
+        <<entity>>
+        -UUID id
+        -UUID requestId
+        -UUID officerId
+        -AssessmentRoute route
+        -List~AssessmentFinding~ findings
+        -Instant assessedAt
+    }
+    class AssessmentFinding {
+        <<value object>>
+        -FindingType type
+        -String description
+        -FindingSeverity severity
+    }
+    class BudgetAssessmentView {
+        <<record>>
+        +BudgetRequest request
+        +AllocationSummary allocation
+        +List~BudgetRequest~ potentialDuplicates
+        +PurposeStatus purposeStatus
+    }
+
+    BudgetAssessmentController ..> BudgetAssessmentService : delegates
+    BudgetAssessmentService ..> IBudgetRequestRepository : persists through
+    BudgetAssessmentService ..> IBudgetReviewQuery : queries through
+    IBudgetRequestRepository ..> BudgetRequest : loads
+    IBudgetRequestRepository ..> BudgetAssessment : persists
+    IBudgetReviewQuery ..> BudgetRequest : compares
+    BudgetRequest "1" --> "0..*" BudgetAssessment : reviewed by
+    BudgetAssessment "1" *-- "0..*" AssessmentFinding : records
+    BudgetAssessmentView "1" --> "1" BudgetRequest : presents

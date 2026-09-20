@@ -1,0 +1,72 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class PostEventReportController {
+        <<boundary>>
+        +openReport(UUID eventId) PostEventReportView
+        +saveDraft(UUID eventId, PostEventReportCommand command) PostEventReport
+        +submit(UUID eventId, PostEventReportCommand command) PostEventReport
+    }
+    class PostEventReportService {
+        <<service>>
+        +prepare(UUID eventId, UUID memberId) PostEventReportView
+        +saveDraft(UUID eventId, PostEventReportCommand command) PostEventReport
+        +submit(UUID eventId, UUID memberId, PostEventReportCommand command) PostEventReport
+    }
+    class IPostEventReportRepository {
+        <<interface>>
+        +findByEvent(UUID eventId) Optional~PostEventReport~
+        +save(PostEventReport report) PostEventReport
+    }
+    class IEventOutcomeDataSource {
+        <<interface>>
+        +getApprovedPlan(UUID eventId) ApprovedEventPlan
+        +getOfficialAttendance(UUID eventId) OfficialAttendance
+        +getFinanceSummary(UUID eventId) FinanceSummary
+        +getFeedbackSummary(UUID eventId) Optional~FeedbackSummary~
+    }
+    class PostEventReport {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -ReportStatus status
+        -String actualResult
+        -String incidents
+        -String lessonsLearned
+        -Instant deadline
+        -boolean late
+        +isComplete() boolean
+        +submit(Instant at) void
+    }
+    class ReportEvidence {
+        <<entity>>
+        -UUID id
+        -EvidenceType type
+        -String storageReference
+        -String description
+    }
+    class PostEventReportView {
+        <<record>>
+        +PostEventReport report
+        +ApprovedEventPlan approvedPlan
+        +OfficialAttendance attendance
+        +FinanceSummary finance
+        +Optional~FeedbackSummary~ feedback
+    }
+
+    PostEventReportController ..> PostEventReportService : delegates
+    PostEventReportService ..> IPostEventReportRepository : persists through
+    PostEventReportService ..> IEventOutcomeDataSource : preloads through
+    IPostEventReportRepository ..> PostEventReport : persists
+    PostEventReport "1" *-- "0..*" ReportEvidence : supports
+    PostEventReportView "1" --> "1" PostEventReport : presents

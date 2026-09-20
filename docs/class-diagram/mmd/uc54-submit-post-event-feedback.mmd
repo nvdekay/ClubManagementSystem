@@ -1,0 +1,74 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventFeedbackController {
+        <<boundary>>
+        +openForm(UUID eventId) FeedbackFormView
+        +submit(UUID eventId, EventFeedbackCommand command) EventFeedback
+    }
+    class EventFeedbackService {
+        <<service>>
+        +prepare(UUID eventId, UUID studentId) FeedbackFormView
+        +submit(UUID eventId, UUID studentId, EventFeedbackCommand command) EventFeedback
+    }
+    class IAttendanceRepository {
+        <<interface>>
+        +findOfficial(UUID eventId, UUID studentId) Optional~AttendanceRecord~
+    }
+    class IEventFeedbackRepository {
+        <<interface>>
+        +exists(UUID eventId, UUID studentId) boolean
+        +save(EventFeedback feedback) EventFeedback
+    }
+    class IFeedbackStatisticsService {
+        <<interface>>
+        +updateForEvent(UUID eventId) FeedbackSummary
+    }
+    class AttendanceRecord {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -UUID studentId
+        -AttendanceStatus status
+        +isFinalized() boolean
+    }
+    class EventFeedback {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -UUID internalStudentId
+        -boolean anonymous
+        -Optional~String~ comment
+        -Instant submittedAt
+    }
+    class FeedbackScore {
+        <<value object>>
+        -UUID criterionId
+        -Decimal score
+    }
+    class FeedbackWindow {
+        <<value object>>
+        -Instant opensAt
+        -Instant closesAt
+        +contains(Instant at) boolean
+    }
+
+    EventFeedbackController ..> EventFeedbackService : delegates
+    EventFeedbackService ..> IAttendanceRepository : verifies through
+    EventFeedbackService ..> IEventFeedbackRepository : persists through
+    EventFeedbackService ..> IFeedbackStatisticsService : updates through
+    IAttendanceRepository ..> AttendanceRecord : loads
+    IEventFeedbackRepository ..> EventFeedback : persists
+    AttendanceRecord "1" --> "0..1" EventFeedback : permits
+    EventFeedback "1" *-- "1..*" FeedbackScore : contains
+    EventFeedback "0..*" --> "1" FeedbackWindow : submitted within

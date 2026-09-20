@@ -1,0 +1,73 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class ExpenseController {
+        <<boundary>>
+        +openEntry(UUID budgetRequestId) ExpenseEntryView
+        +record(UUID budgetRequestId, ExpenseCommand command) Expense
+    }
+    class ExpenseService {
+        <<service>>
+        +prepare(UUID budgetRequestId, UUID memberId) ExpenseEntryView
+        +record(UUID budgetRequestId, UUID memberId, ExpenseCommand command) Expense
+    }
+    class IBudgetRequestRepository {
+        <<interface>>
+        +findOpenApproved(UUID requestId) Optional~BudgetRequest~
+        +getApprovedLines(UUID requestId) List~BudgetLine~
+    }
+    class IExpenseRepository {
+        <<interface>>
+        +sumByCategory(UUID requestId, ExpenseCategory category) Money
+        +save(Expense expense) Expense
+    }
+    class BudgetRequest {
+        <<entity>>
+        -UUID id
+        -BudgetRequestStatus status
+        -ReportingPeriod period
+        +isOpenForExpenses() boolean
+    }
+    class BudgetLine {
+        <<entity>>
+        -ExpenseCategory category
+        -Money approvedAmount
+    }
+    class Expense {
+        <<entity>>
+        -UUID id
+        -UUID budgetRequestId
+        -Optional~UUID~ eventId
+        -ExpenseCategory category
+        -Money amount
+        -LocalDate incurredOn
+        -String description
+        -ExpenseStatus status
+        +flagException(String reason) void
+    }
+    class ExpenseEntryView {
+        <<record>>
+        +List~BudgetLine~ approvedLines
+        +Map~ExpenseCategory, Money~ remainingByCategory
+        +ReportingPeriod validPeriod
+    }
+
+    ExpenseController ..> ExpenseService : delegates
+    ExpenseService ..> IBudgetRequestRepository : validates through
+    ExpenseService ..> IExpenseRepository : persists through
+    IBudgetRequestRepository ..> BudgetRequest : loads
+    IBudgetRequestRepository ..> BudgetLine : loads
+    IExpenseRepository ..> Expense : persists
+    BudgetRequest "1" *-- "1..*" BudgetLine : approves
+    BudgetRequest "1" --> "0..*" Expense : accounts for
+    Expense "0..*" --> "0..1" BudgetLine : classified against

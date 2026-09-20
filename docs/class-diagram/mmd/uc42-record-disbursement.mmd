@@ -1,0 +1,65 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class DisbursementController {
+        <<boundary>>
+        +openEntry(UUID requestId) DisbursementView
+        +record(UUID requestId, DisbursementCommand command) Disbursement
+    }
+    class DisbursementService {
+        <<service>>
+        +loadContext(UUID requestId) DisbursementView
+        +record(UUID requestId, UUID officerId, DisbursementCommand command) Disbursement
+    }
+    class IBudgetRequestRepository {
+        <<interface>>
+        +findApproved(UUID requestId) Optional~BudgetRequest~
+    }
+    class IDisbursementRepository {
+        <<interface>>
+        +sumByRequest(UUID requestId) Money
+        +existsByPaymentReference(String paymentReference) boolean
+        +save(Disbursement disbursement) Disbursement
+    }
+    class BudgetRequest {
+        <<entity>>
+        -UUID id
+        -Money approvedAmount
+        -BudgetRequestStatus status
+        +remainingDisbursable(Money disbursedTotal) Money
+    }
+    class Disbursement {
+        <<entity>>
+        -UUID id
+        -UUID requestId
+        -Money amount
+        -LocalDate disbursedOn
+        -String paymentReference
+        -UUID recordedBy
+        -Instant recordedAt
+    }
+    class DisbursementView {
+        <<record>>
+        +Money approvedAmount
+        +Money disbursedTotal
+        +Money remainingAmount
+        +List~Disbursement~ tranches
+    }
+
+    DisbursementController ..> DisbursementService : delegates
+    DisbursementService ..> IBudgetRequestRepository : validates through
+    DisbursementService ..> IDisbursementRepository : persists through
+    IBudgetRequestRepository ..> BudgetRequest : loads
+    IDisbursementRepository ..> Disbursement : persists
+    BudgetRequest "1" --> "0..*" Disbursement : disbursed by
+    DisbursementView "1" --> "0..*" Disbursement : lists

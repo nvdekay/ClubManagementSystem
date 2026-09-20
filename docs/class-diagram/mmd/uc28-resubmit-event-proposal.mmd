@@ -1,0 +1,72 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventResubmissionController {
+        <<boundary>>
+        +openWorkingRevision(UUID proposalId) ProposalRevisionView
+        +saveWorkingRevision(UUID proposalId, EventProposalDraft draft) EventProposalVersion
+        +resubmit(UUID proposalId) EventProposalVersion
+    }
+    class EventResubmissionService {
+        <<service>>
+        +prepareRevision(UUID proposalId, UUID memberId) ProposalRevisionView
+        +saveDraft(UUID proposalId, EventProposalDraft draft) EventProposalVersion
+        +resubmit(UUID proposalId, UUID memberId) EventProposalVersion
+    }
+    class IEventProposalRepository {
+        <<interface>>
+        +findLatestVersion(UUID proposalId) Optional~EventProposalVersion~
+        +appendVersion(EventProposalVersion version) EventProposalVersion
+        +changeStatus(UUID proposalId, ProposalStatus status) void
+    }
+    class IConflictCheckService {
+        <<interface>>
+        +check(EventSchedule schedule) ConflictResult
+    }
+    class IPropertyBookingService {
+        <<interface>>
+        +synchronize(UUID proposalId, EventSchedule schedule) Optional~PropertyBooking~
+    }
+    class EventProposalVersion {
+        <<entity>>
+        -UUID id
+        -UUID proposalId
+        -int versionNumber
+        -ProposalStatus status
+        -EventProposalDraft content
+        -Instant createdAt
+        +deriveNext(EventProposalDraft draft) EventProposalVersion
+    }
+    class RevisionRequest {
+        <<entity>>
+        -UUID id
+        -Instant deadline
+        -List~RevisionComment~ comments
+        +hasOutstandingItems(EventProposalDraft draft) boolean
+    }
+    class EventProposalDraft {
+        <<record>>
+        +EventSchedule schedule
+        +String objective
+        +RiskLevel riskLevel
+        +Money budgetEstimate
+    }
+
+    EventResubmissionController ..> EventResubmissionService : delegates
+    EventResubmissionService ..> IEventProposalRepository : appends through
+    EventResubmissionService ..> IConflictCheckService : rechecks through
+    EventResubmissionService ..> IPropertyBookingService : synchronizes through
+    IEventProposalRepository ..> EventProposalVersion : persists
+    EventProposalVersion "1" --> "0..1" RevisionRequest : responds to
+    EventProposalVersion "1" *-- "1" EventProposalDraft : snapshots
+    EventProposalVersion "1" --> "0..1" EventProposalVersion : supersedes

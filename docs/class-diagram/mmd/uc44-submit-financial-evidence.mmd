@@ -1,0 +1,73 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class FinancialEvidenceController {
+        <<boundary>>
+        +openChecklist(UUID expenseId) EvidenceChecklistView
+        +submit(UUID expenseId, EvidenceCommand command) FinancialEvidence
+    }
+    class FinancialEvidenceService {
+        <<service>>
+        +getChecklist(UUID expenseId) EvidenceChecklistView
+        +submit(UUID expenseId, UUID memberId, EvidenceCommand command) FinancialEvidence
+        +evaluateSupport(UUID expenseId) ExpenseSupportStatus
+    }
+    class IExpenseRepository {
+        <<interface>>
+        +findById(UUID expenseId) Optional~Expense~
+        +updateSupportStatus(UUID expenseId, ExpenseSupportStatus status) void
+    }
+    class IFinancialEvidenceRepository {
+        <<interface>>
+        +listByExpense(UUID expenseId) List~FinancialEvidence~
+        +save(FinancialEvidence evidence) FinancialEvidence
+    }
+    class IEvidenceRequirementPolicy {
+        <<interface>>
+        +requirementsFor(ExpenseCategory category) List~EvidenceRequirement~
+        +isSatisfied(List~EvidenceRequirement~ requirements, List~FinancialEvidence~ evidence) boolean
+    }
+    class Expense {
+        <<entity>>
+        -UUID id
+        -ExpenseCategory category
+        -Money amount
+        -ExpenseSupportStatus supportStatus
+    }
+    class FinancialEvidence {
+        <<entity>>
+        -UUID id
+        -UUID expenseId
+        -EvidenceType type
+        -String storageReference
+        -Map~String, String~ metadata
+        -UUID submittedBy
+        -Instant submittedAt
+    }
+    class EvidenceRequirement {
+        <<value object>>
+        -EvidenceType type
+        -List~String~ requiredMetadata
+        -boolean mandatory
+    }
+
+    FinancialEvidenceController ..> FinancialEvidenceService : delegates
+    FinancialEvidenceService ..> IExpenseRepository : updates through
+    FinancialEvidenceService ..> IFinancialEvidenceRepository : persists through
+    FinancialEvidenceService ..> IEvidenceRequirementPolicy : evaluates through
+    IExpenseRepository ..> Expense : persists
+    IFinancialEvidenceRepository ..> FinancialEvidence : persists
+    IEvidenceRequirementPolicy ..> EvidenceRequirement : defines
+    IEvidenceRequirementPolicy ..> FinancialEvidence : evaluates
+    Expense "1" *-- "0..*" FinancialEvidence : substantiated by
+    EvidenceRequirement "0..*" ..> FinancialEvidence : satisfied by

@@ -1,0 +1,82 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventFeedbackReviewController {
+        <<boundary>>
+        +openSummary(UUID eventId) FeedbackSummaryView
+        +recordLessons(UUID eventId, String lessonsLearned) PostEventReport
+        +reportComment(UUID feedbackId, String reason) FeedbackModerationRequest
+    }
+    class EventFeedbackReviewService {
+        <<service>>
+        +summarize(UUID eventId, UUID memberId) FeedbackSummaryView
+        +recordLessons(UUID eventId, UUID memberId, String lessonsLearned) PostEventReport
+        +reportComment(UUID feedbackId, UUID memberId, String reason) FeedbackModerationRequest
+    }
+    class IEventFeedbackRepository {
+        <<interface>>
+        +listVisibleByEvent(UUID eventId) List~EventFeedback~
+    }
+    class IPostEventReportRepository {
+        <<interface>>
+        +findByEvent(UUID eventId) Optional~PostEventReport~
+        +attachFeedbackSummary(UUID reportId, FeedbackSummary summary, String lessons) void
+    }
+    class IFeedbackModerationRepository {
+        <<interface>>
+        +save(FeedbackModerationRequest request) FeedbackModerationRequest
+    }
+    class EventFeedback {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -boolean anonymous
+        -Optional~String~ comment
+        -List~FeedbackScore~ scores
+        +visibleAuthor() Optional~UUID~
+    }
+    class FeedbackSummary {
+        <<record>>
+        +UUID eventId
+        +Decimal responseRate
+        +Map~UUID, Decimal~ averageByCriterion
+        +Map~UUID, List~int~~ distributionByCriterion
+        +List~String~ visibleComments
+    }
+    class PostEventReport {
+        <<entity>>
+        -UUID id
+        -UUID eventId
+        -String lessonsLearned
+        -Optional~FeedbackSummary~ feedbackSummary
+    }
+    class FeedbackModerationRequest {
+        <<entity>>
+        -UUID id
+        -UUID feedbackId
+        -String reason
+        -ModerationStatus status
+        -UUID reportedBy
+    }
+
+    EventFeedbackReviewController ..> EventFeedbackReviewService : delegates
+    EventFeedbackReviewService ..> IEventFeedbackRepository : reads through
+    EventFeedbackReviewService ..> IPostEventReportRepository : updates through
+    EventFeedbackReviewService ..> IFeedbackModerationRepository : reports through
+    IEventFeedbackRepository ..> EventFeedback : loads
+    IPostEventReportRepository ..> FeedbackSummary : persists
+    IPostEventReportRepository ..> PostEventReport : updates
+    IFeedbackModerationRepository ..> FeedbackModerationRequest : persists
+    FeedbackSummary "1" --> "1..*" EventFeedback : aggregates
+    PostEventReport "1" --> "0..1" FeedbackSummary : includes
+    EventFeedback "1" --> "0..1" FeedbackModerationRequest : may trigger

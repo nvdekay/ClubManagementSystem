@@ -1,0 +1,89 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class ComplianceCaseController {
+        <<boundary>>
+        +openCase(ComplianceCaseCommand command) ComplianceCase
+        +recordInvestigation(UUID caseId, InvestigationEntryCommand command) ComplianceCaseEntry
+        +submitResponse(UUID caseId, ClubResponseCommand command) ComplianceCaseEntry
+        +issueDecision(UUID caseId, ComplianceDecisionCommand command) ComplianceCaseEntry
+        +assignCorrectiveAction(UUID caseId, CorrectiveActionCommand command) CorrectiveAction
+        +resolve(UUID caseId) ComplianceCase
+    }
+    class ComplianceCaseService {
+        <<service>>
+        +open(UUID officerId, ComplianceCaseCommand command) ComplianceCase
+        +appendEntry(UUID caseId, UUID authorId, CaseEntryType type, String content, List~Evidence~ evidence) ComplianceCaseEntry
+        +decide(UUID caseId, UUID officerId, ComplianceDecisionCommand command) ComplianceCaseEntry
+        +assignAction(UUID caseId, CorrectiveActionCommand command) CorrectiveAction
+        +resolveWhenComplete(UUID caseId) ComplianceCase
+    }
+    class IComplianceCaseRepository {
+        <<interface>>
+        +findById(UUID caseId) Optional~ComplianceCase~
+        +save(ComplianceCase complianceCase) ComplianceCase
+        +appendEntry(UUID caseId, ComplianceCaseEntry entry) ComplianceCaseEntry
+    }
+    class ICorrectiveActionRepository {
+        <<interface>>
+        +save(CorrectiveAction action) CorrectiveAction
+        +listByCase(UUID caseId) List~CorrectiveAction~
+    }
+    class ComplianceCase {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -CaseOrigin origin
+        -Optional~UUID~ originReferenceId
+        -Severity severity
+        -CaseStatus status
+        -Instant handlingDeadline
+        +transitionTo(CaseStatus next) void
+        +canResolve(List~CorrectiveAction~ actions) boolean
+    }
+    class ComplianceCaseEntry {
+        <<entity>>
+        -UUID id
+        -UUID caseId
+        -CaseEntryType type
+        -UUID authorId
+        -String content
+        -Instant createdAt
+    }
+    class Evidence {
+        <<entity>>
+        -UUID id
+        -EvidenceSource source
+        -String storageReference
+        -Instant collectedAt
+    }
+    class CorrectiveAction {
+        <<entity>>
+        -UUID id
+        -UUID caseId
+        -UUID assignedTo
+        -String description
+        -Instant dueAt
+        -ActionStatus status
+        +complete(Instant at) void
+    }
+
+    ComplianceCaseController ..> ComplianceCaseService : delegates
+    ComplianceCaseService ..> IComplianceCaseRepository : persists through
+    ComplianceCaseService ..> ICorrectiveActionRepository : tracks through
+    IComplianceCaseRepository ..> ComplianceCase : persists
+    IComplianceCaseRepository ..> ComplianceCaseEntry : appends
+    ICorrectiveActionRepository ..> CorrectiveAction : persists
+    ComplianceCase "1" *-- "1..*" ComplianceCaseEntry : documents
+    ComplianceCaseEntry "1" *-- "0..*" Evidence : supports
+    ComplianceCase "1" *-- "0..*" CorrectiveAction : requires

@@ -1,0 +1,83 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class PropertyBookingDecisionController {
+        <<boundary>>
+        +openDecision(UUID bookingId) BookingDecisionView
+        +decide(UUID bookingId, BookingDecisionCommand command) BookingDecision
+    }
+    class PropertyBookingDecisionService {
+        <<service>>
+        +loadContext(UUID bookingId, UUID officerId) BookingDecisionView
+        +decide(UUID bookingId, UUID officerId, BookingDecisionCommand command) BookingDecision
+    }
+    class IPropertyBookingRepository {
+        <<interface>>
+        +findRequested(UUID bookingId) Optional~PropertyBooking~
+        +findApprovedOverlaps(UUID propertyId, TimeWindow window) List~PropertyBooking~
+        +applyDecision(UUID bookingId, BookingDecision decision) void
+    }
+    class IClubObligationQuery {
+        <<interface>>
+        +getClubStatus(UUID clubId) ClubStatus
+        +getOpenObligations(UUID clubId) List~ClubObligation~
+    }
+    class IPropertySlotRepository {
+        <<interface>>
+        +lock(UUID propertyId, TimeWindow window, UUID bookingId) PropertySlotLock
+    }
+    class PropertyBooking {
+        <<entity>>
+        -UUID id
+        -UUID clubId
+        -UUID propertyId
+        -TimeWindow timeWindow
+        -String purpose
+        -BookingStatus status
+        +isDecisionReady() boolean
+    }
+    class BookingDecision {
+        <<entity>>
+        -UUID id
+        -BookingDecisionOutcome outcome
+        -Optional~String~ reason
+        -UUID decidedBy
+        -Instant decidedAt
+        +requiresReason() boolean
+    }
+    class PropertySlotLock {
+        <<entity>>
+        -UUID id
+        -UUID propertyId
+        -TimeWindow timeWindow
+        -UUID bookingId
+        -Instant lockedAt
+    }
+    class BookingDecisionView {
+        <<record>>
+        +PropertyBooking booking
+        +ClubStatus clubStatus
+        +List~ClubObligation~ obligations
+        +ConflictResult conflict
+    }
+
+    PropertyBookingDecisionController ..> PropertyBookingDecisionService : delegates
+    PropertyBookingDecisionService ..> IPropertyBookingRepository : persists through
+    PropertyBookingDecisionService ..> IClubObligationQuery : checks through
+    PropertyBookingDecisionService ..> IPropertySlotRepository : locks through
+    IPropertyBookingRepository ..> PropertyBooking : loads
+    IPropertyBookingRepository ..> BookingDecision : persists
+    IPropertySlotRepository ..> PropertySlotLock : creates
+    PropertyBooking "1" --> "0..1" BookingDecision : resolved by
+    BookingDecision "1" --> "0..1" PropertySlotLock : creates
+    BookingDecisionView "1" --> "1" PropertyBooking : presents

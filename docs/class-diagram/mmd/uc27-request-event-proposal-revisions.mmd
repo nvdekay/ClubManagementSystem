@@ -1,0 +1,71 @@
+---
+config:
+  layout: elk
+  elk:
+    mergeEdges: false
+    layeringStrategy: NETWORK_SIMPLEX
+    nodePlacementStrategy: NETWORK_SIMPLEX
+    straightenEdges: true
+    lineHops: arc
+---
+classDiagram
+    direction TB
+
+    class EventRevisionRequestController {
+        <<boundary>>
+        +openRevisionForm(UUID proposalId) RevisionRequestView
+        +requestRevision(UUID proposalId, RevisionRequestCommand command) RevisionRequest
+    }
+    class EventRevisionService {
+        <<service>>
+        +createRequest(UUID proposalId, UUID officerId, RevisionRequestCommand command) RevisionRequest
+        +scheduleReminders(UUID requestId) void
+        +notifyClub(UUID requestId) void
+    }
+    class IEventProposalRepository {
+        <<interface>>
+        +findUnderReview(UUID proposalId) Optional~EventProposalVersion~
+        +changeStatus(UUID proposalId, ProposalStatus status) void
+    }
+    class IRevisionRequestRepository {
+        <<interface>>
+        +save(RevisionRequest request) RevisionRequest
+        +findActiveByProposal(UUID proposalId) Optional~RevisionRequest~
+    }
+    class EventProposalVersion {
+        <<entity>>
+        -UUID id
+        -ProposalStatus status
+        -Instant eventStartsAt
+        +canRequestRevision() boolean
+    }
+    class RevisionRequest {
+        <<entity>>
+        -UUID id
+        -UUID proposalVersionId
+        -UUID requestedBy
+        -Instant deadline
+        -boolean urgent
+        -Instant requestedAt
+        +validateComplete() boolean
+    }
+    class RevisionComment {
+        <<value object>>
+        -ProposalSection section
+        -String comment
+        +isComplete() boolean
+    }
+    class RevisionRequestCommand {
+        <<record>>
+        +List~RevisionComment~ comments
+        +Instant requestedDeadline
+    }
+
+    EventRevisionRequestController ..> EventRevisionService : delegates
+    EventRevisionService ..> IEventProposalRepository : updates through
+    EventRevisionService ..> IRevisionRequestRepository : persists through
+    IEventProposalRepository ..> EventProposalVersion : loads
+    IRevisionRequestRepository ..> RevisionRequest : persists
+    EventProposalVersion "1" --> "0..*" RevisionRequest : receives
+    RevisionRequest "1" *-- "1..*" RevisionComment : contains
+    RevisionRequestCommand "1" *-- "1..*" RevisionComment : carries
