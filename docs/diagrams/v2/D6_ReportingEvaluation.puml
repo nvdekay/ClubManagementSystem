@@ -65,11 +65,12 @@ UC34 <.. UC42 : <<extend>>
 UC39 <.. UC42 : <<extend>>
 UC49 <.. UC42 : <<extend>>
 UC53 <.. UC42 : <<extend>>
-UC15 .[norank].> UC42 : <<extend>>
+UC42 <.. UC15 : <<extend>>
 
 ' layout only: keep ICPDP in its own column to the right of the frame
 UC34 -[hidden]- UC41
 UC39 -[hidden]- UC43
 UC49 -[hidden]- UC44
 UC53 -[hidden]- UC45
+UC15 -[hidden]- ICPDP
 @enduml
