@@ -1,0 +1,66 @@
+@startuml v2_D3_RecruitmentMembership
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D3 - Recruitment & Membership (UC16-UC24)
+
+actor "Student" as STU
+actor "Club Management Board" as CMB
+
+rectangle UCMS {
+  usecase UC16 as "UC16
+  Create and publish a recruitment campaign"
+  usecase UC17 as "UC17
+  Submit a club membership application"
+  usecase UC18 as "UC18
+  Screen and decide membership applications"
+  usecase UC19 as "UC19 [Phase 2]
+  Record candidate evaluation"
+  usecase UC20 as "UC20
+  Onboard accepted candidates"
+  usecase UC21 as "UC21
+  Manage membership status"
+  usecase UC22 as "UC22 [Phase 2]
+  Request to leave a club"
+  usecase UC23 as "UC23 [Phase 2]
+  Assign positions inside the club"
+  usecase UC24 as "UC24
+  Use my member workspace"
+}
+
+UC19 ..> UC18 : <<extend>>
+
+CMB -- UC16
+CMB -- UC18
+CMB -- UC19
+CMB -- UC20
+CMB -- UC21
+CMB -- UC23
+
+STU -- UC17
+STU -- UC22
+STU -- UC24
+
+note bottom of UC21
+  Ending a membership lives here, whoever starts it:
+  CMB-initiated removal, or a withdrawal the student
+  requested in UC22. v1 UC23 carried both actors at once.
+end note
+
+note bottom of UC24
+  Read-only, scoped to clubs where the caller has an
+  active membership. It introduces no new entity - it is
+  what makes a membership worth having in the system.
+end note
+@enduml

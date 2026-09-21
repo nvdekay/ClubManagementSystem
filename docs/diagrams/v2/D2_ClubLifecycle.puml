@@ -1,0 +1,66 @@
+@startuml v2_D2_ClubLifecycle
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D2 - Club Lifecycle, Governance & Term (UC06-UC15)
+
+actor "Student" as STU
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC06 as "UC06
+  Discover clubs and open activity"
+  usecase UC07 as "UC07
+  Submit a club establishment application"
+  usecase UC08 as "UC08
+  Assess and decide the club
+  establishment application"
+  usecase UC09 as "UC09
+  Configure the club profile
+  and organization structure"
+  usecase UC10 as "UC10
+  Nominate the club management board"
+  usecase UC11 as "UC11
+  Confirm the management board"
+  usecase UC12 as "UC12 [Phase 2]
+  Plan the leadership transition"
+  usecase UC13 as "UC13 [Phase 2]
+  Confirm the leadership transition"
+  usecase UC14 as "UC14 [Phase 2]
+  Request club activity suspension"
+  usecase UC15 as "UC15
+  Suspend, reactivate or dissolve a club"
+}
+
+STU -- UC06
+STU -- UC07
+
+CMB -- UC09
+CMB -- UC10
+CMB -- UC12
+CMB -- UC14
+
+ICPDP -- UC08
+ICPDP -- UC11
+ICPDP -- UC13
+ICPDP -- UC15
+
+note bottom of UC08
+  One review session, three outcomes:
+  request revision, approve, reject.
+  Resubmission after a revision request is an
+  alternative flow of UC07, not a use case.
+end note
+@enduml

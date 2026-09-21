@@ -1,0 +1,59 @@
+@startuml v2_D4a_EventApproval
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D4a - Event Approval (UC25-UC28)
+
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC25 as "UC25
+  Submit an event proposal"
+  usecase UC26 as "UC26
+  Assess and decide the event proposal"
+  usecase UC27 as "UC27
+  Publish the event and open registration"
+  usecase UC28 as "UC28
+  Cancel or reschedule an event"
+  usecase UC47 as "UC47
+  Submit a property booking request
+  (see D7)"
+  usecase UC49 as "UC49
+  Track and cancel/release a booked property
+  (see D7)"
+}
+
+UC47 ..> UC25 : <<extend>>
+UC49 ..> UC28 : <<extend>>
+
+CMB -- UC25
+CMB -- UC27
+CMB -- UC28
+
+ICPDP -- UC26
+
+note bottom of UC25
+  Conflict detection is BR15, a business rule evaluated
+  inside this use case and inside UC47 - not a use case
+  (v1 counted it as UC25, with "System" as its actor).
+end note
+
+note bottom of UC28
+  CMB is the only primary actor. An ICPDP-forced
+  cancellation happens through UC15 (suspension) or
+  UC42 (case outcome), which is what removes v1 UC35's
+  two primary actors.
+end note
+@enduml

@@ -1,0 +1,52 @@
+@startuml v2_D5_Finance
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D5 - Finance & Budget (UC35-UC39)
+
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC35 as "UC35
+  Submit a budget request"
+  usecase UC36 as "UC36
+  Assess and decide the budget request"
+  usecase UC37 as "UC37
+  Record disbursement"
+  usecase UC38 as "UC38
+  Record an expense with its evidence"
+  usecase UC39 as "UC39
+  Reconcile budget and spending"
+}
+
+CMB -- UC35
+CMB -- UC38
+
+ICPDP -- UC36
+ICPDP -- UC37
+ICPDP -- UC39
+
+note bottom of UC38
+  One use case: every piece of evidence references
+  exactly one expense (v1 split this into UC43 + UC44).
+end note
+
+note bottom of UC39
+  ICPDP is the only primary actor. CMB reads the same
+  figures through UC02, which is what removes v1 UC45's
+  two primary actors. UC37 is Phase 1 because BR23's
+  disbursed amount is an input to this calculation.
+end note
+@enduml

@@ -1,0 +1,60 @@
+@startuml v2_D8_FeedbackComplaint
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D8 - Feedback & Complaint (UC50-UC54, all Phase 2)
+
+actor "Student" as STU
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC50 as "UC50
+  Submit post-event feedback"
+  usecase UC51 as "UC51
+  Review event feedback"
+  usecase UC52 as "UC52
+  Submit a complaint about a club"
+  usecase UC53 as "UC53
+  Triage a complaint"
+  usecase UC54 as "UC54
+  Respond to a forwarded complaint"
+  usecase UC42 as "UC42
+  Manage violation and compliance cases
+  (see D6)"
+}
+
+UC53 ..> UC42 : <<extend>>
+
+STU -- UC50
+STU -- UC52
+
+CMB -- UC51
+CMB -- UC54
+
+ICPDP -- UC53
+
+note bottom of UC54
+  Added in v2: v1 sent the transition
+  "Forwarded -> Club Responded" to CMB under UC57,
+  an ICPDP use case, so the state had no owner.
+end note
+
+note bottom of UC53
+  Escalation needs UC42, which is why the whole group
+  ships in the same phase. v1 put UC56/UC57 in the MVP
+  and UC48 in V2, so an escalated complaint had
+  nowhere to go.
+end note
+@enduml

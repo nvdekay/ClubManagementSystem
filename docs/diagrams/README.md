@@ -4,6 +4,11 @@ PlantUML sources for the UCMS use case diagrams. They render the actor/use case 
 specified in [`../UCMS_Business_System_Analysis.md`](../UCMS_Business_System_Analysis.md)
 (sections 4, 8, 10 and 11).
 
+> **v1 — kept as history.** These sources render the 57-use-case model of
+> `UCMS_Business_System_Analysis*.md`. The model was revised in
+> [`../UCMS_UseCase_Model_v2.md`](../UCMS_UseCase_Model_v2.md) (54 use cases) and redrawn in
+> [`v2/`](v2/README.md). Use the v2 diagrams for new work; where the two disagree, v2 wins.
+
 | File | Scope | Use cases |
 |---|---|---|
 | `D0_SystemContext.puml` | actors, the 12 modules, the 2 external systems | — |

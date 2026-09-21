@@ -1,0 +1,59 @@
+@startuml v2_D6_ReportingEvaluation
+left to right direction
+skinparam backgroundColor White
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam usecase {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+title D6 - Reporting, Compliance & Evaluation (UC40-UC45)
+
+actor "Club Management Board" as CMB
+actor "ICPDP Officer" as ICPDP
+
+rectangle UCMS {
+  usecase UC40 as "UC40
+  Submit the periodic activity report"
+  usecase UC41 as "UC41
+  Assess the periodic activity report"
+  usecase UC42 as "UC42 [Phase 2]
+  Manage violation and compliance cases"
+  usecase UC43 as "UC43 [Phase 2]
+  Configure the evaluation scheme"
+  usecase UC44 as "UC44 [Phase 2]
+  Generate the club performance
+  evaluation draft"
+  usecase UC45 as "UC45 [Phase 2]
+  Review, finalize and publish
+  the evaluation"
+}
+
+CMB -- UC40
+
+ICPDP -- UC41
+ICPDP -- UC42
+ICPDP -- UC43
+ICPDP -- UC44
+ICPDP -- UC45
+
+note bottom of UC44
+  Consumes UC21, UC32, UC34, UC39, UC41, UC42,
+  UC48, UC49, UC50 and UC53. Those are data
+  dependencies stated in the specification, not
+  use case relationships - a use case diagram
+  never shows sequence.
+end note
+
+note bottom of UC43
+  BR29: a scheme cannot be activated unless the
+  total weight is valid. v1 validated a scheme
+  that no use case ever configured.
+end note
+@enduml
