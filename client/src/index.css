@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap");
 
 /* App owns scrolling, not the browser: html/body never scroll, #root does. */
 html,
@@ -44,14 +45,34 @@ body {
    Naming: --color-<name>-app generates the `<name>-app` Tailwind color
    (e.g. bg-danger-app, text-danger-app, border-danger-app). */
 @theme {
+  /* Typeface — one family, 400/500/600/700. Be Vietnam Pro is drawn for
+     Vietnamese diacritics, so `vi` strings keep their shape at small sizes. */
+  --font-sans:
+    "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+
+  /* Brand — FPT corporate colors, identical in both themes. Fills and
+     graphics only (orange is 2.9:1 on white: never text, never a border
+     that carries meaning). Semantic tokens below are the accessible ones. */
+  --color-brand-app: #f37021;
+  --color-brand-blue-app: #0066b3;
+  --color-brand-green-app: #00a650;
+
+  /* Semantic — every value below is >= 4.5:1 against its own background. */
   --color-text-app: #1a1a1a;
   --color-bg-app: #ffffff;
-  --color-danger-app: #dc143c;
-  --color-primary-app: #2563eb;
-  --color-warning-app: #f97316;
-  --color-border-app: #e5e7eb;
-  --color-muted-app: #6b7280;
   --color-surface-app: #f9fafb;
+  --color-border-app: #e5e7eb;
+  --color-muted-app: #5b6472;
+
+  --color-primary-app: #c2410c; /* darkened FPT orange — 4.8:1 on white */
+  --color-on-primary-app: #ffffff; /* text/icons sitting on primary-app */
+  --color-accent-app: #0066b3; /* FPT blue — 5.9:1 on white, links */
+  --color-ring-app: #0066b3; /* focus ring, never removed */
+
+  --color-success-app: #047857;
+  --color-warning-app: #b45309;
+  --color-danger-app: #b91c1c;
 }
 
 /* Manual dark mode — toggled via a "dark" class on <html>, see App.tsx.
@@ -60,9 +81,20 @@ body {
 :root.dark {
   --color-text-app: #f5f5f5;
   --color-bg-app: #0a0a0a;
+  --color-surface-app: #18181b;
   --color-border-app: #27272a;
   --color-muted-app: #a1a1aa;
-  --color-surface-app: #18181b;
+
+  /* Brand hues lighten on dark surfaces; on-primary flips to near-black so
+     the filled button keeps 7:1 instead of dropping to 2:1 white-on-orange. */
+  --color-primary-app: #fb923c;
+  --color-on-primary-app: #1a1a1a;
+  --color-accent-app: #60a5fa;
+  --color-ring-app: #60a5fa;
+
+  --color-success-app: #34d399;
+  --color-warning-app: #fbbf24;
+  --color-danger-app: #f87171;
 }
 
 /* Clickable elements must show a pointer cursor — the browser UA stylesheet
@@ -73,7 +105,8 @@ select:not(:disabled),
 summary,
 a[href],
 input[type="search"]::-webkit-search-cancel-button,
-[role="button"]:not([aria-disabled="true"]) {
+[role="button"]:not([aria-disabled="true"]),
+[role="option"] {
   cursor: pointer;
 }
 

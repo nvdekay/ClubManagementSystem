@@ -15,7 +15,7 @@ export function AppSwitch({ checked, onChange, className, ...props }: AppSwitchP
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={cn(
-        "h-5 w-9 rounded-full bg-border-app p-0.5 transition-colors disabled:opacity-50",
+        "h-5 w-9 rounded-full bg-border-app p-0.5 transition-colors focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none disabled:opacity-50",
         { "bg-primary-app": checked },
         className,
       )}

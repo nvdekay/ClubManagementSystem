@@ -32,6 +32,35 @@ function initialTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+// Lucide sun/moon, inlined: single use site, and emoji render per-OS (no-emoji-icons rule).
+const iconProps = {
+  "aria-hidden": true,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: "size-4 text-muted-app",
+} as const;
+
+function SunIcon() {
+  return (
+    <svg {...iconProps}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+  );
+}
+
 export function App() {
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const { t, i18n } = useTranslation();
@@ -105,13 +134,13 @@ export function App() {
         <h1 className="text-lg font-semibold">{t("users.title")}</h1>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1 text-sm">
-            ☀️
+            <SunIcon />
             <AppSwitch
               checked={theme === "dark"}
               onChange={(on) => setTheme(on ? "dark" : "light")}
               aria-label={t("common.darkModeLabel")}
             />
-            🌙
+            <MoonIcon />
           </span>
           <span className="flex items-center gap-1 text-sm">
             EN
@@ -126,8 +155,14 @@ export function App() {
       </div>
       <AppCard className="mt-4">
         <form onSubmit={onSubmit} className="flex flex-wrap gap-2">
-          <AppInput name="name" placeholder={t("users.namePlaceholder")} required />
-          <AppInput name="email" type="email" placeholder={t("users.emailPlaceholder")} required />
+          <AppInput name="name" placeholder={t("users.namePlaceholder")} required className="min-w-32 flex-1" />
+          <AppInput
+            name="email"
+            type="email"
+            placeholder={t("users.emailPlaceholder")}
+            required
+            className="min-w-32 flex-1"
+          />
           <AppButton disabled={pending}>{t("users.add")}</AppButton>
         </form>
         {error && <p className="mt-2 text-danger-app">{error}</p>}
@@ -143,6 +178,8 @@ export function App() {
               onPageChange={(pageIndex) => setPagination((p) => ({ ...p, pageIndex }))}
               prevLabel={t("users.previousPage")}
               nextLabel={t("users.nextPage")}
+              pageLabel={(page) => t("users.gotoPage", { page })}
+              navLabel={t("users.paginationLabel")}
             />
           </div>
         </div>
