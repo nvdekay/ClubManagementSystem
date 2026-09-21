@@ -1,60 +1,67 @@
 @startuml v2_D7_PropertyBooking
 left to right direction
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 60
 skinparam backgroundColor White
 skinparam shadowing false
 skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam ArrowColor Black
+skinparam ArrowFontSize 11
+skinparam actor {
+  BackgroundColor White
+  BorderColor Black
+}
 skinparam usecase {
   BackgroundColor White
   BorderColor Black
-  ArrowColor Black
 }
 skinparam rectangle {
   BackgroundColor White
   BorderColor Black
 }
+skinparam package {
+  BackgroundColor White
+  BorderColor Black
+}
+' inner frame: invisible, only adds padding inside the system boundary
+skinparam rectangle<<inner>> {
+  BorderColor Transparent
+  FontColor Transparent
+}
+hide <<inner>> stereotype
 
 title D7 - Property & Facility Booking (UC46-UC49)
 
 actor "Club Management Board" as CMB
 actor "ICPDP Officer" as ICPDP
 
-rectangle UCMS {
-  usecase UC46 as "UC46
-  Manage the property catalogue"
-  usecase UC47 as "UC47
-  Submit a property booking request"
-  usecase UC48 as "UC48
-  Assess and decide the
-  property booking request"
-  usecase UC49 as "UC49
-  Track and cancel/release
-  a booked property"
-  usecase UC25 as "UC25
-  Submit an event proposal
-  (see D4a)"
-  usecase UC28 as "UC28
-  Cancel or reschedule an event
-  (see D4a)"
+rectangle "UCMS" {
+  rectangle " " <<inner>> {
+    usecase "UC46\nManage property catalogue" as UC46
+    usecase "UC47\nRequest property booking" as UC47
+    usecase "UC48\nDecide booking request" as UC48
+    usecase "UC49\nRelease booking" as UC49
+    usecase "UC25\nSubmit event proposal\n(see D4a)" as UC25
+    usecase "UC28\nCancel / reschedule event\n(see D4a)" as UC28
+    usecase "UC15\nSuspend / dissolve club\n(see D2)" as UC15
+    usecase "UC42\nManage compliance case\n(see D6)" as UC42
+  }
 }
-
-UC47 ..> UC25 : <<extend>>
-UC49 ..> UC28 : <<extend>>
-
-ICPDP -- UC46
-ICPDP -- UC48
 
 CMB -- UC47
 CMB -- UC49
 
-note bottom of UC46
-  Added in v2: v1 UC51 picked "a property from the
-  catalogue ICPDP maintains" while no use case
-  maintained it.
-end note
+UC46 -- ICPDP
+UC48 -- ICPDP
 
-note bottom of UC49
-  Phase 1, not Phase 2: BR35 releases a booking when
-  its event is cancelled. Without this use case an
-  approved booking locks a room forever.
-end note
+UC47 ..> UC25 : <<extend>>
+UC49 ..> UC28 : <<extend>>
+UC49 <.. UC15 : <<include>>
+UC49 <.. UC42 : <<extend>>
+
+' layout only: ICPDP's own use cases share the right column, so ICPDP lands beside them
+UC47 -[hidden]- UC46
+UC49 -[hidden]- UC48
 @enduml

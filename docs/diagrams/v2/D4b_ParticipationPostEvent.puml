@@ -1,65 +1,72 @@
 @startuml v2_D4b_ParticipationPostEvent
 left to right direction
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 60
 skinparam backgroundColor White
 skinparam shadowing false
 skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam ArrowColor Black
+skinparam ArrowFontSize 11
+skinparam actor {
+  BackgroundColor White
+  BorderColor Black
+}
 skinparam usecase {
   BackgroundColor White
   BorderColor Black
-  ArrowColor Black
 }
 skinparam rectangle {
   BackgroundColor White
   BorderColor Black
 }
+skinparam package {
+  BackgroundColor White
+  BorderColor Black
+}
+' inner frame: invisible, only adds padding inside the system boundary
+skinparam rectangle<<inner>> {
+  BorderColor Transparent
+  FontColor Transparent
+}
+hide <<inner>> stereotype
 
-title D4b - Registration, Attendance & Event Accountability (UC29-UC34)
+title D4b - Participation & Post-Event (UC29-UC34)
 
 actor "Student" as STU
 actor "Club Management Board" as CMB
 actor "ICPDP Officer" as ICPDP
 
-rectangle UCMS {
-  usecase UC29 as "UC29
-  Register for an event"
-  usecase UC30 as "UC30 [Phase 2]
-  Manage capacity and the waitlist"
-  usecase UC31 as "UC31
-  Check in to an event"
-  usecase UC32 as "UC32
-  Finalize event attendance"
-  usecase UC33 as "UC33
-  Submit the post-event report"
-  usecase UC34 as "UC34
-  Assess and close the event report"
-  usecase UC50 as "UC50 [Phase 2]
-  Submit post-event feedback
-  (see D8)"
+rectangle "UCMS" {
+  rectangle " " <<inner>> {
+    usecase "UC06\nBrowse clubs\n(see D2)" as UC06
+    together {
+      usecase "UC29\nRegister for event" as UC29
+      usecase "UC30\nManage waitlist" as UC30
+    }
+    usecase "UC31\nCheck in" as UC31
+    usecase "UC32\nFinalize attendance" as UC32
+    usecase "UC33\nSubmit event report" as UC33
+    usecase "UC34\nClose event report" as UC34
+    usecase "UC42\nManage compliance case\n(see D6)" as UC42
+  }
 }
-
-UC30 ..> UC29 : <<extend>>
 
 STU -- UC29
 STU -- UC31
-STU -- UC50
 
 CMB -- UC30
 CMB -- UC32
 CMB -- UC33
-CMB ..> UC31 : supporting
+CMB .. UC31 : supporting
 
-ICPDP -- UC34
+UC34 -- ICPDP
 
-note bottom of UC31
-  Student is the primary actor (self check-in).
-  A CMB member with the permission may check a
-  participant in manually - an alternative flow,
-  recorded with who did it (BR18).
-end note
+UC29 ..> UC06 : <<extend>>
+UC30 .[norank].> UC29 : <<extend>>
+UC42 ..> UC34 : <<extend>>
 
-note bottom of UC50
-  The feedback window opens at check-in (BR36, changed
-  in v2), not after UC32 finalization. A club that
-  finalizes late no longer kills its own response rate.
-end note
+' layout only: keep ICPDP in its own column to the right of the frame
+UC06 -[hidden]- ICPDP
 @enduml

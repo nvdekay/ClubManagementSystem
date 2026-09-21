@@ -1,45 +1,60 @@
 @startuml v2_D3_RecruitmentMembership
 left to right direction
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 60
 skinparam backgroundColor White
 skinparam shadowing false
 skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam ArrowColor Black
+skinparam ArrowFontSize 11
+skinparam actor {
+  BackgroundColor White
+  BorderColor Black
+}
 skinparam usecase {
   BackgroundColor White
   BorderColor Black
-  ArrowColor Black
 }
 skinparam rectangle {
   BackgroundColor White
   BorderColor Black
 }
+skinparam package {
+  BackgroundColor White
+  BorderColor Black
+}
+' inner frame: invisible, only adds padding inside the system boundary
+skinparam rectangle<<inner>> {
+  BorderColor Transparent
+  FontColor Transparent
+}
+hide <<inner>> stereotype
 
 title D3 - Recruitment & Membership (UC16-UC24)
 
 actor "Student" as STU
 actor "Club Management Board" as CMB
 
-rectangle UCMS {
-  usecase UC16 as "UC16
-  Create and publish a recruitment campaign"
-  usecase UC17 as "UC17
-  Submit a club membership application"
-  usecase UC18 as "UC18
-  Screen and decide membership applications"
-  usecase UC19 as "UC19 [Phase 2]
-  Record candidate evaluation"
-  usecase UC20 as "UC20
-  Onboard accepted candidates"
-  usecase UC21 as "UC21
-  Manage membership status"
-  usecase UC22 as "UC22 [Phase 2]
-  Request to leave a club"
-  usecase UC23 as "UC23 [Phase 2]
-  Assign positions inside the club"
-  usecase UC24 as "UC24
-  Use my member workspace"
+rectangle "UCMS" {
+  rectangle " " <<inner>> {
+    usecase "UC06\nBrowse clubs\n(see D2)" as UC06
+    usecase "UC16\nPublish recruitment campaign" as UC16
+    usecase "UC17\nApply for membership" as UC17
+    usecase "UC18\nScreen applications" as UC18
+    usecase "UC19\nRecord candidate evaluation" as UC19
+    usecase "UC20\nOnboard members" as UC20
+    usecase "UC21\nManage membership status" as UC21
+    usecase "UC22\nRequest to leave club" as UC22
+    usecase "UC23\nAssign positions" as UC23
+    usecase "UC24\nView member workspace" as UC24
+  }
 }
 
-UC19 ..> UC18 : <<extend>>
+STU -- UC17
+STU -- UC22
+STU -- UC24
 
 CMB -- UC16
 CMB -- UC18
@@ -48,19 +63,7 @@ CMB -- UC20
 CMB -- UC21
 CMB -- UC23
 
-STU -- UC17
-STU -- UC22
-STU -- UC24
-
-note bottom of UC21
-  Ending a membership lives here, whoever starts it:
-  CMB-initiated removal, or a withdrawal the student
-  requested in UC22. v1 UC23 carried both actors at once.
-end note
-
-note bottom of UC24
-  Read-only, scoped to clubs where the caller has an
-  active membership. It introduces no new entity - it is
-  what makes a membership worth having in the system.
-end note
+UC17 ..> UC06 : <<extend>>
+UC19 .[norank].> UC18 : <<extend>>
+UC22 .[norank].> UC24 : <<extend>>
 @enduml

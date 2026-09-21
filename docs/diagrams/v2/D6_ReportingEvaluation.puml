@@ -1,59 +1,75 @@
 @startuml v2_D6_ReportingEvaluation
 left to right direction
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 60
 skinparam backgroundColor White
 skinparam shadowing false
 skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam ArrowColor Black
+skinparam ArrowFontSize 11
+skinparam actor {
+  BackgroundColor White
+  BorderColor Black
+}
 skinparam usecase {
   BackgroundColor White
   BorderColor Black
-  ArrowColor Black
 }
 skinparam rectangle {
   BackgroundColor White
   BorderColor Black
 }
+skinparam package {
+  BackgroundColor White
+  BorderColor Black
+}
+' inner frame: invisible, only adds padding inside the system boundary
+skinparam rectangle<<inner>> {
+  BorderColor Transparent
+  FontColor Transparent
+}
+hide <<inner>> stereotype
 
 title D6 - Reporting, Compliance & Evaluation (UC40-UC45)
 
 actor "Club Management Board" as CMB
 actor "ICPDP Officer" as ICPDP
 
-rectangle UCMS {
-  usecase UC40 as "UC40
-  Submit the periodic activity report"
-  usecase UC41 as "UC41
-  Assess the periodic activity report"
-  usecase UC42 as "UC42 [Phase 2]
-  Manage violation and compliance cases"
-  usecase UC43 as "UC43 [Phase 2]
-  Configure the evaluation scheme"
-  usecase UC44 as "UC44 [Phase 2]
-  Generate the club performance
-  evaluation draft"
-  usecase UC45 as "UC45 [Phase 2]
-  Review, finalize and publish
-  the evaluation"
+rectangle "UCMS" {
+  rectangle " " <<inner>> {
+    usecase "UC40\nSubmit periodic report" as UC40
+    usecase "UC41\nAssess periodic report" as UC41
+    usecase "UC42\nManage compliance case" as UC42
+    usecase "UC43\nConfigure evaluation scheme" as UC43
+    usecase "UC44\nGenerate evaluation draft" as UC44
+    usecase "UC45\nPublish evaluation" as UC45
+    usecase "UC34\nClose event report\n(see D4b)" as UC34
+    usecase "UC39\nReconcile budget\n(see D5)" as UC39
+    usecase "UC49\nRelease booking\n(see D7)" as UC49
+    usecase "UC53\nTriage complaint\n(see D8)" as UC53
+    usecase "UC15\nSuspend / dissolve club\n(see D2)" as UC15
+  }
 }
 
 CMB -- UC40
 
-ICPDP -- UC41
-ICPDP -- UC42
-ICPDP -- UC43
-ICPDP -- UC44
-ICPDP -- UC45
+UC41 -- ICPDP
+UC42 -- ICPDP
+UC43 -- ICPDP
+UC44 -- ICPDP
+UC45 -- ICPDP
 
-note bottom of UC44
-  Consumes UC21, UC32, UC34, UC39, UC41, UC42,
-  UC48, UC49, UC50 and UC53. Those are data
-  dependencies stated in the specification, not
-  use case relationships - a use case diagram
-  never shows sequence.
-end note
+UC34 <.. UC42 : <<extend>>
+UC39 <.. UC42 : <<extend>>
+UC49 <.. UC42 : <<extend>>
+UC53 <.. UC42 : <<extend>>
+UC15 .[norank].> UC42 : <<extend>>
 
-note bottom of UC43
-  BR29: a scheme cannot be activated unless the
-  total weight is valid. v1 validated a scheme
-  that no use case ever configured.
-end note
+' layout only: keep ICPDP in its own column to the right of the frame
+UC34 -[hidden]- UC41
+UC39 -[hidden]- UC43
+UC49 -[hidden]- UC44
+UC53 -[hidden]- UC45
 @enduml

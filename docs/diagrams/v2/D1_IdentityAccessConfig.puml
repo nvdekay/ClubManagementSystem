@@ -1,17 +1,36 @@
 @startuml v2_D1_IdentityAccessConfig
 left to right direction
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 60
 skinparam backgroundColor White
 skinparam shadowing false
 skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam ArrowColor Black
+skinparam ArrowFontSize 11
+skinparam actor {
+  BackgroundColor White
+  BorderColor Black
+}
 skinparam usecase {
   BackgroundColor White
   BorderColor Black
-  ArrowColor Black
 }
 skinparam rectangle {
   BackgroundColor White
   BorderColor Black
 }
+skinparam package {
+  BackgroundColor White
+  BorderColor Black
+}
+' inner frame: invisible, only adds padding inside the system boundary
+skinparam rectangle<<inner>> {
+  BorderColor Transparent
+  FontColor Transparent
+}
+hide <<inner>> stereotype
 
 title D1 - Identity, Access & Configuration (UC01-UC05)
 
@@ -19,44 +38,28 @@ actor "User" as USER
 actor "Student" as STU
 actor "Club Management Board" as CMB
 actor "ICPDP Officer" as ICPDP
+actor "Google OAuth" as OAUTH <<external>>
 
-STU -up-|> USER
-CMB -up-|> USER
-ICPDP -up-|> USER
+USER <|-- STU
+USER <|-- CMB
+USER <|-- ICPDP
 
-rectangle UCMS {
-  usecase UC01 as "UC01
-  Authenticate via Google OAuth
-  and enter the role workspace"
-  usecase UC02 as "UC02
-  Open my role dashboard"
-  usecase UC03 as "UC03
-  Manage accounts and role assignments"
-  usecase UC04 as "UC04
-  Configure institutional policy and deadlines"
-  usecase UC05 as "UC05 [Phase 2]
-  Configure the approval routing rules"
+rectangle "UCMS" {
+  rectangle " " <<inner>> {
+    usecase "UC01\nSign in with Google" as UC01
+    usecase "UC02\nView dashboard" as UC02
+    usecase "UC03\nManage accounts & roles" as UC03
+    usecase "UC04\nConfigure policy & deadlines" as UC04
+    usecase "UC05\nConfigure approval routing" as UC05
+  }
 }
-
-actor "Google OAuth" as OAUTH <<external system>>
 
 USER -- UC01
 USER -- UC02
+UC02 .[norank].> UC01 : <<include>>
 UC01 -- OAUTH
 
 ICPDP -- UC03
 ICPDP -- UC04
 ICPDP -- UC05
-
-note bottom of UC02
-  One use case, three role-specific contents
-  (v2 section 6). Every other use case is opened
-  from here; those 50+ associations are not drawn.
-end note
-
-note bottom of UC04
-  Phase 1 exposes only the values listed in v2 UC04
-  (BR42). Every other rule marked "configurable"
-  ships as a constant in one policy document.
-end note
 @enduml

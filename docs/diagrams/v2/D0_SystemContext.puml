@@ -1,41 +1,61 @@
 @startuml v2_D0_SystemContext
 left to right direction
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 60
 skinparam backgroundColor White
 skinparam shadowing false
 skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam ArrowColor Black
+skinparam ArrowFontSize 11
+skinparam actor {
+  BackgroundColor White
+  BorderColor Black
+}
 skinparam usecase {
   BackgroundColor White
   BorderColor Black
-  ArrowColor Black
 }
 skinparam rectangle {
   BackgroundColor White
   BorderColor Black
 }
+skinparam package {
+  BackgroundColor White
+  BorderColor Black
+}
+' inner frame: invisible, only adds padding inside the system boundary
+skinparam rectangle<<inner>> {
+  BorderColor Transparent
+  FontColor Transparent
+}
+hide <<inner>> stereotype
 
-title UCMS v2 - System Context / Module Overview
+title UCMS v2 - System Context
 
 actor "Student" as STU
 actor "Club Management Board" as CMB
 actor "ICPDP Officer" as ICPDP
+actor "Google OAuth" as OAUTH <<external>>
+actor "Google SMTP" as SMTP <<external>>
 
-rectangle "University Club Management System (UCMS)" {
-  package "M01 Identity, Access & Configuration" as M01
-  package "M02 Club Lifecycle & Governance" as M02
-  package "M03 Leadership & Term" as M03
-  package "M04 Recruitment & Membership" as M04
-  package "M05 Event & Activity" as M05
-  package "M06 Registration & Attendance" as M06
-  package "M07 Finance & Budget" as M07
-  package "M08 Reporting & Compliance" as M08
-  package "M09 Performance Evaluation" as M09
-  package "M10 Workflow, Notification & Audit" as M10
-  package "M11 Property & Facility Booking" as M11
-  package "M12 Feedback & Complaint" as M12
+rectangle "UCMS" {
+  rectangle " " <<inner>> {
+    package "M01 Identity & Config" as M01
+    package "M02 Club Lifecycle" as M02
+    package "M03 Leadership & Term" as M03
+    package "M04 Recruitment & Membership" as M04
+    package "M05 Event & Activity" as M05
+    package "M06 Registration & Attendance" as M06
+    package "M07 Finance & Budget" as M07
+    package "M08 Reporting & Compliance" as M08
+    package "M09 Performance Evaluation" as M09
+    package "M10 Workflow & Notification" as M10
+    package "M11 Property Booking" as M11
+    package "M12 Feedback & Complaint" as M12
+  }
 }
-
-actor "Google OAuth" as OAUTH <<external system>>
-actor "Google SMTP Service" as SMTP <<external system>>
 
 STU -- M01
 STU -- M02
@@ -54,34 +74,16 @@ CMB -- M08
 CMB -- M11
 CMB -- M12
 
-ICPDP -- M01
-ICPDP -- M02
-ICPDP -- M03
-ICPDP -- M05
-ICPDP -- M07
-ICPDP -- M08
-ICPDP -- M09
-ICPDP -- M11
-ICPDP -- M12
+M01 -- ICPDP
+M02 -- ICPDP
+M03 -- ICPDP
+M05 -- ICPDP
+M07 -- ICPDP
+M08 -- ICPDP
+M09 -- ICPDP
+M11 -- ICPDP
+M12 -- ICPDP
 
 M01 -- OAUTH
 M10 -- SMTP
-
-note bottom of SMTP
-  Every notification with an Email channel (section 19)
-  is delivered through this service. The individual
-  use cases are not wired to it on the detail diagrams.
-end note
-
-note bottom of M10
-  Cross-cutting module: approval tasks, notifications,
-  the scheduler that drives time-based transitions, and
-  the audit log. It owns no use case (v2 section 7), so
-  it is not expanded into a detail diagram.
-end note
-
-note bottom of M02
-  Student reaches M02 through UC06 (discover clubs)
-  and UC07 (submit an establishment application).
-end note
 @enduml
