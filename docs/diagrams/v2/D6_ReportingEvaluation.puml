@@ -49,7 +49,6 @@ rectangle "UCMS" {
     usecase "UC39\nReconcile budget\n(see D5)" as UC39
     usecase "UC49\nRelease booking\n(see D7)" as UC49
     usecase "UC53\nTriage complaint\n(see D8)" as UC53
-    usecase "UC15\nSuspend / dissolve club\n(see D2)" as UC15
   }
 }
 
@@ -65,12 +64,10 @@ UC34 <.. UC42 : <<extend>>
 UC39 <.. UC42 : <<extend>>
 UC49 <.. UC42 : <<extend>>
 UC53 <.. UC42 : <<extend>>
-UC42 <.. UC15 : <<extend>>
 
 ' layout only: keep ICPDP in its own column to the right of the frame
 UC34 -[hidden]- UC41
 UC39 -[hidden]- UC43
 UC49 -[hidden]- UC44
 UC53 -[hidden]- UC45
-UC15 -[hidden]- ICPDP
 @enduml

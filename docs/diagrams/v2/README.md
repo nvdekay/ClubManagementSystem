@@ -74,6 +74,8 @@ shared include.
   | UC42 Manage compliance case | UC53 Triage complaint | UC53 flow: "Escalated - a case is opened in UC42" |
   | UC15 Suspend / dissolve club | UC42 Manage compliance case | UC15 trigger: "a case outcome (UC42)" |
 
+  UC15 → UC42 is drawn on D2, next to UC15's two includes, so D6 keeps a single fan-in on UC42.
+
   Business rule BR15 (conflict detection) stays a rule, not an included use case.
 - **Layout-only constructs** (none carries meaning): the invisible `<<inner>>` rectangle inside
   `UCMS` adds the padding Graphviz does not give a cluster, so no ellipse touches the frame;

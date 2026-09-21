@@ -52,6 +52,7 @@ rectangle "UCMS" {
     usecase "UC15\nSuspend / dissolve club" as UC15
     usecase "UC28\nCancel / reschedule event\n(see D4a)" as UC28
     usecase "UC49\nRelease booking\n(see D7)" as UC49
+    usecase "UC42\nManage compliance case\n(see D6)" as UC42
   }
 }
 
@@ -70,6 +71,7 @@ UC15 -- ICPDP
 
 UC15 ..> UC28 : <<include>>
 UC15 ..> UC49 : <<include>>
+UC15 ..> UC42 : <<extend>>
 
 ' layout only: keep ICPDP in its own column to the right of the frame
 UC28 -[hidden]- ICPDP
