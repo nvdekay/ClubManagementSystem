@@ -50,7 +50,7 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
                   <th
                     key={header.id}
                     aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined}
-                    className="px-3 py-2 text-left font-medium text-muted-app"
+                    className="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-app uppercase"
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button

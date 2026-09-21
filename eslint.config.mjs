@@ -32,14 +32,14 @@ export default tseslint.config(
           selector: "JSXAttribute[name.name='className'] TemplateLiteral",
           message: 'No template literals in className. Use cn(base, { override: condition }) — default class + conditional override only.',
         },
-        // cursor: pointer comes from a global rule in client/src/index.css (button, a[href], [role="button"]).
+        // cursor: pointer comes from a global rule in client/src/index.css (button, a[href], [role="button"], [role="option"]).
         {
           selector: "JSXAttribute[name.name='className'] Literal[value=/(^|\\s)cursor-pointer(\\s|$)/]",
-          message: 'Do not add cursor-pointer per component — the global rule in client/src/index.css covers button, a[href], and [role="button"].',
+          message: 'Do not add cursor-pointer per component — the global rule in client/src/index.css covers button, a[href], [role="button"], and [role="option"].',
         },
         {
-          selector: "JSXOpeningElement[name.name=/^(?!(a|button|input|select|option|summary|label|textarea|details|area)$)[a-z]/]:has(JSXAttribute[name.name='onClick']):not(:has(JSXAttribute[name.name='role'][value.value='button']))",
-          message: 'Anything clickable must show cursor: pointer. Use a real <button>/<a href>, or add role="button" so the global cursor rule in client/src/index.css applies. Other interactive roles need their own entry in that CSS rule.',
+          selector: "JSXOpeningElement[name.name=/^(?!(a|button|input|select|option|summary|label|textarea|details|area)$)[a-z]/]:has(JSXAttribute[name.name='onClick']):not(:has(JSXAttribute[name.name='role'][value.value=/^(button|option)$/]))",
+          message: 'Anything clickable must show cursor: pointer. Use a real <button>/<a href>, or add role="button" (or role="option" inside a listbox) so the global cursor rule in client/src/index.css applies. Other interactive roles need their own entry in that CSS rule and in this selector.',
         },
       ],
     },
