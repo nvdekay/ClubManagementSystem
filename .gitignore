@@ -4,3 +4,9 @@ dist/
 .env
 *.log
 .claude/settings.local.json
+
+# rendered diagrams are generated on demand, never committed (docs/diagrams/README.md)
+docs/diagrams/**/*.png
+docs/diagrams/**/*.svg
+docs/diagrams/**/D[0-9]*
+!docs/diagrams/**/*.puml
