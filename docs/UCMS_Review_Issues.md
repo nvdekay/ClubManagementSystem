@@ -32,7 +32,7 @@ Ngày review: 2026-09-23.
 | I04 | 🔴 | UC28: Model nói "không mô hình hoá ICPDP huỷ event", Spec lại có luồng A1 | Model UC28, Spec UC28, UCD | Đã sửa | Giữ A1 của Spec: hệ thống tự huỷ event theo UC15/UC42, ICPDP không là actor; sửa câu ở Model cho khớp |
 | I05 | 🔴 | Dissolve club: Model có huỷ event/booking, Spec thì không | Model UC15, Spec UC15 | Đã sửa | Giải thể có lịch: kỳ quyết định chạy bình thường → kỳ sau `Dissolving` → cuối kỳ đó `Dissolved`; BR44/BR45 bảo đảm không event nào còn chạy |
 | I06 | 🔴 | Trạng thái sau khi resubmit không khớp precondition của UC duyệt | Spec UC07/08, UC25/26, UC35/36, UC47/48; Model §10 | Đã sửa | Nộp lại tạo phiên bản mới và quay về trạng thái chờ duyệt (`Submitted` / `Pending Approval` / `Requested`) |
-| I07 | 🔴 | Spec dùng các trạng thái không có trong lifecycle | Spec UC08, UC17, UC26, UC36, UC39, UC52; Model §10 | Chưa xử lý | — |
+| I07 | 🔴 | Spec dùng các trạng thái không có trong lifecycle | Spec UC08, UC17, UC26, UC36, UC39, UC52; Model §10 | Đã sửa | Thêm `Withdrawn`, `Expired`, `Exception` vào Model §10; "closed" trong Spec đổi thành `Cancelled`; cập nhật state diagram |
 | I08 | 🔴 | BR40 (số người phản hồi tối thiểu) có trong UC04 của Spec, không có trong Model | Spec UC04, Model UC04 | Đã sửa | Thêm BR40 vào Model UC04 cho khớp Spec; D3 chỉ còn là giá trị mặc định |
 | I09 | 🟡 | `UC15 «include» UC28/UC49` sai: chỉ xảy ra có điều kiện, lại khác actor | UCD ICPDP 1, CMB 3 | Đã sửa | Đổi thành `UC28 «extend» UC15` và `UC49 «extend» UC15` |
 | I10 | 🟡 | `UC30 «extend» UC29` sai: waitlist đã nằm trong UC29 A1 | UCD Student, CMB 3 | Đã sửa | Bỏ `UC30 «extend» UC29` và node mượn; UC30 chuyển sang Phase 1 |
@@ -255,10 +255,32 @@ Ngày review: 2026-09-23.
 - **Cách sửa đề xuất:** thêm các trạng thái này (kèm UC điều khiển) vào Model §10, hoặc bỏ khỏi
   Spec. Với loại 3, nên dùng `Cancelled` thay vì "closed" để không đụng nghĩa `Closed` hiện có.
 - **Xử lý:**
-  - Ngày: —
-  - File đã sửa: —
-  - Thay đổi: —
-  - Lý do: —
+  - Ngày: 2026-09-24
+  - File đã sửa: `UCMS_UseCase_Model_v2.md` (§10.1, §10.4, §10.5, §10.6, §10.10; tóm tắt UC07, UC08,
+    UC15, UC17, UC26, UC36, UC39, UC52), `UCMS_UseCase_Specification_v2.md` (UC07, UC08, UC15,
+    UC17, UC26, UC36, UC39, UC52), `diagrams/UCMS_State_Diagrams.drawio` (trang Club Application,
+    Recruitment Application, Event, Budget Request) và 4 PNG tương ứng trong `diagrams/img/`.
+  - Thay đổi:
+    - **Rút đơn → `Withdrawn`** (trạng thái cuối): §10.1 `Submitted / Under Review / Revision
+      Requested → Withdrawn` (UC07 alt — thêm Spec UC07 A3 *Withdraw*); §10.4 `Submitted /
+      Screening / Shortlisted → Withdrawn` (UC17 A2); §10.10 `Submitted / Under Triage →
+      Withdrawn` (UC52 A1). Spec UC17 A2, UC52 A1 ghi rõ trạng thái nào được rút.
+    - **Hết hạn → `Expired`** (trạng thái cuối, Scheduler): §10.1 và §10.5 `Revision Requested →
+      Expired`. Spec UC08 E2, UC26 E2 ghi scheduler là driver.
+    - **"closed" → `Cancelled`**: UC26 E1 → `Cancelled` do UC15; Spec UC15 *Suspend* và Model UC15
+      thêm "huỷ proposal chưa quyết"; driver ở §10.5 thành "UC15 (suspension, or dissolution per
+      BR45)". UC36 E1 → `Cancelled`; §10.6 thêm `Submitted / Under Review → Cancelled` (UC36).
+    - **`Exception`**: §10.6 chuyển từ chuỗi một dòng sang bảng; thêm `Disbursed / Reconciliation
+      Pending → Reconciled / Exception` và `Reconciled / Exception → Closed` (UC39, BR26). Spec
+      UC39 postcondition: officer đóng case ngay trong UC39.
+    - State diagram: thêm ô `Withdrawn`, `Expired`, `Cancelled`, `Exception` cùng các cạnh; nhãn
+      4 cạnh huỷ proposal ở trang Event đổi thành `UC15 / Scheduler [club Dissolved]`.
+  - Lý do: chọn **thêm vào Model** thay vì bỏ khỏi Spec, vì các tình huống này đều có thật (người
+    nộp rút đơn, quá hạn chỉnh sửa, event bị huỷ kéo theo budget). Dùng `Cancelled` thay "closed"
+    vì `Closed` đã có nghĩa khác (sau báo cáo / sau đối soát). `Exception` giữ nguyên tên vì
+    Model UC39 đã dùng.
+  - Chưa sửa: budget request ở `Revision Requested` khi event bị huỷ chưa có đường ra (UC36 E1
+    chỉ chạy khi officer đang xét); `UCMS_UseCase_Specifications_v2.docx` cần xuất lại.
 
 ### I08 — BR40 trong UC04
 - **Vấn đề:** Spec UC04 có cấu hình "số người phản hồi tối thiểu" (BR40); Model UC04 không có, và

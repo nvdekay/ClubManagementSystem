@@ -336,6 +336,7 @@ still applies.
 - **Alternative — resubmit (v1 UC05):** from `Revision Requested`, the applicant edits and
   resubmits; the system creates a **new version** and returns the application to `Submitted`.
 - **Alternative:** save as `Draft`.
+- **Alternative — withdraw:** before the decision, the applicant withdraws → `Withdrawn`.
 - **Exception:** a mandatory document is missing; fewer founding members than BR03 allows.
 - **Rules:** BR02, BR03, BR04 — a submitted version is never overwritten.
 - **Related:** UC08 · **Pain point:** BP04
@@ -352,6 +353,7 @@ still applies.
      a temporary founding CMB permission, limited to UC09 and UC10 while the club is
      `Pending Setup`;
   3. **Reject** — reason mandatory → `Rejected`, no Club is created.
+- **Exception:** the revision deadline passes with no resubmission → the scheduler sets `Expired`.
 - **Rules:** BR05 — actor, timestamp and reason are stored for every outcome. ICPDP never edits
   the applicant's data on their behalf. The decision history stays attached to the application
   and is visible here (this is what satisfies BP15 — no separate audit use case exists).
@@ -402,8 +404,8 @@ still applies.
 - **Actor:** ICPDP · **Goal:** Control the club lifecycle.
 - **Trigger:** a request (UC14), inactivity, a case outcome (UC42), or policy.
 - **Rules:** BR09, BR10, BR34 — a `Suspended` club opens no campaign, submits no event proposal
-  and receives no new booking; suspension cancels its approved future events and bookings through
-  UC28 (A1) and UC49.
+  and receives no new booking; suspension cancels its undecided event proposals, and its approved
+  future events and bookings through UC28 (A1) and UC49.
 - **Dissolution is scheduled, not immediate**, whoever triggers it:
   - at the decision, anything that would end after the `Dissolving` semester is cancelled
     through UC28 (A1) and UC49, and nothing new may end after it (BR45);
@@ -427,6 +429,7 @@ still applies.
 #### UC17 — Submit a club membership application
 - **Actor:** Student
 - **Flow:** pick a campaign (from UC06) → fill in the form → submit → `Submitted`.
+- **Alternative — withdraw:** before the decision → `Withdrawn`.
 - **Validation:** eligibility, the application window (BR11), no duplicate application (BR12),
   no `Banned` membership in this club (BR46).
 - **Related:** UC18, UC02
@@ -508,6 +511,8 @@ still applies.
 - **Flow:** review compliance, venue, time, budget estimate, risk, overdue obligations and the
   attached booking → choose: **request revision** (structured comments mandatory) →
   `Revision Requested`; **approve** → `Approved`; **reject** (reason mandatory) → `Rejected`.
+- **Exceptions:** the club is suspended before the decision → `Cancelled` by UC15; the revision
+  deadline passes → the scheduler sets `Expired`.
 - **Rules:** BR05, BR14, BR31 — ICPDP is the single approval authority; Facility, Security and
   Finance opinions are gathered outside the system and recorded in the review note. Approving a
   proposal that carries a booking request does **not** approve the booking; UC48 decides it.
@@ -593,6 +598,7 @@ still applies.
 - **Actor:** ICPDP
 - **Flow:** review eligibility, the available allocation, duplication and the state of the
   related activity → request revision, approve (possibly with a reduced amount) or reject.
+- **Exception:** the related event is rejected or cancelled → `Cancelled`.
 - **Rules:** BR05 mandatory audit; the approved amount may differ from the requested amount
   where policy allows.
 - **Related:** UC35, UC37
@@ -617,7 +623,7 @@ still applies.
 - **Actor:** ICPDP
 - **System computes:** approved, disbursed, recorded expenses, supported expenses, unsupported
   expenses, remaining balance, variance.
-- **Outcome:** `Reconciled` or `Exception`.
+- **Outcome:** `Reconciled` or `Exception`, then `Closed`.
 - **Rules:** BR26 — reconciliation must complete before a budget case closes. CMB does not
   co-own this decision; it reads the same figures through UC02, which is what removes v1 UC45's
   dual actor.
@@ -744,6 +750,7 @@ still applies.
 - **Input:** the club, the related event if any, the complaint type, the description, evidence.
 - **Flow:** select the club or event → choose a type → describe and attach evidence → submit →
   `Submitted`, ICPDP receives a task.
+- **Alternative — withdraw:** before triage decides → `Withdrawn`.
 - **Rules:** BR38 — the complaint goes straight to ICPDP; the club gains access only after
   UC53 forwards it. The complainant tracks progress through UC02.
 - **Related:** UC53 · **Pain point:** BP18
@@ -845,6 +852,10 @@ with no explanation.
 | Under Review → Revision Requested | UC08 |
 | Revision Requested → Submitted (new version) | UC07 alt |
 | Under Review → Approved / Rejected | UC08 |
+| Submitted / Under Review / Revision Requested → Withdrawn | UC07 alt (withdraw) |
+| Revision Requested → Expired | **Scheduler** (revision deadline set in UC08) |
+
+`Withdrawn` and `Expired` are final; after `Expired` the applicant starts a new application.
 
 ### 10.2 Club
 `Pending Setup → Active → Suspended ⇄ Active → Dissolving → Dissolved`
@@ -870,6 +881,8 @@ Drivers: UC16 for Draft → Published; the scheduler for the window opening and 
 ### 10.4 Recruitment Application
 `Draft → Submitted → Screening → Shortlisted → Accepted / Rejected / Waitlisted → Onboarded`.
 Drivers: UC17, then UC18 up to the decision, then UC20 for Onboarded.
+`Submitted / Screening / Shortlisted → Withdrawn` (final): UC17 alt, the student withdraws before
+the decision.
 
 ### 10.5 Event
 | From → To | Driver |
@@ -886,7 +899,8 @@ Drivers: UC17, then UC18 up to the decision, then UC20 for Onboarded.
 | Report Submitted → Closed | UC34 |
 | Report Submitted → Completed (report returned for correction) | UC34 |
 | Approved / Upcoming / Ongoing → Cancelled | UC28, or UC15 / UC42 on the club |
-| Draft / Pending Approval / Under Review / Revision Requested → Cancelled | UC15 (BR45), or the **Scheduler** when the club becomes `Dissolved` |
+| Draft / Pending Approval / Under Review / Revision Requested → Cancelled | UC15 (suspension, or dissolution per BR45), or the **Scheduler** when the club becomes `Dissolved` |
+| Revision Requested → Expired | **Scheduler** (revision deadline set in UC26); final, the club submits a new proposal |
 
 `Upcoming` covers the whole time between publication and the start, whether registration is open,
 closed, or not used at all (UC27 A2). `Registration Open` and `Registration Closed` are derived
@@ -894,8 +908,21 @@ from the registration window set in UC27, not states of the event — the same a
 feedback window in §10.11.
 
 ### 10.6 Budget Request
-`Draft → Submitted → Under Review → (Revision Requested → Submitted, new version) → Approved / Rejected → Disbursed → Reconciliation Pending → Reconciled → Closed`.
-Drivers: UC35, UC36, UC35 alt, UC36, UC37, UC39, UC39.
+| From → To | Driver |
+|---|---|
+| Draft → Submitted | UC35 |
+| Submitted → Under Review | UC36 |
+| Under Review → Revision Requested | UC36 |
+| Revision Requested → Submitted (new version) | UC35 alt |
+| Under Review → Approved / Rejected | UC36 |
+| Submitted / Under Review → Cancelled | UC36 (the related event is `Rejected` or `Cancelled`) |
+| Approved → Disbursed | UC37 |
+| Disbursed → Reconciliation Pending | UC39 (evidence returned for completion) |
+| Disbursed / Reconciliation Pending → Reconciled / Exception | UC39 |
+| Reconciled / Exception → Closed | UC39 (BR26) |
+
+`Exception` means reconciliation finished with a stated discrepancy; the case still closes, with
+the discrepancy on the record.
 
 ### 10.7 Violation
 `Open → Under Investigation → Awaiting Club Response → Decision Issued → Corrective Action → Resolved`.
@@ -928,6 +955,7 @@ Drivers: UC44 up to Data Ready, UC45 from Under Review.
 | Forwarded → Club Responded | **UC54** |
 | Club Responded → Closed / Escalated | UC53 |
 | Escalated → Violation Open | UC42 |
+| Submitted / Under Triage → Withdrawn | UC52 alt (final) |
 
 ### 10.11 Event Feedback
 `Submitted` — and nothing else.

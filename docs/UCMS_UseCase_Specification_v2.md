@@ -299,6 +299,8 @@ pain point of its own). All use cases ship in one release — see model §12.
   - **A2 Resubmit after revision (v1 UC05):** from `Revision Requested`, the student edits the
     flagged sections and resubmits; the system creates a **new version** and returns the
     application to `Submitted`. The previous version stays readable.
+  - **A3 Withdraw:** the student withdraws an application that has not been decided (`Submitted`,
+    `Under Review` or `Revision Requested`) → `Withdrawn`; any open review task is closed.
 - **Exceptions:**
   - **E1** a mandatory document is missing → submission refused, the application stays `Draft`;
   - **E2** fewer founding members than BR03 allows → refused;
@@ -334,10 +336,10 @@ pain point of its own). All use cases ship in one release — see model §12.
   - **A1 Second level:** when the routing rules of UC05 require it, the decision is
     escalated inside ICPDP before it takes effect.
 - **Exceptions:**
-  - **E1** the applicant withdraws while the application is under review → the review closes as
-    `Withdrawn`;
-  - **E2** the revision deadline passes with no resubmission → the application is closed as
-    `Expired`, and the applicant may start a new one.
+  - **E1** the applicant withdraws while the application is under review (UC07 A3) → the review
+    closes and the application is `Withdrawn`;
+  - **E2** the revision deadline passes with no resubmission → the scheduler moves the application
+    to `Expired`, and the applicant may start a new one.
 - **Postconditions:** The application is `Revision Requested`, `Approved` or `Rejected`; on
   approval a Club exists in `Pending Setup`, and the applicant holds a temporary founding CMB
   permission, limited to UC09 and UC10 while the club is `Pending Setup`, so that the founding
@@ -516,8 +518,9 @@ pain point of its own). All use cases ship in one release — see model §12.
   1. The officer opens the club and reviews its state, obligations and history.
   2. The officer chooses `Suspend`, `Reactivate` or `Dissolve` and enters the reason.
   3. The system applies the state change and its consequences:
-     - **Suspend** — new campaigns, event proposals and bookings are blocked; approved future
-       events and bookings are cancelled through UC28 and UC49;
+     - **Suspend** — new campaigns, event proposals and bookings are blocked; event proposals not
+       yet decided are `Cancelled`; approved future events and bookings are cancelled through
+       UC28 and UC49;
      - **Reactivate** — the club returns to `Active` with its history intact;
      - **Dissolve** — the decision is recorded with its effective semester: the next one in the
        academic calendar (UC04). Events, proposals and bookings that would end after that
@@ -604,7 +607,8 @@ pain point of its own). All use cases ship in one release — see model §12.
   5. The club receives the application; the student tracks it in UC02.
 - **Alternative Flows:**
   - **A1 Draft:** the application is saved and completed before the window closes.
-  - **A2 Withdraw:** the student withdraws an application that has not been decided.
+  - **A2 Withdraw:** the student withdraws an application that has not been decided
+    (`Submitted`, `Screening` or `Shortlisted`) → `Withdrawn`.
 - **Exceptions:**
   - **E1** the window has closed → refused;
   - **E2** the student already applied to this campaign → refused (BR12);
@@ -883,8 +887,10 @@ pain point of its own). All use cases ship in one release — see model §12.
   - **A2 Approve with conditions:** the approval carries conditions that the club must meet; they
     are checked again in UC34.
 - **Exceptions:**
-  - **E1** the club is suspended between submission and decision → the proposal is closed;
-  - **E2** the revision deadline passes → the proposal expires and must be resubmitted as new.
+  - **E1** the club is suspended between submission and decision → the proposal is `Cancelled`
+    by UC15;
+  - **E2** the revision deadline passes → the scheduler moves the proposal to `Expired`; the club
+    must submit a new proposal.
 - **Postconditions:** The proposal is `Revision Requested`, `Approved` or `Rejected`; only an
   approved event can be published in UC27.
 - **Business Rules:** BR05, BR14, BR31. Approving a proposal that carries a booking request does
@@ -1182,7 +1188,7 @@ pain point of its own). All use cases ship in one release — see model §12.
   - **A2 Partial approval per category:** individual lines are approved and others rejected, each
     with its reason.
 - **Exceptions:**
-  - **E1** the related event was rejected or cancelled → the request is closed;
+  - **E1** the related event was rejected or cancelled → the request is `Cancelled`;
   - **E2** the allocation for the period is exhausted → the officer rejects or defers, with the
     reason recorded.
 - **Postconditions:** The request is `Revision Requested`, `Approved` with an approved amount, or
@@ -1267,7 +1273,8 @@ pain point of its own). All use cases ship in one release — see model §12.
     `Reconciliation Pending`.
 - **Exceptions:** **E1** the disbursed amount exceeds the approved amount → the case cannot be
   reconciled until an amendment exists (BR23).
-- **Postconditions:** The case is `Reconciled` or `Exception`, and can then be `Closed` (BR26).
+- **Postconditions:** The case is `Reconciled` or `Exception`; the officer then closes it here →
+  `Closed` (BR26). An `Exception` case closes with its discrepancy on the record.
 - **Business Rules:** BR23, BR24, BR26. ICPDP is the only primary actor; CMB reads the same
   figures through UC02, which is what removes v1 UC45's two primary actors.
 - **Output:** Reconciliation result, audit record; input to UC44.
@@ -1630,7 +1637,8 @@ pain point of its own). All use cases ship in one release — see model §12.
   4. The student submits → `Submitted`; ICPDP receives a task.
   5. The student tracks the progress in UC02.
 - **Alternative Flows:**
-  - **A1 Withdraw:** the student withdraws a complaint that has not been decided.
+  - **A1 Withdraw:** the student withdraws a complaint that has not been decided (`Submitted` or
+    `Under Triage`) → `Withdrawn`.
 - **Exceptions:** **E1** the same student files a duplicate complaint on the same facts → the
   complaints are linked and triaged together.
 - **Postconditions:** The complaint is `Submitted` and trackable.
