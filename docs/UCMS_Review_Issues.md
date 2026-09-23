@@ -54,6 +54,7 @@ Ngày review: 2026-09-23.
 | I26 | 🟡 | Khung Phase 1/2 lỗi thời: mọi UC ra cùng lúc nhưng tài liệu vẫn chia phase và dựa vào đó để hoãn hành vi | Model §4–§8, §10.7–10.11, BR16/BR42/BR43, §12, §13, D2; Spec phần đầu, bảng UC, UC04/UC08/UC26/UC36/UC37/UC49, cuối Spec | Đã sửa | Xóa mọi nhãn Phase; giữ duyệt đa cấp qua UC05 (BR16 có hiệu lực); BR43 rút lại; §12 thành Release scope; §13 coverage đầy đủ |
 | I27 | 🟡 | `«extend»` trên trang Student vẽ điều hướng giao diện (UC17/UC29 → UC06; UC22/UC29/UC31/UC50 → UC24) | UCD Student, Spec UC24 | Đã sửa | Xoá 6 cạnh «extend»; Student chỉ còn association tới 9 UC; Spec UC24 bước 3 ghi rõ là điều hướng; huỷ cách sửa của I12 |
 | I28 | 🟡 | `«extend»` vẽ cascade hệ thống: `UC28 / UC49 → UC15`, `UC42 → UC49`; UC của ICPDP mượn sang trang CMB 3 | UCD CMB 3, ICPDP 1, ICPDP 3; Spec UC15 | Đã sửa | Xoá 3 loại cạnh và các node mượn; cascade ghi ở Postconditions UC15 (Spec UC28 A1, UC49 A1 đã có); giữ `UC47 «extend» UC25`, `UC49 «extend» UC28` |
+| I29 | 🟢 | Trang All users: nhãn Google OAuth hiện nguyên `<br>`; UC02 nằm trên UC01; nhãn actor CMB đè lên actor ICPDP | UCD All users | Đã sửa | Sửa escape nhãn; đảo vị trí UC01/UC02; giãn 3 actor. Giữ tên "Sign in with Google" và actor hình người |
 
 ---
 
@@ -680,3 +681,30 @@ Ngày review: 2026-09-23.
   - Lý do: UCD chỉ giữ quan hệ mà actor thực sự đi qua; cascade và tín hiệu bất đồng bộ thuộc về
     Spec (Postconditions, Alternative Flows) hoặc sơ đồ activity/state.
   - Chưa sửa: `UCMS_UseCase_Specifications_v2.docx` cần xuất lại từ `.md`.
+
+### I29 — Lỗi hiển thị trang All users
+- **Vấn đề (review lần 3):**
+  1. Nhãn actor hiện `<<external>><br>Google OAuth`: value bị escape hai lần nên `<br>` in ra
+     nguyên văn.
+  2. UC02 nằm trên UC01, đọc ngược thứ tự.
+  3. (Phát hiện thêm) nhãn hai dòng "Club Management Board" đè lên đầu actor ICPDP Officer.
+  - Review còn đề nghị: đổi Google OAuth sang hình hộp / stereotype `«secondary»`; đổi "Sign in
+    with Google" → "Sign in"; thêm quan hệ UC02–UC01. **Không sửa:**
+    - UML cho phép hệ thống ngoài làm actor; vai trò supporting đã thể hiện bằng vị trí bên phải
+      và association chỉ với UC01; `«secondary»` không phải stereotype chuẩn; `«external»` khớp
+      Model §3 (Supporting: Google OAuth, ES1).
+    - Đăng nhập chỉ qua Google là ràng buộc nghiệp vụ (UC01: "Access without in-house
+      passwords"), và tên UC trên UCD phải khớp Model/Spec ("Authenticate via Google OAuth …",
+      cùng nguyên tắc I13).
+    - UC02–UC01 đã xử lý ở I11: UC01 là precondition của UC02 (Spec UC02).
+- **Cách sửa đề xuất:** sửa escape, đảo hai oval, giãn actor.
+- **Xử lý:**
+  - Ngày: 2026-09-24
+  - File đã sửa: `diagrams/UCMS_UseCase_ByActor.drawio` — trang All users;
+    `diagrams/img/UCMS_UseCase_ByActor_01_All-users.png`.
+  - Thay đổi:
+    - `p0oauth` value: `&amp;lt;br&amp;gt;` → `&lt;br&gt;` — nhãn thành hai dòng `<<external>>` /
+      `Google OAuth`.
+    - `p0UC01` y 230 → 110, `p0UC02` y 110 → 230; `p0oauth` y 217 → 97 để ngang UC01.
+    - Actor: `p0a1` y 150 → 160, `p0a2` y 260 → 280, `p0user` y 150 → 160.
+  - Lý do: chỉ sửa lỗi hiển thị; ký hiệu và tên UC đã đúng chuẩn và khớp tài liệu.
