@@ -549,7 +549,9 @@ pain point of its own). All use cases ship in one release — see model §12.
   - **E1** dissolution is decided while a budget is unreconciled → the officer is warned; the
     reconciliation is due before the end of the `Dissolving` semester (step 6).
 - **Postconditions:** The club is `Suspended` or `Active`, or carries a dissolution effective next
-  semester and ends `Dissolved` after step 6; the reason and the actor are stored.
+  semester and ends `Dissolved` after step 6; the reason and the actor are stored. On a
+  suspension or dissolution, the events and bookings step 3 names are `Cancelled` and their slots
+  freed — a system cascade (UC28 A1, UC49 A1), not a step the officer performs in UC28 or UC49.
 - **Business Rules:** BR09, BR10, BR34 — a `Suspended` club opens no campaign, submits no event
   proposal and receives no new booking. BR44, BR45 — no event or booking outlives the
   `Dissolving` semester.
@@ -805,8 +807,9 @@ pain point of its own). All use cases ship in one release — see model §12.
   2. The system shows: the membership record and position; the club roster and board; the club's
      upcoming events with the student's registration state; their attendance history; their
      outstanding obligations — feedback not yet submitted, a pending withdrawal.
-  3. The student continues into UC29 (register), UC31 (check in), UC50 (feedback) or UC22
-     (leave).
+  3. The screen links to UC29 (register), UC31 (check in), UC50 (feedback) and UC22 (leave).
+     These are UI navigation only: each is a standalone use case of the Student, not an
+     «extend» of UC24.
 - **Alternative Flows:**
   - **A1 Several clubs:** the student switches between the clubs they belong to.
 - **Exceptions:** **E1** the membership ends → access drops back to the public view of UC06.

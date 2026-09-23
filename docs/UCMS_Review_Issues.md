@@ -34,10 +34,10 @@ Ngày review: 2026-09-23.
 | I06 | 🔴 | Trạng thái sau khi resubmit không khớp precondition của UC duyệt | Spec UC07/08, UC25/26, UC35/36, UC47/48; Model §10 | Đã sửa | Nộp lại tạo phiên bản mới và quay về trạng thái chờ duyệt (`Submitted` / `Pending Approval` / `Requested`) |
 | I07 | 🔴 | Spec dùng các trạng thái không có trong lifecycle | Spec UC08, UC17, UC26, UC36, UC39, UC52; Model §10 | Đã sửa | Thêm `Withdrawn`, `Expired`, `Exception` vào Model §10; "closed" trong Spec đổi thành `Cancelled`; cập nhật state diagram |
 | I08 | 🔴 | BR40 (số người phản hồi tối thiểu) có trong UC04 của Spec, không có trong Model | Spec UC04, Model UC04 | Đã sửa | Thêm BR40 vào Model UC04 cho khớp Spec; D3 chỉ còn là giá trị mặc định |
-| I09 | 🟡 | `UC15 «include» UC28/UC49` sai: chỉ xảy ra có điều kiện, lại khác actor | UCD ICPDP 1, CMB 3 | Đã sửa | Đổi thành `UC28 «extend» UC15` và `UC49 «extend» UC15` |
+| I09 | 🟡 | `UC15 «include» UC28/UC49` sai: chỉ xảy ra có điều kiện, lại khác actor | UCD ICPDP 1, CMB 3 | Đã sửa | ~~Đổi thành `UC28 «extend» UC15` và `UC49 «extend» UC15`~~ (huỷ ở I28: bỏ hẳn cạnh) |
 | I10 | 🟡 | `UC30 «extend» UC29` sai: waitlist đã nằm trong UC29 A1 | UCD Student, CMB 3 | Đã sửa | Bỏ `UC30 «extend» UC29` và node mượn; UC30 chuyển sang Phase 1 |
 | I11 | 🟡 | `UC02 «include» UC01` sai hướng: đăng nhập là điều kiện trước | UCD All users | Đã sửa | Bỏ `UC02 «include» UC01`; UC01 là precondition của UC02 |
-| I12 | 🟡 | Thiếu quan hệ UC24 → UC29 / UC31 / UC50 | UCD Student | Đã sửa | Thêm `UC29 / UC31 / UC50 «extend» UC24`; Model UC24 Related thêm UC22 |
+| I12 | 🟡 | Thiếu quan hệ UC24 → UC29 / UC31 / UC50 | UCD Student | Đã sửa | ~~Thêm `UC29 / UC31 / UC50 «extend» UC24`~~ (huỷ ở I27); Model UC24 Related thêm UC22 |
 | I13 | 🟡 | Tên rút gọn làm mất nghĩa (UC15 thiếu "reactivate", UC49 thiếu "cancel") | UCD | Đã sửa | "Suspend / reactivate / dissolve club", "Cancel / release booking" |
 | I14 | 🟡 | Không phân biệt UC Phase 1 và Phase 2 | UCD | Không sửa | Đã bỏ chia phase; UCD không đánh dấu phase là đúng. Phần dọn phase còn lại thuộc I26 |
 | I15 | 🟡 | Thiếu luồng dữ liệu ICPDP → hệ thống (chỉ vẽ 3) | CD | Đã sửa | Vẽ lại CD v2: ICPDP → HT có 8 luồng gộp, phủ UC03–05, 08, 11, 13, 15, 26, 34, 36, 37, 39, 41–43, 45, 46, 48, 53 |
@@ -52,6 +52,8 @@ Ngày review: 2026-09-23.
 | I24 | 🟢 | Model §10.5 thiếu chuyển trạng thái khi UC34 trả báo cáo để sửa | Model §10.5, Spec UC34 | Đã sửa | Thêm `Report Submitted → Completed` (UC34); Spec UC34 ghi rõ event về `Completed` |
 | I25 | 🟡 | Trạng thái membership `Ended` gộp chung tự rời và bị loại; `On Leave` trùng nghĩa `Inactive` | Model UC21, Spec UC21/UC22, sơ đồ trạng thái Membership | Đã sửa | Đổi thành `Active` ⇄ `Inactive` → `Left` (UC22 được chấp nhận) / `Banned` (CMB buộc rời); BR46 chặn `Banned` quay lại; UC21 A2 thành đăng ký lại thành viên mỗi kỳ |
 | I26 | 🟡 | Khung Phase 1/2 lỗi thời: mọi UC ra cùng lúc nhưng tài liệu vẫn chia phase và dựa vào đó để hoãn hành vi | Model §4–§8, §10.7–10.11, BR16/BR42/BR43, §12, §13, D2; Spec phần đầu, bảng UC, UC04/UC08/UC26/UC36/UC37/UC49, cuối Spec | Đã sửa | Xóa mọi nhãn Phase; giữ duyệt đa cấp qua UC05 (BR16 có hiệu lực); BR43 rút lại; §12 thành Release scope; §13 coverage đầy đủ |
+| I27 | 🟡 | `«extend»` trên trang Student vẽ điều hướng giao diện (UC17/UC29 → UC06; UC22/UC29/UC31/UC50 → UC24) | UCD Student, Spec UC24 | Đã sửa | Xoá 6 cạnh «extend»; Student chỉ còn association tới 9 UC; Spec UC24 bước 3 ghi rõ là điều hướng; huỷ cách sửa của I12 |
+| I28 | 🟡 | `«extend»` vẽ cascade hệ thống: `UC28 / UC49 → UC15`, `UC42 → UC49`; UC của ICPDP mượn sang trang CMB 3 | UCD CMB 3, ICPDP 1, ICPDP 3; Spec UC15 | Đã sửa | Xoá 3 loại cạnh và các node mượn; cascade ghi ở Postconditions UC15 (Spec UC28 A1, UC49 A1 đã có); giữ `UC47 «extend» UC25`, `UC49 «extend» UC28` |
 
 ---
 
@@ -311,6 +313,8 @@ Ngày review: 2026-09-23.
   - Lý do: sau I04/I05, UC15 gọi UC28 (A1) và UC49 có điều kiện — khi đình chỉ, hoặc khi giải
     thể mà còn việc kết thúc sau kỳ `Dissolving` (BR45). «extend» diễn đạt đúng "chỉ khi có điều
     kiện" và giữ quan hệ hiển thị trên sơ đồ, thay vì bỏ hẳn như đề xuất ban đầu.
+  - **Huỷ (2026-09-24, I28):** cascade do hệ thống thực hiện, không phải hành vi chèn vào luồng
+    của ICPDP trong UC15 → bỏ hẳn cạnh, đúng như đề xuất ban đầu.
 
 ### I10 — `UC30 «extend» UC29`
 - **Vấn đề:** trạng thái `Waitlisted` được tạo ngay trong UC29 A1. UC30 là phiên làm việc riêng
@@ -368,6 +372,8 @@ Ngày review: 2026-09-23.
   - Lý do: chọn cách thêm «extend» cho đồng nhất với cách trang Student đã vẽ UC06 (`UC17`,
     `UC29 «extend» UC06` cho bước "continue into"). Mỗi UC đích vẫn giữ association riêng với
     Student vì chúng cũng chạy độc lập (UC29 từ UC06, UC31 bằng QR tại sự kiện).
+  - **Huỷ một phần (2026-09-24, I27):** phần UCD của cách sửa này sai — «extend» không dùng cho
+    điều hướng giao diện. Đã xoá các cạnh; phần Model UC24 Related vẫn giữ.
 
 ### I13 — Tên rút gọn làm mất nghĩa
 - **Vấn đề:** "UC15 Suspend / dissolve club" thiếu **reactivate** (Model: suspend, reactivate
@@ -615,3 +621,62 @@ Ngày review: 2026-09-23.
     câu hỏi mở vì không phụ thuộc phase.
   - Chưa sửa: `UCMS_Business_System_Analysis*.md` (tài liệu v1, giữ nguyên);
     `UCMS_UseCase_Specifications_v2.docx` cần xuất lại từ `.md`.
+
+### I27 — «extend» dùng cho điều hướng giao diện ở trang Student
+- **Vấn đề:** trang Student có 6 cạnh `«extend»`: `UC17 / UC29 → UC06` và
+  `UC22 / UC29 / UC31 / UC50 → UC24`. Chúng mô tả "từ màn hình A bấm sang chức năng B" (UI flow),
+  không phải hành vi tùy chọn chèn vào UC gốc tại một extension point:
+  - UC06 và UC24 là màn hình xem, không có điểm mở rộng hay điều kiện chèn nào;
+  - UC29 extend hai UC gốc khác nhau — dấu hiệu vẽ theo màn hình vào;
+  - cả 6 UC đích đều có association trực tiếp với Student, tức là UC độc lập;
+  - các cạnh đi vòng làm sơ đồ rối.
+- **Cách sửa đề xuất:** xoá toàn bộ 6 cạnh; Student nối thẳng tới từng UC. Điều hướng ghi trong
+  Spec hoặc sơ đồ UI flow, không ở UCD.
+- **Xử lý:**
+  - Ngày: 2026-09-24
+  - File đã sửa: `diagrams/UCMS_UseCase_ByActor.drawio` — trang Student;
+    `diagrams/img/UCMS_UseCase_ByActor_02_Student.png`; `UCMS_UseCase_Specification_v2.md` — UC24.
+  - Thay đổi:
+    - UCD: xoá `p1e10`–`p1e15`. Trước: 6 cạnh «extend». Sau: chỉ còn 9 association Student → UC.
+    - Spec UC24 bước 3: "The student continues into UC29 … or UC22" → ghi rõ đó là liên kết điều
+      hướng, mỗi UC đích là UC độc lập, không phải «extend» của UC24.
+    - I12: đánh dấu phần UCD bị huỷ.
+  - Lý do: «extend» chỉ dành cho hành vi có điều kiện chèn vào luồng UC gốc. Các trang CMB/ICPDP
+    giữ nguyên vì cạnh ở đó đúng nghĩa này (vd. `UC47 «extend» UC25` khi sự kiện cần địa điểm,
+    `UC42 «extend» UC53` khi khiếu nại cần mở case).
+  - Chưa sửa: `UCMS_UseCase_Specifications_v2.docx` cần xuất lại từ `.md`.
+
+### I28 — «extend» dùng cho cascade hệ thống ở trang CMB 3, ICPDP 1, ICPDP 3
+- **Vấn đề (review lần 2):**
+  1. `UC28 «extend» UC15`, `UC49 «extend» UC15`: khi ICPDP đình chỉ/giải thể club, hệ thống tự
+     huỷ event và booking (Spec UC15 bước 3, UC28 A1 "without a CMB step", UC49 A1). Đó là hệ
+     quả nghiệp vụ (cascade), không phải hành vi mà actor của UC15 thực hiện tại một extension
+     point; UC28/UC49 lại là UC của CMB.
+  2. `UC42 «extend» UC49`: UC49 E2 chỉ ghi một *compliance signal*; case được ICPDP mở sau, ở UC42.
+     Không có gì chèn vào luồng UC49.
+  3. Trang CMB 3 mượn UC15, UC42 của ICPDP chỉ để nối các cạnh trên; trang ICPDP 1 mượn
+     UC28/UC49, ICPDP 3 mượn UC49 của CMB.
+  - Review còn cho rằng chiều mũi tên `UC28 → UC15` bị ngược. **Không đúng:** cạnh đi từ UC mở
+    rộng (UC28) về UC gốc (UC15) là đúng chiều; lỗi nằm ở việc dùng «extend», không ở chiều.
+  - Review đề nghị bỏ cả `UC47 «extend» UC25` vì UC47 có association trực tiếp với CMB. **Không
+    sửa:** Spec UC25 bước 4 "optionally attaches a property booking request (UC47)" và UC47 A2 là
+    đúng mẫu «extend» (tùy chọn, chèn tại một bước của UC gốc, cùng actor); UC47 vẫn chạy độc
+    lập cho hoạt động không gắn event nên giữ association. Khác I27: ở đó UC gốc (UC06, UC24) là
+    màn hình xem, không có bước nào để chèn.
+- **Cách sửa đề xuất:** xoá cạnh ở (1), (2) và các node mượn; mô tả cascade trong Spec.
+- **Xử lý:**
+  - Ngày: 2026-09-24
+  - File đã sửa: `diagrams/UCMS_UseCase_ByActor.drawio` — trang CMB 3, ICPDP 1, ICPDP 3;
+    PNG tương ứng trong `diagrams/img/`; `UCMS_UseCase_Specification_v2.md` — UC15.
+  - Thay đổi:
+    - CMB 3: xoá `p4e7` (UC28→UC15), `p4e8` (UC49→UC15), `p4e12` (UC42→UC49) và node mượn
+      `p4UC15`, `p4UC42`. Còn `UC47 «extend» UC25`, `UC49 «extend» UC28`.
+    - ICPDP 1: xoá `p6e8`, `p6e9` và node mượn `p6UC28`, `p6UC49`. Còn `UC15 «extend» UC42`.
+    - ICPDP 3: xoá `p8e9` (UC42→UC49) và node mượn `p8UC49`. Còn UC42 extend UC53/UC34/UC39 và
+      `UC15 «extend» UC42` — cùng actor ICPDP, mở case/ra quyết định ngay trong luồng khi có vi phạm.
+    - Spec UC15 Postconditions: thêm câu event/booking bị huỷ là cascade của hệ thống (UC28 A1,
+      UC49 A1).
+    - I09: đánh dấu cách sửa bị huỷ.
+  - Lý do: UCD chỉ giữ quan hệ mà actor thực sự đi qua; cascade và tín hiệu bất đồng bộ thuộc về
+    Spec (Postconditions, Alternative Flows) hoặc sơ đồ activity/state.
+  - Chưa sửa: `UCMS_UseCase_Specifications_v2.docx` cần xuất lại từ `.md`.
