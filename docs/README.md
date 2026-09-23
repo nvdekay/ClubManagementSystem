@@ -12,6 +12,7 @@ Code rules live in [`../.rules/`](../.rules/README.md) — this folder holds the
 | 3 | [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) | **The detailed specification — current.** All 54 use cases with actor, goal, trigger, preconditions, input, main flow, alternative flows, exceptions, postconditions, business rules, output, related use cases, pain point and phase. |
 | 4 | [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio) | **The use case diagrams — current.** draw.io, one page per actor, covering UC01–UC54. |
 | — | [`UCMS_UseCase_Specifications_v2.docx`](UCMS_UseCase_Specifications_v2.docx) | The same 54 specifications as document 3, in the Word table format the course submission uses — one table per use case with Main Success Scenario, Alternative Scenario, Exceptions and Business Rules. Generated from document 3; edit the Markdown first. |
+| 4b | [`diagrams/UCMS_Context_Diagram_v2.drawio`](diagrams/UCMS_Context_Diagram_v2.drawio) | **The context diagram — current.** 55 data flows between the system, the 3 actors and the 2 external systems; each flow is traced to use cases in §15 of document 2. |
 | 5 | [`UCMS_High_Level_Design.md`](UCMS_High_Level_Design.md) | Containers, module → code map, approval workflow, notification outbox, audit, identity, data design, API surface, client, deployment. |
 | 6 | [`design-guidelines.md`](design-guidelines.md) | Visual and UI guidelines for the client. |
 
@@ -21,6 +22,7 @@ Code rules live in [`../.rules/`](../.rules/README.md) — this folder holds the
 |---|---|
 | §8–§11, §14–§15, §21–§22 of `UCMS_Business_System_Analysis_EN.md` (57 use cases) | `UCMS_UseCase_Model_v2.md` + `UCMS_UseCase_Specification_v2.md` |
 | [`UCMS_Business_System_Analysis.md`](UCMS_Business_System_Analysis.md) (Vietnamese) | The `_EN` version is the working copy; the Vietnamese one lags behind |
+| [`diagrams/UCMS_Context_Diagram.drawio`](diagrams/UCMS_Context_Diagram.drawio) (the team's first context diagram, 40 flows) | `diagrams/UCMS_Context_Diagram_v2.drawio` |
 | `UCMS_UseCase_Specifications.docx` (v1, 57 use cases — on the `agent/use-case-diagrams` branch) | `UCMS_UseCase_Specifications_v2.docx` |
 
 Nothing is deleted: v1 stays readable so a decision can be traced back to the model it was made
@@ -36,7 +38,7 @@ case reads, the evaluation scheme a business rule validates, and all three dashb
 
 v2 keeps the same actors, modules and scope, merges what was one session, deletes what was a
 rule, adds the nine missing use cases, gives every lifecycle transition a named driver, and
-replaces the MVP list with a phase plan no Phase 1 use case can break. `§1` of
+replaces the MVP list with one release grouped into loops that each close. `§1` of
 `UCMS_UseCase_Model_v2.md` has the full list with the evidence per item.
 
 ## Conventions

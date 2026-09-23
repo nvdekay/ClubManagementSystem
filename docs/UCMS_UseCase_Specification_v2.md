@@ -4,7 +4,7 @@
 > [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md). It replaces §9 of
 > [`UCMS_Business_System_Analysis_EN.md`](UCMS_Business_System_Analysis_EN.md) (UC01–UC57) and
 > expands §6 of the model document. The model document keeps the use case list, the v1 → v2
-> mapping, the lifecycles, the business rules and the phase plan; this document holds the specs.
+> mapping, the lifecycles, the business rules and the release scope; this document holds the specs.
 > Diagrams: [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio).
 
 Every entry uses the same template, in this order:
@@ -12,72 +12,72 @@ Every entry uses the same template, in this order:
 ```text
 Primary Actor · Supporting · Module · Business Goal · Trigger · Preconditions · Input
 Main Flow · Alternative Flows · Exceptions · Postconditions · Business Rules · Output
-Related UC · Pain Point · Phase
+Related UC · Pain Point
 ```
 
 A field is omitted only when the use case genuinely has nothing for it (no external system, no
-pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred — see model §12.
+pain point of its own). All use cases ship in one release — see model §12.
 
 ---
 
 ## Index
 
-| UC | Name | Primary actor | Module | Phase |
-|---|---|---|---|---|
-| UC01 | Authenticate via Google OAuth and enter the role workspace | All | M01 | 1 |
-| UC02 | Open my role dashboard | All | M01 | 1 |
-| UC03 | Manage accounts and role assignments | ICPDP | M01 | 1 |
-| UC04 | Configure institutional policy and deadlines | ICPDP | M01 | 1 |
-| UC05 | Configure the approval routing rules | ICPDP | M01 | 2 |
-| UC06 | Discover clubs and open activity | Student | M02 | 1 |
-| UC07 | Submit a club establishment application | Student | M02 | 1 |
-| UC08 | Assess and decide the club establishment application | ICPDP | M02 | 1 |
-| UC09 | Configure the club profile and organization structure | CMB | M02/M03 | 1 |
-| UC10 | Nominate the club management board | CMB | M03 | 1 |
-| UC11 | Confirm the management board | ICPDP | M03 | 1 |
-| UC12 | Plan the leadership transition | CMB | M03 | 2 |
-| UC13 | Confirm the leadership transition | ICPDP | M03 | 2 |
-| UC14 | Request club activity suspension | CMB | M02 | 2 |
-| UC15 | Suspend, reactivate or dissolve a club | ICPDP | M02 | 1 |
-| UC16 | Create and publish a recruitment campaign | CMB | M04 | 1 |
-| UC17 | Submit a club membership application | Student | M04 | 1 |
-| UC18 | Screen and decide membership applications | CMB | M04 | 1 |
-| UC19 | Record candidate evaluation | CMB | M04 | 2 |
-| UC20 | Onboard accepted candidates | CMB | M04 | 1 |
-| UC21 | Manage membership status | CMB | M04 | 1 |
-| UC22 | Request to leave a club | Student | M04 | 2 |
-| UC23 | Assign positions inside the club | CMB | M03/M04 | 2 |
-| UC24 | Use my member workspace | Student | M04 | 1 |
-| UC25 | Submit an event proposal | CMB | M05 | 1 |
-| UC26 | Assess and decide the event proposal | ICPDP | M05 | 1 |
-| UC27 | Publish the event and open registration | CMB | M05 | 1 |
-| UC28 | Cancel or reschedule an event | CMB | M05 | 1 |
-| UC29 | Register for an event | Student | M06 | 1 |
-| UC30 | Manage capacity and the waitlist | CMB | M06 | 2 |
-| UC31 | Check in to an event | Student | M06 | 1 |
-| UC32 | Finalize event attendance | CMB | M06 | 1 |
-| UC33 | Submit the post-event report | CMB | M08 | 1 |
-| UC34 | Assess and close the event report | ICPDP | M08 | 1 |
-| UC35 | Submit a budget request | CMB | M07 | 1 |
-| UC36 | Assess and decide the budget request | ICPDP | M07 | 1 |
-| UC37 | Record disbursement | ICPDP | M07 | 1 |
-| UC38 | Record an expense with its evidence | CMB | M07 | 1 |
-| UC39 | Reconcile budget and spending | ICPDP | M07 | 1 |
-| UC40 | Submit the periodic activity report | CMB | M08 | 1 |
-| UC41 | Assess the periodic activity report | ICPDP | M08 | 1 |
-| UC42 | Manage violation and compliance cases | ICPDP | M08 | 2 |
-| UC43 | Configure the evaluation scheme | ICPDP | M09 | 2 |
-| UC44 | Generate the club performance evaluation draft | ICPDP | M09 | 2 |
-| UC45 | Review, finalize and publish the evaluation | ICPDP | M09 | 2 |
-| UC46 | Manage the property catalogue | ICPDP | M11 | 1 |
-| UC47 | Submit a property booking request | CMB | M11 | 1 |
-| UC48 | Assess and decide the property booking request | ICPDP | M11 | 1 |
-| UC49 | Track and cancel or release a booked property | CMB | M11 | 1 |
-| UC50 | Submit post-event feedback | Student | M12 | 2 |
-| UC51 | Review event feedback | CMB | M12 | 2 |
-| UC52 | Submit a complaint about a club | Student | M12 | 2 |
-| UC53 | Triage a complaint | ICPDP | M12 | 2 |
-| UC54 | Respond to a forwarded complaint | CMB | M12 | 2 |
+| UC | Name | Primary actor | Module |
+|---|---|---|---|
+| UC01 | Authenticate via Google OAuth and enter the role workspace | All | M01 |
+| UC02 | Open my role dashboard | All | M01 |
+| UC03 | Manage accounts and role assignments | ICPDP | M01 |
+| UC04 | Configure institutional policy and deadlines | ICPDP | M01 |
+| UC05 | Configure the approval routing rules | ICPDP | M01 |
+| UC06 | Discover clubs and open activity | Student | M02 |
+| UC07 | Submit a club establishment application | Student | M02 |
+| UC08 | Assess and decide the club establishment application | ICPDP | M02 |
+| UC09 | Configure the club profile and organization structure | CMB | M02/M03 |
+| UC10 | Nominate the club management board | CMB | M03 |
+| UC11 | Confirm the management board | ICPDP | M03 |
+| UC12 | Plan the leadership transition | CMB | M03 |
+| UC13 | Confirm the leadership transition | ICPDP | M03 |
+| UC14 | Request club activity suspension | CMB | M02 |
+| UC15 | Suspend, reactivate or dissolve a club | ICPDP | M02 |
+| UC16 | Create and publish a recruitment campaign | CMB | M04 |
+| UC17 | Submit a club membership application | Student | M04 |
+| UC18 | Screen and decide membership applications | CMB | M04 |
+| UC19 | Record candidate evaluation | CMB | M04 |
+| UC20 | Onboard accepted candidates | CMB | M04 |
+| UC21 | Manage membership status | CMB | M04 |
+| UC22 | Request to leave a club | Student | M04 |
+| UC23 | Assign positions inside the club | CMB | M03/M04 |
+| UC24 | Use my member workspace | Student | M04 |
+| UC25 | Submit an event proposal | CMB | M05 |
+| UC26 | Assess and decide the event proposal | ICPDP | M05 |
+| UC27 | Publish the event and open registration | CMB | M05 |
+| UC28 | Cancel or reschedule an event | CMB | M05 |
+| UC29 | Register for an event | Student | M06 |
+| UC30 | Manage capacity and the waitlist | CMB | M06 |
+| UC31 | Check in to an event | Student | M06 |
+| UC32 | Finalize event attendance | CMB | M06 |
+| UC33 | Submit the post-event report | CMB | M08 |
+| UC34 | Assess and close the event report | ICPDP | M08 |
+| UC35 | Submit a budget request | CMB | M07 |
+| UC36 | Assess and decide the budget request | ICPDP | M07 |
+| UC37 | Record disbursement | ICPDP | M07 |
+| UC38 | Record an expense with its evidence | CMB | M07 |
+| UC39 | Reconcile budget and spending | ICPDP | M07 |
+| UC40 | Submit the periodic activity report | CMB | M08 |
+| UC41 | Assess the periodic activity report | ICPDP | M08 |
+| UC42 | Manage violation and compliance cases | ICPDP | M08 |
+| UC43 | Configure the evaluation scheme | ICPDP | M09 |
+| UC44 | Generate the club performance evaluation draft | ICPDP | M09 |
+| UC45 | Review, finalize and publish the evaluation | ICPDP | M09 |
+| UC46 | Manage the property catalogue | ICPDP | M11 |
+| UC47 | Submit a property booking request | CMB | M11 |
+| UC48 | Assess and decide the property booking request | ICPDP | M11 |
+| UC49 | Track and cancel or release a booked property | CMB | M11 |
+| UC50 | Submit post-event feedback | Student | M12 |
+| UC51 | Review event feedback | CMB | M12 |
+| UC52 | Submit a complaint about a club | Student | M12 |
+| UC53 | Triage a complaint | ICPDP | M12 |
+| UC54 | Respond to a forwarded complaint | CMB | M12 |
 
 ---
 
@@ -119,7 +119,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Session, User, StudentProfile, audit record.
 - **Related UC:** UC02, UC03, UC04
 - **Pain Point:** BP19
-- **Phase:** 1
 
 ## UC02 – Open my role dashboard
 
@@ -153,7 +152,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** The rendered dashboard; no persisted data.
 - **Related UC:** all — every use case is reached from here
 - **Pain Point:** BP01, BP14, and the "track application status" responsibility of §4
-- **Phase:** 1
 
 ## UC03 – Manage accounts and role assignments
 
@@ -184,7 +182,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   permissions, never as a new actor. BR19's "special role" is granted here.
 - **Output:** Role assignment, account state, audit record.
 - **Related UC:** UC01, UC11, UC13, UC42
-- **Phase:** 1
 
 ## UC04 – Configure institutional policy and deadlines
 
@@ -201,7 +198,8 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   - the conflict threshold (BR15);
   - the feedback window and the minimum respondent count (BR36, BR40);
   - the overbooking policy (BR33);
-  - the enforcement switches (BR21).
+  - the enforcement switches (BR21);
+  - the academic calendar — semester start and end dates (UC15 dissolution).
 - **Main Flow:**
   1. The officer opens the policy set for the current period.
   2. The officer edits one or more values.
@@ -214,13 +212,12 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   affected records listed.
 - **Postconditions:** A new policy version is active; decisions already made keep the values
   they were made under.
-- **Business Rules:** BR42 — Phase 1 exposes only the list above. Every other rule marked
+- **Business Rules:** BR42 — the configuration screen exposes only the list above. Every other rule marked
   "configurable" in §14 ships as a constant in a single policy document and becomes editable
   only when a real need appears (model §14, D2).
 - **Output:** Policy version, audit record.
 - **Related UC:** UC01, UC07, UC25, UC33, UC40, UC47, UC50
 - **Pain Point:** BP14
-- **Phase:** 1
 
 ## UC05 – Configure the approval routing rules
 
@@ -244,12 +241,11 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
     sees which would have needed a second level.
 - **Exceptions:** **E1** two rules overlap or a request type has no rule → activation refused.
 - **Postconditions:** An active routing rule set exists; UC08, UC26, UC36 and UC48 consult it.
-- **Business Rules:** This is the use case Signature Feature 1 lacked in v1. Until it ships,
-  every decision in the system is single-level and BR16 is inactive (model §11). Whether the
+- **Business Rules:** This is the use case Signature Feature 1 lacked in v1. It is what makes BR16
+  enforceable: a request that matches no rule is decided at a single level (model §11). Whether the
   second level is a permission or a fourth actor is open decision D1.
 - **Output:** Routing rule set, audit record.
 - **Related UC:** UC08, UC26, UC36, UC48
-- **Phase:** 2
 
 ---
 
@@ -280,7 +276,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   and shows no open campaign (BR09). A `Dissolved` club is not listed.
 - **Output:** None persisted.
 - **Related UC:** UC16, UC17, UC27, UC29
-- **Phase:** 1
 
 ## UC07 – Submit a club establishment application
 
@@ -303,7 +298,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   - **A1 Draft:** the student saves the application as `Draft` and continues later.
   - **A2 Resubmit after revision (v1 UC05):** from `Revision Requested`, the student edits the
     flagged sections and resubmits; the system creates a **new version** and returns the
-    application to `Under Review`. The previous version stays readable.
+    application to `Submitted`. The previous version stays readable.
 - **Exceptions:**
   - **E1** a mandatory document is missing → submission refused, the application stays `Draft`;
   - **E2** fewer founding members than BR03 allows → refused;
@@ -313,7 +308,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** ClubApplication, ApplicationVersion, ApprovalTask, notification.
 - **Related UC:** UC08, UC02
 - **Pain Point:** BP04
-- **Phase:** 1
 
 ## UC08 – Assess and decide the club establishment application
 
@@ -332,11 +326,12 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   4. The officer chooses one outcome:
      - **Request revision** — mark the sections that fall short, enter structured comments, set a
        deadline → `Revision Requested`, the applicant is notified;
-     - **Approve** → `Approved`; a Club is created in `Pending Setup`;
+     - **Approve** → `Approved`; a Club is created in `Pending Setup`, and the applicant receives
+       a temporary founding CMB permission for it;
      - **Reject** — a reason is mandatory → `Rejected`; no Club is created.
   5. The system writes the audit record and notifies the applicant.
 - **Alternative Flows:**
-  - **A1 Second level (Phase 2):** when the routing rules of UC05 require it, the decision is
+  - **A1 Second level:** when the routing rules of UC05 require it, the decision is
     escalated inside ICPDP before it takes effect.
 - **Exceptions:**
   - **E1** the applicant withdraws while the application is under review → the review closes as
@@ -344,7 +339,9 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   - **E2** the revision deadline passes with no resubmission → the application is closed as
     `Expired`, and the applicant may start a new one.
 - **Postconditions:** The application is `Revision Requested`, `Approved` or `Rejected`; on
-  approval a Club exists in `Pending Setup` and its founding board can be nominated in UC10.
+  approval a Club exists in `Pending Setup`, and the applicant holds a temporary founding CMB
+  permission, limited to UC09 and UC10 while the club is `Pending Setup`, so that the founding
+  board can be configured and nominated.
 - **Business Rules:** BR05 — actor, timestamp and, where applicable, the reason are stored for
   every outcome. ICPDP never edits the applicant's data on their behalf. The decision history
   stays attached to the application and is read here, which is what satisfies BP15 without a
@@ -352,7 +349,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** ApprovalDecision, Club (on approval), audit record, notification.
 - **Related UC:** UC07, UC09, UC10, UC05
 - **Pain Point:** BP04, BP15
-- **Phase:** 1
 
 ## UC09 – Configure the club profile and organization structure
 
@@ -361,7 +357,8 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Business Goal:** Complete the operating information of a recognized club and model its
   internal units.
 - **Trigger:** The club is created in `Pending Setup`, or its structure changes.
-- **Preconditions:** The club exists; the caller holds the club-administration permission.
+- **Preconditions:** The club exists; the caller holds the club-administration permission, or
+  the temporary founding CMB permission from UC08 while the club is `Pending Setup`.
 - **Input:** Description, contact, charter, communication channels, operating scope; boards,
   departments, and the positions each may hold.
 - **Main Flow:**
@@ -381,7 +378,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   constrained by a university template.
 - **Output:** Club profile, Position and Department records, audit record.
 - **Related UC:** UC10, UC23, UC11
-- **Phase:** 1
 
 ## UC10 – Nominate the club management board
 
@@ -389,8 +385,9 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Module:** M03
 - **Business Goal:** Propose the leadership of a term for confirmation.
 - **Trigger:** A club is newly approved, a term begins, or a board seat falls vacant.
-- **Preconditions:** The club exists; the nominees are members (or founding members, for the
-  first board).
+- **Preconditions:** The club exists; the caller is CMB, or holds the temporary founding CMB
+  permission from UC08 while the club is `Pending Setup`; the nominees are members (or founding
+  members, for the first board).
 - **Input:** Member, position, term start and end.
 - **Main Flow:**
   1. The member opens the board nomination for a term.
@@ -410,7 +407,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Board nomination, ApprovalTask, notification.
 - **Related UC:** UC11, UC09
 - **Pain Point:** BP03
-- **Phase:** 1
 
 ## UC11 – Confirm the management board
 
@@ -434,11 +430,12 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   the seat is returned to UC10.
 - **Postconditions:** The board is active for the term; permissions are in force; the club is
   `Active` if this was its founding board.
-- **Business Rules:** BR05, BR07. Permissions come from this confirmation, not from UC03.
+- **Business Rules:** BR05, BR07. Permissions come from this confirmation, not from UC03. For a
+  founding board, the confirmation replaces the temporary founding CMB permission granted in
+  UC08: that permission is revoked and only the confirmed board holds CMB rights.
 - **Output:** ClubTerm, Position assignments, permissions, audit record.
 - **Related UC:** UC10, UC03, UC13
 - **Pain Point:** BP03
-- **Phase:** 1
 
 ## UC12 – Plan the leadership transition
 
@@ -463,7 +460,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Transition plan, ApprovalTask.
 - **Related UC:** UC13, UC10
 - **Pain Point:** BP03
-- **Phase:** 2
 
 ## UC13 – Confirm the leadership transition
 
@@ -489,7 +485,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** ClubTerm history, permissions, audit record.
 - **Related UC:** UC12, UC03, UC11
 - **Pain Point:** BP03
-- **Phase:** 2
 
 ## UC14 – Request club activity suspension
 
@@ -508,7 +503,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Postconditions:** The request awaits the decision in UC15.
 - **Output:** Suspension request, ApprovalTask.
 - **Related UC:** UC15
-- **Phase:** 2
 
 ## UC15 – Suspend, reactivate or dissolve a club
 
@@ -525,21 +519,41 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
      - **Suspend** — new campaigns, event proposals and bookings are blocked; approved future
        events and bookings are cancelled through UC28 and UC49;
      - **Reactivate** — the club returns to `Active` with its history intact;
-     - **Dissolve** — the governance history is archived and management access is revoked.
+     - **Dissolve** — the decision is recorded with its effective semester: the next one in the
+       academic calendar (UC04). Events, proposals and bookings that would end after that
+       semester are cancelled at once through UC28 (A1) and UC49 (BR45). The club keeps its
+       state and operates normally until then, including creating new work.
   4. The system audits the decision and notifies the club.
+  5. *(Dissolve only)* At the start of the next semester, the scheduler moves the club to
+     `Dissolving`: it opens no campaign, submits no event proposal and receives no new booking.
+     Work already created — including proposals still under review — runs to its end, and CMB
+     keeps its access only to close it (event reports in UC33 and UC34, budgets, periodic
+     reports).
+  6. *(Dissolve only)* At the end of that semester, before the next one starts, the scheduler
+     closes everything still open, as one step. No event is still running, because every event
+     fits in one semester (BR44) and none may end later (BR45):
+     - event proposals and booking requests not yet decided are cancelled;
+     - unfinished obligations (an unsubmitted report, an unreconciled budget) are recorded as
+       outstanding in the archive;
+     - the governance history is archived, management access is revoked, and the club becomes
+       `Dissolved`.
+
+     If any part fails, the club stays `Dissolving` and ICPDP is alerted.
 - **Alternative Flows:**
   - **A1 From a case:** the decision is taken as the corrective action of a case (UC42) and
     linked to it.
-- **Exceptions:** **E1** dissolution is requested while a budget is unreconciled → the officer is
-  warned and the reconciliation obligation is recorded before the archive.
-- **Postconditions:** The club is `Suspended`, `Active` or `Dissolved`; the reason and the actor
-  are stored.
+- **Exceptions:**
+  - **E1** dissolution is decided while a budget is unreconciled → the officer is warned; the
+    reconciliation is due before the end of the `Dissolving` semester (step 6).
+- **Postconditions:** The club is `Suspended` or `Active`, or carries a dissolution effective next
+  semester and ends `Dissolved` after step 6; the reason and the actor are stored.
 - **Business Rules:** BR09, BR10, BR34 — a `Suspended` club opens no campaign, submits no event
-  proposal and receives no new booking.
-- **Output:** Club state, audit record, notifications, cancelled events and bookings.
+  proposal and receives no new booking. BR44, BR45 — no event or booking outlives the
+  `Dissolving` semester.
+- **Output:** Club state or scheduled dissolution, audit record, notifications; at step 6,
+  cancelled events and bookings and the archive with its outstanding obligations.
 - **Related UC:** UC14, UC42, UC28, UC49, UC02
 - **Pain Point:** BP01
-- **Phase:** 1
 
 ---
 
@@ -573,7 +587,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** RecruitmentCampaign, notification to followers.
 - **Related UC:** UC06, UC17, UC18
 - **Pain Point:** BP11
-- **Phase:** 1
 
 ## UC17 – Submit a club membership application
 
@@ -595,13 +608,13 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Exceptions:**
   - **E1** the window has closed → refused;
   - **E2** the student already applied to this campaign → refused (BR12);
-  - **E3** the student already holds an active membership of this club → refused (BR13).
+  - **E3** the student already holds an active membership of this club → refused (BR13);
+  - **E4** the student's membership of this club is `Banned` → refused (BR46).
 - **Postconditions:** The application is `Submitted` and visible to the club.
-- **Business Rules:** BR11, BR12, BR13.
+- **Business Rules:** BR11, BR12, BR13, BR46.
 - **Output:** RecruitmentApplication, notification.
 - **Related UC:** UC18, UC02, UC06
 - **Pain Point:** BP11
-- **Phase:** 1
 
 ## UC18 – Screen and decide membership applications
 
@@ -634,7 +647,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Application decisions, notifications.
 - **Related UC:** UC17, UC19, UC20
 - **Pain Point:** BP11
-- **Phase:** 1
 
 ## UC19 – Record candidate evaluation
 
@@ -658,7 +670,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Business Rules:** The rubric is configured per campaign.
 - **Output:** CandidateEvaluation.
 - **Related UC:** UC18
-- **Phase:** 2
 
 ## UC20 – Onboard accepted candidates
 
@@ -679,47 +690,58 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
     a reason recorded (BR13).
   - **A2 Declined offer:** the candidate declines; the application is closed and the place returns
     to the waitlist.
-- **Exceptions:** **E1** an active membership already exists for that student and club → refused.
+- **Exceptions:**
+  - **E1** an active membership already exists for that student and club → refused;
+  - **E2** the student's membership of this club is `Banned` → refused, including manual
+    onboarding (BR46).
 - **Postconditions:** An active ClubMembership exists; the roster count changes.
 - **Business Rules:** BR13 — a membership comes only from an accepted candidate or an authorized
-  manual onboarding; no duplicate active membership.
+  manual onboarding; no duplicate active membership. BR46 — a `Banned` student is never onboarded
+  into that club again.
 - **Output:** ClubMembership, notification.
 - **Related UC:** UC18, UC21, UC24
 - **Pain Point:** BP02, BP11
-- **Phase:** 1
 
 ## UC21 – Manage membership status
 
 - **Primary Actor:** CMB
 - **Module:** M04
 - **Business Goal:** Keep the roster true at any point in time, including ending a membership.
-- **Trigger:** A member goes on leave, stops participating, is removed, or asked to leave (UC22).
+- **Trigger:** A semester begins, a member stops participating, is forced out, or asked to leave
+  (UC22).
 - **Preconditions:** The membership exists; the caller holds the membership permission.
-- **Input:** The new status, the effective date, the reason for a removal.
+- **Input:** The new status, the effective date, the reason for a ban.
 - **Main Flow:**
   1. The member opens the roster.
-  2. The member changes a membership's status — `Active`, `On Leave`, `Inactive`, `Ended`.
-  3. The member enters the effective date and, for a removal, a mandatory reason.
+  2. The member changes a membership's status:
+     - `Active` ⇄ `Inactive` — the member stopped participating, or resumes;
+     - `Banned` — the club forces the member out.
+  3. The member enters the effective date and, for a ban, a mandatory reason.
   4. The system applies the change, revokes any position held (UC23) and audits it.
   5. The affected member is notified and sees the change in UC24.
 - **Alternative Flows:**
-  - **A1 Execute a withdrawal:** the change carries out the request the student filed in UC22 and
-    links to it.
-  - **A2 Bulk end of term:** memberships that were not renewed are ended together with one reason.
+  - **A1 Execute a withdrawal:** the member accepts the request the student filed in UC22; the
+    membership moves to `Left` and links to the request.
+  - **A2 Semester re-registration:** at the start of each semester of the academic calendar (UC04),
+    the member confirms which members stay active. The system moves every unconfirmed `Active`
+    membership to `Inactive` and every confirmed `Inactive` one to `Active`, effective from the
+    semester start.
 - **Exceptions:**
-  - **E1** the member holds a confirmed board position → the status cannot be ended until
-    UC10/UC11 replaces them;
+  - **E1** the member holds a confirmed board position → the membership cannot move to
+    `Inactive`, `Left` or `Banned` until UC10/UC11 replaces them; in A2 a board member counts as
+    confirmed;
   - **E2** a backdated effective date would change an already finalized attendance or evaluation
     → refused.
 - **Postconditions:** The membership carries the new status with its effective date, and the
   history is readable.
-- **Business Rules:** Every change carries an effective date; a removal is always attributable.
+- **Business Rules:** Every change carries an effective date; a ban is always attributable.
+  `Left` and `Banned` are final — a student who `Left` returns through a new membership (UC20);
+  a `Banned` student cannot (BR46).
   Ending a membership lives here whoever initiated it — this is what removes v1 UC23's two
   primary actors.
 - **Output:** Membership status history, audit record, notification.
 - **Related UC:** UC20, UC22, UC23
 - **Pain Point:** BP02
-- **Phase:** 1
 
 ## UC22 – Request to leave a club
 
@@ -727,7 +749,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Module:** M04
 - **Business Goal:** Let a member end their membership on the record instead of disappearing.
 - **Trigger:** The member no longer wants to take part.
-- **Preconditions:** An active membership.
+- **Preconditions:** An `Active` or `Inactive` membership.
 - **Input:** Reason, requested effective date.
 - **Main Flow:**
   1. The student opens the membership in UC24.
@@ -741,7 +763,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Withdrawal request, notification.
 - **Related UC:** UC21, UC24
 - **Pain Point:** BP02
-- **Phase:** 2
 
 ## UC23 – Assign positions inside the club
 
@@ -766,7 +787,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   UC11.
 - **Output:** Position assignment, permissions, audit record.
 - **Related UC:** UC09, UC11, UC21
-- **Phase:** 2
 
 ## UC24 – Use my member workspace
 
@@ -793,7 +813,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** None persisted.
 - **Related UC:** UC20, UC22, UC29, UC31, UC50
 - **Pain Point:** BP02
-- **Phase:** 1
 
 ---
 
@@ -819,22 +838,24 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Alternative Flows:**
   - **A1 Draft:** the proposal is saved as `Draft`.
   - **A2 Resubmit after revision (v1 UC28):** from `Revision Requested`, the member edits and
-    resubmits; the system creates a **new revision** and returns the proposal to `Under Review`.
+    resubmits; the system creates a **new revision** and returns the proposal to `Pending Approval`.
     The previous revision is never overwritten.
   - **A3 Recurring activity:** a series is submitted as one proposal with its occurrences listed.
 - **Exceptions:**
   - **E1** a blocking conflict while policy forbids overlap → submission refused;
   - **E2** a mandatory report is overdue and BR21 enforcement is on → refused, with the
     obligation named;
-  - **E3** the club is `Suspended` → refused (BR10).
+  - **E3** the club is `Suspended` → refused (BR10);
+  - **E4** the event does not start and end within one semester → refused (BR44);
+  - **E5** the club has a recorded dissolution and the event ends after its `Dissolving`
+    semester → refused (BR45).
 - **Postconditions:** The proposal is `Pending Approval` with an immutable revision; a review
   task exists.
-- **Business Rules:** BR10, BR15, BR21. Conflict detection is a rule evaluated here, not a use
+- **Business Rules:** BR10, BR15, BR21, BR44, BR45. Conflict detection is a rule evaluated here, not a use
   case (v1 counted it as UC25 with `System` as its actor).
 - **Output:** EventProposal, revision, ApprovalTask, optional PropertyBooking request.
 - **Related UC:** UC26, UC47, UC04
 - **Pain Point:** BP05, BP06
-- **Phase:** 1
 
 ## UC26 – Assess and decide the event proposal
 
@@ -857,7 +878,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
      - **Reject** — a reason is mandatory → `Rejected`.
   5. The system audits the decision and notifies the club.
 - **Alternative Flows:**
-  - **A1 Second level (Phase 2):** a high-risk or large event routes to a second ICPDP level per
+  - **A1 Second level:** a high-risk or large event routes to a second ICPDP level per
     UC05 and BR16.
   - **A2 Approve with conditions:** the approval carries conditions that the club must meet; they
     are checked again in UC34.
@@ -871,7 +892,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** ApprovalDecision, audit record, notification.
 - **Related UC:** UC25, UC27, UC48, UC05
 - **Pain Point:** BP05, BP15
-- **Phase:** 1
 
 ## UC27 – Publish the event and open registration
 
@@ -884,7 +904,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Main Flow:**
   1. The member opens the approved event.
   2. The member sets the registration window, the audience scope and the public details.
-  3. The member publishes → `Open for Registration`.
+  3. The member publishes → `Upcoming`.
   4. The event appears in UC06 and UC24; the registration window is enforced in UC29.
 - **Alternative Flows:**
   - **A1 Members-only event:** the audience scope is limited to club members, and only UC24 shows
@@ -893,13 +913,12 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
     check-in still applies.
 - **Exceptions:** **E1** the event is not `Approved` → refused (BR14); **E2** the registration
   window ends after the event starts → refused.
-- **Postconditions:** The event is `Open for Registration` and publicly visible.
+- **Postconditions:** The event is `Upcoming` and publicly visible.
 - **Business Rules:** BR14, BR17. The scheduler moves the event to `Ongoing` and `Completed` from
   its own times (model §7).
 - **Output:** Published Event, notifications.
 - **Related UC:** UC26, UC29, UC06, UC24
 - **Pain Point:** BP05
-- **Phase:** 1
 
 ## UC28 – Cancel or reschedule an event
 
@@ -907,7 +926,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Module:** M05
 - **Business Goal:** Change an approved event without losing its trail or leaking a booked room.
 - **Trigger:** The club cannot hold the event as approved.
-- **Preconditions:** The event is `Approved`, `Open for Registration` or `Ongoing`.
+- **Preconditions:** The event is `Approved`, `Upcoming` or `Ongoing`.
 - **Input:** The reason; for a reschedule, the new time and venue.
 - **Main Flow:**
   1. The member opens the event and chooses `Cancel` or `Reschedule`.
@@ -918,9 +937,10 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   5. The system notifies every registrant.
   6. The system recomputes the report and budget obligations.
 - **Alternative Flows:**
-  - **A1 Cancelled by a lifecycle decision:** the cancellation is the consequence of UC15
-    (suspension) or UC42 (case outcome), and is linked to it. This is what removes v1 UC35's
-    second primary actor.
+  - **A1 Cancelled by a lifecycle decision:** when UC15 (suspension, dissolution) or UC42 (case
+    outcome) requires it, the system cancels the event without a CMB step, records that decision
+    as the reason and links to it, then runs steps 4–6. E2 does not apply. ICPDP is not an actor
+    of UC28; this is what removes v1 UC35's second primary actor.
 - **Exceptions:**
   - **E1** the event already has finalized attendance → cancellation is refused; the event is
     closed through UC33 and UC34 instead;
@@ -932,7 +952,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   governs whether a reschedule needs a fresh UC26 decision.
 - **Output:** Event state, released booking, notifications, audit record.
 - **Related UC:** UC27, UC49, UC42, UC15
-- **Phase:** 1
 
 ---
 
@@ -944,7 +963,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Module:** M06
 - **Business Goal:** Record participants against the event itself, not in a separate form.
 - **Trigger:** The student finds a published event in UC06 or UC24.
-- **Preconditions:** The event is `Open for Registration` and inside its window.
+- **Preconditions:** The event is `Upcoming` and inside its registration window.
 - **Input:** The event, and any answer the event's registration form asks for.
 - **Main Flow:**
   1. The student opens the event and chooses to register.
@@ -952,8 +971,8 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   3. The system creates the registration → `Confirmed`.
   4. The student sees it in UC02 and UC24 and receives a confirmation.
 - **Alternative Flows:**
-  - **A1 Waitlist (Phase 2):** the event is full and the waitlist is enabled → `Waitlisted`
-    (UC30).
+  - **A1 Waitlist:** the event is full and the waitlist is enabled → `Waitlisted`. Promotion
+    from the waitlist is handled later in UC30.
   - **A2 Cancel registration:** the student cancels before the event starts, which frees the
     place.
 - **Exceptions:**
@@ -963,11 +982,10 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   - **E3** the student is not in the event's audience scope → refused.
 - **Postconditions:** A registration exists in `Confirmed` or `Waitlisted`.
 - **Business Rules:** BR17 — confirmed registrations never exceed capacity unless policy allows
-  overbooking. Without UC30, reaching capacity simply closes registration.
+  overbooking. When the event has no waitlist, reaching capacity closes registration.
 - **Output:** EventRegistration, notification.
 - **Related UC:** UC27, UC30, UC31
 - **Pain Point:** BP07
-- **Phase:** 1
 
 ## UC30 – Manage capacity and the waitlist
 
@@ -975,7 +993,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Module:** M06
 - **Business Goal:** Fill the room when registrations churn.
 - **Trigger:** A place frees up, or the club changes the capacity.
-- **Preconditions:** The event is `Open for Registration` and has a waitlist.
+- **Preconditions:** The event is `Upcoming`, inside its registration window, and has a waitlist.
 - **Main Flow:**
   1. The member opens the event's registration list.
   2. The member adjusts the capacity or promotes a waitlisted student.
@@ -990,7 +1008,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   without a record.
 - **Output:** Registration states, notifications.
 - **Related UC:** UC29
-- **Phase:** 2
 
 ## UC31 – Check in to an event
 
@@ -1023,7 +1040,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Attendance, feedback window opened.
 - **Related UC:** UC29, UC32, UC50
 - **Pain Point:** BP07
-- **Phase:** 1
 
 ## UC32 – Finalize event attendance
 
@@ -1049,7 +1065,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Official Attendance dataset, audit record.
 - **Related UC:** UC31, UC33, UC44
 - **Pain Point:** BP07
-- **Phase:** 1
 
 ---
 
@@ -1081,7 +1096,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Post-event report, ApprovalTask.
 - **Related UC:** UC32, UC34, UC38, UC51
 - **Pain Point:** BP08
-- **Phase:** 1
 
 ## UC34 – Assess and close the event report
 
@@ -1097,9 +1111,9 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
      objective, conditions attached in UC26.
   2. The officer chooses one outcome:
      - **Accept** → the event is `Closed`;
-     - **Return for correction** → the report goes back to UC33;
-     - **Record a finding** → the report is accepted with a finding, which opens a case in UC42
-       once that ships.
+     - **Return for correction** → the event returns to `Completed` and the report goes back to
+       UC33 (A2);
+     - **Record a finding** → the report is accepted with a finding, which opens a case in UC42.
   3. The system audits the decision and notifies the club.
 - **Alternative Flows:**
   - **A1 No report filed:** the officer records the failure to report, which feeds BR21 and the
@@ -1107,12 +1121,10 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Exceptions:** **E1** the figures contradict the finalized attendance → the officer returns
   the report rather than accepting it.
 - **Postconditions:** The event is `Closed`, or the report is back with the club.
-- **Business Rules:** BR05, BR21. Until UC42 ships, a serious finding is recorded on the report
-  and surfaces in UC02 rather than becoming a case (BR43).
+- **Business Rules:** BR05, BR21.
 - **Output:** Report decision, event `Closed`, audit record, finding.
 - **Related UC:** UC33, UC42, UC44
 - **Pain Point:** BP08, BP15
-- **Phase:** 1
 
 ---
 
@@ -1134,7 +1146,8 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Alternative Flows:**
   - **A1 Draft:** the request is saved and completed later.
   - **A2 Revise and resubmit (v1 UC40):** from `Revision Requested`, the member edits and
-    resubmits; **both the version history and the approval history are preserved**.
+    resubmits; the system creates a **new version** and returns the request to `Submitted`;
+    **both the version history and the approval history are preserved**.
 - **Exceptions:**
   - **E1** no valid purpose is linked → refused (BR22);
   - **E2** a request for the same event and category already exists → warning, and the officer
@@ -1144,7 +1157,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** BudgetRequest, version, ApprovalTask.
 - **Related UC:** UC36, UC25
 - **Pain Point:** BP09
-- **Phase:** 1
 
 ## UC36 – Assess and decide the budget request
 
@@ -1165,7 +1177,7 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
      - **Reject** — a reason is mandatory → `Rejected`.
   4. The system audits the decision and notifies the club.
 - **Alternative Flows:**
-  - **A1 Second level (Phase 2):** an amount above the threshold routes to a second ICPDP level
+  - **A1 Second level:** an amount above the threshold routes to a second ICPDP level
     per UC05 and BR16.
   - **A2 Partial approval per category:** individual lines are approved and others rejected, each
     with its reason.
@@ -1180,7 +1192,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** ApprovalDecision, approved amount, audit record.
 - **Related UC:** UC35, UC37, UC05
 - **Pain Point:** BP09
-- **Phase:** 1
 
 ## UC37 – Record disbursement
 
@@ -1201,12 +1212,11 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Exceptions:** **E1** the disbursed total would exceed the approved amount → refused without
   an amendment (BR23).
 - **Postconditions:** The disbursed total is known and is an input to UC39.
-- **Business Rules:** BR23. Tracking only — this is not an accounting ERP (§5.2). **Phase 1**,
-  because without it UC39 computes nothing (BR43).
+- **Business Rules:** BR23. Tracking only — this is not an accounting ERP (§5.2). Without it,
+  UC39 computes nothing.
 - **Output:** Disbursement record.
 - **Related UC:** UC36, UC39
 - **Pain Point:** BP10
-- **Phase:** 1
 
 ## UC38 – Record an expense with its evidence
 
@@ -1237,7 +1247,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Expense, FinancialEvidence.
 - **Related UC:** UC37, UC39, UC33
 - **Pain Point:** BP09, BP10
-- **Phase:** 1
 
 ## UC39 – Reconcile budget and spending
 
@@ -1264,7 +1273,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Reconciliation result, audit record; input to UC44.
 - **Related UC:** UC37, UC38, UC44
 - **Pain Point:** BP10
-- **Phase:** 1
 
 ---
 
@@ -1295,7 +1303,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Periodic report, ApprovalTask.
 - **Related UC:** UC41, UC04
 - **Pain Point:** BP14
-- **Phase:** 1
 
 ## UC41 – Assess the periodic activity report
 
@@ -1318,7 +1325,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Report decision, audit record.
 - **Related UC:** UC40, UC44
 - **Pain Point:** BP14
-- **Phase:** 1
 
 ## UC42 – Manage violation and compliance cases
 
@@ -1350,7 +1356,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Violation, CorrectiveAction, audit record.
 - **Related UC:** UC53, UC34, UC39, UC49, UC15, UC44
 - **Pain Point:** BP12
-- **Phase:** 2
 
 ---
 
@@ -1380,7 +1385,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** EvaluationScheme version, audit record.
 - **Related UC:** UC44
 - **Pain Point:** BP13
-- **Phase:** 2
 
 ## UC44 – Generate the club performance evaluation draft
 
@@ -1408,7 +1412,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Evaluation draft, data lineage.
 - **Related UC:** UC43, UC45, UC41, UC39, UC42
 - **Pain Point:** BP13
-- **Phase:** 2
 
 ## UC45 – Review, finalize and publish the evaluation
 
@@ -1434,7 +1437,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Published Evaluation, notification, audit record.
 - **Related UC:** UC44
 - **Pain Point:** BP13
-- **Phase:** 2
 
 ---
 
@@ -1467,7 +1469,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Property records, audit record.
 - **Related UC:** UC47, UC48
 - **Pain Point:** BP16
-- **Phase:** 1
 
 ## UC47 – Submit a property booking request
 
@@ -1488,19 +1489,21 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Alternative Flows:**
   - **A1 Draft:** saved as `Draft`.
   - **A2 Attach to a proposal:** the request is attached to an event proposal being drafted (UC25).
-  - **A3 Revise and resubmit:** from `Revision Requested`, the member edits and resubmits — the
+  - **A3 Revise and resubmit:** from `Revision Requested`, the member edits and resubmits; the
+    system creates a **new version** and returns the booking to `Requested` — the
     symmetric flow v1 offered in UC52 step 3 but never gave a use case.
 - **Exceptions:**
   - **E1** the slot is taken and policy forbids overbooking → refused (BR33);
   - **E2** the requested time falls in a blackout period → refused;
   - **E3** the headcount exceeds the property's capacity → warning, and the officer decides in
-    UC48.
+    UC48;
+  - **E4** the club has a recorded dissolution and the booking ends after its `Dissolving`
+    semester → refused (BR45).
 - **Postconditions:** The booking is `Requested`.
-- **Business Rules:** BR15, BR33, BR34.
+- **Business Rules:** BR15, BR33, BR34, BR45.
 - **Output:** PropertyBooking, ApprovalTask.
 - **Related UC:** UC25, UC46, UC48
 - **Pain Point:** BP16
-- **Phase:** 1
 
 ## UC48 – Assess and decide the property booking request
 
@@ -1528,7 +1531,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** ApprovalDecision, locked slot, audit record, notification.
 - **Related UC:** UC47, UC49, UC26
 - **Pain Point:** BP16
-- **Phase:** 1
 
 ## UC49 – Track and cancel or release a booked property
 
@@ -1546,17 +1548,16 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
   4. ICPDP is notified; the slot becomes available in UC47.
 - **Alternative Flows:**
   - **A1 Automatic release:** the related event is cancelled in UC28, and the system releases the
-    booking without manual action (BR35).
+    booking without manual action (BR35). When that cancellation comes from UC15 or UC42, an
+    `In Use` booking is released too and E2 does not apply.
 - **Exceptions:** **E1** the booking is already `In Use` or `Completed` → cancellation is refused;
   **E2** the cancellation falls inside the configured notice period → it is recorded as a
   compliance signal for UC42.
 - **Postconditions:** The booking is `Cancelled` or `Released`; the slot is free.
-- **Business Rules:** BR35. **Phase 1**, because without it an approved booking locks a room
-  forever (BR43).
+- **Business Rules:** BR35. Without it, an approved booking locks a room forever.
 - **Output:** Booking state, freed slot, notification; compliance signal.
 - **Related UC:** UC28, UC48, UC42
 - **Pain Point:** BP16
-- **Phase:** 1
 
 ---
 
@@ -1591,7 +1592,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** EventFeedback, updated aggregate.
 - **Related UC:** UC31, UC51, UC44
 - **Pain Point:** BP17
-- **Phase:** 2
 
 ## UC51 – Review event feedback
 
@@ -1613,7 +1613,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Feedback summary; input to UC33 and UC44.
 - **Related UC:** UC50, UC33, UC44
 - **Pain Point:** BP17
-- **Phase:** 2
 
 ## UC52 – Submit a complaint about a club
 
@@ -1640,7 +1639,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Complaint, ApprovalTask, notification.
 - **Related UC:** UC53, UC02
 - **Pain Point:** BP18
-- **Phase:** 2
 
 ## UC53 – Triage a complaint
 
@@ -1666,12 +1664,11 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Postconditions:** The complaint is `Dismissed`, `Forwarded`, `Escalated` or `Closed`; on
   escalation a Violation exists and links back.
 - **Business Rules:** BR39 — every decision carries a reason and is audited; only ICPDP dismisses
-  or escalates. Escalation needs UC42, which is why the whole group ships in one phase (BR43) —
+  or escalates. Escalation needs UC42 —
   v1 put UC56/UC57 in the MVP and UC48 in V2, so an escalated complaint had nowhere to go.
 - **Output:** Complaint decision, Violation (on escalation), audit record, notification.
 - **Related UC:** UC52, UC54, UC42, UC44
 - **Pain Point:** BP18
-- **Phase:** 2
 
 ## UC54 – Respond to a forwarded complaint
 
@@ -1699,7 +1696,6 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 - **Output:** Club response, audit record, notification.
 - **Related UC:** UC53, UC42
 - **Pain Point:** BP18
-- **Phase:** 2
 
 ---
 
@@ -1711,5 +1707,4 @@ pain point of its own). `Phase 1` is the first release; `Phase 2` is deferred �
 | Use cases with exactly one primary actor | 54 of 54 — UC31 is the only one with a supporting actor |
 | Use cases with a Main Flow | 54 of 54 |
 | Use cases whose entity owns a lifecycle, with the state named | UC07, UC08, UC15, UC16, UC17, UC18, UC20, UC21, UC25, UC26, UC27, UC28, UC29, UC31, UC32, UC33, UC34, UC35, UC36, UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC45, UC47, UC48, UC49, UC50, UC52, UC53, UC54 |
-| Phase 1 use cases depending on a Phase 2 use case | none (BR43) |
-| Pain points with at least one use case | 19 of 19; BP12, BP13, BP17 and BP18 land in Phase 2 by design (model §13) |
+| Pain points with at least one use case | 19 of 19 (model §13) |
