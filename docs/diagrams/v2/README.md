@@ -20,6 +20,13 @@ The v1 sources in [`../`](../) are kept as history and still render the 57-use-c
 | `D7_PropertyBooking.puml` | catalogue, booking request, decision, release | UC46–UC49 |
 | `D8_FeedbackComplaint.puml` | event feedback, complaint intake, triage, response | UC50–UC54 |
 
+`UCMS_UseCase_ByActor.drawio` is the same model cut **by actor** instead of by module: an
+"All users" page for UC01/UC02, then one page for Student, four for Club Management Board and
+three for ICPDP Officer (at most 9 use cases per page, so no line crosses another). A related
+use case shown on another page sits in the right-hand column, drawn like any other, labelled with
+its owner or `see <page>`. Related use cases on the same page sit next to each other. Open the
+file at <https://app.diagrams.net> or in the draw.io desktop app.
+
 Every use case UC01–UC54 is owned by exactly one diagram and carries an actor association
 there. A use case shown on another diagram is repeated with a `(see Dx)` suffix so the
 `<<include>>`/`<<extend>>` relationship stays visible on both sides without duplicating
