@@ -5,9 +5,7 @@
 > Those sections stay in place as history; where the two disagree, **this document wins**.
 > Sections not listed here (§1–§7, §12–§13, §16–§20, §23–§24) are unchanged and still apply.
 
-> **Diagrams:** this model is drawn in [`diagrams/v2/`](diagrams/v2/README.md) — 10 PlantUML
-> files covering UC01–UC54. The v1 sources in [`diagrams/`](diagrams/README.md) are kept as
-> history and still render the 57-use-case model; §5 below is the mapping between them.
+> **Diagrams:** this model is drawn in [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio) (draw.io) covering UC01–UC54.
 
 **Total: 54 business use cases** — 45 carried over from the 57 of v1, 9 added.
 Actors and modules are unchanged: 3 actors, 2 external systems, 12 modules.

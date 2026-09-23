@@ -5,7 +5,7 @@
 > [`UCMS_Business_System_Analysis_EN.md`](UCMS_Business_System_Analysis_EN.md) (UC01–UC57) and
 > expands §6 of the model document. The model document keeps the use case list, the v1 → v2
 > mapping, the lifecycles, the business rules and the phase plan; this document holds the specs.
-> Diagrams: [`diagrams/v2/`](diagrams/v2/README.md).
+> Diagrams: [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio).
 
 Every entry uses the same template, in this order:
 

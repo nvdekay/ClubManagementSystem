@@ -10,7 +10,7 @@ Code rules live in [`../.rules/`](../.rules/README.md) — this folder holds the
 | 1 | [`UCMS_Business_System_Analysis_EN.md`](UCMS_Business_System_Analysis_EN.md) | The full business analysis: problems, actors, scope, modules, flows, domain model, evaluation model, dashboards, notifications, audit, signature features. **§1–§7 and §12–§24 are current.** |
 | 2 | [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md) | **The use case model — current.** 54 use cases, the v1 → v2 mapping, relationship map, actor matrix, entity lifecycles, amended business rules, the two-phase plan, traceability, open decisions. |
 | 3 | [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) | **The detailed specification — current.** All 54 use cases with actor, goal, trigger, preconditions, input, main flow, alternative flows, exceptions, postconditions, business rules, output, related use cases, pain point and phase. |
-| 4 | [`diagrams/v2/`](diagrams/v2/README.md) | **The use case diagrams — current.** 10 PlantUML files covering UC01–UC54. |
+| 4 | [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio) | **The use case diagrams — current.** draw.io, one page per actor, covering UC01–UC54. |
 | — | [`UCMS_UseCase_Specifications_v2.docx`](UCMS_UseCase_Specifications_v2.docx) | The same 54 specifications as document 3, in the Word table format the course submission uses — one table per use case with Main Success Scenario, Alternative Scenario, Exceptions and Business Rules. Generated from document 3; edit the Markdown first. |
 | 5 | [`UCMS_High_Level_Design.md`](UCMS_High_Level_Design.md) | Containers, module → code map, approval workflow, notification outbox, audit, identity, data design, API surface, client, deployment. |
 | 6 | [`design-guidelines.md`](design-guidelines.md) | Visual and UI guidelines for the client. |
@@ -21,7 +21,6 @@ Code rules live in [`../.rules/`](../.rules/README.md) — this folder holds the
 |---|---|
 | §8–§11, §14–§15, §21–§22 of `UCMS_Business_System_Analysis_EN.md` (57 use cases) | `UCMS_UseCase_Model_v2.md` + `UCMS_UseCase_Specification_v2.md` |
 | [`UCMS_Business_System_Analysis.md`](UCMS_Business_System_Analysis.md) (Vietnamese) | The `_EN` version is the working copy; the Vietnamese one lags behind |
-| [`diagrams/`](diagrams/README.md) (v1, 9 files, 57 use cases) | `diagrams/v2/` |
 | `UCMS_UseCase_Specifications.docx` (v1, 57 use cases — on the `agent/use-case-diagrams` branch) | `UCMS_UseCase_Specifications_v2.docx` |
 
 Nothing is deleted: v1 stays readable so a decision can be traced back to the model it was made
