@@ -55,6 +55,7 @@ Ngày review: 2026-09-23.
 | I27 | 🟡 | `«extend»` trên trang Student vẽ điều hướng giao diện (UC17/UC29 → UC06; UC22/UC29/UC31/UC50 → UC24) | UCD Student, Spec UC24 | Đã sửa | Xoá 6 cạnh «extend»; Student chỉ còn association tới 9 UC; Spec UC24 bước 3 ghi rõ là điều hướng; huỷ cách sửa của I12 |
 | I28 | 🟡 | `«extend»` vẽ cascade hệ thống: `UC28 / UC49 → UC15`, `UC42 → UC49`; UC của ICPDP mượn sang trang CMB 3 | UCD CMB 3, ICPDP 1, ICPDP 3; Spec UC15 | Đã sửa | Xoá 3 loại cạnh và các node mượn; cascade ghi ở Postconditions UC15 (Spec UC28 A1, UC49 A1 đã có); giữ `UC47 «extend» UC25`, `UC49 «extend» UC28` |
 | I29 | 🟢 | Trang All users: nhãn Google OAuth hiện nguyên `<br>`; UC02 nằm trên UC01; nhãn actor CMB đè lên actor ICPDP | UCD All users | Đã sửa | Sửa escape nhãn; đảo vị trí UC01/UC02; giãn 3 actor. Giữ tên "Sign in with Google" và actor hình người |
+| I30 | 🟡 | Trang CMB 4: cạnh nét đứt "supporting" CMB–UC31 không phải ký hiệu UML; `UC51 «extend» UC33` là luồng dữ liệu; thứ tự oval lộn xộn | UCD CMB 4 | Đã sửa | Đổi thành association nét liền; xoá cạnh «extend» (không đổi sang «include»); xếp lại theo luồng UC31→32→33→51, 35→38, 40, 54 |
 
 ---
 
@@ -708,3 +709,33 @@ Ngày review: 2026-09-23.
     - `p0UC01` y 230 → 110, `p0UC02` y 110 → 230; `p0oauth` y 217 → 97 để ngang UC01.
     - Actor: `p0a1` y 150 → 160, `p0a2` y 260 → 280, `p0user` y 150 → 160.
   - Lý do: chỉ sửa lỗi hiển thị; ký hiệu và tên UC đã đúng chuẩn và khớp tài liệu.
+
+### I30 — Trang CMB 4: ký hiệu supporting, UC51–UC33, thứ tự
+- **Vấn đề (review lần 4):**
+  1. CMB nối UC31 bằng nét đứt có nhãn "supporting". UML chỉ có association (nét liền) giữa actor
+     và UC; vai trò primary/supporting không vẽ được trên cạnh mà ghi ở Spec (UC31: Primary
+     Student, Supporting CMB).
+  2. `UC51 «extend» UC33`: UC51 không chèn hành vi vào luồng UC33 — UC33 bước 1 là hệ thống nạp
+     sẵn tóm tắt feedback, không phải CMB chạy UC51. Quan hệ thật là luồng dữ liệu (output UC51 →
+     input UC33), đã có ở Related UC. UC51 còn chạy độc lập (trigger: đóng cửa sổ feedback; A1 so
+     sánh nhiều event).
+  3. Thứ tự oval: UC31 nằm cuối, UC54 chen giữa nhóm event và nhóm tài chính.
+  - Review đề nghị tách UC31 thành UC "Take attendance" riêng của CMB. **Không sửa:** Model §1 đã
+    gộp check-in thủ công vào UC31 A1 để bỏ hai primary actor của v1; tách ra thì hai UC cùng tạo
+    attendance record và BR18 phải kiểm ở hai chỗ.
+  - Review đề nghị `UC33 «include» UC51` nếu xem feedback là bắt buộc. **Không sửa:** không bắt
+    buộc — dưới ngưỡng BR40 UC51 không hiển thị nội dung.
+- **Cách sửa đề xuất:** association nét liền; xoá «extend»; xếp lại theo luồng nghiệp vụ.
+- **Xử lý:**
+  - Ngày: 2026-09-24
+  - File đã sửa: `diagrams/UCMS_UseCase_ByActor.drawio` — trang CMB 4;
+    `diagrams/img/UCMS_UseCase_ByActor_06_CMB-4-Accountability-finance.png`.
+  - Thay đổi:
+    - `p5e8`: nét đứt nhãn "supporting" → association nét liền, không nhãn. Oval UC31 giữ ghi chú
+      *(Student)* để biết UC mượn từ trang Student.
+    - Xoá `p5e9` (`UC51 «extend» UC33`).
+    - Thứ tự từ trên xuống: UC32, UC33, UC51, UC54, UC35, UC38, UC40, UC31 → UC31, UC32, UC33,
+      UC51 (điểm danh, đóng event) · UC35, UC38 (tài chính) · UC40 (báo cáo định kỳ) · UC54
+      (khiếu nại).
+  - Lý do: UCD chỉ dùng ký hiệu UML chuẩn; phân vai actor và luồng dữ liệu thuộc về Spec. Sắp
+    theo luồng nghiệp vụ giữ các UC liên quan cạnh nhau và gần như tăng dần theo ID.
