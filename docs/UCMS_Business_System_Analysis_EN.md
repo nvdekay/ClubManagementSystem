@@ -888,6 +888,10 @@ User chooses to sign in
 **Total: 57 business use cases** (UC01–UC50 keep their numbering from the previous version;
 UC51–UC57 were added from the Context Diagram).
 
+> **Superseded:** the use case model in §8–§11, §14–§15 and §21–§22 has been revised in
+> [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md) (54 use cases). Where the two
+> disagree, that document wins; the text below is kept as history.
+
 ---
 
 # 9. DETAILED USE CASE SPECIFICATION
