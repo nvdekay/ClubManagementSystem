@@ -2,9 +2,9 @@
 
 Visual rules for the FPT University Club Management System client. Colors, type,
 spacing and component recipes only — code placement rules live in
-[`.rules/frontend.md`](../.rules/frontend.md).
+[`.rules/frontend.md`](../../.rules/frontend.md).
 
-Tokens are declared once in [`client/src/index.css`](../client/src/index.css) inside
+Tokens are declared once in [`client/src/index.css`](../../client/src/index.css) inside
 `@theme`, with `:root.dark` overrides. Components never see a hex value; they use the
 generated Tailwind utility (`bg-primary-app`, `text-muted-app`, `border-border-app`).
 

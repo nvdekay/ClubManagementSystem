@@ -873,7 +873,7 @@ User chọn đăng nhập
 **Tổng cộng: 57 business use case** (UC01–UC50 giữ nguyên đánh số từ bản trước; UC51–UC57 bổ sung theo Context Diagram).
 
 > **Đã được thay thế:** phần use case model ở §8–§11, §14–§15 và §21–§22 đã được sửa lại trong
-> [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md) (54 use case). Khi hai bản khác nhau,
+> [`UCMS_UseCase_Model_v2.md`](../02-use-cases/UCMS_UseCase_Model_v2.md) (54 use case). Khi hai bản khác nhau,
 > lấy bản đó; phần bên dưới giữ lại làm lịch sử.
 
 ---

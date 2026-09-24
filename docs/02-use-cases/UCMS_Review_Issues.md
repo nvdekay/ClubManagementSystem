@@ -4,9 +4,9 @@
 
 - [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md) — gọi tắt **Model**
 - [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) — gọi tắt **Spec**
-- [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio) — gọi tắt **UCD** (use case diagram)
-- [`diagrams/UCMS_Context_Diagram.drawio`](diagrams/UCMS_Context_Diagram.drawio) — gọi tắt **CD** (context diagram).
-  Từ I15–I20 trở đi, CD hiện hành là [`diagrams/UCMS_Context_Diagram_v2.drawio`](diagrams/UCMS_Context_Diagram_v2.drawio)
+- [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) — gọi tắt **UCD** (use case diagram)
+- [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio) — gọi tắt **CD** (context diagram).
+  Từ I15–I20 trở đi, CD hiện hành là [`../03-diagrams/UCMS_Context_Diagram_v2.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.drawio)
 
 Ký hiệu `§N` là mục số N của tài liệu đó (heading `## N. ...`). Ví dụ: **Model §9** là mục
 `## 9. Actor → use case matrix` trong `UCMS_UseCase_Model_v2.md`.

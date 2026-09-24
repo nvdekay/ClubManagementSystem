@@ -1,12 +1,12 @@
 # UCMS — Use Case Model v2 (revised)
 
 > **Status:** revision of §8–§11, §14–§15, §21–§22 of
-> [`UCMS_Business_System_Analysis_EN.md`](UCMS_Business_System_Analysis_EN.md).
+> [`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md).
 > Those sections stay in place as history; where the two disagree, **this document wins**.
 > Sections not listed here (§1–§7, §12–§13, §16–§20, §23–§24) are unchanged and still apply.
 
-> **Diagrams:** this model is drawn in [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio) (draw.io) covering UC01–UC54.
-> The system boundary is drawn in [`diagrams/UCMS_Context_Diagram_v2.drawio`](diagrams/UCMS_Context_Diagram_v2.drawio); §15 maps each of its data flows to use cases.
+> **Diagrams:** this model is drawn in [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) (draw.io) covering UC01–UC54.
+> The system boundary is drawn in [`../03-diagrams/UCMS_Context_Diagram_v2.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.drawio); §15 maps each of its data flows to use cases.
 
 **Total: 54 business use cases** — 45 carried over from the 57 of v1, 9 added.
 Actors and modules are unchanged: 3 actors, 2 external systems, 12 modules.
@@ -1056,7 +1056,7 @@ moved to V2.
 
 ## 15. Context diagram — data flow → use case
 
-[`diagrams/UCMS_Context_Diagram_v2.drawio`](diagrams/UCMS_Context_Diagram_v2.drawio) obeys one
+[`../03-diagrams/UCMS_Context_Diagram_v2.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.drawio) obeys one
 rule: every flow is produced or consumed by at least one use case, and every use case that moves
 data across the system boundary appears in at least one flow. One flow groups data of the same
 kind, so the use cases behind it are listed here, not on the diagram.

@@ -1,13 +1,13 @@
 # UCMS — High-Level Design
 
 Status: draft · Date: 2026-09-21 · Scope: the 12 modules of
-[`UCMS_Business_System_Analysis_EN.md`](UCMS_Business_System_Analysis_EN.md) built on this repo.
+[`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md) built on this repo.
 
 This document says **how the system is shaped**. It does not repeat the layer rules —
-those live in [`.rules/architecture.md`](../.rules/architecture.md) (server layers),
-[`.rules/frontend.md`](../.rules/frontend.md) (client) and
-[`ADR-001`](../.sdd/rfcs/ADR-001-clean-architecture-layers.md) /
-[`ADR-002`](../.sdd/rfcs/ADR-002-client-architecture.md). Everything here either maps the
+those live in [`.rules/architecture.md`](../../.rules/architecture.md) (server layers),
+[`.rules/frontend.md`](../../.rules/frontend.md) (client) and
+[`ADR-001`](../../.sdd/rfcs/ADR-001-clean-architecture-layers.md) /
+[`ADR-002`](../../.sdd/rfcs/ADR-002-client-architecture.md). Everything here either maps the
 business modules onto those rules, or names a decision the rules do not yet cover.
 
 ---

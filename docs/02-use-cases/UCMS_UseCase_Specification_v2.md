@@ -2,10 +2,10 @@
 
 > **Scope:** the full specification of all 54 use cases of
 > [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md). It replaces §9 of
-> [`UCMS_Business_System_Analysis_EN.md`](UCMS_Business_System_Analysis_EN.md) (UC01–UC57) and
+> [`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md) (UC01–UC57) and
 > expands §6 of the model document. The model document keeps the use case list, the v1 → v2
 > mapping, the lifecycles, the business rules and the release scope; this document holds the specs.
-> Diagrams: [`diagrams/UCMS_UseCase_ByActor.drawio`](diagrams/UCMS_UseCase_ByActor.drawio).
+> Diagrams: [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio).
 
 Every entry uses the same template, in this order:
 
