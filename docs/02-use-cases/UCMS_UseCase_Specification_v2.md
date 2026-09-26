@@ -109,7 +109,8 @@ liệu mô hình.
   - **A2 Người dùng quay lại:** StudentProfile được đồng bộ lại từ dữ liệu OAuth, và tên hiển
     thị hay ảnh đại diện đã đổi được cập nhật mà không đụng tới tập vai trò.
 - **Ngoại lệ:**
-  - **E1** email nằm ngoài domain được phép → từ chối truy cập, không tạo gì cả;
+  - **E1** email nằm ngoài domain được phép → từ chối truy cập, không tạo User hay phiên nào, và
+    lần thử được ghi audit;
   - **E2** tài khoản bị khoá ở UC03 → từ chối, và lần thử được ghi audit;
   - **E3** Google OAuth không truy cập được hoặc trả lỗi → hiển thị lỗi, không tạo phiên, không
     ghi User dở dang.
@@ -146,7 +147,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** một module nguồn không khả dụng → panel đó báo lỗi; phần còn lại của
   dashboard vẫn hiển thị.
 - **Hậu điều kiện:** Không có. Không có chuyển trạng thái nào xảy ra ở đây.
-- **Quy tắc nghiệp vụ:** Chỉ đọc. Mọi con số là truy vấn trực tiếp vào module sở hữu, không bao
+- **Quy tắc nghiệp vụ:** BR49. Chỉ đọc. Mọi con số là truy vấn trực tiếp vào module sở hữu, không bao
   giờ là bản sao thứ hai của dữ liệu. Người dùng chỉ thấy những CLB và bản ghi mà vai trò của họ
   cho phép.
 - **Đầu ra:** Dashboard được hiển thị; không ghi dữ liệu.
@@ -161,12 +162,13 @@ liệu mô hình.
   đăng nhập vào nó.
 - **Kích hoạt:** Có một officer mới, cần thu hồi một vai trò, hoặc cần khoá một tài khoản.
 - **Tiền điều kiện:** Người gọi có quyền quản trị tài khoản.
-- **Dữ liệu vào:** Người dùng đích, vai trò cần cấp hoặc thu hồi, ngữ cảnh CLB nếu vai trò gắn
-  CLB, lý do khi khoá hoặc mở khoá.
+- **Dữ liệu vào:** Người dùng đích, vai trò cần cấp hoặc thu hồi (vai trò ICPDP hoặc vai trò đặc
+  biệt của BR19), lý do khi khoá, mở khoá hoặc thu hồi.
 - **Luồng chính:**
   1. Officer tìm người dùng theo email hoặc tên.
   2. Hệ thống hiển thị vai trò, ngữ cảnh CLB và trạng thái tài khoản hiện tại của người đó.
-  3. Officer cấp hoặc thu hồi một vai trò ICPDP hoặc CMB, hoặc khoá / mở khoá tài khoản.
+  3. Officer cấp hoặc thu hồi một vai trò ICPDP hoặc vai trò đặc biệt của BR19, hoặc khoá / mở
+     khoá tài khoản. Quyền CMB không cấp ở đây (BR47).
   4. Officer nhập lý do khi thay đổi là khoá, mở khoá hoặc thu hồi.
   5. Hệ thống áp dụng thay đổi, vô hiệu hoá các phiên bị ảnh hưởng và ghi bản ghi audit.
 - **Luồng thay thế:**
@@ -174,12 +176,12 @@ liệu mô hình.
     cầu; lệnh khoá và hồ sơ được liên kết với nhau.
 - **Ngoại lệ:**
   - **E1** officer cố thu hồi vai trò quản trị cuối cùng của chính mình → từ chối;
-  - **E2** đối tượng đang giữ một ghế ban chủ nhiệm đã xác nhận → hệ thống cảnh báo rằng
-    UC10/UC11 mới là đường đi đúng, và ghi nhận việc ghi đè nếu officer vẫn tiếp tục.
+  - **E2** officer cố cấp quyền CMB cho một người dùng → từ chối, và chỉ sang UC10/UC11 hoặc
+    UC23 (BR47).
 - **Hậu điều kiện:** Tập vai trò hoặc trạng thái tài khoản đã đổi và được audit; một tài khoản
   bị khoá sẽ bị từ chối ở UC01 (ngoại lệ E2 tại đó).
-- **Quy tắc nghiệp vụ:** Một vai trò CMB cấp ở đây là thứ cấp so với ban chủ nhiệm được xác nhận
-  ở UC11 và bị thu hồi tự động khi một nhiệm kỳ đóng lại (UC13). Phân cấp bên trong ICPDP được
+- **Quy tắc nghiệp vụ:** BR47 — use case này không bao giờ cấp quyền CMB; quyền đó chỉ đến từ
+  một vị trí đã xác nhận trong nhiệm kỳ đang hoạt động (UC08, UC11, UC13, UC23). Phân cấp bên trong ICPDP được
   biểu diễn bằng quyền, không bao giờ bằng một actor mới. "Vai trò đặc biệt" của BR19 được cấp
   tại đây.
 - **Đầu ra:** Bản gán vai trò, trạng thái tài khoản, bản ghi audit.
@@ -215,9 +217,9 @@ liệu mô hình.
   các bản ghi bị ảnh hưởng.
 - **Hậu điều kiện:** Một phiên bản chính sách mới đang có hiệu lực; những quyết định đã ra giữ
   nguyên các giá trị mà chúng được ra theo.
-- **Quy tắc nghiệp vụ:** BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách trên. Mọi quy tắc
-  khác được đánh dấu "cấu hình được" ở §14 sẽ nằm dưới dạng hằng số trong một tài liệu chính
-  sách và chỉ trở nên sửa được khi có nhu cầu thật (§14 của tài liệu mô hình, quyết định D2).
+- **Quy tắc nghiệp vụ:** BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách trên. Mọi giá trị
+  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC49); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC40); các loại khiếu nại (UC52); thời hạn CMB trả lời khiếu nại (UC54). Các giá trị này
+  chỉ trở nên sửa được khi có nhu cầu thật (§14 của tài liệu mô hình, quyết định D2).
 - **Đầu ra:** Phiên bản chính sách, bản ghi audit.
 - **Use case liên quan:** UC01, UC07, UC25, UC33, UC40, UC47, UC50
 - **Pain point:** BP14
@@ -235,13 +237,14 @@ liệu mô hình.
 - **Luồng chính:**
   1. Officer mở bộ quy tắc định tuyến.
   2. Officer thêm hoặc sửa một rule: một điều kiện và cấp duyệt mà điều kiện đó đòi hỏi.
-  3. Hệ thống validate rằng bộ rule là đầy đủ và không nhập nhằng — mỗi hồ sơ khớp đúng một rule.
+  3. Hệ thống validate rằng không có hai rule nào chồng nhau; hồ sơ không khớp rule nào thì được
+     quyết định ở một cấp (BR16).
   4. Officer kích hoạt bộ rule.
   5. Hệ thống đánh phiên bản và ghi audit; các hồ sơ mới đi theo bộ rule đó.
 - **Luồng thay thế:**
   - **A1 Mô phỏng:** officer chạy bộ rule nháp trên N hồ sơ đã quyết định gần nhất và xem hồ sơ
     nào lẽ ra đã cần cấp duyệt thứ hai.
-- **Ngoại lệ:** **E1** hai rule chồng nhau hoặc một loại hồ sơ không có rule nào → từ chối kích hoạt.
+- **Ngoại lệ:** **E1** hai rule chồng nhau → từ chối kích hoạt.
 - **Hậu điều kiện:** Tồn tại một bộ rule định tuyến đang hoạt động; UC08, UC26, UC36 và UC48 tra
   cứu nó.
 - **Quy tắc nghiệp vụ:** Đây chính là use case mà Feature nổi bật 1 còn thiếu ở v1. Nó là thứ
@@ -262,22 +265,24 @@ liệu mô hình.
 - **Mục tiêu nghiệp vụ:** Cho sinh viên tìm được một CLB, một đợt tuyển hoặc một sự kiện đáng
   tham gia — điểm vào của cả sản phẩm.
 - **Kích hoạt:** Sinh viên muốn tham gia một CLB hoặc một hoạt động.
-- **Tiền điều kiện:** Có một phiên hợp lệ (UC01).
+- **Tiền điều kiện:** Không có — khách chưa đăng nhập (Guest) cũng xem được, chỉ đọc. Đi tiếp
+  sang UC17 / UC29 thì phải có phiên hợp lệ (UC01).
 - **Dữ liệu vào:** Từ khoá tìm kiếm, lĩnh vực, loại hoạt động.
 - **Luồng chính:**
   1. Sinh viên duyệt hoặc tìm các CLB đang hoạt động theo lĩnh vực hoặc từ khoá.
   2. Hệ thống liệt kê các CLB khớp kèm trạng thái và một mô tả ngắn.
   3. Sinh viên mở trang một CLB: hồ sơ, ban chủ nhiệm, lịch sử hoạt động, các đợt tuyển đang mở,
      các sự kiện công khai sắp tới.
-  4. Sinh viên đi tiếp sang UC17 (ứng tuyển) hoặc UC29 (đăng ký).
+  4. Sinh viên đi tiếp sang UC17 (ứng tuyển) hoặc UC29 (đăng ký); nếu chưa đăng nhập, hệ thống
+     chuyển sang UC01 rồi quay lại đúng trang đó.
 - **Luồng thay thế:**
   - **A1 Bắt đầu từ sự kiện:** sinh viên duyệt các sự kiện công khai sắp tới của mọi CLB và đi
     ngược từ sự kiện về CLB.
 - **Ngoại lệ:** **E1** không có CLB nào khớp → hệ thống gợi ý bỏ bớt bộ lọc và hiển thị các CLB
   đang hoạt động mới nhất.
 - **Hậu điều kiện:** Không có; không có gì đổi trạng thái.
-- **Quy tắc nghiệp vụ:** Chỉ liệt kê các CLB `Active`. Một CLB `Suspended` vẫn thấy được nhưng
-  có đánh dấu và không hiện đợt tuyển nào (BR09). Một CLB `Dissolved` không được liệt kê.
+- **Quy tắc nghiệp vụ:** BR14. Liệt kê các CLB `Active` và `Suspended`; một CLB `Suspended` được đánh
+  dấu và không hiện đợt tuyển nào (BR09). Một CLB `Dissolved` không được liệt kê.
 - **Đầu ra:** Không ghi dữ liệu.
 - **Use case liên quan:** UC16, UC17, UC27, UC29
 
@@ -287,7 +292,7 @@ liệu mô hình.
 - **Module:** M02
 - **Mục tiêu nghiệp vụ:** Cho sinh viên đề xuất một CLB mới qua một quy trình chuẩn, truy vết được.
 - **Kích hoạt:** Một nhóm sinh viên muốn lập một CLB.
-- **Tiền điều kiện:** Đã đăng nhập và đủ điều kiện theo chính sách cấu hình ở UC04.
+- **Tiền điều kiện:** Đã đăng nhập và đủ điều kiện lập CLB định nghĩa trong tài liệu chính sách.
 - **Dữ liệu vào:** Tên CLB, lĩnh vực, mục tiêu; các thành viên sáng lập; các tài liệu bắt buộc.
 - **Luồng chính:**
   1. Sinh viên nhập tên CLB, lĩnh vực và mục tiêu.
@@ -406,8 +411,8 @@ liệu mô hình.
     đụng tới.
 - **Ngoại lệ:**
   - **E1** một người được đề cử không đủ điều kiện theo BR07 → ghế đó bị từ chối;
-  - **E2** người được đề cử đã giữ một nhiệm kỳ Chủ nhiệm chồng lấn → từ chối trừ khi chính sách
-    cho phép (BR06).
+  - **E2** người được đề cử đã giữ một nhiệm kỳ Chủ nhiệm chồng lấn → từ chối trừ khi tài liệu chính
+    sách cho phép (BR06).
 - **Hậu điều kiện:** Bản đề cử ở `Pending Confirmation`.
 - **Quy tắc nghiệp vụ:** BR06, BR07. Một hồ sơ thành lập được duyệt ở UC08 sẽ đề cử ban chủ
   nhiệm đầu tiên của mình tại đây.
@@ -436,7 +441,7 @@ liệu mô hình.
   nhận → ghế đó được trả về UC10.
 - **Hậu điều kiện:** Ban chủ nhiệm hoạt động trong nhiệm kỳ; các quyền có hiệu lực; CLB chuyển
   `Active` nếu đây là ban chủ nhiệm sáng lập của nó.
-- **Quy tắc nghiệp vụ:** BR05, BR07. Quyền đến từ lần xác nhận này, không phải từ UC03. Với ban
+- **Quy tắc nghiệp vụ:** BR05, BR07, BR47. Quyền đến từ lần xác nhận này, không phải từ UC03. Với ban
   chủ nhiệm sáng lập, lần xác nhận này thay thế quyền CMB sáng lập tạm thời đã cấp ở UC08: quyền
   đó bị thu hồi và chỉ ban chủ nhiệm đã xác nhận mới giữ quyền CMB.
 - **Đầu ra:** ClubTerm, các bản gán chức vụ, quyền, bản ghi audit.
@@ -462,7 +467,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** một nghĩa vụ không có người nhận trong ban chủ nhiệm mới → không nộp được
   kế hoạch cho tới khi có người được nêu tên.
 - **Hậu điều kiện:** Kế hoạch chuyển giao ở `Pending Confirmation`.
-- **Quy tắc nghiệp vụ:** Các nghĩa vụ vẫn gắn với CLB, không bao giờ gắn với các cá nhân sắp rời đi.
+- **Quy tắc nghiệp vụ:** BR08. Các nghĩa vụ vẫn gắn với CLB, không bao giờ gắn với các cá nhân sắp rời đi.
 - **Đầu ra:** Kế hoạch chuyển giao, ApprovalTask.
 - **Use case liên quan:** UC13, UC10
 - **Pain point:** BP03
@@ -504,8 +509,9 @@ liệu mô hình.
   1. Ban chủ nhiệm mở yêu cầu tạm ngừng.
   2. Ban chủ nhiệm nêu lý do, giai đoạn và cách xử lý các nghĩa vụ còn tồn đọng.
   3. Ban chủ nhiệm nộp; ICPDP nhận một task.
-- **Ngoại lệ:** **E1** một sự kiện hoặc booking đã duyệt rơi vào giai đoạn xin tạm ngừng → nó
-  phải được huỷ trước qua UC28 hoặc UC49.
+- **Ngoại lệ:** **E1** có sự kiện hoặc booking tương lai đã duyệt → hệ thống cảnh báo và liệt kê
+  chúng: nếu ICPDP chấp thuận ở UC15, chúng bị huỷ tự động (UC28 A1, UC49 A1); ban chủ nhiệm xác
+  nhận rồi nộp.
 - **Hậu điều kiện:** Yêu cầu chờ quyết định ở UC15.
 - **Đầu ra:** Yêu cầu tạm ngừng, ApprovalTask.
 - **Use case liên quan:** UC15
@@ -652,7 +658,7 @@ liệu mô hình.
     danh sách chờ;
   - **E2** ứng viên đã rút đơn (UC17 A2) → đơn được đóng lại mà không có quyết định.
 - **Hậu điều kiện:** Mọi đơn đều mang một quyết định; những đơn được nhận đủ điều kiện sang UC20.
-- **Quy tắc nghiệp vụ:** Lý do từ chối có thể là bắt buộc theo chính sách. Việc sàng lọc và ra
+- **Quy tắc nghiệp vụ:** Lý do từ chối có thể là bắt buộc theo tài liệu chính sách. Việc sàng lọc và ra
   quyết định là một use case vì chúng là một phiên làm việc trên cùng một thực thể — v1 đã tách
   chúng thành UC17 và UC19.
 - **Đầu ra:** Các quyết định trên đơn, thông báo.
@@ -686,7 +692,7 @@ liệu mô hình.
 - **Actor chính:** CMB
 - **Module:** M04
 - **Mục tiêu nghiệp vụ:** Biến một quyết định trúng tuyển thành một bản ghi tư cách thành viên thật.
-- **Kích hoạt:** Ứng viên nhận lời mời, hoặc CLB xác nhận việc nhận.
+- **Kích hoạt:** CLB xác nhận việc nhận một ứng viên trúng tuyển.
 - **Tiền điều kiện:** Đơn đang ở `Accepted`.
 - **Dữ liệu vào:** Ngày gia nhập, vai trò mặc định, bộ phận.
 - **Luồng chính:**
@@ -698,7 +704,9 @@ liệu mô hình.
 - **Luồng thay thế:**
   - **A1 Tiếp nhận thủ công:** một thành viên có thẩm quyền tạo một tư cách thành viên mà không
     qua đợt tuyển, kèm một lý do được ghi lại (BR13).
-  - **A2 Từ chối lời mời:** ứng viên từ chối; đơn được đóng lại và suất được trả về danh sách chờ.
+  - **A2 Ứng viên từ chối:** ứng viên báo với CLB (ngoài hệ thống) là họ không tham gia; thành
+    viên ghi nhận việc từ chối → đơn chuyển sang `Declined` (trạng thái cuối). Suất trống có thể
+    được lấp bằng cách đẩy một ứng viên từ danh sách chờ lên (UC18 A2).
 - **Ngoại lệ:**
   - **E1** đã tồn tại một tư cách thành viên đang hiệu lực cho sinh viên đó và CLB đó → từ chối;
   - **E2** tư cách thành viên của sinh viên ở CLB này là `Banned` → từ chối, kể cả với tiếp nhận
@@ -742,7 +750,7 @@ liệu mô hình.
   - **E2** một ngày hiệu lực lùi về quá khứ sẽ làm thay đổi một bảng điểm danh hoặc một kỳ đánh
     giá đã chốt → từ chối.
 - **Hậu điều kiện:** Tư cách thành viên mang trạng thái mới kèm ngày hiệu lực, và lịch sử đọc được.
-- **Quy tắc nghiệp vụ:** Mọi thay đổi đều mang một ngày hiệu lực; một lệnh cấm luôn quy được
+- **Quy tắc nghiệp vụ:** BR52. Mọi thay đổi đều mang một ngày hiệu lực; một lệnh cấm luôn quy được
   trách nhiệm. `Left` và `Banned` là trạng thái cuối — một sinh viên đã `Left` quay lại bằng một
   tư cách thành viên mới (UC20); một sinh viên `Banned` thì không (BR46).
   Việc kết thúc một tư cách thành viên nằm ở đây bất kể ai khởi xướng — đây chính là thứ loại bỏ
@@ -768,7 +776,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** sinh viên đang giữ một ghế ban chủ nhiệm đã xác nhận → yêu cầu được nhận
   nhưng chỉ có hiệu lực khi UC10/UC11 thay người.
 - **Hậu điều kiện:** Một yêu cầu rời CLB đang chờ; tư cách thành viên chỉ thay đổi ở UC21.
-- **Quy tắc nghiệp vụ:** Sinh viên khởi xướng, CLB thực thi — mỗi use case một actor.
+- **Quy tắc nghiệp vụ:** BR05, BR52. Sinh viên khởi xướng, CLB thực thi — mỗi use case một actor.
 - **Đầu ra:** Yêu cầu rời CLB, thông báo.
 - **Use case liên quan:** UC21, UC24
 - **Pain point:** BP02
@@ -792,7 +800,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** thành viên không ở trạng thái `Active` → từ chối; **E2** chức vụ đã có
   người giữ và chỉ cho phép một người → từ chối.
 - **Hậu điều kiện:** Thành viên giữ chức vụ đó và các quyền của nó.
-- **Quy tắc nghiệp vụ:** Một chức vụ chỉ tồn tại nếu UC09 đã định nghĩa nó; một chức vụ nhạy cảm
+- **Quy tắc nghiệp vụ:** BR47, BR49. Một chức vụ chỉ tồn tại nếu UC09 đã định nghĩa nó; một chức vụ nhạy cảm
   cần tới UC11.
 - **Đầu ra:** Bản gán chức vụ, các quyền, bản ghi audit.
 - **Use case liên quan:** UC09, UC11, UC21
@@ -804,20 +812,23 @@ liệu mô hình.
 - **Mục tiêu nghiệp vụ:** Cho tư cách thành viên một lý do tồn tại bên trong hệ thống — v1 cho
   một thành viên đúng những use case y như một người không phải thành viên.
 - **Kích hoạt:** Thành viên mở một CLB mà mình thuộc về.
-- **Tiền điều kiện:** Có một tư cách thành viên đang hiệu lực ở CLB đó.
+- **Tiền điều kiện:** Có một tư cách thành viên `Active` hoặc `Inactive` ở CLB đó.
 - **Luồng chính:**
   1. Sinh viên mở một CLB mà mình có tư cách thành viên.
   2. Hệ thống hiển thị: bản ghi tư cách thành viên và chức vụ; danh sách thành viên và ban chủ
      nhiệm của CLB; các sự kiện sắp tới của CLB kèm trạng thái đăng ký của sinh viên; lịch sử
-     điểm danh của họ; các nghĩa vụ còn treo — phản hồi chưa gửi, một yêu cầu rời đang chờ.
+     điểm danh của họ; các nghĩa vụ còn treo — phản hồi chưa gửi, một yêu cầu rời đang chờ. Với
+     tư cách thành viên `Inactive`, màn hình đánh dấu "không hoạt động kỳ này" và vẫn cho xin rời
+     (UC22).
   3. Màn hình có liên kết tới UC29 (đăng ký), UC31 (check-in), UC50 (phản hồi) và UC22 (xin rời).
      Đây chỉ là điều hướng giao diện: mỗi cái là một use case độc lập của Student, không phải
      quan hệ «extend» của UC24.
 - **Luồng thay thế:**
   - **A1 Nhiều CLB:** sinh viên chuyển qua lại giữa các CLB mình thuộc về.
-- **Ngoại lệ:** **E1** tư cách thành viên kết thúc → quyền truy cập hạ về chế độ công khai của UC06.
+- **Ngoại lệ:** **E1** tư cách thành viên kết thúc (`Left` hoặc `Banned`) → quyền truy cập hạ về chế
+  độ công khai của UC06.
 - **Hậu điều kiện:** Không có; chỉ đọc.
-- **Quy tắc nghiệp vụ:** Giới hạn trong các CLB có tư cách thành viên đang hiệu lực. Nó không
+- **Quy tắc nghiệp vụ:** BR49. Giới hạn trong các CLB có tư cách thành viên `Active` hoặc `Inactive`. Nó không
   tạo thực thể mới và không tạo dữ liệu mới — mọi trường đều đã do một use case khác sinh ra.
   Nhắn tin nội bộ, chat và chia sẻ file nằm ngoài phạm vi (§5.2).
 - **Đầu ra:** Không ghi dữ liệu.
@@ -839,7 +850,7 @@ liệu mô hình.
   toán ngân sách, nhu cầu cơ sở vật chất.
 - **Luồng chính:**
   1. Thành viên nhập nội dung đề xuất.
-  2. Hệ thống validate tính đầy đủ và thời gian báo trước mà chính sách yêu cầu.
+  2. Hệ thống validate tính đầy đủ và thời gian báo trước tối thiểu định nghĩa trong tài liệu chính sách.
   3. Hệ thống đánh giá quy tắc xung đột BR15 và hiển thị `No Conflict`, `Warning` hoặc
      `Blocking Conflict`.
   4. Thành viên có thể đính kèm một yêu cầu đặt cơ sở vật chất (UC47).
@@ -924,7 +935,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** sự kiện chưa `Approved` → từ chối (BR14); **E2** khung thời gian đăng ký
   kết thúc sau khi sự kiện bắt đầu → từ chối.
 - **Hậu điều kiện:** Sự kiện ở `Upcoming` và hiển thị công khai.
-- **Quy tắc nghiệp vụ:** BR14, BR17. Scheduler chuyển sự kiện sang `Ongoing` và `Completed` theo
+- **Quy tắc nghiệp vụ:** BR14, BR17, BR50. Scheduler chuyển sự kiện sang `Ongoing` và `Completed` theo
   chính mốc giờ của nó (§7 của tài liệu mô hình).
 - **Đầu ra:** Event đã công bố, các thông báo.
 - **Use case liên quan:** UC26, UC29, UC06, UC24
@@ -955,7 +966,7 @@ liệu mô hình.
 - **Ngoại lệ:**
   - **E1** sự kiện đã có bảng điểm danh được chốt → từ chối huỷ; sự kiện được đóng lại qua UC33
     và UC34;
-  - **E2** việc huỷ rơi vào thời hạn báo trước cấu hình được → được ghi nhận là một tín hiệu
+  - **E2** việc huỷ rơi vào thời hạn báo trước định nghĩa trong tài liệu chính sách → được ghi nhận là một tín hiệu
     tuân thủ cho UC42.
 - **Hậu điều kiện:** Sự kiện ở `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký
   được cập nhật; lý do được ghi audit.
@@ -992,7 +1003,8 @@ liệu mô hình.
   - **E3** sinh viên không thuộc phạm vi đối tượng của sự kiện → từ chối.
 - **Hậu điều kiện:** Tồn tại một bản đăng ký ở `Confirmed` hoặc `Waitlisted`.
 - **Quy tắc nghiệp vụ:** BR17 — số đăng ký đã xác nhận không bao giờ vượt sức chứa trừ khi chính
-  sách cho phép overbooking. Khi sự kiện không có danh sách chờ, đạt sức chứa nghĩa là đóng đăng ký.
+  sách cho phép overbooking. BR48 — mỗi sinh viên tối đa một đăng ký cho một sự kiện. BR50 — mở /
+  đóng đăng ký suy ra từ registration window. Khi sự kiện không có danh sách chờ, đạt sức chứa nghĩa là đóng đăng ký.
 - **Đầu ra:** EventRegistration, thông báo.
 - **Use case liên quan:** UC27, UC30, UC31
 - **Pain point:** BP07
@@ -1014,7 +1026,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** sức chứa bị giảm xuống dưới số đã xác nhận → hệ thống từ chối và nêu rõ
   những bản đăng ký sẽ phải bị huỷ.
 - **Hậu điều kiện:** Danh sách đã xác nhận khớp với sức chứa; thứ tự danh sách chờ được giữ nguyên.
-- **Quy tắc nghiệp vụ:** BR17. Việc đẩy lên theo chính sách đã cấu hình, không bao giờ theo ưu
+- **Quy tắc nghiệp vụ:** BR05, BR17. Việc đẩy lên theo quy tắc định nghĩa trong tài liệu chính sách, không bao giờ theo ưu
   ái thủ công mà không ghi vết.
 - **Đầu ra:** Trạng thái các bản đăng ký, thông báo.
 - **Use case liên quan:** UC29
@@ -1026,7 +1038,7 @@ liệu mô hình.
 - **Module:** M06
 - **Mục tiêu nghiệp vụ:** Chứng minh việc có mặt ngay tại nơi sự kiện diễn ra.
 - **Kích hoạt:** Người tham dự đến địa điểm.
-- **Tiền điều kiện:** Sự kiện đang `Ongoing` hoặc nằm trong khung giờ check-in cấu hình được;
+- **Tiền điều kiện:** Sự kiện đang `Ongoing` hoặc nằm trong khung giờ check-in định nghĩa trong tài liệu chính sách;
   sinh viên có một bản đăng ký đã xác nhận, hoặc sự kiện là loại mở tự do.
 - **Dữ liệu vào:** Mã check-in hoặc QR của sự kiện, hoặc định danh người tham dự khi check-in
   thủ công.
@@ -1069,7 +1081,8 @@ liệu mô hình.
 - **Luồng thay thế:**
   - **A1 Mở khoá:** người giữ vai trò đặc biệt mở khoá bộ dữ liệu kèm lý do, và lần mở khoá được
     ghi audit (BR19).
-- **Ngoại lệ:** **E1** sự kiện đã bị huỷ → không có gì để chốt.
+- **Ngoại lệ:** **E1** còn bản ghi bị đánh dấu chưa được sửa hoặc xác nhận kèm lý do → từ chối
+  chốt cho tới khi mọi bản ghi bị đánh dấu được xử lý.
 - **Hậu điều kiện:** Bộ dữ liệu điểm danh chính thức bị khoá và là đầu vào của UC33 và UC44.
 - **Quy tắc nghiệp vụ:** BR18, BR19. Việc chốt **không** điều khiển feedback window — BR36 đã mở
   nó từ lúc check-in, và đây là phần sửa của v2 so với UC54 của v1.
@@ -1102,7 +1115,7 @@ liệu mô hình.
   - **E1** điểm danh chưa được chốt → từ chối nộp;
   - **E2** đã quá deadline → báo cáo vẫn được nhận nhưng bị đánh dấu trễ, và dữ liệu này đi vào
     BR21 cùng kỳ đánh giá.
-- **Hậu điều kiện:** Báo cáo ở `Report Submitted` với các số liệu nạp sẵn đã bị đóng băng.
+- **Hậu điều kiện:** Sự kiện ở `Report Submitted`; các số liệu nạp sẵn của báo cáo đã bị đóng băng.
 - **Quy tắc nghiệp vụ:** BR20 — deadline đến từ UC04; một báo cáo quá hạn đi vào BR21.
 - **Đầu ra:** Báo cáo sau sự kiện, ApprovalTask.
 - **Use case liên quan:** UC32, UC34, UC38, UC51
@@ -1114,8 +1127,10 @@ liệu mô hình.
 - **Module:** M08
 - **Mục tiêu nghiệp vụ:** Xác định xem sự kiện đã duyệt có thực sự diễn ra đúng như đã duyệt hay
   không, và kết thúc vòng đời của nó.
-- **Kích hoạt:** Một task báo cáo từ UC33.
-- **Tiền điều kiện:** Báo cáo đang ở `Report Submitted`.
+- **Kích hoạt:** Một task báo cáo từ UC33, hoặc deadline báo cáo đã qua mà không có báo cáo nào
+  được nộp (A1).
+- **Tiền điều kiện:** Sự kiện đang ở `Report Submitted`, hoặc deadline báo cáo đã qua mà không có
+  báo cáo nào được nộp (A1).
 - **Dữ liệu vào:** Ghi chú thẩm định, quyết định, yêu cầu sửa hoặc phát hiện vi phạm.
 - **Luồng chính:**
   1. Officer mở báo cáo và đối chiếu kế hoạch với thực tế — điểm danh, ngân sách, mục tiêu, các
@@ -1299,7 +1314,7 @@ liệu mô hình.
   định nghĩa ở UC04.
 - **Dữ liệu vào:** Phần thuyết minh và minh chứng mà hệ thống chưa có.
 - **Luồng chính:**
-  1. Thành viên mở báo cáo cho kỳ tương ứng — học kỳ, năm học hoặc một kỳ cấu hình được.
+  1. Thành viên mở báo cáo cho kỳ tương ứng — học kỳ, năm học hoặc một kỳ khác định nghĩa trong tài liệu chính sách.
   2. Hệ thống nạp sẵn các sự kiện, số liệu thành viên, điểm danh và tình hình tài chính.
   3. Thành viên thêm phần thuyết minh, kế hoạch kỳ sau và mọi minh chứng bên ngoài.
   4. Thành viên nộp → `Submitted`; ICPDP nhận một task.
@@ -1393,7 +1408,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** tổng trọng số không hợp lệ → từ chối kích hoạt (BR29); **E2** scheme đã
   được một kỳ đánh giá đã công bố sử dụng → tạo một version mới thay vì sửa.
 - **Hậu điều kiện:** Có đúng một scheme đang hoạt động cho mỗi kỳ.
-- **Quy tắc nghiệp vụ:** BR29, BR30. v1 validate một scheme mà không use case nào cấu hình.
+- **Quy tắc nghiệp vụ:** BR29, BR30, BR51. v1 validate một scheme mà không use case nào cấu hình.
 - **Đầu ra:** Version EvaluationScheme, bản ghi audit.
 - **Use case liên quan:** UC44
 - **Pain point:** BP13
@@ -1421,7 +1436,7 @@ liệu mô hình.
 - **Ngoại lệ:** **E1** một nguồn dữ liệu không đầy đủ → dimension đó được đánh dấu
   `Insufficient data` thay vì bị chấm 0.
 - **Hậu điều kiện:** Mỗi CLB có một bản nháp đánh giá kèm chứng cứ và data lineage của nó.
-- **Quy tắc nghiệp vụ:** BR29. Bản nháp không bao giờ được công bố khi chưa qua UC45.
+- **Quy tắc nghiệp vụ:** BR29, BR30, BR51. Bản nháp không bao giờ được công bố khi chưa qua UC45.
 - **Đầu ra:** Bản nháp đánh giá, data lineage.
 - **Use case liên quan:** UC43, UC45, UC41, UC39, UC42
 - **Pain point:** BP13
@@ -1554,7 +1569,8 @@ liệu mô hình.
 - **Module:** M11
 - **Mục tiêu nghiệp vụ:** Giải phóng một nguồn lực không còn cần tới để một CLB khác đặt được.
 - **Kích hoạt:** Sự kiện bị huỷ hoặc đổi lịch (UC28), hoặc CLB không còn cần property đó.
-- **Tiền điều kiện:** Booking đang ở `Requested` hoặc `Approved`.
+- **Tiền điều kiện:** Booking đang ở `Requested` hoặc `Approved`, hoặc `In Use` khi việc huỷ đến
+  từ UC15 hoặc UC42 (A1).
 - **Dữ liệu vào:** Lý do huỷ.
 - **Luồng chính:**
   1. Thành viên mở booking.
@@ -1566,7 +1582,7 @@ liệu mô hình.
     mà không cần thao tác thủ công (BR35). Khi việc huỷ đó đến từ UC15 hoặc UC42, một booking
     đang `In Use` cũng được giải phóng và ngoại lệ E2 không áp dụng.
 - **Ngoại lệ:** **E1** booking đã `In Use` hoặc `Completed` → từ chối huỷ; **E2** việc huỷ rơi
-  vào thời hạn báo trước cấu hình được → được ghi nhận là một tín hiệu tuân thủ cho UC42.
+  vào thời hạn báo trước định nghĩa trong tài liệu chính sách → được ghi nhận là một tín hiệu tuân thủ cho UC42.
 - **Hậu điều kiện:** Booking ở `Cancelled` hoặc `Released`; khung giờ đã trống.
 - **Quy tắc nghiệp vụ:** BR35. Không có nó, một booking đã duyệt sẽ khoá một căn phòng vĩnh viễn.
 - **Đầu ra:** Trạng thái booking, khung giờ được giải phóng, thông báo; tín hiệu tuân thủ.
@@ -1708,7 +1724,7 @@ liệu mô hình.
   thủ cho UC42.
 - **Hậu điều kiện:** Khiếu nại ở `Club Responded` và trở về với ICPDP.
 - **Quy tắc nghiệp vụ:** CMB không bao giờ tự sửa hay tự đóng khiếu nại. Phải trả lời trong thời
-  hạn cấu hình được.
+  hạn định nghĩa trong tài liệu chính sách.
 - **Đầu ra:** Phần trả lời của CLB, bản ghi audit, thông báo.
 - **Use case liên quan:** UC53, UC42
 - **Pain point:** BP18

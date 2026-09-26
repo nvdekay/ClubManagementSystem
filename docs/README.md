@@ -40,7 +40,7 @@ nhau về một yêu cầu, **lấy theo SRS**.
   Anh vì chúng xuất hiện nguyên văn trong code.
 - Một use case được định danh bằng số **v2** (UC01–UC54) ở mọi nơi trừ bên trong tài liệu v1.
   Dùng §5 của use case model để chuyển đổi giữa v1 và v2.
-- Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR46**, trong đó BR43 đã
+- Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR52** (51 quy tắc còn hiệu lực), trong đó BR43 đã
   được rút. Danh sách hợp nhất, đã áp dụng mọi sửa đổi, nằm ở `SRS.md` §5.
 - Không xoá gì cả. Tài liệu đã bị thay thế vẫn để đọc được, để một quyết định luôn truy ngược
   được về mô hình mà nó được đưa ra; khi v1 và v2 nói khác nhau, **lấy theo v2**.

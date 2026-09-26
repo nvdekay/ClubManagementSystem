@@ -1957,15 +1957,15 @@ I want to log in with my school Google account,
 | BR03 | Số lượng founding members tối thiểu là Configurable Business Rule. |
 | BR04 | Application version đã submit không được overwrite. |
 | BR05 | Approval/Reject phải lưu actor, timestamp và reason khi áp dụng. |
-| BR06 | Không được có overlapping President trong cùng thời gian trừ khi policy cho phép. |
-| BR07 | Điều kiện giữ leadership position là configurable. |
+| BR06 | Không được có overlapping President trong cùng thời gian trừ khi tài liệu chính sách cho phép. |
+| BR07 | Điều kiện giữ leadership position định nghĩa trong tài liệu chính sách. |
 | BR08 | Permission mới chỉ có hiệu lực khi leadership transition được confirm. |
 | BR09 | Suspended Club không được mở recruitment campaign mới. |
 | BR10 | Suspended Club không được submit event proposal mới. |
 | BR11 | Recruitment chỉ nhận application trong application window. |
 | BR12 | Một student không được nộp duplicate application vào cùng campaign. |
 | BR13 | Membership chỉ tạo từ accepted candidate hoặc authorized manual onboarding. |
-| BR14 | Event chỉ được public sau khi Approved. |
+| BR14 | Event chỉ được public khi đã Approved và được công bố ở UC27 (Upcoming). |
 | BR15 | Conflict threshold là configurable. |
 | BR16 | Event có risk category cao hơn ngưỡng cấu hình phải được duyệt ở cấp ICPDP cao hơn (RBAC nội bộ ICPDP), không chuyển sang actor khác. |
 | BR17 | Confirmed registration không vượt capacity nếu policy không cho phép overbooking. |
@@ -1976,13 +1976,13 @@ I want to log in with my school Google account,
 | BR22 | Budget Request phải gắn với valid business purpose. |
 | BR23 | Disbursed Amount không được vượt Approved Amount nếu chưa có amendment. |
 | BR24 | Expense ngoài approved category phải bị flag exception. |
-| BR25 | Requirement về evidence theo expense category là configurable. |
+| BR25 | Requirement về evidence theo expense category định nghĩa trong tài liệu chính sách. |
 | BR26 | Reconciliation phải hoàn thành trước khi budget case được đóng. |
-| BR27 | Violation severity taxonomy do ICPDP cấu hình. |
+| BR27 | Violation severity taxonomy định nghĩa trong tài liệu chính sách. |
 | BR28 | Violation decision phải có reason/evidence. |
 | BR29 | Tổng evaluation weight phải hợp lệ trước khi scheme được activate. |
 | BR30 | Published Evaluation không sửa trực tiếp; phải tạo revision/snapshot mới. |
-| BR31 | ICPDP là approval authority duy nhất; không có quyết định nào trong hệ thống được duyệt bởi actor khác. |
+| BR31 | ICPDP là approval authority duy nhất cho mọi yêu cầu CLB hoặc sinh viên gửi lên nhà trường; quyết định nội bộ CLB do CMB của CLB đó đưa ra trong phạm vi của mình. |
 | BR32 | Hệ thống chỉ chấp nhận đăng nhập qua Google OAuth với email thuộc domain được cấu hình. |
 | BR33 | Một property không được có hai booking `Approved` trùng khung giờ nếu policy không cho overbooking. |
 | BR34 | Suspended Club không được cấp property booking mới. |

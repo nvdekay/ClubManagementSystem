@@ -87,6 +87,7 @@ Enum recruitmentApplicationState {
   Waitlisted
   Onboarded
   Withdrawn
+  Declined
 }
 
 Enum membershipState {

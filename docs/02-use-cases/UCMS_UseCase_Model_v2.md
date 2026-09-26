@@ -52,6 +52,11 @@ dashboard, danh mục CLB và không gian thành viên mà v1 đã bỏ đi vì 
 Không đổi so với §4: **Student**, **Club Management Board (CMB)**, **ICPDP Officer**, cộng thêm
 Google OAuth và Google SMTP với tư cách hệ thống ngoài.
 
+**Guest không phải actor.** Guest là khách chưa đăng nhập, chỉ được **đọc** khu công khai của
+UC06 (danh bạ CLB, trang CLB, đợt tuyển đang mở, sự kiện công khai sắp tới). Guest không sở hữu
+use case nào và không tạo dữ liệu; mọi hành động (ứng tuyển, đăng ký, nộp hồ sơ…) đều đòi UC01,
+và lúc đó người dùng là Student. Nguyên tắc: *khám phá công khai, hành động phải đăng nhập*.
+
 Hai mâu thuẫn của v1 quanh mô hình actor được giải quyết tại đây:
 
 - **Không đưa `ICPDP Head` vào làm actor; duyệt đa cấp vẫn nằm trong nội bộ ICPDP.**
@@ -261,7 +266,7 @@ còn hiệu lực.
   diện → đối chiếu domain email với chính sách (UC04) → ánh xạ tới một User, tạo User +
   StudentProfile ở lần đăng nhập đầu → nạp vai trò và quyền → điều hướng tới workspace.
 - **Thay thế:** người dùng có nhiều ngữ cảnh (vừa là Student vừa là CMB của một CLB) chọn workspace.
-- **Ngoại lệ:** domain không được phép → từ chối; tài khoản bị khoá ở UC03 → từ chối và ghi
+- **Ngoại lệ:** domain không được phép → từ chối, không tạo User hay phiên, ghi audit lần thử; tài khoản bị khoá ở UC03 → từ chối và ghi
   audit; không kết nối được Google → báo lỗi, không tạo phiên.
 - **Quy tắc:** BR32. Không bao giờ lưu mật khẩu.
 - **Liên quan:** UC02, UC03, UC04
@@ -289,9 +294,9 @@ còn hiệu lực.
 - **Actor:** ICPDP
 - **Mục tiêu:** Kiểm soát ai được hành động, tách biệt với ai được đăng nhập.
 - **Luồng:** tìm người dùng → xem vai trò và ngữ cảnh CLB hiện tại → cấp hoặc thu hồi một vai
-  trò ICPDP hoặc CMB → khoá hoặc mở khoá tài khoản kèm lý do → hệ thống ghi audit thay đổi.
-- **Quy tắc:** tài khoản bị khoá sẽ bị từ chối ở UC01; vai trò CMB cấp ở đây là thứ cấp so với
-  ban chủ nhiệm được xác nhận ở UC11 và bị thu hồi tự động khi một nhiệm kỳ đóng lại (UC13);
+  trò ICPDP hoặc vai trò đặc biệt của BR19 → khoá hoặc mở khoá tài khoản kèm lý do → hệ thống
+  ghi audit thay đổi.
+- **Quy tắc:** tài khoản bị khoá sẽ bị từ chối ở UC01; UC03 không cấp quyền CMB (BR47);
   phân cấp trong ICPDP được biểu diễn bằng quyền, không phải bằng actor mới (§3).
 - **Liên quan:** UC01, UC11, UC13
 
@@ -303,9 +308,9 @@ còn hiệu lực.
   (BR15); feedback window và số người phản hồi tối thiểu (BR36, BR40); chính sách overbooking
   (BR33); các công tắc cưỡng chế (BR21); lịch học kỳ (ngày bắt đầu và kết thúc).
 - **Quy tắc:** mọi thay đổi đều được đánh phiên bản và ghi audit; một thay đổi không bao giờ
-  viết lại một quyết định đã ra. **Màn hình cấu hình chỉ phơi ra đúng danh sách này** — mọi quy
-  tắc "cấu hình được" khác trong §14 sẽ nằm dưới dạng hằng số trong một tài liệu chính sách và
-  chỉ trở nên sửa được khi có nhu cầu thật (§14, quyết định còn mở D2).
+  viết lại một quyết định đã ra. **Màn hình cấu hình chỉ phơi ra đúng danh sách này** — mọi giá
+  trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC49); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC40); các loại khiếu nại (UC52); thời hạn CMB trả lời khiếu nại (UC54). Các giá trị
+  này chỉ trở nên sửa được khi có nhu cầu thật (§14, quyết định còn mở D2).
 - **Liên quan:** UC01, UC07, UC25, UC33, UC40, UC47, UC50
 
 #### UC05 — Cấu hình quy tắc định tuyến phê duyệt
@@ -322,11 +327,12 @@ còn hiệu lực.
 #### UC06 — Khám phá CLB và hoạt động đang mở
 - **Actor:** Student
 - **Mục tiêu:** Tìm được một CLB và một đợt tuyển hoặc sự kiện đáng tham gia.
+- **Tiền điều kiện:** không có — Guest xem được (chỉ đọc); UC17 / UC29 đòi UC01.
 - **Luồng:** duyệt hoặc tìm CLB đang hoạt động theo lĩnh vực và từ khoá → mở trang CLB (hồ sơ,
   ban chủ nhiệm, lịch sử hoạt động, đợt tuyển đang mở, sự kiện công khai sắp tới) → đi tiếp sang
   UC17 hoặc UC29.
-- **Quy tắc:** chỉ liệt kê CLB `Active`; CLB `Suspended` vẫn thấy được nhưng có đánh dấu và
-  không hiện đợt tuyển nào (BR09); CLB `Dissolved` không được liệt kê.
+- **Quy tắc:** liệt kê CLB `Active` và `Suspended`; CLB `Suspended` được đánh dấu và không hiện
+  đợt tuyển nào (BR09); CLB `Dissolved` không được liệt kê.
 - **Liên quan:** UC17, UC29, UC16, UC27
 
 #### UC07 — Nộp hồ sơ đề nghị thành lập CLB
@@ -380,7 +386,7 @@ còn hiệu lực.
 - **Actor:** ICPDP · **Mục tiêu:** Trao quyền quản lý.
 - **Luồng:** kiểm tra điều kiện, xung đột và nhiệm kỳ → phê duyệt hoặc từ chối → khi phê duyệt,
   các quyền tương ứng có hiệu lực và CLB có thể rời `Pending Setup`.
-- **Quy tắc:** BR05, BR07. Quyền được cấp bởi lần xác nhận này, không phải bởi UC03. Với ban
+- **Quy tắc:** BR05, BR07, BR47. Quyền được cấp bởi lần xác nhận này, không phải bởi UC03. Với ban
   chủ nhiệm sáng lập, lần xác nhận này thay thế quyền sáng lập tạm thời đã cấp ở UC08.
 - **Liên quan:** UC10, UC03
 
@@ -400,6 +406,8 @@ còn hiệu lực.
 
 #### UC14 — Yêu cầu tạm ngừng hoạt động CLB
 - **Actor:** CMB · **Dữ liệu vào:** lý do, thời lượng dự kiến, các nghĩa vụ, kế hoạch phục hồi.
+- **Ngoại lệ:** có sự kiện/booking tương lai đã duyệt → cảnh báo, liệt kê những gì sẽ bị huỷ nếu
+  UC15 chấp thuận; không chặn việc nộp.
 - **Liên quan:** UC15
 
 #### UC15 — Tạm ngừng, kích hoạt lại hoặc giải thể CLB
@@ -443,7 +451,7 @@ còn hiệu lực.
 - **Luồng:** lọc và xem xét đơn → `Screening` → đưa vào danh sách rút gọn hoặc từ chối → với
   ứng viên trong danh sách rút gọn, có thể đính kèm một bản đánh giá (UC19) → quyết định:
   `Accepted`, `Rejected` hoặc `Waitlisted`.
-- **Quy tắc:** lý do từ chối có thể là bắt buộc theo chính sách; quyết định được thông báo tới
+- **Quy tắc:** lý do từ chối có thể là bắt buộc theo tài liệu chính sách; quyết định được thông báo tới
   ứng viên và hiển thị trong UC02 của họ.
 - **Liên quan:** UC17, UC19, UC20
 
@@ -454,6 +462,7 @@ còn hiệu lực.
 #### UC20 — Tiếp nhận ứng viên trúng tuyển
 - **Actor:** CMB
 - **Luồng:** xác nhận việc nhận → tạo ClubMembership với vai trò mặc định và ngày gia nhập.
+  Nếu ứng viên báo không tham gia, CMB ghi nhận → `Declined`.
 - **Quy tắc:** BR13, BR46; không có hai tư cách thành viên đang hiệu lực cho cùng một sinh viên
   và một CLB.
 - **Liên quan:** UC18, UC21, UC24
@@ -489,7 +498,8 @@ còn hiệu lực.
 - **Luồng:** mở một CLB tôi thuộc về → xem bản ghi tư cách thành viên và chức vụ của mình, danh
   sách thành viên và ban chủ nhiệm, các sự kiện sắp tới của CLB kèm trạng thái đăng ký của tôi,
   lịch sử điểm danh của tôi, và các nghĩa vụ còn treo (phản hồi chưa gửi, yêu cầu rời đang chờ).
-- **Quy tắc:** chỉ đọc, giới hạn trong các CLB mà người gọi có tư cách thành viên đang hiệu lực;
+- **Quy tắc:** chỉ đọc, giới hạn trong các CLB mà người gọi có tư cách thành viên `Active` hoặc
+  `Inactive` (`Inactive` được đánh dấu, vẫn xin rời được qua UC22);
   nó không tạo thực thể mới và không tạo dữ liệu mới — mọi trường đều đã do một use case khác
   sinh ra. Nhắn tin nội bộ, chat và chia sẻ file nằm ngoài phạm vi (§5.2).
 - **Liên quan:** UC20, UC22, UC29, UC31, UC50
@@ -536,7 +546,7 @@ còn hiệu lực.
   chính sách yêu cầu → cập nhật hoặc giải phóng booking liên quan (UC49) → thông báo cho người
   đã đăng ký → tính lại các nghĩa vụ báo cáo và ngân sách.
 - **Quy tắc:** BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. Một lần huỷ nằm
-  trong thời hạn báo trước cấu hình được sẽ được ghi nhận là tín hiệu tuân thủ cho UC42.
+  trong thời hạn báo trước định nghĩa trong tài liệu chính sách sẽ được ghi nhận là tín hiệu tuân thủ cho UC42.
 - **ICPDP buộc huỷ** là luồng thay thế A1: hệ thống huỷ sự kiện như hệ quả của UC15 (tạm ngừng,
   giải thể) hoặc UC42 (kết quả hồ sơ). ICPDP không phải actor của UC28 — đây chính là thứ loại
   bỏ vấn đề hai actor của UC35 trong v1.
@@ -553,7 +563,7 @@ còn hiệu lực.
 - **Liên quan:** UC27, UC30, UC31 · **Pain point:** BP07
 
 #### UC30 — Quản lý sức chứa và danh sách chờ
-- **Actor:** CMB · **Quy tắc:** khi một chỗ trống ra, việc đẩy lên theo chính sách đã cấu hình.
+- **Actor:** CMB · **Quy tắc:** khi một chỗ trống ra, việc đẩy lên theo quy tắc định nghĩa trong tài liệu chính sách.
 - **Liên quan:** UC29
 
 #### UC31 — Check-in vào sự kiện
@@ -621,7 +631,7 @@ còn hiệu lực.
 - **Dữ liệu vào:** hạng mục, số tiền, ngày, ngân sách hoặc sự kiện liên quan, mô tả, và hoá đơn,
   biên lai hoặc chứng từ thanh toán.
 - **Quy tắc:** BR24 — khoản chi ngoài hạng mục đã duyệt bị gắn cờ ngoại lệ; BR25 — yêu cầu về
-  chứng từ theo hạng mục là cấu hình được; mỗi chứng từ tham chiếu đúng một khoản chi, và đó
+  chứng từ theo hạng mục định nghĩa trong tài liệu chính sách; mỗi chứng từ tham chiếu đúng một khoản chi, và đó
   chính là lý do UC43 và UC44 của v1 gộp thành một use case ở đây.
 - **Liên quan:** UC37, UC39
 
@@ -727,7 +737,7 @@ còn hiệu lực.
 - **Luồng:** mở một booking `Approved` → huỷ kèm lý do → khung giờ được giải phóng → ICPDP được
   thông báo.
 - **Quy tắc:** BR35 — một booking mà sự kiện của nó bị huỷ sẽ được giải phóng tự động; một lần
-  huỷ nằm trong thời hạn báo trước cấu hình được sẽ được ghi nhận là tín hiệu tuân thủ cho UC42.
+  huỷ nằm trong thời hạn báo trước định nghĩa trong tài liệu chính sách sẽ được ghi nhận là tín hiệu tuân thủ cho UC42.
   Không có nó, một booking đã duyệt sẽ khoá một căn phòng vĩnh viễn.
 - **Liên quan:** UC28, UC48, UC42
 
@@ -779,7 +789,7 @@ còn hiệu lực.
 - **Luồng:** mở khiếu nại được chuyển xuống (danh tính người khiếu nại chỉ hiển thị ở mức chính
   sách cho phép) → nhập phần trả lời và đính kèm chứng cứ → nộp → `Club Responded`; ICPDP đóng
   hoặc leo thang nó qua UC53.
-- **Quy tắc:** phải trả lời trong thời hạn cấu hình được; quá hạn trả lời là một tín hiệu tuân
+- **Quy tắc:** phải trả lời trong thời hạn định nghĩa trong tài liệu chính sách; quá hạn trả lời là một tín hiệu tuân
   thủ cho UC42. CMB không bao giờ tự sửa hay tự đóng khiếu nại.
 - **Liên quan:** UC53, UC42
 
@@ -891,6 +901,7 @@ Tác nhân: UC16 cho `Draft → Published`; scheduler cho việc mở và đóng
 Tác nhân: UC17, rồi UC18 cho tới quyết định, rồi UC20 cho `Onboarded`.
 `Submitted / Screening / Shortlisted → Withdrawn` (trạng thái cuối): UC17 alt, sinh viên rút đơn
 trước khi có quyết định.
+`Accepted → Declined` (trạng thái cuối): UC20 alt, CMB ghi nhận việc ứng viên từ chối.
 
 ### 10.5 Event
 | Từ → Đến | Tác nhân |
@@ -992,11 +1003,17 @@ BR01–BR39 của §14 vẫn giữ nguyên, với các sửa đổi sau:
 | BR37 | Không đổi. |
 | **BR40** | **Mới.** Bản tổng hợp phản hồi chỉ được hiển thị khi số người phản hồi đạt mức tối thiểu cấu hình được; dưới ngưỡng đó chỉ hiển thị việc có tồn tại phản hồi. Không có quy tắc này thì phản hồi "ẩn danh" trong một sự kiện mười người là không ẩn danh. |
 | **BR41** | **Mới.** Một property không được xoá khi còn booking tương lai đã duyệt; thay vào đó là ngừng kích hoạt (UC46). |
-| **BR42** | **Mới.** Màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04. Mọi quy tắc khác được đánh dấu "cấu hình được" trong §14 sẽ nằm dưới dạng hằng số trong một tài liệu chính sách. |
+| **BR42** | **Mới.** Màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04. Mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC49); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC40); các loại khiếu nại (UC52); thời hạn CMB trả lời khiếu nại (UC54). |
 | **BR43** | **Đã rút.** Nó từng dùng để giữ bản phát hành đầu độc lập với các use case bị hoãn; nay mọi use case ra cùng một bản phát hành. Số hiệu không được dùng lại. |
 | **BR44** | **Mới.** Một sự kiện bắt đầu và kết thúc trong cùng một học kỳ của lịch học kỳ (UC04). |
 | **BR45** | **Mới.** Khi một CLB đã có quyết định giải thể (UC15), không sự kiện, đề xuất sự kiện hay booking nào của CLB đó được kết thúc sau học kỳ `Dissolving` của nó. UC25 và UC47 từ chối những hồ sơ như vậy; UC15 huỷ những gì đã tồn tại. |
 | **BR46** | **Mới.** Sinh viên có tư cách thành viên `Banned` ở một CLB không được nộp đơn vào (UC17) hay được tiếp nhận lại (UC20) vào CLB đó. |
+| **BR47** | **Mới.** Quyền CMB ở một CLB chỉ đến từ một vị trí đã xác nhận trong nhiệm kỳ đang hoạt động của CLB đó: ghế tạm thời của người nộp đơn (UC08), ban chủ nhiệm đã xác nhận (UC11), chuyển giao nhiệm kỳ đã xác nhận (UC13) hoặc phân công chức vụ (UC23). UC03 không bao giờ cấp quyền CMB. |
+| **BR48** | **Mới.** Mỗi sinh viên có tối đa một đăng ký cho mỗi sự kiện. (UC29) |
+| **BR49** | **Mới.** Người dùng chỉ thấy và thao tác trên các CLB mà họ có tư cách thành viên hoặc chức vụ trong nhiệm kỳ đang hoạt động; ICPDP thấy mọi CLB. (UC02, UC23, UC24) |
+| **BR50** | **Mới.** `Registration Open` / `Registration Closed` suy ra từ registration window đặt ở UC27, không bao giờ lưu thành trạng thái của sự kiện. (UC27, UC29) |
+| **BR51** | **Mới.** Một scheme đánh giá đã được dùng thì bị khoá; muốn thay đổi phải tạo version mới, và kỳ đánh giá dùng version có hiệu lực cho kỳ đó. (UC43, UC44) |
+| **BR52** | **Mới.** Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. (UC21, UC22) |
 
 ## 12. Phạm vi phát hành
 
@@ -1019,12 +1036,11 @@ những luồng mà phụ thuộc của chúng đã bị hoãn; việc nhóm the
 
 Mỗi vòng lặp đều khép kín: không có gì kết thúc ở một trạng thái mà không use case nào rời đi được.
 
-### Nếu buộc phải cắt phạm vi
+### Thứ tự build và demo
 
-Cắt trọn vòng lặp, không bao giờ cắt nửa vòng. Theo thứ tự: Governance intelligence (UC42–UC45,
-kéo theo cả cơ chế leo thang của UC53 nên Phản hồi & khiếu nại đi cùng) → Báo cáo định kỳ (UC40,
-UC41) → Tài chính (UC35–UC39) → Cơ sở vật chất (UC46–UC49). Cắt bất cứ thứ gì trên lằn ranh đó
-sẽ làm vỡ vòng sự kiện, vốn là lý do tồn tại của hệ thống.
+Không cắt use case nào: cả 54 use case ra trong một bản phát hành. Priority (High / Medium / Low)
+chỉ là thứ tự build và demo — build trọn từng vòng lặp, không bao giờ làm nửa vòng, vòng High
+trước rồi tới Medium, Low.
 
 ## 13. Truy vết — pain point → use case
 

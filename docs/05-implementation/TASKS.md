@@ -35,11 +35,11 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ### Database
 
-- [ ] **DB-0.1** Tạo kết nối MongoDB và schema biến môi trường ở `infra/config` (`MONGO_URI`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID/SECRET`, `SMTP_*`); server phải fail-fast khi cấu hình sai. → NFR-REL-04, CON-04
+- [ ] **DB-0.1** Tạo kết nối MongoDB và schema biến môi trường ở `infra/config` (`MONGO_URI`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID/SECRET`, `SMTP_*`, `ALLOWED_DOMAIN`, `BOOTSTRAP_ICPDP_EMAIL`); server phải fail-fast khi cấu hình sai. → NFR-REL-04, CON-04
 - [ ] **DB-0.2** Import [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) vào dbdiagram.io, xuất ảnh ERD và gắn vào báo cáo ở Figure IV.4. → SRS §7
 - [ ] **DB-0.3** Viết quy ước schema Mongoose: `timestamps: true`, tham chiếu bằng `ObjectId`, `enum` trên mọi trường trạng thái lấy từ SRS §6, không đặt `default` che giấu một quyết định bắt buộc. → SRS §6, §7
 - [ ] **DB-0.4** Hiện thực `ensureIndexes()` cho từng repository, gọi lúc khởi động; bắt đầu với unique `users.email`. → DAT-02, DAT-03
-- [ ] **DB-0.5** Script seed: một ICPDP officer, một policy version, một lịch học kỳ hai kỳ, ba property, một evaluation scheme. → UC04, UC43, UC46
+- [ ] **DB-0.5** Script seed, chạy khi database còn trống: một ICPDP officer (từ `BOOTSTRAP_ICPDP_EMAIL`), một policy version (domain từ `ALLOWED_DOMAIN`), một lịch học kỳ hai kỳ, ba property, một evaluation scheme — để lần đăng nhập đầu không bị UC01 chặn. → UC04, UC43, UC46
 
 ### Backend
 
@@ -81,7 +81,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-1.6** `GET /dashboard` — mỗi vai trò một lần đọc tổng hợp, mỗi panel là một truy vấn đi qua index, suy giảm độc lập theo panel. → FR-UC02-01…06
 - [ ] **BE-1.7** UC03 quản trị tài khoản và vai trò; vô hiệu hoá phiên khi thay đổi; từ chối việc tự thu hồi vai trò quản trị cuối cùng. → FR-UC03-01…09
 - [ ] **BE-1.8** UC04 đánh phiên bản chính sách kèm ngày hiệu lực và chốt chặn "sẽ làm vô hiệu một quyết định đã ra". → FR-UC04-01…07
-- [ ] **BE-1.9** UC05 rule định tuyến kèm phần validate tính đầy đủ và không nhập nhằng, và endpoint mô phỏng. → FR-UC05-01…07
+- [ ] **BE-1.9** UC05 rule định tuyến kèm phần validate không chồng lấn (hồ sơ không khớp rule nào → một cấp, BR16), và endpoint mô phỏng. → FR-UC05-01…07
 - [ ] **BE-1.10** `resolveRequiredLevel(request)` để UC08/26/36/48 dùng về sau. → BR16
 
 ### Frontend
@@ -112,7 +112,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-2.7** UC11 xác nhận: kích hoạt nhiệm kỳ, cấp quyền, thu hồi quyền sáng lập, chuyển CLB sang Active; xác nhận một phần. → FR-UC11-01…09
 - [ ] **BE-2.8** UC12 kế hoạch chuyển giao với nghĩa vụ nạp sẵn và chốt chặn "không nghĩa vụ nào được thiếu người nhận". → FR-UC12-01…05
 - [ ] **BE-2.9** UC13 xác nhận: đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới, chuyển quyền, giữ lịch sử. → FR-UC13-01…07, BR08
-- [ ] **BE-2.10** UC14 yêu cầu tạm ngừng kèm chốt chặn "có sự kiện hoặc booking đã duyệt nằm trong giai đoạn". → FR-UC14-01…03
+- [ ] **BE-2.10** UC14 yêu cầu tạm ngừng kèm cảnh báo liệt kê các sự kiện và booking tương lai đã duyệt sẽ bị huỷ nếu UC15 chấp thuận (không chặn nộp). → FR-UC14-01…03
 - [ ] **BE-2.11** UC15 tạm ngừng / kích hoạt lại: chặn đợt tuyển, đề xuất và booking; huỷ các đề xuất chưa quyết định; cascade sang UC28 A1 và UC49 A1. → FR-UC15-01…05
 - [ ] **BE-2.12** UC15 giải thể: ghi quyết định kèm học kỳ hiệu lực và huỷ mọi thứ kết thúc sau học kỳ đó. → FR-UC15-06/07, BR45
 - [ ] **BE-2.13** Scheduler: `→ Dissolving` vào đầu học kỳ kế tiếp, và `→ Dissolved` vào cuối học kỳ đó như một bước tất-cả-hoặc-không-gì, cảnh báo ICPDP khi thất bại. → SCH-05, SCH-06, FR-UC15-09…11
@@ -143,7 +143,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-3.3** UC17 ứng tuyển / lưu nháp / rút đơn với bốn đường từ chối (khung thời gian, trùng đơn, đang là thành viên, bị cấm). → FR-UC17-01…09
 - [ ] **BE-3.4** UC18 sàng lọc và quyết định, thao tác hàng loạt, đẩy từ danh sách chờ, chốt chặn chỉ tiêu. → FR-UC18-01…10
 - [ ] **BE-3.5** UC19 đánh giá theo rubric, độ phân tán giữa nhiều người đánh giá, bất biến sau quyết định. → FR-UC19-01…06
-- [ ] **BE-3.6** UC20 tiếp nhận, tiếp nhận thủ công kèm lý do, từ chối lời mời, chốt chặn `Banned`. → FR-UC20-01…07, BR13, BR46
+- [ ] **BE-3.6** UC20 tiếp nhận, tiếp nhận thủ công kèm lý do, ghi nhận ứng viên từ chối (`Declined`), chốt chặn `Banned`. → FR-UC20-01…07, BR13, BR46
 - [ ] **BE-3.7** UC21 đổi trạng thái kèm ngày hiệu lực, lý do cấm bắt buộc, thu hồi chức vụ, chốt chặn ghế ban chủ nhiệm, chốt chặn ngày lùi về quá khứ. → FR-UC21-01…10
 - [ ] **BE-3.8** UC21 A2 đợt quét đăng ký lại thành viên theo học kỳ trong scheduler. → SCH-08
 - [ ] **BE-3.9** UC22 yêu cầu rời CLB và đường thực thi của nó sang UC21. → FR-UC22-01…05

@@ -97,7 +97,7 @@ theo vai trò.
 | Hệ thống ngoài | 2 (Google OAuth, Google SMTP) |
 | Module nghiệp vụ | 12 (M01–M12) |
 | Use case | 54 (UC01–UC54) |
-| Quy tắc nghiệp vụ | 45 quy tắc còn hiệu lực (BR01–BR46, BR43 đã rút) |
+| Quy tắc nghiệp vụ | 51 quy tắc còn hiệu lực (BR01–BR52, BR43 đã rút) |
 | Vấn đề nghiệp vụ (pain point) | 19 (BP01–BP19) |
 | Vòng đời thực thể | 11 |
 | User story | 41 (US01–US41) |
@@ -110,7 +110,7 @@ theo vai trò.
 | Thuật ngữ | Ý nghĩa |
 |---|---|
 | **UCMS** | University Club Management System — sản phẩm này |
-| **ICPDP** | Đơn vị của nhà trường quản lý hoạt động CLB sinh viên. Là **cấp phê duyệt duy nhất** trong UCMS và là actor duy nhất đại diện nhà trường |
+| **ICPDP** | Đơn vị của nhà trường quản lý hoạt động CLB sinh viên. Là **cấp phê duyệt duy nhất** cho mọi yêu cầu CLB hoặc sinh viên gửi lên nhà trường, và là actor duy nhất đại diện nhà trường |
 | **CMB** | Club Management Board — Ban chủ nhiệm/Ban điều hành CLB. Trên context diagram đầu tiên actor này tên `Club's Admin`; từ context diagram v2 trở đi thống nhất là `Club Management Board (CMB)` |
 | **Club** | Một CLB được công nhận, có vòng đời (`Pending Setup → Active → Suspended → Dissolving → Dissolved`) |
 | **Term** (nhiệm kỳ) | Khoảng thời gian có giới hạn mà một ban chủ nhiệm nắm quyền (`ClubTerm`) |
@@ -229,6 +229,11 @@ use case của module sở hữu, không bao giờ gọi thẳng repository củ
 UCMS có **ba actor là người**. Các vai trò con được mô hình hoá bằng RBAC, không bao giờ tạo
 thành actor mới.
 
+**Guest không phải actor.** Guest là khách chưa đăng nhập, chỉ được **đọc** khu công khai của
+UC06 (danh bạ CLB, trang CLB, đợt tuyển đang mở, sự kiện công khai sắp tới). Guest không sở hữu
+use case nào và không tạo dữ liệu; mọi hành động (ứng tuyển, đăng ký, nộp hồ sơ…) đều đòi UC01,
+và lúc đó người dùng là Student. Nguyên tắc: *khám phá công khai, hành động phải đăng nhập*.
+
 ### A1 — Student (Sinh viên)
 
 Mọi sinh viên đã đăng nhập: người chưa tham gia CLB, ứng viên, thành viên CLB, hoặc người đứng
@@ -260,7 +265,8 @@ coordinator là **vai trò RBAC bên trong actor này**, không phải actor ri�
 
 ### A3 — ICPDP Officer
 
-Là **actor duy nhất phía nhà trường** và là **cấp phê duyệt duy nhất** (BR31). Mọi quyết định
+Là **actor duy nhất phía nhà trường** và là **cấp phê duyệt duy nhất** cho mọi yêu cầu gửi lên
+nhà trường (BR31); quyết định nội bộ CLB do CMB đưa ra. Mọi quyết định
 quản trị đều kết thúc ở đây: thành lập, trạng thái CLB, xác nhận ban chủ nhiệm, chuyển giao
 nhiệm kỳ, duyệt sự kiện, duyệt ngân sách và giải ngân, đối soát, cấp cơ sở vật chất, phân loại
 khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
@@ -394,8 +400,8 @@ thủ công · RC06 quản lý deadline phân tán.
 
 ## 3.1 Giao diện người dùng
 
-UCMS là ứng dụng web một trang (SPA), responsive, với **ba workspace theo vai trò** sau một lần
-đăng nhập. Lớp vỏ giao diện quyết định *cái gì được hiển thị*; server quyết định *cái gì được
+UCMS là ứng dụng web một trang (SPA), responsive, với **khu công khai chỉ đọc** (UC06, cho cả
+Guest) và **ba workspace theo vai trò** sau một lần đăng nhập. Lớp vỏ giao diện quyết định *cái gì được hiển thị*; server quyết định *cái gì được
 phép* — client không bao giờ giữ quyền kiểm tra có thẩm quyền.
 
 ```text
@@ -410,6 +416,7 @@ client/src/pages/
 
 | Workspace | Màn hình | Use case |
 |---|---|---|
+| Public | Trang chủ · danh bạ CLB & trang CLB · đợt tuyển đang mở · danh sách và trang sự kiện công khai (chỉ đọc, không cần đăng nhập) | UC06 |
 | Auth | Đăng nhập với Google, callback OAuth, chọn workspace, trang từ chối truy cập | UC01 |
 | Student | Dashboard · danh bạ CLB & trang CLB · form hồ sơ thành lập (+ các version) · form ứng tuyển · đơn của tôi · danh sách và trang sự kiện · đăng ký của tôi · check-in (mã/QR) · không gian thành viên theo CLB · form phản hồi · form khiếu nại & khiếu nại của tôi | UC02, UC06, UC07, UC17, UC22, UC24, UC29, UC31, UC50, UC52 |
 | CMB | Dashboard · hồ sơ & cơ cấu CLB · đề xuất ban chủ nhiệm · kế hoạch chuyển giao · xin tạm ngừng · đợt tuyển · bảng sàng lọc đơn · đánh giá ứng viên · danh sách thành viên · phân công chức vụ · đề xuất sự kiện (+ bản sửa) · công bố sự kiện · huỷ/đổi lịch · đăng ký & danh sách chờ · chốt điểm danh · báo cáo sau sự kiện · yêu cầu ngân sách · khoản chi & chứng từ · báo cáo định kỳ · yêu cầu booking · booking của CLB · xem phản hồi · khiếu nại được chuyển | UC09, UC10, UC12, UC14, UC16, UC18–UC21, UC23, UC25, UC27, UC28, UC30, UC32, UC33, UC35, UC38, UC40, UC47, UC49, UC51, UC54 |
@@ -441,7 +448,7 @@ client/src/pages/
 | Ánh xạ tài khoản | Khoá định danh là địa chỉ email; lần đăng nhập thành công đầu tiên tạo đúng một `User` và một `StudentProfile` |
 | Phiên | Cookie được ký, `httpOnly`, `SameSite=Lax`. Không tồn tại mật khẩu, hash mật khẩu hay luồng đặt lại mật khẩu ở bất kỳ đâu |
 | Lỗi | Không kết nối được hoặc trả lỗi → hiển thị lỗi cho người dùng, **không tạo phiên và không tạo `User` dở dang** |
-| Bí mật | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET` được validate lúc khởi động bởi `infra/config/` và liệt kê trong `.env.example` |
+| Bí mật | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET` được validate lúc khởi động; `ALLOWED_DOMAIN` và `BOOTSTRAP_ICPDP_EMAIL` seed policy version đầu tiên và tài khoản ICPDP đầu tiên khi database còn trống, để lần đăng nhập đầu không bị chặn bởi `infra/config/` và liệt kê trong `.env.example` |
 
 ### EXT-02 — Google SMTP Service (ES2)
 
@@ -489,15 +496,16 @@ Mỗi use case dưới đây được đặc tả theo cùng một khối:
 - hậu điều kiện và dữ liệu được ghi xuống.
 
 **Độ ưu tiên phát hành** (cả 54 use case ra trong **một** bản phát hành; độ ưu tiên ở đây là
-*thứ tự cắt* theo R2 §12 — cắt trọn một vòng lặp, không bao giờ cắt nửa vòng):
+*thứ tự build và demo* theo R2 §12 — build trọn một vòng lặp, không bao giờ làm nửa vòng, và
+không cắt use case nào):
 
 | Ưu tiên | Ý nghĩa | Use case |
 |---|---|---|
-| **P1** | Lõi. Cắt đi là phá lý do tồn tại của hệ thống | UC01–UC34 |
-| **P2** | Mượn cơ sở vật chất — vòng tuỳ chọn bị cắt sau cùng | UC46–UC49 |
+| **P1** | Lõi — lý do tồn tại của hệ thống, build trước | UC01–UC34 |
+| **P2** | Mượn cơ sở vật chất | UC46–UC49 |
 | **P3** | Tài chính | UC35–UC39 |
 | **P4** | Báo cáo định kỳ | UC40, UC41 |
-| **P5** | Governance intelligence và phản hồi & khiếu nại — cắt đầu tiên | UC42–UC45, UC50–UC54 |
+| **P5** | Governance intelligence và phản hồi & khiếu nại — build sau cùng | UC42–UC45, UC50–UC54 |
 
 Hai hành vi trông như use case nhưng **cố tình không phải** use case (R2 §7): **phát hiện xung
 đột** là quy tắc nghiệp vụ BR15 được đánh giá bên trong UC25 và UC47, còn mọi **chuyển trạng thái
@@ -531,7 +539,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC01-06 | Tạo phiên được ký, `httpOnly`, `SameSite=Lax` và điều hướng người dùng tới workspace của vai trò đã xác định |
 | FR-UC01-07 | *(A1)* Hiển thị màn hình chọn workspace cho người dùng có nhiều ngữ cảnh (vừa là Student vừa là CMB của một hoặc nhiều CLB), ghi nhớ lựa chọn và cho phép đổi bất cứ lúc nào |
 | FR-UC01-08 | *(A2)* Đồng bộ lại `StudentProfile` từ dữ liệu OAuth ở mỗi lần đăng nhập, cập nhật tên hiển thị hay ảnh đại diện đã đổi mà không đụng tới tập vai trò |
-| FR-UC01-09 | *(E1)* Từ chối truy cập và không tạo gì cả khi email nằm ngoài domain được phép |
+| FR-UC01-09 | *(E1)* Từ chối truy cập, không tạo `User` hay phiên nào, và ghi audit lần thử khi email nằm ngoài domain được phép |
 | FR-UC01-10 | *(E2)* Từ chối truy cập khi tài khoản đã bị khoá ở UC03, hiển thị lý do khoá và ghi audit lần thử đó |
 | FR-UC01-11 | *(E3)* Hiển thị lỗi và không tạo phiên cũng không tạo `User` dở dang khi Google OAuth không truy cập được hoặc trả lỗi |
 | FR-UC01-12 | Không lưu mật khẩu, hash mật khẩu hay đường đặt lại mật khẩu ở bất kỳ đâu trong hệ thống |
@@ -550,7 +558,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Kích hoạt** | Người dùng vào workspace sau UC01, hoặc quay lại nó |
 | **Tiền điều kiện** | Có phiên hợp lệ (UC01) |
 | **Thực thể / trạng thái** | Không — chỉ đọc |
-| **Quy tắc** | Chỉ đọc; mọi con số là truy vấn trực tiếp vào module sở hữu, không bao giờ là bản sao thứ hai của dữ liệu |
+| **Quy tắc** | BR49; chỉ đọc; mọi con số là truy vấn trực tiếp vào module sở hữu, không bao giờ là bản sao thứ hai của dữ liệu |
 | **Liên quan · Pain point** | Mọi use case đều mở từ đây · BP01, BP14 |
 
 | ID | Hệ thống phải … |
@@ -576,22 +584,22 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Mục tiêu nghiệp vụ** | Kiểm soát ai được phép hành động, tách biệt với ai được phép đăng nhập |
 | **Kích hoạt** | Có officer mới, cần thu hồi một vai trò, hoặc cần khoá một tài khoản |
 | **Tiền điều kiện** | Người gọi có quyền quản trị tài khoản |
-| **Dữ liệu vào** | Người dùng đích; vai trò cần cấp hoặc thu hồi; ngữ cảnh CLB nếu vai trò gắn CLB; lý do khoá, mở khoá hoặc thu hồi |
+| **Dữ liệu vào** | Người dùng đích; vai trò cần cấp hoặc thu hồi (vai trò ICPDP hoặc vai trò đặc biệt của BR19); lý do khoá, mở khoá hoặc thu hồi |
 | **Thực thể / trạng thái** | Trạng thái tài khoản `User`: `Active ⇄ Locked`; các bản gán vai trò |
-| **Quy tắc** | BR19 (vai trò mở khoá điểm danh được cấp tại đây); vai trò CMB cấp ở đây là thứ cấp so với ban chủ nhiệm được xác nhận ở UC11 và tự động bị thu hồi khi nhiệm kỳ đóng (UC13) |
+| **Quy tắc** | BR19 (vai trò mở khoá điểm danh được cấp tại đây); BR47 (UC03 không bao giờ cấp quyền CMB) |
 | **Liên quan** | UC01, UC11, UC13, UC42 |
 
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC03-01 | Cho officer tìm người dùng theo email hoặc tên và hiển thị vai trò hiện tại, ngữ cảnh CLB và trạng thái tài khoản |
-| FR-UC03-02 | Cho officer cấp hoặc thu hồi một vai trò ICPDP hoặc CMB, giới hạn theo CLB nếu vai trò gắn CLB |
+| FR-UC03-02 | Cho officer cấp hoặc thu hồi một vai trò ICPDP hoặc vai trò đặc biệt của BR19; không cho cấp quyền CMB (BR47) |
 | FR-UC03-03 | Cho officer khoá hoặc mở khoá tài khoản, và bắt buộc nhập lý do khi khoá, mở khoá hoặc thu hồi |
 | FR-UC03-04 | Áp dụng thay đổi, vô hiệu hoá ngay các phiên bị ảnh hưởng và ghi bản ghi audit |
 | FR-UC03-05 | *(E1)* Từ chối khi officer tự thu hồi vai trò quản trị cuối cùng của chính mình |
-| FR-UC03-06 | *(E2)* Cảnh báo rằng UC10 / UC11 mới là đường đi đúng khi đối tượng đang giữ một ghế ban chủ nhiệm đã xác nhận, và ghi nhận việc ghi đè nếu officer vẫn tiếp tục |
+| FR-UC03-06 | *(E2)* Từ chối khi officer cố cấp quyền CMB cho một người dùng, và chỉ sang UC10 / UC11 hoặc UC23 (BR47) |
 | FR-UC03-07 | *(A1)* Hỗ trợ khoá khẩn cấp không kèm thay đổi vai trò khi một hồ sơ vi phạm (UC42) yêu cầu, và liên kết lệnh khoá với hồ sơ đó |
 | FR-UC03-08 | Biểu diễn phân cấp bên trong ICPDP bằng quyền, không bao giờ bằng một actor mới |
-| FR-UC03-09 | Tự động thu hồi vai trò CMB khi nhiệm kỳ tương ứng đóng lại ở UC13 |
+| FR-UC03-09 | Không lưu quyền CMB trên bản gán vai trò của UC03; quyền CMB luôn suy ra từ `ClubPositionAssignment ∩ ClubTerm đang hoạt động` (FR-UC01-05) nên tự hết khi nhiệm kỳ đóng |
 
 **Hậu điều kiện** — tập vai trò hoặc trạng thái tài khoản đã đổi và được audit; tài khoản bị khoá sẽ bị từ chối ở UC01.
 **Đầu ra** — bản gán vai trò, trạng thái tài khoản, bản ghi audit.
@@ -606,7 +614,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Kích hoạt** | Quy định của trường thay đổi, hoặc bắt đầu một kỳ học mới |
 | **Tiền điều kiện** | Người gọi có quyền cấu hình chính sách |
 | **Thực thể / trạng thái** | `PolicyVersion` — đánh phiên bản, có ngày hiệu lực |
-| **Quy tắc** | BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách dưới đây; mọi quy tắc "cấu hình được" khác nằm dưới dạng hằng số trong một tài liệu chính sách |
+| **Quy tắc** | BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách dưới đây; mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách (danh sách ở mục BR42 của catalogue quy tắc nghiệp vụ) |
 | **Liên quan · Pain point** | UC01, UC07, UC15, UC25, UC33, UC40, UC47, UC50 · BP14 |
 
 **Danh sách giá trị cấu hình được (đầy đủ — BR42)**
@@ -652,8 +660,8 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC05-01 | Cho officer thêm hoặc sửa một rule định tuyến gồm điều kiện và cấp duyệt mà điều kiện đó đòi hỏi, kèm SLA |
-| FR-UC05-02 | Validate rằng bộ rule là đầy đủ và không nhập nhằng — mỗi hồ sơ khớp đúng một rule |
-| FR-UC05-03 | *(E1)* Từ chối kích hoạt khi hai rule chồng nhau hoặc một loại hồ sơ không có rule nào |
+| FR-UC05-02 | Validate rằng không có hai rule nào chồng nhau; hồ sơ không khớp rule nào được quyết định ở một cấp (BR16) |
+| FR-UC05-03 | *(E1)* Từ chối kích hoạt khi hai rule chồng nhau |
 | FR-UC05-04 | Đánh phiên bản và audit bộ rule đã kích hoạt, và chỉ áp dụng cho hồ sơ mới |
 | FR-UC05-05 | Quyết định ở một cấp duy nhất với mọi hồ sơ không khớp rule nào (BR16) |
 | FR-UC05-06 | Giữ cho mọi cấp duyệt đều do một ICPDP Officer thực hiện, để BR31 (một cấp phê duyệt duy nhất) vẫn đúng |
@@ -674,20 +682,21 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Actor chính** | Student |
 | **Mục tiêu nghiệp vụ** | Giúp sinh viên tìm được CLB, đợt tuyển hoặc sự kiện đáng tham gia — cửa vào của cả sản phẩm |
 | **Kích hoạt** | Sinh viên muốn tham gia một CLB hoặc một hoạt động |
-| **Tiền điều kiện** | Có phiên hợp lệ (UC01) |
+| **Tiền điều kiện** | Không có — Guest xem được (chỉ đọc); đi tiếp sang UC17 / UC29 đòi UC01 |
 | **Dữ liệu vào** | Từ khoá tìm kiếm, lĩnh vực, loại hoạt động |
 | **Thực thể / trạng thái** | Không — chỉ đọc |
-| **Quy tắc** | BR09 |
+| **Quy tắc** | BR09, BR14 |
 | **Liên quan** | UC16, UC17, UC27, UC29 |
 
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC06-01 | Cho sinh viên duyệt hoặc tìm CLB theo lĩnh vực hoặc từ khoá và liệt kê từng CLB khớp kèm trạng thái và mô tả ngắn |
 | FR-UC06-02 | Hiển thị trang CLB gồm hồ sơ, ban chủ nhiệm, lịch sử hoạt động, các đợt tuyển đang mở và các sự kiện công khai sắp tới |
-| FR-UC06-03 | Liệt kê CLB `Active`, và liệt kê CLB `Suspended` có đánh dấu rõ và **không** hiện đợt tuyển nào (BR09) — xem vấn đề còn mở I22 ở §16.2 |
+| FR-UC06-03 | Liệt kê CLB `Active`, và liệt kê CLB `Suspended` có đánh dấu rõ và **không** hiện đợt tuyển nào (BR09); không liệt kê CLB `Dissolved` |
 | FR-UC06-04 | Không bao giờ liệt kê CLB `Dissolved` |
 | FR-UC06-05 | Cho đi tiếp sang UC17 (ứng tuyển) hoặc UC29 (đăng ký sự kiện) ngay từ trang CLB |
 | FR-UC06-06 | *(A1)* Cho sinh viên duyệt các sự kiện công khai sắp tới của mọi CLB và đi ngược từ sự kiện về CLB |
+| FR-UC06-07 | Phục vụ toàn bộ UC06 cho cả khách chưa đăng nhập (Guest), chỉ đọc; khi Guest chọn đi tiếp sang UC17 / UC29, chuyển sang UC01 rồi quay lại đúng trang đó |
 | FR-UC06-07 | *(E1)* Gợi ý bỏ bớt bộ lọc và hiển thị các CLB active mới nhất khi không có kết quả nào |
 
 **Hậu điều kiện** — không có. **Đầu ra** — không ghi dữ liệu.
@@ -700,7 +709,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Actor chính** | Student |
 | **Mục tiêu nghiệp vụ** | Đề xuất một CLB mới qua một quy trình chuẩn, truy vết được |
 | **Kích hoạt** | Một nhóm sinh viên muốn lập CLB |
-| **Tiền điều kiện** | Đã đăng nhập và đủ điều kiện theo chính sách cấu hình ở UC04 |
+| **Tiền điều kiện** | Đã đăng nhập và đủ điều kiện lập CLB định nghĩa trong tài liệu chính sách |
 | **Dữ liệu vào** | Tên CLB, lĩnh vực, mục tiêu; danh sách thành viên sáng lập; các tài liệu bắt buộc |
 | **Thực thể / trạng thái** | `ClubApplication`: `Draft → Submitted`; `Revision Requested → Submitted` (version mới); `… → Withdrawn` |
 | **Quy tắc** | BR02, BR03, BR04 |
@@ -800,8 +809,8 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC10-01 | Cho CMB mở một bản đề xuất ban chủ nhiệm cho một nhiệm kỳ và chọn, theo từng ghế, một thành viên và một chức vụ đã định nghĩa ở UC09 |
-| FR-UC10-02 | Kiểm tra điều kiện của người được đề xuất theo các điều kiện cấu hình được của BR07 |
-| FR-UC10-03 | Kiểm tra trùng lặp nhiệm kỳ Chủ nhiệm và từ chối trừ khi chính sách cho phép (BR06) |
+| FR-UC10-02 | Kiểm tra điều kiện của người được đề xuất theo các điều kiện định nghĩa trong tài liệu chính sách (BR07) |
+| FR-UC10-03 | Kiểm tra trùng lặp nhiệm kỳ Chủ nhiệm và từ chối trừ khi tài liệu chính sách cho phép (BR06) |
 | FR-UC10-04 | Đặt bản đề xuất ở `Pending Confirmation` khi nộp và tạo task cho ICPDP |
 | FR-UC10-05 | *(A1)* Chấp nhận đề xuất một phần — chỉ đề xuất các ghế còn trống, các ghế đã xác nhận giữ nguyên |
 | FR-UC10-06 | *(E1)* Từ chối ghế mà người được đề xuất không đủ điều kiện theo BR07 |
@@ -849,7 +858,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Có một nhiệm kỳ đang hoạt động |
 | **Dữ liệu vào** | Nhiệm kỳ mới; ứng viên; sự kiện còn dở; ngân sách còn treo; báo cáo chưa xong; tài sản và trách nhiệm cần bàn giao |
 | **Thực thể / trạng thái** | `TransitionPlan` → `Pending Confirmation` |
-| **Quy tắc** | Nghĩa vụ luôn gắn với CLB, không bao giờ gắn với cá nhân sắp rời đi |
+| **Quy tắc** | BR08; Nghĩa vụ luôn gắn với CLB, không bao giờ gắn với cá nhân sắp rời đi |
 | **Liên quan · Pain point** | UC10, UC13 · BP03 |
 
 | ID | Hệ thống phải … |
@@ -905,7 +914,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 |---|---|
 | FR-UC14-01 | Cho ban chủ nhiệm nêu lý do, giai đoạn và cách xử lý các nghĩa vụ còn tồn đọng |
 | FR-UC14-02 | Tạo task cho ICPDP khi nộp |
-| FR-UC14-03 | *(E1)* Từ chối nộp khi còn một sự kiện hoặc booking đã duyệt nằm trong giai đoạn xin tạm ngừng, cho tới khi nó được huỷ qua UC28 hoặc UC49 |
+| FR-UC14-03 | *(E1)* Khi nộp, cảnh báo và liệt kê các sự kiện và booking tương lai đã duyệt sẽ bị huỷ tự động (UC28 A1, UC49 A1) nếu UC15 chấp thuận tạm ngừng; yêu cầu ban chủ nhiệm xác nhận trước khi nộp |
 
 **Hậu điều kiện** — yêu cầu chờ quyết định ở UC15. **Đầu ra** — yêu cầu tạm ngừng, `ApprovalTask`.
 
@@ -1014,7 +1023,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Đợt tuyển có đơn; người gọi có quyền tuyển thành viên |
 | **Dữ liệu vào** | Kết quả sàng lọc từng đơn, quyết định và lý do |
 | **Thực thể / trạng thái** | `RecruitmentApplication`: `Submitted → Screening → Shortlisted → {Accepted, Rejected, Waitlisted}`; `RecruitmentCampaign → Completed` |
-| **Quy tắc** | Lý do từ chối có thể là bắt buộc theo chính sách |
+| **Quy tắc** | Lý do từ chối có thể là bắt buộc theo tài liệu chính sách |
 | **Liên quan · Pain point** | UC17, UC19, UC20 · BP11 |
 
 | ID | Hệ thống phải … |
@@ -1065,10 +1074,10 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Module · Ưu tiên** | M04 · P1 |
 | **Actor chính** | CMB |
 | **Mục tiêu nghiệp vụ** | Biến một quyết định trúng tuyển thành một bản ghi thành viên thật |
-| **Kích hoạt** | Ứng viên nhận lời mời, hoặc CLB xác nhận việc nhận |
+| **Kích hoạt** | CLB xác nhận việc nhận một ứng viên trúng tuyển |
 | **Tiền điều kiện** | Đơn đang `Accepted` |
 | **Dữ liệu vào** | Ngày gia nhập, vai trò mặc định, bộ phận |
-| **Thực thể / trạng thái** | Tạo `ClubMembership` ở `Active`; `RecruitmentApplication → Onboarded` |
+| **Thực thể / trạng thái** | Tạo `ClubMembership` ở `Active`; `RecruitmentApplication → Onboarded` (hoặc `Declined` ở A2) |
 | **Quy tắc** | BR13, BR46 |
 | **Liên quan · Pain point** | UC18, UC21, UC24 · BP02, BP11 |
 
@@ -1077,7 +1086,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC20-01 | Tạo `ClubMembership` với vai trò mặc định và ngày gia nhập khi việc nhận được xác nhận, và chuyển đơn sang `Onboarded` |
 | FR-UC20-02 | Cấp cho thành viên mới quyền truy cập UC24 |
 | FR-UC20-03 | *(A1)* Cho phép tiếp nhận thủ công không qua đợt tuyển bởi một thành viên có thẩm quyền, kèm lý do được ghi lại (BR13) |
-| FR-UC20-04 | *(A2)* Đóng đơn và trả suất về danh sách chờ khi ứng viên từ chối |
+| FR-UC20-04 | *(A2)* Cho phép CMB ghi nhận việc ứng viên từ chối, chuyển đơn sang `Declined` (trạng thái cuối); suất trống được lấp qua UC18 A2 |
 | FR-UC20-05 | *(E1)* Từ chối tạo khi đã tồn tại một tư cách thành viên active của sinh viên đó ở CLB đó |
 | FR-UC20-06 | *(E2)* Từ chối tiếp nhận — kể cả tiếp nhận thủ công — với sinh viên có tư cách thành viên `Banned` ở CLB đó (BR46) |
 | FR-UC20-07 | Thông báo cho thành viên mới và cập nhật số lượng thành viên |
@@ -1095,7 +1104,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Tư cách thành viên tồn tại; người gọi có quyền quản lý thành viên |
 | **Dữ liệu vào** | Trạng thái mới, ngày hiệu lực, lý do khi cấm |
 | **Thực thể / trạng thái** | `ClubMembership`: `Active ⇄ Inactive`, `Active`/`Inactive → Left`, `Active`/`Inactive → Banned` (cả hai là trạng thái cuối) |
-| **Quy tắc** | BR46; mọi thay đổi phải có ngày hiệu lực; lệnh cấm luôn quy được trách nhiệm |
+| **Quy tắc** | BR46, BR52; mọi thay đổi phải có ngày hiệu lực; lệnh cấm luôn quy được trách nhiệm |
 | **Liên quan · Pain point** | UC20, UC22, UC23 · BP02 |
 
 | ID | Hệ thống phải … |
@@ -1125,7 +1134,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Có tư cách thành viên `Active` hoặc `Inactive` |
 | **Dữ liệu vào** | Lý do, ngày hiệu lực đề nghị |
 | **Thực thể / trạng thái** | Yêu cầu rời CLB; tư cách thành viên chỉ đổi ở UC21 |
-| **Quy tắc** | Sinh viên khởi tạo, CLB thực thi — mỗi use case một actor |
+| **Quy tắc** | BR05, BR52; sinh viên khởi tạo, CLB thực thi — mỗi use case một actor |
 | **Liên quan · Pain point** | UC21, UC24 · BP02 |
 
 | ID | Hệ thống phải … |
@@ -1149,7 +1158,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Thành viên đang `Active`; chức vụ đã được định nghĩa ở UC09 |
 | **Dữ liệu vào** | Thành viên, chức vụ, khoảng thời gian hiệu lực |
 | **Thực thể / trạng thái** | `ClubPositionAssignment` |
-| **Quy tắc** | Chức vụ chỉ tồn tại nếu UC09 đã định nghĩa; chức vụ nhạy cảm cần UC11 |
+| **Quy tắc** | BR47, BR49; chức vụ chỉ tồn tại nếu UC09 đã định nghĩa; chức vụ nhạy cảm cần UC11 |
 | **Liên quan** | UC09, UC11, UC21 |
 
 | ID | Hệ thống phải … |
@@ -1171,9 +1180,9 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Actor chính** | Student, với tư cách thành viên |
 | **Mục tiêu nghiệp vụ** | Làm cho tư cách thành viên có ý nghĩa bên trong hệ thống |
 | **Kích hoạt** | Thành viên mở một CLB mà mình thuộc về |
-| **Tiền điều kiện** | Có tư cách thành viên active ở CLB đó |
+| **Tiền điều kiện** | Có tư cách thành viên `Active` hoặc `Inactive` ở CLB đó |
 | **Thực thể / trạng thái** | Không — chỉ đọc |
-| **Quy tắc** | Giới hạn trong các CLB có tư cách thành viên active; không tạo thực thể mới và không tạo dữ liệu mới |
+| **Quy tắc** | BR49; giới hạn trong các CLB có tư cách thành viên `Active` hoặc `Inactive`; không tạo thực thể mới và không tạo dữ liệu mới |
 | **Liên quan · Pain point** | UC20, UC22, UC29, UC31, UC50 · BP02 |
 
 | ID | Hệ thống phải … |
@@ -1185,7 +1194,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC24-05 | Hiển thị các nghĩa vụ còn treo của người gọi — phản hồi chưa gửi, yêu cầu rời CLB đang chờ |
 | FR-UC24-06 | Liên kết tới UC29, UC31, UC50 và UC22 **chỉ như điều hướng giao diện**; mỗi cái vẫn là use case độc lập của Student, không phải quan hệ «extend» của UC24 |
 | FR-UC24-07 | *(A1)* Cho sinh viên chuyển giữa các CLB mà mình thuộc về |
-| FR-UC24-08 | *(E1)* Hạ quyền truy cập về chế độ công khai của UC06 khi tư cách thành viên kết thúc |
+| FR-UC24-08 | *(E1)* Hạ quyền truy cập về chế độ công khai của UC06 khi tư cách thành viên kết thúc (`Left` hoặc `Banned`); tư cách `Inactive` vẫn vào được, được đánh dấu và vẫn có liên kết tới UC22 |
 | FR-UC24-09 | Không ghi dữ liệu nào và không cung cấp nhắn tin, chat hay chia sẻ file nội bộ (ngoài phạm vi) |
 
 **Hậu điều kiện** — không có. **Đầu ra** — không ghi dữ liệu.
@@ -1211,7 +1220,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC25-01 | Thu thập toàn bộ đề xuất — mục tiêu, thời gian, địa điểm, đối tượng, sức chứa, kế hoạch, mức rủi ro, dự toán ngân sách và nhu cầu cơ sở vật chất |
-| FR-UC25-02 | Validate tính đầy đủ và thời gian báo trước tối thiểu theo chính sách |
+| FR-UC25-02 | Validate tính đầy đủ và thời gian báo trước tối thiểu định nghĩa trong tài liệu chính sách |
 | FR-UC25-03 | Đánh giá quy tắc xung đột **BR15** khi nộp và hiển thị `No Conflict`, `Warning` hoặc `Blocking Conflict`, đồng thời lưu kết quả phân tích xung đột cùng đề xuất |
 | FR-UC25-04 | Cho phép đính kèm một yêu cầu đặt cơ sở vật chất (UC47) vào đề xuất |
 | FR-UC25-05 | Chuyển `Pending Approval` khi nộp và tạo review task cho ICPDP |
@@ -1269,7 +1278,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Sự kiện đang `Approved` (BR14) |
 | **Dữ liệu vào** | Khung thời gian đăng ký, mô tả công khai, phạm vi đối tượng, sức chứa |
 | **Thực thể / trạng thái** | `Event`: `Approved → Upcoming` |
-| **Quy tắc** | BR14, BR17 |
+| **Quy tắc** | BR14, BR17, BR50 |
 | **Liên quan · Pain point** | UC06, UC24, UC26, UC29 · BP05 |
 
 | ID | Hệ thống phải … |
@@ -1308,7 +1317,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC28-05 | Tính lại các nghĩa vụ báo cáo và ngân sách của sự kiện |
 | FR-UC28-06 | *(A1)* Huỷ sự kiện **không cần thao tác của CMB** khi UC15 (tạm ngừng, giải thể) hoặc UC42 (kết quả hồ sơ vi phạm) yêu cầu, ghi quyết định đó làm lý do, liên kết tới nó, và vẫn thực hiện FR-UC28-03…05; E2 không áp dụng cho cascade này và ICPDP **không** phải actor của use case này |
 | FR-UC28-07 | *(E1)* Từ chối huỷ một sự kiện đã chốt điểm danh; sự kiện đó phải đóng qua UC33 và UC34 |
-| FR-UC28-08 | *(E2)* Ghi nhận việc huỷ trong thời hạn báo trước cấu hình được như một tín hiệu tuân thủ cho UC42 |
+| FR-UC28-08 | *(E2)* Ghi nhận việc huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC42 |
 | FR-UC28-09 | Ghi audit lý do và trạng thái kết quả |
 
 **Hậu điều kiện** — sự kiện `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký được cập nhật.
@@ -1329,7 +1338,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Sự kiện đang `Upcoming` và trong khung thời gian đăng ký |
 | **Dữ liệu vào** | Sự kiện, và các câu trả lời mà form đăng ký của sự kiện yêu cầu |
 | **Thực thể / trạng thái** | `EventRegistration`: `Confirmed` hoặc `Waitlisted`; `→ Cancelled` khi sinh viên tự huỷ |
-| **Quy tắc** | BR17 |
+| **Quy tắc** | BR17, BR48, BR50 |
 | **Liên quan · Pain point** | UC27, UC30, UC31 · BP07 |
 
 | ID | Hệ thống phải … |
@@ -1356,7 +1365,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Kích hoạt** | Có suất trống, hoặc CLB thay đổi sức chứa |
 | **Tiền điều kiện** | Sự kiện đang `Upcoming`, trong khung thời gian đăng ký, và có danh sách chờ |
 | **Thực thể / trạng thái** | `EventRegistration`: `Waitlisted → Confirmed` |
-| **Quy tắc** | BR17; việc đẩy lên theo chính sách cấu hình, không bao giờ theo ưu ái thủ công không ghi vết |
+| **Quy tắc** | BR05, BR17; việc đẩy lên theo quy tắc định nghĩa trong tài liệu chính sách, không bao giờ theo ưu ái thủ công không ghi vết |
 | **Liên quan** | UC29 |
 
 | ID | Hệ thống phải … |
@@ -1378,7 +1387,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Actor chính** | Student · **Hỗ trợ:** CMB (check-in thủ công) |
 | **Mục tiêu nghiệp vụ** | Chứng minh việc có mặt ngay tại nơi sự kiện diễn ra |
 | **Kích hoạt** | Người tham dự đến địa điểm |
-| **Tiền điều kiện** | Sự kiện đang `Ongoing` hoặc trong khung giờ check-in cấu hình được; sinh viên có đăng ký đã xác nhận, hoặc sự kiện là loại mở tự do |
+| **Tiền điều kiện** | Sự kiện đang `Ongoing` hoặc trong khung giờ check-in định nghĩa trong tài liệu chính sách; sinh viên có đăng ký đã xác nhận, hoặc sự kiện là loại mở tự do |
 | **Dữ liệu vào** | Mã check-in hoặc QR của sự kiện; hoặc định danh người tham dự khi check-in thủ công |
 | **Thực thể / trạng thái** | Tạo `Attendance`; mở feedback window của người đó |
 | **Quy tắc** | BR18, BR36 |
@@ -1418,7 +1427,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC32-02 | Cho CMB sửa hoặc xác nhận từng bản ghi bị đánh dấu, kèm lý do |
 | FR-UC32-03 | Khoá bộ dữ liệu khi chốt và từ chối mọi thay đổi sau đó |
 | FR-UC32-04 | *(A1)* Cho người giữ vai trò đặc biệt được cấp ở UC03 mở khoá bộ dữ liệu kèm lý do, và ghi audit lần mở khoá (BR19) |
-| FR-UC32-05 | *(E1)* Không có gì để chốt với sự kiện đã bị huỷ |
+| FR-UC32-05 | *(E1)* Từ chối chốt khi còn bản ghi bị đánh dấu chưa được sửa hoặc xác nhận kèm lý do |
 | FR-UC32-06 | Không điều khiển feedback window tại đây — BR36 đã mở nó từ lúc check-in |
 | FR-UC32-07 | Đưa bộ dữ liệu đã chốt thành đầu vào của UC33 và UC44 |
 
@@ -1464,8 +1473,8 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Module · Ưu tiên** | M08 · P1 |
 | **Actor chính** | ICPDP Officer |
 | **Mục tiêu nghiệp vụ** | Xác định sự kiện đã duyệt có thực sự diễn ra đúng như đã duyệt hay không, và kết thúc vòng đời của nó |
-| **Kích hoạt** | Một task báo cáo từ UC33 |
-| **Tiền điều kiện** | Báo cáo đang `Report Submitted` |
+| **Kích hoạt** | Một task báo cáo từ UC33, hoặc deadline báo cáo đã qua mà không có báo cáo nào được nộp (A1) |
+| **Tiền điều kiện** | Sự kiện đang `Report Submitted`, hoặc deadline báo cáo đã qua mà không có báo cáo nào được nộp (A1) |
 | **Dữ liệu vào** | Ghi chú thẩm định, quyết định, yêu cầu sửa hoặc phát hiện vi phạm |
 | **Thực thể / trạng thái** | `Event`: `Report Submitted → Closed`, hoặc `Report Submitted → Completed` khi trả về |
 | **Quy tắc** | BR05, BR21 |
@@ -1644,7 +1653,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC40-01 | Mở báo cáo cho kỳ tương ứng — học kỳ, năm học hoặc một kỳ cấu hình được |
+| FR-UC40-01 | Mở báo cáo cho kỳ tương ứng — học kỳ, năm học hoặc một kỳ khác định nghĩa trong tài liệu chính sách |
 | FR-UC40-02 | Nạp sẵn các sự kiện, số liệu thành viên, điểm danh và tình hình tài chính của kỳ đó |
 | FR-UC40-03 | Thu thập phần thuyết minh, kế hoạch kỳ sau và mọi minh chứng bên ngoài |
 | FR-UC40-04 | Chuyển `Submitted` khi nộp, đóng băng số liệu nạp sẵn và tạo task cho ICPDP |
@@ -1695,7 +1704,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC42-01 | Mở hồ sơ ghi rõ **nguồn gốc** và mức độ nghiêm trọng theo thang phân loại ICPDP cấu hình (BR27) |
+| FR-UC42-01 | Mở hồ sơ ghi rõ **nguồn gốc** và mức độ nghiêm trọng theo thang phân loại định nghĩa trong tài liệu chính sách (BR27) |
 | FR-UC42-02 | Liên kết ngược hồ sơ được mở từ một khiếu nại về chính khiếu nại đó |
 | FR-UC42-03 | Hỗ trợ giai đoạn điều tra với việc thu thập chứng cứ → `Under Investigation` |
 | FR-UC42-04 | Yêu cầu CLB giải trình → `Awaiting Club Response`, phần trả lời đến từ đây hoặc từ UC54 khi nguồn gốc là một khiếu nại |
@@ -1724,7 +1733,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Người gọi có quyền cấu hình đánh giá |
 | **Dữ liệu vào** | Các dimension D1–D6, trọng số, ngưỡng xếp loại, kỳ áp dụng, trạng thái kích hoạt |
 | **Thực thể / trạng thái** | `EvaluationScheme` version: `Draft → Active` |
-| **Quy tắc** | BR29, BR30 |
+| **Quy tắc** | BR29, BR30, BR51 |
 | **Liên quan · Pain point** | UC44 · BP13 |
 
 | ID | Hệ thống phải … |
@@ -1749,7 +1758,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Có một scheme đang hoạt động (UC43); báo cáo của kỳ đã được thẩm định (UC41) |
 | **Dữ liệu vào** | Kỳ đánh giá và danh sách CLB trong phạm vi |
 | **Thực thể / trạng thái** | `Evaluation`: `Draft → Data Ready` |
-| **Quy tắc** | BR29 |
+| **Quy tắc** | BR29, BR30, BR51 |
 | **Liên quan · Pain point** | UC39, UC41, UC42, UC43, UC45 · BP13 |
 
 | ID | Hệ thống phải … |
@@ -1888,7 +1897,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Actor chính** | CMB |
 | **Mục tiêu nghiệp vụ** | Giải phóng nguồn lực không còn cần tới để CLB khác đặt được |
 | **Kích hoạt** | Sự kiện bị huỷ hoặc đổi lịch (UC28), hoặc CLB không cần property nữa |
-| **Tiền điều kiện** | Booking đang `Requested` hoặc `Approved` |
+| **Tiền điều kiện** | Booking đang `Requested` hoặc `Approved`, hoặc `In Use` khi việc huỷ đến từ UC15 hoặc UC42 (A1) |
 | **Dữ liệu vào** | Lý do huỷ |
 | **Thực thể / trạng thái** | `PropertyBooking`: `Requested`/`Approved → Cancelled`; `Approved → Released` |
 | **Quy tắc** | BR35 |
@@ -1901,7 +1910,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC49-03 | Thông báo cho ICPDP về việc huỷ hoặc trả |
 | FR-UC49-04 | *(A1)* Tự động giải phóng booking khi sự kiện của nó bị huỷ ở UC28 (BR35); khi việc huỷ đó đến từ UC15 hoặc UC42 thì giải phóng cả booking đang `In Use` và không áp dụng E2 |
 | FR-UC49-05 | *(E1)* Từ chối huỷ thủ công một booking đã `In Use` hoặc `Completed` |
-| FR-UC49-06 | *(E2)* Ghi nhận lần huỷ trong thời hạn báo trước cấu hình được như một tín hiệu tuân thủ cho UC42 |
+| FR-UC49-06 | *(E2)* Ghi nhận lần huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC42 |
 | FR-UC49-07 | Để scheduler chuyển `Approved → In Use → Completed` theo mốc giờ của chính booking |
 
 **Hậu điều kiện** — booking ở `Cancelled` hoặc `Released`; khung giờ đã trống.
@@ -2027,7 +2036,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Khiếu nại đang `Forwarded` |
 | **Dữ liệu vào** | Phần trả lời, chứng cứ, hành động CLB đã hoặc sẽ thực hiện |
 | **Thực thể / trạng thái** | `Complaint`: `Forwarded → Club Responded` |
-| **Quy tắc** | CMB không bao giờ được sửa hoặc đóng khiếu nại; phải trả lời trong thời hạn cấu hình được |
+| **Quy tắc** | CMB không bao giờ được sửa hoặc đóng khiếu nại; phải trả lời trong thời hạn định nghĩa trong tài liệu chính sách |
 | **Liên quan · Pain point** | UC42, UC53 · BP18 |
 
 | ID | Hệ thống phải … |
@@ -2047,7 +2056,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 # 5. Quy tắc nghiệp vụ
 
 Quy tắc nghiệp vụ được **thực thi ở tầng usecase** (CON-06), không bao giờ chỉ nằm ở UI.
-BR01–BR39 đến từ R1 §14; BR40–BR46 và các sửa đổi đến từ R2 §11. **BR43 đã bị rút và số hiệu
+BR01–BR39 đến từ R1 §14; BR40–BR52 và các sửa đổi đến từ R2 §11. **BR43 đã bị rút và số hiệu
 của nó không bao giờ được dùng lại.**
 
 | ID | Quy tắc | Thực thi tại |
@@ -2057,15 +2066,15 @@ của nó không bao giờ được dùng lại.**
 | BR03 | Số thành viên sáng lập tối thiểu là giá trị cấu hình được | UC07, UC04 |
 | BR04 | Một version hồ sơ đã nộp không bao giờ bị ghi đè | UC07, UC08 |
 | BR05 | Mọi lần phê duyệt hoặc từ chối đều lưu actor, thời điểm và lý do (nếu áp dụng) | UC08, UC11, UC13, UC26, UC34, UC36, UC41, UC48 |
-| BR06 | Không được có hai nhiệm kỳ Chủ nhiệm chồng nhau trừ khi chính sách cho phép | UC10 |
-| BR07 | Điều kiện giữ chức vụ lãnh đạo là cấu hình được | UC10, UC11 |
+| BR06 | Không được có hai nhiệm kỳ Chủ nhiệm chồng nhau trừ khi tài liệu chính sách cho phép | UC10 |
+| BR07 | Điều kiện giữ chức vụ lãnh đạo định nghĩa trong tài liệu chính sách | UC10, UC11 |
 | BR08 | Quyền mới chỉ có hiệu lực khi chuyển giao nhiệm kỳ được xác nhận | UC13 |
 | BR09 | CLB `Suspended` không được mở đợt tuyển mới | UC15, UC16, UC06 |
 | BR10 | CLB `Suspended` không được nộp đề xuất sự kiện mới | UC15, UC25 |
 | BR11 | Đợt tuyển chỉ nhận đơn trong khung thời gian của nó | UC16, UC17 |
 | BR12 | Một sinh viên không được nộp đơn trùng vào cùng một đợt tuyển | UC17 |
 | BR13 | Tư cách thành viên chỉ được tạo từ một ứng viên trúng tuyển hoặc một lần tiếp nhận thủ công có thẩm quyền | UC20, UC17 |
-| BR14 | Sự kiện chỉ được công khai sau khi đã `Approved` | UC26, UC27 |
+| BR14 | Sự kiện chỉ được công khai khi đã `Approved` **và** được công bố ở UC27 (`Upcoming`) | UC26, UC27 |
 | BR15 | **Quy tắc xung đột** — trùng thời gian trên cùng một property, nơi một sự kiện hoặc booking đã duyệt chặn lại, cho kết quả `Blocking Conflict`; trùng nhẹ cho `Warning`; ngưỡng được cấu hình ở UC04. Đây là một quy tắc, không phải use case | UC25, UC47, UC28 |
 | BR16 | **Đã sửa đổi** — duyệt đa cấp theo rule định tuyến của UC05; hồ sơ không khớp rule nào được quyết định ở một cấp, và mọi cấp đều do ICPDP Officer thực hiện nên BR31 vẫn đúng | UC05, UC08, UC26, UC36, UC48 |
 | BR17 | Số đăng ký đã xác nhận không bao giờ vượt sức chứa trừ khi chính sách cho phép overbooking | UC29, UC30 |
@@ -2076,13 +2085,13 @@ của nó không bao giờ được dùng lại.**
 | BR22 | Yêu cầu ngân sách phải gắn với một mục đích nghiệp vụ hợp lệ | UC35 |
 | BR23 | Số tiền giải ngân không bao giờ vượt số tiền đã duyệt khi chưa có văn bản điều chỉnh | UC37, UC39 |
 | BR24 | Khoản chi ngoài hạng mục đã duyệt bị gắn cờ ngoại lệ | UC38, UC39 |
-| BR25 | Yêu cầu về chứng từ theo từng hạng mục chi là cấu hình được | UC38 |
+| BR25 | Yêu cầu về chứng từ theo từng hạng mục chi định nghĩa trong tài liệu chính sách | UC38 |
 | BR26 | Phải đối soát xong trước khi đóng một hồ sơ ngân sách | UC39 |
-| BR27 | Thang phân loại mức độ vi phạm do ICPDP cấu hình | UC42 |
+| BR27 | Thang phân loại mức độ vi phạm định nghĩa trong tài liệu chính sách | UC42 |
 | BR28 | Quyết định về vi phạm phải có lý do và chứng cứ | UC42 |
 | BR29 | Tổng trọng số đánh giá phải hợp lệ trước khi một scheme được kích hoạt | UC43, UC44 |
 | BR30 | Kỳ đánh giá đã công bố không bao giờ được sửa tại chỗ; phải tạo bản sửa hoặc bản chụp mới | UC45 |
-| BR31 | ICPDP là cấp phê duyệt duy nhất; không quyết định nào trong hệ thống được phê duyệt bởi actor khác | UC08, UC26, UC36, UC48, UC53 |
+| BR31 | ICPDP là cấp phê duyệt duy nhất cho mọi yêu cầu CLB hoặc sinh viên gửi lên nhà trường; quyết định nội bộ CLB do CMB của CLB đó đưa ra trong phạm vi của mình | UC08, UC26, UC36, UC48, UC53 |
 | BR32 | Hệ thống chỉ chấp nhận đăng nhập qua Google OAuth với email thuộc domain đã cấu hình | UC01, UC04 |
 | BR33 | Một property không được có hai booking `Approved` trùng khung giờ trừ khi chính sách cho phép overbooking | UC47, UC48 |
 | BR34 | CLB `Suspended` không được cấp booking mới | UC15, UC47, UC48 |
@@ -2093,15 +2102,21 @@ của nó không bao giờ được dùng lại.**
 | BR39 | Mọi quyết định với khiếu nại (bác bỏ / chuyển xuống / leo thang) phải có lý do và được audit | UC53 |
 | BR40 | **Mới** — bản tổng hợp phản hồi chỉ hiển thị khi số người phản hồi đạt mức tối thiểu cấu hình được; dưới ngưỡng đó chỉ hiển thị việc có tồn tại phản hồi (nếu không, phản hồi "ẩn danh" trong một sự kiện mười người là không ẩn danh) | UC50, UC51, UC04 |
 | BR41 | **Mới** — không được xoá một property còn booking tương lai đã duyệt; chỉ được ngừng kích hoạt | UC46 |
-| BR42 | **Mới** — màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04; mọi quy tắc khác được đánh dấu "cấu hình được" sẽ nằm dưới dạng hằng số trong một tài liệu chính sách | UC04 |
+| BR42 | **Mới** — màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04; mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách (danh sách ngay dưới bảng) | UC04 |
 | ~~BR43~~ | **Đã rút** — nó từng dùng để giữ bản phát hành đầu độc lập với các use case bị hoãn; nay mọi use case ra cùng một bản phát hành. Số hiệu không được dùng lại | — |
 | BR44 | **Mới** — một sự kiện phải bắt đầu và kết thúc trong cùng một học kỳ của lịch học kỳ | UC25, UC15 |
 | BR45 | **Mới** — khi một CLB đã có quyết định giải thể, không sự kiện, đề xuất hay booking nào của CLB đó được kết thúc sau học kỳ `Dissolving` của nó; UC25 và UC47 từ chối những hồ sơ như vậy, UC15 huỷ những gì đã tồn tại | UC15, UC25, UC47 |
 | BR46 | **Mới** — sinh viên có tư cách thành viên `Banned` ở một CLB không được nộp đơn vào, hoặc được tiếp nhận lại vào, CLB đó | UC17, UC20, UC21 |
+| BR47 | **Mới** — Quyền CMB ở một CLB chỉ đến từ một vị trí đã xác nhận trong nhiệm kỳ đang hoạt động của CLB đó: ghế tạm thời của người nộp đơn (UC08), ban chủ nhiệm đã xác nhận (UC11), chuyển giao nhiệm kỳ đã xác nhận (UC13) hoặc phân công chức vụ (UC23). UC03 không bao giờ cấp quyền CMB. | UC01, UC03, UC08, UC11, UC13, UC23 |
+| BR48 | **Mới** — Mỗi sinh viên có tối đa một đăng ký cho mỗi sự kiện. | UC29 |
+| BR49 | **Mới** — Người dùng chỉ thấy và thao tác trên các CLB mà họ có tư cách thành viên hoặc chức vụ trong nhiệm kỳ đang hoạt động; ICPDP thấy mọi CLB. | UC02, UC23, UC24 |
+| BR50 | **Mới** — `Registration Open` / `Registration Closed` suy ra từ registration window đặt ở UC27, không bao giờ lưu thành trạng thái của sự kiện. | UC27, UC29 |
+| BR51 | **Mới** — Một scheme đánh giá đã được dùng thì bị khoá; muốn thay đổi phải tạo version mới, và kỳ đánh giá dùng version có hiệu lực cho kỳ đó. | UC43, UC44 |
+| BR52 | **Mới** — Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. | UC21, UC22 |
 
 **Cấu hình được và hằng số (BR42).** Chỉ chín giá trị liệt kê ở UC04 là sửa được trong sản
-phẩm. Mọi quy tắc khác ở trên ghi "cấu hình được" đều là **hằng số trong một tài liệu chính
-sách** cho tới khi có nhu cầu thật — xem quyết định còn mở D2.
+phẩm. Mọi giá trị chính sách khác là **hằng số định nghĩa trong tài liệu chính sách** cho tới khi có nhu
+cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC49); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC40); các loại khiếu nại (UC52); thời hạn CMB trả lời khiếu nại (UC54).
 
 ---
 
@@ -2165,11 +2180,11 @@ Tác nhân: UC16 (`Draft → Published`, và `Cancelled` từ mọi trạng thá
 
 ```text
 Draft → Submitted → Screening → Shortlisted → Accepted | Rejected | Waitlisted → Onboarded
-                  ↘ Withdrawn (cuối)
+                  ↘ Withdrawn (cuối)                      Accepted ↘ Declined (cuối)
 ```
 
 Tác nhân: UC17 (`Draft → Submitted`, và `Withdrawn` từ `Submitted` / `Screening` /
-`Shortlisted`); UC18 (từ sàng lọc tới quyết định); UC20 (`Accepted → Onboarded`).
+`Shortlisted`); UC18 (từ sàng lọc tới quyết định); UC20 (`Accepted → Onboarded`, hoặc `Accepted → Declined` khi CMB ghi nhận ứng viên từ chối).
 
 ## 6.5 Membership (tư cách thành viên)
 
@@ -2768,18 +2783,18 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 
 | UC | Module | Actor | Thực thể chính | Quy tắc |
 |---|---|---|---|---|
-| UC01 | M01 | Tất cả | User, StudentProfile | BR32 |
-| UC02 | M01 | Tất cả | — (chỉ đọc) | — |
-| UC03 | M01 | ICPDP | User, Role | BR19 |
+| UC01 | M01 | Tất cả | User, StudentProfile | BR32, BR47 |
+| UC02 | M01 | Tất cả | — (chỉ đọc) | BR49 |
+| UC03 | M01 | ICPDP | User, Role | BR19, BR47 |
 | UC04 | M01 | ICPDP | PolicyVersion | BR42 + 9 giá trị |
 | UC05 | M01 | ICPDP | RoutingRuleSet | BR16, BR31 |
-| UC06 | M02 | Student | Club (đọc) | BR09 |
+| UC06 | M02 | Student | Club (đọc) | BR09, BR14 |
 | UC07 | M02 | Student | ClubApplication | BR02, BR03, BR04 |
 | UC08 | M02 | ICPDP | ClubApplication, Club | BR05, BR31 |
 | UC09 | M02/M03 | CMB | Club, ClubPosition | — |
 | UC10 | M03 | CMB | Đề xuất ban chủ nhiệm | BR06, BR07 |
-| UC11 | M03 | ICPDP | ClubTerm | BR05, BR07 |
-| UC12 | M03 | CMB | TransitionPlan | — |
+| UC11 | M03 | ICPDP | ClubTerm | BR05, BR07, BR47 |
+| UC12 | M03 | CMB | TransitionPlan | BR08 |
 | UC13 | M03 | ICPDP | ClubTerm | BR08 |
 | UC14 | M02 | CMB | Yêu cầu tạm ngừng | — |
 | UC15 | M02 | ICPDP | Club | BR09, BR10, BR34, BR44, BR45 |
@@ -2788,16 +2803,16 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 | UC18 | M04 | CMB | RecruitmentApplication | — |
 | UC19 | M04 | CMB | CandidateEvaluation | — |
 | UC20 | M04 | CMB | ClubMembership | BR13, BR46 |
-| UC21 | M04 | CMB | ClubMembership | BR46 |
-| UC22 | M04 | Student | Yêu cầu rời CLB | — |
-| UC23 | M03/M04 | CMB | ClubPositionAssignment | — |
-| UC24 | M04 | Student | — (chỉ đọc) | — |
+| UC21 | M04 | CMB | ClubMembership | BR46, BR52 |
+| UC22 | M04 | Student | Yêu cầu rời CLB | BR05, BR52 |
+| UC23 | M03/M04 | CMB | ClubPositionAssignment | BR47, BR49 |
+| UC24 | M04 | Student | — (chỉ đọc) | BR49 |
 | UC25 | M05 | CMB | Event, EventProposalVersion | BR10, BR15, BR21, BR44, BR45 |
 | UC26 | M05 | ICPDP | Event | BR05, BR14, BR16, BR31 |
-| UC27 | M05 | CMB | Event | BR14, BR17 |
+| UC27 | M05 | CMB | Event | BR14, BR17, BR50 |
 | UC28 | M05 | CMB | Event, PropertyBooking | BR15, BR35 |
-| UC29 | M06 | Student | EventRegistration | BR17 |
-| UC30 | M06 | CMB | EventRegistration | BR17 |
+| UC29 | M06 | Student | EventRegistration | BR17, BR48, BR50 |
+| UC30 | M06 | CMB | EventRegistration | BR05, BR17 |
 | UC31 | M06 | Student (+CMB) | Attendance | BR18, BR36 |
 | UC32 | M06 | CMB | Attendance | BR18, BR19 |
 | UC33 | M08 | CMB | PostEventReport | BR20, BR21 |
@@ -2810,8 +2825,8 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 | UC40 | M08 | CMB | PeriodicReport | BR20 |
 | UC41 | M08 | ICPDP | PeriodicReport | BR05, BR21 |
 | UC42 | M08 | ICPDP | Violation, CorrectiveAction | BR27, BR28 |
-| UC43 | M09 | ICPDP | EvaluationScheme | BR29, BR30 |
-| UC44 | M09 | ICPDP | Evaluation | BR29 |
+| UC43 | M09 | ICPDP | EvaluationScheme | BR29, BR30, BR51 |
+| UC44 | M09 | ICPDP | Evaluation | BR29, BR30, BR51 |
 | UC45 | M09 | ICPDP | Evaluation | BR30 |
 | UC46 | M11 | ICPDP | Property | BR41 |
 | UC47 | M11 | CMB | PropertyBooking | BR15, BR33, BR34, BR45 |
@@ -2963,10 +2978,8 @@ Cả 54 use case ra trong **một bản phát hành**, nhóm thành các vòng l
 | 10 | Cơ sở vật chất | UC46–UC49 | một khung giờ đã đặt được sử dụng hoặc được trả lại |
 | 11 | Phản hồi & khiếu nại | UC50–UC54 | phản hồi được tổng hợp và khiếu nại có kết quả xử lý |
 
-**Nếu buộc phải cắt phạm vi, hãy cắt trọn một vòng lặp, không bao giờ cắt nửa vòng.** Thứ tự:
-Governance intelligence (vòng 9 — kéo theo cơ chế leo thang khiếu nại, nên vòng 11 đi cùng) →
-Báo cáo định kỳ (vòng 8) → Tài chính (vòng 7) → Cơ sở vật chất (vòng 10). Cắt bất cứ thứ gì
-trên lằn ranh đó là phá vỡ vòng sự kiện, tức là phá lý do tồn tại của hệ thống.
+**Không cắt use case nào.** Mỗi vòng lặp được build trọn, không bao giờ làm nửa vòng, theo thứ tự
+sprint dưới đây.
 
 **Thứ tự sprint đề xuất** (theo phụ thuộc): 1 → 2 → 3 → 4 → 5 → 6 → 10 → 7 → 8 → 11 → 9.
 Vòng 10 được đặt trước Tài chính vì vòng sự kiện đã liên kết sang booking (FR-UC25-04 /
@@ -2991,7 +3004,7 @@ UC47 A2), và vòng 9 đặt cuối vì UC44 cần dữ liệu trọn một kỳ
 | ID | Vấn đề | Trạng thái trong SRS này |
 |---|---|---|
 | **I21** | UC09 E2 và UC21 bước 4 tham chiếu UC23 để thu hồi chức vụ, vốn là một phụ thuộc chéo phase trong cách chia phase cũ | Cách chia phase đã bị rút (I26) và mọi use case ra cùng một bản phát hành, nên phụ thuộc này là hợp lệ. SRS này nêu rõ cả hai đường: ghế **ban chủ nhiệm** được thay qua UC10 / UC11 (FR-UC09-07, FR-UC21-07) và chức vụ **nội bộ** qua UC23 (FR-UC21-03). Không còn mâu thuẫn |
-| **I22** | UC06 nói "chỉ liệt kê CLB `Active`" rồi lại nói "CLB `Suspended` vẫn hiển thị nhưng được đánh dấu" — hai câu mâu thuẫn nhau | **Vẫn mở.** FR-UC06-03 ghi lại cách xử lý đề xuất — *liệt kê CLB `Active` và `Suspended`; CLB `Suspended` được đánh dấu và không hiện đợt tuyển nào (BR09); CLB `Dissolved` không được liệt kê* — và đánh dấu là còn mở. Nhóm cần chốt câu chữ rồi cập nhật R2 / R3 |
+| **I22** | UC06 nói "chỉ liệt kê CLB `Active`" rồi lại nói "CLB `Suspended` vẫn hiển thị nhưng được đánh dấu" — hai câu mâu thuẫn nhau | **Đã sửa** (2026-09-26): liệt kê CLB `Active` và `Suspended`; CLB `Suspended` được đánh dấu và không hiện đợt tuyển nào (BR09); CLB `Dissolved` không được liệt kê — FR-UC06-03, R2, R3 đã thống nhất |
 
 ## 16.3 Nợ tài liệu
 
@@ -3019,7 +3032,7 @@ UC47 A2), và vòng 9 đặt cuối vì UC44 cần dữ liệu trọn một kỳ
 | **Data lineage** | `kết quả dimension → chỉ số → thực thể nguồn → kỳ dữ liệu nguồn` (EVL-02) |
 | **Dissolving** | Học kỳ mà một CLB bị giải thể dùng để đóng nốt công việc còn lại; không tạo gì mới |
 | **Founding permission** | Quyền CMB tạm thời do UC08 cấp, chỉ dùng cho UC09 và UC10, bị thu hồi ở UC11 |
-| **ICPDP** | Đơn vị quản lý hoạt động CLB của nhà trường — actor A3, cấp phê duyệt duy nhất |
+| **ICPDP** | Đơn vị quản lý hoạt động CLB của nhà trường — actor A3, cấp phê duyệt duy nhất cho yêu cầu gửi lên nhà trường |
 | **Outbox** | Hàng đợi thông báo được lưu xuống DB và do scheduler rút (§8.2) |
 | **Policy version** | Bản chụp có ngày hiệu lực của chín giá trị cấu hình được ở UC04 |
 | **Property** | Phòng, hội trường hoặc thiết bị có thể đặt (UC46) |
