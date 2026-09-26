@@ -1,0 +1,1430 @@
+// =====================================================================
+// UCMS — Thiết kế cơ sở dữ liệu (MongoDB)
+// Import vào https://dbdiagram.io  (Import > From DBML / dán nội dung)
+//
+// Nguồn chân lý: docs/SRS.md §6 (vòng đời thực thể) và §7 (yêu cầu dữ
+// liệu). Mọi collection, giá trị trạng thái, khoá duy nhất và index bên
+// dưới đều truy vết được tới một use case (UCnn) hoặc một quy tắc nghiệp
+// vụ (BRnn).
+//
+// Cách đọc ký hiệu
+//   - Một "Table" = một collection MongoDB (một aggregate). Tổng 50 collection.
+//   - Cột kiểu "objectId" là tham chiếu được lưu dưới dạng ObjectId, không
+//     phải khoá ngoại. dbdiagram vẽ chúng thành quan hệ để mô hình dễ đọc.
+//   - Cột kiểu "json" là sub-document NHÚNG: có chặn trên, luôn được đọc
+//     kèm cha của nó, không bao giờ bị truy vấn độc lập. Tách chúng ra sẽ
+//     tốn thêm một vòng truy vấn mà không đổi lại được gì (HLD §6).
+//   - Một sub-document chỉ trở thành collection riêng khi nó được truy vấn
+//     độc lập, lớn không giới hạn, hoặc được một module khác ghi vào.
+//   - Các bản sao denormalize chỉ tồn tại cho màn hình danh sách và được
+//     usecase của module sở hữu làm mới (DAT-06).
+// =====================================================================
+
+Project UCMS {
+  database_type: 'MongoDB'
+  Note: '''
+  Hệ thống Quản lý Câu lạc bộ Đại học — 50 collection trên 12 module.
+  Các quy tắc thiết kế đang áp dụng:
+  - Mỗi aggregate một collection; tham chiếu bằng ObjectId, không join trong đường đi nóng (DAT-01).
+  - Sức chứa và việc cấp khung giờ được bảo vệ bằng unique index cộng findOneAndUpdate có điều
+    kiện, không bao giờ bằng đọc-kiểm-ghi (DAT-04, CON-07).
+  - Document version là chỉ-ghi-thêm; một lần nộp lại ghi một version mới (BR04, DAT-05).
+  - Bản chụp bị đóng băng lúc nộp không bao giờ đổi khi dữ liệu nguồn thay đổi (DAT-07).
+  - Không gì đã bước vào một workflow bị xoá cứng; trạng thái vòng đời thay cho việc xoá (DAT-08).
+  - Mọi thay đổi trạng thái đều ghi một dòng auditLogs từ bên trong usecase (DAT-10, AUD-02).
+  '''
+}
+
+// =====================================================================
+// ENUM — các máy trạng thái của SRS §6. Một chuyển trạng thái nằm ngoài
+// các giá trị này là không tồn tại.
+// =====================================================================
+
+Enum accountState {
+  Active
+  Locked
+}
+Enum roleScope {
+  system
+  club
+}
+
+Enum clubState {
+  "Pending Setup"
+  Active
+  Suspended
+  Dissolving
+  Dissolved
+}
+
+Enum clubApplicationState {
+  Draft
+  Submitted
+  "Under Review"
+  "Revision Requested"
+  Approved
+  Rejected
+  Withdrawn
+  Expired
+}
+
+Enum campaignState {
+  Draft
+  Published
+  "Accepting Applications"
+  Screening
+  Completed
+  Cancelled
+}
+
+Enum recruitmentApplicationState {
+  Draft
+  Submitted
+  Screening
+  Shortlisted
+  Accepted
+  Rejected
+  Waitlisted
+  Onboarded
+  Withdrawn
+}
+
+Enum membershipState {
+  Active
+  Inactive
+  Left
+  Banned
+}
+
+Enum eventState {
+  Draft
+  "Pending Approval"
+  "Under Review"
+  "Revision Requested"
+  Approved
+  Upcoming
+  Ongoing
+  Completed
+  "Report Submitted"
+  Closed
+  Cancelled
+  Rejected
+  Expired
+}
+
+Enum registrationState {
+  Confirmed
+  Waitlisted
+  Cancelled
+}
+Enum attendanceMethod {
+  self
+  manual
+  "walk-in"
+}
+
+Enum budgetRequestState {
+  Draft
+  Submitted
+  "Under Review"
+  "Revision Requested"
+  Approved
+  Rejected
+  Cancelled
+  Disbursed
+  "Reconciliation Pending"
+  Reconciled
+  Exception
+  Closed
+}
+
+Enum bookingState {
+  Draft
+  Requested
+  "Under Review"
+  "Revision Requested"
+  Approved
+  Rejected
+  "In Use"
+  Completed
+  Cancelled
+  Released
+}
+
+Enum violationState {
+  Open
+  "Under Investigation"
+  "Awaiting Club Response"
+  "Decision Issued"
+  "Corrective Action"
+  Resolved
+  Closed
+}
+
+Enum complaintState {
+  Submitted
+  "Under Triage"
+  Dismissed
+  Forwarded
+  "Club Responded"
+  Escalated
+  Closed
+  Withdrawn
+}
+
+Enum evaluationState {
+  Draft
+  "Data Ready"
+  "Under Review"
+  Finalized
+  Published
+}
+
+Enum reportState {
+  Draft
+  Submitted
+  Accepted
+  "Returned for correction"
+}
+
+Enum reviewOutcome {
+  "Request revision"
+  Approve
+  Reject
+}
+Enum approvalTaskState {
+  Open
+  Escalated
+  Decided
+  Closed
+}
+Enum nominationState {
+  "Pending Confirmation"
+  Confirmed
+  Returned
+}
+Enum termState {
+  Planned
+  Active
+  Closed
+}
+Enum notificationState {
+  Queued
+  Sent
+  Failed
+  Read
+}
+Enum conflictResult {
+  "No Conflict"
+  Warning
+  "Blocking Conflict"
+}
+
+// =====================================================================
+// M01 — ĐỊNH DANH, TRUY CẬP & CẤU HÌNH  (UC01–UC05)
+// =====================================================================
+
+Table users {
+  id objectId [pk]
+  email string [unique, not null, note: 'Khoá định danh. Domain được đối chiếu với chính sách đang hiệu lực trước khi tạo bất cứ thứ gì (BR32, UC01).']
+  googleSubject string [unique, note: 'Mã subject ổn định của Google; không đổi khi tên hiển thị thay đổi.']
+  displayName string [not null]
+  avatarUrl string
+  accountState accountState [not null, default: 'Active', note: 'Locked bị từ chối ngay khi đăng nhập và lần thử đó được ghi audit (UC03, UC01 E2).']
+  lockReason string [note: 'Bắt buộc khi accountState là Locked (UC03).']
+  lockedBy objectId
+  lockedAt datetime
+  lastLoginAt datetime
+  createdAt datetime [not null]
+  updatedAt datetime
+
+  Note: 'Không tồn tại mật khẩu, hash mật khẩu hay đường đặt lại mật khẩu ở bất kỳ đâu trong hệ thống (UC01, SEC-02).'
+  indexes {
+    email [unique, name: 'uq_users_email']
+    accountState [name: 'ix_users_state']
+  }
+}
+
+Table studentProfiles {
+  id objectId [pk]
+  userId objectId [unique, not null]
+  studentCode string [unique]
+  fullName string [not null]
+  faculty string
+  major string
+  cohort string
+  syncedAt datetime [note: 'Được đồng bộ lại từ dữ liệu OAuth ở mỗi lần đăng nhập (UC01 A2).']
+
+  Note: 'Mỗi user một profile. Tách khỏi users để bản ghi định danh không dính các trường riêng của trường.'
+}
+
+Table permissions {
+  id objectId [pk]
+  code string [unique, not null, note: 'ví dụ: club.event.propose, icpdp.booking.decide, attendance.unlock (BR19).']
+  name string [not null]
+  module string [not null, note: 'M01 … M12.']
+  description string
+}
+
+Table roles {
+  id objectId [pk]
+  code string [unique, not null, note: 'ICPDP_OFFICER, ICPDP_HEAD (quyết định còn mở D1), ATTENDANCE_UNLOCK, CLUB_PRESIDENT, CLUB_TREASURER …']
+  name string [not null]
+  scope roleScope [not null, note: 'Một vai trò gắn CLB chỉ có hiệu lực thông qua một bản gán chức vụ bên trong một nhiệm kỳ đang hoạt động (SEC-04).']
+  permissionCodes "string[]" [not null]
+  isSystem bool [default: false]
+}
+
+Table userRoleAssignments {
+  id objectId [pk]
+  userId objectId [not null]
+  roleId objectId [not null]
+  grantedBy objectId [not null]
+  grantedAt datetime [not null]
+  revokedBy objectId
+  revokedAt datetime
+  reason string [note: 'Bắt buộc khi thu hồi (UC03).']
+
+  Note: 'Chỉ dùng để cấp vai trò phạm vi hệ thống (UC03). Quyền phía CLB KHÔNG cấp ở đây — nó đến từ clubPositionAssignments bên trong một clubTerm đang hoạt động và bị thu hồi tự động khi nhiệm kỳ đóng lại (UC11, UC13, SEC-04).'
+  indexes {
+    (userId, revokedAt) [name: 'ix_ura_user_active']
+  }
+}
+
+Table policyVersions {
+  id objectId [pk]
+  allowedEmailDomains "string[]" [not null, note: 'BR32.']
+  minFoundingMembers int [not null, note: 'BR03.']
+  mandatoryApplicationDocuments "string[]" [not null, note: 'BR02.']
+  reportDeadlines json [not null, note: 'Theo từng loại báo cáo: mốc đến hạn cộng các mốc nhắc T-X / T+Y / T+Z (BR20, NTF-05).']
+  conflictThresholdMinutes int [not null, note: 'BR15 — dưới mức chồng lấn này thì báo Warning thay vì Blocking Conflict.']
+  feedbackWindowHours int [not null, note: 'BR36 — tính từ lúc sự kiện kết thúc.']
+  feedbackMinRespondents int [not null, note: 'BR40 — giá trị ban đầu là quyết định còn mở D3.']
+  allowOverbooking bool [not null, note: 'BR33.']
+  enforceOverdueReportBlock bool [not null, note: 'BR21.']
+  academicCalendar json [not null, note: 'Mã học kỳ kèm ngày bắt đầu và kết thúc. Chi phối BR44, BR45, lịch giải thể (UC15) và đợt quét đăng ký lại thành viên (UC21 A2).']
+  effectiveFrom datetime [not null]
+  createdBy objectId [not null]
+  createdAt datetime [not null]
+
+  Note: 'Chỉ-ghi-thêm, có ngày hiệu lực. Một quyết định đã ra giữ nguyên các giá trị mà nó được ra theo (UC04 FR-04). Màn hình chỉ phơi ra đúng chín giá trị này (BR42).'
+  indexes {
+    effectiveFrom [name: 'ix_policy_effective']
+  }
+}
+
+Table routingRuleSets {
+  id objectId [pk]
+  version int [not null]
+  state string [not null, note: 'Draft | Active | Superseded.']
+  activatedBy objectId
+  activatedAt datetime
+  createdAt datetime [not null]
+
+  Note: 'Tại mỗi thời điểm chỉ có đúng một bộ Active. Việc kích hoạt bị từ chối nếu bộ rule không đầy đủ và không rõ ràng (UC05 FR-02, E1).'
+  indexes {
+    version [unique, name: 'uq_routing_version']
+  }
+}
+
+Table routingRules {
+  id objectId [pk]
+  ruleSetId objectId [not null]
+  requestType string [not null, note: 'CLUB_APPLICATION | EVENT_PROPOSAL | BUDGET_REQUEST | PROPERTY_BOOKING.']
+  amountThreshold decimal [note: 'Dùng cho định tuyến ngân sách (UC36 A1).']
+  riskCategory string [note: 'Dùng cho định tuyến sự kiện (UC26 A1).']
+  propertyClass string
+  complianceCondition string [note: 'ví dụ: CLB đang có một hồ sơ vi phạm chưa đóng.']
+  requiredLevel int [not null, note: '1 = một cấp, 2 = cấp ICPDP thứ hai (BR16). Mọi cấp đều là một ICPDP Officer, nhờ đó BR31 vẫn đúng.']
+  slaHours int
+  priority int [not null, note: 'Thứ tự đánh giá; bộ rule phải cho ra đúng một rule cho mỗi hồ sơ.']
+
+  indexes {
+    (ruleSetId, requestType, priority) [name: 'ix_rule_lookup']
+  }
+}
+
+// =====================================================================
+// M02 / M03 — VÒNG ĐỜI CLB, QUẢN TRỊ & NHIỆM KỲ  (UC06–UC15, UC23)
+// =====================================================================
+
+Table clubs {
+  id objectId [pk]
+  code string [unique, not null]
+  name string [not null]
+  field string [not null]
+  state clubState [not null, default: 'Pending Setup']
+  description text
+  contactEmail string
+  contactPhone string
+  charterUrl string
+  channels json [note: 'Các kênh truyền thông mà CLB công bố.']
+  operatingScope string
+  institutionalFields json [note: 'Chỉ ICPDP sửa được (UC09 E1).']
+  dissolution json [note: 'Do UC15 đặt: { decidedAt, decidedBy, reason, effectiveSemester }. Vẫn tồn tại khi trạng thái còn là Active — việc giải thể là có lịch, không tức thì (BR45).']
+  sourceApplicationId objectId
+  createdAt datetime [not null]
+  updatedAt datetime
+
+  Note: 'Inactive cố ý KHÔNG phải một trạng thái: một CLB ngừng hoạt động thì ở Suspended kèm lý do không hoạt động (SRS §6.2).'
+  indexes {
+    (state, field) [name: 'ix_clubs_state_field']
+    name [name: 'ix_clubs_name']
+  }
+}
+
+Table clubApplications {
+  id objectId [pk]
+  clubName string [not null]
+  field string [not null]
+  objectives text
+  founderUserId objectId [not null]
+  state clubApplicationState [not null, default: 'Draft']
+  currentVersionNo int [not null, default: 1]
+  revisionDeadlineAt datetime [note: 'Do UC08 đặt khi yêu cầu chỉnh sửa; scheduler đặt Expired khi hết hạn (SCH-04).']
+  createdClubId objectId [note: 'Chỉ được đặt khi phê duyệt (UC08 FR-06).']
+  submittedAt datetime
+  decidedAt datetime
+  createdAt datetime [not null]
+
+  indexes {
+    (state, submittedAt) [name: 'ix_clubapp_queue']
+    founderUserId [name: 'ix_clubapp_founder']
+    (state, revisionDeadlineAt) [name: 'ix_clubapp_expiry']
+  }
+}
+
+Table clubApplicationVersions {
+  id objectId [pk]
+  applicationId objectId [not null]
+  versionNo int [not null]
+  payload json [not null, note: 'Bản chụp bất biến đầy đủ của hồ sơ đã nộp.']
+  foundingMembers json [not null, note: 'Danh sách thành viên sáng lập đã khai; được đối chiếu với minFoundingMembers (BR03).']
+  documents json [not null, note: 'Các tài liệu bắt buộc theo chính sách đang hiệu lực (BR02).']
+  submittedBy objectId [not null]
+  submittedAt datetime [not null]
+
+  Note: 'Chỉ-ghi-thêm. Một lần nộp lại ghi một version mới và không bao giờ ghi đè bản trước (BR04, CON-08). Đây chính là thứ trả lời câu hỏi ICPDP đã duyệt chính xác nội dung gì.'
+  indexes {
+    (applicationId, versionNo) [unique, name: 'uq_clubappver']
+  }
+}
+
+Table clubSuspensionRequests {
+  id objectId [pk]
+  clubId objectId [not null]
+  requestedBy objectId [not null]
+  reason text [not null]
+  expectedFrom datetime [not null]
+  expectedTo datetime [not null]
+  obligationsPlan text [note: 'Cách xử lý các nghĩa vụ còn tồn đọng (UC14).']
+  recoveryPlan text
+  state string [not null, note: 'Submitted | Approved | Rejected | Withdrawn.']
+  decidedBy objectId
+  decidedAt datetime
+  createdAt datetime [not null]
+
+  Note: 'Bổ sung khi thiết kế: UC14 sinh ra bản ghi này và một approval task, nhưng danh sách thực thể của SRS chưa đặt tên collection cho nó. Bản thân quyết định được đưa ra ở UC15 trên CLB.'
+  indexes {
+    (clubId, state) [name: 'ix_susp_club_state']
+  }
+}
+
+Table clubTerms {
+  id objectId [pk]
+  clubId objectId [not null]
+  name string [not null, note: 'ví dụ: "Nhiệm kỳ 2026-2027".']
+  startAt datetime [not null]
+  endAt datetime [not null]
+  state termState [not null, default: 'Planned']
+  previousTermId objectId
+  confirmedBy objectId
+  confirmedAt datetime
+
+  Note: 'Phạm vi của mọi quyền CMB. Quyền được suy ra từ bản gán chức vụ giao với nhiệm kỳ đang hoạt động, không bao giờ từ một cờ trên user (SEC-04).'
+  indexes {
+    (clubId, state) [name: 'ix_terms_club_state']
+    (clubId, endAt) [name: 'ix_terms_expiry', note: 'Chi phối lời nhắc nhiệm kỳ sắp hết hạn (§8.2).']
+  }
+}
+
+Table clubPositions {
+  id objectId [pk]
+  clubId objectId [not null]
+  code string [not null]
+  name string [not null]
+  unit string [note: 'Ban hoặc bộ phận mà chức vụ này thuộc về (UC09).']
+  isBoardSeat bool [not null, default: false, note: 'Một ghế ban chủ nhiệm được lấp qua UC10/UC11, không phải qua UC23.']
+  isSensitive bool [not null, default: false, note: 'Một chức vụ nhạy cảm cần được xác nhận qua UC11 (UC23 A1).']
+  isSingleHolder bool [not null, default: true, note: 'UC23 E2 từ chối người giữ thứ hai.']
+  permissionCodes "string[]"
+  isActive bool [not null, default: true]
+
+  Note: 'Không xoá được khi một ghế đã xác nhận hoặc một bản gán đang hiệu lực còn giữ chức vụ này (UC09 E2, bảo vệ theo kiểu BR41).'
+  indexes {
+    (clubId, code) [unique, name: 'uq_position_club_code']
+  }
+}
+
+Table clubPositionAssignments {
+  id objectId [pk]
+  clubId objectId [not null]
+  termId objectId [not null]
+  positionId objectId [not null]
+  membershipId objectId [not null]
+  effectiveFrom datetime [not null]
+  effectiveTo datetime [note: 'Null khi bản gán còn hiệu lực. Được đặt khi thành viên rời đi hoặc nhiệm kỳ đóng lại.']
+  assignedBy objectId [not null]
+  confirmedBy objectId [note: 'Có giá trị với một ghế ban chủ nhiệm hoặc một chức vụ nhạy cảm (UC11).']
+
+  Note: 'Phép giao tạo ra thẩm quyền: bản gán ∩ nhiệm kỳ đang hoạt động = quyền (SEC-04). Bị thu hồi tự động khi tư cách thành viên kết thúc (UC21 FR-03) hoặc khi nhiệm kỳ đóng lại (UC13).'
+  indexes {
+    (clubId, termId, positionId) [name: 'ix_assign_lookup']
+    (membershipId, effectiveTo) [name: 'ix_assign_member_active']
+  }
+}
+
+Table boardNominations {
+  id objectId [pk]
+  clubId objectId [not null]
+  termId objectId [not null]
+  state nominationState [not null, default: 'Pending Confirmation']
+  submittedBy objectId [not null]
+  submittedAt datetime [not null]
+  decidedBy objectId
+  decidedAt datetime
+  reason string
+
+  Note: 'Bổ sung khi thiết kế: UC10 sinh ra một bản đề cử và UC11 quyết định nó, nhưng danh sách thực thể của SRS chưa đặt tên collection. Các ghế là một collection riêng vì UC11 A1 xác nhận từng ghế một.'
+  indexes {
+    (clubId, state) [name: 'ix_nom_club_state']
+  }
+}
+
+Table boardNominationSeats {
+  id objectId [pk]
+  nominationId objectId [not null]
+  positionId objectId [not null]
+  membershipId objectId [not null]
+  state nominationState [not null, default: 'Pending Confirmation']
+  reason string [note: 'Lý do một ghế bị trả về để đề cử lại (UC11 A1).']
+
+  indexes {
+    (nominationId, positionId) [unique, name: 'uq_nom_seat']
+  }
+}
+
+Table transitionPlans {
+  id objectId [pk]
+  clubId objectId [not null]
+  fromTermId objectId [not null]
+  toTermId objectId [not null]
+  candidates json [not null, note: 'Những người được đề cử cho nhiệm kỳ mới.']
+  outstandingObligations json [not null, note: 'Được nạp sẵn từ M05, M07 và M08 lúc tạo; mọi mục phải có người nhận trước khi nộp (UC12 E1).']
+  handoverItems json
+  state nominationState [not null, default: 'Pending Confirmation']
+  submittedBy objectId [not null]
+  submittedAt datetime [not null]
+  decidedBy objectId
+  decidedAt datetime
+  followUpConditions json [note: 'Phê duyệt có điều kiện; hiển thị trên dashboard của ban chủ nhiệm mới (UC13 A1).']
+
+  indexes {
+    (clubId, state) [name: 'ix_transition_club_state']
+  }
+}
+
+// =====================================================================
+// M04 — TUYỂN THÀNH VIÊN & QUẢN LÝ THÀNH VIÊN  (UC16–UC22, UC24)
+// =====================================================================
+
+Table recruitmentCampaigns {
+  id objectId [pk]
+  clubId objectId [not null]
+  title string [not null]
+  positions json [not null]
+  criteria text
+  windowStart datetime [not null]
+  windowEnd datetime [not null, note: 'Scheduler mở và đóng khung thời gian (SCH-03); BR11 từ chối đơn nộp ngoài khung đó.']
+  capacity int [not null]
+  selectionSteps json
+  formSchema json [not null, note: 'Định nghĩa biểu mẫu ứng tuyển hiển thị cho sinh viên.']
+  rubric json [note: 'Rubric riêng của từng đợt tuyển, dùng ở UC19; không có rubric nghĩa là đánh giá dạng văn bản tự do.']
+  state campaignState [not null, default: 'Draft']
+  publishedBy objectId
+  publishedAt datetime
+  createdAt datetime [not null]
+
+  indexes {
+    (clubId, state) [name: 'ix_campaign_club_state']
+    (state, windowStart, windowEnd) [name: 'ix_campaign_window', note: 'Chi phối scheduler và danh sách khám phá công khai (UC06).']
+  }
+}
+
+Table recruitmentApplications {
+  id objectId [pk]
+  campaignId objectId [not null]
+  clubId objectId [not null, note: 'Được denormalize từ đợt tuyển để danh sách người nộp đơn toàn CLB chỉ tốn một truy vấn (DAT-06).']
+  userId objectId [not null]
+  position string
+  answers json [not null]
+  attachments json
+  state recruitmentApplicationState [not null, default: 'Draft']
+  decisionOutcome string [note: 'Accepted | Rejected | Waitlisted.']
+  decisionReason string
+  decidedBy objectId
+  decidedAt datetime
+  submittedAt datetime
+  withdrawnAt datetime
+
+  Note: 'BR12 — mỗi sinh viên một đơn cho mỗi đợt tuyển, được cưỡng chế bằng khoá duy nhất. BR13 và BR46 được kiểm tra trong usecase vì chúng phải đọc collection tư cách thành viên.'
+  indexes {
+    (campaignId, userId) [unique, name: 'uq_recruitapp_campaign_user']
+    (campaignId, state) [name: 'ix_recruitapp_screening']
+    (userId, state) [name: 'ix_recruitapp_mine', note: 'Chi phối mục đơn của tôi trên dashboard sinh viên (UC02).']
+  }
+}
+
+Table candidateEvaluations {
+  id objectId [pk]
+  applicationId objectId [not null]
+  reviewerId objectId [not null]
+  scores json [not null, note: 'Mỗi tiêu chí rubric một mục.']
+  totalScore decimal
+  comment text
+  createdAt datetime [not null]
+
+  Note: 'Bất biến ngay khi quyết định được đưa ra (UC19 FR-06). Mỗi người đánh giá một bản để UC19 A1 hiển thị được độ phân tán.'
+  indexes {
+    (applicationId, reviewerId) [unique, name: 'uq_candeval']
+  }
+}
+
+Table clubMemberships {
+  id objectId [pk]
+  clubId objectId [not null]
+  userId objectId [not null]
+  state membershipState [not null, default: 'Active']
+  joinedAt datetime [not null]
+  leftAt datetime
+  departmentId objectId
+  defaultRole string
+  sourceApplicationId objectId [note: 'Null với một lần tiếp nhận thủ công có thẩm quyền (UC20 A1, BR13).']
+  banReason string [note: 'Bắt buộc khi trạng thái là Banned (UC21 FR-02).']
+  statusHistory json [not null, note: 'Nhúng: [{ fromState, toState, effectiveDate, reason, actorId, at }]. Có chặn trên — vài mục mỗi năm học, luôn được đọc kèm dòng danh sách thành viên.']
+  lastReRegisteredSemester string [note: 'Dùng cho đợt quét theo học kỳ của UC21 A2.']
+
+  Note: 'Khoá duy nhất ở đây là TỪNG PHẦN — nó chỉ áp dụng khi trạng thái là Active hoặc Inactive, nên một sinh viên đã Left có thể quay lại bằng một tư cách thành viên mới (UC21 FR-09), còn sinh viên Banned thì không (BR46, kiểm tra trong usecase).'
+  indexes {
+    (clubId, userId) [unique, name: 'uq_membership_active', note: 'partialFilterExpression: { state: { $in: ["Active","Inactive"] } }']
+    (clubId, state) [name: 'ix_membership_roster']
+    (userId, state) [name: 'ix_membership_mine']
+  }
+}
+
+Table membershipWithdrawalRequests {
+  id objectId [pk]
+  membershipId objectId [not null]
+  clubId objectId [not null]
+  userId objectId [not null]
+  reason text [not null]
+  requestedEffectiveDate datetime [not null]
+  state string [not null, note: 'Pending | Executed | Cancelled | Held. Ở Held khi thành viên vẫn đang giữ một ghế ban chủ nhiệm đã xác nhận (UC22 E1).']
+  createdAt datetime [not null]
+  executedBy objectId [note: 'Thành viên CMB đã thực thi nó ở UC21 A1.']
+  executedAt datetime
+
+  Note: 'Bổ sung khi thiết kế: UC22 sinh ra bản ghi này và UC21 A1 tiêu thụ nó, nhưng danh sách thực thể của SRS chưa đặt tên collection. Bản thân trạng thái tư cách thành viên chỉ đổi ở UC21 (mỗi use case một actor).'
+  indexes {
+    (clubId, state) [name: 'ix_withdrawal_club_state']
+  }
+}
+
+// =====================================================================
+// M05 / M06 — SỰ KIỆN, ĐĂNG KÝ & ĐIỂM DANH  (UC25–UC32)
+// =====================================================================
+
+Table events {
+  id objectId [pk]
+  clubId objectId [not null]
+  clubName string [not null, note: 'Được denormalize cho danh sách sự kiện công khai và hàng đợi của ICPDP (DAT-06); module CLB cập nhật lại khi đổi tên.']
+  title string [not null]
+  objective text
+  startAt datetime [not null]
+  endAt datetime [not null]
+  semesterCode string [not null, note: 'BR44 — một sự kiện bắt đầu và kết thúc trong cùng một học kỳ; BR45 cấm ngày kết thúc rơi sau học kỳ Dissolving.']
+  venueText string [note: 'Địa điểm dạng văn bản tự do khi không dùng property nào trong danh mục.']
+  propertyId objectId [note: 'Được đặt khi sự kiện dùng một property trong danh mục; bản thân booking được quyết định riêng ở UC48.']
+  audienceScope string [not null, note: 'PUBLIC | MEMBERS_ONLY (UC27 A1).']
+  capacity int [not null]
+  waitlistEnabled bool [not null, default: true]
+  riskCategory string [note: 'Cấp dữ liệu cho các rule định tuyến của UC05 (UC26 A1).']
+  budgetEstimate decimal
+  state eventState [not null, default: 'Draft']
+  conflictResult conflictResult [note: 'Kết quả của BR15 được lưu cùng đề xuất để officer thấy đúng thứ mà CLB đã thấy (UC25 FR-03).']
+  conflictDetail json
+  approvalConditions json [note: 'Các điều kiện do UC26 A2 gắn vào và được kiểm tra lại ở UC34.']
+  registrationOpenAt datetime [note: 'Trạng thái đang mở / đã đóng đăng ký được SUY RA từ khung thời gian này, không phải một trạng thái của sự kiện (SRS §6.6).']
+  registrationCloseAt datetime
+  checkInCode string [note: 'Được xuất trình hoặc quét tại địa điểm (UC31).']
+  checkInOpenAt datetime
+  checkInCloseAt datetime
+  allowWalkIn bool [not null, default: false]
+  currentRevisionNo int [not null, default: 1]
+  revisionDeadlineAt datetime [note: 'Scheduler đặt Expired khi hết hạn (SCH-04).']
+  publishedAt datetime
+  cancelReason string
+  cancelledBy objectId [note: 'Null với một cascade hệ thống đến từ UC15 hoặc UC42 (UC28 A1).']
+  cancelSourceType string [note: 'CMB | SUSPENSION | DISSOLUTION | CASE — nguyên nhân gây ra việc huỷ.']
+  isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước đã cấu hình; là một tín hiệu tuân thủ cho UC42 (UC28 E2).']
+  attendanceFinalized bool [not null, default: false]
+  createdAt datetime [not null]
+
+  indexes {
+    (clubId, state) [name: 'ix_events_club_state']
+    (state, startAt) [name: 'ix_events_schedule', note: 'Chi phối các chuyển trạng thái Upcoming → Ongoing → Completed của scheduler (SCH-01) và danh sách công khai.']
+    (propertyId, startAt, endAt) [name: 'ix_events_conflict', note: 'Phía đọc của quy tắc xung đột BR15.']
+    (state, revisionDeadlineAt) [name: 'ix_events_expiry']
+  }
+}
+
+Table eventProposalVersions {
+  id objectId [pk]
+  eventId objectId [not null]
+  revisionNo int [not null]
+  payload json [not null, note: 'Bản chụp bất biến của đề xuất đã nộp.']
+  conflictResult conflictResult
+  submittedBy objectId [not null]
+  submittedAt datetime [not null]
+
+  Note: 'Chỉ-ghi-thêm (BR04). Một bản sửa không bao giờ ghi đè bản trước (UC25 A2).'
+  indexes {
+    (eventId, revisionNo) [unique, name: 'uq_eventrev']
+  }
+}
+
+Table eventRegistrations {
+  id objectId [pk]
+  eventId objectId [not null]
+  studentId objectId [not null]
+  clubId objectId [not null, note: 'Được denormalize cho các danh sách phía CLB (DAT-06).']
+  state registrationState [not null, default: 'Confirmed']
+  waitlistPosition int [note: 'Thứ tự được giữ nguyên qua mọi thao tác (UC30 FR-06).']
+  answers json
+  createdAt datetime [not null]
+  cancelledAt datetime
+  promotedAt datetime
+
+  Note: 'BR17 — sức chứa được cưỡng chế bằng khoá duy nhất này cộng một findOneAndUpdate có điều kiện trên bộ đếm của sự kiện, không phải bằng đọc-kiểm-ghi (DAT-04). Sinh viên huỷ rồi đăng ký lại sẽ dùng lại chính document này thay vì tạo thêm một document thứ hai.'
+  indexes {
+    (eventId, studentId) [unique, name: 'uq_registration']
+    (eventId, state, waitlistPosition) [name: 'ix_registration_waitlist']
+    (studentId, state) [name: 'ix_registration_mine']
+  }
+}
+
+Table attendances {
+  id objectId [pk]
+  eventId objectId [not null]
+  studentId objectId [not null]
+  registrationId objectId [note: 'Null với khách vãng lai cho tới khi UC31 A2 tạo bản đăng ký.']
+  clubId objectId [not null]
+  checkedInAt datetime [not null]
+  method attendanceMethod [not null]
+  performedBy objectId [note: 'Ai đã thực hiện lần check-in thủ công (UC31 A1).']
+  abnormalFlags "string[]" [note: 'no-show | walk-in | manual | out-of-window — được đưa ra để xem xét ở UC32.']
+  correctionReason string
+  finalized bool [not null, default: false]
+  finalizedBy objectId
+  finalizedAt datetime
+  unlockedBy objectId [note: 'Chỉ người giữ vai trò đặc biệt mới mở khoá được (BR19, UC32 A1); mọi lần mở khoá đều được ghi audit.']
+  unlockReason string
+
+  Note: 'BR18 — đúng một bản ghi chính thức cho mỗi người tham dự trên mỗi sự kiện; một lần check-in trùng không tạo gì và bản ghi đầu tiên vẫn giữ nguyên.'
+  indexes {
+    (eventId, studentId) [unique, name: 'uq_attendance']
+    (eventId, finalized) [name: 'ix_attendance_finalize']
+    (studentId, checkedInAt) [name: 'ix_attendance_history']
+  }
+}
+
+// =====================================================================
+// M08 — BÁO CÁO, TRÁCH NHIỆM GIẢI TRÌNH & TUÂN THỦ  (UC33, UC34, UC40–UC42)
+// =====================================================================
+
+Table postEventReports {
+  id objectId [pk]
+  eventId objectId [unique, not null]
+  clubId objectId [not null]
+  preloadedFigures json [not null, note: 'Bị đóng băng lúc nộp: đề xuất đã duyệt, điểm danh đã chốt, ngân sách và khoản chi, bản tổng hợp phản hồi. Không bao giờ đổi khi nguồn thay đổi về sau (DAT-07).']
+  actualResult text [not null]
+  incidents text
+  lessonsLearned text
+  evidence json
+  state reportState [not null, default: 'Draft']
+  versionNo int [not null, default: 1]
+  lateFlag bool [not null, default: false, note: 'Được đặt khi nộp sau deadline; đi vào BR21 và kỳ đánh giá (UC33 E2).']
+  submittedBy objectId
+  submittedAt datetime
+  decisionOutcome string [note: 'Chấp nhận | Trả về để sửa | Chấp nhận kèm phát hiện (UC34).']
+  decisionReason string
+  findingViolationId objectId [note: 'Được đặt khi officer ghi nhận một phát hiện, và phát hiện đó mở một hồ sơ ở UC42.']
+  decidedBy objectId
+  decidedAt datetime
+
+  indexes {
+    (clubId, state) [name: 'ix_pereport_club_state']
+    (state, submittedAt) [name: 'ix_pereport_queue']
+  }
+}
+
+Table periodicReports {
+  id objectId [pk]
+  clubId objectId [not null]
+  periodCode string [not null, note: 'Mã học kỳ hoặc năm học lấy từ lịch học kỳ (UC04).']
+  periodType string [not null, note: 'SEMESTER | ACADEMIC_YEAR | CUSTOM.']
+  preloadedFigures json [not null, note: 'Sự kiện, thành viên, điểm danh và tình hình tài chính, bị đóng băng lúc nộp (DAT-07).']
+  narrative text
+  nextPlan text
+  evidence json
+  state reportState [not null, default: 'Draft']
+  versionNo int [not null, default: 1]
+  lateFlag bool [not null, default: false]
+  submittedBy objectId
+  submittedAt datetime
+  decisionOutcome string
+  observation string [note: 'Chấp nhận kèm ghi nhận, được mang vào kỳ đánh giá (UC41 A1).']
+  decidedBy objectId
+  decidedAt datetime
+  dueAt datetime [not null, note: 'Lấy từ chính sách đang hiệu lực; chi phối thang nhắc hạn và leo thang (BR20, SCH-09).']
+
+  indexes {
+    (clubId, periodCode) [unique, name: 'uq_periodicreport']
+    (state, dueAt) [name: 'ix_periodicreport_due']
+  }
+}
+
+Table violations {
+  id objectId [pk]
+  clubId objectId [not null]
+  originType string [not null, note: 'COMPLAINT | REPORT_FINDING | OVERDUE_REPORT | FINANCIAL_EXCEPTION | UNAUTHORIZED_EVENT | LATE_BOOKING_CANCELLATION (UC42 FR-01).']
+  originRefId objectId [note: 'Bản ghi đã gây ra hồ sơ này; một hồ sơ bắt nguồn từ khiếu nại sẽ liên kết ngược lại nó (BR28).']
+  severity string [not null, note: 'Lấy từ thang phân loại do ICPDP cấu hình (BR27).']
+  title string [not null]
+  description text
+  evidence json
+  state violationState [not null, default: 'Open']
+  clubResponse json [note: 'Được nhúng khi phần trả lời được nộp ở bước 4 của UC42; phần trả lời của hồ sơ bắt nguồn từ khiếu nại đến qua UC54.']
+  decisionReason text [note: 'Bắt buộc kèm chứng cứ (BR28).']
+  decisionEvidence json
+  openedBy objectId [not null]
+  openedAt datetime [not null]
+  decidedBy objectId
+  decidedAt datetime
+  responseDueAt datetime
+  resolvedAt datetime
+
+  indexes {
+    (clubId, state) [name: 'ix_violation_club_state']
+    (state, openedAt) [name: 'ix_violation_queue']
+  }
+}
+
+Table correctiveActions {
+  id objectId [pk]
+  violationId objectId [not null]
+  description text [not null]
+  dueAt datetime [not null]
+  state string [not null, note: 'Pending | Verified | Failed.']
+  linkedLifecycleAction string [note: 'SUSPEND | DISSOLVE khi hành động được thực hiện ở UC15 (UC42 A1).']
+  verifiedBy objectId
+  verifiedAt datetime
+
+  indexes {
+    (violationId, state) [name: 'ix_caction_case']
+  }
+}
+
+// =====================================================================
+// M07 — TÀI CHÍNH & NGÂN SÁCH  (UC35–UC39)
+// =====================================================================
+
+Table budgetRequests {
+  id objectId [pk]
+  clubId objectId [not null]
+  relatedEventId objectId [note: 'Một trong các mục đích nghiệp vụ được chấp nhận (BR22).']
+  purposeType string [not null, note: 'EVENT | SEMESTER_PLAN | APPROVED_ACTIVITY.']
+  purposeRef string
+  categories json [not null, note: 'Nhúng: [{ category, requestedAmount, approvedAmount, reason }]. Hỗ trợ việc phê duyệt từng phần theo hạng mục của UC36 A2.']
+  requestedTotal decimal [not null]
+  approvedTotal decimal [note: 'Được lưu tách biệt với tổng số tiền đã xin (UC36 FR-04).']
+  state budgetRequestState [not null, default: 'Draft']
+  currentVersionNo int [not null, default: 1]
+  periodCode string
+  decisionReason string
+  decidedBy objectId
+  decidedAt datetime
+  createdAt datetime [not null]
+
+  indexes {
+    (clubId, state) [name: 'ix_budget_club_state']
+    (state, createdAt) [name: 'ix_budget_queue']
+    (relatedEventId) [name: 'ix_budget_event', note: 'Dùng để huỷ yêu cầu khi sự kiện bị từ chối hoặc bị huỷ (UC36 E1).']
+  }
+}
+
+Table budgetRequestVersions {
+  id objectId [pk]
+  budgetRequestId objectId [not null]
+  versionNo int [not null]
+  payload json [not null]
+  submittedBy objectId [not null]
+  submittedAt datetime [not null]
+
+  Note: 'Chỉ-ghi-thêm. UC35 A2 giữ lại CẢ lịch sử version lẫn lịch sử phê duyệt khi nộp lại.'
+  indexes {
+    (budgetRequestId, versionNo) [unique, name: 'uq_budgetver']
+  }
+}
+
+Table budgetDisbursements {
+  id objectId [pk]
+  budgetRequestId objectId [not null]
+  amount decimal [not null]
+  disbursedAt datetime [not null]
+  paymentReference string
+  recordedBy objectId [not null]
+  note string
+
+  Note: 'Là collection riêng vì UC37 A1 cộng dồn nhiều lần giải ngân từng phần vào một lần duyệt. BR23 đối chiếu tổng luỹ kế với approvedTotal.'
+  indexes {
+    budgetRequestId [name: 'ix_disb_request']
+  }
+}
+
+Table expenses {
+  id objectId [pk]
+  clubId objectId [not null]
+  budgetRequestId objectId [note: 'Null khi khoản chi được ghi vào một sự kiện mà không có dòng ngân sách.']
+  eventId objectId
+  category string [not null]
+  amount decimal [not null]
+  spentAt datetime [not null]
+  description text
+  isOutOfCategory bool [not null, default: false, note: 'Được gắn cờ ngoại lệ (BR24).']
+  isOverRemaining bool [not null, default: false, note: 'Được gắn cờ ngoại lệ (UC38 E1).']
+  hasEvidence bool [not null, default: false, note: 'Được cập nhật khi có chứng từ đính kèm; một khoản chi không có nó sẽ bị báo là thiếu chứng từ ở UC39 (UC38 A1).']
+  recordedBy objectId [not null]
+  createdAt datetime [not null]
+
+  indexes {
+    (budgetRequestId, category) [name: 'ix_expense_budget']
+    (clubId, spentAt) [name: 'ix_expense_club_period']
+    (budgetRequestId, hasEvidence) [name: 'ix_expense_unsupported', note: 'Chi phối lời nhắc bổ sung chứng từ và các tổng số khi đối soát.']
+  }
+}
+
+Table financialEvidences {
+  id objectId [pk]
+  expenseId objectId [not null]
+  type string [not null, note: 'INVOICE | RECEIPT | PROOF_OF_PAYMENT — tập bắt buộc phụ thuộc hạng mục (BR25).']
+  externalLink string [not null, note: 'Là một liên kết ngoài trong bản phát hành này; object storage chỉ được thêm khi thực sự cần upload (CON-15).']
+  uploadedBy objectId [not null]
+  uploadedAt datetime [not null]
+
+  Note: 'Mỗi chứng từ tham chiếu đúng MỘT khoản chi — một chứng từ không tham chiếu khoản chi nào là bất khả thi về mặt cấu trúc (UC38 FR-08).'
+  indexes {
+    expenseId [name: 'ix_evidence_expense']
+  }
+}
+
+Table financialReconciliations {
+  id objectId [pk]
+  budgetRequestId objectId [unique, not null]
+  approvedTotal decimal [not null]
+  disbursedTotal decimal [not null]
+  recordedTotal decimal [not null]
+  supportedTotal decimal [not null]
+  unsupportedTotal decimal [not null]
+  remaining decimal [not null]
+  variance decimal [not null]
+  outcome string [not null, note: 'Reconciled | Exception (UC39 FR-03).']
+  discrepancyNote text [note: 'Bắt buộc với kết quả Exception; hồ sơ vẫn đóng được, với phần chênh lệch nằm trong hồ sơ.']
+  computedAt datetime [not null]
+  closedBy objectId
+  closedAt datetime [note: 'BR26 — việc đối soát phải hoàn tất trước khi hồ sơ ngân sách đóng lại.']
+}
+
+// =====================================================================
+// M11 — CƠ SỞ VẬT CHẤT & ĐẶT CHỖ  (UC46–UC49)
+// =====================================================================
+
+Table properties {
+  id objectId [pk]
+  code string [unique, not null]
+  name string [not null]
+  type string [not null, note: 'ROOM | HALL | EQUIPMENT.']
+  capacity int
+  location string
+  equipment "string[]"
+  bookableHours json [not null, note: 'Khung giờ mở/đóng theo từng ngày trong tuần. Việc thay đổi chúng không bao giờ làm vô hiệu một quyết định đã ra (UC46 FR-07).']
+  blackouts json [note: 'Các giai đoạn bảo trì hoặc nhà trường sử dụng; một yêu cầu rơi vào đó sẽ bị từ chối (UC47 E2).']
+  propertyClass string [note: 'Cấp dữ liệu cho các rule định tuyến của UC05.']
+  isActive bool [not null, default: true]
+
+  Note: 'Không xoá được khi còn booking tương lai đã duyệt; ngừng kích hoạt là con đường duy nhất (BR41). UCMS chỉ giữ những gì nhà trường mở cho hoạt động CLB (ASM-07).'
+  indexes {
+    (isActive, type) [name: 'ix_property_catalogue']
+  }
+}
+
+Table propertyBookings {
+  id objectId [pk]
+  propertyId objectId [not null]
+  clubId objectId [not null]
+  clubName string [not null, note: 'Được denormalize cho hàng đợi của ICPDP và lịch sử dụng property (DAT-06).']
+  eventId objectId [note: 'Được đặt khi booking được đính kèm vào một đề xuất sự kiện (UC47 A2). Việc duyệt đề xuất KHÔNG đồng nghĩa duyệt booking (UC26 FR-06).']
+  purpose text [not null]
+  startAt datetime [not null]
+  endAt datetime [not null]
+  semesterCode string [not null, note: 'BR45 — không booking nào được kết thúc sau học kỳ Dissolving của một CLB đang giải thể.']
+  headcount int
+  state bookingState [not null, default: 'Draft']
+  currentVersionNo int [not null, default: 1]
+  conflictResult conflictResult
+  decisionReason string
+  decidedBy objectId
+  decidedAt datetime
+  cancelReason string
+  cancelledAt datetime
+  releasedBy string [note: 'CMB | EVENT_CANCELLED | SUSPENSION | DISSOLUTION (BR35, UC49 A1).']
+  isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước; là một tín hiệu tuân thủ cho UC42 (UC49 E2).']
+  createdAt datetime [not null]
+
+  Note: 'BR33 — hai booking Approved không được chồng khung giờ trên cùng một property trừ khi chính sách cho phép overbooking. Được cưỡng chế bằng index khung giờ cộng một findOneAndUpdate có điều kiện tại thời điểm phê duyệt (DAT-04).'
+  indexes {
+    (propertyId, startAt, endAt) [name: 'ix_booking_slot', note: 'Phía đọc xung đột của BR15 và chốt chặn lúc phê duyệt của BR33.']
+    (clubId, state) [name: 'ix_booking_club_state']
+    (state, startAt) [name: 'ix_booking_schedule', note: 'Scheduler chuyển Approved → In Use → Completed (SCH-02).']
+  }
+}
+
+// =====================================================================
+// M12 — PHẢN HỒI & KHIẾU NẠI  (UC50–UC54)
+// =====================================================================
+
+Table eventFeedbacks {
+  id objectId [pk]
+  eventId objectId [not null]
+  attendanceId objectId [not null, note: 'Biểu mẫu chỉ được hiển thị cho người gọi có một bản ghi điểm danh (UC50 FR-01).']
+  studentId objectId [not null, note: 'Vẫn được giữ nội bộ kể cả khi gửi ẩn danh, chỉ để chống spam; không bao giờ để lộ cho CLB (UC50 A1, SEC-05).']
+  clubId objectId [not null, note: 'Được denormalize để bản tổng hợp phản hồi ở mức CLB chỉ tốn một truy vấn.']
+  scores json [not null, note: 'Nhúng: [{ criterionCode, score }].']
+  comment text
+  isAnonymous bool [not null, default: false]
+  submittedAt datetime [not null]
+
+  Note: 'Bất biến — không ai sửa hay xoá được (BR37). Bản ghi chỉ có đúng MỘT trạng thái, và đó là lý do không có cột state (SRS §6.11). Feedback window của BR36 và số người phản hồi tối thiểu của BR40 được cưỡng chế trong usecase.'
+  indexes {
+    (eventId, studentId) [unique, name: 'uq_feedback']
+    (clubId, submittedAt) [name: 'ix_feedback_club']
+  }
+}
+
+Table complaints {
+  id objectId [pk]
+  complainantId objectId [not null]
+  clubId objectId [not null]
+  eventId objectId
+  type string [not null]
+  description text [not null]
+  evidence json
+  state complaintState [not null, default: 'Submitted']
+  triage json [note: 'Nhúng: { severity, validity, outcome, reason, actorId, at } (UC53, BR39).']
+  clubResponse json [note: 'Nhúng: { text, evidence, actorId, at }, do UC54 ghi.']
+  responseDueAt datetime [note: 'Quá hạn là một tín hiệu tuân thủ cho UC42 (UC54 E1).']
+  violationId objectId [note: 'Được đặt khi leo thang và được hồ sơ liên kết ngược lại (UC53 FR-02).']
+  linkedComplaintId objectId [note: 'Các khiếu nại trùng về cùng sự việc được liên kết và phân loại chung (UC52 E1).']
+  submittedAt datetime [not null]
+  withdrawnAt datetime
+  closedAt datetime
+
+  Note: 'BR38 — chỉ ICPDP thấy được cho tới khi trạng thái chuyển Forwarded; CLB không bao giờ sửa, bác bỏ hay đóng nó (SEC-09, UC54 FR-06).'
+  indexes {
+    (state, submittedAt) [name: 'ix_complaint_queue']
+    (clubId, state) [name: 'ix_complaint_club']
+    (complainantId, state) [name: 'ix_complaint_mine']
+  }
+}
+
+// =====================================================================
+// M09 — ĐÁNH GIÁ HIỆU QUẢ  (UC43–UC45)
+// =====================================================================
+
+Table evaluationSchemes {
+  id objectId [pk]
+  periodCode string [not null]
+  version int [not null]
+  state string [not null, note: 'Draft | Active | Superseded. Mỗi kỳ có đúng một bản Active (UC43 FR-03).']
+  totalWeight decimal [not null, note: 'Được validate trước khi kích hoạt (BR29).']
+  thresholds json [not null, note: 'Các dải xếp loại, ví dụ Xuất sắc ≥ 85.']
+  activatedBy objectId
+  activatedAt datetime
+  createdAt datetime [not null]
+
+  Note: 'Một scheme đã được một kỳ đánh giá đã công bố sử dụng thì không bao giờ được sửa tại chỗ; phải tạo một version mới (BR30, UC43 E2).'
+  indexes {
+    (periodCode, version) [unique, name: 'uq_scheme']
+  }
+}
+
+Table evaluationDimensions {
+  id objectId [pk]
+  schemeId objectId [not null]
+  code string [not null, note: 'D1 Thực thi hoạt động, D2 Mức độ tham gia của thành viên, D3 Kỷ luật báo cáo, D4 Tuân thủ tài chính, D5 Quản trị, D6 Tuân thủ và rủi ro.']
+  name string [not null]
+  weight decimal [not null]
+  scoringRule json [not null, note: 'Các chỉ số của dimension và cách chúng quy ra điểm.']
+  allowsManual bool [not null, default: false, note: 'Chỉ dimension được đánh dấu ở đây mới được chấm tay ở UC45 FR-02.']
+
+  indexes {
+    (schemeId, code) [unique, name: 'uq_dimension']
+  }
+}
+
+Table evaluations {
+  id objectId [pk]
+  clubId objectId [not null]
+  periodCode string [not null]
+  schemeId objectId [not null]
+  state evaluationState [not null, default: 'Draft']
+  totalScore decimal
+  classification string
+  revisionNo int [not null, default: 1, note: 'Một lần hiệu chỉnh sau khi công bố là một bản sửa MỚI; bản đã công bố vẫn đọc được (BR30, UC45 A1).']
+  generatedAt datetime
+  finalizedBy objectId
+  finalizedAt datetime
+  publishedAt datetime
+  contestViolationId objectId [note: 'Một kết quả bị phản biện được xử lý như một hồ sơ (UC45 E1).']
+
+  indexes {
+    (clubId, periodCode, revisionNo) [unique, name: 'uq_evaluation']
+    (periodCode, state) [name: 'ix_evaluation_period']
+  }
+}
+
+Table evaluationDimensionResults {
+  id objectId [pk]
+  evaluationId objectId [not null]
+  dimensionCode string [not null]
+  score decimal
+  isInsufficientData bool [not null, default: false, note: 'Một nguồn dữ liệu không đầy đủ được đánh dấu, không bao giờ bị chấm 0 (UC44 E1).']
+  isManual bool [not null, default: false]
+  justification text [note: 'Bắt buộc với một dimension chấm tay (UC45 FR-02).']
+  evidence json [not null, note: 'Data lineage: [{ metric, sourceEntity, sourceId, sourcePeriod, value }] — đây chính là thứ làm cho một điểm số giải thích được (EVL-02).']
+
+  Note: 'Là một collection riêng, không phải mảng nhúng: nó được đọc độc lập bởi chức năng đi sâu vào chứng cứ, và lớn dần theo số dimension của mỗi CLB trong mỗi kỳ.'
+  indexes {
+    (evaluationId, dimensionCode) [unique, name: 'uq_dimresult']
+  }
+}
+
+// =====================================================================
+// M10 — WORKFLOW, THÔNG BÁO & AUDIT  (xuyên suốt, SRS §8)
+// =====================================================================
+
+Table approvalTasks {
+  id objectId [pk]
+  entityType string [not null, note: 'CLUB_APPLICATION | BOARD_NOMINATION | TRANSITION_PLAN | SUSPENSION_REQUEST | EVENT_PROPOSAL | BUDGET_REQUEST | PROPERTY_BOOKING | POST_EVENT_REPORT | PERIODIC_REPORT | COMPLAINT.']
+  entityId objectId [not null]
+  clubId objectId [note: 'Được denormalize để hộp thư lọc theo CLB chỉ tốn một truy vấn.']
+  title string [not null, note: 'Nhãn được denormalize cho hộp thư hợp nhất.']
+  state approvalTaskState [not null, default: 'Open']
+  assigneeRole string [not null]
+  requiredLevel int [not null, default: 1, note: 'Được phân giải từ bộ rule định tuyến đang hoạt động (BR16, UC05).']
+  currentLevel int [not null, default: 1]
+  slaDueAt datetime [note: 'Việc vi phạm SLA được hiển thị dưới dạng approval aging trên dashboard ICPDP (WF-06).']
+  openedAt datetime [not null]
+  closedAt datetime
+
+  Note: 'MỘT aggregate dùng chung cho mọi cặp nộp-và-quyết-định. Đây chính là thứ tạo ra một hộp thư người duyệt hợp nhất cho ICPDP mà không làm các module dính vào nhau (WF-01). Module giữ trạng thái thực thể của riêng nó; bảng này giữ trạng thái thẩm định (WF-02).'
+  indexes {
+    (entityType, entityId) [name: 'ix_task_entity']
+    (state, assigneeRole, slaDueAt) [name: 'ix_task_inbox', note: 'Hộp thư phê duyệt của ICPDP, sắp theo độ trễ.']
+  }
+}
+
+Table approvalDecisions {
+  id objectId [pk]
+  approvalTaskId objectId [not null]
+  level int [not null]
+  outcome reviewOutcome [not null]
+  reason text [note: 'Bắt buộc với kết quả Từ chối và Yêu cầu chỉnh sửa (BR05).']
+  comments json [note: 'Các nhận xét có cấu trúc theo từng phần của một yêu cầu chỉnh sửa.']
+  reviewNote text [note: 'Bao gồm mọi ý kiến của Cơ sở vật chất, An ninh hay Tài chính được lấy NGOÀI hệ thống (UC26 FR-03).']
+  actorId objectId [not null]
+  at datetime [not null]
+
+  Note: 'Chỉ-ghi-thêm. Một quyết định thứ hai giống hệt trên cùng một task không tạo thêm dòng nào (API-07).'
+  indexes {
+    approvalTaskId [name: 'ix_decision_task']
+  }
+}
+
+Table notifications {
+  id objectId [pk]
+  recipientUserId objectId [not null]
+  eventCode string [not null, note: 'ví dụ: EVENT_APPROVED, REPORT_DUE_SOON, COMPLAINT_FORWARDED (ma trận ở §8.2).']
+  entityType string
+  entityId objectId
+  channels "string[]" [not null, note: 'IN_APP và/hoặc EMAIL.']
+  payload json [not null]
+  state notificationState [not null, default: 'Queued']
+  dueAt datetime [not null, note: 'Là thời điểm hiện tại với một thông báo tức thì, hoặc ngày nhắc với một deadline (SCH-09).']
+  attempts int [not null, default: 0]
+  lastError string
+  readAt datetime
+  createdAt datetime [not null]
+
+  Note: 'Hàng đợi outbox. Được đưa vào hàng đợi BÊN TRONG transaction nghiệp vụ đã commit và được scheduler rút ra bất đồng bộ — một email gửi lỗi không bao giờ làm hỏng một thay đổi đã commit (CON-09, NTF-01).'
+  indexes {
+    (state, dueAt) [name: 'ix_outbox_drain', note: 'Scheduler quét index này; nó không bao giờ quét cả collection (NTF-06).']
+    (recipientUserId, readAt) [name: 'ix_notification_inbox']
+  }
+}
+
+Table emailDeliveryLogs {
+  id objectId [pk]
+  notificationId objectId [not null]
+  toEmail string [not null]
+  status string [not null, note: 'SENT | FAILED.']
+  attempt int [not null]
+  providerResponse string
+  at datetime [not null]
+
+  indexes {
+    notificationId [name: 'ix_maillog_notification']
+  }
+}
+
+Table auditLogs {
+  id objectId [pk]
+  entityType string [not null]
+  entityId objectId [not null]
+  action string [not null, note: 'Tên hành động nghiệp vụ, ví dụ APPROVE_EVENT — và đó là lý do audit được ghi trong usecase chứ không phải trong middleware của route (AUD-02).']
+  actorId objectId [note: 'Chỉ null với một chuyển trạng thái do scheduler điều khiển.']
+  actorRole string
+  before json
+  after json
+  changeDiff json
+  reason string
+  correlationId string [not null, note: 'Buộc chung mọi bản ghi sinh ra từ một request, kể cả các cascade UC15 → UC28/UC49 (AUD-05).']
+  at datetime [not null]
+
+  Note: 'Chỉ-ghi-thêm; không vai trò nào sửa hay xoá được một dòng (SEC-12). Bắt buộc audit mạnh cho mọi quyết định liệt kê ở AUD-03, kể cả các lần đăng nhập bị từ chối.'
+  indexes {
+    (entityType, entityId, at) [name: 'ix_audit_entity']
+    correlationId [name: 'ix_audit_correlation']
+    (actorId, at) [name: 'ix_audit_actor']
+  }
+}
+
+// =====================================================================
+// QUAN HỆ
+// =====================================================================
+
+// M01
+Ref: studentProfiles.userId - users.id
+Ref: userRoleAssignments.userId > users.id
+Ref: userRoleAssignments.roleId > roles.id
+Ref: policyVersions.createdBy > users.id
+Ref: routingRules.ruleSetId > routingRuleSets.id
+Ref: routingRuleSets.activatedBy > users.id
+
+// M02 / M03
+Ref: clubApplications.founderUserId > users.id
+Ref: clubApplications.createdClubId - clubs.id
+Ref: clubApplicationVersions.applicationId > clubApplications.id
+Ref: clubApplicationVersions.submittedBy > users.id
+Ref: clubs.sourceApplicationId - clubApplications.id
+Ref: clubSuspensionRequests.clubId > clubs.id
+Ref: clubSuspensionRequests.requestedBy > users.id
+Ref: clubTerms.clubId > clubs.id
+Ref: clubTerms.previousTermId - clubTerms.id
+Ref: clubPositions.clubId > clubs.id
+Ref: clubPositionAssignments.clubId > clubs.id
+Ref: clubPositionAssignments.termId > clubTerms.id
+Ref: clubPositionAssignments.positionId > clubPositions.id
+Ref: clubPositionAssignments.membershipId > clubMemberships.id
+Ref: boardNominations.clubId > clubs.id
+Ref: boardNominations.termId > clubTerms.id
+Ref: boardNominationSeats.nominationId > boardNominations.id
+Ref: boardNominationSeats.positionId > clubPositions.id
+Ref: boardNominationSeats.membershipId > clubMemberships.id
+Ref: transitionPlans.clubId > clubs.id
+Ref: transitionPlans.fromTermId > clubTerms.id
+Ref: transitionPlans.toTermId > clubTerms.id
+
+// M04
+Ref: recruitmentCampaigns.clubId > clubs.id
+Ref: recruitmentApplications.campaignId > recruitmentCampaigns.id
+Ref: recruitmentApplications.clubId > clubs.id
+Ref: recruitmentApplications.userId > users.id
+Ref: candidateEvaluations.applicationId > recruitmentApplications.id
+Ref: candidateEvaluations.reviewerId > users.id
+Ref: clubMemberships.clubId > clubs.id
+Ref: clubMemberships.userId > users.id
+Ref: clubMemberships.sourceApplicationId - recruitmentApplications.id
+Ref: membershipWithdrawalRequests.membershipId > clubMemberships.id
+Ref: membershipWithdrawalRequests.clubId > clubs.id
+Ref: membershipWithdrawalRequests.userId > users.id
+
+// M05 / M06
+Ref: events.clubId > clubs.id
+Ref: events.propertyId > properties.id
+Ref: eventProposalVersions.eventId > events.id
+Ref: eventProposalVersions.submittedBy > users.id
+Ref: eventRegistrations.eventId > events.id
+Ref: eventRegistrations.studentId > users.id
+Ref: eventRegistrations.clubId > clubs.id
+Ref: attendances.eventId > events.id
+Ref: attendances.studentId > users.id
+Ref: attendances.registrationId - eventRegistrations.id
+Ref: attendances.clubId > clubs.id
+
+// M08
+Ref: postEventReports.eventId - events.id
+Ref: postEventReports.clubId > clubs.id
+Ref: postEventReports.findingViolationId > violations.id
+Ref: periodicReports.clubId > clubs.id
+Ref: violations.clubId > clubs.id
+Ref: correctiveActions.violationId > violations.id
+
+// M07
+Ref: budgetRequests.clubId > clubs.id
+Ref: budgetRequests.relatedEventId > events.id
+Ref: budgetRequestVersions.budgetRequestId > budgetRequests.id
+Ref: budgetDisbursements.budgetRequestId > budgetRequests.id
+Ref: budgetDisbursements.recordedBy > users.id
+Ref: expenses.clubId > clubs.id
+Ref: expenses.budgetRequestId > budgetRequests.id
+Ref: expenses.eventId > events.id
+Ref: expenses.recordedBy > users.id
+Ref: financialEvidences.expenseId > expenses.id
+Ref: financialEvidences.uploadedBy > users.id
+Ref: financialReconciliations.budgetRequestId - budgetRequests.id
+
+// M11
+Ref: propertyBookings.propertyId > properties.id
+Ref: propertyBookings.clubId > clubs.id
+Ref: propertyBookings.eventId > events.id
+
+// M12
+Ref: eventFeedbacks.eventId > events.id
+Ref: eventFeedbacks.attendanceId - attendances.id
+Ref: eventFeedbacks.studentId > users.id
+Ref: eventFeedbacks.clubId > clubs.id
+Ref: complaints.complainantId > users.id
+Ref: complaints.clubId > clubs.id
+Ref: complaints.eventId > events.id
+Ref: complaints.violationId - violations.id
+Ref: complaints.linkedComplaintId > complaints.id
+
+// M09
+Ref: evaluationDimensions.schemeId > evaluationSchemes.id
+Ref: evaluations.clubId > clubs.id
+Ref: evaluations.schemeId > evaluationSchemes.id
+Ref: evaluationDimensionResults.evaluationId > evaluations.id
+Ref: evaluations.contestViolationId > violations.id
+
+// M10
+Ref: approvalDecisions.approvalTaskId > approvalTasks.id
+Ref: approvalDecisions.actorId > users.id
+Ref: approvalTasks.clubId > clubs.id
+Ref: notifications.recipientUserId > users.id
+Ref: emailDeliveryLogs.notificationId > notifications.id
+Ref: auditLogs.actorId > users.id
+
+// =====================================================================
+// NHÓM BẢNG — mỗi module của SRS §2.2 một nhóm
+// =====================================================================
+
+TableGroup "M01 Định danh, truy cập & cấu hình" {
+  users
+  studentProfiles
+  roles
+  permissions
+  userRoleAssignments
+  policyVersions
+  routingRuleSets
+  routingRules
+}
+
+TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {
+  clubs
+  clubApplications
+  clubApplicationVersions
+  clubSuspensionRequests
+  clubTerms
+  clubPositions
+  clubPositionAssignments
+  boardNominations
+  boardNominationSeats
+  transitionPlans
+}
+
+TableGroup "M04 Tuyển thành viên & quản lý thành viên" {
+  recruitmentCampaigns
+  recruitmentApplications
+  candidateEvaluations
+  clubMemberships
+  membershipWithdrawalRequests
+}
+
+TableGroup "M05 / M06 Sự kiện, đăng ký & điểm danh" {
+  events
+  eventProposalVersions
+  eventRegistrations
+  attendances
+}
+
+TableGroup "M07 Tài chính & ngân sách" {
+  budgetRequests
+  budgetRequestVersions
+  budgetDisbursements
+  expenses
+  financialEvidences
+  financialReconciliations
+}
+
+TableGroup "M08 Báo cáo, trách nhiệm giải trình & tuân thủ" {
+  postEventReports
+  periodicReports
+  violations
+  correctiveActions
+}
+
+TableGroup "M09 Đánh giá hiệu quả" {
+  evaluationSchemes
+  evaluationDimensions
+  evaluations
+  evaluationDimensionResults
+}
+
+TableGroup "M10 Workflow, thông báo & audit" {
+  approvalTasks
+  approvalDecisions
+  notifications
+  emailDeliveryLogs
+  auditLogs
+}
+
+TableGroup "M11 Cơ sở vật chất & đặt chỗ" {
+  properties
+  propertyBookings
+}
+
+TableGroup "M12 Phản hồi & khiếu nại" {
+  eventFeedbacks
+  complaints
+}

@@ -1,3 +1,3 @@
 # ui/skeleton/
 
-`AppSkeleton` — loading placeholder blocks.
+`AppSkeleton` — các khối giữ chỗ lúc đang tải.

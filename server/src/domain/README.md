@@ -1,5 +1,5 @@
 # domain/
 
-Pure business core: entities + validation factories, repository interfaces (ports),
-and `DomainError`. One file per entity/concept. Imports nothing from other layers;
-never logs, never touches env/DB/HTTP.
+Lõi nghiệp vụ thuần: entity + factory kiểm tra, interface của repository (port), và
+`DomainError`. Mỗi entity/khái niệm một file. Không import gì từ tầng khác; không bao giờ log,
+không bao giờ đụng tới env/DB/HTTP.

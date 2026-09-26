@@ -1,3 +1,4 @@
 # tests/unit/
 
-No DB, no network — in-memory repos only. CI runs these in a job with no Mongo.
+Không DB, không mạng — chỉ dùng repository in-memory. CI chạy các test này trong một job không
+có Mongo.

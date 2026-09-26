@@ -1,3 +1,3 @@
 # ui/card/
 
-`AppCard` — surface container for grouped content.
+`AppCard` — khung bề mặt để gom nhóm nội dung.

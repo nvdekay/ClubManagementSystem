@@ -1,3 +1,3 @@
 # utils/
 
-Small pure helpers: `cn()` (className merge for the CSS-override pattern), `formatDate`.
+Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `formatDate`.

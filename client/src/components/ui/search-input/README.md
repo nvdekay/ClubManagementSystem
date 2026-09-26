@@ -1,3 +1,3 @@
 # ui/search-input/
 
-`AppSearchInput` — debounced search field.
+`AppSearchInput` — ô tìm kiếm có debounce.

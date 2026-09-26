@@ -1,3 +1,3 @@
 # ui/switch/
 
-`AppSwitch` — boolean toggle.
+`AppSwitch` — công tắc bật/tắt.

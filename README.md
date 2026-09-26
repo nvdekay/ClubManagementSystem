@@ -1,40 +1,54 @@
-# MERN Template
+# UCMS — University Club Management System
 
-Express 5 + Mongoose + React 19 (Vite) + TypeScript, one npm workspace.
-Clean architecture on both sides, CI-enforced layer rules.
+Hệ thống quản lý câu lạc bộ sinh viên trong trường đại học.
+Express 5 + Mongoose + React 19 (Vite) + TypeScript, một npm workspace.
+Clean architecture ở cả hai phía, ranh giới tầng được CI kiểm tra.
 
-## Quickstart
+## Bắt đầu nhanh
 
-Requires Node >= 22.9 (scripts use `--env-file`).
+Yêu cầu Node >= 22.9 (các script dùng `--env-file`).
 
 ```bash
-cp .env.example .env     # required — the server fail-fasts without it
-docker compose up -d     # Mongo (bound to 127.0.0.1)
+cp .env.example .env     # bắt buộc — server fail-fast nếu thiếu
+docker compose up -d     # Mongo (bind vào 127.0.0.1)
 npm install
-npm run dev              # API :3000 (routes under /api/v1, OpenAPI docs at /docs), client :5173
-npm run seed             # optional — demo data (3 users)
+npm run dev              # API :3000 (route dưới /api/v1, tài liệu OpenAPI ở /docs), client :5173
+npm run seed             # tuỳ chọn — dữ liệu demo
 ```
 
-## Verify
+## Kiểm tra
 
 ```bash
-npm run check            # constitution + lint + typecheck + tests — Definition of Done
+npm run check            # constitution + lint + typecheck + test — Definition of Done
 ```
 
-## Layout
+## Bố cục
 
 ```
 server/       Express API — clean architecture (domain / usecase / interface / infra)
 client/       React + Vite — pages, components, hooks, services, i18n
-.rules/       all project rules — architecture, backend, frontend
-.sdd/         specs, ADRs
+docs/         Tài liệu nghiệp vụ và thiết kế — bắt đầu từ docs/SRS.md
+.rules/       Toàn bộ quy tắc dự án — kiến trúc, backend, frontend
+.sdd/         Spec và ADR
 ```
 
-Every folder carries a `README.md` saying what belongs in it.
+Mọi thư mục đều có một `README.md` nói rõ thứ gì thuộc về nó.
 
-Rules — for contributors and coding agents alike — live in one folder: **[.rules/](.rules/README.md)**.
-`CLAUDE.md` and `AGENTS.md` are pointers to it, nothing more.
+## Tài liệu
 
-## License
+Baseline yêu cầu là **[`docs/SRS.md`](docs/SRS.md)** — 54 use case, 45 quy tắc nghiệp vụ, 11
+vòng đời thực thể, mô hình dữ liệu, yêu cầu phi chức năng và ma trận truy vết. Mọi tài liệu
+khác nằm trong [`docs/`](docs/README.md), và kế hoạch triển khai kèm thiết kế cơ sở dữ liệu ở
+[`docs/05-implementation/`](docs/05-implementation/README.md).
+
+## Quy tắc
+
+Quy tắc — cho cả người đóng góp lẫn AI agent — nằm trong một thư mục duy nhất:
+**[.rules/](.rules/README.md)**. `CLAUDE.md` và `AGENTS.md` chỉ là con trỏ tới đó.
+
+Quy ước ngôn ngữ: **tài liệu viết bằng tiếng Việt**, còn **code, comment, commit, config, thông
+báo lỗi và test viết bằng tiếng Anh** — chi tiết ở [`.rules/README.md`](.rules/README.md) §5.
+
+## Giấy phép
 
 [MIT](LICENSE)

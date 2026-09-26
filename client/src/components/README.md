@@ -1,4 +1,4 @@
 # components/
 
-`ui/` atomic kit (App-prefixed), `layout/` structural shells, `custom/` cross-page
-domain components. See each folder's README.
+`ui/` là bộ kit nguyên tử (có tiền tố App), `layout/` là các khung bố cục, `custom/` là component
+có hiểu biết nghiệp vụ dùng ở nhiều trang. Xem README của từng thư mục con.

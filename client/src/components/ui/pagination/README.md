@@ -1,3 +1,3 @@
 # ui/pagination/
 
-`AppPagination` — page navigation controls.
+`AppPagination` — bộ điều khiển chuyển trang.

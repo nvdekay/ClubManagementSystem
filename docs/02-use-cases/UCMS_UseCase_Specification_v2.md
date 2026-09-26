@@ -1,1721 +1,1726 @@
-# UCMS — Detailed Use Case Specification v2
+# UCMS — Đặc tả chi tiết Use Case v2
 
-> **Scope:** the full specification of all 54 use cases of
-> [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md). It replaces §9 of
-> [`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md) (UC01–UC57) and
-> expands §6 of the model document. The model document keeps the use case list, the v1 → v2
-> mapping, the lifecycles, the business rules and the release scope; this document holds the specs.
-> Diagrams: [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio).
+> **Phạm vi:** đặc tả đầy đủ của cả 54 use case trong
+> [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md). Tài liệu này thay thế §9 của
+> [`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md)
+> (UC01–UC57) và mở rộng §6 của tài liệu mô hình. Tài liệu mô hình giữ danh sách use case, ánh
+> xạ v1 → v2, các vòng đời, quy tắc nghiệp vụ và phạm vi phát hành; tài liệu này giữ phần đặc tả.
+> Sơ đồ: [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio).
 
-Every entry uses the same template, in this order:
+Mọi mục đều dùng cùng một mẫu, theo đúng thứ tự này:
 
 ```text
-Primary Actor · Supporting · Module · Business Goal · Trigger · Preconditions · Input
-Main Flow · Alternative Flows · Exceptions · Postconditions · Business Rules · Output
-Related UC · Pain Point
+Actor chính · Hỗ trợ · Module · Mục tiêu nghiệp vụ · Kích hoạt · Tiền điều kiện · Dữ liệu vào
+Luồng chính · Luồng thay thế · Ngoại lệ · Hậu điều kiện · Quy tắc nghiệp vụ · Đầu ra
+Use case liên quan · Pain point
 ```
 
-A field is omitted only when the use case genuinely has nothing for it (no external system, no
-pain point of its own). All use cases ship in one release — see model §12.
+Một trường chỉ bị bỏ trống khi use case thực sự không có gì cho trường đó (không có hệ thống
+ngoài, không có pain point riêng). Cả 54 use case ra trong một bản phát hành — xem §12 của tài
+liệu mô hình.
 
 ---
 
-## Index
+## Mục lục
 
-| UC | Name | Primary actor | Module |
+| UC | Tên | Actor chính | Module |
 |---|---|---|---|
-| UC01 | Authenticate via Google OAuth and enter the role workspace | All | M01 |
-| UC02 | Open my role dashboard | All | M01 |
-| UC03 | Manage accounts and role assignments | ICPDP | M01 |
-| UC04 | Configure institutional policy and deadlines | ICPDP | M01 |
-| UC05 | Configure the approval routing rules | ICPDP | M01 |
-| UC06 | Discover clubs and open activity | Student | M02 |
-| UC07 | Submit a club establishment application | Student | M02 |
-| UC08 | Assess and decide the club establishment application | ICPDP | M02 |
-| UC09 | Configure the club profile and organization structure | CMB | M02/M03 |
-| UC10 | Nominate the club management board | CMB | M03 |
-| UC11 | Confirm the management board | ICPDP | M03 |
-| UC12 | Plan the leadership transition | CMB | M03 |
-| UC13 | Confirm the leadership transition | ICPDP | M03 |
-| UC14 | Request club activity suspension | CMB | M02 |
-| UC15 | Suspend, reactivate or dissolve a club | ICPDP | M02 |
-| UC16 | Create and publish a recruitment campaign | CMB | M04 |
-| UC17 | Submit a club membership application | Student | M04 |
-| UC18 | Screen and decide membership applications | CMB | M04 |
-| UC19 | Record candidate evaluation | CMB | M04 |
-| UC20 | Onboard accepted candidates | CMB | M04 |
-| UC21 | Manage membership status | CMB | M04 |
-| UC22 | Request to leave a club | Student | M04 |
-| UC23 | Assign positions inside the club | CMB | M03/M04 |
-| UC24 | Use my member workspace | Student | M04 |
-| UC25 | Submit an event proposal | CMB | M05 |
-| UC26 | Assess and decide the event proposal | ICPDP | M05 |
-| UC27 | Publish the event and open registration | CMB | M05 |
-| UC28 | Cancel or reschedule an event | CMB | M05 |
-| UC29 | Register for an event | Student | M06 |
-| UC30 | Manage capacity and the waitlist | CMB | M06 |
-| UC31 | Check in to an event | Student | M06 |
-| UC32 | Finalize event attendance | CMB | M06 |
-| UC33 | Submit the post-event report | CMB | M08 |
-| UC34 | Assess and close the event report | ICPDP | M08 |
-| UC35 | Submit a budget request | CMB | M07 |
-| UC36 | Assess and decide the budget request | ICPDP | M07 |
-| UC37 | Record disbursement | ICPDP | M07 |
-| UC38 | Record an expense with its evidence | CMB | M07 |
-| UC39 | Reconcile budget and spending | ICPDP | M07 |
-| UC40 | Submit the periodic activity report | CMB | M08 |
-| UC41 | Assess the periodic activity report | ICPDP | M08 |
-| UC42 | Manage violation and compliance cases | ICPDP | M08 |
-| UC43 | Configure the evaluation scheme | ICPDP | M09 |
-| UC44 | Generate the club performance evaluation draft | ICPDP | M09 |
-| UC45 | Review, finalize and publish the evaluation | ICPDP | M09 |
-| UC46 | Manage the property catalogue | ICPDP | M11 |
-| UC47 | Submit a property booking request | CMB | M11 |
-| UC48 | Assess and decide the property booking request | ICPDP | M11 |
-| UC49 | Track and cancel or release a booked property | CMB | M11 |
-| UC50 | Submit post-event feedback | Student | M12 |
-| UC51 | Review event feedback | CMB | M12 |
-| UC52 | Submit a complaint about a club | Student | M12 |
-| UC53 | Triage a complaint | ICPDP | M12 |
-| UC54 | Respond to a forwarded complaint | CMB | M12 |
+| UC01 | Xác thực qua Google OAuth và vào workspace theo vai trò | Tất cả | M01 |
+| UC02 | Mở dashboard theo vai trò của tôi | Tất cả | M01 |
+| UC03 | Quản lý tài khoản và gán vai trò | ICPDP | M01 |
+| UC04 | Cấu hình chính sách và deadline của nhà trường | ICPDP | M01 |
+| UC05 | Cấu hình quy tắc định tuyến phê duyệt | ICPDP | M01 |
+| UC06 | Khám phá CLB và hoạt động đang mở | Student | M02 |
+| UC07 | Nộp hồ sơ đề nghị thành lập CLB | Student | M02 |
+| UC08 | Thẩm định và quyết định hồ sơ thành lập CLB | ICPDP | M02 |
+| UC09 | Cấu hình hồ sơ và cơ cấu tổ chức CLB | CMB | M02/M03 |
+| UC10 | Đề xuất ban chủ nhiệm CLB | CMB | M03 |
+| UC11 | Xác nhận ban chủ nhiệm | ICPDP | M03 |
+| UC12 | Lập kế hoạch chuyển giao nhiệm kỳ | CMB | M03 |
+| UC13 | Xác nhận chuyển giao nhiệm kỳ | ICPDP | M03 |
+| UC14 | Yêu cầu tạm ngừng hoạt động CLB | CMB | M02 |
+| UC15 | Tạm ngừng, kích hoạt lại hoặc giải thể CLB | ICPDP | M02 |
+| UC16 | Tạo và công bố đợt tuyển thành viên | CMB | M04 |
+| UC17 | Nộp đơn ứng tuyển vào CLB | Student | M04 |
+| UC18 | Sàng lọc và quyết định đơn ứng tuyển | CMB | M04 |
+| UC19 | Ghi nhận đánh giá ứng viên | CMB | M04 |
+| UC20 | Tiếp nhận ứng viên trúng tuyển | CMB | M04 |
+| UC21 | Quản lý trạng thái thành viên | CMB | M04 |
+| UC22 | Xin rời CLB | Student | M04 |
+| UC23 | Phân công chức vụ trong CLB | CMB | M03/M04 |
+| UC24 | Sử dụng không gian thành viên của tôi | Student | M04 |
+| UC25 | Nộp đề xuất tổ chức sự kiện | CMB | M05 |
+| UC26 | Thẩm định và quyết định đề xuất sự kiện | ICPDP | M05 |
+| UC27 | Công bố sự kiện và mở đăng ký | CMB | M05 |
+| UC28 | Huỷ hoặc đổi lịch sự kiện | CMB | M05 |
+| UC29 | Đăng ký tham gia sự kiện | Student | M06 |
+| UC30 | Quản lý sức chứa và danh sách chờ | CMB | M06 |
+| UC31 | Check-in vào sự kiện | Student | M06 |
+| UC32 | Chốt điểm danh sự kiện | CMB | M06 |
+| UC33 | Nộp báo cáo sau sự kiện | CMB | M08 |
+| UC34 | Thẩm định và đóng báo cáo sự kiện | ICPDP | M08 |
+| UC35 | Gửi yêu cầu ngân sách | CMB | M07 |
+| UC36 | Thẩm định và quyết định yêu cầu ngân sách | ICPDP | M07 |
+| UC37 | Ghi nhận giải ngân | ICPDP | M07 |
+| UC38 | Ghi nhận khoản chi kèm chứng từ | CMB | M07 |
+| UC39 | Đối soát ngân sách và chi tiêu | ICPDP | M07 |
+| UC40 | Nộp báo cáo hoạt động định kỳ | CMB | M08 |
+| UC41 | Thẩm định báo cáo hoạt động định kỳ | ICPDP | M08 |
+| UC42 | Quản lý hồ sơ vi phạm và tuân thủ | ICPDP | M08 |
+| UC43 | Cấu hình scheme đánh giá | ICPDP | M09 |
+| UC44 | Sinh bản nháp đánh giá hiệu quả CLB | ICPDP | M09 |
+| UC45 | Xem lại, chốt và công bố đánh giá | ICPDP | M09 |
+| UC46 | Quản lý danh mục cơ sở vật chất | ICPDP | M11 |
+| UC47 | Gửi yêu cầu đặt cơ sở vật chất | CMB | M11 |
+| UC48 | Thẩm định và quyết định yêu cầu đặt cơ sở vật chất | ICPDP | M11 |
+| UC49 | Theo dõi và huỷ / trả cơ sở vật chất đã đặt | CMB | M11 |
+| UC50 | Gửi phản hồi sau sự kiện | Student | M12 |
+| UC51 | Xem phản hồi sự kiện | CMB | M12 |
+| UC52 | Gửi khiếu nại về một CLB | Student | M12 |
+| UC53 | Phân loại khiếu nại | ICPDP | M12 |
+| UC54 | Trả lời khiếu nại được chuyển xuống | CMB | M12 |
 
 ---
 
-# M01 — Identity, Access & Configuration
+# M01 — Định danh, truy cập và cấu hình
 
-## UC01 – Authenticate via Google OAuth and enter the role workspace
+## UC01 – Xác thực qua Google OAuth và vào workspace theo vai trò
 
-- **Primary Actor:** All (Student, CMB, ICPDP Officer)
-- **Supporting System:** Google OAuth (ES1)
+- **Actor chính:** Tất cả (Student, CMB, ICPDP Officer)
+- **Hệ thống hỗ trợ:** Google OAuth (ES1)
 - **Module:** M01
-- **Business Goal:** Give each user access to exactly the data and features their role allows,
-  without UCMS managing any password.
-- **Trigger:** The user chooses to sign in.
-- **Preconditions:** The user holds a Google account in a domain the university allows (UC04).
-- **Input:** The OAuth authorization code returned by Google.
-- **Main Flow:**
-  1. The system sends an `Authentication request` to Google OAuth.
-  2. The user authenticates with Google.
-  3. Google OAuth returns `Authentication data` — email, full name, avatar.
-  4. The system checks the email domain against the policy configured in UC04.
-  5. The system maps the email to a User; on first sign-in it creates the User and its
-     StudentProfile.
-  6. The system loads the current role and permission set, including club contexts.
-  7. The system creates the session and routes the user to the matching workspace
+- **Mục tiêu nghiệp vụ:** Cho mỗi người dùng truy cập đúng phần dữ liệu và chức năng mà vai trò
+  của họ cho phép, mà UCMS không quản lý mật khẩu nào.
+- **Kích hoạt:** Người dùng chọn đăng nhập.
+- **Tiền điều kiện:** Người dùng có một tài khoản Google thuộc domain mà nhà trường cho phép (UC04).
+- **Dữ liệu vào:** Authorization code do Google trả về.
+- **Luồng chính:**
+  1. Hệ thống gửi một `Authentication request` tới Google OAuth.
+  2. Người dùng xác thực với Google.
+  3. Google OAuth trả `Authentication data` — email, họ tên, ảnh đại diện.
+  4. Hệ thống đối chiếu domain email với chính sách cấu hình ở UC04.
+  5. Hệ thống ánh xạ email tới một User; ở lần đăng nhập đầu tiên, nó tạo User và StudentProfile.
+  6. Hệ thống nạp tập vai trò và quyền hiện tại, gồm cả các ngữ cảnh CLB.
+  7. Hệ thống tạo phiên và điều hướng người dùng tới workspace tương ứng
      (Student / Club's Admin / ICPDP).
-- **Alternative Flows:**
-  - **A1 Several contexts:** a user who is both a Student and a CMB member of one or more clubs
-    picks a workspace; the choice is remembered and can be switched at any time.
-  - **A2 Returning user:** the StudentProfile is re-synced from the OAuth payload, and a changed
-    display name or avatar is updated without touching the role set.
-- **Exceptions:**
-  - **E1** email outside the allowed domain → access denied, nothing is created;
-  - **E2** the account is locked in UC03 → denied, and the attempt is audited;
-  - **E3** Google OAuth is unreachable or returns an error → an error is shown, no session is
-    created, no partial User is written.
-- **Postconditions:** A valid session exists; the StudentProfile is in sync; the sign-in is
-  audited.
-- **Business Rules:** BR32. UCMS stores no password of its own, and no local sign-in path exists.
-- **Output:** Session, User, StudentProfile, audit record.
-- **Related UC:** UC02, UC03, UC04
-- **Pain Point:** BP19
+- **Luồng thay thế:**
+  - **A1 Nhiều ngữ cảnh:** người dùng vừa là Student vừa là thành viên CMB của một hoặc nhiều
+    CLB sẽ chọn workspace; lựa chọn được ghi nhớ và có thể đổi bất cứ lúc nào.
+  - **A2 Người dùng quay lại:** StudentProfile được đồng bộ lại từ dữ liệu OAuth, và tên hiển
+    thị hay ảnh đại diện đã đổi được cập nhật mà không đụng tới tập vai trò.
+- **Ngoại lệ:**
+  - **E1** email nằm ngoài domain được phép → từ chối truy cập, không tạo gì cả;
+  - **E2** tài khoản bị khoá ở UC03 → từ chối, và lần thử được ghi audit;
+  - **E3** Google OAuth không truy cập được hoặc trả lỗi → hiển thị lỗi, không tạo phiên, không
+    ghi User dở dang.
+- **Hậu điều kiện:** Tồn tại một phiên hợp lệ; StudentProfile đã đồng bộ; lần đăng nhập được audit.
+- **Quy tắc nghiệp vụ:** BR32. UCMS không lưu mật khẩu nào của riêng mình, và không tồn tại
+  đường đăng nhập nội bộ.
+- **Đầu ra:** Session, User, StudentProfile, bản ghi audit.
+- **Use case liên quan:** UC02, UC03, UC04
+- **Pain point:** BP19
 
-## UC02 – Open my role dashboard
+## UC02 – Mở dashboard theo vai trò của tôi
 
-- **Primary Actor:** All
-- **Module:** M01 (reads M02–M12)
-- **Business Goal:** One screen per role answering two questions — what needs my action, and
-  what happened to what I submitted.
-- **Trigger:** The user lands in a workspace after UC01, or returns to it.
-- **Preconditions:** A valid session (UC01).
-- **Main Flow:**
-  1. The system resolves the caller's role and club context.
-  2. The system loads the items owned by that role: pending actions, deadlines, states.
-  3. The system renders the role-specific content:
-     - **ICPDP:** pending approvals by type and age, clubs by state, overdue reports,
-       unreconciled budgets, open cases, upcoming bookings;
-     - **CMB:** our submissions and their states, upcoming deadlines, the event and booking
-       calendar, roster size, budget position, feedback awaiting review;
-     - **Student:** my applications and their states, my registrations, my check-in history,
-       my memberships, my complaints.
-  4. The user opens any item, which continues into that item's own use case.
-- **Alternative Flows:**
-  - **A1 Empty state:** a user with nothing pending sees the entry points for their role
-    (UC06 for a student, UC25/UC47 for CMB) instead of an empty list.
-  - **A2 Context switch:** a user holding several club contexts switches club without
-    re-authenticating.
-- **Exceptions:** **E1** a source module is unavailable → that panel reports the failure; the
-  rest of the dashboard still renders.
-- **Postconditions:** None. No state transition happens here.
-- **Business Rules:** Read-only. Every figure is a live query against the owning module, never a
-  second copy of the data. A user sees only the clubs and records their role grants.
-- **Output:** The rendered dashboard; no persisted data.
-- **Related UC:** all — every use case is reached from here
-- **Pain Point:** BP01, BP14, and the "track application status" responsibility of §4
+- **Actor chính:** Tất cả
+- **Module:** M01 (đọc M02–M12)
+- **Mục tiêu nghiệp vụ:** Mỗi vai trò một màn hình trả lời hai câu hỏi — việc gì cần tôi hành
+  động, và hồ sơ tôi đã nộp giờ ra sao.
+- **Kích hoạt:** Người dùng vào một workspace sau UC01, hoặc quay lại nó.
+- **Tiền điều kiện:** Có một phiên hợp lệ (UC01).
+- **Luồng chính:**
+  1. Hệ thống xác định vai trò và ngữ cảnh CLB của người gọi.
+  2. Hệ thống nạp các mục thuộc về vai trò đó: việc đang chờ, deadline, trạng thái.
+  3. Hệ thống hiển thị nội dung theo vai trò:
+     - **ICPDP:** hồ sơ chờ duyệt theo loại và độ trễ, CLB theo trạng thái, báo cáo quá hạn,
+       ngân sách chưa đối soát, hồ sơ đang mở, booking sắp tới;
+     - **CMB:** hồ sơ của chúng tôi và trạng thái, deadline sắp tới, lịch sự kiện và booking,
+       số lượng thành viên, tình hình ngân sách, phản hồi đang chờ xem;
+     - **Student:** đơn của tôi và trạng thái, đăng ký của tôi, lịch sử check-in, tư cách thành
+       viên, khiếu nại của tôi.
+  4. Người dùng mở một mục bất kỳ, và nó đi tiếp vào use case của chính mục đó.
+- **Luồng thay thế:**
+  - **A1 Trạng thái rỗng:** người dùng không có gì đang chờ sẽ thấy các điểm bắt đầu của vai trò
+    mình (UC06 với sinh viên, UC25/UC47 với CMB) thay vì một danh sách trống.
+  - **A2 Đổi ngữ cảnh:** người dùng có nhiều ngữ cảnh CLB đổi CLB mà không cần xác thực lại.
+- **Ngoại lệ:** **E1** một module nguồn không khả dụng → panel đó báo lỗi; phần còn lại của
+  dashboard vẫn hiển thị.
+- **Hậu điều kiện:** Không có. Không có chuyển trạng thái nào xảy ra ở đây.
+- **Quy tắc nghiệp vụ:** Chỉ đọc. Mọi con số là truy vấn trực tiếp vào module sở hữu, không bao
+  giờ là bản sao thứ hai của dữ liệu. Người dùng chỉ thấy những CLB và bản ghi mà vai trò của họ
+  cho phép.
+- **Đầu ra:** Dashboard được hiển thị; không ghi dữ liệu.
+- **Use case liên quan:** tất cả — mọi use case đều đi tới từ đây
+- **Pain point:** BP01, BP14, và trách nhiệm "theo dõi trạng thái đơn" của §4
 
-## UC03 – Manage accounts and role assignments
+## UC03 – Quản lý tài khoản và gán vai trò
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M01
-- **Business Goal:** Control who may act in the system, independently of who may sign in to it.
-- **Trigger:** A new officer joins, a role must be revoked, or an account must be locked.
-- **Preconditions:** The caller holds the account-administration permission.
-- **Input:** The target user, the role to grant or revoke, the club context where the role is
-  club-scoped, the reason for a lock or an unlock.
-- **Main Flow:**
-  1. The officer searches for the user by email or name.
-  2. The system shows the user's current roles, club contexts and account state.
-  3. The officer grants or revokes an ICPDP or CMB role, or locks or unlocks the account.
-  4. The officer enters a reason where the change is a lock, an unlock or a revocation.
-  5. The system applies the change, invalidates the affected sessions and writes the audit record.
-- **Alternative Flows:**
-  - **A1 Emergency lock:** an account is locked without a role change when a case (UC42) requires
-    it; the lock and the case are linked.
-- **Exceptions:**
-  - **E1** the officer attempts to revoke their own last administrative role → refused;
-  - **E2** the target holds a confirmed board position → the system warns that UC10/UC11 is the
-    correct path, and records the override if the officer proceeds.
-- **Postconditions:** The role set or the account state is changed and audited; a locked account
-  is refused at UC01 (E2 there).
-- **Business Rules:** A CMB role granted here is subordinate to the board confirmed in UC11 and
-  is revoked automatically when a term closes (UC13). The hierarchy inside ICPDP is expressed as
-  permissions, never as a new actor. BR19's "special role" is granted here.
-- **Output:** Role assignment, account state, audit record.
-- **Related UC:** UC01, UC11, UC13, UC42
+- **Mục tiêu nghiệp vụ:** Kiểm soát ai được hành động trong hệ thống, tách biệt với việc ai được
+  đăng nhập vào nó.
+- **Kích hoạt:** Có một officer mới, cần thu hồi một vai trò, hoặc cần khoá một tài khoản.
+- **Tiền điều kiện:** Người gọi có quyền quản trị tài khoản.
+- **Dữ liệu vào:** Người dùng đích, vai trò cần cấp hoặc thu hồi, ngữ cảnh CLB nếu vai trò gắn
+  CLB, lý do khi khoá hoặc mở khoá.
+- **Luồng chính:**
+  1. Officer tìm người dùng theo email hoặc tên.
+  2. Hệ thống hiển thị vai trò, ngữ cảnh CLB và trạng thái tài khoản hiện tại của người đó.
+  3. Officer cấp hoặc thu hồi một vai trò ICPDP hoặc CMB, hoặc khoá / mở khoá tài khoản.
+  4. Officer nhập lý do khi thay đổi là khoá, mở khoá hoặc thu hồi.
+  5. Hệ thống áp dụng thay đổi, vô hiệu hoá các phiên bị ảnh hưởng và ghi bản ghi audit.
+- **Luồng thay thế:**
+  - **A1 Khoá khẩn cấp:** một tài khoản bị khoá mà không đổi vai trò, khi một hồ sơ (UC42) yêu
+    cầu; lệnh khoá và hồ sơ được liên kết với nhau.
+- **Ngoại lệ:**
+  - **E1** officer cố thu hồi vai trò quản trị cuối cùng của chính mình → từ chối;
+  - **E2** đối tượng đang giữ một ghế ban chủ nhiệm đã xác nhận → hệ thống cảnh báo rằng
+    UC10/UC11 mới là đường đi đúng, và ghi nhận việc ghi đè nếu officer vẫn tiếp tục.
+- **Hậu điều kiện:** Tập vai trò hoặc trạng thái tài khoản đã đổi và được audit; một tài khoản
+  bị khoá sẽ bị từ chối ở UC01 (ngoại lệ E2 tại đó).
+- **Quy tắc nghiệp vụ:** Một vai trò CMB cấp ở đây là thứ cấp so với ban chủ nhiệm được xác nhận
+  ở UC11 và bị thu hồi tự động khi một nhiệm kỳ đóng lại (UC13). Phân cấp bên trong ICPDP được
+  biểu diễn bằng quyền, không bao giờ bằng một actor mới. "Vai trò đặc biệt" của BR19 được cấp
+  tại đây.
+- **Đầu ra:** Bản gán vai trò, trạng thái tài khoản, bản ghi audit.
+- **Use case liên quan:** UC01, UC11, UC13, UC42
 
-## UC04 – Configure institutional policy and deadlines
+## UC04 – Cấu hình chính sách và deadline của nhà trường
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M01
-- **Business Goal:** Change a business rule without a release.
-- **Trigger:** A university regulation changes, or a new academic period starts.
-- **Preconditions:** The caller holds the policy-configuration permission.
-- **Input:**
-  - the allowed email domain (BR32);
-  - the minimum number of founding members (BR03);
-  - the mandatory establishment documents (BR02);
-  - report deadlines and reminder offsets (BR20, §19);
-  - the conflict threshold (BR15);
-  - the feedback window and the minimum respondent count (BR36, BR40);
-  - the overbooking policy (BR33);
-  - the enforcement switches (BR21);
-  - the academic calendar — semester start and end dates (UC15 dissolution).
-- **Main Flow:**
-  1. The officer opens the policy set for the current period.
-  2. The officer edits one or more values.
-  3. The system validates each value and rejects an inconsistent combination.
-  4. The officer confirms.
-  5. The system stores a new policy version, effective from a stated date, and audits it.
-- **Alternative Flows:**
-  - **A1 Scheduled change:** a value is given a future effective date and takes effect then.
-- **Exceptions:** **E1** a value would invalidate a decision already taken → refused, with the
-  affected records listed.
-- **Postconditions:** A new policy version is active; decisions already made keep the values
-  they were made under.
-- **Business Rules:** BR42 — the configuration screen exposes only the list above. Every other rule marked
-  "configurable" in §14 ships as a constant in a single policy document and becomes editable
-  only when a real need appears (model §14, D2).
-- **Output:** Policy version, audit record.
-- **Related UC:** UC01, UC07, UC25, UC33, UC40, UC47, UC50
-- **Pain Point:** BP14
+- **Mục tiêu nghiệp vụ:** Đổi một quy tắc nghiệp vụ mà không cần một lần phát hành.
+- **Kích hoạt:** Một quy định của trường thay đổi, hoặc một kỳ học mới bắt đầu.
+- **Tiền điều kiện:** Người gọi có quyền cấu hình chính sách.
+- **Dữ liệu vào:**
+  - domain email được phép (BR32);
+  - số thành viên sáng lập tối thiểu (BR03);
+  - các tài liệu bắt buộc của hồ sơ thành lập (BR02);
+  - deadline báo cáo và các mốc nhắc (BR20, §19);
+  - ngưỡng xung đột (BR15);
+  - feedback window và số người phản hồi tối thiểu (BR36, BR40);
+  - chính sách overbooking (BR33);
+  - các công tắc cưỡng chế (BR21);
+  - lịch học kỳ — ngày bắt đầu và kết thúc của từng học kỳ (dùng cho việc giải thể ở UC15).
+- **Luồng chính:**
+  1. Officer mở bộ chính sách của kỳ hiện tại.
+  2. Officer sửa một hoặc nhiều giá trị.
+  3. Hệ thống validate từng giá trị và từ chối một tổ hợp mâu thuẫn.
+  4. Officer xác nhận.
+  5. Hệ thống lưu một phiên bản chính sách mới, có hiệu lực từ một ngày nêu rõ, và ghi audit.
+- **Luồng thay thế:**
+  - **A1 Thay đổi có lịch:** một giá trị được đặt ngày hiệu lực trong tương lai và chỉ có hiệu
+    lực từ ngày đó.
+- **Ngoại lệ:** **E1** một giá trị sẽ làm vô hiệu một quyết định đã ra → từ chối, kèm danh sách
+  các bản ghi bị ảnh hưởng.
+- **Hậu điều kiện:** Một phiên bản chính sách mới đang có hiệu lực; những quyết định đã ra giữ
+  nguyên các giá trị mà chúng được ra theo.
+- **Quy tắc nghiệp vụ:** BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách trên. Mọi quy tắc
+  khác được đánh dấu "cấu hình được" ở §14 sẽ nằm dưới dạng hằng số trong một tài liệu chính
+  sách và chỉ trở nên sửa được khi có nhu cầu thật (§14 của tài liệu mô hình, quyết định D2).
+- **Đầu ra:** Phiên bản chính sách, bản ghi audit.
+- **Use case liên quan:** UC01, UC07, UC25, UC33, UC40, UC47, UC50
+- **Pain point:** BP14
 
-## UC05 – Configure the approval routing rules
+## UC05 – Cấu hình quy tắc định tuyến phê duyệt
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M01
-- **Business Goal:** Decide which requests need a second level of approval inside ICPDP, without
-  hard-coding the thresholds.
-- **Trigger:** ICPDP changes its internal delegation of authority.
-- **Preconditions:** The caller holds the routing-configuration permission.
-- **Input:** Request type, amount threshold, event risk category, property class, club
-  compliance history → the required approval level and its SLA.
-- **Main Flow:**
-  1. The officer opens the routing rule set.
-  2. The officer adds or edits a rule: a condition and the approval level it requires.
-  3. The system validates that the rules are total and unambiguous — every request matches
-     exactly one rule.
-  4. The officer activates the rule set.
-  5. The system versions and audits it; new requests route through it.
-- **Alternative Flows:**
-  - **A1 Simulation:** the officer runs the draft rules against the last N decided requests and
-    sees which would have needed a second level.
-- **Exceptions:** **E1** two rules overlap or a request type has no rule → activation refused.
-- **Postconditions:** An active routing rule set exists; UC08, UC26, UC36 and UC48 consult it.
-- **Business Rules:** This is the use case Signature Feature 1 lacked in v1. It is what makes BR16
-  enforceable: a request that matches no rule is decided at a single level (model §11). Whether the
-  second level is a permission or a fourth actor is open decision D1.
-- **Output:** Routing rule set, audit record.
-- **Related UC:** UC08, UC26, UC36, UC48
+- **Mục tiêu nghiệp vụ:** Quyết định hồ sơ nào cần một cấp duyệt thứ hai trong nội bộ ICPDP, mà
+  không hard-code các ngưỡng.
+- **Kích hoạt:** ICPDP thay đổi phân cấp thẩm quyền nội bộ của mình.
+- **Tiền điều kiện:** Người gọi có quyền cấu hình định tuyến.
+- **Dữ liệu vào:** Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng cơ sở vật chất, lịch sử
+  tuân thủ của CLB → cấp duyệt yêu cầu và SLA của nó.
+- **Luồng chính:**
+  1. Officer mở bộ quy tắc định tuyến.
+  2. Officer thêm hoặc sửa một rule: một điều kiện và cấp duyệt mà điều kiện đó đòi hỏi.
+  3. Hệ thống validate rằng bộ rule là đầy đủ và không nhập nhằng — mỗi hồ sơ khớp đúng một rule.
+  4. Officer kích hoạt bộ rule.
+  5. Hệ thống đánh phiên bản và ghi audit; các hồ sơ mới đi theo bộ rule đó.
+- **Luồng thay thế:**
+  - **A1 Mô phỏng:** officer chạy bộ rule nháp trên N hồ sơ đã quyết định gần nhất và xem hồ sơ
+    nào lẽ ra đã cần cấp duyệt thứ hai.
+- **Ngoại lệ:** **E1** hai rule chồng nhau hoặc một loại hồ sơ không có rule nào → từ chối kích hoạt.
+- **Hậu điều kiện:** Tồn tại một bộ rule định tuyến đang hoạt động; UC08, UC26, UC36 và UC48 tra
+  cứu nó.
+- **Quy tắc nghiệp vụ:** Đây chính là use case mà Feature nổi bật 1 còn thiếu ở v1. Nó là thứ
+  làm BR16 cưỡng chế được: một hồ sơ không khớp rule nào thì được quyết định ở một cấp duy nhất
+  (§11 của tài liệu mô hình). Việc cấp thứ hai là một quyền hay một actor thứ tư là quyết định
+  còn mở D1.
+- **Đầu ra:** Bộ rule định tuyến, bản ghi audit.
+- **Use case liên quan:** UC08, UC26, UC36, UC48
 
 ---
 
-# M02 / M03 — Club Lifecycle, Governance & Term
+# M02 / M03 — Vòng đời CLB, quản trị và nhiệm kỳ
 
-## UC06 – Discover clubs and open activity
+## UC06 – Khám phá CLB và hoạt động đang mở
 
-- **Primary Actor:** Student
+- **Actor chính:** Student
 - **Module:** M02
-- **Business Goal:** Let a student find a club, a campaign or an event worth joining — the entry
-  point of the whole product.
-- **Trigger:** The student wants to join a club or attend an activity.
-- **Preconditions:** A valid session (UC01).
-- **Input:** Search keyword, field, activity type.
-- **Main Flow:**
-  1. The student browses or searches the active clubs by field or keyword.
-  2. The system lists the matching clubs with their state and a summary.
-  3. The student opens a club page: profile, board, activity history, open campaigns, upcoming
-     public events.
-  4. The student continues into UC17 (apply) or UC29 (register).
-- **Alternative Flows:**
-  - **A1 Event-first:** the student browses upcoming public events across all clubs and reaches
-    the club from the event.
-- **Exceptions:** **E1** no club matches → the system suggests removing filters and shows the
-  newest active clubs.
-- **Postconditions:** None; no state changes.
-- **Business Rules:** Only `Active` clubs are listed. A `Suspended` club is visible but marked
-  and shows no open campaign (BR09). A `Dissolved` club is not listed.
-- **Output:** None persisted.
-- **Related UC:** UC16, UC17, UC27, UC29
+- **Mục tiêu nghiệp vụ:** Cho sinh viên tìm được một CLB, một đợt tuyển hoặc một sự kiện đáng
+  tham gia — điểm vào của cả sản phẩm.
+- **Kích hoạt:** Sinh viên muốn tham gia một CLB hoặc một hoạt động.
+- **Tiền điều kiện:** Có một phiên hợp lệ (UC01).
+- **Dữ liệu vào:** Từ khoá tìm kiếm, lĩnh vực, loại hoạt động.
+- **Luồng chính:**
+  1. Sinh viên duyệt hoặc tìm các CLB đang hoạt động theo lĩnh vực hoặc từ khoá.
+  2. Hệ thống liệt kê các CLB khớp kèm trạng thái và một mô tả ngắn.
+  3. Sinh viên mở trang một CLB: hồ sơ, ban chủ nhiệm, lịch sử hoạt động, các đợt tuyển đang mở,
+     các sự kiện công khai sắp tới.
+  4. Sinh viên đi tiếp sang UC17 (ứng tuyển) hoặc UC29 (đăng ký).
+- **Luồng thay thế:**
+  - **A1 Bắt đầu từ sự kiện:** sinh viên duyệt các sự kiện công khai sắp tới của mọi CLB và đi
+    ngược từ sự kiện về CLB.
+- **Ngoại lệ:** **E1** không có CLB nào khớp → hệ thống gợi ý bỏ bớt bộ lọc và hiển thị các CLB
+  đang hoạt động mới nhất.
+- **Hậu điều kiện:** Không có; không có gì đổi trạng thái.
+- **Quy tắc nghiệp vụ:** Chỉ liệt kê các CLB `Active`. Một CLB `Suspended` vẫn thấy được nhưng
+  có đánh dấu và không hiện đợt tuyển nào (BR09). Một CLB `Dissolved` không được liệt kê.
+- **Đầu ra:** Không ghi dữ liệu.
+- **Use case liên quan:** UC16, UC17, UC27, UC29
 
-## UC07 – Submit a club establishment application
+## UC07 – Nộp hồ sơ đề nghị thành lập CLB
 
-- **Primary Actor:** Student
+- **Actor chính:** Student
 - **Module:** M02
-- **Business Goal:** Let students propose a new club through one standard, traceable process.
-- **Trigger:** A group of students wants to found a club.
-- **Preconditions:** Signed in, and eligible under the policy configured in UC04.
-- **Input:** Club name, field, objectives; the founding members; the mandatory documents.
-- **Main Flow:**
-  1. The student enters the club name, field and objectives.
-  2. The student declares the founding members.
-  3. The student uploads the mandatory documents (BR02).
-  4. The system validates completeness and the minimum founding headcount (BR03).
-  5. The student confirms.
-  6. The system creates version 1 of the application.
-  7. The state moves to `Submitted`.
-  8. ICPDP receives a review task, visible in UC02.
-- **Alternative Flows:**
-  - **A1 Draft:** the student saves the application as `Draft` and continues later.
-  - **A2 Resubmit after revision (v1 UC05):** from `Revision Requested`, the student edits the
-    flagged sections and resubmits; the system creates a **new version** and returns the
-    application to `Submitted`. The previous version stays readable.
-  - **A3 Withdraw:** the student withdraws an application that has not been decided (`Submitted`,
-    `Under Review` or `Revision Requested`) → `Withdrawn`; any open review task is closed.
-- **Exceptions:**
-  - **E1** a mandatory document is missing → submission refused, the application stays `Draft`;
-  - **E2** fewer founding members than BR03 allows → refused;
-  - **E3** a club with the same name is already active → warning, and the officer decides in UC08.
-- **Postconditions:** The application is `Submitted`, with an immutable version and a review task.
-- **Business Rules:** BR02, BR03, BR04 — a submitted version is never overwritten.
-- **Output:** ClubApplication, ApplicationVersion, ApprovalTask, notification.
-- **Related UC:** UC08, UC02
-- **Pain Point:** BP04
+- **Mục tiêu nghiệp vụ:** Cho sinh viên đề xuất một CLB mới qua một quy trình chuẩn, truy vết được.
+- **Kích hoạt:** Một nhóm sinh viên muốn lập một CLB.
+- **Tiền điều kiện:** Đã đăng nhập và đủ điều kiện theo chính sách cấu hình ở UC04.
+- **Dữ liệu vào:** Tên CLB, lĩnh vực, mục tiêu; các thành viên sáng lập; các tài liệu bắt buộc.
+- **Luồng chính:**
+  1. Sinh viên nhập tên CLB, lĩnh vực và mục tiêu.
+  2. Sinh viên khai báo các thành viên sáng lập.
+  3. Sinh viên tải lên các tài liệu bắt buộc (BR02).
+  4. Hệ thống validate tính đầy đủ và số thành viên sáng lập tối thiểu (BR03).
+  5. Sinh viên xác nhận.
+  6. Hệ thống tạo version 1 của hồ sơ.
+  7. Trạng thái chuyển sang `Submitted`.
+  8. ICPDP nhận một review task, hiển thị trong UC02.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** sinh viên lưu hồ sơ ở `Draft` và làm tiếp sau.
+  - **A2 Nộp lại sau khi bị yêu cầu chỉnh sửa (UC05 của v1):** từ `Revision Requested`, người
+    nộp sửa các phần bị đánh dấu và nộp lại; hệ thống tạo một **version mới** và đưa hồ sơ về
+    `Submitted`. Version trước vẫn đọc được.
+  - **A3 Rút hồ sơ:** sinh viên rút một hồ sơ chưa có quyết định (`Submitted`, `Under Review`
+    hoặc `Revision Requested`) → `Withdrawn`; mọi review task đang mở được đóng lại.
+- **Ngoại lệ:**
+  - **E1** thiếu một tài liệu bắt buộc → từ chối nộp, hồ sơ ở lại `Draft`;
+  - **E2** số thành viên sáng lập ít hơn mức BR03 cho phép → từ chối;
+  - **E3** đã có một CLB đang hoạt động trùng tên → cảnh báo, và officer quyết định ở UC08.
+- **Hậu điều kiện:** Hồ sơ ở `Submitted`, với một version bất biến và một review task.
+- **Quy tắc nghiệp vụ:** BR02, BR03, BR04 — một version đã nộp không bao giờ bị ghi đè.
+- **Đầu ra:** ClubApplication, ApplicationVersion, ApprovalTask, thông báo.
+- **Use case liên quan:** UC08, UC02
+- **Pain point:** BP04
 
-## UC08 – Assess and decide the club establishment application
+## UC08 – Thẩm định và quyết định hồ sơ thành lập CLB
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M02
-- **Business Goal:** One review session that ends in one of three outcomes, with the reasoning
-  on the record.
-- **Trigger:** A review task from UC07.
-- **Preconditions:** The application is `Submitted`; the caller holds the review permission.
-- **Input:** The officer's assessment notes, the flagged sections, the decision and its reason.
-- **Main Flow:**
-  1. The officer opens the application; the state moves to `Under Review`.
-  2. The officer checks the club information, the founding members, the documents and the
-     version history.
-  3. The officer records the assessment note, including any opinion gathered outside the system.
-  4. The officer chooses one outcome:
-     - **Request revision** — mark the sections that fall short, enter structured comments, set a
-       deadline → `Revision Requested`, the applicant is notified;
-     - **Approve** → `Approved`; a Club is created in `Pending Setup`, and the applicant receives
-       a temporary founding CMB permission for it;
-     - **Reject** — a reason is mandatory → `Rejected`; no Club is created.
-  5. The system writes the audit record and notifies the applicant.
-- **Alternative Flows:**
-  - **A1 Second level:** when the routing rules of UC05 require it, the decision is
-    escalated inside ICPDP before it takes effect.
-- **Exceptions:**
-  - **E1** the applicant withdraws while the application is under review (UC07 A3) → the review
-    closes and the application is `Withdrawn`;
-  - **E2** the revision deadline passes with no resubmission → the scheduler moves the application
-    to `Expired`, and the applicant may start a new one.
-- **Postconditions:** The application is `Revision Requested`, `Approved` or `Rejected`; on
-  approval a Club exists in `Pending Setup`, and the applicant holds a temporary founding CMB
-  permission, limited to UC09 and UC10 while the club is `Pending Setup`, so that the founding
-  board can be configured and nominated.
-- **Business Rules:** BR05 — actor, timestamp and, where applicable, the reason are stored for
-  every outcome. ICPDP never edits the applicant's data on their behalf. The decision history
-  stays attached to the application and is read here, which is what satisfies BP15 without a
-  dedicated audit use case. BR31 — ICPDP is the only approval authority.
-- **Output:** ApprovalDecision, Club (on approval), audit record, notification.
-- **Related UC:** UC07, UC09, UC10, UC05
-- **Pain Point:** BP04, BP15
+- **Mục tiêu nghiệp vụ:** Một phiên thẩm định duy nhất kết thúc bằng một trong ba kết quả, với
+  lập luận được lưu lại.
+- **Kích hoạt:** Một review task từ UC07.
+- **Tiền điều kiện:** Hồ sơ đang ở `Submitted`; người gọi có quyền thẩm định.
+- **Dữ liệu vào:** Ghi chú thẩm định của officer, các phần bị đánh dấu, quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở hồ sơ; trạng thái chuyển sang `Under Review`.
+  2. Officer kiểm tra thông tin CLB, các thành viên sáng lập, các tài liệu và lịch sử version.
+  3. Officer ghi lại ghi chú thẩm định, gồm cả ý kiến lấy được từ ngoài hệ thống.
+  4. Officer chọn một kết quả:
+     - **Yêu cầu chỉnh sửa** — đánh dấu các phần chưa đạt, nhập nhận xét có cấu trúc, đặt một
+       deadline → `Revision Requested`, người nộp được thông báo;
+     - **Phê duyệt** → `Approved`; một Club được tạo ở `Pending Setup`, và người nộp nhận một
+       quyền CMB sáng lập tạm thời cho CLB đó;
+     - **Từ chối** — bắt buộc có lý do → `Rejected`; không tạo Club nào.
+  5. Hệ thống ghi bản ghi audit và thông báo cho người nộp.
+- **Luồng thay thế:**
+  - **A1 Cấp thứ hai:** khi các rule định tuyến của UC05 yêu cầu, quyết định được leo thang
+    trong nội bộ ICPDP trước khi có hiệu lực.
+- **Ngoại lệ:**
+  - **E1** người nộp rút hồ sơ trong lúc đang thẩm định (UC07 A3) → phiên thẩm định đóng lại và
+    hồ sơ chuyển `Withdrawn`;
+  - **E2** hết deadline chỉnh sửa mà không có bản nộp lại → scheduler chuyển hồ sơ sang
+    `Expired`, và người nộp có thể làm một hồ sơ mới.
+- **Hậu điều kiện:** Hồ sơ ở `Revision Requested`, `Approved` hoặc `Rejected`; khi phê duyệt,
+  tồn tại một Club ở `Pending Setup`, và người nộp giữ quyền CMB sáng lập tạm thời, chỉ dùng
+  được cho UC09 và UC10 khi CLB còn `Pending Setup`, để ban chủ nhiệm sáng lập có thể được cấu
+  hình và đề cử.
+- **Quy tắc nghiệp vụ:** BR05 — actor, thời điểm và, nếu áp dụng, lý do được lưu cho mọi kết
+  quả. ICPDP không bao giờ sửa dữ liệu thay cho người nộp. Lịch sử quyết định gắn liền với hồ sơ
+  và được đọc tại đây, và đó chính là thứ thoả mãn BP15 mà không cần một use case audit riêng.
+  BR31 — ICPDP là cấp phê duyệt duy nhất.
+- **Đầu ra:** ApprovalDecision, Club (khi phê duyệt), bản ghi audit, thông báo.
+- **Use case liên quan:** UC07, UC09, UC10, UC05
+- **Pain point:** BP04, BP15
 
-## UC09 – Configure the club profile and organization structure
+## UC09 – Cấu hình hồ sơ và cơ cấu tổ chức CLB
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M02 / M03
-- **Business Goal:** Complete the operating information of a recognized club and model its
-  internal units.
-- **Trigger:** The club is created in `Pending Setup`, or its structure changes.
-- **Preconditions:** The club exists; the caller holds the club-administration permission, or
-  the temporary founding CMB permission from UC08 while the club is `Pending Setup`.
-- **Input:** Description, contact, charter, communication channels, operating scope; boards,
-  departments, and the positions each may hold.
-- **Main Flow:**
-  1. The CMB member opens the club profile.
-  2. The member completes or edits the operating information.
-  3. The member defines the internal structure — boards, departments, positions.
-  4. The system validates against the university template where one applies.
-  5. The member saves; the system audits the change.
-- **Alternative Flows:**
-  - **A1 Template:** the club adopts the university's default structure and edits from there.
-- **Exceptions:**
-  - **E1** an institutional field is edited → refused; those fields belong to ICPDP;
-  - **E2** a position held by an active membership is deleted → refused until UC23 reassigns it.
-- **Postconditions:** The club profile and structure are current; the club can leave
-  `Pending Setup` once UC11 confirms its board.
-- **Business Rules:** Institutional fields are editable by ICPDP only. The structure may be
-  constrained by a university template.
-- **Output:** Club profile, Position and Department records, audit record.
-- **Related UC:** UC10, UC23, UC11
+- **Mục tiêu nghiệp vụ:** Hoàn thiện thông tin vận hành của một CLB đã được công nhận và mô hình
+  hoá các đơn vị nội bộ của nó.
+- **Kích hoạt:** CLB được tạo ở `Pending Setup`, hoặc cơ cấu của nó thay đổi.
+- **Tiền điều kiện:** CLB tồn tại; người gọi có quyền quản trị CLB, hoặc có quyền CMB sáng lập
+  tạm thời từ UC08 khi CLB còn `Pending Setup`.
+- **Dữ liệu vào:** Mô tả, liên hệ, điều lệ, kênh truyền thông, phạm vi hoạt động; các ban, bộ
+  phận, và những chức vụ mà mỗi đơn vị có thể nắm.
+- **Luồng chính:**
+  1. Thành viên CMB mở hồ sơ CLB.
+  2. Thành viên hoàn thiện hoặc sửa thông tin vận hành.
+  3. Thành viên định nghĩa cơ cấu nội bộ — ban, bộ phận, chức vụ.
+  4. Hệ thống validate theo template của trường ở nơi template được áp dụng.
+  5. Thành viên lưu lại; hệ thống ghi audit thay đổi.
+- **Luồng thay thế:**
+  - **A1 Template:** CLB nhận cơ cấu mặc định của trường và chỉnh sửa từ đó.
+- **Ngoại lệ:**
+  - **E1** một trường thuộc thẩm quyền nhà trường bị sửa → từ chối; các trường đó thuộc về ICPDP;
+  - **E2** một chức vụ đang được một tư cách thành viên đang hiệu lực nắm giữ bị xoá → từ chối
+    cho tới khi UC23 phân công lại.
+- **Hậu điều kiện:** Hồ sơ và cơ cấu CLB là hiện hành; CLB có thể rời `Pending Setup` sau khi
+  UC11 xác nhận ban chủ nhiệm của nó.
+- **Quy tắc nghiệp vụ:** Các trường thuộc thẩm quyền nhà trường chỉ ICPDP sửa được. Cơ cấu có
+  thể bị ràng buộc bởi template của trường.
+- **Đầu ra:** Hồ sơ CLB, các bản ghi chức vụ và bộ phận, bản ghi audit.
+- **Use case liên quan:** UC10, UC23, UC11
 
-## UC10 – Nominate the club management board
+## UC10 – Đề xuất ban chủ nhiệm CLB
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M03
-- **Business Goal:** Propose the leadership of a term for confirmation.
-- **Trigger:** A club is newly approved, a term begins, or a board seat falls vacant.
-- **Preconditions:** The club exists; the caller is CMB, or holds the temporary founding CMB
-  permission from UC08 while the club is `Pending Setup`; the nominees are members (or founding
-  members, for the first board).
-- **Input:** Member, position, term start and end.
-- **Main Flow:**
-  1. The member opens the board nomination for a term.
-  2. For each seat, the member picks a member and a position defined in UC09.
-  3. The system checks eligibility (BR07) and overlap (BR06).
-  4. The member submits the nomination.
-  5. The state moves to `Pending Confirmation`; ICPDP receives a task.
-- **Alternative Flows:**
-  - **A1 Partial board:** only the vacant seats are nominated; the confirmed seats are untouched.
-- **Exceptions:**
-  - **E1** a nominee is ineligible under BR07 → the seat is refused;
-  - **E2** the nominee already holds an overlapping President term → refused unless policy allows
-    it (BR06).
-- **Postconditions:** The nomination is `Pending Confirmation`.
-- **Business Rules:** BR06, BR07. A founding application approved in UC08 nominates its first
-  board here.
-- **Output:** Board nomination, ApprovalTask, notification.
-- **Related UC:** UC11, UC09
-- **Pain Point:** BP03
+- **Mục tiêu nghiệp vụ:** Đề cử bộ máy lãnh đạo của một nhiệm kỳ để được xác nhận.
+- **Kích hoạt:** Một CLB vừa được duyệt, một nhiệm kỳ bắt đầu, hoặc một ghế ban chủ nhiệm trống.
+- **Tiền điều kiện:** CLB tồn tại; người gọi là CMB, hoặc giữ quyền CMB sáng lập tạm thời từ
+  UC08 khi CLB còn `Pending Setup`; người được đề cử là thành viên (hoặc thành viên sáng lập,
+  với ban chủ nhiệm đầu tiên).
+- **Dữ liệu vào:** Thành viên, chức vụ, ngày bắt đầu và kết thúc nhiệm kỳ.
+- **Luồng chính:**
+  1. Thành viên mở phần đề cử ban chủ nhiệm cho một nhiệm kỳ.
+  2. Với mỗi ghế, thành viên chọn một thành viên và một chức vụ đã định nghĩa ở UC09.
+  3. Hệ thống kiểm tra điều kiện (BR07) và sự chồng lấn (BR06).
+  4. Thành viên nộp bản đề cử.
+  5. Trạng thái chuyển sang `Pending Confirmation`; ICPDP nhận một task.
+- **Luồng thay thế:**
+  - **A1 Ban chủ nhiệm một phần:** chỉ đề cử các ghế đang trống; các ghế đã xác nhận không bị
+    đụng tới.
+- **Ngoại lệ:**
+  - **E1** một người được đề cử không đủ điều kiện theo BR07 → ghế đó bị từ chối;
+  - **E2** người được đề cử đã giữ một nhiệm kỳ Chủ nhiệm chồng lấn → từ chối trừ khi chính sách
+    cho phép (BR06).
+- **Hậu điều kiện:** Bản đề cử ở `Pending Confirmation`.
+- **Quy tắc nghiệp vụ:** BR06, BR07. Một hồ sơ thành lập được duyệt ở UC08 sẽ đề cử ban chủ
+  nhiệm đầu tiên của mình tại đây.
+- **Đầu ra:** Bản đề cử ban chủ nhiệm, ApprovalTask, thông báo.
+- **Use case liên quan:** UC11, UC09
+- **Pain point:** BP03
 
-## UC11 – Confirm the management board
+## UC11 – Xác nhận ban chủ nhiệm
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M03
-- **Business Goal:** Grant management authority to a named board for a named term.
-- **Trigger:** A nomination task from UC10.
-- **Preconditions:** The nomination is `Pending Confirmation`.
-- **Input:** The decision and its reason.
-- **Main Flow:**
-  1. The officer opens the nomination.
-  2. The officer checks eligibility, conflicts of interest and the term dates.
-  3. The officer approves or rejects, with a reason where required.
-  4. On approval the system activates the board, grants the matching permissions and lets the
-     club leave `Pending Setup`.
-  5. The system audits the decision and notifies the club.
-- **Alternative Flows:**
-  - **A1 Partial confirmation:** individual seats are confirmed and others returned for
-    re-nomination.
-- **Exceptions:** **E1** the nominee's membership ended between nomination and confirmation →
-  the seat is returned to UC10.
-- **Postconditions:** The board is active for the term; permissions are in force; the club is
-  `Active` if this was its founding board.
-- **Business Rules:** BR05, BR07. Permissions come from this confirmation, not from UC03. For a
-  founding board, the confirmation replaces the temporary founding CMB permission granted in
-  UC08: that permission is revoked and only the confirmed board holds CMB rights.
-- **Output:** ClubTerm, Position assignments, permissions, audit record.
-- **Related UC:** UC10, UC03, UC13
-- **Pain Point:** BP03
+- **Mục tiêu nghiệp vụ:** Trao quyền quản lý cho một ban chủ nhiệm cụ thể trong một nhiệm kỳ cụ thể.
+- **Kích hoạt:** Một task đề cử từ UC10.
+- **Tiền điều kiện:** Bản đề cử đang ở `Pending Confirmation`.
+- **Dữ liệu vào:** Quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở bản đề cử.
+  2. Officer kiểm tra điều kiện, xung đột lợi ích và các mốc thời gian nhiệm kỳ.
+  3. Officer phê duyệt hoặc từ chối, kèm lý do ở nơi cần thiết.
+  4. Khi phê duyệt, hệ thống kích hoạt ban chủ nhiệm, cấp các quyền tương ứng và cho CLB rời
+     `Pending Setup`.
+  5. Hệ thống ghi audit quyết định và thông báo cho CLB.
+- **Luồng thay thế:**
+  - **A1 Xác nhận một phần:** từng ghế được xác nhận riêng và các ghế khác được trả về để đề cử lại.
+- **Ngoại lệ:** **E1** tư cách thành viên của người được đề cử kết thúc giữa lúc đề cử và xác
+  nhận → ghế đó được trả về UC10.
+- **Hậu điều kiện:** Ban chủ nhiệm hoạt động trong nhiệm kỳ; các quyền có hiệu lực; CLB chuyển
+  `Active` nếu đây là ban chủ nhiệm sáng lập của nó.
+- **Quy tắc nghiệp vụ:** BR05, BR07. Quyền đến từ lần xác nhận này, không phải từ UC03. Với ban
+  chủ nhiệm sáng lập, lần xác nhận này thay thế quyền CMB sáng lập tạm thời đã cấp ở UC08: quyền
+  đó bị thu hồi và chỉ ban chủ nhiệm đã xác nhận mới giữ quyền CMB.
+- **Đầu ra:** ClubTerm, các bản gán chức vụ, quyền, bản ghi audit.
+- **Use case liên quan:** UC10, UC03, UC13
+- **Pain point:** BP03
 
-## UC12 – Plan the leadership transition
+## UC12 – Lập kế hoạch chuyển giao nhiệm kỳ
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M03
-- **Business Goal:** Prepare a handover that carries its obligations instead of dropping them.
-- **Trigger:** The term is approaching its end.
-- **Preconditions:** An active term exists.
-- **Input:** The new term; the leadership candidates; outstanding events; outstanding budget;
-  incomplete reports; assets and responsibilities to hand over.
-- **Main Flow:**
-  1. The outgoing board opens the transition plan.
-  2. The system preloads the outstanding obligations from M05, M07 and M08.
-  3. The board names the candidates for the new term and completes the handover list.
-  4. The board submits the plan → `Pending Confirmation`.
-- **Alternative Flows:**
-  - **A1 Early transition:** the plan is submitted before the term ends, with a stated reason.
-- **Exceptions:** **E1** an obligation has no owner in the new board → the plan cannot be
-  submitted until one is named.
-- **Postconditions:** The transition plan is `Pending Confirmation`.
-- **Business Rules:** Obligations stay attached to the club, never to the departing individuals.
-- **Output:** Transition plan, ApprovalTask.
-- **Related UC:** UC13, UC10
-- **Pain Point:** BP03
+- **Mục tiêu nghiệp vụ:** Chuẩn bị một cuộc bàn giao mang theo cả nghĩa vụ của nó thay vì đánh rơi.
+- **Kích hoạt:** Nhiệm kỳ sắp kết thúc.
+- **Tiền điều kiện:** Có một nhiệm kỳ đang hoạt động.
+- **Dữ liệu vào:** Nhiệm kỳ mới; các ứng viên lãnh đạo; sự kiện còn dở; ngân sách còn treo; báo
+  cáo chưa xong; tài sản và trách nhiệm cần bàn giao.
+- **Luồng chính:**
+  1. Ban chủ nhiệm sắp mãn nhiệm mở kế hoạch chuyển giao.
+  2. Hệ thống nạp sẵn các nghĩa vụ còn tồn đọng từ M05, M07 và M08.
+  3. Ban chủ nhiệm nêu tên các ứng viên cho nhiệm kỳ mới và hoàn thiện danh mục bàn giao.
+  4. Ban chủ nhiệm nộp kế hoạch → `Pending Confirmation`.
+- **Luồng thay thế:**
+  - **A1 Chuyển giao sớm:** kế hoạch được nộp trước khi nhiệm kỳ kết thúc, kèm một lý do nêu rõ.
+- **Ngoại lệ:** **E1** một nghĩa vụ không có người nhận trong ban chủ nhiệm mới → không nộp được
+  kế hoạch cho tới khi có người được nêu tên.
+- **Hậu điều kiện:** Kế hoạch chuyển giao ở `Pending Confirmation`.
+- **Quy tắc nghiệp vụ:** Các nghĩa vụ vẫn gắn với CLB, không bao giờ gắn với các cá nhân sắp rời đi.
+- **Đầu ra:** Kế hoạch chuyển giao, ApprovalTask.
+- **Use case liên quan:** UC13, UC10
+- **Pain point:** BP03
 
-## UC13 – Confirm the leadership transition
+## UC13 – Xác nhận chuyển giao nhiệm kỳ
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M03
-- **Business Goal:** Transfer authority without losing accountability.
-- **Trigger:** A transition task from UC12.
-- **Preconditions:** The transition plan is `Pending Confirmation`.
-- **Main Flow:**
-  1. The officer reviews the plan and the outstanding obligations.
-  2. The officer approves or returns the plan.
-  3. On approval the system closes the old term, activates the new one, revokes the previous
-     permissions, grants the new ones and persists the history.
-  4. The system audits the transfer and notifies both boards.
-- **Alternative Flows:**
-  - **A1 Conditional approval:** the transition is approved with obligations flagged for
-    follow-up, which appear on the new board's UC02.
-- **Exceptions:** **E1** the club is `Suspended` → the transition is held until UC15 reactivates
-  the club.
-- **Postconditions:** The new term is active; the old term is closed and readable; permissions
-  reflect the new board.
-- **Business Rules:** BR08 — new permissions take effect only once the transition is confirmed.
-- **Output:** ClubTerm history, permissions, audit record.
-- **Related UC:** UC12, UC03, UC11
-- **Pain Point:** BP03
+- **Mục tiêu nghiệp vụ:** Chuyển giao quyền mà không đánh mất trách nhiệm giải trình.
+- **Kích hoạt:** Một task chuyển giao từ UC12.
+- **Tiền điều kiện:** Kế hoạch chuyển giao đang ở `Pending Confirmation`.
+- **Luồng chính:**
+  1. Officer xem lại kế hoạch và các nghĩa vụ còn tồn đọng.
+  2. Officer phê duyệt hoặc trả lại kế hoạch.
+  3. Khi phê duyệt, hệ thống đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới, thu hồi các quyền cũ, cấp
+     các quyền mới và lưu lại lịch sử.
+  4. Hệ thống ghi audit lần chuyển giao và thông báo cho cả hai ban chủ nhiệm.
+- **Luồng thay thế:**
+  - **A1 Phê duyệt có điều kiện:** việc chuyển giao được phê duyệt kèm các nghĩa vụ được đánh
+    dấu để theo dõi tiếp, và chúng xuất hiện trên UC02 của ban chủ nhiệm mới.
+- **Ngoại lệ:** **E1** CLB đang `Suspended` → việc chuyển giao bị giữ lại cho tới khi UC15 kích
+  hoạt lại CLB.
+- **Hậu điều kiện:** Nhiệm kỳ mới đang hoạt động; nhiệm kỳ cũ đã đóng và vẫn đọc được; các quyền
+  phản ánh đúng ban chủ nhiệm mới.
+- **Quy tắc nghiệp vụ:** BR08 — các quyền mới chỉ có hiệu lực khi việc chuyển giao được xác nhận.
+- **Đầu ra:** Lịch sử ClubTerm, các quyền, bản ghi audit.
+- **Use case liên quan:** UC12, UC03, UC11
+- **Pain point:** BP03
 
-## UC14 – Request club activity suspension
+## UC14 – Yêu cầu tạm ngừng hoạt động CLB
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M02
-- **Business Goal:** Let a club pause legitimately instead of going quiet.
-- **Trigger:** The club cannot operate for a period.
-- **Preconditions:** The club is `Active`.
-- **Input:** Reason, expected duration, outstanding obligations, recovery plan.
-- **Main Flow:**
-  1. The board opens the suspension request.
-  2. The board states the reason, the period and how the outstanding obligations will be handled.
-  3. The board submits; ICPDP receives a task.
-- **Exceptions:** **E1** an approved event or booking falls inside the requested period → it must
-  first be cancelled through UC28 or UC49.
-- **Postconditions:** The request awaits the decision in UC15.
-- **Output:** Suspension request, ApprovalTask.
-- **Related UC:** UC15
+- **Mục tiêu nghiệp vụ:** Cho một CLB tạm dừng một cách hợp thức thay vì lặng lẽ biến mất.
+- **Kích hoạt:** CLB không thể hoạt động trong một giai đoạn.
+- **Tiền điều kiện:** CLB đang `Active`.
+- **Dữ liệu vào:** Lý do, thời lượng dự kiến, các nghĩa vụ còn tồn đọng, kế hoạch phục hồi.
+- **Luồng chính:**
+  1. Ban chủ nhiệm mở yêu cầu tạm ngừng.
+  2. Ban chủ nhiệm nêu lý do, giai đoạn và cách xử lý các nghĩa vụ còn tồn đọng.
+  3. Ban chủ nhiệm nộp; ICPDP nhận một task.
+- **Ngoại lệ:** **E1** một sự kiện hoặc booking đã duyệt rơi vào giai đoạn xin tạm ngừng → nó
+  phải được huỷ trước qua UC28 hoặc UC49.
+- **Hậu điều kiện:** Yêu cầu chờ quyết định ở UC15.
+- **Đầu ra:** Yêu cầu tạm ngừng, ApprovalTask.
+- **Use case liên quan:** UC15
 
-## UC15 – Suspend, reactivate or dissolve a club
+## UC15 – Tạm ngừng, kích hoạt lại hoặc giải thể CLB
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M02
-- **Business Goal:** Control the club lifecycle from one place, with the reason on the record.
-- **Trigger:** A request (UC14), inactivity, a case outcome (UC42), or policy.
-- **Preconditions:** The club exists; the caller holds the lifecycle permission.
-- **Input:** The target state, the reason, the effective date, the period for a suspension.
-- **Main Flow:**
-  1. The officer opens the club and reviews its state, obligations and history.
-  2. The officer chooses `Suspend`, `Reactivate` or `Dissolve` and enters the reason.
-  3. The system applies the state change and its consequences:
-     - **Suspend** — new campaigns, event proposals and bookings are blocked; event proposals not
-       yet decided are `Cancelled`; approved future events and bookings are cancelled through
-       UC28 and UC49;
-     - **Reactivate** — the club returns to `Active` with its history intact;
-     - **Dissolve** — the decision is recorded with its effective semester: the next one in the
-       academic calendar (UC04). Events, proposals and bookings that would end after that
-       semester are cancelled at once through UC28 (A1) and UC49 (BR45). The club keeps its
-       state and operates normally until then, including creating new work.
-  4. The system audits the decision and notifies the club.
-  5. *(Dissolve only)* At the start of the next semester, the scheduler moves the club to
-     `Dissolving`: it opens no campaign, submits no event proposal and receives no new booking.
-     Work already created — including proposals still under review — runs to its end, and CMB
-     keeps its access only to close it (event reports in UC33 and UC34, budgets, periodic
-     reports).
-  6. *(Dissolve only)* At the end of that semester, before the next one starts, the scheduler
-     closes everything still open, as one step. No event is still running, because every event
-     fits in one semester (BR44) and none may end later (BR45):
-     - event proposals and booking requests not yet decided are cancelled;
-     - unfinished obligations (an unsubmitted report, an unreconciled budget) are recorded as
-       outstanding in the archive;
-     - the governance history is archived, management access is revoked, and the club becomes
-       `Dissolved`.
+- **Mục tiêu nghiệp vụ:** Kiểm soát vòng đời CLB từ một chỗ duy nhất, với lý do được lưu lại.
+- **Kích hoạt:** Một yêu cầu (UC14), tình trạng không hoạt động, kết quả một hồ sơ (UC42), hoặc
+  chính sách.
+- **Tiền điều kiện:** CLB tồn tại; người gọi có quyền về vòng đời.
+- **Dữ liệu vào:** Trạng thái đích, lý do, ngày hiệu lực, giai đoạn nếu là tạm ngừng.
+- **Luồng chính:**
+  1. Officer mở CLB và xem lại trạng thái, các nghĩa vụ và lịch sử của nó.
+  2. Officer chọn `Tạm ngừng`, `Kích hoạt lại` hoặc `Giải thể` và nhập lý do.
+  3. Hệ thống áp dụng thay đổi trạng thái và các hệ quả của nó:
+     - **Tạm ngừng** — chặn đợt tuyển mới, đề xuất sự kiện mới và booking mới; các đề xuất sự
+       kiện chưa được quyết định chuyển `Cancelled`; các sự kiện và booking tương lai đã duyệt
+       bị huỷ thông qua UC28 và UC49;
+     - **Kích hoạt lại** — CLB quay về `Active` với lịch sử giữ nguyên;
+     - **Giải thể** — quyết định được ghi nhận kèm học kỳ hiệu lực của nó: học kỳ kế tiếp trong
+       lịch học kỳ (UC04). Các sự kiện, đề xuất và booking kết thúc sau học kỳ đó bị huỷ ngay
+       lập tức thông qua UC28 (A1) và UC49 (BR45). CLB giữ nguyên trạng thái và hoạt động bình
+       thường cho tới lúc đó, kể cả việc tạo việc mới.
+  4. Hệ thống ghi audit quyết định và thông báo cho CLB.
+  5. *(Chỉ với giải thể)* Vào đầu học kỳ kế tiếp, scheduler chuyển CLB sang `Dissolving`: không
+     mở đợt tuyển nào, không nộp đề xuất sự kiện nào và không nhận booking mới nào. Công việc đã
+     được tạo — kể cả các đề xuất còn đang thẩm định — vẫn chạy tới hết, và CMB giữ quyền truy
+     cập chỉ để đóng chúng lại (báo cáo sự kiện ở UC33 và UC34, ngân sách, báo cáo định kỳ).
+  6. *(Chỉ với giải thể)* Vào cuối học kỳ đó, trước khi học kỳ tiếp theo bắt đầu, scheduler đóng
+     mọi thứ còn mở, như một bước duy nhất. Lúc đó không còn sự kiện nào đang chạy, vì mọi sự
+     kiện đều gọn trong một học kỳ (BR44) và không cái nào được kết thúc muộn hơn (BR45):
+     - các đề xuất sự kiện và yêu cầu booking chưa được quyết định đều bị huỷ;
+     - các nghĩa vụ chưa hoàn thành (một báo cáo chưa nộp, một ngân sách chưa đối soát) được ghi
+       là còn tồn đọng trong hồ sơ lưu trữ;
+     - lịch sử quản trị được lưu trữ, quyền quản lý bị thu hồi, và CLB chuyển `Dissolved`.
 
-     If any part fails, the club stays `Dissolving` and ICPDP is alerted.
-- **Alternative Flows:**
-  - **A1 From a case:** the decision is taken as the corrective action of a case (UC42) and
-    linked to it.
-- **Exceptions:**
-  - **E1** dissolution is decided while a budget is unreconciled → the officer is warned; the
-    reconciliation is due before the end of the `Dissolving` semester (step 6).
-- **Postconditions:** The club is `Suspended` or `Active`, or carries a dissolution effective next
-  semester and ends `Dissolved` after step 6; the reason and the actor are stored. On a
-  suspension or dissolution, the events and bookings step 3 names are `Cancelled` and their slots
-  freed — a system cascade (UC28 A1, UC49 A1), not a step the officer performs in UC28 or UC49.
-- **Business Rules:** BR09, BR10, BR34 — a `Suspended` club opens no campaign, submits no event
-  proposal and receives no new booking. BR44, BR45 — no event or booking outlives the
-  `Dissolving` semester.
-- **Output:** Club state or scheduled dissolution, audit record, notifications; at step 6,
-  cancelled events and bookings and the archive with its outstanding obligations.
-- **Related UC:** UC14, UC42, UC28, UC49, UC02
-- **Pain Point:** BP01
+     Nếu bất kỳ phần nào thất bại, CLB ở lại `Dissolving` và ICPDP được cảnh báo.
+- **Luồng thay thế:**
+  - **A1 Từ một hồ sơ:** quyết định được đưa ra như biện pháp khắc phục của một hồ sơ (UC42) và
+    được liên kết với hồ sơ đó.
+- **Ngoại lệ:**
+  - **E1** giải thể được quyết định trong lúc một ngân sách chưa được đối soát → officer được
+    cảnh báo; việc đối soát phải xong trước khi kết thúc học kỳ `Dissolving` (bước 6).
+- **Hậu điều kiện:** CLB ở `Suspended` hoặc `Active`, hoặc mang một quyết định giải thể có hiệu
+  lực từ học kỳ sau và kết thúc ở `Dissolved` sau bước 6; lý do và actor được lưu lại. Khi tạm
+  ngừng hoặc giải thể, các sự kiện và booking nêu ở bước 3 chuyển `Cancelled` và khung giờ của
+  chúng được giải phóng — đây là một cascade hệ thống (UC28 A1, UC49 A1), không phải một bước mà
+  officer thực hiện trong UC28 hay UC49.
+- **Quy tắc nghiệp vụ:** BR09, BR10, BR34 — một CLB `Suspended` không mở đợt tuyển nào, không
+  nộp đề xuất sự kiện nào và không nhận booking mới nào. BR44, BR45 — không sự kiện hay booking
+  nào sống lâu hơn học kỳ `Dissolving`.
+- **Đầu ra:** Trạng thái CLB hoặc lịch giải thể, bản ghi audit, các thông báo; ở bước 6, các sự
+  kiện và booking đã huỷ cùng hồ sơ lưu trữ kèm các nghĩa vụ còn tồn đọng.
+- **Use case liên quan:** UC14, UC42, UC28, UC49, UC02
+- **Pain point:** BP01
 
 ---
 
-# M04 — Recruitment & Membership
+# M04 — Tuyển thành viên và quản lý thành viên
 
-## UC16 – Create and publish a recruitment campaign
+## UC16 – Tạo và công bố đợt tuyển thành viên
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M04
-- **Business Goal:** Recruit members through one linked process instead of a standalone form.
-- **Trigger:** The club needs members for a term or a department.
-- **Preconditions:** The club is `Active` (BR01); the caller holds the recruitment permission.
-- **Input:** Positions sought, criteria, application window, capacity, selection steps, the
-  application form fields.
-- **Main Flow:**
-  1. The member creates the campaign and states the positions and criteria.
-  2. The member sets the application window and the capacity.
-  3. The member defines the selection steps and the application form.
-  4. The system validates the window against the academic calendar policy.
-  5. The member publishes → `Published`; the campaign appears in UC06.
-- **Alternative Flows:**
-  - **A1 Draft:** the campaign is saved as `Draft` and published later.
-  - **A2 Cancel:** a published campaign with no application is cancelled; with applications, it
-    is closed and the applicants are notified.
-- **Exceptions:**
-  - **E1** the club is `Suspended` → refused (BR09);
-  - **E2** an overlapping campaign for the same positions already exists → warning, and the
-    member confirms or merges.
-- **Postconditions:** The campaign is `Published` and accepts applications inside its window.
-- **Business Rules:** BR01, BR09, BR11.
-- **Output:** RecruitmentCampaign, notification to followers.
-- **Related UC:** UC06, UC17, UC18
-- **Pain Point:** BP11
+- **Mục tiêu nghiệp vụ:** Tuyển thành viên qua một quy trình có liên kết thay vì một biểu mẫu rời.
+- **Kích hoạt:** CLB cần thành viên cho một nhiệm kỳ hoặc một bộ phận.
+- **Tiền điều kiện:** CLB đang `Active` (BR01); người gọi có quyền tuyển thành viên.
+- **Dữ liệu vào:** Vị trí cần tuyển, tiêu chí, khung thời gian nhận đơn, chỉ tiêu, các vòng
+  tuyển, các trường của biểu mẫu ứng tuyển.
+- **Luồng chính:**
+  1. Thành viên tạo đợt tuyển và nêu vị trí cùng tiêu chí.
+  2. Thành viên đặt khung thời gian nhận đơn và chỉ tiêu.
+  3. Thành viên định nghĩa các vòng tuyển và biểu mẫu ứng tuyển.
+  4. Hệ thống validate khung thời gian theo chính sách lịch học kỳ.
+  5. Thành viên công bố → `Published`; đợt tuyển xuất hiện ở UC06.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** đợt tuyển được lưu ở `Draft` và công bố sau.
+  - **A2 Huỷ:** một đợt tuyển đã công bố mà chưa có đơn nào thì bị huỷ; nếu đã có đơn thì nó
+    được đóng lại và những người đã nộp được thông báo.
+- **Ngoại lệ:**
+  - **E1** CLB đang `Suspended` → từ chối (BR09);
+  - **E2** đã tồn tại một đợt tuyển chồng lấn cho cùng vị trí → cảnh báo, và thành viên xác nhận
+    hoặc gộp lại.
+- **Hậu điều kiện:** Đợt tuyển ở `Published` và nhận đơn trong khung thời gian của nó.
+- **Quy tắc nghiệp vụ:** BR01, BR09, BR11.
+- **Đầu ra:** RecruitmentCampaign, thông báo tới người theo dõi.
+- **Use case liên quan:** UC06, UC17, UC18
+- **Pain point:** BP11
 
-## UC17 – Submit a club membership application
+## UC17 – Nộp đơn ứng tuyển vào CLB
 
-- **Primary Actor:** Student
+- **Actor chính:** Student
 - **Module:** M04
-- **Business Goal:** Apply to a club through a channel that is linked to the membership it leads to.
-- **Trigger:** The student finds an open campaign in UC06.
-- **Preconditions:** The campaign is inside its application window; the student is eligible.
-- **Input:** The campaign, the position applied for, the form answers, attachments.
-- **Main Flow:**
-  1. The student picks a campaign.
-  2. The student fills in the form and attaches what the campaign asks for.
-  3. The system validates eligibility, the window (BR11) and duplication (BR12).
-  4. The student submits → `Submitted`.
-  5. The club receives the application; the student tracks it in UC02.
-- **Alternative Flows:**
-  - **A1 Draft:** the application is saved and completed before the window closes.
-  - **A2 Withdraw:** the student withdraws an application that has not been decided
-    (`Submitted`, `Screening` or `Shortlisted`) → `Withdrawn`.
-- **Exceptions:**
-  - **E1** the window has closed → refused;
-  - **E2** the student already applied to this campaign → refused (BR12);
-  - **E3** the student already holds an active membership of this club → refused (BR13);
-  - **E4** the student's membership of this club is `Banned` → refused (BR46).
-- **Postconditions:** The application is `Submitted` and visible to the club.
-- **Business Rules:** BR11, BR12, BR13, BR46.
-- **Output:** RecruitmentApplication, notification.
-- **Related UC:** UC18, UC02, UC06
-- **Pain Point:** BP11
+- **Mục tiêu nghiệp vụ:** Ứng tuyển vào một CLB qua một kênh có liên kết với tư cách thành viên
+  mà nó dẫn tới.
+- **Kích hoạt:** Sinh viên tìm thấy một đợt tuyển đang mở ở UC06.
+- **Tiền điều kiện:** Đợt tuyển đang trong khung thời gian nhận đơn; sinh viên đủ điều kiện.
+- **Dữ liệu vào:** Đợt tuyển, vị trí ứng tuyển, các câu trả lời trong biểu mẫu, tệp đính kèm.
+- **Luồng chính:**
+  1. Sinh viên chọn một đợt tuyển.
+  2. Sinh viên điền biểu mẫu và đính kèm những gì đợt tuyển yêu cầu.
+  3. Hệ thống validate điều kiện dự tuyển, khung thời gian (BR11) và việc trùng lặp (BR12).
+  4. Sinh viên nộp → `Submitted`.
+  5. CLB nhận được đơn; sinh viên theo dõi nó ở UC02.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** đơn được lưu lại và hoàn thiện trước khi khung thời gian đóng.
+  - **A2 Rút đơn:** sinh viên rút một đơn chưa có quyết định (`Submitted`, `Screening` hoặc
+    `Shortlisted`) → `Withdrawn`.
+- **Ngoại lệ:**
+  - **E1** khung thời gian đã đóng → từ chối;
+  - **E2** sinh viên đã nộp đơn vào đợt tuyển này → từ chối (BR12);
+  - **E3** sinh viên đã có một tư cách thành viên đang hiệu lực ở CLB này → từ chối (BR13);
+  - **E4** tư cách thành viên của sinh viên ở CLB này là `Banned` → từ chối (BR46).
+- **Hậu điều kiện:** Đơn ở `Submitted` và CLB nhìn thấy được.
+- **Quy tắc nghiệp vụ:** BR11, BR12, BR13, BR46.
+- **Đầu ra:** RecruitmentApplication, thông báo.
+- **Use case liên quan:** UC18, UC02, UC06
+- **Pain point:** BP11
 
-## UC18 – Screen and decide membership applications
+## UC18 – Sàng lọc và quyết định đơn ứng tuyển
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M04
-- **Business Goal:** Take a campaign's applications from `Submitted` to a decision in one
-  session, with the reasoning kept.
-- **Trigger:** The application window closes, or applications accumulate.
-- **Preconditions:** The campaign has applications; the caller holds the recruitment permission.
-- **Input:** The screening outcome per application, the decision and its reason.
-- **Main Flow:**
-  1. The member opens the campaign's applications and filters them.
-  2. The member reviews an application against the criteria → `Screening`.
-  3. The member shortlists or rejects it.
-  4. For a shortlisted candidate, an evaluation may be attached (UC19).
-  5. The member decides: `Accepted`, `Rejected` or `Waitlisted`.
-  6. The system records the decision, notifies the candidate and shows it in their UC02.
-- **Alternative Flows:**
-  - **A1 Bulk action:** several applications are rejected or shortlisted at once, with one shared
-    reason.
-  - **A2 Promote from waitlist:** a waitlisted candidate is accepted when a place frees up.
-- **Exceptions:**
-  - **E1** acceptances exceed the campaign capacity → the system blocks the surplus and offers
-    the waitlist;
-  - **E2** the candidate withdrew (UC17 A2) → the application is closed without a decision.
-- **Postconditions:** Every application carries a decision; the accepted ones are eligible for
-  UC20.
-- **Business Rules:** A rejection reason may be mandatory by policy. Screening and the decision
-  are one use case because they are one session on one entity — v1 split them into UC17 and UC19.
-- **Output:** Application decisions, notifications.
-- **Related UC:** UC17, UC19, UC20
-- **Pain Point:** BP11
+- **Mục tiêu nghiệp vụ:** Đưa toàn bộ đơn của một đợt tuyển từ `Submitted` tới quyết định trong
+  một phiên, và giữ lại lập luận.
+- **Kích hoạt:** Khung thời gian nhận đơn đóng lại, hoặc đơn dồn lại.
+- **Tiền điều kiện:** Đợt tuyển có đơn; người gọi có quyền tuyển thành viên.
+- **Dữ liệu vào:** Kết quả sàng lọc từng đơn, quyết định và lý do.
+- **Luồng chính:**
+  1. Thành viên mở danh sách đơn của đợt tuyển và lọc chúng.
+  2. Thành viên xem xét một đơn theo tiêu chí → `Screening`.
+  3. Thành viên đưa vào danh sách rút gọn hoặc từ chối đơn đó.
+  4. Với một ứng viên trong danh sách rút gọn, có thể đính kèm một bản đánh giá (UC19).
+  5. Thành viên quyết định: `Accepted`, `Rejected` hoặc `Waitlisted`.
+  6. Hệ thống ghi nhận quyết định, thông báo cho ứng viên và hiển thị nó trong UC02 của họ.
+- **Luồng thay thế:**
+  - **A1 Thao tác hàng loạt:** nhiều đơn cùng bị từ chối hoặc cùng được đưa vào danh sách rút
+    gọn, với một lý do dùng chung.
+  - **A2 Đẩy từ danh sách chờ:** một ứng viên trong danh sách chờ được nhận khi có suất trống.
+- **Ngoại lệ:**
+  - **E1** số lượng nhận vượt chỉ tiêu của đợt tuyển → hệ thống chặn phần vượt và gợi ý đưa vào
+    danh sách chờ;
+  - **E2** ứng viên đã rút đơn (UC17 A2) → đơn được đóng lại mà không có quyết định.
+- **Hậu điều kiện:** Mọi đơn đều mang một quyết định; những đơn được nhận đủ điều kiện sang UC20.
+- **Quy tắc nghiệp vụ:** Lý do từ chối có thể là bắt buộc theo chính sách. Việc sàng lọc và ra
+  quyết định là một use case vì chúng là một phiên làm việc trên cùng một thực thể — v1 đã tách
+  chúng thành UC17 và UC19.
+- **Đầu ra:** Các quyết định trên đơn, thông báo.
+- **Use case liên quan:** UC17, UC19, UC20
+- **Pain point:** BP11
 
-## UC19 – Record candidate evaluation
+## UC19 – Ghi nhận đánh giá ứng viên
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M04
-- **Business Goal:** Make the selection defensible with a structured assessment.
-- **Trigger:** A shortlisted candidate is interviewed or tested.
-- **Preconditions:** The application is `Shortlisted`.
-- **Input:** Interview result, rubric score per criterion, reviewer comment.
-- **Main Flow:**
-  1. The reviewer opens the shortlisted application.
-  2. The reviewer scores each rubric criterion and adds a comment.
-  3. The system stores the evaluation against the application and the reviewer.
-  4. The aggregate score is shown in UC18.
-- **Alternative Flows:**
-  - **A1 Several reviewers:** each reviewer files their own evaluation and the system shows the
-    spread.
-- **Exceptions:** **E1** the campaign has no rubric → a free-text assessment is recorded instead.
-- **Postconditions:** The evaluation is attached to the application and is immutable once the
-  decision is taken.
-- **Business Rules:** The rubric is configured per campaign.
-- **Output:** CandidateEvaluation.
-- **Related UC:** UC18
+- **Mục tiêu nghiệp vụ:** Làm cho việc tuyển chọn có căn cứ bằng một bản đánh giá có cấu trúc.
+- **Kích hoạt:** Một ứng viên trong danh sách rút gọn được phỏng vấn hoặc kiểm tra.
+- **Tiền điều kiện:** Đơn đang ở `Shortlisted`.
+- **Dữ liệu vào:** Kết quả phỏng vấn, điểm rubric theo từng tiêu chí, nhận xét của người đánh giá.
+- **Luồng chính:**
+  1. Người đánh giá mở đơn trong danh sách rút gọn.
+  2. Người đánh giá chấm từng tiêu chí rubric và thêm nhận xét.
+  3. Hệ thống lưu bản đánh giá gắn với đơn và với người đánh giá.
+  4. Điểm tổng hợp được hiển thị trong UC18.
+- **Luồng thay thế:**
+  - **A1 Nhiều người đánh giá:** mỗi người nộp bản đánh giá riêng và hệ thống hiển thị độ phân tán.
+- **Ngoại lệ:** **E1** đợt tuyển không có rubric → ghi nhận một bản đánh giá dạng văn bản tự do.
+- **Hậu điều kiện:** Bản đánh giá được gắn vào đơn và trở nên bất biến ngay khi quyết định được
+  đưa ra.
+- **Quy tắc nghiệp vụ:** Rubric được cấu hình theo từng đợt tuyển.
+- **Đầu ra:** CandidateEvaluation.
+- **Use case liên quan:** UC18
 
-## UC20 – Onboard accepted candidates
+## UC20 – Tiếp nhận ứng viên trúng tuyển
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M04
-- **Business Goal:** Turn an acceptance into a real membership record.
-- **Trigger:** The candidate accepts the offer, or the club confirms the acceptance.
-- **Preconditions:** The application is `Accepted`.
-- **Input:** Join date, default role, department.
-- **Main Flow:**
-  1. The member opens the accepted candidates of the campaign.
-  2. The member confirms the acceptance.
-  3. The system creates the ClubMembership with a default role and a join date → `Active`.
-  4. The application moves to `Onboarded`.
-  5. The new member gains access to UC24.
-- **Alternative Flows:**
-  - **A1 Manual onboarding:** an authorized member creates a membership without a campaign, with
-    a reason recorded (BR13).
-  - **A2 Declined offer:** the candidate declines; the application is closed and the place returns
-    to the waitlist.
-- **Exceptions:**
-  - **E1** an active membership already exists for that student and club → refused;
-  - **E2** the student's membership of this club is `Banned` → refused, including manual
-    onboarding (BR46).
-- **Postconditions:** An active ClubMembership exists; the roster count changes.
-- **Business Rules:** BR13 — a membership comes only from an accepted candidate or an authorized
-  manual onboarding; no duplicate active membership. BR46 — a `Banned` student is never onboarded
-  into that club again.
-- **Output:** ClubMembership, notification.
-- **Related UC:** UC18, UC21, UC24
-- **Pain Point:** BP02, BP11
+- **Mục tiêu nghiệp vụ:** Biến một quyết định trúng tuyển thành một bản ghi tư cách thành viên thật.
+- **Kích hoạt:** Ứng viên nhận lời mời, hoặc CLB xác nhận việc nhận.
+- **Tiền điều kiện:** Đơn đang ở `Accepted`.
+- **Dữ liệu vào:** Ngày gia nhập, vai trò mặc định, bộ phận.
+- **Luồng chính:**
+  1. Thành viên mở danh sách ứng viên đã được nhận của đợt tuyển.
+  2. Thành viên xác nhận việc nhận.
+  3. Hệ thống tạo ClubMembership với một vai trò mặc định và một ngày gia nhập → `Active`.
+  4. Đơn chuyển sang `Onboarded`.
+  5. Thành viên mới có quyền truy cập UC24.
+- **Luồng thay thế:**
+  - **A1 Tiếp nhận thủ công:** một thành viên có thẩm quyền tạo một tư cách thành viên mà không
+    qua đợt tuyển, kèm một lý do được ghi lại (BR13).
+  - **A2 Từ chối lời mời:** ứng viên từ chối; đơn được đóng lại và suất được trả về danh sách chờ.
+- **Ngoại lệ:**
+  - **E1** đã tồn tại một tư cách thành viên đang hiệu lực cho sinh viên đó và CLB đó → từ chối;
+  - **E2** tư cách thành viên của sinh viên ở CLB này là `Banned` → từ chối, kể cả với tiếp nhận
+    thủ công (BR46).
+- **Hậu điều kiện:** Tồn tại một ClubMembership đang hiệu lực; số lượng thành viên thay đổi.
+- **Quy tắc nghiệp vụ:** BR13 — một tư cách thành viên chỉ đến từ một ứng viên trúng tuyển hoặc
+  một lần tiếp nhận thủ công có thẩm quyền; không có hai tư cách thành viên đang hiệu lực trùng
+  nhau. BR46 — một sinh viên `Banned` không bao giờ được tiếp nhận lại vào CLB đó.
+- **Đầu ra:** ClubMembership, thông báo.
+- **Use case liên quan:** UC18, UC21, UC24
+- **Pain point:** BP02, BP11
 
-## UC21 – Manage membership status
+## UC21 – Quản lý trạng thái thành viên
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M04
-- **Business Goal:** Keep the roster true at any point in time, including ending a membership.
-- **Trigger:** A semester begins, a member stops participating, is forced out, or asked to leave
+- **Mục tiêu nghiệp vụ:** Giữ danh sách thành viên đúng thực tế tại mọi thời điểm, kể cả khi kết
+  thúc một tư cách thành viên.
+- **Kích hoạt:** Một học kỳ bắt đầu, một thành viên ngừng tham gia, bị buộc rời đi, hoặc xin rời
   (UC22).
-- **Preconditions:** The membership exists; the caller holds the membership permission.
-- **Input:** The new status, the effective date, the reason for a ban.
-- **Main Flow:**
-  1. The member opens the roster.
-  2. The member changes a membership's status:
-     - `Active` ⇄ `Inactive` — the member stopped participating, or resumes;
-     - `Banned` — the club forces the member out.
-  3. The member enters the effective date and, for a ban, a mandatory reason.
-  4. The system applies the change, revokes any position held (UC23) and audits it.
-  5. The affected member is notified and sees the change in UC24.
-- **Alternative Flows:**
-  - **A1 Execute a withdrawal:** the member accepts the request the student filed in UC22; the
-    membership moves to `Left` and links to the request.
-  - **A2 Semester re-registration:** at the start of each semester of the academic calendar (UC04),
-    the member confirms which members stay active. The system moves every unconfirmed `Active`
-    membership to `Inactive` and every confirmed `Inactive` one to `Active`, effective from the
-    semester start.
-- **Exceptions:**
-  - **E1** the member holds a confirmed board position → the membership cannot move to
-    `Inactive`, `Left` or `Banned` until UC10/UC11 replaces them; in A2 a board member counts as
-    confirmed;
-  - **E2** a backdated effective date would change an already finalized attendance or evaluation
-    → refused.
-- **Postconditions:** The membership carries the new status with its effective date, and the
-  history is readable.
-- **Business Rules:** Every change carries an effective date; a ban is always attributable.
-  `Left` and `Banned` are final — a student who `Left` returns through a new membership (UC20);
-  a `Banned` student cannot (BR46).
-  Ending a membership lives here whoever initiated it — this is what removes v1 UC23's two
-  primary actors.
-- **Output:** Membership status history, audit record, notification.
-- **Related UC:** UC20, UC22, UC23
-- **Pain Point:** BP02
+- **Tiền điều kiện:** Tư cách thành viên tồn tại; người gọi có quyền quản lý thành viên.
+- **Dữ liệu vào:** Trạng thái mới, ngày hiệu lực, lý do khi cấm.
+- **Luồng chính:**
+  1. Thành viên mở danh sách thành viên.
+  2. Thành viên đổi trạng thái của một tư cách thành viên:
+     - `Active` ⇄ `Inactive` — thành viên ngừng tham gia, hoặc tham gia trở lại;
+     - `Banned` — CLB buộc thành viên rời đi.
+  3. Thành viên nhập ngày hiệu lực và, với lệnh cấm, một lý do bắt buộc.
+  4. Hệ thống áp dụng thay đổi, thu hồi mọi chức vụ đang giữ (UC23) và ghi audit.
+  5. Thành viên bị ảnh hưởng được thông báo và thấy thay đổi đó trong UC24.
+- **Luồng thay thế:**
+  - **A1 Thực thi một yêu cầu rời CLB:** thành viên chấp nhận yêu cầu mà sinh viên đã nộp ở
+    UC22; tư cách thành viên chuyển sang `Left` và liên kết với yêu cầu đó.
+  - **A2 Đăng ký lại theo học kỳ:** vào đầu mỗi học kỳ của lịch học kỳ (UC04), thành viên xác
+    nhận ai còn hoạt động. Hệ thống chuyển mọi tư cách `Active` chưa được xác nhận sang
+    `Inactive` và mọi tư cách `Inactive` được xác nhận sang `Active`, hiệu lực từ đầu học kỳ.
+- **Ngoại lệ:**
+  - **E1** thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận → tư cách thành viên không thể
+    chuyển sang `Inactive`, `Left` hay `Banned` cho tới khi UC10/UC11 thay người; trong A2, một
+    thành viên ban chủ nhiệm được tính là đã xác nhận;
+  - **E2** một ngày hiệu lực lùi về quá khứ sẽ làm thay đổi một bảng điểm danh hoặc một kỳ đánh
+    giá đã chốt → từ chối.
+- **Hậu điều kiện:** Tư cách thành viên mang trạng thái mới kèm ngày hiệu lực, và lịch sử đọc được.
+- **Quy tắc nghiệp vụ:** Mọi thay đổi đều mang một ngày hiệu lực; một lệnh cấm luôn quy được
+  trách nhiệm. `Left` và `Banned` là trạng thái cuối — một sinh viên đã `Left` quay lại bằng một
+  tư cách thành viên mới (UC20); một sinh viên `Banned` thì không (BR46).
+  Việc kết thúc một tư cách thành viên nằm ở đây bất kể ai khởi xướng — đây chính là thứ loại bỏ
+  vấn đề hai actor chính của UC23 trong v1.
+- **Đầu ra:** Lịch sử trạng thái thành viên, bản ghi audit, thông báo.
+- **Use case liên quan:** UC20, UC22, UC23
+- **Pain point:** BP02
 
-## UC22 – Request to leave a club
+## UC22 – Xin rời CLB
 
-- **Primary Actor:** Student
+- **Actor chính:** Student
 - **Module:** M04
-- **Business Goal:** Let a member end their membership on the record instead of disappearing.
-- **Trigger:** The member no longer wants to take part.
-- **Preconditions:** An `Active` or `Inactive` membership.
-- **Input:** Reason, requested effective date.
-- **Main Flow:**
-  1. The student opens the membership in UC24.
-  2. The student requests withdrawal with a reason and a date.
-  3. The club is notified and executes it in UC21.
-  4. The student tracks the request in UC02.
-- **Exceptions:** **E1** the student holds a confirmed board position → the request is accepted
-  but takes effect only once UC10/UC11 replaces them.
-- **Postconditions:** A withdrawal request is pending; the membership changes only in UC21.
-- **Business Rules:** The student initiates, the club executes — one actor per use case.
-- **Output:** Withdrawal request, notification.
-- **Related UC:** UC21, UC24
-- **Pain Point:** BP02
+- **Mục tiêu nghiệp vụ:** Cho một thành viên kết thúc tư cách thành viên của mình một cách có
+  ghi nhận thay vì biến mất.
+- **Kích hoạt:** Thành viên không còn muốn tham gia.
+- **Tiền điều kiện:** Một tư cách thành viên `Active` hoặc `Inactive`.
+- **Dữ liệu vào:** Lý do, ngày hiệu lực đề nghị.
+- **Luồng chính:**
+  1. Sinh viên mở tư cách thành viên trong UC24.
+  2. Sinh viên gửi yêu cầu rời CLB kèm lý do và ngày.
+  3. CLB được thông báo và thực thi nó ở UC21.
+  4. Sinh viên theo dõi yêu cầu ở UC02.
+- **Ngoại lệ:** **E1** sinh viên đang giữ một ghế ban chủ nhiệm đã xác nhận → yêu cầu được nhận
+  nhưng chỉ có hiệu lực khi UC10/UC11 thay người.
+- **Hậu điều kiện:** Một yêu cầu rời CLB đang chờ; tư cách thành viên chỉ thay đổi ở UC21.
+- **Quy tắc nghiệp vụ:** Sinh viên khởi xướng, CLB thực thi — mỗi use case một actor.
+- **Đầu ra:** Yêu cầu rời CLB, thông báo.
+- **Use case liên quan:** UC21, UC24
+- **Pain point:** BP02
 
-## UC23 – Assign positions inside the club
+## UC23 – Phân công chức vụ trong CLB
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M03 / M04
-- **Business Goal:** Give internal authority to members below board level.
-- **Trigger:** The club fills a department head, treasurer or coordinator seat.
-- **Preconditions:** The member is `Active`; the position is defined in UC09.
-- **Input:** Member, position, effective period.
-- **Main Flow:**
-  1. The member opens the organization structure.
-  2. The member assigns a position to an active member.
-  3. The system applies the permissions attached to that position.
-  4. The change is audited and visible in UC24.
-- **Alternative Flows:**
-  - **A1 Sensitive position:** a position marked sensitive is submitted for confirmation through
-    UC11 before it takes effect.
-- **Exceptions:** **E1** the member is not `Active` → refused; **E2** the position is already
-  occupied and is single-holder → refused.
-- **Postconditions:** The member holds the position and its permissions.
-- **Business Rules:** A position exists only if UC09 defined it; a sensitive position requires
-  UC11.
-- **Output:** Position assignment, permissions, audit record.
-- **Related UC:** UC09, UC11, UC21
+- **Mục tiêu nghiệp vụ:** Trao thẩm quyền nội bộ cho các thành viên dưới cấp ban chủ nhiệm.
+- **Kích hoạt:** CLB bổ nhiệm trưởng bộ phận, thủ quỹ hoặc điều phối viên.
+- **Tiền điều kiện:** Thành viên đang `Active`; chức vụ đã được định nghĩa ở UC09.
+- **Dữ liệu vào:** Thành viên, chức vụ, khoảng thời gian hiệu lực.
+- **Luồng chính:**
+  1. Thành viên mở cơ cấu tổ chức.
+  2. Thành viên gán một chức vụ cho một thành viên đang hoạt động.
+  3. Hệ thống áp dụng các quyền gắn với chức vụ đó.
+  4. Thay đổi được ghi audit và hiển thị trong UC24.
+- **Luồng thay thế:**
+  - **A1 Chức vụ nhạy cảm:** một chức vụ được đánh dấu nhạy cảm sẽ được đưa qua UC11 để xác nhận
+    trước khi có hiệu lực.
+- **Ngoại lệ:** **E1** thành viên không ở trạng thái `Active` → từ chối; **E2** chức vụ đã có
+  người giữ và chỉ cho phép một người → từ chối.
+- **Hậu điều kiện:** Thành viên giữ chức vụ đó và các quyền của nó.
+- **Quy tắc nghiệp vụ:** Một chức vụ chỉ tồn tại nếu UC09 đã định nghĩa nó; một chức vụ nhạy cảm
+  cần tới UC11.
+- **Đầu ra:** Bản gán chức vụ, các quyền, bản ghi audit.
+- **Use case liên quan:** UC09, UC11, UC21
 
-## UC24 – Use my member workspace
+## UC24 – Sử dụng không gian thành viên của tôi
 
-- **Primary Actor:** Student (as a member)
-- **Module:** M04 (reads M05, M06, M07, M12)
-- **Business Goal:** Give membership a reason to exist inside the system — v1 gave a member
-  exactly the same use cases as a non-member.
-- **Trigger:** The member opens a club they belong to.
-- **Preconditions:** An active membership in that club.
-- **Main Flow:**
-  1. The student opens a club where they hold a membership.
-  2. The system shows: the membership record and position; the club roster and board; the club's
-     upcoming events with the student's registration state; their attendance history; their
-     outstanding obligations — feedback not yet submitted, a pending withdrawal.
-  3. The screen links to UC29 (register), UC31 (check in), UC50 (feedback) and UC22 (leave).
-     These are UI navigation only: each is a standalone use case of the Student, not an
-     «extend» of UC24.
-- **Alternative Flows:**
-  - **A1 Several clubs:** the student switches between the clubs they belong to.
-- **Exceptions:** **E1** the membership ends → access drops back to the public view of UC06.
-- **Postconditions:** None; read-only.
-- **Business Rules:** Scoped to clubs with an active membership. It introduces no new entity and
-  no new data — every field is already produced by another use case. Internal messaging, chat and
-  file sharing stay out of scope (§5.2).
-- **Output:** None persisted.
-- **Related UC:** UC20, UC22, UC29, UC31, UC50
-- **Pain Point:** BP02
+- **Actor chính:** Student (với tư cách thành viên)
+- **Module:** M04 (đọc M05, M06, M07, M12)
+- **Mục tiêu nghiệp vụ:** Cho tư cách thành viên một lý do tồn tại bên trong hệ thống — v1 cho
+  một thành viên đúng những use case y như một người không phải thành viên.
+- **Kích hoạt:** Thành viên mở một CLB mà mình thuộc về.
+- **Tiền điều kiện:** Có một tư cách thành viên đang hiệu lực ở CLB đó.
+- **Luồng chính:**
+  1. Sinh viên mở một CLB mà mình có tư cách thành viên.
+  2. Hệ thống hiển thị: bản ghi tư cách thành viên và chức vụ; danh sách thành viên và ban chủ
+     nhiệm của CLB; các sự kiện sắp tới của CLB kèm trạng thái đăng ký của sinh viên; lịch sử
+     điểm danh của họ; các nghĩa vụ còn treo — phản hồi chưa gửi, một yêu cầu rời đang chờ.
+  3. Màn hình có liên kết tới UC29 (đăng ký), UC31 (check-in), UC50 (phản hồi) và UC22 (xin rời).
+     Đây chỉ là điều hướng giao diện: mỗi cái là một use case độc lập của Student, không phải
+     quan hệ «extend» của UC24.
+- **Luồng thay thế:**
+  - **A1 Nhiều CLB:** sinh viên chuyển qua lại giữa các CLB mình thuộc về.
+- **Ngoại lệ:** **E1** tư cách thành viên kết thúc → quyền truy cập hạ về chế độ công khai của UC06.
+- **Hậu điều kiện:** Không có; chỉ đọc.
+- **Quy tắc nghiệp vụ:** Giới hạn trong các CLB có tư cách thành viên đang hiệu lực. Nó không
+  tạo thực thể mới và không tạo dữ liệu mới — mọi trường đều đã do một use case khác sinh ra.
+  Nhắn tin nội bộ, chat và chia sẻ file nằm ngoài phạm vi (§5.2).
+- **Đầu ra:** Không ghi dữ liệu.
+- **Use case liên quan:** UC20, UC22, UC29, UC31, UC50
+- **Pain point:** BP02
 
 ---
 
-# M05 — Event & Activity
+# M05 — Sự kiện và hoạt động
 
-## UC25 – Submit an event proposal
+## UC25 – Nộp đề xuất tổ chức sự kiện
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M05
-- **Business Goal:** Request permission to hold an event through one traceable workflow.
-- **Trigger:** The club plans an activity.
-- **Preconditions:** The club is `Active` (BR10) and the caller holds the event permission.
-- **Input:** Objective, time, venue, audience, capacity, plan, risk category, budget estimate,
-  facility needs.
-- **Main Flow:**
-  1. The member enters the proposal.
-  2. The system validates completeness and the lead time required by policy.
-  3. The system evaluates the conflict rule BR15 and shows `No Conflict`, `Warning` or
+- **Mục tiêu nghiệp vụ:** Xin phép tổ chức một sự kiện qua một workflow duy nhất, truy vết được.
+- **Kích hoạt:** CLB lên kế hoạch một hoạt động.
+- **Tiền điều kiện:** CLB đang `Active` (BR10) và người gọi có quyền về sự kiện.
+- **Dữ liệu vào:** Mục tiêu, thời gian, địa điểm, đối tượng, sức chứa, kế hoạch, mức rủi ro, dự
+  toán ngân sách, nhu cầu cơ sở vật chất.
+- **Luồng chính:**
+  1. Thành viên nhập nội dung đề xuất.
+  2. Hệ thống validate tính đầy đủ và thời gian báo trước mà chính sách yêu cầu.
+  3. Hệ thống đánh giá quy tắc xung đột BR15 và hiển thị `No Conflict`, `Warning` hoặc
      `Blocking Conflict`.
-  4. The member optionally attaches a property booking request (UC47).
-  5. The member submits → `Pending Approval`.
-  6. ICPDP receives a review task.
-- **Alternative Flows:**
-  - **A1 Draft:** the proposal is saved as `Draft`.
-  - **A2 Resubmit after revision (v1 UC28):** from `Revision Requested`, the member edits and
-    resubmits; the system creates a **new revision** and returns the proposal to `Pending Approval`.
-    The previous revision is never overwritten.
-  - **A3 Recurring activity:** a series is submitted as one proposal with its occurrences listed.
-- **Exceptions:**
-  - **E1** a blocking conflict while policy forbids overlap → submission refused;
-  - **E2** a mandatory report is overdue and BR21 enforcement is on → refused, with the
-    obligation named;
-  - **E3** the club is `Suspended` → refused (BR10);
-  - **E4** the event does not start and end within one semester → refused (BR44);
-  - **E5** the club has a recorded dissolution and the event ends after its `Dissolving`
-    semester → refused (BR45).
-- **Postconditions:** The proposal is `Pending Approval` with an immutable revision; a review
-  task exists.
-- **Business Rules:** BR10, BR15, BR21, BR44, BR45. Conflict detection is a rule evaluated here, not a use
-  case (v1 counted it as UC25 with `System` as its actor).
-- **Output:** EventProposal, revision, ApprovalTask, optional PropertyBooking request.
-- **Related UC:** UC26, UC47, UC04
-- **Pain Point:** BP05, BP06
+  4. Thành viên có thể đính kèm một yêu cầu đặt cơ sở vật chất (UC47).
+  5. Thành viên nộp → `Pending Approval`.
+  6. ICPDP nhận một review task.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** đề xuất được lưu ở `Draft`.
+  - **A2 Nộp lại sau khi bị yêu cầu chỉnh sửa (UC28 của v1):** từ `Revision Requested`, thành
+    viên sửa và nộp lại; hệ thống tạo một **bản sửa mới** và đưa đề xuất về `Pending Approval`.
+    Bản sửa trước không bao giờ bị ghi đè.
+  - **A3 Hoạt động định kỳ:** một chuỗi hoạt động được nộp như một đề xuất duy nhất, liệt kê các
+    lần diễn ra của nó.
+- **Ngoại lệ:**
+  - **E1** có xung đột chặn trong khi chính sách cấm chồng lịch → từ chối nộp;
+  - **E2** một báo cáo bắt buộc đã quá hạn và công tắc cưỡng chế BR21 đang bật → từ chối, kèm
+    tên nghĩa vụ đó;
+  - **E3** CLB đang `Suspended` → từ chối (BR10);
+  - **E4** sự kiện không bắt đầu và kết thúc trong cùng một học kỳ → từ chối (BR44);
+  - **E5** CLB đã có quyết định giải thể và sự kiện kết thúc sau học kỳ `Dissolving` của nó →
+    từ chối (BR45).
+- **Hậu điều kiện:** Đề xuất ở `Pending Approval` với một bản sửa bất biến; tồn tại một review task.
+- **Quy tắc nghiệp vụ:** BR10, BR15, BR21, BR44, BR45. Phát hiện xung đột là một quy tắc được
+  đánh giá tại đây, không phải một use case (v1 từng đếm nó thành UC25 với actor là `System`).
+- **Đầu ra:** EventProposal, bản sửa, ApprovalTask, yêu cầu PropertyBooking nếu có.
+- **Use case liên quan:** UC26, UC47, UC04
+- **Pain point:** BP05, BP06
 
-## UC26 – Assess and decide the event proposal
+## UC26 – Thẩm định và quyết định đề xuất sự kiện
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M05
-- **Business Goal:** One review session ending in one of three outcomes, with the university's
-  reasoning on the record.
-- **Trigger:** A review task from UC25.
-- **Preconditions:** The proposal is `Pending Approval`.
-- **Input:** The review note, the structured comments, the decision and its reason.
-- **Main Flow:**
-  1. The officer opens the proposal → `Under Review`.
-  2. The officer reviews compliance, the venue, the time, the budget estimate, the risk
-     category, the club's overdue obligations and the attached booking request.
-  3. The officer records the review note, including any Facility, Security or Finance opinion
-     gathered outside the system.
-  4. The officer chooses one outcome:
-     - **Request revision** — structured comments are mandatory → `Revision Requested`;
-     - **Approve** → `Approved`;
-     - **Reject** — a reason is mandatory → `Rejected`.
-  5. The system audits the decision and notifies the club.
-- **Alternative Flows:**
-  - **A1 Second level:** a high-risk or large event routes to a second ICPDP level per
-    UC05 and BR16.
-  - **A2 Approve with conditions:** the approval carries conditions that the club must meet; they
-    are checked again in UC34.
-- **Exceptions:**
-  - **E1** the club is suspended between submission and decision → the proposal is `Cancelled`
-    by UC15;
-  - **E2** the revision deadline passes → the scheduler moves the proposal to `Expired`; the club
-    must submit a new proposal.
-- **Postconditions:** The proposal is `Revision Requested`, `Approved` or `Rejected`; only an
-  approved event can be published in UC27.
-- **Business Rules:** BR05, BR14, BR31. Approving a proposal that carries a booking request does
-  **not** approve the booking — UC48 decides it separately.
-- **Output:** ApprovalDecision, audit record, notification.
-- **Related UC:** UC25, UC27, UC48, UC05
-- **Pain Point:** BP05, BP15
+- **Mục tiêu nghiệp vụ:** Một phiên thẩm định duy nhất kết thúc bằng một trong ba kết quả, với
+  lập luận của nhà trường được lưu lại.
+- **Kích hoạt:** Một review task từ UC25.
+- **Tiền điều kiện:** Đề xuất đang ở `Pending Approval`.
+- **Dữ liệu vào:** Ghi chú thẩm định, các nhận xét có cấu trúc, quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở đề xuất → `Under Review`.
+  2. Officer xem xét mức độ tuân thủ, địa điểm, thời gian, dự toán ngân sách, mức rủi ro, các
+     nghĩa vụ quá hạn của CLB và yêu cầu booking đính kèm.
+  3. Officer ghi lại ghi chú thẩm định, gồm cả ý kiến của Cơ sở vật chất, An ninh hay Tài chính
+     lấy từ ngoài hệ thống.
+  4. Officer chọn một kết quả:
+     - **Yêu cầu chỉnh sửa** — bắt buộc nhận xét có cấu trúc → `Revision Requested`;
+     - **Phê duyệt** → `Approved`;
+     - **Từ chối** — bắt buộc có lý do → `Rejected`.
+  5. Hệ thống ghi audit quyết định và thông báo cho CLB.
+- **Luồng thay thế:**
+  - **A1 Cấp thứ hai:** một sự kiện rủi ro cao hoặc quy mô lớn được định tuyến lên cấp ICPDP thứ
+    hai theo UC05 và BR16.
+  - **A2 Phê duyệt kèm điều kiện:** việc phê duyệt mang theo các điều kiện mà CLB phải đáp ứng;
+    chúng được kiểm tra lại ở UC34.
+- **Ngoại lệ:**
+  - **E1** CLB bị tạm ngừng giữa lúc nộp và lúc quyết định → đề xuất chuyển `Cancelled` bởi UC15;
+  - **E2** hết deadline chỉnh sửa → scheduler chuyển đề xuất sang `Expired`; CLB phải nộp một đề
+    xuất mới.
+- **Hậu điều kiện:** Đề xuất ở `Revision Requested`, `Approved` hoặc `Rejected`; chỉ một sự kiện
+  đã duyệt mới công bố được ở UC27.
+- **Quy tắc nghiệp vụ:** BR05, BR14, BR31. Việc duyệt một đề xuất có kèm yêu cầu booking
+  **không** đồng nghĩa duyệt booking đó — UC48 quyết định nó riêng.
+- **Đầu ra:** ApprovalDecision, bản ghi audit, thông báo.
+- **Use case liên quan:** UC25, UC27, UC48, UC05
+- **Pain point:** BP05, BP15
 
-## UC27 – Publish the event and open registration
+## UC27 – Công bố sự kiện và mở đăng ký
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M05
-- **Business Goal:** Let the audience see the event and take part.
-- **Trigger:** The event is approved.
-- **Preconditions:** The event is `Approved` (BR14).
-- **Input:** Registration window, public description, audience scope, capacity.
-- **Main Flow:**
-  1. The member opens the approved event.
-  2. The member sets the registration window, the audience scope and the public details.
-  3. The member publishes → `Upcoming`.
-  4. The event appears in UC06 and UC24; the registration window is enforced in UC29.
-- **Alternative Flows:**
-  - **A1 Members-only event:** the audience scope is limited to club members, and only UC24 shows
-    it.
-  - **A2 No registration:** an open-attendance event is published without a registration window;
-    check-in still applies.
-- **Exceptions:** **E1** the event is not `Approved` → refused (BR14); **E2** the registration
-  window ends after the event starts → refused.
-- **Postconditions:** The event is `Upcoming` and publicly visible.
-- **Business Rules:** BR14, BR17. The scheduler moves the event to `Ongoing` and `Completed` from
-  its own times (model §7).
-- **Output:** Published Event, notifications.
-- **Related UC:** UC26, UC29, UC06, UC24
-- **Pain Point:** BP05
+- **Mục tiêu nghiệp vụ:** Cho khán giả thấy sự kiện và tham gia được.
+- **Kích hoạt:** Sự kiện đã được phê duyệt.
+- **Tiền điều kiện:** Sự kiện đang `Approved` (BR14).
+- **Dữ liệu vào:** Khung thời gian đăng ký, mô tả công khai, phạm vi đối tượng, sức chứa.
+- **Luồng chính:**
+  1. Thành viên mở sự kiện đã được duyệt.
+  2. Thành viên đặt khung thời gian đăng ký, phạm vi đối tượng và thông tin công khai.
+  3. Thành viên công bố → `Upcoming`.
+  4. Sự kiện xuất hiện ở UC06 và UC24; khung thời gian đăng ký được cưỡng chế ở UC29.
+- **Luồng thay thế:**
+  - **A1 Sự kiện nội bộ:** phạm vi đối tượng giới hạn trong thành viên CLB, và chỉ UC24 hiển thị nó.
+  - **A2 Không cần đăng ký:** một sự kiện mở tự do được công bố mà không có khung thời gian đăng
+    ký; việc check-in vẫn áp dụng.
+- **Ngoại lệ:** **E1** sự kiện chưa `Approved` → từ chối (BR14); **E2** khung thời gian đăng ký
+  kết thúc sau khi sự kiện bắt đầu → từ chối.
+- **Hậu điều kiện:** Sự kiện ở `Upcoming` và hiển thị công khai.
+- **Quy tắc nghiệp vụ:** BR14, BR17. Scheduler chuyển sự kiện sang `Ongoing` và `Completed` theo
+  chính mốc giờ của nó (§7 của tài liệu mô hình).
+- **Đầu ra:** Event đã công bố, các thông báo.
+- **Use case liên quan:** UC26, UC29, UC06, UC24
+- **Pain point:** BP05
 
-## UC28 – Cancel or reschedule an event
+## UC28 – Huỷ hoặc đổi lịch sự kiện
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M05
-- **Business Goal:** Change an approved event without losing its trail or leaking a booked room.
-- **Trigger:** The club cannot hold the event as approved.
-- **Preconditions:** The event is `Approved`, `Upcoming` or `Ongoing`.
-- **Input:** The reason; for a reschedule, the new time and venue.
-- **Main Flow:**
-  1. The member opens the event and chooses `Cancel` or `Reschedule`.
-  2. The member enters the reason.
-  3. For a reschedule, the system re-evaluates BR15 and, where policy requires it, returns the
-     event to UC26 for a fresh decision.
-  4. The system updates or releases the linked property booking (UC49).
-  5. The system notifies every registrant.
-  6. The system recomputes the report and budget obligations.
-- **Alternative Flows:**
-  - **A1 Cancelled by a lifecycle decision:** when UC15 (suspension, dissolution) or UC42 (case
-    outcome) requires it, the system cancels the event without a CMB step, records that decision
-    as the reason and links to it, then runs steps 4–6. E2 does not apply. ICPDP is not an actor
-    of UC28; this is what removes v1 UC35's second primary actor.
-- **Exceptions:**
-  - **E1** the event already has finalized attendance → cancellation is refused; the event is
-    closed through UC33 and UC34 instead;
-  - **E2** the cancellation falls inside the configured notice period → it is recorded as a
-    compliance signal for UC42.
-- **Postconditions:** The event is `Cancelled`, or rescheduled with its booking and registrants
-  updated; the reason is audited.
-- **Business Rules:** BR35 — cancelling an event releases its approved booking. Open decision D4
-  governs whether a reschedule needs a fresh UC26 decision.
-- **Output:** Event state, released booking, notifications, audit record.
-- **Related UC:** UC27, UC49, UC42, UC15
+- **Mục tiêu nghiệp vụ:** Thay đổi một sự kiện đã duyệt mà không mất vết và không để rò rỉ một
+  căn phòng đã đặt.
+- **Kích hoạt:** CLB không thể tổ chức sự kiện như đã được duyệt.
+- **Tiền điều kiện:** Sự kiện đang `Approved`, `Upcoming` hoặc `Ongoing`.
+- **Dữ liệu vào:** Lý do; với việc đổi lịch là thời gian và địa điểm mới.
+- **Luồng chính:**
+  1. Thành viên mở sự kiện và chọn `Huỷ` hoặc `Đổi lịch`.
+  2. Thành viên nhập lý do.
+  3. Với việc đổi lịch, hệ thống đánh giá lại BR15 và, ở nơi chính sách yêu cầu, đưa sự kiện
+     quay lại UC26 để có một quyết định mới.
+  4. Hệ thống cập nhật hoặc giải phóng booking liên quan (UC49).
+  5. Hệ thống thông báo cho mọi người đã đăng ký.
+  6. Hệ thống tính lại các nghĩa vụ báo cáo và ngân sách.
+- **Luồng thay thế:**
+  - **A1 Bị huỷ bởi một quyết định vòng đời:** khi UC15 (tạm ngừng, giải thể) hoặc UC42 (kết quả
+    hồ sơ) yêu cầu, hệ thống huỷ sự kiện mà không cần một bước của CMB, ghi quyết định đó làm lý
+    do và liên kết tới nó, rồi chạy các bước 4–6. Ngoại lệ E2 không áp dụng. ICPDP không phải
+    actor của UC28; đây chính là thứ loại bỏ actor chính thứ hai của UC35 trong v1.
+- **Ngoại lệ:**
+  - **E1** sự kiện đã có bảng điểm danh được chốt → từ chối huỷ; sự kiện được đóng lại qua UC33
+    và UC34;
+  - **E2** việc huỷ rơi vào thời hạn báo trước cấu hình được → được ghi nhận là một tín hiệu
+    tuân thủ cho UC42.
+- **Hậu điều kiện:** Sự kiện ở `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký
+  được cập nhật; lý do được ghi audit.
+- **Quy tắc nghiệp vụ:** BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. Quyết
+  định còn mở D4 chi phối việc một lần đổi lịch có cần một quyết định mới từ UC26 hay không.
+- **Đầu ra:** Trạng thái sự kiện, booking được giải phóng, các thông báo, bản ghi audit.
+- **Use case liên quan:** UC27, UC49, UC42, UC15
 
 ---
 
-# M06 — Registration & Attendance
+# M06 — Đăng ký và điểm danh
 
-## UC29 – Register for an event
+## UC29 – Đăng ký tham gia sự kiện
 
-- **Primary Actor:** Student
+- **Actor chính:** Student
 - **Module:** M06
-- **Business Goal:** Record participants against the event itself, not in a separate form.
-- **Trigger:** The student finds a published event in UC06 or UC24.
-- **Preconditions:** The event is `Upcoming` and inside its registration window.
-- **Input:** The event, and any answer the event's registration form asks for.
-- **Main Flow:**
-  1. The student opens the event and chooses to register.
-  2. The system validates the window, eligibility, duplication and capacity.
-  3. The system creates the registration → `Confirmed`.
-  4. The student sees it in UC02 and UC24 and receives a confirmation.
-- **Alternative Flows:**
-  - **A1 Waitlist:** the event is full and the waitlist is enabled → `Waitlisted`. Promotion
-    from the waitlist is handled later in UC30.
-  - **A2 Cancel registration:** the student cancels before the event starts, which frees the
-    place.
-- **Exceptions:**
-  - **E1** the window has closed → refused;
-  - **E2** capacity is reached and no waitlist exists → registration closes and the student is
-    told;
-  - **E3** the student is not in the event's audience scope → refused.
-- **Postconditions:** A registration exists in `Confirmed` or `Waitlisted`.
-- **Business Rules:** BR17 — confirmed registrations never exceed capacity unless policy allows
-  overbooking. When the event has no waitlist, reaching capacity closes registration.
-- **Output:** EventRegistration, notification.
-- **Related UC:** UC27, UC30, UC31
-- **Pain Point:** BP07
+- **Mục tiêu nghiệp vụ:** Ghi nhận người tham gia ngay trên chính hồ sơ sự kiện, không phải trên
+  một biểu mẫu riêng.
+- **Kích hoạt:** Sinh viên tìm thấy một sự kiện đã công bố ở UC06 hoặc UC24.
+- **Tiền điều kiện:** Sự kiện đang `Upcoming` và nằm trong khung thời gian đăng ký.
+- **Dữ liệu vào:** Sự kiện, và mọi câu trả lời mà biểu mẫu đăng ký của sự kiện yêu cầu.
+- **Luồng chính:**
+  1. Sinh viên mở sự kiện và chọn đăng ký.
+  2. Hệ thống validate khung thời gian, điều kiện tham gia, việc trùng lặp và sức chứa.
+  3. Hệ thống tạo bản đăng ký → `Confirmed`.
+  4. Sinh viên thấy nó ở UC02 và UC24 và nhận được xác nhận.
+- **Luồng thay thế:**
+  - **A1 Danh sách chờ:** sự kiện đã đầy và danh sách chờ được bật → `Waitlisted`. Việc đẩy lên
+    từ danh sách chờ được xử lý sau ở UC30.
+  - **A2 Huỷ đăng ký:** sinh viên huỷ trước khi sự kiện bắt đầu, và suất đó được giải phóng.
+- **Ngoại lệ:**
+  - **E1** khung thời gian đã đóng → từ chối;
+  - **E2** đã đạt sức chứa và không có danh sách chờ → đăng ký đóng lại và sinh viên được thông báo;
+  - **E3** sinh viên không thuộc phạm vi đối tượng của sự kiện → từ chối.
+- **Hậu điều kiện:** Tồn tại một bản đăng ký ở `Confirmed` hoặc `Waitlisted`.
+- **Quy tắc nghiệp vụ:** BR17 — số đăng ký đã xác nhận không bao giờ vượt sức chứa trừ khi chính
+  sách cho phép overbooking. Khi sự kiện không có danh sách chờ, đạt sức chứa nghĩa là đóng đăng ký.
+- **Đầu ra:** EventRegistration, thông báo.
+- **Use case liên quan:** UC27, UC30, UC31
+- **Pain point:** BP07
 
-## UC30 – Manage capacity and the waitlist
+## UC30 – Quản lý sức chứa và danh sách chờ
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M06
-- **Business Goal:** Fill the room when registrations churn.
-- **Trigger:** A place frees up, or the club changes the capacity.
-- **Preconditions:** The event is `Upcoming`, inside its registration window, and has a waitlist.
-- **Main Flow:**
-  1. The member opens the event's registration list.
-  2. The member adjusts the capacity or promotes a waitlisted student.
-  3. The system applies the configured promotion policy and notifies those affected.
-- **Alternative Flows:**
-  - **A1 Automatic promotion:** a cancellation promotes the first waitlisted student without
-    manual action.
-- **Exceptions:** **E1** the capacity is reduced below the confirmed count → the system refuses
-  and names the registrations that would have to be cancelled.
-- **Postconditions:** The confirmed list matches the capacity; the waitlist order is preserved.
-- **Business Rules:** BR17. Promotion follows the configured policy, never manual preference
-  without a record.
-- **Output:** Registration states, notifications.
-- **Related UC:** UC29
+- **Mục tiêu nghiệp vụ:** Lấp đầy chỗ khi danh sách đăng ký biến động.
+- **Kích hoạt:** Một suất trống ra, hoặc CLB thay đổi sức chứa.
+- **Tiền điều kiện:** Sự kiện đang `Upcoming`, trong khung thời gian đăng ký, và có danh sách chờ.
+- **Luồng chính:**
+  1. Thành viên mở danh sách đăng ký của sự kiện.
+  2. Thành viên điều chỉnh sức chứa hoặc đẩy một sinh viên từ danh sách chờ lên.
+  3. Hệ thống áp dụng chính sách đẩy lên đã cấu hình và thông báo cho những người bị ảnh hưởng.
+- **Luồng thay thế:**
+  - **A1 Đẩy lên tự động:** một lần huỷ sẽ đẩy sinh viên đầu danh sách chờ lên mà không cần thao
+    tác thủ công.
+- **Ngoại lệ:** **E1** sức chứa bị giảm xuống dưới số đã xác nhận → hệ thống từ chối và nêu rõ
+  những bản đăng ký sẽ phải bị huỷ.
+- **Hậu điều kiện:** Danh sách đã xác nhận khớp với sức chứa; thứ tự danh sách chờ được giữ nguyên.
+- **Quy tắc nghiệp vụ:** BR17. Việc đẩy lên theo chính sách đã cấu hình, không bao giờ theo ưu
+  ái thủ công mà không ghi vết.
+- **Đầu ra:** Trạng thái các bản đăng ký, thông báo.
+- **Use case liên quan:** UC29
 
-## UC31 – Check in to an event
+## UC31 – Check-in vào sự kiện
 
-- **Primary Actor:** Student
-- **Supporting Actor:** CMB (manual check-in)
+- **Actor chính:** Student
+- **Actor hỗ trợ:** CMB (check-in thủ công)
 - **Module:** M06
-- **Business Goal:** Prove attendance at the event where it happens.
-- **Trigger:** The participant arrives at the venue.
-- **Preconditions:** The event is `Ongoing` or inside the configured check-in window; the student
-  holds a confirmed registration, or the event is open-attendance.
-- **Input:** The event check-in code or QR, or the participant's identity for a manual check-in.
-- **Main Flow:**
-  1. The student opens the event and scans or enters the check-in code.
-  2. The system verifies the registration and the time window.
-  3. The system creates the attendance record with its timestamp.
-  4. The feedback window opens for that participant (BR36).
-- **Alternative Flows:**
-  - **A1 Manual check-in:** a CMB member with the permission checks a participant in by lookup;
-    the record stores who performed it.
-  - **A2 Walk-in:** an unregistered student is checked in where the event allows it, and a
-    registration is created alongside the attendance.
-- **Exceptions:**
-  - **E1** duplicate check-in → no second record is created, and the first stands (BR18);
-  - **E2** outside the check-in window → refused, and a manual check-in with a reason is the only
-    route;
-  - **E3** no registration for a registration-only event → refused.
-- **Postconditions:** Exactly one attendance record exists for that participant and event.
-- **Business Rules:** BR18. Student is the primary actor — CMB is supporting, which is what
-  removes v1 UC33's two primary actors.
-- **Output:** Attendance, feedback window opened.
-- **Related UC:** UC29, UC32, UC50
-- **Pain Point:** BP07
+- **Mục tiêu nghiệp vụ:** Chứng minh việc có mặt ngay tại nơi sự kiện diễn ra.
+- **Kích hoạt:** Người tham dự đến địa điểm.
+- **Tiền điều kiện:** Sự kiện đang `Ongoing` hoặc nằm trong khung giờ check-in cấu hình được;
+  sinh viên có một bản đăng ký đã xác nhận, hoặc sự kiện là loại mở tự do.
+- **Dữ liệu vào:** Mã check-in hoặc QR của sự kiện, hoặc định danh người tham dự khi check-in
+  thủ công.
+- **Luồng chính:**
+  1. Sinh viên mở sự kiện và quét hoặc nhập mã check-in.
+  2. Hệ thống xác minh bản đăng ký và khung giờ.
+  3. Hệ thống tạo bản ghi điểm danh kèm dấu thời gian.
+  4. Feedback window mở ra cho chính người tham dự đó (BR36).
+- **Luồng thay thế:**
+  - **A1 Check-in thủ công:** một thành viên CMB có quyền check-in hộ một người tham dự bằng
+    cách tra cứu; bản ghi lưu lại ai đã thực hiện.
+  - **A2 Khách vãng lai:** một sinh viên chưa đăng ký được check-in ở nơi sự kiện cho phép, và
+    một bản đăng ký được tạo kèm theo bản ghi điểm danh.
+- **Ngoại lệ:**
+  - **E1** check-in trùng → không tạo bản ghi thứ hai, và bản đầu tiên vẫn giữ nguyên (BR18);
+  - **E2** ngoài khung giờ check-in → từ chối, và một lần check-in thủ công kèm lý do là con
+    đường duy nhất;
+  - **E3** không có bản đăng ký với một sự kiện chỉ dành cho người đã đăng ký → từ chối.
+- **Hậu điều kiện:** Tồn tại đúng một bản ghi điểm danh cho người tham dự đó và sự kiện đó.
+- **Quy tắc nghiệp vụ:** BR18. Student là actor chính — CMB chỉ hỗ trợ, và đây chính là thứ loại
+  bỏ vấn đề hai actor chính của UC33 trong v1.
+- **Đầu ra:** Attendance, feedback window đã mở.
+- **Use case liên quan:** UC29, UC32, UC50
+- **Pain point:** BP07
 
-## UC32 – Finalize event attendance
+## UC32 – Chốt điểm danh sự kiện
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M06
-- **Business Goal:** Produce the official attendance dataset the report and the evaluation rely on.
-- **Trigger:** The event has ended.
-- **Preconditions:** The event is `Completed`; attendance is not yet finalized.
-- **Input:** Corrections to abnormal check-ins, with reasons.
-- **Main Flow:**
-  1. The member opens the event's attendance list.
-  2. The system flags the abnormal records — no-shows, walk-ins, manual check-ins, out-of-window
-     entries.
-  3. The member corrects or confirms each flagged record, with a reason.
-  4. The member finalizes; the system locks the dataset.
-- **Alternative Flows:**
-  - **A1 Unlock:** a holder of the special role unlocks the dataset with a reason, and the unlock
-    is audited (BR19).
-- **Exceptions:** **E1** the event was cancelled → there is nothing to finalize.
-- **Postconditions:** The official attendance dataset is locked and is an input to UC33 and UC44.
-- **Business Rules:** BR18, BR19. Finalization does **not** control the feedback window — BR36
-  opened it at check-in, which is the v2 correction to v1 UC54.
-- **Output:** Official Attendance dataset, audit record.
-- **Related UC:** UC31, UC33, UC44
-- **Pain Point:** BP07
+- **Mục tiêu nghiệp vụ:** Tạo ra bộ dữ liệu điểm danh chính thức mà báo cáo và kỳ đánh giá dựa vào.
+- **Kích hoạt:** Sự kiện đã kết thúc.
+- **Tiền điều kiện:** Sự kiện đang `Completed`; điểm danh chưa được chốt.
+- **Dữ liệu vào:** Các hiệu chỉnh cho lượt check-in bất thường, kèm lý do.
+- **Luồng chính:**
+  1. Thành viên mở danh sách điểm danh của sự kiện.
+  2. Hệ thống đánh dấu các bản ghi bất thường — vắng mặt, khách vãng lai, check-in thủ công,
+     check-in ngoài khung giờ.
+  3. Thành viên sửa hoặc xác nhận từng bản ghi bị đánh dấu, kèm lý do.
+  4. Thành viên chốt; hệ thống khoá bộ dữ liệu.
+- **Luồng thay thế:**
+  - **A1 Mở khoá:** người giữ vai trò đặc biệt mở khoá bộ dữ liệu kèm lý do, và lần mở khoá được
+    ghi audit (BR19).
+- **Ngoại lệ:** **E1** sự kiện đã bị huỷ → không có gì để chốt.
+- **Hậu điều kiện:** Bộ dữ liệu điểm danh chính thức bị khoá và là đầu vào của UC33 và UC44.
+- **Quy tắc nghiệp vụ:** BR18, BR19. Việc chốt **không** điều khiển feedback window — BR36 đã mở
+  nó từ lúc check-in, và đây là phần sửa của v2 so với UC54 của v1.
+- **Đầu ra:** Bộ Attendance chính thức, bản ghi audit.
+- **Use case liên quan:** UC31, UC33, UC44
+- **Pain point:** BP07
 
 ---
 
-# M08 — Event Accountability
+# M08 — Trách nhiệm giải trình sau sự kiện
 
-## UC33 – Submit the post-event report
+## UC33 – Nộp báo cáo sau sự kiện
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M08
-- **Business Goal:** Close the accountability loop on an approved event.
-- **Trigger:** The event is `Completed`, or its report deadline approaches.
-- **Preconditions:** Attendance is finalized (UC32).
-- **Input:** Actual result against the objective, evidence, incidents, lessons learned.
-- **Main Flow:**
-  1. The system preloads the approved proposal, the finalized attendance, the budget and the
-     expenses, and the feedback summary where UC51 exists.
-  2. The member enters the actual result, the incidents and the lessons learned.
-  3. The member attaches evidence.
-  4. The member submits → `Report Submitted`; ICPDP receives a task.
-- **Alternative Flows:**
-  - **A1 Draft:** the report is saved and completed before the deadline.
-  - **A2 Correction:** a report returned by UC34 is edited and resubmitted as a new version.
-- **Exceptions:**
-  - **E1** attendance is not finalized → submission refused;
-  - **E2** the deadline has passed → the report is still accepted but flagged late, which feeds
-    BR21 and the evaluation.
-- **Postconditions:** The report is `Report Submitted` with its preloaded figures frozen.
-- **Business Rules:** BR20 — the deadline comes from UC04; an overdue report feeds BR21.
-- **Output:** Post-event report, ApprovalTask.
-- **Related UC:** UC32, UC34, UC38, UC51
-- **Pain Point:** BP08
+- **Mục tiêu nghiệp vụ:** Khép vòng trách nhiệm giải trình của một sự kiện đã được duyệt.
+- **Kích hoạt:** Sự kiện đang `Completed`, hoặc deadline báo cáo của nó đến gần.
+- **Tiền điều kiện:** Điểm danh đã được chốt (UC32).
+- **Dữ liệu vào:** Kết quả thực tế so với mục tiêu, minh chứng, sự cố, bài học rút ra.
+- **Luồng chính:**
+  1. Hệ thống nạp sẵn đề xuất đã duyệt, bảng điểm danh đã chốt, ngân sách và các khoản chi, và
+     bản tổng hợp phản hồi khi UC51 đã có dữ liệu.
+  2. Thành viên nhập kết quả thực tế, các sự cố và bài học rút ra.
+  3. Thành viên đính kèm minh chứng.
+  4. Thành viên nộp → `Report Submitted`; ICPDP nhận một task.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** báo cáo được lưu lại và hoàn thiện trước deadline.
+  - **A2 Sửa lại:** một báo cáo bị UC34 trả về được sửa và nộp lại dưới dạng một version mới.
+- **Ngoại lệ:**
+  - **E1** điểm danh chưa được chốt → từ chối nộp;
+  - **E2** đã quá deadline → báo cáo vẫn được nhận nhưng bị đánh dấu trễ, và dữ liệu này đi vào
+    BR21 cùng kỳ đánh giá.
+- **Hậu điều kiện:** Báo cáo ở `Report Submitted` với các số liệu nạp sẵn đã bị đóng băng.
+- **Quy tắc nghiệp vụ:** BR20 — deadline đến từ UC04; một báo cáo quá hạn đi vào BR21.
+- **Đầu ra:** Báo cáo sau sự kiện, ApprovalTask.
+- **Use case liên quan:** UC32, UC34, UC38, UC51
+- **Pain point:** BP08
 
-## UC34 – Assess and close the event report
+## UC34 – Thẩm định và đóng báo cáo sự kiện
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M08
-- **Business Goal:** Establish whether the approved event actually happened as approved, and end
-  its lifecycle.
-- **Trigger:** A report task from UC33.
-- **Preconditions:** The report is `Report Submitted`.
-- **Input:** The assessment note, the decision, the correction request or the finding.
-- **Main Flow:**
-  1. The officer opens the report and compares plan against actual — attendance, budget,
-     objective, conditions attached in UC26.
-  2. The officer chooses one outcome:
-     - **Accept** → the event is `Closed`;
-     - **Return for correction** → the event returns to `Completed` and the report goes back to
-       UC33 (A2);
-     - **Record a finding** → the report is accepted with a finding, which opens a case in UC42.
-  3. The system audits the decision and notifies the club.
-- **Alternative Flows:**
-  - **A1 No report filed:** the officer records the failure to report, which feeds BR21 and the
-    evaluation.
-- **Exceptions:** **E1** the figures contradict the finalized attendance → the officer returns
-  the report rather than accepting it.
-- **Postconditions:** The event is `Closed`, or the report is back with the club.
-- **Business Rules:** BR05, BR21.
-- **Output:** Report decision, event `Closed`, audit record, finding.
-- **Related UC:** UC33, UC42, UC44
-- **Pain Point:** BP08, BP15
+- **Mục tiêu nghiệp vụ:** Xác định xem sự kiện đã duyệt có thực sự diễn ra đúng như đã duyệt hay
+  không, và kết thúc vòng đời của nó.
+- **Kích hoạt:** Một task báo cáo từ UC33.
+- **Tiền điều kiện:** Báo cáo đang ở `Report Submitted`.
+- **Dữ liệu vào:** Ghi chú thẩm định, quyết định, yêu cầu sửa hoặc phát hiện vi phạm.
+- **Luồng chính:**
+  1. Officer mở báo cáo và đối chiếu kế hoạch với thực tế — điểm danh, ngân sách, mục tiêu, các
+     điều kiện đã gắn ở UC26.
+  2. Officer chọn một kết quả:
+     - **Chấp nhận** → sự kiện chuyển `Closed`;
+     - **Trả về để sửa** → sự kiện quay về `Completed` và báo cáo quay lại UC33 (A2);
+     - **Ghi nhận một phát hiện** → báo cáo được chấp nhận kèm phát hiện, và phát hiện đó mở một
+       hồ sơ ở UC42.
+  3. Hệ thống ghi audit quyết định và thông báo cho CLB.
+- **Luồng thay thế:**
+  - **A1 Không có báo cáo nào được nộp:** officer ghi nhận việc không nộp báo cáo, và dữ liệu
+    này đi vào BR21 cùng kỳ đánh giá.
+- **Ngoại lệ:** **E1** số liệu mâu thuẫn với bảng điểm danh đã chốt → officer trả báo cáo về
+  thay vì chấp nhận nó.
+- **Hậu điều kiện:** Sự kiện ở `Closed`, hoặc báo cáo đã quay về với CLB.
+- **Quy tắc nghiệp vụ:** BR05, BR21.
+- **Đầu ra:** Quyết định về báo cáo, sự kiện `Closed`, bản ghi audit, phát hiện.
+- **Use case liên quan:** UC33, UC42, UC44
+- **Pain point:** BP08, BP15
 
 ---
 
-# M07 — Finance & Budget
+# M07 — Tài chính và ngân sách
 
-## UC35 – Submit a budget request
+## UC35 – Gửi yêu cầu ngân sách
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M07
-- **Business Goal:** Request funding against a stated business purpose.
-- **Trigger:** The club needs money for an event, a semester plan or an approved activity.
-- **Preconditions:** The club is `Active`; the caller holds the finance permission.
-- **Input:** Category, amount, purpose, expected expense lines, the related event or plan.
-- **Main Flow:**
-  1. The member creates the request and links it to its purpose (BR22).
-  2. The member enters the categories, the amounts and the expected expense lines.
-  3. The system validates the total and the link to a valid purpose.
-  4. The member submits → `Submitted`; ICPDP receives a task.
-- **Alternative Flows:**
-  - **A1 Draft:** the request is saved and completed later.
-  - **A2 Revise and resubmit (v1 UC40):** from `Revision Requested`, the member edits and
-    resubmits; the system creates a **new version** and returns the request to `Submitted`;
-    **both the version history and the approval history are preserved**.
-- **Exceptions:**
-  - **E1** no valid purpose is linked → refused (BR22);
-  - **E2** a request for the same event and category already exists → warning, and the officer
-    decides on duplication in UC36.
-- **Postconditions:** The request is `Submitted` with an immutable version.
-- **Business Rules:** BR22.
-- **Output:** BudgetRequest, version, ApprovalTask.
-- **Related UC:** UC36, UC25
-- **Pain Point:** BP09
+- **Mục tiêu nghiệp vụ:** Xin kinh phí gắn với một mục đích nghiệp vụ được nêu rõ.
+- **Kích hoạt:** CLB cần tiền cho một sự kiện, một kế hoạch học kỳ hoặc một hoạt động đã duyệt.
+- **Tiền điều kiện:** CLB đang `Active`; người gọi có quyền về tài chính.
+- **Dữ liệu vào:** Hạng mục, số tiền, mục đích, các dòng chi dự kiến, sự kiện hoặc kế hoạch liên quan.
+- **Luồng chính:**
+  1. Thành viên tạo yêu cầu và liên kết nó với mục đích của nó (BR22).
+  2. Thành viên nhập các hạng mục, số tiền và các dòng chi dự kiến.
+  3. Hệ thống validate tổng số và mối liên kết tới một mục đích hợp lệ.
+  4. Thành viên nộp → `Submitted`; ICPDP nhận một task.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** yêu cầu được lưu lại và hoàn thiện sau.
+  - **A2 Sửa và nộp lại (UC40 của v1):** từ `Revision Requested`, thành viên sửa và nộp lại;
+    hệ thống tạo một **version mới** và đưa yêu cầu về `Submitted`; **cả lịch sử version lẫn
+    lịch sử phê duyệt đều được giữ lại**.
+- **Ngoại lệ:**
+  - **E1** không có mục đích hợp lệ nào được liên kết → từ chối (BR22);
+  - **E2** đã tồn tại một yêu cầu cho cùng sự kiện và cùng hạng mục → cảnh báo, và officer quyết
+    định về việc trùng lặp ở UC36.
+- **Hậu điều kiện:** Yêu cầu ở `Submitted` với một version bất biến.
+- **Quy tắc nghiệp vụ:** BR22.
+- **Đầu ra:** BudgetRequest, version, ApprovalTask.
+- **Use case liên quan:** UC36, UC25
+- **Pain point:** BP09
 
-## UC36 – Assess and decide the budget request
+## UC36 – Thẩm định và quyết định yêu cầu ngân sách
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M07
-- **Business Goal:** One funding decision per request, with the amount and the reasoning on the
-  record.
-- **Trigger:** A task from UC35.
-- **Preconditions:** The request is `Submitted`.
-- **Input:** The review note, the approved amount, the decision and its reason.
-- **Main Flow:**
-  1. The officer opens the request → `Under Review`.
-  2. The officer reviews eligibility, the available allocation, duplication and the state of the
-     related activity.
-  3. The officer chooses one outcome:
-     - **Request revision** → `Revision Requested`;
-     - **Approve** — possibly with an amount lower than requested → `Approved`;
-     - **Reject** — a reason is mandatory → `Rejected`.
-  4. The system audits the decision and notifies the club.
-- **Alternative Flows:**
-  - **A1 Second level:** an amount above the threshold routes to a second ICPDP level
-    per UC05 and BR16.
-  - **A2 Partial approval per category:** individual lines are approved and others rejected, each
-    with its reason.
-- **Exceptions:**
-  - **E1** the related event was rejected or cancelled → the request is `Cancelled`;
-  - **E2** the allocation for the period is exhausted → the officer rejects or defers, with the
-    reason recorded.
-- **Postconditions:** The request is `Revision Requested`, `Approved` with an approved amount, or
+- **Mục tiêu nghiệp vụ:** Mỗi yêu cầu một quyết định cấp kinh phí, với số tiền và lập luận được
+  lưu lại.
+- **Kích hoạt:** Một task từ UC35.
+- **Tiền điều kiện:** Yêu cầu đang ở `Submitted`.
+- **Dữ liệu vào:** Ghi chú thẩm định, số tiền được duyệt, quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở yêu cầu → `Under Review`.
+  2. Officer xem xét điều kiện, hạn mức còn lại, khả năng trùng lặp và trạng thái của hoạt động
+     liên quan.
+  3. Officer chọn một kết quả:
+     - **Yêu cầu chỉnh sửa** → `Revision Requested`;
+     - **Phê duyệt** — có thể với số tiền thấp hơn số xin → `Approved`;
+     - **Từ chối** — bắt buộc có lý do → `Rejected`.
+  4. Hệ thống ghi audit quyết định và thông báo cho CLB.
+- **Luồng thay thế:**
+  - **A1 Cấp thứ hai:** một số tiền vượt ngưỡng được định tuyến lên cấp ICPDP thứ hai theo UC05
+    và BR16.
+  - **A2 Phê duyệt từng phần theo hạng mục:** từng dòng được duyệt và các dòng khác bị từ chối,
+    mỗi dòng kèm lý do của nó.
+- **Ngoại lệ:**
+  - **E1** sự kiện liên quan bị từ chối hoặc bị huỷ → yêu cầu chuyển `Cancelled`;
+  - **E2** hạn mức của kỳ đã cạn → officer từ chối hoặc hoãn lại, kèm lý do được ghi nhận.
+- **Hậu điều kiện:** Yêu cầu ở `Revision Requested`, `Approved` kèm một số tiền duyệt, hoặc
   `Rejected`.
-- **Business Rules:** BR05 audit mandatory; the approved amount may differ from the requested
-  amount where policy allows.
-- **Output:** ApprovalDecision, approved amount, audit record.
-- **Related UC:** UC35, UC37, UC05
-- **Pain Point:** BP09
+- **Quy tắc nghiệp vụ:** BR05 bắt buộc audit; số tiền duyệt có thể khác số tiền xin ở nơi chính
+  sách cho phép.
+- **Đầu ra:** ApprovalDecision, số tiền duyệt, bản ghi audit.
+- **Use case liên quan:** UC35, UC37, UC05
+- **Pain point:** BP09
 
-## UC37 – Record disbursement
+## UC37 – Ghi nhận giải ngân
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M07
-- **Business Goal:** Track what was actually released against what was approved.
-- **Trigger:** Funds are released to the club.
-- **Preconditions:** The request is `Approved`.
-- **Input:** Approved amount, disbursed amount, date, payment reference.
-- **Main Flow:**
-  1. The officer opens the approved request.
-  2. The officer records the disbursed amount, the date and the reference.
-  3. The system checks the amount against the approval (BR23).
-  4. The state moves to `Disbursed`; the club is notified.
-- **Alternative Flows:**
-  - **A1 Partial disbursement:** several disbursements accumulate against one approval, each
-    recorded separately.
-- **Exceptions:** **E1** the disbursed total would exceed the approved amount → refused without
-  an amendment (BR23).
-- **Postconditions:** The disbursed total is known and is an input to UC39.
-- **Business Rules:** BR23. Tracking only — this is not an accounting ERP (§5.2). Without it,
-  UC39 computes nothing.
-- **Output:** Disbursement record.
-- **Related UC:** UC36, UC39
-- **Pain Point:** BP10
+- **Mục tiêu nghiệp vụ:** Theo dõi số tiền thực sự được cấp so với số đã duyệt.
+- **Kích hoạt:** Kinh phí được chuyển cho CLB.
+- **Tiền điều kiện:** Yêu cầu đang ở `Approved`.
+- **Dữ liệu vào:** Số tiền duyệt, số tiền giải ngân, ngày, mã tham chiếu thanh toán.
+- **Luồng chính:**
+  1. Officer mở yêu cầu đã được duyệt.
+  2. Officer ghi số tiền giải ngân, ngày và mã tham chiếu.
+  3. Hệ thống đối chiếu số tiền với phần đã duyệt (BR23).
+  4. Trạng thái chuyển sang `Disbursed`; CLB được thông báo.
+- **Luồng thay thế:**
+  - **A1 Giải ngân từng phần:** nhiều lần giải ngân cộng dồn vào một lần duyệt, mỗi lần được ghi
+    riêng.
+- **Ngoại lệ:** **E1** tổng giải ngân sẽ vượt số tiền đã duyệt → từ chối khi chưa có văn bản
+  điều chỉnh (BR23).
+- **Hậu điều kiện:** Tổng số đã giải ngân là xác định và là đầu vào của UC39.
+- **Quy tắc nghiệp vụ:** BR23. Chỉ theo dõi — đây không phải một hệ thống kế toán (§5.2). Không
+  có nó thì UC39 không tính được gì.
+- **Đầu ra:** Bản ghi giải ngân.
+- **Use case liên quan:** UC36, UC39
+- **Pain point:** BP10
 
-## UC38 – Record an expense with its evidence
+## UC38 – Ghi nhận khoản chi kèm chứng từ
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M07
-- **Business Goal:** Track actual spending and substantiate it in the same act.
-- **Trigger:** The club spends money.
-- **Preconditions:** A related budget or event exists; the caller holds the finance permission.
-- **Input:** Category, amount, date, the related budget or event, description; the invoice,
-  receipt or proof of payment.
-- **Main Flow:**
-  1. The member records the expense against its budget line or event.
-  2. The member attaches the evidence the category requires (BR25).
-  3. The system validates the category against the approval and flags an out-of-category expense
-     as an exception (BR24).
-  4. The system stores the expense with its evidence.
-- **Alternative Flows:**
-  - **A1 Evidence later:** the expense is recorded without evidence and appears as *unsupported*
-    in UC39 until the evidence arrives.
-  - **A2 Correction:** an expense is corrected before reconciliation closes; the change is audited.
-- **Exceptions:**
-  - **E1** the expense exceeds the remaining approved amount → recorded and flagged as an
-    exception;
-  - **E2** the evidence does not reference an expense → impossible by construction, which is why
-    v1's UC43 and UC44 are one use case here.
-- **Postconditions:** The expense exists, supported or unsupported, and feeds UC39.
-- **Business Rules:** BR24, BR25. Every piece of evidence references exactly one expense.
-- **Output:** Expense, FinancialEvidence.
-- **Related UC:** UC37, UC39, UC33
-- **Pain Point:** BP09, BP10
+- **Mục tiêu nghiệp vụ:** Theo dõi chi tiêu thực tế và chứng minh nó trong cùng một thao tác.
+- **Kích hoạt:** CLB chi tiền.
+- **Tiền điều kiện:** Có một ngân sách hoặc sự kiện liên quan; người gọi có quyền về tài chính.
+- **Dữ liệu vào:** Hạng mục, số tiền, ngày, ngân sách hoặc sự kiện liên quan, mô tả; hoá đơn,
+  biên lai hoặc chứng từ thanh toán.
+- **Luồng chính:**
+  1. Thành viên ghi khoản chi vào dòng ngân sách hoặc sự kiện của nó.
+  2. Thành viên đính kèm chứng từ mà hạng mục yêu cầu (BR25).
+  3. Hệ thống validate hạng mục theo phần đã duyệt và gắn cờ ngoại lệ cho khoản chi ngoài hạng
+     mục (BR24).
+  4. Hệ thống lưu khoản chi cùng chứng từ của nó.
+- **Luồng thay thế:**
+  - **A1 Chứng từ bổ sung sau:** khoản chi được ghi mà chưa có chứng từ và xuất hiện dưới dạng
+    *thiếu chứng từ* trong UC39 cho tới khi chứng từ được bổ sung.
+  - **A2 Sửa lại:** một khoản chi được sửa trước khi việc đối soát đóng lại; thay đổi được ghi audit.
+- **Ngoại lệ:**
+  - **E1** khoản chi vượt phần đã duyệt còn lại → được ghi nhận và gắn cờ ngoại lệ;
+  - **E2** chứng từ không tham chiếu tới một khoản chi nào → bất khả thi về mặt cấu trúc, và đó
+    chính là lý do UC43 và UC44 của v1 gộp thành một use case ở đây.
+- **Hậu điều kiện:** Khoản chi tồn tại, có hoặc chưa có chứng từ, và là đầu vào của UC39.
+- **Quy tắc nghiệp vụ:** BR24, BR25. Mỗi chứng từ tham chiếu đúng một khoản chi.
+- **Đầu ra:** Expense, FinancialEvidence.
+- **Use case liên quan:** UC37, UC39, UC33
+- **Pain point:** BP09, BP10
 
-## UC39 – Reconcile budget and spending
+## UC39 – Đối soát ngân sách và chi tiêu
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M07
-- **Business Goal:** Establish that approved, disbursed, spent and supported are the same story.
-- **Trigger:** The activity ends, or the reconciliation deadline arrives.
-- **Preconditions:** The request is `Disbursed`; expenses have been recorded.
-- **Main Flow:**
-  1. The officer opens the budget case.
-  2. The system computes: approved, disbursed, recorded expenses, supported expenses,
-     unsupported expenses, remaining balance, variance.
-  3. The officer reviews the exceptions flagged by UC38.
-  4. The officer marks the case `Reconciled`, or `Exception` with the discrepancy stated.
-  5. The system audits the outcome; the club sees it in UC02.
-- **Alternative Flows:**
-  - **A1 Return for evidence:** the officer requests the missing evidence, and the case waits in
+- **Mục tiêu nghiệp vụ:** Xác lập rằng số đã duyệt, đã giải ngân, đã chi và đã có chứng từ cùng
+  kể một câu chuyện.
+- **Kích hoạt:** Hoạt động kết thúc, hoặc đến hạn đối soát.
+- **Tiền điều kiện:** Yêu cầu đang ở `Disbursed`; đã có khoản chi được ghi nhận.
+- **Luồng chính:**
+  1. Officer mở hồ sơ ngân sách.
+  2. Hệ thống tính: đã duyệt, đã giải ngân, khoản chi đã ghi nhận, khoản chi có chứng từ, khoản
+     chi thiếu chứng từ, số dư còn lại, chênh lệch.
+  3. Officer xem xét các ngoại lệ do UC38 gắn cờ.
+  4. Officer đánh dấu hồ sơ `Reconciled`, hoặc `Exception` kèm phần chênh lệch được nêu rõ.
+  5. Hệ thống ghi audit kết quả; CLB thấy nó ở UC02.
+- **Luồng thay thế:**
+  - **A1 Trả về để bổ sung chứng từ:** officer yêu cầu phần chứng từ còn thiếu, và hồ sơ chờ ở
     `Reconciliation Pending`.
-- **Exceptions:** **E1** the disbursed amount exceeds the approved amount → the case cannot be
-  reconciled until an amendment exists (BR23).
-- **Postconditions:** The case is `Reconciled` or `Exception`; the officer then closes it here →
-  `Closed` (BR26). An `Exception` case closes with its discrepancy on the record.
-- **Business Rules:** BR23, BR24, BR26. ICPDP is the only primary actor; CMB reads the same
-  figures through UC02, which is what removes v1 UC45's two primary actors.
-- **Output:** Reconciliation result, audit record; input to UC44.
-- **Related UC:** UC37, UC38, UC44
-- **Pain Point:** BP10
+- **Ngoại lệ:** **E1** số tiền đã giải ngân vượt số tiền đã duyệt → hồ sơ không đối soát được
+  cho tới khi có một văn bản điều chỉnh (BR23).
+- **Hậu điều kiện:** Hồ sơ ở `Reconciled` hoặc `Exception`; sau đó officer đóng nó tại đây →
+  `Closed` (BR26). Một hồ sơ `Exception` vẫn đóng được, với phần chênh lệch nằm trong hồ sơ.
+- **Quy tắc nghiệp vụ:** BR23, BR24, BR26. ICPDP là actor chính duy nhất; CMB đọc cùng bộ số
+  liệu qua UC02, và đó chính là thứ loại bỏ vấn đề hai actor chính của UC45 trong v1.
+- **Đầu ra:** Kết quả đối soát, bản ghi audit; đầu vào cho UC44.
+- **Use case liên quan:** UC37, UC38, UC44
+- **Pain point:** BP10
 
 ---
 
-# M08 — Reporting & Compliance
+# M08 — Báo cáo và tuân thủ
 
-## UC40 – Submit the periodic activity report
+## UC40 – Nộp báo cáo hoạt động định kỳ
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M08
-- **Business Goal:** Fulfil the reporting obligation from the data the system already holds.
-- **Trigger:** The reporting period ends, or its deadline approaches.
-- **Preconditions:** The club is `Active` or `Suspended` with obligations; the period is defined
-  in UC04.
-- **Input:** The narrative and the evidence the system does not already hold.
-- **Main Flow:**
-  1. The member opens the report for the period — semester, academic year or a configured period.
-  2. The system preloads the events, the membership figures, the attendance and the finance
-     position.
-  3. The member adds the narrative, the plan for the next period and any external evidence.
-  4. The member submits → `Submitted`; ICPDP receives a task.
-- **Alternative Flows:**
-  - **A1 Draft:** saved and completed before the deadline.
-  - **A2 Correction:** a report returned by UC41 is resubmitted as a new version.
-- **Exceptions:** **E1** the deadline has passed → still accepted, flagged late, feeding BR21 and
-  the evaluation.
-- **Postconditions:** The report is `Submitted` with its preloaded figures frozen.
-- **Business Rules:** BR20 — deadlines and reminders come from UC04 and §19.
-- **Output:** Periodic report, ApprovalTask.
-- **Related UC:** UC41, UC04
-- **Pain Point:** BP14
+- **Mục tiêu nghiệp vụ:** Hoàn thành nghĩa vụ báo cáo từ chính dữ liệu hệ thống đã có.
+- **Kích hoạt:** Kỳ báo cáo kết thúc, hoặc deadline của nó đến gần.
+- **Tiền điều kiện:** CLB đang `Active`, hoặc `Suspended` nhưng còn nghĩa vụ; kỳ báo cáo được
+  định nghĩa ở UC04.
+- **Dữ liệu vào:** Phần thuyết minh và minh chứng mà hệ thống chưa có.
+- **Luồng chính:**
+  1. Thành viên mở báo cáo cho kỳ tương ứng — học kỳ, năm học hoặc một kỳ cấu hình được.
+  2. Hệ thống nạp sẵn các sự kiện, số liệu thành viên, điểm danh và tình hình tài chính.
+  3. Thành viên thêm phần thuyết minh, kế hoạch kỳ sau và mọi minh chứng bên ngoài.
+  4. Thành viên nộp → `Submitted`; ICPDP nhận một task.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** được lưu lại và hoàn thiện trước deadline.
+  - **A2 Sửa lại:** một báo cáo bị UC41 trả về được nộp lại dưới dạng một version mới.
+- **Ngoại lệ:** **E1** đã quá deadline → vẫn được nhận nhưng bị đánh dấu trễ, và dữ liệu này đi
+  vào BR21 cùng kỳ đánh giá.
+- **Hậu điều kiện:** Báo cáo ở `Submitted` với các số liệu nạp sẵn đã bị đóng băng.
+- **Quy tắc nghiệp vụ:** BR20 — deadline và các mốc nhắc đến từ UC04 và §19.
+- **Đầu ra:** Báo cáo định kỳ, ApprovalTask.
+- **Use case liên quan:** UC41, UC04
+- **Pain point:** BP14
 
-## UC41 – Assess the periodic activity report
+## UC41 – Thẩm định báo cáo hoạt động định kỳ
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M08
-- **Business Goal:** Validate the report so it can serve as evaluation input.
-- **Trigger:** A task from UC40.
-- **Preconditions:** The report is `Submitted`.
-- **Main Flow:**
-  1. The officer opens the report and checks it against the system's own figures.
-  2. The officer accepts it, or returns it for correction with structured comments.
-  3. The system audits the outcome and notifies the club.
-- **Alternative Flows:**
-  - **A1 Accept with observation:** the report is accepted with an observation recorded for the
-    evaluation.
-- **Exceptions:** **E1** no report was filed by the deadline → the officer records the failure,
-  which feeds BR21 and the evaluation.
-- **Postconditions:** An accepted report becomes evaluation input for UC44.
-- **Business Rules:** BR05, BR21.
-- **Output:** Report decision, audit record.
-- **Related UC:** UC40, UC44
-- **Pain Point:** BP14
+- **Mục tiêu nghiệp vụ:** Xác nhận báo cáo để nó dùng được làm đầu vào đánh giá.
+- **Kích hoạt:** Một task từ UC40.
+- **Tiền điều kiện:** Báo cáo đang ở `Submitted`.
+- **Luồng chính:**
+  1. Officer mở báo cáo và đối chiếu nó với số liệu của chính hệ thống.
+  2. Officer chấp nhận báo cáo, hoặc trả về để sửa kèm nhận xét có cấu trúc.
+  3. Hệ thống ghi audit kết quả và thông báo cho CLB.
+- **Luồng thay thế:**
+  - **A1 Chấp nhận kèm ghi nhận:** báo cáo được chấp nhận kèm một ghi nhận được lưu lại cho kỳ
+    đánh giá.
+- **Ngoại lệ:** **E1** không có báo cáo nào được nộp đúng hạn → officer ghi nhận việc không nộp,
+  và dữ liệu này đi vào BR21 cùng kỳ đánh giá.
+- **Hậu điều kiện:** Một báo cáo được chấp nhận trở thành đầu vào đánh giá cho UC44.
+- **Quy tắc nghiệp vụ:** BR05, BR21.
+- **Đầu ra:** Quyết định về báo cáo, bản ghi audit.
+- **Use case liên quan:** UC40, UC44
+- **Pain point:** BP14
 
-## UC42 – Manage violation and compliance cases
+## UC42 – Quản lý hồ sơ vi phạm và tuân thủ
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M08
-- **Business Goal:** Handle a breach as a case with a state, an owner and a trail.
-- **Trigger:** An escalated complaint (UC53), a report finding (UC34), an overdue report, a
-  financial exception (UC39), an unauthorized event, or a late booking cancellation (UC49).
-- **Preconditions:** The caller holds the compliance permission.
-- **Input:** Origin, severity, description, evidence, the club concerned, the corrective action.
-- **Main Flow:**
-  1. The officer opens a case and records its origin and severity (BR27).
-  2. The case moves to `Under Investigation`; the officer gathers evidence.
-  3. The officer asks the club to respond → `Awaiting Club Response`.
-  4. The club responds, in this use case or through UC54 when the origin was a complaint.
-  5. The officer issues a decision with a reason and evidence (BR28) → `Decision Issued`.
-  6. The officer records the corrective action and its deadline → `Corrective Action`.
-  7. Once the action is verified, the case is `Resolved`.
-- **Alternative Flows:**
-  - **A1 Escalate to the lifecycle:** the corrective action is a suspension or a dissolution,
-    taken in UC15 and linked to the case.
-  - **A2 Close without action:** the investigation finds no breach; the case closes with the
-    reason recorded.
-- **Exceptions:** **E1** the club does not respond by the deadline → the officer proceeds and
-  records the non-response.
-- **Postconditions:** The case is `Resolved` or closed; its history feeds UC44.
-- **Business Rules:** BR27, BR28. Every case records its origin, and a case opened from a
-  complaint links back to it.
-- **Output:** Violation, CorrectiveAction, audit record.
-- **Related UC:** UC53, UC34, UC39, UC49, UC15, UC44
-- **Pain Point:** BP12
+- **Mục tiêu nghiệp vụ:** Xử lý một vi phạm như một hồ sơ có trạng thái, có người phụ trách và
+  có vết xử lý.
+- **Kích hoạt:** Một khiếu nại được leo thang (UC53), một phát hiện từ báo cáo (UC34), một báo
+  cáo quá hạn, một ngoại lệ tài chính (UC39), một sự kiện không phép, hoặc một lần huỷ booking
+  sát giờ (UC49).
+- **Tiền điều kiện:** Người gọi có quyền về tuân thủ.
+- **Dữ liệu vào:** Nguồn gốc, mức độ nghiêm trọng, mô tả, chứng cứ, CLB liên quan, biện pháp
+  khắc phục.
+- **Luồng chính:**
+  1. Officer mở một hồ sơ và ghi nhận nguồn gốc cùng mức độ nghiêm trọng của nó (BR27).
+  2. Hồ sơ chuyển sang `Under Investigation`; officer thu thập chứng cứ.
+  3. Officer yêu cầu CLB giải trình → `Awaiting Club Response`.
+  4. CLB trả lời, trong chính use case này hoặc qua UC54 khi nguồn gốc là một khiếu nại.
+  5. Officer đưa ra quyết định kèm lý do và chứng cứ (BR28) → `Decision Issued`.
+  6. Officer ghi nhận biện pháp khắc phục và hạn của nó → `Corrective Action`.
+  7. Khi biện pháp được xác minh, hồ sơ chuyển `Resolved`.
+- **Luồng thay thế:**
+  - **A1 Leo thang sang vòng đời:** biện pháp khắc phục là tạm ngừng hoặc giải thể, được thực
+    hiện ở UC15 và liên kết với hồ sơ.
+  - **A2 Đóng không kèm biện pháp:** điều tra kết luận không có vi phạm; hồ sơ đóng lại với lý
+    do được ghi nhận.
+- **Ngoại lệ:** **E1** CLB không trả lời đúng hạn → officer tiếp tục và ghi nhận việc không phản hồi.
+- **Hậu điều kiện:** Hồ sơ ở `Resolved` hoặc đã đóng; lịch sử của nó là đầu vào cho UC44.
+- **Quy tắc nghiệp vụ:** BR27, BR28. Mỗi hồ sơ ghi lại nguồn gốc của nó, và một hồ sơ mở từ một
+  khiếu nại sẽ liên kết ngược lại khiếu nại đó.
+- **Đầu ra:** Violation, CorrectiveAction, bản ghi audit.
+- **Use case liên quan:** UC53, UC34, UC39, UC49, UC15, UC44
+- **Pain point:** BP12
 
 ---
 
-# M09 — Performance Evaluation
+# M09 — Đánh giá hiệu quả
 
-## UC43 – Configure the evaluation scheme
+## UC43 – Cấu hình scheme đánh giá
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M09
-- **Business Goal:** Define how clubs are scored, before anything is scored.
-- **Trigger:** A new evaluation period, or a change to the scoring policy.
-- **Preconditions:** The caller holds the evaluation-configuration permission.
-- **Input:** The dimensions of §17 (D1–D6), their weights, the thresholds per classification, the
-  period, the active state.
-- **Main Flow:**
-  1. The officer creates or opens a scheme version.
-  2. The officer sets the dimensions, the weights and the classification thresholds.
-  3. The system validates the total weight (BR29).
-  4. The officer activates the scheme for a period.
-  5. The system versions and audits it.
-- **Alternative Flows:**
-  - **A1 Clone:** the previous period's scheme is cloned and adjusted.
-- **Exceptions:** **E1** the total weight is invalid → activation refused (BR29); **E2** the
-  scheme is already used by a published evaluation → a new version is created instead of an edit.
-- **Postconditions:** Exactly one scheme is active per period.
-- **Business Rules:** BR29, BR30. v1 validated a scheme that no use case configured.
-- **Output:** EvaluationScheme version, audit record.
-- **Related UC:** UC44
-- **Pain Point:** BP13
+- **Mục tiêu nghiệp vụ:** Định nghĩa cách chấm điểm CLB, trước khi bất cứ thứ gì được chấm.
+- **Kích hoạt:** Một kỳ đánh giá mới, hoặc một thay đổi trong chính sách chấm điểm.
+- **Tiền điều kiện:** Người gọi có quyền cấu hình đánh giá.
+- **Dữ liệu vào:** Các dimension của §17 (D1–D6), trọng số, ngưỡng cho từng mức xếp loại, kỳ áp
+  dụng, trạng thái kích hoạt.
+- **Luồng chính:**
+  1. Officer tạo hoặc mở một version scheme.
+  2. Officer đặt các dimension, trọng số và ngưỡng xếp loại.
+  3. Hệ thống validate tổng trọng số (BR29).
+  4. Officer kích hoạt scheme cho một kỳ.
+  5. Hệ thống đánh phiên bản và ghi audit.
+- **Luồng thay thế:**
+  - **A1 Sao chép:** scheme của kỳ trước được sao chép và điều chỉnh.
+- **Ngoại lệ:** **E1** tổng trọng số không hợp lệ → từ chối kích hoạt (BR29); **E2** scheme đã
+  được một kỳ đánh giá đã công bố sử dụng → tạo một version mới thay vì sửa.
+- **Hậu điều kiện:** Có đúng một scheme đang hoạt động cho mỗi kỳ.
+- **Quy tắc nghiệp vụ:** BR29, BR30. v1 validate một scheme mà không use case nào cấu hình.
+- **Đầu ra:** Version EvaluationScheme, bản ghi audit.
+- **Use case liên quan:** UC44
+- **Pain point:** BP13
 
-## UC44 – Generate the club performance evaluation draft
+## UC44 – Sinh bản nháp đánh giá hiệu quả CLB
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M09
-- **Business Goal:** Turn a period of operational data into governance data, without manual
-  consolidation.
-- **Trigger:** The evaluation period closes.
-- **Preconditions:** An active scheme (UC43); the period's reports are assessed (UC41).
-- **Input:** The period and the clubs in scope.
-- **Main Flow:**
-  1. The officer starts the generation for a period.
-  2. The system collects the inputs: activity (UC26–UC34), attendance (UC32), membership (UC21),
-     finance (UC39), reports (UC41), violations (UC42), feedback (UC50), complaint outcomes
-     (UC53), booking compliance (UC48, UC49).
-  3. The system applies the active scheme and computes a score per dimension with the evidence
-     behind each.
-  4. The state moves to `Data Ready`.
-- **Alternative Flows:**
-  - **A1 Single club:** the draft is regenerated for one club after a late correction.
-- **Exceptions:** **E1** a data source is incomplete → the dimension is marked
-  `Insufficient data` rather than scored as zero.
-- **Postconditions:** An evaluation draft exists per club with its evidence and its data lineage.
-- **Business Rules:** BR29. The draft is never published without UC45.
-- **Output:** Evaluation draft, data lineage.
-- **Related UC:** UC43, UC45, UC41, UC39, UC42
-- **Pain Point:** BP13
+- **Mục tiêu nghiệp vụ:** Biến trọn một kỳ dữ liệu vận hành thành dữ liệu quản trị, không cần
+  tổng hợp thủ công.
+- **Kích hoạt:** Kỳ đánh giá kết thúc.
+- **Tiền điều kiện:** Có một scheme đang hoạt động (UC43); các báo cáo của kỳ đã được thẩm định
+  (UC41).
+- **Dữ liệu vào:** Kỳ đánh giá và danh sách CLB trong phạm vi.
+- **Luồng chính:**
+  1. Officer khởi động việc sinh bản nháp cho một kỳ.
+  2. Hệ thống thu thập các đầu vào: hoạt động (UC26–UC34), điểm danh (UC32), thành viên (UC21),
+     tài chính (UC39), báo cáo (UC41), vi phạm (UC42), phản hồi (UC50), kết quả khiếu nại
+     (UC53), mức tuân thủ về booking (UC48, UC49).
+  3. Hệ thống áp dụng scheme đang hoạt động và tính điểm cho từng dimension kèm chứng cứ phía
+     sau mỗi dimension.
+  4. Trạng thái chuyển sang `Data Ready`.
+- **Luồng thay thế:**
+  - **A1 Một CLB riêng lẻ:** bản nháp được sinh lại cho một CLB sau một lần hiệu chỉnh muộn.
+- **Ngoại lệ:** **E1** một nguồn dữ liệu không đầy đủ → dimension đó được đánh dấu
+  `Insufficient data` thay vì bị chấm 0.
+- **Hậu điều kiện:** Mỗi CLB có một bản nháp đánh giá kèm chứng cứ và data lineage của nó.
+- **Quy tắc nghiệp vụ:** BR29. Bản nháp không bao giờ được công bố khi chưa qua UC45.
+- **Đầu ra:** Bản nháp đánh giá, data lineage.
+- **Use case liên quan:** UC43, UC45, UC41, UC39, UC42
+- **Pain point:** BP13
 
-## UC45 – Review, finalize and publish the evaluation
+## UC45 – Xem lại, chốt và công bố đánh giá
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M09
-- **Business Goal:** Publish an official result that the club can read and contest.
-- **Trigger:** A draft is `Data Ready`.
-- **Preconditions:** The draft exists for the period.
-- **Input:** Anomaly resolutions, the permitted manual dimensions, the final classification.
-- **Main Flow:**
-  1. The officer reviews the draft and its source data.
-  2. The officer handles the anomalies and the `Insufficient data` dimensions.
-  3. The officer adds the manual dimensions the scheme permits, with a justification.
-  4. The officer finalizes → `Finalized`.
-  5. The officer publishes → `Published`; the clubs are notified and see the result.
-- **Alternative Flows:**
-  - **A1 Revision after publication:** a new revision or snapshot is created; the published one
-    is never edited (BR30).
-- **Exceptions:** **E1** a club contests the result → the contest is handled as a case (UC42),
-  and any correction becomes a new revision.
-- **Postconditions:** A published evaluation exists per club for the period, with its history.
-- **Business Rules:** BR30.
-- **Output:** Published Evaluation, notification, audit record.
-- **Related UC:** UC44
-- **Pain Point:** BP13
+- **Mục tiêu nghiệp vụ:** Công bố một kết quả chính thức mà CLB đọc được và phản biện được.
+- **Kích hoạt:** Một bản nháp đang ở `Data Ready`.
+- **Tiền điều kiện:** Bản nháp của kỳ đó tồn tại.
+- **Dữ liệu vào:** Cách xử lý các bất thường, các dimension chấm tay được phép, mức xếp loại cuối.
+- **Luồng chính:**
+  1. Officer xem lại bản nháp và dữ liệu nguồn của nó.
+  2. Officer xử lý các bất thường và các dimension `Insufficient data`.
+  3. Officer thêm các dimension chấm tay mà scheme cho phép, kèm một lý giải.
+  4. Officer chốt → `Finalized`.
+  5. Officer công bố → `Published`; các CLB được thông báo và xem được kết quả.
+- **Luồng thay thế:**
+  - **A1 Bản sửa sau khi công bố:** một bản sửa hoặc bản chụp mới được tạo; bản đã công bố không
+    bao giờ bị sửa (BR30).
+- **Ngoại lệ:** **E1** một CLB phản biện kết quả → việc phản biện được xử lý như một hồ sơ
+  (UC42), và mọi hiệu chỉnh trở thành một bản sửa mới.
+- **Hậu điều kiện:** Mỗi CLB có một kỳ đánh giá đã công bố cho kỳ đó, kèm lịch sử của nó.
+- **Quy tắc nghiệp vụ:** BR30.
+- **Đầu ra:** Evaluation đã công bố, thông báo, bản ghi audit.
+- **Use case liên quan:** UC44
+- **Pain point:** BP13
 
 ---
 
-# M11 — Property & Facility Booking
+# M11 — Cơ sở vật chất và đặt chỗ
 
-## UC46 – Manage the property catalogue
+## UC46 – Quản lý danh mục cơ sở vật chất
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M11
-- **Business Goal:** Define what clubs may book — the missing precondition of v1 UC51.
-- **Trigger:** The university releases a room or equipment to club activity, or its details
-  change.
-- **Preconditions:** The caller holds the property-administration permission.
-- **Input:** Property code and name, type (room, hall, equipment), capacity, location, attached
-  equipment, bookable hours, blackout periods, the active state.
-- **Main Flow:**
-  1. The officer adds a property or opens an existing one.
-  2. The officer sets its capacity, location, bookable hours and blackout periods.
-  3. The officer activates it; it becomes selectable in UC47.
-- **Alternative Flows:**
-  - **A1 Deactivate:** a property that may no longer be booked is deactivated; existing approved
-    bookings stand.
-  - **A2 Blackout:** a period is blocked for maintenance, and conflicting requests are surfaced.
-- **Exceptions:** **E1** deletion is attempted while approved future bookings exist → refused;
-  deactivation is the only route (BR41).
-- **Postconditions:** The catalogue reflects what can be booked, and from when.
-- **Business Rules:** BR41. Changing bookable hours never invalidates a decision already taken.
-  UCMS holds only the properties released to club activity and does not replace the university's
-  own room booking system (§5.2).
-- **Output:** Property records, audit record.
-- **Related UC:** UC47, UC48
-- **Pain Point:** BP16
+- **Mục tiêu nghiệp vụ:** Định nghĩa những gì CLB được phép đặt — tiền điều kiện còn thiếu của
+  UC51 trong v1.
+- **Kích hoạt:** Nhà trường mở một phòng hoặc thiết bị cho hoạt động CLB, hoặc thông tin của nó
+  thay đổi.
+- **Tiền điều kiện:** Người gọi có quyền quản trị cơ sở vật chất.
+- **Dữ liệu vào:** Mã và tên property, loại (phòng, hội trường, thiết bị), sức chứa, vị trí,
+  thiết bị đi kèm, khung giờ được đặt, các giai đoạn khoá, trạng thái hoạt động.
+- **Luồng chính:**
+  1. Officer thêm một property hoặc mở một property đã có.
+  2. Officer đặt sức chứa, vị trí, khung giờ được đặt và các giai đoạn khoá của nó.
+  3. Officer kích hoạt nó; nó trở nên chọn được ở UC47.
+- **Luồng thay thế:**
+  - **A1 Ngừng kích hoạt:** một property không còn được đặt nữa thì bị ngừng kích hoạt; các
+    booking đã duyệt hiện có vẫn giữ nguyên.
+  - **A2 Giai đoạn khoá:** một giai đoạn bị chặn để bảo trì, và các yêu cầu xung đột với nó được
+    hiển thị ra.
+- **Ngoại lệ:** **E1** cố xoá trong khi còn booking tương lai đã duyệt → từ chối; ngừng kích
+  hoạt là con đường duy nhất (BR41).
+- **Hậu điều kiện:** Danh mục phản ánh đúng những gì đặt được, và từ khi nào.
+- **Quy tắc nghiệp vụ:** BR41. Việc đổi khung giờ được đặt không bao giờ làm vô hiệu một quyết
+  định đã ra. UCMS chỉ giữ những property được mở cho hoạt động CLB và không thay thế hệ thống
+  đặt phòng riêng của trường (§5.2).
+- **Đầu ra:** Các bản ghi Property, bản ghi audit.
+- **Use case liên quan:** UC47, UC48
+- **Pain point:** BP16
 
-## UC47 – Submit a property booking request
+## UC47 – Gửi yêu cầu đặt cơ sở vật chất
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M11
-- **Business Goal:** Request a room or equipment through a traceable process linked to the event.
-- **Trigger:** The club needs a venue or equipment for an event or a recurring activity.
-- **Preconditions:** The club is `Active` (BR34); the caller holds the permission; the property is
-  active in UC46.
-- **Input:** Property, purpose of use, start and end date-time, expected headcount, attached
-  equipment, the related event if any.
-- **Main Flow:**
-  1. The member picks a property from the catalogue ICPDP maintains (UC46).
-  2. The system shows its availability.
-  3. The member enters the usage details.
-  4. The system evaluates the conflict rule BR15.
-  5. The member submits → `Requested`; ICPDP receives a review task.
-- **Alternative Flows:**
-  - **A1 Draft:** saved as `Draft`.
-  - **A2 Attach to a proposal:** the request is attached to an event proposal being drafted (UC25).
-  - **A3 Revise and resubmit:** from `Revision Requested`, the member edits and resubmits; the
-    system creates a **new version** and returns the booking to `Requested` — the
-    symmetric flow v1 offered in UC52 step 3 but never gave a use case.
-- **Exceptions:**
-  - **E1** the slot is taken and policy forbids overbooking → refused (BR33);
-  - **E2** the requested time falls in a blackout period → refused;
-  - **E3** the headcount exceeds the property's capacity → warning, and the officer decides in
-    UC48;
-  - **E4** the club has a recorded dissolution and the booking ends after its `Dissolving`
-    semester → refused (BR45).
-- **Postconditions:** The booking is `Requested`.
-- **Business Rules:** BR15, BR33, BR34, BR45.
-- **Output:** PropertyBooking, ApprovalTask.
-- **Related UC:** UC25, UC46, UC48
-- **Pain Point:** BP16
+- **Mục tiêu nghiệp vụ:** Xin một phòng hoặc thiết bị qua một quy trình truy vết được và gắn với
+  sự kiện.
+- **Kích hoạt:** CLB cần địa điểm hoặc thiết bị cho một sự kiện hoặc một hoạt động định kỳ.
+- **Tiền điều kiện:** CLB đang `Active` (BR34); người gọi có quyền tương ứng; property đang hoạt
+  động trong UC46.
+- **Dữ liệu vào:** Property, mục đích sử dụng, thời điểm bắt đầu và kết thúc, số người dự kiến,
+  thiết bị đi kèm, sự kiện liên quan nếu có.
+- **Luồng chính:**
+  1. Thành viên chọn một property từ danh mục mà ICPDP duy trì (UC46).
+  2. Hệ thống hiển thị tình trạng còn trống của nó.
+  3. Thành viên nhập thông tin sử dụng.
+  4. Hệ thống đánh giá quy tắc xung đột BR15.
+  5. Thành viên nộp → `Requested`; ICPDP nhận một review task.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** được lưu ở `Draft`.
+  - **A2 Đính kèm vào một đề xuất:** yêu cầu được đính kèm vào một đề xuất sự kiện đang soạn (UC25).
+  - **A3 Sửa và nộp lại:** từ `Revision Requested`, thành viên sửa và nộp lại; hệ thống tạo một
+    **version mới** và đưa booking về `Requested` — chính là luồng đối xứng mà v1 có ở bước 3
+    của UC52 nhưng không bao giờ cấp cho nó một use case.
+- **Ngoại lệ:**
+  - **E1** khung giờ đã có người đặt và chính sách cấm overbooking → từ chối (BR33);
+  - **E2** thời gian yêu cầu rơi vào một giai đoạn khoá → từ chối;
+  - **E3** số người dự kiến vượt sức chứa của property → cảnh báo, và officer quyết định ở UC48;
+  - **E4** CLB đã có quyết định giải thể và booking kết thúc sau học kỳ `Dissolving` của nó →
+    từ chối (BR45).
+- **Hậu điều kiện:** Booking ở `Requested`.
+- **Quy tắc nghiệp vụ:** BR15, BR33, BR34, BR45.
+- **Đầu ra:** PropertyBooking, ApprovalTask.
+- **Use case liên quan:** UC25, UC46, UC48
+- **Pain point:** BP16
 
-## UC48 – Assess and decide the property booking request
+## UC48 – Thẩm định và quyết định yêu cầu đặt cơ sở vật chất
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M11
-- **Business Goal:** Allocate university resources under control, with the reason on the record.
-- **Trigger:** A task from UC47.
-- **Preconditions:** The booking is `Requested`.
-- **Input:** The review note, the decision and its reason.
-- **Main Flow:**
-  1. The officer opens the request → `Under Review`.
-  2. The officer checks the club's state, the purpose, the conflicts and the overdue obligations.
-  3. The officer chooses: **request revision**, **approve**, or **reject** — a reason is mandatory
-     for the last two outcomes.
-  4. The system audits the decision, updates the state and sends `Property booking status` to CMB.
-- **Alternative Flows:**
-  - **A1 Approve a different slot:** the officer proposes an alternative time or property, which
-    the club accepts through UC47 A3.
-- **Exceptions:** **E1** another booking was approved for the same slot in the meantime → the
-  request is returned as conflicting.
-- **Postconditions:** The booking is `Approved`, `Rejected` or `Revision Requested`; an approved
-  booking locks the slot.
-- **Business Rules:** BR33, BR34, BR35, BR31 — only ICPDP decides; a `Suspended` club receives no
-  new booking.
-- **Output:** ApprovalDecision, locked slot, audit record, notification.
-- **Related UC:** UC47, UC49, UC26
-- **Pain Point:** BP16
+- **Mục tiêu nghiệp vụ:** Cấp phát nguồn lực của nhà trường một cách có kiểm soát, với lý do
+  được lưu lại.
+- **Kích hoạt:** Một task từ UC47.
+- **Tiền điều kiện:** Booking đang ở `Requested`.
+- **Dữ liệu vào:** Ghi chú thẩm định, quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở yêu cầu → `Under Review`.
+  2. Officer kiểm tra trạng thái CLB, mục đích, các xung đột và các nghĩa vụ quá hạn.
+  3. Officer chọn: **yêu cầu chỉnh sửa**, **phê duyệt**, hoặc **từ chối** — hai kết quả sau bắt
+     buộc có lý do.
+  4. Hệ thống ghi audit quyết định, cập nhật trạng thái và gửi `Property booking status` cho CMB.
+- **Luồng thay thế:**
+  - **A1 Duyệt một khung giờ khác:** officer đề xuất một thời gian hoặc property thay thế, và
+    CLB chấp nhận qua UC47 A3.
+- **Ngoại lệ:** **E1** một booking khác đã được duyệt cho cùng khung giờ trong lúc chờ → yêu cầu
+  được trả lại do xung đột.
+- **Hậu điều kiện:** Booking ở `Approved`, `Rejected` hoặc `Revision Requested`; một booking đã
+  duyệt khoá khung giờ.
+- **Quy tắc nghiệp vụ:** BR33, BR34, BR35, BR31 — chỉ ICPDP quyết định; một CLB `Suspended`
+  không nhận booking mới.
+- **Đầu ra:** ApprovalDecision, khung giờ bị khoá, bản ghi audit, thông báo.
+- **Use case liên quan:** UC47, UC49, UC26
+- **Pain point:** BP16
 
-## UC49 – Track and cancel or release a booked property
+## UC49 – Theo dõi và huỷ / trả cơ sở vật chất đã đặt
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M11
-- **Business Goal:** Free a resource that is no longer needed so another club can book it.
-- **Trigger:** The event is cancelled or rescheduled (UC28), or the club no longer needs the
-  property.
-- **Preconditions:** The booking is `Requested` or `Approved`.
-- **Input:** The reason for the cancellation.
-- **Main Flow:**
-  1. The member opens the booking.
-  2. The member chooses `Cancel` and enters the reason.
-  3. The system frees the time slot.
-  4. ICPDP is notified; the slot becomes available in UC47.
-- **Alternative Flows:**
-  - **A1 Automatic release:** the related event is cancelled in UC28, and the system releases the
-    booking without manual action (BR35). When that cancellation comes from UC15 or UC42, an
-    `In Use` booking is released too and E2 does not apply.
-- **Exceptions:** **E1** the booking is already `In Use` or `Completed` → cancellation is refused;
-  **E2** the cancellation falls inside the configured notice period → it is recorded as a
-  compliance signal for UC42.
-- **Postconditions:** The booking is `Cancelled` or `Released`; the slot is free.
-- **Business Rules:** BR35. Without it, an approved booking locks a room forever.
-- **Output:** Booking state, freed slot, notification; compliance signal.
-- **Related UC:** UC28, UC48, UC42
-- **Pain Point:** BP16
+- **Mục tiêu nghiệp vụ:** Giải phóng một nguồn lực không còn cần tới để một CLB khác đặt được.
+- **Kích hoạt:** Sự kiện bị huỷ hoặc đổi lịch (UC28), hoặc CLB không còn cần property đó.
+- **Tiền điều kiện:** Booking đang ở `Requested` hoặc `Approved`.
+- **Dữ liệu vào:** Lý do huỷ.
+- **Luồng chính:**
+  1. Thành viên mở booking.
+  2. Thành viên chọn `Huỷ` và nhập lý do.
+  3. Hệ thống giải phóng khung giờ.
+  4. ICPDP được thông báo; khung giờ trở nên đặt được ở UC47.
+- **Luồng thay thế:**
+  - **A1 Tự động giải phóng:** sự kiện liên quan bị huỷ ở UC28, và hệ thống giải phóng booking
+    mà không cần thao tác thủ công (BR35). Khi việc huỷ đó đến từ UC15 hoặc UC42, một booking
+    đang `In Use` cũng được giải phóng và ngoại lệ E2 không áp dụng.
+- **Ngoại lệ:** **E1** booking đã `In Use` hoặc `Completed` → từ chối huỷ; **E2** việc huỷ rơi
+  vào thời hạn báo trước cấu hình được → được ghi nhận là một tín hiệu tuân thủ cho UC42.
+- **Hậu điều kiện:** Booking ở `Cancelled` hoặc `Released`; khung giờ đã trống.
+- **Quy tắc nghiệp vụ:** BR35. Không có nó, một booking đã duyệt sẽ khoá một căn phòng vĩnh viễn.
+- **Đầu ra:** Trạng thái booking, khung giờ được giải phóng, thông báo; tín hiệu tuân thủ.
+- **Use case liên quan:** UC28, UC48, UC42
+- **Pain point:** BP16
 
 ---
 
-# M12 — Feedback & Complaint
+# M12 — Phản hồi và khiếu nại
 
-## UC50 – Submit post-event feedback
+## UC50 – Gửi phản hồi sau sự kiện
 
-- **Primary Actor:** Student
+- **Actor chính:** Student
 - **Module:** M12
-- **Business Goal:** Collect the participant's assessment as improvement and evaluation data.
-- **Trigger:** The feedback window opens at the participant's check-in (BR36).
-- **Preconditions:** The student holds an attendance record for that event.
-- **Input:** A score per criterion, a free-text comment, optional anonymity.
-- **Main Flow:**
-  1. The student opens an event they attended, from UC02 or UC24.
-  2. The student fills in the feedback form.
-  3. The student submits.
-  4. The system stores it and updates the aggregate statistics.
-- **Alternative Flows:**
-  - **A1 Anonymous:** the identity is hidden from CMB; an internal link is kept for anti-spam
-    purposes only.
-- **Exceptions:**
-  - **E1** feedback was already submitted for that event → refused (BR36);
-  - **E2** the window has closed → refused;
-  - **E3** no attendance record → the form is not offered.
-- **Postconditions:** An EventFeedback record exists and is immutable.
-- **Business Rules:** BR36 — one feedback per participant per event, accepted from **check-in**
-  until the configured window closes. This is the v2 correction: v1 opened the window after UC32
-  finalization, so a late-finalizing club — the exact behaviour BP08 describes — drove the
-  response rate to zero and starved dimensions D1 and D2. BR37 — never edited or deleted, and
-  visible to CMB only in aggregate. BR40 — no aggregate below the minimum respondent count.
-- **Output:** EventFeedback, updated aggregate.
-- **Related UC:** UC31, UC51, UC44
-- **Pain Point:** BP17
+- **Mục tiêu nghiệp vụ:** Thu thập đánh giá của người tham dự làm dữ liệu cải tiến và dữ liệu
+  đánh giá.
+- **Kích hoạt:** Feedback window mở ra tại thời điểm check-in của người tham dự (BR36).
+- **Tiền điều kiện:** Sinh viên có một bản ghi điểm danh của sự kiện đó.
+- **Dữ liệu vào:** Điểm theo từng tiêu chí, nhận xét tự do, tuỳ chọn ẩn danh.
+- **Luồng chính:**
+  1. Sinh viên mở một sự kiện mình đã tham dự, từ UC02 hoặc UC24.
+  2. Sinh viên điền biểu mẫu phản hồi.
+  3. Sinh viên nộp.
+  4. Hệ thống lưu lại và cập nhật thống kê tổng hợp.
+- **Luồng thay thế:**
+  - **A1 Ẩn danh:** danh tính bị ẩn khỏi CMB; một liên kết nội bộ được giữ lại chỉ để chống spam.
+- **Ngoại lệ:**
+  - **E1** đã gửi phản hồi cho sự kiện đó rồi → từ chối (BR36);
+  - **E2** window đã đóng → từ chối;
+  - **E3** không có bản ghi điểm danh → biểu mẫu không được hiển thị.
+- **Hậu điều kiện:** Tồn tại một bản ghi EventFeedback và nó là bất biến.
+- **Quy tắc nghiệp vụ:** BR36 — mỗi người tham dự một phản hồi cho một sự kiện, nhận từ lúc
+  **check-in** cho tới khi window cấu hình được đóng lại. Đây là phần sửa của v2: v1 mở window
+  sau khi chốt điểm danh ở UC32, nên một CLB chốt muộn — đúng cái hành vi mà BP08 mô tả — đẩy tỉ
+  lệ phản hồi về 0 và làm dimension D1, D2 chết đói dữ liệu. BR37 — không bao giờ bị sửa hay
+  xoá, và CMB chỉ thấy ở dạng tổng hợp. BR40 — không hiển thị bản tổng hợp khi chưa đạt số người
+  phản hồi tối thiểu.
+- **Đầu ra:** EventFeedback, bản tổng hợp được cập nhật.
+- **Use case liên quan:** UC31, UC51, UC44
+- **Pain point:** BP17
 
-## UC51 – Review event feedback
+## UC51 – Xem phản hồi sự kiện
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M12
-- **Business Goal:** Use the participants' assessment to improve the next activity.
-- **Trigger:** The feedback window closes, or the club prepares the post-event report.
-- **Preconditions:** The event has feedback, and the respondent count reaches the BR40 minimum.
-- **Main Flow:**
-  1. The member opens the aggregated view for an event.
-  2. The member reads the per-criterion average, the distribution and the comments.
-  3. The member carries the conclusion into the post-event report (UC33).
-- **Alternative Flows:**
-  - **A1 Across events:** the club compares the aggregate across its own events over a period.
-- **Exceptions:** **E1** fewer respondents than BR40 requires → only the fact that feedback
-  exists is shown, never the content.
-- **Postconditions:** None; read-only. The lesson learned is recorded in UC33.
-- **Business Rules:** BR37, BR40. CMB may not edit or delete participant feedback.
-- **Output:** Feedback summary; input to UC33 and UC44.
-- **Related UC:** UC50, UC33, UC44
-- **Pain Point:** BP17
+- **Mục tiêu nghiệp vụ:** Dùng đánh giá của người tham dự để cải thiện hoạt động kế tiếp.
+- **Kích hoạt:** Feedback window đóng lại, hoặc CLB chuẩn bị báo cáo sau sự kiện.
+- **Tiền điều kiện:** Sự kiện có phản hồi, và số người phản hồi đạt mức tối thiểu của BR40.
+- **Luồng chính:**
+  1. Thành viên mở bản tổng hợp của một sự kiện.
+  2. Thành viên đọc điểm trung bình theo từng tiêu chí, phân bố điểm và các nhận xét.
+  3. Thành viên mang kết luận vào báo cáo sau sự kiện (UC33).
+- **Luồng thay thế:**
+  - **A1 So sánh nhiều sự kiện:** CLB so sánh bản tổng hợp giữa các sự kiện của chính mình trong
+    một giai đoạn.
+- **Ngoại lệ:** **E1** số người phản hồi ít hơn mức BR40 yêu cầu → chỉ hiển thị việc có tồn tại
+  phản hồi, không bao giờ hiển thị nội dung.
+- **Hậu điều kiện:** Không có; chỉ đọc. Bài học rút ra được ghi ở UC33.
+- **Quy tắc nghiệp vụ:** BR37, BR40. CMB không được sửa hay xoá phản hồi của người tham dự.
+- **Đầu ra:** Bản tổng hợp phản hồi; đầu vào cho UC33 và UC44.
+- **Use case liên quan:** UC50, UC33, UC44
+- **Pain point:** BP17
 
-## UC52 – Submit a complaint about a club
+## UC52 – Gửi khiếu nại về một CLB
 
-- **Primary Actor:** Student
+- **Actor chính:** Student
 - **Module:** M12
-- **Business Goal:** Give students an official escalation channel with a processing trail.
-- **Trigger:** A student has an issue with a club or one of its activities.
-- **Preconditions:** A valid session (UC01).
-- **Input:** The club concerned, the related event if any, the complaint type, the description,
-  the evidence.
-- **Main Flow:**
-  1. The student selects the club, and the event where one applies.
-  2. The student chooses the complaint type.
-  3. The student describes the issue and attaches evidence.
-  4. The student submits → `Submitted`; ICPDP receives a task.
-  5. The student tracks the progress in UC02.
-- **Alternative Flows:**
-  - **A1 Withdraw:** the student withdraws a complaint that has not been decided (`Submitted` or
+- **Mục tiêu nghiệp vụ:** Cho sinh viên một kênh khiếu nại chính thức có vết xử lý.
+- **Kích hoạt:** Một sinh viên gặp vấn đề với một CLB hoặc một hoạt động của CLB.
+- **Tiền điều kiện:** Có một phiên hợp lệ (UC01).
+- **Dữ liệu vào:** CLB liên quan, sự kiện liên quan nếu có, loại khiếu nại, mô tả, chứng cứ.
+- **Luồng chính:**
+  1. Sinh viên chọn CLB, và sự kiện nếu có.
+  2. Sinh viên chọn loại khiếu nại.
+  3. Sinh viên mô tả vấn đề và đính kèm chứng cứ.
+  4. Sinh viên nộp → `Submitted`; ICPDP nhận một task.
+  5. Sinh viên theo dõi tiến trình ở UC02.
+- **Luồng thay thế:**
+  - **A1 Rút khiếu nại:** sinh viên rút một khiếu nại chưa có quyết định (`Submitted` hoặc
     `Under Triage`) → `Withdrawn`.
-- **Exceptions:** **E1** the same student files a duplicate complaint on the same facts → the
-  complaints are linked and triaged together.
-- **Postconditions:** The complaint is `Submitted` and trackable.
-- **Business Rules:** BR38 — the complaint goes straight to ICPDP; the club gains access only
-  after UC53 forwards it.
-- **Output:** Complaint, ApprovalTask, notification.
-- **Related UC:** UC53, UC02
-- **Pain Point:** BP18
+- **Ngoại lệ:** **E1** cùng một sinh viên gửi khiếu nại trùng về cùng sự việc → các khiếu nại
+  được liên kết với nhau và phân loại chung.
+- **Hậu điều kiện:** Khiếu nại ở `Submitted` và theo dõi được.
+- **Quy tắc nghiệp vụ:** BR38 — khiếu nại đi thẳng tới ICPDP; CLB chỉ tiếp cận được sau khi UC53
+  chuyển nó xuống.
+- **Đầu ra:** Complaint, ApprovalTask, thông báo.
+- **Use case liên quan:** UC53, UC02
+- **Pain point:** BP18
 
-## UC53 – Triage a complaint
+## UC53 – Phân loại khiếu nại
 
-- **Primary Actor:** ICPDP Officer
+- **Actor chính:** ICPDP Officer
 - **Module:** M12
-- **Business Goal:** Filter complaints and open a case only where there are grounds.
-- **Trigger:** A task from UC52.
-- **Preconditions:** The complaint is `Submitted`.
-- **Input:** The severity, the validity assessment, the decision and its reason.
-- **Main Flow:**
-  1. The officer opens the complaint → `Under Triage`.
-  2. The officer classifies its severity and validity.
-  3. The officer chooses one outcome:
-     - **Dismissed** — no grounds, the reason is recorded;
-     - **Forwarded** — handed to the club to answer through UC54;
-     - **Escalated** — a case is opened in UC42 and linked back to the complaint.
-  4. The system audits the decision and notifies the complainant.
-- **Alternative Flows:**
-  - **A1 Close after a response:** a forwarded complaint whose club response satisfies the
-    officer is closed; otherwise it is escalated.
-- **Exceptions:** **E1** the complaint concerns a dissolved club → it is recorded and closed,
-  with the history kept.
-- **Postconditions:** The complaint is `Dismissed`, `Forwarded`, `Escalated` or `Closed`; on
-  escalation a Violation exists and links back.
-- **Business Rules:** BR39 — every decision carries a reason and is audited; only ICPDP dismisses
-  or escalates. Escalation needs UC42 —
-  v1 put UC56/UC57 in the MVP and UC48 in V2, so an escalated complaint had nowhere to go.
-- **Output:** Complaint decision, Violation (on escalation), audit record, notification.
-- **Related UC:** UC52, UC54, UC42, UC44
-- **Pain Point:** BP18
+- **Mục tiêu nghiệp vụ:** Lọc khiếu nại và chỉ mở một hồ sơ ở nơi thực sự có căn cứ.
+- **Kích hoạt:** Một task từ UC52.
+- **Tiền điều kiện:** Khiếu nại đang ở `Submitted`.
+- **Dữ liệu vào:** Mức độ nghiêm trọng, đánh giá tính hợp lệ, quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở khiếu nại → `Under Triage`.
+  2. Officer phân loại mức độ nghiêm trọng và tính hợp lệ.
+  3. Officer chọn một kết quả:
+     - **Dismissed** — không có căn cứ, lý do được ghi lại;
+     - **Forwarded** — chuyển cho CLB trả lời qua UC54;
+     - **Escalated** — một hồ sơ được mở ở UC42 và liên kết ngược lại khiếu nại.
+  4. Hệ thống ghi audit quyết định và thông báo cho người khiếu nại.
+- **Luồng thay thế:**
+  - **A1 Đóng sau khi có phản hồi:** một khiếu nại đã chuyển xuống mà phần trả lời của CLB làm
+    officer hài lòng thì được đóng lại; ngược lại nó được leo thang.
+- **Ngoại lệ:** **E1** khiếu nại liên quan tới một CLB đã giải thể → được ghi nhận và đóng lại,
+  lịch sử được giữ nguyên.
+- **Hậu điều kiện:** Khiếu nại ở `Dismissed`, `Forwarded`, `Escalated` hoặc `Closed`; khi leo
+  thang thì tồn tại một Violation liên kết ngược lại.
+- **Quy tắc nghiệp vụ:** BR39 — mọi quyết định đều mang một lý do và được ghi audit; chỉ ICPDP
+  được bác bỏ hoặc leo thang. Việc leo thang cần tới UC42 — v1 đặt UC56/UC57 vào MVP còn UC48
+  vào V2, nên một khiếu nại được leo thang không có chỗ nào để đi.
+- **Đầu ra:** Quyết định phân loại, Violation (khi leo thang), bản ghi audit, thông báo.
+- **Use case liên quan:** UC52, UC54, UC42, UC44
+- **Pain point:** BP18
 
-## UC54 – Respond to a forwarded complaint
+## UC54 – Trả lời khiếu nại được chuyển xuống
 
-- **Primary Actor:** CMB
+- **Actor chính:** CMB
 - **Module:** M12
-- **Business Goal:** Let the club answer on the record — the owner v1's
-  `Forwarded → Club Responded` transition never had.
-- **Trigger:** ICPDP forwards a complaint in UC53.
-- **Preconditions:** The complaint is `Forwarded`.
-- **Input:** The response, the evidence, the action the club has taken or will take.
-- **Main Flow:**
-  1. The board opens the forwarded complaint; the complainant's identity is shown only as policy
-     allows (open decision D5).
-  2. The board enters its response and attaches evidence.
-  3. The board submits → `Club Responded`.
-  4. ICPDP closes or escalates it in UC53.
-- **Alternative Flows:**
-  - **A1 Action taken:** the response names a concrete action, which ICPDP may verify before
-    closing.
-- **Exceptions:** **E1** the response deadline passes → the non-response is recorded as a
-  compliance signal for UC42.
-- **Postconditions:** The complaint is `Club Responded` and back with ICPDP.
-- **Business Rules:** CMB never edits or closes the complaint itself. A response is due within
-  the configured period.
-- **Output:** Club response, audit record, notification.
-- **Related UC:** UC53, UC42
-- **Pain Point:** BP18
+- **Mục tiêu nghiệp vụ:** Cho CLB giải trình chính thức — chủ sở hữu mà chuyển trạng thái
+  `Forwarded → Club Responded` của v1 chưa từng có.
+- **Kích hoạt:** ICPDP chuyển một khiếu nại xuống ở UC53.
+- **Tiền điều kiện:** Khiếu nại đang ở `Forwarded`.
+- **Dữ liệu vào:** Phần trả lời, chứng cứ, hành động CLB đã hoặc sẽ thực hiện.
+- **Luồng chính:**
+  1. Ban chủ nhiệm mở khiếu nại được chuyển xuống; danh tính người khiếu nại chỉ hiển thị ở mức
+     chính sách cho phép (quyết định còn mở D5).
+  2. Ban chủ nhiệm nhập phần trả lời và đính kèm chứng cứ.
+  3. Ban chủ nhiệm nộp → `Club Responded`.
+  4. ICPDP đóng hoặc leo thang nó ở UC53.
+- **Luồng thay thế:**
+  - **A1 Đã có hành động:** phần trả lời nêu một hành động cụ thể, mà ICPDP có thể xác minh
+    trước khi đóng.
+- **Ngoại lệ:** **E1** quá hạn trả lời → việc không phản hồi được ghi nhận là một tín hiệu tuân
+  thủ cho UC42.
+- **Hậu điều kiện:** Khiếu nại ở `Club Responded` và trở về với ICPDP.
+- **Quy tắc nghiệp vụ:** CMB không bao giờ tự sửa hay tự đóng khiếu nại. Phải trả lời trong thời
+  hạn cấu hình được.
+- **Đầu ra:** Phần trả lời của CLB, bản ghi audit, thông báo.
+- **Use case liên quan:** UC53, UC42
+- **Pain point:** BP18
 
 ---
 
-## Appendix — coverage check
+## Phụ lục — Kiểm tra mức phủ
 
-| Check | Result |
+| Hạng mục kiểm tra | Kết quả |
 |---|---|
-| Use cases specified | 54 of 54 (UC01–UC54) |
-| Use cases with exactly one primary actor | 54 of 54 — UC31 is the only one with a supporting actor |
-| Use cases with a Main Flow | 54 of 54 |
-| Use cases whose entity owns a lifecycle, with the state named | UC07, UC08, UC15, UC16, UC17, UC18, UC20, UC21, UC25, UC26, UC27, UC28, UC29, UC31, UC32, UC33, UC34, UC35, UC36, UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC45, UC47, UC48, UC49, UC50, UC52, UC53, UC54 |
-| Pain points with at least one use case | 19 of 19 (model §13) |
+| Use case đã được đặc tả | 54 trên 54 (UC01–UC54) |
+| Use case có đúng một actor chính | 54 trên 54 — UC31 là use case duy nhất có actor hỗ trợ |
+| Use case có Luồng chính | 54 trên 54 |
+| Use case mà thực thể của nó có vòng đời, và trạng thái được nêu tên | UC07, UC08, UC15, UC16, UC17, UC18, UC20, UC21, UC25, UC26, UC27, UC28, UC29, UC31, UC32, UC33, UC34, UC35, UC36, UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC45, UC47, UC48, UC49, UC50, UC52, UC53, UC54 |
+| Pain point có ít nhất một use case | 19 trên 19 (§13 của tài liệu mô hình) |
