@@ -1,3 +1,3 @@
 # components/layout/
 
-Structural layout shells: Navbar, Sidebar, BottomNav, AuthLayout. No `App` prefix.
+Các khung bố cục cấu trúc: Navbar, Sidebar, BottomNav, AuthLayout. Không có tiền tố `App`.

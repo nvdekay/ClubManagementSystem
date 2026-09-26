@@ -1,3 +1,3 @@
 # ui/button/
 
-`AppButton` — the app's button variants.
+`AppButton` — các biến thể nút của ứng dụng.

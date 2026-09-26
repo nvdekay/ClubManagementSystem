@@ -1,6 +1,6 @@
 # interface/http/
 
-Express adapter. Fixed wiring: `server.ts` (app), `middleware.ts` (logging + error
-mapping), `response.ts` (response contract — the ONLY place that calls `res.json()`),
-`openapi.ts` (/docs). Routes grow as one `<resource>-routes.ts` per resource, mounted
-under `/api/v1`. Translate HTTP ↔ usecase calls only; no business logic.
+Adapter Express. Phần nối dây cố định: `server.ts` (app), `middleware.ts` (log + ánh xạ lỗi),
+`response.ts` (hợp đồng response — nơi DUY NHẤT gọi `res.json()`), `openapi.ts` (/docs). Route
+mở rộng theo mẫu mỗi tài nguyên một file `<resource>-routes.ts`, gắn dưới `/api/v1`. Chỉ dịch
+qua lại giữa HTTP và lời gọi usecase; không chứa logic nghiệp vụ.

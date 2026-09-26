@@ -1,3 +1,3 @@
 # ui/toast/
 
-`AppToast` — transient notifications.
+`AppToast` — các thông báo thoáng qua.

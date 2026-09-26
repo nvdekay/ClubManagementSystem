@@ -1,4 +1,4 @@
 # ui/select/
 
-`AppSelect` — single-choice dropdown. Replaces `<select>` wherever the open list has to
-match the app's tokens: a native `<select>` popup is drawn by the OS and cannot be styled.
+`AppSelect` — dropdown chọn một giá trị. Thay cho `<select>` ở mọi nơi mà danh sách mở ra phải
+khớp token của ứng dụng: popup của `<select>` gốc do hệ điều hành vẽ và không tạo kiểu được.

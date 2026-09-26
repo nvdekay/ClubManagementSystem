@@ -1,159 +1,158 @@
-# Frontend rules — client/
-
+# Quy tắc frontend — client/
 
 ## Stack
 
-- **React 19** + TypeScript, built with **Vite** (`client/`, one of two npm workspaces alongside `server/`).
-- No router — the app is a single page (`App.tsx`).
-- No state library — local component state (`useState`/`useReducer`) is enough at this size.
-- No HTTP client library — native `fetch`, called against `/api/v1/...` (Vite dev-proxies `/api` to the server). **TanStack React Query** (`@tanstack/react-query`) manages server state: `useQuery`/`useMutation` over those fetch functions, `QueryClientProvider` in `main.tsx`. Pass the queryFn's `signal` to `fetch`; after a mutation, update the cache per Fetch/Service rule 4 (`setQueryData` when the response determines the new value, `invalidateQueries` when the list is server-filtered). Paginated/searched queries use `placeholderData: keepPreviousData` so a key change (new page, new search) keeps the old rows on screen instead of flashing empty (see `useUsers`).
-- **Tailwind v4**, CSS-first (`@tailwindcss/vite` plugin, no `tailwind.config.*`). Color tokens are declared in `client/src/index.css` inside `@theme` as `--color-<name>-app`, which generates the `<name>-app` utilities (`bg-danger-app`, `text-danger-app`, …).
-- Dark mode is manual (not `prefers-color-scheme`-only): a `.dark` class toggled on `<html>` (see `App.tsx`'s `theme` state) overrides the same tokens under `:root.dark` in `index.css`. No `dark:` Tailwind variant is used — the token indirection alone repaints every `*-app` utility.
-- Locale: **i18next** + `react-i18next`, initialized in `client/src/i18n/index.ts` (`en`/`vi`, `fallbackLng: "en"`, language persisted to `localStorage`). Strings are split one file per feature domain (`i18n/common.ts`, `i18n/users.ts`, `i18n/demo.ts`), each exporting `{ en, vi }`, assembled into `resources` in `index.ts`. Components read strings with `const { t } = useTranslation()` and namespaced keys (`t("users.title")`); switch locale with `i18n.changeLanguage("vi")`. New feature → new `i18n/<module>.ts`, then register it in both locales in `index.ts`.
-- `cn()` at `client/src/utils/cn.ts` — `twMerge(clsx(inputs))` — for any conditional class.
-- **TanStack Table v9** (`@tanstack/react-table`) for tables — headless: the caller owns the `useTable` instance and passes it to the `ui/table/` kit (`AppTable`, `AppTableColumnToggle`, `AppTableLimitSelect`). Pagination controls are table-agnostic — `ui/pagination/AppPagination` takes plain `pageIndex`/`pageCount`/`onPageChange` props, no table instance. v9 ≠ v8: `useTable({ features, columns, data })` with `tableFeatures({...})` (no `useReactTable`/`getCoreRowModel`), `createColumnHelper<typeof features, T>()`, `table.state` instead of `table.getState()`. The shared feature set lives in `AppTable.tsx` (`appTableFeatures`); extend it there when a table needs sorting/selection/etc. Docs for agents ship in `node_modules/@tanstack/react-table/skills/`. Keep `data`/`columns` referentially stable (module-scope empty fallback, `useMemo` columns).
-- `@/` path alias configured (`client/tsconfig.json` `paths`, `client/vite.config.ts` `resolve.alias`) → `client/src/*`.
+- **React 19** + TypeScript, build bằng **Vite** (`client/`, một trong hai npm workspace bên cạnh `server/`).
+- Không router — ứng dụng hiện là một trang duy nhất (`App.tsx`).
+- Không thư viện state — state cục bộ của component (`useState`/`useReducer`) là đủ ở quy mô này.
+- Không thư viện HTTP client — dùng `fetch` gốc, gọi tới `/api/v1/...` (Vite proxy `/api` sang server ở môi trường dev). **TanStack React Query** (`@tanstack/react-query`) quản lý server state: `useQuery`/`useMutation` bọc quanh các hàm fetch đó, `QueryClientProvider` đặt trong `main.tsx`. Truyền `signal` của queryFn vào `fetch`; sau một mutation, cập nhật cache theo quy tắc 4 của mục Fetch/Service (`setQueryData` khi response đã quyết định được giá trị mới, `invalidateQueries` khi danh sách được lọc ở phía server). Truy vấn có phân trang/tìm kiếm dùng `placeholderData: keepPreviousData` để khi key đổi (trang mới, từ khoá mới) các dòng cũ vẫn nằm trên màn hình thay vì chớp trắng (xem `useUsers`).
+- **Tailwind v4**, CSS-first (plugin `@tailwindcss/vite`, không có `tailwind.config.*`). Token màu khai báo trong `client/src/index.css` bên trong `@theme` dưới dạng `--color-<name>-app`, sinh ra các utility `<name>-app` (`bg-danger-app`, `text-danger-app`, …).
+- Dark mode là thủ công (không chỉ dựa vào `prefers-color-scheme`): một class `.dark` bật/tắt trên `<html>` (xem state `theme` trong `App.tsx`) ghi đè chính các token đó dưới `:root.dark` trong `index.css`. Không dùng variant `dark:` của Tailwind — chỉ riêng lớp gián tiếp token đã đủ để mọi utility `*-app` đổi màu.
+- Ngôn ngữ: **i18next** + `react-i18next`, khởi tạo ở `client/src/i18n/index.ts` (`en`/`vi`, `fallbackLng: "en"`, ngôn ngữ được lưu vào `localStorage`). Chuỗi được tách mỗi miền nghiệp vụ một file (`i18n/common.ts`, `i18n/users.ts`, `i18n/demo.ts`), mỗi file export `{ en, vi }`, rồi ghép thành `resources` trong `index.ts`. Component đọc chuỗi bằng `const { t } = useTranslation()` và key có namespace (`t("users.title")`); đổi ngôn ngữ bằng `i18n.changeLanguage("vi")`. Tính năng mới → thêm `i18n/<module>.ts`, rồi đăng ký nó ở cả hai ngôn ngữ trong `index.ts`.
+- `cn()` ở `client/src/utils/cn.ts` — `twMerge(clsx(inputs))` — dùng cho mọi class có điều kiện.
+- **TanStack Table v9** (`@tanstack/react-table`) cho bảng — headless: người gọi sở hữu instance `useTable` và truyền nó vào bộ kit `ui/table/` (`AppTable`, `AppTableColumnToggle`, `AppTableLimitSelect`). Bộ điều khiển phân trang không phụ thuộc bảng — `ui/pagination/AppPagination` nhận props thuần `pageIndex`/`pageCount`/`onPageChange`, không cần instance bảng. v9 ≠ v8: `useTable({ features, columns, data })` với `tableFeatures({...})` (không còn `useReactTable`/`getCoreRowModel`), `createColumnHelper<typeof features, T>()`, `table.state` thay cho `table.getState()`. Tập feature dùng chung nằm trong `AppTable.tsx` (`appTableFeatures`); mở rộng ở đó khi một bảng cần sắp xếp/chọn dòng/…. Tài liệu dành cho agent nằm trong `node_modules/@tanstack/react-table/skills/`. Giữ `data`/`columns` ổn định về tham chiếu (mảng rỗng khai báo ở phạm vi module, `useMemo` cho columns).
+- Alias `@/` đã cấu hình (`client/tsconfig.json` mục `paths`, `client/vite.config.ts` mục `resolve.alias`) → `client/src/*`.
 
-Do not add react-router, Redux/Zustand/Valtio, or axios speculatively. Each has a concrete trigger below; add it — and update this skill — when the trigger actually fires, not before.
+Không thêm react-router, Redux/Zustand/Valtio hay axios theo kiểu phòng xa. Mỗi thứ đều có một điều kiện kích hoạt cụ thể nêu bên dưới; chỉ thêm — và cập nhật tài liệu này — khi điều kiện đó thực sự xảy ra, không phải trước đó.
 
-## Folder Structure
+## Cấu trúc thư mục
 
-Current (full template layout — every folder exists; empty ones carry a README stating what belongs there):
+Hiện tại (bố cục đầy đủ của template — mọi thư mục đều tồn tại; thư mục rỗng có một README nói rõ thứ gì thuộc về nó):
 
 ```
 client/src/
-  main.tsx     # entry point, mounts App inside QueryClientProvider
-  App.tsx      # the app's one page (no router yet)
-  index.css    # Tailwind import + @theme color tokens (only place hex/named colors are allowed) + :root.dark overrides
+  main.tsx     # điểm vào, gắn App bên trong QueryClientProvider
+  App.tsx      # trang duy nhất của ứng dụng (chưa có router)
+  index.css    # import Tailwind + token màu @theme (nơi duy nhất được phép có mã màu) + ghi đè :root.dark
   i18n/
-    index.ts   # i18next init + Locale type + resources (registers every module in en/vi)
-    common.ts  # one file per feature domain, each exporting { en, vi }
+    index.ts   # khởi tạo i18next + kiểu Locale + resources (đăng ký mọi module ở en/vi)
+    common.ts  # mỗi miền nghiệp vụ một file, mỗi file export { en, vi }
     users.ts
     demo.ts
   services/
-    users.ts   # HTTP layer: one typed async function per endpoint. Knows endpoints, never imports React.
+    users.ts   # tầng HTTP: mỗi endpoint một hàm async có kiểu. Biết endpoint, không bao giờ import React.
   hooks/
-    useUsers.ts # React Query layer: useUsers()/useCreateUser(), owns usersKey. Knows the cache, never calls fetch itself.
+    useUsers.ts # tầng React Query: useUsers()/useCreateUser(), sở hữu usersKey. Biết cache, không tự gọi fetch.
   utils/
-    cn.ts      # twMerge(clsx(inputs)) — use for every conditional className
-  pages/       # one folder per page once a router exists (README placeholder)
+    cn.ts      # twMerge(clsx(inputs)) — dùng cho mọi className có điều kiện
+  pages/       # mỗi trang một thư mục khi đã có router (hiện là README giữ chỗ)
   components/
     ui/
       button/AppButton.tsx
       card/AppCard.tsx
       input/AppInput.tsx
       empty-state/AppEmptyState.tsx
-      pagination/AppPagination.tsx     # table-agnostic pager: pageIndex/pageCount/onPageChange props
-      search-input/AppSearchInput.tsx  # debounced search box (trimmed value via onSearch)
-      skeleton/AppSkeleton.tsx         # pulsing placeholder block — size it with className, compose per use site
+      pagination/AppPagination.tsx     # bộ phân trang không phụ thuộc bảng: props pageIndex/pageCount/onPageChange
+      search-input/AppSearchInput.tsx  # ô tìm kiếm có debounce (trả giá trị đã trim qua onSearch)
+      skeleton/AppSkeleton.tsx         # khối giữ chỗ nhấp nháy — định cỡ bằng className, ghép tại nơi dùng
       switch/AppSwitch.tsx
-      table/AppTable.tsx               # headless TanStack Table v9 kit: AppTable + AppTableColumnToggle + AppTableLimitSelect + shared appTableFeatures
+      table/AppTable.tsx               # kit TanStack Table v9 headless: AppTable + AppTableColumnToggle + AppTableLimitSelect + appTableFeatures dùng chung
       table/AppTableColumnToggle.tsx
       table/AppTableLimitSelect.tsx
       toast/AppToast.tsx
-    custom/    # cross-page, domain-aware components (README placeholder)
-    layout/    # Navbar/Sidebar/AuthLayout shells (README placeholder)
+    custom/    # component dùng nhiều trang, có hiểu biết nghiệp vụ (README giữ chỗ)
+    layout/    # khung Navbar/Sidebar/AuthLayout (README giữ chỗ)
 ```
 
-Folder decision table:
+Bảng quyết định thư mục:
 
-| Folder | What goes here |
+| Thư mục | Thứ gì thuộc về đây |
 |---|---|
-| `src/components/ui/<group>/App<Name>.tsx` | Atomic, generic UI primitives. No business logic. Grouped by functional category (`ui/button/AppButton.tsx`, `ui/input/AppInput.tsx`, …). |
-| `src/components/custom/` | Cross-page custom components. Non-atomic, domain-aware. |
-| `src/components/layout/` | Structural layout wrappers (Navbar, BottomNav, AuthLayout). |
-| `src/pages/<name>/` | Sub-components used by exactly one page (once a router exists). |
-| `src/services/<domain>.ts` | HTTP layer — one typed async function per endpoint, typed against the server envelope. No React imports. |
-| `src/hooks/use<Domain>.ts` | React Query hooks over a service's functions — owns the domain's `queryKey`. Also: any stateful logic needed in 2+ components. |
+| `src/components/ui/<group>/App<Name>.tsx` | Primitive giao diện nguyên tử, dùng chung. Không chứa logic nghiệp vụ. Gom theo nhóm chức năng (`ui/button/AppButton.tsx`, `ui/input/AppInput.tsx`, …). |
+| `src/components/custom/` | Component dùng ở nhiều trang. Không nguyên tử, có hiểu biết nghiệp vụ. |
+| `src/components/layout/` | Khung bố cục cấu trúc (Navbar, BottomNav, AuthLayout). |
+| `src/pages/<name>/` | Component con chỉ dùng bởi đúng một trang (khi đã có router). |
+| `src/services/<domain>.ts` | Tầng HTTP — mỗi endpoint một hàm async có kiểu, khớp với phong bì response của server. Không import React. |
+| `src/hooks/use<Domain>.ts` | Hook React Query bọc quanh các hàm của một service — sở hữu `queryKey` của miền đó. Ngoài ra: mọi logic có state cần dùng ở 2 component trở lên. |
 
-Decision tree for a new component:
+Cây quyết định cho một component mới:
 
-1. Used by exactly 1 page → stays inline in that page/caller (or `src/pages/<name>/PascalCase.tsx` once a router + multi-page structure exists).
-2. Used by 2+ callers + atomic/primitive → `src/components/ui/<group>/App<Name>.tsx`.
-3. Used by 2+ callers + non-atomic/domain-aware → `src/components/custom/`.
-4. Layout/navigation shell → `src/components/layout/`.
+1. Chỉ 1 trang dùng → để nội tuyến ngay trong trang/nơi gọi đó (hoặc `src/pages/<name>/PascalCase.tsx` khi đã có router và cấu trúc nhiều trang).
+2. Từ 2 nơi gọi trở lên + nguyên tử/primitive → `src/components/ui/<group>/App<Name>.tsx`.
+3. Từ 2 nơi gọi trở lên + không nguyên tử/có hiểu biết nghiệp vụ → `src/components/custom/`.
+4. Khung bố cục/điều hướng → `src/components/layout/`.
 
-## Component Rules
+## Quy tắc về component
 
-1. One component per file, `PascalCase.tsx`, named export only (no default exports).
-2. UI primitives under `components/ui/` are prefixed `App` (`AppButton`, `AppInput`, `AppCard`, `AppEmptyState`, …); `components/custom/` and `components/layout/` components are not prefixed.
-3. Props interface in the same file, directly above the component (`interface` for object shapes; `type` for unions/primitives/utility types). Types are co-located with the file that owns them — no `src/types/` folder.
-4. Before adding a new component, check `src/components/ui/`, `src/components/custom/`, and `src/components/layout/` for one to extend instead.
-5. Single-use UI stays inline in its caller — don't pre-split into `components/` for a single use site.
-6. No barrel files (no `index.ts` re-exports) — import directly from the file path: `import { AppButton } from "@/components/ui/button/AppButton"`.
+1. Mỗi file một component, `PascalCase.tsx`, chỉ dùng named export (không default export).
+2. Primitive dưới `components/ui/` có tiền tố `App` (`AppButton`, `AppInput`, `AppCard`, `AppEmptyState`, …); component trong `components/custom/` và `components/layout/` không có tiền tố.
+3. Interface props nằm cùng file, ngay phía trên component (`interface` cho hình dạng đối tượng; `type` cho union/primitive/utility type). Kiểu đặt cạnh file sở hữu nó — không có thư mục `src/types/`.
+4. Trước khi thêm component mới, kiểm tra `src/components/ui/`, `src/components/custom/` và `src/components/layout/` xem có cái nào mở rộng được không.
+5. Giao diện chỉ dùng một lần thì để nội tuyến tại nơi gọi — đừng tách sẵn vào `components/` khi mới có một chỗ dùng.
+6. Không dùng barrel file (không có `index.ts` re-export) — import thẳng theo đường dẫn file: `import { AppButton } from "@/components/ui/button/AppButton"`.
 
-## Fetch / Service Rules
+## Quy tắc Fetch / Service
 
-Two layers between a component and the network — components never call `fetch` and never import from `services/` directly:
+Có hai tầng giữa một component và mạng — component không bao giờ gọi `fetch` và không bao giờ import trực tiếp từ `services/`:
 
 ```
-component → hooks/use<Domain>.ts (React Query, owns queryKey) → services/<domain>.ts (fetch, owns endpoints)
+component → hooks/use<Domain>.ts (React Query, sở hữu queryKey) → services/<domain>.ts (fetch, sở hữu endpoint)
 ```
 
-1. `services/<domain>.ts` — one exported async function per endpoint, typed request/response, entity types (`User`, …) declared here. Never imports React; testable without rendering. Use native `fetch` — no axios (nothing here needs interceptors or auth refresh; if a shared auth header ever appears, add one `apiFetch` helper in `services/`, not a client class).
-2. `hooks/use<Domain>.ts` — `useQuery`/`useMutation` wrappers over the service functions (`useUsers()`, `useCreateUser()`). The domain's `queryKey` is declared once here — a root for prefix-matched cache ops plus a factory that embeds every queryFn input (`usersKeyRoot` / `usersKey(search)` in `useUsers.ts`); never inline `["users"]` strings elsewhere. Every variable the queryFn uses must appear in the key (it's the dependency array). Forward the queryFn's `signal` to `fetch`.
-3. Components share server state through the React Query cache, not props/context: any two components calling `useUsers()` read the same cache entry, and mutations update it for everyone. Server state lives in React Query; client state (theme, locale, form inputs) stays in `useState`.
-4. After a mutation: if the response alone determines the new cache value (unfiltered list, response contains the entity), `cancelQueries` + `setQueryData` saves a refetch; if the list is server-filtered/sorted/paginated so the response can't tell where (or whether) the entity lands, `invalidateQueries` on the domain's root key (see `useCreateUser`).
-5. Server envelope (`server/src/interface/http/response.ts`) — type against it, don't invent an ad hoc shape:
-   - success: `{ statusCode, message, data, timestamp }`
-   - error: `{ statusCode, error, message, details?, timestamp, path }`
-6. Always check `res.ok` before reading the body. Error bodies aren't guaranteed to be JSON (proxy errors, HTML 404s) — use `res.json().catch(() => null)` on the error path.
+1. `services/<domain>.ts` — mỗi endpoint một hàm async được export, request/response có kiểu, kiểu thực thể (`User`, …) khai báo tại đây. Không bao giờ import React; test được mà không cần render. Dùng `fetch` gốc — không dùng axios (ở đây không có gì cần interceptor hay refresh token; nếu sau này xuất hiện một header xác thực dùng chung thì thêm đúng một helper `apiFetch` trong `services/`, không phải một class client).
+2. `hooks/use<Domain>.ts` — các lớp bọc `useQuery`/`useMutation` quanh hàm service (`useUsers()`, `useCreateUser()`). `queryKey` của miền được khai báo đúng một lần ở đây — một gốc để thao tác cache theo tiền tố, cộng một factory nhúng mọi input của queryFn (`usersKeyRoot` / `usersKey(search)` trong `useUsers.ts`); không bao giờ viết chuỗi `["users"]` rải rác nơi khác. Mọi biến mà queryFn dùng đều phải xuất hiện trong key (nó chính là mảng phụ thuộc). Chuyển tiếp `signal` của queryFn vào `fetch`.
+3. Các component chia sẻ server state qua cache của React Query, không qua props/context: hai component bất kỳ cùng gọi `useUsers()` đọc cùng một mục cache, và mutation cập nhật nó cho tất cả. Server state sống trong React Query; client state (theme, ngôn ngữ, ô nhập liệu) ở lại trong `useState`.
+4. Sau một mutation: nếu riêng response đã quyết định được giá trị cache mới (danh sách không lọc, response chứa thực thể), dùng `cancelQueries` + `setQueryData` để khỏi phải gọi lại; nếu danh sách được lọc/sắp xếp/phân trang ở phía server nên response không cho biết thực thể rơi vào đâu (hay có rơi vào không), thì `invalidateQueries` trên key gốc của miền (xem `useCreateUser`).
+5. Phong bì của server (`server/src/interface/http/response.ts`) — hãy khai kiểu theo nó, đừng tự chế hình dạng riêng:
+   - thành công: `{ statusCode, message, data, timestamp }`
+   - lỗi: `{ statusCode, error, message, details?, timestamp, path }`
+6. Luôn kiểm tra `res.ok` trước khi đọc body. Body lỗi không chắc chắn là JSON (lỗi proxy, trang 404 dạng HTML) — dùng `res.json().catch(() => null)` ở nhánh lỗi.
 
-## Error & Loading Rules
+## Quy tắc về lỗi & trạng thái tải
 
-1. Every async call gets explicit error/loading state — no silent failures.
-2. Plain `try`/`catch` or `.catch()`. No error-handling library is installed; don't add one (`neverthrow`, etc.) for this template's needs.
-3. Surface errors inline in the component, as `App.tsx` already does; use `appToast` (`@/components/ui/toast/AppToast`, sonner-backed) for transient cross-cutting notifications.
-4. Loading UI: skeletons only for the *initial* load of async data (`isPending`), composed from `AppSkeleton` sized to the real layout (see `AppTable`'s `loading` prop and the AppSkeleton demo card in `App.tsx`) — no per-component `*Skeleton` files, and no skeleton where the real content is static or `keepPreviousData` already keeps old data on screen. Never render the empty-state message while the first load is still pending.
+1. Mọi lời gọi bất đồng bộ đều phải có trạng thái lỗi/đang tải tường minh — không thất bại im lặng.
+2. Dùng `try`/`catch` hoặc `.catch()` thuần. Dự án không cài thư viện xử lý lỗi nào; đừng thêm (`neverthrow`, …) cho nhu cầu ở quy mô này.
+3. Hiển thị lỗi ngay trong component như `App.tsx` đang làm; dùng `appToast` (`@/components/ui/toast/AppToast`, chạy trên sonner) cho các thông báo thoáng qua mang tính xuyên suốt.
+4. Giao diện lúc tải: chỉ dùng skeleton cho lần tải *đầu tiên* của dữ liệu bất đồng bộ (`isPending`), ghép từ `AppSkeleton` với kích thước khớp bố cục thật (xem prop `loading` của `AppTable` và thẻ demo AppSkeleton trong `App.tsx`) — không tạo file `*Skeleton` cho từng component, và không đặt skeleton ở nơi nội dung thật vốn tĩnh hoặc nơi `keepPreviousData` đã giữ dữ liệu cũ trên màn hình. Không bao giờ hiển thị thông điệp trạng thái rỗng khi lần tải đầu còn đang chạy.
 
-## Styling Rules
+## Quy tắc về styling
 
-1. Tailwind utility classes on elements — this is the default way to style. Only fall back to inline `style` when Tailwind genuinely can't express the value (see `App.tsx`'s `max-w-[480px]` vs. an arbitrary non-color value that has no utility).
-2. No hardcoded hex/named colors anywhere in `.ts`/`.tsx` — ESLint-enforced (`eslint.config.mjs`), and this also catches Tailwind arbitrary-value colors like `text-[#dc143c]`. Add the token to the `@theme` block in `client/src/index.css` as `--color-<name>-app`, then use the generated utility (`bg-<name>-app`, `text-<name>-app`, `border-<name>-app`, …), with a `:root.dark` override alongside it. Tailwind's own palette classes (`bg-gray-800`, `text-white`, …) are not hardcoded colors and ESLint won't flag them, but reserve them for colors that are deliberately identical in both themes (e.g. white button text baked onto a fixed-color primary background) — anything sitting on a themed surface (body text, borders, muted/secondary text) goes through a token so it repaints with the `.dark` toggle. `border-app` (borders) and `muted-app` (secondary/disabled text) already exist — reuse them before adding a new one.
-3. No template literal in `className` — ESLint-enforced. Default class is the base string; a condition only *adds* an override class for the exception, never toggles two opposite classes — always through `cn()`:
+1. Dùng utility class của Tailwind trên phần tử — đây là cách tạo kiểu mặc định. Chỉ lùi về `style` nội tuyến khi Tailwind thật sự không diễn đạt được giá trị đó (xem `max-w-[480px]` trong `App.tsx`, tức một giá trị tuỳ ý không phải màu và không có utility sẵn).
+2. Không có mã màu hex/tên màu cứng ở bất kỳ đâu trong `.ts`/`.tsx` — ESLint cưỡng chế (`eslint.config.mjs`), và quy tắc này cũng bắt cả màu dạng giá trị tuỳ ý của Tailwind như `text-[#dc143c]`. Hãy thêm token vào khối `@theme` trong `client/src/index.css` dưới dạng `--color-<name>-app`, rồi dùng utility được sinh ra (`bg-<name>-app`, `text-<name>-app`, `border-<name>-app`, …), kèm một ghi đè `:root.dark` ngay cạnh đó. Các class bảng màu sẵn của Tailwind (`bg-gray-800`, `text-white`, …) không tính là màu cứng và ESLint không chặn, nhưng hãy dành chúng cho những màu cố ý giống hệt nhau ở cả hai theme (ví dụ chữ trắng trên nền primary màu cố định) — còn bất cứ thứ gì nằm trên một bề mặt có theme (chữ nội dung, viền, chữ phụ/mờ) đều phải đi qua token để đổi màu theo `.dark`. `border-app` (viền) và `muted-app` (chữ phụ/bị vô hiệu) đã có sẵn — tái sử dụng trước khi thêm token mới.
+3. Không dùng template literal trong `className` — ESLint cưỡng chế. Class mặc định là chuỗi nền; một điều kiện chỉ được *thêm* class ghi đè cho trường hợp ngoại lệ, không bao giờ bật/tắt hai class đối nhau — luôn đi qua `cn()`:
    ```tsx
    className={cn("rounded bg-gray-800 px-3 py-1 text-white", { "opacity-50": pending })}
    ```
-4. `cn()` lives at `client/src/utils/cn.ts` (`twMerge(clsx(inputs))`) — import it, never re-implement it. `tailwind-merge` matters here: it resolves conflicting Tailwind utilities between the base and the override (e.g. a base `px-2` and an override `px-4`) in favor of the later one, which plain string concatenation can't do.
-5. No CSS-in-JS, no CSS Modules — Tailwind utilities cover styling needs at this size. Global tokens and the Tailwind `@import` live in `index.css`; nothing else goes there.
-6. Clickable elements get `cursor: pointer` from one global rule in `index.css` (`button`, `a[href]`, `[role="button"]`; `:disabled` → `not-allowed`) — never add `cursor-pointer` per component. A non-native clickable (a `div` with `onClick`) must carry `role="button"` to pick it up — which it needs for accessibility anyway.
+4. `cn()` nằm ở `client/src/utils/cn.ts` (`twMerge(clsx(inputs))`) — import nó, đừng viết lại. `tailwind-merge` quan trọng ở đây: nó giải quyết xung đột giữa utility nền và utility ghi đè (ví dụ nền `px-2` và ghi đè `px-4`) theo hướng cái sau thắng, việc mà nối chuỗi thuần không làm được.
+5. Không CSS-in-JS, không CSS Modules — utility của Tailwind là đủ ở quy mô này. Token toàn cục và lệnh `@import` của Tailwind nằm trong `index.css`; không có gì khác được đặt vào đó.
+6. Phần tử bấm được nhận `cursor: pointer` từ một quy tắc toàn cục duy nhất trong `index.css` (`button`, `a[href]`, `[role="button"]`; `:disabled` → `not-allowed`) — không bao giờ thêm `cursor-pointer` ở từng component. Một phần tử bấm được nhưng không phải thẻ gốc (một `div` có `onClick`) bắt buộc phải mang `role="button"` để nhận quy tắc đó — mà nó cũng cần điều này để đảm bảo khả năng tiếp cận.
 
-## Theme & Locale Safety
+## An toàn theme & ngôn ngữ
 
-Both `theme` and `locale` are runtime toggles a user can flip on the same page — new UI must survive both without a code change.
+Cả `theme` lẫn `locale` đều là công tắc người dùng bật được ngay trên trang — giao diện mới phải sống được với cả hai mà không cần sửa code.
 
-1. **Theme.** Never assume today's light-mode contrast (e.g. "text is dark, so a light border is always visible") — the same class runs under `.dark` too. Check new markup with the theme toggle flipped, not just at default.
-2. **Locale.** `vi` strings in `client/src/i18n/` run 30-60% longer than their `en` counterpart (`"Users"` → `"Người dùng"`, `"Disabled"` → `"Vô hiệu hoá"`). Any element sized to fit today's English string will overflow or clip once `vi` is selected.
-   - No `whitespace-nowrap` on an element rendering a `t()` value.
-   - No fixed pixel width wrapping a translatable label — let it size to content, or wrap.
-   - Any flex row of buttons/pills/labels that includes a translatable string needs `flex-wrap` (see the header controls and the `AppButton`/`AppInput` demo rows in `App.tsx`), so it stacks instead of overflowing at the app's narrow `max-w-[480px]` column.
-   - When adding a new key to an `i18n/<module>.ts`, sanity-check its layout with the longer of the two locales selected, not just `en`.
-3. Prefer letting Flexbox/Grid reflow over `truncate` for translatable text — this app has no tooltip primitive yet, so a truncated label with no way to read the full string is a worse outcome than a taller row.
+1. **Theme.** Đừng bao giờ giả định độ tương phản của chế độ sáng hôm nay (kiểu "chữ đang tối nên viền sáng lúc nào cũng thấy") — cùng class đó cũng chạy dưới `.dark`. Kiểm tra markup mới với công tắc theme đã lật, không chỉ ở trạng thái mặc định.
+2. **Ngôn ngữ.** Chuỗi `vi` trong `client/src/i18n/` dài hơn bản `en` tương ứng 30–60% (`"Users"` → `"Người dùng"`, `"Disabled"` → `"Vô hiệu hoá"`). Bất kỳ phần tử nào được căn kích thước vừa khít chuỗi tiếng Anh hôm nay sẽ tràn hoặc bị cắt khi chọn `vi`.
+   - Không đặt `whitespace-nowrap` lên phần tử đang hiển thị một giá trị `t()`.
+   - Không đặt chiều rộng cố định theo pixel bao quanh một nhãn dịch được — hãy để nó tự co theo nội dung, hoặc cho xuống dòng.
+   - Mọi hàng flex chứa nút/pill/nhãn có chuỗi dịch được đều cần `flex-wrap` (xem các nút điều khiển ở header và các hàng demo `AppButton`/`AppInput` trong `App.tsx`), để nó xếp chồng thay vì tràn ra ngoài cột hẹp `max-w-[480px]` của ứng dụng.
+   - Khi thêm một key mới vào `i18n/<module>.ts`, hãy thử bố cục với ngôn ngữ dài hơn trong hai ngôn ngữ, không chỉ `en`.
+3. Ưu tiên để Flexbox/Grid tự sắp lại hơn là dùng `truncate` cho chữ dịch được — ứng dụng chưa có primitive tooltip, nên một nhãn bị cắt mà không có cách nào đọc đủ chuỗi là kết cục tệ hơn một hàng cao thêm một chút.
 
-## Import Conventions
+## Quy ước import
 
-- `@/` alias for anything under `client/src/` (`@/components/...`, `@/utils/cn`, …). Relative imports (`./`, `../`) only for files in the same folder.
-- No barrel files — always import the exact file, never a folder `index.ts` re-export.
-- Group imports: React → third-party → `@/` alias.
+- Dùng alias `@/` cho mọi thứ dưới `client/src/` (`@/components/...`, `@/utils/cn`, …). Import tương đối (`./`, `../`) chỉ dùng cho file trong cùng thư mục.
+- Không barrel file — luôn import đúng file, không bao giờ import một `index.ts` re-export của thư mục.
+- Nhóm import theo thứ tự: React → thư viện bên thứ ba → alias `@/`.
 
-## Routing & State — Not Yet In This Project
+## Routing & State — chưa có trong dự án này
 
-- Router: add `react-router` (small, standard) when a second page is actually needed. Don't reach for anything heavier without a concrete reason.
-- State: `useState`/`useReducer`/`Context` cover this template. Add a state library only once prop-drilling is a real, demonstrated pain in this codebase — not preemptively.
+- Router: thêm `react-router` (nhỏ, chuẩn mực) khi thực sự cần trang thứ hai. Đừng với tay tới thứ nặng hơn nếu không có lý do cụ thể.
+- State: `useState`/`useReducer`/`Context` là đủ cho template này. Chỉ thêm thư viện state khi việc truyền props qua nhiều tầng đã thực sự gây khó chịu và chứng minh được trong chính codebase này — không phải phòng xa.
 
-## Pre-Implementation Checklist
+## Checklist trước khi code
 
-- [ ] Read the target folder's `README.md` — what you're writing matches what that folder is for
-- [ ] Checked `src/components/ui/`, `src/components/custom/`, `src/components/layout/` for a reusable component before writing a new one
-- [ ] Placed via the decision tree (single-page-use inline, `ui/` for 2+ atomic, `custom/` for 2+ domain-aware, `layout/` for shell)
-- [ ] `App` prefix on `ui/` primitives only; no barrel files; named export
-- [ ] Single-use UI stays inline, not pre-split into its own file
-- [ ] Network calls layered: endpoint fn in `services/<domain>.ts`, React Query hook in `hooks/use<Domain>.ts`, component imports only the hook; `queryKey` declared once in the hook file
-- [ ] Fetch calls check `res.ok` and handle non-JSON error bodies
-- [ ] Loading and error states handled explicitly
-- [ ] No hardcoded colors — token declared in `index.css`'s `@theme` as `--color-<name>-app` with a `:root.dark` override, consumed via the generated Tailwind utility (static Tailwind palette classes only for colors fixed across both themes)
-- [ ] No template literals in `className` — `cn()` used for any conditional class
-- [ ] No per-component `cursor-pointer`; any non-native clickable has `role="button"`
-- [ ] Checked with the theme toggle flipped — text/borders/muted content still readable under `.dark`
-- [ ] Checked with `locale` set to `vi` (longer strings) — no overflow/clipping; translatable rows have `flex-wrap`, no `whitespace-nowrap`, no fixed pixel widths
-- [ ] No new dependency (router, state lib, HTTP client) added without a current, real need
+- [ ] Đã đọc `README.md` của thư mục đích — thứ bạn sắp viết khớp với mục đích của thư mục đó
+- [ ] Đã kiểm tra `src/components/ui/`, `src/components/custom/`, `src/components/layout/` xem có component tái dùng được không trước khi viết mới
+- [ ] Đặt file theo cây quyết định (chỉ một trang dùng thì nội tuyến, `ui/` cho nguyên tử dùng 2+ nơi, `custom/` cho loại có nghiệp vụ dùng 2+ nơi, `layout/` cho khung)
+- [ ] Tiền tố `App` chỉ dành cho primitive trong `ui/`; không barrel file; chỉ named export
+- [ ] Giao diện dùng một lần vẫn để nội tuyến, không tách sẵn ra file riêng
+- [ ] Lời gọi mạng đã phân tầng: hàm endpoint ở `services/<domain>.ts`, hook React Query ở `hooks/use<Domain>.ts`, component chỉ import hook; `queryKey` khai báo đúng một lần trong file hook
+- [ ] Lời gọi fetch có kiểm tra `res.ok` và xử lý được body lỗi không phải JSON
+- [ ] Trạng thái đang tải và trạng thái lỗi đều được xử lý tường minh
+- [ ] Không có màu cứng — token khai báo trong khối `@theme` của `index.css` dưới dạng `--color-<name>-app` kèm ghi đè `:root.dark`, dùng qua utility Tailwind được sinh ra (class bảng màu tĩnh của Tailwind chỉ dành cho màu cố định ở cả hai theme)
+- [ ] Không có template literal trong `className` — mọi class có điều kiện đều qua `cn()`
+- [ ] Không có `cursor-pointer` ở từng component; mọi phần tử bấm được không phải thẻ gốc đều có `role="button"`
+- [ ] Đã kiểm tra với công tắc theme lật sang `.dark` — chữ/viền/nội dung mờ vẫn đọc được
+- [ ] Đã kiểm tra với `locale` đặt thành `vi` (chuỗi dài hơn) — không tràn/không bị cắt; các hàng có chuỗi dịch được đều có `flex-wrap`, không có `whitespace-nowrap`, không có chiều rộng pixel cố định
+- [ ] Không thêm phụ thuộc mới (router, thư viện state, HTTP client) nếu chưa có nhu cầu thật sự ngay lúc này

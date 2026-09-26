@@ -1,4 +1,4 @@
 # tests/
 
-`unit/` runs with no DB and no network; `integration/` needs a real Mongo
-(skipped without `MONGO_URI`, auto-loaded from `.env`).
+`unit/` chạy mà không cần DB và không cần mạng; `integration/` cần một Mongo thật (bị bỏ qua
+khi không có `MONGO_URI`, biến này được nạp tự động từ `.env`).

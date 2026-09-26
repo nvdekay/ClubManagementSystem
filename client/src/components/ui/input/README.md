@@ -1,3 +1,3 @@
 # ui/input/
 
-`AppInput` — text input.
+`AppInput` — ô nhập văn bản.
