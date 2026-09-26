@@ -1,214 +1,215 @@
-# UCMS — High-Level Design
+# UCMS — Thiết kế mức cao
 
-Status: draft · Date: 2026-09-21 · Scope: the 12 modules of
-[`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md) built on this repo.
+Trạng thái: bản nháp · Ngày: 2026-09-21 · Phạm vi: 12 module của
+[`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md)
+dựng trên repo này.
 
-This document says **how the system is shaped**. It does not repeat the layer rules —
-those live in [`.rules/architecture.md`](../../.rules/architecture.md) (server layers),
-[`.rules/frontend.md`](../../.rules/frontend.md) (client) and
+Tài liệu này nói **hệ thống có hình dạng thế nào**. Nó không nhắc lại các quy tắc về tầng —
+những thứ đó nằm ở [`.rules/architecture.md`](../../.rules/architecture.md) (tầng phía server),
+[`.rules/frontend.md`](../../.rules/frontend.md) (client) và
 [`ADR-001`](../../.sdd/rfcs/ADR-001-clean-architecture-layers.md) /
-[`ADR-002`](../../.sdd/rfcs/ADR-002-client-architecture.md). Everything here either maps the
-business modules onto those rules, or names a decision the rules do not yet cover.
+[`ADR-002`](../../.sdd/rfcs/ADR-002-client-architecture.md). Mọi thứ ở đây hoặc là ánh xạ các
+module nghiệp vụ lên những quy tắc đó, hoặc là nêu tên một quyết định mà các quy tắc chưa phủ.
 
 ---
 
-## 1. Context
+## 1. Bối cảnh
 
 ```text
         Student ─┐
    Club Board (CMB) ─┼──HTTPS──► UCMS SPA ──/api/v1──► UCMS API ──► MongoDB
       ICPDP Officer ─┘                                    │
-                                                          ├──► Google OAuth   (sign-in)
-                                                          └──► Google SMTP    (email notifications)
+                                                          ├──► Google OAuth   (đăng nhập)
+                                                          └──► Google SMTP    (email thông báo)
 ```
 
-Three human actors, one system, two external dependencies. No other integration is in
-scope (section 5.2 of the analysis).
+Ba actor là người, một hệ thống, hai phụ thuộc bên ngoài. Không có tích hợp nào khác nằm trong
+phạm vi (mục 5.2 của bản phân tích).
 
-## 2. Containers
+## 2. Các container
 
-| Container | Tech | Responsibility |
+| Container | Công nghệ | Trách nhiệm |
 |---|---|---|
-| `client/` | React 19 + Vite SPA, static build | All UI. Talks only to `/api/v1/*`. |
-| `server/` | Express 5 + Mongoose, single Node process | API, business rules, OAuth callback, scheduler. |
-| MongoDB | replica-set-capable single instance | All persistent state, including the notification outbox and audit log. |
+| `client/` | SPA React 19 + Vite, build tĩnh | Toàn bộ giao diện. Chỉ nói chuyện với `/api/v1/*`. |
+| `server/` | Express 5 + Mongoose, một tiến trình Node duy nhất | API, quy tắc nghiệp vụ, callback OAuth, bộ lập lịch. |
+| MongoDB | một instance, có khả năng chạy replica set | Toàn bộ dữ liệu bền vững, gồm cả hàng đợi thông báo và nhật ký audit. |
 
-**Decision D1 — one deployable, not services.** 57 use cases, one team, one database,
-one transaction boundary. Modules are folders, not processes. The 4-layer split already
-gives the seams a split into services would give, without the operational cost. Revisit
-only if a module needs independent scaling (none does: load is a few hundred students).
+**Quyết định D1 — một khối triển khai, không phải nhiều service.** 54 use case, một nhóm, một
+database, một ranh giới giao dịch. Module là thư mục, không phải tiến trình. Việc chia 4 tầng đã
+cho sẵn những đường nối mà tách service mới có, mà không phải trả giá vận hành. Chỉ xem xét lại
+khi một module cần mở rộng độc lập (hiện không module nào cần: tải là vài trăm sinh viên).
 
-**Decision D2 — the scheduler runs in the API process.** Deadline reminders, escalation
-and the email outbox drain are timer jobs, not a queue system. They ship as an in-process
-interval guarded by a Mongo lease document so a second instance cannot double-send.
-Extract to a worker container when the API is scaled past one instance.
+**Quyết định D2 — bộ lập lịch chạy trong chính tiến trình API.** Nhắc hạn, leo thang và việc rút
+hàng đợi email là các job theo thời gian, không phải một hệ thống queue. Chúng chạy dưới dạng
+một interval trong tiến trình, được bảo vệ bằng một lease document trong Mongo để instance thứ
+hai không gửi trùng. Tách ra container worker riêng khi API được mở rộng quá một instance.
 
-## 3. Module → code map
+## 3. Bản đồ module → code
 
-A module is a **vertical slice across the existing four layers** — never a new top-level
-folder. M05 Event & Activity, for example:
+Một module là một **lát cắt dọc xuyên bốn tầng đã có** — không bao giờ là một thư mục cấp cao
+mới. Ví dụ M05 Event & Activity:
 
 ```text
-server/src/domain/event/            entities (Event, EventProposalVersion), state machine,
-                                    business errors, ports (EventRepository, ApprovalPort)
-server/src/usecase/event/           submitProposal, approveEvent, publishEvent, …  one file per flow
-server/src/interface/http/event-routes.ts   /api/v1/events*  — parse, call usecase, respond
+server/src/domain/event/            entity (Event, EventProposalVersion), máy trạng thái,
+                                    lỗi nghiệp vụ, port (EventRepository, ApprovalPort)
+server/src/usecase/event/           submitProposal, approveEvent, publishEvent, …  mỗi luồng một file
+server/src/interface/http/event-routes.ts   /api/v1/events*  — parse, gọi usecase, trả response
 server/src/infra/db/mongo-event-repository.ts
-client/src/services/events.ts       typed fetch per endpoint
-client/src/hooks/useEvents.ts       React Query keys
-client/src/pages/events/            screens
+client/src/services/events.ts       fetch có kiểu cho từng endpoint
+client/src/hooks/useEvents.ts       query key của React Query
+client/src/pages/events/            các màn hình
 ```
 
-Module ownership of data (analysis §6) is the rule for **who may write**: a usecase writes
-only its own module's aggregates and reads others through their repository ports. Cross-module
-writes go through the owning module's usecase, not its repository.
+Quyền sở hữu dữ liệu theo module (§6 của bản phân tích) là quy tắc quyết định **ai được ghi**:
+một usecase chỉ ghi các aggregate của module mình và đọc module khác qua repository port của
+chúng. Ghi xuyên module phải đi qua usecase của module sở hữu, không phải qua repository của nó.
 
-| Module | Aggregates it owns | MVP |
+| Module | Aggregate nó sở hữu | MVP |
 |---|---|---|
 | M01 Identity & RBAC | User, StudentProfile, Role, Permission | ✅ |
 | M02 Club Lifecycle | Club, ClubApplication(+Version) | ✅ |
-| M03 Leadership & Term | ClubTerm, ClubPosition(+Assignment) | partial (UC09–10) |
+| M03 Leadership & Term | ClubTerm, ClubPosition(+Assignment) | một phần (UC09–10) |
 | M04 Recruitment & Membership | RecruitmentCampaign, RecruitmentApplication, ClubMembership | ✅ |
 | M05 Event & Activity | Event, EventProposalVersion, PostEventReport | ✅ |
 | M06 Registration & Attendance | EventRegistration, Attendance | ✅ |
 | M07 Finance & Budget | BudgetRequest(+Version), Expense, FinancialEvidence, Reconciliation | ✅ |
-| M08 Reporting & Compliance | PeriodicReport, Violation, CorrectiveAction | partial |
+| M08 Reporting & Compliance | PeriodicReport, Violation, CorrectiveAction | một phần |
 | M09 Performance Evaluation | Evaluation, EvaluationScheme/Dimension | ❌ v2 |
-| M10 Workflow / Notification / Audit | ApprovalTask, ApprovalDecision, Notification, EmailDeliveryLog, AuditLog | ✅ (cross-cutting) |
+| M10 Workflow / Notification / Audit | ApprovalTask, ApprovalDecision, Notification, EmailDeliveryLog, AuditLog | ✅ (xuyên suốt) |
 | M11 Property & Booking | Property, PropertyBooking | ✅ |
 | M12 Feedback & Complaint | EventFeedback, Complaint | ✅ |
 
-## 4. Cross-cutting design (M10)
+## 4. Thiết kế xuyên suốt (M10)
 
-These three are what make the 12 modules one system; each is a **domain port with one infra
-implementation**, injected in `main.ts` like any repository.
+Ba thứ dưới đây là cái biến 12 module thành một hệ thống; mỗi thứ là một **domain port với đúng
+một bản cài ở tầng infra**, được tiêm trong `main.ts` như mọi repository khác.
 
-### 4.1 Approval workflow
+### 4.1 Workflow phê duyệt
 
-Six business objects go through submit → review → revise → decide (club application, event
-proposal, budget request, property booking, complaint, suspension). They share **one**
-`ApprovalTask` aggregate: `{ entityType, entityId, state, assignee, decisions[] }`.
+Sáu đối tượng nghiệp vụ đi qua nộp → thẩm định → sửa → quyết định (hồ sơ thành lập CLB, đề xuất
+sự kiện, yêu cầu ngân sách, đặt cơ sở vật chất, khiếu nại, tạm ngừng hoạt động). Chúng dùng
+chung **một** aggregate `ApprovalTask`: `{ entityType, entityId, state, assignee, decisions[] }`.
 
-The module keeps its own entity state (`Event.status`), the approval task keeps the
-*review* state. A usecase calls `approval.open(entityType, entityId, …)`; the decision
-callback flips the entity via the owning usecase. One reviewer inbox for ICPDP falls out
-of this for free — that is the reason for the shared aggregate.
+Module giữ trạng thái thực thể của riêng nó (`Event.status`), còn approval task giữ trạng thái
+*thẩm định*. Một usecase gọi `approval.open(entityType, entityId, …)`; callback quyết định lật
+trạng thái thực thể thông qua usecase sở hữu nó. Một hộp thư người duyệt duy nhất cho ICPDP là
+hệ quả miễn phí của thiết kế này — và đó chính là lý do dùng chung một aggregate.
 
-**Revisions are append-only versions** (`ClubApplicationVersion`, `EventProposalVersion`,
-`BudgetRequestVersion`): a resubmission writes a new version document, never mutates the
-previous one. Audit and "what did ICPDP actually approve" both depend on that.
+**Bản sửa là các version chỉ-ghi-thêm** (`ClubApplicationVersion`, `EventProposalVersion`,
+`BudgetRequestVersion`): một lần nộp lại ghi một document version mới, không bao giờ sửa bản
+trước. Cả audit lẫn câu hỏi "ICPDP thực sự đã duyệt cái gì" đều phụ thuộc vào điều đó.
 
-### 4.2 Notification — outbox, never inline
+### 4.2 Thông báo — dùng outbox, không bao giờ gửi đồng bộ
 
 ```text
-usecase commits business change
-  → notification.enqueue(event, recipients, channels)   # same request, Mongo write
-  → scheduler drains outbox → in-app rows / Google SMTP → EmailDeliveryLog(+retry)
+usecase commit thay đổi nghiệp vụ
+  → notification.enqueue(event, recipients, channels)   # cùng request, ghi vào Mongo
+  → scheduler rút outbox → dòng in-app / Google SMTP → EmailDeliveryLog(+retry)
 ```
 
-Required by analysis §19: *a failed email must never break a committed business
-transaction*. Sending inline would do exactly that. Retry count and backoff live on the
-outbox document.
+§19 của bản phân tích yêu cầu điều này: *một email gửi lỗi không bao giờ được làm hỏng một giao
+dịch nghiệp vụ đã commit*. Gửi đồng bộ sẽ làm đúng điều đó. Số lần thử lại và khoảng lùi nằm
+trên chính document của outbox.
 
-Deadline escalation (`T−X reminder / T due / T+Y overdue / T+Z escalate`) is the same
-scheduler scanning due-date indexes; X/Y/Z are config documents, not constants.
+Leo thang deadline (`T−X nhắc / T đến hạn / T+Y quá hạn / T+Z leo thang`) cũng chính là bộ lập
+lịch đó quét các index theo ngày đến hạn; X/Y/Z là document cấu hình, không phải hằng số.
 
 ### 4.3 Audit
 
-Every state-changing usecase writes `{ entityType, entityId, actor, action, before, after,
-at }` through an `AuditPort`. It is called **in the usecase**, not in a route middleware and
-not in the repository: the route does not know the business action name, and the repository
-does not know the actor.
+Mọi usecase làm thay đổi trạng thái đều ghi `{ entityType, entityId, actor, action, before,
+after, at }` qua một `AuditPort`. Nó được gọi **trong usecase**, không phải trong middleware của
+route và cũng không phải trong repository: route không biết tên hành động nghiệp vụ, còn
+repository không biết actor.
 
-## 5. Identity, authentication, authorization
+## 5. Định danh, xác thực, phân quyền
 
-- **AuthN:** Google OAuth Authorization Code flow. `interface/http/auth-routes.ts` owns
-  redirect + callback; the callback resolves/creates the `User` and sets a signed,
-  httpOnly, SameSite=Lax session cookie. No password is ever stored (analysis §5.2).
-- **AuthZ — two checks, two layers:**
-  1. *Permission* (can this role do this action at all) — middleware at the route, from
-     the `Role → Permission` table.
-  2. *Scope* (is this actor in **this** club, with **this** position, in the **current**
-     term) — inside the usecase, because it is a business rule and must be unit-testable
-     without HTTP. This is the check that actually protects the data; the middleware only
-     rejects early.
-- Role assignments are term-scoped: permission is derived from
-  `ClubPositionAssignment` ∩ active `ClubTerm`, never from a flag on the user. Leadership
-  transition then becomes a data change, not a migration.
+- **Xác thực:** luồng Google OAuth Authorization Code. `interface/http/auth-routes.ts` sở hữu
+  phần redirect + callback; callback tìm hoặc tạo `User` rồi đặt một cookie phiên được ký,
+  `httpOnly`, `SameSite=Lax`. Không bao giờ lưu mật khẩu (§5.2 của bản phân tích).
+- **Phân quyền — hai lớp kiểm tra, hai tầng:**
+  1. *Quyền* (vai trò này có được làm hành động này không) — middleware ở route, lấy từ bảng
+     `Role → Permission`.
+  2. *Phạm vi* (actor này có ở **đúng CLB** đó, với **đúng chức vụ** đó, trong **nhiệm kỳ hiện
+     tại** không) — nằm trong usecase, vì đây là quy tắc nghiệp vụ và phải unit-test được mà
+     không cần HTTP. Đây mới là lớp thực sự bảo vệ dữ liệu; middleware chỉ chặn sớm.
+- Việc gán vai trò gắn với nhiệm kỳ: quyền được suy ra từ `ClubPositionAssignment` ∩ `ClubTerm`
+  đang hoạt động, không bao giờ từ một cờ trên user. Nhờ vậy chuyển giao ban chủ nhiệm trở thành
+  một thay đổi dữ liệu, không phải một lần migration.
 
-## 6. Data design (MongoDB)
+## 6. Thiết kế dữ liệu (MongoDB)
 
-- One collection per aggregate; references by `ObjectId`, no cross-collection joins in hot
-  paths.
-- **Denormalize for lists only** — `{ clubId, clubName }` on event/booking rows so a
-  dashboard list is one query. The owning module's usecase updates the copies on rename.
-- Compound indexes are part of the repository, created at boot (`ensureUserIndexes` is the
-  existing pattern). Minimum: `(clubId, status)`, `(eventId, studentId)` unique on
-  registration, `(entityType, entityId)` on audit and approval, `(dueAt, state)` on the
-  outbox.
-- No multi-document transactions in MVP. The two places that need atomicity —
-  registration capacity and booking conflict — use a unique index plus a guarded
-  `findOneAndUpdate`, which is stronger than a read-check-write in a transaction anyway.
+- Mỗi aggregate một collection; tham chiếu bằng `ObjectId`, không join xuyên collection trong
+  đường đi nóng.
+- **Chỉ denormalize cho màn hình danh sách** — ví dụ `{ clubId, clubName }` trên dòng sự kiện và
+  booking, để một danh sách trên dashboard chỉ tốn một truy vấn. Usecase của module sở hữu chịu
+  trách nhiệm cập nhật bản sao khi đổi tên.
+- Compound index là một phần của repository, được tạo lúc khởi động (`ensureUserIndexes` là mẫu
+  đã có). Tối thiểu: `(clubId, status)`, `(eventId, studentId)` unique trên đăng ký,
+  `(entityType, entityId)` trên audit và approval, `(dueAt, state)` trên outbox.
+- Không dùng transaction đa document trong MVP. Hai chỗ thực sự cần tính nguyên tử — sức chứa
+  đăng ký và xung đột booking — dùng một unique index cộng một `findOneAndUpdate` có điều kiện,
+  vốn còn mạnh hơn so với đọc-kiểm-ghi bên trong một transaction.
 
-## 7. API surface
+## 7. Bề mặt API
 
-Unchanged from the template contract: REST under `/api/v1`, `{ data }` envelope,
-`DomainError` kind → 400/409/404, anything else → 500, zod validation at the edge before
-any Mongoose query. One route file per module, registered in `server.ts`. OpenAPI stays
-generated from the zod schemas and served at `/docs`.
+Giữ nguyên hợp đồng của template: REST dưới `/api/v1`, phong bì `{ data }`, `DomainError` kind →
+400/409/404, mọi thứ khác → 500, validate bằng zod ở biên trước bất kỳ truy vấn Mongoose nào.
+Mỗi module một file route, đăng ký trong `server.ts`. OpenAPI vẫn được sinh từ các schema zod và
+phục vụ tại `/docs`.
 
-Resource naming follows the aggregate: `/clubs`, `/clubs/:id/members`, `/events`,
+Tên tài nguyên đặt theo aggregate: `/clubs`, `/clubs/:id/members`, `/events`,
 `/events/:id/registrations`, `/budget-requests`, `/property-bookings`, `/complaints`,
-`/approvals` (the shared reviewer inbox), `/notifications`.
+`/approvals` (hộp thư người duyệt dùng chung), `/notifications`.
 
 ## 8. Client
 
-ADR-002's router trigger **has fired** — UCMS has three role workspaces and dozens of
-screens, so `react-router` is added now, with the rest of ADR-002 unchanged (services →
-hooks → components, React Query for server state, Tailwind tokens, i18next per-module
-string files).
+Điều kiện kích hoạt router của ADR-002 **đã xảy ra** — UCMS có ba workspace theo vai trò và hàng
+chục màn hình, nên `react-router` được thêm vào ngay, phần còn lại của ADR-002 giữ nguyên
+(services → hooks → components, React Query cho server state, token Tailwind, file chuỗi i18next
+tách theo module).
 
 ```text
 client/src/pages/
-  auth/          login + OAuth callback
-  student/       my clubs, recruitment, events, my registrations, feedback, complaints
-  club/          club admin workspace: members, events, budget, bookings, reports
-  icpdp/         approval inbox, clubs, violations, evaluation, dashboards
+  auth/          đăng nhập + callback OAuth
+  student/       CLB của tôi, tuyển thành viên, sự kiện, đăng ký của tôi, phản hồi, khiếu nại
+  club/          workspace quản trị CLB: thành viên, sự kiện, ngân sách, booking, báo cáo
+  icpdp/         hộp thư phê duyệt, CLB, vi phạm, đánh giá, dashboard
 ```
 
-Route guarding mirrors the server: a role-aware layout shell decides *what is shown*; the
-server decides *what is allowed*. The client never holds the authoritative permission check.
+Việc chặn route phản chiếu phía server: một lớp vỏ bố cục có hiểu vai trò quyết định *cái gì
+được hiển thị*; server quyết định *cái gì được phép*. Client không bao giờ giữ lớp kiểm tra
+quyền có thẩm quyền.
 
-## 9. Deployment
+## 9. Triển khai
 
-`docker compose`: `mongo` + `server` (Node, serves nothing but the API) + a static host for
-the built client (Nginx or the same Express behind a `/` static mount). Env is validated at
-boot by `infra/config/` — the only place reading `process.env`; new secrets
-(`GOOGLE_CLIENT_ID/SECRET`, `SESSION_SECRET`, `SMTP_*`) are added to that schema and
-`.env.example` together.
+`docker compose`: `mongo` + `server` (Node, chỉ phục vụ API) + một host tĩnh cho client đã build
+(Nginx hoặc chính Express với một mount tĩnh ở `/`). Biến môi trường được validate lúc khởi động
+bởi `infra/config/` — nơi duy nhất đọc `process.env`; bí mật mới (`GOOGLE_CLIENT_ID/SECRET`,
+`SESSION_SECRET`, `SMTP_*`) được thêm vào schema đó và vào `.env.example` cùng lúc.
 
-## 10. Quality attributes
+## 10. Thuộc tính chất lượng
 
-| Attribute | Target | How this design gets it |
+| Thuộc tính | Mục tiêu | Thiết kế này đạt được bằng cách nào |
 |---|---|---|
-| Testability | usecases unit-tested with no DB | ports + in-memory fakes (existing rule) |
-| Auditability | every state change attributable | §4.3 + append-only versions |
-| Reliability of email | business tx never fails on SMTP | outbox §4.2 |
-| Data integrity | no double registration / double booking | unique index + guarded update §6 |
-| Security | no home-grown auth, no NoSQL injection | Google OAuth, zod at the edge, scope check in usecase |
-| Change cost | new module = 4 files + 2 client files | vertical slice §3 |
+| Khả năng kiểm thử | usecase unit-test được, không cần DB | port + bản giả in-memory (quy tắc đã có) |
+| Khả năng audit | mọi thay đổi trạng thái đều quy được trách nhiệm | §4.3 + các version chỉ-ghi-thêm |
+| Độ tin cậy của email | giao dịch nghiệp vụ không bao giờ hỏng vì SMTP | outbox §4.2 |
+| Toàn vẹn dữ liệu | không đăng ký trùng / không đặt phòng trùng | unique index + guarded update §6 |
+| Bảo mật | không tự chế xác thực, không NoSQL injection | Google OAuth, zod ở biên, kiểm tra phạm vi trong usecase |
+| Chi phí thay đổi | module mới = 4 file server + 2 file client | lát cắt dọc §3 |
 
-## 11. Deliberately not designed yet
+## 11. Cố ý chưa thiết kế
 
-- Performance evaluation engine (M09) — configurable scheme is v2; MVP stores manual
-  evaluation results only.
-- File storage for financial evidence — MVP stores an external link; add object storage
-  when uploads are actually required.
-- Read models / reporting database for dashboards — plain aggregation pipelines until one
-  is measurably slow.
-- Multi-instance deploy, message queue, caching layer — none has a trigger yet (§D1, D2).
+- Bộ máy đánh giá hiệu quả (M09) — scheme cấu hình được thuộc v2; MVP chỉ lưu kết quả đánh giá
+  nhập tay.
+- Lưu trữ file cho chứng từ tài chính — MVP lưu một liên kết ngoài; thêm object storage khi thực
+  sự cần upload.
+- Read model / database báo cáo cho dashboard — dùng aggregation pipeline thuần cho tới khi có
+  một truy vấn chậm đo được.
+- Triển khai nhiều instance, message queue, tầng cache — chưa cái nào có điều kiện kích hoạt
+  (§D1, D2).
 
 ---
 
-Each decision D1–D2 and §4–§6 becomes an `ADR-NNN` in `.sdd/rfcs/` when the team accepts it;
-this document is the proposal, not the record.
+Mỗi quyết định D1–D2 và các mục §4–§6 sẽ trở thành một `ADR-NNN` trong `.sdd/rfcs/` khi nhóm
+chấp nhận; tài liệu này là bản đề xuất, không phải bản ghi nhận.

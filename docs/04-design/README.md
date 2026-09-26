@@ -1,13 +1,13 @@
-# 04 — Design
+# 04 — Thiết kế
 
-How the system is shaped, and how it must look. These documents answer *how*; the requirements
-they implement are in [`../SRS.md`](../SRS.md).
+Hệ thống có hình dạng thế nào, và giao diện phải trông ra sao. Những tài liệu này trả lời câu
+hỏi *làm thế nào*; phần yêu cầu mà chúng hiện thực nằm ở [`../SRS.md`](../SRS.md).
 
-| File | What it is |
+| File | Là gì |
 |---|---|
-| [`UCMS_High_Level_Design.md`](UCMS_High_Level_Design.md) | Containers, the module → code map, the approval workflow, the notification outbox, audit, identity and authorization, MongoDB data design, the API surface, the client structure, deployment and quality attributes |
-| [`design-guidelines.md`](design-guidelines.md) | Visual and UI rules for the client: brand and semantic colour tokens, typography, spacing, radius, elevation, component recipes, motion, icons, the pre-PR accessibility checklist and the anti-patterns |
+| [`UCMS_High_Level_Design.md`](UCMS_High_Level_Design.md) | Các container, bản đồ module → code, workflow phê duyệt, hàng đợi thông báo, audit, định danh và phân quyền, thiết kế dữ liệu MongoDB, bề mặt API, cấu trúc client, triển khai và các thuộc tính chất lượng |
+| [`design-guidelines.md`](design-guidelines.md) | Quy tắc thị giác và giao diện cho client: token màu thương hiệu và ngữ nghĩa, typography, khoảng cách, bo góc, đổ bóng, công thức component, chuyển động, icon, checklist tiếp cận trước khi mở PR, và các anti-pattern |
 
-Engineering rules (where code goes and how it must be written) are **not** here — they live in
-[`../../.rules/`](../../.rules/README.md), with the accepted decisions in
+Quy tắc kỹ thuật (code đặt ở đâu và phải viết thế nào) **không** nằm ở đây — chúng ở
+[`../../.rules/`](../../.rules/README.md), còn các quyết định đã chốt ở
 [`../../.sdd/rfcs/`](../../.sdd/rfcs/).

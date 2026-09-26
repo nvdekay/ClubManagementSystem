@@ -1,149 +1,148 @@
-# UCMS Design Guidelines
+# UCMS — Quy tắc thiết kế giao diện
 
-Visual rules for the FPT University Club Management System client. Colors, type,
-spacing and component recipes only — code placement rules live in
+Quy tắc thị giác cho client của Hệ thống Quản lý Câu lạc bộ Đại học FPT. Chỉ bàn về màu, chữ,
+khoảng cách và công thức component — quy tắc về vị trí đặt code nằm ở
 [`.rules/frontend.md`](../../.rules/frontend.md).
 
-Tokens are declared once in [`client/src/index.css`](../../client/src/index.css) inside
-`@theme`, with `:root.dark` overrides. Components never see a hex value; they use the
-generated Tailwind utility (`bg-primary-app`, `text-muted-app`, `border-border-app`).
+Token được khai báo đúng một lần trong [`client/src/index.css`](../../client/src/index.css) bên
+trong `@theme`, kèm các ghi đè `:root.dark`. Component không bao giờ thấy một mã màu; chúng dùng
+utility Tailwind được sinh ra (`bg-primary-app`, `text-muted-app`, `border-border-app`).
 
-## 1. Brand basis
+## 1. Nền tảng thương hiệu
 
-FPT's corporate palette is three colors: orange `#F37021`, blue `#0066B3`,
-green `#00A650`. They are the identity, not the interface.
+Bảng màu doanh nghiệp của FPT có ba màu: cam `#F37021`, xanh dương `#0066B3`, xanh lá `#00A650`.
+Chúng là bản sắc, không phải giao diện.
 
-Orange on white measures **2.94:1** — below the 4.5:1 WCAG AA floor for text and below
-3:1 for meaningful borders. So the brand hues are kept as `*-brand-*` tokens for fills,
-logos and decorative blocks, and every interactive color is a darkened, contrast-checked
-variant. This is the single rule that keeps the app both on-brand and accessible.
+Cam trên nền trắng đo được **2.94:1** — dưới ngưỡng 4.5:1 của WCAG AA cho chữ và dưới 3:1 cho
+viền mang nghĩa. Vì vậy các màu thương hiệu được giữ làm token `*-brand-*` dành cho mảng nền,
+logo và khối trang trí, còn mọi màu tương tác đều là biến thể tối hơn, đã kiểm tra độ tương
+phản. Đây là quy tắc duy nhất giữ cho ứng dụng vừa đúng nhận diện vừa dễ tiếp cận.
 
-## 2. Color tokens
+## 2. Token màu
 
-Contrast measured against the theme's own background (`#ffffff` / `#0a0a0a`).
+Độ tương phản đo với chính nền của theme đó (`#ffffff` / `#0a0a0a`).
 
-### Brand — fixed in both themes, fills and graphics only
+### Thương hiệu — cố định ở cả hai theme, chỉ dùng cho mảng nền và đồ hoạ
 
-| Token | Value | Use | Never |
+| Token | Giá trị | Dùng cho | Không bao giờ dùng cho |
 |---|---|---|---|
-| `brand-app` | `#F37021` | Logo, hero block, chart series, large decorative shape | Body text, links, 1px borders, small icons |
-| `brand-blue-app` | `#0066B3` | Secondary brand fill, chart series | — |
-| `brand-green-app` | `#00A650` | Brand fill, chart series | Success text (3.2:1 — use `success-app`) |
+| `brand-app` | `#F37021` | Logo, khối hero, chuỗi dữ liệu biểu đồ, mảng trang trí lớn | Chữ nội dung, link, viền 1px, icon nhỏ |
+| `brand-blue-app` | `#0066B3` | Mảng nền thương hiệu phụ, chuỗi biểu đồ | — |
+| `brand-green-app` | `#00A650` | Mảng nền thương hiệu, chuỗi biểu đồ | Chữ báo thành công (3.2:1 — dùng `success-app`) |
 
-### Semantic — every value ≥ 4.5:1 on its own background
+### Ngữ nghĩa — mọi giá trị đều ≥ 4.5:1 trên nền của chính nó
 
-| Token | Light | Dark | Contrast (light / dark) | Use |
+| Token | Sáng | Tối | Tương phản (sáng / tối) | Dùng cho |
 |---|---|---|---|---|
-| `text-app` | `#1A1A1A` | `#F5F5F5` | 16.9 / 18.2 | Body and heading text |
-| `muted-app` | `#5B6472` | `#A1A1AA` | 5.98 / 7.72 | Secondary text, captions, disabled labels, placeholders |
-| `bg-app` | `#FFFFFF` | `#0A0A0A` | — | Page background |
-| `surface-app` | `#F9FAFB` | `#18181B` | — | Cards, table headers, panels, modals |
-| `border-app` | `#E5E7EB` | `#27272A` | — | Dividers, card and input borders, scrollbar thumb |
-| `primary-app` | `#C2410C` | `#FB923C` | 5.18 / 8.75 | Primary button fill, active nav, selected state |
-| `on-primary-app` | `#FFFFFF` | `#1A1A1A` | 5.18 / 7.69 on primary | Text and icons on `primary-app` |
-| `accent-app` | `#0066B3` | `#60A5FA` | 5.91 / 7.79 | Links, secondary actions, info emphasis |
-| `ring-app` | `#0066B3` | `#60A5FA` | — | Focus ring, 2px offset |
-| `success-app` | `#047857` | `#34D399` | 5.48 / 10.3 | Approved club, confirmed attendance |
-| `warning-app` | `#B45309` | `#FBBF24` | 5.02 / 11.9 | Pending review, expiring deadline |
-| `danger-app` | `#B91C1C` | `#F87171` | 6.47 / 7.16 | Destructive action, rejected, validation error |
+| `text-app` | `#1A1A1A` | `#F5F5F5` | 16.9 / 18.2 | Chữ nội dung và tiêu đề |
+| `muted-app` | `#5B6472` | `#A1A1AA` | 5.98 / 7.72 | Chữ phụ, chú thích, nhãn bị vô hiệu, placeholder |
+| `bg-app` | `#FFFFFF` | `#0A0A0A` | — | Nền trang |
+| `surface-app` | `#F9FAFB` | `#18181B` | — | Thẻ, header bảng, panel, modal |
+| `border-app` | `#E5E7EB` | `#27272A` | — | Đường kẻ, viền thẻ và ô nhập, thanh cuộn |
+| `primary-app` | `#C2410C` | `#FB923C` | 5.18 / 8.75 | Nền nút chính, nav đang chọn, trạng thái được chọn |
+| `on-primary-app` | `#FFFFFF` | `#1A1A1A` | 5.18 / 7.69 trên primary | Chữ và icon nằm trên `primary-app` |
+| `accent-app` | `#0066B3` | `#60A5FA` | 5.91 / 7.79 | Link, hành động phụ, nhấn mạnh thông tin |
+| `ring-app` | `#0066B3` | `#60A5FA` | — | Vòng focus, offset 2px |
+| `success-app` | `#047857` | `#34D399` | 5.48 / 10.3 | CLB active, điểm danh đã xác nhận |
+| `warning-app` | `#B45309` | `#FBBF24` | 5.02 / 11.9 | Đang chờ duyệt, deadline sắp tới |
+| `danger-app` | `#B91C1C` | `#F87171` | 6.47 / 7.16 | Hành động phá huỷ, bị từ chối, lỗi nhập liệu |
 
-`on-primary-app` flips to near-black in dark mode. Hardcoding `text-white` on a primary
-button drops it to ~2:1 once the theme is toggled — always use the token.
+`on-primary-app` lật sang gần đen ở chế độ tối. Viết cứng `text-white` trên một nút chính sẽ
+tụt xuống khoảng 2:1 ngay khi đổi theme — luôn dùng token.
 
-### Status mapping for UCMS domain objects
+### Ánh xạ trạng thái cho các đối tượng nghiệp vụ của UCMS
 
-| Domain state | Token |
+| Trạng thái nghiệp vụ | Token |
 |---|---|
-| Club active / event confirmed / member approved | `success-app` |
-| Pending approval / awaiting proposal review | `warning-app` |
-| Rejected / cancelled / suspended | `danger-app` |
-| Draft / archived / inactive | `muted-app` |
-| Ongoing / featured / current semester | `primary-app` |
+| CLB active / sự kiện đã duyệt / thành viên được nhận | `success-app` |
+| Đang chờ duyệt / đang chờ thẩm định đề xuất | `warning-app` |
+| Bị từ chối / đã huỷ / bị tạm ngừng | `danger-app` |
+| Nháp / đã lưu trữ / không hoạt động | `muted-app` |
+| Đang diễn ra / nổi bật / học kỳ hiện tại | `primary-app` |
 
-A status badge carries its label as text, never color alone — `bg-*` at low opacity,
-`text-*` at full token value, plus the word.
+Một badge trạng thái luôn mang nhãn chữ, không bao giờ chỉ dùng màu — nền là `bg-*` với độ mờ
+thấp, chữ là token ở giá trị đầy đủ, cộng với từ mô tả.
 
-### Adding a token
+### Thêm một token
 
-1. Does an existing token already mean this? Reuse it (`border-app` and `muted-app` cover
-   most requests).
-2. Declare `--color-<name>-app` in `@theme` **and** a `:root.dark` override in the same PR.
-3. Verify ≥ 4.5:1 against `bg-app` and `surface-app` in both themes before committing.
+1. Đã có token nào mang nghĩa này chưa? Dùng lại (`border-app` và `muted-app` phủ được hầu hết
+   nhu cầu).
+2. Khai báo `--color-<name>-app` trong `@theme` **và** một ghi đè `:root.dark` trong cùng PR.
+3. Kiểm tra ≥ 4.5:1 với `bg-app` và `surface-app` ở cả hai theme trước khi commit.
 
 ## 3. Typography
 
-One family: **Be Vietnam Pro** (400/500/600/700), imported in `index.css` and wired to
-`--font-sans`. It is drawn for Vietnamese diacritics — `ộ`, `ằ`, `ỹ` keep their shape at
-14px, which Poppins and most geometric sans faces do not.
+Một họ chữ duy nhất: **Be Vietnam Pro** (400/500/600/700), import trong `index.css` và gắn vào
+`--font-sans`. Nó được vẽ cho dấu tiếng Việt — `ộ`, `ằ`, `ỹ` vẫn giữ được hình ở cỡ 14px, điều
+mà Poppins và phần lớn font sans hình học không làm được.
 
-| Role | Class | Size / line-height | Weight |
+| Vai trò | Class | Cỡ / dãn dòng | Độ đậm |
 |---|---|---|---|
-| Page title | `text-3xl font-bold` | 30 / 36 | 700 |
-| Section heading | `text-xl font-semibold` | 20 / 28 | 600 |
-| Card title | `text-base font-semibold` | 16 / 24 | 600 |
-| Body | `text-base` | 16 / 24 | 400 |
-| Secondary / caption | `text-sm text-muted-app` | 14 / 20 | 400 |
-| Table cell | `text-sm` | 14 / 20 | 400 |
-| Label, badge | `text-xs font-medium uppercase tracking-wide` | 12 / 16 | 500 |
+| Tiêu đề trang | `text-3xl font-bold` | 30 / 36 | 700 |
+| Tiêu đề mục | `text-xl font-semibold` | 20 / 28 | 600 |
+| Tiêu đề thẻ | `text-base font-semibold` | 16 / 24 | 600 |
+| Nội dung | `text-base` | 16 / 24 | 400 |
+| Phụ / chú thích | `text-sm text-muted-app` | 14 / 20 | 400 |
+| Ô trong bảng | `text-sm` | 14 / 20 | 400 |
+| Nhãn, badge | `text-xs font-medium uppercase tracking-wide` | 12 / 16 | 500 |
 
-Rules: body text never below 16px on mobile; line length capped at 65–75 characters
-(`max-w-[65ch]`) for prose; no more than two weights in one component.
+Quy tắc: chữ nội dung không bao giờ nhỏ hơn 16px trên mobile; độ dài dòng văn xuôi giới hạn
+65–75 ký tự (`max-w-[65ch]`); không quá hai độ đậm trong cùng một component.
 
-## 4. Spacing, radius, elevation
+## 4. Khoảng cách, bo góc, đổ bóng
 
-- **Spacing** — Tailwind's 4px scale, and only `1 2 3 4 6 8 12 16`. Inside a card: `p-4`
-  (mobile) / `p-6` (desktop). Between sections: `gap-6`. Between related controls: `gap-2`.
-- **Radius** — `rounded-md` (6px) for inputs, buttons and badges; `rounded-lg` (8px) for
-  cards and modals; `rounded-full` for avatars and pills. Nothing else.
-- **Elevation** — flat by default. `shadow-sm` on a card only when it sits on `bg-app`
-  without a border; `shadow-lg` for modals and popovers. Dark mode leans on
-  `surface-app` + `border-app` instead of shadow, which is invisible on near-black.
-- **Container** — one max width per page: `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`.
-- **z-index** — sticky header 10, dropdown 20, modal overlay 30, toast 50. No other values.
+- **Khoảng cách** — thang 4px của Tailwind, và chỉ dùng `1 2 3 4 6 8 12 16`. Bên trong một thẻ:
+  `p-4` (mobile) / `p-6` (desktop). Giữa các mục: `gap-6`. Giữa các điều khiển liên quan: `gap-2`.
+- **Bo góc** — `rounded-md` (6px) cho ô nhập, nút và badge; `rounded-lg` (8px) cho thẻ và modal;
+  `rounded-full` cho avatar và pill. Không dùng giá trị nào khác.
+- **Đổ bóng** — mặc định là phẳng. `shadow-sm` chỉ dùng cho thẻ nằm trên `bg-app` mà không có
+  viền; `shadow-lg` cho modal và popover. Chế độ tối dựa vào `surface-app` + `border-app` thay
+  cho bóng, vì bóng gần như vô hình trên nền đen.
+- **Container** — mỗi trang một chiều rộng tối đa: `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`.
+- **z-index** — header dính 10, dropdown 20, lớp phủ modal 30, toast 50. Không dùng giá trị khác.
 
-## 5. Component recipes
+## 5. Công thức component
 
-Built from the existing `components/ui/` kit — extend those files rather than restyling
-per call site.
+Dựng từ bộ kit `components/ui/` đã có — mở rộng chính các file đó thay vì tạo kiểu lại ở từng
+nơi gọi.
 
-**Primary button** — `bg-primary-app text-on-primary-app rounded-md px-4 py-2 text-sm
-font-medium transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app
+**Nút chính** — `bg-primary-app text-on-primary-app rounded-md px-4 py-2 text-sm font-medium
+transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app
 focus-visible:ring-offset-2 disabled:opacity-50`
 
-**Secondary button** — `border border-border-app bg-surface-app text-text-app` + the same
-sizing. **Destructive** — `bg-danger-app text-white`. **Ghost** — text only, `hover:bg-surface-app`.
+**Nút phụ** — `border border-border-app bg-surface-app text-text-app` cộng cùng bộ kích thước.
+**Nút phá huỷ** — `bg-danger-app text-white`. **Nút ghost** — chỉ chữ, `hover:bg-surface-app`.
 
-**Card** — `rounded-lg border border-border-app bg-surface-app p-4 sm:p-6`. A clickable
-card adds `role="button"`, `tabIndex={0}` and `hover:border-primary-app transition-colors`
-— a hover that only shifts color, never `scale`, so the grid does not reflow.
+**Thẻ** — `rounded-lg border border-border-app bg-surface-app p-4 sm:p-6`. Thẻ bấm được thêm
+`role="button"`, `tabIndex={0}` và `hover:border-primary-app transition-colors` — hiệu ứng hover
+chỉ đổi màu, không bao giờ `scale`, để lưới không bị dồn lại.
 
-**Table** — header `bg-surface-app text-muted-app text-xs uppercase`, rows separated by
-`divide-y divide-border-app`, cells `px-4 py-3 text-sm`, row hover `hover:bg-surface-app`.
-Below `md`, a table of club members becomes a stacked card list rather than a horizontal
-scroller.
+**Bảng** — header `bg-surface-app text-muted-app text-xs uppercase`, các dòng ngăn bằng
+`divide-y divide-border-app`, ô `px-4 py-3 text-sm`, hover dòng `hover:bg-surface-app`. Dưới
+`md`, một bảng danh sách thành viên chuyển thành danh sách thẻ xếp chồng chứ không phải thanh
+cuộn ngang.
 
-**Form field** — `<label>` above the input, `text-sm font-medium`; input
-`border border-border-app bg-bg-app rounded-md px-3 py-2`; error text
-`text-sm text-danger-app` directly under the field plus `aria-invalid` and
-`aria-describedby`. Never rely on a red border alone. Focus uses `ring-1 ring-ring-app` with
-**no** `ring-offset` plus `border-ring-app` — an offset ring around an already-bordered
-control reads as a second border with a white gap. Filled buttons keep `ring-offset-2`,
-since a ring with no offset would sit on the fill.
+**Trường nhập liệu** — `<label>` đặt trên ô nhập, `text-sm font-medium`; ô nhập
+`border border-border-app bg-bg-app rounded-md px-3 py-2`; chữ lỗi `text-sm text-danger-app`
+ngay dưới trường, kèm `aria-invalid` và `aria-describedby`. Không bao giờ chỉ dựa vào viền đỏ.
+Focus dùng `ring-1 ring-ring-app` **không** có `ring-offset`, cộng `border-ring-app` — một vòng
+có offset quanh một ô vốn đã có viền trông như hai lớp viền cách nhau bởi một khe trắng. Nút có
+nền đặc vẫn giữ `ring-offset-2`, vì vòng không offset sẽ nằm đè lên nền.
 
-**Badge** — `rounded-full px-2 py-0.5 text-xs font-medium` with a 10% tint of its status
-token as background and the token as text.
+**Badge** — `rounded-full px-2 py-0.5 text-xs font-medium`, nền là token trạng thái ở độ mờ 10%
+và chữ là chính token đó.
 
-**Empty state** — icon, one sentence explaining what would be here, one primary action.
-Use `AppEmptyState`; never render it while the first load is still pending.
+**Trạng thái rỗng** — một icon, một câu giải thích chỗ này lẽ ra có gì, một hành động chính.
+Dùng `AppEmptyState`; không bao giờ hiển thị nó khi lần tải đầu còn đang chạy.
 
-**Loading** — `AppSkeleton` shapes matching the real layout on initial load only. Buttons
-disable and show a spinner during a mutation; they never disappear.
+**Trạng thái tải** — `AppSkeleton` với hình khối khớp bố cục thật, chỉ ở lần tải đầu. Nút khi
+đang gửi thì bị vô hiệu và hiện spinner; chúng không bao giờ biến mất.
 
-## 6. Motion
+## 6. Chuyển động
 
-150–300ms, `transition-colors` or `transition-opacity` only — `transform` and `opacity`
-are the sole GPU-cheap properties, and layout-affecting transitions (`width`, `height`,
-`scale` on hover) cause reflow. Page-level animation is opt-out:
+150–300ms, chỉ dùng `transition-colors` hoặc `transition-opacity` — `transform` và `opacity` là
+hai thuộc tính duy nhất rẻ với GPU, còn chuyển động làm đổi bố cục (`width`, `height`, `scale`
+khi hover) gây tính lại layout. Hiệu ứng ở mức trang phải cho phép tắt:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -151,32 +150,32 @@ are the sole GPU-cheap properties, and layout-affecting transitions (`width`, `h
 }
 ```
 
-## 7. Icons
+## 7. Icon
 
-Heroicons or Lucide outline, 24×24 viewBox, rendered `w-5 h-5` (inline) or `w-6 h-6`
-(standalone), `currentColor` fill so they repaint with the theme. No emoji as UI icons.
-An icon-only button carries `aria-label`.
+Heroicons hoặc Lucide dạng outline, viewBox 24×24, render ở `w-5 h-5` (trong dòng) hoặc
+`w-6 h-6` (đứng riêng), fill `currentColor` để chúng đổi màu theo theme. Không dùng emoji làm
+icon giao diện. Nút chỉ có icon phải mang `aria-label`.
 
-## 8. Checklist before opening a PR
+## 8. Checklist trước khi mở PR
 
-- [ ] No hex outside `index.css`; no `dark:` variants (the token indirection handles it)
-- [ ] Toggled the theme — text, borders and muted content still readable in `.dark`
-- [ ] Switched locale to `vi` — Vietnamese strings run 30–60% longer; rows `flex-wrap`,
-      no `whitespace-nowrap`, no fixed pixel width around a `t()` value
-- [ ] Every interactive element has a visible `focus-visible` ring
-- [ ] Touch targets ≥ 44×44px
-- [ ] Status shown by text or icon, not color alone
-- [ ] Checked at 375 / 768 / 1024 / 1440px, no horizontal scroll
-- [ ] `prefers-reduced-motion` respected
+- [ ] Không có mã màu ngoài `index.css`; không dùng variant `dark:` (lớp gián tiếp token đã lo)
+- [ ] Đã lật theme — chữ, viền và nội dung mờ vẫn đọc được dưới `.dark`
+- [ ] Đã đổi ngôn ngữ sang `vi` — chuỗi tiếng Việt dài hơn 30–60%; các hàng dùng `flex-wrap`,
+      không `whitespace-nowrap`, không đặt chiều rộng pixel cố định quanh một giá trị `t()`
+- [ ] Mọi phần tử tương tác đều có vòng `focus-visible` nhìn thấy được
+- [ ] Vùng chạm ≥ 44×44px
+- [ ] Trạng thái được thể hiện bằng chữ hoặc icon, không chỉ bằng màu
+- [ ] Đã kiểm tra ở 375 / 768 / 1024 / 1440px, không có cuộn ngang
+- [ ] Đã tôn trọng `prefers-reduced-motion`
 
-## 9. Anti-patterns
+## 9. Những thứ không được làm
 
-| Don't | Why |
+| Đừng | Vì sao |
 |---|---|
-| `#F37021` as text or link color | 2.94:1 — fails AA; use `primary-app` |
-| `text-white` on a primary button | Breaks in dark mode; use `on-primary-app` |
-| `text-gray-400` for body copy | Below 4.5:1 on white; use `muted-app` |
-| `hover:scale-105` on cards | Reflows the grid; shift color instead |
-| Emoji icons (🎓 🏆 📅) | Render differently per OS; use SVG |
-| A third accent color per feature | The palette is three brand hues plus semantics |
-| `cursor-pointer` per component | One global rule already covers it in `index.css` |
+| Dùng `#F37021` làm màu chữ hoặc link | 2.94:1 — trượt AA; dùng `primary-app` |
+| Viết `text-white` trên nút chính | Hỏng ở chế độ tối; dùng `on-primary-app` |
+| Dùng `text-gray-400` cho chữ nội dung | Dưới 4.5:1 trên nền trắng; dùng `muted-app` |
+| `hover:scale-105` trên thẻ | Làm lưới dồn lại; hãy đổi màu thay vì phóng to |
+| Dùng emoji làm icon (🎓 🏆 📅) | Hiển thị khác nhau theo hệ điều hành; dùng SVG |
+| Thêm một màu nhấn thứ ba cho mỗi tính năng | Bảng màu chỉ gồm ba màu thương hiệu cộng các màu ngữ nghĩa |
+| Đặt `cursor-pointer` ở từng component | Đã có một quy tắc toàn cục trong `index.css` lo việc đó |

@@ -1,44 +1,47 @@
-# Documentation
+# Tài liệu
 
-Business analysis and design for the University Club Management System (UCMS).
-Code rules live in [`../.rules/`](../.rules/README.md) — this folder holds the *what*, not the *how*.
+Phân tích nghiệp vụ và thiết kế cho Hệ thống Quản lý Câu lạc bộ Đại học (UCMS).
+Quy tắc viết code nằm ở [`../.rules/`](../.rules/README.md) — thư mục này giữ phần *cái gì*,
+không giữ phần *làm thế nào*.
 
-## Start here
+## Bắt đầu từ đây
 
-**[`SRS.md`](SRS.md) — the Software Requirements Specification (written in Vietnamese).** One consolidated baseline:
-scope, actors, all 54 use cases as numbered functional requirements, the 45 business rules, the
-11 entity lifecycles, the data model, the cross-cutting workflow / notification / audit design,
-the evaluation model, the dashboards, the non-functional and security requirements, the
-acceptance criteria and the traceability matrices. Design, code, tests and reviews all point at
-it. Where the SRS and a source document disagree on a requirement, **the SRS wins**.
+**[`SRS.md`](SRS.md) — Đặc tả yêu cầu phần mềm.** Một baseline hợp nhất duy nhất: phạm vi,
+actor, toàn bộ 54 use case dưới dạng yêu cầu chức năng được đánh số, 45 quy tắc nghiệp vụ, 11
+vòng đời thực thể, mô hình dữ liệu, thiết kế xuyên suốt cho workflow / thông báo / audit, mô
+hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu chí nghiệm thu và các ma trận
+truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác
+nhau về một yêu cầu, **lấy theo SRS**.
 
-## Folder map
+## Bản đồ thư mục
 
-| Folder | What is inside | Read it when |
+| Thư mục | Bên trong có gì | Đọc khi nào |
 |---|---|---|
-| [`01-business-analysis/`](01-business-analysis/) | The original business & system analysis (Vietnamese): problems, stakeholders, flows, user stories, domain model, evaluation model, signature features | You need the *why* behind a requirement, or the background the SRS summarizes |
-| [`02-use-cases/`](02-use-cases/) | **Current** use case model v2 and the detailed specification of all 54 use cases, the Word export, and the review log I01–I30 | You need the full narrative of a use case, the v1 → v2 mapping, or the history of a correction |
-| [`03-diagrams/`](03-diagrams/) | draw.io sources and PNG exports: context diagram v1 and v2, use case diagrams per actor, state diagrams | You need a picture, or you are changing one |
-| [`04-design/`](04-design/) | High-level design and the UI design guidelines | You are about to write code or build a screen |
+| [`01-business-analysis/`](01-business-analysis/) | Bản phân tích nghiệp vụ và hệ thống gốc: vấn đề, các bên liên quan, luồng nghiệp vụ, user story, domain model, mô hình đánh giá, các feature nổi bật | Bạn cần hiểu *vì sao* có một yêu cầu, hoặc cần phần nền mà SRS đã tóm tắt lại |
+| [`02-use-cases/`](02-use-cases/) | Use case model v2 và đặc tả chi tiết **hiện hành** của cả 54 use case, bản xuất Word, và nhật ký review I01–I30 | Bạn cần bản kể đầy đủ của một use case, bảng ánh xạ v1 → v2, hoặc lịch sử của một lần sửa |
+| [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram v1 và v2, use case diagram theo actor, state diagram | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
+| [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
+| [`05-implementation/`](05-implementation/) | Danh sách công việc triển khai (database, backend, frontend) và thiết kế cơ sở dữ liệu dạng DBML cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
 
-## Reading order for someone new
+## Thứ tự đọc cho người mới
 
-1. [`SRS.md`](SRS.md) §1–§2 — what the product is, who uses it, what is out of scope.
-2. [`03-diagrams/img/UCMS_Context_Diagram_v2_01_Context-diagram-v2.png`](03-diagrams/img/UCMS_Context_Diagram_v2_01_Context-diagram-v2.png) — the system boundary in one picture.
-3. [`SRS.md`](SRS.md) §4 — the use case you are about to build, then §5 and §6 for its rules and states.
-4. [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) — where the code goes.
-5. [`../.rules/README.md`](../.rules/README.md) — how the code must look. Definition of Done: `npm run check` green.
+1. [`SRS.md`](SRS.md) §1–§2 — sản phẩm là gì, ai dùng, cái gì nằm ngoài phạm vi.
+2. [`03-diagrams/img/UCMS_Context_Diagram_v2_01_Context-diagram-v2.png`](03-diagrams/img/UCMS_Context_Diagram_v2_01_Context-diagram-v2.png) — biên hệ thống trong một hình.
+3. [`SRS.md`](SRS.md) §4 — use case bạn sắp làm, rồi §5 và §6 cho quy tắc và trạng thái của nó.
+4. [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) — code đặt ở đâu.
+5. [`05-implementation/TASKS.md`](05-implementation/TASKS.md) — xây cái gì, theo thứ tự nào, cái gì đang bị chặn.
+6. [`../.rules/README.md`](../.rules/README.md) — code phải trông như thế nào. Definition of Done: `npm run check` xanh.
 
-## Conventions
+## Quy ước
 
-- **English only** in every document, as per [`../.rules/README.md`](../.rules/README.md) —
-  with one deliberate exception: [`SRS.md`](SRS.md) is written in **Vietnamese** at the project
-  owner's request. Its technical identifiers (UC / FR / BR codes, state names, entity and field
-  names, paths, endpoints) stay in English because they appear verbatim in the code.
-- A use case is identified by its **v2** number (UC01–UC54) everywhere except inside the v1
-  analysis. §5 of the use case model translates between v1 and v2.
-- Business rules keep one numbering across all documents: **BR01–BR46**, with BR43 withdrawn.
-  The consolidated list, with every amendment applied, is `SRS.md` §5.
-- Nothing is deleted. Superseded material stays readable so a decision can be traced back to
-  the model it was made under; where v1 and v2 disagree, **v2 wins**.
-- Diagrams are edited as `.drawio` and re-exported to `03-diagrams/img/` in the same commit.
+- **Tài liệu viết bằng tiếng Việt**; code, comment, commit, config, thông báo lỗi và test viết
+  bằng tiếng Anh — xem [`../.rules/README.md`](../.rules/README.md) §5. Các định danh kỹ thuật
+  (mã UC/FR/BR, tên trạng thái, tên collection và trường, đường dẫn, endpoint) giữ nguyên tiếng
+  Anh vì chúng xuất hiện nguyên văn trong code.
+- Một use case được định danh bằng số **v2** (UC01–UC54) ở mọi nơi trừ bên trong tài liệu v1.
+  Dùng §5 của use case model để chuyển đổi giữa v1 và v2.
+- Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR46**, trong đó BR43 đã
+  được rút. Danh sách hợp nhất, đã áp dụng mọi sửa đổi, nằm ở `SRS.md` §5.
+- Không xoá gì cả. Tài liệu đã bị thay thế vẫn để đọc được, để một quyết định luôn truy ngược
+  được về mô hình mà nó được đưa ra; khi v1 và v2 nói khác nhau, **lấy theo v2**.
+- Sơ đồ sửa ở dạng `.drawio` rồi xuất lại PNG vào `03-diagrams/img/` trong cùng một commit.
