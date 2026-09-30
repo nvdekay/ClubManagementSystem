@@ -2957,9 +2957,9 @@ Cấu hình:    UC03 Tài khoản · UC04 Chính sách&Deadline · UC05 Định 
 ```
 
 `⇄` đánh dấu một cặp nộp / thẩm định mà vòng chỉnh sửa của nó là **luồng thay thế của use case
-nộp**, không phải một use case riêng. Use case diagram chỉ giữ hai quan hệ `«extend»` —
-`UC47 «extend» UC25` và `UC49 «extend» UC28`; điều hướng giữa các màn hình và cascade hệ thống
-**không** được mô hình hoá bằng `«extend»` (review issue I27, I28).
+nộp**, không phải một use case riêng. Use case diagram không vẽ `«extend»`: quan hệ
+UC47→UC25 và UC49→UC28 chỉ ghi trong Spec; điều hướng giữa các màn hình và cascade hệ thống
+**không** được mô hình hoá bằng `«extend»` (review issue I27, I28, I55).
 
 ---
 
@@ -3114,12 +3114,13 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 | **Use case diagram theo actor** (UC01–UC54) | All users · Student · CMB 1 Club governance · CMB 2 Recruitment & membership · CMB 3 Events & bookings · CMB 4 Accountability & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
 | **State diagram** | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Budget Request · Property Booking | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) |
 
-Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30):
+Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
 
 - Actor vẽ bằng hình người; biên hệ thống là một khung có nhãn `UCMS`.
-- `«include»` và `«extend»` **chỉ** dùng cho quan hệ use case thật. Điều hướng màn hình và
-  cascade hệ thống không được vẽ thành quan hệ — hai cạnh `«extend»` còn lại là
-  `UC47 «extend» UC25` và `UC49 «extend» UC28`.
+- Mỗi trang actor chỉ nối actor tới các use case nhóm `Manage …`; use case nhóm `«include»` các
+  chức năng con (use case quản lý danh mục tách theo CRUD). Oval chỉ ghi tên, không ghi mã UC.
+- Không vẽ `«extend»`. Quan hệ UC47→UC25 và UC49→UC28 chỉ ghi trong Spec (luồng thay thế,
+  Related UC); điều hướng màn hình và cascade hệ thống cũng không vẽ thành quan hệ (I27, I28, I55).
 - Actor phụ được nối bằng association nét liền, không phải nét đứt.
 - Không tồn tại `UC02 «include» UC01`: đăng nhập là **tiền điều kiện** của dashboard.
 - Tên use case không bao giờ được rút gọn tới mức mất nghĩa ("Suspend / reactivate / dissolve

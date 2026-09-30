@@ -16,8 +16,10 @@ tương ứng của VS Code.
 giữ đúng quy ước tên ở trên, và cập nhật `../SRS.md` cùng tài liệu liên quan trong
 [`../02-use-cases/`](../02-use-cases/) trong cùng một commit.
 
-**Quy ước ký hiệu đang áp dụng** (review issue I09–I13, I27–I30): `«include»` và `«extend»` chỉ
-dùng cho quan hệ use case thật — không bao giờ dùng cho điều hướng màn hình và không bao giờ
-dùng cho cascade hệ thống; actor phụ nối bằng association nét liền, không phải nét đứt; đăng
-nhập là *tiền điều kiện* của dashboard chứ không phải `«include»`. Chỉ còn đúng hai cạnh
-`«extend»`: `UC47 «extend» UC25` và `UC49 «extend» UC28`.
+**Quy ước ký hiệu đang áp dụng** (review issue I09–I13, I27–I30, I55): mỗi trang actor chỉ nối
+actor tới các use case nhóm `Manage …`; mỗi use case nhóm `«include»` các chức năng con của nó (với
+use case quản lý danh mục thì tách theo CRUD, ví dụ `Manage properties «include» Add / View / Update /
+Deactivate property`). Oval chỉ ghi tên, không ghi mã UC. Không vẽ `«extend»`: hai quan hệ
+UC47→UC25 và UC49→UC28 chỉ ghi trong Spec (luồng thay thế, Related UC); điều hướng màn hình và
+cascade hệ thống cũng không vẽ thành quan hệ. Actor phụ nối bằng association nét liền; đăng nhập là *tiền điều kiện* của
+dashboard. Nguồn sinh file `.drawio` là cấu trúc trang trong I55.

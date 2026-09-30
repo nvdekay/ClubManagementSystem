@@ -83,6 +83,7 @@ Ngày review: 2026-09-23.
 | I52 | 🟢 | Vai trò Trần Ngọc Huy: "Technical Leader, Full-stack Developer" vs "Technical leader, Tester" | Report Table I.1, II.8, V.4 | Đã sửa | Thêm Tester vào vai trò Trần Ngọc Huy ở Table I.1, II.8; V.4 viết hoa thống nhất |
 | I53 | 🟢 | MSG12 đặt "above the feedback form", nhưng ngữ cảnh là màn hình tổng hợp feedback của CMB (UC51) | Report Table III.7 | Đã sửa | MSG12 → "Inline, on the feedback summary (club)" |
 | I54 | 🟢 | Thông tin chưa đủ: MSSV/email `[TBD]`; "Le Thanh Hai" không dấu; deliverable ghi `report.docx` | Report bìa, Table I.1, I.2, VI.1 | Cần quyết định | Đã sửa "Lê Thanh Hải" và tên file; còn thiếu MSSV (Phong, Quang Huy, Ngọc Huy) và email (Phong, Quang Huy) |
+| I55 | 🟡 | UCD theo actor không có «include» nào: sau I09, I11, I28 chỉ còn association phẳng tới từng UC, kèm mã UC trên oval | UCD mọi trang | Đã sửa | Vẽ lại 8 trang actor: actor → `Manage …` «include» chức năng con (CRUD cho UC quản lý danh mục); bỏ mã UC trên oval; bỏ 2 cạnh «extend» (quan hệ vẫn ghi trong Spec) |
 
 ---
 
@@ -1370,3 +1371,46 @@ sinh (Spec/Model + generator) rồi sinh lại, không sửa tay trong `.docx`.
   - **Cần cung cấp:** MSSV của Nguyễn Đình Phong, Nguyễn Quang Huy, Trần Ngọc Huy (bìa) và email của
     Nguyễn Đình Phong, Nguyễn Quang Huy (Table I.1). Nếu tên file nộp cuối khác tên hiện tại thì sửa lại
     Table VI.1.
+
+### I55 — UCD theo actor thiếu «include»
+- **Vấn đề:** review lần sau nhận xét sơ đồ "thiếu include". Bản gốc có 5 cạnh `«include»` nhưng
+  cả 5 đều sai và đã bị xoá (I09, I11, I28), nên sơ đồ chỉ còn actor nối thẳng tới từng UC kèm mã UC.
+- **Cách sửa đã chọn:** gom theo chức năng — actor chỉ nối tới use case nhóm `Manage …`, nhóm
+  `«include»` các chức năng con; use case quản lý danh mục tách theo CRUD. Bỏ mã UC trên oval.
+- **Xử lý:**
+  - Ngày: 2026-09-30
+  - File đã sửa: `03-diagrams/UCMS_UseCase_ByActor.drawio` (sinh lại toàn bộ) và 9 ảnh
+    `03-diagrams/img/UCMS_UseCase_ByActor_*.png`; quy ước trong `03-diagrams/README.md` và `SRS.md`; `Group1_SE1939-NJ_Report_Final_v2.docx`
+    Figure III.2.1–III.2.9 thay ảnh mới, câu dẫn 2.2.1 bỏ *"UC numbers match …"*, thay bằng mô tả
+    kiểu `Manage …` «include» chức năng con.
+  - Cấu trúc mới (nhóm → chức năng con):
+    - Student: Manage club participation → Browse clubs, Submit club application, Apply for
+      membership, View member workspace, Request to leave club; Manage event participation →
+      Register for event, Check in, Submit event feedback; Submit complaint (nối thẳng).
+    - CMB 1: Manage club profile → View club profile, Update club information, Define club structure
+      (UC09); Manage board → Nominate board, Plan leadership transition; Request suspension.
+    - CMB 2: Manage recruitment campaigns → Create / Update / Publish recruitment campaign (UC16);
+      Manage applications → Screen applications, Record candidate evaluation, Onboard members;
+      Manage members → View member list, Update membership status (UC21), Assign positions.
+    - CMB 3: Manage events → Submit event proposal, Publish event, Cancel / reschedule event, Manage
+      waitlist; Manage bookings → Request property booking, Cancel / release booking.
+    - CMB 4: Manage event accountability → Finalize attendance, Submit event report, Review event
+      feedback; Manage budget → Submit budget request, Record expense; Manage reports & complaints →
+      Submit periodic report, Respond to complaint.
+    - ICPDP 1: Manage accounts → View accounts, Assign / revoke role, Lock / unlock account (UC03);
+      Manage system configuration → Configure policy & deadlines, Configure approval routing; Manage
+      club lifecycle → Decide club application, Confirm board, Confirm leadership transition,
+      Suspend / reactivate / dissolve club.
+    - ICPDP 2: Manage event oversight → Decide event proposal, Close event report; Manage properties
+      → Add property, View properties, Update property, Deactivate property (UC46); Manage bookings →
+      Decide booking request; Manage budget → Decide budget request, Record disbursement, Reconcile
+      budget.
+    - ICPDP 3: Manage compliance → Assess periodic report, Triage complaint, Open compliance case,
+      Issue case decision, Resolve compliance case (UC42); Manage evaluation → Create / Update /
+      Activate evaluation scheme (UC43), Generate evaluation draft, Publish evaluation.
+  - Bỏ 2 cạnh `«extend»` ở trang CMB 3 (UC47→UC25, UC49→UC28): nối chéo giữa hai nhóm gây rối
+    trong kiểu gom nhóm; quan hệ vẫn ghi ở luồng thay thế và Related UC của Spec. Oval nhóm không
+    in đậm, cùng kiểu với oval con.
+  - Bỏ: association CMB — Check in (vai trò hỗ trợ) và các node mượn "(see ICPDP n)".
+  - Lý do: theo lựa chọn của nhóm (kiểu gom chức năng, CRUD được include). Model/Spec vẫn giữ
+    UC01–UC54; các chức năng con CRUD là bước trong luồng chính của UC tương ứng.
