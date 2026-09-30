@@ -263,15 +263,15 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **DB-8.5** Chốt và ghi rõ kiểu dữ liệu tiền tệ (số nguyên theo đơn vị nhỏ nhất) và dùng thống nhất. → NFR-MNT-02
 
 ### Backend
-- [ ] **BE-8.3** UC35 giải ngân kèm chốt chặn tổng luỹ kế và giải ngân từng phần. → FR-UC35-01…06, BR23
-- [ ] **BE-8.4** UC36 khoản chi + chứng từ trong một thao tác; cờ ngoài hạng mục và vượt phần còn lại; đường bổ sung chứng từ sau. → FR-UC36-01…08, BR24, BR25
-- [ ] **BE-8.5** UC37 đối soát tính đủ bảy con số; kết quả Exception; chốt chặn lúc đóng hồ sơ. → FR-UC37-01…09, BR26
+- [ ] **BE-8.3** UC35 ghi dòng tiền `Advance` / `TopUp` / `Refund` kèm chốt chặn tổng luỹ kế, tạm ứng từng phần, cấp bù và hoàn trả đóng ngân sách. → FR-UC35-01…09, BR23, BR26, BR58
+- [ ] **BE-8.4** UC36 khoản chi + chứng từ trong một thao tác; cờ ngoài hạng mục và vượt phần còn lại; đường bổ sung chứng từ sau; nộp / nộp lại quyết toán, khoá bộ khoản chi, cờ trễ hạn. → FR-UC36-01…13, BR24, BR25, BR57
+- [ ] **BE-8.5** UC37 đối soát: chấp nhận / loại từng khoản chi, chốt chi hợp lệ và chênh lệch tất toán, `Recovery Pending` kèm số phải hoàn, chốt khi quá hạn quyết toán (A2), đánh dấu quá hạn hoàn trả vào BR21. → FR-UC37-01…11, BR26, BR57, BR58
 - [ ] **BE-8.6** Read model về tình hình ngân sách dùng cho dashboard CMB. → FR-UC02-03
 
 ### Frontend
-- [ ] **FE-8.3** Màn ghi nhận giải ngân. → UC35
-- [ ] **FE-8.4** Danh sách và biểu mẫu khoản chi kèm đính kèm chứng từ và các cờ ngoại lệ. → UC36
-- [ ] **FE-8.5** Màn đối soát hiển thị tách bạch **Đã duyệt / Đã giải ngân / Đã ghi nhận / Có chứng từ / Thiếu chứng từ / Còn lại / Chênh lệch**. → AC13, FR-UC37-01
+- [ ] **FE-8.3** Màn ghi nhận dòng tiền: tạm ứng, cấp bù, hoàn trả. → UC35
+- [ ] **FE-8.4** Danh sách và biểu mẫu khoản chi kèm đính kèm chứng từ và các cờ ngoại lệ; màn nộp quyết toán. → UC36
+- [ ] **FE-8.5** Màn đối soát hiển thị tách bạch **Đã duyệt / Đã tạm ứng / Đã ghi nhận / Có chứng từ / Thiếu chứng từ / Còn lại**, chấp nhận / loại từng khoản chi, và kết quả **chi hợp lệ / chênh lệch tất toán / số phải hoàn**. → AC13, FR-UC37-01…04
 
 ---
 

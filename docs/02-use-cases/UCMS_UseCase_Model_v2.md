@@ -153,8 +153,8 @@ Hai mâu thuẫn của v1 quanh mô hình actor được giải quyết tại đ
 
 | ID | Use case | Actor | Mục tiêu nghiệp vụ |
 |---|---|---|---|
-| UC35 | Ghi nhận giải ngân | ICPDP | Theo dõi số tiền thực sự được cấp cho ngân sách đã duyệt của sự kiện |
-| UC36 | Ghi nhận khoản chi kèm chứng từ | Club Member | Theo dõi và chứng minh chi tiêu |
+| UC35 | Ghi nhận giải ngân | ICPDP | Theo dõi mọi dòng tiền của ngân sách đã duyệt: tạm ứng, cấp bù và tiền CLB hoàn trả |
+| UC36 | Ghi nhận khoản chi và nộp quyết toán | Club Member | Chứng minh chi tiêu và nộp quyết toán sau sự kiện |
 | UC37 | Đối soát ngân sách và chi tiêu | ICPDP | Xác lập trách nhiệm giải trình |
 
 ### M08 — Báo cáo và tuân thủ
@@ -327,7 +327,7 @@ còn hiệu lực.
   (BR33); các công tắc cưỡng chế (BR21); lịch học kỳ (ngày bắt đầu và kết thúc).
 - **Quy tắc:** mọi thay đổi đều được đánh phiên bản và ghi audit; một thay đổi không bao giờ
   viết lại một quyết định đã ra. **Màn hình cấu hình chỉ phơi ra đúng danh sách này** — mọi giá
-  trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52). Các giá trị
+  trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị
   này chỉ trở nên sửa được khi có nhu cầu thật (§14, quyết định còn mở D2).
 - **Liên quan:** UC01, UC07, UC25, UC33, UC38, UC45, UC48
 
@@ -573,8 +573,8 @@ còn hiệu lực.
 - **Thay thế — ghi nhận sự kiện nội bộ (BR53):** sự kiện `Internal` không có phần ngân sách
   được ghi nhận thẳng `Draft → Approved`, không tạo review task, có ghi audit; ICPDP xem nó ở
   UC02. Có phần ngân sách thì đi luồng chính; booking đính kèm vẫn do UC46 quyết định.
-- **Ngoại lệ:** có xung đột chặn trong khi chính sách cấm chồng lịch; một báo cáo bắt buộc đã
-  quá hạn và công tắc cưỡng chế BR21 đang bật.
+- **Ngoại lệ:** có xung đột chặn trong khi chính sách cấm chồng lịch; một nghĩa vụ bắt buộc
+  (báo cáo, quyết toán, hoàn trả) đã quá hạn và công tắc cưỡng chế BR21 đang bật.
 - **Quy tắc:** BR10, BR15, BR21, BR22, BR44, BR45, BR53. Một bản sửa không bao giờ ghi đè bản trước.
 - **Liên quan:** UC26, UC45 · **Pain point:** BP05, BP06, BP09
 
@@ -608,7 +608,8 @@ còn hiệu lực.
 - **Luồng:** nhập lý do → với việc đổi lịch, đánh giá lại BR15 và nộp lại để có quyết định khi
   chính sách yêu cầu (sự kiện nội bộ theo BR53 chỉ được ghi nhận lại) → cập nhật hoặc giải phóng booking liên quan (UC47) → thông báo cho người
   đã đăng ký → tính lại các nghĩa vụ báo cáo và ngân sách (huỷ sự kiện: `EventBudget` chưa giải
-  ngân chuyển `Cancelled`, đã giải ngân thì phải đối soát ở UC37).
+  ngân chuyển `Cancelled`, đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi
+  ở UC37 — BR57, BR58).
 - **Quy tắc:** BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. Một lần huỷ nằm
   trong thời hạn báo trước định nghĩa trong tài liệu chính sách sẽ được ghi nhận là tín hiệu tuân thủ cho UC40.
 - **ICPDP buộc huỷ** là luồng thay thế A1: hệ thống huỷ sự kiện như hệ quả của UC15 (tạm ngừng,
@@ -670,30 +671,49 @@ còn hiệu lực.
 ### M07 — Tài chính và ngân sách
 
 #### UC35 — Ghi nhận giải ngân
-- **Actor:** ICPDP · **Tiền điều kiện:** `EventBudget` của sự kiện đang `Approved` (UC26) · **Dữ liệu:** số tiền duyệt, số tiền giải ngân, ngày, mã tham chiếu.
-- **Quy tắc:** BR23 — số tiền giải ngân không bao giờ vượt số tiền duyệt khi chưa có văn bản
+- **Actor:** ICPDP · **Dữ liệu:** loại dòng tiền, số tiền, ngày, mã tham chiếu.
+- **Luồng — tạm ứng:** `EventBudget` đang `Approved` hoặc `Disbursed` → officer ghi một lần tạm
+  ứng, một phần hoặc toàn bộ số duyệt, trước khi sự kiện diễn ra → `Disbursed`; CLB được thông báo.
+  Nhiều lần tạm ứng cộng dồn vào một lần duyệt.
+- **Thay thế — cấp bù:** `EventBudget` đang `Reconciled` với chi hợp lệ lớn hơn số đã tạm ứng →
+  officer ghi khoản cấp bù đúng bằng phần chênh (trần là số duyệt) → `Closed`.
+- **Thay thế — ghi nhận hoàn trả:** `EventBudget` đang `Recovery Pending` → officer ghi số tiền CLB
+  đã hoàn; hoàn đủ số phải hoàn → `Closed` (BR58).
+- **Quy tắc:** BR23 — tổng tạm ứng và cấp bù không bao giờ vượt số tiền duyệt khi chưa có văn bản
   điều chỉnh. Chỉ theo dõi; đây không phải một hệ thống kế toán (§5.2). Không có nó thì UC37
   không tính được gì.
-- **Liên quan:** UC26, UC37
+- **Liên quan:** UC26, UC36, UC37
 
-#### UC36 — Ghi nhận khoản chi kèm chứng từ
+#### UC36 — Ghi nhận khoản chi và nộp quyết toán
 - **Actor:** Club Member có permission `club.expense.record` (BR54)
-- **Dữ liệu vào:** hạng mục, số tiền, ngày, sự kiện liên quan (có `EventBudget` đã duyệt), mô tả, và hoá đơn,
-  biên lai hoặc chứng từ thanh toán.
+- **Tiền điều kiện:** `EventBudget` của sự kiện đang `Disbursed` hoặc `Reconciliation Pending`.
+- **Dữ liệu vào:** hạng mục, số tiền, ngày, mô tả, và hoá đơn, biên lai hoặc chứng từ thanh toán.
+- **Luồng:** ghi từng khoản chi kèm chứng từ → khi sự kiện đã `Completed` hoặc bị huỷ, **nộp
+  quyết toán**: hệ thống hiển thị đã tạm ứng, tổng chi, số dư chưa chi, khoản chi thiếu chứng từ →
+  xác nhận → `Settlement Submitted`, bộ khoản chi bị khoá; ICPDP nhận một task.
+- **Thay thế:** nộp lại quyết toán sau khi UC37 trả về (`Reconciliation Pending`).
 - **Quy tắc:** BR24 — khoản chi ngoài hạng mục đã duyệt bị gắn cờ ngoại lệ; BR25 — yêu cầu về
-  chứng từ theo hạng mục định nghĩa trong tài liệu chính sách; mỗi chứng từ tham chiếu đúng một khoản chi, và đó
-  chính là lý do UC43 và UC44 của v1 gộp thành một use case ở đây.
-- **Liên quan:** UC35, UC37
+  chứng từ theo hạng mục định nghĩa trong tài liệu chính sách; mỗi chứng từ tham chiếu đúng một
+  khoản chi, và đó chính là lý do UC43 và UC44 của v1 gộp thành một use case ở đây; BR57 — quyết
+  toán phải nộp trước hạn, quá hạn là một nghĩa vụ quá hạn theo BR21.
+- **Liên quan:** UC35, UC37, UC33
 
 #### UC37 — Đối soát ngân sách và chi tiêu
-- **Actor:** ICPDP
-- **Hệ thống tính:** đã duyệt, đã giải ngân, khoản chi đã ghi nhận, khoản chi có chứng từ, khoản
-  chi thiếu chứng từ, số dư còn lại, chênh lệch.
-- **Kết quả:** `Reconciled` hoặc `Exception`, rồi `Closed`.
-- **Quy tắc:** BR26 — việc đối soát phải hoàn tất trước khi ngân sách của một sự kiện được đóng. CMB
+- **Actor:** ICPDP · **Tiền điều kiện:** `EventBudget` đang `Settlement Submitted` (UC36).
+- **Hệ thống tính:** đã duyệt, đã tạm ứng, khoản chi đã ghi nhận, khoản chi có chứng từ, khoản
+  chi thiếu chứng từ, số dư chưa chi, chênh lệch.
+- **Luồng:** officer chấp nhận hoặc loại từng khoản chi (khoản thiếu chứng từ hoặc ngoài hạng mục
+  không được chấp nhận thì bị loại) → hệ thống chốt **chi hợp lệ** và **chênh lệch tất toán** =
+  chi hợp lệ (trần là số duyệt) − đã tạm ứng: bằng 0 → `Reconciled → Closed`; dương →
+  `Reconciled`, chờ cấp bù ở UC35; âm → `Recovery Pending` với **số phải hoàn** và hạn hoàn (BR58).
+- **Thay thế:** A1 trả về để bổ sung chứng từ → `Reconciliation Pending`; A2 quá hạn quyết toán
+  (BR57) → officer chốt trên các khoản chi đã có chứng từ → `Recovery Pending`.
+- **Ngoại lệ:** quá hạn hoàn trả → nghĩa vụ quá hạn theo BR21 và officer mở hồ sơ vi phạm ở UC40.
+- **Quy tắc:** BR26 — ngân sách chỉ đóng khi đã đối soát và chênh lệch đã tất toán (cấp bù hoặc
+  hoàn trả). BR57, BR58. CMB
   không đồng sở hữu quyết định này; họ đọc cùng bộ số liệu qua UC02, và đó chính là thứ loại bỏ
   vấn đề hai actor của UC45 trong v1.
-- **Liên quan:** UC35, UC36, UC42 · **Pain point:** BP10
+- **Liên quan:** UC35, UC36, UC40, UC42 · **Pain point:** BP10
 
 ### M08 — Báo cáo và tuân thủ
 
@@ -986,14 +1006,19 @@ trạng thái của `Event`. `EventBudget` chỉ được tạo khi UC26 phê du
 | Từ → Đến | Tác nhân |
 |---|---|
 | (tạo) → Approved | UC26 phê duyệt đề xuất có phần ngân sách, kèm số tiền duyệt |
-| Approved → Disbursed | UC35 |
-| Disbursed → Reconciliation Pending | UC37 (trả về để bổ sung chứng từ) |
-| Disbursed / Reconciliation Pending → Reconciled / Exception | UC37 |
-| Reconciled / Exception → Closed | UC37 (BR26) |
-| Approved → Cancelled | UC28, hoặc UC15 / UC40 tác động lên CLB, khi sự kiện bị huỷ trước khi giải ngân |
+| Approved → Disbursed | UC35 — lần tạm ứng đầu tiên, một phần hoặc toàn bộ số duyệt; tạm ứng thêm giữ nguyên `Disbursed` |
+| Disbursed → Settlement Submitted | UC36 — CLB nộp quyết toán sau khi sự kiện kết thúc hoặc bị huỷ (BR57) |
+| Settlement Submitted → Reconciliation Pending | UC37 A1 (trả về để bổ sung chứng từ) |
+| Reconciliation Pending → Settlement Submitted | UC36 (nộp lại quyết toán) |
+| Settlement Submitted → Reconciled | UC37 — chi hợp lệ không thấp hơn số đã tạm ứng |
+| Settlement Submitted → Recovery Pending | UC37 — chi hợp lệ thấp hơn số đã tạm ứng; chốt số phải hoàn (BR58) |
+| Disbursed / Reconciliation Pending → Recovery Pending | UC37 A2 — quá hạn quyết toán (BR57) |
+| Reconciled → Closed | UC37 khi chênh lệch bằng 0, hoặc UC35 ghi khoản cấp bù (BR26) |
+| Recovery Pending → Closed | UC35 ghi nhận CLB đã hoàn đủ (BR26, BR58) |
+| Approved → Cancelled | UC28, hoặc UC15 / UC40 tác động lên CLB, khi sự kiện bị huỷ trước khi tạm ứng |
 
-`Exception` nghĩa là việc đối soát kết thúc với một phần chênh lệch được nêu rõ; hồ sơ vẫn đóng
-được, với phần chênh lệch nằm trong hồ sơ.
+Không còn trạng thái `Exception`: phần tạm ứng không được chứng minh bằng chi hợp lệ không được
+"đóng kèm chênh lệch" nữa mà phải hoàn trả (BR58).
 
 ### 10.7 Violation
 `Open → Under Investigation → Awaiting Club Response → Decision Issued → Corrective Action → Resolved`.
@@ -1049,14 +1074,16 @@ BR01–BR39 của §14 vẫn giữ nguyên, với các sửa đổi sau:
 | BR15 | Được phát biểu lại thành chính quy tắc xung đột (vốn là UC25 của v1): *trùng thời gian trên cùng một property, nơi một sự kiện hoặc booking đã duyệt chặn lại, cho kết quả `Blocking Conflict`; trùng nhẹ cho `Warning`; ngưỡng được cấu hình ở UC04.* Được đánh giá bên trong UC25 và UC45. |
 | BR16 | **Đã đổi.** Duyệt đa cấp theo các rule định tuyến của UC05; một hồ sơ không khớp rule nào thì được quyết định ở một cấp duy nhất. Mọi cấp đều do một ICPDP Officer thực hiện, nhờ đó BR31 vẫn đúng mà không mâu thuẫn. |
 | BR19 | Không đổi, nhưng "vai trò đặc biệt" được cấp ở UC03. |
+| BR21 | **Mở rộng (I60).** Nghĩa vụ quá hạn gồm báo cáo bắt buộc, quyết toán (BR57) và khoản phải hoàn (BR58); công tắc cưỡng chế chặn đề xuất mới khi còn bất kỳ nghĩa vụ nào quá hạn. (UC25, UC34, UC37, UC39) |
 | BR22 | **Đã sửa (I59).** Ngân sách chỉ tồn tại như một phần của đề xuất sự kiện (UC25) và được quyết định cùng đề xuất ở UC26; không có ngân sách tách rời sự kiện. (UC25, UC26) |
-| BR23 | Không đổi — và đó chính là lý do UC35 tồn tại: không có số tiền đã giải ngân thì UC37 không tính được gì. |
+| BR23 | Không đổi — và đó chính là lý do UC35 tồn tại: không có số tiền đã giải ngân thì UC37 không tính được gì. Cấp bù (UC35) cũng tính vào tổng này. |
+| BR26 | **Đã đổi (I60).** Ngân sách của một sự kiện chỉ đóng khi đã đối soát và chênh lệch tất toán đã được xử lý: cấp bù xong, hoặc CLB đã hoàn đủ. Không còn đóng kèm chênh lệch (`Exception`). (UC35, UC37) |
 | BR35 | Không đổi — và đó chính là lý do UC47 tồn tại: không có việc trả chỗ thì một booking đã duyệt khoá một căn phòng vĩnh viễn. |
 | BR36 | **Đã đổi.** Feedback window mở tại thời điểm **check-in** của người tham dự (UC31) và đóng sau khi sự kiện kết thúc một khoảng cấu hình được — không phải sau khi chốt điểm danh (UC54 của v1). |
 | BR37 | Không đổi. |
 | **BR40** | **Mới.** Bản tổng hợp phản hồi chỉ được hiển thị khi số người phản hồi đạt mức tối thiểu cấu hình được; dưới ngưỡng đó chỉ hiển thị việc có tồn tại phản hồi. Không có quy tắc này thì phản hồi "ẩn danh" trong một sự kiện mười người là không ẩn danh. |
 | **BR41** | **Mới.** Một property không được xoá khi còn booking tương lai đã duyệt; thay vào đó là ngừng kích hoạt (UC44). |
-| **BR42** | **Mới.** Màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04. Mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52). |
+| **BR42** | **Mới.** Màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04. Mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). |
 | **BR43** | **Đã rút.** Nó từng dùng để giữ bản phát hành đầu độc lập với các use case bị hoãn; nay mọi use case ra cùng một bản phát hành. Số hiệu không được dùng lại. |
 | **BR44** | **Mới.** Một sự kiện bắt đầu và kết thúc trong cùng một học kỳ của lịch học kỳ (UC04). |
 | **BR45** | **Mới.** Khi một CLB đã có quyết định giải thể (UC15), không sự kiện, đề xuất sự kiện hay booking nào của CLB đó được kết thúc sau học kỳ `Dissolving` của nó. UC25 và UC45 từ chối những hồ sơ như vậy; UC15 huỷ những gì đã tồn tại. |
@@ -1071,6 +1098,8 @@ BR01–BR39 của §14 vẫn giữ nguyên, với các sửa đổi sau:
 | **BR54** | **Mới (I58).** Mỗi use case vận hành CLB kiểm tra người gọi có permission tương ứng trong CLB đó (bảng permission → use case ở SRS §2.3); thiếu quyền thì từ chối. Một thành viên giữ nhiều role có quyền là hợp các permission của các role; Club Leader có mọi permission CLB. (UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52) |
 | **BR55** | **Mới (I58), sửa ở lần 2.** Danh mục permission CLB là cố định, do hệ thống định nghĩa; Club Leader chỉ chọn từ danh mục đó. Bốn quyền giữ riêng của leader — `club.role.manage`, `club.board.nominate`, `club.transition.plan`, `club.suspension.request` — không cấp được cho role nào. Cơ cấu role ban đầu được ICPDP thẩm định cùng hồ sơ thành lập (UC07 / UC08); sau đó Club Leader sửa cơ cấu ở UC23 không cần ICPDP xác nhận, trừ role ban điều hành: người giữ chỉ đến từ UC10 / UC11 / UC13 và việc thêm / bỏ role ban điều hành chỉ đi qua chuyển giao UC12 / UC13. Mọi thay đổi được ghi audit và ICPDP xem được. (UC07, UC08, UC10, UC11, UC12, UC13, UC23) |
 | **BR56** | **Mới (I58, lần 2).** Cơ cấu role của CLB được **đánh phiên bản**: phiên bản 1 là cơ cấu được duyệt ở UC08; mỗi thay đổi ở UC23 hoặc UC13 tạo một phiên bản mới có ngày hiệu lực và không bao giờ ghi đè phiên bản trước. Mỗi CLB luôn có role Chủ nhiệm (cố định) và role Members (mặc định, không xoá được, tự gán cho mọi thành viên ở UC20). ICPDP xem được mọi phiên bản cơ cấu và lịch sử người giữ role ban điều hành theo nhiệm kỳ. (UC02, UC07, UC08, UC13, UC20, UC23) |
+| **BR57** | **Mới (I60).** Ngân sách đã tạm ứng phải được CLB quyết toán (UC36) — đủ khoản chi và chứng từ — trong một thời hạn định nghĩa trong tài liệu chính sách, tính từ lúc sự kiện kết thúc hoặc bị huỷ. Quá hạn là nghĩa vụ quá hạn theo BR21, và ICPDP được chốt đối soát trên các khoản chi đã có chứng từ (UC37 A2). (UC36, UC37) |
+| **BR58** | **Mới (I60).** Phần đã tạm ứng không được chứng minh bằng chi hợp lệ — số dư chưa chi, khoản chi thiếu chứng từ hoặc bị loại — bị thu hồi: CLB phải hoàn trong thời hạn định nghĩa trong tài liệu chính sách; ICPDP ghi nhận tiền hoàn ở UC35. Quá hạn là nghĩa vụ quá hạn theo BR21 và là căn cứ mở hồ sơ vi phạm ở UC40. (UC35, UC37, UC40) |
 
 ## 12. Phạm vi phát hành
 

@@ -128,10 +128,22 @@ Enum eventBudgetState {
   Approved
   Cancelled
   Disbursed
+  "Settlement Submitted"
   "Reconciliation Pending"
   Reconciled
-  Exception
+  "Recovery Pending"
   Closed
+}
+
+Enum budgetFlowKind {
+  Advance [note: 'Tạm ứng trước sự kiện (UC35).']
+  TopUp [note: 'Cấp bù sau đối soát khi chi hợp lệ lớn hơn số đã tạm ứng (UC35 A2).']
+  Refund [note: 'CLB hoàn trả khoản bị thu hồi (UC35 A3, BR58).']
+}
+
+Enum expenseReviewOutcome {
+  Accepted
+  Rejected
 }
 
 Enum bookingState {
@@ -877,7 +889,15 @@ Table eventBudgets {
   requestedTotal decimal [not null]
   approvedTotal decimal [not null, note: 'Được lưu tách biệt với tổng số tiền đã xin (FR-UC26-14).']
   approvedByDecisionId objectId [not null, note: 'Quyết định phê duyệt đề xuất ở UC26 đã tạo ra ngân sách này.']
-  disbursedTotal decimal [not null, default: 0]
+  disbursedTotal decimal [not null, default: 0, note: 'Tổng Advance + TopUp; BR23 so với approvedTotal.']
+  settlementDueAt datetime [note: 'Hạn quyết toán = lúc sự kiện kết thúc hoặc bị huỷ + thời hạn trong tài liệu chính sách (BR57).']
+  settlementSubmittedAt datetime [note: 'Lần nộp quyết toán gần nhất (UC36).']
+  isSettlementLate bool [not null, default: false, note: 'Nộp sau hạn hoặc bị UC37 A2 chốt; đi vào BR21.']
+  acceptedTotal decimal [note: 'Chi hợp lệ, trần là approvedTotal (UC37).']
+  settlementBalance decimal [note: 'acceptedTotal − tổng Advance: dương → cấp bù, âm → thu hồi (UC37).']
+  recoveryAmount decimal [note: 'Số phải hoàn khi settlementBalance âm (BR58).']
+  recoveryDueAt datetime [note: 'Hạn hoàn trả (BR58); quá hạn → BR21 và căn cứ mở hồ sơ UC40.']
+  refundedTotal decimal [not null, default: 0, note: 'Tổng Refund; đạt recoveryAmount → Closed (UC35 A3).']
   state eventBudgetState [not null, default: 'Approved']
   periodCode string
   createdAt datetime [not null]
@@ -891,13 +911,14 @@ Table eventBudgets {
 Table budgetDisbursements {
   id objectId [pk]
   eventBudgetId objectId [not null]
+  kind budgetFlowKind [not null, default: 'Advance']
   amount decimal [not null]
   disbursedAt datetime [not null]
   paymentReference string
   recordedBy objectId [not null]
   note string
 
-  Note: 'Là collection riêng vì UC35 A1 cộng dồn nhiều lần giải ngân từng phần vào một lần duyệt. BR23 đối chiếu tổng luỹ kế với eventBudgets.approvedTotal.'
+  Note: 'Mọi dòng tiền của một ngân sách: tạm ứng (nhiều lần, UC35 A1), cấp bù (A2) và CLB hoàn trả (A3). BR23 đối chiếu tổng Advance + TopUp với eventBudgets.approvedTotal.'
   indexes {
     eventBudgetId [name: 'ix_disb_budget']
   }
@@ -914,7 +935,9 @@ Table expenses {
   description text
   isOutOfCategory bool [not null, default: false, note: 'Được gắn cờ ngoại lệ (BR24).']
   isOverRemaining bool [not null, default: false, note: 'Được gắn cờ ngoại lệ (UC36 E1).']
-  hasEvidence bool [not null, default: false, note: 'Được cập nhật khi có chứng từ đính kèm; một khoản chi không có nó sẽ bị báo là thiếu chứng từ ở UC37 (UC36 A1).']
+  hasEvidence bool [not null, default: false, note: 'Được cập nhật khi có chứng từ đính kèm; một khoản chi không có nó sẽ bị loại khi đối soát (UC36 A1, UC37).']
+  reviewOutcome expenseReviewOutcome [note: 'Officer chấp nhận hoặc loại ở UC37; null khi chưa đối soát.']
+  reviewReason text
   recordedBy objectId [not null]
   createdAt datetime [not null]
 
@@ -948,12 +971,13 @@ Table financialReconciliations {
   supportedTotal decimal [not null]
   unsupportedTotal decimal [not null]
   remaining decimal [not null]
-  variance decimal [not null]
-  outcome string [not null, note: 'Reconciled | Exception (UC37 FR-03).']
-  discrepancyNote text [note: 'Bắt buộc với kết quả Exception; hồ sơ vẫn đóng được, với phần chênh lệch nằm trong hồ sơ.']
+  acceptedTotal decimal [not null, note: 'Chi hợp lệ, trần là approvedTotal (FR-UC37-03).']
+  settlementBalance decimal [not null, note: 'acceptedTotal − disbursedTotal (tạm ứng).']
+  outcome string [not null, note: 'Reconciled | Recovery Pending (FR-UC37-04).']
+  isOverdueSettlement bool [not null, default: false, note: 'Chốt theo UC37 A2 khi CLB quá hạn quyết toán (BR57).']
   computedAt datetime [not null]
   closedBy objectId
-  closedAt datetime [note: 'BR26 — việc đối soát phải hoàn tất trước khi ngân sách của sự kiện đóng lại.']
+  closedAt datetime [note: 'BR26 — ngân sách chỉ đóng khi chênh lệch tất toán đã được cấp bù hoặc hoàn đủ.']
 }
 
 // =====================================================================

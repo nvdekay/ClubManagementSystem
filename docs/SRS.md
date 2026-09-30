@@ -67,7 +67,7 @@ nghiệp vụ kế tiếp:
 
 ```text
 Event Proposal → Approval → Event → Registration → Attendance → Post-event Report → Evaluation
-Event Proposal (+ ngân sách) → Approval → Disbursement → Expense → Evidence → Reconciliation → Evaluation
+Event Proposal (+ ngân sách) → Approval → Advance → Expense → Evidence → Settlement → Reconciliation → Top-up | Recovery → Evaluation
 Recruitment → Application → Screening → Decision → Membership → Participation → Evaluation
 Property Booking → Kiểm tra xung đột → ICPDP quyết định → Thực thi sự kiện → Utilization → Evaluation
 Event Feedback → Tổng hợp → Post-event Report → Evaluation
@@ -87,7 +87,7 @@ kỳ; phản hồi sự kiện; tiếp nhận và phân loại khiếu nại c�
 đánh giá hiệu quả CLB; thông báo in-app và email; nhắc hạn và leo thang; nhật ký audit; dashboard
 theo vai trò.
 
-**Ngoài phạm vi** — xem [§2.7](#27-ngoài-phạm-vi).
+**Ngoài phạm vi** — xem [§2.9](#29-ngoài-phạm-vi).
 
 **Quy mô của baseline**
 
@@ -97,7 +97,7 @@ theo vai trò.
 | Hệ thống ngoài | 3 (Google OAuth, Google SMTP, Cloudinary) |
 | Module nghiệp vụ | 12 (M01–M12) |
 | Use case | 52 (UC01–UC52) |
-| Quy tắc nghiệp vụ | 55 quy tắc còn hiệu lực (BR01–BR56, BR43 đã rút) |
+| Quy tắc nghiệp vụ | 57 quy tắc còn hiệu lực (BR01–BR58, BR43 đã rút) |
 | Vấn đề nghiệp vụ (pain point) | 19 (BP01–BP19) |
 | Vòng đời thực thể | 11 |
 | User story | 41 (US01–US41) |
@@ -222,7 +222,7 @@ cao mới.
 | **M04** Recruitment & Membership | Đợt tuyển, đơn ứng tuyển, sàng lọc, tiếp nhận, danh sách thành viên, không gian thành viên | Student, Club Member | RecruitmentCampaign, RecruitmentApplication, CandidateEvaluation, ClubMembership | UC16–UC22, UC24 |
 | **M05** Event & Activity | Đề xuất (kèm ngân sách), phê duyệt, công bố, huỷ / đổi lịch | Club Member, ICPDP | Event, EventProposalVersion | UC25–UC28 |
 | **M06** Registration & Attendance | Đăng ký, danh sách chờ, check-in, chốt điểm danh | Student, Club Member | EventRegistration, Attendance | UC29–UC32 |
-| **M07** Finance & Budget | Giải ngân, khoản chi, chứng từ, đối soát cho ngân sách sự kiện (ngân sách được xin và duyệt trong đề xuất sự kiện, M05) | Club Member, ICPDP | EventBudget, BudgetDisbursement, Expense, FinancialEvidence, FinancialReconciliation | UC35–UC37 |
+| **M07** Finance & Budget | Tạm ứng, khoản chi, chứng từ, quyết toán, đối soát, cấp bù và thu hồi cho ngân sách sự kiện (ngân sách được xin và duyệt trong đề xuất sự kiện, M05) | Club Member, ICPDP | EventBudget, BudgetDisbursement, Expense, FinancialEvidence, FinancialReconciliation | UC35–UC37 |
 | **M08** Reporting, Accountability & Compliance | Báo cáo sau sự kiện, báo cáo định kỳ, hồ sơ vi phạm | Club Member, ICPDP | PostEventReport, PeriodicReport, Violation, CorrectiveAction | UC33, UC34, UC38–UC40 |
 | **M09** Performance Evaluation | Cấu hình scheme, sinh bản nháp, công bố | ICPDP | EvaluationScheme, EvaluationDimension, Evaluation, EvaluationDimensionResult | UC41–UC43 |
 | **M10** Workflow, Notification & Audit | Approval task, hàng đợi thông báo, gửi email, nhật ký audit, scheduler | Xuyên suốt | ApprovalTask, ApprovalDecision, Notification, EmailDeliveryLog, AuditLog | không có use case riêng — xem §8 |
@@ -271,7 +271,7 @@ các permission của các role đó. Quyền gắn với **nhiệm kỳ** đang
 
 - **Trách nhiệm (theo permission):** vận hành hồ sơ và ban/bộ phận CLB; tuyển thành viên và quản
   lý danh sách; đề xuất, công bố, huỷ và đổi lịch sự kiện; quản lý danh sách chờ; chốt điểm danh;
-  nộp báo cáo sau sự kiện và báo cáo định kỳ; xin ngân sách trong đề xuất sự kiện và ghi nhận khoản chi kèm chứng từ;
+  nộp báo cáo sau sự kiện và báo cáo định kỳ; xin ngân sách trong đề xuất sự kiện, ghi nhận khoản chi kèm chứng từ và nộp quyết toán;
   xin và trả cơ sở vật chất; xem phản hồi sự kiện; trả lời khiếu nại được chuyển xuống.
 - **Use case không cần permission:** UC22, UC24.
 - **Use case cần permission:** UC09, UC16, UC18, UC19, UC20, UC21, UC25, UC27, UC28, UC30,
@@ -364,7 +364,206 @@ từ danh mục này khi cấu hình role ở UC23.
 | `club.transition.plan` | UC12 | không — giữ riêng Club Leader |
 | `club.suspension.request` | UC14 | không — giữ riêng Club Leader |
 
-## 2.4 Môi trường vận hành và công nghệ
+## 2.4 Cơ cấu tổ chức
+
+Mục này mô tả **bộ máy thật** mà UCMS phục vụ: ai đứng ở đâu, ai quyết định gì, và mỗi vị trí
+ánh xạ sang actor / role nào trong hệ thống. Sơ đồ: trang *Organization structure* của
+[`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio)
+([PNG](03-diagrams/img/UCMS_Organization_and_Flows_01_Organization-structure.png)).
+
+```text
+Nhà trường
+├── ICPDP ─────────────────────────────── cấp phê duyệt duy nhất phía nhà trường (BR31)
+│   ├── ICPDP Head          vai trò ICPDP_HEAD — cấp duyệt thứ hai theo rule UC05 (BR16, D1)
+│   └── ICPDP Officer       vai trò ICPDP_OFFICER — thẩm định, quyết định, giải ngân, đối soát
+│
+├── Đơn vị tham vấn (ngoài hệ thống): Tài chính, Cơ sở vật chất, An ninh, cố vấn khoa
+│       ý kiến do ICPDP lấy ngoài hệ thống và ghi vào review note — không phải actor
+│
+└── Câu lạc bộ (N CLB; mỗi CLB có đúng một nhiệm kỳ đang hoạt động — ClubTerm)
+    ├── Chủ nhiệm            Club Leader — ghế cố định, ICPDP xác nhận (UC11 / UC13)
+    ├── Ban điều hành        role ban điều hành: Phó chủ nhiệm, Trưởng ban… — ICPDP xác nhận
+    │                        người giữ (UC10 / UC11 / UC13)
+    ├── Các ban / bộ phận    khai báo ở UC09; role CLB thường gắn với ban: Thủ quỹ, Event
+    │                        coordinator… — Club Leader gán ở UC23, không cần ICPDP (BR55)
+    └── Thành viên           Club Member — role Members mặc định, tự gán khi tiếp nhận (UC20)
+
+Sinh viên (Student) — mọi sinh viên đã đăng nhập: người tìm CLB, ứng viên, người tham dự sự
+kiện, người gửi phản hồi / khiếu nại, người đứng đơn thành lập CLB
+```
+
+| Vị trí trong tổ chức | Actor / quyền trong UCMS | Ai cấp, ở đâu | Quyết định thuộc về vị trí này |
+|---|---|---|---|
+| ICPDP Officer | ICPDP Officer, vai trò `ICPDP_OFFICER` | UC03 | Thành lập CLB, xác nhận ban chủ nhiệm và chuyển giao, duyệt sự kiện kèm ngân sách, giải ngân và đối soát, duyệt cơ sở vật chất, phân loại khiếu nại, hồ sơ vi phạm, đánh giá, cấu hình |
+| ICPDP Head | ICPDP Officer, vai trò `ICPDP_HEAD` | UC03 | Cấp duyệt thứ hai cho hồ sơ khớp rule định tuyến của UC05 (rủi ro cao, quy mô lớn, ngân sách vượt ngưỡng) |
+| Đơn vị tham vấn | — (không dùng hệ thống) | — | Không quyết định trong hệ thống; ý kiến nằm trong review note của ICPDP |
+| Chủ nhiệm CLB | Club Leader | UC11 / UC13 (ghế Chủ nhiệm) | Cơ cấu role và phân quyền (UC23), đề cử ban chủ nhiệm, kế hoạch chuyển giao, xin tạm ngừng; có mọi permission CLB |
+| Người đứng đơn thành lập | Student, sau UC08 có quyền sáng lập tạm thời | UC08 | Chỉ UC09, UC10, UC23 khi CLB còn `Pending Setup` (BR47) |
+| Ban điều hành, trưởng ban, thủ quỹ… | Club Member giữ role tương ứng | UC10 / UC11 / UC13 (role ban điều hành) hoặc UC23 (role thường) | Việc vận hành CLB theo đúng permission của role (BR54) |
+| Thành viên | Club Member, role Members | UC20 | Không gian thành viên, xin rời CLB; thêm việc khác nếu role Members được cấp permission |
+| Sinh viên | Student | UC01 | Không quyết định việc của CLB; tạo hồ sơ, đơn, đăng ký, phản hồi, khiếu nại |
+
+**Nguyên tắc của bộ máy.**
+
+1. **Một cửa phía nhà trường.** Mọi yêu cầu gửi lên nhà trường chỉ đi tới ICPDP (BR31). Duyệt
+   nhiều cấp là chuyện nội bộ ICPDP (UC05, BR16), không phải chuyền qua phòng ban khác.
+2. **Quyền theo vị trí, không theo người.** Quyền CLB chỉ đến từ một vị trí trong nhiệm kỳ đang
+   hoạt động (BR47); hết nhiệm kỳ hoặc rời vị trí thì mất quyền, không cần ai thu hồi tay.
+3. **ICPDP chỉ kiểm soát chỗ nhạy cảm.** Ghế Chủ nhiệm và ban điều hành cần ICPDP xác nhận; các
+   role thường do Chủ nhiệm tự quản (BR55). Mỗi thay đổi cơ cấu là một phiên bản mới (BR56), nên
+   ICPDP luôn xem lại được CLB được tổ chức thế nào tại mọi thời điểm.
+4. **Nghĩa vụ thuộc về CLB, không thuộc về cá nhân.** Báo cáo, quyết toán, khoản phải hoàn, hồ
+   sơ vi phạm đi theo CLB qua các nhiệm kỳ (UC12 / UC13).
+
+## 2.5 Luồng nghiệp vụ chính
+
+Mười luồng end-to-end dưới đây là xương sống của hệ thống; mọi use case thuộc ít nhất một luồng.
+Mỗi bước ghi use case (hoặc scheduler) điều khiển nó và trạng thái mà nó để lại. Sơ đồ: trang
+*Main business flows* của
+[`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio)
+([PNG](03-diagrams/img/UCMS_Organization_and_Flows_02_Main-business-flows.png)). Đăng nhập (UC01)
+và dashboard (UC02) là điểm vào chung của mọi luồng nên không lặp lại.
+
+| # | Luồng | Actor tham gia | Use case |
+|---|---|---|---|
+| F1 | Thành lập CLB | Student, ICPDP | UC06, UC07, UC08, UC09, UC10, UC11 |
+| F2 | Cơ cấu, nhiệm kỳ và chuyển giao | Club Leader, ICPDP | UC23, UC10–UC13 |
+| F3 | Tuyển và quản lý thành viên | Student, Club Member | UC16–UC22, UC24 |
+| F4 | Vòng đời sự kiện | Club Member, ICPDP, Student | UC25–UC34 |
+| F5 | Tài chính sự kiện | Club Member, ICPDP | UC25, UC26, UC35–UC37 |
+| F6 | Mượn cơ sở vật chất | Club Member, ICPDP | UC44–UC47 |
+| F7 | Phản hồi và khiếu nại | Student, Club Member, ICPDP | UC48–UC52 |
+| F8 | Báo cáo định kỳ và tuân thủ | Club Member, ICPDP | UC38–UC40 |
+| F9 | Đánh giá hiệu quả CLB | ICPDP | UC41–UC43 |
+| F10 | Tạm ngừng, kích hoạt lại, giải thể | Club Leader, ICPDP | UC14, UC15 |
+
+### F1 — Thành lập CLB
+
+```text
+Student tìm hiểu (UC06) → nộp hồ sơ kèm thành viên sáng lập, tài liệu và cơ cấu role dự kiến (UC07) → Submitted
+→ ICPDP thẩm định (UC08) → Under Review
+    ├─ yêu cầu chỉnh sửa → Revision Requested → Student nộp version mới → Submitted   (quá hạn → Expired)
+    ├─ từ chối → Rejected
+    └─ phê duyệt → Approved; Club ở Pending Setup; cơ cấu role thành phiên bản 1 (BR56);
+                   người đứng đơn nhận quyền sáng lập tạm thời (BR47)
+→ cấu hình hồ sơ và các ban (UC09) → đề cử ban chủ nhiệm (UC10)
+→ ICPDP xác nhận (UC11) → Club Active, nhiệm kỳ đầu mở, quyền sáng lập tạm thời bị thay bằng ghế thật
+```
+
+### F2 — Cơ cấu, nhiệm kỳ và chuyển giao
+
+```text
+Club Leader tạo / sửa role và permission, gán thành viên vào role thường (UC23) → phiên bản cơ cấu mới
+Cuối nhiệm kỳ: Club Leader lập kế hoạch chuyển giao — nhiệm kỳ mới, người giữ từng role ban điều hành,
+  thay đổi danh sách role ban điều hành, các nghĩa vụ còn treo (UC12)
+→ ICPDP xác nhận (UC13) → đóng nhiệm kỳ cũ, mở nhiệm kỳ mới, thu hồi quyền cũ, cấp quyền mới,
+  ghi lịch sử ban điều hành và (nếu có) phiên bản cơ cấu mới
+Thay người giữa nhiệm kỳ: đề cử lại (UC10) → xác nhận (UC11)
+```
+
+### F3 — Tuyển và quản lý thành viên
+
+```text
+Club Member tạo và công bố đợt tuyển (UC16) → Published
+→ Scheduler mở khung thời gian → Accepting Applications
+→ Student nộp đơn (UC17) → Submitted
+→ Scheduler đóng khung thời gian → đợt tuyển ở Screening
+→ sàng lọc, phỏng vấn, chấm rubric (UC18, UC19) → Accepted | Rejected | Waitlisted
+→ tiếp nhận (UC20) → Onboarded; ClubMembership Active, tự gán role Members
+→ quản lý trạng thái Active ⇄ Inactive, Left, Banned (UC21); thành viên xin rời (UC22);
+  thành viên dùng không gian của mình (UC24)
+```
+
+### F4 — Vòng đời sự kiện
+
+```text
+Club Member nộp đề xuất: phạm vi, kế hoạch, rủi ro, phần ngân sách, yêu cầu booking (UC25, UC45)
+    ├─ sự kiện Internal không có ngân sách → ghi nhận thẳng Approved (BR53)
+    └─ còn lại → Pending Approval
+→ ICPDP thẩm định (UC26), cấp thứ hai nếu khớp rule UC05 → Revision Requested | Approved | Rejected
+→ công bố và mở đăng ký (UC27) → Upcoming
+→ Student đăng ký (UC29), danh sách chờ (UC30)
+→ Scheduler giờ bắt đầu → Ongoing → check-in (UC31) → Scheduler giờ kết thúc → Completed
+→ chốt điểm danh (UC32); Student gửi phản hồi (UC48)
+→ nộp báo cáo sau sự kiện (UC33) → Report Submitted
+→ ICPDP thẩm định (UC34) → Closed | trả về sửa | phát hiện → hồ sơ vi phạm (UC40)
+Huỷ / đổi lịch bất kỳ lúc nào trước khi kết thúc (UC28) → Cancelled, giải phóng booking (UC47)
+```
+
+### F5 — Tài chính sự kiện
+
+```text
+Club Member đưa phần ngân sách vào đề xuất sự kiện: các dòng và tổng số xin (UC25, BR22)
+→ ICPDP duyệt cùng đề xuất, chốt số duyệt từng dòng (UC26) → EventBudget Approved
+→ ICPDP tạm ứng một phần hoặc toàn bộ trước sự kiện (UC35) → Disbursed
+→ Club Member ghi từng khoản chi kèm chứng từ (UC36)
+→ sau khi sự kiện kết thúc hoặc bị huỷ, nộp quyết toán trước hạn (UC36, BR57) → Settlement Submitted
+→ ICPDP đối soát, chấp nhận / loại từng khoản chi (UC37)
+    ├─ thiếu chứng từ → Reconciliation Pending → CLB nộp lại (UC36)
+    ├─ chi hợp lệ = số đã tạm ứng → Reconciled → Closed
+    ├─ chi hợp lệ > số đã tạm ứng → Reconciled → ICPDP cấp bù, trần là số duyệt (UC35) → Closed
+    └─ chi hợp lệ < số đã tạm ứng → Recovery Pending → CLB hoàn, ICPDP ghi nhận (UC35) → Closed
+Quá hạn quyết toán → ICPDP chốt trên chứng từ đã có → Recovery Pending (BR57, BR58)
+Quá hạn hoàn trả → nghĩa vụ quá hạn (BR21) và hồ sơ vi phạm (UC40)
+```
+
+### F6 — Mượn cơ sở vật chất
+
+```text
+ICPDP quản lý danh mục cơ sở vật chất (UC44)
+→ Club Member gửi yêu cầu đặt, kiểm tra xung đột BR15 (UC45) → Requested
+→ ICPDP quyết định (UC46) → Revision Requested | Approved | Rejected   (duyệt sự kiện không phải duyệt booking)
+→ Scheduler → In Use → Completed
+→ Club Member huỷ hoặc trả sớm (UC47) → Cancelled | Released; huỷ sự kiện tự giải phóng booking (BR35)
+```
+
+### F7 — Phản hồi và khiếu nại
+
+```text
+Người tham dự đã check-in gửi phản hồi trong feedback window (UC48, BR36)
+→ Club Member xem bản tổng hợp khi đủ số người phản hồi (UC49, BR40) → đầu vào báo cáo UC33 và đánh giá
+Student gửi khiếu nại về một CLB (UC50) → Submitted
+→ ICPDP phân loại (UC51) → Dismissed | Forwarded | Escalated
+    ├─ Forwarded → CLB trả lời trong hạn (UC52) → Closed | Escalated
+    └─ Escalated → mở hồ sơ vi phạm (UC40)
+```
+
+### F8 — Báo cáo định kỳ và tuân thủ
+
+```text
+Club Member nộp báo cáo hoạt động định kỳ (UC38) → ICPDP thẩm định (UC39)
+Các tín hiệu tuân thủ: báo cáo trễ / thiếu (UC33, UC34, UC38, UC39), quyết toán hoặc hoàn trả quá hạn
+  (UC37), khiếu nại leo thang (UC51), huỷ muộn (UC28, UC47)
+→ ICPDP mở hồ sơ vi phạm (UC40) → Open → Under Investigation → Awaiting Club Response
+→ CLB trả lời (UC40 hoặc UC52) → Decision Issued → Corrective Action → Resolved
+Nghĩa vụ quá hạn khi công tắc cưỡng chế bật → chặn đề xuất sự kiện mới (BR21)
+```
+
+### F9 — Đánh giá hiệu quả CLB
+
+```text
+ICPDP cấu hình scheme đánh giá, tổng trọng số hợp lệ (UC41, BR29)
+→ cuối kỳ, sinh bản nháp từ dữ liệu vận hành: thành viên, sự kiện, điểm danh, báo cáo, tài chính,
+  phản hồi, tuân thủ (UC42) → Data Ready
+→ ICPDP xem lại dữ liệu nguồn, xử lý bất thường, chấm các dimension chấm tay (UC43) → Under Review
+→ chốt → Finalized → công bố → Published (không sửa tại chỗ, BR30)
+```
+
+### F10 — Tạm ngừng, kích hoạt lại, giải thể
+
+```text
+Club Leader xin tạm ngừng kèm lý do, thời lượng, nghĩa vụ, kế hoạch phục hồi (UC14)
+→ ICPDP quyết định (UC15) → Suspended: huỷ đề xuất chưa quyết định, huỷ sự kiện và booking tương lai
+  (UC28 A1, UC47); ICPDP cũng tạm ngừng khi CLB không hoạt động hoặc theo kết quả hồ sơ UC40
+→ kích hoạt lại (UC15) → Active
+ICPDP quyết định giải thể (UC15): huỷ ngay mọi thứ kết thúc sau học kỳ Dissolving (BR45); học kỳ
+  hiện tại vẫn chạy bình thường
+→ Scheduler đầu học kỳ sau → Dissolving (không tạo gì mới, CLB chỉ đóng nốt nghĩa vụ)
+→ Scheduler cuối học kỳ đó → Dissolved: huỷ đề xuất và booking chưa quyết định, ghi nghĩa vụ tồn
+  đọng (báo cáo chưa nộp, ngân sách chưa tất toán) vào hồ sơ lưu trữ, thu hồi quyền quản lý
+```
+
+## 2.6 Môi trường vận hành và công nghệ
 
 | Tầng | Công nghệ | Ghi chú |
 |---|---|---|
@@ -379,7 +578,7 @@ từ danh mục này khi cấu hình role ở UC23.
 | Công cụ | npm workspaces, ESLint, vitest, `npm run check` là Definition of Done | |
 | Trình duyệt | Chrome, Edge, Firefox, Safari bản hiện hành; bề rộng 375 / 768 / 1024 / 1440 px | Không làm app mobile native |
 
-## 2.5 Ràng buộc thiết kế và triển khai
+## 2.7 Ràng buộc thiết kế và triển khai
 
 | ID | Ràng buộc | Nguồn |
 |---|---|---|
@@ -399,7 +598,7 @@ từ danh mục này khi cấu hình role ở UC23.
 | CON-14 | Feature mới bắt đầu từ `.sdd/specs/feat-{name}/SPEC.md` + `TASKS.md`; quyết định kiến trúc thành `.sdd/rfcs/ADR-NNN-*.md` | R10 rule 3–4 |
 | CON-15 | Chứng từ tài chính lưu dưới dạng liên kết ngoài trong bản phát hành đầu; chỉ thêm object storage khi thực sự cần upload | R8 §11 |
 
-## 2.6 Giả định và phụ thuộc
+## 2.8 Giả định và phụ thuộc
 
 | ID | Giả định / phụ thuộc |
 |---|---|
@@ -413,7 +612,7 @@ từ danh mục này khi cấu hình role ở UC23.
 | ASM-08 | Khả dụng của Google OAuth và Google SMTP nằm ngoài tầm kiểm soát của nhóm; hệ thống suy giảm dịch vụ (từ chối đăng nhập, retry email) chứ không làm hỏng dữ liệu |
 | ASM-09 | Trọng số và ngưỡng đánh giá chính xác đến từ chính sách thật của ICPDP; hệ thống cung cấp một scheme cấu hình được, không hard-code công thức |
 
-## 2.7 Ngoài phạm vi
+## 2.9 Ngoài phạm vi
 
 ERP kế toán đầy đủ · trả lương · học phí hoặc xử lý thanh toán · cổng thanh toán · mạng xã hội
 hay chat nội bộ · LMS · hệ thống đặt phòng toàn trường · ERP kho · sàn tài trợ · app mobile
@@ -421,7 +620,7 @@ native · điểm danh bằng nhận diện khuôn mặt · chatbot AI bắt bu�
 username/password tự xây · mail server tự vận hành · phê duyệt đa phòng ban (Tài chính / Cơ sở
 vật chất / An ninh duyệt trực tiếp trên hệ thống) · nhắn tin và chia sẻ file nội bộ CLB.
 
-## 2.8 Các vấn đề nghiệp vụ sản phẩm phải giải quyết
+## 2.10 Các vấn đề nghiệp vụ sản phẩm phải giải quyết
 
 Mọi pain point dưới đây đều phải truy vết được tới ít nhất một use case
 ([§14.1](#141-pain-point--use-case--yêu-cầu)).
@@ -623,7 +822,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC02-01 | Xác định vai trò và ngữ cảnh CLB của người gọi, và chỉ hiển thị những CLB và bản ghi mà vai trò đó cho phép |
-| FR-UC02-02 | Hiển thị dashboard **ICPDP**: các hồ sơ chờ duyệt theo loại và theo độ trễ, CLB theo trạng thái, báo cáo quá hạn, ngân sách chưa đối soát, hồ sơ vi phạm đang mở, booking sắp tới, và **sự kiện nội bộ đã ghi nhận** của mọi CLB (BR53) — lọc theo CLB và học kỳ, mở ra xem chi tiết và điểm danh ở chế độ chỉ đọc; và, trên trang từng CLB, **phiên bản cơ cấu hiện hành, lịch sử các phiên bản cơ cấu, và lịch sử ban điều hành theo nhiệm kỳ** — ai giữ role ban điều hành nào, từ khi nào tới khi nào, được xác nhận ở UC11 / UC13 nào (BR56) |
+| FR-UC02-02 | Hiển thị dashboard **ICPDP**: các hồ sơ chờ duyệt theo loại và theo độ trễ, CLB theo trạng thái, báo cáo quá hạn, ngân sách chưa đối soát, quyết toán quá hạn và khoản phải hoàn, hồ sơ vi phạm đang mở, booking sắp tới, và **sự kiện nội bộ đã ghi nhận** của mọi CLB (BR53) — lọc theo CLB và học kỳ, mở ra xem chi tiết và điểm danh ở chế độ chỉ đọc; và, trên trang từng CLB, **phiên bản cơ cấu hiện hành, lịch sử các phiên bản cơ cấu, và lịch sử ban điều hành theo nhiệm kỳ** — ai giữ role ban điều hành nào, từ khi nào tới khi nào, được xác nhận ở UC11 / UC13 nào (BR56) |
 | FR-UC02-03 | Hiển thị dashboard phía CLB: với **Club Member**, chỉ các mục thuộc permission của họ (BR54) trong số hồ sơ CLB đã nộp và trạng thái, deadline sắp tới, lịch sự kiện và booking, số lượng thành viên, tình hình ngân sách, phản hồi chờ xem; với **Club Leader**, toàn bộ các mục đó cùng danh sách role và người giữ role (UC23), lịch sử phiên bản cơ cấu và lịch sử ban điều hành của CLB mình (BR56) |
 | FR-UC02-04 | Hiển thị dashboard **Student**: đơn của tôi và trạng thái, đăng ký của tôi, lịch sử check-in, các CLB tôi thuộc về, khiếu nại của tôi |
 | FR-UC02-05 | Mở bất kỳ mục nào sang use case sở hữu nó, không nhân bản logic của use case đó |
@@ -687,7 +886,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | Ngưỡng xung đột | BR15, UC25, UC45 |
 | Độ dài feedback window và số người phản hồi tối thiểu | BR36, BR40, UC48, UC49 |
 | Chính sách overbooking | BR33, UC45, UC46 |
-| Công tắc cưỡng chế (chặn đề xuất mới khi còn báo cáo quá hạn) | BR21, UC25 |
+| Công tắc cưỡng chế (chặn đề xuất mới khi còn nghĩa vụ quá hạn: báo cáo, quyết toán, hoàn trả) | BR21, UC25 |
 | Lịch học kỳ — ngày bắt đầu và kết thúc | BR44, BR45, UC15, UC21 A2 |
 
 | ID | Hệ thống phải … |
@@ -1313,7 +1512,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC25-07 | *(A2)* Từ `Revision Requested`, cho CMB sửa và nộp lại; tạo **bản sửa mới**, đưa đề xuất về `Pending Approval`, và không bao giờ ghi đè bản sửa trước |
 | FR-UC25-08 | *(A3)* Chấp nhận chuỗi hoạt động định kỳ như một đề xuất duy nhất liệt kê các lần diễn ra |
 | FR-UC25-09 | *(E1)* Từ chối nộp khi có blocking conflict trong lúc chính sách cấm chồng lịch |
-| FR-UC25-10 | *(E2)* Từ chối nộp, nêu rõ nghĩa vụ còn treo, khi một báo cáo bắt buộc đã quá hạn và công tắc cưỡng chế BR21 đang bật |
+| FR-UC25-10 | *(E2)* Từ chối nộp, nêu rõ nghĩa vụ còn treo, khi một nghĩa vụ bắt buộc (báo cáo, quyết toán, hoàn trả) đã quá hạn và công tắc cưỡng chế BR21 đang bật |
 | FR-UC25-11 | *(E3)* Từ chối nộp khi CLB đang `Suspended` (BR10) |
 | FR-UC25-12 | *(E4)* Từ chối sự kiện không bắt đầu và kết thúc trong cùng một học kỳ (BR44) |
 | FR-UC25-13 | *(E5)* Từ chối sự kiện kết thúc sau học kỳ `Dissolving` khi CLB đã có quyết định giải thể (BR45) |
@@ -1411,7 +1610,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC28-02 | Đánh giá lại BR15 khi đổi lịch và, ở nơi chính sách yêu cầu, đưa sự kiện quay lại UC26 để có quyết định mới (D4); sự kiện nội bộ theo BR53 chỉ được ghi nhận lại, không quay lại UC26 |
 | FR-UC28-03 | Cập nhật hoặc giải phóng booking cơ sở vật chất liên quan qua UC47 (BR35) |
 | FR-UC28-04 | Thông báo cho mọi người đã đăng ký về việc huỷ hoặc thời gian mới |
-| FR-UC28-05 | Tính lại các nghĩa vụ báo cáo và ngân sách của sự kiện: khi huỷ, `EventBudget` chưa giải ngân chuyển `Cancelled`; đã giải ngân thì phải đối soát ở UC37 |
+| FR-UC28-05 | Tính lại các nghĩa vụ báo cáo và ngân sách của sự kiện: khi huỷ, `EventBudget` chưa tạm ứng chuyển `Cancelled`; đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi ở UC37 (BR57, BR58) |
 | FR-UC28-06 | *(A1)* Huỷ sự kiện **không cần thao tác của CMB** khi UC15 (tạm ngừng, giải thể) hoặc UC40 (kết quả hồ sơ vi phạm) yêu cầu, ghi quyết định đó làm lý do, liên kết tới nó, và vẫn thực hiện FR-UC28-03…05; E2 không áp dụng cho cascade này và ICPDP **không** phải actor của use case này |
 | FR-UC28-07 | *(E1)* Từ chối huỷ một sự kiện đã chốt điểm danh; sự kiện đó phải đóng qua UC33 và UC34 |
 | FR-UC28-08 | *(E2)* Ghi nhận việc huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40 |
@@ -1605,37 +1804,40 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 |---|---|
 | **Module · Ưu tiên** | M07 · P3 |
 | **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Theo dõi số tiền thực sự được giải ngân so với số đã duyệt |
-| **Kích hoạt** | Kinh phí được chuyển cho CLB |
-| **Tiền điều kiện** | `EventBudget` của sự kiện đang `Approved` (UC26) |
-| **Dữ liệu vào** | Số tiền duyệt, số tiền giải ngân, ngày, mã tham chiếu thanh toán |
-| **Thực thể / trạng thái** | `EventBudget`: `Approved → Disbursed`; các bản ghi `BudgetDisbursement` |
-| **Quy tắc** | BR23 |
-| **Liên quan · Pain point** | UC26, UC37 · BP10 |
+| **Mục tiêu nghiệp vụ** | Theo dõi mọi dòng tiền của một ngân sách đã duyệt: tạm ứng trước sự kiện, cấp bù sau đối soát, tiền CLB hoàn trả khi bị thu hồi |
+| **Kích hoạt** | Kinh phí được chuyển cho CLB, hoặc CLB hoàn tiền cho nhà trường |
+| **Tiền điều kiện** | `EventBudget` đang `Approved` / `Disbursed` (tạm ứng), `Reconciled` (cấp bù), hoặc `Recovery Pending` (hoàn trả) |
+| **Dữ liệu vào** | Loại dòng tiền (`Advance`, `TopUp`, `Refund`), số tiền, ngày, mã tham chiếu thanh toán |
+| **Thực thể / trạng thái** | `EventBudget`: `Approved → Disbursed`, `Reconciled → Closed`, `Recovery Pending → Closed`; các bản ghi `BudgetDisbursement` |
+| **Quy tắc** | BR23, BR26, BR58 |
+| **Liên quan · Pain point** | UC26, UC36, UC37 · BP10 |
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC35-01 | Cho officer ghi số tiền giải ngân, ngày và mã tham chiếu vào ngân sách đã duyệt của một sự kiện |
-| FR-UC35-02 | Đối chiếu tổng giải ngân luỹ kế với số tiền đã duyệt (BR23) và chuyển `Disbursed` |
-| FR-UC35-03 | Thông báo cho CLB |
-| FR-UC35-04 | *(A1)* Cộng dồn nhiều lần giải ngân từng phần vào một lần duyệt, mỗi lần ghi riêng |
-| FR-UC35-05 | *(E1)* Từ chối lần giải ngân làm tổng vượt số tiền đã duyệt khi chưa có văn bản điều chỉnh (BR23) |
+| FR-UC35-01 | Cho officer ghi một lần **tạm ứng** (số tiền, ngày, mã tham chiếu) vào ngân sách đã duyệt của một sự kiện — một phần hoặc toàn bộ số duyệt |
+| FR-UC35-02 | Đối chiếu tổng tạm ứng và cấp bù luỹ kế với số tiền đã duyệt (BR23) và chuyển `Disbursed` ở lần tạm ứng đầu tiên |
+| FR-UC35-03 | Thông báo cho CLB mỗi dòng tiền; với tạm ứng, kèm hạn quyết toán (BR57) |
+| FR-UC35-04 | *(A1)* Cộng dồn nhiều lần tạm ứng vào một lần duyệt, mỗi lần ghi riêng, trạng thái giữ nguyên `Disbursed` |
+| FR-UC35-05 | *(E1)* Từ chối dòng tiền làm tổng tạm ứng và cấp bù vượt số tiền đã duyệt khi chưa có văn bản điều chỉnh (BR23) |
 | FR-UC35-06 | Chỉ theo dõi — không hạch toán kế toán, không sổ cái, không thực hiện thanh toán |
+| FR-UC35-07 | *(A2)* Với ngân sách `Reconciled` có chênh lệch tất toán dương, cho ghi một khoản **cấp bù** đúng bằng chênh lệch đó rồi chuyển `Closed` (BR26) |
+| FR-UC35-08 | *(A3)* Với ngân sách `Recovery Pending`, cho ghi các khoản **CLB hoàn trả**; chuyển `Closed` khi tổng hoàn đạt số phải hoàn (BR26, BR58), nếu chưa thì hiển thị phần còn phải hoàn |
+| FR-UC35-09 | *(E2)* Từ chối khoản cấp bù khác chênh lệch tất toán, hoặc khoản hoàn vượt phần còn phải hoàn |
 
-**Hậu điều kiện** — tổng số đã giải ngân là xác định và là đầu vào của UC37. **Đầu ra** — `BudgetDisbursement`.
+**Hậu điều kiện** — tổng đã tạm ứng là xác định và là đầu vào của UC36, UC37; với A2 / A3, ngân sách ở `Closed`. **Đầu ra** — `BudgetDisbursement`.
 
-### UC36 — Ghi nhận khoản chi kèm chứng từ
+### UC36 — Ghi nhận khoản chi và nộp quyết toán
 
 | | |
 |---|---|
 | **Module · Ưu tiên** | M07 · P3 |
 | **Actor chính** | Club Member có permission `club.expense.record` |
-| **Mục tiêu nghiệp vụ** | Ghi nhận chi tiêu thực tế và chứng minh nó ngay trong cùng một thao tác |
-| **Kích hoạt** | CLB chi tiền |
-| **Tiền điều kiện** | Sự kiện liên quan có `EventBudget` đã duyệt; người gọi có permission `club.expense.record` |
-| **Dữ liệu vào** | Hạng mục, số tiền, ngày, sự kiện liên quan, mô tả; hoá đơn, biên lai hoặc chứng từ thanh toán |
-| **Thực thể / trạng thái** | `Expense` (+ `FinancialEvidence`), được đánh dấu có hoặc không có chứng từ |
-| **Quy tắc** | BR24, BR25, BR54 |
+| **Mục tiêu nghiệp vụ** | Chứng minh chi tiêu thực tế của khoản đã tạm ứng và nộp quyết toán đầy đủ sau sự kiện |
+| **Kích hoạt** | CLB chi tiền; sự kiện kết thúc hoặc bị huỷ, hoặc hạn quyết toán đến gần |
+| **Tiền điều kiện** | `EventBudget` đang `Disbursed` hoặc `Reconciliation Pending`; người gọi có permission `club.expense.record` |
+| **Dữ liệu vào** | Hạng mục, số tiền, ngày, mô tả; hoá đơn, biên lai hoặc chứng từ thanh toán |
+| **Thực thể / trạng thái** | `Expense` (+ `FinancialEvidence`); `EventBudget`: `Disbursed / Reconciliation Pending → Settlement Submitted` |
+| **Quy tắc** | BR21, BR24, BR25, BR54, BR57 |
 | **Liên quan · Pain point** | UC33, UC35, UC37 · BP09, BP10 |
 
 | ID | Hệ thống phải … |
@@ -1644,14 +1846,18 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC36-02 | Cho CMB đính kèm chứng từ mà hạng mục đó yêu cầu (BR25), mỗi chứng từ tham chiếu đúng một khoản chi |
 | FR-UC36-03 | Validate hạng mục so với phần đã duyệt và gắn cờ **ngoại lệ** cho khoản chi ngoài hạng mục (BR24) |
 | FR-UC36-04 | Lưu người tải lên và thời điểm của mọi chứng từ |
-| FR-UC36-05 | *(A1)* Chấp nhận khoản chi chưa có chứng từ và hiển thị nó là **chưa có chứng từ** trong UC37 cho tới khi chứng từ được bổ sung |
-| FR-UC36-06 | *(A2)* Cho sửa một khoản chi trước khi việc đối soát đóng lại, và ghi audit thay đổi |
+| FR-UC36-05 | *(A1)* Chấp nhận khoản chi chưa có chứng từ và hiển thị nó là **chưa có chứng từ** cho tới khi chứng từ được bổ sung |
+| FR-UC36-06 | *(A2)* Cho sửa một khoản chi trước khi nộp quyết toán, và ghi audit thay đổi |
 | FR-UC36-07 | *(E1)* Ghi nhận và gắn cờ ngoại lệ cho khoản chi vượt phần đã duyệt còn lại |
 | FR-UC36-08 | Làm cho việc tồn tại một chứng từ không tham chiếu khoản chi nào là bất khả thi về mặt cấu trúc |
 | FR-UC36-09 | *(E)* Từ chối khi người gọi thiếu permission `club.expense.record` trong CLB đó (BR54) |
+| FR-UC36-10 | Khi sự kiện đã `Completed` hoặc `Cancelled`, cho **nộp quyết toán**: hiển thị đã tạm ứng, tổng chi, số dư chưa chi, khoản thiếu chứng từ và khoản bị gắn cờ; cảnh báo rằng khoản thiếu chứng từ sẽ bị loại khi đối soát; khi xác nhận thì chuyển `Settlement Submitted`, khoá bộ khoản chi và tạo task cho ICPDP |
+| FR-UC36-11 | *(A3)* Từ `Reconciliation Pending`, cho bổ sung và nộp lại quyết toán → `Settlement Submitted` |
+| FR-UC36-12 | *(E4)* Từ chối nộp quyết toán khi sự kiện chưa kết thúc và chưa bị huỷ |
+| FR-UC36-13 | *(E5)* Nhận quyết toán nộp sau hạn (BR57) nhưng đánh dấu trễ và đưa vào BR21; từ chối nếu UC37 A2 đã chốt đối soát |
 
-**Hậu điều kiện** — khoản chi tồn tại, có hoặc chưa có chứng từ, và là đầu vào của UC37.
-**Đầu ra** — `Expense`, `FinancialEvidence`.
+**Hậu điều kiện** — ngân sách ở `Settlement Submitted` với bộ khoản chi đã khoá, là đầu vào của UC37.
+**Đầu ra** — `Expense`, `FinancialEvidence`, quyết toán đã nộp, `ApprovalTask`.
 
 ### UC37 — Đối soát ngân sách và chi tiêu
 
@@ -1659,27 +1865,29 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 |---|---|
 | **Module · Ưu tiên** | M07 · P3 |
 | **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Xác lập rằng số đã duyệt, đã giải ngân, đã chi và đã có chứng từ cùng kể một câu chuyện |
-| **Kích hoạt** | Hoạt động kết thúc, hoặc đến hạn đối soát |
-| **Tiền điều kiện** | `EventBudget` đang `Disbursed`; đã có khoản chi được ghi nhận |
-| **Thực thể / trạng thái** | `EventBudget`: `Disbursed → Reconciliation Pending → {Reconciled, Exception} → Closed` |
-| **Quy tắc** | BR23, BR24, BR26 |
-| **Liên quan · Pain point** | UC35, UC36, UC42 · BP10 |
+| **Mục tiêu nghiệp vụ** | Xác lập rằng số đã duyệt, đã tạm ứng, đã chi và đã có chứng từ cùng kể một câu chuyện, và chốt ai còn nợ ai bao nhiêu |
+| **Kích hoạt** | Task quyết toán từ UC36, hoặc hạn quyết toán đã qua mà CLB chưa nộp (A2) |
+| **Tiền điều kiện** | `EventBudget` đang `Settlement Submitted`, hoặc `Disbursed` / `Reconciliation Pending` với hạn quyết toán đã qua (A2) |
+| **Thực thể / trạng thái** | `EventBudget`: `Settlement Submitted → {Reconciliation Pending, Reconciled, Recovery Pending}`; `Reconciled → Closed` khi chênh lệch bằng 0 |
+| **Quy tắc** | BR21, BR23, BR24, BR26, BR57, BR58 |
+| **Liên quan · Pain point** | UC35, UC36, UC40, UC42 · BP10 |
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC37-01 | Tính và hiển thị tách bạch: **đã duyệt**, **đã giải ngân**, **khoản chi đã ghi nhận**, **khoản chi có chứng từ**, **khoản chi thiếu chứng từ**, **số dư còn lại** và **chênh lệch** |
-| FR-UC37-02 | Liệt kê các ngoại lệ do UC36 gắn cờ để officer xem xét |
-| FR-UC37-03 | Cho officer đánh dấu hồ sơ `Reconciled`, hoặc `Exception` kèm phần chênh lệch được nêu rõ |
-| FR-UC37-04 | Chỉ cho officer đóng hồ sơ (`Closed`) sau khi đối soát hoàn tất (BR26); hồ sơ `Exception` vẫn đóng được, với chênh lệch nằm trong hồ sơ |
-| FR-UC37-05 | Ghi audit kết quả và hiển thị nó cho CLB qua UC02 |
-| FR-UC37-06 | *(A1)* Cho officer yêu cầu bổ sung chứng từ, để hồ sơ ở `Reconciliation Pending` |
-| FR-UC37-07 | *(E1)* Từ chối đối soát khi số đã giải ngân vượt số đã duyệt mà chưa có văn bản điều chỉnh (BR23) |
+| FR-UC37-01 | Tính và hiển thị tách bạch: **đã duyệt**, **đã tạm ứng**, **khoản chi đã ghi nhận**, **khoản chi có chứng từ**, **khoản chi thiếu chứng từ**, **số dư chưa chi** |
+| FR-UC37-02 | Liệt kê các ngoại lệ do UC36 gắn cờ, và cho officer **chấp nhận** hoặc **loại** từng khoản chi kèm lý do; khoản thiếu chứng từ luôn bị loại |
+| FR-UC37-03 | Chốt **chi hợp lệ** (tổng khoản được chấp nhận, trần là số duyệt) và **chênh lệch tất toán** = chi hợp lệ − đã tạm ứng |
+| FR-UC37-04 | Theo chênh lệch tất toán: bằng 0 → `Reconciled` rồi `Closed`; dương → `Reconciled`, chờ cấp bù ở UC35 A2; âm → `Recovery Pending` với **số phải hoàn** và hạn hoàn trả (BR58). Không bao giờ đóng ngân sách khi chênh lệch chưa xử lý (BR26) |
+| FR-UC37-05 | Ghi audit kết quả, thông báo cho CLB và hiển thị nó cho CLB qua UC02 |
+| FR-UC37-06 | *(A1)* Cho officer yêu cầu bổ sung chứng từ, để hồ sơ ở `Reconciliation Pending` cho tới khi CLB nộp lại ở UC36 |
+| FR-UC37-07 | *(E1)* Từ chối đối soát khi số đã tạm ứng vượt số đã duyệt mà chưa có văn bản điều chỉnh (BR23) |
 | FR-UC37-08 | Giữ ICPDP là actor chính duy nhất; CMB đọc cùng bộ số liệu qua UC02 |
 | FR-UC37-09 | Đưa kết quả đối soát thành đầu vào của UC42 |
+| FR-UC37-10 | *(A2)* Khi hạn quyết toán đã qua mà chưa có quyết toán, cho officer chốt đối soát trên các khoản chi đã có chứng từ; phần còn lại của số đã tạm ứng thành số phải hoàn → `Recovery Pending` (BR57, BR58) |
+| FR-UC37-11 | *(E2)* Khi quá hạn hoàn trả mà chưa hoàn đủ, đánh dấu khoản phải hoàn là nghĩa vụ quá hạn (BR21) và cho officer mở hồ sơ vi phạm ở UC40 từ chính ngân sách đó (BR58) |
 
-**Hậu điều kiện** — hồ sơ ở `Reconciled` hoặc `Exception`, rồi `Closed`.
-**Đầu ra** — kết quả đối soát, bản ghi audit.
+**Hậu điều kiện** — ngân sách ở `Reconciled` (chờ cấp bù), `Recovery Pending` (chờ hoàn trả) hoặc `Closed`.
+**Đầu ra** — kết quả đối soát (chi hợp lệ, chênh lệch tất toán, số phải hoàn), bản ghi audit, thông báo.
 
 ---
 
@@ -2134,12 +2342,12 @@ của nó không bao giờ được dùng lại.**
 | BR18 | Mỗi người tham dự chỉ có một bản ghi điểm danh chính thức cho mỗi sự kiện | UC31, UC32 |
 | BR19 | Bảng điểm danh đã chốt chỉ được mở khoá bởi một vai trò đặc biệt, cấp ở UC03 | UC32, UC03 |
 | BR20 | Deadline báo cáo sau sự kiện và báo cáo định kỳ là cấu hình được | UC04, UC33, UC38 |
-| BR21 | CLB quá hạn một báo cáo bắt buộc có thể bị chặn sự kiện mới, nếu chính sách bật cưỡng chế | UC04, UC25, UC34, UC39 |
+| BR21 | **Mở rộng (I60)** — CLB quá hạn một nghĩa vụ bắt buộc — báo cáo, quyết toán (BR57) hoặc khoản phải hoàn (BR58) — có thể bị chặn sự kiện mới, nếu chính sách bật cưỡng chế | UC04, UC25, UC34, UC36, UC37, UC39 |
 | BR22 | **Đã sửa (I59)** — Ngân sách chỉ tồn tại như một phần của đề xuất sự kiện (UC25) và được quyết định cùng đề xuất ở UC26; không có ngân sách tách rời sự kiện | UC25, UC26 |
-| BR23 | Số tiền giải ngân không bao giờ vượt số tiền đã duyệt khi chưa có văn bản điều chỉnh | UC35, UC37 |
+| BR23 | Tổng tạm ứng và cấp bù không bao giờ vượt số tiền đã duyệt khi chưa có văn bản điều chỉnh | UC35, UC37 |
 | BR24 | Khoản chi ngoài hạng mục đã duyệt bị gắn cờ ngoại lệ | UC36, UC37 |
 | BR25 | Yêu cầu về chứng từ theo từng hạng mục chi định nghĩa trong tài liệu chính sách | UC36 |
-| BR26 | Phải đối soát xong trước khi đóng ngân sách của một sự kiện | UC37 |
+| BR26 | **Đã đổi (I60)** — Ngân sách của một sự kiện chỉ đóng khi đã đối soát và chênh lệch tất toán đã được xử lý: cấp bù xong, hoặc CLB đã hoàn đủ | UC35, UC37 |
 | BR27 | Thang phân loại mức độ vi phạm định nghĩa trong tài liệu chính sách | UC40 |
 | BR28 | Quyết định về vi phạm phải có lý do và chứng cứ | UC40 |
 | BR29 | Tổng trọng số đánh giá phải hợp lệ trước khi một scheme được kích hoạt | UC41, UC42 |
@@ -2170,10 +2378,12 @@ của nó không bao giờ được dùng lại.**
 | BR54 | **Mới (I58)** — Mỗi use case vận hành CLB kiểm tra người gọi có permission tương ứng trong CLB đó (danh mục permission ở §2.3); thiếu quyền thì từ chối. Một thành viên giữ nhiều role có quyền là hợp các permission của các role; Club Leader có mọi permission CLB | UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52 |
 | BR55 | **Mới (I58)** — Danh mục permission CLB là cố định, do hệ thống định nghĩa; chỉ được chọn từ danh mục đó. Bốn quyền giữ riêng của leader — `club.role.manage`, `club.board.nominate`, `club.transition.plan`, `club.suspension.request` — không cấp được cho role nào. Cơ cấu role ban đầu được ICPDP thẩm định cùng hồ sơ thành lập (UC07 / UC08); sau đó Club Leader sửa cơ cấu ở UC23 không cần ICPDP xác nhận, trừ role ban điều hành: người giữ chỉ đến từ UC10 / UC11 / UC13, và việc thêm / bỏ role ban điều hành chỉ đi qua chuyển giao UC12 / UC13 | UC07, UC08, UC10, UC11, UC12, UC13, UC23 |
 | BR56 | **Mới (I58)** — Cơ cấu role của CLB được **đánh phiên bản**: phiên bản 1 là cơ cấu được duyệt ở UC08; mỗi thay đổi ở UC23 hoặc UC13 tạo một phiên bản mới có ngày hiệu lực và không bao giờ ghi đè phiên bản trước. Mỗi CLB luôn có role Chủ nhiệm (cố định) và role Members (mặc định, không xoá được, tự gán cho mọi thành viên ở UC20). ICPDP xem được mọi phiên bản cơ cấu và lịch sử người giữ role ban điều hành theo nhiệm kỳ | UC02, UC07, UC08, UC13, UC20, UC23 |
+| BR57 | **Mới (I60)** — Ngân sách đã tạm ứng phải được CLB quyết toán — đủ khoản chi và chứng từ — trong thời hạn định nghĩa trong tài liệu chính sách, tính từ lúc sự kiện kết thúc hoặc bị huỷ. Quá hạn là nghĩa vụ quá hạn theo BR21, và ICPDP được chốt đối soát trên các khoản chi đã có chứng từ | UC36, UC37 |
+| BR58 | **Mới (I60)** — Phần đã tạm ứng không được chứng minh bằng chi hợp lệ (số dư chưa chi, khoản chi thiếu chứng từ hoặc bị loại) bị thu hồi: CLB phải hoàn trong thời hạn định nghĩa trong tài liệu chính sách; ICPDP ghi nhận tiền hoàn ở UC35. Quá hạn là nghĩa vụ quá hạn theo BR21 và là căn cứ mở hồ sơ vi phạm ở UC40 | UC35, UC37, UC40 |
 
 **Cấu hình được và hằng số (BR42).** Chỉ chín giá trị liệt kê ở UC04 là sửa được trong sản
 phẩm. Mọi giá trị chính sách khác là **hằng số định nghĩa trong tài liệu chính sách** cho tới khi có nhu
-cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52).
+cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58).
 
 ---
 
@@ -2299,21 +2509,30 @@ nháp, chờ duyệt, yêu cầu chỉnh sửa và từ chối là trạng thái
 đời khi UC26 phê duyệt một đề xuất có phần ngân sách.
 
 ```text
-Approved → Disbursed → Reconciliation Pending → Reconciled | Exception → Closed
+Approved → Disbursed → Settlement Submitted → Reconciled ──────────→ Closed
+                                            ↘ Recovery Pending ────↗
+Settlement Submitted ⇄ Reconciliation Pending
+Disbursed / Reconciliation Pending → Recovery Pending   (quá hạn quyết toán)
 Approved → Cancelled
 ```
 
 | Từ → Đến | Tác nhân |
 |---|---|
 | (tạo) → Approved | UC26 phê duyệt đề xuất có phần ngân sách, kèm số tiền duyệt |
-| Approved → Disbursed | UC35 |
-| Disbursed → Reconciliation Pending | UC37 A1 (trả về để bổ sung chứng từ) |
-| Disbursed / Reconciliation Pending → Reconciled / Exception | UC37 |
-| Reconciled / Exception → Closed | UC37 (BR26) |
-| Approved → Cancelled | UC28, hoặc UC15 / UC40 tác động lên CLB, khi sự kiện bị huỷ trước khi giải ngân |
+| Approved → Disbursed | UC35 — lần tạm ứng đầu tiên, một phần hoặc toàn bộ số duyệt; tạm ứng thêm giữ nguyên `Disbursed` |
+| Disbursed → Settlement Submitted | UC36 — CLB nộp quyết toán sau khi sự kiện kết thúc hoặc bị huỷ (BR57) |
+| Settlement Submitted → Reconciliation Pending | UC37 A1 (trả về để bổ sung chứng từ) |
+| Reconciliation Pending → Settlement Submitted | UC36 A3 (nộp lại quyết toán) |
+| Settlement Submitted → Reconciled | UC37 — chi hợp lệ không thấp hơn số đã tạm ứng |
+| Settlement Submitted → Recovery Pending | UC37 — chi hợp lệ thấp hơn số đã tạm ứng; chốt số phải hoàn (BR58) |
+| Disbursed / Reconciliation Pending → Recovery Pending | UC37 A2 — quá hạn quyết toán (BR57) |
+| Reconciled → Closed | UC37 khi chênh lệch tất toán bằng 0, hoặc UC35 A2 ghi khoản cấp bù (BR26) |
+| Recovery Pending → Closed | UC35 A3 khi CLB đã hoàn đủ (BR26, BR58) |
+| Approved → Cancelled | UC28, hoặc UC15 / UC40 tác động lên CLB, khi sự kiện bị huỷ trước khi tạm ứng |
 
-`Exception` nghĩa là việc đối soát kết thúc với một phần chênh lệch được nêu rõ; hồ sơ vẫn đóng
-được, với phần chênh lệch nằm trong hồ sơ.
+**Chênh lệch tất toán** = chi hợp lệ (trần là số duyệt) − đã tạm ứng. Không còn trạng thái
+`Exception`: phần tạm ứng không được chứng minh bằng chi hợp lệ phải hoàn trả (BR58), không được
+đóng kèm chênh lệch.
 
 ## 6.8 Property Booking (đặt cơ sở vật chất)
 
@@ -2429,11 +2648,11 @@ giờ được sửa tại chỗ (BR30).
 | `Attendance` | eventId, studentId (cặp unique), registrationId, checkedInAt, method (`self`/`manual`/`walk-in`), performedBy, abnormalFlags[], finalized, finalizedBy, finalizedAt |
 | `PostEventReport` | eventId, bản chụp số liệu nạp sẵn, actualResult, incidents, lessonsLearned, evidence[], state, versions[], submittedAt, lateFlag |
 | `PeriodicReport` | clubId, period, bản chụp số liệu nạp sẵn, narrative, nextPlan, evidence[], state, versions[], lateFlag |
-| `EventBudget` | eventId (unique), clubId, lines[] {category, requestedAmount, approvedAmount, reason}, requestedTotal, approvedTotal, approvedByDecisionId, disbursedTotal, state |
-| `BudgetDisbursement` | eventBudgetId, amount, date, paymentReference, recordedBy |
-| `Expense` | eventBudgetId, eventId, category, amount, date, description, isOutOfCategory, isOverRemaining, supported (suy ra) |
+| `EventBudget` | eventId (unique), clubId, lines[] {category, requestedAmount, approvedAmount, reason}, requestedTotal, approvedTotal, approvedByDecisionId, disbursedTotal, settlementDueAt, settlementSubmittedAt, acceptedTotal, settlementBalance, recoveryAmount, recoveryDueAt, refundedTotal, state |
+| `BudgetDisbursement` | eventBudgetId, kind (`Advance` / `TopUp` / `Refund`), amount, date, paymentReference, recordedBy |
+| `Expense` | eventBudgetId, eventId, category, amount, date, description, isOutOfCategory, isOverRemaining, supported (suy ra), reviewOutcome (`Accepted` / `Rejected`), reviewReason |
 | `FinancialEvidence` | expenseId (đúng một), type, externalLink, uploadedBy, uploadedAt |
-| `FinancialReconciliation` | eventBudgetId, approved, disbursed, recorded, supported, unsupported, remaining, variance, outcome, closedBy, closedAt |
+| `FinancialReconciliation` | eventBudgetId, approved, disbursed, recorded, supported, unsupported, remaining, accepted, settlementBalance, outcome (`Reconciled` / `Recovery Pending`), isOverdueSettlement, closedBy, closedAt |
 | `Property` | code, name, type, capacity, location, equipment[], bookableHours, blackouts[], isActive |
 | `PropertyBooking` | propertyId, clubId, clubName (denormalize), eventId?, purpose, startAt, endAt, headcount, state, currentVersion, decision {actor, reason, at} |
 | `EventFeedback` | eventId, attendanceId, studentId (nội bộ, ẩn khi gửi ẩn danh), scores[], comment, isAnonymous, submittedAt (bất biến) |
@@ -2798,7 +3017,7 @@ Chúng là hạt giống của bộ test hệ thống.
 | **AC10** Báo cáo sau sự kiện | **Cho** sự kiện đã `Completed` và điểm danh đã chốt, **khi** CMB mở form báo cáo, **thì** số liệu điểm danh đã chốt được nạp sẵn |
 | **AC11** Duyệt ngân sách | **Cho** đề xuất sự kiện có phần ngân sách đang `Under Review`, **khi** ICPDP phê duyệt, **thì** số tiền duyệt được lưu tách biệt với số xin, `EventBudget` được tạo, và actor, thời điểm, quyết định được audit |
 | **AC12** Chứng từ tài chính | **Cho** một khoản chi đã tồn tại, **khi** CMB đính kèm chứng từ, **thì** chứng từ tham chiếu đúng khoản chi đó và người tải lên cùng thời điểm được lưu |
-| **AC13** Đối soát | **Cho** một ngân sách đã có khoản chi, **khi** chạy đối soát, **thì** hệ thống hiển thị tách bạch **Đã duyệt / Đã giải ngân / Đã ghi nhận / Có chứng từ / Thiếu chứng từ / Còn lại** |
+| **AC13** Đối soát | **Cho** một ngân sách đã có khoản chi, **khi** chạy đối soát, **thì** hệ thống hiển thị tách bạch **Đã duyệt / Đã tạm ứng / Đã ghi nhận / Có chứng từ / Thiếu chứng từ / Còn lại**, và sau khi officer chấp nhận / loại từng khoản chi, chốt **chi hợp lệ** và **chênh lệch tất toán**: âm thì ngân sách chuyển `Recovery Pending` với số phải hoàn |
 | **AC14** Tạm ngừng | **Cho** CLB đang `Active`, **khi** ICPDP tạm ngừng, **thì** CLB chuyển `Suspended`, không thể công bố đợt tuyển mới và không thể nộp đề xuất sự kiện mới |
 | **AC15** Đánh giá | **Cho** một kỳ đánh giá đã được cấu hình, **khi** ICPDP sinh bản nháp, **thì** mọi dimension đều truy vết được về dữ liệu nguồn |
 | **AC16** Xung đột booking | **Cho** property P đã có booking `Approved` từ 14:00–16:00 ngày D, **khi** một CLB khác xin P từ 15:00–17:00 ngày D, **thì** hệ thống trả `Blocking Conflict` và booking không thể chuyển `Approved` khi chính sách cấm overbooking |
@@ -2880,9 +3099,9 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 | UC32 | M06 | Club Member | Attendance | BR18, BR19, BR53, BR54 |
 | UC33 | M08 | Club Member | PostEventReport | BR20, BR21, BR54 |
 | UC34 | M08 | ICPDP | PostEventReport, Event | BR05, BR21 |
-| UC35 | M07 | ICPDP | EventBudget, BudgetDisbursement | BR23 |
-| UC36 | M07 | Club Member | Expense, FinancialEvidence | BR24, BR25, BR54 |
-| UC37 | M07 | ICPDP | FinancialReconciliation | BR23, BR24, BR26 |
+| UC35 | M07 | ICPDP | EventBudget, BudgetDisbursement | BR23, BR26, BR58 |
+| UC36 | M07 | Club Member | Expense, FinancialEvidence, EventBudget | BR21, BR24, BR25, BR54, BR57 |
+| UC37 | M07 | ICPDP | FinancialReconciliation | BR21, BR23, BR24, BR26, BR57, BR58 |
 | UC38 | M08 | Club Member | PeriodicReport | BR20, BR54 |
 | UC39 | M08 | ICPDP | PeriodicReport | BR05, BR21 |
 | UC40 | M08 | ICPDP | Violation, CorrectiveAction | BR27, BR28 |
@@ -3088,6 +3307,8 @@ UC45 A2), và vòng 9 đặt cuối vì UC42 cần dữ liệu trọn một kỳ
 | **Routing rule** | Điều kiện ở UC05 quyết định một hồ sơ có cần cấp ICPDP thứ hai hay không |
 | **Scheduler** | Chức năng hệ thống chạy theo thời gian (§8.4); không bao giờ là actor |
 | **Scope check** | Kiểm tra trong usecase rằng actor thuộc *đúng* CLB đó, với *đúng* chức vụ đó, trong *đúng* nhiệm kỳ hiện tại (SEC-03) |
+| **Settlement (quyết toán)** | Bộ khoản chi và chứng từ CLB nộp cho một ngân sách đã tạm ứng sau khi sự kiện kết thúc hoặc bị huỷ (UC36, BR57) |
+| **Settlement balance (chênh lệch tất toán)** | Chi hợp lệ (trần là số duyệt) − đã tạm ứng; dương → cấp bù, âm → thu hồi (UC37, BR58) |
 | **Supported / unsupported expense** | Khoản chi có, hoặc chưa có, chứng từ mà hạng mục của nó yêu cầu (BR25) |
 | **Term** | Nhiệm kỳ có giới hạn thời gian (`ClubTerm`), là nguồn suy ra quyền CMB |
 | **Waitlist** | Hàng đợi có thứ tự của các đăng ký vượt sức chứa (UC29 A1, UC30) |
@@ -3156,6 +3377,7 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 | Context diagram v1 (đã thay thế, 40 luồng) | Context diagram | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
 | So sánh context diagram v1 → v2 | — | [`03-diagrams/UCMS_Context_Diagram_Comparison.docx`](03-diagrams/UCMS_Context_Diagram_Comparison.docx) |
 | **Use case diagram theo actor** (UC01–UC52) | All users (kế thừa actor) · Student · Club Leader · Club Member 1 - Club & recruitment · Club Member 2 - Events & bookings · Club Member 3 - Accountability & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
+| **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio) |
 | **State diagram** | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) |
 
 Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
@@ -3188,7 +3410,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 | M04 | `GET|POST /clubs/:id/campaigns`, `POST /campaigns/:id/publish`, `GET|POST /campaigns/:id/applications`, `POST /applications/:id/withdraw`, `POST /applications/:id/screening`, `POST /applications/:id/decision`, `POST /applications/:id/evaluations`, `POST /applications/:id/onboard`, `GET /clubs/:id/members`, `PATCH /memberships/:id/status`, `POST /memberships/:id/leave-requests`, `GET /me/memberships` |
 | M05 | `GET|POST /events`, `PATCH /events/:id` (nộp lại → bản sửa mới), `POST /events/:id/decision`, `POST /events/:id/publish`, `POST /events/:id/cancel`, `POST /events/:id/reschedule` |
 | M06 | `POST /events/:id/registrations`, `DELETE /registrations/:id`, `GET /events/:id/registrations`, `PATCH /events/:id/capacity`, `POST /registrations/:id/promote`, `POST /events/:id/check-ins`, `POST /events/:id/attendance/finalize`, `POST /events/:id/attendance/unlock` |
-| M07 | `GET|POST /budget-requests`, `PATCH /budget-requests/:id`, `POST /budget-requests/:id/decision`, `POST /budget-requests/:id/disbursements`, `GET|POST /expenses`, `POST /expenses/:id/evidence`, `GET /budget-requests/:id/reconciliation`, `POST /budget-requests/:id/reconciliation` |
+| M07 | `GET /event-budgets/:id`, `POST /event-budgets/:id/disbursements` (`Advance` / `TopUp` / `Refund`), `GET|POST /event-budgets/:id/expenses`, `POST /expenses/:id/evidence`, `POST /event-budgets/:id/settlement`, `GET|POST /event-budgets/:id/reconciliation` — ngân sách được xin và duyệt qua `/events` (M05) |
 | M08 | `GET|POST /events/:id/report`, `POST /event-reports/:id/decision`, `GET|POST /clubs/:id/periodic-reports`, `POST /periodic-reports/:id/decision`, `GET|POST /violations`, `PATCH /violations/:id`, `POST /violations/:id/corrective-actions` |
 | M09 | `GET|POST /evaluation-schemes`, `POST /evaluation-schemes/:id/activate`, `POST /evaluations/generate`, `GET /evaluations`, `POST /evaluations/:id/finalize`, `POST /evaluations/:id/publish` |
 | M10 | `GET /approvals` (hộp thư phê duyệt dùng chung), `GET /approvals/:id`, `GET /notifications`, `PATCH /notifications/:id/read`, `GET /audit-logs?entityType=&entityId=` |

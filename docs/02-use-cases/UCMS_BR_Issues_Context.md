@@ -29,7 +29,7 @@ Cập nhật: 2026-09-26.
 | BR22 | Ngân sách chỉ tồn tại trong đề xuất sự kiện (UC25), được quyết định cùng đề xuất ở UC26; không có ngân sách tách rời sự kiện | I59 | Đã sửa (viết lại) |
 | BR23 | Giải ngân không vượt số đã duyệt | I38 | Đã sửa (I38) |
 | BR25 | Chứng từ theo hạng mục chi định nghĩa trong tài liệu chính sách | I35 | Đã sửa |
-| BR26 | Đối soát xong mới được đóng ngân sách của sự kiện | I38, I59 | Đã sửa (I38; I59 đổi chữ) |
+| BR26 | Ngân sách chỉ đóng khi đã đối soát và chênh lệch đã tất toán (cấp bù hoặc hoàn đủ) | I38, I59, I60 | Đã sửa (I38; I59 đổi chữ; I60 đổi) |
 | BR27 | Thang mức độ vi phạm định nghĩa trong tài liệu chính sách | I35 | Đã sửa |
 | BR29 | Tổng trọng số phải hợp lệ trước khi kích hoạt scheme | I38 | Đã sửa (I38) |
 | BR30 | Kỳ đánh giá đã công bố không sửa tại chỗ | I38 | Đã sửa (I38) |
@@ -51,6 +51,8 @@ Cập nhật: 2026-09-26.
 | BR54 | Mỗi UC vận hành CLB kiểm tra permission của người gọi; quyền là hợp các role, leader có mọi quyền | I58 | Đã sửa (BR mới) |
 | BR55 | Danh mục permission cố định; 4 quyền giữ riêng của leader không cấp được; cơ cấu ban đầu ICPDP thẩm định ở UC07 / UC08, sau đó leader sửa tự do trừ role ban điều hành (người giữ qua UC10 / UC11 / UC13, thêm / bỏ qua UC12 / UC13) | I58 | Đã sửa (BR mới, sửa ở lần 2) |
 | BR56 | Cơ cấu role đánh phiên bản (phiên bản 1 từ UC08, mỗi thay đổi ở UC23 / UC13 là phiên bản mới); role Chủ nhiệm cố định, role Members mặc định tự gán ở UC20; ICPDP xem mọi phiên bản và lịch sử ban điều hành | I58 | Đã sửa (BR mới, lần 2) |
+| BR57 | Ngân sách đã tạm ứng phải được CLB quyết toán trước hạn; quá hạn → BR21 và ICPDP được chốt đối soát | I60 | Đã sửa (BR mới) |
+| BR58 | Phần tạm ứng không được chứng minh bị thu hồi; CLB hoàn trước hạn, quá hạn → BR21 và căn cứ mở UC40 | I60 | Đã sửa (BR mới) |
 
 **Còn mở, cần làm:** không còn issue nào trong bảng này (I21 không sửa).
 

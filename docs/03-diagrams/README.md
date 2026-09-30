@@ -9,6 +9,7 @@ tương ứng của VS Code.
 | [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | Context diagram v2 (57 luồng, gần như mỗi use case một luồng). **Đã bị thay thế** bởi v2.1; giữ lại làm lịch sử |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC52 — mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Leader, Club Member 1–3, ICPDP 1–3 |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking |
+| [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
 | [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | Context diagram đầu tiên của nhóm (40 luồng). **Đã bị thay thế**; giữ lại làm lịch sử |
 | [`UCMS_Context_Diagram_Comparison.docx`](UCMS_Context_Diagram_Comparison.docx) | So sánh từng luồng giữa context diagram v1 và v2, kèm lý do của từng thay đổi |
 | [`img/`](img/) | Bản xuất PNG, đặt tên theo `<tên-file-nguồn>_<số-trang>_<tên-trang>.png` |

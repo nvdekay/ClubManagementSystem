@@ -93,6 +93,7 @@ Ngày review: 2026-09-23.
 | I57 | 🟡 | Sự kiện nội bộ CLB (chỉ thành viên) không có chỗ trong hệ thống: mọi sự kiện đều phải qua ICPDP duyệt (UC26), nên buổi sinh hoạt nhỏ hoặc phải xin duyệt, hoặc không được ghi lại, và ICPDP không thấy chúng | Model/Spec UC02, UC25–UC28, UC32, UC33; SRS §5, §6.6, §10.1; State diagram Event; DBML `events` | Đã sửa | Thêm BR53 (phương án A): sự kiện `Internal` không có ngân sách được ghi nhận thẳng `Draft → Approved`, có audit, ICPDP xem ở UC02, đóng khi chốt điểm danh ở UC32 |
 | I58 | 🟡 | CMB là một actor chung, không phân biệt Chủ nhiệm với thành viên được giao việc; không có UC để tạo role và cấu hình permission; UC23 chỉ gán chức vụ định nghĩa sẵn ở UC09, chức vụ nhạy cảm phải qua ICPDP | Model §3, §4, §9, §11, §15, UC09, UC22–UC24, mọi UC của CMB; Spec; SRS §2.3; UCD trang CMB; CD; DBML; Report | Đã sửa | Tách CMB thành Club Member (actor gốc, làm UC vận hành khi có permission) và Club Leader (Chủ nhiệm, kế thừa Club Member); UC23 thành "Quản lý vai trò CLB và phân quyền"; sửa BR47, thêm BR54, BR55. Lần 2: cơ cấu role khai báo trong hồ sơ UC07, ICPDP thẩm định ở UC08, đánh phiên bản, role ban điều hành do chủ nhiệm đánh dấu và đổi qua chuyển giao, role Members mặc định; thêm BR56; CD 40 luồng |
 | I59 | 🟡 | Ngân sách bị mô hình thành luồng riêng (UC35 Gửi yêu cầu ngân sách, UC36 Thẩm định yêu cầu ngân sách, máy trạng thái Budget Request, permission `club.budget.request`), trong khi nhóm đã thống nhất ngân sách là một phần của đề xuất sự kiện và không có ngân sách tách rời sự kiện | Model, Spec, SRS (UC25, UC26, UC35–UC39, BR22, §6.7, §7, permission), DBML, TASKS, HLD, CD, UCD, State diagram, Report | Đã sửa | Bỏ UC35, UC36; ngân sách là phần tuỳ chọn của đề xuất UC25 và được duyệt ở UC26 (tạo `EventBudget`); BR22 viết lại; bỏ `club.budget.request` (còn 15 permission); đánh số lại UC37–UC54 → UC35–UC52 (52 UC) |
+| I60 | 🟡 | Luồng tiền của sự kiện thiếu bước CLB nộp quyết toán sau sự kiện và cơ chế thu hồi: `Exception` đóng ngân sách kèm chênh lệch, không có số phải hoàn, không ghi nhận tiền hoàn, không phân biệt tạm ứng với cấp bù | Model/Spec/SRS UC25, UC28, UC35–UC37, BR21, BR23, BR26, BR42; State diagram Event Budget; UCD Club Member 3; DBML; TASKS | Đã sửa | Tạm ứng (UC35) → CLB nộp quyết toán (UC36, BR57) → UC37 chốt chi hợp lệ: cấp bù, hoặc `Recovery Pending` và ghi nhận hoàn trả (BR58); bỏ `Exception`; BR21 tính cả quyết toán / hoàn trả quá hạn |
 
 ---
 
@@ -1593,3 +1594,62 @@ sinh (Spec/Model + generator) rồi sinh lại, không sửa tay trong `.docx`.
   - Lý do: đúng với quy trình thật — CLB chỉ xin kinh phí cho một sự kiện cụ thể, và ICPDP quyết
     định kinh phí cùng lúc với việc cho phép tổ chức; tách hai luồng làm ICPDP phải thẩm định hai
     lần cùng một sự kiện và cho phép ngân sách "treo" không gắn với hoạt động nào.
+
+### I60 — Luồng tiền của sự kiện thiếu quyết toán và thu hồi
+- **Vấn đề:** nhóm muốn tiền đi theo luồng: CLB xin tiền trong đề xuất; ICPDP tạm ứng trước một
+  phần hoặc toàn bộ; sau sự kiện CLB phải sao kê đầy đủ, nếu không thì bị thu hồi phần không đúng.
+  Tài liệu mới đáp ứng được hai bước đầu (UC25 / UC26, UC35 A1):
+  - không có bước CLB nộp quyết toán, cũng không có hạn quyết toán — UC36 chỉ ghi từng khoản chi
+    lẻ, còn UC37 do ICPDP tự mở;
+  - không có cơ chế thu hồi: `Exception` chỉ ghi lại phần chênh lệch rồi vẫn `Closed`; không có
+    số phải hoàn, không ghi nhận được tiền hoàn, và không có hậu quả khi CLB không hoàn;
+  - không phân biệt tạm ứng với cấp bù; phần duyệt nhưng chưa cấp không có đường xử lý.
+- **Cách sửa đã chọn (2026-09-30):** quyết toán là một bước riêng trong UC36 (không gộp vào báo
+  cáo UC33); thu hồi có trạng thái riêng và ICPDP ghi nhận tiền hoàn; phần chi hợp lệ vượt số
+  tạm ứng được cấp bù sau đối soát (trần là số duyệt).
+- **Xử lý:**
+  - Ngày: 2026-09-30
+  - File đã sửa: Model (UC25, UC28, UC35–UC37, §10.6, §11 BR21/BR23/BR26/BR42/BR57/BR58, danh
+    sách UC), Spec (UC04, UC25, UC28, UC35–UC37, danh sách UC), `SRS.md` (§1 luồng, trách nhiệm
+    Club Member, FR-UC02-02, bảng UC04, FR-UC25-10, FR-UC28-05, UC35–UC37, §5 BR, hằng số BR42,
+    §6.7, §7 entity, AC13, ma trận truy vết, glossary, endpoint M07),
+    `05-implementation/UCMS_Database_Design.dbml`, `05-implementation/TASKS.md`,
+    `03-diagrams/UCMS_State_Diagrams.drawio` (trang Event Budget + PNG),
+    `03-diagrams/UCMS_UseCase_ByActor.drawio` (trang Club Member 3 + PNG), `UCMS_BR_Issues_Context.md`.
+  - Thay đổi:
+    - Máy trạng thái `EventBudget`: `Approved → Disbursed → Reconciliation Pending → Reconciled |
+      Exception → Closed` → `Approved → Disbursed → Settlement Submitted → Reconciled | Recovery
+      Pending → Closed`, `Settlement Submitted ⇄ Reconciliation Pending`, `Disbursed /
+      Reconciliation Pending → Recovery Pending` khi quá hạn quyết toán. Bỏ `Exception`.
+    - **UC35** ghi mọi dòng tiền (`Advance`, `TopUp`, `Refund`): tạm ứng trước sự kiện (một phần
+      hoặc toàn bộ), A2 cấp bù → `Closed`, A3 ghi nhận CLB hoàn đủ → `Closed`.
+    - **UC36** "Ghi nhận khoản chi kèm chứng từ" → "Ghi nhận khoản chi và nộp quyết toán": sau khi
+      sự kiện kết thúc hoặc bị huỷ, CLB nộp quyết toán → `Settlement Submitted`, khoá bộ khoản chi;
+      A3 nộp lại; nộp trễ bị đánh dấu và đi vào BR21.
+    - **UC37** officer chấp nhận / loại từng khoản chi → chi hợp lệ; chênh lệch tất toán = chi hợp
+      lệ (trần số duyệt) − đã tạm ứng: 0 → đóng, dương → chờ cấp bù, âm → `Recovery Pending` với
+      số phải hoàn. A2 quá hạn quyết toán: chốt trên khoản đã có chứng từ. E2 quá hạn hoàn trả →
+      BR21 + hồ sơ UC40.
+    - **BR21** mở rộng: nghĩa vụ quá hạn gồm báo cáo, quyết toán, hoàn trả (UC25 E2 đổi theo).
+      **BR23** tính cả cấp bù. **BR26** ngân sách chỉ đóng khi chênh lệch đã tất toán. **BR57**
+      (mới) nghĩa vụ và hạn quyết toán. **BR58** (mới) thu hồi và hạn hoàn trả. 57 BR còn hiệu lực.
+    - Hạn quyết toán và hạn hoàn trả là **hằng số trong tài liệu chính sách** (thêm vào danh sách
+      của BR42), không thêm giá trị cấu hình ở UC04 — giữ quyết định 9 giá trị của I35.
+    - UC28: huỷ sự kiện đã tạm ứng → quyết toán ở UC36, phần chưa chi bị thu hồi ở UC37.
+    - DBML: enum `eventBudgetState` (bỏ `Exception`, thêm `Settlement Submitted`, `Recovery
+      Pending`), enum mới `budgetFlowKind`, `expenseReviewOutcome`; `eventBudgets` thêm hạn / thời
+      điểm quyết toán, `acceptedTotal`, `settlementBalance`, `recoveryAmount`, `recoveryDueAt`,
+      `refundedTotal`; `budgetDisbursements.kind`; `expenses.reviewOutcome`; `financialReconciliations`
+      bỏ `variance`/`discrepancyNote`, thêm `acceptedTotal`, `settlementBalance`, `isOverdueSettlement`.
+    - SRS §14 endpoint M07 còn sót `/budget-requests` từ trước I59 → đổi sang `/event-budgets`.
+  - Lần 2 (cùng ngày): `03-diagrams/UCMS_ERD.drawio` — `BudgetRequest` / `BudgetRequestVersion`
+    (sót từ I59) → `EventBudget` (clubId, eventId, approvedByDecisionId, state), mọi `budgetRequestId`
+    → `eventBudgetId`; thêm `ClubRoleStructureVersion` (sót từ I58); ERD khớp 50 collection của DBML.
+    Report `Group1_SE1939-NJ_Report_Final_v2.docx`: tiêu đề và bảng spec UC35–UC37 (thêm luồng
+    thay thế, ngoại lệ, BR57 / BR58), danh sách UC (Table 14), danh sách màn hình (Table 15, 16),
+    UC02 / UC25 / UC40, bảng BR (BR21, BR23, BR26, BR42, thêm BR57, BR58; "51 rules in force" → 57),
+    bảng collection và package M07 (bỏ `BudgetRequest`), hai đoạn "Manage money" / "Decide money";
+    thay hình III.2.6 (UCD Club Member 3), III.17 (Event Budget) và IV.4 (ERD).
+  - Lý do: tạm ứng mà không có nghĩa vụ quyết toán và cơ chế thu hồi thì nhà trường không đòi lại
+    được phần tiền không được chứng minh; `Exception` hợp thức hoá chính phần chênh lệch đó.
+

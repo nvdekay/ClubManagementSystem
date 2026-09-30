@@ -66,7 +66,7 @@ vẫn là tên gọi chung của phía CLB.
 | UC33 | Nộp báo cáo sau sự kiện | Club Member | M08 |
 | UC34 | Thẩm định và đóng báo cáo sự kiện | ICPDP | M08 |
 | UC35 | Ghi nhận giải ngân | ICPDP | M07 |
-| UC36 | Ghi nhận khoản chi kèm chứng từ | Club Member | M07 |
+| UC36 | Ghi nhận khoản chi và nộp quyết toán | Club Member | M07 |
 | UC37 | Đối soát ngân sách và chi tiêu | ICPDP | M07 |
 | UC38 | Nộp báo cáo hoạt động định kỳ | Club Member | M08 |
 | UC39 | Thẩm định báo cáo hoạt động định kỳ | ICPDP | M08 |
@@ -227,7 +227,7 @@ vẫn là tên gọi chung của phía CLB.
 - **Hậu điều kiện:** Một phiên bản chính sách mới đang có hiệu lực; những quyết định đã ra giữ
   nguyên các giá trị mà chúng được ra theo.
 - **Quy tắc nghiệp vụ:** BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách trên. Mọi giá trị
-  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52). Các giá trị này
+  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị này
   chỉ trở nên sửa được khi có nhu cầu thật (§14 của tài liệu mô hình, quyết định D2).
 - **Đầu ra:** Phiên bản chính sách, bản ghi audit.
 - **Use case liên quan:** UC01, UC07, UC25, UC33, UC38, UC45, UC48
@@ -948,7 +948,8 @@ vẫn là tên gọi chung của phía CLB.
     ngân sách đi luồng chính.
 - **Ngoại lệ:**
   - **E1** có xung đột chặn trong khi chính sách cấm chồng lịch → từ chối nộp;
-  - **E2** một báo cáo bắt buộc đã quá hạn và công tắc cưỡng chế BR21 đang bật → từ chối, kèm
+  - **E2** một nghĩa vụ bắt buộc (báo cáo, quyết toán, hoàn trả) đã quá hạn và công tắc cưỡng
+    chế BR21 đang bật → từ chối, kèm
     tên nghĩa vụ đó;
   - **E3** CLB đang `Suspended` → từ chối (BR10);
   - **E4** sự kiện không bắt đầu và kết thúc trong cùng một học kỳ → từ chối (BR44);
@@ -1056,7 +1057,8 @@ vẫn là tên gọi chung của phía CLB.
   4. Hệ thống cập nhật hoặc giải phóng booking liên quan (UC47).
   5. Hệ thống thông báo cho mọi người đã đăng ký.
   6. Hệ thống tính lại các nghĩa vụ báo cáo và ngân sách: khi huỷ, `EventBudget` chưa giải ngân
-     chuyển `Cancelled`; đã giải ngân thì phải đối soát ở UC37.
+     chuyển `Cancelled`; đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi ở
+     UC37 (BR57, BR58).
 - **Luồng thay thế:**
   - **A1 Bị huỷ bởi một quyết định vòng đời:** khi UC15 (tạm ngừng, giải thể) hoặc UC40 (kết quả
     hồ sơ) yêu cầu, hệ thống huỷ sự kiện mà không cần một bước của CMB, ghi quyết định đó làm lý
@@ -1267,55 +1269,76 @@ vẫn là tên gọi chung của phía CLB.
 
 - **Actor chính:** ICPDP Officer
 - **Module:** M07
-- **Mục tiêu nghiệp vụ:** Theo dõi số tiền thực sự được cấp so với số đã duyệt.
-- **Kích hoạt:** Kinh phí được chuyển cho CLB.
-- **Tiền điều kiện:** `EventBudget` của sự kiện đang ở `Approved` (UC26).
-- **Dữ liệu vào:** Số tiền duyệt, số tiền giải ngân, ngày, mã tham chiếu thanh toán.
-- **Luồng chính:**
+- **Mục tiêu nghiệp vụ:** Theo dõi mọi dòng tiền giữa nhà trường và CLB cho một ngân sách đã
+  duyệt: tạm ứng trước sự kiện, cấp bù sau đối soát, và tiền CLB hoàn trả khi bị thu hồi.
+- **Kích hoạt:** Kinh phí được chuyển cho CLB, hoặc CLB hoàn tiền cho nhà trường.
+- **Tiền điều kiện:** `EventBudget` của sự kiện đang ở `Approved` hoặc `Disbursed` (tạm ứng),
+  `Reconciled` (cấp bù — A2), hoặc `Recovery Pending` (hoàn trả — A3).
+- **Dữ liệu vào:** Loại dòng tiền (`Advance`, `TopUp`, `Refund`), số tiền, ngày, mã tham chiếu thanh toán.
+- **Luồng chính — tạm ứng:**
   1. Officer mở ngân sách đã duyệt của sự kiện.
-  2. Officer ghi số tiền giải ngân, ngày và mã tham chiếu.
-  3. Hệ thống đối chiếu số tiền với phần đã duyệt (BR23).
-  4. Trạng thái chuyển sang `Disbursed`; CLB được thông báo.
+  2. Officer ghi số tiền tạm ứng, ngày và mã tham chiếu. Số tạm ứng có thể là một phần hoặc
+     toàn bộ số duyệt, và được cấp trước khi sự kiện diễn ra.
+  3. Hệ thống đối chiếu tổng tạm ứng luỹ kế với số đã duyệt (BR23).
+  4. Trạng thái chuyển sang `Disbursed`; CLB được thông báo, kèm hạn quyết toán (BR57).
 - **Luồng thay thế:**
-  - **A1 Giải ngân từng phần:** nhiều lần giải ngân cộng dồn vào một lần duyệt, mỗi lần được ghi
-    riêng.
-- **Ngoại lệ:** **E1** tổng giải ngân sẽ vượt số tiền đã duyệt → từ chối khi chưa có văn bản
-  điều chỉnh (BR23).
-- **Hậu điều kiện:** Tổng số đã giải ngân là xác định và là đầu vào của UC37.
-- **Quy tắc nghiệp vụ:** BR23. Chỉ theo dõi — đây không phải một hệ thống kế toán (§5.2). Không
-  có nó thì UC37 không tính được gì.
-- **Đầu ra:** Bản ghi giải ngân.
-- **Use case liên quan:** UC26, UC37
+  - **A1 Tạm ứng nhiều lần:** nhiều lần tạm ứng cộng dồn vào một lần duyệt, mỗi lần được ghi
+    riêng; trạng thái giữ nguyên `Disbursed`.
+  - **A2 Cấp bù sau đối soát:** ngân sách đang `Reconciled` với chi hợp lệ lớn hơn số đã tạm ứng
+    (UC37). Officer ghi khoản cấp bù đúng bằng chênh lệch tất toán; hệ thống chuyển `Closed`
+    (BR26) và thông báo cho CLB.
+  - **A3 Ghi nhận hoàn trả:** ngân sách đang `Recovery Pending`. Officer ghi số tiền CLB đã hoàn;
+    khi tổng hoàn đạt số phải hoàn, hệ thống chuyển `Closed` (BR26, BR58). Hoàn thiếu thì ngân
+    sách vẫn ở `Recovery Pending`, với phần còn phải hoàn hiển thị cho cả hai bên.
+- **Ngoại lệ:**
+  - **E1** tổng tạm ứng và cấp bù sẽ vượt số tiền đã duyệt → từ chối khi chưa có văn bản điều
+    chỉnh (BR23);
+  - **E2** khoản cấp bù khác chênh lệch tất toán, hoặc khoản hoàn vượt phần còn phải hoàn → từ chối.
+- **Hậu điều kiện:** Tổng đã tạm ứng là xác định và là đầu vào của UC36, UC37; với A2 và A3,
+  ngân sách ở `Closed`.
+- **Quy tắc nghiệp vụ:** BR23, BR26, BR58. Chỉ theo dõi — đây không phải một hệ thống kế toán
+  (§5.2). Không có nó thì UC37 không tính được gì.
+- **Đầu ra:** Bản ghi dòng tiền (`BudgetDisbursement`), thông báo.
+- **Use case liên quan:** UC26, UC36, UC37
 - **Pain point:** BP10
 
-## UC36 – Ghi nhận khoản chi kèm chứng từ
+## UC36 – Ghi nhận khoản chi và nộp quyết toán
 
 - **Actor chính:** Club Member có permission `club.expense.record` (BR54)
 - **Module:** M07
-- **Mục tiêu nghiệp vụ:** Theo dõi chi tiêu thực tế và chứng minh nó trong cùng một thao tác.
-- **Kích hoạt:** CLB chi tiền.
-- **Tiền điều kiện:** Sự kiện liên quan có `EventBudget` đã duyệt; người gọi có permission
-  `club.expense.record`.
-- **Dữ liệu vào:** Hạng mục, số tiền, ngày, sự kiện liên quan, mô tả; hoá đơn,
-  biên lai hoặc chứng từ thanh toán.
+- **Mục tiêu nghiệp vụ:** Chứng minh chi tiêu thực tế của khoản đã tạm ứng và nộp quyết toán
+  đầy đủ sau sự kiện.
+- **Kích hoạt:** CLB chi tiền; sự kiện kết thúc hoặc bị huỷ, hoặc hạn quyết toán đến gần.
+- **Tiền điều kiện:** `EventBudget` của sự kiện đang `Disbursed` hoặc `Reconciliation Pending`;
+  người gọi có permission `club.expense.record`.
+- **Dữ liệu vào:** Hạng mục, số tiền, ngày, mô tả; hoá đơn, biên lai hoặc chứng từ thanh toán.
 - **Luồng chính:**
   1. Thành viên ghi khoản chi vào `EventBudget` của sự kiện.
   2. Thành viên đính kèm chứng từ mà hạng mục yêu cầu (BR25).
   3. Hệ thống validate hạng mục theo phần đã duyệt và gắn cờ ngoại lệ cho khoản chi ngoài hạng
-     mục (BR24).
-  4. Hệ thống lưu khoản chi cùng chứng từ của nó.
+     mục (BR24), rồi lưu khoản chi cùng chứng từ của nó.
+  4. Khi sự kiện đã `Completed` hoặc `Cancelled`, thành viên mở **quyết toán**: hệ thống hiển thị
+     đã tạm ứng, tổng chi, số dư chưa chi, các khoản chi thiếu chứng từ và các khoản bị gắn cờ.
+  5. Thành viên xác nhận nộp → `Settlement Submitted`; bộ khoản chi bị khoá; ICPDP nhận một task.
 - **Luồng thay thế:**
   - **A1 Chứng từ bổ sung sau:** khoản chi được ghi mà chưa có chứng từ và xuất hiện dưới dạng
-    *thiếu chứng từ* trong UC37 cho tới khi chứng từ được bổ sung.
-  - **A2 Sửa lại:** một khoản chi được sửa trước khi việc đối soát đóng lại; thay đổi được ghi audit.
+    *thiếu chứng từ* cho tới khi chứng từ được bổ sung. Nộp quyết toán khi còn khoản thiếu chứng
+    từ vẫn được, nhưng hệ thống cảnh báo rằng khoản đó sẽ bị loại khi đối soát (BR58).
+  - **A2 Sửa lại:** một khoản chi được sửa trước khi nộp quyết toán; thay đổi được ghi audit.
+  - **A3 Nộp lại quyết toán:** từ `Reconciliation Pending` (UC37 A1), thành viên bổ sung chứng từ
+    hoặc khoản chi theo yêu cầu và nộp lại → `Settlement Submitted`.
 - **Ngoại lệ:**
   - **E1** khoản chi vượt phần đã duyệt còn lại → được ghi nhận và gắn cờ ngoại lệ;
   - **E2** chứng từ không tham chiếu tới một khoản chi nào → bất khả thi về mặt cấu trúc, và đó
     chính là lý do UC43 và UC44 của v1 gộp thành một use case ở đây.
   - **E3** người gọi thiếu permission `club.expense.record` trong CLB → từ chối (BR54).
-- **Hậu điều kiện:** Khoản chi tồn tại, có hoặc chưa có chứng từ, và là đầu vào của UC37.
-- **Quy tắc nghiệp vụ:** BR54 (`club.expense.record`). BR24, BR25. Mỗi chứng từ tham chiếu đúng một khoản chi.
-- **Đầu ra:** Expense, FinancialEvidence.
+  - **E4** nộp quyết toán khi sự kiện chưa kết thúc và chưa bị huỷ → từ chối.
+  - **E5** đã quá hạn quyết toán → quyết toán vẫn được nhận nhưng bị đánh dấu trễ và đi vào BR21,
+    trừ khi UC37 A2 đã chốt đối soát thì bị từ chối (BR57).
+- **Hậu điều kiện:** Ngân sách ở `Settlement Submitted` với bộ khoản chi đã khoá, là đầu vào của UC37.
+- **Quy tắc nghiệp vụ:** BR54 (`club.expense.record`). BR21, BR24, BR25, BR57. Mỗi chứng từ tham
+  chiếu đúng một khoản chi.
+- **Đầu ra:** Expense, FinancialEvidence, quyết toán đã nộp, ApprovalTask.
 - **Use case liên quan:** UC35, UC37, UC33
 - **Pain point:** BP09, BP10
 
@@ -1323,29 +1346,43 @@ vẫn là tên gọi chung của phía CLB.
 
 - **Actor chính:** ICPDP Officer
 - **Module:** M07
-- **Mục tiêu nghiệp vụ:** Xác lập rằng số đã duyệt, đã giải ngân, đã chi và đã có chứng từ cùng
-  kể một câu chuyện.
-- **Kích hoạt:** Hoạt động kết thúc, hoặc đến hạn đối soát.
-- **Tiền điều kiện:** `EventBudget` đang ở `Disbursed`; đã có khoản chi được ghi nhận.
+- **Mục tiêu nghiệp vụ:** Xác lập rằng số đã duyệt, đã tạm ứng, đã chi và đã có chứng từ cùng
+  kể một câu chuyện, và chốt ai còn nợ ai bao nhiêu.
+- **Kích hoạt:** Một task quyết toán từ UC36, hoặc hạn quyết toán đã qua mà CLB chưa nộp (A2).
+- **Tiền điều kiện:** `EventBudget` đang ở `Settlement Submitted`, hoặc ở `Disbursed` /
+  `Reconciliation Pending` với hạn quyết toán đã qua (A2).
 - **Luồng chính:**
-  1. Officer mở ngân sách của sự kiện.
-  2. Hệ thống tính: đã duyệt, đã giải ngân, khoản chi đã ghi nhận, khoản chi có chứng từ, khoản
-     chi thiếu chứng từ, số dư còn lại, chênh lệch.
-  3. Officer xem xét các ngoại lệ do UC36 gắn cờ.
-  4. Officer đánh dấu hồ sơ `Reconciled`, hoặc `Exception` kèm phần chênh lệch được nêu rõ.
-  5. Hệ thống ghi audit kết quả; CLB thấy nó ở UC02.
+  1. Officer mở quyết toán của sự kiện.
+  2. Hệ thống tính: đã duyệt, đã tạm ứng, khoản chi đã ghi nhận, khoản chi có chứng từ, khoản
+     chi thiếu chứng từ, số dư chưa chi.
+  3. Officer xem xét từng khoản chi, nhất là các ngoại lệ do UC36 gắn cờ, và **chấp nhận** hoặc
+     **loại** nó kèm lý do. Khoản chi thiếu chứng từ bị loại.
+  4. Hệ thống chốt **chi hợp lệ** (tổng khoản được chấp nhận, trần là số duyệt) và **chênh lệch
+     tất toán** = chi hợp lệ − đã tạm ứng:
+     - bằng 0 → `Reconciled`, rồi `Closed` ngay (BR26);
+     - dương → `Reconciled`; nhà trường cấp bù phần chênh ở UC35 A2;
+     - âm → `Recovery Pending`, với **số phải hoàn** và hạn hoàn trả (BR58).
+  5. Hệ thống ghi audit kết quả, thông báo cho CLB; CLB thấy nó ở UC02.
 - **Luồng thay thế:**
   - **A1 Trả về để bổ sung chứng từ:** officer yêu cầu phần chứng từ còn thiếu, và hồ sơ chờ ở
-    `Reconciliation Pending`.
-- **Ngoại lệ:** **E1** số tiền đã giải ngân vượt số tiền đã duyệt → hồ sơ không đối soát được
-  cho tới khi có một văn bản điều chỉnh (BR23).
-- **Hậu điều kiện:** Hồ sơ ở `Reconciled` hoặc `Exception`; sau đó officer đóng nó tại đây →
-  `Closed` (BR26). Một hồ sơ `Exception` vẫn đóng được, với phần chênh lệch nằm trong hồ sơ.
-- **Quy tắc nghiệp vụ:** BR23, BR24, BR26. ICPDP là actor chính duy nhất; CMB đọc cùng bộ số
-  liệu qua UC02, và đó chính là thứ loại bỏ vấn đề hai actor chính của UC45 trong v1.
-- **Đầu ra:** Kết quả đối soát, bản ghi audit; đầu vào cho UC42.
-- **Use case liên quan:** UC35, UC36, UC42
+    `Reconciliation Pending` cho tới khi CLB nộp lại ở UC36 A3.
+  - **A2 Quá hạn quyết toán:** hạn quyết toán đã qua mà CLB chưa nộp (hoặc chưa nộp lại). Officer
+    chốt đối soát trên các khoản chi đã có chứng từ; mọi phần còn lại của số đã tạm ứng thành số
+    phải hoàn → `Recovery Pending` (BR57, BR58).
+- **Ngoại lệ:**
+  - **E1** số tiền đã tạm ứng vượt số tiền đã duyệt → hồ sơ không đối soát được cho tới khi có
+    một văn bản điều chỉnh (BR23);
+  - **E2** quá hạn hoàn trả mà CLB chưa hoàn đủ → khoản phải hoàn là nghĩa vụ quá hạn theo BR21,
+    và officer mở một hồ sơ vi phạm ở UC40 (BR58).
+- **Hậu điều kiện:** Ngân sách ở `Reconciled` (chờ cấp bù), `Recovery Pending` (chờ hoàn trả),
+  hoặc `Closed`. Ngân sách chỉ đóng khi chênh lệch tất toán đã được xử lý (BR26).
+- **Quy tắc nghiệp vụ:** BR21, BR23, BR24, BR26, BR57, BR58. ICPDP là actor chính duy nhất; CMB
+  đọc cùng bộ số liệu qua UC02, và đó chính là thứ loại bỏ vấn đề hai actor chính của UC45 trong v1.
+- **Đầu ra:** Kết quả đối soát (chi hợp lệ, chênh lệch tất toán, số phải hoàn), bản ghi audit,
+  thông báo; đầu vào cho UC40 và UC42.
+- **Use case liên quan:** UC35, UC36, UC40, UC42
 - **Pain point:** BP10
+
 
 ---
 
