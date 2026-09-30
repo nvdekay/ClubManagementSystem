@@ -1,0 +1,234 @@
+SCRIPT THUYẾT TRÌNH USE CASE DIAGRAM
+Nguồn: Group1_SE1939-NJ_Report_Final_v2.docx — Figure III.2.1 đến III.2.9
+Thời lượng: khoảng 30–60 giây mỗi hình, tổng khoảng 6–7 phút
+
+======================================================================
+MỞ ĐẦU (Figure III.2)
+======================================================================
+
+Phần này trình bày use case diagram của hệ thống. Hệ thống có 54 use case
+và 3 actor chính: Student, Club Management Board (gọi tắt là CMB) và ICPDP
+Officer. Ngoài ra có một hệ thống bên ngoài là Google OAuth.
+
+Vẽ 54 use case trong một hình thì không đọc được, nên nhóm tách theo actor,
+và với mỗi actor lại tách theo mảng nghiệp vụ. Tổng cộng có 9 hình, mỗi hình
+vừa một trang. Số UC trong hình trùng với phần đặc tả ở mục 3.2.
+
+Có một nguyên tắc xuyên suốt: mỗi use case chỉ có đúng một actor chính.
+Người nộp và người duyệt luôn là hai use case riêng. Ví dụ, CMB nộp đề xuất
+sự kiện ở UC25, còn ICPDP quyết định ở UC26.
+
+======================================================================
+HÌNH 1 — Use cases of every user (UC01–UC02)
+======================================================================
+
+Hình đầu tiên là phần chung cho mọi người dùng.
+
+Ba actor Student, CMB và ICPDP Officer đều kế thừa (generalization) từ một
+actor trừu tượng là User. Nhờ vậy hai use case dùng chung chỉ cần vẽ một
+lần.
+
+- UC01 – Sign in with Google: mọi người đăng nhập bằng tài khoản Google của
+  trường. Hệ thống kiểm tra domain email, nạp các vai trò của tài khoản rồi
+  đưa người dùng vào đúng workspace. Google OAuth là actor bên ngoài tham
+  gia use case này.
+- UC02 – View dashboard: mỗi vai trò có một dashboard trả lời hai câu hỏi:
+  việc gì đang chờ tôi xử lý, và những gì tôi đã nộp đang ở trạng thái nào.
+
+Khách chưa đăng nhập (Guest) không phải actor. Họ chỉ xem được trang công
+khai của CLB; muốn làm bất cứ việc gì đều phải đăng nhập qua UC01.
+
+======================================================================
+HÌNH 2 — Use cases of Student (9)
+======================================================================
+
+Student có 9 use case, đi theo đúng hành trình của một sinh viên:
+
+- Tìm và tham gia: duyệt CLB (UC06), rồi ứng tuyển vào CLB (UC17). Sinh
+  viên muốn tự lập CLB thì nộp hồ sơ thành lập (UC07).
+- Khi đã là thành viên: dùng member workspace (UC24) để xem thông tin thành
+  viên, lịch sự kiện và lịch sử điểm danh. Khi muốn rời CLB thì gửi yêu cầu
+  rời (UC22); sinh viên chỉ yêu cầu, CLB mới là bên thực hiện.
+- Tham gia sự kiện: đăng ký (UC29), check-in tại chỗ (UC31), sau sự kiện
+  gửi feedback (UC50). Chỉ người đã check-in mới được gửi feedback, và
+  feedback có thể ẩn danh.
+- Khiếu nại: UC52 cho phép sinh viên khiếu nại về một CLB. Khiếu nại đi
+  thẳng tới ICPDP, không qua CLB, để bảo vệ người khiếu nại.
+
+======================================================================
+HÌNH 3 — CMB: Club governance (4)
+======================================================================
+
+Từ hình này trở đi là Ban chủ nhiệm CLB (CMB). CMB có nhiều use case nhất
+nên được tách thành 4 hình. Hình đầu là quản trị CLB:
+
+- UC09 – Configure club profile: hoàn thiện hồ sơ CLB và dựng cơ cấu tổ
+  chức nội bộ gồm các ban và các chức vụ.
+- UC10 – Nominate board: đề cử ban chủ nhiệm cho nhiệm kỳ, từng ghế một.
+- UC12 – Plan leadership transition: ban cũ chuẩn bị bàn giao gồm nhiệm kỳ
+  mới, ứng viên, và các sự kiện, ngân sách, báo cáo còn dang dở.
+- UC14 – Request suspension: CLB chủ động xin tạm dừng hoạt động, nêu lý do
+  và cách xử lý các nghĩa vụ còn tồn.
+
+Cả bốn use case này CMB chỉ đề xuất. Quyết định nằm ở ICPDP, tương ứng với
+UC11, UC13 và UC15 ở hình 7.
+
+======================================================================
+HÌNH 4 — CMB: Recruitment & membership (6)
+======================================================================
+
+Hình thứ hai của CMB là tuyển thành viên và quản lý thành viên:
+
+- UC16: tạo và công bố đợt tuyển, gồm vị trí, tiêu chí, thời hạn, chỉ tiêu
+  và form ứng tuyển.
+- UC18 – Screen applications: xét các hồ sơ sinh viên nộp ở UC17, đi từ
+  sàng lọc, shortlist đến kết quả Accepted, Rejected hoặc Waitlisted.
+- UC19 – Record candidate evaluation có quan hệ <<extend>> tới UC18. Trong
+  lúc xét hồ sơ, người chấm có thể chấm điểm ứng viên theo rubric. Đây là
+  bước tùy chọn, không phải hồ sơ nào cũng cần.
+- UC20: onboard ứng viên đã được nhận, tức là tạo membership và mở quyền
+  vào workspace.
+- UC21: quản lý trạng thái thành viên. Active và Inactive chuyển qua lại
+  được; Left và Banned là trạng thái cuối.
+- UC23: giao chức vụ nội bộ, dưới cấp ban chủ nhiệm, cho thành viên.
+
+======================================================================
+HÌNH 5 — CMB: Events & bookings (6)
+======================================================================
+
+Hình thứ ba của CMB là sự kiện và đặt cơ sở vật chất:
+
+- UC25: nộp đề xuất sự kiện. Hệ thống tự kiểm tra xung đột lịch và báo là
+  không xung đột, cảnh báo, hay chặn.
+- UC47 – Request property booking có quan hệ <<extend>> tới UC25. Khi nộp
+  đề xuất sự kiện, CLB có thể kèm yêu cầu đặt phòng. UC47 cũng dùng độc lập
+  được khi CLB đặt phòng không gắn với sự kiện nào.
+- UC27: sau khi sự kiện được duyệt, CLB công bố sự kiện và mở đăng ký.
+- UC30: quản lý sức chứa và danh sách chờ (waitlist), đôn người từ waitlist
+  lên theo đúng thứ tự.
+- UC28: huỷ hoặc dời sự kiện.
+- UC49 – Cancel / release booking có quan hệ <<extend>> tới UC28. Khi sự
+  kiện bị huỷ, phòng gắn với sự kiện được trả lại. Huỷ muộn sẽ bị ghi nhận
+  thành tín hiệu tuân thủ.
+
+======================================================================
+HÌNH 6 — CMB: Accountability & finance (7)
+======================================================================
+
+Hình cuối của CMB là trách nhiệm giải trình và tài chính, tức là những gì
+CLB phải chứng minh sau khi hoạt động:
+
+- Sau sự kiện:
+  - UC31 – Check in xuất hiện ở đây với ghi chú (Student). Actor chính của
+    UC31 vẫn là Student; CMB chỉ là actor hỗ trợ vận hành check-in tại chỗ.
+    Vì vậy UC31 không được tính vào 7 use case của hình này.
+  - UC32: chốt dữ liệu điểm danh, xử lý các check-in bất thường rồi khoá
+    dữ liệu.
+  - UC51: xem tổng hợp feedback của sinh viên.
+  - UC33: nộp báo cáo sau sự kiện. Hệ thống tự điền sẵn điểm danh, chi tiêu
+    và feedback.
+- Tài chính: xin ngân sách (UC35), ghi nhận chi tiêu kèm chứng từ (UC38).
+- Định kỳ: nộp báo cáo hoạt động định kỳ (UC40) và phản hồi các khiếu nại
+  mà ICPDP chuyển xuống (UC54).
+
+======================================================================
+HÌNH 7 — ICPDP: Access & club lifecycle (7)
+======================================================================
+
+Ba hình cuối là của ICPDP Officer, cơ quan đại diện duy nhất của nhà trường
+trong hệ thống. Các phòng Tài chính, Cơ sở vật chất và An ninh không dùng hệ
+thống; khi cần ý kiến của họ, ICPDP tự hỏi bên ngoài rồi ghi kết quả vào
+quyết định.
+
+Hình đầu tiên là cấu hình hệ thống và vòng đời CLB:
+
+- Cấu hình:
+  - UC03: quản lý tài khoản và vai trò.
+  - UC04: cấu hình chính sách và các deadline.
+  - UC05 – Configure approval routing: quy định hồ sơ nào cần duyệt thêm
+    cấp thứ hai trong nội bộ ICPDP, theo loại hồ sơ, số tiền, mức rủi ro
+    hoặc lịch sử tuân thủ. Hồ sơ không khớp rule nào thì duyệt một cấp.
+- Vòng đời CLB:
+  - UC08: quyết định hồ sơ thành lập CLB.
+  - UC11: xác nhận ban chủ nhiệm.
+  - UC13: xác nhận chuyển giao nhiệm kỳ.
+  - UC15: đình chỉ, kích hoạt lại hoặc giải thể CLB.
+- UC15 có quan hệ <<extend>> tới UC42 – Manage compliance case. Khi một vụ
+  vi phạm đủ nghiêm trọng, ICPDP có thể nâng lên thành đình chỉ hoặc giải
+  thể CLB. UC42 được vẽ chi tiết ở hình 9.
+
+======================================================================
+HÌNH 8 — ICPDP: Events, bookings & finance (7)
+======================================================================
+
+Hình thứ hai của ICPDP gồm các bước duyệt tương ứng với những gì CMB đã nộp
+ở hình 5 và hình 6:
+
+- Sự kiện: quyết định đề xuất sự kiện (UC26), sau sự kiện thì thẩm định và
+  đóng báo cáo (UC34).
+- Cơ sở vật chất: ICPDP quản lý danh mục phòng và tài sản cho mượn (UC46)
+  và duyệt yêu cầu đặt (UC48). Duyệt sự kiện không đồng nghĩa với duyệt
+  phòng; hai quyết định này tách riêng.
+- Tài chính:
+  - UC36: duyệt ngân sách. Số tiền duyệt được lưu tách khỏi số tiền xin.
+  - UC37: ghi nhận giải ngân.
+  - UC39: đối soát ngân sách với chi tiêu thực tế.
+- UC42 có quan hệ <<extend>> tới UC34 và UC39. Nếu lúc đóng báo cáo sự kiện
+  hoặc lúc đối soát ngân sách phát hiện sai phạm, officer có thể mở một vụ
+  việc tuân thủ ngay từ đó.
+
+======================================================================
+HÌNH 9 — ICPDP: Compliance & evaluation (6)
+======================================================================
+
+Hình cuối cùng là giám sát tuân thủ và đánh giá CLB:
+
+- UC41: thẩm định báo cáo định kỳ, đối chiếu với số liệu mà chính hệ thống
+  đang giữ.
+- UC53: phân loại khiếu nại của sinh viên. Có ba hướng xử lý: bác bỏ, chuyển
+  cho CLB phản hồi, hoặc mở vụ việc.
+- UC42 – Manage compliance case là use case trung tâm của hình này. Mỗi vi
+  phạm được quản lý như một vụ việc có trạng thái, người phụ trách và lịch
+  sử xử lý. UC42 được mở từ ba nguồn qua quan hệ extend: khiếu nại (UC53),
+  báo cáo sự kiện (UC34) và đối soát ngân sách (UC39). Ngược lại, UC42 có
+  thể dẫn tới đình chỉ CLB (UC15).
+- Đánh giá CLB:
+  - UC43: cấu hình bộ tiêu chí và trọng số.
+  - UC44: hệ thống tự sinh bản nháp đánh giá từ dữ liệu vận hành của cả kỳ.
+  - UC45: officer rà soát, chốt và công bố kết quả cho CLB.
+
+Như vậy dữ liệu tạo ra ở mọi module (điểm danh, feedback, tài chính, vi
+phạm) đều được dùng lại cho việc đánh giá CLB cuối kỳ.
+
+======================================================================
+KẾT
+======================================================================
+
+Tóm lại, 9 hình phủ đủ 54 use case: 2 use case dùng chung, 9 của Student,
+23 của CMB và 20 của ICPDP.
+
+Luồng chung của hệ thống là: CMB nộp -> ICPDP quyết định -> CMB giải trình
+-> ICPDP giám sát và đánh giá. Sinh viên tham gia ở cả hai đầu của luồng
+này, vừa là người dùng hoạt động, vừa là nguồn phản hồi và khiếu nại.
+
+======================================================================
+CHUẨN BỊ Q&A
+======================================================================
+
+- "Sao UC31 có ở cả hình Student và hình CMB?"
+  Actor chính của UC31 là Student; CMB chỉ là actor hỗ trợ. Nhãn (Student)
+  trong hình CMB là để nói rõ điều đó.
+
+- "Hướng mũi tên extend?"
+  Mũi tên đi từ use case mở rộng (tùy chọn) và chỉ vào use case gốc. Ví dụ:
+  UC47 -> UC25 nghĩa là việc đặt phòng là phần tùy chọn khi nộp đề xuất sự
+  kiện.
+
+- "Duyệt 2 cấp ở đâu trong hình?"
+  Hình không vẽ thêm actor nào cho cấp 2. Cấp 2 là quyền RBAC trong nội bộ
+  ICPDP, được cấu hình ở UC05, nên actor vẫn là ICPDP Officer.
+
+- "Sao không có actor Guest hay phòng Tài chính?"
+  Guest chỉ xem trang công khai, không có use case riêng. Các phòng ban khác
+  không dùng hệ thống; ICPDP lấy ý kiến của họ bên ngoài rồi ghi vào quyết
+  định.

@@ -94,7 +94,7 @@ theo vai trò.
 | Hạng mục | Số lượng |
 |---|---|
 | Actor là người | 3 (Student, Club Management Board, ICPDP Officer) |
-| Hệ thống ngoài | 2 (Google OAuth, Google SMTP) |
+| Hệ thống ngoài | 3 (Google OAuth, Google SMTP, Cloudinary) |
 | Module nghiệp vụ | 12 (M01–M12) |
 | Use case | 54 (UC01–UC54) |
 | Quy tắc nghiệp vụ | 51 quy tắc còn hiệu lực (BR01–BR52, BR43 đã rút) |
@@ -293,6 +293,8 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 | **ES1** | Google OAuth | UCMS → Google | `Authentication request` |
 | | | Google → UCMS | `Authentication data` — email, họ tên, ảnh đại diện |
 | **ES2** | Google SMTP Service | UCMS → Google | `Send email request` cho mọi thông báo có kênh email |
+| **ES3** | Cloudinary | UCMS → Cloudinary | `Image upload` — ảnh người dùng tải lên |
+| | | Cloudinary → UCMS | `Image URL` — hệ thống lưu URL thay cho file |
 
 ### Mô hình RBAC
 
@@ -2918,6 +2920,8 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Authentication data | UC01 |
 | Hệ thống → Google SMTP | Send email request | mọi thông báo (§8.2) |
+| Hệ thống → Cloudinary | Image upload | mọi UC có tải ảnh lên |
+| Cloudinary → Hệ thống | Image URL | mọi UC có tải ảnh lên |
 
 ## 14.5 Bản đồ quan hệ use case
 

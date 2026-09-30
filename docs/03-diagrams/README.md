@@ -5,7 +5,7 @@ tương ứng của VS Code.
 
 | File | Thể hiện điều gì |
 |---|---|
-| [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | **Context diagram hiện hành** — biên hệ thống và 55 luồng dữ liệu giữa UCMS, 3 actor và 2 hệ thống ngoài. Mỗi luồng được ánh xạ tới use case ở `../SRS.md` §14.4 |
+| [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | **Context diagram hiện hành** — biên hệ thống và 57 luồng dữ liệu giữa UCMS, 3 actor và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng được ánh xạ tới use case ở `../SRS.md` §14.4 |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC54 — mỗi trang một nhóm actor: All users, Student, CMB 1–4, ICPDP 1–3 |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Budget Request, Property Booking |
 | [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | Context diagram đầu tiên của nhóm (40 luồng). **Đã bị thay thế** bởi v2; giữ lại làm lịch sử |
