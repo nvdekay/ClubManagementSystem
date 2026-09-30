@@ -26,9 +26,10 @@ Cập nhật: 2026-09-26.
 | BR16 | Duyệt đa cấp theo rule UC05; không khớp rule nào → duyệt một cấp | I26, **I34** | I26, I34 đã sửa |
 | BR17 | Số đăng ký xác nhận không vượt sức chứa (trừ overbooking) | I38 | Đã sửa (I38) |
 | BR18 | Mỗi người 1 bản ghi điểm danh chính thức / sự kiện | I38 | Đã sửa (I38) |
+| BR22 | Ngân sách chỉ tồn tại trong đề xuất sự kiện (UC25), được quyết định cùng đề xuất ở UC26; không có ngân sách tách rời sự kiện | I59 | Đã sửa (viết lại) |
 | BR23 | Giải ngân không vượt số đã duyệt | I38 | Đã sửa (I38) |
 | BR25 | Chứng từ theo hạng mục chi định nghĩa trong tài liệu chính sách | I35 | Đã sửa |
-| BR26 | Đối soát xong mới được đóng hồ sơ ngân sách | I38 | Đã sửa (I38) |
+| BR26 | Đối soát xong mới được đóng ngân sách của sự kiện | I38, I59 | Đã sửa (I38; I59 đổi chữ) |
 | BR27 | Thang mức độ vi phạm định nghĩa trong tài liệu chính sách | I35 | Đã sửa |
 | BR29 | Tổng trọng số phải hợp lệ trước khi kích hoạt scheme | I38 | Đã sửa (I38) |
 | BR30 | Kỳ đánh giá đã công bố không sửa tại chỗ | I38 | Đã sửa (I38) |
@@ -40,12 +41,16 @@ Cập nhật: 2026-09-26.
 | BR44 | Sự kiện bắt đầu và kết thúc trong cùng một học kỳ | I05 | Đã sửa (BR mới) |
 | BR45 | Khi đã có quyết định giải thể, không gì kết thúc sau kỳ `Dissolving` | I05 | Đã sửa (BR mới) |
 | BR46 | Sinh viên `Banned` không được apply / tiếp nhận lại vào CLB đó | I25 | Đã sửa (BR mới) |
-| BR47 | Quyền CMB chỉ đến từ vị trí đã xác nhận trong nhiệm kỳ (UC08, UC11, UC13, UC23); UC03 không cấp | I33 | Đã sửa (BR mới) |
+| BR47 | Quyền trong CLB chỉ đến từ vị trí trong nhiệm kỳ: ghế Chủ nhiệm (Club Leader), ghế tạm của người đứng đơn, ghế ban chủ nhiệm khác hoặc role gán ở UC23; UC03 không cấp | I33, I58 | Đã sửa (BR mới, sửa lại ở I58) |
 | BR48 | Mỗi sinh viên tối đa 1 đăng ký / sự kiện | I38 | Đã sửa (BR mới) |
 | BR49 | Chỉ thấy / thao tác trên CLB mình có tư cách thành viên hoặc chức vụ trong nhiệm kỳ | I38 | Đã sửa (BR mới) |
 | BR50 | `Registration Open/Closed` suy ra từ registration window | I38 | Đã sửa (BR mới) |
 | BR51 | Scheme đánh giá đã dùng thì khoá, sửa phải tạo version mới | I38 | Đã sửa (BR mới) |
 | BR52 | Thành viên giữ ghế board phải được thay trước khi rời | I38 | Đã sửa (BR mới) |
+| BR53 | Sự kiện nội bộ không có ngân sách được ghi nhận thẳng, ICPDP xem được, đóng khi chốt điểm danh | I57 | Đã sửa (BR mới) |
+| BR54 | Mỗi UC vận hành CLB kiểm tra permission của người gọi; quyền là hợp các role, leader có mọi quyền | I58 | Đã sửa (BR mới) |
+| BR55 | Danh mục permission cố định; 4 quyền giữ riêng của leader không cấp được; cơ cấu ban đầu ICPDP thẩm định ở UC07 / UC08, sau đó leader sửa tự do trừ role ban điều hành (người giữ qua UC10 / UC11 / UC13, thêm / bỏ qua UC12 / UC13) | I58 | Đã sửa (BR mới, sửa ở lần 2) |
+| BR56 | Cơ cấu role đánh phiên bản (phiên bản 1 từ UC08, mỗi thay đổi ở UC23 / UC13 là phiên bản mới); role Chủ nhiệm cố định, role Members mặc định tự gán ở UC20; ICPDP xem mọi phiên bản và lịch sử ban điều hành | I58 | Đã sửa (BR mới, lần 2) |
 
 **Còn mở, cần làm:** không còn issue nào trong bảng này (I21 không sửa).
 

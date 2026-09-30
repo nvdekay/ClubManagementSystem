@@ -6,7 +6,8 @@
 - [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) — gọi tắt **Spec**
 - [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) — gọi tắt **UCD** (use case diagram)
 - [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio) — gọi tắt **CD** (context diagram).
-  Từ I15–I20 trở đi, CD hiện hành là [`../03-diagrams/UCMS_Context_Diagram_v2.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.drawio)
+  Từ I15–I20 trở đi, CD hiện hành là [`../03-diagrams/UCMS_Context_Diagram_v2.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.drawio);
+  từ I56 trở đi là [`../03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.1.drawio)
 - [`../Group1_SE1939-NJ_Report_Final_v2.docx`](../Group1_SE1939-NJ_Report_Final_v2.docx) — gọi tắt
   **Report** (từ I31 trở đi, review ngày 2026-09-26). Ký hiệu mục theo heading của report, ví dụ
   **Report §III.2.1** là mục *2.1 Actors* của chương III.
@@ -15,6 +16,10 @@ Ký hiệu `§N` là mục số N của tài liệu đó (heading `## N. ...`). 
 `## 9. Actor → use case matrix` trong `UCMS_UseCase_Model_v2.md`.
 
 Ngày review: 2026-09-23.
+
+> **Đánh số use case.** Các issue I01–I58 giữ nguyên số UC tại thời điểm chúng được viết (54 use case,
+> UC01–UC54). Từ I59, UC35 và UC36 bị bỏ và UC37–UC54 được đánh số lại thành UC35–UC52 (52 use case);
+> bảng ánh xạ số cũ → số mới nằm ở mục I59.
 
 **Khi xử lý một issue, phải làm đủ 2 việc:**
 
@@ -84,6 +89,10 @@ Ngày review: 2026-09-23.
 | I53 | 🟢 | MSG12 đặt "above the feedback form", nhưng ngữ cảnh là màn hình tổng hợp feedback của CMB (UC51) | Report Table III.7 | Đã sửa | MSG12 → "Inline, on the feedback summary (club)" |
 | I54 | 🟢 | Thông tin chưa đủ: MSSV/email `[TBD]`; "Le Thanh Hai" không dấu; deliverable ghi `report.docx` | Report bìa, Table I.1, I.2, VI.1 | Cần quyết định | Đã sửa "Lê Thanh Hải" và tên file; còn thiếu MSSV (Phong, Quang Huy, Ngọc Huy) và email (Phong, Quang Huy) |
 | I55 | 🟡 | UCD theo actor không có «include» nào: sau I09, I11, I28 chỉ còn association phẳng tới từng UC, kèm mã UC trên oval | UCD mọi trang | Đã sửa | Vẽ lại 8 trang actor: actor → `Manage …` «include» chức năng con (CRUD cho UC quản lý danh mục); bỏ mã UC trên oval; bỏ 2 cạnh «extend» (quan hệ vẫn ghi trong Spec) |
+| I56 | 🟡 | CD v2 bị nhận xét "quá nhiều chữ, vừa thiếu vừa thừa": 57 luồng gần như mỗi UC một luồng, 10 hồ sơ vẽ hai lần (CMB → hệ thống → ICPDP), nhãn là hành động; Student gần như không nhận gì, CMB thiếu thông báo vi phạm và kết quả giải ngân, ICPDP không có số liệu nào; Cloudinary có trên sơ đồ nhưng thiếu trong Model | CD, Model §3, §15, SRS §2.1, §2.3, §14.4, Report §III.1 | Đã sửa | CD v2.1: 35 luồng gộp theo nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bổ sung luồng còn thiếu; Cloudinary vào Model §3; bảng luồng → UC viết lại ở Model §15 và SRS §14.4 |
+| I57 | 🟡 | Sự kiện nội bộ CLB (chỉ thành viên) không có chỗ trong hệ thống: mọi sự kiện đều phải qua ICPDP duyệt (UC26), nên buổi sinh hoạt nhỏ hoặc phải xin duyệt, hoặc không được ghi lại, và ICPDP không thấy chúng | Model/Spec UC02, UC25–UC28, UC32, UC33; SRS §5, §6.6, §10.1; State diagram Event; DBML `events` | Đã sửa | Thêm BR53 (phương án A): sự kiện `Internal` không có ngân sách được ghi nhận thẳng `Draft → Approved`, có audit, ICPDP xem ở UC02, đóng khi chốt điểm danh ở UC32 |
+| I58 | 🟡 | CMB là một actor chung, không phân biệt Chủ nhiệm với thành viên được giao việc; không có UC để tạo role và cấu hình permission; UC23 chỉ gán chức vụ định nghĩa sẵn ở UC09, chức vụ nhạy cảm phải qua ICPDP | Model §3, §4, §9, §11, §15, UC09, UC22–UC24, mọi UC của CMB; Spec; SRS §2.3; UCD trang CMB; CD; DBML; Report | Đã sửa | Tách CMB thành Club Member (actor gốc, làm UC vận hành khi có permission) và Club Leader (Chủ nhiệm, kế thừa Club Member); UC23 thành "Quản lý vai trò CLB và phân quyền"; sửa BR47, thêm BR54, BR55. Lần 2: cơ cấu role khai báo trong hồ sơ UC07, ICPDP thẩm định ở UC08, đánh phiên bản, role ban điều hành do chủ nhiệm đánh dấu và đổi qua chuyển giao, role Members mặc định; thêm BR56; CD 40 luồng |
+| I59 | 🟡 | Ngân sách bị mô hình thành luồng riêng (UC35 Gửi yêu cầu ngân sách, UC36 Thẩm định yêu cầu ngân sách, máy trạng thái Budget Request, permission `club.budget.request`), trong khi nhóm đã thống nhất ngân sách là một phần của đề xuất sự kiện và không có ngân sách tách rời sự kiện | Model, Spec, SRS (UC25, UC26, UC35–UC39, BR22, §6.7, §7, permission), DBML, TASKS, HLD, CD, UCD, State diagram, Report | Đã sửa | Bỏ UC35, UC36; ngân sách là phần tuỳ chọn của đề xuất UC25 và được duyệt ở UC26 (tạo `EventBudget`); BR22 viết lại; bỏ `club.budget.request` (còn 15 permission); đánh số lại UC37–UC54 → UC35–UC52 (52 UC) |
 
 ---
 
@@ -1414,3 +1423,173 @@ sinh (Spec/Model + generator) rồi sinh lại, không sửa tay trong `.docx`.
   - Bỏ: association CMB — Check in (vai trò hỗ trợ) và các node mượn "(see ICPDP n)".
   - Lý do: theo lựa chọn của nhóm (kiểu gom chức năng, CRUD được include). Model/Spec vẫn giữ
     UC01–UC54; các chức năng con CRUD là bước trong luồng chính của UC tương ứng.
+
+### I56 — Context diagram quá nhiều chữ, vừa thiếu vừa thừa
+- **Vấn đề:** review nhận xét CD v2 "quá nhiều chữ, vừa thiếu vừa thừa". Đối chiếu thì thấy:
+  - **Thừa:** 57 luồng, gần như mỗi UC một luồng. 10 hồ sơ bị vẽ hai lần (CMB → hệ thống, rồi hệ
+    thống → ICPDP). Nhiều nhãn là hành động chứ không phải dữ liệu (`Member management`,
+    `Event publishment`, `Send email request`).
+  - **Thiếu:** Student chỉ có 3 luồng ra, không nhận kết quả đăng ký sự kiện hay kết quả khiếu
+    nại. CMB không nhận thông báo vi phạm, kết quả giải ngân hay danh sách đăng ký sự kiện. ICPDP
+    không nhận số liệu nào. Cloudinary có trên sơ đồ nhưng thiếu trong Model §3 và §15.
+- **Xử lý:**
+  - Ngày: 2026-09-30
+  - File đã sửa: `03-diagrams/UCMS_Context_Diagram_v2.1.drawio` (mới) và
+    `03-diagrams/img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png`; `03-diagrams/README.md`,
+    `../README.md`; Model (dòng dẫn đầu file, §3, §15); `SRS.md` (bảng tổng quan, R5, §2.1, §2.3
+    ES1–ES3, §14.4, danh mục sơ đồ); Report §III.1 (đoạn mô tả và Figure III.1, hình xoay ngang).
+  - Thay đổi: 57 luồng → 35 luồng (Student 4 vào / 4 ra, CMB 7 / 5, ICPDP 6 / 4, OAuth 2, SMTP 1,
+    Cloudinary 2). Mỗi luồng là một nhóm dữ liệu và có một mũi tên thẳng riêng. Các hồ sơ gửi lên
+    ICPDP gộp thành `Submissions for review`, các quyết định gộp thành `Review decisions`. Nhãn
+    đổi sang danh từ dữ liệu (`Send email request` → `Email message`, `Image upload` → `Image
+    file`, `Authentication data` → `Identity data`). Thêm các luồng còn thiếu: `Complaint
+    outcome` (→ Student), `Violation notices & evaluation results`, `Review decisions &
+    disbursements`, `Member applications & event registrations` (→ CMB), `Club statistics &
+    evaluation draft` và `Internal event records` (→ ICPDP, xem I57).
+  - Lý do: context diagram (DFD mức 0) thể hiện dữ liệu đi qua biên hệ thống ở mức nhóm; chi tiết
+    theo từng UC đã có ở use case diagram và ở bảng ánh xạ Model §15 / SRS §14.4. CD v2 giữ lại
+    làm lịch sử.
+
+### I57 — Sự kiện nội bộ không được ghi nhận trong hệ thống
+- **Vấn đề:** mọi sự kiện đều đi UC25 → UC26 (ICPDP duyệt) → UC27. FR-UC27-04 đã có khái niệm
+  "sự kiện nội bộ" (chỉ thành viên CLB) nhưng nó vẫn phải xin duyệt. Kết quả là một buổi sinh hoạt
+  nhỏ hoặc phải qua ICPDP, hoặc nằm ngoài hệ thống, và ICPDP không thấy CLB có hoạt động.
+- **Cách sửa đã chọn:** phương án A — thêm phạm vi `Public` / `Internal` vào UC25. Nhóm yêu cầu
+  ICPDP phải xem được các sự kiện này.
+- **Xử lý:**
+  - Ngày: 2026-09-30
+  - File đã sửa: `SRS.md` (UC02, UC25 FR-14…16, UC26 FR-12, UC27 FR-04, UC28 FR-02, UC32 FR-08,
+    UC33 FR-10, BR53, §6.6, §7.2, AUD-03, §10.1, §14.2); Model (UC02, UC25–UC28, UC32, UC33, §10.5,
+    bảng BR); Spec (UC02, UC25 A4, UC26, UC27 A1, UC28, UC32 A2, UC33); `UCMS_BR_Issues_Context.md`;
+    `03-diagrams/UCMS_State_Diagrams.drawio` trang Event và ảnh `UCMS_State_Diagrams_06_Event.png`;
+    `05-implementation/UCMS_Database_Design.dbml` (`events.audienceScope`, index `ix_events_scope`);
+    Report (UC02 bước 3, UC25 alt 4c.1 và BR53, UC32 alt 3b.1 và BR53, catalogue BR, Figure III.16).
+  - Thay đổi — **BR53 (mới):** sự kiện `Internal` không có dự toán ngân sách được **ghi nhận**
+    chứ không xin duyệt: UC25 chuyển thẳng `Draft → Approved`, không tạo review task, ghi audit
+    `RECORD_INTERNAL`; ICPDP xem mọi sự kiện như vậy trên dashboard UC02 (lọc theo CLB và học kỳ,
+    xem chi tiết và điểm danh, chỉ đọc). Sự kiện không cần báo cáo sau sự kiện, và đóng
+    `Completed → Closed` khi chốt điểm danh ở UC32. Sự kiện `Internal` có dự toán ngân sách vẫn đi
+    UC26; booking đính kèm luôn do UC48 quyết định (BR35). BR10, BR15, BR21, BR44, BR45 vẫn áp
+    dụng. Đổi lịch sự kiện nội bộ chỉ ghi nhận lại, không quay về UC26. ICPDP xử lý sai phạm qua
+    UC42 như mọi sự kiện.
+  - Lý do: giữ được luồng duyệt cho mọi thứ tốn tiền hoặc chiếm cơ sở vật chất của trường, đồng
+    thời ghi lại hoạt động nội bộ bằng dữ liệu điểm danh (UC29–UC32) sẵn có, không thêm thực thể
+    mới. Bỏ nghĩa vụ báo cáo vì một buổi sinh hoạt nội bộ không có gì để ICPDP thẩm định; bộ điểm
+    danh đã chốt chính là bản ghi hoạt động.
+
+### I58 — CMB không phân biệt Chủ nhiệm với thành viên, không có cấu hình role và permission
+- **Vấn đề:** CMB là một actor chung cho cả ban chủ nhiệm lẫn thành viên được giao việc. Chủ
+  nhiệm không có cách tạo role cho CLB hay quyết định mỗi role làm được gì: UC09 định nghĩa chức
+  vụ, UC23 chỉ gán chức vụ có sẵn, quyền của chức vụ không được cấu hình ở use case nào, và chức
+  vụ "nhạy cảm" phải đưa qua ICPDP xác nhận (UC23 A1).
+- **Cách sửa đã chọn** (nhóm chốt 2026-09-30):
+  1. Club Member là actor gốc cho việc vận hành CLB, chỉ làm được khi role có permission; Club
+     Leader kế thừa Club Member.
+  2. Club Leader là người giữ ghế Chủ nhiệm đã được ICPDP xác nhận (UC11 / UC13); leader không
+     uỷ quyền quản lý role cho người khác.
+  3. Leader cấp permission từ danh mục cố định, trừ bốn quyền giữ riêng của leader.
+  4. Role nội bộ và việc gán role có hiệu lực ngay, không cần ICPDP; chỉ ghế ban chủ nhiệm vẫn qua
+     UC10 / UC11. Bỏ cờ "chức vụ nhạy cảm".
+- **Xử lý:**
+  - Ngày: 2026-09-30
+  - File đã sửa: `SRS.md` (§2.3 actor, mô hình RBAC và danh mục permission, trường actor của các
+    UC, UC09, UC23, BR); Model (§2 tổng số actor, §3, §4, §6 dòng Actor của mọi UC phía CLB, UC09,
+    UC22–UC24, UC31, §9, §11 BR47 / BR54 / BR55, §15); Spec (bảng tổng hợp, dòng Actor chính, ngoại
+    lệ và quy tắc BR54 của 19 UC vận hành, UC09, UC22, UC23 viết lại, UC24, UC31, ghi chú đầu
+    tài liệu); `UCMS_BR_Issues_Context.md`; `05-implementation/UCMS_Database_Design.dbml`
+    (`clubPositions`, `permissions`); `03-diagrams/UCMS_UseCase_ByActor.drawio` các trang phía CLB
+    và ảnh PNG; `03-diagrams/UCMS_Context_Diagram_v2.1.drawio` và ảnh PNG; `03-diagrams/README.md`;
+    Report (actor, bảng UC, UC23, catalogue BR, các hình UCD và context diagram).
+  - Thay đổi:
+    - Actor: Student ◁ Club Member ◁ Club Leader. Club Member làm UC22, UC24 và 19 UC vận hành
+      khi có permission (`club.profile.manage`, `club.recruitment.manage`,
+      `club.application.review`, `club.member.manage`, `club.event.manage`,
+      `club.attendance.manage`, `club.report.submit`, `club.budget.request`, `club.expense.record`,
+      `club.booking.manage`, `club.feedback.view`, `club.complaint.respond`). Club Leader có mọi
+      permission và giữ riêng UC10, UC12, UC14, UC23. "CMB" được giữ làm tên gọi chung của phía CLB
+      trong câu văn.
+    - UC23 "Phân công chức vụ trong CLB" → "Quản lý vai trò CLB và phân quyền": tạo / sửa / ngừng
+      dùng role, cấu hình permission, gán / thu hồi thành viên; bỏ A1 chức vụ nhạy cảm; thêm bộ role
+      mặc định và ghế ban chủ nhiệm (chỉ cấu hình permission, người giữ đến từ UC10 / UC11). UC09
+      chỉ còn hồ sơ và ban / bộ phận.
+    - BR47 sửa: quyền trong CLB đến từ ghế Chủ nhiệm (Club Leader), ghế tạm của người đứng đơn,
+      ghế ban chủ nhiệm khác hoặc role gán ở UC23. BR54 mới: kiểm tra permission ở mọi UC vận
+      hành. BR55 mới: danh mục permission cố định, quyền giữ riêng của leader, role có hiệu lực
+      ngay.
+    - Context diagram v2.1: CMB tách thành Club Member (13 luồng) và Club Leader (3 luồng, thêm
+      `Club roles & permissions` và `Leadership & club status decisions`); `Leave request` và
+      `Member workspace` chuyển từ Student sang Club Member. Tổng 39 luồng.
+  - Lý do: đúng cách CLB thật sự vận hành — Chủ nhiệm chịu trách nhiệm trước nhà trường và tự phân
+    việc trong CLB. Giữ ICPDP ở vòng xác nhận ban chủ nhiệm, còn phân quyền nội bộ để CLB tự làm,
+    có audit để ICPDP theo dõi. Giữ "CMB" làm tên gọi chung để không phải viết lại hàng trăm câu
+    văn chỉ nói về "phía CLB".
+  - **Cập nhật lần 2 (2026-09-30).** Nhóm bổ sung: ICPDP phải theo dõi được CLB có những role nào,
+    việc chuyển giao, và lịch sử ban điều hành. Bốn quyết định:
+    1. Cơ cấu role + permission được khai báo trong hồ sơ thành lập UC07; ICPDP thẩm định cùng hồ
+       sơ ở UC08; khi duyệt, cơ cấu thành phiên bản 1 của CLB.
+    2. Chủ nhiệm tự đánh dấu role nào thuộc ban điều hành (ví dụ Phó chủ nhiệm, Trưởng ban A,
+       Trưởng ban B); người giữ các role này đi qua UC10 / UC11 và thay qua chuyển giao UC12 / UC13
+       → có lịch sử ban điều hành theo nhiệm kỳ.
+    3. Sau khi thành lập, leader sửa cơ cấu tự do ở UC23, mỗi lần sửa là một phiên bản mới có ngày
+       hiệu lực; thêm / bỏ role ban điều hành chỉ đi qua UC12 / UC13.
+    4. Role Members là role mặc định, không xoá được, tự gán cho mọi thành viên ở UC20; chủ nhiệm
+       chọn permission cho nó (mặc định không có). Role Chủ nhiệm cố định trong mọi cơ cấu.
+    - File đã sửa: `SRS.md`; `05-implementation/UCMS_Database_Design.dbml` (`proposedRoleStructure`
+      trong hồ sơ, bảng mới `clubRoleStructureVersions`, cờ `isDefaultMemberRole` / `isLeaderRole`
+      của `clubPositions`); Model (UC02, UC07, UC08, UC10–UC13, UC20–UC23, bảng BR, §15); Spec
+      (UC02, UC07, UC08, UC10–UC13, UC20–UC23); `UCMS_BR_Issues_Context.md`;
+      `03-diagrams/UCMS_UseCase_ByActor.drawio` trang Student, Club Leader, ICPDP 1 và ảnh PNG;
+      `03-diagrams/UCMS_Context_Diagram_v2.1.drawio` và ảnh PNG (40 luồng); Report (UC07, UC08,
+      UC09, UC10, UC12, UC13, UC20, UC23, catalogue BR, các hình).
+    - Thay đổi: UC07 thêm phần "cơ cấu tổ chức dự kiến" (role, ban điều hành, permission) và ngoại
+      lệ E4; UC08 thẩm định cả cơ cấu và tạo phiên bản cơ cấu 1 khi duyệt; UC10 đề cử theo các role
+      ban điều hành của cơ cấu đang hiệu lực; UC11 / UC13 ghi lịch sử ban điều hành; UC12 A2 cho
+      phép đổi danh sách role ban điều hành, có hiệu lực khi UC13 xác nhận; UC20 tự gán role
+      Members; UC21 / UC22 thu hồi mọi role khi tư cách thành viên kết thúc; UC23 tạo phiên bản cơ
+      cấu mới ở mỗi thay đổi, A3 (cơ cấu ban đầu từ UC07 / UC08) thay cho bộ role mặc định của
+      trường, thêm A5 xem lịch sử, E6 (đổi role ban điều hành phải qua chuyển giao), E7 (bảo vệ role
+      Chủ nhiệm và Members); UC02 cho ICPDP và Club Leader xem phiên bản cơ cấu và lịch sử ban
+      điều hành. BR55 sửa; BR56 mới (55 quy tắc còn hiệu lực, BR01–BR56). Context diagram thêm
+      luồng `Club role structure & board history` (hệ thống → ICPDP), tổng 40 luồng.
+    - Lý do: cơ cấu là thứ ICPDP cần nhìn thấy để theo dõi ban điều hành, nên nó được thẩm định
+      ngay từ hồ sơ thành lập và lưu thành phiên bản thay vì ghi đè; chỉ role ban điều hành đi qua
+      ICPDP, còn phân quyền hằng ngày vẫn để CLB tự làm.
+
+### I59 — Ngân sách tách rời đề xuất sự kiện
+- **Vấn đề:** tài liệu mô hình ngân sách thành một luồng riêng: UC35 *Gửi yêu cầu ngân sách* (có
+  thể gắn với sự kiện, kế hoạch học kỳ hoặc hoạt động đã duyệt), UC36 *Thẩm định và quyết định yêu
+  cầu ngân sách*, máy trạng thái Budget Request riêng, và permission `club.budget.request` (I58).
+  Nhóm đã thống nhất rằng ngân sách nằm trong đề xuất sự kiện, và không có ngân sách nào không gắn
+  với sự kiện; quyết định đó chưa từng được ghi vào tài liệu.
+- **Cách sửa đã chọn (2026-09-30):** bỏ hẳn UC35, UC36; gộp vào UC25 / UC26; đánh số lại use case.
+- **Xử lý:**
+  - Ngày: 2026-09-30
+  - File đã sửa (giai đoạn 1, vẫn dùng số UC cũ): `SRS.md`, Model, Spec, `UCMS_BR_Issues_Context.md`,
+    `05-implementation/UCMS_Database_Design.dbml`, `05-implementation/TASKS.md`,
+    `04-design/UCMS_High_Level_Design.md`; sơ đồ (CD v2.1, UCD trang Club Member 3 và ICPDP 2, state
+    diagram trang Budget Request → Event Budget) và Report do phần sơ đồ / report xử lý.
+  - Thay đổi:
+    - **UC25** có **phần ngân sách** tuỳ chọn (các dòng: hạng mục, số tiền, mục đích, khoản chi dự
+      kiến; tổng số tiền xin), đóng băng theo bản sửa của đề xuất. Đây là cách duy nhất để xin kinh phí.
+    - **UC26** thẩm định luôn phần ngân sách (điều kiện, hạn mức còn lại, trùng lặp — nội dung cũ
+      của UC36); khi duyệt, officer chốt số tiền duyệt theo từng dòng (có thể thấp hơn, kèm lý do)
+      và hệ thống tạo `EventBudget` ở `Approved`. Ngân sách vượt ngưỡng đi cấp ICPDP thứ hai (BR16).
+    - **UC37 / UC38 / UC39** (giải ngân, khoản chi, đối soát) làm việc trên `EventBudget` của sự
+      kiện. **UC28** huỷ sự kiện → `EventBudget` chưa giải ngân chuyển `Cancelled`.
+    - Máy trạng thái **Budget Request → Event Budget**: `Approved → Disbursed → Reconciliation
+      Pending → Reconciled | Exception → Closed`, cộng `Approved → Cancelled`; các trạng thái nháp /
+      chờ duyệt / sửa / từ chối nay là trạng thái của `Event`.
+    - **BR22** viết lại: ngân sách chỉ tồn tại như một phần của đề xuất sự kiện. BR05, BR16, BR31,
+      BR54 bỏ UC36 / UC35 khỏi danh sách; BR26, BR53 đổi chữ.
+    - Bỏ permission `club.budget.request`: danh mục còn **15 permission** (11 cấp được + 4 giữ
+      riêng leader); việc xin ngân sách nằm trong `club.event.manage`.
+    - DBML: `budgetRequests` → `eventBudgets` (unique `eventId`), bỏ `budgetRequestVersions`,
+      `eventProposalVersions` thêm `budgetLines` và `requestedBudgetTotal`, bỏ `events.budgetEstimate`,
+      các khoá ngoại tài chính đổi sang `eventBudgetId`, enum `eventBudgetState`.
+    - Context diagram vẫn 40 luồng: `Budget requests & expenses` → `Expenses`.
+    - Tổng use case **54 → 52**.
+  - **Đánh số lại (giai đoạn 2, đã chạy 2026-09-30 trên SRS, Model, Spec, DBML, TASKS, README, State diagram và Report; tracker, BR_Issues_Context, BSA và các bảng / câu nói về v1 giữ số cũ):** UC01–UC34 giữ nguyên; UC35, UC36 bị bỏ; UC37→UC35, UC38→UC36, UC39→UC37, UC40→UC38, UC41→UC39, UC42→UC40, UC43→UC41, UC44→UC42, UC45→UC43, UC46→UC44, UC47→UC45, UC48→UC46, UC49→UC47, UC50→UC48, UC51→UC49, UC52→UC50, UC53→UC51, UC54→UC52. Các bảng
+    ánh xạ v1 → v2 trong Model và các issue I01–I58 giữ số UC của thời điểm đó.
+  - Lý do: đúng với quy trình thật — CLB chỉ xin kinh phí cho một sự kiện cụ thể, và ICPDP quyết
+    định kinh phí cùng lúc với việc cho phép tổ chức; tách hai luồng làm ICPDP phải thẩm định hai
+    lần cùng một sự kiện và cho phép ngân sách "treo" không gắn với hoạt động nào.

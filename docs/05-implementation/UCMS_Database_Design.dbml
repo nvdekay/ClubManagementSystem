@@ -124,13 +124,8 @@ Enum attendanceMethod {
   "walk-in"
 }
 
-Enum budgetRequestState {
-  Draft
-  Submitted
-  "Under Review"
-  "Revision Requested"
+Enum eventBudgetState {
   Approved
-  Rejected
   Cancelled
   Disbursed
   "Reconciliation Pending"
@@ -264,6 +259,8 @@ Table permissions {
   code string [unique, not null, note: 'ví dụ: club.event.propose, icpdp.booking.decide, attendance.unlock (BR19).']
   name string [not null]
   module string [not null, note: 'M01 … M12.']
+  scope roleScope [not null, note: 'system: vai trò hệ thống (UC03). club: permission CLB trong danh mục cố định mà Club Leader chọn cho role ở UC23 (BR54, BR55).']
+  isLeaderReserved bool [not null, default: false, note: 'true với club.role.manage, club.board.nominate, club.transition.plan, club.suspension.request — chỉ Club Leader có, không cấp được cho role nào (BR55, UC23 E3).']
   description string
 }
 
@@ -331,8 +328,8 @@ Table routingRuleSets {
 Table routingRules {
   id objectId [pk]
   ruleSetId objectId [not null]
-  requestType string [not null, note: 'CLUB_APPLICATION | EVENT_PROPOSAL | BUDGET_REQUEST | PROPERTY_BOOKING.']
-  amountThreshold decimal [note: 'Dùng cho định tuyến ngân sách (UC36 A1).']
+  requestType string [not null, note: 'CLUB_APPLICATION | EVENT_PROPOSAL | PROPERTY_BOOKING.']
+  amountThreshold decimal [note: 'Ngưỡng tổng ngân sách của đề xuất sự kiện (UC26 A3).']
   riskCategory string [note: 'Dùng cho định tuyến sự kiện (UC26 A1).']
   propertyClass string
   complianceCondition string [note: 'ví dụ: CLB đang có một hồ sơ vi phạm chưa đóng.']
@@ -402,6 +399,7 @@ Table clubApplicationVersions {
   payload json [not null, note: 'Bản chụp bất biến đầy đủ của hồ sơ đã nộp.']
   foundingMembers json [not null, note: 'Danh sách thành viên sáng lập đã khai; được đối chiếu với minFoundingMembers (BR03).']
   documents json [not null, note: 'Các tài liệu bắt buộc theo chính sách đang hiệu lực (BR02).']
+  proposedRoleStructure json [not null, note: 'Cơ cấu tổ chức dự kiến (UC07): [{code, name, unit, isBoardSeat, isLeaderRole, isDefaultMemberRole, isSingleHolder, permissionCodes[]}]. Luôn có role Chủ nhiệm và Members; không chứa permission isLeaderReserved (BR55). Đóng băng theo version hồ sơ; khi UC08 duyệt, trở thành clubRoleStructureVersions số 1 (BR56).']
   submittedBy objectId [not null]
   submittedAt datetime [not null]
 
@@ -442,7 +440,7 @@ Table clubTerms {
   confirmedBy objectId
   confirmedAt datetime
 
-  Note: 'Phạm vi của mọi quyền CMB. Quyền được suy ra từ bản gán chức vụ giao với nhiệm kỳ đang hoạt động, không bao giờ từ một cờ trên user (SEC-04).'
+  Note: 'Phạm vi của mọi quyền phía CLB. Quyền được suy ra từ bản gán role (clubPositionAssignments) giao với nhiệm kỳ đang hoạt động, cộng permission của role, không bao giờ từ một cờ trên user (SEC-04, BR47, BR54).'
   indexes {
     (clubId, state) [name: 'ix_terms_club_state']
     (clubId, endAt) [name: 'ix_terms_expiry', note: 'Chi phối lời nhắc nhiệm kỳ sắp hết hạn (§8.2).']
@@ -454,14 +452,15 @@ Table clubPositions {
   clubId objectId [not null]
   code string [not null]
   name string [not null]
-  unit string [note: 'Ban hoặc bộ phận mà chức vụ này thuộc về (UC09).']
-  isBoardSeat bool [not null, default: false, note: 'Một ghế ban chủ nhiệm được lấp qua UC10/UC11, không phải qua UC23.']
-  isSensitive bool [not null, default: false, note: 'Một chức vụ nhạy cảm cần được xác nhận qua UC11 (UC23 A1).']
+  unit string [note: 'Ban hoặc bộ phận (UC09) mà role này thuộc về.']
+  isBoardSeat bool [not null, default: false, note: 'Role ban điều hành, do chủ nhiệm đánh dấu trong hồ sơ UC07 và chỉ đổi qua chuyển giao UC12/UC13 (UC23 E6). Người giữ chỉ đến từ UC10/UC11/UC13, không gán ở UC23; Club Leader vẫn cấu hình permission ở UC23 (A4). Bản gán của nó tạo nên lịch sử ban điều hành theo nhiệm kỳ (BR55, BR56).']
+  isLeaderRole bool [not null, default: false, note: 'Role Chủ nhiệm: đúng một role mỗi CLB, cố định, không sửa/xoá được; người giữ là Club Leader với mọi permission CLB (BR47, BR56).']
+  isDefaultMemberRole bool [not null, default: false, note: 'Role Members: đúng một role mỗi CLB, không xoá được, tự gán cho mọi thành viên ở UC20; permission do Club Leader chọn, mặc định rỗng (BR56).']
   isSingleHolder bool [not null, default: true, note: 'UC23 E2 từ chối người giữ thứ hai.']
-  permissionCodes "string[]"
+  permissionCodes "string[]" [not null, note: 'Khai báo ở UC07, Club Leader sửa ở UC23, chọn từ danh mục permission scope=club; không bao giờ chứa permission isLeaderReserved (BR55).']
   isActive bool [not null, default: true]
 
-  Note: 'Không xoá được khi một ghế đã xác nhận hoặc một bản gán đang hiệu lực còn giữ chức vụ này (UC09 E2, bảo vệ theo kiểu BR41).'
+  Note: 'Role CLB (I58): trạng thái hiện hành của cơ cấu, bằng phiên bản mới nhất trong clubRoleStructureVersions. Tạo từ hồ sơ đã duyệt ở UC08; Club Leader sửa ở UC23 (mỗi lần sửa ghi một phiên bản mới — BR56), hiệu lực ngay, không cần ICPDP trừ role ban điều hành (BR55). Không ngừng dùng được khi một ghế đã xác nhận hoặc một bản gán đang hiệu lực còn giữ role này (UC23 E4, bảo vệ theo kiểu BR41).'
   indexes {
     (clubId, code) [unique, name: 'uq_position_club_code']
   }
@@ -475,13 +474,31 @@ Table clubPositionAssignments {
   membershipId objectId [not null]
   effectiveFrom datetime [not null]
   effectiveTo datetime [note: 'Null khi bản gán còn hiệu lực. Được đặt khi thành viên rời đi hoặc nhiệm kỳ đóng lại.']
-  assignedBy objectId [not null]
-  confirmedBy objectId [note: 'Có giá trị với một ghế ban chủ nhiệm hoặc một chức vụ nhạy cảm (UC11).']
+  assignedBy objectId [not null, note: 'Club Leader với role gán ở UC23; officer ICPDP với ghế ban chủ nhiệm xác nhận ở UC11/UC13.']
+  confirmedBy objectId [note: 'Chỉ có giá trị với ghế ban chủ nhiệm (UC11/UC13); role gán ở UC23 có hiệu lực ngay (BR55).']
 
-  Note: 'Phép giao tạo ra thẩm quyền: bản gán ∩ nhiệm kỳ đang hoạt động = quyền (SEC-04). Bị thu hồi tự động khi tư cách thành viên kết thúc (UC21 FR-03) hoặc khi nhiệm kỳ đóng lại (UC13).'
+  Note: 'Phép giao tạo ra thẩm quyền: bản gán ∩ nhiệm kỳ đang hoạt động, cộng permissionCodes của role = quyền (SEC-04, BR47, BR54). Bị thu hồi tự động khi tư cách thành viên kết thúc (UC21 FR-03) hoặc khi nhiệm kỳ đóng lại (UC13). Không bao giờ xoá: các bản gán role ban điều hành (gắn termId, confirmedBy) chính là lịch sử ban điều hành theo nhiệm kỳ mà ICPDP đọc ở UC02 (BR56). Role Members được gán tự động ở UC20.'
   indexes {
     (clubId, termId, positionId) [name: 'ix_assign_lookup']
     (membershipId, effectiveTo) [name: 'ix_assign_member_active']
+  }
+}
+
+Table clubRoleStructureVersions {
+  id objectId [pk]
+  clubId objectId [not null]
+  versionNo int [not null, note: '1 = cơ cấu được duyệt cùng hồ sơ thành lập ở UC08.']
+  effectiveFrom datetime [not null]
+  source string [not null, note: 'APPLICATION (UC08) | ROLE_EDIT (UC23) | TRANSITION (UC13, khi kế hoạch chuyển giao đổi danh sách role ban điều hành).']
+  sourceRefId objectId [note: 'clubApplicationVersions.id, hoặc transitionPlans.id; null với ROLE_EDIT.']
+  roles json [not null, note: 'Bản chụp đầy đủ: [{positionId, code, name, unit, isBoardSeat, isLeaderRole, isDefaultMemberRole, isSingleHolder, permissionCodes[]}].']
+  createdBy objectId [not null]
+  reason string
+  createdAt datetime [not null]
+
+  Note: 'Chỉ-ghi-thêm (BR56): mỗi thay đổi cơ cấu tạo một phiên bản mới, không bao giờ ghi đè. ICPDP đọc toàn bộ lịch sử ở UC02.'
+  indexes {
+    (clubId, versionNo) [unique, name: 'uq_role_structure_version']
   }
 }
 
@@ -655,12 +672,11 @@ Table events {
   endAt datetime [not null]
   semesterCode string [not null, note: 'BR44 — một sự kiện bắt đầu và kết thúc trong cùng một học kỳ; BR45 cấm ngày kết thúc rơi sau học kỳ Dissolving.']
   venueText string [note: 'Địa điểm dạng văn bản tự do khi không dùng property nào trong danh mục.']
-  propertyId objectId [note: 'Được đặt khi sự kiện dùng một property trong danh mục; bản thân booking được quyết định riêng ở UC48.']
-  audienceScope string [not null, note: 'PUBLIC | MEMBERS_ONLY (UC27 A1).']
+  propertyId objectId [note: 'Được đặt khi sự kiện dùng một property trong danh mục; bản thân booking được quyết định riêng ở UC46.']
+  audienceScope string [not null, note: 'PUBLIC | MEMBERS_ONLY, chọn ở UC25. MEMBERS_ONLY (sự kiện nội bộ) không có phần ngân sách (requestedBudgetTotal) được ghi nhận thẳng Draft → Approved, không qua UC26, và đóng ở UC32 (BR53). ICPDP liệt kê qua ix_events_scope.']
   capacity int [not null]
   waitlistEnabled bool [not null, default: true]
   riskCategory string [note: 'Cấp dữ liệu cho các rule định tuyến của UC05 (UC26 A1).']
-  budgetEstimate decimal
   state eventState [not null, default: 'Draft']
   conflictResult conflictResult [note: 'Kết quả của BR15 được lưu cùng đề xuất để officer thấy đúng thứ mà CLB đã thấy (UC25 FR-03).']
   conflictDetail json
@@ -675,9 +691,9 @@ Table events {
   revisionDeadlineAt datetime [note: 'Scheduler đặt Expired khi hết hạn (SCH-04).']
   publishedAt datetime
   cancelReason string
-  cancelledBy objectId [note: 'Null với một cascade hệ thống đến từ UC15 hoặc UC42 (UC28 A1).']
+  cancelledBy objectId [note: 'Null với một cascade hệ thống đến từ UC15 hoặc UC40 (UC28 A1).']
   cancelSourceType string [note: 'CMB | SUSPENSION | DISSOLUTION | CASE — nguyên nhân gây ra việc huỷ.']
-  isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước đã cấu hình; là một tín hiệu tuân thủ cho UC42 (UC28 E2).']
+  isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước đã cấu hình; là một tín hiệu tuân thủ cho UC40 (UC28 E2).']
   attendanceFinalized bool [not null, default: false]
   createdAt datetime [not null]
 
@@ -686,6 +702,7 @@ Table events {
     (state, startAt) [name: 'ix_events_schedule', note: 'Chi phối các chuyển trạng thái Upcoming → Ongoing → Completed của scheduler (SCH-01) và danh sách công khai.']
     (propertyId, startAt, endAt) [name: 'ix_events_conflict', note: 'Phía đọc của quy tắc xung đột BR15.']
     (state, revisionDeadlineAt) [name: 'ix_events_expiry']
+    (audienceScope, semesterCode, clubId) [name: 'ix_events_scope', note: 'Danh sách sự kiện nội bộ đã ghi nhận trên dashboard ICPDP, lọc theo học kỳ và CLB (BR53).']
   }
 }
 
@@ -694,6 +711,8 @@ Table eventProposalVersions {
   eventId objectId [not null]
   revisionNo int [not null]
   payload json [not null, note: 'Bản chụp bất biến của đề xuất đã nộp.']
+  budgetLines json [note: 'Phần ngân sách của đề xuất (UC25 FR-18): [{ category, amount, purpose, plannedItems }]; null khi sự kiện không xin kinh phí. Đóng băng theo bản sửa.']
+  requestedBudgetTotal decimal [note: 'Tổng số tiền xin trong bản sửa này (BR22).']
   conflictResult conflictResult
   submittedBy objectId [not null]
   submittedAt datetime [not null]
@@ -750,7 +769,7 @@ Table attendances {
 }
 
 // =====================================================================
-// M08 — BÁO CÁO, TRÁCH NHIỆM GIẢI TRÌNH & TUÂN THỦ  (UC33, UC34, UC40–UC42)
+// M08 — BÁO CÁO, TRÁCH NHIỆM GIẢI TRÌNH & TUÂN THỦ  (UC33, UC34, UC38–UC40)
 // =====================================================================
 
 Table postEventReports {
@@ -769,7 +788,7 @@ Table postEventReports {
   submittedAt datetime
   decisionOutcome string [note: 'Chấp nhận | Trả về để sửa | Chấp nhận kèm phát hiện (UC34).']
   decisionReason string
-  findingViolationId objectId [note: 'Được đặt khi officer ghi nhận một phát hiện, và phát hiện đó mở một hồ sơ ở UC42.']
+  findingViolationId objectId [note: 'Được đặt khi officer ghi nhận một phát hiện, và phát hiện đó mở một hồ sơ ở UC40.']
   decidedBy objectId
   decidedAt datetime
 
@@ -794,7 +813,7 @@ Table periodicReports {
   submittedBy objectId
   submittedAt datetime
   decisionOutcome string
-  observation string [note: 'Chấp nhận kèm ghi nhận, được mang vào kỳ đánh giá (UC41 A1).']
+  observation string [note: 'Chấp nhận kèm ghi nhận, được mang vào kỳ đánh giá (UC39 A1).']
   decidedBy objectId
   decidedAt datetime
   dueAt datetime [not null, note: 'Lấy từ chính sách đang hiệu lực; chi phối thang nhắc hạn và leo thang (BR20, SCH-09).']
@@ -808,14 +827,14 @@ Table periodicReports {
 Table violations {
   id objectId [pk]
   clubId objectId [not null]
-  originType string [not null, note: 'COMPLAINT | REPORT_FINDING | OVERDUE_REPORT | FINANCIAL_EXCEPTION | UNAUTHORIZED_EVENT | LATE_BOOKING_CANCELLATION (UC42 FR-01).']
+  originType string [not null, note: 'COMPLAINT | REPORT_FINDING | OVERDUE_REPORT | FINANCIAL_EXCEPTION | UNAUTHORIZED_EVENT | LATE_BOOKING_CANCELLATION (UC40 FR-01).']
   originRefId objectId [note: 'Bản ghi đã gây ra hồ sơ này; một hồ sơ bắt nguồn từ khiếu nại sẽ liên kết ngược lại nó (BR28).']
   severity string [not null, note: 'Lấy từ thang phân loại do ICPDP cấu hình (BR27).']
   title string [not null]
   description text
   evidence json
   state violationState [not null, default: 'Open']
-  clubResponse json [note: 'Được nhúng khi phần trả lời được nộp ở bước 4 của UC42; phần trả lời của hồ sơ bắt nguồn từ khiếu nại đến qua UC54.']
+  clubResponse json [note: 'Được nhúng khi phần trả lời được nộp ở bước 4 của UC40; phần trả lời của hồ sơ bắt nguồn từ khiếu nại đến qua UC52.']
   decisionReason text [note: 'Bắt buộc kèm chứng cứ (BR28).']
   decisionEvidence json
   openedBy objectId [not null]
@@ -837,7 +856,7 @@ Table correctiveActions {
   description text [not null]
   dueAt datetime [not null]
   state string [not null, note: 'Pending | Verified | Failed.']
-  linkedLifecycleAction string [note: 'SUSPEND | DISSOLVE khi hành động được thực hiện ở UC15 (UC42 A1).']
+  linkedLifecycleAction string [note: 'SUSPEND | DISSOLVE khi hành động được thực hiện ở UC15 (UC40 A1).']
   verifiedBy objectId
   verifiedAt datetime
 
@@ -847,81 +866,62 @@ Table correctiveActions {
 }
 
 // =====================================================================
-// M07 — TÀI CHÍNH & NGÂN SÁCH  (UC35–UC39)
+// M07 — TÀI CHÍNH & NGÂN SÁCH SỰ KIỆN  (UC35–UC37; ngân sách được xin và duyệt ở UC25 / UC26)
 // =====================================================================
 
-Table budgetRequests {
+Table eventBudgets {
   id objectId [pk]
+  eventId objectId [unique, not null, note: 'Mỗi sự kiện có tối đa một ngân sách; ngân sách không tồn tại tách rời sự kiện (BR22).']
   clubId objectId [not null]
-  relatedEventId objectId [note: 'Một trong các mục đích nghiệp vụ được chấp nhận (BR22).']
-  purposeType string [not null, note: 'EVENT | SEMESTER_PLAN | APPROVED_ACTIVITY.']
-  purposeRef string
-  categories json [not null, note: 'Nhúng: [{ category, requestedAmount, approvedAmount, reason }]. Hỗ trợ việc phê duyệt từng phần theo hạng mục của UC36 A2.']
+  lines json [not null, note: 'Nhúng: [{ category, requestedAmount, approvedAmount, reason }] — số xin lấy từ bản sửa đã duyệt của đề xuất; số duyệt và lý do giảm do UC26 chốt (FR-UC26-14).']
   requestedTotal decimal [not null]
-  approvedTotal decimal [note: 'Được lưu tách biệt với tổng số tiền đã xin (UC36 FR-04).']
-  state budgetRequestState [not null, default: 'Draft']
-  currentVersionNo int [not null, default: 1]
+  approvedTotal decimal [not null, note: 'Được lưu tách biệt với tổng số tiền đã xin (FR-UC26-14).']
+  approvedByDecisionId objectId [not null, note: 'Quyết định phê duyệt đề xuất ở UC26 đã tạo ra ngân sách này.']
+  disbursedTotal decimal [not null, default: 0]
+  state eventBudgetState [not null, default: 'Approved']
   periodCode string
-  decisionReason string
-  decidedBy objectId
-  decidedAt datetime
   createdAt datetime [not null]
 
+  Note: 'Chỉ được tạo khi UC26 phê duyệt một đề xuất sự kiện có phần ngân sách. Nháp, chờ duyệt, yêu cầu chỉnh sửa và từ chối là trạng thái của events, không phải của ngân sách.'
   indexes {
     (clubId, state) [name: 'ix_budget_club_state']
-    (state, createdAt) [name: 'ix_budget_queue']
-    (relatedEventId) [name: 'ix_budget_event', note: 'Dùng để huỷ yêu cầu khi sự kiện bị từ chối hoặc bị huỷ (UC36 E1).']
-  }
-}
-
-Table budgetRequestVersions {
-  id objectId [pk]
-  budgetRequestId objectId [not null]
-  versionNo int [not null]
-  payload json [not null]
-  submittedBy objectId [not null]
-  submittedAt datetime [not null]
-
-  Note: 'Chỉ-ghi-thêm. UC35 A2 giữ lại CẢ lịch sử version lẫn lịch sử phê duyệt khi nộp lại.'
-  indexes {
-    (budgetRequestId, versionNo) [unique, name: 'uq_budgetver']
   }
 }
 
 Table budgetDisbursements {
   id objectId [pk]
-  budgetRequestId objectId [not null]
+  eventBudgetId objectId [not null]
   amount decimal [not null]
   disbursedAt datetime [not null]
   paymentReference string
   recordedBy objectId [not null]
   note string
 
-  Note: 'Là collection riêng vì UC37 A1 cộng dồn nhiều lần giải ngân từng phần vào một lần duyệt. BR23 đối chiếu tổng luỹ kế với approvedTotal.'
+  Note: 'Là collection riêng vì UC35 A1 cộng dồn nhiều lần giải ngân từng phần vào một lần duyệt. BR23 đối chiếu tổng luỹ kế với eventBudgets.approvedTotal.'
   indexes {
-    budgetRequestId [name: 'ix_disb_request']
+    eventBudgetId [name: 'ix_disb_budget']
   }
 }
 
 Table expenses {
   id objectId [pk]
   clubId objectId [not null]
-  budgetRequestId objectId [note: 'Null khi khoản chi được ghi vào một sự kiện mà không có dòng ngân sách.']
-  eventId objectId
+  eventBudgetId objectId [not null, note: 'Mọi khoản chi gắn với ngân sách đã duyệt của một sự kiện (BR22).']
+  eventId objectId [not null]
   category string [not null]
   amount decimal [not null]
   spentAt datetime [not null]
   description text
   isOutOfCategory bool [not null, default: false, note: 'Được gắn cờ ngoại lệ (BR24).']
-  isOverRemaining bool [not null, default: false, note: 'Được gắn cờ ngoại lệ (UC38 E1).']
-  hasEvidence bool [not null, default: false, note: 'Được cập nhật khi có chứng từ đính kèm; một khoản chi không có nó sẽ bị báo là thiếu chứng từ ở UC39 (UC38 A1).']
+  isOverRemaining bool [not null, default: false, note: 'Được gắn cờ ngoại lệ (UC36 E1).']
+  hasEvidence bool [not null, default: false, note: 'Được cập nhật khi có chứng từ đính kèm; một khoản chi không có nó sẽ bị báo là thiếu chứng từ ở UC37 (UC36 A1).']
   recordedBy objectId [not null]
   createdAt datetime [not null]
 
   indexes {
-    (budgetRequestId, category) [name: 'ix_expense_budget']
+    (eventBudgetId, category) [name: 'ix_expense_budget']
     (clubId, spentAt) [name: 'ix_expense_club_period']
-    (budgetRequestId, hasEvidence) [name: 'ix_expense_unsupported', note: 'Chi phối lời nhắc bổ sung chứng từ và các tổng số khi đối soát.']
+    (eventBudgetId, hasEvidence) [name: 'ix_expense_unsupported', note: 'Chi phối lời nhắc bổ sung chứng từ và các tổng số khi đối soát.']
   }
 }
 
@@ -933,7 +933,7 @@ Table financialEvidences {
   uploadedBy objectId [not null]
   uploadedAt datetime [not null]
 
-  Note: 'Mỗi chứng từ tham chiếu đúng MỘT khoản chi — một chứng từ không tham chiếu khoản chi nào là bất khả thi về mặt cấu trúc (UC38 FR-08).'
+  Note: 'Mỗi chứng từ tham chiếu đúng MỘT khoản chi — một chứng từ không tham chiếu khoản chi nào là bất khả thi về mặt cấu trúc (UC36 FR-08).'
   indexes {
     expenseId [name: 'ix_evidence_expense']
   }
@@ -941,7 +941,7 @@ Table financialEvidences {
 
 Table financialReconciliations {
   id objectId [pk]
-  budgetRequestId objectId [unique, not null]
+  eventBudgetId objectId [unique, not null]
   approvedTotal decimal [not null]
   disbursedTotal decimal [not null]
   recordedTotal decimal [not null]
@@ -949,15 +949,15 @@ Table financialReconciliations {
   unsupportedTotal decimal [not null]
   remaining decimal [not null]
   variance decimal [not null]
-  outcome string [not null, note: 'Reconciled | Exception (UC39 FR-03).']
+  outcome string [not null, note: 'Reconciled | Exception (UC37 FR-03).']
   discrepancyNote text [note: 'Bắt buộc với kết quả Exception; hồ sơ vẫn đóng được, với phần chênh lệch nằm trong hồ sơ.']
   computedAt datetime [not null]
   closedBy objectId
-  closedAt datetime [note: 'BR26 — việc đối soát phải hoàn tất trước khi hồ sơ ngân sách đóng lại.']
+  closedAt datetime [note: 'BR26 — việc đối soát phải hoàn tất trước khi ngân sách của sự kiện đóng lại.']
 }
 
 // =====================================================================
-// M11 — CƠ SỞ VẬT CHẤT & ĐẶT CHỖ  (UC46–UC49)
+// M11 — CƠ SỞ VẬT CHẤT & ĐẶT CHỖ  (UC44–UC47)
 // =====================================================================
 
 Table properties {
@@ -968,8 +968,8 @@ Table properties {
   capacity int
   location string
   equipment "string[]"
-  bookableHours json [not null, note: 'Khung giờ mở/đóng theo từng ngày trong tuần. Việc thay đổi chúng không bao giờ làm vô hiệu một quyết định đã ra (UC46 FR-07).']
-  blackouts json [note: 'Các giai đoạn bảo trì hoặc nhà trường sử dụng; một yêu cầu rơi vào đó sẽ bị từ chối (UC47 E2).']
+  bookableHours json [not null, note: 'Khung giờ mở/đóng theo từng ngày trong tuần. Việc thay đổi chúng không bao giờ làm vô hiệu một quyết định đã ra (UC44 FR-07).']
+  blackouts json [note: 'Các giai đoạn bảo trì hoặc nhà trường sử dụng; một yêu cầu rơi vào đó sẽ bị từ chối (UC45 E2).']
   propertyClass string [note: 'Cấp dữ liệu cho các rule định tuyến của UC05.']
   isActive bool [not null, default: true]
 
@@ -984,7 +984,7 @@ Table propertyBookings {
   propertyId objectId [not null]
   clubId objectId [not null]
   clubName string [not null, note: 'Được denormalize cho hàng đợi của ICPDP và lịch sử dụng property (DAT-06).']
-  eventId objectId [note: 'Được đặt khi booking được đính kèm vào một đề xuất sự kiện (UC47 A2). Việc duyệt đề xuất KHÔNG đồng nghĩa duyệt booking (UC26 FR-06).']
+  eventId objectId [note: 'Được đặt khi booking được đính kèm vào một đề xuất sự kiện (UC45 A2). Việc duyệt đề xuất KHÔNG đồng nghĩa duyệt booking (UC26 FR-06).']
   purpose text [not null]
   startAt datetime [not null]
   endAt datetime [not null]
@@ -998,8 +998,8 @@ Table propertyBookings {
   decidedAt datetime
   cancelReason string
   cancelledAt datetime
-  releasedBy string [note: 'CMB | EVENT_CANCELLED | SUSPENSION | DISSOLUTION (BR35, UC49 A1).']
-  isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước; là một tín hiệu tuân thủ cho UC42 (UC49 E2).']
+  releasedBy string [note: 'CMB | EVENT_CANCELLED | SUSPENSION | DISSOLUTION (BR35, UC47 A1).']
+  isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước; là một tín hiệu tuân thủ cho UC40 (UC47 E2).']
   createdAt datetime [not null]
 
   Note: 'BR33 — hai booking Approved không được chồng khung giờ trên cùng một property trừ khi chính sách cho phép overbooking. Được cưỡng chế bằng index khung giờ cộng một findOneAndUpdate có điều kiện tại thời điểm phê duyệt (DAT-04).'
@@ -1011,14 +1011,14 @@ Table propertyBookings {
 }
 
 // =====================================================================
-// M12 — PHẢN HỒI & KHIẾU NẠI  (UC50–UC54)
+// M12 — PHẢN HỒI & KHIẾU NẠI  (UC48–UC52)
 // =====================================================================
 
 Table eventFeedbacks {
   id objectId [pk]
   eventId objectId [not null]
-  attendanceId objectId [not null, note: 'Biểu mẫu chỉ được hiển thị cho người gọi có một bản ghi điểm danh (UC50 FR-01).']
-  studentId objectId [not null, note: 'Vẫn được giữ nội bộ kể cả khi gửi ẩn danh, chỉ để chống spam; không bao giờ để lộ cho CLB (UC50 A1, SEC-05).']
+  attendanceId objectId [not null, note: 'Biểu mẫu chỉ được hiển thị cho người gọi có một bản ghi điểm danh (UC48 FR-01).']
+  studentId objectId [not null, note: 'Vẫn được giữ nội bộ kể cả khi gửi ẩn danh, chỉ để chống spam; không bao giờ để lộ cho CLB (UC48 A1, SEC-05).']
   clubId objectId [not null, note: 'Được denormalize để bản tổng hợp phản hồi ở mức CLB chỉ tốn một truy vấn.']
   scores json [not null, note: 'Nhúng: [{ criterionCode, score }].']
   comment text
@@ -1041,16 +1041,16 @@ Table complaints {
   description text [not null]
   evidence json
   state complaintState [not null, default: 'Submitted']
-  triage json [note: 'Nhúng: { severity, validity, outcome, reason, actorId, at } (UC53, BR39).']
-  clubResponse json [note: 'Nhúng: { text, evidence, actorId, at }, do UC54 ghi.']
-  responseDueAt datetime [note: 'Quá hạn là một tín hiệu tuân thủ cho UC42 (UC54 E1).']
-  violationId objectId [note: 'Được đặt khi leo thang và được hồ sơ liên kết ngược lại (UC53 FR-02).']
-  linkedComplaintId objectId [note: 'Các khiếu nại trùng về cùng sự việc được liên kết và phân loại chung (UC52 E1).']
+  triage json [note: 'Nhúng: { severity, validity, outcome, reason, actorId, at } (UC51, BR39).']
+  clubResponse json [note: 'Nhúng: { text, evidence, actorId, at }, do UC52 ghi.']
+  responseDueAt datetime [note: 'Quá hạn là một tín hiệu tuân thủ cho UC40 (UC52 E1).']
+  violationId objectId [note: 'Được đặt khi leo thang và được hồ sơ liên kết ngược lại (UC51 FR-02).']
+  linkedComplaintId objectId [note: 'Các khiếu nại trùng về cùng sự việc được liên kết và phân loại chung (UC50 E1).']
   submittedAt datetime [not null]
   withdrawnAt datetime
   closedAt datetime
 
-  Note: 'BR38 — chỉ ICPDP thấy được cho tới khi trạng thái chuyển Forwarded; CLB không bao giờ sửa, bác bỏ hay đóng nó (SEC-09, UC54 FR-06).'
+  Note: 'BR38 — chỉ ICPDP thấy được cho tới khi trạng thái chuyển Forwarded; CLB không bao giờ sửa, bác bỏ hay đóng nó (SEC-09, UC52 FR-06).'
   indexes {
     (state, submittedAt) [name: 'ix_complaint_queue']
     (clubId, state) [name: 'ix_complaint_club']
@@ -1059,21 +1059,21 @@ Table complaints {
 }
 
 // =====================================================================
-// M09 — ĐÁNH GIÁ HIỆU QUẢ  (UC43–UC45)
+// M09 — ĐÁNH GIÁ HIỆU QUẢ  (UC41–UC43)
 // =====================================================================
 
 Table evaluationSchemes {
   id objectId [pk]
   periodCode string [not null]
   version int [not null]
-  state string [not null, note: 'Draft | Active | Superseded. Mỗi kỳ có đúng một bản Active (UC43 FR-03).']
+  state string [not null, note: 'Draft | Active | Superseded. Mỗi kỳ có đúng một bản Active (UC41 FR-03).']
   totalWeight decimal [not null, note: 'Được validate trước khi kích hoạt (BR29).']
   thresholds json [not null, note: 'Các dải xếp loại, ví dụ Xuất sắc ≥ 85.']
   activatedBy objectId
   activatedAt datetime
   createdAt datetime [not null]
 
-  Note: 'Một scheme đã được một kỳ đánh giá đã công bố sử dụng thì không bao giờ được sửa tại chỗ; phải tạo một version mới (BR30, UC43 E2).'
+  Note: 'Một scheme đã được một kỳ đánh giá đã công bố sử dụng thì không bao giờ được sửa tại chỗ; phải tạo một version mới (BR30, UC41 E2).'
   indexes {
     (periodCode, version) [unique, name: 'uq_scheme']
   }
@@ -1086,7 +1086,7 @@ Table evaluationDimensions {
   name string [not null]
   weight decimal [not null]
   scoringRule json [not null, note: 'Các chỉ số của dimension và cách chúng quy ra điểm.']
-  allowsManual bool [not null, default: false, note: 'Chỉ dimension được đánh dấu ở đây mới được chấm tay ở UC45 FR-02.']
+  allowsManual bool [not null, default: false, note: 'Chỉ dimension được đánh dấu ở đây mới được chấm tay ở UC43 FR-02.']
 
   indexes {
     (schemeId, code) [unique, name: 'uq_dimension']
@@ -1101,12 +1101,12 @@ Table evaluations {
   state evaluationState [not null, default: 'Draft']
   totalScore decimal
   classification string
-  revisionNo int [not null, default: 1, note: 'Một lần hiệu chỉnh sau khi công bố là một bản sửa MỚI; bản đã công bố vẫn đọc được (BR30, UC45 A1).']
+  revisionNo int [not null, default: 1, note: 'Một lần hiệu chỉnh sau khi công bố là một bản sửa MỚI; bản đã công bố vẫn đọc được (BR30, UC43 A1).']
   generatedAt datetime
   finalizedBy objectId
   finalizedAt datetime
   publishedAt datetime
-  contestViolationId objectId [note: 'Một kết quả bị phản biện được xử lý như một hồ sơ (UC45 E1).']
+  contestViolationId objectId [note: 'Một kết quả bị phản biện được xử lý như một hồ sơ (UC43 E1).']
 
   indexes {
     (clubId, periodCode, revisionNo) [unique, name: 'uq_evaluation']
@@ -1119,9 +1119,9 @@ Table evaluationDimensionResults {
   evaluationId objectId [not null]
   dimensionCode string [not null]
   score decimal
-  isInsufficientData bool [not null, default: false, note: 'Một nguồn dữ liệu không đầy đủ được đánh dấu, không bao giờ bị chấm 0 (UC44 E1).']
+  isInsufficientData bool [not null, default: false, note: 'Một nguồn dữ liệu không đầy đủ được đánh dấu, không bao giờ bị chấm 0 (UC42 E1).']
   isManual bool [not null, default: false]
-  justification text [note: 'Bắt buộc với một dimension chấm tay (UC45 FR-02).']
+  justification text [note: 'Bắt buộc với một dimension chấm tay (UC43 FR-02).']
   evidence json [not null, note: 'Data lineage: [{ metric, sourceEntity, sourceId, sourcePeriod, value }] — đây chính là thứ làm cho một điểm số giải thích được (EVL-02).']
 
   Note: 'Là một collection riêng, không phải mảng nhúng: nó được đọc độc lập bởi chức năng đi sâu vào chứng cứ, và lớn dần theo số dimension của mỗi CLB trong mỗi kỳ.'
@@ -1136,7 +1136,7 @@ Table evaluationDimensionResults {
 
 Table approvalTasks {
   id objectId [pk]
-  entityType string [not null, note: 'CLUB_APPLICATION | BOARD_NOMINATION | TRANSITION_PLAN | SUSPENSION_REQUEST | EVENT_PROPOSAL | BUDGET_REQUEST | PROPERTY_BOOKING | POST_EVENT_REPORT | PERIODIC_REPORT | COMPLAINT.']
+  entityType string [not null, note: 'CLUB_APPLICATION | BOARD_NOMINATION | TRANSITION_PLAN | SUSPENSION_REQUEST | EVENT_PROPOSAL | PROPERTY_BOOKING | POST_EVENT_REPORT | PERIODIC_REPORT | COMPLAINT.']
   entityId objectId [not null]
   clubId objectId [note: 'Được denormalize để hộp thư lọc theo CLB chỉ tốn một truy vấn.']
   title string [not null, note: 'Nhãn được denormalize cho hộp thư hợp nhất.']
@@ -1219,7 +1219,7 @@ Table auditLogs {
   after json
   changeDiff json
   reason string
-  correlationId string [not null, note: 'Buộc chung mọi bản ghi sinh ra từ một request, kể cả các cascade UC15 → UC28/UC49 (AUD-05).']
+  correlationId string [not null, note: 'Buộc chung mọi bản ghi sinh ra từ một request, kể cả các cascade UC15 → UC28/UC47 (AUD-05).']
   at datetime [not null]
 
   Note: 'Chỉ-ghi-thêm; không vai trò nào sửa hay xoá được một dòng (SEC-12). Bắt buộc audit mạnh cho mọi quyết định liệt kê ở AUD-03, kể cả các lần đăng nhập bị từ chối.'
@@ -1257,6 +1257,7 @@ Ref: clubPositionAssignments.clubId > clubs.id
 Ref: clubPositionAssignments.termId > clubTerms.id
 Ref: clubPositionAssignments.positionId > clubPositions.id
 Ref: clubPositionAssignments.membershipId > clubMemberships.id
+Ref: clubRoleStructureVersions.clubId > clubs.id
 Ref: boardNominations.clubId > clubs.id
 Ref: boardNominations.termId > clubTerms.id
 Ref: boardNominationSeats.nominationId > boardNominations.id
@@ -1302,18 +1303,18 @@ Ref: violations.clubId > clubs.id
 Ref: correctiveActions.violationId > violations.id
 
 // M07
-Ref: budgetRequests.clubId > clubs.id
-Ref: budgetRequests.relatedEventId > events.id
-Ref: budgetRequestVersions.budgetRequestId > budgetRequests.id
-Ref: budgetDisbursements.budgetRequestId > budgetRequests.id
+Ref: eventBudgets.clubId > clubs.id
+Ref: eventBudgets.eventId - events.id
+Ref: eventBudgets.approvedByDecisionId > approvalDecisions.id
+Ref: budgetDisbursements.eventBudgetId > eventBudgets.id
 Ref: budgetDisbursements.recordedBy > users.id
 Ref: expenses.clubId > clubs.id
-Ref: expenses.budgetRequestId > budgetRequests.id
+Ref: expenses.eventBudgetId > eventBudgets.id
 Ref: expenses.eventId > events.id
 Ref: expenses.recordedBy > users.id
 Ref: financialEvidences.expenseId > expenses.id
 Ref: financialEvidences.uploadedBy > users.id
-Ref: financialReconciliations.budgetRequestId - budgetRequests.id
+Ref: financialReconciliations.eventBudgetId - eventBudgets.id
 
 // M11
 Ref: propertyBookings.propertyId > properties.id
@@ -1369,6 +1370,7 @@ TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {
   clubTerms
   clubPositions
   clubPositionAssignments
+  clubRoleStructureVersions
   boardNominations
   boardNominationSeats
   transitionPlans
@@ -1390,8 +1392,7 @@ TableGroup "M05 / M06 Sự kiện, đăng ký & điểm danh" {
 }
 
 TableGroup "M07 Tài chính & ngân sách" {
-  budgetRequests
-  budgetRequestVersions
+  eventBudgets
   budgetDisbursements
   expenses
   financialEvidences
