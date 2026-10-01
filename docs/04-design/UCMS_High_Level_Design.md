@@ -16,14 +16,16 @@ module nghiệp vụ lên những quy tắc đó, hoặc là nêu tên một quy
 ## 1. Bối cảnh
 
 ```text
-        Student ─┐
-   Club Board (CMB) ─┼──HTTPS──► UCMS SPA ──/api/v1──► UCMS API ──► MongoDB
+            Student ─┐
+        Club Member ─┤
+        Club Leader ─┼──HTTPS──► UCMS SPA ──/api/v1──► UCMS API ──► MongoDB
       ICPDP Officer ─┘                                    │
                                                           ├──► Google OAuth   (đăng nhập)
-                                                          └──► Google SMTP    (email thông báo)
+                                                          ├──► Google SMTP    (email thông báo)
+                                                          └──► Cloudinary     (lưu ảnh tải lên)
 ```
 
-Ba actor là người, một hệ thống, hai phụ thuộc bên ngoài. Không có tích hợp nào khác nằm trong
+Bốn actor là người (Student ◁ Club Member ◁ Club Leader, và ICPDP Officer), một hệ thống, ba phụ thuộc bên ngoài (Google OAuth, Google SMTP, Cloudinary). Không có tích hợp nào khác nằm trong
 phạm vi (mục 5.2 của bản phân tích).
 
 ## 2. Các container
@@ -34,7 +36,7 @@ phạm vi (mục 5.2 của bản phân tích).
 | `server/` | Express 5 + Mongoose, một tiến trình Node duy nhất | API, quy tắc nghiệp vụ, callback OAuth, bộ lập lịch. |
 | MongoDB | một instance, có khả năng chạy replica set | Toàn bộ dữ liệu bền vững, gồm cả hàng đợi thông báo và nhật ký audit. |
 
-**Quyết định D1 — một khối triển khai, không phải nhiều service.** 54 use case, một nhóm, một
+**Quyết định D1 — một khối triển khai, không phải nhiều service.** 52 use case, một nhóm, một
 database, một ranh giới giao dịch. Module là thư mục, không phải tiến trình. Việc chia 4 tầng đã
 cho sẵn những đường nối mà tách service mới có, mà không phải trả giá vận hành. Chỉ xem xét lại
 khi một module cần mở rộng độc lập (hiện không module nào cần: tải là vài trăm sinh viên).
@@ -72,7 +74,7 @@ chúng. Ghi xuyên module phải đi qua usecase của module sở hữu, không
 | M04 Recruitment & Membership | RecruitmentCampaign, RecruitmentApplication, ClubMembership | ✅ |
 | M05 Event & Activity | Event, EventProposalVersion, PostEventReport | ✅ |
 | M06 Registration & Attendance | EventRegistration, Attendance | ✅ |
-| M07 Finance & Budget | BudgetRequest(+Version), Expense, FinancialEvidence, Reconciliation | ✅ |
+| M07 Finance & Budget | EventBudget (tạo khi duyệt đề xuất sự kiện), BudgetDisbursement, Expense, FinancialEvidence, Reconciliation | ✅ |
 | M08 Reporting & Compliance | PeriodicReport, Violation, CorrectiveAction | một phần |
 | M09 Performance Evaluation | Evaluation, EvaluationScheme/Dimension | ❌ v2 |
 | M10 Workflow / Notification / Audit | ApprovalTask, ApprovalDecision, Notification, EmailDeliveryLog, AuditLog | ✅ (xuyên suốt) |
@@ -86,8 +88,8 @@ một bản cài ở tầng infra**, được tiêm trong `main.ts` như mọi r
 
 ### 4.1 Workflow phê duyệt
 
-Sáu đối tượng nghiệp vụ đi qua nộp → thẩm định → sửa → quyết định (hồ sơ thành lập CLB, đề xuất
-sự kiện, yêu cầu ngân sách, đặt cơ sở vật chất, khiếu nại, tạm ngừng hoạt động). Chúng dùng
+Năm đối tượng nghiệp vụ đi qua nộp → thẩm định → sửa → quyết định (hồ sơ thành lập CLB, đề xuất
+sự kiện kèm ngân sách, đặt cơ sở vật chất, khiếu nại, tạm ngừng hoạt động). Chúng dùng
 chung **một** aggregate `ApprovalTask`: `{ entityType, entityId, state, assignee, decisions[] }`.
 
 Module giữ trạng thái thực thể của riêng nó (`Event.status`), còn approval task giữ trạng thái
@@ -95,8 +97,8 @@ Module giữ trạng thái thực thể của riêng nó (`Event.status`), còn 
 trạng thái thực thể thông qua usecase sở hữu nó. Một hộp thư người duyệt duy nhất cho ICPDP là
 hệ quả miễn phí của thiết kế này — và đó chính là lý do dùng chung một aggregate.
 
-**Bản sửa là các version chỉ-ghi-thêm** (`ClubApplicationVersion`, `EventProposalVersion`,
-`BudgetRequestVersion`): một lần nộp lại ghi một document version mới, không bao giờ sửa bản
+**Bản sửa là các version chỉ-ghi-thêm** (`ClubApplicationVersion`, `EventProposalVersion` —
+gồm cả phần ngân sách): một lần nộp lại ghi một document version mới, không bao giờ sửa bản
 trước. Cả audit lẫn câu hỏi "ICPDP thực sự đã duyệt cái gì" đều phụ thuộc vào điều đó.
 
 ### 4.2 Thông báo — dùng outbox, không bao giờ gửi đồng bộ
@@ -129,8 +131,8 @@ repository không biết actor.
 - **Phân quyền — hai lớp kiểm tra, hai tầng:**
   1. *Quyền* (vai trò này có được làm hành động này không) — middleware ở route, lấy từ bảng
      `Role → Permission`.
-  2. *Phạm vi* (actor này có ở **đúng CLB** đó, với **đúng chức vụ** đó, trong **nhiệm kỳ hiện
-     tại** không) — nằm trong usecase, vì đây là quy tắc nghiệp vụ và phải unit-test được mà
+  2. *Phạm vi* (actor này có ở **đúng CLB** đó, với **đúng role** mang permission cần thiết (BR54),
+     trong **nhiệm kỳ hiện tại** không; hoặc là Club Leader với các quyền giữ riêng — BR55) — nằm trong usecase, vì đây là quy tắc nghiệp vụ và phải unit-test được mà
      không cần HTTP. Đây mới là lớp thực sự bảo vệ dữ liệu; middleware chỉ chặn sớm.
 - Việc gán vai trò gắn với nhiệm kỳ: quyền được suy ra từ `ClubPositionAssignment` ∩ `ClubTerm`
   đang hoạt động, không bao giờ từ một cờ trên user. Nhờ vậy chuyển giao ban chủ nhiệm trở thành

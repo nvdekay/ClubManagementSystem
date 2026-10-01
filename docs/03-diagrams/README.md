@@ -5,10 +5,12 @@ tương ứng của VS Code.
 
 | File | Thể hiện điều gì |
 |---|---|
-| [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | **Context diagram hiện hành** — biên hệ thống và 55 luồng dữ liệu giữa UCMS, 3 actor và 2 hệ thống ngoài. Mỗi luồng được ánh xạ tới use case ở `../SRS.md` §14.4 |
-| [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC54 — mỗi trang một nhóm actor: All users, Student, CMB 1–4, ICPDP 1–3 |
-| [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Budget Request, Property Booking |
-| [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | Context diagram đầu tiên của nhóm (40 luồng). **Đã bị thay thế** bởi v2; giữ lại làm lịch sử |
+| [`UCMS_Context_Diagram_v2.1.drawio`](UCMS_Context_Diagram_v2.1.drawio) | **Context diagram hiện hành** — biên hệ thống và 40 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58) |
+| [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | Context diagram v2 (57 luồng, gần như mỗi use case một luồng). **Đã bị thay thế** bởi v2.1; giữ lại làm lịch sử |
+| [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC52 — mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Leader, Club Member 1–3, ICPDP 1–3 |
+| [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking |
+| [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
+| [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | Context diagram đầu tiên của nhóm (40 luồng). **Đã bị thay thế**; giữ lại làm lịch sử |
 | [`UCMS_Context_Diagram_Comparison.docx`](UCMS_Context_Diagram_Comparison.docx) | So sánh từng luồng giữa context diagram v1 và v2, kèm lý do của từng thay đổi |
 | [`img/`](img/) | Bản xuất PNG, đặt tên theo `<tên-file-nguồn>_<số-trang>_<tên-trang>.png` |
 
@@ -16,8 +18,10 @@ tương ứng của VS Code.
 giữ đúng quy ước tên ở trên, và cập nhật `../SRS.md` cùng tài liệu liên quan trong
 [`../02-use-cases/`](../02-use-cases/) trong cùng một commit.
 
-**Quy ước ký hiệu đang áp dụng** (review issue I09–I13, I27–I30): `«include»` và `«extend»` chỉ
-dùng cho quan hệ use case thật — không bao giờ dùng cho điều hướng màn hình và không bao giờ
-dùng cho cascade hệ thống; actor phụ nối bằng association nét liền, không phải nét đứt; đăng
-nhập là *tiền điều kiện* của dashboard chứ không phải `«include»`. Chỉ còn đúng hai cạnh
-`«extend»`: `UC47 «extend» UC25` và `UC49 «extend» UC28`.
+**Quy ước ký hiệu đang áp dụng** (review issue I09–I13, I27–I30, I55): mỗi trang actor chỉ nối
+actor tới các use case nhóm `Manage …`; mỗi use case nhóm `«include»` các chức năng con của nó (với
+use case quản lý danh mục thì tách theo CRUD, ví dụ `Manage properties «include» Add / View / Update /
+Deactivate property`). Oval chỉ ghi tên, không ghi mã UC. Không vẽ `«extend»`: hai quan hệ
+UC45→UC25 và UC47→UC28 chỉ ghi trong Spec (luồng thay thế, Related UC); điều hướng màn hình và
+cascade hệ thống cũng không vẽ thành quan hệ. Actor phụ nối bằng association nét liền; đăng nhập là *tiền điều kiện* của
+dashboard. Nguồn sinh file `.drawio` là cấu trúc trang trong I55.
