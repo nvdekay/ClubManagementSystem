@@ -1,0 +1,162 @@
+import { Types } from "mongoose";
+import type {
+  ClubSearch, Page, PublicBoardSeat, PublicCampaign, PublicClub,
+  PublicDiscoveryRepository, PublicEvent,
+} from "../../domain/public-discovery.js";
+import { ucmsModels } from "./ucms-models.js";
+
+const clubStates = ["Active", "Suspended"];
+const campaignStates = ["Published", "Accepting Applications"];
+const historyStates = ["Completed", "Report Submitted", "Closed"];
+
+function id(value: unknown): string { return String(value); }
+function date(value: unknown): Date {
+  if (!(value instanceof Date)) throw new Error("invalid public date in database");
+  return value;
+}
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+function optionalDate(value: unknown): Date | undefined {
+  return value instanceof Date ? value : undefined;
+}
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
+}
+function mapClub(doc: Record<string, unknown>): PublicClub {
+  return {
+    id: id(doc._id), code: String(doc.code), name: String(doc.name),
+    field: String(doc.field), state: String(doc.state),
+    description: optionalString(doc.description),
+    contactEmail: optionalString(doc.contactEmail),
+    contactPhone: optionalString(doc.contactPhone),
+    operatingScope: optionalString(doc.operatingScope),
+  };
+}
+function mapEvent(doc: Record<string, unknown>): PublicEvent {
+  return {
+    id: id(doc._id), clubId: id(doc.clubId), clubName: String(doc.clubName),
+    title: String(doc.title), startAt: date(doc.startAt), endAt: date(doc.endAt),
+    venueText: optionalString(doc.venueText), capacity: Number(doc.capacity),
+    state: String(doc.state), audienceScope: String(doc.audienceScope),
+    publishedAt: optionalDate(doc.publishedAt),
+  };
+}
+function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
+  return {
+    id: id(doc._id), title: String(doc.title), state: String(doc.state),
+    windowStart: date(doc.windowStart), windowEnd: date(doc.windowEnd),
+    capacity: Number(doc.capacity),
+  };
+}
+
+export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
+  const clubs = ucmsModels.clubs!;
+  const events = ucmsModels.events!;
+  const campaigns = ucmsModels.recruitmentCampaigns!;
+  const terms = ucmsModels.clubTerms!;
+  const positions = ucmsModels.clubPositions!;
+  const assignments = ucmsModels.clubPositionAssignments!;
+  const memberships = ucmsModels.clubMemberships!;
+  const users = ucmsModels.users!;
+  return {
+    async listClubs(input: ClubSearch): Promise<Page<PublicClub>> {
+      const filter: Record<string, unknown> = { state: { $in: clubStates } };
+      if (input.field) filter.field = input.field;
+      if (input.search) {
+        const search = new RegExp(escapeRegex(input.search), "i");
+        filter.$or = [{ name: search }, { code: search }, { description: search }];
+      }
+      const [docs, total] = await Promise.all([
+        clubs.find(filter).sort({ name: 1, _id: 1 })
+          .skip((input.page - 1) * input.pageSize).limit(input.pageSize).lean(),
+        clubs.countDocuments(filter),
+      ]);
+      return { items: docs.map(mapClub), total, page: input.page, pageSize: input.pageSize };
+    },
+    async fields(): Promise<string[]> {
+      const values = await clubs.distinct("field", { state: { $in: clubStates } });
+      return values.filter((value): value is string => typeof value === "string").sort();
+    },
+    async getClub(clubId): Promise<PublicClub | null> {
+      const doc = await clubs.findById(new Types.ObjectId(clubId)).lean();
+      return doc ? mapClub(doc) : null;
+    },
+    async board(clubId, now): Promise<PublicBoardSeat[]> {
+      const clubObjectId = new Types.ObjectId(clubId);
+      const [termDocs, positionDocs] = await Promise.all([
+        terms.find({
+          clubId: clubObjectId, state: "Active", startAt: { $lte: now }, endAt: { $gt: now },
+        }).lean(),
+        positions.find({ clubId: clubObjectId, isBoardSeat: true, isActive: true }).lean(),
+      ]);
+      if (!termDocs.length || !positionDocs.length) return [];
+      const termById = new Map(termDocs.map((term) => [id(term._id), String(term.name)]));
+      const positionById = new Map(positionDocs.map((position) => [id(position._id), String(position.name)]));
+      const assignmentDocs = await assignments.find({
+        clubId: clubObjectId,
+        termId: { $in: termDocs.map((term) => term._id) },
+        positionId: { $in: positionDocs.map((position) => position._id) },
+        confirmedBy: { $exists: true, $ne: null },
+        effectiveFrom: { $lte: now },
+        $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null }, { effectiveTo: { $gt: now } }],
+      }).lean();
+      const memberDocs = await memberships.find({
+        _id: { $in: assignmentDocs.map((assignment) => assignment.membershipId) },
+        clubId: clubObjectId, state: "Active",
+      }).lean();
+      const memberById = new Map(memberDocs.map((member) => [id(member._id), member]));
+      const userDocs = await users.find({
+        _id: { $in: memberDocs.map((member) => member.userId) },
+      }).select("_id displayName").lean();
+      const nameById = new Map(userDocs.map((user) => [id(user._id), String(user.displayName)]));
+      return assignmentDocs.flatMap((assignment) => {
+        const member = memberById.get(id(assignment.membershipId));
+        const memberName = member ? nameById.get(id(member.userId)) : undefined;
+        const positionName = positionById.get(id(assignment.positionId));
+        const termName = termById.get(id(assignment.termId));
+        return memberName && positionName && termName
+          ? [{ memberName, positionName, termName }] : [];
+      });
+    },
+    async campaigns(clubId, now): Promise<PublicCampaign[]> {
+      const docs = await campaigns.find({
+        clubId: new Types.ObjectId(clubId), state: { $in: campaignStates }, windowEnd: { $gt: now },
+      }).sort({ windowStart: 1, _id: 1 }).limit(20).lean();
+      return docs.map(mapCampaign);
+    },
+    async clubUpcomingEvents(clubId, now): Promise<PublicEvent[]> {
+      const docs = await events.find({
+        clubId: new Types.ObjectId(clubId), state: "Upcoming", audienceScope: "PUBLIC",
+        publishedAt: { $exists: true, $ne: null }, startAt: { $gt: now },
+      }).sort({ startAt: 1, _id: 1 }).limit(20).lean();
+      return docs.map(mapEvent);
+    },
+    async clubHistory(clubId, now): Promise<PublicEvent[]> {
+      const docs = await events.find({
+        clubId: new Types.ObjectId(clubId), state: { $in: historyStates },
+        audienceScope: "PUBLIC", publishedAt: { $exists: true, $ne: null },
+        endAt: { $lte: now },
+      }).sort({ endAt: -1, _id: -1 }).limit(20).lean();
+      return docs.map(mapEvent);
+    },
+    async listUpcomingEvents(page, pageSize, now): Promise<Page<PublicEvent>> {
+      const activeClubs = await clubs.find({ state: "Active" }).select("_id").lean();
+      const filter = {
+        clubId: { $in: activeClubs.map((club) => club._id) },
+        state: "Upcoming", audienceScope: "PUBLIC",
+        publishedAt: { $exists: true, $ne: null }, startAt: { $gt: now },
+      };
+      const [docs, total] = await Promise.all([
+        events.find(filter).sort({ startAt: 1, _id: 1 })
+          .skip((page - 1) * pageSize).limit(pageSize).lean(),
+        events.countDocuments(filter),
+      ]);
+      return { items: docs.map(mapEvent), total, page, pageSize };
+    },
+    async getEvent(eventId): Promise<PublicEvent | null> {
+      const doc = await events.findById(new Types.ObjectId(eventId)).lean();
+      return doc ? mapEvent(doc) : null;
+    },
+  };
+}

@@ -1,19 +1,5 @@
 import { z } from "zod";
 import { createDocument } from "zod-openapi";
-import { CreateUser, ListUsersQuery, type User as DomainUser } from "../../domain/user.js";
-
-// Wire shape of a domain type: Dates serialize to ISO strings in JSON.
-type Wire<T> = { [K in keyof T]: T[K] extends Date ? string : T[K] };
-
-// `satisfies` links this schema to the domain entity — adding a field to User breaks the build here.
-const User = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-  name: z.string(),
-  createdAt: z.string().datetime(),
-}) satisfies z.ZodType<Wire<DomainUser>>;
-
-const UserPage = z.object({ items: z.array(User), total: z.number().int() });
 
 const ApiError = z.object({
   statusCode: z.number(),
@@ -24,6 +10,55 @@ const ApiError = z.object({
   path: z.string(),
 });
 const Health = z.object({ ok: z.boolean() });
+const Me = z.object({
+  user: z.object({
+    id: z.string(), email: z.string().email(), displayName: z.string(),
+    avatarUrl: z.string().optional(), accountState: z.enum(["Active", "Locked"]),
+    lockReason: z.string().optional(),
+  }),
+  csrfToken: z.string(),
+  systemRoles: z.array(z.string()),
+  workspaces: z.array(z.object({
+    kind: z.enum(["student", "icpdp", "club"]),
+    clubId: z.string().optional(), clubName: z.string().optional(),
+    role: z.enum(["leader", "member", "founder"]).optional(),
+    permissions: z.array(z.string()),
+  })),
+});
+const AdminUsers = z.object({
+  items: z.array(z.object({
+    user: Me.shape.user, systemRoles: z.array(z.string()),
+  })),
+  total: z.number().int(),
+});
+const Changed = z.object({ changed: z.literal(true) });
+const Reason = z.object({ reason: z.string().min(1).max(1000) });
+const RoleChange = z.object({ roleCode: z.string(), reason: z.string().optional() });
+const UserIdPath = z.object({ id: z.string() });
+const RolePath = z.object({ id: z.string(), roleCode: z.string() });
+const PublicClub = z.object({
+  id: z.string(), code: z.string(), name: z.string(), field: z.string(),
+  state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
+  contactEmail: z.string().optional(), contactPhone: z.string().optional(),
+  operatingScope: z.string().optional(),
+});
+const PublicCampaign = z.object({
+  id: z.string(), title: z.string(), state: z.string(),
+  windowStart: z.string(), windowEnd: z.string(), capacity: z.number(),
+});
+const PublicEvent = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(),
+  startAt: z.string(), endAt: z.string(), venueText: z.string().optional(),
+  capacity: z.number(), state: z.string(), audienceScope: z.string(),
+  publishedAt: z.string().optional(),
+});
+const PublicPage = z.object({
+  items: z.array(PublicClub), total: z.number(), page: z.number(), pageSize: z.number(),
+});
+const EventPage = z.object({
+  items: z.array(PublicEvent), total: z.number(), page: z.number(), pageSize: z.number(),
+});
+const IdPath = z.object({ id: z.string() });
 
 // Success envelope every 2xx response is wrapped in — see interface/http/response.ts.
 function envelope<T extends z.ZodTypeAny>(data: T) {
@@ -37,7 +72,7 @@ function envelope<T extends z.ZodTypeAny>(data: T) {
 
 export const openApiDocument = createDocument({
   openapi: "3.1.0",
-  info: { title: "MERN Template API", version: "1.0.0" },
+  info: { title: "UCMS API", version: "1.0.0" },
   servers: [{ url: "/api/v1" }],
   paths: {
     "/health": {
@@ -55,40 +90,187 @@ export const openApiDocument = createDocument({
         },
       },
     },
-    "/users": {
+    "/public/clubs": {
       get: {
-        summary: "List users",
-        requestParams: { query: ListUsersQuery },
+        summary: "Find public clubs (Guest allowed)",
+        requestParams: { query: z.object({
+          search: z.string().optional(), field: z.string().optional(), page: z.coerce.number().optional(),
+        }) },
+        responses: {
+          "200": { description: "Active and suspended clubs",
+            content: { "application/json": { schema: envelope(PublicPage.extend({
+              fields: z.array(z.string()),
+            })) } } },
+          "400": { description: "Invalid query", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/public/clubs/{id}": {
+      get: {
+        summary: "Public club profile, current board, campaigns and activities",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Public club profile",
+            content: { "application/json": { schema: envelope(z.object({
+              club: PublicClub,
+              board: z.array(z.object({
+                memberName: z.string(), positionName: z.string(), termName: z.string(),
+              })),
+              campaigns: z.array(PublicCampaign),
+              upcomingEvents: z.array(PublicEvent),
+              history: z.array(PublicEvent),
+            })) } } },
+          "404": { description: "Club not public or not found",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/public/events": {
+      get: {
+        summary: "Upcoming published public events",
+        requestParams: { query: z.object({ page: z.coerce.number().optional() }) },
+        responses: {
+          "200": { description: "Upcoming events",
+            content: { "application/json": { schema: envelope(EventPage) } } },
+          "400": { description: "Invalid query", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/public/events/{id}": {
+      get: {
+        summary: "Upcoming published public event detail",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Public event",
+            content: { "application/json": { schema: envelope(z.object({
+              event: PublicEvent, club: z.object({ id: z.string(), name: z.string() }),
+            })) } } },
+          "404": { description: "Event not public or not found",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/auth/login": {
+      get: {
+        summary: "Start Google OAuth login",
+        responses: {
+          "302": { description: "Redirect to Google authorization endpoint" },
+        },
+      },
+    },
+    "/auth/callback": {
+      get: {
+        summary: "Complete Google OAuth login",
+        responses: {
+          "302": { description: "Redirect to client after login or error" },
+        },
+      },
+    },
+    "/auth/error": {
+      get: {
+        summary: "Read and clear the latest signed login error",
+        responses: {
+          "200": { description: "Login error reason, when available",
+            content: { "application/json": { schema: envelope(z.object({
+              reason: z.string().nullable(),
+            })) } } },
+        },
+      },
+    },
+    "/auth/me": {
+      get: {
+        summary: "Get current user and CSRF token",
         responses: {
           "200": {
-            description:
-              "One page, newest first: `offset` rows skipped, at most `limit` (default 20, max 100) returned; `total` counts every match",
-            content: { "application/json": { schema: envelope(UserPage) } },
+            description: "Current account and contexts",
+            content: { "application/json": { schema: envelope(Me) } },
           },
-          "400": {
-            description: "Invalid limit or offset",
+          "401": {
+            description: "Session missing or expired",
+            content: { "application/json": { schema: ApiError } },
+          },
+          "423": {
+            description: "Account locked",
             content: { "application/json": { schema: ApiError } },
           },
         },
       },
+    },
+    "/auth/logout": {
       post: {
-        summary: "Register a user",
-        requestBody: {
-          content: { "application/json": { schema: CreateUser } },
-        },
+        summary: "Revoke current session (requires X-CSRF-Token)",
         responses: {
-          "201": {
-            description: "Created user",
-            content: { "application/json": { schema: envelope(User) } },
+          "200": {
+            description: "Logged out",
+            content: { "application/json": { schema: envelope(z.object({ loggedOut: z.literal(true) })) } },
           },
-          "400": {
-            description: "Validation error",
+          "401": {
+            description: "Session missing or expired",
             content: { "application/json": { schema: ApiError } },
           },
-          "409": {
-            description: "Email already registered",
+          "403": {
+            description: "CSRF token missing or invalid",
             content: { "application/json": { schema: ApiError } },
           },
+        },
+      },
+    },
+    "/admin/users": {
+      get: {
+        summary: "Search users (ICPDP only)",
+        responses: {
+          "200": { description: "Users and current system roles",
+            content: { "application/json": { schema: envelope(AdminUsers) } } },
+          "403": { description: "Account administration denied",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/users/{id}/roles": {
+      post: {
+        summary: "Grant a system role (ICPDP only)",
+        requestParams: { path: UserIdPath },
+        requestBody: { content: { "application/json": { schema: RoleChange } } },
+        responses: {
+          "200": { description: "Role granted",
+            content: { "application/json": { schema: envelope(Changed) } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/users/{id}/roles/{roleCode}": {
+      delete: {
+        summary: "Revoke a system role with reason (ICPDP only)",
+        requestParams: { path: RolePath },
+        requestBody: { content: { "application/json": { schema: Reason } } },
+        responses: {
+          "200": { description: "Role revoked",
+            content: { "application/json": { schema: envelope(Changed) } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/users/{id}/lock": {
+      post: {
+        summary: "Lock account with reason (ICPDP only)",
+        requestParams: { path: UserIdPath },
+        requestBody: { content: { "application/json": { schema: Reason } } },
+        responses: {
+          "200": { description: "Account locked",
+            content: { "application/json": { schema: envelope(Changed) } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/users/{id}/unlock": {
+      post: {
+        summary: "Unlock account with reason (ICPDP only)",
+        requestParams: { path: UserIdPath },
+        requestBody: { content: { "application/json": { schema: Reason } } },
+        responses: {
+          "200": { description: "Account unlocked",
+            content: { "application/json": { schema: envelope(Changed) } } },
+          "403": { description: "Forbidden", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

@@ -1,9 +1,12 @@
 import express from "express";
-import type { UserRepository } from "../../domain/user.js";
+import { authRoutes, type AuthRouteDeps } from "./auth-routes.js";
+import { accountAdminRoutes } from "./account-admin-routes.js";
+import type { AccountAdminRepository } from "../../domain/account-admin.js";
+import type { PublicDiscoveryRepository } from "../../domain/public-discovery.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
-import { userRoutes } from "./user-routes.js";
+import { publicDiscoveryRoutes } from "./public-discovery-routes.js";
 
 // Serialized once — the document never changes after boot.
 const openApiJson = JSON.stringify(openApiDocument);
@@ -28,7 +31,12 @@ const docsHtml = `<!doctype html>
 </body>
 </html>`;
 
-export function buildApp(deps: { userRepo: UserRepository; dbReady: () => boolean }) {
+export function buildApp(deps: {
+  auth?: AuthRouteDeps;
+  adminRepo?: AccountAdminRepository;
+  publicRepo: PublicDiscoveryRepository;
+  dbReady: () => boolean;
+}) {
   const app = express();
   app.disable("x-powered-by");
   app.use((_req, res, next) => {
@@ -44,9 +52,21 @@ export function buildApp(deps: { userRepo: UserRepository; dbReady: () => boolea
     const ok = deps.dbReady(); // 503 when the DB is down, so orchestrators stop routing here
     res.status(ok ? 200 : 503).json({ ok });
   });
-  app.use("/api/v1", userRoutes(deps.userRepo));
+  app.use("/api/v1", publicDiscoveryRoutes(deps.publicRepo));
+  if (deps.auth && deps.adminRepo) {
+    app.use("/api/v1", authRoutes(deps.auth));
+    app.use("/api/v1", accountAdminRoutes({
+      adminRepo: deps.adminRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+    }));
+  }
+  const availablePaths = deps.auth
+    ? openApiDocument.paths
+    : Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
+      .filter(([path]) => !path.startsWith("/auth/") && !path.startsWith("/admin/")));
   app.get("/docs/openapi.json", (_req, res) => {
-    res.type("json").send(openApiJson);
+    res.type("json").send(deps.auth ? openApiJson : JSON.stringify({
+      ...openApiDocument, paths: availablePaths,
+    }));
   });
   app.get("/docs", (_req, res) => {
     res.type("html").send(docsHtml);
