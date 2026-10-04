@@ -20,6 +20,7 @@
 ## Cấu hình còn chờ
 Người dùng sẽ tự điền Google credentials và domain. Không kiểm thử Google thật trước khi có cấu hình đó.
 `policyVersions` chưa seed vì tám giá trị khởi tạo ngoài domain chưa có trong SRS; đang chờ
-quyết định của người dùng. Mongo local hiện chưa được xác nhận là replica set để chạy transaction.
+quyết định của người dùng. Mongo local đã chạy replica set `rs0` (2026-10-04); transaction
+chạy được, xem `docs/05-implementation/AUTH_SETUP.md`.
 Lệnh cài `openid-client` bị DNS của npm registry chặn, nên adapter OIDC dùng Node crypto và
 Google discovery/JWKS, đã có test chữ ký/audience/nonce với khóa RSA giả lập.

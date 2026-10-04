@@ -48,8 +48,10 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
     expect(history[0]?.snapshot.objectives).toBe("Build robots");
     expect(history[1]?.snapshot.objectives).toBe("Build autonomous robots");
     expect(second.versionNo).toBe(2);
-    expect(await ucmsModels.approvalTasks!.countDocuments({ entityId: new Types.ObjectId(application.id) }))
-      .toBe(1);
+    // Each submission opens one review task; resubmitting closes the previous one (FR-UC07-04).
+    const tasks = await ucmsModels.approvalTasks!.find({ entityId: new Types.ObjectId(application.id) })
+      .sort({ openedAt: 1 }).lean();
+    expect(tasks.map((task) => task.state)).toEqual(["Closed", "Open"]);
     expect(await ucmsModels.auditLogs!.countDocuments({ entityId: new Types.ObjectId(application.id),
       action: "CLUB_APPLICATION_SUBMITTED" })).toBe(2);
     expect(await ucmsModels.notifications!.countDocuments({ entityId: new Types.ObjectId(application.id) }))

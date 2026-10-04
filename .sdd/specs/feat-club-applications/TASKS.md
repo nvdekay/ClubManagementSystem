@@ -8,4 +8,5 @@
 - [x] Client Student form/trạng thái, service/hook, i18n en/vi và layout responsive; production build xanh.
 - [ ] Khi UC05 sẵn sàng, thay tuyến ICPDP một cấp tạm thời bằng routing snapshot theo chính sách định tuyến và gửi thông báo tới reviewer được phân công.
 - [ ] Bổ sung bù/xoá Cloudinary asset mồ côi và chính sách retention khi upload thành công nhưng ghi metadata Mongo lỗi.
-- [ ] `npm run check` với Mongo replica set thật; kiểm tra trực quan và Cloudinary upload/download với credentials thật. Lần chạy cục bộ mới nhất: `MONGO_URI= npm run check` xanh (80 unit test pass, 10 integration test bỏ qua).
+- [x] `npm run check` với Mongo replica set thật (`rs0` một node): 90/90 test xanh, gồm 10 integration test (2026-10-04). Test repository được sửa để kiểm đúng hậu điều kiện: nộp lại đóng review task cũ và mở đúng một task `Open` mới.
+- [ ] Kiểm tra trực quan và Cloudinary upload/download với credentials thật.

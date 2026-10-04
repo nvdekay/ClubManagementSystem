@@ -22,10 +22,30 @@ Khi toàn bộ biến Auth còn trống, server chỉ mở khu công khai UC06 v
 `/auth/*` hoặc `/admin/*`; `/docs/openapi.json` cũng chỉ liệt kê route đang phục vụ.
 Khi bắt đầu điền bất kỳ biến Auth nào, server kiểm tra đủ bộ lúc khởi động và fail-fast nếu
 cấu hình chưa hoàn chỉnh. `db:init`/`db:verify` chỉ cần `MONGO_URI`.
-Đăng nhập lần đầu tạo User và StudentProfile trong một MongoDB transaction; `mongod` local
-cần chạy ở chế độ replica set. Không sửa cấu hình service MongoDB đang chạy mà chưa xác nhận
-nó có được ứng dụng khác sử dụng hay không. Bộ 50 collection nghiệp vụ DBML vẫn giữ nguyên;
-server tạo thêm `authSessions` với TTL index cho phiên.
+Đăng nhập lần đầu tạo User và StudentProfile trong một MongoDB transaction; policy và hồ sơ
+UC07 cũng ghi bằng transaction, nên `mongod` phải chạy ở chế độ replica set. Bộ 50 collection
+nghiệp vụ DBML vẫn giữ nguyên; server tạo thêm `authSessions` với TTL index cho phiên.
+
+### Bật replica set một node (`rs0`)
+
+- **Docker:** `docker compose up -d --wait` đã chạy `mongod --replSet rs0` và healthcheck tự
+  `rs.initiate` ở lần khởi động đầu. CI dùng đúng file compose này. Volume tạo bởi bản compose
+  cũ (chưa có replica set) vẫn dùng được, dữ liệu giữ nguyên.
+- **MongoDB cài bằng Homebrew:** thêm vào `/opt/homebrew/etc/mongod.conf`
+
+  ```yaml
+  replication:
+    replSetName: rs0
+  ```
+
+  rồi khởi động lại service (`brew services restart mongodb-community`, hoặc
+  `launchctl kickstart -k gui/$(id -u)/homebrew.mxcl.mongodb-community`) và chạy một lần
+  `mongosh --eval "rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: '127.0.0.1:27017' }] })"`.
+  Dữ liệu cũ giữ nguyên; các ứng dụng khác dùng cùng `mongod` vẫn kết nối như trước.
+
+`MONGO_URI=mongodb://127.0.0.1:27017/ucms` không cần đổi: driver tự nhận ra replica set. Lỗi
+`Transaction numbers are only allowed on a replica set member or mongos` nghĩa là `mongod` chưa
+bật replica set.
 
 Sau khi điền cấu hình và bật replica set: chạy `npm run db:init`, `npm run check`,
 `npm run build --workspaces`, rồi `npm run dev`. Thử `GET /api/v1/auth/me` không có cookie
