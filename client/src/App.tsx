@@ -213,8 +213,18 @@ export function App() {
                   </AppButton>
                 )}
               </AppCard>
+              {selected.kind === "student" && (
+                <div className="mt-8">
+                  <Link to="/workspace/applications" className="font-semibold text-accent-app">
+                    {t("applications.title")}
+                  </Link>
+                </div>
+              )}
               {selected.kind === "icpdp" && (
                 <div className="mt-8">
+                  <Link to="/workspace/policy" className="mb-5 inline-block text-sm font-semibold text-accent-app">
+                    {t("policy.title")}
+                  </Link>
                   <h2 className="text-lg font-semibold">{t("auth.manageAccounts")}</h2>
                   <AppSearchInput className="mt-4 w-full" placeholder={t("auth.searchUsers")}
                     onSearch={setSearch} />

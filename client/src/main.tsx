@@ -12,6 +12,9 @@ import { EventDetail } from "./pages/public/EventDetail.js";
 import { EventDirectory } from "./pages/public/EventDirectory.js";
 import { PublicHome } from "./pages/public/PublicHome.js";
 import { PublicNotFound } from "./pages/public/PublicNotFound.js";
+import { PolicyPage } from "./pages/icpdp/PolicyPage.js";
+import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
+import { ApplicationEditorPage } from "./pages/student/ApplicationEditorPage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -29,6 +32,10 @@ createRoot(document.getElementById("root")!).render(
             <Route path="clubs/:id" element={<ClubDetail />} />
             <Route path="events" element={<EventDirectory />} />
             <Route path="events/:id" element={<EventDetail />} />
+            <Route path="workspace/policy" element={<PolicyPage />} />
+            <Route path="workspace/applications" element={<ApplicationsPage />} />
+            <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
+            <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
             <Route path="*" element={<PublicNotFound />} />
           </Route>
           <Route path="login" element={<App />} />
