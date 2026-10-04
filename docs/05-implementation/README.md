@@ -33,7 +33,11 @@ collection `users` dành cho schema UCMS dùng ObjectId. Auth tạo thêm collec
 `authSessions` khi server khởi động.
 
 Để đối chiếu end-to-end: mở Compass bằng cùng `MONGO_URI`, refresh danh sách database, mở tên
-database do `db:verify` in ra và kiểm tra 50 collection UCMS. Sau khi cấu hình Auth theo
+database do `db:verify` in ra và kiểm tra 50 collection UCMS. Chạy `npm run seed` để upsert
+ảnh chụp dữ liệu công khai của pdp.fpt.edu.vn (Hà Nội, 2026-10-04) với ID cố định: 48 CLB và
+21 sự kiện do CLB tổ chức (đều đã kết thúc, nên chỉ hiện trong lịch sử của từng CLB). Lệnh chạy
+lại được, không nhân đôi; nó chỉ xoá bộ demo hư cấu cũ theo ID cố định của chính seed, không
+đụng dữ liệu khác. Chi tiết và giới hạn ở `server/src/infra/db/README.md`. Sau khi cấu hình Auth theo
 [`AUTH_SETUP.md`](AUTH_SETUP.md), chạy backend bằng `npm run dev -w server`;
 `GET <APP_BASE_URL>/api/v1/health` phải trả `200` với
 `{"ok":true}`. Nếu Compass dùng MongoDB Atlas, backend cũng cần chính URI Atlas đó (không đưa
