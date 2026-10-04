@@ -3,7 +3,7 @@
 ## Stack
 
 - **React 19** + TypeScript, build bằng **Vite** (`client/`, một trong hai npm workspace bên cạnh `server/`).
-- Không router — ứng dụng hiện là một trang duy nhất (`App.tsx`).
+- `react-router` điều hướng các trang công khai UC06 (`/`, `/clubs`, `/events`) và Auth (`/login`, `/workspace`); `BrowserRouter` nằm ở `main.tsx`. Điều kiện thêm router của ADR-002 đã xảy ra.
 - Không thư viện state — state cục bộ của component (`useState`/`useReducer`) là đủ ở quy mô này.
 - Không thư viện HTTP client — dùng `fetch` gốc, gọi tới `/api/v1/...` (Vite proxy `/api` sang server ở môi trường dev). **TanStack React Query** (`@tanstack/react-query`) quản lý server state: `useQuery`/`useMutation` bọc quanh các hàm fetch đó, `QueryClientProvider` đặt trong `main.tsx`. Truyền `signal` của queryFn vào `fetch`; sau một mutation, cập nhật cache theo quy tắc 4 của mục Fetch/Service (`setQueryData` khi response đã quyết định được giá trị mới, `invalidateQueries` khi danh sách được lọc ở phía server). Truy vấn có phân trang/tìm kiếm dùng `placeholderData: keepPreviousData` để khi key đổi (trang mới, từ khoá mới) các dòng cũ vẫn nằm trên màn hình thay vì chớp trắng (xem `useUsers`).
 - **Tailwind v4**, CSS-first (plugin `@tailwindcss/vite`, không có `tailwind.config.*`). Token màu khai báo trong `client/src/index.css` bên trong `@theme` dưới dạng `--color-<name>-app`, sinh ra các utility `<name>-app` (`bg-danger-app`, `text-danger-app`, …).
@@ -13,16 +13,16 @@
 - **TanStack Table v9** (`@tanstack/react-table`) cho bảng — headless: người gọi sở hữu instance `useTable` và truyền nó vào bộ kit `ui/table/` (`AppTable`, `AppTableColumnToggle`, `AppTableLimitSelect`). Bộ điều khiển phân trang không phụ thuộc bảng — `ui/pagination/AppPagination` nhận props thuần `pageIndex`/`pageCount`/`onPageChange`, không cần instance bảng. v9 ≠ v8: `useTable({ features, columns, data })` với `tableFeatures({...})` (không còn `useReactTable`/`getCoreRowModel`), `createColumnHelper<typeof features, T>()`, `table.state` thay cho `table.getState()`. Tập feature dùng chung nằm trong `AppTable.tsx` (`appTableFeatures`); mở rộng ở đó khi một bảng cần sắp xếp/chọn dòng/…. Tài liệu dành cho agent nằm trong `node_modules/@tanstack/react-table/skills/`. Giữ `data`/`columns` ổn định về tham chiếu (mảng rỗng khai báo ở phạm vi module, `useMemo` cho columns).
 - Alias `@/` đã cấu hình (`client/tsconfig.json` mục `paths`, `client/vite.config.ts` mục `resolve.alias`) → `client/src/*`.
 
-Không thêm react-router, Redux/Zustand/Valtio hay axios theo kiểu phòng xa. Mỗi thứ đều có một điều kiện kích hoạt cụ thể nêu bên dưới; chỉ thêm — và cập nhật tài liệu này — khi điều kiện đó thực sự xảy ra, không phải trước đó.
+Không thêm Redux/Zustand/Valtio hay axios theo kiểu phòng xa. Mỗi thứ đều có một điều kiện kích hoạt cụ thể nêu bên dưới; chỉ thêm — và cập nhật tài liệu này — khi điều kiện đó thực sự xảy ra, không phải trước đó.
 
 ## Cấu trúc thư mục
 
-Hiện tại (bố cục đầy đủ của template — mọi thư mục đều tồn tại; thư mục rỗng có một README nói rõ thứ gì thuộc về nó):
+Hiện tại (các thư mục liên quan; mỗi thư mục có README mô tả mục đích):
 
 ```
 client/src/
-  main.tsx     # điểm vào, gắn App bên trong QueryClientProvider
-  App.tsx      # trang duy nhất của ứng dụng (chưa có router)
+  main.tsx     # điểm vào, QueryClientProvider, BrowserRouter và routes
+  App.tsx      # màn Auth và workspace hiện hành
   index.css    # import Tailwind + token màu @theme (nơi duy nhất được phép có mã màu) + ghi đè :root.dark
   i18n/
     index.ts   # khởi tạo i18next + kiểu Locale + resources (đăng ký mọi module ở en/vi)
@@ -35,7 +35,7 @@ client/src/
     useUsers.ts # tầng React Query: useUsers()/useCreateUser(), sở hữu usersKey. Biết cache, không tự gọi fetch.
   utils/
     cn.ts      # twMerge(clsx(inputs)) — dùng cho mọi className có điều kiện
-  pages/       # mỗi trang một thư mục khi đã có router (hiện là README giữ chỗ)
+  pages/public/ # trang UC06: home, danh bạ/chi tiết CLB và sự kiện
   components/
     ui/
       button/AppButton.tsx
@@ -135,9 +135,9 @@ Cả `theme` lẫn `locale` đều là công tắc người dùng bật được
 - Không barrel file — luôn import đúng file, không bao giờ import một `index.ts` re-export của thư mục.
 - Nhóm import theo thứ tự: React → thư viện bên thứ ba → alias `@/`.
 
-## Routing & State — chưa có trong dự án này
+## Routing & State
 
-- Router: thêm `react-router` (nhỏ, chuẩn mực) khi thực sự cần trang thứ hai. Đừng với tay tới thứ nặng hơn nếu không có lý do cụ thể.
+- Router: dùng `react-router` declarative mode vì UC06 có nhiều URL mở trực tiếp; `Routes` ở `main.tsx`, trang ở `pages/`, shell ở `components/layout/`. Không dùng thêm tầng data router khi React Query đã quản lý server state.
 - State: `useState`/`useReducer`/`Context` là đủ cho template này. Chỉ thêm thư viện state khi việc truyền props qua nhiều tầng đã thực sự gây khó chịu và chứng minh được trong chính codebase này — không phải phòng xa.
 
 ## Checklist trước khi code

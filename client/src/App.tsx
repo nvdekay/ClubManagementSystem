@@ -1,30 +1,21 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { createColumnHelper, useTable, type PaginationState } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppCard } from "@/components/ui/card/AppCard";
-import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
+import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppSwitch } from "@/components/ui/switch/AppSwitch";
-import { AppTable, appTableFeatures } from "@/components/ui/table/AppTable";
-import { AppTableColumnToggle } from "@/components/ui/table/AppTableColumnToggle";
-import { AppTableLimitSelect } from "@/components/ui/table/AppTableLimitSelect";
-import { AppPagination } from "@/components/ui/pagination/AppPagination";
-import { AppToaster, appToast } from "@/components/ui/toast/AppToast";
-import { useTranslation } from "react-i18next";
-
-import { useCreateUser, useUsers } from "@/hooks/useUsers";
-import { type Locale } from "@/i18n";
-import { type User } from "@/services/users";
-import { formatDate } from "@/utils/formatDate";
+import { useAuth, useLoginError, useLogout } from "@/hooks/useAuth";
+import { useAccountAction, useAccounts } from "@/hooks/useAccounts";
+import { type AccountAction, type SystemRoleCode } from "@/services/accounts";
+import { googleLoginUrl, type Workspace } from "@/services/auth";
+import { cn } from "@/utils/cn";
 
 type Theme = "light" | "dark";
-
-const columnHelper = createColumnHelper<typeof appTableFeatures, User>();
-// Stable fallback — a fresh [] every render would rebuild the table's row models.
-const NO_USERS: User[] = [];
 
 function initialTheme(): Theme {
   const stored = localStorage.getItem("theme");
@@ -32,203 +23,267 @@ function initialTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-// Lucide sun/moon, inlined: single use site, and emoji render per-OS (no-emoji-icons rule).
-const iconProps = {
-  "aria-hidden": true,
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 2,
-  strokeLinecap: "round",
-  strokeLinejoin: "round",
-  className: "size-4 text-muted-app",
-} as const;
-
-function SunIcon() {
-  return (
-    <svg {...iconProps}>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-    </svg>
-  );
+function workspaceKey(workspace: Workspace): string {
+  return `${workspace.kind}:${workspace.clubId ?? ""}`;
 }
 
 export function App() {
-  const [theme, setTheme] = useState<Theme>(initialTheme);
   const { t, i18n } = useTranslation();
-  const locale = i18n.language as Locale; // only ever set to "en" | "vi" (see i18n/index.ts)
+  const auth = useAuth();
+  const logout = useLogout();
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [selectedKey, setSelectedKey] = useState(() => sessionStorage.getItem("workspace") ?? "");
+  const [choosing, setChoosing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [targetId, setTargetId] = useState("");
+  const [roleCode, setRoleCode] = useState<SystemRoleCode>("ICPDP_OFFICER");
+  const [reason, setReason] = useState("");
+  const errorCode = new URLSearchParams(window.location.search).get("error");
+  const lockError = useLoginError(errorCode === "locked");
+  const loginError = errorCode === "domain" ? t("auth.domainError")
+    : errorCode === "locked" ? t("auth.lockedError")
+      : errorCode ? t("auth.signInError") : null;
+  const requestedReturnTo = new URLSearchParams(window.location.search).get("returnTo");
+  const returnTo = requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
+    && !requestedReturnTo.includes("\\") ? requestedReturnTo : "/workspace";
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const [search, setSearch] = useState("");
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
-  // Server-side pagination: each page is its own request, sized by the select.
-  const usersQuery = useUsers(search, pagination.pageSize, pagination.pageIndex * pagination.pageSize);
-  const createMutation = useCreateUser();
+  const workspaces = auth.data?.workspaces ?? [];
+  const selected = workspaces.find((workspace) => workspaceKey(workspace) === selectedKey)
+    ?? (workspaces.length === 1 ? workspaces[0] : undefined);
+  const accounts = useAccounts(search, selected?.kind === "icpdp" && !choosing);
+  const accountAction = useAccountAction();
+  const target = accounts.data?.items.find((item) => item.user.id === targetId);
+  const roleOptions: Array<{ value: SystemRoleCode; label: string }> = [
+    { value: "ICPDP_OFFICER", label: t("auth.officerRole") },
+    { value: "ICPDP_HEAD", label: t("auth.headRole") },
+    { value: "ATTENDANCE_UNLOCK", label: t("auth.attendanceRole") },
+  ];
 
-  // A new search means a new result set — jump back to its first page.
-  const onSearch = useCallback((value: string) => {
-    setSearch(value);
-    setPagination((p) => (p.pageIndex === 0 ? p : { ...p, pageIndex: 0 }));
-  }, []);
-  const onPageSize = useCallback((value: number) => {
-    setPagination({ pageIndex: 0, pageSize: value });
-  }, []);
-
-  const users = usersQuery.data?.items ?? NO_USERS;
-  const columns = useMemo(
-    () =>
-      columnHelper.columns([
-        columnHelper.accessor("name", { header: t("users.namePlaceholder") }),
-        columnHelper.accessor("email", { header: t("users.emailPlaceholder") }),
-        // ISO strings sort chronologically as text, so the default sortFn is correct.
-        columnHelper.accessor("createdAt", {
-          header: t("users.createdAtHeader"),
-          cell: (info) => formatDate(info.getValue(), locale),
-        }),
-      ]),
-    [t, locale],
-  );
-  const table = useTable({
-    features: appTableFeatures,
-    data: users,
-    columns,
-    state: { pagination },
-    onPaginationChange: setPagination,
-    // The server pages; the table only reports page count from the server's total.
-    manualPagination: true,
-    rowCount: usersQuery.data?.total ?? 0,
-  });
-
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    createMutation.mutate(
-      { email: String(data.get("email")), name: String(data.get("name")) },
-      { onSuccess: () => form.reset() },
-    );
+  function selectWorkspace(workspace: Workspace) {
+    const key = workspaceKey(workspace);
+    sessionStorage.setItem("workspace", key);
+    setSelectedKey(key);
+    setChoosing(false);
   }
 
-  const error = createMutation.isError
-    ? createMutation.error.message || t("common.requestFailed")
-    : usersQuery.isError
-      ? t("users.loadError")
-      : "";
-  const pending = createMutation.isPending;
+  async function signOut() {
+    if (!auth.data) return;
+    try {
+      await logout.mutateAsync(auth.data.csrfToken);
+      sessionStorage.removeItem("workspace");
+      setSelectedKey("");
+    } catch {
+      // The mutation exposes the error state below.
+    }
+  }
+
+  async function updateAccount(kind: AccountAction["kind"]) {
+    if (!auth.data || !target) return;
+    const action: AccountAction = kind === "grant" || kind === "revoke"
+      ? { kind, userId: target.user.id, roleCode, reason }
+      : { kind, userId: target.user.id, reason };
+    try {
+      await accountAction.mutateAsync({ action, csrfToken: auth.data.csrfToken });
+      setReason("");
+    } catch {
+      // The mutation exposes the error state below.
+    }
+  }
+
+  function workspaceTitle(workspace: Workspace): string {
+    if (workspace.kind === "student") return t("auth.student");
+    if (workspace.kind === "icpdp") return t("auth.icpdp");
+    return workspace.clubName ?? t("auth.club");
+  }
+
+  function workspaceSubtitle(workspace: Workspace): string {
+    if (workspace.kind !== "club") return workspace.kind === "student"
+      ? t("auth.student") : t("auth.icpdp");
+    return workspace.role ? t(`auth.${workspace.role}`) : t("auth.member");
+  }
+
+  function systemRoleLabel(code: string): string {
+    if (code === "ICPDP_OFFICER") return t("auth.officerRole");
+    if (code === "ICPDP_HEAD") return t("auth.headRole");
+    if (code === "ATTENDANCE_UNLOCK") return t("auth.attendanceRole");
+    return code;
+  }
 
   return (
-    <main className="mx-auto my-8 max-w-[480px] font-sans">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold">{t("users.title")}</h1>
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1 text-sm">
-            <SunIcon />
+    <main className="mx-auto min-h-full max-w-5xl px-4 py-6 sm:px-8 sm:py-10">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border-app pb-6">
+        <div>
+          <p className="text-2xl font-bold tracking-tight text-primary-app">{t("auth.brand")}</p>
+          <p className="mt-1 text-sm text-muted-app">{t("auth.subtitle")}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link to="/clubs" className="text-sm font-semibold text-accent-app">
+            {t("discovery.navClubs")}
+          </Link>
+          <label className="flex flex-wrap items-center gap-2 text-sm text-muted-app">
+            {t("common.darkModeLabel")}
             <AppSwitch
               checked={theme === "dark"}
-              onChange={(on) => setTheme(on ? "dark" : "light")}
+              onChange={(checked) => setTheme(checked ? "dark" : "light")}
               aria-label={t("common.darkModeLabel")}
             />
-            <MoonIcon />
-          </span>
-          <span className="flex items-center gap-1 text-sm">
-            EN
-            <AppSwitch
-              checked={locale === "vi"}
-              onChange={(on) => void i18n.changeLanguage(on ? "vi" : "en")}
-              aria-label={t("common.languageLabel")}
-            />
-            VI
-          </span>
+          </label>
+          <AppButton
+            variant="secondary"
+            onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}
+            aria-label={t("common.languageLabel")}
+          >
+            {i18n.language === "vi" ? "EN" : "VI"}
+          </AppButton>
         </div>
-      </div>
-      <AppCard className="mt-4">
-        <form onSubmit={onSubmit} className="flex flex-wrap gap-2">
-          <AppInput name="name" placeholder={t("users.namePlaceholder")} required className="min-w-32 flex-1" />
-          <AppInput
-            name="email"
-            type="email"
-            placeholder={t("users.emailPlaceholder")}
-            required
-            className="min-w-32 flex-1"
-          />
-          <AppButton disabled={pending}>{t("users.add")}</AppButton>
-        </form>
-        {error && <p className="mt-2 text-danger-app">{error}</p>}
-        <AppSearchInput className="mt-4 w-full" placeholder={t("users.searchPlaceholder")} onSearch={onSearch} />
-        <div className="mt-4 flex flex-col gap-2">
-          <AppTableColumnToggle table={table} label={t("users.columnsLabel")} />
-          <AppTable table={table} loading={usersQuery.isPending} emptyMessage={search ? t("users.noResults") : t("users.noUsers")} />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <AppTableLimitSelect value={pagination.pageSize} onChange={onPageSize} label={t("users.limitLabel")} />
-            <AppPagination
-              pageIndex={pagination.pageIndex}
-              pageCount={table.getPageCount()}
-              onPageChange={(pageIndex) => setPagination((p) => ({ ...p, pageIndex }))}
-              prevLabel={t("users.previousPage")}
-              nextLabel={t("users.nextPage")}
-              pageLabel={(page) => t("users.gotoPage", { page })}
-              navLabel={t("users.paginationLabel")}
-            />
-          </div>
-        </div>
-      </AppCard>
+      </header>
 
-      <h2 className="mt-8 text-lg font-semibold">{t("demo.componentDemo")}</h2>
-      <div className="mt-4 flex flex-col gap-4">
-        <AppCard>
-          <p className="text-sm font-medium">AppButton</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <AppButton>{t("demo.primary")}</AppButton>
-            <AppButton variant="secondary">{t("demo.secondary")}</AppButton>
-            <AppButton disabled>{t("demo.disabled")}</AppButton>
-          </div>
+      {auth.isPending ? (
+        <AppCard className="mx-auto mt-12 max-w-xl space-y-4 p-6">
+          <p role="status" className="text-sm text-muted-app">{t("auth.loading")}</p>
+          <AppSkeleton className="h-8 w-2/3" />
+          <AppSkeleton className="h-12 w-full" />
         </AppCard>
-        <AppCard>
-          <p className="text-sm font-medium">AppInput</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <AppInput placeholder={t("demo.typeSomething")} />
-            <AppInput placeholder={t("demo.disabled")} disabled />
-          </div>
+      ) : auth.isError ? (
+        <AppCard className="mx-auto mt-12 max-w-xl space-y-4 p-6">
+          <h1 className="text-xl font-semibold">{t("auth.accountError")}</h1>
+          <p role="alert" className="text-sm text-danger-app">{auth.error.message}</p>
+          <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
         </AppCard>
-        <AppCard>
-          <p className="text-sm font-medium">AppEmptyState</p>
-          <div className="mt-2">
-            <AppEmptyState message={t("demo.nothingHere")} />
-          </div>
+      ) : !auth.data ? (
+        <AppCard className="mx-auto mt-12 max-w-xl p-6 sm:p-8">
+          <h1 className="text-2xl font-semibold">{t("auth.signInTitle")}</h1>
+          <p className="mt-3 text-muted-app">{t("auth.signInDescription")}</p>
+          {loginError && <p role="alert" className="mt-4 text-sm text-danger-app">
+            {loginError} {errorCode === "locked" && lockError.data}
+          </p>}
+          <a
+            href={googleLoginUrl(returnTo)}
+            className="mt-8 inline-flex min-h-11 items-center justify-center rounded-md bg-primary-app px-5 text-on-primary-app transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app"
+          >
+            {t("auth.signInGoogle")}
+          </a>
         </AppCard>
-        <AppCard>
-          <p className="text-sm font-medium">AppSkeleton</p>
-          {/* Loading-card pattern: real AppCard frame, skeleton content sized to the future layout. */}
-          <div className="mt-2 flex items-center gap-3">
-            <AppSkeleton className="size-10 rounded-full" />
-            <div className="flex flex-1 flex-col gap-2">
-              <AppSkeleton className="h-4 w-1/3" />
-              <AppSkeleton className="h-4 w-2/3" />
+      ) : (
+        <section className="mx-auto mt-10 max-w-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold">{t("auth.welcome", { name: auth.data.user.displayName })}</h1>
+              <p className="mt-1 text-sm text-muted-app">{auth.data.user.email}</p>
             </div>
+            <AppButton variant="secondary" disabled={logout.isPending} onClick={() => void signOut()}>
+              {t("auth.logout")}
+            </AppButton>
           </div>
-        </AppCard>
-        <AppCard>
-          <p className="text-sm font-medium">AppToast</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <AppButton onClick={() => appToast.success(t("demo.toastSuccess"))}>{t("demo.success")}</AppButton>
-            <AppButton onClick={() => appToast.danger(t("demo.toastDanger"))}>{t("demo.danger")}</AppButton>
-            <AppButton onClick={() => appToast.warning(t("demo.toastWarning"))}>{t("demo.warning")}</AppButton>
-          </div>
-        </AppCard>
-      </div>
-      <AppToaster theme={theme} />
+          {logout.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{t("auth.logoutError")}</p>}
+          {!selected || choosing ? (
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold">{t("auth.chooseWorkspace")}</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {workspaces.map((workspace) => (
+                  <button
+                    key={workspaceKey(workspace)}
+                    type="button"
+                    onClick={() => selectWorkspace(workspace)}
+                    className={cn("rounded-lg border border-border-app bg-surface-app p-5 text-left transition-colors hover:border-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
+                      "border-primary-app": selectedKey === workspaceKey(workspace),
+                    })}
+                  >
+                    <span className="block text-lg font-semibold">{workspaceTitle(workspace)}</span>
+                    <span className="mt-1 block text-sm text-muted-app">{workspaceSubtitle(workspace)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <AppCard className="mt-8 p-6">
+                <p className="text-sm text-muted-app">{t("auth.currentWorkspace")}</p>
+                <h2 className="mt-2 text-xl font-semibold">{workspaceTitle(selected)}</h2>
+                <p className="mt-1 text-sm text-muted-app">{workspaceSubtitle(selected)}</p>
+                <p className="mt-6 text-sm text-muted-app">{t("auth.workspaceReady")}</p>
+                {workspaces.length > 1 && (
+                  <AppButton className="mt-6" variant="secondary" onClick={() => setChoosing(true)}>
+                    {t("auth.switchWorkspace")}
+                  </AppButton>
+                )}
+              </AppCard>
+              {selected.kind === "icpdp" && (
+                <div className="mt-8">
+                  <h2 className="text-lg font-semibold">{t("auth.manageAccounts")}</h2>
+                  <AppSearchInput className="mt-4 w-full" placeholder={t("auth.searchUsers")}
+                    onSearch={setSearch} />
+                  {accounts.isPending ? (
+                    <AppSkeleton className="mt-4 h-36 w-full" />
+                  ) : accounts.isError ? (
+                    <p role="alert" className="mt-4 text-sm text-danger-app">{accounts.error.message}</p>
+                  ) : accounts.data?.items.length === 0 ? (
+                    <p className="mt-4 text-sm text-muted-app">{t("auth.noUsers")}</p>
+                  ) : (
+                    <div className="mt-4 space-y-3">
+                      {accounts.data?.items.map((item) => (
+                        <AppCard key={item.user.id} className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{item.user.displayName}</p>
+                            <p className="text-sm text-muted-app">{item.user.email}</p>
+                            <p className="mt-1 text-xs text-muted-app">
+                              {t("auth.accountState")}: {item.user.accountState === "Locked"
+                                ? t("auth.lockedState") : t("auth.activeState")}
+                              {item.systemRoles.length > 0 && ` · ${item.systemRoles.map(systemRoleLabel).join(", ")}`}
+                            </p>
+                          </div>
+                          <AppButton variant="secondary" onClick={() => setTargetId(item.user.id)}>
+                            {t("auth.manage")}
+                          </AppButton>
+                        </AppCard>
+                      ))}
+                    </div>
+                  )}
+                  {target && (
+                    <AppCard className="mt-5 space-y-4 p-6">
+                      <h3 className="font-semibold">{target.user.displayName}</h3>
+                      <label className="block text-sm">
+                        {t("auth.role")}
+                        <AppSelect className="mt-2 block w-full" label={t("auth.role")}
+                          value={roleCode} options={roleOptions} onChange={setRoleCode} />
+                      </label>
+                      <label className="block text-sm">
+                        {t("auth.reason")}
+                        <AppInput className="mt-2 block w-full" value={reason}
+                          onChange={(event) => setReason(event.target.value)} maxLength={1000} />
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        <AppButton disabled={accountAction.isPending} onClick={() => void updateAccount("grant")}>
+                          {t("auth.grant")}
+                        </AppButton>
+                        <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
+                          onClick={() => void updateAccount("revoke")}>{t("auth.revoke")}</AppButton>
+                        <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
+                          onClick={() => void updateAccount("lock")}>{t("auth.lock")}</AppButton>
+                        <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
+                          onClick={() => void updateAccount("unlock")}>{t("auth.unlock")}</AppButton>
+                      </div>
+                      {accountAction.isError && (
+                        <p role="alert" className="text-sm text-danger-app">
+                          {t("auth.saveError")} {accountAction.error.message}
+                        </p>
+                      )}
+                      {accountAction.isSuccess && (
+                        <p role="status" className="text-sm text-success-app">{t("auth.saveSuccess")}</p>
+                      )}
+                    </AppCard>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
     </main>
   );
 }

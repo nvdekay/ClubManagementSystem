@@ -2,15 +2,17 @@ import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import { common } from "./common";
+import { auth } from "./auth";
 import { demo } from "./demo";
+import { discovery } from "./discovery";
 import { users } from "./users";
 
 export type Locale = "en" | "vi";
 
 // New module: create i18n/<module>.ts (same en/vi shape), then add it to both locales here.
 export const resources = {
-  en: { translation: { common: common.en, users: users.en, demo: demo.en } },
-  vi: { translation: { common: common.vi, users: users.vi, demo: demo.vi } },
+  en: { translation: { common: common.en, auth: auth.en, discovery: discovery.en, users: users.en, demo: demo.en } },
+  vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi, users: users.vi, demo: demo.vi } },
 };
 
 const stored = localStorage.getItem("locale");
