@@ -12,6 +12,9 @@ const schema = z.object({
   BOOTSTRAP_ICPDP_EMAIL: z.string().optional(),
   APP_BASE_URL: z.string().optional(),
   CLIENT_BASE_URL: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 });
 
 const authSchema = z.object({
@@ -26,6 +29,24 @@ const authSchema = z.object({
 
 export type Config = z.infer<typeof schema>;
 export type AuthConfig = z.infer<typeof authSchema>;
+
+const cloudinarySchema = z.object({
+  CLOUDINARY_CLOUD_NAME: z.string().regex(/^[a-zA-Z0-9_-]+$/),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
+});
+export type CloudinaryConfig = z.infer<typeof cloudinarySchema>;
+
+export function optionalCloudinaryConfig(config: Config): CloudinaryConfig | null {
+  const values = [config.CLOUDINARY_CLOUD_NAME, config.CLOUDINARY_API_KEY,
+    config.CLOUDINARY_API_SECRET];
+  if (values.every((value) => !value)) return null;
+  const parsed = cloudinarySchema.safeParse(config);
+  if (!parsed.success) {
+    throw new Error(`Cloudinary configuration missing or invalid: ${Object.keys(parsed.error.flatten().fieldErrors).join(", ")}`);
+  }
+  return parsed.data;
+}
 
 export function requireAuthConfig(config: Config): AuthConfig {
   const parsed = authSchema.safeParse(config);

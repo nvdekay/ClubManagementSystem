@@ -389,6 +389,7 @@ Table clubApplications {
   field string [not null]
   objectives text
   founderUserId objectId [not null]
+  draftPayload json [note: 'Nội dung đang sửa của Draft hoặc Revision Requested, gồm metadata tệp; không dùng version đã nộp làm bản nháp.']
   state clubApplicationState [not null, default: 'Draft']
   currentVersionNo int [not null, default: 1]
   revisionDeadlineAt datetime [note: 'Do UC08 đặt khi yêu cầu chỉnh sửa; scheduler đặt Expired khi hết hạn (SCH-04).']

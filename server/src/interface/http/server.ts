@@ -3,13 +3,14 @@ import { authRoutes, type AuthRouteDeps } from "./auth-routes.js";
 import { accountAdminRoutes } from "./account-admin-routes.js";
 import type { AccountAdminRepository } from "../../domain/account-admin.js";
 import type { PublicDiscoveryRepository } from "../../domain/public-discovery.js";
+import type { PolicyManagementRepository } from "../../domain/policy.js";
+import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
 import { publicDiscoveryRoutes } from "./public-discovery-routes.js";
-
-// Serialized once — the document never changes after boot.
-const openApiJson = JSON.stringify(openApiDocument);
+import { policyRoutes } from "./policy-routes.js";
+import { clubApplicationRoutes } from "./club-application-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -34,6 +35,9 @@ const docsHtml = `<!doctype html>
 export function buildApp(deps: {
   auth?: AuthRouteDeps;
   adminRepo?: AccountAdminRepository;
+  policyRepo?: PolicyManagementRepository;
+  applicationRepo?: ClubApplicationRepository;
+  applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
   dbReady: () => boolean;
 }) {
@@ -58,15 +62,33 @@ export function buildApp(deps: {
     app.use("/api/v1", accountAdminRoutes({
       adminRepo: deps.adminRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
     }));
+    if (deps.policyRepo) {
+      app.use("/api/v1", policyRoutes({
+        repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+      if (deps.applicationRepo) {
+        app.use("/api/v1", clubApplicationRoutes({
+          repo: deps.applicationRepo, policy: deps.policyRepo,
+          files: deps.applicationFiles ?? null,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+        }));
+      }
+    }
   }
-  const availablePaths = deps.auth
-    ? openApiDocument.paths
-    : Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
-      .filter(([path]) => !path.startsWith("/auth/") && !path.startsWith("/admin/")));
-  app.get("/docs/openapi.json", (_req, res) => {
-    res.type("json").send(deps.auth ? openApiJson : JSON.stringify({
-      ...openApiDocument, paths: availablePaths,
+  const hasAdmin = Boolean(deps.auth && deps.adminRepo);
+  const hasPolicy = Boolean(hasAdmin && deps.policyRepo);
+  const hasApplications = Boolean(hasPolicy && deps.applicationRepo);
+  const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
+    .filter(([path]) => {
+      if (path.startsWith("/auth/")) return hasAdmin;
+      if (path.startsWith("/admin/policies")) return hasPolicy;
+      if (path.startsWith("/admin/")) return hasAdmin;
+      if (path.startsWith("/applications")) return hasApplications;
+      return true;
     }));
+  const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths });
+  app.get("/docs/openapi.json", (_req, res) => {
+    res.type("json").send(availableDocumentJson);
   });
   app.get("/docs", (_req, res) => {
     res.type("html").send(docsHtml);

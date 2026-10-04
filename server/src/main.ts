@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { buildApp } from "./interface/http/server.js";
-import { loadConfig, optionalAuthConfig } from "./infra/config/index.js";
+import { loadConfig, optionalAuthConfig, optionalCloudinaryConfig } from "./infra/config/index.js";
 import { ensureUcmsDatabase } from "./infra/db/ucms-models.js";
 import { ensureAuthSessionIndexes, mongoSessionRepository } from "./infra/db/mongo-auth-session-repository.js";
 import { mongoAuthRepository } from "./infra/db/mongo-auth-repository.js";
@@ -11,9 +11,13 @@ import { createSessionService } from "./infra/auth/session-service.js";
 import { createOAuthFlowService } from "./infra/auth/oauth-flow-service.js";
 import { ensureAuthBootstrap } from "./infra/db/bootstrap-auth.js";
 import { mongoPublicDiscoveryRepository } from "./infra/db/mongo-public-discovery-repository.js";
+import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
+import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
+import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
 
 const config = loadConfig(); // first thing — exits if env is invalid
 const authConfig = optionalAuthConfig(config);
+const cloudinaryConfig = optionalCloudinaryConfig(config);
 
 try {
   await mongoose.connect(config.MONGO_URI);
@@ -35,6 +39,9 @@ const commonDeps = {
 const app = authConfig ? buildApp({
   ...commonDeps,
   adminRepo: mongoAccountAdminRepository(),
+  policyRepo: mongoPolicyRepository(),
+  applicationRepo: mongoClubApplicationRepository(),
+  applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
   auth: {
     repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),
     accessRepo: mongoAccessRepository(),

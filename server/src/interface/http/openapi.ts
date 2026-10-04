@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { createDocument } from "zod-openapi";
+import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
+import { applicationDraftBody } from "./club-application-routes.js";
 
 const ApiError = z.object({
   statusCode: z.number(),
@@ -36,6 +38,25 @@ const Reason = z.object({ reason: z.string().min(1).max(1000) });
 const RoleChange = z.object({ roleCode: z.string(), reason: z.string().optional() });
 const UserIdPath = z.object({ id: z.string() });
 const RolePath = z.object({ id: z.string(), roleCode: z.string() });
+const PolicyVersion = policySettingsBody.extend({
+  id: z.string(), effectiveFrom: z.string().datetime(),
+  createdBy: z.string(), createdAt: z.string().datetime(),
+});
+const ApplicationDocument = z.object({
+  id: z.string(), documentType: z.string(), fileName: z.string(),
+  mimeType: z.string(), bytes: z.number(), uploadedAt: z.string(),
+});
+const ApplicationDraft = applicationDraftBody.extend({ documents: z.array(ApplicationDocument) });
+const ApplicationRecord = z.object({
+  id: z.string(), founderUserId: z.string(), state: z.string(),
+  currentVersionNo: z.number(), draftRevision: z.number(), draft: ApplicationDraft,
+  submittedAt: z.string().optional(), createdAt: z.string(),
+});
+const ApplicationVersion = z.object({
+  id: z.string(), applicationId: z.string(), versionNo: z.number(),
+  policyVersionId: z.string(), snapshot: ApplicationDraft, submittedAt: z.string(),
+});
+const ApplicationDocumentPath = z.object({ id: z.string(), documentId: z.string() });
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -224,6 +245,139 @@ export const openApiDocument = createDocument({
           "403": { description: "Account administration denied",
             content: { "application/json": { schema: ApiError } } },
         },
+      },
+    },
+    "/admin/policies": {
+      get: {
+        summary: "List current and recent school policy versions (ICPDP only)",
+        responses: {
+          "200": { description: "Current policy and recent versions",
+            content: { "application/json": { schema: envelope(z.object({
+              current: PolicyVersion.nullable(), versions: z.array(PolicyVersion),
+            })) } } },
+          "401": { description: "Authentication required",
+            content: { "application/json": { schema: ApiError } } },
+          "403": { description: "ICPDP role required",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Create a school policy version (ICPDP only; requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: policyCreateBody } } },
+        responses: {
+          "201": { description: "Policy version created",
+            content: { "application/json": { schema: envelope(PolicyVersion) } } },
+          "400": { description: "Policy values are invalid",
+            content: { "application/json": { schema: ApiError } } },
+          "401": { description: "Authentication required",
+            content: { "application/json": { schema: ApiError } } },
+          "403": { description: "ICPDP role or CSRF token required",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/applications/config": {
+      get: {
+        summary: "Read the current founding policy and grantable club permissions",
+        responses: { "200": { description: "Application configuration",
+          content: { "application/json": { schema: envelope(z.object({
+            requirements: z.object({ policyVersionId: z.string(),
+              minFoundingMembers: z.number(), mandatoryApplicationDocuments: z.array(z.string()) }),
+            grantablePermissions: z.array(z.string()),
+            defaultRoles: z.array(applicationDraftBody.shape.proposedRoles.element),
+          })) } } } },
+      },
+    },
+    "/applications/mine": {
+      get: {
+        summary: "List the signed-in student's club applications",
+        responses: { "200": { description: "Applications",
+          content: { "application/json": { schema: envelope(z.array(ApplicationRecord)) } } } },
+      },
+    },
+    "/applications": {
+      post: {
+        summary: "Create a club application draft (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: applicationDraftBody } } },
+        responses: { "201": { description: "Draft created",
+          content: { "application/json": { schema: envelope(ApplicationRecord) } } } },
+      },
+    },
+    "/applications/{id}": {
+      get: {
+        summary: "Read an owned application and its submitted versions",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Application and history",
+          content: { "application/json": { schema: envelope(z.object({
+            application: ApplicationRecord, versions: z.array(ApplicationVersion),
+          })) } } } },
+      },
+    },
+    "/applications/{id}/preview": {
+      get: {
+        summary: "Preview the current founding requirements and active-name conflict",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Submission preview",
+          content: { "application/json": { schema: envelope(z.object({
+            requirements: z.object({ policyVersionId: z.string(),
+              minFoundingMembers: z.number(), mandatoryApplicationDocuments: z.array(z.string()) }),
+            activeNameConflict: z.boolean(),
+          })) } } } },
+      },
+    },
+    "/applications/{id}/draft": {
+      patch: {
+        summary: "Save an editable application draft (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: applicationDraftBody.extend({
+          draftRevision: z.number().int().nonnegative(),
+        }).strict() } } },
+        responses: { "200": { description: "Draft saved",
+          content: { "application/json": { schema: envelope(ApplicationRecord) } } } },
+      },
+    },
+    "/applications/{id}/submit": {
+      post: {
+        summary: "Submit a new immutable application version and review task (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "201": { description: "Application submitted",
+          content: { "application/json": { schema: envelope(z.object({
+            version: ApplicationVersion, activeNameConflict: z.boolean(),
+          })) } } } },
+      },
+    },
+    "/applications/{id}/withdraw": {
+      post: {
+        summary: "Withdraw an undecided application (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Application withdrawn",
+          content: { "application/json": { schema: envelope(ApplicationRecord) } } } },
+      },
+    },
+    "/applications/{id}/documents": {
+      post: {
+        summary: "Upload a PDF, PNG, JPEG or DOCX to an editable application (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "201": { description: "Document uploaded",
+          content: { "application/json": { schema: envelope(ApplicationDocument) } } } },
+      },
+    },
+    "/applications/{id}/documents/{documentId}": {
+      delete: {
+        summary: "Remove a document from the editable draft (requires CSRF token)",
+        requestParams: { path: ApplicationDocumentPath },
+        responses: { "200": { description: "Draft updated",
+          content: { "application/json": { schema: envelope(ApplicationRecord) } } } },
+      },
+    },
+    "/applications/{id}/documents/{documentId}/access": {
+      get: {
+        summary: "Get a short-lived Cloudinary access URL for an owned document",
+        requestParams: { path: ApplicationDocumentPath },
+        responses: { "200": { description: "Temporary access URL",
+          content: { "application/json": { schema: envelope(z.object({
+            fileName: z.string(), url: z.string().url(),
+          })) } } } },
       },
     },
     "/admin/users/{id}/roles": {

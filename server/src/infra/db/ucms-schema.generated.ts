@@ -587,6 +587,9 @@ export const ucmsTables = {
         "type": "objectId",
         "required": true
       },
+      "draftPayload": {
+        "type": "json"
+      },
       "state": {
         "type": "clubApplicationState",
         "required": true,

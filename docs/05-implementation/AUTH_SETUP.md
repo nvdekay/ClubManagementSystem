@@ -11,6 +11,7 @@ trống theo yêu cầu của người dùng; điền giá trị thật vào `.e
 | `BOOTSTRAP_ICPDP_EMAIL` | Email officer đầu tiên, thuộc `ALLOWED_DOMAIN` |
 | `APP_BASE_URL` | Origin backend, ví dụ `http://localhost:3055` nếu dùng `PORT=3055` |
 | `CLIENT_BASE_URL` | Origin Vite client, thường `http://localhost:5173` |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Bộ API credentials của Cloudinary; chỉ cần khi bật tải tài liệu UC07. Điền `.env`, không gửi secret qua chat hoặc commit. |
 
 Trong Google Cloud Console, thêm **Authorized redirect URI** là
 `<APP_BASE_URL>/api/v1/auth/callback`. Hai origin cục bộ nên dùng cùng hostname (`localhost`
@@ -33,3 +34,9 @@ verified và thuộc domain cấu hình mới được vào.
 
 Hiện `ALLOWED_DOMAIN` là policy fallback cho tới khi bản `policyVersions` đầu tiên được tạo.
 Các giá trị khởi tạo khác của UC04 chưa được chốt trong SRS, nên chưa seed policy version.
+
+Tệp hồ sơ UC07 được backend tải lên dưới dạng `authenticated` asset. Client không nhận API
+secret hoặc Cloudinary asset ID; route kiểm tra chủ hồ sơ rồi trả URL tải có chữ ký hết hạn sau
+60 giây. Cloudinary hỗ trợ upload backend có xác thực và URL truy cập tạm thời cho tài sản
+`private`/`authenticated` ([Upload API](https://cloudinary.com/documentation/image_upload_api_reference),
+[quyền truy cập media](https://cloudinary.com/documentation/control_access_to_media)).
