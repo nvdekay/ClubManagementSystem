@@ -1,5 +1,10 @@
 # UCMS — Danh sách công việc triển khai (Database · Backend · Frontend)
 
+> Checklist thực thi đang được cập nhật theo từng vertical slice ở
+> [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) và `.sdd/specs/feat-*/TASKS.md`.
+> File này giữ bản phân rã ban đầu; ô chưa đánh dấu ở đây có thể đã có code nhưng chưa đạt
+> toàn bộ Definition of Done của task.
+
 Suy ra từ [`../SRS.md`](../SRS.md). Mỗi task đều trích dẫn use case, yêu cầu chức năng hoặc quy
 tắc nghiệp vụ mà nó thoả mãn, nên một task chỉ xong khi yêu cầu đó chứng minh được là đã đạt.
 
@@ -43,10 +48,10 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ### Backend
 
-- [ ] **BE-0.1** Dựng khung bốn tầng (`domain`, `usecase`, `interface/http`, `infra`) kèm `README.md` cho mỗi thư mục và phần kiểm tra hướng phụ thuộc trong `scripts/check-constitution.sh`. → CON-02, CON-13, NFR-MNT-05
+- [x] **BE-0.1** Dựng khung bốn tầng (`domain`, `usecase`, `interface/http`, `infra`) kèm `README.md` cho mỗi thư mục và phần kiểm tra hướng phụ thuộc trong `scripts/check-constitution.sh`. → CON-02, CON-13, NFR-MNT-05
 - [ ] **BE-0.2** Phong bì response `{ data }`, ánh xạ `DomainError` kind → 400/404/409, 401/403/423 cho phần xác thực, 500 cho phần còn lại. → API-02, CON-04
 - [ ] **BE-0.3** Validate bằng zod ở biên route trước mọi lời gọi Mongoose, cộng registry `zod-openapi` phục vụ tại `/docs`. → API-03, API-05, SEC-07
-- [ ] **BE-0.4** Các bản giả repository in-memory để một usecase unit-test được mà không cần database. → NFR-MNT-01
+- [x] **BE-0.4** Các bản giả repository in-memory để một usecase unit-test được mà không cần database. → NFR-MNT-01
 - [ ] **BE-0.5** `AuditPort` + bản cài Mongo; helper ghi `{entityType, entityId, action, actor, before, after, diff, reason, correlationId}` từ bên trong usecase. → AUD-01, AUD-02
 - [ ] **BE-0.6** `NotificationPort` + ghi vào outbox; `EmailPort` dạng stub. Chưa gửi gì cả. → NTF-01, CON-09
 - [ ] **BE-0.7** Khung scheduler: interval + lease document trong Mongo để instance thứ hai không chạy trùng. → NFR-REL-05, NTF-07
@@ -103,7 +108,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **DB-2.4** Chốt chặn chỉ-ghi-thêm trên `clubApplicationVersions` (từ chối mọi update và delete ở biên repository). → BR04, CON-08
 
 ### Backend
-- [ ] **BE-2.1** UC06 khám phá công khai: liệt kê CLB Active + CLB Suspended có đánh dấu, không bao giờ Dissolved; dữ liệu tổng hợp cho trang CLB. → FR-UC06-01…07, BR09 · **đang bị chặn bởi quyết định I22**
+- [ ] **BE-2.1** UC06 khám phá công khai: liệt kê CLB Active + CLB Suspended có đánh dấu, không bao giờ Dissolved; dữ liệu tổng hợp cho trang CLB. → FR-UC06-01…07, BR09 · **Đã code bản đầu và unit test; chờ integration Mongo, kiểm tra UI và CTA UC17/UC29. I22 đã được chốt trong SRS.**
 - [ ] **BE-2.2** UC07 nộp / lưu nháp / nộp lại thành một version mới / rút hồ sơ; cơ cấu role dự kiến kèm permission và role ban điều hành. → FR-UC07-01…13
 - [ ] **BE-2.3** UC08 thẩm định và quyết định với ba kết quả; tạo Club ở `Pending Setup`, các role và phiên bản cơ cấu 1, và cấp quyền sáng lập tạm thời khi phê duyệt. → FR-UC08-01…13, BR56
 - [ ] **BE-2.4** Scheduler: `Revision Requested → Expired` khi hết deadline. → SCH-04
