@@ -3,6 +3,7 @@ import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import type { AuthRepository, AuthUser } from "../../domain/auth.js";
 import type { GoogleIdentity } from "../../domain/google-identity.js";
+import { mongoPolicyRepository } from "./mongo-policy-repository.js";
 import { ucmsModels } from "./ucms-models.js";
 
 function mapUser(doc: Record<string, unknown>): AuthUser {
@@ -17,7 +18,7 @@ function mapUser(doc: Record<string, unknown>): AuthUser {
 export function mongoAuthRepository(initialDomain: string): AuthRepository {
   const users = ucmsModels.users!;
   const profiles = ucmsModels.studentProfiles!;
-  const policies = ucmsModels.policyVersions!;
+  const policies = mongoPolicyRepository();
   const assignments = ucmsModels.userRoleAssignments!;
   const roles = ucmsModels.roles!;
   const memberships = ucmsModels.clubMemberships!;
@@ -27,11 +28,11 @@ export function mongoAuthRepository(initialDomain: string): AuthRepository {
 
   return {
     async allowedDomains(now) {
-      const policy = await policies.findOne({ effectiveFrom: { $lte: now } })
-        .sort({ effectiveFrom: -1 }).lean();
-      const configured = policy?.allowedEmailDomains;
+      const policy = await policies.findEffective(now);
+      if (!policy) return [initialDomain];
+      const configured = policy.allowedEmailDomains;
       return Array.isArray(configured) && configured.every((domain) => typeof domain === "string")
-        ? configured as string[] : [initialDomain];
+        ? [...configured] : [];
     },
     async findOrCreateGoogleUser(identity: GoogleIdentity, email, now) {
       for (let attempt = 0; attempt < 3; attempt += 1) {
