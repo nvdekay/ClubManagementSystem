@@ -16,7 +16,7 @@ export function PublicEventCard({ event }: PublicEventCardProps) {
     <Link to={`/events/${event.id}`} className="block h-full">
       <AppCard className="h-full p-5 transition-colors hover:border-primary-app">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary-app">{event.clubName}</p>
-        <h3 className="mt-2 text-lg font-semibold">{event.title}</h3>
+        <h3 className="mt-2 text-lg font-semibold font-heading">{event.title}</h3>
         <p className="mt-3 text-sm text-muted-app">
           {t("discovery.starts")}: {formatDate(event.startAt, locale)}
         </p>

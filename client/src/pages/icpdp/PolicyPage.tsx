@@ -41,7 +41,7 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
           <dd className="mt-1">{booleanLabel(version.enforceOverdueReportBlock)}</dd></div>
       </dl>
       <div>
-        <h3 className="font-semibold">{t("policy.reportDeadlines")}</h3>
+        <h3 className="font-semibold font-heading">{t("policy.reportDeadlines")}</h3>
         <ul className="mt-2 space-y-2">
           {version.reportDeadlines.map((item) => (
             <li key={item.reportType} className="rounded-md border border-border-app p-3">
@@ -57,7 +57,7 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
         </ul>
       </div>
       <div>
-        <h3 className="font-semibold">{t("policy.calendar")}</h3>
+        <h3 className="font-semibold font-heading">{t("policy.calendar")}</h3>
         <ul className="mt-2 space-y-2">
           {version.academicCalendar.map((item) => (
             <li key={item.code} className="rounded-md border border-border-app p-3">
@@ -86,7 +86,7 @@ export function PolicyPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <Link to="/workspace" className="text-sm font-semibold text-accent-app">{t("policy.back")}</Link>
-      <h1 className="mt-4 text-3xl font-bold">{t("policy.title")}</h1>
+      <h1 className="mt-4 text-3xl font-bold font-heading">{t("policy.title")}</h1>
       <p className="mt-2 text-muted-app">{t("policy.description")}</p>
 
       {auth.isPending ? (
@@ -116,7 +116,7 @@ export function PolicyPage() {
       ) : (
         <>
           <AppCard className="mt-8 p-5">
-            <h2 className="text-lg font-semibold">{t("policy.current")}</h2>
+            <h2 className="text-lg font-semibold font-heading">{t("policy.current")}</h2>
             {policies.data.current ? (
               <div className="mt-3 text-sm">
                 <p>{t("policy.currentFrom", { date: date(policies.data.current.effectiveFrom) })}</p>
@@ -129,13 +129,13 @@ export function PolicyPage() {
             latest={policies.data.versions[0]} csrfToken={auth.data.csrfToken} />
 
           <section className="mt-10">
-            <h2 className="text-xl font-semibold">{t("policy.history")}</h2>
+            <h2 className="text-xl font-semibold font-heading">{t("policy.history")}</h2>
             {policies.data.versions.length === 0 ? (
               <p className="mt-3 text-sm text-muted-app">{t("policy.noHistory")}</p>
             ) : (
               <div className="mt-4 space-y-3">
                 {policies.data.versions.map((version) => (
-                  <AppCard key={version.id} className="flex flex-wrap items-start justify-between gap-3">
+                  <AppCard key={version.id} className="flex-row flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium">{date(version.effectiveFrom)}</p>
                       <p className="mt-1 text-sm text-muted-app">

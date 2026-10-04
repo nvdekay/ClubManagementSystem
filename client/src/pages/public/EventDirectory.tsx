@@ -14,7 +14,7 @@ export function EventDirectory() {
   const events = useEvents(page);
   return (
     <section>
-      <h1 className="text-3xl font-bold sm:text-4xl">{t("discovery.eventsTitle")}</h1>
+      <h1 className="text-3xl font-bold sm:text-4xl font-heading">{t("discovery.eventsTitle")}</h1>
       <p className="mt-3 max-w-2xl text-muted-app">{t("discovery.eventsDescription")}</p>
       {events.isPending ? (
         <div role="status" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

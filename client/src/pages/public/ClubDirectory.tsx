@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppCard } from "@/components/ui/card/AppCard";
@@ -13,8 +13,9 @@ import { useClubs } from "@/hooks/useDiscovery";
 
 export function ClubDirectory() {
   const { t } = useTranslation();
-  const [search, setSearch] = useState("");
-  const [field, setField] = useState("");
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [field, setField] = useState(() => searchParams.get("field") ?? "");
   const [page, setPage] = useState(1);
   const [searchKey, setSearchKey] = useState(0);
   const clubs = useClubs(search, field, page);
@@ -37,13 +38,14 @@ export function ClubDirectory() {
   return (
     <section>
       <div className="max-w-2xl">
-        <h1 className="text-3xl font-bold sm:text-4xl">{t("discovery.clubsTitle")}</h1>
+        <h1 className="text-3xl font-bold sm:text-4xl font-heading">{t("discovery.clubsTitle")}</h1>
         <p className="mt-3 text-muted-app">{t("discovery.clubsDescription")}</p>
       </div>
       <div className="mt-8 flex flex-wrap items-end gap-3">
         <AppSearchInput
           key={searchKey}
           className="min-w-56 flex-1"
+          defaultValue={search}
           placeholder={t("discovery.searchPlaceholder")}
           aria-label={t("discovery.searchPlaceholder")}
           onSearch={changeSearch}
@@ -92,7 +94,7 @@ export function ClubDirectory() {
                       {club.state === "Suspended" ? t("discovery.suspended") : t("discovery.active")}
                     </span>
                   </div>
-                  <h2 className="mt-4 text-xl font-semibold">{club.name}</h2>
+                  <h2 className="mt-4 text-xl font-semibold font-heading">{club.name}</h2>
                   <p className="mt-1 text-xs text-muted-app">{club.code}</p>
                   <p className="mt-3 line-clamp-3 text-sm text-muted-app">{club.description}</p>
                   <span className="mt-5 inline-block text-sm font-semibold text-accent-app">

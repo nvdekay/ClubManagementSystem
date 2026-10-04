@@ -30,7 +30,7 @@ export function ApplicationsPage() {
       <Link to="/workspace" className="text-sm font-semibold text-accent-app">{t("applications.back")}</Link>
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t("applications.title")}</h1>
+          <h1 className="text-3xl font-bold font-heading">{t("applications.title")}</h1>
           <p className="mt-2 text-muted-app">{t("applications.description")}</p>
         </div>
         <Link to="/workspace/applications/new" className="inline-flex h-11 items-center justify-center rounded-md bg-primary-app px-3 text-on-primary-app transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none">
@@ -54,9 +54,9 @@ export function ApplicationsPage() {
       ) : applications.data?.length ? (
         <div className="mt-8 space-y-3">
           {applications.data.map((application) => (
-            <AppCard key={application.id} className="flex flex-wrap items-center justify-between gap-4">
+            <AppCard key={application.id} className="flex-row flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
-                <h2 className="break-words font-semibold">{application.draft.clubName}</h2>
+                <h2 className="break-words font-semibold font-heading">{application.draft.clubName}</h2>
                 <p className="mt-1 text-sm text-muted-app">
                   {t("applications.state")}: {stateLabel(application.state)}
                   {application.state !== "Draft" && ` · ${t("applications.version", { number: application.currentVersionNo })}`}

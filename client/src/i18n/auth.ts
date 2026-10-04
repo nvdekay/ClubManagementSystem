@@ -1,5 +1,5 @@
 const en = {
-  brand: "UCMS",
+  brand: "FPT Clubs",
   subtitle: "FPT University Club Management",
   signInTitle: "Sign in to your workspace",
   signInDescription: "Use your approved university Google account to continue.",
@@ -44,7 +44,7 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
-  brand: "UCMS",
+  brand: "FPT Clubs",
   subtitle: "Hệ thống quản lý câu lạc bộ Đại học FPT",
   signInTitle: "Đăng nhập vào không gian làm việc",
   signInDescription: "Dùng tài khoản Google của trường đã được cho phép để tiếp tục.",

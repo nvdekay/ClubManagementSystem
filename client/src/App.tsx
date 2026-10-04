@@ -151,13 +151,13 @@ export function App() {
         </AppCard>
       ) : auth.isError ? (
         <AppCard className="mx-auto mt-12 max-w-xl space-y-4 p-6">
-          <h1 className="text-xl font-semibold">{t("auth.accountError")}</h1>
+          <h1 className="text-xl font-semibold font-heading">{t("auth.accountError")}</h1>
           <p role="alert" className="text-sm text-danger-app">{auth.error.message}</p>
           <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
         </AppCard>
       ) : !auth.data ? (
         <AppCard className="mx-auto mt-12 max-w-xl p-6 sm:p-8">
-          <h1 className="text-2xl font-semibold">{t("auth.signInTitle")}</h1>
+          <h1 className="text-2xl font-semibold font-heading">{t("auth.signInTitle")}</h1>
           <p className="mt-3 text-muted-app">{t("auth.signInDescription")}</p>
           {loginError && <p role="alert" className="mt-4 text-sm text-danger-app">
             {loginError} {errorCode === "locked" && lockError.data}
@@ -173,7 +173,7 @@ export function App() {
         <section className="mx-auto mt-10 max-w-2xl">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold">{t("auth.welcome", { name: auth.data.user.displayName })}</h1>
+              <h1 className="text-2xl font-semibold font-heading">{t("auth.welcome", { name: auth.data.user.displayName })}</h1>
               <p className="mt-1 text-sm text-muted-app">{auth.data.user.email}</p>
             </div>
             <AppButton variant="secondary" disabled={logout.isPending} onClick={() => void signOut()}>
@@ -183,7 +183,7 @@ export function App() {
           {logout.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{t("auth.logoutError")}</p>}
           {!selected || choosing ? (
             <div className="mt-8">
-              <h2 className="text-lg font-semibold">{t("auth.chooseWorkspace")}</h2>
+              <h2 className="text-lg font-semibold font-heading">{t("auth.chooseWorkspace")}</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {workspaces.map((workspace) => (
                   <button
@@ -204,7 +204,7 @@ export function App() {
             <>
               <AppCard className="mt-8 p-6">
                 <p className="text-sm text-muted-app">{t("auth.currentWorkspace")}</p>
-                <h2 className="mt-2 text-xl font-semibold">{workspaceTitle(selected)}</h2>
+                <h2 className="mt-2 text-xl font-semibold font-heading">{workspaceTitle(selected)}</h2>
                 <p className="mt-1 text-sm text-muted-app">{workspaceSubtitle(selected)}</p>
                 <p className="mt-6 text-sm text-muted-app">{t("auth.workspaceReady")}</p>
                 {workspaces.length > 1 && (
@@ -225,7 +225,7 @@ export function App() {
                   <Link to="/workspace/policy" className="mb-5 inline-block text-sm font-semibold text-accent-app">
                     {t("policy.title")}
                   </Link>
-                  <h2 className="text-lg font-semibold">{t("auth.manageAccounts")}</h2>
+                  <h2 className="text-lg font-semibold font-heading">{t("auth.manageAccounts")}</h2>
                   <AppSearchInput className="mt-4 w-full" placeholder={t("auth.searchUsers")}
                     onSearch={setSearch} />
                   {accounts.isPending ? (
@@ -237,7 +237,7 @@ export function App() {
                   ) : (
                     <div className="mt-4 space-y-3">
                       {accounts.data?.items.map((item) => (
-                        <AppCard key={item.user.id} className="flex flex-wrap items-center justify-between gap-3">
+                        <AppCard key={item.user.id} className="flex-row flex-wrap items-center justify-between gap-3">
                           <div>
                             <p className="font-medium">{item.user.displayName}</p>
                             <p className="text-sm text-muted-app">{item.user.email}</p>
@@ -256,7 +256,7 @@ export function App() {
                   )}
                   {target && (
                     <AppCard className="mt-5 space-y-4 p-6">
-                      <h3 className="font-semibold">{target.user.displayName}</h3>
+                      <h3 className="font-semibold font-heading">{target.user.displayName}</h3>
                       <label className="block text-sm">
                         {t("auth.role")}
                         <AppSelect className="mt-2 block w-full" label={t("auth.role")}

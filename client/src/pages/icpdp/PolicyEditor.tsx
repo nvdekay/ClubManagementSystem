@@ -154,7 +154,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   return (
     <form className="mt-8 space-y-6" onSubmit={(event) => void submit(event)}>
       <div>
-        <h2 className="text-xl font-semibold">{t("policy.formTitle")}</h2>
+        <h2 className="text-xl font-semibold font-heading">{t("policy.formTitle")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("policy.formDescription")}</p>
       </div>
       <AppCard className="grid gap-5 p-5 sm:grid-cols-2">
@@ -179,7 +179,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       </AppCard>
 
       <AppCard className="space-y-5 p-5">
-        <h3 className="font-semibold">{t("policy.reportDeadlines")}</h3>
+        <h3 className="font-semibold font-heading">{t("policy.reportDeadlines")}</h3>
         {form.reportDeadlines.map((item, index) => (
           <div key={index} className="grid gap-3 rounded-md border border-border-app p-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="text-sm">{t("policy.reportType")}
@@ -247,7 +247,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       </AppCard>
 
       <AppCard className="space-y-5 p-5">
-        <h3 className="font-semibold">{t("policy.calendar")}</h3>
+        <h3 className="font-semibold font-heading">{t("policy.calendar")}</h3>
         {form.academicCalendar.map((item, index) => (
           <div key={index} className="grid gap-3 rounded-md border border-border-app p-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className="text-sm">{t("policy.semesterCode")}

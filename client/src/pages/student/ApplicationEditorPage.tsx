@@ -173,13 +173,13 @@ export function ApplicationEditorPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <Link to="/workspace/applications" className="text-sm font-semibold text-accent-app">{t("applications.back")}</Link>
-      <h1 className="mt-4 text-3xl font-bold">{id ? currentDraft.clubName || t("applications.title") : t("applications.new")}</h1>
+      <h1 className="mt-4 text-3xl font-bold font-heading">{id ? currentDraft.clubName || t("applications.title") : t("applications.new")}</h1>
       <p className="mt-2 text-muted-app">{t("applications.description")}</p>
       {state && <p className="mt-2 text-sm text-muted-app">{t("applications.state")}: {stateLabel(state)}</p>}
 
       <fieldset disabled={!editable} className="mt-8 space-y-6 disabled:opacity-80">
         <AppCard className="grid gap-5 p-5 sm:grid-cols-2">
-          <h2 className="text-lg font-semibold sm:col-span-2">{t("applications.basic")}</h2>
+          <h2 className="text-lg font-semibold sm:col-span-2 font-heading">{t("applications.basic")}</h2>
           <label className="text-sm">{t("applications.clubName")}
             <AppInput className="mt-2 block w-full" maxLength={200} required value={currentDraft.clubName}
               onChange={(event) => change("clubName", event.target.value)} />
@@ -202,7 +202,7 @@ export function ApplicationEditorPage() {
         </AppCard>
 
         <AppCard className="space-y-4 p-5">
-          <h2 className="text-lg font-semibold">{t("applications.documents")}</h2>
+          <h2 className="text-lg font-semibold font-heading">{t("applications.documents")}</h2>
           <p className="text-sm text-muted-app">{requiredDocuments.length
             ? t("applications.requiredDocuments", { types: requiredDocuments.join(", ") })
             : t("applications.noRequiredDocuments")}</p>
@@ -246,7 +246,7 @@ export function ApplicationEditorPage() {
 
         <AppCard className="space-y-5 p-5">
           <div>
-            <h2 className="text-lg font-semibold">{t("applications.roles")}</h2>
+            <h2 className="text-lg font-semibold font-heading">{t("applications.roles")}</h2>
             <p className="mt-1 text-sm text-muted-app">{t("applications.rolesHint")}</p>
           </div>
           {currentDraft.proposedRoles.map((role, index) => (
@@ -338,10 +338,10 @@ export function ApplicationEditorPage() {
 
       {application && (
         <section className="mt-10 space-y-3">
-          <h2 className="text-xl font-semibold">{t("applications.history")}</h2>
+          <h2 className="text-xl font-semibold font-heading">{t("applications.history")}</h2>
           {detail.data?.versions.length ? detail.data.versions.map((version) => (
             <AppCard key={version.id} className="space-y-2">
-              <h3 className="font-semibold">{t("applications.version", { number: version.versionNo })}</h3>
+              <h3 className="font-semibold font-heading">{t("applications.version", { number: version.versionNo })}</h3>
               <p className="text-sm text-muted-app">{t("applications.submittedAt", { date:
                 new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-US", {
                   dateStyle: "medium", timeStyle: "short",

@@ -24,7 +24,8 @@ export interface Me {
 
 export async function fetchMe(signal: AbortSignal): Promise<Me | null> {
   const response = await fetch("/api/v1/auth/me", { signal, credentials: "same-origin" });
-  if (response.status === 401) return null;
+  // Auth routes are intentionally absent until OAuth credentials are configured.
+  if (response.status === 401 || response.status === 404) return null;
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
     throw new Error(body?.message ?? `HTTP ${response.status}`);

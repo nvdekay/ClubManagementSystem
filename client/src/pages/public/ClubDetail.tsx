@@ -46,7 +46,7 @@ export function ClubDetail() {
                 {detail.data.club.state === "Suspended" ? t("discovery.suspended") : t("discovery.active")}
               </span>
             </div>
-            <h1 className="mt-4 text-3xl font-bold sm:text-5xl">{detail.data.club.name}</h1>
+            <h1 className="mt-4 text-3xl font-bold sm:text-5xl font-heading">{detail.data.club.name}</h1>
             <p className="mt-2 text-sm text-muted-app">{detail.data.club.code}</p>
             {detail.data.club.description && <p className="mt-6 max-w-3xl text-muted-app">
               {detail.data.club.description}
@@ -60,14 +60,14 @@ export function ClubDetail() {
           </header>
 
           <section>
-            <h2 className="text-2xl font-semibold">{t("discovery.board")}</h2>
+            <h2 className="text-2xl font-semibold font-heading">{t("discovery.board")}</h2>
             {detail.data.board.length === 0 ? (
               <div className="mt-4"><AppEmptyState message={t("discovery.noBoard")} /></div>
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {detail.data.board.map((seat) => (
                   <AppCard key={`${seat.termName}:${seat.positionName}:${seat.memberName}`}>
-                    <h3 className="font-semibold">{seat.memberName}</h3>
+                    <h3 className="font-semibold font-heading">{seat.memberName}</h3>
                     <p className="mt-2 text-sm text-muted-app">{seat.positionName}</p>
                     <p className="mt-1 text-xs text-muted-app">{seat.termName}</p>
                   </AppCard>
@@ -77,14 +77,14 @@ export function ClubDetail() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold">{t("discovery.recruitment")}</h2>
+            <h2 className="text-2xl font-semibold font-heading">{t("discovery.recruitment")}</h2>
             {detail.data.campaigns.length === 0 ? (
               <div className="mt-4"><AppEmptyState message={t("discovery.noRecruitment")} /></div>
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {detail.data.campaigns.map((campaign) => (
                   <AppCard key={campaign.id}>
-                    <h3 className="font-semibold">{campaign.title}</h3>
+                    <h3 className="font-semibold font-heading">{campaign.title}</h3>
                     <p className="mt-2 text-sm text-muted-app">
                       {formatDate(campaign.windowStart, locale)} — {formatDate(campaign.windowEnd, locale)}
                     </p>
@@ -96,7 +96,7 @@ export function ClubDetail() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold">{t("discovery.upcoming")}</h2>
+            <h2 className="text-2xl font-semibold font-heading">{t("discovery.upcoming")}</h2>
             {detail.data.upcomingEvents.length === 0 ? (
               <div className="mt-4"><AppEmptyState message={t("discovery.noUpcoming")} /></div>
             ) : (
@@ -107,14 +107,14 @@ export function ClubDetail() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold">{t("discovery.history")}</h2>
+            <h2 className="text-2xl font-semibold font-heading">{t("discovery.history")}</h2>
             {detail.data.history.length === 0 ? (
               <div className="mt-4"><AppEmptyState message={t("discovery.noHistory")} /></div>
             ) : (
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {detail.data.history.map((event) => (
                   <AppCard key={event.id}>
-                    <h3 className="font-semibold">{event.title}</h3>
+                    <h3 className="font-semibold font-heading">{event.title}</h3>
                     <p className="mt-2 text-sm text-muted-app">{formatDate(event.endAt, locale)}</p>
                   </AppCard>
                 ))}

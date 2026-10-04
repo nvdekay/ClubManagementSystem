@@ -37,7 +37,7 @@ export function EventDetail() {
           <p className="text-sm font-semibold uppercase tracking-wide text-primary-app">
             {t("discovery.upcoming")}
           </p>
-          <h1 className="mt-3 text-3xl font-bold sm:text-5xl">{detail.data.event.title}</h1>
+          <h1 className="mt-3 text-3xl font-bold sm:text-5xl font-heading">{detail.data.event.title}</h1>
           <p className="mt-4 text-muted-app">
             {t("discovery.hostedBy")}: <Link to={`/clubs/${detail.data.club.id}`} className="font-semibold text-accent-app">
               {detail.data.club.name}
