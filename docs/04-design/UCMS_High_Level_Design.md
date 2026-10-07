@@ -72,7 +72,7 @@ chúng. Ghi xuyên module phải đi qua usecase của module sở hữu, không
 | M02 Club Lifecycle | Club, ClubApplication(+Version) | ✅ |
 | M03 Leadership & Term | ClubTerm, ClubPosition(+Assignment) | một phần (UC09–10) |
 | M04 Recruitment & Membership | RecruitmentCampaign, RecruitmentApplication, ClubMembership | ✅ |
-| M05 Event & Activity | Event, EventProposalVersion, PostEventReport | ✅ |
+| M05 Event & Activity | Event, EventProposalVersion, EventInvitation, PostEventReport | ✅ |
 | M06 Registration & Attendance | EventRegistration, Attendance | ✅ |
 | M07 Finance & Budget | EventBudget (tạo khi duyệt đề xuất sự kiện), BudgetDisbursement, Expense, FinancialEvidence, Reconciliation | ✅ |
 | M08 Reporting & Compliance | PeriodicReport, Violation, CorrectiveAction | một phần |

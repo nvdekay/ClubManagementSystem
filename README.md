@@ -36,7 +36,7 @@ Mọi thư mục đều có một `README.md` nói rõ thứ gì thuộc về n�
 
 ## Tài liệu
 
-Baseline yêu cầu là **[`docs/SRS.md`](docs/SRS.md)** — 54 use case, 45 quy tắc nghiệp vụ, 11
+Baseline yêu cầu là **[`docs/SRS.md`](docs/SRS.md)** — 54 use case, 58 quy tắc nghiệp vụ, 12
 vòng đời thực thể, mô hình dữ liệu, yêu cầu phi chức năng và ma trận truy vết. Mọi tài liệu
 khác nằm trong [`docs/`](docs/README.md), và kế hoạch triển khai kèm thiết kế cơ sở dữ liệu ở
 [`docs/05-implementation/`](docs/05-implementation/README.md).

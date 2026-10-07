@@ -1653,3 +1653,28 @@ sinh (Spec/Model + generator) rồi sinh lại, không sửa tay trong `.docx`.
   - Lý do: tạm ứng mà không có nghĩa vụ quyết toán và cơ chế thu hồi thì nhà trường không đòi lại
     được phần tiền không được chứng minh; `Exception` hợp thức hoá chính phần chênh lệch đó.
 
+### I61 — Sự kiện cấp trường do ICPDP chủ trì và cơ chế mời CLB tham gia
+- **Vấn đề:** toàn bộ sự kiện hiện tại đều do CLB tự đề xuất qua UC25, ICPDP chỉ duyệt (UC26).
+  Thực tế nhà trường/ICPDP thường xuyên chủ trì các sự kiện lớn cấp trường (Ngày hội CLB - Club Day,
+  Lễ vinh danh, Hội thao, Workshop tập huấn) và mời các CLB tham gia (dựng gian hàng, cử tiết mục,
+  cử đại biểu). Hiện hệ thống chưa có Use Case cho ICPDP tự tạo sự kiện và gửi lời mời, cũng như
+  chưa có chức năng cho CLB phản hồi (chấp nhận/từ chối) lời mời này.
+- **Cách sửa đã chọn (2026-10-07):**
+  1. Thêm **UC53** *Tạo sự kiện cấp trường và mời câu lạc bộ tham gia*: Actor là `ICPDP Officer`. Sự kiện
+     do ICPDP tạo có `organizerType = 'ICPDP'`, không gắn với một CLB cụ thể (`clubId` null), được công
+     bố trực tiếp hoặc lên lịch, và cho phép gửi lời mời (`EventInvitation`) tới danh sách các CLB đang `Active`.
+  2. Thêm **UC54** *Phản hồi lời mời tham gia sự kiện*: Actor là `Club Member` có permission `club.event.manage`
+     hoặc `Club Leader`. CLB xem chi tiết lời mời, quyết định `Accepted` (kèm thông tin gian hàng/tiết mục/đại diện)
+     hoặc `Declined` (kèm lý do) trước hạn chót (`deadline`).
+  3. Bổ sung **BR59** (mới): Quy tắc sự kiện cấp trường và thời hạn phản hồi lời mời; lời mời quá hạn tự động `Expired`.
+     ICPDP có thể thu hồi lời mời (`Withdrawn`) trước khi CLB phản hồi.
+  4. Máy trạng thái `EventInvitation`: `Pending → Accepted | Declined | Expired | Withdrawn`.
+  5. Cập nhật thực thể `Event` (`organizerType`, `clubId` nullable), thêm collection `eventInvitations`
+     vào Module M05. Tổng số use case tăng từ 52 lên **54 use cases (UC01–UC54)**; 58 quy tắc nghiệp vụ còn hiệu lực.
+- **Xử lý:**
+  - Ngày: 2026-10-07
+  - File đã sửa: `SRS.md`, `02-use-cases/UCMS_Review_Issues.md`, `05-implementation/UCMS_Database_Design.dbml`,
+    `05-implementation/TASKS.md`, `04-design/UCMS_High_Level_Design.md`, `README.md`,
+    `03-diagrams/UCMS_Context_Diagram_v2.1.drawio`, `03-diagrams/README.md`.
+  - Thay đổi trên Context Diagram: Bổ sung 4 luồng dữ liệu mới (`f40` ICPDP → Sys: `University events & invitations`, `f41` Sys → ICPDP: `Event invitation responses`, `f42` Sys → Club Member: `Event invitations`, `f43` Club Member → Sys: `Event invitation response`), nâng tổng số luồng từ 40 lên **44 luồng dữ liệu**, bố cục căn chỉnh hình học đối xứng chuẩn xác.
+

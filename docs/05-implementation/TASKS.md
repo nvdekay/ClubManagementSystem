@@ -18,7 +18,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 | 1 | Truy cập & cấu hình | UC01–UC05 | 11 |
 | 2 | Thành lập & quản trị CLB | UC06–UC15 | 20 |
 | 3 | Tuyển thành viên → thành viên | UC16–UC24 | 18 |
-| 4 | Duyệt → công bố sự kiện | UC25–UC28 | 15 |
+| 4 | Duyệt → công bố sự kiện; sự kiện cấp trường | UC25–UC28, UC53, UC54 | 17 |
 | 5 | Đăng ký → điểm danh | UC29–UC32 | 11 |
 | 6 | Trách nhiệm sau sự kiện | UC33, UC34 | 6 |
 | 7 | Cơ sở vật chất | UC44–UC47 | 11 |
@@ -158,12 +158,13 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ---
 
-## Vòng 4 — Duyệt → công bố sự kiện (UC25–UC28)
+## Vòng 4 — Duyệt → công bố sự kiện; sự kiện cấp trường (UC25–UC28, UC53, UC54)
 
 ### Database
 - [ ] **DB-4.1** Các collection `events`, `eventProposalVersions`. → SRS §7.1
 - [ ] **DB-4.2** Index `events(propertyId, startAt, endAt)` — phía đọc của quy tắc xung đột. → BR15, DAT-03
 - [ ] **DB-4.3** Index `events(clubId, state)`, `events(state, startAt)`, unique `eventProposalVersions(eventId, revisionNo)`. → DAT-02, DAT-03
+- [ ] **DB-4.4** Collection `eventInvitations`, unique index `(eventId, clubId)`, index `(clubId, status)`, `(status, deadline)`. → BR59, DAT-02, DAT-03
 
 ### Backend
 - [ ] **BE-4.1** **Quy tắc xung đột BR15 dưới dạng một domain service dùng lại được**, trả về No Conflict / Warning / Blocking Conflict trên cả sự kiện lẫn booking đã duyệt, với ngưỡng lấy từ UC04. → BR15
@@ -174,13 +175,18 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-4.5** UC27 công bố kèm khung thời gian đăng ký và phạm vi đối tượng; biến thể nội bộ và biến thể không cần đăng ký. → FR-UC27-01…08
 - [ ] **BE-4.6** Scheduler: `Upcoming → Ongoing → Completed`. → SCH-01
 - [ ] **BE-4.7** UC28 huỷ / đổi lịch: đánh giá lại BR15, giải phóng hoặc cập nhật booking, thông báo người đã đăng ký, tính lại nghĩa vụ, ghi nhận huỷ sát giờ là tín hiệu tuân thủ. → FR-UC28-01…09 · **đang bị chặn bởi quyết định D4**
-- [ ] **BE-4.8** UC28 A1 cascade hệ thống được UC15 và UC40 gọi tới — ICPDP không phải actor của UC28. → FR-UC28-06
+- [ ] **BE-4.8a** UC28 A1 cascade hệ thống được UC15 và UC40 gọi tới — ICPDP không phải actor của UC28. → FR-UC28-06
+- [ ] **BE-4.9** UC53 tạo sự kiện cấp trường (`organizerType = 'ICPDP'`), kiểm tra xung đột BR15, phát hành lời mời `eventInvitations` tới các CLB Active kèm hạn chót phản hồi; hỗ trợ thu hồi lời mời. → FR-UC53-01…10, BR59
+- [ ] **BE-4.10** UC54 phản hồi lời mời: CLB chọn `Accepted` (kèm thông tin gian hàng/tiết mục) hoặc `Declined` (kèm lý do) trước hạn chót; ghi nhận hoạt động tham gia. → FR-UC54-01…09, BR54, BR59
+- [ ] **BE-4.11** Scheduler: quét các `eventInvitations` ở `Pending` quá hạn (`deadline < now`) chuyển sang `Expired`. → BR59, SCH-05
 
 ### Frontend
 - [ ] **FE-4.1** Biểu mẫu đề xuất kèm banner xung đột theo thời gian thực, phần ngân sách theo hạng mục và bước đính kèm booking. → UC25, UI-02
 - [ ] **FE-4.2** Danh sách đề xuất, trang chi tiết kèm lịch sử bản sửa, màn nhận xét và kết quả. → UC25, UC26
 - [ ] **FE-4.3** Hàng đợi đề xuất của ICPDP và màn thẩm định-và-quyết định kèm nhận xét có cấu trúc, ô nhập điều kiện, và duyệt ngân sách theo từng dòng với số tiền đã giảm. → UC26
 - [ ] **FE-4.4** Màn công bố; màn huỷ / đổi lịch với hệ quả được nêu rõ trong hộp xác nhận. → UC27, UC28, SA-01
+- [ ] **FE-4.5** Màn hình ICPDP tạo sự kiện cấp trường, chọn danh sách CLB nhận lời mời và theo dõi trực quan trạng thái phản hồi của các CLB. → UC53
+- [ ] **FE-4.6** Màn hình CLB xem danh sách lời mời sự kiện từ ICPDP và biểu mẫu phản hồi Chấp nhận / Từ chối kèm thông tin đăng ký phối hợp. → UC54
 
 ---
 

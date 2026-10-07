@@ -113,6 +113,19 @@ Enum eventState {
   Expired
 }
 
+Enum eventOrganizerType {
+  CLUB
+  ICPDP
+}
+
+Enum eventInvitationStatus {
+  Pending
+  Accepted
+  Declined
+  Expired
+  Withdrawn
+}
+
 Enum registrationState {
   Confirmed
   Waitlisted
@@ -676,8 +689,9 @@ Table membershipWithdrawalRequests {
 
 Table events {
   id objectId [pk]
-  clubId objectId [not null]
-  clubName string [not null, note: 'Được denormalize cho danh sách sự kiện công khai và hàng đợi của ICPDP (DAT-06); module CLB cập nhật lại khi đổi tên.']
+  organizerType eventOrganizerType [not null, default: 'CLUB', note: 'CLUB | ICPDP — phân biệt sự kiện do CLB đề xuất (UC25) và sự kiện cấp trường do ICPDP khởi tạo (UC53).']
+  clubId objectId [note: 'Null đối với sự kiện cấp trường do ICPDP khởi tạo (UC53); bắt buộc đối với sự kiện do CLB đề xuất.']
+  clubName string [note: 'Được denormalize cho danh sách sự kiện công khai và hàng đợi của ICPDP (DAT-06); null hoặc mang tên ICPDP đối với sự kiện cấp trường.']
   title string [not null]
   objective text
   startAt datetime [not null]
@@ -715,6 +729,7 @@ Table events {
     (propertyId, startAt, endAt) [name: 'ix_events_conflict', note: 'Phía đọc của quy tắc xung đột BR15.']
     (state, revisionDeadlineAt) [name: 'ix_events_expiry']
     (audienceScope, semesterCode, clubId) [name: 'ix_events_scope', note: 'Danh sách sự kiện nội bộ đã ghi nhận trên dashboard ICPDP, lọc theo học kỳ và CLB (BR53).']
+    (organizerType, state) [name: 'ix_events_organizer_state']
   }
 }
 
@@ -732,6 +747,29 @@ Table eventProposalVersions {
   Note: 'Chỉ-ghi-thêm (BR04). Một bản sửa không bao giờ ghi đè bản trước (UC25 A2).'
   indexes {
     (eventId, revisionNo) [unique, name: 'uq_eventrev']
+  }
+}
+
+Table eventInvitations {
+  id objectId [pk]
+  eventId objectId [not null, note: 'Sự kiện cấp trường được mời (UC53).']
+  clubId objectId [not null, note: 'CLB nhận lời mời (UC53).']
+  clubName string [not null, note: 'Denormalize tên CLB.']
+  status eventInvitationStatus [not null, default: 'Pending']
+  deadline datetime [not null, note: 'Hạn chót CLB phải phản hồi; quá hạn chuyển sang Expired (BR59).']
+  invitedAt datetime [not null]
+  invitedBy objectId [not null, note: 'Officer gửi lời mời.']
+  respondedAt datetime
+  respondedBy objectId [note: 'Người đại diện CLB phản hồi (UC54).']
+  responseNote text [note: 'Lý do từ chối hoặc ghi chú phối hợp.']
+  responseDetails json [note: 'Chi tiết gian hàng, tiết mục, đại diện tham gia (UC54).']
+  createdAt datetime [not null]
+  updatedAt datetime [not null]
+
+  indexes {
+    (eventId, clubId) [unique, name: 'ix_event_invitations_unique']
+    (clubId, status) [name: 'ix_event_invitations_club_status']
+    (status, deadline) [name: 'ix_event_invitations_expiry', note: 'Scheduler quét để chuyển trạng thái Expired.']
   }
 }
 

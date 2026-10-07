@@ -15,7 +15,7 @@
 > [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md). Chi tiết nào
 > không được nhắc lại ở đây thì vẫn lấy theo tài liệu nguồn được dẫn trong mục tương ứng. Toàn
 > bộ tài liệu v1 (57 use case, đánh số `UC01–UC57`) là lịch sử: mọi mã số trong tài liệu này là
-> **v2** (`UC01–UC52`).
+> **v2** (`UC01–UC54`).
 >
 > **Ngôn ngữ.** Tài liệu này viết bằng tiếng Việt theo yêu cầu của chủ nhiệm đồ án. Đây là
 > **ngoại lệ có chủ đích** so với quy tắc "English only" của
@@ -96,13 +96,13 @@ theo vai trò.
 | Actor là người | 4 (Student, Club Member, Club Leader, ICPDP Officer); Student ◁ Club Member ◁ Club Leader |
 | Hệ thống ngoài | 3 (Google OAuth, Google SMTP, Cloudinary) |
 | Module nghiệp vụ | 12 (M01–M12) |
-| Use case | 52 (UC01–UC52) |
-| Quy tắc nghiệp vụ | 57 quy tắc còn hiệu lực (BR01–BR58, BR43 đã rút) |
+| Use case | 54 (UC01–UC54) |
+| Quy tắc nghiệp vụ | 58 quy tắc còn hiệu lực (BR01–BR59, BR43 đã rút) |
 | Vấn đề nghiệp vụ (pain point) | 19 (BP01–BP19) |
-| Vòng đời thực thể | 11 |
+| Vòng đời thực thể | 12 |
 | User story | 41 (US01–US41) |
 | Tiêu chí nghiệm thu | 20 (AC01–AC20) + 2 bổ sung |
-| Luồng dữ liệu trên context diagram | 40 |
+| Luồng dữ liệu trên context diagram | 44 |
 | Quyết định còn mở của nhóm | 5 (D1–D5) |
 
 ## 1.3 Định nghĩa, từ viết tắt
@@ -220,7 +220,7 @@ cao mới.
 | **M02** Club Lifecycle & Governance | Hồ sơ thành lập, hồ sơ CLB, tạm ngừng / kích hoạt lại / giải thể | Student, Club Member, Club Leader, ICPDP | Club, ClubApplication(+Version) | UC06–UC09, UC14, UC15 |
 | **M03** Leadership & Term | Đề xuất và xác nhận ban chủ nhiệm, chuyển giao nhiệm kỳ, role CLB và phân quyền | Club Leader, ICPDP | ClubTerm, ClubPosition, ClubPositionAssignment, TransitionPlan | UC10–UC13, UC23 |
 | **M04** Recruitment & Membership | Đợt tuyển, đơn ứng tuyển, sàng lọc, tiếp nhận, danh sách thành viên, không gian thành viên | Student, Club Member | RecruitmentCampaign, RecruitmentApplication, CandidateEvaluation, ClubMembership | UC16–UC22, UC24 |
-| **M05** Event & Activity | Đề xuất (kèm ngân sách), phê duyệt, công bố, huỷ / đổi lịch | Club Member, ICPDP | Event, EventProposalVersion | UC25–UC28 |
+| **M05** Event & Activity | Đề xuất (kèm ngân sách), phê duyệt, công bố, huỷ / đổi lịch; sự kiện cấp trường và mời CLB | Club Member, ICPDP | Event, EventProposalVersion, EventInvitation | UC25–UC28, UC53, UC54 |
 | **M06** Registration & Attendance | Đăng ký, danh sách chờ, check-in, chốt điểm danh | Student, Club Member | EventRegistration, Attendance | UC29–UC32 |
 | **M07** Finance & Budget | Tạm ứng, khoản chi, chứng từ, quyết toán, đối soát, cấp bù và thu hồi cho ngân sách sự kiện (ngân sách được xin và duyệt trong đề xuất sự kiện, M05) | Club Member, ICPDP | EventBudget, BudgetDisbursement, Expense, FinancialEvidence, FinancialReconciliation | UC35–UC37 |
 | **M08** Reporting, Accountability & Compliance | Báo cáo sau sự kiện, báo cáo định kỳ, hồ sơ vi phạm | Club Member, ICPDP | PostEventReport, PeriodicReport, Violation, CorrectiveAction | UC33, UC34, UC38–UC40 |
@@ -272,10 +272,10 @@ các permission của các role đó. Quyền gắn với **nhiệm kỳ** đang
 - **Trách nhiệm (theo permission):** vận hành hồ sơ và ban/bộ phận CLB; tuyển thành viên và quản
   lý danh sách; đề xuất, công bố, huỷ và đổi lịch sự kiện; quản lý danh sách chờ; chốt điểm danh;
   nộp báo cáo sau sự kiện và báo cáo định kỳ; xin ngân sách trong đề xuất sự kiện, ghi nhận khoản chi kèm chứng từ và nộp quyết toán;
-  xin và trả cơ sở vật chất; xem phản hồi sự kiện; trả lời khiếu nại được chuyển xuống.
+  xin và trả cơ sở vật chất; xem phản hồi sự kiện; trả lời khiếu nại được chuyển xuống; phản hồi lời mời tham gia sự kiện của trường.
 - **Use case không cần permission:** UC22, UC24.
 - **Use case cần permission:** UC09, UC16, UC18, UC19, UC20, UC21, UC25, UC27, UC28, UC30,
-  UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52 (cùng UC01, UC02).
+  UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC54 (cùng UC01, UC02).
 
 ### A3 — Club Leader (Chủ nhiệm CLB)
 
@@ -293,7 +293,7 @@ không uỷ quyền quản lý role cho người khác.
 Là **actor duy nhất phía nhà trường** và là **cấp phê duyệt duy nhất** cho mọi yêu cầu gửi lên
 nhà trường (BR31); quyết định nội bộ CLB do CMB đưa ra. Mọi quyết định
 quản trị đều kết thúc ở đây: thành lập, trạng thái CLB, xác nhận ban chủ nhiệm, chuyển giao
-nhiệm kỳ, duyệt sự kiện (kèm ngân sách) và giải ngân, đối soát, cấp cơ sở vật chất, phân loại
+nhiệm kỳ, duyệt sự kiện (kèm ngân sách) và giải ngân, đối soát, cấp cơ sở vật chất, tổ chức sự kiện cấp trường và mời CLB, phân loại
 khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 
 - **Vì sao không có actor thứ tư:** Phòng Tài chính, Quản lý cơ sở vật chất, An ninh hay cố vấn
@@ -302,7 +302,7 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
   có một cấp phê duyệt; duyệt đa cấp là **nội bộ ICPDP** (theo rule định tuyến của UC05, BR16);
   phân cấp trong ICPDP (officer, senior officer, head) là RBAC — xem quyết định còn mở D1.
 - **Use case:** UC01, UC02, UC03, UC04, UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35,
-  UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51.
+  UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51, UC53.
 
 ### Dùng chung và actor phụ
 
@@ -352,7 +352,7 @@ từ danh mục này khi cấu hình role ở UC23.
 | `club.recruitment.manage` | UC16 | có |
 | `club.application.review` | UC18, UC19, UC20 | có |
 | `club.member.manage` | UC21 | có |
-| `club.event.manage` | UC25 (gồm phần ngân sách của đề xuất), UC27, UC28 | có |
+| `club.event.manage` | UC25 (gồm phần ngân sách của đề xuất), UC27, UC28, UC54 | có |
 | `club.attendance.manage` | UC30, UC32, check-in thủ công ở UC31 | có |
 | `club.report.submit` | UC33, UC38 | có |
 | `club.expense.record` | UC36 | có |
@@ -481,6 +481,8 @@ Club Member nộp đề xuất: phạm vi, kế hoạch, rủi ro, phần ngân 
     ├─ sự kiện Internal không có ngân sách → ghi nhận thẳng Approved (BR53)
     └─ còn lại → Pending Approval
 → ICPDP thẩm định (UC26), cấp thứ hai nếu khớp rule UC05 → Revision Requested | Approved | Rejected
+Sự kiện cấp trường: ICPDP tạo sự kiện và gửi lời mời tới các CLB Active (UC53)
+    → Club Member/Leader xem và phản hồi Chấp nhận / Từ chối (UC54, BR59) → EventInvitation: Accepted | Declined | Expired
 → công bố và mở đăng ký (UC27) → Upcoming
 → Student đăng ký (UC29), danh sách chờ (UC30)
 → Scheduler giờ bắt đầu → Ongoing → check-in (UC31) → Scheduler giờ kết thúc → Completed
@@ -2312,6 +2314,65 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 **Hậu điều kiện** — khiếu nại ở `Club Responded` và trở về với ICPDP.
 **Đầu ra** — phần trả lời của CLB, bản ghi audit, thông báo.
 
+### UC53 — Tạo sự kiện cấp trường và mời câu lạc bộ tham gia
+
+| | |
+|---|---|
+| **Module · Ưu tiên** | M05 · P2 |
+| **Actor chính** | ICPDP Officer |
+| **Mục tiêu nghiệp vụ** | Nhà trường chủ động tổ chức các sự kiện quy mô toàn trường (ngày hội CLB, hội thao, lễ vinh danh, tập huấn) và điều phối các CLB tham gia |
+| **Kích hoạt** | ICPDP lên kế hoạch tổ chức sự kiện cấp trường |
+| **Tiền điều kiện** | Người dùng đã đăng nhập với vai trò `ICPDP_OFFICER` hoặc `ICPDP_HEAD` |
+| **Dữ liệu vào** | Tên sự kiện, mục tiêu, thời gian bắt đầu/kết thúc, địa điểm/cơ sở vật chất, sức chứa, mô tả/yêu cầu phối hợp, danh sách CLB được mời, hạn chót phản hồi |
+| **Thực thể / trạng thái** | `Event`: `Draft → Approved` (hoặc trực tiếp `Upcoming` khi công bố); `EventInvitation`: `(tạo mới) → Pending` |
+| **Quy tắc** | BR15 (xung đột địa điểm/thời gian), BR44 (trong cùng học kỳ), BR59 (quy tắc lời mời sự kiện cấp trường) |
+| **Liên quan · Pain point** | UC27, UC44, UC45, UC54 · BP05, BP06 |
+
+| ID | Hệ thống phải … |
+|---|---|
+| FR-UC53-01 | Cho phép ICPDP Officer nhập thông tin sự kiện với `organizerType = 'ICPDP'` và `clubId = null` |
+| FR-UC53-02 | Tự động đánh giá xung đột thời gian và cơ sở vật chất (BR15); cảnh báo nếu trùng với sự kiện hoặc booking đã duyệt khác |
+| FR-UC53-03 | Cho phép chọn danh sách các CLB được gửi lời mời (hoặc chọn "Tất cả CLB đang Active"), kèm hạn chót phản hồi (`deadline`) |
+| FR-UC53-04 | Tạo các bản ghi `EventInvitation` ở trạng thái `Pending` cho từng CLB được chọn và phát thông báo in-app/email tới Ban chủ nhiệm các CLB đó |
+| FR-UC53-05 | Cho phép ICPDP theo dõi danh sách phản hồi của các CLB trong thời gian thực (số CLB đã nhận, đã chấp nhận, đã từ chối, chưa phản hồi) |
+| FR-UC53-06 | Cho phép ICPDP thu hồi lời mời (`Withdrawn`) đối với một CLB khi chưa đến hạn chót nếu kế hoạch phối hợp thay đổi |
+| FR-UC53-07 | *(A1)* Cho phép ICPDP bổ sung lời mời tới các CLB khác sau khi sự kiện đã tạo |
+| FR-UC53-08 | *(A2)* Cho phép ICPDP công bố sự kiện ra toàn trường để sinh viên đăng ký tham gia (chuyển tiếp sang UC27) |
+| FR-UC53-09 | *(E1)* Từ chối tạo lời mời tới CLB đang ở trạng thái khác `Active` (BR59) |
+| FR-UC53-10 | Ghi nhật ký audit hành động tạo sự kiện và phát hành lời mời |
+
+**Hậu điều kiện** — Sự kiện cấp trường được tạo ở trạng thái `Approved` / `Upcoming`; các bản ghi `EventInvitation` ở trạng thái `Pending` được gửi tới các CLB tương ứng.
+**Đầu ra** — Thực thể `Event`, danh sách `EventInvitation`, thông báo, bản ghi audit.
+
+### UC54 — Phản hồi lời mời tham gia sự kiện
+
+| | |
+|---|---|
+| **Module · Ưu tiên** | M05 · P2 |
+| **Actor chính** | Club Member có permission `club.event.manage` hoặc Club Leader |
+| **Mục tiêu nghiệp vụ** | CLB chính thức xác nhận việc có tham gia phối hợp vào sự kiện của nhà trường hay không, đăng ký nội dung tham gia |
+| **Kích hoạt** | Nhận được thông báo hoặc xem danh sách lời mời sự kiện từ ICPDP |
+| **Tiền điều kiện** | Tồn tại `EventInvitation` gửi tới CLB ở trạng thái `Pending` và chưa quá hạn chót (`now < deadline`) |
+| **Dữ liệu vào** | Quyết định (`Accepted` hoặc `Declined`), lý do (bắt buộc khi từ chối), thông tin phối hợp (đăng ký gian hàng, số người tham gia, tiết mục biểu diễn) |
+| **Thực thể / trạng thái** | `EventInvitation`: `Pending → Accepted | Declined` |
+| **Quy tắc** | BR54 (quyền của role CLB), BR59 (thời hạn phản hồi) |
+| **Liên quan · Pain point** | UC24, UC53 · BP05 |
+
+| ID | Hệ thống phải … |
+|---|---|
+| FR-UC54-01 | Hiển thị danh sách các lời mời sự kiện gửi tới CLB kèm trạng thái (`Pending`, `Accepted`, `Declined`, `Expired`, `Withdrawn`) và hạn chót phản hồi |
+| FR-UC54-02 | Cho phép người dùng xem chi tiết sự kiện cấp trường: thời gian, địa điểm, mô tả, yêu cầu phối hợp |
+| FR-UC54-03 | Cho phép CLB chọn **Chấp nhận (Accepted)**: nhập thông tin phối hợp (đại diện liên hệ, số lượng thành viên tham gia, nhu cầu gian hàng/tiết mục) |
+| FR-UC54-04 | Cho phép CLB chọn **Từ chối (Declined)**: bắt buộc nhập lý do từ chối |
+| FR-UC54-05 | Chuyển trạng thái lời mời sang `Accepted` hoặc `Declined`, khoá form chỉnh sửa và gửi thông báo kết quả về cho ICPDP |
+| FR-UC54-06 | Tự động ghi nhận sự kiện vào danh sách hoạt động tham gia của CLB khi chấp nhận (làm cơ sở đánh giá thi đua ở UC42) |
+| FR-UC54-07 | *(E1)* Từ chối xử lý và hiển thị thông báo nếu lời mời đã quá hạn (`now > deadline`), hệ thống tự chuyển sang `Expired` (BR59) |
+| FR-UC54-08 | *(E2)* Từ chối nếu lời mời đã bị ICPDP thu hồi (`Withdrawn`) |
+| FR-UC54-09 | *(E3)* Từ chối nếu người thực hiện không có quyền `club.event.manage` hoặc không phải Club Leader của CLB đó (BR54) |
+
+**Hậu điều kiện** — `EventInvitation` chuyển sang `Accepted` hoặc `Declined`; ICPDP nhận được thông báo phản hồi.
+**Đầu ra** — Bản ghi `EventInvitation` cập nhật, thông báo tới ICPDP, bản ghi audit.
+
 ---
 
 # 5. Quy tắc nghiệp vụ
@@ -2375,15 +2436,16 @@ của nó không bao giờ được dùng lại.**
 | BR51 | **Mới** — Một scheme đánh giá đã được dùng thì bị khoá; muốn thay đổi phải tạo version mới, và kỳ đánh giá dùng version có hiệu lực cho kỳ đó. | UC41, UC42 |
 | BR52 | **Mới** — Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. | UC21, UC22 |
 | BR53 | **Mới** — Sự kiện `Internal` (chỉ thành viên CLB) không có phần ngân sách được **ghi nhận**, không xin duyệt: UC25 chuyển thẳng `Draft → Approved`, ghi audit, và ICPDP xem được mọi sự kiện như vậy ở UC02. Sự kiện đó không cần báo cáo sau sự kiện và đóng khi chốt điểm danh ở UC32. Sự kiện `Internal` có phần ngân sách đi đường duyệt UC26 như sự kiện `Public`; booking luôn do UC46 quyết định | UC02, UC25, UC26, UC27, UC32, UC33 |
-| BR54 | **Mới (I58)** — Mỗi use case vận hành CLB kiểm tra người gọi có permission tương ứng trong CLB đó (danh mục permission ở §2.3); thiếu quyền thì từ chối. Một thành viên giữ nhiều role có quyền là hợp các permission của các role; Club Leader có mọi permission CLB | UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52 |
+| BR54 | **Mới (I58)** — Mỗi use case vận hành CLB kiểm tra người gọi có permission tương ứng trong CLB đó (danh mục permission ở §2.3); thiếu quyền thì từ chối. Một thành viên giữ nhiều role có quyền là hợp các permission của các role; Club Leader có mọi permission CLB | UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC54 |
 | BR55 | **Mới (I58)** — Danh mục permission CLB là cố định, do hệ thống định nghĩa; chỉ được chọn từ danh mục đó. Bốn quyền giữ riêng của leader — `club.role.manage`, `club.board.nominate`, `club.transition.plan`, `club.suspension.request` — không cấp được cho role nào. Cơ cấu role ban đầu được ICPDP thẩm định cùng hồ sơ thành lập (UC07 / UC08); sau đó Club Leader sửa cơ cấu ở UC23 không cần ICPDP xác nhận, trừ role ban điều hành: người giữ chỉ đến từ UC10 / UC11 / UC13, và việc thêm / bỏ role ban điều hành chỉ đi qua chuyển giao UC12 / UC13 | UC07, UC08, UC10, UC11, UC12, UC13, UC23 |
 | BR56 | **Mới (I58)** — Cơ cấu role của CLB được **đánh phiên bản**: phiên bản 1 là cơ cấu được duyệt ở UC08; mỗi thay đổi ở UC23 hoặc UC13 tạo một phiên bản mới có ngày hiệu lực và không bao giờ ghi đè phiên bản trước. Mỗi CLB luôn có role Chủ nhiệm (cố định) và role Members (mặc định, không xoá được, tự gán cho mọi thành viên ở UC20). ICPDP xem được mọi phiên bản cơ cấu và lịch sử người giữ role ban điều hành theo nhiệm kỳ | UC02, UC07, UC08, UC13, UC20, UC23 |
 | BR57 | **Mới (I60)** — Ngân sách đã tạm ứng phải được CLB quyết toán — đủ khoản chi và chứng từ — trong thời hạn định nghĩa trong tài liệu chính sách, tính từ lúc sự kiện kết thúc hoặc bị huỷ. Quá hạn là nghĩa vụ quá hạn theo BR21, và ICPDP được chốt đối soát trên các khoản chi đã có chứng từ | UC36, UC37 |
 | BR58 | **Mới (I60)** — Phần đã tạm ứng không được chứng minh bằng chi hợp lệ (số dư chưa chi, khoản chi thiếu chứng từ hoặc bị loại) bị thu hồi: CLB phải hoàn trong thời hạn định nghĩa trong tài liệu chính sách; ICPDP ghi nhận tiền hoàn ở UC35. Quá hạn là nghĩa vụ quá hạn theo BR21 và là căn cứ mở hồ sơ vi phạm ở UC40 | UC35, UC37, UC40 |
+| BR59 | **Mới (I61)** — Sự kiện cấp trường do ICPDP khởi tạo (UC53) chỉ gửi lời mời tới các CLB đang `Active`. Lời mời có hạn chót phản hồi (`deadline`); quá hạn chót mà CLB chưa phản hồi thì hệ thống tự động chuyển trạng thái lời mời sang `Expired`. CLB có thể `Accepted` hoặc `Declined` (bắt buộc nêu lý do khi từ chối, UC54); ICPDP có quyền thu hồi (`Withdrawn`) trước khi CLB phản hồi hoặc trước hạn chót. Khi CLB chấp nhận, tư cách tham gia của CLB được ghi nhận chính thức vào sự kiện | UC53, UC54 |
 
 **Cấu hình được và hằng số (BR42).** Chỉ chín giá trị liệt kê ở UC04 là sửa được trong sản
 phẩm. Mọi giá trị chính sách khác là **hằng số định nghĩa trong tài liệu chính sách** cho tới khi có nhu
-cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58).
+cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58); hạn phản hồi lời mời sự kiện cấp trường (BR59).
 
 ---
 
@@ -2601,6 +2663,23 @@ Draft → Data Ready → Under Review → Finalized → Published
 Tác nhân: UC42 tới `Data Ready`; UC43 từ `Under Review` trở đi. Kỳ đánh giá đã công bố không bao
 giờ được sửa tại chỗ (BR30).
 
+## 6.13 Event Invitation (lời mời tham gia sự kiện)
+
+```text
+(chưa có) --UC53--> Pending ──┬──UC54 (chấp nhận)────────► Accepted
+                              ├──UC54 (từ chối)──────────► Declined
+                              ├──Scheduler (quá hạn)─────► Expired
+                              └──UC53 (ICPDP thu hồi)────► Withdrawn
+```
+
+| Từ → Đến | Tác nhân |
+|---|---|
+| — → Pending | UC53 (ICPDP gửi lời mời sự kiện tới CLB) |
+| Pending → Accepted | UC54 (CLB đồng ý tham gia phối hợp) |
+| Pending → Declined | UC54 (CLB từ chối, kèm lý do) |
+| Pending → Expired | Scheduler (quá deadline mà CLB chưa phản hồi, BR59) |
+| Pending → Withdrawn | UC53 (ICPDP thu hồi lời mời trước hạn chót) |
+
 ---
 
 # 7. Yêu cầu dữ liệu
@@ -2613,7 +2692,7 @@ giờ được sửa tại chỗ (BR30).
 | M02 | `Club`, `ClubApplication`, `ClubApplicationVersion` |
 | M03 | `ClubTerm`, `ClubPosition`, `ClubPositionAssignment`, `ClubRoleStructureVersion`, `TransitionPlan` |
 | M04 | `RecruitmentCampaign`, `RecruitmentApplication`, `CandidateEvaluation`, `ClubMembership` |
-| M05 | `Event`, `EventProposalVersion` |
+| M05 | `Event`, `EventProposalVersion`, `EventInvitation` |
 | M06 | `EventRegistration`, `Attendance` |
 | M07 | `EventBudget`, `BudgetDisbursement`, `Expense`, `FinancialEvidence`, `FinancialReconciliation` |
 | M08 | `PostEventReport`, `PeriodicReport`, `Violation`, `CorrectiveAction` |
@@ -2642,8 +2721,9 @@ giờ được sửa tại chỗ (BR30).
 | `RecruitmentCampaign` | clubId, positions[], criteria, windowStart, windowEnd, capacity, selectionSteps[], formSchema, rubric, state |
 | `RecruitmentApplication` | campaignId, userId (unique theo campaign), position, answers, attachments[], state, decision {outcome, reason, actor, at} |
 | `CandidateEvaluation` | applicationId, reviewerId, scores[], comment, createdAt (bất biến sau quyết định) |
-| `Event` | clubId, clubName (denormalize), title, objective, startAt, endAt, venue/propertyId, audienceScope (`PUBLIC` / `MEMBERS_ONLY`, chọn ở UC25 — BR53), capacity, riskCategory, state, conflictResult, approvalConditions[], registrationWindow {start, end}, currentRevision |
+| `Event` | organizerType (`CLUB` / `ICPDP`, mặc định `CLUB`), clubId (nullable khi do ICPDP tổ chức), clubName (denormalize), title, objective, startAt, endAt, venue/propertyId, audienceScope (`PUBLIC` / `MEMBERS_ONLY`, chọn ở UC25 — BR53), capacity, riskCategory, state, conflictResult, approvalConditions[], registrationWindow {start, end}, currentRevision |
 | `EventProposalVersion` | eventId, revisionNo, bản chụp payload, budgetLines[] {category, amount, purpose, plannedItems}, requestedBudgetTotal, submittedBy, submittedAt (bất biến) |
+| `EventInvitation` | eventId, clubId (cặp unique theo sự kiện), clubName (denormalize), status (`Pending`/`Accepted`/`Declined`/`Expired`/`Withdrawn`), deadline, invitedAt, invitedBy, respondedAt, respondedBy, responseNote, responseDetails (gian hàng, tiết mục, đại biểu) |
 | `EventRegistration` | eventId, studentId (cặp unique), state (`Confirmed`/`Waitlisted`/`Cancelled`), waitlistPosition, answers, createdAt |
 | `Attendance` | eventId, studentId (cặp unique), registrationId, checkedInAt, method (`self`/`manual`/`walk-in`), performedBy, abnormalFlags[], finalized, finalizedBy, finalizedAt |
 | `PostEventReport` | eventId, bản chụp số liệu nạp sẵn, actualResult, incidents, lessonsLearned, evidence[], state, versions[], submittedAt, lateFlag |
@@ -3117,6 +3197,8 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 | UC50 | M12 | Student | Complaint | BR38 |
 | UC51 | M12 | ICPDP | Complaint, Violation | BR38, BR39 |
 | UC52 | M12 | Club Member | Complaint | BR54 |
+| UC53 | M05 | ICPDP | Event, EventInvitation | BR15, BR44, BR59 |
+| UC54 | M05 | Club Member | EventInvitation | BR54, BR59 |
 
 ## 14.3 User story → use case
 
@@ -3158,12 +3240,14 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | Club Member → Hệ thống | Property booking requests | UC45, UC47 |
 | Club Member → Hệ thống | Complaint response | UC52 |
 | Club Member → Hệ thống | Leave request | UC22 |
+| Club Member → Hệ thống | Event invitation response | UC54 |
 | Hệ thống → Club Member | Member workspace | UC24 |
 | Hệ thống → Club Member | Member applications & event registrations | UC17 → UC18, UC29 → UC30, UC32 |
 | Hệ thống → Club Member | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46 |
 | Hệ thống → Club Member | Event feedback & forwarded complaints | UC49, UC51 → UC52 |
 | Hệ thống → Club Member | Violation notices & evaluation results | UC40, UC43 |
 | Hệ thống → Club Member | Deadline reminders | UC04 + scheduler |
+| Hệ thống → Club Member | Event invitations | UC53 → UC54 |
 | Club Leader → Hệ thống | Leadership & suspension requests | UC10, UC12, UC14 |
 | Club Leader → Hệ thống | Club roles & permissions | UC23 (phiên bản cơ cấu mới, BR56) |
 | Hệ thống → Club Leader | Leadership & club status decisions | UC11, UC13, UC15 |
@@ -3173,11 +3257,13 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | ICPDP → Hệ thống | Disbursements & reconciliation | UC35, UC37 |
 | ICPDP → Hệ thống | Complaint triage | UC51 |
 | ICPDP → Hệ thống | Evaluation scoring | UC43 |
+| ICPDP → Hệ thống | University events & invitations | UC53 |
 | Hệ thống → ICPDP | Submissions for review | UC07 → UC08, UC10 → UC11, UC12 → UC13, UC14 → UC15, UC25 → UC26, UC33 → UC34, UC36 → UC37, UC38 → UC39, UC45 → UC46 |
 | Hệ thống → ICPDP | Club complaints | UC50 → UC51 |
 | Hệ thống → ICPDP | Internal event records | UC25 (BR53) → UC02 |
 | Hệ thống → ICPDP | Club statistics & evaluation draft | UC02, UC42 |
 | Hệ thống → ICPDP | Club role structure & board history | UC02 (phiên bản cơ cấu và lịch sử ban điều hành của mọi CLB; BR56) |
+| Hệ thống → ICPDP | Event invitation responses | UC54 → UC53, UC02 |
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Identity data | UC01 |
 | Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2) |
@@ -3201,6 +3287,7 @@ Tuyển TV:    UC06 Khám phá → UC17 Ứng tuyển → UC18 Sàng lọc&Quy�
 Sự kiện:     UC25 Đề xuất ⇄ UC26 Thẩm định&Quyết định → UC27 Công bố → UC29 Đăng ký → UC31 Check-in
                 │  BR15 xung đột đánh giá bên trong                     └─ UC30 Danh sách chờ
                 └─ «extend» UC45 Booking                              → UC32 Chốt điểm danh
+             ICPDP tạo:  UC53 Sự kiện cấp trường & Mời CLB → UC54 CLB phản hồi (Accepted | Declined) → UC27
              UC28 Huỷ/Đổi lịch tác động lên UC27–UC33 và gọi UC47
                                                                       → UC33 Báo cáo → UC34 Đóng
 Tài chính:   UC26 duyệt ngân sách trong đề xuất → UC35 Giải ngân → UC36 Khoản chi+Chứng từ
@@ -3226,7 +3313,7 @@ UC45→UC25 và UC47→UC28 chỉ ghi trong Spec; điều hướng giữa các m
 
 # 15. Phạm vi phát hành và thứ tự triển khai
 
-Cả 52 use case ra trong **một bản phát hành**, nhóm thành các vòng lặp mà mỗi vòng đều khép kín
+Cả 54 use case ra trong **một bản phát hành**, nhóm thành các vòng lặp mà mỗi vòng đều khép kín
 — không có gì kết thúc ở một trạng thái mà không use case nào rời đi được.
 
 | # | Vòng lặp | Use case | Khép kín khi |
@@ -3234,7 +3321,7 @@ Cả 52 use case ra trong **một bản phát hành**, nhóm thành các vòng l
 | 1 | Truy cập & cấu hình | UC01–UC05 | người dùng vào được workspace và ICPDP đặt được chính sách, định tuyến |
 | 2 | Thành lập & quản trị CLB | UC06–UC15 | một CLB tồn tại, có ban chủ nhiệm, và có thể bị tạm ngừng, kích hoạt lại hoặc giải thể |
 | 3 | Tuyển thành viên → thành viên | UC16–UC24 | một đơn ứng tuyển trở thành tư cách thành viên với danh sách duy trì được |
-| 4 | Duyệt → công bố sự kiện | UC25–UC28 | một sự kiện đã duyệt được công bố, và huỷ hoặc đổi lịch được |
+| 4 | Duyệt → công bố sự kiện | UC25–UC28, UC53, UC54 | một sự kiện đã duyệt được công bố, sự kiện cấp trường mời được CLB, và huỷ hoặc đổi lịch được |
 | 5 | Đăng ký → điểm danh | UC29–UC32 | tồn tại một bộ dữ liệu điểm danh chính thức |
 | 6 | Trách nhiệm sau sự kiện | UC33, UC34 | sự kiện chuyển `Closed` |
 | 7 | Tài chính | UC35–UC37 | ngân sách sự kiện `Closed` sau khi đối soát |
@@ -3408,7 +3495,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 | M02 | `GET /clubs`, `GET /clubs/:id`, `POST /club-applications`, `PATCH /club-applications/:id` (nộp lại → version mới), `POST /club-applications/:id/withdraw`, `POST /club-applications/:id/decision`, `PATCH /clubs/:id/profile`, `POST /clubs/:id/suspension-requests`, `POST /clubs/:id/lifecycle` |
 | M03 | `POST /clubs/:id/terms/nominations`, `POST /nominations/:id/decision`, `POST /clubs/:id/transitions`, `POST /transitions/:id/decision`, `GET|POST /clubs/:id/positions`, `POST /clubs/:id/position-assignments` |
 | M04 | `GET|POST /clubs/:id/campaigns`, `POST /campaigns/:id/publish`, `GET|POST /campaigns/:id/applications`, `POST /applications/:id/withdraw`, `POST /applications/:id/screening`, `POST /applications/:id/decision`, `POST /applications/:id/evaluations`, `POST /applications/:id/onboard`, `GET /clubs/:id/members`, `PATCH /memberships/:id/status`, `POST /memberships/:id/leave-requests`, `GET /me/memberships` |
-| M05 | `GET|POST /events`, `PATCH /events/:id` (nộp lại → bản sửa mới), `POST /events/:id/decision`, `POST /events/:id/publish`, `POST /events/:id/cancel`, `POST /events/:id/reschedule` |
+| M05 | `GET|POST /events`, `POST /events/university` (UC53), `POST /events/:id/invitations` (UC53), `DELETE /event-invitations/:id` (UC53), `GET /clubs/:id/event-invitations` (UC54), `PATCH /event-invitations/:id/respond` (UC54), `PATCH /events/:id` (nộp lại → bản sửa mới), `POST /events/:id/decision`, `POST /events/:id/publish`, `POST /events/:id/cancel`, `POST /events/:id/reschedule` |
 | M06 | `POST /events/:id/registrations`, `DELETE /registrations/:id`, `GET /events/:id/registrations`, `PATCH /events/:id/capacity`, `POST /registrations/:id/promote`, `POST /events/:id/check-ins`, `POST /events/:id/attendance/finalize`, `POST /events/:id/attendance/unlock` |
 | M07 | `GET /event-budgets/:id`, `POST /event-budgets/:id/disbursements` (`Advance` / `TopUp` / `Refund`), `GET|POST /event-budgets/:id/expenses`, `POST /expenses/:id/evidence`, `POST /event-budgets/:id/settlement`, `GET|POST /event-budgets/:id/reconciliation` — ngân sách được xin và duyệt qua `/events` (M05) |
 | M08 | `GET|POST /events/:id/report`, `POST /event-reports/:id/decision`, `GET|POST /clubs/:id/periodic-reports`, `POST /periodic-reports/:id/decision`, `GET|POST /violations`, `PATCH /violations/:id`, `POST /violations/:id/corrective-actions` |
