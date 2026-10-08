@@ -603,7 +603,7 @@ ICPDP quyết định giải thể (UC15): huỷ ngay mọi thứ kết thúc sa
 | ID | Giả định / phụ thuộc |
 |---|---|
 | ASM-01 | Nhà trường chưa có nền tảng tập trung cho vòng đời CLB; UCMS trở thành hệ thống ghi nhận chính thức (system of record) |
-| ASM-02 | Mọi người dùng có tài khoản Google thuộc domain nhà trường do ICPDP cấu hình ở UC04; không có đường đăng nhập nội bộ |
+| ASM-02 | Mọi người dùng đăng nhập bằng tài khoản Google có email đã xác minh và được chính sách UC04 cho phép — một danh sách domain, hoặc `*` để nhận mọi domain (ví dụ cả `@gmail.com`); không có đường đăng nhập nội bộ |
 | ASM-03 | ICPDP là bên duy nhất phía nhà trường tham gia hệ thống. Ý kiến của Tài chính, Cơ sở vật chất và An ninh đến từ bên ngoài hệ thống |
 | ASM-04 | Quy mô là vài trăm sinh viên, vài chục CLB, một cơ sở đào tạo — không có yêu cầu multi-tenant |
 | ASM-05 | Lịch học kỳ (ngày bắt đầu và kết thúc) được duy trì ở UC04 và là cơ sở của BR44, BR45, đợt đăng ký lại thành viên theo kỳ (UC21 A2) và lịch giải thể của UC15 |
@@ -2353,7 +2353,7 @@ của nó không bao giờ được dùng lại.**
 | BR29 | Tổng trọng số đánh giá phải hợp lệ trước khi một scheme được kích hoạt | UC41, UC42 |
 | BR30 | Kỳ đánh giá đã công bố không bao giờ được sửa tại chỗ; phải tạo bản sửa hoặc bản chụp mới | UC43 |
 | BR31 | ICPDP là cấp phê duyệt duy nhất cho mọi yêu cầu CLB hoặc sinh viên gửi lên nhà trường; quyết định nội bộ CLB do CMB của CLB đó đưa ra trong phạm vi của mình | UC08, UC26, UC46, UC51 |
-| BR32 | Hệ thống chỉ chấp nhận đăng nhập qua Google OAuth với email thuộc domain đã cấu hình | UC01, UC04 |
+| BR32 | Hệ thống chỉ chấp nhận đăng nhập qua Google OAuth với email đã được Google xác minh và thuộc domain đã cấu hình; giá trị `*` (đứng một mình) cho phép mọi domain | UC01, UC04 |
 | BR33 | Một property không được có hai booking `Approved` trùng khung giờ trừ khi chính sách cho phép overbooking | UC45, UC46 |
 | BR34 | CLB `Suspended` không được cấp booking mới | UC15, UC45, UC46 |
 | BR35 | Booking chỉ được duyệt bởi ICPDP và tự động được giải phóng khi sự kiện liên quan bị huỷ | UC46, UC28, UC47 |
@@ -2981,7 +2981,7 @@ sự kiện nào tôi chưa gửi phản hồi · khiếu nại của tôi đang
 | ID | Yêu cầu |
 |---|---|
 | SEC-01 | **Xác thực** chỉ qua Google OAuth (BR32). Không lưu mật khẩu, và không tồn tại đường đăng nhập nội bộ |
-| SEC-02 | Chỉ email thuộc domain trường đã cấu hình mới được tạo phiên hoặc tạo `User` (FR-UC01-03, FR-UC01-09) |
+| SEC-02 | Chỉ email đã xác minh và được chính sách domain cho phép (danh sách domain, hoặc `*` cho mọi domain) mới được tạo phiên hoặc tạo `User` (FR-UC01-03, FR-UC01-09) |
 | SEC-03 | **Hai lớp kiểm tra thẩm quyền**: kiểm tra *quyền* thô ở middleware của route (vai trò này có được làm hành động này không), và kiểm tra *phạm vi* bên trong use case (actor này có ở **đúng CLB** đó, với **đúng role** mang permission cần thiết (BR54), trong **nhiệm kỳ hiện tại** không; hoặc có phải Club Leader với các quyền giữ riêng — BR55). Lớp kiểm tra phạm vi mới là lớp thực sự bảo vệ dữ liệu (CON-06) |
 | SEC-04 | Quyền được suy ra từ `ClubPositionAssignment ∩ ClubTerm đang hoạt động` và permission của role (BR47, BR54), không bao giờ từ một cờ trên user; nhờ vậy thay đổi ban chủ nhiệm hay role CLB là thay đổi dữ liệu, không phải migration. Thay đổi permission của role hoặc thu hồi role ở UC23 có hiệu lực ngay ở request kế tiếp |
 | SEC-05 | Cookie phiên được ký, `httpOnly`, `SameSite=Lax`, và có cờ `Secure` ngoài môi trường dev. Thay đổi hoặc thu hồi vai trò sẽ vô hiệu hoá ngay các phiên bị ảnh hưởng (FR-UC03-04) |

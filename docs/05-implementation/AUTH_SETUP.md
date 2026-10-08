@@ -7,8 +7,8 @@ trống theo yêu cầu của người dùng; điền giá trị thật vào `.e
 |---|---|
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | OAuth Web application trong Google Cloud Console |
 | `SESSION_SECRET` | Chuỗi ngẫu nhiên bí mật tối thiểu 32 ký tự |
-| `ALLOWED_DOMAIN` | Domain email được UC01 cho phép, không gồm `@` |
-| `BOOTSTRAP_ICPDP_EMAIL` | Email officer đầu tiên, thuộc `ALLOWED_DOMAIN` |
+| `ALLOWED_DOMAIN` | Domain email được UC01 cho phép, không gồm `@` (ví dụ `fpt.edu.vn`), hoặc `*` để nhận mọi tài khoản Google đã xác minh email, kể cả `@gmail.com` |
+| `BOOTSTRAP_ICPDP_EMAIL` | Email officer đầu tiên, thuộc `ALLOWED_DOMAIN` (với `*` thì là bất kỳ email nào) |
 | `APP_BASE_URL` | Origin backend, ví dụ `http://localhost:3055` nếu dùng `PORT=3055` |
 | `CLIENT_BASE_URL` | Origin Vite client, thường `http://localhost:5173` |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Bộ API credentials của Cloudinary; chỉ cần khi bật tải tài liệu UC07. Điền `.env`, không gửi secret qua chat hoặc commit. |
@@ -53,6 +53,11 @@ Sau khi điền cấu hình và bật replica set: chạy `npm run db:init`, `np
 verified và thuộc domain cấu hình mới được vào.
 
 Hiện `ALLOWED_DOMAIN` là policy fallback cho tới khi bản `policyVersions` đầu tiên được tạo.
+ICPDP có thể đổi sang danh sách domain hoặc `*` ở trang chính sách UC04; `*` phải đứng một mình.
+
+Muốn mọi tài khoản Google đăng nhập được (không chỉ danh sách test users), trong Google Cloud
+Console mở **Google Auth Platform → Audience** và bấm **Publish app** để chuyển từ *Testing* sang
+*In production*. UCMS chỉ xin scope cơ bản `openid email profile`, nên không cần Google xét duyệt.
 Các giá trị khởi tạo khác của UC04 chưa được chốt trong SRS, nên chưa seed policy version.
 
 Tệp hồ sơ UC07 được backend tải lên dưới dạng `authenticated` asset. Client không nhận API

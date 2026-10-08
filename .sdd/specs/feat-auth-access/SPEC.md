@@ -55,3 +55,4 @@ Người dùng đã có Google OAuth credentials và sẽ tự điền; chưa cu
 
 ## Changelog
 - v0.1.0 (2026-10-02) — bản triển khai theo SRS UC01, UC03, UC04, BR32, BR47, BR54–BR56; chờ nghiệm thu chức năng.
+- v0.2.0 (2026-10-08) — người dùng quyết định cho mọi tài khoản Google đăng nhập: chính sách domain nhận `*` (đứng một mình) là mọi domain; email vẫn phải được Google xác minh. SRS ASM-02, BR32, SEC-02 cập nhật theo.
