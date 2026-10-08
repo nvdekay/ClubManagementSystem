@@ -6,7 +6,7 @@
 - [x] Mongo repository và use case tạo/sửa/nộp/nộp lại/rút với version bất biến, owner check, review task, audit và thông báo; Mongo integration test đã viết.
 - [x] HTTP route, Zod, OpenAPI, auth/CSRF, preview trùng tên và giới hạn tệp; unit test use case và route contract.
 - [x] Client Student form/trạng thái, service/hook, i18n en/vi và layout responsive; production build xanh.
-- [ ] Khi UC05 sẵn sàng, thay tuyến ICPDP một cấp tạm thời bằng routing snapshot theo chính sách định tuyến và gửi thông báo tới reviewer được phân công.
+- [x] Giữ đúng một review task cho mỗi lần nộp; không thêm routing snapshot vì UC05 đã rút và BR16 chỉ cho một quyết định ICPDP.
 - [ ] Bổ sung bù/xoá Cloudinary asset mồ côi và chính sách retention khi upload thành công nhưng ghi metadata Mongo lỗi.
 - [x] `npm run check` với Mongo replica set thật (`rs0` một node): 90/90 test xanh, gồm 10 integration test (2026-10-04). Test repository được sửa để kiểm đúng hậu điều kiện: nộp lại đóng review task cũ và mở đúng một task `Open` mới.
 - [ ] Kiểm tra trực quan và Cloudinary upload/download với credentials thật.
