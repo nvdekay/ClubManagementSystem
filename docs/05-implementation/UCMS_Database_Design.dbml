@@ -1144,7 +1144,7 @@ Table evaluationSchemes {
 Table evaluationDimensions {
   id objectId [pk]
   schemeId objectId [not null]
-  code string [not null, note: 'D1 Thực thi hoạt động, D2 Mức độ tham gia của thành viên, D3 Kỷ luật báo cáo, D4 Tuân thủ tài chính, D5 Quản trị, D6 Tuân thủ và rủi ro.']
+  code string [not null, note: 'Danh mục cố định (BR60): D1 Số người tham gia, D2 Tầm ảnh hưởng, D3 Mức độ hài lòng (ba dimension chung, bắt buộc trong mọi scheme), D4 Thực thi hoạt động, D5 Kỷ luật báo cáo, D6 Tuân thủ tài chính, D7 Quản trị, D8 Tuân thủ và rủi ro.']
   name string [not null]
   weight decimal [not null]
   scoringRule json [not null, note: 'Các chỉ số của dimension và cách chúng quy ra điểm.']

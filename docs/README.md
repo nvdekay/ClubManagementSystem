@@ -7,7 +7,7 @@ không giữ phần *làm thế nào*.
 ## Bắt đầu từ đây
 
 **[`SRS.md`](SRS.md) — Đặc tả yêu cầu phần mềm.** Một baseline hợp nhất duy nhất: phạm vi,
-actor, toàn bộ 54 use case dưới dạng yêu cầu chức năng được đánh số, 58 quy tắc nghiệp vụ, 12
+actor, toàn bộ 55 use case dưới dạng yêu cầu chức năng được đánh số, 60 quy tắc nghiệp vụ, 12
 vòng đời thực thể, mô hình dữ liệu, thiết kế xuyên suốt cho workflow / thông báo / audit, mô
 hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu chí nghiệm thu và các ma trận
 truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác
@@ -18,7 +18,7 @@ nhau về một yêu cầu, **lấy theo SRS**.
 | Thư mục | Bên trong có gì | Đọc khi nào |
 |---|---|---|
 | [`01-business-analysis/`](01-business-analysis/) | Bản phân tích nghiệp vụ và hệ thống gốc: vấn đề, các bên liên quan, luồng nghiệp vụ, user story, domain model, mô hình đánh giá, các feature nổi bật | Bạn cần hiểu *vì sao* có một yêu cầu, hoặc cần phần nền mà SRS đã tóm tắt lại |
-| [`02-use-cases/`](02-use-cases/) | Use case model v2 và đặc tả chi tiết **hiện hành** của cả 54 use case, bản xuất Word, và nhật ký review I01–I61 | Bạn cần bản kể đầy đủ của một use case, bảng ánh xạ v1 → v2, hoặc lịch sử của một lần sửa |
+| [`02-use-cases/`](02-use-cases/) | Use case model v2 và đặc tả chi tiết **hiện hành** của cả 55 use case, bản xuất Word, và nhật ký review I01–I64 | Bạn cần bản kể đầy đủ của một use case, bảng ánh xạ v1 → v2, hoặc lịch sử của một lần sửa |
 | [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram v1, v2 và v2.1 (hiện hành), use case diagram theo actor, state diagram | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
 | [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
 | [`05-implementation/`](05-implementation/) | Danh sách công việc triển khai (database, backend, frontend) và thiết kế cơ sở dữ liệu dạng DBML cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
@@ -38,9 +38,9 @@ nhau về một yêu cầu, **lấy theo SRS**.
   bằng tiếng Anh — xem [`../.rules/README.md`](../.rules/README.md) §5. Các định danh kỹ thuật
   (mã UC/FR/BR, tên trạng thái, tên collection và trường, đường dẫn, endpoint) giữ nguyên tiếng
   Anh vì chúng xuất hiện nguyên văn trong code.
-- Một use case được định danh bằng số **v2** (UC01–UC54) ở mọi nơi trừ bên trong tài liệu v1.
+- Một use case được định danh bằng số **v2** (UC01–UC55) ở mọi nơi trừ bên trong tài liệu v1.
   Dùng §5 của use case model để chuyển đổi giữa v1 và v2.
-- Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR59** (58 quy tắc còn hiệu lực), trong đó BR43 đã
+- Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR61** (60 quy tắc còn hiệu lực), trong đó BR43 đã
   được rút. Danh sách hợp nhất, đã áp dụng mọi sửa đổi, nằm ở `SRS.md` §5.
 - Không xoá gì cả. Tài liệu đã bị thay thế vẫn để đọc được, để một quyết định luôn truy ngược
   được về mô hình mà nó được đưa ra; khi v1 và v2 nói khác nhau, **lấy theo v2**.

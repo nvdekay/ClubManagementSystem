@@ -25,7 +25,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 | 8 | Tài chính | UC35–UC37 | 12 |
 | 9 | Báo cáo định kỳ | UC38, UC39 | 6 |
 | 10 | Phản hồi & khiếu nại | UC48–UC52 | 10 |
-| 11 | Governance intelligence | UC40–UC43 | 12 |
+| 11 | Governance intelligence | UC40–UC43, UC55 | 12 |
 | — | Gia cố & phát hành | — | 8 |
 | | | | **152** |
 
@@ -326,23 +326,24 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ---
 
-## Vòng 11 — Governance intelligence (UC40–UC43)
+## Vòng 11 — Governance intelligence (UC40–UC43, UC55)
 
 ### Database
 - [ ] **DB-11.1** Các collection `violations`, `correctiveActions`. → SRS §7.1
 - [ ] **DB-11.2** Các collection `evaluationSchemes`, `evaluationDimensions`, `evaluations`, `evaluationDimensionResults`. → UC41–UC43
 - [ ] **DB-11.3** Unique `evaluationSchemes(periodCode, version)`, `evaluations(clubId, periodCode, revisionNo)`, `evaluationDimensionResults(evaluationId, dimensionCode)`. → DAT-02
-- [ ] **DB-11.4** Các aggregation pipeline cấp dữ liệu cho D1–D6 từ các collection vận hành. → EVL-02
+- [ ] **DB-11.4** Các aggregation pipeline cấp dữ liệu cho D1–D8 từ các collection vận hành (D2 cần `eventInvitations` Accepted và tỉ lệ người tham dự ngoài CLB). → EVL-02, BR60
 
 ### Backend
 - [ ] **BE-11.1** UC40 vòng đời hồ sơ với nguồn gốc, mức độ nghiêm trọng, chứng cứ, phần trả lời, quyết định, biện pháp khắc phục. → FR-UC40-01…10, BR27, BR28
 - [ ] **BE-11.2** UC40 A1 leo thang sang UC15 và liên kết ngược về hồ sơ. → FR-UC40-07
 - [ ] **BE-11.3** Đầu vào tín hiệu tuân thủ từ UC28, UC47, UC34, UC37, UC52. → FR-UC40-01
-- [ ] **BE-11.4** UC41 đánh phiên bản scheme kèm validate tổng trọng số và chức năng sao chép. → FR-UC41-01…06, BR29
+- [ ] **BE-11.4** UC41 đánh phiên bản scheme kèm validate tổng trọng số, bắt buộc đủ ba dimension chung D1–D3, và chức năng sao chép. → FR-UC41-01…07, BR29, BR60
 - [ ] **BE-11.5** UC42 sinh bản nháp, thu thập chín nguồn và lưu lineage cho từng dimension. → FR-UC42-01…06, EVL-02
 - [ ] **BE-11.6** UC42 đánh dấu `Insufficient data` thay vì chấm 0. → FR-UC42-06, EVL-03
 - [ ] **BE-11.7** UC43 xem lại, dimension chấm tay kèm lý giải, chốt, công bố, bản sửa sau công bố. → FR-UC43-01…07, BR30
 - [ ] **BE-11.8** Widget sức khoẻ / rủi ro CLB cho dashboard ICPDP. → §10.1
+- [ ] **BE-11.9** UC55 xuất dữ liệu: danh mục loại dữ liệu cố định, bộ lọc, sinh `xlsx` / `csv`, bảng điểm đánh giá ra `pdf`, ẩn danh tính phản hồi ẩn danh, ghi audit mỗi lần xuất, chỉ ICPDP. → FR-UC55-01…10, BR60, BR61
 
 ### Frontend
 - [ ] **FE-11.1** Danh sách hồ sơ tuân thủ, trang chi tiết và dòng thời gian, phần trả lời của CLB và thao tác kết luận. → UC40
@@ -351,6 +352,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **FE-11.4** Khung xem bản nháp đánh giá với khả năng **đi sâu vào chứng cứ** của từng dimension. → UC42, EVL-02
 - [ ] **FE-11.5** Màn chốt và công bố; màn kết quả và xu hướng đánh giá phía CLB. → UC43
 - [ ] **FE-11.6** Trang tổng quan tuân thủ và đánh giá của CLB. → §10.2
+- [ ] **FE-11.7** Màn xuất dữ liệu & báo cáo: chọn loại dữ liệu, bộ lọc, định dạng, xem số dòng trước khi tải. → UC55
 
 ---
 

@@ -1480,7 +1480,7 @@ vẫn là tên gọi chung của phía CLB.
 - **Mục tiêu nghiệp vụ:** Định nghĩa cách chấm điểm CLB, trước khi bất cứ thứ gì được chấm.
 - **Kích hoạt:** Một kỳ đánh giá mới, hoặc một thay đổi trong chính sách chấm điểm.
 - **Tiền điều kiện:** Người gọi có quyền cấu hình đánh giá.
-- **Dữ liệu vào:** Các dimension của §17 (D1–D6), trọng số, ngưỡng cho từng mức xếp loại, kỳ áp
+- **Dữ liệu vào:** Các dimension D1–D8 của SRS §9, trong đó D1–D3 (Số người tham gia, Tầm ảnh hưởng, Mức độ hài lòng) bắt buộc theo BR60, trọng số, ngưỡng cho từng mức xếp loại, kỳ áp
   dụng, trạng thái kích hoạt.
 - **Luồng chính:**
   1. Officer tạo hoặc mở một version scheme.
@@ -1704,7 +1704,7 @@ vẫn là tên gọi chung của phía CLB.
 - **Quy tắc nghiệp vụ:** BR36 — mỗi người tham dự một phản hồi cho một sự kiện, nhận từ lúc
   **check-in** cho tới khi window cấu hình được đóng lại. Đây là phần sửa của v2: v1 mở window
   sau khi chốt điểm danh ở UC32, nên một CLB chốt muộn — đúng cái hành vi mà BP08 mô tả — đẩy tỉ
-  lệ phản hồi về 0 và làm dimension D1, D2 chết đói dữ liệu. BR37 — không bao giờ bị sửa hay
+  lệ phản hồi về 0 và làm dimension D3 Mức độ hài lòng chết đói dữ liệu. BR37 — không bao giờ bị sửa hay
   xoá, và CMB chỉ thấy ở dạng tổng hợp. BR40 — không hiển thị bản tổng hợp khi chưa đạt số người
   phản hồi tối thiểu.
 - **Đầu ra:** EventFeedback, bản tổng hợp được cập nhật.

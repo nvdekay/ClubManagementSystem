@@ -15,7 +15,7 @@
 > [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md). Chi tiết nào
 > không được nhắc lại ở đây thì vẫn lấy theo tài liệu nguồn được dẫn trong mục tương ứng. Toàn
 > bộ tài liệu v1 (57 use case, đánh số `UC01–UC57`) là lịch sử: mọi mã số trong tài liệu này là
-> **v2** (`UC01–UC54`).
+> **v2** (`UC01–UC55`).
 >
 > **Ngôn ngữ.** Tài liệu này viết bằng tiếng Việt theo yêu cầu của chủ nhiệm đồ án. Đây là
 > **ngoại lệ có chủ đích** so với quy tắc "English only" của
@@ -96,8 +96,8 @@ theo vai trò.
 | Actor là người | 4 (Student, Club Member, Club Leader, ICPDP Officer); Student ◁ Club Member ◁ Club Leader |
 | Hệ thống ngoài | 3 (Google OAuth, Google SMTP, Cloudinary) |
 | Module nghiệp vụ | 12 (M01–M12) |
-| Use case | 54 (UC01–UC54) |
-| Quy tắc nghiệp vụ | 58 quy tắc còn hiệu lực (BR01–BR59, BR43 đã rút) |
+| Use case | 55 (UC01–UC55) |
+| Quy tắc nghiệp vụ | 60 quy tắc còn hiệu lực (BR01–BR61, BR43 đã rút) |
 | Vấn đề nghiệp vụ (pain point) | 19 (BP01–BP19) |
 | Vòng đời thực thể | 12 |
 | User story | 41 (US01–US41) |
@@ -139,7 +139,7 @@ theo vai trò.
 | R2 | [`02-use-cases/UCMS_UseCase_Model_v2.md`](02-use-cases/UCMS_UseCase_Model_v2.md) | **Use case model hiện hành.** 52 use case, ánh xạ v1→v2, bản đồ quan hệ, ma trận actor, vòng đời, sửa đổi quy tắc, phạm vi phát hành, truy vết, quyết định còn mở, ánh xạ luồng context |
 | R3 | [`02-use-cases/UCMS_UseCase_Specification_v2.md`](02-use-cases/UCMS_UseCase_Specification_v2.md) | **Đặc tả chi tiết hiện hành** của cả 52 use case |
 | R4 | [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md) | Nhật ký review chéo I01–I30; mọi issue đã xử lý đều đã được đưa vào SRS này |
-| R5 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) | Biên hệ thống, 40 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58) |
+| R5 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) | Biên hệ thống, 46 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
 | R6 | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) | Use case diagram: trang All users (quan hệ kế thừa actor) và mỗi trang một nhóm actor |
 | R7 | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) | Máy trạng thái của 8 thực thể lõi |
 | R8 | [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) | Container, bản đồ module → code, thiết kế approval/notification/audit, định danh, thiết kế dữ liệu, bề mặt API, client, triển khai |
@@ -162,7 +162,7 @@ theo vai trò.
 | `AC` | Tiêu chí nghiệm thu | AC16 — xung đột đặt cơ sở vật chất |
 | `US` | User story | US12 |
 | `D1–D5` | Quyết định còn mở của nhóm | D4 — có duyệt lại khi đổi lịch không |
-| `Dn` (đánh giá) | Dimension đánh giá D1–D6 — **không cùng dãy** với quyết định còn mở; luôn đọc theo ngữ cảnh |
+| `Dn` (đánh giá) | Dimension đánh giá D1–D8 — **không cùng dãy** với quyết định còn mở; luôn đọc theo ngữ cảnh |
 
 Cách dùng từ theo tinh thần RFC 2119: **phải** = bắt buộc, **nên** = khuyến nghị, **có thể** =
 tuỳ chọn. Mọi `FR` trong §4 đều bắt buộc trừ khi ghi rõ khác.
@@ -201,7 +201,7 @@ khác.
                                                           └──► Cloudinary     (lưu ảnh tải lên)
 ```
 
-Biên hệ thống và toàn bộ 40 luồng dữ liệu được vẽ ở R5
+Biên hệ thống và toàn bộ 46 luồng dữ liệu được vẽ ở R5
 ([`img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png`](03-diagrams/img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png)).
 Mỗi luồng là một **nhóm dữ liệu**, không phải một use case; một hồ sơ gửi lên ICPDP chỉ vẽ một
 lần (`Submissions for review`) thay vì lặp lại ở cả chiều CMB → hệ thống và hệ thống → ICPDP.
@@ -224,7 +224,7 @@ cao mới.
 | **M06** Registration & Attendance | Đăng ký, danh sách chờ, check-in, chốt điểm danh | Student, Club Member | EventRegistration, Attendance | UC29–UC32 |
 | **M07** Finance & Budget | Tạm ứng, khoản chi, chứng từ, quyết toán, đối soát, cấp bù và thu hồi cho ngân sách sự kiện (ngân sách được xin và duyệt trong đề xuất sự kiện, M05) | Club Member, ICPDP | EventBudget, BudgetDisbursement, Expense, FinancialEvidence, FinancialReconciliation | UC35–UC37 |
 | **M08** Reporting, Accountability & Compliance | Báo cáo sau sự kiện, báo cáo định kỳ, hồ sơ vi phạm | Club Member, ICPDP | PostEventReport, PeriodicReport, Violation, CorrectiveAction | UC33, UC34, UC38–UC40 |
-| **M09** Performance Evaluation | Cấu hình scheme, sinh bản nháp, công bố | ICPDP | EvaluationScheme, EvaluationDimension, Evaluation, EvaluationDimensionResult | UC41–UC43 |
+| **M09** Performance Evaluation & Reporting | Cấu hình scheme, sinh bản nháp, công bố theo bảng điểm chung; xuất dữ liệu và báo cáo | ICPDP | EvaluationScheme, EvaluationDimension, Evaluation, EvaluationDimensionResult | UC41–UC43, UC55 |
 | **M10** Workflow, Notification & Audit | Approval task, hàng đợi thông báo, gửi email, nhật ký audit, scheduler | Xuyên suốt | ApprovalTask, ApprovalDecision, Notification, EmailDeliveryLog, AuditLog | không có use case riêng — xem §8 |
 | **M11** Property & Facility Booking | Danh mục, yêu cầu đặt, quyết định, trả/giải phóng | Club Member, ICPDP | Property, PropertyBooking | UC44–UC47 |
 | **M12** Feedback & Complaint | Phản hồi sự kiện, tiếp nhận khiếu nại, phân loại, phản hồi của CLB | Student, Club Member, ICPDP | EventFeedback, Complaint | UC48–UC52 |
@@ -302,7 +302,7 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
   có một cấp phê duyệt; duyệt đa cấp là **nội bộ ICPDP** (theo rule định tuyến của UC05, BR16);
   phân cấp trong ICPDP (officer, senior officer, head) là RBAC — xem quyết định còn mở D1.
 - **Use case:** UC01, UC02, UC03, UC04, UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35,
-  UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51, UC53.
+  UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51, UC53, UC55.
 
 ### Dùng chung và actor phụ
 
@@ -544,11 +544,12 @@ Nghĩa vụ quá hạn khi công tắc cưỡng chế bật → chặn đề xu�
 ### F9 — Đánh giá hiệu quả CLB
 
 ```text
-ICPDP cấu hình scheme đánh giá, tổng trọng số hợp lệ (UC41, BR29)
+ICPDP cấu hình scheme đánh giá, tổng trọng số hợp lệ, đủ ba dimension chung D1–D3 (UC41, BR29, BR60)
 → cuối kỳ, sinh bản nháp từ dữ liệu vận hành: thành viên, sự kiện, điểm danh, báo cáo, tài chính,
   phản hồi, tuân thủ (UC42) → Data Ready
 → ICPDP xem lại dữ liệu nguồn, xử lý bất thường, chấm các dimension chấm tay (UC43) → Under Review
-→ chốt → Finalized → công bố → Published (không sửa tại chỗ, BR30)
+→ chốt → Finalized → công bố → Published theo bảng điểm chung (không sửa tại chỗ, BR30, BR60)
+→ ICPDP xuất bảng điểm và dữ liệu nguồn ra xlsx / csv / pdf khi cần báo cáo (UC55, BR61)
 ```
 
 ### F10 — Tạm ngừng, kích hoạt lại, giải thể
@@ -680,7 +681,7 @@ client/src/pages/
 | Student | Dashboard · danh bạ CLB & trang CLB · form hồ sơ thành lập (+ các version) · form ứng tuyển · đơn của tôi · danh sách và trang sự kiện · đăng ký của tôi · check-in (mã/QR) · form phản hồi · form khiếu nại & khiếu nại của tôi | UC02, UC06, UC07, UC17, UC29, UC31, UC48, UC50 |
 | Club Member | Không gian thành viên theo CLB · xin rời CLB (mọi thành viên); các màn hình sau chỉ hiện khi có permission tương ứng (BR54): dashboard CLB · hồ sơ & cơ cấu CLB · đợt tuyển · bảng sàng lọc đơn · đánh giá ứng viên · danh sách thành viên · đề xuất sự kiện (+ bản sửa) · công bố sự kiện · huỷ/đổi lịch · đăng ký & danh sách chờ · chốt điểm danh · báo cáo sau sự kiện · khoản chi & chứng từ · báo cáo định kỳ · yêu cầu booking · booking của CLB · xem phản hồi · khiếu nại được chuyển | UC02, UC09, UC16, UC18–UC22, UC24, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52 |
 | Club Leader | Mọi màn hình của Club Member · vai trò CLB & phân quyền (tạo role, chọn permission, gán thành viên) · đề xuất ban chủ nhiệm · kế hoạch chuyển giao · xin tạm ngừng | UC10, UC12, UC14, UC23 |
-| ICPDP | Dashboard · hộp thư phê duyệt hợp nhất · thẩm định hồ sơ thành lập · danh sách CLB & hành động vòng đời · xác nhận ban chủ nhiệm & chuyển giao · thẩm định đề xuất sự kiện (kèm ngân sách) · thẩm định báo cáo sự kiện · ghi nhận giải ngân · đối soát · thẩm định báo cáo định kỳ · hồ sơ vi phạm · phân loại khiếu nại · danh mục cơ sở vật chất · thẩm định booking · scheme đánh giá · bản nháp & công bố đánh giá · tài khoản & vai trò · chính sách & deadline · định tuyến phê duyệt | UC03–UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39–UC44, UC46, UC51 |
+| ICPDP | Dashboard · hộp thư phê duyệt hợp nhất · thẩm định hồ sơ thành lập · danh sách CLB & hành động vòng đời · xác nhận ban chủ nhiệm & chuyển giao · thẩm định đề xuất sự kiện (kèm ngân sách) · thẩm định báo cáo sự kiện · ghi nhận giải ngân · đối soát · thẩm định báo cáo định kỳ · hồ sơ vi phạm · phân loại khiếu nại · danh mục cơ sở vật chất · thẩm định booking · scheme đánh giá · bản nháp & công bố đánh giá · xuất dữ liệu & báo cáo · tài khoản & vai trò · chính sách & deadline · định tuyến phê duyệt | UC03–UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39–UC44, UC46, UC51, UC55 |
 
 ### 3.1.2 Yêu cầu giao diện
 
@@ -1990,9 +1991,9 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Mục tiêu nghiệp vụ** | Định nghĩa cách chấm điểm CLB, trước khi bất cứ thứ gì được chấm |
 | **Kích hoạt** | Một kỳ đánh giá mới, hoặc chính sách chấm điểm thay đổi |
 | **Tiền điều kiện** | Người gọi có quyền cấu hình đánh giá |
-| **Dữ liệu vào** | Các dimension D1–D6, trọng số, ngưỡng xếp loại, kỳ áp dụng, trạng thái kích hoạt |
+| **Dữ liệu vào** | Các dimension D1–D8 (D1–D3 bắt buộc), trọng số, ngưỡng xếp loại, kỳ áp dụng, trạng thái kích hoạt |
 | **Thực thể / trạng thái** | `EvaluationScheme` version: `Draft → Active` |
-| **Quy tắc** | BR29, BR30, BR51 |
+| **Quy tắc** | BR29, BR30, BR51, BR60 |
 | **Liên quan · Pain point** | UC42 · BP13 |
 
 | ID | Hệ thống phải … |
@@ -2003,6 +2004,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | FR-UC41-04 | Đánh phiên bản và ghi audit mọi thay đổi scheme |
 | FR-UC41-05 | *(A1)* Cho sao chép scheme của kỳ trước rồi chỉnh sửa |
 | FR-UC41-06 | *(E2)* Tạo version mới thay vì sửa tại chỗ khi scheme đã được một kỳ đánh giá đã công bố sử dụng |
+| FR-UC41-07 | *(E3)* Từ chối kích hoạt scheme thiếu một trong ba dimension chung D1–D3 hoặc đặt trọng số 0 cho chúng (BR60) |
 
 **Hậu điều kiện** — đúng một scheme hoạt động cho mỗi kỳ. **Đầu ra** — `EvaluationScheme` version, bản ghi audit.
 
@@ -2017,12 +2019,12 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Có một scheme đang hoạt động (UC41); báo cáo của kỳ đã được thẩm định (UC39) |
 | **Dữ liệu vào** | Kỳ đánh giá và danh sách CLB trong phạm vi |
 | **Thực thể / trạng thái** | `Evaluation`: `Draft → Data Ready` |
-| **Quy tắc** | BR29, BR30, BR51 |
+| **Quy tắc** | BR29, BR30, BR51, BR60 |
 | **Liên quan · Pain point** | UC37, UC39, UC40, UC41, UC43 · BP13 |
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC42-01 | Thu thập cho mỗi CLB trong phạm vi: hoạt động (UC26–UC34), điểm danh (UC32), thành viên (UC21), tài chính (UC37), báo cáo (UC39), vi phạm (UC40), phản hồi (UC48), kết quả khiếu nại (UC51) và mức tuân thủ booking (UC46, UC47) |
+| FR-UC42-01 | Thu thập cho mỗi CLB trong phạm vi: hoạt động (UC26–UC34), điểm danh (UC32), thành viên (UC21), tài chính (UC37), báo cáo (UC39), vi phạm (UC40), phản hồi (UC48), kết quả khiếu nại (UC51), lời mời sự kiện cấp trường đã chấp nhận (UC54) và mức tuân thủ booking (UC46, UC47) |
 | FR-UC42-02 | Áp dụng scheme đang hoạt động của UC41 và tính điểm cho từng dimension |
 | FR-UC42-03 | Lưu **chứng cứ và data lineage** phía sau mỗi kết quả dimension: `kết quả dimension → chỉ số → thực thể nguồn → kỳ dữ liệu nguồn` |
 | FR-UC42-04 | Đặt bản nháp ở `Data Ready` và không bao giờ công bố nó khi chưa qua UC43 |
@@ -2042,14 +2044,14 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | **Tiền điều kiện** | Bản nháp của kỳ đó tồn tại |
 | **Dữ liệu vào** | Xử lý các bất thường, các dimension chấm tay được phép, xếp loại cuối |
 | **Thực thể / trạng thái** | `Evaluation`: `Data Ready → Under Review → Finalized → Published` |
-| **Quy tắc** | BR30 |
-| **Liên quan · Pain point** | UC42 · BP13 |
+| **Quy tắc** | BR30, BR60 |
+| **Liên quan · Pain point** | UC42, UC55 · BP13 |
 
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC43-01 | Hiển thị bản nháp kèm dữ liệu nguồn và cho officer xử lý các bất thường và các dimension `Insufficient data` |
 | FR-UC43-02 | Cho officer thêm các dimension chấm tay mà scheme cho phép, mỗi cái kèm lý giải |
-| FR-UC43-03 | Cho officer chốt (`Finalized`) rồi công bố (`Published`), và thông báo cho các CLB |
+| FR-UC43-03 | Cho officer chốt (`Finalized`) rồi công bố (`Published`) theo bảng điểm chung — cùng các dimension, cùng thứ tự, kèm chỉ số thô — cho mọi CLB (BR60), và thông báo cho các CLB |
 | FR-UC43-04 | Không bao giờ sửa tại chỗ một kỳ đánh giá đã công bố — phải tạo bản sửa hoặc bản chụp mới (BR30) |
 | FR-UC43-05 | *(A1)* Hỗ trợ bản sửa sau công bố như một version mới, giữ bản đã công bố vẫn đọc được |
 | FR-UC43-06 | *(E1)* Xử lý khiếu nại về kết quả như một hồ sơ ở UC40, mọi hiệu chỉnh trở thành một bản sửa mới |
@@ -2373,6 +2375,36 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 **Hậu điều kiện** — `EventInvitation` chuyển sang `Accepted` hoặc `Declined`; ICPDP nhận được thông báo phản hồi.
 **Đầu ra** — Bản ghi `EventInvitation` cập nhật, thông báo tới ICPDP, bản ghi audit.
 
+### UC55 — Xuất dữ liệu và báo cáo
+
+| | |
+|---|---|
+| **Module · Ưu tiên** | M09 · P5 |
+| **Actor chính** | ICPDP Officer |
+| **Mục tiêu nghiệp vụ** | Đưa dữ liệu ra khỏi hệ thống thành file để báo cáo lên nhà trường, lưu trữ hoặc phân tích thêm, không phải tổng hợp tay |
+| **Kích hoạt** | Cần báo cáo cuối kỳ, cuối năm, hoặc theo yêu cầu đột xuất của nhà trường |
+| **Tiền điều kiện** | Người gọi là ICPDP Officer |
+| **Dữ liệu vào** | Loại dữ liệu, bộ lọc (kỳ hoặc khoảng thời gian, CLB, trạng thái), định dạng (`xlsx`, `csv`, `pdf`) |
+| **Thực thể / trạng thái** | Chỉ đọc; ghi `AuditLog` |
+| **Quy tắc** | BR30, BR60, BR61 |
+| **Liên quan · Pain point** | UC02, UC32, UC37, UC40, UC43 · BP13 |
+
+| ID | Hệ thống phải … |
+|---|---|
+| FR-UC55-01 | Cho officer chọn loại dữ liệu từ một danh mục cố định: danh sách CLB và trạng thái; thành viên theo CLB; sự kiện kèm đăng ký và điểm danh; ngân sách, giải ngân và đối soát; hồ sơ vi phạm và khiếu nại; kết quả đánh giá |
+| FR-UC55-02 | Lọc theo kỳ hoặc khoảng thời gian, CLB và trạng thái, và hiển thị số dòng trước khi xuất |
+| FR-UC55-03 | Sinh file `xlsx` hoặc `csv` cho mọi loại dữ liệu; kết quả đánh giá xuất thêm được `pdf` theo bảng điểm chung (BR60) |
+| FR-UC55-04 | Chỉ xuất kết quả đánh giá đã `Published` (BR30) và điểm danh đã chốt (UC32) |
+| FR-UC55-05 | Ghi vào đầu file thời điểm xuất, người xuất và bộ lọc đã dùng |
+| FR-UC55-06 | Áp dụng cùng quy tắc hiển thị như trên màn hình: không xuất danh tính người gửi phản hồi ẩn danh (BR61) |
+| FR-UC55-07 | Ghi audit mỗi lần xuất: người xuất, loại dữ liệu, bộ lọc, số dòng (BR61) |
+| FR-UC55-08 | *(A1)* Xuất bảng so sánh các CLB trong một kỳ: mỗi dòng một CLB, mỗi cột một dimension của bảng điểm chung, kèm tổng điểm và xếp loại |
+| FR-UC55-09 | *(E1)* Báo không có dữ liệu khớp bộ lọc và không tạo file rỗng |
+| FR-UC55-10 | *(E2)* Từ chối nếu người gọi không phải ICPDP Officer (BR61) |
+
+**Hậu điều kiện** — file được tải về máy officer; một bản ghi audit.
+**Đầu ra** — file `xlsx` / `csv` / `pdf`, bản ghi audit.
+
 ---
 
 # 5. Quy tắc nghiệp vụ
@@ -2418,7 +2450,7 @@ của nó không bao giờ được dùng lại.**
 | BR33 | Một property không được có hai booking `Approved` trùng khung giờ trừ khi chính sách cho phép overbooking | UC45, UC46 |
 | BR34 | CLB `Suspended` không được cấp booking mới | UC15, UC45, UC46 |
 | BR35 | Booking chỉ được duyệt bởi ICPDP và tự động được giải phóng khi sự kiện liên quan bị huỷ | UC46, UC28, UC47 |
-| BR36 | **Đã sửa đổi** — mỗi người tham dự một phản hồi cho một sự kiện, nhận từ thời điểm **check-in** của chính họ cho tới khi feedback window đóng (v1 mở window sau khi chốt điểm danh, khiến dimension D1 và D2 của mô hình đánh giá bị thiếu dữ liệu) | UC31, UC48 |
+| BR36 | **Đã sửa đổi** — mỗi người tham dự một phản hồi cho một sự kiện, nhận từ thời điểm **check-in** của chính họ cho tới khi feedback window đóng (v1 mở window sau khi chốt điểm danh, khiến dimension phản hồi của mô hình đánh giá — nay là D3 Mức độ hài lòng — bị thiếu dữ liệu) | UC31, UC48 |
 | BR37 | CMB không được sửa hoặc xoá phản hồi sự kiện và chỉ thấy nó ở dạng tổng hợp | UC48, UC49 |
 | BR38 | Khiếu nại của sinh viên đi thẳng tới ICPDP; CLB chỉ tiếp cận được sau khi ICPDP chuyển xuống | UC50, UC51, UC52 |
 | BR39 | Mọi quyết định với khiếu nại (bác bỏ / chuyển xuống / leo thang) phải có lý do và được audit | UC51 |
@@ -2442,6 +2474,8 @@ của nó không bao giờ được dùng lại.**
 | BR57 | **Mới (I60)** — Ngân sách đã tạm ứng phải được CLB quyết toán — đủ khoản chi và chứng từ — trong thời hạn định nghĩa trong tài liệu chính sách, tính từ lúc sự kiện kết thúc hoặc bị huỷ. Quá hạn là nghĩa vụ quá hạn theo BR21, và ICPDP được chốt đối soát trên các khoản chi đã có chứng từ | UC36, UC37 |
 | BR58 | **Mới (I60)** — Phần đã tạm ứng không được chứng minh bằng chi hợp lệ (số dư chưa chi, khoản chi thiếu chứng từ hoặc bị loại) bị thu hồi: CLB phải hoàn trong thời hạn định nghĩa trong tài liệu chính sách; ICPDP ghi nhận tiền hoàn ở UC35. Quá hạn là nghĩa vụ quá hạn theo BR21 và là căn cứ mở hồ sơ vi phạm ở UC40 | UC35, UC37, UC40 |
 | BR59 | **Mới (I61)** — Sự kiện cấp trường do ICPDP khởi tạo (UC53) chỉ gửi lời mời tới các CLB đang `Active`. Lời mời có hạn chót phản hồi (`deadline`); quá hạn chót mà CLB chưa phản hồi thì hệ thống tự động chuyển trạng thái lời mời sang `Expired`. CLB có thể `Accepted` hoặc `Declined` (bắt buộc nêu lý do khi từ chối, UC54); ICPDP có quyền thu hồi (`Withdrawn`) trước khi CLB phản hồi hoặc trước hạn chót. Khi CLB chấp nhận, tư cách tham gia của CLB được ghi nhận chính thức vào sự kiện | UC53, UC54 |
+| BR60 | **Mới (I63)** — Đánh giá CLB dùng một **format chung**: danh mục dimension D1–D8 do hệ thống định nghĩa (§9), ICPDP chỉ chọn dimension áp dụng, đặt trọng số và ngưỡng. Mọi scheme bắt buộc gồm ba dimension chung D1 Số người tham gia, D2 Tầm ảnh hưởng, D3 Mức độ hài lòng với trọng số > 0; thiếu một trong ba thì không kích hoạt được. Mọi CLB trong cùng kỳ được chấm bằng cùng một scheme và công bố dưới cùng một bảng điểm | UC41, UC42, UC43, UC55 |
+| BR61 | **Mới (I64)** — Chỉ ICPDP Officer xuất được dữ liệu (UC55). Bản xuất tuân theo cùng quy tắc hiển thị như trên màn hình — phản hồi gửi ẩn danh không kèm danh tính người gửi, kết quả đánh giá chỉ xuất bản đã `Published`. Mọi lần xuất được ghi audit: người xuất, loại dữ liệu, bộ lọc, số dòng | UC55 |
 
 **Cấu hình được và hằng số (BR42).** Chỉ chín giá trị liệt kê ở UC04 là sửa được trong sản
 phẩm. Mọi giá trị chính sách khác là **hằng số định nghĩa trong tài liệu chính sách** cho tới khi có nhu
@@ -2738,7 +2772,7 @@ giờ được sửa tại chỗ (BR30).
 | `EventFeedback` | eventId, attendanceId, studentId (nội bộ, ẩn khi gửi ẩn danh), scores[], comment, isAnonymous, submittedAt (bất biến) |
 | `Complaint` | complainantId, clubId, eventId?, type, description, evidence[], state, triage {severity, validity, outcome, reason, actor, at}, clubResponse {text, evidence[], at}, violationId? |
 | `Violation` | clubId, origin {type, sourceId}, severity, description, evidence[], state, decision {reason, evidence, actor, at}, correctiveActions[] |
-| `EvaluationScheme` | period, version, state, dimensions[] {code, name, weight, scoringRule}, thresholds[] |
+| `EvaluationScheme` | period, version, state, dimensions[] {code (D1–D8, D1–D3 bắt buộc theo BR60), name, weight, scoringRule}, thresholds[] |
 | `Evaluation` | clubId, period, schemeVersion, state, totalScore, classification, dimensionResults[], revisions[] |
 | `EvaluationDimensionResult` | evaluationId, dimensionCode, score, cờ `Insufficient data`, evidence[] {metric, sourceEntity, sourceId, sourcePeriod} |
 | `ApprovalTask` | entityType, entityId, state, assigneeRole, requiredLevel, slaDueAt, createdAt, decisions[] |
@@ -2905,21 +2939,29 @@ SCH-06 phải là tất-cả-hoặc-không-gì với từng CLB: nếu bất k�
 # 9. Mô hình đánh giá hiệu quả CLB
 
 Không hard-code bất kỳ công thức điểm nào. Hệ thống cung cấp một **khung đánh giá cấu hình
-được** (UC41) trên sáu dimension, và mọi kết quả phải giải thích được qua data lineage của nó.
+được** (UC41) trên tám dimension, và mọi kết quả phải giải thích được qua data lineage của nó.
+
+**Format chung (BR60).** Mọi CLB được đánh giá theo cùng một bảng điểm. Ba dimension đầu — **Số
+người tham gia, Tầm ảnh hưởng, Mức độ hài lòng** — là phần chung bắt buộc của mọi scheme; năm
+dimension còn lại đo việc vận hành và tuân thủ. Tên dimension và chỉ số phía sau do hệ thống định
+nghĩa; ICPDP chỉ đổi trọng số và ngưỡng. Nhờ vậy điểm của các CLB so sánh được với nhau và giữa
+các kỳ.
 
 | Dim | Tên | Đầu vào | Câu hỏi nghiệp vụ |
 |---|---|---|---|
-| **D1** | Thực thi hoạt động | sự kiện đã duyệt, sự kiện đã hoàn thành, sự kiện bị huỷ, báo cáo sau sự kiện, property được cấp so với thực dùng, điểm phản hồi trung bình | CLB có thực sự làm những gì đã cam kết không? |
-| **D2** | Mức độ tham gia của thành viên | thành viên active, điểm danh, tỉ lệ giữ chân, tỉ lệ tham gia, tỉ lệ phản hồi | Thành viên có thực sự tham gia hay chỉ tồn tại trên danh sách? |
-| **D3** | Kỷ luật báo cáo | mức độ hoàn thành báo cáo, ngày đến hạn, số ngày trễ, số lần phải sửa | CLB có tuân thủ nghĩa vụ báo cáo không? |
-| **D4** | Tuân thủ tài chính | ngân sách được duyệt, số đã giải ngân, khoản chi, chứng từ, kết quả đối soát | CLB dùng ngân sách có minh bạch và đúng quy trình không? |
-| **D5** | Quản trị | ban chủ nhiệm hợp lệ, nhiệm kỳ, chuyển giao, hồ sơ thành viên | CLB có bộ máy vận hành và khả năng kế thừa tốt không? |
-| **D6** | Tuân thủ và rủi ro | số lượng và mức độ vi phạm, hồ sơ chưa xử lý xong, biện pháp khắc phục, khiếu nại bị leo thang, số lần huỷ booking sát giờ | CLB có tạo ra rủi ro quản trị hoặc tuân thủ cho nhà trường không? |
+| **D1** | Số người tham gia *(chung)* | lượt đăng ký, lượt check-in trong điểm danh đã chốt (UC32), số người tham dự không trùng lặp, tỉ lệ có mặt trên đăng ký, số thành viên active (UC21) | CLB thu hút được bao nhiêu người tham gia hoạt động? |
+| **D2** | Tầm ảnh hưởng *(chung)* | tỉ lệ người tham dự không phải thành viên CLB, số sự kiện `Public` đã hoàn thành, số sự kiện cấp trường CLB đã tham gia (UC54 `Accepted`), số đơn ứng tuyển nhận được (UC17) | Hoạt động của CLB có lan ra ngoài phạm vi thành viên không? |
+| **D3** | Mức độ hài lòng *(chung)* | điểm phản hồi trung bình (UC48), tỉ lệ phản hồi trên số người check-in, phân bố điểm theo sự kiện; dưới số người phản hồi tối thiểu (BR40) là `Insufficient data` | Người tham dự có hài lòng với hoạt động không? |
+| **D4** | Thực thi hoạt động | sự kiện đã duyệt, sự kiện đã hoàn thành, sự kiện bị huỷ, báo cáo sau sự kiện, property được cấp so với thực dùng | CLB có thực sự làm những gì đã cam kết không? |
+| **D5** | Kỷ luật báo cáo | mức độ hoàn thành báo cáo, ngày đến hạn, số ngày trễ, số lần phải sửa | CLB có tuân thủ nghĩa vụ báo cáo không? |
+| **D6** | Tuân thủ tài chính | ngân sách được duyệt, số đã giải ngân, khoản chi, chứng từ, kết quả đối soát | CLB dùng ngân sách có minh bạch và đúng quy trình không? |
+| **D7** | Quản trị | ban chủ nhiệm hợp lệ, nhiệm kỳ, chuyển giao, hồ sơ thành viên, tỉ lệ giữ chân thành viên | CLB có bộ máy vận hành và khả năng kế thừa tốt không? |
+| **D8** | Tuân thủ và rủi ro | số lượng và mức độ vi phạm, hồ sơ chưa xử lý xong, biện pháp khắc phục, khiếu nại bị leo thang, số lần huỷ booking sát giờ | CLB có tạo ra rủi ro quản trị hoặc tuân thủ cho nhà trường không? |
 
 ```text
 Evaluation Scheme
 ├─ Kỳ học
-├─ Các dimension (D1–D6)
+├─ Các dimension (D1–D8; D1–D3 bắt buộc, BR60)
 ├─ Tiêu chí
 ├─ Trọng số      ← cấu hình ở UC41; tổng phải hợp lệ (BR29)
 ├─ Quy tắc chấm điểm
@@ -2933,6 +2975,7 @@ Evaluation Scheme
 | EVL-03 | Dimension có nguồn dữ liệu không đầy đủ được đánh dấu `Insufficient data`, không bao giờ chấm 0 |
 | EVL-04 | Bản nháp không bao giờ được công bố khi chưa qua thẩm định ở UC43 |
 | EVL-05 | Kỳ đánh giá đã công bố là bất biến; hiệu chỉnh là một bản sửa hoặc bản chụp mới (BR30) |
+| EVL-06 | Kết quả công bố là một bảng điểm cùng cấu trúc cho mọi CLB: điểm từng dimension, chỉ số thô phía sau, tổng điểm và xếp loại; xuất được ra file ở UC55 (BR60) |
 | EVL-06 | Lịch sử đánh giá được giữ theo từng CLB và từng kỳ để đọc được xu hướng |
 | EVL-07 | Dimension chấm tay chỉ được phép ở nơi scheme cho phép, và mỗi cái kèm lý giải |
 
@@ -3199,6 +3242,7 @@ Hai tiêu chí bổ sung đến từ các sửa đổi của v2, và có tính b
 | UC52 | M12 | Club Member | Complaint | BR54 |
 | UC53 | M05 | ICPDP | Event, EventInvitation | BR15, BR44, BR59 |
 | UC54 | M05 | Club Member | EventInvitation | BR54, BR59 |
+| UC55 | M09 | ICPDP | — (chỉ đọc; AuditLog) | BR30, BR60, BR61 |
 
 ## 14.3 User story → use case
 
@@ -3258,12 +3302,14 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | ICPDP → Hệ thống | Complaint triage | UC51 |
 | ICPDP → Hệ thống | Evaluation scoring | UC43 |
 | ICPDP → Hệ thống | University events & invitations | UC53 |
+| ICPDP → Hệ thống | Export criteria | UC55 |
 | Hệ thống → ICPDP | Submissions for review | UC07 → UC08, UC10 → UC11, UC12 → UC13, UC14 → UC15, UC25 → UC26, UC33 → UC34, UC36 → UC37, UC38 → UC39, UC45 → UC46 |
 | Hệ thống → ICPDP | Club complaints | UC50 → UC51 |
 | Hệ thống → ICPDP | Internal event records | UC25 (BR53) → UC02 |
 | Hệ thống → ICPDP | Club statistics & evaluation draft | UC02, UC42 |
 | Hệ thống → ICPDP | Club role structure & board history | UC02 (phiên bản cơ cấu và lịch sử ban điều hành của mọi CLB; BR56) |
 | Hệ thống → ICPDP | Event invitation responses | UC54 → UC53, UC02 |
+| Hệ thống → ICPDP | Exported data & reports | UC55 |
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Identity data | UC01 |
 | Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2) |
@@ -3313,7 +3359,7 @@ UC45→UC25 và UC47→UC28 chỉ ghi trong Spec; điều hướng giữa các m
 
 # 15. Phạm vi phát hành và thứ tự triển khai
 
-Cả 54 use case ra trong **một bản phát hành**, nhóm thành các vòng lặp mà mỗi vòng đều khép kín
+Cả 55 use case ra trong **một bản phát hành**, nhóm thành các vòng lặp mà mỗi vòng đều khép kín
 — không có gì kết thúc ở một trạng thái mà không use case nào rời đi được.
 
 | # | Vòng lặp | Use case | Khép kín khi |
@@ -3326,7 +3372,7 @@ Cả 54 use case ra trong **một bản phát hành**, nhóm thành các vòng l
 | 6 | Trách nhiệm sau sự kiện | UC33, UC34 | sự kiện chuyển `Closed` |
 | 7 | Tài chính | UC35–UC37 | ngân sách sự kiện `Closed` sau khi đối soát |
 | 8 | Báo cáo định kỳ | UC38, UC39 | một báo cáo được chấp nhận trở thành đầu vào đánh giá |
-| 9 | Governance intelligence | UC40–UC43 | tồn tại một kỳ đánh giá đã công bố, và hồ sơ vi phạm được xử lý xong |
+| 9 | Governance intelligence | UC40–UC43, UC55 | tồn tại một kỳ đánh giá đã công bố theo bảng điểm chung, xuất được ra file, và hồ sơ vi phạm được xử lý xong |
 | 10 | Cơ sở vật chất | UC44–UC47 | một khung giờ đã đặt được sử dụng hoặc được trả lại |
 | 11 | Phản hồi & khiếu nại | UC48–UC52 | phản hồi được tổng hợp và khiếu nại có kết quả xử lý |
 
@@ -3499,7 +3545,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 | M06 | `POST /events/:id/registrations`, `DELETE /registrations/:id`, `GET /events/:id/registrations`, `PATCH /events/:id/capacity`, `POST /registrations/:id/promote`, `POST /events/:id/check-ins`, `POST /events/:id/attendance/finalize`, `POST /events/:id/attendance/unlock` |
 | M07 | `GET /event-budgets/:id`, `POST /event-budgets/:id/disbursements` (`Advance` / `TopUp` / `Refund`), `GET|POST /event-budgets/:id/expenses`, `POST /expenses/:id/evidence`, `POST /event-budgets/:id/settlement`, `GET|POST /event-budgets/:id/reconciliation` — ngân sách được xin và duyệt qua `/events` (M05) |
 | M08 | `GET|POST /events/:id/report`, `POST /event-reports/:id/decision`, `GET|POST /clubs/:id/periodic-reports`, `POST /periodic-reports/:id/decision`, `GET|POST /violations`, `PATCH /violations/:id`, `POST /violations/:id/corrective-actions` |
-| M09 | `GET|POST /evaluation-schemes`, `POST /evaluation-schemes/:id/activate`, `POST /evaluations/generate`, `GET /evaluations`, `POST /evaluations/:id/finalize`, `POST /evaluations/:id/publish` |
+| M09 | `GET|POST /evaluation-schemes`, `POST /evaluation-schemes/:id/activate`, `POST /evaluations/generate`, `GET /evaluations`, `POST /evaluations/:id/finalize`, `POST /evaluations/:id/publish`, `GET /exports?type=&format=&period=&clubId=` (UC55) |
 | M10 | `GET /approvals` (hộp thư phê duyệt dùng chung), `GET /approvals/:id`, `GET /notifications`, `PATCH /notifications/:id/read`, `GET /audit-logs?entityType=&entityId=` |
 | M11 | `GET|POST /properties`, `PATCH /properties/:id`, `GET /properties/:id/availability`, `GET|POST /property-bookings`, `PATCH /property-bookings/:id`, `POST /property-bookings/:id/decision`, `POST /property-bookings/:id/cancel` |
 | M12 | `POST /events/:id/feedback`, `GET /events/:id/feedback/summary`, `GET|POST /complaints`, `POST /complaints/:id/withdraw`, `POST /complaints/:id/triage`, `POST /complaints/:id/response` |

@@ -743,7 +743,7 @@ còn hiệu lực.
 
 #### UC41 — Cấu hình scheme đánh giá
 - **Actor:** ICPDP
-- **Dữ liệu:** các dimension của §17 (D1–D6), trọng số của chúng, ngưỡng cho từng mức xếp loại,
+- **Dữ liệu:** các dimension D1–D8 của SRS §9, trong đó D1–D3 (Số người tham gia, Tầm ảnh hưởng, Mức độ hài lòng) bắt buộc theo BR60, trọng số của chúng, ngưỡng cho từng mức xếp loại,
   kỳ áp dụng, và trạng thái kích hoạt.
 - **Quy tắc:** BR29 — một scheme không kích hoạt được nếu tổng trọng số không hợp lệ; một scheme
   đang hoạt động và đã được một kỳ đánh giá đã công bố sử dụng thì không bao giờ sửa tại chỗ,

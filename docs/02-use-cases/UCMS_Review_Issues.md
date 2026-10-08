@@ -94,6 +94,9 @@ Ngày review: 2026-09-23.
 | I58 | 🟡 | CMB là một actor chung, không phân biệt Chủ nhiệm với thành viên được giao việc; không có UC để tạo role và cấu hình permission; UC23 chỉ gán chức vụ định nghĩa sẵn ở UC09, chức vụ nhạy cảm phải qua ICPDP | Model §3, §4, §9, §11, §15, UC09, UC22–UC24, mọi UC của CMB; Spec; SRS §2.3; UCD trang CMB; CD; DBML; Report | Đã sửa | Tách CMB thành Club Member (actor gốc, làm UC vận hành khi có permission) và Club Leader (Chủ nhiệm, kế thừa Club Member); UC23 thành "Quản lý vai trò CLB và phân quyền"; sửa BR47, thêm BR54, BR55. Lần 2: cơ cấu role khai báo trong hồ sơ UC07, ICPDP thẩm định ở UC08, đánh phiên bản, role ban điều hành do chủ nhiệm đánh dấu và đổi qua chuyển giao, role Members mặc định; thêm BR56; CD 40 luồng |
 | I59 | 🟡 | Ngân sách bị mô hình thành luồng riêng (UC35 Gửi yêu cầu ngân sách, UC36 Thẩm định yêu cầu ngân sách, máy trạng thái Budget Request, permission `club.budget.request`), trong khi nhóm đã thống nhất ngân sách là một phần của đề xuất sự kiện và không có ngân sách tách rời sự kiện | Model, Spec, SRS (UC25, UC26, UC35–UC39, BR22, §6.7, §7, permission), DBML, TASKS, HLD, CD, UCD, State diagram, Report | Đã sửa | Bỏ UC35, UC36; ngân sách là phần tuỳ chọn của đề xuất UC25 và được duyệt ở UC26 (tạo `EventBudget`); BR22 viết lại; bỏ `club.budget.request` (còn 15 permission); đánh số lại UC37–UC54 → UC35–UC52 (52 UC) |
 | I60 | 🟡 | Luồng tiền của sự kiện thiếu bước CLB nộp quyết toán sau sự kiện và cơ chế thu hồi: `Exception` đóng ngân sách kèm chênh lệch, không có số phải hoàn, không ghi nhận tiền hoàn, không phân biệt tạm ứng với cấp bù | Model/Spec/SRS UC25, UC28, UC35–UC37, BR21, BR23, BR26, BR42; State diagram Event Budget; UCD Club Member 3; DBML; TASKS | Đã sửa | Tạm ứng (UC35) → CLB nộp quyết toán (UC36, BR57) → UC37 chốt chi hợp lệ: cấp bù, hoặc `Recovery Pending` và ghi nhận hoàn trả (BR58); bỏ `Exception`; BR21 tính cả quyết toán / hoàn trả quá hạn |
+| I62 | 🟢 | Trang Student của UCD dùng `Manage club participation` / `Manage event participation`: sinh viên không quản lý CLB hay sự kiện mà chỉ tham gia, nên động từ "Manage" sai nghĩa | UCD trang Student; Report Figure III.3.2; script thuyết trình | Đã sửa | Đổi thành `Engage with clubs` và `Attend events`; giữ nguyên các «include» bên dưới |
+| I63 | 🟡 | Góp ý giảng viên: đánh giá CLB cần **format chung** (số người tham gia, tầm ảnh hưởng, mức độ hài lòng…). D1–D6 hiện có đo tuân thủ và vận hành; số người tham gia và hài lòng nằm lẫn trong D1/D2, tầm ảnh hưởng không có | SRS §9, UC41–UC43, BR36, BR60; Model/Spec UC41; DBML; TASKS; UCD trang ICPDP 3 | Đã sửa | Bộ dimension cố định D1–D8: D1 Số người tham gia, D2 Tầm ảnh hưởng, D3 Mức độ hài lòng là phần chung bắt buộc của mọi scheme (BR60); công bố theo một bảng điểm chung; ghi chú trên UCD |
+| I64 | 🟡 | Góp ý giảng viên: context diagram thiếu chức năng **xuất dữ liệu** cho ICPDP; không UC nào xuất file | Context diagram v2.1; SRS §2.2, §4, §5, §14; UCD trang ICPDP 3; TASKS | Đã sửa | Thêm UC55 *Xuất dữ liệu và báo cáo* (ICPDP, M09), BR61; context diagram thêm `Export criteria` và `Exported data & reports` (44 → 46 luồng); UCD thêm `Export data & reports` |
 
 ---
 
@@ -1678,3 +1681,82 @@ sinh (Spec/Model + generator) rồi sinh lại, không sửa tay trong `.docx`.
     `03-diagrams/UCMS_Context_Diagram_v2.1.drawio`, `03-diagrams/README.md`.
   - Thay đổi trên Context Diagram: Bổ sung 4 luồng dữ liệu mới (`f40` ICPDP → Sys: `University events & invitations`, `f41` Sys → ICPDP: `Event invitation responses`, `f42` Sys → Club Member: `Event invitations`, `f43` Club Member → Sys: `Event invitation response`), nâng tổng số luồng từ 40 lên **44 luồng dữ liệu**, bố cục căn chỉnh hình học đối xứng chuẩn xác.
 
+### I62 — Use case nhóm của Student dùng động từ "Manage"
+- **Vấn đề:** trên trang Student, hai use case nhóm là `Manage club participation` và `Manage event
+  participation`. Sinh viên không quản lý CLB hay sự kiện, chỉ tham gia; "Manage" chỉ hợp với Club
+  Member và ICPDP, những actor thật sự vận hành dữ liệu.
+- **Xử lý:**
+  - Ngày: 2026-10-07
+  - File đã sửa: `03-diagrams/UCMS_UseCase_ByActor.drawio`,
+    `03-diagrams/img/UCMS_UseCase_ByActor_02_Student.png`, `UCMS_UseCase_Diagrams.docx`,
+    `UC_Diagram_Presentation.md`.
+  - Thay đổi: `Manage club participation` → `Engage with clubs` (Browse clubs, Submit club
+    application, Apply for membership); `Manage event participation` → `Attend events` (Register for
+    event, Check in, Submit event feedback). Các «include» và use case con giữ nguyên.
+  - Lý do: tên nhóm phải mô tả đúng mục tiêu của actor. "Engage with clubs" đủ rộng để bao cả việc
+    xin thành lập CLB mới, điều mà "Join clubs" không bao được.
+  - Còn lại: Figure III.3.2 trong `Group1_SE1939-NJ_Report_Final_v2.docx` cần thay bằng ảnh mới.
+
+### I63 — Đánh giá CLB chưa có format chung
+- **Nguồn:** góp ý của giảng viên (2026-10-07): *"bổ sung thêm đánh giá CLB; có format chung → số
+  người tham gia, tầm ảnh hưởng, hài lòng, v.v."*
+- **Vấn đề:** M09 (UC41–UC43) đã có, nhưng sáu dimension D1–D6 ở SRS §9 đo việc vận hành và tuân
+  thủ. Số người tham gia nằm lẫn trong D2, mức độ hài lòng (điểm phản hồi) nằm lẫn trong D1, còn
+  tầm ảnh hưởng thì không có. Scheme lại cấu hình tự do, nên hai kỳ hoặc hai CLB có thể bị chấm
+  theo hai bộ tiêu chí khác nhau.
+- **Cách sửa đã chọn (2026-10-07):** giữ UC41–UC43, đổi bộ dimension thành một format chung cố
+  định (không thêm UC cho sinh viên chấm CLB).
+- **Xử lý:**
+  - Ngày: 2026-10-07
+  - File đã sửa: `SRS.md`, `02-use-cases/UCMS_UseCase_Model_v2.md`,
+    `02-use-cases/UCMS_UseCase_Specification_v2.md`, `05-implementation/UCMS_Database_Design.dbml`,
+    `05-implementation/TASKS.md`, `03-diagrams/UCMS_UseCase_ByActor.drawio`,
+    `03-diagrams/img/UCMS_UseCase_ByActor_09_ICPDP-3-Compliance-evaluation.png`, `README.md`.
+  - Thay đổi:
+    1. SRS §9: D1–D6 → **D1–D8**. Ba dimension chung mới: **D1 Số người tham gia** (lượt đăng ký,
+       check-in đã chốt, người tham dự không trùng lặp, tỉ lệ có mặt, thành viên active), **D2 Tầm
+       ảnh hưởng** (tỉ lệ người tham dự ngoài CLB, sự kiện `Public` hoàn thành, sự kiện cấp trường
+       đã tham gia qua UC54, số đơn ứng tuyển), **D3 Mức độ hài lòng** (điểm phản hồi trung bình,
+       tỉ lệ phản hồi; dưới ngưỡng BR40 là `Insufficient data`). D1–D6 cũ thành D4–D8: Thực thi
+       hoạt động (bỏ điểm phản hồi, đã sang D3), Kỷ luật báo cáo, Tuân thủ tài chính, Quản trị (nhận
+       thêm tỉ lệ giữ chân thành viên từ D2 cũ), Tuân thủ và rủi ro. Thêm EVL-06 (bảng điểm chung).
+    2. **BR60** (mới): danh mục dimension do hệ thống định nghĩa; mọi scheme bắt buộc có D1–D3 với
+       trọng số > 0; mọi CLB trong một kỳ chấm bằng cùng scheme, công bố cùng một bảng điểm.
+    3. UC41: dữ liệu vào D1–D8, thêm FR-UC41-07 (E3) từ chối kích hoạt scheme thiếu D1–D3. UC42:
+       thêm nguồn UC54. UC43: FR-UC43-03 công bố theo bảng điểm chung. BR36: "D1 và D2" → "D3".
+    4. UCD trang ICPDP 3: thêm note gắn vào `Manage evaluation` ghi bảng điểm chung (BR60).
+    5. DBML `evaluationDimensions.code` và TASKS DB-11.4, BE-11.4 theo D1–D8.
+  - Lý do: giảng viên muốn mọi CLB được đo bằng cùng một thước. Khoá ba tiêu chí chung trong mọi
+    scheme làm điểm so sánh được giữa các CLB và các kỳ, mà vẫn để ICPDP chỉnh trọng số. Dữ liệu
+    cho cả ba đã có sẵn (UC17, UC32, UC48, UC54), không cần thêm form chấm.
+
+### I64 — ICPDP không xuất được dữ liệu
+- **Nguồn:** góp ý của giảng viên (2026-10-07) cho context diagram: *"thêm export data cho icpdp"*.
+- **Vấn đề:** ICPDP chỉ xem dữ liệu trên màn hình. Không UC nào xuất file, context diagram không có
+  luồng nào mang file ra cho ICPDP, trong khi báo cáo lên nhà trường vẫn cần file.
+- **Cách sửa đã chọn (2026-10-07):** thêm một UC riêng.
+- **Xử lý:**
+  - Ngày: 2026-10-07
+  - File đã sửa: `SRS.md`, `03-diagrams/UCMS_Context_Diagram_v2.1.drawio`,
+    `03-diagrams/img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png`,
+    `03-diagrams/UCMS_UseCase_ByActor.drawio`,
+    `03-diagrams/img/UCMS_UseCase_ByActor_09_ICPDP-3-Compliance-evaluation.png`,
+    `03-diagrams/README.md`, `05-implementation/TASKS.md`, `Context_Diagram_Glossary.md`,
+    `Context_Diagram_QA.md`, `README.md`.
+  - Thay đổi:
+    1. **UC55** *Xuất dữ liệu và báo cáo* (ICPDP, M09 đổi tên thành Performance Evaluation &
+       Reporting, P5): chọn loại dữ liệu từ danh mục cố định (CLB, thành viên, sự kiện và điểm danh,
+       tài chính, vi phạm và khiếu nại, kết quả đánh giá), lọc theo kỳ / CLB / trạng thái, xuất
+       `xlsx` / `csv`, bảng điểm đánh giá ra `pdf`; FR-UC55-01…10. Chỉ đọc, không có thực thể mới.
+    2. **BR61** (mới): chỉ ICPDP được xuất; bản xuất theo cùng quy tắc hiển thị như màn hình (ẩn
+       danh tính phản hồi ẩn danh, đánh giá chỉ bản `Published`); mỗi lần xuất ghi audit.
+    3. Context diagram: thêm `f44` ICPDP → Sys `Export criteria` và `f45` Sys → ICPDP `Exported
+       data & reports`; 44 → **46 luồng**. Khoảng cách luồng cột phải giảm 42 → 38 px để vừa khung.
+       SRS §14.4 thêm 2 dòng; §1.4 và §2.1 sửa số luồng (đang ghi 40, cũ từ trước I61).
+    4. UCD trang ICPDP 3: thêm use case `Export data & reports` nối thẳng với ICPDP Officer.
+    5. SRS: tổng số 54 → **55 use case**, 58 → **60 quy tắc** (BR01–BR61); §2.3, §3.1.1, §14.2,
+       vòng lặp 9, Phụ lục C (`GET /exports`). TASKS thêm BE-11.9, FE-11.7.
+  - Lý do: export là một mục tiêu riêng của ICPDP (có actor, đầu vào, đầu ra, quy tắc), không phải
+    bước phụ của một UC có sẵn, nên tách UC riêng thì vẽ được trên cả hai sơ đồ.
+  - Còn lại: Model/Spec v2 vẫn ở 52 UC (chưa có UC53–UC55, lệch có từ I61); docx báo cáo và
+    `UCMS_UseCase_Diagrams.docx` cần thay hình context và hình ICPDP 3.
