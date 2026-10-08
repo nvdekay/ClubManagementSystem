@@ -1,251 +1,767 @@
-<mxfile host="app.diagrams.net">
-<diagram id="page0" name="All users"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p0title" value="Use cases of every user" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="700" height="30" as="geometry"/></mxCell>
-<mxCell id="p0box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="620" y="60" width="290" height="250" as="geometry"/></mxCell>
-<mxCell id="p0lead" value="Club Leader" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="40" y="40" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p0mem" value="Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="200" y="40" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p0a0" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="360" y="40" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p0a2" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="360" y="300" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p0user" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="510" y="170" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p0g3" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0lead" target="p0mem"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p0g4" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0mem" target="p0a0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p0g0" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0a0" target="p0user"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p0g2" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0a2" target="p0user"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p0uc1" value="Sign in with Google" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="660" y="110" width="210" height="60" as="geometry"/></mxCell>
-<mxCell id="p0uc2" value="View dashboard" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="660" y="230" width="210" height="60" as="geometry"/></mxCell>
-<mxCell id="p0oauth" value="&amp;lt;&amp;lt;external&amp;gt;&amp;gt;&lt;br&gt;Google OAuth" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="990" y="100" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p0e1" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0user" target="p0uc1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p0e2" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0user" target="p0uc2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p0e3" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0uc1" target="p0oauth"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page1" name="Student"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p1title" value="Use cases of Student" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p1box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="1060" height="720.0" as="geometry"/></mxCell>
-<mxCell id="p1actor" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="390.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p1m0" value="Manage club participation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="190.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p1actor" target="p1m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m0c0" value="Browse clubs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0" target="p1m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m0c1" value="Submit club application" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0" target="p1m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m0c2" value="Apply for membership" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="270" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0" target="p1m0c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m1" value="Manage event participation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="470.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p1actor" target="p1m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m1c0" value="Register for event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="390" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m1" target="p1m1c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m1c1" value="Check in" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="470" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m1" target="p1m1c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m1c2" value="Submit event feedback" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="550" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m1" target="p1m1c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m2" value="Submit complaint" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="670" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p1actor" target="p1m2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p1m0c1d" value="Define club role structure" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="1040" y="190" width="250" height="56" as="geometry"/></mxCell>
-<mxCell id="p1m0c1di" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0c1" target="p1m0c1d"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page2" name="Club Leader"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p2title" value="Use cases of Club Leader" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p2box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="710" height="1040.0" as="geometry"/></mxCell>
-<mxCell id="p2actor" value="Club Leader" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="550.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p2m0" value="Manage club roles" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="390.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p2actor" target="p2m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c0" value="Create role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c1" value="View roles" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c2" value="Update role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="270" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c3" value="Deactivate role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="350" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c4" value="Configure role permissions" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="430" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c4"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c5" value="Assign member to role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="510" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c5i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c5"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c6" value="Revoke member role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="590" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c6i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c6"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m0c7" value="View role structure history" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="670" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m0c7i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c7"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m1" value="Manage board" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="830.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p2actor" target="p2m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m1c0" value="Nominate board" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="790" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m1" target="p2m1c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m1c1" value="Plan leadership transition" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="870" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m1" target="p2m1c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p2m2" value="Request suspension" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="990" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p2m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p2actor" target="p2m2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page3" name="Club Member 1 - Club &amp; recruitment"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p3title" value="Use cases of Club Member - Club &amp; recruitment" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p3box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="710" height="1280.0" as="geometry"/></mxCell>
-<mxCell id="p3actor" value="Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="670.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p3m0" value="Manage my membership" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="150.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m0c0" value="View member workspace" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m0" target="p3m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m0c1" value="Request to leave club" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m0" target="p3m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m1" value="Manage club profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="390.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m1c0" value="View club profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="310" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m1" target="p3m1c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m1c1" value="Update club information" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="390" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m1" target="p3m1c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m1c2" value="Define club structure" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="470" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m1" target="p3m1c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m2" value="Manage recruitment campaigns" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="670.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m2c0" value="Create recruitment campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="590" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m2c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m2" target="p3m2c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m2c1" value="Update recruitment campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="670" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m2c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m2" target="p3m2c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m2c2" value="Publish recruitment campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="750" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m2c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m2" target="p3m2c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m3" value="Manage applications" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="950.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m3a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m3c0" value="Screen applications" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="870" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m3c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m3" target="p3m3c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m3c1" value="Record candidate evaluation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="950" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m3c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m3" target="p3m3c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m3c2" value="Onboard members" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="1030" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m3c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m3" target="p3m3c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m4" value="Manage members" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="1190.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m4a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m4"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m4c0" value="View member list" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="1150" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m4c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m4" target="p3m4c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p3m4c1" value="Update membership status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="1230" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p3m4c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m4" target="p3m4c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page4" name="Club Member 2 - Events &amp; bookings"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p4title" value="Use cases of Club Member - Events &amp; bookings" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p4box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="710" height="600.0" as="geometry"/></mxCell>
-<mxCell id="p4actor" value="Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="330.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p4m0" value="Manage events" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="230.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p4actor" target="p4m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p4m0c0" value="Submit event proposal" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p4m0c1" value="Publish event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p4m0c2" value="Cancel / reschedule event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="270" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p4m0c3" value="Manage waitlist" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="350" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m0c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p4m1" value="Manage bookings" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="510.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p4actor" target="p4m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p4m1c0" value="Request property booking" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="470.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m1" target="p4m1c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p4m1c1" value="Cancel / release booking" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="550.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p4m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m1" target="p4m1c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page5" name="Club Member 3 - Accountability &amp; finance"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p5title" value="Use cases of Club Member - Accountability &amp; finance" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p5box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="710" height="640.0" as="geometry"/></mxCell>
-<mxCell id="p5actor" value="Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="350.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p5m0" value="Manage event accountability" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="190.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p5actor" target="p5m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p5m0c0" value="Finalize attendance" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p5m0" target="p5m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p5m0c1" value="Submit event report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p5m0" target="p5m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p5m0c2" value="Review event feedback" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="270" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p5m0" target="p5m0c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p5m1" value="Record expense &amp;amp; submit settlement" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="390" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p5actor" target="p5m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p5m2" value="Manage reports &amp; complaints" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="550.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p5actor" target="p5m2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p5m2c0" value="Submit periodic report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="510" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m2c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p5m2" target="p5m2c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p5m2c1" value="Respond to complaint" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="590" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p5m2c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p5m2" target="p5m2c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page6" name="ICPDP 1 - Access &amp; club lifecycle"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p6title" value="Use cases of ICPDP - Access &amp; club lifecycle" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p6box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="710" height="960.0" as="geometry"/></mxCell>
-<mxCell id="p6actor" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="510.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p6m0" value="Manage accounts" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="190.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p6actor" target="p6m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m0c0" value="View accounts" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m0" target="p6m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m0c1" value="Assign / revoke role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m0" target="p6m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m0c2" value="Lock / unlock account" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="270" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m0" target="p6m0c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m1" value="Manage system configuration" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="430.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p6actor" target="p6m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m1c0" value="Configure policy &amp; deadlines" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="390" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m1" target="p6m1c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m1c1" value="Configure approval routing" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="470" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m1" target="p6m1c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m2" value="Manage club lifecycle" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="750.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p6actor" target="p6m2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m2c0" value="Decide club application" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="590" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m2c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m2c1" value="Confirm board" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="670" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m2c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m2c2" value="Confirm leadership transition" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="750" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m2c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m2c3" value="Suspend / reactivate / dissolve club" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="830" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m2c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p6m2c4" value="View club role structure &amp; board history" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="910" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p6m2c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c4"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page7" name="ICPDP 2 - Events, bookings &amp; finance"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p7title" value="Use cases of ICPDP - Events, bookings &amp; finance" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p7box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="710" height="920.0" as="geometry"/></mxCell>
-<mxCell id="p7actor" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="490.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p7m0" value="Manage event oversight" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="150.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m0c0" value="Decide event proposal" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m0" target="p7m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m0c1" value="Close event report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m0" target="p7m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m1" value="Manage properties" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="430.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m1c0" value="Add property" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="310" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m1c1" value="View properties" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="390" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m1c2" value="Update property" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="470" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m1c3" value="Deactivate property" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="550" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m1c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m2" value="Manage bookings" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="670.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m2c0" value="Decide booking request" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="670" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m2c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m2" target="p7m2c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m3" value="Manage budget" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="830.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m3a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m3c0" value="Record disbursement" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="790" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m3c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m3" target="p7m3c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p7m3c1" value="Reconcile budget" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="870" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p7m3c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m3" target="p7m3c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="page8" name="ICPDP 3 - Compliance &amp; evaluation"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="p8title" value="Use cases of ICPDP - Compliance &amp; evaluation" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="900" height="30" as="geometry"/></mxCell>
-<mxCell id="p8box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="260" y="50" width="710" height="920.0" as="geometry"/></mxCell>
-<mxCell id="p8actor" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="60" y="490.0" width="40" height="80" as="geometry"/></mxCell>
-<mxCell id="p8m0" value="Manage compliance" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="270.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p8actor" target="p8m0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m0c0" value="Assess periodic report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="110" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m0c1" value="Triage complaint" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="190" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m0c2" value="Open compliance case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="270" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m0c3" value="Issue case decision" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="350" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m0c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m0c4" value="Resolve compliance case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="430" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m0c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c4"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m1" value="Manage evaluation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="300" y="710.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p8actor" target="p8m1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m1c0" value="Create evaluation scheme" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="550.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c0"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m1c1" value="Update evaluation scheme" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="630.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c1"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m1c2" value="Activate evaluation scheme" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="710.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c2"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m1c3" value="Generate evaluation draft" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="790.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m1c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="p8m1c4" value="Publish evaluation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1"><mxGeometry x="680" y="870.0" width="230" height="56" as="geometry"/></mxCell>
-<mxCell id="p8m1c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c4"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-</root></mxGraphModel></diagram>
+<mxfile host="app.diagrams.net" pages="9">
+  <diagram id="page0" name="All users">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p0title" value="Use cases of every user" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="700" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p0box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="620" y="60" width="290" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="p0lead" value="Club Leader" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p0mem" value="Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="200" y="40" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p0a0" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="360" y="40" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p0a2" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="360" y="300" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p0user" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="510" y="170" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p0g3" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0lead" target="p0mem">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0g4" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0mem" target="p0a0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0g0" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0a0" target="p0user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0g2" value="" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0a2" target="p0user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0uc1" value="Sign in with Google" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="660" y="110" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p0uc2" value="View dashboard" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="660" y="230" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p0oauth" value="&amp;lt;&amp;lt;external&amp;gt;&amp;gt;&lt;br&gt;Google OAuth" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="990" y="100" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p0e1" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0user" target="p0uc1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0e2" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0user" target="p0uc2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p0e3" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p0uc1" target="p0oauth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page1" name="Student">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p1title" value="Use cases of Student" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="1060" height="720.0" as="geometry" />
+        </mxCell>
+        <mxCell id="p1actor" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="390.0" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0" value="Manage club participation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="190.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p1actor" target="p1m0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c0" value="Browse clubs" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0" target="p1m0c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c1" value="Submit club application" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0" target="p1m0c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c2" value="Apply for membership" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="270" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0" target="p1m0c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1" value="Manage event participation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="470.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p1actor" target="p1m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1c0" value="Register for event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="390" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m1" target="p1m1c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1c1" value="Check in" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="470" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m1" target="p1m1c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1c2" value="Submit event feedback" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="550" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m1" target="p1m1c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m2" value="Submit complaint" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="670" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p1actor" target="p1m2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c1d" value="Define club role structure" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="190" width="250" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1m0c1di" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p1m0c1" target="p1m0c1d">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page2" name="Club Leader">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p2title" value="Use cases of Club Leader" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="710" height="1040.0" as="geometry" />
+        </mxCell>
+        <mxCell id="p2actor" value="Club Leader" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="550.0" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0" value="Manage club roles" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="390.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p2actor" target="p2m0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c0" value="Create role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c1" value="View roles" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c2" value="Update role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="270" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c3" value="Deactivate role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="350" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c4" value="Configure role permissions" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="430" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c5" value="Assign member to role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="510" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c5i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c6" value="Revoke member role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="590" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c6i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c7" value="View role structure history" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="670" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m0c7i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m0" target="p2m0c7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m1" value="Manage board" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="830.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p2actor" target="p2m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m1c0" value="Nominate board" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="790" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m1" target="p2m1c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m1c1" value="Plan leadership transition" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="870" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p2m1" target="p2m1c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m2" value="Request suspension" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="990" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p2actor" target="p2m2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page3" name="Club Member 1 - Club &amp; recruitment">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p3title" value="Use cases of Club Member - Club &amp; recruitment" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="710" height="1280.0" as="geometry" />
+        </mxCell>
+        <mxCell id="p3actor" value="Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="670.0" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m0" value="Manage my membership" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="150.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m0c0" value="View member workspace" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m0" target="p3m0c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m0c1" value="Request to leave club" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m0" target="p3m0c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1" value="Manage club profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="390.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1c0" value="View club profile" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="310" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m1" target="p3m1c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1c1" value="Update club information" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="390" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m1" target="p3m1c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1c2" value="Define club structure" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="470" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m1" target="p3m1c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2" value="Manage recruitment campaigns" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="670.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2c0" value="Create recruitment campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="590" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m2" target="p3m2c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2c1" value="Update recruitment campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="670" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m2" target="p3m2c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2c2" value="Publish recruitment campaign" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="750" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m2c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m2" target="p3m2c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3" value="Manage applications" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="950.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3c0" value="Screen applications" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="870" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m3" target="p3m3c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3c1" value="Record candidate evaluation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="950" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m3" target="p3m3c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3c2" value="Onboard members" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="1030" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m3c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m3" target="p3m3c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m4" value="Manage members" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="1190.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m4a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p3actor" target="p3m4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m4c0" value="View member list" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="1150" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m4c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m4" target="p3m4c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m4c1" value="Update membership status" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="1230" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p3m4c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p3m4" target="p3m4c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page4" name="Club Member 2 - Events &amp; bookings">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p4title" value="Use cases of Club Member - Events &amp; bookings" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="710" height="600.0" as="geometry" />
+        </mxCell>
+        <mxCell id="p4actor" value="Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="330.0" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0" value="Manage events" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="230.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p4actor" target="p4m0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c0" value="Submit event proposal" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c1" value="Publish event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c2" value="Cancel / reschedule event" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="270" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c3" value="Manage waitlist" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="350" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m0c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m0" target="p4m0c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m1" value="Manage bookings" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="510.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p4actor" target="p4m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m1c0" value="Request property booking" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="470.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m1" target="p4m1c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m1c1" value="Cancel / release booking" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="550.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p4m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p4m1" target="p4m1c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page5" name="Club Member 3 - Accountability &amp; finance">
+    <mxGraphModel dx="1165" dy="789" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p5title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Member - Accountability &amp; finance" vertex="1">
+          <mxGeometry height="30" width="900" x="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p5box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
+          <mxGeometry height="640" width="710" x="260" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="p5actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Club Member" vertex="1">
+          <mxGeometry height="80" width="40" x="60" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage event accountability" vertex="1">
+          <mxGeometry height="56" width="230" x="300" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m0" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Finalize attendance" vertex="1">
+          <mxGeometry height="56" width="230" x="680" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0c0i" edge="1" parent="1" source="p5m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m0c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit event report" vertex="1">
+          <mxGeometry height="56" width="230" x="680" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0c1i" edge="1" parent="1" source="p5m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m0c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Review event feedback" vertex="1">
+          <mxGeometry height="56" width="230" x="680" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m0c2i" edge="1" parent="1" source="p5m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m0c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Record expense &amp;amp; submit settlement" vertex="1">
+          <mxGeometry height="56" width="230" x="300" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m1a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage reports &amp; complaints" vertex="1">
+          <mxGeometry height="56" width="230" x="300" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m2a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m2c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit periodic report" vertex="1">
+          <mxGeometry height="56" width="230" x="680" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m2c0i" edge="1" parent="1" source="p5m2" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m2c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m2c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to complaint" vertex="1">
+          <mxGeometry height="56" width="230" x="680" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="p5m2c1i" edge="1" parent="1" source="p5m2" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m2c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page6" name="ICPDP 1 - Access &amp; club lifecycle">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p6title" value="Use cases of ICPDP - Access &amp; club lifecycle" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p6box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="710" height="960.0" as="geometry" />
+        </mxCell>
+        <mxCell id="p6actor" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="510.0" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0" value="Manage accounts" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="190.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p6actor" target="p6m0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0c0" value="View accounts" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m0" target="p6m0c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0c1" value="Assign / revoke role" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m0" target="p6m0c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0c2" value="Lock / unlock account" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="270" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m0" target="p6m0c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m1" value="Manage system configuration" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="430.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p6actor" target="p6m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m1c0" value="Configure policy &amp; deadlines" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="390" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m1" target="p6m1c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m1c1" value="Configure approval routing" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="470" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m1" target="p6m1c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2" value="Manage club lifecycle" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="750.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p6actor" target="p6m2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c0" value="Decide club application" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="590" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c1" value="Confirm board" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="670" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c2" value="Confirm leadership transition" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="750" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c3" value="Suspend / reactivate / dissolve club" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="830" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c4" value="View club role structure &amp; board history" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="910" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p6m2c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p6m2" target="p6m2c4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page7" name="ICPDP 2 - Events, bookings &amp; finance">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p7title" value="Use cases of ICPDP - Events, bookings &amp; finance" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p7box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="710" height="920.0" as="geometry" />
+        </mxCell>
+        <mxCell id="p7actor" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="490.0" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m0" value="Manage event oversight" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="150.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m0c0" value="Decide event proposal" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m0" target="p7m0c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m0c1" value="Close event report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m0" target="p7m0c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1" value="Manage properties" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="430.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c0" value="Add property" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="310" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c1" value="View properties" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="390" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c2" value="Update property" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="470" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c3" value="Deactivate property" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="550" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m1c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m1" target="p7m1c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m2" value="Manage bookings" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="670.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m2a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m2c0" value="Decide booking request" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="670" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m2c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m2" target="p7m2c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m3" value="Manage budget" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="830.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m3a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p7actor" target="p7m3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m3c0" value="Record disbursement" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="790" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m3c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m3" target="p7m3c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m3c1" value="Reconcile budget" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="870" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p7m3c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p7m3" target="p7m3c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="page8" name="ICPDP 3 - Compliance &amp; evaluation">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p8title" value="Use cases of ICPDP - Compliance &amp; evaluation" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p8box" value="UCMS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="260" y="50" width="710" height="920.0" as="geometry" />
+        </mxCell>
+        <mxCell id="p8actor" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="490.0" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0" value="Manage compliance" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="270.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p8actor" target="p8m0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c0" value="Assess periodic report" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="110" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c1" value="Triage complaint" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c2" value="Open compliance case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="270" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c3" value="Issue case decision" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="350" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c4" value="Resolve compliance case" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="430" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m0c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m0" target="p8m0c4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1" value="Manage evaluation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="710.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1a" value="" style="endArrow=none;html=1;strokeColor=#000000;" edge="1" parent="1" source="p8actor" target="p8m1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c0" value="Create evaluation scheme" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="550.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c0i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c1" value="Update evaluation scheme" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="630.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c1i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c2" value="Activate evaluation scheme" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="710.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c2i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c3" value="Generate evaluation draft" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="790.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c3i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c4" value="Publish evaluation" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="680" y="870.0" width="230" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p8m1c4i" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="p8m1" target="p8m1c4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>
