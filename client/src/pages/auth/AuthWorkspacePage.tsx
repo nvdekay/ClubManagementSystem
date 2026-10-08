@@ -74,7 +74,6 @@ export function AuthWorkspacePage() {
   const target = accounts.data?.items.find((item) => item.user.id === targetId);
   const roleOptions: Array<{ value: SystemRoleCode; label: string }> = [
     { value: "ICPDP_OFFICER", label: t("auth.officerRole") },
-    { value: "ICPDP_HEAD", label: t("auth.headRole") },
     { value: "ATTENDANCE_UNLOCK", label: t("auth.attendanceRole") },
   ];
 
@@ -124,7 +123,6 @@ export function AuthWorkspacePage() {
 
   function systemRoleLabel(code: string): string {
     if (code === "ICPDP_OFFICER") return t("auth.officerRole");
-    if (code === "ICPDP_HEAD") return t("auth.headRole");
     if (code === "ATTENDANCE_UNLOCK") return t("auth.attendanceRole");
     return code;
   }

@@ -1,12 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Navigate } from "react-router";
+import { Link, Navigate, useLocation } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppCard } from "@/components/ui/card/AppCard";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppSwitch } from "@/components/ui/switch/AppSwitch";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 import type { Workspace } from "@/services/auth";
+
+type Theme = "light" | "dark";
 
 interface WorkspaceAction {
   href: string;
@@ -24,12 +27,25 @@ function key(workspace: Workspace): string {
   return `${workspace.kind}:${workspace.clubId ?? ""}`;
 }
 
+function initialTheme(): Theme {
+  const stored = localStorage.getItem("theme");
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function WorkspaceHome({ kind, clubId, actions }: WorkspaceHomeProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const location = useLocation();
   const auth = useAuth();
   const logout = useLogout();
+  const [theme, setTheme] = useState<Theme>(initialTheme);
   const workspace = auth.data?.workspaces.find((item) =>
     item.kind === kind && (kind !== "club" || item.clubId === clubId));
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     if (workspace) sessionStorage.setItem("workspace", key(workspace));
@@ -37,8 +53,12 @@ export function WorkspaceHome({ kind, clubId, actions }: WorkspaceHomeProps) {
 
   async function signOut() {
     if (!auth.data) return;
-    await logout.mutateAsync(auth.data.csrfToken);
-    sessionStorage.removeItem("workspace");
+    try {
+      await logout.mutateAsync(auth.data.csrfToken);
+      sessionStorage.removeItem("workspace");
+    } catch {
+      // The mutation exposes the error state below.
+    }
   }
 
   if (auth.isPending) {
@@ -47,7 +67,10 @@ export function WorkspaceHome({ kind, clubId, actions }: WorkspaceHomeProps) {
       <AppSkeleton className="h-64 w-full" />
     </main>;
   }
-  if (!auth.data) return <Navigate to="/login" replace />;
+  if (!auth.data) {
+    const params = new URLSearchParams({ returnTo: `${location.pathname}${location.search}` });
+    return <Navigate to={`/login?${params.toString()}`} replace />;
+  }
   if (!workspace) {
     return <main className="mx-auto min-h-full max-w-xl px-4 py-12">
       <AppCard className="p-6">
@@ -72,7 +95,22 @@ export function WorkspaceHome({ kind, clubId, actions }: WorkspaceHomeProps) {
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight">{title}</h1>
           <p className="mt-1 text-muted-app">{role} · {auth.data.user.displayName}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex flex-wrap items-center gap-2 text-sm text-muted-app">
+            {t("common.darkModeLabel")}
+            <AppSwitch
+              checked={theme === "dark"}
+              onChange={(checked) => setTheme(checked ? "dark" : "light")}
+              aria-label={t("common.darkModeLabel")}
+            />
+          </label>
+          <AppButton
+            variant="secondary"
+            onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}
+            aria-label={t("common.languageLabel")}
+          >
+            {i18n.language === "vi" ? "EN" : "VI"}
+          </AppButton>
           <Link to="/workspace" className="inline-flex min-h-11 items-center rounded-full border border-border-app px-4 text-sm font-semibold text-text-app">
             {t("auth.switchWorkspace")}
           </Link>
@@ -81,6 +119,7 @@ export function WorkspaceHome({ kind, clubId, actions }: WorkspaceHomeProps) {
           </AppButton>
         </div>
       </header>
+      {logout.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{t("auth.logoutError")}</p>}
 
       <section className="py-8">
         <p className="max-w-2xl text-muted-app">{t("auth.workspaceHomeDescription")}</p>

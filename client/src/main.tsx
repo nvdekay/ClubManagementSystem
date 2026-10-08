@@ -18,6 +18,9 @@ import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
 import { ApplicationEditorPage } from "./pages/student/ApplicationEditorPage.js";
 import { StudentHomePage } from "./pages/student/StudentHomePage.js";
 import { ClubHomePage } from "./pages/club/ClubHomePage.js";
+import { ApplicationReviewQueuePage } from "./pages/icpdp/ApplicationReviewQueuePage.js";
+import { ApplicationReviewDetailPage } from "./pages/icpdp/ApplicationReviewDetailPage.js";
+import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -39,6 +42,9 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/applications" element={<ApplicationsPage />} />
             <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
             <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
+            <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
+            <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
+            <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
             <Route path="*" element={<PublicNotFound />} />
           </Route>
           <Route path="login" element={<App />} />

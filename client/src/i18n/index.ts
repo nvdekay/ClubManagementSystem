@@ -7,6 +7,8 @@ import { demo } from "./demo";
 import { discovery } from "./discovery";
 import { policy } from "./policy";
 import { applications } from "./applications";
+import { reviews } from "./reviews";
+import { clubSettings } from "./clubSettings";
 import { users } from "./users";
 
 export type Locale = "en" | "vi";
@@ -14,9 +16,11 @@ export type Locale = "en" | "vi";
 // New module: create i18n/<module>.ts (same en/vi shape), then add it to both locales here.
 export const resources = {
   en: { translation: { common: common.en, auth: auth.en, discovery: discovery.en,
-    policy: policy.en, applications: applications.en, users: users.en, demo: demo.en } },
+    policy: policy.en, applications: applications.en, reviews: reviews.en,
+    clubSettings: clubSettings.en, users: users.en, demo: demo.en } },
   vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi,
-    policy: policy.vi, applications: applications.vi, users: users.vi, demo: demo.vi } },
+    policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
+    clubSettings: clubSettings.vi, users: users.vi, demo: demo.vi } },
 };
 
 const stored = localStorage.getItem("locale");

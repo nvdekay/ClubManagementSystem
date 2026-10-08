@@ -1,6 +1,6 @@
 import type { AuthUser } from "@/services/auth";
 
-export type SystemRoleCode = "ICPDP_OFFICER" | "ICPDP_HEAD" | "ATTENDANCE_UNLOCK";
+export type SystemRoleCode = "ICPDP_OFFICER" | "ATTENDANCE_UNLOCK";
 
 export interface AdminUserPage {
   items: Array<{ user: AuthUser; systemRoles: string[] }>;

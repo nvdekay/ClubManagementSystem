@@ -76,8 +76,7 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
 export function PolicyPage() {
   const { t, i18n } = useTranslation();
   const auth = useAuth();
-  const isOfficer = auth.data?.systemRoles.some((code) =>
-    code === "ICPDP_OFFICER" || code === "ICPDP_HEAD") ?? false;
+  const isOfficer = auth.data?.systemRoles.includes("ICPDP_OFFICER") ?? false;
   const policies = usePolicies(isOfficer);
   function date(value: string): string {
     return formatDate(value, i18n.language);
