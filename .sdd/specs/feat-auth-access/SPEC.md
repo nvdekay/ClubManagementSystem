@@ -38,13 +38,13 @@ quay về `/login?error=oauth|domain|locked`; màn login hiển thị lỗi tư�
 Client cho phép chọn và đổi giữa Student, ICPDP và nhiều CLB từ `/auth/me`.
 
 ## Tiêu chí nghiệm thu
-- [ ] Email chưa verified, sai domain, OAuth lỗi hoặc `state`/nonce sai không tạo User/phiên; trường hợp sai domain được audit.
-- [ ] Hai callback đồng thời cho cùng email tạo đúng một User và một StudentProfile; lần đăng nhập sau chỉ đồng bộ profile.
-- [ ] Cookie có chữ ký, `httpOnly`, `SameSite=Lax`, hạn dùng; logout, lock và thu hồi role làm phiên mất hiệu lực tức thì; request đổi dữ liệu thiếu CSRF bị chặn.
-- [ ] Actor bị khoá nhận 423; không có phiên nhận 401; đủ phiên nhưng sai quyền hoặc CLB nhận 403.
+- [x] Email chưa verified, sai domain, OAuth lỗi hoặc `state`/nonce sai không tạo User/phiên; trường hợp sai domain được audit.
+- [x] Hai callback đồng thời cho cùng email tạo đúng một User và một StudentProfile; lần đăng nhập sau chỉ đồng bộ profile.
+- [x] Cookie có chữ ký, `httpOnly`, `SameSite=Lax`, hạn dùng; logout, lock và thu hồi role làm phiên mất hiệu lực tức thì; request đổi dữ liệu thiếu CSRF bị chặn.
+- [x] Actor bị khoá nhận 423; không có phiên nhận 401; đủ phiên nhưng sai quyền hoặc CLB nhận 403.
 - [x] Resolver quyền không nhận assignment của membership khác, CLB khác, nhiệm kỳ đóng/hết hạn hoặc position đã tắt; quyền reserved không được cấp qua role thường.
-- [ ] UC03 chỉ quản lý system role, ghi audit before/after/reason và ngăn người quản trị tự bỏ role cuối.
-- [ ] Route ghi dữ liệu đều có auth/CSRF hoặc nằm trong allowlist tường minh; OpenAPI khớp route; `npm run check` xanh.
+- [x] UC03 chỉ quản lý system role, ghi audit before/after/reason và ngăn người quản trị tự bỏ role cuối.
+- [x] Route ghi dữ liệu đều có auth/CSRF hoặc nằm trong allowlist tường minh; OpenAPI khớp route; `npm run check` xanh.
 - [ ] Client đăng nhập, chọn/đổi workspace nhiều CLB, logout và hiển thị trạng thái lỗi bằng cả `en`/`vi` trên màn hình sáng/tối.
 
 ## Ngoài phạm vi
