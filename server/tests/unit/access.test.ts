@@ -99,6 +99,19 @@ describe("Google email policy", () => {
         .toThrowError(expect.objectContaining({ kind: "forbidden" }));
     }
   });
+
+  it("admits any verified domain with the * entry but still rejects unverified or malformed emails", () => {
+    expect(normalizeAllowedGoogleEmail("Someone@Gmail.com", true, ["*"])).toBe("someone@gmail.com");
+    expect(normalizeAllowedGoogleEmail("staff@fpt.edu.vn", true, ["*"])).toBe("staff@fpt.edu.vn");
+    for (const [email, verified] of [
+      ["someone@gmail.com", false],
+      ["no-at-sign.gmail.com", true],
+      ["two@at@gmail.com", true],
+    ] as const) {
+      expect(() => normalizeAllowedGoogleEmail(email, verified, ["*"]))
+        .toThrowError(expect.objectContaining({ kind: "forbidden" }));
+    }
+  });
 });
 
 describe("club access use case", () => {

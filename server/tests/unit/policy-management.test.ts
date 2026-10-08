@@ -46,7 +46,10 @@ function repository() {
 describe("UC04 policy management", () => {
   it("normalizes domains and rejects duplicate or invalid values", () => {
     expect(normalizePolicySettings(settings()).allowedEmailDomains).toEqual(["fpt.edu.vn"]);
-    for (const allowedEmailDomains of [["fpt.edu.vn", "FPT.EDU.VN"], ["not a domain"]]) {
+    expect(normalizePolicySettings({ ...settings(), allowedEmailDomains: ["*"] }).allowedEmailDomains)
+      .toEqual(["*"]);
+    for (const allowedEmailDomains of [["fpt.edu.vn", "FPT.EDU.VN"], ["not a domain"],
+      ["*", "fpt.edu.vn"]]) {
       expect(() => normalizePolicySettings({ ...settings(), allowedEmailDomains }))
         .toThrowError(/allowedEmailDomains/);
     }

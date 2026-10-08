@@ -1,3 +1,4 @@
+import { ANY_EMAIL_DOMAIN } from "../domain/access.js";
 import { DomainError } from "../domain/errors.js";
 import type { AuthRepository } from "../domain/auth.js";
 import type {
@@ -58,7 +59,9 @@ function normalizeCalendar(values: readonly AcademicSemester[]): AcademicSemeste
 export function normalizePolicySettings(input: PolicySettings): PolicySettings {
   const domains = uniqueStrings(input.allowedEmailDomains, "allowedEmailDomains")
     .map((domain) => domain.toLowerCase());
-  if (domains.some((domain) => !domainPattern.test(domain))) invalid("allowedEmailDomains");
+  // "*" admits every domain, so it must stand alone rather than hide a narrower list.
+  if (domains.includes(ANY_EMAIL_DOMAIN) ? domains.length > 1
+    : domains.some((domain) => !domainPattern.test(domain))) invalid("allowedEmailDomains");
   const documents = uniqueStrings(input.mandatoryApplicationDocuments,
     "mandatoryApplicationDocuments", true);
   if (!Number.isInteger(input.minFoundingMembers) || input.minFoundingMembers < 1) {

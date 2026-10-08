@@ -131,6 +131,9 @@ export function requireClubPermission(
   }
 }
 
+// Policy entry that admits any verified Google email, whatever its domain.
+export const ANY_EMAIL_DOMAIN = "*";
+
 export function normalizeAllowedGoogleEmail(
   email: string,
   verified: boolean,
@@ -139,9 +142,10 @@ export function normalizeAllowedGoogleEmail(
   const normalized = email.trim().toLowerCase();
   const at = normalized.lastIndexOf("@");
   const domain = normalized.slice(at + 1);
-  if (!verified || at <= 0 || at !== normalized.indexOf("@") || !domain || !allowedDomains.some((allowed) =>
-    allowed.trim().toLowerCase().replace(/^@/, "") === domain,
-  )) {
+  if (!verified || at <= 0 || at !== normalized.indexOf("@") || !domain || !allowedDomains.some((allowed) => {
+    const entry = allowed.trim().toLowerCase().replace(/^@/, "");
+    return entry === ANY_EMAIL_DOMAIN || entry === domain;
+  })) {
     throw new DomainError("Google account is not eligible", "forbidden");
   }
   return normalized;
