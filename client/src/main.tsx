@@ -13,8 +13,11 @@ import { EventDirectory } from "./pages/public/EventDirectory.js";
 import { PublicHome } from "./pages/public/PublicHome.js";
 import { PublicNotFound } from "./pages/public/PublicNotFound.js";
 import { PolicyPage } from "./pages/icpdp/PolicyPage.js";
+import { IcpdpHomePage } from "./pages/icpdp/IcpdpHomePage.js";
 import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
 import { ApplicationEditorPage } from "./pages/student/ApplicationEditorPage.js";
+import { StudentHomePage } from "./pages/student/StudentHomePage.js";
+import { ClubHomePage } from "./pages/club/ClubHomePage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -40,6 +43,9 @@ createRoot(document.getElementById("root")!).render(
           </Route>
           <Route path="login" element={<App />} />
           <Route path="workspace" element={<App />} />
+          <Route path="student" element={<StudentHomePage />} />
+          <Route path="icpdp" element={<IcpdpHomePage />} />
+          <Route path="club/:clubId" element={<ClubHomePage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

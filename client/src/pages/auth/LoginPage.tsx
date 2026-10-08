@@ -17,8 +17,8 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
   const [loginBusy, setLoginBusy] = useState(false);
 
   return (
-    <main className="flex min-h-full flex-wrap bg-bg-app font-auth-body text-text-app">
-      <section className="relative flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden border-r border-border-app bg-surface-app p-[clamp(24px,5vw,64px)]">
+    <main className="flex min-h-full flex-wrap bg-auth-page-bg-app font-auth-body text-auth-page-text-app">
+      <section className="relative flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden border-r border-auth-page-border-app bg-auth-page-bg-app p-[clamp(24px,5vw,64px)]">
         <span aria-hidden="true" className="absolute -right-20 -bottom-20 size-80 rounded-full bg-auth-orb-large-app" />
         <span aria-hidden="true" className="absolute right-40 bottom-30 size-24 rounded-full bg-auth-orb-small-app" />
         <div className="relative flex items-center gap-3">
@@ -27,7 +27,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
           </span>
         </div>
         <div className="relative flex max-w-110 flex-col gap-3">
-          <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.1] font-normal">
+          <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em]">
             {t("auth.brand")}
           </span>
           <span className="text-[17px] text-pretty">{t("auth.systemDescription")}</span>
@@ -37,10 +37,10 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
       <section className="flex flex-[1_1_420px] items-center p-[clamp(24px,5vw,64px)]">
         <div className="flex w-full max-w-100 flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="m-0 font-auth-heading text-4xl leading-[1.12] font-normal tracking-[-0.015em]">
+            <h1 className="m-0 font-auth-heading text-4xl leading-[1.2] font-bold tracking-[-0.025em]">
               {t("auth.signInTitle")}
             </h1>
-            <p className="m-0 text-muted-app">{t("auth.signInDescription")}</p>
+            <p className="m-0 text-auth-page-muted-app">{t("auth.signInDescription")}</p>
           </div>
 
           {authError && (
@@ -60,7 +60,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
               if (isPending || loginBusy) event.preventDefault();
               else setLoginBusy(true);
             }}
-            className={cn("flex min-h-13 items-center justify-center gap-3 rounded-md border border-auth-button-border-app bg-bg-app px-6 text-base font-semibold text-text-app no-underline transition-colors hover:bg-auth-button-hover-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
+            className={cn("flex min-h-13 items-center justify-center gap-3 rounded-md border border-auth-button-border-app bg-auth-page-bg-app px-6 text-base font-semibold text-auth-page-text-app no-underline transition-colors hover:bg-auth-button-hover-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
               "pointer-events-none opacity-50": isPending || loginBusy,
             })}
           >
@@ -77,7 +77,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
             <span>{loginBusy ? t("auth.signingInGoogle") : t("auth.signInGoogle")}</span>
           </a>
 
-          <p className="m-0 flex items-center gap-2 text-sm text-muted-app">
+          <p className="m-0 flex items-center gap-2 text-sm text-auth-page-muted-app">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
             </svg>

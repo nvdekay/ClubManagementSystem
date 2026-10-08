@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppCard } from "@/components/ui/card/AppCard";
@@ -28,13 +28,20 @@ function workspaceKey(workspace: Workspace): string {
   return `${workspace.kind}:${workspace.clubId ?? ""}`;
 }
 
+function workspacePath(workspace: Workspace): string {
+  if (workspace.kind === "student") return "/student";
+  if (workspace.kind === "icpdp") return "/icpdp";
+  return `/club/${encodeURIComponent(workspace.clubId ?? "")}`;
+}
+
 export function AuthWorkspacePage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const auth = useAuth();
   const logout = useLogout();
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [selectedKey, setSelectedKey] = useState(() => sessionStorage.getItem("workspace") ?? "");
-  const [choosing, setChoosing] = useState(false);
+  const [choosing, setChoosing] = useState(true);
   const [search, setSearch] = useState("");
   const [targetId, setTargetId] = useState("");
   const [roleCode, setRoleCode] = useState<SystemRoleCode>("ICPDP_OFFICER");
@@ -53,6 +60,12 @@ export function AuthWorkspacePage() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (window.location.pathname === "/workspace" && auth.data?.workspaces.length === 1) {
+      navigate(workspacePath(auth.data.workspaces[0]!), { replace: true });
+    }
+  }, [auth.data, navigate]);
+
   const workspaces = auth.data?.workspaces ?? [];
   const selected = workspaces.find((workspace) => workspaceKey(workspace) === selectedKey)
     ?? (workspaces.length === 1 ? workspaces[0] : undefined);
@@ -70,6 +83,7 @@ export function AuthWorkspacePage() {
     sessionStorage.setItem("workspace", key);
     setSelectedKey(key);
     setChoosing(false);
+    navigate(workspacePath(workspace));
   }
 
   async function signOut() {

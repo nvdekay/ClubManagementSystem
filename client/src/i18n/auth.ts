@@ -46,6 +46,21 @@ const en = {
   attendanceRole: "Attendance unlock",
   activeState: "Active",
   lockedState: "Locked",
+  workspaceDenied: "Workspace unavailable",
+  workspaceDeniedDescription: "This workspace is no longer available to your account.",
+  studentHome: "Student home",
+  icpdpHome: "ICPDP workspace",
+  workspaceHomeDescription: "Choose an available area to continue. More business modules will appear here as they are completed.",
+  studentApplicationsDescription: "Create and track your club establishment applications.",
+  discoverClubsDescription: "Browse active clubs and their public information.",
+  discoverEventsDescription: "Browse published university club events.",
+  manageAccountsDescription: "Manage system roles and account access.",
+  policyDescription: "Configure effective policy values and deadlines.",
+  reviewClubsDescription: "Review the public club directory and lifecycle states.",
+  clubPublicPage: "Public club page",
+  clubPublicPageDescription: "View the public information currently published for this club.",
+  clubEventsDescription: "Browse events associated with university clubs.",
+  switchWorkspaceDescription: "Return to the workspace picker and choose another role.",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -96,6 +111,21 @@ const vi: Record<keyof typeof en, string> = {
   attendanceRole: "Mở khóa điểm danh",
   activeState: "Hoạt động",
   lockedState: "Đã khóa",
+  workspaceDenied: "Không thể truy cập workspace",
+  workspaceDeniedDescription: "Tài khoản của bạn không còn quyền truy cập workspace này.",
+  studentHome: "Trang chủ sinh viên",
+  icpdpHome: "Không gian ICPDP",
+  workspaceHomeDescription: "Chọn khu vực đang khả dụng để tiếp tục. Các module nghiệp vụ sẽ xuất hiện tại đây khi hoàn tất.",
+  studentApplicationsDescription: "Tạo và theo dõi hồ sơ thành lập câu lạc bộ của bạn.",
+  discoverClubsDescription: "Khám phá các câu lạc bộ đang hoạt động và thông tin công khai.",
+  discoverEventsDescription: "Xem các sự kiện đã được công bố của câu lạc bộ.",
+  manageAccountsDescription: "Quản lý vai trò hệ thống và quyền truy cập tài khoản.",
+  policyDescription: "Cấu hình giá trị chính sách và thời hạn có hiệu lực.",
+  reviewClubsDescription: "Theo dõi danh bạ công khai và trạng thái vòng đời CLB.",
+  clubPublicPage: "Trang công khai của CLB",
+  clubPublicPageDescription: "Xem thông tin công khai hiện tại của câu lạc bộ này.",
+  clubEventsDescription: "Xem các sự kiện liên quan tới câu lạc bộ trong trường.",
+  switchWorkspaceDescription: "Quay lại bộ chọn workspace để đổi vai trò.",
 };
 
 export const auth = { en, vi };

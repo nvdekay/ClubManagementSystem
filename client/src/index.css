@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;600;700&family=Nunito:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 /* App owns scrolling, not the browser: html/body never scroll, #root does. */
@@ -48,8 +48,8 @@ body {
   /* Nunito has a soft, rounded shape and a complete Vietnamese character set. */
   --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-heading: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-auth-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
-  --font-auth-heading: "Caprasimo", ui-sans-serif, system-ui, sans-serif;
+  --font-auth-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-auth-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
   --radius-md: 999px;
   --radius-lg: 8px;
 
@@ -61,9 +61,9 @@ body {
 
   /* Organic light palette. */
   --color-text-app: #201e1d;
-  --color-bg-app: #f5ead8;
-  --color-surface-app: #ebddc5;
-  --color-border-app: #c7b9a3;
+  --color-bg-app: #ffffff;
+  --color-surface-app: #f7f7f5;
+  --color-border-app: #d8d6d1;
   --color-muted-app: #645c50;
 
   --color-primary-app: #8c491a;
@@ -79,6 +79,10 @@ body {
   --color-auth-button-hover-app: #eee7db;
   --color-auth-button-border-app: #8c857f;
   --color-auth-danger-surface-app: #fff0ed;
+  --color-auth-page-bg-app: #ffffff;
+  --color-auth-page-text-app: #201e1d;
+  --color-auth-page-muted-app: #645c50;
+  --color-auth-page-border-app: #dcd3c4;
   --color-google-blue-app: #4285f4;
   --color-google-green-app: #34a853;
   --color-google-yellow-app: #fbbc05;
