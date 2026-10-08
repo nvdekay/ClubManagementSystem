@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;600;700&family=Nunito:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 /* App owns scrolling, not the browser: html/body never scroll, #root does. */
@@ -48,6 +48,8 @@ body {
   /* Nunito has a soft, rounded shape and a complete Vietnamese character set. */
   --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-heading: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-auth-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-auth-heading: "Caprasimo", ui-sans-serif, system-ui, sans-serif;
   --radius-md: 999px;
   --radius-lg: 8px;
 
@@ -72,6 +74,15 @@ body {
   --color-success-app: #56633f;
   --color-warning-app: #8c491a;
   --color-danger-app: #a34335;
+  --color-auth-orb-large-app: #ffe1d0;
+  --color-auth-orb-small-app: #ffc6a5;
+  --color-auth-button-hover-app: #eee7db;
+  --color-auth-button-border-app: #8c857f;
+  --color-auth-danger-surface-app: #fff0ed;
+  --color-google-blue-app: #4285f4;
+  --color-google-green-app: #34a853;
+  --color-google-yellow-app: #fbbc05;
+  --color-google-red-app: #ea4335;
 }
 
 /* Manual dark mode — toggled via a "dark" class on <html>, see App.tsx.
@@ -90,6 +101,11 @@ body {
   --color-success-app: #ccdbb2;
   --color-warning-app: #f6a06b;
   --color-danger-app: #ff9e91;
+  --color-auth-orb-large-app: #643312;
+  --color-auth-orb-small-app: #8c491a;
+  --color-auth-button-hover-app: #302b25;
+  --color-auth-button-border-app: #82796a;
+  --color-auth-danger-surface-app: #402b28;
 }
 
 /* Clickable elements must show a pointer cursor — the browser UA stylesheet
