@@ -5,12 +5,16 @@ import type { AccountAdminRepository } from "../../domain/account-admin.js";
 import type { PublicDiscoveryRepository } from "../../domain/public-discovery.js";
 import type { PolicyManagementRepository } from "../../domain/policy.js";
 import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
+import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
+import type { ClubProfileRepository } from "../../domain/club-profile.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
 import { publicDiscoveryRoutes } from "./public-discovery-routes.js";
 import { policyRoutes } from "./policy-routes.js";
 import { clubApplicationRoutes } from "./club-application-routes.js";
+import { clubApplicationReviewRoutes } from "./club-application-review-routes.js";
+import { clubProfileRoutes } from "./club-profile-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -37,6 +41,8 @@ export function buildApp(deps: {
   adminRepo?: AccountAdminRepository;
   policyRepo?: PolicyManagementRepository;
   applicationRepo?: ClubApplicationRepository;
+  applicationReviewRepo?: ClubApplicationReviewRepository;
+  clubProfileRepo?: ClubProfileRepository;
   applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
   dbReady: () => boolean;
@@ -62,6 +68,12 @@ export function buildApp(deps: {
     app.use("/api/v1", accountAdminRoutes({
       adminRepo: deps.adminRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
     }));
+    if (deps.clubProfileRepo) {
+      app.use("/api/v1", clubProfileRoutes({
+        repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+    }
     if (deps.policyRepo) {
       app.use("/api/v1", policyRoutes({
         repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
@@ -72,18 +84,29 @@ export function buildApp(deps: {
           files: deps.applicationFiles ?? null,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions,
         }));
+        if (deps.applicationReviewRepo) {
+          app.use("/api/v1", clubApplicationReviewRoutes({
+            repo: deps.applicationReviewRepo,
+            authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+            files: deps.applicationFiles ?? null,
+          }));
+        }
       }
     }
   }
   const hasAdmin = Boolean(deps.auth && deps.adminRepo);
   const hasPolicy = Boolean(hasAdmin && deps.policyRepo);
   const hasApplications = Boolean(hasPolicy && deps.applicationRepo);
+  const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
+  const hasClubProfiles = Boolean(hasAdmin && deps.clubProfileRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
       if (path.startsWith("/admin/policies")) return hasPolicy;
+      if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications")) return hasApplications;
+      if (path.startsWith("/clubs/{clubId}/")) return hasClubProfiles;
       return true;
     }));
   const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths });

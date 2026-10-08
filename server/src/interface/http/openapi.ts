@@ -2,6 +2,8 @@ import { z } from "zod";
 import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
+import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
+import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 
 const ApiError = z.object({
   statusCode: z.number(),
@@ -57,6 +59,32 @@ const ApplicationVersion = z.object({
   policyVersionId: z.string(), snapshot: ApplicationDraft, submittedAt: z.string(),
 });
 const ApplicationDocumentPath = z.object({ id: z.string(), documentId: z.string() });
+const ApplicationReviewTask = z.object({
+  id: z.string(), applicationId: z.string(), title: z.string(),
+  state: z.enum(["Open", "Decided", "Closed"]), assigneeId: z.string().optional(),
+  openedAt: z.string(), slaDueAt: z.string().optional(),
+});
+const ApplicationReviewDecision = z.object({
+  id: z.string(), taskId: z.string(),
+  outcome: z.enum(["Request revision", "Approve", "Reject"]),
+  reason: z.string().optional(), sections: z.array(z.string()),
+  reviewNote: z.string().optional(), actorId: z.string(), at: z.string(),
+});
+const ApplicationReviewQueueItem = z.object({
+  task: ApplicationReviewTask, application: ApplicationRecord,
+});
+const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
+  versions: z.array(ApplicationVersion), decisions: z.array(ApplicationReviewDecision),
+});
+const ClubProfile = clubProfileBody.extend({
+  id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(),
+  institutionalFields: z.unknown().optional(), updatedAt: z.string().optional(),
+});
+const ClubDepartment = clubDepartmentBody.extend({
+  id: z.string(), clubId: z.string(), isActive: z.boolean(),
+  createdAt: z.string(), updatedAt: z.string().optional(),
+});
+const ClubSettings = z.object({ profile: ClubProfile, departments: z.array(ClubDepartment) });
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -378,6 +406,112 @@ export const openApiDocument = createDocument({
           content: { "application/json": { schema: envelope(z.object({
             fileName: z.string(), url: z.string().url(),
           })) } } } },
+      },
+    },
+    "/admin/application-reviews": {
+      get: {
+        summary: "List open club application review tasks (ICPDP Officer only)",
+        responses: {
+          "200": { description: "Review queue", content: { "application/json": {
+            schema: envelope(z.array(ApplicationReviewQueueItem)),
+          } } },
+          "403": { description: "ICPDP Officer role required",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/application-reviews/{id}": {
+      get: {
+        summary: "Read a club application review snapshot and history",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Review detail", content: { "application/json": {
+          schema: envelope(ApplicationReviewDetail),
+        } } } },
+      },
+    },
+    "/admin/application-reviews/{id}/claim": {
+      post: {
+        summary: "Claim an open application review and start review (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Claimed review", content: { "application/json": {
+          schema: envelope(ApplicationReviewDetail),
+        } } } },
+      },
+    },
+    "/admin/application-reviews/{id}/decision": {
+      post: {
+        summary: "Record the single decision for an application review (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: applicationReviewDecisionBody } } },
+        responses: { "200": { description: "Decided review", content: { "application/json": {
+          schema: envelope(ApplicationReviewDetail),
+        } } } },
+      },
+    },
+    "/admin/application-reviews/{id}/documents/{documentId}/access": {
+      get: {
+        summary: "Get a short-lived document URL for ICPDP application review",
+        requestParams: { path: ApplicationDocumentPath },
+        responses: { "200": { description: "Temporary access URL", content: {
+          "application/json": { schema: envelope(z.object({
+            fileName: z.string(), url: z.string().url(),
+          })) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/settings": {
+      get: {
+        summary: "Read editable club profile and internal departments",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Club settings", content: {
+          "application/json": { schema: envelope(ClubSettings) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/profile": {
+      patch: {
+        summary: "Update club-owned profile fields (requires club.profile.manage and CSRF)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubProfileBody } } },
+        responses: { "200": { description: "Updated club profile", content: {
+          "application/json": { schema: envelope(ClubProfile) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/departments/template": {
+      post: {
+        summary: "Apply the default department template to an empty club structure",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Current departments", content: {
+          "application/json": { schema: envelope(z.array(ClubDepartment)) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/departments": {
+      post: {
+        summary: "Create an internal club department",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubDepartmentBody } } },
+        responses: { "201": { description: "Department created", content: {
+          "application/json": { schema: envelope(ClubDepartment) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/departments/{departmentId}": {
+      patch: {
+        summary: "Update an internal club department",
+        requestParams: { path: z.object({ clubId: z.string(), departmentId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubDepartmentBody } } },
+        responses: { "200": { description: "Department updated", content: {
+          "application/json": { schema: envelope(ClubDepartment) },
+        } } },
+      },
+      delete: {
+        summary: "Deactivate an unused internal club department",
+        requestParams: { path: z.object({ clubId: z.string(), departmentId: z.string() }) },
+        responses: { "200": { description: "Department deactivated", content: {
+          "application/json": { schema: envelope(ClubDepartment) },
+        } } },
       },
     },
     "/admin/users/{id}/roles": {

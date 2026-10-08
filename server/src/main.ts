@@ -13,6 +13,8 @@ import { ensureAuthBootstrap } from "./infra/db/bootstrap-auth.js";
 import { mongoPublicDiscoveryRepository } from "./infra/db/mongo-public-discovery-repository.js";
 import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
+import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
+import { mongoClubProfileRepository } from "./infra/db/mongo-club-profile-repository.js";
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
 
 const config = loadConfig(); // first thing — exits if env is invalid
@@ -41,6 +43,8 @@ const app = authConfig ? buildApp({
   adminRepo: mongoAccountAdminRepository(),
   policyRepo: mongoPolicyRepository(),
   applicationRepo: mongoClubApplicationRepository(),
+  applicationReviewRepo: mongoClubApplicationReviewRepository(),
+  clubProfileRepo: mongoClubProfileRepository(),
   applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
   auth: {
     repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),

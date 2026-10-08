@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import type { AuthRouteDeps } from "../../src/interface/http/auth-routes.js";
 import type { PublicDiscoveryRepository } from "../../src/domain/public-discovery.js";
 import type { ClubApplicationRepository } from "../../src/domain/club-application.js";
+import type { ClubApplicationReviewRepository } from "../../src/domain/club-application-review.js";
+import type { ClubProfileRepository } from "../../src/domain/club-profile.js";
 import { openApiDocument } from "../../src/interface/http/openapi.js";
 import { buildApp } from "../../src/interface/http/server.js";
 
@@ -66,6 +68,20 @@ const stubApplications: ClubApplicationRepository = {
   submit: async () => { throw new Error("unused"); },
   withdraw: async () => { throw new Error("unused"); },
 };
+const stubApplicationReviews: ClubApplicationReviewRepository = {
+  listOpen: async () => [], find: async () => null,
+  findDocument: async () => null,
+  claim: async () => { throw new Error("unused"); },
+  decide: async () => { throw new Error("unused"); },
+};
+const stubClubProfiles: ClubProfileRepository = {
+  findProfile: async () => null, listDepartments: async () => [],
+  updateProfile: async () => { throw new Error("unused"); },
+  applyDepartmentTemplate: async () => [],
+  createDepartment: async () => { throw new Error("unused"); },
+  updateDepartment: async () => { throw new Error("unused"); },
+  deactivateDepartment: async () => { throw new Error("unused"); },
+};
 
 // Minimal view of Express 5's router internals — enough to enumerate mounted routes.
 interface Layer {
@@ -85,6 +101,8 @@ describe("openapi document", () => {
   it("matches the routes the app actually serves", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications,
+      applicationReviewRepo: stubApplicationReviews,
+      clubProfileRepo: stubClubProfiles,
       publicRepo: stubPublic, dbReady: () => true });
     const base = openApiDocument.servers?.[0]?.url ?? "";
     expect(base).toBe("/api/v1");
@@ -125,6 +143,8 @@ describe("openapi document", () => {
   it("guards every mutation or explicitly lists it as public", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications,
+      applicationReviewRepo: stubApplicationReviews,
+      clubProfileRepo: stubClubProfiles,
       publicRepo: stubPublic, dbReady: () => true });
     const stack = (app as unknown as { router: { stack: Layer[] } }).router.stack;
     const routes = stack.flatMap((layer) => layer.route ? [layer.route]
