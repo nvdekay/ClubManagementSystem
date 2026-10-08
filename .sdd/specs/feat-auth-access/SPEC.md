@@ -8,7 +8,7 @@ UCMS đang có database nhưng API demo cho tạo User công khai và chưa có 
 - Lần đăng nhập đầu tạo đúng một `users` và `studentProfiles` trong cùng transaction; lần sau đồng bộ profile và giữ các role. Tài khoản `Locked` bị từ chối cùng lý do; mọi lần thử được audit.
 - Phiên dùng cookie ký `httpOnly`, `SameSite=Lax`, `Secure` ở production; có hạn dùng, logout và thu hồi tức thì. `GET /api/v1/auth/me` trả danh tính, vai trò hệ thống và mọi ngữ cảnh CLB còn hiệu lực. Client chọn workspace từ dữ liệu này, không tự suy quyền từ localStorage.
 - `POST /api/v1/auth/logout` yêu cầu phiên và CSRF token; route khác làm thay đổi dữ liệu cũng yêu cầu phiên và CSRF. Chỉ các route auth bắt buộc để khởi động OAuth nằm trong danh sách public tường minh. `GET /api/v1/health` giữ hợp đồng hiện hành.
-- `GET /api/v1/admin/users`, `POST /api/v1/admin/users/:id/roles`, `DELETE /api/v1/admin/users/:id/roles/:roleCode`, `POST /api/v1/admin/users/:id/lock`, `POST /api/v1/admin/users/:id/unlock` yêu cầu quyền ICPDP. Cấp/thu hồi chỉ role hệ thống (`ICPDP_OFFICER`, `ICPDP_HEAD`, `ATTENDANCE_UNLOCK`); lý do bắt buộc khi thu hồi/khoá/mở; audit và thu hồi phiên liên quan. Cấm tự bỏ role quản trị cuối.
+- `GET /api/v1/admin/users`, `POST /api/v1/admin/users/:id/roles`, `DELETE /api/v1/admin/users/:id/roles/:roleCode`, `POST /api/v1/admin/users/:id/lock`, `POST /api/v1/admin/users/:id/unlock` yêu cầu `ICPDP_OFFICER`. Cấp/thu hồi chỉ role hệ thống (`ICPDP_OFFICER`, `ATTENDANCE_UNLOCK`); lý do bắt buộc khi thu hồi/khoá/mở; audit và thu hồi phiên liên quan. Cấm tự bỏ role quản trị cuối.
 - `GET /api/v1/users` và `POST /api/v1/users` của template rời khỏi app nghiệp vụ trước khi bật SEC-02; dữ liệu `demoUsers` vẫn được giữ nguyên.
 - Quyền CLB chỉ lấy từ membership `Active`, `ClubPositionAssignment` đang hiệu lực, `ClubTerm` `Active` còn trong thời gian hiệu lực, `ClubPosition` đang hoạt động và cùng `clubId`. `UserRoleAssignment` chỉ dùng cho system role. Club Leader có 15 quyền CLB; role khác chỉ nhận 11 quyền được cấp; `Members` mặc định rỗng. Founder của Club `Pending Setup` chỉ nhận quyền UC09, UC10, UC23 cho đến khi xác nhận UC11.
 - Mọi use case xử lý dữ liệu CLB kiểm tra lại quyền và `clubId` tại thời điểm request. Thiếu phiên → 401; thiếu quyền/sai CLB → 403; bị khoá → 423. API luôn dùng response envelope hiện hành.
@@ -21,9 +21,9 @@ UCMS đang có database nhưng API demo cho tạo User công khai và chưa có 
 | `GET /api/v1/auth/login`, `GET /api/v1/auth/callback`, `GET /api/v1/auth/error` | Public | `state`/nonce/PKCE và domain được kiểm tra trong callback; đường quay lại chỉ là path nội bộ |
 | `GET /api/v1/auth/me` | Phiên hợp lệ | Đọc lại trạng thái, system role và ngữ cảnh CLB hiện hành |
 | `POST /api/v1/auth/logout` | Phiên hợp lệ | Bắt buộc `X-CSRF-Token` |
-| `GET /api/v1/admin/users` | `ICPDP_OFFICER` hoặc `ICPDP_HEAD` | Tìm kiếm user |
-| `POST /api/v1/admin/users/:id/roles`, `DELETE /api/v1/admin/users/:id/roles/:roleCode` | `ICPDP_OFFICER` hoặc `ICPDP_HEAD` | CSRF; chỉ system role; lý do bắt buộc khi thu hồi |
-| `POST /api/v1/admin/users/:id/lock`, `POST /api/v1/admin/users/:id/unlock` | `ICPDP_OFFICER` hoặc `ICPDP_HEAD` | CSRF và lý do |
+| `GET /api/v1/admin/users` | `ICPDP_OFFICER` | Tìm kiếm user |
+| `POST /api/v1/admin/users/:id/roles`, `DELETE /api/v1/admin/users/:id/roles/:roleCode` | `ICPDP_OFFICER` | CSRF; chỉ system role; lý do bắt buộc khi thu hồi |
+| `POST /api/v1/admin/users/:id/lock`, `POST /api/v1/admin/users/:id/unlock` | `ICPDP_OFFICER` | CSRF và lý do |
 | Endpoint đọc công khai UC06 (đợt C) | Public | Chỉ dữ liệu được SRS cho phép công khai; chưa triển khai |
 | Endpoint CLB thuộc UC09–UC52 (các đợt sau) | Thành viên/leader/founder theo từng use case | Kiểm tra `clubId`, permission, membership, assignment và nhiệm kỳ tại use case; mutation cần CSRF |
 
@@ -56,3 +56,4 @@ Người dùng đã có Google OAuth credentials và sẽ tự điền; chưa cu
 ## Changelog
 - v0.1.0 (2026-10-02) — bản triển khai theo SRS UC01, UC03, UC04, BR32, BR47, BR54–BR56; chờ nghiệm thu chức năng.
 - v0.2.0 (2026-10-08) — người dùng quyết định cho mọi tài khoản Google đăng nhập: chính sách domain nhận `*` (đứng một mình) là mọi domain; email vẫn phải được Google xác minh. SRS ASM-02, BR32, SEC-02 cập nhật theo.
+- v0.3.0 (2026-10-08) — chỉ giữ một role ICPDP là `ICPDP_OFFICER`; loại `ICPDP_HEAD` khỏi role có thể cấp và khỏi kiểm tra quyền.

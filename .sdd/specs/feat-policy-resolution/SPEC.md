@@ -16,7 +16,7 @@ UC01 và UC07 phải dùng chính sách có hiệu lực tại thời điểm th
 - [ ] Adapter Mongo đọc đúng DBML `policyVersions` và không đổi schema/index; integration test dùng Mongo thật khi môi trường cho phép.
 
 ## Ngoài phạm vi
-Màn hình và thao tác tạo phiên bản UC04, seed tám giá trị chính sách chưa có trong SRS, rule định tuyến UC05 và hồ sơ UC07. Các phần đó có task riêng trong backlog.
+Màn hình và thao tác tạo phiên bản UC04, seed tám giá trị chính sách chưa có trong SRS và hồ sơ UC07. Các phần đó có task riêng trong backlog; UC05 đã rút khỏi baseline.
 
 ## Changelog
 - v0.1.0 (2026-10-03) — tách bộ phân giải theo ngày hiệu lực để chuẩn bị UC07.

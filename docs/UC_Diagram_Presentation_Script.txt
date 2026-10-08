@@ -159,9 +159,8 @@ Hình đầu tiên là tài khoản, cấu hình và vòng đời CLB:
   unlock account.
 - Manage system configuration include:
   - Configure policy & deadlines.
-  - Configure approval routing: quy định hồ sơ nào cần duyệt thêm cấp thứ
-    hai trong nội bộ ICPDP, theo loại hồ sơ, số tiền, mức rủi ro hoặc lịch
-    sử tuân thủ. Hồ sơ không khớp rule nào thì duyệt một cấp.
+  - UC05 Configure approval routing đã rút khỏi baseline. Mọi hồ sơ chỉ tạo
+    một review task và cần đúng một quyết định của `ICPDP_OFFICER`.
 - Manage club lifecycle include Decide club application, Confirm board,
   Confirm leadership transition và Suspend / reactivate / dissolve club —
   đây là các quyết định tương ứng với những gì CMB đề xuất ở hình 3.
@@ -243,10 +242,9 @@ CHUẨN BỊ Q&A
   Có, nhưng chỉ là actor hỗ trợ vận hành check-in tại chỗ. Actor chính của
   Check in là Student nên hình chỉ vẽ nó ở hình 2.
 
-- "Duyệt 2 cấp ở đâu trong hình?"
-  Hình không vẽ thêm actor nào cho cấp 2. Cấp 2 là quyền RBAC trong nội bộ
-  ICPDP, được cấu hình ở Configure approval routing, nên actor vẫn là ICPDP
-  Officer.
+- "Duyệt hồ sơ có mấy cấp?"
+  Mỗi lần nộp chỉ cần đúng một quyết định của một ICPDP Officer. Hệ thống
+  không có ICPDP Head, cấp duyệt thứ hai hay use case cấu hình định tuyến.
 
 - "Sao không có actor Guest hay phòng Tài chính?"
   Guest chỉ xem trang công khai, không có use case riêng. Các phòng ban khác

@@ -35,7 +35,7 @@ vẫn là tên gọi chung của phía CLB.
 | UC02 | Mở dashboard theo vai trò của tôi | Tất cả | M01 |
 | UC03 | Quản lý tài khoản và gán vai trò | ICPDP | M01 |
 | UC04 | Cấu hình chính sách và deadline của nhà trường | ICPDP | M01 |
-| UC05 | Cấu hình quy tắc định tuyến phê duyệt | ICPDP | M01 |
+| UC05 | **Đã rút** — cấu hình quy tắc định tuyến phê duyệt | — | — |
 | UC06 | Khám phá CLB và hoạt động đang mở | Student | M02 |
 | UC07 | Nộp hồ sơ đề nghị thành lập CLB | Student | M02 |
 | UC08 | Thẩm định và quyết định hồ sơ thành lập CLB | ICPDP | M02 |
@@ -233,35 +233,11 @@ vẫn là tên gọi chung của phía CLB.
 - **Use case liên quan:** UC01, UC07, UC25, UC33, UC38, UC45, UC48
 - **Pain point:** BP14
 
-## UC05 – Cấu hình quy tắc định tuyến phê duyệt
+## UC05 – Đã rút: Cấu hình quy tắc định tuyến phê duyệt
 
-- **Actor chính:** ICPDP Officer
-- **Module:** M01
-- **Mục tiêu nghiệp vụ:** Quyết định hồ sơ nào cần một cấp duyệt thứ hai trong nội bộ ICPDP, mà
-  không hard-code các ngưỡng.
-- **Kích hoạt:** ICPDP thay đổi phân cấp thẩm quyền nội bộ của mình.
-- **Tiền điều kiện:** Người gọi có quyền cấu hình định tuyến.
-- **Dữ liệu vào:** Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng cơ sở vật chất, lịch sử
-  tuân thủ của CLB → cấp duyệt yêu cầu và SLA của nó.
-- **Luồng chính:**
-  1. Officer mở bộ quy tắc định tuyến.
-  2. Officer thêm hoặc sửa một rule: một điều kiện và cấp duyệt mà điều kiện đó đòi hỏi.
-  3. Hệ thống validate rằng không có hai rule nào chồng nhau; hồ sơ không khớp rule nào thì được
-     quyết định ở một cấp (BR16).
-  4. Officer kích hoạt bộ rule.
-  5. Hệ thống đánh phiên bản và ghi audit; các hồ sơ mới đi theo bộ rule đó.
-- **Luồng thay thế:**
-  - **A1 Mô phỏng:** officer chạy bộ rule nháp trên N hồ sơ đã quyết định gần nhất và xem hồ sơ
-    nào lẽ ra đã cần cấp duyệt thứ hai.
-- **Ngoại lệ:** **E1** hai rule chồng nhau → từ chối kích hoạt.
-- **Hậu điều kiện:** Tồn tại một bộ rule định tuyến đang hoạt động; UC08, UC26 và UC46 tra
-  cứu nó.
-- **Quy tắc nghiệp vụ:** Đây chính là use case mà Feature nổi bật 1 còn thiếu ở v1. Nó là thứ
-  làm BR16 cưỡng chế được: một hồ sơ không khớp rule nào thì được quyết định ở một cấp duy nhất
-  (§11 của tài liệu mô hình). Việc cấp thứ hai là một quyền hay một actor thứ tư là quyết định
-  còn mở D1.
-- **Đầu ra:** Bộ rule định tuyến, bản ghi audit.
-- **Use case liên quan:** UC08, UC26, UC46
+UC05 được rút ngày 2026-10-08. ICPDP chỉ có role `ICPDP_OFFICER` và mỗi lần nộp nhận đúng một
+quyết định của một officer, nên không còn cấp duyệt để định tuyến. Giữ mã UC05 để không đánh số
+lại UC06–UC52.
 
 ---
 
@@ -361,9 +337,8 @@ vẫn là tên gọi chung của phía CLB.
        nhận ghế tạm của người đứng đơn cho CLB đó;
      - **Từ chối** — bắt buộc có lý do → `Rejected`; không tạo Club nào.
   5. Hệ thống ghi bản ghi audit và thông báo cho người nộp.
-- **Luồng thay thế:**
-  - **A1 Cấp thứ hai:** khi các rule định tuyến của UC05 yêu cầu, quyết định được leo thang
-    trong nội bộ ICPDP trước khi có hiệu lực.
+- **Luồng thay thế:** không có cấp duyệt thứ hai; bản nộp lại tạo một review task mới và vẫn chỉ
+  nhận một quyết định (BR16).
 - **Ngoại lệ:**
   - **E1** người nộp rút hồ sơ trong lúc đang thẩm định (UC07 A3) → phiên thẩm định đóng lại và
     hồ sơ chuyển `Withdrawn`;
@@ -380,7 +355,7 @@ vẫn là tên gọi chung của phía CLB.
   đây và trở thành phiên bản 1.
 - **Đầu ra:** ApprovalDecision, Club (khi phê duyệt), phiên bản cơ cấu role 1, các role CLB, bản
   ghi audit, thông báo.
-- **Use case liên quan:** UC07, UC09, UC10, UC23, UC05
+- **Use case liên quan:** UC07, UC09, UC10, UC23
 - **Pain point:** BP04, BP15
 
 ## UC09 – Cấu hình hồ sơ và cơ cấu tổ chức CLB
@@ -990,12 +965,8 @@ vẫn là tên gọi chung của phía CLB.
      - **Từ chối** — bắt buộc có lý do → `Rejected`.
   5. Hệ thống ghi audit quyết định và thông báo cho CLB.
 - **Luồng thay thế:**
-  - **A1 Cấp thứ hai:** một sự kiện rủi ro cao hoặc quy mô lớn được định tuyến lên cấp ICPDP thứ
-    hai theo UC05 và BR16.
-  - **A2 Phê duyệt kèm điều kiện:** việc phê duyệt mang theo các điều kiện mà CLB phải đáp ứng;
+  - **A1 Phê duyệt kèm điều kiện:** việc phê duyệt mang theo các điều kiện mà CLB phải đáp ứng;
     chúng được kiểm tra lại ở UC34.
-  - **A3 Ngân sách vượt ngưỡng:** tổng ngân sách vượt ngưỡng được định tuyến lên cấp ICPDP thứ
-    hai theo UC05 và BR16.
 - **Ngoại lệ:**
   - **E1** CLB bị tạm ngừng giữa lúc nộp và lúc quyết định → đề xuất chuyển `Cancelled` bởi UC15;
   - **E2** hết deadline chỉnh sửa → scheduler chuyển đề xuất sang `Expired`; CLB phải nộp một đề
@@ -1009,7 +980,7 @@ vẫn là tên gọi chung của phía CLB.
   **không** đồng nghĩa duyệt booking đó — UC46 quyết định nó riêng. Sự kiện nội bộ ghi nhận thẳng
   theo BR53 không tạo review task ở đây; ICPDP xem chúng ở UC02 và xử lý sai phạm qua UC40.
 - **Đầu ra:** ApprovalDecision, EventBudget (khi có phần ngân sách), bản ghi audit, thông báo.
-- **Use case liên quan:** UC25, UC27, UC35, UC46, UC05
+- **Use case liên quan:** UC25, UC27, UC35, UC46
 - **Pain point:** BP05, BP09, BP15
 
 ## UC27 – Công bố sự kiện và mở đăng ký
