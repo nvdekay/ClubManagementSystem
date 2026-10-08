@@ -15,7 +15,7 @@ async function requireAdmin(repo: AccountAdminRepository, actor: AccessActor | n
   if (actor.accountState === "Locked") throw new DomainError(actor.lockReason || "account locked", "locked");
   if (!objectId.safeParse(actor.id).success) throw new DomainError("invalid actor", "validation");
   const roles = await repo.systemRoles(actor.id);
-  if (!roles.includes("ICPDP_OFFICER") && !roles.includes("ICPDP_HEAD")) {
+  if (!roles.includes("ICPDP_OFFICER")) {
     throw new DomainError("account administration denied", "forbidden");
   }
   return actor.id;
@@ -59,13 +59,8 @@ export async function changeSystemRole(
   const reason = action === "revoke" ? reasonSchema.safeParse(rawReason) : null;
   if (reason && !reason.success) throw new DomainError("reason is required", "validation");
   if (!await repo.findUser(target)) throw new DomainError("user not found", "not_found");
-  if (action === "revoke" && target === actorId &&
-    (role === "ICPDP_OFFICER" || role === "ICPDP_HEAD")) {
-    const roles = await repo.systemRoles(actorId);
-    const remaining = roles.filter((code) => code !== role);
-    if (!remaining.includes("ICPDP_OFFICER") && !remaining.includes("ICPDP_HEAD")) {
-      throw new DomainError("cannot revoke your last admin role", "forbidden");
-    }
+  if (action === "revoke" && target === actorId && role === "ICPDP_OFFICER") {
+    throw new DomainError("cannot revoke your last admin role", "forbidden");
   }
   await repo.applyRoleChange({
     actorId, targetId: target, roleCode: role, action,

@@ -423,82 +423,6 @@ export const ucmsTables = {
       }
     ]
   },
-  "routingRuleSets": {
-    "fields": {
-      "version": {
-        "type": "int",
-        "required": true
-      },
-      "state": {
-        "type": "string",
-        "required": true
-      },
-      "activatedBy": {
-        "type": "objectId"
-      },
-      "activatedAt": {
-        "type": "datetime"
-      },
-      "createdAt": {
-        "type": "datetime",
-        "required": true
-      }
-    },
-    "indexes": [
-      {
-        "fields": [
-          "version"
-        ],
-        "unique": true,
-        "name": "uq_routing_version"
-      }
-    ]
-  },
-  "routingRules": {
-    "fields": {
-      "ruleSetId": {
-        "type": "objectId",
-        "required": true
-      },
-      "requestType": {
-        "type": "string",
-        "required": true
-      },
-      "amountThreshold": {
-        "type": "decimal"
-      },
-      "riskCategory": {
-        "type": "string"
-      },
-      "propertyClass": {
-        "type": "string"
-      },
-      "complianceCondition": {
-        "type": "string"
-      },
-      "requiredLevel": {
-        "type": "int",
-        "required": true
-      },
-      "slaHours": {
-        "type": "int"
-      },
-      "priority": {
-        "type": "int",
-        "required": true
-      }
-    },
-    "indexes": [
-      {
-        "fields": [
-          "ruleSetId",
-          "requestType",
-          "priority"
-        ],
-        "name": "ix_rule_lookup"
-      }
-    ]
-  },
   "clubs": {
     "fields": {
       "code": {
@@ -844,6 +768,60 @@ export const ucmsTables = {
         ],
         "unique": true,
         "name": "uq_position_club_code"
+      }
+    ]
+  },
+  "clubDepartments": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
+      },
+      "name": {
+        "type": "string",
+        "required": true
+      },
+      "normalizedName": {
+        "type": "string",
+        "required": true
+      },
+      "description": {
+        "type": "text"
+      },
+      "sortOrder": {
+        "type": "int",
+        "required": true,
+        "default": 0
+      },
+      "isActive": {
+        "type": "bool",
+        "required": true,
+        "default": true
+      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "updatedAt": {
+        "type": "datetime"
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "clubId",
+          "normalizedName"
+        ],
+        "unique": true,
+        "name": "uq_department_club_name"
+      },
+      {
+        "fields": [
+          "clubId",
+          "isActive",
+          "sortOrder"
+        ],
+        "name": "ix_department_structure"
       }
     ]
   },
@@ -2793,19 +2771,8 @@ export const ucmsTables = {
         "required": true,
         "default": "Open"
       },
-      "assigneeRole": {
-        "type": "string",
-        "required": true
-      },
-      "requiredLevel": {
-        "type": "int",
-        "required": true,
-        "default": 1
-      },
-      "currentLevel": {
-        "type": "int",
-        "required": true,
-        "default": 1
+      "assigneeId": {
+        "type": "objectId"
       },
       "slaDueAt": {
         "type": "datetime"
@@ -2829,7 +2796,7 @@ export const ucmsTables = {
       {
         "fields": [
           "state",
-          "assigneeRole",
+          "assigneeId",
           "slaDueAt"
         ],
         "name": "ix_task_inbox"
@@ -2840,10 +2807,6 @@ export const ucmsTables = {
     "fields": {
       "approvalTaskId": {
         "type": "objectId",
-        "required": true
-      },
-      "level": {
-        "type": "int",
         "required": true
       },
       "outcome": {
@@ -2873,7 +2836,8 @@ export const ucmsTables = {
         "fields": [
           "approvalTaskId"
         ],
-        "name": "ix_decision_task"
+        "unique": true,
+        "name": "uq_decision_task"
       }
     ]
   },

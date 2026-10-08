@@ -148,8 +148,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         await tasks.create([{
           entityType: "CLUB_APPLICATION", entityId: id,
           title: `Club application: ${input.snapshot.clubName}`,
-          state: "Open", assigneeRole: "ICPDP_OFFICER",
-          requiredLevel: 1, currentLevel: 1, openedAt: input.now,
+          state: "Open", openedAt: input.now,
         }], { session });
         await audits.create([{
           entityType: "ClubApplication", entityId: id,

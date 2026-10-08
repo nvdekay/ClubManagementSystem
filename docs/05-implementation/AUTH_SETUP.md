@@ -23,7 +23,7 @@ Khi toàn bộ biến Auth còn trống, server chỉ mở khu công khai UC06 v
 Khi bắt đầu điền bất kỳ biến Auth nào, server kiểm tra đủ bộ lúc khởi động và fail-fast nếu
 cấu hình chưa hoàn chỉnh. `db:init`/`db:verify` chỉ cần `MONGO_URI`.
 Đăng nhập lần đầu tạo User và StudentProfile trong một MongoDB transaction; policy và hồ sơ
-UC07 cũng ghi bằng transaction, nên `mongod` phải chạy ở chế độ replica set. Bộ 50 collection
+UC07–UC09 cũng ghi bằng transaction, nên `mongod` phải chạy ở chế độ replica set. Bộ 49 collection
 nghiệp vụ DBML vẫn giữ nguyên; server tạo thêm `authSessions` với TTL index cho phiên.
 
 ### Bật replica set một node (`rs0`)

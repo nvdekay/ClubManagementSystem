@@ -5,7 +5,7 @@ import {
 import type { AuthConfig } from "../config/index.js";
 import { ucmsModels } from "./ucms-models.js";
 
-const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"] as const;
+const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ATTENDANCE_UNLOCK"] as const;
 const PERMISSION_MODULES: Record<string, string> = {
   "club.profile.manage": "M02",
   "club.recruitment.manage": "M04",

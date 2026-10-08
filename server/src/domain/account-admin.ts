@@ -1,6 +1,6 @@
 import type { AuthUser } from "./auth.js";
 
-export const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"] as const;
+export const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ATTENDANCE_UNLOCK"] as const;
 export type SystemRoleCode = (typeof SYSTEM_ROLE_CODES)[number];
 
 export interface AdminUserPage {

@@ -33,13 +33,15 @@ function fixture(actorRoles = ["ICPDP_OFFICER"]) {
 }
 
 describe("UC03 account administration", () => {
-  it("rejects non-officers and club role codes", async () => {
+  it("rejects non-officers and unsupported role codes", async () => {
     const { repo, sessions, changes } = fixture([]);
     await expect(changeSystemRole(repo, sessions, actor, target.id,
       "ICPDP_OFFICER", "grant", undefined, now)).rejects.toMatchObject({ kind: "forbidden" });
     const officer = fixture();
     await expect(changeSystemRole(officer.repo, officer.sessions, actor, target.id,
       "CLUB_PRESIDENT", "grant", undefined, now)).rejects.toMatchObject({ kind: "validation" });
+    await expect(changeSystemRole(officer.repo, officer.sessions, actor, target.id,
+      "ICPDP_HEAD", "grant", undefined, now)).rejects.toMatchObject({ kind: "validation" });
     expect(changes).toEqual([]);
   });
 

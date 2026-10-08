@@ -113,6 +113,19 @@ describe("Google login use case", () => {
     expect(result.workspaces[3]).toMatchObject({ clubId: "club-b" });
   });
 
+  it("does not grant an ICPDP workspace for the withdrawn legacy head role", async () => {
+    const fixture = fixtures();
+    const repo: AuthRepository = {
+      ...fixture.repo,
+      async systemRoleCodes() { return ["ICPDP_HEAD"]; },
+    };
+
+    const result = await currentUser(repo, fixture.accessRepo, fixture.sessions, "signed", now);
+
+    expect(result.systemRoles).toEqual(["ICPDP_HEAD"]);
+    expect(result.workspaces.map((workspace) => workspace.kind)).toEqual(["student"]);
+  });
+
   it("omits former memberships while retaining a pending founder workspace", async () => {
     const fixture = fixtures();
     const repo: AuthRepository = {

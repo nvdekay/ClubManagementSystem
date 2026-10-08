@@ -43,6 +43,20 @@ describe.skipIf(!uri)("UCMS Mongo database", () => {
     expect(inspection.missingIndexes).toEqual([]);
   }, 60_000);
 
+  it("replaces an obsolete index that has the same declared name", async () => {
+    const tasks = ucmsModels.approvalTasks.collection;
+    await tasks.dropIndex("ix_task_inbox");
+    await tasks.createIndex(
+      { state: 1, assigneeRole: 1, slaDueAt: 1 },
+      { name: "ix_task_inbox" },
+    );
+
+    await ensureUcmsDatabase();
+
+    const inboxIndex = (await tasks.indexes()).find((index) => index.name === "ix_task_inbox");
+    expect(inboxIndex?.key).toEqual({ state: 1, assigneeId: 1, slaDueAt: 1 });
+  }, 60_000);
+
   it("enforces required fields, enums and unique email", async () => {
     const users = ucmsModels.users;
     await expect(users.create({ email: "bad@example.com", displayName: "Bad", accountState: "Unknown", createdAt: new Date() }))

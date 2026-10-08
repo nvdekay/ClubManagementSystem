@@ -7,7 +7,7 @@ Cách biến baseline yêu cầu thành code: phân rã công việc và thiết
 | [`TASKS.md`](TASKS.md) | Danh sách công việc triển khai cho database, backend và frontend, nhóm theo các vòng lặp bàn giao ở `../SRS.md` §15. Mỗi task đều trích dẫn use case, yêu cầu chức năng hoặc quy tắc nghiệp vụ mà nó thoả mãn, và các task đang bị chặn được liệt kê kèm quyết định cần chốt để gỡ chặn |
 | [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) | Backlog thực thi đã đối chiếu SRS, mockup HTML và source hiện tại; ưu tiên Auth/Authz trước, kèm MongoDB, mapping màn hình và gate nghiệm thu |
 | [`AUTH_SETUP.md`](AUTH_SETUP.md) | Cấu hình Google OAuth, cookie phiên và MongoDB local cho Auth |
-| [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 50 collection MongoDB, 24 enum, nhóm theo module. Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
+| [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 49 collection MongoDB, 24 enum, nhóm theo module. Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
 
 ## Dùng file DBML
 
@@ -23,7 +23,7 @@ sub-document được nhúng và khi nào nó thành một collection riêng.
 ## Khởi tạo MongoDB
 
 Sau khi cấu hình `MONGO_URI` trong `.env` hoặc biến môi trường của shell cho server, chạy
-`npm run db:init` từ thư mục gốc để tạo 50 collection UCMS và toàn bộ index từ DBML. Sau đó chạy
+`npm run db:init` từ thư mục gốc để tạo 49 collection UCMS và toàn bộ index từ DBML. Sau đó chạy
 `npm run db:verify` để kiểm tra cùng kết nối. Dùng cùng URI này trong MongoDB Compass; database
 được in ra bởi lệnh verify sẽ chứa các collection. Lệnh init có thể chạy lại, không xoá dữ liệu
 và không seed bản ghi nghiệp vụ. Schema Mongoose được sinh bằng
@@ -33,7 +33,7 @@ collection `users` dành cho schema UCMS dùng ObjectId. Auth tạo thêm collec
 `authSessions` khi server khởi động.
 
 Để đối chiếu end-to-end: mở Compass bằng cùng `MONGO_URI`, refresh danh sách database, mở tên
-database do `db:verify` in ra và kiểm tra 50 collection UCMS. Chạy `npm run seed` để upsert
+database do `db:verify` in ra và kiểm tra 49 collection UCMS. Chạy `npm run seed` để upsert
 ảnh chụp dữ liệu công khai của pdp.fpt.edu.vn (Hà Nội, 2026-10-04) với ID cố định: 48 CLB và
 21 sự kiện do CLB tổ chức (đều đã kết thúc, nên chỉ hiện trong lịch sử của từng CLB). Lệnh chạy
 lại được, không nhân đôi; nó chỉ xoá bộ demo hư cấu cũ theo ID cố định của chính seed, không

@@ -138,6 +138,10 @@ export async function ensureUcmsDatabase(): Promise<void> {
     const existing = await model.collection.indexes();
     for (const [keys, options] of model.schema.indexes()) {
       if (!existing.some((index) => sameIndex(index, keys, options))) {
+        const staleNamedIndex = options.name
+          ? existing.find((index) => index.name === options.name)
+          : undefined;
+        if (staleNamedIndex?.name) await model.collection.dropIndex(staleNamedIndex.name);
         await model.collection.createIndex(keys as Record<string, 1>, {
           name: options.name,
           unique: Boolean(options.unique),

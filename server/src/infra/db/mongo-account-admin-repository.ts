@@ -80,20 +80,8 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
           }], { session });
         } else {
           if (!existing) throw new DomainError("active role not found", "not_found");
-          if (input.actorId === input.targetId &&
-            (input.roleCode === "ICPDP_OFFICER" || input.roleCode === "ICPDP_HEAD")) {
-            // Serialize concurrent self-revocations through the same User document.
-            await users.updateOne({ _id: targetId }, { $set: { updatedAt: input.now } }, { session });
-            const otherAssignments = await assignments.find({
-              userId: targetId, _id: { $ne: existing._id }, revokedAt: null,
-            }).session(session).lean();
-            const otherAdminRole = await roles.findOne({
-              _id: { $in: otherAssignments.map((assignment) => assignment.roleId) },
-              code: { $in: ["ICPDP_OFFICER", "ICPDP_HEAD"] }, scope: "system",
-            }).session(session).lean();
-            if (!otherAdminRole) {
-              throw new DomainError("cannot revoke your last admin role", "forbidden");
-            }
+          if (input.actorId === input.targetId && input.roleCode === "ICPDP_OFFICER") {
+            throw new DomainError("cannot revoke your last admin role", "forbidden");
           }
           await assignments.updateOne({ _id: existing._id, revokedAt: null }, {
             $set: { revokedAt: input.now, revokedBy: actorId, reason: input.reason },

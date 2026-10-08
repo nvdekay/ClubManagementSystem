@@ -94,7 +94,7 @@ async function requirePolicyOfficer(
   }
   if (!objectId.test(actor.id)) throw new DomainError("invalid actor", "validation");
   const roles = await auth.systemRoleCodes(actor.id);
-  if (!roles.includes("ICPDP_OFFICER") && !roles.includes("ICPDP_HEAD")) {
+  if (!roles.includes("ICPDP_OFFICER")) {
     throw new DomainError("policy administration denied", "forbidden");
   }
   return actor.id;

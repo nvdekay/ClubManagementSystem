@@ -67,7 +67,7 @@ export async function currentUser(
     role?: "leader" | "member" | "founder";
     permissions: ClubPermission[];
   }> = [{ kind: "student", permissions: [] }];
-  if (systemRoles.includes("ICPDP_OFFICER") || systemRoles.includes("ICPDP_HEAD")) {
+  if (systemRoles.includes("ICPDP_OFFICER")) {
     workspaces.push({ kind: "icpdp", permissions: [] });
   }
   for (const snapshot of snapshots) {

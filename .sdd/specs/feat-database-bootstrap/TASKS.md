@@ -6,12 +6,16 @@
 | Tạo schema Mongoose và cơ chế sinh từ DBML | xong |
 | Tách repository User demo sang collection riêng | xong |
 | Lệnh khởi tạo idempotent và gọi đảm bảo index lúc server boot | xong; đã chạy trên Mongo thật (xem bên dưới) |
-| Lệnh kiểm tra kết nối, collection và index để đối chiếu với Compass | xong; `npm run db:verify` báo `50/50`, `Missing indexes: 0` |
+| Lệnh kiểm tra kết nối, collection và index để đối chiếu với Compass | xong; baseline hiện tại là `49/49`, `Missing indexes: 0` |
 | Cấu hình kết nối local `127.0.0.1:27017/ucms` cho backend | xong trong `.env` bị Git bỏ qua và `.env.example` |
 | Test ánh xạ, typecheck, build và unit test | xong |
 | Chạy integration test với Mongo thật và `npm run check` đầy đủ | xong; 19/19 test xanh, lint + typecheck + constitution xanh |
 
 ## Kết quả chạy thật (2026-10-02)
+
+> Đây là snapshot lịch sử trước khi UC05 bị rút ngày 2026-10-08. Baseline hiện tại có 48
+> collection; `routingRuleSets` và `routingRules` không còn thuộc schema. Lệnh khởi tạo không
+> xoá collection cũ nếu chúng vẫn tồn tại trong database local.
 
 Môi trường: `mongod` 8.3.3 cài sẵn trên máy, lắng nghe `127.0.0.1:27017` (không dùng Docker
 Compose vì cổng 27017 đã có service này giữ). Node v24.12.0.
