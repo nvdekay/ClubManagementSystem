@@ -1,5 +1,6 @@
 // Snapshot of the public pages of pdp.fpt.edu.vn (Hà Nội campus) taken on 2026-10-04.
 // Club names come only from public PDP text; clubs listed without a public name keep their PDP code.
+// Logos were copied from the PDP club gallery to Cloudinary (ucms/club-logos/) on 2026-10-09.
 // Events organised by IC-PDP rather than a club are left out because events.clubId is required.
 
 export const pdpClubs = [
@@ -8,28 +9,32 @@ export const pdpClubs = [
     "code": "Blazie",
     "name": "FPTU Blazie Dance Team",
     "field": "Nghệ thuật",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Blazie_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Blazie_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518217/ucms/club-logos/blazie.png"
   },
   {
     "id": "a10000000000000000000002",
     "code": "Branché",
     "name": "FPTU Fashion & Model Club - Branché",
     "field": "Nghệ thuật",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Branché_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Branché_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517909/ucms/club-logos/branche.jpg"
   },
   {
     "id": "a10000000000000000000003",
     "code": "EHC",
     "name": "FPTU Ethical Hackers Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=EHC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=EHC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517881/ucms/club-logos/ehc.jpg"
   },
   {
     "id": "a10000000000000000000004",
     "code": "FBC",
     "name": "FPTU Badminton Club",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FBC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FBC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517888/ucms/club-logos/fbc.jpg"
   },
   {
     "id": "a10000000000000000000005",
@@ -43,63 +48,72 @@ export const pdpClubs = [
     "code": "FCC",
     "name": "FPTU Chinese Club - CLB Tiếng Trung",
     "field": "Ngôn ngữ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518268/ucms/club-logos/fcc.png"
   },
   {
     "id": "a10000000000000000000007",
     "code": "FDS",
     "name": "FPTU Data Science Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FDS_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FDS_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518248/ucms/club-logos/fds.png"
   },
   {
     "id": "a10000000000000000000008",
     "code": "FEC",
     "name": "FPTU English Club",
     "field": "Ngôn ngữ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FEC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FEC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518218/ucms/club-logos/fec.png"
   },
   {
     "id": "a10000000000000000000009",
     "code": "FPBC",
     "name": "FPTU Pickleball Club",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPBC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPBC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518266/ucms/club-logos/fpbc.png"
   },
   {
     "id": "a10000000000000000000010",
     "code": "FRC",
     "name": "FPTU Robotics Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FRC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FRC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518253/ucms/club-logos/frc.png"
   },
   {
     "id": "a10000000000000000000011",
     "code": "FTC",
     "name": "FPTU Taekwondo Club",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517891/ucms/club-logos/ftc.png"
   },
   {
     "id": "a10000000000000000000012",
     "code": "FUGym",
     "name": "FU Gymnastic",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUGym_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUGym_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518237/ucms/club-logos/fugym.jpg"
   },
   {
     "id": "a10000000000000000000013",
     "code": "HEBE",
     "name": "HEBE Club",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HEBE_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HEBE_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517886/ucms/club-logos/hebe.png"
   },
   {
     "id": "a10000000000000000000014",
     "code": "HLRC",
     "name": "FPTU Hola Rock Club",
     "field": "Nghệ thuật",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HLRC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HLRC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518274/ucms/club-logos/hlrc.jpg"
   },
   {
     "id": "a10000000000000000000015",
@@ -107,6 +121,7 @@ export const pdpClubs = [
     "name": "iGo Club - Câu lạc bộ Vì Cộng Đồng",
     "field": "Cộng đồng",
     "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=iGo_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518214/ucms/club-logos/igo.jpg",
     "description": "iGo Club là Câu lạc bộ Vì Cộng Đồng trực thuộc Trường Đại học FPT Hà Nội - nơi những người trẻ gặp nhau với mong muốn tạo ra giá trị tích cực cho xã hội."
   },
   {
@@ -114,7 +129,8 @@ export const pdpClubs = [
     "code": "JS",
     "name": "FPTU Japanese Software Engineers Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=JS_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=JS_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517885/ucms/club-logos/js.png"
   },
   {
     "id": "a10000000000000000000017",
@@ -122,6 +138,7 @@ export const pdpClubs = [
     "name": "FPTU Melody Club",
     "field": "Nghệ thuật",
     "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Melody_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517879/ucms/club-logos/melody.png",
     "description": "Suốt 13 năm hình thành và phát triển, FPTU - Melody Club luôn là nơi những con người khao khát vượt ngưỡng tìm thấy nhau."
   },
   {
@@ -129,217 +146,248 @@ export const pdpClubs = [
     "code": "MonStage",
     "name": "FPTU MonStage Club - CLB MC & Thuyết trình",
     "field": "Kỹ năng",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=MonStage_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=MonStage_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518246/ucms/club-logos/monstage.png"
   },
   {
     "id": "a10000000000000000000019",
     "code": "Mây Mưa Club",
     "name": "Mây Mưa Club",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Mây Mưa Club_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Mây Mưa Club_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518220/ucms/club-logos/may-mua-club.jpg"
   },
   {
     "id": "a10000000000000000000020",
     "code": "BoardGame",
     "name": "BoardGame",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BoardGame_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BoardGame_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518287/ucms/club-logos/boardgame.png"
   },
   {
     "id": "a10000000000000000000021",
     "code": "BUK",
     "name": "BUK",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BUK_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BUK_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518290/ucms/club-logos/buk.jpg"
   },
   {
     "id": "a10000000000000000000022",
     "code": "Business",
     "name": "Business",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Business_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Business_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517919/ucms/club-logos/business.jpg"
   },
   {
     "id": "a10000000000000000000023",
     "code": "Chess",
     "name": "Chess",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Chess_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Chess_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518295/ucms/club-logos/chess.png"
   },
   {
     "id": "a10000000000000000000024",
     "code": "Color Team",
     "name": "Color Team",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Color Team_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Color Team_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518271/ucms/club-logos/color-team.png"
   },
   {
     "id": "a10000000000000000000025",
     "code": "Dango",
     "name": "Dango",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Dango_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Dango_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518306/ucms/club-logos/dango.png"
   },
   {
     "id": "a10000000000000000000026",
     "code": "ESC",
     "name": "ESC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=ESC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=ESC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518258/ucms/club-logos/esc.png"
   },
   {
     "id": "a10000000000000000000027",
     "code": "F-Logi",
     "name": "F-Logi",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=F-Logi_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=F-Logi_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518240/ucms/club-logos/f-logi.png"
   },
   {
     "id": "a10000000000000000000028",
     "code": "FAIC",
     "name": "FAIC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FAIC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FAIC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518228/ucms/club-logos/faic.png"
   },
   {
     "id": "a10000000000000000000029",
     "code": "FCOC",
     "name": "FCOC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCOC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCOC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518291/ucms/club-logos/fcoc.jpg"
   },
   {
     "id": "a10000000000000000000030",
     "code": "FFC",
     "name": "FFC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FFC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FFC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517917/ucms/club-logos/ffc.png"
   },
   {
     "id": "a10000000000000000000031",
     "code": "FGC",
     "name": "FGC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517876/ucms/club-logos/fgc.png"
   },
   {
     "id": "a10000000000000000000032",
     "code": "FGoC",
     "name": "FGoC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGoC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGoC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518296/ucms/club-logos/fgoc.png"
   },
   {
     "id": "a10000000000000000000033",
     "code": "FKC",
     "name": "FKC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FKC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FKC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518252/ucms/club-logos/fkc.png"
   },
   {
     "id": "a10000000000000000000034",
     "code": "FMUC",
     "name": "FMUC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMUC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMUC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517920/ucms/club-logos/fmuc.jpg"
   },
   {
     "id": "a10000000000000000000035",
     "code": "FMVC",
     "name": "FMVC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMVC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMVC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518270/ucms/club-logos/fmvc.png"
   },
   {
     "id": "a10000000000000000000036",
     "code": "FNC",
     "name": "FNC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FNC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FNC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518293/ucms/club-logos/fnc.png"
   },
   {
     "id": "a10000000000000000000037",
     "code": "FPC",
     "name": "FPC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518310/ucms/club-logos/fpc.png"
   },
   {
     "id": "a10000000000000000000038",
     "code": "FTIC",
     "name": "FTIC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTIC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTIC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518265/ucms/club-logos/ftic.png"
   },
   {
     "id": "a10000000000000000000039",
     "code": "FTTC",
     "name": "FTTC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTTC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTTC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518302/ucms/club-logos/fttc.png"
   },
   {
     "id": "a10000000000000000000040",
     "code": "FUB",
     "name": "FUB",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUB_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUB_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518282/ucms/club-logos/fub.png"
   },
   {
     "id": "a10000000000000000000041",
     "code": "FUP",
     "name": "FUP",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUP_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUP_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517875/ucms/club-logos/fup.png"
   },
   {
     "id": "a10000000000000000000042",
     "code": "FUSW",
     "name": "FUSW",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUSW_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUSW_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518288/ucms/club-logos/fusw.jpg"
   },
   {
     "id": "a10000000000000000000043",
     "code": "FUVC",
     "name": "FUVC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUVC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUVC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518309/ucms/club-logos/fuvc.png"
   },
   {
     "id": "a10000000000000000000044",
     "code": "FVC",
     "name": "FVC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FVC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FVC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517916/ucms/club-logos/fvc.png"
   },
   {
     "id": "a10000000000000000000045",
     "code": "HFU",
     "name": "HFU",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HFU_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HFU_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518277/ucms/club-logos/hfu.png"
   },
   {
     "id": "a10000000000000000000046",
     "code": "NSC",
     "name": "NSC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=NSC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=NSC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517883/ucms/club-logos/nsc.jpg"
   },
   {
     "id": "a10000000000000000000047",
     "code": "Soleil Crew",
     "name": "Soleil Crew",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Soleil Crew_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Soleil Crew_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518211/ucms/club-logos/soleil-crew.png"
   },
   {
     "id": "a10000000000000000000048",
     "code": "Yosakoi",
     "name": "Yosakoi",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Yosakoi_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Yosakoi_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518236/ucms/club-logos/yosakoi.png"
   }
 ] as const;
 

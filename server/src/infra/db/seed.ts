@@ -80,6 +80,7 @@ async function seedPdpSnapshot(now: Date): Promise<void> {
   await upsertMany("clubs", pdpClubs.map((club) => ({
     _id: objectId(club.id), code: club.code, name: club.name, field: club.field, state: "Active",
     ...("description" in club ? { description: club.description } : {}),
+    ...("logoUrl" in club ? { logoUrl: club.logoUrl } : {}),
     channels: { pdp: club.pdpUrl }, createdAt: now, updatedAt: now,
   })));
 
