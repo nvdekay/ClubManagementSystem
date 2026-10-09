@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
+import { EventStatusBadge } from "@/components/custom/PublicEventCard";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -33,10 +34,12 @@ export function EventDetail() {
           <AppButton onClick={() => void detail.refetch()}>{t("discovery.retry")}</AppButton>
         </div>
       ) : detail.data ? (
-        <div className="mt-7 max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary-app">
-            {t("discovery.upcoming")}
-          </p>
+        <div className="mt-7 max-w-4xl">
+          {detail.data.event.coverImageUrl && (
+            <img src={detail.data.event.coverImageUrl} alt="" decoding="async"
+              className="mb-8 aspect-video w-full rounded-3xl bg-primary-soft-app object-cover shadow-sm" />
+          )}
+          <EventStatusBadge status={detail.data.event.status} />
           <h1 className="mt-3 font-heading text-3xl font-bold tracking-tight text-balance sm:text-5xl">{detail.data.event.title}</h1>
           <p className="mt-4 text-muted-app">
             {t("discovery.hostedBy")}: <Link to={`/clubs/${detail.data.club.id}`} className="font-semibold text-accent-app">
@@ -52,16 +55,18 @@ export function EventDetail() {
               <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-mint-soft-app text-mint-app"><AppIcon name="calendar" className="size-5" /></span>
               <div><dt className="text-sm text-muted-app">{t("discovery.ends")}</dt><dd className="font-semibold">{formatDate(detail.data.event.endAt, locale)}</dd></div>
             </div>
-            {detail.data.event.venueText && <div className="flex gap-3">
-              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app"><AppIcon name="compass" className="size-5" /></span>
+            {detail.data.event.venueText && <div className="flex gap-3 sm:col-span-2">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app"><AppIcon name="mapPin" className="size-5" /></span>
               <div><dt className="text-sm text-muted-app">{t("discovery.venue")}</dt><dd className="font-semibold">{detail.data.event.venueText}</dd></div>
             </div>}
-            <div className="flex gap-3">
-              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app"><AppIcon name="users" className="size-5" /></span>
-              <div><dt className="text-sm text-muted-app">{t("discovery.capacity")}</dt><dd className="font-semibold">{detail.data.event.capacity}</dd></div>
-            </div>
           </dl>
-          <p className="mt-6 text-sm text-muted-app">{t("discovery.registrationLater")}</p>
+          {detail.data.event.objective && (
+            <section className="mt-8">
+              <h2 className="font-heading text-xl font-bold">{t("discovery.eventAbout")}</h2>
+              <p className="mt-3 leading-7 break-words whitespace-pre-line text-text-app">{detail.data.event.objective}</p>
+            </section>
+          )}
+          {detail.data.event.status === "upcoming" && <p className="mt-6 text-sm text-muted-app">{t("discovery.registrationLater")}</p>}
         </div>
       ) : <p className="mt-8">{t("discovery.notFound")}</p>}
     </section>
