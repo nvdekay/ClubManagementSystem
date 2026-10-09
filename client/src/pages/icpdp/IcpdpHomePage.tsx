@@ -16,6 +16,7 @@ export function IcpdpHomePage() {
       description: t("properties.homeDescription") },
     { href: "/workspace/evaluation-schemes", icon: "star", label: t("evaluationSchemes.title"),
       description: t("evaluationSchemes.homeDescription") },
+    { href: "/workspace/exports", icon: "file", label: t("exports.title"), description: t("exports.homeDescription") },
     { href: "/icpdp/accounts", icon: "users", label: t("auth.manageAccounts"), description: t("auth.manageAccountsDescription") },
     { href: "/clubs", icon: "compass", label: t("discovery.navClubs"), description: t("auth.reviewClubsDescription") },
   ]}><RoleDashboard context={{ workspace: "icpdp" }} /></WorkspaceHome>;

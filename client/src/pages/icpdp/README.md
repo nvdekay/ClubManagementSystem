@@ -27,3 +27,6 @@ chỉ xoá được khi chưa từng có booking.
 `EvaluationSchemesPage` + `SchemeEditor` (UC41) cấu hình scheme đánh giá theo học kỳ của lịch năm học: bật
 D4–D8 (D1–D3 luôn có), trọng số % (tổng 100, có "Chia đều"), cho phép chấm tay, 3 mốc xếp loại; nháp sửa/xoá
 được, kích hoạt thay thế scheme đang áp dụng của kỳ, scheme đã kích hoạt chỉ "tạo bản sửa".
+
+`DataExportPage` (UC55) xuất dữ liệu ra `xlsx`/`csv`/`pdf`: chọn loại dữ liệu, thời gian (toàn bộ, học kỳ,
+khoảng ngày), CLB, trạng thái; đếm số dòng trước khi tải; không có dòng nào thì không tạo file.

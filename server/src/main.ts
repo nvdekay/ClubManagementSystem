@@ -14,6 +14,8 @@ import { mongoPublicDiscoveryRepository } from "./infra/db/mongo-public-discover
 import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
 import { mongoPropertyRepository } from "./infra/db/mongo-property-repository.js";
 import { mongoEvaluationSchemeRepository } from "./infra/db/mongo-evaluation-scheme-repository.js";
+import { mongoExportRepository } from "./infra/db/mongo-export-repository.js";
+import { exportFileWriter } from "./infra/files/export-file-writer.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
@@ -62,6 +64,8 @@ const app = authConfig ? buildApp({
   clubFieldRepo: mongoClubFieldRepository(),
   propertyRepo: mongoPropertyRepository(),
   evaluationSchemeRepo: mongoEvaluationSchemeRepository(),
+  exportRepo: mongoExportRepository(),
+  exportWriter: exportFileWriter(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),

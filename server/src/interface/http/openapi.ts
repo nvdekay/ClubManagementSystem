@@ -7,6 +7,7 @@ import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
 import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./evaluation-scheme-routes.js";
+import { exportBody, exportPreviewBody } from "./export-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
@@ -499,6 +500,36 @@ export const openApiDocument = createDocument({
           "201": { description: "Club field created",
             content: { "application/json": { schema: envelope(ClubField) } } },
           "409": { description: "A field with this name already exists",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/exports/options": {
+      get: {
+        summary: "Export catalogue: data types with their status filters, formats, semesters and clubs (UC55)",
+        responses: { "200": { description: "Export options", content: { "application/json": { schema: envelope(z.object({
+          types: z.array(z.object({ type: z.string(), title: z.string(), statuses: z.array(z.string()) })),
+          formats: z.array(z.string()),
+          periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
+          clubs: z.array(z.object({ id: z.string(), name: z.string() })),
+        })) } } } },
+      },
+    },
+    "/admin/exports/preview": {
+      post: {
+        summary: "Count the rows an export would contain (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: exportPreviewBody } } },
+        responses: { "200": { description: "Row count",
+          content: { "application/json": { schema: envelope(z.object({ rowCount: z.number() })) } } } },
+      },
+    },
+    "/admin/exports": {
+      post: {
+        summary: "Download the data as xlsx, csv or pdf; audited (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: exportBody } } },
+        responses: {
+          "200": { description: "The file, sent as an attachment" },
+          "404": { description: "No data matches the filter; no file is produced",
             content: { "application/json": { schema: ApiError } } },
         },
       },

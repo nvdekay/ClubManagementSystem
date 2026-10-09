@@ -7,6 +7,7 @@ import type { PolicyManagementRepository } from "../../domain/policy.js";
 import type { ClubFieldRepository } from "../../domain/club-field.js";
 import type { PropertyRepository } from "../../domain/property.js";
 import type { EvaluationSchemeRepository } from "../../domain/evaluation-scheme.js";
+import type { ExportFileWriter, ExportRepository } from "../../domain/data-export.js";
 import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
@@ -32,6 +33,7 @@ import { clubProfileRoutes } from "./club-profile-routes.js";
 import { clubFieldRoutes } from "./club-field-routes.js";
 import { propertyRoutes } from "./property-routes.js";
 import { evaluationSchemeRoutes } from "./evaluation-scheme-routes.js";
+import { exportRoutes } from "./export-routes.js";
 import { boardNominationRoutes } from "./board-nomination-routes.js";
 import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
 import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
@@ -72,6 +74,8 @@ export function buildApp(deps: {
   clubFieldRepo?: ClubFieldRepository;
   propertyRepo?: PropertyRepository;
   evaluationSchemeRepo?: EvaluationSchemeRepository;
+  exportRepo?: ExportRepository;
+  exportWriter?: ExportFileWriter;
   applicationReviewRepo?: ClubApplicationReviewRepository;
   clubProfileRepo?: ClubProfileRepository;
   boardNominationRepo?: BoardNominationRepository;
@@ -178,6 +182,10 @@ export function buildApp(deps: {
       app.use("/api/v1", policyRoutes({
         repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
+      if (deps.exportRepo && deps.exportWriter) {
+        app.use("/api/v1", exportRoutes({ repo: deps.exportRepo, writer: deps.exportWriter, policy: deps.policyRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
       if (deps.evaluationSchemeRepo) {
         app.use("/api/v1", evaluationSchemeRoutes({ repo: deps.evaluationSchemeRepo, policy: deps.policyRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -212,6 +220,7 @@ export function buildApp(deps: {
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
   const hasProperties = Boolean(hasAdmin && deps.propertyRepo);
   const hasEvaluationSchemes = Boolean(hasPolicy && deps.evaluationSchemeRepo);
+  const hasExports = Boolean(hasPolicy && deps.exportRepo && deps.exportWriter);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
   const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
@@ -228,6 +237,7 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/club-fields")) return hasClubFields;
       if (path.startsWith("/admin/properties")) return hasProperties;
       if (path.startsWith("/admin/evaluation-schemes")) return hasEvaluationSchemes;
+      if (path.startsWith("/admin/exports")) return hasExports;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;

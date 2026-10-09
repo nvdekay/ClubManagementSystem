@@ -234,6 +234,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/workspace/club-fields", label: t("common.navClubFields"), icon: "layers" },
       { to: "/workspace/properties", label: t("common.navProperties"), icon: "mapPin" },
       { to: "/workspace/evaluation-schemes", label: t("common.navEvaluationSchemes"), icon: "star" },
+      { to: "/workspace/exports", label: t("common.navExports"), icon: "file" },
       { to: "/icpdp/accounts", label: t("common.navAccounts"), icon: "users" },
     ] }, explore];
   }
