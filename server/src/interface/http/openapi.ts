@@ -6,6 +6,7 @@ import { applicationReviewDecisionBody } from "./club-application-review-routes.
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
+import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./evaluation-scheme-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
@@ -76,6 +77,11 @@ const FoundingRequirements = z.object({
   required: policySettingsBody.shape.formRequirements.shape.clubFounding,
 });
 const Property = propertyCreateBody.extend({ id: z.string(), code: z.string(), isActive: z.boolean() });
+const EvaluationScheme = evaluationSchemeSettingsBody.extend({
+  id: z.string(), periodCode: z.string(), version: z.number(),
+  state: z.enum(["Draft", "Active", "Superseded"]), totalWeight: z.number(),
+  activatedAt: z.string().optional(), createdAt: z.string(),
+});
 const ClubField = clubFieldBody.extend({ id: z.string(), isActive: z.boolean() });
 const ClubFieldUsage = ClubField.extend({ clubCount: z.number(), applicationCount: z.number() });
 const FoundingIssue = z.enum(["clubName", "field", "summary", "objectives", "fanpageUrl",
@@ -494,6 +500,51 @@ export const openApiDocument = createDocument({
             content: { "application/json": { schema: envelope(ClubField) } } },
           "409": { description: "A field with this name already exists",
             content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/evaluation-schemes": {
+      get: {
+        summary: "List evaluation schemes with the evaluation periods and the D1–D8 catalogue (UC41)",
+        responses: { "200": { description: "Schemes", content: { "application/json": { schema: envelope(z.object({
+          schemes: z.array(EvaluationScheme),
+          periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
+          dimensions: z.array(z.object({ code: z.string(), name: z.string(), core: z.boolean(), measures: z.string() })),
+        })) } } } },
+      },
+      post: {
+        summary: "Create a draft scheme for a semester from the defaults or a copy (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: evaluationSchemeCreateBody } } },
+        responses: {
+          "201": { description: "Draft created", content: { "application/json": { schema: envelope(EvaluationScheme) } } },
+          "400": { description: "Period not in the academic calendar", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/evaluation-schemes/{id}": {
+      patch: {
+        summary: "Edit a draft's dimensions, weights and thresholds",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: evaluationSchemeSettingsBody } } },
+        responses: {
+          "200": { description: "Draft updated", content: { "application/json": { schema: envelope(EvaluationScheme) } } },
+          "409": { description: "Only drafts can change", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      delete: {
+        summary: "Delete a draft scheme",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Draft deleted",
+          content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } } } },
+      },
+    },
+    "/admin/evaluation-schemes/{id}/activate": {
+      post: {
+        summary: "Activate a draft (weights total 100, D1–D3 above 0); supersedes the period's active scheme",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Scheme active", content: { "application/json": { schema: envelope(EvaluationScheme) } } },
+          "400": { description: "details.issues lists totalWeight / coreWeight", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

@@ -23,3 +23,7 @@ xoá (chưa ai dùng thì xoá hẳn, đang dùng thì ẩn khỏi danh sách ch
 `PropertiesPage` + `PropertyEditor` (UC44) quản lý danh mục cơ sở vật chất: mã tự sinh theo loại, sức
 chứa, thiết bị đi kèm, khung giờ được đặt (chung hoặc từng ngày), giai đoạn khoá; ngừng sử dụng/dùng lại;
 chỉ xoá được khi chưa từng có booking.
+
+`EvaluationSchemesPage` + `SchemeEditor` (UC41) cấu hình scheme đánh giá theo học kỳ của lịch năm học: bật
+D4–D8 (D1–D3 luôn có), trọng số % (tổng 100, có "Chia đều"), cho phép chấm tay, 3 mốc xếp loại; nháp sửa/xoá
+được, kích hoạt thay thế scheme đang áp dụng của kỳ, scheme đã kích hoạt chỉ "tạo bản sửa".

@@ -14,6 +14,8 @@ export function IcpdpHomePage() {
       description: t("clubFields.homeDescription") },
     { href: "/workspace/properties", icon: "mapPin", label: t("properties.title"),
       description: t("properties.homeDescription") },
+    { href: "/workspace/evaluation-schemes", icon: "star", label: t("evaluationSchemes.title"),
+      description: t("evaluationSchemes.homeDescription") },
     { href: "/icpdp/accounts", icon: "users", label: t("auth.manageAccounts"), description: t("auth.manageAccountsDescription") },
     { href: "/clubs", icon: "compass", label: t("discovery.navClubs"), description: t("auth.reviewClubsDescription") },
   ]}><RoleDashboard context={{ workspace: "icpdp" }} /></WorkspaceHome>;
