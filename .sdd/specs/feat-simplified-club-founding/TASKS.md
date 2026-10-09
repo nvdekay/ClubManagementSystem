@@ -10,5 +10,6 @@
 - [x] Seed/seed-demo theo dữ liệu mới.
 - [x] Client: form hồ sơ 4 bước, trang duyệt, trang policy chia tab theo luồng, trang lĩnh vực; i18n en/vi.
 - [x] `npm run check` xanh: 198/198 test (gồm integration với Mongo thật), lint, typecheck, build client (2026-10-10).
+- [x] E2E HTTP thật + Mongo thật (`server/tests/integration/club-founding-e2e.test.ts`, 18 kịch bản; Cloudinary thay bằng kho tệp trong bộ nhớ). `npm run check`: 216/216 (2026-10-10).
 - [ ] Kiểm tra trực quan bằng trình duyệt (sáng/tối, vi/en) và upload đề án/logo với Cloudinary thật.
 - [ ] Job tự chuyển hồ sơ quá hạn sửa sang `Expired` (ngoài phạm vi, chưa làm).
