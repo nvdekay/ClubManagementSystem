@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useEvent } from "@/hooks/useDiscovery";
 import { PublicApiError } from "@/services/discovery";
@@ -15,8 +15,8 @@ export function EventDetail() {
   const locale = i18n.language === "vi" ? "vi" : "en";
   return (
     <section>
-      <Link to="/events" className="text-sm font-semibold text-accent-app">
-        ← {t("discovery.backToEvents")}
+      <Link to="/events" className="inline-flex min-h-10 items-center gap-1.5 rounded-full text-sm font-semibold text-accent-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app">
+        <AppIcon name="arrowLeft" className="size-4" />{t("discovery.backToEvents")}
       </Link>
       {detail.isPending ? (
         <div role="status" className="mt-8 space-y-4">
@@ -37,20 +37,30 @@ export function EventDetail() {
           <p className="text-sm font-semibold uppercase tracking-wide text-primary-app">
             {t("discovery.upcoming")}
           </p>
-          <h1 className="mt-3 text-3xl font-bold sm:text-5xl font-heading">{detail.data.event.title}</h1>
+          <h1 className="mt-3 font-heading text-3xl font-bold tracking-tight text-balance sm:text-5xl">{detail.data.event.title}</h1>
           <p className="mt-4 text-muted-app">
             {t("discovery.hostedBy")}: <Link to={`/clubs/${detail.data.club.id}`} className="font-semibold text-accent-app">
               {detail.data.club.name}
             </Link>
           </p>
-          <AppCard className="mt-8 space-y-3 p-6">
-            <p>{t("discovery.starts")}: {formatDate(detail.data.event.startAt, locale)}</p>
-            <p>{t("discovery.ends")}: {formatDate(detail.data.event.endAt, locale)}</p>
-            {detail.data.event.venueText && <p>
-              {t("discovery.venue")}: {detail.data.event.venueText}
-            </p>}
-            <p>{t("discovery.capacity")}: {detail.data.event.capacity}</p>
-          </AppCard>
+          <dl className="mt-8 grid gap-x-8 gap-y-5 border-y border-border-app py-6 sm:grid-cols-2">
+            <div className="flex gap-3">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-mint-soft-app text-mint-app"><AppIcon name="calendar" className="size-5" /></span>
+              <div><dt className="text-sm text-muted-app">{t("discovery.starts")}</dt><dd className="font-semibold">{formatDate(detail.data.event.startAt, locale)}</dd></div>
+            </div>
+            <div className="flex gap-3">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-mint-soft-app text-mint-app"><AppIcon name="calendar" className="size-5" /></span>
+              <div><dt className="text-sm text-muted-app">{t("discovery.ends")}</dt><dd className="font-semibold">{formatDate(detail.data.event.endAt, locale)}</dd></div>
+            </div>
+            {detail.data.event.venueText && <div className="flex gap-3">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app"><AppIcon name="compass" className="size-5" /></span>
+              <div><dt className="text-sm text-muted-app">{t("discovery.venue")}</dt><dd className="font-semibold">{detail.data.event.venueText}</dd></div>
+            </div>}
+            <div className="flex gap-3">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app"><AppIcon name="users" className="size-5" /></span>
+              <div><dt className="text-sm text-muted-app">{t("discovery.capacity")}</dt><dd className="font-semibold">{detail.data.event.capacity}</dd></div>
+            </div>
+          </dl>
           <p className="mt-6 text-sm text-muted-app">{t("discovery.registrationLater")}</p>
         </div>
       ) : <p className="mt-8">{t("discovery.notFound")}</p>}

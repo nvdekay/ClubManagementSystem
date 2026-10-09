@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
@@ -38,10 +39,10 @@ export function ClubDirectory() {
   return (
     <section>
       <div className="max-w-2xl">
-        <h1 className="text-3xl font-bold sm:text-4xl font-heading">{t("discovery.clubsTitle")}</h1>
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl">{t("discovery.clubsTitle")}</h1>
         <p className="mt-3 text-muted-app">{t("discovery.clubsDescription")}</p>
       </div>
-      <div className="mt-8 flex flex-wrap items-end gap-3">
+      <div className="mt-8 flex flex-wrap items-end gap-3 rounded-3xl bg-surface-app p-3">
         <AppSearchInput
           key={searchKey}
           className="min-w-56 flex-1"
@@ -82,28 +83,31 @@ export function ClubDirectory() {
         </div>
       ) : (
         <>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-8 grid gap-x-6 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
             {clubs.data.items.map((club) => (
-              <Link key={club.id} to={`/clubs/${club.id}`} className="block h-full">
-                <AppCard className="h-full p-5 transition-colors hover:border-primary-app">
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-primary-app">
-                      {club.field}
-                    </span>
-                    <span className="rounded-full border border-border-app px-2 py-1 text-xs">
-                      {club.state === "Suspended" ? t("discovery.suspended") : t("discovery.active")}
-                    </span>
-                  </div>
-                  <h2 className="mt-4 text-xl font-semibold font-heading">{club.name}</h2>
-                  <p className="mt-1 text-xs text-muted-app">{club.code}</p>
-                  <p className="mt-3 line-clamp-3 text-sm text-muted-app">{club.description}</p>
-                  <span className="mt-5 inline-block text-sm font-semibold text-accent-app">
-                    {t("discovery.viewClub")} →
+              <li key={club.id}>
+                <Link to={`/clubs/${club.id}`} className="group flex h-full gap-4 rounded-2xl p-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+                  <span aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft-app font-heading text-xl font-bold text-primary-app">
+                    {club.name.trim().charAt(0).toUpperCase()}
                   </span>
-                </AppCard>
-              </Link>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold tracking-wider text-mint-app uppercase">{club.field}</span>
+                      <AppBadge tone={club.state === "Suspended" ? "warning" : "success"}>
+                        {club.state === "Suspended" ? t("discovery.suspended") : t("discovery.active")}
+                      </AppBadge>
+                    </span>
+                    <span className="mt-1 font-heading text-lg font-bold text-text-app group-hover:text-primary-app">{club.name}</span>
+                    <span className="text-xs text-muted-app">{club.code}</span>
+                    <span className="mt-2 line-clamp-2 text-sm text-muted-app">{club.description}</span>
+                    <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-accent-app">
+                      {t("discovery.viewClub")}<AppIcon name="chevronRight" className="size-4" />
+                    </span>
+                  </span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
           <AppPagination
             className="mt-8"
             pageIndex={page - 1}
