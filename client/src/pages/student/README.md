@@ -4,3 +4,6 @@ Các trang nghiệp vụ Student. Mỗi trang gọi dữ liệu qua hook React Q
 
 `RecruitmentApplicationPage` triển khai UC17: xem form campaign đang mở, lưu draft, tải file riêng
 tư, submit/rút đơn; danh sách đơn tuyển được hiển thị riêng khỏi hồ sơ thành lập CLB.
+
+`StudentHomePage` triển khai dashboard UC02: số liệu cá nhân theo module, lỗi từng panel độc lập
+và liên kết tới luồng nghiệp vụ đang có.

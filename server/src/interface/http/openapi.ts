@@ -40,6 +40,15 @@ const AdminUsers = z.object({
   total: z.number().int(),
 });
 const Changed = z.object({ changed: z.literal(true) });
+const Dashboard = z.object({
+  kind: z.enum(["student", "club", "icpdp"]),
+  clubId: z.string().optional(),
+  generatedAt: z.string().datetime(),
+  panels: z.array(z.discriminatedUnion("status", [
+    z.object({ key: z.string(), status: z.literal("ready"), count: z.number().int().nonnegative() }),
+    z.object({ key: z.string(), status: z.literal("error") }),
+  ])),
+});
 const Reason = z.object({ reason: z.string().min(1).max(1000) });
 const RoleChange = z.object({ roleCode: z.string(), reason: z.string().optional() });
 const UserIdPath = z.object({ id: z.string() });
@@ -353,6 +362,25 @@ export const openApiDocument = createDocument({
             description: "CSRF token missing or invalid",
             content: { "application/json": { schema: ApiError } },
           },
+        },
+      },
+    },
+    "/dashboard": {
+      get: {
+        summary: "Read the current Student, club or ICPDP dashboard",
+        requestParams: { query: z.object({
+          workspace: z.enum(["student", "icpdp", "club"]),
+          clubId: z.string().regex(/^[0-9a-f]{24}$/i).optional(),
+        }) },
+        responses: {
+          "200": { description: "Role-scoped dashboard with independently resolved panels",
+            content: { "application/json": { schema: envelope(Dashboard) } } },
+          "400": { description: "Invalid dashboard context",
+            content: { "application/json": { schema: ApiError } } },
+          "401": { description: "Authentication required",
+            content: { "application/json": { schema: ApiError } } },
+          "403": { description: "Workspace access denied",
+            content: { "application/json": { schema: ApiError } } },
         },
       },
     },

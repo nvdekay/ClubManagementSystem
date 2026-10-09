@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { WorkspaceHome } from "@/components/custom/WorkspaceHome";
+import { RoleDashboard } from "@/components/custom/RoleDashboard";
 import { useAuth } from "@/hooks/useAuth";
 
 export function ClubHomePage() {
@@ -22,5 +23,5 @@ export function ClubHomePage() {
       label: t("clubSettings.title"), description: t("clubSettings.description") }] : []),
     { href: `/clubs/${encodeURIComponent(clubId ?? "")}`, icon: "globe", label: t("auth.clubPublicPage"), description: t("auth.clubPublicPageDescription") },
     { href: "/events", icon: "calendar", label: t("discovery.navEvents"), description: t("auth.clubEventsDescription") },
-  ]} />;
+  ]}>{clubId && <RoleDashboard context={{ workspace: "club", clubId }} />}</WorkspaceHome>;
 }

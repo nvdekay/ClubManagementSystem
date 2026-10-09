@@ -11,6 +11,7 @@ import type { BoardNominationRepository } from "../../domain/board-nomination.js
 import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
 import type { MembershipRepository } from "../../domain/membership.js";
 import type { RecruitmentApplicationRepository, RecruitmentAttachmentStorage } from "../../domain/recruitment-application.js";
+import type { DashboardRepository } from "../../domain/dashboard.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
@@ -23,6 +24,7 @@ import { boardNominationRoutes } from "./board-nomination-routes.js";
 import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
 import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
 import { membershipRoutes } from "./membership-routes.js";
+import { dashboardRoutes } from "./dashboard-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -55,6 +57,7 @@ export function buildApp(deps: {
   recruitmentCampaignRepo?: RecruitmentCampaignRepository;
   recruitmentApplicationRepo?: RecruitmentApplicationRepository;
   membershipRepo?: MembershipRepository;
+  dashboardRepo?: DashboardRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
@@ -110,6 +113,10 @@ export function buildApp(deps: {
       app.use("/api/v1", membershipRoutes({ repo: deps.membershipRepo,
         accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
+    if (deps.dashboardRepo) {
+      app.use("/api/v1", dashboardRoutes({ repo: deps.dashboardRepo,
+        accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
     if (deps.policyRepo) {
       app.use("/api/v1", policyRoutes({
         repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
@@ -138,6 +145,7 @@ export function buildApp(deps: {
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
+  const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
@@ -146,6 +154,7 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
+      if (path.startsWith("/dashboard")) return hasDashboard;
       if (path.startsWith("/applications")) return hasApplications;
       if (path.startsWith("/clubs/{clubId}/settings")
         || path.startsWith("/clubs/{clubId}/profile")

@@ -8,3 +8,6 @@ hàng đợi, nhận task, đọc snapshot bất biến và ghi đúng một quy
 
 `BoardNominationQueuePage` và `BoardNominationDetailPage` triển khai UC11: một ICPDP Officer nhận
 task và ghi đúng một quyết định xác nhận toàn phần hoặc một phần cho các ghế ban điều hành.
+
+`IcpdpHomePage` triển khai dashboard UC02: hàng đợi, SLA, trạng thái CLB, báo cáo, tài chính,
+vi phạm, lịch đặt, sự kiện nội bộ và lịch sử cơ cấu/ban điều hành.

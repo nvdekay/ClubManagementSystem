@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -15,10 +16,11 @@ interface WorkspaceHomeProps {
   /** Workspace name shown under the greeting, e.g. the club name. */
   subtitle: string;
   actions: WorkspaceAction[];
+  children?: ReactNode;
 }
 
 /** Overview page rendered inside WorkspaceShell: a greeting band and a list of shortcuts. */
-export function WorkspaceHome({ subtitle, actions }: WorkspaceHomeProps) {
+export function WorkspaceHome({ subtitle, actions, children }: WorkspaceHomeProps) {
   const { t } = useTranslation();
   const auth = useAuth();
   const name = auth.data?.user.displayName ?? "";
@@ -35,6 +37,8 @@ export function WorkspaceHome({ subtitle, actions }: WorkspaceHomeProps) {
           <p className="mt-3 text-pretty text-muted-app">{t("auth.workspaceHomeDescription")}</p>
         </div>
       </section>
+
+      {children}
 
       <ul className="mt-8 grid gap-x-8 sm:grid-cols-2">
         {actions.map((action) => (

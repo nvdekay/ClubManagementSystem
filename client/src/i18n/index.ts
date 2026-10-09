@@ -13,6 +13,7 @@ import { boardNominations } from "./boardNominations";
 import { recruitmentCampaigns } from "./recruitmentCampaigns";
 import { recruitmentApplications } from "./recruitmentApplications";
 import { users } from "./users";
+import { dashboard } from "./dashboard";
 
 export type Locale = "en" | "vi";
 
@@ -22,12 +23,12 @@ export const resources = {
     policy: policy.en, applications: applications.en, reviews: reviews.en,
     clubSettings: clubSettings.en, boardNominations: boardNominations.en,
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
-    users: users.en, demo: demo.en } },
+    users: users.en, dashboard: dashboard.en, demo: demo.en } },
   vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
     clubSettings: clubSettings.vi, boardNominations: boardNominations.vi,
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
-    users: users.vi, demo: demo.vi } },
+    users: users.vi, dashboard: dashboard.vi, demo: demo.vi } },
 };
 
 const stored = localStorage.getItem("locale");

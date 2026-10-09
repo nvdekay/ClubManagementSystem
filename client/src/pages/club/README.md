@@ -14,3 +14,6 @@ draft, công bố trong một kỳ học đã cấu hình và xử lý cảnh b�
 
 `RecruitmentReviewPage` nối UC18 và UC20: reviewer có `club.application.review` sàng lọc/quyết
 định đơn, xử lý danh sách chờ và tiếp nhận ứng viên trúng tuyển thành thành viên role `Members`.
+
+`ClubHomePage` triển khai dashboard UC02 theo `clubId`; panel nhạy cảm chỉ được trả về khi
+membership hiện hành có đúng permission tương ứng, còn Leader nhận toàn bộ panel quản trị.
