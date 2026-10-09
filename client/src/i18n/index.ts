@@ -16,6 +16,7 @@ import { users } from "./users";
 import { dashboard } from "./dashboard";
 import { leadershipTransitions } from "./leadershipTransitions";
 import { eventRegistrations } from "./eventRegistrations";
+import { eventFeedback } from "./eventFeedback";
 
 export type Locale = "en" | "vi";
 
@@ -26,14 +27,14 @@ export const resources = {
     clubSettings: clubSettings.en, boardNominations: boardNominations.en,
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
-    eventRegistrations: eventRegistrations.en,
+    eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
     demo: demo.en } },
   vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
     clubSettings: clubSettings.vi, boardNominations: boardNominations.vi,
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
-    eventRegistrations: eventRegistrations.vi,
+    eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
     demo: demo.vi } },
 };
 

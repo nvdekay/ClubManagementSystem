@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 
 import { EventCheckInForm } from "@/components/custom/EventCheckInForm";
+import { EventFeedbackForm, EventFeedbackSummary } from "@/components/custom/EventFeedbackForm";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -11,9 +12,11 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyAttendances } from "@/hooks/useEventCheckIns";
+import { useMyEventFeedback } from "@/hooks/useEventFeedback";
 import { useEventRegistrationAction, useMyEventRegistrations } from "@/hooks/useEventRegistrations";
 import type { Locale } from "@/i18n";
 import type { Attendance, CheckInResult } from "@/services/eventCheckIns";
+import type { MyEventFeedback } from "@/services/eventFeedback";
 import type { EventRegistration } from "@/services/eventRegistrations";
 import { cn } from "@/utils/cn";
 import { formatDate } from "@/utils/formatDate";
@@ -29,6 +32,7 @@ export function MyEventRegistrationsPage() {
   const signedIn = Boolean(auth.data);
   const registrations = useMyEventRegistrations(signedIn);
   const attendances = useMyAttendances(signedIn);
+  const feedback = useMyEventFeedback(signedIn);
   const action = useEventRegistrationAction();
   const inFlight = useRef(false);
   const [filter, setFilter] = useState<Filter>(() => (searchParams.get("tab") === "attended" ? "attended" : "active"));
@@ -72,8 +76,9 @@ export function MyEventRegistrationsPage() {
     attended: attended.length, cancelled: all.filter((item) => item.state === "Cancelled").length };
   const items = all.filter((item) => (filter === "cancelled" ? item.state === "Cancelled" : item.state !== "Cancelled"));
   const deepLinkTitle = deepLink && all.find((item) => item.eventId === deepLink.eventId)?.eventTitle;
-  const pending = registrations.isPending || attendances.isPending;
-  const error = registrations.error ?? attendances.error;
+  const pending = registrations.isPending || attendances.isPending || feedback.isPending;
+  const error = registrations.error ?? attendances.error ?? feedback.error;
+  const feedbackByEvent = new Map((feedback.data ?? []).map((item) => [item.eventId, item]));
 
   return (
     <>
@@ -101,7 +106,7 @@ export function MyEventRegistrationsPage() {
       ) : error ? (
         <AppNotice tone="danger" role="alert" title={t("eventRegistrations.loadError")}>
           <p>{error.message}</p>
-          <AppButton variant="secondary" onClick={() => { void registrations.refetch(); void attendances.refetch(); }}>
+          <AppButton variant="secondary" onClick={() => { void registrations.refetch(); void attendances.refetch(); void feedback.refetch(); }}>
             {t("eventRegistrations.retry")}</AppButton>
         </AppNotice>
       ) : (
@@ -135,7 +140,8 @@ export function MyEventRegistrationsPage() {
           {filter === "attended" ? (
             attended.length === 0 ? <EmptyState message={t("eventRegistrations.attendedEmpty")} />
               : <ul className="divide-y divide-border-app border-y border-border-app">
-                {attended.map((item) => <AttendanceRow key={item.id} attendance={item} locale={locale} />)}
+                {attended.map((item) => <AttendanceRow key={item.id} attendance={item} locale={locale} nowTime={nowTime}
+                  feedback={feedbackByEvent.get(item.eventId)} />)}
               </ul>
           ) : items.length === 0 ? <EmptyState message={t("eventRegistrations.empty")} /> : (
             <ul className="divide-y divide-border-app border-y border-border-app">
@@ -202,30 +208,57 @@ export function MyEventRegistrationsPage() {
   );
 }
 
-function AttendanceRow({ attendance, locale }: { attendance: Attendance; locale: Locale }) {
+interface AttendanceRowProps {
+  attendance: Attendance;
+  locale: Locale;
+  nowTime: number;
+  feedback: MyEventFeedback | undefined;
+}
+
+function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowProps) {
   const { t } = useTranslation();
-  const feedbackOpen = !attendance.feedbackClosesAt || new Date(attendance.feedbackClosesAt) > new Date();
+  const [open, setOpen] = useState(false);
+  const [justSent, setJustSent] = useState(false);
+  const feedbackOpen = !attendance.feedbackClosesAt || new Date(attendance.feedbackClosesAt).getTime() > nowTime;
   return (
-    <li className="flex flex-wrap items-center gap-x-4 gap-y-3 px-2 py-4">
-      <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-mint-soft-app text-mint-app">
-        <AppIcon name="badge" /></span>
-      <div className="min-w-0 flex-1 basis-56">
-        <Link to={`/events/${attendance.eventId}`} className="font-semibold break-words text-text-app hover:text-primary-app hover:underline">
-          {attendance.eventTitle}</Link>
-        <p className="mt-0.5 text-sm text-muted-app">
-          {attendance.clubName} · {t("eventRegistrations.checkedInAt", { date: formatDate(attendance.checkedInAt, locale) })}
-        </p>
-        <p className={cn("mt-0.5 text-xs", feedbackOpen ? "text-success-app" : "text-muted-app")}>
-          {!feedbackOpen ? t("eventRegistrations.feedbackClosed")
-            : attendance.feedbackClosesAt
-              ? t("eventRegistrations.feedbackOpenUntil", { date: formatDate(attendance.feedbackClosesAt, locale) })
-              : t("eventRegistrations.feedbackOpenNoDeadline")}
-        </p>
+    <li className="px-2 py-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-mint-soft-app text-mint-app">
+          <AppIcon name="badge" /></span>
+        <div className="min-w-0 flex-1 basis-56">
+          <Link to={`/events/${attendance.eventId}`} className="font-semibold break-words text-text-app hover:text-primary-app hover:underline">
+            {attendance.eventTitle}</Link>
+          <p className="mt-0.5 text-sm text-muted-app">
+            {attendance.clubName} · {t("eventRegistrations.checkedInAt", { date: formatDate(attendance.checkedInAt, locale) })}
+          </p>
+          {!feedback && <p className={cn("mt-0.5 text-xs", feedbackOpen ? "text-success-app" : "text-muted-app")}>
+            {!feedbackOpen ? t("eventRegistrations.feedbackClosed")
+              : attendance.feedbackClosesAt
+                ? t("eventRegistrations.feedbackOpenUntil", { date: formatDate(attendance.feedbackClosesAt, locale) })
+                : t("eventRegistrations.feedbackOpenNoDeadline")}
+          </p>}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <AppBadge tone="success">{t("eventRegistrations.checkedInBadge")}</AppBadge>
+          {attendance.method === "walk-in" && <AppBadge tone="warning">{t("eventRegistrations.walkInBadge")}</AppBadge>}
+        </div>
+        {!feedback && feedbackOpen && (
+          <AppButton aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+            <AppIcon name="star" className="size-4" />{t("eventFeedback.giveFeedback")}
+          </AppButton>
+        )}
       </div>
-      <div className="flex flex-wrap gap-2">
-        <AppBadge tone="success">{t("eventRegistrations.checkedInBadge")}</AppBadge>
-        {attendance.method === "walk-in" && <AppBadge tone="warning">{t("eventRegistrations.walkInBadge")}</AppBadge>}
-      </div>
+      {feedback ? (
+        <div className="mt-3 space-y-2 rounded-2xl bg-surface-app p-4">
+          {justSent && <p role="status" className="text-sm font-semibold text-success-app">{t("eventFeedback.submitted")}</p>}
+          <EventFeedbackSummary feedback={feedback} />
+        </div>
+      ) : open && feedbackOpen && (
+        <div className="mt-4 rounded-2xl bg-surface-app p-4">
+          <EventFeedbackForm eventId={attendance.eventId} closesAt={attendance.feedbackClosesAt}
+            onSubmitted={() => { setOpen(false); setJustSent(true); }} />
+        </div>
+      )}
     </li>
   );
 }

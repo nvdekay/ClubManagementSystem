@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
+import { EventFeedbackPanel } from "@/components/custom/EventFeedbackPanel";
 import { EventRegistrationPanel } from "@/components/custom/EventRegistrationPanel";
 import { EventStatusBadge } from "@/components/custom/PublicEventCard";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -68,6 +69,7 @@ export function EventDetail() {
             </section>
           )}
           {detail.data.event.status !== "ended" && <EventRegistrationPanel eventId={detail.data.event.id} />}
+          <EventFeedbackPanel eventId={detail.data.event.id} />
         </div>
       ) : <p className="mt-8">{t("discovery.notFound")}</p>}
     </section>
