@@ -13,6 +13,7 @@ import type { MembershipRepository } from "../../domain/membership.js";
 import type { RecruitmentApplicationRepository, RecruitmentAttachmentStorage } from "../../domain/recruitment-application.js";
 import type { DashboardRepository } from "../../domain/dashboard.js";
 import type { LeadershipTransitionRepository } from "../../domain/leadership-transition.js";
+import type { EventRegistrationRepository } from "../../domain/event-registration.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
@@ -27,6 +28,7 @@ import { recruitmentApplicationRoutes } from "./recruitment-application-routes.j
 import { membershipRoutes } from "./membership-routes.js";
 import { dashboardRoutes } from "./dashboard-routes.js";
 import { leadershipTransitionRoutes } from "./leadership-transition-routes.js";
+import { eventRegistrationRoutes } from "./event-registration-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -61,6 +63,7 @@ export function buildApp(deps: {
   membershipRepo?: MembershipRepository;
   dashboardRepo?: DashboardRepository;
   leadershipTransitionRepo?: LeadershipTransitionRepository;
+  eventRegistrationRepo?: EventRegistrationRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
@@ -125,6 +128,10 @@ export function buildApp(deps: {
       app.use("/api/v1", dashboardRoutes({ repo: deps.dashboardRepo,
         accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
+    if (deps.eventRegistrationRepo && deps.policyRepo) {
+      app.use("/api/v1", eventRegistrationRoutes({ repo: deps.eventRegistrationRepo,
+        policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
     if (deps.policyRepo) {
       app.use("/api/v1", policyRoutes({
         repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
@@ -155,6 +162,7 @@ export function buildApp(deps: {
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
   const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
   const hasLeadershipTransitions = Boolean(hasAdmin && deps.leadershipTransitionRepo);
+  const hasEventRegistrations = Boolean(hasPolicy && deps.eventRegistrationRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
@@ -165,6 +173,8 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
       if (path.startsWith("/dashboard")) return hasDashboard;
+      if (path.startsWith("/events/{id}/registration")
+        || path.startsWith("/event-registrations")) return hasEventRegistrations;
       if (path.startsWith("/applications")) return hasApplications;
       if (path.startsWith("/clubs/{clubId}/settings")
         || path.startsWith("/clubs/{clubId}/profile")

@@ -6,6 +6,7 @@ import { applicationReviewDecisionBody } from "./club-application-review-routes.
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
+import { eventRegistrationBody } from "./event-registration-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
@@ -187,6 +188,21 @@ const LeadershipTransition = z.object({
     reason: z.string().optional(), followUpObligationIds: z.array(z.string()),
     actorId: z.string(), at: z.string() })),
 });
+const EventRegistration = z.object({ id: z.string(), eventId: z.string(), studentId: z.string(),
+  clubId: z.string(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(),
+  eventEndAt: z.string(), state: z.enum(["Confirmed", "Waitlisted", "Cancelled"]),
+  waitlistPosition: z.number().int().optional(),
+  answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  createdAt: z.string(), cancelledAt: z.string().optional() });
+const EventRegistrationContext = z.object({ event: z.object({ id: z.string(), clubId: z.string(),
+  clubName: z.string(), title: z.string(), state: z.string(), audienceScope: z.string(),
+  startAt: z.string(), endAt: z.string(), registrationOpenAt: z.string().optional(),
+  registrationCloseAt: z.string().optional(), capacity: z.number().int(),
+  confirmedRegistrationCount: z.number().int(), waitlistEnabled: z.boolean() }),
+formSchema: z.array(z.object({ key: z.string(), label: z.string(),
+  type: z.enum(["text", "textarea", "select", "radio", "checkbox"]), required: z.boolean(),
+  options: z.array(z.string()).optional() })), isActiveClubMember: z.boolean(),
+registration: EventRegistration.nullable(), registrationOpen: z.boolean() });
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -725,6 +741,31 @@ export const openApiDocument = createDocument({
           "application/json": { schema: envelope(LeadershipTransition) },
         } }, "409": { description: "Transition held while club is suspended or source data changed",
           content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/events/{id}/registration": {
+      get: { summary: "Read the authenticated student's event registration context",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Registration context",
+          content: { "application/json": { schema: envelope(EventRegistrationContext) } } } } },
+    },
+    "/events/{id}/registrations": {
+      post: { summary: "Register the authenticated student for an event (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventRegistrationBody } } },
+        responses: { "201": { description: "Confirmed or waitlisted registration", content: {
+          "application/json": { schema: envelope(EventRegistration) },
+        } }, "409": { description: "Registration closed, duplicate, or capacity reached",
+          content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/event-registrations/mine": {
+      get: { summary: "List the authenticated student's event registrations",
+        responses: { "200": { description: "Owned event registrations", content: {
+          "application/json": { schema: envelope(z.array(EventRegistration)) },
+        } } } },
+    },
+    "/event-registrations/{id}/cancel": {
+      post: { summary: "Cancel an owned event registration before event start (requires CSRF token)",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Cancelled registration",
+          content: { "application/json": { schema: envelope(EventRegistration) } } } } },
     },
     "/clubs/{clubId}/board-nomination-context": {
       get: { summary: "Read current board seats and active club members for nomination",
