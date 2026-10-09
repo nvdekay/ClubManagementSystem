@@ -34,6 +34,9 @@ import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicati
 import { RecruitmentApplicationsPage } from "./pages/student/RecruitmentApplicationsPage.js";
 import { MyEventRegistrationsPage } from "./pages/student/MyEventRegistrationsPage.js";
 import { StudentFeedbackPage } from "./pages/student/StudentFeedbackPage.js";
+import { MyClubsPage } from "./pages/student/MyClubsPage.js";
+import { MemberSpacePage } from "./pages/student/MemberSpacePage.js";
+import { ClubMembersPage } from "./pages/club/ClubMembersPage.js";
 import { ClubFeedbackInboxPage } from "./pages/club/ClubFeedbackInboxPage.js";
 import { StudentFeedbackInboxPage } from "./pages/icpdp/StudentFeedbackInboxPage.js";
 
@@ -68,6 +71,9 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
             <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
             <Route path="workspace/feedback" element={<StudentFeedbackPage />} />
+            <Route path="workspace/clubs" element={<MyClubsPage />} />
+            <Route path="workspace/clubs/:clubId" element={<MemberSpacePage />} />
+            <Route path="club/:clubId/members" element={<ClubMembersPage />} />
             <Route path="workspace/student-feedback" element={<StudentFeedbackInboxPage />} />
             <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
             <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />

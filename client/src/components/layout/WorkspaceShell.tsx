@@ -20,7 +20,7 @@ interface NavItem {
 }
 
 const studentPrefixes = ["/student", "/workspace/applications", "/workspace/recruitment",
-  "/workspace/event-registrations", "/workspace/feedback"];
+  "/workspace/event-registrations", "/workspace/feedback", "/workspace/clubs"];
 
 /** The workspace a management URL belongs to; the sidebar and access check follow it. */
 function contextFor(pathname: string): Context {
@@ -217,8 +217,9 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/student", label: t("common.navOverview"), icon: "home", end: true },
       { to: "/workspace/recruitment", label: t("common.navRecruitment"), icon: "send" },
       { to: "/workspace/applications", label: t("common.navApplications"), icon: "file" },
+      { to: "/workspace/clubs", label: t("common.navMyClubs"), icon: "users" },
       { to: "/workspace/event-registrations", label: t("common.navMyEvents"), icon: "calendar" },
-      { to: "/workspace/feedback", label: t("common.navFeedback"), icon: "send" },
+      { to: "/workspace/feedback", label: t("common.navFeedback"), icon: "megaphone" },
     ] }, explore];
   }
   if (context.kind === "icpdp") {
@@ -241,6 +242,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
     ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "badge" as const }] : []),
     ...(can("club.recruitment.manage") ? [{ to: `${base}/recruitment`, label: t("common.navCampaigns"), icon: "megaphone" as const }] : []),
     ...(can("club.profile.manage") ? [{ to: `${base}/settings`, label: t("common.navSettings"), icon: "settings" as const }] : []),
+    ...(can("club.member.manage") ? [{ to: `${base}/members`, label: t("common.navMembers"), icon: "users" as const }] : []),
     ...(can("club.feedback.view") ? [{ to: `${base}/feedback`, label: t("common.navFeedbackInbox"), icon: "inbox" as const }] : []),
     { to: `/clubs/${encodeURIComponent(context.clubId)}`, label: t("common.navPublicPage"), icon: "globe" },
   ] }, explore];

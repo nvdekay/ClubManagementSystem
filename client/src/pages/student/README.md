@@ -14,3 +14,6 @@ Tab “Đã check-in” còn cho gửi phản hồi sao + nhận xét (UC48) qua
 
 `StudentFeedbackPage` (UC50, góp ý một chiều) cho Student gửi góp ý tới một CLB hoặc ICPDP, tuỳ chọn ẩn
 danh, và xem lại danh sách đã gửi.
+
+`MyClubsPage` và `MemberSpacePage` (UC24) là “CLB của tôi” và không gian thành viên chỉ đọc của một CLB, kèm
+form xin rời CLB (UC22).
