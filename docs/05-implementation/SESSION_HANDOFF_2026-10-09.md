@@ -64,6 +64,11 @@ bên ngoài đã được xác minh.
   qua `confirmedRegistrationCount`/`nextWaitlistPosition`; UC30 promote waitlist chưa triển khai.
   Fixture QA: event `[QA] Workshop nhảy hiện đại…` (`a2000000000000000000aa29`) và transition plan
   `[QA] CLB Chuyển giao Nhiệm kỳ` (`ac130000000000000000000f`) trong DB local.
+- **UC24 + UC22:** “CLB của tôi” → không gian thành viên chỉ đọc (tư cách/chức vụ, thành viên không
+  email, ban chủ nhiệm, sự kiện sắp tới kèm trạng thái đăng ký, điểm danh, phản hồi còn nợ, chuyển
+  CLB); Left/Banned/người ngoài bị chặn. Xin rời CLB ngay trong không gian; CLB có `club.member.manage`
+  thi hành ở `/club/:clubId/members`. Fixture QA: membership `ac2400000000000000000001` (qa.applicant @ HEBE).
+- Test integration: `tests/global-setup.ts` tự xoá database test của tiến trình đã chết trước mỗi lượt chạy.
 - **UC50 (đổi phạm vi):** không còn là ticket khiếu nại mà là góp ý một chiều — Student chọn gửi
   CLB (bắt buộc chọn CLB, tuỳ chọn sự kiện) hoặc ICPDP, loại góp ý/khen ngợi/phản ánh, tuỳ chọn ẩn
   danh; chỉ xem lại danh sách đã gửi. CLB đọc ở `/club/:clubId/feedback` (`club.feedback.view`),

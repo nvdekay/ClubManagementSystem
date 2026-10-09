@@ -153,15 +153,15 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-3.6** UC20 tiếp nhận, tiếp nhận thủ công kèm lý do, ghi nhận ứng viên từ chối (`Declined`), chốt chặn `Banned`. → FR-UC20-01…07, BR13, BR46
 - [ ] **BE-3.7** UC21 đổi trạng thái kèm ngày hiệu lực, lý do cấm bắt buộc, thu hồi role, chốt chặn ghế ban chủ nhiệm, chốt chặn ngày lùi về quá khứ. → FR-UC21-01…11
 - [ ] **BE-3.8** UC21 A2 đợt quét đăng ký lại thành viên theo học kỳ trong scheduler. → SCH-08
-- [ ] **BE-3.9** UC22 yêu cầu rời CLB và đường thực thi của nó sang UC21. → FR-UC22-01…05
-- [ ] **BE-3.10** UC24 dữ liệu tổng hợp cho không gian thành viên (tư cách thành viên, danh sách thành viên, ban chủ nhiệm, sự kiện sắp tới kèm trạng thái của tôi, lịch sử điểm danh, nghĩa vụ còn treo). → FR-UC24-01…09
+- [x] **BE-3.9** UC22 yêu cầu rời CLB và đường thực thi của nó sang UC21. → FR-UC22-01…05 · API sẵn có (`feat-membership-lifecycle`), nay có UI xin rời trong không gian thành viên và trang “Thành viên” phía CLB để thi hành (UC21 A1).
+- [x] **BE-3.10** UC24 dữ liệu tổng hợp cho không gian thành viên (tư cách thành viên, danh sách thành viên, ban chủ nhiệm, sự kiện sắp tới kèm trạng thái của tôi, lịch sử điểm danh, nghĩa vụ còn treo). → FR-UC24-01…09 · `GET /clubs/{clubId}/member-space`, chỉ đọc, Active/Inactive; danh sách thành viên không có email.
 
 ### Frontend
 - [ ] **FE-3.1** Danh sách đợt tuyển, tạo và công bố; danh sách người nộp đơn kèm bộ lọc. → UC16, UC18
 - [ ] **FE-3.2** Trang chi tiết đợt tuyển phía sinh viên, biểu mẫu ứng tuyển, màn xác nhận đã nộp, đơn của tôi, chi tiết đơn. → UC17
 - [ ] **FE-3.3** Bảng sàng lọc kèm thao tác hàng loạt, biểu mẫu đánh giá ứng viên, màn quyết định và lý do. → UC18, UC19
 - [ ] **FE-3.4** Màn tiếp nhận; danh sách thành viên và chi tiết thành viên kèm dòng thời gian lịch sử trạng thái. → UC20, UC21
-- [ ] **FE-3.5** Không gian thành viên và luồng gửi yêu cầu rời CLB. → UC24, UC22
+- [x] **FE-3.5** Không gian thành viên và luồng gửi yêu cầu rời CLB. → UC24, UC22 · “CLB của tôi” `/workspace/clubs`, không gian `/workspace/clubs/:clubId` (chuyển CLB, việc còn treo dẫn tới UC48), form xin rời; CLB thi hành ở `/club/:clubId/members`.
 
 ---
 
@@ -325,7 +325,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-10.7** UC52 phần trả lời của CLB với chính sách hiển thị danh tính và tín hiệu quá hạn trả lời. → FR-UC52-01…06 · **đang bị chặn bởi quyết định D5** · **tạm không làm**: góp ý là một chiều, CLB chỉ đọc qua hộp thư (`club.feedback.view`).
 
 ### Frontend
-- [x] **FE-10.1** Biểu mẫu phản hồi mở từ "đăng ký của tôi" / không gian thành viên, kèm công tắc ẩn danh. → UC48 · form sao (radio, dùng được bằng bàn phím) + nhận xét + ẩn danh trên tab “Đã check-in” và trang sự kiện; lối vào từ không gian thành viên chờ UC24.
+- [x] **FE-10.1** Biểu mẫu phản hồi mở từ "đăng ký của tôi" / không gian thành viên, kèm công tắc ẩn danh. → UC48 · form sao (radio, dùng được bằng bàn phím) + nhận xét + ẩn danh trên tab “Đã check-in” và trang sự kiện; lối vào từ không gian thành viên: mục “Việc còn treo” của UC24.
 - [ ] **FE-10.2** Bản tổng hợp phản hồi phía CLB, hiển thị thông điệp dưới ngưỡng thay vì nội dung. → UC49, MSG12
 - [x] **FE-10.3** Biểu mẫu khiếu nại và màn khiếu nại của tôi kèm dòng thời gian trạng thái. → UC50 · thành trang “Góp ý” (`/workspace/feedback`): form + danh sách đã gửi, không dòng thời gian trạng thái; hộp thư CLB `/club/:clubId/feedback` và ICPDP `/workspace/student-feedback`.
 - [ ] **FE-10.4** Hàng đợi khiếu nại của ICPDP và màn phân loại. → UC51
