@@ -3,6 +3,11 @@
 Ngày: 2026-09-26 · File mẫu nguồn: `docs/Group1_SE1939-NJ_Report_Final_G1.docx`
 Sản phẩm đã sinh ra: `report.docx` (thư mục gốc của dự án)
 
+> **Lưu ý baseline 2026-10-08:** UC05 đã rút, ICPDP chỉ còn `ICPDP_OFFICER`, mỗi lần nộp chỉ
+> cần một quyết định; UC09 sau đó thêm `clubDepartments`, nên schema hiện có 49 collection. Các số liệu 54 use case / 50 collection bên
+> dưới mô tả đúng snapshot của `report.docx` lúc được sinh, nhưng báo cáo phải được tái sinh
+> trước khi bàn giao để theo baseline mới.
+
 File này ghi lại mọi điểm không nhất quán phát hiện được khi dựng lại báo cáo cuối, việc đã xử
 lý ra sao, và những gì nhóm còn phải quyết định. Nó là vết kiểm toán của lần tái sinh báo cáo.
 
@@ -45,7 +50,7 @@ lý ra sao, và những gì nhóm còn phải quyết định. Nó là vết ki�
 | C1 | **Ma trận phân quyền màn hình gần như bỏ trống và một phần thì sai.** Các dòng 34–78 của Bảng III.14 hầu như không có dấu tích nào; "Propose new club" được cấp cho **Guest**, mâu thuẫn với UC07 vốn có tiền điều kiện là đã đăng nhập; ICPDP được cấp các màn hình vận hành của CLB (Application comment and result, Club event list) vốn thuộc về Club's Admin. | Toàn bộ ma trận nay được **sinh ra từ actor của các use case**, nên một màn hình không thể được cấp quyền cho một vai trò không sở hữu use case nào đứng sau nó. |
 | C2 | **Danh sách màn hình không phủ hết use case model.** Không có màn hình nào cho check-in (UC31), phản hồi (UC50, UC51), khiếu nại (UC52–UC54), ngân sách, khoản chi, giải ngân và đối soát (UC35–UC39), danh mục cơ sở vật chất (UC46), danh sách chờ (UC30), chốt điểm danh (UC32), scheme đánh giá, bản nháp và công bố (UC43–UC45), định tuyến phê duyệt (UC05), tiếp nhận thành viên (UC20) hay phân công chức vụ (UC23). | Mở rộng từ 78 lên **113 màn hình**; thêm một cột "Use case" và một phép kiểm tra tự động nay xác nhận **cả 54 use case đều có ít nhất một màn hình**. |
 | C3 | **UC06 tự mâu thuẫn** (review issue I22 còn mở): "Chỉ liệt kê CLB `Active`" rồi lại "CLB `Suspended` vẫn hiển thị nhưng được đánh dấu". | Báo cáo ghi cách xử lý: *liệt kê cả CLB `Active` và `Suspended`; CLB `Suspended` được đánh dấu và không hiện đợt tuyển nào; CLB `Dissolved` không được liệt kê.* **Nhóm phải chốt câu chữ này và cập nhật use case model cùng đặc tả.** |
-| C4 | **BR31 và BR16 / UC05.** BR31 nói ICPDP là cấp phê duyệt duy nhất; BR16 và các rule định tuyến lại đưa vào một cấp duyệt thứ hai. Điều này chỉ đúng vì cả hai cấp đều do một ICPDP Officer thực hiện. | Báo cáo trình bày đúng như vậy. **Quyết định còn mở D1: nếu nhóm vẽ một actor `ICPDP Head` lên use case diagram thì BR31 trở thành sai.** Cần chốt trước khi hiện thực UC05. |
+| C4 | **BR31 và BR16 / UC05.** Baseline cũ vừa nói ICPDP là cấp phê duyệt duy nhất vừa đưa vào cấp duyệt thứ hai. | **Đã chốt 2026-10-08:** chỉ có `ICPDP_OFFICER`, mỗi lần nộp chỉ duyệt một lần; UC05 và định tuyến đa cấp đã rút. |
 | C5 | **Khoảng hai mươi quy tắc tự nhận là "cấu hình được", nhưng thực tế chỉ chín giá trị là cấu hình được** (BR42). | Báo cáo liệt kê tường minh chín giá trị đó ở UC04 và trong Bảng III.6. **Quyết định còn mở D2: cần chốt danh sách với quy trình thật của ICPDP trước khi đóng băng màn hình cấu hình.** |
 | C6 | **Một sự kiện được đổi lịch** — nó có cần một quyết định mới từ UC26, hay chỉ cần thông báo? | Được ghi là phụ thuộc chính sách trong UC28. **Quyết định còn mở D4; phải chọn một hướng trước khi code UC28.** |
 | C7 | **CLB có thấy danh tính người khiếu nại** trong UC54 không? | Được ghi là "chỉ ở mức chính sách cho phép". **Quyết định còn mở D5; nó thay đổi cả màn hình lẫn quy tắc riêng tư.** |

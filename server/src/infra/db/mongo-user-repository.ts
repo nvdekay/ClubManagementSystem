@@ -3,13 +3,14 @@ import { DomainError } from "../../domain/errors.js";
 import type { User, UserRepository } from "../../domain/user.js";
 
 const UserModel = mongoose.model(
-  "User",
+  "DemoUser",
   new Schema<User>({
     id: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     createdAt: { type: Date, required: true, index: true },
   }),
+  "demoUsers",
 );
 
 // Surfaces unique-index build failures at boot instead of mongoose swallowing them in the background.

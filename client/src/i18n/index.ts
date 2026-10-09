@@ -2,15 +2,32 @@ import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import { common } from "./common";
+import { auth } from "./auth";
 import { demo } from "./demo";
+import { discovery } from "./discovery";
+import { policy } from "./policy";
+import { applications } from "./applications";
+import { reviews } from "./reviews";
+import { clubSettings } from "./clubSettings";
+import { boardNominations } from "./boardNominations";
+import { recruitmentCampaigns } from "./recruitmentCampaigns";
+import { recruitmentApplications } from "./recruitmentApplications";
 import { users } from "./users";
 
 export type Locale = "en" | "vi";
 
 // New module: create i18n/<module>.ts (same en/vi shape), then add it to both locales here.
 export const resources = {
-  en: { translation: { common: common.en, users: users.en, demo: demo.en } },
-  vi: { translation: { common: common.vi, users: users.vi, demo: demo.vi } },
+  en: { translation: { common: common.en, auth: auth.en, discovery: discovery.en,
+    policy: policy.en, applications: applications.en, reviews: reviews.en,
+    clubSettings: clubSettings.en, boardNominations: boardNominations.en,
+    recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
+    users: users.en, demo: demo.en } },
+  vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi,
+    policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
+    clubSettings: clubSettings.vi, boardNominations: boardNominations.vi,
+    recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
+    users: users.vi, demo: demo.vi } },
 };
 
 const stored = localStorage.getItem("locale");

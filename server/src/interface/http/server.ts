@@ -1,12 +1,28 @@
 import express from "express";
-import type { UserRepository } from "../../domain/user.js";
+import { authRoutes, type AuthRouteDeps } from "./auth-routes.js";
+import { accountAdminRoutes } from "./account-admin-routes.js";
+import type { AccountAdminRepository } from "../../domain/account-admin.js";
+import type { PublicDiscoveryRepository } from "../../domain/public-discovery.js";
+import type { PolicyManagementRepository } from "../../domain/policy.js";
+import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
+import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
+import type { ClubProfileRepository } from "../../domain/club-profile.js";
+import type { BoardNominationRepository } from "../../domain/board-nomination.js";
+import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
+import type { MembershipRepository } from "../../domain/membership.js";
+import type { RecruitmentApplicationRepository, RecruitmentAttachmentStorage } from "../../domain/recruitment-application.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
-import { userRoutes } from "./user-routes.js";
-
-// Serialized once — the document never changes after boot.
-const openApiJson = JSON.stringify(openApiDocument);
+import { publicDiscoveryRoutes } from "./public-discovery-routes.js";
+import { policyRoutes } from "./policy-routes.js";
+import { clubApplicationRoutes } from "./club-application-routes.js";
+import { clubApplicationReviewRoutes } from "./club-application-review-routes.js";
+import { clubProfileRoutes } from "./club-profile-routes.js";
+import { boardNominationRoutes } from "./board-nomination-routes.js";
+import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
+import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
+import { membershipRoutes } from "./membership-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -28,7 +44,22 @@ const docsHtml = `<!doctype html>
 </body>
 </html>`;
 
-export function buildApp(deps: { userRepo: UserRepository; dbReady: () => boolean }) {
+export function buildApp(deps: {
+  auth?: AuthRouteDeps;
+  adminRepo?: AccountAdminRepository;
+  policyRepo?: PolicyManagementRepository;
+  applicationRepo?: ClubApplicationRepository;
+  applicationReviewRepo?: ClubApplicationReviewRepository;
+  clubProfileRepo?: ClubProfileRepository;
+  boardNominationRepo?: BoardNominationRepository;
+  recruitmentCampaignRepo?: RecruitmentCampaignRepository;
+  recruitmentApplicationRepo?: RecruitmentApplicationRepository;
+  membershipRepo?: MembershipRepository;
+  recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
+  applicationFiles?: ApplicationFileStorage | null;
+  publicRepo: PublicDiscoveryRepository;
+  dbReady: () => boolean;
+}) {
   const app = express();
   app.disable("x-powered-by");
   app.use((_req, res, next) => {
@@ -44,9 +75,88 @@ export function buildApp(deps: { userRepo: UserRepository; dbReady: () => boolea
     const ok = deps.dbReady(); // 503 when the DB is down, so orchestrators stop routing here
     res.status(ok ? 200 : 503).json({ ok });
   });
-  app.use("/api/v1", userRoutes(deps.userRepo));
+  app.use("/api/v1", publicDiscoveryRoutes(deps.publicRepo));
+  if (deps.auth && deps.adminRepo) {
+    app.use("/api/v1", authRoutes(deps.auth));
+    app.use("/api/v1", accountAdminRoutes({
+      adminRepo: deps.adminRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+    }));
+    if (deps.clubProfileRepo) {
+      app.use("/api/v1", clubProfileRoutes({
+        repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+    }
+    if (deps.boardNominationRepo) {
+      app.use("/api/v1", boardNominationRoutes({
+        repo: deps.boardNominationRepo, accessRepo: deps.auth.accessRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+    }
+    if (deps.recruitmentCampaignRepo && deps.policyRepo) {
+      app.use("/api/v1", recruitmentCampaignRoutes({
+        repo: deps.recruitmentCampaignRepo, accessRepo: deps.auth.accessRepo,
+        policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+    }
+    if (deps.recruitmentApplicationRepo) {
+      app.use("/api/v1", recruitmentApplicationRoutes({
+        repo: deps.recruitmentApplicationRepo,
+        files: deps.recruitmentAttachmentStorage ?? null,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions, accessRepo: deps.auth.accessRepo,
+      }));
+    }
+    if (deps.membershipRepo) {
+      app.use("/api/v1", membershipRoutes({ repo: deps.membershipRepo,
+        accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.policyRepo) {
+      app.use("/api/v1", policyRoutes({
+        repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+      if (deps.applicationRepo) {
+        app.use("/api/v1", clubApplicationRoutes({
+          repo: deps.applicationRepo, policy: deps.policyRepo,
+          files: deps.applicationFiles ?? null,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+        }));
+        if (deps.applicationReviewRepo) {
+          app.use("/api/v1", clubApplicationReviewRoutes({
+            repo: deps.applicationReviewRepo,
+            authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+            files: deps.applicationFiles ?? null,
+          }));
+        }
+      }
+    }
+  }
+  const hasAdmin = Boolean(deps.auth && deps.adminRepo);
+  const hasPolicy = Boolean(hasAdmin && deps.policyRepo);
+  const hasApplications = Boolean(hasPolicy && deps.applicationRepo);
+  const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
+  const hasClubProfiles = Boolean(hasAdmin && deps.clubProfileRepo);
+  const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
+  const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
+  const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
+  const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
+    .filter(([path]) => {
+      if (path.startsWith("/auth/")) return hasAdmin;
+      if (path.startsWith("/admin/policies")) return hasPolicy;
+      if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
+      if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
+      if (path.startsWith("/admin/")) return hasAdmin;
+      if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
+      if (path.startsWith("/applications")) return hasApplications;
+      if (path.startsWith("/clubs/{clubId}/settings")
+        || path.startsWith("/clubs/{clubId}/profile")
+        || path.startsWith("/clubs/{clubId}/departments")) return hasClubProfiles;
+      if (path.startsWith("/clubs/{clubId}/board-nomination")) return hasBoardNominations;
+      if (path.startsWith("/clubs/{clubId}/recruitment/campaigns")) return hasRecruitmentCampaigns;
+      return true;
+    }));
+  const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths });
   app.get("/docs/openapi.json", (_req, res) => {
-    res.type("json").send(openApiJson);
+    res.type("json").send(availableDocumentJson);
   });
   app.get("/docs", (_req, res) => {
     res.type("html").send(docsHtml);

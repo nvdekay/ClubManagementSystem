@@ -31,13 +31,10 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
-    services:
-      mongo:
-        image: mongo:7
-        ports:
-          - 27017:27017
     steps:
       - uses: actions/checkout@v4
+      # Same replica-set Mongo as local dev — a services: container cannot pass --replSet.
+      - run: docker compose up -d --wait mongo
       - uses: actions/setup-node@v4
         with:
           node-version: 22
