@@ -17,12 +17,12 @@ function date(value: unknown): Date {
 
 function history(value: unknown): MembershipStatusChange[] {
   return objectArray(value).flatMap((entry) => {
-    if (!("fromState" in entry) || typeof entry.toState !== "string"
-      || typeof entry.actorId !== "string") return [];
+    // actorId is written as an ObjectId; older entries may hold a string — accept both.
+    if (!("fromState" in entry) || typeof entry.toState !== "string" || !entry.actorId) return [];
     return [{ fromState: String(entry.fromState) as MembershipState,
       toState: entry.toState as MembershipState, effectiveDate: date(entry.effectiveDate),
       ...(typeof entry.reason === "string" ? { reason: entry.reason } : {}),
-      actorId: entry.actorId, at: date(entry.at) }];
+      actorId: String(entry.actorId), at: date(entry.at) }];
   });
 }
 

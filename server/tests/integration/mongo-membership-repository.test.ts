@@ -124,6 +124,9 @@ describe.skipIf(!uri)("Mongo membership lifecycle repository", () => {
     const banned = await repo.changeState({ clubId: clubId.toString(), membershipId: membershipId.toString(),
       actorId: managerId.toString(), state: "Banned", reason: "Policy breach", effectiveDate: now, now });
     expect(banned).toMatchObject({ state: "Banned", banReason: "Policy breach" });
+    // History is readable through the API (FR-UC21-10), including the ObjectId actor stored with it.
+    expect(banned.statusHistory).toEqual([expect.objectContaining({ fromState: "Active", toState: "Banned",
+      reason: "Policy breach", actorId: managerId.toString() })]);
     expect(await ucmsModels.clubMemberships.findById(membershipId).select("defaultRole").lean())
       .not.toHaveProperty("defaultRole");
     expect(await ucmsModels.clubPositionAssignments.findOne({ membershipId, effectiveTo: now })).toBeTruthy();
