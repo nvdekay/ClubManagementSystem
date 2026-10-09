@@ -20,6 +20,23 @@ interface NavItem {
   end?: boolean;
 }
 
+/** A parent entry that folds its children; it opens by itself while one of them is the current page. */
+interface NavGroup {
+  group: string;
+  label: string;
+  icon: AppIconName;
+  children: NavItem[];
+}
+
+type NavEntry = NavItem | NavGroup;
+
+const linkClass = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
+const activeLinkClass = "bg-primary-soft-app font-semibold text-primary-app hover:bg-primary-soft-app hover:text-primary-app";
+
+function isCurrent(item: NavItem, pathname: string): boolean {
+  return pathname === item.to || (!item.end && pathname.startsWith(`${item.to}/`));
+}
+
 const studentPrefixes = ["/student", "/workspace/applications", "/workspace/recruitment",
   "/workspace/event-registrations", "/workspace/feedback", "/workspace/clubs"];
 
@@ -47,6 +64,8 @@ export function WorkspaceShell() {
   const [menuPath, setMenuPath] = useState<string | null>(null);
   const menuOpen = menuPath === location.pathname;
   const menuButton = useRef<HTMLButtonElement>(null);
+  // Explicit open/closed choices per group; a group without one follows the current page.
+  const [folded, setFolded] = useState<Record<string, boolean>>({});
   const context = contextFor(location.pathname);
   const workspace = auth.data?.workspaces.find((item) => matches(item, context));
 
@@ -84,6 +103,13 @@ export function WorkspaceShell() {
   const roleName = workspace?.kind === "club" && workspace.role ? t(`auth.${workspace.role}`)
     : context.kind === "icpdp" ? t("auth.officerRole") : t("auth.student");
 
+  function navLink(item: NavItem) {
+    return <NavLink to={item.to} end={item.end} className={({ isActive }) => cn(linkClass, { [activeLinkClass]: isActive })}>
+      <AppIcon name={item.icon} />
+      <span className="min-w-0 flex-1">{item.label}</span>
+    </NavLink>;
+  }
+
   async function signOut() {
     try {
       await logout.mutateAsync(me.csrfToken);
@@ -120,17 +146,25 @@ export function WorkspaceShell() {
         {nav.map((section) => section.items.length > 0 && (
           <div key={section.title} className="mb-5">
             <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-muted-app uppercase">{section.title}</p>
-            <ul className="space-y-1">{section.items.map((item) => (
-              <li key={item.to}>
-                <NavLink to={item.to} end={item.end} className={({ isActive }) => cn(
-                  "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app",
-                  { "bg-primary-soft-app font-semibold text-primary-app hover:bg-primary-soft-app hover:text-primary-app": isActive },
-                )}>
-                  <AppIcon name={item.icon} />
-                  <span className="min-w-0 flex-1">{item.label}</span>
-                </NavLink>
-              </li>
-            ))}</ul>
+            <ul className="space-y-1">{section.items.map((entry) => {
+              if (!("group" in entry)) return <li key={entry.to}>{navLink(entry)}</li>;
+              const containsCurrent = entry.children.some((child) => isCurrent(child, location.pathname));
+              const open = folded[entry.group] === undefined ? containsCurrent : !folded[entry.group];
+              const listId = `nav-group-${entry.group}`;
+              return <li key={entry.group}>
+                <button type="button" aria-expanded={open} aria-controls={listId}
+                  title={t("common.toggleGroup", { group: entry.label })}
+                  onClick={() => setFolded({ ...folded, [entry.group]: open })}
+                  className={cn(linkClass, "w-full text-left", { "text-text-app": containsCurrent })}>
+                  <AppIcon name={entry.icon} />
+                  <span className="min-w-0 flex-1">{entry.label}</span>
+                  <AppIcon name="chevronRight" className={cn("size-4 transition-transform", { "rotate-90": open })} />
+                </button>
+                {open && <ul id={listId} className="mt-1 ml-5 space-y-1 border-l border-border-app pl-2">
+                  {entry.children.map((child) => <li key={child.to}>{navLink(child)}</li>)}
+                </ul>}
+              </li>;
+            })}</ul>
           </div>
         ))}
       </nav>
@@ -207,10 +241,9 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
 }
 
 function navigation(context: Context, workspace: Workspace | undefined,
-  t: (key: `common.${keyof typeof common.en}`) => string): Array<{ title: string; items: NavItem[] }> {
-  const clubsPath = context.kind === "icpdp" ? "/icpdp/clubs" : "/clubs";
+  t: (key: `common.${keyof typeof common.en}`) => string): Array<{ title: string; items: NavEntry[] }> {
   const explore = { title: t("common.sectionExplore"), items: [
-    { to: clubsPath, label: t("common.navDiscover"), icon: "compass" as const },
+    { to: "/clubs", label: t("common.navDiscover"), icon: "compass" as const },
     { to: "/events", label: t("common.navEvents"), icon: "calendar" as const },
   ] };
   if (context.kind === "student") {
@@ -224,19 +257,30 @@ function navigation(context: Context, workspace: Workspace | undefined,
     ] }, explore];
   }
   if (context.kind === "icpdp") {
+    // Grouped by job so the long ICPDP menu reads as a few areas instead of one flat list.
     return [{ title: t("common.sectionWork"), items: [
       { to: "/icpdp", label: t("common.navOverview"), icon: "home", end: true },
-      { to: "/workspace/reviews", label: t("common.navReviews"), icon: "inbox" },
-      { to: "/workspace/board-nominations", label: t("common.navNominations"), icon: "badge" },
-      { to: "/workspace/leadership-transitions", label: t("common.navTransitions"), icon: "calendar" },
-      { to: "/workspace/student-feedback", label: t("common.navFeedbackInbox"), icon: "inbox" },
-      { to: "/workspace/policy", label: t("common.navPolicy"), icon: "shield" },
-      { to: "/workspace/club-fields", label: t("common.navClubFields"), icon: "layers" },
-      { to: "/workspace/properties", label: t("common.navProperties"), icon: "mapPin" },
-      { to: "/workspace/evaluation-schemes", label: t("common.navEvaluationSchemes"), icon: "star" },
-      { to: "/workspace/exports", label: t("common.navExports"), icon: "file" },
-      { to: "/icpdp/accounts", label: t("common.navAccounts"), icon: "users" },
-    ] }, explore];
+      { group: "clubs", label: t("common.groupClubs"), icon: "users", children: [
+        { to: "/icpdp/clubs", label: t("common.icpdpClubs"), icon: "compass" },
+        { to: "/workspace/reviews", label: t("common.icpdpReviews"), icon: "inbox" },
+        { to: "/workspace/board-nominations", label: t("common.icpdpNominations"), icon: "badge" },
+        { to: "/workspace/leadership-transitions", label: t("common.icpdpTransitions"), icon: "calendar" },
+        { to: "/workspace/club-fields", label: t("common.icpdpClubFields"), icon: "layers" },
+      ] },
+      { group: "events", label: t("common.groupEvents"), icon: "calendar", children: [
+        { to: "/events", label: t("common.icpdpEvents"), icon: "calendar" },
+        { to: "/workspace/properties", label: t("common.icpdpProperties"), icon: "mapPin" },
+      ] },
+      { group: "evaluation", label: t("common.groupEvaluation"), icon: "star", children: [
+        { to: "/workspace/evaluation-schemes", label: t("common.icpdpSchemes"), icon: "star" },
+        { to: "/workspace/exports", label: t("common.icpdpExports"), icon: "file" },
+      ] },
+      { to: "/workspace/student-feedback", label: t("common.icpdpFeedback"), icon: "megaphone" },
+      { group: "system", label: t("common.groupSystem"), icon: "settings", children: [
+        { to: "/workspace/policy", label: t("common.icpdpPolicy"), icon: "shield" },
+        { to: "/icpdp/accounts", label: t("common.icpdpAccounts"), icon: "users" },
+      ] },
+    ] }];
   }
   const base = `/club/${encodeURIComponent(context.clubId)}`;
   function can(permission: string) {

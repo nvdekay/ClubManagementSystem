@@ -6,6 +6,7 @@ import { RoleDashboard } from "@/components/custom/RoleDashboard";
 export function IcpdpHomePage() {
   const { t } = useTranslation();
   return <WorkspaceHome subtitle={t("auth.icpdpHome")} actions={[
+    { href: "/icpdp/clubs", icon: "compass", label: t("common.icpdpClubs"), description: t("clubLifecycle.homeDescription") },
     { href: "/workspace/reviews", icon: "inbox", label: t("reviews.title"), description: t("reviews.description") },
     { href: "/workspace/board-nominations", icon: "badge", label: t("boardNominations.queueTitle"),
       description: t("boardNominations.queueDescription") },
@@ -18,6 +19,6 @@ export function IcpdpHomePage() {
       description: t("evaluationSchemes.homeDescription") },
     { href: "/workspace/exports", icon: "file", label: t("exports.title"), description: t("exports.homeDescription") },
     { href: "/icpdp/accounts", icon: "users", label: t("auth.manageAccounts"), description: t("auth.manageAccountsDescription") },
-    { href: "/icpdp/clubs", icon: "compass", label: t("discovery.navClubs"), description: t("clubLifecycle.homeDescription") },
+
   ]}><RoleDashboard context={{ workspace: "icpdp" }} /></WorkspaceHome>;
 }
