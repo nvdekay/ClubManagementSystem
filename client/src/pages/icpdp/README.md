@@ -11,3 +11,5 @@ task và ghi đúng một quyết định xác nhận toàn phần hoặc một 
 
 `IcpdpHomePage` triển khai dashboard UC02: hàng đợi, SLA, trạng thái CLB, báo cáo, tài chính,
 vi phạm, lịch đặt, sự kiện nội bộ và lịch sử cơ cấu/ban điều hành.
+
+`StudentFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho ICPDP; chỉ ICPDP Officer đọc.

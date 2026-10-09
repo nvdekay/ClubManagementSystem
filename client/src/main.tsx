@@ -33,6 +33,9 @@ import { RecruitmentReviewPage } from "./pages/club/RecruitmentReviewPage.js";
 import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicationPage.js";
 import { RecruitmentApplicationsPage } from "./pages/student/RecruitmentApplicationsPage.js";
 import { MyEventRegistrationsPage } from "./pages/student/MyEventRegistrationsPage.js";
+import { StudentFeedbackPage } from "./pages/student/StudentFeedbackPage.js";
+import { ClubFeedbackInboxPage } from "./pages/club/ClubFeedbackInboxPage.js";
+import { StudentFeedbackInboxPage } from "./pages/icpdp/StudentFeedbackInboxPage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -64,6 +67,9 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
             <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
             <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
+            <Route path="workspace/feedback" element={<StudentFeedbackPage />} />
+            <Route path="workspace/student-feedback" element={<StudentFeedbackInboxPage />} />
+            <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
             <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
             <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
             <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />

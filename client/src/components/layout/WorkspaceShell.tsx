@@ -20,7 +20,7 @@ interface NavItem {
 }
 
 const studentPrefixes = ["/student", "/workspace/applications", "/workspace/recruitment",
-  "/workspace/event-registrations"];
+  "/workspace/event-registrations", "/workspace/feedback"];
 
 /** The workspace a management URL belongs to; the sidebar and access check follow it. */
 function contextFor(pathname: string): Context {
@@ -218,6 +218,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/workspace/recruitment", label: t("common.navRecruitment"), icon: "send" },
       { to: "/workspace/applications", label: t("common.navApplications"), icon: "file" },
       { to: "/workspace/event-registrations", label: t("common.navMyEvents"), icon: "calendar" },
+      { to: "/workspace/feedback", label: t("common.navFeedback"), icon: "send" },
     ] }, explore];
   }
   if (context.kind === "icpdp") {
@@ -226,6 +227,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/workspace/reviews", label: t("common.navReviews"), icon: "inbox" },
       { to: "/workspace/board-nominations", label: t("common.navNominations"), icon: "badge" },
       { to: "/workspace/leadership-transitions", label: t("common.navTransitions"), icon: "calendar" },
+      { to: "/workspace/student-feedback", label: t("common.navFeedbackInbox"), icon: "inbox" },
       { to: "/workspace/policy", label: t("common.navPolicy"), icon: "shield" },
       { to: "/icpdp/accounts", label: t("common.navAccounts"), icon: "users" },
     ] }, explore];
@@ -239,6 +241,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
     ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "badge" as const }] : []),
     ...(can("club.recruitment.manage") ? [{ to: `${base}/recruitment`, label: t("common.navCampaigns"), icon: "megaphone" as const }] : []),
     ...(can("club.profile.manage") ? [{ to: `${base}/settings`, label: t("common.navSettings"), icon: "settings" as const }] : []),
+    ...(can("club.feedback.view") ? [{ to: `${base}/feedback`, label: t("common.navFeedbackInbox"), icon: "inbox" as const }] : []),
     { to: `/clubs/${encodeURIComponent(context.clubId)}`, label: t("common.navPublicPage"), icon: "globe" },
   ] }, explore];
 }

@@ -17,3 +17,6 @@ draft, công bố trong một kỳ học đã cấu hình và xử lý cảnh b�
 
 `ClubHomePage` triển khai dashboard UC02 theo `clubId`; panel nhạy cảm chỉ được trả về khi
 membership hiện hành có đúng permission tương ứng, còn Leader nhận toàn bộ panel quản trị.
+
+`ClubFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho CLB, cần `club.feedback.view`;
+người gửi ẩn danh không bao giờ được hiển thị.
