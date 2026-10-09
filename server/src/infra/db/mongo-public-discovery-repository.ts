@@ -177,8 +177,11 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
     async getCampaign(campaignId, now): Promise<PublicCampaign | null> {
       const doc = await campaigns.findOne({ _id: new Types.ObjectId(campaignId),
         state: { $in: campaignStates }, windowStart: { $lte: now }, windowEnd: { $gt: now } }).lean();
-      if (!doc || !await clubs.exists({ _id: doc.clubId, state: "Active" })) return null;
-      return mapCampaignDetail(doc);
+      if (!doc) return null;
+      const club = await clubs.findById(doc.clubId).select("state").lean();
+      // A suspended club's campaign stays visible, flagged, so students learn why they cannot apply.
+      if (club?.state !== "Active" && club?.state !== "Suspended") return null;
+      return { ...mapCampaignDetail(doc), clubSuspended: club.state === "Suspended" };
     },
     async clubUpcomingEvents(clubId, now): Promise<PublicEvent[]> {
       const docs = await events.find({

@@ -92,10 +92,13 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       windowStart: { $lte: now }, windowEnd: { $gt: now } });
     if (session) query = query.session(session);
     const doc = await query.lean();
-    if (!doc || !await clubs.exists({ _id: doc.clubId, state: "Active" }).session(session ?? null)) {
-      return null;
+    if (!doc) return null;
+    const club = await clubs.findById(doc.clubId).select("state").session(session ?? null).lean();
+    // UC15 (2026-10-10): a suspended club keeps its campaign open but accepts no applications for now.
+    if (club?.state === "Suspended") {
+      throw new DomainError("club is suspended; applications are paused", "conflict", { reason: "clubSuspended" });
     }
-    return mapCampaign(doc);
+    return club?.state === "Active" ? mapCampaign(doc) : null;
   }
 
   async function eligibility(userId: Types.ObjectId, clubId: Types.ObjectId,

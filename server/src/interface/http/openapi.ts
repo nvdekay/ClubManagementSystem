@@ -8,6 +8,7 @@ import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
 import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./evaluation-scheme-routes.js";
 import { exportBody, exportPreviewBody } from "./export-routes.js";
+import { lifecycleReasonBody, suspendBody } from "./club-lifecycle-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
@@ -83,6 +84,15 @@ const EvaluationScheme = evaluationSchemeSettingsBody.extend({
   state: z.enum(["Draft", "Active", "Superseded"]), totalWeight: z.number(),
   activatedAt: z.string().optional(), createdAt: z.string(),
 });
+const ClubLifecycleSummary = z.object({
+  id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(), activeMembers: z.number(),
+  suspension: z.object({ reason: z.string(), suspendedAt: z.string(), suspendedBy: z.string(),
+    until: z.string().nullable(), reminderSentAt: z.string().optional() }).optional(),
+  dissolution: z.object({ decidedAt: z.string(), decidedBy: z.string(), reason: z.string(),
+    effectiveSemester: z.string(), effectiveFrom: z.string(), effectiveTo: z.string() }).optional(),
+});
+const CascadeResult = z.object({ cancelledEvents: z.number(), cancelledRegistrations: z.number(),
+  cancelledBookings: z.number() });
 const ClubField = clubFieldBody.extend({ id: z.string(), isActive: z.boolean() });
 const ClubFieldUsage = ClubField.extend({ clubCount: z.number(), applicationCount: z.number() });
 const FoundingIssue = z.enum(["clubName", "field", "summary", "objectives", "fanpageUrl",
@@ -270,6 +280,7 @@ const PublicCampaign = z.object({
 const PublicCampaignDetail = PublicCampaign.extend({
   clubId: z.string(), positions: z.array(z.string()), criteria: z.string().optional(),
   selectionSteps: z.array(z.unknown()), formSchema: z.array(z.unknown()), rubric: z.array(z.unknown()),
+  clubSuspended: z.boolean().optional(),
 });
 const PublicEvent = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(),
@@ -502,6 +513,54 @@ export const openApiDocument = createDocument({
           "409": { description: "A field with this name already exists",
             content: { "application/json": { schema: ApiError } } },
         },
+      },
+    },
+    "/admin/clubs": {
+      get: {
+        summary: "List clubs with their lifecycle state and the suspensions ending soon (UC15)",
+        responses: { "200": { description: "Clubs", content: { "application/json": { schema: envelope(z.object({
+          clubs: z.array(ClubLifecycleSummary), expiringSuspensions: z.array(ClubLifecycleSummary),
+        })) } } } },
+      },
+    },
+    "/admin/clubs/{id}": {
+      get: {
+        summary: "Club lifecycle detail: obligations, history and the semester a dissolution would take effect",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Club detail", content: { "application/json": { schema: envelope(z.object({
+          club: ClubLifecycleSummary.extend({ openCampaigns: z.array(z.unknown()), upcomingEvents: z.array(z.unknown()),
+            activeTerm: z.unknown().optional(), history: z.array(z.unknown()) }),
+          nextSemester: z.object({ code: z.string(), startAt: z.string(), endAt: z.string() }).nullable(),
+        })) } } } },
+      },
+    },
+    "/admin/clubs/{id}/suspend": {
+      post: {
+        summary: "Suspend an active club until a date or indefinitely; cancels upcoming events and bookings",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: suspendBody } } },
+        responses: {
+          "200": { description: "What the cascade cancelled", content: { "application/json": { schema: envelope(CascadeResult) } } },
+          "409": { description: "The club is not active", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/clubs/{id}/reactivate": {
+      post: {
+        summary: "Reactivate a suspended club",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: lifecycleReasonBody } } },
+        responses: { "200": { description: "Reactivated",
+          content: { "application/json": { schema: envelope(z.object({ reactivated: z.literal(true) })) } } } },
+      },
+    },
+    "/admin/clubs/{id}/dissolve": {
+      post: {
+        summary: "Schedule dissolution from the next semester; cancels what would end after it (BR45)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: lifecycleReasonBody } } },
+        responses: { "200": { description: "Dissolution scheduled",
+          content: { "application/json": { schema: envelope(CascadeResult.extend({ effectiveSemester: z.string() })) } } } },
       },
     },
     "/admin/exports/options": {

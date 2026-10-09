@@ -23,6 +23,7 @@ import { clubFields } from "./clubFields";
 import { properties } from "./properties";
 import { evaluationSchemes } from "./evaluationSchemes";
 import { exports } from "./exports";
+import { clubLifecycle } from "./clubLifecycle";
 
 export type Locale = "en" | "vi";
 
@@ -34,7 +35,7 @@ export const resources = {
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
-    studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en,
+    studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en,
     demo: demo.en } },
   vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
@@ -42,7 +43,7 @@ export const resources = {
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
     eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
-    studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi,
+    studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi,
     demo: demo.vi } },
 };
 

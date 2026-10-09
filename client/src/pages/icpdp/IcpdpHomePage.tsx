@@ -9,6 +9,8 @@ export function IcpdpHomePage() {
     { href: "/workspace/reviews", icon: "inbox", label: t("reviews.title"), description: t("reviews.description") },
     { href: "/workspace/board-nominations", icon: "badge", label: t("boardNominations.queueTitle"),
       description: t("boardNominations.queueDescription") },
+    { href: "/workspace/club-lifecycle", icon: "settings", label: t("clubLifecycle.title"),
+      description: t("clubLifecycle.homeDescription") },
     { href: "/workspace/policy", icon: "shield", label: t("policy.title"), description: t("auth.policyDescription") },
     { href: "/workspace/club-fields", icon: "layers", label: t("clubFields.title"),
       description: t("clubFields.homeDescription") },

@@ -481,6 +481,9 @@ export const ucmsTables = {
       "dissolution": {
         "type": "json"
       },
+      "suspension": {
+        "type": "json"
+      },
       "sourceApplicationId": {
         "type": "objectId"
       },

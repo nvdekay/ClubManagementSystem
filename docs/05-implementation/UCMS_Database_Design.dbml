@@ -358,7 +358,8 @@ Table clubs {
   channels json [note: 'Các kênh truyền thông mà CLB công bố.']
   operatingScope string
   institutionalFields json [note: 'Chỉ ICPDP sửa được (UC09 E1).']
-  dissolution json [note: 'Do UC15 đặt: { decidedAt, decidedBy, reason, effectiveSemester }. Vẫn tồn tại khi trạng thái còn là Active — việc giải thể là có lịch, không tức thì (BR45).']
+  dissolution json [note: 'Do UC15 đặt: { decidedAt, decidedBy, reason, effectiveSemester, effectiveFrom, effectiveTo }. Vẫn tồn tại khi trạng thái còn là Active — việc giải thể là có lịch, không tức thì (BR45); job vòng đời chuyển Dissolving ở effectiveFrom và Dissolved ở effectiveTo.']
+  suspension json [note: 'Do UC15 đặt khi tạm ngừng: { reason, suspendedAt, suspendedBy, until, reminderSentAt }; until null = không thời hạn. Job vòng đời tự kích hoạt lại khi tới until và báo ICPDP trước 3 ngày (reminderSentAt). Xoá khi kích hoạt lại; lịch sử nằm ở auditLogs.']
   sourceApplicationId objectId
   createdAt datetime [not null]
   updatedAt datetime

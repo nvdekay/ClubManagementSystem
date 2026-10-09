@@ -62,6 +62,8 @@ export interface PublicRecruitmentCampaign {
   selectionSteps: RecruitmentSelectionStep[];
   formSchema: RecruitmentFormField[];
   rubric: RecruitmentRubricCriterion[];
+  /** The club is suspended (UC15): the campaign stays visible but takes no applications for now. */
+  clubSuspended?: boolean;
 }
 
 export interface CampaignResult {

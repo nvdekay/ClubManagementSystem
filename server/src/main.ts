@@ -15,6 +15,8 @@ import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
 import { mongoPropertyRepository } from "./infra/db/mongo-property-repository.js";
 import { mongoEvaluationSchemeRepository } from "./infra/db/mongo-evaluation-scheme-repository.js";
 import { mongoExportRepository } from "./infra/db/mongo-export-repository.js";
+import { mongoClubLifecycleRepository } from "./infra/db/mongo-club-lifecycle-repository.js";
+import { startClubLifecycleJob } from "./interface/jobs/club-lifecycle-job.js";
 import { exportFileWriter } from "./infra/files/export-file-writer.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
@@ -56,6 +58,7 @@ const commonDeps = {
   publicRepo: mongoPublicDiscoveryRepository(),
   dbReady: () => mongoose.connection.readyState === 1,
 };
+const clubLifecycleRepo = mongoClubLifecycleRepository();
 const app = authConfig ? buildApp({
   ...commonDeps,
   adminRepo: mongoAccountAdminRepository(),
@@ -66,6 +69,7 @@ const app = authConfig ? buildApp({
   evaluationSchemeRepo: mongoEvaluationSchemeRepository(),
   exportRepo: mongoExportRepository(),
   exportWriter: exportFileWriter(),
+  clubLifecycleRepo,
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),
@@ -95,6 +99,7 @@ const app = authConfig ? buildApp({
     secureCookies: config.NODE_ENV === "production",
   },
 }) : buildApp(commonDeps);
+const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
 const server = app.listen(config.PORT, () => {
   console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`);
 });
@@ -104,6 +109,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
     if (shuttingDown) process.exit(1); // second signal = stop waiting, exit now
     shuttingDown = true;
+    stopLifecycleJob();
     // Drain deadline — a hung in-flight request must not block SIGTERM until the platform SIGKILLs.
     setTimeout(() => {
       console.error("shutdown deadline hit — forcing exit");

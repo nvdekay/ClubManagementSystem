@@ -30,3 +30,7 @@ D4–D8 (D1–D3 luôn có), trọng số % (tổng 100, có "Chia đều"), cho
 
 `DataExportPage` (UC55) xuất dữ liệu ra `xlsx`/`csv`/`pdf`: chọn loại dữ liệu, thời gian (toàn bộ, học kỳ,
 khoảng ngày), CLB, trạng thái; đếm số dòng trước khi tải; không có dòng nào thì không tạo file.
+
+`ClubLifecyclePage` + `ClubLifecyclePanel` (UC15) quản lý vòng đời CLB: danh sách lọc theo trạng thái, khối
+"Sắp hết hạn tạm ngừng", chi tiết công việc đang chạy và lịch sử; tạm ngừng (đến ngày hoặc không thời hạn),
+kích hoạt lại, giải thể từ học kỳ kế tiếp — mọi quyết định bắt buộc lý do.
