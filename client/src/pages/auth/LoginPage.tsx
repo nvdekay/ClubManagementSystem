@@ -6,6 +6,9 @@ import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { googleLoginUrl } from "@/services/auth";
 import { cn } from "@/utils/cn";
 
+// FPT University Hoa Lac campus, served by the university website.
+const campusImageUrl = "https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/banner-truong-dai-hoc-fpt-co-so-ha-noi.jpg";
+
 interface LoginPageProps {
   authError: string | null;
   isPending: boolean;
@@ -20,9 +23,18 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
   return (
     <main className="flex min-h-full flex-wrap bg-auth-page-bg-app font-auth-body text-auth-page-text-app">
       <section className="relative m-3 flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden rounded-[2rem] bg-primary-soft-app p-[clamp(24px,5vw,64px)]">
-        <span aria-hidden="true" className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-auth-orb-large-app opacity-80 blur-3xl" />
-        <span aria-hidden="true" className="pointer-events-none absolute bottom-24 left-1/3 size-48 rounded-full bg-auth-orb-small-app opacity-70 blur-2xl" />
-        <UniversityLogo alt={t("auth.schoolLogo")} priority className="relative w-66 sm:w-76" />
+        <img
+          src={campusImageUrl}
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+          draggable={false}
+          className="pointer-events-none absolute inset-0 size-full object-cover object-[78%_center]"
+        />
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary-soft-app via-primary-soft-app/60 via-35% to-transparent to-60%" />
+        <Link to="/" aria-label={t("auth.brand")} className="relative self-start rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring-app">
+          <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />
+        </Link>
         <div className="relative flex max-w-110 flex-col gap-3">
           <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em]">
             {t("auth.brand")}
