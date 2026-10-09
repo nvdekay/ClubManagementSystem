@@ -93,18 +93,24 @@ Schema có collection cho các UC này nhưng **schema không có nghĩa workflo
   nhiệm HEBE Club (đủ permission), thành viên Mây Mưa Club.
 - Tài khoản QA `*@ucms.test`: `qa.student`, `qa.applicant`, `qa.applicant2`–`4`, `qa.uc13.1`–`4`.
 
-### Fixture QA trong DB local (không có trong seed)
+### Dữ liệu demo (dựng lại được)
 
-| Fixture | ID / ghi chú |
+Database local đã được làm sạch và dựng lại bằng script, không còn fixture `[QA]` cũ:
+
+```bash
+npm run db:init && npm run seed && npm run seed:demo -- --owner=<email Google của bạn> --owner-name="Tên"
+```
+
+`seed:demo` cấp cho tài khoản `--owner`: Chủ nhiệm HEBE Club, thành viên Mây Mưa Club, `ICPDP_OFFICER`.
+Dữ liệu để thử theo vai trò:
+
+| Vai trò | Có sẵn để thử |
 |---|---|
-| Sự kiện sắp tới mở đăng ký `[QA] Workshop nhảy hiện đại…` (HEBE, 2 chỗ, waitlist) | `a2000000000000000000aa29` |
-| Sự kiện đang diễn ra `[QA] Check-in demo — Đêm nhạc HEBE` (mã `QA-2026`, cho walk-in) | `a2000000000000000000aa31` — giờ bắt đầu/kết thúc tính theo lúc tạo, sẽ hết hạn |
-| Kế hoạch chuyển giao `[QA] CLB Chuyển giao Nhiệm kỳ` | `ac130000000000000000000f` |
-| Membership qa.applicant @ HEBE (đang `Active`) | `ac2400000000000000000001` |
-| CLB QA cũ `CLB-6348CB00`, hồ sơ/đợt tuyển `[QA] …`, góp ý `[QA] …` | dữ liệu QA, chờ quyết định dọn |
+| Sinh viên | đăng ký `Workshop nhảy hiện đại K-pop` (còn chỗ), `CTF Warm-up` (đầy → danh sách chờ), `Giải cầu lông FBC Open` (đầy, không chờ), `Sinh hoạt tháng 10` của Mây Mưa (chỉ thành viên); check-in `Tuần lễ âm nhạc HEBE Unplugged` bằng mã `HEBE2026` (đang diễn ra tới +5 ngày); gửi phản hồi `Workshop Origami cơ bản` (window còn ~2 ngày); ứng tuyển đợt tuyển EHC; nộp hồ sơ thành lập (thêm đồng sáng lập bằng email demo, vd. `minhanh@demo.ucms.edu.vn`); góp ý; CLB của tôi |
+| ICPDP | 2 hồ sơ thành lập chờ duyệt (Nhiếp ảnh Đường phố, Cờ vây); 1 đề cử BCN (CLB Lập trình Game); 1 kế hoạch chuyển giao (FPTU Data Science Club); 2 góp ý gửi ICPDP; quản lý tài khoản |
+| Chủ nhiệm HEBE | 9 thành viên (2 tạm ngưng) + 1 yêu cầu rời chờ xử lý; đợt tuyển Gen 8 với 4 đơn chờ xét; 3 góp ý (1 có tên, 2 ẩn danh); sự kiện của CLB |
 
-Script QA (Playwright qua Microsoft Edge, mint session, tạo fixture) nằm trong scratchpad của
-session cũ và **không** còn ở session mới; nếu cần QA lại, viết lại script hoặc tạo fixture mới.
+Các mốc thời gian sự kiện tính theo lúc chạy seed; chạy lại trên DB trống để làm mới.
 
 ## Kiểm chứng gần nhất (2026-10-09)
 
