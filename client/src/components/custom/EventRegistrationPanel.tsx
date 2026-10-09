@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router";
 
+import { EventCheckInForm } from "@/components/custom/EventCheckInForm";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppInput } from "@/components/ui/input/AppInput";
@@ -10,13 +11,13 @@ import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
-import { useEventRegistrationAction, useEventRegistrationContext } from "@/hooks/useEventRegistrations";
+import { useMyAttendances } from "@/hooks/useEventCheckIns";
+import { isSignInRequired, useEventRegistrationAction, useEventRegistrationContext } from "@/hooks/useEventRegistrations";
 import type { Locale } from "@/i18n";
-import {
-  EventRegistrationError,
-  type EventRegistrationAnswer,
-  type EventRegistrationContext,
-  type EventRegistrationFormField,
+import type {
+  EventRegistrationAnswer,
+  EventRegistrationContext,
+  EventRegistrationFormField,
 } from "@/services/eventRegistrations";
 import { formatDate } from "@/utils/formatDate";
 
@@ -42,7 +43,7 @@ export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps)
     body = <div className="space-y-3"><p role="status" className="text-sm text-muted-app">{t("eventRegistrations.loading")}</p>
       <AppSkeleton className="h-24 w-full" /></div>;
   } else if (context.isError) {
-    body = context.error instanceof EventRegistrationError && context.error.status === 401
+    body = isSignInRequired(context.error)
       ? <SignInPrompt to={loginTarget} />
       : <AppNotice tone="danger" role="alert" title={t("eventRegistrations.loadError")}>
         <p>{context.error.message}</p>
@@ -76,12 +77,14 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const action = useEventRegistrationAction();
+  const attendances = useMyAttendances(true);
   const inFlight = useRef(false);
   const [answers, setAnswers] = useState<Record<string, EventRegistrationAnswer>>({});
   const [feedback, setFeedback] = useState<"registered" | "cancelled" | null>(null);
   const { event, registration } = context;
   const now = new Date();
   const started = new Date(event.startAt) <= now;
+  const attendance = attendances.data?.find((item) => item.eventId === event.id);
   const spotsLeft = Math.max(event.capacity - event.confirmedRegistrationCount, 0);
   const full = event.capacity > 0 && spotsLeft === 0;
   const active = registration && registration.state !== "Cancelled" ? registration : null;
@@ -128,6 +131,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
   let main;
   if (active) {
     main = (
+      <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
           <AppBadge tone={active.state === "Confirmed" ? "success" : "warning"}>
@@ -140,6 +144,17 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
           : <AppButton variant="secondary" disabled={action.isPending} onClick={cancel}>
             {action.isPending ? t("eventRegistrations.cancelling") : t("eventRegistrations.cancel")}
           </AppButton>}
+      </div>
+      {attendance ? (
+        <AppNotice tone="success" title={t("eventRegistrations.checkedInBadge")}>
+          <p>{t("eventRegistrations.checkedInAt", { date: formatDate(attendance.checkedInAt, locale) })}</p>
+        </AppNotice>
+      ) : active.state === "Confirmed" && new Date(active.checkInOpensAt) <= now && now < new Date(active.checkInClosesAt) && (
+        <div className="rounded-2xl bg-bg-app p-4">
+          <h3 className="mb-2 font-semibold">{t("eventRegistrations.checkInOpen")}</h3>
+          <EventCheckInForm eventId={event.id} />
+        </div>
+      )}
       </div>
     );
   } else if (!context.registrationOpen) {

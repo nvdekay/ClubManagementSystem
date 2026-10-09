@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  EventRegistrationError,
   cancelEventRegistration,
   fetchEventRegistrationContext,
   fetchMyEventRegistrations,
@@ -8,6 +9,11 @@ import {
 } from "@/services/eventRegistrations";
 
 const key = ["event-registrations"] as const;
+
+/** True when a registration/check-in request failed because the visitor is not signed in. */
+export function isSignInRequired(error: unknown): boolean {
+  return error instanceof EventRegistrationError && error.status === 401;
+}
 
 /** Only runs for signed-in users; a disabled query stays pending, so callers branch on `enabled` first. */
 export function useEventRegistrationContext(eventId: string, enabled: boolean) {

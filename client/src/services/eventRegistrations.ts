@@ -18,6 +18,8 @@ export interface EventRegistration {
   eventTitle: string;
   eventStartAt: string;
   eventEndAt: string;
+  checkInOpensAt: string;
+  checkInClosesAt: string;
   state: EventRegistrationState;
   waitlistPosition?: number;
   answers: Record<string, EventRegistrationAnswer>;
