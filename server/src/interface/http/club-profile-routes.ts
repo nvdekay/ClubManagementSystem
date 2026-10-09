@@ -4,6 +4,7 @@ import type { ClubAccessRepository } from "../../domain/access.js";
 import type { AuthRepository } from "../../domain/auth.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
 import { DomainError } from "../../domain/errors.js";
+import type { PolicyRepository } from "../../domain/policy.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
 import {
@@ -20,6 +21,7 @@ import { ok } from "./response.js";
 export interface ClubProfileRouteDeps {
   repo: ClubProfileRepository;
   accessRepo: ClubAccessRepository;
+  policy: PolicyRepository;
   authRepo: AuthRepository;
   sessions: SessionService;
 }
@@ -59,11 +61,11 @@ export function clubProfileRoutes(deps: ClubProfileRouteDeps): Router {
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
   router.get("/clubs/:clubId/settings", authGuard(guard, false), async (req, res) => {
-    ok(res, await getClubSettings(deps.repo, deps.accessRepo, actor(res),
+    ok(res, await getClubSettings(deps.repo, deps.accessRepo, deps.policy, actor(res),
       parsed(id, req.params.clubId)));
   });
   router.patch("/clubs/:clubId/profile", authGuard(guard), async (req, res) => {
-    ok(res, await updateClubProfile(deps.repo, deps.accessRepo, actor(res),
+    ok(res, await updateClubProfile(deps.repo, deps.accessRepo, deps.policy, actor(res),
       parsed(id, req.params.clubId), parsed(clubProfileBody, req.body), new Date()));
   });
   router.post("/clubs/:clubId/departments/template", authGuard(guard), async (req, res) => {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { PolicyManagementRepository, PolicySettings, PolicyVersion } from "../../src/domain/policy.js";
+import {
+  DEFAULT_FORM_REQUIREMENTS, type PolicyManagementRepository, type PolicySettings, type PolicyVersion,
+} from "../../src/domain/policy.js";
 import {
   createPolicyVersion, listPolicyVersions, normalizePolicySettings,
 } from "../../src/usecase/policy.js";
@@ -11,8 +13,9 @@ const student = { systemRoleCodes: async () => [] };
 
 function settings(): PolicySettings {
   return {
-    allowedEmailDomains: ["FPT.EDU.VN"], minFoundingMembers: 5,
-    mandatoryApplicationDocuments: ["charter", "founder-list"],
+    minFoundingMembers: 5,
+    formRequirements: { clubFounding: { ...DEFAULT_FORM_REQUIREMENTS.clubFounding, logo: false },
+      clubProfile: { ...DEFAULT_FORM_REQUIREMENTS.clubProfile, contactEmail: true } },
     reportDeadlines: [{ reportType: "periodic", dueDaysAfterPeriodEnd: 10,
       remindBeforeDays: 3, overdueAfterDays: 2, escalateAfterDays: 5 }],
     conflictThresholdMinutes: 30, feedbackWindowHours: 48,
@@ -45,14 +48,17 @@ function repository() {
 }
 
 describe("UC04 policy management", () => {
-  it("normalizes domains and rejects duplicate or invalid values", () => {
-    expect(normalizePolicySettings(settings()).allowedEmailDomains).toEqual(["fpt.edu.vn"]);
-    expect(normalizePolicySettings({ ...settings(), allowedEmailDomains: ["*"] }).allowedEmailDomains)
-      .toEqual(["*"]);
-    for (const allowedEmailDomains of [["fpt.edu.vn", "FPT.EDU.VN"], ["not a domain"],
-      ["*", "fpt.edu.vn"]]) {
-      expect(() => normalizePolicySettings({ ...settings(), allowedEmailDomains }))
-        .toThrowError(/allowedEmailDomains/);
+  it("keeps per-flow required fields and rejects malformed or invalid values", () => {
+    expect(normalizePolicySettings(settings()).formRequirements).toEqual(settings().formRequirements);
+    const founding = settings().formRequirements.clubFounding;
+    for (const formRequirements of [
+      { ...settings().formRequirements, clubFounding: { ...founding, logo: "yes" } },
+      { ...settings().formRequirements, clubFounding: { ...founding, extra: true } },
+      { clubFounding: founding },
+    ]) {
+      expect(() => normalizePolicySettings({ ...settings(),
+        formRequirements: formRequirements as unknown as PolicySettings["formRequirements"] }))
+        .toThrowError(/formRequirements/);
     }
     expect(() => normalizePolicySettings({ ...settings(), minFoundingMembers: 0 }))
       .toThrowError(/minFoundingMembers/);

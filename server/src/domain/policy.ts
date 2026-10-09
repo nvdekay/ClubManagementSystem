@@ -12,10 +12,32 @@ export interface AcademicSemester {
   endAt: Date;
 }
 
+export const FOUNDING_FORM_FIELDS = [
+  "summary", "objectives", "proposal", "logo", "fanpageUrl", "contactEmail",
+] as const;
+export type FoundingFormField = (typeof FOUNDING_FORM_FIELDS)[number];
+
+export const CLUB_PROFILE_FORM_FIELDS = [
+  "description", "contactEmail", "contactPhone", "charterUrl", "channels", "operatingScope",
+] as const;
+export type ClubProfileFormField = (typeof CLUB_PROFILE_FORM_FIELDS)[number];
+
+/** Which inputs of the fixed, system-owned forms ICPDP marks as required, per business flow. */
+export interface FormRequirements {
+  clubFounding: Readonly<Record<FoundingFormField, boolean>>;
+  clubProfile: Readonly<Record<ClubProfileFormField, boolean>>;
+}
+
+export const DEFAULT_FORM_REQUIREMENTS: FormRequirements = {
+  clubFounding: { summary: true, objectives: true, proposal: true, logo: true,
+    fanpageUrl: false, contactEmail: false },
+  clubProfile: { description: false, contactEmail: false, contactPhone: false,
+    charterUrl: false, channels: false, operatingScope: false },
+};
+
 export interface PolicySettings {
-  allowedEmailDomains: readonly string[];
   minFoundingMembers: number;
-  mandatoryApplicationDocuments: readonly string[];
+  formRequirements: FormRequirements;
   reportDeadlines: readonly ReportDeadline[];
   conflictThresholdMinutes: number;
   feedbackWindowHours: number;
@@ -65,5 +87,5 @@ export interface PolicyManagementRepository extends PolicyRepository {
 export interface FoundingRequirements {
   policyVersionId: string;
   minFoundingMembers: number;
-  mandatoryApplicationDocuments: readonly string[];
+  required: Readonly<Record<FoundingFormField, boolean>>;
 }

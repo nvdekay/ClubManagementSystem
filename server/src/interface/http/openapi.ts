@@ -4,6 +4,7 @@ import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
+import { clubFieldBody } from "./club-field-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
@@ -63,10 +64,21 @@ const PolicyVersion = policySettingsBody.extend({
   createdBy: z.string(), createdAt: z.string().datetime(),
 });
 const ApplicationDocument = z.object({
-  id: z.string(), documentType: z.string(), fileName: z.string(),
-  mimeType: z.string(), bytes: z.number(), uploadedAt: z.string(),
+  id: z.string(), documentType: z.enum(["PROPOSAL", "LOGO"]), fileName: z.string(),
+  mimeType: z.string(), bytes: z.number(), publicUrl: z.string().optional(), uploadedAt: z.string(),
 });
-const ApplicationDraft = applicationDraftBody.extend({ documents: z.array(ApplicationDocument) });
+const ApplicationDraft = applicationDraftBody.extend({
+  field: z.string(), documents: z.array(ApplicationDocument),
+});
+const FoundingRequirements = z.object({
+  policyVersionId: z.string(), minFoundingMembers: z.number(),
+  required: policySettingsBody.shape.formRequirements.shape.clubFounding,
+});
+const ClubField = clubFieldBody.extend({ id: z.string(), isActive: z.boolean() });
+const ClubFieldUsage = ClubField.extend({ clubCount: z.number(), applicationCount: z.number() });
+const FoundingIssue = z.enum(["clubName", "field", "summary", "objectives", "fanpageUrl",
+  "contactEmail", "proposal", "logo", "foundersTooFew", "applicantNotFounder", "duplicateFounder",
+  "leaderCount", "viceLeaderCount", "fieldUnavailable", "leaderHoldsAnotherClub"]);
 const ApplicationRecord = z.object({
   id: z.string(), founderUserId: z.string(), state: z.string(),
   currentVersionNo: z.number(), draftRevision: z.number(), draft: ApplicationDraft,
@@ -109,7 +121,8 @@ const ClubDepartment = clubDepartmentBody.extend({
   id: z.string(), clubId: z.string(), isActive: z.boolean(),
   createdAt: z.string(), updatedAt: z.string().optional(),
 });
-const ClubSettings = z.object({ profile: ClubProfile, departments: z.array(ClubDepartment) });
+const ClubSettings = z.object({ profile: ClubProfile, departments: z.array(ClubDepartment),
+  requiredProfileFields: policySettingsBody.shape.formRequirements.shape.clubProfile });
 const RecruitmentCampaign = z.object({
   id: z.string(), clubId: z.string(), title: z.string(), positions: z.array(z.string()),
   criteria: z.string().optional(), windowStart: z.string().datetime(), windowEnd: z.string().datetime(),
@@ -461,6 +474,53 @@ export const openApiDocument = createDocument({
         },
       },
     },
+    "/admin/club-fields": {
+      get: {
+        summary: "List the club field catalog with how many clubs and applications use each field",
+        responses: {
+          "200": { description: "Club field catalog",
+            content: { "application/json": { schema: envelope(z.array(ClubFieldUsage)) } } },
+          "403": { description: "ICPDP officer role required",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Add a club field (re-adding a hidden field's name restores it)",
+        requestBody: { content: { "application/json": { schema: clubFieldBody } } },
+        responses: {
+          "201": { description: "Club field created",
+            content: { "application/json": { schema: envelope(ClubField) } } },
+          "409": { description: "A field with this name already exists",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/club-fields/{id}": {
+      patch: {
+        summary: "Rename or reorder a club field; clubs and applications using it follow the new name",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: clubFieldBody } } },
+        responses: {
+          "200": { description: "Club field updated",
+            content: { "application/json": { schema: envelope(ClubField) } } },
+          "404": { description: "Club field not found",
+            content: { "application/json": { schema: ApiError } } },
+          "409": { description: "A field with this name already exists",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      delete: {
+        summary: "Delete an unused club field, or hide one that clubs or applications still use",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Removal result",
+            content: { "application/json": { schema: envelope(z.object({
+              result: z.enum(["deleted", "deactivated"]) })) } } },
+          "404": { description: "Club field not found",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
     "/admin/policies": {
       get: {
         summary: "List current and recent school policy versions (ICPDP only)",
@@ -494,13 +554,13 @@ export const openApiDocument = createDocument({
     },
     "/applications/config": {
       get: {
-        summary: "Read the current founding policy and grantable club permissions",
+        summary: "Read the founding form requirements, club field catalog and fixed founding positions",
         responses: { "200": { description: "Application configuration",
           content: { "application/json": { schema: envelope(z.object({
-            requirements: z.object({ policyVersionId: z.string(),
-              minFoundingMembers: z.number(), mandatoryApplicationDocuments: z.array(z.string()) }),
-            grantablePermissions: z.array(z.string()),
-            defaultRoles: z.array(applicationDraftBody.shape.proposedRoles.element),
+            requirements: FoundingRequirements, fields: z.array(ClubField),
+            positions: z.array(z.object({ code: z.string(), name: z.string(),
+              founderRole: z.enum(["LEADER", "VICE_LEADER", "MEMBER"]) })),
+            maxViceLeaders: z.number(),
           })) } } } },
       },
     },
@@ -605,12 +665,11 @@ export const openApiDocument = createDocument({
     },
     "/applications/{id}/preview": {
       get: {
-        summary: "Preview the current founding requirements and active-name conflict",
+        summary: "Preview what still blocks submission and any active-name conflict",
         requestParams: { path: IdPath },
         responses: { "200": { description: "Submission preview",
           content: { "application/json": { schema: envelope(z.object({
-            requirements: z.object({ policyVersionId: z.string(),
-              minFoundingMembers: z.number(), mandatoryApplicationDocuments: z.array(z.string()) }),
+            requirements: FoundingRequirements, issues: z.array(FoundingIssue),
             activeNameConflict: z.boolean(),
           })) } } } },
       },
@@ -646,7 +705,9 @@ export const openApiDocument = createDocument({
     },
     "/applications/{id}/documents": {
       post: {
-        summary: "Upload a PDF, PNG, JPEG or DOCX to an editable application (requires CSRF token)",
+        summary: "Upload the founding proposal (X-Document-Type: PROPOSAL, PDF/DOCX ≤ 10MB) or the "
+          + "proposed logo (LOGO, PNG/JPEG ≤ 2MB); replaces the previous file of that type "
+          + "(requires CSRF token)",
         requestParams: { path: IdPath },
         responses: { "201": { description: "Document uploaded",
           content: { "application/json": { schema: envelope(ApplicationDocument) } } } },

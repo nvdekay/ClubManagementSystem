@@ -376,16 +376,12 @@ export const ucmsTables = {
   },
   "policyVersions": {
     "fields": {
-      "allowedEmailDomains": {
-        "type": "string[]",
-        "required": true
-      },
       "minFoundingMembers": {
         "type": "int",
         "required": true
       },
-      "mandatoryApplicationDocuments": {
-        "type": "string[]",
+      "formRequirements": {
+        "type": "json",
         "required": true
       },
       "reportDeadlines": {
@@ -509,6 +505,51 @@ export const ucmsTables = {
           "name"
         ],
         "name": "ix_clubs_name"
+      }
+    ]
+  },
+  "clubFields": {
+    "fields": {
+      "name": {
+        "type": "string",
+        "required": true
+      },
+      "normalizedName": {
+        "type": "string",
+        "required": true
+      },
+      "sortOrder": {
+        "type": "int",
+        "required": true,
+        "default": 0
+      },
+      "isActive": {
+        "type": "bool",
+        "required": true,
+        "default": true
+      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "updatedAt": {
+        "type": "datetime"
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "normalizedName"
+        ],
+        "unique": true,
+        "name": "uq_club_field_name"
+      },
+      {
+        "fields": [
+          "isActive",
+          "sortOrder"
+        ],
+        "name": "ix_club_field_active"
       }
     ]
   },

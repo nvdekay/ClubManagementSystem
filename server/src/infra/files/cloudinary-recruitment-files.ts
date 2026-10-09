@@ -6,7 +6,8 @@ export function cloudinaryRecruitmentFiles(config: CloudinaryConfig): Recruitmen
   const files = cloudinaryApplicationFiles(config);
   return {
     async upload(input) {
-      const document = await files.upload({ ...input, documentType: input.fieldKey });
+      const document = await files.upload({ ...input, documentType: input.fieldKey,
+        visibility: "private" });
       return {
         id: document.id, fieldKey: input.fieldKey,
         fileName: document.fileName, mimeType: document.mimeType,

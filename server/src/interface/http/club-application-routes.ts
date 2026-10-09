@@ -2,6 +2,7 @@ import { Router, raw, type Response } from "express";
 import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
 import type { ClubApplicationRepository, ApplicationFileStorage } from "../../domain/club-application.js";
+import type { ClubFieldRepository } from "../../domain/club-field.js";
 import { DomainError } from "../../domain/errors.js";
 import type { PolicyRepository } from "../../domain/policy.js";
 import type { SessionService } from "../../domain/session.js";
@@ -19,23 +20,21 @@ import { ok } from "./response.js";
 export interface ClubApplicationRouteDeps {
   repo: ClubApplicationRepository;
   policy: PolicyRepository;
+  fields: ClubFieldRepository;
   files: ApplicationFileStorage | null;
   authRepo: AuthRepository;
   sessions: SessionService;
 }
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i);
-const roleBody = z.object({
-  code: z.string().max(50), name: z.string().max(100), unit: z.string().max(100).optional(),
-  isBoardSeat: z.boolean(), isLeaderRole: z.boolean(),
-  isDefaultMemberRole: z.boolean(), isSingleHolder: z.boolean(),
-  permissionCodes: z.array(z.string().max(100)).max(100),
+const founderBody = z.object({
+  userId: id, role: z.enum(["LEADER", "VICE_LEADER", "MEMBER"]),
 }).strict();
 export const applicationDraftBody = z.object({
-  clubName: z.string().max(200), field: z.string().max(100),
-  objectives: z.string().max(5000),
-  foundingUserIds: z.array(id).max(100),
-  proposedRoles: z.array(roleBody).max(100),
+  clubName: z.string().max(200), fieldId: z.string().max(24),
+  summary: z.string().max(1000), objectives: z.string().max(5000),
+  fanpageUrl: z.string().max(2000), contactEmail: z.string().max(320),
+  founders: z.array(founderBody).max(100),
 }).strict();
 const applicationUpdateBody = applicationDraftBody.extend({
   draftRevision: z.number().int().nonnegative(),
@@ -81,7 +80,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
   router.get("/applications/config", authGuard(guard, false), async (_req, res) => {
-    ok(res, await applicationConfiguration(deps.policy, actor(res), new Date()));
+    ok(res, await applicationConfiguration(deps.policy, deps.fields, actor(res), new Date()));
   });
   // Before "/applications/:id" so "founder-lookup" is never parsed as an application id.
   router.get("/applications/founder-lookup", authGuard(guard, false), async (req, res) => {
@@ -91,7 +90,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     ok(res, (await listMyApplications(deps.repo, actor(res))).map(publicRecord));
   });
   router.post("/applications", authGuard(guard), async (req, res) => {
-    ok(res, publicRecord(await createApplicationDraft(deps.repo, actor(res),
+    ok(res, publicRecord(await createApplicationDraft(deps.repo, deps.fields, actor(res),
       parsed(applicationDraftBody, req.body), new Date())), 201);
   });
   router.get("/applications/:id", authGuard(guard, false), async (req, res) => {
@@ -100,17 +99,17 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
       decisions: detail.decisions, founders: detail.founders });
   });
   router.get("/applications/:id/preview", authGuard(guard, false), async (req, res) => {
-    ok(res, await previewApplication(deps.repo, deps.policy, actor(res),
+    ok(res, await previewApplication(deps.repo, deps.policy, deps.fields, actor(res),
       parsed(id, req.params.id), new Date()));
   });
   router.patch("/applications/:id/draft", authGuard(guard), async (req, res) => {
     const body = parsed(applicationUpdateBody, req.body);
     const { draftRevision, ...draft } = body;
-    ok(res, publicRecord(await saveApplicationDraft(deps.repo, actor(res), parsed(id, req.params.id),
+    ok(res, publicRecord(await saveApplicationDraft(deps.repo, deps.fields, actor(res), parsed(id, req.params.id),
       draft, draftRevision)));
   });
   router.post("/applications/:id/submit", authGuard(guard), async (req, res) => {
-    const result = await submitApplication(deps.repo, deps.policy, actor(res),
+    const result = await submitApplication(deps.repo, deps.policy, deps.fields, actor(res),
       parsed(id, req.params.id), new Date());
     ok(res, { ...result, version: publicVersion(result.version) }, 201);
   });

@@ -6,6 +6,12 @@ import { mongoClubApplicationRepository } from "../../src/infra/db/mongo-club-ap
 import { mongoClubApplicationReviewRepository } from "../../src/infra/db/mongo-club-application-review-repository.js";
 
 const uri = process.env.MONGO_URI;
+
+function draftOf(clubName: string, founders: ClubApplicationDraft["founders"],
+  overrides: Partial<ClubApplicationDraft> = {}): ClubApplicationDraft {
+  return { clubName, fieldId: new Types.ObjectId().toString(), field: "Công nghệ", summary: "Summary",
+    objectives: "Build robots", fanpageUrl: "", contactEmail: "", founders, documents: [], ...overrides };
+}
 const dbName = `ucms-application-test-${process.pid}`;
 
 describe.skipIf(!uri)("Mongo club application repository", () => {
@@ -24,10 +30,7 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
     const now = new Date("2026-10-03T12:00:00Z");
     await ucmsModels.users!.create({ _id: owner, email: "founder@example.edu",
       googleSubject: "test-subject", displayName: "Founder", accountState: "Active", createdAt: now });
-    const initial: ClubApplicationDraft = {
-      clubName: "Robotics Club", field: "Technology", objectives: "Build robots",
-      foundingUserIds: [owner.toString()], documents: [], proposedRoles: [],
-    };
+    const initial = draftOf("Robotics Club", [{ userId: owner.toString(), role: "LEADER" }]);
     const repo = mongoClubApplicationRepository();
     const application = await repo.createDraft(owner.toString(), initial, now);
     const first = await repo.submit({ id: application.id, ownerId: owner.toString(),
@@ -59,9 +62,10 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
       .toBe(2);
   });
 
-  it("claims and approves once, creating the Pending Setup club and role structure v1", async () => {
+  it("approves once: the club is Active with the default structure and the founding board seated", async () => {
     const founder = new Types.ObjectId();
     const secondFounder = new Types.ObjectId();
+    const thirdFounder = new Types.ObjectId();
     const officer = new Types.ObjectId();
     const now = new Date("2026-10-08T08:00:00Z");
     await ucmsModels.users!.insertMany([
@@ -69,21 +73,18 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
         displayName: "Founder Review", accountState: "Active", createdAt: now },
       { _id: secondFounder, email: "cofounder-review@example.edu", googleSubject: "cofounder-review",
         displayName: "Co-founder Review", accountState: "Active", createdAt: now },
+      { _id: thirdFounder, email: "third-review@example.edu", googleSubject: "third-review",
+        displayName: "Third Review", accountState: "Active", createdAt: now },
       { _id: officer, email: "officer-review@example.edu", googleSubject: "officer-review",
         displayName: "Officer Review", accountState: "Active", createdAt: now },
     ]);
-    const snapshot: ClubApplicationDraft = {
-      clubName: "Automation Club", field: "Technology", objectives: "Automate responsibly",
-      foundingUserIds: [founder.toString(), secondFounder.toString()], documents: [],
-      proposedRoles: [
-        { code: "CLUB_LEADER", name: "Club Leader", isBoardSeat: true,
-          isLeaderRole: true, isDefaultMemberRole: false, isSingleHolder: true,
-          permissionCodes: [] },
-        { code: "MEMBERS", name: "Members", isBoardSeat: false,
-          isLeaderRole: false, isDefaultMemberRole: true, isSingleHolder: false,
-          permissionCodes: ["club.event.manage"] },
-      ],
-    };
+    const snapshot = draftOf("Automation Club", [
+      { userId: founder.toString(), role: "MEMBER" },
+      { userId: secondFounder.toString(), role: "LEADER" },
+      { userId: thirdFounder.toString(), role: "VICE_LEADER" },
+    ], { fanpageUrl: "https://facebook.com/automation", contactEmail: "automation@example.edu",
+      documents: [{ id: "logo-1", documentType: "LOGO", fileName: "logo.png", mimeType: "image/png",
+        bytes: 10, assetId: "asset", publicUrl: "https://cdn.example/logo.png", uploadedAt: now }] });
     const applications = mongoClubApplicationRepository();
     const application = await applications.createDraft(founder.toString(), snapshot, now);
     const policyVersionId = new Types.ObjectId().toString();
@@ -93,12 +94,10 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
 
     const claimed = await reviews.claim(application.id, officer.toString(), now);
     expect(claimed.application.state).toBe("Under Review");
-    expect(claimed.founders.map((founderItem) => founderItem.displayName)).toEqual(["Founder Review", "Co-founder Review"]);
+    expect(claimed.founders.map((founderItem) => founderItem.displayName))
+      .toEqual(["Founder Review", "Co-founder Review", "Third Review"]);
     expect(await applications.findActiveUserByEmail("FOUNDER-REVIEW@example.edu"))
       .toMatchObject({ id: founder.toString(), displayName: "Founder Review" });
-    await ucmsModels.users!.updateOne({ _id: secondFounder }, { $set: { accountState: "Locked" } });
-    expect(await applications.findActiveUserByEmail("cofounder-review@example.edu")).toBeNull();
-    await ucmsModels.users!.updateOne({ _id: secondFounder }, { $set: { accountState: "Active" } });
     expect(claimed.task.assigneeId).toBe(officer.toString());
     const decided = await reviews.decide(application.id, officer.toString(), {
       outcome: "Approve", sections: [], reviewNote: "Requirements satisfied",
@@ -106,25 +105,63 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
 
     expect(decided.application.state).toBe("Approved");
     expect(decided.task.state).toBe("Decided");
-    expect(decided.decisions).toHaveLength(1);
     expect(decided.decisions[0]?.policyVersionId).toBe(policyVersionId);
-    const storedApplication = await ucmsModels.clubApplications!.findById(application.id).lean();
-    const clubId = storedApplication?.createdClubId;
-    expect(clubId).toBeTruthy();
+    const clubId = (await ucmsModels.clubApplications!.findById(application.id).lean())?.createdClubId;
     expect(await ucmsModels.clubs!.findById(clubId).lean()).toMatchObject({
-      name: "Automation Club", state: "Pending Setup",
+      name: "Automation Club", field: "Công nghệ", state: "Active", description: "Summary",
+      contactEmail: "automation@example.edu", logoUrl: "https://cdn.example/logo.png",
+      channels: [{ label: "Fanpage", url: "https://facebook.com/automation" }],
     });
-    expect(await ucmsModels.clubMemberships!.countDocuments({ clubId })).toBe(2);
-    expect(await ucmsModels.clubPositions!.countDocuments({ clubId })).toBe(2);
+    expect(await ucmsModels.clubMemberships!.countDocuments({ clubId, defaultRole: "MEMBERS" })).toBe(3);
+    const positions = await ucmsModels.clubPositions!.find({ clubId }).sort({ _id: 1 }).lean();
+    expect(positions.map((position) => position.code)).toEqual(["CLUB_LEADER", "VICE_LEADER", "MEMBERS"]);
+    const assignments = await ucmsModels.clubPositionAssignments!.find({ clubId }).lean();
+    const memberships = await ucmsModels.clubMemberships!.find({ clubId }).lean();
+    function holder(code: string): string[] {
+      const positionId = String(positions.find((position) => position.code === code)!._id);
+      return assignments.filter((assignment) => String(assignment.positionId) === positionId)
+        .map((assignment) => String(memberships.find((membership) =>
+          String(membership._id) === String(assignment.membershipId))!.userId));
+    }
+    expect(holder("CLUB_LEADER")).toEqual([secondFounder.toString()]);
+    expect(holder("VICE_LEADER")).toEqual([thirdFounder.toString()]);
+    expect(assignments.every((assignment) => String(assignment.confirmedBy) === officer.toString())).toBe(true);
+    expect(await ucmsModels.clubTerms!.findOne({ clubId }).lean())
+      .toMatchObject({ state: "Active", confirmedBy: officer });
     expect(await ucmsModels.clubRoleStructureVersions!.findOne({ clubId }).lean())
       .toMatchObject({ versionNo: 1, source: "APPLICATION" });
-    expect(await ucmsModels.approvalDecisions!.countDocuments({
-      approvalTaskId: new Types.ObjectId(decided.task.id),
-    })).toBe(1);
+    expect(await ucmsModels.notifications!.countDocuments({ entityId: new Types.ObjectId(application.id),
+      eventCode: "CLUB_APPLICATION_APPROVED" })).toBe(3);
+    expect(await applications.activeLeaderUserIds([secondFounder.toString(), founder.toString()],
+      new Date(now.getTime() + 2000))).toEqual([secondFounder.toString()]);
     await expect(reviews.decide(application.id, officer.toString(), {
       outcome: "Approve", sections: [],
     }, new Date(now.getTime() + 2000))).rejects.toMatchObject({ kind: "conflict" });
+
+    // The same student cannot be approved as leader of a second club while this term runs.
+    const second = draftOf("Second Club", [{ userId: secondFounder.toString(), role: "LEADER" }]);
+    const secondApplication = await applications.createDraft(secondFounder.toString(), second, now);
+    await applications.submit({ id: secondApplication.id, ownerId: secondFounder.toString(), snapshot: second,
+      expectedDraftRevision: 0, policyVersionId, now });
+    await reviews.claim(secondApplication.id, officer.toString(), now);
+    await expect(reviews.decide(secondApplication.id, officer.toString(), { outcome: "Approve", sections: [] },
+      new Date(now.getTime() + 3000))).rejects.toMatchObject({ kind: "conflict",
+      details: { issues: ["leaderHoldsAnotherClub"] } });
+    expect(await ucmsModels.clubs!.countDocuments({ name: "Second Club" })).toBe(0);
   }, 60_000);
+
+  it("reads applications saved before fixed founding roles with the applicant as leader", async () => {
+    const owner = new Types.ObjectId();
+    const peer = new Types.ObjectId();
+    const now = new Date("2026-10-09T08:00:00Z");
+    const created = await ucmsModels.clubApplications!.create({ clubName: "Legacy Club", field: "Công nghệ",
+      founderUserId: owner, state: "Draft", currentVersionNo: 1, createdAt: now,
+      draftPayload: { clubName: "Legacy Club", field: "Công nghệ", objectives: "Old",
+        foundingUserIds: [owner.toString(), peer.toString()], proposedRoles: [], documents: [], _revision: 0 } });
+    const record = await mongoClubApplicationRepository().findOwned(String(created._id), owner.toString());
+    expect(record?.draft).toMatchObject({ fieldId: "", summary: "", founders: [
+      { userId: owner.toString(), role: "LEADER" }, { userId: peer.toString(), role: "MEMBER" }] });
+  });
 
   it("returns an application for revision, then keeps both decisions after resubmission", async () => {
     const founder = new Types.ObjectId();
@@ -136,17 +173,8 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
       { _id: officer, email: "revision-officer@example.edu", googleSubject: "revision-officer",
         displayName: "Revision Officer", accountState: "Active", createdAt: now },
     ]);
-    const initial: ClubApplicationDraft = {
-      clubName: "Revision Club", field: "Community", objectives: "Initial objective",
-      foundingUserIds: [founder.toString()], documents: [], proposedRoles: [
-        { code: "CLUB_LEADER", name: "Club Leader", isBoardSeat: true,
-          isLeaderRole: true, isDefaultMemberRole: false, isSingleHolder: true,
-          permissionCodes: [] },
-        { code: "MEMBERS", name: "Members", isBoardSeat: false,
-          isLeaderRole: false, isDefaultMemberRole: true, isSingleHolder: false,
-          permissionCodes: [] },
-      ],
-    };
+    const initial = draftOf("Revision Club", [{ userId: founder.toString(), role: "LEADER" }],
+      { field: "Cộng đồng", objectives: "Initial objective" });
     const applications = mongoClubApplicationRepository();
     const reviews = mongoClubApplicationReviewRepository();
     const application = await applications.createDraft(founder.toString(), initial, now);

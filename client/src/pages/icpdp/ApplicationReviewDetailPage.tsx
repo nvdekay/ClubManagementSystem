@@ -14,7 +14,8 @@ import { useApplicationReview, useApplicationReviewAction,
 import type { ReviewOutcome } from "@/services/applicationReviews";
 import { cn } from "@/utils/cn";
 
-const sectionKeys = ["club-information", "founders", "documents", "role-structure", "other"];
+const sectionKeys = ["club-information", "founders", "documents", "other"];
+const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const;
 
 export function ApplicationReviewDetailPage() {
   const { id } = useParams();
@@ -114,6 +115,8 @@ export function ApplicationReviewDetailPage() {
   );
 
   const { application, task, decisions } = review.data;
+  const founders = [...currentVersion.snapshot.founders].sort((left, right) => roleOrder[left.role] - roleOrder[right.role]);
+  const logo = currentVersion.snapshot.documents.find((document) => document.documentType === "LOGO");
   const mine = task.assigneeId === auth.data.user.id;
   const isOpen = task.state === "Open" && ["Submitted", "Under Review"].includes(application.state);
   const stateTone = application.state === "Approved" ? "success"
@@ -135,21 +138,28 @@ export function ApplicationReviewDetailPage() {
             <dl className="mt-5 grid gap-5 sm:grid-cols-2">
               <div><dt className={label}>{t("reviews.clubName")}</dt><dd className="mt-1 font-medium break-words">{currentVersion.snapshot.clubName}</dd></div>
               <div><dt className={label}>{t("reviews.field")}</dt><dd className="mt-1 font-medium break-words">{currentVersion.snapshot.field}</dd></div>
-              <div className="sm:col-span-2"><dt className={label}>{t("reviews.objectives")}</dt><dd className="mt-2 leading-7 break-words whitespace-pre-wrap">{currentVersion.snapshot.objectives}</dd></div>
+              <div className="sm:col-span-2"><dt className={label}>{t("reviews.summary")}</dt><dd className="mt-2 leading-7 break-words whitespace-pre-wrap">{currentVersion.snapshot.summary || "—"}</dd></div>
+              <div className="sm:col-span-2"><dt className={label}>{t("reviews.objectives")}</dt><dd className="mt-2 leading-7 break-words whitespace-pre-wrap">{currentVersion.snapshot.objectives || "—"}</dd></div>
+              <div><dt className={label}>{t("reviews.fanpageUrl")}</dt><dd className="mt-1 break-all">{currentVersion.snapshot.fanpageUrl
+                ? <a className="font-medium text-accent-app" href={currentVersion.snapshot.fanpageUrl} target="_blank" rel="noopener noreferrer">{currentVersion.snapshot.fanpageUrl}</a> : "—"}</dd></div>
+              <div><dt className={label}>{t("reviews.contactEmail")}</dt><dd className="mt-1 break-all">{currentVersion.snapshot.contactEmail || "—"}</dd></div>
+              {logo?.publicUrl && <div className="sm:col-span-2"><dt className={label}>{t("reviews.logo")}</dt><dd className="mt-2">
+                <img src={logo.publicUrl} alt={t("reviews.logo")} className="size-24 rounded-xl border border-border-app object-cover" /></dd></div>}
             </dl>
           </section>
 
           <div className="grid gap-10 border-t border-border-app pt-8 md:grid-cols-2">
             <section className="min-w-0"><h2 className="font-heading text-lg font-bold">{t("reviews.founders")}</h2>
-              <ul className="mt-4 divide-y divide-border-app">{currentVersion.snapshot.foundingUserIds.map((founder) => {
+              <ul className="mt-4 divide-y divide-border-app">{founders.map(({ userId: founder, role }) => {
                 const profile = review.data.founders.find((item) => item.id === founder);
-                return <li key={founder} className="flex items-center gap-3 py-2.5 text-sm">
+                return <li key={founder} className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
                   <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-mint-app"><AppIcon name="users" className="size-4" /></span>
                   <span className="min-w-0">
                     {profile ? <><span className="block font-semibold">{profile.displayName}</span>
                       <span className="block text-xs break-all text-muted-app">{profile.email}</span></>
                       : <span className="font-mono text-xs break-all">{founder}</span>}
                   </span>
+                  <AppBadge tone={role === "MEMBER" ? "neutral" : "info"}>{t(`applications.role${role}`)}</AppBadge>
                 </li>;
               })}</ul>
             </section>
@@ -158,7 +168,8 @@ export function ApplicationReviewDetailPage() {
                 <li key={document.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft-app text-primary-app"><AppIcon name="file" className="size-4" /></span>
-                    <div className="min-w-0"><p className="font-medium break-words">{document.fileName}</p><p className="text-xs text-muted-app">{document.documentType} · {Math.ceil(document.bytes / 1024)} KB</p></div>
+                    <div className="min-w-0"><p className="font-medium break-words">{document.fileName}</p><p className="text-xs text-muted-app">{document.documentType === "LOGO" ? t("applications.logo")
+                      : document.documentType === "PROPOSAL" ? t("applications.proposal") : document.documentType} · {Math.ceil(document.bytes / 1024)} KB</p></div>
                   </div>
                   <AppButton variant="secondary" disabled={documentAccess.isPending} onClick={() => void openDocument(document.id)}>
                     <AppIcon name="external" className="size-4" />{t("reviews.openDocument")}</AppButton>
@@ -169,16 +180,12 @@ export function ApplicationReviewDetailPage() {
           </div>
 
           <section className="border-t border-border-app pt-8"><h2 className="font-heading text-xl font-bold">{t("reviews.roles")}</h2>
-            <ul className="mt-4 divide-y divide-border-app">{currentVersion.snapshot.proposedRoles.map((role) =>
-              <li key={role.code} className="py-4">
-                <div className="flex flex-wrap items-center gap-2"><h3 className="font-bold">{role.name}</h3>
-                  <span className="font-mono text-xs text-muted-app">{role.code}</span>
-                  {role.isBoardSeat && <AppBadge tone="info">{t("reviews.boardSeat")}</AppBadge>}</div>
-                <p className="mt-2 text-sm break-words"><span className="text-muted-app">{t("reviews.permissions")}: </span>
-                  {role.isLeaderRole ? t("reviews.leaderAllPermissions")
-                    : role.permissionCodes.map((code) => t(`applications.perm_${code.replaceAll(".", "_")}`,
-                      { defaultValue: code })).join(", ") || t("reviews.noPermissions")}</p>
-              </li>)}</ul>
+            <p className="mt-2 text-sm text-muted-app">{t("reviews.rolesHint")}</p>
+            <ul className="mt-4 flex flex-wrap gap-2">{founders.filter((founder) => founder.role !== "MEMBER").map((founder) => {
+              const profile = review.data.founders.find((item) => item.id === founder.userId);
+              return <li key={founder.userId}><AppBadge tone="info">
+                {t(`applications.role${founder.role}`)}: {profile?.displayName ?? founder.userId}</AppBadge></li>;
+            })}</ul>
           </section>
 
           <section className="border-t border-border-app pt-8"><h2 className="font-heading text-xl font-bold">{t("reviews.history")}</h2>

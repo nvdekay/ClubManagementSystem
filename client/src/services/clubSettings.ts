@@ -1,3 +1,5 @@
+import type { ClubProfileFormField } from "@/services/policy";
+
 export interface ClubChannel {
   label: string;
   url: string;
@@ -48,13 +50,27 @@ export interface ClubDepartmentInput {
 export interface ClubSettings {
   profile: ClubProfile;
   departments: ClubDepartment[];
+  /** Profile fields the effective school policy requires (true) before a save is accepted. */
+  requiredProfileFields: Record<ClubProfileFormField, boolean>;
+}
+
+/** 400 listing the profile fields school policy requires but the save left empty. */
+export class MissingProfileFieldsError extends Error {
+  constructor(message: string, readonly missing: ClubProfileFormField[]) {
+    super(message);
+    this.name = "MissingProfileFieldsError";
+  }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api/v1/clubs${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    const body = (await response.json().catch(() => null)) as {
+      message?: string; details?: { missing?: ClubProfileFormField[] };
+    } | null;
+    const message = body?.message ?? `HTTP ${response.status}`;
+    if (Array.isArray(body?.details?.missing)) throw new MissingProfileFieldsError(message, body.details.missing);
+    throw new Error(message);
   }
   const body: { data: T } = await response.json();
   return body.data;

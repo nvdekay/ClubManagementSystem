@@ -49,8 +49,9 @@ describe("policy HTTP boundary", () => {
     const { post, append } = handlers();
     const res = { locals: { actor: { id: "000000000000000000000001", accountState: "Active" } } } as unknown as Response;
     for (const body of [
-      { allowedEmailDomains: { $ne: [] } },
-      { allowedEmailDomains: [], unexpected: "value" },
+      { formRequirements: { $ne: [] } },
+      { formRequirements: { clubFounding: { logo: { $gt: "" } } } },
+      { minFoundingMembers: 3, unexpected: "value" },
       { academicCalendar: [{ code: "FA26", startAt: { $gt: "" } }] },
     ]) {
       await expect(post({ body } as Request, res, vi.fn()))

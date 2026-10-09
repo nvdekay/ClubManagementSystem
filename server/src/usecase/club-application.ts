@@ -1,21 +1,26 @@
 import { DomainError } from "../domain/errors.js";
-import { GRANTABLE_CLUB_PERMISSIONS } from "../domain/access.js";
-import type {
-  ApplicationDocument, ApplicationFileStorage, ClubApplicationDraft,
-  ClubApplicationRecord, ClubApplicationRepository, ClubApplicationVersion,
-  ProposedClubRole, ApplicantDecisionFeedback, FounderProfile,
+import type { ClubFieldRepository } from "../domain/club-field.js";
+import {
+  APPLICATION_DOCUMENT_TYPES, FOUNDER_ROLES, FOUNDING_POSITIONS, MAX_VICE_LEADERS,
+  foundingSubmissionIssues,
+  type ApplicationDocument, type ApplicationDocumentType, type ApplicationFileStorage,
+  type ClubApplicationDraft, type ClubApplicationRecord, type ClubApplicationRepository,
+  type ClubApplicationVersion, type ApplicantDecisionFeedback, type FounderProfile,
+  type FounderRole, type FoundingIssue,
 } from "../domain/club-application.js";
-import { validateClubApplicationSubmission } from "../domain/club-application.js";
-import type { PolicyRepository } from "../domain/policy.js";
+import type { FoundingRequirements, PolicyRepository } from "../domain/policy.js";
 import type { AccessActor } from "./access.js";
 import { foundingRequirementsAt } from "./policy.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
-const allowedMimeTypes = new Set([
-  "application/pdf", "image/png", "image/jpeg",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
-const maxFileBytes = 10 * 1024 * 1024;
+const docxMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const documentRules: Record<ApplicationDocumentType, { mimeTypes: ReadonlySet<string>;
+  maxBytes: number; visibility: "private" | "public" }> = {
+  PROPOSAL: { mimeTypes: new Set(["application/pdf", docxMime]), maxBytes: 10 * 1024 * 1024,
+    visibility: "private" },
+  LOGO: { mimeTypes: new Set(["image/png", "image/jpeg"]), maxBytes: 2 * 1024 * 1024,
+    visibility: "public" },
+};
 
 function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
   if (mimeType === "application/pdf") return bytes.subarray(0, 5).toString() === "%PDF-";
@@ -23,7 +28,7 @@ function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   if (mimeType === "image/jpeg") return bytes.length >= 3 &&
     bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+  if (mimeType === docxMime) {
     return bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) &&
       bytes.includes(Buffer.from("[Content_Types].xml"));
   }
@@ -32,10 +37,12 @@ function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
 
 export interface DraftInput {
   clubName: string;
-  field: string;
+  fieldId: string;
+  summary: string;
   objectives: string;
-  foundingUserIds: string[];
-  proposedRoles: ProposedClubRole[];
+  fanpageUrl: string;
+  contactEmail: string;
+  founders: { userId: string; role: string }[];
 }
 
 function owner(actor: AccessActor | null): string {
@@ -58,18 +65,58 @@ function editable(record: ClubApplicationRecord): void {
   }
 }
 
-function draftFrom(input: DraftInput, documents: ApplicationDocument[]): ClubApplicationDraft {
-  const clubName = input.clubName.trim();
-  const field = input.field.trim();
-  const objectives = input.objectives.trim();
-  if (!clubName || !field || clubName.length > 200 || field.length > 100 ||
-    objectives.length > 5000) {
-    throw new DomainError("club name and field are required", "validation");
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function text(value: string, max: number): string {
+  const normalized = value.trim();
+  if (normalized.length > max) throw new DomainError("application text is too long", "validation");
+  return normalized;
+}
+
+function httpUrl(value: string): string {
+  const normalized = text(value, 2_000);
+  if (!normalized) return "";
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
+    return parsed.toString();
+  } catch {
+    throw new DomainError("invalid fanpage URL", "validation");
   }
-  return { clubName, field, objectives,
-    foundingUserIds: [...input.foundingUserIds],
-    proposedRoles: input.proposedRoles.map((role) => ({ ...role,
-      permissionCodes: [...role.permissionCodes] })), documents: [...documents] };
+}
+
+/**
+ * Resolve the chosen field against the catalog. A field hidden after it was saved stays on the
+ * draft (so editing other parts still works) but blocks submission until the student re-picks.
+ */
+async function resolvedField(fields: ClubFieldRepository, fieldId: string,
+  current?: ClubApplicationDraft): Promise<{ fieldId: string; field: string }> {
+  if (!objectId.test(fieldId)) throw new DomainError("club field is required", "validation");
+  const found = await fields.find(fieldId);
+  if (!found || (!found.isActive && current?.fieldId !== fieldId)) {
+    throw new DomainError("club field is not available", "validation");
+  }
+  return { fieldId, field: found.name };
+}
+
+async function draftFrom(fields: ClubFieldRepository, input: DraftInput,
+  documents: ApplicationDocument[], current?: ClubApplicationDraft): Promise<ClubApplicationDraft> {
+  const clubName = text(input.clubName, 200);
+  if (!clubName) throw new DomainError("club name is required", "validation");
+  const contactEmail = text(input.contactEmail, 320).toLowerCase();
+  if (contactEmail && !emailPattern.test(contactEmail)) {
+    throw new DomainError("invalid contact email", "validation");
+  }
+  if (input.founders.length > 100 || input.founders.some((founder) => !objectId.test(founder.userId)
+    || !FOUNDER_ROLES.some((role) => role === founder.role))) {
+    throw new DomainError("invalid founding member", "validation");
+  }
+  return { clubName, ...await resolvedField(fields, input.fieldId.trim(), current),
+    summary: text(input.summary, 1_000), objectives: text(input.objectives, 5_000),
+    fanpageUrl: httpUrl(input.fanpageUrl), contactEmail,
+    founders: input.founders.map((founder) => ({ userId: founder.userId.toLowerCase(),
+      role: founder.role as FounderRole })),
+    documents: [...documents] };
 }
 
 async function owned(repo: ClubApplicationRepository, id: string,
@@ -80,12 +127,13 @@ async function owned(repo: ClubApplicationRepository, id: string,
 }
 
 export async function createApplicationDraft(repo: ClubApplicationRepository,
-  actor: AccessActor | null, input: DraftInput, now: Date): Promise<ClubApplicationRecord> {
-  return repo.createDraft(owner(actor), draftFrom(input, []), now);
+  fields: ClubFieldRepository, actor: AccessActor | null, input: DraftInput,
+  now: Date): Promise<ClubApplicationRecord> {
+  return repo.createDraft(owner(actor), await draftFrom(fields, input, []), now);
 }
 
 export async function saveApplicationDraft(repo: ClubApplicationRepository,
-  actor: AccessActor | null, id: string, input: DraftInput,
+  fields: ClubFieldRepository, actor: AccessActor | null, id: string, input: DraftInput,
   expectedDraftRevision: number): Promise<ClubApplicationRecord> {
   const ownerId = owner(actor);
   const record = await owned(repo, id, ownerId);
@@ -93,8 +141,8 @@ export async function saveApplicationDraft(repo: ClubApplicationRepository,
   if (record.draftRevision !== expectedDraftRevision) {
     throw new DomainError("application draft changed; reload before saving", "conflict");
   }
-  return repo.saveDraft(record.id, ownerId, draftFrom(input, record.draft.documents),
-    expectedDraftRevision);
+  return repo.saveDraft(record.id, ownerId,
+    await draftFrom(fields, input, record.draft.documents, record.draft), expectedDraftRevision);
 }
 
 export async function listMyApplications(repo: ClubApplicationRepository,
@@ -109,11 +157,10 @@ export async function getMyApplication(repo: ClubApplicationRepository,
 }> {
   const record = await owned(repo, id, owner(actor));
   const [versions, decisions] = await Promise.all([repo.versions(record.id), repo.decisionFeedback(record.id)]);
-  const founderIds = [...record.draft.foundingUserIds, ...versions.flatMap((version) => version.snapshot.foundingUserIds)];
+  const founderIds = [record.draft, ...versions.map((version) => version.snapshot)]
+    .flatMap((draft) => draft.founders.map((founder) => founder.userId));
   return { application: record, versions, decisions, founders: await repo.founderProfiles(founderIds) };
 }
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Resolve a founding member by exact email so students never type raw account ids. */
 export async function lookupFounder(repo: ClubApplicationRepository, actor: AccessActor | null,
@@ -129,41 +176,60 @@ export async function lookupFounder(repo: ClubApplicationRepository, actor: Acce
 }
 
 export async function applicationConfiguration(policy: PolicyRepository,
-  actor: AccessActor | null, now: Date) {
+  fields: ClubFieldRepository, actor: AccessActor | null, now: Date) {
   owner(actor);
   return {
     requirements: await foundingRequirementsAt(policy, now),
-    grantablePermissions: GRANTABLE_CLUB_PERMISSIONS,
-    defaultRoles: [
-      { code: "CLUB_LEADER", name: "Chủ nhiệm", isBoardSeat: true,
-        isLeaderRole: true, isDefaultMemberRole: false, isSingleHolder: true,
-        permissionCodes: [] },
-      { code: "MEMBERS", name: "Members", isBoardSeat: false,
-        isLeaderRole: false, isDefaultMemberRole: true, isSingleHolder: false,
-        permissionCodes: [] },
-    ] satisfies ProposedClubRole[],
+    fields: await fields.listActive(),
+    positions: FOUNDING_POSITIONS.map(({ code, name, founderRole }) => ({ code, name, founderRole })),
+    maxViceLeaders: MAX_VICE_LEADERS,
   };
 }
 
+type ExtendedIssue = FoundingIssue
+  | "fieldUnavailable" | "leaderHoldsAnotherClub";
+
+/** Domain issues plus the checks that need the catalog or other clubs. */
+async function submissionIssues(repo: ClubApplicationRepository, fields: ClubFieldRepository,
+  draft: ClubApplicationDraft, applicantId: string, requirements: FoundingRequirements,
+  now: Date): Promise<ExtendedIssue[]> {
+  const issues: ExtendedIssue[] = foundingSubmissionIssues(draft, applicantId, requirements);
+  if (draft.fieldId && objectId.test(draft.fieldId) && !(await fields.find(draft.fieldId))?.isActive) {
+    issues.push("fieldUnavailable");
+  }
+  const leader = draft.founders.find((founder) => founder.role === "LEADER");
+  if (leader && (await repo.activeLeaderUserIds([leader.userId], now)).length) {
+    issues.push("leaderHoldsAnotherClub");
+  }
+  return issues;
+}
+
 export async function previewApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
-  actor: AccessActor | null, id: string, now: Date) {
-  const record = await owned(repo, id, owner(actor));
+  fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date) {
+  const ownerId = owner(actor);
+  const record = await owned(repo, id, ownerId);
   editable(record);
-  return { requirements: await foundingRequirementsAt(policy, now),
+  const requirements = await foundingRequirementsAt(policy, now);
+  return { requirements,
+    issues: await submissionIssues(repo, fields, record.draft, ownerId, requirements, now),
     activeNameConflict: await repo.activeClubNameExists(record.draft.clubName) };
 }
 
 export async function submitApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
-  actor: AccessActor | null, id: string, now: Date): Promise<{
+  fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date): Promise<{
   version: ClubApplicationVersion; activeNameConflict: boolean;
 }> {
   const ownerId = owner(actor);
   const record = await owned(repo, id, ownerId);
   editable(record);
   const requirements = await foundingRequirementsAt(policy, now);
-  validateClubApplicationSubmission({ ...record.draft, founderUserId: ownerId,
-    documentTypes: record.draft.documents.map((document) => document.documentType) }, requirements);
-  if (!await repo.usersExist(record.draft.foundingUserIds)) {
+  const issues = await submissionIssues(repo, fields, record.draft, ownerId, requirements, now);
+  if (issues.length) {
+    throw new DomainError("club application is incomplete", "validation", {
+      issues, required: requirements.minFoundingMembers,
+    });
+  }
+  if (!await repo.usersExist(record.draft.founders.map((founder) => founder.userId))) {
     throw new DomainError("founding member not found", "validation");
   }
   const activeNameConflict = await repo.activeClubNameExists(record.draft.clubName);
@@ -191,14 +257,22 @@ export async function uploadApplicationDocument(repo: ClubApplicationRepository,
   const record = await owned(repo, id, ownerId);
   editable(record);
   if (!storage) throw new DomainError("file storage is not configured", "unavailable");
-  if (!documentType.trim() || documentType.length > 100 || !fileName.trim() ||
-    fileName.length > 255 || !allowedMimeTypes.has(mimeType) ||
-    bytes.length === 0 || bytes.length > maxFileBytes || !fileSignatureMatches(mimeType, bytes)) {
-    throw new DomainError("invalid application document", "validation");
+  const type = APPLICATION_DOCUMENT_TYPES.find((value) => value === documentType);
+  if (!type) throw new DomainError("invalid application document type", "validation");
+  const rule = documentRules[type];
+  if (!fileName.trim() || fileName.length > 255 || !rule.mimeTypes.has(mimeType) ||
+    bytes.length === 0 || bytes.length > rule.maxBytes || !fileSignatureMatches(mimeType, bytes)) {
+    throw new DomainError("invalid application document", "validation", {
+      documentType: type, maxBytes: rule.maxBytes, mimeTypes: [...rule.mimeTypes],
+    });
   }
   const document = await storage.upload({ ownerId, applicationId: record.id,
-    documentType: documentType.trim(), fileName: fileName.trim(), mimeType, bytes, now });
+    documentType: type, fileName: fileName.trim(), mimeType, bytes,
+    visibility: rule.visibility, now });
+  // One file per type: the new upload replaces the previous one.
+  const replaced = record.draft.documents.filter((item) => item.documentType === type);
   await repo.addDocument(record.id, ownerId, document);
+  for (const previous of replaced) await repo.removeDocument(record.id, ownerId, previous.id);
   return document;
 }
 

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createDraft, documentAccess, fetchApplication, fetchApplicationConfig, lookupFounder,
   fetchMyApplications, previewApplication, removeDocument, saveDraft,
-  submitDraft, uploadDocument, withdrawDraft, type DraftInput,
+  submitDraft, uploadDocument, withdrawDraft, type ApplicationDocumentType, type DraftInput,
 } from "@/services/applications";
 
 const applicationsKey = ["applications"] as const;
@@ -36,7 +36,7 @@ export function useApplicationAction() {
       | { kind: "create"; input: DraftInput; csrfToken: string }
       | { kind: "save"; id: string; input: DraftInput; draftRevision: number; csrfToken: string }
       | { kind: "submit" | "withdraw"; id: string; csrfToken: string }
-      | { kind: "upload"; id: string; documentType: string; file: File; csrfToken: string }
+      | { kind: "upload"; id: string; documentType: ApplicationDocumentType; file: File; csrfToken: string }
       | { kind: "remove"; id: string; documentId: string; csrfToken: string }) => {
       switch (action.kind) {
         case "create": return createDraft(action.input, action.csrfToken);

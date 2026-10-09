@@ -12,10 +12,32 @@ export interface AcademicSemester {
   endAt: string;
 }
 
+export const FOUNDING_FORM_FIELDS = [
+  "summary", "objectives", "proposal", "logo", "fanpageUrl", "contactEmail",
+] as const;
+export type FoundingFormField = (typeof FOUNDING_FORM_FIELDS)[number];
+
+export const CLUB_PROFILE_FORM_FIELDS = [
+  "description", "contactEmail", "contactPhone", "charterUrl", "channels", "operatingScope",
+] as const;
+export type ClubProfileFormField = (typeof CLUB_PROFILE_FORM_FIELDS)[number];
+
+/** Which inputs of the fixed founding and club-profile forms are required (true) or optional. */
+export interface FormRequirements {
+  clubFounding: Record<FoundingFormField, boolean>;
+  clubProfile: Record<ClubProfileFormField, boolean>;
+}
+
+export const DEFAULT_FORM_REQUIREMENTS: FormRequirements = {
+  clubFounding: { summary: true, objectives: true, proposal: true, logo: true,
+    fanpageUrl: false, contactEmail: false },
+  clubProfile: { description: false, contactEmail: false, contactPhone: false,
+    charterUrl: false, channels: false, operatingScope: false },
+};
+
 export interface PolicySettings {
-  allowedEmailDomains: string[];
   minFoundingMembers: number;
-  mandatoryApplicationDocuments: string[];
+  formRequirements: FormRequirements;
   reportDeadlines: ReportDeadline[];
   conflictThresholdMinutes: number;
   feedbackWindowHours: number;

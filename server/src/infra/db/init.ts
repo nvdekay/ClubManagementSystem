@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { loadConfig } from "../config/index.js";
+import { ensureDefaultClubFields } from "./mongo-club-field-repository.js";
 import { ensureUcmsDatabase, inspectUcmsDatabase, ucmsCollectionNames } from "./ucms-models.js";
 
 const config = loadConfig();
@@ -7,6 +8,7 @@ const config = loadConfig();
 try {
   await mongoose.connect(config.MONGO_URI, { serverSelectionTimeoutMS: 5_000 });
   await ensureUcmsDatabase();
+  await ensureDefaultClubFields();
   const inspection = await inspectUcmsDatabase();
   if (inspection.missingCollections.length || inspection.missingIndexes.length) {
     throw new Error(`missing ${inspection.missingCollections.length} collections and ${inspection.missingIndexes.length} indexes`);

@@ -1,6 +1,7 @@
 import mongoose, { Types } from "mongoose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mongoAuthRepository } from "../../src/infra/db/mongo-auth-repository.js";
+import { DEFAULT_FORM_REQUIREMENTS } from "../../src/domain/policy.js";
 import { mongoPolicyRepository } from "../../src/infra/db/mongo-policy-repository.js";
 import { ucmsModels } from "../../src/infra/db/ucms-models.js";
 
@@ -17,10 +18,9 @@ describe.skipIf(!uri)("Mongo policy repository", () => {
     await mongoose.disconnect();
   });
 
-  it("selects the historical version and ignores future versions for policy and login", async () => {
+  it("selects the historical version and ignores future versions; login domains come from config", async () => {
     const officer = new Types.ObjectId();
     const base = {
-      minFoundingMembers: 5, mandatoryApplicationDocuments: ["charter"],
       reportDeadlines: [{ reportType: "periodic", dueDaysAfterPeriodEnd: 10,
         remindBeforeDays: 3, overdueAfterDays: 2, escalateAfterDays: 5 }], conflictThresholdMinutes: 30,
       feedbackWindowHours: 48, feedbackMinRespondents: 5,
@@ -31,36 +31,37 @@ describe.skipIf(!uri)("Mongo policy repository", () => {
     const jan = new Date("2026-01-01T00:00:00Z");
     const jun = new Date("2026-06-01T00:00:00Z");
     const dec = new Date("2026-12-01T00:00:00Z");
+    // Written before form requirements existed (raw insert skips today's schema): reads as the defaults.
+    await ucmsModels.policyVersions!.collection.insertOne({ ...base, minFoundingMembers: 3, effectiveFrom: jan,
+      createdAt: new Date("2025-12-01T00:00:00Z") });
     await ucmsModels.policyVersions!.create([
-      { ...base, allowedEmailDomains: ["old.edu.vn"], effectiveFrom: jan,
-        createdAt: new Date("2025-12-01T00:00:00Z") },
-      { ...base, allowedEmailDomains: ["first.edu.vn"], effectiveFrom: jun,
+      { ...base, minFoundingMembers: 4, formRequirements: DEFAULT_FORM_REQUIREMENTS, effectiveFrom: jun,
         createdAt: new Date("2026-05-01T00:00:00Z") },
-      { ...base, allowedEmailDomains: ["latest.edu.vn"], effectiveFrom: jun,
-        createdAt: new Date("2026-05-02T00:00:00Z") },
-      { ...base, allowedEmailDomains: ["future.edu.vn"], effectiveFrom: dec,
+      { ...base, minFoundingMembers: 5, effectiveFrom: jun, createdAt: new Date("2026-05-02T00:00:00Z"),
+        formRequirements: { ...DEFAULT_FORM_REQUIREMENTS,
+          clubFounding: { ...DEFAULT_FORM_REQUIREMENTS.clubFounding, logo: false } } },
+      { ...base, minFoundingMembers: 9, formRequirements: DEFAULT_FORM_REQUIREMENTS, effectiveFrom: dec,
         createdAt: new Date("2026-11-01T00:00:00Z") },
     ]);
 
     const policies = mongoPolicyRepository();
-    const auth = mongoAuthRepository("bootstrap.edu.vn");
     expect(await policies.findEffective(new Date("2025-12-31T23:59:59Z"))).toBeNull();
-    expect(await auth.allowedDomains(new Date("2025-12-31T23:59:59Z")))
-      .toEqual(["bootstrap.edu.vn"]);
-    expect((await policies.findEffective(new Date("2026-03-01T00:00:00Z")))?.allowedEmailDomains)
-      .toEqual(["old.edu.vn"]);
-    expect(await auth.allowedDomains(new Date("2026-07-01T00:00:00Z")))
-      .toEqual(["latest.edu.vn"]);
-    expect((await policies.findEffective(dec))?.allowedEmailDomains)
-      .toEqual(["future.edu.vn"]);
+    const legacy = await policies.findEffective(new Date("2026-03-01T00:00:00Z"));
+    expect(legacy).toMatchObject({ minFoundingMembers: 3, formRequirements: DEFAULT_FORM_REQUIREMENTS });
+    const latest = await policies.findEffective(new Date("2026-07-01T00:00:00Z"));
+    expect(latest).toMatchObject({ minFoundingMembers: 5 });
+    expect(latest?.formRequirements.clubFounding.logo).toBe(false);
+    expect((await policies.findEffective(dec))?.minFoundingMembers).toBe(9);
+    expect(await mongoAuthRepository(" FPT.edu.vn, demo.edu.vn ").allowedDomains(dec))
+      .toEqual(["fpt.edu.vn", "demo.edu.vn"]);
+    expect(await mongoAuthRepository("*").allowedDomains(dec)).toEqual(["*"]);
   });
 
   it("appends a policy and audit without changing the previous version", async () => {
     const repo = mongoPolicyRepository();
     const firstDate = new Date("2030-01-01T00:00:00Z");
     await ucmsModels.policyVersions!.create({
-      allowedEmailDomains: ["original.edu.vn"], minFoundingMembers: 5,
-      mandatoryApplicationDocuments: ["charter"],
+      minFoundingMembers: 5, formRequirements: DEFAULT_FORM_REQUIREMENTS,
       reportDeadlines: [{ reportType: "periodic", dueDaysAfterPeriodEnd: 10,
         remindBeforeDays: 3, overdueAfterDays: 2, escalateAfterDays: 5 }],
       conflictThresholdMinutes: 30, feedbackWindowHours: 48,
@@ -118,8 +119,7 @@ describe.skipIf(!uri)("Mongo policy repository", () => {
     });
 
     const impacts = await mongoPolicyRepository().findDecisionImpacts({
-      allowedEmailDomains: ["fpt.edu.vn"], minFoundingMembers: 5,
-      mandatoryApplicationDocuments: ["charter"],
+      minFoundingMembers: 5, formRequirements: DEFAULT_FORM_REQUIREMENTS,
       reportDeadlines: [{ reportType: "periodic", dueDaysAfterPeriodEnd: 10,
         remindBeforeDays: 3, overdueAfterDays: 2, escalateAfterDays: 5 }],
       conflictThresholdMinutes: 30, feedbackWindowHours: 48, feedbackMinRespondents: 5,

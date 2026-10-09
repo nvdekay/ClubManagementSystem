@@ -19,6 +19,9 @@ const en = {
   signIn: "Sign in to manage this club profile.", signInLink: "Sign in and continue",
   loadError: "Could not load club settings.", actionError: "Could not save this change.",
   success: "Changes saved.", retry: "Retry", pendingSetup: "Pending setup",
+  requiredMark: "required", requiredHint: "Fields marked * are required by school policy.",
+  missingFields: "School policy requires these fields: {{fields}}.",
+  channelsRequired: "Add at least one public channel.",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -42,6 +45,9 @@ const vi: Record<keyof typeof en, string> = {
   signIn: "Đăng nhập để quản lý hồ sơ CLB.", signInLink: "Đăng nhập và tiếp tục",
   loadError: "Không tải được thiết lập CLB.", actionError: "Không thể lưu thay đổi.",
   success: "Đã lưu thay đổi.", retry: "Thử lại", pendingSetup: "Đang thiết lập",
+  requiredMark: "bắt buộc", requiredHint: "Các mục có dấu * là bắt buộc theo chính sách nhà trường.",
+  missingFields: "Chính sách nhà trường yêu cầu điền: {{fields}}.",
+  channelsRequired: "Hãy thêm ít nhất một kênh công khai.",
 };
 
 export const clubSettings = { en, vi };
