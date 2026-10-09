@@ -1,4 +1,4 @@
-import type { ApplicationRecord, ApplicationVersion } from "./applications";
+import type { ApplicationRecord, ApplicationVersion, FounderProfile } from "./applications";
 
 export type ReviewOutcome = "Request revision" | "Approve" | "Reject";
 
@@ -31,6 +31,7 @@ export interface ReviewQueueItem {
 export interface ReviewDetail extends ReviewQueueItem {
   versions: ApplicationVersion[];
   decisions: ReviewDecision[];
+  founders: FounderProfile[];
 }
 
 export interface ReviewDecisionInput {

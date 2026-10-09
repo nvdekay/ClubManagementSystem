@@ -8,17 +8,14 @@ import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useApplication, useApplicationAction, useApplicationConfig,
-  useApplicationPreview, useDocumentAccess } from "@/hooks/useApplications";
+  useApplicationPreview, useDocumentAccess, useFounderLookup } from "@/hooks/useApplications";
+import type { FounderProfile } from "@/services/applications";
 import { useAuth } from "@/hooks/useAuth";
 import type { ApplicationConfig, DraftInput, ProposedRole } from "@/services/applications";
 
 function initialDraft(config: ApplicationConfig, founderId: string): DraftInput {
   return { clubName: "", field: "", objectives: "", foundingUserIds: founderId ? [founderId] : [],
     proposedRoles: config.defaultRoles.map((role) => ({ ...role, permissionCodes: [] })) };
-}
-
-function splitLines(value: string): string[] {
-  return [...new Set(value.split("\n").map((item) => item.trim()).filter(Boolean))];
 }
 
 export function ApplicationEditorPage() {
@@ -28,7 +25,9 @@ export function ApplicationEditorPage() {
   const auth = useAuth();
   const config = useApplicationConfig(Boolean(auth.data));
   const detail = useApplication(id, Boolean(auth.data));
-  const preview = useApplicationPreview(id, true);
+  // Fetched on demand by "review and submit" (refetch ignores enabled); loading it eagerly 409s
+  // once the application is no longer editable.
+  const preview = useApplicationPreview(id, false);
   const action = useApplicationAction();
   const documentAccess = useDocumentAccess();
   const [draft, setDraft] = useState<DraftInput | null>(null);
@@ -37,7 +36,22 @@ export function ApplicationEditorPage() {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [nameConflict, setNameConflict] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const founderLookup = useFounderLookup();
+  const [founderEmail, setFounderEmail] = useState("");
+  const [founderError, setFounderError] = useState<string | null>(null);
+  const [addedFounders, setAddedFounders] = useState<Record<string, FounderProfile>>({});
   const application = detail.data?.application;
+  const latestDecision = detail.data?.decisions.at(-1);
+  function sectionLabel(section: string): string {
+    switch (section) {
+      case "club-information": return t("reviews.sectionClub");
+      case "founders": return t("reviews.sectionFounders");
+      case "documents": return t("reviews.sectionDocuments");
+      case "role-structure": return t("reviews.sectionRoles");
+      case "other": return t("reviews.sectionOther");
+      default: return section;
+    }
+  }
   const state = application?.state;
   const editable = !id || state === "Draft" || state === "Revision Requested";
   const canWithdraw = state === "Submitted" || state === "Under Review" || state === "Revision Requested";
@@ -116,9 +130,36 @@ export function ApplicationEditorPage() {
     }
   }
 
+  function founderProfile(founderId: string): FounderProfile | undefined {
+    if (auth.data && founderId === auth.data.user.id) {
+      return { id: founderId, displayName: auth.data.user.displayName, email: auth.data.user.email };
+    }
+    return addedFounders[founderId] ?? detail.data?.founders.find((item) => item.id === founderId);
+  }
+
+  async function addFounder() {
+    const email = founderEmail.trim();
+    if (!email || !currentDraft) return;
+    setFounderError(null);
+    try {
+      const profile = await founderLookup.mutateAsync(email);
+      if (currentDraft.foundingUserIds.includes(profile.id)) {
+        setFounderError(t("applications.founderAlreadyAdded"));
+        return;
+      }
+      setAddedFounders((current) => ({ ...current, [profile.id]: profile }));
+      change("foundingUserIds", [...currentDraft.foundingUserIds, profile.id]);
+      setFounderEmail("");
+    } catch (error) {
+      const status = (error as { status?: number }).status;
+      setFounderError(status === 404 ? t("applications.founderNotFound") : t("applications.founderLookupError"));
+    }
+  }
+
   async function handleUpload(event: ChangeEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!id || !file || !documentType || !auth.data) return;
+    setLocalError(null);
     try {
       await action.mutateAsync({ kind: "upload", id, file, documentType, csrfToken: auth.data.csrfToken });
       setFile(null);
@@ -129,18 +170,21 @@ export function ApplicationEditorPage() {
 
   async function withdraw() {
     if (!id || !auth.data || !window.confirm(t("applications.withdrawConfirm"))) return;
+    setLocalError(null);
     try { await action.mutateAsync({ kind: "withdraw", id, csrfToken: auth.data.csrfToken }); }
     catch (error) { setLocalError(error instanceof Error ? error.message : t("applications.actionError")); }
   }
 
   async function remove(documentId: string) {
     if (!id || !auth.data) return;
+    setLocalError(null);
     try { await action.mutateAsync({ kind: "remove", id, documentId, csrfToken: auth.data.csrfToken }); }
     catch (error) { setLocalError(error instanceof Error ? error.message : t("applications.actionError")); }
   }
 
   async function download(documentId: string) {
     if (!id) return;
+    setLocalError(null);
     try {
       const access = await documentAccess.mutateAsync({ id, documentId });
       window.location.assign(access.url);
@@ -176,8 +220,25 @@ export function ApplicationEditorPage() {
       <h1 className="mt-4 text-3xl font-bold font-heading">{id ? currentDraft.clubName || t("applications.title") : t("applications.new")}</h1>
       <p className="mt-2 text-muted-app">{t("applications.description")}</p>
       {state && <p className="mt-2 text-sm text-muted-app">{t("applications.state")}: {stateLabel(state)}</p>}
+      {latestDecision && (state === "Revision Requested" || state === "Rejected") && (
+        <section role="status" className="mt-6 rounded-xl border border-warning-app/40 bg-warning-app/10 p-5">
+          <h2 className="font-semibold font-heading">{state === "Rejected"
+            ? t("applications.feedbackRejectedTitle") : t("applications.feedbackRevisionTitle")}</h2>
+          {latestDecision.reason && <p className="mt-2 whitespace-pre-wrap text-sm">{latestDecision.reason}</p>}
+          {latestDecision.sections.length > 0 && <p className="mt-3 text-sm">
+            <span className="font-semibold">{t("applications.feedbackSections")}:</span>{" "}
+            {latestDecision.sections.map(sectionLabel).join(", ")}</p>}
+          {state === "Revision Requested" && application?.revisionDeadlineAt && <p className="mt-2 text-sm">
+            <span className="font-semibold">{t("applications.feedbackDeadline")}:</span>{" "}
+            {new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" })
+              .format(new Date(application.revisionDeadlineAt))}</p>}
+        </section>
+      )}
 
-      <fieldset disabled={!editable} className="mt-8 space-y-6 disabled:opacity-80">
+      {/* Only the editable sections sit in a disabled fieldset: it would also disable the
+          document download and withdraw buttons, which stay available after submission. */}
+      <div className="mt-8 space-y-6">
+      <fieldset disabled={!editable} className="space-y-6 disabled:opacity-80">
         <AppCard className="grid gap-5 p-5 sm:grid-cols-2">
           <h2 className="text-lg font-semibold sm:col-span-2 font-heading">{t("applications.basic")}</h2>
           <label className="text-sm">{t("applications.clubName")}
@@ -192,14 +253,34 @@ export function ApplicationEditorPage() {
             <AppTextarea className="mt-2 block w-full" maxLength={5000} value={currentDraft.objectives}
               onChange={(event) => change("objectives", event.target.value)} />
           </label>
-          <label className="text-sm sm:col-span-2">{t("applications.founders")}
-            <AppTextarea className="mt-2 block w-full" value={currentDraft.foundingUserIds.join("\n")}
-              onChange={(event) => change("foundingUserIds", splitLines(event.target.value))} />
+          <div className="text-sm sm:col-span-2">
+            <p>{t("applications.founders")}</p>
+            <ul className="mt-2 space-y-2">{currentDraft.foundingUserIds.map((founderId) => {
+              const profile = founderProfile(founderId);
+              return <li key={founderId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-app px-3 py-2">
+                <span className="min-w-0"><span className="font-semibold">{profile?.displayName ?? founderId}</span>
+                  {profile && <span className="block break-all text-xs text-muted-app">{profile.email}</span>}</span>
+                {founderId !== auth.data?.user.id && <AppButton type="button" variant="secondary"
+                  onClick={() => change("foundingUserIds", currentDraft.foundingUserIds.filter((value) => value !== founderId))}>
+                  {t("applications.remove")}</AppButton>}
+              </li>;
+            })}</ul>
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              <label className="min-w-56 flex-1">{t("applications.founderEmail")}
+                <AppInput className="mt-2 block w-full" type="email" value={founderEmail}
+                  onChange={(event) => { setFounderEmail(event.target.value); setFounderError(null); }}
+                  onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void addFounder(); } }} />
+              </label>
+              <AppButton type="button" variant="secondary" disabled={!founderEmail.trim() || founderLookup.isPending}
+                onClick={() => void addFounder()}>{t("applications.addFounder")}</AppButton>
+            </div>
+            {founderError && <p role="alert" className="mt-2 text-sm text-danger-app">{founderError}</p>}
             <span className="mt-1 block text-xs text-muted-app">
               {t("applications.foundersHint", { count: config.data.requirements.minFoundingMembers })}
             </span>
-          </label>
+          </div>
         </AppCard>
+      </fieldset>
 
         <AppCard className="space-y-4 p-5">
           <h2 className="text-lg font-semibold font-heading">{t("applications.documents")}</h2>
@@ -244,6 +325,7 @@ export function ApplicationEditorPage() {
           )}
         </AppCard>
 
+      <fieldset disabled={!editable} className="space-y-6 disabled:opacity-80">
         <AppCard className="space-y-5 p-5">
           <div>
             <h2 className="text-lg font-semibold font-heading">{t("applications.roles")}</h2>
@@ -282,12 +364,12 @@ export function ApplicationEditorPage() {
               <fieldset disabled={role.isLeaderRole} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <legend className="mb-2 text-sm font-medium">{t("applications.permissions")}</legend>
                 {config.data.grantablePermissions.map((permission) => (
-                  <label key={permission} className="flex items-start gap-2 break-all text-xs">
+                  <label key={permission} title={permission} className="flex items-start gap-2 text-xs">
                     <input type="checkbox" checked={role.permissionCodes.includes(permission)}
                       onChange={(event) => updateRole(index, { permissionCodes: event.target.checked
                         ? [...role.permissionCodes, permission]
                         : role.permissionCodes.filter((value) => value !== permission) })} />
-                    {permission}
+                    {t(`applications.perm_${permission.replaceAll(".", "_")}`, { defaultValue: permission })}
                   </label>
                 ))}
               </fieldset>
@@ -305,7 +387,7 @@ export function ApplicationEditorPage() {
           ])}>{t("applications.addRole")}</AppButton>
         </AppCard>
 
-        {localError && <p role="alert" className="text-sm text-danger-app">{localError}</p>}
+        {localError && !action.isError && <p role="alert" className="text-sm text-danger-app">{localError}</p>}
         {action.isError && <p role="alert" className="text-sm text-danger-app">{t("applications.actionError")} {action.error.message}</p>}
         {action.isSuccess && <p role="status" className="text-sm text-success-app">{t("applications.success")}</p>}
         {editable && <div className="flex flex-wrap gap-3">
@@ -328,10 +410,12 @@ export function ApplicationEditorPage() {
             </AppButton>
           </div>
         </AppCard>}
-        {canWithdraw && <AppButton type="button" variant="secondary" onClick={() => void withdraw()}>
+      </fieldset>
+        {canWithdraw && <AppButton type="button" variant="secondary" disabled={action.isPending}
+          onClick={() => void withdraw()}>
           {t("applications.withdraw")}
         </AppButton>}
-      </fieldset>
+      </div>
       {nameConflict && !confirmSubmit && <p role="status" className="mt-4 text-sm text-danger-app">
         {t("applications.submitWarning")}
       </p>}

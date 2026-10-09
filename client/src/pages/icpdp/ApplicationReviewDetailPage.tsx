@@ -26,6 +26,7 @@ export function ApplicationReviewDetailPage() {
   const [reviewNote, setReviewNote] = useState("");
   const [deadline, setDeadline] = useState("");
   const [sections, setSections] = useState<string[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
   const currentVersion = useMemo(() => review.data?.versions.find((version) =>
     version.versionNo === review.data?.application.currentVersionNo) ?? review.data?.versions.at(-1),
   [review.data]);
@@ -57,6 +58,13 @@ export function ApplicationReviewDetailPage() {
 
   async function decide() {
     if (!auth.data || !id) return;
+    // Same rules the server enforces, checked before asking for confirmation.
+    const missing = outcome !== "Approve" && !reason.trim() ? t("reviews.reasonRequired")
+      : outcome === "Request revision" && !sections.length ? t("reviews.sectionsRequired")
+        : outcome === "Request revision" && (!deadline || new Date(deadline) <= new Date())
+          ? t("reviews.deadlineRequired") : null;
+    setFormError(missing);
+    if (missing) return;
     const prompt = outcome === "Approve" ? t("reviews.confirmApprove")
       : outcome === "Reject" ? t("reviews.confirmReject") : t("reviews.confirmRevision");
     if (!window.confirm(prompt)) return;
@@ -79,8 +87,15 @@ export function ApplicationReviewDetailPage() {
     }
   }
 
-  if (auth.isPending || review.isPending) return <AppSkeleton className="mx-auto h-[32rem] max-w-6xl" />;
-  if (!auth.data || !isOfficer) return <AppCard><p role="alert" className="text-danger-app">{t("reviews.unauthorized")}</p></AppCard>;
+  // A disabled query stays pending forever, so only wait for a review the user may load.
+  if (auth.isPending || (isOfficer && review.isPending)) return <AppSkeleton className="mx-auto h-[32rem] max-w-6xl" />;
+  if (!auth.data) return <AppCard className="mx-auto max-w-3xl">
+    <p>{t("reviews.signIn")}</p>
+    <Link className="mt-3 inline-block font-semibold text-accent-app"
+      to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
+      {t("reviews.signInLink")}</Link>
+  </AppCard>;
+  if (!isOfficer) return <AppCard><p role="alert" className="text-danger-app">{t("reviews.unauthorized")}</p></AppCard>;
   if (review.isError || !review.data || !currentVersion) return (
     <AppCard className="mx-auto max-w-3xl space-y-4">
       <p role="alert" className="text-danger-app">{review.error?.message ?? t("reviews.loadError")}</p>
@@ -102,7 +117,7 @@ export function ApplicationReviewDetailPage() {
           <p className="mt-2 text-muted-app">{currentVersion.snapshot.field} · {t("reviews.version", { number: currentVersion.versionNo })}</p>
         </div>
         <span className="rounded-full border border-border-app bg-surface-app px-4 py-2 text-sm font-semibold">
-          {t("reviews.status")}: {application.state}
+          {t("reviews.status")}: {t(`applications.status${application.state.replaceAll(" ", "")}`, { defaultValue: application.state })}
         </span>
       </div>
 
@@ -119,8 +134,14 @@ export function ApplicationReviewDetailPage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <AppCard className="p-6"><h2 className="font-bold font-heading">{t("reviews.founders")}</h2>
-              <ul className="mt-4 space-y-2">{currentVersion.snapshot.foundingUserIds.map((founder) =>
-                <li key={founder} className="break-all rounded-md bg-surface-app px-3 py-2 font-mono text-xs">{founder}</li>)}</ul>
+              <ul className="mt-4 space-y-2">{currentVersion.snapshot.foundingUserIds.map((founder) => {
+                const profile = review.data.founders.find((item) => item.id === founder);
+                return <li key={founder} className="rounded-md bg-surface-app px-3 py-2 text-sm">
+                  {profile ? <><span className="font-semibold">{profile.displayName}</span>
+                    <span className="block break-all text-xs text-muted-app">{profile.email}</span></>
+                    : <span className="break-all font-mono text-xs">{founder}</span>}
+                </li>;
+              })}</ul>
             </AppCard>
             <AppCard className="p-6"><h2 className="font-bold font-heading">{t("reviews.documents")}</h2>
               {currentVersion.snapshot.documents.length ? <ul className="mt-4 space-y-3">{currentVersion.snapshot.documents.map((document) =>
@@ -136,7 +157,9 @@ export function ApplicationReviewDetailPage() {
                 <div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{role.name}</h3><p className="mt-1 font-mono text-xs text-muted-app">{role.code}</p></div>
                   {role.isBoardSeat && <span className="rounded-full bg-accent-app/10 px-2 py-1 text-xs font-semibold text-accent-app">{t("reviews.boardSeat")}</span>}</div>
                 <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-app">{t("reviews.permissions")}</p>
-                <p className="mt-1 break-words text-sm">{role.permissionCodes.join(", ") || t("reviews.noPermissions")}</p>
+                <p className="mt-1 break-words text-sm">{role.isLeaderRole ? t("reviews.leaderAllPermissions")
+                  : role.permissionCodes.map((code) => t(`applications.perm_${code.replaceAll(".", "_")}`,
+                    { defaultValue: code })).join(", ") || t("reviews.noPermissions")}</p>
               </section>)}</div>
           </AppCard>
 
@@ -168,13 +191,14 @@ export function ApplicationReviewDetailPage() {
               <label className="mt-5 block text-sm font-semibold">{t("reviews.reason")}<AppTextarea className="mt-2 min-h-28 w-full" value={reason} onChange={(event) => setReason(event.target.value)} placeholder={t("reviews.reasonHint")} maxLength={5000} /></label>
               <label className="mt-5 block text-sm font-semibold">{t("reviews.reviewNote")}<AppTextarea className="mt-2 min-h-28 w-full" value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} placeholder={t("reviews.reviewNoteHint")} maxLength={10000} /></label>
               <AppButton className="mt-6 w-full" disabled={action.isPending} onClick={() => void decide()}>{action.isPending ? t("reviews.submitting") : t("reviews.submitDecision")}</AppButton>
+              {formError && <p role="alert" className="mt-3 text-sm text-danger-app">{formError}</p>}
               {action.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{action.error.message || t("reviews.actionError")}</p>}
               {action.isSuccess && <p role="status" className="mt-3 text-sm text-success-app">{t("reviews.success")}</p>}
             </AppCard>
           ) : null}
 
           <AppCard className="p-6"><h2 className="font-bold font-heading">{t("reviews.decisions")}</h2>
-            {decisions.length ? <ol className="mt-4 space-y-4">{decisions.map((decision) => <li key={decision.id} className="border-l-2 border-primary-app pl-3"><p className="font-semibold">{decision.outcome}</p><p className="mt-1 text-xs text-muted-app">{t("reviews.decidedAt", { date: date(decision.at) })}</p>{decision.reason && <p className="mt-2 text-sm">{decision.reason}</p>}</li>)}</ol>
+            {decisions.length ? <ol className="mt-4 space-y-4">{decisions.map((decision) => <li key={decision.id} className="border-l-2 border-primary-app pl-3"><p className="font-semibold">{decision.outcome === "Approve" ? t("reviews.approve") : decision.outcome === "Reject" ? t("reviews.reject") : decision.outcome === "Request revision" ? t("reviews.requestRevision") : decision.outcome}</p><p className="mt-1 text-xs text-muted-app">{t("reviews.decidedAt", { date: date(decision.at) })}</p>{decision.reason && <p className="mt-2 text-sm">{decision.reason}</p>}</li>)}</ol>
               : <p className="mt-3 text-sm text-muted-app">{t("reviews.noDecisions")}</p>}
           </AppCard>
         </aside>

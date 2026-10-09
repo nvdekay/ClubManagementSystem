@@ -38,7 +38,23 @@ export interface ApplicationRecord {
   draftRevision: number;
   draft: ApplicationDraft;
   submittedAt?: string;
+  revisionDeadlineAt?: string;
   createdAt: string;
+}
+
+/** A founding member shown by name and email instead of a raw account id. */
+export interface FounderProfile {
+  id: string;
+  displayName: string;
+  email: string;
+}
+
+/** ICPDP decision as shown to the applicant (no internal review note). */
+export interface ApplicantDecision {
+  outcome: "Approve" | "Request revision" | "Reject";
+  reason?: string;
+  sections: string[];
+  decidedAt: string;
 }
 
 export interface ApplicationVersion {
@@ -60,6 +76,8 @@ export interface ApplicationConfig {
 export interface ApplicationDetail {
   application: ApplicationRecord;
   versions: ApplicationVersion[];
+  decisions: ApplicantDecision[];
+  founders: FounderProfile[];
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -68,7 +86,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    // Keep the status so callers can tell "not found" apart from other failures.
+    throw Object.assign(new Error(body?.message ?? `HTTP ${response.status}`), { status: response.status });
   }
   const body: { data: T } = await response.json();
   return body.data;
@@ -130,6 +149,10 @@ export function removeDocument(id: string, documentId: string,
   csrfToken: string): Promise<ApplicationRecord> {
   return request(`/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}`,
     mutation("DELETE", csrfToken));
+}
+
+export function lookupFounder(email: string): Promise<FounderProfile> {
+  return request(`/founder-lookup?email=${encodeURIComponent(email)}`);
 }
 
 export function documentAccess(id: string, documentId: string): Promise<{ url: string; fileName: string }> {

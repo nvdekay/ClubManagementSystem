@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  createDraft, documentAccess, fetchApplication, fetchApplicationConfig,
+  createDraft, documentAccess, fetchApplication, fetchApplicationConfig, lookupFounder,
   fetchMyApplications, previewApplication, removeDocument, saveDraft,
   submitDraft, uploadDocument, withdrawDraft, type DraftInput,
 } from "@/services/applications";
@@ -51,6 +51,10 @@ export function useApplicationAction() {
       await queryClient.invalidateQueries({ queryKey: applicationsKey });
     },
   });
+}
+
+export function useFounderLookup() {
+  return useMutation({ mutationFn: (email: string) => lookupFounder(email) });
 }
 
 export function useDocumentAccess() {
