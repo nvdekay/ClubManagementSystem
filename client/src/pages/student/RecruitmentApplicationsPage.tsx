@@ -1,7 +1,10 @@
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyRecruitmentApplications, useRecruitmentApplicationAction } from "@/hooks/useRecruitmentApplications";
@@ -35,54 +38,66 @@ export function RecruitmentApplicationsPage() {
     } catch { /* The mutation error is rendered in the page. */ }
   }
 
-  if (auth.isPending || (auth.data && applications.isPending)) {
-    return <div className="mx-auto max-w-4xl space-y-4"><AppSkeleton className="h-28 w-full" />
-      <AppSkeleton className="h-28 w-full" /></div>;
+  function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
+    if (state === "Accepted" || state === "Onboarded") return "success";
+    if (state === "Rejected" || state === "Declined") return "danger";
+    if (state === "Waitlisted") return "warning";
+    if (state === "Draft" || state === "Withdrawn") return "neutral";
+    return "info";
   }
-  if (!auth.data) return <AppCard className="mx-auto max-w-3xl">
+
+  const header = <PageHeader title={t("recruitmentApplications.title")} description={t("recruitmentApplications.description")} />;
+
+  if (auth.isPending || (auth.data && applications.isPending)) {
+    return <>{header}<div className="space-y-2"><AppSkeleton className="h-28 w-full" />
+      <AppSkeleton className="h-28 w-full" /></div></>;
+  }
+  if (!auth.data) return <>{header}<AppNotice>
     <p>{t("recruitmentApplications.signIn")}</p>
-    <Link className="mt-3 inline-block font-semibold text-accent-app"
+    <Link className="inline-block font-semibold text-accent-app"
       to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
       {t("recruitmentApplications.signInLink")}</Link>
-  </AppCard>;
-  if (applications.isError || !applications.data) return <AppCard className="mx-auto max-w-3xl space-y-4">
-    <p role="alert" className="text-danger-app">{applications.error?.message ?? t("recruitmentApplications.listError")}</p>
-    <AppButton variant="secondary" onClick={() => void applications.refetch()}>{t("recruitmentApplications.retry")}</AppButton>
-  </AppCard>;
+  </AppNotice></>;
+  if (applications.isError || !applications.data) return <>{header}
+    <AppNotice tone="danger" role="alert" title={applications.error?.message ?? t("recruitmentApplications.listError")}>
+      <AppButton variant="secondary" onClick={() => void applications.refetch()}>{t("recruitmentApplications.retry")}</AppButton>
+    </AppNotice></>;
 
-  return <div className="mx-auto max-w-4xl">
-    <Link to="/student" className="text-sm font-semibold text-accent-app">{t("recruitmentApplications.back")}</Link>
-    <header className="mt-5 border-b border-border-app pb-6">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent-app">{t("recruitmentApplications.campaign")}</p>
-      <h1 className="mt-2 text-3xl font-bold font-heading sm:text-4xl">{t("recruitmentApplications.title")}</h1>
-      <p className="mt-3 text-muted-app">{t("recruitmentApplications.description")}</p>
-    </header>
-    {action.isError && <p role="alert" className="mt-5 text-danger-app">{action.error.message || t("recruitmentApplications.actionError")}</p>}
-    {applications.data.length === 0 ? <AppCard className="mt-6 p-6">
-      <p className="font-semibold">{t("recruitmentApplications.noApplications")}</p>
-      <Link to="/clubs" className="mt-4 inline-block font-semibold text-accent-app">{t("recruitmentApplications.explore")}</Link>
-    </AppCard> : <div className="mt-6 space-y-4">
-      {applications.data.map((application) => <AppCard key={application.id} className="p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-app">{application.clubName ?? t("recruitmentApplications.campaign")}</p>
-            <h2 className="mt-1 break-words text-xl font-bold font-heading">{application.campaignTitle ?? application.position}</h2>
-            <p className="mt-2 text-sm text-muted-app">{t("recruitmentApplications.positions")}: {application.position}</p>
+  return <>
+    {header}
+    {action.isError && <AppNotice tone="danger" role="alert" className="mb-5">{action.error.message || t("recruitmentApplications.actionError")}</AppNotice>}
+    {applications.data.length === 0 ? <div className="py-16 text-center">
+      <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="send" className="size-7" /></span>
+      <p className="mt-4 font-semibold">{t("recruitmentApplications.noApplications")}</p>
+      <Link to="/clubs" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+        <AppIcon name="compass" className="size-4" />{t("recruitmentApplications.explore")}</Link>
+    </div> : <ul className="divide-y divide-border-app border-y border-border-app">
+      {applications.data.map((application) => <li key={application.id} className="flex flex-wrap items-start gap-x-4 gap-y-3 px-2 py-5">
+        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+          <AppIcon name="send" />
+        </span>
+        <div className="min-w-0 flex-1 basis-60">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="min-w-0 font-heading text-lg font-bold break-words">{application.campaignTitle ?? application.position}</h2>
+            <AppBadge tone={stateTone(application.state)}>{stateLabel(application.state)}</AppBadge>
           </div>
-          <span className="rounded-full border border-border-app px-3 py-1 text-sm font-semibold">{stateLabel(application.state)}</span>
+          <p className="mt-1 text-sm text-muted-app">
+            {application.clubName ?? t("recruitmentApplications.campaign")} · {t("recruitmentApplications.positions")}: {application.position}
+          </p>
+          {application.decisionReason && <AppNotice className="mt-3">
+            <p><span className="font-semibold">{t("recruitmentApplications.decisionReason")}: </span>{application.decisionReason}</p>
+          </AppNotice>}
+          <p className="mt-2 text-sm text-muted-app">{t("recruitmentApplications.statusHint")}</p>
         </div>
-        {application.decisionReason && <p className="mt-4 rounded-lg bg-surface-app p-3 text-sm">
-          <span className="font-semibold">{t("recruitmentApplications.decisionReason")}: </span>{application.decisionReason}</p>}
-        <p className="mt-4 text-sm text-muted-app">{t("recruitmentApplications.statusHint")}</p>
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {application.state === "Draft" && <Link to={`/workspace/recruitment/${application.campaignId}`}
-            className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary-app px-4 py-2 font-semibold text-on-primary-app">
-            {t("recruitmentApplications.formTitle")}</Link>}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+            {t("recruitmentApplications.formTitle")}<AppIcon name="chevronRight" className="size-4" /></Link>}
           {["Submitted", "Screening", "Shortlisted"].includes(application.state)
             && <AppButton variant="secondary" disabled={action.isPending}
               onClick={() => void withdraw(application.id)}>{t("recruitmentApplications.withdraw")}</AppButton>}
         </div>
-      </AppCard>)}
-    </div>}
-  </div>;
+      </li>)}
+    </ul>}
+  </>;
 }
