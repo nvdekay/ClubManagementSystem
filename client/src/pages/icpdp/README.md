@@ -19,3 +19,7 @@ Sự kiện, Năm học, Báo cáo); ICPDP bật/tắt field bắt buộc của 
 
 `ClubFieldsPage` quản lý danh mục lĩnh vực CLB sinh viên chọn khi lập hồ sơ: thêm, đổi tên/thứ tự,
 xoá (chưa ai dùng thì xoá hẳn, đang dùng thì ẩn khỏi danh sách chọn).
+
+`PropertiesPage` + `PropertyEditor` (UC44) quản lý danh mục cơ sở vật chất: mã tự sinh theo loại, sức
+chứa, thiết bị đi kèm, khung giờ được đặt (chung hoặc từng ngày), giai đoạn khoá; ngừng sử dụng/dùng lại;
+chỉ xoá được khi chưa từng có booking.

@@ -232,6 +232,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/workspace/student-feedback", label: t("common.navFeedbackInbox"), icon: "inbox" },
       { to: "/workspace/policy", label: t("common.navPolicy"), icon: "shield" },
       { to: "/workspace/club-fields", label: t("common.navClubFields"), icon: "layers" },
+      { to: "/workspace/properties", label: t("common.navProperties"), icon: "mapPin" },
       { to: "/icpdp/accounts", label: t("common.navAccounts"), icon: "users" },
     ] }, explore];
   }

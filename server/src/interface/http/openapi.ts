@@ -5,6 +5,7 @@ import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
+import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
@@ -74,6 +75,7 @@ const FoundingRequirements = z.object({
   policyVersionId: z.string(), minFoundingMembers: z.number(),
   required: policySettingsBody.shape.formRequirements.shape.clubFounding,
 });
+const Property = propertyCreateBody.extend({ id: z.string(), code: z.string(), isActive: z.boolean() });
 const ClubField = clubFieldBody.extend({ id: z.string(), isActive: z.boolean() });
 const ClubFieldUsage = ClubField.extend({ clubCount: z.number(), applicationCount: z.number() });
 const FoundingIssue = z.enum(["clubName", "field", "summary", "objectives", "fanpageUrl",
@@ -492,6 +494,53 @@ export const openApiDocument = createDocument({
             content: { "application/json": { schema: envelope(ClubField) } } },
           "409": { description: "A field with this name already exists",
             content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/properties": {
+      get: {
+        summary: "List the facility catalogue (UC44)",
+        responses: {
+          "200": { description: "Properties", content: { "application/json": { schema: envelope(z.array(Property)) } } },
+          "403": { description: "ICPDP officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Add a room, hall or equipment; the code is generated from the type (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: propertyCreateBody } } },
+        responses: {
+          "201": { description: "Property created", content: { "application/json": { schema: envelope(Property) } } },
+          "400": { description: "Invalid property values", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/properties/{id}": {
+      patch: {
+        summary: "Edit a property's details, bookable hours and blackouts; the type cannot change",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: propertyDetailsBody } } },
+        responses: {
+          "200": { description: "Property updated", content: { "application/json": { schema: envelope(Property) } } },
+          "404": { description: "Property not found", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      delete: {
+        summary: "Delete a property that was never booked (BR41: otherwise deactivate it)",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Property deleted",
+            content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } } },
+          "409": { description: "The property has bookings", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/properties/{id}/activation": {
+      post: {
+        summary: "Deactivate or reactivate a property; existing approved bookings are kept",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: propertyActivationBody } } },
+        responses: {
+          "200": { description: "Property updated", content: { "application/json": { schema: envelope(Property) } } },
         },
       },
     },

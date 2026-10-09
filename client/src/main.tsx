@@ -15,6 +15,7 @@ import { PublicHome } from "./pages/public/PublicHome.js";
 import { PublicNotFound } from "./pages/public/PublicNotFound.js";
 import { PolicyPage } from "./pages/icpdp/PolicyPage.js";
 import { ClubFieldsPage } from "./pages/icpdp/ClubFieldsPage.js";
+import { PropertiesPage } from "./pages/icpdp/PropertiesPage.js";
 import { IcpdpHomePage } from "./pages/icpdp/IcpdpHomePage.js";
 import { AccountsPage } from "./pages/icpdp/AccountsPage.js";
 import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
@@ -67,6 +68,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="club/:clubId" element={<ClubHomePage />} />
             <Route path="workspace/policy" element={<PolicyPage />} />
             <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
+            <Route path="workspace/properties" element={<PropertiesPage />} />
             <Route path="workspace/applications" element={<ApplicationsPage />} />
             <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
             <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />

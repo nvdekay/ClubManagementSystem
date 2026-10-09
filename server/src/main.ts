@@ -12,6 +12,7 @@ import { createOAuthFlowService } from "./infra/auth/oauth-flow-service.js";
 import { ensureAuthBootstrap } from "./infra/db/bootstrap-auth.js";
 import { mongoPublicDiscoveryRepository } from "./infra/db/mongo-public-discovery-repository.js";
 import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
+import { mongoPropertyRepository } from "./infra/db/mongo-property-repository.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
@@ -58,6 +59,7 @@ const app = authConfig ? buildApp({
   policyRepo: mongoPolicyRepository(),
   applicationRepo: mongoClubApplicationRepository(),
   clubFieldRepo: mongoClubFieldRepository(),
+  propertyRepo: mongoPropertyRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),
