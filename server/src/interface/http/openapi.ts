@@ -77,6 +77,7 @@ const ApplicationReviewDecision = z.object({
   outcome: z.enum(["Request revision", "Approve", "Reject"]),
   reason: z.string().optional(), sections: z.array(z.string()),
   reviewNote: z.string().optional(), actorId: z.string(), at: z.string(),
+  policyVersionId: z.string().optional(),
 });
 const ApplicationReviewQueueItem = z.object({
   task: ApplicationReviewTask, application: ApplicationRecord,
@@ -387,6 +388,8 @@ export const openApiDocument = createDocument({
           "201": { description: "Policy version created",
             content: { "application/json": { schema: envelope(PolicyVersion) } } },
           "400": { description: "Policy values are invalid",
+            content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Policy would invalidate issued decisions; details lists affected records",
             content: { "application/json": { schema: ApiError } } },
           "401": { description: "Authentication required",
             content: { "application/json": { schema: ApiError } } },

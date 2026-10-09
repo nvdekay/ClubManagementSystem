@@ -23,6 +23,7 @@ export interface ApplicationReviewDecision {
   reason?: string;
   sections: string[];
   reviewNote?: string;
+  policyVersionId?: string;
   actorId: string;
   at: Date;
 }

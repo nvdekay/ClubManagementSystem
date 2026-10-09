@@ -85,7 +85,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-1.5** Middleware kiểm tra quyền (thô) + helper `assertScope()` dùng bên trong usecase (CLB, permission của role hoặc Club Leader, nhiệm kỳ đang hoạt động). → SEC-03, CON-06, BR47, BR54, BR55
 - [ ] **BE-1.6** `GET /dashboard` — mỗi vai trò một lần đọc tổng hợp, mỗi panel là một truy vấn đi qua index, suy giảm độc lập theo panel. → FR-UC02-01…06
 - [ ] **BE-1.7** UC03 quản trị tài khoản và vai trò; vô hiệu hoá phiên khi thay đổi; từ chối việc tự thu hồi vai trò quản trị cuối cùng. → FR-UC03-01…09
-- [ ] **BE-1.8** UC04 đánh phiên bản chính sách kèm ngày hiệu lực và chốt chặn "sẽ làm vô hiệu một quyết định đã ra". → FR-UC04-01…07
+- [x] **BE-1.8** UC04 đánh phiên bản chính sách kèm ngày hiệu lực và chốt chặn "sẽ làm vô hiệu một quyết định đã ra". → FR-UC04-01…07
 - [x] **BE-1.9** Đã rút cùng UC05 — không triển khai rule định tuyến hay endpoint mô phỏng. → BR16
 - [x] **BE-1.10** Đã rút — mỗi lần nộp tạo đúng một review task và nhận một quyết định ICPDP. → BR16
 

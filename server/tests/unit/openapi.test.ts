@@ -58,6 +58,7 @@ const stubPublic: PublicDiscoveryRepository = {
 const stubPolicy = {
   findEffective: async () => null,
   listRecent: async () => [],
+  findDecisionImpacts: async () => [],
   append: async () => { throw new Error("unused"); },
 };
 const stubApplications: ClubApplicationRepository = {

@@ -7,7 +7,10 @@ import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useCreatePolicy } from "@/hooks/usePolicy";
-import type { CreatePolicyInput, PolicyVersion } from "@/services/policy";
+import {
+  PolicyConflictError,
+  type CreatePolicyInput, type PolicyDecisionImpact, type PolicyImpactReason, type PolicyVersion,
+} from "@/services/policy";
 
 interface PolicyEditorProps {
   latest?: PolicyVersion;
@@ -123,6 +126,28 @@ function payload(form: PolicyForm): CreatePolicyInput {
     ...(form.effectiveFrom ? { effectiveFrom: isoDate(form.effectiveFrom) } : {}),
     ...(form.reason.trim() ? { reason: form.reason.trim() } : {}),
   };
+}
+
+function impactReasonKey(reason: PolicyImpactReason):
+  | "policy.impactEventCalendar"
+  | "policy.impactBookingCalendar"
+  | "policy.impactDissolutionSemester"
+  | "policy.impactOverbooking" {
+  switch (reason) {
+    case "EVENT_OUTSIDE_ACADEMIC_CALENDAR": return "policy.impactEventCalendar";
+    case "BOOKING_OUTSIDE_ACADEMIC_CALENDAR": return "policy.impactBookingCalendar";
+    case "DISSOLUTION_SEMESTER_REMOVED": return "policy.impactDissolutionSemester";
+    case "APPROVED_OVERBOOKING_DISALLOWED": return "policy.impactOverbooking";
+  }
+}
+
+function impactEntityKey(entityType: PolicyDecisionImpact["entityType"]):
+  "policy.impactEntityEvent" | "policy.impactEntityBooking" | "policy.impactEntityClub" {
+  switch (entityType) {
+    case "Event": return "policy.impactEntityEvent";
+    case "PropertyBooking": return "policy.impactEntityBooking";
+    case "Club": return "policy.impactEntityClub";
+  }
 }
 
 export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
@@ -287,9 +312,22 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
         </label>
       </div>
       {localError && <p role="alert" className="text-sm text-danger-app">{localError}</p>}
-      {create.isError && <p role="alert" className="text-sm text-danger-app">
-        {t("policy.saveError")} {create.error.message}
-      </p>}
+      {create.isError && create.error instanceof PolicyConflictError ? (
+        <div role="alert" className="rounded-xl border-l-4 border-danger-app bg-danger-app/10 px-4 py-3 text-sm">
+          <p className="font-semibold text-danger-app">{t("policy.impactTitle")}</p>
+          <p className="mt-1 text-text-app">{t("policy.impactDescription")}</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-text-app">
+            {create.error.affectedRecords.map((record) => (
+              <li key={`${record.entityType}:${record.entityId}`}>
+                <span className="font-medium">{t(impactEntityKey(record.entityType))}</span> · {record.entityId}: {record.reasons
+                  .map((reason) => t(impactReasonKey(reason))).join(", ")}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : create.isError ? <p role="alert" className="text-sm text-danger-app">
+          {t("policy.saveError")} {create.error.message}
+        </p> : null}
       {create.isSuccess && <p role="status" className="text-sm text-success-app">{t("policy.saveSuccess")}</p>}
       <AppButton type="submit" disabled={create.isPending}>
         {create.isPending ? t("policy.saving") : t("policy.save")}

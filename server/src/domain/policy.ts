@@ -32,12 +32,27 @@ export interface PolicyVersion extends PolicySettings {
   createdAt: Date;
 }
 
+export type PolicyImpactReason =
+  | "EVENT_OUTSIDE_ACADEMIC_CALENDAR"
+  | "BOOKING_OUTSIDE_ACADEMIC_CALENDAR"
+  | "DISSOLUTION_SEMESTER_REMOVED"
+  | "APPROVED_OVERBOOKING_DISALLOWED";
+
+export interface PolicyDecisionImpact {
+  entityType: "Event" | "PropertyBooking" | "Club";
+  entityId: string;
+  reasons: PolicyImpactReason[];
+}
+
 export interface PolicyRepository {
   findEffective(at: Date): Promise<PolicyVersion | null>;
 }
 
 export interface PolicyManagementRepository extends PolicyRepository {
   listRecent(limit: number): Promise<PolicyVersion[]>;
+  findDecisionImpacts(
+    settings: PolicySettings, effectiveFrom: Date,
+  ): Promise<PolicyDecisionImpact[]>;
   append(input: {
     settings: PolicySettings;
     effectiveFrom: Date;

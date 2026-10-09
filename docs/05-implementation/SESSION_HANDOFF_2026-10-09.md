@@ -55,8 +55,8 @@ bên ngoài đã được xác minh.
 
 - **UC01 / workspace / UC03:** Google OAuth, session, quyền, workspace và UC03 account management
   có code. Chưa hoàn tất callback Google thật bằng credentials phù hợp và nghiệm thu UI thật.
-- **UC04 policy:** màn ICPDP và API/version Mongo có; FR-UC04-06 (liên kết quyết định với policy
-  snapshot và chặn policy làm vô hiệu quyết định đã ra) còn thiếu.
+- **UC04 policy:** màn ICPDP, API/version Mongo và FR-UC04-06 đã hoàn tất; quyết định duyệt hồ sơ
+  giữ `policyVersionId`, policy xung đột quyết định đã ban hành trả `409` kèm bản ghi ảnh hưởng.
 - **UC07 upload:** Cloudinary adapter/route đã có, nhưng chưa nghiệm thử bằng credentials thật;
   xử lý asset mồ côi khi upload thành công nhưng ghi Mongo thất bại còn mở.
 - **UC21–UC22:** domain/use case, API/OpenAPI, Mongo, test cho trạng thái/leave/board-seat guard,

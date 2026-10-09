@@ -33,6 +33,7 @@ function repository() {
         .sort((left, right) => right.effectiveFrom.getTime() - left.effectiveFrom.getTime())[0] ?? null;
     },
     async listRecent(limit) { return saved.slice(-limit).reverse(); },
+    async findDecisionImpacts() { return []; },
     async append(input) {
       const version = { ...input.settings, id: `version-${saved.length + 1}`,
         effectiveFrom: input.effectiveFrom, createdBy: input.createdBy, createdAt: input.createdAt };
@@ -104,5 +105,18 @@ describe("UC04 policy management", () => {
     expect(saved).toHaveLength(2);
     expect((await listPolicyVersions(repo, officer, actor, now)).current?.id).toBe(initial.id);
     expect((await listPolicyVersions(repo, officer, actor, now)).versions).toHaveLength(2);
+  });
+
+  it("rejects a policy that would invalidate an issued decision and returns affected records", async () => {
+    const { repo, saved } = repository();
+    repo.findDecisionImpacts = async () => [{
+      entityType: "Event", entityId: "000000000000000000000009",
+      reasons: ["EVENT_OUTSIDE_ACADEMIC_CALENDAR"],
+    }];
+    await expect(createPolicyVersion(repo, officer, actor, settings(), undefined, undefined, now))
+      .rejects.toMatchObject({ kind: "conflict", details: { affectedRecords: [{
+        entityType: "Event", entityId: "000000000000000000000009",
+      }] } });
+    expect(saved).toHaveLength(0);
   });
 });

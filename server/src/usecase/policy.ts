@@ -152,6 +152,13 @@ export async function createPolicyVersion(
   if (reason !== undefined && (typeof reason !== "string" || reason.trim().length > 1000)) {
     invalid("reason");
   }
-  return repo.append({ settings: normalized, effectiveFrom: requestedEffectiveFrom ?? now,
+  const effectiveFrom = requestedEffectiveFrom ?? now;
+  const impacts = await repo.findDecisionImpacts(normalized, effectiveFrom);
+  if (impacts.length > 0) {
+    throw new DomainError("policy would invalidate existing decisions", "conflict", {
+      affectedRecords: impacts,
+    });
+  }
+  return repo.append({ settings: normalized, effectiveFrom,
     createdBy: actorId, createdAt: now, reason: reason?.trim() || undefined });
 }

@@ -60,13 +60,14 @@ function taskFrom(doc: Record<string, unknown>): ApplicationReviewTask {
 }
 
 function decisionFrom(doc: Record<string, unknown>): ApplicationReviewDecision {
-  const comments = doc.comments as { sections?: string[] } | undefined;
+  const comments = doc.comments as { sections?: string[]; policyVersionId?: string } | undefined;
   return {
     id: String(doc._id), taskId: String(doc.approvalTaskId),
     outcome: doc.outcome as ApplicationReviewDecision["outcome"],
     reason: typeof doc.reason === "string" ? doc.reason : undefined,
     sections: comments?.sections ?? [],
     reviewNote: typeof doc.reviewNote === "string" ? doc.reviewNote : undefined,
+    policyVersionId: comments?.policyVersionId,
     actorId: String(doc.actorId), at: doc.at as Date,
   };
 }
@@ -194,7 +195,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         const version = await versions.findOne({ applicationId: id,
           versionNo: application.currentVersionNo }).session(session).lean();
         if (!version) return conflict("submitted application version is missing");
-        const payload = version.payload as { snapshot: ClubApplicationDraft };
+        const payload = version.payload as { policyVersionId?: string; snapshot: ClubApplicationDraft };
         const snapshot = draftFrom(payload.snapshot as unknown as Record<string, unknown>);
         let createdClubId: Types.ObjectId | undefined;
 
@@ -241,7 +242,8 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
 
         await decisions.create([{
           approvalTaskId: task._id, outcome: input.outcome, reason: input.reason,
-          comments: { sections: input.sections }, reviewNote: input.reviewNote,
+          comments: { sections: input.sections, policyVersionId: payload.policyVersionId },
+          reviewNote: input.reviewNote,
           actorId, at: now,
         }], { session });
         const nextState = input.outcome === "Approve" ? "Approved"
@@ -260,7 +262,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
           entityType: "ClubApplication", entityId: id,
           action: `CLUB_APPLICATION_${nextState.toUpperCase().replace(" ", "_")}`,
           actorId, actorRole: "ICPDP_OFFICER", before: { state: "Under Review" },
-          after: { state: nextState, createdClubId }, reason: input.reason,
+          after: { state: nextState, createdClubId, policyVersionId: payload.policyVersionId },
           correlationId, at: now,
         }], { session });
         await notifications.create([{
