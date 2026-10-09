@@ -1,12 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { PublicEventCard } from "@/components/custom/PublicEventCard";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppInput } from "@/components/ui/input/AppInput";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
+import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useEvents } from "@/hooks/useDiscovery";
@@ -16,7 +15,6 @@ export function EventDirectory() {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<PublicEventFilter>("all");
-  const [draft, setDraft] = useState("");
   const [search, setSearch] = useState("");
   const events = useEvents(page, status, search);
   const statusOptions: Array<{ value: PublicEventFilter; label: string }> = [
@@ -30,11 +28,10 @@ export function EventDirectory() {
     setStatus(value);
     setPage(1);
   }
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSearch(draft.trim());
+  const changeSearch = useCallback((value: string) => {
+    setSearch(value);
     setPage(1);
-  }
+  }, []);
 
   const from = events.data ? (events.data.page - 1) * events.data.pageSize + 1 : 0;
   const to = events.data ? from + events.data.items.length - 1 : 0;
@@ -49,16 +46,11 @@ export function EventDirectory() {
           <span className="mb-1.5 block px-1 text-sm font-medium">{t("discovery.eventStatusLabel")}</span>
           <AppSelect label={t("discovery.eventStatusLabel")} value={status} options={statusOptions} onChange={changeStatus} />
         </div>
-        <form role="search" onSubmit={submitSearch} className="min-w-0">
+        <div role="search" className="min-w-0">
           <label htmlFor="event-search" className="mb-1.5 block px-1 text-sm font-medium">{t("discovery.eventSearchLabel")}</label>
-          <div className="flex gap-2">
-            <AppInput id="event-search" type="search" value={draft} onChange={(event) => setDraft(event.target.value)}
-              placeholder={t("discovery.eventSearchPlaceholder")} maxLength={100} className="min-w-0 flex-1" />
-            <AppButton type="submit" className="shrink-0">
-              <AppIcon name="search" className="size-4" />{t("discovery.searchAction")}
-            </AppButton>
-          </div>
-        </form>
+          <AppSearchInput id="event-search" onSearch={changeSearch}
+            placeholder={t("discovery.eventSearchPlaceholder")} maxLength={100} className="w-full" />
+        </div>
       </div>
 
       {events.isPending ? (
