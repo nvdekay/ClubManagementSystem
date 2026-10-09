@@ -64,6 +64,9 @@ bên ngoài đã được xác minh.
   qua `confirmedRegistrationCount`/`nextWaitlistPosition`; UC30 promote waitlist chưa triển khai.
   Fixture QA: event `[QA] Workshop nhảy hiện đại…` (`a2000000000000000000aa29`) và transition plan
   `[QA] CLB Chuyển giao Nhiệm kỳ` (`ac130000000000000000000f`) trong DB local.
+- **UC48:** người đã check-in gửi một phản hồi bất biến (1–5 sao `overall` + nhận xét, tuỳ chọn ẩn
+  danh) trong window BR36 từ tab “Đã check-in” hoặc trang sự kiện; trùng → 409, chưa check-in →
+  403. Bản tổng hợp BR40 mới là hàm domain; màn đọc phía CLB là UC49.
 - **UC31:** Student check-in bằng mã trên “Sự kiện của tôi”/event detail hoặc QR deep link
   `/workspace/event-registrations?checkin=<eventId>&code=<mã>`; đúng một `Attendance` (BR18),
   walk-in tạo kèm đăng ký (A2), feedback window mở từ lúc check-in (BR36), dashboard có lịch sử.
