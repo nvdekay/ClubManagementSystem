@@ -62,6 +62,7 @@ createRoot(document.getElementById("root")!).render(
           <Route element={<WorkspaceShell />}>
             <Route path="student" element={<StudentHomePage />} />
             <Route path="icpdp" element={<IcpdpHomePage />} />
+            <Route path="icpdp/clubs" element={<ClubDirectory />} />
             <Route path="icpdp/accounts" element={<AccountsPage />} />
             <Route path="club/:clubId" element={<ClubHomePage />} />
             <Route path="workspace/policy" element={<PolicyPage />} />

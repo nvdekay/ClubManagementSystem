@@ -184,7 +184,7 @@ export function WorkspaceShell() {
           </span>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-10">
-          <div className="mx-auto w-full max-w-6xl">
+          <div className="mx-auto w-full max-w-screen-2xl">
             {workspace ? <Outlet /> : <section className="mx-auto max-w-lg py-16 text-center">
               <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary-soft-app text-primary-app"><AppIcon name="shield" className="size-7" /></span>
               <h1 className="mt-5 font-heading text-2xl font-bold">{t("auth.workspaceDenied")}</h1>
@@ -208,8 +208,9 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
 
 function navigation(context: Context, workspace: Workspace | undefined,
   t: (key: `common.${keyof typeof common.en}`) => string): Array<{ title: string; items: NavItem[] }> {
+  const clubsPath = context.kind === "icpdp" ? "/icpdp/clubs" : "/clubs";
   const explore = { title: t("common.sectionExplore"), items: [
-    { to: "/clubs", label: t("common.navDiscover"), icon: "compass" as const },
+    { to: clubsPath, label: t("common.navDiscover"), icon: "compass" as const },
     { to: "/events", label: t("common.navEvents"), icon: "calendar" as const },
   ] };
   if (context.kind === "student") {
