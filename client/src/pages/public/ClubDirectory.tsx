@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 
-import { ClubLogo } from "@/components/custom/ClubLogo";
+import { ClubLogo, thumbnail } from "@/components/custom/ClubLogo";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppCard } from "@/components/ui/card/AppCard";
@@ -19,8 +19,8 @@ function ClubCover({ name, logoUrl }: { name: string; logoUrl?: string }) {
   return (
     <span className="relative block h-28 overflow-hidden bg-primary-soft-app">
       {logoUrl && !failed ? (
-        <img src={logoUrl} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)}
-          className="size-full scale-105 object-cover opacity-75 transition-transform duration-300 group-hover:scale-110" />
+        <img src={thumbnail(logoUrl, 320, 112)} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)}
+          className="size-full object-cover opacity-75" />
       ) : (
         <span aria-hidden="true" className="flex size-full items-center justify-center font-heading text-5xl font-extrabold text-primary-app/15">
           {name.trim().charAt(0).toUpperCase()}
@@ -104,7 +104,7 @@ export function ClubDirectory() {
           <ul className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {clubs.data.items.map((club) => (
               <li key={club.id} className="flex">
-                <AppCard className="group relative flex-1 gap-0 overflow-hidden p-0 shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-xl">
+                <AppCard className="group relative flex-1 gap-0 overflow-hidden p-0 shadow-md transition-transform duration-200 hover:-translate-y-1">
                   <Link to={`/clubs/${club.id}`} aria-label={t("discovery.viewClubLabel", { club: club.name })}
                     className="focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring-app">
                     <ClubCover name={club.name} logoUrl={club.logoUrl} />
