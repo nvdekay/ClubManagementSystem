@@ -21,5 +21,5 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 `ClubFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho CLB, cần `club.feedback.view`;
 người gửi ẩn danh không bao giờ được hiển thị.
 
-`ClubMembersPage` (UC21 A1) liệt kê thành viên và yêu cầu rời CLB đang chờ, cho người có
-`club.member.manage` thi hành.
+`ClubMembersPage` (UC21) liệt kê thành viên và yêu cầu rời CLB đang chờ cho người có `club.member.manage`:
+thi hành yêu cầu rời (A1), đổi Active ⇄ Inactive, cấm có lý do, xem lịch sử trạng thái.

@@ -14,6 +14,15 @@ export interface WithdrawalRequest {
   executedAt?: string;
 }
 
+export interface MembershipStatusChange {
+  fromState: MembershipState;
+  toState: MembershipState;
+  effectiveDate: string;
+  reason?: string;
+  actorId: string;
+  at: string;
+}
+
 export interface Membership {
   id: string;
   clubId: string;
@@ -21,8 +30,12 @@ export interface Membership {
   displayName?: string;
   state: MembershipState;
   joinedAt: string;
+  banReason?: string;
+  statusHistory?: MembershipStatusChange[];
   pendingWithdrawal?: WithdrawalRequest;
 }
+
+export type ManagedMembershipState = "Active" | "Inactive" | "Banned";
 
 export interface MemberSpace {
   club: { id: string; name: string; logoUrl?: string; state: string };
@@ -80,6 +93,15 @@ export function fetchClubMemberships(clubId: string, signal: AbortSignal) {
 
 export function fetchClubWithdrawals(clubId: string, signal: AbortSignal) {
   return request<WithdrawalRequest[]>(`/clubs/${encodeURIComponent(clubId)}/membership-withdrawals`, { signal });
+}
+
+/** UC21: the effective date is today (the server refuses back- or future-dated changes). */
+export function changeMembershipState(clubId: string, membershipId: string,
+  input: { state: ManagedMembershipState; reason?: string }, csrfToken: string) {
+  return request<Membership>(
+    `/clubs/${encodeURIComponent(clubId)}/memberships/${encodeURIComponent(membershipId)}/state`,
+    { method: "PATCH", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+      body: JSON.stringify({ ...input, effectiveDate: new Date().toISOString() }) });
 }
 
 export function executeWithdrawal(clubId: string, requestId: string, csrfToken: string) {

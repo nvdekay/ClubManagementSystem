@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   MemberSpaceError,
+  changeMembershipState,
   executeWithdrawal,
   fetchClubMemberships,
   fetchClubWithdrawals,
   fetchMemberSpace,
   fetchMyMemberships,
   requestWithdrawal,
+  type ManagedMembershipState,
   type Membership,
   type WithdrawalRequest,
 } from "@/services/memberSpace";
@@ -41,12 +43,18 @@ export function useMembershipAction() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (action: { kind: "request"; membershipId: string; reason: string; requestedEffectiveDate: string;
-      csrfToken: string } | { kind: "execute"; clubId: string; requestId: string; csrfToken: string },
-    ): Promise<WithdrawalRequest | Membership> =>
-      action.kind === "request"
-        ? requestWithdrawal(action.membershipId, { reason: action.reason,
-          requestedEffectiveDate: action.requestedEffectiveDate }, action.csrfToken)
-        : executeWithdrawal(action.clubId, action.requestId, action.csrfToken),
+      csrfToken: string } | { kind: "execute"; clubId: string; requestId: string; csrfToken: string }
+      | { kind: "state"; clubId: string; membershipId: string; state: ManagedMembershipState; reason?: string;
+        csrfToken: string },
+    ): Promise<WithdrawalRequest | Membership> => {
+      if (action.kind === "request") {
+        return requestWithdrawal(action.membershipId, { reason: action.reason,
+          requestedEffectiveDate: action.requestedEffectiveDate }, action.csrfToken);
+      }
+      if (action.kind === "execute") return executeWithdrawal(action.clubId, action.requestId, action.csrfToken);
+      return changeMembershipState(action.clubId, action.membershipId,
+        { state: action.state, ...(action.reason ? { reason: action.reason } : {}) }, action.csrfToken);
+    },
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: key });
       await client.invalidateQueries({ queryKey: ["dashboard"] });
