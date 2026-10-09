@@ -57,6 +57,16 @@ bên ngoài đã được xác minh.
   có code. Chưa hoàn tất callback Google thật bằng credentials phù hợp và nghiệm thu UI thật.
 - **UC04 policy:** màn ICPDP, API/version Mongo và FR-UC04-06 đã hoàn tất; quyết định duyệt hồ sơ
   giữ `policyVersionId`, policy xung đột quyết định đã ban hành trả `409` kèm bản ghi ảnh hưởng.
+- **UC02 dashboard:** dashboard Student/Club/ICPDP đã dùng dữ liệu thật theo permission và cô lập
+  lỗi từng panel; vẫn còn các panel sâu sẽ được bổ sung cùng module sở hữu.
+- **UC29:** Student đăng ký sự kiện ngay trên event detail (form theo snapshot revision, waitlist
+  khi đầy, huỷ trước giờ bắt đầu) và theo dõi ở `/workspace/event-registrations`. Quota nguyên tử
+  qua `confirmedRegistrationCount`/`nextWaitlistPosition`; UC30 promote waitlist chưa triển khai.
+  Fixture QA: event `[QA] Workshop nhảy hiện đại…` (`a2000000000000000000aa29`) và transition plan
+  `[QA] CLB Chuyển giao Nhiệm kỳ` (`ac130000000000000000000f`) trong DB local.
+- **UC13:** queue/detail/claim/decision ICPDP đã hoàn tất; xác nhận chuyển term/assignment,
+  áp dụng thay đổi role ban điều hành thành phiên bản mới, hỗ trợ nghĩa vụ follow-up trên UC02,
+  giữ plan khi CLB `Suspended`, audit và thông báo hai ban. UC12 tạo plan vẫn chưa triển khai.
 - **UC07 upload:** Cloudinary adapter/route đã có, nhưng chưa nghiệm thử bằng credentials thật;
   xử lý asset mồ côi khi upload thành công nhưng ghi Mongo thất bại còn mở.
 - **UC21–UC22:** domain/use case, API/OpenAPI, Mongo, test cho trạng thái/leave/board-seat guard,
@@ -67,9 +77,8 @@ bên ngoài đã được xác minh.
 
 ### Chưa có workflow full-stack
 
-- **UC02:** workspace homes hiện chủ yếu là điều hướng/cards, chưa phải dashboard nghiệp vụ có
-  dữ liệu/panel theo actor như yêu cầu.
-- **UC12–UC15:** chuyển giao nhiệm kỳ, suspension/reactivation/dissolution chưa có đường workflow.
+- **UC12, UC14–UC15:** tạo kế hoạch chuyển giao và suspension/reactivation/dissolution chưa có
+  đường workflow; UC13 đã có thể xử lý plan/task `Pending Confirmation` khi UC12 được nối sau.
 - **UC19:** đánh giá ứng viên theo rubric, tổng hợp/độ phân tán, bất biến sau quyết định chưa có.
 - **UC23–UC24:** quản lý role CLB và member space chưa có.
 - **UC25 trở đi:** proposal/approval/công bố sự kiện, booking/cơ sở vật chất, đăng ký/điểm danh,

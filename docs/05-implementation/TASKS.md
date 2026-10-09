@@ -116,7 +116,9 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [x] **BE-2.6** UC10 đề cử kèm kiểm tra membership `Active` và chồng lấn nhiệm kỳ Chủ nhiệm. → FR-UC10-01…08, BR06, BR07
 - [x] **BE-2.7** UC11 xác nhận một lần: kích hoạt nhiệm kỳ, cấp quyền, thu hồi quyền sáng lập, chuyển CLB sang Active; xác nhận một phần. → FR-UC11-01…10
 - [ ] **BE-2.8** UC12 kế hoạch chuyển giao với nghĩa vụ nạp sẵn và chốt chặn "không nghĩa vụ nào được thiếu người nhận". → FR-UC12-01…05
-- [ ] **BE-2.9** UC13 xác nhận: đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới, chuyển quyền, giữ lịch sử. → FR-UC13-01…07, BR08
+- [x] **BE-2.9** UC13 xác nhận: queue/detail/claim/decision ICPDP; đóng nhiệm kỳ và assignment cũ,
+  kích hoạt nhiệm kỳ/assignment mới, phê duyệt có điều kiện, giữ khi `Suspended`, tạo phiên bản
+  cơ cấu `TRANSITION`, audit và notification. → FR-UC13-01…08, BR08, BR55, BR56
 - [ ] **BE-2.10** UC14 yêu cầu tạm ngừng kèm cảnh báo liệt kê các sự kiện và booking tương lai đã duyệt sẽ bị huỷ nếu UC15 chấp thuận (không chặn nộp). → FR-UC14-01…03
 - [ ] **BE-2.11** UC15 tạm ngừng / kích hoạt lại: chặn đợt tuyển, đề xuất và booking; huỷ các đề xuất chưa quyết định; cascade sang UC28 A1 và UC47 A1. → FR-UC15-01…05
 - [ ] **BE-2.12** UC15 giải thể: ghi quyết định kèm học kỳ hiệu lực và huỷ mọi thứ kết thúc sau học kỳ đó. → FR-UC15-06/07, BR45
@@ -128,7 +130,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **FE-2.2** Trình hướng dẫn nộp hồ sơ thành lập, màn xác nhận nộp, khung xem lịch sử version, màn trạng thái và kết quả. → UC07
 - [ ] **FE-2.3** Hàng đợi hồ sơ của ICPDP và màn thẩm định-và-quyết định kèm nhận xét theo từng phần. → UC08
 - [ ] **FE-2.4** Hồ sơ CLB, thông tin vận hành, ban/bộ phận; màn hình vai trò CLB & phân quyền của Club Leader. → UC09, UC23
-- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13 · UC10/11 đã có UI; visual QA còn chờ, UC12/13 chưa triển khai.
+- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13 · UC10/11 và UI thẩm định UC13 đã có; UC12 chưa triển khai, visual QA còn chờ.
 - [ ] **FE-2.6** Yêu cầu tạm ngừng và trạng thái; quản lý CLB phía ICPDP, chi tiết CLB, hành động vòng đời với hệ quả được nêu rõ trong hộp xác nhận. → UC14, UC15, SA-01
 
 ---
@@ -204,8 +206,8 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **DB-5.4** Trường đếm số đã xác nhận trên `events`, cập nhật bằng **`findOneAndUpdate` có điều kiện**, không bao giờ đọc-kiểm-ghi. → DAT-04, CON-07
 
 ### Backend
-- [ ] **BE-5.1** UC29 đăng ký với validate khung thời gian, đối tượng, trùng lặp và sức chứa trong một thao tác ghi nguyên tử. → FR-UC29-01…09
-- [ ] **BE-5.2** UC29 A1 danh sách chờ và A2 tự huỷ để giải phóng suất. → FR-UC29-04/05
+- [x] **BE-5.1** UC29 đăng ký với validate khung thời gian, đối tượng, trùng lặp và sức chứa trong một thao tác ghi nguyên tử. → FR-UC29-01…09 · counter `confirmedRegistrationCount` tăng có điều kiện trong transaction, unique `(eventId, studentId)`, form snapshot của revision hiện hành, audit + notification.
+- [x] **BE-5.2** UC29 A1 danh sách chờ và A2 tự huỷ để giải phóng suất. → FR-UC29-04/05 · `nextWaitlistPosition` tăng nguyên tử; huỷ `Confirmed` giảm counter; đăng ký lại dùng lại document. Tự promote waitlist thuộc UC30.
 - [ ] **BE-5.3** UC30 đổi sức chứa và đẩy lên theo chính sách đã cấu hình; từ chối giảm xuống dưới số đã xác nhận. → FR-UC30-01…06
 - [ ] **BE-5.4** UC31 check-in: xác minh đăng ký và khung giờ, tạo đúng một bản ghi, **mở feedback window**. → FR-UC31-01…03, BR36
 - [ ] **BE-5.5** UC31 A1 check-in thủ công lưu lại ai thực hiện; A2 khách vãng lai tạo kèm bản đăng ký. → FR-UC31-04/05
@@ -215,7 +217,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-5.9** Test tương tranh: N lượt đăng ký song song vào một sự kiện sức chứa 1 phải cho ra đúng một bản `Confirmed`. → NFR-PERF-03
 
 ### Frontend
-- [ ] **FE-5.1** Biểu mẫu đăng ký sự kiện, màn xác nhận, danh sách đăng ký của tôi. → UC29
+- [x] **FE-5.1** Biểu mẫu đăng ký sự kiện, màn xác nhận, danh sách đăng ký của tôi. → UC29 · panel đăng ký trên event detail, `/workspace/event-registrations`, panel dashboard UC02; QA trình duyệt desktop/mobile, `en`/`vi`, light/dark.
 - [ ] **FE-5.2** Màn check-in (mã / QR) kèm thông điệp cho trường hợp trùng và ngoài khung giờ. → UC31, MSG11
 - [ ] **FE-5.3** Màn quản lý đăng ký và danh sách chờ. → UC30
 - [ ] **FE-5.4** Màn chốt điểm danh kèm phần xem lại bản ghi bất thường và hộp xác nhận khoá. → UC32, SA-01
