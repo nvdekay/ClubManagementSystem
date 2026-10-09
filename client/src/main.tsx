@@ -21,6 +21,13 @@ import { ClubHomePage } from "./pages/club/ClubHomePage.js";
 import { ApplicationReviewQueuePage } from "./pages/icpdp/ApplicationReviewQueuePage.js";
 import { ApplicationReviewDetailPage } from "./pages/icpdp/ApplicationReviewDetailPage.js";
 import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
+import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
+import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
+import { BoardNominationDetailPage } from "./pages/icpdp/BoardNominationDetailPage.js";
+import { RecruitmentCampaignPage } from "./pages/club/RecruitmentCampaignPage.js";
+import { RecruitmentReviewPage } from "./pages/club/RecruitmentReviewPage.js";
+import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicationPage.js";
+import { RecruitmentApplicationsPage } from "./pages/student/RecruitmentApplicationsPage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -42,9 +49,16 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/applications" element={<ApplicationsPage />} />
             <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
             <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
+            <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
+            <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
             <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
             <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
+            <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
+            <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
             <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
+            <Route path="club/:clubId/board" element={<BoardNominationPage />} />
+            <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />
+            <Route path="club/:clubId/recruitment/:campaignId/review" element={<RecruitmentReviewPage />} />
             <Route path="*" element={<PublicNotFound />} />
           </Route>
           <Route path="login" element={<App />} />

@@ -5,3 +5,6 @@ trò để hiển thị trạng thái phù hợp; API và use case vẫn kiểm 
 
 `ApplicationReviewQueuePage` và `ApplicationReviewDetailPage` triển khai UC08 một cấp duyệt:
 hàng đợi, nhận task, đọc snapshot bất biến và ghi đúng một quyết định.
+
+`BoardNominationQueuePage` và `BoardNominationDetailPage` triển khai UC11: một ICPDP Officer nhận
+task và ghi đúng một quyết định xác nhận toàn phần hoặc một phần cho các ghế ban điều hành.

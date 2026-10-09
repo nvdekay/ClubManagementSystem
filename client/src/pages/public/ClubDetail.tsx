@@ -7,6 +7,7 @@ import { AppCard } from "@/components/ui/card/AppCard";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useClub } from "@/hooks/useDiscovery";
+import { useAuth } from "@/hooks/useAuth";
 import { PublicApiError } from "@/services/discovery";
 import { formatDate } from "@/utils/formatDate";
 
@@ -14,6 +15,7 @@ export function ClubDetail() {
   const { t, i18n } = useTranslation();
   const { id = "" } = useParams();
   const detail = useClub(id);
+  const auth = useAuth();
   const locale = i18n.language === "vi" ? "vi" : "en";
 
   return (
@@ -88,7 +90,11 @@ export function ClubDetail() {
                     <p className="mt-2 text-sm text-muted-app">
                       {formatDate(campaign.windowStart, locale)} — {formatDate(campaign.windowEnd, locale)}
                     </p>
-                    <p className="mt-3 text-xs text-muted-app">{t("discovery.applicationLater")}</p>
+                    <Link to={auth.data
+                      ? `/workspace/recruitment/${campaign.id}`
+                      : `/login?returnTo=${encodeURIComponent(`/workspace/recruitment/${campaign.id}`)}`}
+                      className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md bg-primary-app px-4 py-2 text-sm font-semibold text-on-primary-app">
+                      {t("discovery.apply")}</Link>
                   </AppCard>
                 ))}
               </div>
