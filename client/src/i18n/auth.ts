@@ -60,6 +60,12 @@ const en = {
   clubPublicPageDescription: "View the public information currently published for this club.",
   clubEventsDescription: "Browse events associated with university clubs.",
   switchWorkspaceDescription: "Return to the workspace picker and choose another role.",
+  chooseWorkspaceHint: "Where would you like to work today?",
+  studentWorkspaceHint: "Join clubs and found a new one",
+  icpdpWorkspaceHint: "Review proposals, policy and accounts",
+  groupPersonal: "Personal", groupSchool: "University", groupClubs: "Your clubs",
+  lastUsed: "Last used", noWorkspaces: "Your account has no workspace yet.",
+  overviewGreeting: "Hi, {{name}}",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -124,6 +130,12 @@ const vi: Record<keyof typeof en, string> = {
   clubPublicPageDescription: "Xem thông tin công khai hiện tại của câu lạc bộ này.",
   clubEventsDescription: "Xem các sự kiện liên quan tới câu lạc bộ trong trường.",
   switchWorkspaceDescription: "Quay lại bộ chọn workspace để đổi vai trò.",
+  chooseWorkspaceHint: "Hôm nay bạn muốn làm việc ở đâu?",
+  studentWorkspaceHint: "Ứng tuyển và thành lập câu lạc bộ",
+  icpdpWorkspaceHint: "Xét duyệt hồ sơ, chính sách và tài khoản",
+  groupPersonal: "Cá nhân", groupSchool: "Nhà trường", groupClubs: "Câu lạc bộ của bạn",
+  lastUsed: "Dùng gần đây", noWorkspaces: "Tài khoản của bạn chưa có không gian làm việc nào.",
+  overviewGreeting: "Chào {{name}}",
 };
 
 export const auth = { en, vi };

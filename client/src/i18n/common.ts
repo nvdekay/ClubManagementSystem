@@ -4,6 +4,15 @@ const en = {
   languageLabel: "Vietnamese language",
   requestFailed: "request failed",
   navigation: "Main navigation",
+  workspaceNav: "Workspace navigation",
+  navOverview: "Overview", navRecruitment: "Join a club", navApplications: "Found a club",
+  navDiscover: "Discover clubs", navEvents: "Events", navReviews: "Club proposals",
+  navNominations: "Board nominations", navPolicy: "School policy", navAccounts: "Accounts",
+  navBoard: "Board", navCampaigns: "Recruitment", navSettings: "Club settings",
+  navPublicPage: "Public page", sectionWork: "Workspace", sectionExplore: "Explore",
+  openMenu: "Open menu", closeMenu: "Close menu", lightMode: "Light mode",
+  switchLanguage: "Switch to Vietnamese", signedInAs: "Signed in as {{name}}",
+  backToSite: "Back to the club directory",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -12,6 +21,15 @@ const vi: Record<keyof typeof en, string> = {
   languageLabel: "Tiếng Việt",
   requestFailed: "yêu cầu thất bại",
   navigation: "Điều hướng chính",
+  workspaceNav: "Điều hướng không gian làm việc",
+  navOverview: "Tổng quan", navRecruitment: "Ứng tuyển CLB", navApplications: "Thành lập CLB",
+  navDiscover: "Khám phá CLB", navEvents: "Sự kiện", navReviews: "Hồ sơ thành lập",
+  navNominations: "Đề cử ban chủ nhiệm", navPolicy: "Chính sách", navAccounts: "Tài khoản",
+  navBoard: "Ban chủ nhiệm", navCampaigns: "Tuyển thành viên", navSettings: "Thiết lập CLB",
+  navPublicPage: "Trang công khai", sectionWork: "Không gian làm việc", sectionExplore: "Khám phá",
+  openMenu: "Mở menu", closeMenu: "Đóng menu", lightMode: "Chế độ sáng",
+  switchLanguage: "Chuyển sang tiếng Anh", signedInAs: "Đăng nhập với {{name}}",
+  backToSite: "Về danh bạ câu lạc bộ",
 };
 
 export const common = { en, vi };

@@ -1,137 +1,57 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Navigate, useLocation } from "react-router";
+import { Link } from "react-router";
 
-import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppSwitch } from "@/components/ui/switch/AppSwitch";
-import { useAuth, useLogout } from "@/hooks/useAuth";
-import type { Workspace } from "@/services/auth";
-
-type Theme = "light" | "dark";
+import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WorkspaceAction {
   href: string;
   label: string;
   description: string;
+  icon: AppIconName;
 }
 
 interface WorkspaceHomeProps {
-  kind: Workspace["kind"];
-  clubId?: string;
+  /** Workspace name shown under the greeting, e.g. the club name. */
+  subtitle: string;
   actions: WorkspaceAction[];
 }
 
-function key(workspace: Workspace): string {
-  return `${workspace.kind}:${workspace.clubId ?? ""}`;
-}
-
-function initialTheme(): Theme {
-  const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-export function WorkspaceHome({ kind, clubId, actions }: WorkspaceHomeProps) {
-  const { t, i18n } = useTranslation();
-  const location = useLocation();
+/** Overview page rendered inside WorkspaceShell: a greeting band and a list of shortcuts. */
+export function WorkspaceHome({ subtitle, actions }: WorkspaceHomeProps) {
+  const { t } = useTranslation();
   const auth = useAuth();
-  const logout = useLogout();
-  const [theme, setTheme] = useState<Theme>(initialTheme);
-  const workspace = auth.data?.workspaces.find((item) =>
-    item.kind === kind && (kind !== "club" || item.clubId === clubId));
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (workspace) sessionStorage.setItem("workspace", key(workspace));
-  }, [workspace]);
-
-  async function signOut() {
-    if (!auth.data) return;
-    try {
-      await logout.mutateAsync(auth.data.csrfToken);
-      sessionStorage.removeItem("workspace");
-    } catch {
-      // The mutation exposes the error state below.
-    }
-  }
-
-  if (auth.isPending) {
-    return <main className="mx-auto min-h-full max-w-6xl space-y-4 px-4 py-8 sm:px-8">
-      <AppSkeleton className="h-12 w-2/3" />
-      <AppSkeleton className="h-64 w-full" />
-    </main>;
-  }
-  if (!auth.data) {
-    const params = new URLSearchParams({ returnTo: `${location.pathname}${location.search}` });
-    return <Navigate to={`/login?${params.toString()}`} replace />;
-  }
-  if (!workspace) {
-    return <main className="mx-auto min-h-full max-w-xl px-4 py-12">
-      <AppCard className="p-6">
-        <h1 className="text-xl font-bold">{t("auth.workspaceDenied")}</h1>
-        <p className="text-muted-app">{t("auth.workspaceDeniedDescription")}</p>
-        <Link to="/workspace" className="font-semibold text-accent-app">{t("auth.chooseWorkspace")}</Link>
-      </AppCard>
-    </main>;
-  }
-
-  const title = workspace.kind === "student" ? t("auth.studentHome")
-    : workspace.kind === "icpdp" ? t("auth.icpdpHome")
-      : workspace.clubName ?? t("auth.club");
-  const role = workspace.kind === "club" && workspace.role ? t(`auth.${workspace.role}`)
-    : workspace.kind === "icpdp" ? t("auth.officerRole") : t("auth.student");
+  const name = auth.data?.user.displayName ?? "";
 
   return (
-    <main className="mx-auto min-h-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border-app pb-6">
-        <div>
-          <Link to="/" className="text-sm font-semibold text-accent-app">{t("auth.brand")}</Link>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight">{title}</h1>
-          <p className="mt-1 text-muted-app">{role} · {auth.data.user.displayName}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex flex-wrap items-center gap-2 text-sm text-muted-app">
-            {t("common.darkModeLabel")}
-            <AppSwitch
-              checked={theme === "dark"}
-              onChange={(checked) => setTheme(checked ? "dark" : "light")}
-              aria-label={t("common.darkModeLabel")}
-            />
-          </label>
-          <AppButton
-            variant="secondary"
-            onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}
-            aria-label={t("common.languageLabel")}
-          >
-            {i18n.language === "vi" ? "EN" : "VI"}
-          </AppButton>
-          <Link to="/workspace" className="inline-flex min-h-11 items-center rounded-full border border-border-app px-4 text-sm font-semibold text-text-app">
-            {t("auth.switchWorkspace")}
-          </Link>
-          <AppButton variant="secondary" disabled={logout.isPending} onClick={() => void signOut()}>
-            {t("auth.logout")}
-          </AppButton>
-        </div>
-      </header>
-      {logout.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{t("auth.logoutError")}</p>}
-
-      <section className="py-8">
-        <p className="max-w-2xl text-muted-app">{t("auth.workspaceHomeDescription")}</p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {actions.map((action) => (
-            <Link key={action.href} to={action.href} className="rounded-2xl border border-border-app bg-surface-app p-5 text-text-app transition-colors hover:border-primary-app">
-              <h2 className="font-bold">{action.label}</h2>
-              <p className="mt-2 text-sm text-muted-app">{action.description}</p>
-            </Link>
-          ))}
+    <>
+      <section className="relative overflow-hidden rounded-3xl bg-primary-soft-app px-6 py-8 sm:px-10 sm:py-10">
+        <span aria-hidden="true" className="pointer-events-none absolute -top-16 -right-10 size-56 rounded-full bg-auth-orb-small-app opacity-60 blur-2xl" />
+        <div className="relative max-w-2xl">
+          <p className="text-sm font-semibold text-primary-app">{subtitle}</p>
+          <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+            {t("auth.overviewGreeting", { name })}
+          </h1>
+          <p className="mt-3 text-pretty text-muted-app">{t("auth.workspaceHomeDescription")}</p>
         </div>
       </section>
-    </main>
+
+      <ul className="mt-8 grid gap-x-8 sm:grid-cols-2">
+        {actions.map((action) => (
+          <li key={action.href} className="border-b border-border-app">
+            <Link to={action.href} className="group flex items-center gap-4 rounded-xl px-2 py-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
+              <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface-strong-app text-primary-app transition-colors group-hover:bg-primary-app group-hover:text-on-primary-app">
+                <AppIcon name={action.icon} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-text-app">{action.label}</span>
+                <span className="mt-0.5 block text-sm text-muted-app">{action.description}</span>
+              </span>
+              <AppIcon name="chevronRight" className="size-5 text-muted-app transition-transform group-hover:translate-x-0.5 group-hover:text-primary-app" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

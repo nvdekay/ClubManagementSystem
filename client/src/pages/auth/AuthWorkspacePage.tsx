@@ -1,28 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
-import { AppSelect } from "@/components/ui/select/AppSelect";
+import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppSwitch } from "@/components/ui/switch/AppSwitch";
 import { useAuth, useLoginError, useLogout } from "@/hooks/useAuth";
-import { useAccountAction, useAccounts } from "@/hooks/useAccounts";
-import { type AccountAction, type SystemRoleCode } from "@/services/accounts";
+import { useTheme } from "@/hooks/useTheme";
 import { googleLoginUrl, type Workspace } from "@/services/auth";
 import { cn } from "@/utils/cn";
 import { LoginPage } from "@/pages/auth/LoginPage";
-
-type Theme = "light" | "dark";
-
-function initialTheme(): Theme {
-  const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
 
 function workspaceKey(workspace: Workspace): string {
   return `${workspace.kind}:${workspace.clubId ?? ""}`;
@@ -34,18 +21,19 @@ function workspacePath(workspace: Workspace): string {
   return `/club/${encodeURIComponent(workspace.clubId ?? "")}`;
 }
 
+function workspaceIcon(workspace: Workspace): AppIconName {
+  if (workspace.kind === "student") return "sparkles";
+  if (workspace.kind === "icpdp") return "shield";
+  return "users";
+}
+
 export function AuthWorkspacePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const auth = useAuth();
   const logout = useLogout();
-  const [theme, setTheme] = useState<Theme>(initialTheme);
-  const [selectedKey, setSelectedKey] = useState(() => sessionStorage.getItem("workspace") ?? "");
-  const [choosing, setChoosing] = useState(true);
-  const [search, setSearch] = useState("");
-  const [targetId, setTargetId] = useState("");
-  const [roleCode, setRoleCode] = useState<SystemRoleCode>("ICPDP_OFFICER");
-  const [reason, setReason] = useState("");
+  const { theme, toggleTheme } = useTheme();
+  const lastKey = sessionStorage.getItem("workspace") ?? "";
   const errorCode = new URLSearchParams(window.location.search).get("error");
   const lockError = useLoginError(errorCode === "locked");
   const loginError = errorCode === "domain" ? t("auth.domainError")
@@ -56,32 +44,13 @@ export function AuthWorkspacePage() {
     && !requestedReturnTo.includes("\\") ? requestedReturnTo : "/workspace";
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
     if (window.location.pathname === "/workspace" && auth.data?.workspaces.length === 1) {
       navigate(workspacePath(auth.data.workspaces[0]!), { replace: true });
     }
   }, [auth.data, navigate]);
 
-  const workspaces = auth.data?.workspaces ?? [];
-  const selected = workspaces.find((workspace) => workspaceKey(workspace) === selectedKey)
-    ?? (workspaces.length === 1 ? workspaces[0] : undefined);
-  const accounts = useAccounts(search, selected?.kind === "icpdp" && !choosing);
-  const accountAction = useAccountAction();
-  const target = accounts.data?.items.find((item) => item.user.id === targetId);
-  const roleOptions: Array<{ value: SystemRoleCode; label: string }> = [
-    { value: "ICPDP_OFFICER", label: t("auth.officerRole") },
-    { value: "ATTENDANCE_UNLOCK", label: t("auth.attendanceRole") },
-  ];
-
   function selectWorkspace(workspace: Workspace) {
-    const key = workspaceKey(workspace);
-    sessionStorage.setItem("workspace", key);
-    setSelectedKey(key);
-    setChoosing(false);
+    sessionStorage.setItem("workspace", workspaceKey(workspace));
     navigate(workspacePath(workspace));
   }
 
@@ -90,20 +59,6 @@ export function AuthWorkspacePage() {
     try {
       await logout.mutateAsync(auth.data.csrfToken);
       sessionStorage.removeItem("workspace");
-      setSelectedKey("");
-    } catch {
-      // The mutation exposes the error state below.
-    }
-  }
-
-  async function updateAccount(kind: AccountAction["kind"]) {
-    if (!auth.data || !target) return;
-    const action: AccountAction = kind === "grant" || kind === "revoke"
-      ? { kind, userId: target.user.id, roleCode, reason }
-      : { kind, userId: target.user.id, reason };
-    try {
-      await accountAction.mutateAsync({ action, csrfToken: auth.data.csrfToken });
-      setReason("");
     } catch {
       // The mutation exposes the error state below.
     }
@@ -116,15 +71,9 @@ export function AuthWorkspacePage() {
   }
 
   function workspaceSubtitle(workspace: Workspace): string {
-    if (workspace.kind !== "club") return workspace.kind === "student"
-      ? t("auth.student") : t("auth.icpdp");
+    if (workspace.kind === "student") return t("auth.studentWorkspaceHint");
+    if (workspace.kind === "icpdp") return t("auth.icpdpWorkspaceHint");
     return workspace.role ? t(`auth.${workspace.role}`) : t("auth.member");
-  }
-
-  function systemRoleLabel(code: string): string {
-    if (code === "ICPDP_OFFICER") return t("auth.officerRole");
-    if (code === "ATTENDANCE_UNLOCK") return t("auth.attendanceRole");
-    return code;
   }
 
   if (!auth.data && window.location.pathname === "/login") {
@@ -139,186 +88,116 @@ export function AuthWorkspacePage() {
     );
   }
 
+  const workspaces = auth.data?.workspaces ?? [];
+  const groups = [
+    { title: t("auth.groupPersonal"), items: workspaces.filter((item) => item.kind === "student") },
+    { title: t("auth.groupSchool"), items: workspaces.filter((item) => item.kind === "icpdp") },
+    { title: t("auth.groupClubs"), items: workspaces.filter((item) => item.kind === "club") },
+  ].filter((group) => group.items.length > 0);
+
   return (
-    <main className="mx-auto min-h-full max-w-5xl px-4 py-6 sm:px-8 sm:py-10">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border-app pb-6">
-        <div>
-          <p className="text-2xl font-bold tracking-tight text-primary-app">{t("auth.brand")}</p>
-          <p className="mt-1 text-sm text-muted-app">{t("auth.subtitle")}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <Link to="/clubs" className="text-sm font-semibold text-accent-app">
-            {t("discovery.navClubs")}
-          </Link>
-          <label className="flex flex-wrap items-center gap-2 text-sm text-muted-app">
-            {t("common.darkModeLabel")}
-            <AppSwitch
-              checked={theme === "dark"}
-              onChange={(checked) => setTheme(checked ? "dark" : "light")}
-              aria-label={t("common.darkModeLabel")}
-            />
-          </label>
-          <AppButton
-            variant="secondary"
-            onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}
-            aria-label={t("common.languageLabel")}
-          >
-            {i18n.language === "vi" ? "EN" : "VI"}
-          </AppButton>
-        </div>
+    <div className="relative min-h-full overflow-hidden bg-bg-app">
+      <span aria-hidden="true" className="pointer-events-none absolute -top-32 -right-24 size-96 rounded-full bg-auth-orb-large-app opacity-70 blur-3xl" />
+      <span aria-hidden="true" className="pointer-events-none absolute top-1/2 -left-32 size-80 rounded-full bg-auth-orb-small-app opacity-50 blur-3xl" />
+
+      <header className="relative mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-5 sm:px-8">
+        <Link to="/" className="mr-auto flex items-center gap-2.5 font-heading text-lg font-extrabold text-text-app">
+          <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-xl bg-primary-app text-on-primary-app">F</span>
+          {t("auth.brand")}
+        </Link>
+        <Link to="/clubs" className="inline-flex min-h-10 items-center rounded-full px-3 text-sm font-semibold text-text-app hover:text-primary-app focus-visible:outline-2 focus-visible:outline-ring-app">
+          {t("discovery.navClubs")}
+        </Link>
+        <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")}
+          className="flex size-10 items-center justify-center rounded-full text-muted-app hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app">
+          <AppIcon name={theme === "dark" ? "sun" : "moon"} />
+        </button>
+        <button type="button" onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")} aria-label={t("common.switchLanguage")}
+          className="flex size-10 items-center justify-center rounded-full text-xs font-bold text-muted-app hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app">
+          {i18n.language === "vi" ? "EN" : "VI"}
+        </button>
       </header>
 
-      {auth.isPending ? (
-        <AppCard className="mx-auto mt-12 max-w-xl space-y-4 p-6">
-          <p role="status" className="text-sm text-muted-app">{t("auth.loading")}</p>
-          <AppSkeleton className="h-8 w-2/3" />
-          <AppSkeleton className="h-12 w-full" />
-        </AppCard>
-      ) : auth.isError ? (
-        <AppCard className="mx-auto mt-12 max-w-xl space-y-4 p-6">
-          <h1 className="text-xl font-semibold font-heading">{t("auth.accountError")}</h1>
-          <p role="alert" className="text-sm text-danger-app">{auth.error.message}</p>
-          <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
-        </AppCard>
-      ) : !auth.data ? (
-        <AppCard className="mx-auto mt-12 max-w-xl p-6 sm:p-8">
-          <h1 className="text-2xl font-semibold font-heading">{t("auth.signInTitle")}</h1>
-          <p className="mt-3 text-muted-app">{t("auth.signInDescription")}</p>
-          {loginError && <p role="alert" className="mt-4 text-sm text-danger-app">
-            {loginError} {errorCode === "locked" && lockError.data}
-          </p>}
-          <a
-            href={googleLoginUrl(returnTo)}
-            className="mt-8 inline-flex min-h-11 items-center justify-center rounded-md bg-primary-app px-5 text-on-primary-app transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app"
-          >
-            {t("auth.signInGoogle")}
-          </a>
-        </AppCard>
-      ) : (
-        <section className="mx-auto mt-10 max-w-2xl">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold font-heading">{t("auth.welcome", { name: auth.data.user.displayName })}</h1>
-              <p className="mt-1 text-sm text-muted-app">{auth.data.user.email}</p>
-            </div>
-            <AppButton variant="secondary" disabled={logout.isPending} onClick={() => void signOut()}>
-              {t("auth.logout")}
-            </AppButton>
+      <main className="relative mx-auto max-w-xl px-4 pt-6 pb-16 sm:pt-12">
+        {auth.isPending ? (
+          <div className="space-y-4">
+            <p role="status" className="text-sm text-muted-app">{t("auth.loading")}</p>
+            <AppSkeleton className="h-10 w-2/3" />
+            <AppSkeleton className="h-48 w-full" />
           </div>
-          {logout.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{t("auth.logoutError")}</p>}
-          {!selected || choosing ? (
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold font-heading">{t("auth.chooseWorkspace")}</h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {workspaces.map((workspace) => (
-                  <button
-                    key={workspaceKey(workspace)}
-                    type="button"
-                    onClick={() => selectWorkspace(workspace)}
-                    className={cn("rounded-lg border border-border-app bg-surface-app p-5 text-left transition-colors hover:border-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
-                      "border-primary-app": selectedKey === workspaceKey(workspace),
-                    })}
-                  >
-                    <span className="block text-lg font-semibold">{workspaceTitle(workspace)}</span>
-                    <span className="mt-1 block text-sm text-muted-app">{workspaceSubtitle(workspace)}</span>
-                  </button>
-                ))}
-              </div>
+        ) : auth.isError ? (
+          <div className="space-y-4 text-center">
+            <h1 className="font-heading text-2xl font-bold">{t("auth.accountError")}</h1>
+            <p role="alert" className="text-sm text-danger-app">{auth.error.message}</p>
+            <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
+          </div>
+        ) : !auth.data ? (
+          <div className="text-center">
+            <h1 className="font-heading text-3xl font-bold">{t("auth.signInTitle")}</h1>
+            <p className="mt-3 text-muted-app">{t("auth.signInDescription")}</p>
+            {loginError && <p role="alert" className="mt-4 text-sm text-danger-app">
+              {loginError} {errorCode === "locked" && lockError.data}
+            </p>}
+            <a href={googleLoginUrl(returnTo)}
+              className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-primary-app px-6 font-semibold text-on-primary-app transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+              {t("auth.signInGoogle")}
+            </a>
+          </div>
+        ) : (
+          <>
+            <div className="text-center">
+              <span aria-hidden="true" className="mx-auto flex size-16 items-center justify-center rounded-full bg-mint-soft-app font-heading text-2xl font-bold text-mint-app">
+                {auth.data.user.displayName.trim().charAt(0).toUpperCase()}
+              </span>
+              <h1 className="mt-4 font-heading text-3xl font-bold tracking-tight text-balance">
+                {t("auth.welcome", { name: auth.data.user.displayName })}
+              </h1>
+              <p className="mt-2 text-muted-app">{t("auth.chooseWorkspaceHint")}</p>
             </div>
-          ) : (
-            <>
-              <AppCard className="mt-8 p-6">
-                <p className="text-sm text-muted-app">{t("auth.currentWorkspace")}</p>
-                <h2 className="mt-2 text-xl font-semibold font-heading">{workspaceTitle(selected)}</h2>
-                <p className="mt-1 text-sm text-muted-app">{workspaceSubtitle(selected)}</p>
-                <p className="mt-6 text-sm text-muted-app">{t("auth.workspaceReady")}</p>
-                {workspaces.length > 1 && (
-                  <AppButton className="mt-6" variant="secondary" onClick={() => setChoosing(true)}>
-                    {t("auth.switchWorkspace")}
-                  </AppButton>
-                )}
-              </AppCard>
-              {selected.kind === "student" && (
-                <div className="mt-8">
-                  <Link to="/workspace/applications" className="font-semibold text-accent-app">
-                    {t("applications.title")}
-                  </Link>
-                </div>
-              )}
-              {selected.kind === "icpdp" && (
-                <div className="mt-8">
-                  <Link to="/workspace/policy" className="mb-5 inline-block text-sm font-semibold text-accent-app">
-                    {t("policy.title")}
-                  </Link>
-                  <h2 className="text-lg font-semibold font-heading">{t("auth.manageAccounts")}</h2>
-                  <AppSearchInput className="mt-4 w-full" placeholder={t("auth.searchUsers")}
-                    onSearch={setSearch} />
-                  {accounts.isPending ? (
-                    <AppSkeleton className="mt-4 h-36 w-full" />
-                  ) : accounts.isError ? (
-                    <p role="alert" className="mt-4 text-sm text-danger-app">{accounts.error.message}</p>
-                  ) : accounts.data?.items.length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-app">{t("auth.noUsers")}</p>
-                  ) : (
-                    <div className="mt-4 space-y-3">
-                      {accounts.data?.items.map((item) => (
-                        <AppCard key={item.user.id} className="flex-row flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="font-medium">{item.user.displayName}</p>
-                            <p className="text-sm text-muted-app">{item.user.email}</p>
-                            <p className="mt-1 text-xs text-muted-app">
-                              {t("auth.accountState")}: {item.user.accountState === "Locked"
-                                ? t("auth.lockedState") : t("auth.activeState")}
-                              {item.systemRoles.length > 0 && ` · ${item.systemRoles.map(systemRoleLabel).join(", ")}`}
-                            </p>
-                          </div>
-                          <AppButton variant="secondary" onClick={() => setTargetId(item.user.id)}>
-                            {t("auth.manage")}
-                          </AppButton>
-                        </AppCard>
-                      ))}
-                    </div>
-                  )}
-                  {target && (
-                    <AppCard className="mt-5 space-y-4 p-6">
-                      <h3 className="font-semibold font-heading">{target.user.displayName}</h3>
-                      <label className="block text-sm">
-                        {t("auth.role")}
-                        <AppSelect className="mt-2 block w-full" label={t("auth.role")}
-                          value={roleCode} options={roleOptions} onChange={setRoleCode} />
-                      </label>
-                      <label className="block text-sm">
-                        {t("auth.reason")}
-                        <AppInput className="mt-2 block w-full" value={reason}
-                          onChange={(event) => setReason(event.target.value)} maxLength={1000} />
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        <AppButton disabled={accountAction.isPending} onClick={() => void updateAccount("grant")}>
-                          {t("auth.grant")}
-                        </AppButton>
-                        <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
-                          onClick={() => void updateAccount("revoke")}>{t("auth.revoke")}</AppButton>
-                        <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
-                          onClick={() => void updateAccount("lock")}>{t("auth.lock")}</AppButton>
-                        <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
-                          onClick={() => void updateAccount("unlock")}>{t("auth.unlock")}</AppButton>
-                      </div>
-                      {accountAction.isError && (
-                        <p role="alert" className="text-sm text-danger-app">
-                          {t("auth.saveError")} {accountAction.error.message}
-                        </p>
-                      )}
-                      {accountAction.isSuccess && (
-                        <p role="status" className="text-sm text-success-app">{t("auth.saveSuccess")}</p>
-                      )}
-                    </AppCard>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </section>
-      )}
-    </main>
+
+            {groups.length === 0 ? (
+              <p className="mt-10 text-center text-muted-app">{t("auth.noWorkspaces")}</p>
+            ) : groups.map((group) => (
+              <section key={group.title} className="mt-8">
+                <h2 className="px-1 pb-2 text-xs font-semibold tracking-wide text-muted-app uppercase">{group.title}</h2>
+                <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app/80 backdrop-blur">
+                  {group.items.map((workspace) => (
+                    <li key={workspaceKey(workspace)}>
+                      <button type="button" onClick={() => selectWorkspace(workspace)}
+                        className="group flex min-h-18 w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-primary-soft-app focus-visible:bg-primary-soft-app focus-visible:outline-none">
+                        <span aria-hidden="true" className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", {
+                          "bg-primary-soft-app text-primary-app": workspace.kind !== "student",
+                          "bg-mint-soft-app text-mint-app": workspace.kind === "student",
+                        })}>
+                          <AppIcon name={workspaceIcon(workspace)} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="line-clamp-2 font-semibold break-words text-text-app">{workspaceTitle(workspace)}</span>
+                          <span className="block text-sm text-muted-app">{workspaceSubtitle(workspace)}</span>
+                        </span>
+                        {lastKey === workspaceKey(workspace) && (
+                          <span className="hidden shrink-0 rounded-full bg-surface-strong-app px-2.5 py-1 text-xs font-semibold text-muted-app sm:inline">{t("auth.lastUsed")}</span>
+                        )}
+                        <AppIcon name="chevronRight" className="size-5 text-muted-app transition-transform group-hover:translate-x-0.5 group-hover:text-primary-app" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-muted-app">
+              <span className="truncate">{auth.data.user.email}</span>
+              <span aria-hidden="true">·</span>
+              <button type="button" disabled={logout.isPending} onClick={() => void signOut()}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-full font-semibold text-accent-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app disabled:opacity-50">
+                <AppIcon name="logout" className="size-4" />{t("auth.logout")}
+              </button>
+            </div>
+            {logout.isError && <p role="alert" className="mt-3 text-center text-sm text-danger-app">{t("auth.logoutError")}</p>}
+          </>
+        )}
+      </main>
+    </div>
   );
 }
