@@ -3,7 +3,7 @@ import { GRANTABLE_CLUB_PERMISSIONS } from "../domain/access.js";
 import type {
   ApplicationDocument, ApplicationFileStorage, ClubApplicationDraft,
   ClubApplicationRecord, ClubApplicationRepository, ClubApplicationVersion,
-  ProposedClubRole,
+  ProposedClubRole, ApplicantDecisionFeedback, FounderProfile,
 } from "../domain/club-application.js";
 import { validateClubApplicationSubmission } from "../domain/club-application.js";
 import type { PolicyRepository } from "../domain/policy.js";
@@ -105,9 +105,27 @@ export async function listMyApplications(repo: ClubApplicationRepository,
 export async function getMyApplication(repo: ClubApplicationRepository,
   actor: AccessActor | null, id: string): Promise<{
   application: ClubApplicationRecord; versions: ClubApplicationVersion[];
+  decisions: ApplicantDecisionFeedback[]; founders: FounderProfile[];
 }> {
   const record = await owned(repo, id, owner(actor));
-  return { application: record, versions: await repo.versions(record.id) };
+  const [versions, decisions] = await Promise.all([repo.versions(record.id), repo.decisionFeedback(record.id)]);
+  const founderIds = [...record.draft.foundingUserIds, ...versions.flatMap((version) => version.snapshot.foundingUserIds)];
+  return { application: record, versions, decisions, founders: await repo.founderProfiles(founderIds) };
+}
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Resolve a founding member by exact email so students never type raw account ids. */
+export async function lookupFounder(repo: ClubApplicationRepository, actor: AccessActor | null,
+  email: string): Promise<FounderProfile> {
+  owner(actor);
+  const normalized = email.trim().toLowerCase();
+  if (!normalized || normalized.length > 254 || !emailPattern.test(normalized)) {
+    throw new DomainError("invalid email", "validation");
+  }
+  const profile = await repo.findActiveUserByEmail(normalized);
+  if (!profile) throw new DomainError("no active account uses this email", "not_found");
+  return profile;
 }
 
 export async function applicationConfiguration(policy: PolicyRepository,

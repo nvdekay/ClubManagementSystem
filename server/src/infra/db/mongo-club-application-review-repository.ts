@@ -87,6 +87,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
   const structures = ucmsModels.clubRoleStructureVersions!;
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
+  const users = ucmsModels.users!;
 
   async function detail(applicationId: Types.ObjectId,
     session?: ClientSession): Promise<ApplicationReviewDetail | null> {
@@ -102,9 +103,19 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       approvalTaskId: { $in: taskDocs.map((item) => item._id) },
     })
       .sort({ at: 1 }).session(session ?? null).lean();
+    const mappedVersions = versionDocs.map(versionFrom);
+    const founderIds = (mappedVersions.at(-1)?.snapshot.foundingUserIds ?? [])
+      .filter((value) => Types.ObjectId.isValid(value));
+    const founderDocs = await users.find({ _id: { $in: founderIds.map((value) => new Types.ObjectId(value)) } })
+      .select("_id displayName email").session(session ?? null).lean();
+    const byId = new Map(founderDocs.map((doc) => [String(doc._id), {
+      id: String(doc._id), email: String(doc.email),
+      displayName: typeof doc.displayName === "string" && doc.displayName ? doc.displayName : String(doc.email),
+    }]));
     return {
       application: recordFrom(application), task: taskFrom(task),
-      versions: versionDocs.map(versionFrom), decisions: decisionDocs.map(decisionFrom),
+      versions: mappedVersions, decisions: decisionDocs.map(decisionFrom),
+      founders: founderIds.flatMap((value) => byId.get(value) ?? []),
     };
   }
 

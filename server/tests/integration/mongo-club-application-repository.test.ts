@@ -92,6 +92,12 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
 
     const claimed = await reviews.claim(application.id, officer.toString(), now);
     expect(claimed.application.state).toBe("Under Review");
+    expect(claimed.founders.map((founderItem) => founderItem.displayName)).toEqual(["Founder Review", "Co-founder Review"]);
+    expect(await applications.findActiveUserByEmail("FOUNDER-REVIEW@example.edu"))
+      .toMatchObject({ id: founder.toString(), displayName: "Founder Review" });
+    await ucmsModels.users!.updateOne({ _id: secondFounder }, { $set: { accountState: "Locked" } });
+    expect(await applications.findActiveUserByEmail("cofounder-review@example.edu")).toBeNull();
+    await ucmsModels.users!.updateOne({ _id: secondFounder }, { $set: { accountState: "Active" } });
     expect(claimed.task.assigneeId).toBe(officer.toString());
     const decided = await reviews.decide(application.id, officer.toString(), {
       outcome: "Approve", sections: [], reviewNote: "Requirements satisfied",
@@ -153,6 +159,12 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
     expect(await ucmsModels.clubs!.countDocuments({ sourceApplicationId: application.id })).toBe(0);
     expect(await ucmsModels.clubApplications!.findById(application.id).lean())
       .toMatchObject({ state: "Revision Requested", revisionDeadlineAt: deadline });
+    expect((await applications.findOwned(application.id, founder.toString()))?.revisionDeadlineAt)
+      .toEqual(deadline);
+    // The applicant sees the reason and sections, never the internal note or the reviewer.
+    const feedback = await applications.decisionFeedback(application.id);
+    expect(feedback).toEqual([{ outcome: "Request revision", reason: "Clarify objectives",
+      sections: ["club-information"], decidedAt: expect.any(Date) }]);
 
     const revised = { ...initial, objectives: "Clear and measurable objective" };
     const saved = await applications.saveDraft(application.id, founder.toString(), revised, 0);

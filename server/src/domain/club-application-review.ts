@@ -1,7 +1,7 @@
 import type {
   ApplicationDocument,
   ClubApplicationRecord,
-  ClubApplicationVersion,
+  ClubApplicationVersion, FounderProfile,
 } from "./club-application.js";
 
 export type ApplicationReviewOutcome = "Request revision" | "Approve" | "Reject";
@@ -35,6 +35,8 @@ export interface ApplicationReviewQueueItem {
 export interface ApplicationReviewDetail extends ApplicationReviewQueueItem {
   versions: ClubApplicationVersion[];
   decisions: ApplicationReviewDecision[];
+  /** Founding members of the latest submitted version, so ICPDP sees names instead of ids. */
+  founders: FounderProfile[];
 }
 
 export interface ApplicationReviewDecisionInput {

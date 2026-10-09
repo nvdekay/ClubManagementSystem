@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import type {
-  ApplicationDocument, ClubApplicationDraft, ClubApplicationRecord,
+  ApplicantDecisionFeedback, ApplicationDocument, FounderProfile, ClubApplicationDraft, ClubApplicationRecord,
   ClubApplicationRepository, ClubApplicationState, ClubApplicationVersion,
 } from "../../domain/club-application.js";
 import { ucmsModels } from "./ucms-models.js";
@@ -28,6 +28,7 @@ function mapRecord(doc: Record<string, unknown>): ClubApplicationRecord {
     state: doc.state as ClubApplicationState,
     currentVersionNo: Number(doc.currentVersionNo), draftRevision: Number(raw?._revision ?? 0),
     draft: draftFrom(raw), submittedAt: doc.submittedAt as Date | undefined,
+    ...(doc.revisionDeadlineAt instanceof Date ? { revisionDeadlineAt: doc.revisionDeadlineAt } : {}),
     createdAt: doc.createdAt as Date,
   };
 }
@@ -42,6 +43,11 @@ function mapVersion(doc: Record<string, unknown>): ClubApplicationVersion {
   };
 }
 
+function profileFrom(doc: Record<string, unknown>): FounderProfile {
+  return { id: String(doc._id), email: String(doc.email),
+    displayName: typeof doc.displayName === "string" && doc.displayName ? doc.displayName : String(doc.email) };
+}
+
 function conflict(): never {
   throw new DomainError("application changed or is no longer editable", "conflict");
 }
@@ -54,6 +60,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
   const tasks = ucmsModels.approvalTasks!;
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
+  const decisions = ucmsModels.approvalDecisions!;
   const editableStates = ["Draft", "Revision Requested"];
 
   return {
@@ -79,6 +86,29 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
       const docs = await versions.find({ applicationId: new Types.ObjectId(id) })
         .sort({ versionNo: 1 }).lean();
       return docs.map(mapVersion);
+    },
+    async findActiveUserByEmail(email) {
+      const doc = await users.findOne({ email: email.trim().toLowerCase(), accountState: "Active" })
+        .select("_id displayName email").lean();
+      return doc ? profileFrom(doc) : null;
+    },
+    async founderProfiles(ids) {
+      const valid = [...new Set(ids)].filter((value) => Types.ObjectId.isValid(value));
+      const docs = await users.find({ _id: { $in: valid.map((value) => new Types.ObjectId(value)) } })
+        .select("_id displayName email").lean();
+      const byId = new Map(docs.map((doc) => [String(doc._id), profileFrom(doc)]));
+      return valid.flatMap((value) => byId.get(value) ?? []);
+    },
+    async decisionFeedback(id) {
+      const taskIds = await tasks.find({ entityType: "CLUB_APPLICATION", entityId: new Types.ObjectId(id) })
+        .distinct("_id");
+      const docs = await decisions.find({ approvalTaskId: { $in: taskIds } }).sort({ at: 1 }).lean();
+      return docs.map((doc) => ({
+        outcome: doc.outcome as ApplicantDecisionFeedback["outcome"],
+        ...(typeof doc.reason === "string" ? { reason: doc.reason } : {}),
+        sections: (doc.comments as { sections?: string[] } | undefined)?.sections ?? [],
+        decidedAt: doc.at as Date,
+      }));
     },
     async saveDraft(id, ownerId, draft, expectedDraftRevision) {
       const updated = await applications.findOneAndUpdate({ _id: new Types.ObjectId(id),

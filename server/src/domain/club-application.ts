@@ -53,7 +53,24 @@ export interface ClubApplicationRecord {
   draftRevision: number;
   draft: ClubApplicationDraft;
   submittedAt?: Date;
+  /** Set by the ICPDP revision request (UC08); the applicant must resubmit before it. */
+  revisionDeadlineAt?: Date;
   createdAt: Date;
+}
+
+/** Identity shown for a founding member instead of a raw user id. */
+export interface FounderProfile {
+  id: string;
+  displayName: string;
+  email: string;
+}
+
+/** What the applicant may see of an ICPDP decision: never the internal review note or reviewer. */
+export interface ApplicantDecisionFeedback {
+  outcome: "Approve" | "Request revision" | "Reject";
+  reason?: string;
+  sections: string[];
+  decidedAt: Date;
 }
 
 export interface ClubApplicationVersion {
@@ -70,6 +87,10 @@ export interface ClubApplicationRepository {
   listMine(ownerId: string): Promise<ClubApplicationRecord[]>;
   findOwned(id: string, ownerId: string): Promise<ClubApplicationRecord | null>;
   versions(id: string): Promise<ClubApplicationVersion[]>;
+  decisionFeedback(id: string): Promise<ApplicantDecisionFeedback[]>;
+  /** Exact, case-insensitive email match among Active accounts (no partial search). */
+  findActiveUserByEmail(email: string): Promise<FounderProfile | null>;
+  founderProfiles(ids: string[]): Promise<FounderProfile[]>;
   saveDraft(id: string, ownerId: string, draft: ClubApplicationDraft,
     expectedDraftRevision: number): Promise<ClubApplicationRecord>;
   addDocument(id: string, ownerId: string, document: ApplicationDocument): Promise<ClubApplicationRecord>;

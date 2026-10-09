@@ -11,7 +11,7 @@ import type { ApplicationDocument, ClubApplicationDraft, ClubApplicationRecord,
 import {
   applicationConfiguration, applicationDocumentAccess, createApplicationDraft, getMyApplication,
   listMyApplications, removeApplicationDocument, saveApplicationDraft,
-  previewApplication, submitApplication, uploadApplicationDocument, withdrawApplication,
+  previewApplication, submitApplication, uploadApplicationDocument, withdrawApplication, lookupFounder,
 } from "../../usecase/club-application.js";
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
@@ -83,6 +83,10 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
   router.get("/applications/config", authGuard(guard, false), async (_req, res) => {
     ok(res, await applicationConfiguration(deps.policy, actor(res), new Date()));
   });
+  // Before "/applications/:id" so "founder-lookup" is never parsed as an application id.
+  router.get("/applications/founder-lookup", authGuard(guard, false), async (req, res) => {
+    ok(res, await lookupFounder(deps.repo, actor(res), parsed(z.string().max(254), req.query.email)));
+  });
   router.get("/applications/mine", authGuard(guard, false), async (_req, res) => {
     ok(res, (await listMyApplications(deps.repo, actor(res))).map(publicRecord));
   });
@@ -92,7 +96,8 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
   });
   router.get("/applications/:id", authGuard(guard, false), async (req, res) => {
     const detail = await getMyApplication(deps.repo, actor(res), parsed(id, req.params.id));
-    ok(res, { application: publicRecord(detail.application), versions: detail.versions.map(publicVersion) });
+    ok(res, { application: publicRecord(detail.application), versions: detail.versions.map(publicVersion),
+      decisions: detail.decisions, founders: detail.founders });
   });
   router.get("/applications/:id/preview", authGuard(guard, false), async (req, res) => {
     ok(res, await previewApplication(deps.repo, deps.policy, actor(res),

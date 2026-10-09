@@ -8,3 +8,4 @@
 - [x] UI ICPDP queue/detail/decision responsive, accessible, light/dark, i18n `en`/`vi`.
 - [x] Unit/integration tests và `npm run check`, production build.
 - [ ] Nghiệm thu trực quan thủ công bằng tài khoản ICPDP thật.
+- [x] Màn chi tiết thẩm định hiển thị tên/email thành viên sáng lập của version đã nộp thay cho ID (2026-10-09).

@@ -4,7 +4,7 @@ import type {
   ClubApplicationVersion,
 } from "../../src/domain/club-application.js";
 import type { PolicyRepository, PolicyVersion } from "../../src/domain/policy.js";
-import { saveApplicationDraft, submitApplication, uploadApplicationDocument } from "../../src/usecase/club-application.js";
+import { getMyApplication, lookupFounder, saveApplicationDraft, submitApplication, uploadApplicationDocument } from "../../src/usecase/club-application.js";
 
 const now = new Date("2026-10-03T12:00:00Z");
 const actor = { id: "000000000000000000000001", accountState: "Active" as const };
@@ -42,7 +42,10 @@ function repository(overrides: Partial<ClubApplicationRepository> = {}) {
   };
   const repo: ClubApplicationRepository = {
     createDraft: async () => record(), listMine: async () => [record()],
-    findOwned: async () => record(), versions: async () => [],
+    findOwned: async () => record(), versions: async () => [], decisionFeedback: async () => [],
+    findActiveUserByEmail: async (email: string) => email === "peer@example.edu"
+      ? { id: "000000000000000000000009", displayName: "Peer", email } : null,
+    founderProfiles: async () => [],
     saveDraft: async () => record(), addDocument: async () => record(),
     removeDocument: async () => record(), usersExist: async () => true,
     activeClubNameExists: async () => false, submit: async () => version,
@@ -75,6 +78,23 @@ describe("UC07 application submission use case", () => {
       { id: "000000000000000000000005", accountState: "Active" }, record().id, now))
       .rejects.toMatchObject({ kind: "not_found" });
     expect(submit).not.toHaveBeenCalled();
+  });
+
+  it("returns the ICPDP decision feedback with the owner's application", async () => {
+    const feedback = [{ outcome: "Request revision" as const, reason: "Clarify objectives",
+      sections: ["club-information"], decidedAt: now }];
+    const repo = repository({ decisionFeedback: async () => feedback });
+    await expect(getMyApplication(repo, actor, record().id))
+      .resolves.toMatchObject({ application: { id: record().id }, decisions: feedback });
+  });
+
+  it("resolves founders by exact email instead of raw account ids", async () => {
+    const repo = repository();
+    await expect(lookupFounder(repo, actor, "  Peer@Example.edu "))
+      .resolves.toMatchObject({ id: "000000000000000000000009", displayName: "Peer" });
+    await expect(lookupFounder(repo, actor, "nobody@example.edu")).rejects.toMatchObject({ kind: "not_found" });
+    await expect(lookupFounder(repo, actor, "not-an-email")).rejects.toMatchObject({ kind: "validation" });
+    await expect(lookupFounder(repo, null, "peer@example.edu")).rejects.toMatchObject({ kind: "unauthorized" });
   });
 
   it("rejects an invalid member set before any write", async () => {

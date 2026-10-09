@@ -65,7 +65,7 @@ function publicDetail(detail: ApplicationReviewDetail) {
   return { ...publicQueueItem(detail),
     versions: detail.versions.map((version) => ({
       ...version, snapshot: publicDraft(version.snapshot),
-    })), decisions: detail.decisions };
+    })), decisions: detail.decisions, founders: detail.founders };
 }
 
 export function clubApplicationReviewRoutes(deps: ClubApplicationReviewRouteDeps): Router {

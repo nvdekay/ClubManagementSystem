@@ -56,7 +56,11 @@ const ApplicationDraft = applicationDraftBody.extend({ documents: z.array(Applic
 const ApplicationRecord = z.object({
   id: z.string(), founderUserId: z.string(), state: z.string(),
   currentVersionNo: z.number(), draftRevision: z.number(), draft: ApplicationDraft,
-  submittedAt: z.string().optional(), createdAt: z.string(),
+  submittedAt: z.string().optional(), revisionDeadlineAt: z.string().optional(), createdAt: z.string(),
+});
+const ApplicantDecisionFeedback = z.object({
+  outcome: z.enum(["Approve", "Request revision", "Reject"]), reason: z.string().optional(),
+  sections: z.array(z.string()), decidedAt: z.string(),
 });
 const ApplicationVersion = z.object({
   id: z.string(), applicationId: z.string(), versionNo: z.number(),
@@ -77,8 +81,10 @@ const ApplicationReviewDecision = z.object({
 const ApplicationReviewQueueItem = z.object({
   task: ApplicationReviewTask, application: ApplicationRecord,
 });
+const FounderProfile = z.object({ id: z.string(), displayName: z.string(), email: z.string() });
 const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
   versions: z.array(ApplicationVersion), decisions: z.array(ApplicationReviewDecision),
+  founders: z.array(FounderProfile),
 });
 const ClubProfile = clubProfileBody.extend({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(),
@@ -477,13 +483,23 @@ export const openApiDocument = createDocument({
           content: { "application/json": { schema: envelope(ApplicationRecord) } } } },
       },
     },
+    "/applications/founder-lookup": {
+      get: {
+        summary: "Find an active account by exact email to add it as a founding member",
+        requestParams: { query: z.object({ email: z.string() }) },
+        responses: { "200": { description: "Matching account", content: {
+          "application/json": { schema: envelope(FounderProfile) },
+        } }, "404": { description: "No active account uses this email" } },
+      },
+    },
     "/applications/{id}": {
       get: {
-        summary: "Read an owned application and its submitted versions",
+        summary: "Read an owned application, its submitted versions and ICPDP decision feedback",
         requestParams: { path: IdPath },
-        responses: { "200": { description: "Application and history",
+        responses: { "200": { description: "Application, history and decisions (without internal review notes)",
           content: { "application/json": { schema: envelope(z.object({
             application: ApplicationRecord, versions: z.array(ApplicationVersion),
+            decisions: z.array(ApplicantDecisionFeedback), founders: z.array(FounderProfile),
           })) } } } },
       },
     },
