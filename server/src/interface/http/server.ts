@@ -17,6 +17,7 @@ import type { EventRegistrationRepository } from "../../domain/event-registratio
 import type { EventCheckInRepository } from "../../domain/event-checkin.js";
 import type { EventFeedbackRepository } from "../../domain/event-feedback.js";
 import type { StudentFeedbackRepository } from "../../domain/student-feedback.js";
+import type { MemberSpaceRepository } from "../../domain/member-space.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
@@ -35,6 +36,7 @@ import { eventRegistrationRoutes } from "./event-registration-routes.js";
 import { eventCheckInRoutes } from "./event-checkin-routes.js";
 import { eventFeedbackRoutes } from "./event-feedback-routes.js";
 import { studentFeedbackRoutes } from "./student-feedback-routes.js";
+import { memberSpaceRoutes } from "./member-space-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -73,6 +75,7 @@ export function buildApp(deps: {
   eventCheckInRepo?: EventCheckInRepository;
   eventFeedbackRepo?: EventFeedbackRepository;
   studentFeedbackRepo?: StudentFeedbackRepository;
+  memberSpaceRepo?: MemberSpaceRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
@@ -145,6 +148,10 @@ export function buildApp(deps: {
       app.use("/api/v1", eventCheckInRoutes({ repo: deps.eventCheckInRepo,
         policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
+    if (deps.memberSpaceRepo && deps.policyRepo) {
+      app.use("/api/v1", memberSpaceRoutes({ repo: deps.memberSpaceRepo, policy: deps.policyRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
     if (deps.studentFeedbackRepo) {
       app.use("/api/v1", studentFeedbackRoutes({ repo: deps.studentFeedbackRepo,
         accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -187,6 +194,7 @@ export function buildApp(deps: {
   const hasEventCheckIns = Boolean(hasPolicy && deps.eventCheckInRepo);
   const hasEventFeedback = Boolean(hasPolicy && deps.eventFeedbackRepo);
   const hasStudentFeedback = Boolean(hasAdmin && deps.studentFeedbackRepo);
+  const hasMemberSpace = Boolean(hasPolicy && deps.memberSpaceRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
@@ -206,6 +214,7 @@ export function buildApp(deps: {
         || path.startsWith("/event-feedbacks")) return hasEventFeedback;
       if (path.startsWith("/student-feedback")
         || path.startsWith("/clubs/{clubId}/student-feedback")) return hasStudentFeedback;
+      if (path.startsWith("/clubs/{clubId}/member-space")) return hasMemberSpace;
       if (path.startsWith("/applications")) return hasApplications;
       if (path.startsWith("/clubs/{clubId}/settings")
         || path.startsWith("/clubs/{clubId}/profile")

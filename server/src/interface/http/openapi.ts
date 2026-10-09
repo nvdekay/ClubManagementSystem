@@ -221,6 +221,19 @@ const SentFeedback = z.object({ id: z.string(), recipient: z.enum(["CLUB", "ICPD
   isAnonymous: z.boolean(), submittedAt: z.string() });
 const ReceivedFeedback = SentFeedback.extend({
   sender: z.object({ displayName: z.string(), email: z.string() }).optional() });
+const MemberSpace = z.object({
+  club: z.object({ id: z.string(), name: z.string(), logoUrl: z.string().optional(), state: z.string() }),
+  membership: z.object({ id: z.string(), state: z.string(), joinedAt: z.string(), positions: z.array(z.string()),
+    pendingWithdrawal: MembershipWithdrawal.optional() }),
+  members: z.array(z.object({ displayName: z.string(), state: z.string(), positions: z.array(z.string()) })),
+  board: z.array(z.object({ positionName: z.string(), memberName: z.string() })),
+  upcomingEvents: z.array(z.object({ id: z.string(), title: z.string(), startAt: z.string(), endAt: z.string(),
+    venueText: z.string().optional(), registrationState: z.enum(["Confirmed", "Waitlisted", "Cancelled"]).nullable() })),
+  attendance: z.array(z.object({ eventId: z.string(), eventTitle: z.string(), checkedInAt: z.string(),
+    eventEndAt: z.string(), feedbackSubmitted: z.boolean() })),
+  feedbackToSend: z.array(z.object({ eventId: z.string(), eventTitle: z.string(), closesAt: z.string().nullable() })),
+  otherClubs: z.array(z.object({ clubId: z.string(), clubName: z.string(), state: z.string() })),
+});
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -858,6 +871,14 @@ export const openApiDocument = createDocument({
         responses: { "201": { description: "Submitted nomination", content: {
           "application/json": { schema: envelope(BoardNomination) },
       } } } },
+    },
+    "/clubs/{clubId}/member-space": {
+      get: { summary: "Read-only member space of a club for its Active or Inactive members (UC24)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Membership, roster, board, events, attendance and owed feedback",
+          content: { "application/json": { schema: envelope(MemberSpace) } } },
+        "403": { description: "Not a current member (Left, Banned or never joined)",
+          content: { "application/json": { schema: ApiError } } } } },
     },
     "/memberships/mine": {
       get: { summary: "List the authenticated student's current club memberships",

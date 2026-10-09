@@ -25,6 +25,7 @@ import { mongoEventRegistrationRepository } from "./infra/db/mongo-event-registr
 import { mongoEventCheckInRepository } from "./infra/db/mongo-event-checkin-repository.js";
 import { mongoEventFeedbackRepository } from "./infra/db/mongo-event-feedback-repository.js";
 import { mongoStudentFeedbackRepository } from "./infra/db/mongo-student-feedback-repository.js";
+import { mongoMemberSpaceRepository } from "./infra/db/mongo-member-space-repository.js";
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
 import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
 
@@ -62,6 +63,7 @@ const app = authConfig ? buildApp({
   eventCheckInRepo: mongoEventCheckInRepository(),
   eventFeedbackRepo: mongoEventFeedbackRepository(),
   studentFeedbackRepo: mongoStudentFeedbackRepository(),
+  memberSpaceRepo: mongoMemberSpaceRepository(),
   recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
     recruitmentApplicationRepo: mongoRecruitmentApplicationRepository(),
     membershipRepo: mongoMembershipRepository(),

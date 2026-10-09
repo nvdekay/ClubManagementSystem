@@ -14,6 +14,7 @@ import type { EventRegistrationRepository } from "../../src/domain/event-registr
 import type { EventCheckInRepository } from "../../src/domain/event-checkin.js";
 import type { EventFeedbackRepository } from "../../src/domain/event-feedback.js";
 import type { StudentFeedbackRepository } from "../../src/domain/student-feedback.js";
+import type { MemberSpaceRepository } from "../../src/domain/member-space.js";
 import { openApiDocument } from "../../src/interface/http/openapi.js";
 import { buildApp } from "../../src/interface/http/server.js";
 
@@ -136,6 +137,7 @@ const stubLeadershipTransitions: LeadershipTransitionRepository = {
   claim: async () => { throw new Error("unused"); },
   decide: async () => { throw new Error("unused"); },
 };
+const stubMemberSpace: MemberSpaceRepository = { find: async () => null };
 const stubStudentFeedback: StudentFeedbackRepository = {
   club: async () => null, eventBelongsToClub: async () => false, listMine: async () => [], inbox: async () => [],
   submit: async () => { throw new Error("unused"); },
@@ -184,6 +186,7 @@ describe("openapi document", () => {
       eventCheckInRepo: stubEventCheckIns,
       eventFeedbackRepo: stubEventFeedback,
       studentFeedbackRepo: stubStudentFeedback,
+      memberSpaceRepo: stubMemberSpace,
       publicRepo: stubPublic, dbReady: () => true });
     const base = openApiDocument.servers?.[0]?.url ?? "";
     expect(base).toBe("/api/v1");
