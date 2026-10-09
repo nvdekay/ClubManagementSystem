@@ -8,6 +8,7 @@ import { boardNominationBody, boardNominationDecisionBody } from "./board-nomina
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
 import { eventCheckInBody } from "./event-checkin-routes.js";
+import { eventFeedbackBody } from "./event-feedback-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
@@ -208,6 +209,11 @@ const Attendance = z.object({ id: z.string(), eventId: z.string(), eventTitle: z
   clubId: z.string(), clubName: z.string(), eventStartAt: z.string(), eventEndAt: z.string(),
   checkedInAt: z.string(), method: z.enum(["self", "manual", "walk-in"]), abnormalFlags: z.array(z.string()),
   feedbackOpensAt: z.string(), feedbackClosesAt: z.string().nullable() });
+const MyEventFeedback = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
+  clubName: z.string(), rating: z.number().int().min(1).max(5), comment: z.string(), isAnonymous: z.boolean(),
+  submittedAt: z.string() });
+const EventFeedbackContext = z.object({ attended: z.boolean(), canSubmit: z.boolean(),
+  opensAt: z.string().nullable(), closesAt: z.string().nullable(), feedback: MyEventFeedback.nullable() });
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -771,6 +777,24 @@ export const openApiDocument = createDocument({
         "403": { description: "No confirmed registration or members-only event", content: { "application/json": { schema: ApiError } } },
         "409": { description: "Event not open for check-in or outside the check-in window",
           content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/events/{id}/feedback": {
+      get: { summary: "Read whether the authenticated student may give feedback, and their own submission",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Feedback context", content: {
+          "application/json": { schema: envelope(EventFeedbackContext) } } } } },
+      post: { summary: "Submit the student's single, immutable event feedback (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventFeedbackBody } } },
+        responses: { "201": { description: "Submitted feedback (visible with identity only to its author)", content: {
+          "application/json": { schema: envelope(MyEventFeedback) } } },
+        "400": { description: "Rating outside 1–5 or empty/oversized comment", content: { "application/json": { schema: ApiError } } },
+        "403": { description: "Caller did not check in to the event", content: { "application/json": { schema: ApiError } } },
+        "409": { description: "Feedback already submitted or window closed", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/event-feedbacks/mine": {
+      get: { summary: "List the authenticated student's own event feedback",
+        responses: { "200": { description: "Own feedback", content: {
+          "application/json": { schema: envelope(z.array(MyEventFeedback)) } } } } },
     },
     "/attendances/mine": {
       get: { summary: "List the authenticated student's check-ins with their feedback windows",
