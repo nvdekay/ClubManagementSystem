@@ -21,6 +21,7 @@ function registration(state: EventRegistration["state"] = "Confirmed"): EventReg
   return { id: registrationId, eventId, studentId, clubId: "000000000000000000000004",
     clubName: "Robotics", eventTitle: "Demo Day",
     eventStartAt: new Date("2026-10-10T10:00:00Z"), eventEndAt: new Date("2026-10-10T12:00:00Z"),
+    checkInOpensAt: new Date("2026-10-10T10:00:00Z"), checkInClosesAt: new Date("2026-10-10T12:00:00Z"),
     state, answers: { dietary: "Vegetarian" }, createdAt: now };
 }
 

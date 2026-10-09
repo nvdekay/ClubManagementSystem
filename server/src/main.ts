@@ -22,6 +22,7 @@ import { mongoMembershipRepository } from "./infra/db/mongo-membership-repositor
 import { mongoDashboardRepository } from "./infra/db/mongo-dashboard-repository.js";
 import { mongoLeadershipTransitionRepository } from "./infra/db/mongo-leadership-transition-repository.js";
 import { mongoEventRegistrationRepository } from "./infra/db/mongo-event-registration-repository.js";
+import { mongoEventCheckInRepository } from "./infra/db/mongo-event-checkin-repository.js";
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
 import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
 
@@ -56,6 +57,7 @@ const app = authConfig ? buildApp({
   boardNominationRepo: mongoBoardNominationRepository(),
   leadershipTransitionRepo: mongoLeadershipTransitionRepository(),
   eventRegistrationRepo: mongoEventRegistrationRepository(),
+  eventCheckInRepo: mongoEventCheckInRepository(),
   recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
     recruitmentApplicationRepo: mongoRecruitmentApplicationRepository(),
     membershipRepo: mongoMembershipRepository(),

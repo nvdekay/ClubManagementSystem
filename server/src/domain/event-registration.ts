@@ -18,6 +18,9 @@ export interface EventRegistration {
   eventTitle: string;
   eventStartAt: Date;
   eventEndAt: Date;
+  /** UC31 window the student can check in during (event's configured window, else its start/end). */
+  checkInOpensAt: Date;
+  checkInClosesAt: Date;
   state: EventRegistrationState;
   waitlistPosition?: number;
   answers: Record<string, EventRegistrationAnswer>;

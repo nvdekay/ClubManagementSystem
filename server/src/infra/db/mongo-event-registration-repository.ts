@@ -58,6 +58,8 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
       studentId: String(registration.studentId), clubId: String(registration.clubId),
       clubName: String(event.clubName ?? ""), eventTitle: String(event.title),
       eventStartAt: date(event.startAt), eventEndAt: date(event.endAt),
+      checkInOpensAt: event.checkInOpenAt instanceof Date ? event.checkInOpenAt : date(event.startAt),
+      checkInClosesAt: event.checkInCloseAt instanceof Date ? event.checkInCloseAt : date(event.endAt),
       state: registration.state as EventRegistrationState,
       ...(typeof registration.waitlistPosition === "number"
         ? { waitlistPosition: registration.waitlistPosition } : {}),

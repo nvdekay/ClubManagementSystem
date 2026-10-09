@@ -7,6 +7,7 @@ import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
+import { eventCheckInBody } from "./event-checkin-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
@@ -189,7 +190,7 @@ const LeadershipTransition = z.object({
     actorId: z.string(), at: z.string() })),
 });
 const EventRegistration = z.object({ id: z.string(), eventId: z.string(), studentId: z.string(),
-  clubId: z.string(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(),
+  clubId: z.string(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(), checkInOpensAt: z.string(), checkInClosesAt: z.string(),
   eventEndAt: z.string(), state: z.enum(["Confirmed", "Waitlisted", "Cancelled"]),
   waitlistPosition: z.number().int().optional(),
   answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
@@ -203,6 +204,10 @@ formSchema: z.array(z.object({ key: z.string(), label: z.string(),
   type: z.enum(["text", "textarea", "select", "radio", "checkbox"]), required: z.boolean(),
   options: z.array(z.string()).optional() })), isActiveClubMember: z.boolean(),
 registration: EventRegistration.nullable(), registrationOpen: z.boolean() });
+const Attendance = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
+  clubId: z.string(), clubName: z.string(), eventStartAt: z.string(), eventEndAt: z.string(),
+  checkedInAt: z.string(), method: z.enum(["self", "manual", "walk-in"]), abnormalFlags: z.array(z.string()),
+  feedbackOpensAt: z.string(), feedbackClosesAt: z.string().nullable() });
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -755,6 +760,22 @@ export const openApiDocument = createDocument({
           "application/json": { schema: envelope(EventRegistration) },
         } }, "409": { description: "Registration closed, duplicate, or capacity reached",
           content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/events/{id}/check-in": {
+      post: { summary: "Check the authenticated student in to an event with its check-in code (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventCheckInBody } } },
+        responses: { "200": { description: "The single attendance record (existing one when already checked in)",
+          content: { "application/json": { schema: envelope(Attendance.extend({ alreadyCheckedIn: z.boolean() })) } } },
+        "400": { description: "Invalid check-in code", content: { "application/json": { schema: ApiError } } },
+        "403": { description: "No confirmed registration or members-only event", content: { "application/json": { schema: ApiError } } },
+        "409": { description: "Event not open for check-in or outside the check-in window",
+          content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/attendances/mine": {
+      get: { summary: "List the authenticated student's check-ins with their feedback windows",
+        responses: { "200": { description: "Attendance history", content: {
+          "application/json": { schema: envelope(z.array(Attendance)) } } } } },
     },
     "/event-registrations/mine": {
       get: { summary: "List the authenticated student's event registrations",

@@ -11,6 +11,7 @@ import type { MembershipRepository } from "../../src/domain/membership.js";
 import type { DashboardRepository } from "../../src/domain/dashboard.js";
 import type { LeadershipTransitionRepository } from "../../src/domain/leadership-transition.js";
 import type { EventRegistrationRepository } from "../../src/domain/event-registration.js";
+import type { EventCheckInRepository } from "../../src/domain/event-checkin.js";
 import { openApiDocument } from "../../src/interface/http/openapi.js";
 import { buildApp } from "../../src/interface/http/server.js";
 
@@ -133,6 +134,10 @@ const stubLeadershipTransitions: LeadershipTransitionRepository = {
   claim: async () => { throw new Error("unused"); },
   decide: async () => { throw new Error("unused"); },
 };
+const stubEventCheckIns: EventCheckInRepository = {
+  target: async () => null, listMine: async () => [],
+  checkIn: async () => { throw new Error("unused"); },
+};
 const stubEventRegistrations: EventRegistrationRepository = {
   context: async () => null, listMine: async () => [], findOwned: async () => null,
   register: async () => { throw new Error("unused"); },
@@ -166,6 +171,7 @@ describe("openapi document", () => {
       dashboardRepo: stubDashboard,
       leadershipTransitionRepo: stubLeadershipTransitions,
       eventRegistrationRepo: stubEventRegistrations,
+      eventCheckInRepo: stubEventCheckIns,
       publicRepo: stubPublic, dbReady: () => true });
     const base = openApiDocument.servers?.[0]?.url ?? "";
     expect(base).toBe("/api/v1");
