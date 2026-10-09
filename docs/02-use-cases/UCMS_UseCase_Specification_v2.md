@@ -227,7 +227,7 @@ vẫn là tên gọi chung của phía CLB.
 - **Hậu điều kiện:** Một phiên bản chính sách mới đang có hiệu lực; những quyết định đã ra giữ
   nguyên các giá trị mà chúng được ra theo.
 - **Quy tắc nghiệp vụ:** BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách trên. Mọi giá trị
-  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị này
+  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị này
   chỉ trở nên sửa được khi có nhu cầu thật (§14 của tài liệu mô hình, quyết định D2).
 - **Đầu ra:** Phiên bản chính sách, bản ghi audit.
 - **Use case liên quan:** UC01, UC07, UC25, UC33, UC38, UC45, UC48
@@ -403,16 +403,15 @@ lại UC06–UC52.
   1. Thành viên mở phần đề cử ban chủ nhiệm cho một nhiệm kỳ.
   2. Hệ thống liệt kê các role **ban điều hành** trong phiên bản cơ cấu đang hiệu lực (BR56); với
      mỗi role, leader chọn một thành viên.
-  3. Hệ thống kiểm tra điều kiện (BR07) và sự chồng lấn (BR06).
+  3. Hệ thống kiểm tra membership `Active` trong CLB (BR07) và sự chồng lấn nhiệm kỳ Chủ nhiệm (BR06).
   4. Thành viên nộp bản đề cử.
   5. Trạng thái chuyển sang `Pending Confirmation`; ICPDP nhận một task.
 - **Luồng thay thế:**
   - **A1 Ban chủ nhiệm một phần:** chỉ đề cử các ghế đang trống; các ghế đã xác nhận không bị
     đụng tới.
 - **Ngoại lệ:**
-  - **E1** một người được đề cử không đủ điều kiện theo BR07 → ghế đó bị từ chối;
-  - **E2** người được đề cử đã giữ một nhiệm kỳ Chủ nhiệm chồng lấn → từ chối trừ khi tài liệu chính
-    sách cho phép (BR06).
+  - **E1** người được đề cử không còn membership `Active` trong CLB → ghế đó được trả về;
+  - **E2** người được đề cử đã giữ một nhiệm kỳ Chủ nhiệm chồng lấn ở bất kỳ CLB nào → từ chối (BR06).
 - **Hậu điều kiện:** Bản đề cử ở `Pending Confirmation`.
 - **Quy tắc nghiệp vụ:** BR06, BR07, BR55. Các ghế cần đề cử là các role ban điều hành trong cơ
   cấu đang hiệu lực, không còn lấy từ template của trường. Một hồ sơ thành lập được duyệt ở UC08
@@ -431,7 +430,7 @@ lại UC06–UC52.
 - **Dữ liệu vào:** Quyết định và lý do.
 - **Luồng chính:**
   1. Officer mở bản đề cử.
-  2. Officer kiểm tra điều kiện, xung đột lợi ích và các mốc thời gian nhiệm kỳ.
+  2. Officer kiểm tra membership `Active`, chồng lấn nhiệm kỳ Chủ nhiệm và các mốc thời gian nhiệm kỳ.
   3. Officer phê duyệt hoặc từ chối, kèm lý do ở nơi cần thiết.
   4. Khi phê duyệt, hệ thống kích hoạt ban chủ nhiệm, cấp các quyền tương ứng và cho CLB rời
      `Pending Setup`.
@@ -597,7 +596,7 @@ lại UC06–UC52.
   1. Thành viên tạo đợt tuyển và nêu vị trí cùng tiêu chí.
   2. Thành viên đặt khung thời gian nhận đơn và chỉ tiêu.
   3. Thành viên định nghĩa các vòng tuyển và biểu mẫu ứng tuyển.
-  4. Hệ thống validate khung thời gian theo chính sách lịch học kỳ.
+  4. Hệ thống validate khung thời gian nằm trọn trong đúng một kỳ theo chính sách lịch học kỳ UC04.
   5. Thành viên công bố → `Published`; đợt tuyển xuất hiện ở UC06.
 - **Luồng thay thế:**
   - **A1 Bản nháp:** đợt tuyển được lưu ở `Draft` và công bố sau.
@@ -605,8 +604,8 @@ lại UC06–UC52.
     được đóng lại và những người đã nộp được thông báo.
 - **Ngoại lệ:**
   - **E1** CLB đang `Suspended` → từ chối (BR09);
-  - **E2** đã tồn tại một đợt tuyển chồng lấn cho cùng vị trí → cảnh báo, và thành viên xác nhận
-    hoặc gộp lại.
+  - **E2** đã tồn tại một đợt tuyển chồng lấn cả vị trí lẫn thời gian → cảnh báo; thành viên có
+    thể xác nhận công bố một campaign riêng. Không gộp campaign.
   - **E3** người gọi thiếu permission `club.recruitment.manage` trong CLB → từ chối (BR54).
 - **Hậu điều kiện:** Đợt tuyển ở `Published` và nhận đơn trong khung thời gian của nó.
 - **Quy tắc nghiệp vụ:** BR54 (`club.recruitment.manage`). BR01, BR09, BR11.

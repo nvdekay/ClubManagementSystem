@@ -324,7 +324,7 @@ còn hiệu lực.
   (BR33); các công tắc cưỡng chế (BR21); lịch học kỳ (ngày bắt đầu và kết thúc).
 - **Quy tắc:** mọi thay đổi đều được đánh phiên bản và ghi audit; một thay đổi không bao giờ
   viết lại một quyết định đã ra. **Màn hình cấu hình chỉ phơi ra đúng danh sách này** — mọi giá
-  trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị
+  trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị
   này chỉ trở nên sửa được khi có nhu cầu thật (§14, quyết định còn mở D2).
 - **Liên quan:** UC01, UC07, UC25, UC33, UC38, UC45, UC48
 
@@ -397,13 +397,15 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
 - **Actor:** Club Leader (quyền giữ riêng `club.board.nominate`, BR55) · **Mục tiêu:** Đề cử lãnh đạo cho một nhiệm kỳ.
 - **Luồng:** với mỗi role **ban điều hành** trong phiên bản cơ cấu đang hiệu lực (không còn lấy từ
   template của trường) → chọn một thành viên → nhiệm kỳ → nộp → `Pending Confirmation`.
-- **Quy tắc:** BR06, BR07, BR55. Hồ sơ thành lập được duyệt ở UC08 sẽ đề cử ban chủ nhiệm đầu tiên
+- **Quy tắc:** BR06, BR07, BR55. Người được đề cử phải có membership `Active`; nhiệm kỳ Chủ nhiệm
+  không được chồng lấn. Hồ sơ thành lập được duyệt ở UC08 sẽ đề cử ban chủ nhiệm đầu tiên
   tại đây.
 - **Liên quan:** UC11
 
 #### UC11 — Xác nhận ban chủ nhiệm
 - **Actor:** ICPDP · **Mục tiêu:** Trao quyền quản lý.
-- **Luồng:** kiểm tra điều kiện, xung đột và nhiệm kỳ → phê duyệt hoặc từ chối → khi phê duyệt,
+- **Luồng:** kiểm tra membership `Active`, chồng lấn nhiệm kỳ Chủ nhiệm và ngày hiệu lực → một ICPDP Officer
+  phê duyệt hoặc từ chối (có thể xác nhận một phần) → khi phê duyệt,
   các quyền tương ứng có hiệu lực và CLB có thể rời `Pending Setup`.
 - **Quy tắc:** BR05, BR07, BR47, BR56. Quyền được cấp bởi lần xác nhận này, không phải bởi UC03.
   Với ban chủ nhiệm sáng lập, lần xác nhận này thay thế quyền sáng lập tạm thời đã cấp ở UC08.
@@ -1075,7 +1077,7 @@ BR01–BR39 của §14 vẫn giữ nguyên, với các sửa đổi sau:
 | BR37 | Không đổi. |
 | **BR40** | **Mới.** Bản tổng hợp phản hồi chỉ được hiển thị khi số người phản hồi đạt mức tối thiểu cấu hình được; dưới ngưỡng đó chỉ hiển thị việc có tồn tại phản hồi. Không có quy tắc này thì phản hồi "ẩn danh" trong một sự kiện mười người là không ẩn danh. |
 | **BR41** | **Mới.** Một property không được xoá khi còn booking tương lai đã duyệt; thay vào đó là ngừng kích hoạt (UC44). |
-| **BR42** | **Mới.** Màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04. Mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). |
+| **BR42** | **Mới.** Màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04. Mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). |
 | **BR43** | **Đã rút.** Nó từng dùng để giữ bản phát hành đầu độc lập với các use case bị hoãn; nay mọi use case ra cùng một bản phát hành. Số hiệu không được dùng lại. |
 | **BR44** | **Mới.** Một sự kiện bắt đầu và kết thúc trong cùng một học kỳ của lịch học kỳ (UC04). |
 | **BR45** | **Mới.** Khi một CLB đã có quyết định giải thể (UC15), không sự kiện, đề xuất sự kiện hay booking nào của CLB đó được kết thúc sau học kỳ `Dissolving` của nó. UC25 và UC45 từ chối những hồ sơ như vậy; UC15 huỷ những gì đã tồn tại. |

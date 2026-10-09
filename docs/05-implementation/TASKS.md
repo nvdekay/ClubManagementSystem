@@ -113,8 +113,8 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [x] **BE-2.3** UC08 thẩm định và quyết định với ba kết quả; tạo Club ở `Pending Setup`, các role và phiên bản cơ cấu 1, và cấp quyền sáng lập tạm thời khi phê duyệt. → FR-UC08-01…13, BR56
 - [ ] **BE-2.4** Scheduler: `Revision Requested → Expired` khi hết deadline. → SCH-04
 - [x] **BE-2.5** UC09 hồ sơ, ban và bộ phận; từ chối sửa trường thuộc thẩm quyền nhà trường và từ chối xoá ban/bộ phận còn role đang dùng. → FR-UC09-01…09
-- [ ] **BE-2.6** UC10 đề cử kèm kiểm tra điều kiện và kiểm tra chồng lấn nhiệm kỳ Chủ nhiệm. → FR-UC10-01…07, BR06, BR07
-- [ ] **BE-2.7** UC11 xác nhận: kích hoạt nhiệm kỳ, cấp quyền, thu hồi quyền sáng lập, chuyển CLB sang Active; xác nhận một phần. → FR-UC11-01…09
+- [x] **BE-2.6** UC10 đề cử kèm kiểm tra membership `Active` và chồng lấn nhiệm kỳ Chủ nhiệm. → FR-UC10-01…08, BR06, BR07
+- [x] **BE-2.7** UC11 xác nhận một lần: kích hoạt nhiệm kỳ, cấp quyền, thu hồi quyền sáng lập, chuyển CLB sang Active; xác nhận một phần. → FR-UC11-01…10
 - [ ] **BE-2.8** UC12 kế hoạch chuyển giao với nghĩa vụ nạp sẵn và chốt chặn "không nghĩa vụ nào được thiếu người nhận". → FR-UC12-01…05
 - [ ] **BE-2.9** UC13 xác nhận: đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới, chuyển quyền, giữ lịch sử. → FR-UC13-01…07, BR08
 - [ ] **BE-2.10** UC14 yêu cầu tạm ngừng kèm cảnh báo liệt kê các sự kiện và booking tương lai đã duyệt sẽ bị huỷ nếu UC15 chấp thuận (không chặn nộp). → FR-UC14-01…03
@@ -128,7 +128,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **FE-2.2** Trình hướng dẫn nộp hồ sơ thành lập, màn xác nhận nộp, khung xem lịch sử version, màn trạng thái và kết quả. → UC07
 - [ ] **FE-2.3** Hàng đợi hồ sơ của ICPDP và màn thẩm định-và-quyết định kèm nhận xét theo từng phần. → UC08
 - [ ] **FE-2.4** Hồ sơ CLB, thông tin vận hành, ban/bộ phận; màn hình vai trò CLB & phân quyền của Club Leader. → UC09, UC23
-- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13
+- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13 · UC10/11 đã có UI; visual QA còn chờ, UC12/13 chưa triển khai.
 - [ ] **FE-2.6** Yêu cầu tạm ngừng và trạng thái; quản lý CLB phía ICPDP, chi tiết CLB, hành động vòng đời với hệ quả được nêu rõ trong hộp xác nhận. → UC14, UC15, SA-01
 
 ---

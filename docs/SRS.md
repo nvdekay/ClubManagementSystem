@@ -1046,11 +1046,11 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC10-01 | Cho Club Leader mở một bản đề xuất ban chủ nhiệm cho một nhiệm kỳ; các ghế cần đề xuất là các **role ban điều hành** trong phiên bản cơ cấu đang hiệu lực (BR56), và với mỗi ghế chọn một thành viên |
-| FR-UC10-02 | Kiểm tra điều kiện của người được đề xuất theo các điều kiện định nghĩa trong tài liệu chính sách (BR07) |
-| FR-UC10-03 | Kiểm tra trùng lặp nhiệm kỳ Chủ nhiệm và từ chối trừ khi tài liệu chính sách cho phép (BR06) |
+| FR-UC10-02 | Kiểm tra người được đề xuất có membership `Active` trong CLB đang đề cử (BR07) |
+| FR-UC10-03 | Từ chối nếu người được đề xuất làm Chủ nhiệm có nhiệm kỳ Chủ nhiệm chồng lấn ở bất kỳ CLB nào (BR06) |
 | FR-UC10-04 | Đặt bản đề xuất ở `Pending Confirmation` khi nộp và tạo task cho ICPDP |
 | FR-UC10-05 | *(A1)* Chấp nhận đề xuất một phần — chỉ đề xuất các ghế còn trống, các ghế đã xác nhận giữ nguyên |
-| FR-UC10-06 | *(E1)* Từ chối ghế mà người được đề xuất không đủ điều kiện theo BR07 |
+| FR-UC10-06 | *(E1)* Từ chối ghế mà người được đề xuất không có membership `Active` trong CLB |
 | FR-UC10-07 | Dùng chính use case này cho ban chủ nhiệm đầu tiên của CLB vừa được duyệt ở UC08 |
 | FR-UC10-08 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB; `club.board.nominate` là quyền giữ riêng, không cấp được cho role nào (BR47, BR55) |
 
@@ -1072,7 +1072,7 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC11-01 | Hiển thị bản đề xuất kèm kết quả kiểm tra điều kiện, xung đột lợi ích và mốc thời gian nhiệm kỳ |
+| FR-UC11-01 | Hiển thị bản đề xuất kèm kết quả kiểm tra membership `Active`, chồng lấn nhiệm kỳ Chủ nhiệm và mốc thời gian nhiệm kỳ |
 | FR-UC11-02 | Cho officer phê duyệt hoặc từ chối, bắt buộc lý do ở nơi chính sách yêu cầu |
 | FR-UC11-03 | Khi phê duyệt, kích hoạt ban chủ nhiệm, tạo hoặc kích hoạt `ClubTerm` và cấp các quyền tương ứng |
 | FR-UC11-04 | Chuyển CLB từ `Pending Setup` sang `Active` khi ban chủ nhiệm sáng lập được xác nhận |
@@ -1217,12 +1217,12 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC16-01 | Thu thập vị trí cần tuyển, tiêu chí, khung thời gian nhận đơn, chỉ tiêu, các vòng tuyển và form ứng tuyển |
-| FR-UC16-02 | Validate khung thời gian nhận đơn theo chính sách lịch học kỳ ở UC04 |
+| FR-UC16-02 | Validate toàn bộ khung nhận đơn nằm trọn trong đúng một kỳ thuộc `academicCalendar` của chính sách UC04 hiệu lực khi công bố |
 | FR-UC16-03 | Chuyển `Published` khi công bố và hiển thị đợt tuyển trong UC06 |
 | FR-UC16-04 | *(A1)* Cho lưu đợt tuyển ở `Draft` và công bố sau |
 | FR-UC16-05 | *(A2)* Cho huỷ một đợt tuyển đã công bố mà chưa có đơn nào; nếu đã có đơn thì đóng lại và thông báo cho người nộp |
 | FR-UC16-06 | *(E1)* Từ chối tạo hoặc công bố khi CLB đang `Suspended` (BR09) hoặc `Dissolving` |
-| FR-UC16-07 | *(E2)* Cảnh báo khi đã tồn tại một đợt tuyển chồng lấn cho cùng vị trí, và cho phép xác nhận hoặc gộp |
+| FR-UC16-07 | *(E2)* Cảnh báo khi có campaign cùng vị trí và chồng lấn thời gian; cho phép xác nhận công bố campaign riêng, không gộp |
 | FR-UC16-08 | Chỉ nhận đơn trong khung thời gian đã công bố (BR11) |
 | FR-UC16-09 | *(E)* Từ chối khi người gọi thiếu permission `club.recruitment.manage` trong CLB đó (BR54) |
 
@@ -2303,8 +2303,8 @@ của nó không bao giờ được dùng lại.**
 | BR03 | Số thành viên sáng lập tối thiểu là giá trị cấu hình được | UC07, UC04 |
 | BR04 | Một version hồ sơ đã nộp không bao giờ bị ghi đè | UC07, UC08 |
 | BR05 | Mọi lần phê duyệt hoặc từ chối đều lưu actor, thời điểm và lý do (nếu áp dụng) | UC08, UC11, UC13, UC26, UC34, UC39, UC46 |
-| BR06 | Không được có hai nhiệm kỳ Chủ nhiệm chồng nhau trừ khi tài liệu chính sách cho phép | UC10 |
-| BR07 | Điều kiện giữ chức vụ lãnh đạo định nghĩa trong tài liệu chính sách | UC10, UC11 |
+| BR06 | Một người không được có hai nhiệm kỳ Chủ nhiệm chồng lấn ở bất kỳ CLB nào | UC10, UC11 |
+| BR07 | Người giữ chức vụ lãnh đạo phải có membership `Active` tại CLB khi đề cử và khi ICPDP xác nhận | UC10, UC11 |
 | BR08 | Quyền mới chỉ có hiệu lực khi chuyển giao nhiệm kỳ được xác nhận | UC13 |
 | BR09 | CLB `Suspended` không được mở đợt tuyển mới | UC15, UC16, UC06 |
 | BR10 | CLB `Suspended` không được nộp đề xuất sự kiện mới | UC15, UC25 |
@@ -2359,7 +2359,7 @@ của nó không bao giờ được dùng lại.**
 
 **Cấu hình được và hằng số (BR42).** Chỉ chín giá trị liệt kê ở UC04 là sửa được trong sản
 phẩm. Mọi giá trị chính sách khác là **hằng số định nghĩa trong tài liệu chính sách** cho tới khi có nhu
-cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); điều kiện giữ chức vụ lãnh đạo (BR07) và việc cho phép nhiệm kỳ Chủ nhiệm chồng lấn (BR06); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58).
+cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58).
 
 ---
 

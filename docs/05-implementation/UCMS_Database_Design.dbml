@@ -634,7 +634,7 @@ Table clubMemberships {
 
   Note: 'Khoá duy nhất ở đây là TỪNG PHẦN — nó chỉ áp dụng khi trạng thái là Active hoặc Inactive, nên một sinh viên đã Left có thể quay lại bằng một tư cách thành viên mới (UC21 FR-09), còn sinh viên Banned thì không (BR46, kiểm tra trong usecase).'
   indexes {
-    (clubId, userId) [unique, name: 'uq_membership_active', note: 'partialFilterExpression: { state: { $in: ["Active","Inactive"] } }']
+    (clubId, userId) [unique, name: 'uq_membership_active', partialFilterExpression: '{"state":{"$in":["Active","Inactive"]}}']
     (clubId, state) [name: 'ix_membership_roster']
     (userId, state) [name: 'ix_membership_mine']
   }
