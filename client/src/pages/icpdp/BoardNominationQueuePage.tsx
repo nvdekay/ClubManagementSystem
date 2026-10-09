@@ -1,7 +1,10 @@
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBoardNominationQueue } from "@/hooks/useBoardNominations";
@@ -16,35 +19,35 @@ export function BoardNominationQueuePage() {
     return new Intl.DateTimeFormat(i18n.language,
       { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
   }
-  return <div className="mx-auto max-w-6xl">
-    <Link to="/icpdp" className="text-sm font-semibold text-accent-app">{t("boardNominations.queueBack")}</Link>
-    <header className="mt-5 flex flex-wrap items-end justify-between gap-4 border-b border-border-app pb-6">
-      <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-accent-app">ICPDP</p>
-        <h1 className="mt-2 text-3xl font-bold font-heading sm:text-4xl">{t("boardNominations.queueTitle")}</h1>
-        <p className="mt-3 text-muted-app">{t("boardNominations.queueDescription")}</p></div>
-      {queue.data && <span className="rounded-full border border-border-app bg-surface-app px-4 py-2 text-sm font-semibold">
-        {t("boardNominations.openCount", { count: queue.data.length })}</span>}
-    </header>
-    {auth.isPending ? <div className="mt-8 grid gap-4 md:grid-cols-2">
-      <AppSkeleton className="h-48 w-full" /><AppSkeleton className="h-48 w-full" />
-    </div> : !auth.data ? <AppCard className="mt-8">{t("boardNominations.signIn")}</AppCard>
-      : !isOfficer ? <AppCard className="mt-8"><p role="alert" className="text-danger-app">{t("boardNominations.unauthorized")}</p></AppCard>
-        : queue.isPending ? <div className="mt-8 grid gap-4 md:grid-cols-2"><AppSkeleton className="h-48 w-full" /><AppSkeleton className="h-48 w-full" /></div>
-        : queue.isError ? <AppCard className="mt-8 space-y-4"><p role="alert" className="text-danger-app">{queue.error.message || t("boardNominations.queueError")}</p>
-          <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("boardNominations.retry")}</AppButton></AppCard>
-          : queue.data?.length ? <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {queue.data.map((nomination) => <AppCard key={nomination.id} className="p-5 sm:p-6">
-              <div className="flex flex-wrap items-start justify-between gap-3"><div>
-                <h2 className="text-xl font-bold font-heading">{nomination.clubName}</h2>
-                <p className="mt-1 text-sm text-muted-app">{nomination.term.name}</p></div>
-                <span className="rounded-full bg-warning-app/15 px-3 py-1 text-xs font-semibold text-warning-app">{nomination.seats.length}</span></div>
-              <p className="mt-4 text-sm text-muted-app">{t("boardNominations.waitingSince", { date: date(nomination.submittedAt) })}</p>
-              <ul className="mt-4 space-y-1 text-sm">{nomination.seats.map((seat) => <li key={seat.id}>{seat.positionName} — {seat.displayName}</li>)}</ul>
-              <AppButton className="mt-5 w-full" onClick={() => navigate(`/workspace/board-nominations/${nomination.id}`)}>
-                {t("boardNominations.open")}</AppButton>
-            </AppCard>)}</div> : <AppCard className="mt-8 py-14 text-center">
-              <h2 className="text-xl font-bold font-heading">{t("boardNominations.queueEmpty")}</h2>
-              <p className="mt-2 text-muted-app">{t("boardNominations.queueEmptyHint")}</p>
-            </AppCard>}
-  </div>;
+  const loading = <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-24 w-full" />)}</div>;
+  return <>
+    <PageHeader title={t("boardNominations.queueTitle")} description={t("boardNominations.queueDescription")}
+      actions={queue.data && <AppBadge tone="info">{t("boardNominations.openCount", { count: queue.data.length })}</AppBadge>} />
+    {auth.isPending ? loading
+      : !auth.data ? <AppNotice>{t("boardNominations.signIn")}</AppNotice>
+        : !isOfficer ? <AppNotice tone="danger" role="alert">{t("boardNominations.unauthorized")}</AppNotice>
+          : queue.isPending ? loading
+            : queue.isError ? <AppNotice tone="danger" role="alert" title={queue.error.message || t("boardNominations.queueError")}>
+              <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("boardNominations.retry")}</AppButton>
+            </AppNotice>
+              : queue.data.length ? <ul className="divide-y divide-border-app border-y border-border-app">
+                {queue.data.map((nomination) => <li key={nomination.id} className="flex flex-wrap items-center gap-x-6 gap-y-3 px-2 py-5">
+                  <div className="min-w-0 flex-1 basis-64">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="font-heading text-lg font-bold">{nomination.clubName}</h2>
+                      <AppBadge tone="warning">{nomination.term.name}</AppBadge>
+                    </div>
+                    <p className="mt-1 text-sm text-muted-app">{t("boardNominations.waitingSince", { date: date(nomination.submittedAt) })}</p>
+                    <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">{nomination.seats.map((seat) =>
+                      <li key={seat.id}><span className="text-muted-app">{seat.positionName}:</span> {seat.displayName}</li>)}</ul>
+                  </div>
+                  <AppButton onClick={() => navigate(`/workspace/board-nominations/${nomination.id}`)}>
+                    {t("boardNominations.open")}<AppIcon name="chevronRight" className="size-4" /></AppButton>
+                </li>)}
+              </ul> : <div className="py-16 text-center">
+                <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="badge" className="size-7" /></span>
+                <h2 className="mt-4 font-heading text-xl font-bold">{t("boardNominations.queueEmpty")}</h2>
+                <p className="mt-2 text-muted-app">{t("boardNominations.queueEmptyHint")}</p>
+              </div>}
+  </>;
 }

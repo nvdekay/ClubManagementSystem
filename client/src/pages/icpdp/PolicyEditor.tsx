@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
@@ -152,12 +152,12 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   }
 
   return (
-    <form className="mt-8 space-y-6" onSubmit={(event) => void submit(event)}>
+    <form className="space-y-8 border-t border-border-app pt-8" onSubmit={(event) => void submit(event)}>
       <div>
-        <h2 className="text-xl font-semibold font-heading">{t("policy.formTitle")}</h2>
+        <h2 className="font-heading text-xl font-bold">{t("policy.formTitle")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("policy.formDescription")}</p>
       </div>
-      <AppCard className="grid gap-5 p-5 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         <label className="block text-sm font-medium sm:col-span-2">
           {t("policy.domains")}
           <AppTextarea className="mt-2 block w-full" value={form.allowedEmailDomains} required
@@ -176,12 +176,12 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
             onChange={(event) => setForm({ ...form, mandatoryApplicationDocuments: event.target.value })} />
           <span className="mt-1 block text-xs font-normal text-muted-app">{t("policy.documentsHint")}</span>
         </label>
-      </AppCard>
+      </div>
 
-      <AppCard className="space-y-5 p-5">
-        <h3 className="font-semibold font-heading">{t("policy.reportDeadlines")}</h3>
+      <div className="space-y-4 border-t border-border-app pt-6">
+        <h3 className="font-heading font-semibold">{t("policy.reportDeadlines")}</h3>
         {form.reportDeadlines.map((item, index) => (
-          <div key={index} className="grid gap-3 rounded-md border border-border-app p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div key={index} className="grid items-end gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="text-sm">{t("policy.reportType")}
               <AppInput className="mt-1 block w-full" required value={item.reportType}
                 onChange={(event) => updateDeadline(index, "reportType", event.target.value)} />
@@ -202,11 +202,11 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
         <AppButton type="button" variant="secondary" onClick={() => setForm({ ...form,
           reportDeadlines: [...form.reportDeadlines, { reportType: "", dueDaysAfterPeriodEnd: "",
             remindBeforeDays: "", overdueAfterDays: "", escalateAfterDays: "" }] })}>
-          {t("policy.addDeadline")}
+          <AppIcon name="plus" className="size-4" />{t("policy.addDeadline")}
         </AppButton>
-      </AppCard>
+      </div>
 
-      <AppCard className="grid gap-5 p-5 sm:grid-cols-2">
+      <div className="grid gap-5 border-t border-border-app pt-6 sm:grid-cols-2">
         <label className="text-sm">{t("policy.conflictMinutes")}
           <AppInput className="mt-2 block w-full" type="number" min="0" required
             value={form.conflictThresholdMinutes}
@@ -244,12 +244,12 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
                 ? "" : value === "true" })} />
           </label>
         </div>
-      </AppCard>
+      </div>
 
-      <AppCard className="space-y-5 p-5">
-        <h3 className="font-semibold font-heading">{t("policy.calendar")}</h3>
+      <div className="space-y-4 border-t border-border-app pt-6">
+        <h3 className="font-heading font-semibold">{t("policy.calendar")}</h3>
         {form.academicCalendar.map((item, index) => (
-          <div key={index} className="grid gap-3 rounded-md border border-border-app p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div key={index} className="grid items-end gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className="text-sm">{t("policy.semesterCode")}
               <AppInput className="mt-1 block w-full" required value={item.code}
                 onChange={(event) => updateSemester(index, "code", event.target.value)} />
@@ -271,11 +271,11 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
         ))}
         <AppButton type="button" variant="secondary" onClick={() => setForm({ ...form,
           academicCalendar: [...form.academicCalendar, { code: "", startAt: "", endAt: "" }] })}>
-          {t("policy.addSemester")}
+          <AppIcon name="plus" className="size-4" />{t("policy.addSemester")}
         </AppButton>
-      </AppCard>
+      </div>
 
-      <AppCard className="grid gap-5 p-5 sm:grid-cols-2">
+      <div className="grid gap-5 border-t border-border-app pt-6 sm:grid-cols-2">
         <label className="text-sm">{t("policy.effectiveFrom")}
           <AppInput className="mt-2 block w-full" type="datetime-local" value={form.effectiveFrom}
             onChange={(event) => setForm({ ...form, effectiveFrom: event.target.value })} />
@@ -285,7 +285,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
           <AppInput className="mt-2 block w-full" maxLength={1000} value={form.reason}
             onChange={(event) => setForm({ ...form, reason: event.target.value })} />
         </label>
-      </AppCard>
+      </div>
       {localError && <p role="alert" className="text-sm text-danger-app">{localError}</p>}
       {create.isError && <p role="alert" className="text-sm text-danger-app">
         {t("policy.saveError")} {create.error.message}
