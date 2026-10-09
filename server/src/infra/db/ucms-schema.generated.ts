@@ -1380,6 +1380,9 @@ export const ucmsTables = {
         "type": "string",
         "required": true
       },
+      "coverImageUrl": {
+        "type": "string"
+      },
       "objective": {
         "type": "text"
       },

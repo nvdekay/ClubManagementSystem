@@ -682,6 +682,7 @@ Table events {
   clubId objectId [note: 'Null đối với sự kiện cấp trường do ICPDP khởi tạo (UC53); bắt buộc đối với sự kiện do CLB đề xuất.']
   clubName string [note: 'Được denormalize cho danh sách sự kiện công khai và hàng đợi của ICPDP (DAT-06); null hoặc mang tên ICPDP đối với sự kiện cấp trường.']
   title string [not null]
+  coverImageUrl string [note: 'URL công khai của ảnh bìa sự kiện (ảnh lưu trên Cloudinary).']
   objective text
   startAt datetime [not null]
   endAt datetime [not null]
