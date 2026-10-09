@@ -31,6 +31,7 @@ function mapClub(doc: Record<string, unknown>): PublicClub {
     contactEmail: optionalString(doc.contactEmail),
     contactPhone: optionalString(doc.contactPhone),
     operatingScope: optionalString(doc.operatingScope),
+    logoUrl: optionalString(doc.logoUrl),
   };
 }
 function mapEvent(doc: Record<string, unknown>): PublicEvent {

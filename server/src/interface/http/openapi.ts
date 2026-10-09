@@ -163,7 +163,7 @@ const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
   contactEmail: z.string().optional(), contactPhone: z.string().optional(),
-  operatingScope: z.string().optional(),
+  operatingScope: z.string().optional(), logoUrl: z.string().url().optional(),
 });
 const PublicCampaign = z.object({
   id: z.string(), title: z.string(), state: z.string(),
