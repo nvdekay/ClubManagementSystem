@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
+import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { googleLoginUrl } from "@/services/auth";
 import { cn } from "@/utils/cn";
 
@@ -21,12 +22,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
       <section className="relative m-3 flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden rounded-[2rem] bg-primary-soft-app p-[clamp(24px,5vw,64px)]">
         <span aria-hidden="true" className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-auth-orb-large-app opacity-80 blur-3xl" />
         <span aria-hidden="true" className="pointer-events-none absolute bottom-24 left-1/3 size-48 rounded-full bg-auth-orb-small-app opacity-70 blur-2xl" />
-        <div className="relative flex items-center gap-3">
-          <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-2xl bg-primary-app font-heading text-2xl font-extrabold text-on-primary-app shadow-md">F</span>
-          <span className="flex h-12 items-center rounded-full border-2 border-dashed border-current px-4 text-xs font-semibold text-muted-app">
-            {t("auth.schoolLogo")}
-          </span>
-        </div>
+        <UniversityLogo alt={t("auth.schoolLogo")} priority className="relative w-66 sm:w-76" />
         <div className="relative flex max-w-110 flex-col gap-3">
           <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em]">
             {t("auth.brand")}

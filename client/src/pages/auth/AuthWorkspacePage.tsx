@@ -1,12 +1,11 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useAuth, useLoginError, useLogout } from "@/hooks/useAuth";
-import { useTheme } from "@/hooks/useTheme";
+import { useAuth, useLoginError } from "@/hooks/useAuth";
 import { googleLoginUrl, type Workspace } from "@/services/auth";
 import { cn } from "@/utils/cn";
 import { LoginPage } from "@/pages/auth/LoginPage";
@@ -22,18 +21,21 @@ function workspacePath(workspace: Workspace): string {
 }
 
 function workspaceIcon(workspace: Workspace): AppIconName {
-  if (workspace.kind === "student") return "sparkles";
+  if (workspace.kind === "student") return "graduationCap";
   if (workspace.kind === "icpdp") return "shield";
-  return "users";
+  return "briefcase";
+}
+
+function workspaceTone(workspace: Workspace): "personal" | "school" | "club" {
+  if (workspace.kind === "student") return "personal";
+  if (workspace.kind === "icpdp") return "school";
+  return "club";
 }
 
 export function AuthWorkspacePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const auth = useAuth();
-  const logout = useLogout();
-  const { theme, toggleTheme } = useTheme();
-  const lastKey = sessionStorage.getItem("workspace") ?? "";
   const errorCode = new URLSearchParams(window.location.search).get("error");
   const lockError = useLoginError(errorCode === "locked");
   const loginError = errorCode === "domain" ? t("auth.domainError")
@@ -54,26 +56,20 @@ export function AuthWorkspacePage() {
     navigate(workspacePath(workspace));
   }
 
-  async function signOut() {
-    if (!auth.data) return;
-    try {
-      await logout.mutateAsync(auth.data.csrfToken);
-      sessionStorage.removeItem("workspace");
-    } catch {
-      // The mutation exposes the error state below.
-    }
-  }
-
   function workspaceTitle(workspace: Workspace): string {
     if (workspace.kind === "student") return t("auth.student");
     if (workspace.kind === "icpdp") return t("auth.icpdp");
+    if (workspace.role === "leader") {
+      return t("auth.clubLeaderWorkspace", { club: workspace.clubName ?? t("auth.club") });
+    }
     return workspace.clubName ?? t("auth.club");
   }
 
   function workspaceSubtitle(workspace: Workspace): string {
     if (workspace.kind === "student") return t("auth.studentWorkspaceHint");
     if (workspace.kind === "icpdp") return t("auth.icpdpWorkspaceHint");
-    return workspace.role ? t(`auth.${workspace.role}`) : t("auth.member");
+    const role = workspace.role ? t(`auth.${workspace.role}`) : t("auth.member");
+    return t("auth.clubWorkspaceHint", { role });
   }
 
   if (!auth.data && window.location.pathname === "/login") {
@@ -89,50 +85,26 @@ export function AuthWorkspacePage() {
   }
 
   const workspaces = auth.data?.workspaces ?? [];
-  const groups = [
-    { title: t("auth.groupPersonal"), items: workspaces.filter((item) => item.kind === "student") },
-    { title: t("auth.groupSchool"), items: workspaces.filter((item) => item.kind === "icpdp") },
-    { title: t("auth.groupClubs"), items: workspaces.filter((item) => item.kind === "club") },
-  ].filter((group) => group.items.length > 0);
-
   return (
-    <div className="relative min-h-full overflow-hidden bg-bg-app">
-      <span aria-hidden="true" className="pointer-events-none absolute -top-32 -right-24 size-96 rounded-full bg-auth-orb-large-app opacity-70 blur-3xl" />
-      <span aria-hidden="true" className="pointer-events-none absolute top-1/2 -left-32 size-80 rounded-full bg-auth-orb-small-app opacity-50 blur-3xl" />
-
-      <header className="relative mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-5 sm:px-8">
-        <Link to="/" className="mr-auto flex items-center gap-2.5 font-heading text-lg font-extrabold text-text-app">
-          <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-xl bg-primary-app text-on-primary-app">F</span>
-          {t("auth.brand")}
-        </Link>
-        <Link to="/clubs" className="inline-flex min-h-10 items-center rounded-full px-3 text-sm font-semibold text-text-app hover:text-primary-app focus-visible:outline-2 focus-visible:outline-ring-app">
-          {t("discovery.navClubs")}
-        </Link>
-        <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")}
-          className="flex size-10 items-center justify-center rounded-full text-muted-app hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app">
-          <AppIcon name={theme === "dark" ? "sun" : "moon"} />
-        </button>
-        <button type="button" onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")} aria-label={t("common.switchLanguage")}
-          className="flex size-10 items-center justify-center rounded-full text-xs font-bold text-muted-app hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app">
-          {i18n.language === "vi" ? "EN" : "VI"}
-        </button>
-      </header>
-
-      <main className="relative mx-auto max-w-xl px-4 pt-6 pb-16 sm:pt-12">
+    <div className="min-h-full bg-picker-page-app">
+      <main className="flex min-h-dvh items-center p-[clamp(24px,5vw,64px)]">
         {auth.isPending ? (
-          <div className="space-y-4">
+          <div className="w-full max-w-[880px] space-y-5">
             <p role="status" className="text-sm text-muted-app">{t("auth.loading")}</p>
-            <AppSkeleton className="h-10 w-2/3" />
-            <AppSkeleton className="h-48 w-full" />
+            <AppSkeleton className="h-12 w-2/3" />
+            <div className="grid gap-5 md:grid-cols-2">
+              <AppSkeleton className="h-64 w-full" />
+              <AppSkeleton className="h-64 w-full" />
+            </div>
           </div>
         ) : auth.isError ? (
-          <div className="space-y-4 text-center">
+          <div className="mx-auto space-y-4 text-center">
             <h1 className="font-heading text-2xl font-bold">{t("auth.accountError")}</h1>
             <p role="alert" className="text-sm text-danger-app">{auth.error.message}</p>
             <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
           </div>
         ) : !auth.data ? (
-          <div className="text-center">
+          <div className="mx-auto text-center">
             <h1 className="font-heading text-3xl font-bold">{t("auth.signInTitle")}</h1>
             <p className="mt-3 text-muted-app">{t("auth.signInDescription")}</p>
             {loginError && <p role="alert" className="mt-4 text-sm text-danger-app">
@@ -144,58 +116,48 @@ export function AuthWorkspacePage() {
             </a>
           </div>
         ) : (
-          <>
-            <div className="text-center">
-              <span aria-hidden="true" className="mx-auto flex size-16 items-center justify-center rounded-full bg-mint-soft-app font-heading text-2xl font-bold text-mint-app">
-                {auth.data.user.displayName.trim().charAt(0).toUpperCase()}
-              </span>
-              <h1 className="mt-4 font-heading text-3xl font-bold tracking-tight text-balance">
-                {t("auth.welcome", { name: auth.data.user.displayName })}
+          <section aria-labelledby="workspace-heading" className="flex w-full max-w-[880px] flex-col gap-8">
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-picker-muted-app">{auth.data.user.email}</p>
+              <h1 id="workspace-heading" className="m-0 max-w-2xl font-heading text-[clamp(30px,5vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em] text-balance text-picker-text-app">
+                {t("auth.chooseWorkspaceTitle", {
+                  name: i18n.language === "vi"
+                    ? auth.data.user.displayName.trim().split(/\s+/).at(-1)
+                    : auth.data.user.displayName.trim().split(/\s+/)[0],
+                })}
               </h1>
-              <p className="mt-2 text-muted-app">{t("auth.chooseWorkspaceHint")}</p>
+              <p className="m-0 text-picker-muted-app">{t("auth.chooseWorkspaceHint")}</p>
             </div>
 
-            {groups.length === 0 ? (
-              <p className="mt-10 text-center text-muted-app">{t("auth.noWorkspaces")}</p>
-            ) : groups.map((group) => (
-              <section key={group.title} className="mt-8">
-                <h2 className="px-1 pb-2 text-xs font-semibold tracking-wide text-muted-app uppercase">{group.title}</h2>
-                <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app/80 backdrop-blur">
-                  {group.items.map((workspace) => (
-                    <li key={workspaceKey(workspace)}>
-                      <button type="button" onClick={() => selectWorkspace(workspace)}
-                        className="group flex min-h-18 w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-primary-soft-app focus-visible:bg-primary-soft-app focus-visible:outline-none">
-                        <span aria-hidden="true" className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", {
-                          "bg-primary-soft-app text-primary-app": workspace.kind !== "student",
-                          "bg-mint-soft-app text-mint-app": workspace.kind === "student",
-                        })}>
-                          <AppIcon name={workspaceIcon(workspace)} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="line-clamp-2 font-semibold break-words text-text-app">{workspaceTitle(workspace)}</span>
-                          <span className="block text-sm text-muted-app">{workspaceSubtitle(workspace)}</span>
-                        </span>
-                        {lastKey === workspaceKey(workspace) && (
-                          <span className="hidden shrink-0 rounded-full bg-surface-strong-app px-2.5 py-1 text-xs font-semibold text-muted-app sm:inline">{t("auth.lastUsed")}</span>
-                        )}
-                        <AppIcon name="chevronRight" className="size-5 text-muted-app transition-transform group-hover:translate-x-0.5 group-hover:text-primary-app" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-muted-app">
-              <span className="truncate">{auth.data.user.email}</span>
-              <span aria-hidden="true">·</span>
-              <button type="button" disabled={logout.isPending} onClick={() => void signOut()}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-full font-semibold text-accent-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app disabled:opacity-50">
-                <AppIcon name="logout" className="size-4" />{t("auth.logout")}
-              </button>
-            </div>
-            {logout.isError && <p role="alert" className="mt-3 text-center text-sm text-danger-app">{t("auth.logoutError")}</p>}
-          </>
+            {workspaces.length === 0 ? (
+              <div className="rounded-[8px] border border-picker-divider-app bg-picker-surface-app p-8 text-picker-muted-app">
+                {t("auth.noWorkspaces")}
+              </div>
+            ) : (
+              <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-6">
+                {workspaces.map((workspace) => (
+                  <li key={workspaceKey(workspace)} className="flex">
+                    <button type="button" onClick={() => selectWorkspace(workspace)}
+                      className="group flex w-full flex-col items-start gap-4 rounded-[8px] border border-picker-divider-app bg-picker-surface-app p-8 text-left transition-colors duration-200 hover:border-picker-accent-app focus-visible:border-picker-accent-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-picker-accent-app">
+                      <span aria-hidden="true" className={cn("flex size-16 items-center justify-center rounded-full", {
+                        "bg-picker-student-soft-app text-picker-student-app": workspaceTone(workspace) === "personal",
+                        "bg-picker-school-soft-app text-picker-school-app": workspaceTone(workspace) === "school",
+                        "bg-picker-club-soft-app text-picker-club-app": workspaceTone(workspace) === "club",
+                      })}>
+                        <AppIcon name={workspaceIcon(workspace)} className="size-6" />
+                      </span>
+                      <span className="font-heading text-2xl leading-tight font-bold text-balance text-picker-text-app">{workspaceTitle(workspace)}</span>
+                      <span className="leading-7 text-pretty text-picker-muted-app">{workspaceSubtitle(workspace)}</span>
+                      <span className="mt-auto flex items-center gap-2 pt-3 font-semibold text-picker-accent-app">
+                        {t("auth.openWorkspace")}
+                        <AppIcon name="chevronRight" className="transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )}
       </main>
     </div>

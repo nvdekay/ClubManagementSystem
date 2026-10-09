@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 
+import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -25,9 +26,8 @@ export function PublicLayout() {
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-30 border-b border-border-app bg-bg-app/85 backdrop-blur">
         <nav aria-label={t("common.navigation")} className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 sm:px-8">
-          <NavLink to="/" className="mr-auto flex items-center gap-2.5 text-text-app no-underline">
-            <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-xl bg-primary-app font-heading text-lg font-extrabold text-on-primary-app">F</span>
-            <span className="font-heading text-lg font-extrabold">{t("auth.brand")}</span>
+          <NavLink to="/" aria-label={t("auth.brand")} className="mr-auto rounded-sm no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+            <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-34 sm:w-40" />
           </NavLink>
           <div className="order-last flex w-full items-center gap-1 sm:order-none sm:w-auto">
             <NavLink to="/clubs" className={navClass}>{t("discovery.navClubs")}</NavLink>

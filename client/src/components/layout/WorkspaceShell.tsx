@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 
+import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { common } from "@/i18n/common";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -95,9 +96,8 @@ export function WorkspaceShell() {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-3 px-5 pt-5">
-        <Link to="/" className="flex items-center gap-2.5 font-heading text-lg font-extrabold text-text-app">
-          <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-xl bg-primary-app text-on-primary-app">F</span>
-          {t("auth.brand")}
+        <Link to="/" aria-label={t("auth.brand")} className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+          <UniversityLogo alt={t("auth.schoolLogo")} className="w-38" />
         </Link>
         <button type="button" onClick={() => setMenuPath(null)} aria-label={t("common.closeMenu")}
           className="flex size-10 items-center justify-center rounded-full text-muted-app hover:bg-surface-strong-app focus-visible:outline-2 focus-visible:outline-ring-app lg:hidden">

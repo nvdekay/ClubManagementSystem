@@ -94,6 +94,20 @@ body {
   --color-google-green-app: #34a853;
   --color-google-yellow-app: #fbbc05;
   --color-google-red-app: #ea4335;
+
+  /* Workspace picker follows the neutral, orange-accented visual mockup. */
+  --color-picker-page-app: #ffffff;
+  --color-picker-surface-app: #f7f7f6;
+  --color-picker-divider-app: #deddd9;
+  --color-picker-text-app: #1c1917;
+  --color-picker-muted-app: #57534e;
+  --color-picker-accent-app: #b54713;
+  --color-picker-student-soft-app: #b7dca9;
+  --color-picker-student-app: #294826;
+  --color-picker-club-soft-app: #fdc49a;
+  --color-picker-club-app: #653016;
+  --color-picker-school-soft-app: #c5d9ee;
+  --color-picker-school-app: #23476b;
 }
 
 /* Manual dark mode — toggled via a "dark" class on <html>.
@@ -128,6 +142,18 @@ body {
   --color-auth-page-text-app: #e6f3fa;
   --color-auth-page-muted-app: #9db6c7;
   --color-auth-page-border-app: #21394a;
+  --color-picker-page-app: #151412;
+  --color-picker-surface-app: #201f1c;
+  --color-picker-divider-app: #3a3833;
+  --color-picker-text-app: #fafaf9;
+  --color-picker-muted-app: #c7c2ba;
+  --color-picker-accent-app: #fb923c;
+  --color-picker-student-soft-app: #294826;
+  --color-picker-student-app: #b7dca9;
+  --color-picker-club-soft-app: #653016;
+  --color-picker-club-app: #fdc49a;
+  --color-picker-school-soft-app: #23476b;
+  --color-picker-school-app: #c5d9ee;
 }
 
 /* Honour reduced-motion: keep state changes, drop the movement. */
