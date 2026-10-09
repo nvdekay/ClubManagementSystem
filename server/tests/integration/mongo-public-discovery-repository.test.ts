@@ -81,9 +81,11 @@ describe.skipIf(!uri)("Mongo public discovery repository", () => {
         startAt: new Date("2026-10-03T10:00:00Z"), endAt: new Date("2026-10-03T14:00:00Z") },
     ]);
     const repo = mongoPublicDiscoveryRepository();
-    const all = await repo.listClubs({ search: "", field: "", page: 1, pageSize: 12 });
+    const all = await repo.listClubs({ search: "", field: "", page: 1, pageSize: 12 }, now);
     expect(all.items.map((club) => club.code)).toEqual(["ACADEMIC", "PAUSED"]);
-    expect((await repo.listClubs({ search: "[Club]", field: "", page: 1, pageSize: 12 })).total)
+    expect(all.items.find((club) => club.code === "ACADEMIC")?.openCampaignId).toBeTruthy();
+    expect(all.items.find((club) => club.code === "PAUSED")?.openCampaignId).toBeUndefined();
+    expect((await repo.listClubs({ search: "[Club]", field: "", page: 1, pageSize: 12 }, now)).total)
       .toBe(1);
     expect(await repo.fields()).toEqual(["Academic", "Arts"]);
     expect(await repo.board(activeId.toString(), now))

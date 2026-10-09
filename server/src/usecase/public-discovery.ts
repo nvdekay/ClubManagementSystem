@@ -13,8 +13,10 @@ function validId(id: string): string {
   return id;
 }
 
-export async function listPublicClubs(repo: PublicDiscoveryRepository, input: ClubSearch) {
-  const [page, fields] = await Promise.all([repo.listClubs(input), repo.fields()]);
+export async function listPublicClubs(
+  repo: PublicDiscoveryRepository, input: ClubSearch, now = new Date(),
+) {
+  const [page, fields] = await Promise.all([repo.listClubs(input, now), repo.fields()]);
   return { ...page, fields };
 }
 

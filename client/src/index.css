@@ -108,6 +108,10 @@ body {
   --color-picker-club-app: #653016;
   --color-picker-school-soft-app: #c5d9ee;
   --color-picker-school-app: #23476b;
+  --color-recruitment-app: #f36b21;
+  --color-on-recruitment-app: #ffffff;
+  --color-recruitment-soft-app: #fed7aa;
+  --color-recruitment-glow-app: #fdba74;
 }
 
 /* Manual dark mode — toggled via a "dark" class on <html>.
@@ -154,6 +158,10 @@ body {
   --color-picker-club-app: #fdc49a;
   --color-picker-school-soft-app: #23476b;
   --color-picker-school-app: #c5d9ee;
+  --color-recruitment-app: #fb923c;
+  --color-on-recruitment-app: #1c1917;
+  --color-recruitment-soft-app: #653016;
+  --color-recruitment-glow-app: #7c2d12;
 }
 
 /* Honour reduced-motion: keep state changes, drop the movement. */

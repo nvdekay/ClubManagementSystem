@@ -35,7 +35,7 @@ export function publicDiscoveryRoutes(repo: PublicDiscoveryRepository): Router {
   const router = Router();
   router.get("/public/clubs", async (req, res) => {
     const query = parse(clubQuery, req.query);
-    ok(res, await listPublicClubs(repo, { ...query, pageSize: 12 }));
+    ok(res, await listPublicClubs(repo, { ...query, pageSize: 12 }, new Date()));
   });
   router.get("/public/clubs/:id", async (req, res) => {
     ok(res, await publicClubDetail(repo, id(req.params.id), new Date()));

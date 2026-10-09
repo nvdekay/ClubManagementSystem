@@ -91,7 +91,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
   const memberships = ucmsModels.clubMemberships!;
   const users = ucmsModels.users!;
   return {
-    async listClubs(input: ClubSearch): Promise<Page<PublicClub>> {
+    async listClubs(input: ClubSearch, now: Date): Promise<Page<PublicClub>> {
       const filter: Record<string, unknown> = { state: { $in: clubStates } };
       if (input.field) filter.field = input.field;
       if (input.search) {
@@ -103,7 +103,24 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
           .skip((input.page - 1) * input.pageSize).limit(input.pageSize).lean(),
         clubs.countDocuments(filter),
       ]);
-      return { items: docs.map(mapClub), total, page: input.page, pageSize: input.pageSize };
+      const activeClubIds = docs.filter((club) => club.state === "Active").map((club) => club._id);
+      const openCampaigns = activeClubIds.length ? await campaigns.find({
+        clubId: { $in: activeClubIds }, state: { $in: campaignStates },
+        windowStart: { $lte: now }, windowEnd: { $gt: now },
+      }).sort({ windowStart: 1, _id: 1 }).select("_id clubId").lean() : [];
+      const campaignByClub = new Map<string, string>();
+      for (const campaign of openCampaigns) {
+        const clubId = id(campaign.clubId);
+        if (!campaignByClub.has(clubId)) campaignByClub.set(clubId, id(campaign._id));
+      }
+      return {
+        items: docs.map((doc) => ({
+          ...mapClub(doc),
+          ...(campaignByClub.has(id(doc._id))
+            ? { openCampaignId: campaignByClub.get(id(doc._id)) } : {}),
+        })),
+        total, page: input.page, pageSize: input.pageSize,
+      };
     },
     async fields(): Promise<string[]> {
       const values = await clubs.distinct("field", { state: { $in: clubStates } });

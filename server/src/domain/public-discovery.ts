@@ -9,6 +9,7 @@ export interface PublicClub {
   contactPhone?: string;
   operatingScope?: string;
   logoUrl?: string;
+  openCampaignId?: string;
 }
 
 export interface PublicCampaign {
@@ -74,7 +75,7 @@ export interface ClubSearch {
 }
 
 export interface PublicDiscoveryRepository {
-  listClubs(input: ClubSearch): Promise<Page<PublicClub>>;
+  listClubs(input: ClubSearch, now: Date): Promise<Page<PublicClub>>;
   fields(): Promise<string[]>;
   getClub(id: string): Promise<PublicClub | null>;
   board(clubId: string, now: Date): Promise<PublicBoardSeat[]>;

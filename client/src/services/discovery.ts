@@ -9,6 +9,7 @@ export interface PublicClub {
   contactPhone?: string;
   operatingScope?: string;
   logoUrl?: string;
+  openCampaignId?: string;
 }
 
 export interface PublicCampaign {
