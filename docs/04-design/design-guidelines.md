@@ -10,42 +10,39 @@ utility Tailwind được sinh ra (`bg-primary-app`, `text-muted-app`, `border-b
 
 ## 1. Nền tảng thương hiệu
 
-Bảng màu doanh nghiệp của FPT có ba màu: cam `#F37021`, xanh dương `#0066B3`, xanh lá `#00A650`.
-Chúng là bản sắc, không phải giao diện.
-
-Cam trên nền trắng đo được **2.94:1** — dưới ngưỡng 4.5:1 của WCAG AA cho chữ và dưới 3:1 cho
-viền mang nghĩa. Vì vậy các màu thương hiệu được giữ làm token `*-brand-*` dành cho mảng nền,
-logo và khối trang trí, còn mọi màu tương tác đều là biến thể tối hơn, đã kiểm tra độ tương
-phản. Đây là quy tắc duy nhất giữ cho ứng dụng vừa đúng nhận diện vừa dễ tiếp cận.
+Giao diện theo mockup `FPT_Club.html`: bảng màu đất ấm, mảng cam đất, xanh olive và thẻ có góc
+bo lớn. Token ngữ nghĩa riêng được dùng cho chữ, link và trạng thái để duy trì độ tương phản.
 
 ## 2. Token màu
 
-Độ tương phản đo với chính nền của theme đó (`#ffffff` / `#0a0a0a`).
+Màu thương hiệu lấy từ mockup. Các màu ngữ nghĩa theme sáng dùng sắc tối để chữ dễ đọc trên nền
+kem; theme tối dùng sắc sáng hơn.
 
 ### Thương hiệu — cố định ở cả hai theme, chỉ dùng cho mảng nền và đồ hoạ
 
 | Token | Giá trị | Dùng cho | Không bao giờ dùng cho |
 |---|---|---|---|
-| `brand-app` | `#F37021` | Logo, khối hero, chuỗi dữ liệu biểu đồ, mảng trang trí lớn | Chữ nội dung, link, viền 1px, icon nhỏ |
-| `brand-blue-app` | `#0066B3` | Mảng nền thương hiệu phụ, chuỗi biểu đồ | — |
-| `brand-green-app` | `#00A650` | Mảng nền thương hiệu, chuỗi biểu đồ | Chữ báo thành công (3.2:1 — dùng `success-app`) |
+| `brand-app` | `#C67139` | Logo, mảng trang trí và điểm nhấn | Chữ nội dung nhỏ |
+| `on-brand-app` | `#201E1D` | Ký tự trên mảng cam đất | — |
+| `brand-blue-app` | `#7A8A5E` | Mảng nền phụ và chuỗi biểu đồ | Chữ nhỏ |
+| `brand-green-app` | `#7A8A5E` | Mảng nền và chuỗi biểu đồ | Chữ nhỏ |
 
 ### Ngữ nghĩa — mọi giá trị đều ≥ 4.5:1 trên nền của chính nó
 
 | Token | Sáng | Tối | Tương phản (sáng / tối) | Dùng cho |
 |---|---|---|---|---|
-| `text-app` | `#1A1A1A` | `#F5F5F5` | 16.9 / 18.2 | Chữ nội dung và tiêu đề |
-| `muted-app` | `#5B6472` | `#A1A1AA` | 5.98 / 7.72 | Chữ phụ, chú thích, nhãn bị vô hiệu, placeholder |
-| `bg-app` | `#FFFFFF` | `#0A0A0A` | — | Nền trang |
-| `surface-app` | `#F9FAFB` | `#18181B` | — | Thẻ, header bảng, panel, modal |
-| `border-app` | `#E5E7EB` | `#27272A` | — | Đường kẻ, viền thẻ và ô nhập, thanh cuộn |
-| `primary-app` | `#C2410C` | `#FB923C` | 5.18 / 8.75 | Nền nút chính, nav đang chọn, trạng thái được chọn |
-| `on-primary-app` | `#FFFFFF` | `#1A1A1A` | 5.18 / 7.69 trên primary | Chữ và icon nằm trên `primary-app` |
-| `accent-app` | `#0066B3` | `#60A5FA` | 5.91 / 7.79 | Link, hành động phụ, nhấn mạnh thông tin |
-| `ring-app` | `#0066B3` | `#60A5FA` | — | Vòng focus, offset 2px |
-| `success-app` | `#047857` | `#34D399` | 5.48 / 10.3 | CLB active, điểm danh đã xác nhận |
-| `warning-app` | `#B45309` | `#FBBF24` | 5.02 / 11.9 | Đang chờ duyệt, deadline sắp tới |
-| `danger-app` | `#B91C1C` | `#F87171` | 6.47 / 7.16 | Hành động phá huỷ, bị từ chối, lỗi nhập liệu |
+| `text-app` | `#201E1D` | `#F5EAD8` | — | Chữ nội dung và tiêu đề |
+| `muted-app` | `#645C50` | `#C0B6A5` | — | Chữ phụ, chú thích, nhãn bị vô hiệu, placeholder |
+| `bg-app` | `#F5EAD8` | `#201E1D` | — | Nền trang |
+| `surface-app` | `#EBDDC5` | `#302B25` | — | Thẻ, header bảng, panel, modal |
+| `border-app` | `#C7B9A3` | `#51483E` | — | Đường kẻ, viền thẻ và ô nhập, thanh cuộn |
+| `primary-app` | `#8C491A` | `#F6A06B` | — | Nền nút chính, nav đang chọn, trạng thái được chọn |
+| `on-primary-app` | `#FFF2EB` | `#201E1D` | — | Chữ và icon nằm trên `primary-app` |
+| `accent-app` | `#643312` | `#FFC6A5` | — | Link, hành động phụ, nhấn mạnh thông tin |
+| `ring-app` | `#8C491A` | `#F6A06B` | — | Vòng focus, luôn hiển thị khi focus |
+| `success-app` | `#56633F` | `#CCDBB2` | — | CLB active, điểm danh đã xác nhận |
+| `warning-app` | `#8C491A` | `#F6A06B` | — | Đang chờ duyệt, deadline sắp tới |
+| `danger-app` | `#A34335` | `#FF9E91` | — | Hành động phá huỷ, bị từ chối, lỗi nhập liệu |
 
 `on-primary-app` lật sang gần đen ở chế độ tối. Viết cứng `text-white` trên một nút chính sẽ
 tụt xuống khoảng 2:1 ngay khi đổi theme — luôn dùng token.
@@ -72,15 +69,15 @@ thấp, chữ là token ở giá trị đầy đủ, cộng với từ mô tả.
 
 ## 3. Typography
 
-Một họ chữ duy nhất: **Be Vietnam Pro** (400/500/600/700), import trong `index.css` và gắn vào
-`--font-sans`. Nó được vẽ cho dấu tiếng Việt — `ộ`, `ằ`, `ỹ` vẫn giữ được hình ở cỡ 14px, điều
-mà Poppins và phần lớn font sans hình học không làm được.
+Ứng dụng dùng **Nunito** (400/500/600/700/800) cho cả nội dung và tiêu đề. Nunito có đầy đủ bộ
+ký tự tiếng Việt, nét tròn và mềm; dùng chung một họ font cũng tránh fallback không đồng đều
+giữa ký tự Latin và ký tự có dấu.
 
 | Vai trò | Class | Cỡ / dãn dòng | Độ đậm |
 |---|---|---|---|
-| Tiêu đề trang | `text-3xl font-bold` | 30 / 36 | 700 |
-| Tiêu đề mục | `text-xl font-semibold` | 20 / 28 | 600 |
-| Tiêu đề thẻ | `text-base font-semibold` | 16 / 24 | 600 |
+| Tiêu đề trang | `text-3xl font-heading font-bold` | 30 / 36 | 700–800 |
+| Tiêu đề mục | `text-xl font-heading font-bold` | 20 / 28 | 700 |
+| Tiêu đề thẻ | `text-base font-heading font-semibold` | 16 / 24 | 600–700 |
 | Nội dung | `text-base` | 16 / 24 | 400 |
 | Phụ / chú thích | `text-sm text-muted-app` | 14 / 20 | 400 |
 | Ô trong bảng | `text-sm` | 14 / 20 | 400 |
@@ -93,8 +90,8 @@ Quy tắc: chữ nội dung không bao giờ nhỏ hơn 16px trên mobile; độ
 
 - **Khoảng cách** — thang 4px của Tailwind, và chỉ dùng `1 2 3 4 6 8 12 16`. Bên trong một thẻ:
   `p-4` (mobile) / `p-6` (desktop). Giữa các mục: `gap-6`. Giữa các điều khiển liên quan: `gap-2`.
-- **Bo góc** — `rounded-md` (6px) cho ô nhập, nút và badge; `rounded-lg` (8px) cho thẻ và modal;
-  `rounded-full` cho avatar và pill. Không dùng giá trị nào khác.
+- **Bo góc** — ô nhập, nút và badge là pill; thẻ và modal có góc bo lớn (32px); avatar dùng
+  `rounded-full`. Đây là các giá trị của mockup.
 - **Đổ bóng** — mặc định là phẳng. `shadow-sm` chỉ dùng cho thẻ nằm trên `bg-app` mà không có
   viền; `shadow-lg` cho modal và popover. Chế độ tối dựa vào `surface-app` + `border-app` thay
   cho bóng, vì bóng gần như vô hình trên nền đen.
@@ -172,7 +169,7 @@ icon giao diện. Nút chỉ có icon phải mang `aria-label`.
 
 | Đừng | Vì sao |
 |---|---|
-| Dùng `#F37021` làm màu chữ hoặc link | 2.94:1 — trượt AA; dùng `primary-app` |
+| Dùng `#C67139` làm màu chữ hoặc link nhỏ | Tương phản thấp; dùng `primary-app` |
 | Viết `text-white` trên nút chính | Hỏng ở chế độ tối; dùng `on-primary-app` |
 | Dùng `text-gray-400` cho chữ nội dung | Dưới 4.5:1 trên nền trắng; dùng `muted-app` |
 | `hover:scale-105` trên thẻ | Làm lưới dồn lại; hãy đổi màu thay vì phóng to |

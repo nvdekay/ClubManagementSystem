@@ -1,5 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap");
 
 /* App owns scrolling, not the browser: html/body never scroll, #root does. */
 html,
@@ -45,56 +45,75 @@ body {
    Naming: --color-<name>-app generates the `<name>-app` Tailwind color
    (e.g. bg-danger-app, text-danger-app, border-danger-app). */
 @theme {
-  /* Typeface — one family, 400/500/600/700. Be Vietnam Pro is drawn for
-     Vietnamese diacritics, so `vi` strings keep their shape at small sizes. */
-  --font-sans:
-    "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    sans-serif;
+  /* Nunito has a soft, rounded shape and a complete Vietnamese character set. */
+  --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-auth-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-auth-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --radius-md: 999px;
+  --radius-lg: 8px;
 
-  /* Brand — FPT corporate colors, identical in both themes. Fills and
-     graphics only (orange is 2.9:1 on white: never text, never a border
-     that carries meaning). Semantic tokens below are the accessible ones. */
-  --color-brand-app: #f37021;
-  --color-brand-blue-app: #0066b3;
-  --color-brand-green-app: #00a650;
+  /* Brand — warm accent and olive details from docs/04-design/FPT_Club.html. */
+  --color-brand-app: #c67139;
+  --color-on-brand-app: #201e1d;
+  --color-brand-blue-app: #7a8a5e;
+  --color-brand-green-app: #7a8a5e;
 
-  /* Semantic — every value below is >= 4.5:1 against its own background. */
-  --color-text-app: #1a1a1a;
+  /* Organic light palette. */
+  --color-text-app: #201e1d;
   --color-bg-app: #ffffff;
-  --color-surface-app: #f9fafb;
-  --color-border-app: #e5e7eb;
-  --color-muted-app: #5b6472;
+  --color-surface-app: #f7f7f5;
+  --color-border-app: #d8d6d1;
+  --color-muted-app: #645c50;
 
-  --color-primary-app: #c2410c; /* darkened FPT orange — 4.8:1 on white */
-  --color-on-primary-app: #ffffff; /* text/icons sitting on primary-app */
-  --color-accent-app: #0066b3; /* FPT blue — 5.9:1 on white, links */
-  --color-ring-app: #0066b3; /* focus ring, never removed */
+  --color-primary-app: #8c491a;
+  --color-on-primary-app: #fff2eb;
+  --color-accent-app: #643312;
+  --color-ring-app: #8c491a;
 
-  --color-success-app: #047857;
-  --color-warning-app: #b45309;
-  --color-danger-app: #b91c1c;
+  --color-success-app: #56633f;
+  --color-warning-app: #8c491a;
+  --color-danger-app: #a34335;
+  --color-auth-orb-large-app: #ffe1d0;
+  --color-auth-orb-small-app: #ffc6a5;
+  --color-auth-button-hover-app: #eee7db;
+  --color-auth-button-border-app: #8c857f;
+  --color-auth-danger-surface-app: #fff0ed;
+  --color-auth-page-bg-app: #ffffff;
+  --color-auth-page-text-app: #201e1d;
+  --color-auth-page-muted-app: #645c50;
+  --color-auth-page-border-app: #dcd3c4;
+  --color-google-blue-app: #4285f4;
+  --color-google-green-app: #34a853;
+  --color-google-yellow-app: #fbbc05;
+  --color-google-red-app: #ea4335;
 }
 
 /* Manual dark mode — toggled via a "dark" class on <html>, see App.tsx.
    Overrides the same custom properties the @theme block sets on :root,
    so every generated *-app utility repaints without touching components. */
 :root.dark {
-  --color-text-app: #f5f5f5;
-  --color-bg-app: #0a0a0a;
-  --color-surface-app: #18181b;
-  --color-border-app: #27272a;
-  --color-muted-app: #a1a1aa;
-
-  /* Brand hues lighten on dark surfaces; on-primary flips to near-black so
-     the filled button keeps 7:1 instead of dropping to 2:1 white-on-orange. */
-  --color-primary-app: #fb923c;
-  --color-on-primary-app: #1a1a1a;
-  --color-accent-app: #60a5fa;
-  --color-ring-app: #60a5fa;
-
-  --color-success-app: #34d399;
-  --color-warning-app: #fbbf24;
-  --color-danger-app: #f87171;
+  --color-text-app: #f5ead8;
+  --color-bg-app: #201e1d;
+  --color-surface-app: #302b25;
+  --color-border-app: #51483e;
+  --color-muted-app: #c0b6a5;
+  --color-primary-app: #f6a06b;
+  --color-on-primary-app: #201e1d;
+  --color-accent-app: #ffc6a5;
+  --color-ring-app: #f6a06b;
+  --color-success-app: #ccdbb2;
+  --color-warning-app: #f6a06b;
+  --color-danger-app: #ff9e91;
+  --color-auth-orb-large-app: #643312;
+  --color-auth-orb-small-app: #8c491a;
+  --color-auth-button-hover-app: #302b25;
+  --color-auth-button-border-app: #82796a;
+  --color-auth-danger-surface-app: #402b28;
+  --color-auth-page-bg-app: #201e1d;
+  --color-auth-page-text-app: #f5ead8;
+  --color-auth-page-muted-app: #c0b6a5;
+  --color-auth-page-border-app: #51483e;
 }
 
 /* Clickable elements must show a pointer cursor — the browser UA stylesheet

@@ -1,5 +1,10 @@
 # UCMS — Danh sách công việc triển khai (Database · Backend · Frontend)
 
+> Checklist thực thi đang được cập nhật theo từng vertical slice ở
+> [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) và `.sdd/specs/feat-*/TASKS.md`.
+> File này giữ bản phân rã ban đầu; ô chưa đánh dấu ở đây có thể đã có code nhưng chưa đạt
+> toàn bộ Definition of Done của task.
+
 Suy ra từ [`../SRS.md`](../SRS.md). Mỗi task đều trích dẫn use case, yêu cầu chức năng hoặc quy
 tắc nghiệp vụ mà nó thoả mãn, nên một task chỉ xong khi yêu cầu đó chứng minh được là đã đạt.
 
@@ -15,7 +20,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 | Vòng | Phạm vi | Use case | Ước lượng (man-day) |
 |---|---|---|---|
 | 0 | Nền tảng | — | 12 |
-| 1 | Truy cập & cấu hình | UC01–UC05 | 11 |
+| 1 | Truy cập & cấu hình | UC01–UC04; UC05 đã rút | 9 |
 | 2 | Thành lập & quản trị CLB | UC06–UC15 | 20 |
 | 3 | Tuyển thành viên → thành viên | UC16–UC24 | 18 |
 | 4 | Duyệt → công bố sự kiện; sự kiện cấp trường | UC25–UC28, UC53, UC54 | 17 |
@@ -27,7 +32,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 | 10 | Phản hồi & khiếu nại | UC48–UC52 | 10 |
 | 11 | Governance intelligence | UC40–UC43, UC55 | 12 |
 | — | Gia cố & phát hành | — | 8 |
-| | | | **152** |
+| | | | **150** |
 
 ---
 
@@ -43,10 +48,10 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ### Backend
 
-- [ ] **BE-0.1** Dựng khung bốn tầng (`domain`, `usecase`, `interface/http`, `infra`) kèm `README.md` cho mỗi thư mục và phần kiểm tra hướng phụ thuộc trong `scripts/check-constitution.sh`. → CON-02, CON-13, NFR-MNT-05
+- [x] **BE-0.1** Dựng khung bốn tầng (`domain`, `usecase`, `interface/http`, `infra`) kèm `README.md` cho mỗi thư mục và phần kiểm tra hướng phụ thuộc trong `scripts/check-constitution.sh`. → CON-02, CON-13, NFR-MNT-05
 - [ ] **BE-0.2** Phong bì response `{ data }`, ánh xạ `DomainError` kind → 400/404/409, 401/403/423 cho phần xác thực, 500 cho phần còn lại. → API-02, CON-04
 - [ ] **BE-0.3** Validate bằng zod ở biên route trước mọi lời gọi Mongoose, cộng registry `zod-openapi` phục vụ tại `/docs`. → API-03, API-05, SEC-07
-- [ ] **BE-0.4** Các bản giả repository in-memory để một usecase unit-test được mà không cần database. → NFR-MNT-01
+- [x] **BE-0.4** Các bản giả repository in-memory để một usecase unit-test được mà không cần database. → NFR-MNT-01
 - [ ] **BE-0.5** `AuditPort` + bản cài Mongo; helper ghi `{entityType, entityId, action, actor, before, after, diff, reason, correlationId}` từ bên trong usecase. → AUD-01, AUD-02
 - [ ] **BE-0.6** `NotificationPort` + ghi vào outbox; `EmailPort` dạng stub. Chưa gửi gì cả. → NTF-01, CON-09
 - [ ] **BE-0.7** Khung scheduler: interval + lease document trong Mongo để instance thứ hai không chạy trùng. → NFR-REL-05, NTF-07
@@ -64,12 +69,12 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ---
 
-## Vòng 1 — Truy cập & cấu hình (UC01–UC05)
+## Vòng 1 — Truy cập & cấu hình (UC01–UC04; UC05 đã rút)
 
 ### Database
 - [ ] **DB-1.1** Các collection `users`, `studentProfiles`, `roles`, `permissions`, `userRoleAssignments`. → SRS §7.1
-- [ ] **DB-1.2** Các collection `policyVersions`, `routingRuleSets`, `routingRules`. → UC04, UC05
-- [ ] **DB-1.3** Index: unique `users.email`, `users.accountState`, `userRoleAssignments(userId, revokedAt)`, `policyVersions.effectiveFrom`, `routingRules(ruleSetId, requestType, priority)`. → DAT-02, DAT-03
+- [ ] **DB-1.2** Collection `policyVersions`. → UC04
+- [ ] **DB-1.3** Index: unique `users.email`, `users.accountState`, `userRoleAssignments(userId, revokedAt)`, `policyVersions.effectiveFrom`. → DAT-02, DAT-03
 - [ ] **DB-1.4** Bộ phân giải chính sách: "version đang hiệu lực tại ngày D", để một quyết định trong quá khứ đọc đúng giá trị của nó. → FR-UC04-04
 
 ### Backend
@@ -81,8 +86,8 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-1.6** `GET /dashboard` — mỗi vai trò một lần đọc tổng hợp, mỗi panel là một truy vấn đi qua index, suy giảm độc lập theo panel. → FR-UC02-01…06
 - [ ] **BE-1.7** UC03 quản trị tài khoản và vai trò; vô hiệu hoá phiên khi thay đổi; từ chối việc tự thu hồi vai trò quản trị cuối cùng. → FR-UC03-01…09
 - [ ] **BE-1.8** UC04 đánh phiên bản chính sách kèm ngày hiệu lực và chốt chặn "sẽ làm vô hiệu một quyết định đã ra". → FR-UC04-01…07
-- [ ] **BE-1.9** UC05 rule định tuyến kèm phần validate không chồng lấn (hồ sơ không khớp rule nào → một cấp, BR16), và endpoint mô phỏng. → FR-UC05-01…07
-- [ ] **BE-1.10** `resolveRequiredLevel(request)` để UC08/26/36/48 dùng về sau. → BR16
+- [x] **BE-1.9** Đã rút cùng UC05 — không triển khai rule định tuyến hay endpoint mô phỏng. → BR16
+- [x] **BE-1.10** Đã rút — mỗi lần nộp tạo đúng một review task và nhận một quyết định ICPDP. → BR16
 
 ### Frontend
 - [ ] **FE-1.1** Màn hình đăng nhập, callback OAuth, chọn workspace, màn từ chối truy cập và màn tài khoản bị khoá. → UC01
@@ -90,7 +95,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **FE-1.3** Dashboard CMB: hồ sơ đã nộp và trạng thái, deadline, lịch sự kiện và booking, số thành viên, tình hình ngân sách, phản hồi chờ xem. → FR-UC02-03
 - [ ] **FE-1.4** Dashboard ICPDP: hồ sơ chờ duyệt theo loại và độ trễ, CLB theo trạng thái, báo cáo quá hạn, ngân sách chưa đối soát, hồ sơ đang mở, booking sắp tới. → FR-UC02-02
 - [ ] **FE-1.5** Trạng thái lỗi theo từng panel — một module hỏng không được làm trắng cả trang. → FR-UC02-06, UI-07
-- [ ] **FE-1.6** Màn hình tài khoản & vai trò; cấu hình chính sách & deadline; cấu hình định tuyến phê duyệt kèm khung mô phỏng. → UC03, UC04, UC05
+- [ ] **FE-1.6** Màn hình tài khoản & vai trò; cấu hình chính sách & deadline. → UC03, UC04
 
 ---
 
@@ -103,13 +108,13 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **DB-2.4** Chốt chặn chỉ-ghi-thêm trên `clubApplicationVersions` (từ chối mọi update và delete ở biên repository). → BR04, CON-08
 
 ### Backend
-- [ ] **BE-2.1** UC06 khám phá công khai: liệt kê CLB Active + CLB Suspended có đánh dấu, không bao giờ Dissolved; dữ liệu tổng hợp cho trang CLB. → FR-UC06-01…07, BR09 · **đang bị chặn bởi quyết định I22**
-- [ ] **BE-2.2** UC07 nộp / lưu nháp / nộp lại thành một version mới / rút hồ sơ; cơ cấu role dự kiến kèm permission và role ban điều hành. → FR-UC07-01…13
-- [ ] **BE-2.3** UC08 thẩm định và quyết định với ba kết quả; tạo Club ở `Pending Setup`, các role và phiên bản cơ cấu 1, và cấp quyền sáng lập tạm thời khi phê duyệt. → FR-UC08-01…13, BR56
+- [ ] **BE-2.1** UC06 khám phá công khai: liệt kê CLB Active + CLB Suspended có đánh dấu, không bao giờ Dissolved; dữ liệu tổng hợp cho trang CLB. → FR-UC06-01…07, BR09 · **Đã code bản đầu và unit test; chờ integration Mongo, kiểm tra UI và CTA UC17/UC29. I22 đã được chốt trong SRS.**
+- [x] **BE-2.2** UC07 nộp / lưu nháp / nộp lại thành một version mới / rút hồ sơ; cơ cấu role dự kiến kèm permission và role ban điều hành. → FR-UC07-01…13
+- [x] **BE-2.3** UC08 thẩm định và quyết định với ba kết quả; tạo Club ở `Pending Setup`, các role và phiên bản cơ cấu 1, và cấp quyền sáng lập tạm thời khi phê duyệt. → FR-UC08-01…13, BR56
 - [ ] **BE-2.4** Scheduler: `Revision Requested → Expired` khi hết deadline. → SCH-04
-- [ ] **BE-2.5** UC09 hồ sơ, ban và bộ phận; từ chối sửa trường thuộc thẩm quyền nhà trường và từ chối xoá ban/bộ phận còn role đang dùng. → FR-UC09-01…09
-- [ ] **BE-2.6** UC10 đề cử kèm kiểm tra điều kiện và kiểm tra chồng lấn nhiệm kỳ Chủ nhiệm. → FR-UC10-01…07, BR06, BR07
-- [ ] **BE-2.7** UC11 xác nhận: kích hoạt nhiệm kỳ, cấp quyền, thu hồi quyền sáng lập, chuyển CLB sang Active; xác nhận một phần. → FR-UC11-01…09
+- [x] **BE-2.5** UC09 hồ sơ, ban và bộ phận; từ chối sửa trường thuộc thẩm quyền nhà trường và từ chối xoá ban/bộ phận còn role đang dùng. → FR-UC09-01…09
+- [x] **BE-2.6** UC10 đề cử kèm kiểm tra membership `Active` và chồng lấn nhiệm kỳ Chủ nhiệm. → FR-UC10-01…08, BR06, BR07
+- [x] **BE-2.7** UC11 xác nhận một lần: kích hoạt nhiệm kỳ, cấp quyền, thu hồi quyền sáng lập, chuyển CLB sang Active; xác nhận một phần. → FR-UC11-01…10
 - [ ] **BE-2.8** UC12 kế hoạch chuyển giao với nghĩa vụ nạp sẵn và chốt chặn "không nghĩa vụ nào được thiếu người nhận". → FR-UC12-01…05
 - [ ] **BE-2.9** UC13 xác nhận: đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới, chuyển quyền, giữ lịch sử. → FR-UC13-01…07, BR08
 - [ ] **BE-2.10** UC14 yêu cầu tạm ngừng kèm cảnh báo liệt kê các sự kiện và booking tương lai đã duyệt sẽ bị huỷ nếu UC15 chấp thuận (không chặn nộp). → FR-UC14-01…03
@@ -123,7 +128,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **FE-2.2** Trình hướng dẫn nộp hồ sơ thành lập, màn xác nhận nộp, khung xem lịch sử version, màn trạng thái và kết quả. → UC07
 - [ ] **FE-2.3** Hàng đợi hồ sơ của ICPDP và màn thẩm định-và-quyết định kèm nhận xét theo từng phần. → UC08
 - [ ] **FE-2.4** Hồ sơ CLB, thông tin vận hành, ban/bộ phận; màn hình vai trò CLB & phân quyền của Club Leader. → UC09, UC23
-- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13
+- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13 · UC10/11 đã có UI; visual QA còn chờ, UC12/13 chưa triển khai.
 - [ ] **FE-2.6** Yêu cầu tạm ngừng và trạng thái; quản lý CLB phía ICPDP, chi tiết CLB, hành động vòng đời với hệ quả được nêu rõ trong hộp xác nhận. → UC14, UC15, SA-01
 
 ---

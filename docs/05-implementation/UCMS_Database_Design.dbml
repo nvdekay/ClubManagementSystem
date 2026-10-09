@@ -8,7 +8,7 @@
 // vụ (BRnn).
 //
 // Cách đọc ký hiệu
-//   - Một "Table" = một collection MongoDB (một aggregate). Tổng 50 collection.
+//   - Một "Table" = một collection MongoDB (một aggregate). Tổng 49 collection.
 //   - Cột kiểu "objectId" là tham chiếu được lưu dưới dạng ObjectId, không
 //     phải khoá ngoại. dbdiagram vẽ chúng thành quan hệ để mô hình dễ đọc.
 //   - Cột kiểu "json" là sub-document NHÚNG: có chặn trên, luôn được đọc
@@ -23,7 +23,7 @@
 Project UCMS {
   database_type: 'MongoDB'
   Note: '''
-  Hệ thống Quản lý Câu lạc bộ Đại học — 50 collection trên 12 module.
+  Hệ thống Quản lý Câu lạc bộ Đại học — 49 collection trên 12 module.
   Các quy tắc thiết kế đang áp dụng:
   - Mỗi aggregate một collection; tham chiếu bằng ObjectId, không join trong đường đi nóng (DAT-01).
   - Sức chứa và việc cấp khung giờ được bảo vệ bằng unique index cộng findOneAndUpdate có điều
@@ -242,7 +242,7 @@ Enum conflictResult {
 }
 
 // =====================================================================
-// M01 — ĐỊNH DANH, TRUY CẬP & CẤU HÌNH  (UC01–UC05)
+// M01 — ĐỊNH DANH, TRUY CẬP & CẤU HÌNH  (UC01–UC04; UC05 đã rút)
 // =====================================================================
 
 Table users {
@@ -291,7 +291,7 @@ Table permissions {
 
 Table roles {
   id objectId [pk]
-  code string [unique, not null, note: 'ICPDP_OFFICER, ICPDP_HEAD (quyết định còn mở D1), ATTENDANCE_UNLOCK, CLUB_PRESIDENT, CLUB_TREASURER …']
+  code string [unique, not null, note: 'ICPDP_OFFICER, ATTENDANCE_UNLOCK, CLUB_PRESIDENT, CLUB_TREASURER …']
   name string [not null]
   scope roleScope [not null, note: 'Một vai trò gắn CLB chỉ có hiệu lực thông qua một bản gán chức vụ bên trong một nhiệm kỳ đang hoạt động (SEC-04).']
   permissionCodes "string[]" [not null]
@@ -336,37 +336,6 @@ Table policyVersions {
   }
 }
 
-Table routingRuleSets {
-  id objectId [pk]
-  version int [not null]
-  state string [not null, note: 'Draft | Active | Superseded.']
-  activatedBy objectId
-  activatedAt datetime
-  createdAt datetime [not null]
-
-  Note: 'Tại mỗi thời điểm chỉ có đúng một bộ Active. Việc kích hoạt bị từ chối nếu bộ rule không đầy đủ và không rõ ràng (UC05 FR-02, E1).'
-  indexes {
-    version [unique, name: 'uq_routing_version']
-  }
-}
-
-Table routingRules {
-  id objectId [pk]
-  ruleSetId objectId [not null]
-  requestType string [not null, note: 'CLUB_APPLICATION | EVENT_PROPOSAL | PROPERTY_BOOKING.']
-  amountThreshold decimal [note: 'Ngưỡng tổng ngân sách của đề xuất sự kiện (UC26 A3).']
-  riskCategory string [note: 'Dùng cho định tuyến sự kiện (UC26 A1).']
-  propertyClass string
-  complianceCondition string [note: 'ví dụ: CLB đang có một hồ sơ vi phạm chưa đóng.']
-  requiredLevel int [not null, note: '1 = một cấp, 2 = cấp ICPDP thứ hai (BR16). Mọi cấp đều là một ICPDP Officer, nhờ đó BR31 vẫn đúng.']
-  slaHours int
-  priority int [not null, note: 'Thứ tự đánh giá; bộ rule phải cho ra đúng một rule cho mỗi hồ sơ.']
-
-  indexes {
-    (ruleSetId, requestType, priority) [name: 'ix_rule_lookup']
-  }
-}
-
 // =====================================================================
 // M02 / M03 — VÒNG ĐỜI CLB, QUẢN TRỊ & NHIỆM KỲ  (UC06–UC15, UC23)
 // =====================================================================
@@ -402,6 +371,7 @@ Table clubApplications {
   field string [not null]
   objectives text
   founderUserId objectId [not null]
+  draftPayload json [note: 'Nội dung đang sửa của Draft hoặc Revision Requested, gồm metadata tệp; không dùng version đã nộp làm bản nháp.']
   state clubApplicationState [not null, default: 'Draft']
   currentVersionNo int [not null, default: 1]
   revisionDeadlineAt datetime [note: 'Do UC08 đặt khi yêu cầu chỉnh sửa; scheduler đặt Expired khi hết hạn (SCH-04).']
@@ -488,6 +458,24 @@ Table clubPositions {
   Note: 'Role CLB (I58): trạng thái hiện hành của cơ cấu, bằng phiên bản mới nhất trong clubRoleStructureVersions. Tạo từ hồ sơ đã duyệt ở UC08; Club Leader sửa ở UC23 (mỗi lần sửa ghi một phiên bản mới — BR56), hiệu lực ngay, không cần ICPDP trừ role ban điều hành (BR55). Không ngừng dùng được khi một ghế đã xác nhận hoặc một bản gán đang hiệu lực còn giữ role này (UC23 E4, bảo vệ theo kiểu BR41).'
   indexes {
     (clubId, code) [unique, name: 'uq_position_club_code']
+  }
+}
+
+Table clubDepartments {
+  id objectId [pk]
+  clubId objectId [not null]
+  name string [not null]
+  normalizedName string [not null, note: 'Tên trim/lowercase dùng để cưỡng chế duy nhất không phân biệt hoa thường trong một CLB.']
+  description text
+  sortOrder int [not null, default: 0]
+  isActive bool [not null, default: true]
+  createdAt datetime [not null]
+  updatedAt datetime
+
+  Note: 'Ban/bộ phận nội bộ do UC09 quản lý. Xoá là ngừng dùng mềm; từ chối khi còn role active có unit trùng tên hoặc membership hiện hành tham chiếu department này.'
+  indexes {
+    (clubId, normalizedName) [unique, name: 'uq_department_club_name']
+    (clubId, isActive, sortOrder) [name: 'ix_department_structure']
   }
 }
 
@@ -659,7 +647,7 @@ Table clubMemberships {
 
   Note: 'Khoá duy nhất ở đây là TỪNG PHẦN — nó chỉ áp dụng khi trạng thái là Active hoặc Inactive, nên một sinh viên đã Left có thể quay lại bằng một tư cách thành viên mới (UC21 FR-09), còn sinh viên Banned thì không (BR46, kiểm tra trong usecase).'
   indexes {
-    (clubId, userId) [unique, name: 'uq_membership_active', note: 'partialFilterExpression: { state: { $in: ["Active","Inactive"] } }']
+    (clubId, userId) [unique, name: 'uq_membership_active', partialFilterExpression: '{"state":{"$in":["Active","Inactive"]}}']
     (clubId, state) [name: 'ix_membership_roster']
     (userId, state) [name: 'ix_membership_mine']
   }
@@ -702,7 +690,7 @@ Table events {
   audienceScope string [not null, note: 'PUBLIC | MEMBERS_ONLY, chọn ở UC25. MEMBERS_ONLY (sự kiện nội bộ) không có phần ngân sách (requestedBudgetTotal) được ghi nhận thẳng Draft → Approved, không qua UC26, và đóng ở UC32 (BR53). ICPDP liệt kê qua ix_events_scope.']
   capacity int [not null]
   waitlistEnabled bool [not null, default: true]
-  riskCategory string [note: 'Cấp dữ liệu cho các rule định tuyến của UC05 (UC26 A1).']
+  riskCategory string [note: 'Thông tin để ICPDP đánh giá rủi ro trong UC26.']
   state eventState [not null, default: 'Draft']
   conflictResult conflictResult [note: 'Kết quả của BR15 được lưu cùng đề xuất để officer thấy đúng thứ mà CLB đã thấy (UC25 FR-03).']
   conflictDetail json
@@ -1032,7 +1020,7 @@ Table properties {
   equipment "string[]"
   bookableHours json [not null, note: 'Khung giờ mở/đóng theo từng ngày trong tuần. Việc thay đổi chúng không bao giờ làm vô hiệu một quyết định đã ra (UC44 FR-07).']
   blackouts json [note: 'Các giai đoạn bảo trì hoặc nhà trường sử dụng; một yêu cầu rơi vào đó sẽ bị từ chối (UC45 E2).']
-  propertyClass string [note: 'Cấp dữ liệu cho các rule định tuyến của UC05.']
+  propertyClass string [note: 'Phân loại property phục vụ tìm kiếm và thẩm định booking.']
   isActive bool [not null, default: true]
 
   Note: 'Không xoá được khi còn booking tương lai đã duyệt; ngừng kích hoạt là con đường duy nhất (BR41). UCMS chỉ giữ những gì nhà trường mở cho hoạt động CLB (ASM-07).'
@@ -1203,9 +1191,7 @@ Table approvalTasks {
   clubId objectId [note: 'Được denormalize để hộp thư lọc theo CLB chỉ tốn một truy vấn.']
   title string [not null, note: 'Nhãn được denormalize cho hộp thư hợp nhất.']
   state approvalTaskState [not null, default: 'Open']
-  assigneeRole string [not null]
-  requiredLevel int [not null, default: 1, note: 'Được phân giải từ bộ rule định tuyến đang hoạt động (BR16, UC05).']
-  currentLevel int [not null, default: 1]
+  assigneeId objectId [note: 'Một ICPDP Officer được phân công xử lý; null nghĩa là task còn ở hàng đợi chung.']
   slaDueAt datetime [note: 'Việc vi phạm SLA được hiển thị dưới dạng approval aging trên dashboard ICPDP (WF-06).']
   openedAt datetime [not null]
   closedAt datetime
@@ -1213,14 +1199,13 @@ Table approvalTasks {
   Note: 'MỘT aggregate dùng chung cho mọi cặp nộp-và-quyết-định. Đây chính là thứ tạo ra một hộp thư người duyệt hợp nhất cho ICPDP mà không làm các module dính vào nhau (WF-01). Module giữ trạng thái thực thể của riêng nó; bảng này giữ trạng thái thẩm định (WF-02).'
   indexes {
     (entityType, entityId) [name: 'ix_task_entity']
-    (state, assigneeRole, slaDueAt) [name: 'ix_task_inbox', note: 'Hộp thư phê duyệt của ICPDP, sắp theo độ trễ.']
+    (state, assigneeId, slaDueAt) [name: 'ix_task_inbox', note: 'Hộp thư phê duyệt của ICPDP, sắp theo độ trễ.']
   }
 }
 
 Table approvalDecisions {
   id objectId [pk]
   approvalTaskId objectId [not null]
-  level int [not null]
   outcome reviewOutcome [not null]
   reason text [note: 'Bắt buộc với kết quả Từ chối và Yêu cầu chỉnh sửa (BR05).']
   comments json [note: 'Các nhận xét có cấu trúc theo từng phần của một yêu cầu chỉnh sửa.']
@@ -1228,9 +1213,9 @@ Table approvalDecisions {
   actorId objectId [not null]
   at datetime [not null]
 
-  Note: 'Chỉ-ghi-thêm. Một quyết định thứ hai giống hệt trên cùng một task không tạo thêm dòng nào (API-07).'
+  Note: 'Chỉ-ghi-thêm. Mỗi task có đúng một quyết định; bản nộp lại tạo task mới (BR16, WF-05).'
   indexes {
-    approvalTaskId [name: 'ix_decision_task']
+    approvalTaskId [unique, name: 'uq_decision_task']
   }
 }
 
@@ -1301,8 +1286,6 @@ Ref: studentProfiles.userId - users.id
 Ref: userRoleAssignments.userId > users.id
 Ref: userRoleAssignments.roleId > roles.id
 Ref: policyVersions.createdBy > users.id
-Ref: routingRules.ruleSetId > routingRuleSets.id
-Ref: routingRuleSets.activatedBy > users.id
 
 // M02 / M03
 Ref: clubApplications.founderUserId > users.id
@@ -1315,6 +1298,7 @@ Ref: clubSuspensionRequests.requestedBy > users.id
 Ref: clubTerms.clubId > clubs.id
 Ref: clubTerms.previousTermId - clubTerms.id
 Ref: clubPositions.clubId > clubs.id
+Ref: clubDepartments.clubId > clubs.id
 Ref: clubPositionAssignments.clubId > clubs.id
 Ref: clubPositionAssignments.termId > clubTerms.id
 Ref: clubPositionAssignments.positionId > clubPositions.id
@@ -1338,6 +1322,7 @@ Ref: candidateEvaluations.applicationId > recruitmentApplications.id
 Ref: candidateEvaluations.reviewerId > users.id
 Ref: clubMemberships.clubId > clubs.id
 Ref: clubMemberships.userId > users.id
+Ref: clubMemberships.departmentId > clubDepartments.id
 Ref: clubMemberships.sourceApplicationId - recruitmentApplications.id
 Ref: membershipWithdrawalRequests.membershipId > clubMemberships.id
 Ref: membershipWithdrawalRequests.clubId > clubs.id
@@ -1405,6 +1390,7 @@ Ref: evaluations.contestViolationId > violations.id
 Ref: approvalDecisions.approvalTaskId > approvalTasks.id
 Ref: approvalDecisions.actorId > users.id
 Ref: approvalTasks.clubId > clubs.id
+Ref: approvalTasks.assigneeId > users.id
 Ref: notifications.recipientUserId > users.id
 Ref: emailDeliveryLogs.notificationId > notifications.id
 Ref: auditLogs.actorId > users.id
@@ -1420,8 +1406,6 @@ TableGroup "M01 Định danh, truy cập & cấu hình" {
   permissions
   userRoleAssignments
   policyVersions
-  routingRuleSets
-  routingRules
 }
 
 TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {
@@ -1431,6 +1415,7 @@ TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {
   clubSuspensionRequests
   clubTerms
   clubPositions
+  clubDepartments
   clubPositionAssignments
   clubRoleStructureVersions
   boardNominations

@@ -24,6 +24,12 @@ if grep -rnE "\b(find|findOne|findById|findByIdAndUpdate|findByIdAndDelete|findO
   violation "SEC-03: raw req.body/req.query passed into a Mongoose query"
 fi
 
+# SEC-02: the route walk test enumerates real Express routes and requires a named
+# authentication middleware on every mutation outside the explicit PUBLIC_ROUTES list.
+if ! npm exec --workspace=server -- vitest run tests/unit/openapi.test.ts >/dev/null; then
+  violation "SEC-02: a mutating route lacks requireAuth or route contract drifted"
+fi
+
 # SEC-03/ARCH-01: mongoose only in infra (+ main.ts for connect/disconnect) — routes and
 # usecases can never reach a model, so aliased raw input can't become a query either
 if grep -rnE "from ['\"]mongoose['\"]" server/src --include="*.ts" | grep -vE "^server/src/(infra/|main\.ts)"; then
