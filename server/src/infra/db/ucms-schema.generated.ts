@@ -129,6 +129,10 @@ export const ucmsEnums = {
     "Resolved",
     "Closed"
   ],
+  "feedbackRecipient": [
+    "CLUB",
+    "ICPDP"
+  ],
   "complaintState": [
     "Submitted",
     "Under Triage",
@@ -2608,9 +2612,13 @@ export const ucmsTables = {
         "type": "objectId",
         "required": true
       },
+      "recipient": {
+        "type": "feedbackRecipient",
+        "required": true,
+        "default": "CLUB"
+      },
       "clubId": {
-        "type": "objectId",
-        "required": true
+        "type": "objectId"
       },
       "eventId": {
         "type": "objectId"
@@ -2622,6 +2630,11 @@ export const ucmsTables = {
       "description": {
         "type": "text",
         "required": true
+      },
+      "isAnonymous": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
       "evidence": {
         "type": "json"
@@ -2678,6 +2691,14 @@ export const ucmsTables = {
           "state"
         ],
         "name": "ix_complaint_mine"
+      },
+      {
+        "fields": [
+          "recipient",
+          "clubId",
+          "submittedAt"
+        ],
+        "name": "ix_complaint_inbox"
       }
     ]
   },

@@ -182,6 +182,11 @@ Enum violationState {
   Closed
 }
 
+Enum feedbackRecipient {
+  CLUB
+  ICPDP
+}
+
 Enum complaintState {
   Submitted
   "Under Triage"
@@ -1089,10 +1094,12 @@ Table eventFeedbacks {
 Table complaints {
   id objectId [pk]
   complainantId objectId [not null]
-  clubId objectId [not null]
+  recipient feedbackRecipient [not null, default: 'CLUB', note: 'UC50 (quyết định 2026-10-09): sinh viên chọn gửi góp ý cho CLB hoặc ICPDP.']
+  clubId objectId [note: 'Bắt buộc khi recipient = CLUB; tuỳ chọn khi gửi ICPDP.']
   eventId objectId
   type string [not null]
   description text [not null]
+  isAnonymous bool [not null, default: false, note: 'Ẩn danh với người nhận; complainantId chỉ giữ nội bộ để chống spam.']
   evidence json
   state complaintState [not null, default: 'Submitted']
   triage json [note: 'Nhúng: { severity, validity, outcome, reason, actorId, at } (UC51, BR39).']
@@ -1104,11 +1111,12 @@ Table complaints {
   withdrawnAt datetime
   closedAt datetime
 
-  Note: 'BR38 — chỉ ICPDP thấy được cho tới khi trạng thái chuyển Forwarded; CLB không bao giờ sửa, bác bỏ hay đóng nó (SEC-09, UC52 FR-06).'
+  Note: 'UC50 là góp ý MỘT CHIỀU (quyết định 2026-10-09): bản ghi bất biến, luôn ở Submitted; CLB chỉ đọc góp ý gửi cho CLB mình (club.feedback.view), ICPDP đọc góp ý gửi ICPDP. Các trường triage/clubResponse/responseDueAt/violationId/linkedComplaintId/withdrawnAt/closedAt thuộc mô hình ticket cũ và không được dùng.'
   indexes {
     (state, submittedAt) [name: 'ix_complaint_queue']
     (clubId, state) [name: 'ix_complaint_club']
     (complainantId, state) [name: 'ix_complaint_mine']
+    (recipient, clubId, submittedAt) [name: 'ix_complaint_inbox', note: 'Hộp thư góp ý của CLB và ICPDP.']
   }
 }
 
