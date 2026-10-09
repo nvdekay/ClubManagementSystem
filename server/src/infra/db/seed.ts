@@ -93,7 +93,8 @@ async function seedPdpSnapshot(now: Date): Promise<void> {
       title: event.title, objective: event.objective, startAt, endAt: new Date(event.endAt),
       ...("coverImageUrl" in event ? { coverImageUrl: event.coverImageUrl } : {}),
       semesterCode: semesterCode(startAt), venueText: event.venueText,
-      audienceScope: "PUBLIC", capacity: 0, waitlistEnabled: false, state: "Completed",
+      organizerType: "CLUB", audienceScope: "PUBLIC", capacity: 0, confirmedRegistrationCount: 0,
+      nextWaitlistPosition: 1, waitlistEnabled: false, state: "Completed",
       allowWalkIn: false, currentRevisionNo: 1, publishedAt: startAt,
       attendanceFinalized: false, createdAt: startAt,
     };
