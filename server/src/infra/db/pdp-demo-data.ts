@@ -1,6 +1,7 @@
 // Snapshot of the public pages of pdp.fpt.edu.vn (Hà Nội campus) taken on 2026-10-04.
 // Club names come only from public PDP text; clubs listed without a public name keep their PDP code.
 // Logos were copied from the PDP club gallery to Cloudinary (ucms/club-logos/) on 2026-10-09.
+// Event covers come from a saved copy of PDP Event/Index (page 1) and live on Cloudinary (ucms/event-covers/).
 // Events organised by IC-PDP rather than a club are left out because events.clubId is required.
 
 export const pdpClubs = [
@@ -525,6 +526,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001031",
     "pdpEventId": 1031,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520343/ucms/event-covers/pdp-1031.jpg",
     "clubCode": "JS",
     "title": "JS RECRUITMENT 2026 – SUBSNOVAX",
     "startAt": "2025-12-26T20:00:00+07:00",
@@ -535,6 +537,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001032",
     "pdpEventId": 1032,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520339/ucms/event-covers/pdp-1032.png",
     "clubCode": "iGo",
     "title": "𝐈𝐆𝐎 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟔: 𝐈 𝐆𝐋𝐎𝐖 𝐎𝐍 – 𝐈 𝐆𝐋𝐎𝐖, 𝐎𝐍 𝐒𝐇𝐀𝐑𝐄𝐃 𝐋𝐈𝐆𝐇𝐓",
     "startAt": "2026-01-03T20:00:00+07:00",
@@ -545,6 +548,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001033",
     "pdpEventId": 1033,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520341/ucms/event-covers/pdp-1033.png",
     "clubCode": "FDS",
     "title": "FDS RECRUITMENT GEN 8 – ARCANA",
     "startAt": "2025-12-29T20:00:00+07:00",
@@ -555,26 +559,29 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001034",
     "pdpEventId": 1034,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520340/ucms/event-covers/pdp-1034.png",
     "clubCode": "Melody",
     "title": "𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌",
     "startAt": "2026-01-01T20:00:00+07:00",
     "endAt": "2026-01-10T23:59:00+07:00",
     "venueText": "Đại học FPT Hà Nội",
-    "objective": "💣 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 💣\n📌 Link đăng ký: https://forms.gle/XXFXx4bKSAvEu9JF6\n⏰ Thời gian:\n➖ Vòng đơn: 01/01/2026 - 10/01/2026\n➖ Vòng phỏng vấn: 13/01/2026 - 16/01/2026\n-------------------------------------------\n⏱️ Trong mỗi chúng ta luôn tồn tại một “bom hẹn giờ” - Kết tinh từ những nỗi sợ chưa dám đối mặt, những giới hạn vô hình tự đặt ra và cả những lần chần chừ trước cơ hội tỏa sáng. Ta trì hoãn không phải vì thiếu khả năng, mà vì chưa dám tháo chốt an toàn bước ra khỏi vùng quen thuộc. Nhưng khi dám vượt qua rào cản, áp lực trở thành động lực, lo lắng biến thành đòn bẩy và tiềm năng tiềm ẩn bên trong bạn sẽ bùng nổ.\n🎶 Suốt 13 năm hình thành và phát triển, 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 luôn là nơi những con người khao khát vượt ngưỡng tìm thấy nhau. Tại đây, âm nhạc không chỉ để biểu diễn, sự kiện không chỉ để tổ chức mà còn là hành trình rèn luyện, va chạm, trưởng thành và thăng hoa cùng những người đồng đội chung đam mê.\n💣 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 - Sự kiện TUYỂN THÀNH VIÊN GEN 13 của 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 mở ra cơ hội dành cho các bạn sinh viên K19, K20, K21 sẵn sàng bước vào hành trình âm nhạc, sự kiện và sáng tạo cùng nhà Mê.\n✨ Tại 𝐌𝐞𝐥𝐨𝐝𝐲, bạn sẽ không chỉ “tham gia” mà còn được thử thách bản thân ở mọi góc cạnh. Từ biểu diễn, sáng tác, chơi nhạc cụ, đến tổ chức sự kiện hay sáng tạo nội dung, mỗi trải nghiệm đều là cơ hội để bạn bứt phá giới hạn và rèn giũa kỹ năng thực chiến. Trong ngôi nhà chung này, bạn học không chỉ từ lý thuyết mà từ trải nghiệm và trách nhiệm thực tế.\n🔥 Không phải ai cũng đủ dũng khí để bước ra khỏi vùng an toàn, nhưng 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 tin rằng: chỉ cần dám đối mặt, nỗi sợ sẽ trở thành lực đẩy khiến bạn khai phá năng lực mạnh mẽ hơn bao giờ hết. Nhấn vào đường link 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 và ghi danh để sẵn sàng trở thành mảnh ghép mới của đại gia đình 𝐌𝐞𝐥𝐨𝐝𝐲.\n----------------------------------------\nCLB Âm Nhạc Đại học FPT Hà Nội: 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛\n🎹 Thông tin chi tiết liên hệ:\n[email protected]\nFacebook: https://www.facebook.com/fptu.melody.club\nInstagram: https://www.instagram.com/fptu_melody_club/\n#Melody\n#BornToSing\n#MelodyRecruitment\n#MEKABOOM\n#Gen13"
+    "objective": "💣 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 💣\n\n📌 Link đăng ký: https://forms.gle/XXFXx4bKSAvEu9JF6 \n⏰ Thời gian:\n➖ Vòng đơn: 01/01/2026 - 10/01/2026\n➖ Vòng phỏng vấn: 13/01/2026 - 16/01/2026\n-------------------------------------------\n⏱️ Trong mỗi chúng ta luôn tồn tại một “bom hẹn giờ” - Kết tinh từ những nỗi sợ chưa dám đối mặt, những giới hạn vô hình tự đặt ra và cả những lần chần chừ trước cơ hội tỏa sáng. Ta trì hoãn không phải vì thiếu khả năng, mà vì chưa dám tháo chốt an toàn bước ra khỏi vùng quen thuộc. Nhưng khi dám vượt qua rào cản, áp lực trở thành động lực, lo lắng biến thành đòn bẩy và tiềm năng tiềm ẩn bên trong bạn sẽ bùng nổ.\n\n🎶 Suốt 13 năm hình thành và phát triển, 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 luôn là nơi những con người khao khát vượt ngưỡng tìm thấy nhau. Tại đây, âm nhạc không chỉ để biểu diễn, sự kiện không chỉ để tổ chức mà còn là hành trình rèn luyện, va chạm, trưởng thành và thăng hoa cùng những người đồng đội chung đam mê.\n\n💣 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 - Sự kiện TUYỂN THÀNH VIÊN GEN 13 của 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 mở ra cơ hội dành cho các bạn sinh viên K19, K20, K21 sẵn sàng bước vào hành trình âm nhạc, sự kiện và sáng tạo cùng nhà Mê.\n\n✨ Tại 𝐌𝐞𝐥𝐨𝐝𝐲, bạn sẽ không chỉ “tham gia” mà còn được thử thách bản thân ở mọi góc cạnh. Từ biểu diễn, sáng tác, chơi nhạc cụ, đến tổ chức sự kiện hay sáng tạo nội dung, mỗi trải nghiệm đều là cơ hội để bạn bứt phá giới hạn và rèn giũa kỹ năng thực chiến. Trong ngôi nhà chung này, bạn học không chỉ từ lý thuyết mà từ trải nghiệm và trách nhiệm thực tế.\n\n🔥 Không phải ai cũng đủ dũng khí để bước ra khỏi vùng an toàn, nhưng 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 tin rằng: chỉ cần dám đối mặt, nỗi sợ sẽ trở thành lực đẩy khiến bạn khai phá năng lực mạnh mẽ hơn bao giờ hết. Nhấn vào đường link 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 và ghi danh để sẵn sàng trở thành mảnh ghép mới của đại gia đình 𝐌𝐞𝐥𝐨𝐝𝐲.\n----------------------------------------\nCLB Âm Nhạc Đại học FPT Hà Nội: 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛\n🎹 Thông tin chi tiết liên hệ:\nEmail: fu.melody.club@gmail.com\nFacebook: https://www.facebook.com/fptu.melody.club\nInstagram: https://www.instagram.com/fptu_melody_club/\nTrưởng BTC: Nguyễn Mai Chi (0347976614)\nHR: Nguyễn Thị Tường Vân (0362138301)\n\n#Melody\n#BornToSing\n#MelodyRecruitment\n#MEKABOOM\n#Gen13"
   },
   {
     "id": "a20000000000000000001035",
     "pdpEventId": 1035,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520333/ucms/event-covers/pdp-1035.png",
     "clubCode": "HEBE",
     "title": "| 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙 | VŨ HỘI TINH THỂ",
     "startAt": "2026-01-08T20:00:00+07:00",
     "endAt": "2026-01-18T23:59:00+07:00",
     "venueText": "Đại học FPT Hà Nội",
-    "objective": "| 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙 | VŨ HỘI TINH THỂ\n🌠 Có một vũ hội chỉ xuất hiện một lần trong năm 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Ở đó, ánh sáng phản chiếu trên từng bước chân và mỗi người khi bước vào đều mang theo ước mơ riêng của mình.\n👗 Giữa những dải lụa trong suốt và tiếng nhạc ngân vang, có một cô gái nhỏ đứng lặng phía sau cánh gà, tay ôm đôi giày múa đã cũ. Cô không có váy lấp lánh, cũng chẳng có phép màu. Chỉ có một trái tim luôn rung động theo nhịp điệu của âm nhạc.\n🌟 Người ta nói, chỉ những ai thực sự tin vào vẻ đẹp của chính mình mới nhìn thấy cánh cửa dẫn đến 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Và rồi, trong khoảnh khắc kỳ diệu, đôi giày cũ dưới chân cô sáng lên như pha lê. Không phải phép thuật của ai khác, mà bởi niềm tin và khát khao tỏa sáng từ chính cô.\nCô bước vào vũ hội.\nKhông còn là cô gái mờ nhạt ngày thường.\nMỗi vòng xoay, mỗi cái vươn tay đều long lanh, như ánh sáng nảy ra từ từng mảnh tinh thể.\n🕛 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳 đã giúp cô ấy tìm thấy phiên bản rực rỡ nhất của bản thân, người mà cô chưa bao giờ dám tin mình có thể trở thành.\n----------------------------------------------\n💎 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙  💎\nKhi tiếng nhạc bắt đầu vang lên, cánh cửa 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭 mở ra và giờ đây 𝐇𝐞𝐛𝐞 𝐂𝐥𝐮𝐛 muốn mời bạn bước vào vũ hội của chính mình.\n◼️ Link đăng ký: https://forms.gle/AWZQLnYHcFMdNrcr6\n◼️ Vòng đơn: 8/1/2026 - 18/1/2026\n◼️ Vòng phỏng vấn: 22/1/2026\n✨  Chào mừng đến với CRYSTAL WALTZ  nơi phép màu bắt đầu từ chính bước chân bạn!\n----------------------------------------------\nThông tin chi tiết liên hệ:\nFacebook: https://www.facebook.com/HebeFPT\n[email protected]\nChủ nhiệm:Lại Việt Hằng (0827 226 763)\nPhó chủ nhiệm: Lê Huyền Linh (0853 448 182)\n#FPTU_HebeClub\n#HebeGen7\n#HebeBeTogetherBeShine\n#Recruitment"
+    "objective": "| 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙 | VŨ HỘI TINH THỂ\n\n🌠 Có một vũ hội chỉ xuất hiện một lần trong năm 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Ở đó, ánh sáng phản chiếu trên từng bước chân và mỗi người khi bước vào đều mang theo ước mơ riêng của mình.\n\n👗 Giữa những dải lụa trong suốt và tiếng nhạc ngân vang, có một cô gái nhỏ đứng lặng phía sau cánh gà, tay ôm đôi giày múa đã cũ. Cô không có váy lấp lánh, cũng chẳng có phép màu. Chỉ có một trái tim luôn rung động theo nhịp điệu của âm nhạc.\n\n🌟 Người ta nói, chỉ những ai thực sự tin vào vẻ đẹp của chính mình mới nhìn thấy cánh cửa dẫn đến 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Và rồi, trong khoảnh khắc kỳ diệu, đôi giày cũ dưới chân cô sáng lên như pha lê. Không phải phép thuật của ai khác, mà bởi niềm tin và khát khao tỏa sáng từ chính cô.\n\nCô bước vào vũ hội.\n\nKhông còn là cô gái mờ nhạt ngày thường.\n\nMỗi vòng xoay, mỗi cái vươn tay đều long lanh, như ánh sáng nảy ra từ từng mảnh tinh thể.\n\n🕛 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳 đã giúp cô ấy tìm thấy phiên bản rực rỡ nhất của bản thân, người mà cô chưa bao giờ dám tin mình có thể trở thành.\n----------------------------------------------\n💎 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙  💎\nKhi tiếng nhạc bắt đầu vang lên, cánh cửa 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭 mở ra và giờ đây 𝐇𝐞𝐛𝐞 𝐂𝐥𝐮𝐛 muốn mời bạn bước vào vũ hội của chính mình.\n◼️ Link đăng ký: https://forms.gle/AWZQLnYHcFMdNrcr6\n ◼️ Vòng đơn: 8/1/2026 - 18/1/2026\n ◼️ Vòng phỏng vấn: 22/1/2026\n✨  Chào mừng đến với CRYSTAL WALTZ  nơi phép màu bắt đầu từ chính bước chân bạn!\n----------------------------------------------\nThông tin chi tiết liên hệ:\nFacebook: https://www.facebook.com/HebeFPT\nEmail: hebeclbfu@gmail.com\nChủ nhiệm:Lại Việt Hằng (0827 226 763)\nPhó chủ nhiệm: Lê Huyền Linh (0853 448 182)\n#FPTU_HebeClub\n#HebeGen7\n#HebeBeTogetherBeShine\n#Recruitment"
   },
   {
     "id": "a20000000000000000001036",
     "pdpEventId": 1036,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520335/ucms/event-covers/pdp-1036.jpg",
     "clubCode": "FPBC",
     "title": "FPBC RECUIMENT GEN 3: RELICTRAIL",
     "startAt": "2026-01-12T20:00:00+07:00",
@@ -585,6 +592,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001037",
     "pdpEventId": 1037,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520332/ucms/event-covers/pdp-1037.png",
     "clubCode": "FUGym",
     "title": "FU Strength Meet 2026",
     "startAt": "2026-07-18T07:30:00+07:00",
@@ -595,11 +603,12 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001038",
     "pdpEventId": 1038,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520329/ucms/event-covers/pdp-1038.jpg",
     "clubCode": "Mây Mưa Club",
     "title": "[FJC] [MÂY MƯA TUYỂN THÀNH VIÊN GEN 18: AMECITI - RECLAIM THE NIGHT]",
     "startAt": "2026-09-08T20:00:00+07:00",
     "endAt": "2026-09-19T12:00:00+07:00",
     "venueText": "Đại học FPT Hà Nội",
-    "objective": "[TUYỂN THÀNH VIÊN GEN 18: AMECITI - RECLAIM THE NIGHT]\nLink đăng ký: https://forms.gle/NPX1p2AWUwLo4xeV9\nThời gian vòng đơn:  8/9/2026 - 19/9/2026\nThời gian phỏng vấn: 22/9/2026 - 23/9/2026\n————————————\nAMECITI — RECLAIM THE NIGHT\nAMECITI — thành phố không bao giờ ngủ.\nNơi ánh đèn neon chưa từng tắt, những tuyến tàu vẫn không ngừng chuyển động và mọi thứ được kết nối trong một hệ thống tưởng như không thể bị phá vỡ.\nNhưng đêm nay, tất cả đã thay đổi.\nTín hiệu bị gián đoạn. Thành phố mất kết nối. Những vùng sáng lần lượt chìm vào bóng tối. Và giữa sự hỗn loạn ấy, một tín hiệu tuyển mộ bất ngờ được phát đi từ A.R.C. — AmeCiti Resistance Coalition:\nhttps://forms.gle/NPX1p2AWUwLo4xeV9\nKhông cần phải là người mạnh nhất.\nChỉ cần bạn sẵn sàng góp sức.\nSIGNAL DETECTED\nAWAITING RESPONSE…\nLiệu bạn sẽ chấp nhận lời hiệu triệu?\nTimeline vòng đơn: 8/9 - 19/9\n————————————\nContact us:\nFanpage: https://www.facebook.com/maymuaclub\n[email protected]\n#FPTU\n#FJC\n#MayMuaClub\n#つなごう\n#Amedayo"
+    "objective": "[TUYỂN THÀNH VIÊN GEN 18: AMECITI - RECLAIM THE NIGHT]\n\nLink đăng ký: https://forms.gle/NPX1p2AWUwLo4xeV9\nThời gian vòng đơn:  8/9/2026 - 19/9/2026\nThời gian phỏng vấn: 22/9/2026 - 23/9/2026\n————————————\n AMECITI — RECLAIM THE NIGHT\nAMECITI — thành phố không bao giờ ngủ.\nNơi ánh đèn neon chưa từng tắt, những tuyến tàu vẫn không ngừng chuyển động và mọi thứ được kết nối trong một hệ thống tưởng như không thể bị phá vỡ.\nNhưng đêm nay, tất cả đã thay đổi.\nTín hiệu bị gián đoạn. Thành phố mất kết nối. Những vùng sáng lần lượt chìm vào bóng tối. Và giữa sự hỗn loạn ấy, một tín hiệu tuyển mộ bất ngờ được phát đi từ A.R.C. — AmeCiti Resistance Coalition:\nhttps://forms.gle/NPX1p2AWUwLo4xeV9\nKhông cần phải là người mạnh nhất.\nChỉ cần bạn sẵn sàng góp sức.\n SIGNAL DETECTED\nAWAITING RESPONSE…\nLiệu bạn sẽ chấp nhận lời hiệu triệu?\nTimeline vòng đơn: 8/9 - 19/9\n————————————\nContact us:\nFanpage: https://www.facebook.com/maymuaclub\nEmail: fjcmaymuaclub@gmail.com\n#FPTU\n#FJC\n#MayMuaClub\n#つなごう\n#Amedayo"
   }
 ] as const;
