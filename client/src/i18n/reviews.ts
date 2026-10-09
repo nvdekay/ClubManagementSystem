@@ -10,7 +10,9 @@ const en = {
   overview: "Overview", clubName: "Club name", field: "Field", objectives: "Objectives",
   founders: "Founding members", documents: "Documents", noDocuments: "No documents",
   openDocument: "Open document", documentError: "Could not open this document.",
-  roles: "Proposed role structure", permissions: "Permissions", noPermissions: "No permissions",
+  roles: "Proposed role structure", permissions: "Permissions", noPermissions: "No permissions", leaderAllPermissions: "All club permissions (leader)",
+  reasonRequired: "Enter a reason for this decision.", sectionsRequired: "Select at least one section to revise.",
+  deadlineRequired: "Choose a revision deadline in the future.",
   boardSeat: "Board seat", singleHolder: "Single holder", history: "Submission history",
   decisions: "Decision history", noDecisions: "No decision has been recorded.",
   claim: "Claim this review", claiming: "Claiming…", claimedByOther: "Another officer owns this review.",
@@ -27,6 +29,7 @@ const en = {
   success: "Decision recorded.", actionError: "Could not complete the review action.",
   unauthorized: "Your current account does not have the ICPDP Officer role.",
   signIn: "Sign in to review applications.", status: "Status", decidedAt: "Decided {{date}}",
+  signInLink: "Sign in and continue",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -41,7 +44,9 @@ const vi: Record<keyof typeof en, string> = {
   overview: "Tổng quan", clubName: "Tên CLB", field: "Lĩnh vực", objectives: "Mục tiêu",
   founders: "Thành viên sáng lập", documents: "Tài liệu", noDocuments: "Không có tài liệu",
   openDocument: "Mở tài liệu", documentError: "Không thể mở tài liệu này.",
-  roles: "Cơ cấu role đề xuất", permissions: "Quyền", noPermissions: "Không có quyền",
+  roles: "Cơ cấu role đề xuất", permissions: "Quyền", noPermissions: "Không có quyền", leaderAllPermissions: "Toàn quyền Chủ nhiệm",
+  reasonRequired: "Hãy nhập lý do cho quyết định này.", sectionsRequired: "Hãy chọn ít nhất một phần cần chỉnh sửa.",
+  deadlineRequired: "Hãy chọn hạn chỉnh sửa trong tương lai.",
   boardSeat: "Ghế ban điều hành", singleHolder: "Một người giữ", history: "Lịch sử nộp",
   decisions: "Lịch sử quyết định", noDecisions: "Chưa có quyết định nào.",
   claim: "Nhận thẩm định", claiming: "Đang nhận…", claimedByOther: "Một officer khác đang xử lý hồ sơ này.",
@@ -58,6 +63,7 @@ const vi: Record<keyof typeof en, string> = {
   success: "Đã ghi quyết định.", actionError: "Không thể hoàn tất thao tác thẩm định.",
   unauthorized: "Tài khoản hiện tại không có role ICPDP Officer.",
   signIn: "Đăng nhập để thẩm định hồ sơ.", status: "Trạng thái", decidedAt: "Quyết định lúc {{date}}",
+  signInLink: "Đăng nhập và tiếp tục",
 };
 
 export const reviews = { en, vi };

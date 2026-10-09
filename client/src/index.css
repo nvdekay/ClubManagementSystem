@@ -110,6 +110,10 @@ body {
   --color-auth-button-hover-app: #302b25;
   --color-auth-button-border-app: #82796a;
   --color-auth-danger-surface-app: #402b28;
+  --color-auth-page-bg-app: #201e1d;
+  --color-auth-page-text-app: #f5ead8;
+  --color-auth-page-muted-app: #c0b6a5;
+  --color-auth-page-border-app: #51483e;
 }
 
 /* Clickable elements must show a pointer cursor — the browser UA stylesheet

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, useLocation } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppSwitch } from "@/components/ui/switch/AppSwitch";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/utils/cn";
 
 type Theme = "light" | "dark";
@@ -17,6 +18,10 @@ function initialTheme(): Theme {
 export function PublicLayout() {
   const { t, i18n } = useTranslation();
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const location = useLocation();
+  const auth = useAuth();
+  // Bring the visitor back to the page they were reading after signing in.
+  const loginTarget = `/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -46,8 +51,8 @@ export function PublicLayout() {
           <AppButton variant="secondary" className="rounded-full" onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}>
             {i18n.language === "vi" ? "EN" : "VI"}
           </AppButton>
-          <NavLink to="/login" className="rounded-full bg-primary-app px-4 py-2 text-sm font-semibold text-on-primary-app no-underline transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
-            {t("discovery.navWorkspace")}
+          <NavLink to={auth.data ? "/workspace" : loginTarget} className="rounded-full bg-primary-app px-4 py-2 text-sm font-semibold text-on-primary-app no-underline transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+            {auth.data ? t("common.myWorkspace") : t("discovery.navWorkspace")}
           </NavLink>
         </nav>
       </header>

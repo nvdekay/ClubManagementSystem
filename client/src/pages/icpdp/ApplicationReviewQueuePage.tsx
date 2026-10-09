@@ -52,12 +52,17 @@ export function ApplicationReviewQueuePage() {
         )}
       </div>
 
-      {auth.isPending || queue.isPending ? (
+      {auth.isPending || (isOfficer && queue.isPending) ? (
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <AppSkeleton className="h-48 w-full" /><AppSkeleton className="h-48 w-full" />
         </div>
       ) : !auth.data ? (
-        <AppCard className="mt-8"><p>{t("reviews.signIn")}</p></AppCard>
+        <AppCard className="mt-8">
+          <p>{t("reviews.signIn")}</p>
+          <Link className="mt-3 inline-block font-semibold text-accent-app"
+            to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
+            {t("reviews.signInLink")}</Link>
+        </AppCard>
       ) : !isOfficer ? (
         <AppCard className="mt-8 border-danger-app/40"><p role="alert" className="text-danger-app">{t("reviews.unauthorized")}</p></AppCard>
       ) : queue.isError ? (

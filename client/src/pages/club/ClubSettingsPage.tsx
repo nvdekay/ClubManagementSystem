@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -33,6 +33,7 @@ export function ClubSettingsPage() {
   const [profileDraft, setProfileDraft] = useState<ClubProfileInput | null>(null);
   const [department, setDepartment] = useState<ClubDepartmentInput>(emptyDepartment);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const loadedProfile = settings.data ? {
     description: settings.data.profile.description ?? "",
@@ -58,6 +59,9 @@ export function ClubSettingsPage() {
 
   async function saveProfile() {
     if (!auth.data || !clubId) return;
+    // The profile is not a <form>, so run the browser constraint checks (email, URL, required) by hand.
+    const invalid = profileRef.current?.querySelector<HTMLInputElement>("input:invalid, textarea:invalid");
+    if (invalid) { invalid.reportValidity(); return; }
     try {
       await action.mutateAsync({ kind: "profile", clubId, input: profile,
         csrfToken: auth.data.csrfToken });
@@ -102,12 +106,21 @@ export function ClubSettingsPage() {
     catch { /* Mutation error is rendered below. */ }
   }
 
-  if (auth.isPending || settings.isPending) {
+  // A disabled query stays pending forever, so only wait for settings the user may load.
+  if (auth.isPending || (canManage && settings.isPending)) {
     return <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
       <AppSkeleton className="h-[34rem] w-full" /><AppSkeleton className="h-[34rem] w-full" />
     </div>;
   }
-  if (!auth.data || !canManage) return (
+  if (!auth.data) return (
+    <AppCard className="mx-auto max-w-2xl">
+      <p>{t("clubSettings.signIn")}</p>
+      <Link className="mt-3 inline-block font-semibold text-accent-app"
+        to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
+        {t("clubSettings.signInLink")}</Link>
+    </AppCard>
+  );
+  if (!canManage) return (
     <AppCard className="mx-auto max-w-2xl"><p role="alert" className="text-danger-app">
       {t("clubSettings.permissionDenied")}
     </p></AppCard>
@@ -139,7 +152,7 @@ export function ClubSettingsPage() {
         <p className="mt-1 text-sm text-muted-app">{t("clubSettings.readOnlyHint")}</p>
         <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {([["code", current.code], ["name", current.name], ["field", current.field],
-            ["state", current.state]] as const).map(([label, value]) => (
+            ["state", current.state === "Pending Setup" ? t("clubSettings.pendingSetup") : current.state === "Active" ? t("discovery.active") : current.state === "Suspended" ? t("discovery.suspended") : current.state]] as const).map(([label, value]) => (
             <div key={label}><dt className="text-xs font-semibold uppercase tracking-wide text-muted-app">{t(`clubSettings.${label}`)}</dt><dd className="mt-1 font-semibold">{value}</dd></div>
           ))}
         </dl>
@@ -147,6 +160,7 @@ export function ClubSettingsPage() {
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
         <AppCard className="p-5 sm:p-6">
+          <div ref={profileRef} className="contents">
           <h2 className="text-xl font-bold font-heading">{t("clubSettings.profile")}</h2>
           <label className="mt-5 block text-sm font-semibold">{t("clubSettings.descriptionLabel")}
             <AppTextarea className="mt-2 min-h-32 w-full" value={profile.description}
@@ -165,11 +179,12 @@ export function ClubSettingsPage() {
           <div className="mt-6 flex items-center justify-between gap-3"><h3 className="font-bold font-heading">{t("clubSettings.channels")}</h3><AppButton variant="secondary" onClick={() => profileField("channels", [...profile.channels, { label: "", url: "" }])}>{t("clubSettings.addChannel")}</AppButton></div>
           <div className="mt-3 space-y-3">{profile.channels.map((channel, index) => (
             <div key={index} className="grid gap-2 rounded-lg border border-border-app p-3 sm:grid-cols-[1fr_1.4fr_auto]">
-              <AppInput aria-label={t("clubSettings.channelLabel")} placeholder={t("clubSettings.channelLabel")} value={channel.label} onChange={(event) => channelField(index, "label", event.target.value)} />
-              <AppInput aria-label={t("clubSettings.channelUrl")} type="url" placeholder={t("clubSettings.channelUrl")} value={channel.url} onChange={(event) => channelField(index, "url", event.target.value)} />
+              <AppInput required aria-label={t("clubSettings.channelLabel")} placeholder={t("clubSettings.channelLabel")} value={channel.label} onChange={(event) => channelField(index, "label", event.target.value)} />
+              <AppInput required aria-label={t("clubSettings.channelUrl")} type="url" placeholder={t("clubSettings.channelUrl")} value={channel.url} onChange={(event) => channelField(index, "url", event.target.value)} />
               <AppButton variant="secondary" onClick={() => profileField("channels", profile.channels.filter((_, currentIndex) => currentIndex !== index))}>{t("clubSettings.removeChannel")}</AppButton>
             </div>
           ))}</div>
+          </div>
           <AppButton className="mt-6 w-full sm:w-auto" disabled={action.isPending} onClick={() => void saveProfile()}>{action.isPending ? t("clubSettings.saving") : t("clubSettings.saveProfile")}</AppButton>
         </AppCard>
 
