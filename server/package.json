@@ -11,6 +11,7 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "seed": "node --env-file-if-exists=../.env --import tsx src/infra/db/seed.ts",
+    "seed:demo": "node --env-file-if-exists=../.env --import tsx src/infra/db/seed-demo.ts",
     "db:init": "node --env-file-if-exists=../.env --import tsx src/infra/db/init.ts",
     "db:verify": "node --env-file-if-exists=../.env --import tsx src/infra/db/verify.ts",
     "typecheck": "tsc --noEmit",
