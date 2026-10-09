@@ -65,7 +65,8 @@ export function mongoDashboardRepository(): DashboardRepository {
           complainantId: user, state: { $nin: ["Withdrawn"] },
         }),
         panel("openRecruitment", "recruitmentCampaigns", {
-          state: "Accepting Applications", windowStart: { $lte: now }, windowEnd: { $gt: now },
+          // Same visibility rule as the public directory: a published campaign accepts applications in its window.
+          state: { $in: ["Published", "Accepting Applications"] }, windowStart: { $lte: now }, windowEnd: { $gt: now },
         }),
         panel("upcomingEvents", "events", { state: "Upcoming", startAt: { $gte: now } }),
       ]);
