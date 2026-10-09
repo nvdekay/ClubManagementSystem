@@ -26,6 +26,8 @@ import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
 import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
 import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
 import { BoardNominationDetailPage } from "./pages/icpdp/BoardNominationDetailPage.js";
+import { LeadershipTransitionQueuePage } from "./pages/icpdp/LeadershipTransitionQueuePage.js";
+import { LeadershipTransitionDetailPage } from "./pages/icpdp/LeadershipTransitionDetailPage.js";
 import { RecruitmentCampaignPage } from "./pages/club/RecruitmentCampaignPage.js";
 import { RecruitmentReviewPage } from "./pages/club/RecruitmentReviewPage.js";
 import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicationPage.js";
@@ -64,6 +66,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
             <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
             <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
+            <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />
+            <Route path="workspace/leadership-transitions/:id" element={<LeadershipTransitionDetailPage />} />
             <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
             <Route path="club/:clubId/board" element={<BoardNominationPage />} />
             <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />

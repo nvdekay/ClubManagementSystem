@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 
 import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
+import { common } from "@/i18n/common";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -205,7 +206,7 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
 }
 
 function navigation(context: Context, workspace: Workspace | undefined,
-  t: ReturnType<typeof useTranslation>["t"]): Array<{ title: string; items: NavItem[] }> {
+  t: (key: `common.${keyof typeof common.en}`) => string): Array<{ title: string; items: NavItem[] }> {
   const explore = { title: t("common.sectionExplore"), items: [
     { to: "/clubs", label: t("common.navDiscover"), icon: "compass" as const },
     { to: "/events", label: t("common.navEvents"), icon: "calendar" as const },
@@ -222,6 +223,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/icpdp", label: t("common.navOverview"), icon: "home", end: true },
       { to: "/workspace/reviews", label: t("common.navReviews"), icon: "inbox" },
       { to: "/workspace/board-nominations", label: t("common.navNominations"), icon: "badge" },
+      { to: "/workspace/leadership-transitions", label: t("common.navTransitions"), icon: "calendar" },
       { to: "/workspace/policy", label: t("common.navPolicy"), icon: "shield" },
       { to: "/icpdp/accounts", label: t("common.navAccounts"), icon: "users" },
     ] }, explore];

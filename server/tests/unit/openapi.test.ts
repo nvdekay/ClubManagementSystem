@@ -9,6 +9,7 @@ import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment
 import type { RecruitmentApplicationRepository } from "../../src/domain/recruitment-application.js";
 import type { MembershipRepository } from "../../src/domain/membership.js";
 import type { DashboardRepository } from "../../src/domain/dashboard.js";
+import type { LeadershipTransitionRepository } from "../../src/domain/leadership-transition.js";
 import { openApiDocument } from "../../src/interface/http/openapi.js";
 import { buildApp } from "../../src/interface/http/server.js";
 
@@ -126,6 +127,11 @@ const stubDashboard: DashboardRepository = {
   club: async (clubId, _permissions, now) => ({ kind: "club", clubId, generatedAt: now, panels: [] }),
   icpdp: async (now) => ({ kind: "icpdp", generatedAt: now, panels: [] }),
 };
+const stubLeadershipTransitions: LeadershipTransitionRepository = {
+  listOpen: async () => [], find: async () => null,
+  claim: async () => { throw new Error("unused"); },
+  decide: async () => { throw new Error("unused"); },
+};
 
 // Minimal view of Express 5's router internals — enough to enumerate mounted routes.
 interface Layer {
@@ -152,6 +158,7 @@ describe("openapi document", () => {
       recruitmentApplicationRepo: stubRecruitmentApplications,
       membershipRepo: stubMemberships,
       dashboardRepo: stubDashboard,
+      leadershipTransitionRepo: stubLeadershipTransitions,
       publicRepo: stubPublic, dbReady: () => true });
     const base = openApiDocument.servers?.[0]?.url ?? "";
     expect(base).toBe("/api/v1");

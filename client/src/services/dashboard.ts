@@ -8,7 +8,7 @@ export const dashboardPanelKeys = [
   "currentTerms", "structureHistory", "pendingClubApplications", "pendingReports",
   "approvalTasks", "overdueApprovals", "activeClubs", "suspendedClubs",
   "unreconciledBudgets", "overdueSettlements", "overdueRefunds", "internalEvents",
-  "roleStructures", "boardHistory",
+  "roleStructures", "boardHistory", "transitionFollowUps",
 ] as const;
 
 export type DashboardPanelKey = (typeof dashboardPanelKeys)[number];

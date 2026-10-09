@@ -40,6 +40,7 @@ const en = {
   internalEvents: "ICPDP internal events",
   roleStructures: "Club role structures",
   boardHistory: "Confirmed board assignments",
+  transitionFollowUps: "Transition obligations to follow up",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -84,6 +85,7 @@ const vi: Record<keyof typeof en, string> = {
   internalEvents: "Sự kiện nội bộ ICPDP",
   roleStructures: "Cơ cấu vai trò CLB",
   boardHistory: "Lịch sử ban điều hành đã xác nhận",
+  transitionFollowUps: "Nghĩa vụ bàn giao cần theo dõi",
 };
 
 export const dashboard = { en, vi };

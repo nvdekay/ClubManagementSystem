@@ -5,6 +5,7 @@ import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
+import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
@@ -169,6 +170,23 @@ const BoardNominationContext = z.object({ clubId: z.string(), clubName: z.string
   clubState: z.string(), term: BoardTerm.nullable(), positions: z.array(BoardPosition),
   candidates: z.array(BoardCandidate), occupiedPositionIds: z.array(z.string()),
   pendingPositionIds: z.array(z.string()), presidentConflictMembershipIds: z.array(z.string()) });
+const TransitionObligation = z.object({ id: z.string(), type: z.string(), entityId: z.string().optional(),
+  description: z.string(), assigneeMembershipId: z.string() });
+const LeadershipTransition = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), clubState: z.string(),
+  fromTerm: BoardTerm, toTerm: BoardTerm,
+  candidates: z.array(z.object({ positionCode: z.string(), positionName: z.string(),
+    membershipId: z.string(), userId: z.string(), displayName: z.string() })),
+  outstandingObligations: z.array(TransitionObligation),
+  handover: z.object({ items: z.array(z.object({ id: z.string(), description: z.string() })),
+    proposedBoardRoles: z.array(z.object({ code: z.string(), name: z.string(), unit: z.string().optional(),
+      isLeaderRole: z.boolean(), isSingleHolder: z.boolean(), permissionCodes: z.array(z.string()) })).optional() }),
+  state: z.string(), submittedBy: z.string(), submittedAt: z.string(),
+  followUpConditions: z.array(TransitionObligation), task: BoardTask,
+  decisions: z.array(z.object({ id: z.string(), outcome: z.enum(["Approve", "Request revision"]),
+    reason: z.string().optional(), followUpObligationIds: z.array(z.string()),
+    actorId: z.string(), at: z.string() })),
+});
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -682,6 +700,31 @@ export const openApiDocument = createDocument({
         responses: { "200": { description: "Decided board nomination", content: {
           "application/json": { schema: envelope(BoardNomination) },
         } } } },
+    },
+    "/admin/leadership-transitions": {
+      get: { summary: "List open leadership transition tasks (ICPDP Officer only)",
+        responses: { "200": { description: "Leadership transition queue", content: {
+          "application/json": { schema: envelope(z.array(LeadershipTransition)) },
+        } } } },
+    },
+    "/admin/leadership-transitions/{id}": {
+      get: { summary: "Read a leadership transition plan and its carried obligations",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Transition detail",
+          content: { "application/json": { schema: envelope(LeadershipTransition) } } } } },
+    },
+    "/admin/leadership-transitions/{id}/claim": {
+      post: { summary: "Claim an open leadership transition task (requires CSRF token)",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Claimed task",
+          content: { "application/json": { schema: envelope(LeadershipTransition) } } } } },
+    },
+    "/admin/leadership-transitions/{id}/decision": {
+      post: { summary: "Approve or return a leadership transition (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: transitionDecisionBody } } },
+        responses: { "200": { description: "Decided transition", content: {
+          "application/json": { schema: envelope(LeadershipTransition) },
+        } }, "409": { description: "Transition held while club is suspended or source data changed",
+          content: { "application/json": { schema: ApiError } } } } },
     },
     "/clubs/{clubId}/board-nomination-context": {
       get: { summary: "Read current board seats and active club members for nomination",

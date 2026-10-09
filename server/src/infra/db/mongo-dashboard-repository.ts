@@ -25,6 +25,19 @@ async function panel(
   }
 }
 
+async function transitionFollowUps(clubId: Types.ObjectId): Promise<DashboardPanel> {
+  try {
+    const totals = await model("transitionPlans").aggregate<{ count: number }>([
+      { $match: { clubId, state: "Confirmed" } },
+      { $project: { count: { $size: { $ifNull: ["$followUpConditions", []] } } } },
+      { $group: { _id: null, count: { $sum: "$count" } } },
+    ]);
+    return { key: "transitionFollowUps", status: "ready", count: totals[0]?.count ?? 0 };
+  } catch {
+    return { key: "transitionFollowUps", status: "error" };
+  }
+}
+
 function buildSnapshot(
   kind: DashboardSnapshot["kind"],
   generatedAt: Date,
@@ -94,6 +107,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         }),
         panel("structureHistory", "clubRoleStructureVersions", { clubId: club }),
         ] : []),
+        ...(allowed.has("club.transition.plan") ? [transitionFollowUps(club)] : []),
       ];
       return buildSnapshot("club", now, panels, clubId);
     },

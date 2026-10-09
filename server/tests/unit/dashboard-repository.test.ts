@@ -9,7 +9,7 @@ const studentCollections = [
 const clubCollections = [
   "clubMemberships", "recruitmentCampaigns", "events", "eventBudgets", "expenses",
   "periodicReports", "propertyBookings", "eventFeedbacks", "violations", "clubTerms",
-  "clubRoleStructureVersions",
+  "clubRoleStructureVersions", "transitionPlans",
 ] as const;
 
 afterEach(() => vi.restoreAllMocks());
@@ -50,5 +50,18 @@ describe("Mongo dashboard read model", () => {
     expect(events).toHaveBeenCalledOnce();
     expect(budgets).not.toHaveBeenCalled();
     expect(memberships).not.toHaveBeenCalled();
+  });
+
+  it("sums individual conditional transition obligations for the incoming leader", async () => {
+    vi.spyOn(ucmsModels.recruitmentCampaigns!, "countDocuments").mockResolvedValue(0 as never);
+    vi.spyOn(ucmsModels.events!, "countDocuments").mockResolvedValue(0 as never);
+    vi.spyOn(ucmsModels.transitionPlans!, "aggregate").mockResolvedValue([{ count: 3 }] as never);
+
+    const result = await mongoDashboardRepository().club(
+      "abcdefabcdefabcdefabcdef", ["club.transition.plan"], new Date("2026-10-09T08:00:00Z"),
+    );
+
+    expect(result.panels.find((item) => item.key === "transitionFollowUps"))
+      .toEqual({ key: "transitionFollowUps", status: "ready", count: 3 });
   });
 });

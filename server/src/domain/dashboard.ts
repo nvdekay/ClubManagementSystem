@@ -9,6 +9,7 @@ export const CLUB_DASHBOARD_PANELS = [
   "activeMembers", "openCampaigns", "upcomingEvents", "pendingEventProposals",
   "activeBudgets", "missingEvidence", "overdueReports", "upcomingBookings",
   "feedback", "openViolations", "currentTerms", "structureHistory",
+  "transitionFollowUps",
 ] as const;
 
 export const ICPDP_DASHBOARD_PANELS = [

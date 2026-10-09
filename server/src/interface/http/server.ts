@@ -12,6 +12,7 @@ import type { RecruitmentCampaignRepository } from "../../domain/recruitment-cam
 import type { MembershipRepository } from "../../domain/membership.js";
 import type { RecruitmentApplicationRepository, RecruitmentAttachmentStorage } from "../../domain/recruitment-application.js";
 import type { DashboardRepository } from "../../domain/dashboard.js";
+import type { LeadershipTransitionRepository } from "../../domain/leadership-transition.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
@@ -25,6 +26,7 @@ import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
 import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
 import { membershipRoutes } from "./membership-routes.js";
 import { dashboardRoutes } from "./dashboard-routes.js";
+import { leadershipTransitionRoutes } from "./leadership-transition-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -58,6 +60,7 @@ export function buildApp(deps: {
   recruitmentApplicationRepo?: RecruitmentApplicationRepository;
   membershipRepo?: MembershipRepository;
   dashboardRepo?: DashboardRepository;
+  leadershipTransitionRepo?: LeadershipTransitionRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
@@ -94,6 +97,11 @@ export function buildApp(deps: {
       app.use("/api/v1", boardNominationRoutes({
         repo: deps.boardNominationRepo, accessRepo: deps.auth.accessRepo,
         authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+    }
+    if (deps.leadershipTransitionRepo) {
+      app.use("/api/v1", leadershipTransitionRoutes({
+        repo: deps.leadershipTransitionRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
     }
     if (deps.recruitmentCampaignRepo && deps.policyRepo) {
@@ -146,12 +154,14 @@ export function buildApp(deps: {
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
   const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
+  const hasLeadershipTransitions = Boolean(hasAdmin && deps.leadershipTransitionRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
       if (path.startsWith("/admin/policies")) return hasPolicy;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
+      if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
       if (path.startsWith("/dashboard")) return hasDashboard;
