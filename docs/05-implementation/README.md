@@ -7,6 +7,7 @@ Cách biến baseline yêu cầu thành code: phân rã công việc và thiết
 | [`TASKS.md`](TASKS.md) | Danh sách công việc triển khai cho database, backend và frontend, nhóm theo các vòng lặp bàn giao ở `../SRS.md` §15. Mỗi task đều trích dẫn use case, yêu cầu chức năng hoặc quy tắc nghiệp vụ mà nó thoả mãn, và các task đang bị chặn được liệt kê kèm quyết định cần chốt để gỡ chặn |
 | [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) | Backlog thực thi đã đối chiếu SRS, mockup HTML và source hiện tại; ưu tiên Auth/Authz trước, kèm MongoDB, mapping màn hình và gate nghiệm thu |
 | [`AUTH_SETUP.md`](AUTH_SETUP.md) | Cấu hình Google OAuth, cookie phiên và MongoDB local cho Auth |
+| [`SESSION_HANDOFF_2026-10-09.md`](SESSION_HANDOFF_2026-10-09.md) | Handoff hiện hành: quyết định đã chốt, tình trạng từng luồng, fixture local, kiểm chứng gần nhất và ưu tiên tiếp theo cho session mới |
 | [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 49 collection MongoDB, 24 enum, nhóm theo module. Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
 
 ## Dùng file DBML

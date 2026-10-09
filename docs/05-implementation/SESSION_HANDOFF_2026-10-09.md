@@ -10,8 +10,7 @@ source/SPEC mới nhất. Không ghi đè các thay đổi chưa commit, không 
 2. Chạy `git status --short` và giữ nguyên toàn bộ thay đổi hiện có. Worktree đang có nhiều thay
    đổi chưa commit thuộc các luồng trước và phần QA UI; không dùng `reset`, `checkout` hay dọn file.
 3. Đọc handoff này, `docs/05-implementation/IMPLEMENTATION_BACKLOG.md`, rồi SPEC/TASKS của luồng
-   nhận tiếp. `docs/05-implementation/SESSION_HANDOFF.md` là snapshot ngày 2026-10-08, một phần
-   thông tin trong đó đã cũ; không thay thế file đó bằng snapshot này.
+   nhận tiếp. Đây là handoff duy nhất còn hiệu lực; bản 2026-10-08 đã cũ và đã được gộp vào đây.
 4. Không chỉnh các sơ đồ. Trước khi sửa một file hiện đang modified, kiểm tra diff và chỉ thay đổi
    phần cần thiết.
 
@@ -78,6 +77,25 @@ bên ngoài đã được xác minh.
 
 DBML/generated schema có nhiều collection cho các use case sau, nhưng **schema đơn lẻ không có
 nghĩa workflow đã được triển khai**.
+
+## Fixture local để thử workspace
+
+MongoDB mà server dùng là `mongod` trên host qua `MONGO_URI` trong `.env`, không phải Mongo bên
+trong `docker compose exec`. Máy từng chạy đồng thời hai Mongo; phải kiểm tra đúng instance trước
+khi sửa dữ liệu.
+
+Tài khoản Google local của người phát triển (không ghi email vào repo) có bốn ngữ cảnh:
+
+| Workspace | Dữ liệu |
+|---|---|
+| Student | luôn được `/auth/me` thêm mặc định |
+| ICPDP | system role `ICPDP_OFFICER` |
+| Club Leader | `HEBE Club`, membership Active, term Active, leader assignment đã xác nhận, 15 permission |
+| Club Member | `Mây Mưa Club`, membership Active, role `Members`, không có permission quản trị |
+
+Fixture này chỉ nằm trong database local, không nằm trong seed đã commit. `npm run seed` chỉ bảo
+đảm 48 CLB và 21 sự kiện PDP cùng ba `demoUsers` của template. Database local còn dữ liệu QA
+(tài khoản `*@ucms.test`, CLB `CLB-6348CB00`, các hồ sơ/đợt tuyển `[QA] …`) đang chờ quyết định dọn.
 
 ## Kiểm chứng gần nhất
 
