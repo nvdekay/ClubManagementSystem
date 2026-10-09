@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 
+import { ClubLogo } from "@/components/custom/ClubLogo";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -87,9 +88,7 @@ export function ClubDirectory() {
             {clubs.data.items.map((club) => (
               <li key={club.id}>
                 <Link to={`/clubs/${club.id}`} className="group flex h-full gap-4 rounded-2xl p-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
-                  <span aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft-app font-heading text-xl font-bold text-primary-app">
-                    {club.name.trim().charAt(0).toUpperCase()}
-                  </span>
+                  <ClubLogo name={club.name} logoUrl={club.logoUrl} />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-xs font-semibold tracking-wider text-mint-app uppercase">{club.field}</span>

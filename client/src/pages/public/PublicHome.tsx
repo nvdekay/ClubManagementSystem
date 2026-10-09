@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 
+import { ClubLogo } from "@/components/custom/ClubLogo";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -132,9 +133,7 @@ export function PublicHome() {
             {featuredClubs.map((club) => (
               <li key={club.id}>
                 <Link to={`/clubs/${club.id}`} className="group flex h-full gap-4 rounded-2xl p-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
-                  <span aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary-soft-app font-heading text-xl font-bold text-primary-app">
-                    {club.name.trim().charAt(0).toUpperCase()}
-                  </span>
+                  <ClubLogo name={club.name} logoUrl={club.logoUrl} />
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="text-xs font-semibold tracking-wide text-mint-app uppercase">{club.field}</span>
                     <span className="font-heading text-lg font-bold text-text-app group-hover:text-primary-app">{club.name}</span>

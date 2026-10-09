@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
 import { PublicEventCard } from "@/components/custom/PublicEventCard";
+import { ClubLogo } from "@/components/custom/ClubLogo";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -43,6 +44,7 @@ export function ClubDetail() {
           <header className="relative overflow-hidden rounded-[2rem] bg-primary-soft-app p-6 sm:p-10">
             <span aria-hidden="true" className="pointer-events-none absolute -top-20 -right-16 size-72 rounded-full bg-auth-orb-small-app opacity-60 blur-3xl" />
             <div className="relative">
+            <ClubLogo name={detail.data.club.name} logoUrl={detail.data.club.logoUrl} size={96} className="mb-6 rounded-3xl shadow-md" />
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-semibold tracking-wide text-primary-app uppercase">
                 {detail.data.club.field}
