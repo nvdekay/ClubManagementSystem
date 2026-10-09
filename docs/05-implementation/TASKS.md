@@ -209,16 +209,16 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [x] **BE-5.1** UC29 đăng ký với validate khung thời gian, đối tượng, trùng lặp và sức chứa trong một thao tác ghi nguyên tử. → FR-UC29-01…09 · counter `confirmedRegistrationCount` tăng có điều kiện trong transaction, unique `(eventId, studentId)`, form snapshot của revision hiện hành, audit + notification.
 - [x] **BE-5.2** UC29 A1 danh sách chờ và A2 tự huỷ để giải phóng suất. → FR-UC29-04/05 · `nextWaitlistPosition` tăng nguyên tử; huỷ `Confirmed` giảm counter; đăng ký lại dùng lại document. Tự promote waitlist thuộc UC30.
 - [ ] **BE-5.3** UC30 đổi sức chứa và đẩy lên theo chính sách đã cấu hình; từ chối giảm xuống dưới số đã xác nhận. → FR-UC30-01…06
-- [ ] **BE-5.4** UC31 check-in: xác minh đăng ký và khung giờ, tạo đúng một bản ghi, **mở feedback window**. → FR-UC31-01…03, BR36
-- [ ] **BE-5.5** UC31 A1 check-in thủ công lưu lại ai thực hiện; A2 khách vãng lai tạo kèm bản đăng ký. → FR-UC31-04/05
-- [ ] **BE-5.6** UC31 các đường từ chối khi check-in trùng và khi ngoài khung giờ. → FR-UC31-06…08, BR18
+- [x] **BE-5.4** UC31 check-in: xác minh đăng ký và khung giờ, tạo đúng một bản ghi, **mở feedback window**. → FR-UC31-01…03, BR36 · `POST /events/{id}/check-in`, `GET /attendances/mine`; feedback window suy ra từ `checkedInAt` tới `endAt + feedbackWindowHours`.
+- [ ] **BE-5.5** UC31 A1 check-in thủ công lưu lại ai thực hiện; A2 khách vãng lai tạo kèm bản đăng ký. → FR-UC31-04/05 · **A2 đã xong** (tạo/tái dùng đăng ký `Confirmed`, cờ `walk-in`); A1 làm cùng màn điểm danh CLB (UC32).
+- [x] **BE-5.6** UC31 các đường từ chối khi check-in trùng và khi ngoài khung giờ. → FR-UC31-06…08, BR18 · check-in trùng trả bản ghi đầu tiên (`alreadyCheckedIn`), unique index chống ghi song song.
 - [ ] **BE-5.7** UC32 đánh dấu bản ghi bất thường, sửa kèm lý do, chốt và khoá. → FR-UC32-01…07
 - [ ] **BE-5.8** UC32 A1 mở khoá chỉ dành cho vai trò đặc biệt, có ghi audit. → BR19, AUD-03
 - [ ] **BE-5.9** Test tương tranh: N lượt đăng ký song song vào một sự kiện sức chứa 1 phải cho ra đúng một bản `Confirmed`. → NFR-PERF-03
 
 ### Frontend
 - [x] **FE-5.1** Biểu mẫu đăng ký sự kiện, màn xác nhận, danh sách đăng ký của tôi. → UC29 · panel đăng ký trên event detail, `/workspace/event-registrations`, panel dashboard UC02; QA trình duyệt desktop/mobile, `en`/`vi`, light/dark.
-- [ ] **FE-5.2** Màn check-in (mã / QR) kèm thông điệp cho trường hợp trùng và ngoài khung giờ. → UC31, MSG11
+- [x] **FE-5.2** Màn check-in (mã / QR) kèm thông điệp cho trường hợp trùng và ngoài khung giờ. → UC31, MSG11 · hộp check-in trên “Sự kiện của tôi” và event detail, QR là deep link `?checkin=&code=`, tab “Đã check-in”.
 - [ ] **FE-5.3** Màn quản lý đăng ký và danh sách chờ. → UC30
 - [ ] **FE-5.4** Màn chốt điểm danh kèm phần xem lại bản ghi bất thường và hộp xác nhận khoá. → UC32, SA-01
 

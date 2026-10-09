@@ -64,6 +64,11 @@ bên ngoài đã được xác minh.
   qua `confirmedRegistrationCount`/`nextWaitlistPosition`; UC30 promote waitlist chưa triển khai.
   Fixture QA: event `[QA] Workshop nhảy hiện đại…` (`a2000000000000000000aa29`) và transition plan
   `[QA] CLB Chuyển giao Nhiệm kỳ` (`ac130000000000000000000f`) trong DB local.
+- **UC31:** Student check-in bằng mã trên “Sự kiện của tôi”/event detail hoặc QR deep link
+  `/workspace/event-registrations?checkin=<eventId>&code=<mã>`; đúng một `Attendance` (BR18),
+  walk-in tạo kèm đăng ký (A2), feedback window mở từ lúc check-in (BR36), dashboard có lịch sử.
+  A1 (CMB check-in thủ công) và UC48 gửi phản hồi chưa làm. Fixture QA: event đang diễn ra
+  `[QA] Check-in demo` (`a2000000000000000000aa31`, mã `QA-2026`).
 - **UC13:** queue/detail/claim/decision ICPDP đã hoàn tất; xác nhận chuyển term/assignment,
   áp dụng thay đổi role ban điều hành thành phiên bản mới, hỗ trợ nghĩa vụ follow-up trên UC02,
   giữ plan khi CLB `Suspended`, audit và thông báo hai ban. UC12 tạo plan vẫn chưa triển khai.
