@@ -1,18 +1,36 @@
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
-import type {
-  AcademicSemester, PolicyDecisionImpact, PolicyImpactReason, PolicyManagementRepository,
-  PolicySettings, PolicyVersion, ReportDeadline,
+import {
+  CLUB_PROFILE_FORM_FIELDS, DEFAULT_FORM_REQUIREMENTS, FOUNDING_FORM_FIELDS,
+  type AcademicSemester, type FormRequirements, type PolicyDecisionImpact, type PolicyImpactReason,
+  type PolicyManagementRepository, type PolicySettings, type PolicyVersion, type ReportDeadline,
 } from "../../domain/policy.js";
 import { ucmsModels } from "./ucms-models.js";
+
+function flags<K extends string>(raw: unknown, keys: readonly K[],
+  fallback: Readonly<Record<K, boolean>>): Record<K, boolean> {
+  const record = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+  return Object.fromEntries(keys.map((key) => [key,
+    typeof record[key] === "boolean" ? record[key] : fallback[key]])) as Record<K, boolean>;
+}
+
+/** Versions written before form requirements existed read as the defaults. */
+function formRequirementsFrom(raw: unknown): FormRequirements {
+  const record = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
+  return {
+    clubFounding: flags(record.clubFounding, FOUNDING_FORM_FIELDS,
+      DEFAULT_FORM_REQUIREMENTS.clubFounding),
+    clubProfile: flags(record.clubProfile, CLUB_PROFILE_FORM_FIELDS,
+      DEFAULT_FORM_REQUIREMENTS.clubProfile),
+  };
+}
 
 function mapPolicy(doc: Record<string, unknown>): PolicyVersion {
   const rawCalendar = doc.academicCalendar as AcademicSemester[];
   return {
     id: String(doc._id),
-    allowedEmailDomains: doc.allowedEmailDomains as string[],
     minFoundingMembers: Number(doc.minFoundingMembers),
-    mandatoryApplicationDocuments: doc.mandatoryApplicationDocuments as string[],
+    formRequirements: formRequirementsFrom(doc.formRequirements),
     reportDeadlines: doc.reportDeadlines as ReportDeadline[],
     conflictThresholdMinutes: Number(doc.conflictThresholdMinutes),
     feedbackWindowHours: Number(doc.feedbackWindowHours),

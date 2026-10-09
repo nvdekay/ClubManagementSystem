@@ -6,48 +6,12 @@ import type {
   ApplicationReviewTask,
   ClubApplicationReviewRepository,
 } from "../../domain/club-application-review.js";
-import type {
-  ApplicationDocument,
-  ClubApplicationDraft,
-  ClubApplicationRecord,
-  ClubApplicationState,
-  ClubApplicationVersion,
-} from "../../domain/club-application.js";
+import { FOUNDING_POSITIONS } from "../../domain/club-application.js";
 import { DomainError } from "../../domain/errors.js";
+import {
+  applicationDraftFrom, mapApplicationRecord, mapApplicationVersion,
+} from "./mongo-club-application-repository.js";
 import { ucmsModels } from "./ucms-models.js";
-
-function draftFrom(raw: Record<string, unknown> | undefined): ClubApplicationDraft {
-  return {
-    clubName: String(raw?.clubName ?? ""), field: String(raw?.field ?? ""),
-    objectives: String(raw?.objectives ?? ""),
-    foundingUserIds: (raw?.foundingUserIds ?? []) as string[],
-    proposedRoles: (raw?.proposedRoles ?? []) as ClubApplicationDraft["proposedRoles"],
-    documents: ((raw?.documents ?? []) as ApplicationDocument[]).map((document) => ({
-      ...document, uploadedAt: new Date(document.uploadedAt),
-    })),
-  };
-}
-
-function recordFrom(doc: Record<string, unknown>): ClubApplicationRecord {
-  const draft = doc.draftPayload as Record<string, unknown> | undefined;
-  return {
-    id: String(doc._id), founderUserId: String(doc.founderUserId),
-    state: doc.state as ClubApplicationState,
-    currentVersionNo: Number(doc.currentVersionNo),
-    draftRevision: Number(draft?._revision ?? 0), draft: draftFrom(draft),
-    submittedAt: doc.submittedAt as Date | undefined, createdAt: doc.createdAt as Date,
-  };
-}
-
-function versionFrom(doc: Record<string, unknown>): ClubApplicationVersion {
-  const payload = doc.payload as { policyVersionId: string; snapshot: ClubApplicationDraft };
-  return {
-    id: String(doc._id), applicationId: String(doc.applicationId),
-    versionNo: Number(doc.versionNo), policyVersionId: payload.policyVersionId,
-    snapshot: draftFrom(payload.snapshot as unknown as Record<string, unknown>),
-    submittedAt: doc.submittedAt as Date,
-  };
-}
 
 function taskFrom(doc: Record<string, unknown>): ApplicationReviewTask {
   return {
@@ -86,6 +50,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
   const memberships = ucmsModels.clubMemberships!;
   const positions = ucmsModels.clubPositions!;
   const structures = ucmsModels.clubRoleStructureVersions!;
+  const assignments = ucmsModels.clubPositionAssignments!;
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
   const users = ucmsModels.users!;
@@ -104,9 +69,9 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       approvalTaskId: { $in: taskDocs.map((item) => item._id) },
     })
       .sort({ at: 1 }).session(session ?? null).lean();
-    const mappedVersions = versionDocs.map(versionFrom);
-    const founderIds = (mappedVersions.at(-1)?.snapshot.foundingUserIds ?? [])
-      .filter((value) => Types.ObjectId.isValid(value));
+    const mappedVersions = versionDocs.map(mapApplicationVersion);
+    const founderIds = (mappedVersions.at(-1)?.snapshot.founders ?? [])
+      .map((founder) => founder.userId).filter((value) => Types.ObjectId.isValid(value));
     const founderDocs = await users.find({ _id: { $in: founderIds.map((value) => new Types.ObjectId(value)) } })
       .select("_id displayName email").session(session ?? null).lean();
     const byId = new Map(founderDocs.map((doc) => [String(doc._id), {
@@ -114,7 +79,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       displayName: typeof doc.displayName === "string" && doc.displayName ? doc.displayName : String(doc.email),
     }]));
     return {
-      application: recordFrom(application), task: taskFrom(task),
+      application: mapApplicationRecord(application), task: taskFrom(task),
       versions: mappedVersions, decisions: decisionDocs.map(decisionFrom),
       founders: founderIds.flatMap((value) => byId.get(value) ?? []),
     };
@@ -132,7 +97,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       const byId = new Map(appDocs.map((application) => [String(application._id), application]));
       return taskDocs.flatMap((task) => {
         const application = byId.get(String(task.entityId));
-        return application ? [{ task: taskFrom(task), application: recordFrom(application) }] : [];
+        return application ? [{ task: taskFrom(task), application: mapApplicationRecord(application) }] : [];
       });
     },
 
@@ -195,49 +160,82 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         const version = await versions.findOne({ applicationId: id,
           versionNo: application.currentVersionNo }).session(session).lean();
         if (!version) return conflict("submitted application version is missing");
-        const payload = version.payload as { policyVersionId?: string; snapshot: ClubApplicationDraft };
-        const snapshot = draftFrom(payload.snapshot as unknown as Record<string, unknown>);
+        const payload = version.payload as { policyVersionId?: string; snapshot: Record<string, unknown> };
+        const snapshot = applicationDraftFrom(payload.snapshot, String(application.founderUserId));
         let createdClubId: Types.ObjectId | undefined;
+        const founderIds = new Set(snapshot.founders.map((founder) => founder.userId));
+        founderIds.add(String(application.founderUserId));
 
         if (input.outcome === "Approve") {
+          // Approving the application also confirms the founding board (no separate UC10 round).
+          const leader = snapshot.founders.find((founder) => founder.role === "LEADER")
+            ?? { userId: String(application.founderUserId), role: "LEADER" as const };
+          // Touch the leader so a concurrent approval naming the same leader conflicts.
+          await users.updateOne({ _id: new Types.ObjectId(leader.userId) },
+            { $currentDate: { updatedAt: true } }, { session });
+          const leaderPositionIds = await positions.find({ isLeaderRole: true, isActive: true })
+            .session(session).distinct("_id");
+          const runningTermIds = await terms.find({ state: { $in: ["Active", "Planned"] },
+            endAt: { $gt: now } }).session(session).distinct("_id");
+          const leaderMembershipIds = await assignments.find({ positionId: { $in: leaderPositionIds },
+            termId: { $in: runningTermIds }, effectiveTo: { $in: [null] } })
+            .session(session).distinct("membershipId");
+          if (await memberships.exists({ _id: { $in: leaderMembershipIds },
+            userId: new Types.ObjectId(leader.userId) }).session(session)) {
+            throw new DomainError("proposed club leader already leads another club", "conflict",
+              { issues: ["leaderHoldsAnotherClub"] });
+          }
+
           createdClubId = new Types.ObjectId();
+          const logo = snapshot.documents.find((document) => document.documentType === "LOGO");
           await clubs.create([{
             _id: createdClubId, code: `CLB-${applicationId.slice(-8).toUpperCase()}`,
-            name: snapshot.clubName, field: snapshot.field, state: "Pending Setup",
-            description: snapshot.objectives, sourceApplicationId: id,
-            createdAt: now, updatedAt: now,
+            name: snapshot.clubName, field: snapshot.field, state: "Active",
+            description: snapshot.summary || snapshot.objectives,
+            ...(snapshot.contactEmail ? { contactEmail: snapshot.contactEmail } : {}),
+            ...(logo?.publicUrl ? { logoUrl: logo.publicUrl } : {}),
+            channels: snapshot.fanpageUrl ? [{ label: "Fanpage", url: snapshot.fanpageUrl }] : [],
+            sourceApplicationId: id, createdAt: now, updatedAt: now,
           }], { session });
           const termEnd = new Date(now);
           termEnd.setUTCFullYear(termEnd.getUTCFullYear() + 1);
-          await terms.create([{
-            clubId: createdClubId, name: "Founding setup term", startAt: now,
-            endAt: termEnd, state: "Active",
+          const [term] = await terms.create([{
+            clubId: createdClubId, name: "Founding term", startAt: now,
+            endAt: termEnd, state: "Active", confirmedBy: actorId, confirmedAt: now,
           }], { session });
-          const founderIds = [...new Set(snapshot.foundingUserIds)];
-          if (!founderIds.includes(String(application.founderUserId))) {
-            founderIds.push(String(application.founderUserId));
-          }
-          await memberships.insertMany(founderIds.map((userId) => ({
+          const membershipDocs = await memberships.insertMany([...founderIds].map((userId) => ({
             clubId: createdClubId, userId: new Types.ObjectId(userId), state: "Active",
-            joinedAt: now, sourceApplicationId: id, statusHistory: [{
+            joinedAt: now, defaultRole: "MEMBERS", sourceApplicationId: id, statusHistory: [{
               toState: "Active", reason: "Founding application approved", actorId, at: now,
             }],
           })), { session });
-          const positionDocs = await positions.insertMany(snapshot.proposedRoles.map((role) => ({
-            clubId: createdClubId, code: role.code, name: role.name, unit: role.unit,
-            isBoardSeat: role.isBoardSeat, isLeaderRole: role.isLeaderRole,
-            isDefaultMemberRole: role.isDefaultMemberRole, isSingleHolder: role.isSingleHolder,
-            permissionCodes: role.permissionCodes, isActive: true,
+          const positionDocs = await positions.insertMany(FOUNDING_POSITIONS.map((position) => ({
+            clubId: createdClubId, code: position.code, name: position.name,
+            isBoardSeat: position.isBoardSeat, isLeaderRole: position.isLeaderRole,
+            isDefaultMemberRole: position.isDefaultMemberRole, isSingleHolder: position.isSingleHolder,
+            permissionCodes: [...position.permissionCodes], isActive: true,
           })), { session });
           await structures.create([{
             clubId: createdClubId, versionNo: 1, effectiveFrom: now,
             source: "APPLICATION", sourceRefId: version._id,
-            roles: positionDocs.map((position, index) => ({
-              positionId: position._id, ...snapshot.proposedRoles[index],
-            })),
-            createdBy: actorId, reason: "Initial structure approved with application",
+            roles: positionDocs.map((position, index) => {
+              const { founderRole: _founderRole, ...role } = FOUNDING_POSITIONS[index]!;
+              return { positionId: position._id, ...role, permissionCodes: [...role.permissionCodes] };
+            }),
+            createdBy: actorId, reason: "Default founding structure approved with application",
             createdAt: now,
           }], { session });
+          const membershipByUser = new Map(membershipDocs.map((membership) =>
+            [String(membership.userId), membership._id]));
+          const positionByRole = new Map(FOUNDING_POSITIONS.map((position, index) =>
+            [position.founderRole, positionDocs[index]!._id]));
+          const boardSeats = snapshot.founders.filter((founder) => founder.role !== "MEMBER");
+          if (!snapshot.founders.some((founder) => founder.role === "LEADER")) boardSeats.push(leader);
+          await assignments.insertMany(boardSeats.map((founder) => ({
+            clubId: createdClubId, termId: term!._id, positionId: positionByRole.get(founder.role),
+            membershipId: membershipByUser.get(founder.userId), effectiveFrom: now,
+            assignedBy: actorId, confirmedBy: actorId,
+          })), { session });
         }
 
         await decisions.create([{
@@ -265,14 +263,16 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
           after: { state: nextState, createdClubId, policyVersionId: payload.policyVersionId },
           correlationId, at: now,
         }], { session });
-        await notifications.create([{
-          recipientUserId: application.founderUserId,
+        const recipients = input.outcome === "Approve"
+          ? [...founderIds].map((userId) => new Types.ObjectId(userId)) : [application.founderUserId];
+        await notifications.insertMany(recipients.map((recipientUserId) => ({
+          recipientUserId,
           eventCode: `CLUB_APPLICATION_${nextState.toUpperCase().replace(" ", "_")}`,
           entityType: "ClubApplication", entityId: id, channels: ["IN_APP"],
           payload: { outcome: input.outcome, reason: input.reason,
             revisionDeadlineAt: input.revisionDeadlineAt, createdClubId },
           state: "Queued", dueAt: now, attempts: 0, createdAt: now,
-        }], { session });
+        })), { session });
       });
       const decided = await detail(id);
       if (!decided) throw new DomainError("application review not found", "not_found");

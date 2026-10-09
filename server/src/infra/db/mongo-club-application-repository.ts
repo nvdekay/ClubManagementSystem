@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
-import type {
-  ApplicantDecisionFeedback, ApplicationDocument, FounderProfile, ClubApplicationDraft, ClubApplicationRecord,
-  ClubApplicationRepository, ClubApplicationState, ClubApplicationVersion,
+import {
+  FOUNDER_ROLES, FOUNDING_POSITIONS,
+  type ApplicantDecisionFeedback, type ApplicationDocument, type FounderProfile,
+  type ClubApplicationDraft, type ClubApplicationRecord, type ClubApplicationRepository,
+  type ClubApplicationState, type ClubApplicationVersion, type FoundingMember,
 } from "../../domain/club-application.js";
 import { ucmsModels } from "./ucms-models.js";
 
@@ -11,34 +13,52 @@ function documentFrom(raw: ApplicationDocument): ApplicationDocument {
   return { ...raw, uploadedAt: new Date(raw.uploadedAt) };
 }
 
-function draftFrom(raw: Record<string, unknown> | undefined): ClubApplicationDraft {
+function foundersFrom(raw: Record<string, unknown> | undefined, applicantId: string): FoundingMember[] {
+  if (Array.isArray(raw?.founders)) {
+    return (raw.founders as Record<string, unknown>[]).map((founder) => ({
+      userId: String(founder.userId),
+      role: FOUNDER_ROLES.find((role) => role === founder.role) ?? "MEMBER",
+    }));
+  }
+  // Drafts and versions written before fixed founding roles: the applicant led, others were members.
+  const legacyIds = Array.isArray(raw?.foundingUserIds) ? raw.foundingUserIds.map(String) : [];
+  return legacyIds.map((userId) => ({ userId,
+    role: userId.toLowerCase() === applicantId.toLowerCase() ? "LEADER" : "MEMBER" }));
+}
+
+function text(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+export function applicationDraftFrom(raw: Record<string, unknown> | undefined,
+  applicantId: string): ClubApplicationDraft {
   return {
-    clubName: String(raw?.clubName ?? ""), field: String(raw?.field ?? ""),
-    objectives: String(raw?.objectives ?? ""),
-    foundingUserIds: (raw?.foundingUserIds ?? []) as string[],
-    proposedRoles: (raw?.proposedRoles ?? []) as ClubApplicationDraft["proposedRoles"],
+    clubName: text(raw?.clubName), fieldId: text(raw?.fieldId), field: text(raw?.field),
+    summary: text(raw?.summary), objectives: text(raw?.objectives),
+    fanpageUrl: text(raw?.fanpageUrl), contactEmail: text(raw?.contactEmail),
+    founders: foundersFrom(raw, applicantId),
     documents: ((raw?.documents ?? []) as ApplicationDocument[]).map(documentFrom),
   };
 }
 
-function mapRecord(doc: Record<string, unknown>): ClubApplicationRecord {
+export function mapApplicationRecord(doc: Record<string, unknown>): ClubApplicationRecord {
   const raw = doc.draftPayload as Record<string, unknown> | undefined;
   return {
     id: String(doc._id), founderUserId: String(doc.founderUserId),
     state: doc.state as ClubApplicationState,
     currentVersionNo: Number(doc.currentVersionNo), draftRevision: Number(raw?._revision ?? 0),
-    draft: draftFrom(raw), submittedAt: doc.submittedAt as Date | undefined,
+    draft: applicationDraftFrom(raw, String(doc.founderUserId)), submittedAt: doc.submittedAt as Date | undefined,
     ...(doc.revisionDeadlineAt instanceof Date ? { revisionDeadlineAt: doc.revisionDeadlineAt } : {}),
     createdAt: doc.createdAt as Date,
   };
 }
 
-function mapVersion(doc: Record<string, unknown>): ClubApplicationVersion {
-  const payload = doc.payload as { policyVersionId: string; snapshot: ClubApplicationDraft };
+export function mapApplicationVersion(doc: Record<string, unknown>): ClubApplicationVersion {
+  const payload = doc.payload as { policyVersionId: string; snapshot: Record<string, unknown> };
   return {
     id: String(doc._id), applicationId: String(doc.applicationId),
     versionNo: Number(doc.versionNo), policyVersionId: payload.policyVersionId,
-    snapshot: draftFrom(payload.snapshot as unknown as Record<string, unknown>),
+    snapshot: applicationDraftFrom(payload.snapshot, String(doc.submittedBy)),
     submittedAt: doc.submittedAt as Date,
   };
 }
@@ -61,6 +81,10 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
   const decisions = ucmsModels.approvalDecisions!;
+  const positions = ucmsModels.clubPositions!;
+  const terms = ucmsModels.clubTerms!;
+  const assignments = ucmsModels.clubPositionAssignments!;
+  const memberships = ucmsModels.clubMemberships!;
   const editableStates = ["Draft", "Revision Requested"];
 
   return {
@@ -70,22 +94,22 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         founderUserId: new Types.ObjectId(ownerId), draftPayload: { ...draft, _revision: 0 },
         state: "Draft", currentVersionNo: 1, createdAt: now,
       });
-      return mapRecord(doc.toObject());
+      return mapApplicationRecord(doc.toObject());
     },
     async listMine(ownerId) {
       const docs = await applications.find({ founderUserId: new Types.ObjectId(ownerId) })
         .sort({ createdAt: -1, _id: -1 }).lean();
-      return docs.map(mapRecord);
+      return docs.map(mapApplicationRecord);
     },
     async findOwned(id, ownerId) {
       const doc = await applications.findOne({ _id: new Types.ObjectId(id),
         founderUserId: new Types.ObjectId(ownerId) }).lean();
-      return doc ? mapRecord(doc) : null;
+      return doc ? mapApplicationRecord(doc) : null;
     },
     async versions(id) {
       const docs = await versions.find({ applicationId: new Types.ObjectId(id) })
         .sort({ versionNo: 1 }).lean();
-      return docs.map(mapVersion);
+      return docs.map(mapApplicationVersion);
     },
     async findActiveUserByEmail(email) {
       const doc = await users.findOne({ email: email.trim().toLowerCase(), accountState: "Active" })
@@ -118,7 +142,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         draftPayload: { ...draft, _revision: expectedDraftRevision + 1 },
       } }, { new: true }).lean();
       if (!updated) return conflict();
-      return mapRecord(updated);
+      return mapApplicationRecord(updated);
     },
     async addDocument(id, ownerId, document) {
       const updated = await applications.findOneAndUpdate({ _id: new Types.ObjectId(id),
@@ -127,7 +151,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         $inc: { "draftPayload._revision": 1 },
       }, { new: true }).lean();
       if (!updated) return conflict();
-      return mapRecord(updated);
+      return mapApplicationRecord(updated);
     },
     async removeDocument(id, ownerId, documentId) {
       const updated = await applications.findOneAndUpdate({ _id: new Types.ObjectId(id),
@@ -137,7 +161,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         $inc: { "draftPayload._revision": 1 },
       }, { new: true }).lean();
       if (!updated) return conflict();
-      return mapRecord(updated);
+      return mapApplicationRecord(updated);
     },
     async usersExist(ids) {
       const distinct = [...new Set(ids.map((id) => id.toLowerCase()))];
@@ -149,6 +173,20 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
     async activeClubNameExists(name) {
       return Boolean(await clubs.exists({ name, state: "Active" })
         .collation({ locale: "en", strength: 2 }));
+    },
+    async activeLeaderUserIds(userIds, at) {
+      const ids = [...new Set(userIds)].filter((value) => Types.ObjectId.isValid(value))
+        .map((value) => new Types.ObjectId(value));
+      if (!ids.length) return [];
+      const [leaderPositionIds, runningTermIds] = await Promise.all([
+        positions.find({ isLeaderRole: true, isActive: true }).distinct("_id"),
+        terms.find({ state: { $in: ["Active", "Planned"] }, endAt: { $gt: at } }).distinct("_id"),
+      ]);
+      const membershipIds = await assignments.find({ positionId: { $in: leaderPositionIds },
+        termId: { $in: runningTermIds }, effectiveTo: { $in: [null] } }).distinct("membershipId");
+      const holders = await memberships.find({ _id: { $in: membershipIds }, userId: { $in: ids } })
+        .distinct("userId");
+      return holders.map(String);
     },
     async submit(input) {
       return mongoose.connection.transaction(async (session) => {
@@ -168,9 +206,9 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         const created = await versions.create([{
           applicationId: id, versionNo,
           payload: { policyVersionId: input.policyVersionId, snapshot: input.snapshot },
-          foundingMembers: input.snapshot.foundingUserIds,
+          foundingMembers: input.snapshot.founders,
           documents: input.snapshot.documents,
-          proposedRoleStructure: input.snapshot.proposedRoles,
+          proposedRoleStructure: FOUNDING_POSITIONS,
           submittedBy: new Types.ObjectId(input.ownerId), submittedAt: input.now,
         }], { session });
         await tasks.updateMany({ entityType: "CLUB_APPLICATION", entityId: id,
@@ -195,7 +233,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
           payload: { versionNo, clubName: input.snapshot.clubName },
           state: "Queued", dueAt: input.now, attempts: 0, createdAt: input.now,
         }], { session });
-        return mapVersion(created[0]!.toObject());
+        return mapApplicationVersion(created[0]!.toObject());
       });
     },
     async withdraw(id, ownerId, now) {
@@ -223,7 +261,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
           entityId: objectId, channels: ["IN_APP"], payload: {},
           state: "Queued", dueAt: now, attempts: 0, createdAt: now,
         }], { session });
-        return mapRecord({ ...previous, state: "Withdrawn" });
+        return mapApplicationRecord({ ...previous, state: "Withdrawn" });
       });
     },
   };

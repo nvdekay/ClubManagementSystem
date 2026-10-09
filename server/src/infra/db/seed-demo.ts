@@ -2,12 +2,12 @@
 // Usage: npm run seed:demo -- --owner=<your Google email> [--owner-name="Your Name"]
 // Safe to re-run: each section skips what already exists. Writes go through the app's use cases and
 // repositories wherever a flow exists, so the data obeys the same rules as the UI.
+import { crc32, deflateSync } from "node:zlib";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
-import type { ProposedClubRole } from "../../domain/club-application.js";
-import type { PolicySettings } from "../../domain/policy.js";
+import type { FounderRole } from "../../domain/club-application.js";
+import { DEFAULT_FORM_REQUIREMENTS, type PolicySettings } from "../../domain/policy.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { submitBoardNomination, getBoardNominationContext } from "../../usecase/board-nomination.js";
 import { createApplicationDraft, submitApplication, uploadApplicationDocument } from "../../usecase/club-application.js";
 import { claimApplicationReview, decideApplicationReview } from "../../usecase/club-application-review.js";
 import { submitEventFeedback } from "../../usecase/event-feedback.js";
@@ -24,7 +24,6 @@ import { loadConfig, optionalCloudinaryConfig } from "../config/index.js";
 import { cloudinaryApplicationFiles } from "../files/cloudinary-application-files.js";
 import { mongoAccessRepository } from "./mongo-access-repository.js";
 import { mongoAuthRepository } from "./mongo-auth-repository.js";
-import { mongoBoardNominationRepository } from "./mongo-board-nomination-repository.js";
 import { mongoClubApplicationRepository } from "./mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./mongo-club-application-review-repository.js";
 import { mongoEventFeedbackRepository } from "./mongo-event-feedback-repository.js";
@@ -35,6 +34,7 @@ import { mongoRecruitmentApplicationRepository } from "./mongo-recruitment-appli
 import { mongoRecruitmentCampaignRepository } from "./mongo-recruitment-campaign-repository.js";
 import { mongoStudentFeedbackRepository } from "./mongo-student-feedback-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
+import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
 
 const config = loadConfig();
@@ -110,9 +110,8 @@ function charterPdf(title: string): Buffer {
 }
 
 const policySettings: PolicySettings = {
-  allowedEmailDomains: ["*"],
   minFoundingMembers: 3,
-  mandatoryApplicationDocuments: ["Điều lệ CLB"],
+  formRequirements: DEFAULT_FORM_REQUIREMENTS,
   reportDeadlines: [{ reportType: "PERIODIC", dueDaysAfterPeriodEnd: 7, remindBeforeDays: 2,
     overdueAfterDays: 1, escalateAfterDays: 3 }],
   conflictThresholdMinutes: 30,
@@ -133,20 +132,30 @@ const boardPermissions = {
   MEDIA: ["club.profile.manage", "club.recruitment.manage", "club.feedback.view"],
 };
 
-function proposedRoles(): ProposedClubRole[] {
-  return [
-    { code: "CLUB_LEADER", name: "Chủ nhiệm", isBoardSeat: true, isLeaderRole: true, isDefaultMemberRole: false,
-      isSingleHolder: true, permissionCodes: [] },
-    { code: "VICE", name: "Phó chủ nhiệm", isBoardSeat: true, isLeaderRole: false, isDefaultMemberRole: false,
-      isSingleHolder: true, permissionCodes: boardPermissions.VICE },
-    { code: "MEMBERS", name: "Thành viên", isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: true,
-      isSingleHolder: false, permissionCodes: [] },
-  ];
+/** A solid-colour square PNG, standing in for the proposed logo a student would upload. */
+function logoPng(rgb: [number, number, number], size = 64): Buffer {
+  function chunk(type: string, data: Buffer): Buffer {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type, "latin1"), data]);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(body));
+    return Buffer.concat([length, body, crc]);
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(size, 0);
+  header.writeUInt32BE(size, 4);
+  header.set([8, 2, 0, 0, 0], 8);
+  const row = Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: size }, () => rgb).flat())]);
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", header),
+    chunk("IDAT", deflateSync(Buffer.concat(Array.from({ length: size }, () => row)))),
+    chunk("IEND", Buffer.alloc(0))]);
 }
 
 try {
   await mongoose.connect(config.MONGO_URI, { serverSelectionTimeoutMS: 5_000 });
   await ensureUcmsDatabase();
+  await ensureDefaultClubFields();
   const db = mongoose.connection.db!;
   if (!(await ucmsModels.clubs!.exists({ _id: club("HEBE").id }))) {
     throw new Error("PDP clubs are missing — run npm run seed first");
@@ -276,50 +285,54 @@ try {
     await submitRecruitmentApplication(recruitment, student, application.id, now);
   }
 
-  // ── Founding applications (UC07→UC08→UC11): two in the ICPDP review queue, one approved + board nominated ──
+  // ── Founding applications (UC07→UC08): two in the ICPDP review queue, one approved (club Active) ──
   const applications = mongoClubApplicationRepository();
   const reviews = mongoClubApplicationReviewRepository();
+  const clubFields = mongoClubFieldRepository();
   const cloudinary = optionalCloudinaryConfig(config);
   const storage = cloudinary ? cloudinaryApplicationFiles(cloudinary) : null;
   async function application(founder: Types.ObjectId, cofounders: Types.ObjectId[], clubName: string,
-    field: string, objectives: string): Promise<string | null> {
+    fieldName: string, summary: string, objectives: string,
+    logoColor: [number, number, number]): Promise<string | null> {
     const existing = (await applications.listMine(founder.toString())).find((item) => item.draft.clubName === clubName);
     if (existing) return existing.state === "Draft" ? null : existing.id;
     if (!storage) {
-      console.warn(`skipped "${clubName}": Cloudinary is not configured, so the charter PDF cannot be uploaded`);
+      console.warn(`skipped "${clubName}": Cloudinary is not configured, so the proposal and logo cannot be uploaded`);
       return null;
     }
-    const draft = await createApplicationDraft(applications, actor(founder), { clubName, field, objectives,
-      foundingUserIds: [founder, ...cofounders].map(String), proposedRoles: proposedRoles() }, now);
-    await uploadApplicationDocument(applications, storage, actor(founder), draft.id, "Điều lệ CLB",
-      "dieu-le-clb.pdf", "application/pdf", charterPdf(clubName), now);
-    await submitApplication(applications, policy, actor(founder), draft.id, now);
+    const field = (await clubFields.listActive()).find((item) => item.name === fieldName);
+    if (!field) {
+      console.warn(`skipped "${clubName}": club field "${fieldName}" is not in the catalog`);
+      return null;
+    }
+    const roles: FounderRole[] = ["LEADER", "VICE_LEADER"];
+    const draft = await createApplicationDraft(applications, clubFields, actor(founder), {
+      clubName, fieldId: field.id, summary, objectives, fanpageUrl: "", contactEmail: "",
+      founders: [founder, ...cofounders].map((userId, index) => ({ userId: String(userId),
+        role: roles[index] ?? "MEMBER" })),
+    }, now);
+    await uploadApplicationDocument(applications, storage, actor(founder), draft.id, "PROPOSAL",
+      "de-an-thanh-lap.pdf", "application/pdf", charterPdf(clubName), now);
+    await uploadApplicationDocument(applications, storage, actor(founder), draft.id, "LOGO",
+      "logo.png", "image/png", logoPng(logoColor), now);
+    await submitApplication(applications, policy, clubFields, actor(founder), draft.id, now);
     return draft.id;
   }
   await application(s[12]!, [s[13]!, s[10]!], "CLB Nhiếp ảnh Đường phố FPTU", "Nghệ thuật",
-    "Lan toả nhiếp ảnh đường phố, tổ chức photowalk hằng tháng và triển lãm cuối kỳ.");
-  await application(s[9]!, [s[11]!, s[4]!], "CLB Cờ vây FPTU", "Học thuật",
-    "Rèn tư duy chiến lược qua cờ vây, tổ chức giải đấu nội bộ mỗi học kỳ.");
+    "Cộng đồng yêu nhiếp ảnh đường phố của FPTU.",
+    "Lan toả nhiếp ảnh đường phố, tổ chức photowalk hằng tháng và triển lãm cuối kỳ.", [234, 88, 12]);
+  await application(s[9]!, [s[11]!, s[4]!], "CLB Cờ vây FPTU", "Kỹ năng",
+    "Nơi rèn tư duy chiến lược qua từng ván cờ vây.",
+    "Rèn tư duy chiến lược qua cờ vây, tổ chức giải đấu nội bộ mỗi học kỳ.", [30, 41, 59]);
   const gameApp = await application(s[11]!, [s[15]!, s[2]!], "CLB Lập trình Game FPTU", "Công nghệ",
-    "Cùng nhau làm game indie bằng Unity/Godot, tham gia game jam trong và ngoài trường.");
+    "Làm game indie cùng nhau, từ ý tưởng tới sản phẩm.",
+    "Cùng nhau làm game indie bằng Unity/Godot, tham gia game jam trong và ngoài trường.", [79, 70, 229]);
   if (gameApp) {
     const record = await ucmsModels.clubApplications!.findById(gameApp).select({ state: 1 }).lean();
     if (record?.state === "Submitted" || record?.state === "Under Review") {
       await once("claim game application", () => claimApplicationReview(reviews, auth, actor(owner), gameApp, now));
       await decideApplicationReview(reviews, auth, actor(owner), gameApp,
         { outcome: "Approve", reason: "Hồ sơ đầy đủ, mục tiêu rõ ràng và phù hợp định hướng phát triển sinh viên." }, now);
-    }
-    const gameClub = await ucmsModels.clubs!.findOne({ sourceApplicationId: new Types.ObjectId(gameApp) }).lean();
-    if (gameClub?.state === "Pending Setup"
-      && !(await ucmsModels.boardNominations!.exists({ clubId: gameClub._id }))) {
-      const nominations = mongoBoardNominationRepository();
-      const context = await getBoardNominationContext(nominations, access, actor(s[11]!), String(gameClub._id), now);
-      function seat(code: string, userId: Types.ObjectId) {
-        return { positionId: context.positions.find((position) => position.code === code)!.id,
-          membershipId: context.candidates.find((candidate) => candidate.userId === userId.toString())!.membershipId };
-      }
-      await submitBoardNomination(nominations, access, actor(s[11]!), String(gameClub._id),
-        [seat("CLUB_LEADER", s[11]!), seat("VICE", s[15]!)], now);
     }
   }
 

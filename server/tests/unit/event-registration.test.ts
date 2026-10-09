@@ -4,7 +4,7 @@ import type {
   EventRegistrationContext,
   EventRegistrationRepository,
 } from "../../src/domain/event-registration.js";
-import type { PolicyRepository } from "../../src/domain/policy.js";
+import { DEFAULT_FORM_REQUIREMENTS, type PolicyRepository } from "../../src/domain/policy.js";
 import {
   cancelEventRegistration,
   getEventRegistrationContext,
@@ -43,8 +43,8 @@ function repo(data: EventRegistrationContext = context()): EventRegistrationRepo
 }
 
 const policy: PolicyRepository = { findEffective: vi.fn(async () => ({ id: "policy", effectiveFrom: now,
-  createdBy: studentId, createdAt: now, allowedEmailDomains: ["example.edu"], minFoundingMembers: 3,
-  mandatoryApplicationDocuments: [], reportDeadlines: [], conflictThresholdMinutes: 0,
+  createdBy: studentId, createdAt: now, minFoundingMembers: 3,
+  formRequirements: DEFAULT_FORM_REQUIREMENTS, reportDeadlines: [], conflictThresholdMinutes: 0,
   feedbackWindowHours: 48, feedbackMinRespondents: 5, allowOverbooking: false,
   enforceOverdueReportBlock: false, academicCalendar: [] })) };
 

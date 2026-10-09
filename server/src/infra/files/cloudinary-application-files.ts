@@ -24,24 +24,33 @@ export function cloudinaryApplicationFiles(config: CloudinaryConfig): Applicatio
       const file = new FormData();
       file.append("file", new Blob([new Uint8Array(input.bytes)], { type: input.mimeType }),
         input.fileName);
-      file.append("public_id", `ucms/applications/${input.ownerId}/${input.applicationId}/${randomUUID()}.${extension}`);
-      file.append("type", "authenticated");
+      // Proposed logos are public images (random path) so they can be previewed and reused as the
+      // club logo on approval; every other document stays an authenticated raw asset.
+      const isPublic = input.visibility === "public";
+      const folder = isPublic ? "ucms/club-logo-proposals"
+        : `ucms/applications/${input.ownerId}/${input.applicationId}`;
+      file.append("public_id", isPublic ? `${folder}/${randomUUID()}`
+        : `${folder}/${randomUUID()}.${extension}`);
+      file.append("type", isPublic ? "upload" : "authenticated");
       let response: globalThis.Response;
       try {
-        response = await fetch(`${base}/raw/upload`, {
+        response = await fetch(`${base}/${isPublic ? "image" : "raw"}/upload`, {
           method: "POST", headers: { Authorization: authorization },
           body: file, signal: AbortSignal.timeout(30_000),
         });
       } catch {
         throw new DomainError("file storage unavailable", "unavailable");
       }
-      const body = await response.json().catch(() => null) as { asset_id?: unknown } | null;
-      if (!response.ok || typeof body?.asset_id !== "string") {
+      const body = await response.json().catch(() => null) as
+        { asset_id?: unknown; secure_url?: unknown } | null;
+      if (!response.ok || typeof body?.asset_id !== "string" ||
+        (isPublic && typeof body.secure_url !== "string")) {
         throw new DomainError("file upload failed", "unavailable");
       }
       return { id: randomUUID(), documentType: input.documentType,
         fileName: input.fileName, mimeType: input.mimeType,
-        bytes: input.bytes.length, assetId: body.asset_id, uploadedAt: input.now };
+        bytes: input.bytes.length, assetId: body.asset_id,
+        ...(isPublic ? { publicUrl: String(body.secure_url) } : {}), uploadedAt: input.now };
     },
     async accessUrl(assetId): Promise<string> {
       const now = Math.floor(Date.now() / 1000);

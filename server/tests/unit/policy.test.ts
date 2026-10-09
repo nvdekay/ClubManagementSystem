@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import type { PolicyRepository, PolicyVersion } from "../../src/domain/policy.js";
+import {
+  DEFAULT_FORM_REQUIREMENTS, type PolicyRepository, type PolicyVersion,
+} from "../../src/domain/policy.js";
 import { foundingRequirementsAt, resolvePolicyAt } from "../../src/usecase/policy.js";
 
 const at = new Date("2026-10-03T12:00:00Z");
 const policy: PolicyVersion = {
   id: "version-1",
-  allowedEmailDomains: ["fpt.edu.vn"],
   minFoundingMembers: 5,
-  mandatoryApplicationDocuments: ["charter", "member-list"],
+  formRequirements: DEFAULT_FORM_REQUIREMENTS,
   reportDeadlines: [{ reportType: "periodic", dueDaysAfterPeriodEnd: 10,
     remindBeforeDays: 3, overdueAfterDays: 2, escalateAfterDays: 5 }],
   conflictThresholdMinutes: 30,
@@ -32,7 +33,7 @@ describe("effective policy use case", () => {
     expect(requestedAt).toBe(at);
     expect(await foundingRequirementsAt(repo, at)).toEqual({
       policyVersionId: "version-1", minFoundingMembers: 5,
-      mandatoryApplicationDocuments: ["charter", "member-list"],
+      required: DEFAULT_FORM_REQUIREMENTS.clubFounding,
     });
   });
 
@@ -43,7 +44,6 @@ describe("effective policy use case", () => {
     for (const invalid of [
       { ...policy, minFoundingMembers: 0 },
       { ...policy, minFoundingMembers: 1.5 },
-      { ...policy, mandatoryApplicationDocuments: ["charter", " "] },
     ]) {
       const repo: PolicyRepository = { async findEffective() { return invalid; } };
       await expect(foundingRequirementsAt(repo, at))

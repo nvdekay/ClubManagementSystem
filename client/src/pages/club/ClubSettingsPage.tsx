@@ -12,12 +12,25 @@ import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubSettings, useClubSettingsAction } from "@/hooks/useClubSettings";
 import { cn } from "@/utils/cn";
-import type {
-  ClubChannel,
-  ClubDepartment,
-  ClubDepartmentInput,
-  ClubProfileInput,
+import {
+  MissingProfileFieldsError,
+  type ClubChannel,
+  type ClubDepartment,
+  type ClubDepartmentInput,
+  type ClubProfileInput,
 } from "@/services/clubSettings";
+import type { ClubProfileFormField } from "@/services/policy";
+
+function profileLabelKey(field: ClubProfileFormField) {
+  switch (field) {
+    case "description": return "clubSettings.descriptionLabel" as const;
+    case "operatingScope": return "clubSettings.scope" as const;
+    case "contactEmail": return "clubSettings.email" as const;
+    case "contactPhone": return "clubSettings.phone" as const;
+    case "charterUrl": return "clubSettings.charter" as const;
+    case "channels": return "clubSettings.channels" as const;
+  }
+}
 
 const emptyProfile: ClubProfileInput = {
   description: "", contactEmail: "", contactPhone: "", charterUrl: "",
@@ -37,6 +50,7 @@ export function ClubSettingsPage() {
   const [profileDraft, setProfileDraft] = useState<ClubProfileInput | null>(null);
   const [department, setDepartment] = useState<ClubDepartmentInput>(emptyDepartment);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [channelsMissing, setChannelsMissing] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   const loadedProfile = settings.data ? {
@@ -66,6 +80,9 @@ export function ClubSettingsPage() {
     // The profile is not a <form>, so run the browser constraint checks (email, URL, required) by hand.
     const invalid = profileRef.current?.querySelector<HTMLInputElement>("input:invalid, textarea:invalid");
     if (invalid) { invalid.reportValidity(); return; }
+    const needsChannel = Boolean(settings.data?.requiredProfileFields.channels) && !profile.channels.length;
+    setChannelsMissing(needsChannel);
+    if (needsChannel) return;
     try {
       await action.mutateAsync({ kind: "profile", clubId, input: profile,
         csrfToken: auth.data.csrfToken });
@@ -135,6 +152,13 @@ export function ClubSettingsPage() {
   );
 
   const current = settings.data.profile;
+  const required = settings.data.requiredProfileFields;
+  const anyRequired = Object.values(required).some(Boolean);
+  function label(field: ClubProfileFormField) {
+    return <>{t(profileLabelKey(field))}{required[field] && (
+      <span className="text-danger-app"> *<span className="sr-only"> ({t("clubSettings.requiredMark")})</span></span>
+    )}</>;
+  }
   const stateLabel = current.state === "Pending Setup" ? t("clubSettings.pendingSetup")
     : current.state === "Active" ? t("discovery.active")
       : current.state === "Suspended" ? t("discovery.suspended") : current.state;
@@ -161,21 +185,24 @@ export function ClubSettingsPage() {
         <section>
           <div ref={profileRef} className="contents">
           <h2 className="font-heading text-xl font-bold">{t("clubSettings.profile")}</h2>
-          <label className="mt-5 block text-sm font-semibold">{t("clubSettings.descriptionLabel")}
+          {anyRequired && <p className="mt-1 text-sm text-muted-app">{t("clubSettings.requiredHint")}</p>}
+          <label className="mt-5 block text-sm font-semibold">{label("description")}
             <AppTextarea className="mt-2 block min-h-32 w-full font-normal" value={profile.description}
+              required={required.description}
               onChange={(event) => profileField("description", event.target.value)} maxLength={10000} />
           </label>
-          <label className="mt-5 block text-sm font-semibold">{t("clubSettings.scope")}
+          <label className="mt-5 block text-sm font-semibold">{label("operatingScope")}
             <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={profile.operatingScope}
+              required={required.operatingScope}
               onChange={(event) => profileField("operatingScope", event.target.value)} maxLength={2000} />
           </label>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-semibold">{t("clubSettings.email")}<AppInput className="mt-2 block w-full font-normal" type="email" value={profile.contactEmail} onChange={(event) => profileField("contactEmail", event.target.value)} /></label>
-            <label className="block text-sm font-semibold">{t("clubSettings.phone")}<AppInput className="mt-2 block w-full font-normal" value={profile.contactPhone} onChange={(event) => profileField("contactPhone", event.target.value)} /></label>
+            <label className="block text-sm font-semibold">{label("contactEmail")}<AppInput className="mt-2 block w-full font-normal" type="email" required={required.contactEmail} value={profile.contactEmail} onChange={(event) => profileField("contactEmail", event.target.value)} /></label>
+            <label className="block text-sm font-semibold">{label("contactPhone")}<AppInput className="mt-2 block w-full font-normal" required={required.contactPhone} value={profile.contactPhone} onChange={(event) => profileField("contactPhone", event.target.value)} /></label>
           </div>
-          <label className="mt-5 block text-sm font-semibold">{t("clubSettings.charter")}<AppInput className="mt-2 block w-full font-normal" type="url" value={profile.charterUrl} onChange={(event) => profileField("charterUrl", event.target.value)} /></label>
+          <label className="mt-5 block text-sm font-semibold">{label("charterUrl")}<AppInput className="mt-2 block w-full font-normal" type="url" required={required.charterUrl} value={profile.charterUrl} onChange={(event) => profileField("charterUrl", event.target.value)} /></label>
 
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border-app pt-6"><h3 className="font-heading font-bold">{t("clubSettings.channels")}</h3><AppButton variant="secondary" onClick={() => profileField("channels", [...profile.channels, { label: "", url: "" }])}><AppIcon name="plus" className="size-4" />{t("clubSettings.addChannel")}</AppButton></div>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border-app pt-6"><h3 className="font-heading font-bold">{label("channels")}</h3><AppButton variant="secondary" onClick={() => profileField("channels", [...profile.channels, { label: "", url: "" }])}><AppIcon name="plus" className="size-4" />{t("clubSettings.addChannel")}</AppButton></div>
           <div className="mt-3 divide-y divide-border-app">{profile.channels.map((channel, index) => (
             <div key={index} className="grid gap-2 py-3 sm:grid-cols-[1fr_1.4fr_auto]">
               <AppInput required aria-label={t("clubSettings.channelLabel")} placeholder={t("clubSettings.channelLabel")} value={channel.label} onChange={(event) => channelField(index, "label", event.target.value)} />
@@ -183,6 +210,9 @@ export function ClubSettingsPage() {
               <AppButton variant="ghost" className="hover:text-danger-app" onClick={() => profileField("channels", profile.channels.filter((_, currentIndex) => currentIndex !== index))}>{t("clubSettings.removeChannel")}</AppButton>
             </div>
           ))}</div>
+          {channelsMissing && !profile.channels.length && (
+            <p role="alert" className="mt-2 text-sm text-danger-app">{t("clubSettings.channelsRequired")}</p>
+          )}
           </div>
           <AppButton className="mt-6 w-full sm:w-auto" disabled={action.isPending} onClick={() => void saveProfile()}>{action.isPending ? t("clubSettings.saving") : t("clubSettings.saveProfile")}</AppButton>
         </section>
@@ -210,7 +240,12 @@ export function ClubSettingsPage() {
           </section>
         </div>
       </div>
-      {action.isError && <AppNotice tone="danger" role="alert" className="mt-6">{action.error.message || t("clubSettings.actionError")}</AppNotice>}
+      {action.isError && <AppNotice tone="danger" role="alert" className="mt-6">
+        {action.error instanceof MissingProfileFieldsError
+          ? t("clubSettings.missingFields", { fields: action.error.missing
+            .map((field) => t(profileLabelKey(field))).join(", ") })
+          : action.error.message || t("clubSettings.actionError")}
+      </AppNotice>}
       {action.isSuccess && <AppNotice tone="success" role="status" className="mt-6">{t("clubSettings.success")}</AppNotice>}
     </>
   );

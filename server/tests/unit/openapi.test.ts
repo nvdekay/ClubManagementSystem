@@ -3,6 +3,7 @@ import type { AuthRouteDeps } from "../../src/interface/http/auth-routes.js";
 import type { PublicDiscoveryRepository } from "../../src/domain/public-discovery.js";
 import type { ClubApplicationRepository } from "../../src/domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../src/domain/club-application-review.js";
+import type { ClubFieldRepository } from "../../src/domain/club-field.js";
 import type { ClubProfileRepository } from "../../src/domain/club-profile.js";
 import type { BoardNominationRepository } from "../../src/domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
@@ -79,8 +80,15 @@ const stubApplications: ClubApplicationRepository = {
   removeDocument: async () => { throw new Error("unused"); },
   usersExist: async () => false,
   activeClubNameExists: async () => false,
+  activeLeaderUserIds: async () => [],
   submit: async () => { throw new Error("unused"); },
   withdraw: async () => { throw new Error("unused"); },
+};
+const stubClubFields: ClubFieldRepository = {
+  listActive: async () => [], listWithUsage: async () => [], find: async () => null,
+  create: async () => { throw new Error("unused"); },
+  update: async () => { throw new Error("unused"); },
+  remove: async () => { throw new Error("unused"); },
 };
 const stubApplicationReviews: ClubApplicationReviewRepository = {
   listOpen: async () => [], find: async () => null,
@@ -173,7 +181,7 @@ describe("openapi document", () => {
   // openapi.ts's User schema `satisfies` the domain entity's wire shape.
   it("matches the routes the app actually serves", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
-      applicationRepo: stubApplications,
+      applicationRepo: stubApplications, clubFieldRepo: stubClubFields,
       applicationReviewRepo: stubApplicationReviews,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,
@@ -226,7 +234,7 @@ describe("openapi document", () => {
 
   it("guards every mutation or explicitly lists it as public", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
-      applicationRepo: stubApplications,
+      applicationRepo: stubApplications, clubFieldRepo: stubClubFields,
       applicationReviewRepo: stubApplicationReviews,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,

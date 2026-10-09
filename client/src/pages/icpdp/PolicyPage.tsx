@@ -9,8 +9,16 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolicies } from "@/hooks/usePolicy";
-import type { PolicyVersion } from "@/services/policy";
-import { PolicyEditor } from "./PolicyEditor";
+import {
+  CLUB_PROFILE_FORM_FIELDS, FOUNDING_FORM_FIELDS, type PolicyVersion,
+} from "@/services/policy";
+import {
+  PolicyEditor, deadlineLabelKey, foundingFieldKey, profileFieldKey, sectionTitleKey,
+} from "./PolicyEditor";
+
+const deadlineFields = [
+  "dueDaysAfterPeriodEnd", "remindBeforeDays", "overdueAfterDays", "escalateAfterDays",
+] as const;
 
 function formatDate(value: string, language: string): string {
   return new Intl.DateTimeFormat(language === "vi" ? "vi-VN" : "en-US", {
@@ -23,44 +31,46 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
   function booleanLabel(value: boolean): string {
     return t(value ? "policy.yes" : "policy.no");
   }
+  function requiredLabel(value: boolean): string {
+    return t(value ? "policy.required" : "policy.optional");
+  }
   return (
     <div className="mt-4 space-y-6 text-sm">
-      <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-        <div><dt className="text-muted-app">{t("policy.domains")}</dt>
-          <dd className="mt-1 break-words">{version.allowedEmailDomains.join(", ")}</dd></div>
-        <div><dt className="text-muted-app">{t("policy.minFounders")}</dt>
-          <dd className="mt-1">{version.minFoundingMembers}</dd></div>
-        <div><dt className="text-muted-app">{t("policy.documents")}</dt>
-          <dd className="mt-1 break-words">{version.mandatoryApplicationDocuments.join(", ") || "—"}</dd></div>
-        <div><dt className="text-muted-app">{t("policy.conflictMinutes")}</dt>
-          <dd className="mt-1">{version.conflictThresholdMinutes}</dd></div>
-        <div><dt className="text-muted-app">{t("policy.feedbackWindow")}</dt>
-          <dd className="mt-1">{version.feedbackWindowHours}</dd></div>
-        <div><dt className="text-muted-app">{t("policy.feedbackMinimum")}</dt>
-          <dd className="mt-1">{version.feedbackMinRespondents}</dd></div>
-        <div><dt className="text-muted-app">{t("policy.overbooking")}</dt>
-          <dd className="mt-1">{booleanLabel(version.allowOverbooking)}</dd></div>
-        <div><dt className="text-muted-app">{t("policy.overdueBlock")}</dt>
-          <dd className="mt-1">{booleanLabel(version.enforceOverdueReportBlock)}</dd></div>
-      </dl>
       <div>
-        <h3 className="font-heading font-semibold">{t("policy.reportDeadlines")}</h3>
-        <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
-          {version.reportDeadlines.map((item) => (
-            <li key={item.reportType} className="py-3">
-              <span className="font-medium">{item.reportType}</span>
-              <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <div><dt className="text-muted-app">{t("policy.dueDays")}</dt><dd>{item.dueDaysAfterPeriodEnd}</dd></div>
-                <div><dt className="text-muted-app">{t("policy.remindBefore")}</dt><dd>{item.remindBeforeDays}</dd></div>
-                <div><dt className="text-muted-app">{t("policy.overdueAfter")}</dt><dd>{item.overdueAfterDays}</dd></div>
-                <div><dt className="text-muted-app">{t("policy.escalateAfter")}</dt><dd>{item.escalateAfterDays}</dd></div>
-              </dl>
-            </li>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey("founding"))}</h3>
+        <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          <div><dt className="text-muted-app">{t("policy.minFounders")}</dt>
+            <dd className="mt-1">{version.minFoundingMembers}</dd></div>
+          {FOUNDING_FORM_FIELDS.map((field) => (
+            <div key={field}><dt className="text-muted-app">{t(foundingFieldKey(field))}</dt>
+              <dd className="mt-1">{requiredLabel(version.formRequirements.clubFounding[field])}</dd></div>
           ))}
-        </ul>
+        </dl>
       </div>
       <div>
-        <h3 className="font-heading font-semibold">{t("policy.calendar")}</h3>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey("profile"))}</h3>
+        <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          {CLUB_PROFILE_FORM_FIELDS.map((field) => (
+            <div key={field}><dt className="text-muted-app">{t(profileFieldKey(field))}</dt>
+              <dd className="mt-1">{requiredLabel(version.formRequirements.clubProfile[field])}</dd></div>
+          ))}
+        </dl>
+      </div>
+      <div>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey("events"))}</h3>
+        <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          <div><dt className="text-muted-app">{t("policy.feedbackWindow")}</dt>
+            <dd className="mt-1">{version.feedbackWindowHours}</dd></div>
+          <div><dt className="text-muted-app">{t("policy.feedbackMinimum")}</dt>
+            <dd className="mt-1">{version.feedbackMinRespondents}</dd></div>
+          <div><dt className="text-muted-app">{t("policy.conflictMinutes")}</dt>
+            <dd className="mt-1">{version.conflictThresholdMinutes}</dd></div>
+          <div><dt className="text-muted-app">{t("policy.overbooking")}</dt>
+            <dd className="mt-1">{booleanLabel(version.allowOverbooking)}</dd></div>
+        </dl>
+      </div>
+      <div>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey("calendar"))}</h3>
         <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
           {version.academicCalendar.map((item) => (
             <li key={item.code} className="flex flex-wrap gap-x-3 gap-y-1 py-3">
@@ -71,6 +81,24 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
             </li>
           ))}
         </ul>
+      </div>
+      <div>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey("reports"))}</h3>
+        <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
+          {version.reportDeadlines.map((item) => (
+            <li key={item.reportType} className="py-3">
+              <span className="font-medium">{item.reportType}</span>
+              <dl className="mt-2 grid gap-2 sm:grid-cols-2">
+                {deadlineFields.map((field) => (
+                  <div key={field}><dt className="text-muted-app">{t(deadlineLabelKey(field))}</dt>
+                    <dd>{item[field]}</dd></div>
+                ))}
+              </dl>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3"><span className="text-muted-app">{t("policy.overdueBlock")}: </span>
+          {booleanLabel(version.enforceOverdueReportBlock)}</p>
       </div>
     </div>
   );
@@ -138,7 +166,7 @@ export function PolicyPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">{date(version.effectiveFrom)}</p>
                       <p className="mt-1 text-sm break-words text-muted-app">
-                        {version.allowedEmailDomains.join(", ")} · {t("policy.minFounders")}: {version.minFoundingMembers}
+                        {t("policy.minFounders")}: {version.minFoundingMembers}
                       </p>
                       <p className="mt-1 text-xs text-muted-app">{t("policy.created", { date: date(version.createdAt) })}</p>
                       <details className="mt-2">

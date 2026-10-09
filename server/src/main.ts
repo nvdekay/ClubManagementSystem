@@ -12,6 +12,7 @@ import { createOAuthFlowService } from "./infra/auth/oauth-flow-service.js";
 import { ensureAuthBootstrap } from "./infra/db/bootstrap-auth.js";
 import { mongoPublicDiscoveryRepository } from "./infra/db/mongo-public-discovery-repository.js";
 import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
+import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
 import { mongoClubProfileRepository } from "./infra/db/mongo-club-profile-repository.js";
@@ -36,6 +37,7 @@ const cloudinaryConfig = optionalCloudinaryConfig(config);
 try {
   await mongoose.connect(config.MONGO_URI);
   await ensureUcmsDatabase();
+  await ensureDefaultClubFields();
   if (authConfig) {
     await ensureAuthSessionIndexes();
     await ensureAuthBootstrap(authConfig);
@@ -55,6 +57,7 @@ const app = authConfig ? buildApp({
   adminRepo: mongoAccountAdminRepository(),
   policyRepo: mongoPolicyRepository(),
   applicationRepo: mongoClubApplicationRepository(),
+  clubFieldRepo: mongoClubFieldRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),

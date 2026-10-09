@@ -1,84 +1,88 @@
 import { describe, expect, it } from "vitest";
-import type { ClubApplicationSubmission } from "../../src/domain/club-application.js";
-import { validateClubApplicationSubmission } from "../../src/domain/club-application.js";
-import type { FoundingRequirements } from "../../src/domain/policy.js";
+import { GRANTABLE_CLUB_PERMISSIONS, LEADER_ONLY_CLUB_PERMISSIONS } from "../../src/domain/access.js";
+import {
+  FOUNDING_POSITIONS, foundingSubmissionIssues, validateClubApplicationSubmission,
+  type ClubApplicationDraft,
+} from "../../src/domain/club-application.js";
+import { DEFAULT_FORM_REQUIREMENTS, type FoundingRequirements } from "../../src/domain/policy.js";
 
 const founder = "000000000000000000000001";
 const member2 = "000000000000000000000002";
 const member3 = "000000000000000000000003";
 const requirements: FoundingRequirements = {
-  policyVersionId: "policy-1", minFoundingMembers: 3,
-  mandatoryApplicationDocuments: ["charter", "founder-list"],
+  policyVersionId: "policy-1", minFoundingMembers: 3, required: DEFAULT_FORM_REQUIREMENTS.clubFounding,
 };
 
-function validSubmission(): ClubApplicationSubmission {
+function validDraft(): ClubApplicationDraft {
+  function document(documentType: string) {
+    return { id: documentType, documentType, fileName: "f", mimeType: "application/pdf", bytes: 1,
+      assetId: "a", uploadedAt: new Date() };
+  }
   return {
-    clubName: "Robotics Club", field: "Technology", objectives: "Build robots",
-    founderUserId: founder, foundingUserIds: [founder, member2, member3],
-    documentTypes: ["charter", "founder-list"],
-    proposedRoles: [
-      { code: "CLUB_LEADER", name: "Club Leader", isBoardSeat: true, isLeaderRole: true,
-        isDefaultMemberRole: false, isSingleHolder: true, permissionCodes: [] },
-      { code: "MEMBERS", name: "Members", isBoardSeat: false, isLeaderRole: false,
-        isDefaultMemberRole: true, isSingleHolder: false, permissionCodes: [] },
-      { code: "EVENT", name: "Event coordinator", isBoardSeat: false,
-        isLeaderRole: false, isDefaultMemberRole: false, isSingleHolder: false,
-        permissionCodes: ["club.event.manage"] },
-    ],
+    clubName: "Robotics Club", fieldId: "00000000000000000000000a", field: "Công nghệ",
+    summary: "Robots", objectives: "Build robots", fanpageUrl: "", contactEmail: "",
+    founders: [{ userId: founder, role: "LEADER" }, { userId: member2, role: "VICE_LEADER" },
+      { userId: member3, role: "MEMBER" }],
+    documents: [document("PROPOSAL"), document("LOGO")],
   };
 }
 
 describe("UC07 submission validation", () => {
   it("accepts a complete founding application under the effective policy", () => {
-    expect(() => validateClubApplicationSubmission(validSubmission(), requirements)).not.toThrow();
+    expect(foundingSubmissionIssues(validDraft(), founder, requirements)).toEqual([]);
+    expect(() => validateClubApplicationSubmission(validDraft(), founder, requirements)).not.toThrow();
   });
 
-  it("requires distinct founding users including the applicant and the policy minimum", () => {
-    const valid = validSubmission();
-    for (const foundingUserIds of [
-      [founder, member2], [founder, member2, member2], [member2, member3, "000000000000000000000004"],
-      [founder, member2, "invalid-id"],
-    ]) {
-      expect(() => validateClubApplicationSubmission({ ...valid, foundingUserIds }, requirements))
-        .toThrow();
-    }
+  it("requires distinct founders including the applicant and the policy minimum", () => {
+    const valid = validDraft();
+    expect(foundingSubmissionIssues({ ...valid, founders: valid.founders.slice(0, 2) }, founder,
+      requirements)).toEqual(["foundersTooFew"]);
+    expect(foundingSubmissionIssues({ ...valid, founders: [...valid.founders.slice(0, 2),
+      { userId: member2, role: "MEMBER" }] }, founder, requirements)).toEqual(["duplicateFounder"]);
+    expect(foundingSubmissionIssues(valid, "000000000000000000000009", requirements))
+      .toEqual(["applicantNotFounder"]);
   });
 
-  it("reports missing required documents from policy", () => {
-    try {
-      validateClubApplicationSubmission({ ...validSubmission(), documentTypes: ["charter"] }, requirements);
-      throw new Error("expected a validation error");
-    } catch (error) {
-      expect(error).toMatchObject({
-        kind: "validation", details: { missingDocuments: ["founder-list"] },
-      });
-    }
+  it("requires only the fields the policy marks as required", () => {
+    const sparse = { ...validDraft(), summary: " ", objectives: "", documents: [] };
+    expect(foundingSubmissionIssues(sparse, founder, requirements))
+      .toEqual(["summary", "objectives", "proposal", "logo"]);
+    expect(foundingSubmissionIssues(sparse, founder, { ...requirements,
+      required: { ...requirements.required, summary: false, objectives: false, proposal: false, logo: false } }))
+      .toEqual([]);
+    expect(foundingSubmissionIssues(validDraft(), founder, { ...requirements,
+      required: { ...requirements.required, fanpageUrl: true, contactEmail: true } }))
+      .toEqual(["fanpageUrl", "contactEmail"]);
   });
 
-  it("rejects missing or invalid leader and Members roles", () => {
-    const valid = validSubmission();
-    const [leader, members, event] = valid.proposedRoles;
-    for (const proposedRoles of [
-      [members!, event!],
-      [leader!, event!],
-      [leader!, { ...leader!, code: "SECOND_LEADER" }, members!],
-      [{ ...leader!, isBoardSeat: false }, members!],
-      [leader!, { ...members!, isSingleHolder: true }],
-      [leader!, members!, { ...event!, code: "members" }],
-    ]) {
-      expect(() => validateClubApplicationSubmission({ ...valid, proposedRoles }, requirements))
-        .toThrow();
+  it("requires exactly one leader and one or two vice leaders", () => {
+    const valid = validDraft();
+    function roles(...values: ("LEADER" | "VICE_LEADER" | "MEMBER")[]): ClubApplicationDraft {
+      return { ...valid, founders: values.map((role, index) => ({
+        userId: `00000000000000000000000${index + 1}`, role })) };
     }
+    expect(foundingSubmissionIssues(roles("LEADER", "LEADER", "VICE_LEADER"), founder, requirements))
+      .toEqual(["leaderCount"]);
+    expect(foundingSubmissionIssues(roles("LEADER", "MEMBER", "MEMBER"), founder, requirements))
+      .toEqual(["viceLeaderCount"]);
+    expect(foundingSubmissionIssues(roles("LEADER", "VICE_LEADER", "VICE_LEADER"), founder, requirements))
+      .toEqual([]);
+    expect(foundingSubmissionIssues(roles("LEADER", "VICE_LEADER", "VICE_LEADER", "VICE_LEADER"),
+      founder, requirements)).toEqual(["viceLeaderCount"]);
   });
 
-  it("never grants a Club Leader reserved or unknown permission through a role", () => {
-    const valid = validSubmission();
-    for (const permissionCodes of [["club.role.manage"], ["unknown.permission"],
-      ["club.event.manage", "club.event.manage"]]) {
-      const proposedRoles = valid.proposedRoles.map((role) => role.code === "EVENT"
-        ? { ...role, permissionCodes } : role);
-      expect(() => validateClubApplicationSubmission({ ...valid, proposedRoles }, requirements))
-        .toThrow();
-    }
+  it("reports every gap with the policy minimum in the error details", () => {
+    expect(() => validateClubApplicationSubmission({ ...validDraft(), clubName: "", fieldId: "" },
+      founder, requirements)).toThrow(expect.objectContaining({
+      kind: "validation", details: { issues: ["clubName", "field"], required: 3 } }));
+  });
+
+  it("gives vice leaders every grantable permission and never a leader-only one", () => {
+    const viceLeader = FOUNDING_POSITIONS.find((position) => position.founderRole === "VICE_LEADER")!;
+    expect([...viceLeader.permissionCodes].sort()).toEqual([...GRANTABLE_CLUB_PERMISSIONS].sort());
+    expect(viceLeader.permissionCodes.some((code) =>
+      (LEADER_ONLY_CLUB_PERMISSIONS as readonly string[]).includes(code))).toBe(false);
+    expect(FOUNDING_POSITIONS.filter((position) => position.isLeaderRole)).toHaveLength(1);
+    expect(FOUNDING_POSITIONS.filter((position) => position.isDefaultMemberRole)).toHaveLength(1);
   });
 });

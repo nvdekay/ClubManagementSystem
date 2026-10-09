@@ -10,6 +10,8 @@ export function IcpdpHomePage() {
     { href: "/workspace/board-nominations", icon: "badge", label: t("boardNominations.queueTitle"),
       description: t("boardNominations.queueDescription") },
     { href: "/workspace/policy", icon: "shield", label: t("policy.title"), description: t("auth.policyDescription") },
+    { href: "/workspace/club-fields", icon: "layers", label: t("clubFields.title"),
+      description: t("clubFields.homeDescription") },
     { href: "/icpdp/accounts", icon: "users", label: t("auth.manageAccounts"), description: t("auth.manageAccountsDescription") },
     { href: "/clubs", icon: "compass", label: t("discovery.navClubs"), description: t("auth.reviewClubsDescription") },
   ]}><RoleDashboard context={{ workspace: "icpdp" }} /></WorkspaceHome>;

@@ -230,6 +230,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/workspace/leadership-transitions", label: t("common.navTransitions"), icon: "calendar" },
       { to: "/workspace/student-feedback", label: t("common.navFeedbackInbox"), icon: "inbox" },
       { to: "/workspace/policy", label: t("common.navPolicy"), icon: "shield" },
+      { to: "/workspace/club-fields", label: t("common.navClubFields"), icon: "layers" },
       { to: "/icpdp/accounts", label: t("common.navAccounts"), icon: "users" },
     ] }, explore];
   }

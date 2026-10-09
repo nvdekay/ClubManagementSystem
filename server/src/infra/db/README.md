@@ -16,14 +16,19 @@ repository của template tách khỏi `users` của UCMS cho đến khi làm Au
 cố định. Trang danh sách và giới thiệu CLB của PDP cần đăng nhập, nên CLB chưa có tên công khai
 giữ mã PDP làm tên; PDP không công bố sức chứa nên `capacity` là 0.
 
-`authSessions` là collection vận hành cho phiên UC01, nằm ngoài 49 collection nghiệp vụ DBML;
+`authSessions` là collection vận hành cho phiên UC01, nằm ngoài các collection nghiệp vụ DBML;
 index TTL chỉ dọn rác, việc kiểm tra hết hạn diễn ra ở mỗi request. Xem ADR-003.
 
 `seed-demo.ts` (`npm run seed:demo -- --owner=<email Google> [--owner-name="Tên"]`, chạy sau
 `npm run seed`) dựng bộ dữ liệu demo sạch để thử mọi luồng đã có: policy hiệu lực; 16 sinh viên demo
 `@demo.ucms.edu.vn`; cơ cấu và thành viên cho HEBE, Mây Mưa, EHC, FDS (người dùng `--owner` là Chủ
 nhiệm HEBE, thành viên Mây Mưa và được cấp `ICPDP_OFFICER`); đợt tuyển và đơn chờ xét; hồ sơ thành lập
-chờ duyệt, một hồ sơ đã duyệt kèm đề cử BCN; sự kiện sắp tới/đang diễn ra/đã kết thúc kèm đăng ký,
+chờ duyệt và một hồ sơ đã duyệt (CLB hoạt động ngay với ban chủ nhiệm khởi lập); sự kiện sắp tới/đang diễn ra/đã kết thúc kèm đăng ký,
 điểm danh, phản hồi; góp ý một chiều; kế hoạch chuyển giao chờ ICPDP. Ghi qua use case/repository khi
 luồng đã có; chạy lại an toàn (mỗi phần tự bỏ qua nếu đã có). Hồ sơ thành lập cần Cloudinary để
-upload Điều lệ PDF; thiếu cấu hình thì bỏ qua phần đó.
+upload đề án PDF và logo PNG; thiếu cấu hình thì bỏ qua phần đó.
+
+`clubFields` là danh mục lĩnh vực CLB do ICPDP quản lý. `ensureDefaultClubFields()` (gọi lúc khởi động
+server, `npm run db:init` và `seed:demo`) tạo sẵn 6 lĩnh vực trên database mới; khi ICPDP đã từng sửa danh
+mục (có audit `ClubField`) thì không tạo lại. Domain email đăng nhập không còn nằm trong policy mà lấy từ
+`ALLOWED_DOMAIN` của server (một domain, danh sách cách nhau bởi dấu phẩy, hoặc `*`).

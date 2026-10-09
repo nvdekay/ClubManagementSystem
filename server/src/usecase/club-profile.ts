@@ -5,6 +5,9 @@ import type {
   ClubProfileRepository,
 } from "../domain/club-profile.js";
 import { DomainError } from "../domain/errors.js";
+import {
+  CLUB_PROFILE_FORM_FIELDS, DEFAULT_FORM_REQUIREMENTS, type ClubProfileFormField, type PolicyRepository,
+} from "../domain/policy.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
@@ -60,6 +63,22 @@ function profileInput(input: ClubProfileInput): ClubProfileInput {
   };
 }
 
+/** Fields ICPDP marks as required for club profiles; defaults apply before any policy exists. */
+async function profileRequirements(policy: PolicyRepository,
+  now: Date): Promise<Readonly<Record<ClubProfileFormField, boolean>>> {
+  return (await policy.findEffective(now))?.formRequirements.clubProfile
+    ?? DEFAULT_FORM_REQUIREMENTS.clubProfile;
+}
+
+function assertRequiredProfileFields(input: ClubProfileInput,
+  required: Readonly<Record<ClubProfileFormField, boolean>>): void {
+  const missing = CLUB_PROFILE_FORM_FIELDS.filter((field) => required[field] &&
+    (field === "channels" ? input.channels.length === 0 : !input[field]));
+  if (missing.length) {
+    throw new DomainError("required club profile fields are missing", "validation", { missing });
+  }
+}
+
 function departmentInput(input: ClubDepartmentInput): ClubDepartmentInput {
   const name = input.name.trim();
   const description = optional(input.description, 2_000);
@@ -79,19 +98,22 @@ async function allowed(access: ClubAccessRepository, actor: AccessActor | null,
 }
 
 export async function getClubSettings(repo: ClubProfileRepository, access: ClubAccessRepository,
-  actor: AccessActor | null, clubId: string, now = new Date()) {
+  policy: PolicyRepository, actor: AccessActor | null, clubId: string, now = new Date()) {
   const ids = await allowed(access, actor, clubId, now);
-  const [profile, departments] = await Promise.all([
-    repo.findProfile(ids.clubId), repo.listDepartments(ids.clubId),
+  const [profile, departments, requiredProfileFields] = await Promise.all([
+    repo.findProfile(ids.clubId), repo.listDepartments(ids.clubId), profileRequirements(policy, now),
   ]);
   if (!profile) throw new DomainError("club not found", "not_found");
-  return { profile, departments };
+  return { profile, departments, requiredProfileFields };
 }
 
 export async function updateClubProfile(repo: ClubProfileRepository, access: ClubAccessRepository,
-  actor: AccessActor | null, clubId: string, input: ClubProfileInput, now: Date) {
+  policy: PolicyRepository, actor: AccessActor | null, clubId: string, input: ClubProfileInput,
+  now: Date) {
   const ids = await allowed(access, actor, clubId, now);
-  return repo.updateProfile(ids.clubId, ids.actorId, profileInput(input), now);
+  const normalized = profileInput(input);
+  assertRequiredProfileFields(normalized, await profileRequirements(policy, now));
+  return repo.updateProfile(ids.clubId, ids.actorId, normalized, now);
 }
 
 export async function applyClubDepartmentTemplate(repo: ClubProfileRepository,

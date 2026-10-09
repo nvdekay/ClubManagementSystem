@@ -4,6 +4,7 @@ import { accountAdminRoutes } from "./account-admin-routes.js";
 import type { AccountAdminRepository } from "../../domain/account-admin.js";
 import type { PublicDiscoveryRepository } from "../../domain/public-discovery.js";
 import type { PolicyManagementRepository } from "../../domain/policy.js";
+import type { ClubFieldRepository } from "../../domain/club-field.js";
 import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
@@ -26,6 +27,7 @@ import { policyRoutes } from "./policy-routes.js";
 import { clubApplicationRoutes } from "./club-application-routes.js";
 import { clubApplicationReviewRoutes } from "./club-application-review-routes.js";
 import { clubProfileRoutes } from "./club-profile-routes.js";
+import { clubFieldRoutes } from "./club-field-routes.js";
 import { boardNominationRoutes } from "./board-nomination-routes.js";
 import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
 import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
@@ -63,6 +65,7 @@ export function buildApp(deps: {
   adminRepo?: AccountAdminRepository;
   policyRepo?: PolicyManagementRepository;
   applicationRepo?: ClubApplicationRepository;
+  clubFieldRepo?: ClubFieldRepository;
   applicationReviewRepo?: ClubApplicationReviewRepository;
   clubProfileRepo?: ClubProfileRepository;
   boardNominationRepo?: BoardNominationRepository;
@@ -102,9 +105,9 @@ export function buildApp(deps: {
     app.use("/api/v1", accountAdminRoutes({
       adminRepo: deps.adminRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
     }));
-    if (deps.clubProfileRepo) {
+    if (deps.clubProfileRepo && deps.policyRepo) {
       app.use("/api/v1", clubProfileRoutes({
-        repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo,
+        repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo, policy: deps.policyRepo,
         authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
     }
@@ -164,9 +167,14 @@ export function buildApp(deps: {
       app.use("/api/v1", policyRoutes({
         repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
-      if (deps.applicationRepo) {
+      if (deps.clubFieldRepo) {
+        app.use("/api/v1", clubFieldRoutes({
+          repo: deps.clubFieldRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+        }));
+      }
+      if (deps.applicationRepo && deps.clubFieldRepo) {
         app.use("/api/v1", clubApplicationRoutes({
-          repo: deps.applicationRepo, policy: deps.policyRepo,
+          repo: deps.applicationRepo, policy: deps.policyRepo, fields: deps.clubFieldRepo,
           files: deps.applicationFiles ?? null,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions,
         }));
@@ -182,9 +190,10 @@ export function buildApp(deps: {
   }
   const hasAdmin = Boolean(deps.auth && deps.adminRepo);
   const hasPolicy = Boolean(hasAdmin && deps.policyRepo);
-  const hasApplications = Boolean(hasPolicy && deps.applicationRepo);
+  const hasClubFields = Boolean(hasPolicy && deps.clubFieldRepo);
+  const hasApplications = Boolean(hasClubFields && deps.applicationRepo);
   const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
-  const hasClubProfiles = Boolean(hasAdmin && deps.clubProfileRepo);
+  const hasClubProfiles = Boolean(hasPolicy && deps.clubProfileRepo);
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
@@ -199,6 +208,7 @@ export function buildApp(deps: {
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
       if (path.startsWith("/admin/policies")) return hasPolicy;
+      if (path.startsWith("/admin/club-fields")) return hasClubFields;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;

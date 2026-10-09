@@ -27,10 +27,19 @@ const semesterBody = z.object({
   startAt: z.string().datetime({ offset: true }),
   endAt: z.string().datetime({ offset: true }),
 }).strict();
+const foundingRequirementsBody = z.object({
+  summary: z.boolean(), objectives: z.boolean(), proposal: z.boolean(), logo: z.boolean(),
+  fanpageUrl: z.boolean(), contactEmail: z.boolean(),
+}).strict();
+const profileRequirementsBody = z.object({
+  description: z.boolean(), contactEmail: z.boolean(), contactPhone: z.boolean(),
+  charterUrl: z.boolean(), channels: z.boolean(), operatingScope: z.boolean(),
+}).strict();
 export const policySettingsBody = z.object({
-  allowedEmailDomains: z.array(z.string().min(1).max(255)).min(1),
   minFoundingMembers: z.number().int().positive(),
-  mandatoryApplicationDocuments: z.array(z.string().min(1).max(100)),
+  formRequirements: z.object({
+    clubFounding: foundingRequirementsBody, clubProfile: profileRequirementsBody,
+  }).strict(),
   reportDeadlines: z.array(deadlineBody).min(1),
   conflictThresholdMinutes: z.number().int().nonnegative(),
   feedbackWindowHours: z.number().int().positive(),

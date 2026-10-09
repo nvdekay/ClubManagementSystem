@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClubAccessRepository, ClubAccessSnapshot } from "../../src/domain/access.js";
-import type { PolicyRepository } from "../../src/domain/policy.js";
+import { DEFAULT_FORM_REQUIREMENTS, type PolicyRepository } from "../../src/domain/policy.js";
 import type {
   RecruitmentCampaign, RecruitmentCampaignInput, RecruitmentCampaignRepository,
 } from "../../src/domain/recruitment-campaign.js";
@@ -71,7 +71,7 @@ function policy(academicCalendar: PolicyRepository extends never ? never : {
   return { findEffective: async () => ({
     id: "policy", effectiveFrom: new Date("2026-01-01T00:00:00.000Z"),
     createdBy: actor.id, createdAt: now,
-    allowedEmailDomains: [], minFoundingMembers: 1, mandatoryApplicationDocuments: [],
+    minFoundingMembers: 1, formRequirements: DEFAULT_FORM_REQUIREMENTS,
     reportDeadlines: [], conflictThresholdMinutes: 0, feedbackWindowHours: 24,
     feedbackMinRespondents: 2, allowOverbooking: false, enforceOverdueReportBlock: false,
     academicCalendar,

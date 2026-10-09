@@ -98,7 +98,7 @@ def main() -> None:
             raise ValueError(f"Unknown type {field_type} at line {line_number}")
         attrs.pop("pk", None)
         table["fields"][field] = {"type": field_type, **attrs}
-    if len(tables) != 50 or len(enums) != 27:
+    if len(tables) != 51 or len(enums) != 27:
         raise ValueError(f"Unexpected DBML inventory: {len(tables)} tables, {len(enums)} enums")
     output = (
         "// Generated from docs/05-implementation/UCMS_Database_Design.dbml.\n"

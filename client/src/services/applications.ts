@@ -1,33 +1,55 @@
-export interface ProposedRole {
-  code: string;
-  name: string;
-  unit?: string;
-  isBoardSeat: boolean;
-  isLeaderRole: boolean;
-  isDefaultMemberRole: boolean;
-  isSingleHolder: boolean;
-  permissionCodes: string[];
+export type FounderRole = "LEADER" | "VICE_LEADER" | "MEMBER";
+export type ApplicationDocumentType = "PROPOSAL" | "LOGO";
+
+export interface FoundingMember {
+  userId: string;
+  role: FounderRole;
 }
 
 export interface ApplicationDocument {
   id: string;
-  documentType: string;
+  documentType: ApplicationDocumentType;
   fileName: string;
   mimeType: string;
   bytes: number;
+  /** Only set for the proposed logo, which is stored publicly so it can be previewed. */
+  publicUrl?: string;
   uploadedAt: string;
 }
 
 export interface DraftInput {
   clubName: string;
-  field: string;
+  fieldId: string;
+  summary: string;
   objectives: string;
-  foundingUserIds: string[];
-  proposedRoles: ProposedRole[];
+  fanpageUrl: string;
+  contactEmail: string;
+  founders: FoundingMember[];
 }
 
 export interface ApplicationDraft extends DraftInput {
+  /** Catalog name of the chosen field, resolved by the server. */
+  field: string;
   documents: ApplicationDocument[];
+}
+
+export type FoundingField = "summary" | "objectives" | "proposal" | "logo" | "fanpageUrl" | "contactEmail";
+
+/** Everything that blocks submission, as reported by the server preview or a rejected submit. */
+export type FoundingIssue = "clubName" | "field" | FoundingField | "foundersTooFew" | "applicantNotFounder"
+  | "duplicateFounder" | "leaderCount" | "viceLeaderCount" | "fieldUnavailable" | "leaderHoldsAnotherClub";
+
+export interface FoundingRequirements {
+  policyVersionId: string;
+  minFoundingMembers: number;
+  required: Record<FoundingField, boolean>;
+}
+
+export interface ClubFieldOption {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
 }
 
 export interface ApplicationRecord {
@@ -67,10 +89,16 @@ export interface ApplicationVersion {
 }
 
 export interface ApplicationConfig {
-  requirements: { policyVersionId: string; minFoundingMembers: number;
-    mandatoryApplicationDocuments: string[] };
-  grantablePermissions: string[];
-  defaultRoles: ProposedRole[];
+  requirements: FoundingRequirements;
+  fields: ClubFieldOption[];
+  positions: { code: string; name: string; founderRole: FounderRole }[];
+  maxViceLeaders: number;
+}
+
+/** Thrown for non-2xx responses; keeps the status and the server's `details` (e.g. founding issues). */
+export interface ApplicationRequestError extends Error {
+  status: number;
+  details?: { issues?: FoundingIssue[]; required?: number };
 }
 
 export interface ApplicationDetail {
@@ -85,9 +113,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     credentials: "same-origin", ...init,
   });
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    const body = (await response.json().catch(() => null)) as
+      { message?: string; details?: unknown } | null;
     // Keep the status so callers can tell "not found" apart from other failures.
-    throw Object.assign(new Error(body?.message ?? `HTTP ${response.status}`), { status: response.status });
+    throw Object.assign(new Error(body?.message ?? `HTTP ${response.status}`), {
+      status: response.status,
+      ...(body?.details && typeof body.details === "object" ? { details: body.details } : {}),
+    });
   }
   const body: { data: T } = await response.json();
   return body.data;
@@ -111,7 +143,7 @@ export function fetchApplication(id: string, signal: AbortSignal): Promise<Appli
 }
 
 export function previewApplication(id: string, signal: AbortSignal): Promise<{
-  requirements: ApplicationConfig["requirements"]; activeNameConflict: boolean;
+  requirements: FoundingRequirements; issues: FoundingIssue[]; activeNameConflict: boolean;
 }> {
   return request(`/${encodeURIComponent(id)}/preview`, { signal });
 }
@@ -136,7 +168,7 @@ export function withdrawDraft(id: string, csrfToken: string): Promise<Applicatio
   return request(`/${encodeURIComponent(id)}/withdraw`, mutation("POST", csrfToken));
 }
 
-export function uploadDocument(id: string, documentType: string, file: File,
+export function uploadDocument(id: string, documentType: ApplicationDocumentType, file: File,
   csrfToken: string): Promise<ApplicationDocument> {
   return request(`/${encodeURIComponent(id)}/documents`, {
     method: "POST", headers: { "Content-Type": file.type,

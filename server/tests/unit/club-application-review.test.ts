@@ -16,8 +16,9 @@ const now = new Date("2026-10-08T08:00:00Z");
 const officer = { id: "000000000000000000000001", accountState: "Active" as const };
 const applicationId = "000000000000000000000002";
 const draft: ClubApplicationDraft = {
-  clubName: "Robotics Club", field: "Technology", objectives: "Build robots",
-  foundingUserIds: ["000000000000000000000003"], documents: [], proposedRoles: [],
+  clubName: "Robotics Club", fieldId: "00000000000000000000000a", field: "Technology",
+  summary: "Robots", objectives: "Build robots", fanpageUrl: "", contactEmail: "",
+  founders: [{ userId: "000000000000000000000003", role: "LEADER" }], documents: [],
 };
 const detail: ApplicationReviewDetail = {
   task: { id: "000000000000000000000004", applicationId, title: "Robotics",

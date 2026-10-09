@@ -8,7 +8,7 @@
 // vụ (BRnn).
 //
 // Cách đọc ký hiệu
-//   - Một "Table" = một collection MongoDB (một aggregate). Tổng 49 collection.
+//   - Một "Table" = một collection MongoDB (một aggregate). Tổng 51 collection.
 //   - Cột kiểu "objectId" là tham chiếu được lưu dưới dạng ObjectId, không
 //     phải khoá ngoại. dbdiagram vẽ chúng thành quan hệ để mô hình dễ đọc.
 //   - Cột kiểu "json" là sub-document NHÚNG: có chặn trên, luôn được đọc
@@ -23,7 +23,7 @@
 Project UCMS {
   database_type: 'MongoDB'
   Note: '''
-  Hệ thống Quản lý Câu lạc bộ Đại học — 49 collection trên 12 module.
+  Hệ thống Quản lý Câu lạc bộ Đại học — 51 collection trên 12 module.
   Các quy tắc thiết kế đang áp dụng:
   - Mỗi aggregate một collection; tham chiếu bằng ObjectId, không join trong đường đi nóng (DAT-01).
   - Sức chứa và việc cấp khung giờ được bảo vệ bằng unique index cộng findOneAndUpdate có điều
@@ -321,9 +321,8 @@ Table userRoleAssignments {
 
 Table policyVersions {
   id objectId [pk]
-  allowedEmailDomains "string[]" [not null, note: 'BR32.']
   minFoundingMembers int [not null, note: 'BR03.']
-  mandatoryApplicationDocuments "string[]" [not null, note: 'BR02.']
+  formRequirements json [not null, note: 'Field nào bắt buộc trong các form cố định, theo luồng: { clubFounding: {summary, objectives, proposal, logo, fanpageUrl, contactEmail}, clubProfile: {description, contactEmail, contactPhone, charterUrl, channels, operatingScope} } (bool). Thay cho danh sách tài liệu bắt buộc BR02 (feat-simplified-club-founding). Domain email đăng nhập (BR32) chuyển sang cấu hình server ALLOWED_DOMAIN.']
   reportDeadlines json [not null, note: 'Theo từng loại báo cáo: mốc đến hạn cộng các mốc nhắc T-X / T+Y / T+Z (BR20, NTF-05).']
   conflictThresholdMinutes int [not null, note: 'BR15 — dưới mức chồng lấn này thì báo Warning thay vì Blocking Conflict.']
   feedbackWindowHours int [not null, note: 'BR36 — tính từ lúc sự kiện kết thúc.']
@@ -335,7 +334,7 @@ Table policyVersions {
   createdBy objectId [not null]
   createdAt datetime [not null]
 
-  Note: 'Chỉ-ghi-thêm, có ngày hiệu lực. Một quyết định đã ra giữ nguyên các giá trị mà nó được ra theo (UC04 FR-04). Màn hình chỉ phơi ra đúng chín giá trị này (BR42).'
+  Note: 'Chỉ-ghi-thêm, có ngày hiệu lực. Một quyết định đã ra giữ nguyên các giá trị mà nó được ra theo (UC04 FR-04). Màn hình nhóm các giá trị này theo luồng nghiệp vụ (BR42).'
   indexes {
     effectiveFrom [name: 'ix_policy_effective']
   }
@@ -371,10 +370,26 @@ Table clubs {
   }
 }
 
+Table clubFields {
+  id objectId [pk]
+  name string [not null]
+  normalizedName string [not null, note: 'Tên trim/lowercase để cưỡng chế duy nhất không phân biệt hoa thường.']
+  sortOrder int [not null, default: 0]
+  isActive bool [not null, default: true, note: 'false = đã xoá nhưng còn CLB/hồ sơ dùng: ẩn khỏi dropdown, dữ liệu cũ giữ nguyên.']
+  createdAt datetime [not null]
+  updatedAt datetime
+
+  Note: 'Danh mục lĩnh vực CLB do ICPDP quản lý (feat-simplified-club-founding). clubs.field và clubApplications.field lưu bản sao tên (DAT-06); đổi tên cập nhật các bản sao đó. Xoá cứng khi chưa ai dùng.'
+  indexes {
+    normalizedName [unique, name: 'uq_club_field_name']
+    (isActive, sortOrder) [name: 'ix_club_field_active']
+  }
+}
+
 Table clubApplications {
   id objectId [pk]
   clubName string [not null]
-  field string [not null]
+  field string [not null, note: 'Tên lĩnh vực chọn từ clubFields; draftPayload giữ thêm fieldId.']
   objectives text
   founderUserId objectId [not null]
   draftPayload json [note: 'Nội dung đang sửa của Draft hoặc Revision Requested, gồm metadata tệp; không dùng version đã nộp làm bản nháp.']
@@ -398,9 +413,9 @@ Table clubApplicationVersions {
   applicationId objectId [not null]
   versionNo int [not null]
   payload json [not null, note: 'Bản chụp bất biến đầy đủ của hồ sơ đã nộp.']
-  foundingMembers json [not null, note: 'Danh sách thành viên sáng lập đã khai; được đối chiếu với minFoundingMembers (BR03).']
-  documents json [not null, note: 'Các tài liệu bắt buộc theo chính sách đang hiệu lực (BR02).']
-  proposedRoleStructure json [not null, note: 'Cơ cấu tổ chức dự kiến (UC07): [{code, name, unit, isBoardSeat, isLeaderRole, isDefaultMemberRole, isSingleHolder, permissionCodes[]}]. Luôn có role Chủ nhiệm và Members; không chứa permission isLeaderReserved (BR55). Đóng băng theo version hồ sơ; khi UC08 duyệt, trở thành clubRoleStructureVersions số 1 (BR56).']
+  foundingMembers json [not null, note: 'Thành viên sáng lập kèm chức vụ dự kiến [{userId, role: LEADER|VICE_LEADER|MEMBER}]; đối chiếu với minFoundingMembers (BR03). Đúng 1 LEADER, 1–2 VICE_LEADER.']
+  documents json [not null, note: 'Đề án thành lập (PROPOSAL, PDF/DOCX) và logo dự kiến (LOGO, PNG/JPG); bắt buộc hay không theo policyVersions.formRequirements.clubFounding.']
+  proposedRoleStructure json [not null, note: 'Cơ cấu mặc định cố định do hệ thống sinh (Chủ nhiệm, Phó chủ nhiệm, Thành viên) kèm permission mặc định; sinh viên không tự cấu hình. Khi UC08 duyệt, trở thành clubRoleStructureVersions số 1 (BR56).']
   submittedBy objectId [not null]
   submittedAt datetime [not null]
 
@@ -1422,6 +1437,7 @@ TableGroup "M01 Định danh, truy cập & cấu hình" {
 
 TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {
   clubs
+  clubFields
   clubApplications
   clubApplicationVersions
   clubSuspensionRequests
