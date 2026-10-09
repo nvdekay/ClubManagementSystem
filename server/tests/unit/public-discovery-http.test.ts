@@ -23,6 +23,7 @@ function repository(): PublicDiscoveryRepository {
     getClub: async () => null,
     board: async () => [],
     campaigns: async () => [],
+    getCampaign: async () => null,
     clubUpcomingEvents: async () => [],
     clubHistory: async () => [],
     listUpcomingEvents: async (page, pageSize) => ({ items: [], total: 0, page, pageSize }),

@@ -45,6 +45,7 @@ const stubPublic: PublicDiscoveryRepository = {
   getClub: async () => null,
   board: async () => [],
   campaigns: async () => [],
+  getCampaign: async () => null,
   clubUpcomingEvents: async () => [],
   clubHistory: async () => [],
   listUpcomingEvents: async () => ({ items: [], total: 0, page: 1, pageSize: 12 }),

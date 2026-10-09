@@ -38,6 +38,16 @@ export async function publicClubDetail(
   };
 }
 
+export async function publicCampaignDetail(
+  repo: PublicDiscoveryRepository, id: string, now: Date,
+) {
+  const campaign = await repo.getCampaign(validId(id), now);
+  if (!campaign || !isVisibleCampaign(campaign, now)) {
+    throw new DomainError("recruitment campaign not found", "not_found");
+  }
+  return campaign;
+}
+
 export async function listPublicEvents(
   repo: PublicDiscoveryRepository, page: number, pageSize: number, now: Date,
 ) {

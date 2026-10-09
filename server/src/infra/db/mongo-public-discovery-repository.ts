@@ -49,6 +49,35 @@ function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
     capacity: Number(doc.capacity),
   };
 }
+function mapCampaignDetail(doc: Record<string, unknown>): PublicCampaign {
+  const item = mapCampaign(doc);
+  const steps = Array.isArray(doc.selectionSteps) ? doc.selectionSteps : [];
+  const fields = Array.isArray(doc.formSchema) ? doc.formSchema : [];
+  const rubric = Array.isArray(doc.rubric) ? doc.rubric : [];
+  return {
+    ...item, clubId: id(doc.clubId),
+    positions: Array.isArray(doc.positions) ? doc.positions.filter((value): value is string =>
+      typeof value === "string") : [],
+    ...(typeof doc.criteria === "string" ? { criteria: doc.criteria } : {}),
+    selectionSteps: steps.flatMap((value) => value && typeof value === "object"
+      && typeof (value as { name?: unknown }).name === "string" ? [value as {
+        name: string; description?: string; startsAt?: Date; endsAt?: Date;
+      }] : []),
+    formSchema: fields.flatMap((value) => value && typeof value === "object"
+      && typeof (value as { key?: unknown }).key === "string"
+      && typeof (value as { label?: unknown }).label === "string"
+      && typeof (value as { type?: unknown }).type === "string" ? [value as {
+        key: string; label: string; type: string; required: boolean; options?: string[];
+      }] : []),
+    rubric: rubric.flatMap((value) => {
+      if (!value || typeof value !== "object") return [];
+      const criterion = value as { key?: unknown; label?: unknown; maxScore?: unknown };
+      return typeof criterion.key === "string" && typeof criterion.label === "string"
+        && typeof criterion.maxScore === "number"
+        ? [{ key: criterion.key, label: criterion.label, maxScore: criterion.maxScore }] : [];
+    }),
+  };
+}
 
 export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
   const clubs = ucmsModels.clubs!;
@@ -121,9 +150,16 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
     },
     async campaigns(clubId, now): Promise<PublicCampaign[]> {
       const docs = await campaigns.find({
-        clubId: new Types.ObjectId(clubId), state: { $in: campaignStates }, windowEnd: { $gt: now },
+        clubId: new Types.ObjectId(clubId), state: { $in: campaignStates },
+        windowStart: { $lte: now }, windowEnd: { $gt: now },
       }).sort({ windowStart: 1, _id: 1 }).limit(20).lean();
       return docs.map(mapCampaign);
+    },
+    async getCampaign(campaignId, now): Promise<PublicCampaign | null> {
+      const doc = await campaigns.findOne({ _id: new Types.ObjectId(campaignId),
+        state: { $in: campaignStates }, windowStart: { $lte: now }, windowEnd: { $gt: now } }).lean();
+      if (!doc || !await clubs.exists({ _id: doc.clubId, state: "Active" })) return null;
+      return mapCampaignDetail(doc);
     },
     async clubUpcomingEvents(clubId, now): Promise<PublicEvent[]> {
       const docs = await events.find({

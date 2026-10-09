@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import type {
   PublicCampaign, PublicClub, PublicDiscoveryRepository, PublicEvent,
 } from "../../src/domain/public-discovery.js";
-import { isHistoricalPublicEvent, isUpcomingPublicEvent } from "../../src/domain/public-discovery.js";
+import { isHistoricalPublicEvent, isUpcomingPublicEvent, isVisibleCampaign } from "../../src/domain/public-discovery.js";
 import {
-  listPublicClubs, publicClubDetail, publicEventDetail,
+  listPublicClubs, publicCampaignDetail, publicClubDetail, publicEventDetail,
 } from "../../src/usecase/public-discovery.js";
 
 const now = new Date("2026-10-03T12:00:00Z");
@@ -39,7 +39,13 @@ function fixture(clubState = "Active") {
         campaign,
         { ...campaign, id: "draft", state: "Draft" },
         { ...campaign, id: "closed", windowEnd: now },
+        { ...campaign, id: "upcoming", windowStart: new Date("2026-10-04T00:00:00Z") },
       ];
+    },
+    async getCampaign(campaignId) {
+      calls.push("campaignDetail");
+      return campaignId === campaign.id ? campaign : { ...campaign,
+        windowStart: new Date("2026-10-04T00:00:00Z") };
     },
     async clubUpcomingEvents() {
       calls.push("upcoming");
@@ -58,6 +64,19 @@ function fixture(clubState = "Active") {
 }
 
 describe("public discovery", () => {
+  it("only shows campaigns inside their published application window", () => {
+    expect(isVisibleCampaign(campaign, now)).toBe(true);
+    expect(isVisibleCampaign({ ...campaign, windowStart: new Date("2026-10-04") }, now)).toBe(false);
+    expect(isVisibleCampaign({ ...campaign, windowEnd: now }, now)).toBe(false);
+  });
+
+  it("only exposes the public form for an open campaign", async () => {
+    const { repo } = fixture();
+    expect(await publicCampaignDetail(repo, id, now)).toEqual(campaign);
+    await expect(publicCampaignDetail(repo, "abcdefabcdefabcdefabcdef", now))
+      .rejects.toMatchObject({ kind: "not_found" });
+  });
+
   it("returns directory fields and filters private detail data", async () => {
     const { repo } = fixture();
     expect(await listPublicClubs(repo, { search: "", field: "", page: 1, pageSize: 12 }))

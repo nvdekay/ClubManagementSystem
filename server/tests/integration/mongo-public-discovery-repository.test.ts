@@ -58,6 +58,9 @@ describe.skipIf(!uri)("Mongo public discovery repository", () => {
       { clubId: activeId, title: "Autumn intake", positions: [], formSchema: {},
         windowStart: new Date("2026-10-01"), windowEnd: new Date("2026-10-10"),
         capacity: 20, state: "Published", createdAt: now },
+      { clubId: activeId, title: "Future intake", positions: [], formSchema: {},
+        windowStart: new Date("2026-10-04"), windowEnd: new Date("2026-10-10"),
+        capacity: 20, state: "Published", createdAt: now },
       { clubId: suspendedId, title: "Paused intake", positions: [], formSchema: {},
         windowStart: new Date("2026-10-01"), windowEnd: new Date("2026-10-10"),
         capacity: 20, state: "Published", createdAt: now },
@@ -82,6 +85,17 @@ describe.skipIf(!uri)("Mongo public discovery repository", () => {
     expect(await repo.board(activeId.toString(), now))
       .toEqual([{ memberName: "Board member", positionName: "Leader", termName: "2026" }]);
     expect(await repo.campaigns(activeId.toString(), now)).toHaveLength(1);
+    const autumnCampaign = await ucmsModels.recruitmentCampaigns!.findOne({
+      clubId: activeId, title: "Autumn intake",
+    }).lean();
+    expect(autumnCampaign).not.toBeNull();
+    expect(await repo.getCampaign(String(autumnCampaign!._id), now))
+      .toMatchObject({ title: "Autumn intake", clubId: activeId.toString() });
+    const futureCampaign = await ucmsModels.recruitmentCampaigns!.findOne({
+      clubId: activeId, title: "Future intake",
+    }).lean();
+    expect(futureCampaign).not.toBeNull();
+    expect(await repo.getCampaign(String(futureCampaign!._id), now)).toBeNull();
     expect(await repo.clubUpcomingEvents(activeId.toString(), now)).toHaveLength(1);
     const upcoming = await repo.listUpcomingEvents(1, 12, now);
     expect(upcoming.items.map((event) => event.title)).toEqual(["Open day"]);

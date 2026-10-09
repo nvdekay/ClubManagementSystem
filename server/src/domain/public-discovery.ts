@@ -17,6 +17,12 @@ export interface PublicCampaign {
   windowStart: Date;
   windowEnd: Date;
   capacity: number;
+  clubId?: string;
+  positions?: string[];
+  criteria?: string;
+  selectionSteps?: Array<{ name: string; description?: string; startsAt?: Date; endsAt?: Date }>;
+  formSchema?: Array<{ key: string; label: string; type: string; required: boolean; options?: string[] }>;
+  rubric?: Array<{ key: string; label: string; maxScore: number }>;
 }
 
 export interface PublicEvent {
@@ -59,6 +65,7 @@ export interface PublicDiscoveryRepository {
   getClub(id: string): Promise<PublicClub | null>;
   board(clubId: string, now: Date): Promise<PublicBoardSeat[]>;
   campaigns(clubId: string, now: Date): Promise<PublicCampaign[]>;
+  getCampaign(id: string, now: Date): Promise<PublicCampaign | null>;
   clubUpcomingEvents(clubId: string, now: Date): Promise<PublicEvent[]>;
   clubHistory(clubId: string, now: Date): Promise<PublicEvent[]>;
   listUpcomingEvents(page: number, pageSize: number, now: Date): Promise<Page<PublicEvent>>;
@@ -71,7 +78,7 @@ export function isDiscoverableClub(club: PublicClub): boolean {
 
 export function isVisibleCampaign(campaign: PublicCampaign, now: Date): boolean {
   return (campaign.state === "Published" || campaign.state === "Accepting Applications")
-    && campaign.windowEnd > now;
+    && campaign.windowStart <= now && campaign.windowEnd > now;
 }
 
 export function isUpcomingPublicEvent(event: PublicEvent, now: Date): boolean {
