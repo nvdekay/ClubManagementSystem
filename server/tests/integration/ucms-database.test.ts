@@ -57,6 +57,21 @@ describe.skipIf(!uri)("UCMS Mongo database", () => {
     expect(inboxIndex?.key).toEqual({ state: 1, assigneeId: 1, slaDueAt: 1 });
   }, 60_000);
 
+  it("migrates the old unconditional membership index to the DBML partial unique index", async () => {
+    const memberships = ucmsModels.clubMemberships.collection;
+    await memberships.dropIndex("uq_membership_active");
+    await memberships.createIndex({ clubId: 1, userId: 1 }, {
+      name: "uq_membership_active", unique: true,
+    });
+
+    await ensureUcmsDatabase();
+
+    const migrated = (await memberships.indexes()).find((index) => index.name === "uq_membership_active");
+    expect(migrated).toMatchObject({ unique: true,
+      partialFilterExpression: { state: { $in: ["Active", "Inactive"] } },
+    });
+  }, 60_000);
+
   it("enforces required fields, enums and unique email", async () => {
     const users = ucmsModels.users;
     await expect(users.create({ email: "bad@example.com", displayName: "Bad", accountState: "Unknown", createdAt: new Date() }))
@@ -68,4 +83,16 @@ describe.skipIf(!uri)("UCMS Mongo database", () => {
     await expect(users.create({ email: "one@example.com", displayName: "Duplicate", createdAt: new Date() }))
       .rejects.toMatchObject({ code: 11000 });
   });
+
+  it("allows rejoin after Left while keeping one Active or Inactive membership per club", async () => {
+    await ensureUcmsDatabase();
+    const clubId = new mongoose.Types.ObjectId();
+    const userId = new mongoose.Types.ObjectId();
+    const memberships = ucmsModels.clubMemberships;
+    await memberships.create({ clubId, userId, state: "Left", joinedAt: new Date(), statusHistory: [] });
+    await expect(memberships.create({ clubId, userId, state: "Active", joinedAt: new Date(), statusHistory: [] }))
+      .resolves.toBeTruthy();
+    await expect(memberships.create({ clubId, userId, state: "Inactive", joinedAt: new Date(), statusHistory: [] }))
+      .rejects.toMatchObject({ code: 11000 });
+  }, 60_000);
 });

@@ -33,6 +33,9 @@ def parse_attributes(value: str | None) -> dict[str, object]:
             result["default"] = ast.literal_eval(raw) if raw.startswith("'") else json.loads(raw)
         elif part.startswith("name:"):
             result["name"] = ast.literal_eval(part.partition(":")[2].strip())
+        elif part.startswith("partialFilterExpression:"):
+            value = ast.literal_eval(part.partition(":")[2].strip())
+            result["partialFilterExpression"] = json.loads(value)
         elif part in {"pk", "unique", "not null"}:
             result[{"not null": "required"}.get(part, part)] = True
         else:

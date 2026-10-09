@@ -12,6 +12,7 @@ type IndexDefinition = {
   readonly fields: readonly string[];
   readonly name?: string;
   readonly unique?: boolean;
+  readonly partialFilterExpression?: Readonly<Record<string, unknown>>;
 };
 
 type TableDefinition = {
@@ -76,7 +77,8 @@ function buildSchema(tableName: string, definition: TableDefinition): Schema {
   }
   for (const index of definition.indexes) {
     const keys = Object.fromEntries(index.fields.map((field) => [field, 1])) as Record<string, 1>;
-    schema.index(keys, { name: index.name, unique: index.unique ?? false });
+    schema.index(keys, { name: index.name, unique: index.unique ?? false,
+      ...(index.partialFilterExpression ? { partialFilterExpression: index.partialFilterExpression } : {}) });
   }
   return schema;
 }
@@ -97,13 +99,16 @@ export function ucmsCollectionNames(): string[] {
 }
 
 function sameIndex(
-  existing: { key: Record<string, unknown>; unique?: boolean; sparse?: boolean },
+  existing: { key: Record<string, unknown>; unique?: boolean; sparse?: boolean;
+    partialFilterExpression?: unknown },
   keys: Record<string, unknown>,
-  options: { unique?: unknown; sparse?: unknown },
+  options: { unique?: unknown; sparse?: unknown; partialFilterExpression?: unknown },
 ): boolean {
   return JSON.stringify(existing.key) === JSON.stringify(keys)
     && Boolean(existing.unique) === Boolean(options.unique)
-    && Boolean(existing.sparse) === Boolean(options.sparse);
+    && Boolean(existing.sparse) === Boolean(options.sparse)
+    && JSON.stringify(existing.partialFilterExpression ?? null)
+      === JSON.stringify(options.partialFilterExpression ?? null);
 }
 
 export async function inspectUcmsDatabase(): Promise<{ database: string; missingCollections: string[]; missingIndexes: string[] }> {
@@ -146,6 +151,7 @@ export async function ensureUcmsDatabase(): Promise<void> {
           name: options.name,
           unique: Boolean(options.unique),
           sparse: Boolean(options.sparse),
+          ...(options.partialFilterExpression ? { partialFilterExpression: options.partialFilterExpression } : {}),
         });
       }
     }

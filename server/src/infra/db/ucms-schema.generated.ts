@@ -1290,7 +1290,15 @@ export const ucmsTables = {
           "userId"
         ],
         "unique": true,
-        "name": "uq_membership_active"
+        "name": "uq_membership_active",
+        "partialFilterExpression": {
+          "state": {
+            "$in": [
+              "Active",
+              "Inactive"
+            ]
+          }
+        }
       },
       {
         "fields": [
