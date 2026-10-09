@@ -12,8 +12,11 @@ const clubQuery = z.object({
   field: z.string().trim().max(100).default(""),
   page: z.coerce.number().int().min(1).max(100_000).default(1),
 }).strict();
-const pageQuery = z.object({
+const eventQuery = z.object({
   page: z.coerce.number().int().min(1).max(100_000).default(1),
+  // Defaults to upcoming so existing "upcoming events" consumers keep their behaviour.
+  status: z.enum(["all", "ongoing", "upcoming", "ended"]).default("upcoming"),
+  search: z.string().trim().max(100).default(""),
 }).strict();
 
 function parse<T extends z.ZodTypeAny>(schema: T, value: unknown): z.output<T> {
@@ -41,8 +44,8 @@ export function publicDiscoveryRoutes(repo: PublicDiscoveryRepository): Router {
     ok(res, await publicCampaignDetail(repo, id(req.params.id), new Date()));
   });
   router.get("/public/events", async (req, res) => {
-    const query = parse(pageQuery, req.query);
-    ok(res, await listPublicEvents(repo, query.page, 12, new Date()));
+    const query = parse(eventQuery, req.query);
+    ok(res, await listPublicEvents(repo, { ...query, pageSize: 8 }, new Date()));
   });
   router.get("/public/events/:id", async (req, res) => {
     ok(res, await publicEventDetail(repo, id(req.params.id), new Date()));

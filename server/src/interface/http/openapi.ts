@@ -176,8 +176,9 @@ const PublicCampaignDetail = PublicCampaign.extend({
 const PublicEvent = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(),
   startAt: z.string(), endAt: z.string(), venueText: z.string().optional(),
+  objective: z.string().optional(), coverImageUrl: z.string().url().optional(),
   capacity: z.number(), state: z.string(), audienceScope: z.string(),
-  publishedAt: z.string().optional(),
+  publishedAt: z.string().optional(), status: z.enum(["ongoing", "upcoming", "ended"]),
 });
 const PublicPage = z.object({
   items: z.array(PublicClub), total: z.number(), page: z.number(), pageSize: z.number(),
@@ -264,10 +265,12 @@ export const openApiDocument = createDocument({
     },
     "/public/events": {
       get: {
-        summary: "Upcoming published public events",
-        requestParams: { query: z.object({ page: z.coerce.number().optional() }) },
+        summary: "Published public events, filterable by status and text",
+        requestParams: { query: z.object({ page: z.coerce.number().optional(),
+          status: z.enum(["all", "ongoing", "upcoming", "ended"]).optional(),
+          search: z.string().optional() }) },
         responses: {
-          "200": { description: "Upcoming events",
+          "200": { description: "Public events (8 per page)",
             content: { "application/json": { schema: envelope(EventPage) } } },
           "400": { description: "Invalid query", content: { "application/json": { schema: ApiError } } },
         },
@@ -275,7 +278,7 @@ export const openApiDocument = createDocument({
     },
     "/public/events/{id}": {
       get: {
-        summary: "Upcoming published public event detail",
+        summary: "Published public event detail (upcoming, ongoing or ended)",
         requestParams: { path: IdPath },
         responses: {
           "200": { description: "Public event",

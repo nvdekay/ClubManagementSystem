@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import type {
   PublicCampaign, PublicClub, PublicDiscoveryRepository, PublicEvent,
 } from "../../src/domain/public-discovery.js";
-import { isHistoricalPublicEvent, isUpcomingPublicEvent, isVisibleCampaign } from "../../src/domain/public-discovery.js";
+import { isHistoricalPublicEvent, isUpcomingPublicEvent, isVisibleCampaign, publicEventStatus } from "../../src/domain/public-discovery.js";
 import {
-  listPublicClubs, publicCampaignDetail, publicClubDetail, publicEventDetail,
+  listPublicClubs, listPublicEvents, publicCampaignDetail, publicClubDetail, publicEventDetail,
 } from "../../src/usecase/public-discovery.js";
 
 const now = new Date("2026-10-03T12:00:00Z");
@@ -55,8 +55,8 @@ function fixture(clubState = "Active") {
       calls.push("history");
       return [{ ...event, state: "Completed", endAt: new Date("2026-09-01") }];
     },
-    async listUpcomingEvents() {
-      return { items: [event], total: 1, page: 1, pageSize: 12 };
+    async listEvents() {
+      return { items: [event, { ...event, id: "draft", state: "Draft" }], total: 2, page: 1, pageSize: 8 };
     },
     async getEvent() { calls.push("event"); return event; },
   };
@@ -83,7 +83,8 @@ describe("public discovery", () => {
       .toMatchObject({ items: [club], fields: ["Academic"], total: 1 });
     const detail = await publicClubDetail(repo, id, now);
     expect(detail.campaigns).toEqual([campaign]);
-    expect(detail.upcomingEvents).toEqual([event]);
+    expect(detail.upcomingEvents).toEqual([{ ...event, status: "upcoming" }]);
+    expect(detail.history[0]?.status).toBe("ended");
     expect(detail.history).toHaveLength(1);
   });
 
@@ -127,5 +128,15 @@ describe("public discovery", () => {
       .toMatchObject({ event, club: { id, name: club.name } });
     await expect(publicEventDetail(fixture("Suspended").repo, id, now))
       .rejects.toMatchObject({ kind: "not_found" });
+  });
+
+  it("labels public events by status and hides non-public ones", async () => {
+    expect(publicEventStatus(event, now)).toBe("upcoming");
+    expect(publicEventStatus({ ...event, state: "Ongoing", startAt: new Date("2026-10-03T10:00:00Z"),
+      endAt: new Date("2026-10-03T14:00:00Z") }, now)).toBe("ongoing");
+    expect(publicEventStatus({ ...event, state: "Completed", endAt: now }, now)).toBe("ended");
+    expect(publicEventStatus({ ...event, state: "Draft" }, now)).toBeNull();
+    const page = await listPublicEvents(fixture().repo, { status: "all", search: "", page: 1, pageSize: 8 }, now);
+    expect(page.items).toEqual([{ ...event, status: "upcoming" }]);
   });
 });

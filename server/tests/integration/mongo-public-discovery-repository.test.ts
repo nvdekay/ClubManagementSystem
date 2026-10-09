@@ -75,6 +75,10 @@ describe.skipIf(!uri)("Mongo public discovery repository", () => {
       { ...eventBase, title: "Open day", state: "Upcoming" },
       { ...eventBase, title: "Approved draft", state: "Approved" },
       { ...eventBase, title: "Private meeting", state: "Upcoming", audienceScope: "MEMBERS_ONLY" },
+      { ...eventBase, title: "Spring workshop", state: "Completed", objective: "Robotics hands-on",
+        startAt: new Date("2026-03-01"), endAt: new Date("2026-03-02") },
+      { ...eventBase, title: "Hack night", state: "Ongoing",
+        startAt: new Date("2026-10-03T10:00:00Z"), endAt: new Date("2026-10-03T14:00:00Z") },
     ]);
     const repo = mongoPublicDiscoveryRepository();
     const all = await repo.listClubs({ search: "", field: "", page: 1, pageSize: 12 });
@@ -97,8 +101,16 @@ describe.skipIf(!uri)("Mongo public discovery repository", () => {
     expect(futureCampaign).not.toBeNull();
     expect(await repo.getCampaign(String(futureCampaign!._id), now)).toBeNull();
     expect(await repo.clubUpcomingEvents(activeId.toString(), now)).toHaveLength(1);
-    const upcoming = await repo.listUpcomingEvents(1, 12, now);
+    function list(status: "all" | "ongoing" | "upcoming" | "ended", search = "") {
+      return repo.listEvents({ status, search, page: 1, pageSize: 8 }, now);
+    }
+    const upcoming = await list("upcoming");
     expect(upcoming.items.map((event) => event.title)).toEqual(["Open day"]);
     expect(upcoming.total).toBe(1);
+    expect((await list("ongoing")).items.map((event) => event.title)).toEqual(["Hack night"]);
+    expect((await list("ended")).items.map((event) => event.title)).toEqual(["Spring workshop"]);
+    expect((await list("all")).items.map((event) => event.title))
+      .toEqual(["Open day", "Hack night", "Spring workshop"]);
+    expect((await list("all", "robotics")).items.map((event) => event.title)).toEqual(["Spring workshop"]);
   });
 });

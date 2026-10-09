@@ -52,7 +52,7 @@ const stubPublic: PublicDiscoveryRepository = {
   getCampaign: async () => null,
   clubUpcomingEvents: async () => [],
   clubHistory: async () => [],
-  listUpcomingEvents: async () => ({ items: [], total: 0, page: 1, pageSize: 12 }),
+  listEvents: async () => ({ items: [], total: 0, page: 1, pageSize: 8 }),
   getEvent: async () => null,
 };
 const stubPolicy = {
