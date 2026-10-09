@@ -16,6 +16,7 @@ import type { LeadershipTransitionRepository } from "../../domain/leadership-tra
 import type { EventRegistrationRepository } from "../../domain/event-registration.js";
 import type { EventCheckInRepository } from "../../domain/event-checkin.js";
 import type { EventFeedbackRepository } from "../../domain/event-feedback.js";
+import type { StudentFeedbackRepository } from "../../domain/student-feedback.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
@@ -33,6 +34,7 @@ import { leadershipTransitionRoutes } from "./leadership-transition-routes.js";
 import { eventRegistrationRoutes } from "./event-registration-routes.js";
 import { eventCheckInRoutes } from "./event-checkin-routes.js";
 import { eventFeedbackRoutes } from "./event-feedback-routes.js";
+import { studentFeedbackRoutes } from "./student-feedback-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -70,6 +72,7 @@ export function buildApp(deps: {
   eventRegistrationRepo?: EventRegistrationRepository;
   eventCheckInRepo?: EventCheckInRepository;
   eventFeedbackRepo?: EventFeedbackRepository;
+  studentFeedbackRepo?: StudentFeedbackRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
@@ -142,6 +145,10 @@ export function buildApp(deps: {
       app.use("/api/v1", eventCheckInRoutes({ repo: deps.eventCheckInRepo,
         policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
+    if (deps.studentFeedbackRepo) {
+      app.use("/api/v1", studentFeedbackRoutes({ repo: deps.studentFeedbackRepo,
+        accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
     if (deps.eventFeedbackRepo && deps.policyRepo) {
       app.use("/api/v1", eventFeedbackRoutes({ repo: deps.eventFeedbackRepo,
         policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -179,6 +186,7 @@ export function buildApp(deps: {
   const hasEventRegistrations = Boolean(hasPolicy && deps.eventRegistrationRepo);
   const hasEventCheckIns = Boolean(hasPolicy && deps.eventCheckInRepo);
   const hasEventFeedback = Boolean(hasPolicy && deps.eventFeedbackRepo);
+  const hasStudentFeedback = Boolean(hasAdmin && deps.studentFeedbackRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
@@ -186,6 +194,7 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;
+      if (path.startsWith("/admin/student-feedback")) return hasStudentFeedback;
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
       if (path.startsWith("/dashboard")) return hasDashboard;
@@ -195,6 +204,8 @@ export function buildApp(deps: {
         || path.startsWith("/attendances")) return hasEventCheckIns;
       if (path.startsWith("/events/{id}/feedback")
         || path.startsWith("/event-feedbacks")) return hasEventFeedback;
+      if (path.startsWith("/student-feedback")
+        || path.startsWith("/clubs/{clubId}/student-feedback")) return hasStudentFeedback;
       if (path.startsWith("/applications")) return hasApplications;
       if (path.startsWith("/clubs/{clubId}/settings")
         || path.startsWith("/clubs/{clubId}/profile")

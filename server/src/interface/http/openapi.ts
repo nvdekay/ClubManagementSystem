@@ -9,6 +9,7 @@ import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
 import { eventCheckInBody } from "./event-checkin-routes.js";
 import { eventFeedbackBody } from "./event-feedback-routes.js";
+import { studentFeedbackBody } from "./student-feedback-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
@@ -214,6 +215,12 @@ const MyEventFeedback = z.object({ id: z.string(), eventId: z.string(), eventTit
   submittedAt: z.string() });
 const EventFeedbackContext = z.object({ attended: z.boolean(), canSubmit: z.boolean(),
   opensAt: z.string().nullable(), closesAt: z.string().nullable(), feedback: MyEventFeedback.nullable() });
+const SentFeedback = z.object({ id: z.string(), recipient: z.enum(["CLUB", "ICPDP"]),
+  clubId: z.string().optional(), clubName: z.string().optional(), eventId: z.string().optional(),
+  eventTitle: z.string().optional(), category: z.enum(["suggestion", "praise", "issue"]), message: z.string(),
+  isAnonymous: z.boolean(), submittedAt: z.string() });
+const ReceivedFeedback = SentFeedback.extend({
+  sender: z.object({ displayName: z.string(), email: z.string() }).optional() });
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -795,6 +802,31 @@ export const openApiDocument = createDocument({
       get: { summary: "List the authenticated student's own event feedback",
         responses: { "200": { description: "Own feedback", content: {
           "application/json": { schema: envelope(z.array(MyEventFeedback)) } } } } },
+    },
+    "/student-feedback": {
+      post: { summary: "Send one-way feedback to a club or to ICPDP, optionally anonymous (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: studentFeedbackBody } } },
+        responses: { "201": { description: "Sent feedback", content: { "application/json": { schema: envelope(SentFeedback) } } },
+          "400": { description: "Missing club, unrelated event or invalid message", content: { "application/json": { schema: ApiError } } },
+          "404": { description: "Club not found or dissolved", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/student-feedback/mine": {
+      get: { summary: "List the feedback the authenticated student has sent",
+        responses: { "200": { description: "Sent feedback", content: {
+          "application/json": { schema: envelope(z.array(SentFeedback)) } } } } },
+    },
+    "/clubs/{clubId}/student-feedback": {
+      get: { summary: "Read feedback students sent to this club (requires club.feedback.view)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Club feedback inbox; anonymous senders are omitted", content: {
+          "application/json": { schema: envelope(z.array(ReceivedFeedback)) } } },
+        "403": { description: "Missing club.feedback.view", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/student-feedback": {
+      get: { summary: "Read feedback students sent to ICPDP (ICPDP officer only)",
+        responses: { "200": { description: "ICPDP feedback inbox; anonymous senders are omitted", content: {
+          "application/json": { schema: envelope(z.array(ReceivedFeedback)) } } },
+        "403": { description: "ICPDP officer role required", content: { "application/json": { schema: ApiError } } } } },
     },
     "/attendances/mine": {
       get: { summary: "List the authenticated student's check-ins with their feedback windows",
