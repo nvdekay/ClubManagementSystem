@@ -9,7 +9,7 @@ interface AppCardProps {
 }
 
 export function AppCard({ children, className, href }: AppCardProps) {
-  const cardClassName = cn("flex flex-col gap-2 rounded-[32px] border border-border-app bg-surface-app p-4", className);
+  const cardClassName = cn("flex flex-col gap-2 rounded-2xl border border-border-app bg-bg-app p-5", className);
 
   if (href) {
     return (
