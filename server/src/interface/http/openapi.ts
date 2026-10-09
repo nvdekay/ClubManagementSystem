@@ -86,6 +86,7 @@ const EvaluationScheme = evaluationSchemeSettingsBody.extend({
 });
 const ClubLifecycleSummary = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(), activeMembers: z.number(),
+  logoUrl: z.string().optional(), contactEmail: z.string().optional(),
   suspension: z.object({ reason: z.string(), suspendedAt: z.string(), suspendedBy: z.string(),
     until: z.string().nullable(), reminderSentAt: z.string().optional() }).optional(),
   dissolution: z.object({ decidedAt: z.string(), decidedBy: z.string(), reason: z.string(),

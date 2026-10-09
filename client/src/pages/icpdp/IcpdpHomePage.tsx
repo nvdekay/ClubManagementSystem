@@ -9,8 +9,6 @@ export function IcpdpHomePage() {
     { href: "/workspace/reviews", icon: "inbox", label: t("reviews.title"), description: t("reviews.description") },
     { href: "/workspace/board-nominations", icon: "badge", label: t("boardNominations.queueTitle"),
       description: t("boardNominations.queueDescription") },
-    { href: "/workspace/club-lifecycle", icon: "settings", label: t("clubLifecycle.title"),
-      description: t("clubLifecycle.homeDescription") },
     { href: "/workspace/policy", icon: "shield", label: t("policy.title"), description: t("auth.policyDescription") },
     { href: "/workspace/club-fields", icon: "layers", label: t("clubFields.title"),
       description: t("clubFields.homeDescription") },
@@ -20,6 +18,6 @@ export function IcpdpHomePage() {
       description: t("evaluationSchemes.homeDescription") },
     { href: "/workspace/exports", icon: "file", label: t("exports.title"), description: t("exports.homeDescription") },
     { href: "/icpdp/accounts", icon: "users", label: t("auth.manageAccounts"), description: t("auth.manageAccountsDescription") },
-    { href: "/clubs", icon: "compass", label: t("discovery.navClubs"), description: t("auth.reviewClubsDescription") },
+    { href: "/icpdp/clubs", icon: "compass", label: t("discovery.navClubs"), description: t("clubLifecycle.homeDescription") },
   ]}><RoleDashboard context={{ workspace: "icpdp" }} /></WorkspaceHome>;
 }

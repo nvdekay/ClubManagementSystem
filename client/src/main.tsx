@@ -18,7 +18,7 @@ import { ClubFieldsPage } from "./pages/icpdp/ClubFieldsPage.js";
 import { PropertiesPage } from "./pages/icpdp/PropertiesPage.js";
 import { EvaluationSchemesPage } from "./pages/icpdp/EvaluationSchemesPage.js";
 import { DataExportPage } from "./pages/icpdp/DataExportPage.js";
-import { ClubLifecyclePage } from "./pages/icpdp/ClubLifecyclePage.js";
+import { IcpdpClubsPage } from "./pages/icpdp/IcpdpClubsPage.js";
 import { IcpdpHomePage } from "./pages/icpdp/IcpdpHomePage.js";
 import { AccountsPage } from "./pages/icpdp/AccountsPage.js";
 import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
@@ -66,7 +66,7 @@ createRoot(document.getElementById("root")!).render(
           <Route element={<WorkspaceShell />}>
             <Route path="student" element={<StudentHomePage />} />
             <Route path="icpdp" element={<IcpdpHomePage />} />
-            <Route path="icpdp/clubs" element={<ClubDirectory />} />
+            <Route path="icpdp/clubs" element={<IcpdpClubsPage />} />
             <Route path="icpdp/accounts" element={<AccountsPage />} />
             <Route path="club/:clubId" element={<ClubHomePage />} />
             <Route path="workspace/policy" element={<PolicyPage />} />
@@ -74,7 +74,6 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/properties" element={<PropertiesPage />} />
             <Route path="workspace/evaluation-schemes" element={<EvaluationSchemesPage />} />
             <Route path="workspace/exports" element={<DataExportPage />} />
-            <Route path="workspace/club-lifecycle" element={<ClubLifecyclePage />} />
             <Route path="workspace/applications" element={<ApplicationsPage />} />
             <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
             <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />

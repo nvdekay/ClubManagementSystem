@@ -44,6 +44,8 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
     const dissolution = dissolutionFrom(doc.dissolution);
     return { id: String(doc._id), code: String(doc.code), name: String(doc.name), field: String(doc.field ?? ""),
       state: String(doc.state), activeMembers, ...(suspension ? { suspension } : {}),
+      ...(typeof doc.logoUrl === "string" && doc.logoUrl ? { logoUrl: doc.logoUrl } : {}),
+      ...(typeof doc.contactEmail === "string" && doc.contactEmail ? { contactEmail: doc.contactEmail } : {}),
       ...(dissolution ? { dissolution } : {}) };
   }
 

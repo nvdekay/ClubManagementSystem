@@ -21,6 +21,8 @@ export interface ClubLifecycleSummary {
   name: string;
   field: string;
   state: string;
+  logoUrl?: string;
+  contactEmail?: string;
   activeMembers: number;
   suspension?: ClubSuspension;
   dissolution?: ClubDissolution;
