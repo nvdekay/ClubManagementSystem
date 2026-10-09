@@ -32,6 +32,7 @@ import { RecruitmentCampaignPage } from "./pages/club/RecruitmentCampaignPage.js
 import { RecruitmentReviewPage } from "./pages/club/RecruitmentReviewPage.js";
 import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicationPage.js";
 import { RecruitmentApplicationsPage } from "./pages/student/RecruitmentApplicationsPage.js";
+import { MyEventRegistrationsPage } from "./pages/student/MyEventRegistrationsPage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -62,6 +63,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
             <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
             <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
+            <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
             <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
             <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
             <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />

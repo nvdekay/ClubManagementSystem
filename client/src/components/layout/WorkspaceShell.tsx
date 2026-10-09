@@ -19,7 +19,8 @@ interface NavItem {
   end?: boolean;
 }
 
-const studentPrefixes = ["/student", "/workspace/applications", "/workspace/recruitment"];
+const studentPrefixes = ["/student", "/workspace/applications", "/workspace/recruitment",
+  "/workspace/event-registrations"];
 
 /** The workspace a management URL belongs to; the sidebar and access check follow it. */
 function contextFor(pathname: string): Context {
@@ -216,6 +217,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { to: "/student", label: t("common.navOverview"), icon: "home", end: true },
       { to: "/workspace/recruitment", label: t("common.navRecruitment"), icon: "send" },
       { to: "/workspace/applications", label: t("common.navApplications"), icon: "file" },
+      { to: "/workspace/event-registrations", label: t("common.navMyEvents"), icon: "calendar" },
     ] }, explore];
   }
   if (context.kind === "icpdp") {

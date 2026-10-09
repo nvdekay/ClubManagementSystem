@@ -9,6 +9,7 @@ export function StudentHomePage() {
     { href: "/workspace/recruitment", icon: "send", label: t("recruitmentApplications.title"), description: t("recruitmentApplications.description") },
     { href: "/workspace/applications", icon: "file", label: t("applications.title"), description: t("auth.studentApplicationsDescription") },
     { href: "/clubs", icon: "compass", label: t("discovery.navClubs"), description: t("auth.discoverClubsDescription") },
+    { href: "/workspace/event-registrations", icon: "calendar", label: t("eventRegistrations.title"), description: t("eventRegistrations.description") },
     { href: "/events", icon: "calendar", label: t("discovery.navEvents"), description: t("auth.discoverEventsDescription") },
   ]}><RoleDashboard context={{ workspace: "student" }} /></WorkspaceHome>;
 }

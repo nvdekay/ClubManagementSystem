@@ -12,6 +12,7 @@ function panelHref(key: DashboardPanelKey, context: DashboardContext): string | 
   if (key === "recruitmentApplications") return "/workspace/recruitment";
   if (key === "openRecruitment" || key === "activeClubs" || key === "suspendedClubs") return "/clubs";
   if (key === "upcomingEvents") return "/events";
+  if (context.workspace === "student" && key === "registrations") return "/workspace/event-registrations";
   if (key === "pendingClubApplications" || key === "approvalTasks") return "/workspace/reviews";
   if (context.workspace === "club" && key === "openCampaigns") {
     return `/club/${encodeURIComponent(context.clubId)}/recruitment`;

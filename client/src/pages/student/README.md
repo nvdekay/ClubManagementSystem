@@ -7,3 +7,6 @@ tư, submit/rút đơn; danh sách đơn tuyển được hiển thị riêng kh
 
 `StudentHomePage` triển khai dashboard UC02: số liệu cá nhân theo module, lỗi từng panel độc lập
 và liên kết tới luồng nghiệp vụ đang có.
+
+`MyEventRegistrationsPage` (UC29) liệt kê đăng ký sự kiện của Student, lọc đang hiệu lực/đã huỷ và cho
+huỷ trước giờ bắt đầu; panel đăng ký trên event detail nằm ở `components/custom/EventRegistrationPanel`.

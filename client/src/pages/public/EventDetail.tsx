@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
 
+import { EventRegistrationPanel } from "@/components/custom/EventRegistrationPanel";
 import { EventStatusBadge } from "@/components/custom/PublicEventCard";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -66,7 +67,7 @@ export function EventDetail() {
               <p className="mt-3 leading-7 break-words whitespace-pre-line text-text-app">{detail.data.event.objective}</p>
             </section>
           )}
-          {detail.data.event.status === "upcoming" && <p className="mt-6 text-sm text-muted-app">{t("discovery.registrationLater")}</p>}
+          {detail.data.event.status !== "ended" && <EventRegistrationPanel eventId={detail.data.event.id} />}
         </div>
       ) : <p className="mt-8">{t("discovery.notFound")}</p>}
     </section>
