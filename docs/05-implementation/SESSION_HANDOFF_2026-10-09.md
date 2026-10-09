@@ -64,6 +64,10 @@ bên ngoài đã được xác minh.
   qua `confirmedRegistrationCount`/`nextWaitlistPosition`; UC30 promote waitlist chưa triển khai.
   Fixture QA: event `[QA] Workshop nhảy hiện đại…` (`a2000000000000000000aa29`) và transition plan
   `[QA] CLB Chuyển giao Nhiệm kỳ` (`ac130000000000000000000f`) trong DB local.
+- **UC50 (đổi phạm vi):** không còn là ticket khiếu nại mà là góp ý một chiều — Student chọn gửi
+  CLB (bắt buộc chọn CLB, tuỳ chọn sự kiện) hoặc ICPDP, loại góp ý/khen ngợi/phản ánh, tuỳ chọn ẩn
+  danh; chỉ xem lại danh sách đã gửi. CLB đọc ở `/club/:clubId/feedback` (`club.feedback.view`),
+  ICPDP ở `/workspace/student-feedback`; người gửi ẩn danh không bao giờ lộ. UC51/UC52 tạm không làm.
 - **UC48:** người đã check-in gửi một phản hồi bất biến (1–5 sao `overall` + nhận xét, tuỳ chọn ẩn
   danh) trong window BR36 từ tab “Đã check-in” hoặc trang sự kiện; trùng → 409, chưa check-in →
   403. Bản tổng hợp BR40 mới là hàm domain; màn đọc phía CLB là UC49.

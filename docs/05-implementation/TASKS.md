@@ -320,14 +320,14 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-10.2** Service tổng hợp ẩn bản tổng hợp khi chưa đạt số người phản hồi tối thiểu. → BR40, FR-UC48-10 · **đang bị chặn bởi quyết định D3** · hàm domain `summarizeFeedback` (chỉ nhận điểm, không nhận danh tính) đã có test; nối API đọc cùng UC49.
 - [ ] **BE-10.3** Scheduler: đóng feedback window. → SCH-07
 - [ ] **BE-10.4** UC49 đọc bản tổng hợp cho CMB — không bao giờ để lộ một phản hồi định danh được. → FR-UC49-01…05, SEC-05
-- [ ] **BE-10.5** UC50 tiếp nhận khiếu nại chỉ định tuyến tới ICPDP; rút khiếu nại; liên kết các khiếu nại trùng. → FR-UC50-01…06, BR38
-- [ ] **BE-10.6** UC51 phân loại với ba kết quả, lý do bắt buộc, leo thang tạo hồ sơ. → FR-UC51-01…08, BR39
-- [ ] **BE-10.7** UC52 phần trả lời của CLB với chính sách hiển thị danh tính và tín hiệu quá hạn trả lời. → FR-UC52-01…06 · **đang bị chặn bởi quyết định D5**
+- [x] **BE-10.5** UC50 tiếp nhận khiếu nại chỉ định tuyến tới ICPDP; rút khiếu nại; liên kết các khiếu nại trùng. → FR-UC50-01…06, BR38 · **Đổi phạm vi (quyết định người dùng 2026-10-09):** UC50 là góp ý một chiều — Student chọn gửi CLB hoặc ICPDP, tuỳ chọn ẩn danh, không trạng thái/rút/trả lời; `complaints` thêm `recipient`, `isAnonymous`, `clubId` không bắt buộc. Xem `.sdd/specs/feat-student-feedback`.
+- [ ] **BE-10.6** UC51 phân loại với ba kết quả, lý do bắt buộc, leo thang tạo hồ sơ. → FR-UC51-01…08, BR39 · **tạm không làm**: UC50 không còn là ticket nên không có hàng đợi phân loại.
+- [ ] **BE-10.7** UC52 phần trả lời của CLB với chính sách hiển thị danh tính và tín hiệu quá hạn trả lời. → FR-UC52-01…06 · **đang bị chặn bởi quyết định D5** · **tạm không làm**: góp ý là một chiều, CLB chỉ đọc qua hộp thư (`club.feedback.view`).
 
 ### Frontend
 - [x] **FE-10.1** Biểu mẫu phản hồi mở từ "đăng ký của tôi" / không gian thành viên, kèm công tắc ẩn danh. → UC48 · form sao (radio, dùng được bằng bàn phím) + nhận xét + ẩn danh trên tab “Đã check-in” và trang sự kiện; lối vào từ không gian thành viên chờ UC24.
 - [ ] **FE-10.2** Bản tổng hợp phản hồi phía CLB, hiển thị thông điệp dưới ngưỡng thay vì nội dung. → UC49, MSG12
-- [ ] **FE-10.3** Biểu mẫu khiếu nại và màn khiếu nại của tôi kèm dòng thời gian trạng thái. → UC50
+- [x] **FE-10.3** Biểu mẫu khiếu nại và màn khiếu nại của tôi kèm dòng thời gian trạng thái. → UC50 · thành trang “Góp ý” (`/workspace/feedback`): form + danh sách đã gửi, không dòng thời gian trạng thái; hộp thư CLB `/club/:clubId/feedback` và ICPDP `/workspace/student-feedback`.
 - [ ] **FE-10.4** Hàng đợi khiếu nại của ICPDP và màn phân loại. → UC51
 - [ ] **FE-10.5** Màn trả lời khiếu nại được chuyển xuống, phía CLB. → UC52
 
