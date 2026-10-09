@@ -80,6 +80,7 @@ async function seedPdpSnapshot(now: Date): Promise<void> {
   await upsertMany("clubs", pdpClubs.map((club) => ({
     _id: objectId(club.id), code: club.code, name: club.name, field: club.field, state: "Active",
     ...("description" in club ? { description: club.description } : {}),
+    ...("logoUrl" in club ? { logoUrl: club.logoUrl } : {}),
     channels: { pdp: club.pdpUrl }, createdAt: now, updatedAt: now,
   })));
 
@@ -90,8 +91,10 @@ async function seedPdpSnapshot(now: Date): Promise<void> {
     return {
       _id: objectId(event.id), clubId, clubName: clubNameByCode.get(event.clubCode),
       title: event.title, objective: event.objective, startAt, endAt: new Date(event.endAt),
+      ...("coverImageUrl" in event ? { coverImageUrl: event.coverImageUrl } : {}),
       semesterCode: semesterCode(startAt), venueText: event.venueText,
-      audienceScope: "PUBLIC", capacity: 0, waitlistEnabled: false, state: "Completed",
+      organizerType: "CLUB", audienceScope: "PUBLIC", capacity: 0, confirmedRegistrationCount: 0,
+      nextWaitlistPosition: 1, waitlistEnabled: false, state: "Completed",
       allowWalkIn: false, currentRevisionNo: 1, publishedAt: startAt,
       attendanceFinalized: false, createdAt: startAt,
     };

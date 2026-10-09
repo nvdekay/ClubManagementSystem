@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 /* App owns scrolling, not the browser: html/body never scroll, #root does. */
@@ -45,75 +45,133 @@ body {
    Naming: --color-<name>-app generates the `<name>-app` Tailwind color
    (e.g. bg-danger-app, text-danger-app, border-danger-app). */
 @theme {
-  /* Nunito has a soft, rounded shape and a complete Vietnamese character set. */
-  --font-sans: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-heading: "Nunito", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Be Vietnam Pro: designed for Vietnamese diacritics, friendly and modern for a young audience. */
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-auth-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
   --font-auth-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  /* Pills for buttons/single-line inputs; multi-line fields and panels use lg/xl. */
   --radius-md: 999px;
-  --radius-lg: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
-  /* Brand — warm accent and olive details from docs/04-design/FPT_Club.html. */
-  --color-brand-app: #c67139;
-  --color-on-brand-app: #201e1d;
-  --color-brand-blue-app: #7a8a5e;
-  --color-brand-green-app: #7a8a5e;
+  /* Fresh & cool: cyan primary, sky links, mint highlights on a bright white canvas.
+     Every text/background pair below meets WCAG AA (4.5:1) in its own theme. */
+  --color-brand-app: #06b6d4;
+  --color-on-brand-app: #ffffff;
+  --color-brand-blue-app: #38bdf8;
+  --color-brand-green-app: #34d399;
 
-  /* Organic light palette. */
-  --color-text-app: #201e1d;
+  --color-text-app: #0f2233;
   --color-bg-app: #ffffff;
-  --color-surface-app: #f7f7f5;
-  --color-border-app: #d8d6d1;
-  --color-muted-app: #645c50;
+  --color-surface-app: #f4f9fc;
+  --color-surface-strong-app: #e7f2f8;
+  --color-border-app: #dbe7ee;
+  --color-muted-app: #52677a;
+  --color-sidebar-app: #f7fbfd;
+  --color-primary-soft-app: #e3f5fa;
+  --color-mint-soft-app: #e3f8ef;
 
-  --color-primary-app: #8c491a;
-  --color-on-primary-app: #fff2eb;
-  --color-accent-app: #643312;
-  --color-ring-app: #8c491a;
+  --color-primary-app: #0e7490;
+  --color-on-primary-app: #ffffff;
+  --color-accent-app: #0369a1;
+  --color-ring-app: #0284c7;
+  --color-mint-app: #047857;
 
-  --color-success-app: #56633f;
-  --color-warning-app: #8c491a;
-  --color-danger-app: #a34335;
-  --color-auth-orb-large-app: #ffe1d0;
-  --color-auth-orb-small-app: #ffc6a5;
-  --color-auth-button-hover-app: #eee7db;
-  --color-auth-button-border-app: #8c857f;
-  --color-auth-danger-surface-app: #fff0ed;
+  --color-success-app: #047857;
+  --color-warning-app: #9a4a0b;
+  --color-danger-app: #b91c1c;
+  --color-auth-orb-large-app: #cff4fc;
+  --color-auth-orb-small-app: #a7f3d0;
+  --color-auth-button-hover-app: #f0f9ff;
+  --color-auth-button-border-app: #94a3b8;
+  --color-auth-danger-surface-app: #fef2f2;
   --color-auth-page-bg-app: #ffffff;
-  --color-auth-page-text-app: #201e1d;
-  --color-auth-page-muted-app: #645c50;
-  --color-auth-page-border-app: #dcd3c4;
+  --color-auth-page-text-app: #0f2233;
+  --color-auth-page-muted-app: #52677a;
+  --color-auth-page-border-app: #dbe7ee;
   --color-google-blue-app: #4285f4;
   --color-google-green-app: #34a853;
   --color-google-yellow-app: #fbbc05;
   --color-google-red-app: #ea4335;
+
+  /* Workspace picker follows the neutral, orange-accented visual mockup. */
+  --color-picker-page-app: #ffffff;
+  --color-picker-surface-app: #f7f7f6;
+  --color-picker-divider-app: #deddd9;
+  --color-picker-text-app: #1c1917;
+  --color-picker-muted-app: #57534e;
+  --color-picker-accent-app: #b54713;
+  --color-picker-student-soft-app: #b7dca9;
+  --color-picker-student-app: #294826;
+  --color-picker-club-soft-app: #fdc49a;
+  --color-picker-club-app: #653016;
+  --color-picker-school-soft-app: #c5d9ee;
+  --color-picker-school-app: #23476b;
+  --color-recruitment-app: #f36b21;
+  --color-on-recruitment-app: #ffffff;
+  --color-recruitment-soft-app: #fed7aa;
+  --color-recruitment-glow-app: #fdba74;
 }
 
-/* Manual dark mode — toggled via a "dark" class on <html>, see App.tsx.
+/* Manual dark mode — toggled via a "dark" class on <html>.
    Overrides the same custom properties the @theme block sets on :root,
    so every generated *-app utility repaints without touching components. */
 :root.dark {
-  --color-text-app: #f5ead8;
-  --color-bg-app: #201e1d;
-  --color-surface-app: #302b25;
-  --color-border-app: #51483e;
-  --color-muted-app: #c0b6a5;
-  --color-primary-app: #f6a06b;
-  --color-on-primary-app: #201e1d;
-  --color-accent-app: #ffc6a5;
-  --color-ring-app: #f6a06b;
-  --color-success-app: #ccdbb2;
-  --color-warning-app: #f6a06b;
-  --color-danger-app: #ff9e91;
-  --color-auth-orb-large-app: #643312;
-  --color-auth-orb-small-app: #8c491a;
-  --color-auth-button-hover-app: #302b25;
-  --color-auth-button-border-app: #82796a;
-  --color-auth-danger-surface-app: #402b28;
-  --color-auth-page-bg-app: #201e1d;
-  --color-auth-page-text-app: #f5ead8;
-  --color-auth-page-muted-app: #c0b6a5;
-  --color-auth-page-border-app: #51483e;
+  --color-brand-app: #22d3ee;
+  --color-on-brand-app: #062a33;
+  --color-text-app: #e6f3fa;
+  --color-bg-app: #0b1620;
+  --color-surface-app: #10212e;
+  --color-surface-strong-app: #16303f;
+  --color-border-app: #21394a;
+  --color-muted-app: #9db6c7;
+  --color-sidebar-app: #0d1b26;
+  --color-primary-soft-app: #0f3443;
+  --color-mint-soft-app: #0f3329;
+  --color-primary-app: #22d3ee;
+  --color-on-primary-app: #062a33;
+  --color-accent-app: #7dd3fc;
+  --color-ring-app: #38bdf8;
+  --color-mint-app: #6ee7b7;
+  --color-success-app: #6ee7b7;
+  --color-warning-app: #fcd34d;
+  --color-danger-app: #fca5a5;
+  --color-auth-orb-large-app: #0f3443;
+  --color-auth-orb-small-app: #0f3329;
+  --color-auth-button-hover-app: #16303f;
+  --color-auth-button-border-app: #3b5568;
+  --color-auth-danger-surface-app: #3a1d22;
+  --color-auth-page-bg-app: #0b1620;
+  --color-auth-page-text-app: #e6f3fa;
+  --color-auth-page-muted-app: #9db6c7;
+  --color-auth-page-border-app: #21394a;
+  --color-picker-page-app: #151412;
+  --color-picker-surface-app: #201f1c;
+  --color-picker-divider-app: #3a3833;
+  --color-picker-text-app: #fafaf9;
+  --color-picker-muted-app: #c7c2ba;
+  --color-picker-accent-app: #fb923c;
+  --color-picker-student-soft-app: #294826;
+  --color-picker-student-app: #b7dca9;
+  --color-picker-club-soft-app: #653016;
+  --color-picker-club-app: #fdc49a;
+  --color-picker-school-soft-app: #23476b;
+  --color-picker-school-app: #c5d9ee;
+  --color-recruitment-app: #fb923c;
+  --color-on-recruitment-app: #1c1917;
+  --color-recruitment-soft-app: #653016;
+  --color-recruitment-glow-app: #7c2d12;
+}
+
+/* Honour reduced-motion: keep state changes, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Clickable elements must show a pointer cursor — the browser UA stylesheet

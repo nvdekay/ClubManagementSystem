@@ -3,7 +3,10 @@ import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
@@ -12,6 +15,19 @@ import { useApplication, useApplicationAction, useApplicationConfig,
 import type { FounderProfile } from "@/services/applications";
 import { useAuth } from "@/hooks/useAuth";
 import type { ApplicationConfig, DraftInput, ProposedRole } from "@/services/applications";
+import { cn } from "@/utils/cn";
+
+function stateTone(state: string): AppBadgeTone {
+  if (state === "Approved") return "success";
+  if (state === "Rejected" || state === "Expired") return "danger";
+  if (state === "Revision Requested") return "warning";
+  if (state === "Draft" || state === "Withdrawn") return "neutral";
+  return "info";
+}
+
+const sectionClass = "border-t border-border-app pt-8";
+const sectionTitleClass = "font-heading text-lg font-bold";
+const fileInputClass = "mt-2 block w-full rounded-xl border border-dashed border-border-app bg-bg-app p-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-primary-soft-app file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-app";
 
 function initialDraft(config: ApplicationConfig, founderId: string): DraftInput {
   return { clubName: "", field: "", objectives: "", foundingUserIds: founderId ? [founderId] : [],
@@ -194,34 +210,37 @@ export function ApplicationEditorPage() {
   }
 
   if (auth.isPending || (auth.data && (config.isPending || (id && detail.isPending)))) {
-    return <AppSkeleton className="mx-auto mt-8 h-72 max-w-4xl" />;
+    return <div className="max-w-4xl space-y-4"><AppSkeleton className="h-12 w-2/3" /><AppSkeleton className="h-72 w-full" /></div>;
   }
   if (!auth.data) {
-    return <AppCard className="mx-auto mt-8 max-w-3xl">
+    return <AppNotice className="max-w-3xl">
       <p>{t("applications.signIn")}</p>
-      <Link className="mt-3 inline-block font-semibold text-accent-app"
+      <Link className="inline-block font-semibold text-accent-app"
         to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("applications.signInLink")}</Link>
-    </AppCard>;
+    </AppNotice>;
   }
   if (config.isError || !config.data) {
-    return <AppCard className="mx-auto mt-8 max-w-3xl"><p role="alert">{t("applications.unconfigured")}</p></AppCard>;
+    return <AppNotice tone="danger" className="max-w-3xl"><p role="alert">{t("applications.unconfigured")}</p></AppNotice>;
   }
   if (id && (detail.isError || !application)) {
-    return <AppCard className="mx-auto mt-8 max-w-3xl"><p role="alert">{t("applications.notFound")}</p></AppCard>;
+    return <AppNotice tone="danger" className="max-w-3xl"><p role="alert">{t("applications.notFound")}</p></AppNotice>;
   }
-  if (!currentDraft) return <AppSkeleton className="mx-auto mt-8 h-72 max-w-4xl" />;
+  if (!currentDraft) return <AppSkeleton className="h-72 w-full max-w-4xl" />;
 
   const documents = application?.draft.documents ?? [];
   const requiredDocuments = config.data.requirements.mandatoryApplicationDocuments;
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <Link to="/workspace/applications" className="text-sm font-semibold text-accent-app">{t("applications.back")}</Link>
-      <h1 className="mt-4 text-3xl font-bold font-heading">{id ? currentDraft.clubName || t("applications.title") : t("applications.new")}</h1>
-      <p className="mt-2 text-muted-app">{t("applications.description")}</p>
-      {state && <p className="mt-2 text-sm text-muted-app">{t("applications.state")}: {stateLabel(state)}</p>}
+    <div className="max-w-4xl">
+      <PageHeader title={id ? currentDraft.clubName || t("applications.title") : t("applications.new")}
+        description={t("applications.description")}
+        back={{ to: "/workspace/applications", label: t("applications.back") }}
+        actions={state && <AppBadge tone={stateTone(state)}>{t("applications.state")}: {stateLabel(state)}</AppBadge>} />
       {latestDecision && (state === "Revision Requested" || state === "Rejected") && (
-        <section role="status" className="mt-6 rounded-xl border border-warning-app/40 bg-warning-app/10 p-5">
+        <section role="status" className={cn("mb-8 rounded-xl border-l-4 px-5 py-4", {
+          "border-warning-app bg-warning-app/10": state === "Revision Requested",
+          "border-danger-app bg-danger-app/10": state === "Rejected",
+        })}>
           <h2 className="font-semibold font-heading">{state === "Rejected"
             ? t("applications.feedbackRejectedTitle") : t("applications.feedbackRevisionTitle")}</h2>
           {latestDecision.reason && <p className="mt-2 whitespace-pre-wrap text-sm">{latestDecision.reason}</p>}
@@ -237,66 +256,70 @@ export function ApplicationEditorPage() {
 
       {/* Only the editable sections sit in a disabled fieldset: it would also disable the
           document download and withdraw buttons, which stay available after submission. */}
-      <div className="mt-8 space-y-6">
-      <fieldset disabled={!editable} className="space-y-6 disabled:opacity-80">
-        <AppCard className="grid gap-5 p-5 sm:grid-cols-2">
-          <h2 className="text-lg font-semibold sm:col-span-2 font-heading">{t("applications.basic")}</h2>
-          <label className="text-sm">{t("applications.clubName")}
+      <div className="space-y-10">
+      <fieldset disabled={!editable} className="space-y-10 disabled:opacity-80">
+        <section className="grid gap-5 sm:grid-cols-2">
+          <h2 className={cn(sectionTitleClass, "sm:col-span-2")}>{t("applications.basic")}</h2>
+          <label className="text-sm font-medium">{t("applications.clubName")}
             <AppInput className="mt-2 block w-full" maxLength={200} required value={currentDraft.clubName}
               onChange={(event) => change("clubName", event.target.value)} />
           </label>
-          <label className="text-sm">{t("applications.field")}
+          <label className="text-sm font-medium">{t("applications.field")}
             <AppInput className="mt-2 block w-full" maxLength={100} required value={currentDraft.field}
               onChange={(event) => change("field", event.target.value)} />
           </label>
-          <label className="text-sm sm:col-span-2">{t("applications.objectives")}
+          <label className="text-sm font-medium sm:col-span-2">{t("applications.objectives")}
             <AppTextarea className="mt-2 block w-full" maxLength={5000} value={currentDraft.objectives}
               onChange={(event) => change("objectives", event.target.value)} />
           </label>
           <div className="text-sm sm:col-span-2">
-            <p>{t("applications.founders")}</p>
-            <ul className="mt-2 space-y-2">{currentDraft.foundingUserIds.map((founderId) => {
+            <p className="font-medium">{t("applications.founders")}</p>
+            <ul className="mt-2 divide-y divide-border-app rounded-xl border border-border-app">{currentDraft.foundingUserIds.map((founderId) => {
               const profile = founderProfile(founderId);
-              return <li key={founderId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-app px-3 py-2">
-                <span className="min-w-0"><span className="font-semibold">{profile?.displayName ?? founderId}</span>
-                  {profile && <span className="block break-all text-xs text-muted-app">{profile.email}</span>}</span>
+              return <li key={founderId} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+                <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
+                  {(profile?.displayName ?? founderId).trim().charAt(0).toUpperCase()}</span>
+                <span className="min-w-0 flex-1"><span className="block font-semibold break-words">{profile?.displayName ?? founderId}</span>
+                  {profile && <span className="block text-xs break-all text-muted-app">{profile.email}</span>}</span>
                 {founderId !== auth.data?.user.id && <AppButton type="button" variant="secondary"
                   onClick={() => change("foundingUserIds", currentDraft.foundingUserIds.filter((value) => value !== founderId))}>
                   {t("applications.remove")}</AppButton>}
               </li>;
             })}</ul>
             <div className="mt-3 flex flex-wrap items-end gap-2">
-              <label className="min-w-56 flex-1">{t("applications.founderEmail")}
+              <label className="min-w-0 flex-1 basis-56 font-medium">{t("applications.founderEmail")}
                 <AppInput className="mt-2 block w-full" type="email" value={founderEmail}
                   onChange={(event) => { setFounderEmail(event.target.value); setFounderError(null); }}
                   onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void addFounder(); } }} />
               </label>
               <AppButton type="button" variant="secondary" disabled={!founderEmail.trim() || founderLookup.isPending}
-                onClick={() => void addFounder()}>{t("applications.addFounder")}</AppButton>
+                onClick={() => void addFounder()}><AppIcon name="plus" className="size-4" />{t("applications.addFounder")}</AppButton>
             </div>
             {founderError && <p role="alert" className="mt-2 text-sm text-danger-app">{founderError}</p>}
             <span className="mt-1 block text-xs text-muted-app">
               {t("applications.foundersHint", { count: config.data.requirements.minFoundingMembers })}
             </span>
           </div>
-        </AppCard>
+        </section>
       </fieldset>
 
-        <AppCard className="space-y-4 p-5">
-          <h2 className="text-lg font-semibold font-heading">{t("applications.documents")}</h2>
+        <section className={cn(sectionClass, "space-y-4")}>
+          <h2 className={sectionTitleClass}>{t("applications.documents")}</h2>
           <p className="text-sm text-muted-app">{requiredDocuments.length
             ? t("applications.requiredDocuments", { types: requiredDocuments.join(", ") })
             : t("applications.noRequiredDocuments")}</p>
           {requiredDocuments.some((required) => !documents.some((document) => document.documentType === required)) && (
-            <p role="status" className="text-sm text-warning-app">{t("applications.missingDocuments", {
+            <p role="status" className="rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm text-warning-app">{t("applications.missingDocuments", {
               types: requiredDocuments.filter((required) =>
                 !documents.some((document) => document.documentType === required)).join(", "),
             })}</p>
           )}
           {!id && <p className="text-sm text-muted-app">{t("applications.saveFirst")}</p>}
-          {documents.length ? documents.map((document) => (
-            <div key={document.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-app p-3">
-              <span className="min-w-0 break-words">{document.documentType}: {document.fileName}</span>
+          {documents.length ? <ul className="divide-y divide-border-app border-y border-border-app">{documents.map((document) => (
+            <li key={document.id} className="flex flex-wrap items-center gap-3 px-1 py-3">
+              <AppIcon name="file" className="text-primary-app" />
+              <span className="min-w-0 flex-1 basis-48 break-words"><span className="font-semibold">{document.documentType}</span>
+                <span className="block text-sm text-muted-app">{document.fileName}</span></span>
               <div className="flex flex-wrap gap-2">
                 <AppButton type="button" variant="secondary" onClick={() => void download(document.id)}>
                   {t("applications.download")}
@@ -305,34 +328,34 @@ export function ApplicationEditorPage() {
                   {t("applications.remove")}
                 </AppButton>}
               </div>
-            </div>
-          )) : <p className="text-sm text-muted-app">{t("applications.noDocuments")}</p>}
+            </li>
+          ))}</ul> : <p className="text-sm text-muted-app">{t("applications.noDocuments")}</p>}
           {id && editable && (
-            <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => void handleUpload(event)}>
-              <label className="min-w-48 flex-1 text-sm">{t("applications.documentType")}
+            <form className="flex flex-wrap items-end gap-3 rounded-2xl bg-surface-app p-4" onSubmit={(event) => void handleUpload(event)}>
+              <label className="min-w-0 flex-1 basis-48 text-sm font-medium">{t("applications.documentType")}
                 <AppInput className="mt-2 block w-full" list="required-document-types" required
                   value={documentType} onChange={(event) => setDocumentType(event.target.value)} />
                 <datalist id="required-document-types">
                   {requiredDocuments.map((document) => <option key={document} value={document} />)}
                 </datalist>
               </label>
-              <label className="min-w-48 flex-1 text-sm">{t("applications.selectFile")}
-                <input className="mt-2 block w-full text-sm" type="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
+              <label className="min-w-0 flex-1 basis-48 text-sm font-medium">{t("applications.selectFile")}
+                <input className={fileInputClass} type="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
                   onChange={(event) => setFile(event.target.files?.[0] ?? null)} required />
               </label>
               <AppButton type="submit" disabled={!file || action.isPending}>{t("applications.upload")}</AppButton>
             </form>
           )}
-        </AppCard>
+        </section>
 
       <fieldset disabled={!editable} className="space-y-6 disabled:opacity-80">
-        <AppCard className="space-y-5 p-5">
+        <section className={cn(sectionClass, "space-y-5")}>
           <div>
-            <h2 className="text-lg font-semibold font-heading">{t("applications.roles")}</h2>
+            <h2 className={sectionTitleClass}>{t("applications.roles")}</h2>
             <p className="mt-1 text-sm text-muted-app">{t("applications.rolesHint")}</p>
           </div>
           {currentDraft.proposedRoles.map((role, index) => (
-            <section key={role.code || index} className="space-y-4 rounded-md border border-border-app p-4">
+            <section key={role.code || index} className="space-y-4 rounded-2xl bg-surface-app p-4 sm:p-5">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <label className="text-sm">{t("applications.roleCode")}
                   <AppInput className="mt-1 block w-full" value={role.code} disabled={role.isLeaderRole || role.isDefaultMemberRole}
@@ -350,13 +373,13 @@ export function ApplicationEditorPage() {
                 </label>
               </div>
               <div className="flex flex-wrap gap-5">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={role.isBoardSeat} disabled={role.isLeaderRole || role.isDefaultMemberRole}
+                <label className="flex min-h-11 items-center gap-2 text-sm">
+                  <input type="checkbox" className="size-4 shrink-0 accent-primary-app" checked={role.isBoardSeat} disabled={role.isLeaderRole || role.isDefaultMemberRole}
                     onChange={(event) => updateRole(index, { isBoardSeat: event.target.checked })} />
                   {t("applications.boardSeat")}
                 </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={role.isSingleHolder} disabled={role.isLeaderRole || role.isDefaultMemberRole}
+                <label className="flex min-h-11 items-center gap-2 text-sm">
+                  <input type="checkbox" className="size-4 shrink-0 accent-primary-app" checked={role.isSingleHolder} disabled={role.isLeaderRole || role.isDefaultMemberRole}
                     onChange={(event) => updateRole(index, { isSingleHolder: event.target.checked })} />
                   {t("applications.singleHolder")}
                 </label>
@@ -364,8 +387,8 @@ export function ApplicationEditorPage() {
               <fieldset disabled={role.isLeaderRole} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <legend className="mb-2 text-sm font-medium">{t("applications.permissions")}</legend>
                 {config.data.grantablePermissions.map((permission) => (
-                  <label key={permission} title={permission} className="flex items-start gap-2 text-xs">
-                    <input type="checkbox" checked={role.permissionCodes.includes(permission)}
+                  <label key={permission} title={permission} className="flex min-h-11 items-start gap-2 text-sm">
+                    <input type="checkbox" className="size-4 shrink-0 accent-primary-app" checked={role.permissionCodes.includes(permission)}
                       onChange={(event) => updateRole(index, { permissionCodes: event.target.checked
                         ? [...role.permissionCodes, permission]
                         : role.permissionCodes.filter((value) => value !== permission) })} />
@@ -384,21 +407,21 @@ export function ApplicationEditorPage() {
           <AppButton type="button" variant="secondary" onClick={() => change("proposedRoles", [
             ...currentDraft.proposedRoles, { code: "", name: "", unit: "", isBoardSeat: false,
               isLeaderRole: false, isDefaultMemberRole: false, isSingleHolder: false, permissionCodes: [] },
-          ])}>{t("applications.addRole")}</AppButton>
-        </AppCard>
+          ])}><AppIcon name="plus" className="size-4" />{t("applications.addRole")}</AppButton>
+        </section>
 
-        {localError && !action.isError && <p role="alert" className="text-sm text-danger-app">{localError}</p>}
-        {action.isError && <p role="alert" className="text-sm text-danger-app">{t("applications.actionError")} {action.error.message}</p>}
-        {action.isSuccess && <p role="status" className="text-sm text-success-app">{t("applications.success")}</p>}
-        {editable && <div className="flex flex-wrap gap-3">
+        {localError && !action.isError && <AppNotice tone="danger" role="alert">{localError}</AppNotice>}
+        {action.isError && <AppNotice tone="danger" role="alert">{t("applications.actionError")} {action.error.message}</AppNotice>}
+        {action.isSuccess && <AppNotice tone="success" role="status">{t("applications.success")}</AppNotice>}
+        {editable && <div className="flex flex-wrap gap-3 border-t border-border-app pt-6">
           <AppButton type="button" variant="secondary" disabled={action.isPending} onClick={() => void save()}>
             {action.isPending ? t("applications.saving") : t("applications.save")}
           </AppButton>
           {id && <AppButton type="button" disabled={action.isPending} onClick={() => void prepareSubmission()}>
-            {t("applications.submit")}
+            <AppIcon name="send" className="size-4" />{t("applications.submit")}
           </AppButton>}
         </div>}
-      {confirmSubmit && <AppCard className="space-y-3 border border-primary-app p-5">
+      {confirmSubmit && <div className="space-y-3 rounded-2xl border-l-4 border-primary-app bg-primary-soft-app p-5">
           <p>{t("applications.submitPrompt")}</p>
           {nameConflict && <p role="alert" className="text-sm text-danger-app">{t("applications.submitWarning")}</p>}
           <div className="flex flex-wrap gap-3">
@@ -409,7 +432,7 @@ export function ApplicationEditorPage() {
               {t("applications.cancelSubmit")}
             </AppButton>
           </div>
-        </AppCard>}
+        </div>}
       </fieldset>
         {canWithdraw && <AppButton type="button" variant="secondary" disabled={action.isPending}
           onClick={() => void withdraw()}>
@@ -421,10 +444,11 @@ export function ApplicationEditorPage() {
       </p>}
 
       {application && (
-        <section className="mt-10 space-y-3">
-          <h2 className="text-xl font-semibold font-heading">{t("applications.history")}</h2>
-          {detail.data?.versions.length ? detail.data.versions.map((version) => (
-            <AppCard key={version.id} className="space-y-2">
+        <section className={cn(sectionClass, "mt-10 space-y-3")}>
+          <h2 className={sectionTitleClass}>{t("applications.history")}</h2>
+          {detail.data?.versions.length ? <ol className="space-y-0">{detail.data.versions.map((version) => (
+            <li key={version.id} className="relative space-y-2 border-l-2 border-border-app pb-6 pl-6 last:pb-0">
+              <span aria-hidden="true" className="absolute top-1 -left-[7px] size-3 rounded-full bg-primary-app" />
               <h3 className="font-semibold font-heading">{t("applications.version", { number: version.versionNo })}</h3>
               <p className="text-sm text-muted-app">{t("applications.submittedAt", { date:
                 new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-US", {
@@ -432,14 +456,14 @@ export function ApplicationEditorPage() {
                 }).format(new Date(version.submittedAt)) })}</p>
               <p className="text-xs text-muted-app">{t("applications.policyVersion", { id: version.policyVersionId })}</p>
               <details>
-                <summary className="text-sm font-medium text-accent-app">{version.snapshot.clubName}</summary>
+                <summary className="inline-flex min-h-10 items-center text-sm font-medium text-accent-app">{version.snapshot.clubName}</summary>
                 <p className="mt-2 text-sm">{version.snapshot.objectives}</p>
                 <p className="mt-2 text-xs text-muted-app">
                   {version.snapshot.documents.map((document) => document.fileName).join(", ")}
                 </p>
               </details>
-            </AppCard>
-          )) : <p className="text-sm text-muted-app">{t("applications.historyEmpty")}</p>}
+            </li>
+          ))}</ol> : <p className="text-sm text-muted-app">{t("applications.historyEmpty")}</p>}
         </section>
       )}
     </div>

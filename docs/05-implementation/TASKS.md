@@ -85,7 +85,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-1.5** Middleware kiểm tra quyền (thô) + helper `assertScope()` dùng bên trong usecase (CLB, permission của role hoặc Club Leader, nhiệm kỳ đang hoạt động). → SEC-03, CON-06, BR47, BR54, BR55
 - [ ] **BE-1.6** `GET /dashboard` — mỗi vai trò một lần đọc tổng hợp, mỗi panel là một truy vấn đi qua index, suy giảm độc lập theo panel. → FR-UC02-01…06
 - [ ] **BE-1.7** UC03 quản trị tài khoản và vai trò; vô hiệu hoá phiên khi thay đổi; từ chối việc tự thu hồi vai trò quản trị cuối cùng. → FR-UC03-01…09
-- [ ] **BE-1.8** UC04 đánh phiên bản chính sách kèm ngày hiệu lực và chốt chặn "sẽ làm vô hiệu một quyết định đã ra". → FR-UC04-01…07
+- [x] **BE-1.8** UC04 đánh phiên bản chính sách kèm ngày hiệu lực và chốt chặn "sẽ làm vô hiệu một quyết định đã ra". → FR-UC04-01…07
 - [x] **BE-1.9** Đã rút cùng UC05 — không triển khai rule định tuyến hay endpoint mô phỏng. → BR16
 - [x] **BE-1.10** Đã rút — mỗi lần nộp tạo đúng một review task và nhận một quyết định ICPDP. → BR16
 
@@ -116,7 +116,9 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [x] **BE-2.6** UC10 đề cử kèm kiểm tra membership `Active` và chồng lấn nhiệm kỳ Chủ nhiệm. → FR-UC10-01…08, BR06, BR07
 - [x] **BE-2.7** UC11 xác nhận một lần: kích hoạt nhiệm kỳ, cấp quyền, thu hồi quyền sáng lập, chuyển CLB sang Active; xác nhận một phần. → FR-UC11-01…10
 - [ ] **BE-2.8** UC12 kế hoạch chuyển giao với nghĩa vụ nạp sẵn và chốt chặn "không nghĩa vụ nào được thiếu người nhận". → FR-UC12-01…05
-- [ ] **BE-2.9** UC13 xác nhận: đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới, chuyển quyền, giữ lịch sử. → FR-UC13-01…07, BR08
+- [x] **BE-2.9** UC13 xác nhận: queue/detail/claim/decision ICPDP; đóng nhiệm kỳ và assignment cũ,
+  kích hoạt nhiệm kỳ/assignment mới, phê duyệt có điều kiện, giữ khi `Suspended`, tạo phiên bản
+  cơ cấu `TRANSITION`, audit và notification. → FR-UC13-01…08, BR08, BR55, BR56
 - [ ] **BE-2.10** UC14 yêu cầu tạm ngừng kèm cảnh báo liệt kê các sự kiện và booking tương lai đã duyệt sẽ bị huỷ nếu UC15 chấp thuận (không chặn nộp). → FR-UC14-01…03
 - [ ] **BE-2.11** UC15 tạm ngừng / kích hoạt lại: chặn đợt tuyển, đề xuất và booking; huỷ các đề xuất chưa quyết định; cascade sang UC28 A1 và UC47 A1. → FR-UC15-01…05
 - [ ] **BE-2.12** UC15 giải thể: ghi quyết định kèm học kỳ hiệu lực và huỷ mọi thứ kết thúc sau học kỳ đó. → FR-UC15-06/07, BR45
@@ -128,7 +130,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **FE-2.2** Trình hướng dẫn nộp hồ sơ thành lập, màn xác nhận nộp, khung xem lịch sử version, màn trạng thái và kết quả. → UC07
 - [ ] **FE-2.3** Hàng đợi hồ sơ của ICPDP và màn thẩm định-và-quyết định kèm nhận xét theo từng phần. → UC08
 - [ ] **FE-2.4** Hồ sơ CLB, thông tin vận hành, ban/bộ phận; màn hình vai trò CLB & phân quyền của Club Leader. → UC09, UC23
-- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13 · UC10/11 đã có UI; visual QA còn chờ, UC12/13 chưa triển khai.
+- [ ] **FE-2.5** Đề cử ban chủ nhiệm, xác nhận ban chủ nhiệm, kế hoạch chuyển giao, thẩm định chuyển giao, lịch sử lãnh đạo. → UC10–UC13 · UC10/11 và UI thẩm định UC13 đã có; UC12 chưa triển khai, visual QA còn chờ.
 - [ ] **FE-2.6** Yêu cầu tạm ngừng và trạng thái; quản lý CLB phía ICPDP, chi tiết CLB, hành động vòng đời với hệ quả được nêu rõ trong hộp xác nhận. → UC14, UC15, SA-01
 
 ---
@@ -149,17 +151,17 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **BE-3.4** UC18 sàng lọc và quyết định, thao tác hàng loạt, đẩy từ danh sách chờ, chốt chặn chỉ tiêu. → FR-UC18-01…10
 - [ ] **BE-3.5** UC19 đánh giá theo rubric, độ phân tán giữa nhiều người đánh giá, bất biến sau quyết định. → FR-UC19-01…06
 - [ ] **BE-3.6** UC20 tiếp nhận, tiếp nhận thủ công kèm lý do, ghi nhận ứng viên từ chối (`Declined`), chốt chặn `Banned`. → FR-UC20-01…07, BR13, BR46
-- [ ] **BE-3.7** UC21 đổi trạng thái kèm ngày hiệu lực, lý do cấm bắt buộc, thu hồi role, chốt chặn ghế ban chủ nhiệm, chốt chặn ngày lùi về quá khứ. → FR-UC21-01…11
+- [x] **BE-3.7** UC21 đổi trạng thái kèm ngày hiệu lực, lý do cấm bắt buộc, thu hồi role, chốt chặn ghế ban chủ nhiệm, chốt chặn ngày lùi về quá khứ. → FR-UC21-01…11 · đã sửa lỗi lịch sử trạng thái luôn rỗng khi đọc qua API (actorId lưu dạng ObjectId).
 - [ ] **BE-3.8** UC21 A2 đợt quét đăng ký lại thành viên theo học kỳ trong scheduler. → SCH-08
-- [ ] **BE-3.9** UC22 yêu cầu rời CLB và đường thực thi của nó sang UC21. → FR-UC22-01…05
-- [ ] **BE-3.10** UC24 dữ liệu tổng hợp cho không gian thành viên (tư cách thành viên, danh sách thành viên, ban chủ nhiệm, sự kiện sắp tới kèm trạng thái của tôi, lịch sử điểm danh, nghĩa vụ còn treo). → FR-UC24-01…09
+- [x] **BE-3.9** UC22 yêu cầu rời CLB và đường thực thi của nó sang UC21. → FR-UC22-01…05 · API sẵn có (`feat-membership-lifecycle`), nay có UI xin rời trong không gian thành viên và trang “Thành viên” phía CLB để thi hành (UC21 A1).
+- [x] **BE-3.10** UC24 dữ liệu tổng hợp cho không gian thành viên (tư cách thành viên, danh sách thành viên, ban chủ nhiệm, sự kiện sắp tới kèm trạng thái của tôi, lịch sử điểm danh, nghĩa vụ còn treo). → FR-UC24-01…09 · `GET /clubs/{clubId}/member-space`, chỉ đọc, Active/Inactive; danh sách thành viên không có email.
 
 ### Frontend
 - [ ] **FE-3.1** Danh sách đợt tuyển, tạo và công bố; danh sách người nộp đơn kèm bộ lọc. → UC16, UC18
 - [ ] **FE-3.2** Trang chi tiết đợt tuyển phía sinh viên, biểu mẫu ứng tuyển, màn xác nhận đã nộp, đơn của tôi, chi tiết đơn. → UC17
 - [ ] **FE-3.3** Bảng sàng lọc kèm thao tác hàng loạt, biểu mẫu đánh giá ứng viên, màn quyết định và lý do. → UC18, UC19
-- [ ] **FE-3.4** Màn tiếp nhận; danh sách thành viên và chi tiết thành viên kèm dòng thời gian lịch sử trạng thái. → UC20, UC21
-- [ ] **FE-3.5** Không gian thành viên và luồng gửi yêu cầu rời CLB. → UC24, UC22
+- [ ] **FE-3.4** Màn tiếp nhận; danh sách thành viên và chi tiết thành viên kèm dòng thời gian lịch sử trạng thái. → UC20, UC21 · **phần UC21 xong**: trang “Thành viên” `/club/:clubId/members` đổi Active ⇄ Inactive, cấm (lý do bắt buộc), hiệu lực hôm nay, lịch sử trạng thái từng người; màn tiếp nhận UC20 còn lại.
+- [x] **FE-3.5** Không gian thành viên và luồng gửi yêu cầu rời CLB. → UC24, UC22 · “CLB của tôi” `/workspace/clubs`, không gian `/workspace/clubs/:clubId` (chuyển CLB, việc còn treo dẫn tới UC48), form xin rời; CLB thi hành ở `/club/:clubId/members`.
 
 ---
 
@@ -204,19 +206,19 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **DB-5.4** Trường đếm số đã xác nhận trên `events`, cập nhật bằng **`findOneAndUpdate` có điều kiện**, không bao giờ đọc-kiểm-ghi. → DAT-04, CON-07
 
 ### Backend
-- [ ] **BE-5.1** UC29 đăng ký với validate khung thời gian, đối tượng, trùng lặp và sức chứa trong một thao tác ghi nguyên tử. → FR-UC29-01…09
-- [ ] **BE-5.2** UC29 A1 danh sách chờ và A2 tự huỷ để giải phóng suất. → FR-UC29-04/05
+- [x] **BE-5.1** UC29 đăng ký với validate khung thời gian, đối tượng, trùng lặp và sức chứa trong một thao tác ghi nguyên tử. → FR-UC29-01…09 · counter `confirmedRegistrationCount` tăng có điều kiện trong transaction, unique `(eventId, studentId)`, form snapshot của revision hiện hành, audit + notification.
+- [x] **BE-5.2** UC29 A1 danh sách chờ và A2 tự huỷ để giải phóng suất. → FR-UC29-04/05 · `nextWaitlistPosition` tăng nguyên tử; huỷ `Confirmed` giảm counter; đăng ký lại dùng lại document. Tự promote waitlist thuộc UC30.
 - [ ] **BE-5.3** UC30 đổi sức chứa và đẩy lên theo chính sách đã cấu hình; từ chối giảm xuống dưới số đã xác nhận. → FR-UC30-01…06
-- [ ] **BE-5.4** UC31 check-in: xác minh đăng ký và khung giờ, tạo đúng một bản ghi, **mở feedback window**. → FR-UC31-01…03, BR36
-- [ ] **BE-5.5** UC31 A1 check-in thủ công lưu lại ai thực hiện; A2 khách vãng lai tạo kèm bản đăng ký. → FR-UC31-04/05
-- [ ] **BE-5.6** UC31 các đường từ chối khi check-in trùng và khi ngoài khung giờ. → FR-UC31-06…08, BR18
+- [x] **BE-5.4** UC31 check-in: xác minh đăng ký và khung giờ, tạo đúng một bản ghi, **mở feedback window**. → FR-UC31-01…03, BR36 · `POST /events/{id}/check-in`, `GET /attendances/mine`; feedback window suy ra từ `checkedInAt` tới `endAt + feedbackWindowHours`.
+- [ ] **BE-5.5** UC31 A1 check-in thủ công lưu lại ai thực hiện; A2 khách vãng lai tạo kèm bản đăng ký. → FR-UC31-04/05 · **A2 đã xong** (tạo/tái dùng đăng ký `Confirmed`, cờ `walk-in`); A1 làm cùng màn điểm danh CLB (UC32).
+- [x] **BE-5.6** UC31 các đường từ chối khi check-in trùng và khi ngoài khung giờ. → FR-UC31-06…08, BR18 · check-in trùng trả bản ghi đầu tiên (`alreadyCheckedIn`), unique index chống ghi song song.
 - [ ] **BE-5.7** UC32 đánh dấu bản ghi bất thường, sửa kèm lý do, chốt và khoá. → FR-UC32-01…07
 - [ ] **BE-5.8** UC32 A1 mở khoá chỉ dành cho vai trò đặc biệt, có ghi audit. → BR19, AUD-03
 - [ ] **BE-5.9** Test tương tranh: N lượt đăng ký song song vào một sự kiện sức chứa 1 phải cho ra đúng một bản `Confirmed`. → NFR-PERF-03
 
 ### Frontend
-- [ ] **FE-5.1** Biểu mẫu đăng ký sự kiện, màn xác nhận, danh sách đăng ký của tôi. → UC29
-- [ ] **FE-5.2** Màn check-in (mã / QR) kèm thông điệp cho trường hợp trùng và ngoài khung giờ. → UC31, MSG11
+- [x] **FE-5.1** Biểu mẫu đăng ký sự kiện, màn xác nhận, danh sách đăng ký của tôi. → UC29 · panel đăng ký trên event detail, `/workspace/event-registrations`, panel dashboard UC02; QA trình duyệt desktop/mobile, `en`/`vi`, light/dark.
+- [x] **FE-5.2** Màn check-in (mã / QR) kèm thông điệp cho trường hợp trùng và ngoài khung giờ. → UC31, MSG11 · hộp check-in trên “Sự kiện của tôi” và event detail, QR là deep link `?checkin=&code=`, tab “Đã check-in”.
 - [ ] **FE-5.3** Màn quản lý đăng ký và danh sách chờ. → UC30
 - [ ] **FE-5.4** Màn chốt điểm danh kèm phần xem lại bản ghi bất thường và hộp xác nhận khoá. → UC32, SA-01
 
@@ -314,18 +316,18 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **DB-10.4** Index `complaints(state, submittedAt)`, `(clubId, state)`, `(complainantId, state)`. → DAT-03
 
 ### Backend
-- [ ] **BE-10.1** UC48 nộp trong window đã mở từ lúc check-in; mỗi người một lần; tuỳ chọn ẩn danh vẫn giữ liên kết nội bộ. → FR-UC48-01…09, BR36
-- [ ] **BE-10.2** Service tổng hợp ẩn bản tổng hợp khi chưa đạt số người phản hồi tối thiểu. → BR40, FR-UC48-10 · **đang bị chặn bởi quyết định D3**
+- [x] **BE-10.1** UC48 nộp trong window đã mở từ lúc check-in; mỗi người một lần; tuỳ chọn ẩn danh vẫn giữ liên kết nội bộ. → FR-UC48-01…09, BR36 · một tiêu chí `overall` 1–5 sao + nhận xét bắt buộc (quyết định người dùng 2026-10-09); `GET/POST /events/{id}/feedback`, `GET /event-feedbacks/mine`; audit không chứa nội dung.
+- [ ] **BE-10.2** Service tổng hợp ẩn bản tổng hợp khi chưa đạt số người phản hồi tối thiểu. → BR40, FR-UC48-10 · **đang bị chặn bởi quyết định D3** · hàm domain `summarizeFeedback` (chỉ nhận điểm, không nhận danh tính) đã có test; nối API đọc cùng UC49.
 - [ ] **BE-10.3** Scheduler: đóng feedback window. → SCH-07
 - [ ] **BE-10.4** UC49 đọc bản tổng hợp cho CMB — không bao giờ để lộ một phản hồi định danh được. → FR-UC49-01…05, SEC-05
-- [ ] **BE-10.5** UC50 tiếp nhận khiếu nại chỉ định tuyến tới ICPDP; rút khiếu nại; liên kết các khiếu nại trùng. → FR-UC50-01…06, BR38
-- [ ] **BE-10.6** UC51 phân loại với ba kết quả, lý do bắt buộc, leo thang tạo hồ sơ. → FR-UC51-01…08, BR39
-- [ ] **BE-10.7** UC52 phần trả lời của CLB với chính sách hiển thị danh tính và tín hiệu quá hạn trả lời. → FR-UC52-01…06 · **đang bị chặn bởi quyết định D5**
+- [x] **BE-10.5** UC50 tiếp nhận khiếu nại chỉ định tuyến tới ICPDP; rút khiếu nại; liên kết các khiếu nại trùng. → FR-UC50-01…06, BR38 · **Đổi phạm vi (quyết định người dùng 2026-10-09):** UC50 là góp ý một chiều — Student chọn gửi CLB hoặc ICPDP, tuỳ chọn ẩn danh, không trạng thái/rút/trả lời; `complaints` thêm `recipient`, `isAnonymous`, `clubId` không bắt buộc. Xem `.sdd/specs/feat-student-feedback`.
+- [ ] **BE-10.6** UC51 phân loại với ba kết quả, lý do bắt buộc, leo thang tạo hồ sơ. → FR-UC51-01…08, BR39 · **tạm không làm**: UC50 không còn là ticket nên không có hàng đợi phân loại.
+- [ ] **BE-10.7** UC52 phần trả lời của CLB với chính sách hiển thị danh tính và tín hiệu quá hạn trả lời. → FR-UC52-01…06 · **đang bị chặn bởi quyết định D5** · **tạm không làm**: góp ý là một chiều, CLB chỉ đọc qua hộp thư (`club.feedback.view`).
 
 ### Frontend
-- [ ] **FE-10.1** Biểu mẫu phản hồi mở từ "đăng ký của tôi" / không gian thành viên, kèm công tắc ẩn danh. → UC48
+- [x] **FE-10.1** Biểu mẫu phản hồi mở từ "đăng ký của tôi" / không gian thành viên, kèm công tắc ẩn danh. → UC48 · form sao (radio, dùng được bằng bàn phím) + nhận xét + ẩn danh trên tab “Đã check-in” và trang sự kiện; lối vào từ không gian thành viên: mục “Việc còn treo” của UC24.
 - [ ] **FE-10.2** Bản tổng hợp phản hồi phía CLB, hiển thị thông điệp dưới ngưỡng thay vì nội dung. → UC49, MSG12
-- [ ] **FE-10.3** Biểu mẫu khiếu nại và màn khiếu nại của tôi kèm dòng thời gian trạng thái. → UC50
+- [x] **FE-10.3** Biểu mẫu khiếu nại và màn khiếu nại của tôi kèm dòng thời gian trạng thái. → UC50 · thành trang “Góp ý” (`/workspace/feedback`): form + danh sách đã gửi, không dòng thời gian trạng thái; hộp thư CLB `/club/:clubId/feedback` và ICPDP `/workspace/student-feedback`.
 - [ ] **FE-10.4** Hàng đợi khiếu nại của ICPDP và màn phân loại. → UC51
 - [ ] **FE-10.5** Màn trả lời khiếu nại được chuyển xuống, phía CLB. → UC52
 

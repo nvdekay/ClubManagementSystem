@@ -1,27 +1,70 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { PublicEventCard } from "@/components/custom/PublicEventCard";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppInput } from "@/components/ui/input/AppInput";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
+import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useEvents } from "@/hooks/useDiscovery";
+import type { PublicEventFilter } from "@/services/discovery";
 
 export function EventDirectory() {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
-  const events = useEvents(page);
+  const [status, setStatus] = useState<PublicEventFilter>("all");
+  const [draft, setDraft] = useState("");
+  const [search, setSearch] = useState("");
+  const events = useEvents(page, status, search);
+  const statusOptions: Array<{ value: PublicEventFilter; label: string }> = [
+    { value: "all", label: t("discovery.statusAll") },
+    { value: "ongoing", label: t("discovery.statusOngoing") },
+    { value: "upcoming", label: t("discovery.statusUpcoming") },
+    { value: "ended", label: t("discovery.statusEnded") },
+  ];
+
+  function changeStatus(value: PublicEventFilter) {
+    setStatus(value);
+    setPage(1);
+  }
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSearch(draft.trim());
+    setPage(1);
+  }
+
+  const from = events.data ? (events.data.page - 1) * events.data.pageSize + 1 : 0;
+  const to = events.data ? from + events.data.items.length - 1 : 0;
+
   return (
     <section>
-      <h1 className="text-3xl font-bold sm:text-4xl font-heading">{t("discovery.eventsTitle")}</h1>
-      <p className="mt-3 max-w-2xl text-muted-app">{t("discovery.eventsDescription")}</p>
+      <h1 className="font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl">{t("discovery.allEventsTitle")}</h1>
+      <p className="mt-2 text-muted-app">{t("discovery.allEventsDescription")}</p>
+
+      <div className="mt-8 grid grid-cols-1 items-end gap-3 rounded-3xl bg-surface-app p-3 sm:p-4 md:grid-cols-[14rem_minmax(0,1fr)]">
+        <div>
+          <span className="mb-1.5 block px-1 text-sm font-medium">{t("discovery.eventStatusLabel")}</span>
+          <AppSelect label={t("discovery.eventStatusLabel")} value={status} options={statusOptions} onChange={changeStatus} />
+        </div>
+        <form role="search" onSubmit={submitSearch} className="min-w-0">
+          <label htmlFor="event-search" className="mb-1.5 block px-1 text-sm font-medium">{t("discovery.eventSearchLabel")}</label>
+          <div className="flex gap-2">
+            <AppInput id="event-search" type="search" value={draft} onChange={(event) => setDraft(event.target.value)}
+              placeholder={t("discovery.eventSearchPlaceholder")} maxLength={100} className="min-w-0 flex-1" />
+            <AppButton type="submit" className="shrink-0">
+              <AppIcon name="search" className="size-4" />{t("discovery.searchAction")}
+            </AppButton>
+          </div>
+        </form>
+      </div>
+
       {events.isPending ? (
-        <div role="status" className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div role="status" className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           <span className="sr-only">{t("discovery.loading")}</span>
-          <AppSkeleton className="h-48 w-full" />
-          <AppSkeleton className="h-48 w-full" />
-          <AppSkeleton className="h-48 w-full" />
+          {[0, 1, 2, 3].map((item) => <AppSkeleton key={item} className="h-96 w-full" />)}
         </div>
       ) : events.isError ? (
         <div role="alert" className="mt-8 space-y-3">
@@ -29,22 +72,28 @@ export function EventDirectory() {
           <AppButton onClick={() => void events.refetch()}>{t("discovery.retry")}</AppButton>
         </div>
       ) : events.data.items.length === 0 ? (
-        <div className="mt-8"><AppEmptyState message={t("discovery.noEvents")} /></div>
+        <div className="mt-10">
+          <AppEmptyState message={search || status !== "all" ? t("discovery.noEventsFound") : t("discovery.noEvents")} />
+        </div>
       ) : (
         <>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {events.data.items.map((event) => <PublicEventCard key={event.id} event={event} />)}
+          <ul className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+            {events.data.items.map((event) => <li key={event.id} className="min-w-0"><PublicEventCard event={event} /></li>)}
+          </ul>
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border-app pt-6">
+            <p className="text-sm text-muted-app italic">
+              {t("discovery.eventsShowing", { from, to, total: events.data.total })}
+            </p>
+            <AppPagination
+              pageIndex={page - 1}
+              pageCount={Math.ceil(events.data.total / events.data.pageSize)}
+              onPageChange={(index) => setPage(index + 1)}
+              prevLabel={t("discovery.prev")}
+              nextLabel={t("discovery.next")}
+              pageLabel={(number) => t("discovery.pageLabel", { page: number })}
+              navLabel={t("discovery.pages")}
+            />
           </div>
-          <AppPagination
-            className="mt-8"
-            pageIndex={page - 1}
-            pageCount={Math.ceil(events.data.total / events.data.pageSize)}
-            onPageChange={(index) => setPage(index + 1)}
-            prevLabel={t("discovery.prev")}
-            nextLabel={t("discovery.next")}
-            pageLabel={(number) => t("discovery.pageLabel", { page: number })}
-            navLabel={t("discovery.pages")}
-          />
         </>
       )}
     </section>

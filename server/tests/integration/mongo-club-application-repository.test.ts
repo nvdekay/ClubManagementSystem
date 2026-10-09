@@ -86,8 +86,9 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
     };
     const applications = mongoClubApplicationRepository();
     const application = await applications.createDraft(founder.toString(), snapshot, now);
+    const policyVersionId = new Types.ObjectId().toString();
     await applications.submit({ id: application.id, ownerId: founder.toString(), snapshot,
-      expectedDraftRevision: 0, policyVersionId: new Types.ObjectId().toString(), now });
+      expectedDraftRevision: 0, policyVersionId, now });
     const reviews = mongoClubApplicationReviewRepository();
 
     const claimed = await reviews.claim(application.id, officer.toString(), now);
@@ -106,6 +107,7 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
     expect(decided.application.state).toBe("Approved");
     expect(decided.task.state).toBe("Decided");
     expect(decided.decisions).toHaveLength(1);
+    expect(decided.decisions[0]?.policyVersionId).toBe(policyVersionId);
     const storedApplication = await ucmsModels.clubApplications!.findById(application.id).lean();
     const clubId = storedApplication?.createdClubId;
     expect(clubId).toBeTruthy();

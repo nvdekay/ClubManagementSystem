@@ -8,6 +8,8 @@ export interface PublicClub {
   contactEmail?: string;
   contactPhone?: string;
   operatingScope?: string;
+  logoUrl?: string;
+  openCampaignId?: string;
 }
 
 export interface PublicCampaign {
@@ -33,10 +35,23 @@ export interface PublicEvent {
   startAt: Date;
   endAt: Date;
   venueText?: string;
+  objective?: string;
+  coverImageUrl?: string;
   capacity: number;
   state: string;
   audienceScope: string;
   publishedAt?: Date;
+}
+
+/** Status shown to visitors, derived from the lifecycle state and the clock. */
+export type PublicEventStatus = "ongoing" | "upcoming" | "ended";
+export type PublicEventFilter = PublicEventStatus | "all";
+
+export interface EventSearch {
+  status: PublicEventFilter;
+  search: string;
+  page: number;
+  pageSize: number;
 }
 
 export interface PublicBoardSeat {
@@ -60,7 +75,7 @@ export interface ClubSearch {
 }
 
 export interface PublicDiscoveryRepository {
-  listClubs(input: ClubSearch): Promise<Page<PublicClub>>;
+  listClubs(input: ClubSearch, now: Date): Promise<Page<PublicClub>>;
   fields(): Promise<string[]>;
   getClub(id: string): Promise<PublicClub | null>;
   board(clubId: string, now: Date): Promise<PublicBoardSeat[]>;
@@ -68,7 +83,7 @@ export interface PublicDiscoveryRepository {
   getCampaign(id: string, now: Date): Promise<PublicCampaign | null>;
   clubUpcomingEvents(clubId: string, now: Date): Promise<PublicEvent[]>;
   clubHistory(clubId: string, now: Date): Promise<PublicEvent[]>;
-  listUpcomingEvents(page: number, pageSize: number, now: Date): Promise<Page<PublicEvent>>;
+  listEvents(input: EventSearch, now: Date): Promise<Page<PublicEvent>>;
   getEvent(id: string): Promise<PublicEvent | null>;
 }
 
@@ -90,4 +105,18 @@ export function isHistoricalPublicEvent(event: PublicEvent, now: Date): boolean 
   return ["Completed", "Report Submitted", "Closed"].includes(event.state)
     && event.audienceScope === "PUBLIC" && event.publishedAt !== undefined
     && event.endAt <= now;
+}
+
+export function isOngoingPublicEvent(event: PublicEvent, now: Date): boolean {
+  return (event.state === "Upcoming" || event.state === "Ongoing")
+    && event.audienceScope === "PUBLIC" && event.publishedAt !== undefined
+    && event.startAt <= now && event.endAt > now;
+}
+
+/** The visitor-facing status of a listed event, or null when the event is not public. */
+export function publicEventStatus(event: PublicEvent, now: Date): PublicEventStatus | null {
+  if (isUpcomingPublicEvent(event, now)) return "upcoming";
+  if (isOngoingPublicEvent(event, now)) return "ongoing";
+  if (isHistoricalPublicEvent(event, now)) return "ended";
+  return null;
 }

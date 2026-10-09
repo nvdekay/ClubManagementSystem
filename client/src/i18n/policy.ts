@@ -54,6 +54,15 @@ const en = {
   saveSuccess: "Policy version created.",
   saveError: "Could not create policy version.",
   invalidForm: "Enter valid dates and choose a value for each policy switch.",
+  impactTitle: "This policy would invalidate issued decisions",
+  impactDescription: "Update the values below or resolve the affected records before saving.",
+  impactEventCalendar: "approved event falls outside the new academic calendar",
+  impactBookingCalendar: "approved booking falls outside the new academic calendar",
+  impactDissolutionSemester: "a decided dissolution semester was removed",
+  impactOverbooking: "approved booking exceeds facility capacity",
+  impactEntityEvent: "Event",
+  impactEntityBooking: "Facility booking",
+  impactEntityClub: "Club",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -112,6 +121,15 @@ const vi: Record<keyof typeof en, string> = {
   saveSuccess: "Đã tạo phiên bản chính sách.",
   saveError: "Không tạo được phiên bản chính sách.",
   invalidForm: "Hãy nhập ngày hợp lệ và chọn giá trị cho từng chính sách dạng bật/tắt.",
+  impactTitle: "Chính sách này sẽ làm vô hiệu quyết định đã ban hành",
+  impactDescription: "Hãy chỉnh lại giá trị hoặc xử lý các bản ghi bị ảnh hưởng trước khi lưu.",
+  impactEventCalendar: "sự kiện đã duyệt nằm ngoài lịch học kỳ mới",
+  impactBookingCalendar: "lịch đặt đã duyệt nằm ngoài lịch học kỳ mới",
+  impactDissolutionSemester: "học kỳ giải thể đã được quyết định bị xoá",
+  impactOverbooking: "lịch đặt đã duyệt vượt sức chứa cơ sở vật chất",
+  impactEntityEvent: "Sự kiện",
+  impactEntityBooking: "Lịch đặt cơ sở vật chất",
+  impactEntityClub: "Câu lạc bộ",
 };
 
 export const policy = { en, vi };

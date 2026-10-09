@@ -2,7 +2,10 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { usePolicies } from "@/hooks/usePolicy";
@@ -21,8 +24,8 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
     return t(value ? "policy.yes" : "policy.no");
   }
   return (
-    <div className="mt-4 space-y-5 text-sm">
-      <dl className="grid gap-4 sm:grid-cols-2">
+    <div className="mt-4 space-y-6 text-sm">
+      <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
         <div><dt className="text-muted-app">{t("policy.domains")}</dt>
           <dd className="mt-1 break-words">{version.allowedEmailDomains.join(", ")}</dd></div>
         <div><dt className="text-muted-app">{t("policy.minFounders")}</dt>
@@ -41,12 +44,12 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
           <dd className="mt-1">{booleanLabel(version.enforceOverdueReportBlock)}</dd></div>
       </dl>
       <div>
-        <h3 className="font-semibold font-heading">{t("policy.reportDeadlines")}</h3>
-        <ul className="mt-2 space-y-2">
+        <h3 className="font-heading font-semibold">{t("policy.reportDeadlines")}</h3>
+        <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
           {version.reportDeadlines.map((item) => (
-            <li key={item.reportType} className="rounded-md border border-border-app p-3">
+            <li key={item.reportType} className="py-3">
               <span className="font-medium">{item.reportType}</span>
-              <dl className="mt-2 grid gap-2 sm:grid-cols-2">
+              <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <div><dt className="text-muted-app">{t("policy.dueDays")}</dt><dd>{item.dueDaysAfterPeriodEnd}</dd></div>
                 <div><dt className="text-muted-app">{t("policy.remindBefore")}</dt><dd>{item.remindBeforeDays}</dd></div>
                 <div><dt className="text-muted-app">{t("policy.overdueAfter")}</dt><dd>{item.overdueAfterDays}</dd></div>
@@ -57,12 +60,12 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
         </ul>
       </div>
       <div>
-        <h3 className="font-semibold font-heading">{t("policy.calendar")}</h3>
-        <ul className="mt-2 space-y-2">
+        <h3 className="font-heading font-semibold">{t("policy.calendar")}</h3>
+        <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
           {version.academicCalendar.map((item) => (
-            <li key={item.code} className="rounded-md border border-border-app p-3">
+            <li key={item.code} className="flex flex-wrap gap-x-3 gap-y-1 py-3">
               <span className="font-medium">{item.code}</span>
-              <span className="ml-2 text-muted-app">
+              <span className="text-muted-app">
                 {formatDate(item.startAt, language)} – {formatDate(item.endAt, language)}
               </span>
             </li>
@@ -83,79 +86,76 @@ export function PolicyPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <Link to="/workspace" className="text-sm font-semibold text-accent-app">{t("policy.back")}</Link>
-      <h1 className="mt-4 text-3xl font-bold font-heading">{t("policy.title")}</h1>
-      <p className="mt-2 text-muted-app">{t("policy.description")}</p>
+    <>
+      <PageHeader title={t("policy.title")} description={t("policy.description")} />
 
       {auth.isPending ? (
-        <AppSkeleton className="mt-8 h-44 w-full" />
+        <AppSkeleton className="h-44 w-full" />
       ) : auth.isError ? (
-        <AppCard className="mt-8 space-y-3">
-          <p role="alert" className="text-danger-app">{auth.error.message}</p>
+        <AppNotice tone="danger" role="alert" title={auth.error.message}>
           <AppButton onClick={() => void auth.refetch()}>{t("policy.retry")}</AppButton>
-        </AppCard>
+        </AppNotice>
       ) : !auth.data ? (
-        <AppCard className="mt-8 space-y-3">
+        <AppNotice>
           <p>{t("policy.signIn")}</p>
           <Link className="font-semibold text-accent-app"
             to="/login?returnTo=%2Fworkspace%2Fpolicy">{t("policy.signInLink")}</Link>
-        </AppCard>
+        </AppNotice>
       ) : !isOfficer ? (
-        <AppCard className="mt-8"><p role="alert">{t("policy.forbidden")}</p></AppCard>
+        <AppNotice tone="danger" role="alert">{t("policy.forbidden")}</AppNotice>
       ) : policies.isPending ? (
-        <AppSkeleton className="mt-8 h-44 w-full" />
+        <AppSkeleton className="h-44 w-full" />
       ) : policies.isError ? (
-        <AppCard className="mt-8 space-y-3">
-          <p role="alert" className="text-danger-app">
-            {t("policy.loadError")} {policies.error.message}
-          </p>
+        <AppNotice tone="danger" role="alert" title={`${t("policy.loadError")} ${policies.error.message}`}>
           <AppButton onClick={() => void policies.refetch()}>{t("policy.retry")}</AppButton>
-        </AppCard>
+        </AppNotice>
       ) : (
-        <>
-          <AppCard className="mt-8 p-5">
-            <h2 className="text-lg font-semibold font-heading">{t("policy.current")}</h2>
+        <div className="space-y-10">
+          <section className="rounded-2xl bg-primary-soft-app p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <AppIcon name="shield" className="text-primary-app" />
+              <h2 className="font-heading text-lg font-bold">{t("policy.current")}</h2>
+            </div>
             {policies.data.current ? (
-              <div className="mt-3 text-sm">
-                <p>{t("policy.currentFrom", { date: date(policies.data.current.effectiveFrom) })}</p>
+              <div className="mt-2 text-sm">
+                <p className="text-muted-app">{t("policy.currentFrom", { date: date(policies.data.current.effectiveFrom) })}</p>
                 <PolicyDetails version={policies.data.current} language={i18n.language} />
               </div>
             ) : <p className="mt-3 text-sm text-muted-app">{t("policy.noCurrent")}</p>}
-          </AppCard>
+          </section>
 
           <PolicyEditor key={policies.data.versions[0]?.id ?? "first"}
             latest={policies.data.versions[0]} csrfToken={auth.data.csrfToken} />
 
-          <section className="mt-10">
-            <h2 className="text-xl font-semibold font-heading">{t("policy.history")}</h2>
+          <section className="border-t border-border-app pt-8">
+            <h2 className="font-heading text-xl font-bold">{t("policy.history")}</h2>
             {policies.data.versions.length === 0 ? (
               <p className="mt-3 text-sm text-muted-app">{t("policy.noHistory")}</p>
             ) : (
-              <div className="mt-4 space-y-3">
+              <ul className="mt-4 divide-y divide-border-app border-y border-border-app">
                 {policies.data.versions.map((version) => (
-                  <AppCard key={version.id} className="flex-row flex-wrap items-start justify-between gap-3">
+                  <li key={version.id} className="flex flex-wrap items-start justify-between gap-3 px-2 py-4">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium">{date(version.effectiveFrom)}</p>
-                      <p className="mt-1 text-sm text-muted-app">
+                      <p className="font-semibold">{date(version.effectiveFrom)}</p>
+                      <p className="mt-1 text-sm break-words text-muted-app">
                         {version.allowedEmailDomains.join(", ")} · {t("policy.minFounders")}: {version.minFoundingMembers}
                       </p>
                       <p className="mt-1 text-xs text-muted-app">{t("policy.created", { date: date(version.createdAt) })}</p>
-                      <details className="mt-3">
-                        <summary className="font-medium text-accent-app">{t("policy.showDetails")}</summary>
+                      <details className="mt-2">
+                        <summary className="inline-flex min-h-10 items-center text-sm font-semibold text-accent-app">{t("policy.showDetails")}</summary>
                         <PolicyDetails version={version} language={i18n.language} />
                       </details>
                     </div>
-                    <span className="rounded-full border border-border-app px-3 py-1 text-xs font-semibold">
+                    <AppBadge tone={new Date(version.effectiveFrom) > new Date() ? "info" : "success"}>
                       {new Date(version.effectiveFrom) > new Date() ? t("policy.scheduled") : t("policy.effective")}
-                    </span>
-                  </AppCard>
+                    </AppBadge>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </section>
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 }

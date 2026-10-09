@@ -157,7 +157,7 @@ export function AppSelect<T extends string | number>({
         disabled={disabled}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onTriggerKeyDown}
-        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-md border border-border-app bg-surface-app pr-2 pl-3 text-sm text-text-app transition-colors hover:border-muted-app focus-visible:border-ring-app focus-visible:ring-1 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-9"
+        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border-app bg-bg-app pr-2 pl-3.5 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-10"
       >
         <span>{options[selectedIndex]?.label ?? ""}</span>
         <ChevronDownIcon />
@@ -171,7 +171,7 @@ export function AppSelect<T extends string | number>({
           aria-activedescendant={`${listId}-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className="absolute z-20 mt-1 max-h-60 w-max min-w-full overflow-auto rounded-lg border border-border-app bg-surface-app p-1 shadow-lg focus:outline-none"
+          className="absolute z-20 mt-1 max-h-60 w-max min-w-full overflow-auto rounded-xl border border-border-app bg-bg-app p-1 shadow-lg focus:outline-none"
         >
           {options.map((option, index) => (
             <li
@@ -182,8 +182,8 @@ export function AppSelect<T extends string | number>({
               data-active={index === activeIndex}
               onPointerEnter={() => setActiveIndex(index)}
               onClick={() => select(index)}
-              className={cn("flex items-center justify-between gap-3 rounded px-3 py-2 text-sm", {
-                "bg-primary-app text-on-primary-app": index === activeIndex,
+              className={cn("flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm", {
+                "bg-primary-soft-app text-primary-app": index === activeIndex,
               })}
             >
               {option.label}

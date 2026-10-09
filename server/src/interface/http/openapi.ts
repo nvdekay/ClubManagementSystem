@@ -5,6 +5,11 @@ import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
+import { transitionDecisionBody } from "./leadership-transition-routes.js";
+import { eventRegistrationBody } from "./event-registration-routes.js";
+import { eventCheckInBody } from "./event-checkin-routes.js";
+import { eventFeedbackBody } from "./event-feedback-routes.js";
+import { studentFeedbackBody } from "./student-feedback-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
@@ -40,6 +45,15 @@ const AdminUsers = z.object({
   total: z.number().int(),
 });
 const Changed = z.object({ changed: z.literal(true) });
+const Dashboard = z.object({
+  kind: z.enum(["student", "club", "icpdp"]),
+  clubId: z.string().optional(),
+  generatedAt: z.string().datetime(),
+  panels: z.array(z.discriminatedUnion("status", [
+    z.object({ key: z.string(), status: z.literal("ready"), count: z.number().int().nonnegative() }),
+    z.object({ key: z.string(), status: z.literal("error") }),
+  ])),
+});
 const Reason = z.object({ reason: z.string().min(1).max(1000) });
 const RoleChange = z.object({ roleCode: z.string(), reason: z.string().optional() });
 const UserIdPath = z.object({ id: z.string() });
@@ -77,6 +91,7 @@ const ApplicationReviewDecision = z.object({
   outcome: z.enum(["Request revision", "Approve", "Reject"]),
   reason: z.string().optional(), sections: z.array(z.string()),
   reviewNote: z.string().optional(), actorId: z.string(), at: z.string(),
+  policyVersionId: z.string().optional(),
 });
 const ApplicationReviewQueueItem = z.object({
   task: ApplicationReviewTask, application: ApplicationRecord,
@@ -159,11 +174,72 @@ const BoardNominationContext = z.object({ clubId: z.string(), clubName: z.string
   clubState: z.string(), term: BoardTerm.nullable(), positions: z.array(BoardPosition),
   candidates: z.array(BoardCandidate), occupiedPositionIds: z.array(z.string()),
   pendingPositionIds: z.array(z.string()), presidentConflictMembershipIds: z.array(z.string()) });
+const TransitionObligation = z.object({ id: z.string(), type: z.string(), entityId: z.string().optional(),
+  description: z.string(), assigneeMembershipId: z.string() });
+const LeadershipTransition = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), clubState: z.string(),
+  fromTerm: BoardTerm, toTerm: BoardTerm,
+  candidates: z.array(z.object({ positionCode: z.string(), positionName: z.string(),
+    membershipId: z.string(), userId: z.string(), displayName: z.string() })),
+  outstandingObligations: z.array(TransitionObligation),
+  handover: z.object({ items: z.array(z.object({ id: z.string(), description: z.string() })),
+    proposedBoardRoles: z.array(z.object({ code: z.string(), name: z.string(), unit: z.string().optional(),
+      isLeaderRole: z.boolean(), isSingleHolder: z.boolean(), permissionCodes: z.array(z.string()) })).optional() }),
+  state: z.string(), submittedBy: z.string(), submittedAt: z.string(),
+  followUpConditions: z.array(TransitionObligation), task: BoardTask,
+  decisions: z.array(z.object({ id: z.string(), outcome: z.enum(["Approve", "Request revision"]),
+    reason: z.string().optional(), followUpObligationIds: z.array(z.string()),
+    actorId: z.string(), at: z.string() })),
+});
+const EventRegistration = z.object({ id: z.string(), eventId: z.string(), studentId: z.string(),
+  clubId: z.string(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(), checkInOpensAt: z.string(), checkInClosesAt: z.string(),
+  eventEndAt: z.string(), state: z.enum(["Confirmed", "Waitlisted", "Cancelled"]),
+  waitlistPosition: z.number().int().optional(),
+  answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  createdAt: z.string(), cancelledAt: z.string().optional() });
+const EventRegistrationContext = z.object({ event: z.object({ id: z.string(), clubId: z.string(),
+  clubName: z.string(), title: z.string(), state: z.string(), audienceScope: z.string(),
+  startAt: z.string(), endAt: z.string(), registrationOpenAt: z.string().optional(),
+  registrationCloseAt: z.string().optional(), capacity: z.number().int(),
+  confirmedRegistrationCount: z.number().int(), waitlistEnabled: z.boolean() }),
+formSchema: z.array(z.object({ key: z.string(), label: z.string(),
+  type: z.enum(["text", "textarea", "select", "radio", "checkbox"]), required: z.boolean(),
+  options: z.array(z.string()).optional() })), isActiveClubMember: z.boolean(),
+registration: EventRegistration.nullable(), registrationOpen: z.boolean() });
+const Attendance = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
+  clubId: z.string(), clubName: z.string(), eventStartAt: z.string(), eventEndAt: z.string(),
+  checkedInAt: z.string(), method: z.enum(["self", "manual", "walk-in"]), abnormalFlags: z.array(z.string()),
+  feedbackOpensAt: z.string(), feedbackClosesAt: z.string().nullable() });
+const MyEventFeedback = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
+  clubName: z.string(), rating: z.number().int().min(1).max(5), comment: z.string(), isAnonymous: z.boolean(),
+  submittedAt: z.string() });
+const EventFeedbackContext = z.object({ attended: z.boolean(), canSubmit: z.boolean(),
+  opensAt: z.string().nullable(), closesAt: z.string().nullable(), feedback: MyEventFeedback.nullable() });
+const SentFeedback = z.object({ id: z.string(), recipient: z.enum(["CLUB", "ICPDP"]),
+  clubId: z.string().optional(), clubName: z.string().optional(), eventId: z.string().optional(),
+  eventTitle: z.string().optional(), category: z.enum(["suggestion", "praise", "issue"]), message: z.string(),
+  isAnonymous: z.boolean(), submittedAt: z.string() });
+const ReceivedFeedback = SentFeedback.extend({
+  sender: z.object({ displayName: z.string(), email: z.string() }).optional() });
+const MemberSpace = z.object({
+  club: z.object({ id: z.string(), name: z.string(), logoUrl: z.string().optional(), state: z.string() }),
+  membership: z.object({ id: z.string(), state: z.string(), joinedAt: z.string(), positions: z.array(z.string()),
+    pendingWithdrawal: MembershipWithdrawal.optional() }),
+  members: z.array(z.object({ displayName: z.string(), state: z.string(), positions: z.array(z.string()) })),
+  board: z.array(z.object({ positionName: z.string(), memberName: z.string() })),
+  upcomingEvents: z.array(z.object({ id: z.string(), title: z.string(), startAt: z.string(), endAt: z.string(),
+    venueText: z.string().optional(), registrationState: z.enum(["Confirmed", "Waitlisted", "Cancelled"]).nullable() })),
+  attendance: z.array(z.object({ eventId: z.string(), eventTitle: z.string(), checkedInAt: z.string(),
+    eventEndAt: z.string(), feedbackSubmitted: z.boolean() })),
+  feedbackToSend: z.array(z.object({ eventId: z.string(), eventTitle: z.string(), closesAt: z.string().nullable() })),
+  otherClubs: z.array(z.object({ clubId: z.string(), clubName: z.string(), state: z.string() })),
+});
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
   contactEmail: z.string().optional(), contactPhone: z.string().optional(),
-  operatingScope: z.string().optional(),
+  operatingScope: z.string().optional(), logoUrl: z.string().url().optional(),
+  openCampaignId: z.string().optional(),
 });
 const PublicCampaign = z.object({
   id: z.string(), title: z.string(), state: z.string(),
@@ -176,8 +252,9 @@ const PublicCampaignDetail = PublicCampaign.extend({
 const PublicEvent = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(),
   startAt: z.string(), endAt: z.string(), venueText: z.string().optional(),
+  objective: z.string().optional(), coverImageUrl: z.string().url().optional(),
   capacity: z.number(), state: z.string(), audienceScope: z.string(),
-  publishedAt: z.string().optional(),
+  publishedAt: z.string().optional(), status: z.enum(["ongoing", "upcoming", "ended"]),
 });
 const PublicPage = z.object({
   items: z.array(PublicClub), total: z.number(), page: z.number(), pageSize: z.number(),
@@ -264,10 +341,12 @@ export const openApiDocument = createDocument({
     },
     "/public/events": {
       get: {
-        summary: "Upcoming published public events",
-        requestParams: { query: z.object({ page: z.coerce.number().optional() }) },
+        summary: "Published public events, filterable by status and text",
+        requestParams: { query: z.object({ page: z.coerce.number().optional(),
+          status: z.enum(["all", "ongoing", "upcoming", "ended"]).optional(),
+          search: z.string().optional() }) },
         responses: {
-          "200": { description: "Upcoming events",
+          "200": { description: "Public events (8 per page)",
             content: { "application/json": { schema: envelope(EventPage) } } },
           "400": { description: "Invalid query", content: { "application/json": { schema: ApiError } } },
         },
@@ -275,7 +354,7 @@ export const openApiDocument = createDocument({
     },
     "/public/events/{id}": {
       get: {
-        summary: "Upcoming published public event detail",
+        summary: "Published public event detail (upcoming, ongoing or ended)",
         requestParams: { path: IdPath },
         responses: {
           "200": { description: "Public event",
@@ -352,6 +431,25 @@ export const openApiDocument = createDocument({
         },
       },
     },
+    "/dashboard": {
+      get: {
+        summary: "Read the current Student, club or ICPDP dashboard",
+        requestParams: { query: z.object({
+          workspace: z.enum(["student", "icpdp", "club"]),
+          clubId: z.string().regex(/^[0-9a-f]{24}$/i).optional(),
+        }) },
+        responses: {
+          "200": { description: "Role-scoped dashboard with independently resolved panels",
+            content: { "application/json": { schema: envelope(Dashboard) } } },
+          "400": { description: "Invalid dashboard context",
+            content: { "application/json": { schema: ApiError } } },
+          "401": { description: "Authentication required",
+            content: { "application/json": { schema: ApiError } } },
+          "403": { description: "Workspace access denied",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
     "/admin/users": {
       get: {
         summary: "Search users (ICPDP only)",
@@ -384,6 +482,8 @@ export const openApiDocument = createDocument({
           "201": { description: "Policy version created",
             content: { "application/json": { schema: envelope(PolicyVersion) } } },
           "400": { description: "Policy values are invalid",
+            content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Policy would invalidate issued decisions; details lists affected records",
             content: { "application/json": { schema: ApiError } } },
           "401": { description: "Authentication required",
             content: { "application/json": { schema: ApiError } } },
@@ -649,6 +749,115 @@ export const openApiDocument = createDocument({
           "application/json": { schema: envelope(BoardNomination) },
         } } } },
     },
+    "/admin/leadership-transitions": {
+      get: { summary: "List open leadership transition tasks (ICPDP Officer only)",
+        responses: { "200": { description: "Leadership transition queue", content: {
+          "application/json": { schema: envelope(z.array(LeadershipTransition)) },
+        } } } },
+    },
+    "/admin/leadership-transitions/{id}": {
+      get: { summary: "Read a leadership transition plan and its carried obligations",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Transition detail",
+          content: { "application/json": { schema: envelope(LeadershipTransition) } } } } },
+    },
+    "/admin/leadership-transitions/{id}/claim": {
+      post: { summary: "Claim an open leadership transition task (requires CSRF token)",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Claimed task",
+          content: { "application/json": { schema: envelope(LeadershipTransition) } } } } },
+    },
+    "/admin/leadership-transitions/{id}/decision": {
+      post: { summary: "Approve or return a leadership transition (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: transitionDecisionBody } } },
+        responses: { "200": { description: "Decided transition", content: {
+          "application/json": { schema: envelope(LeadershipTransition) },
+        } }, "409": { description: "Transition held while club is suspended or source data changed",
+          content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/events/{id}/registration": {
+      get: { summary: "Read the authenticated student's event registration context",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Registration context",
+          content: { "application/json": { schema: envelope(EventRegistrationContext) } } } } },
+    },
+    "/events/{id}/registrations": {
+      post: { summary: "Register the authenticated student for an event (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventRegistrationBody } } },
+        responses: { "201": { description: "Confirmed or waitlisted registration", content: {
+          "application/json": { schema: envelope(EventRegistration) },
+        } }, "409": { description: "Registration closed, duplicate, or capacity reached",
+          content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/events/{id}/check-in": {
+      post: { summary: "Check the authenticated student in to an event with its check-in code (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventCheckInBody } } },
+        responses: { "200": { description: "The single attendance record (existing one when already checked in)",
+          content: { "application/json": { schema: envelope(Attendance.extend({ alreadyCheckedIn: z.boolean() })) } } },
+        "400": { description: "Invalid check-in code", content: { "application/json": { schema: ApiError } } },
+        "403": { description: "No confirmed registration or members-only event", content: { "application/json": { schema: ApiError } } },
+        "409": { description: "Event not open for check-in or outside the check-in window",
+          content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/events/{id}/feedback": {
+      get: { summary: "Read whether the authenticated student may give feedback, and their own submission",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Feedback context", content: {
+          "application/json": { schema: envelope(EventFeedbackContext) } } } } },
+      post: { summary: "Submit the student's single, immutable event feedback (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventFeedbackBody } } },
+        responses: { "201": { description: "Submitted feedback (visible with identity only to its author)", content: {
+          "application/json": { schema: envelope(MyEventFeedback) } } },
+        "400": { description: "Rating outside 1–5 or empty/oversized comment", content: { "application/json": { schema: ApiError } } },
+        "403": { description: "Caller did not check in to the event", content: { "application/json": { schema: ApiError } } },
+        "409": { description: "Feedback already submitted or window closed", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/event-feedbacks/mine": {
+      get: { summary: "List the authenticated student's own event feedback",
+        responses: { "200": { description: "Own feedback", content: {
+          "application/json": { schema: envelope(z.array(MyEventFeedback)) } } } } },
+    },
+    "/student-feedback": {
+      post: { summary: "Send one-way feedback to a club or to ICPDP, optionally anonymous (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: studentFeedbackBody } } },
+        responses: { "201": { description: "Sent feedback", content: { "application/json": { schema: envelope(SentFeedback) } } },
+          "400": { description: "Missing club, unrelated event or invalid message", content: { "application/json": { schema: ApiError } } },
+          "404": { description: "Club not found or dissolved", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/student-feedback/mine": {
+      get: { summary: "List the feedback the authenticated student has sent",
+        responses: { "200": { description: "Sent feedback", content: {
+          "application/json": { schema: envelope(z.array(SentFeedback)) } } } } },
+    },
+    "/clubs/{clubId}/student-feedback": {
+      get: { summary: "Read feedback students sent to this club (requires club.feedback.view)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Club feedback inbox; anonymous senders are omitted", content: {
+          "application/json": { schema: envelope(z.array(ReceivedFeedback)) } } },
+        "403": { description: "Missing club.feedback.view", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/student-feedback": {
+      get: { summary: "Read feedback students sent to ICPDP (ICPDP officer only)",
+        responses: { "200": { description: "ICPDP feedback inbox; anonymous senders are omitted", content: {
+          "application/json": { schema: envelope(z.array(ReceivedFeedback)) } } },
+        "403": { description: "ICPDP officer role required", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/attendances/mine": {
+      get: { summary: "List the authenticated student's check-ins with their feedback windows",
+        responses: { "200": { description: "Attendance history", content: {
+          "application/json": { schema: envelope(z.array(Attendance)) } } } } },
+    },
+    "/event-registrations/mine": {
+      get: { summary: "List the authenticated student's event registrations",
+        responses: { "200": { description: "Owned event registrations", content: {
+          "application/json": { schema: envelope(z.array(EventRegistration)) },
+        } } } },
+    },
+    "/event-registrations/{id}/cancel": {
+      post: { summary: "Cancel an owned event registration before event start (requires CSRF token)",
+        requestParams: { path: IdPath }, responses: { "200": { description: "Cancelled registration",
+          content: { "application/json": { schema: envelope(EventRegistration) } } } } },
+    },
     "/clubs/{clubId}/board-nomination-context": {
       get: { summary: "Read current board seats and active club members for nomination",
         requestParams: { path: z.object({ clubId: z.string() }) },
@@ -663,6 +872,14 @@ export const openApiDocument = createDocument({
         responses: { "201": { description: "Submitted nomination", content: {
           "application/json": { schema: envelope(BoardNomination) },
       } } } },
+    },
+    "/clubs/{clubId}/member-space": {
+      get: { summary: "Read-only member space of a club for its Active or Inactive members (UC24)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Membership, roster, board, events, attendance and owed feedback",
+          content: { "application/json": { schema: envelope(MemberSpace) } } },
+        "403": { description: "Not a current member (Left, Banned or never joined)",
+          content: { "application/json": { schema: ApiError } } } } },
     },
     "/memberships/mine": {
       get: { summary: "List the authenticated student's current club memberships",

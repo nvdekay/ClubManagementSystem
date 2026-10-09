@@ -26,7 +26,7 @@ function repository(): PublicDiscoveryRepository {
     getCampaign: async () => null,
     clubUpcomingEvents: async () => [],
     clubHistory: async () => [],
-    listUpcomingEvents: async (page, pageSize) => ({ items: [], total: 0, page, pageSize }),
+    listEvents: async (input) => ({ items: [], total: 0, page: input.page, pageSize: input.pageSize }),
     getEvent: async () => null,
   };
 }
@@ -49,5 +49,18 @@ describe("public discovery HTTP boundary", () => {
       statusCode: 200,
       data: { items: [], total: 0, page: 1, pageSize: 12, fields: ["Academic"] },
     }));
+  });
+
+  it("defaults the event list to upcoming and rejects unknown statuses", async () => {
+    const listEvents = vi.fn(async () => ({ items: [], total: 0, page: 1, pageSize: 8 }));
+    const handler = route("/public/events", { ...repository(), listEvents });
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as unknown as Response;
+    await handler({ query: {} } as Request, res, vi.fn());
+    expect(listEvents).toHaveBeenCalledWith(
+      { page: 1, status: "upcoming", search: "", pageSize: 8 }, expect.any(Date));
+    for (const query of [{ status: "draft" }, { search: { $ne: "" } }]) {
+      await expect(handler({ query } as unknown as Request, res, vi.fn()))
+        .rejects.toMatchObject({ kind: "validation" });
+    }
   });
 });

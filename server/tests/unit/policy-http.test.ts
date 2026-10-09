@@ -18,6 +18,7 @@ function handlers() {
   const repo: PolicyManagementRepository = {
     findEffective: async () => null,
     listRecent: async () => [],
+    findDecisionImpacts: async () => [],
     append,
   };
   const authRepo: AuthRepository = {

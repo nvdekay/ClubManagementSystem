@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
-  fetchClub, fetchClubs, fetchEvent, fetchEvents,
+  fetchClub, fetchClubs, fetchEvent, fetchEvents, type PublicEventFilter,
 } from "@/services/discovery";
 
 export const discoveryKeyRoot = ["public-discovery"] as const;
@@ -21,10 +21,10 @@ export function useClub(id: string) {
   });
 }
 
-export function useEvents(page: number) {
+export function useEvents(page: number, status: PublicEventFilter = "upcoming", search = "") {
   return useQuery({
-    queryKey: [...discoveryKeyRoot, "events", page],
-    queryFn: ({ signal }) => fetchEvents(page, signal),
+    queryKey: [...discoveryKeyRoot, "events", page, status, search],
+    queryFn: ({ signal }) => fetchEvents(page, signal, status, search),
     placeholderData: keepPreviousData,
   });
 }

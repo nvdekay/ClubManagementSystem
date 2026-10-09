@@ -8,6 +8,8 @@ export interface PublicClub {
   contactEmail?: string;
   contactPhone?: string;
   operatingScope?: string;
+  logoUrl?: string;
+  openCampaignId?: string;
 }
 
 export interface PublicCampaign {
@@ -27,8 +29,14 @@ export interface PublicEvent {
   startAt: string;
   endAt: string;
   venueText?: string;
+  objective?: string;
+  coverImageUrl?: string;
   capacity: number;
+  status: PublicEventStatus;
 }
+
+export type PublicEventStatus = "ongoing" | "upcoming" | "ended";
+export type PublicEventFilter = PublicEventStatus | "all";
 
 export interface Page<T> {
   items: T[];
@@ -76,8 +84,12 @@ export function fetchClub(id: string, signal: AbortSignal): Promise<ClubDetail> 
   return publicGet(`clubs/${encodeURIComponent(id)}`, signal);
 }
 
-export function fetchEvents(page: number, signal: AbortSignal): Promise<Page<PublicEvent>> {
-  return publicGet(`events?page=${page}`, signal);
+export function fetchEvents(
+  page: number, signal: AbortSignal, status: PublicEventFilter = "upcoming", search = "",
+): Promise<Page<PublicEvent>> {
+  const params = new URLSearchParams({ page: String(page), status });
+  if (search) params.set("search", search);
+  return publicGet(`events?${params.toString()}`, signal);
 }
 
 export function fetchEvent(id: string, signal: AbortSignal): Promise<{

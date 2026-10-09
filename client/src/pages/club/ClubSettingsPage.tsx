@@ -2,12 +2,16 @@ import { useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubSettings, useClubSettingsAction } from "@/hooks/useClubSettings";
+import { cn } from "@/utils/cn";
 import type {
   ClubChannel,
   ClubDepartment,
@@ -108,111 +112,106 @@ export function ClubSettingsPage() {
 
   // A disabled query stays pending forever, so only wait for settings the user may load.
   if (auth.isPending || (canManage && settings.isPending)) {
-    return <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
-      <AppSkeleton className="h-[34rem] w-full" /><AppSkeleton className="h-[34rem] w-full" />
+    return <div className="space-y-6">
+      <AppSkeleton className="h-24 w-full" />
+      <div className="grid gap-10 lg:grid-cols-2"><AppSkeleton className="h-[30rem] w-full" /><AppSkeleton className="h-[30rem] w-full" /></div>
     </div>;
   }
   if (!auth.data) return (
-    <AppCard className="mx-auto max-w-2xl">
+    <AppNotice>
       <p>{t("clubSettings.signIn")}</p>
-      <Link className="mt-3 inline-block font-semibold text-accent-app"
+      <Link className="inline-block font-semibold text-accent-app"
         to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
         {t("clubSettings.signInLink")}</Link>
-    </AppCard>
+    </AppNotice>
   );
   if (!canManage) return (
-    <AppCard className="mx-auto max-w-2xl"><p role="alert" className="text-danger-app">
-      {t("clubSettings.permissionDenied")}
-    </p></AppCard>
+    <AppNotice tone="danger" role="alert">{t("clubSettings.permissionDenied")}</AppNotice>
   );
   if (settings.isError || !settings.data) return (
-    <AppCard className="mx-auto max-w-2xl space-y-4">
-      <p role="alert" className="text-danger-app">{settings.error?.message ?? t("clubSettings.loadError")}</p>
+    <AppNotice tone="danger" role="alert" title={settings.error?.message ?? t("clubSettings.loadError")}>
       <AppButton variant="secondary" onClick={() => void settings.refetch()}>{t("clubSettings.retry")}</AppButton>
-    </AppCard>
+    </AppNotice>
   );
 
   const current = settings.data.profile;
+  const stateLabel = current.state === "Pending Setup" ? t("clubSettings.pendingSetup")
+    : current.state === "Active" ? t("discovery.active")
+      : current.state === "Suspended" ? t("discovery.suspended") : current.state;
   return (
-    <div className="mx-auto max-w-7xl">
-      <Link to={`/club/${clubId ?? ""}`} className="text-sm font-semibold text-accent-app">{t("clubSettings.back")}</Link>
-      <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-b border-border-app pb-6">
-        <div className="max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent-app">{t("clubSettings.eyebrow")}</p>
-          <h1 className="mt-2 text-3xl font-bold font-heading sm:text-4xl">{t("clubSettings.title")}</h1>
-          <p className="mt-3 text-muted-app">{t("clubSettings.description")}</p>
-        </div>
-        <span className="rounded-full border border-border-app bg-surface-app px-4 py-2 text-sm font-semibold">
+    <>
+      <PageHeader title={t("clubSettings.title")} description={t("clubSettings.description")} actions={
+        <AppBadge tone={current.state === "Active" ? "success" : current.state === "Pending Setup" ? "warning" : "neutral"}>
           {current.state === "Pending Setup" ? t("clubSettings.pendingSetup") : current.state}
-        </span>
-      </div>
+        </AppBadge>
+      } />
 
-      <section className="mt-8 rounded-xl border border-border-app bg-surface-app/50 p-5 sm:p-6">
-        <h2 className="text-lg font-bold font-heading">{t("clubSettings.readOnly")}</h2>
+      <section className="rounded-2xl bg-surface-app px-5 py-5 sm:px-6">
+        <h2 className="font-heading text-base font-bold">{t("clubSettings.readOnly")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("clubSettings.readOnlyHint")}</p>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {([["code", current.code], ["name", current.name], ["field", current.field],
-            ["state", current.state === "Pending Setup" ? t("clubSettings.pendingSetup") : current.state === "Active" ? t("discovery.active") : current.state === "Suspended" ? t("discovery.suspended") : current.state]] as const).map(([label, value]) => (
-            <div key={label}><dt className="text-xs font-semibold uppercase tracking-wide text-muted-app">{t(`clubSettings.${label}`)}</dt><dd className="mt-1 font-semibold">{value}</dd></div>
+            ["state", stateLabel]] as const).map(([label, value]) => (
+            <div key={label} className="min-w-0"><dt className="text-xs font-semibold tracking-wide text-muted-app uppercase">{t(`clubSettings.${label}`)}</dt><dd className="mt-1 font-semibold break-words">{value}</dd></div>
           ))}
         </dl>
       </section>
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
-        <AppCard className="p-5 sm:p-6">
+      <div className="mt-10 grid items-start gap-x-12 gap-y-10 lg:grid-cols-2">
+        <section>
           <div ref={profileRef} className="contents">
-          <h2 className="text-xl font-bold font-heading">{t("clubSettings.profile")}</h2>
+          <h2 className="font-heading text-xl font-bold">{t("clubSettings.profile")}</h2>
           <label className="mt-5 block text-sm font-semibold">{t("clubSettings.descriptionLabel")}
-            <AppTextarea className="mt-2 min-h-32 w-full" value={profile.description}
+            <AppTextarea className="mt-2 block min-h-32 w-full font-normal" value={profile.description}
               onChange={(event) => profileField("description", event.target.value)} maxLength={10000} />
           </label>
           <label className="mt-5 block text-sm font-semibold">{t("clubSettings.scope")}
-            <AppTextarea className="mt-2 min-h-24 w-full" value={profile.operatingScope}
+            <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={profile.operatingScope}
               onChange={(event) => profileField("operatingScope", event.target.value)} maxLength={2000} />
           </label>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-semibold">{t("clubSettings.email")}<AppInput className="mt-2 w-full" type="email" value={profile.contactEmail} onChange={(event) => profileField("contactEmail", event.target.value)} /></label>
-            <label className="block text-sm font-semibold">{t("clubSettings.phone")}<AppInput className="mt-2 w-full" value={profile.contactPhone} onChange={(event) => profileField("contactPhone", event.target.value)} /></label>
+            <label className="block text-sm font-semibold">{t("clubSettings.email")}<AppInput className="mt-2 block w-full font-normal" type="email" value={profile.contactEmail} onChange={(event) => profileField("contactEmail", event.target.value)} /></label>
+            <label className="block text-sm font-semibold">{t("clubSettings.phone")}<AppInput className="mt-2 block w-full font-normal" value={profile.contactPhone} onChange={(event) => profileField("contactPhone", event.target.value)} /></label>
           </div>
-          <label className="mt-5 block text-sm font-semibold">{t("clubSettings.charter")}<AppInput className="mt-2 w-full" type="url" value={profile.charterUrl} onChange={(event) => profileField("charterUrl", event.target.value)} /></label>
+          <label className="mt-5 block text-sm font-semibold">{t("clubSettings.charter")}<AppInput className="mt-2 block w-full font-normal" type="url" value={profile.charterUrl} onChange={(event) => profileField("charterUrl", event.target.value)} /></label>
 
-          <div className="mt-6 flex items-center justify-between gap-3"><h3 className="font-bold font-heading">{t("clubSettings.channels")}</h3><AppButton variant="secondary" onClick={() => profileField("channels", [...profile.channels, { label: "", url: "" }])}>{t("clubSettings.addChannel")}</AppButton></div>
-          <div className="mt-3 space-y-3">{profile.channels.map((channel, index) => (
-            <div key={index} className="grid gap-2 rounded-lg border border-border-app p-3 sm:grid-cols-[1fr_1.4fr_auto]">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border-app pt-6"><h3 className="font-heading font-bold">{t("clubSettings.channels")}</h3><AppButton variant="secondary" onClick={() => profileField("channels", [...profile.channels, { label: "", url: "" }])}><AppIcon name="plus" className="size-4" />{t("clubSettings.addChannel")}</AppButton></div>
+          <div className="mt-3 divide-y divide-border-app">{profile.channels.map((channel, index) => (
+            <div key={index} className="grid gap-2 py-3 sm:grid-cols-[1fr_1.4fr_auto]">
               <AppInput required aria-label={t("clubSettings.channelLabel")} placeholder={t("clubSettings.channelLabel")} value={channel.label} onChange={(event) => channelField(index, "label", event.target.value)} />
               <AppInput required aria-label={t("clubSettings.channelUrl")} type="url" placeholder={t("clubSettings.channelUrl")} value={channel.url} onChange={(event) => channelField(index, "url", event.target.value)} />
-              <AppButton variant="secondary" onClick={() => profileField("channels", profile.channels.filter((_, currentIndex) => currentIndex !== index))}>{t("clubSettings.removeChannel")}</AppButton>
+              <AppButton variant="ghost" className="hover:text-danger-app" onClick={() => profileField("channels", profile.channels.filter((_, currentIndex) => currentIndex !== index))}>{t("clubSettings.removeChannel")}</AppButton>
             </div>
           ))}</div>
           </div>
           <AppButton className="mt-6 w-full sm:w-auto" disabled={action.isPending} onClick={() => void saveProfile()}>{action.isPending ? t("clubSettings.saving") : t("clubSettings.saveProfile")}</AppButton>
-        </AppCard>
+        </section>
 
-        <div className="space-y-6">
-          <AppCard className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-bold font-heading">{t("clubSettings.structure")}</h2><p className="mt-2 text-sm text-muted-app">{t("clubSettings.structureHint")}</p></div>
+        <div className="space-y-8">
+          <section>
+            <div className="flex flex-wrap items-start justify-between gap-4"><div className="min-w-0"><h2 className="font-heading text-xl font-bold">{t("clubSettings.structure")}</h2><p className="mt-2 text-sm text-muted-app">{t("clubSettings.structureHint")}</p></div>
               {!settings.data.departments.length && <AppButton variant="secondary" disabled={action.isPending} onClick={() => void applyTemplate()}>{t("clubSettings.useTemplate")}</AppButton>}
             </div>
-            {!settings.data.departments.length ? <div className="mt-6 rounded-lg border border-dashed border-border-app p-6 text-center"><p className="font-semibold">{t("clubSettings.noDepartments")}</p><p className="mt-2 text-sm text-muted-app">{t("clubSettings.templateHint")}</p></div>
-              : <div className="mt-5 space-y-3">{settings.data.departments.map((item) => (
-                <div key={item.id} className="rounded-lg border border-border-app p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2"><h3 className="font-bold">{item.name}</h3><span className="rounded-full bg-surface-app px-2 py-1 text-xs text-muted-app">{item.isActive ? t("clubSettings.active") : t("clubSettings.inactive")}</span></div>{item.description && <p className="mt-2 text-sm text-muted-app">{item.description}</p>}</div>
-                    <div className="flex gap-2"><AppButton variant="secondary" onClick={() => editDepartment(item)}>{t("clubSettings.edit")}</AppButton>{item.isActive && <AppButton variant="secondary" onClick={() => void deactivateDepartment(item)}>{t("clubSettings.deactivate")}</AppButton>}</div></div>
-                </div>
-              ))}</div>}
-          </AppCard>
+            {!settings.data.departments.length ? <AppNotice className="mt-5" title={t("clubSettings.noDepartments")}><p className="text-muted-app">{t("clubSettings.templateHint")}</p></AppNotice>
+              : <ul className="mt-5 divide-y divide-border-app border-y border-border-app">{settings.data.departments.map((item) => (
+                <li key={item.id} className={cn("flex flex-wrap items-start justify-between gap-3 px-1 py-4", { "bg-primary-soft-app": editingId === item.id })}>
+                  <div className="min-w-0 flex-1 basis-48"><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold break-words">{item.name}</h3><AppBadge tone={item.isActive ? "success" : "neutral"}>{item.isActive ? t("clubSettings.active") : t("clubSettings.inactive")}</AppBadge></div>{item.description && <p className="mt-1 text-sm text-muted-app">{item.description}</p>}</div>
+                  <div className="flex flex-wrap gap-2"><AppButton variant="secondary" onClick={() => editDepartment(item)}>{t("clubSettings.edit")}</AppButton>{item.isActive && <AppButton variant="ghost" className="hover:text-danger-app" onClick={() => void deactivateDepartment(item)}>{t("clubSettings.deactivate")}</AppButton>}</div>
+                </li>
+              ))}</ul>}
+          </section>
 
-          <AppCard className="p-5 sm:p-6">
-            <h2 className="text-lg font-bold font-heading">{editingId ? t("clubSettings.editDepartment") : t("clubSettings.addDepartment")}</h2>
-            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentName")}<AppInput className="mt-2 w-full" value={department.name} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, name: event.target.value }))} maxLength={120} /></label>
-            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentDescription")}<AppTextarea className="mt-2 min-h-24 w-full" value={department.description} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, description: event.target.value }))} maxLength={2000} /></label>
-            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.sortOrder")}<AppInput className="mt-2 w-full" type="number" min={0} max={10000} value={department.sortOrder} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, sortOrder: Number(event.target.value) }))} /></label>
+          <section className="rounded-2xl bg-surface-app p-5 sm:p-6">
+            <h2 className="font-heading text-lg font-bold">{editingId ? t("clubSettings.editDepartment") : t("clubSettings.addDepartment")}</h2>
+            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentName")}<AppInput className="mt-2 block w-full font-normal" value={department.name} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, name: event.target.value }))} maxLength={120} /></label>
+            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentDescription")}<AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={department.description} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, description: event.target.value }))} maxLength={2000} /></label>
+            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.sortOrder")}<AppInput className="mt-2 block w-full font-normal" type="number" min={0} max={10000} value={department.sortOrder} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, sortOrder: Number(event.target.value) }))} /></label>
             <div className="mt-5 flex flex-wrap gap-2"><AppButton disabled={action.isPending || !department.name.trim()} onClick={() => void saveDepartment()}>{t("clubSettings.saveDepartment")}</AppButton>{editingId && <AppButton variant="secondary" onClick={resetDepartment}>{t("clubSettings.cancel")}</AppButton>}</div>
-          </AppCard>
+          </section>
         </div>
       </div>
-      {action.isError && <p role="alert" className="mt-5 text-sm text-danger-app">{action.error.message || t("clubSettings.actionError")}</p>}
-      {action.isSuccess && <p role="status" className="mt-5 text-sm text-success-app">{t("clubSettings.success")}</p>}
-    </div>
+      {action.isError && <AppNotice tone="danger" role="alert" className="mt-6">{action.error.message || t("clubSettings.actionError")}</AppNotice>}
+      {action.isSuccess && <AppNotice tone="success" role="status" className="mt-6">{t("clubSettings.success")}</AppNotice>}
+    </>
   );
 }

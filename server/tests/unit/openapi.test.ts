@@ -8,6 +8,13 @@ import type { BoardNominationRepository } from "../../src/domain/board-nominatio
 import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
 import type { RecruitmentApplicationRepository } from "../../src/domain/recruitment-application.js";
 import type { MembershipRepository } from "../../src/domain/membership.js";
+import type { DashboardRepository } from "../../src/domain/dashboard.js";
+import type { LeadershipTransitionRepository } from "../../src/domain/leadership-transition.js";
+import type { EventRegistrationRepository } from "../../src/domain/event-registration.js";
+import type { EventCheckInRepository } from "../../src/domain/event-checkin.js";
+import type { EventFeedbackRepository } from "../../src/domain/event-feedback.js";
+import type { StudentFeedbackRepository } from "../../src/domain/student-feedback.js";
+import type { MemberSpaceRepository } from "../../src/domain/member-space.js";
 import { openApiDocument } from "../../src/interface/http/openapi.js";
 import { buildApp } from "../../src/interface/http/server.js";
 
@@ -52,12 +59,13 @@ const stubPublic: PublicDiscoveryRepository = {
   getCampaign: async () => null,
   clubUpcomingEvents: async () => [],
   clubHistory: async () => [],
-  listUpcomingEvents: async () => ({ items: [], total: 0, page: 1, pageSize: 12 }),
+  listEvents: async () => ({ items: [], total: 0, page: 1, pageSize: 8 }),
   getEvent: async () => null,
 };
 const stubPolicy = {
   findEffective: async () => null,
   listRecent: async () => [],
+  findDecisionImpacts: async () => [],
   append: async () => { throw new Error("unused"); },
 };
 const stubApplications: ClubApplicationRepository = {
@@ -119,6 +127,34 @@ const stubMemberships: MembershipRepository = {
   listMyWithdrawalRequests: async () => [], listClubWithdrawalRequests: async () => [],
   executeWithdrawal: async () => { throw new Error("unused"); },
 };
+const stubDashboard: DashboardRepository = {
+  student: async (_userId, now) => ({ kind: "student", generatedAt: now, panels: [] }),
+  club: async (clubId, _permissions, now) => ({ kind: "club", clubId, generatedAt: now, panels: [] }),
+  icpdp: async (now) => ({ kind: "icpdp", generatedAt: now, panels: [] }),
+};
+const stubLeadershipTransitions: LeadershipTransitionRepository = {
+  listOpen: async () => [], find: async () => null,
+  claim: async () => { throw new Error("unused"); },
+  decide: async () => { throw new Error("unused"); },
+};
+const stubMemberSpace: MemberSpaceRepository = { find: async () => null };
+const stubStudentFeedback: StudentFeedbackRepository = {
+  club: async () => null, eventBelongsToClub: async () => false, listMine: async () => [], inbox: async () => [],
+  submit: async () => { throw new Error("unused"); },
+};
+const stubEventFeedback: EventFeedbackRepository = {
+  target: async () => null, listMine: async () => [],
+  submit: async () => { throw new Error("unused"); },
+};
+const stubEventCheckIns: EventCheckInRepository = {
+  target: async () => null, listMine: async () => [],
+  checkIn: async () => { throw new Error("unused"); },
+};
+const stubEventRegistrations: EventRegistrationRepository = {
+  context: async () => null, listMine: async () => [], findOwned: async () => null,
+  register: async () => { throw new Error("unused"); },
+  cancel: async () => { throw new Error("unused"); },
+};
 
 // Minimal view of Express 5's router internals — enough to enumerate mounted routes.
 interface Layer {
@@ -144,6 +180,13 @@ describe("openapi document", () => {
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
       recruitmentApplicationRepo: stubRecruitmentApplications,
       membershipRepo: stubMemberships,
+      dashboardRepo: stubDashboard,
+      leadershipTransitionRepo: stubLeadershipTransitions,
+      eventRegistrationRepo: stubEventRegistrations,
+      eventCheckInRepo: stubEventCheckIns,
+      eventFeedbackRepo: stubEventFeedback,
+      studentFeedbackRepo: stubStudentFeedback,
+      memberSpaceRepo: stubMemberSpace,
       publicRepo: stubPublic, dbReady: () => true });
     const base = openApiDocument.servers?.[0]?.url ?? "";
     expect(base).toBe("/api/v1");

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
+import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { googleLoginUrl } from "@/services/auth";
 import { cn } from "@/utils/cn";
 
@@ -18,19 +19,15 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
 
   return (
     <main className="flex min-h-full flex-wrap bg-auth-page-bg-app font-auth-body text-auth-page-text-app">
-      <section className="relative flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden border-r border-auth-page-border-app bg-auth-page-bg-app p-[clamp(24px,5vw,64px)]">
-        <span aria-hidden="true" className="absolute -right-20 -bottom-20 size-80 rounded-full bg-auth-orb-large-app" />
-        <span aria-hidden="true" className="absolute right-40 bottom-30 size-24 rounded-full bg-auth-orb-small-app" />
-        <div className="relative flex items-center gap-3">
-          <span className="flex h-12 w-30 items-center justify-center rounded-full border-2 border-dashed border-current text-xs font-semibold">
-            {t("auth.schoolLogo")}
-          </span>
-        </div>
+      <section className="relative m-3 flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden rounded-[2rem] bg-primary-soft-app p-[clamp(24px,5vw,64px)]">
+        <span aria-hidden="true" className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-auth-orb-large-app opacity-80 blur-3xl" />
+        <span aria-hidden="true" className="pointer-events-none absolute bottom-24 left-1/3 size-48 rounded-full bg-auth-orb-small-app opacity-70 blur-2xl" />
+        <UniversityLogo alt={t("auth.schoolLogo")} priority className="relative w-66 sm:w-76" />
         <div className="relative flex max-w-110 flex-col gap-3">
           <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em]">
             {t("auth.brand")}
           </span>
-          <span className="text-[17px] text-pretty">{t("auth.systemDescription")}</span>
+          <span className="text-[17px] text-pretty text-muted-app">{t("auth.systemDescription")}</span>
         </div>
       </section>
 
@@ -44,7 +41,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
           </div>
 
           {authError && (
-            <div role="alert" className="flex items-start gap-3 rounded-lg bg-auth-danger-surface-app p-4 text-danger-app">
+            <div role="alert" className="flex items-start gap-3 rounded-xl border-l-4 border-danger-app bg-auth-danger-surface-app p-4 text-danger-app">
               <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-0.5 size-5 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z" />
                 <path d="M12 9v4" /><path d="M12 17h.01" />
@@ -60,7 +57,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
               if (isPending || loginBusy) event.preventDefault();
               else setLoginBusy(true);
             }}
-            className={cn("flex min-h-13 items-center justify-center gap-3 rounded-md border border-auth-button-border-app bg-auth-page-bg-app px-6 text-base font-semibold text-auth-page-text-app no-underline transition-colors hover:bg-auth-button-hover-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
+            className={cn("flex min-h-13 items-center justify-center gap-3 rounded-full border border-auth-button-border-app bg-auth-page-bg-app px-6 text-base font-semibold text-auth-page-text-app no-underline shadow-sm transition-colors hover:border-primary-app hover:bg-auth-button-hover-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
               "pointer-events-none opacity-50": isPending || loginBusy,
             })}
           >
@@ -83,7 +80,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
             </svg>
             {t("auth.allowedDomain")}
           </p>
-          <Link to="/" className="inline-flex min-h-11 self-start items-center gap-2 font-semibold text-accent-app">
+          <Link to="/" className="inline-flex min-h-11 items-center gap-2 self-start rounded-full font-semibold text-accent-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
             </svg>

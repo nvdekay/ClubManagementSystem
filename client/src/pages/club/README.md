@@ -14,3 +14,12 @@ draft, công bố trong một kỳ học đã cấu hình và xử lý cảnh b�
 
 `RecruitmentReviewPage` nối UC18 và UC20: reviewer có `club.application.review` sàng lọc/quyết
 định đơn, xử lý danh sách chờ và tiếp nhận ứng viên trúng tuyển thành thành viên role `Members`.
+
+`ClubHomePage` triển khai dashboard UC02 theo `clubId`; panel nhạy cảm chỉ được trả về khi
+membership hiện hành có đúng permission tương ứng, còn Leader nhận toàn bộ panel quản trị.
+
+`ClubFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho CLB, cần `club.feedback.view`;
+người gửi ẩn danh không bao giờ được hiển thị.
+
+`ClubMembersPage` (UC21) liệt kê thành viên và yêu cầu rời CLB đang chờ cho người có `club.member.manage`:
+thi hành yêu cầu rời (A1), đổi Active ⇄ Inactive, cấm có lý do, xem lịch sử trạng thái.

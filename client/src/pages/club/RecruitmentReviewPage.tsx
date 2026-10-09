@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppCard } from "@/components/ui/card/AppCard";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
+import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useRecruitmentCampaigns } from "@/hooks/useRecruitmentCampaigns";
@@ -73,59 +77,81 @@ export function RecruitmentReviewPage() {
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
 
-  if (query.isPending) return <div className="mx-auto max-w-6xl space-y-4"><AppSkeleton className="h-20 w-full" /><AppSkeleton className="h-80 w-full" /></div>;
-  if (query.isError) return <AppCard className="mx-auto max-w-4xl"><p role="alert" className="text-danger-app">{query.error.message}</p>
-    <AppButton className="mt-4" variant="secondary" onClick={() => void query.refetch()}>{t("recruitmentApplications.retry")}</AppButton></AppCard>;
+  const back = { to: `/club/${clubId ?? ""}/recruitment`, label: t("recruitmentApplications.reviewBack") };
+  const header = <PageHeader back={back} title={t("recruitmentApplications.reviewTitle")}
+    description={t("recruitmentApplications.reviewDescription")} />;
+  const danger = "bg-danger-app text-bg-app hover:opacity-90";
+  if (query.isPending) return <><AppSkeleton className="h-20 w-full" /><AppSkeleton className="mt-4 h-80 w-full" /></>;
+  if (query.isError) return <>{header}<AppNotice tone="danger" role="alert" title={query.error.message}>
+    <AppButton variant="secondary" onClick={() => void query.refetch()}>{t("recruitmentApplications.retry")}</AppButton></AppNotice></>;
 
   const applications = query.data ?? [];
-  return <div className="mx-auto max-w-6xl space-y-5">
-    <Link to={`/club/${clubId}/recruitment`} className="text-sm font-semibold text-accent-app">{t("recruitmentApplications.reviewBack")}</Link>
-    <header><p className="text-xs font-bold uppercase tracking-widest text-accent-app">{t("recruitmentApplications.reviewLabel")}</p>
-      <h1 className="mt-1 text-3xl font-bold font-heading">{t("recruitmentApplications.reviewTitle")}</h1>
-      <p className="mt-2 text-muted-app">{t("recruitmentApplications.reviewDescription")}</p></header>
-    {error && <p role="alert" className="rounded-lg bg-danger-app/10 p-4 text-danger-app">{error}</p>}
-    <AppCard className="space-y-4">
+  return <>
+    {header}
+    {error && <AppNotice tone="danger" role="alert" className="mb-6">{error}</AppNotice>}
+    <section aria-label={t("recruitmentApplications.reviewReason")} className="space-y-4 rounded-2xl bg-surface-app p-5">
       <label className="block text-sm font-semibold">{t("recruitmentApplications.reviewReason")}
-        <textarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
-          className="mt-2 min-h-20 w-full rounded-lg border border-border-app bg-surface-app p-3" />
+        <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
+          className="mt-2 block min-h-20 w-full font-normal" />
         <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentApplications.reviewReasonHint")}</span></label>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <AppButton disabled={!selected.length || action.isPending || !reason.trim()} onClick={() => void bulk("shortlist")}>{t("recruitmentApplications.bulkShortlist")}</AppButton>
-        <AppButton className="bg-danger-app text-white hover:opacity-90" disabled={!selected.length || action.isPending || !reason.trim()} onClick={() => void bulk("decide")}>{t("recruitmentApplications.bulkReject")}</AppButton>
-        <span className="self-center text-sm text-muted-app">{selected.length} {t("recruitmentApplications.selected")}</span>
+        <AppButton className={danger} disabled={!selected.length || action.isPending || !reason.trim()} onClick={() => void bulk("decide")}>{t("recruitmentApplications.bulkReject")}</AppButton>
+        <AppBadge tone={selected.length ? "info" : "neutral"}>{selected.length} {t("recruitmentApplications.selected")}</AppBadge>
       </div>
-      {!applications.length ? <p className="py-8 text-center text-muted-app">{t("recruitmentApplications.noReviewApplications")}</p> :
-        <div className="space-y-3">{applications.map((item) => <article key={item.id} className="rounded-xl border border-border-app p-4 sm:p-5">
+    </section>
+    {!applications.length ? <div className="py-16 text-center">
+      <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="inbox" className="size-7" /></span>
+      <p className="mt-4 text-muted-app">{t("recruitmentApplications.noReviewApplications")}</p>
+    </div> :
+      <ul className="mt-8 divide-y divide-border-app border-y border-border-app">{applications.map((item) => <li key={item.id}>
+        <article className="px-1 py-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex gap-3"><input aria-label={`${t("recruitmentApplications.selectApplication")}: ${item.applicantName ?? item.id.slice(-6)}`} type="checkbox"
-              checked={selected.includes(item.id)} onChange={(event) => setSelected((old) => event.target.checked
-                ? [...old, item.id] : old.filter((id) => id !== item.id))} />
-              <div><h2 className="font-bold">{item.applicantName ?? `${t("recruitmentApplications.applicationNumber")} ${item.id.slice(-6)}`}</h2>
-                <p className="text-sm text-muted-app">{item.position} · {t(`recruitmentApplications.state${item.state}`)}</p>
+            <div className="flex min-w-0 flex-1 basis-64 gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center">
+                <input className="size-5 accent-primary-app" aria-label={`${t("recruitmentApplications.selectApplication")}: ${item.applicantName ?? item.id.slice(-6)}`} type="checkbox"
+                  checked={selected.includes(item.id)} onChange={(event) => setSelected((old) => event.target.checked
+                    ? [...old, item.id] : old.filter((id) => id !== item.id))} />
+              </span>
+              <div className="min-w-0 pt-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-heading font-bold break-words">{item.applicantName ?? `${t("recruitmentApplications.applicationNumber")} ${item.id.slice(-6)}`}</h2>
+                  <AppBadge tone={stateTone(item.state)}>{t(`recruitmentApplications.state${item.state}`)}</AppBadge>
+                </div>
+                <p className="mt-0.5 text-sm text-muted-app">{item.position}</p>
                 {item.decisionReason && <p className="mt-2 text-sm">{t("recruitmentApplications.decisionReason")}: {item.decisionReason}</p>}
               </div></div>
             <div className="flex flex-wrap gap-2">
               {item.state === "Submitted" && <AppButton disabled={action.isPending} onClick={() => void run(item, "screen")}>{t("recruitmentApplications.startScreening")}</AppButton>}
               {item.state === "Screening" && <><AppButton disabled={action.isPending || !reason.trim()} onClick={() => void run(item, "shortlist")}>{t("recruitmentApplications.shortlist")}</AppButton>
-                <AppButton className="bg-danger-app text-white hover:opacity-90" disabled={action.isPending || !reason.trim()} onClick={() => void run(item, "decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
+                <AppButton className={danger} disabled={action.isPending || !reason.trim()} onClick={() => void run(item, "decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
               {item.state === "Shortlisted" && <><AppButton disabled={action.isPending} onClick={() => void run(item, "decide", "Accepted")}>{t("recruitmentApplications.accept")}</AppButton>
                 <AppButton variant="secondary" disabled={action.isPending} onClick={() => void run(item, "decide", "Waitlisted")}>{t("recruitmentApplications.waitlist")}</AppButton>
-                <AppButton className="bg-danger-app text-white hover:opacity-90" disabled={action.isPending || !reason.trim()} onClick={() => void run(item, "decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
+                <AppButton className={danger} disabled={action.isPending || !reason.trim()} onClick={() => void run(item, "decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
               {item.state === "Waitlisted" && <AppButton disabled={action.isPending} onClick={() => void run(item, "promote", "Accepted")}>{t("recruitmentApplications.promote")}</AppButton>}
               {item.state === "Accepted" && <><AppButton disabled={onboarding.isPending} onClick={() => void onboard(item, "onboard")}>{t("recruitmentApplications.onboard")}</AppButton>
                 <AppButton variant="secondary" disabled={onboarding.isPending} onClick={() => void onboard(item, "decline")}>{t("recruitmentApplications.recordDecline")}</AppButton></>}
             </div>
           </div>
-          <details className="mt-4"><summary className="text-sm font-semibold">{t("recruitmentApplications.viewAnswers")}</summary>
-            <dl className="mt-3 grid gap-3 sm:grid-cols-2">{Object.entries(item.answers).map(([key, value]) => <div key={key} className="rounded-lg bg-surface-app p-3">
-              <dt className="text-xs font-semibold text-muted-app">{questionLabels.get(key) ?? key}</dt><dd className="mt-1 whitespace-pre-wrap text-sm">{Array.isArray(value) ? value.join(", ") : value}</dd></div>)}</dl>
-            {item.attachments.map((attachment) => <div key={attachment.id} className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-app p-3">
-              <span className="min-w-0 break-words text-sm"><span className="font-semibold">{questionLabels.get(attachment.fieldKey) ?? attachment.fieldKey}</span>: {attachment.fileName}</span>
+          <details className="group mt-3 sm:pl-14">
+            <summary className="inline-flex min-h-11 items-center gap-1.5 rounded-full text-sm font-semibold text-accent-app focus-visible:outline-2 focus-visible:outline-ring-app">
+              <AppIcon name="chevronRight" className="size-4 transition-transform group-open:rotate-90" />{t("recruitmentApplications.viewAnswers")}</summary>
+            <dl className="mt-3 grid gap-x-6 gap-y-4 sm:grid-cols-2">{Object.entries(item.answers).map(([key, value]) => <div key={key} className="min-w-0 border-l-2 border-primary-app/40 pl-3">
+              <dt className="text-xs font-semibold text-muted-app">{questionLabels.get(key) ?? key}</dt><dd className="mt-1 text-sm break-words whitespace-pre-wrap">{Array.isArray(value) ? value.join(", ") : value}</dd></div>)}</dl>
+            {item.attachments.map((attachment) => <div key={attachment.id} className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-app px-4 py-3">
+              <span className="flex min-w-0 items-center gap-2 text-sm break-words"><AppIcon name="file" className="size-4 text-primary-app" />
+                <span className="min-w-0"><span className="font-semibold">{questionLabels.get(attachment.fieldKey) ?? attachment.fieldKey}</span>: {attachment.fileName}</span></span>
               <AppButton variant="secondary" disabled={attachmentAccess.isPending}
                 onClick={() => void openAttachment(item, attachment.id)}>{t("recruitmentApplications.openAttachment")}</AppButton>
             </div>)}
           </details>
-        </article>)}</div>}
-    </AppCard>
-  </div>;
+        </article></li>)}</ul>}
+  </>;
+}
+
+function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
+  if (state === "Accepted") return "success";
+  if (state === "Rejected") return "danger";
+  if (state === "Waitlisted" || state === "Shortlisted") return "warning";
+  return "info";
 }

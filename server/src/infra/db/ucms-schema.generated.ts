@@ -68,6 +68,17 @@ export const ucmsEnums = {
     "Rejected",
     "Expired"
   ],
+  "eventOrganizerType": [
+    "CLUB",
+    "ICPDP"
+  ],
+  "eventInvitationStatus": [
+    "Pending",
+    "Accepted",
+    "Declined",
+    "Expired",
+    "Withdrawn"
+  ],
   "registrationState": [
     "Confirmed",
     "Waitlisted",
@@ -117,6 +128,10 @@ export const ucmsEnums = {
     "Corrective Action",
     "Resolved",
     "Closed"
+  ],
+  "feedbackRecipient": [
+    "CLUB",
+    "ICPDP"
   ],
   "complaintState": [
     "Submitted",
@@ -453,6 +468,9 @@ export const ucmsTables = {
         "type": "string"
       },
       "charterUrl": {
+        "type": "string"
+      },
+      "logoUrl": {
         "type": "string"
       },
       "channels": {
@@ -1365,17 +1383,23 @@ export const ucmsTables = {
   },
   "events": {
     "fields": {
+      "organizerType": {
+        "type": "eventOrganizerType",
+        "required": true,
+        "default": "CLUB"
+      },
       "clubId": {
-        "type": "objectId",
-        "required": true
+        "type": "objectId"
       },
       "clubName": {
-        "type": "string",
-        "required": true
+        "type": "string"
       },
       "title": {
         "type": "string",
         "required": true
+      },
+      "coverImageUrl": {
+        "type": "string"
       },
       "objective": {
         "type": "text"
@@ -1405,6 +1429,16 @@ export const ucmsTables = {
       "capacity": {
         "type": "int",
         "required": true
+      },
+      "confirmedRegistrationCount": {
+        "type": "int",
+        "required": true,
+        "default": 0
+      },
+      "nextWaitlistPosition": {
+        "type": "int",
+        "required": true,
+        "default": 1
       },
       "waitlistEnabled": {
         "type": "bool",
@@ -1519,6 +1553,13 @@ export const ucmsTables = {
           "clubId"
         ],
         "name": "ix_events_scope"
+      },
+      {
+        "fields": [
+          "organizerType",
+          "state"
+        ],
+        "name": "ix_events_organizer_state"
       }
     ]
   },
@@ -1562,6 +1603,83 @@ export const ucmsTables = {
         ],
         "unique": true,
         "name": "uq_eventrev"
+      }
+    ]
+  },
+  "eventInvitations": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
+      },
+      "clubId": {
+        "type": "objectId",
+        "required": true
+      },
+      "clubName": {
+        "type": "string",
+        "required": true
+      },
+      "status": {
+        "type": "eventInvitationStatus",
+        "required": true,
+        "default": "Pending"
+      },
+      "deadline": {
+        "type": "datetime",
+        "required": true
+      },
+      "invitedAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "invitedBy": {
+        "type": "objectId",
+        "required": true
+      },
+      "respondedAt": {
+        "type": "datetime"
+      },
+      "respondedBy": {
+        "type": "objectId"
+      },
+      "responseNote": {
+        "type": "text"
+      },
+      "responseDetails": {
+        "type": "json"
+      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "updatedAt": {
+        "type": "datetime",
+        "required": true
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "eventId",
+          "clubId"
+        ],
+        "unique": true,
+        "name": "ix_event_invitations_unique"
+      },
+      {
+        "fields": [
+          "clubId",
+          "status"
+        ],
+        "name": "ix_event_invitations_club_status"
+      },
+      {
+        "fields": [
+          "status",
+          "deadline"
+        ],
+        "name": "ix_event_invitations_expiry"
       }
     ]
   },
@@ -2494,9 +2612,13 @@ export const ucmsTables = {
         "type": "objectId",
         "required": true
       },
+      "recipient": {
+        "type": "feedbackRecipient",
+        "required": true,
+        "default": "CLUB"
+      },
       "clubId": {
-        "type": "objectId",
-        "required": true
+        "type": "objectId"
       },
       "eventId": {
         "type": "objectId"
@@ -2508,6 +2630,11 @@ export const ucmsTables = {
       "description": {
         "type": "text",
         "required": true
+      },
+      "isAnonymous": {
+        "type": "bool",
+        "required": true,
+        "default": false
       },
       "evidence": {
         "type": "json"
@@ -2564,6 +2691,14 @@ export const ucmsTables = {
           "state"
         ],
         "name": "ix_complaint_mine"
+      },
+      {
+        "fields": [
+          "recipient",
+          "clubId",
+          "submittedAt"
+        ],
+        "name": "ix_complaint_inbox"
       }
     ]
   },

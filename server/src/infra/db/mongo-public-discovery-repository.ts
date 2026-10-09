@@ -31,13 +31,15 @@ function mapClub(doc: Record<string, unknown>): PublicClub {
     contactEmail: optionalString(doc.contactEmail),
     contactPhone: optionalString(doc.contactPhone),
     operatingScope: optionalString(doc.operatingScope),
+    logoUrl: optionalString(doc.logoUrl),
   };
 }
 function mapEvent(doc: Record<string, unknown>): PublicEvent {
   return {
     id: id(doc._id), clubId: id(doc.clubId), clubName: String(doc.clubName),
     title: String(doc.title), startAt: date(doc.startAt), endAt: date(doc.endAt),
-    venueText: optionalString(doc.venueText), capacity: Number(doc.capacity),
+    venueText: optionalString(doc.venueText), objective: optionalString(doc.objective),
+    coverImageUrl: optionalString(doc.coverImageUrl), capacity: Number(doc.capacity),
     state: String(doc.state), audienceScope: String(doc.audienceScope),
     publishedAt: optionalDate(doc.publishedAt),
   };
@@ -89,7 +91,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
   const memberships = ucmsModels.clubMemberships!;
   const users = ucmsModels.users!;
   return {
-    async listClubs(input: ClubSearch): Promise<Page<PublicClub>> {
+    async listClubs(input: ClubSearch, now: Date): Promise<Page<PublicClub>> {
       const filter: Record<string, unknown> = { state: { $in: clubStates } };
       if (input.field) filter.field = input.field;
       if (input.search) {
@@ -101,7 +103,24 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
           .skip((input.page - 1) * input.pageSize).limit(input.pageSize).lean(),
         clubs.countDocuments(filter),
       ]);
-      return { items: docs.map(mapClub), total, page: input.page, pageSize: input.pageSize };
+      const activeClubIds = docs.filter((club) => club.state === "Active").map((club) => club._id);
+      const openCampaigns = activeClubIds.length ? await campaigns.find({
+        clubId: { $in: activeClubIds }, state: { $in: campaignStates },
+        windowStart: { $lte: now }, windowEnd: { $gt: now },
+      }).sort({ windowStart: 1, _id: 1 }).select("_id clubId").lean() : [];
+      const campaignByClub = new Map<string, string>();
+      for (const campaign of openCampaigns) {
+        const clubId = id(campaign.clubId);
+        if (!campaignByClub.has(clubId)) campaignByClub.set(clubId, id(campaign._id));
+      }
+      return {
+        items: docs.map((doc) => ({
+          ...mapClub(doc),
+          ...(campaignByClub.has(id(doc._id))
+            ? { openCampaignId: campaignByClub.get(id(doc._id)) } : {}),
+        })),
+        total, page: input.page, pageSize: input.pageSize,
+      };
     },
     async fields(): Promise<string[]> {
       const values = await clubs.distinct("field", { state: { $in: clubStates } });
@@ -176,16 +195,27 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
       }).sort({ endAt: -1, _id: -1 }).limit(20).lean();
       return docs.map(mapEvent);
     },
-    async listUpcomingEvents(page, pageSize, now): Promise<Page<PublicEvent>> {
+    async listEvents({ status, search, page, pageSize }, now): Promise<Page<PublicEvent>> {
       const activeClubs = await clubs.find({ state: "Active" }).select("_id").lean();
+      // Mirrors publicEventStatus(): each branch is one visitor-facing status.
+      const byStatus = {
+        upcoming: { state: "Upcoming", startAt: { $gt: now } },
+        ongoing: { state: { $in: ["Upcoming", "Ongoing"] }, startAt: { $lte: now }, endAt: { $gt: now } },
+        ended: { state: { $in: historyStates }, endAt: { $lte: now } },
+      };
+      const text = search ? new RegExp(escapeRegex(search), "i") : null;
       const filter = {
         clubId: { $in: activeClubs.map((club) => club._id) },
-        state: "Upcoming", audienceScope: "PUBLIC",
-        publishedAt: { $exists: true, $ne: null }, startAt: { $gt: now },
+        audienceScope: "PUBLIC", publishedAt: { $exists: true, $ne: null },
+        $and: [
+          status === "all" ? { $or: Object.values(byStatus) } : byStatus[status],
+          ...(text ? [{ $or: [{ title: text }, { objective: text }, { venueText: text }, { clubName: text }] }] : []),
+        ],
       };
+      // Upcoming reads soonest first; every other view shows the newest events first, like PDP.
+      const sort = status === "upcoming" ? { startAt: 1 as const, _id: 1 as const } : { startAt: -1 as const, _id: -1 as const };
       const [docs, total] = await Promise.all([
-        events.find(filter).sort({ startAt: 1, _id: 1 })
-          .skip((page - 1) * pageSize).limit(pageSize).lean(),
+        events.find(filter).sort(sort).skip((page - 1) * pageSize).limit(pageSize).lean(),
         events.countDocuments(filter),
       ]);
       return { items: docs.map(mapEvent), total, page, pageSize };

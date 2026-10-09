@@ -11,6 +11,13 @@ import type { BoardNominationRepository } from "../../domain/board-nomination.js
 import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
 import type { MembershipRepository } from "../../domain/membership.js";
 import type { RecruitmentApplicationRepository, RecruitmentAttachmentStorage } from "../../domain/recruitment-application.js";
+import type { DashboardRepository } from "../../domain/dashboard.js";
+import type { LeadershipTransitionRepository } from "../../domain/leadership-transition.js";
+import type { EventRegistrationRepository } from "../../domain/event-registration.js";
+import type { EventCheckInRepository } from "../../domain/event-checkin.js";
+import type { EventFeedbackRepository } from "../../domain/event-feedback.js";
+import type { StudentFeedbackRepository } from "../../domain/student-feedback.js";
+import type { MemberSpaceRepository } from "../../domain/member-space.js";
 import { errorHandler, requestLogger } from "./middleware.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
@@ -23,6 +30,13 @@ import { boardNominationRoutes } from "./board-nomination-routes.js";
 import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
 import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
 import { membershipRoutes } from "./membership-routes.js";
+import { dashboardRoutes } from "./dashboard-routes.js";
+import { leadershipTransitionRoutes } from "./leadership-transition-routes.js";
+import { eventRegistrationRoutes } from "./event-registration-routes.js";
+import { eventCheckInRoutes } from "./event-checkin-routes.js";
+import { eventFeedbackRoutes } from "./event-feedback-routes.js";
+import { studentFeedbackRoutes } from "./student-feedback-routes.js";
+import { memberSpaceRoutes } from "./member-space-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -55,6 +69,13 @@ export function buildApp(deps: {
   recruitmentCampaignRepo?: RecruitmentCampaignRepository;
   recruitmentApplicationRepo?: RecruitmentApplicationRepository;
   membershipRepo?: MembershipRepository;
+  dashboardRepo?: DashboardRepository;
+  leadershipTransitionRepo?: LeadershipTransitionRepository;
+  eventRegistrationRepo?: EventRegistrationRepository;
+  eventCheckInRepo?: EventCheckInRepository;
+  eventFeedbackRepo?: EventFeedbackRepository;
+  studentFeedbackRepo?: StudentFeedbackRepository;
+  memberSpaceRepo?: MemberSpaceRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
   publicRepo: PublicDiscoveryRepository;
@@ -93,6 +114,11 @@ export function buildApp(deps: {
         authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
     }
+    if (deps.leadershipTransitionRepo) {
+      app.use("/api/v1", leadershipTransitionRoutes({
+        repo: deps.leadershipTransitionRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+    }
     if (deps.recruitmentCampaignRepo && deps.policyRepo) {
       app.use("/api/v1", recruitmentCampaignRoutes({
         repo: deps.recruitmentCampaignRepo, accessRepo: deps.auth.accessRepo,
@@ -109,6 +135,30 @@ export function buildApp(deps: {
     if (deps.membershipRepo) {
       app.use("/api/v1", membershipRoutes({ repo: deps.membershipRepo,
         accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.dashboardRepo) {
+      app.use("/api/v1", dashboardRoutes({ repo: deps.dashboardRepo,
+        accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.eventRegistrationRepo && deps.policyRepo) {
+      app.use("/api/v1", eventRegistrationRoutes({ repo: deps.eventRegistrationRepo,
+        policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.eventCheckInRepo && deps.policyRepo) {
+      app.use("/api/v1", eventCheckInRoutes({ repo: deps.eventCheckInRepo,
+        policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.memberSpaceRepo && deps.policyRepo) {
+      app.use("/api/v1", memberSpaceRoutes({ repo: deps.memberSpaceRepo, policy: deps.policyRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.studentFeedbackRepo) {
+      app.use("/api/v1", studentFeedbackRoutes({ repo: deps.studentFeedbackRepo,
+        accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.eventFeedbackRepo && deps.policyRepo) {
+      app.use("/api/v1", eventFeedbackRoutes({ repo: deps.eventFeedbackRepo,
+        policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.policyRepo) {
       app.use("/api/v1", policyRoutes({
@@ -138,14 +188,33 @@ export function buildApp(deps: {
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
+  const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
+  const hasLeadershipTransitions = Boolean(hasAdmin && deps.leadershipTransitionRepo);
+  const hasEventRegistrations = Boolean(hasPolicy && deps.eventRegistrationRepo);
+  const hasEventCheckIns = Boolean(hasPolicy && deps.eventCheckInRepo);
+  const hasEventFeedback = Boolean(hasPolicy && deps.eventFeedbackRepo);
+  const hasStudentFeedback = Boolean(hasAdmin && deps.studentFeedbackRepo);
+  const hasMemberSpace = Boolean(hasPolicy && deps.memberSpaceRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
       if (path.startsWith("/auth/")) return hasAdmin;
       if (path.startsWith("/admin/policies")) return hasPolicy;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
+      if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;
+      if (path.startsWith("/admin/student-feedback")) return hasStudentFeedback;
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
+      if (path.startsWith("/dashboard")) return hasDashboard;
+      if (path.startsWith("/events/{id}/registration")
+        || path.startsWith("/event-registrations")) return hasEventRegistrations;
+      if (path.startsWith("/events/{id}/check-in")
+        || path.startsWith("/attendances")) return hasEventCheckIns;
+      if (path.startsWith("/events/{id}/feedback")
+        || path.startsWith("/event-feedbacks")) return hasEventFeedback;
+      if (path.startsWith("/student-feedback")
+        || path.startsWith("/clubs/{clubId}/student-feedback")) return hasStudentFeedback;
+      if (path.startsWith("/clubs/{clubId}/member-space")) return hasMemberSpace;
       if (path.startsWith("/applications")) return hasApplications;
       if (path.startsWith("/clubs/{clubId}/settings")
         || path.startsWith("/clubs/{clubId}/profile")

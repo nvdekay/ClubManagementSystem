@@ -89,4 +89,53 @@ describe.skipIf(!uri)("Mongo policy repository", () => {
       reason: "new semester", before: { policyVersionId: before.id },
     });
   });
+
+  it("lists issued decisions invalidated by a proposed calendar and overbooking policy", async () => {
+    const clubId = new Types.ObjectId();
+    const propertyId = new Types.ObjectId();
+    const eventId = new Types.ObjectId();
+    const bookingId = new Types.ObjectId();
+    const startAt = new Date("2041-09-10T08:00:00Z");
+    const endAt = new Date("2041-09-10T10:00:00Z");
+    await ucmsModels.clubs!.create({
+      _id: clubId, code: "IMPACT", name: "Impact Club", field: "Academic", state: "Active",
+      dissolution: { decidedAt: new Date("2040-01-01"), effectiveSemester: "SP42" },
+      createdAt: new Date("2040-01-01"),
+    });
+    await ucmsModels.properties!.create({
+      _id: propertyId, code: "ROOM-20", name: "Room 20", type: "Room",
+      capacity: 20, bookableHours: {}, isActive: true,
+    });
+    await ucmsModels.events!.create({
+      _id: eventId, clubId, clubName: "Impact Club", title: "Approved future event",
+      startAt, endAt, semesterCode: "FA41", audienceScope: "PUBLIC", capacity: 30,
+      state: "Approved", createdAt: new Date("2040-01-01"),
+    });
+    await ucmsModels.propertyBookings!.create({
+      _id: bookingId, propertyId, clubId, clubName: "Impact Club", purpose: "Future event",
+      startAt, endAt, semesterCode: "FA41", headcount: 30, state: "Approved",
+      createdAt: new Date("2040-01-01"),
+    });
+
+    const impacts = await mongoPolicyRepository().findDecisionImpacts({
+      allowedEmailDomains: ["fpt.edu.vn"], minFoundingMembers: 5,
+      mandatoryApplicationDocuments: ["charter"],
+      reportDeadlines: [{ reportType: "periodic", dueDaysAfterPeriodEnd: 10,
+        remindBeforeDays: 3, overdueAfterDays: 2, escalateAfterDays: 5 }],
+      conflictThresholdMinutes: 30, feedbackWindowHours: 48, feedbackMinRespondents: 5,
+      allowOverbooking: false, enforceOverdueReportBlock: true,
+      academicCalendar: [{ code: "SP41", startAt: new Date("2041-01-01"),
+        endAt: new Date("2041-04-30") }],
+    }, new Date("2041-01-01T00:00:00Z"));
+
+    expect(impacts).toEqual(expect.arrayContaining([
+      { entityType: "Event", entityId: eventId.toString(),
+        reasons: ["EVENT_OUTSIDE_ACADEMIC_CALENDAR"] },
+      { entityType: "PropertyBooking", entityId: bookingId.toString(), reasons: [
+        "BOOKING_OUTSIDE_ACADEMIC_CALENDAR", "APPROVED_OVERBOOKING_DISALLOWED",
+      ] },
+      { entityType: "Club", entityId: clubId.toString(),
+        reasons: ["DISSOLUTION_SEMESTER_REMOVED"] },
+    ]));
+  });
 });

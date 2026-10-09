@@ -1,5 +1,7 @@
 // Snapshot of the public pages of pdp.fpt.edu.vn (Hà Nội campus) taken on 2026-10-04.
 // Club names come only from public PDP text; clubs listed without a public name keep their PDP code.
+// Logos were copied from the PDP club gallery to Cloudinary (ucms/club-logos/) on 2026-10-09.
+// Event covers come from a saved copy of PDP Event/Index (page 1) and live on Cloudinary (ucms/event-covers/).
 // Events organised by IC-PDP rather than a club are left out because events.clubId is required.
 
 export const pdpClubs = [
@@ -8,28 +10,32 @@ export const pdpClubs = [
     "code": "Blazie",
     "name": "FPTU Blazie Dance Team",
     "field": "Nghệ thuật",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Blazie_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Blazie_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518217/ucms/club-logos/blazie.png"
   },
   {
     "id": "a10000000000000000000002",
     "code": "Branché",
     "name": "FPTU Fashion & Model Club - Branché",
     "field": "Nghệ thuật",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Branché_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Branché_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517909/ucms/club-logos/branche.jpg"
   },
   {
     "id": "a10000000000000000000003",
     "code": "EHC",
     "name": "FPTU Ethical Hackers Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=EHC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=EHC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517881/ucms/club-logos/ehc.jpg"
   },
   {
     "id": "a10000000000000000000004",
     "code": "FBC",
     "name": "FPTU Badminton Club",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FBC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FBC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517888/ucms/club-logos/fbc.jpg"
   },
   {
     "id": "a10000000000000000000005",
@@ -43,63 +49,72 @@ export const pdpClubs = [
     "code": "FCC",
     "name": "FPTU Chinese Club - CLB Tiếng Trung",
     "field": "Ngôn ngữ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518268/ucms/club-logos/fcc.png"
   },
   {
     "id": "a10000000000000000000007",
     "code": "FDS",
     "name": "FPTU Data Science Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FDS_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FDS_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518248/ucms/club-logos/fds.png"
   },
   {
     "id": "a10000000000000000000008",
     "code": "FEC",
     "name": "FPTU English Club",
     "field": "Ngôn ngữ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FEC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FEC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518218/ucms/club-logos/fec.png"
   },
   {
     "id": "a10000000000000000000009",
     "code": "FPBC",
     "name": "FPTU Pickleball Club",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPBC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPBC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518266/ucms/club-logos/fpbc.png"
   },
   {
     "id": "a10000000000000000000010",
     "code": "FRC",
     "name": "FPTU Robotics Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FRC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FRC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518253/ucms/club-logos/frc.png"
   },
   {
     "id": "a10000000000000000000011",
     "code": "FTC",
     "name": "FPTU Taekwondo Club",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517891/ucms/club-logos/ftc.png"
   },
   {
     "id": "a10000000000000000000012",
     "code": "FUGym",
     "name": "FU Gymnastic",
     "field": "Thể thao",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUGym_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUGym_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518237/ucms/club-logos/fugym.jpg"
   },
   {
     "id": "a10000000000000000000013",
     "code": "HEBE",
     "name": "HEBE Club",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HEBE_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HEBE_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517886/ucms/club-logos/hebe.png"
   },
   {
     "id": "a10000000000000000000014",
     "code": "HLRC",
     "name": "FPTU Hola Rock Club",
     "field": "Nghệ thuật",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HLRC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HLRC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518274/ucms/club-logos/hlrc.jpg"
   },
   {
     "id": "a10000000000000000000015",
@@ -107,6 +122,7 @@ export const pdpClubs = [
     "name": "iGo Club - Câu lạc bộ Vì Cộng Đồng",
     "field": "Cộng đồng",
     "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=iGo_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518214/ucms/club-logos/igo.jpg",
     "description": "iGo Club là Câu lạc bộ Vì Cộng Đồng trực thuộc Trường Đại học FPT Hà Nội - nơi những người trẻ gặp nhau với mong muốn tạo ra giá trị tích cực cho xã hội."
   },
   {
@@ -114,7 +130,8 @@ export const pdpClubs = [
     "code": "JS",
     "name": "FPTU Japanese Software Engineers Club",
     "field": "Công nghệ",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=JS_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=JS_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517885/ucms/club-logos/js.png"
   },
   {
     "id": "a10000000000000000000017",
@@ -122,6 +139,7 @@ export const pdpClubs = [
     "name": "FPTU Melody Club",
     "field": "Nghệ thuật",
     "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Melody_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517879/ucms/club-logos/melody.png",
     "description": "Suốt 13 năm hình thành và phát triển, FPTU - Melody Club luôn là nơi những con người khao khát vượt ngưỡng tìm thấy nhau."
   },
   {
@@ -129,217 +147,248 @@ export const pdpClubs = [
     "code": "MonStage",
     "name": "FPTU MonStage Club - CLB MC & Thuyết trình",
     "field": "Kỹ năng",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=MonStage_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=MonStage_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518246/ucms/club-logos/monstage.png"
   },
   {
     "id": "a10000000000000000000019",
     "code": "Mây Mưa Club",
     "name": "Mây Mưa Club",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Mây Mưa Club_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Mây Mưa Club_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518220/ucms/club-logos/may-mua-club.jpg"
   },
   {
     "id": "a10000000000000000000020",
     "code": "BoardGame",
     "name": "BoardGame",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BoardGame_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BoardGame_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518287/ucms/club-logos/boardgame.png"
   },
   {
     "id": "a10000000000000000000021",
     "code": "BUK",
     "name": "BUK",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BUK_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=BUK_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518290/ucms/club-logos/buk.jpg"
   },
   {
     "id": "a10000000000000000000022",
     "code": "Business",
     "name": "Business",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Business_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Business_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517919/ucms/club-logos/business.jpg"
   },
   {
     "id": "a10000000000000000000023",
     "code": "Chess",
     "name": "Chess",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Chess_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Chess_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518295/ucms/club-logos/chess.png"
   },
   {
     "id": "a10000000000000000000024",
     "code": "Color Team",
     "name": "Color Team",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Color Team_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Color Team_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518271/ucms/club-logos/color-team.png"
   },
   {
     "id": "a10000000000000000000025",
     "code": "Dango",
     "name": "Dango",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Dango_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Dango_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518306/ucms/club-logos/dango.png"
   },
   {
     "id": "a10000000000000000000026",
     "code": "ESC",
     "name": "ESC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=ESC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=ESC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518258/ucms/club-logos/esc.png"
   },
   {
     "id": "a10000000000000000000027",
     "code": "F-Logi",
     "name": "F-Logi",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=F-Logi_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=F-Logi_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518240/ucms/club-logos/f-logi.png"
   },
   {
     "id": "a10000000000000000000028",
     "code": "FAIC",
     "name": "FAIC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FAIC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FAIC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518228/ucms/club-logos/faic.png"
   },
   {
     "id": "a10000000000000000000029",
     "code": "FCOC",
     "name": "FCOC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCOC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FCOC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518291/ucms/club-logos/fcoc.jpg"
   },
   {
     "id": "a10000000000000000000030",
     "code": "FFC",
     "name": "FFC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FFC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FFC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517917/ucms/club-logos/ffc.png"
   },
   {
     "id": "a10000000000000000000031",
     "code": "FGC",
     "name": "FGC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517876/ucms/club-logos/fgc.png"
   },
   {
     "id": "a10000000000000000000032",
     "code": "FGoC",
     "name": "FGoC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGoC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FGoC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518296/ucms/club-logos/fgoc.png"
   },
   {
     "id": "a10000000000000000000033",
     "code": "FKC",
     "name": "FKC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FKC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FKC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518252/ucms/club-logos/fkc.png"
   },
   {
     "id": "a10000000000000000000034",
     "code": "FMUC",
     "name": "FMUC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMUC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMUC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517920/ucms/club-logos/fmuc.jpg"
   },
   {
     "id": "a10000000000000000000035",
     "code": "FMVC",
     "name": "FMVC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMVC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FMVC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518270/ucms/club-logos/fmvc.png"
   },
   {
     "id": "a10000000000000000000036",
     "code": "FNC",
     "name": "FNC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FNC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FNC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518293/ucms/club-logos/fnc.png"
   },
   {
     "id": "a10000000000000000000037",
     "code": "FPC",
     "name": "FPC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FPC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518310/ucms/club-logos/fpc.png"
   },
   {
     "id": "a10000000000000000000038",
     "code": "FTIC",
     "name": "FTIC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTIC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTIC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518265/ucms/club-logos/ftic.png"
   },
   {
     "id": "a10000000000000000000039",
     "code": "FTTC",
     "name": "FTTC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTTC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FTTC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518302/ucms/club-logos/fttc.png"
   },
   {
     "id": "a10000000000000000000040",
     "code": "FUB",
     "name": "FUB",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUB_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUB_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518282/ucms/club-logos/fub.png"
   },
   {
     "id": "a10000000000000000000041",
     "code": "FUP",
     "name": "FUP",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUP_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUP_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517875/ucms/club-logos/fup.png"
   },
   {
     "id": "a10000000000000000000042",
     "code": "FUSW",
     "name": "FUSW",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUSW_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUSW_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518288/ucms/club-logos/fusw.jpg"
   },
   {
     "id": "a10000000000000000000043",
     "code": "FUVC",
     "name": "FUVC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUVC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FUVC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518309/ucms/club-logos/fuvc.png"
   },
   {
     "id": "a10000000000000000000044",
     "code": "FVC",
     "name": "FVC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FVC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=FVC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517916/ucms/club-logos/fvc.png"
   },
   {
     "id": "a10000000000000000000045",
     "code": "HFU",
     "name": "HFU",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HFU_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=HFU_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518277/ucms/club-logos/hfu.png"
   },
   {
     "id": "a10000000000000000000046",
     "code": "NSC",
     "name": "NSC",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=NSC_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=NSC_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791517883/ucms/club-logos/nsc.jpg"
   },
   {
     "id": "a10000000000000000000047",
     "code": "Soleil Crew",
     "name": "Soleil Crew",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Soleil Crew_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Soleil Crew_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518211/ucms/club-logos/soleil-crew.png"
   },
   {
     "id": "a10000000000000000000048",
     "code": "Yosakoi",
     "name": "Yosakoi",
     "field": "Chưa phân loại",
-    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Yosakoi_Hanoi"
+    "pdpUrl": "https://pdp.fpt.edu.vn/Club/Intro?clubCode=Yosakoi_Hanoi",
+    "logoUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791518236/ucms/club-logos/yosakoi.png"
   }
 ] as const;
 
@@ -477,6 +526,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001031",
     "pdpEventId": 1031,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520343/ucms/event-covers/pdp-1031.jpg",
     "clubCode": "JS",
     "title": "JS RECRUITMENT 2026 – SUBSNOVAX",
     "startAt": "2025-12-26T20:00:00+07:00",
@@ -487,6 +537,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001032",
     "pdpEventId": 1032,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520339/ucms/event-covers/pdp-1032.png",
     "clubCode": "iGo",
     "title": "𝐈𝐆𝐎 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟔: 𝐈 𝐆𝐋𝐎𝐖 𝐎𝐍 – 𝐈 𝐆𝐋𝐎𝐖, 𝐎𝐍 𝐒𝐇𝐀𝐑𝐄𝐃 𝐋𝐈𝐆𝐇𝐓",
     "startAt": "2026-01-03T20:00:00+07:00",
@@ -497,6 +548,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001033",
     "pdpEventId": 1033,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520341/ucms/event-covers/pdp-1033.png",
     "clubCode": "FDS",
     "title": "FDS RECRUITMENT GEN 8 – ARCANA",
     "startAt": "2025-12-29T20:00:00+07:00",
@@ -507,26 +559,29 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001034",
     "pdpEventId": 1034,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520340/ucms/event-covers/pdp-1034.png",
     "clubCode": "Melody",
     "title": "𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌",
     "startAt": "2026-01-01T20:00:00+07:00",
     "endAt": "2026-01-10T23:59:00+07:00",
     "venueText": "Đại học FPT Hà Nội",
-    "objective": "💣 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 💣\n📌 Link đăng ký: https://forms.gle/XXFXx4bKSAvEu9JF6\n⏰ Thời gian:\n➖ Vòng đơn: 01/01/2026 - 10/01/2026\n➖ Vòng phỏng vấn: 13/01/2026 - 16/01/2026\n-------------------------------------------\n⏱️ Trong mỗi chúng ta luôn tồn tại một “bom hẹn giờ” - Kết tinh từ những nỗi sợ chưa dám đối mặt, những giới hạn vô hình tự đặt ra và cả những lần chần chừ trước cơ hội tỏa sáng. Ta trì hoãn không phải vì thiếu khả năng, mà vì chưa dám tháo chốt an toàn bước ra khỏi vùng quen thuộc. Nhưng khi dám vượt qua rào cản, áp lực trở thành động lực, lo lắng biến thành đòn bẩy và tiềm năng tiềm ẩn bên trong bạn sẽ bùng nổ.\n🎶 Suốt 13 năm hình thành và phát triển, 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 luôn là nơi những con người khao khát vượt ngưỡng tìm thấy nhau. Tại đây, âm nhạc không chỉ để biểu diễn, sự kiện không chỉ để tổ chức mà còn là hành trình rèn luyện, va chạm, trưởng thành và thăng hoa cùng những người đồng đội chung đam mê.\n💣 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 - Sự kiện TUYỂN THÀNH VIÊN GEN 13 của 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 mở ra cơ hội dành cho các bạn sinh viên K19, K20, K21 sẵn sàng bước vào hành trình âm nhạc, sự kiện và sáng tạo cùng nhà Mê.\n✨ Tại 𝐌𝐞𝐥𝐨𝐝𝐲, bạn sẽ không chỉ “tham gia” mà còn được thử thách bản thân ở mọi góc cạnh. Từ biểu diễn, sáng tác, chơi nhạc cụ, đến tổ chức sự kiện hay sáng tạo nội dung, mỗi trải nghiệm đều là cơ hội để bạn bứt phá giới hạn và rèn giũa kỹ năng thực chiến. Trong ngôi nhà chung này, bạn học không chỉ từ lý thuyết mà từ trải nghiệm và trách nhiệm thực tế.\n🔥 Không phải ai cũng đủ dũng khí để bước ra khỏi vùng an toàn, nhưng 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 tin rằng: chỉ cần dám đối mặt, nỗi sợ sẽ trở thành lực đẩy khiến bạn khai phá năng lực mạnh mẽ hơn bao giờ hết. Nhấn vào đường link 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 và ghi danh để sẵn sàng trở thành mảnh ghép mới của đại gia đình 𝐌𝐞𝐥𝐨𝐝𝐲.\n----------------------------------------\nCLB Âm Nhạc Đại học FPT Hà Nội: 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛\n🎹 Thông tin chi tiết liên hệ:\n[email protected]\nFacebook: https://www.facebook.com/fptu.melody.club\nInstagram: https://www.instagram.com/fptu_melody_club/\n#Melody\n#BornToSing\n#MelodyRecruitment\n#MEKABOOM\n#Gen13"
+    "objective": "💣 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 💣\n\n📌 Link đăng ký: https://forms.gle/XXFXx4bKSAvEu9JF6 \n⏰ Thời gian:\n➖ Vòng đơn: 01/01/2026 - 10/01/2026\n➖ Vòng phỏng vấn: 13/01/2026 - 16/01/2026\n-------------------------------------------\n⏱️ Trong mỗi chúng ta luôn tồn tại một “bom hẹn giờ” - Kết tinh từ những nỗi sợ chưa dám đối mặt, những giới hạn vô hình tự đặt ra và cả những lần chần chừ trước cơ hội tỏa sáng. Ta trì hoãn không phải vì thiếu khả năng, mà vì chưa dám tháo chốt an toàn bước ra khỏi vùng quen thuộc. Nhưng khi dám vượt qua rào cản, áp lực trở thành động lực, lo lắng biến thành đòn bẩy và tiềm năng tiềm ẩn bên trong bạn sẽ bùng nổ.\n\n🎶 Suốt 13 năm hình thành và phát triển, 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 luôn là nơi những con người khao khát vượt ngưỡng tìm thấy nhau. Tại đây, âm nhạc không chỉ để biểu diễn, sự kiện không chỉ để tổ chức mà còn là hành trình rèn luyện, va chạm, trưởng thành và thăng hoa cùng những người đồng đội chung đam mê.\n\n💣 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 - Sự kiện TUYỂN THÀNH VIÊN GEN 13 của 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 mở ra cơ hội dành cho các bạn sinh viên K19, K20, K21 sẵn sàng bước vào hành trình âm nhạc, sự kiện và sáng tạo cùng nhà Mê.\n\n✨ Tại 𝐌𝐞𝐥𝐨𝐝𝐲, bạn sẽ không chỉ “tham gia” mà còn được thử thách bản thân ở mọi góc cạnh. Từ biểu diễn, sáng tác, chơi nhạc cụ, đến tổ chức sự kiện hay sáng tạo nội dung, mỗi trải nghiệm đều là cơ hội để bạn bứt phá giới hạn và rèn giũa kỹ năng thực chiến. Trong ngôi nhà chung này, bạn học không chỉ từ lý thuyết mà từ trải nghiệm và trách nhiệm thực tế.\n\n🔥 Không phải ai cũng đủ dũng khí để bước ra khỏi vùng an toàn, nhưng 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛 tin rằng: chỉ cần dám đối mặt, nỗi sợ sẽ trở thành lực đẩy khiến bạn khai phá năng lực mạnh mẽ hơn bao giờ hết. Nhấn vào đường link 𝐌𝐄𝐋𝐎𝐃𝐘 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟏𝟑: 𝐌𝐄𝐊𝐀𝐁𝐎𝐎𝐌 và ghi danh để sẵn sàng trở thành mảnh ghép mới của đại gia đình 𝐌𝐞𝐥𝐨𝐝𝐲.\n----------------------------------------\nCLB Âm Nhạc Đại học FPT Hà Nội: 𝐅𝐏𝐓𝐔 - 𝐌𝐞𝐥𝐨𝐝𝐲 𝐂𝐥𝐮𝐛\n🎹 Thông tin chi tiết liên hệ:\nEmail: fu.melody.club@gmail.com\nFacebook: https://www.facebook.com/fptu.melody.club\nInstagram: https://www.instagram.com/fptu_melody_club/\nTrưởng BTC: Nguyễn Mai Chi (0347976614)\nHR: Nguyễn Thị Tường Vân (0362138301)\n\n#Melody\n#BornToSing\n#MelodyRecruitment\n#MEKABOOM\n#Gen13"
   },
   {
     "id": "a20000000000000000001035",
     "pdpEventId": 1035,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520333/ucms/event-covers/pdp-1035.png",
     "clubCode": "HEBE",
     "title": "| 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙 | VŨ HỘI TINH THỂ",
     "startAt": "2026-01-08T20:00:00+07:00",
     "endAt": "2026-01-18T23:59:00+07:00",
     "venueText": "Đại học FPT Hà Nội",
-    "objective": "| 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙 | VŨ HỘI TINH THỂ\n🌠 Có một vũ hội chỉ xuất hiện một lần trong năm 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Ở đó, ánh sáng phản chiếu trên từng bước chân và mỗi người khi bước vào đều mang theo ước mơ riêng của mình.\n👗 Giữa những dải lụa trong suốt và tiếng nhạc ngân vang, có một cô gái nhỏ đứng lặng phía sau cánh gà, tay ôm đôi giày múa đã cũ. Cô không có váy lấp lánh, cũng chẳng có phép màu. Chỉ có một trái tim luôn rung động theo nhịp điệu của âm nhạc.\n🌟 Người ta nói, chỉ những ai thực sự tin vào vẻ đẹp của chính mình mới nhìn thấy cánh cửa dẫn đến 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Và rồi, trong khoảnh khắc kỳ diệu, đôi giày cũ dưới chân cô sáng lên như pha lê. Không phải phép thuật của ai khác, mà bởi niềm tin và khát khao tỏa sáng từ chính cô.\nCô bước vào vũ hội.\nKhông còn là cô gái mờ nhạt ngày thường.\nMỗi vòng xoay, mỗi cái vươn tay đều long lanh, như ánh sáng nảy ra từ từng mảnh tinh thể.\n🕛 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳 đã giúp cô ấy tìm thấy phiên bản rực rỡ nhất của bản thân, người mà cô chưa bao giờ dám tin mình có thể trở thành.\n----------------------------------------------\n💎 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙  💎\nKhi tiếng nhạc bắt đầu vang lên, cánh cửa 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭 mở ra và giờ đây 𝐇𝐞𝐛𝐞 𝐂𝐥𝐮𝐛 muốn mời bạn bước vào vũ hội của chính mình.\n◼️ Link đăng ký: https://forms.gle/AWZQLnYHcFMdNrcr6\n◼️ Vòng đơn: 8/1/2026 - 18/1/2026\n◼️ Vòng phỏng vấn: 22/1/2026\n✨  Chào mừng đến với CRYSTAL WALTZ  nơi phép màu bắt đầu từ chính bước chân bạn!\n----------------------------------------------\nThông tin chi tiết liên hệ:\nFacebook: https://www.facebook.com/HebeFPT\n[email protected]\nChủ nhiệm:Lại Việt Hằng (0827 226 763)\nPhó chủ nhiệm: Lê Huyền Linh (0853 448 182)\n#FPTU_HebeClub\n#HebeGen7\n#HebeBeTogetherBeShine\n#Recruitment"
+    "objective": "| 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙 | VŨ HỘI TINH THỂ\n\n🌠 Có một vũ hội chỉ xuất hiện một lần trong năm 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Ở đó, ánh sáng phản chiếu trên từng bước chân và mỗi người khi bước vào đều mang theo ước mơ riêng của mình.\n\n👗 Giữa những dải lụa trong suốt và tiếng nhạc ngân vang, có một cô gái nhỏ đứng lặng phía sau cánh gà, tay ôm đôi giày múa đã cũ. Cô không có váy lấp lánh, cũng chẳng có phép màu. Chỉ có một trái tim luôn rung động theo nhịp điệu của âm nhạc.\n\n🌟 Người ta nói, chỉ những ai thực sự tin vào vẻ đẹp của chính mình mới nhìn thấy cánh cửa dẫn đến 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳. Và rồi, trong khoảnh khắc kỳ diệu, đôi giày cũ dưới chân cô sáng lên như pha lê. Không phải phép thuật của ai khác, mà bởi niềm tin và khát khao tỏa sáng từ chính cô.\n\nCô bước vào vũ hội.\n\nKhông còn là cô gái mờ nhạt ngày thường.\n\nMỗi vòng xoay, mỗi cái vươn tay đều long lanh, như ánh sáng nảy ra từ từng mảnh tinh thể.\n\n🕛 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭𝐳 đã giúp cô ấy tìm thấy phiên bản rực rỡ nhất của bản thân, người mà cô chưa bao giờ dám tin mình có thể trở thành.\n----------------------------------------------\n💎 𝐇𝐄𝐁𝐄 𝐑𝐄𝐂𝐑𝐔𝐈𝐓𝐌𝐄𝐍𝐓 𝐆𝐄𝐍 𝟕: 𝐂𝐑𝐘𝐒𝐓𝐀𝐋 𝐖𝐀𝐋𝐓𝐙  💎\nKhi tiếng nhạc bắt đầu vang lên, cánh cửa 𝐂𝐫𝐲𝐬𝐭𝐚𝐥 𝐖𝐚𝐥𝐭 mở ra và giờ đây 𝐇𝐞𝐛𝐞 𝐂𝐥𝐮𝐛 muốn mời bạn bước vào vũ hội của chính mình.\n◼️ Link đăng ký: https://forms.gle/AWZQLnYHcFMdNrcr6\n ◼️ Vòng đơn: 8/1/2026 - 18/1/2026\n ◼️ Vòng phỏng vấn: 22/1/2026\n✨  Chào mừng đến với CRYSTAL WALTZ  nơi phép màu bắt đầu từ chính bước chân bạn!\n----------------------------------------------\nThông tin chi tiết liên hệ:\nFacebook: https://www.facebook.com/HebeFPT\nEmail: hebeclbfu@gmail.com\nChủ nhiệm:Lại Việt Hằng (0827 226 763)\nPhó chủ nhiệm: Lê Huyền Linh (0853 448 182)\n#FPTU_HebeClub\n#HebeGen7\n#HebeBeTogetherBeShine\n#Recruitment"
   },
   {
     "id": "a20000000000000000001036",
     "pdpEventId": 1036,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520335/ucms/event-covers/pdp-1036.jpg",
     "clubCode": "FPBC",
     "title": "FPBC RECUIMENT GEN 3: RELICTRAIL",
     "startAt": "2026-01-12T20:00:00+07:00",
@@ -537,6 +592,7 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001037",
     "pdpEventId": 1037,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520332/ucms/event-covers/pdp-1037.png",
     "clubCode": "FUGym",
     "title": "FU Strength Meet 2026",
     "startAt": "2026-07-18T07:30:00+07:00",
@@ -547,11 +603,12 @@ export const pdpEvents = [
   {
     "id": "a20000000000000000001038",
     "pdpEventId": 1038,
+    "coverImageUrl": "https://res.cloudinary.com/fb8gk8ko/image/upload/v1791520329/ucms/event-covers/pdp-1038.jpg",
     "clubCode": "Mây Mưa Club",
     "title": "[FJC] [MÂY MƯA TUYỂN THÀNH VIÊN GEN 18: AMECITI - RECLAIM THE NIGHT]",
     "startAt": "2026-09-08T20:00:00+07:00",
     "endAt": "2026-09-19T12:00:00+07:00",
     "venueText": "Đại học FPT Hà Nội",
-    "objective": "[TUYỂN THÀNH VIÊN GEN 18: AMECITI - RECLAIM THE NIGHT]\nLink đăng ký: https://forms.gle/NPX1p2AWUwLo4xeV9\nThời gian vòng đơn:  8/9/2026 - 19/9/2026\nThời gian phỏng vấn: 22/9/2026 - 23/9/2026\n————————————\nAMECITI — RECLAIM THE NIGHT\nAMECITI — thành phố không bao giờ ngủ.\nNơi ánh đèn neon chưa từng tắt, những tuyến tàu vẫn không ngừng chuyển động và mọi thứ được kết nối trong một hệ thống tưởng như không thể bị phá vỡ.\nNhưng đêm nay, tất cả đã thay đổi.\nTín hiệu bị gián đoạn. Thành phố mất kết nối. Những vùng sáng lần lượt chìm vào bóng tối. Và giữa sự hỗn loạn ấy, một tín hiệu tuyển mộ bất ngờ được phát đi từ A.R.C. — AmeCiti Resistance Coalition:\nhttps://forms.gle/NPX1p2AWUwLo4xeV9\nKhông cần phải là người mạnh nhất.\nChỉ cần bạn sẵn sàng góp sức.\nSIGNAL DETECTED\nAWAITING RESPONSE…\nLiệu bạn sẽ chấp nhận lời hiệu triệu?\nTimeline vòng đơn: 8/9 - 19/9\n————————————\nContact us:\nFanpage: https://www.facebook.com/maymuaclub\n[email protected]\n#FPTU\n#FJC\n#MayMuaClub\n#つなごう\n#Amedayo"
+    "objective": "[TUYỂN THÀNH VIÊN GEN 18: AMECITI - RECLAIM THE NIGHT]\n\nLink đăng ký: https://forms.gle/NPX1p2AWUwLo4xeV9\nThời gian vòng đơn:  8/9/2026 - 19/9/2026\nThời gian phỏng vấn: 22/9/2026 - 23/9/2026\n————————————\n AMECITI — RECLAIM THE NIGHT\nAMECITI — thành phố không bao giờ ngủ.\nNơi ánh đèn neon chưa từng tắt, những tuyến tàu vẫn không ngừng chuyển động và mọi thứ được kết nối trong một hệ thống tưởng như không thể bị phá vỡ.\nNhưng đêm nay, tất cả đã thay đổi.\nTín hiệu bị gián đoạn. Thành phố mất kết nối. Những vùng sáng lần lượt chìm vào bóng tối. Và giữa sự hỗn loạn ấy, một tín hiệu tuyển mộ bất ngờ được phát đi từ A.R.C. — AmeCiti Resistance Coalition:\nhttps://forms.gle/NPX1p2AWUwLo4xeV9\nKhông cần phải là người mạnh nhất.\nChỉ cần bạn sẵn sàng góp sức.\n SIGNAL DETECTED\nAWAITING RESPONSE…\nLiệu bạn sẽ chấp nhận lời hiệu triệu?\nTimeline vòng đơn: 8/9 - 19/9\n————————————\nContact us:\nFanpage: https://www.facebook.com/maymuaclub\nEmail: fjcmaymuaclub@gmail.com\n#FPTU\n#FJC\n#MayMuaClub\n#つなごう\n#Amedayo"
   }
 ] as const;
