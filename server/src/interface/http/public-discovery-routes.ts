@@ -3,7 +3,7 @@ import { z } from "zod";
 import { DomainError } from "../../domain/errors.js";
 import type { PublicDiscoveryRepository } from "../../domain/public-discovery.js";
 import {
-  listPublicClubs, listPublicEvents, publicClubDetail, publicEventDetail,
+  listPublicClubs, listPublicEvents, publicCampaignDetail, publicClubDetail, publicEventDetail,
 } from "../../usecase/public-discovery.js";
 import { ok } from "./response.js";
 
@@ -36,6 +36,9 @@ export function publicDiscoveryRoutes(repo: PublicDiscoveryRepository): Router {
   });
   router.get("/public/clubs/:id", async (req, res) => {
     ok(res, await publicClubDetail(repo, id(req.params.id), new Date()));
+  });
+  router.get("/public/campaigns/:id", async (req, res) => {
+    ok(res, await publicCampaignDetail(repo, id(req.params.id), new Date()));
   });
   router.get("/public/events", async (req, res) => {
     const query = parse(pageQuery, req.query);

@@ -4,6 +4,10 @@ import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
+import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
+import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
+import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
+import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
 
 const ApiError = z.object({
   statusCode: z.number(),
@@ -85,6 +89,70 @@ const ClubDepartment = clubDepartmentBody.extend({
   createdAt: z.string(), updatedAt: z.string().optional(),
 });
 const ClubSettings = z.object({ profile: ClubProfile, departments: z.array(ClubDepartment) });
+const RecruitmentCampaign = z.object({
+  id: z.string(), clubId: z.string(), title: z.string(), positions: z.array(z.string()),
+  criteria: z.string().optional(), windowStart: z.string().datetime(), windowEnd: z.string().datetime(),
+  capacity: z.number(), selectionSteps: z.array(z.unknown()), formSchema: z.array(z.unknown()),
+  rubric: z.array(z.unknown()), state: z.string(), publishedBy: z.string().optional(),
+  publishedAt: z.string().datetime().optional(), createdAt: z.string().datetime(),
+});
+const CampaignOverlap = z.object({ id: z.string(), title: z.string(), positions: z.array(z.string()),
+  windowStart: z.string().datetime(), windowEnd: z.string().datetime(), state: z.string() });
+const CampaignWithOverlaps = z.object({ campaign: RecruitmentCampaign,
+  overlaps: z.array(CampaignOverlap) });
+const RecruitmentAttachment = z.object({ id: z.string(), fieldKey: z.string(), fileName: z.string(),
+  mimeType: z.string(), bytes: z.number(), uploadedAt: z.string().datetime() });
+const RecruitmentApplication = z.object({
+  id: z.string(), campaignId: z.string(), clubId: z.string(), userId: z.string(),
+  campaignTitle: z.string().optional(), clubName: z.string().optional(), applicantName: z.string().optional(),
+  position: z.string(), answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
+  attachments: z.array(RecruitmentAttachment), state: z.string(),
+  decisionOutcome: z.string().optional(), decisionReason: z.string().optional(),
+  submittedAt: z.string().datetime().optional(), withdrawnAt: z.string().datetime().optional(),
+});
+const Membership = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string().optional(), userId: z.string(),
+  displayName: z.string().optional(), state: z.enum(["Active", "Inactive", "Left", "Banned"]),
+  joinedAt: z.string().datetime(), leftAt: z.string().datetime().optional(),
+  departmentId: z.string().optional(), defaultRole: z.string().optional(),
+  sourceApplicationId: z.string().optional(), banReason: z.string().optional(),
+  statusHistory: z.array(z.object({ fromState: z.enum(["Active", "Inactive", "Left", "Banned"]), toState: z.enum(["Active", "Inactive", "Left", "Banned"]),
+    effectiveDate: z.string().datetime(), reason: z.string().optional(), actorId: z.string(), at: z.string().datetime() })),
+  pendingWithdrawal: z.unknown().optional(),
+}) satisfies z.ZodType<Omit<ClubMembershipRecord, "joinedAt" | "leftAt" | "statusHistory" | "pendingWithdrawal"> & {
+  joinedAt: string; leftAt?: string; statusHistory: Array<Omit<ClubMembershipRecord["statusHistory"][number], "at" | "effectiveDate"> & { at: string; effectiveDate: string }>;
+}>;
+const MembershipWithdrawal = z.object({
+  id: z.string(), membershipId: z.string(), clubId: z.string(), clubName: z.string().optional(),
+  userId: z.string(), memberName: z.string().optional(), reason: z.string(),
+  requestedEffectiveDate: z.string().datetime(), state: z.enum(["Pending", "Held", "Executed", "Cancelled"]),
+  createdAt: z.string().datetime(), executedBy: z.string().optional(), executedAt: z.string().datetime().optional(),
+}) satisfies z.ZodType<Omit<MembershipWithdrawalRequest, "requestedEffectiveDate" | "createdAt" | "executedAt"> & {
+  requestedEffectiveDate: string; createdAt: string; executedAt?: string;
+}>;
+const BoardTerm = z.object({ id: z.string(), name: z.string(), startAt: z.string(), endAt: z.string(), state: z.string() });
+const BoardPosition = z.object({ id: z.string(), code: z.string(), name: z.string(),
+  unit: z.string().optional(), isLeaderRole: z.boolean() });
+const BoardCandidate = z.object({ membershipId: z.string(), userId: z.string(),
+  displayName: z.string(), state: z.string() });
+const BoardSeat = z.object({ id: z.string(), positionId: z.string(), positionCode: z.string(),
+  positionName: z.string(), isLeaderRole: z.boolean(), membershipId: z.string(), userId: z.string(),
+  displayName: z.string(), state: z.enum(["Pending Confirmation", "Confirmed", "Returned"]),
+  reason: z.string().optional() });
+const BoardTask = z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(),
+  openedAt: z.string() });
+const BoardDecision = z.object({ id: z.string(), taskId: z.string(),
+  outcome: z.enum(["Approve", "Reject"]), reason: z.string().optional(),
+  confirmedSeatIds: z.array(z.string()), returnedSeatIds: z.array(z.string()),
+  actorId: z.string(), at: z.string() });
+const BoardNomination = z.object({ id: z.string(), clubId: z.string(), clubName: z.string(),
+  clubState: z.string(), term: BoardTerm, state: z.string(), submittedBy: z.string(),
+  submittedAt: z.string(), task: BoardTask, seats: z.array(BoardSeat),
+  decisions: z.array(BoardDecision) });
+const BoardNominationContext = z.object({ clubId: z.string(), clubName: z.string(),
+  clubState: z.string(), term: BoardTerm.nullable(), positions: z.array(BoardPosition),
+  candidates: z.array(BoardCandidate), occupiedPositionIds: z.array(z.string()),
+  pendingPositionIds: z.array(z.string()), presidentConflictMembershipIds: z.array(z.string()) });
 const PublicClub = z.object({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(),
   state: z.enum(["Active", "Suspended"]), description: z.string().optional(),
@@ -94,6 +162,10 @@ const PublicClub = z.object({
 const PublicCampaign = z.object({
   id: z.string(), title: z.string(), state: z.string(),
   windowStart: z.string(), windowEnd: z.string(), capacity: z.number(),
+});
+const PublicCampaignDetail = PublicCampaign.extend({
+  clubId: z.string(), positions: z.array(z.string()), criteria: z.string().optional(),
+  selectionSteps: z.array(z.unknown()), formSchema: z.array(z.unknown()), rubric: z.array(z.unknown()),
 });
 const PublicEvent = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(),
@@ -173,6 +245,16 @@ export const openApiDocument = createDocument({
             content: { "application/json": { schema: ApiError } } },
         },
       },
+    },
+    "/public/campaigns/{id}": {
+      get: { summary: "Read an open recruitment campaign and its public application form",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Open recruitment campaign",
+            content: { "application/json": { schema: envelope(PublicCampaignDetail) } } },
+          "404": { description: "Campaign not open or not found",
+            content: { "application/json": { schema: ApiError } } },
+        } },
     },
     "/public/events": {
       get: {
@@ -323,6 +405,70 @@ export const openApiDocument = createDocument({
           content: { "application/json": { schema: envelope(z.array(ApplicationRecord)) } } } },
       },
     },
+    "/applications/recruitment/mine": {
+      get: { summary: "List the signed-in student's recruitment applications",
+        responses: { "200": { description: "Recruitment applications", content: {
+          "application/json": { schema: envelope(z.array(RecruitmentApplication)) },
+        } } } },
+    },
+    "/applications/recruitment/by-campaign/{campaignId}": {
+      get: { summary: "Find the signed-in student's application for a campaign",
+        requestParams: { path: z.object({ campaignId: z.string() }) },
+        responses: { "200": { description: "Application or null", content: {
+          "application/json": { schema: envelope(RecruitmentApplication.nullable()) },
+        } } } },
+    },
+    "/applications/recruitment": {
+      post: { summary: "Create one application draft for a campaign",
+        requestBody: { content: { "application/json": { schema: createRecruitmentApplicationBody } } },
+        responses: { "201": { description: "Application draft", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
+    "/applications/recruitment/{id}": {
+      get: { summary: "Read an owned recruitment application",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Recruitment application", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
+    "/applications/recruitment/{id}/draft": {
+      patch: { summary: "Update an owned application draft",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: updateRecruitmentApplicationBody } } },
+        responses: { "200": { description: "Saved draft", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
+    "/applications/recruitment/{id}/attachments": {
+      post: { summary: "Upload a private file answer to an application draft",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/octet-stream": { schema: z.string() } } },
+        responses: { "201": { description: "Draft with attachment", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
+    "/applications/recruitment/{id}/attachments/{attachmentId}/access": {
+      get: { summary: "Create a short-lived private download URL for an owned attachment",
+        requestParams: { path: z.object({ id: z.string(), attachmentId: z.string() }) },
+        responses: { "200": { description: "Short-lived access URL", content: {
+          "application/json": { schema: envelope(z.object({ url: z.string(), fileName: z.string() })) },
+        } } } },
+    },
+    "/applications/recruitment/{id}/submit": {
+      post: { summary: "Validate and submit an application before the campaign closes",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Submitted application", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
+    "/applications/recruitment/{id}/withdraw": {
+      post: { summary: "Withdraw an undecided recruitment application",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Withdrawn application", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
     "/applications": {
       post: {
         summary: "Create a club application draft (requires CSRF token)",
@@ -458,6 +604,195 @@ export const openApiDocument = createDocument({
           })) },
         } } },
       },
+    },
+    "/admin/board-nominations": {
+      get: { summary: "List open board nomination tasks (ICPDP Officer only)",
+        responses: { "200": { description: "Board nomination queue", content: {
+          "application/json": { schema: envelope(z.array(BoardNomination)) },
+        } } } },
+    },
+    "/admin/board-nominations/{id}": {
+      get: { summary: "Read board nomination and eligibility details",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Board nomination detail", content: {
+          "application/json": { schema: envelope(BoardNomination) },
+        } } } },
+    },
+    "/admin/board-nominations/{id}/claim": {
+      post: { summary: "Claim an open board nomination task (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Claimed task", content: {
+          "application/json": { schema: envelope(BoardNomination) },
+        } } } },
+    },
+    "/admin/board-nominations/{id}/decision": {
+      post: { summary: "Record one full or partial board confirmation decision",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: boardNominationDecisionBody } } },
+        responses: { "200": { description: "Decided board nomination", content: {
+          "application/json": { schema: envelope(BoardNomination) },
+        } } } },
+    },
+    "/clubs/{clubId}/board-nomination-context": {
+      get: { summary: "Read current board seats and active club members for nomination",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Nomination context", content: {
+          "application/json": { schema: envelope(BoardNominationContext) },
+        } } } },
+    },
+    "/clubs/{clubId}/board-nominations": {
+      post: { summary: "Submit one board nomination and create one ICPDP task",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: boardNominationBody } } },
+        responses: { "201": { description: "Submitted nomination", content: {
+          "application/json": { schema: envelope(BoardNomination) },
+      } } } },
+    },
+    "/memberships/mine": {
+      get: { summary: "List the authenticated student's current club memberships",
+        responses: { "200": { description: "Memberships", content: {
+          "application/json": { schema: envelope(z.array(Membership)) },
+        } } } },
+    },
+    "/memberships/withdrawal-requests/mine": {
+      get: { summary: "List the authenticated student's withdrawal requests",
+        responses: { "200": { description: "Withdrawal requests", content: {
+          "application/json": { schema: envelope(z.array(MembershipWithdrawal)) },
+        } } } },
+    },
+    "/memberships/{membershipId}/withdrawal-requests": {
+      post: { summary: "Request to leave a club without changing membership state immediately",
+        requestParams: { path: z.object({ membershipId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: z.object({
+          reason: z.string().min(1).max(2000), requestedEffectiveDate: z.string().datetime(),
+        }) } } },
+        responses: { "201": { description: "Withdrawal request", content: {
+          "application/json": { schema: envelope(MembershipWithdrawal) },
+        } } } },
+    },
+    "/clubs/{clubId}/memberships": {
+      get: { summary: "List current members for a club manager",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Membership roster", content: {
+          "application/json": { schema: envelope(z.array(Membership)) },
+        } } } },
+    },
+    "/clubs/{clubId}/memberships/{membershipId}/state": {
+      patch: { summary: "Activate, deactivate or ban a membership",
+        requestParams: { path: z.object({ clubId: z.string(), membershipId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: z.object({
+          state: z.enum(["Active", "Inactive", "Banned"]), effectiveDate: z.string().datetime(),
+          reason: z.string().max(2000).optional(),
+        }) } } },
+        responses: { "200": { description: "Updated membership", content: {
+          "application/json": { schema: envelope(Membership) },
+        } } } },
+    },
+    "/clubs/{clubId}/membership-withdrawals": {
+      get: { summary: "List club membership withdrawal requests",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Withdrawal requests", content: {
+          "application/json": { schema: envelope(z.array(MembershipWithdrawal)) },
+        } } } },
+    },
+    "/clubs/{clubId}/membership-withdrawals/{requestId}/execute": {
+      post: { summary: "Execute a withdrawal after board-seat and effective-date checks",
+        requestParams: { path: z.object({ clubId: z.string(), requestId: z.string() }) },
+        responses: { "200": { description: "Membership marked as Left", content: {
+          "application/json": { schema: envelope(Membership) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns": {
+      get: { summary: "List recruitment campaigns for a club with recruitment-management permission",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Recruitment campaigns", content: {
+          "application/json": { schema: envelope(z.array(RecruitmentCampaign)) },
+        } } } },
+      post: { summary: "Create a recruitment campaign draft",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: recruitmentCampaignBody } } },
+        responses: { "201": { description: "Draft and overlap warning", content: {
+          "application/json": { schema: envelope(CampaignWithOverlaps) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}": {
+      get: { summary: "Read a recruitment campaign",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        responses: { "200": { description: "Recruitment campaign", content: {
+          "application/json": { schema: envelope(RecruitmentCampaign) },
+        } } } },
+      patch: { summary: "Update a draft recruitment campaign",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: recruitmentCampaignBody } } },
+        responses: { "200": { description: "Draft and overlap warning", content: {
+          "application/json": { schema: envelope(CampaignWithOverlaps) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/publish": {
+      post: { summary: "Publish a draft after academic-calendar and overlap validation",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: z.object({ confirmOverlap: z.boolean() }) } } },
+        responses: {
+          "200": { description: "Published campaign", content: {
+            "application/json": { schema: envelope(CampaignWithOverlaps) },
+          } },
+          "409": { description: "Overlapping campaign requires explicit confirmation",
+            content: { "application/json": { schema: ApiError } } },
+        } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/cancel": {
+      post: { summary: "Cancel a campaign and notify its applicants",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        responses: { "200": { description: "Cancelled campaign", content: {
+          "application/json": { schema: envelope(RecruitmentCampaign) },
+      } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications": {
+      get: { summary: "List recruitment applications for an authorized club reviewer",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }),
+          query: z.object({ state: z.string().optional() }) },
+        responses: { "200": { description: "Applications for review", content: {
+          "application/json": { schema: envelope(z.array(RecruitmentApplication)) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications/review": {
+      post: { summary: "Screen applications or record campaign decisions",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: z.object({
+          action: z.enum(["screen", "shortlist", "decide", "promote", "close-withdrawn"]),
+          applicationIds: z.array(z.string()),
+          outcome: z.enum(["Shortlisted", "Accepted", "Rejected", "Waitlisted"]).optional(),
+          reason: z.string().optional(),
+        }) } } },
+        responses: { "200": { description: "Updated applications", content: {
+          "application/json": { schema: envelope(z.array(RecruitmentApplication)) },
+      } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications/{applicationId}/onboard": {
+      post: { summary: "Create an Active membership for an accepted recruitment candidate",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string(), applicationId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: z.object({
+          joinedAt: z.string().datetime().optional(), departmentId: z.string().optional(),
+        }) } } },
+        responses: { "200": { description: "Onboarded application", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications/{applicationId}/attachments/{attachmentId}/access": {
+      get: { summary: "Create a short-lived private download URL for a reviewer (club.application.review)",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string(),
+          applicationId: z.string(), attachmentId: z.string() }) },
+        responses: { "200": { description: "Short-lived access URL", content: {
+          "application/json": { schema: envelope(z.object({ url: z.string(), fileName: z.string() })) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications/{applicationId}/decline": {
+      post: { summary: "Record a candidate declining an accepted offer",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string(), applicationId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: z.object({ reason: z.string().optional() }) } } },
+        responses: { "200": { description: "Declined application", content: {
+          "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
     },
     "/clubs/{clubId}/settings": {
       get: {

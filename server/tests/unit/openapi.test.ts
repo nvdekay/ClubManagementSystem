@@ -4,6 +4,10 @@ import type { PublicDiscoveryRepository } from "../../src/domain/public-discover
 import type { ClubApplicationRepository } from "../../src/domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../src/domain/club-application-review.js";
 import type { ClubProfileRepository } from "../../src/domain/club-profile.js";
+import type { BoardNominationRepository } from "../../src/domain/board-nomination.js";
+import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
+import type { RecruitmentApplicationRepository } from "../../src/domain/recruitment-application.js";
+import type { MembershipRepository } from "../../src/domain/membership.js";
 import { openApiDocument } from "../../src/interface/http/openapi.js";
 import { buildApp } from "../../src/interface/http/server.js";
 
@@ -83,6 +87,37 @@ const stubClubProfiles: ClubProfileRepository = {
   updateDepartment: async () => { throw new Error("unused"); },
   deactivateDepartment: async () => { throw new Error("unused"); },
 };
+const stubBoardNominations: BoardNominationRepository = {
+  getContext: async () => null, submit: async () => { throw new Error("unused"); },
+  listOpen: async () => [], find: async () => null,
+  claim: async () => { throw new Error("unused"); }, decide: async () => { throw new Error("unused"); },
+};
+const stubRecruitmentCampaigns: RecruitmentCampaignRepository = {
+  list: async () => [], find: async () => null, overlaps: async () => [],
+  createDraft: async () => { throw new Error("unused"); },
+  updateDraft: async () => { throw new Error("unused"); },
+  publish: async () => { throw new Error("unused"); },
+  cancel: async () => { throw new Error("unused"); },
+};
+const stubRecruitmentApplications: RecruitmentApplicationRepository = {
+  campaign: async () => null,
+  eligibility: async () => ({ userActive: false, activeMembership: false, bannedMembership: false }),
+  createDraft: async () => { throw new Error("unused"); },
+  findOwned: async () => null, findMineForCampaign: async () => null, listMine: async () => [],
+  updateDraft: async () => { throw new Error("unused"); },
+  addAttachment: async () => { throw new Error("unused"); }, attachmentAccess: async () => null,
+  submit: async () => { throw new Error("unused"); }, withdraw: async () => { throw new Error("unused"); },
+  listForReview: async () => [], transition: async () => { throw new Error("unused"); },
+  onboard: async () => { throw new Error("unused"); }, declineAccepted: async () => { throw new Error("unused"); },
+  reviewAttachment: async () => null,
+};
+const stubMemberships: MembershipRepository = {
+  listMine: async () => [], listClub: async () => [],
+  changeState: async () => { throw new Error("unused"); },
+  requestWithdrawal: async () => { throw new Error("unused"); },
+  listMyWithdrawalRequests: async () => [], listClubWithdrawalRequests: async () => [],
+  executeWithdrawal: async () => { throw new Error("unused"); },
+};
 
 // Minimal view of Express 5's router internals — enough to enumerate mounted routes.
 interface Layer {
@@ -104,6 +139,10 @@ describe("openapi document", () => {
       applicationRepo: stubApplications,
       applicationReviewRepo: stubApplicationReviews,
       clubProfileRepo: stubClubProfiles,
+      boardNominationRepo: stubBoardNominations,
+      recruitmentCampaignRepo: stubRecruitmentCampaigns,
+      recruitmentApplicationRepo: stubRecruitmentApplications,
+      membershipRepo: stubMemberships,
       publicRepo: stubPublic, dbReady: () => true });
     const base = openApiDocument.servers?.[0]?.url ?? "";
     expect(base).toBe("/api/v1");
@@ -146,6 +185,9 @@ describe("openapi document", () => {
       applicationRepo: stubApplications,
       applicationReviewRepo: stubApplicationReviews,
       clubProfileRepo: stubClubProfiles,
+      boardNominationRepo: stubBoardNominations,
+      recruitmentCampaignRepo: stubRecruitmentCampaigns,
+      recruitmentApplicationRepo: stubRecruitmentApplications,
       publicRepo: stubPublic, dbReady: () => true });
     const stack = (app as unknown as { router: { stack: Layer[] } }).router.stack;
     const routes = stack.flatMap((layer) => layer.route ? [layer.route]

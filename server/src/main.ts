@@ -15,7 +15,12 @@ import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
 import { mongoClubProfileRepository } from "./infra/db/mongo-club-profile-repository.js";
+import { mongoBoardNominationRepository } from "./infra/db/mongo-board-nomination-repository.js";
+import { mongoRecruitmentCampaignRepository } from "./infra/db/mongo-recruitment-campaign-repository.js";
+import { mongoRecruitmentApplicationRepository } from "./infra/db/mongo-recruitment-application-repository.js";
+import { mongoMembershipRepository } from "./infra/db/mongo-membership-repository.js";
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
+import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
 
 const config = loadConfig(); // first thing — exits if env is invalid
 const authConfig = optionalAuthConfig(config);
@@ -45,6 +50,11 @@ const app = authConfig ? buildApp({
   applicationRepo: mongoClubApplicationRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
+  boardNominationRepo: mongoBoardNominationRepository(),
+  recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
+    recruitmentApplicationRepo: mongoRecruitmentApplicationRepository(),
+    membershipRepo: mongoMembershipRepository(),
+  recruitmentAttachmentStorage: cloudinaryConfig ? cloudinaryRecruitmentFiles(cloudinaryConfig) : null,
   applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
   auth: {
     repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),
