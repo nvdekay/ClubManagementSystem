@@ -455,6 +455,9 @@ export const ucmsTables = {
       "charterUrl": {
         "type": "string"
       },
+      "logoUrl": {
+        "type": "string"
+      },
       "channels": {
         "type": "json"
       },

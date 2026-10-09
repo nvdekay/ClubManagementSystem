@@ -350,6 +350,7 @@ Table clubs {
   contactEmail string
   contactPhone string
   charterUrl string
+  logoUrl string [note: 'URL công khai của logo CLB (ảnh lưu trên Cloudinary).']
   channels json [note: 'Các kênh truyền thông mà CLB công bố.']
   operatingScope string
   institutionalFields json [note: 'Chỉ ICPDP sửa được (UC09 E1).']
