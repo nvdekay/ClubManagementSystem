@@ -1,5 +1,13 @@
 # infra/db/
 
+`mongo-facility-booking-repository.ts` (UC45–47) dùng các collection có sẵn. Snapshot nộp
+bất biến ở audit `BOOKING_SUBMITTED`; equipment của draft nằm trong audit snapshot.
+Transaction ghi `__v` của property để tuần tự hoá các quyết định cùng phòng;
+`releaseFacilityBookingsInSession` được cascade UC15 dùng trong chính transaction của CLB.
+Seed demo bổ sung 30 phòng mẫu tại Alpha/Beta/Gamma/Delta/Epsilon (giữ DE312/DE222/DE223) và bốn booking theo Slot 1–4
+ở Approved qua đặt ngay (snapshot chủ nhiệm) nếu lịch học kỳ còn phù hợp. Seed giải phóng
+riêng các booking mẫu cũ của hai bộ dữ liệu demo, giữ lịch sử và không đổi booking của người dùng.
+
 Bản cài bằng Mongoose cho các repository port của domain — mỗi port một file
 `mongo-<entity>-repository.ts` — cộng các tiện ích DB (seed). Không gì ngoài `infra/` được đụng
 tới Mongoose.
@@ -32,3 +40,11 @@ upload đề án PDF và logo PNG; thiếu cấu hình thì bỏ qua phần đó
 server, `npm run db:init` và `seed:demo`) tạo sẵn 6 lĩnh vực trên database mới; khi ICPDP đã từng sửa danh
 mục (có audit `ClubField`) thì không tạo lại. Domain email đăng nhập không còn nằm trong policy mà lấy từ
 `ALLOWED_DOMAIN` của server (một domain, danh sách cách nhau bởi dấu phẩy, hoặc `*`).
+
+Tên năm giảng đường đối chiếu [nguồn FPT](https://daihoc.fpt.edu.vn/sustainability/fpt-university-provides-affordable-housing-for-students/)
+và [tour campus Hà Nội](https://viewdaihoc.fpt.edu.vn/fpt-ha-noi/). Mã AL/BE/GA/DE/EP, số phòng và sức chứa
+là dữ liệu minh hoạ; location chỉ ghi tòa, không lặp tầng. Seed sửa location cũ của phòng Delta
+qua usecase, giữ các cấu hình khác; không ghi đè location đã được người dùng thay đổi.
+
+Đặt ngay ghi `BOOKING_RESERVED` trong audit với snapshot chủ nhiệm, không tạo approval task
+và không đổi schema. Transaction khóa club/property và kiểm tra lại xung đột trước khi ghi Approved.

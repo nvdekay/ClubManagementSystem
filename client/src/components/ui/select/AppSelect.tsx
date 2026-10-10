@@ -5,6 +5,7 @@ import { cn } from "@/utils/cn";
 interface AppSelectOption<T> {
   value: T;
   label: string;
+  disabled?: boolean;
 }
 
 interface AppSelectProps<T> {
@@ -101,6 +102,7 @@ export function AppSelect<T extends string | number>({
   }
 
   function select(index: number) {
+    if (!options[index] || options[index].disabled) return;
     onChange(options[index].value);
     close();
   }
@@ -179,11 +181,13 @@ export function AppSelect<T extends string | number>({
               id={`${listId}-${index}`}
               role="option"
               aria-selected={option.value === value}
+              aria-disabled={option.disabled || undefined}
               data-active={index === activeIndex}
               onPointerEnter={() => setActiveIndex(index)}
               onClick={() => select(index)}
               className={cn("flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm", {
                 "bg-primary-soft-app text-primary-app": index === activeIndex,
+                "text-muted-app opacity-50": option.disabled,
               })}
             >
               {option.label}

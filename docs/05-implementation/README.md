@@ -8,6 +8,8 @@ Cách biến baseline yêu cầu thành code: phân rã công việc và thiết
 | [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) | Backlog thực thi đã đối chiếu SRS, mockup HTML và source hiện tại; ưu tiên Auth/Authz trước, kèm MongoDB, mapping màn hình và gate nghiệm thu |
 | [`AUTH_SETUP.md`](AUTH_SETUP.md) | Cấu hình Google OAuth, cookie phiên và MongoDB local cho Auth |
 | [`SESSION_HANDOFF_2026-10-09.md`](SESSION_HANDOFF_2026-10-09.md) | Handoff hiện hành: quyết định đã chốt, tình trạng từng luồng, fixture local, kiểm chứng gần nhất và ưu tiên tiếp theo cho session mới |
+| [`REMAINING_UC_PLAN.md`](REMAINING_UC_PLAN.md) | Kế hoạch sau review Wave 1 (2026-10-10): trạng thái triển khai/nghiệm thu, 6 wave, phân công phía CLB và các quyết định cần chốt |
+| [`WAVE_2_BOOKING.md`](WAVE_2_BOOKING.md) | Bàn giao Wave 2: slot và hạn gửi, UI CLB/ICPDP, dữ liệu mẫu, cách test và kiểm chứng |
 | [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 49 collection MongoDB, 24 enum, nhóm theo module. Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
 
 ## Dùng file DBML

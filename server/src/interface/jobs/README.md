@@ -1,5 +1,8 @@
 # interface/jobs/
 
+`facility-booking-job.ts` (UC47) chạy mỗi phút: booking `Approved` tới giờ bắt đầu thành
+`In Use`, tới giờ kết thúc thành `Completed`; chạy idempotent, không chạy chồng.
+
 Adapter kích hoạt theo lịch (thay vì theo HTTP): mỗi job một file, chỉ hẹn giờ và gọi một usecase idempotent.
 Không chứa logic nghiệp vụ — mọi quyết định nằm ở usecase để test được không cần đồng hồ thật. Được khởi
 động từ `main.ts`.

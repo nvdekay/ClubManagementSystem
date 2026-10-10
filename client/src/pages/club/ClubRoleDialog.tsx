@@ -18,10 +18,13 @@ interface ClubRoleDialogProps {
   departments: string[];
   grantablePermissions: string[];
   onClose: () => void;
+  inline?: boolean;
+  readOnly?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 /** Create/edit form for one role. Mounted only while open, so its draft and error reset on every open. */
-export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantablePermissions, onClose }: ClubRoleDialogProps) {
+export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantablePermissions, onClose, inline = false, readOnly = false, onDirtyChange }: ClubRoleDialogProps) {
   const { t } = useTranslation();
   const action = useClubRoleAction();
   const [draft, setDraft] = useState<ClubRoleInput>({ name: role?.name ?? "", unit: role?.unit ?? "",
@@ -31,33 +34,35 @@ export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantable
   const groups = groupPermissions(grantablePermissions);
 
   function setCodes(codes: string[], checked: boolean) {
+    onDirtyChange?.(true);
     setDraft((current) => ({ ...current, permissionCodes: checked
       ? [...new Set([...current.permissionCodes, ...codes])]
       : current.permissionCodes.filter((code) => !codes.includes(code)) }));
   }
 
   async function save() {
+    if (readOnly) return;
     const input = { ...draft, name: draft.name.trim(), unit: draft.unit || undefined, reason: draft.reason?.trim() || undefined };
     try {
       await action.mutateAsync(role ? { kind: "update", clubId, roleId: role.id, input, csrfToken } : { kind: "create", clubId, input, csrfToken });
       appToast.success(role ? t("clubRoles.updatedSuccess") : t("clubRoles.createdSuccess"));
+      onDirtyChange?.(false);
       onClose();
     } catch { /* Rendered below, inside the dialog. */ }
   }
 
-  return (
-    <AppDialog open title={role ? t("clubRoles.editRole") : t("clubRoles.addRole")} onClose={onClose}
-      closeLabel={t("clubRoles.close")} className="w-[min(100%-2rem,44rem)]">
-      <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); void save(); }}>
+  const form = (
+      <form onChange={() => onDirtyChange?.(true)} className="space-y-5" onSubmit={(event) => { event.preventDefault(); void save(); }}>
+        <fieldset disabled={readOnly || action.isPending} className="space-y-5">
         {role?.isBoardSeat && <AppNotice tone="info">{t("clubRoles.boardEditHint")}</AppNotice>}
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-semibold">{t("clubRoles.name")}
-            <AppInput className="mt-2 block w-full font-normal" value={draft.name} maxLength={120} required autoFocus
+            <AppInput className="mt-2 block w-full font-normal" value={draft.name} maxLength={120} required autoFocus={!inline}
               onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} /></label>
           <div className="text-sm font-semibold">{t("clubRoles.unit")}
-            <AppSelect className="mt-2 block w-full" label={t("clubRoles.unit")} value={draft.unit ?? ""}
+            <AppSelect disabled={readOnly || action.isPending} className="mt-2 block w-full" label={t("clubRoles.unit")} value={draft.unit ?? ""}
               options={[{ value: "", label: t("clubRoles.noUnit") }, ...departments.map((name) => ({ value: name, label: name }))]}
-              onChange={(unit) => setDraft((current) => ({ ...current, unit }))} /></div>
+              onChange={(unit) => { onDirtyChange?.(true); setDraft((current) => ({ ...current, unit })); }} /></div>
         </div>
         <label className="flex min-h-11 items-center gap-2 text-sm">
           <input type="checkbox" className="size-4 accent-primary-app" checked={draft.isSingleHolder} disabled={holderLocked}
@@ -68,7 +73,7 @@ export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantable
           <legend className="text-sm font-semibold">{t("clubRoles.permissions")}{" "}
             <span className="text-xs font-normal text-muted-app">{t("clubRoles.selectedCount", { count: draft.permissionCodes.length, total: grantablePermissions.length })}</span></legend>
           <p className="mt-1 text-xs text-muted-app">{t("clubRoles.permissionsHint")}</p>
-          <div className="mt-3 space-y-4">{groups.map((group) => {
+          <div className="mt-3 grid items-start gap-3 xl:grid-cols-2">{groups.map((group) => {
             const all = group.codes.every((code) => draft.permissionCodes.includes(code));
             return (
               <section key={group.labelKey} className="rounded-xl border border-border-app p-3 sm:p-4">
@@ -92,17 +97,20 @@ export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantable
           })}</div>
         </fieldset>
 
-        <label className="block text-sm font-semibold">{t("clubRoles.reason")}
+        {!readOnly && <label className="block text-sm font-semibold">{t("clubRoles.reason")}
           <AppInput className="mt-2 block w-full font-normal" value={draft.reason} maxLength={500}
-            onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} /></label>
+            onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} /></label>}
 
         {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
-        <div className="flex flex-wrap justify-end gap-2">
+        {!readOnly && <div className="flex flex-wrap justify-end gap-2">
           <AppButton type="button" variant="secondary" onClick={onClose}>{t("clubRoles.cancel")}</AppButton>
-          <AppButton type="submit" disabled={action.isPending || !draft.name.trim()}>
+          <AppButton type="submit" disabled={readOnly || action.isPending || !draft.name.trim()}>
             {action.isPending ? t("clubRoles.saving") : t("clubRoles.save")}</AppButton>
-        </div>
+        </div>}
+        </fieldset>
       </form>
-    </AppDialog>
   );
+  if (inline) return <section className="rounded-2xl border border-border-app bg-bg-app p-4 sm:p-5">{form}</section>;
+  return <AppDialog open title={role ? t("clubRoles.editRole") : t("clubRoles.addRole")} onClose={onClose}
+    closeLabel={t("clubRoles.close")} className="w-[min(100%-2rem,44rem)]">{form}</AppDialog>;
 }

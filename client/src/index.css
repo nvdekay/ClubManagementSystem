@@ -118,6 +118,7 @@ body {
    Overrides the same custom properties the @theme block sets on :root,
    so every generated *-app utility repaints without touching components. */
 :root.dark {
+  color-scheme: dark;
   --color-brand-app: #22d3ee;
   --color-on-brand-app: #062a33;
   --color-text-app: #e6f3fa;
@@ -179,16 +180,25 @@ body {
    clickable elements should use role="button" to pick up this rule. */
 button:not(:disabled),
 select:not(:disabled),
+input:is([type="checkbox"], [type="radio"]):not(:disabled),
+label:has(input:is([type="checkbox"], [type="radio"]):not(:disabled)),
+:is([role="checkbox"], [role="radio"], [role="switch"]):not([aria-disabled="true"]),
 summary,
 a[href],
 input[type="search"]::-webkit-search-cancel-button,
 [role="button"]:not([aria-disabled="true"]),
-[role="option"] {
+[role="combobox"]:not(:disabled):not([aria-disabled="true"]),
+[role="option"]:not([aria-disabled="true"]) {
   cursor: pointer;
 }
 
 button:disabled,
 select:disabled,
+input:is([type="checkbox"], [type="radio"]):disabled,
+label:has(input:is([type="checkbox"], [type="radio"]):disabled),
+:is([role="checkbox"], [role="radio"], [role="switch"])[aria-disabled="true"],
+[role="combobox"][aria-disabled="true"],
+[role="option"][aria-disabled="true"],
 [role="button"][aria-disabled="true"] {
   cursor: not-allowed;
 }

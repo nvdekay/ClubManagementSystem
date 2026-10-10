@@ -99,7 +99,8 @@ async function allowed(access: ClubAccessRepository, actor: AccessActor | null,
 
 export async function getClubSettings(repo: ClubProfileRepository, access: ClubAccessRepository,
   policy: PolicyRepository, actor: AccessActor | null, clubId: string, now = new Date()) {
-  const ids = await allowed(access, actor, clubId, now);
+  await assertClubAccess(access, actor, id(clubId, "club id"), "club.role.manage", now);
+  const ids = { clubId };
   const [profile, departments, requiredProfileFields] = await Promise.all([
     repo.findProfile(ids.clubId), repo.listDepartments(ids.clubId), profileRequirements(policy, now),
   ]);

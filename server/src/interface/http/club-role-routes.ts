@@ -10,6 +10,7 @@ import {
   assignClubRole,
   createClubRole,
   deactivateClubRole,
+  getClubRoleDirectory,
   getClubRoles,
   revokeClubRole,
   updateClubRole,
@@ -57,6 +58,9 @@ export function clubRoleRoutes(deps: ClubRoleRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
+  router.get("/clubs/:clubId/role-directory", authGuard(guard, false), async (req, res) => {
+    ok(res, await getClubRoleDirectory(deps.repo, deps.accessRepo, actor(res), parsed(id, req.params.clubId)));
+  });
   router.get("/clubs/:clubId/roles", authGuard(guard, false), async (req, res) => {
     ok(res, await getClubRoles(deps.repo, deps.accessRepo, actor(res), parsed(id, req.params.clubId)));
   });

@@ -11,6 +11,7 @@ import {
   assignClubRole,
   createClubRole,
   deactivateClubRole,
+  getClubRoleDirectory,
   getClubRoles,
   revokeClubRole,
   updateClubRole,
@@ -131,14 +132,17 @@ async function withTreasurer() {
 }
 
 describe("UC23 club role management", () => {
-  it("E5: only a caller holding club.role.manage may open or change roles", async () => {
+  it("E5: members may read roles but only club.role.manage may change them", async () => {
     const vice: ClubAccessRepository = { findSnapshot: async () => ({
       ...(await leaderAccess().findSnapshot(leader.id, clubId))!,
       positions: [{ id: ids.vice, clubId, isActive: true, isLeaderRole: false,
         permissionCodes: ["club.member.manage", "club.role.manage"] }],
       assignments: [{ clubId, termId, positionId: ids.vice, membershipId: m.leader,
         effectiveFrom: new Date("2026-09-01") }] }) };
-    await expect(getClubRoles(fakeRepo().repo, vice, leader, clubId, now)).rejects.toMatchObject({ kind: "forbidden" });
+    const readOnly = await getClubRoles(fakeRepo().repo, vice, leader, clubId, now);
+    expect(readOnly.members).toEqual([]);
+    expect(readOnly.versions).toEqual([]);
+    expect(readOnly.roles.every((role) => role.holders.length === 0)).toBe(true);
     await expect(createClubRole(fakeRepo().repo, vice, leader, clubId, treasurer, now))
       .rejects.toMatchObject({ kind: "forbidden" });
     const founder: ClubAccessRepository = { findSnapshot: async () => ({ clubId, clubName: "Club",
@@ -297,7 +301,7 @@ describe("UC23 club role management", () => {
       { membershipId: m.active }, now)).rejects.toMatchObject({ kind: "conflict" });
   });
 
-  it("E5: a vice leader holding every grantable permission still cannot call any role endpoint", async () => {
+  it("E5: a vice leader holding every grantable permission still cannot mutate roles", async () => {
     const vice: ClubAccessRepository = { findSnapshot: async () => ({
       ...(await leaderAccess().findSnapshot(leader.id, clubId))!,
       positions: [{ id: ids.vice, clubId, isActive: true, isLeaderRole: false,
@@ -306,7 +310,6 @@ describe("UC23 club role management", () => {
         effectiveFrom: new Date("2026-09-01"), confirmedBy: leader.id }] }) };
     const fake = await withTreasurer();
     const calls = [
-      () => getClubRoles(fake.repo, vice, leader, clubId, now),
       () => createClubRole(fake.repo, vice, leader, clubId, { ...treasurer, name: "Khác" }, now),
       () => updateClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, treasurer, now),
       () => deactivateClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, now),
@@ -381,5 +384,44 @@ describe("resolveClubPermissions with the default members role", () => {
     }
     expect(resolveClubPermissions(snapshot({ positions: [treasurer], assignments: [{ ...base,
       effectiveFrom: at("2026-09-01T00:00:00Z") }] }), now)).toEqual(["club.expense.record"]);
+  });
+});
+
+describe("read-only club role directory", () => {
+  function memberAccess(state = "Active", requestedClub = clubId): ClubAccessRepository {
+    return { findSnapshot: async () => ({ clubId: requestedClub, clubName: "Club", clubState: "Active",
+      membership: { id: m.active, clubId: requestedClub, state }, terms: [], positions: [], assignments: [], isApprovedFounder: false }) };
+  }
+  it("allows ordinary current members, returns only role definitions, and includes actual leader permissions", async () => {
+    const fake = fakeRepo();
+    for (const state of ["Active", "Inactive"]) {
+      const directory = await getClubRoleDirectory(fake.repo, memberAccess(state), leader, clubId, now);
+      expect(Object.keys(directory).sort()).toEqual(["clubId", "roles"]);
+      expect(directory.roles).toHaveLength(3);
+      expect(directory.roles.find((role) => role.isLeaderRole)?.permissionCodes)
+        .toEqual([...GRANTABLE_CLUB_PERMISSIONS, ...LEADER_ONLY_CLUB_PERMISSIONS]);
+      expect(directory.roles.find((role) => role.id === ids.vice)?.permissionCodes).toEqual(["club.event.manage"]);
+      for (const role of directory.roles) {
+        expect(role).not.toHaveProperty("holders");
+        expect(role).not.toHaveProperty("members");
+      }
+    }
+    await expect(createClubRole(fake.repo, memberAccess(), leader, clubId, treasurer, now))
+      .rejects.toMatchObject({ kind: "forbidden" });
+    await expect(getClubRoles(fake.repo, memberAccess(), leader, clubId, now)).resolves.toMatchObject({ members: [], versions: [] });
+  });
+  it("denies outsiders, past members, cross-club access and locked accounts", async () => {
+    const fake = fakeRepo();
+    for (const state of ["Left", "Banned"]) {
+      await expect(getClubRoleDirectory(fake.repo, memberAccess(state), leader, clubId, now))
+        .rejects.toMatchObject({ kind: "forbidden" });
+    }
+    await expect(getClubRoleDirectory(fake.repo, { findSnapshot: async () => null }, leader, clubId, now))
+      .rejects.toMatchObject({ kind: "forbidden" });
+    await expect(getClubRoleDirectory(fake.repo, memberAccess("Active", "f".repeat(24)), leader, clubId, now))
+      .rejects.toMatchObject({ kind: "forbidden" });
+    await expect(getClubRoleDirectory(fake.repo, memberAccess(), null, clubId, now)).rejects.toMatchObject({ kind: "unauthorized" });
+    await expect(getClubRoleDirectory(fake.repo, memberAccess(), { ...leader, accountState: "Locked" }, clubId, now))
+      .rejects.toMatchObject({ kind: "locked" });
   });
 });

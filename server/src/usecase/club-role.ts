@@ -1,4 +1,4 @@
-import { GRANTABLE_CLUB_PERMISSIONS, type ClubAccessRepository } from "../domain/access.js";
+import { LEADER_ONLY_CLUB_PERMISSIONS, GRANTABLE_CLUB_PERMISSIONS, resolveClubPermissions, type ClubAccessRepository } from "../domain/access.js";
 import {
   assertClubRoleAssignable,
   assertClubRoleDeactivatable,
@@ -12,7 +12,7 @@ import {
   type ClubRoleRepository,
 } from "../domain/club-role.js";
 import { DomainError } from "../domain/errors.js";
-import { assertClubAccess, type AccessActor } from "./access.js";
+import { assertClubSettingsRead, assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 const editableClubStates = new Set(["Active", "Pending Setup"]);
@@ -58,7 +58,12 @@ function withCatalog(overview: ClubRoleOverview) {
 
 export async function getClubRoles(repo: ClubRoleRepository, access: ClubAccessRepository,
   actor: AccessActor | null, clubId: string, now = new Date()) {
-  return withCatalog((await load(repo, access, actor, clubId, now)).overview);
+  const snapshot = await assertClubSettingsRead(access, actor, id(clubId, "club id"), now);
+  const overview = await repo.overview(clubId, now);
+  if (!overview) throw new DomainError("club not found", "not_found");
+  if (resolveClubPermissions(snapshot, now).includes("club.role.manage")) return withCatalog(overview);
+  return withCatalog({ ...overview, members: [], versions: [],
+    roles: overview.roles.map((role) => ({ ...role, holders: [] })) });
 }
 
 export async function createClubRole(repo: ClubRoleRepository, access: ClubAccessRepository,
@@ -114,4 +119,21 @@ export async function revokeClubRole(repo: ClubRoleRepository, access: ClubAcces
   }
   await repo.revoke(clubId, role.id, id(assignmentId, "assignment id"), actorId, now);
   return result(repo, clubId, now);
+}
+
+export async function getClubRoleDirectory(repo: ClubRoleRepository, access: ClubAccessRepository,
+  actor: AccessActor | null, clubId: string, now = new Date()) {
+  if (!actor) throw new DomainError("authentication required", "unauthorized");
+  if (actor.accountState === "Locked") throw new DomainError("account locked", "locked");
+  const snapshot = await access.findSnapshot(id(actor.id, "user id"), id(clubId, "club id"));
+  if (!snapshot || snapshot.membership?.clubId !== clubId || !["Active", "Inactive"].includes(snapshot.membership.state)) {
+    throw new DomainError("role directory is only available to current club members", "forbidden");
+  }
+  const overview = await repo.overview(clubId, now);
+  if (!overview) throw new DomainError("club not found", "not_found");
+  return { clubId, roles: overview.roles.filter((role) => role.isActive).map((role) => ({
+    id: role.id, code: role.code, name: role.name, ...(role.unit ? { unit: role.unit } : {}),
+    isLeaderRole: role.isLeaderRole, isDefaultMemberRole: role.isDefaultMemberRole,
+    permissionCodes: role.isLeaderRole ? [...GRANTABLE_CLUB_PERMISSIONS, ...LEADER_ONLY_CLUB_PERMISSIONS] : role.permissionCodes,
+  })) };
 }

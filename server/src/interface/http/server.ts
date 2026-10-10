@@ -1,3 +1,5 @@
+import type { FacilityBookingRepository } from "../../domain/facility-booking.js";
+import { facilityBookingRoutes } from "./facility-booking-routes.js";
 import express from "express";
 import { authRoutes, type AuthRouteDeps } from "./auth-routes.js";
 import { accountAdminRoutes } from "./account-admin-routes.js";
@@ -89,6 +91,7 @@ export function buildApp(deps: {
   applicationRepo?: ClubApplicationRepository;
   clubFieldRepo?: ClubFieldRepository;
   propertyRepo?: PropertyRepository;
+  facilityBookingRepo?: FacilityBookingRepository;
   evaluationSchemeRepo?: EvaluationSchemeRepository;
   exportRepo?: ExportRepository;
   exportWriter?: ExportFileWriter;
@@ -144,6 +147,11 @@ export function buildApp(deps: {
         repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo, policy: deps.policyRepo,
         authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
+    }
+    if (deps.facilityBookingRepo && deps.propertyRepo && deps.policyRepo) {
+      app.use("/api/v1", facilityBookingRoutes({ repo: deps.facilityBookingRepo,
+        properties: deps.propertyRepo, policy: deps.policyRepo, access: deps.auth.accessRepo,
+        auth: deps.auth.repo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.propertyRepo) {
       app.use("/api/v1", propertyRoutes({
@@ -274,6 +282,7 @@ export function buildApp(deps: {
   const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
   const hasClubProfiles = Boolean(hasPolicy && deps.clubProfileRepo);
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
+  const hasBookings = Boolean(deps.auth && deps.facilityBookingRepo && deps.propertyRepo && deps.policyRepo);
   const hasProperties = Boolean(hasAdmin && deps.propertyRepo);
   const hasEvaluationSchemes = Boolean(hasPolicy && deps.evaluationSchemeRepo);
   const hasExports = Boolean(hasPolicy && deps.exportRepo && deps.exportWriter);
@@ -299,6 +308,9 @@ export function buildApp(deps: {
       if (path.startsWith("/auth/")) return hasAdmin;
       if (path.startsWith("/admin/policies")) return hasPolicy;
       if (path.startsWith("/admin/club-fields")) return hasClubFields;
+      if (path === "/booking-slots" || path.startsWith("/admin/bookings") || path.includes("/booking-properties")
+        || path.includes("/booking-events")
+        || path.startsWith("/clubs/{clubId}/bookings") || path.endsWith("/booking-conflicts")) return hasBookings;
       if (path.startsWith("/admin/properties")) return hasProperties;
       if (path.startsWith("/admin/evaluation-schemes")) return hasEvaluationSchemes;
       if (path.startsWith("/admin/evaluations")) return hasEvaluations;

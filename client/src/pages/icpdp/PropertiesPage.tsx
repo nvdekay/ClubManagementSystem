@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProperties, usePropertyAction } from "@/hooks/useProperties";
 import { PropertyRequestError, type Property, type PropertyDetails, type PropertyType } from "@/services/properties";
 
+import { PropertyBookingConflicts } from "./PropertyBookingConflicts";
 import { PropertyEditor, dayKeys } from "./PropertyEditor";
 
 export function PropertiesPage() {
@@ -126,6 +127,7 @@ export function PropertiesPage() {
                               onClick={() => void run(property, "delete")}>{t("properties.delete")}</AppButton>
                           </div>
                         </div>
+                        {!!property.blackouts.length && <PropertyBookingConflicts propertyId={property.id} blackoutKey={JSON.stringify(property.blackouts)} />}
                         {rowError?.id === property.id && <p role="alert" className="mt-3 text-sm text-danger-app">
                           {rowError.text}</p>}
                       </article>}

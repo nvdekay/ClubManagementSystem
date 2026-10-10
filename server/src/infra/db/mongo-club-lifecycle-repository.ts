@@ -1,3 +1,4 @@
+import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import {
@@ -98,9 +99,9 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         { title: event.title, reason, source }, now);
       }
     }
-    const bookings = await m.propertyBookings!.updateMany({ clubId, ...bookingFilter },
-      { $set: { state: "Cancelled", cancelReason: reason, cancelledAt: now, releasedBy: source } }, { session });
-    return { cancelledEvents: eventIds.length, cancelledRegistrations, cancelledBookings: bookings.modifiedCount };
+    const cancelledBookings = await releaseFacilityBookingsInSession(session, { clubId, ...bookingFilter },
+      source, reason, now, "Cancelled");
+    return { cancelledEvents: eventIds.length, cancelledRegistrations, cancelledBookings };
   }
 
   return {
@@ -231,20 +232,17 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           if (changed.modifiedCount !== 1) return;
           // FR-10: close what is still open and revoke management rights.
           const members = await memberIds(id, session);
-          const [terms, assignments, bookings, campaigns] = await Promise.all([
-            m.clubTerms!.updateMany({ clubId: id, state: { $in: ["Active", "Planned"] } },
-              { $set: { state: "Closed" } }, { session }),
-            m.clubPositionAssignments!.updateMany({ clubId: id, effectiveTo: null },
-              { $set: { effectiveTo: now } }, { session }),
-            m.propertyBookings!.updateMany({ clubId: id, state: { $in: undecidedBookingStates } },
-              { $set: { state: "Cancelled", cancelReason: "Club dissolved", cancelledAt: now, releasedBy: "DISSOLUTION" } },
-              { session }),
-            m.recruitmentCampaigns!.updateMany({ clubId: id, state: { $in: [...openCampaignStates, "Draft"] } },
-              { $set: { state: "Cancelled" } }, { session }),
-          ]);
+          const terms = await m.clubTerms!.updateMany({ clubId: id, state: { $in: ["Active", "Planned"] } },
+            { $set: { state: "Closed" } }, { session });
+          const assignments = await m.clubPositionAssignments!.updateMany({ clubId: id, effectiveTo: null },
+            { $set: { effectiveTo: now } }, { session });
+          const bookings = await releaseFacilityBookingsInSession(session,
+            { clubId: id, state: { $in: undecidedBookingStates } }, "DISSOLUTION", "Club dissolved", now, "Cancelled");
+          const campaigns = await m.recruitmentCampaigns!.updateMany({ clubId: id, state: { $in: [...openCampaignStates, "Draft"] } },
+            { $set: { state: "Cancelled" } }, { session });
           await audit(session, id, "CLUB_DISSOLVED", null, { state: "Dissolving" }, { state: "Dissolved",
             closedTerms: terms.modifiedCount, endedAssignments: assignments.modifiedCount,
-            cancelledBookings: bookings.modifiedCount, cancelledCampaigns: campaigns.modifiedCount }, undefined, now, randomUUID());
+            cancelledBookings: bookings, cancelledCampaigns: campaigns.modifiedCount }, undefined, now, randomUUID());
           await notify(session, members, "CLUB_DISSOLVED", "Club", id, {}, now);
           finished.push(String(id));
         });

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  assignClubRole, createClubRole, deactivateClubRole, fetchClubRoles, revokeClubRole, updateClubRole,
+  fetchClubRoleDirectory, assignClubRole, createClubRole, deactivateClubRole, fetchClubRoles, revokeClubRole, updateClubRole,
   type ClubRoleAssignmentInput, type ClubRoleInput, type ClubRoleOverview,
 } from "@/services/clubRoles";
 
@@ -38,6 +38,12 @@ export function useClubRoleAction() {
     onSuccess: async (overview, action) => {
       await queryClient.cancelQueries({ queryKey: clubRolesKey(action.clubId) });
       queryClient.setQueryData(clubRolesKey(action.clubId), overview);
+      await queryClient.invalidateQueries({ queryKey: [...clubRolesKeyRoot, "directory", action.clubId] });
     },
   });
+}
+
+export function useClubRoleDirectory(clubId: string | undefined, enabled: boolean) {
+  return useQuery({ queryKey: [...clubRolesKeyRoot, "directory", clubId], enabled: enabled && Boolean(clubId), retry: false,
+    queryFn: ({ signal }) => fetchClubRoleDirectory(clubId!, signal) });
 }

@@ -49,11 +49,38 @@ function repository(overrides: Partial<ClubProfileRepository> = {}): ClubProfile
 }
 
 describe("UC09 club profile and structure use case", () => {
-  it("allows the approved founder only while access resolves club.profile.manage", async () => {
+  it("allows the approved founder to view settings while access resolves club.role.manage", async () => {
     await expect(getClubSettings(repository(), access(), noPolicy, actor, clubId, now))
       .resolves.toMatchObject({ profile: { state: "Pending Setup" }, departments: [] });
     await expect(getClubSettings(repository(), access(null), noPolicy, actor, clubId, now))
       .rejects.toMatchObject({ kind: "forbidden" });
+  });
+
+  it("rejects settings reads and profile or department writes from ordinary members", async () => {
+    for (const state of ["Active", "Inactive"]) {
+      const memberAccess = access({ ...snapshot(), isApprovedFounder: false,
+        membership: { id: actor.id, clubId, state } });
+      await expect(getClubSettings(repository(), memberAccess, noPolicy, actor, clubId, now))
+        .rejects.toMatchObject({ kind: "forbidden" });
+      const updateProfile = vi.fn(repository().updateProfile);
+      await expect(updateClubProfile(repository({ updateProfile }), memberAccess, noPolicy, actor,
+        clubId, { channels: [] }, now)).rejects.toMatchObject({ kind: "forbidden" });
+      expect(updateProfile).not.toHaveBeenCalled();
+      await expect(createClubDepartment(repository(), memberAccess, actor, clubId,
+        { name: "Events", sortOrder: 1 }, now)).rejects.toMatchObject({ kind: "forbidden" });
+    }
+  });
+
+  it("rejects outsiders, former members, banned members and locked accounts", async () => {
+    for (const state of ["Left", "Banned"]) {
+      await expect(getClubSettings(repository(), access({ ...snapshot(), isApprovedFounder: false,
+        membership: { id: actor.id, clubId, state } }), noPolicy, actor, clubId, now))
+        .rejects.toMatchObject({ kind: "forbidden" });
+    }
+    await expect(getClubSettings(repository(), access(), noPolicy, null, clubId, now))
+      .rejects.toMatchObject({ kind: "unauthorized" });
+    await expect(getClubSettings(repository(), access(), noPolicy,
+      { ...actor, accountState: "Locked" }, clubId, now)).rejects.toMatchObject({ kind: "locked" });
   });
 
   it("normalizes editable fields without accepting institutional fields", async () => {
@@ -97,5 +124,18 @@ describe("UC09 club profile and structure use case", () => {
     await expect(createClubDepartment(repository({ createDepartment }), access(), actor, clubId,
       { name: " ", sortOrder: -1 }, now)).rejects.toMatchObject({ kind: "validation" });
     expect(createDepartment).not.toHaveBeenCalled();
+  });
+});
+
+describe("club settings visibility", () => {
+  it("denies settings to an ordinary member even with delegated profile permissions", async () => {
+    const member: ClubAccessSnapshot = { ...snapshot(), clubState: "Active", isApprovedFounder: false,
+      membership: { id: "membership", clubId, state: "Active" },
+      positions: [{ id: "default", clubId, isActive: true, isLeaderRole: false, isDefaultMemberRole: true,
+        permissionCodes: ["club.profile.manage"] }] };
+    const findProfile = vi.fn(repository().findProfile);
+    await expect(getClubSettings(repository({ findProfile }), access(member), noPolicy, actor, clubId, now))
+      .rejects.toMatchObject({ kind: "forbidden" });
+    expect(findProfile).not.toHaveBeenCalled();
   });
 });

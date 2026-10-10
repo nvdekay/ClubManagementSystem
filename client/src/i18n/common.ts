@@ -1,4 +1,5 @@
 const en = {
+  navBookings: "Facility bookings",
   darkModeLabel: "Dark mode",
   myWorkspace: "My workspace",
   languageLabel: "Vietnamese language",
@@ -26,6 +27,7 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
+  navBookings: "Đặt cơ sở vật chất",
   darkModeLabel: "Chế độ tối",
   myWorkspace: "Không gian làm việc",
   languageLabel: "Tiếng Việt",

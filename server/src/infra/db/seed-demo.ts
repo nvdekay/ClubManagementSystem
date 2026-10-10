@@ -5,6 +5,7 @@
 import { crc32, deflateSync } from "node:zlib";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
+import { BOOKING_SLOTS } from "../../domain/facility-booking.js";
 import type { FounderRole } from "../../domain/club-application.js";
 import { DEFAULT_FORM_REQUIREMENTS, type PolicySettings } from "../../domain/policy.js";
 import type { AccessActor } from "../../usecase/access.js";
@@ -17,6 +18,8 @@ import { createPolicyVersion } from "../../usecase/policy.js";
 import { createRecruitmentCampaignDraft, publishRecruitmentCampaign } from "../../usecase/recruitment-campaign.js";
 import { reviewRecruitmentApplications } from "../../usecase/recruitment-review.js";
 import { recordCandidateEvaluation } from "../../usecase/candidate-evaluation.js";
+import { createProperty, updateProperty } from "../../usecase/property.js";
+import { reserveRoom } from "../../usecase/facility-booking.js";
 import {
   createRecruitmentApplicationDraft,
   saveRecruitmentApplicationDraft,
@@ -43,6 +46,8 @@ import { mongoRecruitmentApplicationRepository } from "./mongo-recruitment-appli
 import { mongoRecruitmentCampaignRepository } from "./mongo-recruitment-campaign-repository.js";
 import { mongoCandidateEvaluationRepository } from "./mongo-candidate-evaluation-repository.js";
 import { mongoStudentFeedbackRepository } from "./mongo-student-feedback-repository.js";
+import { mongoPropertyRepository } from "./mongo-property-repository.js";
+import { mongoFacilityBookingRepository, releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
@@ -691,9 +696,57 @@ try {
       title: "Chuyển giao nhiệm kỳ — FPTU Data Science Club", state: "Open", openedAt: at(-1 * DAY) });
   }
 
+  // Campus rooms and immediate reservations with the current club leader responsible.
+  const properties = mongoPropertyRepository();
+  const rooms = [];
+  const catalog = await properties.list();
+  // Room numbers and capacities are illustrative demo data, not an official inventory.
+  const roomNames = ["DE312", "DE222", "DE223", ...["AL", "BE", "GA", "DE", "EP"].flatMap((prefix) =>
+    ["101", "102", "201", "202", "301", "302"].map((number) => `${prefix}${number}`))].filter((name) =>
+      !["DE101", "DE102", "DE302"].includes(name));
+  const buildings: Record<string, string> = { AL: "Alpha", BE: "Beta", GA: "Gamma", DE: "Delta", EP: "Epsilon" };
+  for (const [index, name] of roomNames.entries()) {
+    let room = catalog.find((item) => item.name === name)
+      ?? (index === 0 ? catalog.find((item) => item.name === "Demo club practice room") : undefined);
+    const details = { name, location: `${buildings[name.slice(0, 2)]} building`, capacity: 40,
+      equipment: ["Projector", "Sound system"], blackouts: [],
+      bookableHours: Array.from({ length: 7 }, (_, day) => ({ day: day + 1, open: "07:30", close: "17:40" })) };
+    if (!room) room = await createProperty(properties, auth, actor(owner), { type: "ROOM", ...details }, now);
+    else if (room.name === "Demo club practice room") room = await updateProperty(properties, auth, actor(owner), room.id, details, now);
+    else if (room.location === `Delta building, floor ${name[2]}`) {
+      room = await updateProperty(properties, auth, actor(owner), room.id, { ...room, location: details.location }, now);
+    }
+    rooms.push(room);
+  }
+  // Retire only the previous demo requests; keep their immutable versions and decisions.
+  await mongoose.connection.transaction(async (session) => {
+    await releaseFacilityBookingsInSession(session, { clubId: new Types.ObjectId(hebe),
+      purpose: { $in: ["Requested", "Draft", "Approved", "Revision Requested"].flatMap((state) =>
+        [`Demo booking: ${state}`, `Demo campus slot booking: ${state}`]) },
+      state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } },
+    "demo-seed", "Replaced by campus slot demo data", now);
+  });
+  const bookingRepo = mongoFacilityBookingRepository();
+  const bookingDeps = { repo: bookingRepo, properties, access, auth, policy };
+  const bookingClub = await bookingRepo.club(hebe);
+  const bookingPolicy = await policy.findEffective(now);
+  if (bookingClub?.state === "Active" && bookingPolicy) {
+    for (const [index, slot] of BOOKING_SLOTS.entries()) {
+      const practiceRoom = rooms[index]!;
+      if (!practiceRoom.isActive) continue;
+      if ((await bookingRepo.list(hebe)).some((item) => item.purpose === "Club room reservation"
+        && item.propertyId === practiceRoom.id && item.state === "Approved" && item.startAt > now)) continue;
+      const day = new Date(now.getTime() + (3 + index) * DAY + 7 * HOUR).toISOString().slice(0, 10);
+      const startAt = new Date(`${day}T${slot.start}:00+07:00`);
+      const endAt = new Date(`${day}T${slot.end}:00+07:00`);
+      if (!bookingPolicy.academicCalendar.some((semester) => startAt >= semester.startAt && endAt <= semester.endAt)) continue;
+      await reserveRoom(bookingDeps, actor(owner), hebe, { propertyId: practiceRoom.id, startAt, endAt }, now);
+    }
+  }
+
   const counts = await Promise.all(["users", "policyVersions", "clubMemberships", "recruitmentApplications",
     "clubApplications", "boardNominations", "events", "eventRegistrations", "attendances", "eventFeedbacks",
-    "complaints", "transitionPlans"].map(async (name) => `${name}=${await db.collection(name).countDocuments()}`));
+    "complaints", "transitionPlans", "properties", "propertyBookings"].map(async (name) => `${name}=${await db.collection(name).countDocuments()}`));
   console.log(`demo data ready (owner ${ownerEmail}): ${counts.join(", ")}`);
 } catch (error) {
   console.error("demo seed failed:", error instanceof Error ? error.message : error);

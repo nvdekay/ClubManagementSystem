@@ -19,7 +19,7 @@ export function ClubHomePage() {
       label: t("boardNominations.title"), description: t("boardNominations.description") }] : []),
     ...(can("club.recruitment.manage") ? [{ href: `${base}/recruitment`, icon: "megaphone" as const,
       label: t("recruitmentCampaigns.title"), description: t("recruitmentCampaigns.description") }] : []),
-    ...(can("club.profile.manage") ? [{ href: `${base}/settings`, icon: "settings" as const,
+    ...(can("club.role.manage") ? [{ href: `${base}/settings`, icon: "settings" as const,
       label: t("clubSettings.title"), description: t("clubSettings.description") }] : []),
     { href: `/clubs/${encodeURIComponent(clubId ?? "")}`, icon: "globe", label: t("auth.clubPublicPage"), description: t("auth.clubPublicPageDescription") },
     { href: "/events", icon: "calendar", label: t("discovery.navEvents"), description: t("auth.clubEventsDescription") },

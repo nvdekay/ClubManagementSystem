@@ -1,9 +1,13 @@
 # pages/club/
 
+`ClubBookingsPage` dùng `BookingWorkspace`: chọn ngày/slot/phòng, đặt ngay và tự lấy chủ nhiệm
+chịu trách nhiệm. Phòng trùng lịch bị khoá; huỷ đặt giải phóng slot. API review cũ giữ cho lịch sử.
+Cần `club.booking.manage`.
+
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi
 đối chiếu workspace và quyền hiện hành từ `/auth/me`.
 
-`ClubSettingsPage` triển khai UC09: chỉ workspace có `club.profile.manage` mới đọc/sửa hồ sơ
+`ClubSettingsPage` triển khai UC09: chỉ workspace có `club.role.manage` mới mở màn hồ sơ
 vận hành và cơ cấu ban/bộ phận; các trường định danh do ICPDP quản lý chỉ được hiển thị. Tab
 thứ hai (`?tab=roles`, chỉ hiện với `club.role.manage`) là `ClubRolesPanel` — UC23: role,
 permission, gán/thu hồi người giữ và so sánh các phiên bản cơ cấu. Panel có hai mục con
@@ -31,7 +35,11 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 `ClubFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho CLB, cần `club.feedback.view`;
 người gửi ẩn danh không bao giờ được hiển thị.
 
-`ClubMembersPage` (UC21) cho người có `club.member.manage`: các yêu cầu rời CLB (UC22) đang chờ nằm
+`ClubMembersPage` mở cho workspace CLB; `ClubMemberRoles` hiển thị danh mục role/permission
+chỉ đọc qua API riêng, không có holder/email/version. Trang tách thành tab Thành viên và
+Vai trò & quyền; danh sách vai trò bên trái, nhóm quyền được cấp của vai trò đang chọn bên phải.
+Tab được lưu trong query `tab`; thành viên không có quyền quản trị chỉ thấy tab Vai trò & quyền. Chỉ người có `club.member.manage` thấy bảng quản trị:
+ các yêu cầu rời CLB (UC22) đang chờ nằm
 ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
 thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong
 `ClubMemberStateDialog`; lịch sử trạng thái mở trong một AppDialog. `exportClubMembers.ts` ghi các

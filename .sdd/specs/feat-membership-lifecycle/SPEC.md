@@ -31,3 +31,7 @@ Sau khi UC20 tiếp nhận thành viên, CLB cần quản lý trạng thái tư 
 
 ## Changelog
 - v1.0.0 (2026-10-09) — người dùng xác nhận sửa partial index và tạm chặn mọi ngày hồi tố; triển khai luồng UC21–UC22.
+
+### Điều chỉnh UX và quyền đọc thiết lập
+
+UI vô hiệu hoá xử lý yêu cầu rời CLB chưa đến requestedEffectiveDate và hiển thị lý do.

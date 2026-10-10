@@ -244,25 +244,32 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ## Vòng 7 — Cơ sở vật chất (UC44–UC47)
 
+Đã triển khai Wave 2 phía CLB/ICPDP ngày 2026-10-10; xem
+[WAVE_2_BOOKING.md](WAVE_2_BOOKING.md) và SPEC `feat-facility-booking`.
+Các mục gắn UC25/UC28 giữ mở tới khi Wave 3 nối luồng sự kiện.
+
 ### Database
-- [ ] **DB-7.1** Các collection `properties`, `propertyBookings`. → SRS §7.1
+- [x] **DB-7.1** Các collection `properties`, `propertyBookings`. → SRS §7.1
 - [ ] **DB-7.2** Index `propertyBookings(propertyId, startAt, endAt)` — phía đọc xung đột và chốt chặn lúc phê duyệt. → BR15, BR33
-- [ ] **DB-7.3** `findOneAndUpdate` có điều kiện lúc phê duyệt để hai booking chồng lấn không thể cùng trở thành Approved. → DAT-04, BR33
+- [x] **DB-7.3** Transaction ghi khoá property và update trạng thái/version có điều kiện lúc phê duyệt để hai booking chồng lấn không thể cùng trở thành Approved. → DAT-04, BR33
 - [ ] **DB-7.4** Index `propertyBookings(state, startAt)` cho scheduler. → SCH-02
 
 ### Backend
-- [ ] **BE-7.1** UC44 danh mục kèm khung giờ được đặt, giai đoạn khoá, ngừng kích hoạt, và chốt chặn xoá. → FR-UC44-01…08, BR41
+- [x] **BE-7.1** UC44 danh mục kèm khung giờ được đặt, giai đoạn khoá, ngừng kích hoạt, và chốt chặn xoá. → FR-UC44-01…08, BR41
 - [ ] **BE-7.2** UC45 yêu cầu kèm hiển thị tình trạng trống, đánh giá BR15, đính kèm vào đề xuất, nộp lại. → FR-UC45-01…07
-- [ ] **BE-7.3** UC45 các đường từ chối: khung giờ đã có người, giai đoạn khoá, cảnh báo sức chứa, CLB bị tạm ngừng, sau khi có quyết định giải thể. → FR-UC45-08…12, BR33, BR34, BR45
-- [ ] **BE-7.4** UC46 quyết định và khoá khung giờ; đề xuất khung giờ thay thế; xử lý tình huống tranh chấp với một lần duyệt song song. → FR-UC46-01…08
+- [x] **BE-7.3** UC45 các đường từ chối: khung giờ đã có người, giai đoạn khoá, cảnh báo sức chứa, CLB bị tạm ngừng, sau khi có quyết định giải thể. → FR-UC45-08…12, BR33, BR34, BR45
+- [x] **BE-7.4** UC46 quyết định và khoá khung giờ; đề xuất khung giờ thay thế; xử lý tình huống tranh chấp với một lần duyệt song song. → FR-UC46-01…08
 - [ ] **BE-7.5** UC47 huỷ / trả chỗ; tự động giải phóng từ UC28; huỷ sát giờ là tín hiệu tuân thủ. → FR-UC47-01…07, BR35
-- [ ] **BE-7.6** Scheduler `Approved → In Use → Completed`. → SCH-02
+- [x] **BE-7.6** Scheduler `Approved → In Use → Completed`. → SCH-02
+
+UC45 Draft/nộp/nộp lại và API gắn eventId đã có; phần đính kèm từ màn UC25 còn mở ở BE-7.2.
+UC47 huỷ và hàm release dùng chung đã có; cascade UC28 còn mở ở BE-7.5.
 
 ### Frontend
-- [ ] **FE-7.1** Màn quản trị danh mục cơ sở vật chất kèm trình sửa khung giờ và giai đoạn khoá. → UC44
-- [ ] **FE-7.2** Màn yêu cầu booking kèm lịch hiển thị tình trạng trống và banner xung đột. → UC45
-- [ ] **FE-7.3** Hàng đợi booking của ICPDP và màn quyết định. → UC46
-- [ ] **FE-7.4** Màn booking của CLB kèm huỷ / trả chỗ và cảnh báo thời hạn báo trước. → UC47
+- [x] **FE-7.1** Màn quản trị danh mục cơ sở vật chất kèm trình sửa khung giờ và giai đoạn khoá. → UC44
+- [x] **FE-7.2** Màn yêu cầu booking kèm lịch hiển thị tình trạng trống và banner xung đột. → UC45
+- [x] **FE-7.3** Hàng đợi booking của ICPDP và màn quyết định. → UC46
+- [x] **FE-7.4** Màn booking của CLB kèm huỷ Requested/Approved, giải phóng lịch và cảnh báo huỷ muộn. Trả sớm In Use chưa thuộc phạm vi Wave 2. → UC47
 
 ---
 
@@ -384,7 +391,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 - [ ] **FE-R.2** Rà soát responsive ở 375 / 768 / 1024 / 1440 px; bảng chuyển thành thẻ xếp chồng dưới `md`. → NFR-USE-04
 - [ ] **FE-R.3** Rà soát ngôn ngữ `vi`: không nhãn nào bị cắt, không có chiều rộng cố định quanh giá trị đã dịch. → NFR-I18N-02
 - [ ] **FE-R.4** Hộp thoại xác nhận trên mọi hành động phá huỷ liệt kê ở SA-01.
-- [ ] **FE-R.5** Trạng thái rỗng và trạng thái tải trên mọi danh sách; không hiển thị trạng thái rỗng khi lần tải đầu còn chạy. → UI-05
+- [ ] **FE-R.5** Thông báo khi danh sách chưa có mục nào và trạng thái tải trên mọi danh sách; không thông báo chưa có mục nào khi lần tải đầu còn chạy. → UI-05
 
 ---
 

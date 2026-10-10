@@ -1,4 +1,5 @@
 const en = {
+  viewOnly: "You can view these settings. Editing requires management permissions.",
   title: "Club setup", eyebrow: "Profile & structure",
   description: "Complete the club's operating profile and organize its internal departments.",
   back: "Back to club workspace", profile: "Operating profile", structure: "Internal structure",
@@ -15,7 +16,7 @@ const en = {
   departmentDescription: "Department description", sortOrder: "Display order",
   saveDepartment: "Save department", cancel: "Cancel", edit: "Edit", deactivate: "Deactivate",
   inactive: "Inactive", active: "Active", deactivateConfirm: "Deactivate this department?",
-  permissionDenied: "You do not have permission to manage this club profile.",
+  permissionDenied: "Only the club leader or an authorized founder can open club settings.",
   signIn: "Sign in to manage this club profile.", signInLink: "Sign in and continue",
   loadError: "Could not load club settings.", actionError: "Could not save this change.",
   success: "Changes saved.", retry: "Retry", pendingSetup: "Pending setup",
@@ -25,6 +26,7 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
+  viewOnly: "Có thể xem thiết lập. Cần quyền quản lý để chỉnh sửa.",
   title: "Thiết lập CLB", eyebrow: "Hồ sơ & cơ cấu",
   description: "Hoàn thiện hồ sơ vận hành và tổ chức các ban, bộ phận nội bộ của CLB.",
   back: "Về không gian CLB", profile: "Hồ sơ vận hành", structure: "Cơ cấu nội bộ",
@@ -41,7 +43,7 @@ const vi: Record<keyof typeof en, string> = {
   departmentDescription: "Mô tả ban/bộ phận", sortOrder: "Thứ tự hiển thị",
   saveDepartment: "Lưu bộ phận", cancel: "Huỷ", edit: "Sửa", deactivate: "Ngừng dùng",
   inactive: "Đã ngừng dùng", active: "Đang dùng", deactivateConfirm: "Ngừng dùng ban/bộ phận này?",
-  permissionDenied: "Bạn không có quyền quản lý hồ sơ CLB này.",
+  permissionDenied: "Chỉ chủ nhiệm CLB hoặc người sáng lập được cấp quyền mới có thể mở phần thiết lập.",
   signIn: "Đăng nhập để quản lý hồ sơ CLB.", signInLink: "Đăng nhập và tiếp tục",
   loadError: "Không tải được thiết lập CLB.", actionError: "Không thể lưu thay đổi.",
   success: "Đã lưu thay đổi.", retry: "Thử lại", pendingSetup: "Đang thiết lập",

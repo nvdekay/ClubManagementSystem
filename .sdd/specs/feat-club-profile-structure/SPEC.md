@@ -43,3 +43,7 @@ thay đổi hoặc xuất lại sơ đồ.
 ## Changelog
 - v0.2.0 (2026-10-08) — hoàn tất schema, backend, API, UI và automated tests; còn visual QA.
 - v0.1.0 (2026-10-08) — phân tích UC09 và ghi nhận khoảng trống `clubDepartments`.
+
+### Điều chỉnh UX và quyền đọc thiết lập
+
+Thành viên Active/Inactive được xem thiết lập; mutation vẫn cần club.profile.manage, có test quyền đọc/ghi.
