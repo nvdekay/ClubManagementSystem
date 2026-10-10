@@ -29,6 +29,7 @@ import { mongoClubApplicationReviewRepository } from "./mongo-club-application-r
 import { mongoEventFeedbackRepository } from "./mongo-event-feedback-repository.js";
 import { mongoBudgetDisbursementRepository } from "./mongo-budget-disbursement-repository.js";
 import { mongoViolationRepository } from "./mongo-violation-repository.js";
+import { mongoSchoolEventRepository } from "./mongo-school-event-repository.js";
 import { mongoEventRegistrationRepository } from "./mongo-event-registration-repository.js";
 import { mongoMembershipRepository } from "./mongo-membership-repository.js";
 import { mongoPolicyRepository } from "./mongo-policy-repository.js";
@@ -572,6 +573,30 @@ try {
     await cases.apply(late.id, String(owner), { type: "investigate" }, at(-5 * DAY));
     await cases.apply(late.id, String(owner), { type: "requestResponse",
       message: "Đề nghị CLB giải trình lý do huỷ phòng sát giờ và cam kết không tái diễn.", dueAt: at(2 * DAY) }, at(-5 * DAY));
+  }
+
+  // ── School-wide events (UC53): one still collecting club replies, one already open to students ──
+  if (!(await ucmsModels.events!.exists({ organizerType: "ICPDP" }))) {
+    const schoolEvents = mongoSchoolEventRepository();
+    const fairStart = new Date(Math.floor(at(18 * DAY).getTime() / HOUR) * HOUR);
+    const fair = await schoolEvents.create({ title: "Ngày hội Câu lạc bộ Fall 2026",
+      objective: "Giới thiệu các CLB tới tân sinh viên K21, mỗi CLB một gian hàng và một tiết mục ngắn.",
+      coordination: "Mỗi CLB đăng ký 1 gian hàng (bàn + 2 ghế), cử 3–5 thành viên trực gian hàng, gửi tiết mục biểu diễn tối đa 5 phút.",
+      startAt: fairStart, endAt: new Date(fairStart.getTime() + 8 * HOUR), venueText: "Sân trung tâm, Đại học FPT Hà Nội",
+      capacity: 1500, semesterCode: "Fall 2026",
+      invitation: { clubIds: [], allActiveClubs: true, deadline: new Date(fairStart.getTime() - 4 * DAY) } }, String(owner), now);
+    // UC54 is the club side: HEBE has already accepted, as the club workspace would record it.
+    await ucmsModels.eventInvitations!.updateOne({ eventId: new Types.ObjectId(fair.detail.id), clubId: club("HEBE").id },
+      { $set: { status: "Accepted", respondedAt: now, respondedBy: owner, updatedAt: now,
+        responseDetails: { representative: "Trưởng ban truyền thông HEBE", members: 5, booth: true, performance: "Nhảy K-pop 4 phút" } } });
+    const trainingStart = new Date(Math.floor(at(8 * DAY).getTime() / HOUR) * HOUR);
+    const training = await schoolEvents.create({ title: "Tập huấn kỹ năng tổ chức sự kiện cho ban chủ nhiệm CLB",
+      objective: "Quy trình xin duyệt sự kiện, quản lý kinh phí và an toàn khi tổ chức hoạt động đông người.",
+      startAt: trainingStart, endAt: new Date(trainingStart.getTime() + 3 * HOUR), venueText: "Hội trường lớn, tòa Alpha",
+      capacity: 120, semesterCode: "Fall 2026",
+      invitation: { clubIds: [String(club("HEBE").id), String(club("EHC").id), String(club("FDS").id)], allActiveClubs: false,
+        deadline: new Date(trainingStart.getTime() - 3 * DAY) } }, String(owner), now);
+    await schoolEvents.publish(training.detail.id, String(owner), now);
   }
 
   // ── One-way student feedback (UC50) ────────────────────────────────────────────────────────

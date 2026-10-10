@@ -790,7 +790,7 @@ Table eventRegistrations {
   id objectId [pk]
   eventId objectId [not null]
   studentId objectId [not null]
-  clubId objectId [not null, note: 'Được denormalize cho các danh sách phía CLB (DAT-06).']
+  clubId objectId [note: 'Được denormalize cho các danh sách phía CLB (DAT-06). Null với sự kiện cấp trường do ICPDP tổ chức (UC53).']
   state registrationState [not null, default: 'Confirmed']
   waitlistPosition int [note: 'Thứ tự được giữ nguyên qua mọi thao tác (UC30 FR-06).']
   answers json
@@ -811,7 +811,7 @@ Table attendances {
   eventId objectId [not null]
   studentId objectId [not null]
   registrationId objectId [note: 'Null với khách vãng lai cho tới khi UC31 A2 tạo bản đăng ký.']
-  clubId objectId [not null]
+  clubId objectId [note: 'Null với sự kiện cấp trường (UC53).']
   checkedInAt datetime [not null]
   method attendanceMethod [not null]
   performedBy objectId [note: 'Ai đã thực hiện lần check-in thủ công (UC31 A1).']
@@ -1094,7 +1094,7 @@ Table eventFeedbacks {
   eventId objectId [not null]
   attendanceId objectId [not null, note: 'Biểu mẫu chỉ được hiển thị cho người gọi có một bản ghi điểm danh (UC48 FR-01).']
   studentId objectId [not null, note: 'Vẫn được giữ nội bộ kể cả khi gửi ẩn danh, chỉ để chống spam; không bao giờ để lộ cho CLB (UC48 A1, SEC-05).']
-  clubId objectId [not null, note: 'Được denormalize để bản tổng hợp phản hồi ở mức CLB chỉ tốn một truy vấn.']
+  clubId objectId [note: 'Được denormalize để bản tổng hợp phản hồi ở mức CLB chỉ tốn một truy vấn. Null với sự kiện cấp trường (UC53).']
   scores json [not null, note: 'Nhúng: [{ criterionCode, score }].']
   comment text
   isAnonymous bool [not null, default: false]

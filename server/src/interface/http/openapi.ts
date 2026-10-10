@@ -6,6 +6,7 @@ import { applicationReviewDecisionBody } from "./club-application-review-routes.
 import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { violationOpenBody, violationStepBody } from "./violation-routes.js";
+import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
@@ -194,6 +195,24 @@ const ViolationDetail = z.object({
   names: z.record(z.string(), z.string()),
   history: z.array(z.object({ action: z.string(), at: z.string(), actorName: z.string().optional(), reason: z.string().optional() })),
 });
+const ScheduleConflict = z.object({ kind: z.enum(["event", "booking"]), title: z.string(), startAt: z.string(), endAt: z.string() });
+const SchoolEventSummary = z.object({
+  id: z.string(), title: z.string(), startAt: z.string(), endAt: z.string(), venueText: z.string().optional(),
+  property: z.object({ id: z.string(), code: z.string(), name: z.string() }).optional(), capacity: z.number(),
+  state: z.string(), semesterCode: z.string(), publishedAt: z.string().optional(), confirmedRegistrationCount: z.number(),
+  counts: z.object({ invited: z.number(), pending: z.number(), accepted: z.number(), declined: z.number(),
+    expired: z.number(), withdrawn: z.number() }),
+});
+const SchoolEventDetail = SchoolEventSummary.extend({
+  objective: z.string().optional(), coordination: z.string().optional(),
+  conflictResult: z.enum(["No Conflict", "Warning"]), conflicts: z.array(ScheduleConflict),
+  checkInCode: z.string().optional(), registrationCloseAt: z.string().optional(),
+  invitations: z.array(z.object({ id: z.string(), clubId: z.string(), clubName: z.string(),
+    status: z.enum(["Pending", "Accepted", "Declined", "Expired", "Withdrawn"]), deadline: z.string(), invitedAt: z.string(),
+    respondedAt: z.string().optional(), responseNote: z.string().optional(), responseDetails: z.unknown().optional() })),
+});
+const InvitationOutcome = z.object({ invited: z.array(z.string()),
+  skipped: z.array(z.object({ clubId: z.string(), reason: z.enum(["notActive", "alreadyInvited"]) })) });
 const EventProposalQueueItem = z.object({ task: EventProposalTask, event: EventProposalSummary });
 const EventProposalDetail = EventProposalQueueItem.extend({
   versions: z.array(z.object({
@@ -306,12 +325,12 @@ const LeadershipTransition = z.object({
     actorId: z.string(), at: z.string() })),
 });
 const EventRegistration = z.object({ id: z.string(), eventId: z.string(), studentId: z.string(),
-  clubId: z.string(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(), checkInOpensAt: z.string(), checkInClosesAt: z.string(),
+  clubId: z.string().optional(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(), checkInOpensAt: z.string(), checkInClosesAt: z.string(),
   eventEndAt: z.string(), state: z.enum(["Confirmed", "Waitlisted", "Cancelled"]),
   waitlistPosition: z.number().int().optional(),
   answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
   createdAt: z.string(), cancelledAt: z.string().optional() });
-const EventRegistrationContext = z.object({ event: z.object({ id: z.string(), clubId: z.string(),
+const EventRegistrationContext = z.object({ event: z.object({ id: z.string(), clubId: z.string().optional(),
   clubName: z.string(), title: z.string(), state: z.string(), audienceScope: z.string(),
   startAt: z.string(), endAt: z.string(), registrationOpenAt: z.string().optional(),
   registrationCloseAt: z.string().optional(), capacity: z.number().int(),
@@ -321,7 +340,7 @@ formSchema: z.array(z.object({ key: z.string(), label: z.string(),
   options: z.array(z.string()).optional() })), isActiveClubMember: z.boolean(),
 registration: EventRegistration.nullable(), registrationOpen: z.boolean() });
 const Attendance = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
-  clubId: z.string(), clubName: z.string(), eventStartAt: z.string(), eventEndAt: z.string(),
+  clubId: z.string().optional(), clubName: z.string(), eventStartAt: z.string(), eventEndAt: z.string(),
   checkedInAt: z.string(), method: z.enum(["self", "manual", "walk-in"]), abnormalFlags: z.array(z.string()),
   feedbackOpensAt: z.string(), feedbackClosesAt: z.string().nullable() });
 const MyEventFeedback = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
@@ -365,7 +384,7 @@ const PublicCampaignDetail = PublicCampaign.extend({
   clubSuspended: z.boolean().optional(),
 });
 const PublicEvent = z.object({
-  id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(),
+  id: z.string(), clubId: z.string().optional(), clubName: z.string(), title: z.string(),
   startAt: z.string(), endAt: z.string(), venueText: z.string().optional(),
   objective: z.string().optional(), coverImageUrl: z.string().url().optional(),
   capacity: z.number(), state: z.string(), audienceScope: z.string(),
@@ -474,7 +493,7 @@ export const openApiDocument = createDocument({
         responses: {
           "200": { description: "Public event",
             content: { "application/json": { schema: envelope(z.object({
-              event: PublicEvent, club: z.object({ id: z.string(), name: z.string() }),
+              event: PublicEvent, club: z.object({ id: z.string(), name: z.string() }).nullable(),
             })) } } },
           "404": { description: "Event not public or not found",
             content: { "application/json": { schema: ApiError } } },
@@ -1166,6 +1185,70 @@ export const openApiDocument = createDocument({
           "200": { description: "Updated case", content: { "application/json": { schema: envelope(ViolationDetail) } } },
           "400": { description: "Missing reason, evidence, message or deadline", content: { "application/json": { schema: ApiError } } },
           "409": { description: "The step is not allowed in the current state", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events": {
+      get: {
+        summary: "List school-wide events organised by ICPDP with invitation counts (UC53, ICPDP Officer only)",
+        responses: {
+          "200": { description: "School events", content: { "application/json": { schema: envelope(z.array(SchoolEventSummary)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Create a school-wide event (Approved) and optionally invite clubs (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: schoolEventBody } } },
+        responses: {
+          "201": { description: "Created event and invitation outcome", content: { "application/json": {
+            schema: envelope(z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome })) } } },
+          "400": { description: "Invalid time, venue, capacity, semester or reply deadline", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events/conflicts": {
+      get: {
+        summary: "Approved events and bookings overlapping a room and time (BR15 warning)",
+        requestParams: { query: schoolEventConflictQuery },
+        responses: { "200": { description: "Overlaps", content: { "application/json": { schema: envelope(z.array(ScheduleConflict)) } } } },
+      },
+    },
+    "/admin/school-events/{id}": {
+      get: {
+        summary: "School event with conflicts, check-in code and every club invitation",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "School event", content: { "application/json": { schema: envelope(SchoolEventDetail) } } } },
+      },
+    },
+    "/admin/school-events/{id}/invitations": {
+      post: {
+        summary: "Invite more clubs, or re-invite withdrawn/expired ones (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: schoolEventInviteBody } } },
+        responses: {
+          "200": { description: "Updated event and invitation outcome", content: { "application/json": {
+            schema: envelope(z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome })) } } },
+          "409": { description: "The event already took place", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events/{id}/invitations/{invitationId}/withdraw": {
+      post: {
+        summary: "Withdraw a pending invitation before its deadline (requires CSRF token)",
+        requestParams: { path: z.object({ id: z.string(), invitationId: z.string() }) },
+        responses: {
+          "200": { description: "Updated event", content: { "application/json": { schema: envelope(SchoolEventDetail) } } },
+          "409": { description: "Not pending or past the deadline", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events/{id}/publish": {
+      post: {
+        summary: "Publish the event to students and open registration until it starts (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Published event", content: { "application/json": { schema: envelope(SchoolEventDetail) } } },
+          "409": { description: "Already published or already started", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

@@ -36,7 +36,7 @@ function mapClub(doc: Record<string, unknown>): PublicClub {
 }
 function mapEvent(doc: Record<string, unknown>): PublicEvent {
   return {
-    id: id(doc._id), clubId: id(doc.clubId), clubName: String(doc.clubName),
+    id: id(doc._id), ...(doc.clubId ? { clubId: id(doc.clubId) } : {}), clubName: String(doc.clubName ?? ""),
     title: String(doc.title), startAt: date(doc.startAt), endAt: date(doc.endAt),
     venueText: optionalString(doc.venueText), objective: optionalString(doc.objective),
     coverImageUrl: optionalString(doc.coverImageUrl), capacity: Number(doc.capacity),
@@ -208,7 +208,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
       };
       const text = search ? new RegExp(escapeRegex(search), "i") : null;
       const filter = {
-        clubId: { $in: activeClubs.map((club) => club._id) },
+        $or: [{ clubId: { $in: activeClubs.map((club) => club._id) } }, { organizerType: "ICPDP" }],
         audienceScope: "PUBLIC", publishedAt: { $exists: true, $ne: null },
         $and: [
           status === "all" ? { $or: Object.values(byStatus) } : byStatus[status],

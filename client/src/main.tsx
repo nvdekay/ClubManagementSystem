@@ -31,6 +31,7 @@ import { EventProposalQueuePage } from "./pages/icpdp/EventProposalQueuePage.js"
 import { EventProposalReviewPage } from "./pages/icpdp/EventProposalReviewPage.js";
 import { BudgetDetailPage, BudgetsPage } from "./pages/icpdp/BudgetsPage.js";
 import { ViolationDetailPage, ViolationsPage } from "./pages/icpdp/ViolationsPage.js";
+import { SchoolEventDetailPage, SchoolEventsPage } from "./pages/icpdp/SchoolEventsPage.js";
 import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
 import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
 import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
@@ -98,6 +99,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
             <Route path="workspace/violations" element={<ViolationsPage />} />
             <Route path="workspace/violations/:id" element={<ViolationDetailPage />} />
+            <Route path="workspace/school-events" element={<SchoolEventsPage />} />
+            <Route path="workspace/school-events/:id" element={<SchoolEventDetailPage />} />
             <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
             <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
             <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />

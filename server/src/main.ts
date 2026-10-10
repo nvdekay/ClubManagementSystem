@@ -20,6 +20,7 @@ import { startClubLifecycleJob } from "./interface/jobs/club-lifecycle-job.js";
 import { mongoEventProposalReviewRepository } from "./infra/db/mongo-event-proposal-review-repository.js";
 import { mongoBudgetDisbursementRepository } from "./infra/db/mongo-budget-disbursement-repository.js";
 import { mongoViolationRepository } from "./infra/db/mongo-violation-repository.js";
+import { mongoSchoolEventRepository } from "./infra/db/mongo-school-event-repository.js";
 import { startEventLifecycleJob } from "./interface/jobs/event-lifecycle-job.js";
 import { exportFileWriter } from "./infra/files/export-file-writer.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
@@ -64,6 +65,7 @@ const commonDeps = {
 };
 const clubLifecycleRepo = mongoClubLifecycleRepository();
 const eventProposalReviewRepo = mongoEventProposalReviewRepository();
+const schoolEventRepo = mongoSchoolEventRepository();
 const app = authConfig ? buildApp({
   ...commonDeps,
   adminRepo: mongoAccountAdminRepository(),
@@ -78,6 +80,7 @@ const app = authConfig ? buildApp({
   eventProposalReviewRepo,
   budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
   violationRepo: mongoViolationRepository(),
+  schoolEventRepo,
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),
@@ -108,7 +111,7 @@ const app = authConfig ? buildApp({
   },
 }) : buildApp(commonDeps);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
-const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo);
+const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo);
 const server = app.listen(config.PORT, () => {
   console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`);
 });

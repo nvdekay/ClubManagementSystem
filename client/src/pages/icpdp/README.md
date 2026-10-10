@@ -49,3 +49,8 @@ tiền và form ghi đúng một loại dòng tiền mà kinh phí đang nhận 
 CLB, nguồn phát hiện, mức độ, sự việc, sự kiện/kinh phí liên quan, chứng cứ) và `ViolationDetailPage`: chứng
 cứ, giải trình của CLB, quyết định, biện pháp khắc phục, lịch sử, và khung "Bước tiếp theo" chỉ hiện những bước
 hợp lệ ở trạng thái hiện tại.
+
+`SchoolEventsPage` (UC53) gồm `SchoolEventsPage` (danh sách sự kiện cấp trường kèm số CLB nhận lời/chưa trả
+lời, form tạo: thời gian, phòng trong danh mục hoặc nơi khác với cảnh báo trùng lịch BR15, số chỗ, CLB mời,
+hạn phản hồi) và `SchoolEventDetailPage`: danh sách lời mời (thu hồi lời mời đang chờ), mời thêm CLB, công bố
+cho sinh viên (mở đăng ký, sinh mã check-in).

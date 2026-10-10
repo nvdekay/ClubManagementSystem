@@ -31,7 +31,8 @@ export interface PublicCampaign {
 
 export interface PublicEvent {
   id: string;
-  clubId: string;
+  /** Absent for a school-wide event organised by ICPDP (UC53). */
+  clubId?: string;
   clubName: string;
   title: string;
   startAt: Date;

@@ -270,6 +270,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       { group: "events", label: t("common.groupEvents"), icon: "calendar", children: [
         { to: "/workspace/event-proposals", label: t("common.icpdpEventProposals"), icon: "inbox" },
         { to: "/workspace/budgets", label: t("common.icpdpBudgets"), icon: "file" },
+        { to: "/workspace/school-events", label: t("common.icpdpSchoolEvents"), icon: "megaphone" },
         { to: "/events", label: t("common.icpdpEvents"), icon: "calendar" },
         { to: "/workspace/properties", label: t("common.icpdpProperties"), icon: "mapPin" },
       ] },

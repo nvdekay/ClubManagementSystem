@@ -6,7 +6,8 @@ export interface Attendance {
   id: string;
   eventId: string;
   eventTitle: string;
-  clubId: string;
+  /** Absent for a school-wide event organised by ICPDP (UC53). */
+  clubId?: string;
   clubName: string;
   eventStartAt: Date;
   eventEndAt: Date;
@@ -18,7 +19,7 @@ export interface Attendance {
 export interface CheckInTarget {
   event: {
     id: string;
-    clubId: string;
+    clubId?: string;
     title: string;
     state: string;
     audienceScope: string;
