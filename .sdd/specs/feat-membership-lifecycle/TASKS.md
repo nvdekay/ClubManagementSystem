@@ -9,3 +9,5 @@
 - [x] Unit/integration tests cho ngày hiệu lực, transitions, held request, role revoke, notification và lịch sử.
 - [x] Chạy `npm run check`, build server/client.
 - [x] Nghiệm thu UI sau lượt QA song song; hoàn tất UI CMB/Student khi không còn va chạm với Claude QA.
+
+- [x] UI vô hiệu hoá xử lý yêu cầu rời CLB chưa đến requestedEffectiveDate và hiển thị lý do.

@@ -1,4 +1,5 @@
 const en = {
+  viewOnly: "You can view these settings. Editing requires management permissions.",
   title: "Club setup", eyebrow: "Profile & structure",
   description: "Complete the club's operating profile and organize its internal departments.",
   back: "Back to club workspace", profile: "Operating profile", structure: "Internal structure",
@@ -25,6 +26,7 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
+  viewOnly: "Có thể xem thiết lập. Cần quyền quản lý để chỉnh sửa.",
   title: "Thiết lập CLB", eyebrow: "Hồ sơ & cơ cấu",
   description: "Hoàn thiện hồ sơ vận hành và tổ chức các ban, bộ phận nội bộ của CLB.",
   back: "Về không gian CLB", profile: "Hồ sơ vận hành", structure: "Cơ cấu nội bộ",

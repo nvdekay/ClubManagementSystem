@@ -29,7 +29,7 @@ function isRegular(role: ClubRole) {
   return !role.isLeaderRole && !role.isBoardSeat && !role.isDefaultMemberRole;
 }
 
-export function ClubRolesPanel({ clubId }: { clubId: string }) {
+export function ClubRolesPanel({ clubId, readOnly = false }: { clubId: string; readOnly?: boolean }) {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const view = searchParams.get("view") === "history" ? "history" : "roles";
@@ -54,30 +54,31 @@ export function ClubRolesPanel({ clubId }: { clubId: string }) {
     </div>
   );
 
-  if (roles.isPending) return <>{nav}<div className="space-y-4">
+  if (roles.isPending) return <>{!readOnly && nav}<div className="space-y-4">
     <AppSkeleton className="h-12 w-full" /><AppSkeleton className="h-40 w-full" /><AppSkeleton className="h-40 w-full" /></div></>;
-  if (roles.isError || !roles.data) return <>{nav}
+  if (roles.isError || !roles.data) return <>{!readOnly && nav}
     <AppNotice tone="danger" role="alert" title={roles.error?.message ?? t("clubRoles.loadError")}>
       <AppButton variant="secondary" onClick={() => void roles.refetch()}>{t("clubRoles.retry")}</AppButton>
     </AppNotice></>;
 
   const data = roles.data;
   const csrfToken = auth.data?.csrfToken ?? "";
-  if (view === "history") return <>{nav}<ClubRoleHistory versions={data.versions} /></>;
+  if (!readOnly && view === "history") return <>{nav}<ClubRoleHistory versions={data.versions} /></>;
 
   const selected = data.roles.find((role) => role.id === selectedId) ?? data.roles[0];
 
   return (
     <>
-      {nav}
+      {!readOnly && nav}
+      {readOnly && <AppNotice className="mb-4">{t("clubSettings.viewOnly")}</AppNotice>}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 flex-1 basis-64">
           <h2 className="font-heading text-xl font-bold">{t("clubRoles.roles")}</h2>
           <p className="mt-1 text-sm text-muted-app">{t("clubRoles.rolesHint")}</p>
         </div>
-        <AppButton onClick={() => setOpen({ kind: "create" })}><AppIcon name="plus" className="size-4" />{t("clubRoles.addRole")}</AppButton>
+        {!readOnly && <AppButton onClick={() => setOpen({ kind: "create" })}><AppIcon name="plus" className="size-4" />{t("clubRoles.addRole")}</AppButton>}
       </div>
-      {!data.activeTermId && <AppNotice tone="info" className="mb-6">{t("clubRoles.noTerm")}</AppNotice>}
+      {!readOnly && !data.activeTermId && <AppNotice tone="info" className="mb-6">{t("clubRoles.noTerm")}</AppNotice>}
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <section aria-label={t("clubRoles.roles")} className="overflow-hidden rounded-2xl border border-border-app bg-bg-app">
@@ -93,18 +94,18 @@ export function ClubRolesPanel({ clubId }: { clubId: string }) {
               <span className="min-w-0"><span className="block font-semibold break-words">{role.name}</span>
                 {role.unit && <span className="block text-xs text-muted-app">{role.unit}</span>}</span>
               <AppBadge>{role.isLeaderRole ? t("clubRoles.leader") : role.isBoardSeat ? t("clubRoles.board")
-                : role.isDefaultMemberRole ? t("clubRoles.members") : t("clubRoles.holderCount", { count: role.holders.length })}</AppBadge>
+                : role.isDefaultMemberRole ? t("clubRoles.members") : readOnly ? t("clubRoles.permissions") : t("clubRoles.holderCount", { count: role.holders.length })}</AppBadge>
             </button>
           ))}</div>
         </section>
         {selected && <div className="min-w-0 space-y-4">
           <h3 className="font-heading text-lg font-bold break-words">{t("clubRoles.permissions")} · {selected.name}</h3>
           {selected.isLeaderRole ? <AppNotice>{t("clubRoles.leaderLocked")}</AppNotice>
-            : <ClubRoleDialog key={`${selected.id}:${formRevision}`} inline clubId={clubId} csrfToken={csrfToken} role={selected}
+            : <ClubRoleDialog key={`${selected.id}:${formRevision}`} inline readOnly={readOnly} clubId={clubId} csrfToken={csrfToken} role={selected}
               departments={data.departments} grantablePermissions={data.grantablePermissions} onDirtyChange={setDirty}
               onClose={() => { setDirty(false); setFormRevision((value) => value + 1); }} />}
-          <RoleCard key={selected.id} role={selected} onOpen={setOpen}
-            canAssign={isRegular(selected) && Boolean(data.activeTermId)} />
+          {!readOnly && <RoleCard key={selected.id} role={selected} onOpen={setOpen}
+            canAssign={isRegular(selected) && Boolean(data.activeTermId)} />}
         </div>}
       </div>
 

@@ -131,14 +131,17 @@ async function withTreasurer() {
 }
 
 describe("UC23 club role management", () => {
-  it("E5: only a caller holding club.role.manage may open or change roles", async () => {
+  it("E5: members may read roles but only club.role.manage may change them", async () => {
     const vice: ClubAccessRepository = { findSnapshot: async () => ({
       ...(await leaderAccess().findSnapshot(leader.id, clubId))!,
       positions: [{ id: ids.vice, clubId, isActive: true, isLeaderRole: false,
         permissionCodes: ["club.member.manage", "club.role.manage"] }],
       assignments: [{ clubId, termId, positionId: ids.vice, membershipId: m.leader,
         effectiveFrom: new Date("2026-09-01") }] }) };
-    await expect(getClubRoles(fakeRepo().repo, vice, leader, clubId, now)).rejects.toMatchObject({ kind: "forbidden" });
+    const readOnly = await getClubRoles(fakeRepo().repo, vice, leader, clubId, now);
+    expect(readOnly.members).toEqual([]);
+    expect(readOnly.versions).toEqual([]);
+    expect(readOnly.roles.every((role) => role.holders.length === 0)).toBe(true);
     await expect(createClubRole(fakeRepo().repo, vice, leader, clubId, treasurer, now))
       .rejects.toMatchObject({ kind: "forbidden" });
     const founder: ClubAccessRepository = { findSnapshot: async () => ({ clubId, clubName: "Club",
@@ -297,7 +300,7 @@ describe("UC23 club role management", () => {
       { membershipId: m.active }, now)).rejects.toMatchObject({ kind: "conflict" });
   });
 
-  it("E5: a vice leader holding every grantable permission still cannot call any role endpoint", async () => {
+  it("E5: a vice leader holding every grantable permission still cannot mutate roles", async () => {
     const vice: ClubAccessRepository = { findSnapshot: async () => ({
       ...(await leaderAccess().findSnapshot(leader.id, clubId))!,
       positions: [{ id: ids.vice, clubId, isActive: true, isLeaderRole: false,
@@ -306,7 +309,6 @@ describe("UC23 club role management", () => {
         effectiveFrom: new Date("2026-09-01"), confirmedBy: leader.id }] }) };
     const fake = await withTreasurer();
     const calls = [
-      () => getClubRoles(fake.repo, vice, leader, clubId, now),
       () => createClubRole(fake.repo, vice, leader, clubId, { ...treasurer, name: "Khác" }, now),
       () => updateClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, treasurer, now),
       () => deactivateClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, now),

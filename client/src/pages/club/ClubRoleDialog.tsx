@@ -19,11 +19,12 @@ interface ClubRoleDialogProps {
   grantablePermissions: string[];
   onClose: () => void;
   inline?: boolean;
+  readOnly?: boolean;
   onDirtyChange?: (dirty: boolean) => void;
 }
 
 /** Create/edit form for one role. Mounted only while open, so its draft and error reset on every open. */
-export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantablePermissions, onClose, inline = false, onDirtyChange }: ClubRoleDialogProps) {
+export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantablePermissions, onClose, inline = false, readOnly = false, onDirtyChange }: ClubRoleDialogProps) {
   const { t } = useTranslation();
   const action = useClubRoleAction();
   const [draft, setDraft] = useState<ClubRoleInput>({ name: role?.name ?? "", unit: role?.unit ?? "",
@@ -40,6 +41,7 @@ export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantable
   }
 
   async function save() {
+    if (readOnly) return;
     const input = { ...draft, name: draft.name.trim(), unit: draft.unit || undefined, reason: draft.reason?.trim() || undefined };
     try {
       await action.mutateAsync(role ? { kind: "update", clubId, roleId: role.id, input, csrfToken } : { kind: "create", clubId, input, csrfToken });
@@ -51,13 +53,14 @@ export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantable
 
   const form = (
       <form onChange={() => onDirtyChange?.(true)} className="space-y-5" onSubmit={(event) => { event.preventDefault(); void save(); }}>
+        <fieldset disabled={readOnly || action.isPending} className="space-y-5">
         {role?.isBoardSeat && <AppNotice tone="info">{t("clubRoles.boardEditHint")}</AppNotice>}
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm font-semibold">{t("clubRoles.name")}
             <AppInput className="mt-2 block w-full font-normal" value={draft.name} maxLength={120} required autoFocus={!inline}
               onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} /></label>
           <div className="text-sm font-semibold">{t("clubRoles.unit")}
-            <AppSelect className="mt-2 block w-full" label={t("clubRoles.unit")} value={draft.unit ?? ""}
+            <AppSelect disabled={readOnly || action.isPending} className="mt-2 block w-full" label={t("clubRoles.unit")} value={draft.unit ?? ""}
               options={[{ value: "", label: t("clubRoles.noUnit") }, ...departments.map((name) => ({ value: name, label: name }))]}
               onChange={(unit) => { onDirtyChange?.(true); setDraft((current) => ({ ...current, unit })); }} /></div>
         </div>
@@ -94,16 +97,17 @@ export function ClubRoleDialog({ clubId, csrfToken, role, departments, grantable
           })}</div>
         </fieldset>
 
-        <label className="block text-sm font-semibold">{t("clubRoles.reason")}
+        {!readOnly && <label className="block text-sm font-semibold">{t("clubRoles.reason")}
           <AppInput className="mt-2 block w-full font-normal" value={draft.reason} maxLength={500}
-            onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} /></label>
+            onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} /></label>}
 
         {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
-        <div className="flex flex-wrap justify-end gap-2">
+        {!readOnly && <div className="flex flex-wrap justify-end gap-2">
           <AppButton type="button" variant="secondary" onClick={onClose}>{t("clubRoles.cancel")}</AppButton>
-          <AppButton type="submit" disabled={action.isPending || !draft.name.trim()}>
+          <AppButton type="submit" disabled={readOnly || action.isPending || !draft.name.trim()}>
             {action.isPending ? t("clubRoles.saving") : t("clubRoles.save")}</AppButton>
-        </div>
+        </div>}
+        </fieldset>
       </form>
   );
   if (inline) return <section className="rounded-2xl border border-border-app bg-bg-app p-4 sm:p-5">{form}</section>;

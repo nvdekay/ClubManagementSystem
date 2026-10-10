@@ -1878,7 +1878,7 @@ export const openApiDocument = createDocument({
     },
     "/clubs/{clubId}/settings": {
       get: {
-        summary: "Read editable club profile and internal departments",
+        summary: "Read club profile and internal departments (current members; edits require club.profile.manage)",
         requestParams: { path: z.object({ clubId: z.string() }) },
         responses: { "200": { description: "Club settings", content: {
           "application/json": { schema: envelope(ClubSettings) },
@@ -1933,7 +1933,7 @@ export const openApiDocument = createDocument({
     },
     "/clubs/{clubId}/roles": {
       get: {
-        summary: "List club roles, holders, assignable members and structure versions (club.role.manage)",
+        summary: "Read club roles and permissions (current members); holders, assignable members and versions require club.role.manage",
         requestParams: { path: z.object({ clubId: z.string() }) },
         responses: { "200": { description: "Club roles", content: {
           "application/json": { schema: envelope(ClubRoleOverview) },

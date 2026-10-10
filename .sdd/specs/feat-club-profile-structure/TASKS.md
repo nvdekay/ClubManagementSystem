@@ -9,3 +9,5 @@
 - [x] UI Club profile/structure responsive, accessible, light/dark, i18n `en`/`vi`.
 - [x] Unit/integration tests, `npm run check`, production build và `db:verify`.
 - [ ] Nghiệm thu trực quan thủ công.
+
+- [x] Thành viên Active/Inactive được xem thiết lập; mutation vẫn cần club.profile.manage, có test quyền đọc/ghi.

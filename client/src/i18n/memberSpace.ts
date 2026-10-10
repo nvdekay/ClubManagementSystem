@@ -1,4 +1,5 @@
 const en = {
+  notEffectiveYet: "Not effective yet",
   myClubsTitle: "My clubs",
   myClubsDescription: "Clubs you belong to. Open one to see its members, events and what you still owe.",
   myClubsEmpty: "You aren't a member of any club yet.",
@@ -114,6 +115,7 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
+  notEffectiveYet: "Chưa đến ngày có hiệu lực",
   myClubsTitle: "CLB của tôi",
   myClubsDescription: "Các CLB bạn đang tham gia. Mở một CLB để xem thành viên, sự kiện và việc bạn còn phải làm.",
   myClubsEmpty: "Bạn chưa là thành viên CLB nào.",

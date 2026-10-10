@@ -88,3 +88,7 @@ Tên 1–120 ký tự, không trùng (không phân biệt hoa thường) với r
 
 ## Changelog
 - v1.0.0 (2026-10-10) — bản đầu tiên, theo quyết định của product owner (UC23 đầy đủ, không đổi schema).
+
+### Điều chỉnh UX và quyền đọc thiết lập
+
+Thành viên được xem danh sách vai trò và quyền ở chế độ chỉ đọc; API không trả holders, members, versions cho người không có club.role.manage.

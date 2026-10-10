@@ -385,7 +385,9 @@ describe.skipIf(!uri)("E2E: simplified club founding", () => {
     expect((await settings(students.an!)).status).toBe(200); // vice president (and applicant)
     expect((await nominate(students.an!)).status).toBe(403); // leader-only permission
     expect((await settings(students.chi!)).status).toBe(200);
-    expect((await settings(students.dung!)).status).toBe(403); // plain member
+    expect((await settings(students.dung!)).status).toBe(200); // plain member may read
+    expect((await call(students.dung!, "PATCH", `/clubs/${clubId}/profile`,
+      { channels: [] })).status).toBe(403); // editing remains restricted
     expect((await settings(students.em!)).status).toBe(403); // outsider
     expect(await ucmsModels.notifications!.countDocuments({ entityId: new Types.ObjectId(mainId),
       eventCode: "CLUB_APPLICATION_APPROVED" })).toBe(4);

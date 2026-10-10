@@ -12,3 +12,5 @@
 
 - [x] Sửa race khi gán role: serialize bằng `__v` có sẵn; kiểm tra lại người giữ và gán trùng trong transaction; integration test gán đồng thời.
 - [x] Kiểm tra sau sửa Wave 1: `npm run check` xanh, 61 test files / 259 tests, gồm integration Mongo (2026-10-10).
+
+- [x] Thành viên được xem danh sách vai trò và quyền ở chế độ chỉ đọc; API không trả holders, members, versions cho người không có club.role.manage.

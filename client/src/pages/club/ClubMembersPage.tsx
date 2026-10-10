@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
@@ -39,6 +39,11 @@ export function ClubMembersPage({ embedded = false }: { embedded?: boolean }) {
   const withdrawals = useClubWithdrawals(clubId, signedIn);
   const action = useMembershipAction();
   const inFlight = useRef(false);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [doneId, setDoneId] = useState<string | null>(null);
   // Banned members leave the roster, so the confirmation lives at page level.
   const [stateNotice, setStateNotice] = useState<string | null>(null);
@@ -93,6 +98,7 @@ export function ClubMembersPage({ embedded = false }: { embedded?: boolean }) {
   const { pageIndex, pageSize } = table.state.pagination;
 
   async function execute(request: WithdrawalRequest) {
+    if (new Date(request.requestedEffectiveDate).getTime() > currentTime) return;
     if (!auth.data || !clubId || inFlight.current || !window.confirm(t("memberSpace.executeConfirm"))) return;
     inFlight.current = true;
     setDoneId(null);
@@ -162,9 +168,10 @@ export function ClubMembersPage({ embedded = false }: { embedded?: boolean }) {
                           <td className="min-w-48 px-3 py-2 break-words whitespace-pre-line">{request.reason}</td>
                           <td className="px-3 py-2 tabular-nums">{formatDay(request.requestedEffectiveDate, locale)}</td>
                           <td className="px-3 py-2 text-right">
-                            <AppButton className="min-h-9 px-3 sm:min-h-9" disabled={action.isPending}
+                            <AppButton className="min-h-9 px-3 sm:min-h-9" disabled={action.isPending || new Date(request.requestedEffectiveDate).getTime() > currentTime}
                               onClick={() => void execute(request)}>
-                              {action.isPending ? t("memberSpace.executing") : t("memberSpace.execute")}</AppButton>
+                              {action.isPending ? t("memberSpace.executing") : new Date(request.requestedEffectiveDate).getTime() > currentTime
+                                ? t("memberSpace.notEffectiveYet") : t("memberSpace.execute")}</AppButton>
                           </td>
                         </tr>
                       ))}

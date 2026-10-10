@@ -184,12 +184,15 @@ summary,
 a[href],
 input[type="search"]::-webkit-search-cancel-button,
 [role="button"]:not([aria-disabled="true"]),
-[role="option"] {
+[role="combobox"]:not(:disabled):not([aria-disabled="true"]),
+[role="option"]:not([aria-disabled="true"]) {
   cursor: pointer;
 }
 
 button:disabled,
 select:disabled,
+[role="combobox"][aria-disabled="true"],
+[role="option"][aria-disabled="true"],
 [role="button"][aria-disabled="true"] {
   cursor: not-allowed;
 }
