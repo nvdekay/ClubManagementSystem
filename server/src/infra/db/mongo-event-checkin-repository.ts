@@ -27,7 +27,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
 
   function map(attendance: Doc, event: Doc): Attendance {
     return { id: String(attendance._id), eventId: String(attendance.eventId),
-      eventTitle: String(event.title), clubId: String(attendance.clubId),
+      eventTitle: String(event.title), ...(attendance.clubId ? { clubId: String(attendance.clubId) } : {}),
       clubName: String(event.clubName ?? ""), eventStartAt: date(event.startAt),
       eventEndAt: date(event.endAt), checkedInAt: date(attendance.checkedInAt),
       method: attendance.method as AttendanceMethod,
@@ -48,14 +48,14 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
       const eventObjectId = new Types.ObjectId(eventId);
       const studentObjectId = new Types.ObjectId(studentId);
       const event = await events.findById(eventObjectId).lean();
-      if (!event || !event.clubId) return null;
+      if (!event) return null;
       const [registration, membership, attendance] = await Promise.all([
         registrations.findOne({ eventId: eventObjectId, studentId: studentObjectId }).select({ state: 1 }).lean(),
-        memberships.findOne({ clubId: event.clubId, userId: studentObjectId, state: "Active" })
-          .select({ _id: 1 }).lean(),
+        event.clubId ? memberships.findOne({ clubId: event.clubId, userId: studentObjectId, state: "Active" })
+          .select({ _id: 1 }).lean() : null,
         existing(eventObjectId, studentObjectId),
       ]);
-      return { event: { id: String(event._id), clubId: String(event.clubId), title: String(event.title),
+      return { event: { id: String(event._id), ...(event.clubId ? { clubId: String(event.clubId) } : {}), title: String(event.title),
         state: String(event.state), audienceScope: String(event.audienceScope),
         published: event.publishedAt instanceof Date, startAt: date(event.startAt), endAt: date(event.endAt),
         ...(typeof event.checkInCode === "string" && event.checkInCode ? { checkInCode: event.checkInCode } : {}),
@@ -75,7 +75,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
           created = false;
           if (await attendances.exists({ eventId, studentId }).session(session)) return;
           // Re-check the event inside the transaction so a concurrent cancellation is not missed.
-          const event = await events.findOne({ _id: eventId, clubId: { $exists: true, $ne: null },
+          const event = await events.findOne({ _id: eventId,
             state: { $in: [...checkInStates] }, publishedAt: { $exists: true, $ne: null } })
             .session(session).lean();
           if (!event) throw new DomainError("event is not open for check-in", "conflict");
@@ -93,14 +93,14 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
                 { session });
               if (changed.modifiedCount !== 1) throw new DomainError("registration changed during check-in", "conflict");
             } else {
-              const [doc] = await registrations.create([{ eventId, studentId, clubId: event.clubId,
+              const [doc] = await registrations.create([{ eventId, studentId, ...(event.clubId ? { clubId: event.clubId } : {}),
                 state: "Confirmed", answers: {}, createdAt: input.now }], { session });
               registrationId = doc!._id as Types.ObjectId;
             }
             await events.updateOne({ _id: eventId }, { $inc: { confirmedRegistrationCount: 1 } }, { session });
           }
           const [attendance] = await attendances.create([{ eventId, studentId, registrationId,
-            clubId: event.clubId, checkedInAt: input.now, method: input.method,
+            ...(event.clubId ? { clubId: event.clubId } : {}), checkedInAt: input.now, method: input.method,
             abnormalFlags: input.method === "walk-in" ? ["walk-in"] : [], finalized: false }], { session });
           const correlationId = randomUUID();
           await audits.create([{ entityType: "Attendance", entityId: attendance!._id,

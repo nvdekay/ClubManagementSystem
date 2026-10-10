@@ -13,7 +13,8 @@ export interface EventRegistration {
   id: string;
   eventId: string;
   studentId: string;
-  clubId: string;
+  /** Absent for a school-wide event organised by ICPDP (UC53). */
+  clubId?: string;
   clubName: string;
   eventTitle: string;
   eventStartAt: Date;
@@ -31,7 +32,7 @@ export interface EventRegistration {
 export interface EventRegistrationContext {
   event: {
     id: string;
-    clubId: string;
+    clubId?: string;
     clubName: string;
     title: string;
     state: string;

@@ -60,7 +60,9 @@ export function RecruitmentApplicationPage() {
   const submitting = useRef(false);
   const campaign = campaignQuery.data;
   const application = applicationQuery.data ?? createdApplication;
-  const editable = !application || application.state === "Draft";
+  // UC15: while the club is suspended the form stays readable but nothing can be created or submitted.
+  const paused = campaignQuery.data?.clubSuspended === true;
+  const editable = (!application || application.state === "Draft") && !paused;
   const canWithdraw = Boolean(application && ["Submitted", "Screening", "Shortlisted"].includes(application.state));
   const dateLocale = i18n.language === "vi" ? "vi-VN" : "en-US";
 
@@ -214,6 +216,8 @@ export function RecruitmentApplicationPage() {
         <p className="text-xs font-semibold tracking-wide text-primary-app uppercase">{t("recruitmentApplications.answers")}</p>
         <h2 id="recruitment-form-title" className="mt-1 font-heading text-xl font-bold">{t("recruitmentApplications.formTitle")}</h2>
         <div className="mt-5 space-y-3">
+          {paused && <AppNotice tone="warning" role="status" title={t("recruitmentApplications.clubSuspendedTitle")}>
+            <p>{t("recruitmentApplications.clubSuspended")}</p></AppNotice>}
           {notice && <AppNotice tone="success" role="status">{notice}</AppNotice>}
           {pageError && <AppNotice tone="danger" role="alert">{pageError}</AppNotice>}
           {application?.decisionReason && <AppNotice><p><strong>{t("recruitmentApplications.decisionReason")}: </strong>{application.decisionReason}</p></AppNotice>}

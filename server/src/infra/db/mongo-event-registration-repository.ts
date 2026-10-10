@@ -55,7 +55,8 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
     const event = await events.findById(registration.eventId).session(session ?? null).lean();
     if (!event) return null;
     return { id: String(registration._id), eventId: String(registration.eventId),
-      studentId: String(registration.studentId), clubId: String(registration.clubId),
+      studentId: String(registration.studentId),
+      ...(registration.clubId ? { clubId: String(registration.clubId) } : {}),
       clubName: String(event.clubName ?? ""), eventTitle: String(event.title),
       eventStartAt: date(event.startAt), eventEndAt: date(event.endAt),
       checkInOpensAt: event.checkInOpenAt instanceof Date ? event.checkInOpenAt : date(event.startAt),
@@ -79,17 +80,17 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
       const eventObjectId = new Types.ObjectId(eventId);
       const studentObjectId = new Types.ObjectId(studentId);
       const event = await events.findById(eventObjectId).lean();
-      if (!event || !event.clubId) return null;
+      if (!event) return null;
       const [proposal, membership, registration] = await Promise.all([
         proposals.findOne({ eventId: eventObjectId, revisionNo: event.currentRevisionNo })
           .select({ payload: 1 }).lean(),
-        memberships.findOne({ clubId: event.clubId, userId: studentObjectId, state: "Active" })
-          .select({ _id: 1 }).lean(),
+        event.clubId ? memberships.findOne({ clubId: event.clubId, userId: studentObjectId, state: "Active" })
+          .select({ _id: 1 }).lean() : null,
         registrations.findOne({ eventId: eventObjectId, studentId: studentObjectId }).lean(),
       ]);
       const payload = proposal?.payload && typeof proposal.payload === "object"
         ? proposal.payload as Doc : {};
-      return { event: { id: String(event._id), clubId: String(event.clubId),
+      return { event: { id: String(event._id), ...(event.clubId ? { clubId: String(event.clubId) } : {}),
         clubName: String(event.clubName ?? ""), title: String(event.title), state: String(event.state),
         audienceScope: String(event.audienceScope), startAt: date(event.startAt), endAt: date(event.endAt),
         ...(event.registrationOpenAt instanceof Date ? { registrationOpenAt: event.registrationOpenAt } : {}),
@@ -120,7 +121,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
         await mongoose.connection.transaction(async (session) => {
           const current = await registrations.findOne({ eventId, studentId }).session(session).lean();
           if (current && current.state !== "Cancelled") return conflict("student is already registered for this event");
-          const openFilter = { _id: eventId, clubId: { $exists: true, $ne: null }, state: "Upcoming",
+          const openFilter = { _id: eventId, state: "Upcoming",
             publishedAt: { $exists: true, $ne: null }, registrationOpenAt: { $lte: input.now },
             registrationCloseAt: { $gt: input.now }, startAt: { $gt: input.now } };
           const confirmedEvent = await events.findOneAndUpdate({ ...openFilter,
@@ -139,7 +140,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
             waitlistPosition = Number(waitlistEvent.nextWaitlistPosition ?? 1);
             event = waitlistEvent;
           }
-          const update = { eventId, studentId, clubId: event!.clubId, state,
+          const update = { eventId, studentId, ...(event!.clubId ? { clubId: event!.clubId } : {}), state,
             ...(waitlistPosition !== undefined ? { waitlistPosition } : {}),
             answers: input.answers, createdAt: input.now };
           if (current) {

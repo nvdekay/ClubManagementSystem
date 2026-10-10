@@ -481,6 +481,9 @@ export const ucmsTables = {
       "dissolution": {
         "type": "json"
       },
+      "suspension": {
+        "type": "json"
+      },
       "sourceApplicationId": {
         "type": "objectId"
       },
@@ -1735,8 +1738,7 @@ export const ucmsTables = {
         "required": true
       },
       "clubId": {
-        "type": "objectId",
-        "required": true
+        "type": "objectId"
       },
       "state": {
         "type": "registrationState",
@@ -1800,8 +1802,7 @@ export const ucmsTables = {
         "type": "objectId"
       },
       "clubId": {
-        "type": "objectId",
-        "required": true
+        "type": "objectId"
       },
       "checkedInAt": {
         "type": "datetime",
@@ -2609,8 +2610,7 @@ export const ucmsTables = {
         "required": true
       },
       "clubId": {
-        "type": "objectId",
-        "required": true
+        "type": "objectId"
       },
       "scores": {
         "type": "json",

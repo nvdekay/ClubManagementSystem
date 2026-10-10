@@ -5,8 +5,17 @@ import type { AccountAdminRepository } from "../../domain/account-admin.js";
 import type { PublicDiscoveryRepository } from "../../domain/public-discovery.js";
 import type { PolicyManagementRepository } from "../../domain/policy.js";
 import type { ClubFieldRepository } from "../../domain/club-field.js";
+import type { PropertyRepository } from "../../domain/property.js";
+import type { EvaluationSchemeRepository } from "../../domain/evaluation-scheme.js";
+import type { ExportFileWriter, ExportRepository } from "../../domain/data-export.js";
+import type { ClubLifecycleRepository } from "../../domain/club-lifecycle.js";
 import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
+import type { EventProposalReviewRepository } from "../../domain/event-proposal-review.js";
+import type { BudgetDisbursementRepository } from "../../domain/budget-disbursement.js";
+import type { ViolationRepository } from "../../domain/violation.js";
+import type { SchoolEventRepository } from "../../domain/school-event.js";
+import type { EvaluationRepository } from "../../domain/evaluation.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
 import type { BoardNominationRepository } from "../../domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
@@ -26,8 +35,17 @@ import { publicDiscoveryRoutes } from "./public-discovery-routes.js";
 import { policyRoutes } from "./policy-routes.js";
 import { clubApplicationRoutes } from "./club-application-routes.js";
 import { clubApplicationReviewRoutes } from "./club-application-review-routes.js";
+import { eventProposalReviewRoutes } from "./event-proposal-review-routes.js";
+import { budgetDisbursementRoutes } from "./budget-disbursement-routes.js";
+import { violationRoutes } from "./violation-routes.js";
+import { schoolEventRoutes } from "./school-event-routes.js";
+import { evaluationRoutes } from "./evaluation-routes.js";
 import { clubProfileRoutes } from "./club-profile-routes.js";
 import { clubFieldRoutes } from "./club-field-routes.js";
+import { propertyRoutes } from "./property-routes.js";
+import { evaluationSchemeRoutes } from "./evaluation-scheme-routes.js";
+import { exportRoutes } from "./export-routes.js";
+import { clubLifecycleRoutes } from "./club-lifecycle-routes.js";
 import { boardNominationRoutes } from "./board-nomination-routes.js";
 import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
 import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
@@ -66,7 +84,17 @@ export function buildApp(deps: {
   policyRepo?: PolicyManagementRepository;
   applicationRepo?: ClubApplicationRepository;
   clubFieldRepo?: ClubFieldRepository;
+  propertyRepo?: PropertyRepository;
+  evaluationSchemeRepo?: EvaluationSchemeRepository;
+  exportRepo?: ExportRepository;
+  exportWriter?: ExportFileWriter;
+  clubLifecycleRepo?: ClubLifecycleRepository;
   applicationReviewRepo?: ClubApplicationReviewRepository;
+  eventProposalReviewRepo?: EventProposalReviewRepository;
+  budgetDisbursementRepo?: BudgetDisbursementRepository;
+  violationRepo?: ViolationRepository;
+  schoolEventRepo?: SchoolEventRepository;
+  evaluationRepo?: EvaluationRepository;
   clubProfileRepo?: ClubProfileRepository;
   boardNominationRepo?: BoardNominationRepository;
   recruitmentCampaignRepo?: RecruitmentCampaignRepository;
@@ -109,6 +137,11 @@ export function buildApp(deps: {
       app.use("/api/v1", clubProfileRoutes({
         repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo, policy: deps.policyRepo,
         authRepo: deps.auth.repo, sessions: deps.auth.sessions,
+      }));
+    }
+    if (deps.propertyRepo) {
+      app.use("/api/v1", propertyRoutes({
+        repo: deps.propertyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
     }
     if (deps.boardNominationRepo) {
@@ -167,6 +200,38 @@ export function buildApp(deps: {
       app.use("/api/v1", policyRoutes({
         repo: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
+      if (deps.eventProposalReviewRepo) {
+        app.use("/api/v1", eventProposalReviewRoutes({ repo: deps.eventProposalReviewRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
+      if (deps.budgetDisbursementRepo) {
+        app.use("/api/v1", budgetDisbursementRoutes({ repo: deps.budgetDisbursementRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
+      if (deps.violationRepo) {
+        app.use("/api/v1", violationRoutes({ repo: deps.violationRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
+      if (deps.schoolEventRepo) {
+        app.use("/api/v1", schoolEventRoutes({ repo: deps.schoolEventRepo, policy: deps.policyRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
+      if (deps.clubLifecycleRepo) {
+        app.use("/api/v1", clubLifecycleRoutes({ repo: deps.clubLifecycleRepo, policy: deps.policyRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
+      if (deps.exportRepo && deps.exportWriter) {
+        app.use("/api/v1", exportRoutes({ repo: deps.exportRepo, writer: deps.exportWriter, policy: deps.policyRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
+      if (deps.evaluationSchemeRepo) {
+        app.use("/api/v1", evaluationSchemeRoutes({ repo: deps.evaluationSchemeRepo, policy: deps.policyRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
+      if (deps.evaluationRepo && deps.evaluationSchemeRepo) {
+        app.use("/api/v1", evaluationRoutes({ repo: deps.evaluationRepo, schemes: deps.evaluationSchemeRepo,
+          policy: deps.policyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
       if (deps.clubFieldRepo) {
         app.use("/api/v1", clubFieldRoutes({
           repo: deps.clubFieldRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
@@ -195,6 +260,15 @@ export function buildApp(deps: {
   const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
   const hasClubProfiles = Boolean(hasPolicy && deps.clubProfileRepo);
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
+  const hasProperties = Boolean(hasAdmin && deps.propertyRepo);
+  const hasEvaluationSchemes = Boolean(hasPolicy && deps.evaluationSchemeRepo);
+  const hasExports = Boolean(hasPolicy && deps.exportRepo && deps.exportWriter);
+  const hasClubLifecycle = Boolean(hasPolicy && deps.clubLifecycleRepo);
+  const hasEventProposalReviews = Boolean(hasPolicy && deps.eventProposalReviewRepo);
+  const hasBudgets = Boolean(hasPolicy && deps.budgetDisbursementRepo);
+  const hasViolations = Boolean(hasPolicy && deps.violationRepo);
+  const hasSchoolEvents = Boolean(hasPolicy && deps.schoolEventRepo);
+  const hasEvaluations = Boolean(hasEvaluationSchemes && deps.evaluationRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
   const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
@@ -209,7 +283,16 @@ export function buildApp(deps: {
       if (path.startsWith("/auth/")) return hasAdmin;
       if (path.startsWith("/admin/policies")) return hasPolicy;
       if (path.startsWith("/admin/club-fields")) return hasClubFields;
+      if (path.startsWith("/admin/properties")) return hasProperties;
+      if (path.startsWith("/admin/evaluation-schemes")) return hasEvaluationSchemes;
+      if (path.startsWith("/admin/evaluations")) return hasEvaluations;
+      if (path.startsWith("/admin/exports")) return hasExports;
+      if (path.startsWith("/admin/clubs")) return hasClubLifecycle;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
+      if (path.startsWith("/admin/event-proposals")) return hasEventProposalReviews;
+      if (path.startsWith("/admin/budgets")) return hasBudgets;
+      if (path.startsWith("/admin/violations")) return hasViolations;
+      if (path.startsWith("/admin/school-events")) return hasSchoolEvents;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;
       if (path.startsWith("/admin/student-feedback")) return hasStudentFeedback;

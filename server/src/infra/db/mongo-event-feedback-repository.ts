@@ -42,7 +42,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
         feedbacks.findOne({ eventId: eventObjectId, studentId: studentObjectId }).lean(),
       ]);
       return {
-        attendance: attendance ? { id: String(attendance._id), clubId: String(attendance.clubId),
+        attendance: attendance ? { id: String(attendance._id), ...(attendance.clubId ? { clubId: String(attendance.clubId) } : {}),
           checkedInAt: date(attendance.checkedInAt), eventEndAt: date(event.endAt) } : null,
         feedback: feedback ? map(feedback, event) : null,
       };
@@ -55,7 +55,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
         await mongoose.connection.transaction(async (session) => {
           const [doc] = await feedbacks.create([{ eventId: new Types.ObjectId(input.eventId),
             attendanceId: new Types.ObjectId(input.attendanceId), studentId,
-            clubId: new Types.ObjectId(input.clubId),
+            ...(input.clubId ? { clubId: new Types.ObjectId(input.clubId) } : {}),
             scores: [{ criterionCode: FEEDBACK_CRITERION, score: input.rating }],
             comment: input.comment, isAnonymous: input.isAnonymous, submittedAt: input.now }], { session });
           id = doc!._id as Types.ObjectId;

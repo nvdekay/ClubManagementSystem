@@ -13,7 +13,7 @@ export interface EventRegistration {
   id: string;
   eventId: string;
   studentId: string;
-  clubId: string;
+  clubId?: string;
   clubName: string;
   eventTitle: string;
   eventStartAt: string;
@@ -30,7 +30,7 @@ export interface EventRegistration {
 export interface EventRegistrationContext {
   event: {
     id: string;
-    clubId: string;
+    clubId?: string;
     clubName: string;
     title: string;
     state: string;

@@ -12,6 +12,18 @@ import { createOAuthFlowService } from "./infra/auth/oauth-flow-service.js";
 import { ensureAuthBootstrap } from "./infra/db/bootstrap-auth.js";
 import { mongoPublicDiscoveryRepository } from "./infra/db/mongo-public-discovery-repository.js";
 import { mongoPolicyRepository } from "./infra/db/mongo-policy-repository.js";
+import { mongoPropertyRepository } from "./infra/db/mongo-property-repository.js";
+import { mongoEvaluationSchemeRepository } from "./infra/db/mongo-evaluation-scheme-repository.js";
+import { mongoExportRepository } from "./infra/db/mongo-export-repository.js";
+import { mongoClubLifecycleRepository } from "./infra/db/mongo-club-lifecycle-repository.js";
+import { startClubLifecycleJob } from "./interface/jobs/club-lifecycle-job.js";
+import { mongoEventProposalReviewRepository } from "./infra/db/mongo-event-proposal-review-repository.js";
+import { mongoBudgetDisbursementRepository } from "./infra/db/mongo-budget-disbursement-repository.js";
+import { mongoViolationRepository } from "./infra/db/mongo-violation-repository.js";
+import { mongoSchoolEventRepository } from "./infra/db/mongo-school-event-repository.js";
+import { mongoEvaluationRepository } from "./infra/db/mongo-evaluation-repository.js";
+import { startEventLifecycleJob } from "./interface/jobs/event-lifecycle-job.js";
+import { exportFileWriter } from "./infra/files/export-file-writer.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
@@ -52,12 +64,25 @@ const commonDeps = {
   publicRepo: mongoPublicDiscoveryRepository(),
   dbReady: () => mongoose.connection.readyState === 1,
 };
+const clubLifecycleRepo = mongoClubLifecycleRepository();
+const eventProposalReviewRepo = mongoEventProposalReviewRepository();
+const schoolEventRepo = mongoSchoolEventRepository();
 const app = authConfig ? buildApp({
   ...commonDeps,
   adminRepo: mongoAccountAdminRepository(),
   policyRepo: mongoPolicyRepository(),
   applicationRepo: mongoClubApplicationRepository(),
   clubFieldRepo: mongoClubFieldRepository(),
+  propertyRepo: mongoPropertyRepository(),
+  evaluationSchemeRepo: mongoEvaluationSchemeRepository(),
+  exportRepo: mongoExportRepository(),
+  exportWriter: exportFileWriter(),
+  clubLifecycleRepo,
+  eventProposalReviewRepo,
+  budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
+  violationRepo: mongoViolationRepository(),
+  schoolEventRepo,
+  evaluationRepo: mongoEvaluationRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),
@@ -87,6 +112,8 @@ const app = authConfig ? buildApp({
     secureCookies: config.NODE_ENV === "production",
   },
 }) : buildApp(commonDeps);
+const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
+const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo);
 const server = app.listen(config.PORT, () => {
   console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`);
 });
@@ -96,6 +123,8 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
     if (shuttingDown) process.exit(1); // second signal = stop waiting, exit now
     shuttingDown = true;
+    stopLifecycleJob();
+    stopEventLifecycleJob();
     // Drain deadline — a hung in-flight request must not block SIGTERM until the platform SIGKILLs.
     setTimeout(() => {
       console.error("shutdown deadline hit — forcing exit");

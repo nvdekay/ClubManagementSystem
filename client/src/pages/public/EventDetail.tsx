@@ -44,9 +44,9 @@ export function EventDetail() {
           <EventStatusBadge status={detail.data.event.status} />
           <h1 className="mt-3 font-heading text-3xl font-bold tracking-tight text-balance sm:text-5xl">{detail.data.event.title}</h1>
           <p className="mt-4 text-muted-app">
-            {t("discovery.hostedBy")}: <Link to={`/clubs/${detail.data.club.id}`} className="font-semibold text-accent-app">
+            {t("discovery.hostedBy")}: {detail.data.club ? <Link to={`/clubs/${detail.data.club.id}`} className="font-semibold text-accent-app">
               {detail.data.club.name}
-            </Link>
+            </Link> : <span className="font-semibold">{detail.data.event.clubName}</span>}
           </p>
           <dl className="mt-8 grid gap-x-8 gap-y-5 border-y border-border-app py-6 sm:grid-cols-2">
             <div className="flex gap-3">
