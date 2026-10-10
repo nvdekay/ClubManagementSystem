@@ -80,4 +80,35 @@ describe.skipIf(!uri)("Mongo club role repository", () => {
       .toEqual(expect.arrayContaining(["CLUB_ROLE_ASSIGNED", "CLUB_ROLE_REVOKED"]));
     expect(await ucmsModels.auditLogs!.countDocuments({ action: { $regex: /^CLUB_ROLE_/ } })).toBe(5);
   }, 60_000);
+
+  it("drops a revoked future-dated assignment from the holders at once (A2, E2, E4)", async () => {
+    const now = new Date("2026-10-10T12:00:00Z");
+    const clubId = new Types.ObjectId();
+    const leaderId = new Types.ObjectId();
+    await ucmsModels.clubs!.create({ _id: clubId, code: "CLB-UC23-FUT", name: "UC23 Future", field: "Technology",
+      state: "Active", createdAt: now });
+    const [term] = await ucmsModels.clubTerms!.create([{ clubId, name: "Term", startAt: new Date("2026-09-01"),
+      endAt: new Date("2027-09-01"), state: "Active" }]);
+    const [first, second] = await ucmsModels.clubMemberships!.create([
+      { clubId, userId: new Types.ObjectId(), state: "Active", joinedAt: now, statusHistory: [] },
+      { clubId, userId: new Types.ObjectId(), state: "Active", joinedAt: now, statusHistory: [] },
+    ]);
+    const repo = mongoClubRoleRepository();
+    const club = clubId.toString();
+    await repo.createRole(club, leaderId.toString(), { name: "Hậu cần", isSingleHolder: true,
+      permissionCodes: ["club.booking.manage"] }, now);
+    const role = (await repo.overview(club, now))!.roles.find((item) => item.name === "Hậu cần")!;
+    await repo.assign(club, role.id, String(term!._id), leaderId.toString(),
+      { membershipId: String(first!._id), effectiveFrom: new Date("2026-11-01T00:00:00Z") }, now);
+    const [future] = (await repo.overview(club, now))!.roles.find((item) => item.id === role.id)!.holders;
+    await repo.revoke(club, role.id, future!.assignmentId, leaderId.toString(), now);
+
+    expect((await repo.overview(club, now))!.roles.find((item) => item.id === role.id)!.holders).toEqual([]);
+    await repo.assign(club, role.id, String(term!._id), leaderId.toString(),
+      { membershipId: String(second!._id), effectiveFrom: now }, now);
+    const [current] = (await repo.overview(club, now))!.roles.find((item) => item.id === role.id)!.holders;
+    expect(current).toMatchObject({ membershipId: String(second!._id) });
+    await repo.revoke(club, role.id, current!.assignmentId, leaderId.toString(), now);
+    await expect(repo.deactivateRole(club, role.id, leaderId.toString(), now)).resolves.toBeUndefined();
+  }, 60_000);
 });

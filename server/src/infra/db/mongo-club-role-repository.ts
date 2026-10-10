@@ -32,9 +32,11 @@ function versionFrom(doc: Doc): ClubRoleStructureVersion {
   };
 }
 
-/** Assignments still running (or not started yet) at `now`. */
+/** Assignments still running (or not started yet) at `now`. A revoke before the start sets
+ * `effectiveTo = effectiveFrom`, so a zero-length assignment is void, not "not started yet". */
 function openAt(now: Date) {
-  return { $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null }, { effectiveTo: { $gt: now } }] };
+  return { $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null },
+    { effectiveTo: { $gt: now }, $expr: { $gt: ["$effectiveTo", "$effectiveFrom"] } }] };
 }
 
 export function mongoClubRoleRepository(): ClubRoleRepository {
