@@ -15,6 +15,8 @@ import { submitEventFeedback } from "../../usecase/event-feedback.js";
 import { registerForEvent } from "../../usecase/event-registration.js";
 import { createPolicyVersion } from "../../usecase/policy.js";
 import { createRecruitmentCampaignDraft, publishRecruitmentCampaign } from "../../usecase/recruitment-campaign.js";
+import { reviewRecruitmentApplications } from "../../usecase/recruitment-review.js";
+import { recordCandidateEvaluation } from "../../usecase/candidate-evaluation.js";
 import {
   createRecruitmentApplicationDraft,
   saveRecruitmentApplicationDraft,
@@ -34,6 +36,7 @@ import { mongoMembershipRepository } from "./mongo-membership-repository.js";
 import { mongoPolicyRepository } from "./mongo-policy-repository.js";
 import { mongoRecruitmentApplicationRepository } from "./mongo-recruitment-application-repository.js";
 import { mongoRecruitmentCampaignRepository } from "./mongo-recruitment-campaign-repository.js";
+import { mongoCandidateEvaluationRepository } from "./mongo-candidate-evaluation-repository.js";
 import { mongoStudentFeedbackRepository } from "./mongo-student-feedback-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
@@ -301,6 +304,20 @@ try {
     await saveRecruitmentApplicationDraft(recruitment, student, application.id,
       { position, answers: { intro, experience } }, now);
     await submitRecruitmentApplication(recruitment, student, application.id, now);
+  }
+  // UC18→UC19: one HEBE applicant is already shortlisted with two evaluations (leader + vice) to compare.
+  const shortlisted = await recruitment.findMineForCampaign(hebeCampaign, s[13]!.toString());
+  if (shortlisted?.state === "Submitted") {
+    const ids = { clubId: club("HEBE").id.toString(), campaignId: hebeCampaign };
+    await reviewRecruitmentApplications(recruitment, access, actor(owner),
+      { ...ids, applicationIds: [shortlisted.id], action: "screen" }, now);
+    await reviewRecruitmentApplications(recruitment, access, actor(owner), { ...ids, applicationIds: [shortlisted.id],
+      action: "shortlist", reason: "Có kinh nghiệm làm content, phù hợp Ban Truyền thông." }, now);
+    const evaluations = mongoCandidateEvaluationRepository();
+    await recordCandidateEvaluation(evaluations, access, actor(owner), { ...ids, applicationId: shortlisted.id,
+      scores: { attitude: 9, skill: 7 }, comment: "Trả lời phỏng vấn tự tin, có sản phẩm TikTok thực tế." }, now);
+    await recordCandidateEvaluation(evaluations, access, actor(s[0]!), { ...ids, applicationId: shortlisted.id,
+      scores: { attitude: 8, skill: 5 }, comment: "Nhiệt tình nhưng kỹ năng dựng video còn cơ bản." }, now);
   }
 
   // ── Founding applications (UC07→UC08): two in the ICPDP review queue, one approved (club Active) ──

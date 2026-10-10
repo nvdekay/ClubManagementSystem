@@ -4,6 +4,7 @@ import {
   declineRecruitmentApplication, fetchApplicationsForReview, onboardRecruitmentApplication, reviewApplications,
   fetchMyRecruitmentApplications, fetchMyRecruitmentApplication, saveRecruitmentApplication,
   submitRecruitmentApplication, uploadRecruitmentFile, withdrawRecruitmentApplication, accessReviewRecruitmentFile,
+  fetchCandidateEvaluations, saveCandidateEvaluation,
 } from "@/services/recruitmentApplications";
 import type { RecruitmentAnswer, RecruitmentApplication } from "@/services/recruitmentApplications";
 import type { RecruitmentFormField } from "@/services/recruitmentCampaigns";
@@ -61,6 +62,26 @@ export function useRecruitmentOnboardingAction() {
     ? onboardRecruitmentApplication(input.clubId, input.campaignId, input.applicationId, input.csrfToken)
     : declineRecruitmentApplication(input.clubId, input.campaignId, input.applicationId, input.csrfToken),
   onSuccess: async () => queryClient.invalidateQueries({ queryKey: [...recruitmentApplicationKey, "review"] }) });
+}
+
+function evaluationsKey(clubId: string | undefined, campaignId: string | undefined) {
+  return [...recruitmentApplicationKey, "evaluations", clubId, campaignId] as const;
+}
+
+export function useCandidateEvaluations(clubId: string | undefined, campaignId: string | undefined) {
+  return useQuery({ queryKey: evaluationsKey(clubId, campaignId),
+    queryFn: ({ signal }) => fetchCandidateEvaluations(clubId!, campaignId!, signal),
+    enabled: Boolean(clubId && campaignId), retry: false });
+}
+
+export function useSaveCandidateEvaluation() {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (input: { clubId: string; campaignId: string; applicationId: string;
+    scores: Record<string, number>; comment?: string; csrfToken: string }) =>
+    saveCandidateEvaluation(input.clubId, input.campaignId, input.applicationId,
+      { scores: input.scores, ...(input.comment ? { comment: input.comment } : {}) }, input.csrfToken),
+  // The summary (mean/dispersion) is computed server-side, so refetch instead of patching the cache.
+  onSuccess: async (_saved, input) => queryClient.invalidateQueries({ queryKey: evaluationsKey(input.clubId, input.campaignId) }) });
 }
 
 export function useReviewAttachmentAccess() {

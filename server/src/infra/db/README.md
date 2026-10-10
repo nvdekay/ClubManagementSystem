@@ -22,7 +22,7 @@ index TTL chỉ dọn rác, việc kiểm tra hết hạn diễn ra ở mỗi re
 `seed-demo.ts` (`npm run seed:demo -- --owner=<email Google> [--owner-name="Tên"]`, chạy sau
 `npm run seed`) dựng bộ dữ liệu demo sạch để thử mọi luồng đã có: policy hiệu lực; 16 sinh viên demo
 `@demo.ucms.edu.vn`; cơ cấu và thành viên cho HEBE, Mây Mưa, EHC, FDS (người dùng `--owner` là Chủ
-nhiệm HEBE, thành viên Mây Mưa và được cấp `ICPDP_OFFICER`); role thường "Phụ trách Hậu cần" của HEBE đã gán cho một thành viên (UC23, cơ cấu phiên bản 2); đợt tuyển và đơn chờ xét; hồ sơ thành lập
+nhiệm HEBE, thành viên Mây Mưa và được cấp `ICPDP_OFFICER`); role thường "Phụ trách Hậu cần" của HEBE đã gán cho một thành viên (UC23, cơ cấu phiên bản 2); đợt tuyển và đơn chờ xét (một đơn HEBE đã ở `Shortlisted` kèm hai bản đánh giá UC19); hồ sơ thành lập
 chờ duyệt và một hồ sơ đã duyệt (CLB hoạt động ngay với ban chủ nhiệm khởi lập); sự kiện sắp tới/đang diễn ra/đã kết thúc kèm đăng ký,
 điểm danh, phản hồi; góp ý một chiều; kế hoạch chuyển giao chờ ICPDP. Ghi qua use case/repository khi
 luồng đã có; chạy lại an toàn (mỗi phần tự bỏ qua nếu đã có). Hồ sơ thành lập cần Cloudinary để
