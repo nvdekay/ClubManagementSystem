@@ -1,5 +1,13 @@
 # infra/db/
 
+`mongo-facility-booking-repository.ts` (UC45–47) dùng các collection có sẵn. Snapshot nộp
+bất biến ở audit `BOOKING_SUBMITTED`; equipment của draft nằm trong audit snapshot.
+Transaction ghi `__v` của property để tuần tự hoá các quyết định cùng phòng;
+`releaseFacilityBookingsInSession` được cascade UC15 dùng trong chính transaction của CLB.
+Seed demo bổ sung phòng mẫu DE312/DE222/DE223 tại toà Delta và bốn booking theo Slot 1–4
+ở Draft/Requested/Approved/Revision Requested nếu lịch học kỳ còn phù hợp. Seed giải phóng
+riêng bốn booking mẫu dùng khung giờ cũ, giữ lịch sử và không đổi booking của người dùng.
+
 Bản cài bằng Mongoose cho các repository port của domain — mỗi port một file
 `mongo-<entity>-repository.ts` — cộng các tiện ích DB (seed). Không gì ngoài `infra/` được đụng
 tới Mongoose.

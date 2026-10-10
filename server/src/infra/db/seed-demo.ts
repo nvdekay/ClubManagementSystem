@@ -5,6 +5,7 @@
 import { crc32, deflateSync } from "node:zlib";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
+import { BOOKING_SLOTS } from "../../domain/facility-booking.js";
 import type { FounderRole } from "../../domain/club-application.js";
 import { DEFAULT_FORM_REQUIREMENTS, type PolicySettings } from "../../domain/policy.js";
 import type { AccessActor } from "../../usecase/access.js";
@@ -17,6 +18,8 @@ import { createPolicyVersion } from "../../usecase/policy.js";
 import { createRecruitmentCampaignDraft, publishRecruitmentCampaign } from "../../usecase/recruitment-campaign.js";
 import { reviewRecruitmentApplications } from "../../usecase/recruitment-review.js";
 import { recordCandidateEvaluation } from "../../usecase/candidate-evaluation.js";
+import { createProperty, updateProperty } from "../../usecase/property.js";
+import { saveBooking, submitBooking, claimBooking, decideBooking } from "../../usecase/facility-booking.js";
 import {
   createRecruitmentApplicationDraft,
   saveRecruitmentApplicationDraft,
@@ -43,6 +46,8 @@ import { mongoRecruitmentApplicationRepository } from "./mongo-recruitment-appli
 import { mongoRecruitmentCampaignRepository } from "./mongo-recruitment-campaign-repository.js";
 import { mongoCandidateEvaluationRepository } from "./mongo-candidate-evaluation-repository.js";
 import { mongoStudentFeedbackRepository } from "./mongo-student-feedback-repository.js";
+import { mongoPropertyRepository } from "./mongo-property-repository.js";
+import { mongoFacilityBookingRepository, releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
@@ -691,9 +696,59 @@ try {
       title: "Chuyển giao nhiệm kỳ — FPTU Data Science Club", state: "Open", openedAt: at(-1 * DAY) });
   }
 
+  // UC45–47: independent club activity requests, including the ICPDP review and correction loop.
+  const properties = mongoPropertyRepository();
+  const rooms = [];
+  for (const [index, name] of ["DE312", "DE222", "DE223"].entries()) {
+    const catalog = await properties.list();
+    let room = catalog.find((item) => item.name === name)
+      ?? (index === 0 ? catalog.find((item) => item.name === "Demo club practice room") : undefined);
+    const details = { name, location: `Delta building, floor ${name[2]}`, capacity: 40,
+      equipment: ["Projector", "Sound system"], blackouts: [],
+      bookableHours: Array.from({ length: 7 }, (_, day) => ({ day: day + 1, open: "07:30", close: "17:40" })) };
+    if (!room) room = await createProperty(properties, auth, actor(owner), { type: "ROOM", ...details }, now);
+    else if (room.name === "Demo club practice room") room = await updateProperty(properties, auth, actor(owner), room.id, details, now);
+    rooms.push(room);
+  }
+  // Retire only the previous demo requests; keep their immutable versions and decisions.
+  await mongoose.connection.transaction(async (session) => {
+    await releaseFacilityBookingsInSession(session, { clubId: new Types.ObjectId(hebe),
+      purpose: { $in: ["Requested", "Draft", "Approved", "Revision Requested"].map((state) => `Demo booking: ${state}`) },
+      state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } },
+    "demo-seed", "Replaced by campus slot demo data", now);
+  });
+  const bookingRepo = mongoFacilityBookingRepository();
+  const bookingDeps = { repo: bookingRepo, properties, access, auth, policy };
+  const bookingClub = await bookingRepo.club(hebe);
+  const bookingPolicy = await policy.findEffective(now);
+  if (bookingClub?.state === "Active" && bookingPolicy) {
+    for (const [index, scenario] of ["Requested", "Draft", "Approved", "Revision Requested"].entries()) {
+      const purpose = `Demo campus slot booking: ${scenario}`;
+      const practiceRoom = rooms[index % rooms.length]!;
+      if (!practiceRoom.isActive) continue;
+      if ((await bookingRepo.list(hebe)).some((item) => item.purpose === purpose)) continue;
+      const startAt = new Date(now.getTime() + (3 + index) * DAY);
+      const day = new Date(startAt.getTime() + 7 * HOUR).toISOString().slice(0, 10);
+      const slot = BOOKING_SLOTS[index]!;
+      startAt.setTime(new Date(`${day}T${slot.start}:00+07:00`).getTime());
+      const endAt = new Date(`${day}T${slot.end}:00+07:00`);
+      if (!bookingPolicy.academicCalendar.some((semester) => startAt >= semester.startAt && endAt <= semester.endAt)) continue;
+      const draft = await saveBooking(bookingDeps, actor(owner), hebe, null, { propertyId: practiceRoom.id,
+        purpose, startAt, endAt, headcount: scenario === "Revision Requested" ? 60 : 30, equipment: ["Projector"] }, now);
+      if (scenario === "Draft") continue;
+      await submitBooking(bookingDeps, actor(owner), hebe, draft.booking.id, 0, now);
+      if (scenario === "Requested") continue;
+      await claimBooking(bookingDeps, actor(owner), draft.booking.id, now);
+      await decideBooking(bookingDeps, actor(owner), draft.booking.id, scenario === "Approved"
+        ? { outcome: "Approve", reason: "Room allocated for the club activity" }
+        : { outcome: "Request revision", reason: "Choose a larger room or reduce expected participants",
+          alternative: { propertyId: rooms[1]!.id, startAt, endAt } }, now);
+    }
+  }
+
   const counts = await Promise.all(["users", "policyVersions", "clubMemberships", "recruitmentApplications",
     "clubApplications", "boardNominations", "events", "eventRegistrations", "attendances", "eventFeedbacks",
-    "complaints", "transitionPlans"].map(async (name) => `${name}=${await db.collection(name).countDocuments()}`));
+    "complaints", "transitionPlans", "properties", "propertyBookings"].map(async (name) => `${name}=${await db.collection(name).countDocuments()}`));
   console.log(`demo data ready (owner ${ownerEmail}): ${counts.join(", ")}`);
 } catch (error) {
   console.error("demo seed failed:", error instanceof Error ? error.message : error);

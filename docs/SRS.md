@@ -2085,7 +2085,7 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC45-01 | Cho CMB chọn một property từ danh mục của UC44 và hiển thị tình trạng còn trống của nó |
-| FR-UC45-02 | Thu thập thông tin sử dụng — mục đích, thời điểm bắt đầu và kết thúc, số người dự kiến, thiết bị đi kèm, sự kiện liên quan |
+| FR-UC45-02 | Thu thập mục đích, ngày sử dụng và một slot cố định của campus Hoà Lạc (từ đó xác định startAt/endAt), số người dự kiến, thiết bị đi kèm và sự kiện liên quan (tuỳ chọn) |
 | FR-UC45-03 | Đánh giá quy tắc xung đột **BR15** với các booking và sự kiện đã duyệt trước khi nộp |
 | FR-UC45-04 | Chuyển `Requested` khi nộp và tạo review task cho ICPDP |
 | FR-UC45-05 | *(A1)* Cho lưu yêu cầu ở `Draft` |
@@ -2097,6 +2097,24 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | FR-UC45-11 | *(E4)* Từ chối booking kết thúc sau học kỳ `Dissolving` khi CLB đã có quyết định giải thể (BR45) |
 | FR-UC45-12 | Từ chối booking mới với CLB đang `Suspended` (BR34) |
 | FR-UC45-13 | *(E)* Từ chối khi người gọi thiếu permission `club.booking.manage` trong CLB đó (BR54) |
+
+**Quy tắc slot Hoà Lạc — chốt ngày 2026-10-10:**
+
+| Slot | Khung giờ (UTC+7) | Hạn tạo/sửa/nộp trong ngày sử dụng |
+|---|---|---|
+| 1 | 07:30–09:50 | Trước 07:30 |
+| 2 | 10:00–12:20 | Trước 07:30 |
+| 3 | 12:50–15:10 | Trước 09:50 |
+| 4 | 15:20–17:40 | Trước 12:20 |
+
+Đúng mốc là quá hạn. Yêu cầu phải khớp trọn một slot; Slot 5/6 chưa thuộc phạm vi.
+ICPDP được duyệt sau hạn nộp khi slot chưa bắt đầu. Hai lịch khớp các slot khác nhau
+không xung đột; cùng property/ngày/slot bị chặn khi cấm overbooking. Với lịch cũ hoặc
+sự kiện ngoài slot, BR15 tiếp tục áp dụng khoảng đệm `conflictThresholdMinutes`;
+đúng bằng khoảng đệm được phép. Blackout luôn chặn.
+
+Tên phòng hiển thị dùng mã campus, ví dụ `DE312`, kèm toà và tầng. UI dùng AppSelect;
+lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong AppDialog.
 
 **Hậu điều kiện** — booking ở `Requested`. **Đầu ra** — `PropertyBooking`, `ApprovalTask`.
 

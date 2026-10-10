@@ -1,3 +1,5 @@
+import { ClubBookingsPage } from "./pages/club/ClubBookingsPage.js";
+import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
 import "./index.css";
 import "./i18n"; // initializes i18next before first render
 import { StrictMode } from "react";
@@ -77,6 +79,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="club/:clubId" element={<ClubHomePage />} />
             <Route path="workspace/policy" element={<PolicyPage />} />
             <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
+            <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
+            <Route path="workspace/bookings" element={<BookingReviewPage />} />
             <Route path="workspace/properties" element={<PropertiesPage />} />
             <Route path="workspace/evaluation-schemes" element={<EvaluationSchemesPage />} />
             <Route path="workspace/exports" element={<DataExportPage />} />

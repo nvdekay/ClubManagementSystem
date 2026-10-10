@@ -1,5 +1,8 @@
 # pages/club/
 
+`ClubBookingsPage` (UC45/UC47) dùng `BookingWorkspace`: tạo/sửa bản nháp, kiểm tra lịch trống,
+nộp và nộp lại, xem version/quyết định, huỷ đặt với tín hiệu huỷ muộn; cần `club.booking.manage`.
+
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi
 đối chiếu workspace và quyền hiện hành từ `/auth/me`.
 

@@ -1,3 +1,5 @@
+import { mongoFacilityBookingRepository } from "./infra/db/mongo-facility-booking-repository.js";
+import { startFacilityBookingJob } from "./interface/jobs/facility-booking-job.js";
 import mongoose from "mongoose";
 import { buildApp } from "./interface/http/server.js";
 import { loadConfig, optionalAuthConfig, optionalCloudinaryConfig } from "./infra/config/index.js";
@@ -68,6 +70,7 @@ const commonDeps = {
 };
 const clubLifecycleRepo = mongoClubLifecycleRepository();
 const eventProposalReviewRepo = mongoEventProposalReviewRepository();
+const facilityBookingRepo = mongoFacilityBookingRepository();
 const schoolEventRepo = mongoSchoolEventRepository();
 const app = authConfig ? buildApp({
   ...commonDeps,
@@ -76,6 +79,7 @@ const app = authConfig ? buildApp({
   applicationRepo: mongoClubApplicationRepository(),
   clubFieldRepo: mongoClubFieldRepository(),
   propertyRepo: mongoPropertyRepository(),
+  facilityBookingRepo,
   evaluationSchemeRepo: mongoEvaluationSchemeRepository(),
   exportRepo: mongoExportRepository(),
   exportWriter: exportFileWriter(),
@@ -116,6 +120,7 @@ const app = authConfig ? buildApp({
     secureCookies: config.NODE_ENV === "production",
   },
 }) : buildApp(commonDeps);
+const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
 const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo);
 const server = app.listen(config.PORT, () => {
@@ -128,6 +133,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     if (shuttingDown) process.exit(1); // second signal = stop waiting, exit now
     shuttingDown = true;
     stopLifecycleJob();
+    stopBookingJob();
     stopEventLifecycleJob();
     // Drain deadline — a hung in-flight request must not block SIGTERM until the platform SIGKILLs.
     setTimeout(() => {

@@ -1,3 +1,4 @@
+import { facilityBookings } from "./facilityBookings";
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 
@@ -35,7 +36,7 @@ export type Locale = "en" | "vi";
 
 // New module: create i18n/<module>.ts (same en/vi shape), then add it to both locales here.
 export const resources = {
-  en: { translation: { common: common.en, auth: auth.en, discovery: discovery.en,
+  en: { translation: { facilityBookings: facilityBookings.en, common: common.en, auth: auth.en, discovery: discovery.en,
     policy: policy.en, applications: applications.en, reviews: reviews.en,
     clubSettings: clubSettings.en, clubRoles: clubRoles.en, boardNominations: boardNominations.en,
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
@@ -43,7 +44,7 @@ export const resources = {
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
     studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
     demo: demo.en } },
-  vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi,
+  vi: { translation: { facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
     clubSettings: clubSettings.vi, clubRoles: clubRoles.vi, boardNominations: boardNominations.vi,
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,

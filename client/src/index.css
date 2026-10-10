@@ -118,6 +118,7 @@ body {
    Overrides the same custom properties the @theme block sets on :root,
    so every generated *-app utility repaints without touching components. */
 :root.dark {
+  color-scheme: dark;
   --color-brand-app: #22d3ee;
   --color-on-brand-app: #062a33;
   --color-text-app: #e6f3fa;

@@ -1,5 +1,9 @@
 # pages/icpdp/
 
+`BookingReviewPage` (UC46) dùng `BookingWorkspace`: danh sách và chi tiết yêu cầu, nhận thẩm định
+độc quyền, quyết định có lý do, xem nghĩa vụ quá hạn và đề xuất phòng/thời gian thay thế.
+`PropertyBookingConflicts` nối UC44 FR-05, hiển thị yêu cầu đang chờ vướng blackout trong danh mục.
+
 Các trang nghiệp vụ chỉ dành cho `ICPDP_OFFICER`. Mỗi trang tự kiểm tra phiên đăng nhập và vai
 trò để hiển thị trạng thái phù hợp; API và use case vẫn kiểm tra quyền ở server.
 
