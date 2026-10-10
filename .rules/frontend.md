@@ -40,6 +40,7 @@ client/src/
     ui/
       button/AppButton.tsx
       card/AppCard.tsx
+      dialog/AppDialog.tsx             # modal trên <dialog> gốc (showModal): focus trap, Esc do trình duyệt lo
       input/AppInput.tsx
       empty-state/AppEmptyState.tsx
       pagination/AppPagination.tsx     # bộ phân trang không phụ thuộc bảng: props pageIndex/pageCount/onPageChange
