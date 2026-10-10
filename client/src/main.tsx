@@ -31,6 +31,7 @@ import { EventProposalQueuePage } from "./pages/icpdp/EventProposalQueuePage.js"
 import { EventProposalReviewPage } from "./pages/icpdp/EventProposalReviewPage.js";
 import { BudgetDetailPage, BudgetsPage } from "./pages/icpdp/BudgetsPage.js";
 import { ViolationDetailPage, ViolationsPage } from "./pages/icpdp/ViolationsPage.js";
+import { BookingQueuePage, BookingReviewPage } from "./pages/icpdp/BookingReviewsPage.js";
 import { SchoolEventDetailPage, SchoolEventsPage } from "./pages/icpdp/SchoolEventsPage.js";
 import { EvaluationDetailPage, EvaluationsPage } from "./pages/icpdp/EvaluationsPage.js";
 import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
@@ -98,6 +99,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
             <Route path="workspace/budgets" element={<BudgetsPage />} />
             <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
+            <Route path="workspace/bookings" element={<BookingQueuePage />} />
+            <Route path="workspace/bookings/:id" element={<BookingReviewPage />} />
             <Route path="workspace/violations" element={<ViolationsPage />} />
             <Route path="workspace/violations/:id" element={<ViolationDetailPage />} />
             <Route path="workspace/school-events" element={<SchoolEventsPage />} />

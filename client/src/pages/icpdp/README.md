@@ -59,3 +59,7 @@ cho sinh viên (mở đăng ký, sinh mã check-in).
 trạng thái/tổng điểm/xếp loại, công bố cả kỳ khi mọi CLB đã chốt) và `EvaluationDetailPage`: điểm từng tiêu chí
 D1–D8 kèm dữ liệu nguồn, chấm tay (có lý giải) ở tiêu chí cho phép, sinh lại, chốt/mở lại, tạo bản sửa sau
 công bố, các bản và xu hướng các học kỳ trước.
+
+`BookingReviewsPage` (UC46) gồm hàng đợi và trang thẩm định yêu cầu đặt phòng/thiết bị: nhận task, xem xung
+đột khung giờ, sức chứa, nghĩa vụ quá hạn của CLB; duyệt (bị chặn khi khung giờ đã có người giữ hoặc CLB không
+hoạt động), yêu cầu chỉnh sửa kèm phương án thay thế, hoặc từ chối.

@@ -5,6 +5,7 @@ import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
+import { bookingDecisionBody } from "./booking-review-routes.js";
 import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
@@ -172,6 +173,29 @@ const BudgetDetail = BudgetSummary.extend({
     recordedBy: z.string(), recordedByName: z.string().optional() })),
   allowed: z.object({ kind: z.enum(["Advance", "TopUp", "Refund"]), max: z.number(),
     exact: z.number().optional() }).optional(),
+});
+const BookingSummary = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(),
+  property: z.object({ id: z.string(), code: z.string(), name: z.string(), type: z.string(), location: z.string(),
+    capacity: z.number().optional() }),
+  purpose: z.string(), startAt: z.string(), endAt: z.string(), semesterCode: z.string(), headcount: z.number().optional(),
+  state: z.string(), currentVersionNo: z.number(), conflictResult: z.string().optional(),
+  event: z.object({ id: z.string(), title: z.string(), state: z.string() }).optional(),
+});
+const BookingTask = z.object({ id: z.string(), bookingId: z.string(), state: z.enum(["Open", "Decided", "Closed"]),
+  assigneeId: z.string().optional(), openedAt: z.string() });
+const BookingQueueItem = z.object({ task: BookingTask, booking: BookingSummary });
+const BookingDetail = BookingQueueItem.extend({
+  club: z.object({ id: z.string(), name: z.string(), state: z.string(),
+    obligations: z.array(z.enum(["overdueSettlement", "overdueRefund", "overdueReport"])) }),
+  conflicts: z.array(z.object({ kind: z.enum(["booking", "event"]), id: z.string(), title: z.string(),
+    startAt: z.string(), endAt: z.string(), state: z.string(), blocking: z.boolean() })),
+  allowOverbooking: z.boolean(), outsideHours: z.boolean(),
+  decisions: z.array(z.object({ id: z.string(), outcome: z.enum(["Request revision", "Approve", "Reject"]),
+    reason: z.string().optional(), reviewNote: z.string().optional(),
+    alternative: z.object({ propertyId: z.string().optional(), propertyLabel: z.string().optional(),
+      startAt: z.string().optional(), endAt: z.string().optional() }).optional(),
+    versionNo: z.number().optional(), actorId: z.string(), at: z.string() })),
 });
 const ViolationEvidence = z.object({ note: z.string(), url: z.string().optional(), addedBy: z.string(), addedAt: z.string() });
 const ViolationSummary = z.object({
@@ -1162,6 +1186,44 @@ export const openApiDocument = createDocument({
           "200": { description: "Updated budget", content: { "application/json": { schema: envelope(BudgetDetail) } } },
           "400": { description: "Amount over the approved total, not the exact top-up, or over what is owed", content: { "application/json": { schema: ApiError } } },
           "409": { description: "The budget does not accept this kind of flow now", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/bookings": {
+      get: {
+        summary: "Open property booking requests, oldest first (UC46, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Queue", content: { "application/json": { schema: envelope(z.array(BookingQueueItem)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/bookings/{id}": {
+      get: {
+        summary: "Booking with the club's standing, conflicts on the slot and earlier decisions",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Booking detail", content: { "application/json": { schema: envelope(BookingDetail) } } } },
+      },
+    },
+    "/admin/bookings/{id}/claim": {
+      post: {
+        summary: "Take the request and move it to Under Review (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Claimed booking", content: { "application/json": { schema: envelope(BookingDetail) } } },
+          "409": { description: "Already claimed or no longer reviewable", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/bookings/{id}/decision": {
+      post: {
+        summary: "Request revision (optionally suggesting another slot or property), approve or reject (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: bookingDecisionBody } } },
+        responses: {
+          "200": { description: "Decided booking", content: { "application/json": { schema: envelope(BookingDetail) } } },
+          "400": { description: "Missing reason or invalid alternative", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Slot already held, club not active, or booking not claimed by this officer", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

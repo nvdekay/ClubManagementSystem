@@ -3,10 +3,11 @@ import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import {
   approvedBudget,
-  type ApprovedBudgetLine, type ClubObligation, type EventBudgetSummary, type EventProposalDetail,
+  type ApprovedBudgetLine, type EventBudgetSummary, type EventProposalDetail,
   type EventProposalReviewRepository, type EventProposalSummary, type EventProposalTask,
   type EventProposalVersion, type EventReviewDecision, type RequestedBudgetLine,
 } from "../../domain/event-proposal-review.js";
+import { clubObligations } from "./club-board.js";
 import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
@@ -97,17 +98,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
   const audits = m.auditLogs!;
   const notifications = m.notifications!;
 
-  async function obligations(clubId: Types.ObjectId, now: Date): Promise<ClubObligation[]> {
-    const [settlement, refund, report] = await Promise.all([
-      budgets.exists({ clubId, settlementDueAt: { $lt: now }, settlementSubmittedAt: { $exists: false },
-        state: { $nin: ["Cancelled", "Closed"] } }),
-      budgets.exists({ clubId, recoveryDueAt: { $lt: now }, state: "Recovery Pending" }),
-      m.periodicReports!.exists({ clubId, dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } }),
-    ]);
-    return [...(settlement ? ["overdueSettlement" as const] : []), ...(refund ? ["overdueRefund" as const] : []),
-      ...(report ? ["overdueReport" as const] : [])];
-  }
-
   async function detail(eventId: Types.ObjectId, now: Date): Promise<EventProposalDetail | null> {
     const [event, taskDocs, versionDocs] = await Promise.all([
       events.findById(eventId).lean(),
@@ -125,7 +115,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         .select({ displayName: 1, email: 1 }).lean(),
       m.propertyBookings!.find({ eventId }).sort({ startAt: 1 }).lean(),
       budgets.find({ clubId, $or: [{ eventId }, { periodCode: event.semesterCode }] }).sort({ createdAt: -1 }).lean(),
-      obligations(clubId, now),
+      clubObligations(clubId, now),
     ]);
     const propertyIds = bookingDocs.map((booking) => booking.propertyId);
     const [bookingProperties, budgetEvents] = await Promise.all([

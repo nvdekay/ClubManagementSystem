@@ -24,3 +24,18 @@ export async function queueNotifications(session: ClientSession, recipients: rea
     eventCode, entityType, entityId, channels: ["IN_APP"], payload, state: "Queued", dueAt: now, attempts: 0,
     createdAt: now })), { session });
 }
+
+export type ClubObligationCode = "overdueSettlement" | "overdueRefund" | "overdueReport";
+
+/** Overdue duties ICPDP weighs before granting a club anything new (UC26 FR-05, UC46 FR-02). */
+export async function clubObligations(clubId: Types.ObjectId, now: Date): Promise<ClubObligationCode[]> {
+  const m = ucmsModels;
+  const [settlement, refund, report] = await Promise.all([
+    m.eventBudgets!.exists({ clubId, settlementDueAt: { $lt: now }, settlementSubmittedAt: { $exists: false },
+      state: { $nin: ["Cancelled", "Closed"] } }),
+    m.eventBudgets!.exists({ clubId, recoveryDueAt: { $lt: now }, state: "Recovery Pending" }),
+    m.periodicReports!.exists({ clubId, dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } }),
+  ]);
+  return [...(settlement ? ["overdueSettlement" as const] : []), ...(refund ? ["overdueRefund" as const] : []),
+    ...(report ? ["overdueReport" as const] : [])];
+}

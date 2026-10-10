@@ -14,6 +14,7 @@ import type { ClubApplicationReviewRepository } from "../../domain/club-applicat
 import type { EventProposalReviewRepository } from "../../domain/event-proposal-review.js";
 import type { BudgetDisbursementRepository } from "../../domain/budget-disbursement.js";
 import type { ViolationRepository } from "../../domain/violation.js";
+import type { BookingReviewRepository } from "../../domain/booking-review.js";
 import type { SchoolEventRepository } from "../../domain/school-event.js";
 import type { EvaluationRepository } from "../../domain/evaluation.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
@@ -38,6 +39,7 @@ import { clubApplicationReviewRoutes } from "./club-application-review-routes.js
 import { eventProposalReviewRoutes } from "./event-proposal-review-routes.js";
 import { budgetDisbursementRoutes } from "./budget-disbursement-routes.js";
 import { violationRoutes } from "./violation-routes.js";
+import { bookingReviewRoutes } from "./booking-review-routes.js";
 import { schoolEventRoutes } from "./school-event-routes.js";
 import { evaluationRoutes } from "./evaluation-routes.js";
 import { clubProfileRoutes } from "./club-profile-routes.js";
@@ -93,6 +95,7 @@ export function buildApp(deps: {
   eventProposalReviewRepo?: EventProposalReviewRepository;
   budgetDisbursementRepo?: BudgetDisbursementRepository;
   violationRepo?: ViolationRepository;
+  bookingReviewRepo?: BookingReviewRepository;
   schoolEventRepo?: SchoolEventRepository;
   evaluationRepo?: EvaluationRepository;
   clubProfileRepo?: ClubProfileRepository;
@@ -212,6 +215,10 @@ export function buildApp(deps: {
         app.use("/api/v1", violationRoutes({ repo: deps.violationRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       }
+      if (deps.bookingReviewRepo) {
+        app.use("/api/v1", bookingReviewRoutes({ repo: deps.bookingReviewRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
       if (deps.schoolEventRepo) {
         app.use("/api/v1", schoolEventRoutes({ repo: deps.schoolEventRepo, policy: deps.policyRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -267,6 +274,7 @@ export function buildApp(deps: {
   const hasEventProposalReviews = Boolean(hasPolicy && deps.eventProposalReviewRepo);
   const hasBudgets = Boolean(hasPolicy && deps.budgetDisbursementRepo);
   const hasViolations = Boolean(hasPolicy && deps.violationRepo);
+  const hasBookings = Boolean(hasPolicy && deps.bookingReviewRepo);
   const hasSchoolEvents = Boolean(hasPolicy && deps.schoolEventRepo);
   const hasEvaluations = Boolean(hasEvaluationSchemes && deps.evaluationRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
@@ -292,6 +300,7 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/event-proposals")) return hasEventProposalReviews;
       if (path.startsWith("/admin/budgets")) return hasBudgets;
       if (path.startsWith("/admin/violations")) return hasViolations;
+      if (path.startsWith("/admin/bookings")) return hasBookings;
       if (path.startsWith("/admin/school-events")) return hasSchoolEvents;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;

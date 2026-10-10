@@ -39,6 +39,7 @@ import { mongoRecruitmentApplicationRepository } from "./mongo-recruitment-appli
 import { mongoRecruitmentCampaignRepository } from "./mongo-recruitment-campaign-repository.js";
 import { mongoStudentFeedbackRepository } from "./mongo-student-feedback-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
+import { mongoPropertyRepository } from "./mongo-property-repository.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
 
@@ -559,6 +560,39 @@ try {
       periodCode: "Fall 2026", createdAt: at(-24 * DAY) });
     await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
       amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
+  }
+
+  // ── Room bookings waiting for ICPDP (UC46; UC45 is the club side, so the requests are inserted) ──
+  const propertyRepo = mongoPropertyRepository();
+  async function property(name: string, input: Parameters<typeof propertyRepo.create>[0]) {
+    const existing = await ucmsModels.properties!.findOne({ name }).lean();
+    return existing ? existing._id as Types.ObjectId : new Types.ObjectId((await propertyRepo.create(input, String(owner), now)).id);
+  }
+  const everyDay = [1, 2, 3, 4, 5, 6, 7].map((day) => ({ day, open: "07:00", close: "22:00" }));
+  const hall = await property("Hội trường A", { type: "HALL", name: "Hội trường A", location: "Tầng 1, tòa Alpha",
+    capacity: 200, equipment: ["Âm thanh", "Máy chiếu"], bookableHours: everyDay, blackouts: [] });
+  const room = await property("Phòng 207 Beta", { type: "ROOM", name: "Phòng 207 Beta", location: "Tầng 2, tòa Beta",
+    capacity: 40, equipment: ["Máy chiếu"], bookableHours: everyDay.slice(0, 6), blackouts: [] });
+  if (!(await ucmsModels.approvalTasks!.exists({ entityType: "PROPERTY_BOOKING" }))) {
+    const rehearsal = new Date(Math.floor(at(16 * DAY).getTime() / DAY) * DAY + 11 * HOUR); // 18:00 campus time
+    async function booking(code: string, propertyId: Types.ObjectId, input: { purpose: string; startAt: Date; hours: number;
+      headcount: number; state: string; eventId?: string; requestedAt: Date }) {
+      const [doc] = await ucmsModels.propertyBookings!.create([{ propertyId, clubId: club(code).id, clubName: club(code).name,
+        purpose: input.purpose, startAt: input.startAt, endAt: new Date(input.startAt.getTime() + input.hours * HOUR),
+        semesterCode: "Fall 2026", headcount: input.headcount, state: input.state, currentVersionNo: 1,
+        conflictResult: "No Conflict", ...(input.eventId ? { eventId: new Types.ObjectId(input.eventId) } : {}),
+        createdAt: input.requestedAt }]);
+      const open = input.state === "Requested";
+      await ucmsModels.approvalTasks!.create({ entityType: "PROPERTY_BOOKING", entityId: doc!._id, clubId: club(code).id,
+        title: input.purpose, state: open ? "Open" : "Decided", openedAt: input.requestedAt,
+        ...(open ? {} : { assigneeId: owner, closedAt: now }) });
+    }
+    await booking("FDS", hall, { purpose: "Hội thảo Data Science Day", startAt: new Date(rehearsal.getTime() + HOUR), hours: 3,
+      headcount: 150, state: "Approved", requestedAt: at(-5 * DAY) });
+    await booking("HEBE", hall, { purpose: "Tổng duyệt HEBE Dance Battle", startAt: rehearsal, hours: 3, headcount: 60,
+      state: "Requested", eventId: "de0000000000000000000f01", requestedAt: at(-2 * DAY) });
+    await booking("EHC", room, { purpose: "Buổi chia sẻ CTF cho thành viên mới", startAt: new Date(rehearsal.getTime() - 2 * DAY),
+      hours: 2, headcount: 50, state: "Requested", requestedAt: at(-1 * DAY) });
   }
 
   // ── Compliance cases (UC40): one being investigated, one waiting for the club's explanation ──
