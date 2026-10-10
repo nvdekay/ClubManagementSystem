@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { googleLoginUrl } from "@/services/auth";
@@ -32,9 +31,9 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
           className="pointer-events-none absolute inset-0 size-full object-cover object-[78%_center]"
         />
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary-soft-app via-primary-soft-app/60 via-35% to-transparent to-60%" />
-        <Link to="/" aria-label={t("auth.brand")} className="relative self-start rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring-app">
+        <div className="relative self-start">
           <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />
-        </Link>
+        </div>
         <div className="relative flex max-w-110 flex-col gap-3">
           <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em]">
             {t("auth.brand")}
@@ -92,12 +91,6 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
             </svg>
             {t("auth.allowedDomain")}
           </p>
-          <Link to="/" className="inline-flex min-h-11 items-center gap-2 self-start rounded-full font-semibold text-accent-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app">
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-            {t("auth.continueAsGuest")}
-          </Link>
         </div>
       </section>
     </main>

@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth, useLoginError } from "@/hooks/useAuth";
-import { googleLoginUrl, type Workspace } from "@/services/auth";
+import type { Workspace } from "@/services/auth";
 import { cn } from "@/utils/cn";
 import { LoginPage } from "@/pages/auth/LoginPage";
 
@@ -72,7 +72,11 @@ export function AuthWorkspacePage() {
     return t("auth.clubWorkspaceHint", { role });
   }
 
-  if (!auth.data && window.location.pathname === "/login") {
+  if (!auth.data && window.location.pathname !== "/login") {
+    return <Navigate to={`/login${window.location.search}`} replace />;
+  }
+
+  if (!auth.data) {
     const authError = auth.isError ? auth.error.message : loginError;
     return (
       <LoginPage
@@ -82,6 +86,11 @@ export function AuthWorkspacePage() {
         returnTo={returnTo}
       />
     );
+  }
+
+  if (window.location.pathname === "/login") {
+    const destination = returnTo.split(/[?#]/)[0] === "/login" ? "/workspace" : returnTo;
+    return <Navigate to={destination} replace />;
   }
 
   const workspaces = auth.data?.workspaces ?? [];
@@ -102,18 +111,6 @@ export function AuthWorkspacePage() {
             <h1 className="font-heading text-2xl font-bold">{t("auth.accountError")}</h1>
             <p role="alert" className="text-sm text-danger-app">{auth.error.message}</p>
             <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
-          </div>
-        ) : !auth.data ? (
-          <div className="mx-auto text-center">
-            <h1 className="font-heading text-3xl font-bold">{t("auth.signInTitle")}</h1>
-            <p className="mt-3 text-muted-app">{t("auth.signInDescription")}</p>
-            {loginError && <p role="alert" className="mt-4 text-sm text-danger-app">
-              {loginError} {errorCode === "locked" && lockError.data}
-            </p>}
-            <a href={googleLoginUrl(returnTo)}
-              className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-primary-app px-6 font-semibold text-on-primary-app transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
-              {t("auth.signInGoogle")}
-            </a>
           </div>
         ) : (
           <section aria-labelledby="workspace-heading" className="flex w-full max-w-[880px] flex-col gap-8">

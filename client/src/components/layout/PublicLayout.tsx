@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -21,6 +21,8 @@ export function PublicLayout() {
   const auth = useAuth();
   // Bring the visitor back to the page they were reading after signing in.
   const loginTarget = `/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
+
+  if (!auth.data) return <Navigate to={loginTarget} replace />;
 
   return (
     <div className="flex min-h-full flex-col">
