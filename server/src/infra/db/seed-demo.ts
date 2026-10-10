@@ -119,6 +119,7 @@ const policySettings: PolicySettings = {
   minFoundingMembers: 3,
   formRequirements: DEFAULT_FORM_REQUIREMENTS,
   reportDeadlines: [{ reportType: "PERIODIC", dueDaysAfterPeriodEnd: 7, remindBeforeDays: 2,
+    overdueAfterDays: 1, escalateAfterDays: 3 }, { reportType: "POST_EVENT", dueDaysAfterPeriodEnd: 7, remindBeforeDays: 2,
     overdueAfterDays: 1, escalateAfterDays: 3 }],
   conflictThresholdMinutes: 30,
   feedbackWindowHours: 72,
@@ -449,6 +450,13 @@ try {
     startAt: at(-10 * DAY), endAt: at(-10 * DAY + 3 * HOUR), venueText: "Hội trường lớn, tòa Alpha", capacity: 200,
     waitlistEnabled: false, state: "Completed", registrationOpenAt: at(-25 * DAY), registrationCloseAt: at(-11 * DAY) });
   await attended(welcome, "HEBE", [owner, s[0]!, s[3]!, s[4]!], at(-10 * DAY + 5 * 60_000));
+  const ctfNight = await event("de0000000000000000000e08", "EHC", s[14]!, {
+    title: "CTF Night: Giải đề cùng mentor",
+    objective: "Buổi giải đề CTF mở cho sinh viên, có mentor từ doanh nghiệp hỗ trợ.",
+    startAt: at(-16 * DAY), endAt: at(-16 * DAY + 3 * HOUR), venueText: "Phòng lab 301, tòa Alpha", capacity: 40,
+    waitlistEnabled: false, state: "Completed", registrationOpenAt: at(-30 * DAY), registrationCloseAt: at(-17 * DAY) });
+  await attended(ctfNight, "EHC", [s[5]!, s[13]!, s[15]!], at(-16 * DAY + 10 * 60_000));
+
 
   // ── Event proposals waiting for ICPDP (UC26; UC25 is the club side, so proposals are inserted) ──
   // Shape follows the UC25 data contract in .sdd/specs/feat-event-proposal-review/SPEC.md.
@@ -561,6 +569,42 @@ try {
     await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
       amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
   }
+
+  // ── Post-event reports waiting for ICPDP (UC34; UC33 is the club side, so reports are inserted) ──
+  // Shape follows the UC33 data contract in .sdd/specs/feat-post-event-reports/SPEC.md. The CTF night above
+  // has no report and is past its deadline, so it shows under "overdue, not submitted".
+  async function postEventReport(eventId: Types.ObjectId, code: string, submittedBy: Types.ObjectId, input: {
+    checkedIn: number; actualResult: string; incidents?: string; lessonsLearned?: string; evidence?: { note: string; url?: string }[];
+    submittedAt: Date; lateFlag?: boolean }) {
+    if (await ucmsModels.postEventReports!.exists({ eventId })) return;
+    const { id: clubId } = club(code);
+    const [registered, budget, feedbackDocs] = await Promise.all([
+      ucmsModels.eventRegistrations!.countDocuments({ eventId, state: "Confirmed" }),
+      ucmsModels.eventBudgets!.findOne({ eventId }).lean(),
+      ucmsModels.eventFeedbacks!.find({ eventId }).lean(),
+    ]);
+    await ucmsModels.events!.updateOne({ _id: eventId }, { $set: { state: "Report Submitted", attendanceFinalized: true } });
+    await ucmsModels.attendances!.updateMany({ eventId }, { $set: { finalized: true, finalizedBy: submittedBy, finalizedAt: input.submittedAt } });
+    const [doc] = await ucmsModels.postEventReports!.create([{ eventId, clubId, state: "Submitted", versionNo: 1,
+      lateFlag: input.lateFlag ?? false, submittedBy, submittedAt: input.submittedAt,
+      preloadedFigures: { attendance: { registered, checkedIn: input.checkedIn },
+        ...(budget ? { budget: { approvedTotal: Number(String(budget.approvedTotal)), disbursedTotal: Number(String(budget.disbursedTotal)),
+          expenseTotal: Number(String(budget.disbursedTotal)) - 150_000 } } : {}),
+        feedback: { count: feedbackDocs.length }, capturedAt: input.submittedAt },
+      actualResult: input.actualResult, incidents: input.incidents, lessonsLearned: input.lessonsLearned,
+      evidence: input.evidence ?? [] }]);
+    await ucmsModels.approvalTasks!.create({ entityType: "POST_EVENT_REPORT", entityId: doc!._id, clubId,
+      title: "Báo cáo sau sự kiện", state: "Open", openedAt: input.submittedAt });
+  }
+  await postEventReport(welcome, "HEBE", owner, { checkedIn: 4, submittedAt: at(-3 * DAY),
+    actualResult: "Đêm nhạc diễn ra đúng kịch bản với 8 tiết mục, khán giả lấp đầy khoảng 80% hội trường.",
+    incidents: "Micro không dây số 2 mất tín hiệu khoảng 5 phút, đã thay micro dự phòng.",
+    lessonsLearned: "Cần chạy thử toàn bộ thiết bị âm thanh trước giờ mở cửa ít nhất 1 tiếng.",
+    evidence: [{ note: "Album ảnh đêm diễn", url: "https://drive.google.com/demo-welcome-photos" },
+      { note: "Danh sách tình nguyện viên" }] });
+  await postEventReport(origami, "Mây Mưa Club", s[8]!, { checkedIn: 7, submittedAt: at(-2 * HOUR),
+    actualResult: "Buổi workshop có 7 bạn tham gia, ai cũng gấp xong hạc giấy và hoa sen.",
+    lessonsLearned: "Nên chuẩn bị thêm giấy màu vì nhiều bạn muốn gấp thêm." });
 
   // ── Room bookings waiting for ICPDP (UC46; UC45 is the club side, so the requests are inserted) ──
   const propertyRepo = mongoPropertyRepository();

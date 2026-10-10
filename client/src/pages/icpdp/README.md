@@ -63,3 +63,7 @@ công bố, các bản và xu hướng các học kỳ trước.
 `BookingReviewsPage` (UC46) gồm hàng đợi và trang thẩm định yêu cầu đặt phòng/thiết bị: nhận task, xem xung
 đột khung giờ, sức chứa, nghĩa vụ quá hạn của CLB; duyệt (bị chặn khi khung giờ đã có người giữ hoặc CLB không
 hoạt động), yêu cầu chỉnh sửa kèm phương án thay thế, hoặc từ chối.
+
+`EventReportsPage` (UC34) liệt kê báo cáo sau sự kiện đã nộp và sự kiện quá hạn chưa nộp (ghi nhận không nộp mở
+hồ sơ UC40); trang thẩm định đặt số liệu CLB đóng băng cạnh số liệu hệ thống, cho chấp nhận (đóng sự kiện), trả về
+để sửa, hoặc chấp nhận kèm phát hiện. Lệch số điểm danh thì chỉ được trả về.

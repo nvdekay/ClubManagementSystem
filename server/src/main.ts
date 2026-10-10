@@ -21,6 +21,7 @@ import { mongoEventProposalReviewRepository } from "./infra/db/mongo-event-propo
 import { mongoBudgetDisbursementRepository } from "./infra/db/mongo-budget-disbursement-repository.js";
 import { mongoViolationRepository } from "./infra/db/mongo-violation-repository.js";
 import { mongoBookingReviewRepository } from "./infra/db/mongo-booking-review-repository.js";
+import { mongoPostEventReportRepository } from "./infra/db/mongo-post-event-report-repository.js";
 import { mongoSchoolEventRepository } from "./infra/db/mongo-school-event-repository.js";
 import { mongoEvaluationRepository } from "./infra/db/mongo-evaluation-repository.js";
 import { startEventLifecycleJob } from "./interface/jobs/event-lifecycle-job.js";
@@ -83,6 +84,7 @@ const app = authConfig ? buildApp({
   budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
   violationRepo: mongoViolationRepository(),
   bookingReviewRepo: mongoBookingReviewRepository(),
+  postEventReportRepo: mongoPostEventReportRepository(),
   schoolEventRepo,
   evaluationRepo: mongoEvaluationRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),

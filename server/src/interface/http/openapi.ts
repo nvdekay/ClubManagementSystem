@@ -6,6 +6,7 @@ import { applicationReviewDecisionBody } from "./club-application-review-routes.
 import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { bookingDecisionBody } from "./booking-review-routes.js";
+import { missingReportBody, postEventDecisionBody } from "./post-event-report-routes.js";
 import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
@@ -196,6 +197,29 @@ const BookingDetail = BookingQueueItem.extend({
     alternative: z.object({ propertyId: z.string().optional(), propertyLabel: z.string().optional(),
       startAt: z.string().optional(), endAt: z.string().optional() }).optional(),
     versionNo: z.number().optional(), actorId: z.string(), at: z.string() })),
+});
+const PostEventReportSummary = z.object({
+  id: z.string(), eventId: z.string(), eventTitle: z.string(), clubId: z.string(), clubName: z.string(),
+  eventEndAt: z.string(), state: z.string(), versionNo: z.number(), lateFlag: z.boolean(),
+  submittedAt: z.string().optional(), dueAt: z.string(),
+});
+const PostEventQueue = z.object({ submitted: z.array(PostEventReportSummary), missing: z.array(z.object({
+  eventId: z.string(), eventTitle: z.string(), clubId: z.string(), clubName: z.string(), eventEndAt: z.string(),
+  dueAt: z.string(), violationId: z.string().optional() })) });
+const PostEventReportDetail = PostEventReportSummary.extend({
+  event: z.object({ id: z.string(), title: z.string(), objective: z.string().optional(), startAt: z.string(), endAt: z.string(),
+    state: z.string(), capacity: z.number(), audienceScope: z.string(), approvalConditions: z.array(z.string()),
+    venue: z.string().optional() }),
+  preloadedFigures: z.record(z.string(), z.unknown()), actualResult: z.string(), incidents: z.string().optional(),
+  lessonsLearned: z.string().optional(), evidence: z.array(z.object({ note: z.string().optional(), url: z.string().optional() })),
+  live: z.object({ registered: z.number(), checkedIn: z.number(), attendanceFinalized: z.boolean(),
+    budget: z.object({ state: z.string(), approvedTotal: z.number(), disbursedTotal: z.number() }).optional(),
+    feedback: z.object({ count: z.number(), average: z.number().optional() }) }),
+  attendanceMismatch: z.boolean(),
+  decision: z.object({ outcome: z.enum(["Accept", "Return", "AcceptWithFinding"]), reason: z.string().optional(),
+    decidedBy: z.string(), decidedByName: z.string().optional(), decidedAt: z.string(),
+    findingViolationId: z.string().optional() }).optional(),
+  history: z.array(z.object({ action: z.string(), at: z.string(), actorName: z.string().optional(), reason: z.string().optional() })),
 });
 const ViolationEvidence = z.object({ note: z.string(), url: z.string().optional(), addedBy: z.string(), addedAt: z.string() });
 const ViolationSummary = z.object({
@@ -1224,6 +1248,45 @@ export const openApiDocument = createDocument({
           "200": { description: "Decided booking", content: { "application/json": { schema: envelope(BookingDetail) } } },
           "400": { description: "Missing reason or invalid alternative", content: { "application/json": { schema: ApiError } } },
           "409": { description: "Slot already held, club not active, or booking not claimed by this officer", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-reports": {
+      get: {
+        summary: "Submitted post-event reports and completed events whose report is overdue (UC34, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Queue", content: { "application/json": { schema: envelope(PostEventQueue) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-reports/{id}": {
+      get: {
+        summary: "Report with its frozen figures next to the live attendance, budget and feedback of the event",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Report detail", content: { "application/json": { schema: envelope(PostEventReportDetail) } } } },
+      },
+    },
+    "/admin/event-reports/{id}/decision": {
+      post: {
+        summary: "Accept (event Closed), return for correction (event back to Completed) or accept with a finding that opens a UC40 case (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: postEventDecisionBody } } },
+        responses: {
+          "200": { description: "Decided report", content: { "application/json": { schema: envelope(PostEventReportDetail) } } },
+          "400": { description: "Missing reason or finding", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Not waiting for a decision, or attendance mismatch on accept", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-reports/missing/{eventId}": {
+      post: {
+        summary: "Record that a completed event never got its report; opens an OVERDUE_REPORT case (requires CSRF token)",
+        requestParams: { path: z.object({ eventId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: missingReportBody } } },
+        responses: {
+          "201": { description: "Opened case", content: { "application/json": { schema: envelope(z.object({ violationId: z.string() })) } } },
+          "409": { description: "Not overdue, already reported or already recorded", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

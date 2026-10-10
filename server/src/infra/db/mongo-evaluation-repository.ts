@@ -147,7 +147,8 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         m.periodicReports!.find({ clubId: club, periodCode: period.code, dueAt: { $lte: now } }).lean(),
         m.clubPositions!.find({ clubId: club, isLeaderRole: true, isActive: true }).distinct("_id"),
       ]);
-      const completed = eventDocs.filter((event) => event.state === "Completed");
+      // An event that reached its report (UC33) or was closed by ICPDP (UC34) still took place.
+      const completed = eventDocs.filter((event) => ["Completed", "Report Submitted", "Closed"].includes(String(event.state)));
       const completedIds = completed.map((event) => event._id);
       const [registrationDocs, attendanceDocs, feedbackDocs, postReports, invitedEvents, leaderSeat] = await Promise.all([
         m.eventRegistrations!.find({ eventId: { $in: completedIds }, state: "Confirmed" }).select({ _id: 1 }).lean(),
