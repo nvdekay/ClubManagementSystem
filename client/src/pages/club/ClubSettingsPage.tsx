@@ -12,6 +12,7 @@ import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubSettings, useClubSettingsAction } from "@/hooks/useClubSettings";
 import { cn } from "@/utils/cn";
+import { ClubMembersPage } from "./ClubMembersPage";
 import { ClubRolesPanel } from "./ClubRolesPanel";
 import {
   MissingProfileFieldsError,
@@ -47,8 +48,12 @@ export function ClubSettingsPage() {
     && item.clubId === clubId);
   const canManage = Boolean(workspace?.permissions.includes("club.profile.manage"));
   const canManageRoles = Boolean(workspace?.permissions.includes("club.role.manage"));
+  const canManageMembers = Boolean(workspace?.permissions.includes("club.member.manage"));
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = canManageRoles && searchParams.get("tab") === "roles" ? "roles" : "profile";
+  const requestedTab = searchParams.get("tab");
+  const tab = canManageRoles && requestedTab === "roles" ? "roles"
+    : canManageMembers && requestedTab === "members" ? "members"
+      : requestedTab === "profile" ? "profile" : canManageMembers ? "members" : canManageRoles ? "roles" : "profile";
   const settings = useClubSettings(clubId, canManage);
   const action = useClubSettingsAction();
   const [profileDraft, setProfileDraft] = useState<ClubProfileInput | null>(null);
@@ -156,21 +161,25 @@ export function ClubSettingsPage() {
   );
 
   // UC23 lives beside UC09 as a second tab, shown only to the club leader (club.role.manage).
-  const tabs = canManageRoles && (
-    <div role="tablist" aria-label={t("clubSettings.title")} className="mb-6 flex flex-wrap gap-2">
-      {(["profile", "roles"] as const).map((item) => (
+  const tabs = (
+    <div role="tablist" aria-label={t("clubSettings.title")} className="mb-6 flex flex-wrap border-b border-border-app">
+      {(["members", "roles", "profile"] as const).filter((item) => item === "profile" || (item === "roles" ? canManageRoles : canManageMembers)).map((item) => (
         <button key={item} type="button" role="tab" aria-selected={tab === item}
-          onClick={() => setSearchParams(item === "roles" ? { tab: "roles" } : {})}
-          className={cn("min-h-10 rounded-full border border-border-app px-4 text-sm font-medium text-muted-app",
+          onClick={() => setSearchParams({ tab: item })}
+          className={cn("min-h-12 flex-1 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-muted-app",
             { "border-primary-app bg-primary-soft-app text-primary-app": tab === item })}>
-          {item === "roles" ? t("clubRoles.tabRoles") : t("clubRoles.tabProfile")}
+          {item === "members" ? t("clubRoles.tabMembers") : item === "roles" ? t("clubRoles.tabRoles") : t("clubRoles.tabProfile")}
         </button>
       ))}
     </div>
   );
+  if (tab === "members") return <>
+    <PageHeader title={t("clubSettings.title")} description={t("clubRoles.accessHint")} />
+    {tabs}<ClubMembersPage embedded />
+  </>;
   if (tab === "roles" && clubId) return (
     <>
-      <PageHeader title={t("clubRoles.title")} description={t("clubRoles.description")} />
+      <PageHeader title={t("clubSettings.title")} description={t("clubRoles.accessHint")} />
       {tabs}
       <ClubRolesPanel clubId={clubId} />
     </>
