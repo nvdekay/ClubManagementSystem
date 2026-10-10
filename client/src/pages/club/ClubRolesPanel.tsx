@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
@@ -17,10 +17,6 @@ import { formatDay } from "@/utils/formatDate";
 import { ClubRoleAssignDialog } from "./ClubRoleAssignDialog";
 import { ClubRoleDialog } from "./ClubRoleDialog";
 import { ClubRoleHistory } from "./ClubRoleHistory";
-import { permissionLabel } from "./clubRolePermissions";
-
-/** Chips shown on a card before the rest collapse into "+N". */
-const VISIBLE_PERMISSIONS = 4;
 
 type Confirm = { kind: "deactivate"; role: ClubRole } | { kind: "revoke"; role: ClubRole; holder: ClubRoleHolder };
 type Open = { kind: "create" } | { kind: "edit"; role: ClubRole } | { kind: "assign"; role: ClubRole } | Confirm;
@@ -39,6 +35,9 @@ export function ClubRolesPanel({ clubId }: { clubId: string }) {
   const view = searchParams.get("view") === "history" ? "history" : "roles";
   const auth = useAuth();
   const roles = useClubRoles(clubId, true);
+  const [formRevision, setFormRevision] = useState(0);
+  const [dirty, setDirty] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [open, setOpen] = useState<Open | null>(null);
   function close() { setOpen(null); }
 
@@ -66,9 +65,7 @@ export function ClubRolesPanel({ clubId }: { clubId: string }) {
   const csrfToken = auth.data?.csrfToken ?? "";
   if (view === "history") return <>{nav}<ClubRoleHistory versions={data.versions} /></>;
 
-  const leadership = data.roles.filter((role) => role.isLeaderRole || role.isBoardSeat);
-  const custom = data.roles.filter(isRegular);
-  const members = data.roles.filter((role) => role.isDefaultMemberRole);
+  const selected = data.roles.find((role) => role.id === selectedId) ?? data.roles[0];
 
   return (
     <>
@@ -82,15 +79,34 @@ export function ClubRolesPanel({ clubId }: { clubId: string }) {
       </div>
       {!data.activeTermId && <AppNotice tone="info" className="mb-6">{t("clubRoles.noTerm")}</AppNotice>}
 
-      <RoleGroup title={t("clubRoles.groupLeadership")} hint={t("clubRoles.groupLeadershipHint")}>
-        {leadership.map((role) => <RoleCard key={role.id} role={role} onOpen={setOpen} canAssign={false} />)}
-      </RoleGroup>
-      <RoleGroup title={t("clubRoles.groupCustom")} empty={custom.length ? undefined : t("clubRoles.groupCustomEmpty")}>
-        {custom.map((role) => <RoleCard key={role.id} role={role} onOpen={setOpen} canAssign={Boolean(data.activeTermId)} />)}
-      </RoleGroup>
-      <RoleGroup title={t("clubRoles.groupMembers")}>
-        {members.map((role) => <RoleCard key={role.id} role={role} onOpen={setOpen} canAssign={false} />)}
-      </RoleGroup>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+        <section aria-label={t("clubRoles.roles")} className="overflow-hidden rounded-2xl border border-border-app bg-bg-app">
+          <div className="border-b border-border-app bg-surface-app px-4 py-3 text-sm font-semibold">{t("clubRoles.name")}</div>
+          <div className="divide-y divide-border-app">{data.roles.map((role) => (
+            <button key={role.id} type="button" aria-pressed={selected?.id === role.id}
+              onClick={() => {
+                if (selected?.id === role.id || (dirty && !window.confirm(t("clubRoles.discardChanges")))) return;
+                setDirty(false); setSelectedId(role.id);
+              }}
+              className={cn("flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left hover:bg-surface-app",
+                { "bg-primary-soft-app text-primary-app": selected?.id === role.id })}>
+              <span className="min-w-0"><span className="block font-semibold break-words">{role.name}</span>
+                {role.unit && <span className="block text-xs text-muted-app">{role.unit}</span>}</span>
+              <AppBadge>{role.isLeaderRole ? t("clubRoles.leader") : role.isBoardSeat ? t("clubRoles.board")
+                : role.isDefaultMemberRole ? t("clubRoles.members") : t("clubRoles.holderCount", { count: role.holders.length })}</AppBadge>
+            </button>
+          ))}</div>
+        </section>
+        {selected && <div className="min-w-0 space-y-4">
+          <h3 className="font-heading text-lg font-bold break-words">{t("clubRoles.permissions")} · {selected.name}</h3>
+          {selected.isLeaderRole ? <AppNotice>{t("clubRoles.leaderLocked")}</AppNotice>
+            : <ClubRoleDialog key={`${selected.id}:${formRevision}`} inline clubId={clubId} csrfToken={csrfToken} role={selected}
+              departments={data.departments} grantablePermissions={data.grantablePermissions} onDirtyChange={setDirty}
+              onClose={() => { setDirty(false); setFormRevision((value) => value + 1); }} />}
+          <RoleCard key={selected.id} role={selected} onOpen={setOpen}
+            canAssign={isRegular(selected) && Boolean(data.activeTermId)} />
+        </div>}
+      </div>
 
       {(open?.kind === "create" || open?.kind === "edit") && <ClubRoleDialog clubId={clubId} csrfToken={csrfToken}
         role={open.kind === "edit" ? open.role : undefined} departments={data.departments}
@@ -103,24 +119,10 @@ export function ClubRolesPanel({ clubId }: { clubId: string }) {
   );
 }
 
-function RoleGroup({ title, hint, empty, children }: { title: string; hint?: string; empty?: string; children: ReactNode }) {
-  return (
-    <section className="mb-8">
-      <h3 className="font-heading text-sm font-bold tracking-wide text-muted-app uppercase">{title}</h3>
-      {hint && <p className="mt-1 text-xs text-muted-app">{hint}</p>}
-      {empty ? <p className="mt-3 rounded-2xl border border-dashed border-border-app p-5 text-sm text-muted-app">{empty}</p>
-        : <div className="mt-3 grid gap-4 lg:grid-cols-2">{children}</div>}
-    </section>
-  );
-}
-
 function RoleCard({ role, canAssign, onOpen }: { role: ClubRole; canAssign: boolean; onOpen: (open: Open) => void }) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
-  const [showAll, setShowAll] = useState(false);
   const regular = isRegular(role);
-  const permissions = showAll ? role.permissionCodes : role.permissionCodes.slice(0, VISIBLE_PERMISSIONS);
-  const hidden = role.permissionCodes.length - permissions.length;
 
   return (
     <article className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border-app bg-bg-app p-4 sm:p-5">
@@ -129,24 +131,7 @@ function RoleCard({ role, canAssign, onOpen }: { role: ClubRole; canAssign: bool
           <h4 className="font-bold break-words">{role.name}</h4>
           {role.unit && <p className="text-sm text-muted-app break-words">{role.unit}</p>}
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {role.isLeaderRole && <AppBadge tone="info">{t("clubRoles.leader")}</AppBadge>}
-          {role.isBoardSeat && !role.isLeaderRole && <AppBadge tone="warning">{t("clubRoles.board")}</AppBadge>}
-          {role.isDefaultMemberRole && <AppBadge>{t("clubRoles.members")}</AppBadge>}
-          {role.isSingleHolder && !role.isLeaderRole && <AppBadge>{t("clubRoles.singleHolder")}</AppBadge>}
-        </div>
       </div>
-
-      <div className="flex flex-wrap gap-1.5">
-        {role.isLeaderRole ? <span className="rounded-full bg-primary-soft-app px-2.5 py-1 text-xs font-medium text-primary-app">{t("clubRoles.allPermissions")}</span>
-          : !role.permissionCodes.length ? <span className="text-sm text-muted-app">{t("clubRoles.noPermissions")}</span>
-            : <>
-              {permissions.map((code) => <span key={code} className="rounded-full bg-surface-strong-app px-2.5 py-1 text-xs font-medium">{permissionLabel(t, code)}</span>)}
-              {hidden > 0 && <button type="button" className="rounded-full border border-border-app px-2.5 py-1 text-xs font-semibold text-primary-app hover:border-primary-app"
-                onClick={() => setShowAll(true)}>{t("clubRoles.moreCount", { count: hidden })}</button>}
-            </>}
-      </div>
-
       <div className="border-t border-border-app pt-3">
         {role.isDefaultMemberRole ? <p className="text-sm text-muted-app">{t("clubRoles.membersHint")}</p> : <>
           <p className="text-xs font-semibold text-muted-app">{t("clubRoles.holderCount", { count: role.holders.length })}</p>
@@ -169,7 +154,6 @@ function RoleCard({ role, canAssign, onOpen }: { role: ClubRole; canAssign: bool
       {role.isLeaderRole ? <p className="text-xs text-muted-app">{t("clubRoles.leaderLocked")}</p>
         : <div className="mt-auto flex flex-wrap gap-2">
           {canAssign && <AppButton onClick={() => onOpen({ kind: "assign", role })}>{t("clubRoles.assign")}</AppButton>}
-          <AppButton variant="secondary" onClick={() => onOpen({ kind: "edit", role })}>{t("clubRoles.edit")}</AppButton>
           {regular && <AppButton variant="ghost" className="hover:text-danger-app" onClick={() => onOpen({ kind: "deactivate", role })}>
             {t("clubRoles.deactivate")}</AppButton>}
         </div>}
