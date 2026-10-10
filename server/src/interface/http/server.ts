@@ -13,6 +13,7 @@ import type { ApplicationFileStorage, ClubApplicationRepository } from "../../do
 import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
 import type { EventProposalReviewRepository } from "../../domain/event-proposal-review.js";
 import type { BudgetDisbursementRepository } from "../../domain/budget-disbursement.js";
+import type { ViolationRepository } from "../../domain/violation.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
 import type { BoardNominationRepository } from "../../domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
@@ -34,6 +35,7 @@ import { clubApplicationRoutes } from "./club-application-routes.js";
 import { clubApplicationReviewRoutes } from "./club-application-review-routes.js";
 import { eventProposalReviewRoutes } from "./event-proposal-review-routes.js";
 import { budgetDisbursementRoutes } from "./budget-disbursement-routes.js";
+import { violationRoutes } from "./violation-routes.js";
 import { clubProfileRoutes } from "./club-profile-routes.js";
 import { clubFieldRoutes } from "./club-field-routes.js";
 import { propertyRoutes } from "./property-routes.js";
@@ -86,6 +88,7 @@ export function buildApp(deps: {
   applicationReviewRepo?: ClubApplicationReviewRepository;
   eventProposalReviewRepo?: EventProposalReviewRepository;
   budgetDisbursementRepo?: BudgetDisbursementRepository;
+  violationRepo?: ViolationRepository;
   clubProfileRepo?: ClubProfileRepository;
   boardNominationRepo?: BoardNominationRepository;
   recruitmentCampaignRepo?: RecruitmentCampaignRepository;
@@ -199,6 +202,10 @@ export function buildApp(deps: {
         app.use("/api/v1", budgetDisbursementRoutes({ repo: deps.budgetDisbursementRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       }
+      if (deps.violationRepo) {
+        app.use("/api/v1", violationRoutes({ repo: deps.violationRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
       if (deps.clubLifecycleRepo) {
         app.use("/api/v1", clubLifecycleRoutes({ repo: deps.clubLifecycleRepo, policy: deps.policyRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -245,6 +252,7 @@ export function buildApp(deps: {
   const hasClubLifecycle = Boolean(hasPolicy && deps.clubLifecycleRepo);
   const hasEventProposalReviews = Boolean(hasPolicy && deps.eventProposalReviewRepo);
   const hasBudgets = Boolean(hasPolicy && deps.budgetDisbursementRepo);
+  const hasViolations = Boolean(hasPolicy && deps.violationRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
   const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
@@ -266,6 +274,7 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/event-proposals")) return hasEventProposalReviews;
       if (path.startsWith("/admin/budgets")) return hasBudgets;
+      if (path.startsWith("/admin/violations")) return hasViolations;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;
       if (path.startsWith("/admin/student-feedback")) return hasStudentFeedback;

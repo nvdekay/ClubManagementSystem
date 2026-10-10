@@ -10,6 +10,7 @@ import type { ExportFileWriter, ExportRepository } from "../../src/domain/data-e
 import type { ClubLifecycleRepository } from "../../src/domain/club-lifecycle.js";
 import type { EventProposalReviewRepository } from "../../src/domain/event-proposal-review.js";
 import type { BudgetDisbursementRepository } from "../../src/domain/budget-disbursement.js";
+import type { ViolationRepository } from "../../src/domain/violation.js";
 import type { ClubProfileRepository } from "../../src/domain/club-profile.js";
 import type { BoardNominationRepository } from "../../src/domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
@@ -133,6 +134,11 @@ const stubBudgets: BudgetDisbursementRepository = {
   list: async () => [], find: async () => null,
   record: async () => { throw new Error("unused"); },
 };
+const stubViolations: ViolationRepository = {
+  list: async () => [], find: async () => null, sources: async () => null,
+  open: async () => { throw new Error("unused"); },
+  apply: async () => { throw new Error("unused"); },
+};
 const stubClubProfiles: ClubProfileRepository = {
   findProfile: async () => null, listDepartments: async () => [],
   updateProfile: async () => { throw new Error("unused"); },
@@ -220,7 +226,7 @@ describe("openapi document", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle,
-      applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets,
+      applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
@@ -273,7 +279,7 @@ describe("openapi document", () => {
   it("guards every mutation or explicitly lists it as public", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties,
-      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets,
+      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,

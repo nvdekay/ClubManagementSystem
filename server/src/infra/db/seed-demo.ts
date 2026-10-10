@@ -28,6 +28,7 @@ import { mongoClubApplicationRepository } from "./mongo-club-application-reposit
 import { mongoClubApplicationReviewRepository } from "./mongo-club-application-review-repository.js";
 import { mongoEventFeedbackRepository } from "./mongo-event-feedback-repository.js";
 import { mongoBudgetDisbursementRepository } from "./mongo-budget-disbursement-repository.js";
+import { mongoViolationRepository } from "./mongo-violation-repository.js";
 import { mongoEventRegistrationRepository } from "./mongo-event-registration-repository.js";
 import { mongoMembershipRepository } from "./mongo-membership-repository.js";
 import { mongoPolicyRepository } from "./mongo-policy-repository.js";
@@ -555,6 +556,22 @@ try {
       periodCode: "Fall 2026", createdAt: at(-24 * DAY) });
     await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
       amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
+  }
+
+  // ── Compliance cases (UC40): one being investigated, one waiting for the club's explanation ──
+  if (!(await ucmsModels.violations!.exists({}))) {
+    const cases = mongoViolationRepository();
+    await cases.open({ clubId: String(club("EHC").id), originType: "OVERDUE_REPORT", severity: "MINOR",
+      title: "Nộp báo cáo hoạt động tháng 9 trễ 12 ngày",
+      description: "Báo cáo định kỳ tháng 9 đến hạn 05/10 nhưng tới nay CLB vẫn chưa nộp.",
+      evidence: [{ note: "Nhắc nhở qua email ngày 06/10, chưa có phản hồi" }] }, String(owner), at(-3 * DAY));
+    const late = await cases.open({ clubId: String(club("Mây Mưa Club").id), originType: "LATE_BOOKING_CANCELLATION",
+      severity: "MODERATE", title: "Huỷ đặt phòng 112 Gamma sát giờ hai lần trong tháng",
+      evidence: [{ note: "Lịch sử huỷ đặt phòng ngày 21/09 và 03/10", url: "https://drive.google.com/demo-booking-log" }] },
+    String(owner), at(-6 * DAY));
+    await cases.apply(late.id, String(owner), { type: "investigate" }, at(-5 * DAY));
+    await cases.apply(late.id, String(owner), { type: "requestResponse",
+      message: "Đề nghị CLB giải trình lý do huỷ phòng sát giờ và cam kết không tái diễn.", dueAt: at(2 * DAY) }, at(-5 * DAY));
   }
 
   // ── One-way student feedback (UC50) ────────────────────────────────────────────────────────

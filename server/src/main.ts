@@ -19,6 +19,7 @@ import { mongoClubLifecycleRepository } from "./infra/db/mongo-club-lifecycle-re
 import { startClubLifecycleJob } from "./interface/jobs/club-lifecycle-job.js";
 import { mongoEventProposalReviewRepository } from "./infra/db/mongo-event-proposal-review-repository.js";
 import { mongoBudgetDisbursementRepository } from "./infra/db/mongo-budget-disbursement-repository.js";
+import { mongoViolationRepository } from "./infra/db/mongo-violation-repository.js";
 import { startEventLifecycleJob } from "./interface/jobs/event-lifecycle-job.js";
 import { exportFileWriter } from "./infra/files/export-file-writer.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mongo-club-field-repository.js";
@@ -76,6 +77,7 @@ const app = authConfig ? buildApp({
   clubLifecycleRepo,
   eventProposalReviewRepo,
   budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
+  violationRepo: mongoViolationRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),

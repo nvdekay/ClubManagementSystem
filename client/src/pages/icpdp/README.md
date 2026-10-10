@@ -44,3 +44,8 @@ duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối
 `BudgetsPage` (UC35) gồm `BudgetsPage` (danh sách kinh phí sự kiện đã duyệt, lọc theo trạng thái) và
 `BudgetDetailPage`: số duyệt, đã chuyển, còn được tạm ứng, hạn quyết toán, hạng mục duyệt, các lần chuyển
 tiền và form ghi đúng một loại dòng tiền mà kinh phí đang nhận (tạm ứng / cấp bù / CLB hoàn trả).
+
+`ViolationsPage` (UC40) gồm `ViolationsPage` (danh sách hồ sơ vi phạm theo nhóm trạng thái, form mở hồ sơ:
+CLB, nguồn phát hiện, mức độ, sự việc, sự kiện/kinh phí liên quan, chứng cứ) và `ViolationDetailPage`: chứng
+cứ, giải trình của CLB, quyết định, biện pháp khắc phục, lịch sử, và khung "Bước tiếp theo" chỉ hiện những bước
+hợp lệ ở trạng thái hiện tại.

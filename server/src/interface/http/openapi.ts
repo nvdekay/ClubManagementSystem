@@ -5,6 +5,7 @@ import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
+import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
@@ -169,6 +170,29 @@ const BudgetDetail = BudgetSummary.extend({
     recordedBy: z.string(), recordedByName: z.string().optional() })),
   allowed: z.object({ kind: z.enum(["Advance", "TopUp", "Refund"]), max: z.number(),
     exact: z.number().optional() }).optional(),
+});
+const ViolationEvidence = z.object({ note: z.string(), url: z.string().optional(), addedBy: z.string(), addedAt: z.string() });
+const ViolationSummary = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), originType: z.string(), severity: z.string(),
+  title: z.string(), state: z.string(), openedAt: z.string(), responseDueAt: z.string().optional(),
+  responseOverdue: z.boolean(), pendingActions: z.number(),
+});
+const ViolationDetail = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), clubState: z.string(), originType: z.string(),
+  originRefId: z.string().optional(), severity: z.string(), title: z.string(), description: z.string().optional(),
+  evidence: z.array(ViolationEvidence), state: z.string(),
+  clubResponse: z.object({ requestMessage: z.string(), requestedBy: z.string(), requestedAt: z.string(), dueAt: z.string(),
+    source: z.enum(["CLUB", "RECORDED_BY_ICPDP", "NO_RESPONSE"]).optional(), text: z.string().optional(),
+    respondedBy: z.string().optional(), respondedAt: z.string().optional(), recordedBy: z.string().optional() }).optional(),
+  decisionReason: z.string().optional(), decisionEvidence: z.array(ViolationEvidence),
+  openedBy: z.string(), openedAt: z.string(), decidedBy: z.string().optional(), decidedAt: z.string().optional(),
+  responseDueAt: z.string().optional(), resolvedAt: z.string().optional(),
+  actions: z.array(z.object({ id: z.string(), description: z.string(), dueAt: z.string(),
+    state: z.enum(["Pending", "Verified", "Failed"]), linkedLifecycleAction: z.enum(["SUSPEND", "DISSOLVE"]).optional(),
+    verifiedBy: z.string().optional(), verifiedAt: z.string().optional() })),
+  source: z.object({ kind: z.enum(["event", "budget"]), id: z.string(), label: z.string() }).optional(),
+  names: z.record(z.string(), z.string()),
+  history: z.array(z.object({ action: z.string(), at: z.string(), actorName: z.string().optional(), reason: z.string().optional() })),
 });
 const EventProposalQueueItem = z.object({ task: EventProposalTask, event: EventProposalSummary });
 const EventProposalDetail = EventProposalQueueItem.extend({
@@ -1096,6 +1120,52 @@ export const openApiDocument = createDocument({
           "200": { description: "Updated budget", content: { "application/json": { schema: envelope(BudgetDetail) } } },
           "400": { description: "Amount over the approved total, not the exact top-up, or over what is owed", content: { "application/json": { schema: ApiError } } },
           "409": { description: "The budget does not accept this kind of flow now", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/violations": {
+      get: {
+        summary: "List compliance cases, newest first (UC40, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Cases", content: { "application/json": { schema: envelope(z.array(ViolationSummary)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Open a compliance case for a club (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: violationOpenBody } } },
+        responses: {
+          "201": { description: "Opened case", content: { "application/json": { schema: envelope(ViolationDetail) } } },
+          "400": { description: "Invalid origin, severity, title or source record", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/violations/sources/{clubId}": {
+      get: {
+        summary: "Events and budgets of a club a case can point to",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Source records", content: { "application/json": { schema: envelope(z.object({
+          events: z.array(z.object({ id: z.string(), title: z.string(), startAt: z.string(), state: z.string() })),
+          budgets: z.array(z.object({ id: z.string(), eventTitle: z.string(), state: z.string() })),
+        })) } } } },
+      },
+    },
+    "/admin/violations/{id}": {
+      get: {
+        summary: "Compliance case with evidence, club response, decision, corrective actions and history",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Case detail", content: { "application/json": { schema: envelope(ViolationDetail) } } } },
+      },
+    },
+    "/admin/violations/{id}/steps": {
+      post: {
+        summary: "Move a case forward: investigate, add evidence, ask or record the club response, decide, assign/verify corrective actions, resolve (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: violationStepBody } } },
+        responses: {
+          "200": { description: "Updated case", content: { "application/json": { schema: envelope(ViolationDetail) } } },
+          "400": { description: "Missing reason, evidence, message or deadline", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "The step is not allowed in the current state", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

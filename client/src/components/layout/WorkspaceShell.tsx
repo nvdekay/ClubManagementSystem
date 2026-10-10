@@ -275,6 +275,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       ] },
       { group: "evaluation", label: t("common.groupEvaluation"), icon: "star", children: [
         { to: "/workspace/evaluation-schemes", label: t("common.icpdpSchemes"), icon: "star" },
+        { to: "/workspace/violations", label: t("common.icpdpViolations"), icon: "shield" },
         { to: "/workspace/exports", label: t("common.icpdpExports"), icon: "file" },
       ] },
       { to: "/workspace/student-feedback", label: t("common.icpdpFeedback"), icon: "megaphone" },
