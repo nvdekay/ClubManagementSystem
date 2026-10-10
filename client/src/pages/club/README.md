@@ -4,7 +4,9 @@ Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`;
 đối chiếu workspace và quyền hiện hành từ `/auth/me`.
 
 `ClubSettingsPage` triển khai UC09: chỉ workspace có `club.profile.manage` mới đọc/sửa hồ sơ
-vận hành và cơ cấu ban/bộ phận; các trường định danh do ICPDP quản lý chỉ được hiển thị.
+vận hành và cơ cấu ban/bộ phận; các trường định danh do ICPDP quản lý chỉ được hiển thị. Tab
+thứ hai (`?tab=roles`, chỉ hiện với `club.role.manage`) là `ClubRolesPanel` — UC23: role,
+permission, gán/thu hồi người giữ và so sánh các phiên bản cơ cấu.
 
 `BoardNominationPage` triển khai UC10: Club Leader hoặc founder sáng lập có quyền tạm từ UC08
 đề cử thành viên `Active` vào ghế ban điều hành còn trống của nhiệm kỳ hiện tại.

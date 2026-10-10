@@ -44,6 +44,8 @@ export interface ClubPositionAccess {
   clubId: string;
   isActive: boolean;
   isLeaderRole: boolean;
+  /** The default Members role (BR56): its permissions apply to every Active member. */
+  isDefaultMemberRole?: boolean;
   permissionCodes: readonly string[];
 }
 
@@ -105,6 +107,14 @@ export function resolveClubPermissions(snapshot: ClubAccessSnapshot, now: Date):
         }
         continue;
       }
+      for (const code of position.permissionCodes) {
+        if (GRANTABLE_CLUB_PERMISSIONS.some((permission) => permission === code)) {
+          permissions.add(code as ClubPermission);
+        }
+      }
+    }
+    for (const position of positions.values()) {
+      if (!position.isDefaultMemberRole) continue;
       for (const code of position.permissionCodes) {
         if (GRANTABLE_CLUB_PERMISSIONS.some((permission) => permission === code)) {
           permissions.add(code as ClubPermission);

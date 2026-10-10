@@ -16,6 +16,7 @@ import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mo
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
 import { mongoClubProfileRepository } from "./infra/db/mongo-club-profile-repository.js";
+import { mongoClubRoleRepository } from "./infra/db/mongo-club-role-repository.js";
 import { mongoBoardNominationRepository } from "./infra/db/mongo-board-nomination-repository.js";
 import { mongoRecruitmentCampaignRepository } from "./infra/db/mongo-recruitment-campaign-repository.js";
 import { mongoRecruitmentApplicationRepository } from "./infra/db/mongo-recruitment-application-repository.js";
@@ -60,6 +61,7 @@ const app = authConfig ? buildApp({
   clubFieldRepo: mongoClubFieldRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
+  clubRoleRepo: mongoClubRoleRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),
   leadershipTransitionRepo: mongoLeadershipTransitionRepository(),
   eventRegistrationRepo: mongoEventRegistrationRepository(),

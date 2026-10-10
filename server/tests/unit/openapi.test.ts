@@ -5,6 +5,7 @@ import type { ClubApplicationRepository } from "../../src/domain/club-applicatio
 import type { ClubApplicationReviewRepository } from "../../src/domain/club-application-review.js";
 import type { ClubFieldRepository } from "../../src/domain/club-field.js";
 import type { ClubProfileRepository } from "../../src/domain/club-profile.js";
+import type { ClubRoleRepository } from "../../src/domain/club-role.js";
 import type { BoardNominationRepository } from "../../src/domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
 import type { RecruitmentApplicationRepository } from "../../src/domain/recruitment-application.js";
@@ -104,6 +105,10 @@ const stubClubProfiles: ClubProfileRepository = {
   updateDepartment: async () => { throw new Error("unused"); },
   deactivateDepartment: async () => { throw new Error("unused"); },
 };
+const stubClubRoles: ClubRoleRepository = {
+  overview: async () => null, createRole: async () => undefined, updateRole: async () => undefined,
+  deactivateRole: async () => undefined, assign: async () => undefined, revoke: async () => undefined,
+};
 const stubBoardNominations: BoardNominationRepository = {
   getContext: async () => null, submit: async () => { throw new Error("unused"); },
   listOpen: async () => [], find: async () => null,
@@ -184,6 +189,7 @@ describe("openapi document", () => {
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields,
       applicationReviewRepo: stubApplicationReviews,
       clubProfileRepo: stubClubProfiles,
+      clubRoleRepo: stubClubRoles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
       recruitmentApplicationRepo: stubRecruitmentApplications,
@@ -237,6 +243,7 @@ describe("openapi document", () => {
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields,
       applicationReviewRepo: stubApplicationReviews,
       clubProfileRepo: stubClubProfiles,
+      clubRoleRepo: stubClubRoles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
       recruitmentApplicationRepo: stubRecruitmentApplications,

@@ -9,6 +9,7 @@ import { policy } from "./policy";
 import { applications } from "./applications";
 import { reviews } from "./reviews";
 import { clubSettings } from "./clubSettings";
+import { clubRoles } from "./clubRoles";
 import { boardNominations } from "./boardNominations";
 import { recruitmentCampaigns } from "./recruitmentCampaigns";
 import { recruitmentApplications } from "./recruitmentApplications";
@@ -27,7 +28,7 @@ export type Locale = "en" | "vi";
 export const resources = {
   en: { translation: { common: common.en, auth: auth.en, discovery: discovery.en,
     policy: policy.en, applications: applications.en, reviews: reviews.en,
-    clubSettings: clubSettings.en, boardNominations: boardNominations.en,
+    clubSettings: clubSettings.en, clubRoles: clubRoles.en, boardNominations: boardNominations.en,
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
@@ -35,7 +36,7 @@ export const resources = {
     demo: demo.en } },
   vi: { translation: { common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
-    clubSettings: clubSettings.vi, boardNominations: boardNominations.vi,
+    clubSettings: clubSettings.vi, clubRoles: clubRoles.vi, boardNominations: boardNominations.vi,
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
     eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,

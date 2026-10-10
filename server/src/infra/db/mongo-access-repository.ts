@@ -54,6 +54,7 @@ export function mongoAccessRepository(): ClubAccessRepository {
       const mappedPositions: ClubPositionAccess[] = positionDocs.map((position) => ({
         id: id(position._id), clubId: id(position.clubId),
         isActive: position.isActive === true, isLeaderRole: position.isLeaderRole === true,
+        isDefaultMemberRole: position.isDefaultMemberRole === true,
         permissionCodes: stringArray(position.permissionCodes),
       }));
       const mappedAssignments: ClubAssignmentAccess[] = assignmentDocs.map((assignment) => ({

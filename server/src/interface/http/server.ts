@@ -8,6 +8,7 @@ import type { ClubFieldRepository } from "../../domain/club-field.js";
 import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
+import type { ClubRoleRepository } from "../../domain/club-role.js";
 import type { BoardNominationRepository } from "../../domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
 import type { MembershipRepository } from "../../domain/membership.js";
@@ -27,6 +28,7 @@ import { policyRoutes } from "./policy-routes.js";
 import { clubApplicationRoutes } from "./club-application-routes.js";
 import { clubApplicationReviewRoutes } from "./club-application-review-routes.js";
 import { clubProfileRoutes } from "./club-profile-routes.js";
+import { clubRoleRoutes } from "./club-role-routes.js";
 import { clubFieldRoutes } from "./club-field-routes.js";
 import { boardNominationRoutes } from "./board-nomination-routes.js";
 import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
@@ -68,6 +70,7 @@ export function buildApp(deps: {
   clubFieldRepo?: ClubFieldRepository;
   applicationReviewRepo?: ClubApplicationReviewRepository;
   clubProfileRepo?: ClubProfileRepository;
+  clubRoleRepo?: ClubRoleRepository;
   boardNominationRepo?: BoardNominationRepository;
   recruitmentCampaignRepo?: RecruitmentCampaignRepository;
   recruitmentApplicationRepo?: RecruitmentApplicationRepository;
@@ -110,6 +113,10 @@ export function buildApp(deps: {
         repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo, policy: deps.policyRepo,
         authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
+    }
+    if (deps.clubRoleRepo) {
+      app.use("/api/v1", clubRoleRoutes({ repo: deps.clubRoleRepo, accessRepo: deps.auth.accessRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.boardNominationRepo) {
       app.use("/api/v1", boardNominationRoutes({
@@ -195,6 +202,7 @@ export function buildApp(deps: {
   const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
   const hasClubProfiles = Boolean(hasPolicy && deps.clubProfileRepo);
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
+  const hasClubRoles = Boolean(hasAdmin && deps.clubRoleRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
   const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
@@ -230,6 +238,7 @@ export function buildApp(deps: {
         || path.startsWith("/clubs/{clubId}/profile")
         || path.startsWith("/clubs/{clubId}/departments")) return hasClubProfiles;
       if (path.startsWith("/clubs/{clubId}/board-nomination")) return hasBoardNominations;
+      if (path.startsWith("/clubs/{clubId}/roles")) return hasClubRoles;
       if (path.startsWith("/clubs/{clubId}/recruitment/campaigns")) return hasRecruitmentCampaigns;
       return true;
     }));
