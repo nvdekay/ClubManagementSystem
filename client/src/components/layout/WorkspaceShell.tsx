@@ -268,6 +268,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
         { to: "/workspace/club-fields", label: t("common.icpdpClubFields"), icon: "layers" },
       ] },
       { group: "events", label: t("common.groupEvents"), icon: "calendar", children: [
+        { to: "/workspace/event-proposals", label: t("common.icpdpEventProposals"), icon: "inbox" },
         { to: "/events", label: t("common.icpdpEvents"), icon: "calendar" },
         { to: "/workspace/properties", label: t("common.icpdpProperties"), icon: "mapPin" },
       ] },

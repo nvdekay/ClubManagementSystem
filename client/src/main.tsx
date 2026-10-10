@@ -27,6 +27,8 @@ import { StudentHomePage } from "./pages/student/StudentHomePage.js";
 import { ClubHomePage } from "./pages/club/ClubHomePage.js";
 import { ApplicationReviewQueuePage } from "./pages/icpdp/ApplicationReviewQueuePage.js";
 import { ApplicationReviewDetailPage } from "./pages/icpdp/ApplicationReviewDetailPage.js";
+import { EventProposalQueuePage } from "./pages/icpdp/EventProposalQueuePage.js";
+import { EventProposalReviewPage } from "./pages/icpdp/EventProposalReviewPage.js";
 import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
 import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
 import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
@@ -88,6 +90,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
             <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
             <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
+            <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
+            <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
             <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
             <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
             <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />

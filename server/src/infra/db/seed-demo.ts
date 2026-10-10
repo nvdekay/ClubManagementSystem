@@ -444,6 +444,106 @@ try {
     waitlistEnabled: false, state: "Completed", registrationOpenAt: at(-25 * DAY), registrationCloseAt: at(-11 * DAY) });
   await attended(welcome, "HEBE", [owner, s[0]!, s[3]!, s[4]!], at(-10 * DAY + 5 * 60_000));
 
+  // ── Event proposals waiting for ICPDP (UC26; UC25 is the club side, so proposals are inserted) ──
+  // Shape follows the UC25 data contract in .sdd/specs/feat-event-proposal-review/SPEC.md.
+  type BudgetLine = { category: string; amount: number; purpose: string; plannedItems?: string };
+  async function proposal(id: string, code: string, submittedBy: Types.ObjectId, input: {
+    title: string; objective: string; plan: string; startAt: Date; hours: number; venueText: string; capacity: number;
+    audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; riskCategory: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string;
+    facilityNeeds?: string; conflict?: { result: "No Conflict" | "Warning"; detail?: string };
+    revisions: Array<{ budgetLines?: BudgetLine[]; submittedAt: Date; revisionRequest?: string }>;
+  }) {
+    const eventId = new Types.ObjectId(id);
+    if (await ucmsModels.events!.exists({ _id: eventId })) return;
+    const { id: clubId, name } = club(code);
+    const endAt = new Date(input.startAt.getTime() + input.hours * HOUR);
+    const conflictResult = input.conflict?.result ?? "No Conflict";
+    await ucmsModels.events!.create({ _id: eventId, organizerType: "CLUB", clubId, clubName: name, title: input.title,
+      objective: input.objective, startAt: input.startAt, endAt, semesterCode: "Fall 2026", venueText: input.venueText,
+      audienceScope: input.audienceScope ?? "PUBLIC", capacity: input.capacity, riskCategory: input.riskCategory,
+      conflictResult, ...(input.conflict?.detail ? { conflictDetail: { message: input.conflict.detail } } : {}),
+      state: "Pending Approval", currentRevisionNo: input.revisions.length, waitlistEnabled: true,
+      createdAt: input.revisions[0]!.submittedAt });
+    for (const [index, revision] of input.revisions.entries()) {
+      const lines = revision.budgetLines ?? [];
+      await ucmsModels.eventProposalVersions!.create({ eventId, revisionNo: index + 1, submittedBy,
+        submittedAt: revision.submittedAt, conflictResult,
+        payload: { title: input.title, objective: input.objective, plan: input.plan, startAt: input.startAt, endAt,
+          venueText: input.venueText, capacity: input.capacity, audienceScope: input.audienceScope ?? "PUBLIC",
+          riskCategory: input.riskCategory, ...(input.riskNote ? { riskNote: input.riskNote } : {}),
+          ...(input.facilityNeeds ? { facilityNeeds: input.facilityNeeds } : {}) },
+        ...(lines.length ? { budgetLines: lines,
+          requestedBudgetTotal: Types.Decimal128.fromString(String(lines.reduce((sum, line) => sum + line.amount, 0))) } : {}) });
+      const last = index === input.revisions.length - 1;
+      const [task] = await ucmsModels.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: eventId, clubId,
+        title: input.title, state: last ? "Open" : "Decided", openedAt: revision.submittedAt,
+        ...(last ? {} : { assigneeId: owner, closedAt: input.revisions[index + 1]!.submittedAt }) }]);
+      if (!last && revision.revisionRequest) {
+        await ucmsModels.approvalDecisions!.create({ approvalTaskId: task!._id, outcome: "Request revision",
+          reason: revision.revisionRequest, comments: { sections: ["budget", "risk"], conditions: [] }, actorId: owner,
+          at: new Date(revision.submittedAt.getTime() + DAY) });
+      }
+    }
+  }
+  await proposal("de0000000000000000000f01", "HEBE", s[0]!, {
+    title: "HEBE Dance Battle 2026",
+    objective: "Cuộc thi nhảy đối kháng mở cho mọi sinh viên, tạo sân chơi giao lưu giữa các nhóm nhảy trong trường.",
+    plan: "18:00 check-in thí sinh · 18:30 khai mạc · 19:00–21:00 vòng loại và chung kết · 21:15 trao giải.",
+    startAt: at(18 * DAY + 11 * HOUR), hours: 4, venueText: "Sảnh Delta, Đại học FPT Hà Nội", capacity: 300,
+    riskCategory: "MEDIUM", riskNote: "Đông người tại sảnh; CLB bố trí 10 tình nguyện viên điều phối và lối thoát hiểm.",
+    facilityNeeds: "Sân khấu di động, hệ thống âm thanh, 2 micro không dây.",
+    conflict: { result: "Warning", detail: "Trùng khung giờ với một sự kiện khác tại Sảnh Delta trong 30 phút đầu." },
+    revisions: [{ submittedAt: at(-2 * DAY), budgetLines: [
+      { category: "Âm thanh, ánh sáng", amount: 6_000_000, purpose: "Thuê dàn âm thanh và đèn sân khấu", plannedItems: "Loa array, mixer, 8 đèn moving head" },
+      { category: "Giải thưởng", amount: 4_500_000, purpose: "Giải nhất, nhì, ba và giải khán giả bình chọn" },
+      { category: "Truyền thông", amount: 1_500_000, purpose: "In standee, poster và chạy quảng cáo fanpage" },
+    ] }],
+  });
+  await proposal("de0000000000000000000f02", "EHC", s[15]!, {
+    title: "Hackathon An toàn thông tin 24h",
+    objective: "Cuộc thi 24 giờ giải các bài toán bảo mật thực tế, kết nối sinh viên với chuyên gia doanh nghiệp.",
+    plan: "Ngày 1: 08:00 khai mạc, 09:00 bắt đầu thi · Xuyên đêm có mentor trực · Ngày 2: 09:00 chấm điểm, 11:00 trao giải.",
+    startAt: at(25 * DAY + HOUR), hours: 27, venueText: "Phòng lab 301–304, tòa Alpha", capacity: 60,
+    riskCategory: "HIGH", riskNote: "Thi xuyên đêm: cần bảo vệ trực, danh sách người ở lại qua đêm và phương án y tế.",
+    revisions: [
+      { submittedAt: at(-6 * DAY), revisionRequest: "Bổ sung phương án an ninh qua đêm và tách chi phí ăn uống theo bữa.",
+        budgetLines: [{ category: "Ăn uống", amount: 9_000_000, purpose: "Ăn uống cho thí sinh trong 24 giờ" },
+          { category: "Giải thưởng", amount: 6_000_000, purpose: "Giải thưởng cho 3 đội cao nhất" }] },
+      { submittedAt: at(-1 * DAY), budgetLines: [
+        { category: "Ăn uống", amount: 7_200_000, purpose: "3 bữa chính + 1 bữa đêm cho 60 người", plannedItems: "4 bữa × 60 suất × 30.000đ" },
+        { category: "Giải thưởng", amount: 6_000_000, purpose: "Giải thưởng cho 3 đội cao nhất" },
+        { category: "An ninh", amount: 1_200_000, purpose: "Bồi dưỡng bảo vệ trực đêm" },
+      ] },
+    ],
+  });
+  await proposal("de0000000000000000000f03", "FDS", s[3]!, {
+    title: "Data Science 101: Python cho người mới",
+    objective: "Buổi workshop nhập môn phân tích dữ liệu với Python và pandas cho sinh viên năm nhất.",
+    plan: "Giới thiệu (30 phút) · Thực hành notebook (90 phút) · Hỏi đáp (30 phút).",
+    startAt: at(11 * DAY + 2 * HOUR), hours: 2.5, venueText: "Phòng 207, tòa Beta", capacity: 40,
+    riskCategory: "LOW", revisions: [{ submittedAt: at(-1 * DAY) }],
+  });
+  await proposal("de0000000000000000000f04", "Mây Mưa Club", s[9]!, {
+    title: "Dã ngoại cuối kỳ Mây Mưa",
+    objective: "Chuyến dã ngoại gắn kết thành viên sau học kỳ, có hoạt động làm đồ thủ công ngoài trời.",
+    plan: "07:00 tập trung · 08:30 tới khu dã ngoại · hoạt động nhóm · 16:00 về trường.",
+    startAt: at(30 * DAY), hours: 9, venueText: "Khu dã ngoại Đồng Mô, Sơn Tây", capacity: 25, audienceScope: "MEMBERS_ONLY",
+    riskCategory: "MEDIUM", riskNote: "Di chuyển ngoài trường bằng xe thuê; có danh sách liên hệ khẩn cấp.",
+    revisions: [{ submittedAt: at(-3 * DAY), budgetLines: [
+      { category: "Di chuyển", amount: 3_500_000, purpose: "Thuê xe 29 chỗ hai chiều" },
+      { category: "Vật liệu", amount: 800_000, purpose: "Giấy, màu và dụng cụ thủ công" },
+    ] }],
+  });
+  // A budget the HEBE workshop already holds this semester, so the reviewer sees the club's running total.
+  if (!(await ucmsModels.eventBudgets!.exists({ eventId: workshop }))) {
+    await ucmsModels.eventBudgets!.create({ eventId: workshop, clubId: club("HEBE").id,
+      lines: [{ category: "Hậu cần", requestedAmount: 2_000_000, approvedAmount: 1_500_000, reason: "Phòng đã có sẵn loa" }],
+      requestedTotal: Types.Decimal128.fromString("2000000"), approvedTotal: Types.Decimal128.fromString("1500000"),
+      approvedByDecisionId: new Types.ObjectId(), disbursedTotal: Types.Decimal128.fromString("0"),
+      refundedTotal: Types.Decimal128.fromString("0"), isSettlementLate: false, state: "Approved",
+      periodCode: "Fall 2026", createdAt: at(-14 * DAY) });
+  }
+
   // ── One-way student feedback (UC50) ────────────────────────────────────────────────────────
   const studentFeedback = mongoStudentFeedbackRepository();
   const hebe = club("HEBE").id.toString();

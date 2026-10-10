@@ -21,7 +21,7 @@ const en = {
   groupSystem: "System settings", toggleGroup: "Show or hide {{group}}",
   icpdpClubs: "Manage clubs", icpdpReviews: "Founding applications", icpdpNominations: "Board confirmations",
   icpdpTransitions: "Leadership handovers", icpdpClubFields: "Club fields", icpdpEvents: "Event calendar",
-  icpdpProperties: "Rooms & equipment", icpdpSchemes: "Evaluation criteria", icpdpExports: "Export reports",
+  icpdpEventProposals: "Event proposals", icpdpProperties: "Rooms & equipment", icpdpSchemes: "Evaluation criteria", icpdpExports: "Export reports",
   icpdpFeedback: "Student feedback inbox", icpdpPolicy: "School policy", icpdpAccounts: "Accounts & roles",
 };
 
@@ -48,7 +48,7 @@ const vi: Record<keyof typeof en, string> = {
   groupSystem: "Thiết lập hệ thống", toggleGroup: "Mở hoặc thu gọn {{group}}",
   icpdpClubs: "Quản lý CLB", icpdpReviews: "Duyệt hồ sơ thành lập", icpdpNominations: "Xác nhận ban chủ nhiệm",
   icpdpTransitions: "Duyệt chuyển giao nhiệm kỳ", icpdpClubFields: "Lĩnh vực CLB", icpdpEvents: "Lịch sự kiện",
-  icpdpProperties: "Phòng & thiết bị", icpdpSchemes: "Tiêu chí đánh giá CLB", icpdpExports: "Xuất báo cáo",
+  icpdpEventProposals: "Duyệt đề xuất sự kiện", icpdpProperties: "Phòng & thiết bị", icpdpSchemes: "Tiêu chí đánh giá CLB", icpdpExports: "Xuất báo cáo",
   icpdpFeedback: "Hộp thư góp ý", icpdpPolicy: "Chính sách nhà trường", icpdpAccounts: "Tài khoản & phân quyền",
 };
 

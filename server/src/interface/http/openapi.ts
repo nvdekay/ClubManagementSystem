@@ -3,6 +3,7 @@ import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
+import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
@@ -132,6 +133,45 @@ const FounderProfile = z.object({ id: z.string(), displayName: z.string(), email
 const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
   versions: z.array(ApplicationVersion), decisions: z.array(ApplicationReviewDecision),
   founders: z.array(FounderProfile),
+});
+const EventProposalTask = z.object({
+  id: z.string(), eventId: z.string(), title: z.string(), state: z.enum(["Open", "Decided", "Closed"]),
+  assigneeId: z.string().optional(), openedAt: z.string(), slaDueAt: z.string().optional(),
+});
+const EventProposalSummary = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(), objective: z.string().optional(),
+  startAt: z.string(), endAt: z.string(), semesterCode: z.string(), venueText: z.string().optional(),
+  property: z.object({ id: z.string(), code: z.string(), name: z.string() }).optional(),
+  audienceScope: z.string(), capacity: z.number(), riskCategory: z.string().optional(), state: z.string(),
+  conflictResult: z.string().optional(), conflictDetail: z.unknown().optional(),
+  approvalConditions: z.array(z.string()), currentRevisionNo: z.number(),
+  revisionDeadlineAt: z.string().optional(), requestedBudgetTotal: z.number(),
+});
+const EventBudgetSummary = z.object({
+  id: z.string(), eventId: z.string(), eventTitle: z.string().optional(), state: z.string(),
+  requestedTotal: z.number(), approvedTotal: z.number(), lines: z.array(z.object({
+    category: z.string(), requestedAmount: z.number(), approvedAmount: z.number(), reason: z.string().optional(),
+  })),
+});
+const EventProposalQueueItem = z.object({ task: EventProposalTask, event: EventProposalSummary });
+const EventProposalDetail = EventProposalQueueItem.extend({
+  versions: z.array(z.object({
+    id: z.string(), revisionNo: z.number(), payload: z.record(z.string(), z.unknown()),
+    budgetLines: z.array(z.object({ category: z.string(), amount: z.number(), purpose: z.string(),
+      plannedItems: z.string().optional() })),
+    requestedBudgetTotal: z.number(), conflictResult: z.string().optional(), submittedBy: z.string(),
+    submittedByName: z.string().optional(), submittedAt: z.string(),
+  })),
+  decisions: z.array(z.object({
+    id: z.string(), taskId: z.string(), outcome: z.enum(["Request revision", "Approve", "Reject"]),
+    reason: z.string().optional(), sections: z.array(z.string()), conditions: z.array(z.string()),
+    reviewNote: z.string().optional(), actorId: z.string(), at: z.string(),
+  })),
+  club: z.object({ id: z.string(), name: z.string(), state: z.string(),
+    obligations: z.array(z.enum(["overdueSettlement", "overdueRefund", "overdueReport"])) }),
+  bookings: z.array(z.object({ id: z.string(), propertyCode: z.string().optional(),
+    propertyName: z.string().optional(), startAt: z.string(), endAt: z.string(), state: z.string() })),
+  semesterBudgets: z.array(EventBudgetSummary), budget: EventBudgetSummary.optional(),
 });
 const ClubProfile = clubProfileBody.extend({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(),
@@ -971,6 +1011,46 @@ export const openApiDocument = createDocument({
             fileName: z.string(), url: z.string().url(),
           })) },
         } } },
+      },
+    },
+    "/admin/event-proposals": {
+      get: {
+        summary: "List open event proposal review tasks (UC26, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Event proposal queue", content: { "application/json": {
+            schema: envelope(z.array(EventProposalQueueItem)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-proposals/{id}": {
+      get: {
+        summary: "Event proposal with its revisions, budget lines, club obligations, bookings and semester budgets",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Event proposal detail", content: { "application/json": {
+          schema: envelope(EventProposalDetail) } } } },
+      },
+    },
+    "/admin/event-proposals/{id}/claim": {
+      post: {
+        summary: "Claim an event proposal and move it to Under Review (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Claimed proposal", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
+          "409": { description: "Already claimed or no longer reviewable", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-proposals/{id}/decision": {
+      post: {
+        summary: "Request revision, approve (with conditions and per-line approved budget) or reject (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventReviewDecisionBody } } },
+        responses: {
+          "200": { description: "Decided proposal", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
+          "400": { description: "Missing reason, sections, deadline or approved amounts", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Proposal already decided or not claimed by this officer", content: { "application/json": { schema: ApiError } } },
+        },
       },
     },
     "/admin/board-nominations": {

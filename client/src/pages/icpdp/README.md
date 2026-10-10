@@ -35,3 +35,8 @@ khoảng ngày), CLB, trạng thái; đếm số dòng trước khi tải; khôn
 nhưng gồm mọi CLB ở mọi trạng thái, lọc theo tên/lĩnh vực/trạng thái, khối "Sắp hết hạn tạm ngừng"; nút Quản lý
 mở `ClubManageDialog` (dialog gốc của trình duyệt) chứa `ClubLifecyclePanel` (UC15): công việc đang chạy, lịch sử,
 tạm ngừng/kích hoạt lại/giải thể — mọi quyết định bắt buộc lý do.
+
+`EventProposalQueuePage` + `EventProposalReviewPage` (UC26) duyệt đề xuất sự kiện CLB gửi lên: hàng đợi kèm
+tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa điểm, xung đột, nghĩa vụ quá hạn của CLB, booking đính
+kèm (chỉ xem), kinh phí xin theo hạng mục và kinh phí CLB đã được duyệt trong kỳ; quyết định Yêu cầu sửa / Phê
+duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối.
