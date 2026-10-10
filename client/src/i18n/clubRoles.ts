@@ -1,6 +1,6 @@
 const en = {
   discardChanges: "Discard unsaved changes to this role?",
-  tabMembers: "Members", accessHint: "Manage members and configure permissions for each role.",
+  accessHint: "Configure permissions for each club role.",
   tabProfile: "Profile & structure", tabRoles: "Roles & permissions",
   title: "Club roles", description: "Create roles, choose what each role may do and give roles to members. Every structural change is saved as a new version.",
   roles: "Roles", leader: "Leader", board: "Board", members: "Default", singleHolder: "One holder",
@@ -59,7 +59,7 @@ const en = {
 
 const vi: Record<keyof typeof en, string> = {
   discardChanges: "Bỏ các thay đổi chưa lưu của vai trò này?",
-  tabMembers: "Thành viên", accessHint: "Quản lý thành viên và cấu hình quyền cho từng vai trò.",
+  accessHint: "Cấu hình quyền cho từng vai trò trong CLB.",
   tabProfile: "Hồ sơ & cơ cấu", tabRoles: "Vai trò & phân quyền",
   title: "Vai trò CLB", description: "Tạo vai trò, chọn quyền cho từng vai trò và giao vai trò cho thành viên. Mỗi thay đổi cơ cấu được lưu thành một phiên bản mới.",
   roles: "Vai trò", leader: "Chủ nhiệm", board: "Ban điều hành", members: "Mặc định", singleHolder: "Một người giữ",

@@ -29,7 +29,7 @@ const ALL = "";
 const NO_ROLE = "__none__";
 
 /** UC21 A1 for members with club.member.manage: roster and leave requests (UC22) to execute. */
-export function ClubMembersPage({ embedded = false }: { embedded?: boolean }) {
+export function ClubMembersPage() {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const { clubId } = useParams();
@@ -130,11 +130,9 @@ export function ClubMembersPage({ embedded = false }: { embedded?: boolean }) {
   const error = members.error ?? withdrawals.error;
   return (
     <>
-      {!embedded && <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.membersPageDescription")}
+      <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.membersPageDescription")}
         actions={<AppButton variant="secondary" disabled={exporting || filtered.length === 0}
-          onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton>} />}
-      {embedded && <div className="mb-4 flex flex-wrap justify-end"><AppButton variant="secondary" disabled={exporting || filtered.length === 0}
-        onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton></div>}
+          onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton>} />
       {exportFailed && <AppNotice tone="danger" role="alert" className="mb-6" title={t("memberSpace.exportError")} />}
       {error ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}><p>{error.message}</p></AppNotice> : (
         <div className="min-w-0 space-y-8">
