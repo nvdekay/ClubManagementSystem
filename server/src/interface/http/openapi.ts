@@ -8,6 +8,7 @@ import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { bookingDecisionBody } from "./booking-review-routes.js";
 import { missingReportBody, postEventDecisionBody } from "./post-event-report-routes.js";
 import { evidenceRequestBody, reconcileBody, recoveryCaseBody } from "./budget-reconciliation-routes.js";
+import { periodicDecisionBody, periodicMissingBody, periodicOverviewQuery } from "./periodic-report-routes.js";
 import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
@@ -239,6 +240,32 @@ const ReconciliationView = z.object({
     recoveryDueAt: z.string().optional(), isOverdueSettlement: z.boolean(), computedAt: z.string(),
     closedAt: z.string().optional() }).optional(),
   recoveryOverdue: z.boolean(), caseId: z.string().optional(),
+});
+const PeriodFigures = z.object({
+  events: z.object({ completed: z.number().optional(), cancelled: z.number().optional() }).optional(),
+  members: z.object({ active: z.number().optional() }).optional(),
+  attendance: z.object({ total: z.number().optional() }).optional(),
+  finance: z.object({ budgets: z.number().optional(), approvedTotal: z.number().optional(),
+    disbursedTotal: z.number().optional() }).optional(),
+  capturedAt: z.string().optional(),
+});
+const PeriodicOverview = z.object({
+  periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
+  periodCode: z.string().optional(), dueAt: z.string().optional(),
+  rows: z.array(z.object({ clubId: z.string(), clubName: z.string(), clubState: z.string(), dueAt: z.string(),
+    reportId: z.string().optional(), state: z.string().optional(), versionNo: z.number().optional(),
+    lateFlag: z.boolean().optional(), submittedAt: z.string().optional(), overdue: z.boolean(),
+    violationId: z.string().optional() })),
+});
+const PeriodicReportDetail = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), periodCode: z.string(), periodType: z.string(),
+  state: z.string(), versionNo: z.number(), lateFlag: z.boolean(), dueAt: z.string(), submittedAt: z.string().optional(),
+  narrative: z.string().optional(), nextPlan: z.string().optional(),
+  evidence: z.array(z.object({ note: z.string().optional(), url: z.string().optional() })),
+  preloadedFigures: PeriodFigures, live: PeriodFigures,
+  decision: z.object({ outcome: z.enum(["Accept", "Return"]), observation: z.string().optional(), reason: z.string().optional(),
+    sections: z.array(z.string()), decidedByName: z.string().optional(), decidedAt: z.string() }).optional(),
+  history: z.array(z.object({ action: z.string(), at: z.string(), actorName: z.string().optional(), reason: z.string().optional() })),
 });
 const ViolationEvidence = z.object({ note: z.string(), url: z.string().optional(), addedBy: z.string(), addedAt: z.string() });
 const ViolationSummary = z.object({
@@ -1342,6 +1369,45 @@ export const openApiDocument = createDocument({
         responses: {
           "201": { description: "Opened case", content: { "application/json": { schema: envelope(z.object({ violationId: z.string() })) } } },
           "409": { description: "Refund not overdue or case already open", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/periodic-reports": {
+      get: {
+        summary: "Periodic report status of every club for a semester (UC39, ICPDP Officer only)",
+        requestParams: { query: periodicOverviewQuery },
+        responses: {
+          "200": { description: "Overview", content: { "application/json": { schema: envelope(PeriodicOverview) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/periodic-reports/{id}": {
+      get: {
+        summary: "Report next to the system's own figures for the same club and semester",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Report detail", content: { "application/json": { schema: envelope(PeriodicReportDetail) } } } },
+      },
+    },
+    "/admin/periodic-reports/{id}/decision": {
+      post: {
+        summary: "Accept (optionally with an observation for the evaluation) or return with structured comments (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: periodicDecisionBody } } },
+        responses: {
+          "200": { description: "Decided report", content: { "application/json": { schema: envelope(PeriodicReportDetail) } } },
+          "400": { description: "Missing reason or sections for a return", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Not waiting for a decision", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/periodic-reports/missing": {
+      post: {
+        summary: "Record that a club did not submit on time; opens an OVERDUE_REPORT case (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: periodicMissingBody } } },
+        responses: {
+          "201": { description: "Opened case", content: { "application/json": { schema: envelope(z.object({ violationId: z.string() })) } } },
+          "409": { description: "Not due, already submitted or already recorded", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

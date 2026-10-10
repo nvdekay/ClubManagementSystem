@@ -71,3 +71,7 @@ hồ sơ UC40); trang thẩm định đặt số liệu CLB đóng băng cạnh 
 `ReconciliationPanel` (UC37) nằm trong trang chi tiết ngân sách: tổng đã duyệt/tạm ứng/đã chi/có-thiếu chứng từ,
 xét từng khoản chi (khoản thiếu chứng từ luôn bị loại), xem trước chênh lệch rồi chốt đối soát; yêu cầu bổ sung
 chứng từ; mở hồ sơ vi phạm khi quá hạn hoàn trả.
+
+`PeriodicReportsPage` (UC39) cho tình trạng báo cáo định kỳ của mọi CLB theo học kỳ (lọc chờ thẩm định, quá hạn,
+đã chấp nhận; ghi nhận không nộp mở hồ sơ UC40); trang thẩm định đặt số liệu CLB cạnh số liệu hệ thống, cho chấp
+nhận kèm ghi nhận hoặc trả về với phần cần sửa.
