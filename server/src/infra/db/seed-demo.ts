@@ -10,6 +10,7 @@ import { DEFAULT_FORM_REQUIREMENTS, type PolicySettings } from "../../domain/pol
 import type { AccessActor } from "../../usecase/access.js";
 import { createApplicationDraft, submitApplication, uploadApplicationDocument } from "../../usecase/club-application.js";
 import { claimApplicationReview, decideApplicationReview } from "../../usecase/club-application-review.js";
+import { assignClubRole, createClubRole } from "../../usecase/club-role.js";
 import { submitEventFeedback } from "../../usecase/event-feedback.js";
 import { registerForEvent } from "../../usecase/event-registration.js";
 import { createPolicyVersion } from "../../usecase/policy.js";
@@ -26,6 +27,7 @@ import { mongoAccessRepository } from "./mongo-access-repository.js";
 import { mongoAuthRepository } from "./mongo-auth-repository.js";
 import { mongoClubApplicationRepository } from "./mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./mongo-club-application-review-repository.js";
+import { mongoClubRoleRepository } from "./mongo-club-role-repository.js";
 import { mongoEventFeedbackRepository } from "./mongo-event-feedback-repository.js";
 import { mongoEventRegistrationRepository } from "./mongo-event-registration-repository.js";
 import { mongoMembershipRepository } from "./mongo-membership-repository.js";
@@ -231,6 +233,22 @@ try {
   await setupClub("FDS", { name: "Nhiệm kỳ 2025–2026", startAt: new Date("2025-09-30T17:00:00Z"),
     endAt: new Date("2026-10-31T16:59:59Z") }, s[7]!, [{ code: "VICE", name: "Phó chủ nhiệm", user: s[3]! }],
     [{ user: s[12]! }, { user: s[13]! }]);
+
+  // UC23: the HEBE leader (owner) created a regular role and gave it to a member (structure version 2).
+  const clubRoles = mongoClubRoleRepository();
+  const hebeId = club("HEBE").id.toString();
+  if (!(await clubRoles.overview(hebeId, now))?.roles.some((role) => role.name === "Phụ trách Hậu cần")) {
+    const created = await createClubRole(clubRoles, mongoAccessRepository(), actor(owner), hebeId, {
+      name: "Phụ trách Hậu cần", isSingleHolder: true, permissionCodes: ["club.booking.manage", "club.expense.record"],
+      reason: "Cần người lo phòng tập và chi phí đạo cụ",
+    }, now);
+    const logistics = created.roles.find((role) => role.name === "Phụ trách Hậu cần")!;
+    const holder = await ucmsModels.clubMemberships!.findOne({ clubId: club("HEBE").id, userId: s[3] }).lean();
+    if (holder) {
+      await assignClubRole(clubRoles, mongoAccessRepository(), actor(owner), hebeId, logistics.id,
+        { membershipId: String(holder._id) }, now);
+    }
+  }
 
   // UC22: one HEBE member has asked to leave (waiting for the leader in UC21).
   const membershipRepo = mongoMembershipRepository();
