@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  GRANTABLE_CLUB_PERMISSIONS,
   LEADER_ONLY_CLUB_PERMISSIONS,
   resolveClubPermissions,
   type ClubAccessRepository,
@@ -294,5 +295,91 @@ describe("UC23 club role management", () => {
     const created = await createClubRole(noTerm.repo, leaderAccess(), leader, clubId, treasurer, now);
     await expect(assignClubRole(noTerm.repo, leaderAccess(), leader, clubId, created.roles.at(-1)!.id,
       { membershipId: m.active }, now)).rejects.toMatchObject({ kind: "conflict" });
+  });
+
+  it("E5: a vice leader holding every grantable permission still cannot call any role endpoint", async () => {
+    const vice: ClubAccessRepository = { findSnapshot: async () => ({
+      ...(await leaderAccess().findSnapshot(leader.id, clubId))!,
+      positions: [{ id: ids.vice, clubId, isActive: true, isLeaderRole: false,
+        permissionCodes: [...GRANTABLE_CLUB_PERMISSIONS] }],
+      assignments: [{ clubId, termId, positionId: ids.vice, membershipId: m.leader,
+        effectiveFrom: new Date("2026-09-01"), confirmedBy: leader.id }] }) };
+    const fake = await withTreasurer();
+    const calls = [
+      () => getClubRoles(fake.repo, vice, leader, clubId, now),
+      () => createClubRole(fake.repo, vice, leader, clubId, { ...treasurer, name: "Khác" }, now),
+      () => updateClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, treasurer, now),
+      () => deactivateClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, now),
+      () => assignClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, { membershipId: m.active }, now),
+      () => revokeClubRole(fake.repo, vice, leader, clubId, fake.treasurerId, "f00000000000000000000002", now),
+    ];
+    for (const call of calls) await expect(call()).rejects.toMatchObject({ kind: "forbidden" });
+    expect(fake.state.versions).toHaveLength(2);
+    expect(fake.notifications).toEqual([]);
+  });
+
+  it("IDOR: role and assignment ids must belong to this club and this role", async () => {
+    const fake = await withTreasurer();
+    const foreignRole = "d0000000000000000000ffff";
+    await expect(updateClubRole(fake.repo, leaderAccess(), leader, clubId, foreignRole, treasurer, now))
+      .rejects.toMatchObject({ kind: "not_found" });
+    await expect(assignClubRole(fake.repo, leaderAccess(), leader, clubId, foreignRole, { membershipId: m.active }, now))
+      .rejects.toMatchObject({ kind: "not_found" });
+    // The vice's board-seat assignment cannot be revoked through another role's endpoint.
+    await expect(revokeClubRole(fake.repo, leaderAccess(), leader, clubId, fake.treasurerId,
+      "f00000000000000000000002", now)).rejects.toMatchObject({ kind: "not_found" });
+    expect(fake.permissionsOf(m.vice)).toEqual(["club.event.manage"]);
+  });
+
+  it("E3: the members role cannot be given leader-only permissions either", async () => {
+    const fake = fakeRepo();
+    await expect(updateClubRole(fake.repo, leaderAccess(), leader, clubId, ids.members,
+      { name: "Thành viên", isSingleHolder: false, permissionCodes: ["club.role.manage"] }, now))
+      .rejects.toMatchObject({ kind: "validation" });
+    expect(fake.state.versions).toHaveLength(1);
+  });
+});
+
+describe("resolveClubPermissions with the default members role", () => {
+  const term = { id: termId, clubId, state: "Active", startAt: new Date("2026-09-01"), endAt: new Date("2027-09-01") };
+  const members = { id: ids.members, clubId, isActive: true, isLeaderRole: false, isDefaultMemberRole: true,
+    permissionCodes: ["club.feedback.view", "club.role.manage", "club.board.nominate", "not.a.permission"] };
+  function snapshot(overrides: Partial<ClubAccessSnapshot>): ClubAccessSnapshot {
+    return { clubId, clubName: "Club", clubState: "Active", isApprovedFounder: false,
+      membership: { id: m.active, clubId, state: "Active" }, terms: [term], positions: [members], assignments: [],
+      ...overrides };
+  }
+
+  it("grants only catalogued grantable codes, never leader-only ones", () => {
+    expect(resolveClubPermissions(snapshot({}), now)).toEqual(["club.feedback.view"]);
+  });
+
+  it("does not leak to non-Active members, other clubs, or an inactive members role", () => {
+    for (const state of ["Inactive", "Banned", "Withdrawn"]) {
+      expect(resolveClubPermissions(snapshot({ membership: { id: m.active, clubId, state } }), now)).toEqual([]);
+    }
+    expect(resolveClubPermissions(snapshot({ membership: { id: m.active, clubId: "c0000000000000000000ffff",
+      state: "Active" } }), now)).toEqual([]);
+    expect(resolveClubPermissions(snapshot({ positions: [{ ...members, clubId: "c0000000000000000000ffff" }] }), now))
+      .toEqual([]);
+    expect(resolveClubPermissions(snapshot({ positions: [{ ...members, isActive: false }] }), now)).toEqual([]);
+  });
+
+  it("revoked, expired and not-yet-started assignments grant nothing", () => {
+    const treasurer = { id: "d00000000000000000000009", clubId, isActive: true, isLeaderRole: false,
+      permissionCodes: ["club.expense.record"] };
+    const base = { clubId, termId, positionId: treasurer.id, membershipId: m.active, confirmedBy: leader.id };
+    function at(iso: string) { return new Date(iso); }
+    for (const window of [
+      { effectiveFrom: at("2026-09-01T00:00:00Z"), effectiveTo: now }, // revoked at `now`
+      { effectiveFrom: at("2026-09-01T00:00:00Z"), effectiveTo: at("2026-10-01T00:00:00Z") }, // expired
+      { effectiveFrom: at("2026-11-01T00:00:00Z") }, // future
+      { effectiveFrom: at("2026-11-01T00:00:00Z"), effectiveTo: at("2026-11-01T00:00:00Z") }, // revoked before start
+    ]) {
+      expect(resolveClubPermissions(snapshot({ positions: [treasurer], assignments: [{ ...base, ...window }] }), now))
+        .toEqual([]);
+    }
+    expect(resolveClubPermissions(snapshot({ positions: [treasurer], assignments: [{ ...base,
+      effectiveFrom: at("2026-09-01T00:00:00Z") }] }), now)).toEqual(["club.expense.record"]);
   });
 });
