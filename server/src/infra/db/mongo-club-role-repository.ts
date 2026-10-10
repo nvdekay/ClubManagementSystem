@@ -198,13 +198,19 @@ export function mongoClubRoleRepository(): ClubRoleRepository {
       const membershipId = new Types.ObjectId(input.membershipId);
       await transaction(async (session) => {
         const [position, membership] = await Promise.all([
-          positions.findOne({ _id: role, clubId: club, isActive: true }).session(session).lean(),
+          // Increment the existing Mongoose version key to serialize holder changes on this role.
+          positions.findOneAndUpdate({ _id: role, clubId: club, isActive: true,
+            isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: false },
+          { $inc: { __v: 1 } }, { new: true, session }).lean(),
           memberships.findOne({ _id: membershipId, clubId: club, state: "Active" }).session(session).lean(),
         ]);
         if (!position) return conflict("club role changed; reload and retry");
         if (!membership) return conflict("only Active members can hold a club role");
-        // ponytail: re-check inside the transaction; two simultaneous assigns can still both pass
-        // (no write conflict on insert) — add a holder counter on the position if that ever matters.
+        // Retried transactions see the holder committed by the preceding assignment.
+        if (await assignments.exists({ clubId: club, termId: new Types.ObjectId(termId),
+          positionId: role, membershipId, ...openAt(now) }).session(session)) {
+          return conflict("member already holds this role");
+        }
         if (position.isSingleHolder !== false
           && await assignments.exists({ clubId: club, termId: new Types.ObjectId(termId), positionId: role,
             ...openAt(now) }).session(session)) {

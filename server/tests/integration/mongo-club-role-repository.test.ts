@@ -111,4 +111,31 @@ describe.skipIf(!uri)("Mongo club role repository", () => {
     await repo.revoke(club, role.id, current!.assignmentId, leaderId.toString(), now);
     await expect(repo.deactivateRole(club, role.id, leaderId.toString(), now)).resolves.toBeUndefined();
   }, 60_000);
+  it("serializes simultaneous assignments and prevents duplicate holders", async () => {
+    const now = new Date("2026-10-10T12:00:00Z");
+    const clubId = new Types.ObjectId();
+    const actorId = new Types.ObjectId();
+    const termId = new Types.ObjectId();
+    const members = await ucmsModels.clubMemberships!.create(Array.from({ length: 6 }, () => ({
+      clubId, userId: new Types.ObjectId(), state: "Active", joinedAt: now, statusHistory: [],
+    })));
+    const repo = mongoClubRoleRepository();
+    for (const single of [true, false]) {
+      const role = await ucmsModels.clubPositions!.create({ clubId, code: single ? "SINGLE" : "MULTI",
+        name: "Concurrent role", isActive: true, isSingleHolder: single, isBoardSeat: false,
+        isLeaderRole: false, isDefaultMemberRole: false, permissionCodes: [] });
+      const results = await Promise.allSettled(members.map((member) => repo.assign(String(clubId),
+        String(role._id), String(termId), String(actorId), {
+          membershipId: String(single ? member._id : members[0]!._id), effectiveFrom: now,
+        }, now)));
+      expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+      for (const result of results) {
+        if (result.status === "rejected") expect(result.reason).toMatchObject({ kind: "conflict" });
+      }
+      expect(await ucmsModels.clubPositionAssignments!.countDocuments({ positionId: role._id })).toBe(1);
+      expect(await ucmsModels.auditLogs!.countDocuments({ entityType: "ClubPositionAssignment",
+        action: "CLUB_ROLE_ASSIGNED", "after.positionId": String(role._id) })).toBe(1);
+    }
+  }, 60_000);
+
 });

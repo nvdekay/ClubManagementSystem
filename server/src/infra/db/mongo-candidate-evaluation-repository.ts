@@ -59,11 +59,16 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
       const applicationId = new Types.ObjectId(input.applicationId);
       const reviewerId = new Types.ObjectId(input.reviewerId);
       return mongoose.connection.transaction(async (session) => {
-        // ponytail: read-check, not a write lock — a decision committed in the same instant can
-        // still race this save; bump a version field on the application if that ever matters.
-        if (!await applications.exists({ _id: applicationId, state: "Shortlisted" }).session(session)) {
+        // Real writes on the existing version keys make decisions/cancellations conflict
+        // with this transaction. A retry must re-check both workflow states.
+        const application = await applications.findOneAndUpdate({ _id: applicationId, state: "Shortlisted" },
+          { $inc: { __v: 1 } }, { new: true, session }).lean();
+        if (!application) {
           throw new DomainError("only shortlisted applications without a decision can be evaluated", "conflict");
         }
+        const campaign = await campaigns.findOneAndUpdate({ _id: application.campaignId, state: { $ne: "Cancelled" } },
+          { $inc: { __v: 1 } }, { new: true, session }).lean();
+        if (!campaign) throw new DomainError("cancelled campaigns cannot be evaluated", "conflict");
         const unset: Record<string, 1> = {};
         if (input.totalScore === undefined) unset.totalScore = 1;
         if (input.comment === undefined) unset.comment = 1;

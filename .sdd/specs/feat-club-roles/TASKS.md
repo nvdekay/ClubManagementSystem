@@ -9,3 +9,6 @@
 - [x] Client: service + hook + tab "Vai trò" trong `ClubSettingsPage` (danh sách role, form, gán/thu hồi, so sánh phiên bản), i18n `en`/`vi`.
 - [x] `npm run check` xanh: 57 file, 231 test (gồm integration với Mongo thật), lint, typecheck; build client xanh (2026-10-10).
 - [ ] Nghiệm thu trực quan thủ công (sáng/tối, `en`/`vi`).
+
+- [x] Sửa race khi gán role: serialize bằng `__v` có sẵn; kiểm tra lại người giữ và gán trùng trong transaction; integration test gán đồng thời.
+- [x] Kiểm tra sau sửa Wave 1: `npm run check` xanh, 61 test files / 259 tests, gồm integration Mongo (2026-10-10).

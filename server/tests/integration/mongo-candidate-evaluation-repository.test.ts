@@ -50,4 +50,30 @@ describe.skipIf(!uri)("Mongo candidate evaluation repository", () => {
     await expect(repo.save({ applicationId: ids[2], reviewerId: String(reviewerId),
       scores: { communication: 1 }, totalScore: 1, now })).rejects.toMatchObject({ kind: "conflict" });
   });
+  it("serializes reviewers on workflow documents and rejects a cancellation after target loading", async () => {
+    const clubId = new Types.ObjectId();
+    const campaign = await ucmsModels.recruitmentCampaigns!.create({ clubId, title: "Concurrent",
+      positions: ["Designer"], windowStart: now, windowEnd: now, capacity: 5, formSchema: [],
+      rubric: [], state: "Screening", createdAt: now });
+    const application = await ucmsModels.recruitmentApplications!.create({ campaignId: campaign._id, clubId,
+      userId: new Types.ObjectId(), answers: {}, state: "Shortlisted", submittedAt: now });
+    const repo = mongoCandidateEvaluationRepository();
+    const input = { applicationId: String(application._id), scores: {}, comment: "Review", now };
+    const reviews = await Promise.all(Array.from({ length: 4 }, () =>
+      repo.save({ ...input, reviewerId: String(new Types.ObjectId()) })));
+    expect(reviews).toHaveLength(4);
+    expect(await ucmsModels.recruitmentApplications!.findById(application._id).lean()).toMatchObject({ __v: 4 });
+    expect(await ucmsModels.recruitmentCampaigns!.findById(campaign._id).lean()).toMatchObject({ __v: 4 });
+
+    expect(await repo.target(String(clubId), String(campaign._id), input.applicationId))
+      .toMatchObject({ campaignState: "Screening", applicationState: "Shortlisted" });
+    await ucmsModels.recruitmentCampaigns!.updateOne({ _id: campaign._id }, { $set: { state: "Cancelled" } });
+    await expect(repo.save({ ...input, reviewerId: reviews[0]!.reviewerId, comment: "Changed" }))
+      .rejects.toMatchObject({ kind: "conflict" });
+    expect(await ucmsModels.candidateEvaluations!.findById(reviews[0]!.id).lean())
+      .toMatchObject({ comment: "Review" });
+    // Failed workflow checks roll back even the application's version-key write.
+    expect(await ucmsModels.recruitmentApplications!.findById(application._id).lean()).toMatchObject({ __v: 4 });
+  }, 60_000);
+
 });
