@@ -32,7 +32,7 @@ export async function listMyMemberships(repo: MembershipRepository, actor: Acces
 export async function listClubMemberships(repo: MembershipRepository, access: ClubAccessRepository,
   actor: AccessActor | null, clubId: string, now = new Date()) {
   await authorize(access, actor, clubId, now);
-  return repo.listClub(clubId);
+  return repo.listClub(clubId, now);
 }
 
 export async function changeMembershipState(repo: MembershipRepository,
