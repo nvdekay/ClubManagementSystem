@@ -1,3 +1,3 @@
 # utils/
 
-Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `formatDate`.
+Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `formatDate`, `formatMoney` (số tiền VND).

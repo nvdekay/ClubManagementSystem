@@ -27,6 +27,7 @@ import { mongoAuthRepository } from "./mongo-auth-repository.js";
 import { mongoClubApplicationRepository } from "./mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./mongo-club-application-review-repository.js";
 import { mongoEventFeedbackRepository } from "./mongo-event-feedback-repository.js";
+import { mongoBudgetDisbursementRepository } from "./mongo-budget-disbursement-repository.js";
 import { mongoEventRegistrationRepository } from "./mongo-event-registration-repository.js";
 import { mongoMembershipRepository } from "./mongo-membership-repository.js";
 import { mongoPolicyRepository } from "./mongo-policy-repository.js";
@@ -542,6 +543,18 @@ try {
       approvedByDecisionId: new Types.ObjectId(), disbursedTotal: Types.Decimal128.fromString("0"),
       refundedTotal: Types.Decimal128.fromString("0"), isSettlementLate: false, state: "Approved",
       periodCode: "Fall 2026", createdAt: at(-14 * DAY) });
+  }
+  // UC35: the K21 welcome night was approved 4M and ICPDP already advanced part of it.
+  if (!(await ucmsModels.eventBudgets!.exists({ eventId: welcome }))) {
+    const welcomeBudget = await ucmsModels.eventBudgets!.create({ eventId: welcome, clubId: club("HEBE").id,
+      lines: [{ category: "Âm thanh ánh sáng", requestedAmount: 3_000_000, approvedAmount: 3_000_000 },
+        { category: "Truyền thông", requestedAmount: 1_500_000, approvedAmount: 1_000_000, reason: "Chỉ in poster A3" }],
+      requestedTotal: Types.Decimal128.fromString("4500000"), approvedTotal: Types.Decimal128.fromString("4000000"),
+      approvedByDecisionId: new Types.ObjectId(), disbursedTotal: Types.Decimal128.fromString("0"),
+      refundedTotal: Types.Decimal128.fromString("0"), isSettlementLate: false, state: "Approved",
+      periodCode: "Fall 2026", createdAt: at(-24 * DAY) });
+    await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
+      amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
   }
 
   // ── One-way student feedback (UC50) ────────────────────────────────────────────────────────

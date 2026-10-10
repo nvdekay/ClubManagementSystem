@@ -4,6 +4,7 @@ import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
+import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
@@ -152,6 +153,22 @@ const EventBudgetSummary = z.object({
   requestedTotal: z.number(), approvedTotal: z.number(), lines: z.array(z.object({
     category: z.string(), requestedAmount: z.number(), approvedAmount: z.number(), reason: z.string().optional(),
   })),
+});
+const BudgetSummary = z.object({
+  id: z.string(), eventId: z.string(), eventTitle: z.string(), eventState: z.string(), eventStartAt: z.string(),
+  eventEndAt: z.string(), clubId: z.string(), clubName: z.string(), state: z.string(), periodCode: z.string().optional(),
+  requestedTotal: z.number(), approvedTotal: z.number(), disbursedTotal: z.number(), refundedTotal: z.number(),
+  settlementDueAt: z.string().optional(), settlementBalance: z.number().optional(),
+  recoveryAmount: z.number().optional(), recoveryDueAt: z.string().optional(), createdAt: z.string(),
+});
+const BudgetDetail = BudgetSummary.extend({
+  lines: z.array(z.object({ category: z.string(), requestedAmount: z.number(), approvedAmount: z.number(),
+    reason: z.string().optional() })),
+  flows: z.array(z.object({ id: z.string(), kind: z.enum(["Advance", "TopUp", "Refund"]), amount: z.number(),
+    disbursedAt: z.string(), paymentReference: z.string().optional(), note: z.string().optional(),
+    recordedBy: z.string(), recordedByName: z.string().optional() })),
+  allowed: z.object({ kind: z.enum(["Advance", "TopUp", "Refund"]), max: z.number(),
+    exact: z.number().optional() }).optional(),
 });
 const EventProposalQueueItem = z.object({ task: EventProposalTask, event: EventProposalSummary });
 const EventProposalDetail = EventProposalQueueItem.extend({
@@ -1050,6 +1067,35 @@ export const openApiDocument = createDocument({
           "200": { description: "Decided proposal", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
           "400": { description: "Missing reason, sections, deadline or approved amounts", content: { "application/json": { schema: ApiError } } },
           "409": { description: "Proposal already decided or not claimed by this officer", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/budgets": {
+      get: {
+        summary: "List approved event budgets with what has been disbursed (UC35, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Budgets", content: { "application/json": { schema: envelope(z.array(BudgetSummary)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/budgets/{id}": {
+      get: {
+        summary: "Budget with its approved lines, recorded money flows and the flow it accepts now",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Budget detail", content: { "application/json": {
+          schema: envelope(BudgetDetail) } } } },
+      },
+    },
+    "/admin/budgets/{id}/flows": {
+      post: {
+        summary: "Record an advance, top-up or club refund (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: budgetFlowBody } } },
+        responses: {
+          "200": { description: "Updated budget", content: { "application/json": { schema: envelope(BudgetDetail) } } },
+          "400": { description: "Amount over the approved total, not the exact top-up, or over what is owed", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "The budget does not accept this kind of flow now", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

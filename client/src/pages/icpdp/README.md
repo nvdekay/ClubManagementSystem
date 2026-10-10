@@ -40,3 +40,7 @@ tạm ngừng/kích hoạt lại/giải thể — mọi quyết định bắt bu
 tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa điểm, xung đột, nghĩa vụ quá hạn của CLB, booking đính
 kèm (chỉ xem), kinh phí xin theo hạng mục và kinh phí CLB đã được duyệt trong kỳ; quyết định Yêu cầu sửa / Phê
 duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối.
+
+`BudgetsPage` (UC35) gồm `BudgetsPage` (danh sách kinh phí sự kiện đã duyệt, lọc theo trạng thái) và
+`BudgetDetailPage`: số duyệt, đã chuyển, còn được tạm ứng, hạn quyết toán, hạng mục duyệt, các lần chuyển
+tiền và form ghi đúng một loại dòng tiền mà kinh phí đang nhận (tạm ứng / cấp bù / CLB hoàn trả).
