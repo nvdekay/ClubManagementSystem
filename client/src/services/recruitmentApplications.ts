@@ -1,4 +1,4 @@
-import type { RecruitmentFormField } from "./recruitmentCampaigns";
+import type { RecruitmentFormField, RecruitmentRubricCriterion } from "./recruitmentCampaigns";
 
 export type RecruitmentAnswer = string | string[];
 
@@ -127,4 +127,37 @@ export function declineRecruitmentApplication(clubId: string, campaignId: string
   csrfToken: string) {
   return request<RecruitmentApplication>(`/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/applications/${encodeURIComponent(applicationId)}/decline`,
     mutation("POST", csrfToken));
+}
+
+export interface CandidateEvaluation {
+  id: string;
+  applicationId: string;
+  reviewerId: string;
+  reviewerName?: string;
+  scores: Record<string, number>;
+  totalScore?: number;
+  comment?: string;
+  createdAt: string;
+}
+
+export interface CandidateEvaluationGroup {
+  applicationId: string;
+  evaluations: CandidateEvaluation[];
+  summary: { count: number; scoredCount: number; maxTotal: number; mean?: number;
+    min?: number; max?: number; stdDev?: number };
+}
+
+export interface CandidateEvaluationList {
+  rubric: RecruitmentRubricCriterion[];
+  applications: CandidateEvaluationGroup[];
+}
+
+export function fetchCandidateEvaluations(clubId: string, campaignId: string, signal: AbortSignal) {
+  return request<CandidateEvaluationList>(`/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/evaluations`, { signal });
+}
+
+export function saveCandidateEvaluation(clubId: string, campaignId: string, applicationId: string,
+  input: { scores: Record<string, number>; comment?: string }, csrfToken: string) {
+  return request<CandidateEvaluation>(`/clubs/${encodeURIComponent(clubId)}/recruitment/campaigns/${encodeURIComponent(campaignId)}/applications/${encodeURIComponent(applicationId)}/evaluation`,
+    mutation("PUT", csrfToken, input));
 }

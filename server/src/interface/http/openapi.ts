@@ -13,6 +13,7 @@ import { eventFeedbackBody } from "./event-feedback-routes.js";
 import { studentFeedbackBody } from "./student-feedback-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
+import { candidateEvaluationBody } from "./candidate-evaluation-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
 
 const ApiError = z.object({
@@ -144,6 +145,12 @@ const RecruitmentApplication = z.object({
   decisionOutcome: z.string().optional(), decisionReason: z.string().optional(),
   submittedAt: z.string().datetime().optional(), withdrawnAt: z.string().datetime().optional(),
 });
+const CandidateEvaluation = z.object({ id: z.string(), applicationId: z.string(), reviewerId: z.string(),
+  reviewerName: z.string().optional(), scores: z.record(z.string(), z.number()),
+  totalScore: z.number().optional(), comment: z.string().optional(), createdAt: z.string().datetime() });
+const CandidateEvaluationGroup = z.object({ applicationId: z.string(), evaluations: z.array(CandidateEvaluation),
+  summary: z.object({ count: z.number(), scoredCount: z.number(), maxTotal: z.number(), mean: z.number().optional(),
+    min: z.number().optional(), max: z.number().optional(), stdDev: z.number().optional() }) });
 const Membership = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string().optional(), userId: z.string(),
   displayName: z.string().optional(), state: z.enum(["Active", "Inactive", "Left", "Banned"]),
@@ -1086,6 +1093,22 @@ export const openApiDocument = createDocument({
         requestBody: { content: { "application/json": { schema: z.object({ reason: z.string().optional() }) } } },
         responses: { "200": { description: "Declined application", content: {
           "application/json": { schema: envelope(RecruitmentApplication) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/evaluations": {
+      get: { summary: "List candidate evaluations per application with aggregate and dispersion (club.application.review)",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        responses: { "200": { description: "Evaluations grouped by application", content: {
+          "application/json": { schema: envelope(z.object({ rubric: z.array(z.object({ key: z.string(),
+            label: z.string(), maxScore: z.number() })), applications: z.array(CandidateEvaluationGroup) })) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications/{applicationId}/evaluation": {
+      put: { summary: "Create or update the caller's evaluation of a Shortlisted application (club.application.review)",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string(), applicationId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: candidateEvaluationBody } } },
+        responses: { "200": { description: "Saved evaluation", content: {
+          "application/json": { schema: envelope(CandidateEvaluation) },
         } } } },
     },
     "/clubs/{clubId}/settings": {

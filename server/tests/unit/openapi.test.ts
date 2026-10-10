@@ -9,6 +9,7 @@ import type { BoardNominationRepository } from "../../src/domain/board-nominatio
 import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
 import type { RecruitmentApplicationRepository } from "../../src/domain/recruitment-application.js";
 import type { MembershipRepository } from "../../src/domain/membership.js";
+import type { CandidateEvaluationRepository } from "../../src/domain/candidate-evaluation.js";
 import type { DashboardRepository } from "../../src/domain/dashboard.js";
 import type { LeadershipTransitionRepository } from "../../src/domain/leadership-transition.js";
 import type { EventRegistrationRepository } from "../../src/domain/event-registration.js";
@@ -145,6 +146,10 @@ const stubLeadershipTransitions: LeadershipTransitionRepository = {
   claim: async () => { throw new Error("unused"); },
   decide: async () => { throw new Error("unused"); },
 };
+const stubCandidateEvaluations: CandidateEvaluationRepository = {
+  target: async () => null, listForCampaign: async () => null,
+  save: async () => { throw new Error("unused"); },
+};
 const stubMemberSpace: MemberSpaceRepository = { find: async () => null };
 const stubStudentFeedback: StudentFeedbackRepository = {
   club: async () => null, eventBelongsToClub: async () => false, listMine: async () => [], inbox: async () => [],
@@ -187,6 +192,7 @@ describe("openapi document", () => {
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
       recruitmentApplicationRepo: stubRecruitmentApplications,
+      candidateEvaluationRepo: stubCandidateEvaluations,
       membershipRepo: stubMemberships,
       dashboardRepo: stubDashboard,
       leadershipTransitionRepo: stubLeadershipTransitions,
@@ -240,6 +246,7 @@ describe("openapi document", () => {
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
       recruitmentApplicationRepo: stubRecruitmentApplications,
+      candidateEvaluationRepo: stubCandidateEvaluations,
       publicRepo: stubPublic, dbReady: () => true });
     const stack = (app as unknown as { router: { stack: Layer[] } }).router.stack;
     const routes = stack.flatMap((layer) => layer.route ? [layer.route]

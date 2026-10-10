@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
@@ -10,8 +11,9 @@ import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useRecruitmentCampaigns } from "@/hooks/useRecruitmentCampaigns";
-import { useApplicationsForReview, useRecruitmentOnboardingAction, useReviewAttachmentAccess, useReviewRecruitmentApplications } from "@/hooks/useRecruitmentApplications";
-import type { RecruitmentApplication } from "@/services/recruitmentApplications";
+import { useApplicationsForReview, useCandidateEvaluations, useRecruitmentOnboardingAction, useReviewAttachmentAccess, useReviewRecruitmentApplications } from "@/hooks/useRecruitmentApplications";
+import type { CandidateEvaluationGroup, RecruitmentApplication } from "@/services/recruitmentApplications";
+import { CandidateEvaluationPanel } from "./CandidateEvaluationPanel";
 
 export function RecruitmentReviewPage() {
   const { clubId, campaignId } = useParams();
@@ -22,6 +24,8 @@ export function RecruitmentReviewPage() {
   const campaigns = useRecruitmentCampaigns(clubId, Boolean(auth.data));
   const questionLabels = new Map((campaigns.data?.find((campaign) => campaign.id === campaignId)?.formSchema ?? [])
     .map((field) => [field.key, field.label]));
+  const evaluations = useCandidateEvaluations(clubId, campaignId);
+  const evaluationGroups = new Map((evaluations.data?.applications ?? []).map((group) => [group.applicationId, group]));
   const action = useReviewRecruitmentApplications();
   const onboarding = useRecruitmentOnboardingAction();
   const attachmentAccess = useReviewAttachmentAccess();
@@ -120,6 +124,7 @@ export function RecruitmentReviewPage() {
                 </div>
                 <p className="mt-0.5 text-sm text-muted-app">{item.position}</p>
                 {item.decisionReason && <p className="mt-2 text-sm">{t("recruitmentApplications.decisionReason")}: {item.decisionReason}</p>}
+                {evaluationGroups.get(item.id) && <p className="mt-1 text-sm font-semibold">{evaluationSummary(evaluationGroups.get(item.id)!.summary, t)}</p>}
               </div></div>
             <div className="flex flex-wrap gap-2">
               {item.state === "Submitted" && <AppButton disabled={action.isPending} onClick={() => void run(item, "screen")}>{t("recruitmentApplications.startScreening")}</AppButton>}
@@ -145,8 +150,25 @@ export function RecruitmentReviewPage() {
                 onClick={() => void openAttachment(item, attachment.id)}>{t("recruitmentApplications.openAttachment")}</AppButton>
             </div>)}
           </details>
+          {(item.state === "Shortlisted" || evaluationGroups.has(item.id)) && clubId && campaignId && auth.data && <details className="group mt-1 sm:pl-14">
+            <summary className="inline-flex min-h-11 items-center gap-1.5 rounded-full text-sm font-semibold text-accent-app focus-visible:outline-2 focus-visible:outline-ring-app">
+              <AppIcon name="chevronRight" className="size-4 transition-transform group-open:rotate-90" />{t("recruitmentApplications.evaluations")}</summary>
+            {evaluations.isPending ? <AppSkeleton className="mt-3 h-24 w-full" />
+              : evaluations.isError ? <AppNotice tone="danger" role="alert" className="mt-3" title={t("recruitmentApplications.evaluationLoadError")}>
+                <AppButton variant="secondary" onClick={() => void evaluations.refetch()}>{t("recruitmentApplications.retry")}</AppButton></AppNotice>
+                : <CandidateEvaluationPanel key={evaluationGroups.get(item.id)?.evaluations.find((evaluation) => evaluation.reviewerId === auth.data?.user.id)?.id ?? "new"}
+                  clubId={clubId} campaignId={campaignId} applicationId={item.id} editable={item.state === "Shortlisted"}
+                  rubric={evaluations.data.rubric} group={evaluationGroups.get(item.id)}
+                  userId={auth.data.user.id} csrfToken={auth.data.csrfToken} />}
+          </details>}
         </article></li>)}</ul>}
   </>;
+}
+
+function evaluationSummary(summary: CandidateEvaluationGroup["summary"], t: TFunction) {
+  return summary.mean === undefined ? t("recruitmentApplications.evaluationCount", { count: summary.count })
+    : t("recruitmentApplications.evaluationAggregate", { mean: summary.mean.toFixed(1),
+      max: summary.maxTotal, count: summary.scoredCount });
 }
 
 function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
