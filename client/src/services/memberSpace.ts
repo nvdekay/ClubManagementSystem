@@ -35,6 +35,12 @@ export interface Membership {
   pendingWithdrawal?: WithdrawalRequest;
 }
 
+/** UC21 roster row: adds the member's email and the club roles they hold right now. */
+export interface ClubRosterMember extends Membership {
+  email: string;
+  positions: string[];
+}
+
 export type ManagedMembershipState = "Active" | "Inactive" | "Banned";
 
 export interface MemberSpace {
@@ -88,7 +94,7 @@ export function requestWithdrawal(membershipId: string, input: { reason: string;
 }
 
 export function fetchClubMemberships(clubId: string, signal: AbortSignal) {
-  return request<Membership[]>(`/clubs/${encodeURIComponent(clubId)}/memberships`, { signal });
+  return request<ClubRosterMember[]>(`/clubs/${encodeURIComponent(clubId)}/memberships`, { signal });
 }
 
 export function fetchClubWithdrawals(clubId: string, signal: AbortSignal) {
