@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { MembershipRepository } from "../../src/domain/membership.js";
 import type { ClubAccessRepository } from "../../src/domain/access.js";
 import { isBeforeToday } from "../../src/domain/membership.js";
-import { changeMembershipState, requestMembershipWithdrawal } from "../../src/usecase/membership.js";
+import { changeMembershipState, listClubMemberships, requestMembershipWithdrawal } from "../../src/usecase/membership.js";
 
 const actor = { id: "111111111111111111111111", accountState: "Active" as const };
 const clubId = "222222222222222222222222";
@@ -69,5 +69,15 @@ describe("UC21/UC22 membership lifecycle", () => {
     await changeMembershipState(repo, access, actor, { clubId, membershipId,
       state: "Banned", effectiveDate: now, reason: "  repeated abuse  " }, now);
     expect(captured).toMatchObject({ state: "Banned", reason: "repeated abuse" });
+  });
+
+  it("passes the clock to the roster so it can resolve currently held roles", async () => {
+    const { repo } = repository();
+    let seen: Date | undefined;
+    repo.listClub = async (_clubId, at) => { seen = at; return []; };
+    await listClubMemberships(repo, access, actor, clubId, now);
+    expect(seen).toBe(now);
+    await expect(listClubMemberships(repo, { findSnapshot: async () => null }, actor, clubId, now))
+      .rejects.toMatchObject({ kind: "forbidden" });
   });
 });

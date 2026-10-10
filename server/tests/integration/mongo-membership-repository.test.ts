@@ -45,7 +45,21 @@ describe.skipIf(!uri)("Mongo membership lifecycle repository", () => {
     await ucmsModels.clubPositionAssignments.create({ clubId, termId, positionId,
       membershipId: managerMembershipId, effectiveFrom: new Date("2026-09-01"), assignedBy: managerId });
 
+    // An unconfirmed Leader nomination is not a held role yet.
+    const leaderPositionId = new Types.ObjectId();
+    await ucmsModels.clubPositions.create({ _id: leaderPositionId, clubId, code: "PRESIDENT", name: "President",
+      isBoardSeat: true, isLeaderRole: true, isDefaultMemberRole: false, isSingleHolder: true,
+      permissionCodes: [], isActive: true });
+    await ucmsModels.clubPositionAssignments.create({ clubId, termId, positionId: leaderPositionId,
+      membershipId: studentMembershipId, effectiveFrom: new Date("2026-09-01"), assignedBy: managerId });
+
     const repo = mongoMembershipRepository();
+    const roster = await repo.listClub(clubId.toString(), now);
+    expect(roster.map((member) => ({ email: member.email, positions: member.positions }))).toEqual(
+      expect.arrayContaining([
+        { email: `${studentId}@example.edu`, positions: [] },
+        { email: `${managerId}@example.edu`, positions: ["Membership Manager"] },
+      ]));
     const request = await repo.requestWithdrawal({ membershipId: studentMembershipId.toString(),
       userId: studentId.toString(), reason: "Moving away", requestedEffectiveDate: now, now });
     expect(request.state).toBe("Pending");
@@ -112,6 +126,9 @@ describe.skipIf(!uri)("Mongo membership lifecycle repository", () => {
     const request = await repo.requestWithdrawal({ membershipId: membershipId.toString(),
       userId: studentId.toString(), reason: "Leaving", requestedEffectiveDate: now, now });
     expect(request.state).toBe("Held");
+    // Confirmed seats count; a role whose assignment starts later does not.
+    expect((await repo.listClub(clubId.toString(), now)).find((member) => member.id === membershipId.toString()))
+      .toMatchObject({ displayName: "Board Member", email: `${studentId}@example.edu`, positions: ["President"] });
     await expect(repo.executeWithdrawal({ clubId: clubId.toString(), requestId: request.id,
       actorId: managerId.toString(), now })).rejects.toMatchObject({ kind: "conflict" });
     await expect(repo.changeState({ clubId: clubId.toString(), membershipId: membershipId.toString(),

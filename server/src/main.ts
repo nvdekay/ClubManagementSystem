@@ -28,9 +28,11 @@ import { ensureDefaultClubFields, mongoClubFieldRepository } from "./infra/db/mo
 import { mongoClubApplicationRepository } from "./infra/db/mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./infra/db/mongo-club-application-review-repository.js";
 import { mongoClubProfileRepository } from "./infra/db/mongo-club-profile-repository.js";
+import { mongoClubRoleRepository } from "./infra/db/mongo-club-role-repository.js";
 import { mongoBoardNominationRepository } from "./infra/db/mongo-board-nomination-repository.js";
 import { mongoRecruitmentCampaignRepository } from "./infra/db/mongo-recruitment-campaign-repository.js";
 import { mongoRecruitmentApplicationRepository } from "./infra/db/mongo-recruitment-application-repository.js";
+import { mongoCandidateEvaluationRepository } from "./infra/db/mongo-candidate-evaluation-repository.js";
 import { mongoMembershipRepository } from "./infra/db/mongo-membership-repository.js";
 import { mongoDashboardRepository } from "./infra/db/mongo-dashboard-repository.js";
 import { mongoLeadershipTransitionRepository } from "./infra/db/mongo-leadership-transition-repository.js";
@@ -85,6 +87,7 @@ const app = authConfig ? buildApp({
   evaluationRepo: mongoEvaluationRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),
+  clubRoleRepo: mongoClubRoleRepository(),
   boardNominationRepo: mongoBoardNominationRepository(),
   leadershipTransitionRepo: mongoLeadershipTransitionRepository(),
   eventRegistrationRepo: mongoEventRegistrationRepository(),
@@ -94,6 +97,7 @@ const app = authConfig ? buildApp({
   memberSpaceRepo: mongoMemberSpaceRepository(),
   recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
     recruitmentApplicationRepo: mongoRecruitmentApplicationRepository(),
+    candidateEvaluationRepo: mongoCandidateEvaluationRepository(),
     membershipRepo: mongoMembershipRepository(),
     dashboardRepo: mongoDashboardRepository(),
   recruitmentAttachmentStorage: cloudinaryConfig ? cloudinaryRecruitmentFiles(cloudinaryConfig) : null,

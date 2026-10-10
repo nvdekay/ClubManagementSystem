@@ -17,10 +17,12 @@ import type { ViolationRepository } from "../../domain/violation.js";
 import type { SchoolEventRepository } from "../../domain/school-event.js";
 import type { EvaluationRepository } from "../../domain/evaluation.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
+import type { ClubRoleRepository } from "../../domain/club-role.js";
 import type { BoardNominationRepository } from "../../domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
 import type { MembershipRepository } from "../../domain/membership.js";
 import type { RecruitmentApplicationRepository, RecruitmentAttachmentStorage } from "../../domain/recruitment-application.js";
+import type { CandidateEvaluationRepository } from "../../domain/candidate-evaluation.js";
 import type { DashboardRepository } from "../../domain/dashboard.js";
 import type { LeadershipTransitionRepository } from "../../domain/leadership-transition.js";
 import type { EventRegistrationRepository } from "../../domain/event-registration.js";
@@ -41,6 +43,7 @@ import { violationRoutes } from "./violation-routes.js";
 import { schoolEventRoutes } from "./school-event-routes.js";
 import { evaluationRoutes } from "./evaluation-routes.js";
 import { clubProfileRoutes } from "./club-profile-routes.js";
+import { clubRoleRoutes } from "./club-role-routes.js";
 import { clubFieldRoutes } from "./club-field-routes.js";
 import { propertyRoutes } from "./property-routes.js";
 import { evaluationSchemeRoutes } from "./evaluation-scheme-routes.js";
@@ -49,6 +52,7 @@ import { clubLifecycleRoutes } from "./club-lifecycle-routes.js";
 import { boardNominationRoutes } from "./board-nomination-routes.js";
 import { recruitmentCampaignRoutes } from "./recruitment-campaign-routes.js";
 import { recruitmentApplicationRoutes } from "./recruitment-application-routes.js";
+import { candidateEvaluationRoutes } from "./candidate-evaluation-routes.js";
 import { membershipRoutes } from "./membership-routes.js";
 import { dashboardRoutes } from "./dashboard-routes.js";
 import { leadershipTransitionRoutes } from "./leadership-transition-routes.js";
@@ -96,9 +100,11 @@ export function buildApp(deps: {
   schoolEventRepo?: SchoolEventRepository;
   evaluationRepo?: EvaluationRepository;
   clubProfileRepo?: ClubProfileRepository;
+  clubRoleRepo?: ClubRoleRepository;
   boardNominationRepo?: BoardNominationRepository;
   recruitmentCampaignRepo?: RecruitmentCampaignRepository;
   recruitmentApplicationRepo?: RecruitmentApplicationRepository;
+  candidateEvaluationRepo?: CandidateEvaluationRepository;
   membershipRepo?: MembershipRepository;
   dashboardRepo?: DashboardRepository;
   leadershipTransitionRepo?: LeadershipTransitionRepository;
@@ -144,6 +150,10 @@ export function buildApp(deps: {
         repo: deps.propertyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
     }
+    if (deps.clubRoleRepo) {
+      app.use("/api/v1", clubRoleRoutes({ repo: deps.clubRoleRepo, accessRepo: deps.auth.accessRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
     if (deps.boardNominationRepo) {
       app.use("/api/v1", boardNominationRoutes({
         repo: deps.boardNominationRepo, accessRepo: deps.auth.accessRepo,
@@ -167,6 +177,10 @@ export function buildApp(deps: {
         files: deps.recruitmentAttachmentStorage ?? null,
         authRepo: deps.auth.repo, sessions: deps.auth.sessions, accessRepo: deps.auth.accessRepo,
       }));
+    }
+    if (deps.candidateEvaluationRepo) {
+      app.use("/api/v1", candidateEvaluationRoutes({ repo: deps.candidateEvaluationRepo,
+        accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.membershipRepo) {
       app.use("/api/v1", membershipRoutes({ repo: deps.membershipRepo,
@@ -269,8 +283,10 @@ export function buildApp(deps: {
   const hasViolations = Boolean(hasPolicy && deps.violationRepo);
   const hasSchoolEvents = Boolean(hasPolicy && deps.schoolEventRepo);
   const hasEvaluations = Boolean(hasEvaluationSchemes && deps.evaluationRepo);
+  const hasClubRoles = Boolean(hasAdmin && deps.clubRoleRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
+  const hasCandidateEvaluations = Boolean(hasAdmin && deps.candidateEvaluationRepo);
   const hasDashboard = Boolean(hasAdmin && deps.dashboardRepo);
   const hasLeadershipTransitions = Boolean(hasAdmin && deps.leadershipTransitionRepo);
   const hasEventRegistrations = Boolean(hasPolicy && deps.eventRegistrationRepo);
@@ -313,6 +329,8 @@ export function buildApp(deps: {
         || path.startsWith("/clubs/{clubId}/profile")
         || path.startsWith("/clubs/{clubId}/departments")) return hasClubProfiles;
       if (path.startsWith("/clubs/{clubId}/board-nomination")) return hasBoardNominations;
+      if (path.startsWith("/clubs/{clubId}/roles")) return hasClubRoles;
+      if (/\/evaluations?$/.test(path)) return hasCandidateEvaluations;
       if (path.startsWith("/clubs/{clubId}/recruitment/campaigns")) return hasRecruitmentCampaigns;
       return true;
     }));

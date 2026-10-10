@@ -9,6 +9,7 @@ import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
+import { clubRoleAssignmentBody, clubRoleBody } from "./club-role-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
 import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./evaluation-scheme-routes.js";
@@ -22,6 +23,7 @@ import { eventFeedbackBody } from "./event-feedback-routes.js";
 import { studentFeedbackBody } from "./student-feedback-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
+import { candidateEvaluationBody } from "./candidate-evaluation-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
 
 const ApiError = z.object({
@@ -266,6 +268,24 @@ const ClubDepartment = clubDepartmentBody.extend({
 });
 const ClubSettings = z.object({ profile: ClubProfile, departments: z.array(ClubDepartment),
   requiredProfileFields: policySettingsBody.shape.formRequirements.shape.clubProfile });
+const ClubRoleDefinition = z.object({
+  code: z.string(), name: z.string(), unit: z.string().optional(), isBoardSeat: z.boolean(),
+  isLeaderRole: z.boolean(), isDefaultMemberRole: z.boolean(), isSingleHolder: z.boolean(),
+  permissionCodes: z.array(z.string()),
+});
+const ClubRoleOverview = z.object({
+  clubId: z.string(), clubState: z.string(), activeTermId: z.string().nullable(),
+  roles: z.array(ClubRoleDefinition.extend({ id: z.string(), isActive: z.boolean(),
+    holders: z.array(z.object({ assignmentId: z.string(), membershipId: z.string(), displayName: z.string(),
+      email: z.string(), effectiveFrom: z.string().datetime(), effectiveTo: z.string().datetime().optional() })) })),
+  members: z.array(z.object({ membershipId: z.string(), displayName: z.string(), email: z.string(),
+    state: z.string() })),
+  departments: z.array(z.string()),
+  versions: z.array(z.object({ id: z.string(), versionNo: z.number().int(), effectiveFrom: z.string().datetime(),
+    source: z.string(), reason: z.string().optional(), createdBy: z.string(), createdAt: z.string().datetime(),
+    roles: z.array(ClubRoleDefinition.extend({ positionId: z.string() })) })),
+  grantablePermissions: z.array(z.string()),
+});
 const RecruitmentCampaign = z.object({
   id: z.string(), clubId: z.string(), title: z.string(), positions: z.array(z.string()),
   criteria: z.string().optional(), windowStart: z.string().datetime(), windowEnd: z.string().datetime(),
@@ -287,6 +307,12 @@ const RecruitmentApplication = z.object({
   decisionOutcome: z.string().optional(), decisionReason: z.string().optional(),
   submittedAt: z.string().datetime().optional(), withdrawnAt: z.string().datetime().optional(),
 });
+const CandidateEvaluation = z.object({ id: z.string(), applicationId: z.string(), reviewerId: z.string(),
+  reviewerName: z.string().optional(), scores: z.record(z.string(), z.number()),
+  totalScore: z.number().optional(), comment: z.string().optional(), createdAt: z.string().datetime() });
+const CandidateEvaluationGroup = z.object({ applicationId: z.string(), evaluations: z.array(CandidateEvaluation),
+  summary: z.object({ count: z.number(), scoredCount: z.number(), maxTotal: z.number(), mean: z.number().optional(),
+    min: z.number().optional(), max: z.number().optional(), stdDev: z.number().optional() }) });
 const Membership = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string().optional(), userId: z.string(),
   displayName: z.string().optional(), state: z.enum(["Active", "Inactive", "Left", "Banned"]),
@@ -299,6 +325,7 @@ const Membership = z.object({
 }) satisfies z.ZodType<Omit<ClubMembershipRecord, "joinedAt" | "leftAt" | "statusHistory" | "pendingWithdrawal"> & {
   joinedAt: string; leftAt?: string; statusHistory: Array<Omit<ClubMembershipRecord["statusHistory"][number], "at" | "effectiveDate"> & { at: string; effectiveDate: string }>;
 }>;
+const ClubRosterMember = Membership.extend({ email: z.string(), positions: z.array(z.string()) });
 const MembershipWithdrawal = z.object({
   id: z.string(), membershipId: z.string(), clubId: z.string(), clubName: z.string().optional(),
   userId: z.string(), memberName: z.string().optional(), reason: z.string(),
@@ -1526,8 +1553,8 @@ export const openApiDocument = createDocument({
     "/clubs/{clubId}/memberships": {
       get: { summary: "List current members for a club manager",
         requestParams: { path: z.object({ clubId: z.string() }) },
-        responses: { "200": { description: "Membership roster", content: {
-          "application/json": { schema: envelope(z.array(Membership)) },
+        responses: { "200": { description: "Membership roster with email and currently held club roles", content: {
+          "application/json": { schema: envelope(z.array(ClubRosterMember)) },
         } } } },
     },
     "/clubs/{clubId}/memberships/{membershipId}/state": {
@@ -1647,6 +1674,22 @@ export const openApiDocument = createDocument({
           "application/json": { schema: envelope(RecruitmentApplication) },
         } } } },
     },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/evaluations": {
+      get: { summary: "List candidate evaluations per application with aggregate and dispersion (club.application.review)",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string() }) },
+        responses: { "200": { description: "Evaluations grouped by application", content: {
+          "application/json": { schema: envelope(z.object({ rubric: z.array(z.object({ key: z.string(),
+            label: z.string(), maxScore: z.number() })), applications: z.array(CandidateEvaluationGroup) })) },
+        } } } },
+    },
+    "/clubs/{clubId}/recruitment/campaigns/{campaignId}/applications/{applicationId}/evaluation": {
+      put: { summary: "Create or update the caller's evaluation of a Shortlisted application (club.application.review)",
+        requestParams: { path: z.object({ clubId: z.string(), campaignId: z.string(), applicationId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: candidateEvaluationBody } } },
+        responses: { "200": { description: "Saved evaluation", content: {
+          "application/json": { schema: envelope(CandidateEvaluation) },
+        } } } },
+    },
     "/clubs/{clubId}/settings": {
       get: {
         summary: "Read editable club profile and internal departments",
@@ -1699,6 +1742,59 @@ export const openApiDocument = createDocument({
         requestParams: { path: z.object({ clubId: z.string(), departmentId: z.string() }) },
         responses: { "200": { description: "Department deactivated", content: {
           "application/json": { schema: envelope(ClubDepartment) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/roles": {
+      get: {
+        summary: "List club roles, holders, assignable members and structure versions (club.role.manage)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Club roles", content: {
+          "application/json": { schema: envelope(ClubRoleOverview) },
+        } } },
+      },
+      post: {
+        summary: "Create a regular club role; appends a role structure version (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubRoleBody } } },
+        responses: { "201": { description: "Role created", content: {
+          "application/json": { schema: envelope(ClubRoleOverview) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/roles/{roleId}": {
+      patch: {
+        summary: "Edit a club role and its permissions; appends a role structure version (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubRoleBody } } },
+        responses: { "200": { description: "Role updated", content: {
+          "application/json": { schema: envelope(ClubRoleOverview) },
+        } } },
+      },
+      delete: {
+        summary: "Deactivate a regular club role without holders; appends a role structure version",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
+        responses: { "200": { description: "Role deactivated", content: {
+          "application/json": { schema: envelope(ClubRoleOverview) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/roles/{roleId}/assignments": {
+      post: {
+        summary: "Assign an Active member to a regular club role (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubRoleAssignmentBody } } },
+        responses: { "201": { description: "Member assigned", content: {
+          "application/json": { schema: envelope(ClubRoleOverview) },
+        } } },
+      },
+    },
+    "/clubs/{clubId}/roles/{roleId}/assignments/{assignmentId}": {
+      delete: {
+        summary: "Revoke a member's club role (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string(), assignmentId: z.string() }) },
+        responses: { "200": { description: "Role revoked", content: {
+          "application/json": { schema: envelope(ClubRoleOverview) },
         } } },
       },
     },

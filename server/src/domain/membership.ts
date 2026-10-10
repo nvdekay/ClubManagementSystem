@@ -27,6 +27,12 @@ export interface ClubMembershipRecord {
   pendingWithdrawal?: MembershipWithdrawalRequest;
 }
 
+/** UC21 roster row: the membership plus the member's email and the club roles held right now. */
+export interface ClubRosterMember extends ClubMembershipRecord {
+  email: string;
+  positions: string[];
+}
+
 export interface MembershipWithdrawalRequest {
   id: string;
   membershipId: string;
@@ -44,7 +50,7 @@ export interface MembershipWithdrawalRequest {
 
 export interface MembershipRepository {
   listMine(userId: string): Promise<ClubMembershipRecord[]>;
-  listClub(clubId: string): Promise<ClubMembershipRecord[]>;
+  listClub(clubId: string, now: Date): Promise<ClubRosterMember[]>;
   changeState(input: { clubId: string; membershipId: string; actorId: string;
     state: "Active" | "Inactive" | "Banned"; effectiveDate: Date;
     reason?: string; now: Date }): Promise<ClubMembershipRecord>;
