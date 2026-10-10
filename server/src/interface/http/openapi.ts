@@ -1,4 +1,4 @@
-import { bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
+import { roomReservationBody, bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
 import { z } from "zod";
 import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
@@ -455,7 +455,8 @@ const FacilityBooking = bookingBody.extend({ id: z.string(), clubId: z.string(),
   cancelReason: z.string().optional() });
 const BookingCheck = z.object({ conflicts: z.array(z.object({ id: z.string(), startAt: z.string(),
   endAt: z.string(), source: z.enum(["booking", "event"]) })), capacityWarning: z.boolean(), conflictResult: z.string() });
-const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Property.nullable(),
+const BookingResponsible = z.object({ id: z.string(), displayName: z.string(), email: z.string() });
+const FacilityBookingDetail = z.object({ responsible: BookingResponsible.optional(), booking: FacilityBooking, property: Property.nullable(),
   club: z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() }).nullable(),
   task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string() }).nullable(),
   versions: z.array(z.object({ versionNo: z.number().int(), payload: bookingBody, submittedBy: z.string(), submittedAt: z.string() })),
@@ -482,6 +483,23 @@ export const openApiDocument = createDocument({
         responses: { "200": { description: "Campus slots", content: { "application/json": {
           schema: envelope(z.array(z.object({ number: z.number().int().min(1).max(4), start: z.string(), end: z.string() }))) } } },
           "401": { description: "Authentication required", content: { "application/json": { schema: ApiError } } } },
+      },
+    },
+    "/clubs/{clubId}/booking-responsible": {
+      get: { summary: "Current confirmed club leader responsible for room reservations",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Responsible leader", content: { "application/json": { schema: envelope(BookingResponsible) } } },
+          "403": { description: "Club permission required" }, "409": { description: "No active confirmed leader" } },
+      },
+    },
+    "/clubs/{clubId}/bookings/reserve": {
+      post: { summary: "Reserve an available room immediately; snapshots the club leader; CSRF required",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: roomReservationBody } } },
+        responses: { "201": { description: "Room reserved without approval", content: { "application/json": { schema: envelope(FacilityBookingDetail) } } },
+          "400": { description: "Invalid slot or unavailable hours" }, "401": { description: "Authentication required" },
+          "403": { description: "Club permission required" }, "404": { description: "Room or club not found" },
+          "409": { description: "Slot occupied or no active confirmed leader" } },
       },
     },
     "/clubs/{clubId}/booking-events": {
@@ -1878,7 +1896,7 @@ export const openApiDocument = createDocument({
     },
     "/clubs/{clubId}/settings": {
       get: {
-        summary: "Read club profile and internal departments (current members; edits require club.profile.manage)",
+        summary: "Read club settings (requires club.role.manage)",
         requestParams: { path: z.object({ clubId: z.string() }) },
         responses: { "200": { description: "Club settings", content: {
           "application/json": { schema: envelope(ClubSettings) },
@@ -1929,6 +1947,17 @@ export const openApiDocument = createDocument({
         responses: { "200": { description: "Department deactivated", content: {
           "application/json": { schema: envelope(ClubDepartment) },
         } } },
+      },
+    },
+    "/clubs/{clubId}/role-directory": {
+      get: { summary: "Read-only role and permission directory for current club members",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Role definitions without member data or administrative history", content: {
+          "application/json": { schema: envelope(z.object({ clubId: z.string(), roles: z.array(z.object({
+            id: z.string(), code: z.string(), name: z.string(), unit: z.string().optional(),
+            isLeaderRole: z.boolean(), isDefaultMemberRole: z.boolean(), permissionCodes: z.array(z.string()),
+          })) })) },
+        } }, "401": { description: "Authentication required" }, "403": { description: "Current club membership required" } },
       },
     },
     "/clubs/{clubId}/roles": {

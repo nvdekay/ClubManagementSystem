@@ -106,3 +106,16 @@ export function revokeClubRole(clubId: string, roleId: string, assignmentId: str
   return request(`${rolePath(clubId, roleId)}/assignments/${encodeURIComponent(assignmentId)}`,
     mutation("DELETE", csrfToken));
 }
+
+export interface ClubRoleDirectory {
+  clubId: string;
+  roles: Array<Pick<ClubRole, "id" | "code" | "name" | "unit" | "isLeaderRole" | "isDefaultMemberRole" | "permissionCodes">>;
+}
+export async function fetchClubRoleDirectory(clubId: string, signal: AbortSignal): Promise<ClubRoleDirectory> {
+  const response = await fetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/role-directory`, { credentials: "same-origin", signal });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { message?: string } | null;
+    throw new Error(body?.message ?? `HTTP ${response.status}`);
+  }
+  return ((await response.json()) as { data: ClubRoleDirectory }).data;
+}

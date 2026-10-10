@@ -17,7 +17,9 @@ export interface BookingDecisionInput {
   outcome: "Approve" | "Reject" | "Request revision"; reason: string; reviewNote?: string;
   alternative?: { propertyId: string; startAt: string; endAt: string };
 }
+export interface BookingResponsible { id: string; displayName: string; email: string }
 export interface BookingDetail {
+  responsible?: BookingResponsible;
   booking: Booking; property: Property | null;
   club: { id: string; name: string; state: string } | null;
   task: { id: string; state: string; assigneeId?: string; openedAt: string } | null;
@@ -56,7 +58,11 @@ export function fetchBookingAvailability(clubId: string, propertyId: string, sta
 export function fetchBlackoutBookings(propertyId: string, signal: AbortSignal): Promise<Booking[]> {
   return request(`/admin/properties/${encodeURIComponent(propertyId)}/booking-conflicts`, { signal });
 }
+export function fetchBookingResponsible(clubId: string, signal: AbortSignal): Promise<BookingResponsible> {
+  return request(`/clubs/${encodeURIComponent(clubId)}/booking-responsible`, { signal });
+}
 export type BookingAction =
+  | { kind: "reserve"; clubId: string; input: Pick<BookingInput, "propertyId" | "startAt" | "endAt"> }
   | { kind: "save"; clubId: string; id?: string; input: BookingInput; expectedVersion: number }
   | { kind: "submit"; clubId: string; id: string; expectedVersion: number }
   | { kind: "cancel"; clubId: string; id: string; reason: string }
@@ -64,6 +70,9 @@ export type BookingAction =
   | { kind: "decision"; id: string; input: BookingDecisionInput };
 export function changeBooking(action: BookingAction, csrfToken: string): Promise<BookingDetail> {
   const clubId = "clubId" in action ? action.clubId : null;
+  if (action.kind === "reserve") return request(`${base(action.clubId)}/reserve`, {
+    method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(action.input),
+  });
   const path = `${base(clubId)}${action.id ? `/${encodeURIComponent(action.id)}` : ""}`;
   const suffix = action.kind === "save" ? "" : `/${action.kind}`;
   const body = action.kind === "save" ? { ...action.input, ...(action.id ? { expectedVersion: action.expectedVersion } : {}) }

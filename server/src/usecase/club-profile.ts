@@ -8,7 +8,7 @@ import { DomainError } from "../domain/errors.js";
 import {
   CLUB_PROFILE_FORM_FIELDS, DEFAULT_FORM_REQUIREMENTS, type ClubProfileFormField, type PolicyRepository,
 } from "../domain/policy.js";
-import { assertClubSettingsRead, assertClubAccess, type AccessActor } from "./access.js";
+import { assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -99,7 +99,7 @@ async function allowed(access: ClubAccessRepository, actor: AccessActor | null,
 
 export async function getClubSettings(repo: ClubProfileRepository, access: ClubAccessRepository,
   policy: PolicyRepository, actor: AccessActor | null, clubId: string, now = new Date()) {
-  await assertClubSettingsRead(access, actor, id(clubId, "club id"), now);
+  await assertClubAccess(access, actor, id(clubId, "club id"), "club.role.manage", now);
   const ids = { clubId };
   const [profile, departments, requiredProfileFields] = await Promise.all([
     repo.findProfile(ids.clubId), repo.listDepartments(ids.clubId), profileRequirements(policy, now),

@@ -2,6 +2,10 @@ import type { TFunction } from "i18next";
 
 /** Label + one-line description i18n keys for each grantable club permission. */
 const permissionKeys = {
+  "club.role.manage": ["clubRoles.permRole", "clubRoles.descRole"],
+  "club.board.nominate": ["clubRoles.permBoard", "clubRoles.descBoard"],
+  "club.transition.plan": ["clubRoles.permTransition", "clubRoles.descTransition"],
+  "club.suspension.request": ["clubRoles.permSuspension", "clubRoles.descSuspension"],
   "club.profile.manage": ["clubRoles.permProfile", "clubRoles.descProfile"],
   "club.recruitment.manage": ["clubRoles.permRecruitment", "clubRoles.descRecruitment"],
   "club.application.review": ["clubRoles.permApplicationReview", "clubRoles.descApplicationReview"],

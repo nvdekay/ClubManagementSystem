@@ -382,10 +382,10 @@ describe.skipIf(!uri)("E2E: simplified club founding", () => {
     function nominate(who: Actor) { return call(who, "GET", `/clubs/${clubId}/board-nomination-context`); }
     expect((await settings(students.binh!)).status).toBe(200); // president
     expect((await nominate(students.binh!)).status).toBe(200);
-    expect((await settings(students.an!)).status).toBe(200); // vice president (and applicant)
+    expect((await settings(students.an!)).status).toBe(403); // vice president cannot open settings
     expect((await nominate(students.an!)).status).toBe(403); // leader-only permission
-    expect((await settings(students.chi!)).status).toBe(200);
-    expect((await settings(students.dung!)).status).toBe(200); // plain member may read
+    expect((await settings(students.chi!)).status).toBe(403);
+    expect((await settings(students.dung!)).status).toBe(403); // plain members use the read-only role directory
     expect((await call(students.dung!, "PATCH", `/clubs/${clubId}/profile`,
       { channels: [] })).status).toBe(403); // editing remains restricted
     expect((await settings(students.em!)).status).toBe(403); // outsider

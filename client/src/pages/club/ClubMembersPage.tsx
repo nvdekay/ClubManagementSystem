@@ -11,6 +11,7 @@ import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
+import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/ui/table/AppTable";
 import { AppTableLimitSelect } from "@/components/ui/table/AppTableLimitSelect";
@@ -20,6 +21,7 @@ import type { Locale } from "@/i18n";
 import type { ClubRosterMember, WithdrawalRequest } from "@/services/memberSpace";
 import { formatDay } from "@/utils/formatDate";
 
+import { ClubMemberRoles } from "./ClubMemberRoles";
 import { ClubMemberStateDialog } from "./ClubMemberStateDialog";
 import { exportClubMembers } from "./exportClubMembers";
 
@@ -34,7 +36,9 @@ export function ClubMembersPage() {
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const { clubId } = useParams();
   const auth = useAuth();
-  const signedIn = Boolean(auth.data);
+  const workspace = auth.data?.workspaces.find((item) => item.kind === "club" && item.clubId === clubId);
+  const canManage = Boolean(workspace?.permissions.includes("club.member.manage"));
+  const signedIn = Boolean(auth.data) && canManage;
   const members = useClubMembers(clubId, signedIn);
   const withdrawals = useClubWithdrawals(clubId, signedIn);
   const action = useMembershipAction();
@@ -127,12 +131,19 @@ export function ClubMembersPage() {
     }
   }
 
+  if (auth.isPending) return <AppSkeleton className="h-48 w-full" />;
+  if (!workspace || !clubId) return <AppNotice tone="danger">{t("clubRoles.directoryDenied")}</AppNotice>;
+  if (!canManage) return <>
+    <PageHeader title={t("memberSpace.membersPageTitle")} description={t("clubRoles.directoryDescription")} />
+    <ClubMemberRoles clubId={clubId} enabled />
+  </>;
   const error = members.error ?? withdrawals.error;
   return (
     <>
       <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.membersPageDescription")}
         actions={<AppButton variant="secondary" disabled={exporting || filtered.length === 0}
           onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton>} />
+      <ClubMemberRoles clubId={clubId} enabled />
       {exportFailed && <AppNotice tone="danger" role="alert" className="mb-6" title={t("memberSpace.exportError")} />}
       {error ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}><p>{error.message}</p></AppNotice> : (
         <div className="min-w-0 space-y-8">

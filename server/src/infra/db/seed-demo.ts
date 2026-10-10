@@ -19,7 +19,7 @@ import { createRecruitmentCampaignDraft, publishRecruitmentCampaign } from "../.
 import { reviewRecruitmentApplications } from "../../usecase/recruitment-review.js";
 import { recordCandidateEvaluation } from "../../usecase/candidate-evaluation.js";
 import { createProperty, updateProperty } from "../../usecase/property.js";
-import { saveBooking, submitBooking, claimBooking, decideBooking } from "../../usecase/facility-booking.js";
+import { reserveRoom } from "../../usecase/facility-booking.js";
 import {
   createRecruitmentApplicationDraft,
   saveRecruitmentApplicationDraft,
@@ -696,24 +696,33 @@ try {
       title: "Chuyển giao nhiệm kỳ — FPTU Data Science Club", state: "Open", openedAt: at(-1 * DAY) });
   }
 
-  // UC45–47: independent club activity requests, including the ICPDP review and correction loop.
+  // Campus rooms and immediate reservations with the current club leader responsible.
   const properties = mongoPropertyRepository();
   const rooms = [];
-  for (const [index, name] of ["DE312", "DE222", "DE223"].entries()) {
-    const catalog = await properties.list();
+  const catalog = await properties.list();
+  // Room numbers and capacities are illustrative demo data, not an official inventory.
+  const roomNames = ["DE312", "DE222", "DE223", ...["AL", "BE", "GA", "DE", "EP"].flatMap((prefix) =>
+    ["101", "102", "201", "202", "301", "302"].map((number) => `${prefix}${number}`))].filter((name) =>
+      !["DE101", "DE102", "DE302"].includes(name));
+  const buildings: Record<string, string> = { AL: "Alpha", BE: "Beta", GA: "Gamma", DE: "Delta", EP: "Epsilon" };
+  for (const [index, name] of roomNames.entries()) {
     let room = catalog.find((item) => item.name === name)
       ?? (index === 0 ? catalog.find((item) => item.name === "Demo club practice room") : undefined);
-    const details = { name, location: `Delta building, floor ${name[2]}`, capacity: 40,
+    const details = { name, location: `${buildings[name.slice(0, 2)]} building`, capacity: 40,
       equipment: ["Projector", "Sound system"], blackouts: [],
       bookableHours: Array.from({ length: 7 }, (_, day) => ({ day: day + 1, open: "07:30", close: "17:40" })) };
     if (!room) room = await createProperty(properties, auth, actor(owner), { type: "ROOM", ...details }, now);
     else if (room.name === "Demo club practice room") room = await updateProperty(properties, auth, actor(owner), room.id, details, now);
+    else if (room.location === `Delta building, floor ${name[2]}`) {
+      room = await updateProperty(properties, auth, actor(owner), room.id, { ...room, location: details.location }, now);
+    }
     rooms.push(room);
   }
   // Retire only the previous demo requests; keep their immutable versions and decisions.
   await mongoose.connection.transaction(async (session) => {
     await releaseFacilityBookingsInSession(session, { clubId: new Types.ObjectId(hebe),
-      purpose: { $in: ["Requested", "Draft", "Approved", "Revision Requested"].map((state) => `Demo booking: ${state}`) },
+      purpose: { $in: ["Requested", "Draft", "Approved", "Revision Requested"].flatMap((state) =>
+        [`Demo booking: ${state}`, `Demo campus slot booking: ${state}`]) },
       state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } },
     "demo-seed", "Replaced by campus slot demo data", now);
   });
@@ -722,27 +731,16 @@ try {
   const bookingClub = await bookingRepo.club(hebe);
   const bookingPolicy = await policy.findEffective(now);
   if (bookingClub?.state === "Active" && bookingPolicy) {
-    for (const [index, scenario] of ["Requested", "Draft", "Approved", "Revision Requested"].entries()) {
-      const purpose = `Demo campus slot booking: ${scenario}`;
-      const practiceRoom = rooms[index % rooms.length]!;
+    for (const [index, slot] of BOOKING_SLOTS.entries()) {
+      const practiceRoom = rooms[index]!;
       if (!practiceRoom.isActive) continue;
-      if ((await bookingRepo.list(hebe)).some((item) => item.purpose === purpose)) continue;
-      const startAt = new Date(now.getTime() + (3 + index) * DAY);
-      const day = new Date(startAt.getTime() + 7 * HOUR).toISOString().slice(0, 10);
-      const slot = BOOKING_SLOTS[index]!;
-      startAt.setTime(new Date(`${day}T${slot.start}:00+07:00`).getTime());
+      if ((await bookingRepo.list(hebe)).some((item) => item.purpose === "Club room reservation"
+        && item.propertyId === practiceRoom.id && item.state === "Approved" && item.startAt > now)) continue;
+      const day = new Date(now.getTime() + (3 + index) * DAY + 7 * HOUR).toISOString().slice(0, 10);
+      const startAt = new Date(`${day}T${slot.start}:00+07:00`);
       const endAt = new Date(`${day}T${slot.end}:00+07:00`);
       if (!bookingPolicy.academicCalendar.some((semester) => startAt >= semester.startAt && endAt <= semester.endAt)) continue;
-      const draft = await saveBooking(bookingDeps, actor(owner), hebe, null, { propertyId: practiceRoom.id,
-        purpose, startAt, endAt, headcount: scenario === "Revision Requested" ? 60 : 30, equipment: ["Projector"] }, now);
-      if (scenario === "Draft") continue;
-      await submitBooking(bookingDeps, actor(owner), hebe, draft.booking.id, 0, now);
-      if (scenario === "Requested") continue;
-      await claimBooking(bookingDeps, actor(owner), draft.booking.id, now);
-      await decideBooking(bookingDeps, actor(owner), draft.booking.id, scenario === "Approved"
-        ? { outcome: "Approve", reason: "Room allocated for the club activity" }
-        : { outcome: "Request revision", reason: "Choose a larger room or reduce expected participants",
-          alternative: { propertyId: rooms[1]!.id, startAt, endAt } }, now);
+      await reserveRoom(bookingDeps, actor(owner), hebe, { propertyId: practiceRoom.id, startAt, endAt }, now);
     }
   }
 

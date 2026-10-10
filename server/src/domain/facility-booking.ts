@@ -71,12 +71,17 @@ export interface BookingCheck {
 export interface BookingClub {
   id: string; name: string; state: string; dissolutionSemester?: string;
 }
+export interface BookingResponsible { id: string; displayName: string; email: string }
+export type RoomReservationInput = Pick<BookingInput, "propertyId" | "startAt" | "endAt">;
 export interface BookingDetail {
+  responsible?: BookingResponsible;
   booking: Booking; property: Property | null; club: BookingClub | null;
   task: BookingTask | null; versions: BookingVersion[]; decisions: BookingDecision[];
   check: BookingCheck | null; obligations: string[];
 }
 export interface FacilityBookingRepository {
+  responsibleLeader(clubId: string, now: Date): Promise<BookingResponsible | null>;
+  reserve(clubId: string, input: BookingInput, actorId: string, now: Date): Promise<BookingDetail>;
   list(clubId?: string): Promise<Booking[]>;
   find(id: string, now: Date): Promise<BookingDetail | null>;
   club(id: string): Promise<BookingClub | null>;

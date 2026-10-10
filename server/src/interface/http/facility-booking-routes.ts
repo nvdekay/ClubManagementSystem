@@ -5,7 +5,7 @@ import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { BookingInput } from "../../domain/facility-booking.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking,
+import { bookingResponsible, reserveRoom, bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking,
   listBookingSlots, listBookingEvents, listBookingProperties, listBookings, propertyBookingConflicts, saveBooking, submitBooking,
   type BookingDeps } from "../../usecase/facility-booking.js";
 import { authGuard } from "./auth-routes.js";
@@ -16,6 +16,7 @@ const date = z.string().datetime({ offset: true });
 export const bookingBody = z.object({ propertyId: id, purpose: z.string().trim().min(1).max(2000),
   startAt: date, endAt: date, headcount: z.number().int().min(1).max(10000),
   equipment: z.array(z.string().trim().min(1).max(60)).max(30), eventId: id.optional() }).strict();
+export const roomReservationBody = bookingBody.pick({ propertyId: true, startAt: true, endAt: true }).strict();
 export const bookingSaveBody = bookingBody.extend({ expectedVersion: z.number().int().min(0) });
 export const bookingVersionBody = z.object({ expectedVersion: z.number().int().min(0) }).strict();
 export const bookingReasonBody = z.object({ reason: z.string().trim().min(1).max(2000) }).strict();
@@ -48,6 +49,14 @@ export function facilityBookingRoutes(deps: BookingDeps & { authRepo: AuthReposi
     const query = parsed(bookingAvailabilityQuery, req.query);
     ok(res, await bookingAvailability(deps, actor(res), parsed(id, req.params.clubId),
       input({ ...query, propertyId: parsed(id, req.params.id), purpose: "Availability check", headcount: 1, equipment: [] }), new Date()));
+  });
+  router.get("/clubs/:clubId/booking-responsible", authGuard(guard, false), async (req, res) => {
+    ok(res, await bookingResponsible(deps, actor(res), parsed(id, req.params.clubId), new Date()));
+  });
+  router.post(`${clubBase}/reserve`, authGuard(guard), async (req, res) => {
+    const body = parsed(roomReservationBody, req.body);
+    ok(res, await reserveRoom(deps, actor(res), parsed(id, req.params.clubId),
+      { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) }, new Date()), 201);
   });
   router.get(clubBase, authGuard(guard, false), async (req, res) => {
     ok(res, await listBookings(deps, actor(res), parsed(id, req.params.clubId), new Date()));

@@ -3,7 +3,7 @@ import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import { assertBookingNotice, assessBooking, bookingIntervalsConflict, isLateBookingCancellation, slotsConflict,
   type Booking, type BookingClub, type BookingConflict, type BookingDecision, type BookingDetail,
-  type BookingInput, type BookingVersion, type FacilityBookingRepository } from "../../domain/facility-booking.js";
+  type BookingResponsible, type BookingInput, type BookingVersion, type FacilityBookingRepository } from "../../domain/facility-booking.js";
 import type { PolicyVersion } from "../../domain/policy.js";
 import type { Property } from "../../domain/property.js";
 import { ucmsModels as m } from "./ucms-models.js";
@@ -80,6 +80,29 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     const doc = await bookings.findById(oid(id)).session(session).lean();
     if (!doc) throw new DomainError("booking not found", "not_found");
     return doc;
+  }
+  async function responsibleLeader(clubId: string, now: Date, session?: ClientSession): Promise<BookingResponsible | null> {
+    const termQuery = m.clubTerms!.find({ clubId: oid(clubId), state: "Active", startAt: { $lte: now }, endAt: { $gt: now } });
+    const positionQuery = m.clubPositions!.find({ clubId: oid(clubId), isLeaderRole: true, isActive: true });
+    if (session) { termQuery.session(session); positionQuery.session(session); }
+    const terms = await termQuery.lean();
+    const positions = await positionQuery.lean();
+    const assignmentQuery = m.clubPositionAssignments!.find({ clubId: oid(clubId),
+      termId: { $in: terms.map((term) => term._id) }, positionId: { $in: positions.map((position) => position._id) },
+      confirmedBy: { $ne: null }, effectiveFrom: { $lte: now },
+      $or: [{ effectiveTo: null }, { effectiveTo: { $gt: now } }] });
+    if (session) assignmentQuery.session(session);
+    const assignments = await assignmentQuery.lean();
+    const membershipQuery = m.clubMemberships!.find({ clubId: oid(clubId), state: "Active",
+      _id: { $in: assignments.map((assignment) => assignment.membershipId) } });
+    if (session) membershipQuery.session(session);
+    const memberships = await membershipQuery.lean();
+    const leaderIds = [...new Set(memberships.map((membership) => String(membership.userId)))];
+    if (leaderIds.length !== 1) return null;
+    const userQuery = m.users!.findById(oid(leaderIds[0]!)).select({ displayName: 1, email: 1 });
+    if (session) userQuery.session(session);
+    const user = await userQuery.lean();
+    return user ? { id: String(user._id), displayName: String(user.displayName || user.email), email: String(user.email) } : null;
   }
   async function equipmentFor(id: Types.ObjectId, session?: ClientSession): Promise<string[]> {
     const query = audits.findOne({ entityType: "PropertyBooking", entityId: id,
@@ -182,7 +205,9 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         conflictResult: error.message };
     }
     const task = taskDocs[0];
-    return { booking, property: property ? propertyFrom(property) : null, club: club ? clubFrom(club) : null,
+    const reservation = await audits.findOne({ entityType: "PropertyBooking", entityId: doc._id, action: "BOOKING_RESERVED" }).lean();
+    const responsible = (reservation?.after as { responsible?: BookingResponsible } | undefined)?.responsible;
+    return { ...(responsible ? { responsible } : {}), booking, property: property ? propertyFrom(property) : null, club: club ? clubFrom(club) : null,
       task: task ? { id: String(task._id), state: String(task.state), openedAt: task.openedAt as Date,
         ...(task.assigneeId ? { assigneeId: String(task.assigneeId) } : {}) } : null,
       versions: versionDocs.map((item): BookingVersion => {
@@ -203,6 +228,24 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     return found;
   }
   return {
+    responsibleLeader,
+    async reserve(clubId, input, actorId, now) {
+      const id = new Types.ObjectId();
+      await mongoose.connection.transaction(async (session) => {
+        await lockScope(input.propertyId, clubId, session);
+        const check = await assess(input, clubId, now, undefined, session);
+        const room = await m.properties!.findById(oid(input.propertyId)).session(session).lean();
+        if (room?.type !== "ROOM") throw new DomainError("room not found", "not_found");
+        if (check.conflicts.length) conflict("booking slot is unavailable");
+        const responsible = await responsibleLeader(clubId, now, session);
+        if (!responsible) conflict("club has no active confirmed leader");
+        await bookings.create([{ _id: id, ...storedInput(input), clubId: oid(clubId), clubName: check.club.name,
+          semesterCode: check.semesterCode, state: "Approved", currentVersionNo: 0,
+          conflictResult: "No Conflict", createdAt: now }], { session });
+        await audit(id, "BOOKING_RESERVED", actorId, null, { payload: input, responsible, state: "Approved" }, now, session);
+      });
+      return required(String(id), now);
+    },
     async list(clubId) {
       const docs = await bookings.find(clubId ? { clubId: oid(clubId) } : {}).sort({ createdAt: -1, _id: -1 }).lean();
       const snapshots = await audits.aggregate<{ _id: Types.ObjectId; equipment?: string[] }>([

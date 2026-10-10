@@ -5,9 +5,9 @@ import { BOOKING_SLOTS, assertBookingNotice, bookingDeadline, bookingIntervalsCo
 import type { Property } from "../../src/domain/property.js";
 import { DEFAULT_FORM_REQUIREMENTS, type PolicyVersion } from "../../src/domain/policy.js";
 import type { ClubAccessSnapshot } from "../../src/domain/access.js";
-import { bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking, listBookingEvents, listBookingProperties,
+import { bookingResponsible, reserveRoom, bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking, listBookingEvents, listBookingProperties,
   listBookings, releaseBookings, saveBooking, submitBooking, type BookingDeps } from "../../src/usecase/facility-booking.js";
-import { bookingBody, bookingDecisionBody } from "../../src/interface/http/facility-booking-routes.js";
+import { roomReservationBody, bookingBody, bookingDecisionBody } from "../../src/interface/http/facility-booking-routes.js";
 
 const ids = { club: "a".repeat(24), property: "b".repeat(24), user: "c".repeat(24), booking: "d".repeat(24) };
 const now = new Date("2026-10-10T01:00:00Z");
@@ -30,7 +30,7 @@ function deps(): BookingDeps {
     membership: { id: "member", clubId: ids.club, state: "Active" }, terms: [], assignments: [], isApprovedFounder: false,
     positions: [{ id: "members", clubId: ids.club, isActive: true, isLeaderRole: false,
       isDefaultMemberRole: true, permissionCodes: ["club.booking.manage"] }] };
-  const repo: FacilityBookingRepository = { events: vi.fn(async () => []), list: vi.fn(async () => [detail.booking]), find: vi.fn(async () => detail),
+  const repo: FacilityBookingRepository = { responsibleLeader: vi.fn(async () => ({ id: ids.user, displayName: "Leader A", email: "leader@example.com" })), reserve: vi.fn(async () => ({ ...detail, booking: { ...detail.booking, state: "Approved" as const } })), events: vi.fn(async () => []), list: vi.fn(async () => [detail.booking]), find: vi.fn(async () => detail),
     club: vi.fn(async () => club), eventBelongsToClub: vi.fn(async () => true), conflicts: vi.fn(async () => []),
     create: vi.fn(async () => detail), save: vi.fn(async () => detail), submit: vi.fn(async () => detail),
     claim: vi.fn(async () => detail), decide: vi.fn(async () => detail), cancel: vi.fn(async () => detail),
@@ -178,5 +178,57 @@ describe("campus slots and notice", () => {
     expect(bookingIntervalsConflict(input.startAt, input.endAt, input.startAt, input.endAt, 30)).toBe(true);
     expect(bookingIntervalsConflict(input.startAt, input.endAt,
       new Date("2026-10-12T10:00:00+07:00"), new Date("2026-10-12T11:00:00+07:00"), 30)).toBe(true);
+  });
+});
+
+describe("immediate room reservations", () => {
+  it("accepts a minimal request and rejects spoofed responsibility or extra detail fields", () => {
+    const body = { propertyId: input.propertyId, startAt: input.startAt.toISOString(), endAt: input.endAt.toISOString() };
+    expect(roomReservationBody.safeParse(body).success).toBe(true);
+    for (const extra of [{ responsible: { id: ids.user } }, { purpose: "Custom" }, { headcount: 100 }, { propertyId: { $ne: null } }]) {
+      expect(roomReservationBody.safeParse({ ...body, ...extra }).success).toBe(false);
+    }
+  });
+
+  it("accepts only room and slot; assigns the leader and reserves without a review", async () => {
+    const d = deps();
+    const result = await reserveRoom(d, actor, ids.club, input, now);
+    expect(result.booking.state).toBe("Approved");
+    expect(d.repo.reserve).toHaveBeenCalledWith(ids.club, { propertyId: input.propertyId, startAt: input.startAt,
+      endAt: input.endAt, purpose: "Club room reservation", headcount: 1, equipment: [] }, actor.id, now);
+    expect(d.repo.create).not.toHaveBeenCalled();
+    expect(d.repo.submit).not.toHaveBeenCalled();
+    expect(d.repo.claim).not.toHaveBeenCalled();
+    expect(d.repo.decide).not.toHaveBeenCalled();
+  });
+  it("allows a free future slot after the old submission cutoff", async () => {
+    const d = deps();
+    const sameDay = new Date("2026-10-12T08:00:00+07:00");
+    const slot2 = { ...input, startAt: new Date("2026-10-12T10:00:00+07:00"), endAt: new Date("2026-10-12T12:20:00+07:00") };
+    await reserveRoom(d, actor, ids.club, slot2, sameDay);
+    expect(d.repo.reserve).toHaveBeenCalledOnce();
+    expect(await bookingAvailability(d, actor, ids.club, slot2, sameDay)).toMatchObject({ conflicts: [] });
+  });
+  it("blocks occupied rooms even when policy allows overbooking", async () => {
+    const d = deps();
+    vi.mocked(d.policy.findEffective).mockResolvedValue({ ...policy, allowOverbooking: true });
+    for (const source of ["booking", "event"] as const) {
+      vi.mocked(d.repo.conflicts).mockResolvedValue([{ id: "other", startAt: input.startAt, endAt: input.endAt, source }]);
+      await expect(reserveRoom(d, actor, ids.club, input, now)).rejects.toMatchObject({ kind: "conflict" });
+    }
+    expect(d.repo.reserve).not.toHaveBeenCalled();
+  });
+  it("requires a confirmed leader and club permission, and accepts rooms only", async () => {
+    const d = deps();
+    await expect(reserveRoom(d, null, ids.club, input, now)).rejects.toMatchObject({ kind: "unauthorized" });
+    await expect(reserveRoom(d, { ...actor, accountState: "Locked" }, ids.club, input, now)).rejects.toMatchObject({ kind: "locked" });
+    vi.mocked(d.repo.responsibleLeader).mockResolvedValue(null);
+    await expect(reserveRoom(d, actor, ids.club, input, now)).rejects.toThrow("leader");
+    await expect(bookingResponsible(d, actor, ids.club, now)).rejects.toThrow("leader");
+    vi.mocked(d.properties.find).mockResolvedValue({ ...property, type: "HALL" });
+    await expect(reserveRoom(d, actor, ids.club, input, now)).rejects.toMatchObject({ kind: "not_found" });
+    vi.mocked(d.access.findSnapshot).mockResolvedValue(null);
+    await expect(reserveRoom(d, actor, ids.club, input, now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(d.repo.reserve).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,11 @@
 const en = {
+  directoryDenied: "Current club membership is required to view roles and permissions.",
+  directoryDescription: "View the permissions assigned to each club role. This directory is read-only.",
+  directoryError: "Could not load roles and permissions. Please retry.", directoryEmpty: "No active roles yet.",
+  permRole: "Manage roles", descRole: "Create roles and manage their permissions and holders.",
+  permBoard: "Nominate board members", descBoard: "Nominate members for the club board.",
+  permTransition: "Plan leadership transition", descTransition: "Prepare the handover to the next club board.",
+  permSuspension: "Request suspension", descSuspension: "Submit a request to suspend club operations.",
   discardChanges: "Discard unsaved changes to this role?",
   accessHint: "Configure permissions for each club role.",
   tabProfile: "Profile & structure", tabRoles: "Roles & permissions",
@@ -58,6 +65,13 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
+  directoryDenied: "Cần là thành viên hiện tại của CLB để xem vai trò và quyền.",
+  directoryDescription: "Xem các quyền của từng vai trò trong CLB. Danh mục này chỉ cho phép xem.",
+  directoryError: "Không tải được vai trò và quyền. Thử lại.", directoryEmpty: "Chưa có vai trò đang hoạt động.",
+  permRole: "Quản lý vai trò", descRole: "Tạo vai trò, thiết lập quyền và gán người giữ vai trò.",
+  permBoard: "Đề cử ban chủ nhiệm", descBoard: "Đề cử thành viên vào ban chủ nhiệm CLB.",
+  permTransition: "Lập kế hoạch chuyển giao", descTransition: "Chuẩn bị chuyển giao cho ban chủ nhiệm nhiệm kỳ tiếp theo.",
+  permSuspension: "Yêu cầu tạm ngừng hoạt động", descSuspension: "Gửi yêu cầu tạm ngừng hoạt động CLB.",
   discardChanges: "Bỏ các thay đổi chưa lưu của vai trò này?",
   accessHint: "Cấu hình quyền cho từng vai trò trong CLB.",
   tabProfile: "Hồ sơ & cơ cấu", tabRoles: "Vai trò & phân quyền",

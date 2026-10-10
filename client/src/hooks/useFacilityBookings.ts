@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchBookingSlots, changeBooking, fetchBlackoutBookings, fetchBooking, fetchBookingAvailability, fetchBookingEvents,
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchBookingResponsible, fetchBookingSlots, changeBooking, fetchBlackoutBookings, fetchBooking, fetchBookingAvailability, fetchBookingEvents,
   fetchBookingProperties, fetchBookings, type BookingAction } from "@/services/facilityBookings";
 
 const bookingKey = ["facilityBookings"] as const;
@@ -37,4 +37,18 @@ export function useBookingAction(csrfToken: string) {
 export function useBookingSlots(enabled: boolean) {
   return useQuery({ queryKey: [...bookingKey, "slots"], enabled,
     queryFn: ({ signal }) => fetchBookingSlots(signal) });
+}
+
+export function useRoomAvailability(clubId: string | null, propertyIds: string[], startAt: string, endAt: string) {
+  return useQueries({ queries: propertyIds.map((propertyId) => ({
+    queryKey: [...bookingKey, "availability", clubId, propertyId, startAt, endAt],
+    enabled: Boolean(clubId && startAt && endAt && startAt < endAt),
+    queryFn: ({ signal }: { signal: AbortSignal }) => fetchBookingAvailability(clubId!, propertyId, startAt, endAt, signal),
+    refetchInterval: 30000,
+  })) });
+}
+
+export function useBookingResponsible(clubId: string | null, enabled: boolean) {
+  return useQuery({ queryKey: [...bookingKey, "responsible", clubId], enabled: Boolean(clubId) && enabled,
+    queryFn: ({ signal }) => fetchBookingResponsible(clubId!, signal) });
 }

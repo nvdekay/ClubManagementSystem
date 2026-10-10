@@ -117,6 +117,7 @@ const stubExports: ExportRepository = {
 };
 async function unusedLifecycle(): Promise<never> { throw new Error("unused"); }
 const stubBookings: FacilityBookingRepository = {
+  responsibleLeader: async () => null, reserve: async () => { throw new Error("unused"); },
   events: async () => [],
   list: async () => [], find: async () => null, club: async () => null, eventBelongsToClub: async () => false,
   conflicts: async () => [], create: unusedLifecycle, save: unusedLifecycle, submit: unusedLifecycle,

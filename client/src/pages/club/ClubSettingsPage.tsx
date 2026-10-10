@@ -45,13 +45,12 @@ export function ClubSettingsPage() {
   const auth = useAuth();
   const workspace = auth.data?.workspaces.find((item) => item.kind === "club"
     && item.clubId === clubId);
-  const canView = Boolean(workspace);
-  const canManage = Boolean(workspace?.permissions.includes("club.profile.manage"));
+  const canManage = Boolean(workspace?.permissions.includes("club.role.manage"));
   const canManageRoles = Boolean(workspace?.permissions.includes("club.role.manage"));
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const tab = requestedTab === "roles" ? "roles" : "profile";
-  const settings = useClubSettings(clubId, canView);
+  const settings = useClubSettings(clubId, canManage);
   const action = useClubSettingsAction();
   const [profileDraft, setProfileDraft] = useState<ClubProfileInput | null>(null);
   const [department, setDepartment] = useState<ClubDepartmentInput>(emptyDepartment);
@@ -134,7 +133,7 @@ export function ClubSettingsPage() {
   }
 
   // A disabled query stays pending forever, so only wait for settings the user may load.
-  if (auth.isPending || (canView && settings.isPending)) {
+  if (auth.isPending || (canManage && settings.isPending)) {
     return <div className="space-y-6">
       <AppSkeleton className="h-24 w-full" />
       <div className="grid gap-10 lg:grid-cols-2"><AppSkeleton className="h-[30rem] w-full" /><AppSkeleton className="h-[30rem] w-full" /></div>
@@ -148,7 +147,7 @@ export function ClubSettingsPage() {
         {t("clubSettings.signInLink")}</Link>
     </AppNotice>
   );
-  if (!canView) return (
+  if (!canManage) return (
     <AppNotice tone="danger" role="alert">{t("clubSettings.permissionDenied")}</AppNotice>
   );
   if (settings.isError || !settings.data) return (
