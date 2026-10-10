@@ -36,7 +36,9 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 người gửi ẩn danh không bao giờ được hiển thị.
 
 `ClubMembersPage` mở cho workspace CLB; `ClubMemberRoles` hiển thị danh mục role/permission
-chỉ đọc qua API riêng, không có holder/email/version. Chỉ người có `club.member.manage` thấy bảng quản trị:
+chỉ đọc qua API riêng, không có holder/email/version. Trang tách thành tab Thành viên và
+Vai trò & quyền; danh sách vai trò bên trái, nhóm quyền được cấp của vai trò đang chọn bên phải.
+Tab được lưu trong query `tab`; thành viên không có quyền quản trị chỉ thấy tab Vai trò & quyền. Chỉ người có `club.member.manage` thấy bảng quản trị:
  các yêu cầu rời CLB (UC22) đang chờ nằm
 ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
 thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong

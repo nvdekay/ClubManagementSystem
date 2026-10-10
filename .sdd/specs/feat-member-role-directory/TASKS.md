@@ -15,3 +15,9 @@ và giữ API role cũ trả bản chỉ đọc đã loại members/holders/vers
 
 Kiểm tra sau khi chuyển vào branch chính đang mở: `npm run check` đạt 374/374 test
 (trong đó có integration Mongo), build frontend đạt.
+
+## Bổ sung UX hai tab
+
+- [x] Tách hai tab, lưu query, hỗ trợ bàn phím và giữ phân quyền quản trị.
+- [x] Danh sách vai trò và panel quyền chỉ đọc, responsive, nhãn en/vi.
+- [x] Cập nhật tài liệu; lint/typecheck và test toàn bộ.

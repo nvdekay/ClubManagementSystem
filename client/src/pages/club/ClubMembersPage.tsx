@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 
 import { MembershipStateBadge, membershipStateLabels } from "@/components/custom/MembershipStateBadge";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubMembers, useClubWithdrawals, useMembershipAction } from "@/hooks/useMemberSpace";
 import type { Locale } from "@/i18n";
 import type { ClubRosterMember, WithdrawalRequest } from "@/services/memberSpace";
+import { cn } from "@/utils/cn";
 import { formatDay } from "@/utils/formatDate";
 
 import { ClubMemberRoles } from "./ClubMemberRoles";
@@ -38,7 +39,9 @@ export function ClubMembersPage() {
   const auth = useAuth();
   const workspace = auth.data?.workspaces.find((item) => item.kind === "club" && item.clubId === clubId);
   const canManage = Boolean(workspace?.permissions.includes("club.member.manage"));
-  const signedIn = Boolean(auth.data) && canManage;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = !canManage || searchParams.get("tab") === "roles" ? "roles" : "members";
+  const signedIn = Boolean(auth.data) && canManage && activeTab === "members";
   const members = useClubMembers(clubId, signedIn);
   const withdrawals = useClubWithdrawals(clubId, signedIn);
   const action = useMembershipAction();
@@ -133,17 +136,32 @@ export function ClubMembersPage() {
 
   if (auth.isPending) return <AppSkeleton className="h-48 w-full" />;
   if (!workspace || !clubId) return <AppNotice tone="danger">{t("clubRoles.directoryDenied")}</AppNotice>;
-  if (!canManage) return <>
-    <PageHeader title={t("memberSpace.membersPageTitle")} description={t("clubRoles.directoryDescription")} />
-    <ClubMemberRoles clubId={clubId} enabled />
-  </>;
   const error = members.error ?? withdrawals.error;
   return (
     <>
-      <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.membersPageDescription")}
-        actions={<AppButton variant="secondary" disabled={exporting || filtered.length === 0}
-          onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton>} />
-      <ClubMemberRoles clubId={clubId} enabled />
+      <PageHeader title={t("memberSpace.membersPageTitle")} description={t(activeTab === "members" ? "memberSpace.membersPageDescription" : "clubRoles.directoryDescription")}
+        actions={activeTab === "members" ? <AppButton variant="secondary" disabled={exporting || filtered.length === 0}
+          onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton> : undefined} />
+      <div role="tablist" aria-label={t("memberSpace.membersPageTitle")} className="mb-6 flex border-b border-border-app">
+        {(canManage ? ["members", "roles"] : ["roles"]).map((tab) => <button key={tab} type="button"
+          role="tab" id={`club-members-tab-${tab}`} aria-selected={activeTab === tab}
+          aria-controls={`club-members-panel-${tab}`} tabIndex={activeTab === tab ? 0 : -1}
+          onClick={() => setSearchParams((previous) => { const next = new URLSearchParams(previous); next.set("tab", tab); return next; })}
+          onKeyDown={(event) => {
+            if (!canManage || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const nextTab = event.key === "Home" ? "members" : event.key === "End" ? "roles" : activeTab === "members" ? "roles" : "members";
+            setSearchParams((previous) => { const next = new URLSearchParams(previous); next.set("tab", nextTab); return next; });
+            document.getElementById(`club-members-tab-${nextTab}`)?.focus();
+          }}
+          className={cn("min-h-11 flex-1 border-b-2 px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-app",
+            activeTab === tab ? "border-primary-app text-primary-app" : "border-transparent text-muted-app hover:text-text-app")}>
+          {t(tab === "members" ? "clubRoles.tabMembers" : "clubRoles.tabRoles")}
+        </button>)}
+      </div>
+      {activeTab === "roles" ? <div role="tabpanel" id="club-members-panel-roles" aria-labelledby="club-members-tab-roles">
+        <ClubMemberRoles clubId={clubId} enabled />
+      </div> : <div role="tabpanel" id="club-members-panel-members" aria-labelledby="club-members-tab-members">
       {exportFailed && <AppNotice tone="danger" role="alert" className="mb-6" title={t("memberSpace.exportError")} />}
       {error ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}><p>{error.message}</p></AppNotice> : (
         <div className="min-w-0 space-y-8">
@@ -226,6 +244,7 @@ export function ClubMembersPage() {
           </section>
         </div>
       )}
+      </div>}
       {dialog?.kind === "state" && clubId && <ClubMemberStateDialog member={dialog.member} clubId={clubId}
         onClose={closeDialog} onSaved={setStateNotice} />}
       {dialog?.kind === "history" && (

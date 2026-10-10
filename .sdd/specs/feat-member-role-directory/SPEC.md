@@ -21,3 +21,10 @@ Không đổi schema, không cấp thêm permission quản trị hay quyền đ�
 
 ## Changelog
 - v1.0.0 (2026-10-11) — yêu cầu người dùng trong phiên hiện tại.
+
+## Bổ sung UX — 2026-10-11
+
+Tách bảng thành viên và danh mục vai trò thành hai tab độc lập theo ảnh tham chiếu.
+Tab vai trò chọn một vai trò ở danh sách bên trái và hiển thị các nhóm quyền được cấp bên phải;
+trên màn nhỏ hai phần xếp dọc. Danh mục vẫn chỉ đọc. Tab thành viên giữ phân quyền hiện hành;
+thành viên thường mở trực tiếp tab vai trò, không gọi API quản trị. Query `tab` giữ tab khi tải lại.

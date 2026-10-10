@@ -1,4 +1,5 @@
 const en = {
+  tabMembers: "Members",
   directoryDenied: "Current club membership is required to view roles and permissions.",
   directoryDescription: "View the permissions assigned to each club role. This directory is read-only.",
   directoryError: "Could not load roles and permissions. Please retry.", directoryEmpty: "No active roles yet.",
@@ -65,6 +66,7 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
+  tabMembers: "Thành viên",
   directoryDenied: "Cần là thành viên hiện tại của CLB để xem vai trò và quyền.",
   directoryDescription: "Xem các quyền của từng vai trò trong CLB. Danh mục này chỉ cho phép xem.",
   directoryError: "Không tải được vai trò và quyền. Thử lại.", directoryEmpty: "Chưa có vai trò đang hoạt động.",
