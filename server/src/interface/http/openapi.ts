@@ -182,6 +182,7 @@ const Membership = z.object({
 }) satisfies z.ZodType<Omit<ClubMembershipRecord, "joinedAt" | "leftAt" | "statusHistory" | "pendingWithdrawal"> & {
   joinedAt: string; leftAt?: string; statusHistory: Array<Omit<ClubMembershipRecord["statusHistory"][number], "at" | "effectiveDate"> & { at: string; effectiveDate: string }>;
 }>;
+const ClubRosterMember = Membership.extend({ email: z.string(), positions: z.array(z.string()) });
 const MembershipWithdrawal = z.object({
   id: z.string(), membershipId: z.string(), clubId: z.string(), clubName: z.string().optional(),
   userId: z.string(), memberName: z.string().optional(), reason: z.string(),
@@ -993,8 +994,8 @@ export const openApiDocument = createDocument({
     "/clubs/{clubId}/memberships": {
       get: { summary: "List current members for a club manager",
         requestParams: { path: z.object({ clubId: z.string() }) },
-        responses: { "200": { description: "Membership roster", content: {
-          "application/json": { schema: envelope(z.array(Membership)) },
+        responses: { "200": { description: "Membership roster with email and currently held club roles", content: {
+          "application/json": { schema: envelope(z.array(ClubRosterMember)) },
         } } } },
     },
     "/clubs/{clubId}/memberships/{membershipId}/state": {

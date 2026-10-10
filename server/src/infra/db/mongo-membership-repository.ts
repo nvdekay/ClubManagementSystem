@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
-import type { ClubMembershipRecord, MembershipRepository, MembershipStatusChange,
+import type { ClubMembershipRecord, ClubRosterMember, MembershipRepository, MembershipStatusChange,
   MembershipState, MembershipWithdrawalRequest } from "../../domain/membership.js";
 import { isBeforeToday } from "../../domain/membership.js";
 import { ucmsModels } from "./ucms-models.js";
@@ -146,10 +146,35 @@ export function mongoMembershipRepository(): MembershipRepository {
       return Promise.all(docs.map((doc) => membershipView(doc)));
     },
 
-    async listClub(clubId) {
-      const docs = await memberships.find({ clubId: new Types.ObjectId(clubId),
-        state: { $in: ["Active", "Inactive"] } }).sort({ state: 1, joinedAt: 1 }).lean();
-      return Promise.all(docs.map((doc) => membershipView(doc)));
+    async listClub(clubId, now): Promise<ClubRosterMember[]> {
+      const club = new Types.ObjectId(clubId);
+      const [docs, activeTerms, positionDocs] = await Promise.all([
+        memberships.find({ clubId: club, state: { $in: ["Active", "Inactive"] } })
+          .sort({ state: 1, joinedAt: 1 }).lean(),
+        terms.find({ clubId: club, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } }).select("_id").lean(),
+        positions.find({ clubId: club, isActive: true }).sort({ isLeaderRole: -1, isBoardSeat: -1, name: 1 })
+          .select("name isLeaderRole").lean(),
+      ]);
+      const [views, userDocs, assignmentDocs] = await Promise.all([
+        Promise.all(docs.map((doc) => membershipView(doc))),
+        users.find({ _id: { $in: docs.map((doc) => doc.userId) } }).select("email").lean(),
+        activeTerms.length ? assignments.find({ clubId: club, termId: { $in: activeTerms.map((term) => term._id) },
+          effectiveFrom: { $lte: now }, $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null },
+            { effectiveTo: { $gt: now } }] }).select("membershipId positionId confirmedBy").lean() : [],
+      ]);
+      const emailById = new Map(userDocs.map((user) => [String(user._id), String(user.email ?? "")]));
+      // Held now = in effect inside an Active term; a Leader seat counts only once confirmed (same rule as access).
+      const leaderIds = new Set(positionDocs.filter((position) => position.isLeaderRole).map((position) => String(position._id)));
+      const held = new Map<string, Set<string>>();
+      for (const assignment of assignmentDocs) {
+        const positionId = String(assignment.positionId);
+        if (leaderIds.has(positionId) && !assignment.confirmedBy) continue;
+        const key = String(assignment.membershipId);
+        held.set(key, (held.get(key) ?? new Set()).add(positionId));
+      }
+      return views.map((view) => ({ ...view, email: emailById.get(view.userId) ?? "",
+        positions: positionDocs.filter((position) => held.get(view.id)?.has(String(position._id)))
+          .map((position) => String(position.name)) }));
     },
 
     async changeState(input) {

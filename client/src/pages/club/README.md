@@ -25,5 +25,8 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 `ClubFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho CLB, cần `club.feedback.view`;
 người gửi ẩn danh không bao giờ được hiển thị.
 
-`ClubMembersPage` (UC21) liệt kê thành viên và yêu cầu rời CLB đang chờ cho người có `club.member.manage`:
-thi hành yêu cầu rời (A1), đổi Active ⇄ Inactive, cấm có lý do, xem lịch sử trạng thái.
+`ClubMembersPage` (UC21) cho người có `club.member.manage`: các yêu cầu rời CLB (UC22) đang chờ nằm
+ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
+thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong
+`ClubMemberStateDialog`; lịch sử trạng thái mở trong một AppDialog. `exportClubMembers.ts` ghi các
+dòng đang lọc ra `.xlsx` bằng `write-excel-file` (nạp động, không vào bundle chính) — chỉ trang này dùng.
