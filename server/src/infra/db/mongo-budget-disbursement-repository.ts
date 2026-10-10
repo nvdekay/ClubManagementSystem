@@ -114,6 +114,11 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
             : { disbursedTotal: decimal(current.disbursedTotal + flow.amount) }),
           ...(due ? { settlementDueAt: due } : {}),
         } }, { session });
+        if (nextState === "Closed") {
+          // BR26: the reconciliation is settled once the top-up is paid or the refund is complete.
+          await m.financialReconciliations!.updateOne({ eventBudgetId: budgetObjectId },
+            { $set: { closedBy: actorId, closedAt: now } }, { session });
+        }
         const action = `BUDGET_${flow.kind.toUpperCase()}_RECORDED`;
         await m.auditLogs!.create([{ entityType: "EventBudget", entityId: budgetObjectId, action, actorId,
           actorRole: "ICPDP_OFFICER", before: { state: current.state },

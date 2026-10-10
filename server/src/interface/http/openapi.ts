@@ -7,6 +7,7 @@ import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { bookingDecisionBody } from "./booking-review-routes.js";
 import { missingReportBody, postEventDecisionBody } from "./post-event-report-routes.js";
+import { evidenceRequestBody, reconcileBody, recoveryCaseBody } from "./budget-reconciliation-routes.js";
 import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
@@ -220,6 +221,24 @@ const PostEventReportDetail = PostEventReportSummary.extend({
     decidedBy: z.string(), decidedByName: z.string().optional(), decidedAt: z.string(),
     findingViolationId: z.string().optional() }).optional(),
   history: z.array(z.object({ action: z.string(), at: z.string(), actorName: z.string().optional(), reason: z.string().optional() })),
+});
+const ReconciliationView = z.object({
+  budgetId: z.string(), eventTitle: z.string(), clubName: z.string(), state: z.string(),
+  settlementDueAt: z.string().optional(), settlementSubmittedAt: z.string().optional(), isSettlementLate: z.boolean(),
+  mode: z.enum(["settlement", "overdue"]).optional(), canRequestEvidence: z.boolean(),
+  totals: z.object({ approvedTotal: z.number(), advancedTotal: z.number(), recordedTotal: z.number(),
+    supportedTotal: z.number(), unsupportedTotal: z.number(), remaining: z.number() }),
+  expenses: z.array(z.object({ id: z.string(), category: z.string(), amount: z.number(), spentAt: z.string(),
+    description: z.string().optional(), isOutOfCategory: z.boolean(), isOverRemaining: z.boolean(), hasEvidence: z.boolean(),
+    evidence: z.array(z.object({ id: z.string(), type: z.string(), externalLink: z.string(), uploadedAt: z.string(),
+      uploadedByName: z.string().optional() })),
+    reviewOutcome: z.enum(["Accepted", "Rejected"]).optional(), reviewReason: z.string().optional() })),
+  lastEvidenceRequest: z.object({ message: z.string(), at: z.string() }).optional(),
+  result: z.object({ acceptedTotal: z.number(), settlementBalance: z.number(),
+    outcome: z.enum(["Closed", "Reconciled", "Recovery Pending"]), recoveryAmount: z.number().optional(),
+    recoveryDueAt: z.string().optional(), isOverdueSettlement: z.boolean(), computedAt: z.string(),
+    closedAt: z.string().optional() }).optional(),
+  recoveryOverdue: z.boolean(), caseId: z.string().optional(),
 });
 const ViolationEvidence = z.object({ note: z.string(), url: z.string().optional(), addedBy: z.string(), addedAt: z.string() });
 const ViolationSummary = z.object({
@@ -1287,6 +1306,42 @@ export const openApiDocument = createDocument({
         responses: {
           "201": { description: "Opened case", content: { "application/json": { schema: envelope(z.object({ violationId: z.string() })) } } },
           "409": { description: "Not overdue, already reported or already recorded", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/reconciliations/{id}": {
+      get: {
+        summary: "Approved, advanced, recorded, supported and unsupported spending of a budget, with its expenses (UC37, ICPDP Officer only)",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Reconciliation view", content: { "application/json": { schema: envelope(ReconciliationView) } } } },
+      },
+      post: {
+        summary: "Accept or reject each expense and settle the budget: closed, top-up due or refund due (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: reconcileBody } } },
+        responses: {
+          "200": { description: "Reconciled budget", content: { "application/json": { schema: envelope(ReconciliationView) } } },
+          "400": { description: "A flagged or rejected expense without a reason", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Not submitted and not overdue, or more advanced than approved", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/reconciliations/{id}/evidence-request": {
+      post: {
+        summary: "Send a submitted settlement back for missing evidence (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: evidenceRequestBody } } },
+        responses: { "200": { description: "Updated view", content: { "application/json": { schema: envelope(ReconciliationView) } } } },
+      },
+    },
+    "/admin/reconciliations/{id}/case": {
+      post: {
+        summary: "Open a FINANCIAL_EXCEPTION case for an overdue refund (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: recoveryCaseBody } } },
+        responses: {
+          "201": { description: "Opened case", content: { "application/json": { schema: envelope(z.object({ violationId: z.string() })) } } },
+          "409": { description: "Refund not overdue or case already open", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

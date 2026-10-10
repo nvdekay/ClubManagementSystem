@@ -569,6 +569,30 @@ try {
     await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
       amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
   }
+  // UC37: HEBE already submitted its settlement (UC36 is the club side, so the expenses are inserted).
+  // Shape follows the UC36 data contract in .sdd/specs/feat-budget-reconciliation/SPEC.md.
+  const welcomeBudget = await ucmsModels.eventBudgets!.findOne({ eventId: welcome }).lean();
+  if (welcomeBudget && welcomeBudget.state === "Disbursed" && !(await ucmsModels.expenses!.exists({ eventBudgetId: welcomeBudget._id }))) {
+    const spent: Array<{ category: string; amount: number; description: string; evidence?: "INVOICE" | "RECEIPT";
+      outOfCategory?: boolean }> = [
+      { category: "Âm thanh ánh sáng", amount: 2_800_000, description: "Thuê dàn âm thanh và 6 đèn par", evidence: "INVOICE" },
+      { category: "Truyền thông", amount: 350_000, description: "In 20 poster A3", evidence: "RECEIPT" },
+      { category: "Ăn uống", amount: 400_000, description: "Nước uống cho tình nguyện viên", evidence: "RECEIPT", outOfCategory: true },
+      { category: "Truyền thông", amount: 150_000, description: "Băng rôn sân khấu" },
+    ];
+    for (const [index, item] of spent.entries()) {
+      const [expense] = await ucmsModels.expenses!.create([{ clubId: club("HEBE").id, eventBudgetId: welcomeBudget._id,
+        eventId: welcome, category: item.category, amount: Types.Decimal128.fromString(String(item.amount)),
+        spentAt: at(-10 * DAY - (index + 1) * HOUR), description: item.description, isOutOfCategory: item.outOfCategory === true,
+        isOverRemaining: false, hasEvidence: Boolean(item.evidence), recordedBy: owner, createdAt: at(-9 * DAY) }]);
+      if (item.evidence) {
+        await ucmsModels.financialEvidences!.create({ expenseId: expense!._id, type: item.evidence,
+          externalLink: `https://drive.google.com/demo-evidence-${index + 1}`, uploadedBy: owner, uploadedAt: at(-9 * DAY) });
+      }
+    }
+    await ucmsModels.eventBudgets!.updateOne({ _id: welcomeBudget._id }, { $set: { state: "Settlement Submitted",
+      settlementSubmittedAt: at(-2 * DAY) } });
+  }
 
   // ── Post-event reports waiting for ICPDP (UC34; UC33 is the club side, so reports are inserted) ──
   // Shape follows the UC33 data contract in .sdd/specs/feat-post-event-reports/SPEC.md. The CTF night above
@@ -578,10 +602,11 @@ try {
     submittedAt: Date; lateFlag?: boolean }) {
     if (await ucmsModels.postEventReports!.exists({ eventId })) return;
     const { id: clubId } = club(code);
-    const [registered, budget, feedbackDocs] = await Promise.all([
+    const [registered, budget, feedbackDocs, expenseDocs] = await Promise.all([
       ucmsModels.eventRegistrations!.countDocuments({ eventId, state: "Confirmed" }),
       ucmsModels.eventBudgets!.findOne({ eventId }).lean(),
       ucmsModels.eventFeedbacks!.find({ eventId }).lean(),
+      ucmsModels.expenses!.find({ eventId }).lean(),
     ]);
     await ucmsModels.events!.updateOne({ _id: eventId }, { $set: { state: "Report Submitted", attendanceFinalized: true } });
     await ucmsModels.attendances!.updateMany({ eventId }, { $set: { finalized: true, finalizedBy: submittedBy, finalizedAt: input.submittedAt } });
@@ -589,7 +614,7 @@ try {
       lateFlag: input.lateFlag ?? false, submittedBy, submittedAt: input.submittedAt,
       preloadedFigures: { attendance: { registered, checkedIn: input.checkedIn },
         ...(budget ? { budget: { approvedTotal: Number(String(budget.approvedTotal)), disbursedTotal: Number(String(budget.disbursedTotal)),
-          expenseTotal: Number(String(budget.disbursedTotal)) - 150_000 } } : {}),
+          expenseTotal: expenseDocs.reduce((sum, item) => sum + Number(String(item.amount)), 0) } } : {}),
         feedback: { count: feedbackDocs.length }, capturedAt: input.submittedAt },
       actualResult: input.actualResult, incidents: input.incidents, lessonsLearned: input.lessonsLearned,
       evidence: input.evidence ?? [] }]);

@@ -67,3 +67,7 @@ hoạt động), yêu cầu chỉnh sửa kèm phương án thay thế, hoặc t
 `EventReportsPage` (UC34) liệt kê báo cáo sau sự kiện đã nộp và sự kiện quá hạn chưa nộp (ghi nhận không nộp mở
 hồ sơ UC40); trang thẩm định đặt số liệu CLB đóng băng cạnh số liệu hệ thống, cho chấp nhận (đóng sự kiện), trả về
 để sửa, hoặc chấp nhận kèm phát hiện. Lệch số điểm danh thì chỉ được trả về.
+
+`ReconciliationPanel` (UC37) nằm trong trang chi tiết ngân sách: tổng đã duyệt/tạm ứng/đã chi/có-thiếu chứng từ,
+xét từng khoản chi (khoản thiếu chứng từ luôn bị loại), xem trước chênh lệch rồi chốt đối soát; yêu cầu bổ sung
+chứng từ; mở hồ sơ vi phạm khi quá hạn hoàn trả.
