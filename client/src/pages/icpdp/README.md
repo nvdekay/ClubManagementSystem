@@ -54,3 +54,8 @@ hợp lệ ở trạng thái hiện tại.
 lời, form tạo: thời gian, phòng trong danh mục hoặc nơi khác với cảnh báo trùng lịch BR15, số chỗ, CLB mời,
 hạn phản hồi) và `SchoolEventDetailPage`: danh sách lời mời (thu hồi lời mời đang chờ), mời thêm CLB, công bố
 cho sinh viên (mở đăng ký, sinh mã check-in).
+
+`EvaluationsPage` (UC42 + UC43) gồm `EvaluationsPage` (chọn học kỳ, sinh bản nháp cho mọi CLB chưa có, bảng
+trạng thái/tổng điểm/xếp loại, công bố cả kỳ khi mọi CLB đã chốt) và `EvaluationDetailPage`: điểm từng tiêu chí
+D1–D8 kèm dữ liệu nguồn, chấm tay (có lý giải) ở tiêu chí cho phép, sinh lại, chốt/mở lại, tạo bản sửa sau
+công bố, các bản và xu hướng các học kỳ trước.

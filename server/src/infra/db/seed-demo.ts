@@ -30,6 +30,8 @@ import { mongoEventFeedbackRepository } from "./mongo-event-feedback-repository.
 import { mongoBudgetDisbursementRepository } from "./mongo-budget-disbursement-repository.js";
 import { mongoViolationRepository } from "./mongo-violation-repository.js";
 import { mongoSchoolEventRepository } from "./mongo-school-event-repository.js";
+import { mongoEvaluationSchemeRepository } from "./mongo-evaluation-scheme-repository.js";
+import { DEFAULT_SCHEME_SETTINGS } from "../../domain/evaluation-scheme.js";
 import { mongoEventRegistrationRepository } from "./mongo-event-registration-repository.js";
 import { mongoMembershipRepository } from "./mongo-membership-repository.js";
 import { mongoPolicyRepository } from "./mongo-policy-repository.js";
@@ -597,6 +599,13 @@ try {
       invitation: { clubIds: [String(club("HEBE").id), String(club("EHC").id), String(club("FDS").id)], allActiveClubs: false,
         deadline: new Date(trainingStart.getTime() - 3 * DAY) } }, String(owner), now);
     await schoolEvents.publish(training.detail.id, String(owner), now);
+  }
+
+  // ── Evaluation (UC41 → UC42): an active default scheme for Fall 2026, so drafts can be generated right away ──
+  if (!(await ucmsModels.evaluationSchemes!.exists({ periodCode: "Fall 2026" }))) {
+    const schemes = mongoEvaluationSchemeRepository();
+    const draft = await schemes.createDraft("Fall 2026", DEFAULT_SCHEME_SETTINGS, String(owner), now);
+    await schemes.activate(draft.id, String(owner), now);
   }
 
   // ── One-way student feedback (UC50) ────────────────────────────────────────────────────────
