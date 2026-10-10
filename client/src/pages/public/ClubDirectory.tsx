@@ -2,7 +2,8 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 
-import { ClubLogo, thumbnail } from "@/components/custom/ClubLogo";
+import { ClubCover } from "@/components/custom/ClubCover";
+import { ClubLogo } from "@/components/custom/ClubLogo";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppCard } from "@/components/ui/card/AppCard";
@@ -13,23 +14,6 @@ import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useClubs } from "@/hooks/useDiscovery";
-
-function ClubCover({ name, logoUrl }: { name: string; logoUrl?: string }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <span className="relative block h-28 overflow-hidden bg-primary-soft-app">
-      {logoUrl && !failed ? (
-        <img src={thumbnail(logoUrl, 320, 112)} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)}
-          className="size-full object-cover opacity-75" />
-      ) : (
-        <span aria-hidden="true" className="flex size-full items-center justify-center font-heading text-5xl font-extrabold text-primary-app/15">
-          {name.trim().charAt(0).toUpperCase()}
-        </span>
-      )}
-      <span aria-hidden="true" className="absolute inset-0 bg-text-app/5" />
-    </span>
-  );
-}
 
 export function ClubDirectory() {
   const { t } = useTranslation();

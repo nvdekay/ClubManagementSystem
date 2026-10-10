@@ -4,6 +4,15 @@ import type { PublicDiscoveryRepository } from "../../src/domain/public-discover
 import type { ClubApplicationRepository } from "../../src/domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../src/domain/club-application-review.js";
 import type { ClubFieldRepository } from "../../src/domain/club-field.js";
+import type { PropertyRepository } from "../../src/domain/property.js";
+import type { EvaluationSchemeRepository } from "../../src/domain/evaluation-scheme.js";
+import type { ExportFileWriter, ExportRepository } from "../../src/domain/data-export.js";
+import type { ClubLifecycleRepository } from "../../src/domain/club-lifecycle.js";
+import type { EventProposalReviewRepository } from "../../src/domain/event-proposal-review.js";
+import type { BudgetDisbursementRepository } from "../../src/domain/budget-disbursement.js";
+import type { ViolationRepository } from "../../src/domain/violation.js";
+import type { SchoolEventRepository } from "../../src/domain/school-event.js";
+import type { EvaluationRepository } from "../../src/domain/evaluation.js";
 import type { ClubProfileRepository } from "../../src/domain/club-profile.js";
 import type { BoardNominationRepository } from "../../src/domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
@@ -90,11 +99,64 @@ const stubClubFields: ClubFieldRepository = {
   update: async () => { throw new Error("unused"); },
   remove: async () => { throw new Error("unused"); },
 };
+const stubProperties: PropertyRepository = {
+  list: async () => [], find: async () => null, hasBookings: async () => false,
+  create: async () => { throw new Error("unused"); }, update: async () => { throw new Error("unused"); },
+  setActive: async () => { throw new Error("unused"); }, remove: async () => { throw new Error("unused"); },
+};
+const stubSchemes: EvaluationSchemeRepository = {
+  list: async () => [], find: async () => null,
+  createDraft: async () => { throw new Error("unused"); }, updateDraft: async () => { throw new Error("unused"); },
+  activate: async () => { throw new Error("unused"); }, deleteDraft: async () => { throw new Error("unused"); },
+};
+const stubExports: ExportRepository = {
+  table: async () => ({ columns: [], rows: [] }), clubs: async () => [], audit: async () => undefined,
+};
+async function unusedLifecycle(): Promise<never> { throw new Error("unused"); }
+const stubLifecycle: ClubLifecycleRepository = {
+  list: async () => [], detail: async () => null, suspend: unusedLifecycle, reactivate: unusedLifecycle,
+  decideDissolution: unusedLifecycle, suspensionsDueForReminder: async () => [], markReminded: unusedLifecycle,
+  expiredSuspensions: async () => [], startDissolving: async () => [], completeDissolutions: async () => [],
+  officerIds: async () => [],
+};
+const stubWriter: ExportFileWriter = { write: async () => { throw new Error("unused"); } };
 const stubApplicationReviews: ClubApplicationReviewRepository = {
   listOpen: async () => [], find: async () => null,
   findDocument: async () => null,
   claim: async () => { throw new Error("unused"); },
   decide: async () => { throw new Error("unused"); },
+};
+const stubEventProposalReviews: EventProposalReviewRepository = {
+  listOpen: async () => [], find: async () => null,
+  claim: async () => { throw new Error("unused"); },
+  decide: async () => { throw new Error("unused"); },
+  advanceLifecycle: async () => ({ expired: 0, started: 0, completed: 0 }),
+};
+const stubBudgets: BudgetDisbursementRepository = {
+  list: async () => [], find: async () => null,
+  record: async () => { throw new Error("unused"); },
+};
+const stubViolations: ViolationRepository = {
+  list: async () => [], find: async () => null, sources: async () => null,
+  open: async () => { throw new Error("unused"); },
+  apply: async () => { throw new Error("unused"); },
+};
+const stubSchoolEvents: SchoolEventRepository = {
+  list: async () => [], find: async () => null, conflicts: async () => [],
+  create: async () => { throw new Error("unused"); },
+  invite: async () => { throw new Error("unused"); },
+  withdraw: async () => { throw new Error("unused"); },
+  publish: async () => { throw new Error("unused"); },
+  expireInvitations: async () => 0,
+};
+const stubEvaluations: EvaluationRepository = {
+  clubsInScope: async () => [], latest: async () => [], find: async () => null,
+  collectMetrics: async () => { throw new Error("unused"); },
+  writeDraft: async () => { throw new Error("unused"); },
+  setManual: async () => { throw new Error("unused"); },
+  finalize: async () => { throw new Error("unused"); },
+  reopen: async () => { throw new Error("unused"); },
+  publish: async () => 0,
 };
 const stubClubProfiles: ClubProfileRepository = {
   findProfile: async () => null, listDepartments: async () => [],
@@ -181,8 +243,9 @@ describe("openapi document", () => {
   // openapi.ts's User schema `satisfies` the domain entity's wire shape.
   it("matches the routes the app actually serves", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
-      applicationRepo: stubApplications, clubFieldRepo: stubClubFields,
-      applicationReviewRepo: stubApplicationReviews,
+      applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties,
+      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle,
+      applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
@@ -234,8 +297,8 @@ describe("openapi document", () => {
 
   it("guards every mutation or explicitly lists it as public", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
-      applicationRepo: stubApplications, clubFieldRepo: stubClubFields,
-      applicationReviewRepo: stubApplicationReviews,
+      applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties,
+      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,

@@ -23,7 +23,8 @@ export interface PublicCampaign {
 
 export interface PublicEvent {
   id: string;
-  clubId: string;
+  /** Absent for a school-wide event organised by ICPDP. */
+  clubId?: string;
   clubName: string;
   title: string;
   startAt: string;
@@ -94,7 +95,8 @@ export function fetchEvents(
 
 export function fetchEvent(id: string, signal: AbortSignal): Promise<{
   event: PublicEvent;
-  club: { id: string; name: string };
+  /** Null for a school-wide event organised by ICPDP. */
+  club: { id: string; name: string } | null;
 }> {
   return publicGet(`events/${encodeURIComponent(id)}`, signal);
 }

@@ -3,8 +3,17 @@ import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
+import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
+import { budgetFlowBody } from "./budget-disbursement-routes.js";
+import { violationOpenBody, violationStepBody } from "./violation-routes.js";
+import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
+import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
+import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
+import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./evaluation-scheme-routes.js";
+import { exportBody, exportPreviewBody } from "./export-routes.js";
+import { lifecycleReasonBody, suspendBody } from "./club-lifecycle-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
@@ -74,6 +83,22 @@ const FoundingRequirements = z.object({
   policyVersionId: z.string(), minFoundingMembers: z.number(),
   required: policySettingsBody.shape.formRequirements.shape.clubFounding,
 });
+const Property = propertyCreateBody.extend({ id: z.string(), code: z.string(), isActive: z.boolean() });
+const EvaluationScheme = evaluationSchemeSettingsBody.extend({
+  id: z.string(), periodCode: z.string(), version: z.number(),
+  state: z.enum(["Draft", "Active", "Superseded"]), totalWeight: z.number(),
+  activatedAt: z.string().optional(), createdAt: z.string(),
+});
+const ClubLifecycleSummary = z.object({
+  id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(), activeMembers: z.number(),
+  logoUrl: z.string().optional(), contactEmail: z.string().optional(),
+  suspension: z.object({ reason: z.string(), suspendedAt: z.string(), suspendedBy: z.string(),
+    until: z.string().nullable(), reminderSentAt: z.string().optional() }).optional(),
+  dissolution: z.object({ decidedAt: z.string(), decidedBy: z.string(), reason: z.string(),
+    effectiveSemester: z.string(), effectiveFrom: z.string(), effectiveTo: z.string() }).optional(),
+});
+const CascadeResult = z.object({ cancelledEvents: z.number(), cancelledRegistrations: z.number(),
+  cancelledBookings: z.number() });
 const ClubField = clubFieldBody.extend({ id: z.string(), isActive: z.boolean() });
 const ClubFieldUsage = ClubField.extend({ clubCount: z.number(), applicationCount: z.number() });
 const FoundingIssue = z.enum(["clubName", "field", "summary", "objectives", "fanpageUrl",
@@ -112,6 +137,124 @@ const FounderProfile = z.object({ id: z.string(), displayName: z.string(), email
 const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
   versions: z.array(ApplicationVersion), decisions: z.array(ApplicationReviewDecision),
   founders: z.array(FounderProfile),
+});
+const EventProposalTask = z.object({
+  id: z.string(), eventId: z.string(), title: z.string(), state: z.enum(["Open", "Decided", "Closed"]),
+  assigneeId: z.string().optional(), openedAt: z.string(), slaDueAt: z.string().optional(),
+});
+const EventProposalSummary = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(), objective: z.string().optional(),
+  startAt: z.string(), endAt: z.string(), semesterCode: z.string(), venueText: z.string().optional(),
+  property: z.object({ id: z.string(), code: z.string(), name: z.string() }).optional(),
+  audienceScope: z.string(), capacity: z.number(), riskCategory: z.string().optional(), state: z.string(),
+  conflictResult: z.string().optional(), conflictDetail: z.unknown().optional(),
+  approvalConditions: z.array(z.string()), currentRevisionNo: z.number(),
+  revisionDeadlineAt: z.string().optional(), requestedBudgetTotal: z.number(),
+});
+const EventBudgetSummary = z.object({
+  id: z.string(), eventId: z.string(), eventTitle: z.string().optional(), state: z.string(),
+  requestedTotal: z.number(), approvedTotal: z.number(), lines: z.array(z.object({
+    category: z.string(), requestedAmount: z.number(), approvedAmount: z.number(), reason: z.string().optional(),
+  })),
+});
+const BudgetSummary = z.object({
+  id: z.string(), eventId: z.string(), eventTitle: z.string(), eventState: z.string(), eventStartAt: z.string(),
+  eventEndAt: z.string(), clubId: z.string(), clubName: z.string(), state: z.string(), periodCode: z.string().optional(),
+  requestedTotal: z.number(), approvedTotal: z.number(), disbursedTotal: z.number(), refundedTotal: z.number(),
+  settlementDueAt: z.string().optional(), settlementBalance: z.number().optional(),
+  recoveryAmount: z.number().optional(), recoveryDueAt: z.string().optional(), createdAt: z.string(),
+});
+const BudgetDetail = BudgetSummary.extend({
+  lines: z.array(z.object({ category: z.string(), requestedAmount: z.number(), approvedAmount: z.number(),
+    reason: z.string().optional() })),
+  flows: z.array(z.object({ id: z.string(), kind: z.enum(["Advance", "TopUp", "Refund"]), amount: z.number(),
+    disbursedAt: z.string(), paymentReference: z.string().optional(), note: z.string().optional(),
+    recordedBy: z.string(), recordedByName: z.string().optional() })),
+  allowed: z.object({ kind: z.enum(["Advance", "TopUp", "Refund"]), max: z.number(),
+    exact: z.number().optional() }).optional(),
+});
+const ViolationEvidence = z.object({ note: z.string(), url: z.string().optional(), addedBy: z.string(), addedAt: z.string() });
+const ViolationSummary = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), originType: z.string(), severity: z.string(),
+  title: z.string(), state: z.string(), openedAt: z.string(), responseDueAt: z.string().optional(),
+  responseOverdue: z.boolean(), pendingActions: z.number(),
+});
+const ViolationDetail = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), clubState: z.string(), originType: z.string(),
+  originRefId: z.string().optional(), severity: z.string(), title: z.string(), description: z.string().optional(),
+  evidence: z.array(ViolationEvidence), state: z.string(),
+  clubResponse: z.object({ requestMessage: z.string(), requestedBy: z.string(), requestedAt: z.string(), dueAt: z.string(),
+    source: z.enum(["CLUB", "RECORDED_BY_ICPDP", "NO_RESPONSE"]).optional(), text: z.string().optional(),
+    respondedBy: z.string().optional(), respondedAt: z.string().optional(), recordedBy: z.string().optional() }).optional(),
+  decisionReason: z.string().optional(), decisionEvidence: z.array(ViolationEvidence),
+  openedBy: z.string(), openedAt: z.string(), decidedBy: z.string().optional(), decidedAt: z.string().optional(),
+  responseDueAt: z.string().optional(), resolvedAt: z.string().optional(),
+  actions: z.array(z.object({ id: z.string(), description: z.string(), dueAt: z.string(),
+    state: z.enum(["Pending", "Verified", "Failed"]), linkedLifecycleAction: z.enum(["SUSPEND", "DISSOLVE"]).optional(),
+    verifiedBy: z.string().optional(), verifiedAt: z.string().optional() })),
+  source: z.object({ kind: z.enum(["event", "budget"]), id: z.string(), label: z.string() }).optional(),
+  names: z.record(z.string(), z.string()),
+  history: z.array(z.object({ action: z.string(), at: z.string(), actorName: z.string().optional(), reason: z.string().optional() })),
+});
+const ScheduleConflict = z.object({ kind: z.enum(["event", "booking"]), title: z.string(), startAt: z.string(), endAt: z.string() });
+const SchoolEventSummary = z.object({
+  id: z.string(), title: z.string(), startAt: z.string(), endAt: z.string(), venueText: z.string().optional(),
+  property: z.object({ id: z.string(), code: z.string(), name: z.string() }).optional(), capacity: z.number(),
+  state: z.string(), semesterCode: z.string(), publishedAt: z.string().optional(), confirmedRegistrationCount: z.number(),
+  counts: z.object({ invited: z.number(), pending: z.number(), accepted: z.number(), declined: z.number(),
+    expired: z.number(), withdrawn: z.number() }),
+});
+const SchoolEventDetail = SchoolEventSummary.extend({
+  objective: z.string().optional(), coordination: z.string().optional(),
+  conflictResult: z.enum(["No Conflict", "Warning"]), conflicts: z.array(ScheduleConflict),
+  checkInCode: z.string().optional(), registrationCloseAt: z.string().optional(),
+  invitations: z.array(z.object({ id: z.string(), clubId: z.string(), clubName: z.string(),
+    status: z.enum(["Pending", "Accepted", "Declined", "Expired", "Withdrawn"]), deadline: z.string(), invitedAt: z.string(),
+    respondedAt: z.string().optional(), responseNote: z.string().optional(), responseDetails: z.unknown().optional() })),
+});
+const InvitationOutcome = z.object({ invited: z.array(z.string()),
+  skipped: z.array(z.object({ clubId: z.string(), reason: z.enum(["notActive", "alreadyInvited"]) })) });
+const EvaluationClassification = z.enum(["EXCELLENT", "GOOD", "FAIR", "NEEDS_IMPROVEMENT"]);
+const EvaluationOverview = z.object({
+  periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string(), hasActiveScheme: z.boolean() })),
+  periodCode: z.string().optional(), scheme: z.object({ id: z.string(), version: z.number() }).optional(),
+  rows: z.array(z.object({ evaluationId: z.string().optional(), clubId: z.string(), clubName: z.string(), clubState: z.string(),
+    state: z.string().optional(), revisionNo: z.number().optional(), totalScore: z.number().optional(),
+    classification: EvaluationClassification.optional(), insufficientCount: z.number(), manualCount: z.number() })),
+  canPublish: z.boolean(),
+});
+const EvaluationDetail = z.object({
+  id: z.string(), clubId: z.string(), clubName: z.string(), periodCode: z.string(), schemeId: z.string(), schemeVersion: z.number(),
+  state: z.string(), revisionNo: z.number(), totalScore: z.number().optional(), classification: EvaluationClassification.optional(),
+  generatedAt: z.string().optional(), finalizedAt: z.string().optional(), publishedAt: z.string().optional(),
+  dimensions: z.array(z.object({ code: z.string(), name: z.string(), weight: z.number(), allowsManual: z.boolean(),
+    score: z.number().optional(), computedScore: z.number().optional(), insufficientData: z.boolean(), isManual: z.boolean(),
+    justification: z.string().optional(), evidence: z.array(z.object({ metric: z.string(), sourceEntity: z.string(),
+      sourceIds: z.array(z.string()), sourcePeriod: z.string(), value: z.number() })) })),
+  revisions: z.array(z.object({ id: z.string(), revisionNo: z.number(), state: z.string(), totalScore: z.number().optional(),
+    publishedAt: z.string().optional() })),
+  trend: z.array(z.object({ periodCode: z.string(), totalScore: z.number().optional(), classification: EvaluationClassification.optional() })),
+  thresholds: z.object({ excellent: z.number(), good: z.number(), fair: z.number() }),
+});
+const EventProposalQueueItem = z.object({ task: EventProposalTask, event: EventProposalSummary });
+const EventProposalDetail = EventProposalQueueItem.extend({
+  versions: z.array(z.object({
+    id: z.string(), revisionNo: z.number(), payload: z.record(z.string(), z.unknown()),
+    budgetLines: z.array(z.object({ category: z.string(), amount: z.number(), purpose: z.string(),
+      plannedItems: z.string().optional() })),
+    requestedBudgetTotal: z.number(), conflictResult: z.string().optional(), submittedBy: z.string(),
+    submittedByName: z.string().optional(), submittedAt: z.string(),
+  })),
+  decisions: z.array(z.object({
+    id: z.string(), taskId: z.string(), outcome: z.enum(["Request revision", "Approve", "Reject"]),
+    reason: z.string().optional(), sections: z.array(z.string()), conditions: z.array(z.string()),
+    reviewNote: z.string().optional(), actorId: z.string(), at: z.string(),
+  })),
+  club: z.object({ id: z.string(), name: z.string(), state: z.string(),
+    obligations: z.array(z.enum(["overdueSettlement", "overdueRefund", "overdueReport"])) }),
+  bookings: z.array(z.object({ id: z.string(), propertyCode: z.string().optional(),
+    propertyName: z.string().optional(), startAt: z.string(), endAt: z.string(), state: z.string() })),
+  semesterBudgets: z.array(EventBudgetSummary), budget: EventBudgetSummary.optional(),
 });
 const ClubProfile = clubProfileBody.extend({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(),
@@ -205,12 +348,12 @@ const LeadershipTransition = z.object({
     actorId: z.string(), at: z.string() })),
 });
 const EventRegistration = z.object({ id: z.string(), eventId: z.string(), studentId: z.string(),
-  clubId: z.string(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(), checkInOpensAt: z.string(), checkInClosesAt: z.string(),
+  clubId: z.string().optional(), clubName: z.string(), eventTitle: z.string(), eventStartAt: z.string(), checkInOpensAt: z.string(), checkInClosesAt: z.string(),
   eventEndAt: z.string(), state: z.enum(["Confirmed", "Waitlisted", "Cancelled"]),
   waitlistPosition: z.number().int().optional(),
   answers: z.record(z.string(), z.union([z.string(), z.array(z.string())])),
   createdAt: z.string(), cancelledAt: z.string().optional() });
-const EventRegistrationContext = z.object({ event: z.object({ id: z.string(), clubId: z.string(),
+const EventRegistrationContext = z.object({ event: z.object({ id: z.string(), clubId: z.string().optional(),
   clubName: z.string(), title: z.string(), state: z.string(), audienceScope: z.string(),
   startAt: z.string(), endAt: z.string(), registrationOpenAt: z.string().optional(),
   registrationCloseAt: z.string().optional(), capacity: z.number().int(),
@@ -220,7 +363,7 @@ formSchema: z.array(z.object({ key: z.string(), label: z.string(),
   options: z.array(z.string()).optional() })), isActiveClubMember: z.boolean(),
 registration: EventRegistration.nullable(), registrationOpen: z.boolean() });
 const Attendance = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
-  clubId: z.string(), clubName: z.string(), eventStartAt: z.string(), eventEndAt: z.string(),
+  clubId: z.string().optional(), clubName: z.string(), eventStartAt: z.string(), eventEndAt: z.string(),
   checkedInAt: z.string(), method: z.enum(["self", "manual", "walk-in"]), abnormalFlags: z.array(z.string()),
   feedbackOpensAt: z.string(), feedbackClosesAt: z.string().nullable() });
 const MyEventFeedback = z.object({ id: z.string(), eventId: z.string(), eventTitle: z.string(),
@@ -261,9 +404,10 @@ const PublicCampaign = z.object({
 const PublicCampaignDetail = PublicCampaign.extend({
   clubId: z.string(), positions: z.array(z.string()), criteria: z.string().optional(),
   selectionSteps: z.array(z.unknown()), formSchema: z.array(z.unknown()), rubric: z.array(z.unknown()),
+  clubSuspended: z.boolean().optional(),
 });
 const PublicEvent = z.object({
-  id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(),
+  id: z.string(), clubId: z.string().optional(), clubName: z.string(), title: z.string(),
   startAt: z.string(), endAt: z.string(), venueText: z.string().optional(),
   objective: z.string().optional(), coverImageUrl: z.string().url().optional(),
   capacity: z.number(), state: z.string(), audienceScope: z.string(),
@@ -372,7 +516,7 @@ export const openApiDocument = createDocument({
         responses: {
           "200": { description: "Public event",
             content: { "application/json": { schema: envelope(z.object({
-              event: PublicEvent, club: z.object({ id: z.string(), name: z.string() }),
+              event: PublicEvent, club: z.object({ id: z.string(), name: z.string() }).nullable(),
             })) } } },
           "404": { description: "Event not public or not found",
             content: { "application/json": { schema: ApiError } } },
@@ -492,6 +636,176 @@ export const openApiDocument = createDocument({
             content: { "application/json": { schema: envelope(ClubField) } } },
           "409": { description: "A field with this name already exists",
             content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/clubs": {
+      get: {
+        summary: "List clubs with their lifecycle state and the suspensions ending soon (UC15)",
+        responses: { "200": { description: "Clubs", content: { "application/json": { schema: envelope(z.object({
+          clubs: z.array(ClubLifecycleSummary), expiringSuspensions: z.array(ClubLifecycleSummary),
+        })) } } } },
+      },
+    },
+    "/admin/clubs/{id}": {
+      get: {
+        summary: "Club lifecycle detail: obligations, history and the semester a dissolution would take effect",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Club detail", content: { "application/json": { schema: envelope(z.object({
+          club: ClubLifecycleSummary.extend({ openCampaigns: z.array(z.unknown()), upcomingEvents: z.array(z.unknown()),
+            activeTerm: z.unknown().optional(), history: z.array(z.unknown()) }),
+          nextSemester: z.object({ code: z.string(), startAt: z.string(), endAt: z.string() }).nullable(),
+        })) } } } },
+      },
+    },
+    "/admin/clubs/{id}/suspend": {
+      post: {
+        summary: "Suspend an active club until a date or indefinitely; cancels upcoming events and bookings",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: suspendBody } } },
+        responses: {
+          "200": { description: "What the cascade cancelled", content: { "application/json": { schema: envelope(CascadeResult) } } },
+          "409": { description: "The club is not active", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/clubs/{id}/reactivate": {
+      post: {
+        summary: "Reactivate a suspended club",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: lifecycleReasonBody } } },
+        responses: { "200": { description: "Reactivated",
+          content: { "application/json": { schema: envelope(z.object({ reactivated: z.literal(true) })) } } } },
+      },
+    },
+    "/admin/clubs/{id}/dissolve": {
+      post: {
+        summary: "Schedule dissolution from the next semester; cancels what would end after it (BR45)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: lifecycleReasonBody } } },
+        responses: { "200": { description: "Dissolution scheduled",
+          content: { "application/json": { schema: envelope(CascadeResult.extend({ effectiveSemester: z.string() })) } } } },
+      },
+    },
+    "/admin/exports/options": {
+      get: {
+        summary: "Export catalogue: data types with their status filters, formats, semesters and clubs (UC55)",
+        responses: { "200": { description: "Export options", content: { "application/json": { schema: envelope(z.object({
+          types: z.array(z.object({ type: z.string(), title: z.string(), statuses: z.array(z.string()) })),
+          formats: z.array(z.string()),
+          periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
+          clubs: z.array(z.object({ id: z.string(), name: z.string() })),
+        })) } } } },
+      },
+    },
+    "/admin/exports/preview": {
+      post: {
+        summary: "Count the rows an export would contain (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: exportPreviewBody } } },
+        responses: { "200": { description: "Row count",
+          content: { "application/json": { schema: envelope(z.object({ rowCount: z.number() })) } } } },
+      },
+    },
+    "/admin/exports": {
+      post: {
+        summary: "Download the data as xlsx, csv or pdf; audited (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: exportBody } } },
+        responses: {
+          "200": { description: "The file, sent as an attachment" },
+          "404": { description: "No data matches the filter; no file is produced",
+            content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/evaluation-schemes": {
+      get: {
+        summary: "List evaluation schemes with the evaluation periods and the D1–D8 catalogue (UC41)",
+        responses: { "200": { description: "Schemes", content: { "application/json": { schema: envelope(z.object({
+          schemes: z.array(EvaluationScheme),
+          periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
+          dimensions: z.array(z.object({ code: z.string(), name: z.string(), core: z.boolean(), measures: z.string() })),
+        })) } } } },
+      },
+      post: {
+        summary: "Create a draft scheme for a semester from the defaults or a copy (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: evaluationSchemeCreateBody } } },
+        responses: {
+          "201": { description: "Draft created", content: { "application/json": { schema: envelope(EvaluationScheme) } } },
+          "400": { description: "Period not in the academic calendar", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/evaluation-schemes/{id}": {
+      patch: {
+        summary: "Edit a draft's dimensions, weights and thresholds",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: evaluationSchemeSettingsBody } } },
+        responses: {
+          "200": { description: "Draft updated", content: { "application/json": { schema: envelope(EvaluationScheme) } } },
+          "409": { description: "Only drafts can change", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      delete: {
+        summary: "Delete a draft scheme",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Draft deleted",
+          content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } } } },
+      },
+    },
+    "/admin/evaluation-schemes/{id}/activate": {
+      post: {
+        summary: "Activate a draft (weights total 100, D1–D3 above 0); supersedes the period's active scheme",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Scheme active", content: { "application/json": { schema: envelope(EvaluationScheme) } } },
+          "400": { description: "details.issues lists totalWeight / coreWeight", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/properties": {
+      get: {
+        summary: "List the facility catalogue (UC44)",
+        responses: {
+          "200": { description: "Properties", content: { "application/json": { schema: envelope(z.array(Property)) } } },
+          "403": { description: "ICPDP officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Add a room, hall or equipment; the code is generated from the type (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: propertyCreateBody } } },
+        responses: {
+          "201": { description: "Property created", content: { "application/json": { schema: envelope(Property) } } },
+          "400": { description: "Invalid property values", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/properties/{id}": {
+      patch: {
+        summary: "Edit a property's details, bookable hours and blackouts; the type cannot change",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: propertyDetailsBody } } },
+        responses: {
+          "200": { description: "Property updated", content: { "application/json": { schema: envelope(Property) } } },
+          "404": { description: "Property not found", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      delete: {
+        summary: "Delete a property that was never booked (BR41: otherwise deactivate it)",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Property deleted",
+            content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } } },
+          "409": { description: "The property has bookings", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/properties/{id}/activation": {
+      post: {
+        summary: "Deactivate or reactivate a property; existing approved bookings are kept",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: propertyActivationBody } } },
+        responses: {
+          "200": { description: "Property updated", content: { "application/json": { schema: envelope(Property) } } },
         },
       },
     },
@@ -780,6 +1094,251 @@ export const openApiDocument = createDocument({
             fileName: z.string(), url: z.string().url(),
           })) },
         } } },
+      },
+    },
+    "/admin/event-proposals": {
+      get: {
+        summary: "List open event proposal review tasks (UC26, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Event proposal queue", content: { "application/json": {
+            schema: envelope(z.array(EventProposalQueueItem)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-proposals/{id}": {
+      get: {
+        summary: "Event proposal with its revisions, budget lines, club obligations, bookings and semester budgets",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Event proposal detail", content: { "application/json": {
+          schema: envelope(EventProposalDetail) } } } },
+      },
+    },
+    "/admin/event-proposals/{id}/claim": {
+      post: {
+        summary: "Claim an event proposal and move it to Under Review (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Claimed proposal", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
+          "409": { description: "Already claimed or no longer reviewable", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-proposals/{id}/decision": {
+      post: {
+        summary: "Request revision, approve (with conditions and per-line approved budget) or reject (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventReviewDecisionBody } } },
+        responses: {
+          "200": { description: "Decided proposal", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
+          "400": { description: "Missing reason, sections, deadline or approved amounts", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "Proposal already decided or not claimed by this officer", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/budgets": {
+      get: {
+        summary: "List approved event budgets with what has been disbursed (UC35, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Budgets", content: { "application/json": { schema: envelope(z.array(BudgetSummary)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/budgets/{id}": {
+      get: {
+        summary: "Budget with its approved lines, recorded money flows and the flow it accepts now",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Budget detail", content: { "application/json": {
+          schema: envelope(BudgetDetail) } } } },
+      },
+    },
+    "/admin/budgets/{id}/flows": {
+      post: {
+        summary: "Record an advance, top-up or club refund (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: budgetFlowBody } } },
+        responses: {
+          "200": { description: "Updated budget", content: { "application/json": { schema: envelope(BudgetDetail) } } },
+          "400": { description: "Amount over the approved total, not the exact top-up, or over what is owed", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "The budget does not accept this kind of flow now", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/violations": {
+      get: {
+        summary: "List compliance cases, newest first (UC40, ICPDP Officer only)",
+        responses: {
+          "200": { description: "Cases", content: { "application/json": { schema: envelope(z.array(ViolationSummary)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Open a compliance case for a club (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: violationOpenBody } } },
+        responses: {
+          "201": { description: "Opened case", content: { "application/json": { schema: envelope(ViolationDetail) } } },
+          "400": { description: "Invalid origin, severity, title or source record", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/violations/sources/{clubId}": {
+      get: {
+        summary: "Events and budgets of a club a case can point to",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Source records", content: { "application/json": { schema: envelope(z.object({
+          events: z.array(z.object({ id: z.string(), title: z.string(), startAt: z.string(), state: z.string() })),
+          budgets: z.array(z.object({ id: z.string(), eventTitle: z.string(), state: z.string() })),
+        })) } } } },
+      },
+    },
+    "/admin/violations/{id}": {
+      get: {
+        summary: "Compliance case with evidence, club response, decision, corrective actions and history",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Case detail", content: { "application/json": { schema: envelope(ViolationDetail) } } } },
+      },
+    },
+    "/admin/violations/{id}/steps": {
+      post: {
+        summary: "Move a case forward: investigate, add evidence, ask or record the club response, decide, assign/verify corrective actions, resolve (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: violationStepBody } } },
+        responses: {
+          "200": { description: "Updated case", content: { "application/json": { schema: envelope(ViolationDetail) } } },
+          "400": { description: "Missing reason, evidence, message or deadline", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "The step is not allowed in the current state", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events": {
+      get: {
+        summary: "List school-wide events organised by ICPDP with invitation counts (UC53, ICPDP Officer only)",
+        responses: {
+          "200": { description: "School events", content: { "application/json": { schema: envelope(z.array(SchoolEventSummary)) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+      post: {
+        summary: "Create a school-wide event (Approved) and optionally invite clubs (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: schoolEventBody } } },
+        responses: {
+          "201": { description: "Created event and invitation outcome", content: { "application/json": {
+            schema: envelope(z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome })) } } },
+          "400": { description: "Invalid time, venue, capacity, semester or reply deadline", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events/conflicts": {
+      get: {
+        summary: "Approved events and bookings overlapping a room and time (BR15 warning)",
+        requestParams: { query: schoolEventConflictQuery },
+        responses: { "200": { description: "Overlaps", content: { "application/json": { schema: envelope(z.array(ScheduleConflict)) } } } },
+      },
+    },
+    "/admin/school-events/{id}": {
+      get: {
+        summary: "School event with conflicts, check-in code and every club invitation",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "School event", content: { "application/json": { schema: envelope(SchoolEventDetail) } } } },
+      },
+    },
+    "/admin/school-events/{id}/invitations": {
+      post: {
+        summary: "Invite more clubs, or re-invite withdrawn/expired ones (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: schoolEventInviteBody } } },
+        responses: {
+          "200": { description: "Updated event and invitation outcome", content: { "application/json": {
+            schema: envelope(z.object({ detail: SchoolEventDetail, outcome: InvitationOutcome })) } } },
+          "409": { description: "The event already took place", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events/{id}/invitations/{invitationId}/withdraw": {
+      post: {
+        summary: "Withdraw a pending invitation before its deadline (requires CSRF token)",
+        requestParams: { path: z.object({ id: z.string(), invitationId: z.string() }) },
+        responses: {
+          "200": { description: "Updated event", content: { "application/json": { schema: envelope(SchoolEventDetail) } } },
+          "409": { description: "Not pending or past the deadline", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/school-events/{id}/publish": {
+      post: {
+        summary: "Publish the event to students and open registration until it starts (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Published event", content: { "application/json": { schema: envelope(SchoolEventDetail) } } },
+          "409": { description: "Already published or already started", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/evaluations": {
+      get: {
+        summary: "Evaluation overview of a period: every club in scope with its latest revision (UC42/UC43, ICPDP Officer only)",
+        requestParams: { query: evaluationOverviewQuery },
+        responses: {
+          "200": { description: "Overview", content: { "application/json": { schema: envelope(EvaluationOverview) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/evaluations/generate": {
+      post: {
+        summary: "Generate a Data Ready draft from operational data for every club without one (UC42, requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: evaluationPeriodBody } } },
+        responses: { "200": { description: "Overview", content: { "application/json": { schema: envelope(EvaluationOverview) } } },
+          "409": { description: "No active scheme for the period", content: { "application/json": { schema: ApiError } } } },
+      },
+    },
+    "/admin/evaluations/publish": {
+      post: {
+        summary: "Publish the period once every club is finalized, and notify the clubs (UC43, requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: evaluationPeriodBody } } },
+        responses: { "200": { description: "Overview", content: { "application/json": { schema: envelope(EvaluationOverview) } } },
+          "409": { description: "Some club is not finalized", content: { "application/json": { schema: ApiError } } } },
+      },
+    },
+    "/admin/evaluations/{id}": {
+      get: {
+        summary: "Evaluation with dimension scores, data lineage, revisions and trend",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Evaluation", content: { "application/json": { schema: envelope(EvaluationDetail) } } } },
+      },
+    },
+    "/admin/evaluations/{id}/regenerate": {
+      post: {
+        summary: "Generate the draft again from current data, or start a new revision of a published result (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Evaluation", content: { "application/json": { schema: envelope(EvaluationDetail) } } },
+          "409": { description: "Not allowed in the current state", content: { "application/json": { schema: ApiError } } } },
+      },
+    },
+    "/admin/evaluations/{id}/manual": {
+      post: {
+        summary: "Score a dimension by hand with a justification, or clear the manual score (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: evaluationManualBody } } },
+        responses: { "200": { description: "Evaluation", content: { "application/json": { schema: envelope(EvaluationDetail) } } },
+          "409": { description: "Not allowed in the current state", content: { "application/json": { schema: ApiError } } } },
+      },
+    },
+    "/admin/evaluations/{id}/finalize": {
+      post: {
+        summary: "Finalize: compute the weighted total and classification (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Evaluation", content: { "application/json": { schema: envelope(EvaluationDetail) } } },
+          "409": { description: "Not allowed in the current state", content: { "application/json": { schema: ApiError } } } },
+      },
+    },
+    "/admin/evaluations/{id}/reopen": {
+      post: {
+        summary: "Reopen a finalized, unpublished evaluation for review (requires CSRF token)",
+        requestParams: { path: IdPath },
+        responses: { "200": { description: "Evaluation", content: { "application/json": { schema: envelope(EvaluationDetail) } } },
+          "409": { description: "Not allowed in the current state", content: { "application/json": { schema: ApiError } } } },
       },
     },
     "/admin/board-nominations": {

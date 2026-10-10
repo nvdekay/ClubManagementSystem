@@ -31,7 +31,6 @@ function assertOpen(context: EventRegistrationContext, now: Date): void {
   if (event.audienceScope === "MEMBERS_ONLY" && !context.isActiveClubMember) {
     throw new DomainError("event is limited to active club members", "forbidden");
   }
-  if (!event.clubId) throw new DomainError("event registration is unavailable", "conflict");
 }
 
 export async function getEventRegistrationContext(repo: EventRegistrationRepository,

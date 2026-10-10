@@ -25,11 +25,14 @@ export interface PublicCampaign {
   selectionSteps?: Array<{ name: string; description?: string; startsAt?: Date; endsAt?: Date }>;
   formSchema?: Array<{ key: string; label: string; type: string; required: boolean; options?: string[] }>;
   rubric?: Array<{ key: string; label: string; maxScore: number }>;
+  /** The club is suspended: the campaign is shown but applications are paused (UC15). */
+  clubSuspended?: boolean;
 }
 
 export interface PublicEvent {
   id: string;
-  clubId: string;
+  /** Absent for a school-wide event organised by ICPDP (UC53). */
+  clubId?: string;
   clubName: string;
   title: string;
   startAt: Date;

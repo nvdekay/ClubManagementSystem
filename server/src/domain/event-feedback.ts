@@ -17,14 +17,14 @@ export interface MyEventFeedback {
 }
 
 export interface FeedbackTarget {
-  attendance: { id: string; clubId: string; checkedInAt: Date; eventEndAt: Date } | null;
+  attendance: { id: string; clubId?: string; checkedInAt: Date; eventEndAt: Date } | null;
   feedback: MyEventFeedback | null;
 }
 
 export interface EventFeedbackRepository {
   target(eventId: string, studentId: string): Promise<FeedbackTarget | null>;
   /** Inserts the immutable record; duplicate submissions surface as a `conflict` DomainError. */
-  submit(input: { eventId: string; studentId: string; attendanceId: string; clubId: string;
+  submit(input: { eventId: string; studentId: string; attendanceId: string; clubId?: string;
     rating: number; comment: string; isAnonymous: boolean; now: Date }): Promise<MyEventFeedback>;
   listMine(studentId: string): Promise<MyEventFeedback[]>;
 }

@@ -73,6 +73,7 @@ export async function publicEventDetail(
   if (!event) {
     throw new DomainError("event not found", "not_found");
   }
+  if (!event.clubId) return { event, club: null };
   const club = await repo.getClub(event.clubId);
   if (!club || club.state !== "Active") {
     throw new DomainError("event not found", "not_found");

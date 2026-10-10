@@ -15,6 +15,10 @@ import { PublicHome } from "./pages/public/PublicHome.js";
 import { PublicNotFound } from "./pages/public/PublicNotFound.js";
 import { PolicyPage } from "./pages/icpdp/PolicyPage.js";
 import { ClubFieldsPage } from "./pages/icpdp/ClubFieldsPage.js";
+import { PropertiesPage } from "./pages/icpdp/PropertiesPage.js";
+import { EvaluationSchemesPage } from "./pages/icpdp/EvaluationSchemesPage.js";
+import { DataExportPage } from "./pages/icpdp/DataExportPage.js";
+import { IcpdpClubsPage } from "./pages/icpdp/IcpdpClubsPage.js";
 import { IcpdpHomePage } from "./pages/icpdp/IcpdpHomePage.js";
 import { AccountsPage } from "./pages/icpdp/AccountsPage.js";
 import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
@@ -23,6 +27,12 @@ import { StudentHomePage } from "./pages/student/StudentHomePage.js";
 import { ClubHomePage } from "./pages/club/ClubHomePage.js";
 import { ApplicationReviewQueuePage } from "./pages/icpdp/ApplicationReviewQueuePage.js";
 import { ApplicationReviewDetailPage } from "./pages/icpdp/ApplicationReviewDetailPage.js";
+import { EventProposalQueuePage } from "./pages/icpdp/EventProposalQueuePage.js";
+import { EventProposalReviewPage } from "./pages/icpdp/EventProposalReviewPage.js";
+import { BudgetDetailPage, BudgetsPage } from "./pages/icpdp/BudgetsPage.js";
+import { ViolationDetailPage, ViolationsPage } from "./pages/icpdp/ViolationsPage.js";
+import { SchoolEventDetailPage, SchoolEventsPage } from "./pages/icpdp/SchoolEventsPage.js";
+import { EvaluationDetailPage, EvaluationsPage } from "./pages/icpdp/EvaluationsPage.js";
 import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
 import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
 import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
@@ -62,10 +72,14 @@ createRoot(document.getElementById("root")!).render(
           <Route element={<WorkspaceShell />}>
             <Route path="student" element={<StudentHomePage />} />
             <Route path="icpdp" element={<IcpdpHomePage />} />
+            <Route path="icpdp/clubs" element={<IcpdpClubsPage />} />
             <Route path="icpdp/accounts" element={<AccountsPage />} />
             <Route path="club/:clubId" element={<ClubHomePage />} />
             <Route path="workspace/policy" element={<PolicyPage />} />
             <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
+            <Route path="workspace/properties" element={<PropertiesPage />} />
+            <Route path="workspace/evaluation-schemes" element={<EvaluationSchemesPage />} />
+            <Route path="workspace/exports" element={<DataExportPage />} />
             <Route path="workspace/applications" element={<ApplicationsPage />} />
             <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
             <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
@@ -80,6 +94,16 @@ createRoot(document.getElementById("root")!).render(
             <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
             <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
             <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
+            <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
+            <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
+            <Route path="workspace/budgets" element={<BudgetsPage />} />
+            <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
+            <Route path="workspace/violations" element={<ViolationsPage />} />
+            <Route path="workspace/violations/:id" element={<ViolationDetailPage />} />
+            <Route path="workspace/school-events" element={<SchoolEventsPage />} />
+            <Route path="workspace/school-events/:id" element={<SchoolEventDetailPage />} />
+            <Route path="workspace/evaluations" element={<EvaluationsPage />} />
+            <Route path="workspace/evaluations/:id" element={<EvaluationDetailPage />} />
             <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
             <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
             <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />

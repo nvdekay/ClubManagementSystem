@@ -36,7 +36,7 @@ function mapClub(doc: Record<string, unknown>): PublicClub {
 }
 function mapEvent(doc: Record<string, unknown>): PublicEvent {
   return {
-    id: id(doc._id), clubId: id(doc.clubId), clubName: String(doc.clubName),
+    id: id(doc._id), ...(doc.clubId ? { clubId: id(doc.clubId) } : {}), clubName: String(doc.clubName ?? ""),
     title: String(doc.title), startAt: date(doc.startAt), endAt: date(doc.endAt),
     venueText: optionalString(doc.venueText), objective: optionalString(doc.objective),
     coverImageUrl: optionalString(doc.coverImageUrl), capacity: Number(doc.capacity),
@@ -177,8 +177,11 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
     async getCampaign(campaignId, now): Promise<PublicCampaign | null> {
       const doc = await campaigns.findOne({ _id: new Types.ObjectId(campaignId),
         state: { $in: campaignStates }, windowStart: { $lte: now }, windowEnd: { $gt: now } }).lean();
-      if (!doc || !await clubs.exists({ _id: doc.clubId, state: "Active" })) return null;
-      return mapCampaignDetail(doc);
+      if (!doc) return null;
+      const club = await clubs.findById(doc.clubId).select("state").lean();
+      // A suspended club's campaign stays visible, flagged, so students learn why they cannot apply.
+      if (club?.state !== "Active" && club?.state !== "Suspended") return null;
+      return { ...mapCampaignDetail(doc), clubSuspended: club.state === "Suspended" };
     },
     async clubUpcomingEvents(clubId, now): Promise<PublicEvent[]> {
       const docs = await events.find({
@@ -205,7 +208,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
       };
       const text = search ? new RegExp(escapeRegex(search), "i") : null;
       const filter = {
-        clubId: { $in: activeClubs.map((club) => club._id) },
+        $or: [{ clubId: { $in: activeClubs.map((club) => club._id) } }, { organizerType: "ICPDP" }],
         audienceScope: "PUBLIC", publishedAt: { $exists: true, $ne: null },
         $and: [
           status === "all" ? { $or: Object.values(byStatus) } : byStatus[status],

@@ -6,7 +6,7 @@ export interface Attendance {
   id: string;
   eventId: string;
   eventTitle: string;
-  clubId: string;
+  clubId?: string;
   clubName: string;
   eventStartAt: string;
   eventEndAt: string;
