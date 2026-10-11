@@ -1,5 +1,6 @@
 export const clubEvents = {
   en: {
+    bookingPermissionHint: "Booking management permission is required to change these links.",
     conditions: "Approval conditions", revisionDeadline: "Revision deadline", title: "Club events", description: "Propose, publish and manage your club's events.", attendance: "Registration & attendance", feedback: "Event feedback",
     create: "New proposal", edit: "Edit proposal", details: "Event details", titleField: "Title", objective: "Objective", plan: "Activity plan",
     start: "Starts (UTC+7)", end: "Ends (UTC+7)", venue: "Venue", property: "Room / property", none: "None", scope: "Audience",
@@ -23,6 +24,7 @@ export const clubEvents = {
     "No Conflict": "No conflict", Warning: "Schedule warning", "Blocking Conflict": "Blocking schedule conflict", "no-show": "No-show", "walk-in": "Walk-in", manual: "Manual check-in", "out-of-window": "Outside check-in window",
   },
   vi: {
+    bookingPermissionHint: "Cần quyền quản lý đặt cơ sở vật chất để thay đổi liên kết booking.",
     conditions: "Điều kiện phê duyệt", revisionDeadline: "Hạn chỉnh sửa", title: "Sự kiện CLB", description: "Lập đề xuất, công bố và quản lý sự kiện của CLB.", attendance: "Đăng ký & điểm danh", feedback: "Phản hồi sự kiện",
     create: "Tạo đề xuất", edit: "Sửa đề xuất", details: "Chi tiết sự kiện", titleField: "Tên sự kiện", objective: "Mục tiêu", plan: "Kế hoạch hoạt động",
     start: "Bắt đầu (UTC+7)", end: "Kết thúc (UTC+7)", venue: "Địa điểm", property: "Phòng / cơ sở vật chất", none: "Không chọn", scope: "Đối tượng",

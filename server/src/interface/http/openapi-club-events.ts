@@ -28,7 +28,7 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
     post: { summary: "Create a club event draft", requestParams: { path: clubPath }, requestBody: { content: { "application/json": { schema: clubEventBody } } }, responses: response(Detail, "201") },
   },
   [`${base}/options`]: { get: { summary: "Event properties and club booking choices", requestParams: { path: clubPath }, responses: response(z.object({
-    properties: z.array(z.object({ id: eventObjectId, name: z.string() })), bookings: z.array(z.object({ id: eventObjectId, propertyId: eventObjectId, title: z.string(), startAt: date, endAt: date })) })) } },
+    properties: z.array(z.object({ id: eventObjectId, name: z.string() })), bookings: z.array(z.object({ id: eventObjectId, propertyId: eventObjectId, propertyType: z.string().optional(), title: z.string(), startAt: date, endAt: date })) })) } },
   [`${base}/feedback`]: { get: { summary: "Compare anonymized event feedback; hide content below policy threshold", requestParams: { path: clubPath, query: clubEventFeedbackQuery },
     responses: response(z.array(z.object({ eventId: eventObjectId, title: z.string(), respondents: z.number(), visible: z.boolean(), averageRating: z.number().optional(), distribution: z.record(z.number()).optional(), comments: z.array(z.string()).optional() }))) } },
   [`${base}/{id}`]: { get: { summary: "Read club event proposal and history", requestParams: { path: eventPath }, responses: response(Detail) } },

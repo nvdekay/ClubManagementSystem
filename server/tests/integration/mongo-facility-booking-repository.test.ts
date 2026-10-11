@@ -12,10 +12,10 @@ const now = new Date("2026-10-10T01:00:00Z");
 const actor = new Types.ObjectId().toString();
 const officer = new Types.ObjectId().toString();
 const repo = mongoFacilityBookingRepository();
-async function fixture(): Promise<{ clubId: string; input: BookingInput }> {
+async function fixture(type: "ROOM" | "HALL" | "OUTDOOR" | "STAGE" = "HALL"): Promise<{ clubId: string; input: BookingInput }> {
   const clubId = new Types.ObjectId();
   await m.clubs!.create({ _id: clubId, code: String(clubId), name: "Club A", field: "Technology", state: "Active", createdAt: now });
-  const property = await mongoPropertyRepository().create({ name: "Room A", type: "ROOM", location: "Alpha", capacity: 20,
+  const property = await mongoPropertyRepository().create({ name: "Facility A", type, location: "Alpha", capacity: 20,
     equipment: ["Projector"], blackouts: [], bookableHours: [{ day: 1, open: "07:00", close: "21:00" }] }, officer, now);
   return { clubId: String(clubId), input: { propertyId: property.id, purpose: "Meeting", startAt: new Date("2026-10-12T00:30:00Z"),
     endAt: new Date("2026-10-12T02:50:00Z"), headcount: 30, equipment: ["Projector"] } };
@@ -56,8 +56,17 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
       membershipId: membership._id, effectiveFrom: new Date("2026-09-01"), assignedBy: new Types.ObjectId(officer), confirmedBy: new Types.ObjectId(officer) });
     return { user, term, membership, assignment };
   }
+  it("rejects room draft creation in the transaction and creates an outdoor review task", async () => {
+    const room = await fixture("ROOM");
+    await expect(repo.create(room.clubId, room.input, actor, now)).rejects.toThrow("direct reservation");
+    expect(await m.propertyBookings!.countDocuments({ clubId: room.clubId })).toBe(0);
+    const outdoor = await fixture("OUTDOOR"); const request = await submitted(outdoor.clubId, outdoor.input);
+    expect(request.booking.state).toBe("Requested"); expect(request.task?.state).toBe("Open");
+    await repo.claim(request.booking.id, officer, now);
+    expect((await repo.decide(request.booking.id, officer, { outcome: "Approve", reason: "Approved outdoor activity" }, now)).booking.state).toBe("Approved");
+  });
   it("reserves immediately, blocks simultaneous writers and preserves the responsible leader snapshot", async () => {
-    const { clubId, input } = await fixture();
+    const { clubId, input } = await fixture("ROOM");
     const leader = await leaderFixture(clubId);
     const reservationInput = { ...input, headcount: 1, equipment: [] };
     const results = await Promise.allSettled([
@@ -81,8 +90,8 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
     expect(await repo.conflicts(input, 30)).toHaveLength(0);
   });
   it("serializes room reservations from different clubs", async () => {
-    const first = await fixture();
-    const second = await fixture();
+    const first = await fixture("ROOM");
+    const second = await fixture("ROOM");
     await leaderFixture(first.clubId);
     await leaderFixture(second.clubId);
     const results = await Promise.allSettled([
@@ -94,7 +103,7 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
     expect(await m.propertyBookings!.countDocuments({ state: "Approved" })).toBe(1);
   });
   it("requires an active confirmed leader and ignores obsolete submission cutoffs", async () => {
-    const { clubId, input } = await fixture();
+    const { clubId, input } = await fixture("ROOM");
     await expect(repo.reserve(clubId, input, actor, now)).rejects.toThrow("leader");
     const leader = await leaderFixture(clubId);
     await m.clubPositionAssignments!.updateOne({ _id: leader.assignment._id }, { $unset: { confirmedBy: "" } });
@@ -210,7 +219,7 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
     await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
   });
   it("records officer overbooking atomically and rechecks policy, role, reason and conflicts", async () => {
-    const { clubId, input } = await fixture();
+    const { clubId, input } = await fixture("ROOM");
     await leaderFixture(clubId);
     const existing = await repo.reserve(clubId, input, actor, now);
     const exception = { reason: " Joint activity in a shared room " };

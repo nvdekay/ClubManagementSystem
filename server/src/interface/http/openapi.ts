@@ -573,7 +573,7 @@ export const openApiDocument = createDocument({
           "409": { description: "State, version or slot conflict", content: { "application/json": { schema: ApiError } } },
         },
       },
-      post: { summary: "Create booking draft (UC45, CSRF required)",
+      post: { summary: "Create non-room facility booking draft (rooms use direct reservation) (UC45, CSRF required)",
         requestParams: { path: z.object({ clubId: z.string() }) },
         requestBody: { content: { "application/json": { schema: bookingBody } } },
         responses: { "201": { description: "Booking result", content: { "application/json": { schema: envelope(FacilityBookingDetail) } } },

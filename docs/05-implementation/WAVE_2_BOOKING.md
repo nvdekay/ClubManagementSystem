@@ -94,3 +94,13 @@ Bốn booking mẫu khung giờ cũ chuyển Released, giữ lịch sử. Seed l
 - Fixture 25 booking kiểm tra đổi trang, trang cuối, chọn số dòng, lọc về trang đầu và
   chọn slot bằng bàn phím. Persistence kiểm tra riêng bằng integration Mongo.
 - Chạy seed hai lần: 3 phòng, 4 booking mới và 4 booking cũ Released, không nhân đôi.
+
+## Điều chỉnh hai luồng booking — 2026-10-11
+ROOM đặt trực tiếp; HALL/OUTDOOR/STAGE/EQUIPMENT cần ICPDP duyệt, có Draft/sửa/nộp lại.
+UC44 hỗ trợ sân trường/khu ngoài trời (OUTDOOR) và sân khấu (STAGE). Phòng học trực tiếp
+không gắn UC25; booking cần duyệt có thể liên kết sự kiện cùng CLB, gắn/gỡ tại UC25 cần
+thêm club.booking.manage. UC26 không duyệt thay UC46. ROOM legacy đã nộp vẫn xử lý được.
+
+Kiểm chứng bổ sung: check với Mongo thật 405 test / 83 file pass; build client thành công.
+Chrome API fixture: 16 cấu hình hai form, vi/en, sáng/tối, 390/1440 px; thêm nhánh
+yêu cầu sửa/nộp lại. Không coi browser fixture là nghiệm thu OAuth/API end-to-end.

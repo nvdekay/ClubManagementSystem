@@ -48,5 +48,5 @@ export function actOnClubEvent(clubId: string, id: string, action: string, body:
   return request(clubId, `/${encodeURIComponent(id)}/${action}`, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
 }
 
-export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; title: string; startAt: string; endAt: string }[] }
+export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; title: string; startAt: string; endAt: string }[] }
 export function fetchClubEventOptions(clubId: string, signal: AbortSignal): Promise<ClubEventOptions> { return request(clubId, "/options", { signal }); }

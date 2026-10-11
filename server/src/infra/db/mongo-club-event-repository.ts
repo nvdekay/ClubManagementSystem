@@ -91,7 +91,11 @@ async function assess(session: ClientSession, clubId: Types.ObjectId, input: Clu
   }
   for (const bookingId of input.bookingIds) {
     const booking = await m.propertyBookings!.findOne({ _id: oid(bookingId), clubId, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }).session(session).lean();
-    if (!booking || (booking.eventId && String(booking.eventId) !== String(eventId)) || !input.propertyId || String(booking.propertyId) !== input.propertyId ||
+    const bookingProperty = booking ? await m.properties!.findById(booking.propertyId).session(session).lean() : null;
+    if (bookingProperty?.type === "ROOM" && Number(booking?.currentVersionNo ?? 0) < 1) {
+      throw new DomainError("direct room reservations cannot be attached to an event proposal", "validation", { bookingId });
+    }
+    if (!booking || (booking.eventId && String(booking.eventId) !== String(eventId)) || (bookingProperty?.type !== "EQUIPMENT" && (!input.propertyId || String(booking.propertyId) !== input.propertyId)) ||
       !(input.occurrences?.length ? input.occurrences : [{ startAt: input.startAt, endAt: input.endAt }]).some((interval) =>
         (booking.startAt as Date) <= interval.startAt && (booking.endAt as Date) >= interval.endAt)) {
       throw new DomainError("booking must belong to the club, be available and cover the event schedule", "validation", { bookingId });
@@ -102,7 +106,7 @@ async function assess(session: ClientSession, clubId: Types.ObjectId, input: Clu
   return { club, semesterCode, conflictResult, conflictDetail: found.map((d) => ({ id: String(d._id), title: String(d.title ?? d.purpose ?? ""), startAt: d.startAt, endAt: d.endAt })) };
 }
 async function submitVersion(session: ClientSession, event: Doc, input: ClubEventInput, actorId: Types.ObjectId, now: Date,
-  assessment: Awaited<ReturnType<typeof assess>>) {
+  assessment: Awaited<ReturnType<typeof assess>>, requireBookingPermission = true) {
   const revisionNo = Number(event.currentRevisionNo ?? 0) + 1;
   const existingBudget = await m.eventBudgets!.findOne({ eventId: event._id }).session(session).lean();
   if (existingBudget && !input.budgetLines.length) conflict("an event with an approved budget must keep its budget lines when resubmitting");
@@ -115,6 +119,10 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
     conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail }, $unset: { revisionDeadlineAt: "" } }, { session });
   if (!direct) await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
     title: input.title, state: "Open", openedAt: now }], { session });
+  const linked = await m.propertyBookings!.find({ eventId: event._id }).session(session).lean();
+  if (requireBookingPermission && (linked.length !== input.bookingIds.length || linked.some((booking) => !input.bookingIds.includes(String(booking._id))))) {
+    await assertEventWriteAccess(session, event.clubId as Types.ObjectId, actorId, "club.booking.manage", now);
+  }
   await m.propertyBookings!.updateMany({ eventId: event._id, _id: { $nin: input.bookingIds.map(oid) } }, { $unset: { eventId: "" } }, { session });
   for (const bookingId of input.bookingIds) await m.propertyBookings!.updateOne({ _id: oid(bookingId), clubId: event.clubId }, { $set: { eventId: event._id } }, { session });
   await audit(session, event._id as Types.ObjectId, direct ? "RECORD_INTERNAL" : "EVENT_PROPOSAL_SUBMITTED", actorId, { payload: input, state, revisionNo }, now);
@@ -129,8 +137,12 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
     async options(clubId) {
       const [properties, bookings] = await Promise.all([m.properties!.find({ isActive: true }).sort({ name: 1 }).lean(),
         m.propertyBookings!.find({ clubId: oid(clubId), state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }).lean()]);
+      const requestBookings = bookings.filter((b) => {
+        const property = properties.find((p) => String(p._id) === String(b.propertyId));
+        return property && (property.type !== "ROOM" || Number(b.currentVersionNo) > 0);
+      });
       return { properties: properties.map((p) => ({ id: String(p._id), name: String(p.name) })),
-        bookings: bookings.map((b) => ({ id: String(b._id), propertyId: String(b.propertyId), title: String(b.purpose), startAt: b.startAt as Date, endAt: b.endAt as Date })) };
+        bookings: requestBookings.map((b) => ({ id: String(b._id), propertyId: String(b.propertyId), propertyType: String(properties.find((p) => String(p._id) === String(b.propertyId))!.type), title: String(b.purpose), startAt: b.startAt as Date, endAt: b.endAt as Date })) };
     },
     async list(clubId) {
       const docs = await m.events!.find({ clubId: oid(clubId), organizerType: "CLUB" }).sort({ startAt: -1, _id: -1 }).lean();
@@ -185,7 +197,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           const assessment = await assess(session, oid(clubId), next, oid(eventId), now, false, rules);
           if (assessment.conflictResult === "Blocking Conflict") conflict("event schedule has blocking conflicts");
           await releaseFacilityBookingsInSession(session, { eventId: event._id, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }, "EVENT_RESCHEDULE", action.reason, now);
-          await submitVersion(session, event, next, oid(actorId), now, assessment);
+          await submitVersion(session, event, next, oid(actorId), now, assessment, false);
           await audit(session, oid(eventId), "EVENT_RESCHEDULED", oid(actorId), { payload: next, previousStartAt: event.startAt, previousEndAt: event.endAt }, now, action.reason);
           const registrations = await m.eventRegistrations!.find({ eventId: event._id, state: { $in: ["Confirmed", "Waitlisted"] } }).session(session).lean();
           if (registrations.length) await m.notifications!.create(registrations.map((r) => ({ recipientUserId: r.studentId, eventCode: "EVENT_RESCHEDULED", entityType: "Event", entityId: event._id,

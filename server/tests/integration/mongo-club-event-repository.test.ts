@@ -47,6 +47,41 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     await m.userRoleAssignments!.create({ userId: actor, roleId: unlockRole, grantedBy: actor, grantedAt: now });
   }, 30000);
   afterAll(async () => { if (mongoose.connection.readyState === 1) await mongoose.connection.dropDatabase(); await mongoose.disconnect(); });
+  it("requires booking permission when UC25 changes links and never attaches direct rooms", async () => {
+    const property = await m.properties!.create({ code: "SN-W3", name: "Outdoor venue", type: "OUTDOOR", location: "Campus", isActive: true,
+      capacity: 100, equipment: [], blackouts: [], bookableHours: [{ day: 7, open: "07:00", close: "21:00" }] });
+    const booking = await m.propertyBookings!.create({ propertyId: property._id, clubId: club, clubName: "Wave 3", purpose: "Outdoor activity",
+      startAt, endAt, headcount: 2, state: "Requested", currentVersionNo: 1, semesterCode: "Fall", createdAt: now });
+    const draft = await repo.create(String(club), { ...input(), propertyId: String(property._id), bookingIds: [String(booking._id)] }, String(actor), now);
+    await expect(repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(await m.eventProposalVersions!.countDocuments({ eventId: draft.event.id })).toBe(0);
+    expect((await m.propertyBookings!.findById(booking._id).lean())?.eventId).toBeUndefined();
+    await m.clubPositions!.updateOne({ _id: role }, { $addToSet: { permissionCodes: "club.booking.manage" } });
+    const sent = await repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now);
+    expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
+    await m.events!.updateOne({ _id: sent.event.id }, { $set: { state: "Revision Requested" } });
+    const revised = await repo.act(String(club), sent.event.id, { kind: "save", input: { ...input(), propertyId: String(property._id), bookingIds: [] }, expectedVersion: sent.event.version }, String(actor), now);
+    await m.clubPositions!.updateOne({ _id: role }, { $pull: { permissionCodes: "club.booking.manage" } });
+    await expect(repo.act(String(club), sent.event.id, { kind: "submit", expectedVersion: revised.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
+    await m.properties!.updateOne({ _id: property._id }, { $set: { type: "ROOM" } });
+    await m.propertyBookings!.updateOne({ _id: booking._id }, { $unset: { eventId: "" }, $set: { currentVersionNo: 0, state: "Approved" } });
+    await expect(repo.create(String(club), { ...input(), propertyId: String(property._id), bookingIds: [String(booking._id)] }, String(actor), now)).rejects.toThrow("direct room reservations");
+    await m.propertyBookings!.updateOne({ _id: booking._id }, { $set: { state: "Cancelled" } });
+    await m.events!.updateOne({ _id: sent.event.id }, { $set: { state: "Cancelled" } });
+  });
+  it("offers equipment bookings and links them without using the equipment as the event venue", async () => {
+    const property = await m.properties!.create({ code: "TB-W3", name: "Sound system", type: "EQUIPMENT", location: "Campus", isActive: true,
+      equipment: [], blackouts: [], bookableHours: [{ day: 7, open: "07:00", close: "21:00" }] });
+    const booking = await m.propertyBookings!.create({ propertyId: property._id, clubId: club, clubName: "Wave 3", purpose: "Sound equipment",
+      startAt, endAt, headcount: 2, state: "Requested", currentVersionNo: 1, semesterCode: "Fall", createdAt: now });
+    expect((await repo.options(String(club))).bookings).toContainEqual(expect.objectContaining({ id: String(booking._id), propertyType: "EQUIPMENT" }));
+    await m.clubPositions!.updateOne({ _id: role }, { $addToSet: { permissionCodes: "club.booking.manage" } });
+    const draft = await repo.create(String(club), { ...input(), bookingIds: [String(booking._id)] }, String(actor), now);
+    const sent = await repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now);
+    expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
+    await m.clubPositions!.updateOne({ _id: role }, { $pull: { permissionCodes: "club.booking.manage" } });
+  });
   it("serializes submission and preserves immutable revisions", async () => {
     const d = await repo.create(String(club), input(), String(actor), now);
     const results = await Promise.allSettled([1, 2].map(() => repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now)));

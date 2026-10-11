@@ -1,4 +1,4 @@
-export type PropertyType = "ROOM" | "HALL" | "EQUIPMENT";
+export type PropertyType = "ROOM" | "HALL" | "OUTDOOR" | "STAGE" | "EQUIPMENT";
 
 /** `day` 1 = Monday … 7 = Sunday; days not listed cannot be booked. */
 export interface BookableHours {

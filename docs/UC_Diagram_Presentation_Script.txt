@@ -162,9 +162,9 @@ HÌNH III.3.8 — ICPDP Officer: Events, bookings & finance
   xuất và ngân sách đi kèm — và Close event report (UC34).
 - Manage properties (UC44) include Add, View, Update, Deactivate property:
   danh mục phòng và tài sản.
-- Manage bookings include Decide legacy booking request và Authorize room
+- Manage bookings include Decide facility booking request và Authorize room
   overbooking (UC46). Chỉ ICPDP được đặt trùng, khi policy bật và có lý do;
-  blackout vẫn bị chặn. Phòng còn trống được CLB đặt trực tiếp.
+  blackout vẫn bị chặn. Tài sản ngoài ROOM phải gửi ICPDP duyệt. Phòng học còn trống được CLB đặt trực tiếp.
 - Manage budget include Record disbursement (UC35) — ghi nhận giải ngân — và
   Reconcile budget (UC37) — đối soát với quyết toán của CLB, xác định số tiền
   CLB phải hoàn lại nếu có.

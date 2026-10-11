@@ -50,7 +50,7 @@ export type ClubEventAction =
   | { kind: "finalize" }
   | { kind: "unlock"; reason: string };
 export interface ClubEventRepository {
-  options(clubId: string): Promise<{ properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; title: string; startAt: Date; endAt: Date }[] }>;
+  options(clubId: string): Promise<{ properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; title: string; startAt: Date; endAt: Date }[] }>;
   list(clubId: string): Promise<ClubEvent[]>;
   find(clubId: string, eventId: string): Promise<ClubEventDetail | null>;
   create(clubId: string, input: ClubEventInput, actorId: string, now: Date): Promise<ClubEventDetail>;

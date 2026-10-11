@@ -560,9 +560,9 @@ Không. Audit là quy tắc xuyên suốt (BR05). Lịch sử quyết định đ
 >   kèm** — và **Close event report** — đối chiếu kế hoạch với thực tế rồi đóng sự kiện.
 > - **Manage properties** include Add, View, Update, Deactivate property: danh mục phòng và thiết bị
 >   mà CLB được phép đặt.
-> - **Manage bookings** include **Decide legacy booking request** và **Authorize room overbooking**.
+> - **Manage bookings** include **Decide facility booking request** và **Authorize room overbooking**.
 >   Chỉ ICPDP được đặt trùng, khi policy bật và nhập lý do; server lưu lịch sử ngoại lệ.
->   Phòng còn trống được CLB đặt trực tiếp, độc lập với duyệt sự kiện.
+>   Tài sản ngoài ROOM phải gửi ICPDP duyệt. Phòng học còn trống được CLB đặt trực tiếp, độc lập với duyệt sự kiện.
 > - **Manage budget** include **Record disbursement** — ghi nhận tiền tạm ứng, cấp bù, và tiền CLB
 >   hoàn lại — và **Reconcile budget** — đối soát với quyết toán của CLB, xác định CLB được cấp bù
 >   hay phải hoàn lại bao nhiêu.
@@ -577,7 +577,7 @@ Không. Audit là quy tắc xuyên suốt (BR05). Lịch sử quyết định đ
 | Decide event proposal | UC26 | Cặp với UC25; ngân sách vượt ngưỡng → cấp 2 (BR16) |
 | Close event report | UC34 | Cặp với UC33; phát hiện sai phạm → mở hồ sơ UC40 |
 | Add / View / Update / Deactivate property | UC44 | Property còn booking tương lai chỉ ngừng kích hoạt, không xoá |
-| Decide legacy booking request | UC46 | Thẩm định task booking cũ; slot trùng cần lý do ngoại lệ và policy bật |
+| Decide facility booking request | UC46 | Thẩm định yêu cầu tài sản ngoài ROOM và ROOM legacy; slot trùng cần lý do ngoại lệ và policy bật |
 | Authorize room overbooking | UC46 | Chỉ ICPDP; policy bật và có lý do; không bỏ qua blackout (BR33) |
 | Record disbursement | UC35 | Tổng tạm ứng + cấp bù ≤ số duyệt (BR23) |
 | Reconcile budget | UC37 | Ngân sách chỉ đóng khi chênh lệch đã tất toán (BR26) |
@@ -722,7 +722,7 @@ ICPDP là người kích hoạt và chịu trách nhiệm bản nháp; hệ th�
 | UC33 Submit event report | UC34 Close event report |
 | UC36 Submit settlement | UC37 Reconcile budget |
 | UC38 Submit periodic report | UC39 Assess periodic report |
-| UC45 Reserve available room | UC46 Decide legacy booking request / Authorize room overbooking |
+| UC45 Reserve available room / Request other facility | UC46 Decide facility booking request / Authorize room overbooking |
 | UC50 Submit complaint | UC51 Triage complaint |
 
 ---

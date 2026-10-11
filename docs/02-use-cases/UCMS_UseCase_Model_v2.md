@@ -773,7 +773,11 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
   (§5.2).
 - **Liên quan:** UC45, UC46
 
-#### UC45 — Gửi yêu cầu đặt cơ sở vật chất
+#### UC45 — Đặt phòng học hoặc gửi yêu cầu cơ sở vật chất khác
+- **Hai luồng đã chốt:** `ROOM` đặt trực tiếp → `Approved`, không task và không liên kết UC25.
+  `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` theo workflow yêu cầu bên dưới; chỉ ICPDP duyệt.
+  ROOM legacy đã nộp vẫn sửa/nộp lại và duyệt. Gắn/gỡ booking tại UC25 cần thêm `club.booking.manage`.
+
 - **Actor:** Club Member có permission `club.booking.manage` (BR54) · **Tiền điều kiện:** CLB đang `Active` (BR34) và người gọi có quyền tương ứng
 - **Dữ liệu vào:** property, mục đích, thời điểm bắt đầu và kết thúc, số người dự kiến, thiết bị
   đi kèm, sự kiện liên quan nếu có.
@@ -790,7 +794,7 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
 - **Actor:** ICPDP
 - **Luồng:** mở yêu cầu → kiểm tra trạng thái CLB, mục đích, các xung đột và nghĩa vụ quá hạn →
   yêu cầu chỉnh sửa, phê duyệt hoặc từ chối kèm lý do → hệ thống ghi audit, cập nhật trạng thái
-  và thông báo cho CMB.
+  và thông báo cho Club Member.
 - **Quy tắc:** BR33, BR34, BR35 — một booking đã duyệt khoá khung giờ; CLB bị tạm ngừng không
   nhận booking mới; chỉ ICPDP quyết định.
 - **Liên quan:** UC45, UC47, UC26
@@ -1088,7 +1092,7 @@ BR01–BR39 của §14 vẫn giữ nguyên, với các sửa đổi sau:
 | **BR50** | **Mới.** `Registration Open` / `Registration Closed` suy ra từ registration window đặt ở UC27, không bao giờ lưu thành trạng thái của sự kiện. (UC27, UC29) |
 | **BR51** | **Mới.** Một scheme đánh giá đã được dùng thì bị khoá; muốn thay đổi phải tạo version mới, và kỳ đánh giá dùng version có hiệu lực cho kỳ đó. (UC41, UC42) |
 | **BR52** | **Mới.** Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. (UC21, UC22) |
-| **BR53** | **Mới.** Sự kiện `Internal` (chỉ thành viên CLB) không có phần ngân sách được ghi nhận, không xin duyệt: UC25 chuyển thẳng `Draft → Approved` và ghi audit; ICPDP xem mọi sự kiện như vậy ở UC02; không cần báo cáo sau sự kiện, sự kiện đóng khi chốt điểm danh ở UC32. Có phần ngân sách thì đi đường UC26; booking luôn do UC46 quyết định. (UC02, UC25, UC26, UC27, UC32, UC33) |
+| **BR53** | **Mới.** Sự kiện `Internal` (chỉ thành viên CLB) không có phần ngân sách được ghi nhận, không xin duyệt: UC25 chuyển thẳng `Draft → Approved` và ghi audit; ICPDP xem mọi sự kiện như vậy ở UC02; không cần báo cáo sau sự kiện, sự kiện đóng khi chốt điểm danh ở UC32. Có phần ngân sách thì đi đường UC26; booking ngoài ROOM do UC46 quyết định. (UC02, UC25, UC26, UC27, UC32, UC33) |
 | **BR54** | **Mới (I58).** Mỗi use case vận hành CLB kiểm tra người gọi có permission tương ứng trong CLB đó (bảng permission → use case ở SRS §2.3); thiếu quyền thì từ chối. Một thành viên giữ nhiều role có quyền là hợp các permission của các role; Club Leader có mọi permission CLB. (UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52) |
 | **BR55** | **Mới (I58), sửa ở lần 2.** Danh mục permission CLB là cố định, do hệ thống định nghĩa; Club Leader chỉ chọn từ danh mục đó. Bốn quyền giữ riêng của leader — `club.role.manage`, `club.board.nominate`, `club.transition.plan`, `club.suspension.request` — không cấp được cho role nào. Cơ cấu role ban đầu được ICPDP thẩm định cùng hồ sơ thành lập (UC07 / UC08); sau đó Club Leader sửa cơ cấu ở UC23 không cần ICPDP xác nhận, trừ role ban điều hành: người giữ chỉ đến từ UC10 / UC11 / UC13 và việc thêm / bỏ role ban điều hành chỉ đi qua chuyển giao UC12 / UC13. Mọi thay đổi được ghi audit và ICPDP xem được. (UC07, UC08, UC10, UC11, UC12, UC13, UC23) |
 | **BR56** | **Mới (I58, lần 2).** Cơ cấu role của CLB được **đánh phiên bản**: phiên bản 1 là cơ cấu được duyệt ở UC08; mỗi thay đổi ở UC23 hoặc UC13 tạo một phiên bản mới có ngày hiệu lực và không bao giờ ghi đè phiên bản trước. Mỗi CLB luôn có role Chủ nhiệm (cố định) và role Members (mặc định, không xoá được, tự gán cho mọi thành viên ở UC20). ICPDP xem được mọi phiên bản cơ cấu và lịch sử người giữ role ban điều hành theo nhiệm kỳ. (UC02, UC07, UC08, UC13, UC20, UC23) |

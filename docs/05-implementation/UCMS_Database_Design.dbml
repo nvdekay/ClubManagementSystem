@@ -1039,7 +1039,7 @@ Table properties {
   id objectId [pk]
   code string [unique, not null]
   name string [not null]
-  type string [not null, note: 'ROOM | HALL | EQUIPMENT.']
+  type string [not null, note: 'ROOM | HALL | OUTDOOR | STAGE | EQUIPMENT.']
   capacity int
   location string
   equipment "string[]"

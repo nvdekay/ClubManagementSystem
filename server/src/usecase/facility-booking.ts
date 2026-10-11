@@ -70,10 +70,18 @@ export async function saveBooking(deps: BookingDeps, actor: AccessActor | null, 
   const actorId = await member(deps, actor, clubId, now);
   const input = validateBookingInput(raw);
   await check(deps, clubId, input, now, id ?? undefined);
-  if (!id) return deps.repo.create(bookingId(clubId), input, actorId, now);
+  if (!id) {
+    const property = await deps.properties.find(input.propertyId);
+    if (property?.type === "ROOM") throw new DomainError("rooms must use direct reservation", "validation");
+    return deps.repo.create(bookingId(clubId), input, actorId, now);
+  }
   const detail = await owned(deps, clubId, id, now);
   if (!["Draft", "Revision Requested"].includes(detail.booking.state)) {
     throw new DomainError("booking cannot be edited", "conflict");
+  }
+  const property = await deps.properties.find(input.propertyId);
+  if (property?.type === "ROOM" && (detail.property?.type !== "ROOM" || detail.booking.currentVersionNo < 1)) {
+    throw new DomainError("rooms must use direct reservation", "validation");
   }
   return deps.repo.save(bookingId(id), bookingId(clubId), input, expectedVersion, actorId, now);
 }
@@ -81,6 +89,9 @@ export async function submitBooking(deps: BookingDeps, actor: AccessActor | null
   id: string, expectedVersion: number, now: Date) {
   const actorId = await member(deps, actor, clubId, now);
   const detail = await owned(deps, clubId, id, now);
+  if (detail.property?.type === "ROOM" && detail.booking.currentVersionNo < 1) {
+    throw new DomainError("rooms must use direct reservation", "validation");
+  }
   const result = await check(deps, clubId, detail.booking, now, id);
   if (result.conflictResult === "Blocking Conflict") {
     throw new DomainError("booking slot is unavailable", "conflict", result);
@@ -103,6 +114,10 @@ export async function decideBooking(deps: BookingDeps, actor: AccessActor | null
   if (input.alternative) {
     if (input.outcome !== "Request revision") throw new DomainError("alternative requires revision", "validation");
     const detail = await getBooking(deps, actor, null, id, now);
+    const alternativeProperty = await deps.properties.find(input.alternative.propertyId);
+    if (alternativeProperty?.type === "ROOM" && detail.property?.type !== "ROOM") {
+      throw new DomainError("rooms must use direct reservation", "validation");
+    }
     await check(deps, detail.booking.clubId, validateBookingInput({ ...detail.booking, ...input.alternative,
       equipment: [] }), now, id, false);
   }

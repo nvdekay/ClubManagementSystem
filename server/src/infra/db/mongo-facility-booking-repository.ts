@@ -157,6 +157,14 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     return { ...assessBooking(input, propertyFrom(property), clubFrom(club), policy,
       await conflicts(input, policy.conflictThresholdMinutes, excludeId, session), now), club: clubFrom(club) };
   }
+  async function assertRequestProperty(input: BookingInput, session: ClientSession, before?: Doc) {
+    const property = await m.properties!.findById(oid(input.propertyId)).session(session).lean();
+    if (property?.type !== "ROOM") return;
+    const original = before ? await m.properties!.findById(before.propertyId).session(session).lean() : null;
+    if (!before || original?.type !== "ROOM" || Number(before.currentVersionNo) < 1) {
+      throw new DomainError("rooms must use direct reservation", "validation");
+    }
+  }
   async function lockScope(propertyId: string, clubId: string, session: ClientSession) {
     // Serialize writers sharing a slot or a club with lifecycle/catalog transactions.
     await m.clubs!.updateOne({ _id: oid(clubId) }, { $inc: { __v: 1 } }, { session });
@@ -285,6 +293,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       await mongoose.connection.transaction(async (session) => {
         await lockScope(input.propertyId, clubId, session);
         assertBookingNotice(input, now);
+        await assertRequestProperty(input, session);
         const check = await assess(input, clubId, now, undefined, session);
         await bookings.create([{ _id: id, ...storedInput(input), clubId: oid(clubId), clubName: check.club.name,
           semesterCode: check.semesterCode, state: "Draft", currentVersionNo: 0,
@@ -300,6 +309,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         if (String(before.clubId) !== clubId || !editableStates.includes(String(before.state))
           || Number(before.currentVersionNo) !== expectedVersion) conflict("booking cannot be edited or version changed");
         assertBookingNotice(input, now);
+        await assertRequestProperty(input, session, before);
         const check = await assess(input, clubId, now, id, session);
         await bookings.updateOne({ _id: before._id }, { $set: { ...storedInput(input), semesterCode: check.semesterCode,
           conflictResult: check.conflictResult }, ...(!input.eventId ? { $unset: { eventId: "" } } : {}) }, { session });
@@ -315,6 +325,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         await lockScope(String(before.propertyId), clubId, session);
         const input = inputFrom(before, await equipmentFor(before._id as Types.ObjectId, session));
         assertBookingNotice(input, now);
+        await assertRequestProperty(input, session, before);
         const check = await assess(input, clubId, now, id, session);
         if (check.conflictResult === "Blocking Conflict") conflict("booking slot is unavailable");
         const versionNo = expectedVersion + 1;
@@ -352,6 +363,13 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         const task = await tasks.findOne({ entityType: taskType, entityId: before._id, state: "Open", assigneeId: oid(officerId) })
           .session(session).lean();
         if (before.state !== "Under Review" || !task) conflict("booking cannot be decided by this officer");
+        if (input.alternative) {
+          const replacement = await m.properties!.findById(oid(input.alternative.propertyId)).session(session).lean();
+          const original = await m.properties!.findById(before.propertyId).session(session).lean();
+          if (replacement?.type === "ROOM" && original?.type !== "ROOM") {
+            throw new DomainError("rooms must use direct reservation", "validation");
+          }
+        }
         let outcome = input.outcome;
         let reason = decisionReason;
         let overbooking: BookingDetail["overbooking"];
