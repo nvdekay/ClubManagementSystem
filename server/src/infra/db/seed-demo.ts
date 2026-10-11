@@ -138,6 +138,7 @@ const policySettings: PolicySettings = {
   allowOverbooking: false,
   enforceOverdueReportBlock: false,
   academicCalendar: [
+    { code: "Summer 2026", startAt: new Date("2026-04-30T17:00:00Z"), endAt: new Date("2026-08-31T16:59:59Z") },
     { code: "Fall 2026", startAt: new Date("2026-08-31T17:00:00Z"), endAt: new Date("2026-12-31T16:59:59Z") },
     { code: "Spring 2027", startAt: new Date("2026-12-31T17:00:00Z"), endAt: new Date("2027-04-30T16:59:59Z") },
   ],
@@ -492,6 +493,13 @@ try {
     startAt: at(-10 * DAY), endAt: at(-10 * DAY + 3 * HOUR), venueText: "Hội trường lớn, tòa Alpha", capacity: 200,
     waitlistEnabled: false, state: "Completed", registrationOpenAt: at(-25 * DAY), registrationCloseAt: at(-11 * DAY) });
   await attended(welcome, "HEBE", [owner, s[0]!, s[3]!, s[4]!], at(-10 * DAY + 5 * 60_000));
+  const ctfNight = await event("de0000000000000000000e08", "EHC", s[14]!, {
+    title: "CTF Night: Giải đề cùng mentor",
+    objective: "Buổi giải đề CTF mở cho sinh viên, có mentor từ doanh nghiệp hỗ trợ.",
+    startAt: at(-16 * DAY), endAt: at(-16 * DAY + 3 * HOUR), venueText: "Phòng lab 301, tòa Alpha", capacity: 40,
+    waitlistEnabled: false, state: "Completed", registrationOpenAt: at(-30 * DAY), registrationCloseAt: at(-17 * DAY) });
+  await attended(ctfNight, "EHC", [s[5]!, s[13]!, s[15]!], at(-16 * DAY + 10 * 60_000));
+
 
   // ── Event proposals waiting for ICPDP (UC26; UC25 is the club side, so proposals are inserted) ──
   // Shape follows the UC25 data contract in .sdd/specs/feat-event-proposal-review/SPEC.md.
@@ -603,6 +611,39 @@ try {
       periodCode: "Fall 2026", createdAt: at(-24 * DAY) });
     await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
       amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
+  }
+  // ── Periodic reports for Summer 2026 (UC39; UC38 is the club side, so the reports are inserted) ──
+  // Shape follows the UC38 data contract in .sdd/specs/feat-periodic-reports/SPEC.md. Clubs without a row are overdue.
+  if (!(await ucmsModels.periodicReports!.exists({ periodCode: "Summer 2026" }))) {
+    const dueAt = new Date("2026-09-07T16:59:59Z");
+    async function periodicReport(code: string, submittedBy: Types.ObjectId, input: { state: "Submitted" | "Accepted";
+      submittedAt: Date; figures: { completed: number; cancelled: number; active: number; total: number };
+      narrative: string; nextPlan: string; evidence?: { note: string; url?: string }[] }) {
+      const { id: clubId } = club(code);
+      const late = input.submittedAt > dueAt;
+      const [doc] = await ucmsModels.periodicReports!.create([{ clubId, periodCode: "Summer 2026", periodType: "SEMESTER",
+        preloadedFigures: { events: { completed: input.figures.completed, cancelled: input.figures.cancelled },
+          members: { active: input.figures.active }, attendance: { total: input.figures.total },
+          finance: { budgets: 0, approvedTotal: 0, disbursedTotal: 0 }, capturedAt: input.submittedAt },
+        narrative: input.narrative, nextPlan: input.nextPlan, evidence: input.evidence ?? [], state: input.state, versionNo: 1,
+        lateFlag: late, submittedBy, submittedAt: input.submittedAt, dueAt,
+        ...(input.state === "Accepted" ? { decisionOutcome: "Accept", decidedBy: owner, decidedAt: new Date(input.submittedAt.getTime() + DAY) } : {}) }]);
+      await ucmsModels.approvalTasks!.create({ entityType: "PERIODIC_REPORT", entityId: doc!._id, clubId,
+        title: `Báo cáo hoạt động Summer 2026 — ${club(code).name}`, state: input.state === "Submitted" ? "Open" : "Decided",
+        openedAt: input.submittedAt, ...(input.state === "Accepted" ? { assigneeId: owner, closedAt: new Date(input.submittedAt.getTime() + DAY) } : {}) });
+    }
+    await periodicReport("HEBE", owner, { state: "Submitted", submittedAt: new Date("2026-09-05T03:00:00Z"),
+      figures: { completed: 0, cancelled: 0, active: 6, total: 0 },
+      narrative: "Học kỳ hè CLB tập trung luyện tập cho mùa tuyển thành viên và chuẩn bị tiết mục cho đêm nhạc chào tân sinh viên.",
+      nextPlan: "Tuyển thành viên Gen 8, tổ chức đêm nhạc chào K21 và workshop nhảy hiện đại cho tân sinh viên.",
+      evidence: [{ note: "Lịch tập học kỳ hè", url: "https://drive.google.com/demo-hebe-summer" }] });
+    await periodicReport("EHC", s[14]!, { state: "Submitted", submittedAt: new Date("2026-09-12T03:00:00Z"),
+      figures: { completed: 2, cancelled: 0, active: 4, total: 35 },
+      narrative: "CLB tổ chức 2 buổi CTF luyện tập nội bộ và 1 buổi chia sẻ với khách mời doanh nghiệp.",
+      nextPlan: "Tổ chức CTF Warm-up và Hackathon An toàn thông tin 24h." });
+    await periodicReport("FDS", s[12]!, { state: "Accepted", submittedAt: new Date("2026-09-03T03:00:00Z"),
+      figures: { completed: 0, cancelled: 0, active: 3, total: 0 },
+      narrative: "Học kỳ hè CLB biên soạn tài liệu workshop Data Science 101.", nextPlan: "Mở workshop Python cho tân sinh viên." });
   }
 
   // ── Compliance cases (UC40): one being investigated, one waiting for the club's explanation ──

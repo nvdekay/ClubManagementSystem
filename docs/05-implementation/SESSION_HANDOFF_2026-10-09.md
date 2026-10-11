@@ -1,129 +1,88 @@
-# Handoff dự án UCMS — 2026-10-09 (cập nhật cuối ngày)
+# Handoff dự án UCMS — cập nhật 2026-10-11
 
-Ảnh chụp trạng thái để mở session mới hoặc chia sẻ với đồng đội. Nguồn chân lý vẫn là
-`docs/SRS.md`, `.sdd/specs/feat-*/SPEC.md`, source và `.rules/`; nếu khác biệt, tin source/SPEC mới
-nhất. Đây là handoff duy nhất còn hiệu lực.
+Ảnh chụp trạng thái để mở session mới. Đây là handoff hiện hành theo `docs/05-implementation/README.md`.
+Nguồn chân lý: `.rules/`, `docs/SRS.md`, `.sdd/specs/feat-*/SPEC.md`, checklist của feature và source.
+Nếu tài liệu tổng quan cũ khác source/SPEC/TASKS của feature mới nhất, ưu tiên source/SPEC/TASKS.
 
 ## Bắt đầu session mới
 
-1. Đọc `.rules/README.md`, rồi file quy tắc của tầng sắp làm (`.rules/backend.md`, `.rules/frontend.md`).
-2. Chạy `git status --short`. **Không** `reset`/`checkout`/dọn file: có thể có thay đổi chưa commit
-   của người khác (xem mục “Trạng thái git” bên dưới). Trước khi sửa một file đang modified, đọc diff.
-3. Đọc handoff này, `docs/05-implementation/TASKS.md`, rồi SPEC/TASKS của luồng nhận tiếp.
-4. Không chỉnh các sơ đồ. Đổi schema (`server/src/infra/db/**`), thêm dependency hay động vào `.env*`
-   phải hỏi người dùng trước (`.rules/backend.md` — Chính sách AI Agent).
-5. Trao đổi với người dùng bằng **tiếng Việt**; code, commit message, comment bằng tiếng Anh. Commit
-   **không** kèm dòng `Co-Authored-By`/logo Claude. Chỉ commit/push khi người dùng yêu cầu; chia nhỏ
-   commit theo luồng và kiểm tra từng commit trước khi push.
+1. Đọc `.rules/README.md`, rồi quy tắc tầng liên quan (`.rules/backend.md` / `.rules/frontend.md`).
+2. Chạy `git status --short`; không reset/checkout/dọn thay đổi chưa rõ nguồn gốc. Đọc diff trước khi sửa file đang đổi.
+3. Đọc handoff này, `docs/05-implementation/README.md`, sau đó SPEC/TASKS trong `.sdd/specs/feat-*/` của luồng nhận tiếp.
+4. `docs/05-implementation/TASKS.md` và `IMPLEMENTATION_BACKLOG.md` là phân rã/backlog ban đầu, chưa được đồng bộ hết với các UC ICPDP mới. Dùng checklist feature và source để xác minh trạng thái thực.
+5. Không chỉnh sơ đồ. Thay schema (`server/src/infra/db/**`), thêm dependency hoặc sửa `.env*` phải tuân thủ `.rules/` và hỏi người dùng trước khi cần thiết.
+6. Trao đổi với người dùng bằng tiếng Việt; code, commit message, comment bằng tiếng Anh. Chỉ commit/push khi được yêu cầu; không thêm `Co-Authored-By`/logo Claude.
 
-## Trạng thái git
+## Trạng thái repo và môi trường
 
-- Nhánh `khanhnvd`, đã push toàn bộ: phần của Claude (tới UC21 đổi trạng thái thành viên và handoff
-  này) và phần giao diện của Codex (logo Trường Đại học FPT ở header/đăng nhập/sidebar, làm lại màn
-  chọn workspace với token `--color-picker-*`). Worktree sạch tại thời điểm ghi handoff.
+- Nhánh `khanhnvd`, HEAD `15539ae` — UC39: báo cáo định kỳ theo kỳ, số liệu hệ thống, yêu cầu bổ sung và báo cáo thiếu.
+- Nhánh đang đồng bộ `origin/khanhnvd`; worktree sạch tại thời điểm cập nhật. `main`/`origin/main` cũ hơn, không tự merge/push.
+- Backend `:3000` và Vite `:5173` hiện không chạy (kết nối bị từ chối khi kiểm tra). Không xác minh trạng thái Mongo/dữ liệu local trong lần cập nhật này. Có thể khởi động app qua `npm run dev`; xem `server/src/infra/db/README.md` trước thao tác DB/seed.
+- Không chạy test trong lần cập nhật handoff này. Các checklist feature được nêu dưới đây ghi trạng thái kiểm tra từ lần triển khai tương ứng; chưa có một lượt `npm run check` tổng thể mới trong lần này.
 
-## Quyết định đã chốt với người dùng
+## Quyết định sản phẩm đã chốt
 
-- ICPDP chỉ có một role `ICPDP_OFFICER`; UC08/UC11 một review task và một quyết định mỗi lần duyệt.
-- UC10: người được đề cử cần membership `Active`; không cho nhiệm kỳ Chủ nhiệm chồng lấn.
-- Recruitment campaign nằm trọn trong một kỳ của `academicCalendar`; campaign trùng chỉ cảnh báo.
-- UC21: ngày hiệu lực đổi trạng thái luôn là **hôm nay** (`Asia/Ho_Chi_Minh`), không hồi tố.
-- Membership unique từng phần `(clubId,userId)` khi `Active`/`Inactive`; `Left` quay lại bằng membership
-  mới, `Banned` không được nhận lại (BR46). Xin rời (UC22) không tự đổi membership; người giữ ghế BCN
-  đã xác nhận → request `Held`.
-- Đăng nhập: **mọi email Google đã xác minh** (`allowedEmailDomains: ["*"]`); admin là `icpdp.admin@gmail.com`.
-- **UC48:** một tiêu chí duy nhất `overall`, **1–5 sao + nhận xét bắt buộc**, tuỳ chọn ẩn danh.
-- **UC50 đổi phạm vi:** không phải ticket khiếu nại mà là **góp ý một chiều** — Student chọn gửi cho
-  CLB hoặc ICPDP, tuỳ chọn ẩn danh, chỉ xem lại danh sách đã gửi; dùng collection `complaints` đã
-  chỉnh (`recipient`, `isAnonymous`, `clubId` không bắt buộc). **UC51/UC52 tạm không làm.**
-- Giao diện: tông “tươi mát” cyan/sky/mint, Be Vietnam Pro, khung quản lý có sidebar trái
-  (`WorkspaceShell`), màn chọn workspace tách riêng; ít card, dùng danh sách/section phẳng.
-- Dữ liệu PDP: 48 CLB + logo (Cloudinary `ucms/club-logos/`), 21 sự kiện + 8 ảnh bìa
-  (`ucms/event-covers/`). Trang `/events` dựng giống PDP Event/Index (lọc trạng thái, tìm kiếm, 8/trang).
+- ICPDP là role `ICPDP_OFFICER`; UC08/UC11 xử lý một review task và một quyết định mỗi lượt.
+- UC10: người được đề cử cần membership `Active`; không để nhiệm kỳ Chủ nhiệm chồng lấn.
+- Recruitment campaign nằm trong một kỳ `academicCalendar`; campaign trùng chỉ cảnh báo.
+- UC21: ngày hiệu lực đổi trạng thái là hôm nay theo `Asia/Ho_Chi_Minh`, không hồi tố.
+- Membership unique từng phần `(clubId,userId)` khi `Active`/`Inactive`; `Left` quay lại bằng membership mới; `Banned` không được nhận lại. Xin rời (UC22) không tự đổi trạng thái membership; người đang giữ ghế BCN khiến request ở trạng thái `Held`.
+- Google OAuth chấp nhận mọi email đã xác minh (`allowedEmailDomains: ["*"]`); tài khoản ICPDP demo mặc định `icpdp.admin@gmail.com`.
+- UC48: một tiêu chí `overall`, 1–5 sao và nhận xét bắt buộc, có thể ẩn danh.
+- UC50 là góp ý một chiều cho CLB hoặc ICPDP, có thể ẩn danh; sinh viên chỉ xem danh sách đã gửi. UC51/UC52 tạm hoãn sau khi đổi phạm vi UC50.
+- UI dùng Be Vietnam Pro, tông cyan/sky/mint; workspace có sidebar trái. ICPDP “Khám phá CLB” hiển thị danh sách ngay tại `/icpdp/clubs` trong workspace.
+- Màn khám phá CLB public dùng card cho từng CLB và hiển thị trạng thái “Tuyển thành viên” khi đang mở tuyển.
 
-## Tình trạng theo use case
+## Tình trạng use case
 
-“Full-stack” = đã có UI → hook/service → API → use case/repository → Mongo cho luồng chính, có
-automated test và đã QA trên trình duyệt (desktop/mobile, `vi`/`en`, sáng/tối) trừ khi ghi khác.
+“Đã triển khai” nghĩa là feature có luồng code chính và checklist triển khai tương ứng đã đánh dấu; không đồng nghĩa toàn bộ tổ hợp E2E/visual QA đã được nghiệm thu lại trong session này.
 
-### Đã full-stack
+### Student / Club member
 
-| UC | Nội dung | Spec |
-|---|---|---|
-| UC01/UC03 | Google OAuth, session, workspace, quản lý tài khoản (`/icpdp/accounts`) | `feat-auth-access`, `feat-workspace-routing` |
-| UC02 | Dashboard Student/CLB/ICPDP theo permission, lỗi cô lập từng panel | `feat-role-dashboard` |
-| UC04 | Policy có phiên bản; chặn policy làm vô hiệu quyết định đã ban hành (409) | `feat-policy-management` |
-| UC06 | Danh bạ/chi tiết CLB có logo; `/events` giống PDP, event detail mở cả sự kiện đã kết thúc | `feat-public-discovery` |
-| UC07→UC11 | Thành lập CLB: nộp hồ sơ → ICPDP duyệt → cấu hình → đề cử BCN → xác nhận | `feat-club-*`, `feat-board-nomination-confirmation` |
-| UC13 | ICPDP xác nhận chuyển giao nhiệm kỳ (queue/detail/claim/decision) | `feat-leadership-transition-confirmation` |
-| UC16→UC18, UC20 | Đợt tuyển → nộp đơn → review/quyết định → onboard | `feat-recruitment-*` |
-| UC21 | Trang “Thành viên” CLB: thi hành yêu cầu rời (A1), Active ⇄ Inactive, cấm có lý do, lịch sử | `feat-membership-lifecycle` |
-| UC22 | Xin rời CLB từ không gian thành viên | `feat-membership-lifecycle` |
-| UC24 | “CLB của tôi” → không gian thành viên chỉ đọc | `feat-member-space` |
-| UC29 | Đăng ký sự kiện (form, quota nguyên tử, waitlist, huỷ, đăng ký lại) | `feat-student-event-registration` |
-| UC31 | Check-in bằng mã/QR deep link, một `Attendance`, walk-in, mở feedback window | `feat-student-event-checkin` |
-| UC48 | Phản hồi sự kiện 1–5 sao + nhận xét, bất biến, ẩn danh | `feat-student-event-feedback` |
-| UC50 | Góp ý một chiều tới CLB/ICPDP + hộp thư CLB/ICPDP | `feat-student-feedback` |
+- Đã triển khai các luồng chính: UC01/02 (đăng nhập và workspace/dashboard), UC06/07 (khám phá CLB/sự kiện, hồ sơ thành lập/upload), UC17/18 (ứng tuyển và sàng lọc), UC20 (onboarding phía sinh viên), UC22/24 (xin rời và không gian thành viên), UC29 (đăng ký/hủy/waitlist cơ bản), UC31 (sinh viên tự check-in), UC48 (gửi đánh giá), UC50 (góp ý một chiều).
+- Còn thiếu/hạn chế cần lưu ý:
+  - UC01: chưa nghiệm thu browser E2E bằng Google OAuth thật; trước đây QA có dùng session tạo sẵn.
+  - UC07: xử lý dọn asset Cloudinary mồ côi nếu ghi Mongo thất bại còn thiếu.
+  - UC18: checklist còn test tập trung cho capacity/bulk/waitlist promotion.
+  - UC21: scheduler A2 quét trạng thái đầu học kỳ chưa có.
+  - UC31: phía CLB chưa có check-in thủ công A1 và màn tạo/hiển thị QR hoàn chỉnh; luồng tự check-in của student đã có. UC32 chốt điểm danh chưa có.
+  - UC49: phía CLB chưa có màn xem tổng hợp feedback; `summarizeFeedback` đã có test. Chốt ngưỡng `feedbackMinRespondents` trước khi hoàn thiện chính sách.
+  - UC50: sự kiện liên quan chưa bao gồm sự kiện đang diễn ra.
 
-### Có một phần
+### ICPDP và các luồng quản trị đã được bổ sung
 
-- **UC01:** chưa nghiệm thu E2E bằng Google OAuth thật trên trình duyệt (QA dùng session mint sẵn).
-- **UC07 upload:** Cloudinary đã chạy thật; còn mở xử lý asset mồ côi khi ghi Mongo thất bại.
-- **UC18:** thiếu test tập trung cho capacity/bulk/waitlist. **UC19** (rubric) chưa có.
-- **UC21:** A2 (quét trạng thái đầu học kỳ, scheduler) chưa có.
-- **UC31:** A1 (CMB check-in thủ công) và màn tạo/hiển thị QR phía CLB chưa có (hợp làm cùng UC32).
-- **UC48→UC49:** hàm tổng hợp BR40 `summarizeFeedback` đã có test; chưa có màn CLB đọc tổng hợp.
-  Giá trị ban đầu `feedbackMinRespondents` (quyết định D3) vẫn mở.
-- **UC50:** danh sách “sự kiện liên quan” chỉ có sự kiện sắp tới/đã kết thúc, chưa có sự kiện đang diễn ra.
+- Đã triển khai: UC03/04/08/11/13/15 (quản trị ICPDP, policy, thành lập/duyệt, đề cử-xác nhận BCN, vòng đời CLB); UC26 (duyệt đề xuất sự kiện); UC34/35/37/39 (báo cáo sau sự kiện, giải ngân, đối soát, báo cáo định kỳ); UC40 (vi phạm); UC41/42/43 (thang đánh giá và đánh giá CLB); UC44 (danh mục tài sản); UC46 (duyệt booking); UC53/54 (sự kiện cấp trường và lời mời CLB); UC55 (xuất dữ liệu).
+- UC05 đã rút; UC51/52 đang hoãn theo quyết định đổi phạm vi UC50.
+- Nhiều luồng ICPDP đã có UI/API/test nhưng phần visual QA vẫn còn trong checklist feature; kiểm tra `.sdd/specs/feat-*/TASKS.md` trước khi tuyên bố hoàn tất nghiệm thu.
+- Một số luồng ICPDP hiện có màn xử lý/duyệt nhưng thiếu luồng đầu vào tương ứng phía CLB (xem danh sách dưới). Có thể demo bằng dữ liệu seed nhưng không nên coi đó là E2E hoàn chỉnh từ đầu đến cuối.
 
-### Chưa có workflow
+### Workflow phía CLB còn thiếu hoặc chưa hoàn chỉnh
 
-UC12 (tạo kế hoạch chuyển giao), UC14–UC15 (tạm ngưng/giải thể CLB), UC19, UC20 màn tiếp nhận phía
-CLB, UC23 (quản lý role), UC25–UC28 (đề xuất/duyệt/công bố/huỷ sự kiện), UC30 (promote waitlist),
-UC32 (chốt điểm danh), UC33+ (báo cáo, tài chính, booking, đánh giá), UC49, UC51–UC52.
-Schema có collection cho các UC này nhưng **schema không có nghĩa workflow đã có**.
+- UC12 tạo kế hoạch chuyển giao; UC14 yêu cầu tạm ngưng.
+- UC19 rubric đánh giá ứng viên; UC23 quản lý role.
+- UC25 gửi đề xuất sự kiện; UC27 công bố sự kiện; UC28 hủy/đổi lịch; UC30 quản trị/promote waitlist; UC31 A1 check-in thủ công/QR phía CLB; UC32 chốt điểm danh.
+- UC33 gửi báo cáo sau sự kiện; UC36 gửi khoản chi/đối soát; UC38 gửi báo cáo định kỳ.
+- UC45 tạo booking; UC47 hủy/giải phóng booking.
+- UC49 xem tổng hợp phản hồi.
+- UC15 đã có luồng ICPDP tạm ngưng/kích hoạt lại/giải thể; cần phân biệt với UC14 là yêu cầu từ phía CLB.
+- UC25/26/27, UC33/34, UC36/37, UC38/39 và UC45/46/47 là các chuỗi liên quan: phần duyệt ICPDP có thể đã code trong khi khởi tạo/gửi yêu cầu phía CLB chưa có.
 
-## Môi trường local
+## Checklist feature nên xem trước khi nhận việc
 
-- MongoDB: `mongod` Homebrew, replica set `rs0` (cần cho transaction), `MONGO_URI` trong `.env`.
-  `npm run db:verify` hiện báo **50/50 collection, 0 index thiếu**; schema generated 50 collection,
-  **27 enum** (`python3 server/src/infra/db/generate-ucms-schema.py` chạy được trở lại).
-- Đang chạy: backend `:3000`, Vite `:5173`, mongod `:27017`.
-- Tài khoản Google của người phát triển có các ngữ cảnh: Student, ICPDP (`ICPDP_OFFICER`), Chủ
-  nhiệm HEBE Club (đủ permission), thành viên Mây Mưa Club.
-- Tài khoản QA `*@ucms.test`: `qa.student`, `qa.applicant`, `qa.applicant2`–`4`, `qa.uc13.1`–`4`.
+- Đã có implementation và các kiểm tra feature ghi hoàn tất, nhưng visual QA còn mở ở một số feature: `feat-data-export` (UC55), `feat-evaluation-schemes` (UC41), `feat-property-catalog` (UC44), `feat-school-events` (UC53/54), `feat-club-evaluations` (UC42/43), `feat-violations` (UC40), `feat-event-proposal-review` (UC26), `feat-budget-disbursements` (UC35), `feat-club-lifecycle` (UC15), `feat-recruitment-onboarding` (UC20), `feat-budget-reconciliation` (UC37), `feat-booking-review` (UC46), `feat-periodic-reports` (UC39).
+- `feat-recruitment-screening` (UC18): bổ sung test capacity/bulk/waitlist.
+- `feat-student-event-registration` (UC29) ghi đã hoàn tất check/build/DB/visual QA.
+- Trạng thái này được đọc từ các checklist liên quan; hãy mở file TASKS hiện hành vì có thể đã được cập nhật sau handoff.
 
-### Dữ liệu demo (dựng lại được)
+## Dữ liệu demo và lệnh thường dùng
 
-Database local đã được làm sạch và dựng lại bằng script, không còn fixture `[QA]` cũ:
+- Lệnh repo: `npm run dev`, `npm run check`, `npm run seed`, `npm run seed:demo -- --owner=<email> [--owner-name="Tên"]`, `npm run db:init`, `npm run db:verify`.
+- Seed demo có thể dựng lại trên DB phù hợp bằng `npm run db:init && npm run seed && npm run seed:demo -- --owner=<Google email> --owner-name="Tên"`. Thao tác này tác động dữ liệu DB; xác nhận đúng môi trường trước khi chạy, không chạy trên production.
+- Thời gian sự kiện/demo phụ thuộc thời điểm chạy seed. Vì backend/Mongo không được xác minh lần này, không giả định fixture cũ vẫn tồn tại.
 
-```bash
-npm run db:init && npm run seed && npm run seed:demo -- --owner=<email Google của bạn> --owner-name="Tên"
-```
+## Gợi ý thứ tự triển khai tiếp
 
-`seed:demo` cấp cho tài khoản `--owner`: Chủ nhiệm HEBE Club, thành viên Mây Mưa Club, `ICPDP_OFFICER`.
-Dữ liệu để thử theo vai trò:
-
-| Vai trò | Có sẵn để thử |
-|---|---|
-| Sinh viên | đăng ký `Workshop nhảy hiện đại K-pop` (còn chỗ), `CTF Warm-up` (đầy → danh sách chờ), `Giải cầu lông FBC Open` (đầy, không chờ), `Sinh hoạt tháng 10` của Mây Mưa (chỉ thành viên); check-in `Tuần lễ âm nhạc HEBE Unplugged` bằng mã `HEBE2026` (đang diễn ra tới +5 ngày); gửi phản hồi `Workshop Origami cơ bản` (window còn ~2 ngày); ứng tuyển đợt tuyển EHC; nộp hồ sơ thành lập (thêm đồng sáng lập bằng email demo, vd. `minhanh@demo.ucms.edu.vn`); góp ý; CLB của tôi |
-| ICPDP | 2 hồ sơ thành lập chờ duyệt (Nhiếp ảnh Đường phố, Cờ vây); 1 đề cử BCN (CLB Lập trình Game); 1 kế hoạch chuyển giao (FPTU Data Science Club); 2 góp ý gửi ICPDP; quản lý tài khoản |
-| Chủ nhiệm HEBE | 9 thành viên (2 tạm ngưng) + 1 yêu cầu rời chờ xử lý; đợt tuyển Gen 8 với 4 đơn chờ xét; 3 góp ý (1 có tên, 2 ẩn danh); sự kiện của CLB |
-
-Các mốc thời gian sự kiện tính theo lúc chạy seed; chạy lại trên DB trống để làm mới.
-
-## Kiểm chứng gần nhất (2026-10-09)
-
-- `npm run check` (constitution, lint, typecheck, test) **xanh: 189/189 test**, gồm integration chạy
-  thật với Mongo (không skip). Client build pass (cảnh báo bundle > 500 kB).
-- `server/tests/global-setup.ts` tự xoá database `ucms-*-test-<pid>` của tiến trình đã chết trước mỗi
-  lượt test; sau lượt chạy đầy đủ chỉ còn database `ucms` và các database không thuộc dự án.
-- Mỗi commit đã push được kiểm tra riêng (typecheck/lint/test) trong worktree tạm trước khi push.
-
-## Ưu tiên tiếp theo
-
-1. Hoàn thiện nhóm sự kiện phía CLB: UC25–UC27 (đề xuất/duyệt/công bố, cấu hình mã check-in và
-   form đăng ký), UC31 A1 + UC32 (điểm danh/chốt điểm danh), UC30 (promote waitlist), UC49 (xem phản hồi).
-2. UC19 rubric + test capacity/bulk/waitlist cho UC18; UC20 màn tiếp nhận; UC23 quản lý role.
-3. UC12/UC14/UC15 (tạo kế hoạch chuyển giao, tạm ngưng/giải thể CLB).
-4. Nghiệm thu UC01 bằng Google OAuth thật; quyết định dọn dữ liệu QA trong DB local.
+1. Hoàn thành chuỗi event phía CLB: UC25 → ICPDP UC26 → UC27/28; tiếp đó UC31 A1 + UC32 và UC30.
+2. Hoàn thành các workflow nguồn để khép chuỗi ICPDP đã có: UC33, UC36, UC38, UC45/47; sau đó UC49 và chốt chính sách ngưỡng feedback.
+3. Bổ sung UC19, test còn thiếu UC18, UC23, UC12/14; xử lý các phần UC07/21/31/50 đã ghi ở trên.
+4. Lên lịch nghiệm thu Google OAuth thật và visual QA các feature ICPDP mới trên browser (desktop/mobile, vi/en, light/dark theo phạm vi dự án).

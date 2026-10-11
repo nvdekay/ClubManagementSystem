@@ -30,6 +30,7 @@ import { exports } from "./exports";
 import { clubLifecycle } from "./clubLifecycle";
 import { eventReviews } from "./eventReviews";
 import { budgets } from "./budgets";
+import { periodicReports } from "./periodicReports";
 import { violations } from "./violations";
 import { schoolEvents } from "./schoolEvents";
 import { evaluations } from "./evaluations";
@@ -44,7 +45,7 @@ export const resources = {
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
-    accountability: accountability.en, studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
+    accountability: accountability.en, studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, periodicReports: periodicReports.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
     clubEvents: clubEvents.en, demo: demo.en } },
   vi: { translation: { facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
@@ -52,7 +53,7 @@ export const resources = {
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
     eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
-    accountability: accountability.vi, studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
+    accountability: accountability.vi, studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, periodicReports: periodicReports.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
     clubEvents: clubEvents.vi, demo: demo.vi } },
 };
 
