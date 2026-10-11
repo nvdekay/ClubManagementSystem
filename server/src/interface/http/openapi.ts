@@ -1,4 +1,4 @@
-import { roomReservationBody, bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
+import { roomOverbookingBody, roomReservationBody, bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
 import { z } from "zod";
 import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
@@ -456,7 +456,9 @@ const FacilityBooking = bookingBody.extend({ id: z.string(), clubId: z.string(),
 const BookingCheck = z.object({ conflicts: z.array(z.object({ id: z.string(), startAt: z.string(),
   endAt: z.string(), source: z.enum(["booking", "event"]) })), capacityWarning: z.boolean(), conflictResult: z.string() });
 const BookingResponsible = z.object({ id: z.string(), displayName: z.string(), email: z.string() });
-const FacilityBookingDetail = z.object({ responsible: BookingResponsible.optional(), booking: FacilityBooking, property: Property.nullable(),
+const FacilityBookingDetail = z.object({ responsible: BookingResponsible.optional(),
+  overbooking: z.object({ actorId: z.string(), reason: z.string(), at: z.string(), conflicts: BookingCheck.shape.conflicts }).optional(),
+  booking: FacilityBooking, property: Property.nullable(),
   club: z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() }).nullable(),
   task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string() }).nullable(),
   versions: z.array(z.object({ versionNo: z.number().int(), payload: bookingBody, submittedBy: z.string(), submittedAt: z.string() })),
@@ -478,6 +480,30 @@ export const openApiDocument = createDocument({
   info: { title: "UCMS API", version: "1.0.0" },
   servers: [{ url: "/api/v1" }],
   paths: {
+    "/admin/clubs/{clubId}/booking-responsible": {
+      get: { summary: "Responsible leader for an ICPDP room reservation",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Responsible leader", content: { "application/json": { schema: envelope(BookingResponsible) } } },
+          "403": { description: "ICPDP officer required" }, "409": { description: "No active confirmed leader" } },
+      },
+    },
+    "/admin/clubs/{clubId}/booking-properties/{id}/availability": {
+      get: { summary: "ICPDP room availability; a conflict is a warning only when overbooking policy is enabled",
+        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }), query: bookingAvailabilityQuery },
+        responses: { "200": { description: "Conflict assessment", content: { "application/json": { schema: envelope(BookingCheck) } } },
+          "403": { description: "ICPDP officer required" }, "409": { description: "Inactive club/property or blackout" } },
+      },
+    },
+    "/admin/clubs/{clubId}/bookings/overbook": {
+      post: { summary: "ICPDP only: reserve an occupied room with a reason and enabled overbooking policy; CSRF required",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: roomOverbookingBody } } },
+        responses: { "201": { description: "Exception recorded with officer, reason, conflicts and responsible leader", content: { "application/json": { schema: envelope(FacilityBookingDetail) } } },
+          "400": { description: "Invalid slot or missing reason" }, "401": { description: "Authentication required" },
+          "403": { description: "ICPDP officer required" }, "404": { description: "Room or club not found" },
+          "409": { description: "Policy disabled, no conflict, blackout, inactive club/property or no confirmed leader" } },
+      },
+    },
     "/booking-slots": {
       get: { summary: "Four fixed campus booking slots (Vietnam time)",
         responses: { "200": { description: "Campus slots", content: { "application/json": {

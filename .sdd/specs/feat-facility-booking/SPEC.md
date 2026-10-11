@@ -7,6 +7,20 @@ CLB cần đặt cơ sở vật chất, theo dõi thẩm định và giải phó
 kiểm tra xung đột và ra quyết định có lịch sử truy vết. Tái sử dụng UC44 đã có.
 
 ## Hành vi
+- Chốt ngày 2026-10-11: CLB đặt trực tiếp chỉ được giữ phòng còn trống, kể cả policy
+  `allowOverbooking = true`. Chỉ ICPDP được đặt trùng khi policy đang bật và nhập lý do
+  không rỗng (tối đa 2000 ký tự); không được bỏ qua blackout, trạng thái CLB/phòng,
+  học kỳ, slot tương lai hoặc yêu cầu có Chủ nhiệm đang giữ chức vụ hợp lệ.
+- ICPDP đặt trùng qua `POST /admin/clubs/{clubId}/bookings/overbook`; lịch trùng,
+  officer, thời điểm, lý do và snapshot Chủ nhiệm được ghi trong `BOOKING_RESERVED`.
+  Thông báo tới Chủ nhiệm cùng transaction; không đổi schema. Chi tiết hiển thị lý do.
+  Policy và role được kiểm tra lại trong transaction. Slot đã hết xung đột thì từ chối
+  thao tác overbooking, để CLB dùng luồng đặt phòng còn trống.
+- Với task review cũ, duyệt slot trùng phải nhập riêng `overbookingReason` và policy
+  đang bật. Không có lý do ngoại lệ thì tự trả `Revision Requested`; ghi lý do và
+  các conflict vào decision/audit khi ngoại lệ được chấp nhận.
+- `GET /admin/clubs/{clubId}/booking-responsible` và
+  `GET /admin/clubs/{clubId}/booking-properties/{id}/availability` phục vụ form ICPDP.
 - Phía CLB cần `club.booking.manage`: danh mục còn hoạt động, xem lịch, tạo/sửa Draft,
   nộp Requested, sửa Revision Requested và nộp version mới, xem lịch sử, huỷ Requested/Approved.
 - Chỉ CLB Active được tạo/nộp. Dissolving chỉ được đặt trong giới hạn học kỳ giải thể (BR45);
@@ -59,6 +73,10 @@ kiểm tra xung đột và ra quyết định có lịch sử truy vết. Tái s
   theo tên và thời gian, không yêu cầu nhập ObjectId.
 
 ## Tiêu chí nghiệm thu
+- [x] AC11: CLB không thể tự overbooking; ICPDP chỉ được khi policy bật và có lý do,
+  kể cả policy/role đổi giữa precheck và transaction; chặn blackout và trạng thái sai.
+- [x] AC12: Lý do, officer, thời điểm, conflict, snapshot và notification nguyên tử;
+  giao diện ICPDP hỗ trợ đặt trùng và cả hai workspace đọc được lý do ngoại lệ.
 - [x] AC1: Xác thực, permission, vai trò ICPDP và scope CLB được kiểm tra.
 - [x] AC2: Validate payload, học kỳ, giờ địa phương, blackout, equipment, event scope và BR45.
 - [x] AC3: Draft/sửa/nộp lại tạo lịch sử bất biến, task mới và tăng version đúng.
@@ -75,6 +93,7 @@ kiểm tra xung đột và ra quyết định có lịch sử truy vết. Tái s
 Không thêm nút trả phòng trước hạn cho In Use vì UC47 E1 chưa cho phép thao tác này.
 
 ## Changelog
+- v1.2.0 (2026-10-11) — người dùng chốt overbooking chỉ dành cho ICPDP, policy phải bật và bắt buộc lý do.
 - v1.0.0 (2026-10-10) — người dùng giao triển khai cả ICPDP và dùng quy tắc agent đề xuất.
 - v1.1.0 (2026-10-10) — người dùng chốt bốn slot và tên phòng theo mã campus Hoà Lạc.
 

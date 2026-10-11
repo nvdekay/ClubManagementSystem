@@ -19,10 +19,10 @@ export function useBookingProperties(clubId: string | null, enabled: boolean) {
   return useQuery({ queryKey: [...bookingKey, "properties", clubId], enabled,
     queryFn: ({ signal }) => fetchBookingProperties(clubId, signal) });
 }
-export function useBookingAvailability(clubId: string | null, propertyId: string, startAt: string, endAt: string) {
-  return useQuery({ queryKey: [...bookingKey, "availability", clubId, propertyId, startAt, endAt],
+export function useBookingAvailability(clubId: string | null, propertyId: string, startAt: string, endAt: string, asOfficer = false) {
+  return useQuery({ queryKey: [...bookingKey, "availability", clubId, propertyId, startAt, endAt, asOfficer],
     enabled: Boolean(clubId && propertyId && startAt && endAt && startAt < endAt),
-    queryFn: ({ signal }) => fetchBookingAvailability(clubId!, propertyId, startAt, endAt, signal) });
+    queryFn: ({ signal }) => fetchBookingAvailability(clubId!, propertyId, startAt, endAt, signal, asOfficer) });
 }
 export function useBlackoutBookings(propertyId: string | null, blackoutKey: string) {
   return useQuery({ queryKey: [...bookingKey, "blackouts", propertyId, blackoutKey], enabled: Boolean(propertyId),
@@ -48,7 +48,7 @@ export function useRoomAvailability(clubId: string | null, propertyIds: string[]
   })) });
 }
 
-export function useBookingResponsible(clubId: string | null, enabled: boolean) {
-  return useQuery({ queryKey: [...bookingKey, "responsible", clubId], enabled: Boolean(clubId) && enabled,
-    queryFn: ({ signal }) => fetchBookingResponsible(clubId!, signal) });
+export function useBookingResponsible(clubId: string | null, enabled: boolean, asOfficer = false) {
+  return useQuery({ queryKey: [...bookingKey, "responsible", clubId, asOfficer], enabled: Boolean(clubId) && enabled,
+    queryFn: ({ signal }) => fetchBookingResponsible(clubId!, signal, asOfficer) });
 }

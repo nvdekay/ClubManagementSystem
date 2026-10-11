@@ -195,7 +195,51 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
     await repo.decide(a.booking.id, officer, { outcome: "Approve", reason: "Allowed" }, now);
     await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: true } });
     const b = await submitted(clubId, input); await repo.claim(b.booking.id, officer, now);
-    expect((await repo.decide(b.booking.id, officer, { outcome: "Approve", reason: "Exception allowed" }, now)).booking.state).toBe("Approved");
+    expect((await repo.decide(b.booking.id, officer, { outcome: "Approve", reason: "Exception allowed" }, now)).booking.state).toBe("Revision Requested");
+    const c = await submitted(clubId, input); await repo.claim(c.booking.id, officer, now);
+    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
+    await expect(repo.decide(c.booking.id, officer, { outcome: "Approve", reason: "Allowed",
+      overbookingReason: "Shared room for a joint activity" }, now)).rejects.toThrow("disabled by policy");
+    expect((await repo.find(c.booking.id, now))!.decisions).toHaveLength(0);
+    expect((await repo.find(c.booking.id, now))!.booking.state).toBe("Under Review");
+    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: true } });
+    const approved = await repo.decide(c.booking.id, officer, { outcome: "Approve", reason: "Allowed",
+      overbookingReason: "Shared room for a joint activity" }, now);
+    expect(approved.booking.state).toBe("Approved");
+    expect(approved.decisions[0]?.overbookingReason).toBe("Shared room for a joint activity");
+    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
+  });
+  it("records officer overbooking atomically and rechecks policy, role, reason and conflicts", async () => {
+    const { clubId, input } = await fixture();
+    await leaderFixture(clubId);
+    const existing = await repo.reserve(clubId, input, actor, now);
+    const exception = { reason: " Joint activity in a shared room " };
+    await expect(repo.reserve(clubId, input, officer, now, exception)).rejects.toThrow("disabled by policy");
+    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: true } });
+    await expect(repo.reserve(clubId, input, actor, now, exception)).rejects.toMatchObject({ kind: "forbidden" });
+    await expect(repo.reserve(clubId, input, officer, now, { reason: " " })).rejects.toMatchObject({ kind: "validation" });
+    expect(await m.propertyBookings!.countDocuments()).toBe(1);
+    expect(await m.notifications!.countDocuments()).toBe(0);
+    const result = await repo.reserve(clubId, input, officer, now, exception);
+    expect(result).toMatchObject({ booking: { state: "Approved", conflictResult: "Warning" }, task: null,
+      overbooking: { actorId: officer, reason: "Joint activity in a shared room", at: now,
+        conflicts: [{ id: existing.booking.id, source: "booking" }] } });
+    expect(result.responsible).toBeDefined();
+    const audit = await m.auditLogs!.findOne({ entityId: new Types.ObjectId(result.booking.id), action: "BOOKING_RESERVED" }).lean();
+    expect(audit).toMatchObject({ reason: "Joint activity in a shared room", after: { overbooking: result.overbooking } });
+    expect(await m.notifications!.countDocuments({ entityId: new Types.ObjectId(result.booking.id), eventCode: "PROPERTY_BOOKING_STATUS" })).toBe(1);
+    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
+    await expect(repo.reserve(clubId, input, officer, now, exception)).rejects.toThrow("disabled by policy");
+    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: true } });
+    await expect(repo.reserve(clubId, { ...input, startAt: new Date("2026-10-12T10:00:00+07:00"),
+      endAt: new Date("2026-10-12T12:20:00+07:00") }, officer, now, exception)).rejects.toThrow("occupied slot");
+    const properties = mongoPropertyRepository();
+    await properties.update(input.propertyId, { ...(await properties.find(input.propertyId))!,
+      blackouts: [{ startAt: input.startAt, endAt: input.endAt, reason: "Maintenance" }] }, officer, now);
+    await expect(repo.reserve(clubId, input, officer, now, exception)).rejects.toThrow("blackout");
+    expect(await m.propertyBookings!.countDocuments()).toBe(2);
+    expect(await m.auditLogs!.countDocuments({ action: "BOOKING_RESERVED" })).toBe(2);
+    expect(await m.notifications!.countDocuments()).toBe(1);
     await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
   });
   it("cancels with late signals and releases slots and review tasks", async () => {

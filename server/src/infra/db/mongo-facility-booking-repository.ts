@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
-import { assertBookingNotice, assessBooking, bookingIntervalsConflict, isLateBookingCancellation, slotsConflict,
+import { assertBookingNotice, assessBooking, bookingReason, bookingIntervalsConflict, isLateBookingCancellation, slotsConflict,
   type Booking, type BookingClub, type BookingConflict, type BookingDecision, type BookingDetail,
   type BookingResponsible, type BookingInput, type BookingVersion, type FacilityBookingRepository } from "../../domain/facility-booking.js";
 import type { PolicyVersion } from "../../domain/policy.js";
@@ -207,7 +207,8 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     const task = taskDocs[0];
     const reservation = await audits.findOne({ entityType: "PropertyBooking", entityId: doc._id, action: "BOOKING_RESERVED" }).lean();
     const responsible = (reservation?.after as { responsible?: BookingResponsible } | undefined)?.responsible;
-    return { ...(responsible ? { responsible } : {}), booking, property: property ? propertyFrom(property) : null, club: club ? clubFrom(club) : null,
+    const overbooking = (reservation?.after as { overbooking?: BookingDetail["overbooking"] } | undefined)?.overbooking;
+    return { ...(responsible ? { responsible } : {}), ...(overbooking ? { overbooking } : {}), booking, property: property ? propertyFrom(property) : null, club: club ? clubFrom(club) : null,
       task: task ? { id: String(task._id), state: String(task.state), openedAt: task.openedAt as Date,
         ...(task.assigneeId ? { assigneeId: String(task.assigneeId) } : {}) } : null,
       versions: versionDocs.map((item): BookingVersion => {
@@ -219,7 +220,8 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         const comments = item.comments as { alternative?: BookingDecision["alternative"] } | undefined;
         return { id: String(item._id), taskId: String(item.approvalTaskId), actorId: String(item.actorId), at: item.at as Date,
           outcome: item.outcome as BookingDecision["outcome"], reason: String(item.reason ?? ""),
-          reviewNote: item.reviewNote as string | undefined, alternative: comments?.alternative };
+          reviewNote: item.reviewNote as string | undefined, alternative: comments?.alternative,
+          overbookingReason: (item.comments as { overbookingReason?: string } | undefined)?.overbookingReason };
       }), check, obligations };
   }
   async function required(id: string, now: Date): Promise<BookingDetail> {
@@ -229,20 +231,31 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
   }
   return {
     responsibleLeader,
-    async reserve(clubId, input, actorId, now) {
+    async reserve(clubId, input, actorId, now, exception) {
       const id = new Types.ObjectId();
       await mongoose.connection.transaction(async (session) => {
         await lockScope(input.propertyId, clubId, session);
         const check = await assess(input, clubId, now, undefined, session);
         const room = await m.properties!.findById(oid(input.propertyId)).session(session).lean();
         if (room?.type !== "ROOM") throw new DomainError("room not found", "not_found");
-        if (check.conflicts.length) conflict("booking slot is unavailable");
+        let overbooking: BookingDetail["overbooking"];
+        if (exception) {
+          const reason = bookingReason(exception.reason);
+          if (!(await officers(session)).includes(actorId)) throw new DomainError("ICPDP officer role required", "forbidden");
+          const policy = await policyAt(now, session);
+          if (!policy?.allowOverbooking) conflict("overbooking is disabled by policy");
+          if (!check.conflicts.length) conflict("overbooking requires an occupied slot");
+          overbooking = { actorId, reason, at: now, conflicts: check.conflicts };
+        } else if (check.conflicts.length) conflict("booking slot is unavailable");
         const responsible = await responsibleLeader(clubId, now, session);
         if (!responsible) conflict("club has no active confirmed leader");
         await bookings.create([{ _id: id, ...storedInput(input), clubId: oid(clubId), clubName: check.club.name,
           semesterCode: check.semesterCode, state: "Approved", currentVersionNo: 0,
-          conflictResult: "No Conflict", createdAt: now }], { session });
-        await audit(id, "BOOKING_RESERVED", actorId, null, { payload: input, responsible, state: "Approved" }, now, session);
+          conflictResult: overbooking ? "Warning" : "No Conflict", createdAt: now }], { session });
+        await audit(id, "BOOKING_RESERVED", actorId, null, { payload: input, responsible, state: "Approved",
+          ...(overbooking ? { overbooking } : {}) }, now, session, overbooking?.reason);
+        if (overbooking) await notify(id, "PROPERTY_BOOKING_STATUS", [responsible.id],
+          { state: "Approved", overbooking }, now, session);
       });
       return required(String(id), now);
     },
@@ -332,28 +345,39 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     },
     async decide(id, officerId, input, now) {
       await mongoose.connection.transaction(async (session) => {
+        const decisionReason = bookingReason(input.reason);
+        const overbookingReason = input.overbookingReason === undefined ? undefined : bookingReason(input.overbookingReason);
+        if (overbookingReason && input.outcome !== "Approve") throw new DomainError("overbooking requires approval", "validation");
         const before = await current(id, session);
         const task = await tasks.findOne({ entityType: taskType, entityId: before._id, state: "Open", assigneeId: oid(officerId) })
           .session(session).lean();
         if (before.state !== "Under Review" || !task) conflict("booking cannot be decided by this officer");
         let outcome = input.outcome;
-        let reason = input.reason;
+        let reason = decisionReason;
+        let overbooking: BookingDetail["overbooking"];
         let checkResult = String(before.conflictResult ?? "No Conflict");
         if (outcome === "Approve") {
           await lockScope(String(before.propertyId), String(before.clubId), session);
           const check = await assess(inputFrom(before, await equipmentFor(before._id as Types.ObjectId, session)),
             String(before.clubId), now, id, session);
           checkResult = check.conflictResult;
-          if (checkResult === "Blocking Conflict") { outcome = "Request revision"; reason = "Slot conflict detected during approval; choose another slot"; }
+          if (check.conflicts.length) {
+            if (overbookingReason) {
+              if (!(await officers(session)).includes(officerId)) throw new DomainError("ICPDP officer role required", "forbidden");
+              if (checkResult === "Blocking Conflict") conflict("overbooking is disabled by policy");
+              overbooking = { actorId: officerId, reason: overbookingReason, at: now, conflicts: check.conflicts };
+            } else { outcome = "Request revision"; reason = "Slot conflict detected during approval; choose another slot or provide an overbooking reason"; }
+          }
         }
         const state = outcome === "Approve" ? "Approved" : outcome === "Reject" ? "Rejected" : "Revision Requested";
         await decisions.create([{ approvalTaskId: task._id, outcome, reason, reviewNote: input.reviewNote,
-          comments: { alternative: input.alternative }, actorId: oid(officerId), at: now }], { session });
+          comments: { alternative: input.alternative, ...(overbooking ? { overbookingReason: overbooking.reason, overbooking } : {}) }, actorId: oid(officerId), at: now }], { session });
         await tasks.updateOne({ _id: task._id }, { $set: { state: "Decided", closedAt: now } }, { session });
         await bookings.updateOne({ _id: before._id }, { $set: { state, decisionReason: reason,
           conflictResult: checkResult, decidedBy: oid(officerId), decidedAt: now } }, { session });
         await audit(before._id as Types.ObjectId, "BOOKING_DECIDED", officerId, { state: before.state },
-          { state, outcome, versionNo: before.currentVersionNo, alternative: input.alternative }, now, session, reason);
+          { state, outcome, versionNo: before.currentVersionNo, alternative: input.alternative,
+            ...(overbooking ? { overbooking } : {}) }, now, session, reason);
         const submitted = await audits.findOne({ entityType: "PropertyBooking", entityId: before._id, action: "BOOKING_SUBMITTED" })
           .sort({ at: -1, _id: -1 }).session(session).lean();
         if (submitted?.actorId) await notify(before._id as Types.ObjectId, "PROPERTY_BOOKING_STATUS", [String(submitted.actorId)],

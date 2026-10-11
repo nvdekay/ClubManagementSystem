@@ -5,7 +5,7 @@ import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { BookingInput } from "../../domain/facility-booking.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { bookingResponsible, reserveRoom, bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking,
+import { bookingResponsible, overbookRoom, reserveRoom, bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking,
   listBookingSlots, listBookingEvents, listBookingProperties, listBookings, propertyBookingConflicts, saveBooking, submitBooking,
   type BookingDeps } from "../../usecase/facility-booking.js";
 import { authGuard } from "./auth-routes.js";
@@ -20,8 +20,10 @@ export const roomReservationBody = bookingBody.pick({ propertyId: true, startAt:
 export const bookingSaveBody = bookingBody.extend({ expectedVersion: z.number().int().min(0) });
 export const bookingVersionBody = z.object({ expectedVersion: z.number().int().min(0) }).strict();
 export const bookingReasonBody = z.object({ reason: z.string().trim().min(1).max(2000) }).strict();
+export const roomOverbookingBody = roomReservationBody.extend({ reason: bookingReasonBody.shape.reason }).strict();
 export const bookingDecisionBody = bookingReasonBody.extend({
   outcome: z.enum(["Approve", "Reject", "Request revision"]), reviewNote: z.string().max(2000).optional(),
+  overbookingReason: bookingReasonBody.shape.reason.optional(),
   alternative: z.object({ propertyId: id, startAt: date, endAt: date }).strict().optional(),
 }).strict();
 export const bookingAvailabilityQuery = z.object({ startAt: date, endAt: date }).strict();
@@ -39,6 +41,19 @@ export function facilityBookingRoutes(deps: BookingDeps & { authRepo: AuthReposi
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
   router.get("/booking-slots", authGuard(guard, false), (_req, res) => { ok(res, listBookingSlots()); });
   const clubBase = "/clubs/:clubId/bookings";
+  router.get("/admin/clubs/:clubId/booking-responsible", authGuard(guard, false), async (req, res) => {
+    ok(res, await bookingResponsible(deps, actor(res), parsed(id, req.params.clubId), new Date(), true));
+  });
+  router.get("/admin/clubs/:clubId/booking-properties/:id/availability", authGuard(guard, false), async (req, res) => {
+    const query = parsed(bookingAvailabilityQuery, req.query);
+    ok(res, await bookingAvailability(deps, actor(res), parsed(id, req.params.clubId),
+      input({ ...query, propertyId: parsed(id, req.params.id), purpose: "Availability check", headcount: 1, equipment: [] }), new Date(), true));
+  });
+  router.post("/admin/clubs/:clubId/bookings/overbook", authGuard(guard), async (req, res) => {
+    const body = parsed(roomOverbookingBody, req.body);
+    ok(res, await overbookRoom(deps, actor(res), parsed(id, req.params.clubId),
+      { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) }, new Date()), 201);
+  });
   router.get("/clubs/:clubId/booking-events", authGuard(guard, false), async (req, res) => {
     ok(res, await listBookingEvents(deps, actor(res), parsed(id, req.params.clubId), new Date()));
   });

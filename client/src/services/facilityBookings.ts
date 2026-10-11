@@ -15,11 +15,13 @@ export interface BookingCheck {
 }
 export interface BookingDecisionInput {
   outcome: "Approve" | "Reject" | "Request revision"; reason: string; reviewNote?: string;
+  overbookingReason?: string;
   alternative?: { propertyId: string; startAt: string; endAt: string };
 }
 export interface BookingResponsible { id: string; displayName: string; email: string }
 export interface BookingDetail {
   responsible?: BookingResponsible;
+  overbooking?: { actorId: string; reason: string; at: string; conflicts: BookingCheck["conflicts"] };
   booking: Booking; property: Property | null;
   club: { id: string; name: string; state: string } | null;
   task: { id: string; state: string; assigneeId?: string; openedAt: string } | null;
@@ -51,17 +53,18 @@ export function fetchBookingEvents(clubId: string, signal: AbortSignal): Promise
   return request(`/clubs/${encodeURIComponent(clubId)}/booking-events`, { signal });
 }
 export function fetchBookingAvailability(clubId: string, propertyId: string, startAt: string, endAt: string,
-  signal: AbortSignal): Promise<BookingCheck> {
+  signal: AbortSignal, asOfficer = false): Promise<BookingCheck> {
   const query = new URLSearchParams({ startAt, endAt });
-  return request(`/clubs/${encodeURIComponent(clubId)}/booking-properties/${encodeURIComponent(propertyId)}/availability?${query}`, { signal });
+  return request(`${asOfficer ? "/admin" : ""}/clubs/${encodeURIComponent(clubId)}/booking-properties/${encodeURIComponent(propertyId)}/availability?${query}`, { signal });
 }
 export function fetchBlackoutBookings(propertyId: string, signal: AbortSignal): Promise<Booking[]> {
   return request(`/admin/properties/${encodeURIComponent(propertyId)}/booking-conflicts`, { signal });
 }
-export function fetchBookingResponsible(clubId: string, signal: AbortSignal): Promise<BookingResponsible> {
-  return request(`/clubs/${encodeURIComponent(clubId)}/booking-responsible`, { signal });
+export function fetchBookingResponsible(clubId: string, signal: AbortSignal, asOfficer = false): Promise<BookingResponsible> {
+  return request(`${asOfficer ? "/admin" : ""}/clubs/${encodeURIComponent(clubId)}/booking-responsible`, { signal });
 }
 export type BookingAction =
+  | { kind: "overbook"; clubId: string; input: Pick<BookingInput, "propertyId" | "startAt" | "endAt"> & { reason: string } }
   | { kind: "reserve"; clubId: string; input: Pick<BookingInput, "propertyId" | "startAt" | "endAt"> }
   | { kind: "save"; clubId: string; id?: string; input: BookingInput; expectedVersion: number }
   | { kind: "submit"; clubId: string; id: string; expectedVersion: number }
@@ -69,6 +72,9 @@ export type BookingAction =
   | { kind: "claim"; id: string }
   | { kind: "decision"; id: string; input: BookingDecisionInput };
 export function changeBooking(action: BookingAction, csrfToken: string): Promise<BookingDetail> {
+  if (action.kind === "overbook") return request(`/admin/clubs/${encodeURIComponent(action.clubId)}/bookings/overbook`, {
+    method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(action.input),
+  });
   const clubId = "clubId" in action ? action.clubId : null;
   if (action.kind === "reserve") return request(`${base(action.clubId)}/reserve`, {
     method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(action.input),

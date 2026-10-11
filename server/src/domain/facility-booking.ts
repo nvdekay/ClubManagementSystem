@@ -59,6 +59,7 @@ export interface BookingVersion {
 }
 export interface BookingDecisionInput {
   outcome: "Approve" | "Reject" | "Request revision"; reason: string; reviewNote?: string;
+  overbookingReason?: string;
   alternative?: { propertyId: string; startAt: Date; endAt: Date };
 }
 export interface BookingDecision extends BookingDecisionInput {
@@ -73,15 +74,21 @@ export interface BookingClub {
 }
 export interface BookingResponsible { id: string; displayName: string; email: string }
 export type RoomReservationInput = Pick<BookingInput, "propertyId" | "startAt" | "endAt">;
+export interface RoomOverbookingInput extends RoomReservationInput { reason: string }
+export interface BookingOverbooking {
+  actorId: string; reason: string; at: Date; conflicts: BookingConflict[];
+}
 export interface BookingDetail {
   responsible?: BookingResponsible;
+  overbooking?: BookingOverbooking;
   booking: Booking; property: Property | null; club: BookingClub | null;
   task: BookingTask | null; versions: BookingVersion[]; decisions: BookingDecision[];
   check: BookingCheck | null; obligations: string[];
 }
 export interface FacilityBookingRepository {
   responsibleLeader(clubId: string, now: Date): Promise<BookingResponsible | null>;
-  reserve(clubId: string, input: BookingInput, actorId: string, now: Date): Promise<BookingDetail>;
+  reserve(clubId: string, input: BookingInput, actorId: string, now: Date,
+    exception?: { reason: string }): Promise<BookingDetail>;
   list(clubId?: string): Promise<Booking[]>;
   find(id: string, now: Date): Promise<BookingDetail | null>;
   club(id: string): Promise<BookingClub | null>;

@@ -5,9 +5,9 @@ import { BOOKING_SLOTS, assertBookingNotice, bookingDeadline, bookingIntervalsCo
 import type { Property } from "../../src/domain/property.js";
 import { DEFAULT_FORM_REQUIREMENTS, type PolicyVersion } from "../../src/domain/policy.js";
 import type { ClubAccessSnapshot } from "../../src/domain/access.js";
-import { bookingResponsible, reserveRoom, bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking, listBookingEvents, listBookingProperties,
+import { overbookRoom, bookingResponsible, reserveRoom, bookingAvailability, cancelBooking, claimBooking, decideBooking, getBooking, listBookingEvents, listBookingProperties,
   listBookings, releaseBookings, saveBooking, submitBooking, type BookingDeps } from "../../src/usecase/facility-booking.js";
-import { roomReservationBody, bookingBody, bookingDecisionBody } from "../../src/interface/http/facility-booking-routes.js";
+import { roomOverbookingBody, roomReservationBody, bookingBody, bookingDecisionBody } from "../../src/interface/http/facility-booking-routes.js";
 
 const ids = { club: "a".repeat(24), property: "b".repeat(24), user: "c".repeat(24), booking: "d".repeat(24) };
 const now = new Date("2026-10-10T01:00:00Z");
@@ -88,6 +88,61 @@ describe("facility booking rules", () => {
   });
 });
 describe("facility booking use cases", () => {
+  it("allows only officers to overbook with enabled policy and a nonempty reason", async () => {
+    const d = deps();
+    const raw = { ...input, reason: " Shared room for a joint activity " };
+    vi.mocked(d.repo.conflicts).mockResolvedValue([{ id: "other", startAt: input.startAt, endAt: input.endAt, source: "booking" }]);
+    await expect(overbookRoom(d, null, ids.club, raw, now)).rejects.toMatchObject({ kind: "unauthorized" });
+    await expect(overbookRoom(d, { ...actor, accountState: "Locked" }, ids.club, raw, now)).rejects.toMatchObject({ kind: "locked" });
+    vi.mocked(d.auth.systemRoleCodes).mockResolvedValue([]);
+    await expect(overbookRoom(d, actor, ids.club, raw, now)).rejects.toMatchObject({ kind: "forbidden" });
+    vi.mocked(d.auth.systemRoleCodes).mockResolvedValue(["ICPDP_OFFICER"]);
+    await expect(overbookRoom(d, actor, ids.club, { ...raw, reason: " " }, now)).rejects.toMatchObject({ kind: "validation" });
+    await expect(overbookRoom(d, actor, ids.club, raw, now)).rejects.toThrow("disabled by policy");
+    expect(d.repo.reserve).not.toHaveBeenCalled();
+    vi.mocked(d.policy.findEffective).mockResolvedValue({ ...policy, allowOverbooking: true });
+    await overbookRoom(d, actor, ids.club, raw, now);
+    expect(d.repo.reserve).toHaveBeenCalledWith(ids.club, { propertyId: input.propertyId, startAt: input.startAt,
+      endAt: input.endAt, purpose: "Club room reservation", headcount: 1, equipment: [] }, actor.id, now,
+    { reason: "Shared room for a joint activity" });
+    expect(d.access.findSnapshot).not.toHaveBeenCalled();
+    expect(await bookingAvailability(d, actor, ids.club, input, now)).toMatchObject({ conflictResult: "Blocking Conflict" });
+    expect(await bookingAvailability(d, actor, ids.club, input, now, true)).toMatchObject({ conflictResult: "Warning" });
+    vi.mocked(d.repo.conflicts).mockResolvedValue([]);
+    await expect(overbookRoom(d, actor, ids.club, raw, now)).rejects.toThrow("occupied slot");
+  });
+  it("never lets an overbooking exception bypass blackouts, club state or leader requirements", async () => {
+    const d = deps();
+    const raw = { ...input, reason: "Joint activity" };
+    vi.mocked(d.policy.findEffective).mockResolvedValue({ ...policy, allowOverbooking: true });
+    vi.mocked(d.repo.conflicts).mockResolvedValue([{ id: "other", startAt: input.startAt, endAt: input.endAt, source: "event" }]);
+    vi.mocked(d.properties.find).mockResolvedValue({ ...property, blackouts: [{ startAt: input.startAt, endAt: input.endAt, reason: "Maintenance" }] });
+    await expect(overbookRoom(d, actor, ids.club, raw, now)).rejects.toThrow("blackout");
+    vi.mocked(d.properties.find).mockResolvedValue(property);
+    vi.mocked(d.repo.club).mockResolvedValue({ ...club, state: "Suspended" });
+    await expect(overbookRoom(d, actor, ids.club, raw, now)).rejects.toThrow("club cannot request");
+    vi.mocked(d.repo.club).mockResolvedValue(club);
+    vi.mocked(d.repo.responsibleLeader).mockResolvedValue(null);
+    await expect(overbookRoom(d, actor, ids.club, raw, now)).rejects.toThrow("leader");
+    expect(d.repo.reserve).not.toHaveBeenCalled();
+  });
+  it("validates overbooking reasons and rejects exception fields on the club reservation body", () => {
+    const body = { propertyId: input.propertyId, startAt: input.startAt.toISOString(), endAt: input.endAt.toISOString() };
+    expect(roomReservationBody.safeParse({ ...body, reason: "Override" }).success).toBe(false);
+    expect(roomOverbookingBody.safeParse(body).success).toBe(false);
+    expect(roomOverbookingBody.safeParse({ ...body, reason: " " }).success).toBe(false);
+    expect(roomOverbookingBody.safeParse({ ...body, reason: "x".repeat(2001) }).success).toBe(false);
+    expect(roomOverbookingBody.parse({ ...body, reason: " Joint activity " }).reason).toBe("Joint activity");
+    expect(bookingDecisionBody.safeParse({ outcome: "Approve", reason: "Approved", overbookingReason: " " }).success).toBe(false);
+  });
+  it("requires a separate valid reason for a legacy overbooking approval", async () => {
+    const d = deps();
+    await expect(decideBooking(d, actor, ids.booking, { outcome: "Approve", reason: "Allowed", overbookingReason: " " }, now)).rejects.toThrow("reason");
+    await expect(decideBooking(d, actor, ids.booking, { outcome: "Reject", reason: "Denied", overbookingReason: "Override" }, now)).rejects.toThrow("requires approval");
+    await decideBooking(d, actor, ids.booking, { outcome: "Approve", reason: "Allowed", overbookingReason: " Shared activity " }, now);
+    expect(d.repo.decide).toHaveBeenCalledWith(ids.booking, actor.id,
+      { outcome: "Approve", reason: "Allowed", overbookingReason: "Shared activity" }, now);
+  });
   it("enforces the same-day deadline when submitting, including the exact boundary", async () => {
     const d = deps();
     await submitBooking(d, actor, ids.club, ids.booking, 0, new Date("2026-10-12T00:29:59Z"));

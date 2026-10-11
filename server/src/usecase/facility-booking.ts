@@ -2,7 +2,7 @@ import type { ClubAccessRepository } from "../domain/access.js";
 import type { AuthRepository } from "../domain/auth.js";
 import { DomainError } from "../domain/errors.js";
 import { BOOKING_SLOTS, assertBookingNotice, assessBooking, bookingId, bookingReason, validateBookingInput,
-  type RoomReservationInput, type BookingDecisionInput, type BookingInput, type FacilityBookingRepository } from "../domain/facility-booking.js";
+  type RoomReservationInput, type RoomOverbookingInput, type BookingDecisionInput, type BookingInput, type FacilityBookingRepository } from "../domain/facility-booking.js";
 import type { PolicyRepository } from "../domain/policy.js";
 import type { PropertyRepository } from "../domain/property.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
@@ -60,9 +60,10 @@ export async function getBooking(deps: BookingDeps, actor: AccessActor | null, c
   return detail;
 }
 export async function bookingAvailability(deps: BookingDeps, actor: AccessActor | null, clubId: string,
-  input: BookingInput, now: Date) {
-  await member(deps, actor, clubId, now);
-  return check(deps, clubId, validateBookingInput(input), now, undefined, false);
+  input: BookingInput, now: Date, asOfficer = false) {
+  if (asOfficer) await officer(deps, actor); else await member(deps, actor, clubId, now);
+  const result = await check(deps, clubId, validateBookingInput(input), now, undefined, false);
+  return !asOfficer && result.conflicts.length ? { ...result, conflictResult: "Blocking Conflict" } : result;
 }
 export async function saveBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   id: string | null, raw: BookingInput, now: Date, expectedVersion = 0) {
@@ -96,6 +97,8 @@ export async function decideBooking(deps: BookingDeps, actor: AccessActor | null
     throw new DomainError("invalid booking decision", "validation");
   }
   const reason = bookingReason(input.reason);
+  const overbookingReason = input.overbookingReason === undefined ? undefined : bookingReason(input.overbookingReason);
+  if (overbookingReason && input.outcome !== "Approve") throw new DomainError("overbooking requires approval", "validation");
   if (input.reviewNote && input.reviewNote.length > 2000) throw new DomainError("review note is too long", "validation");
   if (input.alternative) {
     if (input.outcome !== "Request revision") throw new DomainError("alternative requires revision", "validation");
@@ -103,7 +106,7 @@ export async function decideBooking(deps: BookingDeps, actor: AccessActor | null
     await check(deps, detail.booking.clubId, validateBookingInput({ ...detail.booking, ...input.alternative,
       equipment: [] }), now, id, false);
   }
-  return deps.repo.decide(bookingId(id), actorId, { ...input, reason }, now);
+  return deps.repo.decide(bookingId(id), actorId, { ...input, reason, overbookingReason }, now);
 }
 export async function cancelBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   id: string, reason: string, now: Date) {
@@ -131,8 +134,8 @@ export async function runBookingLifecycleJob(repo: FacilityBookingRepository, no
 
 export function listBookingSlots() { return BOOKING_SLOTS; }
 
-export async function bookingResponsible(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date) {
-  await member(deps, actor, clubId, now);
+export async function bookingResponsible(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date, asOfficer = false) {
+  if (asOfficer) await officer(deps, actor); else await member(deps, actor, clubId, now);
   const responsible = await deps.repo.responsibleLeader(bookingId(clubId), now);
   if (!responsible) throw new DomainError("club has no active confirmed leader", "conflict");
   return responsible;
@@ -148,4 +151,19 @@ export async function reserveRoom(deps: BookingDeps, actor: AccessActor | null, 
   if (result.conflicts.length) throw new DomainError("booking slot is unavailable", "conflict");
   await bookingResponsible(deps, actor, clubId, now);
   return deps.repo.reserve(bookingId(clubId), input, actorId, now);
+}
+
+export async function overbookRoom(deps: BookingDeps, actor: AccessActor | null, clubId: string,
+  raw: RoomOverbookingInput, now: Date) {
+  const actorId = await officer(deps, actor);
+  const reason = bookingReason(raw.reason);
+  const input = validateBookingInput({ propertyId: raw.propertyId, startAt: raw.startAt, endAt: raw.endAt,
+    purpose: "Club room reservation", headcount: 1, equipment: [] });
+  const property = await deps.properties.find(input.propertyId);
+  if (!property || property.type !== "ROOM") throw new DomainError("room not found", "not_found");
+  const result = await check(deps, clubId, input, now, undefined, false);
+  if (!result.conflicts.length) throw new DomainError("overbooking requires an occupied slot", "conflict");
+  if (result.conflictResult === "Blocking Conflict") throw new DomainError("overbooking is disabled by policy", "conflict");
+  await bookingResponsible(deps, actor, clubId, now, true);
+  return deps.repo.reserve(bookingId(clubId), input, actorId, now, { reason });
 }

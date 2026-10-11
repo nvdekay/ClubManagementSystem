@@ -119,8 +119,8 @@ HÌNH III.3.5 — Club Member: Events & bookings
   - Cancel / reschedule event (UC28).
   - Manage waitlist (UC30): quản lý sức chứa, đôn người từ danh sách chờ
     theo đúng thứ tự.
-- Manage bookings include Request property booking (UC45) và Cancel /
-  release booking (UC47). Đặt phòng có thể gắn với sự kiện hoặc đặt riêng.
+- Manage bookings include Reserve available room (UC45) và Cancel /
+  release booking (UC47). CLB chỉ được đặt phòng còn trống, được giữ ngay khi đặt.
 
 ======================================================================
 HÌNH III.3.6 — Club Member: Accountability & finance
@@ -162,8 +162,9 @@ HÌNH III.3.8 — ICPDP Officer: Events, bookings & finance
   xuất và ngân sách đi kèm — và Close event report (UC34).
 - Manage properties (UC44) include Add, View, Update, Deactivate property:
   danh mục phòng và tài sản.
-- Manage bookings include Decide booking request (UC46). Duyệt sự kiện không
-  đồng nghĩa với duyệt phòng; hai quyết định tách riêng.
+- Manage bookings include Decide legacy booking request và Authorize room
+  overbooking (UC46). Chỉ ICPDP được đặt trùng, khi policy bật và có lý do;
+  blackout vẫn bị chặn. Phòng còn trống được CLB đặt trực tiếp.
 - Manage budget include Record disbursement (UC35) — ghi nhận giải ngân — và
   Reconcile budget (UC37) — đối soát với quyết toán của CLB, xác định số tiền
   CLB phải hoàn lại nếu có.

@@ -2091,7 +2091,7 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | FR-UC45-05 | *(A1)* Cho lưu yêu cầu ở `Draft` |
 | FR-UC45-06 | *(A2)* Cho đính kèm yêu cầu vào một đề xuất sự kiện đang soạn ở UC25 |
 | FR-UC45-07 | *(A3)* Từ `Revision Requested`, cho CMB sửa và nộp lại; tạo **version mới** và đưa booking về `Requested` |
-| FR-UC45-08 | *(E1)* Từ chối yêu cầu cho khung giờ đã có người đặt khi chính sách cấm overbooking (BR33) |
+| FR-UC45-08 | *(E1)* CLB đặt trực tiếp phải bị từ chối nếu phòng đã có lịch xung đột, kể cả khi policy bật; chỉ ICPDP được đặt trùng với lý do theo BR33 |
 | FR-UC45-09 | *(E2)* Từ chối yêu cầu rơi vào giai đoạn khoá |
 | FR-UC45-10 | *(E3)* Cảnh báo khi số người dự kiến vượt sức chứa của property, và để UC46 quyết định |
 | FR-UC45-11 | *(E4)* Từ chối booking kết thúc sau học kỳ `Dissolving` khi CLB đã có quyết định giải thể (BR45) |
@@ -2140,11 +2140,18 @@ lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong App
 | FR-UC46-04 | Khoá khung giờ khi phê duyệt để không booking nào khác được duyệt chồng lên (BR33) |
 | FR-UC46-05 | Ghi audit quyết định, cập nhật trạng thái và gửi `Property booking status` cho CMB |
 | FR-UC46-06 | *(A1)* Cho officer đề xuất một khung giờ hoặc property thay thế, CLB chấp nhận qua UC45 A3 |
-| FR-UC46-07 | *(E1)* Trả lại yêu cầu do xung đột khi một booking khác đã được duyệt cho cùng khung giờ trong lúc chờ |
+| FR-UC46-07 | *(E1)* Trả lại yêu cầu cũ do xung đột khi một booking khác đã được duyệt trong lúc chờ; chỉ ICPDP được duyệt ngoại lệ khi policy bật và có riêng `overbookingReason`, lưu lý do và conflict trong decision/audit |
 | FR-UC46-08 | Chỉ nhận quyết định từ ICPDP (BR31) và từ chối booking mới với CLB đang `Suspended` (BR34) |
 
 **Hậu điều kiện** — booking ở `Approved`, `Rejected` hoặc `Revision Requested`; booking đã duyệt khoá khung giờ.
 **Đầu ra** — `ApprovalDecision`, khung giờ bị khoá, bản ghi audit, thông báo.
+
+**Ngoại lệ đặt phòng trực tiếp — chốt ngày 2026-10-11:** ICPDP dùng
+`POST /admin/clubs/{clubId}/bookings/overbook`, chọn CLB/phòng/ngày/slot có xung đột và
+nhập lý do. Policy phải bật tại lúc ghi transaction. Booking mới ở `Approved`, giữ nguyên
+lịch đã có, lưu snapshot Chủ nhiệm và metadata ngoại lệ trong `BOOKING_RESERVED`, thông báo
+cho Chủ nhiệm cùng transaction. Không tạo task review. CLB không được gọi thao tác này.
+Các validation về blackout, trạng thái, học kỳ và thời gian vẫn áp dụng.
 
 ### UC47 — Theo dõi và huỷ / trả cơ sở vật chất đã đặt
 
@@ -2442,7 +2449,7 @@ của nó không bao giờ được dùng lại.**
 | BR30 | Kỳ đánh giá đã công bố không bao giờ được sửa tại chỗ; phải tạo bản sửa hoặc bản chụp mới | UC43 |
 | BR31 | ICPDP là cấp phê duyệt duy nhất cho mọi yêu cầu CLB hoặc sinh viên gửi lên nhà trường; quyết định nội bộ CLB do CMB của CLB đó đưa ra trong phạm vi của mình | UC08, UC26, UC46, UC51 |
 | BR32 | Hệ thống chỉ chấp nhận đăng nhập qua Google OAuth với email đã được Google xác minh và thuộc domain đã cấu hình; giá trị `*` (đứng một mình) cho phép mọi domain | UC01, UC04 |
-| BR33 | Một property không được có hai booking `Approved` trùng khung giờ trừ khi chính sách cho phép overbooking | UC45, UC46 |
+| BR33 | CLB chỉ được đặt phòng còn trống. Chỉ `ICPDP_OFFICER` được đặt trùng khi policy `allowOverbooking = true` và nhập lý do không rỗng (tối đa 2000 ký tự). Ghi officer, lý do, thời điểm và các lịch trùng trong audit cùng transaction; không được bỏ qua blackout, trạng thái CLB/phòng, học kỳ, slot tương lai hoặc Chủ nhiệm hợp lệ | UC45, UC46 |
 | BR34 | CLB `Suspended` không được cấp booking mới | UC15, UC45, UC46 |
 | BR35 | Booking chỉ được duyệt bởi ICPDP và tự động được giải phóng khi sự kiện liên quan bị huỷ | UC46, UC28, UC47 |
 | BR36 | **Đã sửa đổi** — mỗi người tham dự một phản hồi cho một sự kiện, nhận từ thời điểm **check-in** của chính họ cho tới khi feedback window đóng (v1 mở window sau khi chốt điểm danh, khiến dimension phản hồi của mô hình đánh giá — nay là D3 Mức độ hài lòng — bị thiếu dữ liệu) | UC31, UC48 |

@@ -60,6 +60,8 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [reviewNote, setReviewNote] = useState("");
+  const [overbookingReason, setOverbookingReason] = useState("");
+  const [permitOverbooking, setPermitOverbooking] = useState(false);
   const [outcome, setOutcome] = useState<BookingDecisionInput["outcome"]>("Approve");
   const [suggest, setSuggest] = useState(false);
   const [alternative, setAlternative] = useState({ propertyId: "", startAt: "", endAt: "" });
@@ -82,7 +84,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
     setFormError(null);
     try {
       const result = await action.mutateAsync(value);
-      setSelected(result.booking.id); setEditing(false); setReason("");
+      setSelected(result.booking.id); setEditing(false); setReason(""); setOverbookingReason(""); setPermitOverbooking(false);
       appToast.success(t(value.kind === "reserve" ? "facilityBookings.reserved" : "facilityBookings.changed"));
     } catch { /* action.error is displayed below. */ }
   }
@@ -101,6 +103,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
     }
     if (!selected || !window.confirm(t("facilityBookings.confirmDecision"))) return;
     void mutate({ kind: "decision", id: selected, input: { outcome, reason, reviewNote,
+      ...(outcome === "Approve" && permitOverbooking ? { overbookingReason } : {}),
       ...(outcome === "Request revision" && suggest ? { alternative } : {}) } });
   }
   const propertyOptions = [{ value: "", label: t("facilityBookings.select") },
@@ -119,7 +122,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
     column.accessor("purpose", { header: t("facilityBookings.property"), cell: (cell) => <button type="button"
       aria-pressed={selected === cell.row.original.id} className={cn("text-left font-semibold break-words text-primary-app underline", {
         "text-text-app": selected === cell.row.original.id,
-      })} onClick={() => { setSearchParams({ id: cell.row.original.id }, { replace: true }); setEditing(false); setReason(""); setSuggest(false); resetAction(); }}>
+      })} onClick={() => { setSearchParams({ id: cell.row.original.id }, { replace: true }); setEditing(false); setReason(""); setSuggest(false); setPermitOverbooking(false); setOverbookingReason(""); resetAction(); }}>
       {!clubId && <span className="block text-sm text-muted-app">{cell.row.original.clubName}</span>}{properties.data?.find((item) => item.id === cell.row.original.propertyId)?.name ?? cell.getValue()}</button> }),
     column.accessor("startAt", { header: t("facilityBookings.slotLabel"), cell: (cell) => interval(cell.row.original) }),
     column.accessor("state", { header: t("facilityBookings.status"), cell: (cell) => <span>{stateLabel(cell.getValue())}
@@ -230,6 +233,11 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                 </dl>
                 {booking.decisionReason && <AppNotice>{booking.decisionReason}</AppNotice>}
                 {booking.cancelReason && <AppNotice>{booking.cancelReason}</AppNotice>}
+                {detail.data.overbooking && <AppNotice tone="warning" title={t("facilityBookings.overbooking")}>
+                  <p className="break-words">{detail.data.overbooking.reason}</p>
+                  <p className="text-sm">{date(detail.data.overbooking.at)}</p>
+                  {detail.data.overbooking.conflicts.map((item) => <p key={`${item.source}-${item.id}`}>{interval(item)}</p>)}
+                </AppNotice>}
                 {detail.data.check?.capacityWarning && <AppNotice tone="warning">{t("facilityBookings.capacityWarning")}</AppNotice>}
                 {!!detail.data.check?.conflicts.length && <AppNotice tone="warning" title={t("facilityBookings.conflicts")}>
                   {detail.data.check.conflicts.map((item) => <p key={item.id}>{interval(item)}</p>)}</AppNotice>}
@@ -255,6 +263,13 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                     value={reason} onChange={(event) => setReason(event.target.value)} /></label>
                   <label className="block text-sm font-medium">{t("facilityBookings.reviewNote")}<AppInput className="mt-1 w-full" maxLength={2000}
                     value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} /></label>
+                  {outcome === "Approve" && !!detail.data.check?.conflicts.length && detail.data.check.conflictResult === "Warning" && <div className="space-y-3">
+                    <label className="flex flex-wrap items-center gap-2 text-sm"><input type="checkbox" checked={permitOverbooking}
+                      onChange={(event) => setPermitOverbooking(event.target.checked)} />{t("facilityBookings.permitOverbooking")}</label>
+                    {permitOverbooking && <label className="block text-sm font-medium">{t("facilityBookings.overbookingReason")}
+                      <AppInput required maxLength={2000} className="mt-1 w-full" value={overbookingReason}
+                        onChange={(event) => setOverbookingReason(event.target.value)} /></label>}
+                  </div>}
                   {outcome === "Request revision" && <><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={suggest}
                     onChange={(event) => setSuggest(event.target.checked)} />{t("facilityBookings.alternative")}</label>
                     {suggest && <div className="space-y-3"><div className="block text-sm"><span>{t("facilityBookings.property")}</span><AppSelect className="mt-1 w-full" label={t("facilityBookings.property")}
@@ -274,6 +289,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                   {detail.data.decisions.map((item) => <div key={item.id} className="space-y-2 rounded-xl bg-surface-app p-4">
                     <p>{t(item.outcome === "Approve" ? "facilityBookings.approve" : item.outcome === "Reject" ? "facilityBookings.reject" : "facilityBookings.revision")} · {date(item.at)}</p>
                     <p className="break-words">{item.reason}</p>{item.reviewNote && <p className="break-words">{item.reviewNote}</p>}
+                    {item.overbookingReason && <p className="break-words">{t("facilityBookings.overbookingReason")}: {item.overbookingReason}</p>}
                     {item.alternative && <><p>{t("facilityBookings.alternative")}: {properties.data?.find((value) => value.id === item.alternative?.propertyId)?.name}
                       · {interval(item.alternative)}</p>
 </>}

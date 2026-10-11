@@ -1,5 +1,15 @@
 # TASKS: feat-facility-booking
 
+## Overbooking do ICPDP quyết định
+- [x] Guard policy/role/lý do, transaction và audit/notification cho đặt trùng.
+- [x] API/OpenAPI, UI ICPDP và lịch sử ngoại lệ en/vi.
+- [x] Test quyền, policy, lý do, rollback và cập nhật report/SRS; chạy check/build.
+
+Kiểm chứng overbooking ngày 2026-10-11: `npm run check` qua 81 file / 379 test,
+gồm Mongo thật; build client thành công (cảnh báo bundle lớn hiện có). Cập nhật
+diagram theo actor trang CLB/ICPDP, xuất PNG và đồng bộ hai hình vào report v2.
+Giao diện được kiểm tra bằng lint/typecheck/build; chưa kiểm thử trực tiếp trong trình duyệt.
+
 - [x] Đọc UC44–47, xác nhận phạm vi ICPDP và quy tắc xung đột/huỷ muộn, viết SPEC.
 - [x] Domain và use case; permission và guard nghiệp vụ.
 - [x] Mongo repository: draft/version/task/decision, khoá slot, audit và notification.

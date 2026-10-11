@@ -18,8 +18,8 @@ nộp, tránh bản nháp lưu sớm nhưng gửi quá hạn. ICPDP có thể du
 chưa bắt đầu. Phương án thay thế phải là một slot hợp lệ; CLB chọn dùng rồi gửi lại
 vẫn phải đáp ứng hạn gửi.
 
-Cùng property/ngày/slot xung đột; hai slot kế tiếp được phép đặt. Policy overbooking
-vẫn quyết định chặn hay cảnh báo. Lịch cũ và sự kiện ngoài slot giữ khoảng đệm policy;
+Cùng property/ngày/slot xung đột; hai slot kế tiếp được phép đặt. CLB đặt trực tiếp luôn bị chặn khi có conflict. Policy `allowOverbooking` bật chỉ cho phép
+ICPDP đặt trùng kèm lý do; không cấp quyền đặt trùng cho CLB. Lịch cũ và sự kiện ngoài slot giữ khoảng đệm policy;
 blackout luôn chặn. Số người vượt sức chứa chỉ cảnh báo. Huỷ dưới 24 giờ trước giờ bắt
 đầu ghi nhận huỷ muộn; đúng 24 giờ không muộn.
 
@@ -27,6 +27,16 @@ Không đổi schema, dependency hoặc env. Snapshot version bất biến và e
 claim, decision, notification cùng transaction. Duyệt cạnh tranh cùng phòng được tuần tự hoá
 bằng khoá ghi property. Job phút chuyển Approved → In Use → Completed. Cascade vòng đời CLB
 đã nối release; chưa có thao tác trả sớm In Use. Luồng sự kiện UC25/UC28 nối thêm khi triển khai Wave 3.
+
+## Ngoại lệ overbooking — chốt ngày 2026-10-11
+
+ICPDP mở Đặt trùng phòng tại `/workspace/bookings`, chọn CLB, ngày, slot và phòng,
+đọc lịch xung đột, nhập lý do bắt buộc. Policy `allowOverbooking` phải bật; blackout,
+phòng/CLB không hợp lệ và slot đã bắt đầu vẫn bị chặn. Transaction kiểm tra lại role,
+policy và conflict, ghi `BOOKING_RESERVED` với officer/lý do/thời điểm/lịch trùng cùng
+snapshot Chủ nhiệm; notification gửi Chủ nhiệm cùng transaction. Hai workspace đọc
+được lý do ngoại lệ trong chi tiết. API: `POST /admin/clubs/{clubId}/bookings/overbook`.
+Với yêu cầu review cũ, duyệt slot trùng cần nhập riêng `overbookingReason`.
 
 ## Giao diện
 

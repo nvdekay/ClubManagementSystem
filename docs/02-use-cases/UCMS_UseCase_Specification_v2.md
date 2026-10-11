@@ -1592,14 +1592,19 @@ lại UC06–UC52.
 - **Pain point:** BP16.
 
 Phạm vi cập nhật này thay các yêu cầu P1 về review, Draft/nộp lại và dữ liệu form.
-Các chênh lệch deadline và `allowOverbooking` được review riêng ở P2; không suy ra
-thay đổi policy từ việc chuyển sang đặt trực tiếp.
+Deadline được review riêng ở P2. Quy tắc overbooking chốt ngày 2026-10-11:
+CLB không được đặt trùng; chỉ ICPDP được đặt trùng khi policy bật và có lý do không rỗng.
 
-## UC46 – Thẩm định yêu cầu đặt cơ sở vật chất cũ
+## UC46 – Ngoại lệ đặt trùng và thẩm định yêu cầu cũ
 
 - **Actor chính:** ICPDP Officer.
 - **Module:** M11.
-- **Phạm vi:** Chỉ áp dụng với booking đã có task trong workflow review cũ.
+- **Đặt trùng trực tiếp:** ICPDP chọn CLB/phòng/ngày/slot có xung đột, nhập lý do
+  không rỗng (tối đa 2000 ký tự); server chỉ cho phép khi policy `allowOverbooking` bật.
+  Ghi `Approved` và snapshot Chủ nhiệm, officer, lý do, thời điểm, conflict trong audit;
+  thông báo Chủ nhiệm cùng transaction. Không bỏ qua blackout, trạng thái CLB/phòng,
+  học kỳ, slot tương lai hoặc Chủ nhiệm hợp lệ. Không tạo task review.
+- **Thẩm định yêu cầu cũ:** Áp dụng với booking đã có task trong workflow review cũ.
   Booking mới từ UC45 được đặt trực tiếp ở `Approved`, không đi vào hàng đợi này.
 - **Tiền điều kiện:** Booking `Requested` hoặc `Under Review`, có task review còn mở.
 - **Luồng chính:** Officer nhận task, kiểm tra CLB, xung đột và nghĩa vụ, rồi quyết định
@@ -1608,7 +1613,8 @@ thay đổi policy từ việc chuyển sang đặt trực tiếp.
 - **Phương án thay thế:** Có thể ghi đề xuất phòng/slot trong lịch sử quyết định cũ.
   Giao diện đặt trực tiếp không cung cấp thao tác sửa và nộp lại yêu cầu cũ.
 - **Ngoại lệ:** Task đã đóng hoặc được officer khác nhận → từ chối; xung đột mới khi duyệt
-  → `Revision Requested`.
+  → `Revision Requested`, trừ khi ICPDP nhập riêng `overbookingReason` và policy bật.
+  Lý do ngoại lệ và conflict được lưu trong decision/audit.
 - **Hậu điều kiện:** Booking cũ ở `Approved`, `Rejected` hoặc `Revision Requested`.
 - **Quy tắc:** Chỉ ICPDP quyết định task cũ; quy tắc này không áp dụng cho đặt phòng trực tiếp.
 - **Đầu ra:** `ApprovalDecision`, `AuditLog`, thông báo.
