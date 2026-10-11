@@ -178,6 +178,12 @@ này — không có luồng "budget request" riêng.
 Các khoản chi kèm chứng từ, và bản quyết toán sau sự kiện (UC36).
 
 **Hỏi: `Review decisions & disbursements` gửi cho CLB những gì?**
+Với báo cáo định kỳ (UC39), quyết định gồm yêu cầu sửa kèm nhận xét chỉ rõ phần chưa đúng mẫu
+hoặc còn thiếu, và chấp nhận khi đạt yêu cầu. CLB sửa, nộp version mới qua UC38 rồi ICPDP
+xét lại đến khi duyệt. Hai chức năng quyết định thuộc `Manage evaluation` trên use case diagram;
+context diagram vẫn dùng các luồng `Review decisions` và `Review decisions & disbursements`,
+không cần thêm luồng hoặc actor.
+
 Quyết định của ICPDP về đề xuất sự kiện, báo cáo sự kiện, báo cáo định kỳ, booking, và các lần giải
 ngân / cấp bù / số phải hoàn (UC26, UC34, UC35, UC39, UC46).
 

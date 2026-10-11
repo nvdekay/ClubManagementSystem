@@ -118,7 +118,7 @@ D4: đổi thời gian/địa điểm phải duyệt lại; nội bộ không ng
 
 | Feature | UC | Việc chính |
 |---|---|---|
-| `feat-periodic-reports` | UC38, UC39 | Báo cáo hoạt động định kỳ và thẩm định. |
+| `feat-periodic-reports` | UC38, UC39 | Báo cáo định kỳ: kiểm tra đúng mẫu và đủ nội dung, yêu cầu sửa kèm nhận xét, nộp version mới, xét lại đến khi duyệt. Hai nhánh quyết định UC39 thuộc nhóm `Manage evaluation` trên sơ đồ. |
 | `feat-violations` | UC40 | Hồ sơ vi phạm, biện pháp khắc phục (`correctiveActions`); liên kết UC15 A1. |
 | `feat-club-evaluation` | UC41, UC42, UC43 | Cấu hình scheme; sinh bản nháp từ dữ liệu thật (điểm danh, feedback, báo cáo, tài chính); xem lại, chốt và công bố. |
 

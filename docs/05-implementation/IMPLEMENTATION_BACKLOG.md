@@ -95,7 +95,7 @@
 ## 8. Đợt G — Báo cáo định kỳ, tuân thủ và đánh giá (UC38–UC43)
 
 - [ ] **G1 · Mongo** `periodicReports`, `violations`, `correctiveActions`, `evaluationSchemes`, `evaluationDimensions`, `evaluations`, `evaluationDimensionResults`; index club/kỳ/version/state và provenance của từng dimension. Không ghi đè báo cáo, scheme, evaluation đã công bố.
-- [ ] **G2 · UC38–39** CLB lập báo cáo theo kỳ policy UC04, nạp dữ liệu thực, snapshot lúc nộp, sửa thành version mới; ICPDP thẩm định, trả lại/chấp nhận/ghi nhận không nộp; dashboard và BR21 dùng đúng trạng thái trễ. UI CLB: reports/report-form/status; ICPDP: reports/periodic-review.
+- [ ] **G2 · UC38–39** CLB lập báo cáo theo kỳ policy UC04, nạp dữ liệu thực, snapshot lúc nộp, sửa thành version mới; ICPDP kiểm tra đúng mẫu, đủ nội dung và minh chứng, trả lại kèm nhận xét bắt buộc/chấp nhận/ghi nhận không nộp; CLB đọc nhận xét, nộp version mới và ICPDP xét lại đến khi duyệt; hai nhánh yêu cầu sửa và duyệt thuộc `Manage evaluation` trên sơ đồ (UC39); dashboard và BR21 dùng đúng trạng thái trễ. UI CLB: reports/report-form/status; ICPDP: reports/periodic-review.
 - [ ] **G3 · UC40** Hồ sơ vi phạm từ review, tài chính, booking, khiếu nại và thao tác nhập tay; timeline, chứng cứ, giải trình, quyết định, corrective action, liên kết UC15; quyền riêng tư và audit. UI CLB: compliance/cases/case/forwarded; ICPDP: compliance/case/case-resolve.
 - [ ] **G4 · UC41–43** ICPDP version scheme và validate trọng số, sinh draft từ các nguồn có lineage; thiếu dữ liệu là `Insufficient data`, không chấm 0; chấm tay có lý do, chốt/công bố, sửa sau công bố theo version; CLB xem kết quả/xu hướng. UI ICPDP: eval-scheme/draft/publish; CLB: evaluation.
 

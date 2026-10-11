@@ -716,11 +716,16 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
 - **Tự động nạp sẵn:** sự kiện, thành viên, điểm danh, tài chính. **Nhập tay:** phần thuyết minh
   và minh chứng mà hệ thống không có.
 - **Quy tắc:** BR20; deadline và các mốc nhắc đến từ UC04 và §19.
+- **Sửa và nộp lại (A2):** thành viên đọc nhận xét, sửa phần chưa đúng mẫu hoặc còn thiếu;
+  nộp version mới, giữ version cũ và tạo task UC39 mới. Lặp lại đến khi được chấp nhận.
 - **Liên quan:** UC39 · **Pain point:** BP14
 
 #### UC39 — Thẩm định báo cáo hoạt động định kỳ
-- **Actor:** ICPDP · **Kết quả:** chấp nhận — báo cáo trở thành đầu vào đánh giá — hoặc trả về
-  để sửa. · **Liên quan:** UC38, UC42
+- **Actor:** ICPDP · **Kiểm tra:** đúng mẫu, đủ các mục bắt buộc và minh chứng, đối chiếu số liệu hệ thống.
+- **Kết quả:** chấp nhận → `Accepted`, đầu vào UC42; chưa đạt → `Returned for correction`,
+  bắt buộc nhận xét chỉ rõ các phần cần sửa và thông báo CLB. CLB nộp version mới qua UC38
+  và ICPDP thẩm định lại đến khi chấp nhận. · **Liên quan:** UC38, UC42
+- **Nhóm chức năng trên sơ đồ ICPDP:** `Assess periodic report` nằm trong `Manage compliance`; `Request periodic report revision` và `Approve periodic report` nằm trong `Manage evaluation`. Hai chức năng sau là các nhánh quyết định của UC39, không tạo mã UC mới và không thay đổi module sở hữu `PeriodicReport` (M08). Phía CLB, `Revise and resubmit periodic report` là UC38 A2 trong `Manage reports`, cần permission `club.report.submit`.
 
 #### UC40 — Quản lý hồ sơ vi phạm và tuân thủ
 - **Actor:** ICPDP
@@ -900,7 +905,8 @@ Sự kiện:    UC25 Đề xuất ⇄ UC26 Thẩm định&Quyết định → UC
 Tài chính:  UC26 duyệt ngân sách trong đề xuất → UC35 Giải ngân → UC36 Khoản chi+Chứng từ
                                                       → UC37 Đối soát
 Cơ sở VC:   UC44 Danh mục → UC45 Yêu cầu ⇄ UC46 Thẩm định&Quyết định → UC47 Theo dõi/Trả
-Báo cáo:    UC38 Nộp → UC39 Thẩm định
+Báo cáo:    UC38 Nộp → UC39 Thẩm định → Accepted → UC42
+            UC39 trả về → UC38 sửa và nộp version mới → UC39 xét lại (lặp đến khi duyệt)
 Phản hồi:   UC31 Check-in → UC48 Phản hồi → UC49 CMB xem → UC33 Báo cáo
 Khiếu nại:  UC50 Gửi → UC51 Phân loại ─┬─ Bác bỏ
                                        ├─ Chuyển xuống → UC52 CLB trả lời

@@ -531,7 +531,9 @@ Student gửi khiếu nại về một CLB (UC50) → Submitted
 ### F8 — Báo cáo định kỳ và tuân thủ
 
 ```text
-Club Member nộp báo cáo hoạt động định kỳ (UC38) → ICPDP thẩm định (UC39)
+Club Member nộp báo cáo hoạt động định kỳ (UC38) → ICPDP kiểm tra đúng mẫu, đủ nội dung và minh chứng (UC39)
+    ├─ chưa đạt → trả về kèm nhận xét → CLB sửa, nộp version mới (UC38 A2) → thẩm định lại (UC39)
+    └─ đạt → Accepted → đầu vào đánh giá UC42; lặp nhánh sửa đến khi được chấp nhận
 Các tín hiệu tuân thủ: báo cáo trễ / thiếu (UC33, UC34, UC38, UC39), quyết toán hoặc hoàn trả quá hạn
   (UC37), khiếu nại leo thang (UC51), huỷ muộn (UC28, UC47)
 → ICPDP mở hồ sơ vi phạm (UC40) → Open → Under Investigation → Awaiting Club Response
@@ -1883,7 +1885,7 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | **Kích hoạt** | Kỳ báo cáo kết thúc, hoặc deadline đến gần |
 | **Tiền điều kiện** | CLB đang `Active`, hoặc `Suspended` nhưng còn nghĩa vụ; kỳ báo cáo được định nghĩa ở UC04 |
 | **Dữ liệu vào** | Phần thuyết minh, kế hoạch kỳ sau, minh chứng mà hệ thống không có sẵn |
-| **Thực thể / trạng thái** | `PeriodicReport`: `Draft → Submitted` |
+| **Thực thể / trạng thái** | `PeriodicReport`: `Draft → Submitted`; `Returned for correction → Submitted` (version mới) |
 | **Quy tắc** | BR20, BR54 |
 | **Liên quan · Pain point** | UC04, UC39 · BP14 |
 
@@ -1894,7 +1896,7 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | FR-UC38-03 | Thu thập phần thuyết minh, kế hoạch kỳ sau và mọi minh chứng bên ngoài |
 | FR-UC38-04 | Chuyển `Submitted` khi nộp, đóng băng số liệu nạp sẵn và tạo task cho ICPDP |
 | FR-UC38-05 | *(A1)* Cho lưu báo cáo ở `Draft` và hoàn thiện trước deadline |
-| FR-UC38-06 | *(A2)* Cho nộp lại như một version mới với báo cáo bị UC39 trả về |
+| FR-UC38-06 | *(A2)* Cho thành viên xem nhận xét của ICPDP, sửa các phần chưa đúng mẫu hoặc còn thiếu và nộp lại báo cáo bị UC39 trả về như một version mới; giữ lịch sử các version, chuyển về `Submitted` và tạo task thẩm định mới. Lặp lại UC38–UC39 đến khi báo cáo được chấp nhận |
 | FR-UC38-07 | *(E1)* Vẫn nhận báo cáo trễ nhưng đánh dấu trễ, dữ liệu này đi vào BR21 và kỳ đánh giá |
 | FR-UC38-08 | Lấy deadline và các mốc nhắc từ UC04 và §8.2 |
 | FR-UC38-09 | *(E)* Từ chối khi người gọi thiếu permission `club.report.submit` trong CLB đó (BR54) |
@@ -1903,6 +1905,8 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 **Đầu ra** — `PeriodicReport`, `ApprovalTask`.
 
 ### UC39 — Thẩm định báo cáo hoạt động định kỳ
+
+**Nhóm chức năng trên sơ đồ ICPDP:** `Assess periodic report` nằm trong `Manage compliance`; `Request periodic report revision` và `Approve periodic report` nằm trong `Manage evaluation`. Hai chức năng sau là các nhánh quyết định của UC39, không tạo mã UC mới và không thay đổi module sở hữu `PeriodicReport` (M08). Phía CLB, `Revise and resubmit periodic report` là UC38 A2 trong `Manage reports`, cần permission `club.report.submit`.
 
 | | |
 |---|---|
@@ -1916,14 +1920,14 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC39-01 | Hiển thị báo cáo cạnh số liệu của chính hệ thống trong cùng kỳ |
-| FR-UC39-02 | Cho officer chấp nhận báo cáo, hoặc trả về để sửa kèm nhận xét có cấu trúc |
+| FR-UC39-01 | Hiển thị báo cáo cạnh số liệu của chính hệ thống trong cùng kỳ, mẫu báo cáo áp dụng và nhận xét của các lần thẩm định trước; cho officer kiểm tra đúng mẫu, đầy đủ các mục bắt buộc và minh chứng |
+| FR-UC39-02 | Cho officer chấp nhận báo cáo khi đạt yêu cầu, hoặc trả về để sửa khi chưa đúng mẫu, thiếu nội dung hoặc minh chứng; bắt buộc nhận xét có cấu trúc chỉ rõ từng phần cần sửa. Báo cáo trả về chưa được dùng làm đầu vào UC42; sau khi CLB nộp version mới qua UC38, officer thẩm định lại đến khi chấp nhận |
 | FR-UC39-03 | Ghi audit kết quả và thông báo cho CLB |
 | FR-UC39-04 | *(A1)* Hỗ trợ chấp nhận kèm một ghi nhận được lưu lại cho kỳ đánh giá |
 | FR-UC39-05 | *(E1)* Cho officer ghi nhận việc không nộp đúng hạn, dữ liệu này đi vào BR21 và kỳ đánh giá |
 | FR-UC39-06 | Đưa báo cáo được chấp nhận thành đầu vào đánh giá cho UC42 |
 
-**Hậu điều kiện** — báo cáo được chấp nhận trở thành đầu vào đánh giá. **Đầu ra** — quyết định về báo cáo, bản ghi audit.
+**Hậu điều kiện** — báo cáo ở `Accepted` hoặc `Returned for correction`. Chỉ báo cáo được chấp nhận trở thành đầu vào UC42; báo cáo trả về chờ CLB sửa và nộp lại qua UC38. **Đầu ra** — quyết định về báo cáo, nhận xét chỉ rõ phần cần sửa, thông báo cho CLB và bản ghi audit.
 
 ### UC40 — Quản lý hồ sơ vi phạm và tuân thủ
 
@@ -3349,7 +3353,8 @@ Sự kiện:     UC25 Đề xuất ⇄ UC26 Thẩm định&Quyết định → U
 Tài chính:   UC26 duyệt ngân sách trong đề xuất → UC35 Giải ngân → UC36 Khoản chi+Chứng từ
                                                                       → UC37 Đối soát
 Cơ sở VC:    UC44 Danh mục → UC45 Yêu cầu ⇄ UC46 Thẩm định&Quyết định → UC47 Theo dõi/Trả
-Báo cáo:     UC38 Nộp → UC39 Thẩm định
+Báo cáo:     UC38 Nộp → UC39 Thẩm định → Accepted → UC42
+             UC39 trả về → UC38 sửa và nộp version mới → UC39 xét lại (lặp đến khi duyệt)
 Phản hồi:    UC31 Check-in → UC48 Phản hồi → UC49 CMB xem → UC33 Báo cáo
 Khiếu nại:   UC50 Gửi → UC51 Phân loại ─┬─ Bác bỏ
                                         ├─ Chuyển xuống → UC52 CLB trả lời

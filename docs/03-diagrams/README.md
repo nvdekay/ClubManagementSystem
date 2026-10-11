@@ -23,7 +23,12 @@ use case quản lý danh mục thì tách theo CRUD, ví dụ `Manage properties
 Deactivate property`). Oval chỉ ghi tên, không ghi mã UC. Không vẽ `«extend»`: hai quan hệ
 UC45→UC25 và UC47→UC28 chỉ ghi trong Spec (luồng thay thế, Related UC); điều hướng màn hình và
 cascade hệ thống cũng không vẽ thành quan hệ. Actor phụ nối bằng association nét liền; đăng nhập là *tiền điều kiện* của
-dashboard. Nguồn sinh file `.drawio` là cấu trúc trang trong I55.
+dashboard. Nguồn sinh file `.drawio` là cấu trúc trang trong I55; thay đổi nhóm chức năng báo cáo
+định kỳ theo I65: `Request periodic report revision` và `Approve periodic report` thuộc
+`Manage evaluation`, còn `Assess periodic report` thuộc `Manage compliance`. Hai oval
+quyết định vẫn là các nhánh UC39; `Revise and resubmit periodic report` là UC38 A2 trong
+`Manage reports` phía CLB. Vòng sửa–nộp lại–thẩm định lặp đến khi được chấp nhận được mô tả
+trong SRS và đặc tả, không biến thành chuỗi `include` giữa các bước quyết định.
 
 **RBAC trên các trang Club Member 1–3:** mỗi khung nét đứt trong boundary là **một** permission
 CLB (danh mục ở `../SRS.md` §2.3, BR54), nhãn khung là đúng mã permission (`club.event.manage`, …).

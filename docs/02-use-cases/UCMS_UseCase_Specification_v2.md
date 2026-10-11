@@ -1375,7 +1375,9 @@ lại UC06–UC52.
   4. Thành viên nộp → `Submitted`; ICPDP nhận một task.
 - **Luồng thay thế:**
   - **A1 Bản nháp:** được lưu lại và hoàn thiện trước deadline.
-  - **A2 Sửa lại:** một báo cáo bị UC39 trả về được nộp lại dưới dạng một version mới.
+  - **A2 Sửa lại:** thành viên xem nhận xét của ICPDP, sửa các phần chưa đúng mẫu hoặc còn thiếu
+    và nộp lại dưới dạng một version mới; giữ lịch sử các version. Hệ thống chuyển về
+    `Submitted` và tạo task thẩm định mới cho UC39. Lặp lại đến khi báo cáo được chấp nhận.
 - **Ngoại lệ:** **E1** đã quá deadline → vẫn được nhận nhưng bị đánh dấu trễ, và dữ liệu này đi
   vào BR21 cùng kỳ đánh giá.
   **E2** người gọi thiếu permission `club.report.submit` trong CLB → từ chối (BR54).
@@ -1387,21 +1389,30 @@ lại UC06–UC52.
 
 ## UC39 – Thẩm định báo cáo hoạt động định kỳ
 
+**Nhóm chức năng trên sơ đồ ICPDP:** `Assess periodic report` nằm trong `Manage compliance`; `Request periodic report revision` và `Approve periodic report` nằm trong `Manage evaluation`. Hai chức năng sau là các nhánh quyết định của UC39, không tạo mã UC mới và không thay đổi module sở hữu `PeriodicReport` (M08). Phía CLB, `Revise and resubmit periodic report` là UC38 A2 trong `Manage reports`, cần permission `club.report.submit`.
+
 - **Actor chính:** ICPDP Officer
 - **Module:** M08
 - **Mục tiêu nghiệp vụ:** Xác nhận báo cáo để nó dùng được làm đầu vào đánh giá.
 - **Kích hoạt:** Một task từ UC38.
 - **Tiền điều kiện:** Báo cáo đang ở `Submitted`.
 - **Luồng chính:**
-  1. Officer mở báo cáo và đối chiếu nó với số liệu của chính hệ thống.
-  2. Officer chấp nhận báo cáo, hoặc trả về để sửa kèm nhận xét có cấu trúc.
+  1. Officer mở báo cáo, mẫu áp dụng và lịch sử nhận xét; kiểm tra đúng mẫu, đầy đủ các mục
+     bắt buộc và minh chứng, rồi đối chiếu với số liệu của chính hệ thống.
+  2. Officer chấp nhận báo cáo khi đạt yêu cầu.
   3. Hệ thống ghi audit kết quả và thông báo cho CLB.
 - **Luồng thay thế:**
   - **A1 Chấp nhận kèm ghi nhận:** báo cáo được chấp nhận kèm một ghi nhận được lưu lại cho kỳ
     đánh giá.
+  - **A2 Yêu cầu chỉnh sửa:** tại bước 2, báo cáo chưa đúng mẫu, thiếu nội dung hoặc minh chứng
+    → officer trả về, bắt buộc ghi nhận xét có cấu trúc chỉ rõ các phần cần sửa. Hệ thống
+    lưu quyết định và thông báo cho CLB; báo cáo chưa được dùng làm đầu vào UC42. Thành viên
+    sửa và nộp version mới qua UC38 A2; officer thực hiện lại bước 1–3 đến khi chấp nhận.
 - **Ngoại lệ:** **E1** không có báo cáo nào được nộp đúng hạn → officer ghi nhận việc không nộp,
   và dữ liệu này đi vào BR21 cùng kỳ đánh giá.
-- **Hậu điều kiện:** Một báo cáo được chấp nhận trở thành đầu vào đánh giá cho UC42.
+- **Hậu điều kiện:** Báo cáo ở `Accepted` hoặc `Returned for correction`. Chỉ báo cáo được
+  chấp nhận trở thành đầu vào UC42; báo cáo trả về chờ sửa và nộp lại qua UC38. Nhận xét,
+  quyết định và lịch sử các version được giữ để đối chiếu các lần thẩm định.
 - **Quy tắc nghiệp vụ:** BR05, BR21.
 - **Đầu ra:** Quyết định về báo cáo, bản ghi audit.
 - **Use case liên quan:** UC38, UC42
