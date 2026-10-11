@@ -29,6 +29,8 @@ const eventTabs = [
   { value: "ended", label: "discovery.statusEnded" },
 ] as const satisfies ReadonlyArray<{ value: PublicEventStatus; label: string }>;
 
+/** Logos shown before the "+N" tile: one full row of twelve cells on wide screens. */
+const LOGO_COUNT = 11;
 const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app";
 const moreLink = "inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-primary-app no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app";
 
@@ -167,18 +169,20 @@ export function PublicHome() {
         </ul>
       </div>
 
-      {/* Club logos ------------------------------------------------------------------------ */}
+      {/* Clubs on the platform: one full-width row of logos, then "+N" for the rest */}
       <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-8 sm:pt-20">
         {sectionTitle({ title: t("discovery.logoWallTitle"), description: t("discovery.logoWallText"),
           action: <Link to="/clubs" className={moreLink}>{t("discovery.viewDirectory")}<AppIcon name="chevronRight" className="size-4" /></Link> })}
         {clubs.isPending ? (
-          <div role="status" className="mt-8 flex flex-wrap gap-6">{[0, 1, 2, 3, 4, 5].map((item) => <AppSkeleton key={item} className="size-20 rounded-full" />)}</div>
+          <div role="status" className="mt-8 grid grid-cols-4 gap-6 sm:grid-cols-6 lg:grid-cols-12">
+            {Array.from({ length: 12 }, (_, item) => <AppSkeleton key={item} className="mx-auto size-20 rounded-full" />)}
+          </div>
         ) : clubs.isError ? (
           <p role="alert" className="mt-8 text-sm text-danger-app">{t("discovery.loadError")}</p>
-        ) : (
-          <ul className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-6 sm:justify-start">
-            {(clubList.length > 6 ? clubList.slice(6, 18) : clubList).map((club) => (
-              <li key={club.id} className="w-24">
+        ) : clubList.length ? (
+          <ul className="mt-8 grid grid-cols-4 gap-x-4 gap-y-6 sm:grid-cols-6 lg:grid-cols-12">
+            {clubList.slice(0, LOGO_COUNT).map((club) => (
+              <li key={club.id} className="min-w-0">
                 <Link to={`/clubs/${club.id}`} title={club.name} className={cn("group flex flex-col items-center gap-2 rounded-2xl text-center no-underline", focusRing)}>
                   <span className="rounded-full p-1 ring-2 ring-border-app transition-colors group-hover:ring-primary-app">
                     <ClubLogo name={club.name} logoUrl={club.logoUrl} size={72} className="rounded-full" />
@@ -187,35 +191,18 @@ export function PublicHome() {
                 </Link>
               </li>
             ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Featured clubs --------------------------------------------------------------------- */}
-      <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-8 sm:pt-20">
-        {sectionTitle({ title: t("discovery.clubsTitle"),
-          action: <Link to="/clubs" className={moreLink}>{t("discovery.viewDirectory")}<AppIcon name="chevronRight" className="size-4" /></Link> })}
-        {clubs.isPending ? (
-          <div role="status" className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-48 rounded-3xl" />)}</div>
-        ) : clubs.isError ? null : clubList.length ? (
-          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {clubList.slice(0, 6).map((club) => (
-              <li key={club.id}>
-                <Link to={`/clubs/${club.id}`} className={cn("group flex h-full flex-col gap-4 rounded-3xl border border-border-app bg-bg-app p-6 no-underline transition-all hover:-translate-y-1 hover:border-primary-app hover:shadow-xl", focusRing)}>
-                  <div className="flex items-start gap-4">
-                    <ClubLogo name={club.name} logoUrl={club.logoUrl} size={64} />
-                    <span className="min-w-0 flex-1">
-                      <span className="inline-flex rounded-full bg-primary-soft-app px-2.5 py-0.5 text-xs font-semibold text-primary-app">{club.field}</span>
-                      <span className="mt-1.5 block font-heading text-lg leading-snug font-bold break-words text-text-app group-hover:text-primary-app">{club.name}</span>
+            {(clubs.data?.total ?? 0) > LOGO_COUNT && (
+              <li className="min-w-0">
+                <Link to="/clubs" title={t("discovery.viewDirectory")} className={cn("group flex flex-col items-center gap-2 rounded-2xl text-center no-underline", focusRing)}>
+                  <span className="rounded-full p-1 ring-2 ring-border-app transition-colors group-hover:ring-primary-app">
+                    <span className="flex size-[72px] items-center justify-center rounded-full bg-primary-soft-app font-heading text-lg font-extrabold text-primary-app">
+                      +{(clubs.data?.total ?? 0) - LOGO_COUNT}
                     </span>
-                  </div>
-                  <p className="line-clamp-3 flex-1 text-sm text-muted-app">{club.description || club.code}</p>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary-app">
-                    {t("discovery.clubCardCta")}<AppIcon name="chevronRight" className="size-4 transition-transform group-hover:translate-x-0.5" />
                   </span>
+                  <span className="text-xs font-semibold text-primary-app">{t("discovery.moreClubs")}</span>
                 </Link>
               </li>
-            ))}
+            )}
           </ul>
         ) : <p className="mt-8 text-sm text-muted-app">{t("discovery.noClubs")}</p>}
       </section>
