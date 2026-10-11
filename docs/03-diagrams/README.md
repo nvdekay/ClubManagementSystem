@@ -7,8 +7,8 @@ tương ứng của VS Code.
 |---|---|
 | [`UCMS_Context_Diagram_v2.1.drawio`](UCMS_Context_Diagram_v2.1.drawio) | **Context diagram hiện hành** — biên hệ thống và 46 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64) |
 | [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | Context diagram v2 (57 luồng, gần như mỗi use case một luồng). **Đã bị thay thế** bởi v2.1; giữ lại làm lịch sử |
-| [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 — mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Leader, Club Member 1–3, ICPDP 1–3 |
-| [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking |
+| [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 và UC58 (phân phòng học theo học kỳ, thêm 2026-10-11) — mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Leader, Club Member 1–3, ICPDP 1–3 |
+| [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`) |
 | [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
 | [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | Context diagram đầu tiên của nhóm (40 luồng). **Đã bị thay thế**; giữ lại làm lịch sử |
 | [`img/`](img/) | Bản xuất PNG, đặt tên theo `<tên-file-nguồn>_<số-trang>_<tên-trang>.png` |
@@ -30,3 +30,11 @@ CLB (danh mục ở `../SRS.md` §2.3, BR54), nhãn khung là đúng mã permiss
 Mỗi nhóm `Manage …` chỉ nằm trong một khung, nên không được gộp chức năng của hai permission vào
 cùng một nhóm. Khung `No permission required` chứa UC22, UC24. Bốn quyền giữ riêng của Club Leader
 (BR55) chỉ vẽ ở trang Club Leader.
+
+**PNG chưa xuất lại (2026-10-11, UC58).** Nguồn `.drawio` đã cập nhật nhưng máy sửa không có
+draw.io CLI, nên các bản xuất sau trong `img/` vẫn là bản cũ và cần xuất lại:
+`UCMS_UseCase_ByActor_04_Club-Member-1-Club-recruitment.png` (thêm View allocated rooms),
+`UCMS_UseCase_ByActor_05_Club-Member-2-Events-bookings.png` (bỏ Reserve available room),
+`UCMS_UseCase_ByActor_08_ICPDP-2-Events-bookings-finance.png` (bỏ Authorize room overbooking,
+thêm Manage room allocations), `UCMS_State_Diagrams_08_Property-Booking.png` (UC58 tạo buổi
+`Approved`, thu hồi → `Released`).

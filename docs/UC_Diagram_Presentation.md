@@ -46,7 +46,7 @@
 > Cloudinary chỉ là nơi lưu ảnh, nên hai hệ thống này nằm ở context diagram.
 >
 > Nhóm tách sơ đồ theo actor. Actor nào nhiều chức năng thì tách tiếp theo mảng nghiệp vụ, để
-> mỗi hình vừa một trang. Tổng cộng **9 hình, phủ đủ 52 use case** được đặc tả ở mục 3.2.
+> mỗi hình vừa một trang. Tổng cộng **9 hình, phủ đủ 53 use case** được đặc tả ở mục 3.2.
 >
 > Mọi hình đọc theo cùng một cách: actor chỉ nối tới vài use case lớn dạng *"Manage …"*, và mỗi
 > use case lớn **include** các chức năng con. Với chức năng kiểu danh mục, chức năng con được tách
@@ -59,7 +59,7 @@
 ### Ghi chú cho người nói
 
 - Câu "người nộp / người duyệt tách riêng" là sợi chỉ đỏ — nhắc lại ở hình 3, 7, 8 khi chỉ ra cặp tương ứng.
-- Nếu hội đồng hỏi ngay "52 là đếm thế nào" → xem [bảng tổng](#bảng-tổng-52-use-case-theo-hình).
+- Nếu hội đồng hỏi ngay "53 là đếm thế nào" → xem [bảng tổng](#bảng-tổng-53-use-case-theo-hình).
 
 ---
 
@@ -279,8 +279,9 @@ Hệ thống cảnh báo và liệt kê những gì sẽ bị huỷ nếu ICPDP 
 > role — RBAC. Ví dụ trưởng ban truyền thông có thể được giao quyền tạo đợt tuyển mà không cần là
 > chủ nhiệm.
 >
-> - **Manage my membership** include **View member workspace** và **Request to leave club**. Hai
->   việc này mọi thành viên đều làm được, không cần quyền gì thêm.
+> - **Manage my membership** include **View member workspace**, **Request to leave club** và
+>   **View allocated rooms** — xem lịch phòng học ICPDP đã phân cho CLB (UC58, chỉ đọc). Ba việc
+>   này mọi thành viên đều làm được, không cần quyền gì thêm.
 > - **Manage club profile** include View club profile, Update club information và Define club
 >   structure — hồ sơ CLB và các ban, bộ phận.
 > - **Manage recruitment campaigns** include Create, Update và Publish recruitment campaign.
@@ -295,6 +296,7 @@ Hệ thống cảnh báo và liệt kê những gì sẽ bị huỷ nếu ICPDP 
 |---|---|---|
 | View member workspace | UC24 | — (mọi thành viên `Active`/`Inactive`) |
 | Request to leave club | UC22 | — (mọi thành viên) |
+| View allocated rooms | UC58 (đọc) | — (mọi thành viên `Active`); actor chính của UC58 là ICPDP |
 | View club profile / Update club information / Define club structure | UC09 | `club.profile.manage` |
 | Create / Update / Publish recruitment campaign | UC16 | `club.recruitment.manage` |
 | Screen applications | UC18 | `club.application.review` |
@@ -347,7 +349,7 @@ nghĩa vụ còn treo.
 
 ### Script
 
-> Hình thứ hai của Club Member là sự kiện và đặt phòng.
+> Hình thứ hai của Club Member là sự kiện và đặt cơ sở vật chất.
 >
 > **Manage events** include:
 > - **Submit event proposal**: nộp đề xuất sự kiện. **Ngân sách sự kiện nằm luôn trong đề xuất** —
@@ -358,8 +360,10 @@ nghĩa vụ còn treo.
 >   trả phòng, tính lại ngân sách.
 > - **Manage waitlist**: quản lý sức chứa, đôn người từ danh sách chờ theo đúng thứ tự.
 >
-> **Manage bookings** include **Reserve available room** và **Cancel / release booking**. CLB
-> chọn phòng còn trống và đặt ngay; không được tự đặt trùng kể cả khi policy bật.
+> **Manage bookings** include **Request facility booking** và **Cancel / release booking**. CLB
+> chỉ xin hội trường, sân ngoài trời, sân khấu hoặc thiết bị (`HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`),
+> yêu cầu đi qua ICPDP duyệt ở UC46. Phòng học (`ROOM`) không còn đặt ở đây: ICPDP phân theo học
+> kỳ (UC58), CLB chỉ xem ở **View allocated rooms** (hình III.3.4).
 
 ### Bảng ánh xạ
 
@@ -369,8 +373,8 @@ nghĩa vụ còn treo.
 | Publish event | UC27 | Chỉ khi `Approved` (BR14) → `Upcoming` |
 | Cancel / reschedule event | UC28 | Huỷ sự kiện tự giải phóng booking (BR35) |
 | Manage waitlist | UC30 | Đôn chỗ theo chính sách |
-| Reserve available room | UC45 | Chỉ đặt phòng còn trống; CLB `Active` hoặc `Dissolving` trong giới hạn học kỳ (BR33, BR34, BR45) |
-| Cancel / release booking | UC47 | Huỷ sát giờ là tín hiệu tuân thủ |
+| Request facility booking | UC45 | Chỉ `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`; Draft → Requested → ICPDP duyệt; CLB `Active` hoặc `Dissolving` trong giới hạn học kỳ (BR15, BR34, BR45) |
+| Cancel / release booking | UC47 | Chỉ booking ngoài ROOM; huỷ sát giờ là tín hiệu tuân thủ |
 
 ### Q&A
 
@@ -383,7 +387,7 @@ song, dễ lệch nhau.
 Vì không có actor người. Nó là quy tắc nghiệp vụ BR15, chạy bên trong UC25 và UC45. Nguyên tắc của
 nhóm: actor chính phải là con người, không bao giờ là "System".
 
-**Hỏi: Đặt phòng kèm đề xuất sự kiện — sao không vẽ `<<extend>>`?**
+**Hỏi: Đặt cơ sở vật chất kèm đề xuất sự kiện — sao không vẽ `<<extend>>`?**
 Quan hệ đó có thật (UC45 mở rộng UC25, UC47 mở rộng UC28) và được ghi ở luồng thay thế trong đặc tả.
 Không vẽ vì hai use case nằm ở hai nhóm "Manage" khác nhau, vẽ ra sẽ nối chéo và rối hình.
 
@@ -407,8 +411,9 @@ Bật danh sách chờ thì người đăng ký sau vào `Waitlisted`; không b�
 Số đăng ký xác nhận không bao giờ vượt sức chứa trừ khi chính sách cho phép overbooking (BR17).
 
 **Hỏi: CLB có thể giữ phòng mãi không?**
-Không. Booking không dùng nữa phải trả qua UC47; sự kiện huỷ thì booking tự giải phóng. Huỷ sát giờ
-được ghi nhận làm tín hiệu tuân thủ.
+Không. Booking cơ sở vật chất không dùng nữa phải trả qua UC47; sự kiện huỷ thì booking tự giải
+phóng. Huỷ sát giờ được ghi nhận làm tín hiệu tuân thủ. Phòng học do ICPDP phân chỉ có hiệu lực
+trong một học kỳ (UC58), sang kỳ sau ICPDP phân lại; CLB không tự đặt hay huỷ phòng học.
 
 ---
 
@@ -560,9 +565,12 @@ Không. Audit là quy tắc xuyên suốt (BR05). Lịch sử quyết định đ
 >   kèm** — và **Close event report** — đối chiếu kế hoạch với thực tế rồi đóng sự kiện.
 > - **Manage properties** include Add, View, Update, Deactivate property: danh mục phòng và thiết bị
 >   mà CLB được phép đặt.
-> - **Manage bookings** include **Decide facility booking request** và **Authorize room overbooking**.
->   Chỉ ICPDP được đặt trùng, khi policy bật và nhập lý do; server lưu lịch sử ngoại lệ.
->   Tài sản ngoài ROOM phải gửi ICPDP duyệt. Phòng học còn trống được CLB đặt trực tiếp, độc lập với duyệt sự kiện.
+> - **Manage bookings** include **Decide facility booking request**: duyệt yêu cầu hội trường, sân
+>   ngoài trời, sân khấu, thiết bị. Duyệt trùng chỉ khi policy bật và nhập lý do (BR33).
+> - **Manage room allocations** include **Allocate club room by semester**, **View room allocations**
+>   và **Revoke room allocation** (UC58): trước hoặc trong học kỳ, ICPDP chọn CLB, phòng học, thứ và
+>   slot — ví dụ "Slot 4, Thứ 4" — hệ thống giữ phòng đó mọi tuần của học kỳ. Ngày nào trùng lịch
+>   thì từ chối cả đợt; phòng học không bao giờ đặt trùng. Thu hồi phải có lý do.
 > - **Manage budget** include **Record disbursement** — ghi nhận tiền tạm ứng, cấp bù, và tiền CLB
 >   hoàn lại — và **Reconcile budget** — đối soát với quyết toán của CLB, xác định CLB được cấp bù
 >   hay phải hoàn lại bao nhiêu.
@@ -577,16 +585,21 @@ Không. Audit là quy tắc xuyên suốt (BR05). Lịch sử quyết định đ
 | Decide event proposal | UC26 | Cặp với UC25; ngân sách vượt ngưỡng → cấp 2 (BR16) |
 | Close event report | UC34 | Cặp với UC33; phát hiện sai phạm → mở hồ sơ UC40 |
 | Add / View / Update / Deactivate property | UC44 | Property còn booking tương lai chỉ ngừng kích hoạt, không xoá |
-| Decide facility booking request | UC46 | Thẩm định yêu cầu tài sản ngoài ROOM và ROOM legacy; slot trùng cần lý do ngoại lệ và policy bật |
-| Authorize room overbooking | UC46 | Chỉ ICPDP; policy bật và có lý do; không bỏ qua blackout (BR33) |
+| Decide facility booking request | UC46 | Chỉ `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`; slot trùng cần lý do ngoại lệ và policy bật (BR33) |
+| Allocate / View / Revoke room allocation | UC58 | Một CLB mỗi phòng/thứ/slot mỗi học kỳ; xung đột → từ chối cả đợt; bỏ qua ngày blackout; thu hồi giữ buổi đã qua (BR62) |
 | Record disbursement | UC35 | Tổng tạm ứng + cấp bù ≤ số duyệt (BR23) |
 | Reconcile budget | UC37 | Ngân sách chỉ đóng khi chênh lệch đã tất toán (BR26) |
 
 ### Q&A
 
 **Hỏi: Duyệt sự kiện rồi sao còn phải duyệt phòng?**
-Hai quyết định khác nhau: nội dung sự kiện hợp lệ chưa chắc phòng còn trống. Tách ra để một bên bị
-từ chối không chặn bên kia — sự kiện được duyệt vẫn có thể đổi phòng khác.
+Hai quyết định khác nhau: nội dung sự kiện hợp lệ chưa chắc địa điểm còn trống. Tách ra để một bên bị
+từ chối không chặn bên kia — sự kiện được duyệt vẫn có thể đổi địa điểm khác.
+
+**Hỏi: Sao CLB không tự đặt phòng học nữa?**
+Phòng học là tài nguyên dùng định kỳ cả học kỳ. ICPDP phân một lần theo mẫu tuần (UC58) để mỗi
+phòng/thứ/slot chỉ thuộc một CLB và không có ai đặt trùng; CLB đưa màn hình "Phòng được phân" để
+nhận chìa khoá.
 
 **Hỏi: ICPDP có duyệt ít tiền hơn CLB xin không?**
 Có. Khi phê duyệt, officer chốt số tiền duyệt theo từng dòng, có thể thấp hơn số xin nếu chính sách
@@ -687,7 +700,7 @@ ICPDP là người kích hoạt và chịu trách nhiệm bản nháp; hệ th�
 
 ### Script
 
-> Tóm lại, 9 hình phủ toàn bộ **52 use case**: phần chung, Student, Club Leader, 3 mảng của Club
+> Tóm lại, 9 hình phủ toàn bộ **53 use case**: phần chung, Student, Club Leader, 3 mảng của Club
 > Member và 3 mảng của ICPDP.
 >
 > Luồng chung của hệ thống: **CLB nộp → ICPDP quyết định → CLB giải trình → ICPDP giám sát và đánh
@@ -695,20 +708,20 @@ ICPDP là người kích hoạt và chịu trách nhiệm bản nháp; hệ th�
 >
 > Em xin hết phần use case diagram.
 
-### Bảng tổng: 52 use case theo hình
+### Bảng tổng: 53 use case theo hình
 
 | Hình | Actor / mảng | Use case | Số |
 |---|---|---|---|
 | III.3.1 | Mọi User | UC01, UC02 | 2 |
 | III.3.2 | Student | UC06, UC07, UC17, UC29, UC31, UC48, UC50 | 7 |
 | III.3.3 | Club Leader | UC10, UC12, UC14, UC23 | 4 |
-| III.3.4 | Club Member — CLB & tuyển | UC09, UC16, UC18, UC19, UC20, UC21, UC22, UC24 | 8 |
+| III.3.4 | Club Member — CLB & tuyển | UC09, UC16, UC18, UC19, UC20, UC21, UC22, UC24 (+ xem UC58, không đếm lại) | 8 |
 | III.3.5 | Club Member — sự kiện & booking | UC25, UC27, UC28, UC30, UC45, UC47 | 6 |
 | III.3.6 | Club Member — giải trình & tài chính | UC32, UC33, UC36, UC38, UC49, UC52 | 6 |
 | III.3.7 | ICPDP — truy cập & vòng đời CLB | UC03, UC04, UC05, UC08, UC11, UC13, UC15 | 7 |
-| III.3.8 | ICPDP — sự kiện, booking & tài chính | UC26, UC34, UC35, UC37, UC44, UC46 | 6 |
+| III.3.8 | ICPDP — sự kiện, booking & tài chính | UC26, UC34, UC35, UC37, UC44, UC46, UC58 | 7 |
 | III.3.9 | ICPDP — tuân thủ & đánh giá | UC39, UC40, UC41, UC42, UC43, UC51 | 6 |
-| | | **Tổng** | **52** |
+| | | **Tổng** | **53** |
 
 ### Bảng cặp nộp ↔ duyệt (dùng khi bị hỏi "ai duyệt cái này")
 
@@ -722,7 +735,7 @@ ICPDP là người kích hoạt và chịu trách nhiệm bản nháp; hệ th�
 | UC33 Submit event report | UC34 Close event report |
 | UC36 Submit settlement | UC37 Reconcile budget |
 | UC38 Submit periodic report | UC39 Assess periodic report |
-| UC45 Reserve available room / Request other facility | UC46 Decide facility booking request / Authorize room overbooking |
+| UC45 Request facility booking | UC46 Decide facility booking request |
 | UC50 Submit complaint | UC51 Triage complaint |
 
 ---
@@ -741,7 +754,7 @@ include để thể hiện phân rã chức năng, đây là cách vẽ phổ bi
 đơn vị được đặc tả. *(Nếu bị bắt bẻ: thừa nhận thẳng đây là quy ước trình bày, không cãi.)*
 
 **Hỏi: Sao không có `<<extend>>`?**
-Các nhánh tuỳ chọn — đặt phòng kèm đề xuất sự kiện (UC45→UC25), trả phòng khi huỷ sự kiện (UC47→UC28),
+Các nhánh tuỳ chọn — đặt cơ sở vật chất kèm đề xuất sự kiện (UC45→UC25), trả chỗ khi huỷ sự kiện (UC47→UC28),
 hoàn tiền khi đối soát — được ghi ở luồng thay thế trong đặc tả mục 3.2. Vẽ lên thì sẽ nối chéo giữa
 các nhóm, khó đọc.
 
@@ -781,24 +794,25 @@ Actor chính là Student nên chỉ vẽ ở hình Student.
 ### Tổng thể
 
 **Hỏi: Sao chia 9 hình mà không vẽ một hình tổng?**
-52 use case trên một trang không đọc được. Chia theo actor, rồi theo mảng nghiệp vụ; hình III.3.1 giữ
+53 use case trên một trang không đọc được. Chia theo actor, rồi theo mảng nghiệp vụ; hình III.3.1 giữ
 vai trò hình tổng về actor.
 
 **Hỏi: So với bản đầu tiên thay đổi gì?**
 Bản v1 có 57 use case: tách một phiên duyệt thành 3 use case, đếm cả "nộp lại" và "phát hiện xung đột"
 thành use case, có use case 2 actor chính. v2 gộp lại theo nguyên tắc *một actor chính, một kết quả
 nghiệp vụ*, và bổ sung các use case còn thiếu (dashboard, danh mục property, cấu hình, workspace thành
-viên, phản hồi khiếu nại) → 52.
+viên, phản hồi khiếu nại) → 52; ngày 2026-10-11 thêm UC58 phân phòng học theo học kỳ → 53.
 
 **Hỏi: Có chia giai đoạn phát hành (MVP / phase 2) không?**
-Không. Toàn bộ 52 use case phát hành cùng lúc, để không use case nào phải chờ một use case bị hoãn.
+Không. Toàn bộ 53 use case phát hành cùng lúc, để không use case nào phải chờ một use case bị hoãn.
 
 ---
 
 ## Kiểm tra trước khi vào phòng
 
 - [ ] Mục 3.2 trong docx có câu *"all 54 use cases ship in one release"* nhưng bảng III.2 và hình ghi
-      **52**. Nếu bị hỏi: số đúng là 52, câu kia sót lại từ bản cũ. Tốt nhất sửa docx trước.
+      **52**; từ 2026-10-11 số đúng là **53** (thêm UC58). Kiểm tra docx và hình III.3.4 / III.3.8 đã
+      xuất lại có UC58 chưa.
 - [ ] Screen flow (Figure III.10) và bảng phân quyền màn hình dùng tên **"Club Admin"**, trong khi actor
       là Club Leader / Club Member. Nếu bị hỏi: Club Admin là tên khu vực màn hình phía CLB, dùng chung
       cho cả hai actor.

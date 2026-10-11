@@ -1,3 +1,9 @@
+> Cập nhật v1.4.0 ngày 2026-10-11 theo product owner: UC46 chỉ còn thẩm định `HALL`, `OUTDOOR`,
+> `STAGE`, `EQUIPMENT`. Phòng học `ROOM` do ICPDP phân theo học kỳ ở UC58
+> ([`../feat-room-allocation/SPEC.md`](../feat-room-allocation/SPEC.md)), không qua hàng đợi này;
+> ICPDP không đề xuất ROOM làm phương án thay thế. Ngoại lệ `allowOverbooking` (BR33) chỉ áp dụng
+> khi duyệt các tài sản trên.
+
 # SPEC: feat-booking-review
 
 ## Vấn đề
@@ -60,3 +66,4 @@ hộp thư thông báo trong app.
 ## Changelog
 - v0.1.0 (2026-10-10) — backend, API, UI, i18n, seed demo và test tự động; còn visual QA.
 - v0.1.1 (2026-10-11) — **Thay thế** khi merge `main`: UC46 dùng bản của nhóm (`facility-booking-*`, `BookingWorkspace`, cùng API `/admin/bookings`). Code của SPEC này đã gỡ khỏi nhánh hiện hành; bản gốc nằm ở commit `265e208`.
+- v1.4.0 (2026-10-11) — ghi chú phạm vi: UC46 không còn áp dụng cho ROOM (UC58).

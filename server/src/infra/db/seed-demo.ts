@@ -7,7 +7,6 @@ import type { ClubEventInput } from "../../domain/club-event.js";
 import { crc32, deflateSync } from "node:zlib";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
-import { BOOKING_SLOTS } from "../../domain/facility-booking.js";
 import type { FounderRole } from "../../domain/club-application.js";
 import { DEFAULT_FORM_REQUIREMENTS, type PolicySettings } from "../../domain/policy.js";
 import type { AccessActor } from "../../usecase/access.js";
@@ -21,7 +20,8 @@ import { createRecruitmentCampaignDraft, publishRecruitmentCampaign } from "../.
 import { reviewRecruitmentApplications } from "../../usecase/recruitment-review.js";
 import { recordCandidateEvaluation } from "../../usecase/candidate-evaluation.js";
 import { createProperty, updateProperty } from "../../usecase/property.js";
-import { reserveRoom } from "../../usecase/facility-booking.js";
+import { allocateRoom } from "../../usecase/room-allocation.js";
+import { ROOM_ALLOCATION_PURPOSE } from "../../domain/room-allocation.js";
 import {
   createRecruitmentApplicationDraft,
   saveRecruitmentApplicationDraft,
@@ -49,7 +49,7 @@ import { mongoRecruitmentCampaignRepository } from "./mongo-recruitment-campaign
 import { mongoCandidateEvaluationRepository } from "./mongo-candidate-evaluation-repository.js";
 import { mongoStudentFeedbackRepository } from "./mongo-student-feedback-repository.js";
 import { mongoPropertyRepository } from "./mongo-property-repository.js";
-import { mongoFacilityBookingRepository, releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
+import { mongoRoomAllocationRepository } from "./mongo-room-allocation-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
@@ -741,7 +741,7 @@ try {
       title: "Chuyển giao nhiệm kỳ — FPTU Data Science Club", state: "Open", openedAt: at(-1 * DAY) });
   }
 
-  // Campus rooms and immediate reservations with the current club leader responsible.
+  // Campus room catalogue; ICPDP allocates these rooms to clubs per semester (UC58).
   const properties = mongoPropertyRepository();
   const rooms = [];
   const catalog = await properties.list();
@@ -763,29 +763,38 @@ try {
     }
     rooms.push(room);
   }
-  // Retire only the previous demo requests; keep their immutable versions and decisions.
-  await mongoose.connection.transaction(async (session) => {
-    await releaseFacilityBookingsInSession(session, { clubId: new Types.ObjectId(hebe),
-      purpose: { $in: ["Requested", "Draft", "Approved", "Revision Requested"].flatMap((state) =>
-        [`Demo booking: ${state}`, `Demo campus slot booking: ${state}`]) },
-      state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } },
-    "demo-seed", "Replaced by campus slot demo data", now);
-  });
-  const bookingRepo = mongoFacilityBookingRepository();
-  const bookingDeps = { repo: bookingRepo, properties, access, auth, policy };
-  const bookingClub = await bookingRepo.club(hebe);
-  const bookingPolicy = await policy.findEffective(now);
-  if (bookingClub?.state === "Active" && bookingPolicy) {
-    for (const [index, slot] of BOOKING_SLOTS.entries()) {
-      const practiceRoom = rooms[index]!;
-      if (!practiceRoom.isActive) continue;
-      if ((await bookingRepo.list(hebe)).some((item) => item.purpose === "Club room reservation"
-        && item.propertyId === practiceRoom.id && item.state === "Approved" && item.startAt > now)) continue;
-      const day = new Date(now.getTime() + (3 + index) * DAY + 7 * HOUR).toISOString().slice(0, 10);
-      const startAt = new Date(`${day}T${slot.start}:00+07:00`);
-      const endAt = new Date(`${day}T${slot.end}:00+07:00`);
-      if (!bookingPolicy.academicCalendar.some((semester) => startAt >= semester.startAt && endAt <= semester.endAt)) continue;
-      await reserveRoom(bookingDeps, actor(owner), hebe, { propertyId: practiceRoom.id, startAt, endAt }, now);
+  // Rooms are only allocated by ICPDP now (UC58): drop every earlier room booking and its review trail.
+  const roomIds = await ucmsModels.properties!.distinct("_id", { type: "ROOM" });
+  const legacyRoomBookings = await ucmsModels.propertyBookings!.distinct("_id", { propertyId: { $in: roomIds },
+    purpose: { $ne: ROOM_ALLOCATION_PURPOSE } });
+  if (legacyRoomBookings.length) {
+    const taskIds = await ucmsModels.approvalTasks!.distinct("_id", { entityType: "PROPERTY_BOOKING", entityId: { $in: legacyRoomBookings } });
+    await ucmsModels.approvalDecisions!.deleteMany({ approvalTaskId: { $in: taskIds } });
+    await ucmsModels.approvalTasks!.deleteMany({ _id: { $in: taskIds } });
+    await ucmsModels.notifications!.deleteMany({ entityType: "PropertyBooking", entityId: { $in: legacyRoomBookings } });
+    await ucmsModels.auditLogs!.deleteMany({ entityType: "PropertyBooking", entityId: { $in: legacyRoomBookings } });
+    await ucmsModels.propertyBookings!.deleteMany({ _id: { $in: legacyRoomBookings } });
+  }
+  // A few weekly allocations in the current (or next) semester; reruns keep what already exists.
+  const allocationDeps = { repo: mongoRoomAllocationRepository(), properties, policy, auth, access };
+  const allocationPolicy = await policy.findEffective(now);
+  const allocationSemester = allocationPolicy?.academicCalendar.filter((item) => item.endAt > now)
+    .sort((x, y) => x.startAt.getTime() - y.startAt.getTime())[0];
+  if (allocationSemester) {
+    const existing = await allocationDeps.repo.list({ semesterCode: allocationSemester.code });
+    const demoAllocations = [
+      { club: "HEBE", room: "DE312", weekday: 3, slot: 4, note: "Sinh hoạt định kỳ" },
+      { club: "HEBE", room: "DE222", weekday: 1, slot: 2 },
+      { club: "FDS", room: "AL101", weekday: 2, slot: 1, note: "Lớp kỹ năng dữ liệu" },
+      { club: "EHC", room: "BE201", weekday: 5, slot: 3 },
+    ];
+    for (const item of demoAllocations) {
+      const room = rooms.find((value) => value.name === item.room);
+      const target = await ucmsModels.clubs!.findById(club(item.club).id).lean();
+      if (!room?.isActive || target?.state !== "Active" || existing.some((value) => !value.revokedAt
+        && value.propertyId === room.id && value.weekday === item.weekday && value.slot === item.slot)) continue;
+      await allocateRoom(allocationDeps, actor(owner), { semesterCode: allocationSemester.code, clubId: String(club(item.club).id),
+        propertyId: room.id, weekday: item.weekday, slot: item.slot, ...(item.note ? { note: item.note } : {}) }, now);
     }
   }
 

@@ -1,3 +1,13 @@
+> Cập nhật v1.4.0 ngày 2026-10-11 theo product owner: phòng học `ROOM` không còn do CLB đặt.
+> ICPDP phân phòng theo học kỳ ở UC58 — xem [`../feat-room-allocation/SPEC.md`](../feat-room-allocation/SPEC.md)
+> và ADR-006. Spec này (UC45–47) chỉ còn áp dụng cho `HALL`, `OUTDOOR`, `STAGE`, `EQUIPMENT`.
+> Bị bỏ: CLB đặt ROOM trực tiếp (`Approved` ngay, audit `BOOKING_RESERVED`), snapshot Chủ nhiệm
+> chịu trách nhiệm (`GET /admin/clubs/{clubId}/booking-responsible`), ICPDP đặt trùng phòng học
+> (`POST /admin/clubs/{clubId}/bookings/overbook`, `RoomOverbookingForm`) và ROOM legacy đi
+> Draft/submit/review. `allowOverbooking` chỉ còn áp dụng khi ICPDP duyệt ở UC46; ICPDP không
+> được đề xuất ROOM làm phương án thay thế; UC25 không gắn booking ROOM. Dữ liệu ROOM cũ bị
+> `npm run seed:demo` xoá hẳn. Mọi mô tả ROOM/overbooking phòng học bên dưới là lịch sử.
+
 > Cập nhật v1.3.0 ngày 2026-10-11 theo yêu cầu người dùng: hai luồng booking theo loại tài sản.
 > `ROOM` đặt trực tiếp; `HALL`, `OUTDOOR`, `STAGE`, `EQUIPMENT` gửi ICPDP duyệt.
 > Quy tắc này thay các mô tả “mọi booking mới đặt trực tiếp / review chỉ legacy” bên dưới.
@@ -82,9 +92,9 @@ kiểm tra xung đột và ra quyết định có lịch sử truy vết. Tái s
   theo tên và thời gian, không yêu cầu nhập ObjectId.
 
 ## Tiêu chí nghiệm thu
-- [x] AC11: CLB không thể tự overbooking; ICPDP chỉ được khi policy bật và có lý do,
+- [x] AC11 *(thay bởi v1.4.0 — overbooking phòng học bị bỏ; chỉ còn ngoại lệ khi duyệt UC46)*: CLB không thể tự overbooking; ICPDP chỉ được khi policy bật và có lý do,
   kể cả policy/role đổi giữa precheck và transaction; chặn blackout và trạng thái sai.
-- [x] AC12: Lý do, officer, thời điểm, conflict, snapshot và notification nguyên tử;
+- [x] AC12 *(thay bởi v1.4.0 — bỏ form đặt trùng và snapshot Chủ nhiệm)*: Lý do, officer, thời điểm, conflict, snapshot và notification nguyên tử;
   giao diện ICPDP hỗ trợ đặt trùng và cả hai workspace đọc được lý do ngoại lệ.
 - [x] AC1: Xác thực, permission, vai trò ICPDP và scope CLB được kiểm tra.
 - [x] AC2: Validate payload, học kỳ, giờ địa phương, blackout, equipment, event scope và BR45.
@@ -122,11 +132,11 @@ mẫu cũ Released. Chrome kiểm tra chọn Slot 3 khi tạo draft và Slot 4 k
 đổi lịch, đúng timestamp UTC+7, en/vi sáng/tối ở 390/1440 px.
 
 ## Tiêu chí bổ sung v1.3.0
-- [x] AC13: ROOM đặt trực tiếp; tạo yêu cầu ROOM mới bị chặn; ROOM legacy vẫn xử lý được.
+- [x] AC13 *(thay bởi v1.4.0 — ROOM do ICPDP phân ở UC58, xem feat-room-allocation AC1–AC6)*: ROOM đặt trực tiếp; tạo yêu cầu ROOM mới bị chặn; ROOM legacy vẫn xử lý được.
 - [x] AC14: HALL/OUTDOOR/STAGE/EQUIPMENT chỉ ở Draft/Requested trước quyết định ICPDP.
 - [x] AC15: UI có chọn hai luồng, sửa/nộp/nộp lại, thiết bị và sự kiện tuỳ chọn, en/vi.
-- [x] AC16: UC25 không gắn phòng học trực tiếp; đổi liên kết cần quyền booking và rollback khi thiếu quyền.
-- [x] AC17: DOCX, SRS, đặc tả, diagram/PNG và OpenAPI phản ánh cùng hai luồng.
+- [x] AC16 *(thay một phần bởi v1.4.0 — UC25 không gắn mọi booking ROOM; phần quyền đổi liên kết giữ nguyên)*: UC25 không gắn phòng học trực tiếp; đổi liên kết cần quyền booking và rollback khi thiếu quyền.
+- [x] AC17 *(thay bởi v1.4.0 AC20)*: DOCX, SRS, đặc tả, diagram/PNG và OpenAPI phản ánh cùng hai luồng.
 
 Changelog v1.3.0: người dùng phê duyệt tách phòng học và cơ sở vật chất cần ICPDP duyệt.
 
@@ -138,3 +148,14 @@ Không runtime error hoặc tràn ngang. Mongo thật kiểm tra rollback thiế
 chặn liên kết ROOM trực tiếp và liên kết EQUIPMENT độc lập địa điểm sự kiện.
 DOCX cập nhật nội dung và ba ảnh embedded; giữ aspect ratio, kiểm tra ZIP/XML.
 Chưa chạy luồng Google OAuth với hai tài khoản thật.
+
+## Tiêu chí bổ sung v1.4.0
+- [ ] AC18: Tạo/sửa/nộp yêu cầu với property `ROOM` bị từ chối ở mọi endpoint CLB; danh mục
+  `booking-properties` của CLB không trả ROOM.
+- [ ] AC19: Endpoint overbook và `booking-responsible` bị gỡ khỏi API/OpenAPI; ICPDP không đề xuất
+  được ROOM làm phương án thay thế; UC25 từ chối gắn booking ROOM.
+- [x] AC20: SRS, đặc tả/mô hình use case, diagram, guide book và DOCX phản ánh UC58 và phạm vi mới
+  của UC45–47 (PNG/ảnh DOCX cần xuất lại — xem báo cáo cập nhật tài liệu).
+
+Changelog v1.4.0 (2026-10-11): product owner duyệt chuyển phòng học sang ICPDP phân theo học kỳ
+(UC58, BR62); UC45–47 chỉ còn HALL/OUTDOOR/STAGE/EQUIPMENT.

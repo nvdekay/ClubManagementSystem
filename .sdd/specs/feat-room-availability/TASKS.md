@@ -15,3 +15,6 @@
 
 Kiểm tra sau khi chuyển vào branch chính đang mở: `npm run check` đạt 374/374 test
 (trong đó có integration Mongo), build frontend đạt.
+
+> 2026-10-11: luồng đặt ngay và snapshot chủ nhiệm ở trên bị gỡ theo v1.2.0 của SPEC; việc gỡ code
+> được theo dõi ở [`../feat-room-allocation/TASKS.md`](../feat-room-allocation/TASKS.md).

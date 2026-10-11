@@ -6,6 +6,8 @@ import type { ClubEventRepository } from "../../domain/club-event.js";
 import { clubEventRoutes } from "./club-event-routes.js";
 import type { FacilityBookingRepository } from "../../domain/facility-booking.js";
 import { facilityBookingRoutes } from "./facility-booking-routes.js";
+import type { RoomAllocationRepository } from "../../domain/room-allocation.js";
+import { roomAllocationRoutes } from "./room-allocation-routes.js";
 import express from "express";
 import { authRoutes, type AuthRouteDeps } from "./auth-routes.js";
 import { accountAdminRoutes } from "./account-admin-routes.js";
@@ -100,6 +102,7 @@ export function buildApp(deps: {
   clubFieldRepo?: ClubFieldRepository;
   propertyRepo?: PropertyRepository;
   facilityBookingRepo?: FacilityBookingRepository;
+  roomAllocationRepo?: RoomAllocationRepository;
   evaluationSchemeRepo?: EvaluationSchemeRepository;
   exportRepo?: ExportRepository;
   exportWriter?: ExportFileWriter;
@@ -164,6 +167,11 @@ export function buildApp(deps: {
       app.use("/api/v1", facilityBookingRoutes({ repo: deps.facilityBookingRepo,
         properties: deps.propertyRepo, policy: deps.policyRepo, access: deps.auth.accessRepo,
         auth: deps.auth.repo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.roomAllocationRepo && deps.propertyRepo && deps.policyRepo) {
+      app.use("/api/v1", roomAllocationRoutes({ repo: deps.roomAllocationRepo, properties: deps.propertyRepo,
+        policy: deps.policyRepo, access: deps.auth.accessRepo, auth: deps.auth.repo, authRepo: deps.auth.repo,
+        sessions: deps.auth.sessions }));
     }
     if (deps.propertyRepo) {
       app.use("/api/v1", propertyRoutes({
@@ -308,6 +316,7 @@ export function buildApp(deps: {
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
   const hasBookings = Boolean(deps.auth && deps.facilityBookingRepo && deps.propertyRepo && deps.policyRepo);
   const hasProperties = Boolean(hasAdmin && deps.propertyRepo);
+  const hasRoomAllocations = Boolean(deps.auth && deps.roomAllocationRepo && deps.propertyRepo && deps.policyRepo);
   const hasEvaluationSchemes = Boolean(hasPolicy && deps.evaluationSchemeRepo);
   const hasExports = Boolean(hasPolicy && deps.exportRepo && deps.exportWriter);
   const hasClubLifecycle = Boolean(hasPolicy && deps.clubLifecycleRepo);
@@ -337,6 +346,7 @@ export function buildApp(deps: {
         || path.includes("/booking-events")
         || path.startsWith("/clubs/{clubId}/bookings") || path.endsWith("/booking-conflicts")) return hasBookings;
       if (path.startsWith("/admin/properties")) return hasProperties;
+      if (path.includes("/room-allocations")) return hasRoomAllocations;
       if (path.startsWith("/admin/evaluation-schemes")) return hasEvaluationSchemes;
       if (path.startsWith("/admin/evaluations")) return hasEvaluations;
       if (path.startsWith("/admin/exports")) return hasExports;

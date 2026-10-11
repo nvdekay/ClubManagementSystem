@@ -37,7 +37,7 @@ route, UI — gần như không thêm collection.
 
 ```
 UC23 (role/quyền) ──► mọi UC cần permission riêng (thủ quỹ, ban sự kiện, ...)
-UC44–46 (cơ sở vật chất) ──► UC25 (đề xuất sự kiện có đặt phòng)
+UC44–46 (cơ sở vật chất ngoài ROOM) ──► UC25 (đề xuất sự kiện có đặt cơ sở vật chất)
 UC25 ► UC26 ► UC27 ► UC28 / UC30 / UC32 ► UC33 ► UC34
                           └► ngân sách UC35 ► UC36 ► UC37
 Sự kiện + ngân sách + báo cáo ──► UC12 (nạp nghĩa vụ tồn đọng)
@@ -70,7 +70,8 @@ cập, các ngoại lệ nghiệp vụ, gán role đồng thời và khoá đán
 | Feature | UC | Việc chính |
 |---|---|---|
 | `feat-property-catalog` | UC44 | Tái sử dụng ICPDP CRUD `properties` đã có; nối FR-05 hiển thị yêu cầu vướng blackout. |
-| `feat-facility-booking` | UC45, UC46, UC47 | Draft/nộp/nộp lại theo version; ICPDP nhận và quyết định có lý do/phương án thay thế; CLB theo dõi/huỷ. Khoá slot trong transaction; cascade dùng chung và job In Use/Completed. |
+| `feat-facility-booking` | UC45, UC46, UC47 | Draft/nộp/nộp lại theo version; ICPDP nhận và quyết định có lý do/phương án thay thế; CLB theo dõi/huỷ. Khoá slot trong transaction; cascade dùng chung và job In Use/Completed. Từ 2026-10-11 chỉ áp dụng `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`. |
+| `feat-room-allocation` | UC58 | **Thêm 2026-10-11, đang triển khai.** ICPDP phân phòng học `ROOM` cho CLB theo học kỳ (thứ + slot); sinh booking `Approved` từng tuần, thu hồi có lý do; CLB xem `/club/:clubId/rooms` chỉ đọc (BR62). |
 
 Đã chốt ngày 2026-10-10: booking chọn ngày + một trong bốn slot Hoà Lạc. Hạn gửi Slot 1/2
 trước 07:30, Slot 3 trước 09:50, Slot 4 trước 12:20 trong ngày sử dụng; đúng mốc là quá hạn.
@@ -129,7 +130,7 @@ Phần ICPDP giữ thành luồng riêng; chưa chỉ định người phụ tr�
 
 | Luồng | Người dùng phụ trách | Phần phối hợp ICPDP |
 |---|---|---|
-| Booking | UC45, UC47 | UC44 danh mục; UC46 duyệt booking |
+| Booking | UC45, UC47 (ngoài ROOM) | UC44 danh mục; UC46 duyệt booking; UC58 phân phòng học |
 | Sự kiện | UC25, UC27, UC28, UC30, UC31 A1, UC32, UC49 | UC26 duyệt đề xuất đã có SPEC và hợp đồng UC25 |
 | Báo cáo, tài chính | UC33, UC36, UC38 | UC34, UC35, UC37, UC39 |
 | Vòng đời CLB | UC12, UC14, UC21 A2 (phối hợp scheduler) | UC13 đã có; UC15 và scheduler dùng chung |

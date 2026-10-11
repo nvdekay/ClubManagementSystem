@@ -82,8 +82,8 @@ async function assess(session: ClientSession, clubId: Types.ObjectId, input: Clu
   for (const bookingId of input.bookingIds) {
     const booking = await m.propertyBookings!.findOne({ _id: oid(bookingId), clubId, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }).session(session).lean();
     const bookingProperty = booking ? await m.properties!.findById(booking.propertyId).session(session).lean() : null;
-    if (bookingProperty?.type === "ROOM" && Number(booking?.currentVersionNo ?? 0) < 1) {
-      throw new DomainError("direct room reservations cannot be attached to an event proposal", "validation", { bookingId });
+    if (bookingProperty?.type === "ROOM") {
+      throw new DomainError("room allocations cannot be attached to an event proposal", "validation", { bookingId });
     }
     if (!booking || (booking.eventId && String(booking.eventId) !== String(eventId)) || (bookingProperty?.type !== "EQUIPMENT" && (!input.propertyId || String(booking.propertyId) !== input.propertyId)) ||
       !(input.occurrences?.length ? input.occurrences : [{ startAt: input.startAt, endAt: input.endAt }]).some((interval) =>
@@ -129,7 +129,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
         m.propertyBookings!.find({ clubId: oid(clubId), state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }).lean()]);
       const requestBookings = bookings.filter((b) => {
         const property = properties.find((p) => String(p._id) === String(b.propertyId));
-        return property && (property.type !== "ROOM" || Number(b.currentVersionNo) > 0);
+        return property && property.type !== "ROOM";
       });
       return { properties: properties.map((p) => ({ id: String(p._id), name: String(p.name) })),
         bookings: requestBookings.map((b) => ({ id: String(b._id), propertyId: String(b.propertyId), propertyType: String(properties.find((p) => String(p._id) === String(b.propertyId))!.type), title: String(b.purpose), startAt: b.startAt as Date, endAt: b.endAt as Date })) };
