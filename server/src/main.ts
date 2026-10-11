@@ -26,6 +26,7 @@ import { startClubLifecycleJob } from "./interface/jobs/club-lifecycle-job.js";
 import { mongoEventProposalReviewRepository } from "./infra/db/mongo-event-proposal-review-repository.js";
 import { mongoBudgetDisbursementRepository } from "./infra/db/mongo-budget-disbursement-repository.js";
 import { mongoViolationRepository } from "./infra/db/mongo-violation-repository.js";
+import { mongoPeriodicReportRepository } from "./infra/db/mongo-periodic-report-repository.js";
 import { mongoSchoolEventRepository } from "./infra/db/mongo-school-event-repository.js";
 import { mongoEvaluationRepository } from "./infra/db/mongo-evaluation-repository.js";
 import { startEventLifecycleJob } from "./interface/jobs/event-lifecycle-job.js";
@@ -92,6 +93,7 @@ const app = authConfig ? buildApp({
   budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
   postEventReportRepo: mongoPostEventReportRepository(),
   violationRepo: mongoViolationRepository(),
+  periodicReportRepo: mongoPeriodicReportRepository(),
   schoolEventRepo,
   clubEventRepo: mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 }),
   evaluationRepo: mongoEvaluationRepository(),

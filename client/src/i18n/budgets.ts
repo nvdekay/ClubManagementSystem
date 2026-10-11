@@ -27,6 +27,7 @@ const en = {
   confirm: "Record {{kind}} of {{amount}} for this event?",
   stateApproved: "Not advanced yet", stateDisbursed: "Advanced", stateSettlementSubmitted: "Settlement submitted",
   stateReconciliationPending: "Waiting for evidence", stateReconciled: "Reconciled", stateRecoveryPending: "Refund due",
+  filterReconcile: "To reconcile",
   stateClosed: "Closed", stateCancelled: "Cancelled",
 };
 
@@ -59,6 +60,7 @@ const vi: Record<keyof typeof en, string> = {
   confirm: "Ghi {{kind}} {{amount}} cho sự kiện này?",
   stateApproved: "Chưa tạm ứng", stateDisbursed: "Đã tạm ứng", stateSettlementSubmitted: "CLB đã nộp quyết toán",
   stateReconciliationPending: "Chờ bổ sung chứng từ", stateReconciled: "Đã đối soát", stateRecoveryPending: "Chờ CLB hoàn trả",
+  filterReconcile: "Cần đối soát",
   stateClosed: "Đã tất toán", stateCancelled: "Đã huỷ",
 };
 

@@ -65,3 +65,7 @@ cho sinh viên (mở đăng ký, sinh mã check-in).
 trạng thái/tổng điểm/xếp loại, công bố cả kỳ khi mọi CLB đã chốt) và `EvaluationDetailPage`: điểm từng tiêu chí
 D1–D8 kèm dữ liệu nguồn, chấm tay (có lý giải) ở tiêu chí cho phép, sinh lại, chốt/mở lại, tạo bản sửa sau
 công bố, các bản và xu hướng các học kỳ trước.
+
+`PeriodicReportsPage` (UC39) cho tình trạng báo cáo định kỳ của mọi CLB theo học kỳ (lọc chờ thẩm định, quá hạn,
+đã chấp nhận; ghi nhận không nộp mở hồ sơ UC40); trang thẩm định đặt số liệu CLB cạnh số liệu hệ thống, cho chấp
+nhận kèm ghi nhận hoặc trả về với phần cần sửa.

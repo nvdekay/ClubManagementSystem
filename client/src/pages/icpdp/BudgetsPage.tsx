@@ -15,13 +15,16 @@ import type { BudgetFlowKind, BudgetSummary } from "@/services/budgets";
 import { cn } from "@/utils/cn";
 import { formatMoney } from "@/utils/formatMoney";
 
-const filters = ["all", "toAdvance", "disbursed", "topUp", "refund", "closed"] as const;
+const filters = ["all", "toAdvance", "disbursed", "reconcile", "topUp", "refund", "closed"] as const;
 type Filter = typeof filters[number];
 
 function matches(filter: Filter, budget: BudgetSummary): boolean {
   switch (filter) {
     case "toAdvance": return budget.state === "Approved";
     case "disbursed": return ["Disbursed", "Settlement Submitted", "Reconciliation Pending"].includes(budget.state);
+    // UC37: a submitted settlement, or an advance whose settlement deadline has passed (A2).
+    case "reconcile": return budget.state === "Settlement Submitted" || (["Disbursed", "Reconciliation Pending"].includes(budget.state)
+      && Boolean(budget.settlementDueAt && new Date(budget.settlementDueAt) < new Date()));
     case "topUp": return budget.state === "Reconciled";
     case "refund": return budget.state === "Recovery Pending";
     case "closed": return ["Closed", "Cancelled"].includes(budget.state);
@@ -56,6 +59,7 @@ function filterLabel(t: TFunction, filter: Filter): string {
   switch (filter) {
     case "toAdvance": return t("budgets.filterToAdvance");
     case "disbursed": return t("budgets.filterDisbursed");
+    case "reconcile": return t("budgets.filterReconcile");
     case "topUp": return t("budgets.filterTopUp");
     case "refund": return t("budgets.filterRefund");
     case "closed": return t("budgets.filterClosed");
