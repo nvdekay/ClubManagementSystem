@@ -423,7 +423,8 @@ Mười luồng end-to-end dưới đây là xương sống của hệ thống; 
 Mỗi bước ghi use case (hoặc scheduler) điều khiển nó và trạng thái mà nó để lại. Sơ đồ: trang
 *Main business flows* của
 [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio)
-([PNG](03-diagrams/img/UCMS_Organization_and_Flows_02_Main-business-flows.png)). Đăng nhập (UC01)
+([PNG](03-diagrams/img/UCMS_Organization_and_Flows_02_Main-business-flows.png)). Swimlane chi tiết từng luồng
+(tiếng Anh): [`03-diagrams/UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio). Đăng nhập (UC01)
 và dashboard (UC02) là điểm vào chung của mọi luồng nên không lặp lại.
 
 | # | Luồng | Actor tham gia | Use case |
