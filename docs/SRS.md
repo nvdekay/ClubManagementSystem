@@ -3404,7 +3404,6 @@ một quyết định. `ICPDP_HEAD`, duyệt đa cấp và UC05 được rút kh
 
 | Hạng mục | Việc cần làm |
 |---|---|
-| [`02-use-cases/UCMS_UseCase_Specifications_v2.docx`](02-use-cases/UCMS_UseCase_Specifications_v2.docx) vẫn mang phần bìa của v1 ("57 business use cases", "BR01–BR39") và ra đời trước các issue I04–I07, I23–I30 | Xuất lại từ `UCMS_UseCase_Specification_v2.md` trước lần nộp tiếp theo |
 | [`01-business-analysis/UCMS_Business_System_Analysis.md`](01-business-analysis/UCMS_Business_System_Analysis.md) dùng cách đánh số v1 (UC01–UC57) và BR01–BR39, và bản tiếng Anh song song đã bị xoá | Giữ làm lịch sử. **SRS này thay thế §8–§11, §14–§15, §21–§22 của nó**; chỉ dùng §1–§7, §12–§13, §16–§20, §23–§24 làm nền tảng tham khảo |
 | Các file PNG trong `03-diagrams/img/` được xuất từ nguồn `.drawio` | Xuất lại sau mỗi lần sửa sơ đồ, giữ quy ước tên `<file>_<số-trang>_<tên-trang>.png` |
 
@@ -3504,7 +3503,6 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 | **Context diagram v2.1** (hiện hành, 40 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) |
 | Context diagram v2 (đã thay thế, 57 luồng) | Context diagram v2 | [`03-diagrams/UCMS_Context_Diagram_v2.drawio`](03-diagrams/UCMS_Context_Diagram_v2.drawio) |
 | Context diagram v1 (đã thay thế, 40 luồng) | Context diagram | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
-| So sánh context diagram v1 → v2 | — | [`03-diagrams/UCMS_Context_Diagram_Comparison.docx`](03-diagrams/UCMS_Context_Diagram_Comparison.docx) |
 | **Use case diagram theo actor** (UC01–UC52) | All users (kế thừa actor) · Student · Club Leader · Club Member 1 - Club & recruitment · Club Member 2 - Events & bookings · Club Member 3 - Accountability & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
 | **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio) |
 | **State diagram** | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) |

@@ -1555,69 +1555,65 @@ lại UC06–UC52.
 - **Use case liên quan:** UC45, UC46
 - **Pain point:** BP16
 
-## UC45 – Gửi yêu cầu đặt cơ sở vật chất
+## UC45 – Đặt phòng CLB trực tiếp
 
-- **Actor chính:** Club Member có permission `club.booking.manage` (BR54)
-- **Module:** M11
-- **Mục tiêu nghiệp vụ:** Xin một phòng hoặc thiết bị qua một quy trình truy vết được và gắn với
-  sự kiện.
-- **Kích hoạt:** CLB cần địa điểm hoặc thiết bị cho một sự kiện hoặc một hoạt động định kỳ.
-- **Tiền điều kiện:** CLB đang `Active` (BR34); người gọi có quyền tương ứng; property đang hoạt
-  động trong UC44.
-- **Dữ liệu vào:** Property, mục đích sử dụng, thời điểm bắt đầu và kết thúc, số người dự kiến,
-  thiết bị đi kèm, sự kiện liên quan nếu có.
+> Cập nhật thiết kế P1 ngày 2026-10-11: booking mới dùng đặt phòng trực tiếp;
+> workflow review chỉ giữ cho yêu cầu cũ. DOCX đặc tả cũ đang đánh số chức năng này
+> là UC47 và review là UC48; không đổi mã các use case khác trong lần cập nhật này.
+
+- **Actor chính:** Club Member có permission `club.booking.manage` (BR54).
+- **Module:** M11.
+- **Mục tiêu nghiệp vụ:** Đặt một phòng còn trống, lưu người phụ trách để truy vết.
+- **Kích hoạt:** CLB cần phòng cho hoạt động của CLB.
+- **Tiền điều kiện:** CLB đang `Active`, hoặc `Dissolving` trong giới hạn học kỳ giải thể;
+  người gọi có quyền; property đang hoạt động và có type `ROOM`; xác định được một
+  Club Leader đang giữ chức vụ đã xác nhận trong nhiệm kỳ và membership còn hiệu lực.
+- **Dữ liệu vào:** `propertyId`, ngày sử dụng và một slot campus; server lưu `startAt`, `endAt`.
 - **Luồng chính:**
-  1. Thành viên chọn một property từ danh mục mà ICPDP duy trì (UC44).
-  2. Hệ thống hiển thị tình trạng còn trống của nó.
-  3. Thành viên nhập thông tin sử dụng.
-  4. Hệ thống đánh giá quy tắc xung đột BR15.
-  5. Thành viên nộp → `Requested`; ICPDP nhận một review task.
+  1. Thành viên chọn ngày và slot; hệ thống hiển thị phòng và tình trạng còn trống.
+  2. Hệ thống hiển thị tên và email Club Leader phụ trách; thành viên không tự chọn người phụ trách.
+  3. Thành viên chọn phòng còn trống và xác nhận đặt.
+  4. Hệ thống kiểm tra property, trạng thái CLB, học kỳ, giờ được đặt, blackout và xung đột;
+     kiểm tra lại trong transaction để tránh cấp trùng phòng.
+  5. Hệ thống tạo booking `Approved`, khoá slot và ghi `BOOKING_RESERVED` với snapshot
+     người phụ trách. Không tạo submission version, `ApprovalTask` hay `ApprovalDecision`.
+- **Thông tin do hệ thống gán:** `purpose = "Club room reservation"`, `headcount = 1`,
+  `equipment = []`. Form không thu thập mục đích, số người, thiết bị hoặc `eventId`.
 - **Luồng thay thế:**
-  - **A1 Bản nháp:** được lưu ở `Draft`.
-  - **A2 Đính kèm vào một đề xuất:** yêu cầu được đính kèm vào một đề xuất sự kiện đang soạn (UC25).
-  - **A3 Sửa và nộp lại:** từ `Revision Requested`, thành viên sửa và nộp lại; hệ thống tạo một
-    **version mới** và đưa booking về `Requested` — chính là luồng đối xứng mà v1 có ở bước 3
-    của UC50 nhưng không bao giờ cấp cho nó một use case.
-- **Ngoại lệ:**
-  - **E1** khung giờ đã có người đặt và chính sách cấm overbooking → từ chối (BR33);
-  - **E2** thời gian yêu cầu rơi vào một giai đoạn khoá → từ chối;
-  - **E3** số người dự kiến vượt sức chứa của property → cảnh báo, và officer quyết định ở UC46;
-  - **E4** CLB đã có quyết định giải thể và booking kết thúc sau học kỳ `Dissolving` của nó →
-    từ chối (BR45).
-  - **E5** người gọi thiếu permission `club.booking.manage` trong CLB → từ chối (BR54).
-- **Hậu điều kiện:** Booking ở `Requested`.
-- **Quy tắc nghiệp vụ:** BR54 (`club.booking.manage`). BR15, BR33, BR34, BR45.
-- **Đầu ra:** PropertyBooking, ApprovalTask.
-- **Use case liên quan:** UC25, UC44, UC46
-- **Pain point:** BP16
+  - Đóng form trước khi xác nhận: không tạo booking; không có thao tác lưu `Draft`.
+  - Cần đổi booking: huỷ booking đã đặt theo UC47 nếu được phép, rồi đặt phòng mới.
+    Form trực tiếp không có sửa hoặc nộp lại `Revision Requested`.
+  - Đặt phòng phục vụ sự kiện: đặt độc lập; form trực tiếp không đính kèm booking vào UC25.
+- **Ngoại lệ:** thiếu permission, không có Club Leader phù hợp, phòng không hoạt động,
+  CLB `Suspended`/`Dissolved`, thời gian không hợp lệ hoặc vượt học kỳ giải thể → từ chối.
+- **Hậu điều kiện:** Booking ở `Approved`, slot đã giữ và người phụ trách được lưu trong audit.
+- **Đầu ra:** `PropertyBooking`, `AuditLog`.
+- **Use case liên quan:** UC44, UC47.
+- **Pain point:** BP16.
 
-## UC46 – Thẩm định và quyết định yêu cầu đặt cơ sở vật chất
+Phạm vi cập nhật này thay các yêu cầu P1 về review, Draft/nộp lại và dữ liệu form.
+Các chênh lệch deadline và `allowOverbooking` được review riêng ở P2; không suy ra
+thay đổi policy từ việc chuyển sang đặt trực tiếp.
 
-- **Actor chính:** ICPDP Officer
-- **Module:** M11
-- **Mục tiêu nghiệp vụ:** Cấp phát nguồn lực của nhà trường một cách có kiểm soát, với lý do
-  được lưu lại.
-- **Kích hoạt:** Một task từ UC45.
-- **Tiền điều kiện:** Booking đang ở `Requested`.
-- **Dữ liệu vào:** Ghi chú thẩm định, quyết định và lý do.
-- **Luồng chính:**
-  1. Officer mở yêu cầu → `Under Review`.
-  2. Officer kiểm tra trạng thái CLB, mục đích, các xung đột và các nghĩa vụ quá hạn.
-  3. Officer chọn: **yêu cầu chỉnh sửa**, **phê duyệt**, hoặc **từ chối** — hai kết quả sau bắt
-     buộc có lý do.
-  4. Hệ thống ghi audit quyết định, cập nhật trạng thái và gửi `Property booking status` cho CMB.
-- **Luồng thay thế:**
-  - **A1 Duyệt một khung giờ khác:** officer đề xuất một thời gian hoặc property thay thế, và
-    CLB chấp nhận qua UC45 A3.
-- **Ngoại lệ:** **E1** một booking khác đã được duyệt cho cùng khung giờ trong lúc chờ → yêu cầu
-  được trả lại do xung đột.
-- **Hậu điều kiện:** Booking ở `Approved`, `Rejected` hoặc `Revision Requested`; một booking đã
-  duyệt khoá khung giờ.
-- **Quy tắc nghiệp vụ:** BR33, BR34, BR35, BR31 — chỉ ICPDP quyết định; một CLB `Suspended`
-  không nhận booking mới.
-- **Đầu ra:** ApprovalDecision, khung giờ bị khoá, bản ghi audit, thông báo.
-- **Use case liên quan:** UC45, UC47, UC26
-- **Pain point:** BP16
+## UC46 – Thẩm định yêu cầu đặt cơ sở vật chất cũ
+
+- **Actor chính:** ICPDP Officer.
+- **Module:** M11.
+- **Phạm vi:** Chỉ áp dụng với booking đã có task trong workflow review cũ.
+  Booking mới từ UC45 được đặt trực tiếp ở `Approved`, không đi vào hàng đợi này.
+- **Tiền điều kiện:** Booking `Requested` hoặc `Under Review`, có task review còn mở.
+- **Luồng chính:** Officer nhận task, kiểm tra CLB, xung đột và nghĩa vụ, rồi quyết định
+  `Approve`, `Reject` hoặc `Request revision` với lý do; hệ thống lưu decision, audit
+  và thông báo trong transaction.
+- **Phương án thay thế:** Có thể ghi đề xuất phòng/slot trong lịch sử quyết định cũ.
+  Giao diện đặt trực tiếp không cung cấp thao tác sửa và nộp lại yêu cầu cũ.
+- **Ngoại lệ:** Task đã đóng hoặc được officer khác nhận → từ chối; xung đột mới khi duyệt
+  → `Revision Requested`.
+- **Hậu điều kiện:** Booking cũ ở `Approved`, `Rejected` hoặc `Revision Requested`.
+- **Quy tắc:** Chỉ ICPDP quyết định task cũ; quy tắc này không áp dụng cho đặt phòng trực tiếp.
+- **Đầu ra:** `ApprovalDecision`, `AuditLog`, thông báo.
+- **Use case liên quan:** UC47.
+- **Pain point:** BP16.
 
 ## UC47 – Theo dõi và huỷ / trả cơ sở vật chất đã đặt
 

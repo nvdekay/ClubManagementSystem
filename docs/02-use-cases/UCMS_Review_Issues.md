@@ -1,5 +1,9 @@
 # UCMS — Theo dõi các lỗi review Use Case
 
+> Ghi chú dọn tài liệu ngày 2026-10-11: chỉ giữ report v2 làm bản DOCX sử dụng.
+> Các tên DOCX cũ bên dưới là ghi nhận lịch sử review; những file này đã được xoá
+> và không còn là hạng mục cần cập nhật hoặc xuất lại.
+
 Đối chiếu 4 tài liệu:
 
 - [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md) — gọi tắt **Model**
