@@ -303,14 +303,14 @@ UC47 huỷ và hàm release dùng chung đã có; cascade UC28 còn mở ở BE-
 
 ### Backend
 - [ ] **BE-9.1** UC38 nạp sẵn sự kiện, thành viên, điểm danh và tài chính của kỳ; đóng băng lúc nộp. → FR-UC38-01…04, DAT-07
-- [ ] **BE-9.2** UC38 nhận báo cáo trễ kèm cờ; sửa lại thành một version mới. → FR-UC38-06/07
-- [ ] **BE-9.3** UC39 chấp nhận / trả về / chấp nhận kèm ghi nhận / ghi nhận việc không nộp. → FR-UC39-01…06
+- [ ] **BE-9.2** UC38 nhận báo cáo trễ kèm cờ; cho đọc nhận xét, sửa và nộp lại thành version mới, giữ lịch sử và mở task UC39 mới. → FR-UC38-06/07
+- [ ] **BE-9.3** UC39 kiểm tra đúng mẫu, đủ nội dung và minh chứng; chấp nhận / trả về kèm nhận xét bắt buộc / chấp nhận kèm ghi nhận / ghi nhận việc không nộp. Xét lại các version nộp lại đến khi duyệt; chỉ `Accepted` dùng cho UC42. → FR-UC39-01…06
 - [ ] **BE-9.4** Thang nhắc hạn trong scheduler: `T−X` nhắc, `T` đến hạn, `T+Y` quá hạn, `T+Z` leo thang. → SCH-09, NTF-05
 - [ ] **BE-9.5** Công tắc cưỡng chế BR21 được UC25 E2 tiêu thụ. → BR21
 
 ### Frontend
-- [ ] **FE-9.1** Danh sách, biểu mẫu và trạng thái báo cáo định kỳ phía CLB. → UC38
-- [ ] **FE-9.2** Màn thẩm định báo cáo của ICPDP với số liệu hệ thống đặt cạnh bên. → UC39
+- [ ] **FE-9.1** Danh sách, biểu mẫu, trạng thái, nhận xét và lịch sử version báo cáo định kỳ phía CLB; sửa và nộp lại khi bị trả về. → UC38
+- [ ] **FE-9.2** Màn thẩm định báo cáo của ICPDP với mẫu áp dụng, số liệu hệ thống và lịch sử nhận xét đặt cạnh bên. `Request periodic report revision` và `Approve periodic report` thuộc nhóm `Manage evaluation` trên sơ đồ; vẫn là nhánh UC39. → UC39
 
 ---
 

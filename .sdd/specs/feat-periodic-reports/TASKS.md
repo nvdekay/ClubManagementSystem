@@ -8,3 +8,6 @@
 - [x] Client: tổng quan + trang thẩm định, sidebar, i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
 - [ ] Kiểm tra trực quan trên trình duyệt.
+- [x] Đồng bộ tài liệu I65: hai nhánh yêu cầu sửa và duyệt thuộc `Manage evaluation`; giữ UC38/UC39.
+- [ ] Nghiệm thu kiểm tra mẫu, nội dung, minh chứng và vòng trả về–nộp version mới–xét lại đến khi duyệt,
+  đối chiếu được version cũ và quyết định tương ứng (CON-08).

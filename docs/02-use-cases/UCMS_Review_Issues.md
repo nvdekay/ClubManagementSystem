@@ -1764,3 +1764,16 @@ sinh (Spec/Model + generator) rồi sinh lại, không sửa tay trong `.docx`.
     bước phụ của một UC có sẵn, nên tách UC riêng thì vẽ được trên cả hai sơ đồ.
   - Còn lại: Model/Spec v2 vẫn ở 52 UC (chưa có UC53–UC55, lệch có từ I61); docx báo cáo và
     `UCMS_UseCase_Diagrams.docx` cần thay hình context và hình ICPDP 3.
+
+### I65 — Làm rõ vòng xét duyệt báo cáo định kỳ và nhóm Manage evaluation
+
+- **Nguồn:** yêu cầu người dùng ngày 2026-10-11.
+- **Quyết định:** **Nhóm chức năng trên sơ đồ ICPDP:** `Assess periodic report` nằm trong `Manage compliance`; `Request periodic report revision` và `Approve periodic report` nằm trong `Manage evaluation`. Hai chức năng sau là các nhánh quyết định của UC39, không tạo mã UC mới và không thay đổi module sở hữu `PeriodicReport` (M08). Phía CLB, `Revise and resubmit periodic report` là UC38 A2 trong `Manage reports`, cần permission `club.report.submit`.
+- **Luồng:** ICPDP kiểm tra đúng mẫu, đủ các mục bắt buộc và minh chứng. Chưa đạt → trả về
+  kèm nhận xét chỉ rõ phần cần sửa → CLB sửa và nộp version mới → ICPDP xét lại. Lặp đến khi
+  `Accepted`; chỉ báo cáo đã chấp nhận dùng làm đầu vào UC42. Giữ mọi version và quyết định cũ.
+- **Đồng bộ:** SRS, Model/Spec v2, sơ đồ nguồn và PNG của ICPDP 3/Club Member 3, README sơ đồ,
+  luồng nghiệp vụ F8 (draw.io/PNG), hai bản thuyết trình, context Q&A, backlog/kế hoạch triển khai,
+  SPEC/TASKS feature và report DOCX v2 (hình, mô tả UC, màn hình, luồng, hướng dẫn và mục lục).
+- **Phạm vi:** không tăng tổng số UC, không đổi mã UC hay module dữ liệu; tài liệu v1 và các
+  mục review trước I65 giữ làm lịch sử. Không xác nhận code phía CLB đã triển khai hoặc nghiệm thu.

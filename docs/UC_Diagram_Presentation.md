@@ -430,8 +430,10 @@ Không. Booking không dùng nữa phải trả qua UC47; sự kiện huỷ thì
 > toán. Hệ thống tự tính đã tạm ứng bao nhiêu, đã chi bao nhiêu, còn dư bao nhiêu, khoản nào thiếu
 > chứng từ.
 >
-> **Manage reports & complaints** include **Submit periodic report** — báo cáo hoạt động định kỳ theo
-> học kỳ — và **Respond to complaint** — phản hồi khiếu nại mà ICPDP đã chuyển xuống.
+> **Manage reports** include **Submit event report**, **Submit periodic report** và
+> **Revise and resubmit periodic report**: đọc nhận xét ICPDP, sửa phần chưa đúng mẫu hoặc
+> còn thiếu, rồi nộp version mới. ICPDP xét lại đến khi chấp nhận. **Respond to complaint**
+> nằm riêng trong permission `club.complaint.respond`.
 
 ### Bảng ánh xạ
 
@@ -442,6 +444,7 @@ Không. Booking không dùng nữa phải trả qua UC47; sự kiện huỷ thì
 | Review event feedback | UC49 | Chỉ tổng hợp (BR37), đủ số người tối thiểu (BR40) |
 | Record expense & submit settlement | UC36 | Chi ngoài hạng mục bị gắn cờ (BR24); chứng từ theo hạng mục (BR25); hạn quyết toán (BR57) |
 | Submit periodic report | UC38 | Hệ thống nạp sẵn sự kiện, thành viên, điểm danh, tài chính |
+| Revise and resubmit periodic report | UC38 A2 | Giữ version cũ; tạo task UC39 mới, lặp đến khi duyệt |
 | Respond to complaint | UC52 | Có thời hạn; CLB không tự đóng khiếu nại |
 
 ### Q&A
@@ -623,7 +626,7 @@ UCMS chỉ quản lý những phòng mở cho CLB, không thay hệ thống đ�
 > Hình cuối là giám sát tuân thủ và đánh giá CLB.
 >
 > **Manage compliance** include:
-> - **Assess periodic report**: thẩm định báo cáo định kỳ, đối chiếu với số liệu hệ thống đang giữ.
+> - **Assess periodic report**: kiểm tra đúng mẫu, đủ nội dung và minh chứng, đối chiếu số liệu hệ thống.
 >   Báo cáo được chấp nhận trở thành đầu vào đánh giá.
 > - **Triage complaint**: phân loại khiếu nại — bác bỏ, chuyển cho CLB phản hồi, hoặc leo thang
 >   thành vụ việc.
@@ -632,6 +635,8 @@ UCMS chỉ quản lý những phòng mở cho CLB, không thay hệ thống đ�
 >   khắc phục, đến khi giải quyết xong.
 >
 > **Manage evaluation** include:
+> - **Request periodic report revision**: trả báo cáo kèm nhận xét chỉ rõ phần cần sửa (nhánh UC39).
+> - **Approve periodic report**: chấp nhận khi đạt yêu cầu (nhánh UC39). CLB sửa và nộp version mới qua UC38; ICPDP xét lại đến khi duyệt.
 > - **Create, Update, Activate evaluation scheme**: bộ tiêu chí và trọng số của kỳ đánh giá.
 > - **Generate evaluation draft**: hệ thống tự sinh bản nháp từ dữ liệu vận hành, kèm chứng cứ
 >   cho từng tiêu chí.
@@ -640,11 +645,14 @@ UCMS chỉ quản lý những phòng mở cho CLB, không thay hệ thống đ�
 > Đây là chỗ mọi thứ khép lại: điểm danh, feedback, tài chính, báo cáo, vi phạm — dữ liệu từ mọi
 > module đều được dùng lại để đánh giá CLB cuối kỳ, không phải nhập lại.
 
+**Nhóm chức năng trên sơ đồ ICPDP:** `Assess periodic report` nằm trong `Manage compliance`; `Request periodic report revision` và `Approve periodic report` nằm trong `Manage evaluation`. Hai chức năng sau là các nhánh quyết định của UC39, không tạo mã UC mới và không thay đổi module sở hữu `PeriodicReport` (M08). Phía CLB, `Revise and resubmit periodic report` là UC38 A2 trong `Manage reports`, cần permission `club.report.submit`.
+
 ### Bảng ánh xạ
 
 | Oval | Mã UC | Quy tắc đáng nhớ |
 |---|---|---|
 | Assess periodic report | UC39 | Cặp với UC38 |
+| Request periodic report revision / Approve periodic report | UC39 | Thuộc nhóm Manage evaluation; sửa và nộp lại qua UC38 đến khi duyệt |
 | Triage complaint | UC51 | Cặp với UC50; mọi quyết định có lý do (BR39) |
 | Open / Issue decision / Resolve compliance case | UC40 | Ghi nguồn gốc vụ việc; quyết định cần lý do và chứng cứ (BR27, BR28) |
 | Create / Update / Activate evaluation scheme | UC41 | Tổng trọng số không hợp lệ thì không kích hoạt được (BR29) |

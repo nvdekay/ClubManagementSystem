@@ -133,8 +133,10 @@ Hình này là những gì CLB phải giải trình sau khi hoạt động:
   điền sẵn số liệu, và Review event feedback (UC49).
 - Record expense & submit settlement (UC36) nối thẳng: ghi chi tiêu kèm
   chứng từ rồi nộp quyết toán.
-- Manage reports & complaints include Submit periodic report (UC38) và
-  Respond to complaint (UC52) — phản hồi khiếu nại mà ICPDP chuyển xuống.
+- Manage reports include Submit event report (UC33), Submit periodic report (UC38)
+  và Revise and resubmit periodic report (UC38 A2): đọc nhận xét, sửa nội dung
+  hoặc minh chứng chưa đạt, nộp version mới và chờ ICPDP xét lại đến khi duyệt.
+- Respond to complaint (UC52) nằm riêng trong permission club.complaint.respond.
 
 ======================================================================
 HÌNH III.3.7 — ICPDP Officer: Access & club lifecycle
@@ -174,18 +176,25 @@ HÌNH III.3.9 — ICPDP Officer: Compliance & evaluation
 ======================================================================
 
 - Manage compliance include:
-  - Assess periodic report (UC39): đối chiếu báo cáo với số liệu chính hệ
-    thống đang giữ.
+  - Assess periodic report (UC39): kiểm tra đúng mẫu, đủ nội dung và minh chứng,
+    đối chiếu với số liệu hệ thống.
   - Triage complaint (UC51): bác bỏ, chuyển cho CLB phản hồi, hoặc mở vụ
     việc.
   - Open compliance case, Issue case decision, Resolve compliance case
     (UC40): mỗi vi phạm là một vụ việc có trạng thái và lịch sử xử lý.
 - Manage evaluation include:
+  - Request periodic report revision (nhánh UC39): trả báo cáo kèm nhận xét
+    chỉ rõ phần cần sửa và thông báo CLB.
+  - Approve periodic report (nhánh UC39): duyệt khi đạt yêu cầu, đưa vào UC42.
+    CLB sửa và nộp lại qua UC38 A2; ICPDP xét lại đến khi duyệt.
   - Create, Update, Activate evaluation scheme (UC41): bộ tiêu chí và trọng
     số của kỳ.
   - Generate evaluation draft (UC42): hệ thống tự sinh bản nháp từ dữ liệu
     vận hành.
   - Publish evaluation (UC43): rà soát, chốt và công bố.
+
+Hai chức năng yêu cầu sửa và duyệt thuộc Manage evaluation trên sơ đồ, vẫn là
+các nhánh UC39; không tăng số UC và không đổi module dữ liệu M08.
 
 Dữ liệu ở mọi module — điểm danh, feedback, tài chính, vi phạm — đều được
 dùng lại để đánh giá CLB cuối kỳ.
