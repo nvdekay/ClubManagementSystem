@@ -81,8 +81,6 @@ body {
   --color-success-app: #047857;
   --color-warning-app: #9a4a0b;
   --color-danger-app: #b91c1c;
-  --color-auth-orb-large-app: #cff4fc;
-  --color-auth-orb-small-app: #a7f3d0;
   --color-auth-button-hover-app: #f0f9ff;
   --color-auth-button-border-app: #94a3b8;
   --color-auth-danger-surface-app: #fef2f2;
@@ -112,13 +110,9 @@ body {
   --color-on-recruitment-app: #ffffff;
   --color-recruitment-soft-app: #fed7aa;
   --color-recruitment-glow-app: #fdba74;
-  /* FPT Education brand used by the public pages (pdp.fpt.edu.vn palette). */
-  --color-fpt-orange-app: #f27022;
-  --color-on-fpt-orange-app: #ffffff;
-  --color-fpt-orange-soft-app: #fff1e7;
-  --color-fpt-navy-app: #012970;
-  --color-on-fpt-navy-app: #ffffff;
-  --color-fpt-heading-app: #012970;
+  /* Deep band behind the public hero, call-to-action and footer (same family as text-app). */
+  --color-hero-app: #0b2533;
+  --color-on-hero-app: #ffffff;
 }
 
 /* Manual dark mode — toggled via a "dark" class on <html>.
@@ -145,8 +139,6 @@ body {
   --color-success-app: #6ee7b7;
   --color-warning-app: #fcd34d;
   --color-danger-app: #fca5a5;
-  --color-auth-orb-large-app: #0f3443;
-  --color-auth-orb-small-app: #0f3329;
   --color-auth-button-hover-app: #16303f;
   --color-auth-button-border-app: #3b5568;
   --color-auth-danger-surface-app: #3a1d22;
@@ -170,12 +162,8 @@ body {
   --color-on-recruitment-app: #1c1917;
   --color-recruitment-soft-app: #653016;
   --color-recruitment-glow-app: #7c2d12;
-  --color-fpt-orange-app: #e8661a;
-  --color-on-fpt-orange-app: #ffffff;
-  --color-fpt-orange-soft-app: #3a2214;
-  --color-fpt-navy-app: #0c2a5e;
-  --color-on-fpt-navy-app: #f1f5ff;
-  --color-fpt-heading-app: #e6f3fa;
+  --color-hero-app: #0e2635;
+  --color-on-hero-app: #e6f3fa;
 }
 
 /* Honour reduced-motion: keep state changes, drop the movement. */

@@ -30,11 +30,10 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
           draggable={false}
           className="pointer-events-none absolute inset-0 size-full object-cover object-[78%_center]"
         />
-        <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary-soft-app via-primary-soft-app/60 via-35% to-transparent to-60%" />
         <div className="relative self-start">
           <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />
         </div>
-        <div className="relative flex max-w-110 flex-col gap-3">
+        <div className="relative flex max-w-110 flex-col gap-3 rounded-3xl bg-bg-app p-6 shadow-lg">
           <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em]">
             {t("auth.brand")}
           </span>

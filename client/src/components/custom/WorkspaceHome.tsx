@@ -28,7 +28,6 @@ export function WorkspaceHome({ subtitle, actions, children }: WorkspaceHomeProp
   return (
     <>
       <section className="relative overflow-hidden rounded-3xl bg-primary-soft-app px-6 py-8 sm:px-10 sm:py-10">
-        <span aria-hidden="true" className="pointer-events-none absolute -top-16 -right-10 size-56 rounded-full bg-auth-orb-small-app opacity-60 blur-2xl" />
         <div className="relative max-w-2xl">
           <p className="text-sm font-semibold text-primary-app">{subtitle}</p>
           <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl">

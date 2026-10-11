@@ -1,6 +1,5 @@
 const en = {
   navHome: "Home",
-  topBar: "FPT University · Student clubs, events and recruitment",
   footerAbout: "The club management system of FPT University: clubs, events, recruitment and facilities in one place.",
   footerExplore: "Explore",
   footerAccount: "Your account",
@@ -116,7 +115,6 @@ const en = {
 
 const vi: Record<keyof typeof en, string> = {
   navHome: "Trang chủ",
-  topBar: "Đại học FPT · Câu lạc bộ, sự kiện và tuyển thành viên",
   footerAbout: "Hệ thống quản lý câu lạc bộ của Đại học FPT: CLB, sự kiện, tuyển thành viên và cơ sở vật chất ở cùng một nơi.",
   footerExplore: "Khám phá",
   footerAccount: "Tài khoản",
