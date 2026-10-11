@@ -30,6 +30,12 @@ interface NavGroup {
 
 type NavEntry = NavItem | NavGroup;
 
+/** A folding parent only when it has two or more visible children; one child stays a plain link, none hides it. */
+function group(key: string, label: string, icon: AppIconName, children: NavItem[]): NavEntry[] {
+  if (children.length > 1) return [{ group: key, label, icon, children }];
+  return children;
+}
+
 const linkClass = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
 const activeLinkClass = "bg-primary-soft-app font-semibold text-primary-app hover:bg-primary-soft-app hover:text-primary-app";
 
@@ -249,11 +255,15 @@ function navigation(context: Context, workspace: Workspace | undefined,
   if (context.kind === "student") {
     return [{ title: t("common.sectionWork"), items: [
       { to: "/student", label: t("common.navOverview"), icon: "home", end: true },
-      { to: "/workspace/recruitment", label: t("common.navRecruitment"), icon: "send" },
-      { to: "/workspace/applications", label: t("common.navApplications"), icon: "file" },
-      { to: "/workspace/clubs", label: t("common.navMyClubs"), icon: "users" },
-      { to: "/workspace/event-registrations", label: t("common.navMyEvents"), icon: "calendar" },
-      { to: "/workspace/feedback", label: t("common.navFeedback"), icon: "megaphone" },
+      ...group("student-clubs", t("common.groupClubs"), "users", [
+        { to: "/workspace/clubs", label: t("common.navMyClubs"), icon: "users" },
+        { to: "/workspace/recruitment", label: t("common.navRecruitment"), icon: "send" },
+        { to: "/workspace/applications", label: t("common.navApplications"), icon: "file" },
+      ]),
+      ...group("student-events", t("common.groupEventsFeedback"), "calendar", [
+        { to: "/workspace/event-registrations", label: t("common.navMyEvents"), icon: "calendar" },
+        { to: "/workspace/feedback", label: t("common.navFeedback"), icon: "megaphone" },
+      ]),
     ] }, explore];
   }
   if (context.kind === "icpdp") {
@@ -295,19 +305,27 @@ function navigation(context: Context, workspace: Workspace | undefined,
   function can(permission: string) {
     return Boolean(workspace?.permissions.includes(permission));
   }
+  const member = workspace?.role !== "founder";
+  // Club pages are grouped like the ICPDP menu; each child still follows the role's permissions.
   return [{ title: t("common.sectionWork"), items: [
     { to: base, label: t("common.navOverview"), icon: "home", end: true },
-    ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "badge" as const }] : []),
-    ...(can("club.recruitment.manage") ? [{ to: `${base}/recruitment`, label: t("common.navCampaigns"), icon: "megaphone" as const }] : []),
-    ...(can("club.role.manage") ? [{ to: `${base}/settings`, label: t("common.navSettings"), icon: "settings" as const }] : []),
-    ...(can("club.event.manage") ? [{ to: `${base}/events`, label: t("common.navClubEvents"), icon: "megaphone" as const }] : []),
-    ...(can("club.report.submit") ? [{ to: `${base}/event-reports`, label: t("common.navEventReports"), icon: "file" as const }] : []),
-    ...(can("club.expense.record") ? [{ to: `${base}/budgets`, label: t("common.navEventFinances"), icon: "file" as const }] : []),
-    ...(can("club.attendance.manage") ? [{ to: `${base}/event-attendance`, label: t("common.navEventAttendance"), icon: "users" as const }] : []),
-    ...(can("club.feedback.view") ? [{ to: `${base}/event-feedback`, label: t("common.navEventFeedback"), icon: "megaphone" as const }] : []),
-    ...(workspace?.role !== "founder" ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "calendar" as const }] : []),
-    ...(can("club.booking.manage") ? [{ to: `${base}/bookings`, label: t("common.navBookings"), icon: "mapPin" as const }] : []),
-    ...(workspace?.role !== "founder" ? [{ to: `${base}/members`, label: t("common.navMembers"), icon: "users" as const }] : []),
+    ...group("club-people", t("common.groupPeople"), "users", [
+      ...(member ? [{ to: `${base}/members`, label: t("common.navMembers"), icon: "users" as const }] : []),
+      ...(can("club.recruitment.manage") ? [{ to: `${base}/recruitment`, label: t("common.navCampaigns"), icon: "megaphone" as const }] : []),
+      ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "badge" as const }] : []),
+      ...(can("club.role.manage") ? [{ to: `${base}/settings`, label: t("common.navSettings"), icon: "settings" as const }] : []),
+    ]),
+    ...group("club-events", t("common.groupClubEvents"), "calendar", [
+      ...(can("club.event.manage") ? [{ to: `${base}/events`, label: t("common.navClubEvents"), icon: "megaphone" as const }] : []),
+      ...(can("club.attendance.manage") ? [{ to: `${base}/event-attendance`, label: t("common.navEventAttendance"), icon: "users" as const }] : []),
+      ...(can("club.feedback.view") ? [{ to: `${base}/event-feedback`, label: t("common.navEventFeedback"), icon: "megaphone" as const }] : []),
+      ...(can("club.report.submit") ? [{ to: `${base}/event-reports`, label: t("common.navEventReports"), icon: "file" as const }] : []),
+    ]),
+    ...group("club-resources", t("common.groupFinanceFacilities"), "mapPin", [
+      ...(can("club.expense.record") ? [{ to: `${base}/budgets`, label: t("common.navEventFinances"), icon: "file" as const }] : []),
+      ...(member ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "calendar" as const }] : []),
+      ...(can("club.booking.manage") ? [{ to: `${base}/bookings`, label: t("common.navBookings"), icon: "mapPin" as const }] : []),
+    ]),
     ...(can("club.feedback.view") ? [{ to: `${base}/feedback`, label: t("common.navFeedbackInbox"), icon: "inbox" as const }] : []),
     { to: `/clubs/${encodeURIComponent(context.clubId)}`, label: t("common.navPublicPage"), icon: "globe" },
   ] }, explore];
