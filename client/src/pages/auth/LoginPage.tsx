@@ -2,18 +2,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
-import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { googleLoginUrl } from "@/services/auth";
 import { cn } from "@/utils/cn";
 
 // FPT University Hoa Lac campus, served by the university website.
 const campusImageUrl = "https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/banner-truong-dai-hoc-fpt-co-so-ha-noi.jpg";
-
-const features = [
-  { icon: "compass", title: "auth.featureClubsTitle", text: "auth.featureClubsText" },
-  { icon: "calendar", title: "auth.featureEventsTitle", text: "auth.featureEventsText" },
-  { icon: "shield", title: "auth.featureManageTitle", text: "auth.featureManageText" },
-] as const satisfies ReadonlyArray<{ icon: AppIconName; title: string; text: string }>;
 
 interface LoginPageProps {
   authError: string | null;
@@ -41,27 +35,14 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
         <div className="relative self-start">
           <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />
         </div>
-        <div className="relative w-full max-w-120 rounded-3xl bg-bg-app p-6 text-text-app shadow-xl sm:p-8">
+        <div className="relative w-full max-w-sm rounded-2xl bg-bg-app p-5 text-text-app shadow-lg">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft-app px-3 py-1 text-xs font-semibold text-primary-app">
             <AppIcon name="graduationCap" className="size-4" />{t("auth.loginChip")}
           </span>
-          <p className="mt-4 font-auth-heading text-[clamp(30px,4vw,42px)] leading-[1.1] font-extrabold tracking-[-0.025em]">
+          <p className="mt-3 font-auth-heading text-3xl leading-tight font-extrabold tracking-[-0.025em]">
             {t("auth.brand")}
           </p>
-          <p className="mt-2 text-pretty text-muted-app">{t("auth.systemDescription")}</p>
-          <ul className="mt-6 hidden space-y-4 border-t border-border-app pt-6 sm:block">
-            {features.map((feature) => (
-              <li key={feature.title} className="flex items-start gap-3">
-                <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-app text-on-primary-app">
-                  <AppIcon name={feature.icon} className="size-5" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-semibold">{t(feature.title)}</span>
-                  <span className="block text-sm text-pretty text-muted-app">{t(feature.text)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <p className="mt-1.5 text-sm text-pretty text-muted-app">{t("auth.systemDescription")}</p>
         </div>
       </section>
 
