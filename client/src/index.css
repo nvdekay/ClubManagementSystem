@@ -112,6 +112,13 @@ body {
   --color-on-recruitment-app: #ffffff;
   --color-recruitment-soft-app: #fed7aa;
   --color-recruitment-glow-app: #fdba74;
+  /* FPT Education brand used by the public pages (pdp.fpt.edu.vn palette). */
+  --color-fpt-orange-app: #f27022;
+  --color-on-fpt-orange-app: #ffffff;
+  --color-fpt-orange-soft-app: #fff1e7;
+  --color-fpt-navy-app: #012970;
+  --color-on-fpt-navy-app: #ffffff;
+  --color-fpt-heading-app: #012970;
 }
 
 /* Manual dark mode — toggled via a "dark" class on <html>.
@@ -163,6 +170,12 @@ body {
   --color-on-recruitment-app: #1c1917;
   --color-recruitment-soft-app: #653016;
   --color-recruitment-glow-app: #7c2d12;
+  --color-fpt-orange-app: #e8661a;
+  --color-on-fpt-orange-app: #ffffff;
+  --color-fpt-orange-soft-app: #3a2214;
+  --color-fpt-navy-app: #0c2a5e;
+  --color-on-fpt-navy-app: #f1f5ff;
+  --color-fpt-heading-app: #e6f3fa;
 }
 
 /* Honour reduced-motion: keep state changes, drop the movement. */
