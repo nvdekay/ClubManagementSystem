@@ -7,7 +7,6 @@ import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth, useLoginError } from "@/hooks/useAuth";
 import type { Workspace } from "@/services/auth";
-import { cn } from "@/utils/cn";
 import { LoginPage } from "@/pages/auth/LoginPage";
 
 function workspaceKey(workspace: Workspace): string {
@@ -24,12 +23,6 @@ function workspaceIcon(workspace: Workspace): AppIconName {
   if (workspace.kind === "student") return "graduationCap";
   if (workspace.kind === "icpdp") return "shield";
   return "briefcase";
-}
-
-function workspaceTone(workspace: Workspace): "personal" | "school" | "club" {
-  if (workspace.kind === "student") return "personal";
-  if (workspace.kind === "icpdp") return "school";
-  return "club";
 }
 
 export function AuthWorkspacePage() {
@@ -95,13 +88,14 @@ export function AuthWorkspacePage() {
 
   const workspaces = auth.data?.workspaces ?? [];
   return (
-    <div className="min-h-full bg-picker-page-app">
+    <div className="min-h-full bg-bg-app">
       <main className="flex min-h-dvh items-center p-[clamp(24px,5vw,64px)]">
         {auth.isPending ? (
-          <div className="w-full max-w-[880px] space-y-5">
+          <div className="mx-auto w-full max-w-6xl space-y-5">
             <p role="status" className="text-sm text-muted-app">{t("auth.loading")}</p>
             <AppSkeleton className="h-12 w-2/3" />
-            <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <AppSkeleton className="h-64 w-full" />
               <AppSkeleton className="h-64 w-full" />
               <AppSkeleton className="h-64 w-full" />
             </div>
@@ -113,39 +107,35 @@ export function AuthWorkspacePage() {
             <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
           </div>
         ) : (
-          <section aria-labelledby="workspace-heading" className="flex w-full max-w-[880px] flex-col gap-8">
+          <section aria-labelledby="workspace-heading" className="mx-auto flex w-full max-w-6xl flex-col gap-8">
             <div className="flex flex-col gap-2">
-              <p className="text-sm text-picker-muted-app">{auth.data.user.email}</p>
-              <h1 id="workspace-heading" className="m-0 max-w-2xl font-heading text-[clamp(30px,5vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em] text-balance text-picker-text-app">
+              <p className="text-sm text-muted-app">{auth.data.user.email}</p>
+              <h1 id="workspace-heading" className="m-0 max-w-2xl font-heading text-[clamp(30px,5vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em] text-balance text-text-app">
                 {t("auth.chooseWorkspaceTitle", {
                   name: i18n.language === "vi"
                     ? auth.data.user.displayName.trim().split(/\s+/).at(-1)
                     : auth.data.user.displayName.trim().split(/\s+/)[0],
                 })}
               </h1>
-              <p className="m-0 text-picker-muted-app">{t("auth.chooseWorkspaceHint")}</p>
+              <p className="m-0 text-muted-app">{t("auth.chooseWorkspaceHint")}</p>
             </div>
 
             {workspaces.length === 0 ? (
-              <div className="rounded-[8px] border border-picker-divider-app bg-picker-surface-app p-8 text-picker-muted-app">
+              <div className="rounded-2xl border border-border-app bg-surface-app p-8 text-muted-app">
                 {t("auth.noWorkspaces")}
               </div>
             ) : (
-              <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-6">
+              <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {workspaces.map((workspace) => (
                   <li key={workspaceKey(workspace)} className="flex">
                     <button type="button" onClick={() => selectWorkspace(workspace)}
-                      className="group flex w-full flex-col items-start gap-4 rounded-[8px] border border-picker-divider-app bg-picker-surface-app p-8 text-left transition-colors duration-200 hover:border-picker-accent-app focus-visible:border-picker-accent-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-picker-accent-app">
-                      <span aria-hidden="true" className={cn("flex size-16 items-center justify-center rounded-full", {
-                        "bg-picker-student-soft-app text-picker-student-app": workspaceTone(workspace) === "personal",
-                        "bg-picker-school-soft-app text-picker-school-app": workspaceTone(workspace) === "school",
-                        "bg-picker-club-soft-app text-picker-club-app": workspaceTone(workspace) === "club",
-                      })}>
+                      className="group flex w-full flex-col items-start gap-4 rounded-2xl border border-border-app bg-bg-app p-7 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-app hover:shadow-lg focus-visible:border-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+                      <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft-app text-primary-app transition-colors group-hover:bg-primary-app group-hover:text-on-primary-app">
                         <AppIcon name={workspaceIcon(workspace)} className="size-6" />
                       </span>
-                      <span className="font-heading text-2xl leading-tight font-bold text-balance text-picker-text-app">{workspaceTitle(workspace)}</span>
-                      <span className="leading-7 text-pretty text-picker-muted-app">{workspaceSubtitle(workspace)}</span>
-                      <span className="mt-auto flex items-center gap-2 pt-3 font-semibold text-picker-accent-app">
+                      <span className="font-heading text-2xl leading-tight font-bold text-balance text-text-app">{workspaceTitle(workspace)}</span>
+                      <span className="leading-7 text-pretty text-muted-app">{workspaceSubtitle(workspace)}</span>
+                      <span className="mt-auto flex items-center gap-2 pt-3 font-semibold text-primary-app">
                         {t("auth.openWorkspace")}
                         <AppIcon name="chevronRight" className="transition-transform group-hover:translate-x-1" />
                       </span>
