@@ -1,13 +1,13 @@
 # 02 — Use case model và đặc tả (v2, hiện hành)
 
-Tài liệu use case có thẩm quyền: **52 use case (UC01–UC52)**, 4 actor (Student, Club Member, Club Leader, ICPDP Officer), 3 hệ thống
+Tài liệu use case có thẩm quyền: **53 use case (UC01–UC52 và UC58 — phân phòng học theo học kỳ, thêm 2026-10-11)**, 4 actor (Student, Club Member, Club Leader, ICPDP Officer), 3 hệ thống
 ngoài, 12 module. Mọi mã số trong thư mục này là v2; cách đánh số v1 (UC01–UC57) chỉ còn tồn tại trong
 [`../01-business-analysis/`](../01-business-analysis/).
 
 | File | Là gì |
 |---|---|
 | [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md) | Mô hình: vì sao có v2, danh sách use case, ánh xạ v1 → v2, bản đồ quan hệ, ma trận actor, các vòng đời thực thể, phần sửa đổi quy tắc nghiệp vụ (BR40–BR46), phạm vi phát hành, truy vết và ánh xạ luồng context |
-| [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) | Đặc tả chi tiết cả 52 use case — actor, mục tiêu, điều kiện kích hoạt, tiền điều kiện, dữ liệu vào, luồng chính, luồng thay thế, ngoại lệ, hậu điều kiện, quy tắc nghiệp vụ, đầu ra, use case liên quan, pain point |
+| [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) | Đặc tả chi tiết cả 53 use case — actor, mục tiêu, điều kiện kích hoạt, tiền điều kiện, dữ liệu vào, luồng chính, luồng thay thế, ngoại lệ, hậu điều kiện, quy tắc nghiệp vụ, đầu ra, use case liên quan, pain point |
 | [`UCMS_Review_Issues.md`](UCMS_Review_Issues.md) | Nhật ký review chéo I01–I30: những chỗ mô hình, đặc tả và sơ đồ mâu thuẫn nhau, và cách xử lý từng mục. I21 và I22 vẫn còn mở |
 
 Bản Word sử dụng hiện tại là [report v2](../Group1_SE1939-NJ_Report_Final_v2.docx);

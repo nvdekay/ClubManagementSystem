@@ -3,6 +3,7 @@ import { startAccountabilityReminderJob } from "./interface/jobs/accountability-
 import { mongoPostEventReportRepository } from "./infra/db/mongo-post-event-report-repository.js";
 import { mongoClubEventRepository } from "./infra/db/mongo-club-event-repository.js";
 import { mongoFacilityBookingRepository } from "./infra/db/mongo-facility-booking-repository.js";
+import { mongoRoomAllocationRepository } from "./infra/db/mongo-room-allocation-repository.js";
 import { startFacilityBookingJob } from "./interface/jobs/facility-booking-job.js";
 import mongoose from "mongoose";
 import { buildApp } from "./interface/http/server.js";
@@ -85,6 +86,7 @@ const app = authConfig ? buildApp({
   clubFieldRepo: mongoClubFieldRepository(),
   propertyRepo: mongoPropertyRepository(),
   facilityBookingRepo,
+  roomAllocationRepo: mongoRoomAllocationRepository(),
   evaluationSchemeRepo: mongoEvaluationSchemeRepository(),
   exportRepo: mongoExportRepository(),
   exportWriter: exportFileWriter(),

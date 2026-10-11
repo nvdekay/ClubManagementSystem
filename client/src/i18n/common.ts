@@ -1,6 +1,6 @@
 const en = {
   navEventReports: "Post-event reports", navEventFinances: "Expenses & settlement", navClubEvents: "Club events", navEventAttendance: "Registration & attendance", navEventFeedback: "Event feedback",
-  navBookings: "Facility bookings",
+  navBookings: "Facility requests", navRoomAllocations: "Room allocation", navClubRooms: "Allocated rooms",
   darkModeLabel: "Dark mode",
   myWorkspace: "My workspace",
   languageLabel: "Vietnamese language",
@@ -29,7 +29,7 @@ const en = {
 
 const vi: Record<keyof typeof en, string> = {
   navEventReports: "Báo cáo sau sự kiện", navEventFinances: "Khoản chi và quyết toán", navClubEvents: "Sự kiện CLB", navEventAttendance: "Đăng ký & điểm danh", navEventFeedback: "Phản hồi sự kiện",
-  navBookings: "Đặt cơ sở vật chất",
+  navBookings: "Yêu cầu cơ sở vật chất", navRoomAllocations: "Phân phòng CLB", navClubRooms: "Phòng được phân",
   darkModeLabel: "Chế độ tối",
   myWorkspace: "Không gian làm việc",
   languageLabel: "Tiếng Việt",

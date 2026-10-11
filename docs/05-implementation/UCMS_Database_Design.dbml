@@ -1074,11 +1074,11 @@ Table propertyBookings {
   decidedAt datetime
   cancelReason string
   cancelledAt datetime
-  releasedBy string [note: 'CMB | EVENT_CANCELLED | SUSPENSION | DISSOLUTION (BR35, UC47 A1).']
+  releasedBy string [note: 'CMB | EVENT_CANCELLED | SUSPENSION | DISSOLUTION | ROOM_ALLOCATION_REVOKED (BR35, UC47 A1, UC58 thu hồi).']
   isLateCancellation bool [default: false, note: 'Nằm trong thời hạn báo trước; là một tín hiệu tuân thủ cho UC40 (UC47 E2).']
   createdAt datetime [not null]
 
-  Note: 'BR33 — hai booking Approved không được chồng khung giờ trên cùng một property trừ khi chính sách cho phép overbooking. Được cưỡng chế bằng index khung giờ cộng một findOneAndUpdate có điều kiện tại thời điểm phê duyệt (DAT-04).'
+  Note: 'BR33 — hai booking Approved không được chồng khung giờ trên cùng một property trừ khi chính sách cho phép overbooking (chỉ khi ICPDP duyệt HALL/OUTDOOR/STAGE/EQUIPMENT ở UC46). Được cưỡng chế bằng index khung giờ cộng một findOneAndUpdate có điều kiện tại thời điểm phê duyệt (DAT-04). Phòng học ROOM chỉ do ICPDP phân theo học kỳ (UC58, BR62): mỗi buổi là một booking Approved, purpose ICPDP room allocation, currentVersionNo 0; bản ghi đợt phân nằm ở auditLogs (entityType RoomAllocation), không bao giờ đặt trùng.'
   indexes {
     (propertyId, startAt, endAt) [name: 'ix_booking_slot', note: 'Phía đọc xung đột của BR15 và chốt chặn lúc phê duyệt của BR33.']
     (clubId, state) [name: 'ix_booking_club_state']

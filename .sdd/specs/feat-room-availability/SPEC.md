@@ -1,3 +1,10 @@
+> Cập nhật v1.2.0 ngày 2026-10-11 theo product owner: **luồng CLB tự đặt phòng học trong spec này
+> bị bỏ toàn bộ.** Phòng học `ROOM` do ICPDP phân theo học kỳ ở UC58 — xem
+> [`../feat-room-allocation/SPEC.md`](../feat-room-allocation/SPEC.md) và ADR-006. Không còn đặt ngay
+> `Approved`, không còn snapshot Chủ nhiệm chịu trách nhiệm. Phần còn dùng lại: danh mục 30 phòng
+> seed ở năm toà (toà nhà = `location`) và cách tính phòng bị chiếm (booking `Approved`/`In Use`,
+> sự kiện `Approved`/`Upcoming`/`Ongoing`) — UC58 dùng cho lưới chiếm dụng tuần.
+
 # SPEC: feat-room-availability
 
 ## Vấn đề
@@ -26,7 +33,7 @@ Người đặt cần biết phòng đã có lịch sử dụng trước khi ch�
 ## Ngoài phạm vi
 Không đổi schema; luồng đặt ngay luôn chặn xung đột, không sửa policy toàn hệ thống; không đưa Omega Hub vào phòng đặt khi chưa xác nhận vận hành. Không seed database đang chạy trong phiên sửa code.
 
-## Tiêu chí bổ sung
+## Tiêu chí bổ sung *(cả mục bị thay bởi v1.2.0 — xem feat-room-allocation)*
 - [ ] Form chỉ cần ngày, slot, phòng; tự hiển thị chủ nhiệm chịu trách nhiệm.
 - [ ] Đặt ngay trả Approved, không tạo task; chặn xung đột khi allowOverbooking=true.
 - [ ] Hai người đặt cùng slot chỉ một người thành công; giữ snapshot chủ nhiệm khi đổi nhiệm kỳ.
@@ -35,3 +42,4 @@ Không đổi schema; luồng đặt ngay luôn chặn xung đột, không sửa
 ## Changelog
 - v1.0.0 (2026-10-11) — theo yêu cầu người dùng trên branch hiện tại.
 - v1.1.0 (2026-10-11) — người dùng xác nhận đặt xong giữ phòng ngay và chủ nhiệm chịu trách nhiệm.
+- v1.2.0 (2026-10-11) — product owner bỏ luồng CLB tự đặt phòng học; thay bằng UC58 (feat-room-allocation).

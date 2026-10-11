@@ -18,7 +18,7 @@ nộp, tránh bản nháp lưu sớm nhưng gửi quá hạn. ICPDP có thể du
 chưa bắt đầu. Phương án thay thế phải là một slot hợp lệ; CLB chọn dùng rồi gửi lại
 vẫn phải đáp ứng hạn gửi.
 
-Cùng property/ngày/slot xung đột; hai slot kế tiếp được phép đặt. CLB đặt trực tiếp luôn bị chặn khi có conflict. Policy `allowOverbooking` bật chỉ cho phép
+Cùng property/ngày/slot xung đột; hai slot kế tiếp được phép đặt. *(Câu về CLB đặt trực tiếp và ICPDP đặt trùng dưới đây đã bị thay ở mục 2026-10-11 cuối file.)* CLB đặt trực tiếp luôn bị chặn khi có conflict. Policy `allowOverbooking` bật chỉ cho phép
 ICPDP đặt trùng kèm lý do; không cấp quyền đặt trùng cho CLB. Lịch cũ và sự kiện ngoài slot giữ khoảng đệm policy;
 blackout luôn chặn. Số người vượt sức chứa chỉ cảnh báo. Huỷ dưới 24 giờ trước giờ bắt
 đầu ghi nhận huỷ muộn; đúng 24 giờ không muộn.
@@ -29,6 +29,9 @@ bằng khoá ghi property. Job phút chuyển Approved → In Use → Completed.
 đã nối release; chưa có thao tác trả sớm In Use. Luồng sự kiện UC25/UC28 nối thêm khi triển khai Wave 3.
 
 ## Ngoại lệ overbooking — chốt ngày 2026-10-11
+
+> **Đã bỏ (2026-10-11, UC58):** ICPDP không còn đặt trùng phòng học; endpoint overbook và
+> snapshot Chủ nhiệm bị gỡ. Chỉ còn `overbookingReason` khi duyệt yêu cầu ngoài ROOM ở UC46.
 
 ICPDP mở Đặt trùng phòng tại `/workspace/bookings`, chọn CLB, ngày, slot và phòng,
 đọc lịch xung đột, nhập lý do bắt buộc. Policy `allowOverbooking` phải bật; blackout,
@@ -96,6 +99,8 @@ Bốn booking mẫu khung giờ cũ chuyển Released, giữ lịch sử. Seed l
 - Chạy seed hai lần: 3 phòng, 4 booking mới và 4 booking cũ Released, không nhân đôi.
 
 ## Điều chỉnh hai luồng booking — 2026-10-11
+
+> **Đã bị thay** bởi mục "Phòng học do ICPDP phân theo học kỳ" ngay dưới.
 ROOM đặt trực tiếp; HALL/OUTDOOR/STAGE/EQUIPMENT cần ICPDP duyệt, có Draft/sửa/nộp lại.
 UC44 hỗ trợ sân trường/khu ngoài trời (OUTDOOR) và sân khấu (STAGE). Phòng học trực tiếp
 không gắn UC25; booking cần duyệt có thể liên kết sự kiện cùng CLB, gắn/gỡ tại UC25 cần
@@ -104,3 +109,14 @@ thêm club.booking.manage. UC26 không duyệt thay UC46. ROOM legacy đã nộp
 Kiểm chứng bổ sung: check với Mongo thật 405 test / 83 file pass; build client thành công.
 Chrome API fixture: 16 cấu hình hai form, vi/en, sáng/tối, 390/1440 px; thêm nhánh
 yêu cầu sửa/nộp lại. Không coi browser fixture là nghiệm thu OAuth/API end-to-end.
+
+## Phòng học do ICPDP phân theo học kỳ — 2026-10-11 (UC58)
+Product owner bỏ toàn bộ luồng phòng học cũ: CLB đặt ROOM trực tiếp, ICPDP đặt trùng phòng học,
+ROOM legacy đi Draft/submit/review và snapshot Chủ nhiệm (`booking-responsible`). Thay bằng UC58:
+ICPDP chọn học kỳ, CLB (`Active`/`Dissolving`), phòng ROOM, thứ và một slot; hệ thống sinh một booking
+`Approved` cho mỗi ngày khớp còn ở tương lai, bỏ qua blackout; một ngày xung đột là từ chối cả đợt.
+Đợt phân lưu ở `auditLogs` (`RoomAllocation`, `ROOM_ALLOCATED`/`ROOM_ALLOCATION_REVOKED`), không đổi
+schema. UC45–47 chỉ còn HALL/OUTDOOR/STAGE/EQUIPMENT; `allowOverbooking` chỉ cho UC46.
+CLB xem phòng được phân tại `/club/:clubId/rooms`; ICPDP phân tại `/workspace/room-allocations`.
+`seed:demo` xoá dữ liệu ROOM cũ và seed vài đợt phân. Chi tiết:
+[`.sdd/specs/feat-room-allocation/SPEC.md`](../../.sdd/specs/feat-room-allocation/SPEC.md), ADR-006.

@@ -20,7 +20,7 @@ mảng nghiệp vụ, để mỗi hình vừa một trang. Tổng cộng 9 hình
 Mọi hình đọc theo cùng một cách: actor chỉ nối tới vài use case lớn dạng
 "Manage ...", và mỗi use case lớn <<include>> các chức năng con. Với chức
 năng kiểu danh mục, chức năng con được tách theo thêm, xem, sửa, ngừng kích
-hoạt. Các chức năng con ứng với 52 use case được đặc tả ở mục 3.2.
+hoạt. Các chức năng con ứng với 53 use case được đặc tả ở mục 3.2.
 
 Có một nguyên tắc xuyên suốt: người nộp và người duyệt luôn là hai use case
 riêng. Ví dụ Club Member nộp đề xuất sự kiện, còn ICPDP quyết định đề xuất
@@ -96,8 +96,10 @@ có quyền tương ứng (BR54). Vì vậy trưởng ban truyền thông có th
 tuyển mà không cần là chủ nhiệm. Club Member có nhiều chức năng nhất nên
 tách thành 3 hình.
 
-- Manage my membership include View member workspace (UC24) và Request to
-  leave club (UC22). Hai cái này mọi thành viên đều làm được, không cần quyền.
+- Manage my membership include View member workspace (UC24), Request to
+  leave club (UC22) và View allocated rooms — xem lịch phòng học ICPDP đã
+  phân cho CLB (UC58, chỉ đọc). Ba cái này mọi thành viên đều làm được,
+  không cần quyền.
 - Manage club profile include View club profile, Update club information và
   Define club structure (UC09): hồ sơ CLB và cơ cấu ban.
 - Manage recruitment campaigns include Create, Update, Publish recruitment
@@ -119,8 +121,9 @@ HÌNH III.3.5 — Club Member: Events & bookings
   - Cancel / reschedule event (UC28).
   - Manage waitlist (UC30): quản lý sức chứa, đôn người từ danh sách chờ
     theo đúng thứ tự.
-- Manage bookings include Reserve available room (UC45) và Cancel /
-  release booking (UC47). CLB chỉ được đặt phòng còn trống, được giữ ngay khi đặt.
+- Manage bookings include Request facility booking (UC45) và Cancel /
+  release booking (UC47). CLB chỉ xin hội trường, sân ngoài trời, sân khấu,
+  thiết bị; yêu cầu đi qua ICPDP duyệt. Phòng học do ICPDP phân (UC58).
 
 ======================================================================
 HÌNH III.3.6 — Club Member: Accountability & finance
@@ -164,9 +167,13 @@ HÌNH III.3.8 — ICPDP Officer: Events, bookings & finance
   xuất và ngân sách đi kèm — và Close event report (UC34).
 - Manage properties (UC44) include Add, View, Update, Deactivate property:
   danh mục phòng và tài sản.
-- Manage bookings include Decide facility booking request và Authorize room
-  overbooking (UC46). Chỉ ICPDP được đặt trùng, khi policy bật và có lý do;
-  blackout vẫn bị chặn. Tài sản ngoài ROOM phải gửi ICPDP duyệt. Phòng học còn trống được CLB đặt trực tiếp.
+- Manage bookings include Decide facility booking request (UC46): duyệt
+  hội trường, sân ngoài trời, sân khấu, thiết bị. Duyệt trùng chỉ khi policy
+  bật và có lý do; blackout vẫn bị chặn.
+- Manage room allocations include Allocate club room by semester, View room
+  allocations và Revoke room allocation (UC58). ICPDP chọn CLB, phòng học,
+  thứ và slot, ví dụ "Slot 4, Thứ 4"; hệ thống giữ phòng mọi tuần của học
+  kỳ. Có ngày trùng lịch thì từ chối cả đợt; thu hồi phải có lý do.
 - Manage budget include Record disbursement (UC35) — ghi nhận giải ngân — và
   Reconcile budget (UC37) — đối soát với quyết toán của CLB, xác định số tiền
   CLB phải hoàn lại nếu có.
@@ -203,7 +210,7 @@ dùng lại để đánh giá CLB cuối kỳ.
 KẾT
 ======================================================================
 
-Tóm lại 9 hình phủ toàn bộ 52 use case: phần chung, Student, Club Leader, 3
+Tóm lại 9 hình phủ toàn bộ 53 use case: phần chung, Student, Club Leader, 3
 mảng của Club Member và 3 mảng của ICPDP.
 
 Luồng chung: CLB nộp -> ICPDP quyết định -> CLB giải trình -> ICPDP giám sát
@@ -226,8 +233,8 @@ CHUẨN BỊ Q&A
   User. Con kế thừa mọi association của cha.
 
 - "Sao không có <<extend>>?"
-  Các nhánh tuỳ chọn (đặt phòng kèm đề xuất sự kiện, trả phòng khi huỷ sự
-  kiện, hoàn tiền khi đối soát) được ghi ở alternative flow trong đặc tả mục
+  Các nhánh tuỳ chọn (đặt cơ sở vật chất kèm đề xuất sự kiện, trả chỗ khi
+  huỷ sự kiện, hoàn tiền khi đối soát) được ghi ở alternative flow trong đặc tả mục
   3.2. Vẽ lên thì sẽ nối chéo giữa các hình và khó đọc.
 
 - "Manage X include Create/View/Update — vậy có bắt buộc làm hết mỗi lần
@@ -299,7 +306,8 @@ CHUẨN BỊ Q&A
 --- Điểm dễ bị bắt lỗi trong docx (kiểm tra trước khi vào phòng) ---
 
 - Mục 3.2 có câu "all 54 use cases ship in one release" nhưng bảng III.2 và
-  hình ghi 52. Nếu bị hỏi: số đúng là 52, câu kia sót lại từ bản cũ.
+  hình ghi 52. Từ 2026-10-11 số đúng là 53 (thêm UC58), câu kia sót lại
+  từ bản cũ.
 - Screen flow (Figure III.10) và bảng phân quyền màn hình dùng tên "Club
   Admin", trong khi actor là Club Leader / Club Member. Nếu bị hỏi: Club Admin
   là tên khu vực màn hình phía CLB, dùng chung cho cả hai actor.

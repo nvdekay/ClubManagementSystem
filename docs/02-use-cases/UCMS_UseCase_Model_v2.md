@@ -5,10 +5,15 @@
 > Các mục đó vẫn được giữ nguyên làm lịch sử; khi hai bên nói khác nhau, **lấy theo tài liệu này**.
 > Những mục không liệt kê ở đây (§1–§7, §12–§13, §16–§20, §23–§24) không thay đổi và vẫn còn hiệu lực.
 
-> **Sơ đồ:** mô hình này được vẽ trong [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) (draw.io), phủ UC01–UC52.
+> **Sơ đồ:** mô hình này được vẽ trong [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) (draw.io), phủ UC01–UC52 và UC58.
 > Biên hệ thống được vẽ trong [`../03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.1.drawio) (v2.1, 40 luồng — I56, I58); §15 ánh xạ từng luồng dữ liệu của nó tới use case.
 
-**Tổng: 52 business use case** — 43 use case mang sang từ 57 use case của v1, thêm mới 9. (Hai use case ngân sách cũ, UC35 và UC36 theo cách đánh số trước I59, đã gộp vào UC25, UC26; các use case sau đó được đánh số lại — xem I59.)
+**Tổng: 53 business use case** — 43 use case mang sang từ 57 use case của v1, thêm mới 10. (Hai use case ngân sách cũ, UC35 và UC36 theo cách đánh số trước I59, đã gộp vào UC25, UC26; các use case sau đó được đánh số lại — xem I59.)
+
+> **Thay đổi 2026-10-11:** Phòng học (`ROOM`) chuyển sang ICPDP phân theo học kỳ (UC58, BR62);
+> bỏ CLB đặt phòng trực tiếp và ICPDP đặt trùng phòng học; UC45–UC47 chỉ còn
+> `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`. UC58 là mã mới (UC53–UC55 nằm trong SRS; UC56–UC57 là mã
+> v1 nên không dùng lại).
 4 actor (Student, Club Member, Club Leader, ICPDP Officer — CMB được tách ở I58), 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary), 12 module.
 
 ---
@@ -175,9 +180,10 @@ Hai mâu thuẫn của v1 quanh mô hình actor được giải quyết tại đ
 | ID | Use case | Actor | Mục tiêu nghiệp vụ |
 |---|---|---|---|
 | UC44 | Quản lý danh mục cơ sở vật chất | ICPDP | Định nghĩa những gì được phép đặt |
-| UC45 | Gửi yêu cầu đặt cơ sở vật chất | Club Member | Xin một phòng hoặc thiết bị |
-| UC46 | Thẩm định và quyết định yêu cầu đặt cơ sở vật chất | ICPDP | Cấp phát nguồn lực có kiểm soát |
+| UC45 | Gửi yêu cầu đặt cơ sở vật chất (hội trường, sân, sân khấu, thiết bị) | Club Member | Xin `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` |
+| UC46 | Thẩm định yêu cầu cơ sở vật chất | ICPDP | Cấp phát nguồn lực có kiểm soát |
 | UC47 | Theo dõi và huỷ / trả cơ sở vật chất đã đặt | Club Member | Giải phóng thứ không còn cần |
+| UC58 | Phân phòng học cho CLB theo học kỳ | ICPDP | Cấp phòng học cố định theo mẫu tuần cho cả học kỳ |
 
 ### M12 — Phản hồi và khiếu nại
 
@@ -189,7 +195,7 @@ Hai mâu thuẫn của v1 quanh mô hình actor được giải quyết tại đ
 | UC51 | Phân loại khiếu nại | ICPDP | Bác bỏ, chuyển xuống hoặc leo thang, kèm lý do |
 | UC52 | Trả lời khiếu nại được chuyển xuống | Club Member | Giải trình chính thức, có ghi nhận |
 
-**Tổng:** 5 + 10 + 9 + 4 + 4 + 2 + 3 + 3 + 3 + 4 + 5 = **52**.
+**Tổng:** 5 + 10 + 9 + 4 + 4 + 2 + 3 + 3 + 3 + 5 + 5 = **53**.
 
 ## 5. Ánh xạ v1 → v2
 
@@ -255,11 +261,12 @@ Mọi mã số của v1 đều được xử lý.
 | *mới* | UC41 | Cấu hình scheme đánh giá (BR29) |
 | *mới* | UC44 | Quản lý danh mục cơ sở vật chất (UC51 của v1 đọc một danh mục không ai duy trì) |
 | *mới* | UC52 | Trả lời khiếu nại được chuyển xuống (trạng thái ở §15.10 không có actor) |
+| *mới (2026-10-11)* | UC58 | Phân phòng học cho CLB theo học kỳ (thay việc CLB tự đặt phòng học) |
 
 ## 6. Đặc tả chi tiết — bản rút gọn
 
 > **Đặc tả đầy đủ:** [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md)
-> chứa cả 52 use case theo mẫu §9 của bản phân tích — actor, mục tiêu, điều kiện kích hoạt,
+> chứa cả 53 use case theo mẫu §9 của bản phân tích — actor, mục tiêu, điều kiện kích hoạt,
 > tiền điều kiện, dữ liệu vào, luồng chính, luồng thay thế, ngoại lệ, hậu điều kiện, quy tắc
 > nghiệp vụ, đầu ra, use case liên quan, pain point. Các mục dưới đây là bản rút gọn; khi hai
 > bên khác nhau, lấy theo tài liệu đặc tả.
@@ -321,7 +328,8 @@ còn hiệu lực.
 - **Dữ liệu:** domain email được phép; số thành viên sáng lập tối thiểu (BR03); tài liệu bắt
   buộc của hồ sơ thành lập (BR02); deadline báo cáo và các mốc nhắc (BR20, §19); ngưỡng xung đột
   (BR15); feedback window và số người phản hồi tối thiểu (BR36, BR40); chính sách overbooking
-  (BR33); các công tắc cưỡng chế (BR21); lịch học kỳ (ngày bắt đầu và kết thúc).
+  (BR33, chỉ cho UC46); các công tắc cưỡng chế (BR21); lịch học kỳ (ngày bắt đầu và kết thúc —
+  dùng cho UC15 và UC58).
 - **Quy tắc:** mọi thay đổi đều được đánh phiên bản và ghi audit; một thay đổi không bao giờ
   viết lại một quyết định đã ra. **Màn hình cấu hình chỉ phơi ra đúng danh sách này** — mọi giá
   trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị
@@ -442,7 +450,9 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
   chính sách.
 - **Quy tắc:** BR09, BR10, BR34 — một CLB `Suspended` không mở đợt tuyển nào, không nộp đề xuất
   sự kiện nào và không nhận booking mới nào; việc tạm ngừng huỷ các đề xuất sự kiện chưa được
-  quyết định, và huỷ các sự kiện cùng booking tương lai đã duyệt thông qua UC28 (A1) và UC47.
+  quyết định, và huỷ các sự kiện cùng booking tương lai đã duyệt thông qua UC28 (A1) và UC47;
+  các buổi phòng học tương lai của UC58 cũng được giải phóng và không khôi phục khi kích hoạt
+  lại — ICPDP phân lại.
 - **Giải thể là có lịch, không tức thì**, bất kể ai kích hoạt nó:
   - tại thời điểm quyết định, mọi thứ kết thúc sau học kỳ `Dissolving` đều bị huỷ thông qua UC28
     (A1) và UC47, và không thứ gì mới được phép kết thúc sau đó (BR45);
@@ -453,7 +463,7 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
     học kỳ (BR44) và không cái nào được kết thúc muộn hơn (BR45), lúc đó không còn sự kiện nào
     đang chạy: scheduler huỷ các đề xuất chưa quyết định, ghi các nghĩa vụ chưa hoàn thành vào
     hồ sơ lưu trữ, lưu trữ lịch sử quản trị, thu hồi quyền quản lý và đặt `Dissolved`.
-- **Liên quan:** UC14, UC40, UC28, UC47 · **Pain point:** BP01
+- **Liên quan:** UC14, UC40, UC28, UC47, UC58 · **Pain point:** BP01
 
 ### M04 — Tuyển thành viên và quản lý thành viên
 
@@ -770,19 +780,18 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
 #### UC44 — Quản lý danh mục cơ sở vật chất
 - **Actor:** ICPDP
 - **Mục tiêu:** Định nghĩa những gì CLB được phép đặt — tiền điều kiện còn thiếu của UC51 trong v1.
-- **Dữ liệu:** mã và tên property, loại (phòng, hội trường, thiết bị), sức chứa, vị trí, thiết
-  bị đi kèm, khung giờ được đặt, các giai đoạn khoá, trạng thái hoạt động.
+- **Dữ liệu:** mã và tên property, loại (`ROOM`, `HALL`, `OUTDOOR`, `STAGE`, `EQUIPMENT`), sức
+  chứa, vị trí (toà nhà), thiết bị đi kèm, khung giờ được đặt, các giai đoạn khoá, trạng thái hoạt động.
 - **Quy tắc:** một property còn booking tương lai đã duyệt thì không xoá được, chỉ ngừng kích
   hoạt; việc đổi khung giờ được đặt không bao giờ làm vô hiệu một quyết định đã ra. UCMS chỉ giữ
   những property được mở cho hoạt động CLB và không thay thế hệ thống đặt phòng riêng của trường
   (§5.2).
-- **Liên quan:** UC45, UC46
+- **Liên quan:** UC45, UC46, UC58
 
-#### UC45 — Đặt phòng học hoặc gửi yêu cầu cơ sở vật chất khác
-- **Hai luồng đã chốt:** `ROOM` đặt trực tiếp → `Approved`, không task và không liên kết UC25.
-  `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` theo workflow yêu cầu bên dưới; chỉ ICPDP duyệt.
-  ROOM legacy đã nộp vẫn sửa/nộp lại và duyệt. Gắn/gỡ booking tại UC25 cần thêm `club.booking.manage`.
-
+#### UC45 — Gửi yêu cầu đặt cơ sở vật chất (hội trường, sân, sân khấu, thiết bị)
+- **Phạm vi (2026-10-11):** chỉ `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`. Phòng học `ROOM` do ICPDP
+  phân ở UC58; CLB không đặt, huỷ hay xin phòng học (BR35). Gắn/gỡ booking tại UC25 cần thêm
+  `club.booking.manage`.
 - **Actor:** Club Member có permission `club.booking.manage` (BR54) · **Tiền điều kiện:** CLB đang `Active` (BR34) và người gọi có quyền tương ứng
 - **Dữ liệu vào:** property, mục đích, thời điểm bắt đầu và kết thúc, số người dự kiến, thiết bị
   đi kèm, sự kiện liên quan nếu có.
@@ -791,17 +800,18 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
 - **Thay thế:** lưu ở `Draft`; đính kèm yêu cầu vào một đề xuất sự kiện đang soạn (UC25);
   **sửa và nộp lại** từ `Revision Requested` — chính là luồng đối xứng mà v1 có ở bước 3 của
   UC50 nhưng không bao giờ cấp cho nó một use case.
-- **Ngoại lệ:** khung giờ đã có người đặt và chính sách cấm overbooking (BR33); booking kết thúc
+- **Ngoại lệ:** khung giờ đã có người đặt (BR33); property là `ROOM`; booking kết thúc
   sau học kỳ `Dissolving` của CLB (BR45).
-- **Liên quan:** UC25, UC44, UC46 · **Pain point:** BP16
+- **Liên quan:** UC25, UC44, UC46, UC58 · **Pain point:** BP16
 
-#### UC46 — Thẩm định và quyết định yêu cầu đặt cơ sở vật chất
+#### UC46 — Thẩm định yêu cầu cơ sở vật chất
 - **Actor:** ICPDP
 - **Luồng:** mở yêu cầu → kiểm tra trạng thái CLB, mục đích, các xung đột và nghĩa vụ quá hạn →
   yêu cầu chỉnh sửa, phê duyệt hoặc từ chối kèm lý do → hệ thống ghi audit, cập nhật trạng thái
   và thông báo cho Club Member.
 - **Quy tắc:** BR33, BR34, BR35 — một booking đã duyệt khoá khung giờ; CLB bị tạm ngừng không
-  nhận booking mới; chỉ ICPDP quyết định.
+  nhận booking mới; chỉ ICPDP quyết định. Duyệt trùng chỉ khi `allowOverbooking` bật và có lý do;
+  không đề xuất `ROOM` làm phương án thay thế.
 - **Liên quan:** UC45, UC47, UC26
 
 #### UC47 — Theo dõi và huỷ / trả cơ sở vật chất đã đặt
@@ -812,7 +822,25 @@ còn cấp duyệt để định tuyến; giữ mã UC05 để không đánh s�
 - **Quy tắc:** BR35 — một booking mà sự kiện của nó bị huỷ sẽ được giải phóng tự động; một lần
   huỷ nằm trong thời hạn báo trước định nghĩa trong tài liệu chính sách sẽ được ghi nhận là tín hiệu tuân thủ cho UC40.
   Không có nó, một booking đã duyệt sẽ khoá một căn phòng vĩnh viễn.
+- **Phạm vi:** booking ngoài `ROOM`; buổi phòng học của UC58 chỉ ICPDP thu hồi.
 - **Liên quan:** UC28, UC46, UC40
+
+#### UC58 — Phân phòng học cho CLB theo học kỳ
+- **Actor:** ICPDP · **Mục tiêu:** cấp cho CLB một phòng học cố định theo mẫu tuần cho cả học kỳ.
+- **Dữ liệu vào:** học kỳ chưa kết thúc (`academicCalendar`), CLB `Active`/`Dissolving`, phòng
+  `ROOM` đang hoạt động (toà nhà bất kỳ), thứ trong tuần, một slot campus (1–4, UTC+7), ghi chú.
+- **Luồng:** chọn học kỳ → chọn CLB, phòng, thứ, slot (xem lưới chiếm dụng của phòng) → hệ thống
+  sinh một booking `Approved` cho mỗi ngày khớp mà slot chưa bắt đầu, bỏ qua ngày blackout →
+  ghi audit `ROOM_ALLOCATED` (entityType `RoomAllocation`) → thông báo ban chủ nhiệm. CLB xem ở
+  trang "Phòng được phân" (chỉ đọc) để nhận chìa khoá.
+- **Thay thế:** thu hồi kèm lý do — buổi chưa bắt đầu `Released`
+  (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ lịch sử; đổi = thu hồi rồi phân lại;
+  học kỳ sau phân lại từ đầu.
+- **Ngoại lệ:** bất kỳ ngày nào xung đột → từ chối cả đợt và liệt kê ngày; học kỳ đã kết thúc;
+  CLB sai trạng thái; phòng không hoạt động / không phải `ROOM`; khung giờ được đặt không phủ
+  thứ/slot; không còn ngày nào để sinh.
+- **Quy tắc:** BR15, BR33, BR34, BR35, BR62.
+- **Liên quan:** UC04, UC15, UC44, UC47 · **Pain point:** BP16
 
 ### M12 — Phản hồi và khiếu nại
 
@@ -905,6 +933,7 @@ Sự kiện:    UC25 Đề xuất ⇄ UC26 Thẩm định&Quyết định → UC
 Tài chính:  UC26 duyệt ngân sách trong đề xuất → UC35 Giải ngân → UC36 Khoản chi+Chứng từ
                                                       → UC37 Đối soát
 Cơ sở VC:   UC44 Danh mục → UC45 Yêu cầu ⇄ UC46 Thẩm định&Quyết định → UC47 Theo dõi/Trả
+            UC44 Danh mục (ROOM) → UC58 Phân phòng học theo học kỳ → CLB xem phòng được phân
 Báo cáo:    UC38 Nộp → UC39 Thẩm định → Accepted → UC42
             UC39 trả về → UC38 sửa và nộp version mới → UC39 xét lại (lặp đến khi duyệt)
 Phản hồi:   UC31 Check-in → UC48 Phản hồi → UC49 CMB xem → UC33 Báo cáo
@@ -927,7 +956,7 @@ nộp**, không phải một use case riêng.
 | **Student** | UC01, UC02, UC06, UC07, UC17, UC29, UC31, UC48, UC50 |
 | **Club Member** (kế thừa Student) | UC22, UC24; và khi có permission (BR54): UC09, UC16, UC18, UC19, UC20, UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52 |
 | **Club Leader** (kế thừa Club Member, có mọi permission CLB) | UC10, UC12, UC14, UC23 |
-| **ICPDP Officer** | UC01, UC02, UC03, UC04, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51 |
+| **ICPDP Officer** | UC01, UC02, UC03, UC04, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51, UC58 |
 
 Dùng chung: UC01 và UC02 (mọi actor, nội dung khác nhau theo vai trò và permission). UC31 có
 Student là actor chính và Club Member có `club.attendance.manage` là actor hỗ trợ. **Không use case nào có hai actor chính.**
@@ -1036,6 +1065,7 @@ Tác nhân: UC42 tới `Data Ready`, UC43 từ `Under Review` trở đi.
 ### 10.9 Property Booking
 | Từ → Đến | Tác nhân |
 |---|---|
+| (chưa có) → Approved | UC58 (mỗi ngày khớp của đợt phân phòng học; không qua Draft/review) |
 | Draft → Requested | UC45 |
 | Requested → Under Review | UC46 |
 | Under Review → Revision Requested | UC46 |
@@ -1044,7 +1074,7 @@ Tác nhân: UC42 tới `Data Ready`, UC43 từ `Under Review` trở đi.
 | Approved → In Use | **Scheduler** (giờ bắt đầu) |
 | In Use → Completed | **Scheduler** (giờ kết thúc) |
 | Requested / Approved → Cancelled | UC47 |
-| Approved → Released | UC28 qua BR35, hoặc UC47 |
+| Approved → Released | UC28 qua BR35, hoặc UC47; UC58 thu hồi (buổi chưa bắt đầu); UC15 tạm ngừng/giải thể |
 
 ### 10.10 Complaint
 | Từ → Đến | Tác nhân |
@@ -1082,7 +1112,8 @@ BR01–BR39 của §14 vẫn giữ nguyên, với các sửa đổi sau:
 | BR22 | **Đã sửa (I59).** Ngân sách chỉ tồn tại như một phần của đề xuất sự kiện (UC25) và được quyết định cùng đề xuất ở UC26; không có ngân sách tách rời sự kiện. (UC25, UC26) |
 | BR23 | Không đổi — và đó chính là lý do UC35 tồn tại: không có số tiền đã giải ngân thì UC37 không tính được gì. Cấp bù (UC35) cũng tính vào tổng này. |
 | BR26 | **Đã đổi (I60).** Ngân sách của một sự kiện chỉ đóng khi đã đối soát và chênh lệch tất toán đã được xử lý: cấp bù xong, hoặc CLB đã hoàn đủ. Không còn đóng kèm chênh lệch (`Exception`). (UC35, UC37) |
-| BR35 | Không đổi — và đó chính là lý do UC47 tồn tại: không có việc trả chỗ thì một booking đã duyệt khoá một căn phòng vĩnh viễn. |
+| BR33 | **Sửa 2026-10-11.** Booking cơ sở vật chất `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` chỉ được duyệt khi khung giờ còn trống; ICPDP chỉ được duyệt trùng ở UC46 khi policy `allowOverbooking = true` và nhập `overbookingReason` (≤ 2000 ký tự), ghi officer, lý do, thời điểm và lịch trùng trong audit cùng transaction; blackout không bao giờ được bỏ qua. Phòng học `ROOM` không bao giờ được đặt trùng (BR62). (UC46, UC58) |
+| BR35 | **Sửa 2026-10-11.** Phòng học `ROOM` chỉ do ICPDP phân ở UC58; CLB không đặt, huỷ hay xin phòng học. Tài sản khác chỉ được duyệt bởi ICPDP ở UC46. Booking liên kết sự kiện được giải phóng khi sự kiện bị huỷ — và đó chính là lý do UC47 tồn tại. (UC28, UC46, UC47, UC58) |
 | BR36 | **Đã đổi.** Feedback window mở tại thời điểm **check-in** của người tham dự (UC31) và đóng sau khi sự kiện kết thúc một khoảng cấu hình được — không phải sau khi chốt điểm danh (UC54 của v1). |
 | BR37 | Không đổi. |
 | **BR40** | **Mới.** Bản tổng hợp phản hồi chỉ được hiển thị khi số người phản hồi đạt mức tối thiểu cấu hình được; dưới ngưỡng đó chỉ hiển thị việc có tồn tại phản hồi. Không có quy tắc này thì phản hồi "ẩn danh" trong một sự kiện mười người là không ẩn danh. |
@@ -1104,10 +1135,11 @@ BR01–BR39 của §14 vẫn giữ nguyên, với các sửa đổi sau:
 | **BR56** | **Mới (I58, lần 2).** Cơ cấu role của CLB được **đánh phiên bản**: phiên bản 1 là cơ cấu được duyệt ở UC08; mỗi thay đổi ở UC23 hoặc UC13 tạo một phiên bản mới có ngày hiệu lực và không bao giờ ghi đè phiên bản trước. Mỗi CLB luôn có role Chủ nhiệm (cố định) và role Members (mặc định, không xoá được, tự gán cho mọi thành viên ở UC20). ICPDP xem được mọi phiên bản cơ cấu và lịch sử người giữ role ban điều hành theo nhiệm kỳ. (UC02, UC07, UC08, UC13, UC20, UC23) |
 | **BR57** | **Mới (I60).** Ngân sách đã tạm ứng phải được CLB quyết toán (UC36) — đủ khoản chi và chứng từ — trong một thời hạn định nghĩa trong tài liệu chính sách, tính từ lúc sự kiện kết thúc hoặc bị huỷ. Quá hạn là nghĩa vụ quá hạn theo BR21, và ICPDP được chốt đối soát trên các khoản chi đã có chứng từ (UC37 A2). (UC36, UC37) |
 | **BR58** | **Mới (I60).** Phần đã tạm ứng không được chứng minh bằng chi hợp lệ — số dư chưa chi, khoản chi thiếu chứng từ hoặc bị loại — bị thu hồi: CLB phải hoàn trong thời hạn định nghĩa trong tài liệu chính sách; ICPDP ghi nhận tiền hoàn ở UC35. Quá hạn là nghĩa vụ quá hạn theo BR21 và là căn cứ mở hồ sơ vi phạm ở UC40. (UC35, UC37, UC40) |
+| **BR62** | **Mới (2026-10-11).** Phân phòng theo học kỳ: mỗi lần phân gồm một học kỳ chưa kết thúc (`academicCalendar`), một CLB `Active`/`Dissolving`, một phòng `ROOM` đang hoạt động, một thứ trong tuần và một slot campus. Hệ thống sinh một booking `Approved` cho mỗi ngày khớp trong học kỳ mà slot chưa bắt đầu, bỏ qua ngày trùng blackout; khung giờ được đặt của phòng phải phủ thứ/slot đó. Có bất kỳ ngày nào xung đột với booking `Approved`/`In Use` hoặc sự kiện `Approved`/`Upcoming`/`Ongoing` cùng phòng → từ chối cả đợt và liệt kê ngày xung đột. Không kế thừa sang học kỳ sau. Thu hồi bắt buộc lý do: buổi chưa bắt đầu → `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử. Muốn đổi thì thu hồi rồi phân lại. (UC15, UC58) |
 
 ## 12. Phạm vi phát hành
 
-Có 52 mã use case, trong đó 51 use case còn hiệu lực và UC05 đã rút. MVP của v1 (§22) nêu 30–34 use case nhưng lại bao gồm
+Có 53 mã use case (UC01–UC52 và UC58), trong đó 52 use case còn hiệu lực và UC05 đã rút. MVP của v1 (§22) nêu 30–34 use case nhưng lại bao gồm
 những luồng mà phụ thuộc của chúng đã bị hoãn; việc nhóm theo vòng lặp tránh được điều đó.
 
 | Vòng lặp | Use case |
@@ -1121,14 +1153,14 @@ những luồng mà phụ thuộc của chúng đã bị hoãn; việc nhóm the
 | Tài chính | UC35, UC36, UC37 |
 | Báo cáo định kỳ | UC38, UC39 |
 | Governance intelligence | UC40, UC41, UC42, UC43 |
-| Cơ sở vật chất | UC44, UC45, UC46, UC47 |
+| Cơ sở vật chất | UC44, UC45, UC46, UC47, UC58 |
 | Phản hồi & khiếu nại | UC48, UC49, UC50, UC51, UC52 |
 
 Mỗi vòng lặp đều khép kín: không có gì kết thúc ở một trạng thái mà không use case nào rời đi được.
 
 ### Thứ tự build và demo
 
-Không cắt use case nào: cả 52 use case ra trong một bản phát hành. Priority (High / Medium / Low)
+Không cắt use case nào: cả 53 use case ra trong một bản phát hành. Priority (High / Medium / Low)
 chỉ là thứ tự build và demo — build trọn từng vòng lặp, không bao giờ làm nửa vòng, vòng High
 trước rồi tới Medium, Low.
 
@@ -1151,7 +1183,7 @@ trước rồi tới Medium, Low.
 | BP13 đánh giá thủ công | UC41, UC42, UC43 | đầy đủ — kỳ đánh giá đầu tiên cần trọn một kỳ dữ liệu |
 | BP14 nhắc deadline thủ công | UC04 + scheduler (§19), hiển thị ở UC02 | đầy đủ |
 | BP15 không có audit trail | BR05 xuyên suốt; được đọc bên trong UC08, UC26, UC46 | đầy đủ, không cần use case riêng |
-| BP16 mượn cơ sở vật chất qua email | UC44, UC45, UC46, UC47 | đầy đủ |
+| BP16 mượn cơ sở vật chất qua email | UC44, UC45, UC46, UC47, UC58 | đầy đủ |
 | BP17 phản hồi không có cấu trúc | UC48, UC49 | đầy đủ |
 | BP18 không có kênh khiếu nại | UC50, UC51, UC52 | đầy đủ |
 | BP19 phải nhớ thêm mật khẩu | UC01 | đầy đủ |
@@ -1197,14 +1229,14 @@ các dữ liệu cùng loại, nên những use case đứng sau nó được li
 | Club Member → Hệ thống | Leave request | UC22 |
 | Hệ thống → Club Member | Member workspace | UC24 |
 | Hệ thống → Club Member | Member applications & event registrations | UC17 → UC18, UC29 → UC30, UC32 |
-| Hệ thống → Club Member | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46 |
+| Hệ thống → Club Member | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46, UC58 (phòng được phân, thông báo `ROOM_ALLOCATED` / `ROOM_ALLOCATION_REVOKED`) |
 | Hệ thống → Club Member | Event feedback & forwarded complaints | UC49, UC51 → UC52 |
 | Hệ thống → Club Member | Violation notices & evaluation results | UC40, UC43 |
 | Hệ thống → Club Member | Deadline reminders | UC04 + scheduler |
 | Club Leader → Hệ thống | Leadership & suspension requests | UC10, UC12, UC14 |
 | Club Leader → Hệ thống | Club roles & permissions | UC23 (phiên bản cơ cấu mới, BR56) |
 | Hệ thống → Club Leader | Leadership & club status decisions | UC11, UC13, UC15 |
-| ICPDP → Hệ thống | System configuration | UC03, UC04, UC41, UC44 |
+| ICPDP → Hệ thống | System configuration | UC03, UC04, UC41, UC44, UC58 (phân phòng học theo học kỳ) |
 | ICPDP → Hệ thống | Review decisions | UC08, UC11, UC13, UC26, UC34, UC39, UC46 |
 | ICPDP → Hệ thống | Club status & violation decisions | UC15, UC40 |
 | ICPDP → Hệ thống | Disbursements & reconciliation | UC35, UC37 |
