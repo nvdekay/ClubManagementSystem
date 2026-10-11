@@ -26,6 +26,7 @@ vẫn được giữ để chỉnh sửa và đối chiếu.
 | [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram v1, v2 và v2.1 (hiện hành), use case diagram theo actor, state diagram | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
 | [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
 | [`05-implementation/`](05-implementation/) | Danh sách công việc triển khai (database, backend, frontend) và thiết kế cơ sở dữ liệu dạng DBML cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
+| [`06-user-guide/`](06-user-guide/) | Guide book PDF/HTML/Markdown và ảnh chụp các luồng chính với dữ liệu đã seed | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
 
 ## Thứ tự đọc cho người mới
 

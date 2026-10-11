@@ -462,13 +462,14 @@ try {
     startAt: at(-1 * DAY), endAt: at(5 * DAY), venueText: "Sảnh Delta, Đại học FPT Hà Nội", capacity: 120,
     waitlistEnabled: false, state: "Ongoing", registrationOpenAt: at(-10 * DAY), registrationCloseAt: at(-2 * DAY),
     checkInCode: "HEBE2026", allowWalkIn: true });
-  if (!(await ucmsModels.eventRegistrations!.exists({ eventId: festival, studentId: owner }))) {
-    for (const userId of [owner, s[3]!, s[4]!]) {
-      await ucmsModels.eventRegistrations!.create({ eventId: festival, studentId: userId, clubId: club("HEBE").id,
-        state: "Confirmed", answers: { phone: "0912345678", level: "Thường xuyên" }, createdAt: at(-5 * DAY) });
-    }
-    await ucmsModels.events!.updateOne({ _id: festival }, { $set: { confirmedRegistrationCount: 3 } });
+  for (const userId of [owner, s[3]!, s[4]!]) {
+    await ucmsModels.eventRegistrations!.updateOne({ eventId: festival, studentId: userId },
+      { $setOnInsert: { eventId: festival, studentId: userId, clubId: club("HEBE").id,
+        state: "Confirmed", answers: { phone: "0912345678", level: "Thường xuyên" }, createdAt: at(-5 * DAY) } },
+      { upsert: true });
   }
+  const festivalConfirmed = await ucmsModels.eventRegistrations!.countDocuments({ eventId: festival, state: "Confirmed" });
+  await ucmsModels.events!.updateOne({ _id: festival }, { $set: { confirmedRegistrationCount: festivalConfirmed } });
   const origami = await event("de0000000000000000000e06", "Mây Mưa Club", s[8]!, {
     title: "Workshop Origami cơ bản",
     objective: "Gấp hạc giấy và hoa sen giấy theo phong cách Nhật Bản. Cảm ơn mọi người đã tham gia!",

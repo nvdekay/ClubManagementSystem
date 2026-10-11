@@ -1,0 +1,353 @@
+{
+  "capturedAt": "2026-10-11T06:58:59.699Z",
+  "baseUrl": "http://localhost:5173",
+  "images": [
+    {
+      "file": "01-home.png",
+      "url": "/",
+      "source": "local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "02-clubs.png",
+      "url": "/clubs",
+      "source": "local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "03-club-detail.png",
+      "url": "/clubs/a10000000000000000000021",
+      "source": "local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "04-login.png",
+      "url": "/login",
+      "source": "local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light"
+    },
+    {
+      "file": "05-workspaces.png",
+      "url": "/workspace",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "06-founding.png",
+      "url": "/workspace/applications/new",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "07-campaign.png",
+      "url": "/club/a10000000000000000000013/recruitment",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "08-recruitment-apply.png",
+      "url": "/workspace/recruitment/6ac9fd847aeb7c1da9fa4edc",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "09-members.png",
+      "url": "/club/a10000000000000000000013/members",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "10-member-space.png",
+      "url": "/workspace/clubs/a10000000000000000000013",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "11-event-proposal.png",
+      "url": "/club/a10000000000000000000013/events",
+      "source": "seeded-local-api",
+      "action": "Chọn bản ghi đã seed",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "12-event-review.png",
+      "url": "/workspace/event-proposals/de0000000000000000000f04",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "13-attendance.png",
+      "url": "/club/a10000000000000000000013/event-attendance",
+      "source": "seeded-local-api",
+      "action": "Chọn bản ghi đã seed",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "14-event-feedback.png",
+      "url": "/club/a10000000000000000000013/event-feedback",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "15-booking.png",
+      "url": "/club/a10000000000000000000013/bookings?id=6aca79740d65dc82bf34a7dd",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "16-booking-review.png",
+      "url": "/workspace/bookings?id=6aca79740d65dc82bf34a7dd",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "17-report-draft.png",
+      "url": "/club/a10000000000000000000013/event-reports",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Chọn Wave 4 demo: top-up",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "18-report-review.png",
+      "url": "/workspace/event-reports",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Chọn Wave 4 demo: refund",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "19-report-correction.png",
+      "url": "/club/a10000000000000000000013/event-reports",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Chọn Wave 4 demo: balanced",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "20-expenses.png",
+      "url": "/club/a10000000000000000000013/budgets",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Chọn Wave 4 demo: balanced",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "21-expense-dialog.png",
+      "url": "/club/a10000000000000000000013/budgets",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Chọn Wave 4 demo: balanced",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "22-reconciliation.png",
+      "url": "/workspace/budgets/6acb3456a09d0c79ffc2b863/reconciliation",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "23-advance.png",
+      "url": "/workspace/budgets/6aca684b942b2ecc04c9886b",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "24-topup.png",
+      "url": "/workspace/budgets/6acb3456a09d0c79ffc2b7be",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "25-refund.png",
+      "url": "/workspace/budgets/6acb3456a09d0c79ffc2b863",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "financialPolicy": "Demo only: any allowed evidence type, recovery in 14 days"
+    },
+    {
+      "file": "26-my-events.png",
+      "url": "/workspace/event-registrations",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "27-review-queue.png",
+      "url": "/workspace/reviews",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "28-dashboard.png",
+      "url": "/icpdp",
+      "source": "seeded-local-api",
+      "action": "Mở màn hình",
+      "viewport": "1440 × 1000",
+      "locale": "vi",
+      "theme": "light",
+      "authentication": "Local session issued through SessionService; Google OAuth not exercised"
+    },
+    {
+      "file": "29-report-submit.png",
+      "url": "/club/a10000000000000000000013/event-reports",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Cuộn tới Nộp",
+      "locale": "vi",
+      "theme": "light",
+      "viewport": "1440 × 1000"
+    },
+    {
+      "file": "30-report-decision.png",
+      "url": "/workspace/event-reports",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Cuộn tới Trả về để sửa",
+      "locale": "vi",
+      "theme": "light",
+      "viewport": "1440 × 1000"
+    },
+    {
+      "file": "31-recovery-result.png",
+      "url": "/workspace/budgets/6acb3456a09d0c79ffc2b863/reconciliation",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Cuộn tới Còn phải hoàn",
+      "locale": "vi",
+      "theme": "light",
+      "viewport": "1440 × 1000"
+    },
+    {
+      "file": "32-reconciliation-finalize.png",
+      "url": "/workspace/budgets/6acb3456a09d0c79ffc2b908/reconciliation",
+      "source": "seeded-demo-api",
+      "database": "ucms_guide_demo",
+      "baseUrl": "http://127.0.0.1:4318",
+      "action": "Nhận thẩm định, ghi lý do loại khoản thiếu chứng từ, cuộn tới Chốt đối soát",
+      "locale": "vi",
+      "theme": "light",
+      "viewport": "1440 × 1000"
+    }
+  ],
+  "errors": [],
+  "realCaptureErrors": [],
+  "demoCaptureErrors": [],
+  "completedAt": "2026-10-11T07:12:11.770248+00:00",
+  "notes": [
+    "All final screenshots use a real API and seeded MongoDB data; no API fixture interception remains.",
+    "Google OAuth was not exercised; local sessions use SessionService.",
+    "Wave 4 screenshots use the isolated ucms_guide_demo database and a demo-only financial policy."
+  ]
+}

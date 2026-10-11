@@ -48,3 +48,15 @@ qua usecase, giữ các cấu hình khác; không ghi đè location đã đượ
 
 Đặt ngay ghi `BOOKING_RESERVED` trong audit với snapshot chủ nhiệm, không tạo approval task
 và không đổi schema. Transaction khóa club/property và kiểm tra lại xung đột trước khi ghi Approved.
+
+`seed-guide.ts` chạy sau seed công khai và seed demo: tạo database riêng `ucms_guide_demo`,
+copy các collection nghiệp vụ một lần (không copy `authSessions`), rồi thêm dữ liệu wave 4
+qua repository. Database nguồn và policy thật không bị sửa. Bản copy dùng POST_EVENT 7 ngày
+và quy định chứng từ/hoàn trả mẫu; các giá trị này không phải quyết định BR25/BR58 của bản chính.
+Chạy từ gốc repo: `node --env-file=.env --import tsx server/src/infra/db/seed-guide.ts`.
+Chạy lại giữ các version báo cáo đã sửa và ngân sách đã được đối soát; không reset thao tác demo.
+Hồ sơ Returned, Submitted, khoản thiếu chứng từ, task, điểm danh và phản hồi phục vụ
+[guide book](../../../../docs/06-user-guide/README.md).
+
+Seed đăng ký festival xử lý từng cặp event/student bằng `$setOnInsert`; đổi owner hoặc chạy lại
+sau một lần seed dở không tạo trùng các sinh viên đã đăng ký. Tổng confirmed lấy từ dữ liệu thật.
