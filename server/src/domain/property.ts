@@ -1,10 +1,10 @@
 import { DomainError } from "./errors.js";
 
-export const PROPERTY_TYPES = ["ROOM", "HALL", "EQUIPMENT"] as const;
+export const PROPERTY_TYPES = ["ROOM", "HALL", "OUTDOOR", "STAGE", "EQUIPMENT"] as const;
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 /** Codes are generated per type when a property is created, e.g. PH-001. */
-export const PROPERTY_CODE_PREFIX: Record<PropertyType, string> = { ROOM: "PH", HALL: "HT", EQUIPMENT: "TB" };
+export const PROPERTY_CODE_PREFIX: Record<PropertyType, string> = { ROOM: "PH", HALL: "HT", OUTDOOR: "SN", STAGE: "SK", EQUIPMENT: "TB" };
 
 /** One bookable window; `day` 1 = Monday … 7 = Sunday. Days not listed cannot be booked. */
 export interface BookableHours {

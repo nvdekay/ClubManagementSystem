@@ -1,3 +1,5 @@
+import type { ClubEventRepository } from "../../domain/club-event.js";
+import { clubEventRoutes } from "./club-event-routes.js";
 import type { FacilityBookingRepository } from "../../domain/facility-booking.js";
 import { facilityBookingRoutes } from "./facility-booking-routes.js";
 import express from "express";
@@ -101,6 +103,7 @@ export function buildApp(deps: {
   budgetDisbursementRepo?: BudgetDisbursementRepository;
   violationRepo?: ViolationRepository;
   schoolEventRepo?: SchoolEventRepository;
+  clubEventRepo?: ClubEventRepository;
   evaluationRepo?: EvaluationRepository;
   clubProfileRepo?: ClubProfileRepository;
   clubRoleRepo?: ClubRoleRepository;
@@ -234,6 +237,10 @@ export function buildApp(deps: {
         app.use("/api/v1", violationRoutes({ repo: deps.violationRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       }
+      if (deps.clubEventRepo) {
+        app.use("/api/v1", clubEventRoutes({ repo: deps.clubEventRepo, access: deps.auth.accessRepo,
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      }
       if (deps.schoolEventRepo) {
         app.use("/api/v1", schoolEventRoutes({ repo: deps.schoolEventRepo, policy: deps.policyRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -335,6 +342,7 @@ export function buildApp(deps: {
         || path.startsWith("/event-feedbacks")) return hasEventFeedback;
       if (path.startsWith("/student-feedback")
         || path.startsWith("/clubs/{clubId}/student-feedback")) return hasStudentFeedback;
+      if (path.startsWith("/clubs/{clubId}/events")) return Boolean(hasPolicy && deps.clubEventRepo);
       if (path.startsWith("/clubs/{clubId}/member-space")) return hasMemberSpace;
       if (path.startsWith("/applications")) return hasApplications;
       if (path.startsWith("/clubs/{clubId}/settings")

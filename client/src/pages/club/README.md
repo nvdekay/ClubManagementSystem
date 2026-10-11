@@ -1,7 +1,7 @@
 # pages/club/
 
 `ClubBookingsPage` dùng `BookingWorkspace`: chọn ngày/slot/phòng, đặt ngay và tự lấy chủ nhiệm
-chịu trách nhiệm. Phòng trùng lịch bị khoá; huỷ đặt giải phóng slot. API review cũ giữ cho lịch sử.
+chịu trách nhiệm. Phòng trùng lịch bị khoá; huỷ đặt giải phóng slot. Tài sản ngoài ROOM có form Draft/sửa/nộp lại và gửi ICPDP duyệt; ROOM legacy đã nộp vẫn giữ workflow.
 Cần `club.booking.manage`.
 
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi

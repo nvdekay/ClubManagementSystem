@@ -39,3 +39,10 @@ Kiểm chứng giao diện: Chrome en/vi sáng/tối, 390/1440 px, tạo draft t
 ICPDP chọn phương án thay thế qua AppSelect. Fixture 25 booking kiểm tra trang cuối,
 đổi số dòng, lọc trạng thái về trang đầu; chọn slot bằng bàn phím.
 `npm run check`: 81 file / 361 test, không có cảnh báo lint mới; build client thành công.
+
+## Điều chỉnh hai luồng booking — 2026-10-11
+- [x] Chốt SPEC: ROOM trực tiếp; cơ sở vật chất khác cần ICPDP duyệt.
+- [x] Domain/API/repository và quyền liên kết UC25.
+- [x] UI booking, danh mục OUTDOOR/STAGE và i18n.
+- [x] Đồng bộ DOCX, SRS, use case model/spec và diagram/PNG.
+- [x] Unit/integration, npm run check, build client và kiểm tra UI.

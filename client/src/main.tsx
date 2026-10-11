@@ -1,3 +1,4 @@
+import { ClubEventsPage } from "./pages/club/ClubEventsPage.js";
 import { ClubBookingsPage } from "./pages/club/ClubBookingsPage.js";
 import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
 import "./index.css";
@@ -79,6 +80,9 @@ createRoot(document.getElementById("root")!).render(
             <Route path="club/:clubId" element={<ClubHomePage />} />
             <Route path="workspace/policy" element={<PolicyPage />} />
             <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
+            <Route path="club/:clubId/events" element={<ClubEventsPage />} />
+            <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
+            <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />
             <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
             <Route path="workspace/bookings" element={<BookingReviewPage />} />
             <Route path="workspace/properties" element={<PropertiesPage />} />

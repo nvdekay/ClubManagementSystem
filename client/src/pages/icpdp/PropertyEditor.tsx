@@ -11,7 +11,7 @@ import { cn } from "@/utils/cn";
 const days = [1, 2, 3, 4, 5, 6, 7];
 export const dayKeys = ["properties.day1", "properties.day2", "properties.day3", "properties.day4",
   "properties.day5", "properties.day6", "properties.day7"] as const;
-const types: PropertyType[] = ["ROOM", "HALL", "EQUIPMENT"];
+const types: PropertyType[] = ["ROOM", "HALL", "OUTDOOR", "STAGE", "EQUIPMENT"];
 const timeInputClass = "mt-1 min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none";
 
 interface BlackoutDraft {

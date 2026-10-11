@@ -9,4 +9,4 @@
 - [x] Seed demo: 4 đề xuất chờ duyệt (3 có kinh phí, 1 đã qua một lần yêu cầu sửa) + 1 ngân sách đã duyệt trong kỳ.
 - [x] Client: hàng đợi + màn thẩm định, sidebar "Duyệt đề xuất sự kiện", i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
-- [ ] Kiểm tra trực quan trên trình duyệt (sáng/tối, vi/en, mobile).
+- [x] Kiểm tra trực quan Chrome bằng API fixture (sáng/tối, vi/en, 390/1440 px), gồm budget đã duyệt; xem bàn giao Wave 3.

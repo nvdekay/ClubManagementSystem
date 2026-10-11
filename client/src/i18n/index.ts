@@ -1,3 +1,4 @@
+import { clubEvents } from "./clubEvents";
 import { facilityBookings } from "./facilityBookings";
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
@@ -43,7 +44,7 @@ export const resources = {
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
     studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
-    demo: demo.en } },
+    clubEvents: clubEvents.en, demo: demo.en } },
   vi: { translation: { facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
     clubSettings: clubSettings.vi, clubRoles: clubRoles.vi, boardNominations: boardNominations.vi,
@@ -51,7 +52,7 @@ export const resources = {
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
     eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
     studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
-    demo: demo.vi } },
+    clubEvents: clubEvents.vi, demo: demo.vi } },
 };
 
 const stored = localStorage.getItem("locale");

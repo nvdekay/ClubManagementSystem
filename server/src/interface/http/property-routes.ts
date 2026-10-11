@@ -33,7 +33,7 @@ export const propertyDetailsBody = z.object({
   blackouts: z.array(blackoutBody).max(50),
 }).strict();
 export const propertyCreateBody = propertyDetailsBody.extend({
-  type: z.enum(["ROOM", "HALL", "EQUIPMENT"]),
+  type: z.enum(["ROOM", "HALL", "OUTDOOR", "STAGE", "EQUIPMENT"]),
 }).strict();
 export const propertyActivationBody = z.object({ isActive: z.boolean() }).strict();
 

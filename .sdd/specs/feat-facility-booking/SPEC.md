@@ -1,3 +1,12 @@
+> Cập nhật v1.3.0 ngày 2026-10-11 theo yêu cầu người dùng: hai luồng booking theo loại tài sản.
+> `ROOM` đặt trực tiếp; `HALL`, `OUTDOOR`, `STAGE`, `EQUIPMENT` gửi ICPDP duyệt.
+> Quy tắc này thay các mô tả “mọi booking mới đặt trực tiếp / review chỉ legacy” bên dưới.
+> Phòng học mới không được đi qua Draft/submit hoặc liên kết UC25. ROOM legacy đã có task
+> vẫn được sửa/nộp lại/thẩm định. Booking cần duyệt có thể liên kết sự kiện cùng CLB;
+> gắn/gỡ liên kết tại UC25 cần thêm `club.booking.manage`, kiểm tra trong transaction.
+> OUTDOOR dùng cho sân trường/khu ngoài trời, STAGE dùng cho sân khấu; UC44 quản lý danh mục.
+> Các khung slot và deadline hiện có tiếp tục áp dụng cho yêu cầu cần duyệt.
+
 # SPEC: feat-facility-booking
 
 > UC45–47; gồm phía CLB và ICPDP. Người dùng chốt phạm vi và giao agent chọn quy tắc ngày 2026-10-10.
@@ -111,3 +120,21 @@ Kiểm chứng điều chỉnh slot: `npm run check` qua 81 file / 361 test vớ
 `npm run build -w client` thành công. Seed hai lần giữ 3 phòng, 4 booking mới và 4 booking
 mẫu cũ Released. Chrome kiểm tra chọn Slot 3 khi tạo draft và Slot 4 khi ICPDP đề xuất
 đổi lịch, đúng timestamp UTC+7, en/vi sáng/tối ở 390/1440 px.
+
+## Tiêu chí bổ sung v1.3.0
+- [x] AC13: ROOM đặt trực tiếp; tạo yêu cầu ROOM mới bị chặn; ROOM legacy vẫn xử lý được.
+- [x] AC14: HALL/OUTDOOR/STAGE/EQUIPMENT chỉ ở Draft/Requested trước quyết định ICPDP.
+- [x] AC15: UI có chọn hai luồng, sửa/nộp/nộp lại, thiết bị và sự kiện tuỳ chọn, en/vi.
+- [x] AC16: UC25 không gắn phòng học trực tiếp; đổi liên kết cần quyền booking và rollback khi thiếu quyền.
+- [x] AC17: DOCX, SRS, đặc tả, diagram/PNG và OpenAPI phản ánh cùng hai luồng.
+
+Changelog v1.3.0: người dùng phê duyệt tách phòng học và cơ sở vật chất cần ICPDP duyệt.
+
+Kiểm chứng v1.3.0: `npm run check` với Mongo local replica set — 405 test / 83 file pass;
+`npm run build -w client` thành công. Browser QA Chrome bằng API fixture: 16 cấu hình
+hai form × vi/en × sáng/tối × 390/1440 px; tạo ROOM Approved không review, tạo yêu cầu
+OUTDOOR kèm thiết bị/sự kiện → Requested; ICPDP yêu cầu sửa → CLB sửa/nộp version 2.
+Không runtime error hoặc tràn ngang. Mongo thật kiểm tra rollback thiếu quyền UC25,
+chặn liên kết ROOM trực tiếp và liên kết EQUIPMENT độc lập địa điểm sự kiện.
+DOCX cập nhật nội dung và ba ảnh embedded; giữ aspect ratio, kiểm tra ZIP/XML.
+Chưa chạy luồng Google OAuth với hai tài khoản thật.

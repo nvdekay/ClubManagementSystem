@@ -1,3 +1,4 @@
+import { mongoClubEventRepository } from "./infra/db/mongo-club-event-repository.js";
 import { mongoFacilityBookingRepository } from "./infra/db/mongo-facility-booking-repository.js";
 import { startFacilityBookingJob } from "./interface/jobs/facility-booking-job.js";
 import mongoose from "mongoose";
@@ -88,6 +89,7 @@ const app = authConfig ? buildApp({
   budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
   violationRepo: mongoViolationRepository(),
   schoolEventRepo,
+  clubEventRepo: mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 }),
   evaluationRepo: mongoEvaluationRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
   clubProfileRepo: mongoClubProfileRepository(),

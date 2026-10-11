@@ -85,7 +85,7 @@ export function mongoExportRepository(): ExportRepository {
       models.eventRegistrations!.aggregate<{ _id: { eventId: Types.ObjectId; state: string }; count: number }>([
         { $match: { eventId: { $in: ids } } }, { $group: { _id: { eventId: "$eventId", state: "$state" }, count: { $sum: 1 } } }]),
       models.attendances!.aggregate<{ _id: Types.ObjectId; count: number }>([
-        { $match: { eventId: { $in: ids } } }, { $group: { _id: "$eventId", count: { $sum: 1 } } }]),
+        { $match: { eventId: { $in: ids }, abnormalFlags: { $ne: "no-show" } } }, { $group: { _id: "$eventId", count: { $sum: 1 } } }]),
     ]);
     function registered(eventId: unknown, state: string): number {
       return registrations.find((item) => String(item._id.eventId) === String(eventId) && item._id.state === state)?.count ?? 0;

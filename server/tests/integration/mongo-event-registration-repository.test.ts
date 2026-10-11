@@ -56,14 +56,16 @@ describe.skipIf(!uri)("Mongo event registration repository", () => {
 
     const cancelled = await repo.cancel(confirmed.id, confirmed.studentId, now);
     expect(cancelled.state).toBe("Cancelled");
-    expect(await ucmsModels.events!.findById(eventId).lean()).toMatchObject({ confirmedRegistrationCount: 0 });
+    expect(await ucmsModels.events!.findById(eventId).lean()).toMatchObject({ confirmedRegistrationCount: 1 });
+    const promoted = results.find((item) => item.waitlistPosition === 1)!;
+    expect((await repo.findOwned(promoted.id, promoted.studentId))?.state).toBe("Confirmed");
     const reused = await repo.register({ eventId: eventId.toString(), studentId: confirmed.studentId,
       answers: { dietary: "None" }, allowOverbooking: false, now });
-    expect(reused).toMatchObject({ id: confirmed.id, state: "Confirmed", answers: { dietary: "None" } });
+    expect(reused).toMatchObject({ id: confirmed.id, state: "Waitlisted", waitlistPosition: 3, answers: { dietary: "None" } });
     expect(await ucmsModels.eventRegistrations!.countDocuments({ eventId,
       studentId: new Types.ObjectId(confirmed.studentId) })).toBe(1);
-    expect(await ucmsModels.auditLogs!.countDocuments({ entityType: "EventRegistration" })).toBe(5);
-    expect(await ucmsModels.notifications!.countDocuments({ entityType: "EventRegistration" })).toBe(5);
+    expect(await ucmsModels.auditLogs!.countDocuments({ entityType: "EventRegistration" })).toBe(6);
+    expect(await ucmsModels.notifications!.countDocuments({ entityType: "EventRegistration" })).toBe(6);
   }, 60_000);
 
   it("rejects a full event when waitlist is disabled", async () => {

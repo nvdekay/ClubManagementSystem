@@ -1,3 +1,5 @@
+import { mongoClubEventRepository } from "./mongo-club-event-repository.js";
+import type { ClubEventInput } from "../../domain/club-event.js";
 // Clean, realistic demo data on top of `npm run seed`, so every implemented flow can be tried end to end.
 // Usage: npm run seed:demo -- --owner=<your Google email> [--owner-name="Your Name"]
 // Safe to re-run: each section skips what already exists. Writes go through the app's use cases and
@@ -741,6 +743,31 @@ try {
       const endAt = new Date(`${day}T${slot.end}:00+07:00`);
       if (!bookingPolicy.academicCalendar.some((semester) => startAt >= semester.startAt && endAt <= semester.endAt)) continue;
       await reserveRoom(bookingDeps, actor(owner), hebe, { propertyId: practiceRoom.id, startAt, endAt }, now);
+    }
+  }
+
+  // Wave 3 fixtures only add new events; existing user-managed events are never reset.
+  const wave3 = mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 });
+  const eventPolicy = await policy.findEffective(now);
+  const demoStart = new Date(now.getTime() + 12 * DAY);
+  const demoEnd = new Date(demoStart.getTime() + 2 * HOUR);
+  if (eventPolicy?.academicCalendar.some((semester) => demoStart >= semester.startAt && demoEnd <= semester.endAt)) {
+    const examples = [
+      { title: "Wave 3 demo: Workshop proposal", scope: "PUBLIC" as const, submit: false },
+      { title: "Wave 3 demo: Public workshop", scope: "PUBLIC" as const, submit: true },
+      { title: "Wave 3 demo: Internal practice", scope: "MEMBERS_ONLY" as const, submit: true },
+    ];
+    for (const example of examples) {
+      if (await ucmsModels.events!.exists({ clubId: club("HEBE").id, title: example.title })) continue;
+      const input: ClubEventInput = { title: example.title, objective: "Practice event management", plan: "Welcome participants, run the activity, and collect feedback.",
+        startAt: demoStart, endAt: demoEnd, venueText: "Campus activity space", audienceScope: example.scope, capacity: 30, riskCategory: "LOW", bookingIds: [],
+        registrationForm: [{ key: "expectations", label: "What do you expect from this event?", type: "textarea", required: false }],
+        budgetLines: example.scope === "PUBLIC" ? [{ category: "Materials", amount: 300000, purpose: "Workshop supplies" }] : [] };
+      const created = await wave3.create(hebe, input, String(owner), now);
+      if (!example.submit) continue;
+      const submitted = await wave3.act(hebe, created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(owner), now);
+      if (example.scope === "MEMBERS_ONLY") await wave3.act(hebe, created.event.id, { kind: "publish", expectedVersion: submitted.event.version,
+        input: { registrationOpenAt: now, registrationCloseAt: demoStart, checkInOpenAt: demoStart, checkInCloseAt: demoEnd, allowWalkIn: true, waitlistEnabled: true } }, String(owner), now);
     }
   }
 

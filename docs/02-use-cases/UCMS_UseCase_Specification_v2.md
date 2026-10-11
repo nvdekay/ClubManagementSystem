@@ -1022,8 +1022,9 @@ lại UC06–UC52.
 - **Luồng chính:**
   1. Thành viên mở sự kiện và chọn `Huỷ` hoặc `Đổi lịch`.
   2. Thành viên nhập lý do.
-  3. Với việc đổi lịch, hệ thống đánh giá lại BR15 và, ở nơi chính sách yêu cầu, đưa sự kiện
-     quay lại UC26 để có một quyết định mới; sự kiện nội bộ theo BR53 chỉ được ghi nhận lại.
+  3. Với việc đổi thời gian hoặc địa điểm, hệ thống đánh giá lại BR15 và đưa sự kiện đã duyệt
+     quay lại UC26 để có một quyết định mới; sự kiện nội bộ không ngân sách theo BR53 chỉ được
+     ghi nhận lại (D4, chốt ngày 2026-10-11).
   4. Hệ thống cập nhật hoặc giải phóng booking liên quan (UC47).
   5. Hệ thống thông báo cho mọi người đã đăng ký.
   6. Hệ thống tính lại các nghĩa vụ báo cáo và ngân sách: khi huỷ, `EventBudget` chưa giải ngân
@@ -1042,8 +1043,8 @@ lại UC06–UC52.
   - **E3** người gọi thiếu permission `club.event.manage` trong CLB → từ chối (BR54).
 - **Hậu điều kiện:** Sự kiện ở `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký
   được cập nhật; lý do được ghi audit.
-- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. Quyết
-  định còn mở D4 chi phối việc một lần đổi lịch có cần một quyết định mới từ UC26 hay không.
+- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. D4 đã chốt ngày 2026-10-11: đổi thời gian/địa điểm phải duyệt lại ở UC26,
+  trừ sự kiện nội bộ không ngân sách theo BR53.
 - **Đầu ra:** Trạng thái sự kiện, booking được giải phóng, các thông báo, bản ghi audit.
 - **Use case liên quan:** UC27, UC47, UC40, UC15
 
@@ -1555,71 +1556,46 @@ lại UC06–UC52.
 - **Use case liên quan:** UC45, UC46
 - **Pain point:** BP16
 
-## UC45 – Đặt phòng CLB trực tiếp
+## UC45 – Đặt phòng học hoặc gửi yêu cầu cơ sở vật chất khác
 
-> Cập nhật thiết kế P1 ngày 2026-10-11: booking mới dùng đặt phòng trực tiếp;
-> workflow review chỉ giữ cho yêu cầu cũ. DOCX đặc tả cũ đang đánh số chức năng này
-> là UC47 và review là UC48; không đổi mã các use case khác trong lần cập nhật này.
+- **Actor chính:** Club Member có `club.booking.manage` (BR54).
+- **Tiền điều kiện:** CLB `Active`, hoặc `Dissolving` trong học kỳ cho phép; tài sản đang hoạt động.
+- **Luồng phòng học (`ROOM`):** chọn phòng, ngày và slot còn trống → kiểm tra lịch trong
+  transaction → `Approved`. Snapshot Club Leader được lưu trong audit `BOOKING_RESERVED`.
+  Không Draft, version nộp, task hay decision; không thu thập `eventId`, không liên kết UC25.
+  Đổi phòng/lịch bằng huỷ theo UC47 rồi đặt mới. CLB không được đặt trùng dù policy bật.
+- **Luồng tài sản khác:** `HALL`, `OUTDOOR` (sân trường/khu ngoài trời), `STAGE` (sân khấu),
+  `EQUIPMENT`. Chọn tài sản, ngày/slot, mục đích, số người, thiết bị và sự kiện cùng CLB nếu có.
+  Lưu `Draft` → đánh giá BR15 và deadline → nộp `Requested`, tạo version bất biến và task ICPDP.
+  Từ `Revision Requested`, sửa rồi nộp version mới. Tài sản chưa được giữ chỗ trước khi UC46 duyệt.
+- **Deadline:** yêu cầu cần duyệt dùng bốn slot và hạn gửi đã chốt ở SRS UC45;
+  đặt phòng học trực tiếp chỉ cần slot còn ở tương lai, không áp dụng hạn gửi workflow.
+- **Liên kết sự kiện:** booking cần duyệt có thể liên kết UC25. Gắn/gỡ cần cả
+  `club.event.manage` và `club.booking.manage`; UC26 không duyệt thay booking.
+  `EQUIPMENT` có thể khác property địa điểm sự kiện, nhưng thời gian phải bao phủ sự kiện.
+- **Ngoại lệ:** thiếu quyền, blackout, sai học kỳ/khung giờ, tài sản không hoạt động,
+  CLB bị tạm ngừng/giải thể → từ chối. Vượt sức chứa tài sản cần duyệt là cảnh báo cho ICPDP.
+- **Tương thích:** ROOM legacy đã nộp (`currentVersionNo > 0`) vẫn được sửa/nộp lại và duyệt;
+  không được tạo ROOM Draft mới hoặc đổi yêu cầu tài sản khác thành ROOM để đi đường review.
+- **Quy tắc:** BR15, BR33, BR34, BR45, BR54.
+- **Liên quan:** UC25, UC44, UC46, UC47.
 
-- **Actor chính:** Club Member có permission `club.booking.manage` (BR54).
-- **Module:** M11.
-- **Mục tiêu nghiệp vụ:** Đặt một phòng còn trống, lưu người phụ trách để truy vết.
-- **Kích hoạt:** CLB cần phòng cho hoạt động của CLB.
-- **Tiền điều kiện:** CLB đang `Active`, hoặc `Dissolving` trong giới hạn học kỳ giải thể;
-  người gọi có quyền; property đang hoạt động và có type `ROOM`; xác định được một
-  Club Leader đang giữ chức vụ đã xác nhận trong nhiệm kỳ và membership còn hiệu lực.
-- **Dữ liệu vào:** `propertyId`, ngày sử dụng và một slot campus; server lưu `startAt`, `endAt`.
-- **Luồng chính:**
-  1. Thành viên chọn ngày và slot; hệ thống hiển thị phòng và tình trạng còn trống.
-  2. Hệ thống hiển thị tên và email Club Leader phụ trách; thành viên không tự chọn người phụ trách.
-  3. Thành viên chọn phòng còn trống và xác nhận đặt.
-  4. Hệ thống kiểm tra property, trạng thái CLB, học kỳ, giờ được đặt, blackout và xung đột;
-     kiểm tra lại trong transaction để tránh cấp trùng phòng.
-  5. Hệ thống tạo booking `Approved`, khoá slot và ghi `BOOKING_RESERVED` với snapshot
-     người phụ trách. Không tạo submission version, `ApprovalTask` hay `ApprovalDecision`.
-- **Thông tin do hệ thống gán:** `purpose = "Club room reservation"`, `headcount = 1`,
-  `equipment = []`. Form không thu thập mục đích, số người, thiết bị hoặc `eventId`.
-- **Luồng thay thế:**
-  - Đóng form trước khi xác nhận: không tạo booking; không có thao tác lưu `Draft`.
-  - Cần đổi booking: huỷ booking đã đặt theo UC47 nếu được phép, rồi đặt phòng mới.
-    Form trực tiếp không có sửa hoặc nộp lại `Revision Requested`.
-  - Đặt phòng phục vụ sự kiện: đặt độc lập; form trực tiếp không đính kèm booking vào UC25.
-- **Ngoại lệ:** thiếu permission, không có Club Leader phù hợp, phòng không hoạt động,
-  CLB `Suspended`/`Dissolved`, thời gian không hợp lệ hoặc vượt học kỳ giải thể → từ chối.
-- **Hậu điều kiện:** Booking ở `Approved`, slot đã giữ và người phụ trách được lưu trong audit.
-- **Đầu ra:** `PropertyBooking`, `AuditLog`.
-- **Use case liên quan:** UC44, UC47.
-- **Pain point:** BP16.
-
-Phạm vi cập nhật này thay các yêu cầu P1 về review, Draft/nộp lại và dữ liệu form.
-Deadline được review riêng ở P2. Quy tắc overbooking chốt ngày 2026-10-11:
-CLB không được đặt trùng; chỉ ICPDP được đặt trùng khi policy bật và có lý do không rỗng.
-
-## UC46 – Ngoại lệ đặt trùng và thẩm định yêu cầu cũ
+## UC46 – Thẩm định cơ sở vật chất và cho phép đặt trùng phòng học
 
 - **Actor chính:** ICPDP Officer.
-- **Module:** M11.
-- **Đặt trùng trực tiếp:** ICPDP chọn CLB/phòng/ngày/slot có xung đột, nhập lý do
-  không rỗng (tối đa 2000 ký tự); server chỉ cho phép khi policy `allowOverbooking` bật.
-  Ghi `Approved` và snapshot Chủ nhiệm, officer, lý do, thời điểm, conflict trong audit;
-  thông báo Chủ nhiệm cùng transaction. Không bỏ qua blackout, trạng thái CLB/phòng,
-  học kỳ, slot tương lai hoặc Chủ nhiệm hợp lệ. Không tạo task review.
-- **Thẩm định yêu cầu cũ:** Áp dụng với booking đã có task trong workflow review cũ.
-  Booking mới từ UC45 được đặt trực tiếp ở `Approved`, không đi vào hàng đợi này.
-- **Tiền điều kiện:** Booking `Requested` hoặc `Under Review`, có task review còn mở.
-- **Luồng chính:** Officer nhận task, kiểm tra CLB, xung đột và nghĩa vụ, rồi quyết định
-  `Approve`, `Reject` hoặc `Request revision` với lý do; hệ thống lưu decision, audit
-  và thông báo trong transaction.
-- **Phương án thay thế:** Có thể ghi đề xuất phòng/slot trong lịch sử quyết định cũ.
-  Giao diện đặt trực tiếp không cung cấp thao tác sửa và nộp lại yêu cầu cũ.
-- **Ngoại lệ:** Task đã đóng hoặc được officer khác nhận → từ chối; xung đột mới khi duyệt
-  → `Revision Requested`, trừ khi ICPDP nhập riêng `overbookingReason` và policy bật.
-  Lý do ngoại lệ và conflict được lưu trong decision/audit.
-- **Hậu điều kiện:** Booking cũ ở `Approved`, `Rejected` hoặc `Revision Requested`.
-- **Quy tắc:** Chỉ ICPDP quyết định task cũ; quy tắc này không áp dụng cho đặt phòng trực tiếp.
-- **Đầu ra:** `ApprovalDecision`, `AuditLog`, thông báo.
-- **Use case liên quan:** UC47.
-- **Pain point:** BP16.
+- **Yêu cầu cần duyệt:** tài sản ngoài ROOM và ROOM legacy đã có task.
+- **Luồng chính:** nhận task `Requested → Under Review`; kiểm tra lịch, mục đích,
+  trạng thái CLB và nghĩa vụ; quyết định `Approve`, `Reject` hoặc `Request revision` có lý do.
+  Lưu decision, audit và notification cùng transaction. Chỉ người nhận task được quyết định.
+- **Khi duyệt:** kiểm tra lại lịch và trạng thái; `Approved` giữ slot. Nếu phát sinh xung đột,
+  trả `Revision Requested`, trừ khi ICPDP nhập riêng `overbookingReason` và policy cho phép.
+  Blackout không được bỏ qua. Có thể đề xuất tài sản/slot khác khi yêu cầu sửa;
+  yêu cầu ngoài ROOM không được đề xuất ROOM — dùng luồng đặt phòng trực tiếp riêng.
+- **Ngoại lệ phòng học trực tiếp:** ICPDP chọn CLB/ROOM/ngày/slot trùng, nhập lý do;
+  chỉ ghi `Approved` khi policy bật, có xung đột và Club Leader hợp lệ. Audit ghi officer,
+  lý do, lịch trùng, thời điểm và snapshot; notification cùng transaction, không tạo task.
+- **Quy tắc:** BR31, BR33, BR34, BR35.
+- **Liên quan:** UC45, UC47, UC26.
 
 ## UC47 – Theo dõi và huỷ / trả cơ sở vật chất đã đặt
 

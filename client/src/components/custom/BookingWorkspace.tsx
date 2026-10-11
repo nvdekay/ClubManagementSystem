@@ -15,7 +15,7 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
-import { useBookingResponsible, useRoomAvailability, useBooking, useBookingAction, useBookingAvailability, useBookingSlots, useBookingProperties, useBookings } from "@/hooks/useFacilityBookings";
+import { useBookingEvents, useBookingResponsible, useRoomAvailability, useBooking, useBookingAction, useBookingAvailability, useBookingSlots, useBookingProperties, useBookings } from "@/hooks/useFacilityBookings";
 import type { Booking, BookingAction, BookingDecisionInput, BookingInput, BookingSlot } from "@/services/facilityBookings";
 import { cn } from "@/utils/cn";
 
@@ -56,6 +56,9 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const resetAction = action.reset;
   const [filter, setFilter] = useState("");
   const [editing, setEditing] = useState(false);
+  const [requestMode, setRequestMode] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const events = useBookingEvents(clubId, can && editing && requestMode);
   const [form, setForm] = useState<BookingInput>(emptyInput);
   const [formError, setFormError] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -67,11 +70,18 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const [alternative, setAlternative] = useState({ propertyId: "", startAt: "", endAt: "" });
   const availability = useBookingAvailability(editing ? clubId : null, form.propertyId, form.startAt, form.endAt);
   const activeProperties = (properties.data ?? []).filter((item) => item.isActive && item.type === "ROOM");
-  const roomAvailability = useRoomAvailability(editing ? clubId : null, activeProperties.map((item) => item.id), form.startAt, form.endAt);
+  const roomAvailability = useRoomAvailability(editing && !requestMode ? clubId : null, activeProperties.map((item) => item.id), form.startAt, form.endAt);
   const selectedRoomCheck = roomAvailability[activeProperties.findIndex((item) => item.id === form.propertyId)];
   const canSaveRoom = Boolean(selectedRoomCheck?.isSuccess && !selectedRoomCheck.isFetching && !selectedRoomCheck.data.conflicts.length && responsible.isSuccess && !responsible.isFetching);
   const booking = detail.data?.booking;
   const property = properties.data?.find((item) => item.id === form.propertyId);
+  const requestProperties = (properties.data ?? []).filter((item) => item.isActive &&
+    (item.type !== "ROOM" || (editingId && detail.data?.property?.type === "ROOM" && (booking?.currentVersionNo ?? 0) > 0)));
+  function openForm(isRequest: boolean, current?: Booking) {
+    setRequestMode(isRequest); setEditingId(current?.id ?? null); setForm(current ?? emptyInput);
+    if (!current) setSelected(null);
+    setEditing(true); setFormError(null); action.reset();
+  }
   const states = ["Draft", "Requested", "Under Review", "Revision Requested", "Approved", "Rejected", "In Use", "Completed", "Cancelled", "Released"] as const;
   const stateLabel = useCallback((state: string) => t(`facilityBookings.states.${state as typeof states[number]}`), [t]);
   const date = useCallback((value: string) => new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", {
@@ -93,6 +103,14 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
     if (!clubId || !form.propertyId || !form.startAt || !form.endAt || !slotNumber(form, slots.data ?? [])) {
       setFormError(t("facilityBookings.invalidForm")); return;
     }
+    if (requestMode) {
+      if (!form.purpose.trim() || !requestProperties.some((item) => item.id === form.propertyId)) {
+        setFormError(t("facilityBookings.invalidForm")); return;
+      }
+      void mutate({ kind: "save", clubId, ...(editingId ? { id: editingId } : {}), input: form,
+        expectedVersion: booking?.currentVersionNo ?? 0 });
+      return;
+    }
     if (!canSaveRoom) { setFormError(t("facilityBookings.roomUnavailable")); return; }
     void mutate({ kind: "reserve", clubId, input: { propertyId: form.propertyId, startAt: form.startAt, endAt: form.endAt } });
   }
@@ -107,7 +125,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
       ...(outcome === "Request revision" && suggest ? { alternative } : {}) } });
   }
   const propertyOptions = [{ value: "", label: t("facilityBookings.select") },
-    ...(properties.data ?? []).filter((item) => item.isActive).map((item) => ({ value: item.id, label: `${item.name} · ${item.location}` }))];
+    ...(properties.data ?? []).filter((item) => item.isActive && (item.type !== "ROOM" || detail.data?.property?.type === "ROOM")).map((item) => ({ value: item.id, label: `${item.name} · ${item.location}` }))];
   const roomOptions = [{ value: "", label: t("facilityBookings.select") }, ...activeProperties.map((item, index) => {
     const check = roomAvailability[index];
     const status = !form.startAt || !form.endAt ? "chooseTime" : check.isFetching || check.isPending ? "checking"
@@ -134,8 +152,10 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   if (!can) return <AppNotice tone="danger" role="alert">{t("facilityBookings.denied")}</AppNotice>;
   return <>
     <PageHeader title={t("facilityBookings.title")} description={t(clubId ? "facilityBookings.description" : "facilityBookings.officerDescription")}
-      actions={clubId ? <AppButton onClick={() => { setSelected(null); setForm(emptyInput); setEditing(true); setFormError(null); action.reset(); }}>
-        {t("facilityBookings.newBooking")}</AppButton> : undefined} />
+      actions={clubId ? <div className="flex flex-wrap gap-3">
+        <AppButton onClick={() => openForm(false)}>{t("facilityBookings.newBooking")}</AppButton>
+        <AppButton variant="secondary" onClick={() => openForm(true)}>{t("facilityBookings.newRequest")}</AppButton>
+      </div> : undefined} />
     <p className="mb-5 text-sm text-muted-app">{t("facilityBookings.timeZone")}</p>
     {(slots.isPending || list.isPending || properties.isPending) ? <AppSkeleton className="h-48 w-full" />
       : slots.isError || list.isError || properties.isError ? <AppNotice tone="danger" role="alert" title={t("facilityBookings.loadError")}>
@@ -164,13 +184,13 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
         <section className="min-w-0 space-y-5">
           {!editing && action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
           {!editing && formError && <AppNotice tone="danger" role="alert">{formError}</AppNotice>}
-          {editing && clubId ? <AppDialog open title={t("facilityBookings.newBooking")}
+          {editing && clubId ? <AppDialog open title={t(requestMode ? editingId ? "facilityBookings.edit" : "facilityBookings.newRequest" : "facilityBookings.newBooking")}
             closeLabel={t("facilityBookings.close")} onClose={() => setEditing(false)}>
             <form onSubmit={save} className="space-y-4">
             {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
             {formError && <AppNotice tone="danger" role="alert">{formError}</AppNotice>}
-            {!activeProperties.length && <AppNotice>{t("facilityBookings.noProperties")}</AppNotice>}
-            {responsible.isPending ? <AppSkeleton className="h-16 w-full" /> : responsible.isError ? <AppNotice tone="danger">
+            {!(requestMode ? requestProperties : activeProperties).length && <AppNotice>{t("facilityBookings.noProperties")}</AppNotice>}
+            {!requestMode && (responsible.isPending ? <AppSkeleton className="h-16 w-full" /> : responsible.isError ? <AppNotice tone="danger">
               <p>{t("facilityBookings.noResponsible")}</p>
               <AppButton type="button" variant="secondary" onClick={() => void responsible.refetch()}>{t("facilityBookings.retry")}</AppButton>
             </AppNotice> : responsible.data && <div className="rounded-xl border border-border-app p-3">
@@ -178,7 +198,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
               <p className="font-medium break-words">{responsible.data.displayName}</p>
               <p className="text-sm break-words text-muted-app">{responsible.data.email}</p>
               <p className="mt-1 text-sm text-muted-app">{t("facilityBookings.responsibleHint")}</p>
-            </div>}
+            </div>)}
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm font-medium">{t("facilityBookings.bookingDate")}
                 <AppInput type="date" className="mt-1 w-full min-w-0" required value={localTime(form.startAt).slice(0, 10)}
@@ -190,8 +210,9 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
             </div>
             <div className="block text-sm font-medium"><span>{t("facilityBookings.property")}</span>
               <AppSelect className="mt-1 w-full" label={t("facilityBookings.property")} value={form.propertyId}
-                onChange={(value) => setForm({ ...form, propertyId: value, equipment: [] })} disabled={!form.startAt || !form.endAt} options={roomOptions} /></div>
-            {roomAvailability.some((check) => check.isError) && <AppNotice tone="warning">
+                onChange={(value) => setForm({ ...form, propertyId: value, equipment: [] })} disabled={!form.startAt || !form.endAt} options={requestMode ? [{ value: "", label: t("facilityBookings.select") },
+                  ...requestProperties.map((item) => ({ value: item.id, label: `${item.name} · ${item.location}` }))] : roomOptions} /></div>
+            {!requestMode && roomAvailability.some((check) => check.isError) && <AppNotice tone="warning">
               <p>{t("facilityBookings.roomCheckError")}</p>
               <AppButton type="button" variant="secondary" onClick={() => { roomAvailability.forEach((check) => { void check.refetch(); }); }}>
                 {t("facilityBookings.retry")}
@@ -201,7 +222,25 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
               <details><summary>{t("facilityBookings.hours")}</summary><p>{t("facilityBookings.hours")}: {property.bookableHours.map((item) => `${t(`properties.day${item.day as 1 | 2 | 3 | 4 | 5 | 6 | 7}`)}: ${item.open}–${item.close}`).join("; ")}</p>
               {property.blackouts.map((item, index) => <p key={index}>{t("facilityBookings.blackout")}: {interval(item)} · {item.reason}</p>)}</details>
             </div>}
-            <p className="text-sm text-muted-app">{t("facilityBookings.instantRule")}</p>
+            {requestMode && <>
+              <label className="block text-sm font-medium">{t("facilityBookings.purpose")}
+                <AppInput required maxLength={2000} className="mt-1 w-full" value={form.purpose} onChange={(event) => setForm({ ...form, purpose: event.target.value })} /></label>
+              <label className="block text-sm font-medium">{t("facilityBookings.headcount")}
+                <AppInput required type="number" min={1} max={10000} className="mt-1 w-full" value={form.headcount} onChange={(event) => setForm({ ...form, headcount: Number(event.target.value) })} /></label>
+              <details><summary>{t("facilityBookings.optionalFields")}</summary>
+                <div className="mt-3 space-y-3">
+                  {property?.equipment.map((item) => <label key={item} className="flex flex-wrap items-center gap-2"><input type="checkbox" checked={form.equipment.includes(item)}
+                    onChange={(event) => setForm({ ...form, equipment: event.target.checked ? [...form.equipment, item] : form.equipment.filter((value) => value !== item) })} />{item}</label>)}
+                  {events.isPending ? <AppSkeleton className="h-12" /> : events.isError ? <AppNotice tone="danger">{events.error.message}
+                    <AppButton type="button" onClick={() => void events.refetch()}>{t("facilityBookings.retry")}</AppButton></AppNotice> :
+                    <AppSelect label={t("facilityBookings.eventId")} value={form.eventId ?? ""} onChange={(value) => setForm({ ...form, eventId: value || undefined })}
+                      options={[{ value: "", label: t("facilityBookings.noEvent") }, ...(events.data ?? []).map((item) => ({ value: item.id, label: item.title }))]} />}
+                </div>
+              </details>
+              {property?.capacity !== undefined && form.headcount > property.capacity && <AppNotice tone="warning">{t("facilityBookings.capacityWarning")}</AppNotice>}
+            </>}
+            <p className="text-sm text-muted-app">{t(requestMode ? "facilityBookings.requestRule" : "facilityBookings.instantRule")}</p>
+            {requestMode && <p className="text-sm text-muted-app">{t("facilityBookings.noticeRule")}</p> }
             {form.propertyId && form.startAt && form.endAt && <div role="status">
               {availability.isFetching ? <p>{t("facilityBookings.checking")}</p> : availability.isError ? <AppNotice tone="danger">{availability.error.message}</AppNotice>
                 : availability.data && <AppNotice tone={availability.data.conflicts.length ? "danger" : "success"}>
@@ -209,7 +248,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                   {availability.data.conflicts.map((item) => <p key={item.id}>{interval(item)}</p>)}
                 </AppNotice>}
             </div>}
-            <div className="flex flex-wrap gap-3"><AppButton type="submit" disabled={action.isPending || !canSaveRoom}>{t("facilityBookings.reserve")}</AppButton>
+            <div className="flex flex-wrap gap-3"><AppButton type="submit" disabled={action.isPending || (!requestMode && !canSaveRoom)}>{t(requestMode ? "facilityBookings.save" : "facilityBookings.reserve")}</AppButton>
               <AppButton type="button" variant="secondary" onClick={() => setEditing(false)}>{t("facilityBookings.close")}</AppButton></div>
           </form></AppDialog> : selected && detail.isPending ? <AppSkeleton className="h-64 w-full" />
             : detail.isError ? <AppNotice tone="danger" role="alert">{detail.error.message}
@@ -243,6 +282,10 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                   {detail.data.check.conflicts.map((item) => <p key={item.id}>{interval(item)}</p>)}</AppNotice>}
                 {!clubId && !!detail.data.obligations.length && <AppNotice tone="warning" title={t("facilityBookings.obligations")}>
                   {detail.data.obligations.map((item) => <p key={item}>{t(`facilityBookings.${item as "overdueReport" | "overdueSettlement" | "overdueRefund"}`)}</p>)}</AppNotice>}
+                {clubId && ["Draft", "Revision Requested"].includes(booking.state) && <div className="flex flex-wrap gap-3">
+                  <AppButton onClick={() => openForm(true, booking)}>{t("facilityBookings.edit")}</AppButton>
+                  <AppButton disabled={action.isPending} onClick={() => { if (window.confirm(t("facilityBookings.confirmSubmit"))) void mutate({ kind: "submit", clubId, id: booking.id, expectedVersion: booking.currentVersionNo }); }}>{t("facilityBookings.submit")}</AppButton>
+                </div>}
                 {clubId && ["Requested", "Approved"].includes(booking.state) && <form className="space-y-3" onSubmit={(event) => {
                   event.preventDefault(); if (window.confirm(t("facilityBookings.confirmCancel"))) void mutate({ kind: "cancel", clubId, id: booking.id, reason });
                 }}><p className="text-sm text-muted-app">{t("facilityBookings.cancelNotice")}</p>

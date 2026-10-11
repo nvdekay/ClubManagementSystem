@@ -87,13 +87,17 @@ và bốn booking theo slot; hướng dẫn test ở [WAVE_2_BOOKING.md](WAVE_2_
 
 ### Wave 3 — Vòng đời sự kiện phía CLB
 
+Kế hoạch chi tiết ngày 2026-10-11: [WAVE_3_EVENTS_PLAN.md](WAVE_3_EVENTS_PLAN.md).
+Đã triển khai ngày 2026-10-11: [bàn giao và kiểm chứng](WAVE_3_EVENTS.md).
+D4: đổi thời gian/địa điểm phải duyệt lại; nội bộ không ngân sách chỉ ghi nhận lại.
+
 | Feature | UC | Việc chính |
 |---|---|---|
-| `feat-event-proposals` | UC25, UC26 | CLB nộp đề xuất (`eventProposalVersions`, ngân sách dự kiến `eventBudgets`, liên kết booking); ICPDP thẩm định theo mô hình claim/decision giống UC08. |
+| `feat-event-proposals` | UC25, UC26 | CLB nộp đề xuất (`eventProposalVersions`, dòng ngân sách xin trong version; UC26 mới tạo `eventBudgets`, liên kết booking); ICPDP thẩm định theo mô hình claim/decision giống UC08. |
 | `feat-event-publishing` | UC27, UC28 | Công bố và mở đăng ký — nối với UC29 đã có (thay dữ liệu seed). Huỷ/đổi lịch, gồm A1 huỷ cascade từ hệ thống. |
 | `feat-event-capacity` | UC30 | Danh sách chờ và tự động promote khi có suất trống (UC29 đã chừa chỗ). |
 | `feat-event-attendance-close` | UC32 | Chốt điểm danh, khoá `attendances`. |
-| `feat-event-feedback-view` | UC49 | CLB xem phản hồi tổng hợp, tôn trọng `feedbackMinRespondents`. Cần thêm permission `club.feedback.view` nếu chưa có trong danh mục. |
+| `feat-event-feedback-view` | UC49 | CLB xem phản hồi tổng hợp, tôn trọng `feedbackMinRespondents`. Dùng permission `club.feedback.view` đã có. |
 
 ### Wave 4 — Sau sự kiện và tài chính
 

@@ -22,10 +22,11 @@ const policy: PolicyVersion = { id: "e".repeat(24), minFoundingMembers: 5, formR
   academicCalendar: [{ code: "FA26", startAt: new Date("2026-09-01"), endAt: new Date("2026-12-31") }],
   effectiveFrom: new Date("2026-01-01"), createdBy: ids.user, createdAt: now };
 const actor = { id: ids.user, accountState: "Active" as const };
-function deps(): BookingDeps {
+function deps(propertyType: Property["type"] = "ROOM"): BookingDeps {
+  const bookingProperty = { ...property, type: propertyType };
   const detail: BookingDetail = { booking: { ...input, id: ids.booking, clubId: ids.club, clubName: club.name,
     semesterCode: "FA26", state: "Draft", currentVersionNo: 0, isLateCancellation: false },
-  property, club, task: null, check: null, versions: [], decisions: [], obligations: [] };
+  property: bookingProperty, club, task: null, check: null, versions: [], decisions: [], obligations: [] };
   const snapshot: ClubAccessSnapshot = { clubId: ids.club, clubName: club.name, clubState: "Active",
     membership: { id: "member", clubId: ids.club, state: "Active" }, terms: [], assignments: [], isApprovedFounder: false,
     positions: [{ id: "members", clubId: ids.club, isActive: true, isLeaderRole: false,
@@ -37,8 +38,8 @@ function deps(): BookingDeps {
     release: vi.fn(async () => 1), advanceLifecycle: vi.fn(async () => ({ started: 0, completed: 0 })),
     blackoutConflicts: vi.fn(async () => []) };
   return { repo, access: { findSnapshot: vi.fn(async () => snapshot) }, auth: { systemRoleCodes: vi.fn(async () => ["ICPDP_OFFICER"]) },
-    policy: { findEffective: vi.fn(async () => policy) }, properties: { list: vi.fn(async () => [property]),
-      find: vi.fn(async () => property), create: vi.fn(), update: vi.fn(), setActive: vi.fn(), remove: vi.fn(), hasBookings: vi.fn() } };
+    policy: { findEffective: vi.fn(async () => policy) }, properties: { list: vi.fn(async () => [bookingProperty]),
+      find: vi.fn(async () => bookingProperty), create: vi.fn(), update: vi.fn(), setActive: vi.fn(), remove: vi.fn(), hasBookings: vi.fn() } };
 }
 describe("facility booking rules", () => {
   it("uses Vietnam hours, fits a semester and treats capacity as a warning", () => {
@@ -144,7 +145,7 @@ describe("facility booking use cases", () => {
       { outcome: "Approve", reason: "Allowed", overbookingReason: "Shared activity" }, now);
   });
   it("enforces the same-day deadline when submitting, including the exact boundary", async () => {
-    const d = deps();
+    const d = deps("HALL");
     await submitBooking(d, actor, ids.club, ids.booking, 0, new Date("2026-10-12T00:29:59Z"));
     vi.mocked(d.repo.submit).mockClear();
     await expect(submitBooking(d, actor, ids.club, ids.booking, 0, new Date("2026-10-12T00:30:00Z")))
@@ -173,8 +174,8 @@ describe("facility booking use cases", () => {
     await expect(saveBooking(d, actor, ids.club, null, { ...input, eventId: "f".repeat(24) }, now)).rejects.toThrow("event");
   });
   it("exposes active catalog/availability, creates draft and submits with version guard", async () => {
-    const d = deps();
-    expect(await listBookingProperties(d, actor, ids.club, now)).toEqual([property]);
+    const d = deps("HALL");
+    expect(await listBookingProperties(d, actor, ids.club, now)).toEqual([{ ...property, type: "HALL" }]);
     expect(await listBookingEvents(d, actor, ids.club, now)).toEqual([]);
     expect(d.repo.events).toHaveBeenCalledWith(ids.club);
     expect(await bookingAvailability(d, actor, ids.club, input, now)).toMatchObject({ capacityWarning: true });
@@ -186,7 +187,7 @@ describe("facility booking use cases", () => {
     await expect(submitBooking(d, actor, ids.club, ids.booking, 0, now)).rejects.toMatchObject({ kind: "conflict" });
   });
   it("edits only draft/revision and validates a proposed replacement", async () => {
-    const d = deps();
+    const d = deps("HALL");
     await saveBooking(d, actor, ids.club, ids.booking, input, now, 0);
     const found = await d.repo.find(ids.booking, now);
     vi.mocked(d.repo.find).mockResolvedValue({ ...found!, booking: { ...found!.booking, state: "Approved" } });
@@ -285,5 +286,34 @@ describe("immediate room reservations", () => {
     vi.mocked(d.access.findSnapshot).mockResolvedValue(null);
     await expect(reserveRoom(d, actor, ids.club, input, now)).rejects.toMatchObject({ kind: "forbidden" });
     expect(d.repo.reserve).not.toHaveBeenCalled();
+  });
+});
+
+describe("booking routes by property type", () => {
+  it("rejects new room drafts and submission without invoking the repository", async () => {
+    const d = deps();
+    await expect(saveBooking(d, actor, ids.club, null, input, now)).rejects.toThrow("direct reservation");
+    await expect(submitBooking(d, actor, ids.club, ids.booking, 0, now)).rejects.toThrow("direct reservation");
+    expect(d.repo.create).not.toHaveBeenCalled(); expect(d.repo.submit).not.toHaveBeenCalled();
+  });
+  it.each(["HALL", "OUTDOOR", "STAGE", "EQUIPMENT"] as const)("requires review for %s instead of reserving directly", async (type) => {
+    const d = deps(type);
+    await saveBooking(d, actor, ids.club, null, input, now);
+    await submitBooking(d, actor, ids.club, ids.booking, 0, now);
+    expect(d.repo.create).toHaveBeenCalledOnce(); expect(d.repo.submit).toHaveBeenCalledOnce();
+    await expect(reserveRoom(d, actor, ids.club, input, now)).rejects.toMatchObject({ kind: "not_found" });
+    expect(d.repo.reserve).not.toHaveBeenCalled();
+  });
+  it("keeps existing submitted room requests editable and resubmittable", async () => {
+    const d = deps(); const detail = await d.repo.find(ids.booking, now);
+    vi.mocked(d.repo.find).mockResolvedValue({ ...detail!, booking: { ...detail!.booking, state: "Revision Requested", currentVersionNo: 1 } });
+    await saveBooking(d, actor, ids.club, ids.booking, input, now, 1);
+    await submitBooking(d, actor, ids.club, ids.booking, 1, now);
+    expect(d.repo.save).toHaveBeenCalledOnce(); expect(d.repo.submit).toHaveBeenCalledOnce();
+  });
+  it("cannot turn a non-room request into a room review request", async () => {
+    const d = deps("HALL"); vi.mocked(d.properties.find).mockResolvedValue(property);
+    await expect(saveBooking(d, actor, ids.club, ids.booking, input, now)).rejects.toThrow("direct reservation");
+    expect(d.repo.save).not.toHaveBeenCalled();
   });
 });
