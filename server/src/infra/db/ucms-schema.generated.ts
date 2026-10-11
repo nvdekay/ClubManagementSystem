@@ -1868,7 +1868,6 @@ export const ucmsTables = {
     "fields": {
       "eventId": {
         "type": "objectId",
-        "unique": true,
         "required": true
       },
       "clubId": {
@@ -1930,6 +1929,14 @@ export const ucmsTables = {
       }
     },
     "indexes": [
+      {
+        "fields": [
+          "eventId",
+          "versionNo"
+        ],
+        "unique": true,
+        "name": "uq_post_event_report_version"
+      },
       {
         "fields": [
           "clubId",

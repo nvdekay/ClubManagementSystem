@@ -1,3 +1,4 @@
+import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { cancelEventInSession } from "./event-cancellation.js";
 import { settlementDueAt } from "../../domain/budget-disbursement.js";
 import { randomUUID } from "node:crypto";
@@ -100,14 +101,15 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
   const notifications = m.notifications!;
 
   async function obligations(clubId: Types.ObjectId, now: Date): Promise<ClubObligation[]> {
-    const [settlement, refund, report] = await Promise.all([
+    const [settlement, refund, report, postReports] = await Promise.all([
       budgets.exists({ clubId, settlementDueAt: { $lt: now }, settlementSubmittedAt: { $exists: false },
         state: { $nin: ["Cancelled", "Closed"] } }),
       budgets.exists({ clubId, recoveryDueAt: { $lt: now }, state: "Recovery Pending" }),
       m.periodicReports!.exists({ clubId, dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } }),
+      overduePostEventReports(clubId, now),
     ]);
     return [...(settlement ? ["overdueSettlement" as const] : []), ...(refund ? ["overdueRefund" as const] : []),
-      ...(report ? ["overdueReport" as const] : [])];
+      ...(report || postReports.length ? ["overdueReport" as const] : [])];
   }
 
   async function detail(eventId: Types.ObjectId, now: Date): Promise<EventProposalDetail | null> {
@@ -276,7 +278,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
             if (approvedTotal < disbursed) return conflict("approved budget cannot be less than the amount already disbursed");
             await budgets.updateOne({ _id: budgetId }, { $set: { lines: lines.map((line) => ({ ...line })),
               requestedTotal: decimal(requestedTotal), approvedTotal: decimal(approvedTotal), approvedByDecisionId: decisionId,
-              periodCode: event.semesterCode, ...(disbursed === 0 ? { state: "Approved" } : { settlementDueAt: settlementDueAt(event.endAt as Date) }) } }, { session });
+              periodCode: event.semesterCode, ...(disbursed === 0 ? { state: "Approved" } : { settlementDueAt: settlementDueAt(event.endAt as Date) }) }, $inc: { __v: 1 } }, { session });
           } else {
             budgetId = new Types.ObjectId();
             await budgets.create([{ _id: budgetId, eventId: id, clubId: event.clubId,

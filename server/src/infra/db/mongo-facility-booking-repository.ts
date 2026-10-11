@@ -1,3 +1,4 @@
+import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
@@ -198,6 +199,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       .sort({ "after.versionNo": 1 }).lean();
     const decisionDocs = await decisions.find({ approvalTaskId: { $in: taskDocs.map((task) => task._id) } }).sort({ at: 1 }).lean();
     const obligations: string[] = [];
+    if ((await overduePostEventReports(doc.clubId as Types.ObjectId, now)).length) obligations.push("overduePostEventReport");
     if (await m.periodicReports!.exists({ clubId: doc.clubId, dueAt: { $lt: now },
       state: { $in: ["Draft", "Returned for correction"] } })) obligations.push("overdueReport");
     if (await m.eventBudgets!.exists({ clubId: doc.clubId, settlementDueAt: { $lt: now },

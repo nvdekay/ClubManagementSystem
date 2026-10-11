@@ -10,6 +10,9 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
   actorId: Types.ObjectId, now: Date, internalWithoutBudget: boolean): Promise<void> {
   const eventId = event._id as Types.ObjectId;
   if (action.kind === "unlock") {
+    if (await m.postEventReports!.exists({ eventId, state: { $in: ["Submitted", "Accepted", "Returned for correction"] } }).session(session)) {
+      conflict("submitted report history prevents attendance unlocking");
+    }
     if (event.attendanceFinalized !== true || !["Completed", "Closed"].includes(String(event.state))) conflict("attendance is not finalized");
     await m.events!.updateOne({ _id: eventId }, { $set: { attendanceFinalized: false, state: "Completed" } }, { session });
     await m.attendances!.updateMany({ eventId }, { $set: { finalized: false, unlockedBy: actorId, unlockReason: action.reason },

@@ -27,13 +27,14 @@ export async function cancelEventInSession(session: ClientSession, event: Doc, r
     const disbursed = Number(String(budget.disbursedTotal ?? 0));
     if (disbursed === 0) await m.eventBudgets!.updateOne({ _id: budget._id }, { $set: { state: "Cancelled" } }, { session });
     // Amount to recover must be decided from real expenses in UC37; do not assume all advances are unspent.
-    else await m.eventBudgets!.updateOne({ _id: budget._id }, { $set: { settlementDueAt: budget.settlementDueAt ?? settlementDueAt(now) } }, { session });
+    else await m.eventBudgets!.updateOne({ _id: budget._id }, { $set: { settlementDueAt: settlementDueAt(now) }, $inc: { __v: 1 } }, { session });
   }
   const correlationId = randomUUID();
   await m.auditLogs!.create([{ entityType: "Event", entityId: id, action: "EVENT_CANCELLED",
     ...(actorId ? { actorId, actorRole: source.startsWith("PROPOSAL_") ? "ICPDP_OFFICER" : "Club Member" } : { actorRole: "SYSTEM" }),
     before: { state: event.state }, after: { state: "Cancelled", source, sourceRefId,
-      settlementRequired: budget ? Number(String(budget.disbursedTotal ?? 0)) > 0 : false },
+      settlementRequired: budget ? Number(String(budget.disbursedTotal ?? 0)) > 0 : false, previousSettlementDueAt: budget?.settlementDueAt,
+      ...(budget && Number(String(budget.disbursedTotal ?? 0)) > 0 ? { settlementDueAt: settlementDueAt(now) } : {}) },
     reason, correlationId, at: now }], { session });
   if (registrations.length) await m.notifications!.create(registrations.map((r) => ({ recipientUserId: r.studentId,
     eventCode: "EVENT_CANCELLED", entityType: "Event", entityId: id, channels: ["IN_APP"], payload: { title: event.title, reason, source },

@@ -837,7 +837,7 @@ Table attendances {
 
 Table postEventReports {
   id objectId [pk]
-  eventId objectId [unique, not null]
+  eventId objectId [not null]
   clubId objectId [not null]
   preloadedFigures json [not null, note: 'Bị đóng băng lúc nộp: đề xuất đã duyệt, điểm danh đã chốt, ngân sách và khoản chi, bản tổng hợp phản hồi. Không bao giờ đổi khi nguồn thay đổi về sau (DAT-07).']
   actualResult text [not null]
@@ -856,6 +856,7 @@ Table postEventReports {
   decidedAt datetime
 
   indexes {
+    (eventId, versionNo) [unique, name: 'uq_post_event_report_version']
     (clubId, state) [name: 'ix_pereport_club_state']
     (state, submittedAt) [name: 'ix_pereport_queue']
   }

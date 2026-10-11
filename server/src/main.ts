@@ -1,3 +1,6 @@
+import { mongoAccountabilityReminderRepository } from "./infra/db/mongo-accountability-reminder-repository.js";
+import { startAccountabilityReminderJob } from "./interface/jobs/accountability-reminder-job.js";
+import { mongoPostEventReportRepository } from "./infra/db/mongo-post-event-report-repository.js";
 import { mongoClubEventRepository } from "./infra/db/mongo-club-event-repository.js";
 import { mongoFacilityBookingRepository } from "./infra/db/mongo-facility-booking-repository.js";
 import { startFacilityBookingJob } from "./interface/jobs/facility-booking-job.js";
@@ -87,6 +90,7 @@ const app = authConfig ? buildApp({
   clubLifecycleRepo,
   eventProposalReviewRepo,
   budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
+  postEventReportRepo: mongoPostEventReportRepository(),
   violationRepo: mongoViolationRepository(),
   schoolEventRepo,
   clubEventRepo: mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 }),
@@ -122,6 +126,7 @@ const app = authConfig ? buildApp({
     secureCookies: config.NODE_ENV === "production",
   },
 }) : buildApp(commonDeps);
+const stopAccountabilityJob = startAccountabilityReminderJob(mongoAccountabilityReminderRepository());
 const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
 const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo);
@@ -136,6 +141,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     shuttingDown = true;
     stopLifecycleJob();
     stopBookingJob();
+    stopAccountabilityJob();
     stopEventLifecycleJob();
     // Drain deadline — a hung in-flight request must not block SIGTERM until the platform SIGKILLs.
     setTimeout(() => {

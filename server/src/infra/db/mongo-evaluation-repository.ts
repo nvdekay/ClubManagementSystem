@@ -147,9 +147,9 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         m.periodicReports!.find({ clubId: club, periodCode: period.code, dueAt: { $lte: now } }).lean(),
         m.clubPositions!.find({ clubId: club, isLeaderRole: true, isActive: true }).distinct("_id"),
       ]);
-      const completed = eventDocs.filter((event) => event.state === "Completed");
+      const completed = eventDocs.filter((event) => ["Completed", "Report Submitted", "Closed"].includes(String(event.state)));
       const completedIds = completed.map((event) => event._id);
-      const [registrationDocs, attendanceDocs, feedbackDocs, postReports, invitedEvents, leaderSeat] = await Promise.all([
+      const [registrationDocs, attendanceDocs, feedbackDocs, postReportVersions, invitedEvents, leaderSeat] = await Promise.all([
         m.eventRegistrations!.find({ eventId: { $in: completedIds }, state: "Confirmed" }).select({ _id: 1 }).lean(),
         m.attendances!.find({ eventId: { $in: completedIds }, abnormalFlags: { $ne: "no-show" } }).select({ studentId: 1 }).lean(),
         m.eventFeedbacks!.find({ eventId: { $in: eventDocs.map((event) => event._id) } }).select({ scores: 1 }).lean(),
@@ -158,6 +158,8 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         leaderPositions.length ? m.clubPositionAssignments!.findOne({ clubId: club, positionId: { $in: leaderPositions }, effectiveTo: null })
           .select({ _id: 1 }).lean() : null,
       ]);
+      const postReports = [...new Map(postReportVersions.sort((a, b) => Number(a.versionNo) - Number(b.versionNo))
+        .map((report) => [String(report.eventId), report])).values()];
       const memberIds = new Set(memberDocs.map((item) => String(item.userId)));
       const attendees = new Set(attendanceDocs.map((item) => String(item.studentId)));
       const outsiders = [...attendees].filter((id) => !memberIds.has(id));

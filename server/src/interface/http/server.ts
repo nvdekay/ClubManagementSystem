@@ -1,3 +1,7 @@
+import type { EventFinanceRepository } from "../../domain/event-finance.js";
+import type { PostEventReportRepository } from "../../domain/post-event-report.js";
+import { eventFinanceRoutes } from "./event-finance-routes.js";
+import { postEventReportRoutes } from "./post-event-report-routes.js";
 import type { ClubEventRepository } from "../../domain/club-event.js";
 import { clubEventRoutes } from "./club-event-routes.js";
 import type { FacilityBookingRepository } from "../../domain/facility-booking.js";
@@ -101,6 +105,8 @@ export function buildApp(deps: {
   applicationReviewRepo?: ClubApplicationReviewRepository;
   eventProposalReviewRepo?: EventProposalReviewRepository;
   budgetDisbursementRepo?: BudgetDisbursementRepository;
+  eventFinanceRepo?: EventFinanceRepository;
+  postEventReportRepo?: PostEventReportRepository;
   violationRepo?: ViolationRepository;
   schoolEventRepo?: SchoolEventRepository;
   clubEventRepo?: ClubEventRepository;
@@ -229,6 +235,10 @@ export function buildApp(deps: {
         app.use("/api/v1", eventProposalReviewRoutes({ repo: deps.eventProposalReviewRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       }
+      if (deps.eventFinanceRepo) app.use("/api/v1", eventFinanceRoutes({ repo: deps.eventFinanceRepo,
+        access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+      if (deps.postEventReportRepo) app.use("/api/v1", postEventReportRoutes({ repo: deps.postEventReportRepo,
+        access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       if (deps.budgetDisbursementRepo) {
         app.use("/api/v1", budgetDisbursementRoutes({ repo: deps.budgetDisbursementRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -325,6 +335,8 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/clubs")) return hasClubLifecycle;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/event-proposals")) return hasEventProposalReviews;
+      if (path.includes("/event-reports")) return Boolean(hasPolicy && deps.postEventReportRepo);
+      if (path.startsWith("/clubs/{clubId}/budgets") || path.includes("/reconciliation")) return Boolean(hasPolicy && deps.eventFinanceRepo);
       if (path.startsWith("/admin/budgets")) return hasBudgets;
       if (path.startsWith("/admin/violations")) return hasViolations;
       if (path.startsWith("/admin/school-events")) return hasSchoolEvents;

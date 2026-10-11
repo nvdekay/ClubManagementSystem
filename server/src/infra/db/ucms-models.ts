@@ -140,6 +140,16 @@ export async function ensureUcmsDatabase(): Promise<void> {
     } catch (error) {
       if (!(error instanceof mongoose.mongo.MongoServerError && error.code === 48)) throw error;
     }
+    // Wave 4 replaces the legacy one-report-per-event index with immutable versions.
+    if (model.collection.name === "postEventReports") {
+      const indexes = await model.collection.indexes();
+      const legacy = indexes.find((index) => index.unique && Object.keys(index.key).length === 1 && index.key.eventId === 1);
+      if (legacy?.name) {
+        // Build the replacement before removing the old constraint; failures leave the old index intact.
+        await model.collection.createIndex({ eventId: 1, versionNo: 1 }, { unique: true, name: "uq_post_event_report_version" });
+        await model.collection.dropIndex(legacy.name);
+      }
+    }
     const existing = await model.collection.indexes();
     for (const [keys, options] of model.schema.indexes()) {
       if (!existing.some((index) => sameIndex(index, keys, options))) {

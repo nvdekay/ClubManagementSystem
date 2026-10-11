@@ -12,6 +12,9 @@ Cách biến baseline yêu cầu thành code: phân rã công việc và thiết
 | [`WAVE_2_BOOKING.md`](WAVE_2_BOOKING.md) | Bàn giao Wave 2: slot và hạn gửi, UI CLB/ICPDP, dữ liệu mẫu, cách test và kiểm chứng |
 | [`WAVE_3_EVENTS_PLAN.md`](WAVE_3_EVENTS_PLAN.md) | Kế hoạch Wave 3: hiện trạng source, thứ tự bàn giao sự kiện CLB, quyết định D4 và chính sách đã áp dụng |
 | [`WAVE_3_EVENTS.md`](WAVE_3_EVENTS.md) | Bàn giao Wave 3: API/UI, chính sách, dữ liệu demo, cách thử và phạm vi kiểm chứng |
+| [`WAVE_4_REPORTS_FINANCE_PLAN.md`](WAVE_4_REPORTS_FINANCE_PLAN.md) | Kế hoạch Wave 4: UC33–UC37, hiện trạng source, thứ tự bàn giao, hợp đồng phối hợp và quyết định cần chốt |
+| [`WAVE_4_REPORTS_FINANCE.md`](WAVE_4_REPORTS_FINANCE.md) | Bàn giao tạm Wave 4: phần đã viết, kiểm chứng và BR25/BR58 cần chốt trước khi bật API tài chính |
+| [`WAVE_4_REVIEW_2026-10-11.md`](WAVE_4_REVIEW_2026-10-11.md) | Review lại Wave 4, lỗi tái hiện với MongoDB, trạng thái API thật và seed phục vụ guide book |
 | [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 49 collection MongoDB, 24 enum, nhóm theo module. Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
 
 ## Dùng file DBML

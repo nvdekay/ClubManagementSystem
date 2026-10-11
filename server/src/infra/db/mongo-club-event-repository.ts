@@ -1,10 +1,11 @@
+import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { randomInt, randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import type { ClubEventInput, ClubEventRepository } from "../../domain/club-event.js";
 import { eventActionPermission } from "../../domain/club-event.js";
 import { assertEventNotice, eventConflictResult, validateClubEventInput, validateEventPublication } from "../../domain/club-event-rules.js";
 import { DomainError } from "../../domain/errors.js";
-import type { AcademicSemester, ReportDeadline } from "../../domain/policy.js";
+import type { AcademicSemester } from "../../domain/policy.js";
 import { checkInCode } from "../../domain/school-event.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
 import { clubEventFrom, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
@@ -47,18 +48,7 @@ async function assertObligations(session: ClientSession, clubId: Types.ObjectId,
   if (await m.eventBudgets!.exists({ clubId, state: { $nin: ["Cancelled", "Closed"] }, settlementDueAt: { $lt: now }, settlementSubmittedAt: null }).session(session)) obligations.push("overdueSettlement");
   if (await m.eventBudgets!.exists({ clubId, state: "Recovery Pending", recoveryDueAt: { $lt: now } }).session(session)) obligations.push("overdueRefund");
   if (await m.periodicReports!.exists({ clubId, dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } }).session(session)) obligations.push("overduePeriodicReport");
-  const deadlines = (policy.reportDeadlines ?? []) as ReportDeadline[];
-  const postDeadline = deadlines.find((d) => d.reportType === "POST_EVENT");
-  if (postDeadline) {
-    const dueEvents = await m.events!.find({ clubId, state: { $in: ["Completed", "Report Submitted"] },
-      endAt: { $lt: new Date(now.getTime() - postDeadline.dueDaysAfterPeriodEnd * 86400000) } }).session(session).lean();
-    for (const event of dueEvents) {
-      if (event.audienceScope === "MEMBERS_ONLY" && !(await m.eventBudgets!.exists({ eventId: event._id }).session(session))) continue;
-      if (!(await m.postEventReports!.exists({ eventId: event._id, state: { $in: ["Submitted", "Accepted"] } }).session(session))) {
-        obligations.push(`overduePostEventReport:${String(event._id)}`);
-      }
-    }
-  }
+  for (const id of await overduePostEventReports(clubId, now, session)) obligations.push(`overduePostEventReport:${String(id)}`);
   if (obligations.length) throw new DomainError("overdue club obligations prevent proposal submission", "conflict", { obligations });
 }
 async function assess(session: ClientSession, clubId: Types.ObjectId, input: ClubEventInput, eventId: Types.ObjectId | undefined,
