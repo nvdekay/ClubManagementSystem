@@ -1,3 +1,4 @@
+import { assertAccountabilityOfficer } from "./accountability-workflow.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import {
@@ -96,9 +97,10 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
       const budgetObjectId = new Types.ObjectId(id);
       const actorId = new Types.ObjectId(officerId);
       await mongoose.connection.transaction(async (session) => {
+        await assertAccountabilityOfficer(session, actorId);
         const doc = await budgets.findById(budgetObjectId).session(session).lean();
         if (!doc) throw new DomainError("budget not found", "not_found");
-        const event = await m.events!.findById(doc.eventId).session(session).lean();
+        const event = await m.events!.findOneAndUpdate({ _id: doc.eventId }, { $inc: { __v: 1 } }, { session }).lean();
         const current = summaryFrom(doc, event as Doc | undefined, undefined);
         checkFlow(current, flow);
         const nextState = stateAfterFlow(current, flow);
@@ -113,7 +115,9 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
           ...(flow.kind === "Refund" ? { refundedTotal: decimal(current.refundedTotal + flow.amount) }
             : { disbursedTotal: decimal(current.disbursedTotal + flow.amount) }),
           ...(due ? { settlementDueAt: due } : {}),
-        } }, { session });
+        }, $inc: { __v: 1 } }, { session });
+        if (nextState === "Closed") await m.financialReconciliations!.updateOne({ eventBudgetId: budgetObjectId },
+          { $set: { closedBy: actorId, closedAt: now } }, { session });
         const action = `BUDGET_${flow.kind.toUpperCase()}_RECORDED`;
         await m.auditLogs!.create([{ entityType: "EventBudget", entityId: budgetObjectId, action, actorId,
           actorRole: "ICPDP_OFFICER", before: { state: current.state },

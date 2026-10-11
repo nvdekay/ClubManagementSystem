@@ -219,6 +219,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
       <PageHeader title={data.eventTitle} back={back}
         description={`${data.clubName} · ${t("budgets.eventOn", { date: day(data.eventStartAt) })}`}
         actions={<AppBadge tone={stateTone(data.state)}>{stateLabel(t, data.state)}</AppBadge>} />
+      <Link className="mb-6 inline-block text-accent-app underline" to={`/workspace/budgets/${id}/reconciliation`}>{t("accountability.review")}</Link>
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-10">
           <dl className="grid gap-5 sm:grid-cols-4">

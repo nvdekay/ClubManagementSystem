@@ -1,3 +1,7 @@
+import { ClubReportsPage } from "./pages/club/ClubReportsPage.js";
+import { ClubBudgetsPage } from "./pages/club/ClubBudgetsPage.js";
+import { EventReportsPage } from "./pages/icpdp/EventReportsPage.js";
+import { ReconciliationPage } from "./pages/icpdp/ReconciliationPage.js";
 import { ClubEventsPage } from "./pages/club/ClubEventsPage.js";
 import { ClubBookingsPage } from "./pages/club/ClubBookingsPage.js";
 import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
@@ -80,6 +84,10 @@ createRoot(document.getElementById("root")!).render(
             <Route path="club/:clubId" element={<ClubHomePage />} />
             <Route path="workspace/policy" element={<PolicyPage />} />
             <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
+            <Route path="club/:clubId/event-reports" element={<ClubReportsPage />} />
+            <Route path="club/:clubId/budgets" element={<ClubBudgetsPage />} />
+            <Route path="workspace/event-reports" element={<EventReportsPage />} />
+            <Route path="workspace/budgets/:id/reconciliation" element={<ReconciliationPage />} />
             <Route path="club/:clubId/events" element={<ClubEventsPage />} />
             <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
             <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />

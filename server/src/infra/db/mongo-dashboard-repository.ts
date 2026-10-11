@@ -1,3 +1,4 @@
+import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { Types, type FilterQuery, type Model } from "mongoose";
 import type {
   DashboardPanel, DashboardPanelKey, DashboardRepository, DashboardSnapshot,
@@ -36,6 +37,14 @@ async function transitionFollowUps(clubId: Types.ObjectId): Promise<DashboardPan
   } catch {
     return { key: "transitionFollowUps", status: "error" };
   }
+}
+
+async function overdueReportsPanel(now: Date, clubId?: Types.ObjectId): Promise<DashboardPanel> {
+  try {
+    const [postEvents, periodic] = await Promise.all([overduePostEventReports(clubId, now), model("periodicReports").countDocuments({
+      ...(clubId ? { clubId } : {}), dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } })]);
+    return { key: "overdueReports", status: "ready", count: postEvents.length + periodic };
+  } catch { return { key: "overdueReports", status: "error" }; }
 }
 
 function buildSnapshot(
@@ -92,9 +101,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         }),
         panel("missingEvidence", "expenses", { clubId: club, hasEvidence: false }),
         ] : []),
-        ...(allowed.has("club.report.submit") ? [panel("overdueReports", "periodicReports", {
-          clubId: club, dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] },
-        })] : []),
+        ...(allowed.has("club.report.submit") ? [overdueReportsPanel(now, club)] : []),
         ...(allowed.has("club.booking.manage") ? [panel("upcomingBookings", "propertyBookings", {
           clubId: club, state: { $in: ["Approved", "In Use"] }, endAt: { $gte: now },
         })] : []),
@@ -129,9 +136,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         }),
         panel("activeClubs", "clubs", { state: "Active" }),
         panel("suspendedClubs", "clubs", { state: "Suspended" }),
-        panel("overdueReports", "periodicReports", {
-          dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] },
-        }),
+        overdueReportsPanel(now),
         panel("unreconciledBudgets", "eventBudgets", {
           state: { $in: ["Settlement Submitted", "Reconciliation Pending"] },
         }),

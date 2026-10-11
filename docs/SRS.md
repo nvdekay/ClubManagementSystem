@@ -1738,7 +1738,7 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | FR-UC33-03 | Cho CMB đính kèm minh chứng vào báo cáo |
 | FR-UC33-04 | Chuyển sự kiện sang `Report Submitted` khi nộp, đóng băng các số liệu đã nạp sẵn, và tạo task cho ICPDP |
 | FR-UC33-05 | *(A1)* Cho lưu báo cáo ở `Draft` và hoàn thiện trước deadline |
-| FR-UC33-06 | *(A2)* Cho sửa và nộp lại như một version mới với báo cáo bị UC34 trả về |
+| FR-UC33-06 | *(A2)* Cho sửa và nộp lại như một version mới với báo cáo bị UC34 trả về; mỗi version là một document `PostEventReport` riêng, unique `(eventId, versionNo)` |
 | FR-UC33-07 | *(E1)* Từ chối nộp khi điểm danh chưa được chốt |
 | FR-UC33-08 | *(E2)* Vẫn nhận báo cáo nộp sau deadline nhưng đánh dấu trễ, dữ liệu này đi vào BR21 và kỳ đánh giá |
 | FR-UC33-09 | Lấy deadline từ chính sách cấu hình ở UC04 (BR20) |

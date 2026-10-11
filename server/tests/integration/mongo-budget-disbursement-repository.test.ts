@@ -41,6 +41,8 @@ describe.skipIf(!uri)("Mongo budget disbursement repository", () => {
     await ucmsModels.users!.insertMany([
       { _id: officer, email: "o@fpt.edu.vn", displayName: "Cán bộ", googleSubject: "o", accountState: "Active", createdAt: now },
       { _id: leader, email: "l@fpt.edu.vn", displayName: "Chủ nhiệm", googleSubject: "l", accountState: "Active", createdAt: now }]);
+    const officerRole = await ucmsModels.roles!.create({ code: "ICPDP_OFFICER", name: "Officer", scope: "system", permissionCodes: [] });
+    await ucmsModels.userRoleAssignments!.create({ userId: officer, roleId: officerRole._id, grantedBy: officer, grantedAt: now });
     await ucmsModels.clubs!.create({ _id: clubId, code: "CLB-HEBE", name: "HEBE", field: "Nghệ thuật", state: "Active", createdAt: now });
     const membershipId = new Types.ObjectId();
     const positionId = new Types.ObjectId();

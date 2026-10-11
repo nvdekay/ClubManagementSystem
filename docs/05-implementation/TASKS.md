@@ -228,7 +228,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ### Database
 - [ ] **DB-6.1** Collection `postEventReports` với bản chụp `preloadedFigures` bị đóng băng. → DAT-07
-- [ ] **DB-6.2** Unique `postEventReports.eventId`; index `(state, submittedAt)`. → DAT-02, DAT-03
+- [ ] **DB-6.2** Unique `postEventReports(eventId, versionNo)`; index `(state, submittedAt)`. → DAT-02, DAT-03
 
 ### Backend
 - [ ] **BE-6.1** UC33 nạp sẵn (đề xuất, điểm danh đã chốt, ngân sách và khoản chi, bản tổng hợp phản hồi) và đóng băng lúc nộp. → FR-UC33-01/04

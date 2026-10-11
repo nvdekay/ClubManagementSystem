@@ -149,6 +149,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     await m.eventBudgets!.updateOne({ eventId: funded.event.id }, { $set: { settlementDueAt: new Date(now.getTime() + 86400000) } });
     const cancelled = await repo.act(String(club), funded.event.id, { kind: "cancel", expectedVersion: funded.event.version, reason: "Funding obligation retained" }, String(actor), now);
     expect(cancelled.budget).toMatchObject({ state: "Disbursed", disbursedTotal: 50000 });
+    expect((await m.eventBudgets!.findOne({ eventId: funded.event.id }).lean())?.settlementDueAt).toEqual(new Date(now.getTime() + 14 * 86400000));
     expect((await m.auditLogs!.findOne({ entityId: funded.event.id, action: "EVENT_CANCELLED" }).lean())?.after).toMatchObject({ settlementRequired: true });
   });
   it("keeps earlier revisions and blocks a resubmission after its deadline", async () => {

@@ -1,5 +1,5 @@
 const en = {
-  navClubEvents: "Club events", navEventAttendance: "Registration & attendance", navEventFeedback: "Event feedback",
+  navEventReports: "Post-event reports", navEventFinances: "Expenses & settlement", navClubEvents: "Club events", navEventAttendance: "Registration & attendance", navEventFeedback: "Event feedback",
   navBookings: "Facility bookings",
   darkModeLabel: "Dark mode",
   myWorkspace: "My workspace",
@@ -28,7 +28,7 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
-  navClubEvents: "Sự kiện CLB", navEventAttendance: "Đăng ký & điểm danh", navEventFeedback: "Phản hồi sự kiện",
+  navEventReports: "Báo cáo sau sự kiện", navEventFinances: "Khoản chi và quyết toán", navClubEvents: "Sự kiện CLB", navEventAttendance: "Đăng ký & điểm danh", navEventFeedback: "Phản hồi sự kiện",
   navBookings: "Đặt cơ sở vật chất",
   darkModeLabel: "Chế độ tối",
   myWorkspace: "Không gian làm việc",
