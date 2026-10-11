@@ -2,11 +2,18 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
+import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { googleLoginUrl } from "@/services/auth";
 import { cn } from "@/utils/cn";
 
 // FPT University Hoa Lac campus, served by the university website.
 const campusImageUrl = "https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/banner-truong-dai-hoc-fpt-co-so-ha-noi.jpg";
+
+const features = [
+  { icon: "compass", title: "auth.featureClubsTitle", text: "auth.featureClubsText" },
+  { icon: "calendar", title: "auth.featureEventsTitle", text: "auth.featureEventsText" },
+  { icon: "shield", title: "auth.featureManageTitle", text: "auth.featureManageText" },
+] as const satisfies ReadonlyArray<{ icon: AppIconName; title: string; text: string }>;
 
 interface LoginPageProps {
   authError: string | null;
@@ -20,8 +27,9 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
   const [loginBusy, setLoginBusy] = useState(false);
 
   return (
-    <main className="flex min-h-full flex-wrap bg-auth-page-bg-app font-auth-body text-auth-page-text-app">
-      <section className="relative m-3 flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden rounded-[2rem] bg-primary-soft-app p-[clamp(24px,5vw,64px)]">
+    <main className="flex min-h-full flex-wrap content-start bg-auth-page-bg-app min-[840px]:content-stretch font-auth-body text-auth-page-text-app">
+      {/* The campus photo fills the whole left half, edge to edge. */}
+      <section className="relative flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden bg-primary-soft-app p-[clamp(24px,5vw,64px)]">
         <img
           src={campusImageUrl}
           alt=""
@@ -33,11 +41,27 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
         <div className="relative self-start">
           <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />
         </div>
-        <div className="relative flex max-w-110 flex-col gap-3 rounded-3xl bg-bg-app p-6 shadow-lg">
-          <span className="font-auth-heading text-[clamp(30px,4vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em]">
-            {t("auth.brand")}
+        <div className="relative w-full max-w-120 rounded-3xl bg-bg-app p-6 text-text-app shadow-xl sm:p-8">
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft-app px-3 py-1 text-xs font-semibold text-primary-app">
+            <AppIcon name="graduationCap" className="size-4" />{t("auth.loginChip")}
           </span>
-          <span className="text-[17px] text-pretty text-muted-app">{t("auth.systemDescription")}</span>
+          <p className="mt-4 font-auth-heading text-[clamp(30px,4vw,42px)] leading-[1.1] font-extrabold tracking-[-0.025em]">
+            {t("auth.brand")}
+          </p>
+          <p className="mt-2 text-pretty text-muted-app">{t("auth.systemDescription")}</p>
+          <ul className="mt-6 hidden space-y-4 border-t border-border-app pt-6 sm:block">
+            {features.map((feature) => (
+              <li key={feature.title} className="flex items-start gap-3">
+                <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-app text-on-primary-app">
+                  <AppIcon name={feature.icon} className="size-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-semibold">{t(feature.title)}</span>
+                  <span className="block text-sm text-pretty text-muted-app">{t(feature.text)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
