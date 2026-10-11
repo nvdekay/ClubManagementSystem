@@ -151,7 +151,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       const completedIds = completed.map((event) => event._id);
       const [registrationDocs, attendanceDocs, feedbackDocs, postReports, invitedEvents, leaderSeat] = await Promise.all([
         m.eventRegistrations!.find({ eventId: { $in: completedIds }, state: "Confirmed" }).select({ _id: 1 }).lean(),
-        m.attendances!.find({ eventId: { $in: completedIds } }).select({ studentId: 1 }).lean(),
+        m.attendances!.find({ eventId: { $in: completedIds }, abnormalFlags: { $ne: "no-show" } }).select({ studentId: 1 }).lean(),
         m.eventFeedbacks!.find({ eventId: { $in: eventDocs.map((event) => event._id) } }).select({ scores: 1 }).lean(),
         m.postEventReports!.find({ clubId: club, eventId: { $in: eventDocs.map((event) => event._id) }, state: { $ne: "Draft" } }).lean(),
         m.events!.find({ _id: { $in: invitationDocs.map((item) => item.eventId) }, semesterCode: period.code }).select({ _id: 1 }).lean(),

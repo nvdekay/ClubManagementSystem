@@ -1581,13 +1581,13 @@ cần đúng một quyết định của một officer; vì vậy không còn c�
 | **Tiền điều kiện** | Sự kiện đang `Approved`, `Upcoming` hoặc `Ongoing` |
 | **Dữ liệu vào** | Lý do; với đổi lịch là thời gian và địa điểm mới |
 | **Thực thể / trạng thái** | `Event`: `… → Cancelled`, hoặc được đổi lịch và có thể quay lại UC26 |
-| **Quy tắc** | BR15 (đánh giá lại), BR35, BR54; quyết định còn mở D4 |
+| **Quy tắc** | BR15 (đánh giá lại), BR35, BR54; D4 đã chốt ngày 2026-10-11 |
 | **Liên quan** | UC15, UC27, UC40, UC47 |
 
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC28-01 | Cho CMB chọn `Huỷ` hoặc `Đổi lịch` và bắt buộc nhập lý do |
-| FR-UC28-02 | Đánh giá lại BR15 khi đổi lịch và, ở nơi chính sách yêu cầu, đưa sự kiện quay lại UC26 để có quyết định mới (D4); sự kiện nội bộ theo BR53 chỉ được ghi nhận lại, không quay lại UC26 |
+| FR-UC28-02 | Đánh giá lại BR15 khi đổi thời gian hoặc địa điểm và đưa sự kiện đã duyệt quay lại UC26 để có quyết định mới (D4, chốt ngày 2026-10-11); sự kiện nội bộ không ngân sách theo BR53 chỉ được ghi nhận lại, không quay lại UC26 |
 | FR-UC28-03 | Cập nhật hoặc giải phóng booking cơ sở vật chất liên quan qua UC47 (BR35) |
 | FR-UC28-04 | Thông báo cho mọi người đã đăng ký về việc huỷ hoặc thời gian mới |
 | FR-UC28-05 | Tính lại các nghĩa vụ báo cáo và ngân sách của sự kiện: khi huỷ, `EventBudget` chưa tạm ứng chuyển `Cancelled`; đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi ở UC37 (BR57, BR58) |
@@ -3397,8 +3397,17 @@ một quyết định. `ICPDP_HEAD`, duyệt đa cấp và UC05 được rút kh
 |---|---|---|---|
 | **D2** | Ngoài danh sách của UC04, những giá trị nào nữa được sửa trong sản phẩm? | Mỗi giá trị thêm vào tốn một màn hình, một schema và một đường validate; danh sách phải đến từ quy trình thật của ICPDP | Đổi UC04 và BR42 — cần chốt trước khi đóng băng màn hình cấu hình |
 | **D3** | Số người phản hồi tối thiểu ban đầu cho BR40 | Đây là con số chính sách, không phải con số kỹ thuật. Năm là mức sàn phổ biến | Thấp — giá trị này cấu hình được ở UC04 |
-| **D4** | Sự kiện đổi lịch có cần quyết định mới từ UC26, hay chỉ cần thông báo? | Phụ thuộc cách ICPDP thực sự xử lý một thay đổi thời gian | Đổi FR-UC28-02 — cần chốt trước khi làm UC28 |
+| **D4 — đã chốt 2026-10-11** | Mọi thay đổi thời gian/địa điểm của sự kiện đã duyệt phải được UC26 duyệt lại; nội bộ không ngân sách theo BR53 chỉ ghi nhận lại | Người dùng chọn phương án đề xuất khi lập kế hoạch Wave 3 | FR-UC28-02 đã cập nhật; chính sách triển khai Wave 3 ghi bên dưới và trong SPEC |
 | **D5** | UC52 có cho CMB thấy danh tính người khiếu nại không? | Đây là quy tắc riêng tư mà nhà trường phải đặt ra; mô hình hỗ trợ cả hai hướng | Đổi FR-UC52-01 và SEC-09 |
+
+
+**Chính sách Wave 3, chốt theo chỉ dẫn triển khai khuyến nghị ngày 2026-10-11:** UC25
+báo trước tối thiểu 168 giờ; UC28 huỷ dưới 24 giờ là muộn. UC30 dùng FIFO.
+Chuỗi hoạt động dùng chung registration/attendance. Đổi lịch giữ đăng ký, tạm đóng tiếp nhận
+và check-in tới khi duyệt/công bố lại; không đổi số duyệt của ngân sách đã giải ngân.
+Huỷ giữ nghĩa vụ tài chính đã phát sinh; booking `In Use` giữ tới hết slot.
+Mở khoá sự kiện nội bộ `Closed` đưa về `Completed`. UC49 dùng rating overall 1–5 hiện có,
+feedback bất biến, tổng hợp hiển thị ngay khi đủ `feedbackMinRespondents`.
 
 ## 16.2 Vấn đề tài liệu còn mở (theo R4)
 

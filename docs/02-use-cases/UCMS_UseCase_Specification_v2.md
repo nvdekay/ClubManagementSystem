@@ -1022,8 +1022,9 @@ lại UC06–UC52.
 - **Luồng chính:**
   1. Thành viên mở sự kiện và chọn `Huỷ` hoặc `Đổi lịch`.
   2. Thành viên nhập lý do.
-  3. Với việc đổi lịch, hệ thống đánh giá lại BR15 và, ở nơi chính sách yêu cầu, đưa sự kiện
-     quay lại UC26 để có một quyết định mới; sự kiện nội bộ theo BR53 chỉ được ghi nhận lại.
+  3. Với việc đổi thời gian hoặc địa điểm, hệ thống đánh giá lại BR15 và đưa sự kiện đã duyệt
+     quay lại UC26 để có một quyết định mới; sự kiện nội bộ không ngân sách theo BR53 chỉ được
+     ghi nhận lại (D4, chốt ngày 2026-10-11).
   4. Hệ thống cập nhật hoặc giải phóng booking liên quan (UC47).
   5. Hệ thống thông báo cho mọi người đã đăng ký.
   6. Hệ thống tính lại các nghĩa vụ báo cáo và ngân sách: khi huỷ, `EventBudget` chưa giải ngân
@@ -1042,8 +1043,8 @@ lại UC06–UC52.
   - **E3** người gọi thiếu permission `club.event.manage` trong CLB → từ chối (BR54).
 - **Hậu điều kiện:** Sự kiện ở `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký
   được cập nhật; lý do được ghi audit.
-- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. Quyết
-  định còn mở D4 chi phối việc một lần đổi lịch có cần một quyết định mới từ UC26 hay không.
+- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. D4 đã chốt ngày 2026-10-11: đổi thời gian/địa điểm phải duyệt lại ở UC26,
+  trừ sự kiện nội bộ không ngân sách theo BR53.
 - **Đầu ra:** Trạng thái sự kiện, booking được giải phóng, các thông báo, bản ghi audit.
 - **Use case liên quan:** UC27, UC47, UC40, UC15
 

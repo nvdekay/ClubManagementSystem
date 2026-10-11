@@ -1,3 +1,4 @@
+import { cancelEventInSession } from "./event-cancellation.js";
 import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
@@ -60,8 +61,8 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
   }
 
   async function audit(session: ClientSession, clubId: Types.ObjectId, action: string, actorId: string | null,
-    before: unknown, after: unknown, reason: string | undefined, at: Date, correlationId: string): Promise<void> {
-    await m.auditLogs!.create([{ entityType: "Club", entityId: clubId, action,
+    before: unknown, after: unknown, reason: string | undefined, at: Date, correlationId: string, auditId?: Types.ObjectId): Promise<void> {
+    await m.auditLogs!.create([{ ...(auditId ? { _id: auditId } : {}), entityType: "Club", entityId: clubId, action,
       ...(actorId ? { actorId: new Types.ObjectId(actorId), actorRole: "ICPDP_OFFICER" } : { actorRole: "SYSTEM" }),
       before, after, ...(reason ? { reason } : {}), correlationId, at }], { session });
   }
@@ -81,27 +82,15 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
 
   /** System cascade (UC28 A1 / UC47 A1): cancels events and bookings, frees registrations, notifies. */
   async function cascade(session: ClientSession, clubId: Types.ObjectId, eventFilter: Doc, bookingFilter: Doc,
-    source: "SUSPENSION" | "DISSOLUTION", reason: string, now: Date): Promise<CascadeResult> {
+    source: "SUSPENSION" | "DISSOLUTION", reason: string, now: Date, decisionId: Types.ObjectId): Promise<CascadeResult> {
     const events = await m.events!.find({ clubId, ...eventFilter }).session(session).lean();
-    const eventIds = events.map((event) => event._id);
     let cancelledRegistrations = 0;
-    if (eventIds.length) {
-      await m.events!.updateMany({ _id: { $in: eventIds } }, { $set: { state: "Cancelled", cancelReason: reason,
-        cancelSourceType: source, confirmedRegistrationCount: 0 } }, { session });
-      const registrations = await m.eventRegistrations!.find({ eventId: { $in: eventIds },
-        state: { $in: ["Confirmed", "Waitlisted"] } }).session(session).lean();
-      cancelledRegistrations = registrations.length;
-      await m.eventRegistrations!.updateMany({ _id: { $in: registrations.map((item) => item._id) } },
-        { $set: { state: "Cancelled", cancelledAt: now } }, { session });
-      for (const event of events) {
-        await notify(session, registrations.filter((item) => String(item.eventId) === String(event._id))
-          .map((item) => item.studentId), "EVENT_CANCELLED", "Event", event._id as Types.ObjectId,
-        { title: event.title, reason, source }, now);
-      }
+    for (const event of events) {
+      cancelledRegistrations += await cancelEventInSession(session, event, reason, now, source, 24, undefined, decisionId);
     }
     const cancelledBookings = await releaseFacilityBookingsInSession(session, { clubId, ...bookingFilter },
       source, reason, now, "Cancelled");
-    return { cancelledEvents: eventIds.length, cancelledRegistrations, cancelledBookings };
+    return { cancelledEvents: events.length, cancelledRegistrations, cancelledBookings };
   }
 
   return {
@@ -142,12 +131,13 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         const changed = await m.clubs!.updateOne({ _id: id, state: "Active" },
           { $set: { state: "Suspended", suspension, updatedAt: now } }, { session });
         if (changed.modifiedCount !== 1) return conflict("only an active club can be suspended");
+        const decisionId = new Types.ObjectId();
         // Open recruitment stays open (decision 2026-10-10): applying is blocked while suspended instead.
         const result = await cascade(session, id, { state: { $in: scheduledEventStates }, startAt: { $gt: now } },
-          { state: "Approved", startAt: { $gt: now } }, "SUSPENSION", input.reason, now);
+          { state: "Approved", startAt: { $gt: now } }, "SUSPENSION", input.reason, now, decisionId);
         const correlationId = randomUUID();
         await audit(session, id, "CLUB_SUSPENDED", actorId, { state: "Active" },
-          { state: "Suspended", until: input.until, ...result }, input.reason, now, correlationId);
+          { state: "Suspended", until: input.until, ...result }, input.reason, now, correlationId, decisionId);
         await notify(session, await memberIds(id, session), "CLUB_SUSPENDED", "Club", id,
           { reason: input.reason, until: input.until }, now);
         return result;
@@ -172,13 +162,14 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           dissolution: { $exists: false } }, { $set: { updatedAt: now, dissolution: { ...decision,
           decidedBy: new Types.ObjectId(decision.decidedBy) } } }, { session });
         if (changed.modifiedCount !== 1) return conflict("this club cannot be scheduled for dissolution");
+        const decisionId = new Types.ObjectId();
         // BR45: nothing of this club may end after its Dissolving semester.
         const result = await cascade(session, id, { state: { $in: liveEventStates }, endAt: { $gt: decision.effectiveTo } },
           { state: { $in: [...undecidedBookingStates, "Approved"] }, endAt: { $gt: decision.effectiveTo } },
-          "DISSOLUTION", decision.reason, now);
+          "DISSOLUTION", decision.reason, now, decisionId);
         await audit(session, id, "CLUB_DISSOLUTION_DECIDED", decision.decidedBy, null,
           { effectiveSemester: decision.effectiveSemester, effectiveFrom: decision.effectiveFrom,
-            effectiveTo: decision.effectiveTo, ...result }, decision.reason, now, randomUUID());
+            effectiveTo: decision.effectiveTo, ...result }, decision.reason, now, randomUUID(), decisionId);
         await notify(session, await memberIds(id, session), "CLUB_DISSOLUTION_DECIDED", "Club", id,
           { reason: decision.reason, effectiveSemester: decision.effectiveSemester }, now);
         return result;

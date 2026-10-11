@@ -1,3 +1,4 @@
+import { clubEventOpenApiPaths } from "./openapi-club-events.js";
 import { roomOverbookingBody, roomReservationBody, bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
 import { z } from "zod";
 import { createDocument } from "zod-openapi";
@@ -480,6 +481,7 @@ export const openApiDocument = createDocument({
   info: { title: "UCMS API", version: "1.0.0" },
   servers: [{ url: "/api/v1" }],
   paths: {
+    ...clubEventOpenApiPaths,
     "/admin/clubs/{clubId}/booking-responsible": {
       get: { summary: "Responsible leader for an ICPDP room reservation",
         requestParams: { path: z.object({ clubId: z.string() }) },

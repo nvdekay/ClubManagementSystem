@@ -76,9 +76,16 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
           if (await attendances.exists({ eventId, studentId }).session(session)) return;
           // Re-check the event inside the transaction so a concurrent cancellation is not missed.
           const event = await events.findOne({ _id: eventId,
-            state: { $in: [...checkInStates] }, publishedAt: { $exists: true, $ne: null } })
+            attendanceFinalized: { $ne: true }, state: { $in: [...checkInStates] }, publishedAt: { $exists: true, $ne: null } })
             .session(session).lean();
           if (!event) throw new DomainError("event is not open for check-in", "conflict");
+          await events.updateOne({ _id: eventId }, { $inc: { __v: 1 } }, { session });
+          if (input.now < (event.checkInOpenAt as Date ?? event.startAt as Date) || input.now >= (event.checkInCloseAt as Date ?? event.endAt as Date)) {
+            throw new DomainError("check-in is outside the event window", "conflict");
+          }
+          if (event.audienceScope === "MEMBERS_ONLY" && !(await memberships.exists({ clubId: event.clubId, userId: studentId, state: "Active" }).session(session))) {
+            throw new DomainError("event is limited to active club members", "forbidden");
+          }
           const registration = await registrations.findOne({ eventId, studentId }).session(session).lean();
           let registrationId = registration?._id as Types.ObjectId | undefined;
           if (input.method === "self") {
@@ -86,6 +93,11 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
               throw new DomainError("a confirmed registration is required to check in", "forbidden");
             }
           } else if (registration?.state !== "Confirmed") {
+            if (!event.allowWalkIn) throw new DomainError("walk-ins are disabled", "conflict");
+            const policy = await ucmsModels.policyVersions!.findOne({ effectiveFrom: { $lte: input.now } }).sort({ effectiveFrom: -1 }).session(session).lean();
+            if (Number(event.confirmedRegistrationCount) >= Number(event.capacity) && policy?.allowOverbooking !== true) {
+              throw new DomainError("event capacity is full", "conflict");
+            }
             // UC31 A2: a walk-in gets a confirmed registration alongside the attendance.
             if (registration) {
               const changed = await registrations.updateOne({ _id: registration._id, state: registration.state },
@@ -125,7 +137,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
     },
 
     async listMine(studentId) {
-      const docs = await attendances.find({ studentId: new Types.ObjectId(studentId) })
+      const docs = await attendances.find({ studentId: new Types.ObjectId(studentId), abnormalFlags: { $ne: "no-show" } })
         .sort({ checkedInAt: -1, _id: -1 }).lean();
       const eventDocs = await events.find({ _id: { $in: docs.map((doc) => doc.eventId) } }).lean();
       const byId = new Map(eventDocs.map((event) => [String(event._id), event]));

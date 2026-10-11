@@ -1,3 +1,4 @@
+import type { ClubEventRepository } from "../../src/domain/club-event.js";
 import type { FacilityBookingRepository } from "../../src/domain/facility-booking.js";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthRouteDeps } from "../../src/interface/http/auth-routes.js";
@@ -56,6 +57,10 @@ const stubAuth: AuthRouteDeps = {
   secureCookies: false,
 };
 
+const stubClubEvents: ClubEventRepository = {
+  list: async () => [], options: async () => ({ properties: [], bookings: [] }), find: async () => null,
+  participants: async () => [], feedback: async () => [], create: async () => { throw new Error("unused"); }, act: async () => { throw new Error("unused"); },
+};
 const stubAdmin = {
   listUsers: async () => ({ items: [], total: 0 }),
   findUser: async () => null,
@@ -264,7 +269,7 @@ describe("openapi document", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle,
-      applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
+      applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
       clubRoleRepo: stubClubRoles,
       boardNominationRepo: stubBoardNominations,
@@ -319,7 +324,7 @@ describe("openapi document", () => {
   it("guards every mutation or explicitly lists it as public", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings,
-      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
+      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, violationRepo: stubViolations, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
       clubRoleRepo: stubClubRoles,
       boardNominationRepo: stubBoardNominations,

@@ -38,7 +38,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
       const event = await events.findById(eventObjectId).lean();
       if (!event) return null;
       const [attendance, feedback] = await Promise.all([
-        attendances.findOne({ eventId: eventObjectId, studentId: studentObjectId }).lean(),
+        attendances.findOne({ eventId: eventObjectId, studentId: studentObjectId, abnormalFlags: { $ne: "no-show" } }).lean(),
         feedbacks.findOne({ eventId: eventObjectId, studentId: studentObjectId }).lean(),
       ]);
       return {

@@ -1,3 +1,4 @@
+import { promoteEventWaitlist } from "./event-waitlist.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
@@ -195,6 +196,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
             confirmedRegistrationCount: { $gt: 0 } }, { $inc: { confirmedRegistrationCount: -1 } }, { session });
           if (released.modifiedCount !== 1) return conflict("event capacity counter is inconsistent");
         }
+        if (registration.state === "Confirmed") await promoteEventWaitlist(session, event._id as Types.ObjectId, now);
         const correlationId = randomUUID();
         await audits.create([{ entityType: "EventRegistration", entityId: id,
           action: "EVENT_REGISTRATION_CANCELLED", actorId: userId, actorRole: "STUDENT",

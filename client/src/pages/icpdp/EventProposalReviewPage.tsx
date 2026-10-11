@@ -35,7 +35,7 @@ export function EventProposalReviewPage() {
   const [deadline, setDeadline] = useState("");
   const [sections, setSections] = useState<EventReviewSection[]>([]);
   const [conditions, setConditions] = useState("");
-  // Per-line edits keyed by line index; an untouched line approves what the club asked for.
+  // Per-line edits keyed by line index; an untouched line retains the previous approval, or uses the requested amount.
   const [amounts, setAmounts] = useState<Record<number, { amount?: string; reason?: string }>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -134,7 +134,7 @@ export function EventProposalReviewPage() {
     : event.conflictResult === "Warning" ? "warning" : "success";
   const approvedAmounts = lines.map((line, index) => {
     const raw = amounts[index]?.amount;
-    return raw === undefined ? line.amount : Number(raw);
+    return raw === undefined ? budget?.lines[index]?.approvedAmount ?? line.amount : Number(raw);
   });
   const approvedTotal = approvedAmounts.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
   const semesterTotal = semesterBudgets.reduce((sum, item) => sum + item.approvedTotal, 0);
@@ -151,7 +151,7 @@ export function EventProposalReviewPage() {
     const badAmount = outcome === "Approve" && approvedAmounts.some((value, index) =>
       !Number.isInteger(value) || value < 0 || value > lines[index]!.amount);
     const missingLineReason = outcome === "Approve" && approvedAmounts.some((value, index) =>
-      value < lines[index]!.amount && !amounts[index]?.reason?.trim());
+      value < lines[index]!.amount && !(amounts[index]?.reason?.trim() || budget?.lines[index]?.reason?.trim()));
     const missing = outcome !== "Approve" && !reason.trim() ? t("eventReviews.reasonRequired")
       : outcome === "Request revision" && !sections.length ? t("eventReviews.sectionsRequired")
         : outcome === "Request revision" && (!deadline || new Date(deadline) <= new Date()) ? t("eventReviews.deadlineRequired")
@@ -168,7 +168,7 @@ export function EventProposalReviewPage() {
         ...(outcome === "Approve" ? {
           conditions: conditions.split("\n").map((item) => item.trim()).filter(Boolean),
           budgetLines: approvedAmounts.map((approvedAmount, index) => ({ approvedAmount,
-            ...(approvedAmount < lines[index]!.amount ? { reason: amounts[index]?.reason?.trim() } : {}) })),
+            ...(approvedAmount < lines[index]!.amount ? { reason: amounts[index]?.reason?.trim() || budget?.lines[index]?.reason } : {}) })),
         } : {}),
       } });
     } catch { /* Mutation state is rendered below. */ }
@@ -326,10 +326,10 @@ export function EventProposalReviewPage() {
                       <span className="font-medium break-words">{line.category}</span>
                       <span className="text-xs text-muted-app">{t("eventReviews.requestedAmount")}: {money(line.amount)}</span></span>
                       <AppInput type="number" min={0} max={line.amount} step={1000} inputMode="numeric"
-                        value={amounts[index]?.amount ?? String(line.amount)}
+                        value={amounts[index]?.amount ?? String(budget?.lines[index]?.approvedAmount ?? line.amount)}
                         onChange={(e) => editLine(index, { amount: e.target.value })} className="mt-1.5 w-full tabular-nums" /></label>
                     {lowered && <AppInput aria-label={t("eventReviews.reductionReason")} placeholder={t("eventReviews.reductionReason")}
-                      value={amounts[index]?.reason ?? ""} maxLength={500}
+                      value={amounts[index]?.reason ?? budget?.lines[index]?.reason ?? ""} maxLength={500}
                       onChange={(e) => editLine(index, { reason: e.target.value })} className="mt-2 w-full" />}
                   </div>;
                 })}</div>

@@ -1,3 +1,5 @@
+import { cancelEventInSession } from "./event-cancellation.js";
+import { settlementDueAt } from "../../domain/budget-disbursement.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
@@ -253,19 +255,36 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         if (changed.modifiedCount !== 1) return conflict("event proposal changed while deciding");
         await tasks.updateOne({ _id: task._id, state: "Open" }, { $set: { state: "Decided", closedAt: now } }, { session });
 
+        if (input.outcome === "Reject" && await audits.exists({ entityType: "Event", entityId: id, action: "EVENT_RESCHEDULED" }).session(session)) {
+          await cancelEventInSession(session, { ...event, state: nextState }, input.reason ?? "Reschedule rejected", now, "PROPOSAL_REJECTION", 24, actorId, decisionId);
+          await events.updateOne({ _id: id, state: "Cancelled" }, { $set: { state: nextState } }, { session });
+        }
+
         let budgetId: Types.ObjectId | undefined;
         if (lines.length) {
           const requestedTotal = lines.reduce((sum, line) => sum + line.requestedAmount, 0);
           const approvedTotal = lines.reduce((sum, line) => sum + line.approvedAmount, 0);
-          if (await budgets.exists({ eventId: id }).session(session)) {
-            return conflict("this event already has a budget");
+          const existingBudget = await budgets.findOne({ eventId: id }).session(session).lean();
+          if (existingBudget) {
+            budgetId = existingBudget._id as Types.ObjectId;
+            const disbursed = money(existingBudget.disbursedTotal);
+            const existingLines = approvedLines(existingBudget.lines);
+            if (disbursed > 0 && (approvedTotal !== money(existingBudget.approvedTotal) || lines.length !== existingLines.length ||
+              lines.some((line, index) => line.category !== existingLines[index]?.category || line.approvedAmount !== existingLines[index]?.approvedAmount))) {
+              return conflict("a reschedule cannot change an already disbursed budget");
+            }
+            if (approvedTotal < disbursed) return conflict("approved budget cannot be less than the amount already disbursed");
+            await budgets.updateOne({ _id: budgetId }, { $set: { lines: lines.map((line) => ({ ...line })),
+              requestedTotal: decimal(requestedTotal), approvedTotal: decimal(approvedTotal), approvedByDecisionId: decisionId,
+              periodCode: event.semesterCode, ...(disbursed === 0 ? { state: "Approved" } : { settlementDueAt: settlementDueAt(event.endAt as Date) }) } }, { session });
+          } else {
+            budgetId = new Types.ObjectId();
+            await budgets.create([{ _id: budgetId, eventId: id, clubId: event.clubId,
+              lines: lines.map((line) => ({ ...line })), requestedTotal: decimal(requestedTotal),
+              approvedTotal: decimal(approvedTotal), approvedByDecisionId: decisionId, disbursedTotal: decimal(0),
+              refundedTotal: decimal(0), isSettlementLate: false, state: "Approved",
+              periodCode: event.semesterCode, createdAt: now }], { session });
           }
-          budgetId = new Types.ObjectId();
-          await budgets.create([{ _id: budgetId, eventId: id, clubId: event.clubId,
-            lines: lines.map((line) => ({ ...line })), requestedTotal: decimal(requestedTotal),
-            approvedTotal: decimal(approvedTotal), approvedByDecisionId: decisionId, disbursedTotal: decimal(0),
-            refundedTotal: decimal(0), isSettlementLate: false, state: "Approved",
-            periodCode: event.semesterCode, createdAt: now }], { session });
         }
         const action = `EVENT_PROPOSAL_${nextState.toUpperCase().replace(" ", "_")}`;
         await audits.create([{ entityType: "Event", entityId: id, action, actorId, actorRole: "ICPDP_OFFICER",
@@ -288,6 +307,13 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
           const changed = await events.updateOne({ _id: event._id, state: "Revision Requested" },
             { $set: { state: "Expired" } }, { session });
           if (changed.modifiedCount !== 1) return;
+          if (await audits.exists({ entityType: "Event", entityId: event._id, action: "EVENT_RESCHEDULED" }).session(session)) {
+            const expiredEvent = await events.findById(event._id).session(session).lean();
+            if (expiredEvent) {
+              await cancelEventInSession(session, expiredEvent, "Reschedule revision expired", now, "PROPOSAL_EXPIRY", 24);
+              await events.updateOne({ _id: event._id, state: "Cancelled" }, { $set: { state: "Expired" } }, { session });
+            }
+          }
           expired += 1;
           await audits.create([{ entityType: "Event", entityId: event._id, action: "EVENT_PROPOSAL_EXPIRED",
             actorRole: "SYSTEM", before: { state: "Revision Requested" }, after: { state: "Expired" },
