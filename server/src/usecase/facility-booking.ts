@@ -1,8 +1,8 @@
 import type { ClubAccessRepository } from "../domain/access.js";
 import type { AuthRepository } from "../domain/auth.js";
 import { DomainError } from "../domain/errors.js";
-import { BOOKING_SLOTS, assertBookingNotice, assessBooking, bookingId, bookingReason, validateBookingInput,
-  type RoomReservationInput, type RoomOverbookingInput, type BookingDecisionInput, type BookingInput, type FacilityBookingRepository } from "../domain/facility-booking.js";
+import { BOOKING_SLOTS, assertBookingNotice, assertRequestableProperty, assessBooking, bookingId, bookingReason, validateBookingInput,
+  type BookingDecisionInput, type BookingInput, type FacilityBookingRepository } from "../domain/facility-booking.js";
 import type { PolicyRepository } from "../domain/policy.js";
 import type { PropertyRepository } from "../domain/property.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
@@ -33,6 +33,7 @@ async function check(deps: BookingDeps, clubId: string, input: BookingInput, now
   const [club, property, policy] = await Promise.all([deps.repo.club(bookingId(clubId)),
     deps.properties.find(input.propertyId), deps.policy.findEffective(now)]);
   if (!club || !property) throw new DomainError("club or property not found", "not_found");
+  assertRequestableProperty(property);
   if (!policy) throw new DomainError("policy is not configured", "unavailable");
   if (input.eventId && !(await deps.repo.eventBelongsToClub(input.eventId, clubId))) {
     throw new DomainError("event is not available in this club", "validation");
@@ -42,7 +43,7 @@ async function check(deps: BookingDeps, clubId: string, input: BookingInput, now
 }
 export async function listBookingProperties(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date) {
   await member(deps, actor, clubId, now);
-  return (await deps.properties.list()).filter((item) => item.isActive);
+  return (await deps.properties.list()).filter((item) => item.isActive && item.type !== "ROOM");
 }
 export async function listBookingEvents(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date) {
   await member(deps, actor, clubId, now);
@@ -60,28 +61,20 @@ export async function getBooking(deps: BookingDeps, actor: AccessActor | null, c
   return detail;
 }
 export async function bookingAvailability(deps: BookingDeps, actor: AccessActor | null, clubId: string,
-  input: BookingInput, now: Date, asOfficer = false) {
-  if (asOfficer) await officer(deps, actor); else await member(deps, actor, clubId, now);
+  input: BookingInput, now: Date) {
+  await member(deps, actor, clubId, now);
   const result = await check(deps, clubId, validateBookingInput(input), now, undefined, false);
-  return !asOfficer && result.conflicts.length ? { ...result, conflictResult: "Blocking Conflict" } : result;
+  return result.conflicts.length ? { ...result, conflictResult: "Blocking Conflict" } : result;
 }
 export async function saveBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   id: string | null, raw: BookingInput, now: Date, expectedVersion = 0) {
   const actorId = await member(deps, actor, clubId, now);
   const input = validateBookingInput(raw);
   await check(deps, clubId, input, now, id ?? undefined);
-  if (!id) {
-    const property = await deps.properties.find(input.propertyId);
-    if (property?.type === "ROOM") throw new DomainError("rooms must use direct reservation", "validation");
-    return deps.repo.create(bookingId(clubId), input, actorId, now);
-  }
+  if (!id) return deps.repo.create(bookingId(clubId), input, actorId, now);
   const detail = await owned(deps, clubId, id, now);
   if (!["Draft", "Revision Requested"].includes(detail.booking.state)) {
     throw new DomainError("booking cannot be edited", "conflict");
-  }
-  const property = await deps.properties.find(input.propertyId);
-  if (property?.type === "ROOM" && (detail.property?.type !== "ROOM" || detail.booking.currentVersionNo < 1)) {
-    throw new DomainError("rooms must use direct reservation", "validation");
   }
   return deps.repo.save(bookingId(id), bookingId(clubId), input, expectedVersion, actorId, now);
 }
@@ -89,9 +82,7 @@ export async function submitBooking(deps: BookingDeps, actor: AccessActor | null
   id: string, expectedVersion: number, now: Date) {
   const actorId = await member(deps, actor, clubId, now);
   const detail = await owned(deps, clubId, id, now);
-  if (detail.property?.type === "ROOM" && detail.booking.currentVersionNo < 1) {
-    throw new DomainError("rooms must use direct reservation", "validation");
-  }
+  assertRequestableProperty(detail.property);
   const result = await check(deps, clubId, detail.booking, now, id);
   if (result.conflictResult === "Blocking Conflict") {
     throw new DomainError("booking slot is unavailable", "conflict", result);
@@ -114,10 +105,6 @@ export async function decideBooking(deps: BookingDeps, actor: AccessActor | null
   if (input.alternative) {
     if (input.outcome !== "Request revision") throw new DomainError("alternative requires revision", "validation");
     const detail = await getBooking(deps, actor, null, id, now);
-    const alternativeProperty = await deps.properties.find(input.alternative.propertyId);
-    if (alternativeProperty?.type === "ROOM" && detail.property?.type !== "ROOM") {
-      throw new DomainError("rooms must use direct reservation", "validation");
-    }
     await check(deps, detail.booking.clubId, validateBookingInput({ ...detail.booking, ...input.alternative,
       equipment: [] }), now, id, false);
   }
@@ -126,7 +113,7 @@ export async function decideBooking(deps: BookingDeps, actor: AccessActor | null
 export async function cancelBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   id: string, reason: string, now: Date) {
   const actorId = await member(deps, actor, clubId, now);
-  await owned(deps, clubId, id, now);
+  assertRequestableProperty((await owned(deps, clubId, id, now)).property);
   return deps.repo.cancel(bookingId(id), bookingId(clubId), bookingReason(reason), actorId, now);
 }
 export async function propertyBookingConflicts(deps: BookingDeps, actor: AccessActor | null, id: string) {
@@ -148,37 +135,3 @@ export async function runBookingLifecycleJob(repo: FacilityBookingRepository, no
 }
 
 export function listBookingSlots() { return BOOKING_SLOTS; }
-
-export async function bookingResponsible(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date, asOfficer = false) {
-  if (asOfficer) await officer(deps, actor); else await member(deps, actor, clubId, now);
-  const responsible = await deps.repo.responsibleLeader(bookingId(clubId), now);
-  if (!responsible) throw new DomainError("club has no active confirmed leader", "conflict");
-  return responsible;
-}
-export async function reserveRoom(deps: BookingDeps, actor: AccessActor | null, clubId: string,
-  raw: RoomReservationInput, now: Date) {
-  const actorId = await member(deps, actor, clubId, now);
-  const input = validateBookingInput({ propertyId: raw.propertyId, startAt: raw.startAt, endAt: raw.endAt,
-    purpose: "Club room reservation", headcount: 1, equipment: [] });
-  const property = await deps.properties.find(input.propertyId);
-  if (!property || property.type !== "ROOM") throw new DomainError("room not found", "not_found");
-  const result = await check(deps, clubId, input, now, undefined, false);
-  if (result.conflicts.length) throw new DomainError("booking slot is unavailable", "conflict");
-  await bookingResponsible(deps, actor, clubId, now);
-  return deps.repo.reserve(bookingId(clubId), input, actorId, now);
-}
-
-export async function overbookRoom(deps: BookingDeps, actor: AccessActor | null, clubId: string,
-  raw: RoomOverbookingInput, now: Date) {
-  const actorId = await officer(deps, actor);
-  const reason = bookingReason(raw.reason);
-  const input = validateBookingInput({ propertyId: raw.propertyId, startAt: raw.startAt, endAt: raw.endAt,
-    purpose: "Club room reservation", headcount: 1, equipment: [] });
-  const property = await deps.properties.find(input.propertyId);
-  if (!property || property.type !== "ROOM") throw new DomainError("room not found", "not_found");
-  const result = await check(deps, clubId, input, now, undefined, false);
-  if (!result.conflicts.length) throw new DomainError("overbooking requires an occupied slot", "conflict");
-  if (result.conflictResult === "Blocking Conflict") throw new DomainError("overbooking is disabled by policy", "conflict");
-  await bookingResponsible(deps, actor, clubId, now, true);
-  return deps.repo.reserve(bookingId(clubId), input, actorId, now, { reason });
-}

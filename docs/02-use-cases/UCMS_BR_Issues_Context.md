@@ -9,7 +9,8 @@ Ký hiệu tài liệu giống tracker: **Model** (`UCMS_UseCase_Model_v2.md`), 
 (`../Group1_SE1939-NJ_Report_Final_v2.docx`). Catalogue BR đầy đủ: SRS mục quy tắc nghiệp vụ,
 Model §11 / bảng BR, Report Table III.6.
 
-Cập nhật: 2026-09-26.
+Cập nhật: 2026-09-26; 2026-10-11 — BR33/BR35 sửa và thêm BR62 khi phòng học (`ROOM`) chuyển sang ICPDP
+phân theo học kỳ (UC58). Đây là thay đổi nghiệp vụ được product owner duyệt, không xuất phát từ issue review.
 
 ---
 
@@ -34,7 +35,8 @@ Cập nhật: 2026-09-26.
 | BR29 | Tổng trọng số phải hợp lệ trước khi kích hoạt scheme | I38 | Đã sửa (I38) |
 | BR30 | Kỳ đánh giá đã công bố không sửa tại chỗ | I38 | Đã sửa (I38) |
 | BR31 | ICPDP là cấp duyệt duy nhất cho yêu cầu gửi lên nhà trường; việc nội bộ CLB do CMB | I32, I38, I33 | Đã sửa |
-| BR33 | Không có 2 booking `Approved` trùng giờ trên 1 property | I38 | Đã sửa (I38) |
+| BR33 | Không có 2 booking `Approved` trùng giờ trên 1 property; chỉ UC46 (ngoài `ROOM`) được duyệt trùng khi `allowOverbooking` bật và có lý do — phòng học không bao giờ trùng (sửa 2026-10-11) | I38 | Đã sửa (I38) |
+| BR35 | Phòng học `ROOM` chỉ do ICPDP phân ở UC58; tài sản khác chỉ ICPDP duyệt ở UC46; booking của sự kiện bị huỷ được giải phóng (sửa 2026-10-11) | — | Thay đổi nghiệp vụ, không có issue |
 | BR40 | Tổng hợp phản hồi chỉ hiện khi đủ số người phản hồi tối thiểu (cấu hình được) | I08 | Đã sửa |
 | BR42 | Màn hình cấu hình chỉ có 9 giá trị của UC04; còn lại là hằng số | I26, I35 | Đã sửa |
 | BR43 | *(Đã rút)* Phase 1 không phụ thuộc Phase 2 | I21, I26, **I37** | I26, I37 đã sửa; I21 không sửa |
@@ -53,6 +55,7 @@ Cập nhật: 2026-09-26.
 | BR56 | Cơ cấu role đánh phiên bản (phiên bản 1 từ UC08, mỗi thay đổi ở UC23 / UC13 là phiên bản mới); role Chủ nhiệm cố định, role Members mặc định tự gán ở UC20; ICPDP xem mọi phiên bản và lịch sử ban điều hành | I58 | Đã sửa (BR mới, lần 2) |
 | BR57 | Ngân sách đã tạm ứng phải được CLB quyết toán trước hạn; quá hạn → BR21 và ICPDP được chốt đối soát | I60 | Đã sửa (BR mới) |
 | BR58 | Phần tạm ứng không được chứng minh bị thu hồi; CLB hoàn trước hạn, quá hạn → BR21 và căn cứ mở UC40 | I60 | Đã sửa (BR mới) |
+| BR62 | Phân phòng học theo học kỳ (UC58): mẫu tuần thứ + slot, sinh booking `Approved` cho mỗi ngày còn tới, xung đột → từ chối cả đợt, thu hồi giữ lịch sử | — | BR mới 2026-10-11, không có issue |
 
 **Còn mở, cần làm:** không còn issue nào trong bảng này (I21 không sửa).
 

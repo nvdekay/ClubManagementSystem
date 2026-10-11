@@ -1,3 +1,8 @@
+> Cập nhật v1.4.0 ngày 2026-10-11: `allowOverbooking` chỉ còn áp dụng khi ICPDP duyệt yêu cầu
+> `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` ở UC46 (BR33). Phòng học `ROOM` do UC58 phân theo học kỳ và
+> không bao giờ được đặt trùng (BR62); `academicCalendar` là nguồn học kỳ cho UC58 — học kỳ đã kết
+> thúc không phân được. Kiểm tra tác động khi đổi lịch học kỳ vẫn áp dụng cho các buổi phòng đã phân.
+
 # SPEC: feat-policy-management
 
 ## Vấn đề
@@ -32,3 +37,4 @@ UC07 nộp hồ sơ; các giá trị ngoài danh sách BR42; điều chỉnh quy
 - v0.1.0 (2026-10-03) — cấu trúc hai trường JSON và việc không seed số liệu ban đầu được người dùng chốt trong phiên làm việc.
 - v0.2.0 (2026-10-08) — đồng bộ quyết định chỉ có một role ICPDP là `ICPDP_OFFICER`.
 - v0.3.0 (2026-10-09) — bổ sung kiểm tra tác động quyết định và phản hồi xung đột FR-UC04-06.
+- v1.4.0 (2026-10-11) — ghi chú: `allowOverbooking` chỉ cho UC46; `academicCalendar` cấp học kỳ cho UC58.

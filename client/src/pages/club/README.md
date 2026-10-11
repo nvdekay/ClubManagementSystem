@@ -1,8 +1,10 @@
 # pages/club/
 
-`ClubBookingsPage` dùng `BookingWorkspace`: chọn ngày/slot/phòng, đặt ngay và tự lấy chủ nhiệm
-chịu trách nhiệm. Phòng trùng lịch bị khoá; huỷ đặt giải phóng slot. Tài sản ngoài ROOM có form Draft/sửa/nộp lại và gửi ICPDP duyệt; ROOM legacy đã nộp vẫn giữ workflow.
-Cần `club.booking.manage`.
+`ClubBookingsPage` dùng `BookingWorkspace` cho UC45–47: chỉ gửi yêu cầu `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`
+(Draft/sửa/nộp lại, ICPDP duyệt), xem lịch sử và huỷ. Cần `club.booking.manage`. CLB không đặt phòng học.
+
+Trang "Phòng được phân" (route `/club/:clubId/rooms`, UC58) chỉ đọc, mọi thành viên `Active` xem được:
+lịch tuần học kỳ hiện tại/sắp tới (thứ, slot, giờ, phòng, toà, ghi chú) và các buổi sắp tới do ICPDP phân.
 
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi
 đối chiếu workspace và quyền hiện hành từ `/auth/me`.

@@ -2,6 +2,7 @@ import type { EventFinanceRepository } from "../../src/domain/event-finance.js";
 import type { PostEventReportRepository } from "../../src/domain/post-event-report.js";
 import type { ClubEventRepository } from "../../src/domain/club-event.js";
 import type { FacilityBookingRepository } from "../../src/domain/facility-booking.js";
+import type { RoomAllocationRepository } from "../../src/domain/room-allocation.js";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthRouteDeps } from "../../src/interface/http/auth-routes.js";
 import type { PublicDiscoveryRepository } from "../../src/domain/public-discovery.js";
@@ -125,12 +126,15 @@ const stubExports: ExportRepository = {
 };
 async function unusedLifecycle(): Promise<never> { throw new Error("unused"); }
 const stubBookings: FacilityBookingRepository = {
-  responsibleLeader: async () => null, reserve: async () => { throw new Error("unused"); },
   events: async () => [],
   list: async () => [], find: async () => null, club: async () => null, eventBelongsToClub: async () => false,
   conflicts: async () => [], create: unusedLifecycle, save: unusedLifecycle, submit: unusedLifecycle,
   claim: unusedLifecycle, decide: unusedLifecycle, cancel: unusedLifecycle, release: async () => 0,
   advanceLifecycle: async () => ({ started: 0, completed: 0 }), blackoutConflicts: async () => [],
+};
+const stubRoomAllocations: RoomAllocationRepository = {
+  clubs: async () => [], club: async () => null, list: async () => [], find: async () => null,
+  allocate: unusedLifecycle, revoke: unusedLifecycle,
 };
 const stubLifecycle: ClubLifecycleRepository = {
   list: async () => [], detail: async () => null, suspend: unusedLifecycle, reactivate: unusedLifecycle,
@@ -277,7 +281,7 @@ describe("openapi document", () => {
   // openapi.ts's User schema `satisfies` the domain entity's wire shape.
   it("matches the routes the app actually serves", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
-      applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings,
+      applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings, roomAllocationRepo: stubRoomAllocations,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle,
       applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
@@ -333,7 +337,7 @@ describe("openapi document", () => {
 
   it("guards every mutation or explicitly lists it as public", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
-      applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings,
+      applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings, roomAllocationRepo: stubRoomAllocations,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
       clubRoleRepo: stubClubRoles,

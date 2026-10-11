@@ -2,9 +2,9 @@ import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
-import { assertBookingNotice, assessBooking, bookingReason, bookingIntervalsConflict, isLateBookingCancellation, slotsConflict,
+import { assertBookingNotice, assertRequestableProperty, assessBooking, bookingIntervalsConflict, bookingReason, isLateBookingCancellation, slotsConflict,
   type Booking, type BookingClub, type BookingConflict, type BookingDecision, type BookingDetail,
-  type BookingResponsible, type BookingInput, type BookingVersion, type FacilityBookingRepository } from "../../domain/facility-booking.js";
+  type BookingInput, type BookingVersion, type FacilityBookingRepository } from "../../domain/facility-booking.js";
 import type { PolicyVersion } from "../../domain/policy.js";
 import type { Property } from "../../domain/property.js";
 import { ucmsModels as m } from "./ucms-models.js";
@@ -82,29 +82,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     if (!doc) throw new DomainError("booking not found", "not_found");
     return doc;
   }
-  async function responsibleLeader(clubId: string, now: Date, session?: ClientSession): Promise<BookingResponsible | null> {
-    const termQuery = m.clubTerms!.find({ clubId: oid(clubId), state: "Active", startAt: { $lte: now }, endAt: { $gt: now } });
-    const positionQuery = m.clubPositions!.find({ clubId: oid(clubId), isLeaderRole: true, isActive: true });
-    if (session) { termQuery.session(session); positionQuery.session(session); }
-    const terms = await termQuery.lean();
-    const positions = await positionQuery.lean();
-    const assignmentQuery = m.clubPositionAssignments!.find({ clubId: oid(clubId),
-      termId: { $in: terms.map((term) => term._id) }, positionId: { $in: positions.map((position) => position._id) },
-      confirmedBy: { $ne: null }, effectiveFrom: { $lte: now },
-      $or: [{ effectiveTo: null }, { effectiveTo: { $gt: now } }] });
-    if (session) assignmentQuery.session(session);
-    const assignments = await assignmentQuery.lean();
-    const membershipQuery = m.clubMemberships!.find({ clubId: oid(clubId), state: "Active",
-      _id: { $in: assignments.map((assignment) => assignment.membershipId) } });
-    if (session) membershipQuery.session(session);
-    const memberships = await membershipQuery.lean();
-    const leaderIds = [...new Set(memberships.map((membership) => String(membership.userId)))];
-    if (leaderIds.length !== 1) return null;
-    const userQuery = m.users!.findById(oid(leaderIds[0]!)).select({ displayName: 1, email: 1 });
-    if (session) userQuery.session(session);
-    const user = await userQuery.lean();
-    return user ? { id: String(user._id), displayName: String(user.displayName || user.email), email: String(user.email) } : null;
-  }
   async function equipmentFor(id: Types.ObjectId, session?: ClientSession): Promise<string[]> {
     const query = audits.findOne({ entityType: "PropertyBooking", entityId: id,
       action: { $in: ["BOOKING_DRAFT_CREATED", "BOOKING_DRAFT_SAVED", "BOOKING_SUBMITTED"] } })
@@ -158,13 +135,8 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     return { ...assessBooking(input, propertyFrom(property), clubFrom(club), policy,
       await conflicts(input, policy.conflictThresholdMinutes, excludeId, session), now), club: clubFrom(club) };
   }
-  async function assertRequestProperty(input: BookingInput, session: ClientSession, before?: Doc) {
-    const property = await m.properties!.findById(oid(input.propertyId)).session(session).lean();
-    if (property?.type !== "ROOM") return;
-    const original = before ? await m.properties!.findById(before.propertyId).session(session).lean() : null;
-    if (!before || original?.type !== "ROOM" || Number(before.currentVersionNo) < 1) {
-      throw new DomainError("rooms must use direct reservation", "validation");
-    }
+  async function assertRequestProperty(propertyId: unknown, session: ClientSession) {
+    assertRequestableProperty(await m.properties!.findById(propertyId).select({ type: 1 }).session(session).lean() as { type: Property["type"] } | null);
   }
   async function lockScope(propertyId: string, clubId: string, session: ClientSession) {
     // Serialize writers sharing a slot or a club with lifecycle/catalog transactions.
@@ -215,10 +187,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         conflictResult: error.message };
     }
     const task = taskDocs[0];
-    const reservation = await audits.findOne({ entityType: "PropertyBooking", entityId: doc._id, action: "BOOKING_RESERVED" }).lean();
-    const responsible = (reservation?.after as { responsible?: BookingResponsible } | undefined)?.responsible;
-    const overbooking = (reservation?.after as { overbooking?: BookingDetail["overbooking"] } | undefined)?.overbooking;
-    return { ...(responsible ? { responsible } : {}), ...(overbooking ? { overbooking } : {}), booking, property: property ? propertyFrom(property) : null, club: club ? clubFrom(club) : null,
+    return { booking, property: property ? propertyFrom(property) : null, club: club ? clubFrom(club) : null,
       task: task ? { id: String(task._id), state: String(task.state), openedAt: task.openedAt as Date,
         ...(task.assigneeId ? { assigneeId: String(task.assigneeId) } : {}) } : null,
       versions: versionDocs.map((item): BookingVersion => {
@@ -240,37 +209,10 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     return found;
   }
   return {
-    responsibleLeader,
-    async reserve(clubId, input, actorId, now, exception) {
-      const id = new Types.ObjectId();
-      await mongoose.connection.transaction(async (session) => {
-        await lockScope(input.propertyId, clubId, session);
-        const check = await assess(input, clubId, now, undefined, session);
-        const room = await m.properties!.findById(oid(input.propertyId)).session(session).lean();
-        if (room?.type !== "ROOM") throw new DomainError("room not found", "not_found");
-        let overbooking: BookingDetail["overbooking"];
-        if (exception) {
-          const reason = bookingReason(exception.reason);
-          if (!(await officers(session)).includes(actorId)) throw new DomainError("ICPDP officer role required", "forbidden");
-          const policy = await policyAt(now, session);
-          if (!policy?.allowOverbooking) conflict("overbooking is disabled by policy");
-          if (!check.conflicts.length) conflict("overbooking requires an occupied slot");
-          overbooking = { actorId, reason, at: now, conflicts: check.conflicts };
-        } else if (check.conflicts.length) conflict("booking slot is unavailable");
-        const responsible = await responsibleLeader(clubId, now, session);
-        if (!responsible) conflict("club has no active confirmed leader");
-        await bookings.create([{ _id: id, ...storedInput(input), clubId: oid(clubId), clubName: check.club.name,
-          semesterCode: check.semesterCode, state: "Approved", currentVersionNo: 0,
-          conflictResult: overbooking ? "Warning" : "No Conflict", createdAt: now }], { session });
-        await audit(id, "BOOKING_RESERVED", actorId, null, { payload: input, responsible, state: "Approved",
-          ...(overbooking ? { overbooking } : {}) }, now, session, overbooking?.reason);
-        if (overbooking) await notify(id, "PROPERTY_BOOKING_STATUS", [responsible.id],
-          { state: "Approved", overbooking }, now, session);
-      });
-      return required(String(id), now);
-    },
     async list(clubId) {
-      const docs = await bookings.find(clubId ? { clubId: oid(clubId) } : {}).sort({ createdAt: -1, _id: -1 }).lean();
+      const rooms = await m.properties!.distinct("_id", { type: "ROOM" });
+      const docs = await bookings.find({ ...(clubId ? { clubId: oid(clubId) } : {}), propertyId: { $nin: rooms } })
+        .sort({ createdAt: -1, _id: -1 }).lean();
       const snapshots = await audits.aggregate<{ _id: Types.ObjectId; equipment?: string[] }>([
         { $match: { entityType: "PropertyBooking", entityId: { $in: docs.map((doc) => doc._id) },
           action: { $in: ["BOOKING_DRAFT_CREATED", "BOOKING_DRAFT_SAVED", "BOOKING_SUBMITTED"] } } },
@@ -295,7 +237,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       await mongoose.connection.transaction(async (session) => {
         await lockScope(input.propertyId, clubId, session);
         assertBookingNotice(input, now);
-        await assertRequestProperty(input, session);
+        await assertRequestProperty(oid(input.propertyId), session);
         const check = await assess(input, clubId, now, undefined, session);
         await bookings.create([{ _id: id, ...storedInput(input), clubId: oid(clubId), clubName: check.club.name,
           semesterCode: check.semesterCode, state: "Draft", currentVersionNo: 0,
@@ -311,7 +253,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         if (String(before.clubId) !== clubId || !editableStates.includes(String(before.state))
           || Number(before.currentVersionNo) !== expectedVersion) conflict("booking cannot be edited or version changed");
         assertBookingNotice(input, now);
-        await assertRequestProperty(input, session, before);
+        await assertRequestProperty(oid(input.propertyId), session);
         const check = await assess(input, clubId, now, id, session);
         await bookings.updateOne({ _id: before._id }, { $set: { ...storedInput(input), semesterCode: check.semesterCode,
           conflictResult: check.conflictResult }, ...(!input.eventId ? { $unset: { eventId: "" } } : {}) }, { session });
@@ -327,7 +269,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         await lockScope(String(before.propertyId), clubId, session);
         const input = inputFrom(before, await equipmentFor(before._id as Types.ObjectId, session));
         assertBookingNotice(input, now);
-        await assertRequestProperty(input, session, before);
+        await assertRequestProperty(before.propertyId, session);
         const check = await assess(input, clubId, now, id, session);
         if (check.conflictResult === "Blocking Conflict") conflict("booking slot is unavailable");
         const versionNo = expectedVersion + 1;
@@ -365,16 +307,11 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         const task = await tasks.findOne({ entityType: taskType, entityId: before._id, state: "Open", assigneeId: oid(officerId) })
           .session(session).lean();
         if (before.state !== "Under Review" || !task) conflict("booking cannot be decided by this officer");
-        if (input.alternative) {
-          const replacement = await m.properties!.findById(oid(input.alternative.propertyId)).session(session).lean();
-          const original = await m.properties!.findById(before.propertyId).session(session).lean();
-          if (replacement?.type === "ROOM" && original?.type !== "ROOM") {
-            throw new DomainError("rooms must use direct reservation", "validation");
-          }
-        }
+        await assertRequestProperty(before.propertyId, session);
+        if (input.alternative) await assertRequestProperty(oid(input.alternative.propertyId), session);
         let outcome = input.outcome;
         let reason = decisionReason;
-        let overbooking: BookingDetail["overbooking"];
+        let overbooking: { actorId: string; reason: string; at: Date; conflicts: BookingConflict[] } | undefined;
         let checkResult = String(before.conflictResult ?? "No Conflict");
         if (outcome === "Approve") {
           await lockScope(String(before.propertyId), String(before.clubId), session);
@@ -410,6 +347,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         const before = await current(id, session);
         if (String(before.clubId) !== clubId || !["Requested", "Approved"].includes(String(before.state))
           || (before.state === "Approved" && (before.startAt as Date) <= now)) conflict("booking cannot be cancelled");
+        await assertRequestProperty(before.propertyId, session);
         const late = isLateBookingCancellation(before.startAt as Date, now);
         await bookings.updateOne({ _id: before._id }, { $set: { state: "Cancelled", cancelReason: reason,
           cancelledAt: now, isLateCancellation: late } }, { session });

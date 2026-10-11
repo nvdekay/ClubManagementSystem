@@ -1,6 +1,7 @@
 import { accountabilityOpenApiPaths } from "./openapi-accountability.js";
 import { clubEventOpenApiPaths } from "./openapi-club-events.js";
-import { roomOverbookingBody, roomReservationBody, bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
+import { roomAllocationBody, roomAllocationQuery, roomAllocationRevokeBody } from "./room-allocation-routes.js";
+import { bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
 import { z } from "zod";
 import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
@@ -484,10 +485,44 @@ const FacilityBooking = bookingBody.extend({ id: z.string(), clubId: z.string(),
   cancelReason: z.string().optional() });
 const BookingCheck = z.object({ conflicts: z.array(z.object({ id: z.string(), startAt: z.string(),
   endAt: z.string(), source: z.enum(["booking", "event"]) })), capacityWarning: z.boolean(), conflictResult: z.string() });
-const BookingResponsible = z.object({ id: z.string(), displayName: z.string(), email: z.string() });
-const FacilityBookingDetail = z.object({ responsible: BookingResponsible.optional(),
-  overbooking: z.object({ actorId: z.string(), reason: z.string(), at: z.string(), conflicts: BookingCheck.shape.conflicts }).optional(),
-  booking: FacilityBooking, property: Property.nullable(),
+const RoomAllocation = z.object({ id: z.string(), semesterCode: z.string(), clubId: z.string(), clubName: z.string(),
+  propertyId: z.string(), propertyName: z.string(), location: z.string(), weekday: z.number().int().min(1).max(7),
+  slot: z.number().int().min(1).max(4), note: z.string().optional(), allocatedBy: z.string(), allocatedByName: z.string().optional(),
+  allocatedAt: z.string(), revokedAt: z.string().optional(), revokeReason: z.string().optional(),
+  occurrences: z.array(z.object({ bookingId: z.string(), startAt: z.string(), endAt: z.string(), state: z.string() })) });
+const roomAllocationPaths = {
+  "/admin/room-allocations/options": {
+    get: { summary: "UC58 form options: semesters not yet ended, clubs that may receive rooms, active rooms",
+      responses: { "200": { description: "Options", content: { "application/json": { schema: envelope(z.object({
+        semesters: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
+        clubs: z.array(z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() })),
+        rooms: z.array(Property) })) } } }, "403": { description: "ICPDP officer required" } } },
+  },
+  "/admin/room-allocations": {
+    get: { summary: "UC58 room allocations, optionally for one semester", requestParams: { query: roomAllocationQuery },
+      responses: { "200": { description: "Allocations with their occurrences", content: { "application/json": { schema: envelope(z.array(RoomAllocation)) } } },
+        "403": { description: "ICPDP officer required" } } },
+    post: { summary: "UC58 allocate a room to a club for one weekday and slot of every week in a semester; CSRF required",
+      requestBody: { content: { "application/json": { schema: roomAllocationBody } } },
+      responses: { "201": { description: "Approved occurrences generated (blackout dates skipped)", content: { "application/json": { schema: envelope(RoomAllocation) } } },
+        "400": { description: "Invalid input, outside bookable hours or no upcoming dates" }, "403": { description: "ICPDP officer required" },
+        "404": { description: "Room or club not found" },
+        "409": { description: "Room already allocated or booked on some dates (details list them), club or room unavailable, semester ended" } } },
+  },
+  "/admin/room-allocations/{id}/revoke": {
+    post: { summary: "UC58 revoke an allocation; future occurrences are released, past ones kept; CSRF required",
+      requestParams: { path: IdPath }, requestBody: { content: { "application/json": { schema: roomAllocationRevokeBody } } },
+      responses: { "200": { description: "Revoked allocation", content: { "application/json": { schema: envelope(RoomAllocation) } } },
+        "403": { description: "ICPDP officer required" }, "404": { description: "Allocation not found" }, "409": { description: "Already revoked" } } },
+  },
+  "/clubs/{clubId}/room-allocations": {
+    get: { summary: "Rooms ICPDP allocated to the club with their remaining dates (read-only, every current member)",
+      requestParams: { path: z.object({ clubId: z.string() }) },
+      responses: { "200": { description: "Active allocations", content: { "application/json": { schema: envelope(z.array(RoomAllocation)) } } },
+        "403": { description: "Club membership required" } } },
+  },
+} as const;
+const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Property.nullable(),
   club: z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() }).nullable(),
   task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string() }).nullable(),
   versions: z.array(z.object({ versionNo: z.number().int(), payload: bookingBody, submittedBy: z.string(), submittedAt: z.string() })),
@@ -511,52 +546,12 @@ export const openApiDocument = createDocument({
   paths: {
     ...accountabilityOpenApiPaths,
     ...clubEventOpenApiPaths,
-    "/admin/clubs/{clubId}/booking-responsible": {
-      get: { summary: "Responsible leader for an ICPDP room reservation",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        responses: { "200": { description: "Responsible leader", content: { "application/json": { schema: envelope(BookingResponsible) } } },
-          "403": { description: "ICPDP officer required" }, "409": { description: "No active confirmed leader" } },
-      },
-    },
-    "/admin/clubs/{clubId}/booking-properties/{id}/availability": {
-      get: { summary: "ICPDP room availability; a conflict is a warning only when overbooking policy is enabled",
-        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }), query: bookingAvailabilityQuery },
-        responses: { "200": { description: "Conflict assessment", content: { "application/json": { schema: envelope(BookingCheck) } } },
-          "403": { description: "ICPDP officer required" }, "409": { description: "Inactive club/property or blackout" } },
-      },
-    },
-    "/admin/clubs/{clubId}/bookings/overbook": {
-      post: { summary: "ICPDP only: reserve an occupied room with a reason and enabled overbooking policy; CSRF required",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { "application/json": { schema: roomOverbookingBody } } },
-        responses: { "201": { description: "Exception recorded with officer, reason, conflicts and responsible leader", content: { "application/json": { schema: envelope(FacilityBookingDetail) } } },
-          "400": { description: "Invalid slot or missing reason" }, "401": { description: "Authentication required" },
-          "403": { description: "ICPDP officer required" }, "404": { description: "Room or club not found" },
-          "409": { description: "Policy disabled, no conflict, blackout, inactive club/property or no confirmed leader" } },
-      },
-    },
+    ...roomAllocationPaths,
     "/booking-slots": {
       get: { summary: "Four fixed campus booking slots (Vietnam time)",
         responses: { "200": { description: "Campus slots", content: { "application/json": {
           schema: envelope(z.array(z.object({ number: z.number().int().min(1).max(4), start: z.string(), end: z.string() }))) } } },
           "401": { description: "Authentication required", content: { "application/json": { schema: ApiError } } } },
-      },
-    },
-    "/clubs/{clubId}/booking-responsible": {
-      get: { summary: "Current confirmed club leader responsible for room reservations",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        responses: { "200": { description: "Responsible leader", content: { "application/json": { schema: envelope(BookingResponsible) } } },
-          "403": { description: "Club permission required" }, "409": { description: "No active confirmed leader" } },
-      },
-    },
-    "/clubs/{clubId}/bookings/reserve": {
-      post: { summary: "Reserve an available room immediately; snapshots the club leader; CSRF required",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { "application/json": { schema: roomReservationBody } } },
-        responses: { "201": { description: "Room reserved without approval", content: { "application/json": { schema: envelope(FacilityBookingDetail) } } },
-          "400": { description: "Invalid slot or unavailable hours" }, "401": { description: "Authentication required" },
-          "403": { description: "Club permission required" }, "404": { description: "Room or club not found" },
-          "409": { description: "Slot occupied or no active confirmed leader" } },
       },
     },
     "/clubs/{clubId}/booking-events": {
@@ -602,7 +597,7 @@ export const openApiDocument = createDocument({
           "409": { description: "State, version or slot conflict", content: { "application/json": { schema: ApiError } } },
         },
       },
-      post: { summary: "Create non-room facility booking draft (rooms use direct reservation) (UC45, CSRF required)",
+      post: { summary: "Create a facility request draft for a hall, outdoor area, stage or equipment; rooms are allocated by ICPDP (UC45/UC58, CSRF required)",
         requestParams: { path: z.object({ clubId: z.string() }) },
         requestBody: { content: { "application/json": { schema: bookingBody } } },
         responses: { "201": { description: "Booking result", content: { "application/json": { schema: envelope(FacilityBookingDetail) } } },

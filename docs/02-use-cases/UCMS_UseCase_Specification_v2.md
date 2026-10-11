@@ -1,11 +1,15 @@
 # UCMS — Đặc tả chi tiết Use Case v2
 
-> **Phạm vi:** đặc tả đầy đủ của cả 52 use case trong
+> **Phạm vi:** đặc tả đầy đủ của cả 53 use case (UC01–UC52 và UC58) trong
 > [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md). Tài liệu này thay thế §9 của
 > [`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md)
 > (UC01–UC57) và mở rộng §6 của tài liệu mô hình. Tài liệu mô hình giữ danh sách use case, ánh
 > xạ v1 → v2, các vòng đời, quy tắc nghiệp vụ và phạm vi phát hành; tài liệu này giữ phần đặc tả.
 > Sơ đồ: [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio).
+>
+> **Thay đổi 2026-10-11:** Phòng học (`ROOM`) chuyển sang ICPDP phân theo học kỳ (UC58, BR62);
+> bỏ CLB đặt phòng trực tiếp và ICPDP đặt trùng phòng học; UC45–UC47 chỉ còn
+> `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`. UC58 là mã mới — UC56–UC57 là mã v1 nên không dùng lại.
 
 Mọi mục đều dùng cùng một mẫu, theo đúng thứ tự này:
 
@@ -16,7 +20,7 @@ Use case liên quan · Pain point
 ```
 
 Một trường chỉ bị bỏ trống khi use case thực sự không có gì cho trường đó (không có hệ thống
-ngoài, không có pain point riêng). Cả 52 use case ra trong một bản phát hành — xem §12 của tài
+ngoài, không có pain point riêng). Cả 53 use case ra trong một bản phát hành — xem §12 của tài
 liệu mô hình.
 
 **Actor phía CLB (I58).** Actor `CMB` cũ được tách thành **Club Member** và **Club Leader**
@@ -75,9 +79,10 @@ vẫn là tên gọi chung của phía CLB.
 | UC42 | Sinh bản nháp đánh giá hiệu quả CLB | ICPDP | M09 |
 | UC43 | Xem lại, chốt và công bố đánh giá | ICPDP | M09 |
 | UC44 | Quản lý danh mục cơ sở vật chất | ICPDP | M11 |
-| UC45 | Gửi yêu cầu đặt cơ sở vật chất | Club Member | M11 |
-| UC46 | Thẩm định và quyết định yêu cầu đặt cơ sở vật chất | ICPDP | M11 |
+| UC45 | Gửi yêu cầu đặt cơ sở vật chất (hội trường, sân, sân khấu, thiết bị) | Club Member | M11 |
+| UC46 | Thẩm định yêu cầu cơ sở vật chất | ICPDP | M11 |
 | UC47 | Theo dõi và huỷ / trả cơ sở vật chất đã đặt | Club Member | M11 |
+| UC58 | Phân phòng học cho CLB theo học kỳ | ICPDP | M11 |
 | UC48 | Gửi phản hồi sau sự kiện | Student | M12 |
 | UC49 | Xem phản hồi sự kiện | Club Member | M12 |
 | UC50 | Gửi khiếu nại về một CLB | Student | M12 |
@@ -210,9 +215,10 @@ vẫn là tên gọi chung của phía CLB.
   - deadline báo cáo và các mốc nhắc (BR20, §19);
   - ngưỡng xung đột (BR15);
   - feedback window và số người phản hồi tối thiểu (BR36, BR40);
-  - chính sách overbooking (BR33);
+  - chính sách overbooking (BR33 — chỉ áp dụng cho UC46, không cho phòng học);
   - các công tắc cưỡng chế (BR21);
-  - lịch học kỳ — ngày bắt đầu và kết thúc của từng học kỳ (dùng cho việc giải thể ở UC15).
+  - lịch học kỳ — ngày bắt đầu và kết thúc của từng học kỳ (dùng cho việc giải thể ở UC15 và
+    phân phòng học ở UC58).
 - **Luồng chính:**
   1. Officer mở bộ chính sách của kỳ hiện tại.
   2. Officer sửa một hoặc nhiều giá trị.
@@ -540,8 +546,10 @@ lại UC06–UC52.
   3. Hệ thống áp dụng thay đổi trạng thái và các hệ quả của nó:
      - **Tạm ngừng** — chặn đợt tuyển mới, đề xuất sự kiện mới và booking mới; các đề xuất sự
        kiện chưa được quyết định chuyển `Cancelled`; các sự kiện và booking tương lai đã duyệt
-       bị huỷ thông qua UC28 và UC47;
-     - **Kích hoạt lại** — CLB quay về `Active` với lịch sử giữ nguyên;
+       bị huỷ thông qua UC28 và UC47; các buổi phòng học tương lai do UC58 sinh ra cũng được
+       giải phóng;
+     - **Kích hoạt lại** — CLB quay về `Active` với lịch sử giữ nguyên; phòng học đã giải phóng
+       không được khôi phục — ICPDP phân lại ở UC58;
      - **Giải thể** — quyết định được ghi nhận kèm học kỳ hiệu lực của nó: học kỳ kế tiếp trong
        lịch học kỳ (UC04). Các sự kiện, đề xuất và booking kết thúc sau học kỳ đó bị huỷ ngay
        lập tức thông qua UC28 (A1) và UC47 (BR45). CLB giữ nguyên trạng thái và hoạt động bình
@@ -576,7 +584,7 @@ lại UC06–UC52.
   nào sống lâu hơn học kỳ `Dissolving`.
 - **Đầu ra:** Trạng thái CLB hoặc lịch giải thể, bản ghi audit, các thông báo; ở bước 6, các sự
   kiện và booking đã huỷ cùng hồ sơ lưu trữ kèm các nghĩa vụ còn tồn đọng.
-- **Use case liên quan:** UC14, UC40, UC28, UC47, UC02
+- **Use case liên quan:** UC14, UC40, UC28, UC47, UC58, UC02
 - **Pain point:** BP01
 
 ---
@@ -904,7 +912,8 @@ lại UC06–UC52.
   2. Hệ thống validate tính đầy đủ, tổng số của phần ngân sách, và thời gian báo trước tối thiểu định nghĩa trong tài liệu chính sách.
   3. Hệ thống đánh giá quy tắc xung đột BR15 và hiển thị `No Conflict`, `Warning` hoặc
      `Blocking Conflict`.
-  4. Thành viên có thể đính kèm một yêu cầu đặt cơ sở vật chất (UC45).
+  4. Thành viên có thể đính kèm một yêu cầu đặt cơ sở vật chất ngoài `ROOM` (UC45). Phòng học
+     không gắn được vào đề xuất; sự kiện trùng một buổi phòng học đã phân (UC58) vẫn bị BR15 chặn.
   5. Thành viên nộp → `Pending Approval`.
   6. ICPDP nhận một review task.
 - **Luồng thay thế:**
@@ -918,7 +927,7 @@ lại UC06–UC52.
     ngân sách, hệ thống **ghi nhận thẳng** sự kiện sang `Approved` thay vì `Pending Approval`,
     không tạo review task, ghi audit hành động `RECORD_INTERNAL`, và đưa sự kiện vào danh sách
     sự kiện nội bộ trên dashboard ICPDP (UC02). Các bước 2–3 và mọi ngoại lệ vẫn áp dụng. Nếu có
-    đính kèm yêu cầu booking, booking đó vẫn chờ UC46 quyết định. Sự kiện `Internal` có phần
+    đính kèm yêu cầu booking (chỉ tài sản ngoài `ROOM`), booking đó vẫn chờ UC46 quyết định. Sự kiện `Internal` có phần
     ngân sách đi luồng chính.
 - **Ngoại lệ:**
   - **E1** có xung đột chặn trong khi chính sách cấm chồng lịch → từ chối nộp;
@@ -1546,12 +1555,12 @@ lại UC06–UC52.
 - **Kích hoạt:** Nhà trường mở một phòng hoặc thiết bị cho hoạt động CLB, hoặc thông tin của nó
   thay đổi.
 - **Tiền điều kiện:** Người gọi có quyền quản trị cơ sở vật chất.
-- **Dữ liệu vào:** Mã và tên property, loại (phòng, hội trường, thiết bị), sức chứa, vị trí,
+- **Dữ liệu vào:** Mã và tên property, loại (`ROOM`, `HALL`, `OUTDOOR`, `STAGE`, `EQUIPMENT`), sức chứa, vị trí (toà nhà),
   thiết bị đi kèm, khung giờ được đặt, các giai đoạn khoá, trạng thái hoạt động.
 - **Luồng chính:**
   1. Officer thêm một property hoặc mở một property đã có.
   2. Officer đặt sức chứa, vị trí, khung giờ được đặt và các giai đoạn khoá của nó.
-  3. Officer kích hoạt nó; nó trở nên chọn được ở UC45.
+  3. Officer kích hoạt nó; phòng học `ROOM` trở nên chọn được ở UC58, các loại khác ở UC45.
 - **Luồng thay thế:**
   - **A1 Ngừng kích hoạt:** một property không còn được đặt nữa thì bị ngừng kích hoạt; các
     booking đã duyệt hiện có vẫn giữ nguyên.
@@ -1564,47 +1573,40 @@ lại UC06–UC52.
   định đã ra. UCMS chỉ giữ những property được mở cho hoạt động CLB và không thay thế hệ thống
   đặt phòng riêng của trường (§5.2).
 - **Đầu ra:** Các bản ghi Property, bản ghi audit.
-- **Use case liên quan:** UC45, UC46
+- **Use case liên quan:** UC45, UC46, UC58
 - **Pain point:** BP16
 
-## UC45 – Đặt phòng học hoặc gửi yêu cầu cơ sở vật chất khác
+## UC45 – Gửi yêu cầu đặt cơ sở vật chất (hội trường, sân, sân khấu, thiết bị)
 
 - **Actor chính:** Club Member có `club.booking.manage` (BR54).
+- **Phạm vi (2026-10-11):** chỉ `HALL`, `OUTDOOR` (sân trường/khu ngoài trời), `STAGE` (sân khấu),
+  `EQUIPMENT`. Phòng học `ROOM` không đặt, huỷ hay xin qua UC45 — ICPDP phân theo học kỳ ở UC58
+  (BR35, BR62); CLB chỉ xem phòng được phân.
 - **Tiền điều kiện:** CLB `Active`, hoặc `Dissolving` trong học kỳ cho phép; tài sản đang hoạt động.
-- **Luồng phòng học (`ROOM`):** chọn phòng, ngày và slot còn trống → kiểm tra lịch trong
-  transaction → `Approved`. Snapshot Club Leader được lưu trong audit `BOOKING_RESERVED`.
-  Không Draft, version nộp, task hay decision; không thu thập `eventId`, không liên kết UC25.
-  Đổi phòng/lịch bằng huỷ theo UC47 rồi đặt mới. CLB không được đặt trùng dù policy bật.
-- **Luồng tài sản khác:** `HALL`, `OUTDOOR` (sân trường/khu ngoài trời), `STAGE` (sân khấu),
-  `EQUIPMENT`. Chọn tài sản, ngày/slot, mục đích, số người, thiết bị và sự kiện cùng CLB nếu có.
+- **Luồng chính:** chọn tài sản, ngày/slot, mục đích, số người, thiết bị và sự kiện cùng CLB nếu có.
   Lưu `Draft` → đánh giá BR15 và deadline → nộp `Requested`, tạo version bất biến và task ICPDP.
   Từ `Revision Requested`, sửa rồi nộp version mới. Tài sản chưa được giữ chỗ trước khi UC46 duyệt.
-- **Deadline:** yêu cầu cần duyệt dùng bốn slot và hạn gửi đã chốt ở SRS UC45;
-  đặt phòng học trực tiếp chỉ cần slot còn ở tương lai, không áp dụng hạn gửi workflow.
-- **Liên kết sự kiện:** booking cần duyệt có thể liên kết UC25. Gắn/gỡ cần cả
+- **Deadline:** dùng bốn slot và hạn gửi đã chốt ở SRS UC45.
+- **Liên kết sự kiện:** booking có thể liên kết UC25. Gắn/gỡ cần cả
   `club.event.manage` và `club.booking.manage`; UC26 không duyệt thay booking.
   `EQUIPMENT` có thể khác property địa điểm sự kiện, nhưng thời gian phải bao phủ sự kiện.
-- **Ngoại lệ:** thiếu quyền, blackout, sai học kỳ/khung giờ, tài sản không hoạt động,
-  CLB bị tạm ngừng/giải thể → từ chối. Vượt sức chứa tài sản cần duyệt là cảnh báo cho ICPDP.
-- **Tương thích:** ROOM legacy đã nộp (`currentVersionNo > 0`) vẫn được sửa/nộp lại và duyệt;
-  không được tạo ROOM Draft mới hoặc đổi yêu cầu tài sản khác thành ROOM để đi đường review.
-- **Quy tắc:** BR15, BR33, BR34, BR45, BR54.
-- **Liên quan:** UC25, UC44, UC46, UC47.
+- **Ngoại lệ:** thiếu quyền, blackout, sai học kỳ/khung giờ, tài sản không hoạt động hoặc là
+  `ROOM`, CLB bị tạm ngừng/giải thể → từ chối. Vượt sức chứa là cảnh báo cho ICPDP.
+- **Quy tắc:** BR15, BR33, BR34, BR35, BR45, BR54.
+- **Liên quan:** UC25, UC44, UC46, UC47, UC58.
 
-## UC46 – Thẩm định cơ sở vật chất và cho phép đặt trùng phòng học
+## UC46 – Thẩm định yêu cầu cơ sở vật chất
 
 - **Actor chính:** ICPDP Officer.
-- **Yêu cầu cần duyệt:** tài sản ngoài ROOM và ROOM legacy đã có task.
+- **Phạm vi:** yêu cầu `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` từ UC45. Phòng học không đi qua
+  thẩm định — ICPDP phân trực tiếp ở UC58.
 - **Luồng chính:** nhận task `Requested → Under Review`; kiểm tra lịch, mục đích,
   trạng thái CLB và nghĩa vụ; quyết định `Approve`, `Reject` hoặc `Request revision` có lý do.
   Lưu decision, audit và notification cùng transaction. Chỉ người nhận task được quyết định.
 - **Khi duyệt:** kiểm tra lại lịch và trạng thái; `Approved` giữ slot. Nếu phát sinh xung đột,
-  trả `Revision Requested`, trừ khi ICPDP nhập riêng `overbookingReason` và policy cho phép.
-  Blackout không được bỏ qua. Có thể đề xuất tài sản/slot khác khi yêu cầu sửa;
-  yêu cầu ngoài ROOM không được đề xuất ROOM — dùng luồng đặt phòng trực tiếp riêng.
-- **Ngoại lệ phòng học trực tiếp:** ICPDP chọn CLB/ROOM/ngày/slot trùng, nhập lý do;
-  chỉ ghi `Approved` khi policy bật, có xung đột và Club Leader hợp lệ. Audit ghi officer,
-  lý do, lịch trùng, thời điểm và snapshot; notification cùng transaction, không tạo task.
+  trả `Revision Requested`, trừ khi ICPDP nhập riêng `overbookingReason` và policy
+  `allowOverbooking` bật (BR33). Blackout không được bỏ qua. Có thể đề xuất tài sản/slot khác
+  khi yêu cầu sửa; không được đề xuất một `ROOM` làm phương án thay thế.
 - **Quy tắc:** BR31, BR33, BR34, BR35.
 - **Liên quan:** UC45, UC47, UC26.
 
@@ -1614,6 +1616,8 @@ lại UC06–UC52.
 - **Module:** M11
 - **Mục tiêu nghiệp vụ:** Giải phóng một nguồn lực không còn cần tới để một CLB khác đặt được.
 - **Kích hoạt:** Sự kiện bị huỷ hoặc đổi lịch (UC28), hoặc CLB không còn cần property đó.
+- **Phạm vi:** booking `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`. CLB không huỷ buổi phòng học do
+  UC58 sinh ra; chỉ ICPDP thu hồi đợt phân phòng (UC58 A1).
 - **Tiền điều kiện:** Booking đang ở `Requested` hoặc `Approved`, hoặc `In Use` khi việc huỷ đến
   từ UC15 hoặc UC40 (A1).
 - **Dữ liệu vào:** Lý do huỷ.
@@ -1632,7 +1636,62 @@ lại UC06–UC52.
 - **Hậu điều kiện:** Booking ở `Cancelled` hoặc `Released`; khung giờ đã trống.
 - **Quy tắc nghiệp vụ:** BR54 (`club.booking.manage`). BR35. Không có nó, một booking đã duyệt sẽ khoá một căn phòng vĩnh viễn.
 - **Đầu ra:** Trạng thái booking, khung giờ được giải phóng, thông báo; tín hiệu tuân thủ.
-- **Use case liên quan:** UC28, UC46, UC40
+- **Use case liên quan:** UC28, UC46, UC40, UC58
+- **Pain point:** BP16
+
+## UC58 – Phân phòng học cho CLB theo học kỳ
+
+- **Actor chính:** ICPDP Officer
+- **Hỗ trợ:** — (CMB — Club Leader và các ghế ban chủ nhiệm — nhận thông báo)
+- **Module:** M11
+- **Mục tiêu nghiệp vụ:** Cấp cho mỗi CLB một phòng học cố định theo mẫu tuần cho cả học kỳ, để
+  CLB có chỗ sinh hoạt mà không phải tự đặt phòng, và không hai CLB nào giữ cùng một phòng/thứ/slot.
+- **Kích hoạt:** Trước hoặc trong một học kỳ, ICPDP sắp xếp phòng sinh hoạt cho các CLB.
+- **Tiền điều kiện:** Học kỳ có trong `academicCalendar` (UC04) và chưa kết thúc; CLB `Active` hoặc
+  `Dissolving`; phòng loại `ROOM` đang hoạt động (UC44).
+- **Dữ liệu vào:** Học kỳ, CLB, phòng (thuộc toà nhà bất kỳ — toà nhà là `location`), thứ trong tuần
+  (Thứ 2 … Chủ nhật), một slot campus (1: 07:30–09:50, 2: 10:00–12:20, 3: 12:50–15:10,
+  4: 15:20–17:40, UTC+7), ghi chú tuỳ chọn.
+- **Luồng chính:**
+  1. Officer mở màn hình phân phòng và chọn học kỳ; hệ thống liệt kê các đợt phân phòng của học
+     kỳ đó (lọc theo CLB, toà nhà).
+  2. Officer chọn CLB, phòng, thứ và slot, nhập ghi chú nếu cần.
+  3. Hệ thống tính mọi ngày khớp thứ đó trong học kỳ mà slot chưa bắt đầu, bỏ qua ngày trùng
+     blackout của phòng, và kiểm tra khung giờ được đặt của phòng phủ thứ/slot đó.
+  4. Hệ thống kiểm tra xung đột từng ngày với booking `Approved`/`In Use` và sự kiện
+     `Approved`/`Upcoming`/`Ongoing` trên cùng phòng.
+  5. Không có xung đột: trong một transaction, hệ thống sinh một `propertyBookings` cho mỗi ngày
+     (`Approved`, purpose `ICPDP room allocation`, `currentVersionNo` 0, `conflictResult`
+     `No Conflict`, `decidedBy`/`decidedAt` = officer/thời điểm phân), ghi audit
+     `ROOM_ALLOCATED` (entityType `RoomAllocation`, `after` gồm semesterCode, clubId, clubName,
+     propertyId, weekday, slot, note, bookingIds) và gửi thông báo `ROOM_ALLOCATED` tới ban chủ nhiệm.
+  6. CLB thấy lịch tuần và các ngày sắp tới ở trang "Phòng được phân" (chỉ đọc, mọi thành viên
+     active) và dùng màn hình này làm bằng chứng khi nhận chìa khoá phòng.
+- **Luồng thay thế:**
+  - **A1 Thu hồi:** officer chọn một đợt phân phòng và nhập lý do (bắt buộc). Buổi chưa bắt đầu
+    chuyển `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử; ghi
+    audit `ROOM_ALLOCATION_REVOKED` và thông báo cùng tên tới ban chủ nhiệm. Muốn đổi phòng/thứ/slot
+    thì thu hồi rồi phân lại — không có thao tác sửa.
+  - **A2 Phân giữa kỳ:** học kỳ đã bắt đầu → chỉ sinh các ngày mà slot chưa bắt đầu.
+  - **A3 Xem lịch chiếm dụng:** khi chọn phòng, officer xem lưới tuần (thứ × slot) của phòng đó
+    trong học kỳ để chọn ô còn trống.
+  - **A4 Học kỳ sau:** mẫu không kế thừa; officer phân lại cho học kỳ mới.
+- **Ngoại lệ:**
+  - **E1** có ít nhất một ngày xung đột → từ chối cả đợt, liệt kê các ngày xung đột; không có
+    ngoại lệ đặt trùng cho phòng học (BR33, BR62).
+  - **E2** học kỳ đã kết thúc hoặc không có trong `academicCalendar` → từ chối.
+  - **E3** CLB không ở `Active`/`Dissolving` → từ chối.
+  - **E4** phòng không hoạt động hoặc không phải `ROOM` → từ chối.
+  - **E5** khung giờ được đặt của phòng không phủ thứ/slot đã chọn → từ chối.
+  - **E6** sau khi bỏ ngày đã qua và ngày blackout không còn ngày nào để sinh → từ chối.
+  - **E7** người gọi không phải ICPDP Officer → từ chối.
+- **Hậu điều kiện:** Mỗi ngày khớp có một booking `Approved` khoá phòng/slot cho CLB; bản ghi phân
+  phòng nằm trong audit. Lifecycle job đưa từng buổi `Approved → In Use → Completed`; UC15 tạm ngừng
+  hoặc giải thể giải phóng các buổi tương lai và không khôi phục khi kích hoạt lại.
+- **Quy tắc nghiệp vụ:** BR15, BR33, BR34, BR35, BR62.
+- **Đầu ra:** Các booking `Approved`, bản ghi audit `ROOM_ALLOCATED` / `ROOM_ALLOCATION_REVOKED`,
+  thông báo cho ban chủ nhiệm.
+- **Use case liên quan:** UC04, UC15, UC25, UC44, UC47
 - **Pain point:** BP16
 
 ---
@@ -1783,8 +1842,8 @@ lại UC06–UC52.
 
 | Hạng mục kiểm tra | Kết quả |
 |---|---|
-| Use case đã được đặc tả | 52 trên 52 (UC01–UC52) |
-| Use case có đúng một actor chính | 52 trên 52 — UC31 là use case duy nhất có actor hỗ trợ |
-| Use case có Luồng chính | 52 trên 52 |
-| Use case mà thực thể của nó có vòng đời, và trạng thái được nêu tên | UC07, UC08, UC15, UC16, UC17, UC18, UC20, UC21, UC25, UC26, UC27, UC28, UC29, UC31, UC32, UC33, UC34, UC35, UC37, UC38, UC39, UC40, UC41, UC42, UC43, UC45, UC46, UC47, UC48, UC50, UC51, UC52 |
+| Use case đã được đặc tả | 53 trên 53 (UC01–UC52, UC58) |
+| Use case có đúng một actor chính | 53 trên 53 — UC31 là use case duy nhất có actor hỗ trợ |
+| Use case có Luồng chính | 53 trên 53 |
+| Use case mà thực thể của nó có vòng đời, và trạng thái được nêu tên | UC07, UC08, UC15, UC16, UC17, UC18, UC20, UC21, UC25, UC26, UC27, UC28, UC29, UC31, UC32, UC33, UC34, UC35, UC37, UC38, UC39, UC40, UC41, UC42, UC43, UC45, UC46, UC47, UC48, UC50, UC51, UC52, UC58 |
 | Pain point có ít nhất một use case | 19 trên 19 (§13 của tài liệu mô hình) |

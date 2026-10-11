@@ -3,8 +3,8 @@
 Phiên bản 11/10/2026 · Giao diện tiếng Việt · Student, CLB và ICPDP.
 
 Hướng dẫn các luồng chính từ khám phá CLB, nộp hồ sơ, tuyển thành viên, tổ chức sự kiện,
-đặt phòng đến báo cáo và quyết toán. Mỗi luồng có nơi bắt đầu, điều kiện, từng bước thao tác
-và kết quả cần kiểm tra.
+phân phòng, đặt cơ sở vật chất đến báo cáo và quyết toán. Mỗi luồng có nơi bắt đầu, điều
+kiện, từng bước thao tác và kết quả cần kiểm tra.
 
 Ảnh được chụp từ app với API và MongoDB thật sau khi seed. Các màn wave 4 dùng database
 `ucms_guide_demo` riêng và policy mẫu; server chính chưa bật UC36/UC37. Google OAuth chưa
@@ -20,7 +20,7 @@ và kết quả cần kiểm tra.
 6. Sự kiện: đề xuất → duyệt → công bố.
 7. Đăng ký sự kiện, check-in và phản hồi.
 8. CLB chốt điểm danh và xem phản hồi tổng hợp.
-9. Đặt phòng và thẩm định booking.
+9. Phân phòng học và đặt cơ sở vật chất khác.
 10. Báo cáo sau sự kiện và nộp lại.
 11. ICPDP thẩm định báo cáo.
 12. Ghi nhận tạm ứng.
@@ -134,7 +134,7 @@ chưa đồng nghĩa với đã rời CLB.
 
 1. CLB mở **Sự kiện CLB**, tạo đề xuất (`/club/:clubId/events`).
 2. Nhập mục tiêu, kế hoạch, lịch, địa điểm, đối tượng, sức chứa, rủi ro, booking liên quan
-   và ngân sách theo hạng mục nếu xin kinh phí.
+   (hội trường, sân, sân khấu, thiết bị; không gắn phòng học) và ngân sách theo hạng mục nếu xin kinh phí.
 3. Lưu nháp, rà soát rồi gửi đề xuất trước thời hạn app quy định.
 4. ICPDP mở **Duyệt đề xuất sự kiện**, nhận thẩm định. Đối chiếu lịch, rủi ro, địa điểm,
    nghĩa vụ CLB và từng dòng ngân sách; ghi điều kiện/lý do quyết định.
@@ -184,21 +184,63 @@ mở khoá điểm danh theo luồng thông thường. Chưa đủ người ph�
 
 ![Phản hồi tổng hợp từ sự kiện đã seed](images/14-event-feedback.png)
 
-## 9. Đặt phòng và thẩm định booking
+## 9. Phân phòng học và đặt cơ sở vật chất khác
 
-**Vai trò:** CLB có quyền booking; ICPDP thẩm định khi yêu cầu cần xét.
+Từ 11/10/2026 phòng học (`ROOM`) không còn do CLB tự đặt: ICPDP phân phòng cho CLB theo học
+kỳ (UC58). CLB chỉ gửi yêu cầu cho hội trường, sân ngoài trời, sân khấu và thiết bị
+(`HALL`, `OUTDOOR`, `STAGE`, `EQUIPMENT`).
 
-1. CLB mở **Đặt cơ sở vật chất** (`/club/:clubId/bookings`).
-2. Chọn phòng, ngày và một trong bốn slot của campus. Kiểm tra sức chứa, thiết bị và tình
-   trạng còn trống trước khi xác nhận.
-3. Luồng đặt ngay phòng ghi booking ở `Approved` khi thoả điều kiện. Với yêu cầu cần xét,
-   lưu/gửi yêu cầu và theo dõi quyết định.
-4. ICPDP mở booking, nhận thẩm định nếu hồ sơ có task. Kiểm tra xung đột, nhu cầu và nghĩa
-   vụ CLB; duyệt hoặc yêu cầu sửa, có thể đề xuất phòng/slot khác.
+### 9.1. ICPDP phân phòng CLB theo học kỳ
+
+**Vai trò:** ICPDP. **Nơi bắt đầu:** **Phân phòng CLB** (`/workspace/room-allocations`),
+nhóm thanh bên **Sự kiện & cơ sở vật chất**.
+
+1. Chọn học kỳ (lấy từ lịch học kỳ của policy, chưa kết thúc). Danh sách hiện các đợt phân
+   của học kỳ đó; lọc theo CLB hoặc toà nhà.
+2. Chọn **Tạo phân phòng**: chọn CLB (`Active` hoặc `Dissolving`), phòng học đang hoạt động ở
+   toà nhà bất kỳ, thứ trong tuần và một slot campus (1: 07:30–09:50, 2: 10:00–12:20,
+   3: 12:50–15:10, 4: 15:20–17:40), ghi chú nếu cần.
+3. Xem lưới chiếm dụng theo tuần của phòng đã chọn để tránh ô đã có CLB khác hoặc sự kiện.
+4. Xác nhận. App tạo một buổi `Approved` cho mỗi tuần còn lại của học kỳ (bỏ qua ngày phòng
+   bị khoá) và thông báo cho ban chủ nhiệm CLB.
+5. Nếu có ngày trùng booking hoặc sự kiện đã duyệt ở phòng đó, app từ chối cả đợt và liệt kê
+   các ngày trùng; chọn phòng, thứ hoặc slot khác.
+6. Muốn đổi, chọn **Thu hồi**, nhập lý do (bắt buộc) rồi tạo đợt mới. Các buổi chưa diễn ra
+   được giải phóng; buổi đã qua giữ làm lịch sử.
+
+**Kết quả:** mỗi CLB có lịch phòng cố định cho cả học kỳ, ví dụ “Slot 4, Thứ 4” là mọi thứ Tư
+slot 4. Sang học kỳ mới, ICPDP phải phân lại; không tự kế thừa.
+
+### 9.2. CLB xem phòng được phân
+
+**Vai trò:** mọi thành viên đang hoạt động của CLB. **Nơi bắt đầu:** **Phòng được phân**
+(`/club/:clubId/rooms`).
+
+1. Xem lịch tuần của học kỳ hiện tại và sắp tới: thứ, slot, giờ, phòng, toà nhà, ghi chú.
+2. Xem danh sách các buổi sắp tới.
+3. Đưa màn hình này cho bộ phận quản lý phòng làm bằng chứng khi nhận chìa khoá.
+
+**Kết quả:** màn hình chỉ để xem; CLB không đặt, huỷ hay xin phòng học trên app. CLB bị tạm
+ngừng hoặc giải thể sẽ mất các buổi tương lai; khi hoạt động lại cần ICPDP phân lại.
+
+### 9.3. Yêu cầu cơ sở vật chất khác và thẩm định booking
+
+**Vai trò:** CLB có `club.booking.manage`; ICPDP thẩm định.
+
+1. CLB mở **Đặt cơ sở vật chất** (`/club/:clubId/bookings`). Màn này chỉ còn hội trường,
+   sân ngoài trời, sân khấu và thiết bị.
+2. Chọn tài sản, ngày và một trong bốn slot của campus. Kiểm tra sức chứa, thiết bị và tình
+   trạng còn trống; lưu `Draft` rồi gửi yêu cầu trước hạn app hiển thị.
+3. ICPDP mở yêu cầu, nhận thẩm định, kiểm tra xung đột, nhu cầu và nghĩa vụ CLB; duyệt, từ
+   chối hoặc yêu cầu sửa, có thể đề xuất tài sản/slot khác (không đề xuất phòng học).
+4. Khi bị trả sửa, CLB sửa và nộp lại; app tạo version mới.
 5. Nếu không dùng nữa, huỷ booking theo thời hạn app hiển thị; kiểm tra trạng thái sau huỷ.
 
 **Kết quả:** chỉ booking đã được duyệt mới là lịch sử dụng được xác nhận. Cảnh báo sức chứa
 hoặc xung đột cần được xử lý trước khi tiếp tục.
+
+**Hiện trạng:** hai ảnh dưới đây chụp trước thay đổi 11/10/2026 và còn hiện phòng học trong
+màn booking của CLB; màn phân phòng chưa có ảnh.
 
 ![Booking đã duyệt của CLB](images/15-booking.png)
 

@@ -4,9 +4,9 @@
 bất biến ở audit `BOOKING_SUBMITTED`; equipment của draft nằm trong audit snapshot.
 Transaction ghi `__v` của property để tuần tự hoá các quyết định cùng phòng;
 `releaseFacilityBookingsInSession` được cascade UC15 dùng trong chính transaction của CLB.
-Seed demo bổ sung 30 phòng mẫu tại Alpha/Beta/Gamma/Delta/Epsilon (giữ DE312/DE222/DE223) và bốn booking theo Slot 1–4
-ở Approved qua đặt ngay (snapshot chủ nhiệm) nếu lịch học kỳ còn phù hợp. Seed giải phóng
-riêng các booking mẫu cũ của hai bộ dữ liệu demo, giữ lịch sử và không đổi booking của người dùng.
+Seed demo bổ sung 30 phòng mẫu tại Alpha/Beta/Gamma/Delta/Epsilon (giữ DE312/DE222/DE223). Từ 2026-10-11
+(UC58) `seed:demo` xoá hẳn booking ROOM của luồng cũ kèm task/decision/notification/audit của chúng và seed
+vài đợt phân phòng của ICPDP (booking `Approved` sinh theo thứ/slot + audit `ROOM_ALLOCATED`), idempotent.
 
 Bản cài bằng Mongoose cho các repository port của domain — mỗi port một file
 `mongo-<entity>-repository.ts` — cộng các tiện ích DB (seed). Không gì ngoài `infra/` được đụng

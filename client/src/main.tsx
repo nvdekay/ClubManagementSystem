@@ -5,6 +5,8 @@ import { ReconciliationPage } from "./pages/icpdp/ReconciliationPage.js";
 import { ClubEventsPage } from "./pages/club/ClubEventsPage.js";
 import { ClubBookingsPage } from "./pages/club/ClubBookingsPage.js";
 import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
+import { RoomAllocationsPage } from "./pages/icpdp/RoomAllocationsPage.js";
+import { ClubRoomsPage } from "./pages/club/ClubRoomsPage.js";
 import "./index.css";
 import "./i18n"; // initializes i18next before first render
 import { StrictMode } from "react";
@@ -94,6 +96,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />
             <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
             <Route path="workspace/bookings" element={<BookingReviewPage />} />
+            <Route path="workspace/room-allocations" element={<RoomAllocationsPage />} />
+            <Route path="club/:clubId/rooms" element={<ClubRoomsPage />} />
             <Route path="workspace/properties" element={<PropertiesPage />} />
             <Route path="workspace/evaluation-schemes" element={<EvaluationSchemesPage />} />
             <Route path="workspace/exports" element={<DataExportPage />} />

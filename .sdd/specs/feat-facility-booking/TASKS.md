@@ -46,3 +46,10 @@ ICPDP chọn phương án thay thế qua AppSelect. Fixture 25 booking kiểm tr
 - [x] UI booking, danh mục OUTDOOR/STAGE và i18n.
 - [x] Đồng bộ DOCX, SRS, use case model/spec và diagram/PNG.
 - [x] Unit/integration, npm run check, build client và kiểm tra UI.
+
+## Bỏ luồng phòng học khỏi UC45–47 — 2026-10-11 (v1.4.0, xem feat-room-allocation)
+- [x] Cập nhật SPEC v1.4.0, đánh dấu AC11/12/13/16/17 bị thay; đồng bộ SRS, đặc tả/mô hình UC, diagram, guide book, DOCX.
+- [ ] Chặn ROOM ở mọi endpoint CLB; `booking-properties` của CLB không trả ROOM.
+- [ ] Gỡ endpoint overbook, `booking-responsible`, `RoomOverbookingForm` và i18n liên quan.
+- [ ] ICPDP không đề xuất ROOM làm phương án thay thế; UC25 từ chối gắn booking ROOM.
+- [ ] Unit/integration, `npm run check`, build client và kiểm tra UI `/club/:clubId/bookings`.

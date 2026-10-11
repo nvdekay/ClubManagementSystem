@@ -26,7 +26,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 | 4 | Duyệt → công bố sự kiện; sự kiện cấp trường | UC25–UC28, UC53, UC54 | 17 |
 | 5 | Đăng ký → điểm danh | UC29–UC32 | 11 |
 | 6 | Trách nhiệm sau sự kiện | UC33, UC34 | 6 |
-| 7 | Cơ sở vật chất | UC44–UC47 | 11 |
+| 7 | Cơ sở vật chất; phân phòng học theo học kỳ | UC44–UC47, UC58 | 11 |
 | 8 | Tài chính | UC35–UC37 | 12 |
 | 9 | Báo cáo định kỳ | UC38, UC39 | 6 |
 | 10 | Phản hồi & khiếu nại | UC48–UC52 | 10 |
@@ -242,7 +242,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 
 ---
 
-## Vòng 7 — Cơ sở vật chất (UC44–UC47)
+## Vòng 7 — Cơ sở vật chất (UC44–UC47, UC58)
 
 Đã triển khai Wave 2 phía CLB/ICPDP ngày 2026-10-10; xem
 [WAVE_2_BOOKING.md](WAVE_2_BOOKING.md) và SPEC `feat-facility-booking`.
@@ -270,6 +270,14 @@ UC47 huỷ và hàm release dùng chung đã có; cascade UC28 còn mở ở BE-
 - [x] **FE-7.2** Màn yêu cầu booking kèm lịch hiển thị tình trạng trống và banner xung đột. → UC45
 - [x] **FE-7.3** Hàng đợi booking của ICPDP và màn quyết định. → UC46
 - [x] **FE-7.4** Màn booking của CLB kèm huỷ Requested/Approved, giải phóng lịch và cảnh báo huỷ muộn. Trả sớm In Use chưa thuộc phạm vi Wave 2. → UC47
+
+### Phân phòng học theo học kỳ (UC58) — thêm ngày 2026-10-11
+Phòng học `ROOM` chuyển sang ICPDP phân theo học kỳ (BR62); UC45–UC47 chỉ còn
+`HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`. Không đổi schema. Chi tiết và tiến độ ở
+`.sdd/specs/feat-room-allocation/SPEC.md` và `TASKS.md`.
+- [ ] **BE-7.7** UC58 tạo đợt phân phòng: sinh booking `Approved` cho mỗi ngày khớp chưa bắt đầu, bỏ qua blackout, từ chối cả đợt khi có xung đột; ghi audit `ROOM_ALLOCATED`, thông báo ban chủ nhiệm. → UC58, BR62
+- [ ] **BE-7.8** UC58 thu hồi có lý do: buổi chưa bắt đầu → `Released` (`ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ lịch sử; gỡ luồng CLB đặt ROOM trực tiếp và ICPDP đặt trùng phòng học. → UC58, BR33, BR35
+- [ ] **FE-7.5** ICPDP `/workspace/room-allocations` (chọn học kỳ, lọc CLB/toà nhà, dialog tạo kèm lưới chiếm dụng tuần, thu hồi) và CLB `/club/:clubId/rooms` chỉ đọc. → UC58
 
 ---
 

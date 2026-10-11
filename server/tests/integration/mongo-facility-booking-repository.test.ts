@@ -40,85 +40,25 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
     await mongoose.disconnect();
   });
   beforeEach(async () => {
-    for (const name of ["propertyBookings", "approvalTasks", "approvalDecisions", "auditLogs", "notifications", "properties", "clubs", "clubTerms", "clubPositions", "clubPositionAssignments", "clubMemberships", "users", "events"]) {
+    for (const name of ["propertyBookings", "approvalTasks", "approvalDecisions", "auditLogs", "notifications", "properties", "clubs", "events"]) {
       await m[name]!.deleteMany({});
     }
   });
-  async function leaderFixture(clubId: string) {
-    const club = new Types.ObjectId(clubId);
-    const user = await m.users!.create({ email: `${clubId}@example.edu`, displayName: "Leader A", accountState: "Active", createdAt: now });
-    const term = await m.clubTerms!.create({ clubId: club, name: "Current term", startAt: new Date("2026-09-01"),
-      endAt: new Date("2026-12-31"), state: "Active" });
-    const position = await m.clubPositions!.create({ clubId: club, code: "CLUB_LEADER", name: "Leader", isActive: true,
-      isLeaderRole: true, isBoardSeat: true, isSingleHolder: true, permissionCodes: [] });
-    const membership = await m.clubMemberships!.create({ clubId: club, userId: user._id, state: "Active", joinedAt: now, statusHistory: [] });
-    const assignment = await m.clubPositionAssignments!.create({ clubId: club, termId: term._id, positionId: position._id,
-      membershipId: membership._id, effectiveFrom: new Date("2026-09-01"), assignedBy: new Types.ObjectId(officer), confirmedBy: new Types.ObjectId(officer) });
-    return { user, term, membership, assignment };
-  }
-  it("rejects room draft creation in the transaction and creates an outdoor review task", async () => {
+  it("rejects every room request path in the transaction and creates an outdoor review task", async () => {
     const room = await fixture("ROOM");
-    await expect(repo.create(room.clubId, room.input, actor, now)).rejects.toThrow("direct reservation");
+    await expect(repo.create(room.clubId, room.input, actor, now)).rejects.toThrow("allocated by ICPDP");
     expect(await m.propertyBookings!.countDocuments({ clubId: room.clubId })).toBe(0);
+    const allocated = await m.propertyBookings!.create({ propertyId: new Types.ObjectId(room.input.propertyId),
+      clubId: new Types.ObjectId(room.clubId), clubName: "Club A", purpose: "ICPDP room allocation", startAt: room.input.startAt,
+      endAt: room.input.endAt, semesterCode: "FA26", state: "Approved", currentVersionNo: 0, createdAt: now });
+    await expect(repo.cancel(String(allocated._id), room.clubId, "Not needed", actor, now)).rejects.toThrow("allocated by ICPDP");
+    expect(await repo.list(room.clubId)).toEqual([]);
+    expect(await repo.conflicts(room.input, 30)).toHaveLength(1);
     const outdoor = await fixture("OUTDOOR"); const request = await submitted(outdoor.clubId, outdoor.input);
     expect(request.booking.state).toBe("Requested"); expect(request.task?.state).toBe("Open");
+    expect((await repo.list()).map((item) => item.id)).toEqual([request.booking.id]);
     await repo.claim(request.booking.id, officer, now);
     expect((await repo.decide(request.booking.id, officer, { outcome: "Approve", reason: "Approved outdoor activity" }, now)).booking.state).toBe("Approved");
-  });
-  it("reserves immediately, blocks simultaneous writers and preserves the responsible leader snapshot", async () => {
-    const { clubId, input } = await fixture("ROOM");
-    const leader = await leaderFixture(clubId);
-    const reservationInput = { ...input, headcount: 1, equipment: [] };
-    const results = await Promise.allSettled([
-      repo.reserve(clubId, reservationInput, actor, now), repo.reserve(clubId, reservationInput, officer, now),
-    ]);
-    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-    const rejected = results.find((result) => result.status === "rejected");
-    expect(rejected?.status === "rejected" && rejected.reason).toMatchObject({ kind: "conflict" });
-    const success = results.find((result) => result.status === "fulfilled");
-    if (!success || success.status !== "fulfilled") throw new Error("expected a reservation");
-    const id = success.value.booking.id;
-    expect(success.value).toMatchObject({ booking: { state: "Approved" }, task: null, decisions: [],
-      responsible: { id: String(leader.user._id), displayName: "Leader A", email: String(leader.user.email) } });
-    expect(await m.approvalTasks!.countDocuments()).toBe(0);
-    expect(await repo.conflicts(input, 30)).toHaveLength(1);
-    await m.users!.updateOne({ _id: leader.user._id }, { $set: { displayName: "Changed name" } });
-    await m.clubTerms!.updateOne({ _id: leader.term._id }, { $set: { state: "Closed" } });
-    expect(await repo.responsibleLeader(clubId, now)).toBeNull();
-    expect((await repo.find(id, now))?.responsible?.displayName).toBe("Leader A");
-    await repo.cancel(id, clubId, "No longer needed", actor, now);
-    expect(await repo.conflicts(input, 30)).toHaveLength(0);
-  });
-  it("serializes room reservations from different clubs", async () => {
-    const first = await fixture("ROOM");
-    const second = await fixture("ROOM");
-    await leaderFixture(first.clubId);
-    await leaderFixture(second.clubId);
-    const results = await Promise.allSettled([
-      repo.reserve(first.clubId, first.input, actor, now),
-      repo.reserve(second.clubId, first.input, officer, now),
-    ]);
-    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-    expect(await repo.conflicts(first.input, 30)).toHaveLength(1);
-    expect(await m.propertyBookings!.countDocuments({ state: "Approved" })).toBe(1);
-  });
-  it("requires an active confirmed leader and ignores obsolete submission cutoffs", async () => {
-    const { clubId, input } = await fixture("ROOM");
-    await expect(repo.reserve(clubId, input, actor, now)).rejects.toThrow("leader");
-    const leader = await leaderFixture(clubId);
-    await m.clubPositionAssignments!.updateOne({ _id: leader.assignment._id }, { $unset: { confirmedBy: "" } });
-    expect(await repo.responsibleLeader(clubId, now)).toBeNull();
-    await m.clubPositionAssignments!.updateOne({ _id: leader.assignment._id }, { $set: { confirmedBy: new Types.ObjectId(officer), effectiveTo: now } });
-    expect(await repo.responsibleLeader(clubId, now)).toBeNull();
-    await m.clubPositionAssignments!.updateOne({ _id: leader.assignment._id }, { $unset: { effectiveTo: "" } });
-    await m.clubMemberships!.updateOne({ _id: leader.membership._id }, { $set: { state: "Withdrawn" } });
-    expect(await repo.responsibleLeader(clubId, now)).toBeNull();
-    await m.clubMemberships!.updateOne({ _id: leader.membership._id }, { $set: { state: "Active" } });
-    const slot2 = { ...input, startAt: new Date("2026-10-12T10:00:00+07:00"), endAt: new Date("2026-10-12T12:20:00+07:00") };
-    expect((await repo.reserve(clubId, slot2, actor, new Date("2026-10-12T08:00:00+07:00"))).booking.state).toBe("Approved");
-    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: true } });
-    await expect(repo.reserve(clubId, slot2, actor, now)).rejects.toMatchObject({ kind: "conflict" });
-    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
   });
   it("keeps submitted versions immutable and creates a new review task after correction", async () => {
     const { clubId, input } = await fixture();
@@ -216,39 +156,6 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
       overbookingReason: "Shared room for a joint activity" }, now);
     expect(approved.booking.state).toBe("Approved");
     expect(approved.decisions[0]?.overbookingReason).toBe("Shared room for a joint activity");
-    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
-  });
-  it("records officer overbooking atomically and rechecks policy, role, reason and conflicts", async () => {
-    const { clubId, input } = await fixture("ROOM");
-    await leaderFixture(clubId);
-    const existing = await repo.reserve(clubId, input, actor, now);
-    const exception = { reason: " Joint activity in a shared room " };
-    await expect(repo.reserve(clubId, input, officer, now, exception)).rejects.toThrow("disabled by policy");
-    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: true } });
-    await expect(repo.reserve(clubId, input, actor, now, exception)).rejects.toMatchObject({ kind: "forbidden" });
-    await expect(repo.reserve(clubId, input, officer, now, { reason: " " })).rejects.toMatchObject({ kind: "validation" });
-    expect(await m.propertyBookings!.countDocuments()).toBe(1);
-    expect(await m.notifications!.countDocuments()).toBe(0);
-    const result = await repo.reserve(clubId, input, officer, now, exception);
-    expect(result).toMatchObject({ booking: { state: "Approved", conflictResult: "Warning" }, task: null,
-      overbooking: { actorId: officer, reason: "Joint activity in a shared room", at: now,
-        conflicts: [{ id: existing.booking.id, source: "booking" }] } });
-    expect(result.responsible).toBeDefined();
-    const audit = await m.auditLogs!.findOne({ entityId: new Types.ObjectId(result.booking.id), action: "BOOKING_RESERVED" }).lean();
-    expect(audit).toMatchObject({ reason: "Joint activity in a shared room", after: { overbooking: result.overbooking } });
-    expect(await m.notifications!.countDocuments({ entityId: new Types.ObjectId(result.booking.id), eventCode: "PROPERTY_BOOKING_STATUS" })).toBe(1);
-    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
-    await expect(repo.reserve(clubId, input, officer, now, exception)).rejects.toThrow("disabled by policy");
-    await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: true } });
-    await expect(repo.reserve(clubId, { ...input, startAt: new Date("2026-10-12T10:00:00+07:00"),
-      endAt: new Date("2026-10-12T12:20:00+07:00") }, officer, now, exception)).rejects.toThrow("occupied slot");
-    const properties = mongoPropertyRepository();
-    await properties.update(input.propertyId, { ...(await properties.find(input.propertyId))!,
-      blackouts: [{ startAt: input.startAt, endAt: input.endAt, reason: "Maintenance" }] }, officer, now);
-    await expect(repo.reserve(clubId, input, officer, now, exception)).rejects.toThrow("blackout");
-    expect(await m.propertyBookings!.countDocuments()).toBe(2);
-    expect(await m.auditLogs!.countDocuments({ action: "BOOKING_RESERVED" })).toBe(2);
-    expect(await m.notifications!.countDocuments()).toBe(1);
     await m.policyVersions!.updateMany({}, { $set: { allowOverbooking: false } });
   });
   it("cancels with late signals and releases slots and review tasks", async () => {

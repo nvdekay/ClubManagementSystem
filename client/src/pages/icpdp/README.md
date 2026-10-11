@@ -3,8 +3,11 @@
 `BookingReviewPage` (UC46) dùng `BookingWorkspace`: danh sách và chi tiết yêu cầu, nhận thẩm định
 độc quyền, quyết định có lý do, xem nghĩa vụ quá hạn và đề xuất phòng/thời gian thay thế.
 `PropertyBookingConflicts` nối UC44 FR-05, hiển thị yêu cầu đang chờ vướng blackout trong danh mục.
-`RoomOverbookingForm` cho ICPDP chọn CLB/phòng/ngày/slot trùng lịch và nhập lý do ngoại lệ;
-chỉ ghi khi policy bật, có conflict và có Chủ nhiệm hợp lệ. Server kiểm tra lại trong transaction.
+UC46 chỉ còn cho `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`; không đề xuất ROOM làm phương án thay thế.
+
+Trang "Phân phòng CLB" (route `/workspace/room-allocations`, UC58, nhóm sidebar "Sự kiện & cơ sở vật chất"):
+chọn học kỳ, danh sách đợt phân lọc theo CLB/toà, dialog tạo đợt (CLB, phòng ROOM, thứ, slot, ghi chú) có lưới
+chiếm dụng tuần của phòng, thu hồi kèm lý do. Server sinh booking và từ chối cả đợt khi có xung đột.
 
 Các trang nghiệp vụ chỉ dành cho `ICPDP_OFFICER`. Mỗi trang tự kiểm tra phiên đăng nhập và vai
 trò để hiển thị trạng thái phù hợp; API và use case vẫn kiểm tra quyền ở server.
