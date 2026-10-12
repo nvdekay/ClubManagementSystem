@@ -10,10 +10,12 @@ Guide book cho người dùng UCMS, theo ba không gian Student, CLB và ICPDP.
 - `build-guide.py`: dựng lại HTML từ Markdown và PNG bằng Python standard library,
   không cần cài thêm dependency.
 
-Ảnh cuối dùng API thật với MongoDB đã seed, không dùng API fixture trong trình duyệt.
-Các màn wave 4 dùng database `ucms_guide_demo` riêng với policy mẫu; không thay policy ở database
-nguồn. Google OAuth chưa được kiểm thử lại: phiên local cấp qua SessionService, quyền và
-CSRF vẫn được kiểm tra bình thường. UC36/UC37 chưa được nối ở server chính.
+Bản 12/10/2026 phủ mọi màn hình đang có (23 chương). Mọi trang, kể cả trang chủ và danh bạ, nay
+yêu cầu đăng nhập. Ảnh 04 chụp lại theo giao diện mới; các ảnh khác chụp ngày 11/10/2026 trước
+đợt đổi giao diện thanh bên. Ảnh 01–03 và 05 đã bỏ khỏi guide, chờ chụp lại bằng một phiên đăng
+nhập. Màn khoản chi (UC36) và đối soát (UC37) chưa được nối API ở server chính; ảnh của chúng
+lấy từ database demo `ucms_guide_demo`. Các phần ghi **Hiện trạng** trong guide là chức năng còn
+thiếu màn hình hoặc chưa nối API.
 
 ## Tạo dữ liệu
 

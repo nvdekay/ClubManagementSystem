@@ -33,10 +33,11 @@
       "file": "04-login.png",
       "url": "/login",
       "source": "local-api",
-      "action": "Mở màn hình",
+      "action": "Mở màn hình khi chưa đăng nhập",
       "viewport": "1440 × 1000",
       "locale": "vi",
-      "theme": "light"
+      "theme": "light",
+      "capturedAt": "2026-10-12"
     },
     {
       "file": "05-workspaces.png",
@@ -348,6 +349,7 @@
   "notes": [
     "All final screenshots use a real API and seeded MongoDB data; no API fixture interception remains.",
     "Google OAuth was not exercised; local sessions use SessionService.",
-    "Wave 4 screenshots use the isolated ucms_guide_demo database and a demo-only financial policy."
+    "Wave 4 screenshots use the isolated ucms_guide_demo database and a demo-only financial policy.",
+    "2026-10-12: 04-login.png recaptured after the login redesign; public pages now require sign-in, so 01-03 and 05 are no longer used in the guide."
   ]
 }
