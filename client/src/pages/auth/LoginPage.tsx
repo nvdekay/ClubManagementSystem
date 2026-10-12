@@ -32,17 +32,19 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
           draggable={false}
           className="pointer-events-none absolute inset-0 size-full object-cover object-[78%_center]"
         />
+        {/* Darkens the bottom of the photo so the white brand text stays readable in both themes. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-black/75 via-black/35 to-transparent" />
         <div className="relative self-start">
           <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />
         </div>
-        <div className="relative w-full max-w-sm rounded-2xl bg-bg-app p-5 text-text-app shadow-lg">
-          <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft-app px-3 py-1 text-xs font-semibold text-primary-app">
+        <div className="relative w-full max-w-md text-white">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
             <AppIcon name="graduationCap" className="size-4" />{t("auth.loginChip")}
           </span>
-          <p className="mt-3 font-auth-heading text-3xl leading-tight font-extrabold tracking-[-0.025em]">
+          <p className="mt-3 font-auth-heading text-4xl leading-tight font-extrabold tracking-[-0.025em] text-shadow-lg sm:text-5xl">
             {t("auth.brand")}
           </p>
-          <p className="mt-1.5 text-sm text-pretty text-muted-app">{t("auth.systemDescription")}</p>
+          <p className="mt-2 text-base text-pretty text-white/85 text-shadow-md">{t("auth.systemDescription")}</p>
         </div>
       </section>
 
