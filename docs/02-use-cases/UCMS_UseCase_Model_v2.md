@@ -58,8 +58,11 @@ dashboard, danh mục CLB và không gian thành viên mà v1 đã bỏ đi vì 
 Google SMTP và Cloudinary (lưu ảnh tải lên) với tư cách hệ thống ngoài. Actor `Club Management
 Board (CMB)` của §4 được tách thành Club Member và Club Leader (I58):
 
-- **Chuỗi generalization:** Student ◁ Club Member ◁ Club Leader. Club Member là một Student;
-  Club Leader là một Club Member; mỗi actor kế thừa mọi use case của actor cha.
+- **Chuỗi generalization:** User ◁ Student ◁ Club Member ◁ Club Leader; User ◁ ICPDP Officer.
+  User là actor trừu tượng gom UC01 và UC02. Club Member là một Student; Club Leader là một
+  Club Member; mỗi actor kế thừa mọi use case của actor cha. Mỗi trang nghiệp vụ chỉ vẽ quan hệ
+  kế thừa tới actor cha trực tiếp bằng nét liền, tam giác rỗng hướng về actor cha, bên ngoài
+  biên `UCMS`; trang All users giữ cây tổng thể. Các oval được kế thừa tham chiếu sang trang của actor cha.
 - **Club Member** — Student có tư cách thành viên `Active` (UC24 cho phép cả `Inactive`) ở một
   CLB. Actor chính của UC22 và UC24 (mọi thành viên) và của các use case vận hành CLB; một use case
   vận hành chỉ làm được khi role của người gọi trong CLB đó có permission tương ứng (BR54). Một

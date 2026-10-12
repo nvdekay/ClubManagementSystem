@@ -15,7 +15,8 @@ nhau về một yêu cầu, **lấy theo SRS**.
 
 Bản Word sử dụng hiện tại: [Group1_SE1939-NJ_Report_Final_v2.docx](Group1_SE1939-NJ_Report_Final_v2.docx).
 Các DOCX report, đặc tả và sơ đồ cũ đã được xoá theo yêu cầu; nguồn Markdown, draw.io và PNG
-vẫn được giữ để chỉnh sửa và đối chiếu.
+vẫn được giữ để chỉnh sửa và đối chiếu. Bản Word tổng hợp sơ đồ theo actor hiện hành:
+[UCMS_UseCase_ByActor.docx](UCMS_UseCase_ByActor.docx).
 
 ## Bản đồ thư mục
 
@@ -39,7 +40,8 @@ vẫn được giữ để chỉnh sửa và đối chiếu.
 
 Use case diagram chuẩn là [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio)
 và chín ảnh `03-diagrams/img/UCMS_UseCase_ByActor_*.png`. Các hình use case trong report v2
-dùng bộ ảnh này. Bản DOCX sơ đồ riêng đã được xoá để tránh dùng nhầm bản cũ.
+dùng bộ ảnh này. [UCMS_UseCase_ByActor.docx](UCMS_UseCase_ByActor.docx) tổng hợp đủ chín ảnh
+hiện hành, mỗi ảnh một trang; cần xuất lại bản Word khi cập nhật bộ ảnh nguồn.
 
 ## Quy ước
 

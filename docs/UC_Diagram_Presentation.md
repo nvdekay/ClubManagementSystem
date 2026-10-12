@@ -84,7 +84,8 @@
 > - **View dashboard**: mỗi vai trò có một màn hình trả lời hai câu hỏi — *việc gì đang chờ tôi xử
 >   lý*, và *những gì tôi đã nộp đang ở trạng thái nào*.
 >
-> Nhờ generalization, các hình sau không phải vẽ lại những use case đã kế thừa.
+> Trên từng hình sau, mỗi actor chỉ nối kế thừa tới actor cha trực tiếp, với tam giác
+> rỗng hướng về actor cha. Cây kế thừa tổng thể nằm ở hình All users. Các chức năng được kế thừa xem ở hình của actor cha.
 
 ### Bảng ánh xạ
 

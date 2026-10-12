@@ -44,8 +44,9 @@ Hình đầu tiên là phần chung và quan hệ giữa các actor.
   - View dashboard (UC02): mỗi vai trò có một màn hình trả lời 2 câu hỏi:
     việc gì đang chờ tôi xử lý, và những gì tôi đã nộp đang ở trạng thái nào.
 
-Nhờ generalization nên các hình sau không phải vẽ lại các use case đã kế
-thừa.
+Trên từng hình sau, mỗi actor chỉ nối kế thừa tới actor cha trực tiếp,
+với tam giác rỗng hướng về actor cha. Cây tổng thể nằm ở hình All users. Các chức năng được kế thừa xem
+ở hình của actor cha.
 
 ======================================================================
 HÌNH III.3.2 — Use cases of the Student

@@ -244,6 +244,10 @@ generalization **Student ◁ Club Member ◁ Club Leader** (một Club Member l�
 Leader là một Club Member). Các vai trò con bên trong CLB (thủ quỹ, trưởng ban…) là **role CLB**
 có permission (UC23, BR54, BR55), không tạo thành actor mới; phân cấp trong ICPDP là RBAC.
 
+**User** là actor trừu tượng gom UC01 và UC02; Student và ICPDP Officer kế thừa User.
+Mỗi trang use case nghiệp vụ chỉ vẽ quan hệ kế thừa tới actor cha trực tiếp; cây kế thừa
+tổng thể nằm ở trang All users. Các use case của actor cha được trình bày ở trang của actor đó.
+
 "CMB" trong tài liệu này là **tên gọi chung của phía CLB** — Club Leader cùng các Club Member có
 role phù hợp — chứ không phải một actor.
 
@@ -3592,6 +3596,10 @@ Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
   `Cancel / release facility booking` (UC47). Không có chức năng CLB đặt phòng học hay ICPDP
   duyệt đặt trùng phòng học. PNG các trang liên quan đã đồng bộ với `.drawio` ngày 2026-10-12.
 - Actor vẽ bằng hình người; biên hệ thống là một khung có nhãn `UCMS`.
+- Mỗi trang nghiệp vụ chỉ vẽ một quan hệ generalization tới actor cha trực tiếp bên ngoài biên hệ thống:
+  Student → User; Club Member → Student; Club Leader → Club Member; ICPDP Officer → User.
+  Trang All users giữ cây kế thừa tổng thể. Nét liền, tam giác rỗng hướng về actor cha; các oval được kế thừa
+  tham chiếu sang trang actor cha.
 - Mỗi trang actor chỉ nối actor tới các use case nhóm `Manage …`; use case nhóm `«include»` các
   chức năng con (use case quản lý danh mục tách theo CRUD). Oval chỉ ghi tên, không ghi mã UC.
 - Không vẽ `«extend»`. Quan hệ UC45→UC25 và UC47→UC28 chỉ ghi trong Spec (luồng thay thế,

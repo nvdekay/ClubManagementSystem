@@ -37,6 +37,14 @@ Mỗi nhóm `Manage …` chỉ nằm trong một khung, nên không được g�
 cùng một nhóm. Khung `No permission required` chứa UC22, UC24. Bốn quyền giữ riêng của Club Leader
 (BR55) chỉ vẽ ở trang Club Leader.
 
+**Kế thừa actor trên từng trang (2026-10-12):** mỗi trang nghiệp vụ chỉ vẽ một quan hệ
+generalization tới actor cha trực tiếp bên ngoài biên `UCMS`: Student → User; Club Member → Student;
+Club Leader → Club Member; ICPDP Officer → User. Mũi tên dùng nét liền,
+tam giác rỗng hướng về actor cha. Trang All users giữ cây kế thừa tổng thể. Các use case được
+kế thừa tham chiếu sang trang của actor cha, không cần lặp lại oval trên trang của actor con.
+Tám trang nghiệp vụ đã được xuất lại PNG; bản Word tổng hợp ở
+[`../UCMS_UseCase_ByActor.docx`](../UCMS_UseCase_ByActor.docx) dùng bộ ảnh đã cập nhật.
+
 **Luồng phòng học và CSVC (đối chiếu code ngày 2026-10-12):** ICPDP cấp phòng học `ROOM`
 theo học kỳ qua `Manage room allocations` (UC58), gồm cấp, xem và thu hồi. CLB xem qua
 `Manage allocated rooms «include» View allocated rooms` trong khung `club.booking.manage` ở
