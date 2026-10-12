@@ -84,7 +84,8 @@
 > - **View dashboard**: mỗi vai trò có một màn hình trả lời hai câu hỏi — *việc gì đang chờ tôi xử
 >   lý*, và *những gì tôi đã nộp đang ở trạng thái nào*.
 >
-> Nhờ generalization, các hình sau không phải vẽ lại những use case đã kế thừa.
+> Trên từng hình sau, mỗi actor chỉ nối kế thừa tới actor cha trực tiếp, với tam giác
+> rỗng hướng về actor cha. Cây kế thừa tổng thể nằm ở hình All users. Các chức năng được kế thừa xem ở hình của actor cha.
 
 ### Bảng ánh xạ
 
@@ -279,9 +280,8 @@ Hệ thống cảnh báo và liệt kê những gì sẽ bị huỷ nếu ICPDP 
 > role — RBAC. Ví dụ trưởng ban truyền thông có thể được giao quyền tạo đợt tuyển mà không cần là
 > chủ nhiệm.
 >
-> - **Manage my membership** include **View member workspace**, **Request to leave club** và
->   **View allocated rooms** — xem lịch phòng học ICPDP đã phân cho CLB (UC58, chỉ đọc). Ba việc
->   này mọi thành viên đều làm được, không cần quyền gì thêm.
+> - **Manage my membership** include **View member workspace** và **Request to leave club**.
+>   Hai việc này mọi thành viên đều làm được, không cần quyền gì thêm.
 > - **Manage club profile** include View club profile, Update club information và Define club
 >   structure — hồ sơ CLB và các ban, bộ phận.
 > - **Manage recruitment campaigns** include Create, Update và Publish recruitment campaign.
@@ -296,7 +296,6 @@ Hệ thống cảnh báo và liệt kê những gì sẽ bị huỷ nếu ICPDP 
 |---|---|---|
 | View member workspace | UC24 | — (mọi thành viên `Active`/`Inactive`) |
 | Request to leave club | UC22 | — (mọi thành viên) |
-| View allocated rooms | UC58 (đọc) | — (mọi thành viên `Active`); actor chính của UC58 là ICPDP |
 | View club profile / Update club information / Define club structure | UC09 | `club.profile.manage` |
 | Create / Update / Publish recruitment campaign | UC16 | `club.recruitment.manage` |
 | Screen applications | UC18 | `club.application.review` |
@@ -360,10 +359,12 @@ nghĩa vụ còn treo.
 >   trả phòng, tính lại ngân sách.
 > - **Manage waitlist**: quản lý sức chứa, đôn người từ danh sách chờ theo đúng thứ tự.
 >
-> **Manage bookings** include **Request facility booking** và **Cancel / release booking**. CLB
+> **Manage facility bookings** include **Request non-room facility booking** và **Cancel / release facility booking**. CLB
 > chỉ xin hội trường, sân ngoài trời, sân khấu hoặc thiết bị (`HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`),
 > yêu cầu đi qua ICPDP duyệt ở UC46. Phòng học (`ROOM`) không còn đặt ở đây: ICPDP phân theo học
-> kỳ (UC58), CLB chỉ xem ở **View allocated rooms** (hình III.3.4).
+> kỳ (UC58), thành viên có `club.booking.manage` xem ở **View allocated rooms** (hình III.3.5).
+> **Manage allocated rooms** include **View allocated rooms** trong cùng khung permission này:
+> thành viên phụ trách xuất trình lịch cho bảo vệ để nhận chìa khoá, không tự đặt hay huỷ phòng học.
 
 ### Bảng ánh xạ
 
@@ -373,8 +374,9 @@ nghĩa vụ còn treo.
 | Publish event | UC27 | Chỉ khi `Approved` (BR14) → `Upcoming` |
 | Cancel / reschedule event | UC28 | Huỷ sự kiện tự giải phóng booking (BR35) |
 | Manage waitlist | UC30 | Đôn chỗ theo chính sách |
-| Request facility booking | UC45 | Chỉ `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`; Draft → Requested → ICPDP duyệt; CLB `Active` hoặc `Dissolving` trong giới hạn học kỳ (BR15, BR34, BR45) |
-| Cancel / release booking | UC47 | Chỉ booking ngoài ROOM; huỷ sát giờ là tín hiệu tuân thủ |
+| View allocated rooms | UC58 (đọc) | `club.booking.manage` trong đúng CLB; xuất trình cho bảo vệ khi nhận chìa khoá |
+| Request non-room facility booking | UC45 | Chỉ `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`; Draft → Requested → ICPDP duyệt; CLB `Active` hoặc `Dissolving` trong giới hạn học kỳ (BR15, BR34, BR45) |
+| Cancel / release facility booking | UC47 | Chỉ booking ngoài ROOM; huỷ sát giờ là tín hiệu tuân thủ |
 
 ### Q&A
 
@@ -568,7 +570,7 @@ Không. Audit là quy tắc xuyên suốt (BR05). Lịch sử quyết định đ
 >   kèm** — và **Close event report** — đối chiếu kế hoạch với thực tế rồi đóng sự kiện.
 > - **Manage properties** include Add, View, Update, Deactivate property: danh mục phòng và thiết bị
 >   mà CLB được phép đặt.
-> - **Manage bookings** include **Decide facility booking request**: duyệt yêu cầu hội trường, sân
+> - **Manage facility bookings** include **Decide non-room facility request**: duyệt yêu cầu hội trường, sân
 >   ngoài trời, sân khấu, thiết bị. Duyệt trùng chỉ khi policy bật và nhập lý do (BR33).
 > - **Manage room allocations** include **Allocate club room by semester**, **View room allocations**
 >   và **Revoke room allocation** (UC58): trước hoặc trong học kỳ, ICPDP chọn CLB, phòng học, thứ và
@@ -588,7 +590,7 @@ Không. Audit là quy tắc xuyên suốt (BR05). Lịch sử quyết định đ
 | Decide event proposal | UC26 | Cặp với UC25; ngân sách vượt ngưỡng → cấp 2 (BR16) |
 | Close event report | UC34 | Cặp với UC33; phát hiện sai phạm → mở hồ sơ UC40 |
 | Add / View / Update / Deactivate property | UC44 | Property còn booking tương lai chỉ ngừng kích hoạt, không xoá |
-| Decide facility booking request | UC46 | Chỉ `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`; slot trùng cần lý do ngoại lệ và policy bật (BR33) |
+| Decide non-room facility request | UC46 | Chỉ `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`; slot trùng cần lý do ngoại lệ và policy bật (BR33) |
 | Allocate / View / Revoke room allocation | UC58 | Một CLB mỗi phòng/thứ/slot mỗi học kỳ; xung đột → từ chối cả đợt; bỏ qua ngày blackout; thu hồi giữ buổi đã qua (BR62) |
 | Record disbursement | UC35 | Tổng tạm ứng + cấp bù ≤ số duyệt (BR23) |
 | Reconcile budget | UC37 | Ngân sách chỉ đóng khi chênh lệch đã tất toán (BR26) |
@@ -723,8 +725,8 @@ ICPDP là người kích hoạt và chịu trách nhiệm bản nháp; hệ th�
 | III.3.1 | Mọi User | UC01, UC02 | 2 |
 | III.3.2 | Student | UC06, UC07, UC17, UC29, UC31, UC48, UC50 | 7 |
 | III.3.3 | Club Leader | UC10, UC12, UC14, UC23 | 4 |
-| III.3.4 | Club Member — CLB & tuyển | UC09, UC16, UC18, UC19, UC20, UC21, UC22, UC24 (+ xem UC58, không đếm lại) | 8 |
-| III.3.5 | Club Member — sự kiện & booking | UC25, UC27, UC28, UC30, UC45, UC47 | 6 |
+| III.3.4 | Club Member — CLB & tuyển | UC09, UC16, UC18, UC19, UC20, UC21, UC22, UC24 | 8 |
+| III.3.5 | Club Member — sự kiện & booking | UC25, UC27, UC28, UC30, UC45, UC47 (+ xem UC58, không đếm lại) | 6 |
 | III.3.6 | Club Member — giải trình & tài chính | UC32, UC33, UC36, UC38, UC49, UC52 | 6 |
 | III.3.7 | ICPDP — truy cập & vòng đời CLB | UC03, UC04, UC05, UC08, UC11, UC13, UC15 | 7 |
 | III.3.8 | ICPDP — sự kiện, booking & tài chính | UC26, UC34, UC35, UC37, UC44, UC46, UC58 | 7 |
@@ -743,7 +745,7 @@ ICPDP là người kích hoạt và chịu trách nhiệm bản nháp; hệ th�
 | UC33 Submit event report | UC34 Close event report |
 | UC36 Submit settlement | UC37 Reconcile budget |
 | UC38 Submit periodic report | UC39 Assess periodic report |
-| UC45 Request facility booking | UC46 Decide facility booking request |
+| UC45 Request non-room facility booking | UC46 Decide non-room facility request |
 | UC50 Submit complaint | UC51 Triage complaint |
 
 ---

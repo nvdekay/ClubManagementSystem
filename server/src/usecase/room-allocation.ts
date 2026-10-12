@@ -5,7 +5,7 @@ import type { PolicyRepository } from "../domain/policy.js";
 import type { PropertyRepository } from "../domain/property.js";
 import { allocationId, allocationReason, planRoomAllocation, validateRoomAllocationInput,
   type RoomAllocation, type RoomAllocationInput, type RoomAllocationOptions, type RoomAllocationRepository } from "../domain/room-allocation.js";
-import { assertClubSettingsRead, type AccessActor } from "./access.js";
+import { assertClubAccess, type AccessActor } from "./access.js";
 
 export interface RoomAllocationDeps {
   repo: RoomAllocationRepository; properties: PropertyRepository; policy: PolicyRepository;
@@ -60,7 +60,7 @@ export async function revokeRoomAllocation(deps: RoomAllocationDeps, actor: Acce
 /** Read-only club view: active allocations with their remaining usable dates, shown when collecting the key. */
 export async function clubRoomAllocations(deps: RoomAllocationDeps, actor: AccessActor | null,
   clubId: string, now: Date): Promise<RoomAllocation[]> {
-  await assertClubSettingsRead(deps.access, actor, clubId, now);
+  await assertClubAccess(deps.access, actor, clubId, "club.booking.manage", now);
   const allocations = await deps.repo.list({ clubId: allocationId(clubId) });
   return allocations.filter((item) => !item.revokedAt).map((item) => ({ ...item,
     occurrences: item.occurrences.filter((occurrence) => occurrence.endAt > now

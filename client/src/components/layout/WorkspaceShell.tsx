@@ -323,7 +323,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
     ]),
     ...group("club-resources", t("common.groupFinanceFacilities"), "mapPin", [
       ...(can("club.expense.record") ? [{ to: `${base}/budgets`, label: t("common.navEventFinances"), icon: "file" as const }] : []),
-      ...(member ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "calendar" as const }] : []),
+      ...(can("club.booking.manage") ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "calendar" as const }] : []),
       ...(can("club.booking.manage") ? [{ to: `${base}/bookings`, label: t("common.navBookings"), icon: "mapPin" as const }] : []),
     ]),
     ...(can("club.feedback.view") ? [{ to: `${base}/feedback`, label: t("common.navFeedbackInbox"), icon: "inbox" as const }] : []),

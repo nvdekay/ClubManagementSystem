@@ -153,7 +153,7 @@ sửa hoặc từ chối.
 | Quản lý điểm danh | Đăng ký & điểm danh |
 | Nộp báo cáo | Báo cáo sau sự kiện |
 | Ghi nhận chi tiêu | Khoản chi và quyết toán |
-| Quản lý đặt phòng | Yêu cầu cơ sở vật chất |
+| Quản lý cơ sở vật chất | Phòng được phân, Yêu cầu cơ sở vật chất |
 | Xem góp ý | Phản hồi sự kiện, Góp ý sinh viên |
 
 **Kết quả:** vai trò Chủ nhiệm luôn có mọi quyền và không sửa được. Vai trò một người giữ
@@ -378,17 +378,22 @@ hội trường, sân trường, sân khấu và thiết bị.
 
 ### 12.3. CLB xem phòng được phân
 
-**Nơi bắt đầu:** **Phòng được phân** (`/club/:clubId/rooms`), mọi thành viên đang hoạt động.
+**Vai trò:** thành viên đang hoạt động có quyền **Quản lý cơ sở vật chất**, được Chủ nhiệm giao
+phụ trách cơ sở vật chất và nhận chìa khoá. **Nơi bắt đầu:** **Phòng được phân**
+(`/club/:clubId/rooms`).
 
 1. Xem lịch tuần của học kỳ hiện tại và sắp tới: thứ, slot, giờ, phòng, toà nhà, ghi chú.
-2. Xem danh sách các buổi sắp tới; đưa màn hình này cho bộ phận quản lý phòng khi nhận chìa
-   khoá.
+2. Xem danh sách các buổi sắp tới.
+3. Xuất trình màn hình này cho bảo vệ để nhận chìa khoá phòng.
 
-**Kết quả:** màn hình chỉ để xem. CLB bị tạm ngừng hoặc giải thể mất các buổi tương lai.
+Nếu không thấy mục **Phòng được phân**, liên hệ Chủ nhiệm CLB để được cấp quyền.
+
+**Kết quả:** màn hình chỉ để xem; CLB không đặt, huỷ hay xin phòng học trên app. CLB bị tạm
+ngừng hoặc giải thể mất các buổi tương lai.
 
 ### 12.4. Yêu cầu cơ sở vật chất và thẩm định
 
-**Vai trò:** CLB có quyền **Quản lý đặt phòng**; ICPDP thẩm định.
+**Vai trò:** CLB có quyền **Quản lý cơ sở vật chất**; ICPDP thẩm định.
 
 1. CLB mở **Yêu cầu cơ sở vật chất** (`/club/:clubId/bookings`), chọn tài sản, ngày và slot;
    kiểm tra sức chứa, thiết bị và tình trạng còn trống; lưu nháp rồi gửi.

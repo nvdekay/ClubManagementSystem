@@ -50,10 +50,12 @@ chứng khi nhận chìa khoá.
   `ROOM_ALLOCATION_REVOKED` (kèm lý do).
 
 ### Phía CLB (chỉ đọc)
-- `/club/:clubId/rooms` — "Phòng được phân": mọi thành viên hiện tại của CLB (`Active`/`Inactive`,
-  cùng quy tắc đọc `assertClubSettingsRead`) xem được, không cần permission CLB riêng; menu ẩn với
-  founder chưa có membership. Hiển thị lịch tuần của học kỳ hiện tại và sắp tới (thứ, slot, giờ, phòng,
-  toà, ghi chú) và các buổi sắp tới. CLB không đặt, huỷ hay xin phòng học.
+- `/club/:clubId/rooms` — "Phòng được phân": chỉ thành viên `Active` có
+  `club.booking.manage` trong đúng CLB (bao gồm Club Leader theo BR54) xem được. Dùng permission
+  CSVC hiện có; Club Leader gán cho role của thành viên phụ trách nhận chìa khoá. API kiểm tra
+  `assertClubAccess`; menu ẩn và trang chặn khi thiếu quyền. Hiển thị lịch tuần của học kỳ hiện tại
+  và sắp tới (thứ, slot, giờ, phòng, toà, ghi chú) và các buổi sắp tới để xuất trình cho bảo vệ.
+  CLB không đặt, huỷ hay xin phòng học.
 - `/club/:clubId/bookings` chỉ còn yêu cầu `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` (UC45–47).
 
 ### Phía ICPDP (UI)
@@ -75,7 +77,7 @@ chứng khi nhận chìa khoá.
 | `GET /admin/room-allocations/options` | ICPDP | Học kỳ chưa kết thúc, CLB `Active`/`Dissolving`, phòng ROOM đang hoạt động |
 | `POST /admin/room-allocations` | ICPDP + CSRF | `{semesterCode, clubId, propertyId, weekday, slot, note?}` → 201 đợt phân kèm các buổi đã sinh; 409 kèm danh sách xung đột |
 | `POST /admin/room-allocations/{id}/revoke` | ICPDP + CSRF | `{reason}` → 200 đợt phân sau thu hồi; 409 nếu đã thu hồi |
-| `GET /clubs/{clubId}/room-allocations` | Thành viên hiện tại của CLB | Đợt phân chưa thu hồi còn buổi sắp tới, chỉ kèm các buổi `Approved`/`In Use` chưa kết thúc |
+| `GET /clubs/{clubId}/room-allocations` | Thành viên `Active` có `club.booking.manage` trong CLB | Đợt phân chưa thu hồi còn buổi sắp tới, chỉ kèm các buổi `Approved`/`In Use` chưa kết thúc |
 
 Lỗi: 400 validate (học kỳ không có, thứ/slot sai, ngoài khung giờ được đặt, không còn ngày),
 401/403/423 theo auth chung, 404 CLB/phòng/đợt không tồn tại, 409 học kỳ đã kết thúc, CLB sai
@@ -104,7 +106,7 @@ xoá hẳn kèm task/decision/notification/audit của chúng; demo seed vài đ
 - Phòng ngừng hoạt động sau khi đã phân: các buổi đã sinh giữ nguyên (UC44 A1).
 
 ## Tiêu chí nghiệm thu
-- [x] AC1: Chỉ ICPDP gọi được API admin; thành viên `Active` của đúng CLB đọc được API CLB, người khác 403.
+- [x] AC1: Chỉ ICPDP gọi được API admin; chỉ thành viên `Active` có `club.booking.manage` trong đúng CLB đọc được API CLB; thiếu quyền, `Inactive`, role hết hạn hoặc CLB khác bị 403.
 - [x] AC2: Sinh đúng một booking `Approved` cho mỗi ngày khớp, chỉ ngày chưa bắt đầu, đúng giờ UTC+7.
 - [x] AC3: Ngày trùng blackout bị bỏ qua và trả về; ngoài khung giờ được đặt hoặc không còn ngày → 400.
 - [x] AC4: Một ngày xung đột với booking/sự kiện chiếm phòng → 409, không ghi gì; liệt kê ngày xung đột; `allowOverbooking` không có tác dụng.

@@ -58,8 +58,12 @@ dashboard, danh mục CLB và không gian thành viên mà v1 đã bỏ đi vì 
 Google SMTP và Cloudinary (lưu ảnh tải lên) với tư cách hệ thống ngoài. Actor `Club Management
 Board (CMB)` của §4 được tách thành Club Member và Club Leader (I58):
 
-- **Chuỗi generalization:** Student ◁ Club Member ◁ Club Leader. Club Member là một Student;
-  Club Leader là một Club Member; mỗi actor kế thừa mọi use case của actor cha.
+- **Chuỗi generalization:** User ◁ Student ◁ Club Member ◁ Club Leader; User ◁ ICPDP Officer.
+  User là actor trừu tượng gom UC01 và UC02. Club Member là một Student; Club Leader là một
+  Club Member; mỗi actor kế thừa mọi use case của actor cha. Mỗi trang nghiệp vụ chỉ vẽ quan hệ
+  kế thừa tới actor cha trực tiếp bằng nét liền, tam giác rỗng hướng về actor cha, bên ngoài
+  biên `UCMS`; trang All users giữ cây tổng thể. Các oval được kế thừa tham chiếu sang trang của actor cha.
+  Nét nối `«include»` phải tránh cắt qua oval khác; trang Club Leader đã chỉnh điểm nối và xuất lại ảnh.
 - **Club Member** — Student có tư cách thành viên `Active` (UC24 cho phép cả `Inactive`) ở một
   CLB. Actor chính của UC22 và UC24 (mọi thành viên) và của các use case vận hành CLB; một use case
   vận hành chỉ làm được khi role của người gọi trong CLB đó có permission tương ứng (BR54). Một
@@ -184,6 +188,13 @@ Hai mâu thuẫn của v1 quanh mô hình actor được giải quyết tại đ
 | UC46 | Thẩm định yêu cầu cơ sở vật chất | ICPDP | Cấp phát nguồn lực có kiểm soát |
 | UC47 | Theo dõi và huỷ / trả cơ sở vật chất đã đặt | Club Member | Giải phóng thứ không còn cần |
 | UC58 | Phân phòng học cho CLB theo học kỳ | ICPDP | Cấp phòng học cố định theo mẫu tuần cho cả học kỳ |
+
+Trong use case diagram, `Manage room allocations` thuộc ICPDP (UC58); phía CLB chỉ có
+`Manage allocated rooms «include» View allocated rooms` trong khung `club.booking.manage`,
+dành cho thành viên phụ trách xuất trình lịch cho bảo vệ để nhận chìa khoá. Nhóm `Manage facility bookings` dành cho tài sản ngoài `ROOM`, gồm
+`Request non-room facility booking` (UC45), `Decide non-room facility request` (UC46) và
+`Cancel / release facility booking` (UC47). Các ảnh PNG liên quan đã được đồng bộ với nguồn
+`.drawio` ngày 2026-10-12.
 
 ### M12 — Phản hồi và khiếu nại
 

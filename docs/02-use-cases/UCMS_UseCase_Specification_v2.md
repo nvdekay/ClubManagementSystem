@@ -29,6 +29,12 @@ liệu mô hình.
 (BR54); bốn use case UC10, UC12, UC14, UC23 thuộc riêng Club Leader (BR55). Trong câu văn, "CMB"
 vẫn là tên gọi chung của phía CLB.
 
+**Kế thừa actor trên sơ đồ.** User là actor trừu tượng gom UC01 và UC02. Mỗi trang theo actor
+chỉ vẽ quan hệ tới actor cha trực tiếp: Student → User; Club Member → Student;
+Club Leader → Club Member; ICPDP Officer → User. Trang All users giữ cây tổng thể. Mũi tên dùng nét liền,
+tam giác rỗng hướng về actor cha. Các oval được kế thừa tham chiếu sang trang actor cha;
+quyền và luồng của từng use case giữ theo đặc tả dưới đây.
+
 ---
 
 ## Mục lục
@@ -1665,8 +1671,9 @@ lại UC06–UC52.
      `No Conflict`, `decidedBy`/`decidedAt` = officer/thời điểm phân), ghi audit
      `ROOM_ALLOCATED` (entityType `RoomAllocation`, `after` gồm semesterCode, clubId, clubName,
      propertyId, weekday, slot, note, bookingIds) và gửi thông báo `ROOM_ALLOCATED` tới ban chủ nhiệm.
-  6. CLB thấy lịch tuần và các ngày sắp tới ở trang "Phòng được phân" (chỉ đọc, mọi thành viên
-     active) và dùng màn hình này làm bằng chứng khi nhận chìa khoá phòng.
+  6. Thành viên `Active` có `club.booking.manage` trong đúng CLB xem lịch tuần và các ngày sắp
+     tới ở trang "Phòng được phân" (chỉ đọc) để xuất trình cho bảo vệ khi nhận chìa khoá phòng.
+     Thành viên thiếu quyền không xem được; Club Leader gán quyền cho role của người phụ trách.
 - **Luồng thay thế:**
   - **A1 Thu hồi:** officer chọn một đợt phân phòng và nhập lý do (bắt buộc). Buổi chưa bắt đầu
     chuyển `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử; ghi
@@ -1684,11 +1691,13 @@ lại UC06–UC52.
   - **E4** phòng không hoạt động hoặc không phải `ROOM` → từ chối.
   - **E5** khung giờ được đặt của phòng không phủ thứ/slot đã chọn → từ chối.
   - **E6** sau khi bỏ ngày đã qua và ngày blackout không còn ngày nào để sinh → từ chối.
-  - **E7** người gọi không phải ICPDP Officer → từ chối.
+  - **E7** người gọi thao tác phân/thu hồi không phải ICPDP Officer → từ chối.
+  - **E8** người xem phía CLB không có membership `Active` và `club.booking.manage` trong đúng
+    CLB, hoặc role đã hết hiệu lực → từ chối.
 - **Hậu điều kiện:** Mỗi ngày khớp có một booking `Approved` khoá phòng/slot cho CLB; bản ghi phân
   phòng nằm trong audit. Lifecycle job đưa từng buổi `Approved → In Use → Completed`; UC15 tạm ngừng
   hoặc giải thể giải phóng các buổi tương lai và không khôi phục khi kích hoạt lại.
-- **Quy tắc nghiệp vụ:** BR15, BR33, BR34, BR35, BR62.
+- **Quy tắc nghiệp vụ:** BR15, BR33, BR34, BR35, BR62; BR54 (`club.booking.manage` khi xem phía CLB).
 - **Đầu ra:** Các booking `Approved`, bản ghi audit `ROOM_ALLOCATED` / `ROOM_ALLOCATION_REVOKED`,
   thông báo cho ban chủ nhiệm.
 - **Use case liên quan:** UC04, UC15, UC25, UC44, UC47
