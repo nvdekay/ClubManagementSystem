@@ -5,6 +5,7 @@ tương ứng của VS Code.
 
 | File | Thể hiện điều gì |
 |---|---|
+| [`UCMS_Class_Diagram.drawio`](UCMS_Class_Diagram.drawio) | **Class diagram hiện hành** — 55 trang cho UC01–UC04, UC06–UC55 và UC58; mỗi use case còn hiệu lực một trang, Controller → Service → Repository / Port → Entity; đối chiếu SRS ngày 2026-10-12 |
 | [`UCMS_Context_Diagram_v2.1.drawio`](UCMS_Context_Diagram_v2.1.drawio) | **Context diagram hiện hành** — biên hệ thống và 46 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64) |
 | [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | Context diagram v2 (57 luồng, gần như mỗi use case một luồng). **Đã bị thay thế** bởi v2.1; giữ lại làm lịch sử |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 và UC58 (phân phòng học theo học kỳ, thêm 2026-10-11) — mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Leader, Club Member 1–3, ICPDP 1–3 |
@@ -50,3 +51,27 @@ khi nhận chìa khoá; CLB không đặt, xin duyệt hay tự huỷ phòng h�
 **PNG state diagram chưa xuất lại (2026-10-11, UC58):**
 `UCMS_State_Diagrams_08_Property-Booking.png` vẫn cần xuất lại để thể hiện UC58 tạo buổi
 `Approved`, thu hồi → `Released`.
+
+**Class diagram (2026-10-12):** khôi phục nguồn từ stash `class`, cập nhật theo SRS hiện hành.
+UC05 đã rút nên không có trang; UC35–UC37 là giải ngân, nộp quyết toán và đối soát ngân sách
+của sự kiện (không còn hồ sơ xin ngân sách độc lập). UC23 quản lý role, permission và phiên bản
+cơ cấu; UC09 chỉ quản lý hồ sơ và ban/bộ phận. AccessPolicyPort thể hiện kiểm tra BR54/BR55.
+UC39 có ba thao tác thẩm định, yêu cầu sửa và chấp nhận; vòng nộp lại thuộc UC38.
+UC58 sinh booking phòng học Approved và ghi AuditLog; RoomAllocationView là DTO từ audit,
+không phải collection mới. UC45–UC47 chỉ dành cho tài sản ngoài ROOM.
+
+Các lớp là thiết kế logic, không khẳng định có lớp TypeScript tương ứng. Thuộc tính được chọn
+lọc từ DBML hiện hành; `id` biểu diễn bằng `_id`. Controller là biên HTTP, Service nhóm
+usecase, Repository/Port là hợp đồng phụ thuộc. Nét đứt là dependency; nét liền là association
+kèm bội số; `?` là tuỳ chọn/null, `+` là public. D5 (mức hiển thị danh tính người khiếu nại)
+vẫn để mở; sơ đồ không chốt thay chính sách. D4 đã chốt: đổi lịch sự kiện đã duyệt cần duyệt
+lại, trừ sự kiện nội bộ không ngân sách. PNG của cả 55 trang nằm trong `img/`,
+theo quy ước `<tên-file-nguồn>_<số-trang>_<tên-trang>.png`.
+
+UC53 (sự kiện cấp trường), UC54 (phản hồi lời mời) và UC55 (xuất dữ liệu) được bổ sung theo
+SRS §4, BR59–BR61. SRS có các use case này dù tài liệu model/spec v2 vẫn ghi phạm vi cũ.
+UC55 chỉ đọc dữ liệu hợp lệ theo quyền, chỉ xuất đánh giá đã Published và điểm danh đã chốt;
+ExportFile là kết quả truyền tải, không phải collection.
+
+**Padding ảnh class diagram:** PNG xuất ở tỉ lệ 2× với --border 40 (80 px nền trắng
+ở mỗi cạnh). Giữ tuỳ chọn này khi xuất lại để chữ và đường nối không sát mép ảnh.

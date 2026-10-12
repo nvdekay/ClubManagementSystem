@@ -3577,6 +3577,7 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 
 | Sơ đồ | Các trang | File |
 |---|---|---|
+| **Class diagram hiện hành** | 55 trang: UC01–UC04, UC06–UC55, UC58 (UC05 đã rút); Controller → Service → Repository / Port → Entity; cập nhật 2026-10-12, D5 giữ mở | [`03-diagrams/UCMS_Class_Diagram.drawio`](03-diagrams/UCMS_Class_Diagram.drawio) |
 | **Context diagram v2.1** (hiện hành, 40 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) |
 | Context diagram v2 (đã thay thế, 57 luồng) | Context diagram v2 | [`03-diagrams/UCMS_Context_Diagram_v2.drawio`](03-diagrams/UCMS_Context_Diagram_v2.drawio) |
 | Context diagram v1 (đã thay thế, 40 luồng) | Context diagram | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
