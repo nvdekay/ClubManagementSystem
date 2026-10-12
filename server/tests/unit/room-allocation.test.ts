@@ -33,10 +33,14 @@ function allocation(overrides: Partial<RoomAllocation> = {}): RoomAllocation {
       { bookingId: "3".repeat(24), startAt: new Date("2026-09-23T15:20:00+07:00"), endAt: new Date("2026-09-23T17:40:00+07:00"), state: "Released" },
     ], ...overrides };
 }
-function deps(): RoomAllocationDeps {
+function deps(withBookingPermission = false): RoomAllocationDeps {
   const snapshot: ClubAccessSnapshot = { clubId: ids.club, clubName: "HEBE", clubState: "Active",
-    membership: { id: "member", clubId: ids.club, state: "Active" }, terms: [], assignments: [], isApprovedFounder: false,
-    positions: [{ id: "members", clubId: ids.club, isActive: true, isLeaderRole: false, isDefaultMemberRole: true, permissionCodes: [] }] };
+    membership: { id: "member", clubId: ids.club, state: "Active" }, isApprovedFounder: false,
+    terms: [{ id: "term", clubId: ids.club, state: "Active", startAt: new Date("2026-01-01"), endAt: semester.endAt }],
+    assignments: withBookingPermission ? [{ clubId: ids.club, termId: "term", positionId: "facilities",
+      membershipId: "member", effectiveFrom: now }] : [],
+    positions: [{ id: "facilities", clubId: ids.club, isActive: true, isLeaderRole: false,
+      permissionCodes: ["club.booking.manage"] }] };
   const repo: RoomAllocationRepository = { clubs: vi.fn(async () => [club]), club: vi.fn(async () => club),
     list: vi.fn(async () => [allocation()]), find: vi.fn(async () => allocation()),
     allocate: vi.fn(async () => allocation()), revoke: vi.fn(async () => allocation({ revokedAt: now })) };
@@ -133,8 +137,8 @@ describe("room allocation use cases", () => {
     await revokeRoomAllocation(d, actor, ids.allocation, " Club moved ", now);
     expect(d.repo.revoke).toHaveBeenCalledWith(ids.allocation, "Club moved", ids.user, now);
   });
-  it("shows members only active allocations with their remaining usable dates", async () => {
-    const d = deps();
+  it("shows authorized facility managers only active allocations with their remaining usable dates", async () => {
+    const d = deps(true);
     const at = new Date("2026-09-10T00:00:00+07:00");
     const result = await clubRoomAllocations(d, actor, ids.club, at);
     expect(result).toHaveLength(1);
@@ -144,5 +148,54 @@ describe("room allocation use cases", () => {
     expect(await clubRoomAllocations(d, actor, ids.club, at)).toEqual([]);
     vi.mocked(d.access.findSnapshot).mockResolvedValue(null);
     await expect(clubRoomAllocations(d, actor, ids.club, at)).rejects.toMatchObject({ kind: "forbidden" });
+  });
+  it("rejects room reads without a current booking permission before fetching allocations", async () => {
+    const d = deps();
+    await expect(clubRoomAllocations(d, actor, ids.club, now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(d.repo.list).not.toHaveBeenCalled();
+
+    for (const expired of ["membership", "assignment", "term", "position"] as const) {
+      const authorized = deps(true);
+      const snapshot = (await authorized.access.findSnapshot(actor.id, ids.club))!;
+      if (expired === "membership") snapshot.membership = { ...snapshot.membership!, state: "Inactive" };
+      if (expired === "assignment") snapshot.assignments = snapshot.assignments.map((item) => ({ ...item, effectiveTo: now }));
+      if (expired === "term") snapshot.terms = snapshot.terms.map((item) => ({ ...item, endAt: now }));
+      if (expired === "position") snapshot.positions = snapshot.positions.map((item) => ({ ...item, isActive: false }));
+      await expect(clubRoomAllocations(authorized, actor, ids.club, now)).rejects.toMatchObject({ kind: "forbidden" });
+      expect(authorized.repo.list).not.toHaveBeenCalled();
+    }
+  });
+  it("checks authentication, account state and permission in the requested club", async () => {
+    const d = deps(true);
+    const snapshot = (await d.access.findSnapshot(actor.id, ids.club))!;
+    vi.mocked(d.access.findSnapshot).mockImplementation(async (_userId, clubId) => clubId === ids.club ? snapshot : null);
+    await expect(clubRoomAllocations(d, null, ids.club, now)).rejects.toMatchObject({ kind: "unauthorized" });
+    await expect(clubRoomAllocations(d, { ...actor, accountState: "Locked" }, ids.club, now)).rejects.toMatchObject({ kind: "locked" });
+    await expect(clubRoomAllocations(d, actor, "f".repeat(24), now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(d.repo.list).not.toHaveBeenCalled();
+  });
+  it("allows confirmed leaders and members granted the permission through the default role", async () => {
+    const d = deps(true);
+    const snapshot = (await d.access.findSnapshot(actor.id, ids.club))!;
+    snapshot.positions = snapshot.positions.map((item) => ({ ...item, isLeaderRole: true, permissionCodes: [] }));
+    await expect(clubRoomAllocations(d, actor, ids.club, now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(d.repo.list).not.toHaveBeenCalled();
+
+    snapshot.assignments = snapshot.assignments.map((item) => ({ ...item, confirmedBy: ids.user }));
+    expect(await clubRoomAllocations(d, actor, ids.club, now)).toHaveLength(1);
+
+    snapshot.assignments = [];
+    snapshot.positions = snapshot.positions.map((item) => ({ ...item, isLeaderRole: false,
+      isDefaultMemberRole: true, permissionCodes: ["club.booking.manage"] }));
+    expect(await clubRoomAllocations(d, actor, ids.club, now)).toHaveLength(1);
+  });
+  it("rechecks permission on every read after the role permission is revoked", async () => {
+    const d = deps(true);
+    expect(await clubRoomAllocations(d, actor, ids.club, now)).toHaveLength(1);
+    vi.mocked(d.repo.list).mockClear();
+    const snapshot = (await d.access.findSnapshot(actor.id, ids.club))!;
+    snapshot.positions = snapshot.positions.map((item) => ({ ...item, permissionCodes: [] }));
+    await expect(clubRoomAllocations(d, actor, ids.club, now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(d.repo.list).not.toHaveBeenCalled();
   });
 });

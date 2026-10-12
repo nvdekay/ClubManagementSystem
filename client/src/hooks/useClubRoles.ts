@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authKeyRoot } from "@/hooks/useAuth";
 import {
   fetchClubRoleDirectory, assignClubRole, createClubRole, deactivateClubRole, fetchClubRoles, revokeClubRole, updateClubRole,
   type ClubRoleAssignmentInput, type ClubRoleInput, type ClubRoleOverview,
@@ -38,6 +39,7 @@ export function useClubRoleAction() {
     onSuccess: async (overview, action) => {
       await queryClient.cancelQueries({ queryKey: clubRolesKey(action.clubId) });
       queryClient.setQueryData(clubRolesKey(action.clubId), overview);
+      await queryClient.invalidateQueries({ queryKey: authKeyRoot });
       await queryClient.invalidateQueries({ queryKey: [...clubRolesKeyRoot, "directory", action.clubId] });
     },
   });

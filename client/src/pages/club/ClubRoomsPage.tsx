@@ -9,6 +9,7 @@ import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useBookingSlots } from "@/hooks/useFacilityBookings";
+import { useAuth } from "@/hooks/useAuth";
 import { useClubRoomAllocations } from "@/hooks/useRoomAllocations";
 import { slotLabel, weekdayLabel } from "@/utils/roomSchedule";
 
@@ -20,8 +21,11 @@ function vietnamDay(value: string | Date): string {
 export function ClubRoomsPage() {
   const { clubId = "" } = useParams();
   const { t, i18n } = useTranslation();
-  const allocations = useClubRoomAllocations(clubId);
-  const slots = useBookingSlots(true);
+  const auth = useAuth();
+  const can = Boolean(auth.data?.workspaces.some((item) => item.clubId === clubId
+    && item.permissions.includes("club.booking.manage")));
+  const allocations = useClubRoomAllocations(clubId, can);
+  const slots = useBookingSlots(can);
   const slotList = slots.data ?? [];
   const locale = i18n.language === "vi" ? "vi-VN" : "en-GB";
   const date = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "numeric", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" }), [locale]);
@@ -32,6 +36,9 @@ export function ClubRoomsPage() {
     .sort((a, b) => (a.occurrences[0]?.startAt ?? "").localeCompare(b.occurrences[0]?.startAt ?? "")), [allocations.data]);
   const todays = items.flatMap((item) => item.occurrences.filter((occurrence) => vietnamDay(occurrence.startAt) === today)
     .map((occurrence) => ({ item, occurrence })));
+
+  if (auth.isPending) return <AppSkeleton className="h-48 w-full" />;
+  if (!can) return <AppNotice tone="danger" role="alert">{t("roomAllocations.clubDenied")}</AppNotice>;
 
   return <>
     <PageHeader title={t("roomAllocations.clubTitle")} description={t("roomAllocations.clubDescription")} />

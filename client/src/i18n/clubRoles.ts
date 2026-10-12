@@ -30,7 +30,7 @@ const en = {
   retry: "Retry", success: "Saved.",
   permProfile: "Manage club profile", permRecruitment: "Manage recruitment", permApplicationReview: "Review applications",
   permMember: "Manage members", permEvent: "Manage events", permAttendance: "Manage attendance",
-  permReport: "Submit reports", permExpense: "Record expenses", permBooking: "Manage bookings",
+  permReport: "Submit reports", permExpense: "Record expenses", permBooking: "Manage facilities",
   permFeedback: "View feedback", permComplaint: "Respond to complaints",
 
   viewsLabel: "Roles sections", viewRoles: "Roles", viewHistory: "History",
@@ -60,7 +60,7 @@ const en = {
   descAttendance: "Check members in and correct attendance records.",
   descReport: "Prepare and submit club reports.",
   descExpense: "Record club spending and receipts.",
-  descBooking: "Request and manage room and equipment bookings.",
+  descBooking: "View allocated rooms to collect keys, request other facilities and manage their bookings.",
   descFeedback: "Read feedback students send to the club.",
   descComplaint: "Reply to complaints about the club.",
 };
@@ -97,7 +97,7 @@ const vi: Record<keyof typeof en, string> = {
   retry: "Thử lại", success: "Đã lưu.",
   permProfile: "Quản lý hồ sơ CLB", permRecruitment: "Quản lý tuyển thành viên", permApplicationReview: "Xét đơn ứng tuyển",
   permMember: "Quản lý thành viên", permEvent: "Quản lý sự kiện", permAttendance: "Quản lý điểm danh",
-  permReport: "Nộp báo cáo", permExpense: "Ghi nhận chi tiêu", permBooking: "Quản lý đặt phòng",
+  permReport: "Nộp báo cáo", permExpense: "Ghi nhận chi tiêu", permBooking: "Quản lý cơ sở vật chất",
   permFeedback: "Xem góp ý", permComplaint: "Phản hồi khiếu nại",
 
   viewsLabel: "Các mục vai trò", viewRoles: "Vai trò", viewHistory: "Lịch sử",
@@ -127,7 +127,7 @@ const vi: Record<keyof typeof en, string> = {
   descAttendance: "Điểm danh thành viên và sửa dữ liệu điểm danh.",
   descReport: "Soạn và nộp báo cáo của CLB.",
   descExpense: "Ghi nhận khoản chi và chứng từ của CLB.",
-  descBooking: "Đăng ký và quản lý đặt phòng, thiết bị.",
+  descBooking: "Xem phòng được phân để nhận chìa khoá; gửi yêu cầu và quản lý việc đặt cơ sở vật chất khác.",
   descFeedback: "Đọc góp ý sinh viên gửi cho CLB.",
   descComplaint: "Phản hồi khiếu nại về CLB.",
 };

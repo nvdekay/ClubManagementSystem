@@ -3,7 +3,8 @@
 `ClubBookingsPage` dùng `BookingWorkspace` cho UC45–47: chỉ gửi yêu cầu `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`
 (Draft/sửa/nộp lại, ICPDP duyệt), xem lịch sử và huỷ. Cần `club.booking.manage`. CLB không đặt phòng học.
 
-Trang "Phòng được phân" (route `/club/:clubId/rooms`, UC58) chỉ đọc, mọi thành viên `Active` xem được:
+Trang "Phòng được phân" (route `/club/:clubId/rooms`, UC58) chỉ đọc, cần membership `Active`
+và `club.booking.manage` trong đúng CLB để xuất trình lịch cho bảo vệ khi nhận chìa khoá:
 lịch tuần học kỳ hiện tại/sắp tới (thứ, slot, giờ, phòng, toà, ghi chú) và các buổi sắp tới do ICPDP phân.
 
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi

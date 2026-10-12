@@ -213,12 +213,15 @@ slot 4. Sang học kỳ mới, ICPDP phải phân lại; không tự kế thừa
 
 ### 9.2. CLB xem phòng được phân
 
-**Vai trò:** mọi thành viên đang hoạt động của CLB. **Nơi bắt đầu:** **Phòng được phân**
+**Vai trò:** thành viên đang hoạt động có `club.booking.manage` trong CLB, được Chủ nhiệm
+giao phụ trách cơ sở vật chất và nhận chìa khoá. **Nơi bắt đầu:** **Phòng được phân**
 (`/club/:clubId/rooms`).
 
 1. Xem lịch tuần của học kỳ hiện tại và sắp tới: thứ, slot, giờ, phòng, toà nhà, ghi chú.
 2. Xem danh sách các buổi sắp tới.
-3. Đưa màn hình này cho bộ phận quản lý phòng làm bằng chứng khi nhận chìa khoá.
+3. Xuất trình màn hình này cho bảo vệ để nhận chìa khoá phòng.
+
+Nếu không thấy mục **Phòng được phân**, liên hệ Chủ nhiệm CLB để được cấp quyền quản lý cơ sở vật chất.
 
 **Kết quả:** màn hình chỉ để xem; CLB không đặt, huỷ hay xin phòng học trên app. CLB bị tạm
 ngừng hoặc giải thể sẽ mất các buổi tương lai; khi hoạt động lại cần ICPDP phân lại.

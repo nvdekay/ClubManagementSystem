@@ -516,10 +516,10 @@ const roomAllocationPaths = {
         "403": { description: "ICPDP officer required" }, "404": { description: "Allocation not found" }, "409": { description: "Already revoked" } } },
   },
   "/clubs/{clubId}/room-allocations": {
-    get: { summary: "Rooms ICPDP allocated to the club with their remaining dates (read-only, every current member)",
+    get: { summary: "Rooms ICPDP allocated to the club with their remaining dates (read-only, club.booking.manage required)",
       requestParams: { path: z.object({ clubId: z.string() }) },
       responses: { "200": { description: "Active allocations", content: { "application/json": { schema: envelope(z.array(RoomAllocation)) } } },
-        "403": { description: "Club membership required" } } },
+        "403": { description: "Active club membership with club.booking.manage required" } } },
   },
 } as const;
 const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Property.nullable(),

@@ -96,10 +96,8 @@ có quyền tương ứng (BR54). Vì vậy trưởng ban truyền thông có th
 tuyển mà không cần là chủ nhiệm. Club Member có nhiều chức năng nhất nên
 tách thành 3 hình.
 
-- Manage my membership include View member workspace (UC24), Request to
-  leave club (UC22) và View allocated rooms — xem lịch phòng học ICPDP đã
-  phân cho CLB (UC58, chỉ đọc). Ba cái này mọi thành viên đều làm được,
-  không cần quyền.
+- Manage my membership include View member workspace (UC24) và Request to
+  leave club (UC22). Hai việc này mọi thành viên đều làm được, không cần quyền.
 - Manage club profile include View club profile, Update club information và
   Define club structure (UC09): hồ sơ CLB và cơ cấu ban.
 - Manage recruitment campaigns include Create, Update, Publish recruitment
@@ -121,9 +119,12 @@ HÌNH III.3.5 — Club Member: Events & bookings
   - Cancel / reschedule event (UC28).
   - Manage waitlist (UC30): quản lý sức chứa, đôn người từ danh sách chờ
     theo đúng thứ tự.
-- Manage bookings include Request facility booking (UC45) và Cancel /
-  release booking (UC47). CLB chỉ xin hội trường, sân ngoài trời, sân khấu,
+- Manage facility bookings include Request non-room facility booking (UC45) và Cancel /
+  release facility booking (UC47). CLB chỉ xin hội trường, sân ngoài trời, sân khấu,
   thiết bị; yêu cầu đi qua ICPDP duyệt. Phòng học do ICPDP phân (UC58).
+- Manage allocated rooms include View allocated rooms (UC58, chỉ đọc),
+  cần club.booking.manage trong đúng CLB. Thành viên phụ trách xuất trình
+  lịch cho bảo vệ để nhận chìa khoá; CLB không tự đặt hay huỷ phòng học.
 
 ======================================================================
 HÌNH III.3.6 — Club Member: Accountability & finance
@@ -167,7 +168,7 @@ HÌNH III.3.8 — ICPDP Officer: Events, bookings & finance
   xuất và ngân sách đi kèm — và Close event report (UC34).
 - Manage properties (UC44) include Add, View, Update, Deactivate property:
   danh mục phòng và tài sản.
-- Manage bookings include Decide facility booking request (UC46): duyệt
+- Manage facility bookings include Decide non-room facility request (UC46): duyệt
   hội trường, sân ngoài trời, sân khấu, thiết bị. Duyệt trùng chỉ khi policy
   bật và có lý do; blackout vẫn bị chặn.
 - Manage room allocations include Allocate club room by semester, View room
