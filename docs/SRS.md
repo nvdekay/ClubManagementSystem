@@ -3362,14 +3362,14 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | ICPDP → Hệ thống | Complaint triage | UC51 |
 | ICPDP → Hệ thống | Evaluation scoring | UC43 |
 | ICPDP → Hệ thống | University events & invitations | UC53 |
-| ICPDP → Hệ thống | Export criteria | UC55 |
+| ICPDP → Hệ thống | Export criteria | UC55 (tiêu chí xuất: loại dữ liệu, kỳ/khoảng thời gian, CLB, định dạng xlsx/csv/pdf) |
 | Hệ thống → ICPDP | Submissions for review | UC07 → UC08, UC10 → UC11, UC12 → UC13, UC14 → UC15, UC25 → UC26, UC33 → UC34, UC36 → UC37, UC38 → UC39, UC45 → UC46 |
 | Hệ thống → ICPDP | Club complaints | UC50 → UC51 |
 | Hệ thống → ICPDP | Internal event records | UC25 (BR53) → UC02 |
 | Hệ thống → ICPDP | Club statistics & evaluation draft | UC02, UC42 |
 | Hệ thống → ICPDP | Club role structure & board history | UC02 (phiên bản cơ cấu và lịch sử ban điều hành của mọi CLB; BR56) |
 | Hệ thống → ICPDP | Event invitation responses | UC54 → UC53, UC02 |
-| Hệ thống → ICPDP | Exported data & reports | UC55 |
+| Hệ thống → ICPDP | Exported data & reports | UC55 (file report cuối kỳ của các CLB, bảng so sánh điểm xếp loại theo kỳ, dữ liệu xlsx/csv/pdf) |
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Identity data | UC01 |
 | Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2) |

@@ -134,14 +134,14 @@ Chiều mũi tên: **→ UCMS** là dữ liệu đi vào hệ thống, **UCMS �
 | **Complaint triage** | → UCMS | Phân loại khiếu nại | Bác bỏ, chuyển CLB, hoặc leo thang thành vụ việc — kèm lý do (UC51) |
 | **Evaluation scoring** | → UCMS | Chấm điểm đánh giá | Điểm chấm tay, điều chỉnh, quyết định công bố kết quả (UC43) |
 | **University events & invitations** | → UCMS | Sự kiện cấp trường và lời mời | Sự kiện do ICPDP tổ chức, danh sách CLB được mời, hạn trả lời (UC53) |
-| **Export criteria** | → UCMS | Tiêu chí xuất dữ liệu | Loại dữ liệu, bộ lọc (kỳ, CLB, trạng thái), định dạng xlsx / csv / pdf (UC55) |
+| **Export criteria** | → UCMS | Tiêu chí xuất dữ liệu và báo cáo | Loại dữ liệu (báo cáo cuối kỳ của các CLB, bảng điểm đánh giá, danh sách CLB, thành viên, sự kiện, tài chính, vi phạm), bộ lọc (kỳ/khoảng thời gian, CLB, trạng thái), định dạng xlsx / csv / pdf (UC55) |
 | **Submissions for review** | UCMS → | Hồ sơ chờ thẩm định | Mọi hồ sơ CLB đã nộp đang chờ ICPDP quyết định |
 | **Club complaints** | UCMS → | Khiếu nại về CLB | Khiếu nại sinh viên gửi, chờ phân loại |
 | **Internal event records** | UCMS → | Bản ghi sự kiện nội bộ | Sự kiện nội bộ CLB đã tự ghi nhận, kèm điểm danh — chỉ xem (BR53) |
 | **Club statistics & evaluation draft** | UCMS → | Số liệu CLB và bản nháp đánh giá | Số liệu tổng hợp trên dashboard; bản nháp điểm đánh giá hệ thống tự sinh (UC42) |
 | **Club role structure & board history** | UCMS → | Cơ cấu chức vụ và lịch sử ban chủ nhiệm | Các phiên bản cơ cấu chức vụ và ai giữ ghế nào qua từng nhiệm kỳ — chỉ xem (BR56) |
 | **Event invitation responses** | UCMS → | Các phản hồi lời mời sự kiện | Tổng hợp CLB nào chấp nhận, từ chối, chưa trả lời |
-| **Exported data & reports** | UCMS → | Dữ liệu và báo cáo đã xuất | File xlsx / csv / pdf: danh sách CLB, thành viên, sự kiện và điểm danh, tài chính, vi phạm, bảng điểm đánh giá (UC55) |
+| **Exported data & reports** | UCMS → | Dữ liệu và báo cáo đã xuất | File report cuối kỳ của các câu lạc bộ (bảng so sánh điểm và xếp loại học kỳ ra xlsx/csv/pdf theo BR60), cùng file dữ liệu xlsx / csv: danh sách CLB, thành viên, sự kiện và điểm danh, tài chính, vi phạm (UC55) |
 
 ### 3.5 Hệ thống ngoài — 5 luồng
 
