@@ -3602,6 +3602,7 @@ Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
   tham chiếu sang trang actor cha.
 - Mỗi trang actor chỉ nối actor tới các use case nhóm `Manage …`; use case nhóm `«include»` các
   chức năng con (use case quản lý danh mục tách theo CRUD). Oval chỉ ghi tên, không ghi mã UC.
+- Nét nối `«include»` đi từ mép oval nhóm tới mép oval chức năng con, tránh cắt qua oval khác.
 - Không vẽ `«extend»`. Quan hệ UC45→UC25 và UC47→UC28 chỉ ghi trong Spec (luồng thay thế,
   Related UC); điều hướng màn hình và cascade hệ thống cũng không vẽ thành quan hệ (I27, I28, I55).
 - Actor phụ được nối bằng association nét liền, không phải nét đứt.

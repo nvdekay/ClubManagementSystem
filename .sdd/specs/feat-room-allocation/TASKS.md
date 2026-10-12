@@ -19,3 +19,4 @@
 | Rà soát permission 2026-10-12: tải lại `/auth/me` sau thay đổi role; test Chủ nhiệm đã xác nhận, quyền qua role mặc định và thu hồi quyền; sửa nhãn permission swimlane UC58 và xuất lại PNG Club Member 1/Room Allocation | agent | xong |
 | Kiểm chứng sau rà soát: `npm run check` (91 file, 438 test qua, gồm integration Mongo), build client, kiểm tra PNG và chuỗi i18n | agent | xong; chưa QA UI trực quan qua OAuth |
 | Sơ đồ actor 2026-10-12: mỗi trang nghiệp vụ chỉ nối kế thừa tới actor cha trực tiếp; đồng bộ SRS, model/spec, presentation, PNG và bản Word tổng hợp | agent | xong |
+| Sửa bố cục hình 03: điểm nối `include` từ mép phải nhóm role tới mép trái từng oval, tránh đè oval; kiểm tra ảnh xuất lại và đồng bộ bản Word | agent | xong |
