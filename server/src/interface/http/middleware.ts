@@ -7,6 +7,10 @@ const DOMAIN_STATUS: Record<DomainErrorKind, number> = {
   validation: 400,
   conflict: 409,
   not_found: 404,
+  unauthorized: 401,
+  forbidden: 403,
+  locked: 423,
+  unavailable: 503,
 };
 
 // Performance/access log: one JSON line per request with duration.

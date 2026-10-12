@@ -1,16 +1,61 @@
+import { accountability } from "./accountability";
+import { clubEvents } from "./clubEvents";
+import { facilityBookings } from "./facilityBookings";
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import { common } from "./common";
+import { auth } from "./auth";
 import { demo } from "./demo";
+import { discovery } from "./discovery";
+import { policy } from "./policy";
+import { applications } from "./applications";
+import { reviews } from "./reviews";
+import { clubSettings } from "./clubSettings";
+import { clubRoles } from "./clubRoles";
+import { boardNominations } from "./boardNominations";
+import { recruitmentCampaigns } from "./recruitmentCampaigns";
+import { recruitmentApplications } from "./recruitmentApplications";
 import { users } from "./users";
+import { dashboard } from "./dashboard";
+import { leadershipTransitions } from "./leadershipTransitions";
+import { eventRegistrations } from "./eventRegistrations";
+import { eventFeedback } from "./eventFeedback";
+import { studentFeedback } from "./studentFeedback";
+import { memberSpace } from "./memberSpace";
+import { clubFields } from "./clubFields";
+import { properties } from "./properties";
+import { evaluationSchemes } from "./evaluationSchemes";
+import { exports } from "./exports";
+import { clubLifecycle } from "./clubLifecycle";
+import { eventReviews } from "./eventReviews";
+import { budgets } from "./budgets";
+import { periodicReports } from "./periodicReports";
+import { roomAllocations } from "./roomAllocations";
+import { violations } from "./violations";
+import { schoolEvents } from "./schoolEvents";
+import { evaluations } from "./evaluations";
 
 export type Locale = "en" | "vi";
 
 // New module: create i18n/<module>.ts (same en/vi shape), then add it to both locales here.
 export const resources = {
-  en: { translation: { common: common.en, users: users.en, demo: demo.en } },
-  vi: { translation: { common: common.vi, users: users.vi, demo: demo.vi } },
+  en: { translation: { facilityBookings: facilityBookings.en, common: common.en, auth: auth.en, discovery: discovery.en,
+    policy: policy.en, applications: applications.en, reviews: reviews.en,
+    clubSettings: clubSettings.en, clubRoles: clubRoles.en, boardNominations: boardNominations.en,
+    recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
+    users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
+    eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
+    accountability: accountability.en, studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, periodicReports: periodicReports.en, roomAllocations: roomAllocations.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
+    clubEvents: clubEvents.en, demo: demo.en } },
+  vi: { translation: { facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
+    policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
+    clubSettings: clubSettings.vi, clubRoles: clubRoles.vi, boardNominations: boardNominations.vi,
+    recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
+    users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
+    eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
+    accountability: accountability.vi, studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, periodicReports: periodicReports.vi, roomAllocations: roomAllocations.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
+    clubEvents: clubEvents.vi, demo: demo.vi } },
 };
 
 const stored = localStorage.getItem("locale");

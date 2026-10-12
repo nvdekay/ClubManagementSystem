@@ -1,3 +1,3 @@
 # infra/
 
-Outbound adapters: `config/` (env) and `db/` (Mongo). Implements domain ports.
+Các adapter đi ra ngoài: `config/` (biến môi trường) và `db/` (Mongo). Hiện thực các port của domain.

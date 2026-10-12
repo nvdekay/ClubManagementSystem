@@ -28,3 +28,8 @@ export function fail(
     path: req.originalUrl,
   });
 }
+
+// File download — the one non-JSON 2xx: a generated file sent as an attachment (UC55).
+export function download(res: Response, file: { bytes: Buffer; mimeType: string }, fileName: string) {
+  res.status(200).type(file.mimeType).attachment(fileName).send(file.bytes);
+}

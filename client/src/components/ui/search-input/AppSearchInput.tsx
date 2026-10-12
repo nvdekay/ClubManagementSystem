@@ -8,8 +8,8 @@ interface AppSearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>
   delayMs?: number;
 }
 
-export function AppSearchInput({ onSearch, delayMs = 300, ...props }: AppSearchInputProps) {
-  const [value, setValue] = useState("");
+export function AppSearchInput({ onSearch, delayMs = 300, defaultValue, ...props }: AppSearchInputProps) {
+  const [value, setValue] = useState(defaultValue?.toString() ?? "");
 
   useEffect(() => {
     const id = setTimeout(() => onSearch(value.trim()), delayMs);

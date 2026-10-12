@@ -1,34 +1,39 @@
-# ADR-002: Minimal-dependency client architecture
+# ADR-002: Kiến trúc client tối giản phụ thuộc
 
-Date: 2026-08-13 · Status: accepted
+Ngày: 2026-08-13 · Trạng thái: đã chấp nhận
 
-## Decision
-Single-page React 19 + Vite app in `client/` with deliberately few libraries:
-- No router, no state library, no HTTP client. Native `fetch` behind two layers:
-  `services/<domain>.ts` (endpoints, typed, no React) → `hooks/use<Domain>.ts`
-  (TanStack React Query, owns the `queryKey`) → components. Server state lives in
-  the React Query cache; client state (theme, locale, forms) in `useState`.
-- Tailwind v4 CSS-first. All themed colors are `--color-<name>-app` tokens in
-  `index.css` `@theme` with `:root.dark` overrides — dark mode is a `.dark` class
-  on `<html>`, no `dark:` variants. Conditional classes via `cn()` only
-  (CSS-override pattern, no template literals in `className`) — ESLint-enforced.
-- Locale is a flat `STRINGS[locale]` dictionary in `i18n.ts` (`en`/`vi`), no i18n lib.
-- Tables are headless TanStack Table v9: caller owns the `useTable` instance,
-  `ui/table/` kit renders it.
-- Component taxonomy: `ui/` (atomic, `App*`-prefixed), `custom/` (domain-aware),
-  `layout/` (shells); single-use UI stays inline. No barrel files.
+## Quyết định
+Ứng dụng một trang React 19 + Vite trong `client/`, cố ý dùng rất ít thư viện:
+- Không router, không thư viện state, không HTTP client. Dùng `fetch` gốc phía sau hai tầng:
+  `services/<domain>.ts` (endpoint, có kiểu, không React) → `hooks/use<Domain>.ts`
+  (TanStack React Query, sở hữu `queryKey`) → component. Server state sống trong cache của
+  React Query; client state (theme, ngôn ngữ, form) nằm trong `useState`.
+- Tailwind v4 theo hướng CSS-first. Mọi màu có theme là token `--color-<name>-app` trong khối
+  `@theme` của `index.css`, kèm ghi đè `:root.dark` — dark mode là một class `.dark` trên
+  `<html>`, không dùng variant `dark:`. Class có điều kiện chỉ đi qua `cn()` (mẫu ghi đè CSS,
+  không dùng template literal trong `className`) — được ESLint cưỡng chế.
+- Ngôn ngữ là một từ điển phẳng `STRINGS[locale]` trong `i18n.ts` (`en`/`vi`), không dùng thư
+  viện i18n.
+- Bảng dùng TanStack Table v9 dạng headless: người gọi sở hữu instance `useTable`, bộ kit
+  `ui/table/` chịu trách nhiệm render.
+- Phân loại component: `ui/` (nguyên tử, tiền tố `App*`), `custom/` (có hiểu biết nghiệp vụ),
+  `layout/` (khung); giao diện dùng một lần thì để nội tuyến. Không dùng barrel file.
 
-## Why
-- Template for small teams + AI agents: fewer libraries = fewer conventions to
-  drift from, and the remaining rules are lint-enforceable (colors, className).
-- Token indirection makes dark mode a repaint, not a per-component audit.
-- Service/hook split keeps endpoints testable without rendering and cache keys
-  declared once.
+## Vì sao
+- Đây là template cho nhóm nhỏ cộng AI agent: ít thư viện hơn = ít quy ước để trôi dạt hơn, và
+  những quy tắc còn lại thì lint cưỡng chế được (màu, className).
+- Lớp gián tiếp qua token biến dark mode thành một lần tô lại, không phải một đợt rà từng component.
+- Việc tách service/hook giữ cho endpoint test được mà không cần render, và cache key chỉ khai
+  báo một lần.
 
-## Trade-offs
-- Each skipped library has a written trigger (see `.claude/skills/react-arch`):
-  router when a second page exists, state lib when prop-drilling demonstrably
-  hurts, i18n lib when the flat dictionary outgrows one page. Add on trigger,
-  not before — and update the skill when one fires.
-- Manual `.dark`/locale toggles mean every new UI must be checked under both;
-  mitigated by the react-arch checklist rather than tooling.
+## Đánh đổi
+- Mỗi thư viện bị bỏ qua đều có một điều kiện kích hoạt được ghi rõ (xem `.claude/skills/react-arch`):
+  router khi có trang thứ hai, thư viện state khi việc truyền props qua nhiều tầng thực sự gây
+  khó chịu và chứng minh được, thư viện i18n khi từ điển phẳng vượt quá một trang. Thêm khi
+  điều kiện xảy ra, không phải trước đó — và cập nhật tài liệu khi một điều kiện kích hoạt.
+- Việc bật/tắt `.dark` và ngôn ngữ thủ công nghĩa là mọi giao diện mới đều phải kiểm tra ở cả
+  hai chế độ; điều này được kiểm soát bằng checklist của react-arch thay vì bằng công cụ.
+
+> **Ghi chú (2026-09):** điều kiện kích hoạt router đã xảy ra với UCMS — sản phẩm có ba workspace
+> theo vai trò, nên `react-router` được thêm vào; phần còn lại của ADR này giữ nguyên. Tương tự,
+> phần ngôn ngữ nay dùng i18next với file chuỗi tách theo module.

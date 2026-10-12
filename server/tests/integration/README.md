@@ -1,3 +1,3 @@
 # tests/integration/
 
-Tests against a real Mongo. Skipped when `MONGO_URI` is not set.
+Test chạy với Mongo thật. Bị bỏ qua khi không đặt `MONGO_URI`.

@@ -1,5 +1,5 @@
 // Business failure kinds — the interface layer maps them to HTTP statuses (ARCH-02).
-export type DomainErrorKind = "validation" | "conflict" | "not_found";
+export type DomainErrorKind = "validation" | "conflict" | "not_found" | "unauthorized" | "forbidden" | "locked" | "unavailable";
 
 export class DomainError extends Error {
   constructor(

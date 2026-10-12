@@ -11,6 +11,8 @@ const en = {
   noResults: "No matching users.",
   previousPage: "Previous page",
   nextPage: "Next page",
+  paginationLabel: "Pagination",
+  gotoPage: "Page {{page}}",
   loadError: "failed to load users",
 };
 
@@ -27,6 +29,8 @@ const vi: Record<keyof typeof en, string> = {
   noResults: "Không có người dùng phù hợp.",
   previousPage: "Trang trước",
   nextPage: "Trang sau",
+  paginationLabel: "Phân trang",
+  gotoPage: "Trang {{page}}",
   loadError: "không thể tải danh sách người dùng",
 };
 

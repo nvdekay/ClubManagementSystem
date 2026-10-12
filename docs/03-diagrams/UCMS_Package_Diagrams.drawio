@@ -1,0 +1,47 @@
+<mxfile host="app.diagrams.net">
+<diagram id="fe-packages" name="Front-end packages"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1120" pageHeight="800" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="t" value="UCMS — Front-end packages (client/src)" style="text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="20" y="10" width="600" height="40" as="geometry"/></mxCell>
+
+<mxCell id="router" value="router" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#fff2cc;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="470" y="70" width="180" height="80" as="geometry"/></mxCell>
+<mxCell id="pages" value="pages" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#fff2cc;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="470" y="220" width="180" height="80" as="geometry"/></mxCell>
+<mxCell id="layout" value="components/layout" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#d5e8d4;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="40" y="390" width="190" height="80" as="geometry"/></mxCell>
+<mxCell id="custom" value="components/custom" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#d5e8d4;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="280" y="390" width="190" height="80" as="geometry"/></mxCell>
+<mxCell id="hooks" value="hooks" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#dae8fc;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="650" y="390" width="180" height="80" as="geometry"/></mxCell>
+<mxCell id="i18n" value="i18n" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#f5f5f5;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="890" y="390" width="180" height="80" as="geometry"/></mxCell>
+<mxCell id="ui" value="components/ui" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#d5e8d4;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="160" y="560" width="190" height="80" as="geometry"/></mxCell>
+<mxCell id="services" value="services" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#f8cecc;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="650" y="560" width="180" height="80" as="geometry"/></mxCell>
+<mxCell id="assets" value="assets" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#f5f5f5;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="40" y="700" width="180" height="80" as="geometry"/></mxCell>
+<mxCell id="utils" value="utils" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#f5f5f5;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="290" y="700" width="180" height="80" as="geometry"/></mxCell>
+
+<mxCell id="f1" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="router" target="pages"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f2" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="pages" target="layout"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f3" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="pages" target="custom"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f4" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="pages" target="hooks"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f5" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="pages" target="i18n"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f6" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="layout" target="ui"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f7" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="custom" target="ui"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f8" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="hooks" target="services"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f9" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="ui" target="utils"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="f10" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="layout" target="assets"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root></mxGraphModel></diagram>
+
+<diagram id="be-packages" name="Back-end packages"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1000" pageHeight="820" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
+<mxCell id="t" value="UCMS — Back-end packages (server/src)" style="text;html=1;fontSize=22;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="20" y="10" width="600" height="40" as="geometry"/></mxCell>
+
+<mxCell id="http" value="interface/http" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#fff2cc;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="400" y="70" width="200" height="80" as="geometry"/></mxCell>
+<mxCell id="usecase" value="usecase" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#dae8fc;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="400" y="230" width="200" height="80" as="geometry"/></mxCell>
+<mxCell id="domain" value="domain" style="shape=folder;tabWidth=60;tabHeight=18;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#d5e8d4;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="400" y="390" width="200" height="80" as="geometry"/></mxCell>
+
+<mxCell id="infra" value="infra" style="shape=folder;tabWidth=80;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;verticalAlign=top;spacingTop=22;fillColor=#f5f0fa;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="40" y="560" width="920" height="220" as="geometry"/></mxCell>
+<mxCell id="db" value="db" style="shape=folder;tabWidth=50;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#e1d5e7;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="70" y="640" width="150" height="80" as="geometry"/></mxCell>
+<mxCell id="auth" value="auth" style="shape=folder;tabWidth=50;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#e1d5e7;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="250" y="640" width="150" height="80" as="geometry"/></mxCell>
+<mxCell id="mail" value="mail" style="shape=folder;tabWidth=50;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#e1d5e7;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="430" y="640" width="150" height="80" as="geometry"/></mxCell>
+<mxCell id="scheduler" value="scheduler" style="shape=folder;tabWidth=50;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#e1d5e7;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="610" y="640" width="150" height="80" as="geometry"/></mxCell>
+<mxCell id="config" value="config" style="shape=folder;tabWidth=50;tabHeight=16;tabPosition=left;html=1;whiteSpace=wrap;fontSize=15;fontStyle=1;fillColor=#e1d5e7;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="790" y="640" width="150" height="80" as="geometry"/></mxCell>
+
+<mxCell id="b1" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="http" target="usecase"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="b2" style="dashed=1;endArrow=open;endSize=10;html=1;" edge="1" parent="1" source="usecase" target="domain"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="b3" value="implements ports" style="dashed=1;endArrow=block;endFill=0;endSize=12;html=1;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="infra" target="domain"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="b4" value="invokes" style="dashed=1;endArrow=open;endSize=10;html=1;fontSize=13;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="scheduler" target="usecase"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="685" y="270"/></Array></mxGeometry></mxCell>
+</root></mxGraphModel></diagram>
+</mxfile>

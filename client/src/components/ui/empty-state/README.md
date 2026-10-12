@@ -1,3 +1,3 @@
 # ui/empty-state/
 
-`AppEmptyState` — placeholder for lists/pages with no data.
+`AppEmptyState` — phần giữ chỗ cho danh sách hoặc trang không có dữ liệu.

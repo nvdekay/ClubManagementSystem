@@ -1,9 +1,65 @@
+import { ClubReportsPage } from "./pages/club/ClubReportsPage.js";
+import { ClubBudgetsPage } from "./pages/club/ClubBudgetsPage.js";
+import { EventReportsPage } from "./pages/icpdp/EventReportsPage.js";
+import { ReconciliationPage } from "./pages/icpdp/ReconciliationPage.js";
+import { ClubEventsPage } from "./pages/club/ClubEventsPage.js";
+import { ClubBookingsPage } from "./pages/club/ClubBookingsPage.js";
+import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
+import { RoomAllocationsPage } from "./pages/icpdp/RoomAllocationsPage.js";
+import { ClubRoomsPage } from "./pages/club/ClubRoomsPage.js";
 import "./index.css";
 import "./i18n"; // initializes i18next before first render
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Route, Routes } from "react-router";
 import { App } from "./App.js";
+import { PublicLayout } from "./components/layout/PublicLayout.js";
+import { WorkspaceShell } from "./components/layout/WorkspaceShell.js";
+import { ClubDetail } from "./pages/public/ClubDetail.js";
+import { ClubDirectory } from "./pages/public/ClubDirectory.js";
+import { EventDetail } from "./pages/public/EventDetail.js";
+import { EventDirectory } from "./pages/public/EventDirectory.js";
+import { PublicHome } from "./pages/public/PublicHome.js";
+import { PublicNotFound } from "./pages/public/PublicNotFound.js";
+import { PolicyPage } from "./pages/icpdp/PolicyPage.js";
+import { ClubFieldsPage } from "./pages/icpdp/ClubFieldsPage.js";
+import { PropertiesPage } from "./pages/icpdp/PropertiesPage.js";
+import { EvaluationSchemesPage } from "./pages/icpdp/EvaluationSchemesPage.js";
+import { DataExportPage } from "./pages/icpdp/DataExportPage.js";
+import { IcpdpClubsPage } from "./pages/icpdp/IcpdpClubsPage.js";
+import { IcpdpHomePage } from "./pages/icpdp/IcpdpHomePage.js";
+import { AccountsPage } from "./pages/icpdp/AccountsPage.js";
+import { ApplicationsPage } from "./pages/student/ApplicationsPage.js";
+import { ApplicationEditorPage } from "./pages/student/ApplicationEditorPage.js";
+import { StudentHomePage } from "./pages/student/StudentHomePage.js";
+import { ClubHomePage } from "./pages/club/ClubHomePage.js";
+import { ApplicationReviewQueuePage } from "./pages/icpdp/ApplicationReviewQueuePage.js";
+import { ApplicationReviewDetailPage } from "./pages/icpdp/ApplicationReviewDetailPage.js";
+import { EventProposalQueuePage } from "./pages/icpdp/EventProposalQueuePage.js";
+import { EventProposalReviewPage } from "./pages/icpdp/EventProposalReviewPage.js";
+import { BudgetDetailPage, BudgetsPage } from "./pages/icpdp/BudgetsPage.js";
+import { ViolationDetailPage, ViolationsPage } from "./pages/icpdp/ViolationsPage.js";
+import { PeriodicReportReviewPage, PeriodicReportsPage } from "./pages/icpdp/PeriodicReportsPage.js";
+import { SchoolEventDetailPage, SchoolEventsPage } from "./pages/icpdp/SchoolEventsPage.js";
+import { EvaluationDetailPage, EvaluationsPage } from "./pages/icpdp/EvaluationsPage.js";
+import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
+import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
+import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
+import { BoardNominationDetailPage } from "./pages/icpdp/BoardNominationDetailPage.js";
+import { LeadershipTransitionQueuePage } from "./pages/icpdp/LeadershipTransitionQueuePage.js";
+import { LeadershipTransitionDetailPage } from "./pages/icpdp/LeadershipTransitionDetailPage.js";
+import { RecruitmentCampaignPage } from "./pages/club/RecruitmentCampaignPage.js";
+import { RecruitmentReviewPage } from "./pages/club/RecruitmentReviewPage.js";
+import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicationPage.js";
+import { RecruitmentApplicationsPage } from "./pages/student/RecruitmentApplicationsPage.js";
+import { MyEventRegistrationsPage } from "./pages/student/MyEventRegistrationsPage.js";
+import { StudentFeedbackPage } from "./pages/student/StudentFeedbackPage.js";
+import { MyClubsPage } from "./pages/student/MyClubsPage.js";
+import { MemberSpacePage } from "./pages/student/MemberSpacePage.js";
+import { ClubMembersPage } from "./pages/club/ClubMembersPage.js";
+import { ClubFeedbackInboxPage } from "./pages/club/ClubFeedbackInboxPage.js";
+import { StudentFeedbackInboxPage } from "./pages/icpdp/StudentFeedbackInboxPage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -13,7 +69,77 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <BrowserRouter>
+        <Routes>
+          <Route element={<PublicLayout />}>
+            <Route index element={<PublicHome />} />
+            <Route path="clubs" element={<ClubDirectory />} />
+            <Route path="clubs/:id" element={<ClubDetail />} />
+            <Route path="events" element={<EventDirectory />} />
+            <Route path="events/:id" element={<EventDetail />} />
+            <Route path="*" element={<PublicNotFound />} />
+          </Route>
+          <Route element={<WorkspaceShell />}>
+            <Route path="student" element={<StudentHomePage />} />
+            <Route path="icpdp" element={<IcpdpHomePage />} />
+            <Route path="icpdp/clubs" element={<IcpdpClubsPage />} />
+            <Route path="icpdp/accounts" element={<AccountsPage />} />
+            <Route path="club/:clubId" element={<ClubHomePage />} />
+            <Route path="workspace/policy" element={<PolicyPage />} />
+            <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
+            <Route path="club/:clubId/event-reports" element={<ClubReportsPage />} />
+            <Route path="club/:clubId/budgets" element={<ClubBudgetsPage />} />
+            <Route path="workspace/event-reports" element={<EventReportsPage />} />
+            <Route path="workspace/budgets/:id/reconciliation" element={<ReconciliationPage />} />
+            <Route path="club/:clubId/events" element={<ClubEventsPage />} />
+            <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
+            <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />
+            <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
+            <Route path="workspace/bookings" element={<BookingReviewPage />} />
+            <Route path="workspace/room-allocations" element={<RoomAllocationsPage />} />
+            <Route path="club/:clubId/rooms" element={<ClubRoomsPage />} />
+            <Route path="workspace/properties" element={<PropertiesPage />} />
+            <Route path="workspace/evaluation-schemes" element={<EvaluationSchemesPage />} />
+            <Route path="workspace/exports" element={<DataExportPage />} />
+            <Route path="workspace/applications" element={<ApplicationsPage />} />
+            <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
+            <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
+            <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
+            <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
+            <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
+            <Route path="workspace/feedback" element={<StudentFeedbackPage />} />
+            <Route path="workspace/clubs" element={<MyClubsPage />} />
+            <Route path="workspace/clubs/:clubId" element={<MemberSpacePage />} />
+            <Route path="club/:clubId/members" element={<ClubMembersPage />} />
+            <Route path="workspace/student-feedback" element={<StudentFeedbackInboxPage />} />
+            <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
+            <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
+            <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
+            <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
+            <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
+            <Route path="workspace/budgets" element={<BudgetsPage />} />
+            <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
+            <Route path="workspace/periodic-reports" element={<PeriodicReportsPage />} />
+            <Route path="workspace/periodic-reports/:id" element={<PeriodicReportReviewPage />} />
+            <Route path="workspace/violations" element={<ViolationsPage />} />
+            <Route path="workspace/violations/:id" element={<ViolationDetailPage />} />
+            <Route path="workspace/school-events" element={<SchoolEventsPage />} />
+            <Route path="workspace/school-events/:id" element={<SchoolEventDetailPage />} />
+            <Route path="workspace/evaluations" element={<EvaluationsPage />} />
+            <Route path="workspace/evaluations/:id" element={<EvaluationDetailPage />} />
+            <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
+            <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
+            <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />
+            <Route path="workspace/leadership-transitions/:id" element={<LeadershipTransitionDetailPage />} />
+            <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
+            <Route path="club/:clubId/board" element={<BoardNominationPage />} />
+            <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />
+            <Route path="club/:clubId/recruitment/:campaignId/review" element={<RecruitmentReviewPage />} />
+          </Route>
+          <Route path="login" element={<App />} />
+          <Route path="workspace" element={<App />} />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
 );

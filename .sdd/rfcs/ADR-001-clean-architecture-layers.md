@@ -1,18 +1,18 @@
-# ADR-001: 4-layer clean architecture in server/src
+# ADR-001: Clean architecture 4 tầng trong server/src
 
-Date: 2026-08-08 · Status: accepted
+Ngày: 2026-08-08 · Trạng thái: đã chấp nhận
 
-## Decision
-Split `server/src` into `domain/`, `usecase/`, `interface/`, `infra/`. Dependency arrows
-point at domain. Repository interfaces (ports) live in domain; Mongo implementations in infra.
+## Quyết định
+Chia `server/src` thành `domain/`, `usecase/`, `interface/`, `infra/`. Mũi tên phụ thuộc hướng
+về domain. Interface của repository (port) nằm ở domain; bản cài Mongo nằm ở infra.
 
-## Why
-- 5-person team + AI agents working in parallel need hard boundaries greps can enforce.
-- Domain/usecase test without mocks (in-memory repo) → fast unit loop.
-- Swapping Mongo, adding gRPC, etc. touch one layer each.
+## Vì sao
+- Nhóm 5 người cộng các AI agent làm song song cần những ranh giới cứng mà grep kiểm tra được.
+- Domain và usecase test được không cần mock (dùng repo in-memory) → vòng lặp unit test nhanh.
+- Đổi Mongo, thêm gRPC… mỗi việc chỉ đụng vào một tầng.
 
-## Trade-offs
-- More files than a flat `routes/ + models/` Express app. Accepted: the boundary checks
-  are what keep parallel work from tangling.
-- No DI container — dependencies passed as function arguments. Revisit only if wiring
-  in main.ts outgrows a screen.
+## Đánh đổi
+- Nhiều file hơn một app Express phẳng kiểu `routes/ + models/`. Chấp nhận: chính các ràng buộc
+  ranh giới này giữ cho việc làm song song không rối vào nhau.
+- Không dùng DI container — phụ thuộc truyền qua tham số hàm. Chỉ xem xét lại khi phần nối dây
+  trong main.ts dài quá một màn hình.

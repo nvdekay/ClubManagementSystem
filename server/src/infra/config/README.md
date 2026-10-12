@@ -1,4 +1,4 @@
 # infra/config/
 
-The ONLY place that reads `process.env`. Validates it with zod at boot into a typed
-`Config`; invalid env = `process.exit(1)`.
+Nơi DUY NHẤT đọc `process.env`. Validate bằng zod lúc khởi động thành một `Config` có kiểu;
+env sai = `process.exit(1)`.

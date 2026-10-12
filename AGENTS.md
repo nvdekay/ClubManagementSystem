@@ -1,6 +1,6 @@
-# Agent instructions
+# Hướng dẫn cho agent
 
-All rules for this repo live in **`.rules/`**. This file holds none of them.
+Toàn bộ quy tắc của repo này nằm ở **`.rules/`**. File này không chứa quy tắc nào.
 
-**Read [`.rules/README.md`](.rules/README.md) first** — it is the entry point: what to read
-before touching `server/` or `client/`, the rules that apply everywhere, and the process.
+**Đọc [`.rules/README.md`](.rules/README.md) trước** — đó là điểm vào: cần đọc gì trước khi
+đụng vào `server/` hay `client/`, các quy tắc áp dụng ở mọi nơi, và quy trình làm việc.

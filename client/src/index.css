@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 /* App owns scrolling, not the browser: html/body never scroll, #root does. */
@@ -44,25 +45,109 @@ body {
    Naming: --color-<name>-app generates the `<name>-app` Tailwind color
    (e.g. bg-danger-app, text-danger-app, border-danger-app). */
 @theme {
-  --color-text-app: #1a1a1a;
+  /* Be Vietnam Pro: designed for Vietnamese diacritics, friendly and modern for a young audience. */
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-auth-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-auth-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  /* Pills for buttons/single-line inputs; multi-line fields and panels use lg/xl. */
+  --radius-md: 999px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Fresh & cool: cyan primary, sky links, mint highlights on a bright white canvas.
+     Every text/background pair below meets WCAG AA (4.5:1) in its own theme. */
+  --color-brand-app: #06b6d4;
+  --color-on-brand-app: #ffffff;
+  --color-brand-blue-app: #38bdf8;
+  --color-brand-green-app: #34d399;
+
+  --color-text-app: #0f2233;
   --color-bg-app: #ffffff;
-  --color-danger-app: #dc143c;
-  --color-primary-app: #2563eb;
-  --color-warning-app: #f97316;
-  --color-border-app: #e5e7eb;
-  --color-muted-app: #6b7280;
-  --color-surface-app: #f9fafb;
+  --color-surface-app: #f4f9fc;
+  --color-surface-strong-app: #e7f2f8;
+  --color-border-app: #dbe7ee;
+  --color-muted-app: #52677a;
+  --color-sidebar-app: #f7fbfd;
+  --color-primary-soft-app: #e3f5fa;
+  --color-mint-soft-app: #e3f8ef;
+
+  --color-primary-app: #0e7490;
+  --color-on-primary-app: #ffffff;
+  --color-accent-app: #0369a1;
+  --color-ring-app: #0284c7;
+  --color-mint-app: #047857;
+
+  --color-success-app: #047857;
+  --color-warning-app: #9a4a0b;
+  --color-danger-app: #b91c1c;
+  --color-auth-button-hover-app: #f0f9ff;
+  --color-auth-button-border-app: #94a3b8;
+  --color-auth-danger-surface-app: #fef2f2;
+  --color-auth-page-bg-app: #ffffff;
+  --color-auth-page-text-app: #0f2233;
+  --color-auth-page-muted-app: #52677a;
+  --color-auth-page-border-app: #dbe7ee;
+  --color-google-blue-app: #4285f4;
+  --color-google-green-app: #34a853;
+  --color-google-yellow-app: #fbbc05;
+  --color-google-red-app: #ea4335;
+  --color-recruitment-app: #f36b21;
+  --color-on-recruitment-app: #ffffff;
+  --color-recruitment-soft-app: #fed7aa;
+  --color-recruitment-glow-app: #fdba74;
+  /* Deep band behind the public hero, call-to-action and footer (same family as text-app). */
+  --color-hero-app: #0b2533;
+  --color-on-hero-app: #ffffff;
 }
 
-/* Manual dark mode — toggled via a "dark" class on <html>, see App.tsx.
+/* Manual dark mode — toggled via a "dark" class on <html>.
    Overrides the same custom properties the @theme block sets on :root,
    so every generated *-app utility repaints without touching components. */
 :root.dark {
-  --color-text-app: #f5f5f5;
-  --color-bg-app: #0a0a0a;
-  --color-border-app: #27272a;
-  --color-muted-app: #a1a1aa;
-  --color-surface-app: #18181b;
+  color-scheme: dark;
+  --color-brand-app: #22d3ee;
+  --color-on-brand-app: #062a33;
+  --color-text-app: #e6f3fa;
+  --color-bg-app: #0b1620;
+  --color-surface-app: #10212e;
+  --color-surface-strong-app: #16303f;
+  --color-border-app: #21394a;
+  --color-muted-app: #9db6c7;
+  --color-sidebar-app: #0d1b26;
+  --color-primary-soft-app: #0f3443;
+  --color-mint-soft-app: #0f3329;
+  --color-primary-app: #22d3ee;
+  --color-on-primary-app: #062a33;
+  --color-accent-app: #7dd3fc;
+  --color-ring-app: #38bdf8;
+  --color-mint-app: #6ee7b7;
+  --color-success-app: #6ee7b7;
+  --color-warning-app: #fcd34d;
+  --color-danger-app: #fca5a5;
+  --color-auth-button-hover-app: #16303f;
+  --color-auth-button-border-app: #3b5568;
+  --color-auth-danger-surface-app: #3a1d22;
+  --color-auth-page-bg-app: #0b1620;
+  --color-auth-page-text-app: #e6f3fa;
+  --color-auth-page-muted-app: #9db6c7;
+  --color-auth-page-border-app: #21394a;
+  --color-recruitment-app: #fb923c;
+  --color-on-recruitment-app: #1c1917;
+  --color-recruitment-soft-app: #653016;
+  --color-recruitment-glow-app: #7c2d12;
+  --color-hero-app: #0e2635;
+  --color-on-hero-app: #e6f3fa;
+}
+
+/* Honour reduced-motion: keep state changes, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Clickable elements must show a pointer cursor — the browser UA stylesheet
@@ -70,15 +155,25 @@ body {
    clickable elements should use role="button" to pick up this rule. */
 button:not(:disabled),
 select:not(:disabled),
+input:is([type="checkbox"], [type="radio"]):not(:disabled),
+label:has(input:is([type="checkbox"], [type="radio"]):not(:disabled)),
+:is([role="checkbox"], [role="radio"], [role="switch"]):not([aria-disabled="true"]),
 summary,
 a[href],
 input[type="search"]::-webkit-search-cancel-button,
-[role="button"]:not([aria-disabled="true"]) {
+[role="button"]:not([aria-disabled="true"]),
+[role="combobox"]:not(:disabled):not([aria-disabled="true"]),
+[role="option"]:not([aria-disabled="true"]) {
   cursor: pointer;
 }
 
 button:disabled,
 select:disabled,
+input:is([type="checkbox"], [type="radio"]):disabled,
+label:has(input:is([type="checkbox"], [type="radio"]):disabled),
+:is([role="checkbox"], [role="radio"], [role="switch"])[aria-disabled="true"],
+[role="combobox"][aria-disabled="true"],
+[role="option"][aria-disabled="true"],
 [role="button"][aria-disabled="true"] {
   cursor: not-allowed;
 }

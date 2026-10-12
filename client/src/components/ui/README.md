@@ -1,5 +1,5 @@
 # components/ui/
 
-Atomic, domain-agnostic component kit. One folder per component, `App` prefix
-(`AppButton`, `AppTable`, …). Styling via tokens (`--color-*-app`) + `cn()` — no hex,
-no template literals in `className`.
+Bộ kit component nguyên tử, không dính nghiệp vụ. Mỗi component một thư mục, có tiền tố `App`
+(`AppButton`, `AppTable`, …). Tạo kiểu qua token (`--color-*-app`) và `cn()` — không dùng mã
+màu hex, không dùng template literal trong `className`.

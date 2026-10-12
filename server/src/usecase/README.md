@@ -1,5 +1,4 @@
 # usecase/
 
-Business flows, one file per resource/feature. Plain functions that depend on domain
-only and receive repositories (ports) as arguments — never import from `interface/`
-or `infra/`.
+Các luồng nghiệp vụ, mỗi tài nguyên/tính năng một file. Hàm thuần chỉ phụ thuộc domain và nhận
+repository (port) qua tham số — không bao giờ import từ `interface/` hay `infra/`.

@@ -1,20 +1,20 @@
 # SPEC: feat-{name}
 
-> Copy this folder pattern: `.sdd/specs/feat-{name}/SPEC.md` + `TASKS.md`.
-> SPEC is locked once approved — changes go in the Changelog section, not silent edits.
+> Sao chép mẫu thư mục này: `.sdd/specs/feat-{name}/SPEC.md` + `TASKS.md`.
+> SPEC bị khoá lại khi đã được duyệt — thay đổi ghi vào mục Changelog, không sửa lặng lẽ.
 
-## Problem
-One paragraph: what user problem this solves.
+## Vấn đề
+Một đoạn: tính năng này giải quyết vấn đề gì của người dùng.
 
-## Behavior
-- Input / output per endpoint or flow
-- Edge cases and error responses
+## Hành vi
+- Dữ liệu vào / ra theo từng endpoint hoặc luồng
+- Các trường hợp biên và response lỗi
 
-## Acceptance criteria
-- [ ] Checkable statements — each becomes a test
+## Tiêu chí nghiệm thu
+- [ ] Các phát biểu kiểm tra được — mỗi phát biểu trở thành một test
 
-## Out of scope
-What this feature deliberately does NOT do.
+## Ngoài phạm vi
+Tính năng này cố ý KHÔNG làm những gì.
 
 ## Changelog
-- v1.0.0 (YYYY-MM-DD) — approved by X, Y
+- v1.0.0 (YYYY-MM-DD) — được duyệt bởi X, Y

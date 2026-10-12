@@ -1,15 +1,14 @@
-import { type SelectHTMLAttributes } from "react";
-
+import { AppSelect } from "@/components/ui/select/AppSelect";
 import { cn } from "@/utils/cn";
 
-interface AppTableLimitSelectProps
-  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange" | "value"> {
+interface AppTableLimitSelectProps {
   value: number;
   onChange: (limit: number) => void;
-  /** Localized label rendered before the select. */
+  /** Localized label rendered before the control. */
   label: string;
   /** Custom option list — defaults match the API's limit cap (max 100). */
   options?: number[];
+  className?: string;
 }
 
 const DEFAULT_OPTIONS = [5, 10, 20, 50, 100];
@@ -20,32 +19,18 @@ export function AppTableLimitSelect({
   label,
   options = DEFAULT_OPTIONS,
   className,
-  ...props
 }: AppTableLimitSelectProps) {
   return (
-    <label className={cn("flex items-center gap-2 text-sm text-muted-app", className)}>
+    <span className={cn("flex flex-wrap items-center gap-2 text-sm text-muted-app", className)}>
       {label}
-      {/* appearance-none hides the UA arrow so the ▾ span can replace it — keep them in sync. */}
-      <span className="relative">
-        <select
-          className="appearance-none rounded-md border border-border-app bg-surface-app py-1 pl-2.5 pr-7 text-sm text-text-app transition-colors hover:border-muted-app focus:border-primary-app focus:outline-none"
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          {...props}
-        >
-          {options.map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
-        <span
-          aria-hidden
-          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs"
-        >
-          ▾
-        </span>
-      </span>
-    </label>
+      <AppSelect
+        value={value}
+        // min-w keeps the trigger from resizing between "5" and "100".
+        className="min-w-20"
+        options={options.map((n) => ({ value: n, label: String(n) }))}
+        onChange={onChange}
+        label={label}
+      />
+    </span>
   );
 }

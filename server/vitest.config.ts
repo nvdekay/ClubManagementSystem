@@ -8,4 +8,7 @@ try {
   // no .env — integration tests skip on missing MONGO_URI
 }
 
-export default defineConfig({});
+export default defineConfig({
+  // Removes databases left behind by integration runs that were killed before afterAll ran.
+  test: { globalSetup: ["./tests/global-setup.ts"] },
+});
