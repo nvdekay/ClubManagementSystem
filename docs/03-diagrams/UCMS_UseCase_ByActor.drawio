@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="page0" name="All users">
-        <mxGraphModel dx="1062" dy="603" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1074" dy="1215" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -59,7 +59,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="page1" name="Student">
-        <mxGraphModel dx="1229" dy="1002" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1329" dy="1009" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -141,83 +141,8 @@
             </root>
         </mxGraphModel>
     </diagram>
-    <diagram name="Club Leader - Events &amp; bookings" id="z8fWKeUN44cDwQSLrjxJ">
-        <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
-            <root>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-0"/>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-1" parent="mpR2GT1c1wVrjcdAAdY3-0"/>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-2" parent="mpR2GT1c1wVrjcdAAdY3-1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader&amp;nbsp;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;- Events &amp;amp; bookings&lt;/span&gt;" vertex="1">
-                    <mxGeometry height="30" width="900" x="30" y="10" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-3" parent="mpR2GT1c1wVrjcdAAdY3-1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
-                    <mxGeometry height="570" width="710" x="260" y="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-8" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage events" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="250" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-9" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="Uush5KJDFG4K1rcUO-Kb-0" style="endArrow=none;html=1;strokeColor=#000000;" target="mpR2GT1c1wVrjcdAAdY3-8" value="">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="120" y="410.98412699999994" as="sourcePoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-10" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit event proposal" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-11" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="mpR2GT1c1wVrjcdAAdY3-8" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="mpR2GT1c1wVrjcdAAdY3-10" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-12" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Publish event" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="210" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-13" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="mpR2GT1c1wVrjcdAAdY3-8" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="mpR2GT1c1wVrjcdAAdY3-12" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-14" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Cancel / reschedule event" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="290" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-15" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="mpR2GT1c1wVrjcdAAdY3-8" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="mpR2GT1c1wVrjcdAAdY3-14" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-16" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to event invitation" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="370" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-17" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="mpR2GT1c1wVrjcdAAdY3-8" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="mpR2GT1c1wVrjcdAAdY3-16" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-24" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage facility bookings" vertex="1">
-                    <mxGeometry height="56" width="230" x="310" y="521" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-25" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="Uush5KJDFG4K1rcUO-Kb-0" style="endArrow=none;html=1;strokeColor=#000000;" target="mpR2GT1c1wVrjcdAAdY3-24" value="">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="120" y="427.9384620000001" as="sourcePoint"/>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-26" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Cancel / release facility booking" vertex="1">
-                    <mxGeometry height="56" width="230" x="690" y="561" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-27" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="mpR2GT1c1wVrjcdAAdY3-24" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="mpR2GT1c1wVrjcdAAdY3-26" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-28" parent="mpR2GT1c1wVrjcdAAdY3-1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Request non-room facility booking" vertex="1">
-                    <mxGeometry height="56" width="230" x="690" y="481" as="geometry"/>
-                </mxCell>
-                <mxCell id="mpR2GT1c1wVrjcdAAdY3-29" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="mpR2GT1c1wVrjcdAAdY3-24" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="mpR2GT1c1wVrjcdAAdY3-28" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="Uush5KJDFG4K1rcUO-Kb-0" parent="mpR2GT1c1wVrjcdAAdY3-1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Club Leader" vertex="1">
-                    <mxGeometry height="80" width="40" x="80" y="379.5" as="geometry"/>
-                </mxCell>
-                <mxCell id="Uush5KJDFG4K1rcUO-Kb-1" parent="mpR2GT1c1wVrjcdAAdY3-1" style="shape=umlActor;verticalLabelPosition=middle;verticalAlign=middle;labelPosition=right;align=left;spacingLeft=8;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Club Member" vertex="1">
-                    <mxGeometry height="80" width="40" x="80" y="176.5" as="geometry"/>
-                </mxCell>
-                <mxCell id="Uush5KJDFG4K1rcUO-Kb-2" edge="1" parent="mpR2GT1c1wVrjcdAAdY3-1" source="Uush5KJDFG4K1rcUO-Kb-0" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;dashed=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="Uush5KJDFG4K1rcUO-Kb-1" value="">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-            </root>
-        </mxGraphModel>
-    </diagram>
     <diagram id="page4" name="Club Member - Events &amp; bookings">
-        <mxGraphModel dx="1062" dy="1191" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="736" dy="951" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -288,7 +213,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="page2" name="Club Leader">
-        <mxGraphModel dx="1705" dy="1912" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1214" dy="1131" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -389,7 +314,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="page3" name="Club Leader - Club &amp; recruitment">
-        <mxGraphModel dx="1981" dy="2222" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1304" dy="1215" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -501,73 +426,121 @@
             </root>
         </mxGraphModel>
     </diagram>
-    <diagram id="page5" name="Club Leader - Accountability &amp; finance">
-        <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+    <diagram id="page5" name="Club Leader - Events, bookings &amp; finance">
+        <mxGraphModel dx="848" dy="790" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p5title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader&amp;nbsp;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;- Accountability &amp;amp; finance&lt;/span&gt;" vertex="1">
-                    <mxGeometry height="30" width="900" x="40" as="geometry"/>
+                <mxCell id="p5title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader - Events, bookings &amp;amp; finance" vertex="1">
+                    <mxGeometry height="30" width="900" x="40" y="10" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
-                    <mxGeometry height="724" width="710" x="260" y="50" as="geometry"/>
+                    <mxGeometry height="1110" width="710" x="260" y="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Club Member" vertex="1">
-                    <mxGeometry height="80" width="40" x="60" y="412" as="geometry"/>
+                <mxCell id="p5actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Club Leader" vertex="1">
+                    <mxGeometry height="80" width="40" x="80" y="580" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5ancestor1" parent="1" style="shape=umlActor;verticalLabelPosition=middle;verticalAlign=middle;labelPosition=right;align=left;spacingLeft=8;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Student" vertex="1">
-                    <mxGeometry height="80" width="40" x="60" y="242" as="geometry"/>
+                <mxCell id="p5ancestor1" parent="1" style="shape=umlActor;verticalLabelPosition=middle;verticalAlign=middle;labelPosition=right;align=left;spacingLeft=8;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Club Member" vertex="1">
+                    <mxGeometry height="80" width="40" x="80" y="400" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5generalization1" edge="1" parent="1" source="p5actor" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;dashed=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="p5ancestor1" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage reports" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="170" as="geometry"/>
+                <mxCell id="p5m_events" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage events" vertex="1">
+                    <mxGeometry height="56" width="230" x="300" y="200" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m0a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m0" value="">
+                <mxCell id="p5m_events_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_events" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m0c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit event report" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="130" as="geometry"/>
+                <mxCell id="p5m_events_c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit event proposal" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="90" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m0c0i" edge="1" parent="1" source="p5m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m0c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                <mxCell id="p5m_events_c0i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m0c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit periodic report" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="210" as="geometry"/>
+                <mxCell id="p5m_events_c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Publish event" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="165" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m0c1i" edge="1" parent="1" source="p5m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m0c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                <mxCell id="p5m_events_c1i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Record expense &amp; submit settlement" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="416" as="geometry"/>
+                <mxCell id="p5m_events_c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Cancel / reschedule event" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="240" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m1a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m1" value="">
+                <mxCell id="p5m_events_c2i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Review event feedback" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="542" as="geometry"/>
+                <mxCell id="p5m_events_c3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to event invitation" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="315" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m2a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m2" value="">
+                <mxCell id="p5m_events_c3i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to complaint" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="668" as="geometry"/>
+                <mxCell id="p5m_fac" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage facility bookings" vertex="1">
+                    <mxGeometry height="56" width="230" x="300" y="432" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m3a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m3" value="">
+                <mxCell id="p5m_fac_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_fac" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="page5report0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Revise and resubmit periodic report" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="290" as="geometry"/>
+                <mxCell id="p5m_fac_c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Request non-room facility booking" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="395" as="geometry"/>
                 </mxCell>
-                <mxCell id="page5report0i" edge="1" parent="1" source="p5m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="page5report0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                <mxCell id="p5m_fac_c0i" edge="1" parent="1" source="p5m_fac" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_fac_c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_fac_c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Cancel / release facility booking" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="470" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_fac_c1i" edge="1" parent="1" source="p5m_fac" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_fac_c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage reports" vertex="1">
+                    <mxGeometry height="56" width="230" x="300" y="630" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_rep" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep_c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit event report" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="555" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep_c0i" edge="1" parent="1" source="p5m_rep" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_rep_c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep_c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit periodic report" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="630" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep_c1i" edge="1" parent="1" source="p5m_rep" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_rep_c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep_c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Revise and resubmit periodic report" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="705" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_rep_c2i" edge="1" parent="1" source="p5m_rep" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_rep_c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_exp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Record expense &amp; submit settlement" vertex="1">
+                    <mxGeometry height="56" width="230" x="300" y="795" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_exp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_exp" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_fdb" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Review event feedback" vertex="1">
+                    <mxGeometry height="56" width="230" x="300" y="885" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_fdb_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_fdb" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_cmp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to complaint" vertex="1">
+                    <mxGeometry height="56" width="230" x="300" y="975" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5m_cmp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_cmp" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram id="page6" name="ICPDP 1 - Access &amp; club lifecycle">
-        <mxGraphModel dx="1292" dy="1054" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1084" dy="1058" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
