@@ -249,8 +249,7 @@ ICPDP tạo sự kiện cấp trường và danh sách CLB được mời (UC53)
 
 **Hỏi: `Export criteria` và `Exported data & reports` để làm gì?**
 ICPDP chọn loại dữ liệu, bộ lọc và định dạng (`Export criteria`); hệ thống trả về file xlsx / csv /
-pdf (`Exported data & reports`) để báo cáo lên nhà trường hoặc lưu trữ (UC55). Chỉ ICPDP được xuất,
-mỗi lần xuất ghi audit, phản hồi ẩn danh không lộ danh tính (BR61).
+pdf (`Exported data & reports`) để xuất file report cuối kỳ của các câu lạc bộ (kết quả đánh giá hiệu quả hoạt động, bảng điểm so sánh xếp loại theo kỳ theo BR60, tổng hợp hoạt động CLB) cũng như các tệp dữ liệu chi tiết nhằm báo cáo lên nhà trường hoặc lưu trữ (UC55). Chỉ ICPDP được xuất, mỗi lần xuất ghi audit, phản hồi ẩn danh không lộ danh tính (BR61).
 
 ---
 
