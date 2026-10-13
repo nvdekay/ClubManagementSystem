@@ -9,7 +9,7 @@ tương ứng của VS Code.
 | [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | Context diagram v2 (57 luồng, gần như mỗi use case một luồng). **Đã bị thay thế** bởi v2.1; giữ lại làm lịch sử |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 và UC58 (phân phòng học theo học kỳ, thêm 2026-10-11) — 9 trang, mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Member - Events & bookings, Club Leader, Club Leader - Club & recruitment, Club Leader - Events, bookings & finance, ICPDP 1–3 |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`) |
-| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (13/10/2026) — mô hình **khái niệm** theo **ký pháp Chen**: 51 thực thể (hình chữ nhật), 365 thuộc tính (elip), 109 quan hệ (hình thoi). 11 trang: trang 1 là bản tổng thể ghép đủ 10 module, trang 2–11 là từng module M01–M12. Không ghi kiểu dữ liệu, khoá, ràng buộc hay cardinality. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới |
+| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (13/10/2026) — mô hình **khái niệm** theo **ký pháp Chen**: 47 thực thể (hình chữ nhật), 347 thuộc tính (elip), 102 quan hệ (hình thoi). 11 trang: trang 1 *ERD general* là ERD tổng quát liền mạch (đủ 47 thực thể, các quan hệ chính, mỗi thực thể ba thuộc tính tiêu biểu), trang 2–11 là từng module M01–M12 với đủ thuộc tính và quan hệ. Không còn Role / Permission vì role đã cố định. Không ghi kiểu dữ liệu, khoá, ràng buộc hay cardinality. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới |
 | [`UCMS_Package_Diagrams.drawio`](UCMS_Package_Diagrams.drawio) | **Package diagram hiện hành** (13/10/2026) — Front-end (`client/src`) và Back-end (`server/src`), vẽ theo đúng thư mục và quan hệ import đang có trong code (`interface/http`, `interface/jobs`, `usecase`, `domain`, `infra/db`·`auth`·`files`·`config`, `main.ts`) |
 | [`UCMS_Screen_Flow.drawio`](UCMS_Screen_Flow.drawio) | **Screen flow gộp một trang** cho mọi role: đăng nhập → Workspace picker → Public area, Student, Club và ICPDP workspace; đối chiếu router `client/src/main.tsx` ngày 13/10/2026 |
 | [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
@@ -32,7 +32,7 @@ collection, trường và role giữ nguyên tiếng Anh.
 | State Diagram | `UCMS_State_Diagrams.drawio` | 8 ảnh `UCMS_State_Diagrams_01…08_*.png` |
 | Package Diagram | `UCMS_Package_Diagrams.drawio` | `UCMS_Package_Diagrams_01_Front-end-packages.png`, `…_02_Back-end-packages.png` |
 | Screen flow | `UCMS_Screen_Flow.drawio` | `UCMS_Screen_Flow_01_Screen-flow.png` — một sơ đồ gộp, không tách theo role |
-| ERD | `UCMS_ERD.drawio` | 11 ảnh `UCMS_ERD_01…11_*.png` (tổng thể + 10 trang module), kèm bản `.svg` cùng tên |
+| ERD | `UCMS_ERD.drawio` | 11 ảnh `UCMS_ERD_01…11_*.png` (tổng quát + 10 trang module), kèm bản `.svg` cùng tên |
 | Mainwork flow | `UCMS_Main_Workflow.drawio` | 2 ảnh `UCMS_Main_Workflow_01_*.png`, `…_02_*.png`, kèm bản `.svg` cùng tên |
 
 Main workflow của report là **đúng hai swimlane tổng quát** trong `UCMS_Main_Workflow.drawio`. Bộ 14 swimlane
@@ -57,17 +57,27 @@ sửa ở repo trước, rồi tải đè file tương ứng lên Drive.
 - Mỗi trường tham chiếu trong DBML được thay bằng **một quan hệ có tên** (ví dụ `Club organises
   Event`, `User files Complaint`), không vẽ thành thuộc tính. Các trường `…By` cùng trỏ về `User`
   trên một thực thể được gộp thành một quan hệ (ví dụ `submits / decides`).
-- Bốn quan hệ không có trường tham chiếu nhưng có căn cứ trong schema và code: `Role includes
-  Permission` và `Permission is granted to Club Position` (danh sách `permissionCodes`), `Club Field
-  classifies Club / Club Application` (trường `field` lấy từ danh mục `clubFields`), `Evaluation
-  Dimension is scored in Dimension Result` (`dimensionCode`).
+- Ba quan hệ không có trường tham chiếu nhưng có căn cứ trong schema và code: `Club Field
+  classifies Club` và `Club Field classifies Club Application` (trường `field` lấy từ danh mục
+  `clubFields`), `Evaluation Dimension is scored in Dimension Result` (`dimensionCode`).
+- **Không có RBAC.** Từ 13/10/2026 phía CLB chỉ còn hai role cố định (`Club Leader`, `Club Member`),
+  bộ quyền của Club Leader là hằng số trong code (`server/src/domain/access.ts`). Vì vậy mô hình
+  khái niệm bỏ bốn collection `roles`, `permissions`, `userRoleAssignments`,
+  `clubRoleStructureVersions`; vai trò hệ thống của tài khoản (Student, ICPDP Officer) là thuộc
+  tính `System role` của `User`. `Club Position` vẫn còn vì ghế Chủ nhiệm / Phó chủ nhiệm quyết
+  định ai là Club Leader, nhưng không mang danh sách quyền. Các collection này vẫn nằm trong DBML
+  và database; ERD chỉ không vẽ chúng.
+- Trang *ERD general* chỉ vẽ quan hệ giữa các thực thể nghiệp vụ và 13 quan hệ chính của `User`
+  (sở hữu, nộp, đăng ký, nhận…); các quan hệ `User` đóng vai người xử lý (`submits / decides`,
+  `records`, `verifies`…) nằm ở trang module.
 - **Lược bỏ có chủ ý:** `id`, `createdAt`, `updatedAt`; 12 tham chiếu là bản sao suy ra được qua
   quan hệ khác (ví dụ `attendances.clubId` suy ra qua `Event`); và các thuộc tính thuần kỹ thuật
   như `googleSubject`, `normalizedName`, `sortOrder`, bộ đếm (`confirmedRegistrationCount`,
   `nextWaitlistPosition`, `currentVersionNo`), bản sao tên (`clubName`), `payload`/`attempts` của
   thông báo, `before`/`after`/`correlationId` của audit log. Ba tham chiếu đa hình (`entityId`,
   `sourceRefId`, `originRefId`) không thành quan hệ vì không trỏ tới một thực thể cố định.
-- Cả 51 collection đều có mặt dưới dạng thực thể; không gộp thực thể nào.
+- 47 trong 51 collection có mặt dưới dạng thực thể; không gộp thực thể nào, chỉ bỏ bốn collection
+  RBAC nêu trên.
 - Nguồn đối chiếu là [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml).
   Schema đổi thì sửa DBML trước rồi sinh lại ERD, không sửa tay trên sơ đồ.
 
