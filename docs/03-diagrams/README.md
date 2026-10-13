@@ -9,11 +9,12 @@ tương ứng của VS Code.
 | [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | Context diagram v2 (57 luồng, gần như mỗi use case một luồng). **Đã bị thay thế** bởi v2.1; giữ lại làm lịch sử |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 và UC58 (phân phòng học theo học kỳ, thêm 2026-10-11) — 9 trang, mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Member - Events & bookings, Club Leader, Club Leader - Club & recruitment, Club Leader - Events, bookings & finance, ICPDP 1–3 |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`) |
-| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (13/10/2026), sinh từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml) — 11 trang: trang 1 là tổng quan 51 collection (chỉ khoá và quan hệ), trang 2–11 là ERD chi tiết từng module M01–M12 với đủ thuộc tính, kiểu dữ liệu và ràng buộc (`PK`, `FK`, `UQ`, `NN`, giá trị mặc định, unique index ghép). Ký hiệu Crow's Foot (Information Engineering), mức vật lý. Quan hệ gồm 94 `Ref` của DBML, hai tham chiếu `eventInvitations` → `events`/`clubs`, và các trường `…By` trỏ về `users`. Ba trường đa hình (`entityId`, `sourceRefId`, `originRefId`) không vẽ quan hệ |
+| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (13/10/2026) — mô hình **khái niệm** theo **ký pháp Chen**: 51 thực thể (hình chữ nhật), 365 thuộc tính (elip), 109 quan hệ (hình thoi). 11 trang: trang 1 là bản tổng thể ghép đủ 10 module, trang 2–11 là từng module M01–M12. Không ghi kiểu dữ liệu, khoá, ràng buộc hay cardinality. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới |
 | [`UCMS_Package_Diagrams.drawio`](UCMS_Package_Diagrams.drawio) | **Package diagram hiện hành** (13/10/2026) — Front-end (`client/src`) và Back-end (`server/src`), vẽ theo đúng thư mục và quan hệ import đang có trong code (`interface/http`, `interface/jobs`, `usecase`, `domain`, `infra/db`·`auth`·`files`·`config`, `main.ts`) |
 | [`UCMS_Screen_Flow.drawio`](UCMS_Screen_Flow.drawio) | **Screen flow gộp một trang** cho mọi role: đăng nhập → Workspace picker → Public area, Student, Club và ICPDP workspace; đối chiếu router `client/src/main.tsx` ngày 13/10/2026 |
 | [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
-| [`UCMS_Swimlane_Flows.drawio`](UCMS_Swimlane_Flows.drawio) | **Main workflow hiện hành** — swimlane của các luồng nghiệp vụ chính (tiếng Anh), 14 trang: Club Founding, Leadership Transition, Member Recruitment, Event Proposal, Event Execution, Event Finance, Room Allocation (UC58), Facility Request, Complaint Handling, Periodic Report, Violation Case, Club Evaluation, Suspension and Dissolution, Club Leader and Club Member. Phía CLB chỉ có hai role cố định (13/10/2026): mọi làn thao tác của CLB là `Club Leader` (Chủ nhiệm hoặc Phó chủ nhiệm đã được ICPDP xác nhận); `Club Member` chỉ xem và tham gia. Trang 14 thay bằng **Club Leader and Club Member** (đề cử ghế → ICPDP xác nhận → thành Club Leader → hết ghế thì về Club Member). Màu theo bảng chung: hành động xanh dương, quyết định vàng, kết quả tốt xanh lá, tham chiếu sang luồng khác nét đứt. Đã xuất đủ 14 ảnh PNG vào [`img/`](img/), tỉ lệ 2×, nền trắng |
+| [`UCMS_Main_Workflow.drawio`](UCMS_Main_Workflow.drawio) | **Main workflow hiện hành** (13/10/2026) — đúng **hai** swimlane tổng quát, làn dọc theo actor (Student, Club Leader, ICPDP Officer, UCMS), luồng chạy từ trên xuống theo giai đoạn nghiệp vụ: trang 1 *Club and membership governance* (thành lập → thiết lập CLB → tuyển và quản lý thành viên → ban chủ nhiệm và nhiệm kỳ → giám sát, đánh giá, vòng đời), trang 2 *Event management and supporting operations* (đề xuất → xét duyệt → nguồn lực khi cần → công bố và đăng ký → tổ chức và điểm danh → báo cáo, quyết toán, phản hồi, đánh giá). Không vẽ chi tiết từng use case |
+| [`UCMS_Swimlane_Flows.drawio`](UCMS_Swimlane_Flows.drawio) | **Swimlane chi tiết từng luồng** (tiếng Anh, 14 trang) — tài liệu tham khảo sâu cho SRS §2.5, **không còn là main workflow của report**: Club Founding, Leadership Transition, Member Recruitment, Event Proposal, Event Execution, Event Finance, Room Allocation (UC58), Facility Request, Complaint Handling, Periodic Report, Violation Case, Club Evaluation, Suspension and Dissolution, Club Leader and Club Member. Phía CLB chỉ có hai role cố định: `Club Leader` thao tác, `Club Member` chỉ xem và tham gia |
 | [`UCMS_System_Architecture.drawio`](UCMS_System_Architecture.drawio) | Sơ đồ kiến trúc hệ thống tổng quan, một trang (02/10/2026). Chưa có bản PNG trong `img/`; thiết kế chi tiết xem [`../04-design/UCMS_High_Level_Design.md`](../04-design/UCMS_High_Level_Design.md) |
 | [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | Context diagram đầu tiên của nhóm (40 luồng). **Đã bị thay thế**; giữ lại làm lịch sử |
 | [`img/`](img/) | Bản xuất PNG, đặt tên theo `<tên-file-nguồn>_<số-trang>_<tên-trang>.png` |
@@ -31,10 +32,11 @@ collection, trường và role giữ nguyên tiếng Anh.
 | State Diagram | `UCMS_State_Diagrams.drawio` | 8 ảnh `UCMS_State_Diagrams_01…08_*.png` |
 | Package Diagram | `UCMS_Package_Diagrams.drawio` | `UCMS_Package_Diagrams_01_Front-end-packages.png`, `…_02_Back-end-packages.png` |
 | Screen flow | `UCMS_Screen_Flow.drawio` | `UCMS_Screen_Flow_01_Screen-flow.png` — một sơ đồ gộp, không tách theo role |
-| ERD | `UCMS_ERD.drawio` | 11 ảnh `UCMS_ERD_01…11_*.png` (tổng quan + 10 trang module) |
-| Mainwork flow | `UCMS_Swimlane_Flows.drawio` | 14 ảnh `UCMS_Swimlane_Flows_01…14_*.png` |
+| ERD | `UCMS_ERD.drawio` | 11 ảnh `UCMS_ERD_01…11_*.png` (tổng thể + 10 trang module), kèm bản `.svg` cùng tên |
+| Mainwork flow | `UCMS_Main_Workflow.drawio` | 2 ảnh `UCMS_Main_Workflow_01_*.png`, `…_02_*.png`, kèm bản `.svg` cùng tên |
 
-Main workflow của report **là bộ swimlane**. Bản flowchart không chia làn
+Main workflow của report là **đúng hai swimlane tổng quát** trong `UCMS_Main_Workflow.drawio`. Bộ 14 swimlane
+chi tiết (`UCMS_Swimlane_Flows.drawio`) chỉ còn là tài liệu tham khảo; bản flowchart không chia làn
 (`UCMS_Main_Workflows.drawio`) đã bị loại ngày 13/10/2026 và xoá khỏi repo.
 
 Trên Google Drive của nhóm, mỗi loại sơ đồ nằm trong một thư mục con của `Diagrams`
@@ -44,15 +46,29 @@ sửa ở repo trước, rồi tải đè file tương ứng lên Drive.
 
 ## Ký hiệu ERD
 
-`UCMS_ERD.drawio` vẽ theo **Crow's Foot (Information Engineering)** ở **mức vật lý**: mỗi hình chữ
-nhật là một collection MongoDB, mỗi dòng là một trường với tên, kiểu dữ liệu và ràng buộc.
+`UCMS_ERD.drawio` là **mô hình khái niệm theo ký pháp Chen**, không phải schema vật lý.
 
-- Ràng buộc ghi tắt: `PK` khoá chính, `FK` khoá ngoại, `UQ` duy nhất, `NN` bắt buộc; giá trị mặc
-  định và unique index ghép ghi ngay trong bảng.
-- Đầu mút quan hệ: một gạch là "một", chân quạ là "nhiều", vòng tròn là "không bắt buộc".
-- Trang 1 chỉ vẽ khoá và quan hệ của cả 51 collection để nhìn toàn cảnh; trang 2–11 mới có đủ
-  thuộc tính, chia theo module M01–M12.
-- Nguồn dữ liệu duy nhất là [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml).
+- **Hình chữ nhật** là thực thể, **elip** là thuộc tính nối vào thực thể của nó, **hình thoi** là quan
+  hệ mang tên nghiệp vụ nối các thực thể. Hình chữ nhật **nét đứt, chữ nghiêng** là một thực thể được
+  lặp lại từ chỗ khác (ví dụ `User`, `Club`) để đường nối không phải chạy xuyên trang; nó vẫn là cùng
+  một thực thể.
+- Sơ đồ **không ghi** kiểu dữ liệu, `PK`/`FK`/`UQ`, `NOT NULL`, giá trị mặc định, index, cardinality
+  hay participation; thuộc tính khoá cũng không gạch chân.
+- Mỗi trường tham chiếu trong DBML được thay bằng **một quan hệ có tên** (ví dụ `Club organises
+  Event`, `User files Complaint`), không vẽ thành thuộc tính. Các trường `…By` cùng trỏ về `User`
+  trên một thực thể được gộp thành một quan hệ (ví dụ `submits / decides`).
+- Bốn quan hệ không có trường tham chiếu nhưng có căn cứ trong schema và code: `Role includes
+  Permission` và `Permission is granted to Club Position` (danh sách `permissionCodes`), `Club Field
+  classifies Club / Club Application` (trường `field` lấy từ danh mục `clubFields`), `Evaluation
+  Dimension is scored in Dimension Result` (`dimensionCode`).
+- **Lược bỏ có chủ ý:** `id`, `createdAt`, `updatedAt`; 12 tham chiếu là bản sao suy ra được qua
+  quan hệ khác (ví dụ `attendances.clubId` suy ra qua `Event`); và các thuộc tính thuần kỹ thuật
+  như `googleSubject`, `normalizedName`, `sortOrder`, bộ đếm (`confirmedRegistrationCount`,
+  `nextWaitlistPosition`, `currentVersionNo`), bản sao tên (`clubName`), `payload`/`attempts` của
+  thông báo, `before`/`after`/`correlationId` của audit log. Ba tham chiếu đa hình (`entityId`,
+  `sourceRefId`, `originRefId`) không thành quan hệ vì không trỏ tới một thực thể cố định.
+- Cả 51 collection đều có mặt dưới dạng thực thể; không gộp thực thể nào.
+- Nguồn đối chiếu là [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml).
   Schema đổi thì sửa DBML trước rồi sinh lại ERD, không sửa tay trên sơ đồ.
 
 ## Quy ước chung
