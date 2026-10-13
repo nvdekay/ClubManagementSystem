@@ -5,8 +5,8 @@ ICPDP. Mỗi luồng ghi nơi bắt đầu, vai trò cần có, từng bước t
 màn hình, và kết quả cần kiểm tra.
 
 Tên nút, bộ lọc và trạng thái trong tài liệu lấy từ giao diện tiếng Việt của bản hiện tại.
-Ảnh minh hoạ được chụp từ app với API và MongoDB thật sau khi seed; xem phần **Phụ lục** để
-biết ảnh nào chụp trước đợt đổi giao diện 12/10/2026.
+Toàn bộ ảnh minh hoạ được chụp lại ngày 13/10/2026 từ app đang chạy với API và MongoDB thật sau
+khi seed, bằng các tài khoản mẫu; xem phần **Phụ lục** để biết nguồn dữ liệu.
 
 ## Mục lục
 
@@ -47,12 +47,21 @@ quay lại đúng trang đó sau khi đăng nhập xong.
 4. Ở **Câu lạc bộ**, tìm theo tên và lọc theo lĩnh vực; mở một CLB để xem giới thiệu, ban chủ
    nhiệm, đợt tuyển đang mở và hoạt động.
 5. Ở **Sự kiện**, mở một sự kiện để xem thời gian, địa điểm, số chỗ và khung đăng ký.
-6. Chọn **Không gian làm việc** ở chân trang để vào khu làm việc theo vai trò.
+6. Bấm avatar ở góc phải thanh menu, chọn **Không gian làm việc** để vào khu làm việc theo vai
+   trò.
 
 **Kết quả:** email sai domain hoặc tài khoản đã bị khoá sẽ nhận thông báo lỗi và không tạo
 phiên đăng nhập. Danh bạ chỉ hiện CLB đang hoạt động; CLB đang tạm ngừng có nhãn riêng.
 
-![Màn hình đăng nhập Google](images/04-login.png)
+![Màn hình đăng nhập Google](images/01-login.png)
+
+![Trang chủ sau khi đăng nhập](images/02-home.png)
+
+![Danh bạ câu lạc bộ](images/03-club-directory.png)
+
+![Trang chi tiết một CLB](images/04-club-detail.png)
+
+![Danh sách sự kiện](images/05-event-directory.png)
 
 ## 2. Chọn không gian làm việc
 
@@ -61,8 +70,9 @@ phiên đăng nhập. Danh bạ chỉ hiện CLB đang hoạt động; CLB đang
 Màn hình hiện lời chào và một thẻ cho mỗi không gian mà tài khoản có quyền:
 
 - **Sinh viên**: CLB của tôi, sự kiện đã đăng ký, đơn ứng tuyển, thông báo cá nhân.
-- **CLB**: mỗi CLB một thẻ. Chủ nhiệm thấy tiêu đề "Ban chủ nhiệm CLB …"; thành viên thấy tên
-  CLB kèm vai trò (Chủ nhiệm, Thành viên hoặc Người sáng lập).
+- **CLB**: mỗi CLB một thẻ. Club Leader (Chủ nhiệm và Phó chủ nhiệm đã xác nhận) thấy tiêu đề
+  "Ban chủ nhiệm CLB …" với nhãn **Chủ nhiệm**; Club Member thấy tên CLB với nhãn **Thành viên**;
+  người đứng đơn của CLB đang thiết lập thấy nhãn **Người sáng lập**.
 - **ICPDP**: xét duyệt hồ sơ, chính sách và tài khoản.
 
 1. Bấm **Vào workspace →** trên thẻ cần dùng. Tài khoản chỉ có một không gian thì app vào
@@ -90,7 +100,12 @@ Thanh bên chia nhóm theo không gian:
 Sinh viên và CLB còn có phần **Khám phá** (Khám phá CLB, Sự kiện) ở cuối thanh bên.
 
 **Kết quả:** ở không gian CLB, Club Member chỉ thấy Tổng quan, Thành viên (chỉ xem) và Trang công
-khai; các mục quản lý chỉ hiện với Club Leader (xem chương 4).
+khai; các mục quản lý chỉ hiện với Club Leader (xem chương 4). Thẻ ở đầu thanh bên ghi nhãn
+**Chủ nhiệm** cho mọi Club Leader, kể cả Phó chủ nhiệm.
+
+![Màn chọn không gian làm việc](images/06-workspace-chooser.png)
+
+![Tổng quan và thanh bên của không gian Sinh viên](images/07-student-home.png)
 
 ## 3. Nộp hồ sơ thành lập CLB
 
@@ -109,13 +124,15 @@ hồ sơ mới.
 **Kết quả:** hồ sơ chuyển `Draft` → `Submitted`. Khi được duyệt, CLB chuyển sang hoạt động
 ngay, ban chủ nhiệm trong hồ sơ được xác lập và không gian CLB xuất hiện ở màn chọn workspace.
 
-![Bước thông tin CLB trong hồ sơ thành lập](images/06-founding.png)
-
-**Phía ICPDP:** mở **Duyệt hồ sơ thành lập** (`/workspace/reviews`), chọn hồ sơ, nhận thẩm
-định, xem các phần, lịch sử bản nộp và file đính kèm. Ghi lý do rồi chọn duyệt, yêu cầu chỉnh
+**Phía ICPDP:** mở **Duyệt hồ sơ thành lập** (`/workspace/reviews`), bấm **Mở thẩm định** ở hồ
+sơ cần xem, nhận thẩm định, xem các phần, lịch sử bản nộp và file đính kèm. Ghi lý do rồi chọn duyệt, yêu cầu chỉnh
 sửa hoặc từ chối.
 
-![Hàng đợi thẩm định hồ sơ thành lập](images/27-review-queue.png)
+![Bước thông tin CLB trong hồ sơ thành lập](images/08-founding-form.png)
+
+![Hàng đợi thẩm định hồ sơ thành lập](images/09-founding-review-queue.png)
+
+![ICPDP thẩm định một hồ sơ thành lập](images/10-founding-review-detail.png)
 
 ## 4. Thiết lập CLB và hai vai trò trong CLB
 
@@ -143,9 +160,16 @@ Phía CLB chỉ có **hai vai trò cố định**, không tự tạo thêm vai t
 | Xem phòng được phân, gửi yêu cầu cơ sở vật chất | Có | Không |
 | Lập kế hoạch chuyển giao, xin tạm ngừng hoạt động | Có | Không |
 
+Ba việc Club Leader có quyền nhưng **chưa có màn hình phía CLB**: nộp báo cáo định kỳ (chương 15),
+lập kế hoạch chuyển giao (chương 5) và xin tạm ngừng hoạt động.
+
 Thành viên muốn có quyền quản lý thì phải được đề cử vào ghế Phó chủ nhiệm và được ICPDP xác nhận
 (chương 5). Khi CLB mới được duyệt và còn ở bước thiết lập, người đứng đơn chỉ sửa được hồ sơ CLB
 và đề cử ban chủ nhiệm.
+
+![Không gian CLB của Club Leader: đủ các nhóm quản lý](images/11-club-leader-home.png)
+
+![Không gian CLB của Club Member: chỉ xem](images/12-club-member-home.png)
 
 ### Thiết lập hồ sơ và cơ cấu
 
@@ -160,6 +184,8 @@ và đề cử ban chủ nhiệm.
 
 **Kết quả:** các mục có dấu * là bắt buộc theo chính sách nhà trường. Ban/bộ phận chỉ để mô tả
 cơ cấu, không gắn quyền.
+
+![Thiết lập CLB: hồ sơ vận hành và cơ cấu nội bộ](images/13-club-settings.png)
 
 ## 5. Ban chủ nhiệm và chuyển giao nhiệm kỳ
 
@@ -176,6 +202,8 @@ cơ cấu, không gắn quyền.
 **Kết quả:** phải chọn ít nhất một ghế. App chặn người có nhiệm kỳ Chủ nhiệm bị chồng lấn.
 Quyền của người được đề cử chỉ có hiệu lực sau khi ICPDP xác nhận.
 
+![Trang đề cử ban chủ nhiệm khi không còn ghế trống](images/14-board-nomination.png)
+
 ### ICPDP xác nhận ban chủ nhiệm
 
 **Nơi bắt đầu:** **Xác nhận ban chủ nhiệm** (`/workspace/board-nominations`).
@@ -187,6 +215,8 @@ Quyền của người được đề cử chỉ có hiệu lực sau khi ICPDP 
 **Kết quả:** ghế chuyển sang Đã xác nhận hoặc Đã trả để đề cử lại. Mỗi đề cử chỉ nhận một
 quyết định; trả lại tất cả các ghế thì bắt buộc có ghi chú. Nếu officer khác đã nhận, app báo
 và không cho thao tác trùng.
+
+![ICPDP xem đề cử và nhận quyết định](images/15-board-nomination-review.png)
 
 ### ICPDP duyệt chuyển giao nhiệm kỳ
 
@@ -201,6 +231,8 @@ và không cho thao tác trùng.
 **Kết quả:** khi phê duyệt, nhiệm kỳ cũ đóng, nhiệm kỳ mới có hiệu lực và quyền được cấp lại.
 Không phê duyệt được khi CLB đang tạm ngừng. **Hiện trạng:** phía CLB chưa có màn hình lập kế
 hoạch chuyển giao; hàng đợi này hiện chỉ có dữ liệu seed.
+
+![ICPDP thẩm định kế hoạch chuyển giao nhiệm kỳ](images/16-transition-review.png)
 
 ## 6. Tuyển thành viên
 
@@ -220,9 +252,11 @@ hoạch chuyển giao; hàng đợi này hiện chỉ có dữ liệu seed.
 **Kết quả:** sinh viên theo dõi quyết định trong **Ứng tuyển CLB**. Đợt tuyển của CLB đang
 tạm ngừng vẫn hiện nhưng không nhận đơn mới.
 
-![Quản lý đợt tuyển của CLB](images/07-campaign.png)
+![Tạo và quản lý đợt tuyển của CLB](images/17-recruitment-campaign.png)
 
-![Đơn ứng tuyển của sinh viên](images/08-recruitment-apply.png)
+![Đơn ứng tuyển của sinh viên](images/18-recruitment-apply.png)
+
+![Sàng lọc đơn ứng tuyển của một đợt tuyển](images/19-recruitment-review.png)
 
 ## 7. Thành viên và yêu cầu rời CLB
 
@@ -241,9 +275,11 @@ tạm ngừng vẫn hiện nhưng không nhận đơn mới.
 **Kết quả:** trạng thái và lịch sử được cập nhật. Yêu cầu rời đang chờ chưa có nghĩa là đã
 rời CLB.
 
-![Danh sách thành viên và yêu cầu rời CLB](images/09-members.png)
+![Club Leader quản lý thành viên và yêu cầu rời CLB](images/20-members-manage.png)
 
-![Không gian thành viên](images/10-member-space.png)
+![Club Member chỉ xem danh sách thành viên](images/21-members-readonly.png)
+
+![Không gian thành viên của sinh viên trong một CLB](images/22-member-space.png)
 
 ## 8. Sự kiện CLB
 
@@ -266,9 +302,11 @@ rời CLB.
 **Kết quả:** duyệt đề xuất thì app tạo ngân sách sự kiện cho phần kinh phí đã duyệt. Đề xuất
 quá hạn mà chưa được xử lý sẽ tự chuyển **Hết hạn**.
 
-![Đề xuất sự kiện ở phía CLB](images/11-event-proposal.png)
+![Hộp thoại tạo đề xuất sự kiện](images/24-event-proposal-form.png)
 
-![Thẩm định đề xuất và ngân sách ở phía ICPDP](images/12-event-review.png)
+![Hàng đợi đề xuất sự kiện phía ICPDP](images/25-event-proposal-queue.png)
+
+![Thẩm định đề xuất và từng dòng ngân sách](images/26-event-proposal-review.png)
 
 ### Công bố, sức chứa, đổi lịch và huỷ
 
@@ -282,6 +320,8 @@ quá hạn mà chưa được xử lý sẽ tự chuyển **Hết hạn**.
 **Kết quả:** sự kiện tự chuyển Sắp diễn ra → Đang diễn ra → Đã kết thúc theo thời gian.
 Huỷ trong vòng 24 giờ trước sự kiện được ghi nhận là huỷ muộn. Người đã đăng ký nhận thông
 báo khi sự kiện đổi lịch hoặc bị huỷ.
+
+![Danh sách sự kiện CLB với nút Đổi lịch và Huỷ sự kiện](images/23-club-events.png)
 
 ## 9. Sự kiện cấp trường
 
@@ -303,6 +343,12 @@ báo khi sự kiện đổi lịch hoặc bị huỷ.
 ký, check-in và phản hồi như sự kiện CLB. **Hiện trạng:** phía CLB chưa có màn hình nhận/từ
 chối lời mời, nên phản hồi của CLB hiện chỉ có từ dữ liệu seed.
 
+![Danh sách sự kiện cấp trường](images/27-school-events.png)
+
+![Biểu mẫu tạo sự kiện cấp trường](images/28-school-event-create.png)
+
+![Chi tiết sự kiện cấp trường: mã check-in và phản hồi của CLB](images/29-school-event-detail.png)
+
 ## 10. Đăng ký sự kiện, check-in và gửi phản hồi
 
 **Vai trò:** Sinh viên. **Nơi bắt đầu:** trang sự kiện `/events/:id`; **Sự kiện của tôi**
@@ -322,7 +368,9 @@ chối lời mời, nên phản hồi của CLB hiện chỉ có từ dữ liệ
 được phản hồi, trước hạn "Phản hồi mở đến …", và không sửa được sau khi gửi. Sự kiện dành
 cho thành viên CLB thì người ngoài không đăng ký được.
 
-![Sự kiện đã đăng ký và đã tham gia của sinh viên](images/26-my-events.png)
+![Khung đăng ký tham gia trên trang sự kiện](images/30-event-register.png)
+
+![Sự kiện đã đăng ký và đã check-in của sinh viên](images/31-my-events.png)
 
 ## 11. Chốt điểm danh và xem phản hồi
 
@@ -338,9 +386,9 @@ cho thành viên CLB thì người ngoài không đăng ký được.
 **Kết quả:** điểm danh đã chốt bị khoá và trở thành đầu vào báo cáo. Khi chưa đủ số phản hồi
 tối thiểu theo chính sách, phần tổng hợp được ẩn. CLB không sửa hay xoá được phản hồi.
 
-![Danh sách đăng ký và điểm danh phía CLB](images/13-attendance.png)
+![Danh sách đăng ký và điểm danh đã chốt](images/32-attendance.png)
 
-![Phản hồi tổng hợp của sự kiện](images/14-event-feedback.png)
+![Phản hồi tổng hợp, so sánh hai sự kiện](images/33-event-feedback.png)
 
 ## 12. Cơ sở vật chất
 
@@ -360,12 +408,14 @@ hội trường, sân trường, sân khấu và thiết bị.
 
 **Kết quả:** mục đã từng được đặt chỉ ngừng sử dụng được, không xoá được.
 
+![Danh mục phòng và thiết bị](images/34-properties.png)
+
 ### 12.2. ICPDP phân phòng học theo học kỳ
 
 **Nơi bắt đầu:** **Phân phòng CLB** (`/workspace/room-allocations`).
 
 1. Chọn học kỳ (lấy từ lịch năm học của chính sách, chưa kết thúc); lọc theo CLB hoặc toà nhà.
-2. Chọn **Tạo phân phòng**: CLB (đang hoạt động hoặc đang giải thể), phòng học, thứ trong
+2. Bấm **Phân phòng**: chọn CLB (đang hoạt động hoặc đang giải thể), phòng học, thứ trong
    tuần và slot (1: 07:30–09:50, 2: 10:00–12:20, 3: 12:50–15:10, 4: 15:20–17:40), ghi chú.
 3. Xem lưới chiếm dụng của phòng để tránh ô đã có CLB khác hoặc sự kiện.
 4. Xác nhận. App tạo một buổi đã duyệt cho mỗi tuần còn lại của học kỳ (bỏ qua ngày phòng bị
@@ -375,6 +425,10 @@ hội trường, sân trường, sân khấu và thiết bị.
    giải phóng.
 
 **Kết quả:** CLB có lịch phòng cố định cả học kỳ. Sang học kỳ mới phải phân lại.
+
+![Bảng phân phòng học theo học kỳ](images/35-room-allocations.png)
+
+![Hộp thoại phân phòng](images/36-room-allocation-create.png)
 
 ### 12.3. CLB xem phòng được phân
 
@@ -388,12 +442,15 @@ hội trường, sân trường, sân khấu và thiết bị.
 **Kết quả:** màn hình chỉ để xem; CLB không đặt, huỷ hay xin phòng học trên app. CLB bị tạm
 ngừng hoặc giải thể mất các buổi tương lai.
 
+![Phòng được phân của CLB](images/37-club-rooms.png)
+
 ### 12.4. Yêu cầu cơ sở vật chất và thẩm định
 
 **Vai trò:** Club Leader; ICPDP thẩm định.
 
-1. CLB mở **Yêu cầu cơ sở vật chất** (`/club/:clubId/bookings`), chọn tài sản, ngày và slot;
-   kiểm tra sức chứa, thiết bị và tình trạng còn trống; lưu nháp rồi gửi.
+1. CLB mở **Yêu cầu cơ sở vật chất** (`/club/:clubId/bookings`), bấm nút **Yêu cầu cơ sở vật
+   chất**; chọn ngày, slot và cơ sở vật chất, nhập mục đích và số người dự kiến; **Lưu bản nháp**
+   rồi gửi.
 2. ICPDP mở **Yêu cầu cơ sở vật chất** (`/workspace/bookings`), nhận xử lý, kiểm tra xung đột,
    nhu cầu và nghĩa vụ CLB; duyệt, từ chối hoặc yêu cầu sửa, có thể đề xuất tài sản/giờ khác.
 3. Khi bị trả sửa, CLB sửa và nộp lại; app tạo bản mới.
@@ -402,12 +459,9 @@ ngừng hoặc giải thể mất các buổi tương lai.
 **Kết quả:** trùng khung giờ đã được giữ thì không duyệt được. CLB đang tạm ngừng không gửi
 yêu cầu mới được. Chỉ yêu cầu đã duyệt mới là lịch sử dụng chính thức.
 
-**Hiện trạng ảnh:** hai ảnh dưới chụp trước khi tách phòng học khỏi luồng đặt chỗ, nên còn
-hiện phòng học trong màn của CLB.
+![CLB tạo yêu cầu cơ sở vật chất](images/38-club-booking-request.png)
 
-![Booking đã duyệt của CLB](images/15-booking.png)
-
-![Chi tiết booking phía ICPDP](images/16-booking-review.png)
+![ICPDP thẩm định yêu cầu cơ sở vật chất](images/39-booking-review.png)
 
 ## 13. Báo cáo sau sự kiện
 
@@ -425,11 +479,9 @@ hiện phòng học trong màn của CLB.
 Sự kiện nội bộ không xin ngân sách và sự kiện nhập từ dữ liệu cũ không phải nộp báo cáo. Màn
 này cần chính sách có cấu hình hạn nộp báo cáo sau sự kiện.
 
-![Báo cáo nháp với số liệu điểm danh và phản hồi](images/17-report-draft.png)
+![Báo cáo nháp với số liệu nạp sẵn](images/40-report-draft.png)
 
-![Phần nhập minh chứng, lưu và nộp báo cáo](images/29-report-submit.png)
-
-![Báo cáo được sửa với lịch sử bản trước](images/19-report-correction.png)
+![Báo cáo bị trả về để sửa](images/41-report-returned.png)
 
 ## 14. ICPDP thẩm định báo cáo sau sự kiện
 
@@ -445,9 +497,7 @@ này cần chính sách có cấu hình hạn nộp báo cáo sau sự kiện.
 **Kết quả:** chấp nhận → sự kiện `Closed`; trả sửa → sự kiện quay về `Completed`. Đóng sự
 kiện không tự tất toán ngân sách.
 
-![Báo cáo đã nộp ở phía ICPDP](images/18-report-review.png)
-
-![Các quyết định và luồng mở hồ sơ phát hiện](images/30-report-decision.png)
+![ICPDP xem báo cáo đã nộp và nhận thẩm định](images/42-report-review.png)
 
 ## 15. Báo cáo định kỳ
 
@@ -465,6 +515,10 @@ kiện không tự tất toán ngân sách.
 **Kết quả:** báo cáo chuyển Đã chấp nhận hoặc Đã trả về; báo cáo được chấp nhận là đầu vào
 đánh giá CLB. Loại báo cáo và các mốc hạn nộp/nhắc/quá hạn cấu hình trong chính sách.
 **Hiện trạng:** phía CLB chưa có màn hình nộp báo cáo định kỳ; dữ liệu hiện có đến từ seed.
+
+![Danh sách báo cáo định kỳ theo học kỳ](images/43-periodic-reports.png)
+
+![Thẩm định một báo cáo định kỳ](images/44-periodic-report-review.png)
 
 ## 16. Kinh phí: tạm ứng, quyết toán, đối soát
 
@@ -484,7 +538,9 @@ kiện không tự tất toán ngân sách.
 duyệt. Ngày chuyển không được ở tương lai; sự kiện đã huỷ thì không ghi tạm ứng. CLB phải
 quyết toán trong 14 ngày sau khi sự kiện kết thúc. App chỉ ghi nhận, không chuyển tiền.
 
-![Ghi một khoản tạm ứng vào ngân sách đã duyệt](images/23-advance.png)
+![Danh sách kinh phí sự kiện và bộ lọc](images/45-budgets.png)
+
+![Ghi một lần tạm ứng](images/46-budget-advance.png)
 
 ### 16.2. CLB ghi khoản chi và nộp quyết toán
 
@@ -500,9 +556,9 @@ quyết toán trong 14 ngày sau khi sự kiện kết thúc. App chỉ ghi nh�
 **Kết quả:** ngân sách sang CLB đã nộp quyết toán; khoản chi bị khoá. Khoản thiếu chứng từ
 vẫn ghi được nhưng sẽ bị loại khi đối soát.
 
-![Danh sách khoản chi và các số liệu quyết toán](images/20-expenses.png)
+![Khoản chi và các số liệu quyết toán của CLB](images/47-club-expenses.png)
 
-![Hộp thoại ghi khoản chi](images/21-expense-dialog.png)
+![Hộp thoại thêm khoản chi](images/48-expense-dialog.png)
 
 ### 16.3. ICPDP đối soát, cấp bù và ghi hoàn trả
 
@@ -524,18 +580,12 @@ vẫn ghi được nhưng sẽ bị loại khi đối soát.
 | Nhỏ hơn 0 | Chờ CLB hoàn trả | Ghi hoàn trả đủ, hạn 14 ngày |
 
 **Hiện trạng:** màn khoản chi của CLB (16.2) và màn đối soát (16.3) đã có giao diện nhưng API
-chưa được nối vào server chính (gọi API trả 404 ngày 12/10/2026). Ảnh 16.2–16.3 chụp từ bản
-demo riêng. Phần tạm ứng (16.1) chạy trên server chính.
+chưa được nối vào server chính (gọi API trả 404, kiểm tra lại ngày 13/10/2026). Ảnh 16.2–16.3
+chụp từ bản demo có nối API này. Phần tạm ứng (16.1) chạy trên server chính.
 
-![Xét từng khoản chi khi đối soát](images/22-reconciliation.png)
+![Đối soát: xét từng khoản chi](images/49-reconciliation.png)
 
-![Ghi lý do loại khoản thiếu chứng từ và xác nhận chốt đối soát](images/32-reconciliation-finalize.png)
-
-![Kết quả đối soát và nghĩa vụ hoàn trả](images/31-recovery-result.png)
-
-![Ghi cấp bù đúng chênh lệch](images/24-topup.png)
-
-![Ghi nhận CLB hoàn trả và theo dõi phần còn nợ](images/25-refund.png)
+![Ghi khoản cấp bù đúng chênh lệch](images/50-budget-topup.png)
 
 ## 17. Hồ sơ vi phạm
 
@@ -560,6 +610,10 @@ ghi nhận CLB không phản hồi). Biện pháp tạm ngừng/giải thể ch�
 (chương 20), không tự thực hiện. **Hiện trạng:** CLB chưa có màn hình xem hồ sơ và gửi giải
 trình trên app.
 
+![Danh sách hồ sơ vi phạm](images/51-violations.png)
+
+![Chi tiết hồ sơ: chứng cứ, giải trình và quyết định](images/52-violation-detail.png)
+
 ## 18. Đánh giá CLB
 
 ### 18.1. Tiêu chí đánh giá
@@ -576,6 +630,8 @@ trình trên app.
 **Kết quả:** tổng trọng số phải đúng 100%; D1–D3 phải lớn hơn 0; các mức phải giảm dần.
 Trạng thái: Bản nháp → Đang áp dụng → Đã thay thế.
 
+![Tiêu chí đánh giá D1–D8 và trọng số](images/53-evaluation-scheme.png)
+
 ### 18.2. Sinh, chốt và công bố kết quả
 
 **Nơi bắt đầu:** **Đánh giá CLB** (`/workspace/evaluations`).
@@ -590,6 +646,8 @@ Trạng thái: Bản nháp → Đang áp dụng → Đã thay thế.
 
 **Kết quả:** xếp loại Xuất sắc / Tốt / Khá / Cần cải thiện. Tiêu chí thiếu dữ liệu ghi "chưa
 đủ dữ liệu", không tính 0. Kết quả đã công bố không sửa trực tiếp; dùng **Tạo bản sửa**.
+
+![Bảng đánh giá CLB theo học kỳ](images/54-evaluations.png)
 
 ## 19. Góp ý của sinh viên
 
@@ -610,6 +668,12 @@ liên quan, thời điểm gửi. Người gửi ẩn danh không bao giờ đư
 
 **Kết quả:** góp ý không sửa được sau khi gửi.
 
+![Sinh viên gửi góp ý](images/55-student-feedback.png)
+
+![Góp ý sinh viên gửi cho CLB](images/56-club-feedback-inbox.png)
+
+![Hộp thư góp ý của ICPDP](images/57-icpdp-feedback-inbox.png)
+
 ## 20. ICPDP quản lý vòng đời CLB
 
 **Nơi bắt đầu:** **Quản lý CLB** (`/icpdp/clubs`).
@@ -627,6 +691,10 @@ liên quan, thời điểm gửi. Người gửi ẩn danh không bao giờ đư
 **Kết quả:** tạm ngừng huỷ sự kiện sắp tới và booking đã duyệt; đợt tuyển vẫn hiện nhưng
 không nhận đơn. CLB tự hoạt động lại khi đến ngày đã đặt. Giải thể có hiệu lực từ học kỳ kế
 tiếp; nút bị khoá khi lịch năm học chưa có học kỳ kế tiếp.
+
+![Quản lý CLB phía ICPDP](images/58-icpdp-clubs.png)
+
+![Hộp thoại quản lý vòng đời một CLB](images/59-club-manage.png)
 
 ## 21. Thiết lập hệ thống
 
@@ -647,6 +715,8 @@ tiếp; nút bị khoá khi lịch năm học chưa có học kỳ kế tiếp.
 học kỳ và một loại báo cáo. App cảnh báo nếu phiên bản mới làm vô hiệu một quyết định đã ban
 hành.
 
+![Chính sách đang hiệu lực](images/60-policy.png)
+
 ### Lĩnh vực CLB
 
 **Nơi bắt đầu:** **Lĩnh vực CLB** (`/workspace/club-fields`).
@@ -654,6 +724,8 @@ hành.
 1. Ở **Lĩnh vực mới**, nhập tên và thứ tự (số nhỏ hiện trước), bấm **Thêm lĩnh vực**.
 2. **Sửa** → **Lưu** để đổi tên; tên mới được cập nhật cho mọi CLB và hồ sơ đang dùng.
 3. **Xoá** → xác nhận. Lĩnh vực đang được dùng chỉ bị ẩn (nhãn **Đã ẩn**).
+
+![Danh sách lĩnh vực CLB](images/61-club-fields.png)
 
 ### Tài khoản & phân quyền
 
@@ -666,6 +738,8 @@ hành.
 
 **Kết quả:** thu hồi, khoá và mở khoá bắt buộc có lý do. Mọi thay đổi quyền được ghi audit.
 
+![Quản lý vai trò hệ thống của một tài khoản](images/62-accounts.png)
+
 ## 22. Xuất dữ liệu
 
 **Vai trò:** ICPDP. **Nơi bắt đầu:** **Xuất báo cáo** (`/workspace/exports`).
@@ -673,18 +747,18 @@ hành.
 1. Chọn dữ liệu: CLB và trạng thái / Thành viên theo CLB / Sự kiện kèm đăng ký và điểm danh /
    Ngân sách, giải ngân và đối soát / Hồ sơ vi phạm và góp ý / Kết quả đánh giá đã công bố.
 2. Chọn thời gian: Toàn bộ / Theo học kỳ / Khoảng ngày; lọc theo CLB và trạng thái.
-3. Chọn định dạng Excel, CSV hoặc PDF.
+3. Chọn định dạng XLSX, CSV hoặc PDF.
 4. Bấm **Đếm số dòng**, rồi **Tải xuống**.
 
 **Kết quả:** không tải được khi kết quả có 0 dòng. Mỗi lần xuất được ghi lại.
+
+![Xuất dữ liệu](images/63-exports.png)
 
 ## 23. Tổng quan ICPDP và xử lý lỗi thường gặp
 
 ICPDP mở **Tổng quan** (`/icpdp`) để theo dõi việc đang chờ, nghĩa vụ và số liệu chung, rồi
 đi vào từng hồ sơ để xử lý. Sinh viên và CLB cũng có trang **Tổng quan** riêng với các thẻ số
 liệu và lối tắt.
-
-![Dashboard ICPDP với dữ liệu đã seed](images/28-dashboard.png)
 
 | Tình huống | Cách xử lý |
 |---|---|
@@ -699,20 +773,20 @@ liệu và lối tắt.
 | Không thấy tổng hợp phản hồi | Số phản hồi chưa đạt ngưỡng tối thiểu trong chính sách |
 | Không cấp bù/hoàn trả được số đã nhập | Đối chiếu đúng chênh lệch hoặc phần còn phải hoàn |
 
+![Tổng quan ICPDP](images/64-icpdp-home.png)
+
 ## Phụ lục — Dữ liệu và nguồn ảnh
 
-- Ảnh 04 (đăng nhập) chụp ngày 12/10/2026 theo giao diện mới.
-- Các ảnh còn lại chụp ngày 11/10/2026, trước khi đổi giao diện trang chủ, đăng nhập, màn
-  chọn workspace và chia nhóm thanh bên của Sinh viên/CLB. Nội dung từng màn không đổi, nhưng
-  thanh bên trong ảnh có thể khác bảng ở chương 2.
-- Ảnh 01–03 (trang chủ, danh bạ, chi tiết CLB) và 05 (chọn workspace) đã bỏ khỏi guide vì
-  giao diện đã thay đổi; cần chụp lại bằng một phiên đăng nhập.
-- Ảnh 14, 17–22, 24–25, 29–32 dùng API thật của bản demo, database `ucms_guide_demo`.
-- Các màn chưa có ảnh: thiết lập CLB, ban chủ nhiệm, sự kiện cấp trường, phân phòng, báo cáo
-  định kỳ, hồ sơ vi phạm, đánh giá CLB, góp ý, quản lý CLB, chính sách, tài khoản, xuất dữ
-  liệu.
-- Liên kết `example.org` là placeholder demo. Tên và email `@demo.ucms.edu.vn` là nhân vật mẫu.
-- Chi tiết URL, nguồn dữ liệu và thao tác chụp ở `images/manifest.json`.
+- Toàn bộ 64 ảnh chụp ngày 13/10/2026, giao diện tiếng Việt, theme sáng, khung nhìn 1440 × 1000,
+  sau khi phía CLB chuyển sang hai vai trò cố định.
+- Ảnh chụp từ app thật chạy trên database demo riêng `ucms_guide_demo` (bản sao của database
+  local sau khi seed, thêm dữ liệu "Wave 4 demo" cho báo cáo và kinh phí). Bản demo có nối API
+  khoản chi và đối soát; server chính thì chưa (xem **Hiện trạng** ở chương 16).
+- Tài khoản dùng để chụp: Trần Minh Anh (Club Leader của HEBE Club), Võ Ngọc Hà (Club Member),
+  Đặng Quốc Huy (Sinh viên), Lê Thu Hằng và Nguyễn Khánh Duy (Cán bộ ICPDP). Tên và email
+  `@demo.ucms.edu.vn` đều là nhân vật mẫu.
+- Sự kiện có tên "Wave 3 demo" / "Wave 4 demo" và liên kết `example.org` là dữ liệu mẫu.
+- Chi tiết URL, tài khoản và thao tác trước khi chụp của từng ảnh ở `images/manifest.json`.
 
 Tài liệu này chỉ hướng dẫn các luồng đã có màn hình. Những phần ghi **Hiện trạng** là chức
-năng còn thiếu màn hình hoặc chưa nối API ở server chính tính đến 12/10/2026.
+năng còn thiếu màn hình hoặc chưa nối API ở server chính tính đến 13/10/2026.

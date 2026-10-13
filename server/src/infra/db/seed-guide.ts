@@ -1,5 +1,6 @@
 // Builds a separate database for screenshots without changing the source database's policy.
 import mongoose, { Types } from "mongoose";
+import { DEFAULT_FORM_REQUIREMENTS } from "../../domain/policy.js";
 import { loadConfig } from "../config/index.js";
 import { ensureUcmsDatabase, ucmsModels as m } from "./ucms-models.js";
 import { seedWave4 } from "./seed-wave4.js";
@@ -39,7 +40,8 @@ try {
     const { _id: policyId, __v: revision, ...settings } = policy;
     void policyId;
     void revision;
-    await m.policyVersions!.create({ ...settings, effectiveFrom: now, createdAt: now, createdBy: owner,
+    // Versions written before form requirements existed carry none; copies need the defaults.
+    await m.policyVersions!.create({ formRequirements: DEFAULT_FORM_REQUIREMENTS, ...settings, effectiveFrom: now, createdAt: now, createdBy: owner,
       reportDeadlines: [...(policy.reportDeadlines as unknown[]), { reportType: "POST_EVENT", dueDaysAfterPeriodEnd: 7,
         remindBeforeDays: 2, overdueAfterDays: 1, escalateAfterDays: 3 }] });
   }
@@ -50,7 +52,7 @@ try {
     const { _id: policyId, __v: revision, ...settings } = policy;
     void policyId;
     void revision;
-    await m.policyVersions!.create({ ...settings, effectiveFrom: new Date("2000-01-01"), createdAt: now, createdBy: owner,
+    await m.policyVersions!.create({ formRequirements: DEFAULT_FORM_REQUIREMENTS, ...settings, effectiveFrom: new Date("2000-01-01"), createdAt: now, createdBy: owner,
       reportDeadlines: [...((settings.reportDeadlines ?? []) as { reportType: string }[])
         .filter((deadline) => deadline.reportType !== "POST_EVENT"), reportDeadline] });
   }

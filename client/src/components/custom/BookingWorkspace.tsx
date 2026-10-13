@@ -232,7 +232,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                 {!!detail.data.check?.conflicts.length && <AppNotice tone="warning" title={t("facilityBookings.conflicts")}>
                   {detail.data.check.conflicts.map((item) => <p key={item.id}>{interval(item)}</p>)}</AppNotice>}
                 {!clubId && !!detail.data.obligations.length && <AppNotice tone="warning" title={t("facilityBookings.obligations")}>
-                  {detail.data.obligations.map((item) => <p key={item}>{t(`facilityBookings.${item as "overdueReport" | "overdueSettlement" | "overdueRefund"}`)}</p>)}</AppNotice>}
+                  {detail.data.obligations.map((item) => <p key={item}>{t(`facilityBookings.${item as "overdueReport" | "overduePostEventReport" | "overdueSettlement" | "overdueRefund"}`)}</p>)}</AppNotice>}
                 {clubId && ["Draft", "Revision Requested"].includes(booking.state) && <div className="flex flex-wrap gap-3">
                   <AppButton onClick={() => openForm(booking)}>{t("facilityBookings.edit")}</AppButton>
                   <AppButton disabled={action.isPending} onClick={() => { if (window.confirm(t("facilityBookings.confirmSubmit"))) void mutate({ kind: "submit", clubId, id: booking.id, expectedVersion: booking.currentVersionNo }); }}>{t("facilityBookings.submit")}</AppButton>
