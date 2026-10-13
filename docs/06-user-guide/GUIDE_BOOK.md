@@ -13,7 +13,7 @@ biết ảnh nào chụp trước đợt đổi giao diện 12/10/2026.
 1. Đăng nhập và khám phá CLB, sự kiện.
 2. Chọn không gian làm việc và thanh bên.
 3. Nộp hồ sơ thành lập CLB và thẩm định.
-4. Thiết lập CLB: hồ sơ, cơ cấu, vai trò và phân quyền.
+4. Thiết lập CLB và hai vai trò Club Leader / Club Member.
 5. Ban chủ nhiệm và chuyển giao nhiệm kỳ.
 6. Tuyển thành viên.
 7. Thành viên và yêu cầu rời CLB.
@@ -89,8 +89,8 @@ Thanh bên chia nhóm theo không gian:
 
 Sinh viên và CLB còn có phần **Khám phá** (Khám phá CLB, Sự kiện) ở cuối thanh bên.
 
-**Kết quả:** ở không gian CLB, mỗi mục chỉ hiện khi vai trò của bạn trong CLB có quyền tương
-ứng (xem chương 4). Không thấy một mục thường có nghĩa là bạn chưa được cấp quyền đó.
+**Kết quả:** ở không gian CLB, Club Member chỉ thấy Tổng quan, Thành viên (chỉ xem) và Trang công
+khai; các mục quản lý chỉ hiện với Club Leader (xem chương 4).
 
 ## 3. Nộp hồ sơ thành lập CLB
 
@@ -117,12 +117,39 @@ sửa hoặc từ chối.
 
 ![Hàng đợi thẩm định hồ sơ thành lập](images/27-review-queue.png)
 
-## 4. Thiết lập CLB
+## 4. Thiết lập CLB và hai vai trò trong CLB
 
-**Vai trò:** Chủ nhiệm, hoặc thành viên có quyền **Quản lý vai trò**. **Nơi bắt đầu:**
-**Thiết lập CLB** (`/club/:clubId/settings`).
+Phía CLB chỉ có **hai vai trò cố định**, không tự tạo thêm vai trò hay chia quyền lẻ:
 
-### Tab "Hồ sơ & cơ cấu"
+- **Club Leader**: Chủ nhiệm và các Phó chủ nhiệm đã được ICPDP xác nhận (qua hồ sơ thành lập,
+  đề cử ban chủ nhiệm hoặc chuyển giao nhiệm kỳ). Có toàn quyền quản lý CLB; Chủ nhiệm và Phó chủ
+  nhiệm có quyền như nhau.
+- **Club Member**: mọi thành viên đang hoạt động khác. Chỉ xem và tham gia.
+
+| Việc | Club Leader | Club Member |
+|---|---|---|
+| Xem Tổng quan CLB, trang công khai | Có | Có |
+| Xem danh sách thành viên | Có (quản lý được) | Có (chỉ xem) |
+| Không gian thành viên, xin rời CLB, đăng ký sự kiện, check-in, phản hồi, góp ý | Có | Có |
+| Sửa hồ sơ vận hành và cơ cấu ban/bộ phận (Thiết lập CLB) | Có | Không |
+| Đổi trạng thái thành viên, xử lý yêu cầu rời, xuất Excel | Có | Không |
+| Tạo đợt tuyển, xét đơn, chấm rubric, tiếp nhận thành viên | Có | Không |
+| Đề cử ban chủ nhiệm | Có | Không |
+| Đề xuất, công bố, đổi lịch, huỷ sự kiện; quản lý sức chứa | Có | Không |
+| Điểm danh hộ, chốt điểm danh | Có | Không |
+| Xem phản hồi sự kiện và góp ý sinh viên gửi CLB | Có | Không |
+| Báo cáo sau sự kiện, báo cáo định kỳ | Có | Không |
+| Ghi khoản chi, nộp quyết toán | Có | Không |
+| Xem phòng được phân, gửi yêu cầu cơ sở vật chất | Có | Không |
+| Lập kế hoạch chuyển giao, xin tạm ngừng hoạt động | Có | Không |
+
+Thành viên muốn có quyền quản lý thì phải được đề cử vào ghế Phó chủ nhiệm và được ICPDP xác nhận
+(chương 5). Khi CLB mới được duyệt và còn ở bước thiết lập, người đứng đơn chỉ sửa được hồ sơ CLB
+và đề cử ban chủ nhiệm.
+
+### Thiết lập hồ sơ và cơ cấu
+
+**Vai trò:** Club Leader. **Nơi bắt đầu:** **Thiết lập CLB** (`/club/:clubId/settings`).
 
 1. Phần **Định danh do nhà trường quản lý** (mã CLB, tên, lĩnh vực, trạng thái) chỉ để xem.
 2. Ở **Hồ sơ vận hành**, nhập mô tả, phạm vi hoạt động, email, số điện thoại, URL điều lệ.
@@ -131,40 +158,14 @@ sửa hoặc từ chối.
    **Thêm bộ phận** (tên, mô tả, thứ tự hiển thị) rồi **Lưu bộ phận**. Mỗi bộ phận có **Sửa**
    và **Ngừng dùng**.
 
-### Tab "Vai trò & phân quyền"
-
-1. Chọn **Vai trò mới** (hoặc **Sửa**): nhập tên vai trò, ban/bộ phận, số người giữ (**Một
-   người giữ** hoặc **Nhiều người giữ**).
-2. Tick các quyền theo nhóm (có **Chọn hết** / **Bỏ chọn**), ghi lý do nếu cần, bấm
-   **Lưu vai trò**.
-3. Chọn **Giao vai trò**, tìm thành viên đang hoạt động, nhập ngày bắt đầu/kết thúc (không
-   bắt buộc), bấm **Giao**. Dùng **Thu hồi** để gỡ người khỏi vai trò.
-4. Mở **Lịch sử**, chọn hai phiên bản rồi **So sánh** để xem thay đổi phân quyền.
-
-| Quyền | Mở được |
-|---|---|
-| Quản lý vai trò | Thiết lập CLB |
-| Đề cử ban chủ nhiệm | Ban chủ nhiệm |
-| Quản lý hồ sơ CLB | Hồ sơ vận hành và cơ cấu |
-| Quản lý tuyển thành viên | Tuyển thành viên |
-| Xét đơn ứng tuyển | Xét đơn trong đợt tuyển |
-| Quản lý thành viên | Đổi trạng thái thành viên |
-| Quản lý sự kiện | Sự kiện CLB |
-| Quản lý điểm danh | Đăng ký & điểm danh |
-| Nộp báo cáo | Báo cáo sau sự kiện |
-| Ghi nhận chi tiêu | Khoản chi và quyết toán |
-| Quản lý cơ sở vật chất | Phòng được phân, Yêu cầu cơ sở vật chất |
-| Xem góp ý | Phản hồi sự kiện, Góp ý sinh viên |
-
-**Kết quả:** vai trò Chủ nhiệm luôn có mọi quyền và không sửa được. Vai trò một người giữ
-phải thu hồi người cũ trước khi giao người mới. Chỉ giao vai trò được khi CLB có nhiệm kỳ
-đang hoạt động. Ghế ban điều hành đến từ đề cử (chương 5), không giao trực tiếp ở đây.
+**Kết quả:** các mục có dấu * là bắt buộc theo chính sách nhà trường. Ban/bộ phận chỉ để mô tả
+cơ cấu, không gắn quyền.
 
 ## 5. Ban chủ nhiệm và chuyển giao nhiệm kỳ
 
 ### CLB đề cử ban chủ nhiệm
 
-**Vai trò:** Chủ nhiệm (quyền **Đề cử ban chủ nhiệm**). **Nơi bắt đầu:** **Ban chủ nhiệm**
+**Vai trò:** Club Leader. **Nơi bắt đầu:** **Ban chủ nhiệm**
 (`/club/:clubId/board`).
 
 1. Xem **Nhiệm kỳ hiện tại** (ngày bắt đầu, kết thúc).
@@ -203,8 +204,7 @@ hoạch chuyển giao; hàng đợi này hiện chỉ có dữ liệu seed.
 
 ## 6. Tuyển thành viên
 
-**Vai trò:** CLB có quyền **Quản lý tuyển thành viên** / **Xét đơn ứng tuyển**; Sinh viên
-ứng tuyển.
+**Vai trò:** Club Leader tạo đợt tuyển và xét đơn; Sinh viên ứng tuyển.
 
 1. CLB mở **Tuyển thành viên** (`/club/:clubId/recruitment`), tạo đợt tuyển: tên, vị trí,
    tiêu chí, thời gian nhận đơn, chỉ tiêu, câu hỏi ứng tuyển và rubric đánh giá.
@@ -229,8 +229,8 @@ tạm ngừng vẫn hiện nhưng không nhận đơn mới.
 **Nơi bắt đầu:** CLB → **Thành viên** (`/club/:clubId/members`); Sinh viên → **CLB của tôi**
 (`/workspace/clubs`).
 
-1. Ở danh sách thành viên, tìm theo tên/email, lọc trạng thái hoặc vai trò. Thành viên thường
-   chỉ xem; người có quyền **Quản lý thành viên** mới đổi được trạng thái.
+1. Club Member chỉ thấy danh sách thành viên. Club Leader thấy bảng quản lý: tìm theo tên/email,
+   lọc trạng thái hoặc chức vụ.
 2. Chọn **Đổi trạng thái**, nhập lý do khi được yêu cầu và xác nhận. Loại thành viên bắt buộc
    có lý do.
 3. Xem lịch sử trạng thái; dùng **Xuất Excel** khi cần danh sách.
@@ -247,7 +247,7 @@ rời CLB.
 
 ## 8. Sự kiện CLB
 
-**Vai trò:** CLB có quyền **Quản lý sự kiện**; ICPDP thẩm định. **Nơi bắt đầu:**
+**Vai trò:** Club Leader; ICPDP thẩm định. **Nơi bắt đầu:**
 **Sự kiện CLB** (`/club/:clubId/events`).
 
 ### Đề xuất và thẩm định
@@ -326,7 +326,7 @@ cho thành viên CLB thì người ngoài không đăng ký được.
 
 ## 11. Chốt điểm danh và xem phản hồi
 
-**Vai trò:** CLB có quyền **Quản lý điểm danh** / **Xem góp ý**.
+**Vai trò:** Club Leader.
 
 1. Mở **Đăng ký & điểm danh** (`/club/:clubId/event-attendance`), chọn sự kiện.
 2. Đối chiếu danh sách đăng ký với dữ liệu check-in; dùng **Điểm danh hộ** khi người tham dự
@@ -378,22 +378,19 @@ hội trường, sân trường, sân khấu và thiết bị.
 
 ### 12.3. CLB xem phòng được phân
 
-**Vai trò:** thành viên đang hoạt động có quyền **Quản lý cơ sở vật chất**, được Chủ nhiệm giao
-phụ trách cơ sở vật chất và nhận chìa khoá. **Nơi bắt đầu:** **Phòng được phân**
+**Vai trò:** Club Leader (người đi nhận chìa khoá). **Nơi bắt đầu:** **Phòng được phân**
 (`/club/:clubId/rooms`).
 
 1. Xem lịch tuần của học kỳ hiện tại và sắp tới: thứ, slot, giờ, phòng, toà nhà, ghi chú.
 2. Xem danh sách các buổi sắp tới.
 3. Xuất trình màn hình này cho bảo vệ để nhận chìa khoá phòng.
 
-Nếu không thấy mục **Phòng được phân**, liên hệ Chủ nhiệm CLB để được cấp quyền.
-
 **Kết quả:** màn hình chỉ để xem; CLB không đặt, huỷ hay xin phòng học trên app. CLB bị tạm
 ngừng hoặc giải thể mất các buổi tương lai.
 
 ### 12.4. Yêu cầu cơ sở vật chất và thẩm định
 
-**Vai trò:** CLB có quyền **Quản lý cơ sở vật chất**; ICPDP thẩm định.
+**Vai trò:** Club Leader; ICPDP thẩm định.
 
 1. CLB mở **Yêu cầu cơ sở vật chất** (`/club/:clubId/bookings`), chọn tài sản, ngày và slot;
    kiểm tra sức chứa, thiết bị và tình trạng còn trống; lưu nháp rồi gửi.
@@ -414,7 +411,7 @@ hiện phòng học trong màn của CLB.
 
 ## 13. Báo cáo sau sự kiện
 
-**Vai trò:** CLB có quyền **Nộp báo cáo**. **Nơi bắt đầu:** **Báo cáo sau sự kiện**
+**Vai trò:** Club Leader. **Nơi bắt đầu:** **Báo cáo sau sự kiện**
 (`/club/:clubId/event-reports`).
 
 1. Chọn sự kiện đã kết thúc và đã chốt điểm danh.
@@ -491,7 +488,7 @@ quyết toán trong 14 ngày sau khi sự kiện kết thúc. App chỉ ghi nh�
 
 ### 16.2. CLB ghi khoản chi và nộp quyết toán
 
-**Vai trò:** CLB có quyền **Ghi nhận chi tiêu**. **Nơi bắt đầu:** **Khoản chi và quyết toán**
+**Vai trò:** Club Leader. **Nơi bắt đầu:** **Khoản chi và quyết toán**
 (`/club/:clubId/budgets`).
 
 1. Chọn ngân sách đã tạm ứng hoặc đang chờ bổ sung chứng từ.
@@ -607,7 +604,7 @@ trả lời hay theo dõi trạng thái xử lý.
    **Gửi ẩn danh**.
 4. Bấm **Gửi góp ý**; xem lại ở **Góp ý bạn đã gửi**.
 
-**CLB** — **Góp ý sinh viên** (`/club/:clubId/feedback`, quyền **Xem góp ý**) và **ICPDP** —
+**CLB** — **Góp ý sinh viên** (`/club/:clubId/feedback`, Club Leader) và **ICPDP** —
 **Hộp thư góp ý** (`/workspace/student-feedback`): danh sách để đọc, có loại, CLB và sự kiện
 liên quan, thời điểm gửi. Người gửi ẩn danh không bao giờ được hiển thị.
 
@@ -692,7 +689,7 @@ liệu và lối tắt.
 | Tình huống | Cách xử lý |
 |---|---|
 | Bị chuyển về trang đăng nhập | Mọi trang đều cần đăng nhập; đăng nhập lại, app quay về trang đang xem |
-| Không thấy mục quản lý | Đổi đúng không gian; nhờ chủ nhiệm kiểm tra quyền của vai trò |
+| Không thấy mục quản lý | Chỉ Club Leader (Chủ nhiệm, Phó chủ nhiệm đã xác nhận) thấy; Club Member chỉ xem |
 | "Không thể truy cập workspace" | Bấm **Chọn không gian làm việc** và chọn không gian bạn có quyền |
 | Phiên hết hạn | Đăng nhập lại, mở lại hồ sơ và đọc trạng thái mới nhất |
 | Hồ sơ đã thay đổi hoặc HTTP 409 | Tải lại trang, đối chiếu dữ liệu mới rồi thao tác lại |

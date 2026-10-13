@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import {
-  GRANTABLE_CLUB_PERMISSIONS, LEADER_ONLY_CLUB_PERMISSIONS, normalizeAllowedGoogleEmail,
+  CLUB_LEADER_PERMISSIONS, normalizeAllowedGoogleEmail,
 } from "../../domain/access.js";
 import type { AuthConfig } from "../config/index.js";
 import { ucmsModels } from "./ucms-models.js";
@@ -18,7 +18,6 @@ const PERMISSION_MODULES: Record<string, string> = {
   "club.booking.manage": "M11",
   "club.feedback.view": "M12",
   "club.complaint.respond": "M12",
-  "club.role.manage": "M03",
   "club.board.nominate": "M03",
   "club.transition.plan": "M03",
   "club.suspension.request": "M02",
@@ -38,10 +37,10 @@ export async function ensureAuthBootstrap(config: AuthConfig): Promise<void> {
     { unique: true, name: "uq_ura_active", partialFilterExpression: { revokedAt: null } },
   );
 
-  for (const code of [...GRANTABLE_CLUB_PERMISSIONS, ...LEADER_ONLY_CLUB_PERMISSIONS]) {
+  // Every club permission belongs to the fixed Club Leader role; Club Members hold none.
+  for (const code of CLUB_LEADER_PERMISSIONS) {
     await permissions.updateOne({ code }, { $setOnInsert: {
-      code, name: code, module: PERMISSION_MODULES[code], scope: "club",
-      isLeaderReserved: LEADER_ONLY_CLUB_PERMISSIONS.some((reserved) => reserved === code),
+      code, name: code, module: PERMISSION_MODULES[code], scope: "club", isLeaderReserved: true,
     } }, { upsert: true });
   }
 

@@ -49,7 +49,7 @@ function repository(overrides: Partial<ClubProfileRepository> = {}): ClubProfile
 }
 
 describe("UC09 club profile and structure use case", () => {
-  it("allows the approved founder to view settings while access resolves club.role.manage", async () => {
+  it("allows the approved founder to view settings while access resolves club.profile.manage", async () => {
     await expect(getClubSettings(repository(), access(), noPolicy, actor, clubId, now))
       .resolves.toMatchObject({ profile: { state: "Pending Setup" }, departments: [] });
     await expect(getClubSettings(repository(), access(null), noPolicy, actor, clubId, now))
@@ -128,11 +128,10 @@ describe("UC09 club profile and structure use case", () => {
 });
 
 describe("club settings visibility", () => {
-  it("denies settings to an ordinary member even with delegated profile permissions", async () => {
+  it("denies settings to a Club Member", async () => {
     const member: ClubAccessSnapshot = { ...snapshot(), clubState: "Active", isApprovedFounder: false,
       membership: { id: "membership", clubId, state: "Active" },
-      positions: [{ id: "default", clubId, isActive: true, isLeaderRole: false, isDefaultMemberRole: true,
-        permissionCodes: ["club.profile.manage"] }] };
+      positions: [{ id: "default", clubId, isActive: true, isLeaderRole: false, isBoardSeat: false }] };
     const findProfile = vi.fn(repository().findProfile);
     await expect(getClubSettings(repository({ findProfile }), access(member), noPolicy, actor, clubId, now))
       .rejects.toMatchObject({ kind: "forbidden" });

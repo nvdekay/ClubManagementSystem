@@ -58,20 +58,20 @@ describe("student feedback (UC50, one-way)", () => {
     await expect(sendStudentFeedback(repo(), null, toClub, now)).rejects.toMatchObject({ kind: "unauthorized" });
   });
 
-  it("opens the club inbox only with club.feedback.view, and only for that club", async () => {
+  it("opens the club inbox only for a Club Leader of that club", async () => {
     const data = repo();
-    function snapshot(permissionCodes: string[]): ClubAccessSnapshot {
+    function snapshot(isBoardSeat: boolean): ClubAccessSnapshot {
       return { clubId, clubName: "Robotics",
       clubState: "Active", membership: { id: "000000000000000000000011", clubId, state: "Active" },
       terms: [{ id: "t", clubId, state: "Active", startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01") }],
-      positions: [{ id: "p", clubId, isActive: true, isLeaderRole: false, permissionCodes }],
+      positions: [{ id: "p", clubId, isActive: true, isLeaderRole: false, isBoardSeat }],
       assignments: [{ clubId, termId: "t", positionId: "p", membershipId: "000000000000000000000011",
-        effectiveFrom: new Date("2026-01-01") }], isApprovedFounder: false };
+        effectiveFrom: new Date("2026-01-01"), confirmedBy: "000000000000000000000099" }], isApprovedFounder: false };
     }
-    const allowed: ClubAccessRepository = { findSnapshot: async () => snapshot(["club.feedback.view"]) };
+    const allowed: ClubAccessRepository = { findSnapshot: async () => snapshot(true) };
     await listClubFeedbackInbox(data, allowed, actor, clubId, now);
     expect(data.inbox).toHaveBeenCalledWith("CLUB", clubId);
-    const denied: ClubAccessRepository = { findSnapshot: async () => snapshot(["club.event.manage"]) };
+    const denied: ClubAccessRepository = { findSnapshot: async () => snapshot(false) };
     await expect(listClubFeedbackInbox(repo(), denied, actor, clubId, now)).rejects.toMatchObject({ kind: "forbidden" });
   });
 

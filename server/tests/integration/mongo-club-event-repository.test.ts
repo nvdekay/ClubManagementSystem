@@ -34,35 +34,45 @@ async function published(scope: "PUBLIC" | "MEMBERS_ONLY" = "PUBLIC") {
   return repo.act(String(club), d.event.id, { kind: "publish", expectedVersion: d.event.version, input: {
     registrationOpenAt: now, registrationCloseAt: startAt, checkInOpenAt: startAt, checkInCloseAt: endAt, allowWalkIn: true, waitlistEnabled: true } }, String(actor), now);
 }
+// Turns the actor's board seat on or off: a Club Leader has every club permission, a Club Member none.
+async function setLeader(on: boolean) {
+  await m.clubPositions!.updateOne({ _id: role }, { $set: { isBoardSeat: on } });
+}
 describe.skipIf(!uri)("Mongo club event lifecycle", () => {
   beforeAll(async () => {
     await mongoose.connect(uri ?? "", { dbName: `ucms-wave3-test-${process.pid}` }); await ensureUcmsDatabase();
     await m.users!.create([actor, ...students].map((id, i) => ({ _id: id, email: `wave3-${i}@test.edu`, displayName: `Student ${i}`, googleSubject: `wave3-${i}`, accountState: "Active", createdAt: now })));
     await m.clubs!.create({ _id: club, code: "W3", name: "Wave 3", field: "Technology", state: "Active", createdAt: now });
     await m.clubMemberships!.create([actor, ...students].map((userId) => ({ clubId: club, userId, state: "Active", joinedAt: now, statusHistory: [] })));
-    await m.clubPositions!.create({ _id: role, clubId: club, code: "MEMBERS", name: "Members", isDefaultMemberRole: true, isLeaderRole: false, isActive: true, permissionCodes: ["club.event.manage", "club.attendance.manage", "club.feedback.view"] });
+    // The actor is a Club Leader: a confirmed Phó chủ nhiệm seat in the active term.
+    await m.clubPositions!.create({ _id: role, clubId: club, code: "VICE_LEADER", name: "Phó chủ nhiệm", isBoardSeat: true, isLeaderRole: false, isActive: true, permissionCodes: [] });
+    const term = await m.clubTerms!.create({ clubId: club, name: "2026", state: "Active", startAt: new Date("2026-01-01Z"), endAt: new Date("2027-12-31Z") });
+    const own = await m.clubMemberships!.findOne({ clubId: club, userId: actor }).lean();
+    await m.clubPositionAssignments!.create({ clubId: club, termId: term._id, positionId: role, membershipId: own!._id, effectiveFrom: new Date("2026-01-01Z"), assignedBy: actor, confirmedBy: actor });
     await m.policyVersions!.create({ minFoundingMembers: 5, formRequirements: DEFAULT_FORM_REQUIREMENTS, reportDeadlines: [], conflictThresholdMinutes: 15, feedbackWindowHours: 72, feedbackMinRespondents: 2, allowOverbooking: false, enforceOverdueReportBlock: true,
       academicCalendar: [{ code: "Fall", startAt: new Date("2026-09-01Z"), endAt: new Date("2027-01-01Z") }], effectiveFrom: now, createdBy: actor, createdAt: now });
     const unlockRole = new Types.ObjectId(); await m.roles!.create({ _id: unlockRole, code: "ATTENDANCE_UNLOCK", name: "Unlock", scope: "system", permissionCodes: [] });
     await m.userRoleAssignments!.create({ userId: actor, roleId: unlockRole, grantedBy: actor, grantedAt: now });
   }, 30000);
   afterAll(async () => { if (mongoose.connection.readyState === 1) await mongoose.connection.dropDatabase(); await mongoose.disconnect(); });
-  it("requires booking permission when UC25 changes links and never attaches room allocations", async () => {
+  it("requires a Club Leader when UC25 changes links and never attaches room allocations", async () => {
     const property = await m.properties!.create({ code: "SN-W3", name: "Outdoor venue", type: "OUTDOOR", location: "Campus", isActive: true,
       capacity: 100, equipment: [], blackouts: [], bookableHours: [{ day: 7, open: "07:00", close: "21:00" }] });
     const booking = await m.propertyBookings!.create({ propertyId: property._id, clubId: club, clubName: "Wave 3", purpose: "Outdoor activity",
       startAt, endAt, headcount: 2, state: "Requested", currentVersionNo: 1, semesterCode: "Fall", createdAt: now });
     const draft = await repo.create(String(club), { ...input(), propertyId: String(property._id), bookingIds: [String(booking._id)] }, String(actor), now);
+    await setLeader(false);
     await expect(repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
     expect(await m.eventProposalVersions!.countDocuments({ eventId: draft.event.id })).toBe(0);
     expect((await m.propertyBookings!.findById(booking._id).lean())?.eventId).toBeUndefined();
-    await m.clubPositions!.updateOne({ _id: role }, { $addToSet: { permissionCodes: "club.booking.manage" } });
+    await setLeader(true);
     const sent = await repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now);
     expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
     await m.events!.updateOne({ _id: sent.event.id }, { $set: { state: "Revision Requested" } });
     const revised = await repo.act(String(club), sent.event.id, { kind: "save", input: { ...input(), propertyId: String(property._id), bookingIds: [] }, expectedVersion: sent.event.version }, String(actor), now);
-    await m.clubPositions!.updateOne({ _id: role }, { $pull: { permissionCodes: "club.booking.manage" } });
+    await setLeader(false);
     await expect(repo.act(String(club), sent.event.id, { kind: "submit", expectedVersion: revised.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
+    await setLeader(true);
     expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
     await m.properties!.updateOne({ _id: property._id }, { $set: { type: "ROOM" } });
     await m.propertyBookings!.updateOne({ _id: booking._id }, { $unset: { eventId: "" }, $set: { currentVersionNo: 0, state: "Approved" } });
@@ -77,11 +87,9 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     const booking = await m.propertyBookings!.create({ propertyId: property._id, clubId: club, clubName: "Wave 3", purpose: "Sound equipment",
       startAt, endAt, headcount: 2, state: "Requested", currentVersionNo: 1, semesterCode: "Fall", createdAt: now });
     expect((await repo.options(String(club))).bookings).toContainEqual(expect.objectContaining({ id: String(booking._id), propertyType: "EQUIPMENT" }));
-    await m.clubPositions!.updateOne({ _id: role }, { $addToSet: { permissionCodes: "club.booking.manage" } });
     const draft = await repo.create(String(club), { ...input(), bookingIds: [String(booking._id)] }, String(actor), now);
     const sent = await repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now);
     expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
-    await m.clubPositions!.updateOne({ _id: role }, { $pull: { permissionCodes: "club.booking.manage" } });
   });
   it("serializes submission and preserves immutable revisions", async () => {
     const d = await repo.create(String(club), input(), String(actor), now);
@@ -131,9 +139,9 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
   });
   it("re-checks permission inside the write transaction", async () => {
     const d = await repo.create(String(club), input(), String(actor), now);
-    await m.clubPositions!.updateOne({ _id: role }, { $set: { permissionCodes: [] } });
+    await setLeader(false);
     await expect(repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
-    await m.clubPositions!.updateOne({ _id: role }, { $set: { permissionCodes: ["club.event.manage", "club.attendance.manage", "club.feedback.view"] } });
+    await setLeader(true);
   });
   it("rejects notice, semester, dissolution and overdue obligations without partial submission", async () => {
     const late = await repo.create(String(club), { ...input(), startAt: new Date(now.getTime() + 3600000), endAt: new Date(now.getTime() + 7200000) }, String(actor), now);

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { GRANTABLE_CLUB_PERMISSIONS, LEADER_ONLY_CLUB_PERMISSIONS } from "../../src/domain/access.js";
 import {
   FOUNDING_POSITIONS, foundingSubmissionIssues, validateClubApplicationSubmission,
   type ClubApplicationDraft,
@@ -77,11 +76,10 @@ describe("UC07 submission validation", () => {
       kind: "validation", details: { issues: ["clubName", "field"], required: 3 } }));
   });
 
-  it("gives vice leaders every grantable permission and never a leader-only one", () => {
-    const viceLeader = FOUNDING_POSITIONS.find((position) => position.founderRole === "VICE_LEADER")!;
-    expect([...viceLeader.permissionCodes].sort()).toEqual([...GRANTABLE_CLUB_PERMISSIONS].sort());
-    expect(viceLeader.permissionCodes.some((code) =>
-      (LEADER_ONLY_CLUB_PERMISSIONS as readonly string[]).includes(code))).toBe(false);
+  it("seats the Chủ nhiệm and Phó chủ nhiệm as board seats and everyone else as plain members", () => {
+    const vice = FOUNDING_POSITIONS.find((position) => position.founderRole === "VICE_LEADER")!;
+    expect(vice.isBoardSeat).toBe(true);
+    expect(FOUNDING_POSITIONS.every((position) => position.permissionCodes.length === 0)).toBe(true);
     expect(FOUNDING_POSITIONS.filter((position) => position.isLeaderRole)).toHaveLength(1);
     expect(FOUNDING_POSITIONS.filter((position) => position.isDefaultMemberRole)).toHaveLength(1);
   });

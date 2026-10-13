@@ -10,21 +10,24 @@ lịch tuần học kỳ hiện tại/sắp tới (thứ, slot, giờ, phòng, t
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi
 đối chiếu workspace và quyền hiện hành từ `/auth/me`.
 
-`ClubSettingsPage` triển khai UC09: chỉ workspace có `club.role.manage` mới mở màn hồ sơ
-vận hành và cơ cấu ban/bộ phận; các trường định danh do ICPDP quản lý chỉ được hiển thị. Tab
-thứ hai (`?tab=roles`, chỉ hiện với `club.role.manage`) là `ClubRolesPanel` — UC23: role,
-permission, gán/thu hồi người giữ và so sánh các phiên bản cơ cấu. Panel có hai mục con
-(`?view=history`): thẻ role chia nhóm Ban chủ nhiệm / Vai trò tự tạo / Thành viên, và lịch sử phiên bản
-(`ClubRoleHistory`). Tạo/sửa role (`ClubRoleDialog`) và gán thành viên (`ClubRoleAssignDialog`) mở
-trong `AppDialog`; `clubRolePermissions.ts` giữ nhãn, mô tả và nhóm của danh mục permission.
+Phía CLB chỉ có hai role cố định (từ 13/10/2026, UC23 đã rút): **Club Leader** là người giữ ghế
+Chủ nhiệm hoặc Phó chủ nhiệm đã được ICPDP xác nhận và có mọi permission CLB; **Club Member** là
+thành viên `Active` còn lại, không có permission quản lý nào. Permission vẫn dùng để gate từng
+trang, nhưng không còn role tự tạo hay màn phân quyền.
+
+`ClubSettingsPage` triển khai UC09: chỉ workspace có `club.profile.manage` (Club Leader) mới mở màn
+hồ sơ vận hành và cơ cấu ban/bộ phận; các trường định danh do ICPDP quản lý chỉ được hiển thị.
+
+`ClubMembersPage`: Club Leader (`club.member.manage`) quản lý danh sách, đổi trạng thái, xử lý
+yêu cầu rời và xuất Excel; Club Member chỉ thấy danh sách thành viên (đọc từ member space).
 
 `BoardNominationPage` triển khai UC10: Club Leader hoặc founder sáng lập có quyền tạm từ UC08
 đề cử thành viên `Active` vào ghế ban điều hành còn trống của nhiệm kỳ hiện tại.
 
-`RecruitmentCampaignPage` triển khai UC16: Club Member có `club.recruitment.manage` tạo/chỉnh
+`RecruitmentCampaignPage` triển khai UC16: Club Leader (`club.recruitment.manage`) tạo/chỉnh
 draft, công bố trong một kỳ học đã cấu hình và xử lý cảnh báo campaign chồng lấn.
 
-`RecruitmentReviewPage` nối UC18 và UC20: reviewer có `club.application.review` sàng lọc/quyết
+`RecruitmentReviewPage` nối UC18 và UC20: Club Leader (`club.application.review`) sàng lọc/quyết
 định đơn, xử lý danh sách chờ và tiếp nhận ứng viên trúng tuyển thành thành viên role `Members`.
 Đơn hiển thị dạng bảng (lọc trạng thái, tìm tên, sắp xếp theo điểm trung bình); mở một dòng là
 `ApplicationReviewDialog` với câu trả lời, thao tác sàng lọc và UC19 qua `CandidateEvaluationPanel`

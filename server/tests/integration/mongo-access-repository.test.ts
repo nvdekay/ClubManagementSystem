@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { resolveClubPermissions } from "../../src/domain/access.js";
+import { CLUB_LEADER_PERMISSIONS, resolveClubPermissions } from "../../src/domain/access.js";
 import { mongoAccessRepository } from "../../src/infra/db/mongo-access-repository.js";
 import { ucmsModels } from "../../src/infra/db/ucms-models.js";
 
@@ -39,14 +39,14 @@ describe.skipIf(!uri)("Mongo club access repository", () => {
       startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01"),
     });
     await ucmsModels.clubPositions!.create({
-      _id: positionId, clubId, code: "EVENT", name: "Event coordinator",
-      isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: false,
-      isSingleHolder: false, permissionCodes: ["club.event.manage"], isActive: true,
+      _id: positionId, clubId, code: "VICE_LEADER", name: "Phó chủ nhiệm",
+      isBoardSeat: true, isLeaderRole: false, isDefaultMemberRole: false,
+      isSingleHolder: false, permissionCodes: [], isActive: true,
     });
     await ucmsModels.clubPositionAssignments!.create([
       {
         clubId, termId, positionId, membershipId,
-        effectiveFrom: new Date("2026-01-01"), assignedBy: userId,
+        effectiveFrom: new Date("2026-01-01"), assignedBy: userId, confirmedBy: otherUserId,
       },
       {
         clubId, termId, positionId, membershipId: otherMembershipId,
@@ -58,7 +58,7 @@ describe.skipIf(!uri)("Mongo club access repository", () => {
     const own = await repo.findSnapshot(userId.toString(), clubId.toString());
     expect(own).not.toBeNull();
     expect(own?.assignments).toHaveLength(1);
-    expect(resolveClubPermissions(own!, now)).toEqual(["club.event.manage"]);
+    expect(resolveClubPermissions(own!, now)).toEqual([...CLUB_LEADER_PERMISSIONS]);
     expect(await repo.findSnapshot(userId.toString(), new Types.ObjectId().toString())).toBeNull();
   });
 });

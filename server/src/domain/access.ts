@@ -1,6 +1,12 @@
 import { DomainError } from "./errors.js";
 
-export const GRANTABLE_CLUB_PERMISSIONS = [
+/**
+ * The club side has exactly two fixed roles. A Club Leader is anyone holding a confirmed
+ * board seat (Chủ nhiệm or Phó chủ nhiệm) in the active term and gets every permission below.
+ * A Club Member is any other Active member and gets none of them: members only read and take
+ * part (member space, roster, allocated rooms, events). There are no custom roles.
+ */
+export const CLUB_LEADER_PERMISSIONS = [
   "club.profile.manage",
   "club.recruitment.manage",
   "club.application.review",
@@ -12,18 +18,12 @@ export const GRANTABLE_CLUB_PERMISSIONS = [
   "club.booking.manage",
   "club.feedback.view",
   "club.complaint.respond",
-] as const;
-
-export const LEADER_ONLY_CLUB_PERMISSIONS = [
-  "club.role.manage",
   "club.board.nominate",
   "club.transition.plan",
   "club.suspension.request",
 ] as const;
 
-export type ClubPermission =
-  | (typeof GRANTABLE_CLUB_PERMISSIONS)[number]
-  | (typeof LEADER_ONLY_CLUB_PERMISSIONS)[number];
+export type ClubPermission = (typeof CLUB_LEADER_PERMISSIONS)[number];
 
 export interface ClubMembershipAccess {
   id: string;
@@ -44,9 +44,8 @@ export interface ClubPositionAccess {
   clubId: string;
   isActive: boolean;
   isLeaderRole: boolean;
-  /** The default Members role (BR56): its permissions apply to every Active member. */
-  isDefaultMemberRole?: boolean;
-  permissionCodes: readonly string[];
+  /** Chủ nhiệm and Phó chủ nhiệm seats; a confirmed holder is a Club Leader. */
+  isBoardSeat?: boolean;
 }
 
 export interface ClubAssignmentAccess {
@@ -74,10 +73,7 @@ export interface ClubAccessRepository {
   findSnapshot(userId: string, clubId: string): Promise<ClubAccessSnapshot | null>;
 }
 
-const allClubPermissions: readonly ClubPermission[] = [
-  ...GRANTABLE_CLUB_PERMISSIONS,
-  ...LEADER_ONLY_CLUB_PERMISSIONS,
-];
+const allClubPermissions: readonly ClubPermission[] = CLUB_LEADER_PERMISSIONS;
 
 export function resolveClubPermissions(snapshot: ClubAccessSnapshot, now: Date): ClubPermission[] {
   const permissions = new Set<ClubPermission>();
@@ -100,25 +96,8 @@ export function resolveClubPermissions(snapshot: ClubAccessSnapshot, now: Date):
         || assignment.effectiveFrom > now
         || (assignment.effectiveTo && assignment.effectiveTo <= now)) continue;
       const position = positions.get(assignment.positionId);
-      if (!position) continue;
-      if (position.isLeaderRole) {
-        if (assignment.confirmedBy) {
-          for (const permission of allClubPermissions) permissions.add(permission);
-        }
-        continue;
-      }
-      for (const code of position.permissionCodes) {
-        if (GRANTABLE_CLUB_PERMISSIONS.some((permission) => permission === code)) {
-          permissions.add(code as ClubPermission);
-        }
-      }
-    }
-    for (const position of positions.values()) {
-      if (!position.isDefaultMemberRole) continue;
-      for (const code of position.permissionCodes) {
-        if (GRANTABLE_CLUB_PERMISSIONS.some((permission) => permission === code)) {
-          permissions.add(code as ClubPermission);
-        }
+      if (position && (position.isLeaderRole || position.isBoardSeat) && assignment.confirmedBy) {
+        for (const permission of allClubPermissions) permissions.add(permission);
       }
     }
   }
@@ -126,7 +105,6 @@ export function resolveClubPermissions(snapshot: ClubAccessSnapshot, now: Date):
   if (snapshot.clubState === "Pending Setup" && snapshot.isApprovedFounder) {
     permissions.add("club.profile.manage");
     permissions.add("club.board.nominate");
-    permissions.add("club.role.manage");
   }
   return allClubPermissions.filter((permission) => permissions.has(permission));
 }

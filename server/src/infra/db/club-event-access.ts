@@ -27,7 +27,7 @@ export async function assertEventWriteAccess(session: ClientSession, clubId: Typ
     membership: { id: String(membership._id), clubId: String(clubId), state: String(membership.state) },
     terms: terms.map((t) => ({ id: String(t._id), clubId: String(clubId), state: String(t.state), startAt: t.startAt as Date, endAt: t.endAt as Date })),
     positions: positions.map((p) => ({ id: String(p._id), clubId: String(clubId), isActive: p.isActive === true,
-      isLeaderRole: p.isLeaderRole === true, isDefaultMemberRole: p.isDefaultMemberRole === true, permissionCodes: (p.permissionCodes ?? []) as string[] })),
+      isLeaderRole: p.isLeaderRole === true, isBoardSeat: p.isBoardSeat === true })),
     assignments: assignments.map((a) => ({ clubId: String(clubId), membershipId: String(a.membershipId), termId: String(a.termId),
       positionId: String(a.positionId), effectiveFrom: a.effectiveFrom as Date, effectiveTo: a.effectiveTo as Date | undefined,
       confirmedBy: a.confirmedBy ? String(a.confirmedBy) : undefined })), isApprovedFounder: false };

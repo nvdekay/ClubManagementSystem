@@ -1,4 +1,3 @@
-import { GRANTABLE_CLUB_PERMISSIONS } from "./access.js";
 import { DomainError } from "./errors.js";
 import type { FoundingRequirements } from "./policy.js";
 
@@ -55,8 +54,7 @@ export const FOUNDING_POSITIONS: readonly FoundingPosition[] = [
   { code: "CLUB_LEADER", name: "Chủ nhiệm", founderRole: "LEADER", isBoardSeat: true,
     isLeaderRole: true, isDefaultMemberRole: false, isSingleHolder: true, permissionCodes: [] },
   { code: "VICE_LEADER", name: "Phó chủ nhiệm", founderRole: "VICE_LEADER", isBoardSeat: true,
-    isLeaderRole: false, isDefaultMemberRole: false, isSingleHolder: false,
-    permissionCodes: GRANTABLE_CLUB_PERMISSIONS },
+    isLeaderRole: false, isDefaultMemberRole: false, isSingleHolder: false, permissionCodes: [] },
   { code: "MEMBERS", name: "Thành viên", founderRole: "MEMBER", isBoardSeat: false,
     isLeaderRole: false, isDefaultMemberRole: true, isSingleHolder: false, permissionCodes: [] },
 ];

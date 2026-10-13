@@ -14,7 +14,6 @@ import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
 import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
-import { clubRoleAssignmentBody, clubRoleBody } from "./club-role-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
 import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./evaluation-scheme-routes.js";
@@ -299,24 +298,6 @@ const ClubDepartment = clubDepartmentBody.extend({
 });
 const ClubSettings = z.object({ profile: ClubProfile, departments: z.array(ClubDepartment),
   requiredProfileFields: policySettingsBody.shape.formRequirements.shape.clubProfile });
-const ClubRoleDefinition = z.object({
-  code: z.string(), name: z.string(), unit: z.string().optional(), isBoardSeat: z.boolean(),
-  isLeaderRole: z.boolean(), isDefaultMemberRole: z.boolean(), isSingleHolder: z.boolean(),
-  permissionCodes: z.array(z.string()),
-});
-const ClubRoleOverview = z.object({
-  clubId: z.string(), clubState: z.string(), activeTermId: z.string().nullable(),
-  roles: z.array(ClubRoleDefinition.extend({ id: z.string(), isActive: z.boolean(),
-    holders: z.array(z.object({ assignmentId: z.string(), membershipId: z.string(), displayName: z.string(),
-      email: z.string(), effectiveFrom: z.string().datetime(), effectiveTo: z.string().datetime().optional() })) })),
-  members: z.array(z.object({ membershipId: z.string(), displayName: z.string(), email: z.string(),
-    state: z.string() })),
-  departments: z.array(z.string()),
-  versions: z.array(z.object({ id: z.string(), versionNo: z.number().int(), effectiveFrom: z.string().datetime(),
-    source: z.string(), reason: z.string().optional(), createdBy: z.string(), createdAt: z.string().datetime(),
-    roles: z.array(ClubRoleDefinition.extend({ positionId: z.string() })) })),
-  grantablePermissions: z.array(z.string()),
-});
 const RecruitmentCampaign = z.object({
   id: z.string(), clubId: z.string(), title: z.string(), positions: z.array(z.string()),
   criteria: z.string().optional(), windowStart: z.string().datetime(), windowEnd: z.string().datetime(),
@@ -1987,7 +1968,7 @@ export const openApiDocument = createDocument({
     },
     "/clubs/{clubId}/settings": {
       get: {
-        summary: "Read club settings (requires club.role.manage)",
+        summary: "Read club settings (Club Leader, club.profile.manage)",
         requestParams: { path: z.object({ clubId: z.string() }) },
         responses: { "200": { description: "Club settings", content: {
           "application/json": { schema: envelope(ClubSettings) },
@@ -2037,70 +2018,6 @@ export const openApiDocument = createDocument({
         requestParams: { path: z.object({ clubId: z.string(), departmentId: z.string() }) },
         responses: { "200": { description: "Department deactivated", content: {
           "application/json": { schema: envelope(ClubDepartment) },
-        } } },
-      },
-    },
-    "/clubs/{clubId}/role-directory": {
-      get: { summary: "Read-only role and permission directory for current club members",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        responses: { "200": { description: "Role definitions without member data or administrative history", content: {
-          "application/json": { schema: envelope(z.object({ clubId: z.string(), roles: z.array(z.object({
-            id: z.string(), code: z.string(), name: z.string(), unit: z.string().optional(),
-            isLeaderRole: z.boolean(), isDefaultMemberRole: z.boolean(), permissionCodes: z.array(z.string()),
-          })) })) },
-        } }, "401": { description: "Authentication required" }, "403": { description: "Current club membership required" } },
-      },
-    },
-    "/clubs/{clubId}/roles": {
-      get: {
-        summary: "Read club roles and permissions (current members); holders, assignable members and versions require club.role.manage",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        responses: { "200": { description: "Club roles", content: {
-          "application/json": { schema: envelope(ClubRoleOverview) },
-        } } },
-      },
-      post: {
-        summary: "Create a regular club role; appends a role structure version (club.role.manage, CSRF)",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        requestBody: { content: { "application/json": { schema: clubRoleBody } } },
-        responses: { "201": { description: "Role created", content: {
-          "application/json": { schema: envelope(ClubRoleOverview) },
-        } } },
-      },
-    },
-    "/clubs/{clubId}/roles/{roleId}": {
-      patch: {
-        summary: "Edit a club role and its permissions; appends a role structure version (club.role.manage, CSRF)",
-        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
-        requestBody: { content: { "application/json": { schema: clubRoleBody } } },
-        responses: { "200": { description: "Role updated", content: {
-          "application/json": { schema: envelope(ClubRoleOverview) },
-        } } },
-      },
-      delete: {
-        summary: "Deactivate a regular club role without holders; appends a role structure version",
-        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
-        responses: { "200": { description: "Role deactivated", content: {
-          "application/json": { schema: envelope(ClubRoleOverview) },
-        } } },
-      },
-    },
-    "/clubs/{clubId}/roles/{roleId}/assignments": {
-      post: {
-        summary: "Assign an Active member to a regular club role (club.role.manage, CSRF)",
-        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
-        requestBody: { content: { "application/json": { schema: clubRoleAssignmentBody } } },
-        responses: { "201": { description: "Member assigned", content: {
-          "application/json": { schema: envelope(ClubRoleOverview) },
-        } } },
-      },
-    },
-    "/clubs/{clubId}/roles/{roleId}/assignments/{assignmentId}": {
-      delete: {
-        summary: "Revoke a member's club role (club.role.manage, CSRF)",
-        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string(), assignmentId: z.string() }) },
-        responses: { "200": { description: "Role revoked", content: {
-          "application/json": { schema: envelope(ClubRoleOverview) },
         } } },
       },
     },

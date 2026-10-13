@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
-import { GRANTABLE_CLUB_PERMISSIONS, LEADER_ONLY_CLUB_PERMISSIONS } from "../../domain/access.js";
 import { DomainError } from "../../domain/errors.js";
 import type {
   LeadershipTransition,
@@ -169,11 +168,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
     const currentLeader = current.find((item) => item.isLeaderRole === true);
     if (leaders.length !== 1 || !currentLeader || leaders[0]?.code !== currentLeader.code) {
       conflict("the fixed President role must be preserved");
-    }
-    const grantable = new Set<string>(GRANTABLE_CLUB_PERMISSIONS);
-    if (proposed.some((role) => role.permissionCodes.some((code) =>
-      LEADER_ONLY_CLUB_PERMISSIONS.some((reserved) => reserved === code) || !grantable.has(code)))) {
-      conflict("proposed board role contains a non-grantable permission");
     }
   }
 
