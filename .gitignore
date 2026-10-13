@@ -1,6 +1,7 @@
 node_modules/
 docs-qa/
 dist/
+*.tsbuildinfo
 .env
 *.log
 .claude/settings.local.json

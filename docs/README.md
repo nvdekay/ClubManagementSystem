@@ -15,7 +15,8 @@ nhau về một yêu cầu, **lấy theo SRS**.
 
 Bản Word sử dụng hiện tại: [Group1_SE1939-NJ_Report_Final_v2.docx](Group1_SE1939-NJ_Report_Final_v2.docx).
 Các DOCX report, đặc tả và sơ đồ cũ đã được xoá theo yêu cầu; nguồn Markdown, draw.io và PNG
-vẫn được giữ để chỉnh sửa và đối chiếu.
+vẫn được giữ để chỉnh sửa và đối chiếu. Bản Word tổng hợp sơ đồ theo actor hiện hành:
+[UCMS_UseCase_ByActor.docx](UCMS_UseCase_ByActor.docx).
 
 ## Bản đồ thư mục
 
@@ -23,7 +24,7 @@ vẫn được giữ để chỉnh sửa và đối chiếu.
 |---|---|---|
 | [`01-business-analysis/`](01-business-analysis/) | Bản phân tích nghiệp vụ và hệ thống gốc: vấn đề, các bên liên quan, luồng nghiệp vụ, user story, domain model, mô hình đánh giá, các feature nổi bật | Bạn cần hiểu *vì sao* có một yêu cầu, hoặc cần phần nền mà SRS đã tóm tắt lại |
 | [`02-use-cases/`](02-use-cases/) | Use case model v2 và đặc tả chi tiết **hiện hành** của cả 55 use case và nhật ký review I01–I64 | Bạn cần bản kể đầy đủ của một use case, bảng ánh xạ v1 → v2, hoặc lịch sử của một lần sửa |
-| [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram v1, v2 và v2.1 (hiện hành), use case diagram theo actor, state diagram | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
+| [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram v1, v2 và v2.1 (hiện hành), use case diagram theo actor, state diagram, ERD, package diagram, screen flow, swimlane các luồng nghiệp vụ chính (main workflow) | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
 | [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
 | [`05-implementation/`](05-implementation/) | Danh sách công việc triển khai (database, backend, frontend) và thiết kế cơ sở dữ liệu dạng DBML cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
 | [`06-user-guide/`](06-user-guide/) | Guide book PDF/HTML/Markdown và ảnh chụp các luồng chính với dữ liệu đã seed | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
@@ -39,7 +40,8 @@ vẫn được giữ để chỉnh sửa và đối chiếu.
 
 Use case diagram chuẩn là [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio)
 và chín ảnh `03-diagrams/img/UCMS_UseCase_ByActor_*.png`. Các hình use case trong report v2
-dùng bộ ảnh này. Bản DOCX sơ đồ riêng đã được xoá để tránh dùng nhầm bản cũ.
+dùng bộ ảnh này. [UCMS_UseCase_ByActor.docx](UCMS_UseCase_ByActor.docx) tổng hợp đủ chín ảnh
+hiện hành, mỗi ảnh một trang; cần xuất lại bản Word khi cập nhật bộ ảnh nguồn.
 
 ## Quy ước
 

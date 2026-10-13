@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLUB_LEADER_PERMISSIONS,
   normalizeAllowedGoogleEmail,
   requireClubPermission,
   resolveClubPermissions,
@@ -10,6 +11,7 @@ import { assertClubAccess } from "../../src/usecase/access.js";
 
 const now = new Date("2026-10-02T12:00:00.000Z");
 
+// A plain Active member: holds the default Members position, which grants nothing.
 function snapshot(): ClubAccessSnapshot {
   return {
     clubId: "club-a",
@@ -20,10 +22,7 @@ function snapshot(): ClubAccessSnapshot {
       id: "term-a", clubId: "club-a", state: "Active",
       startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01"),
     }],
-    positions: [{
-      id: "position-a", clubId: "club-a", isActive: true, isLeaderRole: false,
-      permissionCodes: ["club.event.manage", "club.role.manage"],
-    }],
+    positions: [{ id: "position-a", clubId: "club-a", isActive: true, isLeaderRole: false, isBoardSeat: false }],
     assignments: [{
       clubId: "club-a", termId: "term-a", positionId: "position-a",
       membershipId: "member-a", effectiveFrom: new Date("2026-01-01"),
@@ -32,16 +31,43 @@ function snapshot(): ClubAccessSnapshot {
   };
 }
 
+// A confirmed Phó chủ nhiệm: a board seat confirmed by ICPDP makes the holder a Club Leader.
+function viceLeader(): ClubAccessSnapshot {
+  const base = snapshot();
+  return {
+    ...base,
+    positions: [{ ...base.positions[0]!, isBoardSeat: true }],
+    assignments: [{ ...base.assignments[0]!, confirmedBy: "officer-a" }],
+  };
+}
+
 describe("club permission resolver", () => {
-  it("grants only catalogued assignable permissions to a current club member", () => {
-    expect(resolveClubPermissions(snapshot(), now)).toEqual(["club.event.manage"]);
-    expect(() => requireClubPermission(snapshot(), "club.role.manage", now)).toThrowError(
+  it("gives a Club Member no management permission", () => {
+    expect(resolveClubPermissions(snapshot(), now)).toEqual([]);
+    expect(() => requireClubPermission(snapshot(), "club.event.manage", now)).toThrowError(
       expect.objectContaining({ kind: "forbidden" }),
     );
   });
 
+  it("gives every club permission to a confirmed Chủ nhiệm or Phó chủ nhiệm", () => {
+    const vice = viceLeader();
+    const president: ClubAccessSnapshot = {
+      ...vice, positions: [{ ...vice.positions[0]!, isBoardSeat: false, isLeaderRole: true }],
+    };
+    for (const leader of [vice, president]) {
+      expect(resolveClubPermissions(leader, now)).toEqual([...CLUB_LEADER_PERMISSIONS]);
+    }
+    expect(resolveClubPermissions(vice, now)).toContain("club.suspension.request");
+  });
+
+  it("needs ICPDP confirmation before a board seat grants anything", () => {
+    const vice = viceLeader();
+    expect(resolveClubPermissions({ ...vice, assignments: [{ ...vice.assignments[0]!, confirmedBy: null }] }, now))
+      .toEqual([]);
+  });
+
   it("rejects mismatched membership, club, expired term, expired assignment and disabled position", () => {
-    const base = snapshot();
+    const base = viceLeader();
     const changes: ClubAccessSnapshot[] = [
       { ...base, membership: { id: "member-b", clubId: "club-a", state: "Active" } },
       { ...base, membership: { id: "member-a", clubId: "club-b", state: "Active" } },
@@ -56,28 +82,11 @@ describe("club permission resolver", () => {
     for (const changed of changes) expect(resolveClubPermissions(changed, now)).toEqual([]);
   });
 
-  it("grants leader rights only for a confirmed current leader assignment", () => {
-    const base = snapshot();
-    const leader: ClubAccessSnapshot = {
-      ...base,
-      positions: [{ ...base.positions[0]!, isLeaderRole: true, permissionCodes: [] }],
-    };
-    expect(resolveClubPermissions(leader, now)).toEqual([]);
-    const confirmed: ClubAccessSnapshot = {
-      ...leader,
-      assignments: [{ ...leader.assignments[0]!, confirmedBy: "officer-a" }],
-    };
-    expect(resolveClubPermissions(confirmed, now)).toHaveLength(15);
-    expect(resolveClubPermissions(confirmed, now)).toContain("club.suspension.request");
-  });
-
-  it("limits an approved founder to UC09, UC10 and UC23 during Pending Setup", () => {
+  it("limits an approved founder to the club profile and board nomination during Pending Setup", () => {
     const founder: ClubAccessSnapshot = {
       ...snapshot(), membership: null, clubState: "Pending Setup", isApprovedFounder: true,
     };
-    expect(resolveClubPermissions(founder, now)).toEqual([
-      "club.profile.manage", "club.role.manage", "club.board.nominate",
-    ]);
+    expect(resolveClubPermissions(founder, now)).toEqual(["club.profile.manage", "club.board.nominate"]);
     expect(resolveClubPermissions({ ...founder, clubState: "Active" }, now)).toEqual([]);
   });
 });

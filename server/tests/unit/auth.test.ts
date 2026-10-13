@@ -98,9 +98,9 @@ describe("Google login use case", () => {
           terms: [{ id: `term-${clubId}`, clubId, state: "Active",
             startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01") }],
           positions: [{ id: `position-${clubId}`, clubId, isActive: true,
-            isLeaderRole: false, permissionCodes: ["club.event.manage"] }],
+            isLeaderRole: false, isBoardSeat: clubId === "club-b" }],
           assignments: [{ clubId, termId: `term-${clubId}`, positionId: `position-${clubId}`,
-            membershipId: `member-${clubId}`, effectiveFrom: new Date("2026-01-01") }],
+            membershipId: `member-${clubId}`, effectiveFrom: new Date("2026-01-01"), confirmedBy: "officer" }],
         };
       },
     };
@@ -108,9 +108,10 @@ describe("Google login use case", () => {
     expect(result.workspaces.map((workspace) => workspace.kind))
       .toEqual(["student", "icpdp", "club", "club"]);
     expect(result.workspaces[2]).toMatchObject({
-      clubId: "club-a", role: "member", permissions: ["club.event.manage"],
+      clubId: "club-a", role: "member", permissions: [],
     });
-    expect(result.workspaces[3]).toMatchObject({ clubId: "club-b" });
+    expect(result.workspaces[3]).toMatchObject({ clubId: "club-b", role: "leader" });
+    expect(result.workspaces[3]?.permissions).toContain("club.event.manage");
   });
 
   it("does not grant an ICPDP workspace for the withdrawn legacy head role", async () => {
@@ -156,7 +157,7 @@ describe("Google login use case", () => {
       {
         kind: "club", clubId: "founder", clubName: "founder",
         role: "founder",
-        permissions: ["club.profile.manage", "club.role.manage", "club.board.nominate"],
+        permissions: ["club.profile.manage", "club.board.nominate"],
       },
     ]);
   });

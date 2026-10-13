@@ -81,7 +81,7 @@ export async function currentUser(
     workspaces.push({
       kind: "club", clubId: snapshot.clubId, clubName: snapshot.clubName,
       role: isPendingFounder ? "founder"
-        : permissions.includes("club.role.manage") ? "leader" : "member",
+        : permissions.includes("club.member.manage") ? "leader" : "member",
       permissions,
     });
   }

@@ -20,7 +20,6 @@ import type { PeriodicReportRepository } from "../../src/domain/periodic-report.
 import type { SchoolEventRepository } from "../../src/domain/school-event.js";
 import type { EvaluationRepository } from "../../src/domain/evaluation.js";
 import type { ClubProfileRepository } from "../../src/domain/club-profile.js";
-import type { ClubRoleRepository } from "../../src/domain/club-role.js";
 import type { BoardNominationRepository } from "../../src/domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../src/domain/recruitment-campaign.js";
 import type { RecruitmentApplicationRepository } from "../../src/domain/recruitment-application.js";
@@ -196,10 +195,6 @@ const stubClubProfiles: ClubProfileRepository = {
   updateDepartment: async () => { throw new Error("unused"); },
   deactivateDepartment: async () => { throw new Error("unused"); },
 };
-const stubClubRoles: ClubRoleRepository = {
-  overview: async () => null, createRole: async () => undefined, updateRole: async () => undefined,
-  deactivateRole: async () => undefined, assign: async () => undefined, revoke: async () => undefined,
-};
 const stubBoardNominations: BoardNominationRepository = {
   getContext: async () => null, submit: async () => { throw new Error("unused"); },
   listOpen: async () => [], find: async () => null,
@@ -285,7 +280,6 @@ describe("openapi document", () => {
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle,
       applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
-      clubRoleRepo: stubClubRoles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
       recruitmentApplicationRepo: stubRecruitmentApplications,
@@ -340,7 +334,6 @@ describe("openapi document", () => {
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings, roomAllocationRepo: stubRoomAllocations,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
-      clubRoleRepo: stubClubRoles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
       recruitmentApplicationRepo: stubRecruitmentApplications,

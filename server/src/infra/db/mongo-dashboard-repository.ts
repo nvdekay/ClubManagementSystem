@@ -110,7 +110,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         ...(allowed.has("club.complaint.respond") ? [panel("openViolations", "violations", {
           clubId: club, state: { $nin: ["Resolved", "Closed"] },
         })] : []),
-        ...(allowed.has("club.role.manage") ? [panel("currentTerms", "clubTerms", {
+        ...(allowed.has("club.board.nominate") ? [panel("currentTerms", "clubTerms", {
           clubId: club, state: "Active", startAt: { $lte: now }, endAt: { $gt: now },
         }),
         panel("structureHistory", "clubRoleStructureVersions", { clubId: club }),

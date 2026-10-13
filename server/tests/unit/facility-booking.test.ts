@@ -28,9 +28,11 @@ function deps(propertyType: Property["type"] = "HALL"): BookingDeps {
     semesterCode: "FA26", state: "Draft", currentVersionNo: 0, isLateCancellation: false },
   property: bookingProperty, club, task: null, check: null, versions: [], decisions: [], obligations: [] };
   const snapshot: ClubAccessSnapshot = { clubId: ids.club, clubName: club.name, clubState: "Active",
-    membership: { id: "member", clubId: ids.club, state: "Active" }, terms: [], assignments: [], isApprovedFounder: false,
-    positions: [{ id: "members", clubId: ids.club, isActive: true, isLeaderRole: false,
-      isDefaultMemberRole: true, permissionCodes: ["club.booking.manage"] }] };
+    membership: { id: "member", clubId: ids.club, state: "Active" }, isApprovedFounder: false,
+    terms: [{ id: "term", clubId: ids.club, state: "Active", startAt: new Date("2026-01-01"), endAt: new Date("2027-12-31") }],
+    assignments: [{ clubId: ids.club, termId: "term", positionId: "vice", membershipId: "member",
+      effectiveFrom: new Date("2026-01-01"), confirmedBy: ids.user }],
+    positions: [{ id: "vice", clubId: ids.club, isActive: true, isLeaderRole: false, isBoardSeat: true }] };
   const repo: FacilityBookingRepository = { events: vi.fn(async () => []), list: vi.fn(async () => [detail.booking]), find: vi.fn(async () => detail),
     club: vi.fn(async () => club), eventBelongsToClub: vi.fn(async () => true), conflicts: vi.fn(async () => []),
     create: vi.fn(async () => detail), save: vi.fn(async () => detail), submit: vi.fn(async () => detail),

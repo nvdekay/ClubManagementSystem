@@ -17,10 +17,6 @@ function date(value: unknown): Date {
   return value;
 }
 
-function stringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
-}
-
 export function mongoAccessRepository(): ClubAccessRepository {
   const clubs = ucmsModels.clubs!;
   const memberships = ucmsModels.clubMemberships!;
@@ -54,8 +50,7 @@ export function mongoAccessRepository(): ClubAccessRepository {
       const mappedPositions: ClubPositionAccess[] = positionDocs.map((position) => ({
         id: id(position._id), clubId: id(position.clubId),
         isActive: position.isActive === true, isLeaderRole: position.isLeaderRole === true,
-        isDefaultMemberRole: position.isDefaultMemberRole === true,
-        permissionCodes: stringArray(position.permissionCodes),
+        isBoardSeat: position.isBoardSeat === true,
       }));
       const mappedAssignments: ClubAssignmentAccess[] = assignmentDocs.map((assignment) => ({
         clubId: id(assignment.clubId), termId: id(assignment.termId),

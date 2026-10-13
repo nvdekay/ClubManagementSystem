@@ -28,7 +28,6 @@ import type { PeriodicReportRepository } from "../../domain/periodic-report.js";
 import type { SchoolEventRepository } from "../../domain/school-event.js";
 import type { EvaluationRepository } from "../../domain/evaluation.js";
 import type { ClubProfileRepository } from "../../domain/club-profile.js";
-import type { ClubRoleRepository } from "../../domain/club-role.js";
 import type { BoardNominationRepository } from "../../domain/board-nomination.js";
 import type { RecruitmentCampaignRepository } from "../../domain/recruitment-campaign.js";
 import type { MembershipRepository } from "../../domain/membership.js";
@@ -55,7 +54,6 @@ import { periodicReportRoutes } from "./periodic-report-routes.js";
 import { schoolEventRoutes } from "./school-event-routes.js";
 import { evaluationRoutes } from "./evaluation-routes.js";
 import { clubProfileRoutes } from "./club-profile-routes.js";
-import { clubRoleRoutes } from "./club-role-routes.js";
 import { clubFieldRoutes } from "./club-field-routes.js";
 import { propertyRoutes } from "./property-routes.js";
 import { evaluationSchemeRoutes } from "./evaluation-scheme-routes.js";
@@ -118,7 +116,6 @@ export function buildApp(deps: {
   clubEventRepo?: ClubEventRepository;
   evaluationRepo?: EvaluationRepository;
   clubProfileRepo?: ClubProfileRepository;
-  clubRoleRepo?: ClubRoleRepository;
   boardNominationRepo?: BoardNominationRepository;
   recruitmentCampaignRepo?: RecruitmentCampaignRepository;
   recruitmentApplicationRepo?: RecruitmentApplicationRepository;
@@ -177,10 +174,6 @@ export function buildApp(deps: {
       app.use("/api/v1", propertyRoutes({
         repo: deps.propertyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
-    }
-    if (deps.clubRoleRepo) {
-      app.use("/api/v1", clubRoleRoutes({ repo: deps.clubRoleRepo, accessRepo: deps.auth.accessRepo,
-        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.boardNominationRepo) {
       app.use("/api/v1", boardNominationRoutes({
@@ -326,7 +319,6 @@ export function buildApp(deps: {
   const hasPeriodicReports = Boolean(hasPolicy && deps.periodicReportRepo);
   const hasSchoolEvents = Boolean(hasPolicy && deps.schoolEventRepo);
   const hasEvaluations = Boolean(hasEvaluationSchemes && deps.evaluationRepo);
-  const hasClubRoles = Boolean(hasAdmin && deps.clubRoleRepo);
   const hasRecruitmentCampaigns = Boolean(hasAdmin && deps.recruitmentCampaignRepo && deps.policyRepo);
   const hasRecruitmentApplications = Boolean(hasAdmin && deps.recruitmentApplicationRepo);
   const hasCandidateEvaluations = Boolean(hasAdmin && deps.candidateEvaluationRepo);
@@ -380,7 +372,6 @@ export function buildApp(deps: {
         || path.startsWith("/clubs/{clubId}/profile")
         || path.startsWith("/clubs/{clubId}/departments")) return hasClubProfiles;
       if (path.startsWith("/clubs/{clubId}/board-nomination")) return hasBoardNominations;
-      if (path.startsWith("/clubs/{clubId}/roles")) return hasClubRoles;
       if (/\/evaluations?$/.test(path)) return hasCandidateEvaluations;
       if (path.startsWith("/clubs/{clubId}/recruitment/campaigns")) return hasRecruitmentCampaigns;
       return true;

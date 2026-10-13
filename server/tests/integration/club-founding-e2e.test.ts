@@ -366,7 +366,7 @@ describe.skipIf(!uri)("E2E: simplified club founding", () => {
     expect(resubmitted.body.data.version.versionNo).toBe(2);
   });
 
-  it("13. Approval activates the club with the founding board and default permissions", async () => {
+  it("13. Approval activates the club with the founding board as Club Leaders", async () => {
     const approved = await approve(mainId);
     expect(approved.status).toBe(200);
     expect(approved.body.data.application.state).toBe("Approved");
@@ -380,12 +380,12 @@ describe.skipIf(!uri)("E2E: simplified club founding", () => {
     // Everyone sees the club as Active and their workspace, permissions follow the role.
     function settings(who: Actor) { return call(who, "GET", `/clubs/${clubId}/settings`); }
     function nominate(who: Actor) { return call(who, "GET", `/clubs/${clubId}/board-nomination-context`); }
-    expect((await settings(students.binh!)).status).toBe(200); // president
-    expect((await nominate(students.binh!)).status).toBe(200);
-    expect((await settings(students.an!)).status).toBe(403); // vice president cannot open settings
-    expect((await nominate(students.an!)).status).toBe(403); // leader-only permission
-    expect((await settings(students.chi!)).status).toBe(403);
-    expect((await settings(students.dung!)).status).toBe(403); // plain members use the read-only role directory
+    // Chủ nhiệm and both Phó chủ nhiệm are Club Leaders with the same full rights.
+    for (const leader of [students.binh!, students.an!, students.chi!]) {
+      expect((await settings(leader)).status).toBe(200);
+      expect((await nominate(leader)).status).toBe(200);
+    }
+    expect((await settings(students.dung!)).status).toBe(403); // a Club Member only reads and takes part
     expect((await call(students.dung!, "PATCH", `/clubs/${clubId}/profile`,
       { channels: [] })).status).toBe(403); // editing remains restricted
     expect((await settings(students.em!)).status).toBe(403); // outsider

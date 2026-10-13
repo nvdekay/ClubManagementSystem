@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -12,7 +12,6 @@ import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubSettings, useClubSettingsAction } from "@/hooks/useClubSettings";
 import { cn } from "@/utils/cn";
-import { ClubRolesPanel } from "./ClubRolesPanel";
 import {
   MissingProfileFieldsError,
   type ClubChannel,
@@ -45,11 +44,7 @@ export function ClubSettingsPage() {
   const auth = useAuth();
   const workspace = auth.data?.workspaces.find((item) => item.kind === "club"
     && item.clubId === clubId);
-  const canManage = Boolean(workspace?.permissions.includes("club.role.manage"));
-  const canManageRoles = Boolean(workspace?.permissions.includes("club.role.manage"));
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get("tab");
-  const tab = requestedTab === "roles" ? "roles" : "profile";
+  const canManage = Boolean(workspace?.permissions.includes("club.profile.manage"));
   const settings = useClubSettings(clubId, canManage);
   const action = useClubSettingsAction();
   const [profileDraft, setProfileDraft] = useState<ClubProfileInput | null>(null);
@@ -156,27 +151,6 @@ export function ClubSettingsPage() {
     </AppNotice>
   );
 
-  // Current members may inspect settings; each management action keeps its own permission gate.
-  const tabs = (
-    <div role="tablist" aria-label={t("clubSettings.title")} className="mb-6 flex flex-wrap border-b border-border-app">
-      {(["profile", "roles"] as const).map((item) => (
-        <button key={item} type="button" role="tab" aria-selected={tab === item}
-          onClick={() => setSearchParams({ tab: item })}
-          className={cn("min-h-12 flex-1 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-muted-app",
-            { "border-primary-app bg-primary-soft-app text-primary-app": tab === item })}>
-          {item === "roles" ? t("clubRoles.tabRoles") : t("clubRoles.tabProfile")}
-        </button>
-      ))}
-    </div>
-  );
-  if (tab === "roles" && clubId) return (
-    <>
-      <PageHeader title={t("clubSettings.title")} description={t("clubRoles.accessHint")} />
-      {tabs}
-      <ClubRolesPanel clubId={clubId} readOnly={!canManageRoles} />
-    </>
-  );
-
   const current = settings.data.profile;
   const required = settings.data.requiredProfileFields;
   const anyRequired = Object.values(required).some(Boolean);
@@ -195,7 +169,6 @@ export function ClubSettingsPage() {
           {current.state === "Pending Setup" ? t("clubSettings.pendingSetup") : current.state}
         </AppBadge>
       } />
-      {tabs}
 
       {!canManage && <AppNotice className="mb-4">{t("clubSettings.viewOnly")}</AppNotice>}
       <section className="rounded-2xl bg-surface-app px-5 py-5 sm:px-6">

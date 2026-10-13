@@ -131,13 +131,31 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
       joinedAt: now,
       statusHistory: [],
     });
-    await m.clubPositions!.create({
+    // The actor is a Club Leader: a confirmed Phó chủ nhiệm seat in the active term.
+    const seat = await m.clubPositions!.create({
       clubId: club,
-      code: "MEMBERS",
-      name: "Members",
-      isDefaultMemberRole: true,
+      code: "VICE_LEADER",
+      name: "Phó chủ nhiệm",
+      isBoardSeat: true,
       isActive: true,
-      permissionCodes: ["club.expense.record", "club.report.submit"],
+      permissionCodes: [],
+    });
+    const term = await m.clubTerms!.create({
+      clubId: club,
+      name: "2026",
+      state: "Active",
+      startAt: new Date("2026-01-01Z"),
+      endAt: new Date("2027-12-31Z"),
+    });
+    const own = await m.clubMemberships!.findOne({ clubId: club, userId: actor }).lean();
+    await m.clubPositionAssignments!.create({
+      clubId: club,
+      termId: term._id,
+      positionId: seat._id,
+      membershipId: own!._id,
+      effectiveFrom: new Date("2026-01-01Z"),
+      assignedBy: actor,
+      confirmedBy: actor,
     });
     const role = await m.roles!.create({
       code: "ICPDP_OFFICER",
@@ -728,7 +746,7 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
     ).rejects.toThrow("disagree");
     await m.clubPositions!.updateMany(
       { clubId: club },
-      { $set: { permissionCodes: [] } },
+      { $set: { isBoardSeat: false } },
     );
     await expect(
       finance.act(
@@ -745,11 +763,7 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
     ).rejects.toMatchObject({ kind: "forbidden" });
     await m.clubPositions!.updateMany(
       { clubId: club },
-      {
-        $set: {
-          permissionCodes: ["club.expense.record", "club.report.submit"],
-        },
-      },
+      { $set: { isBoardSeat: true } },
     );
     const internal = await fixture();
     await m.eventBudgets!.deleteOne({ _id: internal.budgetId });

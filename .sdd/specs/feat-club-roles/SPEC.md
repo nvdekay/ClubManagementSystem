@@ -92,3 +92,6 @@ Tên 1–120 ký tự, không trùng (không phân biệt hoa thường) với r
 ### Điều chỉnh UX và quyền đọc thiết lập
 
 Thành viên được xem danh sách vai trò và quyền ở chế độ chỉ đọc; API không trả holders, members, versions cho người không có club.role.manage.
+
+## Changelog bổ sung
+- 2026-10-13 — **Thay thế** bởi [`feat-fixed-club-roles`](../feat-fixed-club-roles/SPEC.md): UC23 rút, phía CLB chỉ còn Club Leader / Club Member; API và UI quản lý role đã gỡ.

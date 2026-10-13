@@ -150,6 +150,10 @@ theo vai trò.
 | R9 | [`04-design/design-guidelines.md`](04-design/design-guidelines.md) | Quy tắc giao diện (màu, typography, spacing, công thức component, checklist accessibility) |
 | R10 | [`../.rules/README.md`](../.rules/README.md), [`architecture.md`](../.rules/architecture.md), [`backend.md`](../.rules/backend.md), [`frontend.md`](../.rules/frontend.md) | Quy tắc kỹ thuật ràng buộc phần triển khai |
 | R11 | [`../.sdd/rfcs/ADR-001-clean-architecture-layers.md`](../.sdd/rfcs/ADR-001-clean-architecture-layers.md), [`ADR-002`](../.sdd/rfcs/ADR-002-client-architecture.md) | Các quyết định kiến trúc đã chốt |
+| R12 | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) | ERD mức vật lý, ký hiệu Crow's Foot: tổng quan 51 collection và 10 trang module, sinh từ `05-implementation/UCMS_Database_Design.dbml` |
+| R13 | [`03-diagrams/UCMS_Package_Diagrams.drawio`](03-diagrams/UCMS_Package_Diagrams.drawio) | Package diagram Front-end (`client/src`) và Back-end (`server/src`) theo đúng cấu trúc code |
+| R14 | [`03-diagrams/UCMS_Screen_Flow.drawio`](03-diagrams/UCMS_Screen_Flow.drawio) | Screen flow gộp một trang cho mọi role, đối chiếu router `client/src/main.tsx` |
+| R15 | [`03-diagrams/UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio) | Main workflow: 14 swimlane của các luồng nghiệp vụ chính (§2.5) |
 
 ## 1.5 Quy ước tài liệu — hệ thống mã định danh
 
@@ -244,6 +248,10 @@ generalization **Student ◁ Club Member ◁ Club Leader** (một Club Member l�
 Leader là một Club Member). Các vai trò con bên trong CLB (thủ quỹ, trưởng ban…) là **role CLB**
 có permission (UC23, BR54, BR55), không tạo thành actor mới; phân cấp trong ICPDP là RBAC.
 
+**User** là actor trừu tượng gom UC01 và UC02; Student và ICPDP Officer kế thừa User.
+Mỗi trang use case nghiệp vụ chỉ vẽ quan hệ kế thừa tới actor cha trực tiếp; cây kế thừa
+tổng thể nằm ở trang All users. Các use case của actor cha được trình bày ở trang của actor đó.
+
 "CMB" trong tài liệu này là **tên gọi chung của phía CLB** — Club Leader cùng các Club Member có
 role phù hợp — chứ không phải một actor.
 
@@ -276,7 +284,7 @@ các permission của các role đó. Quyền gắn với **nhiệm kỳ** đang
 - **Trách nhiệm (theo permission):** vận hành hồ sơ và ban/bộ phận CLB; tuyển thành viên và quản
   lý danh sách; đề xuất, công bố, huỷ và đổi lịch sự kiện; quản lý danh sách chờ; chốt điểm danh;
   nộp báo cáo sau sự kiện và báo cáo định kỳ; xin ngân sách trong đề xuất sự kiện, ghi nhận khoản chi kèm chứng từ và nộp quyết toán;
-  xin và trả cơ sở vật chất ngoài phòng học (phòng học do ICPDP phân, mọi thành viên chỉ xem); xem phản hồi sự kiện; trả lời khiếu nại được chuyển xuống; phản hồi lời mời tham gia sự kiện của trường.
+  xin và trả cơ sở vật chất ngoài phòng học (phòng học do ICPDP phân, thành viên có `club.booking.manage` chỉ xem); xem phản hồi sự kiện; trả lời khiếu nại được chuyển xuống; phản hồi lời mời tham gia sự kiện của trường.
 - **Use case không cần permission:** UC22, UC24.
 - **Use case cần permission:** UC09, UC16, UC18, UC19, UC20, UC21, UC25, UC27, UC28, UC30,
   UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC54 (cùng UC01, UC02).
@@ -360,7 +368,7 @@ từ danh mục này khi cấu hình role ở UC23.
 | `club.attendance.manage` | UC30, UC32, check-in thủ công ở UC31 | có |
 | `club.report.submit` | UC33, UC38 | có |
 | `club.expense.record` | UC36 | có |
-| `club.booking.manage` | UC45, UC47 | có |
+| `club.booking.manage` | UC45, UC47, UC58 (xem phòng được phân để nhận chìa khoá) | có |
 | `club.feedback.view` | UC49 | có |
 | `club.complaint.respond` | UC52 | có |
 | `club.role.manage` | UC23 | không — giữ riêng Club Leader |
@@ -689,7 +697,7 @@ client/src/pages/
 | Public | Trang chủ · danh bạ CLB & trang CLB · đợt tuyển đang mở · danh sách và trang sự kiện công khai (chỉ đọc, không cần đăng nhập) | UC06 |
 | Auth | Đăng nhập với Google, callback OAuth, chọn workspace, trang từ chối truy cập | UC01 |
 | Student | Dashboard · danh bạ CLB & trang CLB · form hồ sơ thành lập (+ các version) · form ứng tuyển · đơn của tôi · danh sách và trang sự kiện · đăng ký của tôi · check-in (mã/QR) · form phản hồi · form khiếu nại & khiếu nại của tôi | UC02, UC06, UC07, UC17, UC29, UC31, UC48, UC50 |
-| Club Member | Không gian thành viên theo CLB · xin rời CLB (mọi thành viên); các màn hình sau chỉ hiện khi có permission tương ứng (BR54): dashboard CLB · hồ sơ & cơ cấu CLB · đợt tuyển · bảng sàng lọc đơn · đánh giá ứng viên · danh sách thành viên · đề xuất sự kiện (+ bản sửa) · công bố sự kiện · huỷ/đổi lịch · đăng ký & danh sách chờ · chốt điểm danh · báo cáo sau sự kiện · khoản chi & chứng từ · báo cáo định kỳ · yêu cầu booking (ngoài phòng học) · booking của CLB · phòng được phân (mọi thành viên, chỉ đọc) · xem phản hồi · khiếu nại được chuyển | UC02, UC09, UC16, UC18–UC22, UC24, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC58 (xem) |
+| Club Member | Không gian thành viên theo CLB · xin rời CLB (mọi thành viên); các màn hình sau chỉ hiện khi có permission tương ứng (BR54): dashboard CLB · hồ sơ & cơ cấu CLB · đợt tuyển · bảng sàng lọc đơn · đánh giá ứng viên · danh sách thành viên · đề xuất sự kiện (+ bản sửa) · công bố sự kiện · huỷ/đổi lịch · đăng ký & danh sách chờ · chốt điểm danh · báo cáo sau sự kiện · khoản chi & chứng từ · báo cáo định kỳ · yêu cầu booking (ngoài phòng học) · booking của CLB · phòng được phân (`club.booking.manage`, chỉ đọc) · xem phản hồi · khiếu nại được chuyển | UC02, UC09, UC16, UC18–UC22, UC24, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC58 (xem) |
 | Club Leader | Mọi màn hình của Club Member · vai trò CLB & phân quyền (tạo role, chọn permission, gán thành viên) · đề xuất ban chủ nhiệm · kế hoạch chuyển giao · xin tạm ngừng | UC10, UC12, UC14, UC23 |
 | ICPDP | Dashboard · hộp thư phê duyệt hợp nhất · thẩm định hồ sơ thành lập · danh sách CLB & hành động vòng đời · xác nhận ban chủ nhiệm & chuyển giao · thẩm định đề xuất sự kiện (kèm ngân sách) · thẩm định báo cáo sự kiện · ghi nhận giải ngân · đối soát · thẩm định báo cáo định kỳ · hồ sơ vi phạm · phân loại khiếu nại · danh mục cơ sở vật chất · thẩm định booking · phân phòng CLB · scheme đánh giá · bản nháp & công bố đánh giá · xuất dữ liệu & báo cáo · tài khoản & vai trò · chính sách & deadline · định tuyến phê duyệt | UC03–UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39–UC44, UC46, UC51, UC55, UC58 |
 
@@ -2226,7 +2234,7 @@ lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong App
 | FR-UC58-07 | Ghi audit `ROOM_ALLOCATED` (`entityType = RoomAllocation`, `after` = semesterCode, clubId, clubName, propertyId, weekday, slot, note, bookingIds) và gửi thông báo in-app `ROOM_ALLOCATED` tới Club Leader và các ghế ban chủ nhiệm |
 | FR-UC58-08 | *(A1)* Cho thu hồi một đợt phân phòng với lý do bắt buộc: buổi chưa bắt đầu chuyển `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử; ghi audit và gửi thông báo `ROOM_ALLOCATION_REVOKED`. Không có thao tác sửa — đổi bằng thu hồi rồi phân lại |
 | FR-UC58-09 | *(A2)* Phân giữa học kỳ chỉ sinh các ngày còn ở tương lai; mẫu tuần không kế thừa sang học kỳ sau |
-| FR-UC58-10 | Hiển thị cho mọi thành viên active của CLB trang chỉ đọc "Phòng được phân": lịch tuần của học kỳ hiện tại/sắp tới (thứ, slot, giờ, phòng, toà nhà, ghi chú) và các ngày sắp tới |
+| FR-UC58-10 | Chỉ cho thành viên `Active` có `club.booking.manage` trong đúng CLB xem trang chỉ đọc "Phòng được phân" để xuất trình cho bảo vệ khi nhận chìa khoá; thiếu quyền thì từ chối: lịch tuần của học kỳ hiện tại/sắp tới (thứ, slot, giờ, phòng, toà nhà, ghi chú) và các ngày sắp tới |
 | FR-UC58-11 | *(E)* Từ chối khi học kỳ đã kết thúc, CLB sai trạng thái, phòng không hoạt động hoặc không phải `ROOM`, khung giờ được đặt không phủ thứ/slot, hoặc không còn ngày nào để sinh |
 | FR-UC58-12 | *(E)* Từ chối khi người gọi không phải ICPDP Officer |
 
@@ -3577,18 +3585,32 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 
 | Sơ đồ | Các trang | File |
 |---|---|---|
-| **Context diagram v2.1** (hiện hành, 40 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) |
+| **Context diagram v2.1** (hiện hành, 46 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) |
 | Context diagram v2 (đã thay thế, 57 luồng) | Context diagram v2 | [`03-diagrams/UCMS_Context_Diagram_v2.drawio`](03-diagrams/UCMS_Context_Diagram_v2.drawio) |
 | Context diagram v1 (đã thay thế, 40 luồng) | Context diagram | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
-| **Use case diagram theo actor** (UC01–UC52, UC58) | All users (kế thừa actor) · Student · Club Leader · Club Member 1 - Club & recruitment · Club Member 2 - Events & bookings · Club Member 3 - Accountability & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
+| **Use case diagram theo actor** (UC01–UC52, UC58) | All users (kế thừa actor) · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 - Access & club lifecycle · ICPDP 2 - Events, bookings & finance · ICPDP 3 - Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
 | **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio) |
 | **State diagram** | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) |
+| **Main workflow — swimlane** (§2.5, tiếng Anh) | Club Founding · Leadership Transition · Member Recruitment · Event Proposal · Event Execution · Event Finance · Room Allocation · Facility Request · Complaint Handling · Periodic Report · Violation Case · Club Evaluation · Suspension and Dissolution · Club Leader and Club Member | [`03-diagrams/UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio) |
+| **ERD** (Crow's Foot, mức vật lý, 51 collection) | ERD overview · M01 Identity, Access & Configuration · M02 / M03 Club Lifecycle, Governance & Term · M04 Recruitment & Membership · M05 / M06 Event, Registration & Attendance · M07 Event Finance & Budget · M08 Reporting, Accountability & Compliance · M09 Performance Evaluation · M10 Workflow, Notification & Audit · M11 Property & Booking · M12 Feedback & Complaint | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) |
+| **Package diagram** | Front-end packages · Back-end packages | [`03-diagrams/UCMS_Package_Diagrams.drawio`](03-diagrams/UCMS_Package_Diagrams.drawio) |
+| **Screen flow** (gộp một trang cho mọi role) | Screen flow | [`03-diagrams/UCMS_Screen_Flow.drawio`](03-diagrams/UCMS_Screen_Flow.drawio) |
 
 Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
 
+- Với M11, `Manage room allocations` thuộc ICPDP (UC58); CLB có `Manage allocated rooms «include» View allocated rooms`
+  trong khung `club.booking.manage`, dành cho thành viên phụ trách nhận chìa khoá. `Manage facility bookings` chỉ dành cho `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`, với các oval
+  `Request non-room facility booking` (UC45), `Decide non-room facility request` (UC46) và
+  `Cancel / release facility booking` (UC47). Không có chức năng CLB đặt phòng học hay ICPDP
+  duyệt đặt trùng phòng học. PNG các trang liên quan đã đồng bộ với `.drawio` ngày 2026-10-12.
 - Actor vẽ bằng hình người; biên hệ thống là một khung có nhãn `UCMS`.
+- Mỗi trang nghiệp vụ chỉ vẽ một quan hệ generalization tới actor cha trực tiếp bên ngoài biên hệ thống:
+  Student → User; Club Member → Student; Club Leader → Club Member; ICPDP Officer → User.
+  Trang All users giữ cây kế thừa tổng thể. Nét liền, tam giác rỗng hướng về actor cha; các oval được kế thừa
+  tham chiếu sang trang actor cha.
 - Mỗi trang actor chỉ nối actor tới các use case nhóm `Manage …`; use case nhóm `«include»` các
   chức năng con (use case quản lý danh mục tách theo CRUD). Oval chỉ ghi tên, không ghi mã UC.
+- Nét nối `«include»` đi từ mép oval nhóm tới mép oval chức năng con, tránh cắt qua oval khác.
 - Không vẽ `«extend»`. Quan hệ UC45→UC25 và UC47→UC28 chỉ ghi trong Spec (luồng thay thế,
   Related UC); điều hướng màn hình và cascade hệ thống cũng không vẽ thành quan hệ (I27, I28, I55).
 - Actor phụ được nối bằng association nét liền, không phải nét đứt.
@@ -3618,7 +3640,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 | M08 | `GET|POST /events/:id/report`, `POST /event-reports/:id/decision`, `GET|POST /clubs/:id/periodic-reports`, `POST /periodic-reports/:id/decision`, `GET|POST /violations`, `PATCH /violations/:id`, `POST /violations/:id/corrective-actions` |
 | M09 | `GET|POST /evaluation-schemes`, `POST /evaluation-schemes/:id/activate`, `POST /evaluations/generate`, `GET /evaluations`, `POST /evaluations/:id/finalize`, `POST /evaluations/:id/publish`, `GET /exports?type=&format=&period=&clubId=` (UC55) |
 | M10 | `GET /approvals` (hộp thư phê duyệt dùng chung), `GET /approvals/:id`, `GET /notifications`, `PATCH /notifications/:id/read`, `GET /audit-logs?entityType=&entityId=` |
-| M11 | `GET|POST /properties`, `PATCH /properties/:id`, `GET /properties/:id/availability`, `GET|POST /property-bookings`, `PATCH /property-bookings/:id`, `POST /property-bookings/:id/decision`, `POST /property-bookings/:id/cancel`, `GET /admin/room-allocations?semesterCode=` (UC58), `GET /admin/room-allocations/options` (UC58), `POST /admin/room-allocations` (UC58), `POST /admin/room-allocations/{id}/revoke` (UC58), `GET /clubs/{clubId}/room-allocations` (UC58, chỉ đọc) |
+| M11 | `GET|POST /properties`, `PATCH /properties/:id`, `GET /properties/:id/availability`, `GET|POST /property-bookings`, `PATCH /property-bookings/:id`, `POST /property-bookings/:id/decision`, `POST /property-bookings/:id/cancel`, `GET /admin/room-allocations?semesterCode=` (UC58), `GET /admin/room-allocations/options` (UC58), `POST /admin/room-allocations` (UC58), `POST /admin/room-allocations/{id}/revoke` (UC58), `GET /clubs/{clubId}/room-allocations` (UC58, chỉ đọc, cần `club.booking.manage`) |
 | M12 | `POST /events/:id/feedback`, `GET /events/:id/feedback/summary`, `GET|POST /complaints`, `POST /complaints/:id/withdraw`, `POST /complaints/:id/triage`, `POST /complaints/:id/response` |
 
 Quy ước: endpoint **decision** mang kết quả (`request-revision` / `approve` / `reject`) kèm lý do
