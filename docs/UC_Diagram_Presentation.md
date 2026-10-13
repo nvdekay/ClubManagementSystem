@@ -4,6 +4,13 @@
 > Sơ đồ gốc: [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio).
 > Đặc tả tham chiếu khi bị hỏi sâu: [`02-use-cases/UCMS_UseCase_Model_v2.md`](02-use-cases/UCMS_UseCase_Model_v2.md) §3, §6, §7.
 >
+> **Lưu ý (13/10/2026):** phía CLB nay chỉ còn hai role cố định (`Club Leader`, `Club Member`) và
+> sơ đồ đã bỏ khung permission. Ảnh ở Hình III.3.3–III.3.6 đã trỏ sang bốn trang CLB hiện hành
+> (`Club Leader`, `Club Leader - Club & recruitment`, `Club Member - Events & bookings`,
+> `Club Leader - Events, bookings & finance`), nhưng **tiêu đề, script, bảng ánh xạ và Q&A của bốn
+> hình này vẫn viết theo cách chia trang cũ (Club Member 1–3 theo permission) và cần được viết lại**
+> trước khi dùng để thuyết trình.
+>
 > **Thời lượng:** mở đầu ~45s, mỗi hình ~50–70s, kết ~30s → tổng **~9–10 phút**.
 >
 > **Cách dùng file này:** mỗi hình gồm 4 phần —
@@ -198,7 +205,7 @@ Có, cả hai đều có luồng rút (`Withdrawn`) trước khi có quyết đ�
 
 ## Hình III.3.3 — Club Leader
 
-![Use cases of Club Leader](03-diagrams/img/UCMS_UseCase_ByActor_03_Club-Leader.png)
+![Use cases of Club Leader](03-diagrams/img/UCMS_UseCase_ByActor_04_Club-Leader.png)
 
 ### Script
 
@@ -269,7 +276,7 @@ Hệ thống cảnh báo và liệt kê những gì sẽ bị huỷ nếu ICPDP 
 
 ## Hình III.3.4 — Club Member: Club & recruitment
 
-![Use cases of Club Member - Club & recruitment](03-diagrams/img/UCMS_UseCase_ByActor_04_Club-Member-1-Club-recruitment.png)
+![Use cases of Club Member - Club & recruitment](03-diagrams/img/UCMS_UseCase_ByActor_05_Club-Leader-Club-recruitment.png)
 
 ### Script
 
@@ -344,7 +351,7 @@ nghĩa vụ còn treo.
 
 ## Hình III.3.5 — Club Member: Events & bookings
 
-![Use cases of Club Member - Events & bookings](03-diagrams/img/UCMS_UseCase_ByActor_05_Club-Member-2-Events-bookings.png)
+![Use cases of Club Member - Events & bookings](03-diagrams/img/UCMS_UseCase_ByActor_03_Club-Member-Events-bookings.png)
 
 ### Script
 
@@ -421,7 +428,7 @@ trong một học kỳ (UC58), sang kỳ sau ICPDP phân lại; CLB không tự 
 
 ## Hình III.3.6 — Club Member: Accountability & finance
 
-![Use cases of Club Member - Accountability & finance](03-diagrams/img/UCMS_UseCase_ByActor_06_Club-Member-3-Accountability-finance.png)
+![Use cases of Club Member - Accountability & finance](03-diagrams/img/UCMS_UseCase_ByActor_06_Club-Leader-Events-bookings-finance.png)
 
 ### Script
 

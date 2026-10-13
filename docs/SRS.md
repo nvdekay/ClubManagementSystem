@@ -150,6 +150,10 @@ theo vai trò.
 | R9 | [`04-design/design-guidelines.md`](04-design/design-guidelines.md) | Quy tắc giao diện (màu, typography, spacing, công thức component, checklist accessibility) |
 | R10 | [`../.rules/README.md`](../.rules/README.md), [`architecture.md`](../.rules/architecture.md), [`backend.md`](../.rules/backend.md), [`frontend.md`](../.rules/frontend.md) | Quy tắc kỹ thuật ràng buộc phần triển khai |
 | R11 | [`../.sdd/rfcs/ADR-001-clean-architecture-layers.md`](../.sdd/rfcs/ADR-001-clean-architecture-layers.md), [`ADR-002`](../.sdd/rfcs/ADR-002-client-architecture.md) | Các quyết định kiến trúc đã chốt |
+| R12 | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) | ERD mức vật lý, ký hiệu Crow's Foot: tổng quan 51 collection và 10 trang module, sinh từ `05-implementation/UCMS_Database_Design.dbml` |
+| R13 | [`03-diagrams/UCMS_Package_Diagrams.drawio`](03-diagrams/UCMS_Package_Diagrams.drawio) | Package diagram Front-end (`client/src`) và Back-end (`server/src`) theo đúng cấu trúc code |
+| R14 | [`03-diagrams/UCMS_Screen_Flow.drawio`](03-diagrams/UCMS_Screen_Flow.drawio) | Screen flow gộp một trang cho mọi role, đối chiếu router `client/src/main.tsx` |
+| R15 | [`03-diagrams/UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio) | Main workflow: 14 swimlane của các luồng nghiệp vụ chính (§2.5) |
 
 ## 1.5 Quy ước tài liệu — hệ thống mã định danh
 
@@ -3581,12 +3585,16 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 
 | Sơ đồ | Các trang | File |
 |---|---|---|
-| **Context diagram v2.1** (hiện hành, 40 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) |
+| **Context diagram v2.1** (hiện hành, 46 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) |
 | Context diagram v2 (đã thay thế, 57 luồng) | Context diagram v2 | [`03-diagrams/UCMS_Context_Diagram_v2.drawio`](03-diagrams/UCMS_Context_Diagram_v2.drawio) |
 | Context diagram v1 (đã thay thế, 40 luồng) | Context diagram | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
-| **Use case diagram theo actor** (UC01–UC52, UC58) | All users (kế thừa actor) · Student · Club Leader · Club Member 1 - Club & recruitment · Club Member 2 - Events & bookings · Club Member 3 - Accountability & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
+| **Use case diagram theo actor** (UC01–UC52, UC58) | All users (kế thừa actor) · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 - Access & club lifecycle · ICPDP 2 - Events, bookings & finance · ICPDP 3 - Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
 | **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio) |
 | **State diagram** | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) |
+| **Main workflow — swimlane** (§2.5, tiếng Anh) | Club Founding · Leadership Transition · Member Recruitment · Event Proposal · Event Execution · Event Finance · Room Allocation · Facility Request · Complaint Handling · Periodic Report · Violation Case · Club Evaluation · Suspension and Dissolution · Club Leader and Club Member | [`03-diagrams/UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio) |
+| **ERD** (Crow's Foot, mức vật lý, 51 collection) | ERD overview · M01 Identity, Access & Configuration · M02 / M03 Club Lifecycle, Governance & Term · M04 Recruitment & Membership · M05 / M06 Event, Registration & Attendance · M07 Event Finance & Budget · M08 Reporting, Accountability & Compliance · M09 Performance Evaluation · M10 Workflow, Notification & Audit · M11 Property & Booking · M12 Feedback & Complaint | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) |
+| **Package diagram** | Front-end packages · Back-end packages | [`03-diagrams/UCMS_Package_Diagrams.drawio`](03-diagrams/UCMS_Package_Diagrams.drawio) |
+| **Screen flow** (gộp một trang cho mọi role) | Screen flow | [`03-diagrams/UCMS_Screen_Flow.drawio`](03-diagrams/UCMS_Screen_Flow.drawio) |
 
 Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
 
