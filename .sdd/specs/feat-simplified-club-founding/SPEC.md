@@ -1,5 +1,7 @@
 # SPEC: feat-simplified-club-founding
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** "quyền tuỳ biến" của role không còn tồn tại — role CLB không mang permission, mọi việc vận hành CLB thuộc riêng Club Leader (BR54, BR55).
+
 > Người dùng duyệt toàn bộ quyết định và thay đổi schema (2026-10-09). Mục tiêu: sinh viên chỉ điền những gì
 > chỉ họ biết, hệ thống tự suy ra/làm sẵn phần còn lại; ICPDP không phải hiểu các field kỹ thuật.
 

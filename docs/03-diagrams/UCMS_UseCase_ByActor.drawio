@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="page0" name="All users">
-        <mxGraphModel dx="1074" dy="1215" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1045" dy="565" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -59,7 +59,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="page1" name="Student">
-        <mxGraphModel dx="1329" dy="1009" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="2015" dy="778" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -142,7 +142,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="page4" name="Club Member - Events &amp; bookings">
-        <mxGraphModel dx="736" dy="951" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1322" dy="939" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -168,33 +168,29 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p4m1c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage waitlist" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="496" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="520" as="geometry"/>
                 </mxCell>
                 <mxCell id="p4m1c0i" edge="1" parent="1" source="p4m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p4m1c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p4m1c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Finalize attendance" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="576" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="616" as="geometry"/>
                 </mxCell>
                 <mxCell id="p4m1c1i" edge="1" parent="1" source="p4m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p4m1c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p4m3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage allocated rooms" vertex="1">
-                    <mxGeometry height="56" width="230" x="310" y="700" as="geometry"/>
-                </mxCell>
-                <mxCell id="p4m3a" edge="1" parent="1" source="p4actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p4m3" value="">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="p4m3a" edge="1" parent="1" source="p4actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p4m3c0" value="">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="369.37609715563576" y="703.4932370077004" as="targetPoint"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="p4m3c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View allocated rooms" vertex="1">
-                    <mxGeometry height="56" width="230" x="690" y="700" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="320" y="690" as="geometry"/>
                 </mxCell>
-                <mxCell id="p4m3c0i" edge="1" parent="1" source="p4m3" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p4m3c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                <mxCell id="9ihhTGZDZ2kmpCRAsCtT-8" edge="1" parent="1" source="p4actor" style="edgeStyle=none;html=1;endArrow=none;endFill=0;" target="9ihhTGZDZ2kmpCRAsCtT-2" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="9ihhTGZDZ2kmpCRAsCtT-8" edge="1" parent="1" source="p4actor" style="edgeStyle=none;html=1;endArrow=none;endFill=0;" target="9ihhTGZDZ2kmpCRAsCtT-2" value="`">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="9ihhTGZDZ2kmpCRAsCtT-2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage my membership" vertex="1">
+                <mxCell id="9ihhTGZDZ2kmpCRAsCtT-2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Club membership" vertex="1">
                     <mxGeometry height="56" width="230" x="310" y="310" as="geometry"/>
                 </mxCell>
                 <mxCell id="9ihhTGZDZ2kmpCRAsCtT-3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View member workspace" vertex="1">
@@ -209,11 +205,17 @@
                 <mxCell id="9ihhTGZDZ2kmpCRAsCtT-6" edge="1" parent="1" source="9ihhTGZDZ2kmpCRAsCtT-2" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="9ihhTGZDZ2kmpCRAsCtT-5" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
+                <mxCell id="p4memberList" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View member list" vertex="1">
+                    <mxGeometry height="56" width="230" x="690" y="430" as="geometry"/>
+                </mxCell>
+                <mxCell id="p4memberListInclude" edge="1" parent="1" source="9ihhTGZDZ2kmpCRAsCtT-2" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p4memberList" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram id="page2" name="Club Leader">
-        <mxGraphModel dx="1214" dy="1131" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1983" dy="1072" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -233,7 +235,7 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2m0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage club roles" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="390" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="350" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2m0a" edge="1" parent="1" source="p2actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p2m0" value="">
                     <mxGeometry relative="1" as="geometry"/>
@@ -262,26 +264,20 @@
                 <mxCell id="p2m0c3i" edge="1" parent="1" source="p2m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2m0c3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" x="0.3" as="geometry"/>
                 </mxCell>
-                <mxCell id="p2m0c4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Configure role permissions" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="430" as="geometry"/>
-                </mxCell>
-                <mxCell id="p2m0c4i" edge="1" parent="1" source="p2m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2m0c4" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" x="0.3" as="geometry"/>
-                </mxCell>
                 <mxCell id="p2m0c5" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Assign member to role" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="510" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="430" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2m0c5i" edge="1" parent="1" source="p2m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2m0c5" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" x="0.3" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2m0c6" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Revoke member role" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="590" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="510" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2m0c6i" edge="1" parent="1" source="p2m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2m0c6" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" x="0.3" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2m0c7" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View role structure history" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="670" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="590" as="geometry"/>
                 </mxCell>
                 <mxCell id="p2m0c7i" edge="1" parent="1" source="p2m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p2m0c7" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" x="0.3" as="geometry"/>
@@ -314,11 +310,11 @@
         </mxGraphModel>
     </diagram>
     <diagram id="page3" name="Club Leader - Club &amp; recruitment">
-        <mxGraphModel dx="1304" dy="1215" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1662" dy="1179" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p3title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader&amp;nbsp;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;- Club &amp;amp; recruitment&lt;/span&gt;" vertex="1">
+                <mxCell id="p3title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader - Club &amp;amp; recruitment" vertex="1">
                     <mxGeometry height="30" width="900" x="40" y="210" as="geometry"/>
                 </mxCell>
                 <mxCell id="p3box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
@@ -339,20 +335,14 @@
                 <mxCell id="p3m1a" edge="1" parent="1" source="p3actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p3m1" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p3m1c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View club profile" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="336" as="geometry"/>
-                </mxCell>
-                <mxCell id="p3m1c0i" edge="1" parent="1" source="p3m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p3m1c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
                 <mxCell id="p3m1c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Update club information" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="416" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="350" as="geometry"/>
                 </mxCell>
                 <mxCell id="p3m1c1i" edge="1" parent="1" source="p3m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p3m1c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p3m1c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Define club structure" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="496" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="472" as="geometry"/>
                 </mxCell>
                 <mxCell id="p3m1c2i" edge="1" parent="1" source="p3m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p3m1c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
@@ -411,14 +401,8 @@
                 <mxCell id="p3m4a" edge="1" parent="1" source="p3actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p3m4" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p3m4c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View member list" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="1194" as="geometry"/>
-                </mxCell>
-                <mxCell id="p3m4c0i" edge="1" parent="1" source="p3m4" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p3m4c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
                 <mxCell id="p3m4c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Update membership status" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="1274" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="1234" as="geometry"/>
                 </mxCell>
                 <mxCell id="p3m4c1i" edge="1" parent="1" source="p3m4" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p3m4c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
@@ -427,7 +411,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="page5" name="Club Leader - Events, bookings &amp; finance">
-        <mxGraphModel dx="848" dy="790" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="1620" dy="1150" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -521,19 +505,19 @@
                 <mxCell id="p5m_exp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Record expense &amp; submit settlement" vertex="1">
                     <mxGeometry height="56" width="230" x="300" y="795" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m_exp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_exp" value="">
+                <mxCell id="p5m_exp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p5m_exp" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fdb" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Review event feedback" vertex="1">
                     <mxGeometry height="56" width="230" x="300" y="885" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m_fdb_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_fdb" value="">
+                <mxCell id="p5m_fdb_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p5m_fdb" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_cmp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to complaint" vertex="1">
                     <mxGeometry height="56" width="230" x="300" y="975" as="geometry"/>
                 </mxCell>
-                <mxCell id="p5m_cmp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_cmp" value="">
+                <mxCell id="p5m_cmp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p5m_cmp" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
             </root>

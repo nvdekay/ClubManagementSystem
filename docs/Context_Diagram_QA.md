@@ -200,8 +200,8 @@ nhận `Event invitations`, trả lời chấp nhận / từ chối qua `Event i
 tổng hợp qua `Event invitation responses`. Lời mời quá hạn tự `Expired` (BR59).
 
 **Hỏi: Sao lời mời gửi tới Club Member, không tới Club Leader?**
-Người có quyền `club.event.manage` trả lời được, không nhất thiết là chủ nhiệm. Chủ nhiệm kế thừa Club
-Member nên cũng nhận được.
+Context diagram vẽ phía CLB nhận lời mời, nhưng từ 2026-10-13 (review issue I66) chỉ Club Leader trả
+lời được (`club.event.manage` thuộc riêng Club Leader, BR54, BR55). Luồng trên hình chưa đổi tên actor.
 
 ---
 
@@ -211,7 +211,8 @@ Member nên cũng nhận được.
 Đề cử ban chủ nhiệm (UC10), kế hoạch bàn giao nhiệm kỳ (UC12), yêu cầu tạm dừng CLB (UC14).
 
 **Hỏi: `Club roles & permissions` gửi vào để làm gì? Có ai duyệt không?**
-Chủ nhiệm tạo role, chọn quyền, gán thành viên (UC23). Không cần duyệt; mỗi thay đổi tạo một phiên
+Chủ nhiệm tạo role (chức danh) và gán thành viên (UC23); từ 2026-10-13 (I66) role không mang quyền,
+tên luồng giữ nguyên trên hình. Không cần duyệt; mỗi thay đổi tạo một phiên
 bản cơ cấu mới. ICPDP xem lịch sử qua `Club role structure & board history` (BR56).
 
 **Hỏi: `Leadership & club status decisions` khác `Club status & violation decisions` thế nào?**

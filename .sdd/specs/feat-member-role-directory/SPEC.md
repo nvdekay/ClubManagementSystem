@@ -1,5 +1,7 @@
 # SPEC: feat-member-role-directory
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** role CLB không còn mang permission. Danh mục chỉ đọc hiển thị role Chủ nhiệm → mọi permission, role Members → `club.attendance.manage`, `club.room.view`, role khác → không có. `club.member.manage` thuộc riêng Club Leader.
+
 ## Vấn đề
 Thành viên cần biết mỗi role có permission gì mà không mở màn Thiết lập CLB hay được cấp quyền quản trị role.
 

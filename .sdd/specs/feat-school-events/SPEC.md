@@ -1,5 +1,7 @@
 # SPEC: feat-school-events
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** phản hồi lời mời (UC54) chỉ Club Leader làm được; `club.event.manage` không còn cấp được cho role (BR54, BR55).
+
 > UC53 — Tạo sự kiện cấp trường và mời câu lạc bộ tham gia. Người dùng duyệt các quyết định (2026-10-10),
 > kể cả thay đổi schema (`clubId` không bắt buộc ở `eventRegistrations`, `attendances`, `eventFeedbacks`).
 

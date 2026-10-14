@@ -1,5 +1,7 @@
 # SPEC: feat-event-attendance-close
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** chốt điểm danh (UC32) do mọi thành viên `Active` làm được — `club.attendance.manage` là permission mặc định (BR54).
+
 ## Vấn đề
 Hoàn thiện UC31 A1, UC32 phía CLB theo kế hoạch Wave 3 và SRS hiện hành.
 

@@ -1,5 +1,7 @@
 # SPEC: feat-room-allocation
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** xem phòng được phân phía CLB không còn dùng `club.booking.manage` mà dùng permission mặc định `club.room.view`, tự có với mọi thành viên `Active` của đúng CLB; không cần Club Leader gán quyền. `club.booking.manage` nay thuộc riêng Club Leader.
+
 > UC58 — Phân phòng học cho CLB theo học kỳ. Product owner duyệt ngày 2026-10-11; thay luồng CLB
 > tự đặt phòng học (feat-room-availability, AC13 của feat-facility-booking) và luồng ICPDP đặt trùng
 > phòng học. Quyết định kiến trúc: [ADR-006](../../rfcs/ADR-006-room-allocation-by-icpdp.md).
@@ -124,6 +126,7 @@ hoặc đổi phòng học; khôi phục buổi đã giải phóng khi CLB kích
 
 ## Changelog
 - v1.0.0 (2026-10-11) — product owner duyệt luồng ICPDP phân phòng học theo học kỳ (UC58).
+- v1.1.0 (2026-10-13) — xem phòng phía CLB dùng `club.room.view`, mặc định cho mọi thành viên `Active` (I66, ADR-007).
 
 Kiểm chứng v1.0.0: `npm run check` — 91 file / 434 test pass (có integration Mongo thật:
 `mongo-room-allocation-repository.test.ts`, booking, UC25); `npm run build -w client` thành công;
