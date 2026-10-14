@@ -1,5 +1,7 @@
 # SPEC: feat-leadership-transition-confirmation
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** không permission nào được gán vào role (cả 14 quyền đều thuộc riêng Club Leader, BR55).
+
 ## Vấn đề
 Kế hoạch chuyển giao từ UC12 cần một quyết định ICPDP có thể thực thi atomically: nhiệm kỳ cũ
 đóng, nhiệm kỳ mới mở, quyền cũ hết hiệu lực, quyền mới chỉ phát sinh sau xác nhận, trong khi

@@ -1,5 +1,7 @@
 # SPEC: feat-student-event-checkin
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** check-in thủ công (A1) do mọi thành viên `Active` của CLB làm được — `club.attendance.manage` là permission mặc định, không cần role (BR54).
+
 ## Vấn đề
 Student đã đăng ký được sự kiện (UC29) nhưng chưa thể chứng minh có mặt. UC31 phải tạo đúng một
 `Attendance` cho mỗi người và mỗi sự kiện (BR18), mở feedback window ngay lúc check-in (BR36) để

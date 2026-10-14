@@ -23,7 +23,7 @@ năng kiểu danh mục, chức năng con được tách theo thêm, xem, sửa,
 hoạt. Các chức năng con ứng với 53 use case được đặc tả ở mục 3.2.
 
 Có một nguyên tắc xuyên suốt: người nộp và người duyệt luôn là hai use case
-riêng. Ví dụ Club Member nộp đề xuất sự kiện, còn ICPDP quyết định đề xuất
+riêng. Ví dụ Club Leader nộp đề xuất sự kiện, còn ICPDP quyết định đề xuất
 đó.
 
 ======================================================================
@@ -59,7 +59,7 @@ Student là bất kỳ sinh viên đã đăng nhập. Có 3 nhánh:
     kiện sắp tới.
   - Submit club application (UC07): nộp hồ sơ thành lập CLB mới, kèm thành
     viên sáng lập, tài liệu, và include Define club role structure, tức là
-    đề xuất luôn cơ cấu chức vụ ban đầu của CLB.
+    đề xuất luôn cơ cấu chức vụ ban đầu của CLB (chức danh, không kèm quyền).
   - Apply for membership (UC17): ứng tuyển vào một đợt tuyển của CLB.
 - Manage event participation include Register for event (UC29), Check in
   (UC31) và Submit event feedback (UC48). Chỉ người đã check-in mới được gửi
@@ -68,18 +68,34 @@ Student là bất kỳ sinh viên đã đăng nhập. Có 3 nhánh:
   nại đi thẳng tới ICPDP, không qua CLB, để bảo vệ người khiếu nại.
 
 ======================================================================
-HÌNH III.3.3 — Use cases of the Club Leader
+HÌNH III.3.3 — Club Member: Events & bookings
+======================================================================
+
+Club Member là sinh viên có tư cách thành viên Active ở một CLB. Hình này
+chỉ vẽ những việc mọi thành viên đều làm được, không cần ai cấp quyền (BR54);
+các việc vận hành CLB khác thuộc riêng chủ nhiệm, ở ba hình tiếp theo.
+
+- Club membership include View member workspace, View member list (UC24)
+  và Request to leave club (UC22).
+- Manage attendance include Manage waitlist (UC30) — đôn người từ danh sách
+  chờ theo đúng thứ tự — và Finalize attendance (UC32) — chốt và khoá điểm
+  danh. Thành viên cũng check-in hộ người tham dự (hỗ trợ UC31).
+- Manage allocated rooms include View allocated rooms (UC58, chỉ đọc).
+  Mọi thành viên Active xem lịch phòng học ICPDP phân để xuất trình cho bảo
+  vệ khi nhận chìa khoá; CLB không tự đặt hay huỷ phòng học.
+
+======================================================================
+HÌNH III.3.4 — Use cases of the Club Leader
 ======================================================================
 
 Club Leader là chủ nhiệm CLB, người giữ ghế President đã được ICPDP xác
-nhận. Hình này chỉ vẽ những quyền mà riêng chủ nhiệm có, không role nào khác
-được giao:
+nhận, và là actor duy nhất của mọi việc vận hành CLB. Hình này là tổ chức
+và nhiệm kỳ:
 
 - Manage club roles (UC23) include Create, View, Update, Deactivate role,
-  Configure role permissions, Assign member to role, Revoke member role và
-  View role structure history. Tức là chủ nhiệm tự dựng các role trong CLB,
-  gán quyền cho role từ một danh mục quyền cố định, rồi gán thành viên vào
-  role. Mọi thay đổi đều được audit.
+  Assign member to role, Revoke member role và View role structure history.
+  Role chỉ là chức danh (thủ quỹ, trưởng ban), không mang quyền. Mọi thay
+  đổi đều được audit và tạo phiên bản cơ cấu mới.
 - Manage board include Nominate board (UC10) — đề cử ban chủ nhiệm — và Plan
   leadership transition (UC12) — chuẩn bị bàn giao nhiệm kỳ.
 - Request suspension (UC14) nối thẳng: CLB chủ động xin tạm dừng hoạt động.
@@ -88,60 +104,34 @@ nhận. Hình này chỉ vẽ những quyền mà riêng chủ nhiệm có, khô
 định tạm dừng đều nằm ở ICPDP, hình III.3.7.
 
 ======================================================================
-HÌNH III.3.4 — Club Member: Club & recruitment
+HÌNH III.3.5 — Club Leader: Club & recruitment
 ======================================================================
 
-Từ đây là Club Member. Điểm quan trọng: mọi thành viên đều có workspace,
-nhưng các chức năng vận hành CLB chỉ chạy được khi role của thành viên đó
-có quyền tương ứng (BR54). Vì vậy trưởng ban truyền thông có thể tạo đợt
-tuyển mà không cần là chủ nhiệm. Club Member có nhiều chức năng nhất nên
-tách thành 3 hình.
-
-- Manage my membership include View member workspace (UC24) và Request to
-  leave club (UC22). Hai việc này mọi thành viên đều làm được, không cần quyền.
-- Manage club profile include View club profile, Update club information và
+- Manage club profile include Update club information và
   Define club structure (UC09): hồ sơ CLB và cơ cấu ban.
 - Manage recruitment campaigns include Create, Update, Publish recruitment
   campaign (UC16).
 - Manage applications include Screen applications (UC18), Record candidate
   evaluation (UC19) theo rubric, và Onboard members (UC20).
-- Manage members include View member list và Update membership status
+- Manage members include Update membership status
   (UC21): Active và Inactive chuyển qua lại; Left và Banned là trạng thái
   cuối.
 
 ======================================================================
-HÌNH III.3.5 — Club Member: Events & bookings
+HÌNH III.3.6 — Club Leader: Events, bookings & finance
 ======================================================================
 
-- Manage events include:
-  - Submit event proposal (UC25): nộp đề xuất sự kiện, ngân sách sự kiện
-    nằm luôn trong đề xuất. Hệ thống tự kiểm tra xung đột lịch.
-  - Publish event (UC27): sau khi được duyệt thì công bố và mở đăng ký.
-  - Cancel / reschedule event (UC28).
-  - Manage waitlist (UC30): quản lý sức chứa, đôn người từ danh sách chờ
-    theo đúng thứ tự.
-- Manage facility bookings include Request non-room facility booking (UC45) và Cancel /
-  release facility booking (UC47). CLB chỉ xin hội trường, sân ngoài trời, sân khấu,
-  thiết bị; yêu cầu đi qua ICPDP duyệt. Phòng học do ICPDP phân (UC58).
-- Manage allocated rooms include View allocated rooms (UC58, chỉ đọc),
-  cần club.booking.manage trong đúng CLB. Thành viên phụ trách xuất trình
-  lịch cho bảo vệ để nhận chìa khoá; CLB không tự đặt hay huỷ phòng học.
-
-======================================================================
-HÌNH III.3.6 — Club Member: Accountability & finance
-======================================================================
-
-Hình này là những gì CLB phải giải trình sau khi hoạt động:
-
-- Manage event accountability include Finalize attendance (UC32) — chốt và
-  khoá điểm danh, Submit event report (UC33) — báo cáo sau sự kiện, hệ thống
-  điền sẵn số liệu, và Review event feedback (UC49).
-- Record expense & submit settlement (UC36) nối thẳng: ghi chi tiêu kèm
-  chứng từ rồi nộp quyết toán.
-- Manage reports include Submit event report (UC33), Submit periodic report (UC38)
-  và Revise and resubmit periodic report (UC38 A2): đọc nhận xét, sửa nội dung
-  hoặc minh chứng chưa đạt, nộp version mới và chờ ICPDP xét lại đến khi duyệt.
-- Respond to complaint (UC52) nằm riêng trong permission club.complaint.respond.
+- Manage events include Submit event proposal (UC25) — ngân sách nằm luôn
+  trong đề xuất, hệ thống tự kiểm tra xung đột lịch —, Publish event (UC27),
+  Cancel / reschedule event (UC28) và Respond to event invitation (UC54).
+- Manage facility bookings include Request non-room facility booking (UC45)
+  và Cancel / release facility booking (UC47). CLB chỉ xin hội trường, sân
+  ngoài trời, sân khấu, thiết bị; yêu cầu đi qua ICPDP duyệt.
+- Manage reports include Submit event report (UC33), Submit periodic report
+  (UC38) và Revise and resubmit periodic report (UC38 A2): đọc nhận xét, sửa
+  nội dung hoặc minh chứng chưa đạt, nộp version mới và chờ ICPDP xét lại.
+- Nối thẳng: Record expense & submit settlement (UC36), Review event
+  feedback (UC49), Respond to complaint (UC52).
 
 ======================================================================
 HÌNH III.3.7 — ICPDP Officer: Access & club lifecycle
@@ -213,7 +203,7 @@ KẾT
 ======================================================================
 
 Tóm lại 9 hình phủ toàn bộ 53 use case: phần chung, Student, Club Leader, 3
-mảng của Club Member và 3 mảng của ICPDP.
+mảng của Club Leader và 3 mảng của ICPDP.
 
 Luồng chung: CLB nộp -> ICPDP quyết định -> CLB giải trình -> ICPDP giám sát
 và đánh giá. Sinh viên ở cả hai đầu: vừa tham gia hoạt động, vừa là nguồn
@@ -253,15 +243,14 @@ CHUẨN BỊ Q&A
 --- Actor ---
 
 - "Sao tách Club Member và Club Leader, không để 1 actor CMB?"
-  Vì quyền khác nhau thật: chủ nhiệm có 4 quyền không role nào nhận được
-  (UC10, UC12, UC14, UC23). Các việc vận hành khác thì phụ thuộc permission
-  của role, nên gộp vào Club Member. "CMB" vẫn dùng như tên gọi chung cho
+  Vì quyền khác nhau thật: chủ nhiệm giữ mọi permission CLB và là actor
+  duy nhất của việc vận hành CLB; thành viên chỉ có workspace, xin rời,
+  điểm danh và xem phòng được phân (BR54, BR55). "CMB" vẫn dùng như tên gọi chung cho
   phía CLB trong thông báo, dashboard.
 
-- "Club Member có quyền tạo sự kiện hết à?"
-  Không. Actor trên hình là ai có thể làm, còn chạy được hay không do
-  permission của role (BR54, RBAC). Thành viên thường chỉ có workspace và
-  xin rời CLB.
+- "Chủ nhiệm có giao quyền tạo sự kiện cho phó chủ nhiệm được không?"
+  Không. Từ 2026-10-13 (I66) role CLB chỉ là chức danh, không mang
+  permission; mọi việc vận hành CLB thuộc riêng Club Leader.
 
 - "Sao không có Guest?"
   Guest chỉ xem trang công khai (một phần UC06), không có use case riêng,

@@ -50,8 +50,8 @@ phân theo học kỳ (UC58). Đây là thay đổi nghiệp vụ được produ
 | BR51 | Scheme đánh giá đã dùng thì khoá, sửa phải tạo version mới | I38 | Đã sửa (BR mới) |
 | BR52 | Thành viên giữ ghế board phải được thay trước khi rời | I38 | Đã sửa (BR mới) |
 | BR53 | Sự kiện nội bộ không có ngân sách được ghi nhận thẳng, ICPDP xem được, đóng khi chốt điểm danh | I57 | Đã sửa (BR mới) |
-| BR54 | Mỗi UC vận hành CLB kiểm tra permission của người gọi; quyền là hợp các role, leader có mọi quyền | I58 | Đã sửa (BR mới) |
-| BR55 | Danh mục permission cố định; 4 quyền giữ riêng của leader không cấp được; cơ cấu ban đầu ICPDP thẩm định ở UC07 / UC08, sau đó leader sửa tự do trừ role ban điều hành (người giữ qua UC10 / UC11 / UC13, thêm / bỏ qua UC12 / UC13) | I58 | Đã sửa (BR mới, sửa ở lần 2) |
+| BR54 | Club Leader đã xác nhận giữ mọi permission CLB, role không cấp quyền; mọi thành viên `Active` tự có `club.attendance.manage` và `club.room.view` (sửa 2026-10-13, I66) | I58, I66 | Đã sửa |
+| BR55 | Danh mục permission cố định; không permission nào cấp được cho role (cả 14 quyền thuộc riêng leader, sửa 2026-10-13, I66); cơ cấu ban đầu ICPDP thẩm định ở UC07 / UC08, sau đó leader sửa tự do trừ role ban điều hành (người giữ qua UC10 / UC11 / UC13, thêm / bỏ qua UC12 / UC13) | I58, I66 | Đã sửa (BR mới, sửa ở lần 2 và I66) |
 | BR56 | Cơ cấu role đánh phiên bản (phiên bản 1 từ UC08, mỗi thay đổi ở UC23 / UC13 là phiên bản mới); role Chủ nhiệm cố định, role Members mặc định tự gán ở UC20; ICPDP xem mọi phiên bản và lịch sử ban điều hành | I58 | Đã sửa (BR mới, lần 2) |
 | BR57 | Ngân sách đã tạm ứng phải được CLB quyết toán trước hạn; quá hạn → BR21 và ICPDP được chốt đối soát | I60 | Đã sửa (BR mới) |
 | BR58 | Phần tạm ứng không được chứng minh bị thu hồi; CLB hoàn trước hạn, quá hạn → BR21 và căn cứ mở UC40 | I60 | Đã sửa (BR mới) |

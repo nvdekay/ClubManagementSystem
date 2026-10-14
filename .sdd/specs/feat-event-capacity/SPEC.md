@@ -1,5 +1,7 @@
 # SPEC: feat-event-capacity
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** UC30 do mọi thành viên `Active` làm được — `club.attendance.manage` là permission mặc định (BR54).
+
 ## Vấn đề
 Hoàn thiện UC30 phía CLB theo kế hoạch Wave 3 và SRS hiện hành.
 

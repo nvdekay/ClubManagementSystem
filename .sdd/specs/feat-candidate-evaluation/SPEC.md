@@ -1,5 +1,7 @@
 # SPEC: feat-candidate-evaluation
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** `club.application.review` thuộc riêng Club Leader, nên người đánh giá ứng viên là Club Leader (BR54, BR55).
+
 ## Vấn đề
 UC19 — Ghi nhận đánh giá ứng viên. Sau khi một đơn được đưa vào danh sách rút gọn (UC18), ban
 tuyển thành viên phỏng vấn/kiểm tra ứng viên nhưng chưa có chỗ ghi lại điểm rubric và nhận xét.
