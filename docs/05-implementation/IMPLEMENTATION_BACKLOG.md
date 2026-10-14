@@ -1,13 +1,13 @@
 # UCMS — Backlog triển khai theo SRS và mockup
 
-> Trạng thái đối chiếu: nhánh `khanhnvd`, `docs/SRS.md`, `docs/04-design/FPT_Club.html`, thiết kế DBML và source hiện tại. `[x]` là phần đã cài và có test phù hợp; `[ ]` là chưa xong. Ghi chú dưới từng nhóm nêu rõ phần đã code nhưng còn chờ kiểm chứng. Khi bắt đầu code một tính năng, tạo `SPEC.md` và `TASKS.md` trong `.sdd/specs/feat-*/` theo `.rules/README.md`; đánh dấu tiến độ ở đó.
+> Trạng thái đối chiếu: nhánh `khanhnvd`, `docs/SRS.md`, thiết kế DBML và source hiện tại. `[x]` là phần đã cài và có test phù hợp; `[ ]` là chưa xong. Ghi chú dưới từng nhóm nêu rõ phần đã code nhưng còn chờ kiểm chứng. Khi bắt đầu code một tính năng, tạo `SPEC.md` và `TASKS.md` trong `.sdd/specs/feat-*/` theo `.rules/README.md`; đánh dấu tiến độ ở đó.
 
 ## 1. Điểm xuất phát và nguyên tắc ưu tiên
 
 - Server dùng Express 5 + TypeScript + Mongoose 8; Auth/Authz UC01/UC03 đã có bản đầu, API demo User đã gỡ mount. Các module nghiệp vụ sau Auth chưa triển khai.
 - Client dùng React 19 + Vite 6, Tailwind v4, React Query, TanStack Table v9, i18next `en`/`vi`; đã có màn login/workspace và quản lý tài khoản bản đầu, chưa có router hay các màn nghiệp vụ.
 - MongoDB trong `docker-compose.yml` là cơ sở dữ liệu duy nhất. Schema/index của 49 collection từ DBML đã được tạo bằng công cụ bootstrap; Auth dùng thêm `authSessions`. Kiểm chứng integration với Mongo thật vẫn chưa chạy được trong sandbox này.
-- `FPT_Club.html` là bundle mockup ba ứng dụng: Public/Student, Club Admin và ICPDP. Dùng để đối chiếu **màn hình, điều hướng, trạng thái và thao tác**. Dữ liệu mẫu, `location.hash`, các nút đổi role giả lập và nội dung demo không phải hợp đồng nghiệp vụ. SRS quyết định hành vi; `design-guidelines.md` quyết định token màu, typography, hai theme và accessibility. Không mang runtime/React bundle của mockup vào client.
+- `FPT_Club.html` (đã gỡ khỏi repo ngày 14/10/2026) là bundle mockup ba ứng dụng: Public/Student, Club Admin và ICPDP, từng dùng để đối chiếu **màn hình, điều hướng, trạng thái và thao tác**. Dữ liệu mẫu, `location.hash`, các nút đổi role giả lập và nội dung demo không phải hợp đồng nghiệp vụ. SRS quyết định hành vi; `design-guidelines.md` quyết định token màu, typography, hai theme và accessibility. Không mang runtime/React bundle của mockup vào client.
 - Ưu tiên đầu tiên là **Auth + Authz chạy xuyên suốt server, MongoDB và client**. Chỉ sau khi có lớp bảo vệ route/use case mới mở các module ghi dữ liệu khác. Guest vẫn xem UC06. Mọi chức năng còn lại thuộc cùng bản phát hành theo SRS §15; thứ tự dưới đây là thứ tự xây dựng, không phải cắt phạm vi.
 
 ### Các lệch cần xử lý ngay trong kế hoạch

@@ -10,7 +10,7 @@ utility Tailwind được sinh ra (`bg-primary-app`, `text-muted-app`, `border-b
 
 ## 1. Nền tảng thương hiệu
 
-Giao diện theo mockup `FPT_Club.html`: bảng màu đất ấm, mảng cam đất, xanh olive và thẻ có góc
+Giao diện dựng theo mockup `FPT_Club.html` (đã gỡ khỏi repo ngày 14/10/2026; nay giao diện trong `client/` là bản tham chiếu): bảng màu đất ấm, mảng cam đất, xanh olive và thẻ có góc
 bo lớn. Token ngữ nghĩa riêng được dùng cho chữ, link và trạng thái để duy trì độ tương phản.
 
 ## 2. Token màu
