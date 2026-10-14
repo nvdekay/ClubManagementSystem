@@ -9,7 +9,7 @@ tương ứng của VS Code.
 | [`UCMS_Context_Diagram_v2.drawio`](UCMS_Context_Diagram_v2.drawio) | Context diagram v2 (57 luồng, gần như mỗi use case một luồng). **Đã bị thay thế** bởi v2.1; giữ lại làm lịch sử |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 và UC58 (phân phòng học theo học kỳ, thêm 2026-10-11) — 9 trang, mỗi trang một nhóm actor: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Member - Events & bookings, Club Leader, Club Leader - Club & recruitment, Club Leader - Events, bookings & finance, ICPDP 1–3 |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`) |
-| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (13/10/2026) — mô hình **khái niệm** theo **ký pháp Chen**: 47 thực thể (hình chữ nhật), 347 thuộc tính (elip), 102 quan hệ (hình thoi). 11 trang: trang 1 *ERD general* là ERD tổng quát liền mạch (đủ 47 thực thể, các quan hệ chính, mỗi thực thể ba thuộc tính tiêu biểu), trang 2–11 là từng module M01–M12 với đủ thuộc tính và quan hệ. Không còn Role / Permission vì role đã cố định. Không ghi kiểu dữ liệu, khoá, ràng buộc hay cardinality. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới |
+| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (13/10/2026) — mô hình **khái niệm** theo **ký pháp Chen**: 47 thực thể (hình chữ nhật), 347 thuộc tính (elip), 102 quan hệ (hình thoi). 11 trang: trang 1 *ERD general* là ERD tổng quát liền mạch (đủ 47 thực thể, các quan hệ chính, mỗi thực thể ba thuộc tính tiêu biểu), trang 2–11 là từng module M01–M12 với đủ thuộc tính và quan hệ. Không còn Role / Permission vì role đã cố định. Không ghi kiểu dữ liệu, khoá hay ràng buộc; có ghi bản số `1` / `N` trên từng quan hệ. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới |
 | [`UCMS_Package_Diagrams.drawio`](UCMS_Package_Diagrams.drawio) | **Package diagram hiện hành** (13/10/2026) — Front-end (`client/src`) và Back-end (`server/src`), vẽ theo đúng thư mục và quan hệ import đang có trong code (`interface/http`, `interface/jobs`, `usecase`, `domain`, `infra/db`·`auth`·`files`·`config`, `main.ts`) |
 | [`UCMS_Screen_Flow.drawio`](UCMS_Screen_Flow.drawio) | **Screen flow gộp một trang** cho mọi role: đăng nhập → Workspace picker → Public area, Student, Club và ICPDP workspace; đối chiếu router `client/src/main.tsx` ngày 13/10/2026 |
 | [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
@@ -52,8 +52,15 @@ sửa ở repo trước, rồi tải đè file tương ứng lên Drive.
   hệ mang tên nghiệp vụ nối các thực thể. Hình chữ nhật **nét đứt, chữ nghiêng** là một thực thể được
   lặp lại từ chỗ khác (ví dụ `User`, `Club`) để đường nối không phải chạy xuyên trang; nó vẫn là cùng
   một thực thể.
-- Sơ đồ **không ghi** kiểu dữ liệu, `PK`/`FK`/`UQ`, `NOT NULL`, giá trị mặc định, index, cardinality
-  hay participation; thuộc tính khoá cũng không gạch chân.
+- Sơ đồ **không ghi** kiểu dữ liệu, `PK`/`FK`/`UQ`, `NOT NULL`, giá trị mặc định hay index; thuộc tính
+  khoá không gạch chân.
+- **Bản số (cardinality)** ghi bằng chữ đỏ `1` / `N` trên mỗi đường nối thực thể với hình thoi, sát
+  hình thoi. Số trên đường của thực thể E là số E tham gia vào một lần quan hệ với phía bên kia, ví dụ
+  `Club 1 — organises — N Event`: một CLB tổ chức nhiều sự kiện, mỗi sự kiện thuộc một CLB. Bản số
+  suy ra từ schema: phía được tham chiếu là `1`, phía giữ tham chiếu là `N`, hoặc `1` nếu tham chiếu
+  là duy nhất (ví dụ `Event 1 — is funded by — 1 Event Budget`). Có 91 quan hệ 1:N, 8 quan hệ 1:1
+  và 3 quan hệ N:1; không có quan hệ N:M. Hai quan hệ 1:1 suy từ unique ghép theo
+  `(eventId, studentId)`: `Event Registration — Attendance` và `Attendance — Event Feedback`.
 - Mỗi trường tham chiếu trong DBML được thay bằng **một quan hệ có tên** (ví dụ `Club organises
   Event`, `User files Complaint`), không vẽ thành thuộc tính. Các trường `…By` cùng trỏ về `User`
   trên một thực thể được gộp thành một quan hệ (ví dụ `submits / decides`).
