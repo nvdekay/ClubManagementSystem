@@ -60,7 +60,7 @@ export interface CascadeResult {
 export interface ClubLifecycleRepository {
   list(): Promise<ClubLifecycleSummary[]>;
   detail(clubId: string, now: Date): Promise<ClubLifecycleDetail | null>;
-  suspend(clubId: string, input: { reason: string; until: Date | null }, actorId: string, now: Date): Promise<CascadeResult>;
+  suspend(clubId: string, input: { reason: string; until: Date | null; requestId?: string; decisionReason?: string }, actorId: string, now: Date): Promise<CascadeResult>;
   /** `actorId` null: reactivated by the lifecycle job when the suspension ran out. */
   reactivate(clubId: string, reason: string, actorId: string | null, now: Date): Promise<void>;
   decideDissolution(clubId: string, decision: ClubDissolution, now: Date): Promise<CascadeResult>;

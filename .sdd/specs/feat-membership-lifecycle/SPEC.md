@@ -1,5 +1,10 @@
 # SPEC: feat-membership-lifecycle
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+
+
 ## Vấn đề
 Sau khi UC20 tiếp nhận thành viên, CLB cần quản lý trạng thái tư cách thành viên có lịch sử; thành viên cần có cách xin rời CLB, còn CLB thực thi việc kết thúc ở một thao tác riêng.
 

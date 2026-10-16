@@ -17,3 +17,6 @@ danh, và xem lại danh sách đã gửi.
 
 `MyClubsPage` và `MemberSpacePage` (UC24) là “CLB của tôi” và không gian thành viên chỉ đọc của một CLB, kèm
 form xin rời CLB (UC22).
+
+`MembershipReconfirmationPanel` (UC21 A2) nằm trong `MyClubsPage`: liệt kê các đợt tái xác nhận đầu học kỳ
+đang mở của chính người dùng và cho xác nhận trước hạn.

@@ -211,7 +211,7 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
         dueAt,
         overdue:
           now > dueAt &&
-          !["Submitted", "Accepted"].includes(versions[0]?.state ?? ""),
+          !versions.some((version) => Boolean(version.submittedAt)),
         report: versions[0],
       },
       versions,
@@ -229,9 +229,15 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
         .sort({ endAt: -1, _id: -1 })
         .lean();
       const details = await Promise.all(
-        events.map((e) => detail(String(e._id), clubId, now)),
+        events.map(async (e) => {
+          try { const d = await detail(String(e._id), clubId, now); return d?.obligation; }
+          catch (error) {
+            if (!(error instanceof DomainError) || error.kind !== "unavailable") throw error;
+            return { eventId: String(e._id), eventTitle: String(e.title), state: String(e.state), revision: Number(e.__v ?? 0), configurationError: "REPORT_DEADLINE_NOT_CONFIGURED" as const };
+          }
+        }),
       );
-      return details.flatMap((d) => (d ? [d.obligation] : []));
+      return details.filter((d): d is NonNullable<typeof d> => Boolean(d));
     },
     find: detail,
     async act(eventId, clubId, actor, action, now) {

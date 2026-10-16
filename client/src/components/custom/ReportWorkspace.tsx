@@ -22,6 +22,7 @@ import { useOpenViolation } from "@/hooks/useViolations";
 import type {
   AccountabilityContext,
   ReportDetail,
+  ReportObligation,
   ReportInput,
   ReportSnapshot,
 } from "@/services/accountability";
@@ -540,11 +541,13 @@ export function ReportWorkspace({
   if (auth.isPending) return <AppSkeleton className="h-40 w-full" />;
   if (!allowed || !auth.data)
     return <AppNotice tone="danger">{t("accountability.access")}</AppNotice>;
-  const items = list.data ?? [];
+  const items = (list.data ?? []).filter((item): item is ReportObligation => !("configurationError" in item));
+  const configurationIssues = (list.data ?? []).filter((item) => "configurationError" in item);
   const count = Math.max(1, Math.ceil(items.length / 10));
   return (
     <div className="space-y-6">
       <PageHeader title={t("accountability.reports")} />
+      {configurationIssues.map((item) => <AppNotice key={item.eventId} tone="warning">{item.eventTitle}: {t("accountability.deadlineMissing")}</AppNotice>)}
       {list.isPending ? (
         <AppSkeleton className="h-32 w-full" />
       ) : list.isError ? (

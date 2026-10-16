@@ -406,6 +406,7 @@ export function mongoEventFinanceRepository(rules: {
             current.totals,
             current.expenses,
             action.reviews,
+            overdue,
           );
           if (!overdue)
             await decideAccountabilityTask(

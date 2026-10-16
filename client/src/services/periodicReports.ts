@@ -33,6 +33,9 @@ export interface PeriodicOverview {
 }
 
 export interface PeriodicReportDetail {
+  revision?: number;
+  versions?: { versionNo: number; narrative: string; nextPlan: string; evidence: { note?: string; url?: string }[];
+    preloadedFigures: PeriodFigures; submittedAt: string; decision?: { outcome: string; reason?: string; observation?: string; sections?: string[]; decidedAt: string } }[];
   id: string;
   clubId: string;
   clubName: string;

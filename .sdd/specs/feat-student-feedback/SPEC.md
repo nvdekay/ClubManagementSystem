@@ -22,7 +22,7 @@ theo dõi tiến trình, UC51/UC52 xử lý). Nhóm muốn một kênh **góp ý
 - Nội dung bắt buộc, 1–2.000 ký tự sau khi trim.
 - CLB phải tồn tại và chưa `Dissolved`; sự kiện (nếu có) phải thuộc CLB đã chọn.
 - Người đọc:
-  - Thành viên CLB có `club.feedback.view` đọc góp ý gửi **cho CLB đó** (`recipient: CLUB`).
+  - Club Leader có `club.feedback.view` đọc góp ý gửi **cho CLB đó** (`recipient: CLUB`).
   - ICPDP Officer đọc góp ý gửi **cho ICPDP**.
   - Góp ý ẩn danh không bao giờ trả tên/email người gửi cho người đọc.
 - Audit cùng transaction, không ghi nội dung; người nhận không nhận notification từng góp ý (MVP).

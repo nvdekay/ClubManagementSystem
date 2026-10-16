@@ -1,3 +1,10 @@
+import { ClubEvaluationsPage } from "@/pages/club/ClubEvaluationsPage";
+import { ClubViolationsPage } from "@/pages/club/ClubViolationsPage";
+import { SuspensionRequestsPage } from "@/pages/icpdp/SuspensionRequestsPage";
+import { ClubSuspensionRequestsPage } from "@/pages/club/ClubSuspensionRequestsPage";
+import { ClubTransitionPlansPage } from "@/pages/club/ClubTransitionPlansPage";
+import { ClubPeriodicReportsPage } from "@/pages/club/ClubPeriodicReportsPage";
+import { ClubInvitationsPage } from "@/pages/club/ClubInvitationsPage";
 import { ClubReportsPage } from "./pages/club/ClubReportsPage.js";
 import { ClubBudgetsPage } from "./pages/club/ClubBudgetsPage.js";
 import { EventReportsPage } from "./pages/icpdp/EventReportsPage.js";
@@ -88,6 +95,13 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/policy" element={<PolicyPage />} />
             <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
             <Route path="club/:clubId/event-reports" element={<ClubReportsPage />} />
+            <Route path="club/:clubId/transition-plans" element={<ClubTransitionPlansPage />} />
+            <Route path="club/:clubId/suspension-requests" element={<ClubSuspensionRequestsPage />} />
+            <Route path="workspace/suspension-requests" element={<SuspensionRequestsPage />} />
+            <Route path="club/:clubId/violations" element={<ClubViolationsPage />} />
+            <Route path="club/:clubId/evaluations" element={<ClubEvaluationsPage />} />
+            <Route path="club/:clubId/periodic-reports" element={<ClubPeriodicReportsPage />} />
+            <Route path="club/:clubId/invitations" element={<ClubInvitationsPage />} />
             <Route path="club/:clubId/budgets" element={<ClubBudgetsPage />} />
             <Route path="workspace/event-reports" element={<EventReportsPage />} />
             <Route path="workspace/budgets/:id/reconciliation" element={<ReconciliationPage />} />

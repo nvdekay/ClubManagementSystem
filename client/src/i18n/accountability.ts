@@ -1,5 +1,7 @@
 export const accountability = {
   en: {
+    deadlineMissing:
+      "Report deadline is not configured for this event. Contact ICPDP to resolve its historical policy.",
     severity: "Severity",
     minor: "Minor",
     moderate: "Moderate",
@@ -83,6 +85,9 @@ export const accountability = {
     evidenceHint:
       "Add a readable HTTPS link to a document. Do not include access credentials.",
     details: "Details",
+    expenseRecorded: "Expense saved",
+    evidenceAdded: "Evidence added",
+    reviewClaimed: "Review claimed",
     next: "Next",
     previous: "Previous",
     page: "Page {{page}}",
@@ -106,6 +111,8 @@ export const accountability = {
     claimFirst: "Claim this review to make a decision.",
   },
   vi: {
+    deadlineMissing:
+      "Chưa có hạn báo cáo cho sự kiện này. Liên hệ ICPDP để xử lý chính sách lịch sử.",
     severity: "Mức độ",
     minor: "Nhẹ",
     moderate: "Trung bình",
@@ -188,6 +195,9 @@ export const accountability = {
     evidenceHint:
       "Thêm liên kết HTTPS đọc được tới chứng từ. Không đưa thông tin đăng nhập vào liên kết.",
     details: "Chi tiết",
+    expenseRecorded: "Đã lưu khoản chi",
+    evidenceAdded: "Đã thêm minh chứng",
+    reviewClaimed: "Đã nhận thẩm định",
     next: "Sau",
     previous: "Trước",
     page: "Trang {{page}}",

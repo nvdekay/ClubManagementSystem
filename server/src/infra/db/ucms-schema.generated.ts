@@ -167,6 +167,12 @@ export const ucmsEnums = {
     "Decided",
     "Closed"
   ],
+  "transitionPlanState": [
+    "Draft",
+    "Pending Confirmation",
+    "Confirmed",
+    "Returned"
+  ],
   "nominationState": [
     "Pending Confirmation",
     "Confirmed",
@@ -1089,7 +1095,7 @@ export const ucmsTables = {
         "type": "json"
       },
       "state": {
-        "type": "nominationState",
+        "type": "transitionPlanState",
         "required": true,
         "default": "Pending Confirmation"
       },
@@ -2135,6 +2141,9 @@ export const ucmsTables = {
       },
       "linkedLifecycleAction": {
         "type": "string"
+      },
+      "submission": {
+        "type": "json"
       },
       "verifiedBy": {
         "type": "objectId"
@@ -3195,6 +3204,117 @@ export const ucmsTables = {
           "at"
         ],
         "name": "ix_audit_actor"
+      }
+    ]
+  },
+  "suspensionRequests": {
+    "fields": {
+      "clubId": {
+        "type": "objectId",
+        "required": true
+      },
+      "reason": {
+        "type": "text",
+        "required": true
+      },
+      "until": {
+        "type": "datetime",
+        "required": true
+      },
+      "obligationsPlan": {
+        "type": "text",
+        "required": true
+      },
+      "recoveryPlan": {
+        "type": "text",
+        "required": true
+      },
+      "acknowledgedImpactIds": {
+        "type": "json",
+        "required": true
+      },
+      "state": {
+        "type": "string",
+        "required": true,
+        "default": "Pending"
+      },
+      "submittedBy": {
+        "type": "objectId",
+        "required": true
+      },
+      "submittedAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "decisionReason": {
+        "type": "text"
+      },
+      "decidedBy": {
+        "type": "objectId"
+      },
+      "decidedAt": {
+        "type": "datetime"
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "clubId",
+          "state"
+        ],
+        "name": "ix_suspension_request_club_state"
+      }
+    ]
+  },
+  "membershipReconfirmations": {
+    "fields": {
+      "membershipId": {
+        "type": "objectId",
+        "required": true
+      },
+      "clubId": {
+        "type": "objectId",
+        "required": true
+      },
+      "periodCode": {
+        "type": "string",
+        "required": true
+      },
+      "openedAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "dueAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "state": {
+        "type": "string",
+        "required": true,
+        "default": "Pending"
+      },
+      "confirmedAt": {
+        "type": "datetime"
+      },
+      "confirmedBy": {
+        "type": "objectId"
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "membershipId",
+          "periodCode"
+        ],
+        "unique": true,
+        "name": "uq_membership_reconfirmation_period"
+      },
+      {
+        "fields": [
+          "state",
+          "dueAt"
+        ],
+        "name": "ix_membership_reconfirmation_due"
       }
     ]
   }

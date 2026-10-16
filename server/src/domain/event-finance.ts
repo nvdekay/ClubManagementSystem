@@ -164,6 +164,7 @@ export function reconcileExpenses(
   totals: FinanceTotals,
   expenses: Expense[],
   reviews: Extract<FinanceAction, { kind: "finalize" }>["reviews"],
+  overdue = false,
 ) {
   if (totals.advanceTotal > totals.approvedTotal)
     throw new DomainError("advances exceed approved budget", "conflict");
@@ -194,7 +195,7 @@ export function reconcileExpenses(
       );
     if (review.outcome === "Accepted") acceptedTotal += expense.amount;
   }
-  acceptedTotal = Math.min(acceptedTotal, totals.approvedTotal);
+  acceptedTotal = Math.min(acceptedTotal, totals.approvedTotal, overdue ? totals.advanceTotal : totals.approvedTotal);
   const settlementBalance = acceptedTotal - totals.advanceTotal;
   return {
     acceptedTotal,

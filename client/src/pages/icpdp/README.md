@@ -72,3 +72,6 @@ công bố, các bản và xu hướng các học kỳ trước.
 `PeriodicReportsPage` (UC39) cho tình trạng báo cáo định kỳ của mọi CLB theo học kỳ (lọc chờ thẩm định, quá hạn,
 đã chấp nhận; ghi nhận không nộp mở hồ sơ UC40); trang thẩm định đặt số liệu CLB cạnh số liệu hệ thống, cho chấp
 nhận kèm ghi nhận hoặc trả về với phần cần sửa.
+
+`SuspensionRequestsPage` (UC15) là hàng đợi yêu cầu tạm ngừng do CLB gửi (UC14), dùng chung
+`SuspensionRequestWorkspace` với trang CLB; ICPDP xem ảnh hưởng tới lịch rồi phê duyệt hoặc từ chối kèm lý do.

@@ -1,3 +1,4 @@
+import { assertAccountabilityOfficer } from "./accountability-workflow.js";
 import { cancelEventInSession } from "./event-cancellation.js";
 import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { randomUUID } from "node:crypto";
@@ -126,6 +127,12 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
     async suspend(clubId, input, actorId, now) {
       return mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
+        if (input.requestId) {
+          await assertAccountabilityOfficer(session, new Types.ObjectId(actorId));
+          const request = await m.suspensionRequests!.findOne({ _id: new Types.ObjectId(input.requestId), clubId: id, state: "Pending" }).session(session).lean();
+          if (!request || (request.until as Date) <= now) throw new DomainError("suspension request is unavailable or expired", "conflict");
+          input = { ...input, reason: String(request.reason), until: request.until as Date };
+        }
         const suspension = { reason: input.reason, suspendedAt: now, suspendedBy: new Types.ObjectId(actorId),
           until: input.until };
         const changed = await m.clubs!.updateOne({ _id: id, state: "Active" },
@@ -140,6 +147,15 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           { state: "Suspended", until: input.until, ...result }, input.reason, now, correlationId, decisionId);
         await notify(session, await memberIds(id, session), "CLUB_SUSPENDED", "Club", id,
           { reason: input.reason, until: input.until }, now);
+        if (input.requestId) {
+          const requestId = new Types.ObjectId(input.requestId);
+          await m.suspensionRequests!.updateOne({ _id: requestId, state: "Pending" }, { $set: { state: "Approved", decidedBy: new Types.ObjectId(actorId), decidedAt: now, decisionReason: input.decisionReason } }, { session });
+          const task = await m.approvalTasks!.findOne({ entityType: "SUSPENSION_REQUEST", entityId: requestId, state: "Open" }).session(session).lean();
+          if (!task) throw new DomainError("suspension review task not found", "conflict");
+          await m.approvalTasks!.updateOne({ _id: task._id }, { $set: { state: "Decided", closedAt: now, assigneeId: new Types.ObjectId(actorId) } }, { session });
+          await m.approvalDecisions!.create([{ approvalTaskId: task._id, outcome: "Approve", reason: input.decisionReason, actorId: new Types.ObjectId(actorId), at: now }], { session });
+          await m.auditLogs!.create([{ entityType: "SuspensionRequest", entityId: requestId, action: "SUSPENSION_REQUEST_APPROVED", actorId: new Types.ObjectId(actorId), actorRole: "ICPDP_OFFICER", after: result, reason: input.decisionReason, correlationId, at: now }], { session });
+        }
         return result;
       });
     },

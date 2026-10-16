@@ -406,6 +406,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
               <li key={action.id} className="flex flex-wrap items-center gap-3 py-3">
                 <div className="min-w-0 flex-1 basis-56">
                   <p className="font-medium break-words">{action.description}</p>
+                  {action.submission && <div className="my-2 rounded-lg bg-bg-app p-3"><p className="whitespace-pre-wrap break-words">{action.submission.note}</p>{action.submission.evidence.map((e, n) => <p key={n} className="break-words">{e.note} {e.url && <a href={e.url} target="_blank" rel="noreferrer" className="text-accent-app underline">{e.url}</a>}</p>)}</div>}
                   <p className="text-xs text-muted-app">{t("violations.actionDue")}: {day(action.dueAt)}
                     {action.linkedLifecycleAction && ` · ${action.linkedLifecycleAction === "SUSPEND" ? t("violations.actionLinkSUSPEND") : t("violations.actionLinkDISSOLVE")}`}</p>
                 </div>

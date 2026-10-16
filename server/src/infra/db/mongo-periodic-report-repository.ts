@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import mongoose, { Types } from "mongoose";
+import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import {
   RETURN_SECTIONS,
@@ -54,6 +54,25 @@ function figuresFrom(raw: unknown): PeriodFigures {
   };
 }
 
+export async function periodicLiveFigures(clubId: Types.ObjectId, periodCode: string, session?: ClientSession): Promise<PeriodicReportDetail["live"]> {
+    const m = ucmsModels;
+    const [eventDocs, active, budgetDocs] = await Promise.all([
+      m.events!.find({ clubId, semesterCode: periodCode }).select({ state: 1 }).session(session ?? null).lean(),
+      m.clubMemberships!.countDocuments({ clubId, state: "Active" }).session(session ?? null),
+      m.eventBudgets!.find({ clubId, periodCode, state: { $ne: "Cancelled" } })
+        .select({ approvedTotal: 1, disbursedTotal: 1 }).session(session ?? null).lean(),
+    ]);
+    const held = eventDocs.filter((item) => heldEventStates.includes(String(item.state)));
+    const total = await m.attendances!.countDocuments({ eventId: { $in: held.map((item) => item._id) } }).session(session ?? null);
+    return {
+      events: { completed: held.length, cancelled: eventDocs.filter((item) => item.state === "Cancelled").length },
+      members: { active }, attendance: { total },
+      finance: { budgets: budgetDocs.length, approvedTotal: budgetDocs.reduce((sum, item) => sum + money(item.approvedTotal), 0),
+        disbursedTotal: budgetDocs.reduce((sum, item) => sum + money(item.disbursedTotal), 0) },
+    };
+  }
+
+
 export function mongoPeriodicReportRepository(): PeriodicReportRepository {
   const m = ucmsModels;
   const reports = m.periodicReports!;
@@ -64,22 +83,6 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
     return new Map(audits.map((item) => [String(item.entityId), String((item.after as Doc).violationId)]));
   }
 
-  async function live(clubId: Types.ObjectId, periodCode: string): Promise<PeriodicReportDetail["live"]> {
-    const [eventDocs, active, budgetDocs] = await Promise.all([
-      m.events!.find({ clubId, semesterCode: periodCode }).select({ state: 1 }).lean(),
-      m.clubMemberships!.countDocuments({ clubId, state: "Active" }),
-      m.eventBudgets!.find({ clubId, periodCode, state: { $ne: "Cancelled" } })
-        .select({ approvedTotal: 1, disbursedTotal: 1 }).lean(),
-    ]);
-    const held = eventDocs.filter((item) => heldEventStates.includes(String(item.state)));
-    const total = await m.attendances!.countDocuments({ eventId: { $in: held.map((item) => item._id) } });
-    return {
-      events: { completed: held.length, cancelled: eventDocs.filter((item) => item.state === "Cancelled").length },
-      members: { active }, attendance: { total },
-      finance: { budgets: budgetDocs.length, approvedTotal: budgetDocs.reduce((sum, item) => sum + money(item.approvedTotal), 0),
-        disbursedTotal: budgetDocs.reduce((sum, item) => sum + money(item.disbursedTotal), 0) },
-    };
-  }
 
   async function detail(id: Types.ObjectId): Promise<PeriodicReportDetail | null> {
     const report = await reports.findById(id).lean();
@@ -87,7 +90,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
     const clubId = report.clubId as Types.ObjectId;
     const [club, figures, audits] = await Promise.all([
       m.clubs!.findById(clubId).select({ name: 1 }).lean(),
-      live(clubId, String(report.periodCode)),
+      periodicLiveFigures(clubId, String(report.periodCode)),
       m.auditLogs!.find({ entityType: "PeriodicReport", entityId: id }).sort({ at: -1 }).lean(),
     ]);
     const people = await m.users!.find({ _id: { $in: [...audits.map((item) => item.actorId), report.decidedBy].filter(Boolean) } })
@@ -101,6 +104,15 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
     return {
       id: String(id), clubId: String(clubId), clubName: String(club?.name ?? ""), periodCode: String(report.periodCode),
       periodType: String(report.periodType ?? "SEMESTER"), state: String(report.state), versionNo: Number(report.versionNo ?? 1),
+      revision: Number(report.__v ?? 0),
+      versions: audits.filter((a) => a.action === "PERIODIC_REPORT_SUBMITTED").map((a) => {
+        const snapshot = (a.after as { snapshot: import("../../domain/periodic-report.js").PeriodicReportVersion }).snapshot;
+        const decision = audits.find((d) => ["PERIODIC_REPORT_ACCEPTED", "PERIODIC_REPORT_RETURNED"].includes(String(d.action))
+          && (d.after as Doc | undefined)?.versionNo === snapshot.versionNo);
+        return { ...snapshot, ...(decision ? { decision: { outcome: decision.action === "PERIODIC_REPORT_ACCEPTED" ? "Accept" : "Return",
+          reason: optionalText(decision.reason), sections: (decision.after as Doc).sections as string[] | undefined,
+          observation: optionalText((decision.after as Doc).observation), decidedAt: decision.at as Date } } : {}) };
+      }),
       lateFlag: report.lateFlag === true, dueAt: report.dueAt as Date,
       ...(report.submittedAt ? { submittedAt: report.submittedAt as Date } : {}),
       narrative: optionalText(report.narrative), nextPlan: optionalText(report.nextPlan),
@@ -151,7 +163,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
         const report = await reports.findOne({ _id: id, state: "Submitted" }).session(session).lean();
         if (!report) return conflict("this report is not waiting for a decision");
         const nextState = input.outcome === "Accept" ? "Accepted" : "Returned for correction";
-        const changed = await reports.updateOne({ _id: id, state: "Submitted" }, { $set: { state: nextState,
+        const changed = await reports.updateOne({ _id: id, state: "Submitted" }, { $inc: { __v: 1 }, $set: { state: nextState,
           decisionOutcome: input.outcome, decidedBy: actorId, decidedAt: now,
           ...(input.observation ? { observation: input.observation } : {}) },
         ...(!input.observation ? { $unset: { observation: "" } } : {}) }, { session });

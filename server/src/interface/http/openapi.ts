@@ -1,3 +1,6 @@
+import { clubCompletionOpenApiPaths } from "./openapi-club-completion.js";
+import { clubPeriodicCreateBody, clubPeriodicDraftBody, clubPeriodicVersionBody } from "./club-periodic-report-routes.js";
+import { invitationResponseBody } from "./club-invitation-routes.js";
 import { accountabilityOpenApiPaths } from "./openapi-accountability.js";
 import { clubEventOpenApiPaths } from "./openapi-club-events.js";
 import { roomAllocationBody, roomAllocationQuery, roomAllocationRevokeBody } from "./room-allocation-routes.js";
@@ -332,7 +335,7 @@ const Membership = z.object({
   departmentId: z.string().optional(), defaultRole: z.string().optional(),
   sourceApplicationId: z.string().optional(), banReason: z.string().optional(),
   statusHistory: z.array(z.object({ fromState: z.enum(["Active", "Inactive", "Left", "Banned"]), toState: z.enum(["Active", "Inactive", "Left", "Banned"]),
-    effectiveDate: z.string().datetime(), reason: z.string().optional(), actorId: z.string(), at: z.string().datetime() })),
+    effectiveDate: z.string().datetime(), reason: z.string().optional(), actorId: z.string().nullable(), actorRole: z.literal("SYSTEM").optional(), at: z.string().datetime() })),
   pendingWithdrawal: z.unknown().optional(),
 }) satisfies z.ZodType<Omit<ClubMembershipRecord, "joinedAt" | "leftAt" | "statusHistory" | "pendingWithdrawal"> & {
   joinedAt: string; leftAt?: string; statusHistory: Array<Omit<ClubMembershipRecord["statusHistory"][number], "at" | "effectiveDate"> & { at: string; effectiveDate: string }>;
@@ -525,6 +528,28 @@ export const openApiDocument = createDocument({
   info: { title: "UCMS API", version: "1.0.0" },
   servers: [{ url: "/api/v1" }],
   paths: {
+    ...clubCompletionOpenApiPaths,
+    "/clubs/{clubId}/periodic-reports": {
+      get: { summary: "UC38 reporting periods and this club's reports with immutable versions", requestParams: { path: z.object({ clubId: z.string() }) }, responses: { "200": { description: "Periods and reports" }, "403": { description: "Club Leader required" } } },
+      post: { summary: "UC38 create a periodic report draft (CSRF required)", requestParams: { path: z.object({ clubId: z.string() }) }, requestBody: { required: true, content: { "application/json": { schema: clubPeriodicCreateBody } } }, responses: { "201": { description: "Draft created" }, "409": { description: "Report already exists" } } },
+    },
+    "/clubs/{clubId}/periodic-reports/{id}": {
+      put: { summary: "UC38 save draft/correction using revision for concurrency (CSRF required)", requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) }, requestBody: { required: true, content: { "application/json": { schema: clubPeriodicDraftBody } } }, responses: { "200": { description: "Draft saved" }, "409": { description: "Report changed or locked" } } },
+    },
+    "/clubs/{clubId}/periodic-reports/{id}/submit": {
+      post: { summary: "UC38 freeze a submission version and open UC39 review (CSRF required)", requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) }, requestBody: { required: true, content: { "application/json": { schema: clubPeriodicVersionBody } } }, responses: { "200": { description: "Report submitted" }, "409": { description: "Report changed or locked" } } },
+    },
+    "/clubs/{clubId}/invitations": {
+      get: { summary: "List this club's school event invitations (UC54, Club Leader)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Invitations with event coordination details" }, "403": { description: "Club Leader required" } } },
+    },
+    "/clubs/{clubId}/invitations/{id}/response": {
+      post: { summary: "Accept or decline a pending invitation before its deadline (UC54, CSRF required)",
+        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
+        requestBody: { required: true, content: { "application/json": { schema: invitationResponseBody } } },
+        responses: { "200": { description: "Response saved" }, "409": { description: "Invitation no longer answerable" }, "403": { description: "Club Leader required" } } },
+    },
     ...accountabilityOpenApiPaths,
     ...clubEventOpenApiPaths,
     ...roomAllocationPaths,

@@ -26,6 +26,7 @@ export interface ViolationSummary {
 }
 
 export interface CorrectiveAction {
+  submission?: { note: string; evidence: { note: string; url?: string }[]; submittedBy: string; submittedAt: string };
   id: string;
   description: string;
   dueAt: string;

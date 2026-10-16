@@ -43,6 +43,21 @@ function stateKey(state: string): keyof typeof accountability.en {
     )[state] ?? "state"
   );
 }
+function historyKey(action: string): keyof typeof accountability.en {
+  const suffix = action.replace(/^SETTLEMENT_/, "");
+  return (
+    (
+      {
+        SUBMIT: "submitted",
+        RETURN: "returned",
+        FINALIZE: "finalize",
+        EXPENSE: "expenseRecorded",
+        EVIDENCE: "evidenceAdded",
+        CLAIM: "reviewClaimed",
+      } as Record<string, keyof typeof accountability.en>
+    )[suffix] ?? "details"
+  );
+}
 function FinanceEditor({
   data,
   context,
@@ -522,9 +537,7 @@ function FinanceEditor({
           <details key={i} className="rounded-lg border border-border-app p-3">
             <summary>
               {formatDay(entry.at, i18n.language)} ·{" "}
-              {t(
-                `accountability.${entry.action.endsWith("SUBMIT") ? "submitted" : entry.action.endsWith("RETURN") ? "returned" : entry.action.endsWith("FINALIZE") ? "finalize" : "details"}`,
-              )}
+              {t(`accountability.${historyKey(entry.action)}`)}
             </summary>
             {entry.reason && <p className="mt-2 break-words">{entry.reason}</p>}
             {((entry.snapshot as { expenses?: Expense[] })?.expenses ?? []).map(

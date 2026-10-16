@@ -196,6 +196,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
           state: { $in: editableStates },
           "draftPayload._revision": input.expectedDraftRevision }).session(session).lean();
         if (!current) return conflict();
+        if (current.state === "Revision Requested" && current.revisionDeadlineAt instanceof Date && current.revisionDeadlineAt <= input.now) throw new DomainError("application revision deadline has expired", "conflict");
         const versionNo = current.state === "Draft" ? 1 : Number(current.currentVersionNo) + 1;
         const changed = await applications.updateOne({ _id: id, state: current.state,
           currentVersionNo: current.currentVersionNo,

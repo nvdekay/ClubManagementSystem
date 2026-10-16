@@ -11,3 +11,7 @@
 - [x] Client: danh sách, form tạo (kiểm tra trùng lịch tức thì), chi tiết, sidebar, i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
 - [ ] Kiểm tra trực quan trên trình duyệt.
+
+## Phía CLB còn thiếu (đối chiếu 15/10/2026)
+
+- [ ] UC54: API/UI nhận danh sách lời mời và gửi Accept/Decline trước deadline.

@@ -182,7 +182,7 @@ for (const base of ["/clubs/{clubId}/event-reports", "/admin/event-reports"]) {
       ...(club
         ? { requestParams: { path: reportPath.pick({ clubId: true }) } }
         : {}),
-      responses: responses(z.array(obligation)),
+      responses: responses(z.array(z.union([obligation, z.object({ eventId: z.string(), eventTitle: z.string(), state: z.string(), revision: z.number(), configurationError: z.literal("REPORT_DEADLINE_NOT_CONFIGURED") })]))),
     },
   };
   const path = club ? reportPath : reportPath.pick({ id: true });

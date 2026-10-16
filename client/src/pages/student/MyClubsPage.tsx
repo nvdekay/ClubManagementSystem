@@ -1,3 +1,4 @@
+import { MembershipReconfirmationPanel } from "./MembershipReconfirmationPanel";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -22,6 +23,7 @@ export function MyClubsPage() {
   return (
     <>
       <PageHeader title={t("memberSpace.myClubsTitle")} description={t("memberSpace.myClubsDescription")} />
+      <MembershipReconfirmationPanel />
       {memberships.isPending ? <div className="space-y-2">{[0, 1].map((item) => <AppSkeleton key={item} className="h-20 w-full" />)}</div>
         : memberships.isError ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}>
           <AppButton variant="secondary" onClick={() => void memberships.refetch()}>{t("memberSpace.retry")}</AppButton></AppNotice>

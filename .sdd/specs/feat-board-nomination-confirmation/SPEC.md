@@ -1,5 +1,10 @@
 # SPEC: feat-board-nomination-confirmation
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+
+
 ## Vấn đề
 Sau UC09, CLB `Pending Setup` cần đề cử các ghế ban điều hành, nhận đúng một quyết định từ ICPDP,
 rồi chỉ khi xác nhận Chủ nhiệm sáng lập mới chuyển thành `Active`. Hiện UC10/UC11 chưa nối các

@@ -1,5 +1,10 @@
 # SPEC: feat-auth-access
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+
+
 ## Vấn đề
 UCMS đang có database nhưng API demo cho tạo User công khai và chưa có danh tính, phiên hay kiểm tra quyền. UC01 và UC03 phải bảo đảm chỉ tài khoản Google thuộc domain được phép mới vào hệ thống; quyền hệ thống và quyền CLB phải được kiểm tra lại từ dữ liệu hiện hành ở server.
 

@@ -1,4 +1,8 @@
 const en = {
+  navCompliance: "Compliance and explanations", navClubEvaluations: "Published evaluations",
+  navTransitions: "Leadership handover", navSuspensions: "Suspension requests",
+  navPeriodicReports: "Periodic reports",
+  navInvitations: "School event invitations",
   navEventReports: "Post-event reports", navEventFinances: "Expenses & settlement", navClubEvents: "Club events", navEventAttendance: "Registration & attendance", navEventFeedback: "Event feedback",
   navBookings: "Facility requests", navRoomAllocations: "Room allocation", navClubRooms: "Allocated rooms",
   darkModeLabel: "Dark mode",
@@ -28,6 +32,10 @@ const en = {
 };
 
 const vi: Record<keyof typeof en, string> = {
+  navCompliance: "Tuân thủ và giải trình", navClubEvaluations: "Kết quả đánh giá",
+  navTransitions: "Chuyển giao nhiệm kỳ", navSuspensions: "Yêu cầu tạm ngừng",
+  navPeriodicReports: "Báo cáo định kỳ",
+  navInvitations: "Lời mời sự kiện cấp trường",
   navEventReports: "Báo cáo sau sự kiện", navEventFinances: "Khoản chi và quyết toán", navClubEvents: "Sự kiện CLB", navEventAttendance: "Đăng ký & điểm danh", navEventFeedback: "Phản hồi sự kiện",
   navBookings: "Yêu cầu cơ sở vật chất", navRoomAllocations: "Phân phòng CLB", navClubRooms: "Phòng được phân",
   darkModeLabel: "Chế độ tối",

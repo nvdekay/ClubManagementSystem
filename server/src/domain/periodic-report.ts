@@ -43,7 +43,19 @@ export interface PeriodicOverview {
   rows: PeriodicReportRow[];
 }
 
+export interface PeriodicReportVersion {
+  versionNo: number;
+  narrative: string;
+  nextPlan: string;
+  evidence: { note?: string; url?: string }[];
+  preloadedFigures: PeriodFigures;
+  submittedAt: Date;
+  decision?: { outcome: string; reason?: string; sections?: string[]; observation?: string; decidedAt: Date };
+}
+
 export interface PeriodicReportDetail {
+  revision?: number;
+  versions?: PeriodicReportVersion[];
   id: string;
   clubId: string;
   clubName: string;

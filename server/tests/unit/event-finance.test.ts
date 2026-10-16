@@ -83,6 +83,10 @@ describe("Event finance rules", () => {
       ]),
     ).toMatchObject({ state, settlementBalance });
   });
+  it.each([[70, "Recovery Pending", -30], [100, "Closed", 0], [150, "Closed", 0]])("A2 caps supported spend %s at the advance and never creates a top-up", (amount, state, settlementBalance) => {
+    const rows = [expense("a", Number(amount), true)];
+    expect(reconcileExpenses(financeTotals(200, 100, rows), rows, [{ expenseId: "a", outcome: "Accepted", reason: "Valid" }], true)).toMatchObject({ state, settlementBalance });
+  });
   it("caps valid expenses and never accepts unsupported expenses or incomplete reviews", () => {
     const rows = [expense("a", 300, true)];
     expect(

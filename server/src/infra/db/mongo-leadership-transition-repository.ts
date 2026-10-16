@@ -102,7 +102,7 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
       clubs.findById(plan.clubId).session(session ?? null).lean(),
       terms.findById(plan.fromTermId).session(session ?? null).lean(),
       terms.findById(plan.toTermId).session(session ?? null).lean(),
-      decisions.find({ approvalTaskId: taskDoc._id }).sort({ at: 1 }).session(session ?? null).lean(),
+      decisions.find({ approvalTaskId: { $in: await tasks.find({ entityType: "TRANSITION_PLAN", entityId: planId }).session(session ?? null).distinct("_id") } }).sort({ at: 1 }).session(session ?? null).lean(),
     ]);
     if (!club || !fromTerm || !toTerm) return null;
     const candidateDocs = rawObjects(plan.candidates);
@@ -232,7 +232,7 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
           await decisions.create([{ approvalTaskId: taskDoc._id, outcome: "Request revision",
             reason: input.reason, comments: { followUpObligationIds: [] }, actorId: officer, at: now }], { session });
           await plans.updateOne({ _id: id, state: "Pending Confirmation" },
-            { $set: { state: "Returned", decidedBy: officer, decidedAt: now } }, { session });
+            { $set: { state: "Returned", decidedBy: officer, decidedAt: now }, $inc: { __v: 1 } }, { session });
           await tasks.updateOne({ _id: taskDoc._id, state: "Open" },
             { $set: { state: "Decided", closedAt: now } }, { session });
           await audits.create([{ entityType: "TransitionPlan", entityId: id,
@@ -259,14 +259,16 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
         const proposed = parsedHandover.proposedBoardRoles;
         if (proposed) validateProposal(proposed, currentPositions);
         const boardRoleCodes = proposed?.map((item) => item.code)
-          ?? currentPositions.filter((item) => item.isBoardSeat === true).map((item) => String(item.code));
+          ?? currentPositions.filter((item) => item.isBoardSeat === true || item.isLeaderRole === true).map((item) => String(item.code));
         const candidateDocs = rawObjects(plan.candidates);
         const candidateCodes = candidateDocs.flatMap((item) => typeof item.positionCode === "string"
           ? [item.positionCode] : []);
-        if (candidateDocs.length !== boardRoleCodes.length
-          || new Set(candidateCodes).size !== candidateDocs.length
-          || boardRoleCodes.some((code) => !candidateCodes.includes(code))) {
-          return conflict("every board role must have exactly one candidate");
+        const holderLimits = new Map((proposed ?? currentPositions.filter((p) => p.isBoardSeat === true || p.isLeaderRole === true))
+          .map((p) => [String(p.code), p.isSingleHolder !== false ? 1 : 2]));
+        if (candidateCodes.length !== candidateDocs.length || candidateCodes.some((code) => !boardRoleCodes.includes(code))
+          || boardRoleCodes.some((code) => { const count = candidateCodes.filter((c) => c === code).length; return count < 1 || count > (holderLimits.get(code) ?? 1); })
+          || new Set(candidateDocs.map((c) => String(c.membershipId))).size !== candidateDocs.length) {
+          return conflict("every board role needs eligible distinct candidates within its holder limit");
         }
         const candidateMembershipIds = candidateDocs.flatMap((item) =>
           typeof item.membershipId === "string" && Types.ObjectId.isValid(item.membershipId)

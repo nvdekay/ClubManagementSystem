@@ -52,7 +52,7 @@ function responseDoc(response: ClubResponse) {
 }
 
 function actionFrom(doc: Doc): CorrectiveAction {
-  return { id: String(doc._id), description: String(doc.description), dueAt: doc.dueAt as Date,
+  return { ...(doc.submission ? { submission: doc.submission as CorrectiveAction["submission"] } : {}), id: String(doc._id), description: String(doc.description), dueAt: doc.dueAt as Date,
     state: doc.state as CorrectiveAction["state"],
     ...(optionalText(doc.linkedLifecycleAction) ? { linkedLifecycleAction: doc.linkedLifecycleAction as "SUSPEND" | "DISSOLVE" } : {}),
     ...(optionalId(doc.verifiedBy) ? { verifiedBy: String(doc.verifiedBy) } : {}),

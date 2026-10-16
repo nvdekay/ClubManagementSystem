@@ -40,6 +40,7 @@ export interface ClubResponse {
 }
 
 export interface CorrectiveAction {
+  submission?: { note: string; evidence: EvidenceInput[]; submittedBy: string; submittedAt: Date };
   id: string;
   description: string;
   dueAt: Date;

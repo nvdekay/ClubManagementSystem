@@ -6,7 +6,7 @@ UC35 đã ghi dòng tiền; cần khoản chi/chứng từ, quyết toán và đ
 ## Hành vi
 - `club.expense.record` đọc ngân sách cùng CLB; ghi/sửa khoản chi khi Disbursed/Reconciliation Pending.
 - Tiền là số nguyên VND dương; ngày không tương lai. Ngoài hạng mục/vượt hạng mục vẫn ghi và gắn cờ.
-- Chứng từ HTTPS thuộc đúng khoản chi; loại INVOICE/RECEIPT/PROOF_OF_PAYMENT. BR25 và số ngày BR58 đang chờ câu trả lời người dùng.
+- Chứng từ HTTPS thuộc đúng khoản chi; loại INVOICE/RECEIPT/PROOF_OF_PAYMENT. BR25: mọi khoản chi cần ít nhất một chứng từ hợp lệ. BR58: hạn hoàn trả mặc định 7 ngày từ chốt đối soát (người dùng xác nhận 15/10/2026).
 - Nộp quyết toán khi sự kiện kết thúc (Completed/Report Submitted/Closed) hoặc Cancelled; nộp trễ vẫn nhận.
 - Submit khoá khoản chi/chứng từ, lưu snapshot bất biến trong audit và tạo task. Return cho bổ sung, nộp lại tạo task mới.
 - ICPDP claim, accept/reject từng khoản kèm lý do; thiếu chứng từ luôn loại. Chi hợp lệ có trần số duyệt.

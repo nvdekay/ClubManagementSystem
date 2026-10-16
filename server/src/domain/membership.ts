@@ -6,7 +6,8 @@ export interface MembershipStatusChange {
   toState: MembershipState;
   effectiveDate: Date;
   reason?: string;
-  actorId: string;
+  actorId: string | null;
+  actorRole?: "SYSTEM";
   at: Date;
 }
 

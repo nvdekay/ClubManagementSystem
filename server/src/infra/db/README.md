@@ -30,7 +30,7 @@ index TTL chỉ dọn rác, việc kiểm tra hết hạn diễn ra ở mỗi re
 `seed-demo.ts` (`npm run seed:demo -- --owner=<email Google> [--owner-name="Tên"]`, chạy sau
 `npm run seed`) dựng bộ dữ liệu demo sạch để thử mọi luồng đã có: policy hiệu lực; 16 sinh viên demo
 `@demo.ucms.edu.vn`; cơ cấu và thành viên cho HEBE, Mây Mưa, EHC, FDS (người dùng `--owner` là Chủ
-nhiệm HEBE, thành viên Mây Mưa và được cấp `ICPDP_OFFICER`); role thường "Phụ trách Hậu cần" của HEBE đã gán cho một thành viên (UC23, cơ cấu phiên bản 2); đợt tuyển và đơn chờ xét (một đơn HEBE đã ở `Shortlisted` kèm hai bản đánh giá UC19); hồ sơ thành lập
+nhiệm HEBE, thành viên Mây Mưa và được cấp `ICPDP_OFFICER`); đợt tuyển và đơn chờ xét (một đơn HEBE đã ở `Shortlisted` kèm hai bản đánh giá UC19); hồ sơ thành lập
 chờ duyệt và một hồ sơ đã duyệt (CLB hoạt động ngay với ban chủ nhiệm khởi lập); sự kiện sắp tới/đang diễn ra/đã kết thúc kèm đăng ký,
 điểm danh, phản hồi; góp ý một chiều; kế hoạch chuyển giao chờ ICPDP. Ghi qua use case/repository khi
 luồng đã có; chạy lại an toàn (mỗi phần tự bỏ qua nếu đã có). Hồ sơ thành lập cần Cloudinary để
@@ -46,8 +46,7 @@ và [tour campus Hà Nội](https://viewdaihoc.fpt.edu.vn/fpt-ha-noi/). Mã AL/B
 là dữ liệu minh hoạ; location chỉ ghi tòa, không lặp tầng. Seed sửa location cũ của phòng Delta
 qua usecase, giữ các cấu hình khác; không ghi đè location đã được người dùng thay đổi.
 
-Đặt ngay ghi `BOOKING_RESERVED` trong audit với snapshot chủ nhiệm, không tạo approval task
-và không đổi schema. Transaction khóa club/property và kiểm tra lại xung đột trước khi ghi Approved.
+Luồng ROOM đặt ngay cũ đã bỏ. UC58 do ICPDP phân phòng; UC45 ngoài ROOM tạo task để ICPDP duyệt.
 
 `seed-guide.ts` chạy sau seed công khai và seed demo: tạo database riêng `ucms_guide_demo`,
 copy các collection nghiệp vụ một lần (không copy `authSessions`), rồi thêm dữ liệu wave 4
@@ -60,3 +59,10 @@ Hồ sơ Returned, Submitted, khoản thiếu chứng từ, task, điểm danh v
 
 Seed đăng ký festival xử lý từng cặp event/student bằng `$setOnInsert`; đổi owner hoặc chạy lại
 sau một lần seed dở không tạo trùng các sinh viên đã đăng ký. Tổng confirmed lấy từ dữ liệu thật.
+
+Các repository phía CLB thêm ngày 15/10/2026: `mongo-club-transition-plan-repository.ts` (UC12, dùng
+`club-obligations.ts` để nạp nghĩa vụ còn mở của CLB), `mongo-suspension-request-repository.ts` (UC14/UC15,
+cascade sự kiện/booking trong cùng transaction), `mongo-club-periodic-report-repository.ts` (UC38, mỗi lần nộp
+một snapshot), `mongo-club-invitation-repository.ts` (UC54), `mongo-club-violation-repository.ts` (UC40),
+`mongo-club-evaluation-repository.ts` (UC43, chỉ đọc bản `Published`), `mongo-membership-reconfirmation-repository.ts`
+(UC21 A2) và `mongo-application-expiry-repository.ts` (UC07/08).

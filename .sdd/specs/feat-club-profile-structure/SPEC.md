@@ -1,5 +1,10 @@
 # SPEC: feat-club-profile-structure
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+
+
 ## Vấn đề
 Sau UC08, Club ở `Pending Setup` nhưng founder chưa có nơi hoàn thiện hồ sơ vận hành và định
 nghĩa các ban/bộ phận. UC09 cần cho đúng người có `club.profile.manage` sửa dữ liệu thuộc thẩm

@@ -1,3 +1,17 @@
+import type { ClubEvaluationRepository } from "../../domain/club-evaluation.js";
+import { clubEvaluationRoutes } from "./club-evaluation-routes.js";
+import type { ClubViolationRepository } from "../../domain/club-violation.js";
+import { clubViolationRoutes } from "./club-violation-routes.js";
+import type { MembershipReconfirmationRepository } from "../../domain/membership-reconfirmation.js";
+import { membershipReconfirmationRoutes } from "./membership-reconfirmation-routes.js";
+import type { SuspensionRequestRepository } from "../../domain/suspension-request.js";
+import { suspensionRequestRoutes } from "./suspension-request-routes.js";
+import type { ClubTransitionPlanRepository } from "../../domain/club-transition-plan.js";
+import { clubTransitionPlanRoutes } from "./club-transition-plan-routes.js";
+import type { ClubPeriodicReportRepository } from "../../domain/club-periodic-report.js";
+import { clubPeriodicReportRoutes } from "./club-periodic-report-routes.js";
+import type { ClubInvitationRepository } from "../../domain/club-invitation.js";
+import { clubInvitationRoutes } from "./club-invitation-routes.js";
 import type { EventFinanceRepository } from "../../domain/event-finance.js";
 import type { PostEventReportRepository } from "../../domain/post-event-report.js";
 import { eventFinanceRoutes } from "./event-finance-routes.js";
@@ -112,7 +126,9 @@ export function buildApp(deps: {
   postEventReportRepo?: PostEventReportRepository;
   violationRepo?: ViolationRepository;
   periodicReportRepo?: PeriodicReportRepository;
+  clubPeriodicReportRepo?: ClubPeriodicReportRepository;
   schoolEventRepo?: SchoolEventRepository;
+  clubInvitationRepo?: ClubInvitationRepository;
   clubEventRepo?: ClubEventRepository;
   evaluationRepo?: EvaluationRepository;
   clubProfileRepo?: ClubProfileRepository;
@@ -130,6 +146,11 @@ export function buildApp(deps: {
   memberSpaceRepo?: MemberSpaceRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
+  clubTransitionPlanRepo?: ClubTransitionPlanRepository;
+  suspensionRequestRepo?: SuspensionRequestRepository;
+  membershipReconfirmationRepo?: MembershipReconfirmationRepository;
+  clubViolationRepo?: ClubViolationRepository;
+  clubEvaluationRepo?: ClubEvaluationRepository;
   publicRepo: PublicDiscoveryRepository;
   dbReady: () => boolean;
 }) {
@@ -154,6 +175,18 @@ export function buildApp(deps: {
     app.use("/api/v1", accountAdminRoutes({
       adminRepo: deps.adminRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
     }));
+    if (deps.clubTransitionPlanRepo) app.use("/api/v1", clubTransitionPlanRoutes({ repo: deps.clubTransitionPlanRepo, access: deps.auth.accessRepo,
+      authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    if (deps.suspensionRequestRepo) app.use("/api/v1", suspensionRequestRoutes({ repo: deps.suspensionRequestRepo, access: deps.auth.accessRepo,
+      authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    if (deps.membershipReconfirmationRepo) app.use("/api/v1", membershipReconfirmationRoutes({ repo: deps.membershipReconfirmationRepo,
+      authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    if (deps.clubViolationRepo) app.use("/api/v1", clubViolationRoutes({ repo: deps.clubViolationRepo, access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    if (deps.clubEvaluationRepo) app.use("/api/v1", clubEvaluationRoutes({ repo: deps.clubEvaluationRepo, access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    if (deps.clubInvitationRepo) {
+      app.use("/api/v1", clubInvitationRoutes({ repo: deps.clubInvitationRepo, access: deps.auth.accessRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
     if (deps.clubProfileRepo && deps.policyRepo) {
       app.use("/api/v1", clubProfileRoutes({
         repo: deps.clubProfileRepo, accessRepo: deps.auth.accessRepo, policy: deps.policyRepo,
@@ -251,6 +284,8 @@ export function buildApp(deps: {
         app.use("/api/v1", violationRoutes({ repo: deps.violationRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       }
+      if (deps.clubPeriodicReportRepo) app.use("/api/v1", clubPeriodicReportRoutes({ repo: deps.clubPeriodicReportRepo,
+        policy: deps.policyRepo, access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       if (deps.periodicReportRepo) {
         app.use("/api/v1", periodicReportRoutes({ repo: deps.periodicReportRepo, policy: deps.policyRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -331,6 +366,13 @@ export function buildApp(deps: {
   const hasMemberSpace = Boolean(hasPolicy && deps.memberSpaceRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
+      if (path.startsWith("/clubs/{clubId}/transition-plans")) return Boolean(hasAdmin && deps.clubTransitionPlanRepo);
+      if (path.startsWith("/clubs/{clubId}/suspension-requests") || path.startsWith("/admin/suspension-requests")) return Boolean(hasAdmin && deps.suspensionRequestRepo);
+      if (path.startsWith("/memberships/reconfirmations")) return Boolean(hasAdmin && deps.membershipReconfirmationRepo);
+      if (path.startsWith("/clubs/{clubId}/violations")) return Boolean(hasAdmin && deps.clubViolationRepo);
+      if (path.startsWith("/clubs/{clubId}/evaluations")) return Boolean(hasAdmin && deps.clubEvaluationRepo);
+      if (path.startsWith("/clubs/{clubId}/invitations")) return Boolean(hasAdmin && deps.clubInvitationRepo);
+      if (path.startsWith("/clubs/{clubId}/periodic-reports")) return Boolean(hasPolicy && deps.clubPeriodicReportRepo);
       if (path.startsWith("/auth/")) return hasAdmin;
       if (path.startsWith("/admin/policies")) return hasPolicy;
       if (path.startsWith("/admin/club-fields")) return hasClubFields;

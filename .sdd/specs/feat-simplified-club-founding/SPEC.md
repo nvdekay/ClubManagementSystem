@@ -1,5 +1,10 @@
 # SPEC: feat-simplified-club-founding
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+
+
 > Người dùng duyệt toàn bộ quyết định và thay đổi schema (2026-10-09). Mục tiêu: sinh viên chỉ điền những gì
 > chỉ họ biết, hệ thống tự suy ra/làm sẵn phần còn lại; ICPDP không phải hiểu các field kỹ thuật.
 
@@ -18,10 +23,9 @@ ghi giá trị mặc định.
    hiển thị tiến độ “cần thêm N người” theo policy. Mỗi người được gán một chức vụ của **cơ cấu mặc
    định cố định: Chủ nhiệm + Phó chủ nhiệm + Thành viên**; người nộp mặc định là Chủ nhiệm.
    **Bắt buộc đúng 1 Chủ nhiệm và 1–2 Phó chủ nhiệm.**
-3. **Quyền mặc định** (hệ thống tự gắn, sinh viên không cấu hình): **Chủ nhiệm** = mọi quyền;
-   **Phó chủ nhiệm** = toàn bộ `GRANTABLE_CLUB_PERMISSIONS`, trừ nhóm `LEADER_ONLY_CLUB_PERMISSIONS`
-   (sửa cơ cấu/quyền, đề cử BCN, kế hoạch chuyển giao, đề nghị đình chỉ); **Thành viên** = không có
-   quyền quản lý. Thêm ban/chức vụ để sau, ở UC09 khi CLB đã hoạt động.
+3. **Quyền cố định (cập nhật 13/10/2026):** Chủ nhiệm và Phó chủ nhiệm đã xác nhận cùng nhận
+   mọi permission Club Leader; Thành viên không có permission quản lý. Không tạo role hay
+   cấu hình permission ở UC09/UC23.
 4. **Bước 3 · Hồ sơ đính kèm** (thay cho danh sách tài liệu theo policy):
    - **Đề án thành lập CLB:** 1 file **.docx hoặc .pdf**, ≤ 10MB, mặc định bắt buộc.
    - **Bộ nhận diện CLB:** **logo dự kiến**, **PNG/JPG ≤ 2MB**, khuyến nghị ảnh vuông (vd. 512×512),
@@ -61,7 +65,7 @@ ghi giá trị mặc định.
 
 ## Lệch so với SRS cần ghi nhận
 - FR-UC07-12/13 (sinh viên tự định nghĩa role và permission trong hồ sơ) được thay bằng cơ cấu mặc
-  định cố định; quyền tuỳ biến chuyển sang UC09.
+  định cố định; quyền tuỳ biến đã bỏ.
 - Policy UC04 không còn domain email và danh sách tài liệu bắt buộc.
 - Lĩnh vực CLB thành danh mục do ICPDP quản lý (SRS không có).
 
@@ -94,7 +98,7 @@ ghi giá trị mặc định.
 - [x] Field không bắt buộc theo policy được bỏ trống mà vẫn nộp được.
 - [x] Đề án chỉ nhận PDF/DOCX ≤ 10MB; logo chỉ nhận PNG/JPG ≤ 2MB; SVG bị từ chối.
 - [x] Duyệt hồ sơ tạo CLB `Active` với đúng chức vụ, quyền mặc định và logo; Phó chủ nhiệm có mọi
-      quyền trừ `LEADER_ONLY_CLUB_PERMISSIONS`.
+      quyền Club Leader như Chủ nhiệm.
 - [x] ICPDP thêm/đổi tên/xoá lĩnh vực; đổi tên cập nhật CLB đang dùng; xoá lĩnh vực đang dùng chỉ ẩn.
 - [x] Policy không còn domain email/tài liệu bắt buộc; lưu và đọc `formRequirements`.
 - [x] Cập nhật hồ sơ CLB bị từ chối khi thiếu field mà `formRequirements.clubProfile` bắt buộc.

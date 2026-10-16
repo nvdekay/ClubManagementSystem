@@ -457,6 +457,9 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
       },
       now,
     );
+    const lateNow = new Date(now.getTime() + 30 * DAY);
+    expect((await reports.find(f.eventId, undefined, lateNow))?.obligation.overdue).toBe(false);
+    await expect(reports.act(f.eventId, undefined, String(actor), { kind: "overdue", revision: d.obligation.revision, reason: "No report" }, lateNow)).rejects.toMatchObject({ kind: "conflict" });
     d = await reports.act(
       f.eventId,
       String(club),
@@ -773,4 +776,20 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
     );
     expect(await reports.find(internal.eventId, undefined, now)).toBeNull();
   });
+  it.each([[70, "Recovery Pending", 30], [100, "Closed", 0], [150, "Closed", 0]])("A2 overdue reconciliation of %s never permits a top-up", async (amount, state, recoveryAmount) => {
+    const f = await fixture(100, 20); let d = (await finance.find(f.budgetId))!;
+    d = await expense(d, Number(amount));
+    d = await finance.act(d.id, undefined, String(actor), { kind: "finalize", overdue: true, revision: d.revision,
+      reviews: d.expenses.map((e) => ({ expenseId: e.id, outcome: "Accepted" as const, reason: "Valid receipt" })) }, now);
+    expect(d).toMatchObject({ state, recoveryAmount, settlementBalance: recoveryAmount ? -Number(recoveryAmount) : 0 });
+    expect(d.acceptedTotal).toBe(Math.min(Number(amount), 100));
+  });
+  it("isolates missing historical report deadlines without hiding configured reports", async () => {
+    const old = await fixture(100, 200); const configured = await fixture();
+    const list = await reports.list(String(club), now);
+    expect(list.find((item) => item.eventId === old.eventId)).toMatchObject({ configurationError: "REPORT_DEADLINE_NOT_CONFIGURED" });
+    expect(list.find((item) => item.eventId === configured.eventId)).toHaveProperty("dueAt");
+    await expect(reports.find(old.eventId, String(club), now)).rejects.toMatchObject({ kind: "unavailable" });
+  });
+
 });

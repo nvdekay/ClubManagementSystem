@@ -8,4 +8,4 @@
 - [x] Seed demo: quyết toán của đêm nhạc HEBE (khoản có chứng từ, ngoài hạng mục, thiếu chứng từ).
 - [x] Client: phần Đối soát trong trang ngân sách, bộ lọc "Cần đối soát", i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
-- [ ] Kiểm tra trực quan trên trình duyệt.
+- [x] Kiểm tra trực quan trên trình duyệt (16/10/2026, xem `feat-event-finance`); lịch sử phiên bản hiện đúng tên thao tác.

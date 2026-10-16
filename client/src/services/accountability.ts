@@ -39,6 +39,7 @@ export interface ReportObligation {
   overdue: boolean;
   report?: PostEventReport;
 }
+export interface ReportConfigurationIssue { eventId: string; eventTitle: string; state: string; revision: number; configurationError: "REPORT_DEADLINE_NOT_CONFIGURED" }
 export interface ReportDetail {
   obligation: ReportObligation;
   versions: PostEventReport[];
@@ -123,7 +124,7 @@ function financeBase(context: AccountabilityContext, id?: string) {
 export function fetchReportObligations(
   context: AccountabilityContext,
   signal: AbortSignal,
-): Promise<ReportObligation[]> {
+): Promise<(ReportObligation | ReportConfigurationIssue)[]> {
   return request(reportBase(context), { signal });
 }
 export function fetchReportDetail(

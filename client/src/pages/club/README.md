@@ -41,12 +41,21 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 `ClubFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho CLB, cần `club.feedback.view`;
 người gửi ẩn danh không bao giờ được hiển thị.
 
-`ClubMembersPage` mở cho workspace CLB; `ClubMemberRoles` hiển thị danh mục role/permission
-chỉ đọc qua API riêng, không có holder/email/version. Trang tách thành tab Thành viên và
-Vai trò & quyền; danh sách vai trò bên trái, nhóm quyền được cấp của vai trò đang chọn bên phải.
-Tab được lưu trong query `tab`; thành viên không có quyền quản trị chỉ thấy tab Vai trò & quyền. Chỉ người có `club.member.manage` thấy bảng quản trị:
+`ClubMembersPage` mở cho workspace CLB; `ClubRosterReadOnly` dùng member space để hiển thị
+danh sách tên/trạng thái/vị trí cho Club Member, không chia sẻ email. Không còn tab role hay
+`ClubMemberRoles`, API role-directory hoặc hook/service role. Chỉ Leader có `club.member.manage` thấy bảng quản trị:
  các yêu cầu rời CLB (UC22) đang chờ nằm
 ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
 thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong
 `ClubMemberStateDialog`; lịch sử trạng thái mở trong một AppDialog. `exportClubMembers.ts` ghi các
 dòng đang lọc ra `.xlsx` bằng `write-excel-file` (nạp động, không vào bundle chính) — chỉ trang này dùng.
+
+Thiết lập CLB bị gate theo permission ở UI; GET profile/departments phía server vẫn cho current
+member đọc, mutation luôn yêu cầu Leader. API xem phòng UC58 yêu cầu Leader.
+
+Các trang thêm ngày 15/10/2026, đều chỉ dành cho Club Leader:
+`ClubTransitionPlansPage` + `ClubTransitionPlanEditor` (UC12: ban mới, người nhận từng nghĩa vụ còn mở, nộp lại
+sau khi bị trả), `ClubSuspensionRequestsPage` (UC14, dùng `SuspensionRequestWorkspace`), `ClubPeriodicReportsPage`
++ `ClubPeriodicReportEditor` (UC38: nháp, nộp, nộp lại, lịch sử các lần nộp), `ClubInvitationsPage` (UC54: nhận
+hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộp minh chứng khắc phục) và
+`ClubEvaluationsPage` (UC43: chỉ kết quả `Published`).

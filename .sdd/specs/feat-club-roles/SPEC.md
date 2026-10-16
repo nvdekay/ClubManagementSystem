@@ -1,4 +1,12 @@
-# SPEC: feat-club-roles
+# SPEC: feat-club-roles — ĐÃ BỊ THAY THẾ
+
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+
+
+> Feature role tự tạo và UC23 đã bị huỷ ngày 13/10/2026. Không triển khai hoặc nghiệm thu các
+> tiêu chí dưới đây. Baseline thay thế: [`../feat-fixed-club-roles/SPEC.md`](../feat-fixed-club-roles/SPEC.md).
 
 ## Vấn đề
 UC23 — Chủ nhiệm cần tự tổ chức CLB: tạo role (thủ quỹ, trưởng nhóm hậu cần, …), chọn

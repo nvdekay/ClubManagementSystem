@@ -18,11 +18,11 @@ function date(value: unknown): Date {
 function history(value: unknown): MembershipStatusChange[] {
   return objectArray(value).flatMap((entry) => {
     // actorId is written as an ObjectId; older entries may hold a string — accept both.
-    if (!("fromState" in entry) || typeof entry.toState !== "string" || !entry.actorId) return [];
+    if (!("fromState" in entry) || typeof entry.toState !== "string" || (!entry.actorId && entry.actorRole !== "SYSTEM")) return [];
     return [{ fromState: String(entry.fromState) as MembershipState,
       toState: entry.toState as MembershipState, effectiveDate: date(entry.effectiveDate),
       ...(typeof entry.reason === "string" ? { reason: entry.reason } : {}),
-      actorId: String(entry.actorId), at: date(entry.at) }];
+      actorId: entry.actorId ? String(entry.actorId) : null, ...(entry.actorRole === "SYSTEM" ? { actorRole: "SYSTEM" as const } : {}), at: date(entry.at) }];
   });
 }
 

@@ -1,4 +1,12 @@
-# SPEC: feat-member-role-directory
+# SPEC: feat-member-role-directory — ĐÃ HUỶ
+
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../../../docs/CURRENT_IMPLEMENTATION.md).
+
+
+> Không còn danh mục role/permission cho Club Member. Club Member không có permission quản lý;
+> Club Leader nhận toàn bộ permission cố định. Không triển khai các tiêu chí cũ dưới đây.
 
 ## Vấn đề
 Thành viên cần biết mỗi role có permission gì mà không mở màn Thiết lập CLB hay được cấp quyền quản trị role.

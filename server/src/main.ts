@@ -1,3 +1,14 @@
+import { mongoApplicationExpiryRepository } from "./infra/db/mongo-application-expiry-repository.js";
+import { startApplicationExpiryJob } from "./interface/jobs/application-expiry-job.js";
+import { mongoClubEvaluationRepository } from "./infra/db/mongo-club-evaluation-repository.js";
+import { mongoClubViolationRepository } from "./infra/db/mongo-club-violation-repository.js";
+import { startMembershipReconfirmationJob } from "./interface/jobs/membership-reconfirmation-job.js";
+import { mongoMembershipReconfirmationRepository } from "./infra/db/mongo-membership-reconfirmation-repository.js";
+import { mongoSuspensionRequestRepository } from "./infra/db/mongo-suspension-request-repository.js";
+import { mongoClubTransitionPlanRepository } from "./infra/db/mongo-club-transition-plan-repository.js";
+import { mongoClubPeriodicReportRepository } from "./infra/db/mongo-club-periodic-report-repository.js";
+import { mongoEventFinanceRepository } from "./infra/db/mongo-event-finance-repository.js";
+import { mongoClubInvitationRepository } from "./infra/db/mongo-club-invitation-repository.js";
 import { mongoAccountabilityReminderRepository } from "./infra/db/mongo-accountability-reminder-repository.js";
 import { startAccountabilityReminderJob } from "./interface/jobs/accountability-reminder-job.js";
 import { mongoPostEventReportRepository } from "./infra/db/mongo-post-event-report-repository.js";
@@ -69,6 +80,7 @@ try {
 }
 console.log("mongo connected");
 
+const membershipReconfirmationRepo = mongoMembershipReconfirmationRepository();
 const commonDeps = {
   publicRepo: mongoPublicDiscoveryRepository(),
   dbReady: () => mongoose.connection.readyState === 1,
@@ -79,6 +91,11 @@ const facilityBookingRepo = mongoFacilityBookingRepository();
 const schoolEventRepo = mongoSchoolEventRepository();
 const app = authConfig ? buildApp({
   ...commonDeps,
+  clubEvaluationRepo: mongoClubEvaluationRepository(),
+  clubViolationRepo: mongoClubViolationRepository(),
+  membershipReconfirmationRepo,
+  suspensionRequestRepo: mongoSuspensionRequestRepository(),
+  clubTransitionPlanRepo: mongoClubTransitionPlanRepository(),
   adminRepo: mongoAccountAdminRepository(),
   policyRepo: mongoPolicyRepository(),
   applicationRepo: mongoClubApplicationRepository(),
@@ -95,7 +112,10 @@ const app = authConfig ? buildApp({
   postEventReportRepo: mongoPostEventReportRepository(),
   violationRepo: mongoViolationRepository(),
   periodicReportRepo: mongoPeriodicReportRepository(),
+  clubPeriodicReportRepo: mongoClubPeriodicReportRepository(),
+  eventFinanceRepo: mongoEventFinanceRepository({ recoveryDueDays: 7, evidenceTypes: ["INVOICE", "RECEIPT", "PROOF_OF_PAYMENT"] }),
   schoolEventRepo,
+  clubInvitationRepo: mongoClubInvitationRepository(),
   clubEventRepo: mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 }),
   evaluationRepo: mongoEvaluationRepository(),
   applicationReviewRepo: mongoClubApplicationReviewRepository(),
@@ -128,6 +148,8 @@ const app = authConfig ? buildApp({
     secureCookies: config.NODE_ENV === "production",
   },
 }) : buildApp(commonDeps);
+const stopApplicationExpiryJob = startApplicationExpiryJob(mongoApplicationExpiryRepository());
+const stopReconfirmationJob = startMembershipReconfirmationJob(membershipReconfirmationRepo, mongoPolicyRepository());
 const stopAccountabilityJob = startAccountabilityReminderJob(mongoAccountabilityReminderRepository());
 const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
@@ -141,6 +163,8 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
     if (shuttingDown) process.exit(1); // second signal = stop waiting, exit now
     shuttingDown = true;
+    stopApplicationExpiryJob();
+    stopReconfirmationJob();
     stopLifecycleJob();
     stopBookingJob();
     stopAccountabilityJob();

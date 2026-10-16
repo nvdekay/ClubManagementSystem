@@ -62,8 +62,9 @@ export type ReportAction =
       violationId?: string;
     }
   | { kind: "overdue"; revision: number; reason: string };
+export interface ReportConfigurationIssue { eventId: string; eventTitle: string; state: string; revision: number; configurationError: "REPORT_DEADLINE_NOT_CONFIGURED" }
 export interface PostEventReportRepository {
-  list(clubId: string | undefined, now: Date): Promise<ReportObligation[]>;
+  list(clubId: string | undefined, now: Date): Promise<(ReportObligation | ReportConfigurationIssue)[]>;
   find(
     eventId: string,
     clubId: string | undefined,

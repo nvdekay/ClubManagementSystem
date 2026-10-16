@@ -22,6 +22,10 @@ Club Leader và Club Member.
 - **Không đổi schema.** `clubPositions.permissionCodes`, `clubRoleStructureVersions` vẫn còn nhưng không
   dùng để cấp quyền; role tự tạo cũ trong DB bị bỏ qua.
 
+**Giới hạn runtime đã đối chiếu 15/10:** API UC58 vẫn yêu cầu club.booking.manage; chỉ Leader
+xem phòng được phân. Thiết lập CLB bị ẩn với Member ở UI, nhưng API GET profile/departments vẫn
+cho current member đọc qua assertClubSettingsRead; mutation luôn yêu cầu quyền Leader.
+
 ## Tiêu chí nghiệm thu
 - [x] Thành viên thường không có permission nào; mọi API vận hành CLB trả 403.
 - [x] Chủ nhiệm và Phó chủ nhiệm đã xác nhận có đủ 14 permission; chưa xác nhận thì không có quyền.
@@ -30,7 +34,7 @@ Club Leader và Club Member.
 - [x] API quản lý role không còn; client không còn màn phân quyền.
 
 ## Ngoài phạm vi
-Xoá collection/field role trong DBML; vẽ lại diagram use case (trang Club Leader còn oval UC23).
+Xoá collection/field role trong DBML. Diagram đã bỏ UC23; xem ma trận runtime tại docs/CURRENT_IMPLEMENTATION.md.
 
 ## Changelog
 - v1.0.0 (2026-10-13) — người dùng chốt: Phó chủ nhiệm = Club Leader; Club Member chỉ xem và tham gia; gỡ UI + API, giữ collection.
