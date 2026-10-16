@@ -199,8 +199,11 @@ try {
   // ── Policy (UC04) ─────────────────────────────────────────────────────────────────────────
   const policy = mongoPolicyRepository();
   if (!(await policy.findEffective(now))) {
+    // Effective from the first demo semester, so events that ended before the seed ran still
+    // resolve their post-event report deadline instead of reporting a missing historical policy.
+    const policyStart = policySettings.academicCalendar[0]!.startAt;
     await createPolicyVersion(policy, auth, actor(owner), policySettings, undefined,
-      "Chính sách khởi tạo cho môi trường demo", now);
+      "Chính sách khởi tạo cho môi trường demo", policyStart < now ? policyStart : now);
   }
 
   // ── Club structures: term, positions, members, confirmed board (HEBE, Mây Mưa, EHC, FDS) ──────
