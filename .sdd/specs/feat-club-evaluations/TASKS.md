@@ -10,4 +10,4 @@
 - [x] Seed demo: scheme mặc định đang áp dụng cho Fall 2026.
 - [x] Client: tổng quan kỳ + chi tiết (dữ liệu nguồn, chấm tay, chốt, bản sửa), sidebar, i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
-- [ ] Kiểm tra trực quan trên trình duyệt.
+- [x] Kiểm tra trực quan trên trình duyệt (`/workspace/evaluations`, sinh bản nháp 48 CLB và mở chi tiết; quét giao diện 16/10/2026 trên DB QA: desktop en/sáng và mobile vi/tối, không lỗi console/API, không tràn ngang).

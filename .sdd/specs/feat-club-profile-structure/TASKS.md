@@ -8,6 +8,6 @@
 - [x] HTTP routes, validation, OpenAPI và contract tests.
 - [x] UI Club profile/structure responsive, accessible, light/dark, i18n `en`/`vi`.
 - [x] Unit/integration tests, `npm run check`, production build và `db:verify`.
-- [ ] Nghiệm thu trực quan thủ công.
+- [x] Nghiệm thu trực quan thủ công (`/club/:clubId/settings`; quét giao diện 16/10/2026 trên DB QA: desktop en/sáng và mobile vi/tối, không lỗi console/API, không tràn ngang).
 
 - [x] Thành viên Active/Inactive được xem thiết lập; mutation vẫn cần club.profile.manage, có test quyền đọc/ghi.

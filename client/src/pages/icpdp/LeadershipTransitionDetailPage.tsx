@@ -94,9 +94,7 @@ export function LeadershipTransitionDetailPage() {
             <li key={item.id}>{item.description}</li>)}</ul> : <p className="mt-3 text-muted-app">{t("leadershipTransitions.noHandover")}</p>}</section>
         {plan.handover.proposedBoardRoles && <section><h2 className="font-heading text-xl font-bold">{t("leadershipTransitions.roleChanges")}</h2>
           <ul className="mt-4 divide-y divide-border-app border-y border-border-app">{plan.handover.proposedBoardRoles.map((role) =>
-            <li key={role.code} className="px-2 py-4"><p className="font-semibold">{role.name} <span className="text-sm text-muted-app">({role.code})</span></p>
-              <p className="mt-1 text-sm text-muted-app">{t("leadershipTransitions.permissions")}: {role.permissionCodes.map((code) => t(`applications.perm_${code.replaceAll(".", "_")}`,
-                { defaultValue: code })).join(", ") || "—"}</p></li>)}</ul></section>}
+            <li key={role.code} className="px-2 py-4"><p className="font-semibold">{role.name} <span className="text-sm text-muted-app">({role.code})</span></p></li>)}</ul></section>}
       </div>
       <aside className="min-w-0 lg:sticky lg:top-6">
         {plan.task.state === "Decided" ? <section><h2 className="font-heading text-lg font-bold">{t("leadershipTransitions.history")}</h2>

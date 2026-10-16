@@ -8,4 +8,4 @@
 - [x] Seed demo: ngân sách đã duyệt và đã tạm ứng.
 - [x] Client: danh sách + chi tiết + form ghi dòng tiền, sidebar, i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
-- [ ] Kiểm tra trực quan trên trình duyệt.
+- [x] Kiểm tra trực quan trên trình duyệt (`/workspace/budgets` và chi tiết ngân sách; quét giao diện 16/10/2026 trên DB QA: desktop en/sáng và mobile vi/tối, không lỗi console/API, không tràn ngang).

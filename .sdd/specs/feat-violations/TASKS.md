@@ -8,4 +8,4 @@
 - [x] Seed demo: một hồ sơ mới mở (EHC) và một hồ sơ chờ CLB giải trình (Mây Mưa).
 - [x] Client: danh sách + form mở hồ sơ + chi tiết với khung bước tiếp theo, sidebar, i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
-- [ ] Kiểm tra trực quan trên trình duyệt.
+- [x] Kiểm tra trực quan trên trình duyệt (`/workspace/violations` và chi tiết; quét giao diện 16/10/2026 trên DB QA: desktop en/sáng và mobile vi/tối, không lỗi console/API, không tràn ngang).

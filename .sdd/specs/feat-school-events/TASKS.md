@@ -10,7 +10,7 @@
 - [x] Seed demo: ngày hội CLB đang chờ phản hồi (HEBE đã nhận lời) + buổi tập huấn đã công bố.
 - [x] Client: danh sách, form tạo (kiểm tra trùng lịch tức thì), chi tiết, sidebar, i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
-- [ ] Kiểm tra trực quan trên trình duyệt.
+- [x] Kiểm tra trực quan trên trình duyệt (`/workspace/school-events` và chi tiết; quét giao diện 16/10/2026 trên DB QA: desktop en/sáng và mobile vi/tối, không lỗi console/API, không tràn ngang).
 
 ## Phía CLB còn thiếu (đối chiếu 15/10/2026)
 

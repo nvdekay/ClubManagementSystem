@@ -7,4 +7,4 @@
 - [x] Client ICPDP: service/hook/form/lịch sử, i18n và token hai theme; build kiểm tra (chờ kiểm tra trực quan).
 - [x] Hoàn tất FR-UC04-06: liên kết quyết định với policy snapshot; từ chối policy làm vô hiệu quyết định đã ra và trả danh sách bản ghi ảnh hưởng, không cần đổi schema.
 - [x] `npm run check` xanh; integration UC04 và quyết định hồ sơ chạy với Mongo thật; client production build xanh.
-- [ ] Kiểm tra trực quan bằng trình duyệt ở desktop/mobile en/vi light/dark (browser control không khả dụng trong phiên hiện tại).
+- [x] Kiểm tra trực quan bằng trình duyệt ở desktop/mobile en/vi light/dark (browser control không khả dụng trong phiên hiện tại) (`/workspace/policy`; quét giao diện 16/10/2026 trên DB QA: desktop en/sáng và mobile vi/tối, không lỗi console/API, không tràn ngang).

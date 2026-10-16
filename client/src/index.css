@@ -177,3 +177,11 @@ label:has(input:is([type="checkbox"], [type="radio"]):disabled),
 [role="button"][aria-disabled="true"] {
   cursor: not-allowed;
 }
+
+/* Screen-reader-only labels are absolutely positioned. Without a positioned table they escape the
+   table's horizontal scroll wrapper and make the whole page scroll sideways on narrow screens. */
+@layer base {
+  table {
+    position: relative;
+  }
+}

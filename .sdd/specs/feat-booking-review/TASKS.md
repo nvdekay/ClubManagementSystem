@@ -7,4 +7,4 @@
 - [x] Seed demo: 2 property, 1 booking đã duyệt, 2 yêu cầu chờ (1 trùng giờ, 1 vượt sức chứa).
 - [x] Client: hàng đợi + chi tiết + form quyết định, sidebar, i18n `en`/`vi`.
 - [x] `npm run check` xanh, build client OK.
-- [ ] Kiểm tra trực quan trên trình duyệt.
+- [x] Kiểm tra trực quan trên trình duyệt (`/workspace/bookings`; quét giao diện 16/10/2026 trên DB QA: desktop en/sáng và mobile vi/tối, không lỗi console/API, không tràn ngang).
