@@ -1,5 +1,10 @@
 # Kế hoạch Wave 3 — vòng đời sự kiện phía CLB
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+
+
 Lập ngày 2026-10-11 từ SRS, đặc tả UC v2, SPEC/TASKS và source hiện tại.
 Đã triển khai ngày 2026-10-11. Kết quả và cách demo: [WAVE_3_EVENTS.md](WAVE_3_EVENTS.md).
 Các bảng hiện trạng bên dưới giữ đối chiếu tại thời điểm lập kế hoạch.

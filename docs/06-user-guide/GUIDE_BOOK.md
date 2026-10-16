@@ -1,5 +1,10 @@
 # UCMS — Guide book hướng dẫn sử dụng
 
+> **Đối chiếu code ngày 15/10/2026 (`60fc2db`).** Phía CLB có hai role cố định;
+> UC23 đã rút, UC50 là góp ý một chiều và UC51/UC52 ngoài phạm vi.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+
+
 Hướng dẫn mọi màn hình đang có trong app, theo ba không gian làm việc: Sinh viên, CLB và
 ICPDP. Mỗi luồng ghi nơi bắt đầu, vai trò cần có, từng bước thao tác với đúng tên nút trên
 màn hình, và kết quả cần kiểm tra.
@@ -229,8 +234,8 @@ và không cho thao tác trùng.
    chú và bấm **Gửi quyết định**.
 
 **Kết quả:** khi phê duyệt, nhiệm kỳ cũ đóng, nhiệm kỳ mới có hiệu lực và quyền được cấp lại.
-Không phê duyệt được khi CLB đang tạm ngừng. **Hiện trạng:** phía CLB chưa có màn hình lập kế
-hoạch chuyển giao; hàng đợi này hiện chỉ có dữ liệu seed.
+Không phê duyệt được khi CLB đang tạm ngừng. CLB lập và nộp kế hoạch
+chuyển giao ở mục **Chuyển giao nhiệm kỳ** của workspace CLB (chưa có ảnh minh hoạ trong bản này).
 
 ![ICPDP thẩm định kế hoạch chuyển giao nhiệm kỳ](images/16-transition-review.png)
 
@@ -340,8 +345,8 @@ báo khi sự kiện đổi lịch hoặc bị huỷ.
    công bố đến lúc bắt đầu và hiện **Mã check-in**.
 
 **Kết quả:** sự kiện xuất hiện trong lịch sự kiện với đơn vị tổ chức ICPDP; sinh viên đăng
-ký, check-in và phản hồi như sự kiện CLB. **Hiện trạng:** phía CLB chưa có màn hình nhận/từ
-chối lời mời, nên phản hồi của CLB hiện chỉ có từ dữ liệu seed.
+ký, check-in và phản hồi như sự kiện CLB. CLB nhận hoặc từ chối (kèm lý do) ở
+mục **Lời mời sự kiện cấp trường** của workspace CLB (chưa có ảnh minh hoạ trong bản này).
 
 ![Danh sách sự kiện cấp trường](images/27-school-events.png)
 
@@ -514,7 +519,8 @@ kiện không tự tất toán ngân sách.
 
 **Kết quả:** báo cáo chuyển Đã chấp nhận hoặc Đã trả về; báo cáo được chấp nhận là đầu vào
 đánh giá CLB. Loại báo cáo và các mốc hạn nộp/nhắc/quá hạn cấu hình trong chính sách.
-**Hiện trạng:** phía CLB chưa có màn hình nộp báo cáo định kỳ; dữ liệu hiện có đến từ seed.
+CLB lập, nộp và nộp lại báo cáo ở mục **Báo cáo định kỳ** của workspace CLB (chưa có ảnh minh
+hoạ trong bản này).
 
 ![Danh sách báo cáo định kỳ theo học kỳ](images/43-periodic-reports.png)
 
@@ -579,9 +585,8 @@ vẫn ghi được nhưng sẽ bị loại khi đối soát.
 | Lớn hơn 0 | Đã đối soát | Ghi cấp bù đúng chênh lệch |
 | Nhỏ hơn 0 | Chờ CLB hoàn trả | Ghi hoàn trả đủ, hạn 14 ngày |
 
-**Hiện trạng:** màn khoản chi của CLB (16.2) và màn đối soát (16.3) đã có giao diện nhưng API
-chưa được nối vào server chính (gọi API trả 404, kiểm tra lại ngày 13/10/2026). Ảnh 16.2–16.3
-chụp từ bản demo có nối API này. Phần tạm ứng (16.1) chạy trên server chính.
+Từ ngày 15/10/2026, cả tạm ứng (16.1), khoản chi (16.2) và đối soát (16.3) đều chạy trên server
+chính. Ảnh 16.2–16.3 chụp từ bản demo ngày 13/10/2026, trước khi API được nối.
 
 ![Đối soát: xét từng khoản chi](images/49-reconciliation.png)
 
@@ -607,8 +612,8 @@ chụp từ bản demo có nối API này. Phần tạm ứng (16.1) chạy trê
 
 **Kết quả:** kết luận có vi phạm cần ít nhất một chứng cứ và phải qua bước giải trình (hoặc
 ghi nhận CLB không phản hồi). Biện pháp tạm ngừng/giải thể chỉ dẫn link sang quản lý CLB
-(chương 20), không tự thực hiện. **Hiện trạng:** CLB chưa có màn hình xem hồ sơ và gửi giải
-trình trên app.
+(chương 20), không tự thực hiện. CLB xem hồ sơ, gửi giải trình và nộp
+minh chứng khắc phục ở mục **Tuân thủ và giải trình** của workspace CLB (chưa có ảnh minh hoạ).
 
 ![Danh sách hồ sơ vi phạm](images/51-violations.png)
 
@@ -780,13 +785,14 @@ liệu và lối tắt.
 - Toàn bộ 64 ảnh chụp ngày 13/10/2026, giao diện tiếng Việt, theme sáng, khung nhìn 1440 × 1000,
   sau khi phía CLB chuyển sang hai vai trò cố định.
 - Ảnh chụp từ app thật chạy trên database demo riêng `ucms_guide_demo` (bản sao của database
-  local sau khi seed, thêm dữ liệu "Wave 4 demo" cho báo cáo và kinh phí). Bản demo có nối API
-  khoản chi và đối soát; server chính thì chưa (xem **Hiện trạng** ở chương 16).
+  local sau khi seed, thêm dữ liệu "Wave 4 demo" cho báo cáo và kinh phí). Bản demo nối API
+  khoản chi và đối soát trước server chính; từ 15/10/2026 server chính cũng đã nối.
 - Tài khoản dùng để chụp: Trần Minh Anh (Club Leader của HEBE Club), Võ Ngọc Hà (Club Member),
   Đặng Quốc Huy (Sinh viên), Lê Thu Hằng và Nguyễn Khánh Duy (Cán bộ ICPDP). Tên và email
   `@demo.ucms.edu.vn` đều là nhân vật mẫu.
 - Sự kiện có tên "Wave 3 demo" / "Wave 4 demo" và liên kết `example.org` là dữ liệu mẫu.
 - Chi tiết URL, tài khoản và thao tác trước khi chụp của từng ảnh ở `images/manifest.json`.
 
-Tài liệu này chỉ hướng dẫn các luồng đã có màn hình. Những phần ghi **Hiện trạng** là chức
-năng còn thiếu màn hình hoặc chưa nối API ở server chính tính đến 13/10/2026.
+Tài liệu này chỉ hướng dẫn các luồng đã có màn hình, đối chiếu lại ngày 15/10/2026. Các màn CLB
+mới thêm ngày 15/10/2026 (chuyển giao nhiệm kỳ, yêu cầu tạm ngừng, báo cáo định kỳ, lời mời, tuân
+thủ, kết quả đánh giá, tái xác nhận thành viên) được nhắc tên mục nhưng chưa có ảnh chụp.

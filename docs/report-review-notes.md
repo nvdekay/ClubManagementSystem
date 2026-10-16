@@ -1,5 +1,8 @@
 # Ghi chú review — `report.docx` đối chiếu với file mẫu và baseline UCMS
 
+> **Nhật ký lịch sử 26/09/2026.** Số UC, RBAC, complaint workflow và tên file bên dưới thuộc
+> snapshot cũ. Trạng thái hiện hành ngày 15/10/2026: [CURRENT_IMPLEMENTATION.md](CURRENT_IMPLEMENTATION.md).
+
 Ngày: 2026-09-26 · File mẫu nguồn: `docs/Group1_SE1939-NJ_Report_Final_G1.docx`
 Sản phẩm đã sinh ra: `report.docx` (thư mục gốc của dự án)
 

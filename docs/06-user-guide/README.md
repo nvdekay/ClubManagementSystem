@@ -10,12 +10,13 @@ Guide book cho người dùng UCMS, theo ba không gian Student, CLB và ICPDP.
 - `build-guide.py`: dựng lại HTML từ Markdown và PNG bằng Python standard library,
   không cần cài thêm dependency.
 
-Bản 13/10/2026 phủ mọi màn hình đang có (23 chương, 64 ảnh). Mọi trang, kể cả trang chủ và danh
-bạ, yêu cầu đăng nhập. Toàn bộ ảnh được chụp lại ngày 13/10/2026 theo giao diện hiện tại (thanh
+Nội dung đối chiếu 15/10/2026; ảnh chụp 13/10/2026. Bản ảnh phủ các màn hình đã chụp (23 chương, 64 ảnh). Client yêu cầu đăng nhập cho mọi
+trang, kể cả trang chủ/danh bạ; API `/public/*` vẫn công khai. Toàn bộ ảnh được chụp lại ngày 13/10/2026 theo giao diện hiện tại (thanh
 bên chia nhóm, phía CLB chỉ còn hai vai trò Club Leader / Club Member), trên database demo
-`ucms_guide_demo`. Màn khoản chi (UC36) và đối soát (UC37) chưa được nối API ở server chính; ảnh
-của chúng lấy từ bản demo có nối API này. Các phần ghi **Hiện trạng** trong guide là chức năng
-còn thiếu màn hình hoặc chưa nối API.
+`ucms_guide_demo`. Ảnh UC36 và UC37 chụp trên bản demo có nối API trước khi server chính được
+nối ngày 15/10/2026. Các màn CLB thêm ngày 15/10/2026 (UC12, UC14, UC21 A2, UC38, UC40, UC43, UC54)
+mới được nhắc tên mục, chưa có ảnh. Đối chiếu phạm vi với
+[`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 
 ## Tạo dữ liệu
 

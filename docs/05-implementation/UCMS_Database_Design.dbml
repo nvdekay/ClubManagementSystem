@@ -1,5 +1,8 @@
 // =====================================================================
 // UCMS — Thiết kế cơ sở dữ liệu (MongoDB)
+// Runtime access (2026-10-15): fixed Club Leader/Club Member; UC23 removed.
+// permissionCodes and role structure versions remain for compatibility, not authorization.
+// complaints stores one-way UC50 feedback; legacy ticket fields/states are unused.
 // Import vào https://dbdiagram.io  (Import > From DBML / dán nội dung)
 //
 // Nguồn chân lý: docs/SRS.md §6 (vòng đời thực thể) và §7 (yêu cầu dữ
@@ -224,6 +227,13 @@ Enum approvalTaskState {
   Decided
   Closed
 }
+Enum transitionPlanState {
+  Draft
+  "Pending Confirmation"
+  Confirmed
+  Returned
+}
+
 Enum nominationState {
   "Pending Confirmation"
   Confirmed
@@ -575,7 +585,7 @@ Table transitionPlans {
   candidates json [not null, note: 'Những người được đề cử cho nhiệm kỳ mới.']
   outstandingObligations json [not null, note: 'Được nạp sẵn từ M05, M07 và M08 lúc tạo; mọi mục phải có người nhận trước khi nộp (UC12 E1).']
   handoverItems json
-  state nominationState [not null, default: 'Pending Confirmation']
+  state transitionPlanState [not null, default: 'Pending Confirmation']
   submittedBy objectId [not null]
   submittedAt datetime [not null]
   decidedBy objectId
@@ -921,6 +931,7 @@ Table correctiveActions {
   dueAt datetime [not null]
   state string [not null, note: 'Pending | Verified | Failed.']
   linkedLifecycleAction string [note: 'SUSPEND | DISSOLVE khi hành động được thực hiện ở UC15 (UC40 A1).']
+  submission json [note: 'Minh chứng CLB nộp; ICPDP vẫn kiểm chứng, không tự chuyển Verified.']
   verifiedBy objectId
   verifiedAt datetime
 
@@ -1506,4 +1517,41 @@ TableGroup "M11 Cơ sở vật chất & đặt chỗ" {
 TableGroup "M12 Phản hồi & khiếu nại" {
   eventFeedbacks
   complaints
+}
+
+
+Table suspensionRequests {
+  id objectId [pk]
+  clubId objectId [not null]
+  reason text [not null]
+  until datetime [not null]
+  obligationsPlan text [not null]
+  recoveryPlan text [not null]
+  acknowledgedImpactIds json [not null]
+  state string [not null, default: 'Pending']
+  submittedBy objectId [not null]
+  submittedAt datetime [not null]
+  decisionReason text
+  decidedBy objectId
+  decidedAt datetime
+  indexes {
+    (clubId, state) [name: 'ix_suspension_request_club_state']
+  }
+}
+
+
+Table membershipReconfirmations {
+  id objectId [pk]
+  membershipId objectId [not null]
+  clubId objectId [not null]
+  periodCode string [not null]
+  openedAt datetime [not null]
+  dueAt datetime [not null]
+  state string [not null, default: 'Pending']
+  confirmedAt datetime
+  confirmedBy objectId
+  indexes {
+    (membershipId, periodCode) [unique, name: 'uq_membership_reconfirmation_period']
+    (state, dueAt) [name: 'ix_membership_reconfirmation_due']
+  }
 }

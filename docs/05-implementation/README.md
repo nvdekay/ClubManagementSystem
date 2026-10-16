@@ -1,13 +1,19 @@
 # 05 — Triển khai
 
+Trạng thái hiện hành: [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+Các backlog/wave và handoff 09/10 là snapshot lịch sử, UC23 đã huỷ.
+Session mới đọc [bàn giao 15/10/2026](SESSION_HANDOFF_2026-10-15.md) để giữ đúng trạng thái worktree và phạm vi kiểm chứng.
+
 Cách biến baseline yêu cầu thành code: phân rã công việc và thiết kế cơ sở dữ liệu.
 
 | File | Là gì |
 |---|---|
+| [`UC_CODE_MAPPING.md`](UC_CODE_MAPPING.md) | Ma trận đủ 56 mã UC → route server, UI client, mount và khoảng trống triển khai ngày 15/10/2026 |
 | [`TASKS.md`](TASKS.md) | Danh sách công việc triển khai cho database, backend và frontend, nhóm theo các vòng lặp bàn giao ở `../SRS.md` §15. Mỗi task đều trích dẫn use case, yêu cầu chức năng hoặc quy tắc nghiệp vụ mà nó thoả mãn, và các task đang bị chặn được liệt kê kèm quyết định cần chốt để gỡ chặn |
 | [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) | Backlog thực thi đã đối chiếu SRS, mockup HTML và source hiện tại; ưu tiên Auth/Authz trước, kèm MongoDB, mapping màn hình và gate nghiệm thu |
 | [`AUTH_SETUP.md`](AUTH_SETUP.md) | Cấu hình Google OAuth, cookie phiên và MongoDB local cho Auth |
-| [`SESSION_HANDOFF_2026-10-09.md`](SESSION_HANDOFF_2026-10-09.md) | Handoff hiện hành: quyết định đã chốt, tình trạng từng luồng, fixture local, kiểm chứng gần nhất và ưu tiên tiếp theo cho session mới |
+| [`SESSION_HANDOFF_2026-10-15.md`](SESSION_HANDOFF_2026-10-15.md) | Bàn giao hiện hành: cập nhật tài liệu, kết luận audit, Git chưa commit/push, giới hạn kiểm thử và lưu ý session mới |
+| [`SESSION_HANDOFF_2026-10-09.md`](SESSION_HANDOFF_2026-10-09.md) | Handoff lịch sử: quyết định đã chốt, tình trạng từng luồng, fixture local, kiểm chứng gần nhất và ưu tiên tiếp theo cho session mới |
 | [`REMAINING_UC_PLAN.md`](REMAINING_UC_PLAN.md) | Kế hoạch sau review Wave 1 (2026-10-10): trạng thái triển khai/nghiệm thu, 6 wave, phân công phía CLB và các quyết định cần chốt |
 | [`WAVE_2_BOOKING.md`](WAVE_2_BOOKING.md) | Bàn giao Wave 2: slot và hạn gửi, UI CLB/ICPDP, dữ liệu mẫu, cách test và kiểm chứng; ghi chú 2026-10-11 phòng học chuyển sang UC58 |
 | [`WAVE_3_EVENTS_PLAN.md`](WAVE_3_EVENTS_PLAN.md) | Kế hoạch Wave 3: hiện trạng source, thứ tự bàn giao sự kiện CLB, quyết định D4 và chính sách đã áp dụng |
@@ -15,7 +21,7 @@ Cách biến baseline yêu cầu thành code: phân rã công việc và thiết
 | [`WAVE_4_REPORTS_FINANCE_PLAN.md`](WAVE_4_REPORTS_FINANCE_PLAN.md) | Kế hoạch Wave 4: UC33–UC37, hiện trạng source, thứ tự bàn giao, hợp đồng phối hợp và quyết định cần chốt |
 | [`WAVE_4_REPORTS_FINANCE.md`](WAVE_4_REPORTS_FINANCE.md) | Bàn giao tạm Wave 4: phần đã viết, kiểm chứng và BR25/BR58 cần chốt trước khi bật API tài chính |
 | [`WAVE_4_REVIEW_2026-10-11.md`](WAVE_4_REVIEW_2026-10-11.md) | Review lại Wave 4, lỗi tái hiện với MongoDB, trạng thái API thật và seed phục vụ guide book |
-| [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 49 collection MongoDB, 24 enum, nhóm theo module. Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
+| [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 51 collection MongoDB, 24 enum, nhóm theo module. Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
 
 ## Dùng file DBML
 
@@ -31,7 +37,7 @@ sub-document được nhúng và khi nào nó thành một collection riêng.
 ## Khởi tạo MongoDB
 
 Sau khi cấu hình `MONGO_URI` trong `.env` hoặc biến môi trường của shell cho server, chạy
-`npm run db:init` từ thư mục gốc để tạo 49 collection UCMS và toàn bộ index từ DBML. Sau đó chạy
+`npm run db:init` từ thư mục gốc để tạo 51 collection UCMS và toàn bộ index từ DBML. Sau đó chạy
 `npm run db:verify` để kiểm tra cùng kết nối. Dùng cùng URI này trong MongoDB Compass; database
 được in ra bởi lệnh verify sẽ chứa các collection. Lệnh init có thể chạy lại, không xoá dữ liệu
 và không seed bản ghi nghiệp vụ. Schema Mongoose được sinh bằng
@@ -41,7 +47,7 @@ collection `users` dành cho schema UCMS dùng ObjectId. Auth tạo thêm collec
 `authSessions` khi server khởi động.
 
 Để đối chiếu end-to-end: mở Compass bằng cùng `MONGO_URI`, refresh danh sách database, mở tên
-database do `db:verify` in ra và kiểm tra 49 collection UCMS. Chạy `npm run seed` để upsert
+database do `db:verify` in ra và kiểm tra 51 collection UCMS. Chạy `npm run seed` để upsert
 ảnh chụp dữ liệu công khai của pdp.fpt.edu.vn (Hà Nội, 2026-10-04) với ID cố định: 48 CLB và
 21 sự kiện do CLB tổ chức (đều đã kết thúc, nên chỉ hiện trong lịch sử của từng CLB). Lệnh chạy
 lại được, không nhân đôi; nó chỉ xoá bộ demo hư cấu cũ theo ID cố định của chính seed, không

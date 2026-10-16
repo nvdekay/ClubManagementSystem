@@ -1,5 +1,9 @@
 # UCMS — Theo dõi các lỗi review Use Case
 
+> **Nhật ký lịch sử, không phải baseline runtime.** Các đoạn RBAC động/UC23 ghi lại quyết định
+> cũ. Hiện tại Club Leader có toàn bộ permission, Club Member không có permission quản lý và
+> UC23 đã rút. Xem [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+
 > Ghi chú dọn tài liệu ngày 2026-10-11: chỉ giữ report v2 làm bản DOCX sử dụng.
 > Các tên DOCX cũ bên dưới là ghi nhận lịch sử review; những file này đã được xoá
 > và không còn là hạng mục cần cập nhật hoặc xuất lại.

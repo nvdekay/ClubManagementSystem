@@ -1,5 +1,9 @@
 # UCMS — Context các issue liên quan đến Business Rule (BR)
 
+> **Ngữ cảnh review lịch sử.** Mô tả role tự tạo, cấp permission qua UC23 hoặc Club Member vận
+> hành theo permission đã bị baseline hai role cố định thay thế. Xem
+> [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+
 File này gom mọi issue trong [`UCMS_Review_Issues.md`](UCMS_Review_Issues.md) có dính tới BR, và
 giải thích **vì sao nó là vấn đề** để đọc mà không phải mở song song 4–5 tài liệu. File này
 **không thay** tracker: trạng thái và mục "Xử lý" vẫn ghi ở `UCMS_Review_Issues.md`.

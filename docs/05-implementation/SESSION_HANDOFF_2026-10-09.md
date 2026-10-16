@@ -1,5 +1,8 @@
 # Handoff dự án UCMS — cập nhật 2026-10-11
 
+> **Snapshot lịch sử.** UC23/RBAC động đã bị thay thế ngày 13/10/2026. Không dùng file này để
+> kết luận trạng thái hiện tại; xem [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+
 Ảnh chụp trạng thái để mở session mới. Đây là handoff hiện hành theo `docs/05-implementation/README.md`.
 Nguồn chân lý: `.rules/`, `docs/SRS.md`, `.sdd/specs/feat-*/SPEC.md`, checklist của feature và source.
 Nếu tài liệu tổng quan cũ khác source/SPEC/TASKS của feature mới nhất, ưu tiên source/SPEC/TASKS.

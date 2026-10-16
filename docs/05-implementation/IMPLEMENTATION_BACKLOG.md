@@ -1,5 +1,9 @@
 # UCMS — Backlog triển khai theo SRS và mockup
 
+> **Backlog lịch sử.** Checkbox không phản ánh đầy đủ code đã merge. Trạng thái hiện hành nằm ở
+> [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md) và SPEC/TASKS từng feature.
+> Mọi task UC23/role tự tạo được coi là huỷ.
+
 > Trạng thái đối chiếu: nhánh `khanhnvd`, `docs/SRS.md`, `docs/04-design/FPT_Club.html`, thiết kế DBML và source hiện tại. `[x]` là phần đã cài và có test phù hợp; `[ ]` là chưa xong. Ghi chú dưới từng nhóm nêu rõ phần đã code nhưng còn chờ kiểm chứng. Khi bắt đầu code một tính năng, tạo `SPEC.md` và `TASKS.md` trong `.sdd/specs/feat-*/` theo `.rules/README.md`; đánh dấu tiến độ ở đó.
 
 ## 1. Điểm xuất phát và nguyên tắc ưu tiên

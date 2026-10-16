@@ -1,5 +1,10 @@
 # Bàn giao Wave 2 — đặt cơ sở vật chất
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+
+
 Cập nhật ngày 2026-10-10. Phạm vi UC45/UC46/UC47 phía CLB và ICPDP; tái sử dụng danh mục
 UC44. Hợp đồng chi tiết và AC ở [SPEC](../../.sdd/specs/feat-facility-booking/SPEC.md),
 trạng thái công việc ở [TASKS](../../.sdd/specs/feat-facility-booking/TASKS.md).

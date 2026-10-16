@@ -1,5 +1,10 @@
 # Bàn giao tạm Wave 4 — báo cáo và tài chính
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+
+
 Cập nhật 2026-10-11. Wave 4 **chưa hoàn tất**: BR25 và thời hạn BR58 đang chờ người dùng chốt.
 Kế hoạch: [WAVE_4_REPORTS_FINANCE_PLAN.md](WAVE_4_REPORTS_FINANCE_PLAN.md).
 

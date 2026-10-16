@@ -1,5 +1,8 @@
 # 04 — Thiết kế
 
+`FPT_Club.html` là mockup lịch sử; role-switch, RBAC, dữ liệu và chức năng trong mockup không
+phản ánh đầy đủ runtime hiện hành. Ánh xạ code: [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+
 Hệ thống có hình dạng thế nào, và giao diện phải trông ra sao. Những tài liệu này trả lời câu
 hỏi *làm thế nào*; phần yêu cầu mà chúng hiện thực nằm ở [`../SRS.md`](../SRS.md).
 

@@ -1,5 +1,10 @@
 # Review Wave 4 — 11/10/2026
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+
+
 ## Kết luận
 
 Wave 4 chưa đạt nghiệm thu. Có hai lỗi nghiệp vụ đã tái hiện với repository và MongoDB thật;

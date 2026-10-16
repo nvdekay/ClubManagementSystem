@@ -1,5 +1,10 @@
 # Bàn giao Wave 3 — vòng đời sự kiện CLB
 
+> **Tài liệu lịch sử.** Nội dung bên dưới ghi lại quyết định tại thời điểm lập tài liệu;
+> checkbox và mô tả RBAC/UC23 cũ không phải trạng thái release hiện hành.
+> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
+
+
 Cập nhật ngày 2026-10-11. Đã triển khai UC25, UC27, UC28, UC30, UC31 A1, UC32 và UC49;
 UC26 dùng luồng ICPDP hiện có, bổ sung xử lý ngân sách khi duyệt lại lịch.
 Kế hoạch và chính sách: [WAVE_3_EVENTS_PLAN.md](WAVE_3_EVENTS_PLAN.md).

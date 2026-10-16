@@ -1,5 +1,8 @@
 # UCMS — Danh sách công việc triển khai (Database · Backend · Frontend)
 
+> **Phân rã lịch sử.** Không dùng checkbox ở đây làm trạng thái release. UC23/RBAC động đã huỷ;
+> trạng thái hiện hành xem [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+
 > Checklist thực thi đang được cập nhật theo từng vertical slice ở
 > [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) và `.sdd/specs/feat-*/TASKS.md`.
 > File này giữ bản phân rã ban đầu; ô chưa đánh dấu ở đây có thể đã có code nhưng chưa đạt
