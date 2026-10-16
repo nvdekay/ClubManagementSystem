@@ -436,25 +436,6 @@ Table clubApplicationVersions {
   }
 }
 
-Table clubSuspensionRequests {
-  id objectId [pk]
-  clubId objectId [not null]
-  requestedBy objectId [not null]
-  reason text [not null]
-  expectedFrom datetime [not null]
-  expectedTo datetime [not null]
-  obligationsPlan text [note: 'Cách xử lý các nghĩa vụ còn tồn đọng (UC14).']
-  recoveryPlan text
-  state string [not null, note: 'Submitted | Approved | Rejected | Withdrawn.']
-  decidedBy objectId
-  decidedAt datetime
-  createdAt datetime [not null]
-
-  Note: 'Bổ sung khi thiết kế: UC14 sinh ra bản ghi này và một approval task, nhưng danh sách thực thể của SRS chưa đặt tên collection cho nó. Bản thân quyết định được đưa ra ở UC15 trên CLB.'
-  indexes {
-    (clubId, state) [name: 'ix_susp_club_state']
-  }
-}
 
 Table clubTerms {
   id objectId [pk]
@@ -1333,8 +1314,6 @@ Ref: clubApplications.createdClubId - clubs.id
 Ref: clubApplicationVersions.applicationId > clubApplications.id
 Ref: clubApplicationVersions.submittedBy > users.id
 Ref: clubs.sourceApplicationId - clubApplications.id
-Ref: clubSuspensionRequests.clubId > clubs.id
-Ref: clubSuspensionRequests.requestedBy > users.id
 Ref: clubTerms.clubId > clubs.id
 Ref: clubTerms.previousTermId - clubTerms.id
 Ref: clubPositions.clubId > clubs.id
@@ -1459,7 +1438,6 @@ TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {
   clubFields
   clubApplications
   clubApplicationVersions
-  clubSuspensionRequests
   suspensionRequests
   clubTerms
   clubPositions

@@ -678,59 +678,6 @@ export const ucmsTables = {
       }
     ]
   },
-  "clubSuspensionRequests": {
-    "fields": {
-      "clubId": {
-        "type": "objectId",
-        "required": true
-      },
-      "requestedBy": {
-        "type": "objectId",
-        "required": true
-      },
-      "reason": {
-        "type": "text",
-        "required": true
-      },
-      "expectedFrom": {
-        "type": "datetime",
-        "required": true
-      },
-      "expectedTo": {
-        "type": "datetime",
-        "required": true
-      },
-      "obligationsPlan": {
-        "type": "text"
-      },
-      "recoveryPlan": {
-        "type": "text"
-      },
-      "state": {
-        "type": "string",
-        "required": true
-      },
-      "decidedBy": {
-        "type": "objectId"
-      },
-      "decidedAt": {
-        "type": "datetime"
-      },
-      "createdAt": {
-        "type": "datetime",
-        "required": true
-      }
-    },
-    "indexes": [
-      {
-        "fields": [
-          "clubId",
-          "state"
-        ],
-        "name": "ix_susp_club_state"
-      }
-    ]
-  },
   "clubTerms": {
     "fields": {
       "clubId": {

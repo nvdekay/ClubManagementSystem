@@ -4,7 +4,7 @@ import { ucmsCollectionNames, ucmsModels } from "../../src/infra/db/ucms-models.
 
 describe("UCMS DBML model mapping", () => {
   it("maps all designed collections and enum values", () => {
-    expect(ucmsCollectionNames()).toHaveLength(53);
+    expect(ucmsCollectionNames()).toHaveLength(52);
     expect(Object.keys(ucmsEnums)).toHaveLength(28);
     expect(Object.keys(ucmsModels).sort()).toEqual(Object.keys(ucmsTables).sort());
     expect(ucmsModels.users.schema.path("_id").instance).toBe("ObjectId");
