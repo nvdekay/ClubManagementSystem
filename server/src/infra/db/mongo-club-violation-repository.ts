@@ -13,7 +13,10 @@ export function mongoClubViolationRepository(): ClubViolationRepository {
   }
   return {
     async list(clubId, now) {
-      const ids = await m.violations!.find({ clubId: new Types.ObjectId(clubId), state: { $in: visible }, "clubResponse.requestedAt": { $exists: true } }).sort({ openedAt: -1 }).distinct("_id");
+      // The club sees every case it was notified about: a response request or a decision, including
+      // a "no violation" closure issued before any response was requested.
+      const ids = await m.violations!.find({ clubId: new Types.ObjectId(clubId), state: { $in: visible },
+        $or: [{ "clubResponse.requestedAt": { $exists: true } }, { decidedAt: { $exists: true } }] }).sort({ openedAt: -1 }).distinct("_id");
       const reader = mongoViolationRepository();
       return (await Promise.all(ids.map((id) => reader.find(String(id), now)))).filter((d): d is NonNullable<typeof d> => Boolean(d));
     },

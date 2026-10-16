@@ -24,3 +24,25 @@ export async function queueNotifications(session: ClientSession, recipients: rea
     eventCode, entityType, entityId, channels: ["IN_APP"], payload, state: "Queued", dueAt: now, attempts: 0,
     createdAt: now })), { session });
 }
+
+/**
+ * BR06: the users behind these memberships who already hold the leader role of another club in a
+ * term overlapping [startAt, endAt). The club's own outgoing term is ignored, so a re-elected
+ * leader stays eligible.
+ */
+export async function otherClubLeaderUserIds(session: ClientSession, clubId: Types.ObjectId,
+  membershipIds: readonly Types.ObjectId[], startAt: Date, endAt: Date): Promise<Set<string>> {
+  const m = ucmsModels;
+  if (!membershipIds.length) return new Set();
+  const userIds = await m.clubMemberships!.find({ _id: { $in: membershipIds } }).session(session).distinct("userId");
+  const termIds = await m.clubTerms!.find({ clubId: { $ne: clubId }, state: { $in: ["Active", "Planned"] },
+    startAt: { $lt: endAt }, endAt: { $gt: startAt } }).session(session).distinct("_id");
+  if (!userIds.length || !termIds.length) return new Set();
+  const leaderPositionIds = await m.clubPositions!.find({ clubId: { $ne: clubId }, isLeaderRole: true, isActive: true })
+    .session(session).distinct("_id");
+  const heldBy = await m.clubPositionAssignments!.find({ termId: { $in: termIds }, positionId: { $in: leaderPositionIds },
+    effectiveTo: null }).session(session).distinct("membershipId");
+  if (!heldBy.length) return new Set();
+  const users = await m.clubMemberships!.find({ _id: { $in: heldBy }, userId: { $in: userIds } }).session(session).distinct("userId");
+  return new Set(users.map(String));
+}

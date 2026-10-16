@@ -5,6 +5,7 @@ import { DomainError } from "../../domain/errors.js";
 import type { TransitionObligation, TransitionTerm } from "../../domain/leadership-transition.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
 import { openAccountabilityTask } from "./accountability-workflow.js";
+import { otherClubLeaderUserIds } from "./club-board.js";
 import { clubOutstandingObligations } from "./club-obligations.js";
 import { ucmsModels as m } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
@@ -113,6 +114,11 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
         const memberIds = candidates.map((c) => new Types.ObjectId(c.membershipId));
         const activeCount = await m.clubMemberships!.countDocuments({ _id: { $in: memberIds }, clubId: new Types.ObjectId(clubId), state: "Active" }).session(session);
         if (activeCount !== candidates.length) throw new DomainError("every candidate must be an active club member", "conflict");
+        const leaderCodes = new Set(positions.filter((p) => p.isLeaderRole === true).map((p) => String(p.code)));
+        const leaderMemberIds = candidates.filter((c) => leaderCodes.has(c.positionCode)).map((c) => new Types.ObjectId(c.membershipId));
+        if ((await otherClubLeaderUserIds(session, new Types.ObjectId(clubId), leaderMemberIds, target.startAt as Date, target.endAt as Date)).size) {
+          throw new DomainError("a leader candidate already leads another club in an overlapping term", "conflict");
+        }
         const live = await clubOutstandingObligations(new Types.ObjectId(clubId), session);
         if (live.some((o) => !candidates.some((c) => c.membershipId === snapshot.assignees[o.id]))) throw new DomainError("every obligation needs an assignee on the new board", "validation");
         const assigned = live.map((o) => ({ ...o, assigneeMembershipId: snapshot.assignees[o.id]! }));

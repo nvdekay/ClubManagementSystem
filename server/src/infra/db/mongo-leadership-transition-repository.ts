@@ -12,6 +12,7 @@ import type {
   TransitionObligation,
   TransitionTerm,
 } from "../../domain/leadership-transition.js";
+import { otherClubLeaderUserIds } from "./club-board.js";
 import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
@@ -280,6 +281,12 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
           clubId: plan.clubId, state: "Active" }).session(session).lean();
         if (activeMembers.length !== candidateDocs.length) {
           return conflict("every transition candidate must have an Active membership");
+        }
+        const leaderCodes = new Set((proposed ?? currentPositions).filter((p) => p.isLeaderRole === true).map((p) => String(p.code)));
+        const leaderMemberIds = candidateDocs.filter((c) => leaderCodes.has(String(c.positionCode)))
+          .map((c) => new Types.ObjectId(String(c.membershipId)));
+        if ((await otherClubLeaderUserIds(session, plan.clubId as Types.ObjectId, leaderMemberIds, now, toTerm.endAt as Date)).size) {
+          return conflict("a leader candidate already leads another club in an overlapping term (BR06)");
         }
 
         let effectivePositions = currentPositions;

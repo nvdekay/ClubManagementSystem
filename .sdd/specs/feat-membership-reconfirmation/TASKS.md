@@ -5,3 +5,4 @@
 - [x] Integration các mốc thời gian (hết hạn đúng mốc 14 ngày, miễn Leader, chỉ chủ membership xác nhận được).
 - [x] Nối main.ts, check/build (xác minh 15/10/2026: `npm run check` xanh, 438 test gồm integration Mongo thật đều qua, build client qua).
 - [x] Cập nhật tài liệu cuối (15/10/2026: đã cập nhật SRS, Use Case Model/Specification, HLD, CURRENT_IMPLEMENTATION, UC_CODE_MAPPING, REMAINING_UC_PLAN, hướng dẫn sử dụng và sơ đồ).
+- [x] Sửa sau review 16/10/2026: job quét mọi yêu cầu Pending đã quá hạn, kể cả của kỳ đã kết thúc (server khởi động lại sau cuối kỳ); có unit và integration test.

@@ -125,6 +125,24 @@ describe.skipIf(!uri)("remaining club UC transactions", () => {
     expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(g.president), String(g.id)))!, now)).toEqual([]);
     expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(g.candidateUser), String(g.id)))!, now)).toContain("club.transition.plan");
   });
+  it("UC12/13 rejects a president candidate who leads another club in an overlapping term (BR06)", async () => {
+    const a = await governedClub(); const b = await governedClub(); const repo = mongoClubTransitionPlanRepository(); const review = mongoLeadershipTransitionRepository();
+    const input = { toTerm: { name: "Next", startAt: new Date("2026-11-01"), endAt: new Date("2027-11-01") }, candidates: [{ positionCode: "PRESIDENT", membershipId: String(a.candidateMember) }],
+      handoverItems: [{ id: "1", description: "Keys" }], earlyReason: "Graduation", assignees: {} as Record<string, string> };
+    // The candidate of club A is already the president of club B.
+    const inB = await m.clubMemberships!.create({ clubId: b.id, userId: a.candidateUser, state: "Active", joinedAt: new Date("2026-01-01"), statusHistory: [] });
+    const bAssignment = await m.clubPositionAssignments!.create({ clubId: b.id, termId: b.termId, positionId: b.seat, membershipId: inB._id, effectiveFrom: new Date("2026-01-01"), assignedBy: officer, confirmedBy: officer });
+    let plan = await repo.create(String(a.id), input, String(a.president), now);
+    await expect(repo.submit(String(a.id), plan.id, plan.revision, String(a.president), now)).rejects.toThrow(/another club/);
+    // Submitted while eligible, then the candidate takes club B's chair before ICPDP confirms.
+    await m.clubPositionAssignments!.updateOne({ _id: bAssignment._id }, { $set: { effectiveTo: now } });
+    plan = await repo.submit(String(a.id), plan.id, plan.revision, String(a.president), now);
+    await m.clubPositionAssignments!.updateOne({ _id: bAssignment._id }, { $set: { effectiveTo: null } });
+    await review.claim(plan.id, String(officer), now);
+    await expect(review.decide(plan.id, String(officer), { outcome: "Approve", followUpObligationIds: [] }, now)).rejects.toThrow(/BR06/);
+    expect(await m.transitionPlans!.findById(plan.id).lean()).toMatchObject({ state: "Pending Confirmation" });
+    expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(a.candidateUser), String(a.id)))!, now)).toEqual([]);
+  });
   it("UC14/15 requires fresh impact acknowledgement and commits only one competing decision", async () => {
     const g = await governedClub(); const repo = mongoSuspensionRequestRepository();
     const event = await m.events!.create({ clubId: g.id, clubName: "Governed", organizerType: "CLUB", title: "Future event", state: "Upcoming", startAt: new Date("2026-12-01"), endAt: new Date("2026-12-02"), semesterCode: "Fall", capacity: 10, audienceScope: "PUBLIC", currentRevisionNo: 1, createdAt: now });
@@ -160,6 +178,31 @@ describe.skipIf(!uri)("remaining club UC transactions", () => {
     expect(await m.clubMemberships!.findById(g2.presidentMember).lean()).toMatchObject({ state: "Active" });
     expect(await m.auditLogs!.countDocuments({ entityId: g2.candidateMember, action: "MEMBERSHIP_RECONFIRMATION_EXPIRED" })).toBe(1);
     expect(await m.membershipReconfirmations!.countDocuments({ membershipId: g2.candidateMember, periodCode: period.code })).toBe(1);
+  });
+  it("UC21 A2 expires an overdue request of a semester that has already ended", async () => {
+    const g = await governedClub(); const repo = mongoMembershipReconfirmationRepository();
+    const ended = { code: "Ended semester", startAt: new Date("2026-09-01"), endAt: new Date("2026-10-01") };
+    const dueAt = new Date(ended.startAt.getTime() + 14 * 86400000);
+    await repo.run(ended, dueAt, new Date("2026-09-02"));
+    expect((await repo.listMine(String(g.candidateUser))).find((r) => r.periodCode === ended.code)?.state).toBe("Pending");
+    // The server was down past the deadline and past the end of the semester.
+    const later = new Date("2026-10-15");
+    const first = await repo.expireOverdue(later);
+    expect(first.expired).toBeGreaterThanOrEqual(1);
+    expect((await repo.listMine(String(g.candidateUser))).find((r) => r.periodCode === ended.code)?.state).toBe("Expired");
+    expect(await m.clubMemberships!.findById(g.candidateMember).lean()).toMatchObject({ state: "Inactive" });
+    expect((await repo.listMine(String(g.president))).find((r) => r.periodCode === ended.code)?.state).toBe("Exempt");
+    expect(await m.clubMemberships!.findById(g.presidentMember).lean()).toMatchObject({ state: "Active" });
+    expect(await repo.expireOverdue(later)).toEqual({ expired: 0, exempt: 0 });
+  });
+  it("UC40 lists a no-violation closure issued before any response request", async () => {
+    const g = await governedClub(); const repo = mongoClubViolationRepository();
+    const closed = await m.violations!.create({ clubId: g.id, title: "Unfounded report", originType: "OTHER", severity: "MINOR", state: "Closed", openedBy: officer, openedAt: now,
+      evidence: [], decisionReason: "No violation found", decidedBy: officer, decidedAt: now, resolvedAt: now });
+    const dropped = await m.violations!.create({ clubId: g.id, title: "Opened in error", originType: "OTHER", severity: "MINOR", state: "Closed", openedBy: officer, openedAt: now, evidence: [] });
+    const ids = (await repo.list(String(g.id), now)).map((v) => v.id);
+    expect(ids).toContain(String(closed._id));
+    expect(ids).not.toContain(String(dropped._id));
   });
   it("UC40 accepts one explanation even late, preserves the request, and submits corrective evidence", async () => {
     const g = await governedClub(); const repo = mongoClubViolationRepository(); const id = new Types.ObjectId();

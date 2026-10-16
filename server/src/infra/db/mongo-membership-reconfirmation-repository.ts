@@ -27,6 +27,22 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
     await m.auditLogs!.create([{ entityType: "ClubMembership", entityId: member._id, action,
       ...(actorId ? { actorId: new Types.ObjectId(actorId), actorRole: "Student" } : { actorRole: "SYSTEM" }), after, correlationId: randomUUID(), at: now }], { session });
   }
+  /** Exempts a current Leader, otherwise expires the request and makes the membership Inactive. */
+  async function close(session: ClientSession, member: Doc, request: Doc, now: Date, changes: { expired: number; exempt: number }) {
+    const periodCode = String(request.periodCode);
+    if (await isLeader(session, member, now)) {
+      await m.membershipReconfirmations!.updateOne({ _id: request._id, state: "Pending" }, { $set: { state: "Exempt" } }, { session });
+      changes.exempt = 1;
+      await audit(session, member, "MEMBERSHIP_RECONFIRMATION_EXEMPT", { periodCode }, now);
+      return;
+    }
+    await m.membershipReconfirmations!.updateOne({ _id: request._id, state: "Pending" }, { $set: { state: "Expired" } }, { session });
+    await m.clubMemberships!.updateOne({ _id: member._id, state: "Active" }, { $set: { state: "Inactive" }, $push: { statusHistory: {
+      fromState: "Active", toState: "Inactive", effectiveDate: now, reason: "Semester reconfirmation deadline expired", actorId: null, actorRole: "SYSTEM", at: now } } }, { session });
+    await audit(session, member, "MEMBERSHIP_RECONFIRMATION_EXPIRED", { periodCode, fromState: "Active", toState: "Inactive", effectiveDate: now }, now);
+    await queueNotifications(session, [member.userId], "MEMBERSHIP_RECONFIRMATION_EXPIRED", "ClubMembership", member._id as Types.ObjectId, { periodCode }, now);
+    changes.expired = 1;
+  }
   return {
     async listMine(userId) {
       const ids = await m.clubMemberships!.find({ userId: new Types.ObjectId(userId) }).distinct("_id");
@@ -72,16 +88,33 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
             changes.exempt = 1;
             await audit(session, member, "MEMBERSHIP_RECONFIRMATION_EXEMPT", { periodCode: period.code }, now);
           } else if ((request.dueAt as Date) <= now) {
-            await m.membershipReconfirmations!.updateOne({ _id: request._id, state: "Pending" }, { $set: { state: "Expired" } }, { session });
-            await m.clubMemberships!.updateOne({ _id: member._id, state: "Active" }, { $set: { state: "Inactive" }, $push: { statusHistory: {
-              fromState: "Active", toState: "Inactive", effectiveDate: now, reason: "Semester reconfirmation deadline expired", actorId: null, actorRole: "SYSTEM", at: now } } }, { session });
-            await audit(session, member, "MEMBERSHIP_RECONFIRMATION_EXPIRED", { periodCode: period.code, fromState: "Active", toState: "Inactive", effectiveDate: now }, now);
-            await queueNotifications(session, [member.userId], "MEMBERSHIP_RECONFIRMATION_EXPIRED", "ClubMembership", member._id as Types.ObjectId, { periodCode: period.code }, now);
-            changes.expired = 1;
+            await close(session, member, request, now, changes);
           }
           return changes;
         });
         result.opened += outcome.opened; result.expired += outcome.expired; result.exempt += outcome.exempt;
+      }
+      return result;
+    },
+    async expireOverdue(now) {
+      const result = { expired: 0, exempt: 0 };
+      const overdue = await m.membershipReconfirmations!.find({ state: "Pending", dueAt: { $lte: now } }).select({ _id: 1 }).lean();
+      for (const { _id } of overdue) {
+        const outcome = await mongoose.connection.transaction(async (session) => {
+          const changes = { expired: 0, exempt: 0 };
+          const request = await m.membershipReconfirmations!.findOne({ _id, state: "Pending", dueAt: { $lte: now } }).session(session).lean();
+          if (!request) return changes;
+          const member = await m.clubMemberships!.findOneAndUpdate({ _id: request.membershipId, state: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
+          if (!member) {
+            // The membership already left Active by another path; the request just closes.
+            await m.membershipReconfirmations!.updateOne({ _id, state: "Pending" }, { $set: { state: "Expired" } }, { session });
+            return changes;
+          }
+          await m.clubs!.updateOne({ _id: member.clubId }, { $inc: { __v: 1 } }, { session });
+          await close(session, member, request, now, changes);
+          return changes;
+        });
+        result.expired += outcome.expired; result.exempt += outcome.exempt;
       }
       return result;
     },
