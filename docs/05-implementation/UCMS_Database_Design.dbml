@@ -1352,6 +1352,12 @@ Ref: boardNominationSeats.membershipId > clubMemberships.id
 Ref: transitionPlans.clubId > clubs.id
 Ref: transitionPlans.fromTermId > clubTerms.id
 Ref: transitionPlans.toTermId > clubTerms.id
+Ref: suspensionRequests.clubId > clubs.id
+Ref: suspensionRequests.submittedBy > users.id
+Ref: suspensionRequests.decidedBy > users.id
+Ref: membershipReconfirmations.membershipId > clubMemberships.id
+Ref: membershipReconfirmations.clubId > clubs.id
+Ref: membershipReconfirmations.confirmedBy > users.id
 
 // M04
 Ref: recruitmentCampaigns.clubId > clubs.id
@@ -1454,6 +1460,7 @@ TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {
   clubApplications
   clubApplicationVersions
   clubSuspensionRequests
+  suspensionRequests
   clubTerms
   clubPositions
   clubDepartments
@@ -1468,6 +1475,7 @@ TableGroup "M04 Tuyển thành viên & quản lý thành viên" {
   recruitmentCampaigns
   recruitmentApplications
   candidateEvaluations
+  membershipReconfirmations
   clubMemberships
   membershipWithdrawalRequests
 }
