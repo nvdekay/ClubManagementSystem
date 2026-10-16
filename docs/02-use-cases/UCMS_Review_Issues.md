@@ -1,9 +1,5 @@
 # UCMS — Theo dõi các lỗi review Use Case
 
-> **Nhật ký lịch sử, không phải baseline runtime.** Các đoạn RBAC động/UC23 ghi lại quyết định
-> cũ. Hiện tại Club Leader có toàn bộ permission, Club Member không có permission quản lý và
-> UC23 đã rút. Xem [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
-
 > Ghi chú dọn tài liệu ngày 2026-10-11: chỉ giữ report v2 làm bản DOCX sử dụng.
 > Các tên DOCX cũ bên dưới là ghi nhận lịch sử review; những file này đã được xoá
 > và không còn là hạng mục cần cập nhật hoặc xuất lại.
@@ -14,7 +10,7 @@
 - [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) — gọi tắt **Spec**
 - [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) — gọi tắt **UCD** (use case diagram)
 - [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio) — gọi tắt **CD** (context diagram).
-  Từ I15–I20 trở đi, CD hiện hành là [`../03-diagrams/UCMS_Context_Diagram_v2.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.drawio);
+  Từ I15–I20 trở đi, CD hiện hành là `UCMS_Context_Diagram_v2.drawio` (đã xoá khỏi repo ngày 14/10/2026);
   từ I56 trở đi là [`../03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.1.drawio)
 - [`../Group1_SE1939-NJ_Report_Final_v2.docx`](../Group1_SE1939-NJ_Report_Final_v2.docx) — gọi tắt
   **Report** (từ I31 trở đi, review ngày 2026-09-26). Ký hiệu mục theo heading của report, ví dụ
@@ -105,6 +101,7 @@ Ngày review: 2026-09-23.
 | I62 | 🟢 | Trang Student của UCD dùng `Manage club participation` / `Manage event participation`: sinh viên không quản lý CLB hay sự kiện mà chỉ tham gia, nên động từ "Manage" sai nghĩa | UCD trang Student; Report Figure III.3.2; script thuyết trình | Đã sửa | Đổi thành `Engage with clubs` và `Attend events`; giữ nguyên các «include» bên dưới |
 | I63 | 🟡 | Góp ý giảng viên: đánh giá CLB cần **format chung** (số người tham gia, tầm ảnh hưởng, mức độ hài lòng…). D1–D6 hiện có đo tuân thủ và vận hành; số người tham gia và hài lòng nằm lẫn trong D1/D2, tầm ảnh hưởng không có | SRS §9, UC41–UC43, BR36, BR60; Model/Spec UC41; DBML; TASKS; UCD trang ICPDP 3 | Đã sửa | Bộ dimension cố định D1–D8: D1 Số người tham gia, D2 Tầm ảnh hưởng, D3 Mức độ hài lòng là phần chung bắt buộc của mọi scheme (BR60); công bố theo một bảng điểm chung; ghi chú trên UCD |
 | I64 | 🟡 | Góp ý giảng viên: context diagram thiếu chức năng **xuất dữ liệu** cho ICPDP; không UC nào xuất file | Context diagram v2.1; SRS §2.2, §4, §5, §14; UCD trang ICPDP 3; TASKS | Đã sửa | Thêm UC55 *Xuất dữ liệu và báo cáo* (ICPDP, M09), BR61; context diagram thêm `Export criteria` và `Exported data & reports` (44 → 46 luồng); UCD thêm `Export data & reports` |
+| I66 | 🔴 | UCD sau commit `107ea77`, `3f1c580` gán 10 use case vận hành CLB cho Club Leader và bỏ khung permission, trong khi đặc tả và code vẫn cho Club Member làm khi role có permission | UCD các trang phía CLB; Model §3, §4, §6, §9, §11 BR47/BR54/BR55; Spec; SRS §2.3, §2.4, FR, BR; code `server/src/domain/access.ts` | Đã sửa | Chỉ Club Leader làm việc vận hành CLB; role không mang permission, bỏ "Configure role permissions"; mọi thành viên `Active` tự có `club.attendance.manage` và `club.room.view` (ADR-007) |
 
 ---
 
@@ -1781,3 +1778,53 @@ sinh (Spec/Model + generator) rồi sinh lại, không sửa tay trong `.docx`.
   SPEC/TASKS feature và report DOCX v2 (hình, mô tả UC, màn hình, luồng, hướng dẫn và mục lục).
 - **Phạm vi:** không tăng tổng số UC, không đổi mã UC hay module dữ liệu; tài liệu v1 và các
   mục review trước I65 giữ làm lịch sử. Không xác nhận code phía CLB đã triển khai hoặc nghiệm thu.
+
+### I66 — Use case diagram chuyển việc vận hành CLB sang Club Leader, lệch đặc tả và code
+
+- **Nguồn:** rà soát commit `107ea77` (Update use case diagrams) và `3f1c580` (fix(diagrams))
+  ngày 2026-10-13.
+- **Vấn đề:** hai commit chuyển association của Manage club profile, Manage members, Manage
+  recruitment campaigns, Manage applications, Manage events, Manage facility bookings, Manage
+  reports, Record expense & submit settlement, Respond to complaint, Review event feedback từ
+  Club Member sang Club Leader, xoá các khung permission (`club.event.manage`, …) và khung
+  `No permission required`, gộp trang thành Club Member - Events & bookings và ba trang Club
+  Leader. Đặc tả (Model / Spec / SRS, BR54) và code vẫn cho thành viên làm các việc này khi role
+  có permission. PNG và `UCMS_UseCase_ByActor.docx` cũng chưa xuất lại; một đường nối trên trang
+  Club Member có nhãn thừa `` ` ``.
+- **Cách sửa đã chọn** (người dùng chốt 2026-10-13):
+  1. Chỉ Club Leader đã xác nhận làm các việc vận hành CLB, và sửa cả code (không giữ uỷ quyền).
+  2. Manage attendance và xem phòng được phân dành cho mọi thành viên `Active`, không cần cấp
+     quyền.
+  3. Bỏ nhánh "Configure role permissions" của UC23; role CLB chỉ là chức danh.
+- **Xử lý:**
+  - Ngày: 2026-10-13
+  - File đã sửa (tài liệu): Model v2 (§3 actor, §4 cột actor của UC09, UC16, UC18–UC21, UC25,
+    UC27, UC28, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC23, UC07 / UC08, UC45, §9 ma trận,
+    §11 BR47 / BR54 / BR55, §15 luồng context); Spec v2 (ghi chú đầu tài liệu, mục lục, dòng actor
+    và ngoại lệ BR54 của mọi UC vận hành, UC07, UC08, UC09, UC23, UC31, UC45, UC58);
+    `UCMS_BR_Issues_Context.md`; `SRS.md` (§1 thuật ngữ, §2.3 actor và RBAC, danh mục permission,
+    §2.4 cơ cấu tổ chức, bảng màn hình, FR của UC07 / UC08 / UC09 / UC23 / UC45 / UC54 / UC58, BR,
+    dữ liệu, SEC-03 / SEC-04, truy vết, danh sách sơ đồ); `03-diagrams/README.md`;
+    `UC_Diagram_Presentation.md` và `_Script.txt` (hình III.3.3–III.3.6 theo bộ trang mới);
+    `Context_Diagram_QA.md`; các SPEC trong `.sdd/specs/` có câu về uỷ quyền (ghi chú có ngày);
+    `.sdd/rfcs/ADR-007-club-leader-only-permissions.md`. Code, sơ đồ, PNG và docx được sửa cùng đợt.
+  - Thay đổi:
+    - BR54: Club Leader đã xác nhận giữ mọi permission CLB; role không cấp permission nào; mọi
+      thành viên `Active` tự có `club.attendance.manage` (UC30, UC32, hỗ trợ UC31) và
+      `club.room.view` (mới, xem phòng được phân ở UC58). Danh bạ role: Chủ nhiệm → mọi permission,
+      Members → hai permission mặc định, role khác → không có.
+    - BR55: danh mục cố định; không permission nào cấp được cho role — 14 quyền thuộc riêng
+      Club Leader. Phần còn lại (thẩm định cơ cấu ban đầu, ghế ban điều hành qua UC10–UC13, audit)
+      giữ nguyên.
+    - BR47 (c): thành viên `Active` → hai quyền mặc định; ghế ban điều hành khác hay role ở UC23
+      không cấp thêm quyền. BR56 giữ nguyên nghĩa đánh phiên bản cơ cấu.
+    - UC23 "Quản lý vai trò CLB và phân quyền" → "Quản lý vai trò CLB": bỏ chọn permission, bỏ A1
+      sửa permission, E3 thành "gửi kèm permission → từ chối".
+    - Actor của UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC33, UC36, UC38, UC45, UC47, UC49, UC52
+      (và UC54 trong SRS) đổi từ Club Member sang Club Leader; ngoại lệ "thiếu permission" thành
+      "người gọi không phải Club Leader của CLB".
+  - Lý do: sơ đồ là bản người dùng muốn giữ; mô hình quyền một tầng (chủ nhiệm / thành viên) đơn
+    giản hơn và bỏ được màn hình cấu hình quyền không còn tác dụng.
+  - Còn lại: swimlane `UCMS_Swimlane_Flows.drawio` (làn `Club Member (Assigned Role)`, trang Club
+    Roles and Permissions) và context diagram v2.1 vẫn vẽ theo mô hình cũ; tài liệu
+    `05-implementation/` giữ làm lịch sử.

@@ -49,7 +49,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 | M09 Evaluation & Export | Scheme, evaluation, export | Có ICPDP và màn CLB xem kết quả đã công bố (UC43) |
 | M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Ghi dữ liệu có; chưa có mail worker/inbox tổng quát/lease như thiết kế đích |
 | M11 Properties & Booking | Property, non-room booking, room allocation | Có; UC58 CLB xem chỉ dành Leader |
-| M12 Feedback | Event feedback và góp ý một chiều | Có; physical complaints giữ tên cũ, UC51/52 ngoài phạm vi |
+| M12 Feedback | Event feedback và góp ý một chiều | Có; physical complaints giữ tên cũ; UC51/52 chưa triển khai |
 
 ## 4. Workflow, thông báo và audit thật
 

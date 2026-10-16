@@ -1,10 +1,6 @@
 # HỆ THỐNG QUẢN LÝ CÂU LẠC BỘ TRONG TRƯỜNG ĐẠI HỌC
 ## University Club Management System (UCMS)
 
-> **Tài liệu lịch sử.** Các phần RBAC, CMB, role tự tạo và cách đánh số UC đã bị thay thế.
-> Baseline runtime: [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md). Phía CLB chỉ
-> có Club Leader/Club Member cố định và UC23 đã rút.
-
 > **Loại tài liệu:** Business & System Analysis / Requirement Baseline  
 > **Mục tiêu:** Làm nền tảng cho SRS, Use Case Diagram, Use Case Specification, Activity Diagram, Sequence Diagram, ERD, Database Design, API Design, UI/UX, Test Case, Product Backlog và Sprint Backlog.  
 > **Nguyên tắc thiết kế:** Business Problem → Business Process → Actor → Requirement → Use Case.  

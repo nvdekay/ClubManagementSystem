@@ -21,15 +21,15 @@ Phía CLB chỉ có hai role cố định:
 Không còn role tự tạo, không cấu hình permission theo role và không gán permission lẻ cho thành
 viên. API `/clubs/:clubId/roles*`, `/clubs/:clubId/role-directory` và UI “Vai trò & phân quyền”
 đã bị gỡ. `clubPositions.permissionCodes` và `clubRoleStructureVersions` vẫn tồn tại trong schema
-để tương thích dữ liệu nhưng không cấp quyền. UC23 đã rút và giữ số hiệu để không đánh lại UC.
+để tương thích dữ liệu nhưng không cấp quyền. UC23 không triển khai vì role CLB cố định (ADR-007); SRS vẫn giữ mục UC23.
 
 ## 2. Ánh xạ theo actor
 
 Ma trận đủ 56 mã UC với link route/UI: [UC_CODE_MAPPING.md](05-implementation/UC_CODE_MAPPING.md).
-Danh mục có 52 UC còn trong phạm vi và 4 mã đã rút; số lượng này không phải số UC đã hoàn thành.
+Theo SRS trên `main`, UC05 đã rút và còn 55 UC hiệu lực. Code không triển khai UC23, UC51, UC52 (lý do ở mục 1 và mục 3).
 
 Ký hiệu: **Có** = route/use case/UI hiện hành; **Một phần** = có một phía hoặc còn thiếu nhánh
-nghiệp vụ; **Đã rút/đổi scope** = không còn là chức năng như đặc tả cũ.
+nghiệp vụ; **Không triển khai** = code không làm theo đặc tả SRS vì đã đổi hướng.
 
 | Actor | Use case | Hiện trạng |
 |---|---|---|
@@ -52,7 +52,7 @@ nghiệp vụ; **Đã rút/đổi scope** = không còn là chức năng như đ
 | Club Leader | UC12 lập kế hoạch chuyển giao | Có, tại `/club/:clubId/transition-plans` |
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn) |
-| Club Leader | UC23 quản lý role | **Đã rút** |
+| Club Leader | UC23 quản lý role | **Không triển khai** (role cố định) |
 | Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
 | Club Leader | UC36 khoản chi/quyết toán | Có, đã nối vào app chính; chứng từ bắt buộc (BR25), hạn hoàn trả 7 ngày (BR58) |
@@ -61,13 +61,13 @@ nghiệp vụ; **Đã rút/đổi scope** = không còn là chức năng như đ
 | Club Leader | UC43 xem kết quả đánh giá | Có, tại `/club/:clubId/evaluations`; chỉ thấy kết quả `Published` |
 | Club Leader | UC45, UC47 booking ngoài `ROOM` | Có |
 | Club Leader | UC49 xem tổng hợp feedback | Có |
-| Club Leader | UC52 phản hồi complaint | Đã rút theo việc đổi UC50 thành góp ý một chiều |
+| Club Leader | UC52 phản hồi complaint | Không triển khai; UC50 là góp ý một chiều |
 | ICPDP | UC03, UC04 tài khoản/chính sách | Có; UC05 đã rút |
 | ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests` |
 | ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính |
 | ICPDP | UC37 đối soát | Có, đã nối vào app chính; A2 đối soát tối đa bằng số đã tạm ứng, không cấp bù |
 | ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end |
-| ICPDP | UC51 complaint triage | Đã rút theo scope góp ý một chiều |
+| ICPDP | UC51 complaint triage | Không triển khai; UC50 là góp ý một chiều |
 | ICPDP | UC53 sự kiện cấp trường | Có |
 | Club Leader | UC54 phản hồi lời mời | Có, tại `/club/:clubId/invitations`; từ chối phải kèm lý do |
 | ICPDP | UC55 xuất dữ liệu | Có |
@@ -81,10 +81,11 @@ ngày 15/10/2026 (xem `.sdd/specs/feat-club-transition-plans`, `feat-suspension-
 `feat-club-compliance`, `feat-club-invitations`, `feat-application-expiry`). Còn lại:
 
 1. UC50 đã đổi scope theo quyết định 09/10/2026 trong `feat-student-feedback`: giữ góp ý một
-   chiều; UC51/UC52 ngoài phạm vi. Không coi đây là UC còn phải triển khai.
+   chiều, nên UC51/UC52 chưa triển khai. SRS trên `main` vẫn giữ đặc tả hai UC này; nhóm cần chốt
+   bỏ hẳn hay làm sau.
 2. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi.
-3. Seed demo chưa tạo ngân sách sự kiện, nên chưa thử trọn luồng chi, quyết toán, đối soát
-   UC36/UC37 trên giao diện với dữ liệu demo.
+3. Luồng UC36/UC37 và vòng UC38 → UC39 → UC38 đã bấm thử trọn trên giao diện ngày 16/10/2026
+   với dữ liệu seed demo (xem TASKS của `feat-event-finance` và `feat-periodic-reports`).
 4. Mail delivery worker và inbox notification tổng quát chưa được nối như thiết kế đích.
 
 ## 4. Các điểm cần đọc đúng khi đối chiếu
@@ -96,7 +97,7 @@ ngày 15/10/2026 (xem `.sdd/specs/feat-club-transition-plans`, `feat-suspension-
 - API public còn mở, trong khi client yêu cầu đăng nhập cho cả trang chủ/danh bạ. Đây là khác biệt
   giữa API và UI hiện hành, không phải bằng chứng Guest dùng được UI.
 - `club.transition.plan` (UC12) và `club.suspension.request` (UC14) đã có route nghiệp vụ.
-  `club.complaint.respond` nay dùng cho màn tuân thủ UC40 phía CLB; complaint response UC52 vẫn đã rút.
+  `club.complaint.respond` nay dùng cho màn tuân thủ UC40 phía CLB; complaint response UC52 chưa triển khai.
 - `isBoardSeat` là cờ kỹ thuật: resolver cấp quyền cho mọi vị trí active mang cờ này và assignment
   đã xác nhận. Cơ cấu chuẩn hiện tạo Chủ nhiệm/Phó chủ nhiệm; dữ liệu cũ gắn cờ cho ghế khác cũng
   được resolver coi là Leader.

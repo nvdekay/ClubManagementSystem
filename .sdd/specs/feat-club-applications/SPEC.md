@@ -1,5 +1,7 @@
 # SPEC: feat-club-applications
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** cơ cấu role trong hồ sơ không còn mang permission; mọi `permissionCodes` khác rỗng bị từ chối. Role VICE_LEADER / MEMBERS sáng lập không có permission (BR54, BR55).
+
 ## Vấn đề
 Sinh viên cần nộp hồ sơ thành lập CLB để ICPDP thẩm định. Mọi lần nộp phải giữ bản chụp bất biến của nội dung và cơ cấu role đã gửi, áp dụng đúng chính sách hiệu lực khi nộp.
 

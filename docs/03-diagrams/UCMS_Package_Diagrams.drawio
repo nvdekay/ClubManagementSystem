@@ -1,55 +1,190 @@
-<mxfile host="app.diagrams.net"><diagram id="fe-packages" name="Front-end packages"><mxGraphModel grid="1" gridSize="10" page="0" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="fe-packages_1" value="UCMS — Front-end packages (client/src)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="20" y="10" width="900" height="36" as="geometry"/></mxCell>
-<mxCell id="fe-packages_2" value="app&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;main.tsx (router, providers), App.tsx&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1"><mxGeometry x="480" y="70" width="300" height="80" as="geometry"/></mxCell>
-<mxCell id="fe-packages_3" value="pages" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;spacingTop=24;" vertex="1" parent="1"><mxGeometry x="150" y="220" width="960" height="150" as="geometry"/></mxCell>
-<mxCell id="fe-packages_4" value="auth" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="180" y="280" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_5" value="public" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="365" y="280" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_6" value="student" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="550" y="280" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_7" value="club" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="735" y="280" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_8" value="icpdp" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="920" y="280" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_9" value="components" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;spacingTop=24;" vertex="1" parent="1"><mxGeometry x="150" y="450" width="620" height="150" as="geometry"/></mxCell>
-<mxCell id="fe-packages_10" value="layout" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="180" y="510" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_11" value="custom" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="380" y="510" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_12" value="ui" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="580" y="510" width="160" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_13" value="hooks&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;React Query hooks per domain&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1"><mxGeometry x="850" y="480" width="260" height="90" as="geometry"/></mxCell>
-<mxCell id="fe-packages_14" value="i18n&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;en / vi strings per module&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="150" y="690" width="260" height="90" as="geometry"/></mxCell>
-<mxCell id="fe-packages_15" value="utils&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;framework-free helpers&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="480" y="690" width="260" height="90" as="geometry"/></mxCell>
-<mxCell id="fe-packages_16" value="services&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;typed API clients, one per domain&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="850" y="690" width="260" height="90" as="geometry"/></mxCell>
-<mxCell id="fe-packages_17" value="«external»&lt;br&gt;UCMS REST API&lt;br&gt;/api/v1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fontSize=12;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="890" y="860" width="180" height="70" as="geometry"/></mxCell>
-<mxCell id="fe-packages_18" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fe-packages_2" target="fe-packages_3"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_19" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.6;entryX=0.25;entryY=0;" edge="1" parent="1" source="fe-packages_2" target="fe-packages_10"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="120" y="118"/><mxPoint x="120" y="440"/><mxPoint x="220" y="440"/></Array></mxGeometry></mxCell>
-<mxCell id="fe-packages_20" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.32;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fe-packages_3" target="fe-packages_9"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_21" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.865;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fe-packages_3" target="fe-packages_13"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_22" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="fe-packages_9" target="fe-packages_13"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_23" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;entryX=0;entryY=0.6;" edge="1" parent="1" source="fe-packages_10" target="fe-packages_11"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_24" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;entryX=0;entryY=0.6;" edge="1" parent="1" source="fe-packages_11" target="fe-packages_12"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_25" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.21;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fe-packages_9" target="fe-packages_14"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_26" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.74;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fe-packages_9" target="fe-packages_15"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_27" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fe-packages_13" target="fe-packages_16"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_28" value="HTTPS / JSON" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="fe-packages_16" target="fe-packages_17"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="fe-packages_29" value="pages also import hooks, services, i18n and utils directly; only the main dependencies are drawn. No package below imports a package above it." style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1"><mxGeometry x="150" y="860" width="520" height="56" as="geometry"/></mxCell>
-<mxCell id="fe-packages_30" value="&lt;b&gt;Notation: UML package diagram&lt;/b&gt;&lt;br&gt;Folder = package (a source directory). Nested folder = sub-package.&lt;br&gt;Dashed arrow with open head = «import» dependency: the tail package imports the head package." style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1"><mxGeometry x="1180" y="70" width="520" height="74" as="geometry"/></mxCell>
-</root></mxGraphModel></diagram>
-<diagram id="be-packages" name="Back-end packages"><mxGraphModel grid="1" gridSize="10" page="0" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="be-packages_1" value="UCMS — Back-end packages (server/src)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="20" y="10" width="900" height="36" as="geometry"/></mxCell>
-<mxCell id="be-packages_2" value="main.ts&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;composition root: wires repositories into use cases&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1"><mxGeometry x="60" y="250" width="250" height="100" as="geometry"/></mxCell>
-<mxCell id="be-packages_3" value="interface" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;spacingTop=24;" vertex="1" parent="1"><mxGeometry x="420" y="70" width="620" height="160" as="geometry"/></mxCell>
-<mxCell id="be-packages_4" value="http&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;routes, validation, response envelope&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="450" y="130" width="260" height="80" as="geometry"/></mxCell>
-<mxCell id="be-packages_5" value="jobs&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;scheduled lifecycle and reminder jobs&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="750" y="130" width="260" height="80" as="geometry"/></mxCell>
-<mxCell id="be-packages_6" value="usecase&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;one file per business flow; rules, scope checks, audit&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="560" y="310" width="340" height="100" as="geometry"/></mxCell>
-<mxCell id="be-packages_7" value="domain&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;entities, state machines, errors, repository ports&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="560" y="490" width="340" height="100" as="geometry"/></mxCell>
-<mxCell id="be-packages_8" value="infra" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;spacingTop=24;" vertex="1" parent="1"><mxGeometry x="250" y="690" width="960" height="160" as="geometry"/></mxCell>
-<mxCell id="be-packages_9" value="db&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Mongoose models, repositories&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1"><mxGeometry x="280" y="750" width="205" height="80" as="geometry"/></mxCell>
-<mxCell id="be-packages_10" value="auth&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Google OIDC, sessions&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1"><mxGeometry x="512" y="750" width="205" height="80" as="geometry"/></mxCell>
-<mxCell id="be-packages_11" value="files&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Cloudinary, export files&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1"><mxGeometry x="744" y="750" width="205" height="80" as="geometry"/></mxCell>
-<mxCell id="be-packages_12" value="config&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;environment validation&lt;/span&gt;" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1"><mxGeometry x="976" y="750" width="205" height="80" as="geometry"/></mxCell>
-<mxCell id="be-packages_13" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="be-packages_4" target="be-packages_6"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="be-packages_14" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="be-packages_5" target="be-packages_6"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="be-packages_15" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="be-packages_6" target="be-packages_7"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="be-packages_16" value="implements ports" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="be-packages_8" target="be-packages_7"><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell>
-<mxCell id="be-packages_17" value="" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;entryX=1;entryY=0.5;" edge="1" parent="1" source="be-packages_3" target="be-packages_7"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1100" y="166"/><mxPoint x="1100" y="540"/></Array></mxGeometry></mxCell>
-<mxCell id="be-packages_18" value="starts" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0;entryY=0.6;" edge="1" parent="1" source="be-packages_2" target="be-packages_3"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="185" y="166"/></Array></mxGeometry></mxCell>
-<mxCell id="be-packages_19" value="instantiates" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0;entryY=0.6;" edge="1" parent="1" source="be-packages_2" target="be-packages_8"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="185" y="786"/></Array></mxGeometry></mxCell>
-<mxCell id="be-packages_20" value="Dependency rule: arrows point inward. domain imports nothing; usecase imports only domain; interface and infra never import each other. main.ts is the only place that knows both sides." style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1"><mxGeometry x="60" y="890" width="560" height="62" as="geometry"/></mxCell>
-<mxCell id="be-packages_21" value="&lt;b&gt;Notation: UML package diagram&lt;/b&gt;&lt;br&gt;Folder = package (a source directory). Nested folder = sub-package.&lt;br&gt;Dashed arrow with open head = «import» dependency: the tail package imports the head package.&lt;br&gt;Dashed arrow with hollow triangle = realization: infra implements the repository and service ports declared in domain." style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1"><mxGeometry x="1180" y="70" width="520" height="92" as="geometry"/></mxCell>
-</root></mxGraphModel></diagram></mxfile>
+<mxfile host="65bd71144e">
+    <diagram id="fe-packages" name="Front-end packages">
+        <mxGraphModel dx="1710" dy="987" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="fe-packages_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" value="UCMS — Front-end packages (client/src)" vertex="1">
+                    <mxGeometry height="36" width="900" x="20" y="10" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_2" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" value="app&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;main.tsx (router, providers), App.tsx&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="300" x="480" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_3" parent="1" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;spacingTop=24;" value="pages" vertex="1">
+                    <mxGeometry height="150" width="960" x="150" y="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_4" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" value="auth" vertex="1">
+                    <mxGeometry height="70" width="160" x="180" y="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_5" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" value="public" vertex="1">
+                    <mxGeometry height="70" width="160" x="365" y="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_6" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" value="student" vertex="1">
+                    <mxGeometry height="70" width="160" x="550" y="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_7" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" value="club" vertex="1">
+                    <mxGeometry height="70" width="160" x="735" y="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_8" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#6c8ebf;" value="icpdp" vertex="1">
+                    <mxGeometry height="70" width="160" x="920" y="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_9" parent="1" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;spacingTop=24;" value="components" vertex="1">
+                    <mxGeometry height="150" width="620" x="150" y="450" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_10" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#82b366;" value="layout" vertex="1">
+                    <mxGeometry height="70" width="160" x="180" y="510" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_11" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#82b366;" value="custom" vertex="1">
+                    <mxGeometry height="70" width="160" x="380" y="510" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_12" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#82b366;" value="ui" vertex="1">
+                    <mxGeometry height="70" width="160" x="580" y="510" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_13" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#e1d5e7;strokeColor=#9673a6;" value="hooks&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;React Query hooks per domain&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="90" width="260" x="850" y="480" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_14" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#f5f5f5;strokeColor=#666666;" value="i18n&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;en / vi strings per module&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="90" width="260" x="150" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_15" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#f5f5f5;strokeColor=#666666;" value="utils&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;framework-free helpers&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="90" width="260" x="480" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_16" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffe6cc;strokeColor=#d79b00;" value="services&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;typed API clients, one per domain&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="90" width="260" x="850" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_17" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fontSize=12;fillColor=#ffffff;strokeColor=#666666;" value="«external»&lt;br&gt;UCMS REST API&lt;br&gt;/api/v1" vertex="1">
+                    <mxGeometry height="70" width="180" x="890" y="860" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_18" edge="1" parent="1" source="fe-packages_2" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_3" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_19" edge="1" parent="1" source="fe-packages_2" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.6;entryX=0.25;entryY=0;" target="fe-packages_10" value="">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="120" y="118"/>
+                            <mxPoint x="120" y="440"/>
+                            <mxPoint x="220" y="440"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="fe-packages_20" edge="1" parent="1" source="fe-packages_3" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.32;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_9" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_21" edge="1" parent="1" source="fe-packages_3" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.865;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_13" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_22" edge="1" parent="1" source="fe-packages_9" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="fe-packages_13" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_23" edge="1" parent="1" source="fe-packages_10" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;entryX=0;entryY=0.6;" target="fe-packages_11" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_24" edge="1" parent="1" source="fe-packages_11" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;entryX=0;entryY=0.6;" target="fe-packages_12" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_25" edge="1" parent="1" source="fe-packages_9" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.21;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_14" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_26" edge="1" parent="1" source="fe-packages_9" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.74;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_15" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_27" edge="1" parent="1" source="fe-packages_13" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_16" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_28" edge="1" parent="1" source="fe-packages_16" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_17" value="HTTPS / JSON">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_29" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="pages also import hooks, services, i18n and utils directly; only the main dependencies are drawn. No package below imports a package above it." vertex="1">
+                    <mxGeometry height="56" width="520" x="150" y="860" as="geometry"/>
+                </mxCell>
+                <mxCell id="fe-packages_30" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;b&gt;Notation: UML package diagram&lt;/b&gt;&lt;br&gt;Folder = package (a source directory). Nested folder = sub-package.&lt;br&gt;Dashed arrow with open head = «import» dependency: the tail package imports the head package." vertex="1">
+                    <mxGeometry height="74" width="520" x="1180" y="70" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="be-packages" name="Back-end packages">
+        <mxGraphModel dx="1710" dy="987" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="be-packages_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" value="UCMS — Back-end packages (server/src)" vertex="1">
+                    <mxGeometry height="36" width="900" x="20" y="10" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_2" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" value="main.ts&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;composition root: wires repositories into use cases&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="100" width="250" x="60" y="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_3" parent="1" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;spacingTop=24;" value="interface" vertex="1">
+                    <mxGeometry height="160" width="620" x="420" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_4" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#d79b00;" value="http&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;routes, validation, response envelope&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="260" x="450" y="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_5" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#d79b00;" value="jobs&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;scheduled lifecycle and reminder jobs&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="260" x="750" y="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_6" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="usecase&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;one file per business flow; rules, scope checks, audit&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="100" width="340" x="560" y="310" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_7" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;" value="domain&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;entities, state machines, errors, repository ports&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="100" width="340" x="560" y="490" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_8" parent="1" style="shape=folder;tabWidth=110;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;spacingTop=24;" value="infra" vertex="1">
+                    <mxGeometry height="160" width="960" x="250" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_9" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="db&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Mongoose models, repositories&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="205" x="280" y="750" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_10" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="auth&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Google OIDC, sessions&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="205" x="512" y="750" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_11" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="files&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Cloudinary, export files&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="205" x="744" y="750" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_12" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="config&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;environment validation&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="205" x="976" y="750" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_13" edge="1" parent="1" source="be-packages_4" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" target="be-packages_6" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_14" edge="1" parent="1" source="be-packages_5" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" target="be-packages_6" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_15" edge="1" parent="1" source="be-packages_6" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="be-packages_7" value="">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_16" edge="1" parent="1" source="be-packages_8" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=block;endFill=0;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" target="be-packages_7" value="implements ports">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_17" edge="1" parent="1" source="be-packages_3" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.6;entryX=1;entryY=0.5;" target="be-packages_7" value="">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="166"/>
+                            <mxPoint x="1100" y="540"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="be-packages_18" edge="1" parent="1" source="be-packages_2" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0;entryY=0.6;" target="be-packages_3" value="starts">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="185" y="166"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="be-packages_19" edge="1" parent="1" source="be-packages_2" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0;entryY=0.6;" target="be-packages_8" value="instantiates">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="185" y="786"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="be-packages_20" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="Dependency rule: arrows point inward. domain imports nothing; usecase imports only domain; interface and infra never import each other. main.ts is the only place that knows both sides." vertex="1">
+                    <mxGeometry height="62" width="560" x="60" y="890" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_21" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;b&gt;Notation: UML package diagram&lt;/b&gt;&lt;br&gt;Folder = package (a source directory). Nested folder = sub-package.&lt;br&gt;Dashed arrow with open head = «import» dependency: the tail package imports the head package.&lt;br&gt;Dashed arrow with hollow triangle = realization: infra implements the repository and service ports declared in domain." vertex="1">
+                    <mxGeometry height="92" width="520" x="1180" y="70" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

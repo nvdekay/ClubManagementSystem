@@ -8,6 +8,8 @@
 > Không còn danh mục role/permission cho Club Member. Club Member không có permission quản lý;
 > Club Leader nhận toàn bộ permission cố định. Không triển khai các tiêu chí cũ dưới đây.
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** role CLB không còn mang permission. Danh mục chỉ đọc hiển thị role Chủ nhiệm → mọi permission, role Members → `club.attendance.manage`, `club.room.view`, role khác → không có. `club.member.manage` thuộc riêng Club Leader.
+
 ## Vấn đề
 Thành viên cần biết mỗi role có permission gì mà không mở màn Thiết lập CLB hay được cấp quyền quản trị role.
 

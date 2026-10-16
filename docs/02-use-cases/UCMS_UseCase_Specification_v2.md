@@ -1,10 +1,5 @@
 # UCMS — Đặc tả chi tiết Use Case v2
 
-> **Đối chiếu code ngày 15/10/2026 (`60fc2db`).** Phía CLB có hai role cố định;
-> UC23 đã rút, UC50 là góp ý một chiều và UC51/UC52 ngoài phạm vi.
-> Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
-
-
 > **Phạm vi:** đặc tả đầy đủ của cả 53 use case (UC01–UC52 và UC58) trong
 > [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md). Tài liệu này thay thế §9 của
 > [`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md)
@@ -25,12 +20,16 @@ Use case liên quan · Pain point
 ```
 
 Một trường chỉ bị bỏ trống khi use case thực sự không có gì cho trường đó (không có hệ thống
-ngoài, không có pain point riêng). Danh mục có 56 mã, 52 còn trong phạm vi; trạng thái code xem ma trận implementation — xem §12 của tài
+ngoài, không có pain point riêng). Cả 53 use case ra trong một bản phát hành — xem §12 của tài
 liệu mô hình.
 
-**Actor phía CLB (cập nhật 15/10/2026).** Phía CLB chỉ còn hai role cố định. Club Leader là
-Chủ nhiệm hoặc Phó chủ nhiệm đã xác nhận và nhận toàn bộ permission quản lý; Club Member không
-nhận permission quản lý, chỉ xem và tham gia. UC23 và toàn bộ role tự tạo đã rút.
+**Actor phía CLB (I58).** Actor `CMB` cũ được tách thành **Club Member** và **Club Leader**
+(Student ◁ Club Member ◁ Club Leader — xem §3 của tài liệu mô hình). Từ 2026-10-13 (I66), mọi
+use case vận hành CLB ghi actor "Club Leader (`club.…`)" kèm mã permission mà code kiểm tra, và có
+một ngoại lệ từ chối khi người gọi không phải Club Leader của CLB (BR54, BR55). Role CLB không
+mang permission. Riêng UC22, UC24, UC30, UC32 và phần xem phòng được phân của UC58 dành cho mọi
+thành viên `Active`. Trong câu văn, "CMB"
+vẫn là tên gọi chung của phía CLB.
 
 **Kế thừa actor trên sơ đồ.** User là actor trừu tượng gom UC01 và UC02. Mỗi trang theo actor
 chỉ vẽ quan hệ tới actor cha trực tiếp: Student → User; Club Member → Student;
@@ -66,16 +65,16 @@ quyền và luồng của từng use case giữ theo đặc tả dưới đây.
 | UC20 | Tiếp nhận ứng viên trúng tuyển | Club Leader | M04 |
 | UC21 | Quản lý trạng thái thành viên | Club Leader | M04 |
 | UC22 | Xin rời CLB | Club Member | M04 |
-| UC23 | Đã rút: role tự tạo | — | — |
+| UC23 | Quản lý vai trò CLB | Club Leader | M03/M04 |
 | UC24 | Sử dụng không gian thành viên của tôi | Club Member | M04 |
 | UC25 | Nộp đề xuất tổ chức sự kiện | Club Leader | M05 |
 | UC26 | Thẩm định và quyết định đề xuất sự kiện | ICPDP | M05 |
 | UC27 | Công bố sự kiện và mở đăng ký | Club Leader | M05 |
 | UC28 | Huỷ hoặc đổi lịch sự kiện | Club Leader | M05 |
 | UC29 | Đăng ký tham gia sự kiện | Student | M06 |
-| UC30 | Quản lý sức chứa và danh sách chờ | Club Leader | M06 |
+| UC30 | Quản lý sức chứa và danh sách chờ | Club Member | M06 |
 | UC31 | Check-in vào sự kiện | Student | M06 |
-| UC32 | Chốt điểm danh sự kiện | Club Leader | M06 |
+| UC32 | Chốt điểm danh sự kiện | Club Member | M06 |
 | UC33 | Nộp báo cáo sau sự kiện | Club Leader | M08 |
 | UC34 | Thẩm định và đóng báo cáo sự kiện | ICPDP | M08 |
 | UC35 | Ghi nhận giải ngân | ICPDP | M07 |
@@ -94,9 +93,9 @@ quyền và luồng của từng use case giữ theo đặc tả dưới đây.
 | UC58 | Phân phòng học cho CLB theo học kỳ | ICPDP | M11 |
 | UC48 | Gửi phản hồi sau sự kiện | Student | M12 |
 | UC49 | Xem phản hồi sự kiện | Club Leader | M12 |
-| UC50 | Gửi góp ý một chiều tới CLB/ICPDP | Student | M12 |
-| UC51 | Ngoài phạm vi: triage complaint | — | — |
-| UC52 | Ngoài phạm vi: response complaint | — | — |
+| UC50 | Gửi khiếu nại về một CLB | Student | M12 |
+| UC51 | Phân loại khiếu nại | ICPDP | M12 |
+| UC52 | Trả lời khiếu nại được chuyển xuống | Club Leader | M12 |
 
 ---
 
@@ -204,50 +203,49 @@ quyền và luồng của từng use case giữ theo đặc tả dưới đây.
 - **Hậu điều kiện:** Tập vai trò hoặc trạng thái tài khoản đã đổi và được audit; một tài khoản
   bị khoá sẽ bị từ chối ở UC01 (ngoại lệ E2 tại đó).
 - **Quy tắc nghiệp vụ:** BR47 — use case này không bao giờ cấp quyền CMB; quyền đó chỉ đến từ
-  một vị trí đã xác nhận trong nhiệm kỳ đang hoạt động (UC08, UC11, UC13). Phân cấp bên trong ICPDP được
+  một vị trí đã xác nhận trong nhiệm kỳ đang hoạt động (UC08, UC11, UC13, UC23). Phân cấp bên trong ICPDP được
   biểu diễn bằng quyền, không bao giờ bằng một actor mới. "Vai trò đặc biệt" của BR19 được cấp
   tại đây.
 - **Đầu ra:** Bản gán vai trò, trạng thái tài khoản, bản ghi audit.
 - **Use case liên quan:** UC01, UC11, UC13, UC40
 
-## UC04 — Cấu hình chính sách và deadline của nhà trường
+## UC04 – Cấu hình chính sách và deadline của nhà trường
 
-| | |
-|---|---|
-| **Module · Ưu tiên** | M01 · P1 |
-| **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Thay đổi một quy tắc nghiệp vụ mà không cần release code |
-| **Kích hoạt** | Quy định của trường thay đổi, hoặc bắt đầu một kỳ học mới |
-| **Tiền điều kiện** | Người gọi có quyền cấu hình chính sách |
-| **Thực thể / trạng thái** | `PolicyVersion` — đánh phiên bản, có ngày hiệu lực |
-| **Quy tắc** | BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách dưới đây; mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách (danh sách ở mục BR42 của catalogue quy tắc nghiệp vụ) |
-| **Liên quan · Pain point** | UC01, UC07, UC15, UC25, UC33, UC38, UC45, UC48 · BP14 |
-
-**Danh sách giá trị cấu hình được (đầy đủ — BR42)**
-
-| Giá trị | Quy tắc nó chi phối |
-|---|---|
-| Domain email | Không cấu hình ở UC04; lấy từ `ALLOWED_DOMAIN` của server |
-| Số thành viên sáng lập tối thiểu | BR03, UC07 |
-| `formRequirements` cho thành lập và hồ sơ CLB | Bật/tắt yêu cầu field theo form cố định; không có role/permission tuỳ biến |
-| Deadline báo cáo và các mốc nhắc (`T−X`, `T`, `T+Y`, `T+Z`) | BR20, §8.2 |
-| Ngưỡng xung đột | BR15, UC25, UC45 |
-| Độ dài feedback window và số người phản hồi tối thiểu | BR36, BR40, UC48, UC49 |
-| Chính sách overbooking (chỉ cơ sở vật chất ngoài `ROOM`) | BR33, UC46 |
-| Công tắc cưỡng chế (chặn đề xuất mới khi còn nghĩa vụ quá hạn: báo cáo, quyết toán, hoàn trả) | BR21, UC25 |
-| Lịch học kỳ — ngày bắt đầu và kết thúc | BR44, BR45, BR62, UC15, UC21 A2, UC58 |
-
-| ID | Hệ thống phải … |
-|---|---|
-| FR-UC04-01 | Hiển thị bộ chính sách của kỳ hiện tại và cho officer sửa một hoặc nhiều giá trị trong danh sách trên |
-| FR-UC04-02 | Validate từng giá trị và từ chối tổ hợp mâu thuẫn nội tại |
-| FR-UC04-03 | Lưu mỗi lần xác nhận thành một **phiên bản chính sách mới** kèm ngày hiệu lực, và ghi audit |
-| FR-UC04-04 | Giữ nguyên mọi quyết định đã ra theo đúng giá trị tại thời điểm ra quyết định — thay đổi chính sách không bao giờ viết lại lịch sử |
-| FR-UC04-05 | *(A1)* Chấp nhận ngày hiệu lực trong tương lai và chỉ áp dụng giá trị từ ngày đó |
-| FR-UC04-06 | *(E1)* Từ chối giá trị làm vô hiệu một quyết định đã ra, và liệt kê các bản ghi bị ảnh hưởng |
-| FR-UC04-07 | Không phơi ra bất kỳ giá trị cấu hình nào ngoài danh sách trên (BR42) |
-
-**Hậu điều kiện** — một phiên bản chính sách mới có hiệu lực. **Đầu ra** — `PolicyVersion`, bản ghi audit.
+- **Actor chính:** ICPDP Officer
+- **Module:** M01
+- **Mục tiêu nghiệp vụ:** Đổi một quy tắc nghiệp vụ mà không cần một lần phát hành.
+- **Kích hoạt:** Một quy định của trường thay đổi, hoặc một kỳ học mới bắt đầu.
+- **Tiền điều kiện:** Người gọi có quyền cấu hình chính sách.
+- **Dữ liệu vào:**
+  - domain email được phép (BR32);
+  - số thành viên sáng lập tối thiểu (BR03);
+  - các tài liệu bắt buộc của hồ sơ thành lập (BR02);
+  - deadline báo cáo và các mốc nhắc (BR20, §19);
+  - ngưỡng xung đột (BR15);
+  - feedback window và số người phản hồi tối thiểu (BR36, BR40);
+  - chính sách overbooking (BR33 — chỉ áp dụng cho UC46, không cho phòng học);
+  - các công tắc cưỡng chế (BR21);
+  - lịch học kỳ — ngày bắt đầu và kết thúc của từng học kỳ (dùng cho việc giải thể ở UC15 và
+    phân phòng học ở UC58).
+- **Luồng chính:**
+  1. Officer mở bộ chính sách của kỳ hiện tại.
+  2. Officer sửa một hoặc nhiều giá trị.
+  3. Hệ thống validate từng giá trị và từ chối một tổ hợp mâu thuẫn.
+  4. Officer xác nhận.
+  5. Hệ thống lưu một phiên bản chính sách mới, có hiệu lực từ một ngày nêu rõ, và ghi audit.
+- **Luồng thay thế:**
+  - **A1 Thay đổi có lịch:** một giá trị được đặt ngày hiệu lực trong tương lai và chỉ có hiệu
+    lực từ ngày đó.
+- **Ngoại lệ:** **E1** một giá trị sẽ làm vô hiệu một quyết định đã ra → từ chối, kèm danh sách
+  các bản ghi bị ảnh hưởng.
+- **Hậu điều kiện:** Một phiên bản chính sách mới đang có hiệu lực; những quyết định đã ra giữ
+  nguyên các giá trị mà chúng được ra theo.
+- **Quy tắc nghiệp vụ:** BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách trên. Mọi giá trị
+  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị này
+  chỉ trở nên sửa được khi có nhu cầu thật (§14 của tài liệu mô hình, quyết định D2).
+- **Đầu ra:** Phiên bản chính sách, bản ghi audit.
+- **Use case liên quan:** UC01, UC07, UC25, UC33, UC38, UC45, UC48
+- **Pain point:** BP14
 
 ## UC05 – Đã rút: Cấu hình quy tắc định tuyến phê duyệt
 
@@ -261,7 +259,7 @@ lại UC06–UC52.
 
 ## UC06 – Khám phá CLB và hoạt động đang mở
 
-> **Hiện trạng code:** API `/public/*` không cần session; client `PublicLayout.tsx` yêu cầu đăng nhập cho cả trang chủ/danh bạ.
+Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clubs` (UC06) của Student; không có use case `View club profile` riêng ở hai actor này.
 
 - **Actor chính:** Student
 - **Module:** M02
@@ -289,101 +287,121 @@ lại UC06–UC52.
 - **Đầu ra:** Không ghi dữ liệu.
 - **Use case liên quan:** UC16, UC17, UC27, UC29
 
-## UC07 — Nộp hồ sơ đề nghị thành lập CLB
+## UC07 – Nộp hồ sơ đề nghị thành lập CLB
 
-| | |
-|---|---|
-| **Module · Ưu tiên** | M02 · P1 |
-| **Actor chính** | Student |
-| **Mục tiêu nghiệp vụ** | Đề xuất một CLB mới qua một quy trình chuẩn, truy vết được |
-| **Kích hoạt** | Một nhóm sinh viên muốn lập CLB |
-| **Tiền điều kiện** | Đã đăng nhập và đủ điều kiện lập CLB định nghĩa trong tài liệu chính sách |
-| **Dữ liệu vào** | Tên, lĩnh vực từ danh mục, summary/objectives, founders với chức vụ cố định, đề án/logo; không tự cấu hình role hay permission |
-| **Thực thể / trạng thái** | `ClubApplication`: `Draft → Submitted`; `Revision Requested → Submitted` (version mới); `… → Withdrawn` |
-| **Quy tắc** | BR02, BR03, BR04, BR55, BR56 |
-| **Liên quan · Pain point** | UC02, UC08 · BP04 |
+- **Actor chính:** Student
+- **Module:** M02
+- **Mục tiêu nghiệp vụ:** Cho sinh viên đề xuất một CLB mới qua một quy trình chuẩn, truy vết được.
+- **Kích hoạt:** Một nhóm sinh viên muốn lập một CLB.
+- **Tiền điều kiện:** Đã đăng nhập và đủ điều kiện lập CLB định nghĩa trong tài liệu chính sách.
+- **Dữ liệu vào:** Tên CLB, lĩnh vực, mục tiêu; các thành viên sáng lập; cơ cấu tổ chức dự kiến
+  (danh sách role — tên, ban/bộ phận, một hay nhiều người giữ, có thuộc ban điều hành không; role
+  không mang permission, BR54); các tài liệu bắt buộc.
+- **Luồng chính:**
+  1. Sinh viên nhập tên CLB, lĩnh vực và mục tiêu.
+  2. Sinh viên khai báo các thành viên sáng lập.
+  3. Sinh viên khai báo cơ cấu tổ chức dự kiến: hệ thống có sẵn role Chủ nhiệm (cố định, thuộc ban
+     điều hành) và Members (mặc định); sinh viên thêm các role khác (ví dụ Phó chủ nhiệm, Trưởng
+     ban A, Trưởng ban B), và đánh dấu role nào thuộc ban điều hành (BR55, BR56).
+  4. Sinh viên tải lên các tài liệu bắt buộc (BR02).
+  5. Hệ thống validate tính đầy đủ, số thành viên sáng lập tối thiểu (BR03) và cơ cấu role.
+  6. Sinh viên xác nhận.
+  7. Hệ thống tạo version 1 của hồ sơ, gồm cả cơ cấu role.
+  8. Trạng thái chuyển sang `Submitted`.
+  9. ICPDP nhận một review task, hiển thị trong UC02.
+- **Luồng thay thế:**
+  - **A1 Bản nháp:** sinh viên lưu hồ sơ ở `Draft` và làm tiếp sau.
+  - **A2 Nộp lại sau khi bị yêu cầu chỉnh sửa (UC05 của v1):** từ `Revision Requested`, người
+    nộp sửa các phần bị đánh dấu và nộp lại; hệ thống tạo một **version mới** và đưa hồ sơ về
+    `Submitted`. Version trước vẫn đọc được.
+  - **A3 Rút hồ sơ:** sinh viên rút một hồ sơ chưa có quyết định (`Submitted`, `Under Review`
+    hoặc `Revision Requested`) → `Withdrawn`; mọi review task đang mở được đóng lại.
+- **Ngoại lệ:**
+  - **E1** thiếu một tài liệu bắt buộc → từ chối nộp, hồ sơ ở lại `Draft`;
+  - **E2** số thành viên sáng lập ít hơn mức BR03 cho phép → từ chối;
+  - **E3** đã có một CLB đang hoạt động trùng tên → cảnh báo, và officer quyết định ở UC08;
+  - **E4** cơ cấu thiếu role Chủ nhiệm, hoặc một role được gán permission → từ chối nộp
+    (BR54, BR55).
+- **Hậu điều kiện:** Hồ sơ ở `Submitted`, với một version bất biến (gồm cả cơ cấu role) và một
+  review task.
+- **Quy tắc nghiệp vụ:** BR02, BR03, BR04 — một version đã nộp, gồm cả cơ cấu role, không bao giờ
+  bị ghi đè; BR55, BR56.
+- **Đầu ra:** ClubApplication, ApplicationVersion, ApprovalTask, thông báo.
+- **Use case liên quan:** UC08, UC02, UC23
+- **Pain point:** BP04
 
-| ID | Hệ thống phải … |
-|---|---|
-| FR-UC07-01 | Thu thập tên CLB, lĩnh vực từ danh mục, mô tả, mục tiêu, liên hệ; founders gồm đúng một Chủ nhiệm và 1–2 Phó chủ nhiệm; đề án PDF/DOCX ≤10 MB, logo PNG/JPG ≤2 MB, bắt buộc theo formRequirements |
-| FR-UC07-02 | Validate tính đầy đủ và số lượng thành viên sáng lập tối thiểu trước khi chấp nhận nộp (BR03) |
-| FR-UC07-03 | Tạo **version 1** của hồ sơ khi nộp và đặt trạng thái `Submitted` |
-| FR-UC07-04 | Tạo một review task cho ICPDP, hiển thị trong UC02, với mọi hồ sơ đã nộp |
-| FR-UC07-05 | *(A1)* Cho sinh viên lưu hồ sơ ở trạng thái `Draft` và làm tiếp sau |
-| FR-UC07-06 | *(A2)* Từ `Revision Requested`, cho người nộp sửa các phần bị đánh dấu và nộp lại; tạo **version mới**, đưa hồ sơ về `Submitted`, và giữ mọi version trước đọc được (BR04, CON-08) |
-| FR-UC07-07 | *(A3)* Cho người nộp rút hồ sơ chưa có quyết định (`Submitted`, `Under Review` hoặc `Revision Requested`) → `Withdrawn`, đồng thời đóng review task đang mở |
-| FR-UC07-08 | *(E1)* Từ chối nộp và giữ hồ sơ ở `Draft` khi thiếu một tài liệu bắt buộc |
-| FR-UC07-09 | *(E2)* Từ chối nộp khi số thành viên sáng lập ít hơn mức BR03 cho phép |
-| FR-UC07-10 | Từ chối tên CLB trùng và kiểm tra Chủ nhiệm chồng nhiệm kỳ khi nộp/duyệt |
-| FR-UC07-11 | Không bao giờ ghi đè một version đã nộp (BR04); một version hồ sơ bao gồm cả cơ cấu tổ chức dự kiến |
-| FR-UC07-12 | Dùng cơ cấu cố định Chủ nhiệm/Phó chủ nhiệm/Thành viên; hệ thống tự gắn quyền, sinh viên không tạo role hay chọn permission |
-| FR-UC07-13 | Từ chối khi thiếu đúng một Chủ nhiệm, 1–2 Phó chủ nhiệm, field bắt buộc hoặc đủ founder theo policy |
+## UC08 – Thẩm định và quyết định hồ sơ thành lập CLB
 
-**Hậu điều kiện** — hồ sơ ở `Submitted` với một version bất biến và một review task.
-**Đầu ra** — `ClubApplication`, `ClubApplicationVersion`, `ApprovalTask`, thông báo.
+- **Actor chính:** ICPDP Officer
+- **Module:** M02
+- **Mục tiêu nghiệp vụ:** Một phiên thẩm định duy nhất kết thúc bằng một trong ba kết quả, với
+  lập luận được lưu lại.
+- **Kích hoạt:** Một review task từ UC07.
+- **Tiền điều kiện:** Hồ sơ đang ở `Submitted`; người gọi có quyền thẩm định.
+- **Dữ liệu vào:** Ghi chú thẩm định của officer, các phần bị đánh dấu, quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở hồ sơ; trạng thái chuyển sang `Under Review`.
+  2. Officer kiểm tra thông tin CLB, các thành viên sáng lập, cơ cấu role dự kiến (các role,
+     ban/bộ phận, role nào thuộc ban điều hành), các tài liệu và lịch sử version.
+  3. Officer ghi lại ghi chú thẩm định, gồm cả ý kiến lấy được từ ngoài hệ thống.
+  4. Officer chọn một kết quả:
+     - **Yêu cầu chỉnh sửa** — đánh dấu các phần chưa đạt (có thể là cơ cấu role), nhập nhận xét
+       có cấu trúc, đặt một deadline → `Revision Requested`, người nộp được thông báo;
+     - **Phê duyệt** → `Approved`; một Club được tạo ở `Pending Setup` cùng **phiên bản cơ cấu
+       1** — các role trong hồ sơ, hiệu lực từ ngày duyệt (BR56) — và người nộp
+       nhận ghế tạm của người đứng đơn cho CLB đó;
+     - **Từ chối** — bắt buộc có lý do → `Rejected`; không tạo Club nào.
+  5. Hệ thống ghi bản ghi audit và thông báo cho người nộp.
+- **Luồng thay thế:** không có cấp duyệt thứ hai; bản nộp lại tạo một review task mới và vẫn chỉ
+  nhận một quyết định (BR16).
+- **Ngoại lệ:**
+  - **E1** người nộp rút hồ sơ trong lúc đang thẩm định (UC07 A3) → phiên thẩm định đóng lại và
+    hồ sơ chuyển `Withdrawn`;
+  - **E2** hết deadline chỉnh sửa mà không có bản nộp lại → scheduler chuyển hồ sơ sang
+    `Expired`, và người nộp có thể làm một hồ sơ mới.
+- **Hậu điều kiện:** Hồ sơ ở `Revision Requested`, `Approved` hoặc `Rejected`; khi phê duyệt,
+  tồn tại một Club ở `Pending Setup` với phiên bản cơ cấu 1, và người nộp giữ ghế tạm của người
+  đứng đơn, chỉ dùng được cho UC09, UC10 và UC23 khi CLB còn `Pending Setup`, để ban chủ nhiệm
+  sáng lập có thể được đề cử.
+- **Quy tắc nghiệp vụ:** BR05 — actor, thời điểm và, nếu áp dụng, lý do được lưu cho mọi kết
+  quả. ICPDP không bao giờ sửa dữ liệu thay cho người nộp. Lịch sử quyết định gắn liền với hồ sơ
+  và được đọc tại đây, và đó chính là thứ thoả mãn BP15 mà không cần một use case audit riêng.
+  BR31 — ICPDP là cấp phê duyệt duy nhất. BR55, BR56 — cơ cấu role ban đầu được thẩm định tại
+  đây và trở thành phiên bản 1.
+- **Đầu ra:** ApprovalDecision, Club (khi phê duyệt), phiên bản cơ cấu role 1, các role CLB, bản
+  ghi audit, thông báo.
+- **Use case liên quan:** UC07, UC09, UC10, UC23
+- **Pain point:** BP04, BP15
 
-## UC08 — Thẩm định và quyết định hồ sơ thành lập CLB
+## UC09 – Cấu hình hồ sơ và cơ cấu tổ chức CLB
 
-> **Hiện trạng code:** UC08 hiện tạo CLB `Active` ngay, nhiệm kỳ khởi lập, membership founder và assignment board đã xác nhận; không qua bước setup UC10/UC11 cho lần thành lập.
-
-| | |
-|---|---|
-| **Module · Ưu tiên** | M02 · P1 |
-| **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Một phiên thẩm định duy nhất kết thúc bằng đúng một trong ba kết quả, kèm lý do được lưu lại |
-| **Kích hoạt** | Một review task từ UC07 |
-| **Tiền điều kiện** | Hồ sơ đang `Submitted`; người gọi có quyền thẩm định |
-| **Dữ liệu vào** | Ghi chú thẩm định, các phần bị đánh dấu, quyết định và lý do, deadline chỉnh sửa |
-| **Thực thể / trạng thái** | `ClubApplication`: `Submitted → Under Review → {Revision Requested, Approved, Rejected}`; tạo `Club` ở `Active`, nhiệm kỳ và board đã xác nhận khi duyệt |
-| **Quy tắc** | BR05, BR31, BR55, BR56 |
-| **Liên quan · Pain point** | UC07, UC09, UC10 · BP04, BP15 |
-
-| ID | Hệ thống phải … |
-|---|---|
-| FR-UC08-01 | Chuyển hồ sơ sang `Under Review` khi officer mở nó |
-| FR-UC08-02 | Hiển thị thông tin CLB, thành viên sáng lập, tài liệu, cơ cấu founder cố định (Chủ nhiệm, Phó chủ nhiệm, Thành viên) và toàn bộ lịch sử version trên cùng một màn hình |
-| FR-UC08-03 | Ghi lại ghi chú thẩm định của officer, gồm cả ý kiến lấy từ ngoài hệ thống |
-| FR-UC08-04 | Cung cấp đúng ba kết quả: **yêu cầu chỉnh sửa**, **phê duyệt**, **từ chối** |
-| FR-UC08-05 | Khi **yêu cầu chỉnh sửa**: bắt buộc đánh dấu phần chưa đạt (kể cả cơ cấu tổ chức) và nhập nhận xét có cấu trúc, cho phép đặt deadline, chuyển `Revision Requested` và thông báo người nộp |
-| FR-UC08-06 | Phê duyệt tạo đúng một Club Active ngay, nhiệm kỳ khởi lập một năm đã xác nhận, membership founder, ba vị trí chuẩn và assignment Chủ nhiệm/Phó chủ nhiệm đã xác nhận; hai chức danh nhận cùng toàn bộ quyền Leader |
-| FR-UC08-07 | Khi **từ chối**: bắt buộc nhập lý do, chuyển `Rejected` và không tạo `Club` nào |
-| FR-UC08-08 | Lưu actor, thời điểm và lý do (nếu có) cho mọi kết quả (BR05), và thông báo người nộp |
-| FR-UC08-09 | **Đã rút** — không còn cấp ICPDP thứ hai; mỗi lần nộp chỉ có một quyết định (BR16) |
-| FR-UC08-10 | *(E1)* Đóng phiên thẩm định và đánh dấu hồ sơ `Withdrawn` khi người nộp rút trong lúc đang thẩm định |
-| FR-UC08-11 | *(E2)* Để scheduler chuyển `Expired` khi hết deadline chỉnh sửa mà không có bản nộp lại; người nộp phải làm hồ sơ mới |
-| FR-UC08-12 | Không bao giờ cho ICPDP sửa dữ liệu thay cho người nộp |
-| FR-UC08-13 | Gắn lịch sử quyết định vào hồ sơ và cho đọc ngay tại đây (đây chính là cách BP15 được giải quyết mà không cần một use case audit riêng) |
-
-**Hậu điều kiện** — hồ sơ ở `Revision Requested`, `Approved` hoặc `Rejected`; khi duyệt thì tồn tại một `Club` ở `Active` cùng board đã xác nhận.
-**Đầu ra** — `ApprovalDecision`, `Club` và phiên bản cơ cấu 1 (khi duyệt), bản ghi audit, thông báo.
-
-## UC09 — Cấu hình hồ sơ và cơ cấu tổ chức CLB
-
-| | |
-|---|---|
-| **Module · Ưu tiên** | M02 / M03 · P1 |
-| **Actor chính** | Club Leader |
-| **Mục tiêu nghiệp vụ** | Hoàn thiện thông tin vận hành của một CLB đã được công nhận và mô hình hoá các ban, bộ phận bên trong |
-| **Kích hoạt** | CLB vừa được tạo ở `Pending Setup`, hoặc cơ cấu thay đổi |
-| **Tiền điều kiện** | CLB tồn tại; người gọi có `club.profile.manage` (Club Leader luôn có), hoặc giữ ghế tạm từ UC08 khi CLB còn `Pending Setup` |
-| **Dữ liệu vào** | Mô tả, liên hệ, điều lệ, kênh truyền thông, phạm vi hoạt động; các ban và bộ phận |
-| **Thực thể / trạng thái** | Hồ sơ `Club`, ban / bộ phận và vị trí ban chủ nhiệm |
-| **Quy tắc** | BR54; Trường thuộc thẩm quyền nhà trường chỉ ICPDP sửa được; cơ cấu có thể bị ràng buộc bởi template của trường |
-| **Liên quan** | UC10, UC11 |
-
-| ID | Hệ thống phải … |
-|---|---|
-| FR-UC09-01 | Cho CMB hoàn thiện hoặc sửa thông tin vận hành của CLB |
-| FR-UC09-02 | Cho Club Leader định nghĩa thông tin cơ cấu nội bộ — các ban và bộ phận; thao tác này không tạo role hay permission runtime |
-| FR-UC09-03 | Validate cơ cấu theo template của trường ở những nơi template được áp dụng |
-| FR-UC09-04 | Ghi audit mọi thay đổi hồ sơ và cơ cấu |
-| FR-UC09-05 | *(A1)* Cung cấp cơ cấu mặc định của trường làm điểm khởi đầu |
-| FR-UC09-06 | *(E1)* Từ chối sửa một trường thuộc thẩm quyền nhà trường |
-| FR-UC09-07 | *(E2)* Từ chối xoá một ban/bộ phận còn vị trí hoặc assignment ban chủ nhiệm đang dùng |
-| FR-UC09-08 | Chỉ cho CLB rời `Pending Setup` sau khi UC11 xác nhận ban chủ nhiệm |
-| FR-UC09-09 | *(E)* Từ chối khi người gọi thiếu permission `club.profile.manage` trong CLB đó (BR54) |
-
-**Hậu điều kiện** — hồ sơ và cơ cấu CLB là hiện hành. **Đầu ra** — hồ sơ `Club`, bản ghi ban và bộ phận, bản ghi audit.
+- **Actor chính:** Club Leader (`club.profile.manage`, BR54)
+- **Module:** M02 / M03
+- **Mục tiêu nghiệp vụ:** Hoàn thiện thông tin vận hành của một CLB đã được công nhận và mô hình
+  hoá các đơn vị nội bộ của nó.
+- **Kích hoạt:** CLB được tạo ở `Pending Setup`, hoặc cơ cấu của nó thay đổi.
+- **Tiền điều kiện:** CLB tồn tại; người gọi là Club Leader (`club.profile.manage`), hoặc giữ ghế tạm của người đứng đơn từ UC08 khi CLB còn `Pending Setup` (BR47).
+- **Dữ liệu vào:** Mô tả, liên hệ, điều lệ, kênh truyền thông, phạm vi hoạt động; các ban và bộ
+  phận. Role được định nghĩa ở UC23 (I58); role không mang permission (BR54).
+- **Luồng chính:**
+  1. Thành viên mở hồ sơ CLB.
+  2. Thành viên hoàn thiện hoặc sửa thông tin vận hành.
+  3. Thành viên định nghĩa cơ cấu nội bộ — ban, bộ phận.
+  4. Hệ thống validate theo template của trường ở nơi template được áp dụng.
+  5. Thành viên lưu lại; hệ thống ghi audit thay đổi.
+- **Luồng thay thế:**
+  - **A1 Template:** CLB nhận cơ cấu mặc định của trường và chỉnh sửa từ đó.
+- **Ngoại lệ:**
+  - **E1** một trường thuộc thẩm quyền nhà trường bị sửa → từ chối; các trường đó thuộc về ICPDP;
+  - **E2** xoá một ban/bộ phận còn role gắn với nó → từ chối cho tới khi UC23 chuyển hoặc ngừng
+    dùng các role đó.
+  - **E3** người gọi không phải Club Leader của CLB (`club.profile.manage`) → từ chối (BR54).
+- **Hậu điều kiện:** Hồ sơ và cơ cấu CLB là hiện hành; CLB có thể rời `Pending Setup` sau khi
+  UC11 xác nhận ban chủ nhiệm của nó.
+- **Quy tắc nghiệp vụ:** BR54 (`club.profile.manage`). Các trường thuộc thẩm quyền nhà trường chỉ ICPDP sửa được. Cơ cấu có
+  thể bị ràng buộc bởi template của trường.
+- **Đầu ra:** Hồ sơ CLB, các bản ghi ban và bộ phận, bản ghi audit.
+- **Use case liên quan:** UC10, UC23, UC11
 
 ## UC10 – Đề xuất ban chủ nhiệm CLB
 
@@ -447,8 +465,6 @@ lại UC06–UC52.
 
 ## UC12 – Lập kế hoạch chuyển giao nhiệm kỳ
 
-> **Hiện trạng code:** Có API/UI phía CLB tạo, sửa, nộp và nộp lại transition plan tại `/club/:clubId/transition-plans`; quyền chỉ chuyển sang ban mới khi ICPDP xác nhận ở UC13.
-
 - **Actor chính:** Club Leader (quyền giữ riêng `club.transition.plan`, BR55)
 - **Module:** M03
 - **Mục tiêu nghiệp vụ:** Chuẩn bị một cuộc bàn giao mang theo cả nghĩa vụ của nó thay vì đánh rơi.
@@ -473,7 +489,7 @@ lại UC06–UC52.
 - **Quy tắc nghiệp vụ:** BR08. Các nghĩa vụ vẫn gắn với CLB, không bao giờ gắn với các cá nhân sắp rời đi.
   BR55 — thêm / bỏ role ban điều hành chỉ đi qua chuyển giao.
 - **Đầu ra:** Kế hoạch chuyển giao, ApprovalTask.
-- **Use case liên quan:** UC13, UC10, UC11
+- **Use case liên quan:** UC13, UC10, UC23
 - **Pain point:** BP03
 
 ## UC13 – Xác nhận chuyển giao nhiệm kỳ
@@ -505,8 +521,6 @@ lại UC06–UC52.
 - **Pain point:** BP03
 
 ## UC14 – Yêu cầu tạm ngừng hoạt động CLB
-
-> **Hiện trạng code:** Có API/UI phía CLB gửi yêu cầu tạm ngừng tại `/club/:clubId/suspension-requests`, kèm xác nhận các sự kiện và booking bị ảnh hưởng; ICPDP duyệt hoặc từ chối tại `/workspace/suspension-requests` (UC15).
 
 - **Actor chính:** Club Leader (quyền giữ riêng `club.suspension.request`, BR55)
 - **Module:** M02
@@ -587,7 +601,7 @@ lại UC06–UC52.
 
 ## UC16 – Tạo và công bố đợt tuyển thành viên
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.recruitment.manage`, BR54)
 - **Module:** M04
 - **Mục tiêu nghiệp vụ:** Tuyển thành viên qua một quy trình có liên kết thay vì một biểu mẫu rời.
 - **Kích hoạt:** CLB cần thành viên cho một nhiệm kỳ hoặc một bộ phận.
@@ -608,7 +622,7 @@ lại UC06–UC52.
   - **E1** CLB đang `Suspended` → từ chối (BR09);
   - **E2** đã tồn tại một đợt tuyển chồng lấn cả vị trí lẫn thời gian → cảnh báo; thành viên có
     thể xác nhận công bố một campaign riêng. Không gộp campaign.
-  - **E3** người gọi thiếu permission `club.recruitment.manage` trong CLB → từ chối (BR54).
+  - **E3** người gọi không phải Club Leader của CLB (`club.recruitment.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Đợt tuyển ở `Published` và nhận đơn trong khung thời gian của nó.
 - **Quy tắc nghiệp vụ:** BR54 (`club.recruitment.manage`). BR01, BR09, BR11.
 - **Đầu ra:** RecruitmentCampaign, thông báo tới người theo dõi.
@@ -647,7 +661,7 @@ lại UC06–UC52.
 
 ## UC18 – Sàng lọc và quyết định đơn ứng tuyển
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.application.review`, BR54)
 - **Module:** M04
 - **Mục tiêu nghiệp vụ:** Đưa toàn bộ đơn của một đợt tuyển từ `Submitted` tới quyết định trong
   một phiên, và giữ lại lập luận.
@@ -669,7 +683,7 @@ lại UC06–UC52.
   - **E1** số lượng nhận vượt chỉ tiêu của đợt tuyển → hệ thống chặn phần vượt và gợi ý đưa vào
     danh sách chờ;
   - **E2** ứng viên đã rút đơn (UC17 A2) → đơn được đóng lại mà không có quyết định.
-  - **E3** người gọi thiếu permission `club.application.review` trong CLB → từ chối (BR54).
+  - **E3** người gọi không phải Club Leader của CLB (`club.application.review`) → từ chối (BR54).
 - **Hậu điều kiện:** Mọi đơn đều mang một quyết định; những đơn được nhận đủ điều kiện sang UC20.
 - **Quy tắc nghiệp vụ:** BR54 (`club.application.review`). Lý do từ chối có thể là bắt buộc theo tài liệu chính sách. Việc sàng lọc và ra
   quyết định là một use case vì chúng là một phiên làm việc trên cùng một thực thể — v1 đã tách
@@ -680,7 +694,7 @@ lại UC06–UC52.
 
 ## UC19 – Ghi nhận đánh giá ứng viên
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.application.review`, BR54)
 - **Module:** M04
 - **Mục tiêu nghiệp vụ:** Làm cho việc tuyển chọn có căn cứ bằng một bản đánh giá có cấu trúc.
 - **Kích hoạt:** Một ứng viên trong danh sách rút gọn được phỏng vấn hoặc kiểm tra.
@@ -694,7 +708,7 @@ lại UC06–UC52.
 - **Luồng thay thế:**
   - **A1 Nhiều người đánh giá:** mỗi người nộp bản đánh giá riêng và hệ thống hiển thị độ phân tán.
 - **Ngoại lệ:** **E1** đợt tuyển không có rubric → ghi nhận một bản đánh giá dạng văn bản tự do.
-  **E2** người gọi thiếu permission `club.application.review` trong CLB → từ chối (BR54).
+  **E2** người gọi không phải Club Leader của CLB (`club.application.review`) → từ chối (BR54).
 - **Hậu điều kiện:** Bản đánh giá được gắn vào đơn và trở nên bất biến ngay khi quyết định được
   đưa ra.
 - **Quy tắc nghiệp vụ:** BR54 (`club.application.review`). Rubric được cấu hình theo từng đợt tuyển.
@@ -703,7 +717,7 @@ lại UC06–UC52.
 
 ## UC20 – Tiếp nhận ứng viên trúng tuyển
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.application.review`, BR54)
 - **Module:** M04
 - **Mục tiêu nghiệp vụ:** Biến một quyết định trúng tuyển thành một bản ghi tư cách thành viên thật.
 - **Kích hoạt:** CLB xác nhận việc nhận một ứng viên trúng tuyển.
@@ -726,21 +740,19 @@ lại UC06–UC52.
   - **E1** đã tồn tại một tư cách thành viên đang hiệu lực cho sinh viên đó và CLB đó → từ chối;
   - **E2** tư cách thành viên của sinh viên ở CLB này là `Banned` → từ chối, kể cả với tiếp nhận
     thủ công (BR46).
-  - **E3** người gọi thiếu permission `club.application.review` trong CLB → từ chối (BR54).
+  - **E3** người gọi không phải Club Leader của CLB (`club.application.review`) → từ chối (BR54).
 - **Hậu điều kiện:** Tồn tại một ClubMembership đang hiệu lực; số lượng thành viên thay đổi.
 - **Quy tắc nghiệp vụ:** BR54 (`club.application.review`). BR13 — một tư cách thành viên chỉ đến từ một ứng viên trúng tuyển hoặc
   một lần tiếp nhận thủ công có thẩm quyền; không có hai tư cách thành viên đang hiệu lực trùng
   nhau. BR46 — một sinh viên `Banned` không bao giờ được tiếp nhận lại vào CLB đó. BR56 — mọi
   thành viên mới giữ role Members.
 - **Đầu ra:** ClubMembership, bản gán role Members, thông báo.
-- **Use case liên quan:** UC18, UC21, UC24
+- **Use case liên quan:** UC18, UC21, UC23, UC24
 - **Pain point:** BP02, BP11
 
 ## UC21 – Quản lý trạng thái thành viên
 
-> **Hiện trạng code:** Luồng quản lý trạng thái, yêu cầu rời và A2 tái xác nhận đầu học kỳ đã có: job mở đợt xác nhận, thành viên xác nhận trong 14 ngày tại `/workspace/clubs`, quá hạn chuyển `Inactive`, Club Leader được miễn.
-
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.member.manage`, BR54)
 - **Module:** M04
 - **Mục tiêu nghiệp vụ:** Giữ danh sách thành viên đúng thực tế tại mọi thời điểm, kể cả khi kết
   thúc một tư cách thành viên.
@@ -769,7 +781,7 @@ lại UC06–UC52.
     thành viên ban chủ nhiệm được tính là đã xác nhận;
   - **E2** một ngày hiệu lực lùi về quá khứ sẽ làm thay đổi một bảng điểm danh hoặc một kỳ đánh
     giá đã chốt → từ chối.
-  - **E3** người gọi thiếu permission `club.member.manage` trong CLB → từ chối (BR54).
+  - **E3** người gọi không phải Club Leader của CLB (`club.member.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Tư cách thành viên mang trạng thái mới kèm ngày hiệu lực, và lịch sử đọc được.
 - **Quy tắc nghiệp vụ:** BR54 (`club.member.manage`). BR52. Mọi thay đổi đều mang một ngày hiệu lực; một lệnh cấm luôn quy được
   trách nhiệm. `Left` và `Banned` là trạng thái cuối — một sinh viên đã `Left` quay lại bằng một
@@ -777,7 +789,7 @@ lại UC06–UC52.
   Việc kết thúc một tư cách thành viên nằm ở đây bất kể ai khởi xướng — đây chính là thứ loại bỏ
   vấn đề hai actor chính của UC23 trong v1.
 - **Đầu ra:** Lịch sử trạng thái thành viên, bản ghi audit, thông báo.
-- **Use case liên quan:** UC20, UC22
+- **Use case liên quan:** UC20, UC22, UC23
 - **Pain point:** BP02
 
 ## UC22 – Xin rời CLB
@@ -803,11 +815,62 @@ lại UC06–UC52.
 - **Use case liên quan:** UC21, UC24
 - **Pain point:** BP02
 
-## UC23 – Đã rút: Quản lý vai trò CLB và phân quyền
+## UC23 – Quản lý vai trò CLB
 
-UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permission, gán role, API hay UI tương ứng. Club Leader là Chủ nhiệm hoặc Phó chủ nhiệm đã xác nhận và nhận toàn bộ permission CLB; Club Member không nhận permission quản lý.
+- **Actor chính:** Club Leader (quyền giữ riêng `club.role.manage`, BR55)
+- **Module:** M03 / M04
+- **Mục tiêu nghiệp vụ:** Chủ nhiệm tự tổ chức CLB — tạo role (chức danh) và giao role cho
+  thành viên. Role **không mang permission**; nhánh "Configure role permissions" đã bị bỏ
+  (2026-10-13, I66) và mọi use case vận hành CLB thuộc riêng Club Leader (BR54, BR55).
+- **Kích hoạt:** CLB cần ghi nhận chức danh của thành viên (thủ quỹ, trưởng ban sự kiện, …),
+  hoặc điều chỉnh cơ cấu đã được duyệt ở UC08.
+- **Tiền điều kiện:** Người gọi là Club Leader của CLB (BR47); CLB đang `Active`, hoặc
+  `Pending Setup` với ghế tạm của người đứng đơn (UC08).
+- **Dữ liệu vào:** Tên role, mô tả, ban/bộ phận (UC09), một hay nhiều người giữ;
+  thành viên, khoảng thời gian hiệu lực (tuỳ chọn).
+- **Luồng chính:**
+  1. Leader mở danh sách role của CLB.
+  2. Leader tạo role (hoặc sửa role có sẵn): tên, mô tả, ban/bộ phận, một hay nhiều người giữ.
+  3. Hệ thống lưu, ghi audit và tạo một **phiên bản cơ cấu mới** (số phiên bản, ngày hiệu lực,
+     người sửa, lý do tuỳ chọn) — phiên bản trước không bị ghi đè (BR56).
+  4. Leader gán một hoặc nhiều thành viên `Active` vào role thường, có thể kèm thời hạn.
+  5. Hệ thống ghi audit, thông báo cho thành viên và hiển thị role ở UC24. Việc gán role không
+     cấp thêm quyền nào (BR54).
+- **Luồng thay thế:**
+  - **A1 Sửa permission của role:** đã bỏ (2026-10-13, I66) — role không mang permission.
+  - **A2 Thu hồi role:** leader thu hồi role của một thành viên; chức danh hết hiệu lực ngay, có
+    audit, thành viên được thông báo.
+  - **A3 Cơ cấu ban đầu:** cơ cấu role của CLB bắt đầu từ cơ cấu khai báo trong hồ sơ thành lập
+    (UC07) và được ICPDP duyệt ở UC08 — phiên bản 1; leader sửa tiếp tại đây.
+  - **A4 Role ban điều hành:** một role ban điều hành (ví dụ Phó chủ nhiệm, Trưởng ban A) được
+    leader sửa tên, mô tả tại đây, nhưng người giữ chỉ đến từ UC10 / UC11 / UC13 — không gán ở
+    UC23.
+  - **A5 Xem lịch sử cơ cấu:** leader mở danh sách các phiên bản cơ cấu và so sánh hai phiên bản.
+- **Ngoại lệ:**
+  - **E1** gán cho thành viên không ở `Active` → từ chối;
+  - **E2** role chỉ cho một người giữ đã có người → từ chối, phải thu hồi trước;
+  - **E3** gửi kèm bất kỳ permission nào cho role → từ chối (BR54);
+  - **E4** ngừng dùng một role còn người giữ, hoặc đang là ghế ban chủ nhiệm đã xác nhận → từ chối
+    cho tới khi thu hồi hoặc thay qua UC10 / UC11;
+  - **E5** người gọi không phải Club Leader → từ chối;
+  - **E6** thêm, bỏ hoặc đánh dấu lại một role ban điều hành trong nhiệm kỳ đang chạy → từ chối;
+    thay đổi phải đi qua chuyển giao UC12 / UC13 (BR55);
+  - **E7** xoá hoặc ngừng dùng role Chủ nhiệm hay Members, hoặc gán tay role Members → từ chối
+    (BR56).
+- **Hậu điều kiện:** Role đã lưu trong một phiên bản cơ cấu mới; thành viên giữ role được ghi
+  nhận chức danh, không có thêm quyền; mọi thay đổi có bản ghi audit.
+- **Quy tắc nghiệp vụ:** BR47, BR49, BR54, BR55, BR56. Không cần ICPDP xác nhận — cờ "chức vụ nhạy
+  cảm" (A1 cũ, trước I58) bị bỏ; ICPDP đã thẩm định cơ cấu ban đầu ở UC08, người giữ role ban
+  điều hành vẫn qua UC10 / UC11 / UC13, và ICPDP xem mọi phiên bản cơ cấu cùng lịch sử ban điều
+  hành (chỉ đọc) ở UC02.
+- **Đầu ra:** Phiên bản cơ cấu role, role CLB, bản gán role, bản ghi audit,
+  thông báo.
+- **Use case liên quan:** UC07, UC08, UC09, UC10, UC11, UC12, UC13, UC20, UC21, UC24
+- **Pain point:** BP02
 
 ## UC24 – Sử dụng không gian thành viên của tôi
+
+`View member list` thuộc UC24 của Club Member (`Active`/`Inactive` trong CLB đang chọn); Club Leader kế thừa chức năng này. UC21 chỉ quản lý thay đổi trạng thái thành viên.
 
 - **Actor chính:** Club Member
 - **Module:** M04 (đọc M05, M06, M07, M12)
@@ -843,7 +906,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC25 – Nộp đề xuất tổ chức sự kiện
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.event.manage`, BR54)
 - **Module:** M05
 - **Mục tiêu nghiệp vụ:** Xin phép tổ chức một sự kiện qua một workflow duy nhất, truy vết được;
   với sự kiện nội bộ thì ghi nhận nó vào hệ thống để ICPDP theo dõi.
@@ -884,7 +947,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
   - **E4** sự kiện không bắt đầu và kết thúc trong cùng một học kỳ → từ chối (BR44);
   - **E5** CLB đã có quyết định giải thể và sự kiện kết thúc sau học kỳ `Dissolving` của nó →
     từ chối (BR45).
-  - **E6** người gọi thiếu permission `club.event.manage` trong CLB → từ chối (BR54).
+  - **E6** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Đề xuất ở `Pending Approval` với một bản sửa bất biến; tồn tại một review
   task. Với A4: sự kiện ở `Approved`, có bản ghi audit và ICPDP xem được ở UC02.
 - **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR10, BR15, BR21, BR22, BR44, BR45, BR53. Phát hiện xung đột là một quy tắc được
@@ -939,7 +1002,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC27 – Công bố sự kiện và mở đăng ký
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.event.manage`, BR54)
 - **Module:** M05
 - **Mục tiêu nghiệp vụ:** Cho khán giả thấy sự kiện và tham gia được.
 - **Kích hoạt:** Sự kiện đã được phê duyệt.
@@ -957,7 +1020,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
     ký; việc check-in vẫn áp dụng.
 - **Ngoại lệ:** **E1** sự kiện chưa `Approved` → từ chối (BR14); **E2** khung thời gian đăng ký
   kết thúc sau khi sự kiện bắt đầu → từ chối.
-  **E3** người gọi thiếu permission `club.event.manage` trong CLB → từ chối (BR54).
+  **E3** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Sự kiện ở `Upcoming` và hiển thị công khai.
 - **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR14, BR17, BR50, BR53. Scheduler chuyển sự kiện sang `Ongoing` và `Completed` theo
   chính mốc giờ của nó (§7 của tài liệu mô hình).
@@ -967,7 +1030,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC28 – Huỷ hoặc đổi lịch sự kiện
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.event.manage`, BR54)
 - **Module:** M05
 - **Mục tiêu nghiệp vụ:** Thay đổi một sự kiện đã duyệt mà không mất vết và không để rò rỉ một
   căn phòng đã đặt.
@@ -995,7 +1058,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
     và UC34;
   - **E2** việc huỷ rơi vào thời hạn báo trước định nghĩa trong tài liệu chính sách → được ghi nhận là một tín hiệu
     tuân thủ cho UC40.
-  - **E3** người gọi thiếu permission `club.event.manage` trong CLB → từ chối (BR54).
+  - **E3** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Sự kiện ở `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký
   được cập nhật; lý do được ghi audit.
 - **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR35 — huỷ một sự kiện sẽ giải phóng booking đã duyệt của nó. D4 đã chốt ngày 2026-10-11: đổi thời gian/địa điểm phải duyệt lại ở UC26,
@@ -1039,7 +1102,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC30 – Quản lý sức chứa và danh sách chờ
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Member (mọi thành viên `Active`, `club.attendance.manage` mặc định — BR54)
 - **Module:** M06
 - **Mục tiêu nghiệp vụ:** Lấp đầy chỗ khi danh sách đăng ký biến động.
 - **Kích hoạt:** Một suất trống ra, hoặc CLB thay đổi sức chứa.
@@ -1053,7 +1116,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
     tác thủ công.
 - **Ngoại lệ:** **E1** sức chứa bị giảm xuống dưới số đã xác nhận → hệ thống từ chối và nêu rõ
   những bản đăng ký sẽ phải bị huỷ.
-  **E2** người gọi thiếu permission `club.attendance.manage` trong CLB → từ chối (BR54).
+  **E2** người gọi không có tư cách thành viên `Active` trong CLB → từ chối (BR54).
 - **Hậu điều kiện:** Danh sách đã xác nhận khớp với sức chứa; thứ tự danh sách chờ được giữ nguyên.
 - **Quy tắc nghiệp vụ:** BR54 (`club.attendance.manage`). BR05, BR17. Việc đẩy lên theo quy tắc định nghĩa trong tài liệu chính sách, không bao giờ theo ưu
   ái thủ công mà không ghi vết.
@@ -1063,7 +1126,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 ## UC31 – Check-in vào sự kiện
 
 - **Actor chính:** Student
-- **Actor hỗ trợ:** Club Leader (check-in thủ công)
+- **Actor hỗ trợ:** Club Member (mọi thành viên `Active`) (check-in thủ công)
 - **Module:** M06
 - **Mục tiêu nghiệp vụ:** Chứng minh việc có mặt ngay tại nơi sự kiện diễn ra.
 - **Kích hoạt:** Người tham dự đến địa điểm.
@@ -1077,7 +1140,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
   3. Hệ thống tạo bản ghi điểm danh kèm dấu thời gian.
   4. Feedback window mở ra cho chính người tham dự đó (BR36).
 - **Luồng thay thế:**
-  - **A1 Check-in thủ công:** Club Leader check-in hộ một người tham dự bằng
+  - **A1 Check-in thủ công:** một thành viên `Active` của CLB (`club.attendance.manage` mặc định, BR54) check-in hộ một người tham dự bằng
     cách tra cứu; bản ghi lưu lại ai đã thực hiện.
   - **A2 Khách vãng lai:** một sinh viên chưa đăng ký được check-in ở nơi sự kiện cho phép, và
     một bản đăng ký được tạo kèm theo bản ghi điểm danh.
@@ -1095,7 +1158,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC32 – Chốt điểm danh sự kiện
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Member (mọi thành viên `Active`, `club.attendance.manage` mặc định — BR54)
 - **Module:** M06
 - **Mục tiêu nghiệp vụ:** Tạo ra bộ dữ liệu điểm danh chính thức mà báo cáo và kỳ đánh giá dựa vào.
 - **Kích hoạt:** Sự kiện đã kết thúc.
@@ -1115,7 +1178,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
     không có báo cáo sau sự kiện.
 - **Ngoại lệ:** **E1** còn bản ghi bị đánh dấu chưa được sửa hoặc xác nhận kèm lý do → từ chối
   chốt cho tới khi mọi bản ghi bị đánh dấu được xử lý.
-  **E2** người gọi thiếu permission `club.attendance.manage` trong CLB → từ chối (BR54).
+  **E2** người gọi không có tư cách thành viên `Active` trong CLB → từ chối (BR54).
 - **Hậu điều kiện:** Bộ dữ liệu điểm danh chính thức bị khoá và là đầu vào của UC33 và UC42.
 - **Quy tắc nghiệp vụ:** BR54 (`club.attendance.manage`). BR18, BR19, BR53. Việc chốt **không** điều khiển feedback window — BR36 đã mở
   nó từ lúc check-in, và đây là phần sửa của v2 so với UC54 của v1.
@@ -1129,7 +1192,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC33 – Nộp báo cáo sau sự kiện
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.report.submit`, BR54)
 - **Module:** M08
 - **Mục tiêu nghiệp vụ:** Khép vòng trách nhiệm giải trình của một sự kiện đã được duyệt.
 - **Kích hoạt:** Sự kiện đang `Completed`, hoặc deadline báo cáo của nó đến gần.
@@ -1148,7 +1211,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
   - **E1** điểm danh chưa được chốt → từ chối nộp;
   - **E2** đã quá deadline → báo cáo vẫn được nhận nhưng bị đánh dấu trễ, và dữ liệu này đi vào
     BR21 cùng kỳ đánh giá.
-  - **E3** người gọi thiếu permission `club.report.submit` trong CLB → từ chối (BR54).
+  - **E3** người gọi không phải Club Leader của CLB (`club.report.submit`) → từ chối (BR54).
 - **Hậu điều kiện:** Sự kiện ở `Report Submitted`; các số liệu nạp sẵn của báo cáo đã bị đóng băng.
 - **Quy tắc nghiệp vụ:** BR54 (`club.report.submit`). BR20 — deadline đến từ UC04; một báo cáo quá hạn đi vào BR21. Sự kiện
   nội bộ ghi nhận thẳng (BR53) không sinh nghĩa vụ báo cáo — nó đóng ở UC32 A2.
@@ -1230,15 +1293,13 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC36 – Ghi nhận khoản chi và nộp quyết toán
 
-> **Hiện trạng code:** Có repository/use case/route/UI/test và đã nối vào app chính: mọi khoản chi phải có chứng từ (BR25), số chưa chứng minh phải hoàn trong 7 ngày (BR58).
-
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.expense.record`, BR54)
 - **Module:** M07
 - **Mục tiêu nghiệp vụ:** Chứng minh chi tiêu thực tế của khoản đã tạm ứng và nộp quyết toán
   đầy đủ sau sự kiện.
 - **Kích hoạt:** CLB chi tiền; sự kiện kết thúc hoặc bị huỷ, hoặc hạn quyết toán đến gần.
 - **Tiền điều kiện:** `EventBudget` của sự kiện đang `Disbursed` hoặc `Reconciliation Pending`;
-  người gọi có permission `club.expense.record`.
+  người gọi là Club Leader (`club.expense.record`).
 - **Dữ liệu vào:** Hạng mục, số tiền, ngày, mô tả; hoá đơn, biên lai hoặc chứng từ thanh toán.
 - **Luồng chính:**
   1. Thành viên ghi khoản chi vào `EventBudget` của sự kiện.
@@ -1259,7 +1320,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
   - **E1** khoản chi vượt phần đã duyệt còn lại → được ghi nhận và gắn cờ ngoại lệ;
   - **E2** chứng từ không tham chiếu tới một khoản chi nào → bất khả thi về mặt cấu trúc, và đó
     chính là lý do UC43 và UC44 của v1 gộp thành một use case ở đây.
-  - **E3** người gọi thiếu permission `club.expense.record` trong CLB → từ chối (BR54).
+  - **E3** người gọi không phải Club Leader của CLB (`club.expense.record`) → từ chối (BR54).
   - **E4** nộp quyết toán khi sự kiện chưa kết thúc và chưa bị huỷ → từ chối.
   - **E5** đã quá hạn quyết toán → quyết toán vẫn được nhận nhưng bị đánh dấu trễ và đi vào BR21,
     trừ khi UC37 A2 đã chốt đối soát thì bị từ chối (BR57).
@@ -1271,8 +1332,6 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 - **Pain point:** BP09, BP10
 
 ## UC37 – Đối soát ngân sách và chi tiêu
-
-> **Hiện trạng code:** Có repository/use case/route/UI/test và đã nối vào app chính. Nhánh A2 (CLB quá hạn chưa quyết toán) đối soát tối đa bằng số đã tạm ứng và không cấp bù.
 
 - **Actor chính:** ICPDP Officer
 - **Module:** M07
@@ -1320,9 +1379,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC38 – Nộp báo cáo hoạt động định kỳ
 
-> **Hiện trạng code:** Có API/UI phía CLB tạo bản nháp, nộp và nộp lại báo cáo định kỳ tại `/club/:clubId/periodic-reports`; mỗi lần nộp lưu một snapshot không sửa được.
-
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.report.submit`, BR54)
 - **Module:** M08
 - **Mục tiêu nghiệp vụ:** Hoàn thành nghĩa vụ báo cáo từ chính dữ liệu hệ thống đã có.
 - **Kích hoạt:** Kỳ báo cáo kết thúc, hoặc deadline của nó đến gần.
@@ -1341,7 +1398,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
     `Submitted` và tạo task thẩm định mới cho UC39. Lặp lại đến khi báo cáo được chấp nhận.
 - **Ngoại lệ:** **E1** đã quá deadline → vẫn được nhận nhưng bị đánh dấu trễ, và dữ liệu này đi
   vào BR21 cùng kỳ đánh giá.
-  **E2** người gọi thiếu permission `club.report.submit` trong CLB → từ chối (BR54).
+  **E2** người gọi không phải Club Leader của CLB (`club.report.submit`) → từ chối (BR54).
 - **Hậu điều kiện:** Báo cáo ở `Submitted` với các số liệu nạp sẵn đã bị đóng băng.
 - **Quy tắc nghiệp vụ:** BR54 (`club.report.submit`). BR20 — deadline và các mốc nhắc đến từ UC04 và §19.
 - **Đầu ra:** Báo cáo định kỳ, ApprovalTask.
@@ -1350,9 +1407,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC39 – Thẩm định báo cáo hoạt động định kỳ
 
-> **Hiện trạng code:** Có API/UI thẩm định phía ICPDP; vòng trả sửa–nộp lại chạy end-to-end cùng UC38, giữ đủ các lần nộp và quyết định của từng vòng.
-
-**Nhóm chức năng trên sơ đồ ICPDP:** `Assess periodic report` nằm trong `Manage compliance`; `Request periodic report revision` và `Approve periodic report` nằm trong `Manage evaluation`. Hai chức năng sau là các nhánh quyết định của UC39, không tạo mã UC mới và không thay đổi module sở hữu `PeriodicReport` (M08). Phía CLB, `Revise and resubmit periodic report` là UC38 A2 trong `Manage reports`, cần permission `club.report.submit`.
+**Nhóm chức năng trên sơ đồ ICPDP:** `Assess periodic report` nằm trong `Manage compliance`; `Request periodic report revision` và `Approve periodic report` nằm trong `Manage evaluation`. Hai chức năng sau là các nhánh quyết định của UC39, không tạo mã UC mới và không thay đổi module sở hữu `PeriodicReport` (M08). Phía CLB, `Revise and resubmit periodic report` là UC38 A2 trong `Manage reports`, do Club Leader thực hiện (`club.report.submit`).
 
 - **Actor chính:** ICPDP Officer
 - **Module:** M08
@@ -1382,8 +1437,6 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 - **Pain point:** BP14
 
 ## UC40 – Quản lý hồ sơ vi phạm và tuân thủ
-
-> **Hiện trạng code:** Có API/UI phía ICPDP; phía CLB có màn `/club/:clubId/violations` để gửi giải trình và nộp minh chứng khắc phục, ICPDP xem minh chứng trong hồ sơ.
 
 - **Actor chính:** ICPDP Officer
 - **Module:** M08
@@ -1475,8 +1528,6 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC43 – Xem lại, chốt và công bố đánh giá
 
-> **Hiện trạng code:** Có API/UI công bố phía ICPDP; CLB xem kết quả `Published` tại `/club/:clubId/evaluations` và không thấy bản chưa công bố.
-
 - **Actor chính:** ICPDP Officer
 - **Module:** M09
 - **Mục tiêu nghiệp vụ:** Công bố một kết quả chính thức mà CLB đọc được và phản biện được.
@@ -1536,7 +1587,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC45 – Gửi yêu cầu đặt cơ sở vật chất (hội trường, sân, sân khấu, thiết bị)
 
-- **Actor chính:** Club Leader (BR54).
+- **Actor chính:** Club Leader (`club.booking.manage`, BR54).
 - **Phạm vi (2026-10-11):** chỉ `HALL`, `OUTDOOR` (sân trường/khu ngoài trời), `STAGE` (sân khấu),
   `EQUIPMENT`. Phòng học `ROOM` không đặt, huỷ hay xin qua UC45 — ICPDP phân theo học kỳ ở UC58
   (BR35, BR62); CLB chỉ xem phòng được phân.
@@ -1545,8 +1596,8 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
   Lưu `Draft` → đánh giá BR15 và deadline → nộp `Requested`, tạo version bất biến và task ICPDP.
   Từ `Revision Requested`, sửa rồi nộp version mới. Tài sản chưa được giữ chỗ trước khi UC46 duyệt.
 - **Deadline:** dùng bốn slot và hạn gửi đã chốt ở SRS UC45.
-- **Liên kết sự kiện:** booking có thể liên kết UC25. Gắn/gỡ cần cả
-  `club.event.manage` và `club.booking.manage`; UC26 không duyệt thay booking.
+- **Liên kết sự kiện:** booking có thể liên kết UC25. Gắn/gỡ do Club Leader thực hiện
+  (`club.event.manage` và `club.booking.manage`); UC26 không duyệt thay booking.
   `EQUIPMENT` có thể khác property địa điểm sự kiện, nhưng thời gian phải bao phủ sự kiện.
 - **Ngoại lệ:** thiếu quyền, blackout, sai học kỳ/khung giờ, tài sản không hoạt động hoặc là
   `ROOM`, CLB bị tạm ngừng/giải thể → từ chối. Vượt sức chứa là cảnh báo cho ICPDP.
@@ -1570,7 +1621,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC47 – Theo dõi và huỷ / trả cơ sở vật chất đã đặt
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.booking.manage`, BR54)
 - **Module:** M11
 - **Mục tiêu nghiệp vụ:** Giải phóng một nguồn lực không còn cần tới để một CLB khác đặt được.
 - **Kích hoạt:** Sự kiện bị huỷ hoặc đổi lịch (UC28), hoặc CLB không còn cần property đó.
@@ -1590,7 +1641,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
     đang `In Use` cũng được giải phóng và ngoại lệ E2 không áp dụng.
 - **Ngoại lệ:** **E1** booking đã `In Use` hoặc `Completed` → từ chối huỷ; **E2** việc huỷ rơi
   vào thời hạn báo trước định nghĩa trong tài liệu chính sách → được ghi nhận là một tín hiệu tuân thủ cho UC40.
-  **E3** người gọi thiếu permission `club.booking.manage` trong CLB → từ chối (BR54).
+  **E3** người gọi không phải Club Leader của CLB (`club.booking.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Booking ở `Cancelled` hoặc `Released`; khung giờ đã trống.
 - **Quy tắc nghiệp vụ:** BR54 (`club.booking.manage`). BR35. Không có nó, một booking đã duyệt sẽ khoá một căn phòng vĩnh viễn.
 - **Đầu ra:** Trạng thái booking, khung giờ được giải phóng, thông báo; tín hiệu tuân thủ.
@@ -1598,8 +1649,6 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 - **Pain point:** BP16
 
 ## UC58 – Phân phòng học cho CLB theo học kỳ
-
-> **Hiện trạng code:** Phía CLB chỉ Leader có `club.booking.manage` được xem; Club Member hiện bị server từ chối.
 
 - **Actor chính:** ICPDP Officer
 - **Hỗ trợ:** — (CMB — Club Leader và các ghế ban chủ nhiệm — nhận thông báo)
@@ -1625,9 +1674,9 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
      `No Conflict`, `decidedBy`/`decidedAt` = officer/thời điểm phân), ghi audit
      `ROOM_ALLOCATED` (entityType `RoomAllocation`, `after` gồm semesterCode, clubId, clubName,
      propertyId, weekday, slot, note, bookingIds) và gửi thông báo `ROOM_ALLOCATED` tới ban chủ nhiệm.
-  6. Thành viên `Active` có `club.booking.manage` trong đúng CLB xem lịch tuần và các ngày sắp
-     tới ở trang "Phòng được phân" (chỉ đọc) để xuất trình cho bảo vệ khi nhận chìa khoá phòng.
-     Thành viên thiếu quyền không xem được; Club Leader gán quyền cho role của người phụ trách.
+  6. Mọi thành viên `Active` của đúng CLB (permission mặc định `club.room.view`, BR54) xem lịch
+     tuần và các ngày sắp tới ở trang "Phòng được phân" (chỉ đọc) để xuất trình cho bảo vệ khi
+     nhận chìa khoá phòng.
 - **Luồng thay thế:**
   - **A1 Thu hồi:** officer chọn một đợt phân phòng và nhập lý do (bắt buộc). Buổi chưa bắt đầu
     chuyển `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử; ghi
@@ -1646,12 +1695,11 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
   - **E5** khung giờ được đặt của phòng không phủ thứ/slot đã chọn → từ chối.
   - **E6** sau khi bỏ ngày đã qua và ngày blackout không còn ngày nào để sinh → từ chối.
   - **E7** người gọi thao tác phân/thu hồi không phải ICPDP Officer → từ chối.
-  - **E8** người xem phía CLB không có membership `Active` và `club.booking.manage` trong đúng
-    CLB, hoặc role đã hết hiệu lực → từ chối.
+  - **E8** người xem phía CLB không có membership `Active` trong đúng CLB → từ chối.
 - **Hậu điều kiện:** Mỗi ngày khớp có một booking `Approved` khoá phòng/slot cho CLB; bản ghi phân
   phòng nằm trong audit. Lifecycle job đưa từng buổi `Approved → In Use → Completed`; UC15 tạm ngừng
   hoặc giải thể giải phóng các buổi tương lai và không khôi phục khi kích hoạt lại.
-- **Quy tắc nghiệp vụ:** BR15, BR33, BR34, BR35, BR62; BR54 (`club.booking.manage` khi xem phía CLB).
+- **Quy tắc nghiệp vụ:** BR15, BR33, BR34, BR35, BR62; BR54 (`club.room.view` khi xem phía CLB).
 - **Đầu ra:** Các booking `Approved`, bản ghi audit `ROOM_ALLOCATED` / `ROOM_ALLOCATION_REVOKED`,
   thông báo cho ban chủ nhiệm.
 - **Use case liên quan:** UC04, UC15, UC25, UC44, UC47
@@ -1694,7 +1742,7 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
 
 ## UC49 – Xem phản hồi sự kiện
 
-- **Actor chính:** Club Leader (BR54)
+- **Actor chính:** Club Leader (`club.feedback.view`, BR54)
 - **Module:** M12
 - **Mục tiêu nghiệp vụ:** Dùng đánh giá của người tham dự để cải thiện hoạt động kế tiếp.
 - **Kích hoạt:** Feedback window đóng lại, hoặc CLB chuẩn bị báo cáo sau sự kiện.
@@ -1708,136 +1756,105 @@ UC23 đã rút ngày 13/10/2026. Không còn role tự tạo, cấu hình permis
     một giai đoạn.
 - **Ngoại lệ:** **E1** số người phản hồi ít hơn mức BR40 yêu cầu → chỉ hiển thị việc có tồn tại
   phản hồi, không bao giờ hiển thị nội dung.
-  **E2** người gọi thiếu permission `club.feedback.view` trong CLB → từ chối (BR54).
+  **E2** người gọi không phải Club Leader của CLB (`club.feedback.view`) → từ chối (BR54).
 - **Hậu điều kiện:** Không có; chỉ đọc. Bài học rút ra được ghi ở UC33.
 - **Quy tắc nghiệp vụ:** BR54 (`club.feedback.view`). BR37, BR40. CMB không được sửa hay xoá phản hồi của người tham dự.
 - **Đầu ra:** Bản tổng hợp phản hồi; đầu vào cho UC33 và UC42.
 - **Use case liên quan:** UC48, UC33, UC42
 - **Pain point:** BP17
 
-## UC50 — Gửi góp ý cho CLB hoặc ICPDP
+## UC50 – Gửi khiếu nại về một CLB
 
-| Thuộc tính | Hiện hành |
-|---|---|
-| Actor | Student |
-| Dữ liệu vào | `recipient: CLUB/ICPDP`, `clubId` bắt buộc khi gửi CLB, `eventId` tuỳ chọn thuộc CLB, `category: suggestion/praise/issue`, nội dung 1–2000 ký tự, `isAnonymous` |
-| Luồng | Sinh viên chọn nơi nhận, nhập nội dung, gửi và xem lại lịch sử của chính mình |
-| Người đọc | Club Leader đọc góp ý gửi CLB mình; ICPDP chỉ đọc góp ý gửi ICPDP |
-| Lưu trữ | Giao diện domain `StudentFeedback`, collection vật lý `complaints`, trạng thái cố định `Submitted` |
-| Quyền riêng tư | Góp ý ẩn danh không trả tên/email cho người nhận; vẫn giữ `complainantId` nội bộ |
-| Sau gửi | Bất biến; không sửa/xoá/rút, không task/SLA, triage, forward hay trao đổi trả lời |
+- **Actor chính:** Student
+- **Module:** M12
+- **Mục tiêu nghiệp vụ:** Cho sinh viên một kênh khiếu nại chính thức có vết xử lý.
+- **Kích hoạt:** Một sinh viên gặp vấn đề với một CLB hoặc một hoạt động của CLB.
+- **Tiền điều kiện:** Có một phiên hợp lệ (UC01).
+- **Dữ liệu vào:** CLB liên quan, sự kiện liên quan nếu có, loại khiếu nại, mô tả, chứng cứ.
+- **Luồng chính:**
+  1. Sinh viên chọn CLB, và sự kiện nếu có.
+  2. Sinh viên chọn loại khiếu nại.
+  3. Sinh viên mô tả vấn đề và đính kèm chứng cứ.
+  4. Sinh viên nộp → `Submitted`; ICPDP nhận một task.
+  5. Sinh viên theo dõi tiến trình ở UC02.
+- **Luồng thay thế:**
+  - **A1 Rút khiếu nại:** sinh viên rút một khiếu nại chưa có quyết định (`Submitted` hoặc
+    `Under Triage`) → `Withdrawn`.
+- **Ngoại lệ:** **E1** cùng một sinh viên gửi khiếu nại trùng về cùng sự việc → các khiếu nại
+  được liên kết với nhau và phân loại chung.
+- **Hậu điều kiện:** Khiếu nại ở `Submitted` và theo dõi được.
+- **Quy tắc nghiệp vụ:** BR38 — khiếu nại đi thẳng tới ICPDP; CLB chỉ tiếp cận được sau khi UC51
+  chuyển nó xuống.
+- **Đầu ra:** Complaint, ApprovalTask, thông báo.
+- **Use case liên quan:** UC51, UC02
+- **Pain point:** BP18
 
-Quyết định scope ngày 09/10/2026: `.sdd/specs/feat-student-feedback/SPEC.md`.
+## UC51 – Phân loại khiếu nại
 
-## UC51 — Ngoài phạm vi: Phân loại khiếu nại
+- **Actor chính:** ICPDP Officer
+- **Module:** M12
+- **Mục tiêu nghiệp vụ:** Lọc khiếu nại và chỉ mở một hồ sơ ở nơi thực sự có căn cứ.
+- **Kích hoạt:** Một task từ UC50.
+- **Tiền điều kiện:** Khiếu nại đang ở `Submitted`.
+- **Dữ liệu vào:** Mức độ nghiêm trọng, đánh giá tính hợp lệ, quyết định và lý do.
+- **Luồng chính:**
+  1. Officer mở khiếu nại → `Under Triage`.
+  2. Officer phân loại mức độ nghiêm trọng và tính hợp lệ.
+  3. Officer chọn một kết quả:
+     - **Dismissed** — không có căn cứ, lý do được ghi lại;
+     - **Forwarded** — chuyển cho CLB trả lời qua UC52;
+     - **Escalated** — một hồ sơ được mở ở UC40 và liên kết ngược lại khiếu nại.
+  4. Hệ thống ghi audit quyết định và thông báo cho người khiếu nại.
+- **Luồng thay thế:**
+  - **A1 Đóng sau khi có phản hồi:** một khiếu nại đã chuyển xuống mà phần trả lời của CLB làm
+    officer hài lòng thì được đóng lại; ngược lại nó được leo thang.
+- **Ngoại lệ:** **E1** khiếu nại liên quan tới một CLB đã giải thể → được ghi nhận và đóng lại,
+  lịch sử được giữ nguyên.
+- **Hậu điều kiện:** Khiếu nại ở `Dismissed`, `Forwarded`, `Escalated` hoặc `Closed`; khi leo
+  thang thì tồn tại một Violation liên kết ngược lại.
+- **Quy tắc nghiệp vụ:** BR39 — mọi quyết định đều mang một lý do và được ghi audit; chỉ ICPDP
+  được bác bỏ hoặc leo thang. Việc leo thang cần tới UC40 — v1 đặt UC56/UC57 vào MVP còn UC48
+  vào V2, nên một khiếu nại được leo thang không có chỗ nào để đi.
+- **Đầu ra:** Quyết định phân loại, Violation (khi leo thang), bản ghi audit, thông báo.
+- **Use case liên quan:** UC50, UC52, UC40, UC42
+- **Pain point:** BP18
 
-Không có route/UI triage complaint trong code hiện tại. Giữ mã lịch sử; được thay bởi inbox
-góp ý một chiều UC50, không có quyết định dismiss/forward/escalate.
+## UC52 – Trả lời khiếu nại được chuyển xuống
 
-## UC52 — Ngoài phạm vi: Trả lời khiếu nại được chuyển xuống
+- **Actor chính:** Club Leader (`club.complaint.respond`, BR54)
+- **Module:** M12
+- **Mục tiêu nghiệp vụ:** Cho CLB giải trình chính thức — chủ sở hữu mà chuyển trạng thái
+  `Forwarded → Club Responded` của v1 chưa từng có.
+- **Kích hoạt:** ICPDP chuyển một khiếu nại xuống ở UC51.
+- **Tiền điều kiện:** Khiếu nại đang ở `Forwarded`.
+- **Dữ liệu vào:** Phần trả lời, chứng cứ, hành động CLB đã hoặc sẽ thực hiện.
+- **Luồng chính:**
+  1. Ban chủ nhiệm mở khiếu nại được chuyển xuống; danh tính người khiếu nại chỉ hiển thị ở mức
+     chính sách cho phép (quyết định còn mở D5).
+  2. Ban chủ nhiệm nhập phần trả lời và đính kèm chứng cứ.
+  3. Ban chủ nhiệm nộp → `Club Responded`.
+  4. ICPDP đóng hoặc leo thang nó ở UC51.
+- **Luồng thay thế:**
+  - **A1 Đã có hành động:** phần trả lời nêu một hành động cụ thể, mà ICPDP có thể xác minh
+    trước khi đóng.
+- **Ngoại lệ:** **E1** quá hạn trả lời → việc không phản hồi được ghi nhận là một tín hiệu tuân
+  thủ cho UC40.
+  **E2** người gọi không phải Club Leader của CLB (`club.complaint.respond`) → từ chối (BR54).
+- **Hậu điều kiện:** Khiếu nại ở `Club Responded` và trở về với ICPDP.
+- **Quy tắc nghiệp vụ:** BR54 (`club.complaint.respond`). CMB không bao giờ tự sửa hay tự đóng khiếu nại. Phải trả lời trong thời
+  hạn định nghĩa trong tài liệu chính sách.
+- **Đầu ra:** Phần trả lời của CLB, bản ghi audit, thông báo.
+- **Use case liên quan:** UC51, UC40
+- **Pain point:** BP18
 
-Không có route/UI response complaint trong code hiện tại. `club.complaint.respond` còn trong
-danh mục permission tương thích nhưng không có UC nghiệp vụ tương ứng.
+---
 
 ## Phụ lục — Kiểm tra mức phủ
 
 | Hạng mục kiểm tra | Kết quả |
 |---|---|
-| Use case đã được đặc tả | 56 mã UC01–UC55 và UC58, 52 còn trong phạm vi |
+| Use case đã được đặc tả | 53 trên 53 (UC01–UC52, UC58) |
 | Use case có đúng một actor chính | 53 trên 53 — UC31 là use case duy nhất có actor hỗ trợ |
 | Use case có Luồng chính | 53 trên 53 |
 | Use case mà thực thể của nó có vòng đời, và trạng thái được nêu tên | UC07, UC08, UC15, UC16, UC17, UC18, UC20, UC21, UC25, UC26, UC27, UC28, UC29, UC31, UC32, UC33, UC34, UC35, UC37, UC38, UC39, UC40, UC41, UC42, UC43, UC45, UC46, UC47, UC48, UC50, UC51, UC52, UC58 |
 | Pain point có ít nhất một use case | 19 trên 19 (§13 của tài liệu mô hình) |
-
-## UC53 — Tạo sự kiện cấp trường và mời câu lạc bộ tham gia
-
-| | |
-|---|---|
-| **Module · Ưu tiên** | M05 · P2 |
-| **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Nhà trường chủ động tổ chức các sự kiện quy mô toàn trường (ngày hội CLB, hội thao, lễ vinh danh, tập huấn) và điều phối các CLB tham gia |
-| **Kích hoạt** | ICPDP lên kế hoạch tổ chức sự kiện cấp trường |
-| **Tiền điều kiện** | Người dùng đã đăng nhập với vai trò `ICPDP_OFFICER` hoặc `ICPDP_HEAD` |
-| **Dữ liệu vào** | Tên sự kiện, mục tiêu, thời gian bắt đầu/kết thúc, địa điểm/cơ sở vật chất, sức chứa, mô tả/yêu cầu phối hợp, danh sách CLB được mời, hạn chót phản hồi |
-| **Thực thể / trạng thái** | `Event`: `Draft → Approved` (hoặc trực tiếp `Upcoming` khi công bố); `EventInvitation`: `(tạo mới) → Pending` |
-| **Quy tắc** | BR15 (xung đột địa điểm/thời gian), BR44 (trong cùng học kỳ), BR59 (quy tắc lời mời sự kiện cấp trường) |
-| **Liên quan · Pain point** | UC27, UC44, UC45, UC54 · BP05, BP06 |
-
-| ID | Hệ thống phải … |
-|---|---|
-| FR-UC53-01 | Cho phép ICPDP Officer nhập thông tin sự kiện với `organizerType = 'ICPDP'` và `clubId = null` |
-| FR-UC53-02 | Tự động đánh giá xung đột thời gian và cơ sở vật chất (BR15); cảnh báo nếu trùng với sự kiện hoặc booking đã duyệt khác |
-| FR-UC53-03 | Cho phép chọn danh sách các CLB được gửi lời mời (hoặc chọn "Tất cả CLB đang Active"), kèm hạn chót phản hồi (`deadline`) |
-| FR-UC53-04 | Tạo các bản ghi `EventInvitation` ở trạng thái `Pending` cho từng CLB được chọn và phát thông báo in-app/email tới Ban chủ nhiệm các CLB đó |
-| FR-UC53-05 | Cho phép ICPDP theo dõi danh sách phản hồi của các CLB trong thời gian thực (số CLB đã nhận, đã chấp nhận, đã từ chối, chưa phản hồi) |
-| FR-UC53-06 | Cho phép ICPDP thu hồi lời mời (`Withdrawn`) đối với một CLB khi chưa đến hạn chót nếu kế hoạch phối hợp thay đổi |
-| FR-UC53-07 | *(A1)* Cho phép ICPDP bổ sung lời mời tới các CLB khác sau khi sự kiện đã tạo |
-| FR-UC53-08 | *(A2)* Cho phép ICPDP công bố sự kiện ra toàn trường để sinh viên đăng ký tham gia (chuyển tiếp sang UC27) |
-| FR-UC53-09 | *(E1)* Từ chối tạo lời mời tới CLB đang ở trạng thái khác `Active` (BR59) |
-| FR-UC53-10 | Ghi nhật ký audit hành động tạo sự kiện và phát hành lời mời |
-
-**Hậu điều kiện** — Sự kiện cấp trường được tạo ở trạng thái `Approved` / `Upcoming`; các bản ghi `EventInvitation` ở trạng thái `Pending` được gửi tới các CLB tương ứng.
-**Đầu ra** — Thực thể `Event`, danh sách `EventInvitation`, thông báo, bản ghi audit.
-
-## UC54 — Phản hồi lời mời tham gia sự kiện
-
-> **Hiện trạng code:** Có API/UI phía CLB nhận hoặc từ chối (kèm lý do) lời mời tại `/club/:clubId/invitations`; phía ICPDP gửi/thu hồi và job hết hạn đã có.
-
-| | |
-|---|---|
-| **Module · Ưu tiên** | M05 · P2 |
-| **Actor chính** | Club Leader |
-| **Mục tiêu nghiệp vụ** | CLB chính thức xác nhận việc có tham gia phối hợp vào sự kiện của nhà trường hay không, đăng ký nội dung tham gia |
-| **Kích hoạt** | Nhận được thông báo hoặc xem danh sách lời mời sự kiện từ ICPDP |
-| **Tiền điều kiện** | Tồn tại `EventInvitation` gửi tới CLB ở trạng thái `Pending` và chưa quá hạn chót (`now < deadline`) |
-| **Dữ liệu vào** | Quyết định (`Accepted` hoặc `Declined`), lý do (bắt buộc khi từ chối), thông tin phối hợp (đăng ký gian hàng, số người tham gia, tiết mục biểu diễn) |
-| **Thực thể / trạng thái** | `EventInvitation`: `Pending → Accepted | Declined` |
-| **Quy tắc** | BR54 (quyền của role CLB), BR59 (thời hạn phản hồi) |
-| **Liên quan · Pain point** | UC24, UC53 · BP05 |
-
-| ID | Hệ thống phải … |
-|---|---|
-| FR-UC54-01 | Hiển thị danh sách các lời mời sự kiện gửi tới CLB kèm trạng thái (`Pending`, `Accepted`, `Declined`, `Expired`, `Withdrawn`) và hạn chót phản hồi |
-| FR-UC54-02 | Cho phép người dùng xem chi tiết sự kiện cấp trường: thời gian, địa điểm, mô tả, yêu cầu phối hợp |
-| FR-UC54-03 | Cho phép CLB chọn **Chấp nhận (Accepted)**: nhập thông tin phối hợp (đại diện liên hệ, số lượng thành viên tham gia, nhu cầu gian hàng/tiết mục) |
-| FR-UC54-04 | Cho phép CLB chọn **Từ chối (Declined)**: bắt buộc nhập lý do từ chối |
-| FR-UC54-05 | Chuyển trạng thái lời mời sang `Accepted` hoặc `Declined`, khoá form chỉnh sửa và gửi thông báo kết quả về cho ICPDP |
-| FR-UC54-06 | Tự động ghi nhận sự kiện vào danh sách hoạt động tham gia của CLB khi chấp nhận (làm cơ sở đánh giá thi đua ở UC42) |
-| FR-UC54-07 | *(E1)* Từ chối xử lý và hiển thị thông báo nếu lời mời đã quá hạn (`now > deadline`), hệ thống tự chuyển sang `Expired` (BR59) |
-| FR-UC54-08 | *(E2)* Từ chối nếu lời mời đã bị ICPDP thu hồi (`Withdrawn`) |
-| FR-UC54-09 | *(E3)* Từ chối nếu người thực hiện không có quyền `club.event.manage` hoặc không phải Club Leader của CLB đó (BR54) |
-
-**Hậu điều kiện** — `EventInvitation` chuyển sang `Accepted` hoặc `Declined`; ICPDP nhận được thông báo phản hồi.
-**Đầu ra** — Bản ghi `EventInvitation` cập nhật, thông báo tới ICPDP, bản ghi audit.
-
-## UC55 — Xuất dữ liệu và báo cáo
-
-| | |
-|---|---|
-| **Module · Ưu tiên** | M09 · P5 |
-| **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Đưa dữ liệu ra khỏi hệ thống thành file để báo cáo lên nhà trường, lưu trữ hoặc phân tích thêm, không phải tổng hợp tay |
-| **Kích hoạt** | Cần báo cáo cuối kỳ, cuối năm, hoặc theo yêu cầu đột xuất của nhà trường |
-| **Tiền điều kiện** | Người gọi là ICPDP Officer |
-| **Dữ liệu vào** | Loại dữ liệu, bộ lọc (kỳ hoặc khoảng thời gian, CLB, trạng thái), định dạng (`xlsx`, `csv`, `pdf`) |
-| **Thực thể / trạng thái** | Chỉ đọc; ghi `AuditLog` |
-| **Quy tắc** | BR30, BR60, BR61 |
-| **Liên quan · Pain point** | UC02, UC32, UC37, UC40, UC43 · BP13 |
-
-| ID | Hệ thống phải … |
-|---|---|
-| FR-UC55-01 | Cho officer chọn loại dữ liệu từ một danh mục cố định: danh sách CLB và trạng thái; thành viên theo CLB; sự kiện kèm đăng ký và điểm danh; ngân sách, giải ngân và đối soát; hồ sơ vi phạm và khiếu nại; kết quả đánh giá |
-| FR-UC55-02 | Lọc theo kỳ hoặc khoảng thời gian, CLB và trạng thái, và hiển thị số dòng trước khi xuất |
-| FR-UC55-03 | Sinh file `xlsx` hoặc `csv` cho mọi loại dữ liệu; kết quả đánh giá xuất thêm được `pdf` theo bảng điểm chung (BR60) |
-| FR-UC55-04 | Chỉ xuất kết quả đánh giá đã `Published` (BR30) và điểm danh đã chốt (UC32) |
-| FR-UC55-05 | Ghi vào đầu file thời điểm xuất, người xuất và bộ lọc đã dùng |
-| FR-UC55-06 | Áp dụng cùng quy tắc hiển thị như trên màn hình: không xuất danh tính người gửi phản hồi ẩn danh (BR61) |
-| FR-UC55-07 | Ghi audit mỗi lần xuất: người xuất, loại dữ liệu, bộ lọc, số dòng (BR61) |
-| FR-UC55-08 | *(A1)* Xuất bảng so sánh các CLB trong một kỳ: mỗi dòng một CLB, mỗi cột một dimension của bảng điểm chung, kèm tổng điểm và xếp loại |
-| FR-UC55-09 | *(E1)* Báo không có dữ liệu khớp bộ lọc và không tạo file rỗng |
-| FR-UC55-10 | *(E2)* Từ chối nếu người gọi không phải ICPDP Officer (BR61) |
-
-**Hậu điều kiện** — file được tải về máy officer; một bản ghi audit.
-**Đầu ra** — file `xlsx` / `csv` / `pdf`, bản ghi audit.
-
----

@@ -1,23 +1,304 @@
-SCRIPT THUYẾT TRÌNH USE CASE DIAGRAM — CẬP NHẬT 15/10/2026
+SCRIPT THUYẾT TRÌNH USE CASE DIAGRAM
+Nguồn: Group1_SE1939-NJ_Report_Final_v2.docx — mục 2.2.1, Figure III.3.1 đến III.3.9
+Thời lượng: khoảng 40–50 giây mỗi hình, tổng khoảng 7 phút
 
-Hệ thống có bốn actor người: Student, Club Member, Club Leader và ICPDP Officer.
+======================================================================
+MỞ ĐẦU (Figure III.3)
+======================================================================
 
-Điểm quan trọng nhất là phía CLB chỉ có hai role cố định. Club Leader là Chủ nhiệm hoặc Phó chủ
-nhiệm đã được ICPDP xác nhận trong nhiệm kỳ hiện hành; hai chức danh có cùng toàn bộ permission
-quản lý. Club Member không có permission quản lý, chỉ xem và tham gia. UC23 và role tự tạo đã rút.
+Phần này trình bày use case diagram của hệ thống UCMS.
 
-Student làm UC01, UC02, UC06, UC07, UC17, UC29, UC31, UC48 và UC50. UC50 hiện là góp ý một
-chiều cho CLB hoặc ICPDP, không còn complaint workflow; UC51 và UC52 đã rút theo code.
+Hệ thống có 4 actor người: Student, Club Member, Club Leader và ICPDP
+Officer. Ngoài ra có 3 hệ thống bên ngoài là Google OAuth, Google SMTP và
+Cloudinary. Trên use case diagram chỉ Google OAuth xuất hiện, vì nó tham gia
+trực tiếp vào use case đăng nhập; SMTP và Cloudinary chỉ là kênh gửi mail và
+lưu ảnh nên nằm ở context diagram.
 
-Club Member làm UC22 và UC24, xem danh sách thành viên ; xem phòng được phân hiện chỉ Leader được phép, rồi kế thừa các chức
-năng Student.
+Nhóm tách sơ đồ theo actor, và actor nào nhiều chức năng thì tách tiếp theo
+mảng nghiệp vụ, để mỗi hình vừa một trang. Tổng cộng 9 hình.
 
-Club Leader vận hành hồ sơ, board, tuyển thành viên, sự kiện, attendance, báo cáo, tài chính,
-booking và feedback qua UC09, UC10, UC12, UC14, UC16, UC18 đến UC21, UC25, UC27, UC28, UC30,
-UC32, UC33, UC36, UC38, UC45, UC47, UC49 và UC54. Từ 15/10/2026 các UC này đều đã có trong code, kể cả UC12, UC14, UC38, UC54 phía CLB và UC36/UC37.
+Mọi hình đọc theo cùng một cách: actor chỉ nối tới vài use case lớn dạng
+"Manage ...", và mỗi use case lớn <<include>> các chức năng con. Với chức
+năng kiểu danh mục, chức năng con được tách theo thêm, xem, sửa, ngừng kích
+hoạt. Các chức năng con ứng với 53 use case được đặc tả ở mục 3.2.
 
-ICPDP làm UC03, UC04, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39 đến UC46, UC53,
-UC55 và UC58. UC05 đã rút.
+Có một nguyên tắc xuyên suốt: người nộp và người duyệt luôn là hai use case
+riêng. Ví dụ Club Leader nộp đề xuất sự kiện, còn ICPDP quyết định đề xuất
+đó.
 
-Khi trình bày sơ đồ, không nói Club Member vận hành theo permission của role, không nói Leader
-tạo role, và không mô tả UC23 là chức năng còn tồn tại.
+======================================================================
+HÌNH III.3.1 — Use cases of every user (generalization)
+======================================================================
+
+Hình đầu tiên là phần chung và quan hệ giữa các actor.
+
+- Có một actor trừu tượng là User. Student và ICPDP Officer đều kế thừa từ
+  User.
+- Club Member kế thừa Student, và Club Leader kế thừa Club Member. Nghĩa là
+  thành viên CLB vẫn là sinh viên, làm được mọi việc của sinh viên; chủ nhiệm
+  vẫn là thành viên, làm được mọi việc của thành viên, cộng thêm quyền riêng.
+- Mọi User có 2 use case chung:
+  - Sign in with Google (UC01): đăng nhập qua Google OAuth, hệ thống kiểm
+    tra domain e-mail của trường rồi đưa người dùng vào workspace theo vai
+    trò. Hệ thống không lưu mật khẩu.
+  - View dashboard (UC02): mỗi vai trò có một màn hình trả lời 2 câu hỏi:
+    việc gì đang chờ tôi xử lý, và những gì tôi đã nộp đang ở trạng thái nào.
+
+Trên từng hình sau, mỗi actor chỉ nối kế thừa tới actor cha trực tiếp,
+với tam giác rỗng hướng về actor cha. Cây tổng thể nằm ở hình All users. Các chức năng được kế thừa xem
+ở hình của actor cha.
+
+======================================================================
+HÌNH III.3.2 — Use cases of the Student
+======================================================================
+
+Student là bất kỳ sinh viên đã đăng nhập. Có 3 nhánh:
+
+- Manage club participation include:
+  - Browse clubs (UC06): xem danh bạ CLB, trang CLB, đợt tuyển đang mở và sự
+    kiện sắp tới.
+  - Submit club application (UC07): nộp hồ sơ thành lập CLB mới, kèm thành
+    viên sáng lập, tài liệu, và include Define club role structure, tức là
+    đề xuất luôn cơ cấu chức vụ ban đầu của CLB (chức danh, không kèm quyền).
+  - Apply for membership (UC17): ứng tuyển vào một đợt tuyển của CLB.
+- Manage event participation include Register for event (UC29), Check in
+  (UC31) và Submit event feedback (UC48). Chỉ người đã check-in mới được gửi
+  feedback.
+- Submit complaint (UC50) nối thẳng với Student: khiếu nại về một CLB. Khiếu
+  nại đi thẳng tới ICPDP, không qua CLB, để bảo vệ người khiếu nại.
+
+======================================================================
+HÌNH III.3.3 — Club Member: Events & bookings
+======================================================================
+
+Club Member là sinh viên có tư cách thành viên Active ở một CLB. Hình này
+chỉ vẽ những việc mọi thành viên đều làm được, không cần ai cấp quyền (BR54);
+các việc vận hành CLB khác thuộc riêng chủ nhiệm, ở ba hình tiếp theo.
+
+- Club membership include View member workspace, View member list (UC24)
+  và Request to leave club (UC22).
+- Manage attendance include Manage waitlist (UC30) — đôn người từ danh sách
+  chờ theo đúng thứ tự — và Finalize attendance (UC32) — chốt và khoá điểm
+  danh. Thành viên cũng check-in hộ người tham dự (hỗ trợ UC31).
+- Manage allocated rooms include View allocated rooms (UC58, chỉ đọc).
+  Mọi thành viên Active xem lịch phòng học ICPDP phân để xuất trình cho bảo
+  vệ khi nhận chìa khoá; CLB không tự đặt hay huỷ phòng học.
+
+======================================================================
+HÌNH III.3.4 — Use cases of the Club Leader
+======================================================================
+
+Club Leader là chủ nhiệm CLB, người giữ ghế President đã được ICPDP xác
+nhận, và là actor duy nhất của mọi việc vận hành CLB. Hình này là tổ chức
+và nhiệm kỳ:
+
+- Manage club roles (UC23) include Create, View, Update, Deactivate role,
+  Assign member to role, Revoke member role và View role structure history.
+  Role chỉ là chức danh (thủ quỹ, trưởng ban), không mang quyền. Mọi thay
+  đổi đều được audit và tạo phiên bản cơ cấu mới.
+- Manage board include Nominate board (UC10) — đề cử ban chủ nhiệm — và Plan
+  leadership transition (UC12) — chuẩn bị bàn giao nhiệm kỳ.
+- Request suspension (UC14) nối thẳng: CLB chủ động xin tạm dừng hoạt động.
+
+Ở hình này chủ nhiệm chỉ đề xuất; xác nhận board, xác nhận bàn giao và quyết
+định tạm dừng đều nằm ở ICPDP, hình III.3.7.
+
+======================================================================
+HÌNH III.3.5 — Club Leader: Club & recruitment
+======================================================================
+
+- Manage club profile include Update club information và
+  Define club structure (UC09): hồ sơ CLB và cơ cấu ban.
+- Manage recruitment campaigns include Create, Update, Publish recruitment
+  campaign (UC16).
+- Manage applications include Screen applications (UC18), Record candidate
+  evaluation (UC19) theo rubric, và Onboard members (UC20).
+- Manage members include Update membership status
+  (UC21): Active và Inactive chuyển qua lại; Left và Banned là trạng thái
+  cuối.
+
+======================================================================
+HÌNH III.3.6 — Club Leader: Events, bookings & finance
+======================================================================
+
+- Manage events include Submit event proposal (UC25) — ngân sách nằm luôn
+  trong đề xuất, hệ thống tự kiểm tra xung đột lịch —, Publish event (UC27),
+  Cancel / reschedule event (UC28) và Respond to event invitation (UC54).
+- Manage facility bookings include Request non-room facility booking (UC45)
+  và Cancel / release facility booking (UC47). CLB chỉ xin hội trường, sân
+  ngoài trời, sân khấu, thiết bị; yêu cầu đi qua ICPDP duyệt.
+- Manage reports include Submit event report (UC33), Submit periodic report
+  (UC38) và Revise and resubmit periodic report (UC38 A2): đọc nhận xét, sửa
+  nội dung hoặc minh chứng chưa đạt, nộp version mới và chờ ICPDP xét lại.
+- Nối thẳng: Record expense & submit settlement (UC36), Review event
+  feedback (UC49), Respond to complaint (UC52).
+
+======================================================================
+HÌNH III.3.7 — ICPDP Officer: Access & club lifecycle
+======================================================================
+
+Ba hình cuối là ICPDP Officer, cơ quan duyệt duy nhất của nhà trường. Các
+phòng Tài chính, Cơ sở vật chất, An ninh không dùng hệ thống; ICPDP hỏi ý
+kiến họ bên ngoài rồi ghi vào quyết định.
+
+- Manage accounts (UC03) include View accounts, Assign / revoke role và
+  Lock / unlock account.
+- Manage system configuration include Configure policy & deadlines (UC04)
+  và Configure approval routing (UC05): quy định hồ sơ nào cần duyệt thêm
+  cấp 2 (ICPDP Head), theo loại hồ sơ, số tiền, mức rủi ro.
+- Manage club lifecycle include Decide club application (UC08), Confirm
+  board (UC11), Confirm leadership transition (UC13), Suspend / reactivate /
+  dissolve club (UC15) và View club role structure & board history. Đây là
+  các quyết định tương ứng với những gì Student và Club Leader đề xuất.
+
+======================================================================
+HÌNH III.3.8 — ICPDP Officer: Events, bookings & finance
+======================================================================
+
+- Manage event oversight include Decide event proposal (UC26) — duyệt đề
+  xuất và ngân sách đi kèm — và Close event report (UC34).
+- Manage properties (UC44) include Add, View, Update, Deactivate property:
+  danh mục phòng và tài sản.
+- Manage facility bookings include Decide non-room facility request (UC46): duyệt
+  hội trường, sân ngoài trời, sân khấu, thiết bị. Duyệt trùng chỉ khi policy
+  bật và có lý do; blackout vẫn bị chặn.
+- Manage room allocations include Allocate club room by semester, View room
+  allocations và Revoke room allocation (UC58). ICPDP chọn CLB, phòng học,
+  thứ và slot, ví dụ "Slot 4, Thứ 4"; hệ thống giữ phòng mọi tuần của học
+  kỳ. Có ngày trùng lịch thì từ chối cả đợt; thu hồi phải có lý do.
+- Manage budget include Record disbursement (UC35) — ghi nhận giải ngân — và
+  Reconcile budget (UC37) — đối soát với quyết toán của CLB, xác định số tiền
+  CLB phải hoàn lại nếu có.
+
+======================================================================
+HÌNH III.3.9 — ICPDP Officer: Compliance & evaluation
+======================================================================
+
+- Manage compliance include:
+  - Assess periodic report (UC39): kiểm tra đúng mẫu, đủ nội dung và minh chứng,
+    đối chiếu với số liệu hệ thống.
+  - Triage complaint (UC51): bác bỏ, chuyển cho CLB phản hồi, hoặc mở vụ
+    việc.
+  - Open compliance case, Issue case decision, Resolve compliance case
+    (UC40): mỗi vi phạm là một vụ việc có trạng thái và lịch sử xử lý.
+- Manage evaluation include:
+  - Request periodic report revision (nhánh UC39): trả báo cáo kèm nhận xét
+    chỉ rõ phần cần sửa và thông báo CLB.
+  - Approve periodic report (nhánh UC39): duyệt khi đạt yêu cầu, đưa vào UC42.
+    CLB sửa và nộp lại qua UC38 A2; ICPDP xét lại đến khi duyệt.
+  - Create, Update, Activate evaluation scheme (UC41): bộ tiêu chí và trọng
+    số của kỳ.
+  - Generate evaluation draft (UC42): hệ thống tự sinh bản nháp từ dữ liệu
+    vận hành.
+  - Publish evaluation (UC43): rà soát, chốt và công bố.
+
+Hai chức năng yêu cầu sửa và duyệt thuộc Manage evaluation trên sơ đồ, vẫn là
+các nhánh UC39; không tăng số UC và không đổi module dữ liệu M08.
+
+Dữ liệu ở mọi module — điểm danh, feedback, tài chính, vi phạm — đều được
+dùng lại để đánh giá CLB cuối kỳ.
+
+======================================================================
+KẾT
+======================================================================
+
+Tóm lại 9 hình phủ toàn bộ 53 use case: phần chung, Student, Club Leader, 3
+mảng của Club Leader và 3 mảng của ICPDP.
+
+Luồng chung: CLB nộp -> ICPDP quyết định -> CLB giải trình -> ICPDP giám sát
+và đánh giá. Sinh viên ở cả hai đầu: vừa tham gia hoạt động, vừa là nguồn
+feedback và khiếu nại.
+
+======================================================================
+CHUẨN BỊ Q&A
+======================================================================
+
+--- Ký hiệu UML ---
+
+- "Hướng mũi tên include?"
+  Nét đứt, đi từ use case lớn chỉ vào chức năng con: base luôn gọi tới
+  included. Manage properties -> Add property nghĩa là thêm property là một
+  phần của quản lý danh mục property.
+
+- "Hướng mũi tên generalization?"
+  Tam giác rỗng chỉ về phía cha: Club Leader -> Club Member -> Student ->
+  User. Con kế thừa mọi association của cha.
+
+- "Sao không có <<extend>>?"
+  Các nhánh tuỳ chọn (đặt cơ sở vật chất kèm đề xuất sự kiện, trả chỗ khi
+  huỷ sự kiện, hoàn tiền khi đối soát) được ghi ở alternative flow trong đặc tả mục
+  3.2. Vẽ lên thì sẽ nối chéo giữa các hình và khó đọc.
+
+- "Manage X include Create/View/Update — vậy có bắt buộc làm hết mỗi lần
+  không? Include là bắt buộc mà?"
+  Đúng, về lý thuyết include là bắt buộc. Ở đây "Manage X" là use case nhóm
+  (gói chức năng), nhóm dùng include để thể hiện phân rã chức năng, đây là
+  cách vẽ phổ biến trong báo cáo. Mỗi chức năng con mới là đơn vị được đặc tả.
+  (Thừa nhận thẳng nếu bị bắt bẻ, không cãi.)
+
+- "Sao có use case nối thẳng actor, không qua Manage?"
+  Submit complaint, Request suspension, Record expense & submit settlement
+  là chức năng đơn lẻ, không có chức năng con, nên không cần nhóm.
+
+--- Actor ---
+
+- "Sao tách Club Member và Club Leader, không để 1 actor CMB?"
+  Vì quyền khác nhau thật: chủ nhiệm giữ mọi permission CLB và là actor
+  duy nhất của việc vận hành CLB; thành viên chỉ có workspace, xin rời,
+  điểm danh và xem phòng được phân (BR54, BR55). "CMB" vẫn dùng như tên gọi chung cho
+  phía CLB trong thông báo, dashboard.
+
+- "Chủ nhiệm có giao quyền tạo sự kiện cho phó chủ nhiệm được không?"
+  Không. Từ 2026-10-13 (I66) role CLB chỉ là chức danh, không mang
+  permission; mọi việc vận hành CLB thuộc riêng Club Leader.
+
+- "Sao không có Guest?"
+  Guest chỉ xem trang công khai (một phần UC06), không có use case riêng,
+  không tạo dữ liệu. Nguyên tắc: xem công khai, hành động phải đăng nhập.
+
+- "ICPDP Head (duyệt cấp 2) ở đâu?"
+  Không vẽ thêm actor. Cấp 2 là role RBAC trong nội bộ ICPDP, cấu hình ở
+  Configure approval routing (UC05). Actor vẫn là ICPDP Officer.
+
+- "Google SMTP, Cloudinary sao không có trên UC diagram?"
+  Chúng không tham gia use case nào như một actor, chỉ là hạ tầng gửi mail và
+  lưu ảnh; đã thể hiện ở context diagram (Figure III.1).
+
+- "Phòng Tài chính / Cơ sở vật chất sao không là actor?"
+  Họ không dùng hệ thống. ICPDP hỏi ý kiến bên ngoài rồi ghi vào review note.
+
+- "Check-in có ai hỗ trợ?"
+  UC31 là use case duy nhất có supporting actor: CLB vận hành check-in tại
+  chỗ (quét mã / xác nhận). Actor chính là Student nên chỉ vẽ ở hình Student.
+
+--- Nội dung ---
+
+- "Budget request đâu?"
+  Ngân sách được gộp vào đề xuất sự kiện (UC25), ICPDP duyệt cả hai trong
+  UC26. Sau đó là giải ngân (UC35), quyết toán (UC36), đối soát (UC37).
+
+- "Khiếu nại sao không gửi thẳng CLB?"
+  Để bảo vệ người khiếu nại. ICPDP triage trước, chỉ chuyển cho CLB khi phù
+  hợp; feedback cho CLB chỉ hiện dạng tổng hợp.
+
+- "Duyệt sự kiện rồi sao còn phải duyệt phòng?"
+  Hai quyết định khác nhau: nội dung sự kiện hợp lệ chưa chắc phòng còn
+  trống. Tách để một bên bị từ chối không chặn bên kia.
+
+- "Dashboard (UC02) có phải use case không, nó chỉ là màn hình?"
+  Có mục tiêu nghiệp vụ rõ: cho mỗi vai trò biết việc đang chờ và trạng thái
+  hồ sơ đã nộp. Nên giữ là use case.
+
+- "Chức năng con trên hình ứng với use case nào trong đặc tả?"
+  Mỗi chức năng con là một use case ở mục 3.2 hoặc một bước trong luồng chính
+  của use case đó. Ví dụ Add / View / Update / Deactivate property là các
+  bước của UC44.
+
+--- Điểm dễ bị bắt lỗi trong docx (kiểm tra trước khi vào phòng) ---
+
+- Mục 3.2 có câu "all 54 use cases ship in one release" nhưng bảng III.2 và
+  hình ghi 52. Từ 2026-10-11 số đúng là 53 (thêm UC58), câu kia sót lại
+  từ bản cũ.
+- Screen flow (Figure III.10) và bảng phân quyền màn hình dùng tên "Club
+  Admin", trong khi actor là Club Leader / Club Member. Nếu bị hỏi: Club Admin
+  là tên khu vực màn hình phía CLB, dùng chung cho cả hai actor.

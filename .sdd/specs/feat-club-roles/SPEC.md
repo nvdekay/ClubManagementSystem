@@ -8,6 +8,8 @@
 > Feature role tự tạo và UC23 đã bị huỷ ngày 13/10/2026. Không triển khai hoặc nghiệm thu các
 > tiêu chí dưới đây. Baseline thay thế: [`../feat-fixed-club-roles/SPEC.md`](../feat-fixed-club-roles/SPEC.md).
 
+> **Cập nhật 2026-10-13 (review issue I66, ADR-007):** bỏ nhánh "Configure role permissions". Role CLB chỉ là chức danh, không mang permission: body role không còn nhận `permissionCodes` (gửi kèm bất kỳ mã nào → 400), A1 "sửa permission" bị bỏ, danh mục permission cấp được rỗng. Danh bạ role hiển thị role Chủ nhiệm → mọi permission, role Members → `club.attendance.manage`, `club.room.view`, role khác → không có. Phần dưới về chọn / sửa permission là lịch sử.
+
 ## Vấn đề
 UC23 — Chủ nhiệm cần tự tổ chức CLB: tạo role (thủ quỹ, trưởng nhóm hậu cần, …), chọn
 permission cho từng role từ danh mục cố định, giao role cho thành viên `Active` và thu hồi khi
@@ -96,6 +98,7 @@ Tên 1–120 ký tự, không trùng (không phân biệt hoa thường) với r
 
 ## Changelog
 - v1.0.0 (2026-10-10) — bản đầu tiên, theo quyết định của product owner (UC23 đầy đủ, không đổi schema).
+- v2.0.0 (2026-10-13) — bỏ cấu hình permission của role (I66, ADR-007); role chỉ là chức danh.
 
 ### Điều chỉnh UX và quyền đọc thiết lập
 
