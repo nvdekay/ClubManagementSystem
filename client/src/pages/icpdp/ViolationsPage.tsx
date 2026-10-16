@@ -96,6 +96,8 @@ function historyLabel(t: TFunction, action: string): string {
     case "VIOLATION_ACTION_VERIFIED": return t("violations.historyVIOLATION_ACTION_VERIFIED");
     case "VIOLATION_ACTION_FAILED": return t("violations.historyVIOLATION_ACTION_FAILED");
     case "VIOLATION_RESOLVED": return t("violations.historyVIOLATION_RESOLVED");
+    case "VIOLATION_RESPONSE_SUBMITTED": return t("violations.historyVIOLATION_RESPONSE_SUBMITTED");
+    case "CORRECTIVE_ACTION_SUBMITTED": return t("violations.historyCORRECTIVE_ACTION_SUBMITTED");
     default: return action;
   }
 }
@@ -406,16 +408,16 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
               <li key={action.id} className="flex flex-wrap items-center gap-3 py-3">
                 <div className="min-w-0 flex-1 basis-56">
                   <p className="font-medium break-words">{action.description}</p>
-                  {action.submission && <div className="my-2 rounded-lg bg-bg-app p-3"><p className="whitespace-pre-wrap break-words">{action.submission.note}</p>{action.submission.evidence.map((e, n) => <p key={n} className="break-words">{e.note} {e.url && <a href={e.url} target="_blank" rel="noreferrer" className="text-accent-app underline">{e.url}</a>}</p>)}</div>}
+                  {action.submission && <div className="my-2 rounded-lg bg-bg-app p-3"><p className="whitespace-pre-wrap break-words">{action.submission.note}</p>{action.submission.evidence.map((e, n) => <p key={n} className="break-words">{e.note !== e.url && e.note} {e.url && <a href={e.url} target="_blank" rel="noreferrer" className="text-accent-app underline">{e.url}</a>}</p>)}</div>}
                   <p className="text-xs text-muted-app">{t("violations.actionDue")}: {day(action.dueAt)}
                     {action.linkedLifecycleAction && ` · ${action.linkedLifecycleAction === "SUSPEND" ? t("violations.actionLinkSUSPEND") : t("violations.actionLinkDISSOLVE")}`}</p>
                 </div>
-                {action.state === "Pending" && item.state === "Corrective Action" ? <div className="flex flex-wrap gap-2">
-                  <AppButton variant="secondary" disabled={step.isPending}
-                    onClick={() => void run({ type: "verifyAction", actionId: action.id, outcome: "Verified" })}>{t("violations.markVerified")}</AppButton>
+                {action.state === "Pending" && item.state === "Corrective Action" ? (action.submission || new Date(action.dueAt) <= new Date()) ? <div className="flex flex-wrap gap-2">
+                  {action.submission && <AppButton variant="secondary" disabled={step.isPending}
+                    onClick={() => void run({ type: "verifyAction", actionId: action.id, outcome: "Verified" })}>{t("violations.markVerified")}</AppButton>}
                   <AppButton variant="secondary" disabled={step.isPending}
                     onClick={() => void run({ type: "verifyAction", actionId: action.id, outcome: "Failed" })}>{t("violations.markFailed")}</AppButton>
-                </div> : <AppBadge tone={action.state === "Verified" ? "success" : action.state === "Failed" ? "danger" : "warning"}>{actionStateLabel(action.state)}</AppBadge>}
+                </div> : <p className="text-sm text-muted-app">{t("violations.awaitingEvidence")}</p> : <AppBadge tone={action.state === "Verified" ? "success" : action.state === "Failed" ? "danger" : "warning"}>{actionStateLabel(action.state)}</AppBadge>}
               </li>)}</ul> : <p className="mt-3 text-sm text-muted-app">{t("violations.noActions")}</p>}
             {item.actions.some((action) => action.linkedLifecycleAction) && <Link to="/icpdp/clubs"
               className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent-app hover:underline">

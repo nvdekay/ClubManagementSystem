@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { vnDateInput, vnDayBoundary, vnTomorrowInput } from "@/utils/formatDate";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -9,8 +10,8 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
   const { t, i18n } = useTranslation();
   const action = useWriteTransitionPlan(clubId);
   const [name, setName] = useState(plan?.input.toTerm.name ?? "");
-  const [start, setStart] = useState(plan?.input.toTerm.startAt.slice(0, 10) ?? "");
-  const [end, setEnd] = useState(plan?.input.toTerm.endAt.slice(0, 10) ?? "");
+  const [start, setStart] = useState(plan ? vnDateInput(plan.input.toTerm.startAt) : "");
+  const [end, setEnd] = useState(plan ? vnDateInput(plan.input.toTerm.endAt) : "");
   const [earlyReason, setEarlyReason] = useState(plan?.input.earlyReason ?? "");
   const [items, setItems] = useState(plan?.input.handoverItems.map((i) => i.description).join("\n") ?? "");
   const [candidates, setCandidates] = useState<Record<string, string>>(Object.fromEntries(plan?.input.candidates.map((c, n, all) => [`${c.positionCode}:${all.slice(0, n).filter((item) => item.positionCode === c.positionCode).length}`, c.membershipId]) ?? []));
@@ -20,7 +21,7 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
   const inputClass = "block w-full rounded-xl border border-border-app bg-bg-app p-3 text-text-app";
   function edited(update: () => void) { update(); setDirty(true); }
   async function save(submit = false) {
-    const input: TransitionInput = { toTerm: { name, startAt: `${start}T00:00:00.000Z`, endAt: `${end}T00:00:00.000Z` }, earlyReason,
+    const input: TransitionInput = { toTerm: { name, startAt: vnDayBoundary(start, "start"), endAt: vnDayBoundary(end, "end") }, earlyReason,
       handoverItems: items.split("\n").filter((v) => v.trim()).map((description, n) => ({ id: String(n + 1), description })),
       candidates: Object.entries(candidates).filter(([, id]) => id).map(([key, membershipId]) => ({ positionCode: key.split(":")[0]!, membershipId })),
       assignees: Object.fromEntries(Object.entries(assignees).filter(([, id]) => id)) };
@@ -32,8 +33,8 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
     {plan && <h2 className="font-bold">{t(labels[plan.state as keyof typeof labels])}</h2>}
     <div className="grid gap-4 sm:grid-cols-3">
       <label>{t("clubTransitionPlans.term")}<input className={inputClass} maxLength={200} value={name} disabled={!editable} onChange={(e) => edited(() => setName(e.target.value))} /></label>
-      <label>{t("clubTransitionPlans.start")}<input type="date" className={inputClass} value={start} disabled={!editable} onChange={(e) => edited(() => setStart(e.target.value))} /></label>
-      <label>{t("clubTransitionPlans.end")}<input type="date" className={inputClass} value={end} disabled={!editable} onChange={(e) => edited(() => setEnd(e.target.value))} /></label>
+      <label>{t("clubTransitionPlans.start")}<input type="date" className={inputClass} min={vnTomorrowInput()} value={start} disabled={!editable} onChange={(e) => edited(() => setStart(e.target.value))} /></label>
+      <label>{t("clubTransitionPlans.end")}<input type="date" className={inputClass} min={start || vnTomorrowInput()} value={end} disabled={!editable} onChange={(e) => edited(() => setEnd(e.target.value))} /></label>
     </div>
     <label className="block">{t("clubTransitionPlans.earlyReason")}<textarea className={inputClass} value={earlyReason} maxLength={2000} disabled={!editable} onChange={(e) => edited(() => setEarlyReason(e.target.value))} /></label>
     <h3 className="font-semibold">{t("clubTransitionPlans.board")}</h3>

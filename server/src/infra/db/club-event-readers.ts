@@ -51,9 +51,10 @@ export async function readClubEvent(clubId: string, eventId: string): Promise<Cl
     ...(budget ? { budget: { state: String(budget.state), approvedTotal: eventMoney(budget.approvedTotal), disbursedTotal: eventMoney(budget.disbursedTotal) } } : {}) };
 }
 export async function readEventParticipants(clubId: string, eventId: string): Promise<EventParticipant[]> {
-  if (!(await m.events!.exists({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }))) {
-    throw new DomainError("event not found", "not_found");
-  }
+  const event = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }).select({ endAt: 1 }).lean();
+  if (!event) throw new DomainError("event not found", "not_found");
+  // A confirmed registration without a check-in is a no-show only once the event has ended.
+  const ended = (event.endAt as Date) <= new Date();
   const [registrations, attendances] = await Promise.all([
     m.eventRegistrations!.find({ eventId: oid(eventId) }).sort({ waitlistPosition: 1, createdAt: 1 }).lean(),
     m.attendances!.find({ eventId: oid(eventId) }).lean(),
@@ -68,7 +69,7 @@ export async function readEventParticipants(clubId: string, eventId: string): Pr
       registrationId: r ? String(r._id) : undefined, state: r?.state as string | undefined,
       waitlistPosition: r?.waitlistPosition as number | undefined, attendanceId: a ? String(a._id) : undefined,
       checkedInAt: a?.checkedInAt as Date | undefined, method: a?.method as string | undefined,
-      abnormalFlags: (a?.abnormalFlags ?? (r?.state === "Confirmed" ? ["no-show"] : [])) as string[],
+      abnormalFlags: (a?.abnormalFlags ?? (r?.state === "Confirmed" && ended ? ["no-show"] : [])) as string[],
       correctionReason: a?.correctionReason as string | undefined, finalized: a?.finalized === true };
   });
 }

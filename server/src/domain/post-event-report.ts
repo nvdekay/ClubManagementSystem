@@ -43,6 +43,8 @@ export interface ReportObligation {
   revision: number;
   dueAt: Date;
   overdue: boolean;
+  /** The club can draft the report only after it has finalized the event's attendance. */
+  attendanceFinalized: boolean;
   report?: PostEventReport;
 }
 export interface ReportDetail {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDay, vnDayBoundary, vnTomorrowInput } from "@/utils/formatDate";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -16,7 +17,7 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
   const impactKey = JSON.stringify(query.data?.impacts.map((i) => i.id).sort() ?? []);
   const inputClass = "block w-full rounded-xl border border-border-app bg-bg-app p-3 text-text-app";
   async function submit() { if (!auth.data || !query.data) return; try { await action.mutateAsync({ kind: "submit", csrfToken: auth.data.csrfToken,
-    input: { reason, until: `${until}T23:59:59.999Z`, obligationsPlan, recoveryPlan, acknowledgedImpactIds: query.data.impacts.map((i) => i.id) } }); } catch { /* The mutation error is displayed below. */ } }
+    input: { reason, until: vnDayBoundary(until, "end"), obligationsPlan, recoveryPlan, acknowledgedImpactIds: query.data.impacts.map((i) => i.id) } }); } catch { /* The mutation error is displayed below. */ } }
   async function decide(id: string, outcome: "Approve" | "Reject") { if (!auth.data) return; try { await action.mutateAsync({ kind: "decide", csrfToken: auth.data.csrfToken, id, outcome, reason: decisions[id] ?? "" }); } catch { /* The mutation error is displayed below. */ } }
   if (auth.isPending) return <AppSkeleton className="h-64 w-full" />;
   if (!allowed) return <AppNotice tone="danger">{t("suspensionRequests.denied")}</AppNotice>;
@@ -26,7 +27,7 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
     {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
     {clubId && query.data && !query.data.requests.some((r) => r.state === "Pending") && <section className="mb-6 space-y-4 rounded-2xl border border-border-app bg-surface-app p-5">
       <label className="block">{t("suspensionRequests.reason")}<textarea className={inputClass} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></label>
-      <label className="block">{t("suspensionRequests.until")}<input type="date" className={inputClass} value={until} onChange={(e) => setUntil(e.target.value)} /></label>
+      <label className="block">{t("suspensionRequests.until")}<input type="date" className={inputClass} min={vnTomorrowInput()} value={until} onChange={(e) => setUntil(e.target.value)} /></label>
       <label className="block">{t("suspensionRequests.obligations")}<textarea className={inputClass} maxLength={5000} value={obligationsPlan} onChange={(e) => setObligationsPlan(e.target.value)} /></label>
       <label className="block">{t("suspensionRequests.recovery")}<textarea className={inputClass} maxLength={5000} value={recoveryPlan} onChange={(e) => setRecoveryPlan(e.target.value)} /></label>
       <h2 className="font-semibold">{t("suspensionRequests.impact")}</h2><ul className="list-inside list-disc">{query.data.impacts.map((i) => <li key={i.id}>{i.title} · {new Date(i.startAt).toLocaleString(i18n.language)}</li>)}</ul>
@@ -36,7 +37,7 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
     {query.data?.requests.length === 0 && <AppNotice>{t("suspensionRequests.empty")}</AppNotice>}
     <div className="space-y-6">{query.data?.requests.map((r) => <section key={r.id} className="space-y-3 rounded-2xl border border-border-app bg-surface-app p-5">
       <h2 className="font-bold">{r.clubName} · {t(`suspensionRequests.${r.state}`)}</h2><p className="whitespace-pre-wrap break-words">{r.reason}</p>
-      <p>{t("suspensionRequests.until")}: {new Date(r.until).toLocaleDateString(i18n.language)}</p><p className="whitespace-pre-wrap break-words">{r.obligationsPlan}</p><p className="whitespace-pre-wrap break-words">{r.recoveryPlan}</p>
+      <p>{t("suspensionRequests.until")}: {formatDay(r.until, i18n.language)}</p><p className="whitespace-pre-wrap break-words">{r.obligationsPlan}</p><p className="whitespace-pre-wrap break-words">{r.recoveryPlan}</p>
       {r.decisionReason && <AppNotice>{r.decisionReason}</AppNotice>}
       {!clubId && r.state === "Pending" && <><label className="block">{t("suspensionRequests.decision")}<textarea className={inputClass} maxLength={2000} value={decisions[r.id] ?? ""} onChange={(e) => setDecisions((d) => ({ ...d, [r.id]: e.target.value }))} /></label>
         <div className="flex flex-wrap gap-3"><AppButton disabled={action.isPending || !decisions[r.id]?.trim()} onClick={() => void decide(r.id, "Approve")}>{t("suspensionRequests.approve")}</AppButton>

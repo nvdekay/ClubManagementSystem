@@ -58,12 +58,21 @@ describe.skipIf(!uri)("Mongo club lifecycle repository", () => {
   it("suspends: cancels upcoming events and registrations, keeps recruitment open but blocks applying", async () => {
     const repo = mongoClubLifecycleRepository();
     const seeded = await seedClub("Robotics");
+    // FR-UC15-04: a proposal awaiting ICPDP is cancelled too; an unsent draft is left to the club.
+    const proposal = { clubId: seeded.clubId, clubName: "Robotics", startAt: new Date(now.getTime() + 10 * DAY),
+      endAt: new Date(now.getTime() + 10 * DAY + 3_600_000), semesterCode: "FA26", audienceScope: "PUBLIC", capacity: 30, createdAt: now };
+    const [pending] = await ucmsModels.events!.insertMany([{ ...proposal, title: "Chờ duyệt", state: "Pending Approval" },
+      { ...proposal, title: "Bản nháp", state: "Draft", startAt: new Date(now.getTime() + 11 * DAY), endAt: new Date(now.getTime() + 11 * DAY + 3_600_000) }]);
+    await ucmsModels.approvalTasks!.create({ entityType: "EVENT_PROPOSAL", entityId: pending!._id, clubId: seeded.clubId,
+      title: "Chờ duyệt", state: "Open", openedAt: now });
     const until = new Date(now.getTime() + 2 * DAY);
     expect(await repo.suspend(String(seeded.clubId), { reason: "Vi phạm quy chế", until }, String(officer), now))
-      .toEqual({ cancelledEvents: 2, cancelledRegistrations: 2, cancelledBookings: 0 });
+      .toEqual({ cancelledEvents: 3, cancelledRegistrations: 2, cancelledBookings: 0 });
     const events = await ucmsModels.events!.find({ clubId: seeded.clubId }).sort({ startAt: 1 }).lean();
     expect(events.map((event) => [event.title, event.state, event.cancelSourceType])).toEqual([
-      ["Đã diễn ra", "Completed", undefined], ["Sắp tới", "Cancelled", "SUSPENSION"], ["Năm sau", "Cancelled", "SUSPENSION"]]);
+      ["Đã diễn ra", "Completed", undefined], ["Sắp tới", "Cancelled", "SUSPENSION"], ["Chờ duyệt", "Cancelled", "SUSPENSION"],
+      ["Bản nháp", "Draft", undefined], ["Năm sau", "Cancelled", "SUSPENSION"]]);
+    expect(await ucmsModels.approvalTasks!.findOne({ entityId: pending!._id }).lean()).toMatchObject({ state: "Closed" });
     expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: student, eventCode: "EVENT_CANCELLED" })).toBe(2);
     expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: member, eventCode: "CLUB_SUSPENDED" })).toBe(1);
     expect((await ucmsModels.recruitmentCampaigns!.findById(seeded.campaignId).lean())?.state).toBe("Published");

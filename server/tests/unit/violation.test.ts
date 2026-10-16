@@ -37,6 +37,12 @@ describe("violation case steps", () => {
       { description: "Nộp bản kiểm điểm", dueAt: new Date("2026-11-01"), linkedLifecycleAction: "SUSPEND" }] }, officer, later).next;
     expect(current.state).toBe("Corrective Action");
     current = { ...current, actions: current.actions.map((item) => ({ ...item, id: "a1" })) };
+    expect(() => applyViolationStep(current, { type: "verifyAction", actionId: "a1", outcome: "Verified" }, officer, later))
+      .toThrow(/not submitted evidence/);
+    expect(() => applyViolationStep(current, { type: "verifyAction", actionId: "a1", outcome: "Failed" }, officer, later))
+      .toThrow(/deadline/);
+    current = { ...current, actions: current.actions.map((item) => ({ ...item,
+      submission: { note: "Đã nộp", evidence: [], submittedBy: "leader", submittedAt: later } })) };
     const verified = applyViolationStep(current, { type: "verifyAction", actionId: "a1", outcome: "Verified" }, officer, later);
     expect(verified).toMatchObject({ action: "VIOLATION_RESOLVED", next: { state: "Resolved", resolvedAt: later } });
     expect(() => applyViolationStep(verified.next, { type: "investigate" }, officer, later)).toThrow(/closed/);
@@ -53,7 +59,8 @@ describe("violation case steps", () => {
 
   it("keeps the case open when an action fails and lets the officer resolve once nothing is pending", () => {
     const current = base({ state: "Corrective Action", actions: [
-      { id: "a1", description: "A", dueAt: later, state: "Pending" }, { id: "a2", description: "B", dueAt: later, state: "Verified" }] });
+      { id: "a1", description: "A", dueAt: later, state: "Pending",
+        submission: { note: "Chưa đạt", evidence: [], submittedBy: "leader", submittedAt: now } }, { id: "a2", description: "B", dueAt: later, state: "Verified" }] });
     const failed = applyViolationStep(current, { type: "verifyAction", actionId: "a1", outcome: "Failed" }, officer, now);
     expect(failed).toMatchObject({ action: "VIOLATION_ACTION_FAILED", next: { state: "Corrective Action" } });
     expect(() => applyViolationStep(current, { type: "resolve" }, officer, now)).toThrow(/not checked/);

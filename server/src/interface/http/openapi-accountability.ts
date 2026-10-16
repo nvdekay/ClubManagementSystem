@@ -109,6 +109,7 @@ const obligation = z.object({
   revision: z.number(),
   dueAt: date,
   overdue: z.boolean(),
+  attendanceFinalized: z.boolean(),
   report: report.optional(),
 });
 const detail = z.object({

@@ -62,7 +62,7 @@ export function AuthWorkspacePage() {
     if (workspace.kind === "student") return t("auth.studentWorkspaceHint");
     if (workspace.kind === "icpdp") return t("auth.icpdpWorkspaceHint");
     const role = workspace.role ? t(`auth.${workspace.role}`) : t("auth.member");
-    return t("auth.clubWorkspaceHint", { role });
+    return t(workspace.role === "leader" || workspace.role === "founder" ? "auth.clubWorkspaceHint" : "auth.clubMemberWorkspaceHint", { role });
   }
 
   if (!auth.data && window.location.pathname !== "/login") {

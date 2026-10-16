@@ -53,7 +53,7 @@ const en = {
   historyVIOLATION_RESPONSE_RECORDED: "Club answer recorded", historyVIOLATION_NO_RESPONSE_RECORDED: "No answer from the club",
   historyVIOLATION_DECIDED: "Violation decided", historyVIOLATION_CLOSED_NO_VIOLATION: "Closed — no violation",
   historyVIOLATION_ACTIONS_ASSIGNED: "Corrective actions assigned", historyVIOLATION_ACTION_VERIFIED: "Action checked as done",
-  historyVIOLATION_ACTION_FAILED: "Action checked as not done", historyVIOLATION_RESOLVED: "Case resolved",
+  historyVIOLATION_ACTION_FAILED: "Action checked as not done", historyVIOLATION_RESOLVED: "Case resolved", historyVIOLATION_RESPONSE_SUBMITTED: "Club submitted its explanation", historyCORRECTIVE_ACTION_SUBMITTED: "Club submitted corrective evidence", awaitingEvidence: "Waiting for the club's evidence",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -111,7 +111,7 @@ const vi: Record<keyof typeof en, string> = {
   historyVIOLATION_RESPONSE_RECORDED: "Ghi nhận giải trình", historyVIOLATION_NO_RESPONSE_RECORDED: "CLB không phản hồi",
   historyVIOLATION_DECIDED: "Kết luận có vi phạm", historyVIOLATION_CLOSED_NO_VIOLATION: "Đóng — không vi phạm",
   historyVIOLATION_ACTIONS_ASSIGNED: "Giao biện pháp khắc phục", historyVIOLATION_ACTION_VERIFIED: "Xác nhận biện pháp hoàn thành",
-  historyVIOLATION_ACTION_FAILED: "Biện pháp không hoàn thành", historyVIOLATION_RESOLVED: "Kết thúc hồ sơ",
+  historyVIOLATION_ACTION_FAILED: "Biện pháp không hoàn thành", historyVIOLATION_RESOLVED: "Kết thúc hồ sơ", historyVIOLATION_RESPONSE_SUBMITTED: "CLB đã gửi giải trình", historyCORRECTIVE_ACTION_SUBMITTED: "CLB đã nộp minh chứng khắc phục", awaitingEvidence: "Chờ CLB nộp minh chứng",
 };
 
 export const violations = { en, vi };

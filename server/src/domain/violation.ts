@@ -265,6 +265,11 @@ export function applyViolationStep(current: ViolationCase, step: ViolationStep, 
       const item = next.actions.find((action) => action.id === step.actionId);
       if (!item) throw new DomainError("corrective action not found", "not_found");
       if (item.state !== "Pending") conflict("this corrective action is already checked");
+      // Done needs the club's evidence; not done needs that evidence or a passed deadline.
+      if (step.outcome === "Verified" && !item.submission) conflict("the club has not submitted evidence for this action yet");
+      if (step.outcome === "Failed" && !item.submission && item.dueAt > now) {
+        conflict("wait for the club's evidence or the action deadline before marking it not done");
+      }
       item.state = step.outcome;
       item.verifiedBy = actorId;
       item.verifiedAt = now;

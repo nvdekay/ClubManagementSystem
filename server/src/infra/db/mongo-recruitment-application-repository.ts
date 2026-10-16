@@ -234,7 +234,11 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
         }
         const all = await applications.find({ campaignId }).select("state").session(session).lean();
         const terminal = new Set(["Accepted", "Rejected", "Waitlisted", "Withdrawn", "Onboarded", "Declined"]);
-        if (all.length > 0 && all.every((app) => terminal.has(String(app.state)))) {
+        // Complete only when no more applications can arrive: the window has closed or every
+        // place is taken. Deciding the current applications early must not close an open campaign.
+        const filled = all.filter((app) => ["Accepted", "Onboarded"].includes(String(app.state))).length;
+        const closed = (campaign.windowEnd as Date) <= input.now || filled >= Number(campaign.capacity);
+        if (closed && all.length > 0 && all.every((app) => terminal.has(String(app.state)))) {
           await campaigns.updateOne({ _id: campaignId, state: { $ne: "Completed" } },
             { $set: { state: "Completed" } }, { session });
         }

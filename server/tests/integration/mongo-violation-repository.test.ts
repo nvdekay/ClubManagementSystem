@@ -73,6 +73,11 @@ describe.skipIf(!uri)("Mongo violation repository", () => {
     expect(assigned.actions.map((item) => item.state)).toEqual(["Pending", "Pending"]);
     expect((await repo.list())[0]?.pendingActions).toBe(2);
 
+    await expect(repo.apply(opened.id, String(officer), { type: "verifyAction", actionId: assigned.actions[0]!.id,
+      outcome: "Verified" }, now)).rejects.toMatchObject({ kind: "conflict" });
+    // The club's evidence normally arrives through the club compliance screen (UC40).
+    await ucmsModels.correctiveActions!.updateMany({ violationId: new Types.ObjectId(opened.id) },
+      { $set: { submission: { note: "Đã thực hiện", evidence: [], submittedBy: String(leader), submittedAt: now } } });
     await repo.apply(opened.id, String(officer), { type: "verifyAction", actionId: assigned.actions[0]!.id, outcome: "Verified" }, now);
     const resolved = await repo.apply(opened.id, String(officer), { type: "verifyAction", actionId: assigned.actions[1]!.id,
       outcome: "Verified" }, now);

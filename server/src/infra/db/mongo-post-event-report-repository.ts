@@ -212,6 +212,7 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
         overdue:
           now > dueAt &&
           !versions.some((version) => Boolean(version.submittedAt)),
+        attendanceFinalized: event.attendanceFinalized === true,
         report: versions[0],
       },
       versions,

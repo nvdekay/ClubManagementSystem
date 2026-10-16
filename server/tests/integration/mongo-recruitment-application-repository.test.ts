@@ -137,8 +137,9 @@ describe.skipIf(!uri)("Mongo recruitment application repository", () => {
     expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: secondStudent,
       eventCode: { $in: ["RECRUITMENT_APPLICATION_ACCEPTED", "RECRUITMENT_APPLICATION_ONBOARDED"] },
       entityId: new Types.ObjectId(secondDraft.id) })).toBe(2);
-    expect(await ucmsModels.recruitmentCampaigns!.findById(campaignId).select("state").lean())
-      .toMatchObject({ state: "Completed" });
+    // Every application is decided, but the window is open until 1 Nov and places remain.
+    expect((await ucmsModels.recruitmentCampaigns!.findById(campaignId).select("state").lean())?.state)
+      .not.toBe("Completed");
   }, 60_000);
 
   it("rejects banned and active club members at the eligibility boundary", async () => {

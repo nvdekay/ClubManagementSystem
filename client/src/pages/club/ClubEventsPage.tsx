@@ -195,7 +195,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       <div className="flex flex-wrap gap-2">
         {active.state === "Upcoming" && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.capacity")}</AppButton>}
         {!active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed"].includes(active.state) && <AppButton onClick={() => openOperation("check-in")}>{t("clubEvents.checkin")}</AppButton>}
-        {active.state === "Completed" && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={() => void runAction("attendance/finalize", {})}>{t("clubEvents.finalize")}</AppButton>}
+        {active.state === "Completed" && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={() => { if (window.confirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
         {active.attendanceFinalized && auth.data?.systemRoles.includes("ATTENDANCE_UNLOCK") && <AppButton onClick={() => openOperation("unlock")}>{t("clubEvents.unlock")}</AppButton>}
       </div>
       <AppTable table={ptable} emptyMessage={t("clubEvents.noParticipants")} loading={participants.isPending} />

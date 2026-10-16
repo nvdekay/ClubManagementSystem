@@ -201,7 +201,10 @@ try {
   if (!(await policy.findEffective(now))) {
     // Effective from the first demo semester, so events that ended before the seed ran still
     // resolve their post-event report deadline instead of reporting a missing historical policy.
-    const policyStart = policySettings.academicCalendar[0]!.startAt;
+    // The PDP snapshot seeded by `npm run seed` holds events from before the calendar starts too.
+    const earliestEvent = await ucmsModels.events!.findOne({}).sort({ endAt: 1 }).select({ endAt: 1 }).lean();
+    const policyStart = new Date(Math.min(policySettings.academicCalendar[0]!.startAt.getTime(),
+      earliestEvent ? (earliestEvent.endAt as Date).getTime() - 86_400_000 : Infinity));
     await createPolicyVersion(policy, auth, actor(owner), policySettings, undefined,
       "Chính sách khởi tạo cho môi trường demo", policyStart < now ? policyStart : now);
   }
@@ -747,6 +750,19 @@ try {
       room = await updateProperty(properties, auth, actor(owner), room.id, { ...room, location: details.location }, now);
     }
     rooms.push(room);
+  }
+  // Facilities clubs request through UC45 (every type except ROOM); illustrative demo data, not an inventory.
+  const facilityHours = Array.from({ length: 7 }, (_, day) => ({ day: day + 1, open: "07:00", close: "21:30" }));
+  const facilities = [
+    { type: "HALL" as const, name: "Hội trường Alpha", location: "Alpha building, ground floor", capacity: 500, equipment: ["Projector", "Sound system", "Stage lighting"] },
+    { type: "OUTDOOR" as const, name: "Sân trung tâm", location: "Campus central yard", capacity: 300, equipment: [] },
+    { type: "STAGE" as const, name: "Sân khấu ngoài trời", location: "Campus central yard", capacity: 200, equipment: ["Sound system"] },
+    { type: "EQUIPMENT" as const, name: "Bộ âm thanh di động", location: "ICPDP equipment store", equipment: ["2 speakers", "4 microphones", "Mixer"] },
+  ];
+  for (const { type, ...details } of facilities) {
+    if (!catalog.some((item) => item.name === details.name)) {
+      await createProperty(properties, auth, actor(owner), { type, ...details, blackouts: [], bookableHours: facilityHours }, now);
+    }
   }
   // Rooms are only allocated by ICPDP now (UC58): drop every earlier room booking and its review trail.
   const roomIds = await ucmsModels.properties!.distinct("_id", { type: "ROOM" });

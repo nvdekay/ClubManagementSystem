@@ -1,5 +1,9 @@
 export const accountability = {
   en: {
+    attendanceRequired:
+      "Finalize this event's attendance before writing the report: the report uses the final attendance figures.",
+    openAttendance: "Open registration & attendance",
+    confirmDecision: "Confirm this decision?",
     deadlineMissing:
       "Report deadline is not configured for this event. Contact ICPDP to resolve its historical policy.",
     severity: "Severity",
@@ -111,6 +115,10 @@ export const accountability = {
     claimFirst: "Claim this review to make a decision.",
   },
   vi: {
+    attendanceRequired:
+      "Hãy chốt điểm danh của sự kiện trước khi viết báo cáo: báo cáo dùng số liệu điểm danh đã chốt.",
+    openAttendance: "Mở trang đăng ký và điểm danh",
+    confirmDecision: "Xác nhận quyết định này?",
     deadlineMissing:
       "Chưa có hạn báo cáo cho sự kiện này. Liên hệ ICPDP để xử lý chính sách lịch sử.",
     severity: "Mức độ",

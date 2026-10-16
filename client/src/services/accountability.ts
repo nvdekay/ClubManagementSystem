@@ -37,6 +37,7 @@ export interface ReportObligation {
   revision: number;
   dueAt: string;
   overdue: boolean;
+  attendanceFinalized: boolean;
   report?: PostEventReport;
 }
 export interface ReportConfigurationIssue { eventId: string; eventTitle: string; state: string; revision: number; configurationError: "REPORT_DEADLINE_NOT_CONFIGURED" }

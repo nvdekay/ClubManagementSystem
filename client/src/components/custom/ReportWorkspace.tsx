@@ -171,7 +171,17 @@ function ReportEditor({
     (!latest.task?.assigneeId || latest.task.assigneeId === actorId);
   const claimed = latest?.task?.assigneeId === actorId;
   async function act(body: object, confirm = false) {
-    if (confirm && !window.confirm(t("accountability.confirmSubmit"))) return;
+    if (
+      confirm &&
+      !window.confirm(
+        t(
+          admin
+            ? "accountability.confirmDecision"
+            : "accountability.confirmSubmit",
+        ),
+      )
+    )
+      return;
     try {
       await mutation.mutateAsync({
         body: { ...body, revision: data.obligation.revision },
@@ -237,6 +247,19 @@ function ReportEditor({
             <Figures figures={data.preview} />
           </div>
         </details>
+      )}
+      {!admin && draft && !data.obligation.attendanceFinalized && (
+        <AppNotice tone="warning">
+          {t("accountability.attendanceRequired")}{" "}
+          {context.kind === "club" && (
+            <Link
+              className="font-semibold text-accent-app underline"
+              to={`/club/${context.clubId}/event-attendance`}
+            >
+              {t("accountability.openAttendance")}
+            </Link>
+          )}
+        </AppNotice>
       )}
       {!admin && draft ? (
         <form
@@ -314,7 +337,12 @@ function ReportEditor({
             ))}
           </ul>
           <div className="flex flex-wrap gap-3">
-            <AppButton type="submit" disabled={mutation.isPending}>
+            <AppButton
+              type="submit"
+              disabled={
+                mutation.isPending || !data.obligation.attendanceFinalized
+              }
+            >
               {t("accountability.save")}
             </AppButton>
             {latest?.state === "Draft" && (
@@ -541,13 +569,21 @@ export function ReportWorkspace({
   if (auth.isPending) return <AppSkeleton className="h-40 w-full" />;
   if (!allowed || !auth.data)
     return <AppNotice tone="danger">{t("accountability.access")}</AppNotice>;
-  const items = (list.data ?? []).filter((item): item is ReportObligation => !("configurationError" in item));
-  const configurationIssues = (list.data ?? []).filter((item) => "configurationError" in item);
+  const items = (list.data ?? []).filter(
+    (item): item is ReportObligation => !("configurationError" in item),
+  );
+  const configurationIssues = (list.data ?? []).filter(
+    (item) => "configurationError" in item,
+  );
   const count = Math.max(1, Math.ceil(items.length / 10));
   return (
     <div className="space-y-6">
       <PageHeader title={t("accountability.reports")} />
-      {configurationIssues.map((item) => <AppNotice key={item.eventId} tone="warning">{item.eventTitle}: {t("accountability.deadlineMissing")}</AppNotice>)}
+      {configurationIssues.map((item) => (
+        <AppNotice key={item.eventId} tone="warning">
+          {item.eventTitle}: {t("accountability.deadlineMissing")}
+        </AppNotice>
+      ))}
       {list.isPending ? (
         <AppSkeleton className="h-32 w-full" />
       ) : list.isError ? (
@@ -564,12 +600,10 @@ export function ReportWorkspace({
             value={selected}
             options={[
               { value: "", label: t("accountability.select") },
-              ...items
-                .slice(page * 10, page * 10 + 10)
-                .map((item) => ({
-                  value: item.eventId,
-                  label: `${item.eventTitle} · ${t("accountability.due")}: ${formatDay(item.dueAt, i18n.language)}${item.overdue ? ` · ${t("accountability.late")}` : ""}`,
-                })),
+              ...items.slice(page * 10, page * 10 + 10).map((item) => ({
+                value: item.eventId,
+                label: `${item.eventTitle} · ${t("accountability.due")}: ${formatDay(item.dueAt, i18n.language)}${item.overdue ? ` · ${t("accountability.late")}` : ""}`,
+              })),
             ]}
             onChange={setSelected}
             className="w-full"

@@ -1,7 +1,7 @@
 export const facilityBookings = {
   en: {
     overbookingReason: "Overbooking reason", permitOverbooking: "Authorize overbooking",
-    bookingHistory: "Request history", bookingCount: "{{count}} requests", rowsPerPage: "Rows per page",
+    bookingHistory: "Request history", bookingCount_one: "{{count}} request", bookingCount_other: "{{count}} requests", rowsPerPage: "Rows per page",
     prevPage: "Previous page", nextPage: "Next page", pageLabel: "Page {{page}}", pages: "Booking pages", optionalFields: "Equipment and related event (optional)",
     noticeRule: "Submit before 07:30 for Slots 1–2, before 09:50 for Slot 3, and before 12:20 for Slot 4 on the booking date.",
     bookingDate: "Booking date", slot: "Slot {{number}}", slotLabel: "Campus slot", selectSlot: "Select a slot", legacySlot: "This request uses an earlier time interval. Choose a date and slot before submitting.",
@@ -22,7 +22,7 @@ export const facilityBookings = {
     capacityWarning: "Expected participants exceed facility capacity. ICPDP must review this request.",
     clubState: "Club status", obligations: "Overdue obligations", overdueReport: "Activity report", overduePostEventReport: "Post-event report", overdueSettlement: "Budget settlement",
     overdueRefund: "Budget refund", late: "Late cancellation", assigned: "Another officer is reviewing this request.",
-    noProperties: "No active facilities. ICPDP must activate a facility before a request can be created.",
+    noProperties: "No facility is open for requests. Classrooms are allocated by ICPDP each semester; ask ICPDP to add or activate a hall, yard, stage or equipment.",
     hours: "Bookable hours (Vietnam time)", blackout: "Blackouts", blackoutTitle: "Pending requests affected by blackouts",
     noBlackoutConflicts: "No pending requests overlap these blackouts.", select: "Select a facility", detail: "Request details",
     changed: "Booking updated.", confirmSubmit: "Submit this request to ICPDP?", confirmDecision: "Record this decision?",
@@ -54,7 +54,7 @@ export const facilityBookings = {
     capacityWarning: "Số người dự kiến vượt sức chứa. ICPDP cần thẩm định yêu cầu này.",
     clubState: "Trạng thái CLB", obligations: "Nghĩa vụ quá hạn", overdueReport: "Báo cáo hoạt động", overduePostEventReport: "Báo cáo sau sự kiện", overdueSettlement: "Quyết toán kinh phí",
     overdueRefund: "Hoàn trả kinh phí", late: "Huỷ muộn", assigned: "Officer khác đang thẩm định yêu cầu này.",
-    noProperties: "Chưa có cơ sở vật chất đang hoạt động. ICPDP cần kích hoạt trước khi CLB tạo yêu cầu.",
+    noProperties: "Chưa có cơ sở vật chất nào mở cho CLB yêu cầu. Phòng học do ICPDP phân theo học kỳ; hãy đề nghị ICPDP thêm hoặc kích hoạt hội trường, sân, sân khấu hay thiết bị.",
     hours: "Khung giờ được đặt (giờ Việt Nam)", blackout: "Giai đoạn khoá", blackoutTitle: "Yêu cầu đang chờ vướng giai đoạn khoá",
     noBlackoutConflicts: "Không có yêu cầu đang chờ trùng giai đoạn khoá.", select: "Chọn cơ sở vật chất", detail: "Chi tiết yêu cầu",
     changed: "Đã cập nhật yêu cầu.", confirmSubmit: "Gửi yêu cầu này đến ICPDP thẩm định?", confirmDecision: "Ghi nhận quyết định này?",

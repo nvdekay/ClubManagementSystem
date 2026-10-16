@@ -22,7 +22,7 @@ export function ClubEvaluationsPage() {
       {e.publishedAt && <p>{new Date(e.publishedAt).toLocaleString(i18n.language)}</p>}
       <p className="text-lg font-bold">{t("clubCompliance.score")}: {e.totalScore ?? t("clubCompliance.missing")} {e.classification && `· ${t(`evaluations.rating${e.classification}`)}`}</p>
       <div className="space-y-3">{e.dimensions.map((d) => <article key={d.code} className="border-t border-border-app pt-3">
-        <div className="flex flex-wrap justify-between gap-3"><h3 className="font-semibold">{d.name}</h3><span>{d.score ?? t("clubCompliance.missing")} · {t("evaluations.weight")}: {d.weight}</span></div>
+        <div className="flex flex-wrap justify-between gap-3"><h3 className="font-semibold">{d.name}</h3><span>{d.score ?? t("clubCompliance.missing")} · {t("evaluations.weight")}: {d.weight}%</span></div>
         {d.justification && <p className="whitespace-pre-wrap break-words">{d.justification}</p>}
         <details><summary>{t("clubCompliance.sources")}</summary><dl className="grid grid-cols-2 gap-2 pt-2">{d.evidence.map((s, n) => <div key={n} className="col-span-2 flex flex-wrap justify-between gap-2"><dt>{metric(s.metric)} ({s.sourcePeriod})</dt><dd>{s.value}</dd></div>)}</dl></details>
       </article>)}</div>

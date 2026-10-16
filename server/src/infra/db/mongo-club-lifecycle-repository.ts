@@ -15,6 +15,7 @@ type Doc = Record<string, unknown>;
 const scheduledEventStates = ["Approved", "Upcoming"];
 /** Proposals and events that may still run; BR45 cancels those ending after the dissolution semester. */
 const liveEventStates = ["Draft", "Pending Approval", "Under Review", "Revision Requested", "Approved", "Upcoming"];
+const undecidedProposalStates = ["Pending Approval", "Under Review", "Revision Requested"];
 const undecidedBookingStates = ["Draft", "Requested", "Under Review", "Revision Requested"];
 const openCampaignStates = ["Published", "Accepting Applications"];
 
@@ -140,7 +141,9 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         if (changed.modifiedCount !== 1) return conflict("only an active club can be suspended");
         const decisionId = new Types.ObjectId();
         // Open recruitment stays open (decision 2026-10-10): applying is blocked while suspended instead.
-        const result = await cascade(session, id, { state: { $in: scheduledEventStates }, startAt: { $gt: now } },
+        // FR-UC15-04: future approved events and every proposal still awaiting a decision are cancelled.
+        const result = await cascade(session, id, { $or: [{ state: { $in: scheduledEventStates }, startAt: { $gt: now } },
+          { state: { $in: undecidedProposalStates } }] },
           { state: "Approved", startAt: { $gt: now } }, "SUSPENSION", input.reason, now, decisionId);
         const correlationId = randomUUID();
         await audit(session, id, "CLUB_SUSPENDED", actorId, { state: "Active" },
