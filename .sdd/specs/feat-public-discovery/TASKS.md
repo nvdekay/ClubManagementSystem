@@ -9,4 +9,4 @@
 - [x] Chạy integration Mongo thật (replica set `rs0`): 90/90 test xanh (2026-10-04).
 - [ ] Kiểm tra giao diện bằng trình duyệt ở desktop/mobile, light/dark, en/vi.
 - [ ] Dữ liệu PDP còn thiếu: tên 29 CLB, logo/ảnh bìa (schema chưa có trường ảnh), sức chứa sự kiện (PDP không công bố, đang để 0) và sự kiện sắp diễn ra (hiện chưa có).
-- [ ] Hoàn tất CTA ứng tuyển/đăng ký khi UC17/UC29 được triển khai; hiện trang thông báo trạng thái chưa mở, không giả lập thao tác.
+- [x] CTA ứng tuyển/đăng ký đã nối (đối chiếu 16/10/2026): `ClubDetail` dẫn tới `/workspace/recruitment/:id` (qua đăng nhập nếu chưa có phiên), `EventDetail` có `EventRegistrationPanel`.

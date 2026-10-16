@@ -319,9 +319,9 @@ gửi ICPDP, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 - **Vì sao không có actor thứ tư:** Phòng Tài chính, Quản lý cơ sở vật chất, An ninh hay cố vấn
   khoa **không tương tác trực tiếp** với UCMS. Khi cần ý kiến chuyên môn của họ, ICPDP lấy ý
   kiến **ngoài hệ thống** và ghi vào review note của chính quyết định mình. Hệ quả: hệ thống chỉ
-  có một cấp phê duyệt; duyệt đa cấp là **nội bộ ICPDP** (theo rule định tuyến của UC05, BR16);
-  phân cấp trong ICPDP (officer, senior officer, head) là RBAC — xem quyết định còn mở D1.
-- **Use case:** UC01, UC02, UC03, UC04, UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35,
+  có một cấp phê duyệt, và mỗi hồ sơ chỉ cần một quyết định của một `ICPDP_OFFICER`; duyệt đa cấp
+  và rule định tuyến đã rút cùng UC05 (sửa 2026-10-16).
+- **Use case:** UC01, UC02, UC03, UC04, UC08, UC11, UC13, UC15, UC26, UC34, UC35,
   UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC50 (hộp thư góp ý gửi ICPDP), UC53, UC55, UC58.
 
 ### Dùng chung và actor phụ
@@ -502,7 +502,7 @@ Club Leader tạo và công bố đợt tuyển (UC16) → Published
 Club Leader nộp đề xuất: phạm vi, kế hoạch, rủi ro, phần ngân sách, yêu cầu booking (UC25, UC45)
     ├─ sự kiện Internal không có ngân sách → ghi nhận thẳng Approved (BR53)
     └─ còn lại → Pending Approval
-→ ICPDP thẩm định (UC26), cấp thứ hai nếu khớp rule UC05 → Revision Requested | Approved | Rejected
+→ ICPDP thẩm định (UC26), một quyết định của một officer → Revision Requested | Approved | Rejected
 Sự kiện cấp trường: ICPDP tạo sự kiện và gửi lời mời tới các CLB Active (UC53)
     → Club Leader xem và phản hồi Chấp nhận / Từ chối (UC54, BR59) → EventInvitation: Accepted | Declined | Expired
 → công bố và mở đăng ký (UC27) → Upcoming
@@ -2846,7 +2846,7 @@ repository.
 ## 8.1 Workflow phê duyệt
 
 Bốn đối tượng nghiệp vụ đi qua *nộp → thẩm định → sửa → quyết định*: hồ sơ thành lập (UC07/08),
-đề xuất sự kiện kèm ngân sách (UC25/26), đặt cơ sở vật chất (UC45/48) và tạm ngừng CLB (UC14/15);
+đề xuất sự kiện kèm ngân sách (UC25/26), đặt cơ sở vật chất (UC45/46) và tạm ngừng CLB (UC14/15);
 góp ý UC50 không còn đi qua luồng này (sửa 2026-10-16). Xác nhận ban chủ nhiệm (UC10/11), chuyển giao nhiệm kỳ
 (UC12/13) và hai loại thẩm định báo cáo (UC33/34, UC38/41) dùng cùng cơ chế task.
 
@@ -3577,7 +3577,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 
 | Module | Endpoint (dự kiến) |
 |---|---|
-| M01 | `GET /auth/google`, `GET /auth/google/callback`, `POST /auth/logout`, `GET /me`, `GET /dashboard`, `GET|PATCH /users/:id/roles`, `POST /users/:id/lock`, `GET|PUT /policies`, `GET|PUT /approval-routing` |
+| M01 | `GET /auth/google`, `GET /auth/google/callback`, `POST /auth/logout`, `GET /me`, `GET /dashboard`, `GET|PATCH /users/:id/roles`, `POST /users/:id/lock`, `GET|PUT /policies` (`/approval-routing` đã bỏ cùng UC05) |
 | M02 | `GET /clubs`, `GET /clubs/:id`, `POST /club-applications`, `PATCH /club-applications/:id` (nộp lại → version mới), `POST /club-applications/:id/withdraw`, `POST /club-applications/:id/decision`, `PATCH /clubs/:id/profile`, `POST /clubs/:id/suspension-requests`, `POST /clubs/:id/lifecycle` |
 | M03 | `POST /clubs/:id/terms/nominations`, `POST /nominations/:id/decision`, `POST /clubs/:id/transitions`, `POST /transitions/:id/decision` (API role CLB của UC23 đã gỡ, sửa 2026-10-16) |
 | M04 | `GET|POST /clubs/:id/campaigns`, `POST /campaigns/:id/publish`, `GET|POST /campaigns/:id/applications`, `POST /applications/:id/withdraw`, `POST /applications/:id/screening`, `POST /applications/:id/decision`, `POST /applications/:id/evaluations`, `POST /applications/:id/onboard`, `GET /clubs/:id/members`, `PATCH /memberships/:id/status`, `POST /memberships/:id/leave-requests`, `GET /me/memberships` |

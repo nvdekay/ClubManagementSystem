@@ -14,4 +14,4 @@
 
 ## Phía CLB còn thiếu (đối chiếu 15/10/2026)
 
-- [ ] UC54: API/UI nhận danh sách lời mời và gửi Accept/Decline trước deadline.
+- [x] UC54: API/UI nhận danh sách lời mời và gửi Accept/Decline trước deadline: làm ở `feat-club-invitations` (15/10/2026).
