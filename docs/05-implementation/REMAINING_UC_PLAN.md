@@ -7,7 +7,7 @@
 
 Phía CLB chỉ có Club Leader và Club Member cố định. Club Leader là Chủ nhiệm hoặc Phó chủ nhiệm
 đã xác nhận và có toàn bộ permission quản lý; Club Member không có permission quản lý. UC23
-không triển khai; API/UI role tự tạo và việc cấp permission lẻ đã gỡ.
+đã rút; API/UI role tự tạo và việc cấp permission lẻ đã gỡ.
 
 ## P0 — Luồng nghiệp vụ đã hoàn thành ngày 15/10/2026
 
@@ -22,8 +22,8 @@ không triển khai; API/UI role tự tạo và việc cấp permission lẻ đ�
 | UC40/UC43 | CLB gửi giải trình, nộp minh chứng khắc phục; xem kết quả đánh giá `Published` | Integration, UI |
 | UC07/08 | Job chuyển hồ sơ quá hạn sửa sang `Expired`, chặn nộp lại quá hạn | Integration đúng deadline |
 
-UC50 đã chốt thành góp ý một chiều ngày 09/10/2026 (`feat-student-feedback`). UC51/UC52 chưa
-triển khai; SRS trên `main` vẫn giữ đặc tả, nhóm cần chốt bỏ hẳn hay làm sau. API xem phòng UC58 hiện chỉ cho Leader,
+UC50 đã chốt thành góp ý một chiều ngày 09/10/2026 (`feat-student-feedback`). UC51/UC52 đã
+rút; không phải backlog còn phải triển khai. API xem phòng UC58 hiện chỉ cho Leader,
 dù sơ đồ cũ từng đặt ở Club Member.
 
 ## P1 — Đóng tiêu chí đã có code

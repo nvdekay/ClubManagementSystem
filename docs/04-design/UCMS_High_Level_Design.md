@@ -39,8 +39,8 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 | Module | Dữ liệu/chức năng | Trạng thái |
 |---|---|---|
 | M01 Identity, Access, Configuration | User, session, system role, policy, dashboard | Có; OAuth thật còn gate nghiệm thu |
-| M02 Club Lifecycle | Hồ sơ thành lập, profile, lifecycle | UC08 tạo Active ngay; UC14 thiếu phía CLB |
-| M03 Leadership & Term | Term, position, assignment, transition | UC10/11/13 có; UC12 thiếu phía CLB; UC23 rút |
+| M02 Club Lifecycle | Hồ sơ thành lập, profile, lifecycle | UC08 tạo Active ngay; UC14 CLB xin tạm ngừng và UC15 ICPDP quyết định; job hết hạn hồ sơ UC07/08 |
+| M03 Leadership & Term | Term, position, assignment, transition | UC10–UC13 có (UC12/13 kiểm tra BR06); UC23 đã rút |
 | M04 Recruitment & Membership | Campaign, application, candidate evaluation, membership | Có, gồm job tái xác nhận đầu kỳ UC21 A2 |
 | M05 Event & Activity | Proposal, event, school event, invitation | Có, gồm UC54 CLB nhận/từ chối lời mời |
 | M06 Registration & Attendance | Registration, waitlist, attendance | Có |
@@ -49,7 +49,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 | M09 Evaluation & Export | Scheme, evaluation, export | Có ICPDP và màn CLB xem kết quả đã công bố (UC43) |
 | M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Ghi dữ liệu có; chưa có mail worker/inbox tổng quát/lease như thiết kế đích |
 | M11 Properties & Booking | Property, non-room booking, room allocation | Có; UC58 CLB xem chỉ dành Leader |
-| M12 Feedback | Event feedback và góp ý một chiều | Có; physical complaints giữ tên cũ; UC51/52 chưa triển khai |
+| M12 Feedback | Event feedback và góp ý một chiều | Có; physical complaints giữ tên cũ; UC51/52 đã rút |
 
 ## 4. Workflow, thông báo và audit thật
 

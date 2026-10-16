@@ -13,7 +13,7 @@ trước khi sửa hoặc commit các thay đổi tài liệu đang có.
 này trước khi hỏi chức năng nào đã có, actor nào được phép làm gì, hoặc còn thiếu UC nào.
 
 **[`SRS.md`](SRS.md) — Đặc tả yêu cầu phần mềm.** Một baseline hợp nhất duy nhất: phạm vi,
-actor, 55 use case còn hiệu lực (UC05 đã rút) dưới dạng yêu cầu chức năng được đánh số, danh mục quy tắc nghiệp vụ và
+actor, 56 mã UC (52 trong phạm vi; UC05, UC23, UC51, UC52 đã rút) dưới dạng yêu cầu chức năng được đánh số, danh mục quy tắc nghiệp vụ và
 vòng đời thực thể, mô hình dữ liệu, thiết kế xuyên suốt cho workflow / thông báo / audit, mô
 hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu chí nghiệm thu và các ma trận
 truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác

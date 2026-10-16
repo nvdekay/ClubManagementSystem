@@ -10,9 +10,11 @@
   này (kể cả `sync-current-diagrams.py` và context v2.1) đã bỏ; xem lại được ở commit `e241491`.
 - Từ nhánh này chỉ giữ code, `.sdd`, tài liệu hiện trạng (CURRENT_IMPLEMENTATION, UC_CODE_MAPPING,
   REMAINING_UC_PLAN, HLD, guide, bàn giao) và README thư mục code.
-- Phạm vi theo `main`: UC05 đã rút, còn 55 UC hiệu lực. Code không triển khai UC23 (role cố định)
-  và UC51/UC52 (UC50 là góp ý một chiều); nhóm cần chốt bỏ hẳn hay làm sau. Các câu "đã rút" và
-  "52 trong phạm vi" ở phần dưới là cách hiểu cũ.
+- Phạm vi (người dùng chốt 16/10/2026): 56 mã, 4 mã UC05, UC23, UC51, UC52 đã rút, còn 52 UC
+  trong phạm vi. SRS và Use Case Model/Specification đã được sửa đúng các chỗ lệch với quyết định
+  này và với mô hình hai role cố định (Member không có quyền quản lý).
+- Review 16/10/2026: đã sửa BR06 cho UC12/13, job UC21 quét yêu cầu quá hạn của kỳ đã kết thúc,
+  CLB xem được kết luận "không vi phạm", trạng thái khắc phục hiện đúng (commit `c51358a`).
 - 16/10/2026 đã bấm thử trọn trên giao diện: luồng chi tiêu, quyết toán, đối soát UC36/UC37 (hoàn
   500.000, hạn 7 ngày, không cấp bù) và vòng UC38 → UC39 → UC38 (v1 bị trả về, v2 được chấp nhận).
   `npm run check` với Mongo thật: 438 test qua.
@@ -84,7 +86,7 @@ Các artifact đã sửa:
 
 ## Những kết luận không được suy diễn lại sai
 
-- Không còn role CLB tự tạo, API roles/role-directory hoặc UI cấu hình permission; UC23 không triển khai.
+- Không còn role CLB tự tạo, API roles/role-directory hoặc UI cấu hình permission; UC23 đã rút.
 - Resolver thật ở `server/src/domain/access.ts`: membership Active, term Active còn hiệu lực,
   position active, assignment còn hiệu lực và có `confirmedBy`. Ghế `isLeaderRole` hoặc
   `isBoardSeat` nhận đủ 14 permission; Member nhận rỗng. Cơ cấu chuẩn là Chủ nhiệm/Phó chủ nhiệm;
@@ -98,7 +100,7 @@ Các artifact đã sửa:
 - UC36/37 có repo/usecase/route/UI/test nhưng main.ts không truyền `eventFinanceRepo`, nên
   **chưa mount ở app chính**. UC35 đã mount. Không đánh dấu tài chính đầy đủ vì có file source.
 - UC50 đã đổi thành góp ý một chiều CLUB/ICPDP ngày 09/10, có ẩn danh; physical collection
-  `complaints`, trạng thái Submitted. UC51/52 chưa triển khai (SRS trên `main` vẫn giữ).
+  `complaints`, trạng thái Submitted. UC51/52 đã rút.
 - `permissionCodes` và `clubRoleStructureVersions` vẫn còn schema vì tương thích, không cấp quyền.
 - API `/public/*` mở, nhưng UI `PublicLayout.tsx` chuyển về login cả home/discovery.
 - Mongo dùng transaction đa document, cần replica set; compose chỉ dựng Mongo single-node replica set.

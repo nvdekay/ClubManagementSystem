@@ -8,7 +8,7 @@ Cách biến baseline yêu cầu thành code: phân rã công việc và thiết
 
 | File | Là gì |
 |---|---|
-| [`UC_CODE_MAPPING.md`](UC_CODE_MAPPING.md) | Ma trận 56 mã UC (55 hiệu lực) → route server, UI client, mount và khoảng trống triển khai ngày 15/10/2026 |
+| [`UC_CODE_MAPPING.md`](UC_CODE_MAPPING.md) | Ma trận 56 mã UC (52 trong phạm vi) → route server, UI client, mount và khoảng trống triển khai ngày 15/10/2026 |
 | [`TASKS.md`](TASKS.md) | Danh sách công việc triển khai cho database, backend và frontend, nhóm theo các vòng lặp bàn giao ở `../SRS.md` §15. Mỗi task đều trích dẫn use case, yêu cầu chức năng hoặc quy tắc nghiệp vụ mà nó thoả mãn, và các task đang bị chặn được liệt kê kèm quyết định cần chốt để gỡ chặn |
 | [`IMPLEMENTATION_BACKLOG.md`](IMPLEMENTATION_BACKLOG.md) | Backlog thực thi đã đối chiếu SRS, mockup HTML và source hiện tại; ưu tiên Auth/Authz trước, kèm MongoDB, mapping màn hình và gate nghiệm thu |
 | [`AUTH_SETUP.md`](AUTH_SETUP.md) | Cấu hình Google OAuth, cookie phiên và MongoDB local cho Auth |

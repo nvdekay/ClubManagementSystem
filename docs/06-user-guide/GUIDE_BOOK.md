@@ -1,7 +1,7 @@
 # UCMS — Guide book hướng dẫn sử dụng
 
 > **Đối chiếu code ngày 15/10/2026 (`60fc2db`).** Phía CLB có hai role cố định;
-> UC23 không triển khai vì role CLB cố định, UC50 là góp ý một chiều và UC51/UC52 chưa triển khai.
+> UC23 đã rút vì role CLB cố định, UC50 là góp ý một chiều và UC51/UC52 đã rút.
 > Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
 
 
