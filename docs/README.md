@@ -30,7 +30,7 @@ vẫn được giữ để chỉnh sửa và đối chiếu. Bản Word tổng h
 |---|---|---|
 | [`01-business-analysis/`](01-business-analysis/) | Bản phân tích nghiệp vụ và hệ thống gốc: vấn đề, các bên liên quan, luồng nghiệp vụ, user story, domain model, mô hình đánh giá, các feature nổi bật | Bạn cần hiểu *vì sao* có một yêu cầu, hoặc cần phần nền mà SRS đã tóm tắt lại |
 | [`02-use-cases/`](02-use-cases/) | Use case model v2, đặc tả chi tiết và nhật ký review; UC23/RBAC động là lịch sử đã bị mô hình hai role cố định thay thế | Bạn cần bản kể đầy đủ của một use case hoặc lịch sử của một lần sửa |
-| [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram v1, v2 và v2.1 (hiện hành), use case diagram theo actor, state diagram, ERD, package diagram, screen flow, swimlane các luồng nghiệp vụ chính (main workflow) | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
+| [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram hiện hành [`UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) (ảnh v1, v2, v2.1 là lịch sử), use case diagram theo actor, state diagram, ERD, package diagram, screen flow, swimlane các luồng nghiệp vụ chính (main workflow) | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
 | [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
 | [`05-implementation/`](05-implementation/) | Danh sách công việc triển khai (database, backend, frontend) và thiết kế cơ sở dữ liệu dạng DBML cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
 | [`06-user-guide/`](06-user-guide/) | Guide book PDF/HTML/Markdown và ảnh chụp các luồng chính với dữ liệu đã seed | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
@@ -56,7 +56,7 @@ hiện hành, mỗi ảnh một trang; cần xuất lại bản Word khi cập n
   bằng tiếng Anh — xem [`../.rules/README.md`](../.rules/README.md) §5. Các định danh kỹ thuật
   (mã UC/FR/BR, tên trạng thái, tên collection và trường, đường dẫn, endpoint) giữ nguyên tiếng
   Anh vì chúng xuất hiện nguyên văn trong code.
-- Một use case được định danh bằng số **v2** (UC01–UC55) ở mọi nơi trừ bên trong tài liệu v1.
+- Một use case được định danh bằng số **v2** (UC01–UC55, UC58) ở mọi nơi trừ bên trong tài liệu v1.
   Dùng §5 của use case model để chuyển đổi giữa v1 và v2.
 - Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR61** (60 quy tắc còn hiệu lực), trong đó BR43 đã
   được rút. Danh sách hợp nhất, đã áp dụng mọi sửa đổi, nằm ở `SRS.md` §5.

@@ -148,7 +148,7 @@ theo vai trò.
 | R2 | [`02-use-cases/UCMS_UseCase_Model_v2.md`](02-use-cases/UCMS_UseCase_Model_v2.md) | **Use case model hiện hành.** 53 mã use case (UC01–UC52, UC58; UC53–UC55 chỉ có trong SRS), ánh xạ v1→v2, bản đồ quan hệ, ma trận actor, vòng đời, sửa đổi quy tắc, phạm vi phát hành, truy vết, quyết định còn mở, ánh xạ luồng context |
 | R3 | [`02-use-cases/UCMS_UseCase_Specification_v2.md`](02-use-cases/UCMS_UseCase_Specification_v2.md) | **Đặc tả chi tiết hiện hành** của 53 mã use case (UC01–UC52, UC58) |
 | R4 | [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md) | Nhật ký review chéo I01–I30; mọi issue đã xử lý đều đã được đưa vào SRS này |
-| R5 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) | Biên hệ thống, 46 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
+| R5 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) | Biên hệ thống, 46 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
 | R6 | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) | Use case diagram: trang All users (quan hệ kế thừa actor) và mỗi trang một nhóm actor |
 | R7 | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) | Máy trạng thái của 8 thực thể lõi |
 | R8 | [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) | Container, bản đồ module → code, thiết kế approval/notification/audit, định danh, thiết kế dữ liệu, bề mặt API, client, triển khai |
@@ -157,7 +157,7 @@ theo vai trò.
 | R11 | [`../.sdd/rfcs/ADR-001-clean-architecture-layers.md`](../.sdd/rfcs/ADR-001-clean-architecture-layers.md), [`ADR-002`](../.sdd/rfcs/ADR-002-client-architecture.md) | Các quyết định kiến trúc đã chốt |
 | R12 | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) | ERD khái niệm theo ký pháp Chen: 47 thực thể, 347 thuộc tính, 102 quan hệ, không có Role / Permission vì role đã cố định; trang tổng quát và 10 trang module, đối chiếu từ `05-implementation/UCMS_Database_Design.dbml` |
 | R13 | [`03-diagrams/UCMS_Package_Diagrams.drawio`](03-diagrams/UCMS_Package_Diagrams.drawio) | Package diagram Front-end (`client/src`) và Back-end (`server/src`) theo đúng cấu trúc code |
-| R14 | [`03-diagrams/UCMS_Screen_Flow.drawio`](03-diagrams/UCMS_Screen_Flow.drawio) | Screen flow gộp một trang cho mọi role, đối chiếu router `client/src/main.tsx` |
+| R14 | [`03-diagrams/img/UCMS_Screen_Flow_01_Screen-flow.png`](03-diagrams/img/UCMS_Screen_Flow_01_Screen-flow.png) | Screen flow gộp một trang cho mọi role, đối chiếu router `client/src/main.tsx` |
 | R15 | [`03-diagrams/UCMS_Main_Workflow.drawio`](03-diagrams/UCMS_Main_Workflow.drawio) | Main workflow: hai swimlane tổng quát (quản trị CLB và thành viên; quản lý sự kiện và nghiệp vụ hỗ trợ). Swimlane chi tiết từng luồng của §2.5 ở [`UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio) |
 
 ## 1.5 Quy ước tài liệu — hệ thống mã định danh
@@ -709,7 +709,7 @@ client/src/pages/
 | Student | Dashboard · danh bạ CLB & trang CLB · form hồ sơ thành lập (+ các version) · form ứng tuyển · đơn của tôi · danh sách và trang sự kiện · đăng ký của tôi · check-in (mã/QR) · form phản hồi · form góp ý & góp ý đã gửi | UC02, UC06, UC07, UC17, UC29, UC31, UC48, UC50 |
 | Club Member | Không gian thành viên theo CLB · danh sách thành viên (chỉ đọc) · xin rời CLB; không có màn hình quản lý nào (BR54, sửa 2026-10-16) | UC02, UC22, UC24 |
 | Club Leader | Mọi màn hình của Club Member · dashboard CLB · hồ sơ & cơ cấu CLB · đợt tuyển · bảng sàng lọc đơn · đánh giá ứng viên · danh sách thành viên · đề xuất sự kiện (+ bản sửa) · công bố sự kiện · huỷ/đổi lịch · báo cáo sau sự kiện · khoản chi & chứng từ · báo cáo định kỳ · yêu cầu booking (ngoài phòng học) · booking của CLB · phòng được phân (chỉ đọc) · danh sách chờ · chốt điểm danh · xem phản hồi · hộp thư góp ý · hồ sơ vi phạm & giải trình · đề xuất ban chủ nhiệm · kế hoạch chuyển giao · xin tạm ngừng | UC09, UC10, UC12, UC14, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC40 (giải trình), UC45, UC47, UC49, UC50 (hộp thư), UC54, UC58 (xem) |
-| ICPDP | Dashboard · hộp thư phê duyệt hợp nhất · thẩm định hồ sơ thành lập · danh sách CLB & hành động vòng đời · xác nhận ban chủ nhiệm & chuyển giao · thẩm định đề xuất sự kiện (kèm ngân sách) · thẩm định báo cáo sự kiện · ghi nhận giải ngân · đối soát · thẩm định báo cáo định kỳ · hồ sơ vi phạm · hộp thư góp ý gửi ICPDP · danh mục cơ sở vật chất · thẩm định booking · phân phòng CLB · scheme đánh giá · bản nháp & công bố đánh giá · xuất dữ liệu & báo cáo · tài khoản & vai trò · chính sách & deadline · định tuyến phê duyệt | UC03–UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39–UC44, UC46, UC50 (hộp thư), UC55, UC58 |
+| ICPDP | Dashboard · hộp thư phê duyệt hợp nhất · thẩm định hồ sơ thành lập · danh sách CLB & hành động vòng đời · xác nhận ban chủ nhiệm & chuyển giao · thẩm định đề xuất sự kiện (kèm ngân sách) · thẩm định báo cáo sự kiện · ghi nhận giải ngân · đối soát · thẩm định báo cáo định kỳ · hồ sơ vi phạm · hộp thư góp ý gửi ICPDP · danh mục cơ sở vật chất · thẩm định booking · phân phòng CLB · scheme đánh giá · bản nháp & công bố đánh giá · xuất dữ liệu & báo cáo · tài khoản & vai trò · chính sách & deadline | UC03, UC04, UC08, UC11, UC13, UC15, UC26, UC34, UC35, UC37, UC39–UC44, UC46, UC50 (hộp thư), UC55, UC58 |
 
 ### 3.1.2 Yêu cầu giao diện
 
@@ -3298,8 +3298,8 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | Club Member → Hệ thống | Leave request | UC22 |
 | Club Member → Hệ thống | Event invitation response | UC54 |
 | Hệ thống → Club Member | Member workspace | UC24 |
-| Hệ thống → Club Member | Member applications & event registrations | UC17 → UC18, UC29 → UC30, UC32 |
-| Hệ thống → Club Member | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46, UC58 (phòng được phân) |
+| Hệ thống → Club Leader | Member applications & event registrations | UC17 → UC18, UC29 → UC30, UC32 |
+| Hệ thống → Club Leader | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46, UC58 (phòng được phân) |
 | Hệ thống → Club Member | Event feedback & forwarded complaints | UC49; UC50 (hộp thư góp ý của CLB). UC51 → UC52 đã rút |
 | Hệ thống → Club Member | Violation notices & evaluation results | UC40, UC43 |
 | Hệ thống → Club Member | Deadline reminders | UC04 + scheduler |
@@ -3532,7 +3532,7 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 
 | Sơ đồ | Các trang | File |
 |---|---|---|
-| **Context diagram v2.1** (hiện hành, 46 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) |
+| **Context diagram v2.1** (hiện hành, 46 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
 | Context diagram v1 (đã thay thế, 40 luồng) | Context diagram | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
 | **Use case diagram theo actor** (UC01–UC52, UC58) | All users (kế thừa actor) · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
 | **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio) |
@@ -3541,7 +3541,7 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 | Swimlane chi tiết từng luồng (§2.5, tiếng Anh) | Club Founding · Leadership Transition · Member Recruitment · Event Proposal · Event Execution · Event Finance · Room Allocation · Facility Request · Complaint Handling · Periodic Report · Violation Case · Club Evaluation · Suspension and Dissolution · Club Leader and Club Member | [`03-diagrams/UCMS_Swimlane_Flows.drawio`](03-diagrams/UCMS_Swimlane_Flows.drawio) |
 | **ERD** (ký pháp Chen, mô hình khái niệm, 47 thực thể) | ERD general · M01 Identity, Access and Configuration · M02 / M03 Club Lifecycle, Governance and Term · M04 Recruitment and Membership · M05 / M06 Event, Registration and Attendance · M07 Event Finance and Budget · M08 Reporting, Accountability and Compliance · M09 Performance Evaluation · M10 Workflow, Notification and Audit · M11 Property and Booking · M12 Feedback and Complaint | [`03-diagrams/UCMS_ERD.drawio`](03-diagrams/UCMS_ERD.drawio) |
 | **Package diagram** | Front-end packages · Back-end packages | [`03-diagrams/UCMS_Package_Diagrams.drawio`](03-diagrams/UCMS_Package_Diagrams.drawio) |
-| **Screen flow** (gộp một trang cho mọi role) | Screen flow | [`03-diagrams/UCMS_Screen_Flow.drawio`](03-diagrams/UCMS_Screen_Flow.drawio) |
+| **Screen flow** (gộp một trang cho mọi role) | Screen flow | [`03-diagrams/img/UCMS_Screen_Flow_01_Screen-flow.png`](03-diagrams/img/UCMS_Screen_Flow_01_Screen-flow.png) |
 
 Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
 

@@ -6,7 +6,7 @@
 > Những mục không liệt kê ở đây (§1–§7, §12–§13, §16–§20, §23–§24) không thay đổi và vẫn còn hiệu lực.
 
 > **Sơ đồ:** mô hình này được vẽ trong [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) (draw.io), phủ UC01–UC52 và UC58.
-> Biên hệ thống được vẽ trong [`../03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.1.drawio) (v2.1, 40 luồng — I56, I58); §15 ánh xạ từng luồng dữ liệu của nó tới use case.
+> Biên hệ thống được vẽ trong [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio) (v2.1, 40 luồng — I56, I58); §15 ánh xạ từng luồng dữ liệu của nó tới use case.
 
 **Tổng: 53 mã business use case** — 43 use case mang sang từ 57 use case của v1, thêm mới 10. **Sửa 2026-10-16:** UC05, UC23, UC51, UC52 đã rút nên mô hình này còn 49 use case hiệu lực; cộng UC53–UC55 (chỉ có trong SRS), toàn hệ thống có **52 use case trong phạm vi** trên 56 mã. (Hai use case ngân sách cũ, UC35 và UC36 theo cách đánh số trước I59, đã gộp vào UC25, UC26; các use case sau đó được đánh số lại — xem I59.)
 
@@ -1214,7 +1214,7 @@ Mọi pain point đều được phủ. v1 truy vết BP03, BP06, BP12 và BP13 
 
 ## 15. Context diagram — luồng dữ liệu → use case
 
-[`../03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.1.drawio)
+[`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio)
 tuân theo một quy tắc: mọi luồng đều được tạo ra hoặc tiêu thụ bởi ít nhất một use case, và mọi
 use case có dữ liệu đi qua biên hệ thống đều xuất hiện trong ít nhất một luồng. Một luồng gom
 các dữ liệu cùng loại, nên những use case đứng sau nó được liệt kê ở đây chứ không vẽ lên sơ đồ.
@@ -1238,8 +1238,8 @@ các dữ liệu cùng loại, nên những use case đứng sau nó được li
 | Club Leader → Hệ thống | Complaint response | **Không còn** — UC52 đã rút |
 | Club Member → Hệ thống | Leave request | UC22 |
 | Hệ thống → Club Member | Member workspace | UC24 |
-| Hệ thống → Club Member | Member applications & event registrations | UC17 → UC18, UC29 → UC30, UC32 |
-| Hệ thống → Club Member | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46, UC58 (phòng được phân, thông báo `ROOM_ALLOCATED` / `ROOM_ALLOCATION_REVOKED`) |
+| Hệ thống → Club Leader | Member applications & event registrations | UC17 → UC18, UC29 → UC30, UC32 |
+| Hệ thống → Club Leader | Review decisions & disbursements | UC26, UC34, UC35, UC39, UC46, UC58 (phòng được phân, thông báo `ROOM_ALLOCATED` / `ROOM_ALLOCATION_REVOKED`) |
 | Hệ thống → Club Member | Event feedback & forwarded complaints | UC49; UC50 (hộp thư góp ý của CLB, Club Leader đọc). UC51 → UC52 đã rút |
 | Hệ thống → Club Member | Violation notices & evaluation results | UC40, UC43 |
 | Hệ thống → Club Member | Deadline reminders | UC04 + scheduler |

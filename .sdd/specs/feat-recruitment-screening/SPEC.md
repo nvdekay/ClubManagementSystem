@@ -14,7 +14,7 @@ Let authorized club reviewers process applications for a published recruitment c
 - Capacity counts Accepted and Onboarded applications; exceeding capacity is rejected with a waitlist suggestion.
 - A Waitlisted applicant may be promoted only when capacity is free.
 - Rejection requires a reason; other decisions accept an optional reason.
-- A campaign becomes Completed when all applications are in Accepted, Rejected, Waitlisted, Withdrawn, Onboarded, or Declined. Waitlisted remains a decision but does not block completion.
+- A campaign becomes Completed only when no more applications can arrive (the window has closed or Accepted + Onboarded reached capacity) **and** all applications are in Accepted, Rejected, Waitlisted, Withdrawn, Onboarded, or Declined. Deciding every current application early does not close an open campaign (changed in 655cad3). Waitlisted remains a decision but does not block completion.
 - Notifications are in-app and transactional with each state change.
 
 ## Out of scope

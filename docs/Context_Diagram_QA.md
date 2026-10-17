@@ -1,6 +1,6 @@
 # Q&A — Context Diagram v2.1 (UCMS)
 
-> **Sơ đồ:** [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) —
+> **Sơ đồ:** [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) —
 > bản hiện hành, **46 luồng dữ liệu, 7 thực thể ngoài** (đã gồm 4 luồng mời sự kiện cấp trường của I61 và 2 luồng xuất dữ liệu của I64).
 > **Bảng luồng → use case:** [`SRS.md` §14.4](SRS.md#144-luồng-dữ-liệu-context--use-case).
 > **Lịch sử thay đổi:** review issue I56 (gộp luồng), I57 (sự kiện nội bộ), I58 (tách Club Leader), I61 (sự kiện cấp trường).

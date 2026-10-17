@@ -9,11 +9,14 @@ Clean architecture ở cả hai phía, ranh giới tầng được CI kiểm tra
 Yêu cầu Node >= 22.9 (các script dùng `--env-file`).
 
 ```bash
-cp .env.example .env     # bắt buộc — server fail-fast nếu thiếu
+cp .env.example .env     # bắt buộc — server dừng ngay nếu thiếu MONGO_URI hoặc điền dở bộ biến Auth;
+                         # để trống toàn bộ biến Auth thì chỉ mở khu công khai (docs/05-implementation/AUTH_SETUP.md)
 docker compose up -d     # Mongo (bind vào 127.0.0.1)
 npm install
 npm run dev              # API :3000 (route dưới /api/v1, tài liệu OpenAPI ở /docs), client :5173
-npm run seed             # tuỳ chọn — dữ liệu demo
+npm run db:init          # tạo collection + index từ DBML (chạy lại được; db:verify để kiểm tra)
+npm run seed             # tuỳ chọn — ảnh chụp dữ liệu công khai PDP (CLB + sự kiện)
+npm run seed:demo -- --owner=<email>   # tuỳ chọn — dữ liệu demo nghiệp vụ, <email> là tài khoản Google của bạn
 ```
 
 ## Kiểm tra

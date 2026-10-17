@@ -1,6 +1,6 @@
 # UCMS — Guide book hướng dẫn sử dụng
 
-> **Đối chiếu code ngày 15/10/2026 (`60fc2db`).** Phía CLB có hai role cố định;
+> **Đối chiếu code ngày 17/10/2026 (`655cad3`).** Phía CLB có hai role cố định;
 > UC23 đã rút vì role CLB cố định, UC50 là góp ý một chiều và UC51/UC52 đã rút.
 > Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
 
@@ -608,7 +608,9 @@ chính. Ảnh 16.2–16.3 chụp từ bản demo ngày 13/10/2026, trước khi 
    **Ra quyết định**. Có thể **Đóng hồ sơ — không vi phạm** bất cứ lúc nào trước đó (bắt
    buộc lý do).
 6. **Giao biện pháp khắc phục** (mỗi biện pháp có hạn, có thể dẫn tới tạm ngừng hoặc giải
-   thể); đánh dấu **Đã hoàn thành** / **Không hoàn thành**, rồi **Kết thúc hồ sơ**.
+   thể); đánh dấu **Đã hoàn thành** / **Không hoàn thành**, rồi **Kết thúc hồ sơ**. Chỉ đánh dấu
+   **Đã hoàn thành** được sau khi CLB đã nộp minh chứng; **Không hoàn thành** cần minh chứng
+   hoặc đã quá hạn biện pháp.
 
 **Kết quả:** kết luận có vi phạm cần ít nhất một chứng cứ và phải qua bước giải trình (hoặc
 ghi nhận CLB không phản hồi). Biện pháp tạm ngừng/giải thể chỉ dẫn link sang quản lý CLB

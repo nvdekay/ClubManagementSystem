@@ -28,11 +28,12 @@ mới được nhắc tên mục, chưa có ảnh. Đối chiếu phạm vi vớ
 
 Seed guide copy các collection nghiệp vụ một lần, giữ liên kết và lịch sử, không copy phiên
 đăng nhập. Chạy lại không reset thao tác của người dùng trong database demo. Policy POST_EVENT
-7 ngày, chứng từ mẫu và hạn hoàn trả 14 ngày chỉ phục vụ demo; bản chính cần chốt BR25/BR58.
+7 ngày và chứng từ mẫu chỉ phục vụ demo. Hạn hoàn trả BR58 đã chốt 7 ngày (server chính dùng 7;
+`seed-guide.ts` còn đặt 14 ngày cho bộ demo).
 Link `example.org` là placeholder, không phải chứng từ thanh toán thật.
 
 Dữ liệu wave 4 có sự kiện Completed/Cancelled, điểm danh, phản hồi, báo cáo nháp/đã nộp/trả sửa,
-version mới, khoản chi có/thiếu chứng từ, task, đối soát chờ cấp bù và hoàn trả. Các ảnh ghi lại
+version mới, khoản chi có/thiếu chứng từ, task, đối soát còn số dư (`Reconciled`, UC37 A2 không có bước cấp bù) và chờ hoàn trả. Các ảnh ghi lại
 trạng thái tại lúc thao tác; database sau demo có thể đã chuyển sang bước tiếp theo.
 
 ## Cập nhật guide

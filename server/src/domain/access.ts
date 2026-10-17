@@ -4,7 +4,8 @@ import { DomainError } from "./errors.js";
  * The club side has exactly two fixed roles. A Club Leader is anyone holding a confirmed
  * board seat (Chủ nhiệm or Phó chủ nhiệm) in the active term and gets every permission below.
  * A Club Member is any other Active member and gets none of them: members only read and take
- * part (member space, roster, allocated rooms, events). There are no custom roles.
+ * part (member space, roster, events). Viewing allocated rooms needs club.booking.manage, so
+ * only a Club Leader sees them. There are no custom roles.
  */
 export const CLUB_LEADER_PERMISSIONS = [
   "club.profile.manage",

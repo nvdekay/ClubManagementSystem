@@ -1,6 +1,8 @@
 # TASKS: feat-club-roles — ĐÃ HUỶ
 
 > Toàn bộ feature được thay bởi `feat-fixed-club-roles`; task QA UI role cũ không còn áp dụng.
+>
+> **Ghi chú 17/10/2026:** code của feature này (domain/usecase `club-role.ts`, route, tab "Vai trò") đã bị gỡ khỏi repo khi chuyển sang role cố định Leader/Member (13/10/2026); UC23 đã rút khỏi phạm vi. Các checkbox dưới đây chỉ là lịch sử.
 
 - [x] Đối chiếu UC23 (BR47/49/54/55/56), resolver quyền, schema `clubPositions` / `clubPositionAssignments` / `clubRoleStructureVersions`; ghi SPEC.
 - [x] Domain `club-role.ts`: kiểu, port, quy tắc E1–E7; resolver áp permission role Members.

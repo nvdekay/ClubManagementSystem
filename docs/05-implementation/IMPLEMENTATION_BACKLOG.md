@@ -3,6 +3,9 @@
 > **Backlog lịch sử.** Checkbox không phản ánh đầy đủ code đã merge. Trạng thái hiện hành nằm ở
 > [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md) và SPEC/TASKS từng feature.
 > Mọi task UC23/role tự tạo được coi là huỷ.
+> Các mô tả "49 collection", "chưa có router" và "module nghiệp vụ chưa triển khai" bên dưới không còn
+> đúng: DBML hiện có 52 collection (+`authSessions`), client có router ở `client/src/main.tsx` và 52 UC
+> trong phạm vi đã có code (đối chiếu `655cad3`, 17/10/2026).
 
 > Trạng thái đối chiếu: nhánh `khanhnvd`, `docs/SRS.md`, thiết kế DBML và source hiện tại. `[x]` là phần đã cài và có test phù hợp; `[ ]` là chưa xong. Ghi chú dưới từng nhóm nêu rõ phần đã code nhưng còn chờ kiểm chứng. Khi bắt đầu code một tính năng, tạo `SPEC.md` và `TASKS.md` trong `.sdd/specs/feat-*/` theo `.rules/README.md`; đánh dấu tiến độ ở đó.
 
@@ -71,7 +74,7 @@
 - [x] **C0 · UC06 bản đầu** API công khai danh bạ/chi tiết CLB và sự kiện, lọc trạng thái theo SRS; client có trang home/clubs/club/events/event, URL mở trực tiếp và i18n. Unit test và build xanh. Xem `.sdd/specs/feat-public-discovery/TASKS.md` để theo dõi bước còn thiếu.
 - [ ] **C0.1 · UC06 nghiệm thu** Chạy integration Mongo thật; kiểm tra UI bằng trình duyệt desktop/mobile ở hai ngôn ngữ và hai theme; nối CTA UC17/UC29 khi hai use case đó mở. Môi trường agent hiện không truy cập được Mongo local hoặc mở cổng Vite.
 
-- [ ] **C1 · Mongo** `clubs`, `clubApplications`, `clubApplicationVersions`, `clubSuspensionRequests`, `clubTerms`, `clubPositions`, `clubPositionAssignments`, `clubRoleStructureVersions`, `boardNominations`, `boardNominationSeats`, `transitionPlans`; unique tên/mã và version theo scope, index trạng thái/kỳ/club. Giữ version nộp và cơ cấu bất biến; mọi membership/position có lịch sử hiệu lực.
+- [ ] **C1 · Mongo** `clubs`, `clubApplications`, `clubApplicationVersions`, ~~`clubSuspensionRequests`~~ (đã bỏ ở `536721d`, dùng `suspensionRequests`), `clubTerms`, `clubPositions`, `clubPositionAssignments`, `clubRoleStructureVersions`, `boardNominations`, `boardNominationSeats`, `transitionPlans`; unique tên/mã và version theo scope, index trạng thái/kỳ/club. Giữ version nộp và cơ cấu bất biến; mọi membership/position có lịch sử hiệu lực.
 - [ ] **C2 · UC06–08** Danh bạ công khai/CLB/sự kiện/đợt tuyển; hồ sơ thành lập Draft → Submitted → review/Revision Requested/Approved/Rejected/Withdrawn/Expired; tài liệu bắt buộc, founder tối thiểu, cơ cấu role/permission phiên bản 1; ICPDP ghi quyết định, tạo một Club `Pending Setup` và founder tạm duy nhất khi approve. UI Public/Student: home, clubs/club, found/form/confirm/status/result; ICPDP: applications/application.
 - [ ] **C3 · UC09–11** Founder/Leader cấu hình profile và cơ cấu, đề cử BCN theo term, ICPDP xác nhận/chỉnh sửa/từ chối; khi xác nhận bật CLB, role/assignment có hiệu lực, thu hồi founder tạm. UI CLB: profile/structure/leadership/assign; ICPDP: leaders-confirm.
 - [ ] **C4 · UC12–15** Kế hoạch chuyển giao, duyệt/chốt term và role assignment mới; xin tạm ngừng, ICPDP suspend/reactivate/dissolve, cascade sự kiện/booking/quyền theo SRS, không xoá cứng lịch sử. UI CLB: transition/suspend/status; ICPDP: transition/clubs/club/leaders. **UC13 phía ICPDP đã hoàn tất full-stack và test Mongo; UC12, UC14–UC15 còn mở.**

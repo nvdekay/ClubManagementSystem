@@ -5,18 +5,17 @@ tương ứng của VS Code.
 
 | File | Thể hiện điều gì |
 |---|---|
-| [`UCMS_Context_Diagram_v2.1.drawio`](UCMS_Context_Diagram_v2.1.drawio) | **Context diagram hiện hành** — biên hệ thống và 46 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64) |
+| [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | **Context diagram hiện hành** (nội dung v2.1; file `UCMS_Context_Diagram_v2.1.drawio` cũ đã gộp vào đây và bị xoá ngày 14/10/2026, commit `402dafa`) — biên hệ thống và 46 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64) |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 và UC58 (phân phòng học theo học kỳ, thêm 2026-10-11) — mỗi trang một nhóm actor: 9 trang: All users (kèm generalization User ◁ Student ◁ Club Member ◁ Club Leader), Student, Club Member - Events & bookings, Club Leader, Club Leader - Club & recruitment, Club Leader - Events, bookings & finance, ICPDP 1–3 (bộ trang từ commit `107ea77`, `3f1c580`; review issue I66) |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`) |
-| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (16/10/2026) — mô hình **khái niệm** theo **ký pháp Chen**: 48 thực thể (hình chữ nhật), 349 thuộc tính (elip), 102 quan hệ (hình thoi). 11 trang: trang 1 *ERD general* là ERD tổng quát liền mạch (đủ 47 thực thể, các quan hệ chính, mỗi thực thể ba thuộc tính tiêu biểu), trang 2–11 là từng module M01–M12 với đủ thuộc tính và quan hệ. Không còn Role / Permission vì role đã cố định. Không ghi kiểu dữ liệu, khoá hay ràng buộc; có ghi bản số `1` / `N` trên từng quan hệ. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới |
+| [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (16/10/2026) — mô hình **khái niệm** theo **ký pháp Chen**: 48 thực thể (hình chữ nhật), 349 thuộc tính (elip), 102 quan hệ (hình thoi). 11 trang: trang 1 *ERD general* là ERD tổng quát liền mạch (đủ 48 thực thể, các quan hệ chính, mỗi thực thể ba thuộc tính tiêu biểu), trang 2–11 là từng module M01–M12 với đủ thuộc tính và quan hệ. Không còn Role / Permission vì role đã cố định. Không ghi kiểu dữ liệu, khoá hay ràng buộc; có ghi bản số `1` / `N` trên từng quan hệ. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới |
 | [`UCMS_Database_Schema.drawio`](UCMS_Database_Schema.drawio) | **Database schema hiện hành** (16/10/2026) — mô hình **vật lý** MongoDB theo ký pháp Crow's Foot, sinh từ `docs/05-implementation/UCMS_Database_Design.dbml` (nguồn mà server dùng để tạo collection và index) cộng `authSessions` (khai báo riêng trong `server/src/infra/db/mongo-auth-session-repository.ts`): 53 collection, mỗi trường ghi tên, kiểu BSON (`ObjectId`, `String`, `Int (Number)`, `Decimal128`, `Boolean`, `Date`, `Object (embedded)`, `String[]`, `String · enum X`) và ràng buộc `PK`/`FK`/`UQ`/`NN`/giá trị mặc định; unique ghép ghi ở dòng vàng cuối bảng. 12 trang: tổng quan (chỉ khoá và tham chiếu), 10 trang theo module, trang *Enums* liệt kê 28 enum và trường dùng chúng. Khác ERD, schema vẫn có `roles`, `permissions`, `userRoleAssignments`, `clubRoleStructureVersions` vì các collection này còn trong database và code. Ảnh `img/UCMS_Database_Schema_*.png` |
 | [`UCMS_Package_Diagrams.drawio`](UCMS_Package_Diagrams.drawio) | **Package diagram hiện hành** (13/10/2026) — Front-end (`client/src`) và Back-end (`server/src`), vẽ theo đúng thư mục và quan hệ import đang có trong code (`interface/http`, `interface/jobs`, `usecase`, `domain`, `infra/db`·`auth`·`files`·`config`, `main.ts`) |
-| [`UCMS_Screen_Flow.drawio`](UCMS_Screen_Flow.drawio) | **Screen flow gộp một trang** cho mọi role: đăng nhập → Workspace picker → Public area, Student, Club và ICPDP workspace; đối chiếu router `client/src/main.tsx` ngày 13/10/2026 |
+| [`img/UCMS_Screen_Flow_01_Screen-flow.png`](img/UCMS_Screen_Flow_01_Screen-flow.png) | **Screen flow gộp một trang** cho mọi role: đăng nhập → Workspace picker → Public area, Student, Club và ICPDP workspace; đối chiếu router `client/src/main.tsx` ngày 13/10/2026. File nguồn `UCMS_Screen_Flow.drawio` đã bị xoá ngày 14/10/2026 (commit `402dafa`); chỉ còn bản PNG |
 | [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
 | [`UCMS_Main_Workflow.drawio`](UCMS_Main_Workflow.drawio) | **Main workflow hiện hành** (13/10/2026) — đúng **hai** swimlane tổng quát, làn dọc theo actor (Student, Club Leader, ICPDP Officer, UCMS), luồng chạy từ trên xuống theo giai đoạn nghiệp vụ: trang 1 *Club and membership governance* (thành lập → thiết lập CLB → tuyển và quản lý thành viên → ban chủ nhiệm và nhiệm kỳ → giám sát, đánh giá, vòng đời), trang 2 *Event management and supporting operations* (đề xuất → xét duyệt → nguồn lực khi cần → công bố và đăng ký → tổ chức và điểm danh → báo cáo, quyết toán, phản hồi, đánh giá). Không vẽ chi tiết từng use case |
 | [`UCMS_Swimlane_Flows.drawio`](UCMS_Swimlane_Flows.drawio) | **Swimlane chi tiết từng luồng** (tiếng Anh, 14 trang) — tài liệu tham khảo sâu cho SRS §2.5, **không còn là main workflow của report**: Club Founding, Leadership Transition, Member Recruitment, Event Proposal, Event Execution, Event Finance, Room Allocation (UC58), Facility Request, Complaint Handling, Periodic Report, Violation Case, Club Evaluation, Suspension and Dissolution, Club Leader and Club Member. Phía CLB chỉ có hai role cố định: `Club Leader` thao tác, `Club Member` chỉ xem và tham gia |
 | [`UCMS_System_Architecture.drawio`](UCMS_System_Architecture.drawio) | Sơ đồ kiến trúc hệ thống tổng quan, một trang (02/10/2026). Chưa có bản PNG trong `img/`; thiết kế chi tiết xem [`../04-design/UCMS_High_Level_Design.md`](../04-design/UCMS_High_Level_Design.md) |
-| [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | Context diagram đầu tiên của nhóm (40 luồng). **Đã bị thay thế**; giữ lại làm lịch sử |
 | [`img/`](img/) | Bản xuất PNG, đặt tên theo `<tên-file-nguồn>_<số-trang>_<tên-trang>.png` |
 
 ## Bộ sơ đồ dùng trong report v2
@@ -27,11 +26,11 @@ collection, trường và role giữ nguyên tiếng Anh.
 
 | Tab trong report | File nguồn | Ảnh dùng |
 |---|---|---|
-| Context diagram | `UCMS_Context_Diagram_v2.1.drawio` | `UCMS_Context_Diagram_v2.1_01_*.png` |
+| Context diagram | `UCMS_Context_Diagram.drawio` | `UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png` (chưa xuất lại PNG theo tên file mới) |
 | Use case diagram | `UCMS_UseCase_ByActor.drawio` | `UCMS_UseCase_ByActor_*.png` |
 | State Diagram | `UCMS_State_Diagrams.drawio` | 8 ảnh `UCMS_State_Diagrams_01…08_*.png` |
 | Package Diagram | `UCMS_Package_Diagrams.drawio` | `UCMS_Package_Diagrams_01_Front-end-packages.png`, `…_02_Back-end-packages.png` |
-| Screen flow | `UCMS_Screen_Flow.drawio` | `UCMS_Screen_Flow_01_Screen-flow.png` — một sơ đồ gộp, không tách theo role |
+| Screen flow | — (file nguồn đã xoá 14/10/2026) | `UCMS_Screen_Flow_01_Screen-flow.png` — một sơ đồ gộp, không tách theo role |
 | ERD | `UCMS_ERD.drawio` | 11 ảnh `UCMS_ERD_01…11_*.png` (tổng quát + 10 trang module), kèm bản `.svg` cùng tên |
 | Mainwork flow | `UCMS_Main_Workflow.drawio` | 2 ảnh `UCMS_Main_Workflow_01_*.png`, `…_02_*.png`, kèm bản `.svg` cùng tên |
 
@@ -119,6 +118,10 @@ Club Member - Events & bookings chứa các use case mọi thành viên `Active`
 hành CLB còn lại — hồ sơ, thành viên, tuyển, đơn ứng tuyển, sự kiện, booking CSVC, báo cáo, khoản
 chi, phản hồi, khiếu nại, role CLB, ban chủ nhiệm, chuyển giao, tạm ngừng (BR54, BR55). Oval
 `Configure role permissions` của `Manage club roles` đã bị bỏ vì role không mang permission.
+> **Cập nhật 2026-10-17:** theo quyết định Club Member không có permission quản lý, code chỉ cho
+> Club Leader dùng `Manage attendance` (UC30/UC32) và `View allocated rooms` (UC58, cần
+> `club.booking.manage`). Trang Club Member - Events & bookings trong `.drawio` vẫn vẽ các oval
+> này, cần chuyển sang trang Club Leader.
 
 **Xem danh sách thành viên (2026-10-14):** `Club membership` của Club Member
 include `View member list` (UC24), dành cho thành viên `Active`/`Inactive` trong
@@ -145,7 +148,7 @@ kế thừa tham chiếu sang trang của actor cha, không cần lặp lại ov
 **Luồng phòng học và CSVC (đối chiếu code ngày 2026-10-12):** ICPDP cấp phòng học `ROOM`
 theo học kỳ qua `Manage room allocations` (UC58), gồm cấp, xem và thu hồi. CLB xem qua
 `Manage allocated rooms «include» View allocated rooms` ở trang Club Member - Events & bookings.
-Mọi thành viên `Active` đều xem được lịch (`club.room.view`, từ I66) để xuất trình cho bảo vệ
+Theo code hiện hành chỉ Club Leader xem được lịch (cần `club.booking.manage`; xem ghi chú 2026-10-17 ở trên) để xuất trình cho bảo vệ
 khi nhận chìa khoá; CLB không đặt, xin duyệt hay tự huỷ phòng học. Nhóm
 `Manage facility bookings` chỉ áp dụng cho `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`: CLB gửi
 `Request non-room facility booking` (UC45), ICPDP xử lý `Decide non-room facility request`

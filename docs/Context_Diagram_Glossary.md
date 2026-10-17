@@ -1,7 +1,7 @@
 # Giải thích thuật ngữ tiếng Anh — Context Diagram
 
 > Đi kèm [`Context_Diagram_QA.md`](Context_Diagram_QA.md). Sơ đồ:
-> [`03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](03-diagrams/UCMS_Context_Diagram_v2.1.drawio) (46 luồng).
+> [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) (46 luồng).
 > Bảng luồng → use case đầy đủ: [`SRS.md` §14.4](SRS.md#144-luồng-dữ-liệu-context--use-case).
 
 ![Context diagram v2.1](03-diagrams/img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.2.png)

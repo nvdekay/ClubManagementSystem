@@ -11,7 +11,7 @@
 - [`../03-diagrams/UCMS_UseCase_ByActor.drawio`](../03-diagrams/UCMS_UseCase_ByActor.drawio) — gọi tắt **UCD** (use case diagram)
 - [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio) — gọi tắt **CD** (context diagram).
   Từ I15–I20 trở đi, CD hiện hành là `UCMS_Context_Diagram_v2.drawio` (đã xoá khỏi repo ngày 14/10/2026);
-  từ I56 trở đi là [`../03-diagrams/UCMS_Context_Diagram_v2.1.drawio`](../03-diagrams/UCMS_Context_Diagram_v2.1.drawio)
+  từ I56 trở đi là [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio)
 - [`../Group1_SE1939-NJ_Report_Final_v2.docx`](../Group1_SE1939-NJ_Report_Final_v2.docx) — gọi tắt
   **Report** (từ I31 trở đi, review ngày 2026-09-26). Ký hiệu mục theo heading của report, ví dụ
   **Report §III.2.1** là mục *2.1 Actors* của chương III.

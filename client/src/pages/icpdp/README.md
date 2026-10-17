@@ -75,3 +75,12 @@ nhận kèm ghi nhận hoặc trả về với phần cần sửa.
 
 `SuspensionRequestsPage` (UC15) là hàng đợi yêu cầu tạm ngừng do CLB gửi (UC14), dùng chung
 `SuspensionRequestWorkspace` với trang CLB; ICPDP xem ảnh hưởng tới lịch rồi phê duyệt hoặc từ chối kèm lý do.
+
+Các trang khác (đối chiếu 17/10/2026):
+`AccountsPage` (UC03, route `/icpdp/accounts`): tìm tài khoản, khoá/mở khoá, gán/thu hồi vai trò hệ thống.
+`LeadershipTransitionQueuePage` + `LeadershipTransitionDetailPage` (UC13, `/workspace/leadership-transitions`):
+hàng đợi và xác nhận chuyển giao nhiệm kỳ.
+`EventReportsPage` (UC34, `/workspace/event-reports`, dùng `ReportWorkspace`): thẩm định và đóng báo cáo sau sự kiện.
+`ReconciliationPage` (UC37, `/workspace/budgets/:id/reconciliation`, dùng `FinanceWorkspace`): đối soát kinh phí.
+`RoomAllocationsPage` (UC58) là trang "Phân phòng CLB" mô tả ở trên; `PropertyBookingConflicts` là component con
+của `PropertiesPage`.

@@ -20,3 +20,8 @@ form xin rời CLB (UC22).
 
 `MembershipReconfirmationPanel` (UC21 A2) nằm trong `MyClubsPage`: liệt kê các đợt tái xác nhận đầu học kỳ
 đang mở của chính người dùng và cho xác nhận trước hạn.
+
+`ApplicationsPage` (UC07, route `/workspace/applications`) liệt kê hồ sơ thành lập CLB của Student;
+`ApplicationEditorPage` (`/workspace/applications/new` và `/workspace/applications/:id`) là form lập/sửa draft và
+nộp hồ sơ theo policy hiện hành. `RecruitmentApplicationsPage` (UC17, `/workspace/recruitment`) liệt kê các đợt
+tuyển đang mở và đơn ứng tuyển của chính Student, dẫn tới `RecruitmentApplicationPage` (`/workspace/recruitment/:campaignId`).

@@ -228,9 +228,9 @@ Có, cả hai đều có luồng rút (`Withdrawn`) trước khi có quyết đ�
 |---|---|---|
 | View member workspace / View member list | UC24 | Mọi thành viên `Active`/`Inactive`; Leader kế thừa |
 | Request to leave club | UC22 | Mọi thành viên; CLB thực thi ở UC21 |
-| Manage waitlist | UC30 | Mọi thành viên `Active` (`club.attendance.manage` mặc định, BR54); đôn chỗ theo chính sách |
-| Finalize attendance | UC32 | Như trên; khoá dữ liệu, chỉ vai trò đặc biệt mở khoá (BR19) |
-| View allocated rooms | UC58 (đọc) | Mọi thành viên `Active` (`club.room.view` mặc định, BR54) |
+| Manage waitlist | UC30 | Theo code hiện hành chỉ Club Leader (Member không có permission quản lý, 13/10); đôn chỗ theo chính sách |
+| Finalize attendance | UC32 | Chỉ Club Leader; khoá dữ liệu, chỉ vai trò đặc biệt mở khoá (BR19) |
+| View allocated rooms | UC58 (đọc) | Chỉ Club Leader (cần `club.booking.manage`) |
 
 ### Q&A
 
@@ -730,10 +730,10 @@ ICPDP là người kích hoạt và chịu trách nhiệm bản nháp; hệ th�
 |---|---|---|---|
 | III.3.1 | Mọi User | UC01, UC02 | 2 |
 | III.3.2 | Student | UC06, UC07, UC17, UC29, UC31, UC48, UC50 | 7 |
-| III.3.3 | Club Member — sự kiện & phòng | UC22, UC24, UC30, UC32 (+ xem UC58, không đếm lại) | 4 |
+| III.3.3 | Club Member — sự kiện & phòng | UC22, UC24 | 2 |
 | III.3.4 | Club Leader | UC10, UC12, UC14, UC23 | 4 |
 | III.3.5 | Club Leader — CLB & tuyển | UC09, UC16, UC18, UC19, UC20, UC21 | 6 |
-| III.3.6 | Club Leader — sự kiện, booking & tài chính | UC25, UC27, UC28, UC33, UC36, UC38, UC45, UC47, UC49, UC52 (+ UC54, ngoài 53) | 10 |
+| III.3.6 | Club Leader — sự kiện, booking & tài chính | UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52 (+ UC54, ngoài 53) | 12 |
 | III.3.7 | ICPDP — truy cập & vòng đời CLB | UC03, UC04, UC05, UC08, UC11, UC13, UC15 | 7 |
 | III.3.8 | ICPDP — sự kiện, booking & tài chính | UC26, UC34, UC35, UC37, UC44, UC46, UC58 | 7 |
 | III.3.9 | ICPDP — tuân thủ & đánh giá | UC39, UC40, UC41, UC42, UC43, UC51 | 6 |

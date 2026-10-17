@@ -3,8 +3,8 @@
 `ClubBookingsPage` dùng `BookingWorkspace` cho UC45–47: chỉ gửi yêu cầu `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`
 (Draft/sửa/nộp lại, ICPDP duyệt), xem lịch sử và huỷ. Cần `club.booking.manage`. CLB không đặt phòng học.
 
-Trang "Phòng được phân" (route `/club/:clubId/rooms`, UC58) chỉ đọc, cần membership `Active`
-và `club.booking.manage` trong đúng CLB để xuất trình lịch cho bảo vệ khi nhận chìa khoá:
+`ClubRoomsPage` — trang "Phòng được phân" (route `/club/:clubId/rooms`, UC58) chỉ đọc, chỉ Club Leader
+(`club.booking.manage`, Club Member không có) trong đúng CLB để xuất trình lịch cho bảo vệ khi nhận chìa khoá:
 lịch tuần học kỳ hiện tại/sắp tới (thứ, slot, giờ, phòng, toà, ghi chú) và các buổi sắp tới do ICPDP phân.
 
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi
@@ -28,7 +28,7 @@ yêu cầu rời và xuất Excel; Club Member chỉ thấy danh sách thành vi
 draft, công bố trong một kỳ học đã cấu hình và xử lý cảnh báo campaign chồng lấn.
 
 `RecruitmentReviewPage` nối UC18 và UC20: Club Leader (`club.application.review`) sàng lọc/quyết
-định đơn, xử lý danh sách chờ và tiếp nhận ứng viên trúng tuyển thành thành viên role `Members`.
+định đơn, xử lý danh sách chờ và tiếp nhận ứng viên trúng tuyển thành Club Member.
 Đơn hiển thị dạng bảng (lọc trạng thái, tìm tên, sắp xếp theo điểm trung bình); mở một dòng là
 `ApplicationReviewDialog` với câu trả lời, thao tác sàng lọc và UC19 qua `CandidateEvaluationPanel`
 (tổng hợp + thanh trung bình theo tiêu chí + từng bản đánh giá) và `CandidateEvaluationForm` (form
@@ -50,8 +50,8 @@ thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ 
 `ClubMemberStateDialog`; lịch sử trạng thái mở trong một AppDialog. `exportClubMembers.ts` ghi các
 dòng đang lọc ra `.xlsx` bằng `write-excel-file` (nạp động, không vào bundle chính) — chỉ trang này dùng.
 
-Thiết lập CLB bị gate theo permission ở UI; GET profile/departments phía server vẫn cho current
-member đọc, mutation luôn yêu cầu Leader. API xem phòng UC58 yêu cầu Leader.
+Thiết lập CLB bị gate theo permission ở cả UI và server: `getClubSettings` (GET) và mọi mutation đều
+yêu cầu `club.profile.manage` (Club Leader). API xem phòng UC58 cũng chỉ dành cho Leader.
 
 Các trang thêm ngày 15/10/2026, đều chỉ dành cho Club Leader:
 `ClubTransitionPlansPage` + `ClubTransitionPlanEditor` (UC12: ban mới, người nhận từng nghĩa vụ còn mở, nộp lại
@@ -59,3 +59,9 @@ sau khi bị trả), `ClubSuspensionRequestsPage` (UC14, dùng `SuspensionReques
 + `ClubPeriodicReportEditor` (UC38: nháp, nộp, nộp lại, lịch sử các lần nộp), `ClubInvitationsPage` (UC54: nhận
 hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộp minh chứng khắc phục) và
 `ClubEvaluationsPage` (UC43: chỉ kết quả `Published`).
+
+Các trang khác (đối chiếu 17/10/2026), đều chỉ dành cho Club Leader:
+`ClubEventsPage` (UC25, UC27, UC28, UC30; cùng component với `mode="attendance"` cho UC32 tại
+`/club/:clubId/event-attendance` và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
+`ClubBookingsPage` (UC45–47, xem trên), `ClubReportsPage` (UC33, dùng `ReportWorkspace`, route
+`/club/:clubId/event-reports`) và `ClubBudgetsPage` (UC36, dùng `FinanceWorkspace`, route `/club/:clubId/budgets`).

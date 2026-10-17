@@ -1,7 +1,7 @@
 # Kế hoạch hoàn thiện use case còn lại
 
-> Cập nhật ngày 15/10/2026 theo `origin/main` commit `60fc2db`. Ánh xạ đầy đủ nằm ở
-> [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
+> **Tài liệu lịch sử** (cập nhật lần cuối 15/10/2026 theo `origin/main` commit `60fc2db`). Trạng thái
+> hiện hành và khoảng trống còn lại nằm ở [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 
 ## Baseline truy cập
 

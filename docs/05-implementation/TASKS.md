@@ -105,7 +105,7 @@ dưới lên, không bao giờ cắt nửa vòng.
 ## Vòng 2 — Thành lập & quản trị CLB (UC06–UC15)
 
 ### Database
-- [ ] **DB-2.1** Các collection `clubs`, `clubApplications`, `clubApplicationVersions`, `clubSuspensionRequests`. → SRS §7.1
+- [ ] **DB-2.1** Các collection `clubs`, `clubApplications`, `clubApplicationVersions`, ~~`clubSuspensionRequests`~~ (đã bỏ ở `536721d`, dùng `suspensionRequests`). → SRS §7.1
 - [ ] **DB-2.2** Các collection `clubTerms`, `clubPositions`, `clubPositionAssignments`, `clubRoleStructureVersions`, `boardNominations`, `boardNominationSeats`, `transitionPlans`. → UC09–UC13, UC23
 - [ ] **DB-2.3** Index `clubs(state, field)`, `clubApplications(state, submittedAt)`, unique `clubApplicationVersions(applicationId, versionNo)`, `clubTerms(clubId, state)`, `clubTerms(clubId, endAt)`, unique `clubPositions(clubId, code)`. → DAT-02, DAT-03
 - [ ] **DB-2.4** Chốt chặn chỉ-ghi-thêm trên `clubApplicationVersions` (từ chối mọi update và delete ở biên repository). → BR04, CON-08
