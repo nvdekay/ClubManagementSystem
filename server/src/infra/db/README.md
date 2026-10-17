@@ -71,3 +71,9 @@ một snapshot), `mongo-club-invitation-repository.ts` (UC54), `mongo-club-viola
 quá hạn mà CLB chưa mở báo cáo — dùng chung cho đề xuất sự kiện, thẩm định đề xuất, booking và dashboard.
 
 `dashboard-charts.ts` (17/10/2026) tính dữ liệu chart của dashboard ICPDP và Club Leader (UC02).
+
+`seed-dashboard.ts` (`npm run seed:dashboard`, 17/10/2026) — chạy sau `seed` + `seed:demo`, chỉ ghi vào DB
+local: ~150 tài khoản sinh viên demo, thành viên/sự kiện/đăng ký/check-in/phản hồi/ngân sách/đề xuất chờ duyệt
+trong 12 tháng cho ~12 CLB, đơn ứng tuyển đợt tuyển HEBE và lĩnh vực đoán theo tên cho CLB "Chưa phân loại".
+Mọi bản ghi có id cố định theo khoá nên chạy lại không tạo trùng; thành viên đang hoạt động được ghi sẵn
+tái xác nhận học kỳ hiện tại để job UC21 A2 không chuyển họ sang Inactive.

@@ -14,6 +14,7 @@
     "test": "npm test --workspaces --if-present",
     "seed": "npm run seed --workspace=server",
     "seed:demo": "npm run seed:demo --workspace=server --",
+    "seed:dashboard": "npm run seed:dashboard --workspace=server",
     "db:init": "npm run db:init --workspace=server",
     "db:verify": "npm run db:verify --workspace=server",
     "typecheck": "npm run typecheck --workspaces",

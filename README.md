@@ -17,6 +17,7 @@ npm run dev              # API :3000 (route dưới /api/v1, tài liệu OpenAPI
 npm run db:init          # tạo collection + index từ DBML (chạy lại được; db:verify để kiểm tra)
 npm run seed             # tuỳ chọn — ảnh chụp dữ liệu công khai PDP (CLB + sự kiện)
 npm run seed:demo -- --owner=<email>   # tuỳ chọn — dữ liệu demo nghiệp vụ, <email> là tài khoản Google của bạn
+npm run seed:dashboard                 # tuỳ chọn — ~150 tài khoản sinh viên demo và 12 tháng hoạt động của ~12 CLB cho dashboard (chỉ DB local)
 ```
 
 ## Kiểm tra
