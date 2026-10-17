@@ -72,6 +72,21 @@ const Dashboard = z.object({
     z.object({ key: z.string(), status: z.literal("ready"), count: z.number().int().nonnegative() }),
     z.object({ key: z.string(), status: z.literal("error") }),
   ])),
+  icpdpCharts: z.object({
+    queues: z.array(z.object({ entityType: z.string(), onTime: z.number().int(), overdue: z.number().int() })),
+    eventsByMonth: z.array(z.object({ month: z.string(), count: z.number().int() })),
+    clubsByField: z.array(z.object({ field: z.string(), count: z.number().int() })),
+    clubsByState: z.array(z.object({ state: z.string(), count: z.number().int() })),
+    budget: z.object({ periodCode: z.string().optional(), approved: z.number(), disbursed: z.number() }),
+  }).optional(),
+  clubCharts: z.object({
+    membersByMonth: z.array(z.object({ month: z.string(), count: z.number().int() })),
+    eventTurnout: z.array(z.object({ eventId: z.string(), title: z.string(), startAt: z.string().datetime(),
+      registered: z.number().int(), attended: z.number().int() })),
+    recruitment: z.object({ campaignId: z.string(), title: z.string(), submitted: z.number().int(),
+      shortlisted: z.number().int(), accepted: z.number().int(), onboarded: z.number().int() }).optional(),
+    feedback: z.object({ respondents: z.number().int(), average: z.number().optional(), distribution: z.array(z.number().int()) }),
+  }).optional(),
 });
 const Reason = z.object({ reason: z.string().min(1).max(1000) });
 const RoleChange = z.object({ roleCode: z.string(), reason: z.string().optional() });

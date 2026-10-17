@@ -4,6 +4,8 @@ import { Link } from "react-router";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { ClubDashboard } from "@/components/custom/ClubDashboard";
+import { IcpdpDashboard } from "@/components/custom/IcpdpDashboard";
 import { useDashboard } from "@/hooks/useDashboard";
 import type { DashboardContext, DashboardPanelKey } from "@/services/dashboard";
 
@@ -35,6 +37,7 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
       <p role="status" className="text-sm text-muted-app">{t("dashboard.loading")}</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((item) => <AppSkeleton key={item} className="h-32" />)}
+        <AppSkeleton className="h-72 sm:col-span-2 xl:col-span-3" /><AppSkeleton className="h-72" />
       </div>
     </section>;
   }
@@ -46,6 +49,24 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
     </AppNotice>;
   }
 
+  const generated = t("dashboard.generatedAt", {
+    time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" })
+      .format(new Date(dashboard.data.generatedAt)),
+  });
+  // ICPDP and Club Leaders get the chart overview; students and Club Members keep the summary cards.
+  const charts = dashboard.data.icpdpCharts ?? dashboard.data.clubCharts;
+  if (charts) {
+    return <section aria-labelledby="dashboard-title" className="mt-8">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+        <h2 id="dashboard-title" className="font-heading text-2xl font-bold">{t("dashboard.overviewTitle")}</h2>
+        <p className="text-xs text-muted-app">{generated}</p>
+      </div>
+      {dashboard.data.icpdpCharts ? <IcpdpDashboard data={dashboard.data} charts={dashboard.data.icpdpCharts} />
+        : context.workspace === "club" && dashboard.data.clubCharts
+          && <ClubDashboard clubId={context.clubId} data={dashboard.data} charts={dashboard.data.clubCharts} />}
+    </section>;
+  }
+
   const allEmpty = dashboard.data.panels.every((item) => item.status === "ready" && item.count === 0);
   return <section aria-labelledby="dashboard-title" className="mt-8">
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -53,10 +74,7 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
         <h2 id="dashboard-title" className="font-heading text-2xl font-bold">{t("dashboard.title")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("dashboard.description")}</p>
       </div>
-      <p className="text-xs text-muted-app">{t("dashboard.generatedAt", {
-        time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" })
-          .format(new Date(dashboard.data.generatedAt)),
-      })}</p>
+      <p className="text-xs text-muted-app">{generated}</p>
     </div>
 
     {allEmpty && <AppNotice tone="info" title={t("dashboard.emptyTitle")} className="mt-5">

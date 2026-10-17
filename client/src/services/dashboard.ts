@@ -24,11 +24,30 @@ export interface FailedDashboardPanel {
   status: "error";
 }
 
+export interface DashboardMonthCount { month: string; count: number }
+
+export interface IcpdpDashboardCharts {
+  queues: { entityType: string; onTime: number; overdue: number }[];
+  eventsByMonth: DashboardMonthCount[];
+  clubsByField: { field: string; count: number }[];
+  clubsByState: { state: string; count: number }[];
+  budget: { periodCode?: string; approved: number; disbursed: number };
+}
+
+export interface ClubDashboardCharts {
+  membersByMonth: DashboardMonthCount[];
+  eventTurnout: { eventId: string; title: string; startAt: string; registered: number; attended: number }[];
+  recruitment?: { campaignId: string; title: string; submitted: number; shortlisted: number; accepted: number; onboarded: number };
+  feedback: { respondents: number; average?: number; distribution: number[] };
+}
+
 export interface Dashboard {
   kind: DashboardKind;
   clubId?: string;
   generatedAt: string;
   panels: Array<ReadyDashboardPanel | FailedDashboardPanel>;
+  icpdpCharts?: IcpdpDashboardCharts;
+  clubCharts?: ClubDashboardCharts;
 }
 
 export type DashboardContext =

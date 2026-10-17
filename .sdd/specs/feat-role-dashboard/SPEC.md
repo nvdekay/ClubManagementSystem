@@ -26,6 +26,7 @@ chưa có trang tổng quan nghiệp vụ theo UC02 để nhận biết việc �
 Không triển khai các thao tác ghi của module sở hữu panel; các thao tác đó thuộc UC tương ứng.
 
 ## Changelog
+- 2026-10-17 — dashboard ICPDP và Club Leader thành chart: snapshot thêm `icpdpCharts` (hàng chờ theo loại tách trong/quá SLA, sự kiện 8 tháng, CLB theo lĩnh vực/trạng thái, kinh phí học kỳ) và `clubCharts` (thành viên 12 tháng, đăng ký/check-in 6 sự kiện gần nhất, phễu đợt tuyển gần nhất, phân bố điểm phản hồi; chỉ khi có `club.member.manage`). Chart lỗi thì bỏ chart, panel vẫn giữ. Client vẽ bằng `components/ui/chart/` (SVG/HTML, không thêm thư viện), bảng màu đã qua bộ kiểm tra dataviz. Student và Club Member giữ thẻ số liệu.
 - 2026-10-17 — panel `internalEvents` đếm sự kiện `MEMBERS_ONLY` (giá trị `ICPDP_INTERNAL` cũ không bao giờ được ghi); `overdueReports` của CLB tính cả kỳ chưa mở báo cáo.
 - v0.1.0 (2026-10-09) — tạo spec UC02 trước khi triển khai.
 - v1.0.0 (2026-10-09) — hoàn tất API, dashboard ba workspace và kiểm thử UC02.

@@ -13,7 +13,10 @@ Các component còn lại (đối chiếu 17/10/2026):
 
 - `FinanceWorkspace` — UC36 phía CLB (`ClubBudgetsPage`) và UC37 phía ICPDP (`ReconciliationPage`).
 - `ReportWorkspace` — UC33 phía CLB (`ClubReportsPage`) và UC34 phía ICPDP (`EventReportsPage`).
-- `RoleDashboard`, `WorkspaceHome` — dashboard UC02 của ba trang chủ Student / CLB / ICPDP.
+- `RoleDashboard`, `WorkspaceHome` — dashboard UC02 của ba trang chủ Student / CLB / ICPDP. Khi server
+  trả `icpdpCharts`/`clubCharts`, `RoleDashboard` hiển thị `IcpdpDashboard` hoặc `ClubDashboard`
+  (hàng KPI + chart từ `ui/chart/`); Student và Club Member giữ các thẻ số liệu.
+- `DashboardTaskList` — danh sách việc quá hạn/còn nợ có icon trạng thái, dùng ở cả hai dashboard.
 - `EventRegistrationPanel`, `EventCheckInForm` — đăng ký và check-in sự kiện (UC29, UC31).
 - `EventFeedbackPanel`, `EventFeedbackForm` — gửi phản hồi sự kiện (UC48).
 - `StudentFeedbackList` — danh sách góp ý UC50 (trang gửi của Student và hai hộp thư CLB/ICPDP).

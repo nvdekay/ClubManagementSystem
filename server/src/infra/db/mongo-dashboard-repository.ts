@@ -5,6 +5,7 @@ import type {
 } from "../../domain/dashboard.js";
 import { ucmsModels } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
+import { clubCharts, icpdpCharts } from "./dashboard-charts.js";
 
 type UcmsDocument = Record<string, unknown>;
 
@@ -54,9 +55,12 @@ function buildSnapshot(
   generatedAt: Date,
   panels: Promise<DashboardPanel>[],
   clubId?: string,
+  charts?: Promise<Pick<DashboardSnapshot, "icpdpCharts" | "clubCharts">>,
 ): Promise<DashboardSnapshot> {
-  return Promise.all(panels).then((resolved) => ({
-    kind, generatedAt, panels: resolved, ...(clubId ? { clubId } : {}),
+  // A failed chart query drops the charts only; the panels keep their own per-panel errors.
+  const chartData = (charts ?? Promise.resolve({})).catch(() => ({}));
+  return Promise.all([Promise.all(panels), chartData]).then(([resolved, extra]) => ({
+    kind, generatedAt, panels: resolved, ...(clubId ? { clubId } : {}), ...extra,
   }));
 }
 
@@ -119,7 +123,9 @@ export function mongoDashboardRepository(): DashboardRepository {
         ] : []),
         ...(allowed.has("club.transition.plan") ? [transitionFollowUps(club)] : []),
       ];
-      return buildSnapshot("club", now, panels, clubId);
+      // Charts read member, event and recruitment data, which only a Club Leader manages.
+      return buildSnapshot("club", now, panels, clubId, allowed.has("club.member.manage")
+        ? clubCharts(clubId, now).then((clubCharts) => ({ clubCharts })) : undefined);
     },
 
     icpdp(now) {
@@ -158,7 +164,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         }),
         panel("roleStructures", "clubRoleStructureVersions", {}),
         panel("boardHistory", "clubPositionAssignments", { confirmedBy: { $exists: true } }),
-      ]);
+      ], undefined, icpdpCharts(now).then((icpdpCharts) => ({ icpdpCharts })));
     },
   };
 }

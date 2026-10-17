@@ -69,3 +69,5 @@ một snapshot), `mongo-club-invitation-repository.ts` (UC54), `mongo-club-viola
 
 `periodic-report-obligations.ts` (17/10/2026) gom luật BR21 "báo cáo định kỳ quá hạn" — gồm cả kỳ đã
 quá hạn mà CLB chưa mở báo cáo — dùng chung cho đề xuất sự kiện, thẩm định đề xuất, booking và dashboard.
+
+`dashboard-charts.ts` (17/10/2026) tính dữ liệu chart của dashboard ICPDP và Club Leader (UC02).

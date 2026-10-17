@@ -98,6 +98,12 @@ body {
   --color-recruitment-glow-app: #fdba74;
   /* Deep band behind the public hero, call-to-action and footer (same family as text-app). */
   --color-hero-app: #0b2533;
+  /* Dashboard charts: two categorical slots validated with the dataviz palette checks on the
+     light (#ffffff) and dark (#0b1620) surfaces, a de-emphasis gray and a hairline grid. */
+  --color-chart-1-app: #0891b2;
+  --color-chart-2-app: #ea580c;
+  --color-chart-muted-app: #c4d3dd;
+  --color-chart-grid-app: #e6eef3;
   --color-on-hero-app: #ffffff;
 }
 
@@ -137,6 +143,10 @@ body {
   --color-recruitment-soft-app: #653016;
   --color-recruitment-glow-app: #7c2d12;
   --color-hero-app: #0e2635;
+  --color-chart-1-app: #0aa0c0;
+  --color-chart-2-app: #e5641f;
+  --color-chart-muted-app: #34505f;
+  --color-chart-grid-app: #1b3040;
   --color-on-hero-app: #e6f3fa;
 }
 
