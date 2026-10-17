@@ -34,11 +34,11 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 | Actor | Use case | Hiện trạng |
 |---|---|---|
 | Mọi user | UC01 đăng nhập Google | Có; cần nghiệm thu callback Google thật |
-| Mọi user | UC02 dashboard | Một phần; panel sự kiện nội bộ luôn 0, chưa có danh sách sự kiện nội bộ và lịch sử cơ cấu/ban chủ nhiệm theo CLB |
+| Mọi user | UC02 dashboard | Một phần; chưa có danh sách sự kiện nội bộ và lịch sử cơ cấu/ban chủ nhiệm theo CLB |
 | Student | UC06 khám phá CLB/sự kiện | Một phần; API `/public/*` không cần auth, nhưng `PublicLayout.tsx` yêu cầu đăng nhập; E1 chưa gợi ý CLB mới |
 | Student | UC07 hồ sơ thành lập CLB | Có; hồ sơ quá hạn sửa tự chuyển `Expired`; còn QA Cloudinary thật và dọn asset mồ côi |
 | Student | UC17 ứng tuyển thành viên | Một phần; thành viên `Inactive` vẫn nộp được (E3/BR13) |
-| Club Member | UC21 A2 tái xác nhận thành viên đầu kỳ | Một phần, tại `/workspace/clubs`; quá hạn chuyển `Inactive`, nhưng `Inactive` không tái xác nhận để về `Active` được |
+| Club Member | UC21 A2 tái xác nhận thành viên đầu kỳ | Có, tại `/workspace/clubs`; quá hạn chuyển `Inactive`, Leader kích hoạt lại qua UC21 |
 | Student | UC29 đăng ký sự kiện | Có |
 | Student | UC31 check-in | Có |
 | Student | UC48 phản hồi sự kiện | Một phần; chỉ một điểm tổng, chưa chấm theo tiêu chí |
@@ -48,7 +48,7 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 | Club Member | Xem danh sách thành viên | Có, qua `member-space`; không truy cập API quản trị `/memberships` |
 | Club Member | Xem phòng được phân | **Chưa được phép**: API và menu yêu cầu `club.booking.manage`, chỉ Leader có quyền |
 | Club Leader | UC09 hồ sơ/cơ cấu CLB | Có; GET và mutation đều yêu cầu `club.profile.manage` |
-| Club Leader | UC10 đề cử ban chủ nhiệm | Một phần; một người có thể được đề cử hai ghế, CLB không thấy trạng thái/lý do trả lại |
+| Club Leader | UC10 đề cử ban chủ nhiệm | Một phần; CLB không thấy trạng thái/lý do trả lại |
 | Club Leader | UC12 lập kế hoạch chuyển giao | Một phần, tại `/club/:clubId/transition-plans`; A2 chưa đổi được danh sách ghế ban chủ nhiệm |
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 **Một phần**: chưa có tiếp nhận thủ công (A1) |
@@ -79,12 +79,20 @@ UC12, UC14, UC21 A2, UC36–UC38, UC40, UC43, UC54 và job hết hạn hồ sơ 
 ngày 15/10/2026; `655cad3` (16/10) vá các lỗ hổng tìm thấy khi đi hết luồng nghiệp vụ. Kiểm toán
 ngày 17/10/2026 còn ghi nhận các luồng thiếu dưới đây (chưa sửa).
 
+Đã sửa ngày 17/10/2026 (nhánh `agent/fix-business-gaps`): panel sự kiện nội bộ UC02 đếm sự kiện
+`MEMBERS_ONLY`; BR21 coi kỳ đã quá hạn mà CLB chưa mở báo cáo là nghĩa vụ quá hạn
+([periodic-report-obligations.ts](../server/src/infra/db/periodic-report-obligations.ts), chỉ tính kỳ
+bắt đầu sau khi CLB được tạo); UC17 E3 chặn cả thành viên `Inactive`; UC35 từ chối tạm ứng có ngày
+chi sau khi sự kiện kết thúc; UC10 chặn một người ở hai ghế; trang sự kiện CLB nêu rõ nghĩa vụ quá
+hạn, số đăng ký bị ảnh hưởng và số xung đột (UC25 E2, UC30 E1).
+
+Còn chờ quyết định: CLB `Dissolving` vẫn được đặt CSVC trong học kỳ giải thể. BR45 cho phép điều
+này, còn sơ đồ luồng UC15 trong SRS ghi "Dissolving: không tạo gì mới".
+
 **Dashboard và khám phá**
 
-1. UC02: panel sự kiện nội bộ đếm `audienceScope: "ICPDP_INTERNAL"`
-   ([mongo-dashboard-repository.ts](../server/src/infra/db/mongo-dashboard-repository.ts#L155))
-   nhưng không code nào ghi giá trị này (chỉ `PUBLIC`/`MEMBERS_ONLY`) → luôn 0. Chưa có danh sách
-   sự kiện nội bộ cho ICPDP (FR-UC02-02, BR53) và lịch sử cơ cấu/ban chủ nhiệm theo từng CLB (BR56).
+1. UC02: chưa có danh sách sự kiện nội bộ cho ICPDP (FR-UC02-02, BR53) và lịch sử cơ cấu/ban chủ
+   nhiệm theo từng CLB (BR56); dashboard chỉ có số đếm.
 2. UC22: yêu cầu rời CLB không hiện trên dashboard; `GET /memberships/withdrawal-requests/mine`
    không được client gọi.
 3. UC06: Guest không duyệt được UI (`PublicLayout.tsx` chuyển về `/login`) dù `/public/*` mở;
@@ -94,51 +102,41 @@ ngày 17/10/2026 còn ghi nhận các luồng thiếu dưới đây (chưa sửa
 
 4. UC03: khoá tài khoản chưa nối với hồ sơ UC40 (A1); tìm kiếm không hiện ngữ cảnh CLB.
 5. UC07 E3: cảnh báo trùng tên không hiển thị cho người thẩm định ICPDP.
-6. UC10: một người có thể được đề cử hai ghế; phía CLB không thấy trạng thái đề cử/lý do trả lại;
-   chỉ có một ghế Phó chủ nhiệm.
+6. UC10: phía CLB không thấy trạng thái đề cử/lý do trả lại; chỉ có một ghế Phó chủ nhiệm.
 7. UC12 A2: kế hoạch không đổi được danh sách ghế (`proposedBoardRoles` chỉ có từ seed) → UC13
    không bao giờ sinh phiên bản cơ cấu mới từ dữ liệu thật.
 8. UC15: giải thể cuối kỳ không huỷ đề xuất đang chờ/lưu trữ nghĩa vụ; job lỗi chỉ log console;
-   E1 không cảnh báo ngân sách chưa đối soát; A1 tạm ngừng/giải thể không gắn hồ sơ UC40; booking
-   vẫn được nhận khi CLB `Dissolving` (BR44/45).
+   E1 không cảnh báo ngân sách chưa đối soát; A1 tạm ngừng/giải thể không gắn hồ sơ UC40.
 
 **Thành viên**
 
-9. UC17 E3/BR13: thành viên `Inactive` vẫn nộp đơn được (chỉ chặn `Active`), lỗi muộn ở unique
-   index khi tiếp nhận.
-10. UC20 A1 / FR-UC20-03: chưa có tiếp nhận thủ công (tạo membership không cần đơn được chấp nhận).
-11. UC21 A2: thành viên `Inactive` không tái xác nhận về `Active` được (job/xác nhận chỉ cho
-    `Active`); mốc `Inactive` là ngày chạy, không phải đầu kỳ.
+9. UC20 A1 / FR-UC20-03: chưa có tiếp nhận thủ công (tạo membership không cần đơn được chấp nhận).
 
 **Sự kiện, ngân sách, cơ sở vật chất**
 
-12. UC28 E2 và UC47 E2: cờ `isLateCancellation` (sự kiện/booking) được lưu nhưng không chảy vào
+10. UC28 E2 và UC47 E2: cờ `isLateCancellation` (sự kiện/booking) được lưu nhưng không chảy vào
     UC40 hay UC42; ngưỡng huỷ muộn booking cố định 24 giờ, không lấy từ policy.
-13. UC35: vẫn ghi tạm ứng được sau khi sự kiện kết thúc.
-14. UC27/UC53: công bố sự kiện không gửi thông báo cho sinh viên; UC16 công bố đợt tuyển không báo
+11. UC27/UC53: công bố sự kiện không gửi thông báo cho sinh viên; UC16 công bố đợt tuyển không báo
     người theo dõi (không có khái niệm follower).
-15. UC44 A2: blackout chỉ liệt kê yêu cầu đang chờ bị trùng, không liệt kê booking đã duyệt hay
+12. UC44 A2: blackout chỉ liệt kê yêu cầu đang chờ bị trùng, không liệt kê booking đã duyệt hay
     buổi phân phòng UC58.
-16. UC48/UC49: chỉ một điểm tổng (`overall`); đặc tả yêu cầu điểm theo từng tiêu chí.
+13. UC48/UC49: chỉ một điểm tổng (`overall`); đặc tả yêu cầu điểm theo từng tiêu chí.
 
 **Báo cáo, tuân thủ, đánh giá**
 
-17. BR21 / UC38 E1 / UC39 E1: CLB không hề tạo báo cáo định kỳ thì không bao giờ bị coi là quá hạn
-    (chặn sự kiện chỉ xét báo cáo `Draft`/`Returned` đã có).
-18. UC40 A1: leo thang tạm ngừng/giải thể chỉ là nhãn (`linkedLifecycleAction`), không nối UC15.
-19. UC42: bản nháp đếm cả báo cáo `Returned`/chưa chấp nhận; sinh nháp không đòi báo cáo kỳ đã
+14. UC40 A1: leo thang tạm ngừng/giải thể chỉ là nhãn (`linkedLifecycleAction`), không nối UC15.
+15. UC42: bản nháp đếm cả báo cáo `Returned`/chưa chấp nhận; sinh nháp không đòi báo cáo kỳ đã
     thẩm định; không đọc tuân thủ booking; D5 thiếu số lần trả sửa.
-20. UC41/UC42 BR51/BR60: kích hoạt phiên bản scheme mới giữa kỳ có thể trộn phiên bản trong một kỳ.
-21. UC43 E1: CLB không khiếu nại được kết quả đánh giá đã công bố.
+16. UC41/UC42 BR51/BR60: kích hoạt phiên bản scheme mới giữa kỳ có thể trộn phiên bản trong một kỳ.
+17. UC43 E1: CLB không khiếu nại được kết quả đánh giá đã công bố.
 
 **Hạ tầng bên ngoài**
 
-22. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi.
-23. Mail delivery worker và inbox notification tổng quát chưa được nối như thiết kế đích.
+18. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi.
+19. Mail delivery worker và inbox notification tổng quát chưa được nối như thiết kế đích.
 
 ### Lỗi UI nhỏ
 
-- `ClubEventsPage` bỏ mất chi tiết lỗi server (tên nghĩa vụ, đăng ký bị ảnh hưởng, xung đột) — UC25 E2, UC30 E1.
 - Panel dashboard phần lớn không bấm được; panel CLB active/suspended của ICPDP dẫn tới `/clubs` công khai.
 - UC20 hộp thoại tiếp nhận không đặt được `joinedAt`/ban; UC16 bước tuyển không có mô tả/ngày;
   UC18 thao tác hàng loạt lỗi khi trộn trạng thái.
@@ -167,7 +165,9 @@ ngày 17/10/2026 còn ghi nhận các luồng thiếu dưới đây (chưa sửa
   tạm ngừng huỷ các đề xuất đang chờ.
 - UC16 A2: huỷ đợt tuyển luôn ra `Cancelled`. Từ `655cad3`, đợt tuyển chỉ `Completed` khi đã đóng
   cửa sổ hoặc đã đủ chỉ tiêu.
-- UC21 A2: sinh viên tự xác nhận (không phải phía CLB); ngày hiệu lực UC21 chỉ là hôm nay.
+- UC21 A2: sinh viên tự xác nhận (không phải phía CLB); quá hạn thì `Inactive` tính từ lúc job chạy,
+  không hồi tố đầu kỳ; sinh viên không tự khôi phục từ `Inactive`, Leader kích hoạt lại qua UC21
+  (quyết định 15/10, `feat-membership-reconfirmation`). Ngày hiệu lực UC21 chỉ là hôm nay.
 - UC28: sự kiện `Ongoing` huỷ được nhưng không đổi lịch được.
 - `audienceScope` dùng `PUBLIC`/`MEMBERS_ONLY`, đặc tả ghi Public/Internal.
 - UC33 (`655cad3`): chỉ soạn báo cáo sau sự kiện khi điểm danh đã chốt

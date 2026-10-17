@@ -66,3 +66,6 @@ cascade sự kiện/booking trong cùng transaction), `mongo-club-periodic-repor
 một snapshot), `mongo-club-invitation-repository.ts` (UC54), `mongo-club-violation-repository.ts` (UC40),
 `mongo-club-evaluation-repository.ts` (UC43, chỉ đọc bản `Published`), `mongo-membership-reconfirmation-repository.ts`
 (UC21 A2) và `mongo-application-expiry-repository.ts` (UC07/08).
+
+`periodic-report-obligations.ts` (17/10/2026) gom luật BR21 "báo cáo định kỳ quá hạn" — gồm cả kỳ đã
+quá hạn mà CLB chưa mở báo cáo — dùng chung cho đề xuất sự kiện, thẩm định đề xuất, booking và dashboard.

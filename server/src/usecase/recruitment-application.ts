@@ -71,7 +71,7 @@ async function eligible(repo: RecruitmentApplicationRepository, userId: string, 
   const result = await repo.eligibility(userId, clubId);
   if (!result.userActive) throw new DomainError("student account is not active", "forbidden");
   if (result.bannedMembership) throw new DomainError("banned student cannot apply to this club", "forbidden");
-  if (result.activeMembership) throw new DomainError("active club members cannot apply to recruitment", "conflict");
+  if (result.activeMembership) throw new DomainError("current club members, Active or Inactive, cannot apply to recruitment", "conflict");
 }
 
 function normalizedAnswers(answers: Record<string, RecruitmentAnswer>): Record<string, RecruitmentAnswer> {

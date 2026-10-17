@@ -64,4 +64,17 @@ describe("Mongo dashboard read model", () => {
     expect(result.panels.find((item) => item.key === "transitionFollowUps"))
       .toEqual({ key: "transitionFollowUps", status: "ready", count: 3 });
   });
+
+  it("counts members-only club events as ICPDP internal events", async () => {
+    for (const item of Object.values(ucmsModels)) {
+      vi.spyOn(item!, "countDocuments").mockResolvedValue(0 as never);
+      vi.spyOn(item!, "find").mockReturnValue({ lean: async () => [] } as never);
+      vi.spyOn(item!, "aggregate").mockResolvedValue([] as never);
+    }
+    const events = vi.mocked(ucmsModels.events!.countDocuments);
+
+    await mongoDashboardRepository().icpdp(new Date("2026-10-09T08:00:00Z"));
+
+    expect(events).toHaveBeenCalledWith(expect.objectContaining({ audienceScope: "MEMBERS_ONLY" }));
+  });
 });

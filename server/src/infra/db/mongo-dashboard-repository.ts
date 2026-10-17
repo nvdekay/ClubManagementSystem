@@ -4,6 +4,7 @@ import type {
   DashboardPanel, DashboardPanelKey, DashboardRepository, DashboardSnapshot,
 } from "../../domain/dashboard.js";
 import { ucmsModels } from "./ucms-models.js";
+import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type UcmsDocument = Record<string, unknown>;
 
@@ -41,8 +42,9 @@ async function transitionFollowUps(clubId: Types.ObjectId): Promise<DashboardPan
 
 async function overdueReportsPanel(now: Date, clubId?: Types.ObjectId): Promise<DashboardPanel> {
   try {
-    const [postEvents, periodic] = await Promise.all([overduePostEventReports(clubId, now), model("periodicReports").countDocuments({
-      ...(clubId ? { clubId } : {}), dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } })]);
+    const [postEvents, periodic] = await Promise.all([overduePostEventReports(clubId, now), clubId
+      ? overduePeriodicReports(clubId, now).then((codes) => codes.length)
+      : model("periodicReports").countDocuments({ dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } })]);
     return { key: "overdueReports", status: "ready", count: postEvents.length + periodic };
   } catch { return { key: "overdueReports", status: "error" }; }
 }
@@ -152,7 +154,7 @@ export function mongoDashboardRepository(): DashboardRepository {
           state: { $in: ["Requested", "Under Review"] }, startAt: { $gte: now },
         }),
         panel("internalEvents", "events", {
-          audienceScope: "ICPDP_INTERNAL", state: { $in: ["Upcoming", "Ongoing"] },
+          audienceScope: "MEMBERS_ONLY", state: { $in: ["Upcoming", "Ongoing"] },
         }),
         panel("roleStructures", "clubRoleStructureVersions", {}),
         panel("boardHistory", "clubPositionAssignments", { confirmedBy: { $exists: true } }),

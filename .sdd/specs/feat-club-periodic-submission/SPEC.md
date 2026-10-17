@@ -23,4 +23,5 @@ UC39 đã xét báo cáo nhưng thiếu đầu vào UC38 và lịch sử bất b
 Báo cáo năm học và mẫu tuỳ chỉnh chưa có trong policy.
 
 ## Changelog
+- 2026-10-17 — BR21/UC38 E1: kỳ đã quá hạn mà CLB chưa mở báo cáo cũng là nghĩa vụ quá hạn (chặn đề xuất sự kiện, booking, hiện trên dashboard CLB); chỉ tính kỳ bắt đầu sau khi CLB được tạo (`periodic-report-obligations.ts`).
 - 2026-10-15 — triển khai UC38 theo hợp đồng feat-periodic-reports và yêu cầu hoàn thiện UC của người dùng.

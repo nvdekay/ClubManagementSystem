@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthRepository } from "../../src/domain/auth.js";
 import {
-  allowedFlow, settlementDueAt, stateAfterFlow,
+  allowedFlow, checkFlow, settlementDueAt, stateAfterFlow,
   type BudgetDetail, type BudgetDisbursementRepository,
 } from "../../src/domain/budget-disbursement.js";
 import { listBudgets, normalizedBudgetFlow, recordBudgetFlow } from "../../src/usecase/budget-disbursement.js";
@@ -31,6 +31,12 @@ describe("budget disbursement rules", () => {
     expect(allowedFlow(budget({ state: "Disbursed", disbursedTotal: 1_000_000 }))).toEqual({ kind: "Advance", max: 3_000_000 });
     expect(allowedFlow(budget({ state: "Disbursed", disbursedTotal: 4_000_000 }))).toBeUndefined();
     expect(allowedFlow(budget({ eventState: "Cancelled" }))).toBeUndefined();
+  });
+
+  it("refuses an advance dated after the event has ended", () => {
+    const flow = { kind: "Advance" as const, amount: 1_000_000, disbursedAt: new Date(now.getTime() + 1000) };
+    expect(() => checkFlow(budget({ eventState: "Completed" }), flow)).toThrow("before the event ends");
+    expect(() => checkFlow(budget({ eventState: "Completed" }), { ...flow, disbursedAt: now })).not.toThrow();
   });
 
   it("allows an exact top-up after reconciliation and a refund of what is still owed", () => {

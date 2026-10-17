@@ -91,12 +91,16 @@ describe("UC10/UC11 board nomination use cases", () => {
       [{ positionId: leaderPositionId, membershipId: memberId }], now);
   });
 
-  it("rejects duplicate seats, inactive nominees, occupied seats, and a President overlap", async () => {
+  it("rejects duplicate seats, one member on two seats, inactive nominees, occupied seats, and a President overlap", async () => {
     const { repository, access } = setup();
     await expect(submitBoardNomination(repository, access, actor, clubId, [
       { positionId: leaderPositionId, membershipId: memberId },
       { positionId: leaderPositionId, membershipId: otherMemberId },
     ], now)).rejects.toMatchObject({ kind: "validation" });
+    await expect(submitBoardNomination(repository, access, actor, clubId, [
+      { positionId: leaderPositionId, membershipId: memberId },
+      { positionId: otherPositionId, membershipId: memberId },
+    ], now)).rejects.toMatchObject({ kind: "validation", message: "one member cannot be nominated for two board seats" });
     await expect(submitBoardNomination(repository, access, actor, clubId, [
       { positionId: leaderPositionId, membershipId: "000000000000000000000099" },
     ], now)).rejects.toMatchObject({ kind: "validation" });

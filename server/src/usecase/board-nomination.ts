@@ -54,6 +54,9 @@ export async function submitBoardNomination(repo: BoardNominationRepository,
   if (new Set(seats.map((seat) => seat.positionId)).size !== seats.length) {
     throw new DomainError("duplicate board position", "validation");
   }
+  if (new Set(seats.map((seat) => seat.membershipId)).size !== seats.length) {
+    throw new DomainError("one member cannot be nominated for two board seats", "validation");
+  }
   const positions = new Map(context.positions.map((position) => [position.id, position]));
   const candidates = new Map(context.candidates.filter((candidate) => candidate.state === "Active")
     .map((candidate) => [candidate.membershipId, candidate]));

@@ -40,4 +40,5 @@ UI báo cáo/quyết toán Wave 4; không thay schema/dependency/env.
 UC26 tái sử dụng phần đã có; chỉ bổ sung tương thích khi cần.
 
 ## Changelog
+- 2026-10-17 — UI nêu rõ nghĩa vụ quá hạn (UC25 E2), số đăng ký bị ảnh hưởng khi giảm sức chứa (UC30 E1) và số xung đột chặn; nghĩa vụ báo cáo định kỳ có dạng `overduePeriodicReport:<periodCode>`.
 - v0.1.0 (2026-10-11) — người dùng yêu cầu triển khai theo đề xuất; triển khai theo khuyến nghị đã được giao; API/UI và kiểm chứng hoàn tất.

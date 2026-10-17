@@ -57,6 +57,7 @@ bản ghi role, membership, nhiệm kỳ, task, quyết định và quyền truy
 - Cho phép Chủ nhiệm trùng nhiệm kỳ; hiện quy tắc được chốt là không cho phép.
 
 ## Changelog
+- 2026-10-17 — UC10: một thành viên không được đề cử vào hai ghế trong cùng lượt; UI ẩn người đã được chọn ở ghế khác.
 - v0.3.0 (2026-10-08) — hoàn tất vertical slice, automated tests và build; còn visual QA.
 - v0.2.0 (2026-10-08) — ghi nhận BR06/BR07 theo xác nhận người dùng và dùng ngày của nhiệm kỳ hiện tại.
 - v0.1.0 (2026-10-08) — chốt phạm vi UC10→UC11, một task/một quyết định, không đổi schema.

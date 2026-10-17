@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Link, useParams } from "react-router";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -13,7 +14,7 @@ import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubEvent, useClubEventFeedback, useClubEventMutation, useClubEventOptions, useClubEvents, useEventParticipants } from "@/hooks/useClubEvents";
-import type { ClubEvent, ClubEventInput, EventParticipant } from "@/services/clubEvents";
+import type { ClubEvent, ClubEventError, ClubEventInput, EventParticipant } from "@/services/clubEvents";
 
 const eventsEmpty: ClubEvent[] = [];
 const participantsEmpty: EventParticipant[] = [];
@@ -29,8 +30,29 @@ function freshEvent(): ClubEventInput {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="font-medium">{label}</span>{children}</label>;
 }
+function obligationLabel(t: TFunction, item: string) {
+  const [key, value] = item.split(":", 2);
+  switch (key) {
+    case "overdueSettlement": return t("clubEvents.overdueSettlement");
+    case "overdueRefund": return t("clubEvents.overdueRefund");
+    case "overduePeriodicReport": return t("clubEvents.overduePeriodicReport", { period: value ?? "" });
+    case "overduePostEventReport": return t("clubEvents.overduePostEventReport");
+    default: return item;
+  }
+}
+// Spells out what the server named (UC25 E2 obligations, UC30 E1 affected registrations) instead of its raw message.
 function ErrorMessage({ error }: { error: unknown }) {
-  return error ? <p role="alert" className="break-words text-sm text-danger-app">{error instanceof Error ? error.message : String(error)}</p> : null;
+  const { t } = useTranslation();
+  if (!error) return null;
+  const details = error instanceof Error && "details" in error ? (error as ClubEventError).details : undefined;
+  const className = "break-words text-sm text-danger-app";
+  if (details?.obligations?.length) {
+    return <div role="alert" className={className}><p>{t("clubEvents.blockedByObligations")}</p>
+      <ul className="mt-1 list-disc pl-5">{details.obligations.map((item) => <li key={item}>{obligationLabel(t, item)}</li>)}</ul></div>;
+  }
+  if (details?.registrationIds?.length) return <p role="alert" className={className}>{t("clubEvents.capacityBelowConfirmed", { count: details.registrationIds.length })}</p>;
+  if (details?.conflicts?.length) return <p role="alert" className={className}>{t("clubEvents.blockingConflicts", { count: details.conflicts.length })}</p>;
+  return <p role="alert" className={className}>{error instanceof Error ? error.message : String(error)}</p>;
 }
 function TablePager({ pageIndex, pageCount, onChange }: { pageIndex: number; pageCount: number; onChange: (value: number) => void }) {
   const { t } = useTranslation();

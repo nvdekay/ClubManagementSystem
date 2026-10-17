@@ -142,24 +142,29 @@ describe.skipIf(!uri)("Mongo recruitment application repository", () => {
       .not.toBe("Completed");
   }, 60_000);
 
-  it("rejects banned and active club members at the eligibility boundary", async () => {
+  it("rejects banned, active and inactive club members at the eligibility boundary", async () => {
     const clubId = new Types.ObjectId();
     const bannedId = new Types.ObjectId();
     const activeId = new Types.ObjectId();
+    const inactiveId = new Types.ObjectId();
     await ucmsModels.clubs!.create({ _id: clubId, code: "ELIG-UC17", name: "Eligibility Club",
       field: "Technology", state: "Active", createdAt: now });
     await ucmsModels.users!.create([
       { _id: bannedId, email: "banned@example.edu", displayName: "Banned", accountState: "Active", createdAt: now },
       { _id: activeId, email: "member@example.edu", displayName: "Member", accountState: "Active", createdAt: now },
+      { _id: inactiveId, email: "inactive@example.edu", displayName: "Inactive", accountState: "Active", createdAt: now },
     ]);
     await ucmsModels.clubMemberships!.create([
       { clubId, userId: bannedId, state: "Banned", joinedAt: now, statusHistory: [] },
       { clubId, userId: activeId, state: "Active", joinedAt: now, statusHistory: [] },
+      { clubId, userId: inactiveId, state: "Inactive", joinedAt: now, statusHistory: [] },
     ]);
     const repo = mongoRecruitmentApplicationRepository();
     await expect(repo.eligibility(bannedId.toString(), clubId.toString()))
       .resolves.toMatchObject({ userActive: true, bannedMembership: true, activeMembership: false });
     await expect(repo.eligibility(activeId.toString(), clubId.toString()))
+      .resolves.toMatchObject({ userActive: true, bannedMembership: false, activeMembership: true });
+    await expect(repo.eligibility(inactiveId.toString(), clubId.toString()))
       .resolves.toMatchObject({ userActive: true, bannedMembership: false, activeMembership: true });
   });
 });

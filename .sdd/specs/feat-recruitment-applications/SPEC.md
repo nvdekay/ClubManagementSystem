@@ -39,4 +39,5 @@ lại làm đầu vào cho UC18 và hồ sơ membership UC20.
 UC18 sàng lọc/quyết định, UC19 đánh giá, UC20 tiếp nhận thành viên; sơ đồ và đổi schema.
 
 ## Changelog
+- 2026-10-17 — E3/BR13: thành viên `Inactive` cũng không nộp đơn được, cùng điều kiện với unique index `uq_membership_active`.
 - v0.1.0 (2026-10-08) — đặc tả UC17 dựa trên UC16 và DBML hiện hành.

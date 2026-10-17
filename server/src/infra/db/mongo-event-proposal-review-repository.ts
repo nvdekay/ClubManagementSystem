@@ -11,6 +11,7 @@ import {
   type EventProposalVersion, type EventReviewDecision, type RequestedBudgetLine,
 } from "../../domain/event-proposal-review.js";
 import { ucmsModels } from "./ucms-models.js";
+import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type Doc = Record<string, unknown>;
 const TASK_TYPE = "EVENT_PROPOSAL";
@@ -105,11 +106,11 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       budgets.exists({ clubId, settlementDueAt: { $lt: now }, settlementSubmittedAt: { $exists: false },
         state: { $nin: ["Cancelled", "Closed"] } }),
       budgets.exists({ clubId, recoveryDueAt: { $lt: now }, state: "Recovery Pending" }),
-      m.periodicReports!.exists({ clubId, dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } }),
+      overduePeriodicReports(clubId, now),
       overduePostEventReports(clubId, now),
     ]);
     return [...(settlement ? ["overdueSettlement" as const] : []), ...(refund ? ["overdueRefund" as const] : []),
-      ...(report || postReports.length ? ["overdueReport" as const] : [])];
+      ...(report.length || postReports.length ? ["overdueReport" as const] : [])];
   }
 
   async function detail(eventId: Types.ObjectId, now: Date): Promise<EventProposalDetail | null> {

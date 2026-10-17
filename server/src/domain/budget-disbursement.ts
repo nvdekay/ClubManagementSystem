@@ -102,10 +102,15 @@ export function allowedFlow(budget: Pick<BudgetSummary, "state" | "approvedTotal
 }
 
 /** BR23 / BR26 / BR58: rejects a flow the budget cannot take in its current state. */
-export function checkFlow(budget: Parameters<typeof allowedFlow>[0], flow: NormalizedBudgetFlow): void {
+export function checkFlow(budget: Parameters<typeof allowedFlow>[0] & Partial<Pick<BudgetSummary, "eventEndAt">>,
+  flow: NormalizedBudgetFlow): void {
   const allowed = allowedFlow(budget);
   if (!allowed || allowed.kind !== flow.kind) {
     throw new DomainError(`a ${flow.kind} cannot be recorded for this budget now`, "conflict");
+  }
+  // UC35: an advance funds the event, so it cannot be dated after the event has ended.
+  if (flow.kind === "Advance" && budget.eventEndAt instanceof Date && flow.disbursedAt > budget.eventEndAt) {
+    throw new DomainError("an advance must be paid before the event ends", "validation", { field: "disbursedAt" });
   }
   if (allowed.exact !== undefined && flow.amount !== allowed.exact) {
     throw new DomainError("a top-up must equal the settlement balance", "validation", { field: "amount", exact: allowed.exact });

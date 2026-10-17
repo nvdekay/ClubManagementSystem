@@ -75,8 +75,11 @@ export function BoardNominationPage() {
           : <div className="mt-4 divide-y divide-border-app border-y border-border-app">
             {available.map((position) => {
               const conflictIds = position.isLeaderRole ? context.data!.presidentConflictMembershipIds : [];
+              // One person holds at most one seat, so a member picked elsewhere is not offered here.
+              const takenIds = Object.entries(selection).filter(([id, value]) => id !== position.id && value)
+                .map(([, value]) => value);
               const candidates = context.data!.candidates.filter((candidate) =>
-                !conflictIds.includes(candidate.membershipId));
+                !conflictIds.includes(candidate.membershipId) && !takenIds.includes(candidate.membershipId));
               return <label key={position.id} className="grid gap-3 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,1fr)] sm:items-center">
                 <span className="flex min-w-0 flex-wrap items-center gap-2 font-semibold">{position.name}
                   {position.unit && <span className="text-sm font-normal text-muted-app">{position.unit}</span>}

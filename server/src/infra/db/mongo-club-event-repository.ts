@@ -14,6 +14,7 @@ import { cancelEventInSession } from "./event-cancellation.js";
 import { promoteEventWaitlist } from "./event-waitlist.js";
 import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
+import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type Doc = Record<string, unknown>;
 export interface ClubEventRules { proposalNoticeHours: number; cancellationNoticeHours: number }
@@ -47,7 +48,7 @@ async function assertObligations(session: ClientSession, clubId: Types.ObjectId,
   const obligations: string[] = [];
   if (await m.eventBudgets!.exists({ clubId, state: { $nin: ["Cancelled", "Closed"] }, settlementDueAt: { $lt: now }, settlementSubmittedAt: null }).session(session)) obligations.push("overdueSettlement");
   if (await m.eventBudgets!.exists({ clubId, state: "Recovery Pending", recoveryDueAt: { $lt: now } }).session(session)) obligations.push("overdueRefund");
-  if (await m.periodicReports!.exists({ clubId, dueAt: { $lt: now }, state: { $in: ["Draft", "Returned for correction"] } }).session(session)) obligations.push("overduePeriodicReport");
+  for (const code of await overduePeriodicReports(clubId, now, session)) obligations.push(`overduePeriodicReport:${code}`);
   for (const id of await overduePostEventReports(clubId, now, session)) obligations.push(`overduePostEventReport:${String(id)}`);
   if (obligations.length) throw new DomainError("overdue club obligations prevent proposal submission", "conflict", { obligations });
 }

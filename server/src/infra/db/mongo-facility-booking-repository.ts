@@ -8,6 +8,7 @@ import { assertBookingNotice, assertRequestableProperty, assessBooking, bookingI
 import type { PolicyVersion } from "../../domain/policy.js";
 import type { Property } from "../../domain/property.js";
 import { ucmsModels as m } from "./ucms-models.js";
+import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type Doc = Record<string, unknown>;
 const taskType = "PROPERTY_BOOKING";
@@ -172,8 +173,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     const decisionDocs = await decisions.find({ approvalTaskId: { $in: taskDocs.map((task) => task._id) } }).sort({ at: 1 }).lean();
     const obligations: string[] = [];
     if ((await overduePostEventReports(doc.clubId as Types.ObjectId, now)).length) obligations.push("overduePostEventReport");
-    if (await m.periodicReports!.exists({ clubId: doc.clubId, dueAt: { $lt: now },
-      state: { $in: ["Draft", "Returned for correction"] } })) obligations.push("overdueReport");
+    if ((await overduePeriodicReports(doc.clubId as Types.ObjectId, now)).length) obligations.push("overdueReport");
     if (await m.eventBudgets!.exists({ clubId: doc.clubId, settlementDueAt: { $lt: now },
       settlementSubmittedAt: { $exists: false }, state: { $nin: ["Closed", "Cancelled"] } })) obligations.push("overdueSettlement");
     if (await m.eventBudgets!.exists({ clubId: doc.clubId, recoveryDueAt: { $lt: now }, state: "Recovery Pending" })) {

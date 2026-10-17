@@ -47,4 +47,5 @@ và không thực hiện thanh toán (FR-UC35-06).
 UC36 (CLB ghi khoản chi, nộp quyết toán), UC37 (đối soát), văn bản điều chỉnh số duyệt (BR23), hạch toán.
 
 ## Changelog
+- 2026-10-17 — UC35: tạm ứng có ngày chi sau khi sự kiện kết thúc bị từ chối (`validation`, field `disbursedAt`).
 - v1.0.0 (2026-10-10) — được người dùng duyệt.
