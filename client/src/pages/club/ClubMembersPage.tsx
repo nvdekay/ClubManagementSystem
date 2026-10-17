@@ -21,6 +21,7 @@ import type { Locale } from "@/i18n";
 import type { ClubRosterMember, WithdrawalRequest } from "@/services/memberSpace";
 import { formatDay } from "@/utils/formatDate";
 
+import { ClubMemberOnboardDialog } from "./ClubMemberOnboardDialog";
 import { ClubMemberStateDialog } from "./ClubMemberStateDialog";
 import { exportClubMembers } from "./exportClubMembers";
 
@@ -54,6 +55,7 @@ export function ClubMembersPage() {
   const [stateFilter, setStateFilter] = useState(ALL);
   const [roleFilter, setRoleFilter] = useState(ALL);
   const [dialog, setDialog] = useState<{ kind: "state" | "history"; member: ClubRosterMember } | null>(null);
+  const [onboarding, setOnboarding] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportFailed, setExportFailed] = useState(false);
   const roster = members.data ?? EMPTY;
@@ -138,8 +140,11 @@ export function ClubMembersPage() {
   return (
     <>
       <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.membersPageDescription")}
-        actions={<AppButton variant="secondary" disabled={exporting || filtered.length === 0}
-          onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton>} />
+        actions={<div className="flex flex-wrap gap-2">
+          <AppButton onClick={() => setOnboarding(true)}>{t("memberSpace.onboard")}</AppButton>
+          <AppButton variant="secondary" disabled={exporting || filtered.length === 0}
+            onClick={() => void exportRows()}>{exporting ? t("memberSpace.exporting") : t("memberSpace.exportXlsx")}</AppButton>
+        </div>} />
       {exportFailed && <AppNotice tone="danger" role="alert" className="mb-6" title={t("memberSpace.exportError")} />}
       {error ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}><p>{error.message}</p></AppNotice> : (
         <div className="min-w-0 space-y-8">
@@ -222,6 +227,7 @@ export function ClubMembersPage() {
           </section>
         </div>
       )}
+      {onboarding && <ClubMemberOnboardDialog clubId={clubId} onClose={() => setOnboarding(false)} onSaved={setStateNotice} />}
       {dialog?.kind === "state" && clubId && <ClubMemberStateDialog member={dialog.member} clubId={clubId}
         onClose={closeDialog} onSaved={setStateNotice} />}
       {dialog?.kind === "history" && (

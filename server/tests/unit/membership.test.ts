@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { MembershipRepository } from "../../src/domain/membership.js";
 import type { ClubAccessRepository } from "../../src/domain/access.js";
 import { isBeforeToday } from "../../src/domain/membership.js";
-import { changeMembershipState, listClubMemberships, requestMembershipWithdrawal } from "../../src/usecase/membership.js";
+import { changeMembershipState, listClubMemberships, onboardMemberManually, requestMembershipWithdrawal } from "../../src/usecase/membership.js";
 
 const actor = { id: "111111111111111111111111", accountState: "Active" as const };
 const clubId = "222222222222222222222222";
@@ -22,10 +22,14 @@ const access: ClubAccessRepository = { findSnapshot: async () => ({
   }],
 }) };
 
-function repository(): { repo: MembershipRepository; captured: { state?: string; date?: Date; reason?: string } } {
-  const captured: { state?: string; date?: Date; reason?: string } = {};
+function repository(): { repo: MembershipRepository; captured: { state?: string; date?: Date; reason?: string; email?: string } } {
+  const captured: { state?: string; date?: Date; reason?: string; email?: string } = {};
   const repo: MembershipRepository = {
     listMine: async () => [], listClub: async () => [],
+    onboardManually: async (input) => {
+      captured.email = input.email; captured.reason = input.reason;
+      return { id: membershipId, clubId, userId: "666666666666666666666666", state: "Active", joinedAt: now, statusHistory: [] };
+    },
     changeState: async (input) => {
       captured.state = input.state; captured.date = input.effectiveDate; captured.reason = input.reason;
       return { id: membershipId, clubId, userId: actor.id, state: input.state,
@@ -54,6 +58,17 @@ describe("UC21/UC22 membership lifecycle", () => {
     await expect(changeMembershipState(repo, access, actor, { clubId, membershipId,
       state: "Banned", effectiveDate: now }, now)).rejects.toMatchObject({ kind: "validation" });
     expect(captured.state).toBeUndefined();
+  });
+
+  it("requires a reason and a valid email for manual onboarding (UC20 A1, BR13)", async () => {
+    const { repo, captured } = repository();
+    await expect(onboardMemberManually(repo, access, actor, { clubId, email: "student@fpt.edu.vn", reason: "  " }, now))
+      .rejects.toMatchObject({ kind: "validation" });
+    await expect(onboardMemberManually(repo, access, actor, { clubId, email: "not-an-email", reason: "Transfer" }, now))
+      .rejects.toMatchObject({ kind: "validation" });
+    expect(captured.email).toBeUndefined();
+    await onboardMemberManually(repo, access, actor, { clubId, email: " Student@FPT.edu.vn ", reason: " Transfer " }, now);
+    expect(captured).toMatchObject({ email: "student@fpt.edu.vn", reason: "Transfer" });
   });
 
   it("accepts a future leave request without changing membership state", async () => {

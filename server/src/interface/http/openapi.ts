@@ -1857,6 +1857,14 @@ export const openApiDocument = createDocument({
         responses: { "200": { description: "Membership roster with email and currently held club roles", content: {
           "application/json": { schema: envelope(z.array(ClubRosterMember)) },
         } } } },
+      post: { summary: "Onboard a student manually without a recruitment application (UC20 A1)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: z.object({
+          email: z.string().max(320), reason: z.string().min(1).max(2000),
+        }) } } },
+        responses: { "201": { description: "Created Active membership", content: {
+          "application/json": { schema: envelope(Membership) },
+        } } } },
     },
     "/clubs/{clubId}/memberships/{membershipId}/state": {
       patch: { summary: "Activate, deactivate or ban a membership",

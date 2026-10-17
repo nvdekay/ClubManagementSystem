@@ -221,6 +221,7 @@ const stubRecruitmentApplications: RecruitmentApplicationRepository = {
 };
 const stubMemberships: MembershipRepository = {
   listMine: async () => [], listClub: async () => [],
+  onboardManually: async () => { throw new Error("unused"); },
   changeState: async () => { throw new Error("unused"); },
   requestWithdrawal: async () => { throw new Error("unused"); },
   listMyWithdrawalRequests: async () => [], listClubWithdrawalRequests: async () => [],

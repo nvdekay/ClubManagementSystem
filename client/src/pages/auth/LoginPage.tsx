@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { googleLoginUrl } from "@/services/auth";
 import { cn } from "@/utils/cn";
+
+/** UC06: only the discovery pages are open to guests; any other target falls back to the home page. */
+function guestTarget(returnTo: string): string {
+  const path = returnTo.split(/[?#]/)[0]!;
+  return path === "/" || /^\/(clubs|events)(\/|$)/.test(path) ? returnTo : "/";
+}
 
 // FPT University Hoa Lac campus, served by the university website.
 const campusImageUrl = "https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/banner-truong-dai-hoc-fpt-co-so-ha-noi.jpg";
@@ -97,6 +104,10 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
             </svg>
             {t("auth.allowedDomain")}
           </p>
+          <Link to={guestTarget(returnTo)}
+            className="self-center text-sm font-semibold text-primary-app underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+            {t("auth.continueAsGuest")}
+          </Link>
         </div>
       </section>
     </main>

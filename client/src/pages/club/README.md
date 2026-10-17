@@ -47,7 +47,8 @@ danh sách tên/trạng thái/vị trí cho Club Member, không chia sẻ email.
  các yêu cầu rời CLB (UC22) đang chờ nằm
 ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
 thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong
-`ClubMemberStateDialog`; lịch sử trạng thái mở trong một AppDialog. `exportClubMembers.ts` ghi các
+`ClubMemberStateDialog`; nút "Thêm thành viên" mở `ClubMemberOnboardDialog` (UC20 A1: email + lý do,
+không qua đợt tuyển); lịch sử trạng thái mở trong một AppDialog. `exportClubMembers.ts` ghi các
 dòng đang lọc ra `.xlsx` bằng `write-excel-file` (nạp động, không vào bundle chính) — chỉ trang này dùng.
 
 Thiết lập CLB bị gate theo permission ở cả UI và server: `getClubSettings` (GET) và mọi mutation đều

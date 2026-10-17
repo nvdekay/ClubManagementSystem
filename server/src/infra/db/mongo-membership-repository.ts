@@ -177,6 +177,47 @@ export function mongoMembershipRepository(): MembershipRepository {
           .map((position) => String(position.name)) }));
     },
 
+    async onboardManually(input) {
+      const clubId = new Types.ObjectId(input.clubId);
+      const actorId = new Types.ObjectId(input.actorId);
+      let membershipId: Types.ObjectId | undefined;
+      try {
+        await mongoose.connection.transaction(async (session) => {
+          const club = await clubs.findOneAndUpdate({ _id: clubId, state: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
+          if (!club) throw new DomainError("club is not active", "conflict");
+          const student = await users.findOne({ email: input.email }).collation({ locale: "en", strength: 2 })
+            .session(session).select({ accountState: 1 }).lean();
+          if (!student) throw new DomainError("no account uses this email yet; the student must sign in once first", "not_found", { field: "email" });
+          if (student.accountState !== "Active") throw new DomainError("this student's account is not active", "conflict", { field: "email" });
+          const userId = student._id as Types.ObjectId;
+          const [banned, current, memberRole] = await Promise.all([
+            memberships.exists({ clubId, userId, state: "Banned" }).session(session),
+            memberships.exists({ clubId, userId, state: { $in: ["Active", "Inactive"] } }).session(session),
+            positions.findOne({ clubId, isDefaultMemberRole: true, isActive: true }).session(session).select("code").lean(),
+          ]);
+          // E2 / BR46: a banned student is never taken back, manual onboarding included.
+          if (banned) throw new DomainError("banned students cannot be onboarded", "forbidden");
+          if (current) throw new DomainError("student already has an active membership", "conflict");
+          if (!memberRole) throw new DomainError("default Members role is not configured", "conflict");
+          const [created] = await memberships.create([{
+            clubId, userId, state: "Active", joinedAt: input.now, defaultRole: String(memberRole.code),
+            statusHistory: [{ state: "Active", at: input.now, actorId, reason: input.reason }],
+          }], { session });
+          membershipId = new Types.ObjectId(String(created!._id));
+          await audits.create([{
+            entityType: "ClubMembership", entityId: membershipId, action: "CLUB_MEMBERSHIP_MANUALLY_ONBOARDED",
+            actorId, actorRole: "Club Leader", after: { state: "Active", userId, defaultRole: String(memberRole.code) },
+            reason: input.reason, correlationId: randomUUID(), at: input.now,
+          }], { session });
+          await notify({ recipient: userId, entityId: membershipId, eventCode: "CLUB_MEMBERSHIP_ONBOARDED",
+            clubId, now: input.now, payload: { membershipId: String(membershipId) }, session });
+        });
+      } catch (error) { if (error instanceof DomainError) throw error; duplicate(error); }
+      const created = await memberships.findById(membershipId).lean();
+      if (!created) throw new DomainError("membership not found", "not_found");
+      return membershipView(created);
+    },
+
     async changeState(input) {
       const clubId = new Types.ObjectId(input.clubId);
       const membershipId = new Types.ObjectId(input.membershipId);

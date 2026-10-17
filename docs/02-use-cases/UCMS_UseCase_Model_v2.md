@@ -480,7 +480,8 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   - tại thời điểm quyết định, mọi thứ kết thúc sau học kỳ `Dissolving` đều bị huỷ thông qua UC28
     (A1) và UC47, và không thứ gì mới được phép kết thúc sau đó (BR45);
   - học kỳ ra quyết định vẫn chạy bình thường — CLB tiếp tục hoạt động và vẫn có thể tạo việc mới;
-  - vào đầu học kỳ kế tiếp, CLB chuyển sang `Dissolving`: không tạo gì mới, và CMB chỉ giữ quyền
+  - vào đầu học kỳ kế tiếp, CLB chuyển sang `Dissolving`: không tạo đề xuất sự kiện hay đợt tuyển
+    mới, chỉ được đặt CSVC trong học kỳ đó (BR45, quyết định 17/10/2026), và CMB chỉ giữ quyền
     truy cập để hoàn tất phần việc còn tồn;
   - mọi thứ phải được đóng trước khi học kỳ tiếp theo bắt đầu. Vì mọi sự kiện đều gọn trong một
     học kỳ (BR44) và không cái nào được kết thúc muộn hơn (BR45), lúc đó không còn sự kiện nào

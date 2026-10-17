@@ -589,7 +589,8 @@ Club Leader xin tạm ngừng kèm lý do, thời lượng, nghĩa vụ, kế ho
 → kích hoạt lại (UC15) → Active
 ICPDP quyết định giải thể (UC15): huỷ ngay mọi thứ kết thúc sau học kỳ Dissolving (BR45); học kỳ
   hiện tại vẫn chạy bình thường
-→ Scheduler đầu học kỳ sau → Dissolving (không tạo gì mới, CLB chỉ đóng nốt nghĩa vụ)
+→ Scheduler đầu học kỳ sau → Dissolving (không tạo đề xuất sự kiện hay đợt tuyển mới; chỉ được
+  đặt CSVC trong học kỳ Dissolving (BR45) và đóng nốt nghĩa vụ)
 → Scheduler cuối học kỳ đó → Dissolved: huỷ đề xuất và booking chưa quyết định, ghi nghĩa vụ tồn
   đọng (báo cáo chưa nộp, ngân sách chưa tất toán) vào hồ sơ lưu trữ, thu hồi quyền quản lý
 ```
@@ -1144,7 +1145,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC12-04 | *(A1)* Chấp nhận chuyển giao sớm nộp trước khi nhiệm kỳ kết thúc, kèm lý do |
 | FR-UC12-05 | *(E1)* Từ chối nộp khi còn một nghĩa vụ chưa có người nhận trong ban mới |
 | FR-UC12-06 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB; `club.transition.plan` là quyền giữ riêng, không cấp được cho role nào (BR47, BR55) |
-| FR-UC12-07 | *(A2)* Cho kế hoạch kèm thay đổi danh sách role ban điều hành (thêm, bỏ, hoặc đánh dấu lại một role); thay đổi đó chỉ có hiệu lực khi UC13 xác nhận (BR55, BR56) |
+| FR-UC12-07 | *(A2)* Cho kế hoạch kèm thay đổi danh sách role ban điều hành (thêm, bỏ, hoặc đánh dấu lại một role); thay đổi đó chỉ có hiệu lực khi UC13 xác nhận (BR55, BR56). *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* kế hoạch không đổi được danh sách ghế ban điều hành. |
 
 **Hậu điều kiện** — kế hoạch ở `Pending Confirmation`. **Đầu ra** — kế hoạch chuyển giao, `ApprovalTask`.
 
@@ -1170,7 +1171,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC13-05 | Ghi audit lần chuyển giao và thông báo cho cả ban cũ lẫn ban mới |
 | FR-UC13-06 | *(A1)* Hỗ trợ phê duyệt có điều kiện — các nghĩa vụ được đánh dấu để theo dõi tiếp và xuất hiện trên UC02 của ban mới |
 | FR-UC13-07 | *(E1)* Giữ chuyển giao lại khi CLB đang `Suspended`, cho tới khi UC15 kích hoạt lại CLB |
-| FR-UC13-08 | Khi phê duyệt: đóng các bản gán role ban điều hành của nhiệm kỳ cũ, tạo bản gán mới gắn nhiệm kỳ mới, và nếu kế hoạch có thay đổi danh sách role ban điều hành (UC12 A2) thì tạo một **phiên bản cơ cấu mới** có hiệu lực từ ngày xác nhận (BR56) |
+| FR-UC13-08 | Khi phê duyệt: đóng các bản gán role ban điều hành của nhiệm kỳ cũ, tạo bản gán mới gắn nhiệm kỳ mới, và nếu kế hoạch có thay đổi danh sách role ban điều hành (UC12 A2) thì tạo một **phiên bản cơ cấu mới** có hiệu lực từ ngày xác nhận (BR56). *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* nhánh tạo phiên bản cơ cấu mới từ kế hoạch (UC12 A2) không xảy ra. |
 
 **Hậu điều kiện** — nhiệm kỳ mới hoạt động; nhiệm kỳ cũ đã đóng và đọc được.
 **Đầu ra** — lịch sử `ClubTerm`, quyền, bản ghi audit.
@@ -1222,10 +1223,10 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC15-06 | Khi **giải thể**: ghi nhận quyết định kèm học kỳ hiệu lực — học kỳ kế tiếp theo lịch học kỳ cấu hình ở UC04 — và **không** đổi trạng thái ngay |
 | FR-UC15-07 | Khi **giải thể**: huỷ ngay mọi sự kiện, đề xuất và booking kết thúc sau học kỳ đó (BR45), thông qua UC28 A1 và UC47 A1 |
 | FR-UC15-08 | Khi **giải thể**: để CLB hoạt động bình thường, kể cả tạo việc mới, cho tới đầu học kỳ kế tiếp |
-| FR-UC15-09 | *(Scheduler)* Chuyển CLB đã có quyết định giải thể sang `Dissolving` vào đầu học kỳ kế tiếp: không mở đợt tuyển mới, không nộp đề xuất sự kiện mới, không nhận booking mới; việc đã tạo vẫn chạy đến hết, CMB chỉ giữ quyền truy cập để đóng chúng lại |
+| FR-UC15-09 | *(Scheduler)* Chuyển CLB đã có quyết định giải thể sang `Dissolving` vào đầu học kỳ kế tiếp: không mở đợt tuyển mới, không nộp đề xuất sự kiện mới; booking CSVC mới chỉ được nhận nếu nằm gọn trong học kỳ `Dissolving` (BR45, quyết định 17/10/2026); việc đã tạo vẫn chạy đến hết, CMB chỉ giữ quyền truy cập để đóng chúng lại |
 | FR-UC15-10 | *(Scheduler)* Vào cuối học kỳ `Dissolving`, trước khi học kỳ kế tiếp bắt đầu: huỷ các đề xuất và yêu cầu booking chưa quyết định, ghi các nghĩa vụ chưa hoàn thành vào hồ sơ lưu trữ, lưu trữ lịch sử quản trị, thu hồi quyền quản lý và chuyển `Dissolved` |
 | FR-UC15-11 | *(Scheduler)* Giữ CLB ở `Dissolving` và cảnh báo ICPDP nếu bất kỳ phần nào của bước đóng lại thất bại |
-| FR-UC15-12 | *(A1)* Liên kết quyết định với hồ sơ vi phạm (UC40) khi nó được ra như một biện pháp khắc phục |
+| FR-UC15-12 | *(A1)* Liên kết quyết định với hồ sơ vi phạm (UC40) khi nó được ra như một biện pháp khắc phục. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* chỉ ghi nhãn leo thang trên hồ sơ UC40; ICPDP thực hiện UC15 riêng, không liên kết hai chiều. |
 | FR-UC15-13 | *(E1)* Cảnh báo officer khi giải thể được quyết định lúc còn ngân sách chưa đối soát; việc đối soát phải xong trước khi kết thúc học kỳ `Dissolving` |
 | FR-UC15-14 | Ghi audit quyết định kèm actor, thời điểm, lý do và thông báo cho CLB |
 
@@ -1263,7 +1264,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC16-09 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.recruitment.manage`) đó (BR54) |
 
 **Hậu điều kiện** — đợt tuyển ở `Published` và nhận đơn trong khung thời gian của nó.
-**Đầu ra** — `RecruitmentCampaign`, thông báo.
+**Đầu ra** — `RecruitmentCampaign`, thông báo. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không thông báo tới người theo dõi (hệ thống không có khái niệm người theo dõi).
 
 ### UC17 — Nộp đơn ứng tuyển vào CLB
 
@@ -1565,7 +1566,7 @@ Giữ mã UC23 làm dấu vết lịch sử và không đánh số lại các us
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC27-01 | Cho CMB đặt khung thời gian đăng ký, phạm vi đối tượng, sức chứa và thông tin công khai của một sự kiện đã duyệt |
-| FR-UC27-02 | Chuyển `Upcoming` khi công bố và hiển thị sự kiện trong UC06 và UC24 |
+| FR-UC27-02 | Chuyển `Upcoming` khi công bố và hiển thị sự kiện trong UC06 và UC24. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh viên (thông báo chỉ được lưu, không có mail worker). |
 | FR-UC27-03 | Suy ra "đang mở đăng ký" và "đã đóng đăng ký" từ khung thời gian đăng ký, chứ không từ một trạng thái riêng của sự kiện |
 | FR-UC27-04 | *(A1)* Với sự kiện `Internal` (phạm vi chọn ở UC25), giới hạn đối tượng về thành viên CLB và chỉ hiển thị trong UC24, không hiển thị ở UC06 |
 | FR-UC27-05 | *(A2)* Cho phép công bố sự kiện mở tự do, không cần khung thời gian đăng ký, nhưng vẫn áp dụng check-in |
@@ -1599,7 +1600,7 @@ Giữ mã UC23 làm dấu vết lịch sử và không đánh số lại các us
 | FR-UC28-05 | Tính lại các nghĩa vụ báo cáo và ngân sách của sự kiện: khi huỷ, `EventBudget` chưa tạm ứng chuyển `Cancelled`; đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi ở UC37 (BR57, BR58) |
 | FR-UC28-06 | *(A1)* Huỷ sự kiện **không cần thao tác của CMB** khi UC15 (tạm ngừng, giải thể) hoặc UC40 (kết quả hồ sơ vi phạm) yêu cầu, ghi quyết định đó làm lý do, liên kết tới nó, và vẫn thực hiện FR-UC28-03…05; E2 không áp dụng cho cascade này và ICPDP **không** phải actor của use case này |
 | FR-UC28-07 | *(E1)* Từ chối huỷ một sự kiện đã chốt điểm danh; sự kiện đó phải đóng qua UC33 và UC34 |
-| FR-UC28-08 | *(E2)* Ghi nhận việc huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40 |
+| FR-UC28-08 | *(E2)* Ghi nhận việc huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* việc huỷ sát giờ chỉ được đánh dấu `isLateCancellation`, không tự tạo hồ sơ UC40 và không đưa vào chấm điểm UC42. |
 | FR-UC28-09 | Ghi audit lý do và trạng thái kết quả |
 | FR-UC28-10 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.event.manage`) đó (BR54) |
 
@@ -1955,7 +1956,7 @@ Giữ mã UC23 làm dấu vết lịch sử và không đánh số lại các us
 | FR-UC40-04 | Yêu cầu CLB giải trình → `Awaiting Club Response`; Club Leader (`club.complaint.respond`) xem hồ sơ vi phạm của CLB mình và gửi phần giải trình ngay tại UC40 (sửa 2026-10-16) |
 | FR-UC40-05 | Bắt buộc có lý do và chứng cứ cho quyết định (BR28) → `Decision Issued` |
 | FR-UC40-06 | Ghi nhận biện pháp khắc phục và hạn hoàn thành → `Corrective Action`, và chuyển `Resolved` khi biện pháp được xác minh |
-| FR-UC40-07 | *(A1)* Leo thang sang vòng đời CLB — tạm ngừng hoặc giải thể, thực hiện ở UC15 và liên kết với hồ sơ |
+| FR-UC40-07 | *(A1)* Leo thang sang vòng đời CLB — tạm ngừng hoặc giải thể, thực hiện ở UC15 và liên kết với hồ sơ. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* leo thang chỉ được ghi nhãn trên hồ sơ; ICPDP thực hiện UC15 riêng, không liên kết hai chiều. |
 | FR-UC40-08 | *(A2)* Đóng hồ sơ không kèm biện pháp khi điều tra kết luận không có vi phạm, ghi rõ lý do |
 | FR-UC40-09 | *(E1)* Cho officer tiếp tục và ghi nhận việc không phản hồi khi CLB quá hạn giải trình |
 | FR-UC40-10 | Đưa lịch sử hồ sơ thành đầu vào của UC42 |
@@ -2039,7 +2040,7 @@ Giữ mã UC23 làm dấu vết lịch sử và không đánh số lại các us
 | FR-UC43-03 | Cho officer chốt (`Finalized`) rồi công bố (`Published`) theo bảng điểm chung — cùng các dimension, cùng thứ tự, kèm chỉ số thô — cho mọi CLB (BR60), và thông báo cho các CLB |
 | FR-UC43-04 | Không bao giờ sửa tại chỗ một kỳ đánh giá đã công bố — phải tạo bản sửa hoặc bản chụp mới (BR30) |
 | FR-UC43-05 | *(A1)* Hỗ trợ bản sửa sau công bố như một version mới, giữ bản đã công bố vẫn đọc được |
-| FR-UC43-06 | *(E1)* Xử lý khiếu nại về kết quả như một hồ sơ ở UC40, mọi hiệu chỉnh trở thành một bản sửa mới |
+| FR-UC43-06 | *(E1)* Xử lý khiếu nại về kết quả như một hồ sơ ở UC40, mọi hiệu chỉnh trở thành một bản sửa mới. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* CLB không phản biện được kết quả đã công bố. |
 | FR-UC43-07 | Giữ lịch sử đánh giá theo từng CLB và từng kỳ để đọc được xu hướng |
 
 **Hậu điều kiện** — mỗi CLB có một kỳ đánh giá đã công bố, kèm lịch sử.
@@ -2188,7 +2189,7 @@ lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong App
 | FR-UC47-03 | Thông báo cho ICPDP về việc huỷ hoặc trả |
 | FR-UC47-04 | *(A1)* Tự động giải phóng booking khi sự kiện của nó bị huỷ ở UC28 (BR35); khi việc huỷ đó đến từ UC15 hoặc UC40 thì giải phóng cả booking đang `In Use` và không áp dụng E2 |
 | FR-UC47-05 | *(E1)* Từ chối huỷ thủ công một booking đã `In Use` hoặc `Completed` |
-| FR-UC47-06 | *(E2)* Ghi nhận lần huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40 |
+| FR-UC47-06 | *(E2)* Ghi nhận lần huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* chỉ đánh dấu `isLateCancellation`, không tự tạo hồ sơ UC40 và không đưa vào chấm điểm UC42; ngưỡng huỷ sát giờ của booking cố định 24 giờ, không phải trường của chính sách. |
 | FR-UC47-07 | Để scheduler chuyển `Approved → In Use → Completed` theo mốc giờ của chính booking |
 | FR-UC47-08 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.booking.manage`) đó (BR54) |
 
@@ -2253,7 +2254,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 | FR-UC48-02 | Nhận phản hồi từ thời điểm **check-in** của chính người đó cho tới khi feedback window đóng (BR36) |
 | FR-UC48-03 | Nhận đúng một phản hồi cho mỗi người tham dự trên mỗi sự kiện (BR36) |
 | FR-UC48-04 | Lưu phản hồi ở dạng bất biến — không ai được sửa hoặc xoá (BR37) |
-| FR-UC48-05 | Cập nhật thống kê tổng hợp của sự kiện khi có phản hồi mới |
+| FR-UC48-05 | Cập nhật thống kê tổng hợp của sự kiện khi có phản hồi mới. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không chấm theo từng tiêu chí; hệ thống giữ một điểm tổng 1–5 (`FEEDBACK_CRITERION = "overall"`). |
 | FR-UC48-06 | *(A1)* Hỗ trợ phản hồi ẩn danh: danh tính bị ẩn khỏi CMB, và chỉ giữ một liên kết nội bộ phục vụ chống spam |
 | FR-UC48-07 | *(E1)* Từ chối lần gửi thứ hai cho cùng một sự kiện |
 | FR-UC48-08 | *(E2)* Từ chối gửi sau khi feedback window đã đóng |
@@ -2277,7 +2278,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC49-01 | Hiển thị cho CMB bản tổng hợp của một sự kiện: điểm trung bình theo từng tiêu chí, phân bố điểm và các nhận xét |
+| FR-UC49-01 | Hiển thị cho CMB bản tổng hợp của một sự kiện: điểm trung bình theo từng tiêu chí, phân bố điểm và các nhận xét. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không có điểm theo từng tiêu chí; bản tổng hợp gồm điểm trung bình và phân bố của một điểm tổng 1–5. |
 | FR-UC49-02 | Không bao giờ cho CMB sửa hoặc xoá phản hồi của người tham dự (BR37) |
 | FR-UC49-03 | *(E1)* Chỉ hiển thị việc *có tồn tại* phản hồi — không bao giờ hiển thị nội dung — khi số người phản hồi chưa đạt mức tối thiểu của BR40 |
 | FR-UC49-04 | *(A1)* Cho CLB so sánh bản tổng hợp giữa các sự kiện của chính mình trong một giai đoạn |
@@ -2353,7 +2354,7 @@ làm dấu vết lịch sử và không đánh số lại.
 | FR-UC53-05 | Cho phép ICPDP theo dõi danh sách phản hồi của các CLB trong thời gian thực (số CLB đã nhận, đã chấp nhận, đã từ chối, chưa phản hồi) |
 | FR-UC53-06 | Cho phép ICPDP thu hồi lời mời (`Withdrawn`) đối với một CLB khi chưa đến hạn chót nếu kế hoạch phối hợp thay đổi |
 | FR-UC53-07 | *(A1)* Cho phép ICPDP bổ sung lời mời tới các CLB khác sau khi sự kiện đã tạo |
-| FR-UC53-08 | *(A2)* Cho phép ICPDP công bố sự kiện ra toàn trường để sinh viên đăng ký tham gia (chuyển tiếp sang UC27) |
+| FR-UC53-08 | *(A2)* Cho phép ICPDP công bố sự kiện ra toàn trường để sinh viên đăng ký tham gia (chuyển tiếp sang UC27). *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh viên. |
 | FR-UC53-09 | *(E1)* Từ chối tạo lời mời tới CLB đang ở trạng thái khác `Active` (BR59) |
 | FR-UC53-10 | Ghi nhật ký audit hành động tạo sự kiện và phát hành lời mời |
 
@@ -3456,7 +3457,7 @@ feedback bất biến, tổng hợp hiển thị ngay khi đủ `feedbackMinResp
 | **Club context** | CLB mà người dùng đang thao tác nhân danh; một người có thể có nhiều |
 | **Compliance signal** | Một sự kiện được ghi nhận để UC40 dùng về sau (huỷ sát giờ, quá hạn trả lời, báo cáo quá hạn) |
 | **Data lineage** | `kết quả dimension → chỉ số → thực thể nguồn → kỳ dữ liệu nguồn` (EVL-02) |
-| **Dissolving** | Học kỳ mà một CLB bị giải thể dùng để đóng nốt công việc còn lại; không tạo gì mới |
+| **Dissolving** | Học kỳ mà một CLB bị giải thể dùng để đóng nốt công việc còn lại; không tạo đề xuất sự kiện hay đợt tuyển mới, chỉ được đặt CSVC trong học kỳ đó (BR45) |
 | **Founding permission** | Quyền tạm thời do UC08 cấp, chỉ gồm `club.profile.manage` và `club.board.nominate` (UC09, UC10), bị thu hồi ở UC11 (BR47) |
 | **ICPDP** | Đơn vị quản lý hoạt động CLB của nhà trường — actor A3, cấp phê duyệt duy nhất cho yêu cầu gửi lên nhà trường |
 | **Outbox** | Hàng đợi thông báo được lưu xuống DB và do scheduler rút (§8.2) |

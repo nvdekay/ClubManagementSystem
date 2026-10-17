@@ -35,13 +35,13 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 |---|---|---|
 | Mọi user | UC01 đăng nhập Google | Có; cần nghiệm thu callback Google thật |
 | Mọi user | UC02 dashboard | Một phần; chưa có danh sách sự kiện nội bộ và lịch sử cơ cấu/ban chủ nhiệm theo CLB |
-| Student | UC06 khám phá CLB/sự kiện | Một phần; API `/public/*` không cần auth, nhưng `PublicLayout.tsx` yêu cầu đăng nhập; E1 chưa gợi ý CLB mới |
+| Student | UC06 khám phá CLB/sự kiện | Có; Guest xem được danh bạ/chi tiết (chỉ đọc), ứng tuyển/đăng ký mới yêu cầu đăng nhập; E1 chưa gợi ý CLB mới |
 | Student | UC07 hồ sơ thành lập CLB | Có; hồ sơ quá hạn sửa tự chuyển `Expired`; còn QA Cloudinary thật và dọn asset mồ côi |
 | Student | UC17 ứng tuyển thành viên | Một phần; thành viên `Inactive` vẫn nộp được (E3/BR13) |
 | Club Member | UC21 A2 tái xác nhận thành viên đầu kỳ | Có, tại `/workspace/clubs`; quá hạn chuyển `Inactive`, Leader kích hoạt lại qua UC21 |
 | Student | UC29 đăng ký sự kiện | Có |
 | Student | UC31 check-in | Có |
-| Student | UC48 phản hồi sự kiện | Một phần; chỉ một điểm tổng, chưa chấm theo tiêu chí |
+| Student | UC48 phản hồi sự kiện | Có; một điểm tổng (chấm theo tiêu chí ngoài phạm vi) |
 | Student | UC50 góp ý | Có; một chiều cho CLB/ICPDP theo quyết định 09/10/2026 |
 | Club Member | UC22 xin rời CLB | Một phần; chưa theo dõi yêu cầu rời trên dashboard UC02 |
 | Club Member | UC24 member space | Có |
@@ -49,9 +49,9 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 | Club Member | Xem phòng được phân | **Chưa được phép**: API và menu yêu cầu `club.booking.manage`, chỉ Leader có quyền |
 | Club Leader | UC09 hồ sơ/cơ cấu CLB | Có; GET và mutation đều yêu cầu `club.profile.manage` |
 | Club Leader | UC10 đề cử ban chủ nhiệm | Một phần; CLB không thấy trạng thái/lý do trả lại |
-| Club Leader | UC12 lập kế hoạch chuyển giao | Một phần, tại `/club/:clubId/transition-plans`; A2 chưa đổi được danh sách ghế ban chủ nhiệm |
+| Club Leader | UC12 lập kế hoạch chuyển giao | Có, tại `/club/:clubId/transition-plans` (A2 đổi danh sách ghế ngoài phạm vi) |
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
-| Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 **Một phần**: chưa có tiếp nhận thủ công (A1) |
+| Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
 | Club Leader | UC23 quản lý role | **Đã rút** (role cố định, 13/10/2026) |
 | Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
@@ -60,13 +60,13 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 | Club Leader | UC40 giải trình và khắc phục vi phạm | Có, tại `/club/:clubId/violations` |
 | Club Leader | UC43 xem kết quả đánh giá | Có, tại `/club/:clubId/evaluations`; chỉ thấy kết quả `Published` |
 | Club Leader | UC45, UC47 booking ngoài `ROOM` | Có |
-| Club Leader | UC49 xem tổng hợp feedback | Một phần; chỉ điểm tổng, chưa tổng hợp theo tiêu chí |
+| Club Leader | UC49 xem tổng hợp feedback | Có; điểm tổng kèm trung bình và phân bố (tổng hợp theo tiêu chí ngoài phạm vi) |
 | Club Leader | UC52 phản hồi complaint | **Đã rút** (UC50 là góp ý một chiều, 09/10/2026) |
 | ICPDP | UC03, UC04 tài khoản/chính sách | Có; UC05 đã rút; UC03 chưa nối khoá tài khoản với hồ sơ UC40 |
-| ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests`; UC15 **Một phần**: giải thể chưa dọn nghĩa vụ/cảnh báo đối soát |
+| ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests`; UC15 **Một phần**: giải thể chưa dọn nghĩa vụ/cảnh báo đối soát (A1 liên kết hồ sơ UC40 ngoài phạm vi) |
 | ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính |
 | ICPDP | UC37 đối soát | Có, đã nối vào app chính; A2 đối soát tối đa bằng số đã tạm ứng, không cấp bù |
-| ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42/UC43 **Một phần** (nguồn dữ liệu bản nháp, chưa khiếu nại kết quả) |
+| ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42 **Một phần** (nguồn dữ liệu bản nháp); UC43 có (E1 khiếu nại kết quả ngoài phạm vi) |
 | ICPDP | UC51 complaint triage | **Đã rút** (UC50 là góp ý một chiều, 09/10/2026) |
 | ICPDP | UC53 sự kiện cấp trường | Có |
 | Club Leader | UC54 phản hồi lời mời | Có, tại `/club/:clubId/invitations`; từ chối phải kèm lý do |
@@ -84,10 +84,12 @@ ngày 17/10/2026 còn ghi nhận các luồng thiếu dưới đây (chưa sửa
 ([periodic-report-obligations.ts](../server/src/infra/db/periodic-report-obligations.ts), chỉ tính kỳ
 bắt đầu sau khi CLB được tạo); UC17 E3 chặn cả thành viên `Inactive`; UC35 từ chối tạm ứng có ngày
 chi sau khi sự kiện kết thúc; UC10 chặn một người ở hai ghế; trang sự kiện CLB nêu rõ nghĩa vụ quá
-hạn, số đăng ký bị ảnh hưởng và số xung đột (UC25 E2, UC30 E1).
+hạn, số đăng ký bị ảnh hưởng và số xung đột (UC25 E2, UC30 E1). Cũng ngày 17/10: UC06 cho Guest xem
+trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/memberships`, xem
+`.sdd/specs/feat-manual-onboarding`).
 
-Còn chờ quyết định: CLB `Dissolving` vẫn được đặt CSVC trong học kỳ giải thể. BR45 cho phép điều
-này, còn sơ đồ luồng UC15 trong SRS ghi "Dissolving: không tạo gì mới".
+Đã quyết định ngày 17/10/2026: CLB `Dissolving` được đặt CSVC trong học kỳ giải thể (BR45); SRS và
+đặc tả UC15 đã sửa cho khớp.
 
 **Dashboard và khám phá**
 
@@ -95,45 +97,48 @@ này, còn sơ đồ luồng UC15 trong SRS ghi "Dissolving: không tạo gì m�
    nhiệm theo từng CLB (BR56); dashboard chỉ có số đếm.
 2. UC22: yêu cầu rời CLB không hiện trên dashboard; `GET /memberships/withdrawal-requests/mine`
    không được client gọi.
-3. UC06: Guest không duyệt được UI (`PublicLayout.tsx` chuyển về `/login`) dù `/public/*` mở;
-   E1 không gợi ý CLB mới nhất.
+3. UC06 E1: không có CLB khớp thì chưa gợi ý các CLB mới nhất.
 
 **Tài khoản và vòng đời CLB**
 
 4. UC03: khoá tài khoản chưa nối với hồ sơ UC40 (A1); tìm kiếm không hiện ngữ cảnh CLB.
 5. UC07 E3: cảnh báo trùng tên không hiển thị cho người thẩm định ICPDP.
 6. UC10: phía CLB không thấy trạng thái đề cử/lý do trả lại; chỉ có một ghế Phó chủ nhiệm.
-7. UC12 A2: kế hoạch không đổi được danh sách ghế (`proposedBoardRoles` chỉ có từ seed) → UC13
-   không bao giờ sinh phiên bản cơ cấu mới từ dữ liệu thật.
-8. UC15: giải thể cuối kỳ không huỷ đề xuất đang chờ/lưu trữ nghĩa vụ; job lỗi chỉ log console;
-   E1 không cảnh báo ngân sách chưa đối soát; A1 tạm ngừng/giải thể không gắn hồ sơ UC40.
+7. UC15: giải thể cuối kỳ không huỷ đề xuất đang chờ/lưu trữ nghĩa vụ; job lỗi chỉ log console;
+   E1 không cảnh báo ngân sách chưa đối soát.
 
 **Thành viên**
 
-9. UC20 A1 / FR-UC20-03: chưa có tiếp nhận thủ công (tạo membership không cần đơn được chấp nhận).
 
 **Sự kiện, ngân sách, cơ sở vật chất**
 
-10. UC28 E2 và UC47 E2: cờ `isLateCancellation` (sự kiện/booking) được lưu nhưng không chảy vào
-    UC40 hay UC42; ngưỡng huỷ muộn booking cố định 24 giờ, không lấy từ policy.
-11. UC27/UC53: công bố sự kiện không gửi thông báo cho sinh viên; UC16 công bố đợt tuyển không báo
-    người theo dõi (không có khái niệm follower).
-12. UC44 A2: blackout chỉ liệt kê yêu cầu đang chờ bị trùng, không liệt kê booking đã duyệt hay
-    buổi phân phòng UC58.
-13. UC48/UC49: chỉ một điểm tổng (`overall`); đặc tả yêu cầu điểm theo từng tiêu chí.
+8. UC44 A2: blackout chỉ liệt kê yêu cầu đang chờ bị trùng, không liệt kê booking đã duyệt hay
+   buổi phân phòng UC58.
 
 **Báo cáo, tuân thủ, đánh giá**
 
-14. UC40 A1: leo thang tạm ngừng/giải thể chỉ là nhãn (`linkedLifecycleAction`), không nối UC15.
-15. UC42: bản nháp đếm cả báo cáo `Returned`/chưa chấp nhận; sinh nháp không đòi báo cáo kỳ đã
+9. UC42: bản nháp đếm cả báo cáo `Returned`/chưa chấp nhận; sinh nháp không đòi báo cáo kỳ đã
     thẩm định; không đọc tuân thủ booking; D5 thiếu số lần trả sửa.
-16. UC41/UC42 BR51/BR60: kích hoạt phiên bản scheme mới giữa kỳ có thể trộn phiên bản trong một kỳ.
-17. UC43 E1: CLB không khiếu nại được kết quả đánh giá đã công bố.
+10. UC41/UC42 BR51/BR60: kích hoạt phiên bản scheme mới giữa kỳ có thể trộn phiên bản trong một kỳ.
 
 **Hạ tầng bên ngoài**
 
-18. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi.
-19. Mail delivery worker và inbox notification tổng quát chưa được nối như thiết kế đích.
+11. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi.
+12. Mail delivery worker và inbox notification tổng quát chưa được nối như thiết kế đích.
+
+### Ngoài phạm vi bản hiện tại (quyết định 17/10/2026)
+
+- UC12 A2: kế hoạch không đổi danh sách ghế ban chủ nhiệm, nên UC13 không sinh phiên bản cơ cấu mới
+  từ kế hoạch.
+- UC27/UC53: không gửi thông báo công bố sự kiện cho sinh viên; UC16 không báo người theo dõi (không
+  có khái niệm follower; thông báo chỉ được lưu, không có mail worker).
+- UC28 E2 / UC47 E2: huỷ sát giờ chỉ đánh dấu `isLateCancellation`, không tự tạo hồ sơ UC40 và không
+  vào chấm điểm UC42; ngưỡng huỷ muộn booking cố định 24 giờ, không phải trường policy.
+- UC48/UC49: một điểm tổng 1–5 (`FEEDBACK_CRITERION = "overall"`) kèm trung bình và phân bố, không
+  chấm theo tiêu chí.
+- UC40 A1 (và UC15 A1): leo thang tạm ngừng/giải thể chỉ là nhãn (`linkedLifecycleAction`) trên hồ
+  sơ; ICPDP thực hiện UC15 riêng, không liên kết hai chiều.
+- UC43 E1: CLB không phản biện kết quả đánh giá đã công bố.
 
 ### Lỗi UI nhỏ
 

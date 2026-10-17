@@ -52,6 +52,9 @@ export interface MembershipWithdrawalRequest {
 export interface MembershipRepository {
   listMine(userId: string): Promise<ClubMembershipRecord[]>;
   listClub(clubId: string, now: Date): Promise<ClubRosterMember[]>;
+  /** UC20 A1 / BR13: creates an Active membership without an application, with a recorded reason. */
+  onboardManually(input: { clubId: string; email: string; reason: string; actorId: string;
+    now: Date }): Promise<ClubMembershipRecord>;
   changeState(input: { clubId: string; membershipId: string; actorId: string;
     state: "Active" | "Inactive" | "Banned"; effectiveDate: Date;
     reason?: string; now: Date }): Promise<ClubMembershipRecord>;

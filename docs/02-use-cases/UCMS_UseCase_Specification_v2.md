@@ -491,6 +491,8 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   - **A1 Chuyển giao sớm:** kế hoạch được nộp trước khi nhiệm kỳ kết thúc, kèm một lý do nêu rõ.
   - **A2 Đổi danh sách role ban điều hành:** kế hoạch thêm, bỏ hoặc đánh dấu lại role ban điều
     hành (ví dụ thêm Trưởng ban C); thay đổi chỉ có hiệu lực khi UC13 xác nhận (BR55).
+    *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* kế hoạch không đổi được danh sách ghế ban điều hành, nên UC13
+    không bao giờ tạo phiên bản cơ cấu mới từ kế hoạch.
 - **Ngoại lệ:** **E1** một nghĩa vụ không có người nhận trong ban chủ nhiệm mới → không nộp được
   kế hoạch cho tới khi có người được nêu tên.
 - **Hậu điều kiện:** Kế hoạch chuyển giao ở `Pending Confirmation`.
@@ -572,7 +574,8 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
        thường cho tới lúc đó, kể cả việc tạo việc mới.
   4. Hệ thống ghi audit quyết định và thông báo cho CLB.
   5. *(Chỉ với giải thể)* Vào đầu học kỳ kế tiếp, scheduler chuyển CLB sang `Dissolving`: không
-     mở đợt tuyển nào, không nộp đề xuất sự kiện nào và không nhận booking mới nào. Công việc đã
+     mở đợt tuyển nào, không nộp đề xuất sự kiện nào; booking CSVC mới vẫn được nhận nếu nằm gọn
+     trong học kỳ `Dissolving` (BR45, quyết định 17/10/2026). Công việc đã
      được tạo — kể cả các đề xuất còn đang thẩm định — vẫn chạy tới hết, và CMB giữ quyền truy
      cập chỉ để đóng chúng lại (báo cáo sự kiện ở UC33 và UC34, ngân sách, báo cáo định kỳ).
   6. *(Chỉ với giải thể)* Vào cuối học kỳ đó, trước khi học kỳ tiếp theo bắt đầu, scheduler đóng
@@ -586,7 +589,8 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
      Nếu bất kỳ phần nào thất bại, CLB ở lại `Dissolving` và ICPDP được cảnh báo.
 - **Luồng thay thế:**
   - **A1 Từ một hồ sơ:** quyết định được đưa ra như biện pháp khắc phục của một hồ sơ (UC40) và
-    được liên kết với hồ sơ đó.
+    được liên kết với hồ sơ đó. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* chỉ ghi nhãn trên hồ sơ UC40,
+    ICPDP thực hiện UC15 riêng, không có liên kết hai chiều.
 - **Ngoại lệ:**
   - **E1** giải thể được quyết định trong lúc một ngân sách chưa được đối soát → officer được
     cảnh báo; việc đối soát phải xong trước khi kết thúc học kỳ `Dissolving` (bước 6).
@@ -633,7 +637,8 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   - **E3** người gọi không phải Club Leader của CLB (`club.recruitment.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Đợt tuyển ở `Published` và nhận đơn trong khung thời gian của nó.
 - **Quy tắc nghiệp vụ:** BR54 (`club.recruitment.manage`). BR01, BR09, BR11.
-- **Đầu ra:** RecruitmentCampaign, thông báo tới người theo dõi.
+- **Đầu ra:** RecruitmentCampaign, thông báo tới người theo dõi. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo
+  tới người theo dõi (hệ thống không có khái niệm người theo dõi).
 - **Use case liên quan:** UC06, UC17, UC18
 - **Pain point:** BP11
 
@@ -987,7 +992,8 @@ không đánh số lại các use case sau.
 - **Hậu điều kiện:** Sự kiện ở `Upcoming` và hiển thị công khai.
 - **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR14, BR17, BR50, BR53. Scheduler chuyển sự kiện sang `Ongoing` và `Completed` theo
   chính mốc giờ của nó (§7 của tài liệu mô hình).
-- **Đầu ra:** Event đã công bố, các thông báo.
+- **Đầu ra:** Event đã công bố, các thông báo. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh
+  viên (thông báo chỉ được lưu, không có mail worker).
 - **Use case liên quan:** UC26, UC29, UC06, UC24
 - **Pain point:** BP05
 
@@ -1020,7 +1026,8 @@ không đánh số lại các use case sau.
   - **E1** sự kiện đã có bảng điểm danh được chốt → từ chối huỷ; sự kiện được đóng lại qua UC33
     và UC34;
   - **E2** việc huỷ rơi vào thời hạn báo trước định nghĩa trong tài liệu chính sách → được ghi nhận là một tín hiệu
-    tuân thủ cho UC40.
+    tuân thủ cho UC40. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* việc huỷ sát giờ chỉ được đánh dấu
+    (`isLateCancellation`), không tự tạo hồ sơ UC40 và không đưa vào chấm điểm UC42.
   - **E3** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Sự kiện ở `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký
   được cập nhật; lý do được ghi audit.
@@ -1422,7 +1429,8 @@ không đánh số lại các use case sau.
   7. Khi biện pháp được xác minh, hồ sơ chuyển `Resolved`.
 - **Luồng thay thế:**
   - **A1 Leo thang sang vòng đời:** biện pháp khắc phục là tạm ngừng hoặc giải thể, được thực
-    hiện ở UC15 và liên kết với hồ sơ.
+    hiện ở UC15 và liên kết với hồ sơ. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* leo thang chỉ được ghi
+    nhãn trên hồ sơ; ICPDP thực hiện UC15 riêng, không có liên kết hai chiều.
   - **A2 Đóng không kèm biện pháp:** điều tra kết luận không có vi phạm; hồ sơ đóng lại với lý
     do được ghi nhận.
 - **Ngoại lệ:** **E1** CLB không trả lời đúng hạn → officer tiếp tục và ghi nhận việc không phản hồi.
@@ -1508,7 +1516,8 @@ không đánh số lại các use case sau.
   - **A1 Bản sửa sau khi công bố:** một bản sửa hoặc bản chụp mới được tạo; bản đã công bố không
     bao giờ bị sửa (BR30).
 - **Ngoại lệ:** **E1** một CLB phản biện kết quả → việc phản biện được xử lý như một hồ sơ
-  (UC40), và mọi hiệu chỉnh trở thành một bản sửa mới.
+  (UC40), và mọi hiệu chỉnh trở thành một bản sửa mới. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* CLB không
+  phản biện được kết quả đã công bố.
 - **Hậu điều kiện:** Mỗi CLB có một kỳ đánh giá đã công bố cho kỳ đó, kèm lịch sử của nó.
 - **Quy tắc nghiệp vụ:** BR30.
 - **Đầu ra:** Evaluation đã công bố, thông báo, bản ghi audit.
@@ -1605,6 +1614,9 @@ không đánh số lại các use case sau.
     đang `In Use` cũng được giải phóng và ngoại lệ E2 không áp dụng.
 - **Ngoại lệ:** **E1** booking đã `In Use` hoặc `Completed` → từ chối huỷ; **E2** việc huỷ rơi
   vào thời hạn báo trước định nghĩa trong tài liệu chính sách → được ghi nhận là một tín hiệu tuân thủ cho UC40.
+  *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* việc huỷ sát giờ chỉ được đánh dấu (`isLateCancellation`),
+  không tự tạo hồ sơ UC40 và không đưa vào chấm điểm UC42; ngưỡng huỷ sát giờ của booking cố định
+  24 giờ, không phải một trường của chính sách.
   **E3** người gọi không phải Club Leader của CLB (`club.booking.manage`) → từ chối (BR54).
 - **Hậu điều kiện:** Booking ở `Cancelled` hoặc `Released`; khung giờ đã trống.
 - **Quy tắc nghiệp vụ:** BR54 (`club.booking.manage`). BR35. Không có nó, một booking đã duyệt sẽ khoá một căn phòng vĩnh viễn.
@@ -1682,7 +1694,8 @@ không đánh số lại các use case sau.
   đánh giá.
 - **Kích hoạt:** Feedback window mở ra tại thời điểm check-in của người tham dự (BR36).
 - **Tiền điều kiện:** Sinh viên có một bản ghi điểm danh của sự kiện đó.
-- **Dữ liệu vào:** Điểm theo từng tiêu chí, nhận xét tự do, tuỳ chọn ẩn danh.
+- **Dữ liệu vào:** Điểm theo từng tiêu chí, nhận xét tự do, tuỳ chọn ẩn danh. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không
+  chấm theo từng tiêu chí; hệ thống giữ một điểm tổng 1–5 (`FEEDBACK_CRITERION = "overall"`).
 - **Luồng chính:**
   1. Sinh viên mở một sự kiện mình đã tham dự, từ UC02 hoặc UC24.
   2. Sinh viên điền biểu mẫu phản hồi.
@@ -1715,6 +1728,8 @@ không đánh số lại các use case sau.
 - **Luồng chính:**
   1. Thành viên mở bản tổng hợp của một sự kiện.
   2. Thành viên đọc điểm trung bình theo từng tiêu chí, phân bố điểm và các nhận xét.
+     *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không có điểm theo từng tiêu chí; bản tổng hợp gồm điểm
+     trung bình và phân bố của một điểm tổng 1–5 (`overall`).
   3. Thành viên mang kết luận vào báo cáo sau sự kiện (UC33).
 - **Luồng thay thế:**
   - **A1 So sánh nhiều sự kiện:** CLB so sánh bản tổng hợp giữa các sự kiện của chính mình trong

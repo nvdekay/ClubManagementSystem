@@ -111,6 +111,11 @@ export function changeMembershipState(clubId: string, membershipId: string,
       body: JSON.stringify({ ...input, effectiveDate: new Date().toISOString() }) });
 }
 
+/** UC20 A1: adds a student who has signed in before, with the reason BR13 requires. */
+export function onboardMember(clubId: string, input: { email: string; reason: string }, csrfToken: string) {
+  return request<Membership>(`/clubs/${encodeURIComponent(clubId)}/memberships`, post(csrfToken, input));
+}
+
 export function executeWithdrawal(clubId: string, requestId: string, csrfToken: string) {
   return request<Membership>(
     `/clubs/${encodeURIComponent(clubId)}/membership-withdrawals/${encodeURIComponent(requestId)}/execute`,

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
+import { Link, NavLink, Outlet, useLocation } from "react-router";
 
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { UserMenu } from "@/components/layout/UserMenu";
@@ -28,8 +28,6 @@ export function PublicLayout() {
   // Bring the visitor back to the page they were reading after signing in.
   const loginTarget = `/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
 
-  if (!auth.data) return <Navigate to={loginTarget} replace />;
-
   return (
     <div className="flex min-h-full flex-col">
       <header className="sticky top-0 z-30">
@@ -50,7 +48,11 @@ export function PublicLayout() {
               className={cn(iconButton, "text-xs font-bold")}>
               {i18n.language === "vi" ? "EN" : "VI"}
             </button>
-            <UserMenu user={auth.data.user} csrfToken={auth.data.csrfToken} />
+            {/* UC06: guests browse read-only; applying or registering sends them through UC01 and back. */}
+            {auth.data ? <UserMenu user={auth.data.user} csrfToken={auth.data.csrfToken} />
+              : !auth.isPending && <Link to={loginTarget}
+                className="inline-flex min-h-10 items-center rounded-full bg-primary-app px-4 text-sm font-semibold text-on-primary-app no-underline transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+                {t("auth.signInTitle")}</Link>}
           </nav>
         </div>
       </header>

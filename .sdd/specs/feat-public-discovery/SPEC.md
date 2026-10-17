@@ -22,4 +22,5 @@ Guest và Student cần tìm CLB, đợt tuyển và sự kiện công khai theo
 Ghi dữ liệu UC07, UC16–17, UC25–29; đăng ký/ứng tuyển thật chỉ mở khi use case tương ứng được xây. Không tạo dữ liệu giả trong production.
 
 ## Changelog
+- 2026-10-17 — người dùng chọn mở lại UC06 cho Guest: `PublicLayout` không còn bắt đăng nhập (đã thêm ngày 11/10), header có nút "Đăng nhập", trang đăng nhập có link "Tiếp tục xem với tư cách khách"; ứng tuyển/đăng ký vẫn yêu cầu phiên.
 - v0.1.0 (2026-10-03) — phạm vi UC06 theo SRS và DBML hiện hành.

@@ -152,4 +152,33 @@ describe.skipIf(!uri)("Mongo membership lifecycle repository", () => {
       effectiveFrom: new Date("2026-11-01"), effectiveTo: new Date("2026-11-01"),
     });
   }, 60_000);
+
+  it("onboards a student manually, refusing current and banned members (UC20 A1)", async () => {
+    const clubId = new Types.ObjectId();
+    const leaderId = new Types.ObjectId(), freshId = new Types.ObjectId(), bannedId = new Types.ObjectId(), leftId = new Types.ObjectId();
+    await ucmsModels.clubs.create({ _id: clubId, code: `MO-${clubId.toString().slice(-8)}`,
+      name: "Manual Onboarding", field: "Technology", state: "Active", createdAt: now });
+    await ucmsModels.clubPositions.create({ clubId, code: "MEMBERS", name: "Members", isDefaultMemberRole: true,
+      isBoardSeat: false, isLeaderRole: false, isActive: true, permissionCodes: [] });
+    await ucmsModels.users.create([
+      { _id: freshId, email: "fresh.mo@fpt.edu.vn", displayName: "Fresh", accountState: "Active", createdAt: now },
+      { _id: bannedId, email: "banned.mo@fpt.edu.vn", displayName: "Banned", accountState: "Active", createdAt: now },
+      { _id: leftId, email: "left.mo@fpt.edu.vn", displayName: "Left", accountState: "Active", createdAt: now },
+    ]);
+    await ucmsModels.clubMemberships.create([
+      { clubId, userId: bannedId, state: "Banned", joinedAt: now, statusHistory: [] },
+      { clubId, userId: leftId, state: "Left", joinedAt: now, leftAt: now, statusHistory: [] },
+    ]);
+    const repo = mongoMembershipRepository();
+    const input = { clubId: String(clubId), reason: "Chuyển từ CLB cũ", actorId: String(leaderId), now };
+
+    const created = await repo.onboardManually({ ...input, email: "Fresh.MO@fpt.edu.vn" });
+    expect(created).toMatchObject({ state: "Active", userId: String(freshId), defaultRole: "MEMBERS" });
+    expect(await ucmsModels.auditLogs.exists({ entityId: new Types.ObjectId(created.id),
+      action: "CLUB_MEMBERSHIP_MANUALLY_ONBOARDED", reason: "Chuyển từ CLB cũ" })).toBeTruthy();
+    await expect(repo.onboardManually({ ...input, email: "fresh.mo@fpt.edu.vn" })).rejects.toMatchObject({ kind: "conflict" });
+    await expect(repo.onboardManually({ ...input, email: "banned.mo@fpt.edu.vn" })).rejects.toMatchObject({ kind: "forbidden" });
+    await expect(repo.onboardManually({ ...input, email: "nobody.mo@fpt.edu.vn" })).rejects.toMatchObject({ kind: "not_found" });
+    await expect(repo.onboardManually({ ...input, email: "left.mo@fpt.edu.vn" })).resolves.toMatchObject({ state: "Active" });
+  });
 });

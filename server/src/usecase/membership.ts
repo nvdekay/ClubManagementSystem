@@ -35,6 +35,19 @@ export async function listClubMemberships(repo: MembershipRepository, access: Cl
   return repo.listClub(clubId, now);
 }
 
+/** UC20 A1: a Club Leader adds a student who has signed in before, giving a reason (BR13). */
+export async function onboardMemberManually(repo: MembershipRepository, access: ClubAccessRepository,
+  actor: AccessActor | null, input: { clubId: string; email: string; reason: string }, now = new Date()) {
+  const id = actorId(actor);
+  validId(input.clubId, "club id");
+  await assertClubAccess(access, actor, input.clubId, "club.application.review", now);
+  const email = input.email.trim().toLowerCase();
+  const reason = input.reason.trim();
+  if (!/^[^\s@]+@[^\s@]+$/.test(email) || email.length > 320) throw new DomainError("a valid email is required", "validation", { field: "email" });
+  if (!reason || reason.length > 2000) throw new DomainError("an onboarding reason is required", "validation", { field: "reason" });
+  return repo.onboardManually({ clubId: input.clubId, email, reason, actorId: id, now });
+}
+
 export async function changeMembershipState(repo: MembershipRepository,
   access: ClubAccessRepository, actor: AccessActor | null, input: {
     clubId: string; membershipId: string; state: "Active" | "Inactive" | "Banned";

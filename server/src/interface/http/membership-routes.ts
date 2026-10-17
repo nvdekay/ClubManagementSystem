@@ -6,7 +6,7 @@ import type { MembershipRepository } from "../../domain/membership.js";
 import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { changeMembershipState, executeMembershipWithdrawal, listClubMemberships,
+import { changeMembershipState, executeMembershipWithdrawal, listClubMemberships, onboardMemberManually,
   listClubMembershipWithdrawalRequests, listMyMemberships,
   listMyMembershipWithdrawalRequests, requestMembershipWithdrawal } from "../../usecase/membership.js";
 import { authGuard } from "./auth-routes.js";
@@ -55,6 +55,12 @@ export function membershipRoutes(deps: MembershipRouteDeps): Router {
   });
   router.get("/clubs/:clubId/memberships", authGuard(guard, false), async (req, res) => {
     ok(res, await listClubMemberships(deps.repo, deps.accessRepo, actor(res), parsed(id, req.params.clubId)));
+  });
+  router.post("/clubs/:clubId/memberships", authGuard(guard), async (req, res) => {
+    const body = parsed(z.object({ email: z.string().min(3).max(320), reason: z.string().min(1).max(2000) }).strict(), req.body);
+    ok(res, await onboardMemberManually(deps.repo, deps.accessRepo, actor(res), {
+      clubId: parsed(id, req.params.clubId), email: body.email, reason: body.reason,
+    }), 201);
   });
   router.patch("/clubs/:clubId/memberships/:membershipId/state", authGuard(guard), async (req, res) => {
     const body = parsed(z.object({ state: z.enum(["Active", "Inactive", "Banned"]),

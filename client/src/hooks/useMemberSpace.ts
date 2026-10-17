@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
+import { onboardMember,
   MemberSpaceError,
   changeMembershipState,
   executeWithdrawal,
@@ -45,13 +45,14 @@ export function useMembershipAction() {
     mutationFn: (action: { kind: "request"; membershipId: string; reason: string; requestedEffectiveDate: string;
       csrfToken: string } | { kind: "execute"; clubId: string; requestId: string; csrfToken: string }
       | { kind: "state"; clubId: string; membershipId: string; state: ManagedMembershipState; reason?: string;
-        csrfToken: string },
+        csrfToken: string } | { kind: "onboard"; clubId: string; email: string; reason: string; csrfToken: string },
     ): Promise<WithdrawalRequest | Membership> => {
       if (action.kind === "request") {
         return requestWithdrawal(action.membershipId, { reason: action.reason,
           requestedEffectiveDate: action.requestedEffectiveDate }, action.csrfToken);
       }
       if (action.kind === "execute") return executeWithdrawal(action.clubId, action.requestId, action.csrfToken);
+      if (action.kind === "onboard") return onboardMember(action.clubId, { email: action.email, reason: action.reason }, action.csrfToken);
       return changeMembershipState(action.clubId, action.membershipId,
         { state: action.state, ...(action.reason ? { reason: action.reason } : {}) }, action.csrfToken);
     },

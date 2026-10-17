@@ -2,8 +2,9 @@
 
 Các khung bố cục cấu trúc. Không có tiền tố `App`.
 
-- `PublicLayout` — header/footer cho các trang khám phá (`/`, `/clubs`, `/events`). Chỉ hiển thị
-  khi đã đăng nhập; nếu chưa có phiên, chuyển tới `/login` và giữ trang đích trong `returnTo`. Bố cục
+- `PublicLayout` — header/footer cho các trang khám phá (`/`, `/clubs`, `/events`). Guest xem được
+  (UC06, chỉ đọc): header hiện nút "Đăng nhập" thay cho `UserMenu`, link đăng nhập giữ trang đang
+  xem trong `returnTo`; ứng tuyển/đăng ký mới yêu cầu phiên. Bố cục
   tham khảo pdp.fpt.edu.vn nhưng giữ tông xanh ngọc chung của hệ thống, chỉ màu đơn sắc, không
   gradient: header trắng, footer nền `hero-app` với thông tin FPT Education. Trang chủ `/` tự quản
   bề rộng (dải nền tràn viền), các trang khác nằm trong khung `max-w-7xl`.
