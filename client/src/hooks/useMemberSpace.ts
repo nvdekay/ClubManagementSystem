@@ -7,6 +7,7 @@ import { onboardMember,
   fetchClubWithdrawals,
   fetchMemberSpace,
   fetchMyMemberships,
+  fetchMyWithdrawals,
   requestWithdrawal,
   type ManagedMembershipState,
   type Membership,
@@ -22,6 +23,10 @@ export function isNotAMember(error: unknown): boolean {
 
 export function useMyMemberships(enabled: boolean) {
   return useQuery({ queryKey: [...key, "mine"], queryFn: ({ signal }) => fetchMyMemberships(signal), enabled, retry: false });
+}
+
+export function useMyWithdrawals(enabled: boolean) {
+  return useQuery({ queryKey: [...key, "withdrawals", "mine"], queryFn: ({ signal }) => fetchMyWithdrawals(signal), enabled, retry: false });
 }
 
 export function useMemberSpace(clubId: string | undefined, enabled: boolean) {

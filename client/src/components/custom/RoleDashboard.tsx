@@ -12,18 +12,35 @@ import type { DashboardContext, DashboardPanelKey } from "@/services/dashboard";
 function panelHref(key: DashboardPanelKey, context: DashboardContext): string | null {
   if (key === "foundingApplications") return "/workspace/applications";
   if (key === "recruitmentApplications") return "/workspace/recruitment";
-  if (key === "openRecruitment" || key === "activeClubs" || key === "suspendedClubs") return "/clubs";
+  if (key === "openRecruitment") return "/clubs";
+  if (key === "activeClubs" || key === "suspendedClubs" || key === "roleStructures" || key === "boardHistory") return "/icpdp/clubs";
+  if (key === "internalEvents") return "/workspace/internal-events";
   if (key === "upcomingEvents") return "/events";
   if (context.workspace === "student" && key === "registrations") return "/workspace/event-registrations";
   if (context.workspace === "student" && key === "complaints") return "/workspace/feedback";
-  if (context.workspace === "student" && key === "memberships") return "/workspace/clubs";
+  if (context.workspace === "student" && (key === "memberships" || key === "withdrawalRequests")) return "/workspace/clubs";
   if (context.workspace === "student" && key === "attendanceHistory") return "/workspace/event-registrations?tab=attended";
-  if (key === "pendingClubApplications" || key === "approvalTasks") return "/workspace/reviews";
+  if (key === "pendingClubApplications" || key === "approvalTasks" || key === "overdueApprovals") return "/workspace/reviews";
+  if (context.workspace === "icpdp") {
+    if (key === "pendingEventProposals") return "/workspace/event-proposals";
+    if (key === "pendingReports" || key === "overdueReports") return "/workspace/periodic-reports";
+    if (key === "unreconciledBudgets" || key === "overdueSettlements" || key === "overdueRefunds") return "/workspace/budgets";
+    if (key === "openViolations") return "/workspace/violations";
+    if (key === "upcomingBookings") return "/workspace/bookings";
+  }
   if (context.workspace === "club" && key === "openCampaigns") {
     return `/club/${encodeURIComponent(context.clubId)}/recruitment`;
   }
-  if (context.workspace === "club" && key === "structureHistory") {
-    return `/club/${encodeURIComponent(context.clubId)}/settings`;
+  if (context.workspace === "club") {
+    const base = `/club/${encodeURIComponent(context.clubId)}`;
+    const clubPages: Partial<Record<DashboardPanelKey, string>> = {
+      activeMembers: "members", pendingEventProposals: "events", activeBudgets: "budgets", missingEvidence: "budgets",
+      overdueReports: "periodic-reports", upcomingBookings: "bookings", feedback: "event-feedback",
+      openViolations: "violations", currentTerms: "board-history", structureHistory: "board-history",
+      transitionFollowUps: "transition-plans",
+    };
+    const page = clubPages[key];
+    if (page) return `${base}/${page}`;
   }
   return null;
 }

@@ -1,4 +1,5 @@
 import { MembershipReconfirmationPanel } from "./MembershipReconfirmationPanel";
+import { MyWithdrawalRequests } from "./MyWithdrawalRequests";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -51,6 +52,7 @@ export function MyClubsPage() {
               ))}
             </ul>
           )}
+      <MyWithdrawalRequests />
     </>
   );
 }

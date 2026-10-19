@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
+import { ClubBoardHistory } from "@/components/custom/ClubBoardHistory";
 import { ClubLogo } from "@/components/custom/ClubLogo";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -50,6 +51,11 @@ export function ClubManageDialog({ club, stateLabel, stateTone, csrfToken, onClo
             <AppIcon name="close" className="size-5" /></button>
         </header>
         <ClubLifecyclePanel clubId={club.id} csrfToken={csrfToken} onClose={onClose} />
+        <section aria-labelledby="club-history-title" className="mt-8 border-t border-border-app pt-6">
+          <h2 id="club-history-title" className="font-heading text-xl font-bold">{t("clubOversight.historyTitle")}</h2>
+          <p className="mt-1 mb-4 text-sm text-muted-app">{t("clubOversight.historyDescription")}</p>
+          <ClubBoardHistory clubId={club.id} headingClassName="text-base" />
+        </section>
       </div>
     </dialog>
   );

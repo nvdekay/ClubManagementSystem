@@ -75,6 +75,8 @@ export interface ClubSearch {
   field: string;
   page: number;
   pageSize: number;
+  /** UC06 E1: only Active clubs, newest first, instead of every listed club by name. */
+  newestActive?: boolean;
 }
 
 export interface PublicDiscoveryRepository {

@@ -14,6 +14,7 @@ import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useClubs } from "@/hooks/useDiscovery";
+import type { PublicClub } from "@/services/discovery";
 
 export function ClubDirectory() {
   const { t } = useTranslation();
@@ -82,42 +83,20 @@ export function ClubDirectory() {
           {(search || field) && <AppButton variant="secondary" onClick={clearFilters}>
             {t("discovery.clearFilters")}
           </AppButton>}
+          {clubs.data.suggestions && clubs.data.suggestions.length > 0 && (
+            <div className="pt-4">
+              <h2 className="font-heading text-xl font-bold text-text-app">{t("discovery.newestClubsTitle")}</h2>
+              <p className="mt-1 text-sm text-muted-app">{t("discovery.newestClubsHint")}</p>
+              <ul className="mt-5 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {clubs.data.suggestions.map((club) => <ClubCard key={club.id} club={club} />)}
+              </ul>
+            </div>
+          )}
         </div>
       ) : (
         <>
           <ul className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {clubs.data.items.map((club) => (
-              <li key={club.id} className="flex">
-                <AppCard className="group relative flex-1 gap-0 overflow-hidden p-0 shadow-md transition-transform duration-200 hover:-translate-y-1">
-                  <Link to={`/clubs/${club.id}`} aria-label={t("discovery.viewClubLabel", { club: club.name })}
-                    className="focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring-app">
-                    <ClubCover name={club.name} logoUrl={club.logoUrl} />
-                  </Link>
-                  <ClubLogo name={club.name} logoUrl={club.logoUrl} size={72}
-                    className="absolute top-19 left-1/2 -translate-x-1/2 rounded-full border-2 border-bg-app shadow-sm" />
-                  <div className="flex flex-1 flex-col items-center px-4 pt-11 pb-5 text-center">
-                    <Link to={`/clubs/${club.id}`} title={club.name}
-                      className="line-clamp-1 font-heading text-lg font-bold text-primary-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app">
-                      {club.name}
-                    </Link>
-                    <span className="mt-1 line-clamp-1 w-full text-xs text-muted-app" title={club.contactEmail ?? club.code}>
-                      {club.contactEmail ?? club.code}
-                    </span>
-                    {club.state === "Suspended" && (
-                      <AppBadge tone="warning" className="mt-3">{t("discovery.suspended")}</AppBadge>
-                    )}
-                    {club.openCampaignId && (
-                      <div className="mt-auto pt-4">
-                        <Link to={`/workspace/recruitment/${club.openCampaignId}`}
-                          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-recruitment-app px-4 pt-0.5 text-sm font-semibold text-on-recruitment-app shadow-[0_4px_14px_var(--color-recruitment-glow-app)] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-recruitment-app">
-                          <AppIcon name="users" className="size-4" />{t("discovery.recruitingNow")}
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </AppCard>
-              </li>
-            ))}
+            {clubs.data.items.map((club) => <ClubCard key={club.id} club={club} />)}
           </ul>
           <AppPagination
             className="mt-8"
@@ -132,5 +111,42 @@ export function ClubDirectory() {
         </>
       )}
     </section>
+  );
+}
+
+/** One directory card; also used for the UC06 E1 suggestions under an empty search. */
+function ClubCard({ club }: { club: PublicClub }) {
+  const { t } = useTranslation();
+  return (
+    <li className="flex">
+      <AppCard className="group relative flex-1 gap-0 overflow-hidden p-0 shadow-md transition-transform duration-200 hover:-translate-y-1">
+        <Link to={`/clubs/${club.id}`} aria-label={t("discovery.viewClubLabel", { club: club.name })}
+          className="focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring-app">
+          <ClubCover name={club.name} logoUrl={club.logoUrl} />
+        </Link>
+        <ClubLogo name={club.name} logoUrl={club.logoUrl} size={72}
+          className="absolute top-19 left-1/2 -translate-x-1/2 rounded-full border-2 border-bg-app shadow-sm" />
+        <div className="flex flex-1 flex-col items-center px-4 pt-11 pb-5 text-center">
+          <Link to={`/clubs/${club.id}`} title={club.name}
+            className="line-clamp-1 font-heading text-lg font-bold text-primary-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app">
+            {club.name}
+          </Link>
+          <span className="mt-1 line-clamp-1 w-full text-xs text-muted-app" title={club.contactEmail ?? club.code}>
+            {club.contactEmail ?? club.code}
+          </span>
+          {club.state === "Suspended" && (
+            <AppBadge tone="warning" className="mt-3">{t("discovery.suspended")}</AppBadge>
+          )}
+          {club.openCampaignId && (
+            <div className="mt-auto pt-4">
+              <Link to={`/workspace/recruitment/${club.openCampaignId}`}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-recruitment-app px-4 pt-0.5 text-sm font-semibold text-on-recruitment-app shadow-[0_4px_14px_var(--color-recruitment-glow-app)] transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-recruitment-app">
+                <AppIcon name="users" className="size-4" />{t("discovery.recruitingNow")}
+              </Link>
+            </div>
+          )}
+        </div>
+      </AppCard>
+    </li>
   );
 }

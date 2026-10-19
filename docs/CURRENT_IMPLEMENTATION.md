@@ -34,8 +34,8 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 | Actor | Use case | Hiện trạng |
 |---|---|---|
 | Mọi user | UC01 đăng nhập Google | Có; cần nghiệm thu callback Google thật |
-| Mọi user | UC02 dashboard | Một phần; chưa có danh sách sự kiện nội bộ và lịch sử cơ cấu/ban chủ nhiệm theo CLB |
-| Student | UC06 khám phá CLB/sự kiện | Có; Guest xem được danh bạ/chi tiết (chỉ đọc), ứng tuyển/đăng ký mới yêu cầu đăng nhập; E1 chưa gợi ý CLB mới |
+| Mọi user | UC02 dashboard | Có; từ 19/10 có danh sách sự kiện nội bộ cho ICPDP và lịch sử cơ cấu/ban chủ nhiệm theo CLB (ICPDP và Club Leader) |
+| Student | UC06 khám phá CLB/sự kiện | Có; Guest xem được danh bạ/chi tiết (chỉ đọc), ứng tuyển/đăng ký mới yêu cầu đăng nhập; E1 gợi ý CLB mới nhất (19/10) |
 | Student | UC07 hồ sơ thành lập CLB | Có; hồ sơ quá hạn sửa tự chuyển `Expired`; còn QA Cloudinary thật và dọn asset mồ côi |
 | Student | UC17 ứng tuyển thành viên | Một phần; thành viên `Inactive` vẫn nộp được (E3/BR13) |
 | Club Member | UC21 A2 tái xác nhận thành viên đầu kỳ | Có, tại `/workspace/clubs`; quá hạn chuyển `Inactive`, Leader kích hoạt lại qua UC21 |
@@ -43,7 +43,7 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 | Student | UC31 check-in | Có |
 | Student | UC48 phản hồi sự kiện | Có; một điểm tổng (chấm theo tiêu chí ngoài phạm vi) |
 | Student | UC50 góp ý | Có; một chiều cho CLB/ICPDP theo quyết định 09/10/2026 |
-| Club Member | UC22 xin rời CLB | Một phần; chưa theo dõi yêu cầu rời trên dashboard UC02 |
+| Club Member | UC22 xin rời CLB | Có; sinh viên theo dõi yêu cầu rời ở dashboard và trang "CLB của tôi" (19/10) |
 | Club Member | UC24 member space | Có |
 | Club Member | Xem danh sách thành viên | Có, qua `member-space`; không truy cập API quản trị `/memberships` |
 | Club Member | Xem phòng được phân | **Chưa được phép**: API và menu yêu cầu `club.booking.manage`, chỉ Leader có quyền |
@@ -91,13 +91,11 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 Đã quyết định ngày 17/10/2026: CLB `Dissolving` được đặt CSVC trong học kỳ giải thể (BR45); SRS và
 đặc tả UC15 đã sửa cho khớp.
 
-**Dashboard và khám phá**
-
-1. UC02: chưa có danh sách sự kiện nội bộ cho ICPDP (FR-UC02-02, BR53) và lịch sử cơ cấu/ban chủ
-   nhiệm theo từng CLB (BR56); dashboard chỉ có số đếm.
-2. UC22: yêu cầu rời CLB không hiện trên dashboard; `GET /memberships/withdrawal-requests/mine`
-   không được client gọi.
-3. UC06 E1: không có CLB khớp thì chưa gợi ý các CLB mới nhất.
+**Dashboard và khám phá** — đã xử lý ngày 19/10/2026 (nhánh `agent/gaps-dashboard`): UC02 có trang
+sự kiện nội bộ cho ICPDP (`/workspace/internal-events`, lọc CLB/học kỳ, chi tiết + điểm danh chỉ
+đọc) và lịch sử cơ cấu/ban chủ nhiệm theo CLB (hộp quản lý CLB của ICPDP, `/club/:clubId/board-history`
+cho Club Leader); UC22 hiện yêu cầu rời trên dashboard Student và trang "CLB của tôi"; UC06 E1 gợi ý
+CLB mới nhất khi tìm không ra.
 
 **Tài khoản và vòng đời CLB**
 
@@ -142,7 +140,6 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 
 ### Lỗi UI nhỏ
 
-- Panel dashboard phần lớn không bấm được; panel CLB active/suspended của ICPDP dẫn tới `/clubs` công khai.
 - UC20 hộp thoại tiếp nhận không đặt được `joinedAt`/ban; UC16 bước tuyển không có mô tả/ngày;
   UC18 thao tác hàng loạt lỗi khi trộn trạng thái.
 - UC16 đợt tuyển quá hạn vẫn `Published` đến khi có thao tác xét duyệt; UC54 lời mời quá hạn vẫn

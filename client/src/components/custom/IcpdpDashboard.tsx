@@ -109,6 +109,12 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
               rows: fieldRows.map((row) => [row.label, row.values[0]!]) }}>
             <AppBarList rows={fieldRows} tones={["chart-1"]} seriesLabels={[t("dashboard.clubs")]} emptyLabel={t("dashboard.noData")} />
           </AppChartFrame>
+          <DashboardTaskList variant="neutral" title={t("dashboard.oversightTitle")} description={t("dashboard.oversightDescription")} tasks={[
+            { key: "internalEvents", label: t("dashboard.internalEvents"), count: count("internalEvents"), href: "/workspace/internal-events" },
+            { key: "pendingReports", label: t("dashboard.pendingReports"), count: count("pendingReports"), href: "/workspace/periodic-reports" },
+            { key: "upcomingBookings", label: t("dashboard.upcomingBookings"), count: count("upcomingBookings"), href: "/workspace/bookings" },
+            { key: "boardHistory", label: t("dashboard.boardHistory"), count: count("boardHistory"), href: "/icpdp/clubs" },
+          ]} />
         </div>
       </div>
     </div>

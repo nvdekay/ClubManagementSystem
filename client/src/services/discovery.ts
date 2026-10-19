@@ -48,6 +48,8 @@ export interface Page<T> {
 
 export interface ClubPage extends Page<PublicClub> {
   fields: string[];
+  /** UC06 E1: the newest Active clubs, sent only when a filtered search matched nothing. */
+  suggestions?: PublicClub[];
 }
 
 export interface ClubDetail {

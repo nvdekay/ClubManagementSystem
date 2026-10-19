@@ -4,7 +4,7 @@ import { ucmsModels } from "../../src/infra/db/ucms-models.js";
 
 const studentCollections = [
   "clubApplications", "recruitmentApplications", "clubMemberships", "eventRegistrations",
-  "attendances", "complaints", "recruitmentCampaigns", "events",
+  "attendances", "complaints", "recruitmentCampaigns", "events", "membershipWithdrawalRequests",
 ] as const;
 const clubCollections = [
   "clubMemberships", "recruitmentCampaigns", "events", "eventBudgets", "expenses",
@@ -25,11 +25,11 @@ describe("Mongo dashboard read model", () => {
       "0123456789abcdef01234567", new Date("2026-10-09T08:00:00Z"),
     );
 
-    expect(result.panels).toHaveLength(8);
+    expect(result.panels).toHaveLength(9);
     expect(result.panels.find((item) => item.key === "complaints"))
       .toEqual({ key: "complaints", status: "error" });
     expect(result.panels.filter((item) => item.status === "ready"))
-      .toHaveLength(7);
+      .toHaveLength(8);
   });
 
   it("does not query or expose restricted club panels without permission", async () => {

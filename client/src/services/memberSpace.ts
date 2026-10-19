@@ -84,6 +84,11 @@ export function fetchMyMemberships(signal: AbortSignal) {
   return request<Membership[]>("/memberships/mine", { signal });
 }
 
+/** UC22: every leave request the student has sent, newest first, so UC02 can track them. */
+export function fetchMyWithdrawals(signal: AbortSignal) {
+  return request<WithdrawalRequest[]>("/memberships/withdrawal-requests/mine", { signal });
+}
+
 export function fetchMemberSpace(clubId: string, signal: AbortSignal) {
   return request<MemberSpace>(`/clubs/${encodeURIComponent(clubId)}/member-space`, { signal });
 }

@@ -43,7 +43,11 @@ khoảng ngày), CLB, trạng thái; đếm số dòng trước khi tải; khôn
 `IcpdpClubsPage` (route `/icpdp/clubs`) là màn CLB duy nhất của ICPDP: giao diện lưới thẻ như Khám phá CLB
 nhưng gồm mọi CLB ở mọi trạng thái, lọc theo tên/lĩnh vực/trạng thái, khối "Sắp hết hạn tạm ngừng"; nút Quản lý
 mở `ClubManageDialog` (dialog gốc của trình duyệt) chứa `ClubLifecyclePanel` (UC15): công việc đang chạy, lịch sử,
-tạm ngừng/kích hoạt lại/giải thể — mọi quyết định bắt buộc lý do.
+tạm ngừng/kích hoạt lại/giải thể — mọi quyết định bắt buộc lý do. Dưới panel là `ClubBoardHistory` (UC02, BR56):
+các phiên bản cơ cấu và ban chủ nhiệm theo nhiệm kỳ.
+
+`InternalEventsPage` + `InternalEventDetailPage` (UC02 FR-UC02-02, BR53, route `/workspace/internal-events`)
+liệt kê sự kiện `MEMBERS_ONLY` CLB đã ghi nhận, lọc theo CLB/học kỳ; trang chi tiết hiện điểm danh chỉ đọc.
 
 `EventProposalQueuePage` + `EventProposalReviewPage` (UC26) duyệt đề xuất sự kiện CLB gửi lên: hàng đợi kèm
 tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa điểm, xung đột, nghĩa vụ quá hạn của CLB, booking đính

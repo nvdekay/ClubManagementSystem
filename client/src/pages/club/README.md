@@ -21,6 +21,9 @@ hồ sơ vận hành và cơ cấu ban/bộ phận; các trường định danh 
 `ClubMembersPage`: Club Leader (`club.member.manage`) quản lý danh sách, đổi trạng thái, xử lý
 yêu cầu rời và xuất Excel; Club Member chỉ thấy danh sách thành viên (đọc từ member space).
 
+`ClubBoardHistoryPage` (UC02 FR-UC02-03, route `/club/:clubId/board-history`) cho Club Leader xem các phiên
+bản cơ cấu và ban chủ nhiệm theo nhiệm kỳ của CLB mình (dùng chung `ClubBoardHistory` với ICPDP).
+
 `BoardNominationPage` triển khai UC10: Club Leader hoặc founder sáng lập có quyền tạm từ UC08
 đề cử thành viên `Active` vào ghế ban điều hành còn trống của nhiệm kỳ hiện tại.
 

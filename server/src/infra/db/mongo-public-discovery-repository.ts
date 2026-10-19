@@ -92,14 +92,14 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
   const users = ucmsModels.users!;
   return {
     async listClubs(input: ClubSearch, now: Date): Promise<Page<PublicClub>> {
-      const filter: Record<string, unknown> = { state: { $in: clubStates } };
+      const filter: Record<string, unknown> = { state: input.newestActive ? "Active" : { $in: clubStates } };
       if (input.field) filter.field = input.field;
       if (input.search) {
         const search = new RegExp(escapeRegex(input.search), "i");
         filter.$or = [{ name: search }, { code: search }, { description: search }];
       }
       const [docs, total] = await Promise.all([
-        clubs.find(filter).sort({ name: 1, _id: 1 })
+        clubs.find(filter).sort(input.newestActive ? { createdAt: -1, _id: -1 } : { name: 1, _id: 1 })
           .skip((input.page - 1) * input.pageSize).limit(input.pageSize).lean(),
         clubs.countDocuments(filter),
       ]);
