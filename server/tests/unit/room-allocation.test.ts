@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClubAccessSnapshot } from "../../src/domain/access.js";
 import { DEFAULT_FORM_REQUIREMENTS, type PolicyVersion } from "../../src/domain/policy.js";
 import type { Property } from "../../src/domain/property.js";
-import { planRoomAllocation, validateRoomAllocationInput, weeklySlotDates,
+import { planRoomAllocation, roomOccupancy, validateRoomAllocationInput, weeklySlotDates,
   type RoomAllocation, type RoomAllocationRepository } from "../../src/domain/room-allocation.js";
 import { roomAllocationBody, roomAllocationRevokeBody } from "../../src/interface/http/room-allocation-routes.js";
-import { allocateRoom, clubRoomAllocations, listRoomAllocations, revokeRoomAllocation, roomAllocationOptions,
+import { allocateRoom, clubRoomAllocations, listRoomAllocations, revokeRoomAllocation, roomAllocationOccupancy, roomAllocationOptions,
   type RoomAllocationDeps } from "../../src/usecase/room-allocation.js";
 
 const ids = { club: "a".repeat(24), property: "b".repeat(24), user: "c".repeat(24), allocation: "d".repeat(24) };
@@ -42,7 +42,8 @@ function deps(withBookingPermission = false): RoomAllocationDeps {
     positions: [{ id: "vice", clubId: ids.club, isActive: true, isLeaderRole: false, isBoardSeat: true }] };
   const repo: RoomAllocationRepository = { clubs: vi.fn(async () => [club]), club: vi.fn(async () => club),
     list: vi.fn(async () => [allocation()]), find: vi.fn(async () => allocation()),
-    allocate: vi.fn(async () => allocation()), revoke: vi.fn(async () => allocation({ revokedAt: now })) };
+    allocate: vi.fn(async () => allocation()), revoke: vi.fn(async () => allocation({ revokedAt: now })),
+    roomCommitments: vi.fn(async () => []) };
   return { repo, access: { findSnapshot: vi.fn(async () => snapshot) }, auth: { systemRoleCodes: vi.fn(async () => ["ICPDP_OFFICER"]) },
     policy: { findEffective: vi.fn(async () => policy) },
     properties: { list: vi.fn(async () => [room, { ...room, id: "f".repeat(24), type: "HALL" as const }, { ...room, id: "9".repeat(24), isActive: false }]),
@@ -63,6 +64,25 @@ describe("room allocation rules", () => {
     expect(local(weeklySlotDates(semester, 3, 4, midSlot)[0]!.startAt)).toBe("2026-09-23T15:20");
     expect(local(weeklySlotDates(semester, 3, 4, new Date(midSlot.getTime() - 1))[0]!.startAt)).toBe("2026-09-16T15:20");
   });
+  it("places approved events and bookings on the weekly grid cells they would block (UC58 A3)", () => {
+    const event = { startAt: new Date("2026-09-16T14:00:00+07:00"), endAt: new Date("2026-09-16T16:00:00+07:00"),
+      source: "event" as const, title: "Workshop", clubName: "FDS" };
+    const booking = { startAt: new Date("2026-09-18T07:30:00+07:00"), endAt: new Date("2026-09-18T09:50:00+07:00"),
+      source: "booking" as const, title: "Rehearsal" };
+    // A free-form event spans slots 3 and 4 on Wednesday; an exact slot booking blocks only its own slot.
+    expect(roomOccupancy([event, booking], 30)).toEqual([
+      { weekday: 3, slot: 3, items: [event] }, { weekday: 3, slot: 4, items: [event] },
+      { weekday: 5, slot: 1, items: [booking] }]);
+  });
+
+  it("reads the room's commitments from the rest of the semester only", async () => {
+    const d = deps();
+    await expect(roomAllocationOccupancy(d, actor, "FA26", ids.property, new Date("2026-09-10T00:00:00+07:00"))).resolves.toEqual([]);
+    expect(d.repo.roomCommitments).toHaveBeenCalledWith(ids.property, new Date("2026-09-10T00:00:00+07:00"), semester.endAt);
+    await expect(roomAllocationOccupancy(d, actor, "XX99", ids.property, now)).rejects.toMatchObject({ kind: "validation" });
+    await expect(roomAllocationOccupancy(d, actor, "SU26", ids.property, now)).resolves.toEqual([]);
+  });
+
   it("skips blackout dates instead of rejecting the whole allocation", () => {
     const blackout = { startAt: new Date("2026-09-30T00:00:00+07:00"), endAt: new Date("2026-10-01T00:00:00+07:00"), reason: "Holiday" };
     const plan = planRoomAllocation(input, { ...room, blackouts: [blackout] }, club, policy.academicCalendar, now);

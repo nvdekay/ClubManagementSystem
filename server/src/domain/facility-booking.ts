@@ -95,7 +95,8 @@ export interface FacilityBookingRepository {
   release(input: { clubId?: string; eventId?: string; source: "event" | "club";
     reason: string; now: Date }): Promise<number>;
   advanceLifecycle(now: Date): Promise<{ started: number; completed: number }>;
-  blackoutConflicts(propertyId: string): Promise<Booking[]>;
+  /** Unfinished requests, approved bookings and room-allocation sessions overlapping a blackout (UC44 A2). */
+  blackoutConflicts(propertyId: string, now: Date): Promise<Booking[]>;
 }
 
 /** Rooms are allocated by ICPDP each semester; clubs request every other facility type. */

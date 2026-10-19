@@ -5,6 +5,7 @@ import { Link, useSearchParams } from "react-router";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppConfirmDialog } from "@/components/ui/dialog/AppConfirmDialog";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppSelect } from "@/components/ui/select/AppSelect";
@@ -66,6 +67,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const [outcome, setOutcome] = useState<BookingDecisionInput["outcome"]>("Approve");
   const [suggest, setSuggest] = useState(false);
   const [alternative, setAlternative] = useState({ propertyId: "", startAt: "", endAt: "" });
+  const [confirming, setConfirming] = useState<{ message: string; run: () => void } | null>(null);
   const availability = useBookingAvailability(editing ? clubId : null, form.propertyId, form.startAt, form.endAt);
   const booking = detail.data?.booking;
   const property = properties.data?.find((item) => item.id === form.propertyId);
@@ -108,10 +110,11 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
     if (outcome === "Request revision" && suggest && (!alternative.propertyId || !slotNumber(alternative, slots.data ?? []))) {
       setFormError(t("facilityBookings.invalidForm")); return;
     }
-    if (!selected || !window.confirm(t("facilityBookings.confirmDecision"))) return;
-    void mutate({ kind: "decision", id: selected, input: { outcome, reason, reviewNote,
-      ...(outcome === "Approve" && permitOverbooking ? { overbookingReason } : {}),
-      ...(outcome === "Request revision" && suggest ? { alternative } : {}) } });
+    if (!selected) return;
+    setConfirming({ message: t("facilityBookings.confirmDecision"), run: () => void mutate({ kind: "decision", id: selected,
+      input: { outcome, reason, reviewNote,
+        ...(outcome === "Approve" && permitOverbooking ? { overbookingReason } : {}),
+        ...(outcome === "Request revision" && suggest ? { alternative } : {}) } }) });
   }
   const propertyOptions = [{ value: "", label: t("facilityBookings.select") },
     ...requestProperties.map((item) => ({ value: item.id, label: `${item.name} · ${item.location}` }))];
@@ -235,10 +238,10 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                   {detail.data.obligations.map((item) => <p key={item}>{t(`facilityBookings.${item as "overdueReport" | "overduePostEventReport" | "overdueSettlement" | "overdueRefund"}`)}</p>)}</AppNotice>}
                 {clubId && ["Draft", "Revision Requested"].includes(booking.state) && <div className="flex flex-wrap gap-3">
                   <AppButton onClick={() => openForm(booking)}>{t("facilityBookings.edit")}</AppButton>
-                  <AppButton disabled={action.isPending} onClick={() => { if (window.confirm(t("facilityBookings.confirmSubmit"))) void mutate({ kind: "submit", clubId, id: booking.id, expectedVersion: booking.currentVersionNo }); }}>{t("facilityBookings.submit")}</AppButton>
+                  <AppButton disabled={action.isPending} onClick={() => setConfirming({ message: t("facilityBookings.confirmSubmit"), run: () => void mutate({ kind: "submit", clubId, id: booking.id, expectedVersion: booking.currentVersionNo }) })}>{t("facilityBookings.submit")}</AppButton>
                 </div>}
                 {clubId && ["Requested", "Approved"].includes(booking.state) && <form className="space-y-3" onSubmit={(event) => {
-                  event.preventDefault(); if (window.confirm(t("facilityBookings.confirmCancel"))) void mutate({ kind: "cancel", clubId, id: booking.id, reason });
+                  event.preventDefault(); setConfirming({ message: t("facilityBookings.confirmCancel"), run: () => void mutate({ kind: "cancel", clubId, id: booking.id, reason }) });
                 }}><p className="text-sm text-muted-app">{t("facilityBookings.cancelNotice")}</p>
                   <label className="block text-sm font-medium">{t("facilityBookings.cancelReason")}<AppInput className="mt-1 w-full" required maxLength={2000}
                     value={reason} onChange={(event) => setReason(event.target.value)} /></label>
@@ -300,5 +303,8 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
               </>}
         </section>
       </div>}
+    <AppConfirmDialog open={confirming !== null} title={t("facilityBookings.confirmTitle")} message={confirming?.message ?? ""}
+      confirmLabel={t("facilityBookings.confirmYes")} cancelLabel={t("facilityBookings.confirmBack")}
+      onCancel={() => setConfirming(null)} onConfirm={() => { confirming?.run(); setConfirming(null); }} />
   </>;
 }

@@ -41,6 +41,18 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
       case "CLUB_DISSOLUTION_DECIDED": return t("clubLifecycle.action_CLUB_DISSOLUTION_DECIDED");
       case "CLUB_DISSOLVING": return t("clubLifecycle.action_CLUB_DISSOLVING");
       case "CLUB_DISSOLVED": return t("clubLifecycle.action_CLUB_DISSOLVED");
+      case "CLUB_LIFECYCLE_FAILED": return t("clubLifecycle.action_CLUB_LIFECYCLE_FAILED");
+      default: return value;
+    }
+  }
+
+  function budgetState(value: string): string {
+    switch (value) {
+      case "Approved": return t("budgets.stateApproved");
+      case "Disbursed": return t("budgets.stateDisbursed");
+      case "Settlement Submitted": return t("budgets.stateSettlementSubmitted");
+      case "Reconciliation Pending": return t("budgets.stateReconciliationPending");
+      case "Recovery Pending": return t("budgets.stateRecoveryPending");
       default: return value;
     }
   }
@@ -71,6 +83,9 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
       } else if (decision === "dissolve" && "effectiveSemester" in result && "cancelledEvents" in result) {
         appToast.success(t("clubLifecycle.dissolved", { semester: result.effectiveSemester,
           events: result.cancelledEvents, bookings: result.cancelledBookings }));
+        if ("unreconciledBudgets" in result && Number(result.unreconciledBudgets) > 0) {
+          appToast.warning(t("clubLifecycle.dissolvedUnreconciled", { count: Number(result.unreconciledBudgets) }));
+        }
       } else {
         appToast.success(t("clubLifecycle.reactivated"));
       }
@@ -90,6 +105,10 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
   const canSuspend = club.state === "Active";
   const canReactivate = club.state === "Suspended";
   const canDissolve = ["Active", "Suspended"].includes(club.state) && !club.dissolution;
+  const outstanding = club.dissolution?.outstanding;
+  // E1: warn while choosing to dissolve and for as long as the club is on its way out.
+  const showUnreconciled = club.unreconciledBudgets.length > 0 && club.state !== "Dissolved"
+    && (decision === "dissolve" || Boolean(club.dissolution));
 
   return (
     <div className="mt-4 space-y-6 border-t border-border-app pt-4">
@@ -99,6 +118,25 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
       {club.dissolution && <AppNotice tone="danger">{t("clubLifecycle.dissolutionScheduled", {
         semester: club.dissolution.effectiveSemester, from: date(club.dissolution.effectiveFrom),
         to: date(club.dissolution.effectiveTo), reason: club.dissolution.reason })}</AppNotice>}
+      {showUnreconciled && <AppNotice tone="warning" title={t("clubLifecycle.unreconciledTitle")}>
+        <p>{t("clubLifecycle.unreconciledHint")}</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">{club.unreconciledBudgets.map((item) =>
+          <li key={item.id}>{t("clubLifecycle.budgetLine", { event: item.eventTitle, state: budgetState(item.state) })}</li>)}</ul>
+      </AppNotice>}
+      {club.dissolution?.archivedAt && outstanding && <AppNotice
+        tone={outstanding.periodicReports.length || outstanding.postEventReports.length || outstanding.budgets.length ? "warning" : "info"}
+        title={t("clubLifecycle.outstandingTitle", { date: date(club.dissolution.archivedAt) })}>
+        {outstanding.periodicReports.length || outstanding.postEventReports.length || outstanding.budgets.length
+          ? <ul className="list-disc space-y-1 pl-5">
+            {outstanding.periodicReports.length > 0 && <li>{t("clubLifecycle.outstandingPeriodic",
+              { periods: outstanding.periodicReports.join(", ") })}</li>}
+            {outstanding.postEventReports.length > 0 && <li>{t("clubLifecycle.outstandingPostEvent",
+              { events: outstanding.postEventReports.map((item) => item.title).join(", ") })}</li>}
+            {outstanding.budgets.length > 0 && <li>{t("clubLifecycle.outstandingBudgets",
+              { budgets: outstanding.budgets.map((item) => item.eventTitle).join(", ") })}</li>}
+          </ul>
+          : <p>{t("clubLifecycle.outstandingNone")}</p>}
+      </AppNotice>}
 
       <section className="grid gap-4 sm:grid-cols-3">
         <div><h3 className="text-sm font-semibold">{t("clubLifecycle.openCampaigns")}</h3>

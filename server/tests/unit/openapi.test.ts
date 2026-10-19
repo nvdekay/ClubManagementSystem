@@ -133,13 +133,13 @@ const stubBookings: FacilityBookingRepository = {
 };
 const stubRoomAllocations: RoomAllocationRepository = {
   clubs: async () => [], club: async () => null, list: async () => [], find: async () => null,
-  allocate: unusedLifecycle, revoke: unusedLifecycle,
+  allocate: unusedLifecycle, revoke: unusedLifecycle, roomCommitments: async () => [],
 };
 const stubLifecycle: ClubLifecycleRepository = {
   list: async () => [], detail: async () => null, suspend: unusedLifecycle, reactivate: unusedLifecycle,
   decideDissolution: unusedLifecycle, suspensionsDueForReminder: async () => [], markReminded: unusedLifecycle,
-  expiredSuspensions: async () => [], startDissolving: async () => [], completeDissolutions: async () => [],
-  officerIds: async () => [],
+  expiredSuspensions: async () => [], startDissolving: async () => ({ done: [], failed: [] }),
+  completeDissolutions: async () => ({ done: [], failed: [] }), officerIds: async () => [], alertOfficers: async () => false,
 };
 const stubWriter: ExportFileWriter = { write: async () => { throw new Error("unused"); } };
 const stubApplicationReviews: ClubApplicationReviewRepository = {

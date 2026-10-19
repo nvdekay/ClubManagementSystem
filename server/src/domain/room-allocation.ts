@@ -1,5 +1,5 @@
 import { DomainError } from "./errors.js";
-import { BOOKING_SLOTS, slotsConflict } from "./facility-booking.js";
+import { BOOKING_SLOTS, bookingIntervalsConflict, slotsConflict } from "./facility-booking.js";
 import type { AcademicSemester } from "./policy.js";
 import type { Property } from "./property.js";
 
@@ -23,6 +23,8 @@ export interface RoomAllocation {
 }
 export interface RoomAllocationClub { id: string; name: string; state: string; dissolutionSemester?: string }
 export interface RoomAllocationConflict { startAt: Date; endAt: Date; source: "booking" | "event"; title: string; clubName?: string }
+/** One weekly grid cell (UC58 A3) and the approved events or bookings that would block it. */
+export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
 export interface RoomAllocationPlan { input: RoomAllocationInput; dates: Array<{ startAt: Date; endAt: Date }>; skipped: Date[] }
 export interface RoomAllocationOptions {
   semesters: AcademicSemester[];
@@ -40,6 +42,8 @@ export interface RoomAllocationRepository {
   allocate(plan: RoomAllocationPlan, clubName: string, thresholdMinutes: number,
     officerId: string, now: Date): Promise<RoomAllocation>;
   revoke(id: string, reason: string, officerId: string, now: Date): Promise<RoomAllocation>;
+  /** Approved events and bookings (not allocation sessions) on the room inside the window. */
+  roomCommitments(propertyId: string, from: Date, to: Date): Promise<RoomAllocationConflict[]>;
 }
 
 const OBJECT_ID = /^[0-9a-f]{24}$/i;
@@ -89,6 +93,27 @@ export function weeklySlotDates(semester: AcademicSemester, weekday: number, slo
     if (startAt >= semester.startAt && endAt <= semester.endAt && startAt > now) dates.push({ startAt, endAt });
   }
   return dates;
+}
+
+/**
+ * UC58 A3: places each approved event or booking on the weekday × slot cells it would block, with the
+ * same conflict rule the allocation uses, so the grid shows what E1 would reject before submitting.
+ */
+export function roomOccupancy(commitments: readonly RoomAllocationConflict[], thresholdMinutes: number): RoomOccupancyCell[] {
+  const cells = new Map<string, RoomOccupancyCell>();
+  for (const item of commitments) {
+    const { day, weekday } = vietnamDay(item.startAt);
+    for (const slot of BOOKING_SLOTS) {
+      const startAt = new Date(`${day}T${slot.start}:00+07:00`);
+      const endAt = new Date(`${day}T${slot.end}:00+07:00`);
+      if (!bookingIntervalsConflict(startAt, endAt, item.startAt, item.endAt, thresholdMinutes)) continue;
+      const key = `${weekday}-${slot.number}`;
+      const cell = cells.get(key) ?? { weekday, slot: slot.number, items: [] };
+      cell.items.push(item);
+      cells.set(key, cell);
+    }
+  }
+  return [...cells.values()].sort((a, b) => a.weekday - b.weekday || a.slot - b.slot);
 }
 
 /** Validates the allocation against catalogue, club and calendar rules; blackout dates are skipped. */

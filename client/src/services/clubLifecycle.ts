@@ -13,6 +13,21 @@ export interface ClubDissolution {
   effectiveSemester: string;
   effectiveFrom: string;
   effectiveTo: string;
+  /** Set when the club was archived at the end of its Dissolving semester (UC15 step 6). */
+  archivedAt?: string;
+  outstanding?: OutstandingObligations;
+}
+
+export interface UnreconciledBudget {
+  id: string;
+  eventTitle: string;
+  state: string;
+}
+
+export interface OutstandingObligations {
+  periodicReports: string[];
+  postEventReports: { eventId: string; title: string }[];
+  budgets: UnreconciledBudget[];
 }
 
 export interface ClubLifecycleSummary {
@@ -32,6 +47,7 @@ export interface ClubLifecycleDetail extends ClubLifecycleSummary {
   openCampaigns: { id: string; title: string; windowEnd: string }[];
   upcomingEvents: { id: string; title: string; startAt: string; endAt: string; registrations: number }[];
   activeTerm?: { name: string; startAt: string; endAt: string };
+  unreconciledBudgets: UnreconciledBudget[];
   history: { action: string; reason?: string; actorName?: string; at: string }[];
 }
 
@@ -86,7 +102,7 @@ export function reactivateClub(id: string, reason: string, csrfToken: string): P
 }
 
 export function dissolveClub(id: string, reason: string, csrfToken: string): Promise<CascadeResult & {
-  effectiveSemester: string;
+  effectiveSemester: string; unreconciledBudgets: number;
 }> {
   return request(`/${encodeURIComponent(id)}/dissolve`, post("", csrfToken, { reason }));
 }

@@ -184,13 +184,16 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
     expect((await repo.advanceLifecycle(input.endAt)).completed).toBe(1);
     await expect(repo.cancel(b.booking.id, clubId, "Unused", actor, input.endAt)).rejects.toMatchObject({ kind: "conflict" });
   });
-  it("surfaces blackout conflicts only for pending requests and preserves approved decisions", async () => {
+  it("surfaces blackout conflicts for pending and approved bookings and preserves approved decisions", async () => {
     const { clubId, input } = await fixture(); const a = await submitted(clubId, input);
     const b = await submitted(clubId, input); await repo.claim(a.booking.id, officer, now);
     await repo.decide(a.booking.id, officer, { outcome: "Approve", reason: "Allowed" }, now);
     const properties = mongoPropertyRepository(); const property = (await properties.find(input.propertyId))!;
     await properties.update(property.id, { ...property, blackouts: [{ startAt: input.startAt, endAt: input.endAt, reason: "Maintenance" }] }, officer, now);
-    expect((await repo.blackoutConflicts(property.id)).map((item) => item.id)).toEqual([b.booking.id]);
+    expect((await repo.blackoutConflicts(property.id, now)).map((item) => [item.id, item.state]).sort())
+      .toEqual([[a.booking.id, "Approved"], [b.booking.id, "Requested"]].sort());
+    // Once the slot is over it is history, not a conflict to handle.
+    expect(await repo.blackoutConflicts(property.id, new Date(input.endAt.getTime() + 1))).toEqual([]);
     expect((await repo.find(a.booking.id, now))!.booking.state).toBe("Approved");
     await repo.claim(b.booking.id, officer, now);
     await expect(repo.decide(b.booking.id, officer, { outcome: "Approve", reason: "Allowed" }, now)).rejects.toThrow("blackout");

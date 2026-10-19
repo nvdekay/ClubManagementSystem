@@ -90,6 +90,20 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
       return hydrate(records);
     },
     find,
+    async roomCommitments(propertyId, from, to) {
+      const property = oid(propertyId);
+      const window = { startAt: { $lt: to }, endAt: { $gt: from } };
+      const [bookingDocs, eventDocs] = await Promise.all([
+        m.propertyBookings!.find({ propertyId: property, state: { $in: ["Approved", "In Use"] },
+          purpose: { $ne: ROOM_ALLOCATION_PURPOSE }, ...window }).sort({ startAt: 1 }).lean(),
+        m.events!.find({ propertyId: property, state: { $in: ["Approved", "Upcoming", "Ongoing"] }, ...window })
+          .sort({ startAt: 1 }).lean(),
+      ]);
+      return [...bookingDocs.map((doc) => ({ source: "booking" as const, title: String(doc.purpose), doc })),
+        ...eventDocs.map((doc) => ({ source: "event" as const, title: String(doc.title), doc }))]
+        .map(({ source, title, doc }) => ({ startAt: doc.startAt as Date, endAt: doc.endAt as Date, source, title,
+          ...(doc.clubName ? { clubName: String(doc.clubName) } : {}) }));
+    },
     async allocate(plan, clubName, thresholdMinutes, officerId, now) {
       const id = new Types.ObjectId();
       const { input, dates } = plan;

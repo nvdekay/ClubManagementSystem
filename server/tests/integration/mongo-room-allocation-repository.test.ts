@@ -73,6 +73,17 @@ describe.skipIf(!uri)("Mongo room allocation repository", () => {
     expect(await bookings.list(club.id)).toEqual([]);
   });
 
+  it("lists room sessions caught by a blackout added after the allocation (UC44 A2)", async () => {
+    const club = await clubFixture("HEBE"); const room = await roomFixture();
+    const result = await allocate({ semesterCode: "FA26", clubId: club.id, propertyId: room.id, weekday: 3, slot: 4 }, club.name);
+    const second = result.occurrences[1]!;
+    const property = (await mongoPropertyRepository().find(room.id))!;
+    await mongoPropertyRepository().update(room.id, { ...property, blackouts: [{ startAt: new Date(second.startAt.getTime() - 3_600_000),
+      endAt: new Date(second.endAt.getTime() + 3_600_000), reason: "Maintenance" }] }, officer, now);
+    expect((await bookings.blackoutConflicts(room.id, now)).map((item) => [item.id, item.purpose, item.state]))
+      .toEqual([[second.bookingId, "ICPDP room allocation", "Approved"]]);
+  });
+
   it("lets only one club take a room slot when two officers allocate at once, and lists the clashing dates", async () => {
     const first = await clubFixture("HEBE"); const second = await clubFixture("FDS"); const room = await roomFixture();
     const input = { semesterCode: "FA26", propertyId: room.id, weekday: 3, slot: 4 };
@@ -96,6 +107,9 @@ describe.skipIf(!uri)("Mongo room allocation repository", () => {
       .rejects.toMatchObject({ kind: "conflict", details: [{ source: "event", title: "Workshop" }] });
     expect(await m.propertyBookings!.countDocuments()).toBe(0);
     expect(await m.auditLogs!.countDocuments({ entityType: "RoomAllocation" })).toBe(0);
+    // The grid shows the event before the officer tries (UC58 A3); allocation sessions are not listed here.
+    expect(await repo.roomCommitments(room.id, semester.startAt, semester.endAt)).toEqual([{ source: "event", title: "Workshop",
+      clubName: "HEBE", startAt: new Date("2026-09-23T15:00:00+07:00"), endAt: new Date("2026-09-23T17:00:00+07:00") }]);
   });
 
   it("revokes once: frees future dates, keeps used ones as history and lets the slot be allocated again", async () => {

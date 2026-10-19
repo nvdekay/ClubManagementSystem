@@ -90,7 +90,7 @@ export function facilityBookingRoutes(deps: BookingDeps & { authRepo: AuthReposi
         endAt: new Date(body.alternative.endAt) } : undefined }, new Date()));
   });
   router.get("/admin/properties/:id/booking-conflicts", authGuard(guard, false), async (req, res) => {
-    ok(res, await propertyBookingConflicts(deps, actor(res), parsed(id, req.params.id)));
+    ok(res, await propertyBookingConflicts(deps, actor(res), parsed(id, req.params.id), new Date()));
   });
   return router;
 }

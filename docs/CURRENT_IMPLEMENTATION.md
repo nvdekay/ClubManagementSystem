@@ -63,7 +63,7 @@ nghiệp vụ; **Đã rút** = không còn trong phạm vi, giữ số hiệu đ
 | Club Leader | UC49 xem tổng hợp feedback | Có; điểm tổng kèm trung bình và phân bố (tổng hợp theo tiêu chí ngoài phạm vi) |
 | Club Leader | UC52 phản hồi complaint | **Đã rút** (UC50 là góp ý một chiều, 09/10/2026) |
 | ICPDP | UC03, UC04 tài khoản/chính sách | Có; UC05 đã rút; UC03 chưa nối khoá tài khoản với hồ sơ UC40 |
-| ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests`; UC15 **Một phần**: giải thể chưa dọn nghĩa vụ/cảnh báo đối soát (A1 liên kết hồ sơ UC40 ngoài phạm vi) |
+| ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests`; UC15 giải thể dọn việc còn mở, lưu nghĩa vụ tồn đọng và cảnh báo đối soát (A1 liên kết hồ sơ UC40 ngoài phạm vi) |
 | ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính |
 | ICPDP | UC37 đối soát | Có, đã nối vào app chính; A2 đối soát tối đa bằng số đã tạm ứng, không cấp bù |
 | ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42 **Một phần** (nguồn dữ liệu bản nháp); UC43 có (E1 khiếu nại kết quả ngoài phạm vi) |
@@ -104,16 +104,21 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 4. UC03: khoá tài khoản chưa nối với hồ sơ UC40 (A1); tìm kiếm không hiện ngữ cảnh CLB.
 5. UC07 E3: cảnh báo trùng tên không hiển thị cho người thẩm định ICPDP.
 6. UC10: phía CLB không thấy trạng thái đề cử/lý do trả lại; chỉ có một ghế Phó chủ nhiệm.
-7. UC15: giải thể cuối kỳ không huỷ đề xuất đang chờ/lưu trữ nghĩa vụ; job lỗi chỉ log console;
-   E1 không cảnh báo ngân sách chưa đối soát.
+7. ~~UC15: giải thể cuối kỳ không huỷ đề xuất đang chờ/lưu trữ nghĩa vụ; job lỗi chỉ log console;
+   E1 không cảnh báo ngân sách chưa đối soát.~~ Đã sửa 19/10/2026 (nhánh `agent/gaps-lifecycle`): bước 6
+   huỷ đề xuất (kể cả `Draft`) và yêu cầu booking chưa quyết định, ghi `dissolution.outstanding` (báo cáo
+   định kỳ/sau sự kiện chưa nộp, ngân sách chưa đối soát) cùng `archivedAt`, báo ICPDP; mỗi CLB một
+   transaction, lỗi thì CLB ở lại `Dissolving` và ICPDP nhận `CLUB_LIFECYCLE_FAILED` (audit + thông báo,
+   tối đa một lần/ngày; job hỏng toàn bộ cũng báo); E1 liệt kê ngân sách chưa đối soát khi chọn giải thể.
 
 **Thành viên**
 
 
 **Sự kiện, ngân sách, cơ sở vật chất**
 
-8. UC44 A2: blackout chỉ liệt kê yêu cầu đang chờ bị trùng, không liệt kê booking đã duyệt hay
-   buổi phân phòng UC58.
+8. ~~UC44 A2: blackout chỉ liệt kê yêu cầu đang chờ bị trùng, không liệt kê booking đã duyệt hay
+   buổi phân phòng UC58.~~ Đã sửa 19/10/2026: danh sách gồm yêu cầu đang chờ, booking `Approved`/`In Use`
+   và buổi phân phòng UC58 chưa kết thúc; quyết định đã ra vẫn giữ nguyên (ICPDP xử lý tay).
 
 **Báo cáo, tuân thủ, đánh giá**
 
@@ -152,8 +157,9 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 - UC14 checkbox xác nhận bắt buộc kể cả khi không có gì để xác nhận.
 - UC38 editor hiện số liệu trực tiếp sau khi nộp; không có số liệu tài chính.
 - UC40 thẻ hồ sơ phía CLB thiếu trạng thái/mức độ/nguồn.
-- UC46 phương án thay thế chỉ là văn bản; lưới UC58 không đánh dấu sự kiện đã duyệt.
-- `window.confirm` còn dùng ở `PropertiesPage`/`BookingWorkspace`.
+- UC46 phương án thay thế chỉ là văn bản. (Lưới UC58 đánh dấu ô vướng sự kiện/booking đã duyệt từ 19/10.)
+- `window.confirm` còn dùng ở vài trang khác (sự kiện, thành viên, tuyển, báo cáo, tài chính);
+  `PropertiesPage`/`BookingWorkspace` đã chuyển sang `AppConfirmDialog` ngày 19/10.
 - Tên tiêu chí đánh giá tiếng Việt khi ở `en`; so sánh feedback gồm cả sự kiện `Draft`/`Pending`;
   nhãn "active clubs" trên bộ lọc suspended ở `/icpdp/clubs`; lỗi form tuyển không nêu tên trường.
 - `seed-guide.ts:60` và `seed-wave4.ts:82` dùng `recoveryDueDays` 14 (prod 7, BR58).

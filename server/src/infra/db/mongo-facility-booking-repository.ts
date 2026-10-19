@@ -381,11 +381,14 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return { started, completed };
     },
-    async blackoutConflicts(propertyId) {
+    async blackoutConflicts(propertyId, now) {
       const property = await m.properties!.findById(oid(propertyId)).lean();
       if (!property) throw new DomainError("property not found", "not_found");
       const blackouts = propertyFrom(property).blackouts;
-      const docs = await bookings.find({ propertyId: oid(propertyId), state: { $in: pendingStates } }).sort({ startAt: 1 }).lean();
+      // UC44 A2: pending requests, plus approved bookings and UC58 room sessions that are not over yet —
+      // a blackout never revokes a decision, so ICPDP sees them and handles them by hand.
+      const docs = await bookings.find({ propertyId: oid(propertyId), endAt: { $gt: now },
+        state: { $in: [...pendingStates, "Approved", "In Use"] } }).sort({ startAt: 1 }).lean();
       return docs.filter((doc) => blackouts.some((item) => slotsConflict(doc.startAt as Date, doc.endAt as Date,
         item.startAt, item.endAt, 0))).map((doc) => bookingFrom(doc));
     },

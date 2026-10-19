@@ -116,9 +116,9 @@ export async function cancelBooking(deps: BookingDeps, actor: AccessActor | null
   assertRequestableProperty((await owned(deps, clubId, id, now)).property);
   return deps.repo.cancel(bookingId(id), bookingId(clubId), bookingReason(reason), actorId, now);
 }
-export async function propertyBookingConflicts(deps: BookingDeps, actor: AccessActor | null, id: string) {
+export async function propertyBookingConflicts(deps: BookingDeps, actor: AccessActor | null, id: string, now: Date) {
   await officer(deps, actor);
-  return deps.repo.blackoutConflicts(bookingId(id));
+  return deps.repo.blackoutConflicts(bookingId(id), now);
 }
 export async function releaseBookings(repo: FacilityBookingRepository,
   input: Parameters<FacilityBookingRepository["release"]>[0]) {

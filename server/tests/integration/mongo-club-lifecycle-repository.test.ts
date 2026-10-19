@@ -4,7 +4,7 @@ import { mongoClubLifecycleRepository } from "../../src/infra/db/mongo-club-life
 import { mongoPublicDiscoveryRepository } from "../../src/infra/db/mongo-public-discovery-repository.js";
 import { mongoRecruitmentApplicationRepository } from "../../src/infra/db/mongo-recruitment-application-repository.js";
 import { ensureUcmsDatabase, ucmsModels } from "../../src/infra/db/ucms-models.js";
-import { runClubLifecycleJob } from "../../src/usecase/club-lifecycle.js";
+import { alertClubLifecycleJobFailure, runClubLifecycleJob } from "../../src/usecase/club-lifecycle.js";
 
 const uri = process.env.MONGO_URI;
 const dbName = `ucms-lifecycle-test-${process.pid}`;
@@ -115,13 +115,55 @@ describe.skipIf(!uri)("Mongo club lifecycle repository", () => {
 
     expect(await runClubLifecycleJob(repo, new Date("2027-01-06T00:00:00Z"))).toMatchObject({ dissolving: 1, dissolved: 0 });
     expect((await ucmsModels.clubs!.findById(seeded.clubId).lean())?.state).toBe("Dissolving");
-    expect(await runClubLifecycleJob(repo, new Date("2027-05-01T00:00:00Z"))).toMatchObject({ dissolved: 1 });
-    expect((await ucmsModels.clubs!.findById(seeded.clubId).lean())?.state).toBe("Dissolved");
+    // Left open during the Dissolving semester: a proposal under review and an unreconciled budget (E1).
+    const [pending] = await ucmsModels.events!.insertMany([{ clubId: seeded.clubId, clubName: "Guitar", title: "Đang duyệt",
+      startAt: new Date("2027-04-10T02:00:00Z"), endAt: new Date("2027-04-10T05:00:00Z"), state: "Under Review",
+      semesterCode: "SP27", audienceScope: "PUBLIC", capacity: 30, createdAt: now }]);
+    const budget = await ucmsModels.eventBudgets!.create({ clubId: seeded.clubId, eventId: seeded.past, lines: [],
+      requestedTotal: 100, approvedTotal: 100, approvedByDecisionId: new Types.ObjectId(), disbursedTotal: 100,
+      isSettlementLate: false, refundedTotal: 0, state: "Disbursed", createdAt: now });
+    expect((await repo.detail(String(seeded.clubId), now))?.unreconciledBudgets)
+      .toEqual([{ id: String(budget._id), eventTitle: "Đã diễn ra", state: "Disbursed" }]);
+    expect(await runClubLifecycleJob(repo, new Date("2027-05-01T00:00:00Z"))).toMatchObject({ dissolved: 1, failed: 0 });
+    const archived = await ucmsModels.clubs!.findById(seeded.clubId).lean();
+    expect(archived?.state).toBe("Dissolved");
+    expect((await ucmsModels.events!.findById(pending!._id).lean())?.state).toBe("Cancelled");
+    // The completed event never got its report and the budget was not reconciled: both stay on the archive.
+    expect((archived?.dissolution as { outstanding?: unknown; archivedAt?: Date })).toMatchObject({
+      archivedAt: new Date("2027-05-01T00:00:00Z"),
+      outstanding: { postEventReports: [{ eventId: String(seeded.past), title: "Đã diễn ra" }],
+        budgets: [{ id: String(budget._id), state: "Disbursed" }] } });
+    expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: officer, eventCode: "CLUB_DISSOLVED",
+      entityId: seeded.clubId, "payload.outstandingBudgets": 1 })).toBe(1);
     expect(await ucmsModels.clubTerms!.countDocuments({ clubId: seeded.clubId, state: "Active" })).toBe(0);
     expect(await ucmsModels.clubPositionAssignments!.countDocuments({ clubId: seeded.clubId, effectiveTo: null })).toBe(0);
     expect((await ucmsModels.recruitmentCampaigns!.findById(seeded.campaignId).lean())?.state).toBe("Cancelled");
     expect(await runClubLifecycleJob(repo, new Date("2027-05-02T00:00:00Z"))).toMatchObject({ dissolved: 0 });
     expect(await ucmsModels.auditLogs!.distinct("action", { entityId: seeded.clubId })).toEqual(
       expect.arrayContaining(["CLUB_DISSOLUTION_DECIDED", "CLUB_DISSOLVING", "CLUB_DISSOLVED"]));
+  });
+
+  it("keeps a club Dissolving when the final step fails and alerts ICPDP once a day", async () => {
+    const repo = mongoClubLifecycleRepository();
+    const clubId = new Types.ObjectId();
+    await ucmsModels.clubs!.create({ _id: clubId, code: "CLB-Broken", name: "Broken", field: "Công nghệ", state: "Dissolving",
+      createdAt: now, dissolution: { decidedAt: now, decidedBy: officer, reason: "x", effectiveSemester: "SP27",
+        effectiveFrom: new Date("2027-01-05T00:00:00Z"), effectiveTo: new Date("2027-04-30T00:00:00Z") } });
+    // A proposal that cannot be cancelled makes the whole step roll back.
+    await ucmsModels.events!.create({ clubId, clubName: "Broken", title: "Kẹt", startAt: new Date("2027-04-01T02:00:00Z"),
+      endAt: new Date("2027-04-01T05:00:00Z"), state: "Under Review", attendanceFinalized: true, semesterCode: "SP27",
+      audienceScope: "PUBLIC", capacity: 30, createdAt: now });
+    const at = new Date("2027-05-03T00:00:00Z");
+    expect(await runClubLifecycleJob(repo, at)).toMatchObject({ dissolved: 0, failed: 1 });
+    expect((await ucmsModels.clubs!.findById(clubId).lean())?.state).toBe("Dissolving");
+    expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: officer, eventCode: "CLUB_LIFECYCLE_FAILED",
+      entityId: clubId })).toBe(1);
+    expect(await ucmsModels.auditLogs!.countDocuments({ entityId: clubId, action: "CLUB_LIFECYCLE_FAILED" })).toBe(1);
+    // The next hourly run fails again but does not alert again within the day.
+    await runClubLifecycleJob(repo, new Date(at.getTime() + 3_600_000));
+    expect(await ucmsModels.notifications!.countDocuments({ eventCode: "CLUB_LIFECYCLE_FAILED", entityId: clubId })).toBe(1);
+    expect(await alertClubLifecycleJobFailure(repo, "database unreachable", at)).toBe(true);
+    expect(await alertClubLifecycleJobFailure(repo, "database unreachable", at)).toBe(false);
+    await ucmsModels.events!.deleteMany({ clubId });
   });
 });

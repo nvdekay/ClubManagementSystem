@@ -41,7 +41,12 @@ ICPDP cần kiểm soát vòng đời CLB ở một chỗ, có lý do, và để
       và thu hồi quyền.
 
 ## Ngoài phạm vi
-UC14 (CLB tự xin tạm ngừng), liên kết hồ sơ vi phạm UC40 (A1), cảnh báo ngân sách chưa đối soát (E1).
+UC14 (CLB tự xin tạm ngừng), liên kết hồ sơ vi phạm UC40 (A1). E1 làm ở v1.1.0.
 
 ## Changelog
 - v1.0.0 (2026-10-10) — được người dùng duyệt.
+- v1.1.0 (2026-10-19) — bước 6 (UC15): huỷ đề xuất/yêu cầu booking chưa quyết định, ghi
+  `dissolution.outstanding` + `archivedAt` (báo cáo định kỳ, báo cáo sau sự kiện, ngân sách chưa đối soát),
+  thông báo ICPDP; mỗi CLB một transaction, lỗi → giữ `Dissolving`, audit + thông báo `CLUB_LIFECYCLE_FAILED`
+  tối đa một lần/ngày (job lỗi toàn bộ cũng báo). E1: `GET /admin/clubs/:id` trả `unreconciledBudgets`,
+  `POST …/dissolve` trả số ngân sách còn phải đối soát; màn hình ICPDP cảnh báo.

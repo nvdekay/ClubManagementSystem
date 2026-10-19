@@ -4,7 +4,7 @@ import {
 } from "../../src/domain/club-lifecycle.js";
 import type { PolicyRepository, PolicyVersion } from "../../src/domain/policy.js";
 import {
-  dissolveClub, getClubLifecycle, listClubLifecycles, reactivateClub, runClubLifecycleJob, suspendClub,
+  alertClubLifecycleJobFailure, dissolveClub, getClubLifecycle, listClubLifecycles, reactivateClub, runClubLifecycleJob, suspendClub,
 } from "../../src/usecase/club-lifecycle.js";
 
 const now = new Date("2026-10-10T08:00:00Z");
@@ -21,7 +21,7 @@ const cascade = { cancelledEvents: 1, cancelledRegistrations: 3, cancelledBookin
 
 function club(overrides: Partial<ClubLifecycleDetail> = {}): ClubLifecycleDetail {
   return { id: clubId, code: "CLB-1", name: "CLB A", field: "Công nghệ", state: "Active", activeMembers: 5,
-    openCampaigns: [], upcomingEvents: [], history: [], ...overrides };
+    openCampaigns: [], upcomingEvents: [], unreconciledBudgets: [], history: [], ...overrides };
 }
 
 function repository(current: ClubLifecycleDetail | null = club()) {
@@ -30,8 +30,9 @@ function repository(current: ClubLifecycleDetail | null = club()) {
     suspend: vi.fn(async () => cascade), reactivate: vi.fn(async () => undefined),
     decideDissolution: vi.fn(async () => cascade), suspensionsDueForReminder: vi.fn(async () => []),
     markReminded: vi.fn(async () => undefined), expiredSuspensions: vi.fn(async () => []),
-    startDissolving: vi.fn(async () => []), completeDissolutions: vi.fn(async () => []),
-    officerIds: async () => ["000000000000000000000009"],
+    startDissolving: vi.fn(async () => ({ done: [], failed: [] })),
+    completeDissolutions: vi.fn(async () => ({ done: [], failed: [] })),
+    officerIds: async () => ["000000000000000000000009"], alertOfficers: vi.fn(async () => true),
   };
   return repo;
 }
@@ -96,9 +97,27 @@ describe("UC15 club lifecycle use cases", () => {
     const repo = repository();
     vi.mocked(repo.suspensionsDueForReminder).mockResolvedValue([club({ id: "a", state: "Suspended" })]);
     vi.mocked(repo.expiredSuspensions).mockResolvedValue([club({ id: "b", state: "Suspended" })]);
-    vi.mocked(repo.startDissolving).mockResolvedValue(["c"]);
-    await expect(runClubLifecycleJob(repo, now)).resolves.toEqual({ reminded: 1, reactivated: 1, dissolving: 1, dissolved: 0 });
+    vi.mocked(repo.startDissolving).mockResolvedValue({ done: ["c"], failed: [] });
+    await expect(runClubLifecycleJob(repo, now)).resolves.toEqual({ reminded: 1, reactivated: 1, dissolving: 1, dissolved: 0, failed: 0 });
     expect(repo.markReminded).toHaveBeenCalledWith("a", ["000000000000000000000009"], now);
     expect(repo.reactivate).toHaveBeenCalledWith("b", expect.any(String), null, now);
+    expect(repo.alertOfficers).not.toHaveBeenCalled();
+  });
+
+  it("alerts ICPDP when a club's dissolution step fails, and when the whole run fails", async () => {
+    const repo = repository();
+    vi.mocked(repo.completeDissolutions).mockResolvedValue({ done: [], failed: [{ clubId: "d", step: "dissolved", message: "boom" }] });
+    await expect(runClubLifecycleJob(repo, now)).resolves.toMatchObject({ dissolved: 0, failed: 1 });
+    expect(repo.alertOfficers).toHaveBeenCalledWith({ clubId: "d", step: "dissolved", message: "boom" },
+      ["000000000000000000000009"], now);
+    await alertClubLifecycleJobFailure(repo, "db down", now);
+    expect(repo.alertOfficers).toHaveBeenLastCalledWith({ clubId: null, step: "job", message: "db down" },
+      ["000000000000000000000009"], now);
+  });
+
+  it("E1: warns about unreconciled budgets when dissolution is decided", async () => {
+    const repo = repository(club({ unreconciledBudgets: [{ id: "b1", eventTitle: "Hội thao", state: "Disbursed" }] }));
+    await expect(dissolveClub(repo, policy, officer, actor, clubId, { reason: "Không hoạt động" }, now))
+      .resolves.toMatchObject({ unreconciledBudgets: 1 });
   });
 });

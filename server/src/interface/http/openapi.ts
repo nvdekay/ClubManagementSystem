@@ -3,7 +3,7 @@ import { clubPeriodicCreateBody, clubPeriodicDraftBody, clubPeriodicVersionBody 
 import { invitationResponseBody } from "./club-invitation-routes.js";
 import { accountabilityOpenApiPaths } from "./openapi-accountability.js";
 import { clubEventOpenApiPaths } from "./openapi-club-events.js";
-import { roomAllocationBody, roomAllocationQuery, roomAllocationRevokeBody } from "./room-allocation-routes.js";
+import { roomAllocationBody, roomAllocationQuery, roomAllocationRevokeBody, roomOccupancyQuery } from "./room-allocation-routes.js";
 import { bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
 import { z } from "zod";
 import { createDocument } from "zod-openapi";
@@ -119,7 +119,11 @@ const ClubLifecycleSummary = z.object({
   suspension: z.object({ reason: z.string(), suspendedAt: z.string(), suspendedBy: z.string(),
     until: z.string().nullable(), reminderSentAt: z.string().optional() }).optional(),
   dissolution: z.object({ decidedAt: z.string(), decidedBy: z.string(), reason: z.string(),
-    effectiveSemester: z.string(), effectiveFrom: z.string(), effectiveTo: z.string() }).optional(),
+    effectiveSemester: z.string(), effectiveFrom: z.string(), effectiveTo: z.string(), archivedAt: z.string().optional(),
+    outstanding: z.object({ periodicReports: z.array(z.string()),
+      postEventReports: z.array(z.object({ eventId: z.string(), title: z.string() })),
+      budgets: z.array(z.object({ id: z.string(), eventTitle: z.string(), state: z.string() })) }).optional()
+      .describe("UC15 step 6: obligations still open when the club was archived") }).optional(),
 });
 const CascadeResult = z.object({ cancelledEvents: z.number(), cancelledRegistrations: z.number(),
   cancelledBookings: z.number() });
@@ -497,6 +501,15 @@ const roomAllocationPaths = {
         clubs: z.array(z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() })),
         rooms: z.array(Property) })) } } }, "403": { description: "ICPDP officer required" } } },
   },
+  "/admin/room-allocations/occupancy": {
+    get: { summary: "UC58 A3 weekly grid cells of a room blocked by approved events or bookings this semester",
+      requestParams: { query: roomOccupancyQuery },
+      responses: { "200": { description: "Blocked cells", content: { "application/json": { schema: envelope(z.array(z.object({
+        weekday: z.number().int().min(1).max(7), slot: z.number().int().min(1).max(4),
+        items: z.array(z.object({ startAt: z.string(), endAt: z.string(), source: z.enum(["booking", "event"]), title: z.string(),
+          clubName: z.string().optional() })) }))) } } },
+        "400": { description: "Unknown semester or invalid room id" }, "403": { description: "ICPDP officer required" } } },
+  },
   "/admin/room-allocations": {
     get: { summary: "UC58 room allocations, optionally for one semester", requestParams: { query: roomAllocationQuery },
       responses: { "200": { description: "Allocations with their occurrences", content: { "application/json": { schema: envelope(z.array(RoomAllocation)) } } },
@@ -728,7 +741,7 @@ export const openApiDocument = createDocument({
       },
     },
     "/admin/properties/{id}/booking-conflicts": {
-      get: { summary: "Pending bookings overlapping property blackouts (UC44 FR-05)",
+      get: { summary: "Pending requests, approved bookings and room-allocation sessions overlapping property blackouts (UC44 A2)",
         requestParams: { path: z.object({ id: z.string() }) },
         responses: { "200": { description: "Booking result", content: { "application/json": { schema: envelope(z.array(FacilityBooking)) } } },
           "400": { description: "Invalid booking input", content: { "application/json": { schema: ApiError } } },
@@ -957,7 +970,9 @@ export const openApiDocument = createDocument({
         requestParams: { path: IdPath },
         responses: { "200": { description: "Club detail", content: { "application/json": { schema: envelope(z.object({
           club: ClubLifecycleSummary.extend({ openCampaigns: z.array(z.unknown()), upcomingEvents: z.array(z.unknown()),
-            activeTerm: z.unknown().optional(), history: z.array(z.unknown()) }),
+            activeTerm: z.unknown().optional(), history: z.array(z.unknown()),
+            unreconciledBudgets: z.array(z.object({ id: z.string(), eventTitle: z.string(), state: z.string() }))
+              .describe("UC15 E1: budgets to reconcile before the Dissolving semester ends") }),
           nextSemester: z.object({ code: z.string(), startAt: z.string(), endAt: z.string() }).nullable(),
         })) } } } },
       },
@@ -988,7 +1003,8 @@ export const openApiDocument = createDocument({
         requestParams: { path: IdPath },
         requestBody: { content: { "application/json": { schema: lifecycleReasonBody } } },
         responses: { "200": { description: "Dissolution scheduled",
-          content: { "application/json": { schema: envelope(CascadeResult.extend({ effectiveSemester: z.string() })) } } } },
+          content: { "application/json": { schema: envelope(CascadeResult.extend({ effectiveSemester: z.string(),
+            unreconciledBudgets: z.number().describe("UC15 E1: budgets the club must still reconcile") })) } } } },
       },
     },
     "/admin/exports/options": {

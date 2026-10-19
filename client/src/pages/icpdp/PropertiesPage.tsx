@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppConfirmDialog } from "@/components/ui/dialog/AppConfirmDialog";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -26,6 +27,7 @@ export function PropertiesPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; text: string } | null>(null);
+  const [deleting, setDeleting] = useState<Property | null>(null);
   const csrfToken = auth.data?.csrfToken ?? "";
 
   function message(error: unknown): string {
@@ -54,7 +56,6 @@ export function PropertiesPage() {
 
   async function run(property: Property, kind: "activation" | "delete") {
     setRowError(null);
-    if (kind === "delete" && !window.confirm(t("properties.confirmDelete", { name: property.name }))) return;
     try {
       if (kind === "delete") {
         await action.mutateAsync({ kind, id: property.id, csrfToken });
@@ -124,7 +125,7 @@ export function PropertiesPage() {
                               onClick={() => void run(property, "activation")}>
                               {property.isActive ? t("properties.deactivate") : t("properties.activate")}</AppButton>
                             <AppButton variant="ghost" disabled={action.isPending}
-                              onClick={() => void run(property, "delete")}>{t("properties.delete")}</AppButton>
+                              onClick={() => setDeleting(property)}>{t("properties.delete")}</AppButton>
                           </div>
                         </div>
                         {!!property.blackouts.length && <PropertyBookingConflicts propertyId={property.id} blackoutKey={JSON.stringify(property.blackouts)} />}
@@ -134,6 +135,11 @@ export function PropertiesPage() {
                   </li>
                 ))}</ul>
               </div>}
+      <AppConfirmDialog open={deleting !== null} title={t("properties.delete")}
+        message={deleting ? t("properties.confirmDelete", { name: deleting.name }) : ""}
+        confirmLabel={t("properties.delete")} cancelLabel={t("properties.cancel")} pending={action.isPending}
+        onCancel={() => setDeleting(null)}
+        onConfirm={() => { const target = deleting; setDeleting(null); if (target) void run(target, "delete"); }} />
     </>
   );
 }
