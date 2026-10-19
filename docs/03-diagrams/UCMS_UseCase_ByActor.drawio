@@ -1,50 +1,26 @@
 <mxfile host="65bd71144e">
-    <diagram id="page0" name="All users">
+    <diagram id="page0" name="User">
         <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p0title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of every user" vertex="1">
+                <mxCell id="p0title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of User" vertex="1">
                     <mxGeometry height="30" width="700" x="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="p0box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
-                    <mxGeometry height="250" width="290" x="620" y="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0lead" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Club Leader" vertex="1">
-                    <mxGeometry height="80" width="40" x="40" y="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0mem" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Club Member" vertex="1">
-                    <mxGeometry height="80" width="40" x="200" y="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0a0" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Student" vertex="1">
-                    <mxGeometry height="80" width="40" x="360" y="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0a2" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="ICPDP Officer" vertex="1">
-                    <mxGeometry height="80" width="40" x="360" y="300" as="geometry"/>
+                    <mxGeometry height="250" width="290" x="180" y="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="p0user" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="User" vertex="1">
-                    <mxGeometry height="80" width="40" x="510" y="170" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0g3" edge="1" parent="1" source="p0lead" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" target="p0mem" value="">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0g4" edge="1" parent="1" source="p0mem" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" target="p0a0" value="">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0g0" edge="1" parent="1" source="p0a0" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" target="p0user" value="">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="p0g2" edge="1" parent="1" source="p0a2" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;" target="p0user" value="">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry height="80" width="40" x="60" y="170" as="geometry"/>
                 </mxCell>
                 <mxCell id="p0uc1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Sign in with Google" vertex="1">
-                    <mxGeometry height="60" width="210" x="660" y="110" as="geometry"/>
+                    <mxGeometry height="60" width="210" x="220" y="110" as="geometry"/>
                 </mxCell>
                 <mxCell id="p0uc2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View dashboard" vertex="1">
-                    <mxGeometry height="60" width="210" x="660" y="230" as="geometry"/>
+                    <mxGeometry height="60" width="210" x="220" y="230" as="geometry"/>
                 </mxCell>
                 <mxCell id="p0oauth" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="&amp;lt;&amp;lt;external&amp;gt;&amp;gt;&lt;br&gt;Google OAuth" vertex="1">
-                    <mxGeometry height="80" width="40" x="990" y="100" as="geometry"/>
+                    <mxGeometry height="80" width="40" x="550" y="100" as="geometry"/>
                 </mxCell>
                 <mxCell id="p0e1" edge="1" parent="1" source="p0user" style="endArrow=none;html=1;strokeColor=#000000;" target="p0uc1" value="">
                     <mxGeometry relative="1" as="geometry"/>

@@ -66,7 +66,7 @@ Board (CMB)` của §4 được tách thành Club Member và Club Leader (I58):
   User là actor trừu tượng gom UC01 và UC02. Club Member là một Student; Club Leader là một
   Club Member; mỗi actor kế thừa mọi use case của actor cha. Mỗi trang nghiệp vụ chỉ vẽ quan hệ
   kế thừa tới actor cha trực tiếp bằng nét liền, tam giác rỗng hướng về actor cha, bên ngoài
-  biên `UCMS`; trang All users giữ cây tổng thể. Các oval được kế thừa tham chiếu sang trang của actor cha.
+  biên `UCMS`; trang User chỉ vẽ User với UC01, UC02, không vẽ cây tổng thể. Các oval được kế thừa tham chiếu sang trang của actor cha.
   Nét nối `«include»` phải tránh cắt qua oval khác; trang Club Leader đã chỉnh điểm nối và xuất lại ảnh.
 - **Club Member** — Student có tư cách thành viên `Active` (UC24 cho phép cả `Inactive`) ở một
   CLB. **Không có permission quản lý nào** (sửa 2026-10-16): actor chính của UC22, UC24; ngoài ra

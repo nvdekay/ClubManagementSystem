@@ -149,7 +149,7 @@ theo vai trò.
 | R3 | [`02-use-cases/UCMS_UseCase_Specification_v2.md`](02-use-cases/UCMS_UseCase_Specification_v2.md) | **Đặc tả chi tiết hiện hành** của 53 mã use case (UC01–UC52, UC58) |
 | R4 | [`02-use-cases/UCMS_Review_Issues.md`](02-use-cases/UCMS_Review_Issues.md) | Nhật ký review chéo I01–I30; mọi issue đã xử lý đều đã được đưa vào SRS này |
 | R5 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) | Biên hệ thống, 46 luồng dữ liệu, 7 thực thể ngoài (v2.1, gộp theo nhóm dữ liệu — I56, I58, I61, I64) |
-| R6 | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) | Use case diagram: trang All users (quan hệ kế thừa actor) và mỗi trang một nhóm actor |
+| R6 | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) | Use case diagram: trang User (UC01, UC02) và mỗi trang một nhóm actor |
 | R7 | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) | Máy trạng thái của 8 thực thể lõi |
 | R8 | [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) | Container, bản đồ module → code, thiết kế approval/notification/audit, định danh, thiết kế dữ liệu, bề mặt API, client, triển khai |
 | R9 | [`04-design/design-guidelines.md`](04-design/design-guidelines.md) | Quy tắc giao diện (màu, typography, spacing, công thức component, checklist accessibility) |
@@ -254,8 +254,8 @@ Leader là một Club Member). Các vai trò con bên trong CLB (thủ quỹ, tr
 — chức danh không mang permission (BR54, BR55; UC23 đã rút), không tạo thành actor mới; phân cấp trong ICPDP là RBAC.
 
 **User** là actor trừu tượng gom UC01 và UC02; Student và ICPDP Officer kế thừa User.
-Mỗi trang use case nghiệp vụ chỉ vẽ quan hệ kế thừa tới actor cha trực tiếp; cây kế thừa
-tổng thể nằm ở trang All users. Các use case của actor cha được trình bày ở trang của actor đó.
+Mỗi trang use case nghiệp vụ chỉ vẽ quan hệ kế thừa tới actor cha trực tiếp; trang User chỉ vẽ
+actor User với UC01 và UC02, không vẽ cây kế thừa tổng thể. Các use case của actor cha được trình bày ở trang của actor đó.
 
 "CMB" trong tài liệu này là **tên gọi chung của phía CLB** — Club Leader cùng các Club Member —
 chứ không phải một actor.
@@ -3535,7 +3535,7 @@ Mọi sơ đồ đều có nguồn draw.io kèm bản xuất PNG trong `03-diagr
 |---|---|---|
 | **Context diagram v2.1** (hiện hành, 46 luồng, 7 thực thể ngoài) | Context diagram v2.1 | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
 | Context diagram v1 (đã thay thế, 40 luồng) | Context diagram | [`03-diagrams/UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) |
-| **Use case diagram theo actor** (UC01–UC52, UC58) | All users (kế thừa actor) · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
+| **Use case diagram theo actor** (UC01–UC52, UC58) | User · Student · Club Member - Events & bookings · Club Leader · Club Leader - Club & recruitment · Club Leader - Events, bookings & finance · ICPDP 1 Access & club lifecycle · ICPDP 2 Events, bookings & finance · ICPDP 3 Compliance & evaluation | [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio) |
 | **Cơ cấu tổ chức và luồng nghiệp vụ chính** (§2.4, §2.5) | Organization structure · Main business flows | [`03-diagrams/UCMS_Organization_and_Flows.drawio`](03-diagrams/UCMS_Organization_and_Flows.drawio) |
 | **State diagram** | Club Application · Club · Membership · Recruitment Campaign · Recruitment Application · Event · Event Budget · Property Booking | [`03-diagrams/UCMS_State_Diagrams.drawio`](03-diagrams/UCMS_State_Diagrams.drawio) |
 | **Main workflow** (hai swimlane tổng quát, tiếng Anh) | Club and membership governance · Event management and supporting operations | [`03-diagrams/UCMS_Main_Workflow.drawio`](03-diagrams/UCMS_Main_Workflow.drawio) |
@@ -3554,7 +3554,7 @@ Quy ước vẽ đang có hiệu lực (review issue I09–I13, I27–I30, I55):
 - Actor vẽ bằng hình người; biên hệ thống là một khung có nhãn `UCMS`.
 - Mỗi trang nghiệp vụ chỉ vẽ một quan hệ generalization tới actor cha trực tiếp bên ngoài biên hệ thống:
   Student → User; Club Member → Student; Club Leader → Club Member; ICPDP Officer → User.
-  Trang All users giữ cây kế thừa tổng thể. Nét liền, tam giác rỗng hướng về actor cha; các oval được kế thừa
+  Trang User chỉ vẽ actor User với UC01, UC02, không vẽ cây kế thừa. Nét liền, tam giác rỗng hướng về actor cha; các oval được kế thừa
   tham chiếu sang trang actor cha.
 - Mỗi trang actor chỉ nối actor tới các use case nhóm `Manage …`; use case nhóm `«include»` các
   chức năng con (use case quản lý danh mục tách theo CRUD). Oval chỉ ghi tên, không ghi mã UC.

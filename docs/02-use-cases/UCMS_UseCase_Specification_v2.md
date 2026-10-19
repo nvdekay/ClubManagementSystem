@@ -41,7 +41,7 @@ vẫn là tên gọi chung của phía CLB.
 
 **Kế thừa actor trên sơ đồ.** User là actor trừu tượng gom UC01 và UC02. Mỗi trang theo actor
 chỉ vẽ quan hệ tới actor cha trực tiếp: Student → User; Club Member → Student;
-Club Leader → Club Member; ICPDP Officer → User. Trang All users giữ cây tổng thể. Mũi tên dùng nét liền,
+Club Leader → Club Member; ICPDP Officer → User. Trang User chỉ vẽ User với UC01, UC02, không vẽ cây tổng thể. Mũi tên dùng nét liền,
 tam giác rỗng hướng về actor cha. Các oval được kế thừa tham chiếu sang trang actor cha;
 quyền và luồng của từng use case giữ theo đặc tả dưới đây.
 
