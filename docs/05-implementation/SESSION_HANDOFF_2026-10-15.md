@@ -60,8 +60,8 @@ không xoá lịch sử ADR, không sửa quy tắc `.rules/`, không triển kh
 
 Các artifact đã sửa:
 
-- `docs/Group1_SE1939-NJ_Report_Final_v2.docx`: 56 bảng UC, actor, route/quyền, schema và giới hạn implementation.
-- `docs/UCMS_UseCase_ByActor.docx`: 9 hình theo actor.
+- `docs/Group1_SE1939-NJ_Report_Final_v2.docx`: 56 bảng UC, actor, route/quyền, schema và giới hạn implementation (đã xoá khỏi repo 19/10/2026).
+- `docs/UCMS_UseCase_ByActor.docx`: 9 hình theo actor (đã xoá 19/10/2026, thay bằng `docs/v2.docx`).
 - `docs/06-user-guide/GUIDE_BOOK.{md,html,pdf}`: ghi rõ hiện trạng; giữ nguồn ảnh chụp 13/10,
   không giả vờ ảnh demo tài chính là API chính đã hoạt động.
 - `docs/03-diagrams/sync-current-diagrams.py`: đã bỏ khi gộp `main` ngày 16/10/2026 (sơ đồ lấy

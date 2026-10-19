@@ -8,7 +8,6 @@
 Cập nhật 2026-10-11. Wave 4 **chưa hoàn tất**: BR25 và thời hạn BR58 đang chờ người dùng chốt.
 Kế hoạch: [WAVE_4_REPORTS_FINANCE_PLAN.md](WAVE_4_REPORTS_FINANCE_PLAN.md).
 
-Review lại và seed phục vụ hướng dẫn: [WAVE_4_REVIEW_2026-10-11.md](WAVE_4_REVIEW_2026-10-11.md).
 Đã có [guide book kèm ảnh từ API thật](../06-user-guide/README.md) trên database demo riêng;
 không thay kết luận chưa nghiệm thu API tài chính ở server chính.
 

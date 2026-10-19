@@ -1,8 +1,10 @@
 # UCMS — Theo dõi các lỗi review Use Case
 
-> Ghi chú dọn tài liệu ngày 2026-10-11: chỉ giữ report v2 làm bản DOCX sử dụng.
-> Các tên DOCX cũ bên dưới là ghi nhận lịch sử review; những file này đã được xoá
-> và không còn là hạng mục cần cập nhật hoặc xuất lại.
+> Ghi chú dọn tài liệu: 2026-10-11 chỉ giữ report v2 làm bản DOCX sử dụng; 2026-10-19 xoá nốt
+> report v2, `UCMS_UseCase_ByActor.docx`, `UC_Diagram_Presentation.*`, `Context_Diagram_QA.md`,
+> `Context_Diagram_Glossary.md` và các file review rời. Bản Word duy nhất còn giữ là `../v2.docx`
+> (chín use case diagram theo actor). Các tên DOCX và file cũ bên dưới là ghi nhận lịch sử review;
+> những file này đã được xoá và không còn là hạng mục cần cập nhật hoặc xuất lại.
 
 Đối chiếu 4 tài liệu:
 
@@ -12,7 +14,7 @@
 - [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio) — gọi tắt **CD** (context diagram).
   Từ I15–I20 trở đi, CD hiện hành là `UCMS_Context_Diagram_v2.drawio` (đã xoá khỏi repo ngày 14/10/2026);
   từ I56 trở đi là [`../03-diagrams/UCMS_Context_Diagram.drawio`](../03-diagrams/UCMS_Context_Diagram.drawio)
-- [`../Group1_SE1939-NJ_Report_Final_v2.docx`](../Group1_SE1939-NJ_Report_Final_v2.docx) — gọi tắt
+- `Group1_SE1939-NJ_Report_Final_v2.docx` (đã xoá khỏi repo 19/10/2026) — gọi tắt
   **Report** (từ I31 trở đi, review ngày 2026-09-26). Ký hiệu mục theo heading của report, ví dụ
   **Report §III.2.1** là mục *2.1 Actors* của chương III.
 

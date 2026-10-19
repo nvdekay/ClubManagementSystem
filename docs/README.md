@@ -19,10 +19,9 @@ hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu
 truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác
 nhau về một yêu cầu, **lấy theo SRS**.
 
-Bản Word sử dụng hiện tại: [Group1_SE1939-NJ_Report_Final_v2.docx](Group1_SE1939-NJ_Report_Final_v2.docx).
-Các DOCX report, đặc tả và sơ đồ cũ đã được xoá theo yêu cầu; nguồn Markdown, draw.io và PNG
-vẫn được giữ để chỉnh sửa và đối chiếu. Bản Word tổng hợp sơ đồ theo actor hiện hành:
-[UCMS_UseCase_ByActor.docx](UCMS_UseCase_ByActor.docx).
+Bản Word duy nhất còn giữ: [v2.docx](v2.docx) — chín use case diagram theo actor, mỗi ảnh một trang.
+Report, DOCX đặc tả và sơ đồ cũ, các file thuyết trình và review rời đã được xoá (19/10/2026);
+nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và đối chiếu.
 
 ## Bản đồ thư mục
 
@@ -46,8 +45,7 @@ vẫn được giữ để chỉnh sửa và đối chiếu. Bản Word tổng h
 7. [`../.rules/README.md`](../.rules/README.md) — code phải trông như thế nào. Definition of Done: `npm run check` xanh.
 
 Use case diagram chuẩn là [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio)
-và chín ảnh `03-diagrams/img/UCMS_UseCase_ByActor_*.png`. Các hình use case trong report v2
-dùng bộ ảnh này. [UCMS_UseCase_ByActor.docx](UCMS_UseCase_ByActor.docx) tổng hợp đủ chín ảnh
+và chín ảnh `03-diagrams/img/UCMS_UseCase_ByActor_*.png`. [v2.docx](v2.docx) tổng hợp đủ chín ảnh
 hiện hành, mỗi ảnh một trang; cần xuất lại bản Word khi cập nhật bộ ảnh nguồn.
 
 ## Quy ước
@@ -60,6 +58,6 @@ hiện hành, mỗi ảnh một trang; cần xuất lại bản Word khi cập n
   Dùng §5 của use case model để chuyển đổi giữa v1 và v2.
 - Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR61** (60 quy tắc còn hiệu lực), trong đó BR43 đã
   được rút. Danh sách hợp nhất, đã áp dụng mọi sửa đổi, nằm ở `SRS.md` §5.
-- Tài liệu nguồn đã bị thay thế được giữ làm lịch sử; các DOCX cũ đã được xoá theo yêu cầu,
-  chỉ dùng report v2. Khi v1 và v2 nói khác nhau, **lấy theo v2**.
+- Tài liệu nguồn đã bị thay thế được giữ làm lịch sử; các DOCX cũ đã được xoá theo yêu cầu.
+  Khi v1 và v2 nói khác nhau, **lấy theo v2**.
 - Sơ đồ sửa ở dạng `.drawio` rồi xuất lại PNG vào `03-diagrams/img/` trong cùng một commit.

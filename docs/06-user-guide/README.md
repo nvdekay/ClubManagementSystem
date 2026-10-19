@@ -46,5 +46,3 @@ python3 docs/06-user-guide/build-guide.py
 
 Mở HTML, chọn In → lưu PDF, khổ A4 ngang, bật hình nền. PDF bàn giao đã được xuất và kiểm tra
 font tiếng Việt, ảnh, số trang và khả năng đọc trên trình duyệt.
-
-Review Wave 4: [WAVE_4_REVIEW_2026-10-11.md](../05-implementation/WAVE_4_REVIEW_2026-10-11.md).

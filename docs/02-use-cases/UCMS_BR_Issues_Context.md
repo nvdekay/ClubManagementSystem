@@ -6,7 +6,7 @@ giải thích **vì sao nó là vấn đề** để đọc mà không phải m�
 
 Ký hiệu tài liệu giống tracker: **Model** (`UCMS_UseCase_Model_v2.md`), **Spec**
 (`UCMS_UseCase_Specification_v2.md`), **SRS** (`../SRS.md`), **Report**
-(`../Group1_SE1939-NJ_Report_Final_v2.docx`). Catalogue BR đầy đủ: SRS mục quy tắc nghiệp vụ,
+(`Group1_SE1939-NJ_Report_Final_v2.docx`, đã xoá khỏi repo 19/10/2026). Catalogue BR đầy đủ: SRS mục quy tắc nghiệp vụ,
 Model §11 / bảng BR, Report Table III.6.
 
 Cập nhật: 2026-09-26; 2026-10-11 — BR33/BR35 sửa và thêm BR62 khi phòng học (`ROOM`) chuyển sang ICPDP
