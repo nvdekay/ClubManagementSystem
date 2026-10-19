@@ -395,19 +395,19 @@
                     <mxGeometry height="30" width="900" x="40" y="10" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
-                    <mxGeometry height="1110" width="710" x="260" y="50" as="geometry"/>
+                    <mxGeometry height="1280" width="710" x="260" y="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="Club Leader" vertex="1">
-                    <mxGeometry height="80" width="40" x="80" y="580" as="geometry"/>
+                    <mxGeometry height="80" width="40" x="80" y="665.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5ancestor1" parent="1" style="shape=umlActor;verticalLabelPosition=middle;verticalAlign=middle;labelPosition=right;align=left;spacingLeft=8;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Club Member" vertex="1">
-                    <mxGeometry height="80" width="40" x="80" y="400" as="geometry"/>
+                    <mxGeometry height="80" width="40" x="80" y="485.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5generalization1" edge="1" parent="1" source="p5actor" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;dashed=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="p5ancestor1" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_events" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage events" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="200" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="277.5" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_events_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_events" value="">
                     <mxGeometry relative="1" as="geometry"/>
@@ -437,66 +437,78 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fac" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage facility bookings" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="432" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="602.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fac_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_fac" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fac_c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Request non-room facility booking" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="395" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="565.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fac_c0i" edge="1" parent="1" source="p5m_fac" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_fac_c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fac_c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Cancel / release facility booking" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="470" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="640.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fac_c1i" edge="1" parent="1" source="p5m_fac" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_fac_c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage reports" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="630" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="800.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p5m_rep" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep_c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit event report" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="555" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="725.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep_c0i" edge="1" parent="1" source="p5m_rep" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_rep_c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep_c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit periodic report" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="630" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="800.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep_c1i" edge="1" parent="1" source="p5m_rep" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_rep_c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep_c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Revise and resubmit periodic report" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="705" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="875.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_rep_c2i" edge="1" parent="1" source="p5m_rep" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_rep_c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_exp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Record expense &amp; submit settlement" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="795" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="965.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_exp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p5m_exp" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fdb" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Review event feedback" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="885" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="1055.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_fdb_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p5m_fdb" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_cmp" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to complaint" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="975" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="1145.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p5m_cmp_a" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p5m_cmp" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-            </root>
+            <mxCell id="p5eventStatus" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View proposal status and review comments" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="390" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5eventStatusi" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5eventStatus" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5eventResubmit" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Supplement and resubmit event proposal" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="465" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5eventResubmiti" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5eventResubmit" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                </root>
         </mxGraphModel>
     </diagram>
     <diagram id="page6" name="ICPDP 1 - Access &amp; club lifecycle">
@@ -609,120 +621,138 @@
                     <mxGeometry height="30" width="900" x="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
-                    <mxGeometry height="1160" width="710" x="260" y="50" as="geometry"/>
+                    <mxGeometry height="1420" width="710" x="260" y="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="ICPDP Officer" vertex="1">
-                    <mxGeometry height="80" width="40" x="60" y="590" as="geometry"/>
+                    <mxGeometry height="80" width="40" x="60" y="720.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7ancestor1" parent="1" style="shape=umlActor;verticalLabelPosition=middle;verticalAlign=middle;labelPosition=right;align=left;spacingLeft=8;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="User" vertex="1">
-                    <mxGeometry height="80" width="40" x="60" y="420" as="geometry"/>
+                    <mxGeometry height="80" width="40" x="60" y="550.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7generalization1" edge="1" parent="1" source="p7actor" style="endArrow=block;endFill=0;endSize=12;html=1;strokeColor=#000000;dashed=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="p7ancestor1" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage event oversight" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="150" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="250" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m0a" edge="1" parent="1" source="p7actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p7m0" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m0c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Decide event proposal" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="110" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m0c0i" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m0c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m0c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Close event report" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="190" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="410" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m0c1i" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m0c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage properties" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="430" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="690.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1a" edge="1" parent="1" source="p7actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p7m1" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Add property" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="310" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="570.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c0i" edge="1" parent="1" source="p7m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m1c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View properties" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="390" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="650.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c1i" edge="1" parent="1" source="p7m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m1c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Update property" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="470" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="730.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c2i" edge="1" parent="1" source="p7m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m1c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Deactivate property" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="550" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="810.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m1c3i" edge="1" parent="1" source="p7m1" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m1c3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage facility bookings" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="670" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="930.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m2a" edge="1" parent="1" source="p7actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p7m2" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m2c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Decide non-room facility request" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="670" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="930.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m2c0i" edge="1" parent="1" source="p7m2" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m2c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage budget" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="1070" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="1330.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m3a" edge="1" parent="1" source="p7actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p7m3" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m3c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Record disbursement" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="1030" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="1290.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m3c0i" edge="1" parent="1" source="p7m3" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m3c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m3c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Reconcile budget" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="1110" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="1370.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m3c1i" edge="1" parent="1" source="p7m3" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m3c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Manage room allocations" vertex="1">
-                    <mxGeometry height="56" width="230" x="300" y="830" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="300" y="1090.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4a" edge="1" parent="1" source="p7actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p7m4" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Allocate club room by semester" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="750" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="1010.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4c0i" edge="1" parent="1" source="p7m4" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m4c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View room allocations" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="830" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="1090.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4c1i" edge="1" parent="1" source="p7m4" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m4c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Revoke room allocation" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="910" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="1170.0" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m4c2i" edge="1" parent="1" source="p7m4" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m4c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-            </root>
+            <mxCell id="p7eventStatus" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Update event proposal report status" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7eventStatusi" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventStatus" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7eventSupplement" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Request event proposal supplement" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7eventSupplementi" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventSupplement" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7eventComments" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Provide revision feedback" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7eventCommentsi" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventComments" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                </root>
         </mxGraphModel>
     </diagram>
     <diagram id="page8" name="ICPDP 3 - Compliance &amp; evaluation">

@@ -158,6 +158,8 @@ quyết định vẫn là các nhánh UC39; `Revise and resubmit periodic report
 `Manage reports` phía CLB. Vòng sửa–nộp lại–thẩm định lặp đến khi được chấp nhận được mô tả
 trong SRS và đặc tả, không biến thành chuỗi `include` giữa các bước quyết định.
 
+**Bổ sung quản lý đề xuất sự kiện (2026-10-19):** `Manage event oversight` gồm `Decide event proposal`, `Update event proposal report status`, `Request event proposal supplement`, `Provide revision feedback` (UC26) và `Close event report` (UC34). Yêu cầu bổ sung phải ghi rõ phần thiếu, nhận xét hướng dẫn, hạn bổ sung và phiên bản hồ sơ; chuyển `Revision Requested` và thông báo cho Club Leader. `Manage events` phía Leader có thêm `View proposal status and review comments` và `Supplement and resubmit event proposal` (UC25 A2). Nộp lại tạo phiên bản mới → `Pending Approval`, ICPDP thẩm định lại; giữ lịch sử nhận xét. Không tạo mã UC mới; báo cáo đề xuất trước khi duyệt khác báo cáo sau sự kiện. Hai trang 06/08, ảnh PNG và hai DOCX được đồng bộ.
+
 **Phân chia actor phía CLB (2026-10-13, I66):** sơ đồ không còn vẽ khung permission. Trang
 Club Member - Events & bookings chứa các use case mọi thành viên `Active` đều làm được:
 `Manage my membership`, `Manage attendance` (`club.attendance.manage` mặc định) và

@@ -892,12 +892,10 @@ không đánh số lại các use case sau.
   4. Thành viên có thể đính kèm một yêu cầu đặt cơ sở vật chất ngoài `ROOM` (UC45). Phòng học
      không gắn được vào đề xuất; sự kiện trùng một buổi phòng học đã phân (UC58) vẫn bị BR15 chặn.
   5. Thành viên nộp → `Pending Approval`.
-  6. ICPDP nhận một review task.
+  6. ICPDP nhận một review task; Club Leader xem được trạng thái yêu cầu, phiên bản hồ sơ và phản hồi thẩm định.
 - **Luồng thay thế:**
   - **A1 Bản nháp:** đề xuất được lưu ở `Draft`.
-  - **A2 Nộp lại sau khi bị yêu cầu chỉnh sửa (UC28 của v1):** từ `Revision Requested`, thành
-    viên sửa và nộp lại (kể cả phần ngân sách); hệ thống tạo một **bản sửa mới** chứa cả ngân
-    sách và đưa đề xuất về `Pending Approval`. Bản sửa trước không bao giờ bị ghi đè.
+  - **A2 Bổ sung và nộp lại báo cáo đề xuất (UC28 của v1):** từ `Revision Requested`, Club Leader xem danh sách nội dung hoặc tài liệu còn thiếu, nhận xét của ICPDP và hạn bổ sung; hoàn thiện báo cáo đề xuất (kể cả phần ngân sách) rồi nộp lại. Hệ thống tạo **bản sửa mới**, đưa đề xuất về `Pending Approval` và chuyển lại ICPDP thẩm định. Giữ nguyên mọi bản sửa và nhận xét cũ; vòng này có thể lặp khi hồ sơ vẫn thiếu.
   - **A3 Hoạt động định kỳ:** một chuỗi hoạt động được nộp như một đề xuất duy nhất, liệt kê các
     lần diễn ra của nó.
   - **A4 Ghi nhận sự kiện nội bộ (BR53):** ở bước 5, nếu phạm vi là `Internal` và không có phần
@@ -942,22 +940,24 @@ không đánh số lại các use case sau.
   3. Officer ghi lại ghi chú thẩm định, gồm cả ý kiến của Cơ sở vật chất, An ninh hay Tài chính
      lấy từ ngoài hệ thống.
   4. Officer chọn một kết quả:
-     - **Yêu cầu chỉnh sửa** — bắt buộc nhận xét có cấu trúc, có thể nhắm riêng vào phần ngân
-       sách → `Revision Requested`;
+     - **Yêu cầu bổ sung báo cáo đề xuất** — bắt buộc chỉ rõ từng nội dung hoặc tài liệu còn thiếu, kèm nhận xét hướng dẫn và hạn bổ sung theo chính sách; phản hồi gắn với phiên bản được thẩm định, có thể nhắm riêng phần ngân sách → `Revision Requested`;
      - **Phê duyệt** → `Approved`; nếu có phần ngân sách, officer chốt **số tiền duyệt** theo
        từng dòng (có thể thấp hơn số xin ở nơi chính sách cho phép, mỗi dòng giảm kèm lý do), và
        hệ thống tạo `EventBudget` ở `Approved`, lưu số duyệt tách biệt với số xin;
      - **Từ chối** — bắt buộc có lý do → `Rejected`.
-  5. Hệ thống ghi audit quyết định và thông báo cho CLB.
+  5. Hệ thống lưu trạng thái, người xử lý, thời điểm, phiên bản hồ sơ và nhận xét vào lịch sử; thông báo trạng thái và nội dung cần bổ sung cho Club Leader.
+  6. ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện, gồm phiên bản hiện tại, lịch sử thẩm định và hạn bổ sung. Trạng thái xử lý gồm `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời.
 - **Luồng thay thế:**
   - **A1 Phê duyệt kèm điều kiện:** việc phê duyệt mang theo các điều kiện mà CLB phải đáp ứng;
     chúng được kiểm tra lại ở UC34.
+  - **A2 Hồ sơ thiếu và thẩm định lại:** ICPDP yêu cầu bổ sung như bước 4; Club Leader hoàn thiện báo cáo và nộp phiên bản mới qua UC25 A2 → `Pending Approval`. ICPDP mở lại → `Under Review`, đối chiếu phần bổ sung với nhận xét cũ rồi ra quyết định. Lặp khi vẫn thiếu; không ghi đè hồ sơ hoặc nhận xét trước. Báo cáo này là đề xuất trước khi duyệt, khác UC33/UC34.
 - **Ngoại lệ:**
   - **E1** CLB bị tạm ngừng giữa lúc nộp và lúc quyết định → đề xuất chuyển `Cancelled` bởi UC15;
   - **E2** hết deadline chỉnh sửa → scheduler chuyển đề xuất sang `Expired`; CLB phải nộp một đề
     xuất mới.
   - **E3** hạn mức ngân sách của kỳ đã cạn → officer yêu cầu chỉnh sửa hoặc từ chối, kèm lý do
     được ghi lại.
+  - **E4** yêu cầu bổ sung không nêu nội dung còn thiếu hoặc nhận xét rỗng → từ chối lưu, giữ nguyên trạng thái.
 - **Hậu điều kiện:** Đề xuất ở `Revision Requested`, `Approved` hoặc `Rejected`; chỉ một sự kiện
   đã duyệt mới công bố được ở UC27. Đề xuất được duyệt có phần ngân sách thì có `EventBudget` ở
   `Approved`, là đầu vào của UC35.

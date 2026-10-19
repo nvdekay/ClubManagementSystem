@@ -1509,6 +1509,7 @@ Giữ mã UC23 làm dấu vết lịch sử và không đánh số lại các us
 | FR-UC25-17 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.event.manage`) đó (BR54) |
 | FR-UC25-18 | Cho đề xuất kèm **phần ngân sách** tuỳ chọn: các dòng ngân sách (hạng mục, số tiền, mục đích, khoản chi dự kiến) và tổng số tiền xin; validate tổng số. Đây là cách duy nhất để CLB xin kinh phí (BR22) |
 | FR-UC25-19 | Đóng băng phần ngân sách trong bản sửa của đề xuất; một lần nộp lại ở A2 tạo bản sửa mới chứa cả ngân sách, không ghi đè bản trước |
+| FR-UC25-20 | Cho Club Leader xem trạng thái yêu cầu tạo sự kiện, phiên bản hồ sơ, nhận xét của ICPDP, danh sách nội dung hoặc tài liệu còn thiếu và hạn bổ sung; từ `Revision Requested`, bổ sung báo cáo đề xuất theo phản hồi rồi nộp lại qua UC25 A2 |
 
 **Hậu điều kiện** — đề xuất ở `Pending Approval` với một bản sửa bất biến và một review task; hoặc, với sự kiện nội bộ theo BR53, sự kiện ở `Approved` và ICPDP xem được.
 **Đầu ra** — `Event`, `EventProposalVersion` (gồm phần ngân sách), `ApprovalTask`, có thể kèm yêu cầu `PropertyBooking`.
@@ -1545,6 +1546,11 @@ Giữ mã UC23 làm dấu vết lịch sử và không đánh số lại các us
 | FR-UC26-14 | Khi phê duyệt đề xuất có phần ngân sách, bắt buộc officer chốt **số tiền duyệt** theo từng dòng — có thể thấp hơn số xin ở nơi chính sách cho phép, mỗi dòng giảm kèm lý do — lưu tách biệt với số xin, và tạo `EventBudget` ở `Approved` |
 | FR-UC26-15 | **Đã rút** — tổng ngân sách không tạo thêm cấp duyệt; một officer ra quyết định (BR16) |
 | FR-UC26-16 | *(E3)* Cho officer yêu cầu chỉnh sửa hoặc từ chối kèm lý do được ghi lại khi hạn mức ngân sách của kỳ đã cạn |
+| FR-UC26-17 | Cho ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện của CLB: `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`; hiển thị phiên bản hiện tại, lịch sử xử lý, nhận xét và hạn bổ sung; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời hiện hành |
+| FR-UC26-18 | Khi báo cáo đề xuất chưa đầy đủ, cho ICPDP yêu cầu CLB bổ sung; bắt buộc ghi rõ từng nội dung hoặc tài liệu còn thiếu và nhận xét hướng dẫn tương ứng, gắn với phiên bản được thẩm định, kèm hạn bổ sung theo chính sách; không chấp nhận yêu cầu có nhận xét rỗng |
+| FR-UC26-19 | Khi gửi yêu cầu bổ sung, chuyển sang `Revision Requested`, lưu người xử lý, thời điểm, nội dung thiếu và nhận xét trong lịch sử; thông báo trạng thái và phản hồi cho Club Leader. Sau khi CLB nộp phiên bản mới ở UC25, đưa về `Pending Approval` để ICPDP thẩm định lại; giữ nguyên các phiên bản và nhận xét trước, lặp đến khi được duyệt, bị từ chối hoặc kết thúc theo vòng đời |
+
+Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức sự kiện trước khi duyệt**, khác báo cáo sau sự kiện UC33/UC34. Các oval bổ sung là chức năng con của UC25/UC26, không tạo mã UC hay trạng thái mới.
 
 **Hậu điều kiện** — đề xuất ở `Revision Requested`, `Approved` hoặc `Rejected`.
 **Đầu ra** — `ApprovalDecision`, `EventBudget` (khi có phần ngân sách), bản ghi audit, thông báo.

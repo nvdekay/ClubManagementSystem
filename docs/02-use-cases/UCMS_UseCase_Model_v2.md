@@ -583,8 +583,7 @@ hoặc UC12 / UC13. Giữ mã UC23 để không đánh số lại các use case 
 - **Luồng:** validate → hệ thống đánh giá quy tắc xung đột BR15 và hiển thị
   `No Conflict` / `Warning` / `Blocking Conflict` → có thể đính kèm một yêu cầu đặt cơ sở vật
   chất (UC45) → nộp → `Pending Approval`.
-- **Thay thế — nộp lại (UC28 của v1):** từ `Revision Requested`, sửa và nộp lại; một bản sửa mới
-  được tạo và đề xuất quay về `Pending Approval`.
+- **Thay thế — bổ sung và nộp lại (UC28 của v1):** Club Leader xem trạng thái, từng nội dung hoặc tài liệu còn thiếu, nhận xét ICPDP và hạn bổ sung; từ `Revision Requested`, hoàn thiện báo cáo đề xuất rồi nộp phiên bản mới → `Pending Approval`. Giữ nguyên phiên bản và nhận xét cũ để ICPDP đối chiếu khi thẩm định lại.
 - **Thay thế — ghi nhận sự kiện nội bộ (BR53):** sự kiện `Internal` không có phần ngân sách
   được ghi nhận thẳng `Draft → Approved`, không tạo review task, có ghi audit; ICPDP xem nó ở
   UC02. Có phần ngân sách thì đi luồng chính; booking đính kèm vẫn do UC46 quyết định.
@@ -602,6 +601,7 @@ hoặc UC12 / UC13. Giữ mã UC23 để không đánh số lại các use case 
   → `Revision Requested`; **phê duyệt** → `Approved`, officer chốt **số tiền duyệt** theo từng
   dòng (có thể thấp hơn số xin ở nơi chính sách cho phép) và hệ thống tạo `EventBudget` ở
   `Approved`; **từ chối** (bắt buộc lý do) → `Rejected`.
+- **Theo dõi và cập nhật trạng thái báo cáo đề xuất:** ICPDP cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện theo hành động tiếp nhận, thẩm định và quyết định, phiên bản hiện tại, lịch sử xử lý, nhận xét và hạn bổ sung. Khi hồ sơ thiếu, ICPDP yêu cầu bổ sung báo cáo đề xuất, bắt buộc chỉ rõ từng nội dung hoặc tài liệu thiếu kèm nhận xét hướng dẫn → `Revision Requested`, lưu người xử lý/thời điểm và thông báo cho Club Leader. CLB nộp lại qua UC25 → `Pending Approval`; ICPDP mở lại → `Under Review` và tiếp tục quyết định. Vòng bổ sung có thể lặp, không ghi đè lịch sử. Đây là chức năng con UC25/UC26, khác báo cáo sau sự kiện UC33/UC34.
 - **Ngoại lệ:** CLB bị tạm ngừng trước khi có quyết định → `Cancelled` bởi UC15; hết deadline
   chỉnh sửa → scheduler đặt `Expired`.
 - **Quy tắc:** BR05, BR14, BR16, BR22, BR31 — ICPDP là cấp phê duyệt duy nhất; ý kiến của Cơ sở vật chất, An
