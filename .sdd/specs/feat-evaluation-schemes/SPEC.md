@@ -38,3 +38,5 @@ UC42/UC43 (sinh, chốt, công bố đánh giá).
 
 ## Changelog
 - v1.0.0 (2026-10-10) — được người dùng duyệt.
+- 2026-10-19 — BR51/BR60: không kích hoạt được phiên bản mới cho học kỳ đã có đánh giá (409), để mọi CLB trong kỳ được
+  chấm bằng một phiên bản; danh sách trả `periods[].evaluated` và UI khoá nút kích hoạt kèm giải thích.

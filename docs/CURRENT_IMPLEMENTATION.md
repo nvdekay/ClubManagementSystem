@@ -117,9 +117,12 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 
 **Báo cáo, tuân thủ, đánh giá**
 
-9. UC42: bản nháp đếm cả báo cáo `Returned`/chưa chấp nhận; sinh nháp không đòi báo cáo kỳ đã
-    thẩm định; không đọc tuân thủ booking; D5 thiếu số lần trả sửa.
-10. UC41/UC42 BR51/BR60: kích hoạt phiên bản scheme mới giữa kỳ có thể trộn phiên bản trong một kỳ.
+9. ~~UC42: bản nháp đếm cả báo cáo `Returned`/chưa chấp nhận; sinh nháp không đòi báo cáo kỳ đã
+    thẩm định; không đọc tuân thủ booking; D5 thiếu số lần trả sửa.~~ Đã sửa 19/10/2026: D5 chỉ tính báo cáo được
+    chấp nhận, kỳ chưa mở báo cáo vẫn đến hạn, trừ điểm theo số lần trả sửa; D4 đọc booking CSVC được duyệt/đã dùng;
+    sinh nháp từ chối khi còn báo cáo `Submitted` chờ UC39.
+10. ~~UC41/UC42 BR51/BR60: kích hoạt phiên bản scheme mới giữa kỳ có thể trộn phiên bản trong một kỳ.~~ Đã sửa
+    19/10/2026: học kỳ đã có đánh giá không kích hoạt được phiên bản mới; sinh lại dùng phiên bản đã chấm.
 
 **Hạ tầng bên ngoài**
 
@@ -150,7 +153,6 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 - UC09 audit ghi `actorRole` "Club Member" cho thao tác của Leader; thông báo chỉ-xem trong
   `ClubSettingsPage` không bao giờ hiện.
 - UC14 checkbox xác nhận bắt buộc kể cả khi không có gì để xác nhận.
-- UC38 editor hiện số liệu trực tiếp sau khi nộp; không có số liệu tài chính.
 - UC40 thẻ hồ sơ phía CLB thiếu trạng thái/mức độ/nguồn.
 - UC46 phương án thay thế chỉ là văn bản; lưới UC58 không đánh dấu sự kiện đã duyệt.
 - `window.confirm` còn dùng ở `PropertiesPage`/`BookingWorkspace`.

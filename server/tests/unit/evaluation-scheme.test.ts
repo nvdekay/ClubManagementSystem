@@ -28,7 +28,7 @@ function scheme(state: EvaluationScheme["state"] = "Draft", value = settings()):
 
 function repository(current: EvaluationScheme | null = scheme()) {
   const repo: EvaluationSchemeRepository = {
-    list: async () => (current ? [current] : []), find: async () => current,
+    list: async () => (current ? [current] : []), evaluatedPeriods: async () => [], find: async () => current,
     createDraft: vi.fn(async (periodCode, value) => ({ ...scheme("Draft", value), periodCode })),
     updateDraft: vi.fn(async (_id, value) => scheme("Draft", value)),
     activate: vi.fn(async () => scheme("Active")), deleteDraft: vi.fn(async () => undefined),

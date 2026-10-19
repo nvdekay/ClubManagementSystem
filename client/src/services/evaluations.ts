@@ -62,11 +62,21 @@ export interface EvaluationDetail {
   thresholds: { excellent: number; good: number; fair: number };
 }
 
+/** Non-2xx response; `pendingReviewClubs` names the clubs whose periodic report still waits for UC39. */
+export class EvaluationRequestError extends Error {
+  constructor(message: string, readonly pendingReviewClubs: string[] = []) {
+    super(message);
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api/v1/admin/evaluations${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    const body = (await response.json().catch(() => null)) as
+      { message?: string; details?: { field?: unknown; clubs?: unknown } } | null;
+    const clubs = body?.details?.field === "periodicReports" && Array.isArray(body.details.clubs)
+      ? body.details.clubs.map(String) : [];
+    throw new EvaluationRequestError(body?.message ?? `HTTP ${response.status}`, clubs);
   }
   const body: { data: T } = await response.json();
   return body.data;

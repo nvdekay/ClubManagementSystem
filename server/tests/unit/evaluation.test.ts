@@ -23,6 +23,17 @@ describe("evaluation scoring", () => {
     expect(results[0]!.evidence[0]).toMatchObject({ sourcePeriod: "Fall 2026" });
   });
 
+  it("averages event delivery with facility use and takes points off for each report returned", () => {
+    const scheme = { dimensions: [{ code: "D4" as const, weight: 50, allowsManual: true },
+      { code: "D5" as const, weight: 50, allowsManual: true }] };
+    const [d4, d5] = scoreDimensions(metrics({ completedEvents: 3, cancelledEvents: 1, bookingsGranted: 4, bookingsUsed: 2,
+      reportsDue: 2, reportsOnTime: 2, reportReturns: 3 }), scheme, "Fall 2026", 1);
+    expect(d4!.score).toBe(62.5);
+    expect(d5!.score).toBe(70);
+    const [, floor] = scoreDimensions(metrics({ reportsDue: 1, reportReturns: 2 }), scheme, "Fall 2026", 1);
+    expect(floor!.score).toBe(0);
+  });
+
   it("marks satisfaction as insufficient below the minimum respondents instead of scoring 0", () => {
     const [d3] = scoreDimensions(metrics({ feedbackCount: 3, feedbackAverage: 5 }), { dimensions: [{ code: "D3", weight: 100, allowsManual: false }] },
       "Fall 2026", 5);

@@ -8,6 +8,7 @@ import {
 } from "../../domain/evaluation.js";
 import type { DimensionCode, SchemeThresholds } from "../../domain/evaluation-scheme.js";
 import { clubBoardUserIds, queueNotifications } from "./club-board.js";
+import { overduePeriodicReports } from "./periodic-report-obligations.js";
 import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
@@ -136,7 +137,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       const club = new Types.ObjectId(clubId);
       const inPeriod = { $gte: period.startAt, $lte: period.endAt };
       const [eventDocs, memberDocs, leftDocs, applicationDocs, invitationDocs, budgetDocs, violationDocs, periodicDocs,
-        leaderPositions] = await Promise.all([
+        leaderPositions, bookingDocs, owedPeriods] = await Promise.all([
         m.events!.find({ clubId: club, semesterCode: period.code }).select({ state: 1, audienceScope: 1 }).lean(),
         m.clubMemberships!.find({ clubId: club, state: { $in: ["Active", "Inactive"] } }).select({ userId: 1, state: 1 }).lean(),
         m.clubMemberships!.find({ clubId: club, state: { $in: ["Left", "Banned"] }, leftAt: inPeriod }).select({ _id: 1 }).lean(),
@@ -146,11 +147,17 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         m.violations!.find({ clubId: club, openedAt: inPeriod }).select({ severity: 1, state: 1 }).lean(),
         m.periodicReports!.find({ clubId: club, periodCode: period.code, dueAt: { $lte: now } }).lean(),
         m.clubPositions!.find({ clubId: club, isLeaderRole: true, isActive: true }).distinct("_id"),
+        // A booking the club was granted and that is over: used, or cancelled by the club after approval (UC46, UC47).
+        // A booking ICPDP released (UC58) is not held against the club.
+        m.propertyBookings!.find({ clubId: club, semesterCode: period.code, endAt: { $lte: now },
+          $or: [{ state: { $in: ["In Use", "Completed"] } }, { state: "Cancelled", decidedAt: { $exists: true } }] })
+          .select({ state: 1 }).lean(),
+        overduePeriodicReports(club, now),
       ]);
       // An event that reached its report (UC33) or was closed by ICPDP (UC34) still took place.
       const completed = eventDocs.filter((event) => ["Completed", "Report Submitted", "Closed"].includes(String(event.state)));
       const completedIds = completed.map((event) => event._id);
-      const [registrationDocs, attendanceDocs, feedbackDocs, postReportVersions, invitedEvents, leaderSeat] = await Promise.all([
+      const [registrationDocs, attendanceDocs, feedbackDocs, postReportVersions, invitedEvents, leaderSeat, periodicReturns] = await Promise.all([
         m.eventRegistrations!.find({ eventId: { $in: completedIds }, state: "Confirmed" }).select({ _id: 1 }).lean(),
         m.attendances!.find({ eventId: { $in: completedIds }, abnormalFlags: { $ne: "no-show" } }).select({ studentId: 1 }).lean(),
         m.eventFeedbacks!.find({ eventId: { $in: eventDocs.map((event) => event._id) } }).select({ scores: 1 }).lean(),
@@ -158,6 +165,8 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         m.events!.find({ _id: { $in: invitationDocs.map((item) => item.eventId) }, semesterCode: period.code }).select({ _id: 1 }).lean(),
         leaderPositions.length ? m.clubPositionAssignments!.findOne({ clubId: club, positionId: { $in: leaderPositions }, effectiveTo: null })
           .select({ _id: 1 }).lean() : null,
+        m.auditLogs!.find({ entityType: "PeriodicReport", entityId: { $in: periodicDocs.map((item) => item._id) },
+          action: "PERIODIC_REPORT_RETURNED" }).select({ _id: 1 }).lean(),
       ]);
       const postReports = [...new Map(postReportVersions.sort((a, b) => Number(a.versionNo) - Number(b.versionNo))
         .map((report) => [String(report.eventId), report])).values()];
@@ -166,9 +175,15 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       const outsiders = [...attendees].filter((id) => !memberIds.has(id));
       const ratings = feedbackDocs.flatMap((item) => Array.isArray(item.scores)
         ? (item.scores as { score?: unknown }[]).map((score) => Number(score.score)).filter(Number.isFinite).slice(0, 1) : []);
-      const onTimePeriodic = periodicDocs.filter((item) => item.submittedAt instanceof Date && item.lateFlag !== true
-        && item.submittedAt <= (item.dueAt as Date));
-      const onTimePost = postReports.filter((item) => item.submittedAt instanceof Date && item.lateFlag !== true);
+      // Only a report ICPDP accepted counts (UC39: a returned or unreviewed report is not an input to UC42).
+      const onTimePeriodic = periodicDocs.filter((item) => item.state === "Accepted" && item.submittedAt instanceof Date
+        && item.lateFlag !== true && item.submittedAt <= (item.dueAt as Date));
+      const onTimePost = postReports.filter((item) => item.state === "Accepted" && item.submittedAt instanceof Date
+        && item.lateFlag !== true);
+      // BR21: a past-due period the club never opened a report for is still a report due.
+      const neverOpened = !periodicDocs.length && owedPeriods.includes(period.code) ? 1 : 0;
+      const postReturns = postReportVersions.filter((item) => item.state === "Returned for correction");
+      const bookingsUsed = bookingDocs.filter((item) => item.state !== "Cancelled");
       const clean = budgetDocs.filter((item) => item.isSettlementLate !== true
         && !(item.settlementDueAt instanceof Date && item.settlementDueAt < now && !item.settlementSubmittedAt && item.state !== "Closed")
         && !(item.state === "Recovery Pending" && item.recoveryDueAt instanceof Date && item.recoveryDueAt < now));
@@ -190,10 +205,14 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         applications: metric(applicationDocs.length, "recruitmentApplications", ids(applicationDocs)),
         feedbackCount: metric(ratings.length, "eventFeedbacks", ids(feedbackDocs)),
         feedbackAverage: metric(ratings.length ? ratings.reduce((sum, value) => sum + value, 0) / ratings.length : 0, "eventFeedbacks"),
-        reportsDue: metric(periodicDocs.length + postReports.length, "periodicReports+postEventReports",
+        reportsDue: metric(periodicDocs.length + neverOpened + postReports.length, "periodicReports+postEventReports",
           [...ids(periodicDocs), ...ids(postReports)]),
         reportsOnTime: metric(onTimePeriodic.length + onTimePost.length, "periodicReports+postEventReports",
           [...ids(onTimePeriodic), ...ids(onTimePost)]),
+        reportReturns: metric(periodicReturns.length + postReturns.length, "auditLogs+postEventReports",
+          [...ids(periodicReturns), ...ids(postReturns)]),
+        bookingsGranted: metric(bookingDocs.length, "propertyBookings", ids(bookingDocs)),
+        bookingsUsed: metric(bookingsUsed.length, "propertyBookings", ids(bookingsUsed)),
         budgets: metric(budgetDocs.length, "eventBudgets", ids(budgetDocs)),
         budgetsClean: metric(clean.length, "eventBudgets", ids(clean)),
         leaderSeated: metric(leaderSeat ? 1 : 0, "clubPositionAssignments", leaderSeat ? [String(leaderSeat._id)] : []),
@@ -201,6 +220,13 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         violationPenalty: metric(found.reduce((sum, item) => sum + severityPenalty(String(item.severity)), 0), "violations", ids(found)),
         openViolations: metric(open.length, "violations", ids(open)),
       } satisfies ClubMetrics;
+    },
+
+    async unreviewedReports(periodCode, clubId) {
+      const reports = await m.periodicReports!.find({ periodCode, state: "Submitted",
+        ...(clubId ? { clubId: new Types.ObjectId(clubId) } : {}) }).select({ clubId: 1 }).lean();
+      const clubs = await m.clubs!.find({ _id: { $in: reports.map((item) => item.clubId) } }).select({ name: 1 }).lean();
+      return clubs.map((club) => ({ clubId: String(club._id), clubName: String(club.name) }));
     },
 
     async writeDraft(input, officerId, now) {

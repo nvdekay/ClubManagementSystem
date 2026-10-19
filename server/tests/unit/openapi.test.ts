@@ -116,7 +116,7 @@ const stubProperties: PropertyRepository = {
   setActive: async () => { throw new Error("unused"); }, remove: async () => { throw new Error("unused"); },
 };
 const stubSchemes: EvaluationSchemeRepository = {
-  list: async () => [], find: async () => null,
+  list: async () => [], evaluatedPeriods: async () => [], find: async () => null,
   createDraft: async () => { throw new Error("unused"); }, updateDraft: async () => { throw new Error("unused"); },
   activate: async () => { throw new Error("unused"); }, deleteDraft: async () => { throw new Error("unused"); },
 };
@@ -181,6 +181,7 @@ const stubSchoolEvents: SchoolEventRepository = {
 const stubEvaluations: EvaluationRepository = {
   clubsInScope: async () => [], latest: async () => [], find: async () => null,
   collectMetrics: async () => { throw new Error("unused"); },
+  unreviewedReports: async () => [],
   writeDraft: async () => { throw new Error("unused"); },
   setManual: async () => { throw new Error("unused"); },
   finalize: async () => { throw new Error("unused"); },

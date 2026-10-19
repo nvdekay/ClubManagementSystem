@@ -76,6 +76,9 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
       const byId = new Map(loaded.map((scheme) => [scheme.id, scheme]));
       return docs.map((doc) => byId.get(String(doc._id))!);
     },
+    async evaluatedPeriods() {
+      return (await ucmsModels.evaluations!.distinct("periodCode")).map(String);
+    },
     async find(id) {
       return (await load([new Types.ObjectId(id)]))[0] ?? null;
     },
@@ -114,6 +117,10 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
     async activate(id, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const doc = await draft(id, session);
+        if (await ucmsModels.evaluations!.exists({ periodCode: doc.periodCode }).session(session)) {
+          throw new DomainError("this period already has evaluations; it keeps the scheme version they were scored with",
+            "conflict", { field: "periodCode" });
+        }
         await schemes.updateMany({ periodCode: doc.periodCode, state: "Active" },
           { $set: { state: "Superseded" } }, { session });
         await schemes.updateOne({ _id: doc._id, state: "Draft" }, { $set: {

@@ -1026,7 +1026,8 @@ export const openApiDocument = createDocument({
         summary: "List evaluation schemes with the evaluation periods and the D1–D8 catalogue (UC41)",
         responses: { "200": { description: "Schemes", content: { "application/json": { schema: envelope(z.object({
           schemes: z.array(EvaluationScheme),
-          periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
+          periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string(),
+            evaluated: z.boolean().describe("The period already has evaluations, so its scheme version is pinned (BR51, BR60)") })),
           dimensions: z.array(z.object({ code: z.string(), name: z.string(), core: z.boolean(), measures: z.string() })),
         })) } } } },
       },
@@ -1063,6 +1064,8 @@ export const openApiDocument = createDocument({
         responses: {
           "200": { description: "Scheme active", content: { "application/json": { schema: envelope(EvaluationScheme) } } },
           "400": { description: "details.issues lists totalWeight / coreWeight", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "The period already has evaluations; it keeps their scheme version (BR51, BR60)",
+            content: { "application/json": { schema: ApiError } } },
         },
       },
     },

@@ -62,3 +62,9 @@ UC43 E1 (CLB phản biện kết quả → hồ sơ UC40), trang CLB xem kết q
 
 ## Changelog
 - v1.0.0 (2026-10-10) — được người dùng duyệt.
+- 2026-10-19 — đầu vào UC42 theo SRS §9: D5 chỉ tính báo cáo được chấp nhận và đúng hạn, kỳ quá hạn chưa mở báo cáo vẫn
+  là báo cáo đến hạn (BR21), mỗi lần bị trả về sửa trừ 10 điểm (`reportReturns`); D4 lấy trung bình tỉ lệ sự kiện hoàn
+  thành và tỉ lệ booking CSVC được duyệt đã dùng (`bookingsGranted`/`bookingsUsed`; booking ICPDP giải phóng ở UC58 không
+  tính). Sinh/sinh lại nháp bị từ chối (409, `details.field = "periodicReports"`, `details.clubs`) khi còn báo cáo định kỳ
+  của kỳ đang `Submitted` chờ UC39. Kỳ đã có đánh giá giữ phiên bản scheme đã dùng (BR51, BR60). Huỷ booking sát giờ
+  vẫn không vào điểm (quyết định 17/10).

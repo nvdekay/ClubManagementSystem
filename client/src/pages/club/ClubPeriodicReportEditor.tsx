@@ -4,6 +4,7 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { useChangePeriodicReport } from "@/hooks/useClubPeriodicReports";
 import type { PeriodicReportDetail } from "@/services/periodicReports";
+import { formatMoney } from "@/utils/formatMoney";
 
 interface Props { clubId: string; csrfToken: string; report: PeriodicReportDetail }
 export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
@@ -16,6 +17,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
   const [notes, setNotes] = useState(initialNotes);
   const [urls, setUrls] = useState(initialUrls);
   const editable = ["Draft", "Returned for correction"].includes(report.state);
+  // Once submitted, the report shows the figures frozen at submission (FR-UC38-04), not today's live data.
+  const figures = editable || !report.preloadedFigures.capturedAt ? report.live : report.preloadedFigures;
   const dirty = narrative !== (report.narrative ?? "") || nextPlan !== (report.nextPlan ?? "") || notes !== initialNotes || urls !== initialUrls;
   const inputClass = "block min-h-28 w-full rounded-xl border border-border-app bg-bg-app p-3 text-text-app disabled:cursor-not-allowed disabled:opacity-70";
   async function change(kind: "save" | "submit") {
@@ -40,11 +43,18 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
     {editable && <div className="flex flex-wrap gap-3"><AppButton disabled={action.isPending || !dirty} onClick={() => void change("save")}>{t("clubPeriodicReports.save")}</AppButton>
       <AppButton variant="secondary" disabled={action.isPending || dirty || !narrative.trim() || !nextPlan.trim() || (!notes.trim() && !urls.trim())} onClick={() => void change("submit")}>{t("clubPeriodicReports.submit")}</AppButton></div>}
     {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
-    <details><summary>{t("clubPeriodicReports.figures")}</summary><dl className="mt-3 grid grid-cols-2 gap-2">
-      <dt>{t("periodicReports.eventsHeld")}</dt><dd>{report.live.events?.completed ?? 0}</dd>
-      <dt>{t("periodicReports.activeMembers")}</dt><dd>{report.live.members?.active ?? 0}</dd>
-      <dt>{t("periodicReports.attendance")}</dt><dd>{report.live.attendance?.total ?? 0}</dd>
-    </dl></details>
+    <details><summary>{t("clubPeriodicReports.figures")}</summary>
+      <p className="mt-3 text-sm text-muted-app">{editable || !figures.capturedAt ? t("clubPeriodicReports.figuresLive")
+        : t("clubPeriodicReports.figuresFrozen", { date: new Date(figures.capturedAt).toLocaleString(i18n.language) })}</p>
+      <dl className="mt-3 grid grid-cols-2 gap-2">
+        <dt>{t("periodicReports.eventsHeld")}</dt><dd>{figures.events?.completed ?? 0}</dd>
+        <dt>{t("periodicReports.eventsCancelled")}</dt><dd>{figures.events?.cancelled ?? 0}</dd>
+        <dt>{t("periodicReports.activeMembers")}</dt><dd>{figures.members?.active ?? 0}</dd>
+        <dt>{t("periodicReports.attendance")}</dt><dd>{figures.attendance?.total ?? 0}</dd>
+        <dt>{t("periodicReports.budgets")}</dt><dd>{figures.finance?.budgets ?? 0}</dd>
+        <dt>{t("periodicReports.approvedTotal")}</dt><dd>{formatMoney(figures.finance?.approvedTotal ?? 0, i18n.language)}</dd>
+        <dt>{t("periodicReports.disbursedTotal")}</dt><dd>{formatMoney(figures.finance?.disbursedTotal ?? 0, i18n.language)}</dd>
+      </dl></details>
     <details><summary>{t("clubPeriodicReports.history")}</summary><div className="space-y-4 pt-3">{report.versions?.map((v) => <article key={v.versionNo} className="space-y-2 border-t border-border-app pt-3">
       <h3 className="font-semibold">{t("clubPeriodicReports.version")} {v.versionNo} · {new Date(v.submittedAt).toLocaleString(i18n.language)}</h3>
       <p className="whitespace-pre-wrap break-words">{v.narrative}</p><p className="whitespace-pre-wrap break-words">{v.nextPlan}</p>

@@ -38,7 +38,8 @@ export interface DimensionInfo {
 
 export interface SchemeCatalogue {
   schemes: EvaluationScheme[];
-  periods: { code: string; startAt: string; endAt: string }[];
+  /** `evaluated`: the period already has evaluations, so its scheme version is pinned (BR51, BR60). */
+  periods: { code: string; startAt: string; endAt: string; evaluated: boolean }[];
   dimensions: DimensionInfo[];
 }
 

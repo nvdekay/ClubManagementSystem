@@ -45,8 +45,10 @@ async function periods(policy: PolicyRepository, now: Date) {
 export async function listEvaluationSchemes(repo: EvaluationSchemeRepository, policy: PolicyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, now: Date) {
   await officer(auth, actor);
-  const [schemes, semesters] = await Promise.all([repo.list(), periods(policy, now)]);
-  return { schemes, periods: semesters, dimensions: EVALUATION_DIMENSIONS };
+  const [schemes, semesters, evaluated] = await Promise.all([repo.list(), periods(policy, now), repo.evaluatedPeriods()]);
+  const pinned = new Set(evaluated);
+  return { schemes, periods: semesters.map((semester) => ({ ...semester, evaluated: pinned.has(semester.code) })),
+    dimensions: EVALUATION_DIMENSIONS };
 }
 
 /** A new draft starts from the defaults, or from any earlier scheme (UC41 A1, BR51 revisions). */

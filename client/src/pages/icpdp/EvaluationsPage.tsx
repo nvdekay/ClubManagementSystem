@@ -13,11 +13,11 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useEvaluation, useEvaluationAction, useEvaluationOverview, useEvaluationPeriodAction } from "@/hooks/useEvaluations";
-import type { Classification, DimensionView, EvaluationState } from "@/services/evaluations";
+import { EvaluationRequestError, type Classification, type DimensionView, type EvaluationState } from "@/services/evaluations";
 
 const metricKeys = ["registrations", "attendances", "uniqueAttendees", "outsiderAttendees", "activeMembers", "completedEvents",
   "publicCompletedEvents", "cancelledEvents", "acceptedInvitations", "applications", "feedbackCount", "feedbackAverage",
-  "reportsDue", "reportsOnTime", "budgets", "budgetsClean", "leaderSeated", "membersLeft", "violationPenalty", "openViolations"] as const;
+  "reportsDue", "reportsOnTime", "reportReturns", "bookingsGranted", "bookingsUsed", "budgets", "budgetsClean", "leaderSeated", "membersLeft", "violationPenalty", "openViolations"] as const;
 type MetricKey = typeof metricKeys[number];
 type DimensionCode = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7" | "D8";
 
@@ -111,7 +111,12 @@ function Overview({ csrfToken }: { csrfToken: string }) {
             {action.isPending && action.variables?.kind === "publish" ? t("evaluations.publishing") : t("evaluations.publish")}</AppButton>
         </section>
       </div>}
-      {action.isError && <AppNotice tone="danger" role="alert" className="mb-6">{action.error.message}</AppNotice>}
+      {action.isError && <AppNotice tone="danger" role="alert" className="mb-6">
+        {action.error instanceof EvaluationRequestError && action.error.pendingReviewClubs.length ? <>
+          <p>{t("evaluations.reportsPending", { clubs: action.error.pendingReviewClubs.join(", ") })}</p>
+          <Link to="/workspace/periodic-reports" className="mt-2 inline-block font-semibold text-accent-app">
+            {t("evaluations.reportsLink")}</Link>
+        </> : action.error.message}</AppNotice>}
       {data.rows.length ? <div className="overflow-x-auto">
         <table className="w-full min-w-[40rem] text-left text-sm">
           <thead><tr className="border-b border-border-app text-muted-app">

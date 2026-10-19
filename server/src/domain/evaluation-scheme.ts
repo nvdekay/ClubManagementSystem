@@ -55,11 +55,14 @@ export interface EvaluationScheme extends SchemeSettings {
 
 export interface EvaluationSchemeRepository {
   list(): Promise<EvaluationScheme[]>;
+  /** Periods that already have an evaluation; their scheme version is pinned for the whole period (BR51, BR60). */
+  evaluatedPeriods(): Promise<string[]>;
   find(id: string): Promise<EvaluationScheme | null>;
   /** Next version for the period is assigned by the repository. */
   createDraft(periodCode: string, settings: SchemeSettings, actorId: string, now: Date): Promise<EvaluationScheme>;
   updateDraft(id: string, settings: SchemeSettings, actorId: string, now: Date): Promise<EvaluationScheme>;
-  /** Activates a draft and supersedes the period's previous active scheme, atomically. */
+  /** Activates a draft and supersedes the period's previous active scheme, atomically; refused once the period has an
+   * evaluation, so every club of a period is scored with one version (BR51, BR60). */
   activate(id: string, actorId: string, now: Date): Promise<EvaluationScheme>;
   deleteDraft(id: string, actorId: string, now: Date): Promise<void>;
 }

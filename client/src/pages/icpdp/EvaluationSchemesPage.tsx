@@ -114,6 +114,7 @@ export function EvaluationSchemesPage() {
                 {data.schemes.length === 0 ? <AppNotice>{t("evaluationSchemes.empty")}</AppNotice>
                   : <ul className="space-y-4">{data.schemes.map((scheme) => {
                     const draft = scheme.state === "Draft";
+                    const pinned = data.periods.some((item) => item.code === scheme.periodCode && item.evaluated);
                     return <li key={scheme.id} className="rounded-2xl border border-border-app p-4 sm:p-5">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 flex-1 basis-64">
@@ -130,7 +131,7 @@ export function EvaluationSchemesPage() {
                           <AppButton variant="secondary" onClick={() => setOpen(open === scheme.id ? null : scheme.id)}>
                             {draft ? t("evaluationSchemes.edit") : t("evaluationSchemes.view")}</AppButton>
                           {draft ? <>
-                            <AppButton disabled={action.isPending} onClick={() => void run(scheme, "activate")}>
+                            <AppButton disabled={action.isPending || pinned} onClick={() => void run(scheme, "activate")}>
                               {t("evaluationSchemes.activate")}</AppButton>
                             <AppButton variant="ghost" disabled={action.isPending} onClick={() => void run(scheme, "delete")}>
                               {t("evaluationSchemes.delete")}</AppButton>
@@ -138,6 +139,7 @@ export function EvaluationSchemesPage() {
                             onClick={() => void create(scheme.periodCode, scheme.id)}>{t("evaluationSchemes.revise")}</AppButton>}
                         </div>
                       </div>
+                      {draft && pinned && <p className="mt-3 text-sm text-muted-app">{t("evaluationSchemes.periodPinned")}</p>}
                       {error?.id === scheme.id && open !== scheme.id && <p role="alert" className="mt-3 text-sm text-danger-app">{error.text}</p>}
                       {open === scheme.id && <SchemeEditor key={`${scheme.id}-${scheme.totalWeight}-${scheme.dimensions.length}`}
                         scheme={scheme} catalogue={data.dimensions} readOnly={!draft} pending={action.isPending}

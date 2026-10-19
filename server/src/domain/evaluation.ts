@@ -13,7 +13,7 @@ export interface MetricValue {
 
 export const METRIC_KEYS = ["registrations", "attendances", "uniqueAttendees", "outsiderAttendees", "activeMembers",
   "completedEvents", "publicCompletedEvents", "cancelledEvents", "acceptedInvitations", "applications", "feedbackCount",
-  "feedbackAverage", "reportsDue", "reportsOnTime", "budgets", "budgetsClean", "leaderSeated", "membersLeft",
+  "feedbackAverage", "reportsDue", "reportsOnTime", "reportReturns", "bookingsGranted", "bookingsUsed", "budgets", "budgetsClean", "leaderSeated", "membersLeft",
   "violationPenalty", "openViolations"] as const;
 export type MetricKey = (typeof METRIC_KEYS)[number];
 export type ClubMetrics = Record<MetricKey, MetricValue>;
@@ -108,6 +108,8 @@ export interface EvaluationRepository {
   latest(periodCode: string): Promise<EvaluationRecord[]>;
   find(id: string): Promise<EvaluationDetail | null>;
   collectMetrics(clubId: string, period: PeriodWindow, now: Date): Promise<ClubMetrics>;
+  /** Clubs whose periodic report of the period still waits for the UC39 review (UC42 precondition). */
+  unreviewedReports(periodCode: string, clubId?: string): Promise<{ clubId: string; clubName: string }[]>;
   writeDraft(input: { clubId: string; periodCode: string; scheme: EvaluationScheme; results: DimensionResult[];
     target: DraftTarget }, officerId: string, now: Date): Promise<string>;
   setManual(id: string, code: DimensionCode, manual: { score: number; justification: string } | null,
@@ -120,6 +122,8 @@ export interface EvaluationRepository {
 
 const SEVERITY_PENALTY = { MINOR: 10, MODERATE: 25, SERIOUS: 50 } as const;
 export const OPEN_CASE_PENALTY = 5;
+/** Points D5 loses for each time ICPDP returned a report of the period for correction (SRS §9 "số lần phải sửa"). */
+export const RETURN_PENALTY = 10;
 
 export function severityPenalty(severity: string): number {
   return SEVERITY_PENALTY[severity as keyof typeof SEVERITY_PENALTY] ?? 0;
@@ -147,11 +151,20 @@ const RULES: Record<DimensionCode, { metrics: MetricKey[]; score: (m: ClubMetric
   D3: { metrics: ["feedbackCount", "feedbackAverage"],
     score: (m, minRespondents) => m.feedbackCount.value > 0 && m.feedbackCount.value >= minRespondents
       ? (m.feedbackAverage.value - 1) / 4 * 100 : undefined },
-  D4: { metrics: ["completedEvents", "cancelledEvents"],
-    score: (m) => m.completedEvents.value + m.cancelledEvents.value > 0
-      ? 100 * ratio(m.completedEvents.value, m.completedEvents.value + m.cancelledEvents.value) : undefined },
-  D5: { metrics: ["reportsDue", "reportsOnTime"],
-    score: (m) => m.reportsDue.value > 0 ? 100 * ratio(m.reportsOnTime.value, m.reportsDue.value) : undefined },
+  // Events held against events cancelled, and facilities used against facilities granted (UC46, UC47), averaged over
+  // whichever of the two the club has data for.
+  D4: { metrics: ["completedEvents", "cancelledEvents", "bookingsGranted", "bookingsUsed"],
+    score: (m) => {
+      const parts = [
+        ...(m.completedEvents.value + m.cancelledEvents.value > 0
+          ? [ratio(m.completedEvents.value, m.completedEvents.value + m.cancelledEvents.value)] : []),
+        ...(m.bookingsGranted.value > 0 ? [ratio(m.bookingsUsed.value, m.bookingsGranted.value)] : []),
+      ];
+      return parts.length ? 100 * parts.reduce((sum, part) => sum + part, 0) / parts.length : undefined;
+    } },
+  D5: { metrics: ["reportsDue", "reportsOnTime", "reportReturns"],
+    score: (m) => m.reportsDue.value > 0
+      ? Math.max(0, 100 * ratio(m.reportsOnTime.value, m.reportsDue.value) - RETURN_PENALTY * m.reportReturns.value) : undefined },
   D6: { metrics: ["budgets", "budgetsClean"],
     score: (m) => m.budgets.value > 0 ? 100 * ratio(m.budgetsClean.value, m.budgets.value) : undefined },
   D7: { metrics: ["leaderSeated", "activeMembers", "membersLeft"],

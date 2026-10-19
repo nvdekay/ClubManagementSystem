@@ -48,6 +48,20 @@ function activeScheme(schemes: EvaluationScheme[], periodCode: string): Evaluati
   return schemes.find((scheme) => scheme.periodCode === periodCode && scheme.state === "Active");
 }
 
+/** BR51 + BR60: once a period has evaluations, every club of it is scored with the version they used. */
+function periodScheme(schemes: EvaluationScheme[], periodCode: string, pinnedId?: string): EvaluationScheme | undefined {
+  return pinnedId ? schemes.find((scheme) => scheme.id === pinnedId) : activeScheme(schemes, periodCode);
+}
+
+/** UC42 precondition: the period's reports have been through UC39, so none is still waiting for a decision. */
+async function assertReportsReviewed(repo: EvaluationRepository, periodCode: string, clubId?: string): Promise<void> {
+  const pending = await repo.unreviewedReports(periodCode, clubId);
+  if (pending.length) {
+    throw new DomainError("review the periodic reports of this period first", "conflict",
+      { field: "periodicReports", clubs: pending.map((club) => club.clubName) });
+  }
+}
+
 function period(calendar: PeriodWindow[], code: string): PeriodWindow {
   const found = calendar.find((item) => item.code === code);
   if (!found) throw new DomainError("this period is not in the academic calendar", "validation", { field: "periodCode" });
@@ -87,7 +101,7 @@ export async function evaluationOverview(deps: EvaluationDeps, actor: AccessActo
       insufficientCount: item?.dimensions.filter((dimension) => dimension.score === undefined).length ?? 0,
       manualCount: item?.dimensions.filter((dimension) => dimension.isManual).length ?? 0 };
   });
-  const scheme = activeScheme(schemes, chosen);
+  const scheme = periodScheme(schemes, chosen, latest[0]?.schemeId);
   return { periods, periodCode: chosen, ...(scheme ? { scheme: { id: scheme.id, version: scheme.version } } : {}), rows,
     canPublish: rows.length > 0 && rows.every((row) => row.state === "Finalized" || row.state === "Published")
       && rows.some((row) => row.state === "Finalized") };
@@ -98,9 +112,10 @@ export async function generateEvaluations(deps: EvaluationDeps, actor: AccessAct
   const officerId = await officer(deps.auth, actor);
   const { calendar, minRespondents, schemes } = await context(deps, now);
   const window = period(calendar, periodCode);
-  const scheme = activeScheme(schemes, periodCode);
-  if (!scheme) throw new DomainError("activate an evaluation scheme for this period first", "conflict");
   const [clubs, latest] = await Promise.all([deps.repo.clubsInScope(), deps.repo.latest(periodCode)]);
+  const scheme = periodScheme(schemes, periodCode, latest[0]?.schemeId);
+  if (!scheme) throw new DomainError("activate an evaluation scheme for this period first", "conflict");
+  await assertReportsReviewed(deps.repo, periodCode);
   const done = new Set(latest.map((item) => item.clubId));
   for (const club of clubs.filter((item) => !done.has(item.id))) {
     await deps.repo.writeDraft({ clubId: club.id, periodCode, scheme, target: { kind: "new" },
@@ -119,7 +134,7 @@ export async function regenerateEvaluation(deps: EvaluationDeps, actor: AccessAc
   const officerId = await officer(deps.auth, actor);
   const current = await evaluation(deps.repo, id);
   const { calendar, minRespondents, schemes } = await context(deps, now);
-  const scheme = activeScheme(schemes, current.periodCode);
+  const scheme = periodScheme(schemes, current.periodCode, current.schemeId);
   if (!scheme) throw new DomainError("the period has no active evaluation scheme", "conflict");
   const latestRevision = current.revisions[0]?.revisionNo ?? current.revisionNo;
   if (current.revisionNo !== latestRevision) throw new DomainError("only the latest revision can change", "conflict");
@@ -127,6 +142,7 @@ export async function regenerateEvaluation(deps: EvaluationDeps, actor: AccessAc
   if (!isPublished && !editableStates.has(current.state)) {
     throw new DomainError("reopen the finalized evaluation before generating it again", "conflict");
   }
+  await assertReportsReviewed(deps.repo, current.periodCode, current.clubId);
   const results = withManual(await computed(deps, current.clubId, period(calendar, current.periodCode), scheme, minRespondents, now),
     current, scheme);
   const newId = await deps.repo.writeDraft({ clubId: current.clubId, periodCode: current.periodCode, scheme, results,
