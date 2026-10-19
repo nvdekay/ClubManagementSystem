@@ -762,9 +762,9 @@ export const openApiDocument = createDocument({
           search: z.string().optional(), field: z.string().optional(), page: z.coerce.number().optional(),
         }) },
         responses: {
-          "200": { description: "Active and suspended clubs",
+          "200": { description: "Active and suspended clubs; a filtered search with no match adds the newest Active clubs (UC06 E1)",
             content: { "application/json": { schema: envelope(PublicPage.extend({
-              fields: z.array(z.string()),
+              fields: z.array(z.string()), suggestions: z.array(PublicClub).optional(),
             })) } } },
           "400": { description: "Invalid query", content: { "application/json": { schema: ApiError } } },
         },
@@ -908,6 +908,39 @@ export const openApiDocument = createDocument({
             content: { "application/json": { schema: ApiError } } },
           "403": { description: "Workspace access denied",
             content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/dashboard/internal-events": {
+      get: {
+        summary: "UC02 ICPDP list of recorded internal (MEMBERS_ONLY) events, by club and semester (BR53)",
+        requestParams: { query: z.object({ clubId: z.string().optional(), semesterCode: z.string().optional() }) },
+        responses: {
+          "200": { description: "Events with registration and check-in totals, plus the filter options" },
+          "400": { description: "Invalid filter", content: { "application/json": { schema: ApiError } } },
+          "403": { description: "ICPDP role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/dashboard/internal-events/{id}": {
+      get: {
+        summary: "UC02 one internal event with its attendance, read-only",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Event detail and attendance rows" },
+          "403": { description: "ICPDP role required", content: { "application/json": { schema: ApiError } } },
+          "404": { description: "No recorded internal event with this id", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/dashboard/clubs/{clubId}/board-history": {
+      get: {
+        summary: "UC02 role-structure versions and board seats by term (BR56); ICPDP or the club's Club Leader",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: {
+          "200": { description: "Structure versions and terms, newest first" },
+          "403": { description: "Not ICPDP and not this club's Club Leader", content: { "application/json": { schema: ApiError } } },
+          "404": { description: "Club not found", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

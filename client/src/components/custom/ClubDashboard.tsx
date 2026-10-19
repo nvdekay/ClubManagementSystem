@@ -95,6 +95,13 @@ export function ClubDashboard({ clubId, data, charts }: ClubDashboardProps) {
               rows={charts.feedback.distribution.map((value, index) => ({ key: String(index + 1), label: t("dashboard.stars", { count: index + 1 }), values: [value] })).reverse()} />
               : <p className="py-6 text-center text-sm text-muted-app">{t("dashboard.tileRatingNone")}</p>}
           </AppChartFrame>
+          <DashboardTaskList variant="neutral" title={t("dashboard.clubRecordsTitle")} description={t("dashboard.clubRecordsDescription")}
+            tasks={[
+              { key: "currentTerms", label: t("dashboard.currentTerms"), count: count("currentTerms"), href: `${base}/board-history` },
+              { key: "structureHistory", label: t("dashboard.structureHistory"), count: count("structureHistory"), href: `${base}/board-history` },
+              { key: "upcomingBookings", label: t("dashboard.upcomingBookings"), count: count("upcomingBookings"), href: `${base}/bookings` },
+              { key: "activeBudgets", label: t("dashboard.activeBudgets"), count: count("activeBudgets"), href: `${base}/budgets` },
+            ].filter((task) => data.panels.some((item) => item.key === task.key))} />
         </div>
       </div>
     </div>

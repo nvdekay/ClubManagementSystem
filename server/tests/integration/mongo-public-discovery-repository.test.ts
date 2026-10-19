@@ -87,6 +87,8 @@ describe.skipIf(!uri)("Mongo public discovery repository", () => {
     expect(all.items.find((club) => club.code === "PAUSED")?.openCampaignId).toBeUndefined();
     expect((await repo.listClubs({ search: "[Club]", field: "", page: 1, pageSize: 12 }, now)).total)
       .toBe(1);
+    expect((await repo.listClubs({ search: "", field: "", page: 1, pageSize: 4, newestActive: true }, now)).items
+      .map((club) => club.code)).toEqual(["ACADEMIC"]);
     expect(await repo.fields()).toEqual(["Academic", "Arts"]);
     expect(await repo.board(activeId.toString(), now))
       .toEqual([{ memberName: "Board member", positionName: "Leader", termName: "2026" }]);

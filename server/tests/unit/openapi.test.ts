@@ -232,6 +232,9 @@ const stubDashboard: DashboardRepository = {
   student: async (_userId, now) => ({ kind: "student", generatedAt: now, panels: [] }),
   club: async (clubId, _permissions, now) => ({ kind: "club", clubId, generatedAt: now, panels: [] }),
   icpdp: async (now) => ({ kind: "icpdp", generatedAt: now, panels: [] }),
+  internalEvents: async () => ({ items: [], clubs: [], semesters: [] }),
+  internalEvent: async () => null,
+  boardHistory: async () => null,
 };
 const stubLeadershipTransitions: LeadershipTransitionRepository = {
   listOpen: async () => [], find: async () => null,

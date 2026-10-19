@@ -88,6 +88,21 @@ describe("public discovery", () => {
     expect(detail.history).toHaveLength(1);
   });
 
+  it("suggests the newest active clubs when a filtered search finds nothing (UC06 E1)", async () => {
+    const { repo } = fixture();
+    const seen: unknown[] = [];
+    repo.listClubs = async (input) => {
+      seen.push(input);
+      return input.newestActive ? { items: [club], total: 1, page: 1, pageSize: input.pageSize }
+        : { items: [], total: 0, page: input.page, pageSize: input.pageSize };
+    };
+    expect(await listPublicClubs(repo, { search: "chess", field: "", page: 1, pageSize: 12 }))
+      .toMatchObject({ items: [], total: 0, suggestions: [club] });
+    expect(seen[1]).toMatchObject({ search: "", field: "", newestActive: true });
+    const unfiltered = await listPublicClubs(repo, { search: "", field: "", page: 1, pageSize: 12 });
+    expect(unfiltered).not.toHaveProperty("suggestions");
+  });
+
   it("labels suspended clubs but never loads recruitment or upcoming events", async () => {
     const { repo, calls } = fixture("Suspended");
     const detail = await publicClubDetail(repo, id, now);

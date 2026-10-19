@@ -5,3 +5,4 @@
 - [x] Thêm API chỉ đọc, wiring và OpenAPI.
 - [x] Thêm service, hook, dashboard responsive và bản dịch `en`/`vi`.
 - [x] Viết test authorization/panel isolation và chạy `npm run check`.
+- [x] (19/10) Drill-down sự kiện nội bộ và lịch sử cơ cấu/ban chủ nhiệm (FR-UC02-02/03, BR53, BR56), panel yêu cầu rời UC22, liên kết panel.

@@ -2,7 +2,7 @@ import type { ClubPermission } from "./access.js";
 
 export const STUDENT_DASHBOARD_PANELS = [
   "foundingApplications", "recruitmentApplications", "memberships", "registrations",
-  "attendanceHistory", "complaints", "openRecruitment", "upcomingEvents",
+  "attendanceHistory", "complaints", "openRecruitment", "upcomingEvents", "withdrawalRequests",
 ] as const;
 
 export const CLUB_DASHBOARD_PANELS = [
@@ -70,8 +70,77 @@ export interface DashboardSnapshot {
   clubCharts?: ClubDashboardCharts;
 }
 
+/** Event states that mean an internal event was recorded (BR53) and later ran, ended or was cancelled. */
+export const RECORDED_EVENT_STATES = [
+  "Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "Cancelled",
+] as const;
+
+/** UC02 drill-down (FR-UC02-02): a recorded `MEMBERS_ONLY` event of any club, read-only for ICPDP. */
+export interface InternalEventSummary {
+  id: string;
+  clubId: string;
+  clubName: string;
+  title: string;
+  startAt: Date;
+  endAt: Date;
+  semesterCode: string;
+  state: string;
+  venueText?: string;
+  capacity: number;
+  registrations: number;
+  attendances: number;
+}
+
+export interface InternalEventFilter { clubId?: string; semesterCode?: string }
+
+export interface InternalEventList {
+  items: InternalEventSummary[];
+  /** Filter options: every club and semester that has a recorded internal event. */
+  clubs: { id: string; name: string }[];
+  semesters: string[];
+}
+
+export interface InternalEventDetail extends InternalEventSummary {
+  objective?: string;
+  attendance: { studentName: string; email: string; checkedInAt: Date; method: string; finalized: boolean }[];
+}
+
+/** Which confirmation put a board seat in place: UC08 founding, UC11 nomination or UC13 transition. */
+export type BoardSeatSource = "APPLICATION" | "NOMINATION" | "TRANSITION";
+
+/** BR56: the role-structure versions and the board of every term, newest first. */
+export interface ClubBoardHistory {
+  club: { id: string; code: string; name: string; state: string };
+  structures: {
+    versionNo: number;
+    effectiveFrom: Date;
+    source: string;
+    reason?: string;
+    roles: { code: string; name: string; unit?: string; isBoardSeat: boolean; isLeaderRole: boolean }[];
+  }[];
+  terms: {
+    id: string;
+    name: string;
+    state: string;
+    startAt: Date;
+    endAt: Date;
+    seats: {
+      positionName: string;
+      memberName: string;
+      effectiveFrom: Date;
+      effectiveTo?: Date;
+      source?: BoardSeatSource;
+      confirmedAt?: Date;
+      confirmedByName?: string;
+    }[];
+  }[];
+}
+
 export interface DashboardRepository {
   student(userId: string, now: Date): Promise<DashboardSnapshot>;
   club(clubId: string, permissions: readonly ClubPermission[], now: Date): Promise<DashboardSnapshot>;
   icpdp(now: Date): Promise<DashboardSnapshot>;
+  internalEvents(filter: InternalEventFilter): Promise<InternalEventList>;
+  internalEvent(eventId: string): Promise<InternalEventDetail | null>;
+  boardHistory(clubId: string): Promise<ClubBoardHistory | null>;
 }

@@ -67,6 +67,8 @@ import { MemberSpacePage } from "./pages/student/MemberSpacePage.js";
 import { ClubMembersPage } from "./pages/club/ClubMembersPage.js";
 import { ClubFeedbackInboxPage } from "./pages/club/ClubFeedbackInboxPage.js";
 import { StudentFeedbackInboxPage } from "./pages/icpdp/StudentFeedbackInboxPage.js";
+import { InternalEventDetailPage, InternalEventsPage } from "./pages/icpdp/InternalEventsPage.js";
+import { ClubBoardHistoryPage } from "./pages/club/ClubBoardHistoryPage.js";
 
 const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
@@ -130,6 +132,9 @@ createRoot(document.getElementById("root")!).render(
             <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
             <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
             <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
+            <Route path="workspace/internal-events" element={<InternalEventsPage />} />
+            <Route path="workspace/internal-events/:id" element={<InternalEventDetailPage />} />
+            <Route path="club/:clubId/board-history" element={<ClubBoardHistoryPage />} />
             <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
             <Route path="workspace/budgets" element={<BudgetsPage />} />
             <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
