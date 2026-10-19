@@ -1,4 +1,5 @@
 import { clubCompletionOpenApiPaths } from "./openapi-club-completion.js";
+import { notificationOpenApiPaths } from "./openapi-notifications.js";
 import { clubPeriodicCreateBody, clubPeriodicDraftBody, clubPeriodicVersionBody } from "./club-periodic-report-routes.js";
 import { invitationResponseBody } from "./club-invitation-routes.js";
 import { accountabilityOpenApiPaths } from "./openapi-accountability.js";
@@ -544,6 +545,7 @@ export const openApiDocument = createDocument({
   servers: [{ url: "/api/v1" }],
   paths: {
     ...clubCompletionOpenApiPaths,
+    ...notificationOpenApiPaths,
     "/clubs/{clubId}/periodic-reports": {
       get: { summary: "UC38 reporting periods and this club's reports with immutable versions", requestParams: { path: z.object({ clubId: z.string() }) }, responses: { "200": { description: "Periods and reports" }, "403": { description: "Club Leader required" } } },
       post: { summary: "UC38 create a periodic report draft (CSRF required)", requestParams: { path: z.object({ clubId: z.string() }) }, requestBody: { required: true, content: { "application/json": { schema: clubPeriodicCreateBody } } }, responses: { "201": { description: "Draft created" }, "409": { description: "Report already exists" } } },

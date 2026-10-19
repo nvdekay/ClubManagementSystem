@@ -293,6 +293,8 @@ describe("openapi document", () => {
       eventFeedbackRepo: stubEventFeedback,
       studentFeedbackRepo: stubStudentFeedback,
       memberSpaceRepo: stubMemberSpace,
+      notificationRepo: { listMine: async () => ({ items: [], unread: 0 }), unreadCount: async () => 0,
+        markRead: async () => true, markAllRead: async () => 0 },
       publicRepo: stubPublic, dbReady: () => true });
     const base = openApiDocument.servers?.[0]?.url ?? "";
     expect(base).toBe("/api/v1");

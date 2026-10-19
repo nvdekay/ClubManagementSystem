@@ -123,15 +123,19 @@ trang khám phá; UC20 A1 tiếp nhận thủ công (`POST /clubs/:clubId/member
 
 **Hạ tầng bên ngoài**
 
-11. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi.
-12. Mail delivery worker và inbox notification tổng quát chưa được nối như thiết kế đích.
+11. Nghiệm thu callback Google và Cloudinary thật; dọn asset mồ côi. Cả hai cần credential thật nên chưa làm; dọn
+    asset mồ côi cố ý chưa viết vì code xoá asset trên Cloudinary không kiểm thử được khi không có tài khoản thật (19/10).
+12. ~~Mail delivery worker và inbox notification tổng quát.~~ Đã làm 19/10/2026 (`.sdd/specs/feat-notification-inbox`):
+    chuông + hộp thông báo in-app ở mọi workspace (`/notifications/mine`, đánh dấu đã đọc), worker outbox SCH-10 có
+    claim/lease, `emailDeliveryLogs` và retry backoff; email theo ma trận SRS §8.2. Còn lại: transport hiện chỉ ghi log —
+    gửi SMTP thật cần duyệt thêm dependency (ví dụ `nodemailer`) và biến `SMTP_*`.
 
 ### Ngoài phạm vi bản hiện tại (quyết định 17/10/2026)
 
 - UC12 A2: kế hoạch không đổi danh sách ghế ban chủ nhiệm, nên UC13 không sinh phiên bản cơ cấu mới
   từ kế hoạch.
 - UC27/UC53: không gửi thông báo công bố sự kiện cho sinh viên; UC16 không báo người theo dõi (không
-  có khái niệm follower; thông báo chỉ được lưu, không có mail worker).
+  có khái niệm follower).
 - UC28 E2 / UC47 E2: huỷ sát giờ chỉ đánh dấu `isLateCancellation`, không tự tạo hồ sơ UC40 và không
   vào chấm điểm UC42; ngưỡng huỷ muộn booking cố định 24 giờ, không phải trường policy.
 - UC48/UC49: một điểm tổng 1–5 (`FEEDBACK_CRITERION = "overall"`) kèm trung bình và phân bố, không

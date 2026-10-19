@@ -40,6 +40,7 @@ import { roomAllocations } from "./roomAllocations";
 import { violations } from "./violations";
 import { schoolEvents } from "./schoolEvents";
 import { evaluations } from "./evaluations";
+import { notifications } from "./notifications";
 
 export type Locale = "en" | "vi";
 
@@ -52,7 +53,7 @@ export const resources = {
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
     accountability: accountability.en, studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, periodicReports: periodicReports.en, roomAllocations: roomAllocations.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
-    clubEvents: clubEvents.en, demo: demo.en } },
+    clubEvents: clubEvents.en, notifications: notifications.en, demo: demo.en } },
   vi: { translation: { clubCompliance: clubCompliance.vi, membershipReconfirmations: membershipReconfirmations.vi, suspensionRequests: suspensionRequests.vi, clubTransitionPlans: clubTransitionPlans.vi, clubPeriodicReports: clubPeriodicReports.vi, clubInvitations: clubInvitations.vi, facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
     clubSettings: clubSettings.vi, boardNominations: boardNominations.vi,
@@ -60,7 +61,7 @@ export const resources = {
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
     eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
     accountability: accountability.vi, studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, periodicReports: periodicReports.vi, roomAllocations: roomAllocations.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
-    clubEvents: clubEvents.vi, demo: demo.vi } },
+    clubEvents: clubEvents.vi, notifications: notifications.vi, demo: demo.vi } },
 };
 
 const stored = localStorage.getItem("locale");

@@ -85,6 +85,8 @@ import { eventCheckInRoutes } from "./event-checkin-routes.js";
 import { eventFeedbackRoutes } from "./event-feedback-routes.js";
 import { studentFeedbackRoutes } from "./student-feedback-routes.js";
 import { memberSpaceRoutes } from "./member-space-routes.js";
+import type { NotificationRepository } from "../../domain/notification.js";
+import { notificationRoutes } from "./notification-routes.js";
 
 // ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
 // execute) — vendor swagger-ui-dist locally if offline dev matters.
@@ -144,6 +146,7 @@ export function buildApp(deps: {
   eventFeedbackRepo?: EventFeedbackRepository;
   studentFeedbackRepo?: StudentFeedbackRepository;
   memberSpaceRepo?: MemberSpaceRepository;
+  notificationRepo?: NotificationRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
   clubTransitionPlanRepo?: ClubTransitionPlanRepository;
@@ -255,6 +258,9 @@ export function buildApp(deps: {
     if (deps.memberSpaceRepo && deps.policyRepo) {
       app.use("/api/v1", memberSpaceRoutes({ repo: deps.memberSpaceRepo, policy: deps.policyRepo,
         authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.notificationRepo) {
+      app.use("/api/v1", notificationRoutes({ repo: deps.notificationRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.studentFeedbackRepo) {
       app.use("/api/v1", studentFeedbackRoutes({ repo: deps.studentFeedbackRepo,
@@ -399,6 +405,7 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
       if (path.startsWith("/dashboard")) return hasDashboard;
+      if (path.startsWith("/notifications")) return Boolean(hasAdmin && deps.notificationRepo);
       if (path.startsWith("/events/{id}/registration")
         || path.startsWith("/event-registrations")) return hasEventRegistrations;
       if (path.startsWith("/events/{id}/check-in")

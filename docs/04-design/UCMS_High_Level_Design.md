@@ -47,7 +47,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 | M07 Finance & Budget | Budget, disbursement, expense, evidence, reconciliation | UC35–UC37 đã nối vào app chính |
 | M08 Reporting & Compliance | Event report, periodic report, violation | Có, gồm UC38 CLB nộp/nộp lại và UC40 CLB giải trình, khắc phục |
 | M09 Evaluation & Export | Scheme, evaluation, export | Có ICPDP và màn CLB xem kết quả đã công bố (UC43) |
-| M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Ghi dữ liệu có; chưa có mail worker/inbox tổng quát/lease như thiết kế đích |
+| M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Có; hộp thông báo in-app chung và worker outbox (từ 19/10/2026) — email đi qua transport ghi log, SMTP thật chờ duyệt dependency |
 | M11 Properties & Booking | Property, non-room booking, room allocation | Có; UC58 CLB xem chỉ dành Leader |
 | M12 Feedback | Event feedback và góp ý một chiều | Có; physical complaints giữ tên cũ; UC51/52 đã rút |
 
@@ -71,9 +71,16 @@ Jobs được nối trong `main.ts`:
 - `accountability-reminder-job`: nghĩa vụ báo cáo/tài chính và thông báo nhắc hạn.
 - `application-expiry-job`: hồ sơ thành lập quá hạn sửa (UC07/08) chuyển `Expired`.
 - `membership-reconfirmation-job`: mở đợt tái xác nhận đầu kỳ và chuyển `Inactive` khi quá 14 ngày (UC21 A2).
+- `notification-delivery-job` (SCH-10, từ 19/10/2026): mỗi phút rút outbox `notifications` — dòng chỉ in-app
+  `Queued → Sent`; dòng có kênh `EMAIL` được claim nguyên tử (đẩy `dueAt` qua lease 5 phút, tăng `attempts`) nên hai
+  instance không gửi trùng (NTF-07), mỗi lần thử ghi một `emailDeliveryLogs`, lỗi thì retry backoff 1/2/4/8 phút, quá
+  5 lần thì `Failed` (NTF-02/03).
 
-Chưa có SMTP delivery/retry hoặc lease Mongo dùng chung. Sự tồn tại của collection `emailDeliveryLogs` không chứng minh mail
-đã được gửi.
+Kênh email theo ma trận SRS §8.2 do `notificationChannels()` ở `domain/notification.ts` quyết định (hồ sơ thành lập
+yêu cầu sửa/duyệt/từ chối, đề xuất sự kiện duyệt/từ chối, quyết định booking, vi phạm yêu cầu giải trình/có quyết định).
+Transport hiện là `logMailTransport` (chỉ ghi người nhận + tiêu đề ra log); gửi SMTP thật cần thêm dependency SMTP và
+`SMTP_*` — xem `server/src/infra/mail/README.md`. Người dùng đọc thông báo qua `GET /notifications/mine` (chuông ở
+`WorkspaceShell`), đánh dấu đã đọc qua `POST /notifications/{id}/read` và `POST /notifications/mine/read-all`.
 
 ## 5. Định danh và quyền truy cập
 
