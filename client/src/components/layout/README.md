@@ -14,4 +14,7 @@ Các khung bố cục cấu trúc. Không có tiền tố `App`.
   sidebar thành drawer. Tự kiểm tra đăng nhập và quyền truy cập workspace theo URL. Menu của cả ba
   workspace gom thành tab cha (`NavGroup`, bấm để mở/thu gọn, tự mở khi đang ở một tab con); với CLB
   mỗi tab con vẫn lọc theo permission của role, nhóm chỉ còn một tab hiện thành link thường, nhóm rỗng ẩn đi.
+- `NotificationBell` — chuông thông báo in-app (NTF-04) ở chân sidebar và header mobile của `WorkspaceShell`: badge số
+  chưa đọc (làm mới mỗi phút), bấm mở hộp thoại danh sách mới nhất trước, "Xem cũ hơn" theo trang, "Đánh dấu tất cả đã
+  đọc"; bấm một dòng thì đánh dấu đã đọc và mở trang liên quan (`utils/notificationLink`).
 - `PageHeader` — khối tiêu đề (tiêu đề, mô tả, link quay lại, hành động) ở đầu mỗi trang quản lý.

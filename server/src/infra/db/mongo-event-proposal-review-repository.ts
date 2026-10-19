@@ -4,6 +4,7 @@ import { settlementDueAt } from "../../domain/budget-disbursement.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
+import { notificationChannels } from "../../domain/notification.js";
 import {
   approvedBudget,
   type ApprovedBudgetLine, type ClubObligation, type EventBudgetSummary, type EventProposalDetail,
@@ -294,7 +295,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
           before: { state: "Under Review" }, after: { state: nextState, revisionNo: version.revisionNo, budgetId },
           reason: input.reason, correlationId: randomUUID(), at: now }], { session });
         await notifications.create([{ recipientUserId: version.submittedBy, eventCode: action, entityType: "Event",
-          entityId: id, channels: ["IN_APP"], payload: { title: event.title, outcome: input.outcome, reason: input.reason,
+          entityId: id, channels: notificationChannels(action), payload: { title: event.title, outcome: input.outcome, reason: input.reason,
             sections: input.sections, revisionDeadlineAt: input.revisionDeadlineAt, conditions: input.conditions },
           state: "Queued", dueAt: now, attempts: 0, createdAt: now }], { session });
       });

@@ -20,5 +20,7 @@ Không chứa logic nghiệp vụ — mọi quyết định nằm ở usecase đ
 - `membership-reconfirmation-job.ts` — UC21 A2: chạy lúc khởi động và mỗi giờ: mở đợt tái xác nhận đầu học kỳ
   theo lịch học vụ trong policy, miễn Club Leader, quá 14 ngày chưa xác nhận → membership `Inactive`.
 
-Đối chiếu 15/10/2026: chưa có SMTP delivery/retry hoặc lease Mongo dùng chung. Không suy việc đã có worker từ schema
-notifications/emailDeliveryLogs.
+- `notification-delivery-job.ts` — SCH-10 (từ 19/10/2026): chạy lúc khởi động và mỗi phút, gọi `deliverNotifications`:
+  thông báo chỉ in-app đến hạn → `Sent`; thông báo có kênh `EMAIL` được claim nguyên tử với lease 5 phút (không gửi trùng
+  giữa nhiều instance), gửi qua `MailTransport`, ghi `emailDeliveryLogs` mỗi lần thử, retry backoff tới 5 lần rồi `Failed`.
+  Transport hiện là `infra/mail/log-mail-transport.ts`; SMTP thật cần thêm dependency (xem `infra/mail/README.md`).

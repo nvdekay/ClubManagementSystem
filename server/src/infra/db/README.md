@@ -75,6 +75,11 @@ quá hạn mà CLB chưa mở báo cáo — dùng chung cho đề xuất sự ki
 điểm danh, và lịch sử phiên bản cơ cấu/ban chủ nhiệm theo nhiệm kỳ (nguồn xác nhận suy từ ghế đề cử UC11 đã
 xác nhận, kế hoạch UC13 đã xác nhận, hoặc nhiệm kỳ khởi lập UC08).
 
+`mongo-notification-repository.ts` (19/10/2026, NTF-04/SCH-10): hộp thông báo in-app của người dùng (kèm `clubId`
+suy ra từ payload hoặc thực thể để client dựng link) và outbox cho worker gửi email — claim nguyên tử bằng lease trên
+`dueAt`, mỗi lần thử ghi `emailDeliveryLogs`. Kênh email do `notificationChannels()` của domain quyết định, được
+`queueNotifications` (`club-board.ts`) và các repository hồ sơ thành lập, đề xuất sự kiện, booking dùng.
+
 `seed-dashboard.ts` (`npm run seed:dashboard`, 17/10/2026) — chạy sau `seed` + `seed:demo`, chỉ ghi vào DB
 local: ~150 tài khoản sinh viên demo, thành viên/sự kiện/đăng ký/check-in/phản hồi/ngân sách/đề xuất chờ duyệt
 trong 12 tháng cho ~12 CLB, đơn ứng tuyển đợt tuyển HEBE và lĩnh vực đoán theo tên cho CLB "Chưa phân loại".

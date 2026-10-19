@@ -8,6 +8,7 @@ import type {
 } from "../../domain/club-application-review.js";
 import { FOUNDING_POSITIONS } from "../../domain/club-application.js";
 import { DomainError } from "../../domain/errors.js";
+import { notificationChannels } from "../../domain/notification.js";
 import {
   applicationDraftFrom, mapApplicationRecord, mapApplicationVersion,
 } from "./mongo-club-application-repository.js";
@@ -273,10 +274,10 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         }], { session });
         const recipients = input.outcome === "Approve"
           ? [...founderIds].map((userId) => new Types.ObjectId(userId)) : [application.founderUserId];
+        const eventCode = `CLUB_APPLICATION_${nextState.toUpperCase().replace(" ", "_")}`;
         await notifications.insertMany(recipients.map((recipientUserId) => ({
-          recipientUserId,
-          eventCode: `CLUB_APPLICATION_${nextState.toUpperCase().replace(" ", "_")}`,
-          entityType: "ClubApplication", entityId: id, channels: ["IN_APP"],
+          recipientUserId, eventCode,
+          entityType: "ClubApplication", entityId: id, channels: notificationChannels(eventCode),
           payload: { outcome: input.outcome, reason: input.reason,
             revisionDeadlineAt: input.revisionDeadlineAt, createdClubId },
           state: "Queued", dueAt: now, attempts: 0, createdAt: now,

@@ -2,6 +2,7 @@ import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
+import { notificationChannels } from "../../domain/notification.js";
 import { assertBookingNotice, assertRequestableProperty, assessBooking, bookingIntervalsConflict, bookingReason, isLateBookingCancellation, slotsConflict,
   type Booking, type BookingClub, type BookingConflict, type BookingDecision, type BookingDetail,
   type BookingInput, type BookingVersion, type FacilityBookingRepository } from "../../domain/facility-booking.js";
@@ -148,7 +149,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     payload: unknown, now: Date, session: ClientSession) {
     if (!recipientIds.length) return;
     await m.notifications!.create([...new Set(recipientIds)].map((recipient) => ({ recipientUserId: oid(recipient),
-      eventCode, entityType: "PropertyBooking", entityId: id, channels: ["IN_APP"], payload,
+      eventCode, entityType: "PropertyBooking", entityId: id, channels: notificationChannels(eventCode), payload,
       state: "Queued", dueAt: now, attempts: 0, createdAt: now })), { session, ordered: true });
   }
   async function officers(session: ClientSession): Promise<string[]> {

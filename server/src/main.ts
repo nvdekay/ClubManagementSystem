@@ -16,6 +16,9 @@ import { mongoClubEventRepository } from "./infra/db/mongo-club-event-repository
 import { mongoFacilityBookingRepository } from "./infra/db/mongo-facility-booking-repository.js";
 import { mongoRoomAllocationRepository } from "./infra/db/mongo-room-allocation-repository.js";
 import { startFacilityBookingJob } from "./interface/jobs/facility-booking-job.js";
+import { startNotificationDeliveryJob } from "./interface/jobs/notification-delivery-job.js";
+import { mongoMailOutboxRepository, mongoNotificationRepository } from "./infra/db/mongo-notification-repository.js";
+import { logMailTransport } from "./infra/mail/log-mail-transport.js";
 import mongoose from "mongoose";
 import { buildApp } from "./interface/http/server.js";
 import { loadConfig, optionalAuthConfig, optionalCloudinaryConfig } from "./infra/config/index.js";
@@ -127,6 +130,7 @@ const app = authConfig ? buildApp({
   eventFeedbackRepo: mongoEventFeedbackRepository(),
   studentFeedbackRepo: mongoStudentFeedbackRepository(),
   memberSpaceRepo: mongoMemberSpaceRepository(),
+  notificationRepo: mongoNotificationRepository(),
   recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
     recruitmentApplicationRepo: mongoRecruitmentApplicationRepository(),
     candidateEvaluationRepo: mongoCandidateEvaluationRepository(),
@@ -154,6 +158,9 @@ const stopAccountabilityJob = startAccountabilityReminderJob(mongoAccountability
 const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
 const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo);
+// ponytail: log transport until an SMTP client dependency is approved (see infra/mail/README.md).
+const stopNotificationJob = startNotificationDeliveryJob(mongoMailOutboxRepository(), logMailTransport(),
+  authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {});
 const server = app.listen(config.PORT, () => {
   console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`);
 });
@@ -169,6 +176,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     stopBookingJob();
     stopAccountabilityJob();
     stopEventLifecycleJob();
+    stopNotificationJob();
     // Drain deadline — a hung in-flight request must not block SIGTERM until the platform SIGKILLs.
     setTimeout(() => {
       console.error("shutdown deadline hit — forcing exit");
