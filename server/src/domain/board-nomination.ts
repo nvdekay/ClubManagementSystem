@@ -12,6 +12,8 @@ export interface BoardPosition {
   name: string;
   unit?: string;
   isLeaderRole: boolean;
+  /** A multi-holder seat (e.g. Phó chủ nhiệm) stays open after one holder is confirmed or pending. */
+  isSingleHolder: boolean;
 }
 
 export interface BoardCandidate {
@@ -30,6 +32,8 @@ export interface BoardNominationContext {
   candidates: BoardCandidate[];
   occupiedPositionIds: string[];
   pendingPositionIds: string[];
+  /** Members already holding, or pending for, a board seat in the term: one person holds one seat. */
+  seatedMembershipIds: string[];
   presidentConflictMembershipIds: string[];
 }
 
@@ -97,6 +101,8 @@ export interface BoardNominationRepository {
   submit(clubId: string, actorId: string, termId: string,
     seats: readonly BoardNominationSeatInput[], now: Date): Promise<BoardNominationDetail>;
   listOpen(): Promise<BoardNominationSummary[]>;
+  /** Most recent nominations of one club, newest first, so the club sees status and return reasons. */
+  listForClub(clubId: string): Promise<BoardNominationDetail[]>;
   find(nominationId: string): Promise<BoardNominationDetail | null>;
   claim(nominationId: string, officerId: string, now: Date): Promise<BoardNominationDetail>;
   decide(nominationId: string, officerId: string, input: BoardNominationDecisionInput,

@@ -77,6 +77,7 @@ export async function setAccountLock(
   locked: boolean,
   rawReason: unknown,
   now: Date,
+  violationId?: string,
 ): Promise<void> {
   const actorId = await requireAdmin(repo, actor);
   const target = parseTarget(targetId);
@@ -84,6 +85,10 @@ export async function setAccountLock(
   if (!reason.success) throw new DomainError("reason is required", "validation");
   if (!await repo.findUser(target)) throw new DomainError("user not found", "not_found");
   if (locked && target === actorId) throw new DomainError("cannot lock your own account", "forbidden");
-  await repo.setLock({ actorId, targetId: target, locked, reason: reason.data, now });
+  if (violationId !== undefined && (!locked || !/^[0-9a-f]{24}$/i.test(violationId))) {
+    throw new DomainError("a violation case can only be linked to a lock", "validation");
+  }
+  await repo.setLock({ actorId, targetId: target, locked, reason: reason.data, now,
+    ...(violationId ? { violationId } : {}) });
   await sessions.revokeUser(target, now);
 }

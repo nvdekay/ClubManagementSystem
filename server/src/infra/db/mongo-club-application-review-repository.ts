@@ -78,10 +78,18 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       id: String(doc._id), email: String(doc.email),
       displayName: typeof doc.displayName === "string" && doc.displayName ? doc.displayName : String(doc.email),
     }]));
+    const record = mapApplicationRecord(application);
+    // Once approved, the club created from this application carries the same name by design.
+    const proposedName = (mappedVersions.at(-1)?.snapshot.clubName ?? record.draft.clubName).trim();
+    const sameName = proposedName && record.state !== "Approved"
+      ? await clubs.find({ name: proposedName, state: "Active" }).collation({ locale: "en", strength: 2 })
+        .select("_id code name").limit(5).session(session ?? null).lean() : [];
     return {
-      application: mapApplicationRecord(application), task: taskFrom(task),
+      application: record, task: taskFrom(task),
       versions: mappedVersions, decisions: decisionDocs.map(decisionFrom),
       founders: founderIds.flatMap((value) => byId.get(value) ?? []),
+      nameConflicts: sameName.map((club) => ({ id: String(club._id), code: String(club.code),
+        name: String(club.name) })),
     };
   }
 

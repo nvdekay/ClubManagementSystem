@@ -37,6 +37,8 @@ Scheduler làm hết hạn deadline chỉnh sửa; gửi email outbox; UC09–UC
 CLB; thay đổi hoặc xuất lại sơ đồ.
 
 ## Changelog
+- 2026-10-19 — UC07 E3: chi tiết thẩm định có `nameConflicts` (CLB `Active` trùng tên, không phân
+  biệt hoa thường); trang thẩm định hiện cảnh báo để officer quyết định ở UC08.
 - v0.2.0 (2026-10-08) — hoàn tất backend, API, queue/detail UI, i18n và automated tests;
   còn visual QA thủ công.
 - v0.1.0 (2026-10-08) — chốt UC08 một cấp duyệt và bắt đầu implementation.

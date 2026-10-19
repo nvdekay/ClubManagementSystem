@@ -103,7 +103,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
         await clubs.updateOne({ _id: id }, { $set: set, $unset: unset }, { session });
         await audits.create([{
           entityType: "Club", entityId: id, action: "CLUB_PROFILE_UPDATED",
-          actorId: new Types.ObjectId(actorId), actorRole: "Club Member",
+          actorId: new Types.ObjectId(actorId), actorRole: "Club Leader",
           before: profileFrom(before), after: input,
           correlationId: randomUUID(), at: now,
         }], { session });
@@ -124,7 +124,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
         })), { session });
         await audits.create([{
           entityType: "Club", entityId: id, action: "CLUB_DEPARTMENT_TEMPLATE_APPLIED",
-          actorId: new Types.ObjectId(actorId), actorRole: "Club Member",
+          actorId: new Types.ObjectId(actorId), actorRole: "Club Leader",
           after: { departments: template.map((department) => department.name) },
           correlationId: randomUUID(), at: now,
         }], { session });
@@ -149,7 +149,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
           await audits.create([{
             entityType: "ClubDepartment", entityId: createdId,
             action: "CLUB_DEPARTMENT_CREATED", actorId: new Types.ObjectId(actorId),
-            actorRole: "Club Member", after: input, correlationId: randomUUID(), at: now,
+            actorRole: "Club Leader", after: input, correlationId: randomUUID(), at: now,
           }], { session });
         });
       } catch (error) { duplicate(error); }
@@ -176,7 +176,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
           await audits.create([{
             entityType: "ClubDepartment", entityId: departmentObjectId,
             action: "CLUB_DEPARTMENT_UPDATED", actorId: new Types.ObjectId(actorId),
-            actorRole: "Club Member", before: departmentFrom(before), after: input,
+            actorRole: "Club Leader", before: departmentFrom(before), after: input,
             correlationId: randomUUID(), at: now,
           }], { session });
         });
@@ -198,7 +198,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
         await audits.create([{
           entityType: "ClubDepartment", entityId: departmentObjectId,
           action: "CLUB_DEPARTMENT_DEACTIVATED", actorId: new Types.ObjectId(actorId),
-          actorRole: "Club Member", before: { isActive: true }, after: { isActive: false },
+          actorRole: "Club Leader", before: { isActive: true }, after: { isActive: false },
           correlationId: randomUUID(), at: now,
         }], { session });
       });

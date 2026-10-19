@@ -92,6 +92,43 @@ describe.skipIf(!uri)("Mongo board nomination repository", () => {
       action: { $in: ["BOARD_NOMINATION_SUBMITTED", "BOARD_NOMINATION_CLAIMED", "BOARD_NOMINATION_RETURNED"] } })).toBe(3);
     expect(await ucmsModels.notifications!.countDocuments({ entityType: "BoardNomination",
       entityId: new Types.ObjectId(submitted.id) })).toBe(3);
+    expect(await repo.listForClub(clubId.toString())).toEqual([expect.objectContaining({
+      id: submitted.id, state: "Returned", seats: expect.arrayContaining([
+        expect.objectContaining({ id: viceSeat.id, reason: "Needs renewed term consent" }),
+      ]) })]);
+  }, 60_000);
+
+  it("keeps a multi-holder seat open for a second holder but not for a seated member", async () => {
+    const now = new Date("2026-10-08T15:00:00Z");
+    const [clubId, termId, viceId, officerId] = Array.from({ length: 4 }, () => new Types.ObjectId());
+    const userIds = [new Types.ObjectId(), new Types.ObjectId()];
+    const membershipIds = [new Types.ObjectId(), new Types.ObjectId()];
+    await ucmsModels.clubs!.create({ _id: clubId, code: "CLB-MULTI", name: "Multi Club",
+      field: "Technology", state: "Active", createdAt: now });
+    await ucmsModels.clubTerms!.create({ _id: termId, clubId, name: "Term", startAt: now,
+      endAt: new Date("2027-10-08T15:00:00Z"), state: "Active" });
+    await ucmsModels.users!.insertMany(userIds.map((_id, index) => ({ _id,
+      email: `vice${index}@example.edu`, displayName: `Vice ${index}`, accountState: "Active", createdAt: now })));
+    await ucmsModels.clubMemberships!.insertMany(membershipIds.map((_id, index) => ({ _id, clubId,
+      userId: userIds[index], state: "Active", joinedAt: now, statusHistory: [] })));
+    await ucmsModels.clubPositions!.create({ _id: viceId, clubId, code: "VICE_LEADER", name: "Vice",
+      isBoardSeat: true, isLeaderRole: false, isDefaultMemberRole: false, isSingleHolder: false,
+      permissionCodes: [], isActive: true });
+    const repo = mongoBoardNominationRepository();
+    const first = await repo.submit(clubId.toString(), userIds[0]!.toString(), termId.toString(),
+      [{ positionId: viceId.toString(), membershipId: membershipIds[0]!.toString() }], now);
+    expect(await repo.getContext(clubId.toString())).toMatchObject({
+      pendingPositionIds: [viceId.toString()], seatedMembershipIds: [membershipIds[0]!.toString()],
+      positions: [expect.objectContaining({ isSingleHolder: false })] });
+    await expect(repo.submit(clubId.toString(), userIds[0]!.toString(), termId.toString(),
+      [{ positionId: viceId.toString(), membershipId: membershipIds[0]!.toString() }], now))
+      .rejects.toMatchObject({ kind: "conflict" });
+    await repo.claim(first.id, officerId.toString(), now);
+    await repo.decide(first.id, officerId.toString(),
+      { confirmedSeatIds: [first.seats[0]!.id], returnedSeats: [] }, now);
+    await repo.submit(clubId.toString(), userIds[0]!.toString(), termId.toString(),
+      [{ positionId: viceId.toString(), membershipId: membershipIds[1]!.toString() }], now);
+    expect(await repo.listForClub(clubId.toString())).toHaveLength(2);
   }, 60_000);
 
   it("returns a nominee whose membership became inactive before confirmation", async () => {

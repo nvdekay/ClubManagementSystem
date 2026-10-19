@@ -7,6 +7,7 @@ import {
   decideBoardNomination,
   getBoardNominationContext,
   listBoardNominations,
+  listClubBoardNominations,
   submitBoardNomination,
 } from "../../src/usecase/board-nomination.js";
 
@@ -26,13 +27,13 @@ function context(): BoardNominationContext {
     term: { id: "000000000000000000000010", name: "Founding term", state: "Active",
       startAt: now, endAt: new Date("2027-10-08T12:00:00Z") },
     positions: [
-      { id: leaderPositionId, code: "PRESIDENT", name: "President", isLeaderRole: true },
-      { id: otherPositionId, code: "VP", name: "Vice President", isLeaderRole: false },
+      { id: leaderPositionId, code: "PRESIDENT", name: "President", isLeaderRole: true, isSingleHolder: true },
+      { id: otherPositionId, code: "VP", name: "Vice President", isLeaderRole: false, isSingleHolder: false },
     ],
     candidates: [
       { membershipId: memberId, userId: actor.id, displayName: "Founder", state: "Active" },
       { membershipId: otherMemberId, userId: "000000000000000000000011", displayName: "Member", state: "Active" },
-    ], occupiedPositionIds: [], pendingPositionIds: [], presidentConflictMembershipIds: [],
+    ], occupiedPositionIds: [], pendingPositionIds: [], seatedMembershipIds: [], presidentConflictMembershipIds: [],
   };
 }
 
@@ -53,6 +54,7 @@ function setup(options: { role?: string; permission?: boolean; data?: BoardNomin
   const repository: BoardNominationRepository = {
     getContext: vi.fn(async () => options.data ?? context()),
     submit: vi.fn(async () => detail()), listOpen: vi.fn(async () => [detail()]),
+    listForClub: vi.fn(async () => [detail()]),
     find: vi.fn(async () => detail()), claim: vi.fn(async () => detail()),
     decide: vi.fn(async () => detail()),
   };
@@ -113,6 +115,26 @@ describe("UC10/UC11 board nomination use cases", () => {
     await expect(submitBoardNomination(repository, { findSnapshot: async () => null }, actor,
       clubId, [{ positionId: leaderPositionId, membershipId: memberId }], now))
       .rejects.toMatchObject({ kind: "forbidden" });
+  });
+
+  it("keeps a multi-holder seat open but never seats one member twice", async () => {
+    const { access } = setup();
+    const filled = setup({ data: { ...context(), occupiedPositionIds: [otherPositionId],
+      seatedMembershipIds: [otherMemberId] } }).repository;
+    await expect(submitBoardNomination(filled, access, actor, clubId,
+      [{ positionId: otherPositionId, membershipId: memberId }], now)).resolves.toBeDefined();
+    await expect(submitBoardNomination(filled, access, actor, clubId,
+      [{ positionId: otherPositionId, membershipId: otherMemberId }], now))
+      .rejects.toMatchObject({ kind: "conflict" });
+  });
+
+  it("lets the club read its own nominations and refuses outsiders", async () => {
+    const { repository, access } = setup();
+    await expect(listClubBoardNominations(repository, access, actor, clubId, now))
+      .resolves.toHaveLength(1);
+    expect(repository.listForClub).toHaveBeenCalledWith(clubId);
+    await expect(listClubBoardNominations(repository, { findSnapshot: async () => null }, actor,
+      clubId, now)).rejects.toMatchObject({ kind: "forbidden" });
   });
 
   it("allows one officer to decide once and requires one result for every pending seat", async () => {

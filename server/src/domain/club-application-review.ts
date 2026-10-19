@@ -38,6 +38,8 @@ export interface ApplicationReviewDetail extends ApplicationReviewQueueItem {
   decisions: ApplicationReviewDecision[];
   /** Founding members of the latest submitted version, so ICPDP sees names instead of ids. */
   founders: FounderProfile[];
+  /** UC07 E3: Active clubs already using the proposed name; ICPDP decides in UC08. */
+  nameConflicts: Array<{ id: string; code: string; name: string }>;
 }
 
 export interface ApplicationReviewDecisionInput {

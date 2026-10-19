@@ -197,7 +197,7 @@ const stubClubProfiles: ClubProfileRepository = {
 };
 const stubBoardNominations: BoardNominationRepository = {
   getContext: async () => null, submit: async () => { throw new Error("unused"); },
-  listOpen: async () => [], find: async () => null,
+  listOpen: async () => [], listForClub: async () => [], find: async () => null,
   claim: async () => { throw new Error("unused"); }, decide: async () => { throw new Error("unused"); },
 };
 const stubRecruitmentCampaigns: RecruitmentCampaignRepository = {

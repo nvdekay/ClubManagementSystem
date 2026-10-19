@@ -2,14 +2,23 @@ import type { AuthUser } from "@/services/auth";
 
 export type SystemRoleCode = "ICPDP_OFFICER" | "ATTENDANCE_UNLOCK";
 
+export interface AdminUserClub {
+  clubId: string;
+  clubName: string;
+  membershipState: string;
+  positions: string[];
+}
+
 export interface AdminUserPage {
-  items: Array<{ user: AuthUser; systemRoles: string[] }>;
+  items: Array<{ user: AuthUser; systemRoles: string[]; clubs: AdminUserClub[];
+    lockCase?: { violationId: string; title: string; clubName: string } }>;
   total: number;
 }
 
 export type AccountAction =
   | { kind: "grant" | "revoke"; userId: string; roleCode: SystemRoleCode; reason: string }
-  | { kind: "lock" | "unlock"; userId: string; reason: string };
+  | { kind: "lock"; userId: string; reason: string; violationId?: string }
+  | { kind: "unlock"; userId: string; reason: string };
 
 async function accountRequest(path: string, method: "POST" | "DELETE", csrfToken: string,
   body: object): Promise<void> {
@@ -43,7 +52,10 @@ export async function applyAccountAction(action: AccountAction, csrfToken: strin
   } else if (action.kind === "revoke") {
     await accountRequest(`${base}/roles/${encodeURIComponent(action.roleCode)}`, "DELETE", csrfToken,
       { reason: action.reason });
+  } else if (action.kind === "lock") {
+    await accountRequest(`${base}/lock`, "POST", csrfToken,
+      { reason: action.reason, ...(action.violationId ? { violationId: action.violationId } : {}) });
   } else {
-    await accountRequest(`${base}/${action.kind}`, "POST", csrfToken, { reason: action.reason });
+    await accountRequest(`${base}/unlock`, "POST", csrfToken, { reason: action.reason });
   }
 }

@@ -12,6 +12,7 @@ export interface BoardPosition {
   name: string;
   unit?: string;
   isLeaderRole: boolean;
+  isSingleHolder: boolean;
 }
 
 export interface BoardCandidate {
@@ -30,6 +31,7 @@ export interface BoardNominationContext {
   candidates: BoardCandidate[];
   occupiedPositionIds: string[];
   pendingPositionIds: string[];
+  seatedMembershipIds: string[];
   presidentConflictMembershipIds: string[];
 }
 
@@ -86,6 +88,10 @@ function mutation(method: string, csrfToken: string, body?: object): RequestInit
 export function fetchBoardNominationContext(clubId: string,
   signal: AbortSignal): Promise<BoardNominationContext> {
   return request(`/clubs/${encodeURIComponent(clubId)}/board-nomination-context`, { signal });
+}
+
+export function fetchClubBoardNominations(clubId: string, signal: AbortSignal) {
+  return request<BoardNomination[]>(`/clubs/${encodeURIComponent(clubId)}/board-nominations`, { signal });
 }
 
 export function submitBoardNomination(clubId: string,

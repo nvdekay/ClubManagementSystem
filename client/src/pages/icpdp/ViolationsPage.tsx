@@ -98,6 +98,7 @@ function historyLabel(t: TFunction, action: string): string {
     case "VIOLATION_RESOLVED": return t("violations.historyVIOLATION_RESOLVED");
     case "VIOLATION_RESPONSE_SUBMITTED": return t("violations.historyVIOLATION_RESPONSE_SUBMITTED");
     case "CORRECTIVE_ACTION_SUBMITTED": return t("violations.historyCORRECTIVE_ACTION_SUBMITTED");
+    case "VIOLATION_ACCOUNT_LOCKED": return t("violations.historyVIOLATION_ACCOUNT_LOCKED");
     default: return action;
   }
 }

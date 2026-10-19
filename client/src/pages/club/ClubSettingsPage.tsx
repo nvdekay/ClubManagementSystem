@@ -170,7 +170,6 @@ export function ClubSettingsPage() {
         </AppBadge>
       } />
 
-      {!canManage && <AppNotice className="mb-4">{t("clubSettings.viewOnly")}</AppNotice>}
       <section className="rounded-2xl bg-surface-app px-5 py-5 sm:px-6">
         <h2 className="font-heading text-base font-bold">{t("clubSettings.readOnly")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("clubSettings.readOnlyHint")}</p>

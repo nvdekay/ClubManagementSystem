@@ -5,6 +5,7 @@ import {
   fetchBoardNomination,
   fetchBoardNominationContext,
   fetchBoardNominationQueue,
+  fetchClubBoardNominations,
   submitBoardNomination,
   type BoardNominationDecisionInput,
 } from "@/services/boardNominations";
@@ -14,6 +15,12 @@ const boardNominationKey = ["board-nominations"] as const;
 export function useBoardNominationContext(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...boardNominationKey, "context", clubId],
     queryFn: ({ signal }) => fetchBoardNominationContext(clubId!, signal),
+    enabled: enabled && Boolean(clubId), retry: false });
+}
+
+export function useClubBoardNominations(clubId: string | undefined, enabled: boolean) {
+  return useQuery({ queryKey: [...boardNominationKey, "club", clubId],
+    queryFn: ({ signal }) => fetchClubBoardNominations(clubId!, signal),
     enabled: enabled && Boolean(clubId), retry: false });
 }
 

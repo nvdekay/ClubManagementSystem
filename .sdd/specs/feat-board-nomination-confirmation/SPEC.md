@@ -57,6 +57,11 @@ bản ghi role, membership, nhiệm kỳ, task, quyết định và quyền truy
 - Cho phép Chủ nhiệm trùng nhiệm kỳ; hiện quy tắc được chốt là không cho phép.
 
 ## Changelog
+- 2026-10-19 — UC10: CLB xem các đề cử đã nộp, trạng thái từng ghế và lý do trả lại
+  (`GET /clubs/:clubId/board-nominations`); ghế `isSingleHolder: false` (Phó chủ nhiệm) vẫn mở sau
+  khi đã có người giữ hoặc đang chờ; một người đã giữ/đang chờ một ghế trong nhiệm kỳ không được đề
+  cử thêm. Không đổi schema: index unique `uq_nom_seat` vẫn giới hạn một người cho mỗi ghế trong
+  một lần nộp.
 - 2026-10-17 — UC10: một thành viên không được đề cử vào hai ghế trong cùng lượt; UI ẩn người đã được chọn ở ghế khác.
 - v0.3.0 (2026-10-08) — hoàn tất vertical slice, automated tests và build; còn visual QA.
 - v0.2.0 (2026-10-08) — ghi nhận BR06/BR07 theo xác nhận người dùng và dùng ngày của nhiệm kỳ hiện tại.

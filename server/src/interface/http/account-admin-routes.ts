@@ -17,6 +17,8 @@ export interface AccountAdminRouteDeps {
 
 const roleBody = z.object({ roleCode: z.string(), reason: z.string().optional() }).strict();
 const reasonBody = z.object({ reason: z.string() }).strict();
+export const lockBody = z.object({ reason: z.string(),
+  violationId: z.string().regex(/^[0-9a-f]{24}$/i).optional() }).strict();
 
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
@@ -57,9 +59,9 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
   });
 
   router.post("/admin/users/:id/lock", authGuard(guardDeps), async (req, res) => {
-    const body = parsed(reasonBody, req.body);
+    const body = parsed(lockBody, req.body);
     await setAccountLock(deps.adminRepo, deps.sessions, actor(res), param(req.params.id),
-      true, body.reason, new Date());
+      true, body.reason, new Date(), body.violationId);
     ok(res, { changed: true });
   });
 

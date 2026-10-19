@@ -32,6 +32,7 @@ export interface ReviewDetail extends ReviewQueueItem {
   versions: ApplicationVersion[];
   decisions: ReviewDecision[];
   founders: FounderProfile[];
+  nameConflicts: Array<{ id: string; code: string; name: string }>;
 }
 
 export interface ReviewDecisionInput {
