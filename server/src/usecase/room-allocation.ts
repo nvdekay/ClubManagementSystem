@@ -3,7 +3,7 @@ import type { AuthRepository } from "../domain/auth.js";
 import { DomainError } from "../domain/errors.js";
 import type { PolicyRepository } from "../domain/policy.js";
 import type { PropertyRepository } from "../domain/property.js";
-import { allocationId, allocationReason, planRoomAllocation, validateRoomAllocationInput,
+import { allocationId, allocationReason, planRoomAllocation, roomOccupancy, validateRoomAllocationInput,
   type RoomAllocation, type RoomAllocationInput, type RoomAllocationOptions, type RoomAllocationRepository } from "../domain/room-allocation.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
 
@@ -49,6 +49,19 @@ export async function allocateRoom(deps: RoomAllocationDeps, actor: AccessActor 
     deps.repo.club(input.clubId), effectivePolicy(deps, now)]);
   const plan = planRoomAllocation(input, property, club, policy.academicCalendar, now);
   return deps.repo.allocate(plan, club!.name, policy.conflictThresholdMinutes, officerId, now);
+}
+
+/** UC58 A3: the cells of a room's weekly grid that approved events or bookings already block this semester. */
+export async function roomAllocationOccupancy(deps: RoomAllocationDeps, actor: AccessActor | null,
+  semesterCode: string, propertyId: string, now: Date) {
+  await officer(deps, actor);
+  const policy = await effectivePolicy(deps, now);
+  const semester = policy.academicCalendar.find((item) => item.code === semesterCode);
+  if (!semester) throw new DomainError("semester not found in the academic calendar", "validation");
+  const from = semester.startAt > now ? semester.startAt : now;
+  if (from >= semester.endAt) return [];
+  const commitments = await deps.repo.roomCommitments(allocationId(propertyId), from, semester.endAt);
+  return roomOccupancy(commitments, policy.conflictThresholdMinutes);
 }
 
 export async function revokeRoomAllocation(deps: RoomAllocationDeps, actor: AccessActor | null,

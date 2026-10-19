@@ -8,7 +8,9 @@ Không chứa logic nghiệp vụ — mọi quyết định nằm ở usecase đ
 động từ `main.ts`.
 
 - `club-lifecycle-job.ts` — UC15: chạy lúc khởi động và mỗi giờ: báo ICPDP trước khi hết hạn tạm ngừng, tự
-  kích hoạt lại CLB hết hạn tạm ngừng, chuyển CLB đã có quyết định giải thể sang `Dissolving`/`Dissolved`.
+  kích hoạt lại CLB hết hạn tạm ngừng, chuyển CLB đã có quyết định giải thể sang `Dissolving`/`Dissolved`
+  (bước 6 lưu nghĩa vụ tồn đọng). Bước lỗi của một CLB hoặc cả lượt chạy lỗi → ICPDP nhận
+  `CLUB_LIFECYCLE_FAILED` (tối đa một lần/ngày), không chỉ log console.
 - `event-lifecycle-job.ts` — UC26 E2 + SCH-01: chạy lúc khởi động và mỗi giờ: đề xuất `Revision Requested` quá hạn
   sửa → `Expired`; sự kiện `Upcoming` tới giờ bắt đầu → `Ongoing`, qua giờ kết thúc → `Completed`; lời mời sự
   kiện cấp trường (UC53) còn `Pending` quá hạn phản hồi → `Expired` (BR59).

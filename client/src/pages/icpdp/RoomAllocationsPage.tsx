@@ -15,7 +15,7 @@ import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useBookingSlots } from "@/hooks/useFacilityBookings";
-import { useAllocateRoom, useRevokeRoomAllocation, useRoomAllocationOptions, useRoomAllocations } from "@/hooks/useRoomAllocations";
+import { useAllocateRoom, useRevokeRoomAllocation, useRoomAllocationOptions, useRoomAllocations, useRoomOccupancy } from "@/hooks/useRoomAllocations";
 import { RoomAllocationError, type RoomAllocation, type RoomAllocationConflict, type RoomAllocationOptions } from "@/services/roomAllocations";
 import { cn } from "@/utils/cn";
 import { WEEKDAYS, slotLabel, weekdayLabel } from "@/utils/roomSchedule";
@@ -84,6 +84,10 @@ export function RoomAllocationsPage() {
   [allocations, status, building, clubFilter]);
   const takenCells = useMemo(() => new Map(allocations.filter((item) => !item.revokedAt && item.propertyId === form.propertyId)
     .map((item) => [`${item.weekday}-${item.slot}`, item.clubName])), [allocations, form.propertyId]);
+  // UC58 A3/E1: a cell an approved event or booking blocks on any remaining date would be rejected.
+  const occupancy = useRoomOccupancy(creating ? semester : "", form.propertyId);
+  const busyCells = useMemo(() => new Map((occupancy.data ?? []).map((cell) => [`${cell.weekday}-${cell.slot}`, cell.items])),
+    [occupancy.data]);
   const columns = useMemo(() => column.columns([
     column.accessor("clubName", { header: t("roomAllocations.club"), cell: (cell) => <span className="font-semibold break-words">{cell.getValue()}</span> }),
     column.accessor("propertyName", { header: t("roomAllocations.room"), cell: (cell) => <span className="break-words">
@@ -183,6 +187,7 @@ export function RoomAllocationsPage() {
         {form.propertyId && <div className="space-y-2">
           <p className="text-sm font-medium">{t("roomAllocations.gridTitle", { semester })}</p>
           <p className="text-sm text-muted-app">{t("roomAllocations.gridHint")}</p>
+          {occupancy.isError && <p role="alert" className="text-sm text-danger-app">{t("roomAllocations.gridLoadError")}</p>}
           <div className="overflow-x-auto"><table className="w-full min-w-[36rem] border-collapse text-sm">
             <thead><tr><th className="p-1" />{WEEKDAYS.map((day) => <th key={day} className="p-1 font-medium">{weekdayLabel(t, day)}</th>)}</tr></thead>
             <tbody>{slotList.map((slot) => <tr key={slot.number}>
@@ -190,14 +195,21 @@ export function RoomAllocationsPage() {
                 <span className="block font-normal text-muted-app">{slot.start}–{slot.end}</span></th>
               {WEEKDAYS.map((day) => {
                 const takenBy = takenCells.get(`${day}-${slot.number}`);
+                const busy = takenBy ? undefined : busyCells.get(`${day}-${slot.number}`);
                 const chosen = form.weekday === String(day) && form.slot === String(slot.number);
-                return <td key={day} className="p-1"><button type="button" disabled={Boolean(takenBy)} aria-pressed={chosen}
+                const busyDetail = busy ? t("roomAllocations.gridBusyDetail", { items: busy.map((item) =>
+                  `${item.title} · ${dateTime.format(new Date(item.startAt))}`).join("; ") }) : undefined;
+                return <td key={day} className="p-1"><button type="button" disabled={Boolean(takenBy) || Boolean(busy)} aria-pressed={chosen}
+                  title={busyDetail} aria-description={busyDetail}
                   onClick={() => setForm({ ...form, weekday: String(day), slot: String(slot.number) })}
                   className={cn("min-h-12 w-full rounded-lg border px-1 py-2 text-xs break-words", {
                     "border-primary-app bg-primary-soft-app font-semibold text-primary-app": chosen,
                     "cursor-not-allowed border-border-app bg-surface-strong-app text-muted-app": Boolean(takenBy),
-                    "border-border-app hover:border-primary-app": !chosen && !takenBy,
-                  })}>{takenBy ? t("roomAllocations.gridTaken", { club: takenBy }) : chosen ? t("roomAllocations.gridChosen") : t("roomAllocations.gridFree")}</button></td>;
+                    "cursor-not-allowed border-warning-app bg-warning-app/10 text-text-app": Boolean(busy),
+                    "border-border-app hover:border-primary-app": !chosen && !takenBy && !busy,
+                  })}>{takenBy ? t("roomAllocations.gridTaken", { club: takenBy })
+                    : busy ? t("roomAllocations.gridBusy", { count: busy.length })
+                      : chosen ? t("roomAllocations.gridChosen") : t("roomAllocations.gridFree")}</button></td>;
               })}
             </tr>)}</tbody>
           </table></div>

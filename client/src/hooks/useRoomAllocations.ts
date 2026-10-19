@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createRoomAllocation, fetchClubRoomAllocations, fetchRoomAllocationOptions, fetchRoomAllocations,
-  revokeRoomAllocation, type RoomAllocationInput } from "@/services/roomAllocations";
+  fetchRoomOccupancy, revokeRoomAllocation, type RoomAllocationInput } from "@/services/roomAllocations";
 
 const allocationKey = ["room-allocations"] as const;
 
@@ -11,6 +11,11 @@ export function useRoomAllocationOptions(enabled: boolean) {
 export function useRoomAllocations(semesterCode: string) {
   return useQuery({ queryKey: [...allocationKey, "list", semesterCode], enabled: Boolean(semesterCode), retry: false,
     queryFn: ({ signal }) => fetchRoomAllocations(semesterCode, signal) });
+}
+export function useRoomOccupancy(semesterCode: string, propertyId: string) {
+  return useQuery({ queryKey: [...allocationKey, "occupancy", semesterCode, propertyId],
+    enabled: Boolean(semesterCode) && Boolean(propertyId), retry: false,
+    queryFn: ({ signal }) => fetchRoomOccupancy(semesterCode, propertyId, signal) });
 }
 export function useClubRoomAllocations(clubId: string, enabled: boolean) {
   return useQuery({ queryKey: [...allocationKey, "club", clubId], enabled: Boolean(clubId) && enabled, retry: false,

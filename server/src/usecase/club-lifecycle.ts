@@ -86,7 +86,8 @@ export async function dissolveClub(repo: ClubLifecycleRepository, policy: Policy
   }
   const result = await repo.decideDissolution(current.id, { decidedAt: now, decidedBy: actorId, reason,
     effectiveSemester: semester.code, effectiveFrom: semester.startAt, effectiveTo: semester.endAt }, now);
-  return { ...result, effectiveSemester: semester.code };
+  // E1: the officer is warned; these budgets must be reconciled before the Dissolving semester ends.
+  return { ...result, effectiveSemester: semester.code, unreconciledBudgets: current.unreconciledBudgets.length };
 }
 
 /**
@@ -103,6 +104,16 @@ export async function runClubLifecycleJob(repo: ClubLifecycleRepository, now: Da
   }
   const dissolving = await repo.startDissolving(now);
   const dissolved = await repo.completeDissolutions(now);
-  return { reminded: reminders.length, reactivated: expired.length, dissolving: dissolving.length,
-    dissolved: dissolved.length };
+  // UC15 step 6: a club whose step failed stays where it was, and ICPDP is alerted.
+  const failed = [...dissolving.failed, ...dissolved.failed];
+  for (const failure of failed) {
+    await repo.alertOfficers({ clubId: failure.clubId, step: failure.step, message: failure.message }, officers, now);
+  }
+  return { reminded: reminders.length, reactivated: expired.length, dissolving: dissolving.done.length,
+    dissolved: dissolved.done.length, failed: failed.length };
+}
+
+/** The whole run failed (e.g. the database was unreachable): alert ICPDP instead of only logging. */
+export async function alertClubLifecycleJobFailure(repo: ClubLifecycleRepository, message: string, now: Date) {
+  return repo.alertOfficers({ clubId: null, step: "job", message }, await repo.officerIds(), now);
 }

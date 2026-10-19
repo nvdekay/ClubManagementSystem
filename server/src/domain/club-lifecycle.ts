@@ -21,6 +21,41 @@ export interface ClubDissolution {
   effectiveFrom: Date;
   /** …and the club is Dissolved here (that semester ends). */
   effectiveTo: Date;
+  /** Set by the final step (UC15 step 6): when the club was archived and what it still owed. */
+  archivedAt?: Date;
+  outstanding?: OutstandingObligations;
+}
+
+/** Obligations a club had not finished — open reports and unreconciled budgets (UC15 step 6, E1). */
+export interface OutstandingObligations {
+  periodicReports: string[];
+  postEventReports: { eventId: string; title: string }[];
+  budgets: UnreconciledBudget[];
+}
+
+export interface UnreconciledBudget {
+  id: string;
+  eventTitle: string;
+  state: string;
+}
+
+/** A lifecycle step that failed for one club; the club stays where it was and ICPDP is alerted. */
+export interface ClubLifecycleStepFailure {
+  clubId: string;
+  step: "dissolving" | "dissolved";
+  message: string;
+}
+
+export interface ClubLifecycleStepResult {
+  done: string[];
+  failed: ClubLifecycleStepFailure[];
+}
+
+export interface ClubLifecycleAlert {
+  /** null: the job itself failed, not one club. */
+  clubId: string | null;
+  step: string;
+  message: string;
 }
 
 export interface ClubLifecycleSummary {
@@ -47,6 +82,8 @@ export interface ClubLifecycleDetail extends ClubLifecycleSummary {
   openCampaigns: { id: string; title: string; windowEnd: Date }[];
   upcomingEvents: { id: string; title: string; startAt: Date; endAt: Date; registrations: number }[];
   activeTerm?: { name: string; startAt: Date; endAt: Date };
+  /** E1: budgets still to reconcile; dissolution warns about them and step 6 records the rest. */
+  unreconciledBudgets: UnreconciledBudget[];
   history: ClubLifecycleHistoryEntry[];
 }
 
@@ -68,9 +105,12 @@ export interface ClubLifecycleRepository {
   suspensionsDueForReminder(now: Date): Promise<ClubLifecycleSummary[]>;
   markReminded(clubId: string, officerIds: string[], now: Date): Promise<void>;
   expiredSuspensions(now: Date): Promise<ClubLifecycleSummary[]>;
-  startDissolving(now: Date): Promise<string[]>;
-  completeDissolutions(now: Date): Promise<string[]>;
+  startDissolving(now: Date): Promise<ClubLifecycleStepResult>;
+  /** Step 6 for each due club in its own transaction; a failed club stays Dissolving. */
+  completeDissolutions(now: Date): Promise<ClubLifecycleStepResult>;
   officerIds(): Promise<string[]>;
+  /** Alerts ICPDP officers about a failure, at most once a day for the same club and step. */
+  alertOfficers(alert: ClubLifecycleAlert, officerIds: string[], now: Date): Promise<boolean>;
 }
 
 export function validateLifecycleReason(reason: string): string {

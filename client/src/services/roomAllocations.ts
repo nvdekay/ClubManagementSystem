@@ -19,6 +19,8 @@ export interface RoomAllocationInput {
   semesterCode: string; clubId: string; propertyId: string; weekday: number; slot: number; note?: string;
 }
 export interface RoomAllocationConflict { startAt: string; endAt: string; source: "booking" | "event"; title: string; clubName?: string }
+/** A weekly grid cell blocked by approved events or bookings on that room (UC58 A3). */
+export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
 
 /** Keeps the server's `details` (e.g. the clashing dates) next to the message. */
 export class RoomAllocationError extends Error {
@@ -43,6 +45,9 @@ export function fetchRoomAllocationOptions(signal: AbortSignal): Promise<RoomAll
 }
 export function fetchRoomAllocations(semesterCode: string, signal: AbortSignal): Promise<RoomAllocation[]> {
   return request(`/admin/room-allocations?${new URLSearchParams({ semesterCode })}`, { signal });
+}
+export function fetchRoomOccupancy(semesterCode: string, propertyId: string, signal: AbortSignal): Promise<RoomOccupancyCell[]> {
+  return request(`/admin/room-allocations/occupancy?${new URLSearchParams({ semesterCode, propertyId })}`, { signal });
 }
 export function fetchClubRoomAllocations(clubId: string, signal: AbortSignal): Promise<RoomAllocation[]> {
   return request(`/clubs/${encodeURIComponent(clubId)}/room-allocations`, { signal });

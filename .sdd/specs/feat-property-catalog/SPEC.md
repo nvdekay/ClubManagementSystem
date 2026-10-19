@@ -43,3 +43,6 @@ UC45/UC46/UC47 (đặt, duyệt, huỷ booking) và FR-05.
 
 ## Changelog
 - v1.0.0 (2026-10-10) — được người dùng duyệt.
+- v1.1.0 (2026-10-19) — UC44 A2: `GET /admin/properties/:id/booking-conflicts` liệt kê cả booking
+  `Approved`/`In Use` và buổi phân phòng UC58 chưa kết thúc (không chỉ yêu cầu đang chờ); xoá property
+  dùng `AppConfirmDialog` thay `window.confirm`.

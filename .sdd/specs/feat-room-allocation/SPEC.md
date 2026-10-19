@@ -127,6 +127,9 @@ hoặc đổi phòng học; khôi phục buổi đã giải phóng khi CLB kích
 ## Changelog
 - v1.0.0 (2026-10-11) — product owner duyệt luồng ICPDP phân phòng học theo học kỳ (UC58).
 - v1.1.0 (2026-10-13) — xem phòng phía CLB dùng `club.room.view`, mặc định cho mọi thành viên `Active` (I66, ADR-007).
+- v1.2.0 (2026-10-19) — A3: `GET /admin/room-allocations/occupancy?semesterCode&propertyId` trả các ô thứ × slot
+  bị sự kiện/booking đã duyệt chặn trong phần còn lại của học kỳ (cùng luật xung đột với E1); lưới đánh
+  dấu và khoá các ô đó.
 
 Kiểm chứng v1.0.0: `npm run check` — 91 file / 434 test pass (có integration Mongo thật:
 `mongo-room-allocation-repository.test.ts`, booking, UC25); `npm run build -w client` thành công;

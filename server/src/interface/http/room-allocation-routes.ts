@@ -4,7 +4,7 @@ import type { AuthRepository } from "../../domain/auth.js";
 import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { allocateRoom, clubRoomAllocations, listRoomAllocations, revokeRoomAllocation, roomAllocationOptions,
+import { allocateRoom, clubRoomAllocations, listRoomAllocations, revokeRoomAllocation, roomAllocationOccupancy, roomAllocationOptions,
   type RoomAllocationDeps } from "../../usecase/room-allocation.js";
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
@@ -15,6 +15,7 @@ export const roomAllocationBody = z.object({ semesterCode: z.string().trim().min
   note: z.string().trim().max(500).optional() }).strict();
 export const roomAllocationRevokeBody = z.object({ reason: z.string().trim().min(1).max(2000) }).strict();
 export const roomAllocationQuery = z.object({ semesterCode: z.string().trim().min(1).max(40).optional() }).strict();
+export const roomOccupancyQuery = z.object({ semesterCode: z.string().trim().min(1).max(40), propertyId: id }).strict();
 
 function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -29,6 +30,10 @@ export function roomAllocationRoutes(deps: RoomAllocationDeps & { authRepo: Auth
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
   router.get("/admin/room-allocations/options", authGuard(guard, false), async (_req, res) => {
     ok(res, await roomAllocationOptions(deps, actor(res), new Date()));
+  });
+  router.get("/admin/room-allocations/occupancy", authGuard(guard, false), async (req, res) => {
+    const query = parsed(roomOccupancyQuery, req.query);
+    ok(res, await roomAllocationOccupancy(deps, actor(res), query.semesterCode, query.propertyId, new Date()));
   });
   router.get("/admin/room-allocations", authGuard(guard, false), async (req, res) => {
     ok(res, await listRoomAllocations(deps, actor(res), parsed(roomAllocationQuery, req.query).semesterCode));
