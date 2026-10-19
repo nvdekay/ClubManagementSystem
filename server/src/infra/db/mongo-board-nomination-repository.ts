@@ -29,7 +29,7 @@ function mapTerm(doc: Record<string, unknown>): BoardTerm {
 function mapPosition(doc: Record<string, unknown>): BoardPosition {
   return { id: String(doc._id), code: String(doc.code), name: String(doc.name),
     unit: typeof doc.unit === "string" ? doc.unit : undefined,
-    isLeaderRole: doc.isLeaderRole === true };
+    isLeaderRole: doc.isLeaderRole === true, isSingleHolder: doc.isSingleHolder !== false };
 }
 
 function mapSeat(doc: Record<string, unknown>, position: Record<string, unknown>,
@@ -176,6 +176,8 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
         term: term ? mapTerm(term) : null, positions: positionDocs.map(mapPosition), candidates,
         occupiedPositionIds: termAssignments.map((item) => String(item.positionId)),
         pendingPositionIds: pendingSeats.map((item) => String(item.positionId)),
+        seatedMembershipIds: [...new Set([...termAssignments, ...pendingSeats]
+          .map((item) => String(item.membershipId)))],
         presidentConflictMembershipIds,
       };
     },
@@ -209,7 +211,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           memberships.find({ _id: { $in: memberIds }, clubId: clubObjectId, state: "Active" })
             .session(session).lean(),
           assignments.find({ clubId: clubObjectId, termId: termObjectId,
-            positionId: { $in: positionIds }, effectiveTo: { $in: [null] } }).session(session).lean(),
+            effectiveTo: { $in: [null] } }).session(session).lean(),
           nominations.find({ clubId: clubObjectId, termId: termObjectId,
             state: "Pending Confirmation" }).session(session).lean(),
         ]);
@@ -217,10 +219,19 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           return conflict("positions and nominees must remain active in this club");
         }
         const pendingSeatDocs = pending.length ? await seats.find({
-          nominationId: { $in: pending.map((item) => item._id) },
-          positionId: { $in: positionIds }, state: "Pending Confirmation",
+          nominationId: { $in: pending.map((item) => item._id) }, state: "Pending Confirmation",
         }).session(session).lean() : [];
-        if (occupied.length || pendingSeatDocs.length) return conflict("a board seat is already occupied or pending");
+        // A single-holder seat takes one holder per term; a multi-holder seat stays open.
+        const singleHolderIds = new Set(positionDocs.filter((position) => position.isSingleHolder !== false)
+          .map((position) => String(position._id)));
+        if ([...occupied, ...pendingSeatDocs].some((item) => singleHolderIds.has(String(item.positionId))
+          && positionIds.some((positionId) => String(positionId) === String(item.positionId)))) {
+          return conflict("a board seat is already occupied or pending");
+        }
+        const seated = new Set([...occupied, ...pendingSeatDocs].map((item) => String(item.membershipId)));
+        if (memberIds.some((membershipId) => seated.has(String(membershipId)))) {
+          return conflict("nominee already holds or is pending for a board seat");
+        }
         const leaderPositions = positionDocs.filter((position) => position.isLeaderRole);
         if (leaderPositions.length) {
           const leaderMembershipIds = nominationSeats.filter((seat) => leaderPositions.some((position) =>
@@ -289,6 +300,13 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       const taskDocs = await tasks.find({ entityType: "BOARD_NOMINATION", state: "Open" })
         .sort({ openedAt: 1, _id: 1 }).lean();
       const results = await Promise.all(taskDocs.map((task) => detail(task.entityId as Types.ObjectId)));
+      return results.filter((item): item is BoardNominationDetail => item !== null);
+    },
+
+    async listForClub(clubId) {
+      const recent = await nominations.find({ clubId: new Types.ObjectId(clubId) })
+        .sort({ submittedAt: -1, _id: -1 }).limit(20).select({ _id: 1 }).lean();
+      const results = await Promise.all(recent.map((item) => detail(item._id as Types.ObjectId)));
       return results.filter((item): item is BoardNominationDetail => item !== null);
     },
 

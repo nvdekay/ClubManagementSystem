@@ -31,6 +31,7 @@ const en = {
   unauthorized: "Your current account does not have the ICPDP Officer role.",
   signIn: "Sign in to review applications.", status: "Status", decidedAt: "Decided {{date}}",
   signInLink: "Sign in and continue",
+  nameConflict: "An active club already uses this name: {{clubs}}. Decide whether the new club may share it.",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -66,6 +67,7 @@ const vi: Record<keyof typeof en, string> = {
   unauthorized: "Tài khoản hiện tại không có role ICPDP Officer.",
   signIn: "Đăng nhập để thẩm định hồ sơ.", status: "Trạng thái", decidedAt: "Quyết định lúc {{date}}",
   signInLink: "Đăng nhập và tiếp tục",
+  nameConflict: "Đã có CLB đang hoạt động trùng tên: {{clubs}}. Cân nhắc có chấp nhận CLB mới trùng tên hay không.",
 };
 
 export const reviews = { en, vi };

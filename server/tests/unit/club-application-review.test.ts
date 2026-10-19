@@ -25,7 +25,7 @@ const detail: ApplicationReviewDetail = {
     state: "Open", openedAt: now },
   application: { id: applicationId, founderUserId: "000000000000000000000003",
     state: "Submitted", currentVersionNo: 1, draftRevision: 0, draft, createdAt: now },
-  versions: [], decisions: [], founders: [],
+  versions: [], decisions: [], founders: [], nameConflicts: [],
 };
 
 function auth(roles: string[]): AuthRepository {

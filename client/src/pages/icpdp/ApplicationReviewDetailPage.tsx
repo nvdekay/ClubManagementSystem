@@ -131,6 +131,10 @@ export function ApplicationReviewDetailPage() {
           {t("reviews.status")}: {t(`applications.status${application.state.replaceAll(" ", "")}`, { defaultValue: application.state })}
         </AppBadge>} />
 
+      {review.data.nameConflicts.length > 0 && <AppNotice tone="warning" role="status" className="mb-8">
+        {t("reviews.nameConflict", { clubs: review.data.nameConflicts.map((club) => `${club.name} (${club.code})`).join(", ") })}
+      </AppNotice>}
+
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-10">
           <section>

@@ -60,6 +60,10 @@ Client cho phép chọn và đổi giữa Student, ICPDP và nhiều CLB từ `/
 Người dùng đã có Google OAuth credentials và sẽ tự điền; chưa cung cấp domain, nên giá trị `ALLOWED_DOMAIN`, `BOOTSTRAP_ICPDP_EMAIL`, Google credentials và `SESSION_SECRET` phải để trống trong mẫu, không ghi giá trị thật vào repo. `APP_BASE_URL`/callback URL phải khớp Google Console và cổng backend thực tế (cổng 3000 hiện bị tiến trình khác chiếm). Bootstrap policy và ICPDP không chạy khi cấu hình còn trống.
 
 ## Changelog
+- 2026-10-19 — UC03: tìm kiếm tài khoản trả về `clubs` (CLB chưa rời, trạng thái thành viên, ghế đang
+  giữ); A1 khoá khẩn cấp nhận `violationId` của một hồ sơ UC40 chưa `Resolved`/`Closed` — audit
+  `ACCOUNT_LOCKED` ghi `violationId`, hồ sơ có audit `VIOLATION_ACCOUNT_LOCKED`, danh sách tài khoản
+  hiện hồ sơ đã dùng để khoá.
 - v0.1.0 (2026-10-02) — bản triển khai theo SRS UC01, UC03, UC04, BR32, BR47, BR54–BR56; chờ nghiệm thu chức năng.
 - v0.2.0 (2026-10-08) — người dùng quyết định cho mọi tài khoản Google đăng nhập: chính sách domain nhận `*` (đứng một mình) là mọi domain; email vẫn phải được Google xác minh. SRS ASM-02, BR32, SEC-02 cập nhật theo.
 - v0.3.0 (2026-10-08) — chỉ giữ một role ICPDP là `ICPDP_OFFICER`; loại `ICPDP_HEAD` khỏi role có thể cấp và khỏi kiểm tra quyền.

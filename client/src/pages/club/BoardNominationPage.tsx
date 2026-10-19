@@ -8,7 +8,61 @@ import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
-import { useBoardNominationAction, useBoardNominationContext } from "@/hooks/useBoardNominations";
+import { useBoardNominationAction, useBoardNominationContext,
+  useClubBoardNominations } from "@/hooks/useBoardNominations";
+import type { BoardNomination } from "@/services/boardNominations";
+
+function nominationTone(state: string) {
+  if (state === "Confirmed") return "success" as const;
+  if (state === "Returned") return "warning" as const;
+  return "info" as const;
+}
+
+/** UC10: the club follows each submitted nomination and reads why ICPDP returned a seat. */
+function NominationHistory({ clubId }: { clubId: string }) {
+  const { t, i18n } = useTranslation();
+  const history = useClubBoardNominations(clubId, true);
+  function stateLabel(state: string) {
+    if (state === "Confirmed") return t("boardNominations.nominationConfirmed");
+    if (state === "Returned") return t("boardNominations.nominationReturned");
+    return t("boardNominations.nominationPending");
+  }
+  function seatLabel(state: BoardNomination["seats"][number]["state"]) {
+    if (state === "Confirmed") return t("boardNominations.confirmed");
+    if (state === "Returned") return t("boardNominations.returned");
+    return t("boardNominations.pending");
+  }
+  const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" });
+  return <section className="mt-12">
+    <h2 className="font-heading text-xl font-bold">{t("boardNominations.clubHistory")}</h2>
+    {history.isPending ? <AppSkeleton className="mt-4 h-32 w-full" />
+      : history.isError ? <AppNotice tone="danger" role="alert" className="mt-4">{t("boardNominations.clubHistoryError")}</AppNotice>
+        : !history.data.length ? <AppNotice className="mt-4">{t("boardNominations.clubHistoryEmpty")}</AppNotice>
+          : <ul className="mt-4 space-y-4">
+            {history.data.map((nomination) => {
+              const note = nomination.decisions.at(-1)?.reason;
+              return <li key={nomination.id} className="rounded-2xl border border-border-app px-5 py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <AppBadge tone={nominationTone(nomination.state)}>{stateLabel(nomination.state)}</AppBadge>
+                  <span className="text-sm text-muted-app">{nomination.term.name} · {t("boardNominations.waitingSince",
+                    { date: date.format(new Date(nomination.submittedAt)) })}</span>
+                </div>
+                <ul className="mt-3 divide-y divide-border-app">
+                  {nomination.seats.map((seat) => <li key={seat.id} className="flex flex-wrap items-start justify-between gap-2 py-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold break-words">{seat.positionName} · {seat.displayName}</p>
+                      {seat.reason && <p className="mt-0.5 text-sm text-muted-app break-words">
+                        {t("boardNominations.seatReason", { reason: seat.reason })}</p>}
+                    </div>
+                    <AppBadge tone={nominationTone(seat.state)}>{seatLabel(seat.state)}</AppBadge>
+                  </li>)}
+                </ul>
+                {note && <p className="mt-2 text-sm text-muted-app break-words">{t("boardNominations.decisionNote", { reason: note })}</p>}
+              </li>;
+            })}
+          </ul>}
+  </section>;
+}
 
 export function BoardNominationPage() {
   const { clubId } = useParams();
@@ -51,9 +105,11 @@ export function BoardNominationPage() {
     <AppButton variant="secondary" onClick={() => void context.refetch()}>{t("boardNominations.retry")}</AppButton>
   </AppNotice>;
 
-  const available = context.data.positions.filter((position) =>
-    !context.data.occupiedPositionIds.includes(position.id)
-    && !context.data.pendingPositionIds.includes(position.id));
+  // A multi-holder seat (Phó chủ nhiệm) stays open after one holder is confirmed or pending.
+  const available = context.data.positions.filter((position) => !position.isSingleHolder
+    || (!context.data.occupiedPositionIds.includes(position.id)
+      && !context.data.pendingPositionIds.includes(position.id)));
+  const seated = context.data.seatedMembershipIds;
   return <>
     <PageHeader title={t("boardNominations.title")} description={t("boardNominations.description")} />
     {submitted && <AppNotice tone="success" role="status" className="mb-6">{t("boardNominations.success")}</AppNotice>}
@@ -79,11 +135,13 @@ export function BoardNominationPage() {
               const takenIds = Object.entries(selection).filter(([id, value]) => id !== position.id && value)
                 .map(([, value]) => value);
               const candidates = context.data!.candidates.filter((candidate) =>
-                !conflictIds.includes(candidate.membershipId) && !takenIds.includes(candidate.membershipId));
+                !conflictIds.includes(candidate.membershipId) && !takenIds.includes(candidate.membershipId)
+                && !seated.includes(candidate.membershipId));
               return <label key={position.id} className="grid gap-3 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,1fr)] sm:items-center">
                 <span className="flex min-w-0 flex-wrap items-center gap-2 font-semibold">{position.name}
                   {position.unit && <span className="text-sm font-normal text-muted-app">{position.unit}</span>}
                   {position.isLeaderRole && <AppBadge tone="info">{t("boardNominations.leader")}</AppBadge>}
+                  {!position.isSingleHolder && <AppBadge>{t("boardNominations.multiHolder")}</AppBadge>}
                 </span>
                 <select className="min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 py-2 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none"
                   aria-label={`${t("boardNominations.candidate")}: ${position.name}`}
@@ -104,5 +162,6 @@ export function BoardNominationPage() {
       </AppButton>
       {action.isError && <p role="alert" className="mt-4 text-sm text-danger-app">{action.error.message || t("boardNominations.actionError")}</p>}
     </section>
+    {clubId && <NominationHistory clubId={clubId} />}
   </>;
 }

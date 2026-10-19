@@ -9,7 +9,8 @@ import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAccountAction, useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
-import { type AccountAction, type SystemRoleCode } from "@/services/accounts";
+import { useViolations } from "@/hooks/useViolations";
+import { type AccountAction, type AdminUserClub, type SystemRoleCode } from "@/services/accounts";
 import { cn } from "@/utils/cn";
 
 export function AccountsPage() {
@@ -19,13 +20,26 @@ export function AccountsPage() {
   const [targetId, setTargetId] = useState("");
   const [roleCode, setRoleCode] = useState<SystemRoleCode>("ICPDP_OFFICER");
   const [reason, setReason] = useState("");
+  const [violationId, setViolationId] = useState("");
   const accounts = useAccounts(search, true);
   const accountAction = useAccountAction();
   const target = accounts.data?.items.find((item) => item.user.id === targetId);
+  // UC03 A1: an emergency lock may be recorded under an open UC40 case.
+  const violations = useViolations(Boolean(target));
+  const caseOptions = [{ value: "", label: t("auth.noLinkedCase") },
+    ...(violations.data ?? []).filter((item) => !["Resolved", "Closed"].includes(item.state))
+      .map((item) => ({ value: item.id, label: `${item.title} · ${item.clubName}` }))];
   const roleOptions: Array<{ value: SystemRoleCode; label: string }> = [
     { value: "ICPDP_OFFICER", label: t("auth.officerRole") },
     { value: "ATTENDANCE_UNLOCK", label: t("auth.attendanceRole") },
   ];
+
+  function clubLabel(club: AdminUserClub): string {
+    const state = club.membershipState === "Active" ? t("auth.membershipActive")
+      : club.membershipState === "Inactive" ? t("auth.membershipInactive")
+        : club.membershipState === "Banned" ? t("auth.membershipBanned") : club.membershipState;
+    return [club.clubName, state, ...club.positions].join(" · ");
+  }
 
   function systemRoleLabel(code: string): string {
     if (code === "ICPDP_OFFICER") return t("auth.officerRole");
@@ -37,10 +51,12 @@ export function AccountsPage() {
     if (!auth.data || !target) return;
     const action: AccountAction = kind === "grant" || kind === "revoke"
       ? { kind, userId: target.user.id, roleCode, reason }
-      : { kind, userId: target.user.id, reason };
+      : kind === "lock" ? { kind, userId: target.user.id, reason, ...(violationId ? { violationId } : {}) }
+        : { kind, userId: target.user.id, reason };
     try {
       await accountAction.mutateAsync({ action, csrfToken: auth.data.csrfToken });
       setReason("");
+      setViolationId("");
     } catch {
       // The mutation exposes the error state below.
     }
@@ -73,9 +89,14 @@ export function AccountsPage() {
                       </span>
                       {item.systemRoles.length > 0 && ` · ${item.systemRoles.map(systemRoleLabel).join(", ")}`}
                     </p>
+                    <p className="mt-1 text-xs break-words text-muted-app">
+                      {item.clubs.length ? item.clubs.map(clubLabel).join("; ") : t("auth.noClubs")}
+                    </p>
+                    {item.lockCase && <p className="mt-1 text-xs break-words text-danger-app">
+                      {t("auth.lockCase", { title: item.lockCase.title, club: item.lockCase.clubName })}</p>}
                   </div>
                   <AppButton variant="secondary" aria-pressed={item.user.id === targetId}
-                    onClick={() => { setTargetId(item.user.id); setReason(""); accountAction.reset(); }}>
+                    onClick={() => { setTargetId(item.user.id); setReason(""); setViolationId(""); accountAction.reset(); }}>
                     {t("auth.manage")}
                   </AppButton>
                 </li>
@@ -100,6 +121,11 @@ export function AccountsPage() {
               <AppInput className="mt-2 block w-full" value={reason}
                 onChange={(event) => setReason(event.target.value)} maxLength={1000} />
             </label>
+            {target.user.accountState === "Active" && <label className="block text-sm font-medium">
+              {t("auth.linkedCase")}
+              <AppSelect className="mt-2 block w-full" label={t("auth.linkedCase")}
+                value={violationId} options={caseOptions} onChange={setViolationId} />
+            </label>}
             <div className="flex flex-wrap gap-2">
               <AppButton disabled={accountAction.isPending} onClick={() => void updateAccount("grant")}>
                 {t("auth.grant")}

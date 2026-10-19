@@ -99,9 +99,17 @@ CLB mới nhất khi tìm không ra.
 
 **Tài khoản và vòng đời CLB**
 
-4. UC03: khoá tài khoản chưa nối với hồ sơ UC40 (A1); tìm kiếm không hiện ngữ cảnh CLB.
-5. UC07 E3: cảnh báo trùng tên không hiển thị cho người thẩm định ICPDP.
-6. UC10: phía CLB không thấy trạng thái đề cử/lý do trả lại; chỉ có một ghế Phó chủ nhiệm.
+4. ~~UC03: khoá tài khoản chưa nối với hồ sơ UC40 (A1); tìm kiếm không hiện ngữ cảnh CLB.~~ Đã
+   làm 19/10/2026: tìm kiếm hiện CLB, trạng thái thành viên và ghế đang giữ; khi khoá, officer có thể
+   chọn một hồ sơ UC40 đang mở — audit `ACCOUNT_LOCKED` ghi `violationId`, hồ sơ có mục lịch sử
+   `VIOLATION_ACCOUNT_LOCKED`.
+5. ~~UC07 E3: cảnh báo trùng tên không hiển thị cho người thẩm định ICPDP.~~ Đã làm 19/10/2026: trang
+   thẩm định UC08 cảnh báo khi đã có CLB `Active` trùng tên (không phân biệt hoa thường).
+6. ~~UC10: phía CLB không thấy trạng thái đề cử/lý do trả lại; chỉ có một ghế Phó chủ nhiệm.~~ Đã làm
+   19/10/2026: trang đề cử liệt kê các đề cử đã nộp, trạng thái từng ghế và lý do trả lại; ghế nhiều
+   người giữ (`isSingleHolder: false`) vẫn mở sau khi đã có người giữ/đang chờ, mỗi người chỉ một ghế.
+   Còn lại: một lần nộp chỉ đề cử một người cho mỗi ghế, vì index `uq_nom_seat`
+   (`nominationId`, `positionId`) là unique; muốn đề cử hai Phó chủ nhiệm cùng lúc phải đổi schema.
 7. ~~UC15: giải thể cuối kỳ không huỷ đề xuất đang chờ/lưu trữ nghĩa vụ; job lỗi chỉ log console;
    E1 không cảnh báo ngân sách chưa đối soát.~~ Đã sửa 19/10/2026 (nhánh `agent/gaps-lifecycle`): bước 6
    huỷ đề xuất (kể cả `Draft`) và yêu cầu booking chưa quyết định, ghi `dissolution.outstanding` (báo cáo
@@ -152,8 +160,9 @@ CLB mới nhất khi tìm không ra.
   UC18 thao tác hàng loạt lỗi khi trộn trạng thái.
 - UC16 đợt tuyển quá hạn vẫn `Published` đến khi có thao tác xét duyệt; UC54 lời mời quá hạn vẫn
   `Pending` đến khi job hết hạn chạy.
-- UC09 audit ghi `actorRole` "Club Member" cho thao tác của Leader; thông báo chỉ-xem trong
-  `ClubSettingsPage` không bao giờ hiện.
+- ~~UC09 audit ghi `actorRole` "Club Member" cho thao tác của Leader; thông báo chỉ-xem trong
+  `ClubSettingsPage` không bao giờ hiện.~~ Đã sửa 19/10/2026: audit ghi "Club Leader"; bỏ thông báo
+  chỉ-xem vì UC09 E3 từ chối người không có `club.profile.manage`.
 - UC14 checkbox xác nhận bắt buộc kể cả khi không có gì để xác nhận.
 - UC40 thẻ hồ sơ phía CLB thiếu trạng thái/mức độ/nguồn.
 - UC46 phương án thay thế chỉ là văn bản. (Lưới UC58 đánh dấu ô vướng sự kiện/booking đã duyệt từ 19/10.)

@@ -23,6 +23,7 @@ import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./eval
 import { exportBody, exportPreviewBody } from "./export-routes.js";
 import { lifecycleReasonBody, suspendBody } from "./club-lifecycle-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
+import { lockBody } from "./account-admin-routes.js";
 import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
 import { eventCheckInBody } from "./event-checkin-routes.js";
@@ -60,6 +61,9 @@ const Me = z.object({
 const AdminUsers = z.object({
   items: z.array(z.object({
     user: Me.shape.user, systemRoles: z.array(z.string()),
+    clubs: z.array(z.object({ clubId: z.string(), clubName: z.string(), membershipState: z.string(),
+      positions: z.array(z.string()) })),
+    lockCase: z.object({ violationId: z.string(), title: z.string(), clubName: z.string() }).optional(),
   })),
   total: z.number().int(),
 });
@@ -165,6 +169,7 @@ const FounderProfile = z.object({ id: z.string(), displayName: z.string(), email
 const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
   versions: z.array(ApplicationVersion), decisions: z.array(ApplicationReviewDecision),
   founders: z.array(FounderProfile),
+  nameConflicts: z.array(z.object({ id: z.string(), code: z.string(), name: z.string() })),
 });
 const EventProposalTask = z.object({
   id: z.string(), eventId: z.string(), title: z.string(), state: z.enum(["Open", "Decided", "Closed"]),
@@ -370,7 +375,7 @@ const MembershipWithdrawal = z.object({
 }>;
 const BoardTerm = z.object({ id: z.string(), name: z.string(), startAt: z.string(), endAt: z.string(), state: z.string() });
 const BoardPosition = z.object({ id: z.string(), code: z.string(), name: z.string(),
-  unit: z.string().optional(), isLeaderRole: z.boolean() });
+  unit: z.string().optional(), isLeaderRole: z.boolean(), isSingleHolder: z.boolean() });
 const BoardCandidate = z.object({ membershipId: z.string(), userId: z.string(),
   displayName: z.string(), state: z.string() });
 const BoardSeat = z.object({ id: z.string(), positionId: z.string(), positionCode: z.string(),
@@ -390,7 +395,8 @@ const BoardNomination = z.object({ id: z.string(), clubId: z.string(), clubName:
 const BoardNominationContext = z.object({ clubId: z.string(), clubName: z.string(),
   clubState: z.string(), term: BoardTerm.nullable(), positions: z.array(BoardPosition),
   candidates: z.array(BoardCandidate), occupiedPositionIds: z.array(z.string()),
-  pendingPositionIds: z.array(z.string()), presidentConflictMembershipIds: z.array(z.string()) });
+  pendingPositionIds: z.array(z.string()), seatedMembershipIds: z.array(z.string()),
+  presidentConflictMembershipIds: z.array(z.string()) });
 const TransitionObligation = z.object({ id: z.string(), type: z.string(), entityId: z.string().optional(),
   description: z.string(), assigneeMembershipId: z.string() });
 const LeadershipTransition = z.object({
@@ -1881,6 +1887,11 @@ export const openApiDocument = createDocument({
         } } } },
     },
     "/clubs/{clubId}/board-nominations": {
+      get: { summary: "List the club's recent board nominations with seat states and return reasons (UC10)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Club board nominations, newest first", content: {
+          "application/json": { schema: envelope(z.array(BoardNomination)) },
+        } } } },
       post: { summary: "Submit one board nomination and create one ICPDP task",
         requestParams: { path: z.object({ clubId: z.string() }) },
         requestBody: { content: { "application/json": { schema: boardNominationBody } } },
@@ -2147,9 +2158,9 @@ export const openApiDocument = createDocument({
     },
     "/admin/users/{id}/lock": {
       post: {
-        summary: "Lock account with reason (ICPDP only)",
+        summary: "Lock account with reason, optionally under an open UC40 case (ICPDP only)",
         requestParams: { path: UserIdPath },
-        requestBody: { content: { "application/json": { schema: Reason } } },
+        requestBody: { content: { "application/json": { schema: lockBody } } },
         responses: {
           "200": { description: "Account locked",
             content: { "application/json": { schema: envelope(Changed) } } },

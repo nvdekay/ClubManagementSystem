@@ -73,4 +73,13 @@ describe("UC03 account administration", () => {
       "locked", `revoke:${target.id}`,
     ]);
   });
+
+  it("links a UC40 case only to a lock (A1)", async () => {
+    const { repo, sessions, changes } = fixture();
+    await expect(setAccountLock(repo, sessions, actor, target.id, false, "cleared", now,
+      "0123456789abcdef01234599")).rejects.toMatchObject({ kind: "validation" });
+    await expect(setAccountLock(repo, sessions, actor, target.id, true, "case", now, "bad"))
+      .rejects.toMatchObject({ kind: "validation" });
+    expect(changes).toEqual([]);
+  });
 });

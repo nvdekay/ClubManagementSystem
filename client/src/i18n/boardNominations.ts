@@ -27,6 +27,11 @@ const en = {
   decisionError: "Could not record the decision.", history: "Decision history",
   confirmedLabel: "Confirmed seats", returnedLabel: "Returned seats",
   activeClub: "Club is now Active.", readOnly: "This nomination task has already been decided.",
+  multiHolder: "Several holders", clubHistory: "Submitted nominations",
+  clubHistoryEmpty: "This club has not submitted a board nomination yet.",
+  clubHistoryError: "Could not load submitted nominations.", nominationReturned: "Returned",
+  nominationConfirmed: "Confirmed", nominationPending: "Waiting for ICPDP",
+  decisionNote: "ICPDP note: {{reason}}", seatReason: "Reason: {{reason}}",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -58,6 +63,11 @@ const vi: Record<keyof typeof en, string> = {
   decisionError: "Không thể ghi quyết định.", history: "Lịch sử quyết định",
   confirmedLabel: "Ghế đã xác nhận", returnedLabel: "Ghế đã trả lại",
   activeClub: "Câu lạc bộ đã chuyển sang Active.", readOnly: "Task đề cử này đã được quyết định.",
+  multiHolder: "Nhiều người giữ", clubHistory: "Các đề cử đã nộp",
+  clubHistoryEmpty: "CLB chưa nộp đề cử ban chủ nhiệm nào.",
+  clubHistoryError: "Không tải được các đề cử đã nộp.", nominationReturned: "Đã trả lại",
+  nominationConfirmed: "Đã xác nhận", nominationPending: "Chờ ICPDP xác nhận",
+  decisionNote: "Ghi chú của ICPDP: {{reason}}", seatReason: "Lý do: {{reason}}",
 };
 
 export const boardNominations = { en, vi };

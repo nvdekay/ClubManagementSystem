@@ -91,9 +91,13 @@ describe.skipIf(!uri)("Mongo club application repository", () => {
     await applications.submit({ id: application.id, ownerId: founder.toString(), snapshot,
       expectedDraftRevision: 0, policyVersionId, now });
     const reviews = mongoClubApplicationReviewRepository();
+    const namesake = await ucmsModels.clubs!.create({ code: "AUTO-OLD", name: "automation club",
+      field: "Technology", state: "Active", createdAt: now });
 
     const claimed = await reviews.claim(application.id, officer.toString(), now);
     expect(claimed.application.state).toBe("Under Review");
+    expect(claimed.nameConflicts).toEqual([{ id: String(namesake._id), code: "AUTO-OLD", name: "automation club" }]);
+    await ucmsModels.clubs!.deleteOne({ _id: namesake._id });
     expect(claimed.founders.map((founderItem) => founderItem.displayName))
       .toEqual(["Founder Review", "Co-founder Review", "Third Review"]);
     expect(await applications.findActiveUserByEmail("FOUNDER-REVIEW@example.edu"))

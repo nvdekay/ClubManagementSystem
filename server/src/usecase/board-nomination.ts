@@ -65,9 +65,12 @@ export async function submitBoardNomination(repo: BoardNominationRepository,
     const membershipId = validId(seat.membershipId);
     const position = positions.get(positionId);
     if (!position) throw new DomainError("position is not an active board seat", "validation");
-    if (context.occupiedPositionIds.includes(positionId)
-      || context.pendingPositionIds.includes(positionId)) {
+    if (position.isSingleHolder && (context.occupiedPositionIds.includes(positionId)
+      || context.pendingPositionIds.includes(positionId))) {
       throw new DomainError("board position is already occupied or pending", "conflict");
+    }
+    if (context.seatedMembershipIds.includes(membershipId)) {
+      throw new DomainError("nominee already holds or is pending for a board seat", "conflict");
     }
     if (!candidates.has(membershipId)) {
       throw new DomainError("nominee must have an active membership in this club", "validation");
@@ -78,6 +81,12 @@ export async function submitBoardNomination(repo: BoardNominationRepository,
   }
   return repo.submit(validClubId, actor.id, context.term.id,
     seats.map((seat) => ({ positionId: seat.positionId, membershipId: seat.membershipId })), now);
+}
+
+export async function listClubBoardNominations(repo: BoardNominationRepository,
+  access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now: Date) {
+  await assertClubAccess(access, actor, clubId, "club.board.nominate", now);
+  return repo.listForClub(validId(clubId));
 }
 
 export async function listBoardNominations(repo: BoardNominationRepository,

@@ -12,6 +12,7 @@ import {
   getBoardNomination,
   getBoardNominationContext,
   listBoardNominations,
+  listClubBoardNominations,
   submitBoardNomination,
 } from "../../usecase/board-nomination.js";
 import { authGuard } from "./auth-routes.js";
@@ -52,6 +53,10 @@ export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
   router.get("/clubs/:clubId/board-nomination-context", authGuard(guard, false), async (req, res) => {
     ok(res, await getBoardNominationContext(deps.repo, deps.accessRepo, actor(res),
+      parsed(id, req.params.clubId), new Date()));
+  });
+  router.get("/clubs/:clubId/board-nominations", authGuard(guard, false), async (req, res) => {
+    ok(res, await listClubBoardNominations(deps.repo, deps.accessRepo, actor(res),
       parsed(id, req.params.clubId), new Date()));
   });
   router.post("/clubs/:clubId/board-nominations", authGuard(guard), async (req, res) => {
