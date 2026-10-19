@@ -5,7 +5,7 @@ tương ứng của VS Code.
 
 | File | Thể hiện điều gì |
 |---|---|
-| [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | **Context diagram hiện hành** (nội dung v2.1; file `UCMS_Context_Diagram_v2.1.drawio` cũ đã gộp vào đây và bị xoá ngày 14/10/2026, commit `402dafa`) — biên hệ thống và 46 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64) |
+| [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | **Context diagram hiện hành** (nội dung v2.1; file `UCMS_Context_Diagram_v2.1.drawio` cũ đã gộp vào đây và bị xoá ngày 14/10/2026, commit `402dafa`) — biên hệ thống và 46 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64). Ảnh `img/UCMS_Context_Diagram_01_Context-diagram.png` (xuất lại 19/10/2026 từ file này; các ảnh `_v2`, `_v2.1` là lịch sử) |
 | [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | **Use case diagram hiện hành**, phủ UC01–UC55 và UC58 (phân phòng học theo học kỳ, thêm 2026-10-11) — mỗi trang một nhóm actor: 9 trang: User (chỉ UC01, UC02; không vẽ kế thừa — 2026-10-19), Student, Club Member - Events & bookings, Club Leader, Club Leader - Club & recruitment, Club Leader - Events, bookings & finance, ICPDP 1–3 (bộ trang từ commit `107ea77`, `3f1c580`; review issue I66) |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event, Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`) |
 | [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (19/10/2026) — mô hình **khái niệm**, 33 thực thể (màu theo module), 188 thuộc tính (183 của thực thể + 5 của hai quan hệ N:M), **mỗi ký pháp đúng một hình**: trang 1 *ERD Chen* theo **ký pháp Chen** (hình chữ nhật, elip thuộc tính, elip đôi là đa trị, hình thoi quan hệ), bản số ghi bằng **chân quạ** (Crow's Foot) ở đầu đường nối, 53 quan hệ; trang 2 *ERD Crow's Foot* theo **ký pháp Crow's Foot** thuần (bảng thực thể liệt kê thuộc tính, đường nối thẳng giữa hai bảng, tên quan hệ ghi trên đường, hai quan hệ N:M vẽ thành thực thể liên kết `Candidate Evaluation` / `Dimension Result`), 55 đường nối; trang 3–4 *(no legend)* là chính hai hình đó bỏ tiêu đề / chú giải / dải màu module, để dán vào report. Không có Role / Permission, không có bảng kỹ thuật (approval, notification, audit). Không ghi kiểu dữ liệu, khoá hay ràng buộc. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới. Ảnh `img/UCMS_ERD_01_ERD-Chen.png`, `img/UCMS_ERD_02_ERD-Crow-s-Foot.png` (có chú giải, để đọc), `img/UCMS_ERD_03_ERD-Chen-no-legend.png`, `img/UCMS_ERD_04_ERD-Crow-s-Foot-no-legend.png` (không chú giải, để dán vào report) và `.svg` cùng tên |
@@ -15,25 +15,28 @@ tương ứng của VS Code.
 | [`UCMS_Organization_and_Flows.drawio`](UCMS_Organization_and_Flows.drawio) | **Cơ cấu tổ chức và luồng nghiệp vụ chính** — trang Organization structure (SRS §2.4) và Main business flows F1–F10 (SRS §2.5) |
 | [`UCMS_Main_Workflow.drawio`](UCMS_Main_Workflow.drawio) | **Main workflow hiện hành** (13/10/2026) — đúng **hai** swimlane tổng quát, làn dọc theo actor (Student, Club Leader, ICPDP Officer, UCMS), luồng chạy từ trên xuống theo giai đoạn nghiệp vụ: trang 1 *Club and membership governance* (thành lập → thiết lập CLB → tuyển và quản lý thành viên → ban chủ nhiệm và nhiệm kỳ → giám sát, đánh giá, vòng đời), trang 2 *Event management and supporting operations* (đề xuất → xét duyệt → nguồn lực khi cần → công bố và đăng ký → tổ chức và điểm danh → báo cáo, quyết toán, phản hồi, đánh giá). Không vẽ chi tiết từng use case |
 | [`UCMS_Swimlane_Flows.drawio`](UCMS_Swimlane_Flows.drawio) | **Swimlane chi tiết từng luồng** (tiếng Anh, 14 trang) — tài liệu tham khảo sâu cho SRS §2.5, **không còn là main workflow của report**: Club Founding, Leadership Transition, Member Recruitment, Event Proposal, Event Execution, Event Finance, Room Allocation (UC58), Facility Request, Complaint Handling, Periodic Report, Violation Case, Club Evaluation, Suspension and Dissolution, Club Leader and Club Member. Phía CLB chỉ có hai role cố định: `Club Leader` thao tác, `Club Member` chỉ xem và tham gia |
-| [`UCMS_System_Architecture.drawio`](UCMS_System_Architecture.drawio) | Sơ đồ kiến trúc hệ thống tổng quan, một trang (02/10/2026). Chưa có bản PNG trong `img/`; thiết kế chi tiết xem [`../04-design/UCMS_High_Level_Design.md`](../04-design/UCMS_High_Level_Design.md) |
+| [`UCMS_System_Architecture.drawio`](UCMS_System_Architecture.drawio) | Sơ đồ kiến trúc hệ thống tổng quan, một trang (02/10/2026). Ảnh `img/UCMS_System_Architecture_01_System-architecture.png` (xuất 19/10/2026); thiết kế chi tiết xem [`../04-design/UCMS_High_Level_Design.md`](../04-design/UCMS_High_Level_Design.md) |
 | [`img/`](img/) | Bản xuất PNG, đặt tên theo `<tên-file-nguồn>_<số-trang>_<tên-trang>.png` |
 
-## Bộ sơ đồ dùng trong report v2
+## Bộ sơ đồ dùng trong report final
 
-Report v2 DOCX đã xoá khỏi repo ngày 19/10/2026; bảng dưới giữ lại để biết tab nào dùng sơ đồ nào.
-Mỗi tab trong nhóm *Diagram* của report lấy đúng một file nguồn ở thư mục này. Ảnh chèn vào report
-là các PNG trong [`img/`](img/); phần giải thích trong report viết bằng tiếng Việt, tên trạng thái,
-collection, trường và role giữ nguyên tiếng Anh.
+Report final hiện hành là [`../Group1_SE1939-NJ_Report_Final.docx`](../Group1_SE1939-NJ_Report_Final.docx)
+(dựng lại 19/10/2026); bảng dưới cho biết mục nào của report dùng sơ đồ nào. Ảnh chèn vào report là các PNG
+trong [`img/`](img/); report viết bằng tiếng Anh theo mẫu môn học, tên trạng thái, collection, trường và role
+giữ nguyên như trong code.
 
-| Tab trong report | File nguồn | Ảnh dùng |
+| Mục trong report | File nguồn | Ảnh dùng |
 |---|---|---|
-| Context diagram | `UCMS_Context_Diagram.drawio` | `UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png` (chưa xuất lại PNG theo tên file mới) |
-| Use case diagram | `UCMS_UseCase_ByActor.drawio` | `UCMS_UseCase_ByActor_*.png` |
-| State Diagram | `UCMS_State_Diagrams.drawio` | 8 ảnh `UCMS_State_Diagrams_01…08_*.png` |
-| Package Diagram | `UCMS_Package_Diagrams.drawio` | `UCMS_Package_Diagrams_01_Front-end-packages.png`, `…_02_Back-end-packages.png` |
-| Screen flow | `UCMS_Screen_Flow.drawio` | `UCMS_Screen_Flow_01_Screen-flow.png` — một sơ đồ gộp, 5 khung theo layout, tách actor bằng màu |
-| ERD | `UCMS_ERD.drawio` | 4 ảnh, mỗi ký pháp một hình: `UCMS_ERD_01_ERD-Chen.png` (Chen, bản số chân quạ) và `UCMS_ERD_02_ERD-Crow-s-Foot.png` (Crow's Foot) có chú giải để đọc; `UCMS_ERD_03_ERD-Chen-no-legend.png` và `UCMS_ERD_04_ERD-Crow-s-Foot-no-legend.png` không chú giải để dán vào report; kèm bản `.svg` cùng tên |
-| Mainwork flow | `UCMS_Main_Workflow.drawio` | 2 ảnh `UCMS_Main_Workflow_01_*.png`, `…_02_*.png`, kèm bản `.svg` cùng tên |
+| Context diagram (III.1) | `UCMS_Context_Diagram.drawio` | `UCMS_Context_Diagram_01_Context-diagram.png` |
+| Organization structure, Main business flows (III.1.1, III.3.1.1) | `UCMS_Organization_and_Flows.drawio` | `UCMS_Organization_and_Flows_01_*.png`, `…_02_*.png` |
+| Use case diagram (III.2.2.1) | `UCMS_UseCase_ByActor.drawio` | `UCMS_UseCase_ByActor_*.png` |
+| State Diagram (III.5.3) | `UCMS_State_Diagrams.drawio` | 8 ảnh `UCMS_State_Diagrams_01…08_*.png` |
+| Package Diagram (IV.1.2) | `UCMS_Package_Diagrams.drawio` | `UCMS_Package_Diagrams_01_Front-end-packages.png`, `…_02_Back-end-packages.png` |
+| Screen flow (III.3.1.2) | `UCMS_Screen_Flow.drawio` | `UCMS_Screen_Flow_01_Screen-flow.png` — một sơ đồ gộp, 5 khung theo layout, tách actor bằng màu |
+| ERD (IV.2) | `UCMS_ERD.drawio` | 4 ảnh, mỗi ký pháp một hình: `UCMS_ERD_01_ERD-Chen.png` (Chen, bản số chân quạ) và `UCMS_ERD_02_ERD-Crow-s-Foot.png` (Crow's Foot) có chú giải để đọc; `UCMS_ERD_03_ERD-Chen-no-legend.png` và `UCMS_ERD_04_ERD-Crow-s-Foot-no-legend.png` không chú giải để dán vào report; kèm bản `.svg` cùng tên |
+| Main workflow (III.3.1.1) | `UCMS_Main_Workflow.drawio` | 2 ảnh `UCMS_Main_Workflow_01_*.png`, `…_02_*.png`, kèm bản `.svg` cùng tên |
+| Database schema (IV.2) | `UCMS_Database_Schema.drawio` | `UCMS_Database_Schema_01_Schema-overview.png` (10 trang module và trang Enums để tra cứu, không chèn) |
+| System architecture (IV.1.1) | `UCMS_System_Architecture.drawio` | `UCMS_System_Architecture_01_System-architecture.png` |
 
 Main workflow của report là **đúng hai swimlane tổng quát** trong `UCMS_Main_Workflow.drawio`. Bộ 14 swimlane
 chi tiết (`UCMS_Swimlane_Flows.drawio`) chỉ còn là tài liệu tham khảo; bản flowchart không chia làn
@@ -186,8 +189,8 @@ kế thừa tham chiếu sang trang của actor cha, không cần lặp lại ov
 Ảnh PNG theo bộ 9 trang mới: `UCMS_UseCase_ByActor_01_User.png`, `02_Student`,
 `03_Club-Member-Events-bookings`, `04_Club-Leader`, `05_Club-Leader-Club-recruitment`,
 `06_Club-Leader-Events-bookings-finance`, `07_ICPDP-1-Access-club-lifecycle`,
-`08_ICPDP-2-Events-bookings-finance`, `09_ICPDP-3-Compliance-evaluation`. Bản Word tổng hợp ở
-[`../v2.docx`](../v2.docx) dùng đúng bộ ảnh này (cập nhật 2026-10-19).
+`08_ICPDP-2-Events-bookings-finance`, `09_ICPDP-3-Compliance-evaluation`. Report final
+(`../Group1_SE1939-NJ_Report_Final.docx`, mục III.2.2.1) dùng đúng bộ ảnh này (cập nhật 2026-10-19).
 
 **Luồng phòng học và CSVC (đối chiếu code ngày 2026-10-12):** ICPDP cấp phòng học `ROOM`
 theo học kỳ qua `Manage room allocations` (UC58), gồm cấp, xem và thu hồi. CLB xem qua

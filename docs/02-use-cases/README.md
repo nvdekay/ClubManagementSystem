@@ -10,8 +10,9 @@ ngoài, 12 module. Mọi mã số trong thư mục này là v2; cách đánh s�
 | [`UCMS_UseCase_Specification_v2.md`](UCMS_UseCase_Specification_v2.md) | Đặc tả chi tiết 53 mã use case (4 mã đã rút ghi rõ lý do) — actor, mục tiêu, điều kiện kích hoạt, tiền điều kiện, dữ liệu vào, luồng chính, luồng thay thế, ngoại lệ, hậu điều kiện, quy tắc nghiệp vụ, đầu ra, use case liên quan, pain point |
 | [`UCMS_Review_Issues.md`](UCMS_Review_Issues.md) | Nhật ký review chéo I01–I30: những chỗ mô hình, đặc tả và sơ đồ mâu thuẫn nhau, và cách xử lý từng mục. I21 và I22 vẫn còn mở |
 
-Bản Word duy nhất còn giữ là [`../v2.docx`](../v2.docx) (chín use case diagram theo actor);
-report và DOCX đặc tả riêng đã được xoá để tránh dùng bản cũ.
+Bản Word hiện hành là report final [`../Group1_SE1939-NJ_Report_Final.docx`](../Group1_SE1939-NJ_Report_Final.docx)
+(mục III: use case diagram, bảng use case và đặc tả UC01–UC55, UC58); DOCX đặc tả riêng và `v2.docx` đã được xoá
+để tránh dùng bản cũ.
 
 Sơ đồ của phần này nằm ở [`../03-diagrams/`](../03-diagrams/); baseline yêu cầu hợp nhất là
 [`../SRS.md`](../SRS.md).

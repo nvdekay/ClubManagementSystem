@@ -19,8 +19,10 @@ hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu
 truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác
 nhau về một yêu cầu, **lấy theo SRS**.
 
-Bản Word duy nhất còn giữ: [v2.docx](v2.docx) — chín use case diagram theo actor, mỗi ảnh một trang.
-Report, DOCX đặc tả và sơ đồ cũ, các file thuyết trình và review rời đã được xoá (19/10/2026);
+**Report final hiện hành:** [`Group1_SE1939-NJ_Report_Final.docx`](Group1_SE1939-NJ_Report_Final.docx) — dựng lại
+19/10/2026 từ bộ sơ đồ hiện hành trong `03-diagrams/img/` (context, use case theo actor, main workflow, screen flow,
+state, ERD Chen + Crow's Foot, database schema, package, kiến trúc); mở bằng Word và chấp nhận cập nhật field để làm
+mới mục lục. `v2.docx`, DOCX đặc tả và sơ đồ cũ, các file thuyết trình và review rời đã được xoá (19/10/2026);
 nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và đối chiếu.
 
 ## Bản đồ thư mục
@@ -38,15 +40,15 @@ nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và �
 
 1. [`CURRENT_IMPLEMENTATION.md`](CURRENT_IMPLEMENTATION.md) — code đã có gì và còn thiếu gì.
 2. [`SRS.md`](SRS.md) §1–§2 — sản phẩm là gì, ai dùng, cái gì nằm ngoài phạm vi.
-3. [`03-diagrams/img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png`](03-diagrams/img/UCMS_Context_Diagram_v2.1_01_Context-diagram-v2.1.png) — biên hệ thống trong một hình.
+3. [`03-diagrams/img/UCMS_Context_Diagram_01_Context-diagram.png`](03-diagrams/img/UCMS_Context_Diagram_01_Context-diagram.png) — biên hệ thống trong một hình.
 4. [`SRS.md`](SRS.md) §4 — use case bạn sắp làm, rồi §5 và §6 cho quy tắc và trạng thái của nó.
 5. [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) — code đặt ở đâu.
 6. [`05-implementation/TASKS.md`](05-implementation/TASKS.md) — lịch sử phân rã; trạng thái hiện hành lấy từ `CURRENT_IMPLEMENTATION.md` và SPEC/TASKS của feature.
 7. [`../.rules/README.md`](../.rules/README.md) — code phải trông như thế nào. Definition of Done: `npm run check` xanh.
 
 Use case diagram chuẩn là [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio)
-và chín ảnh `03-diagrams/img/UCMS_UseCase_ByActor_*.png`. [v2.docx](v2.docx) tổng hợp đủ chín ảnh
-hiện hành, mỗi ảnh một trang; cần xuất lại bản Word khi cập nhật bộ ảnh nguồn.
+và chín ảnh `03-diagrams/img/UCMS_UseCase_ByActor_*.png`; report final chèn đúng bộ ảnh này (mục III.2.2.1).
+Cần dựng lại report khi cập nhật bộ ảnh nguồn.
 
 ## Quy ước
 
