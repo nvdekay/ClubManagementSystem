@@ -621,7 +621,7 @@
                     <mxGeometry height="30" width="900" x="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
-                    <mxGeometry height="1420" width="710" x="260" y="50" as="geometry"/>
+                    <mxGeometry height="1420" width="1040" x="260" y="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;" value="ICPDP Officer" vertex="1">
                     <mxGeometry height="80" width="40" x="60" y="720.0" as="geometry"/>
@@ -638,7 +638,7 @@
                 <mxCell id="p7m0a" edge="1" parent="1" source="p7actor" style="endArrow=none;html=1;strokeColor=#000000;" target="p7m0" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="p7m0c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Decide event proposal" vertex="1">
+                <mxCell id="p7m0c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Approve event proposal" vertex="1">
                     <mxGeometry height="56" width="230" x="680" y="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7m0c0i" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7m0c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
@@ -735,21 +735,27 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
             <mxCell id="p7eventStatus" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Update event proposal report status" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="170" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="680" y="330" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7eventStatusi" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventStatus" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7eventSupplement" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Request event proposal supplement" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="250" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="1030" y="170" as="geometry"/>
                 </mxCell>
-                <mxCell id="p7eventSupplementi" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventSupplement" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                <mxCell id="p7eventSupplementi" edge="1" parent="1" source="p7eventReject" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventSupplement" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="p7eventComments" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Provide revision feedback" vertex="1">
-                    <mxGeometry height="56" width="230" x="680" y="330" as="geometry"/>
+                    <mxGeometry height="56" width="230" x="1030" y="250" as="geometry"/>
                 </mxCell>
-                <mxCell id="p7eventCommentsi" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventComments" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                <mxCell id="p7eventCommentsi" edge="1" parent="1" source="p7eventReject" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventComments" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7eventReject" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Reject event proposal" vertex="1">
+                    <mxGeometry height="56" width="230" x="680" y="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7eventRejecti" edge="1" parent="1" source="p7m0" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p7eventReject" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 </root>

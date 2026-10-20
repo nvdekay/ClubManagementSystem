@@ -593,6 +593,9 @@ hoặc UC12 / UC13. Giữ mã UC23 để không đánh số lại các use case 
 - **Liên quan:** UC26, UC45 · **Pain point:** BP05, BP06, BP09
 
 #### UC26 — Thẩm định và quyết định đề xuất sự kiện
+
+Trong sơ đồ, `Approve event proposal` và `Reject event proposal` là các chức năng con UC26. Theo quyết định ngày 20/10/2026, `Reject event proposal` mang nghĩa **trả hồ sơ để bổ sung** → `Revision Requested`; chức năng này `«include»` cả `Request event proposal supplement` và `Provide revision feedback`. Hai chức năng bổ sung/nhận xét không nối trực tiếp từ `Manage event oversight`. Nhãn `Reject event proposal` này khác kết quả từ chối hẳn `Rejected` trong vòng đời hiện hành.
+
 - **Actor:** ICPDP
 - **Tiền điều kiện:** đề xuất đang ở `Pending Approval`.
 - **Luồng:** xem xét mức độ tuân thủ, địa điểm, thời gian, rủi ro, các nghĩa vụ quá hạn, yêu cầu

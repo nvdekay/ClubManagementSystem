@@ -1552,6 +1552,8 @@ Giữ mã UC23 làm dấu vết lịch sử và không đánh số lại các us
 
 Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức sự kiện trước khi duyệt**, khác báo cáo sau sự kiện UC33/UC34. Các oval bổ sung là chức năng con của UC25/UC26, không tạo mã UC hay trạng thái mới.
 
+Trong sơ đồ, `Approve event proposal` và `Reject event proposal` là các chức năng con UC26. Theo quyết định ngày 20/10/2026, `Reject event proposal` mang nghĩa **trả hồ sơ để bổ sung** → `Revision Requested`; chức năng này `«include»` cả `Request event proposal supplement` và `Provide revision feedback`. Hai chức năng bổ sung/nhận xét không nối trực tiếp từ `Manage event oversight`. Nhãn `Reject event proposal` này khác kết quả từ chối hẳn `Rejected` trong vòng đời hiện hành.
+
 **Hậu điều kiện** — đề xuất ở `Revision Requested`, `Approved` hoặc `Rejected`.
 **Đầu ra** — `ApprovalDecision`, `EventBudget` (khi có phần ngân sách), bản ghi audit, thông báo.
 
