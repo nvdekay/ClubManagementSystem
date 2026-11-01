@@ -16,6 +16,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubEvent, useClubEventFeedback, useClubEventMutation, useClubEventOptions, useClubEvents, useEventParticipants } from "@/hooks/useClubEvents";
 import type { ClubEvent, ClubEventError, ClubEventInput, EventParticipant } from "@/services/clubEvents";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
 const eventsEmpty: ClubEvent[] = [];
 const participantsEmpty: EventParticipant[] = [];
@@ -28,8 +31,13 @@ function freshEvent(): ClubEventInput {
   return { title: "", objective: "", plan: "", startAt: start.toISOString(), endAt: new Date(start.getTime() + 2 * 3600000).toISOString(),
     venueText: "", audienceScope: "PUBLIC", capacity: 40, riskCategory: "LOW", budgetLines: [], bookingIds: [], registrationForm: [], occurrences: [] };
 }
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="font-medium">{label}</span>{children}</label>;
+function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string | null; children: ReactNode }) {
+  return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="font-medium">{label}{required && <AppRequiredMark />}</span>{children}<AppFieldError message={error} /></label>;
+}
+function numberError(t: TFunction, value: number, min: number, max: number) {
+  if (!Number.isInteger(value)) return t("common.invalidNumber");
+  if (value < min) return t("common.numberMin", { min });
+  return value > max ? t("common.numberMax", { max }) : null;
 }
 function obligationLabel(t: TFunction, item: string) {
   const [key, value] = item.split(":", 2);
@@ -76,6 +84,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const [compare, setCompare] = useState<string[]>([]);
   const [editing, setEditing] = useState<ClubEvent | "new" | null>(null);
   const [draft, setDraft] = useState<ClubEventInput>(freshEvent);
+  const [editorOpenedAt, setEditorOpenedAt] = useState(0); // "now" for the start-in-future check; render must stay pure
   const [operation, setOperation] = useState<"publish" | "cancel" | "reschedule" | "capacity" | "check-in" | "correct" | "unlock" | null>(null);
   const [target, setTarget] = useState<EventParticipant | null>(null);
   const [reason, setReason] = useState("");
@@ -124,7 +133,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     setEditing(event); setDraft(event === "new" ? freshEvent() : { title: event.title, objective: event.objective, plan: event.plan, startAt: event.startAt, endAt: event.endAt,
       venueText: event.venueText, propertyId: event.propertyId, audienceScope: event.audienceScope, capacity: event.capacity, riskCategory: event.riskCategory,
       riskNote: event.riskNote, facilityNeeds: event.facilityNeeds, occurrences: event.occurrences ?? [], budgetLines: event.budgetLines, bookingIds: event.bookingIds, registrationForm: event.registrationForm ?? [] });
-    mutation.reset(); setFormError(null); setSuccess(false);
+    mutation.reset(); setFormError(null); setSuccess(false); eventField.reset(); setEditorOpenedAt(new Date().getTime());
   }
   const openOperation = useCallback(function openOperation(kind: NonNullable<typeof operation>, participant: EventParticipant | null = null) {
     if (!active) return;
@@ -144,7 +153,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   ]), [t, active, mutation.isPending, runAction, openOperation]);
   const ptable = useTable({ features: appTableFeatures, columns: pcolumns, data: people, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   async function save(event: FormEvent) {
-    event.preventDefault(); if (!auth.data) return;
+    event.preventDefault(); if (!auth.data || !eventField.touchAll()) return;
     setFormError(null);
     try {
       const result = editing === "new" ? await mutation.mutateAsync({ kind: "create", input: draft, csrfToken: auth.data.csrfToken }) :
@@ -153,7 +162,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     } catch (error) { setFormError(error); }
   }
   async function execute(event: FormEvent) {
-    event.preventDefault(); if (!active || !operation) return;
+    event.preventDefault(); if (!active || !operation || !opField.touchAll()) return;
+    opField.reset(); // valid now; a later failure is a server error, shown above the form
     try {
       const version = { expectedVersion: active.version };
       if (operation === "publish") await runAction("publish", { ...version, ...(!noRegistration ? { registrationOpenAt: iso(registrationOpen), registrationCloseAt: iso(registrationClose) } : {}),
@@ -166,6 +176,38 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       else await runAction("attendance/unlock", { reason });
     } catch (error) { setFormError(error); }
   }
+  const required = t("common.fieldRequired");
+  const eventErrors: Record<string, string | null> = {
+    title: draft.title.trim() ? null : required, objective: draft.objective.trim() ? null : required, plan: draft.plan.trim() ? null : required,
+    startAt: new Date(draft.startAt).getTime() > editorOpenedAt ? null : t("common.dateNotPast"),
+    endAt: Date.parse(draft.endAt) > Date.parse(draft.startAt) ? null : t("common.endAfterStart"),
+    venue: draft.venueText?.trim() || draft.propertyId ? null : t("clubEvents.venueRequired"),
+    capacity: numberError(t, draft.capacity, 1, 100000),
+  };
+  draft.budgetLines.forEach((line, index) => {
+    eventErrors[`budget.${index}.category`] = line.category.trim() ? null : required;
+    eventErrors[`budget.${index}.purpose`] = line.purpose.trim() ? null : required;
+    eventErrors[`budget.${index}.amount`] = numberError(t, line.amount, 1, 1000000000000);
+  });
+  draft.registrationForm?.forEach((field, index) => {
+    eventErrors[`form.${index}.label`] = field.label.trim() ? null : required;
+    eventErrors[`form.${index}.options`] = ["select", "radio", "checkbox"].includes(field.type) && !field.options?.some((option) => option.trim()) ? required : null;
+  });
+  draft.occurrences?.forEach((occurrence, index) => { eventErrors[`occurrence.${index}.endAt`] = Date.parse(occurrence.endAt) > Date.parse(occurrence.startAt) ? null : t("common.endAfterStart"); });
+  const eventField = useFieldValidation(eventErrors);
+  const publishing = operation === "publish" && !noRegistration;
+  const opField = useFieldValidation({
+    registrationOpen: publishing && !registrationOpen ? required : null,
+    registrationClose: !publishing ? null : !registrationClose ? required : registrationOpen && registrationClose <= registrationOpen ? t("common.endAfterStart") : null,
+    checkOpen: operation === "publish" && !checkOpen ? required : null,
+    checkClose: operation !== "publish" ? null : !checkClose ? required : checkOpen && checkClose <= checkOpen ? t("common.endAfterStart") : null,
+    newStart: operation === "reschedule" && !newStart ? required : null,
+    newEnd: operation !== "reschedule" ? null : !newEnd ? required : newStart && newEnd <= newStart ? t("common.endAfterStart") : null,
+    capacity: operation === "capacity" ? numberError(t, capacity, 1, 100000) : null,
+    studentId: operation === "check-in" && !studentId ? t("common.chooseRequired") : null,
+    reason: ["cancel", "reschedule", "unlock", "correct"].includes(operation ?? "") && !reason.trim() ? required : null,
+  });
+  function closeOperation() { setOperation(null); opField.reset(); }
   const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options.data?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
   if (auth.isPending) return <AppSkeleton className="h-40 w-full" />;
   if (!allowed) return <p role="alert">{t("clubEvents.noAccess")}</p>;
@@ -239,57 +281,57 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       </article>)}</div>
     </section>}
     <AppDialog open={editing !== null} title={t(editing === "new" ? "clubEvents.create" : "clubEvents.edit")} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) setEditing(null); }}>
-      <form onSubmit={(event) => void save(event)} className="space-y-4">
+      <form noValidate onSubmit={(event) => void save(event)} className="space-y-4">
         <p className="text-sm text-muted-app">{t("clubEvents.notice")}</p><ErrorMessage error={formError ?? options.error} />
-        <Field label={t("clubEvents.titleField")}><AppInput required maxLength={200} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></Field>
-        <Field label={t("clubEvents.objective")}><AppTextarea required maxLength={5000} value={draft.objective} onChange={(e) => setDraft({ ...draft, objective: e.target.value })} /></Field>
-        <Field label={t("clubEvents.plan")}><AppTextarea required maxLength={20000} value={draft.plan} onChange={(e) => setDraft({ ...draft, plan: e.target.value })} /></Field>
-        <div className="grid gap-4 sm:grid-cols-2"><Field label={t("clubEvents.start")}><AppInput required type="datetime-local" value={localTime(draft.startAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, startAt: iso(e.target.value) }); }} /></Field>
-          <Field label={t("clubEvents.end")}><AppInput required type="datetime-local" value={localTime(draft.endAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, endAt: iso(e.target.value) }); }} /></Field></div>
+        <Field label={t("clubEvents.titleField")} required error={eventField.error("title")}><AppInput {...eventField.control("title")} maxLength={200} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></Field>
+        <Field label={t("clubEvents.objective")} required error={eventField.error("objective")}><AppTextarea {...eventField.control("objective")} maxLength={5000} value={draft.objective} onChange={(e) => setDraft({ ...draft, objective: e.target.value })} /></Field>
+        <Field label={t("clubEvents.plan")} required error={eventField.error("plan")}><AppTextarea {...eventField.control("plan")} maxLength={20000} value={draft.plan} onChange={(e) => setDraft({ ...draft, plan: e.target.value })} /></Field>
+        <div className="grid gap-4 sm:grid-cols-2"><Field label={t("clubEvents.start")} required error={eventField.error("startAt")}><AppInput {...eventField.control("startAt")} type="datetime-local" value={localTime(draft.startAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, startAt: iso(e.target.value) }); }} /></Field>
+          <Field label={t("clubEvents.end")} required error={eventField.error("endAt")}><AppInput {...eventField.control("endAt")} type="datetime-local" value={localTime(draft.endAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, endAt: iso(e.target.value) }); }} /></Field></div>
         <Field label={t("clubEvents.property")}><AppSelect label={t("clubEvents.property")} value={draft.propertyId ?? ""} options={roomOptions} onChange={(value) => setDraft({ ...draft, propertyId: value || undefined, bookingIds: [] })} /></Field>
-        <Field label={t("clubEvents.venue")}><AppInput value={draft.venueText ?? ""} onChange={(e) => setDraft({ ...draft, venueText: e.target.value })} /></Field>
+        <Field label={t("clubEvents.venue")} required={!draft.propertyId} error={eventField.error("venue")}><AppInput {...eventField.control("venue", !draft.propertyId)} value={draft.venueText ?? ""} onChange={(e) => setDraft({ ...draft, venueText: e.target.value })} /></Field>
         <div className="grid gap-4 sm:grid-cols-2"><Field label={t("clubEvents.scope")}><AppSelect label={t("clubEvents.scope")} value={draft.audienceScope} options={(["PUBLIC", "MEMBERS_ONLY"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, audienceScope: value })} /></Field>
-          <Field label={t("clubEvents.capacity")}><AppInput required type="number" min={1} max={100000} value={draft.capacity} onChange={(e) => setDraft({ ...draft, capacity: Number(e.target.value) })} /></Field></div>
+          <Field label={t("clubEvents.capacity")} required error={eventField.error("capacity")}><AppInput {...eventField.control("capacity")} type="number" min={1} max={100000} value={draft.capacity} onChange={(e) => setDraft({ ...draft, capacity: Number(e.target.value) })} /></Field></div>
         <Field label={t("clubEvents.risk")}><AppSelect label={t("clubEvents.risk")} value={draft.riskCategory} options={(["LOW", "MEDIUM", "HIGH"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, riskCategory: value })} /></Field>
         <Field label={t("clubEvents.riskNote")}><AppTextarea value={draft.riskNote ?? ""} onChange={(e) => setDraft({ ...draft, riskNote: e.target.value })} /></Field>
         <Field label={t("clubEvents.facilityNeeds")}><AppTextarea value={draft.facilityNeeds ?? ""} onChange={(e) => setDraft({ ...draft, facilityNeeds: e.target.value })} /></Field>
         <details><summary className="font-semibold">{t("clubEvents.bookings")}</summary>{!permissions.includes("club.booking.manage") && <p className="mt-2 text-sm text-muted-app">{t("clubEvents.bookingPermissionHint")}</p>}<div className="mt-3 space-y-2">{options.data?.bookings.filter((b) => b.propertyId === draft.propertyId || b.propertyType === "EQUIPMENT").map((b) => <label key={b.id} className="flex items-start gap-2"><input type="checkbox" checked={draft.bookingIds.includes(b.id)} disabled={!permissions.includes("club.booking.manage")} onChange={(e) => setDraft({ ...draft, bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id) })} /><span>{b.title} · {format.format(new Date(b.startAt))}</span></label>)}</div></details>
         <details><summary className="font-semibold">{t("clubEvents.budget")}</summary><div className="mt-3 space-y-4">{draft.budgetLines.map((line, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
-          {(["category", "purpose", "plannedItems"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "plannedItems" ? "planItems" : key}`)}><AppInput required={key !== "plannedItems"} value={line[key] ?? ""} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, [key]: e.target.value } : l) })} /></Field>)}
-          <Field label={t("clubEvents.amount")}><AppInput required type="number" min={1} step={1} value={line.amount} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, amount: Number(e.target.value) } : l) })} /></Field>
+          {(["category", "purpose", "plannedItems"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "plannedItems" ? "planItems" : key}`)} required={key !== "plannedItems"} error={eventField.error(`budget.${index}.${key}`)}><AppInput {...eventField.control(`budget.${index}.${key}`, key !== "plannedItems")} value={line[key] ?? ""} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, [key]: e.target.value } : l) })} /></Field>)}
+          <Field label={t("clubEvents.amount")} required error={eventField.error(`budget.${index}.amount`)}><AppInput {...eventField.control(`budget.${index}.amount`)} type="number" min={1} step={1} value={line.amount} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, amount: Number(e.target.value) } : l) })} /></Field>
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, budgetLines: draft.budgetLines.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, budgetLines: [...draft.budgetLines, { category: "", purpose: "", amount: 1 }] })}>{t("clubEvents.addLine")}</AppButton></div></details>
         <details><summary className="font-semibold">{t("clubEvents.form")}</summary><div className="mt-3 space-y-4">{draft.registrationForm?.map((field, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
-          {(["label"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "label" ? "question" : key}`)}><AppInput required value={field[key]} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, [key]: e.target.value } : f) })} /></Field>)}
+          {(["label"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "label" ? "question" : key}`)} required error={eventField.error(`form.${index}.${key}`)}><AppInput {...eventField.control(`form.${index}.${key}`)} value={field[key]} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, [key]: e.target.value } : f) })} /></Field>)}
           <Field label={t("clubEvents.type")}><AppSelect label={t("clubEvents.type")} value={field.type} options={(["text", "textarea", "select", "radio", "checkbox"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, type: value } : f) })} /></Field>
           <label className="flex items-center gap-2"><input type="checkbox" checked={field.required} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, required: e.target.checked } : f) })} />{t("clubEvents.required")}</label>
-          {["select", "radio", "checkbox"].includes(field.type) && <Field label={t("clubEvents.options")}><AppTextarea required value={field.options?.join("\n") ?? ""} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, options: e.target.value.split("\n") } : f) })} /></Field>}
+          {["select", "radio", "checkbox"].includes(field.type) && <Field label={t("clubEvents.options")} required error={eventField.error(`form.${index}.options`)}><AppTextarea {...eventField.control(`form.${index}.options`)} value={field.options?.join("\n") ?? ""} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, options: e.target.value.split("\n") } : f) })} /></Field>}
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, registrationForm: draft.registrationForm?.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, registrationForm: [...draft.registrationForm ?? [], { key: `field_${crypto.randomUUID().replaceAll("-", "")}`, label: "", type: "text", required: true }] })}>{t("clubEvents.addField")}</AppButton></div></details>
         <details><summary className="font-semibold">{t("clubEvents.occurrences")}</summary><div className="mt-3 space-y-3">{draft.occurrences?.map((o, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
-          {(["startAt", "endAt"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "startAt" ? "start" : "end"}`)}><AppInput required type="datetime-local" value={localTime(o[key])} onChange={(e) => { if (e.target.value) setDraft({ ...draft, occurrences: draft.occurrences?.map((item, i) => i === index ? { ...item, [key]: iso(e.target.value) } : item) }); }} /></Field>)}
+          {(["startAt", "endAt"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "startAt" ? "start" : "end"}`)} required error={eventField.error(`occurrence.${index}.${key}`)}><AppInput {...eventField.control(`occurrence.${index}.${key}`)} type="datetime-local" value={localTime(o[key])} onChange={(e) => { if (e.target.value) setDraft({ ...draft, occurrences: draft.occurrences?.map((item, i) => i === index ? { ...item, [key]: iso(e.target.value) } : item) }); }} /></Field>)}
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, occurrences: draft.occurrences?.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, occurrences: [...draft.occurrences ?? [], { startAt: draft.startAt, endAt: draft.endAt }] })}>{t("clubEvents.addOccurrence")}</AppButton></div></details>
         <AppButton type="submit" disabled={mutation.isPending}>{t("clubEvents.save")}</AppButton>
       </form>
     </AppDialog>
-    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) setOperation(null); }}>
-      <form onSubmit={(event) => void execute(event)} className="space-y-4"><ErrorMessage error={formError} />
+    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) closeOperation(); }}>
+      <form noValidate onSubmit={(event) => void execute(event)} className="space-y-4"><ErrorMessage error={formError} />
         {operation === "publish" && <>
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration} onChange={(e) => setNoRegistration(e.target.checked)} />{t("clubEvents.noRegistration")}</label>
-          {!noRegistration && <><Field label={t("clubEvents.registrationOpen")}><AppInput required type="datetime-local" value={registrationOpen} onChange={(e) => setRegistrationOpen(e.target.value)} /></Field><Field label={t("clubEvents.registrationClose")}><AppInput required type="datetime-local" value={registrationClose} onChange={(e) => setRegistrationClose(e.target.value)} /></Field></>}
-          <Field label={t("clubEvents.checkInOpen")}><AppInput required type="datetime-local" value={checkOpen} onChange={(e) => setCheckOpen(e.target.value)} /></Field><Field label={t("clubEvents.checkInClose")}><AppInput required type="datetime-local" value={checkClose} onChange={(e) => setCheckClose(e.target.value)} /></Field>
+          {!noRegistration && <><Field label={t("clubEvents.registrationOpen")} required error={opField.error("registrationOpen")}><AppInput {...opField.control("registrationOpen")} type="datetime-local" value={registrationOpen} onChange={(e) => setRegistrationOpen(e.target.value)} /></Field><Field label={t("clubEvents.registrationClose")} required error={opField.error("registrationClose")}><AppInput {...opField.control("registrationClose")} type="datetime-local" value={registrationClose} onChange={(e) => setRegistrationClose(e.target.value)} /></Field></>}
+          <Field label={t("clubEvents.checkInOpen")} required error={opField.error("checkOpen")}><AppInput {...opField.control("checkOpen")} type="datetime-local" value={checkOpen} onChange={(e) => setCheckOpen(e.target.value)} /></Field><Field label={t("clubEvents.checkInClose")} required error={opField.error("checkClose")}><AppInput {...opField.control("checkClose")} type="datetime-local" value={checkClose} onChange={(e) => setCheckClose(e.target.value)} /></Field>
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration || walkIn} disabled={noRegistration} onChange={(e) => setWalkIn(e.target.checked)} />{t("clubEvents.walkIn")}</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={waitlist} onChange={(e) => setWaitlist(e.target.checked)} />{t("clubEvents.waitlist")}</label>
         </>}
-        {operation === "reschedule" && <><Field label={t("clubEvents.start")}><AppInput required type="datetime-local" value={newStart} onChange={(e) => setNewStart(e.target.value)} /></Field><Field label={t("clubEvents.end")}><AppInput required type="datetime-local" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} /></Field>
+        {operation === "reschedule" && <><Field label={t("clubEvents.start")} required error={opField.error("newStart")}><AppInput {...opField.control("newStart")} type="datetime-local" value={newStart} onChange={(e) => setNewStart(e.target.value)} /></Field><Field label={t("clubEvents.end")} required error={opField.error("newEnd")}><AppInput {...opField.control("newEnd")} type="datetime-local" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} /></Field>
           <AppSelect label={t("clubEvents.property")} value={property} options={roomOptions} onChange={setProperty} /><Field label={t("clubEvents.venue")}><AppInput value={venue} onChange={(e) => setVenue(e.target.value)} /></Field></>}
-        {operation === "capacity" && <Field label={t("clubEvents.capacity")}><AppInput required type="number" min={1} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} /></Field>}
-        {operation === "check-in" && <><AppSelect label={t("clubEvents.studentId")} value={studentId} onChange={setStudentId} options={[{ value: "", label: t("clubEvents.none") }, ...people.filter((p) => p.state === "Confirmed" && !p.attendanceId).map((p) => ({ value: p.studentId, label: `${p.name} · ${p.email}` }))]} /><p className="text-sm text-muted-app">{t("clubEvents.manualReason")}</p></>}
+        {operation === "capacity" && <Field label={t("clubEvents.capacity")} required error={opField.error("capacity")}><AppInput {...opField.control("capacity")} type="number" min={1} max={100000} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} /></Field>}
+        {operation === "check-in" && <><Field label={t("clubEvents.studentId")} required error={opField.error("studentId")}><AppSelect required invalid={Boolean(opField.error("studentId"))} label={t("clubEvents.studentId")} value={studentId} onChange={(value) => { setStudentId(value); opField.touch("studentId"); }} options={[{ value: "", label: t("clubEvents.none") }, ...people.filter((p) => p.state === "Confirmed" && !p.attendanceId).map((p) => ({ value: p.studentId, label: `${p.name} · ${p.email}` }))]} /></Field><p className="text-sm text-muted-app">{t("clubEvents.manualReason")}</p></>}
         {operation === "correct" && <><p>{target?.name}</p><label className="flex items-center gap-2"><input type="checkbox" checked={absent} disabled={Boolean(target?.attendanceId && !target.abnormalFlags.includes("no-show"))} onChange={(e) => setAbsent(e.target.checked)} />{t("clubEvents.absent")}</label>
           {!absent && <Field label={t("clubEvents.correctedTime")}><AppInput type="datetime-local" value={corrected} onChange={(e) => setCorrected(e.target.value)} /></Field>}</>}
-        {["cancel", "reschedule", "unlock", "correct", "check-in"].includes(operation ?? "") && <Field label={t("clubEvents.reason")}><AppTextarea required={operation !== "check-in"} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>}
-        <AppButton type="submit" disabled={mutation.isPending || (operation === "check-in" && !studentId)}>{t("clubEvents.confirm")}</AppButton>
+        {["cancel", "reschedule", "unlock", "correct", "check-in"].includes(operation ?? "") && <Field label={t("clubEvents.reason")} required={operation !== "check-in"} error={opField.error("reason")}><AppTextarea {...opField.control("reason", operation !== "check-in")} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>}
+        <AppButton type="submit" disabled={mutation.isPending}>{t("clubEvents.confirm")}</AppButton>
       </form>
     </AppDialog>
   </>;

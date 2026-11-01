@@ -26,6 +26,7 @@ export const clubEvents = {
     Draft: "Draft", "Pending Approval": "Pending approval", "Under Review": "Under review", "Revision Requested": "Revision requested", Approved: "Approved", Rejected: "Rejected", Expired: "Expired",
     Upcoming: "Upcoming", Ongoing: "Ongoing", Completed: "Completed", Cancelled: "Cancelled", Closed: "Closed", Confirmed: "Confirmed", Waitlisted: "Waitlisted",
     "No Conflict": "No conflict", Warning: "Schedule warning", "Blocking Conflict": "Blocking schedule conflict", "no-show": "No-show", "walk-in": "Walk-in", manual: "Manual check-in", "out-of-window": "Outside check-in window",
+    venueRequired: "Choose a room or enter a venue.",
   },
   vi: {
     bookingPermissionHint: "Cần quyền quản lý đặt cơ sở vật chất để thay đổi liên kết booking.",
@@ -54,5 +55,6 @@ export const clubEvents = {
     Draft: "Bản nháp", "Pending Approval": "Chờ duyệt", "Under Review": "Đang thẩm định", "Revision Requested": "Yêu cầu chỉnh sửa", Approved: "Đã duyệt", Rejected: "Từ chối", Expired: "Hết hạn",
     Upcoming: "Sắp diễn ra", Ongoing: "Đang diễn ra", Completed: "Đã kết thúc", Cancelled: "Đã huỷ", Closed: "Đã đóng", Confirmed: "Đã xác nhận", Waitlisted: "Danh sách chờ",
     "No Conflict": "Không xung đột", Warning: "Cảnh báo lịch", "Blocking Conflict": "Xung đột chặn", "no-show": "Vắng mặt", "walk-in": "Khách vãng lai", manual: "Check-in hộ", "out-of-window": "Ngoài khung giờ",
+    venueRequired: "Vui lòng chọn phòng hoặc nhập địa điểm.",
   },
 };
