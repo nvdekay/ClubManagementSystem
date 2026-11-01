@@ -2,15 +2,18 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useClubLifecycle, useClubLifecycleAction } from "@/hooks/useClubLifecycle";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { cn } from "@/utils/cn";
 
 type Decision = "suspend" | "reactivate" | "dissolve";
-const dateInputClass = "mt-1 block min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none";
+const dateInputClass = "mt-1 block min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app";
 const choiceClass = "min-h-10 rounded-full border border-border-app px-4 text-sm text-muted-app";
 const activeChoiceClass = "border-primary-app bg-primary-soft-app text-primary-app";
 
@@ -29,6 +32,13 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
   const [timed, setTimed] = useState(true);
   const [until, setUntil] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // The end date is a whole day: reactivate at the start of that local day.
+  const untilIso = decision === "suspend" && timed && until ? new Date(`${until}T00:00:00`).toISOString() : undefined;
+  const field = useFieldValidation(decision ? {
+    reason: reason.trim() ? null : t("clubLifecycle.reasonRequired"),
+    until: decision === "suspend" && timed && (!untilIso || new Date(untilIso) <= new Date())
+      ? t("clubLifecycle.untilRequired") : null,
+  } : {});
 
   function date(value: string): string {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
@@ -61,17 +71,11 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
     setDecision(value);
     setReason("");
     setError(null);
+    field.reset();
   }
 
   async function confirm() {
-    if (!decision) return;
-    if (!reason.trim()) { setError(t("clubLifecycle.reasonRequired")); return; }
-    // The end date is a whole day: reactivate at the start of that local day.
-    const untilIso = decision === "suspend" && timed && until ? new Date(`${until}T00:00:00`).toISOString() : undefined;
-    if (decision === "suspend" && timed && (!untilIso || new Date(untilIso) <= new Date())) {
-      setError(t("clubLifecycle.untilRequired"));
-      return;
-    }
+    if (!decision || !field.touchAll()) return;
     setError(null);
     try {
       const result = await action.mutateAsync(decision === "suspend"
@@ -172,12 +176,15 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
               className={cn(choiceClass, { [activeChoiceClass]: timed === value })}>
               {value ? t("clubLifecycle.durationUntil") : t("clubLifecycle.durationOpen")}</button>))}
           </div>
-          {timed && <label className="block text-sm">{t("clubLifecycle.untilDate")}
-            <input type="date" className={dateInputClass} value={until} onChange={(event) => setUntil(event.target.value)} /></label>}
+          {timed && <label className="block text-sm">{t("clubLifecycle.untilDate")}<AppRequiredMark />
+            <input type="date" className={dateInputClass} value={until} {...field.control("until")}
+              onChange={(event) => setUntil(event.target.value)} />
+            <AppFieldError message={field.error("until")} /></label>}
         </fieldset>}
-        <label className="block text-sm font-medium">{t("clubLifecycle.reason")}
+        <label className="block text-sm font-medium">{t("clubLifecycle.reason")}<AppRequiredMark />
           <AppTextarea className="mt-2 min-h-24 w-full font-normal" maxLength={2000} value={reason}
-            onChange={(event) => setReason(event.target.value)} /></label>
+            {...field.control("reason")} onChange={(event) => setReason(event.target.value)} />
+          <AppFieldError message={field.error("reason")} /></label>
         {error && <p role="alert" className="text-sm text-danger-app">{error}</p>}
         <div className="flex flex-wrap gap-3">
           <AppButton disabled={action.isPending || (decision === "dissolve" && !nextSemester)} onClick={() => void confirm()}>

@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -14,6 +16,7 @@ import { useApplicationReview, useApplicationReviewAction,
 import type { ReviewOutcome } from "@/services/applicationReviews";
 import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 const sectionKeys = ["club-information", "founders", "documents", "other"];
 const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const;
@@ -32,7 +35,13 @@ export function ApplicationReviewDetailPage() {
   const [reviewNote, setReviewNote] = useState("");
   const [deadline, setDeadline] = useState("");
   const [sections, setSections] = useState<string[]>([]);
-  const [formError, setFormError] = useState<string | null>(null);
+  // Same rules the server enforces: a reason unless approving; sections and a future deadline for a revision.
+  const revision = outcome === "Request revision";
+  const field = useFieldValidation({
+    reason: outcome !== "Approve" && !reason.trim() ? t("reviews.reasonRequired") : null,
+    sections: revision && !sections.length ? t("reviews.sectionsRequired") : null,
+    deadline: revision && (!deadline || new Date(deadline) <= new Date()) ? t("reviews.deadlineRequired") : null,
+  });
   const currentVersion = useMemo(() => review.data?.versions.find((version) =>
     version.versionNo === review.data?.application.currentVersionNo) ?? review.data?.versions.at(-1),
   [review.data]);
@@ -54,6 +63,7 @@ export function ApplicationReviewDetailPage() {
   function toggleSection(section: string) {
     setSections((current) => current.includes(section)
       ? current.filter((item) => item !== section) : [...current, section]);
+    field.touch("sections");
   }
 
   async function claim() {
@@ -64,13 +74,8 @@ export function ApplicationReviewDetailPage() {
 
   async function decide() {
     if (!auth.data || !id) return;
-    // Same rules the server enforces, checked before asking for confirmation.
-    const missing = outcome !== "Approve" && !reason.trim() ? t("reviews.reasonRequired")
-      : outcome === "Request revision" && !sections.length ? t("reviews.sectionsRequired")
-        : outcome === "Request revision" && (!deadline || new Date(deadline) <= new Date())
-          ? t("reviews.deadlineRequired") : null;
-    setFormError(missing);
-    if (missing) return;
+    // Checked before asking for confirmation.
+    if (!field.touchAll()) return;
     const prompt = outcome === "Approve" ? t("reviews.confirmApprove")
       : outcome === "Reject" ? t("reviews.confirmReject") : t("reviews.confirmRevision");
     if (!(await askConfirm(prompt))) return;
@@ -216,14 +221,16 @@ export function ApplicationReviewDetailPage() {
                 })}>
                   {value === "Approve" ? t("reviews.approve") : value === "Reject" ? t("reviews.reject") : t("reviews.requestRevision")}
                 </button>)}</div>
-              {outcome === "Request revision" && <fieldset className="mt-5"><legend className="text-sm font-semibold">{t("reviews.sections")}</legend>
+              {outcome === "Request revision" && <fieldset className="mt-5"><legend className="text-sm font-semibold">{t("reviews.sections")}<AppRequiredMark /></legend>
                 <div className="mt-3 space-y-1">{sectionKeys.map((section) => <label key={section} className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm hover:bg-surface-strong-app"><input type="checkbox" checked={sections.includes(section)} onChange={() => toggleSection(section)} className="size-4 accent-primary-app" />{sectionLabel(section)}</label>)}</div>
-                <label className="mt-4 block text-sm font-semibold">{t("reviews.deadline")}<input type="datetime-local" value={deadline} onChange={(event) => setDeadline(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none" /></label>
+                <AppFieldError message={field.error("sections")} />
+                <label className="mt-4 block text-sm font-semibold">{t("reviews.deadline")}<AppRequiredMark /><input type="datetime-local" value={deadline} {...field.control("deadline")} onChange={(event) => setDeadline(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app" />
+                  <AppFieldError message={field.error("deadline")} /></label>
               </fieldset>}
-              <label className="mt-5 block text-sm font-semibold">{t("reviews.reason")}<AppTextarea className="mt-2 min-h-28 w-full font-normal" value={reason} onChange={(event) => setReason(event.target.value)} placeholder={t("reviews.reasonHint")} maxLength={5000} /></label>
+              <label className="mt-5 block text-sm font-semibold">{t("reviews.reason")}{outcome !== "Approve" && <AppRequiredMark />}<AppTextarea className="mt-2 min-h-28 w-full font-normal" value={reason} {...field.control("reason", outcome !== "Approve")} onChange={(event) => setReason(event.target.value)} placeholder={t("reviews.reasonHint")} maxLength={5000} />
+                <AppFieldError message={field.error("reason")} /></label>
               <label className="mt-5 block text-sm font-semibold">{t("reviews.reviewNote")}<AppTextarea className="mt-2 min-h-28 w-full font-normal" value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} placeholder={t("reviews.reviewNoteHint")} maxLength={10000} /></label>
               <AppButton className="mt-6 w-full" disabled={action.isPending} onClick={() => void decide()}>{action.isPending ? t("reviews.submitting") : t("reviews.submitDecision")}</AppButton>
-              {formError && <p role="alert" className="mt-3 text-sm text-danger-app">{formError}</p>}
               {action.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{action.error.message || t("reviews.actionError")}</p>}
               {action.isSuccess && <p role="status" className="mt-3 text-sm text-success-app">{t("reviews.success")}</p>}
             </section>

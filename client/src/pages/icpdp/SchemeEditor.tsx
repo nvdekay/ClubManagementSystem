@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSwitch } from "@/components/ui/switch/AppSwitch";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import type {
   DimensionCode, DimensionInfo, EvaluationScheme, SchemeSettings, SchemeThresholds,
 } from "@/services/evaluationSchemes";
@@ -13,6 +17,14 @@ interface Row {
   included: boolean;
   weight: string;
   allowsManual: boolean;
+}
+
+/** Whole number in [min, max], or the message saying why not; blank is `blankError` (null = allowed). */
+function wholeNumberError(t: TFunction, value: string, min: number, max: number, blankError: string | null): string | null {
+  if (!value.trim()) return blankError;
+  const number = Number(value);
+  return !Number.isInteger(number) ? t("common.invalidNumber") : number < min ? t("common.numberMin", { min })
+    : number > max ? t("common.numberMax", { max }) : null;
 }
 
 interface SchemeEditorProps {
@@ -37,6 +49,14 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
     fair: String(scheme.thresholds.fair) });
   const included = catalogue.filter((dimension) => rows[dimension.code]!.included);
   const total = included.reduce((sum, dimension) => sum + (Number(rows[dimension.code]!.weight) || 0), 0);
+  // Server rules: whole-percent weights, and bands with 100 >= excellent > good > fair > 0.
+  const field = useFieldValidation<string>({
+    ...Object.fromEntries(included.map((dimension) =>
+      [`weight:${dimension.code}`, wholeNumberError(t, rows[dimension.code]!.weight, 0, 100, null)])),
+    excellent: wholeNumberError(t, bands.excellent, 3, 100, t("common.fieldRequired")),
+    good: wholeNumberError(t, bands.good, 2, (Number(bands.excellent) || 100) - 1, t("common.fieldRequired")),
+    fair: wholeNumberError(t, bands.fair, 1, (Number(bands.good) || 100) - 1, t("common.fieldRequired")),
+  });
 
   function patch(code: DimensionCode, update: Partial<Row>) {
     setRows({ ...rows, [code]: { ...rows[code]!, ...update } });
@@ -54,6 +74,7 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
   }
 
   function save() {
+    if (!field.touchAll()) return;
     onSave({
       dimensions: included.map((dimension) => ({ code: dimension.code,
         weight: Number(rows[dimension.code]!.weight), allowsManual: rows[dimension.code]!.allowsManual })),
@@ -90,7 +111,9 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
             {row.included && <div className="flex flex-wrap items-center gap-4">
               <label className="text-sm">{t("evaluationSchemes.weight")}
                 <AppInput className="mt-1 block w-24" type="number" min="0" max="100" step="1" value={row.weight}
+                  {...field.control(`weight:${dimension.code}`, false)}
                   onChange={(event) => patch(dimension.code, { weight: event.target.value })} />
+                <AppFieldError message={field.error(`weight:${dimension.code}`)} />
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <AppSwitch checked={row.allowsManual} onChange={(value) => patch(dimension.code, { allowsManual: value })} />
@@ -107,9 +130,10 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
         <legend className="font-heading font-bold">{t("evaluationSchemes.bands")}</legend>
         <div className="flex flex-wrap gap-4">
           {(["excellent", "good", "fair"] as const).map((band) => <label key={band} className="text-sm">
-            {t(`evaluationSchemes.${band}`)}
+            {t(`evaluationSchemes.${band}`)}<AppRequiredMark />
             <AppInput className="mt-1 block w-24" type="number" min="1" max="100" step="1" value={bands[band]}
-              onChange={(event) => setBands({ ...bands, [band]: event.target.value })} />
+              {...field.control(band)} onChange={(event) => setBands({ ...bands, [band]: event.target.value })} />
+            <AppFieldError message={field.error(band)} />
           </label>)}
         </div>
         <p className="text-sm text-muted-app">{t("evaluationSchemes.needsImprovement", { score: bands.fair })}</p>

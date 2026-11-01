@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAccountAction, useAccounts } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useViolations } from "@/hooks/useViolations";
 import { type AccountAction, type AdminUserClub, type SystemRoleCode } from "@/services/accounts";
 import { cn } from "@/utils/cn";
@@ -23,6 +25,8 @@ export function AccountsPage() {
   const [violationId, setViolationId] = useState("");
   const accounts = useAccounts(search, true);
   const accountAction = useAccountAction();
+  // Revoke, lock and unlock need a reason (granting does not), so it is only flagged when one of those is pressed.
+  const field = useFieldValidation({ reason: reason.trim() ? null : t("common.fieldRequired") });
   const target = accounts.data?.items.find((item) => item.user.id === targetId);
   // UC03 A1: an emergency lock may be recorded under an open UC40 case.
   const violations = useViolations(Boolean(target));
@@ -48,7 +52,7 @@ export function AccountsPage() {
   }
 
   async function updateAccount(kind: AccountAction["kind"]) {
-    if (!auth.data || !target) return;
+    if (!auth.data || !target || (kind !== "grant" && !field.touchAll())) return;
     const action: AccountAction = kind === "grant" || kind === "revoke"
       ? { kind, userId: target.user.id, roleCode, reason }
       : kind === "lock" ? { kind, userId: target.user.id, reason, ...(violationId ? { violationId } : {}) }
@@ -57,6 +61,7 @@ export function AccountsPage() {
       await accountAction.mutateAsync({ action, csrfToken: auth.data.csrfToken });
       setReason("");
       setViolationId("");
+      field.reset();
     } catch {
       // The mutation exposes the error state below.
     }
@@ -96,7 +101,7 @@ export function AccountsPage() {
                       {t("auth.lockCase", { title: item.lockCase.title, club: item.lockCase.clubName })}</p>}
                   </div>
                   <AppButton variant="secondary" aria-pressed={item.user.id === targetId}
-                    onClick={() => { setTargetId(item.user.id); setReason(""); setViolationId(""); accountAction.reset(); }}>
+                    onClick={() => { setTargetId(item.user.id); setReason(""); setViolationId(""); accountAction.reset(); field.reset(); }}>
                     {t("auth.manage")}
                   </AppButton>
                 </li>
@@ -118,8 +123,9 @@ export function AccountsPage() {
             </label>
             <label className="block text-sm font-medium">
               {t("auth.reason")}
-              <AppInput className="mt-2 block w-full" value={reason}
+              <AppInput className="mt-2 block w-full" value={reason} aria-invalid={field.error("reason") ? true : undefined}
                 onChange={(event) => setReason(event.target.value)} maxLength={1000} />
+              <AppFieldError message={field.error("reason")} />
             </label>
             {target.user.accountState === "Active" && <label className="block text-sm font-medium">
               {t("auth.linkedCase")}
@@ -130,11 +136,11 @@ export function AccountsPage() {
               <AppButton disabled={accountAction.isPending} onClick={() => void updateAccount("grant")}>
                 {t("auth.grant")}
               </AppButton>
-              <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
+              <AppButton variant="secondary" disabled={accountAction.isPending}
                 onClick={() => void updateAccount("revoke")}>{t("auth.revoke")}</AppButton>
-              <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
+              <AppButton variant="secondary" disabled={accountAction.isPending}
                 onClick={() => void updateAccount("lock")}>{t("auth.lock")}</AppButton>
-              <AppButton variant="secondary" disabled={accountAction.isPending || !reason.trim()}
+              <AppButton variant="secondary" disabled={accountAction.isPending}
                 onClick={() => void updateAccount("unlock")}>{t("auth.unlock")}</AppButton>
             </div>
             {accountAction.isError && (

@@ -4,12 +4,15 @@ import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeadershipTransition, useLeadershipTransitionAction } from "@/hooks/useLeadershipTransitions";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 export function LeadershipTransitionDetailPage() {
   const { id } = useParams();
@@ -24,6 +27,10 @@ export function LeadershipTransitionDetailPage() {
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   const inFlight = useRef(false);
+  const returning = outcome === "Request revision";
+  const field = useFieldValidation({
+    reason: returning && !reason.trim() ? t("leadershipTransitions.returnReason") : null,
+  });
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language,
       { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -38,7 +45,7 @@ export function LeadershipTransitionDetailPage() {
     catch { /* Rendered below. */ }
   }
   async function decide() {
-    if (!auth.data || !id || inFlight.current || !(await askConfirm(t("leadershipTransitions.confirmPrompt")))) return;
+    if (!auth.data || !id || inFlight.current || !field.touchAll() || !(await askConfirm(t("leadershipTransitions.confirmPrompt")))) return;
     inFlight.current = true;
     try {
       await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken,
@@ -109,10 +116,11 @@ export function LeadershipTransitionDetailPage() {
           <select className="mt-4 min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 text-sm"
             value={outcome} onChange={(event) => setOutcome(event.target.value as typeof outcome)}>
             <option value="Approve">{t("leadershipTransitions.approve")}</option><option value="Request revision">{t("leadershipTransitions.return")}</option>
-          </select><label className="mt-4 block text-sm font-semibold">{t("leadershipTransitions.reason")}
-            <AppInput className="mt-2 w-full font-normal" value={reason} onChange={(event) => setReason(event.target.value)} /></label>
-          {outcome === "Request revision" && !reason.trim() && <p className="mt-2 text-sm text-danger-app">{t("leadershipTransitions.returnReason")}</p>}
-          <AppButton className="mt-5 w-full" disabled={action.isPending || (outcome === "Request revision" && !reason.trim())
+          </select><label className="mt-4 block text-sm font-semibold">{t("leadershipTransitions.reason")}{returning && <AppRequiredMark />}
+            <AppInput className="mt-2 w-full font-normal" value={reason} {...field.control("reason", returning)}
+              onChange={(event) => setReason(event.target.value)} />
+            <AppFieldError message={field.error("reason")} /></label>
+          <AppButton className="mt-5 w-full" disabled={action.isPending
             || (outcome === "Approve" && plan.clubState === "Suspended")} onClick={() => void decide()}>
             {action.isPending ? t("leadershipTransitions.deciding") : t("leadershipTransitions.submitDecision")}</AppButton>
         </section> : assignedElsewhere ? <AppNotice tone="warning">{t("leadershipTransitions.claimedByOther")}</AppNotice>

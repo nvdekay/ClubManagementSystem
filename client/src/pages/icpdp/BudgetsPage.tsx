@@ -5,6 +5,8 @@ import type { TFunction } from "i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -15,6 +17,7 @@ import type { BudgetFlowKind, BudgetSummary } from "@/services/budgets";
 import { cn } from "@/utils/cn";
 import { formatMoney } from "@/utils/formatMoney";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 const filters = ["all", "toAdvance", "disbursed", "reconcile", "topUp", "refund", "closed"] as const;
 type Filter = typeof filters[number];
@@ -172,7 +175,15 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
   const [date, setDate] = useState(todayInput());
   const [paymentReference, setPaymentReference] = useState("");
   const [note, setNote] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
+  const allowedFlow = budget.data?.allowed;
+  const amountValue = amount ?? String(allowedFlow?.exact ?? allowedFlow?.max ?? "");
+  const amountNumber = Number(amountValue);
+  const field = useFieldValidation(allowedFlow ? {
+    amount: !amountValue.trim() ? t("common.fieldRequired") : !Number.isInteger(amountNumber) || amountNumber <= 0
+      || amountNumber > allowedFlow.max || (allowedFlow.exact !== undefined && amountNumber !== allowedFlow.exact)
+      ? t("budgets.amountInvalid") : null,
+    date: !date ? t("common.fieldRequired") : date > todayInput() ? t("budgets.dateInvalid") : null,
+  } : {});
   function money(value: number) {
     return formatMoney(value, i18n.language);
   }
@@ -191,19 +202,13 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
 
   const data = budget.data;
   const allowed = data.allowed;
-  const amountValue = amount ?? String(allowed?.exact ?? allowed?.max ?? "");
   const label = "text-xs font-semibold tracking-wide text-muted-app uppercase";
   const remaining = data.approvedTotal - data.disbursedTotal;
   const eventClosed = ["Cancelled", "Rejected", "Expired"].includes(data.eventState);
 
   async function submit() {
-    if (!allowed) return;
-    const value = Number(amountValue);
-    const invalid = !Number.isInteger(value) || value <= 0 || value > allowed.max
-      || (allowed.exact !== undefined && value !== allowed.exact) ? t("budgets.amountInvalid")
-      : !date || date > todayInput() ? t("budgets.dateInvalid") : null;
-    setFormError(invalid);
-    if (invalid) return;
+    if (!allowed || !field.touchAll()) return;
+    const value = amountNumber;
     if (!(await askConfirm(t("budgets.confirm", { kind: kindLabel(t, allowed.kind).toLowerCase(), amount: money(value) })))) return;
     // Noon local time keeps the chosen calendar day whatever the time zone.
     const disbursedAt = date === todayInput() ? new Date() : new Date(`${date}T12:00:00`);
@@ -212,6 +217,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
         disbursedAt: disbursedAt.toISOString(), paymentReference: paymentReference.trim() || undefined,
         note: note.trim() || undefined } });
       setAmount(null); setPaymentReference(""); setNote("");
+      field.reset();
     } catch { /* Mutation state is rendered below. */ }
   }
 
@@ -282,13 +288,16 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
             <section className="rounded-2xl bg-surface-app p-5">
               <h2 className="font-heading text-lg font-bold">{heading}</h2>
               <p className="mt-1 text-sm text-muted-app">{hint}</p>
-              <label className="mt-5 block text-sm font-semibold">{t("budgets.amount")}
+              <label className="mt-5 block text-sm font-semibold">{t("budgets.amount")}<AppRequiredMark />
                 <AppInput type="number" min={1} max={allowed.max} step={1000} inputMode="numeric" value={amountValue}
-                  readOnly={allowed.exact !== undefined} onChange={(e) => setAmount(e.target.value)}
+                  readOnly={allowed.exact !== undefined} {...field.control("amount")} onChange={(e) => setAmount(e.target.value)}
                   className="mt-2 w-full font-normal tabular-nums" />
+                <AppFieldError message={field.error("amount")} />
                 <span className="mt-1 block text-xs font-normal text-muted-app">{t("budgets.amountMax", { amount: money(allowed.max) })}</span></label>
-              <label className="mt-4 block text-sm font-semibold">{t("budgets.date")}
-                <AppInput type="date" value={date} max={todayInput()} onChange={(e) => setDate(e.target.value)} className="mt-2 w-full font-normal" /></label>
+              <label className="mt-4 block text-sm font-semibold">{t("budgets.date")}<AppRequiredMark />
+                <AppInput type="date" value={date} max={todayInput()} {...field.control("date")}
+                  onChange={(e) => setDate(e.target.value)} className="mt-2 w-full font-normal" />
+                <AppFieldError message={field.error("date")} /></label>
               <label className="mt-4 block text-sm font-semibold">{t("budgets.paymentReference")}
                 <AppInput value={paymentReference} maxLength={100} placeholder={t("budgets.paymentReferenceHint")}
                   onChange={(e) => setPaymentReference(e.target.value)} className="mt-2 w-full font-normal" /></label>
@@ -296,7 +305,6 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
                 <AppInput value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} className="mt-2 w-full font-normal" /></label>
               <AppButton className="mt-6 w-full" disabled={record.isPending} onClick={() => void submit()}>
                 {record.isPending ? t("budgets.submitting") : t("budgets.submit")}</AppButton>
-              {formError && <p role="alert" className="mt-3 text-sm text-danger-app">{formError}</p>}
               {record.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{record.error.message}</p>}
             </section>
           ) : (

@@ -8,13 +8,15 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { appToast } from "@/components/ui/toast/AppToast";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useExportDownload, useExportOptions, useExportPreview } from "@/hooks/useExports";
 import { ExportRequestError, type ExportFilter, type ExportFormat, type ExportType } from "@/services/exports";
 import { cn } from "@/utils/cn";
 
 type PeriodMode = "all" | "semester" | "range";
-const dateInputClass = "mt-1 block min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none";
+const dateInputClass = "mt-1 block min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app";
 const choiceClass = "min-h-10 rounded-full border border-border-app px-4 text-sm text-muted-app";
 const activeChoiceClass = "border-primary-app bg-primary-soft-app text-primary-app";
 
@@ -38,6 +40,8 @@ export function DataExportPage() {
   const csrfToken = auth.data?.csrfToken ?? "";
   const data = options.data;
   const semesterCode = semester || data?.periods.at(-1)?.code || "";
+  // Only the range is checked: every filter is optional, but the server rejects `from` after `to`.
+  const field = useFieldValidation({ to: mode === "range" && from && to && from > to ? t("common.endAfterStart") : null });
 
   function reset() {
     setRowCount(null);
@@ -56,12 +60,14 @@ export function DataExportPage() {
 
   async function count() {
     reset();
+    if (!field.touchAll()) return;
     try { setRowCount(await preview.mutateAsync({ type, filter: filter(), csrfToken })); }
     catch (failure) { setError(`${t("exports.failed")} ${(failure as Error).message}`); }
   }
 
   async function save() {
     reset();
+    if (!field.touchAll()) return;
     try {
       const file = await download.mutateAsync({ type, filter: filter(), format, csrfToken });
       const url = URL.createObjectURL(file.blob);
@@ -121,7 +127,9 @@ export function DataExportPage() {
                     <label className="text-sm">{t("exports.from")}<input type="date" className={dateInputClass} value={from}
                       onChange={(event) => { setFrom(event.target.value); reset(); }} /></label>
                     <label className="text-sm">{t("exports.to")}<input type="date" className={dateInputClass} value={to}
-                      onChange={(event) => { setTo(event.target.value); reset(); }} /></label>
+                      aria-invalid={field.error("to") ? true : undefined} onBlur={() => field.touch("to")}
+                      onChange={(event) => { setTo(event.target.value); reset(); }} />
+                      <AppFieldError message={field.error("to")} /></label>
                   </div>}
                 </fieldset>
 

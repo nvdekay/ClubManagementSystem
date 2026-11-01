@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppInput } from "@/components/ui/input/AppInput";
@@ -11,6 +13,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBoardNomination, useBoardNominationAction } from "@/hooks/useBoardNominations";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 export function BoardNominationDetailPage() {
   const { id } = useParams();
@@ -26,6 +29,14 @@ export function BoardNominationDetailPage() {
   const [saved, setSaved] = useState(false);
   // A double click fires twice (two confirms, two requests) before the button re-renders disabled.
   const inFlight = useRef(false);
+  // The server wants a reason on every returned seat, and a general reason when all of them go back.
+  const pendingSeats = query.data?.seats.filter((seat) => seat.state === "Pending Confirmation") ?? [];
+  const returningAll = pendingSeats.every((seat) => decisions[seat.id] === "return");
+  const field = useFieldValidation<string>({
+    ...Object.fromEntries(pendingSeats.filter((seat) => decisions[seat.id] === "return").map((seat) =>
+      [`seat:${seat.id}`, reasons[seat.id]?.trim() ? null : t("common.fieldRequired")])),
+    decisionNote: returningAll && !decisionNote.trim() ? t("common.fieldRequired") : null,
+  });
   function stateLabel(value: string) {
     return value === "Pending Confirmation" ? t("boardNominations.pending")
       : value === "Confirmed" ? t("boardNominations.confirmed")
@@ -43,11 +54,10 @@ export function BoardNominationDetailPage() {
   }
 
   async function decide() {
-    if (!auth.data || !id || !query.data) return;
-    const pending = query.data.seats.filter((seat) => seat.state === "Pending Confirmation");
-    const confirmedSeatIds = pending.filter((seat) => (decisions[seat.id] ?? "confirm") === "confirm")
+    if (!auth.data || !id || !query.data || !field.touchAll()) return;
+    const confirmedSeatIds = pendingSeats.filter((seat) => (decisions[seat.id] ?? "confirm") === "confirm")
       .map((seat) => seat.id);
-    const returnedSeats = pending.filter((seat) => decisions[seat.id] === "return")
+    const returnedSeats = pendingSeats.filter((seat) => decisions[seat.id] === "return")
       .map((seat) => ({ seatId: seat.id, reason: reasons[seat.id] ?? "" }));
     if (inFlight.current || !(await askConfirm(t("boardNominations.confirmPrompt")))) return;
     inFlight.current = true;
@@ -76,8 +86,6 @@ export function BoardNominationDetailPage() {
   const canDecide = nomination.task.state === "Open" && nomination.task.assigneeId === auth.data.user.id;
   const assignedElsewhere = nomination.task.state === "Open" && Boolean(nomination.task.assigneeId)
     && nomination.task.assigneeId !== auth.data.user.id;
-  const pendingSeats = nomination.seats.filter((seat) => seat.state === "Pending Confirmation");
-  const returningAll = pendingSeats.every((seat) => decisions[seat.id] === "return");
   function tone(value: string) {
     return value === "Confirmed" ? "success" as const : value === "Returned" ? "danger" as const : "warning" as const;
   }
@@ -111,9 +119,11 @@ export function BoardNominationDetailPage() {
                 <option value="confirm">{t("boardNominations.confirmSeat")}</option>
                 <option value="return">{t("boardNominations.returnSeat")}</option>
               </select>
-              {decisions[seat.id] === "return" && <AppInput aria-label={`${t("boardNominations.reason")}: ${seat.positionName}`}
-                placeholder={t("boardNominations.reason")} value={reasons[seat.id] ?? ""}
-                onChange={(event) => setReasons((current) => ({ ...current, [seat.id]: event.target.value }))} />}
+              {decisions[seat.id] === "return" && <div><AppInput aria-label={`${t("boardNominations.reason")}: ${seat.positionName}`}
+                placeholder={t("boardNominations.reason")} value={reasons[seat.id] ?? ""} className="w-full"
+                {...field.control(`seat:${seat.id}`)}
+                onChange={(event) => setReasons((current) => ({ ...current, [seat.id]: event.target.value }))} />
+                <AppFieldError message={field.error(`seat:${seat.id}`)} /></div>}
             </div>}
           </li>)}
         </ul>
@@ -129,12 +139,12 @@ export function BoardNominationDetailPage() {
         </section> : canDecide ? <section className="rounded-2xl bg-surface-app p-5">
           <h2 className="font-heading text-lg font-bold">{t("boardNominations.decisionTitle")}</h2>
           <p className="mt-1 text-sm text-muted-app">{t("boardNominations.decisionHint")}</p>
-          <label className="mt-4 block text-sm font-semibold">{t("boardNominations.generalReason")}
-            <AppInput className="mt-2 w-full font-normal" value={decisionNote} onChange={(event) => setDecisionNote(event.target.value)} />
+          <label className="mt-4 block text-sm font-semibold">{t("boardNominations.generalReason")}{returningAll && <AppRequiredMark />}
+            <AppInput className="mt-2 w-full font-normal" value={decisionNote} {...field.control("decisionNote", returningAll)}
+              onChange={(event) => setDecisionNote(event.target.value)} />
+            <AppFieldError message={field.error("decisionNote")} />
           </label>
-          <AppButton className="mt-5 w-full" disabled={action.isPending
-            || pendingSeats.some((seat) => decisions[seat.id] === "return" && !reasons[seat.id]?.trim())
-            || (returningAll && !decisionNote.trim())} onClick={() => void decide()}>
+          <AppButton className="mt-5 w-full" disabled={action.isPending} onClick={() => void decide()}>
             {action.isPending ? t("boardNominations.deciding") : t("boardNominations.submitDecision")}</AppButton>
         </section> : assignedElsewhere ? <AppNotice tone="warning"><p role="status">{t("boardNominations.claimedByOther")}</p></AppNotice>
           : nomination.task.state === "Open" ? <div className="rounded-2xl bg-surface-app p-5">

@@ -21,6 +21,9 @@ import {
 import { cn } from "@/utils/cn";
 import { formatMoney } from "@/utils/formatMoney";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
 const filters = ["all", "waiting", "overdue", "accepted"] as const;
 type Filter = typeof filters[number];
@@ -223,7 +226,10 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
   const [observation, setObservation] = useState("");
   const [reason, setReason] = useState("");
   const [sections, setSections] = useState<ReturnSection[]>([]);
-  const [formError, setFormError] = useState<string | null>(null);
+  const field = useFieldValidation(outcome === "Return" ? {
+    reason: reason.trim() ? null : t("periodicReports.reasonMissing"),
+    sections: sections.length ? null : t("periodicReports.sectionsMissing"),
+  } : {});
   const back = { to: "/workspace/periodic-reports", label: t("periodicReports.back") };
   function money(value: number | undefined) {
     return value === undefined ? undefined : formatMoney(value, i18n.language);
@@ -243,13 +249,11 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
 
   function toggle(section: ReturnSection) {
     setSections((current) => current.includes(section) ? current.filter((item) => item !== section) : [...current, section]);
+    field.touch("sections");
   }
 
   async function submit() {
-    const invalid = outcome === "Return" && !reason.trim() ? t("periodicReports.reasonMissing")
-      : outcome === "Return" && !sections.length ? t("periodicReports.sectionsMissing") : null;
-    setFormError(invalid);
-    if (invalid || !(await askConfirm(outcome === "Accept" ? t("periodicReports.confirmAccept") : t("periodicReports.confirmReturn")))) return;
+    if (!field.touchAll() || !(await askConfirm(outcome === "Accept" ? t("periodicReports.confirmAccept") : t("periodicReports.confirmReturn")))) return;
     try {
       await decide.mutateAsync({ id, csrfToken, input: outcome === "Accept"
         ? { outcome, observation: observation.trim() || undefined } : { outcome, reason: reason.trim(), sections } });
@@ -335,21 +339,22 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                   <span className="mt-1 block text-xs font-normal text-muted-app">{t("periodicReports.observationHint")}</span></label>
               ) : <>
                 <fieldset className="mt-5">
-                  <legend className="text-sm font-semibold">{t("periodicReports.sections")}</legend>
+                  <legend className="text-sm font-semibold">{t("periodicReports.sections")}<AppRequiredMark /></legend>
                   <div className="mt-2 flex flex-wrap gap-2">{RETURN_SECTIONS.map((section) =>
                     <button key={section} type="button" aria-pressed={sections.includes(section)} onClick={() => toggle(section)}
                       className={cn("min-h-11 rounded-full border border-border-app px-4 text-sm font-semibold text-muted-app transition-colors focus-visible:outline-2 focus-visible:outline-ring-app", {
                         "border-primary-app bg-primary-soft-app text-primary-app": sections.includes(section),
                       })}>{sectionLabel(t, section)}</button>)}</div>
+                  <AppFieldError message={field.error("sections")} />
                 </fieldset>
-                <label className="mt-5 block text-sm font-semibold">{t("periodicReports.reason")}
+                <label className="mt-5 block text-sm font-semibold">{t("periodicReports.reason")}<AppRequiredMark />
                   <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={reason} maxLength={5000}
-                    onChange={(e) => setReason(e.target.value)} />
+                    {...field.control("reason")} onChange={(e) => setReason(e.target.value)} />
+                  <AppFieldError message={field.error("reason")} />
                   <span className="mt-1 block text-xs font-normal text-muted-app">{t("periodicReports.reasonHint")}</span></label>
               </>}
               <AppButton className="mt-6 w-full" disabled={decide.isPending} onClick={() => void submit()}>
                 {decide.isPending ? t("periodicReports.submitting") : t("periodicReports.submit")}</AppButton>
-              {formError && <p role="alert" className="mt-3 text-sm text-danger-app">{formError}</p>}
               {decide.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{decide.error.message}</p>}
             </section>
           ) : data.decision ? (

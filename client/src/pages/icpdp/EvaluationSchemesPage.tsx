@@ -7,6 +7,7 @@ import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { appToast } from "@/components/ui/toast/AppToast";
@@ -95,8 +96,8 @@ export function EvaluationSchemesPage() {
                   <h2 className="font-heading font-semibold">{t("evaluationSchemes.createTitle")}</h2>
                   {data.periods.length === 0 ? <AppNotice tone="warning">{t("evaluationSchemes.noPeriods")}</AppNotice>
                     : <div className="flex flex-wrap items-end gap-3">
-                      <div className="text-sm">{t("evaluationSchemes.period")}
-                        <AppSelect className="mt-1 w-40" label={t("evaluationSchemes.period")} value={periodCode}
+                      <div className="text-sm">{t("evaluationSchemes.period")}<AppRequiredMark />
+                        <AppSelect className="mt-1 w-40" label={t("evaluationSchemes.period")} value={periodCode} required
                           onChange={setPeriod} options={data.periods.map((item) => ({ value: item.code, label: item.code }))} />
                       </div>
                       <div className="min-w-0 flex-1 basis-56 text-sm">{t("evaluationSchemes.copyFrom")}

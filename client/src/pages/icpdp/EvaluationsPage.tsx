@@ -5,6 +5,8 @@ import type { TFunction } from "i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -15,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEvaluation, useEvaluationAction, useEvaluationOverview, useEvaluationPeriodAction } from "@/hooks/useEvaluations";
 import { EvaluationRequestError, type Classification, type DimensionView, type EvaluationState } from "@/services/evaluations";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 const metricKeys = ["registrations", "attendances", "uniqueAttendees", "outsiderAttendees", "activeMembers", "completedEvents",
   "publicCompletedEvents", "cancelledEvents", "acceptedInvitations", "applications", "feedbackCount", "feedbackAverage",
@@ -164,15 +167,16 @@ function DimensionRow({ dimension, editable, busy, onSave }: { dimension: Dimens
   const [editing, setEditing] = useState(false);
   const [score, setScore] = useState(String(dimension.score ?? ""));
   const [justification, setJustification] = useState(dimension.justification ?? "");
-  const [error, setError] = useState<string | null>(null);
+  const value = Number(score);
+  const field = useFieldValidation({
+    score: !score.trim() ? t("common.fieldRequired") : !Number.isFinite(value) ? t("common.invalidNumber")
+      : value < 0 ? t("common.numberMin", { min: 0 }) : value > 100 ? t("common.numberMax", { max: 100 }) : null,
+    justification: justification.trim() ? null : t("common.fieldRequired"),
+  });
 
   async function save() {
-    const value = Number(score);
-    if (!score.trim() || !Number.isFinite(value) || value < 0 || value > 100 || !justification.trim()) {
-      setError(t("evaluations.manualInvalid")); return;
-    }
-    setError(null);
-    if (await onSave({ score: value, justification: justification.trim() })) setEditing(false);
+    if (!field.touchAll()) return;
+    if (await onSave({ score: value, justification: justification.trim() })) { setEditing(false); field.reset(); }
   }
 
   return (
@@ -204,17 +208,19 @@ function DimensionRow({ dimension, editable, busy, onSave }: { dimension: Dimens
           <dd className="font-semibold tabular-nums">{item.value}</dd>
         </div>)}</dl>}
       {editing && <div className="mt-3 grid gap-3 rounded-xl border border-border-app p-3 sm:grid-cols-[8rem_1fr]">
-        <label className="block text-sm font-semibold">{t("evaluations.manualScore")}
+        <label className="block text-sm font-semibold">{t("evaluations.manualScore")}<AppRequiredMark />
           <AppInput type="number" min={0} max={100} step={0.5} className="mt-1.5 w-full font-normal tabular-nums" value={score}
-            onChange={(e) => setScore(e.target.value)} /></label>
-        <label className="block text-sm font-semibold">{t("evaluations.justification")}
+            {...field.control("score")} onChange={(e) => setScore(e.target.value)} />
+          <AppFieldError message={field.error("score")} /></label>
+        <label className="block text-sm font-semibold">{t("evaluations.justification")}<AppRequiredMark />
           <AppTextarea className="mt-1.5 min-h-20 w-full font-normal" value={justification} maxLength={2000}
-            placeholder={t("evaluations.justificationHint")} onChange={(e) => setJustification(e.target.value)} /></label>
+            placeholder={t("evaluations.justificationHint")} {...field.control("justification")}
+            onChange={(e) => setJustification(e.target.value)} />
+          <AppFieldError message={field.error("justification")} /></label>
         <div className="flex flex-wrap gap-2 sm:col-span-2">
           <AppButton disabled={busy} onClick={() => void save()}>{t("evaluations.saveManual")}</AppButton>
-          <AppButton variant="secondary" onClick={() => setEditing(false)}>{t("evaluations.cancel")}</AppButton>
+          <AppButton variant="secondary" onClick={() => { setEditing(false); field.reset(); }}>{t("evaluations.cancel")}</AppButton>
         </div>
-        {error && <p role="alert" className="text-sm text-danger-app sm:col-span-2">{error}</p>}
       </div>}
     </li>
   );

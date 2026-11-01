@@ -1,16 +1,20 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Link } from "react-router";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import {
   useClubFields, useCreateClubField, useRemoveClubField, useUpdateClubField,
 } from "@/hooks/useClubFields";
@@ -30,6 +34,18 @@ function parsed(draft: FieldDraft): ClubFieldInput | null {
   return { name, sortOrder };
 }
 
+/** Inline errors for the same rules as `parsed`; a blank order is allowed (it falls back to a default). */
+function draftErrors(t: TFunction, draft: FieldDraft | null) {
+  if (!draft) return {};
+  const order = draft.sortOrder.trim();
+  const sortOrder = Number(order);
+  return {
+    name: draft.name.trim() ? null : t("common.fieldRequired"),
+    sortOrder: !order ? null : !Number.isInteger(sortOrder) ? t("common.invalidNumber")
+      : sortOrder < 0 ? t("common.numberMin", { min: 0 }) : sortOrder > 10_000 ? t("common.numberMax", { max: 10_000 }) : null,
+  };
+}
+
 interface FieldRowProps {
   field: ClubFieldUsage;
   csrfToken: string;
@@ -41,6 +57,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const update = useUpdateClubField();
+  const form = useFieldValidation(draftErrors(t, draft));
   const remove = useRemoveClubField();
   const inUse = field.clubCount + field.applicationCount > 0;
   const counts = { clubs: field.clubCount, applications: field.applicationCount };
@@ -49,11 +66,12 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
     event.preventDefault();
     if (!draft) return;
     const input = parsed(draft);
-    if (!input) { setError(t("clubFields.invalid")); return; }
+    if (!form.touchAll() || !input) return;
     setError(null);
     try {
       await update.mutateAsync({ id: field.id, input, csrfToken });
       setDraft(null);
+      form.reset();
       appToast.success(t("clubFields.updated"));
     } catch (failure) {
       setError(failure instanceof DuplicateClubFieldError ? t("clubFields.duplicate")
@@ -75,20 +93,22 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
   if (draft) {
     return (
       <li className="py-4">
-        <form className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_auto]" onSubmit={(event) => void save(event)}>
-          <label className="text-sm">{t("clubFields.name")}
+        <form noValidate className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_auto]" onSubmit={(event) => void save(event)}>
+          <label className="text-sm">{t("clubFields.name")}<AppRequiredMark />
             <AppInput className="mt-1 block w-full" maxLength={100} value={draft.name} autoFocus
-              onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+              {...form.control("name")} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+            <AppFieldError message={form.error("name")} />
           </label>
           <label className="text-sm">{t("clubFields.order")}
             <AppInput className="mt-1 block w-full" type="number" min="0" max="10000" value={draft.sortOrder}
-              onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
+              {...form.control("sortOrder", false)} onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
+            <AppFieldError message={form.error("sortOrder")} />
           </label>
           <div className="flex flex-wrap gap-2">
             <AppButton type="submit" disabled={update.isPending}>
               {update.isPending ? t("clubFields.saving") : t("clubFields.save")}
             </AppButton>
-            <AppButton type="button" variant="ghost" onClick={() => { setDraft(null); setError(null); }}>
+            <AppButton type="button" variant="ghost" onClick={() => { setDraft(null); setError(null); form.reset(); }}>
               {t("clubFields.cancel")}
             </AppButton>
           </div>
@@ -144,15 +164,17 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
   const [draft, setDraft] = useState<FieldDraft>({ name: "", sortOrder: "" });
   const [error, setError] = useState<string | null>(null);
   const create = useCreateClubField();
+  const field = useFieldValidation(draftErrors(t, draft));
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const input = parsed({ ...draft, sortOrder: draft.sortOrder || String(nextOrder) });
-    if (!input) { setError(t("clubFields.invalid")); return; }
+    if (!field.touchAll() || !input) return;
     setError(null);
     try {
       await create.mutateAsync({ input, csrfToken });
       setDraft({ name: "", sortOrder: "" });
+      field.reset();
       appToast.success(t("clubFields.created"));
     } catch (failure) {
       setError(failure instanceof DuplicateClubFieldError ? t("clubFields.duplicate")
@@ -161,17 +183,19 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
   }
 
   return (
-    <form className="space-y-3 rounded-2xl bg-surface-app p-4 sm:p-5" onSubmit={(event) => void submit(event)}>
+    <form noValidate className="space-y-3 rounded-2xl bg-surface-app p-4 sm:p-5" onSubmit={(event) => void submit(event)}>
       <h2 className="font-heading font-semibold">{t("clubFields.addTitle")}</h2>
       <div className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_auto]">
-        <label className="text-sm">{t("clubFields.name")}
+        <label className="text-sm">{t("clubFields.name")}<AppRequiredMark />
           <AppInput className="mt-1 block w-full" maxLength={100} value={draft.name}
-            onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+            {...field.control("name")} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
+          <AppFieldError message={field.error("name")} />
         </label>
         <label className="text-sm">{t("clubFields.order")}
           <AppInput className="mt-1 block w-full" type="number" min="0" max="10000"
             placeholder={String(nextOrder)} value={draft.sortOrder}
-            onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
+            {...field.control("sortOrder", false)} onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
+          <AppFieldError message={field.error("sortOrder")} />
         </label>
         <AppButton type="submit" disabled={create.isPending}>
           <AppIcon name="plus" className="size-4" />
