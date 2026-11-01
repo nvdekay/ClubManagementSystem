@@ -40,9 +40,7 @@ Sau khi cấu hình `MONGO_URI` trong `.env` hoặc biến môi trường của 
 `npm run db:verify` để kiểm tra cùng kết nối. Dùng cùng URI này trong MongoDB Compass; database
 được in ra bởi lệnh verify sẽ chứa các collection. Lệnh init có thể chạy lại, không xoá dữ liệu
 và không seed bản ghi nghiệp vụ. Schema Mongoose được sinh bằng
-`python3 server/src/infra/db/generate-ucms-schema.py` khi DBML thay đổi. Dữ liệu `User` demo
-của template nằm tạm ở `demoUsers` nhưng API demo đã được gỡ khỏi app nghiệp vụ;
-collection `users` dành cho schema UCMS dùng ObjectId. Auth tạo thêm collection vận hành
+`python3 server/src/infra/db/generate-ucms-schema.py` khi DBML thay đổi. Collection `users` dùng ObjectId. Auth tạo thêm collection vận hành
 `authSessions` khi server khởi động.
 
 Để đối chiếu end-to-end: mở Compass bằng cùng `MONGO_URI`, refresh danh sách database, mở tên

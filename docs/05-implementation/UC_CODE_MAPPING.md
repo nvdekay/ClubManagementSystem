@@ -72,7 +72,6 @@
 - [main.ts](../../server/src/main.ts): dependency thực được truyền vào `buildApp`.
 - [server.ts](../../server/src/interface/http/server.ts): điều kiện mount route theo dependency.
 - [main.tsx](../../client/src/main.tsx): route UI thật (mọi route; `App.tsx` chỉ render `AuthWorkspacePage`).
-- [user-routes.ts](../../server/src/interface/http/user-routes.ts): không được mount trong `server.ts` — code chết.
 - [access.ts](../../server/src/domain/access.ts): 14 permission cố định và resolver Leader/Member.
 - [member-space.ts](../../server/src/usecase/member-space.ts): roster chỉ đọc cho Active/Inactive.
 - [room-allocation.ts](../../server/src/usecase/room-allocation.ts): UC58 phía CLB yêu cầu `club.booking.manage`.

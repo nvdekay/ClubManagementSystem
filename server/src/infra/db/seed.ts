@@ -1,8 +1,6 @@
 // Adds or refreshes deterministic demo records without deleting user data: npm run seed.
 import mongoose, { Types } from "mongoose";
-import { newUser } from "../../domain/user.js";
 import { loadConfig } from "../config/index.js";
-import { mongoUserRepository } from "./mongo-user-repository.js";
 import { pdpClubs, pdpEvents } from "./pdp-demo-data.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
 
@@ -33,23 +31,6 @@ async function upsertMany(
       upsert: true,
     },
   })));
-}
-
-async function seedTemplateUsers(): Promise<number> {
-  const repo = mongoUserRepository();
-  const demo = [
-    { email: "ana@example.com", name: "Ana" },
-    { email: "bob@example.com", name: "Bob" },
-    { email: "carol@example.com", name: "Carol" },
-  ];
-  let seeded = 0;
-  for (const input of demo) {
-    if (!(await repo.findByEmail(input.email))) {
-      await repo.save(newUser(input));
-      seeded++;
-    }
-  }
-  return seeded;
 }
 
 // The earlier fictional demo (F-Code, F-Japan…) used these fixed ids; only those seed-owned
@@ -104,11 +85,10 @@ async function seedPdpSnapshot(now: Date): Promise<void> {
 try {
   await mongoose.connect(config.MONGO_URI, { serverSelectionTimeoutMS: 5_000 });
   await ensureUcmsDatabase();
-  const templateUserCount = await seedTemplateUsers();
   await removeFictionalDemo();
   await seedPdpSnapshot(new Date());
   // Never log MONGO_URI — it can carry credentials (SEC-04).
-  console.log(`demo data ready: ${templateUserCount} template users added, ${pdpClubs.length} clubs and ${pdpEvents.length} events from the PDP snapshot`);
+  console.log(`demo data ready: ${pdpClubs.length} clubs and ${pdpEvents.length} events from the PDP snapshot`);
 } catch (error) {
   console.error("demo seed failed:", error instanceof Error ? error.message : error);
   process.exitCode = 1;

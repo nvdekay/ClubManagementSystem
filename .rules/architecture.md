@@ -54,7 +54,7 @@ domain; nếu nó chỉ là dịch qua lại HTTP thì giữ ở interface.
 
 ## `server/src/interface/http/`
 
-**Là gì?** Biên Express: `server.ts` (lắp ráp app), `user-routes.ts` (endpoint dưới `/api/v1`),
+**Là gì?** Biên Express: `server.ts` (lắp ráp app), `*-routes.ts` (endpoint dưới `/api/v1`, mỗi module một file),
 `middleware.ts` (log request + xử lý lỗi), `openapi.ts` (tài liệu API phục vụ tại `/docs`). Nó
 chỉ dịch qua lại giữa HTTP và lời gọi usecase, không làm gì hơn.
 
@@ -75,7 +75,7 @@ liệu vào, gọi usecase, gửi response. Nếu nó phình to hơn thế thì 
 
 - `config/` — nơi **duy nhất** được phép đọc `process.env`. Một schema zod validate biến môi
   trường lúc khởi động; env sai → `process.exit(1)`. Mọi nơi khác nhận một `Config` đã có kiểu.
-- `db/` — `mongo-user-repository.ts` hiện thực port `UserRepository` của domain bằng Mongoose;
+- `db/` — `mongo-*-repository.ts` hiện thực các port repository của domain bằng Mongoose;
   `seed.ts` để tạo dữ liệu cục bộ.
 
 **Vì sao?** Config: fail-fast lúc khởi động tốt hơn nhiều so với một chuỗi kết nối `undefined`

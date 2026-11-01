@@ -2,7 +2,7 @@
 
 Bản dump đầy đủ DB `ucms` để người mới có ngay dữ liệu giống máy của nhóm.
 
-`ucms-seed.archive.gz` — `mongodump --gzip --archive` của 54 collection (168 user, 49 CLB,
+`ucms-seed.archive.gz` — `mongodump --gzip --archive` của 52 collection (168 user, 49 CLB,
 113 sự kiện, 350 thành viên, 2065 đăng ký sự kiện…). Không chứa `authSessions`.
 
 ## Import
