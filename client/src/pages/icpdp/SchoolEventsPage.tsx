@@ -19,6 +19,7 @@ import {
 } from "@/hooks/useSchoolEvents";
 import type { InvitationStatus, ScheduleConflict } from "@/services/schoolEvents";
 import { cn } from "@/utils/cn";
+import { useConfirm } from "@/hooks/useConfirm";
 
 function stateLabel(t: TFunction, state: string): string {
   switch (state) {
@@ -255,6 +256,7 @@ export function SchoolEventsPage() {
 
 function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const query = useSchoolEvent(id, true);
   const action = useSchoolEventAction();
   const [all, setAll] = useState(false);
@@ -331,7 +333,7 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
                 </div>
                 <AppBadge tone={statusTone(item.status)}>{statusLabel(t, item.status)}</AppBadge>
                 {item.status === "Pending" && new Date(item.deadline) > new Date() && <AppButton variant="secondary" disabled={action.isPending}
-                  onClick={() => { if (window.confirm(t("schoolEvents.confirmWithdraw", { club: item.clubName }))) {
+                  onClick={async () => { if (await askConfirm(t("schoolEvents.confirmWithdraw", { club: item.clubName }))) {
                     action.mutate({ kind: "withdraw", id, invitationId: item.id, csrfToken }); } }}>{t("schoolEvents.withdraw")}</AppButton>}
               </li>)}</ul> : <p className="mt-3 text-sm text-muted-app">{t("schoolEvents.noInvitations")}</p>}
           </section>
@@ -342,7 +344,7 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
             <h2 className="font-heading text-lg font-bold">{t("schoolEvents.publish")}</h2>
             <p className="mt-1 text-sm text-muted-app">{t("schoolEvents.publishHint")}</p>
             <AppButton className="mt-4 w-full" disabled={action.isPending}
-              onClick={() => { if (window.confirm(t("schoolEvents.confirmPublish"))) action.mutate({ kind: "publish", id, csrfToken }); }}>
+              onClick={async () => { if (await askConfirm(t("schoolEvents.confirmPublish"))) action.mutate({ kind: "publish", id, csrfToken }); }}>
               {t("schoolEvents.publish")}</AppButton>
           </section>}
           {event.publishedAt && <AppNotice role="status">{t("schoolEvents.published", { date: date(event.publishedAt) })}</AppNotice>}

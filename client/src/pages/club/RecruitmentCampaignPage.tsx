@@ -14,6 +14,7 @@ import { useRecruitmentCampaignAction, useRecruitmentCampaigns } from "@/hooks/u
 import { cn } from "@/utils/cn";
 import { CampaignApiError, type OverlappingCampaign, type RecruitmentCampaign,
   type RecruitmentCampaignInput, type RecruitmentFormField, type RecruitmentRubricCriterion } from "@/services/recruitmentCampaigns";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface CampaignForm {
   title: string;
@@ -80,6 +81,7 @@ function semestersFrom(error: unknown): Array<{ code: string; startAt: string; e
 export function RecruitmentCampaignPage() {
   const { clubId } = useParams();
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const workspace = auth.data?.workspaces.find((item) => item.kind === "club" && item.clubId === clubId);
   const canManage = Boolean(workspace?.permissions.includes("club.recruitment.manage"));
@@ -167,7 +169,7 @@ export function RecruitmentCampaignPage() {
   }
 
   async function cancel(campaign: RecruitmentCampaign) {
-    if (!auth.data || !clubId || !window.confirm(t("recruitmentCampaigns.cancelConfirm"))) return;
+    if (!auth.data || !clubId || !(await askConfirm(t("recruitmentCampaigns.cancelConfirm")))) return;
     setPageError("");
     setNotice("");
     try {

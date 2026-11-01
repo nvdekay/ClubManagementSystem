@@ -14,6 +14,7 @@ import { useBudget, useBudgets, useRecordBudgetFlow } from "@/hooks/useBudgets";
 import type { BudgetFlowKind, BudgetSummary } from "@/services/budgets";
 import { cn } from "@/utils/cn";
 import { formatMoney } from "@/utils/formatMoney";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const filters = ["all", "toAdvance", "disbursed", "reconcile", "topUp", "refund", "closed"] as const;
 type Filter = typeof filters[number];
@@ -164,6 +165,7 @@ function todayInput(): string {
 
 function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const budget = useBudget(id, true);
   const record = useRecordBudgetFlow();
   const [amount, setAmount] = useState<string | null>(null);
@@ -202,7 +204,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
       : !date || date > todayInput() ? t("budgets.dateInvalid") : null;
     setFormError(invalid);
     if (invalid) return;
-    if (!window.confirm(t("budgets.confirm", { kind: kindLabel(t, allowed.kind).toLowerCase(), amount: money(value) }))) return;
+    if (!(await askConfirm(t("budgets.confirm", { kind: kindLabel(t, allowed.kind).toLowerCase(), amount: money(value) })))) return;
     // Noon local time keeps the chosen calendar day whatever the time zone.
     const disbursedAt = date === todayInput() ? new Date() : new Date(`${date}T12:00:00`);
     try {

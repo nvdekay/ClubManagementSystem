@@ -13,6 +13,7 @@ import type { CandidateEvaluationGroup, RecruitmentApplication } from "@/service
 import type { RecruitmentRubricCriterion } from "@/services/recruitmentCampaigns";
 import { CandidateEvaluationPanel } from "./CandidateEvaluationPanel";
 import { formatDate, stateTone } from "./recruitmentReviewFormat";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface ApplicationReviewDialogProps {
   onClose: () => void;
@@ -35,6 +36,7 @@ const DANGER = "bg-danger-app text-bg-app hover:opacity-90";
 export function ApplicationReviewDialog({ onClose, clubId, campaignId, application, group, rubric,
   evaluationsLoading, canReview, questionLabels, userId, csrfToken }: ApplicationReviewDialogProps) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const action = useReviewRecruitmentApplications();
   const onboarding = useRecruitmentOnboardingAction();
   const attachmentAccess = useReviewAttachmentAccess();
@@ -54,7 +56,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
   }
 
   async function onboard(kind: "onboard" | "decline") {
-    if (!window.confirm(t(kind === "onboard" ? "recruitmentApplications.onboardConfirm" : "recruitmentApplications.declineConfirm"))) return;
+    if (!(await askConfirm(t(kind === "onboard" ? "recruitmentApplications.onboardConfirm" : "recruitmentApplications.declineConfirm")))) return;
     setError("");
     try {
       await onboarding.mutateAsync({ kind, clubId, campaignId, applicationId: application.id, csrfToken });

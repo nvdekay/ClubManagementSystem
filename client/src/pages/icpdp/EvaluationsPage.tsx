@@ -14,6 +14,7 @@ import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useEvaluation, useEvaluationAction, useEvaluationOverview, useEvaluationPeriodAction } from "@/hooks/useEvaluations";
 import { EvaluationRequestError, type Classification, type DimensionView, type EvaluationState } from "@/services/evaluations";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const metricKeys = ["registrations", "attendances", "uniqueAttendees", "outsiderAttendees", "activeMembers", "completedEvents",
   "publicCompletedEvents", "cancelledEvents", "acceptedInvitations", "applications", "feedbackCount", "feedbackAverage",
@@ -74,6 +75,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
 
 function Overview({ csrfToken }: { csrfToken: string }) {
   const { t } = useTranslation();
+  const askConfirm = useConfirm();
   const [params, setParams] = useSearchParams();
   const overview = useEvaluationOverview(params.get("period") ?? undefined, true);
   const action = useEvaluationPeriodAction();
@@ -107,7 +109,7 @@ function Overview({ csrfToken }: { csrfToken: string }) {
         <section className="rounded-2xl bg-surface-app p-5">
           <p className="text-sm text-muted-app">{t("evaluations.publishHint")}</p>
           <AppButton className="mt-4" disabled={action.isPending || !data.canPublish}
-            onClick={() => { if (window.confirm(t("evaluations.confirmPublish", { period: periodCode }))) action.mutate({ kind: "publish", periodCode, csrfToken }); }}>
+            onClick={async () => { if (await askConfirm(t("evaluations.confirmPublish", { period: periodCode }))) action.mutate({ kind: "publish", periodCode, csrfToken }); }}>
             {action.isPending && action.variables?.kind === "publish" ? t("evaluations.publishing") : t("evaluations.publish")}</AppButton>
         </section>
       </div>}
@@ -220,6 +222,7 @@ function DimensionRow({ dimension, editable, busy, onSave }: { dimension: Dimens
 
 function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const query = useEvaluation(id, true);
   const action = useEvaluationAction();
   const navigate = useNavigate();
@@ -238,7 +241,7 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
   }
 
   async function run(next: Parameters<typeof action.mutateAsync>[0]["action"], confirmText?: string): Promise<boolean> {
-    if (confirmText && !window.confirm(confirmText)) return false;
+    if (confirmText && !(await askConfirm(confirmText))) return false;
     try {
       const result = await action.mutateAsync({ id, action: next, csrfToken });
       // A revision of a published result is a new evaluation with its own id.

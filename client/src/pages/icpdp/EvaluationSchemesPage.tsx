@@ -15,9 +15,11 @@ import { useEvaluationSchemeAction, useEvaluationSchemes } from "@/hooks/useEval
 import { SchemeRequestError, type EvaluationScheme, type SchemeSettings } from "@/services/evaluationSchemes";
 
 import { SchemeEditor } from "./SchemeEditor";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function EvaluationSchemesPage() {
   const { t } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const isOfficer = auth.data?.systemRoles.includes("ICPDP_OFFICER") ?? false;
   const catalogue = useEvaluationSchemes(isOfficer);
@@ -49,8 +51,8 @@ export function EvaluationSchemesPage() {
 
   async function run(scheme: EvaluationScheme, kind: "activate" | "delete") {
     setError(null);
-    if (kind === "activate" && !window.confirm(t("evaluationSchemes.confirmActivate", { period: scheme.periodCode }))) return;
-    if (kind === "delete" && !window.confirm(t("evaluationSchemes.confirmDelete"))) return;
+    if (kind === "activate" && !(await askConfirm(t("evaluationSchemes.confirmActivate", { period: scheme.periodCode })))) return;
+    if (kind === "delete" && !(await askConfirm(t("evaluationSchemes.confirmDelete")))) return;
     try {
       await action.mutateAsync({ kind, id: scheme.id, csrfToken });
       appToast.success(t(kind === "activate" ? "evaluationSchemes.activated" : "evaluationSchemes.deleted"));

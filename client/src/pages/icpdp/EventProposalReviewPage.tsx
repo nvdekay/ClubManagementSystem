@@ -15,6 +15,7 @@ import {
   type ClubObligation, type EventReviewOutcome, type EventReviewSection,
 } from "@/services/eventProposalReviews";
 import { cn } from "@/utils/cn";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const outcomes: EventReviewOutcome[] = ["Request revision", "Approve", "Reject"];
 
@@ -25,6 +26,7 @@ function text(value: unknown): string | undefined {
 export function EventProposalReviewPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const review = useEventProposal(id, isOfficer);
@@ -160,7 +162,7 @@ export function EventProposalReviewPage() {
     if (missing) return;
     const prompt = outcome === "Approve" ? t("eventReviews.confirmApprove")
       : outcome === "Reject" ? t("eventReviews.confirmReject") : t("eventReviews.confirmRevision");
-    if (!window.confirm(prompt)) return;
+    if (!(await askConfirm(prompt))) return;
     try {
       await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken, input: {
         outcome, reason: reason.trim() || undefined, reviewNote: reviewNote.trim() || undefined,

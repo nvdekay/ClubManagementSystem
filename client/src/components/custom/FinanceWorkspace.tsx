@@ -26,6 +26,7 @@ import type {
   FinanceDetail,
   FinancialEvidence,
 } from "@/services/accountability";
+import { useConfirm } from "@/hooks/useConfirm";
 
 function stateKey(state: string): keyof typeof accountability.en {
   return (
@@ -70,6 +71,7 @@ function FinanceEditor({
   actorId: string;
 }) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const admin = context.kind === "admin";
   const openViolation = useOpenViolation();
   const [findingId, setFindingId] = useState("");
@@ -110,13 +112,13 @@ function FinanceEditor({
   async function act(body: object, confirm?: "submit" | "finalize") {
     if (
       confirm &&
-      !window.confirm(
+      !(await askConfirm(
         t(
           confirm === "submit"
             ? "accountability.confirmSubmit"
             : "accountability.confirmFinalize",
         ),
-      )
+      ))
     )
       return;
     try {

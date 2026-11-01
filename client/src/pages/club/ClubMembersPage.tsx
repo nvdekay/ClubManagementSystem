@@ -24,6 +24,7 @@ import { formatDay } from "@/utils/formatDate";
 import { ClubMemberOnboardDialog } from "./ClubMemberOnboardDialog";
 import { ClubMemberStateDialog } from "./ClubMemberStateDialog";
 import { exportClubMembers } from "./exportClubMembers";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const EMPTY: ClubRosterMember[] = [];
 const helper = createColumnHelper<AppTableFeatures, ClubRosterMember>();
@@ -33,6 +34,7 @@ const NO_ROLE = "__none__";
 /** UC21 A1 for members with club.member.manage: roster and leave requests (UC22) to execute. */
 export function ClubMembersPage() {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const { clubId } = useParams();
   const auth = useAuth();
@@ -104,7 +106,7 @@ export function ClubMembersPage() {
 
   async function execute(request: WithdrawalRequest) {
     if (new Date(request.requestedEffectiveDate).getTime() > currentTime) return;
-    if (!auth.data || !clubId || inFlight.current || !window.confirm(t("memberSpace.executeConfirm"))) return;
+    if (!auth.data || !clubId || inFlight.current || !(await askConfirm(t("memberSpace.executeConfirm")))) return;
     inFlight.current = true;
     setDoneId(null);
     try {

@@ -16,6 +16,7 @@ import { usePublicRecruitmentCampaign } from "@/hooks/useRecruitmentCampaigns";
 import type { RecruitmentApplication } from "@/services/recruitmentApplications";
 import type { RecruitmentAnswer } from "@/services/recruitmentApplications";
 import { cn } from "@/utils/cn";
+import { useConfirm } from "@/hooks/useConfirm";
 
 function stateLabel(state: RecruitmentApplication["state"], t: TFunction): string {
   switch (state) {
@@ -47,6 +48,7 @@ function isApplication(value: unknown): value is RecruitmentApplication {
 export function RecruitmentApplicationPage() {
   const { campaignId } = useParams();
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const campaignQuery = usePublicRecruitmentCampaign(campaignId);
   const applicationQuery = useMyCampaignApplication(campaignId, Boolean(auth.data));
@@ -143,7 +145,7 @@ export function RecruitmentApplicationPage() {
     }
     submitting.current = true;
     try {
-      if (!window.confirm(t("recruitmentApplications.submitConfirm"))) return;
+      if (!(await askConfirm(t("recruitmentApplications.submitConfirm")))) return;
       const applicationId = await saveDraft();
       if (!applicationId) return;
       setPageError("");
@@ -159,7 +161,7 @@ export function RecruitmentApplicationPage() {
   }
 
   async function withdraw() {
-    if (!auth.data || !application || !window.confirm(t("recruitmentApplications.withdrawConfirm"))) return;
+    if (!auth.data || !application || !(await askConfirm(t("recruitmentApplications.withdrawConfirm")))) return;
     setPageError("");
     try {
       const result = await action.mutateAsync({ kind: "withdraw", applicationId: application.id,

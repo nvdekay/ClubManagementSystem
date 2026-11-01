@@ -10,10 +10,12 @@ import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBoardNomination, useBoardNominationAction } from "@/hooks/useBoardNominations";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function BoardNominationDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const query = useBoardNomination(id, isOfficer);
@@ -47,7 +49,7 @@ export function BoardNominationDetailPage() {
       .map((seat) => seat.id);
     const returnedSeats = pending.filter((seat) => decisions[seat.id] === "return")
       .map((seat) => ({ seatId: seat.id, reason: reasons[seat.id] ?? "" }));
-    if (inFlight.current || !window.confirm(t("boardNominations.confirmPrompt"))) return;
+    if (inFlight.current || !(await askConfirm(t("boardNominations.confirmPrompt")))) return;
     inFlight.current = true;
     try {
       await action.mutateAsync({ kind: "decide", id,

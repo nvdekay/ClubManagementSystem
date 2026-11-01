@@ -20,6 +20,7 @@ import type {
   EventRegistrationFormField,
 } from "@/services/eventRegistrations";
 import { formatDate } from "@/utils/formatDate";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface EventRegistrationPanelProps {
   eventId: string;
@@ -75,6 +76,7 @@ function SignInPrompt({ to }: { to: string }) {
 
 function RegistrationBody({ context, csrfToken }: { context: EventRegistrationContext; csrfToken: string }) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const action = useEventRegistrationAction();
   const attendances = useMyAttendances(true);
@@ -112,8 +114,8 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
     void run({ kind: "register", eventId: event.id, csrfToken, answers }, "registered");
   }
 
-  function cancel() {
-    if (!active || !window.confirm(t("eventRegistrations.cancelConfirm"))) return;
+  async function cancel() {
+    if (!active || !(await askConfirm(t("eventRegistrations.cancelConfirm")))) return;
     void run({ kind: "cancel", registrationId: active.id, csrfToken }, "cancelled");
   }
 

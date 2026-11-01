@@ -20,12 +20,14 @@ import type { MyEventFeedback } from "@/services/eventFeedback";
 import type { EventRegistration } from "@/services/eventRegistrations";
 import { cn } from "@/utils/cn";
 import { formatDate } from "@/utils/formatDate";
+import { useConfirm } from "@/hooks/useConfirm";
 
 type Filter = "active" | "attended" | "cancelled";
 const objectId = /^[0-9a-f]{24}$/i;
 
 export function MyEventRegistrationsPage() {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const auth = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -48,7 +50,7 @@ export function MyEventRegistrationsPage() {
     ? { eventId: deepLinkEvent, code: searchParams.get("code") ?? "" } : null;
 
   async function cancel(registration: EventRegistration) {
-    if (!auth.data || inFlight.current || !window.confirm(t("eventRegistrations.cancelConfirm"))) return;
+    if (!auth.data || inFlight.current || !(await askConfirm(t("eventRegistrations.cancelConfirm")))) return;
     inFlight.current = true;
     setCancelledId(null);
     try {

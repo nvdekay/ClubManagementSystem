@@ -9,10 +9,12 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeadershipTransition, useLeadershipTransitionAction } from "@/hooks/useLeadershipTransitions";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function LeadershipTransitionDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const query = useLeadershipTransition(id, isOfficer);
@@ -36,7 +38,7 @@ export function LeadershipTransitionDetailPage() {
     catch { /* Rendered below. */ }
   }
   async function decide() {
-    if (!auth.data || !id || inFlight.current || !window.confirm(t("leadershipTransitions.confirmPrompt"))) return;
+    if (!auth.data || !id || inFlight.current || !(await askConfirm(t("leadershipTransitions.confirmPrompt")))) return;
     inFlight.current = true;
     try {
       await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken,

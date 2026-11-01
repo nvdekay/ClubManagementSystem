@@ -13,6 +13,7 @@ import { useApplicationReview, useApplicationReviewAction,
   useReviewDocumentAccess } from "@/hooks/useApplicationReviews";
 import type { ReviewOutcome } from "@/services/applicationReviews";
 import { cn } from "@/utils/cn";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const sectionKeys = ["club-information", "founders", "documents", "other"];
 const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const;
@@ -20,6 +21,7 @@ const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const;
 export function ApplicationReviewDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const review = useApplicationReview(id, isOfficer);
@@ -71,7 +73,7 @@ export function ApplicationReviewDetailPage() {
     if (missing) return;
     const prompt = outcome === "Approve" ? t("reviews.confirmApprove")
       : outcome === "Reject" ? t("reviews.confirmReject") : t("reviews.confirmRevision");
-    if (!window.confirm(prompt)) return;
+    if (!(await askConfirm(prompt))) return;
     try {
       await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken,
         input: { outcome, reason: reason || undefined, reviewNote: reviewNote || undefined,

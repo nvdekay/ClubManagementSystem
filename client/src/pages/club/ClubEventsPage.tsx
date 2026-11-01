@@ -15,6 +15,7 @@ import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubEvent, useClubEventFeedback, useClubEventMutation, useClubEventOptions, useClubEvents, useEventParticipants } from "@/hooks/useClubEvents";
 import type { ClubEvent, ClubEventError, ClubEventInput, EventParticipant } from "@/services/clubEvents";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const eventsEmpty: ClubEvent[] = [];
 const participantsEmpty: EventParticipant[] = [];
@@ -63,6 +64,7 @@ function TablePager({ pageIndex, pageCount, onChange }: { pageIndex: number; pag
 export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attendance" | "feedback" }) {
   const { clubId = "" } = useParams();
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const permissions = auth.data?.workspaces.find((w) => w.kind === "club" && w.clubId === clubId)?.permissions ?? [];
   const allowed = permissions.includes(mode === "events" ? "club.event.manage" : mode === "attendance" ? "club.attendance.manage" : "club.feedback.view");
@@ -217,7 +219,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       <div className="flex flex-wrap gap-2">
         {active.state === "Upcoming" && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.capacity")}</AppButton>}
         {!active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed"].includes(active.state) && <AppButton onClick={() => openOperation("check-in")}>{t("clubEvents.checkin")}</AppButton>}
-        {active.state === "Completed" && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={() => { if (window.confirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
+        {active.state === "Completed" && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={async () => { if (await askConfirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
         {active.attendanceFinalized && auth.data?.systemRoles.includes("ATTENDANCE_UNLOCK") && <AppButton onClick={() => openOperation("unlock")}>{t("clubEvents.unlock")}</AppButton>}
       </div>
       <AppTable table={ptable} emptyMessage={t("clubEvents.noParticipants")} loading={participants.isPending} />

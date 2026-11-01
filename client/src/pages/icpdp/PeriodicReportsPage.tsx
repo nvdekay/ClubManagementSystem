@@ -20,6 +20,7 @@ import {
 } from "@/services/periodicReports";
 import { cn } from "@/utils/cn";
 import { formatMoney } from "@/utils/formatMoney";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const filters = ["all", "waiting", "overdue", "accepted"] as const;
 type Filter = typeof filters[number];
@@ -214,6 +215,7 @@ function Figure({ label, frozen, live }: { label: string; frozen: ReactNode; liv
 
 function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const day = useDay();
   const report = usePeriodicReport(id, true);
   const decide = useDecidePeriodicReport();
@@ -247,7 +249,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
     const invalid = outcome === "Return" && !reason.trim() ? t("periodicReports.reasonMissing")
       : outcome === "Return" && !sections.length ? t("periodicReports.sectionsMissing") : null;
     setFormError(invalid);
-    if (invalid || !window.confirm(outcome === "Accept" ? t("periodicReports.confirmAccept") : t("periodicReports.confirmReturn"))) return;
+    if (invalid || !(await askConfirm(outcome === "Accept" ? t("periodicReports.confirmAccept") : t("periodicReports.confirmReturn")))) return;
     try {
       await decide.mutateAsync({ id, csrfToken, input: outcome === "Accept"
         ? { outcome, observation: observation.trim() || undefined } : { outcome, reason: reason.trim(), sections } });

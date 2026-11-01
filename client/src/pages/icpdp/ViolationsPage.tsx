@@ -19,6 +19,7 @@ import {
   type EvidenceInput, type ViolationEvidence, type ViolationOrigin, type ViolationSeverity, type ViolationStep, type ViolationSummary,
 } from "@/services/violations";
 import { cn } from "@/utils/cn";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const filters = ["active", "awaiting", "actions", "closed", "all"] as const;
 type Filter = typeof filters[number];
@@ -290,6 +291,7 @@ function EvidenceList({ items, names }: { items: ViolationEvidence[]; names: Rec
 
 function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const query = useViolation(id, true);
   const step = useViolationStep();
   const [message, setMessage] = useState("");
@@ -322,7 +324,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
   const label = "text-xs font-semibold tracking-wide text-muted-app uppercase";
 
   async function run(next: ViolationStep, confirmText?: string): Promise<boolean> {
-    if (confirmText && !window.confirm(confirmText)) return false;
+    if (confirmText && !(await askConfirm(confirmText))) return false;
     try { await step.mutateAsync({ id, csrfToken, step: next }); setFormError(null); return true; }
     catch { return false; }
   }

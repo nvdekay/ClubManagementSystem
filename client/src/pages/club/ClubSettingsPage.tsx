@@ -20,6 +20,7 @@ import {
   type ClubProfileInput,
 } from "@/services/clubSettings";
 import type { ClubProfileFormField } from "@/services/policy";
+import { useConfirm } from "@/hooks/useConfirm";
 
 function profileLabelKey(field: ClubProfileFormField) {
   switch (field) {
@@ -41,6 +42,7 @@ const emptyDepartment: ClubDepartmentInput = { name: "", description: "", sortOr
 export function ClubSettingsPage() {
   const { clubId } = useParams();
   const { t } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const workspace = auth.data?.workspaces.find((item) => item.kind === "club"
     && item.clubId === clubId);
@@ -121,7 +123,7 @@ export function ClubSettingsPage() {
   }
 
   async function deactivateDepartment(value: ClubDepartment) {
-    if (!auth.data || !clubId || !window.confirm(t("clubSettings.deactivateConfirm"))) return;
+    if (!auth.data || !clubId || !(await askConfirm(t("clubSettings.deactivateConfirm")))) return;
     try { await action.mutateAsync({ kind: "deactivateDepartment", clubId,
       departmentId: value.id, csrfToken: auth.data.csrfToken }); }
     catch { /* Mutation error is rendered below. */ }

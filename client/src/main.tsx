@@ -21,6 +21,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { App } from "./App.js";
+import { AppConfirmProvider } from "./components/ui/dialog/AppConfirmProvider.js";
 import { PublicLayout } from "./components/layout/PublicLayout.js";
 import { WorkspaceShell } from "./components/layout/WorkspaceShell.js";
 import { ClubDetail } from "./pages/public/ClubDetail.js";
@@ -78,87 +79,89 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<PublicLayout />}>
-            <Route index element={<PublicHome />} />
-            <Route path="clubs" element={<ClubDirectory />} />
-            <Route path="clubs/:id" element={<ClubDetail />} />
-            <Route path="events" element={<EventDirectory />} />
-            <Route path="events/:id" element={<EventDetail />} />
-            <Route path="*" element={<PublicNotFound />} />
-          </Route>
-          <Route element={<WorkspaceShell />}>
-            <Route path="student" element={<StudentHomePage />} />
-            <Route path="icpdp" element={<IcpdpHomePage />} />
-            <Route path="icpdp/clubs" element={<IcpdpClubsPage />} />
-            <Route path="icpdp/accounts" element={<AccountsPage />} />
-            <Route path="club/:clubId" element={<ClubHomePage />} />
-            <Route path="workspace/policy" element={<PolicyPage />} />
-            <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
-            <Route path="club/:clubId/event-reports" element={<ClubReportsPage />} />
-            <Route path="club/:clubId/transition-plans" element={<ClubTransitionPlansPage />} />
-            <Route path="club/:clubId/suspension-requests" element={<ClubSuspensionRequestsPage />} />
-            <Route path="workspace/suspension-requests" element={<SuspensionRequestsPage />} />
-            <Route path="club/:clubId/violations" element={<ClubViolationsPage />} />
-            <Route path="club/:clubId/evaluations" element={<ClubEvaluationsPage />} />
-            <Route path="club/:clubId/periodic-reports" element={<ClubPeriodicReportsPage />} />
-            <Route path="club/:clubId/invitations" element={<ClubInvitationsPage />} />
-            <Route path="club/:clubId/budgets" element={<ClubBudgetsPage />} />
-            <Route path="workspace/event-reports" element={<EventReportsPage />} />
-            <Route path="workspace/budgets/:id/reconciliation" element={<ReconciliationPage />} />
-            <Route path="club/:clubId/events" element={<ClubEventsPage />} />
-            <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
-            <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />
-            <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
-            <Route path="workspace/bookings" element={<BookingReviewPage />} />
-            <Route path="workspace/room-allocations" element={<RoomAllocationsPage />} />
-            <Route path="club/:clubId/rooms" element={<ClubRoomsPage />} />
-            <Route path="workspace/properties" element={<PropertiesPage />} />
-            <Route path="workspace/evaluation-schemes" element={<EvaluationSchemesPage />} />
-            <Route path="workspace/exports" element={<DataExportPage />} />
-            <Route path="workspace/applications" element={<ApplicationsPage />} />
-            <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
-            <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
-            <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
-            <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
-            <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
-            <Route path="workspace/feedback" element={<StudentFeedbackPage />} />
-            <Route path="workspace/clubs" element={<MyClubsPage />} />
-            <Route path="workspace/clubs/:clubId" element={<MemberSpacePage />} />
-            <Route path="club/:clubId/members" element={<ClubMembersPage />} />
-            <Route path="workspace/student-feedback" element={<StudentFeedbackInboxPage />} />
-            <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
-            <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
-            <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
-            <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
-            <Route path="workspace/internal-events" element={<InternalEventsPage />} />
-            <Route path="workspace/internal-events/:id" element={<InternalEventDetailPage />} />
-            <Route path="club/:clubId/board-history" element={<ClubBoardHistoryPage />} />
-            <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
-            <Route path="workspace/budgets" element={<BudgetsPage />} />
-            <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
-            <Route path="workspace/periodic-reports" element={<PeriodicReportsPage />} />
-            <Route path="workspace/periodic-reports/:id" element={<PeriodicReportReviewPage />} />
-            <Route path="workspace/violations" element={<ViolationsPage />} />
-            <Route path="workspace/violations/:id" element={<ViolationDetailPage />} />
-            <Route path="workspace/school-events" element={<SchoolEventsPage />} />
-            <Route path="workspace/school-events/:id" element={<SchoolEventDetailPage />} />
-            <Route path="workspace/evaluations" element={<EvaluationsPage />} />
-            <Route path="workspace/evaluations/:id" element={<EvaluationDetailPage />} />
-            <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
-            <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
-            <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />
-            <Route path="workspace/leadership-transitions/:id" element={<LeadershipTransitionDetailPage />} />
-            <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
-            <Route path="club/:clubId/board" element={<BoardNominationPage />} />
-            <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />
-            <Route path="club/:clubId/recruitment/:campaignId/review" element={<RecruitmentReviewPage />} />
-          </Route>
-          <Route path="login" element={<App />} />
-          <Route path="workspace" element={<App />} />
-        </Routes>
-      </BrowserRouter>
+      <AppConfirmProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<PublicLayout />}>
+              <Route index element={<PublicHome />} />
+              <Route path="clubs" element={<ClubDirectory />} />
+              <Route path="clubs/:id" element={<ClubDetail />} />
+              <Route path="events" element={<EventDirectory />} />
+              <Route path="events/:id" element={<EventDetail />} />
+              <Route path="*" element={<PublicNotFound />} />
+            </Route>
+            <Route element={<WorkspaceShell />}>
+              <Route path="student" element={<StudentHomePage />} />
+              <Route path="icpdp" element={<IcpdpHomePage />} />
+              <Route path="icpdp/clubs" element={<IcpdpClubsPage />} />
+              <Route path="icpdp/accounts" element={<AccountsPage />} />
+              <Route path="club/:clubId" element={<ClubHomePage />} />
+              <Route path="workspace/policy" element={<PolicyPage />} />
+              <Route path="workspace/club-fields" element={<ClubFieldsPage />} />
+              <Route path="club/:clubId/event-reports" element={<ClubReportsPage />} />
+              <Route path="club/:clubId/transition-plans" element={<ClubTransitionPlansPage />} />
+              <Route path="club/:clubId/suspension-requests" element={<ClubSuspensionRequestsPage />} />
+              <Route path="workspace/suspension-requests" element={<SuspensionRequestsPage />} />
+              <Route path="club/:clubId/violations" element={<ClubViolationsPage />} />
+              <Route path="club/:clubId/evaluations" element={<ClubEvaluationsPage />} />
+              <Route path="club/:clubId/periodic-reports" element={<ClubPeriodicReportsPage />} />
+              <Route path="club/:clubId/invitations" element={<ClubInvitationsPage />} />
+              <Route path="club/:clubId/budgets" element={<ClubBudgetsPage />} />
+              <Route path="workspace/event-reports" element={<EventReportsPage />} />
+              <Route path="workspace/budgets/:id/reconciliation" element={<ReconciliationPage />} />
+              <Route path="club/:clubId/events" element={<ClubEventsPage />} />
+              <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
+              <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />
+              <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
+              <Route path="workspace/bookings" element={<BookingReviewPage />} />
+              <Route path="workspace/room-allocations" element={<RoomAllocationsPage />} />
+              <Route path="club/:clubId/rooms" element={<ClubRoomsPage />} />
+              <Route path="workspace/properties" element={<PropertiesPage />} />
+              <Route path="workspace/evaluation-schemes" element={<EvaluationSchemesPage />} />
+              <Route path="workspace/exports" element={<DataExportPage />} />
+              <Route path="workspace/applications" element={<ApplicationsPage />} />
+              <Route path="workspace/applications/new" element={<ApplicationEditorPage />} />
+              <Route path="workspace/applications/:id" element={<ApplicationEditorPage />} />
+              <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
+              <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
+              <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
+              <Route path="workspace/feedback" element={<StudentFeedbackPage />} />
+              <Route path="workspace/clubs" element={<MyClubsPage />} />
+              <Route path="workspace/clubs/:clubId" element={<MemberSpacePage />} />
+              <Route path="club/:clubId/members" element={<ClubMembersPage />} />
+              <Route path="workspace/student-feedback" element={<StudentFeedbackInboxPage />} />
+              <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
+              <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
+              <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
+              <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
+              <Route path="workspace/internal-events" element={<InternalEventsPage />} />
+              <Route path="workspace/internal-events/:id" element={<InternalEventDetailPage />} />
+              <Route path="club/:clubId/board-history" element={<ClubBoardHistoryPage />} />
+              <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
+              <Route path="workspace/budgets" element={<BudgetsPage />} />
+              <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
+              <Route path="workspace/periodic-reports" element={<PeriodicReportsPage />} />
+              <Route path="workspace/periodic-reports/:id" element={<PeriodicReportReviewPage />} />
+              <Route path="workspace/violations" element={<ViolationsPage />} />
+              <Route path="workspace/violations/:id" element={<ViolationDetailPage />} />
+              <Route path="workspace/school-events" element={<SchoolEventsPage />} />
+              <Route path="workspace/school-events/:id" element={<SchoolEventDetailPage />} />
+              <Route path="workspace/evaluations" element={<EvaluationsPage />} />
+              <Route path="workspace/evaluations/:id" element={<EvaluationDetailPage />} />
+              <Route path="workspace/board-nominations" element={<BoardNominationQueuePage />} />
+              <Route path="workspace/board-nominations/:id" element={<BoardNominationDetailPage />} />
+              <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />
+              <Route path="workspace/leadership-transitions/:id" element={<LeadershipTransitionDetailPage />} />
+              <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
+              <Route path="club/:clubId/board" element={<BoardNominationPage />} />
+              <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />
+              <Route path="club/:clubId/recruitment/:campaignId/review" element={<RecruitmentReviewPage />} />
+            </Route>
+            <Route path="login" element={<App />} />
+            <Route path="workspace" element={<App />} />
+          </Routes>
+        </BrowserRouter>
+      </AppConfirmProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

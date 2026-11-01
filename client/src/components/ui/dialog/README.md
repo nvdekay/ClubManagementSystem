@@ -6,3 +6,7 @@ khi mở, nên form bên trong tự reset mỗi lần đóng.
 
 `AppConfirmDialog` — câu hỏi có/không dựng trên `AppDialog`, dùng thay `window.confirm` để hộp xác nhận
 theo theme và ngôn ngữ của app. Component cha giữ thao tác đang chờ xác nhận.
+
+`AppConfirmProvider` — bọc toàn app trong `main.tsx`, giữ một `AppConfirmDialog` duy nhất cho hook
+`useConfirm()`: `if (!(await askConfirm(t("..."))) return;`. Đừng dùng `window.confirm` — hộp thoại
+của trình duyệt không theo theme, ngôn ngữ và hiện tên miền `localhost:5173`.

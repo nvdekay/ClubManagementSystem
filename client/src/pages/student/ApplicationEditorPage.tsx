@@ -19,6 +19,7 @@ import type {
   FounderProfile, FounderRole, FoundingField, FoundingIssue,
 } from "@/services/applications";
 import { cn } from "@/utils/cn";
+import { useConfirm } from "@/hooks/useConfirm";
 
 function stateTone(state: string): AppBadgeTone {
   if (state === "Approved") return "success";
@@ -51,6 +52,7 @@ function inputFrom(draft: ApplicationDraft): DraftInput {
 
 export function ApplicationEditorPage() {
   const { t, i18n } = useTranslation();
+  const askConfirm = useConfirm();
   const navigate = useNavigate();
   const { id } = useParams();
   const auth = useAuth();
@@ -226,7 +228,7 @@ export function ApplicationEditorPage() {
   }
 
   async function submit() {
-    if (!id || !auth.data || !window.confirm(t("applications.submitPrompt"))) return;
+    if (!id || !auth.data || !(await askConfirm(t("applications.submitPrompt")))) return;
     setNotice(null);
     try {
       const result = await action.mutateAsync({ kind: "submit", id, csrfToken: auth.data.csrfToken });
@@ -240,7 +242,7 @@ export function ApplicationEditorPage() {
   }
 
   async function withdraw() {
-    if (!id || !auth.data || !window.confirm(t("applications.withdrawConfirm"))) return;
+    if (!id || !auth.data || !(await askConfirm(t("applications.withdrawConfirm")))) return;
     setNotice(null);
     try { await action.mutateAsync({ kind: "withdraw", id, csrfToken: auth.data.csrfToken }); }
     catch (error) { setNotice({ tone: "danger", text: errorText(error) }); }

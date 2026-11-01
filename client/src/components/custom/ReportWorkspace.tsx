@@ -26,6 +26,7 @@ import type {
   ReportInput,
   ReportSnapshot,
 } from "@/services/accountability";
+import { useConfirm } from "@/hooks/useConfirm";
 
 function reportState(state: string): keyof typeof accountability.en {
   return (
@@ -141,6 +142,7 @@ function ReportEditor({
   actorId: string;
 }) {
   const { t } = useTranslation();
+  const askConfirm = useConfirm();
   const admin = context.kind === "admin";
   const latest = data.versions[0];
   const draft =
@@ -173,13 +175,13 @@ function ReportEditor({
   async function act(body: object, confirm = false) {
     if (
       confirm &&
-      !window.confirm(
+      !(await askConfirm(
         t(
           admin
             ? "accountability.confirmDecision"
             : "accountability.confirmSubmit",
         ),
-      )
+      ))
     )
       return;
     try {

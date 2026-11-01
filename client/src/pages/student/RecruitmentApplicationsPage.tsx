@@ -9,9 +9,11 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyRecruitmentApplications, useRecruitmentApplicationAction } from "@/hooks/useRecruitmentApplications";
 import type { RecruitmentApplication } from "@/services/recruitmentApplications";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function RecruitmentApplicationsPage() {
   const { t } = useTranslation();
+  const askConfirm = useConfirm();
   const auth = useAuth();
   const applications = useMyRecruitmentApplications(Boolean(auth.data));
   const action = useRecruitmentApplicationAction();
@@ -31,7 +33,7 @@ export function RecruitmentApplicationsPage() {
   }
 
   async function withdraw(applicationId: string) {
-    if (!auth.data || !window.confirm(t("recruitmentApplications.withdrawConfirm"))) return;
+    if (!auth.data || !(await askConfirm(t("recruitmentApplications.withdrawConfirm")))) return;
     try {
       await action.mutateAsync({ kind: "withdraw", applicationId,
         csrfToken: auth.data.csrfToken });
