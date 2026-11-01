@@ -113,6 +113,8 @@ export const accountability = {
     title: "Event",
     taskAssigned: "This review is assigned to another officer.",
     claimFirst: "Claim this review to make a decision.",
+    httpsRequired: "Enter a valid link starting with https://.",
+    dateNotFuture: "The date cannot be in the future.",
   },
   vi: {
     attendanceRequired:
@@ -227,5 +229,7 @@ export const accountability = {
     title: "Sự kiện",
     taskAssigned: "Một officer khác đang thẩm định hồ sơ này.",
     claimFirst: "Nhận thẩm định trước khi quyết định.",
+    httpsRequired: "Liên kết phải bắt đầu bằng https://.",
+    dateNotFuture: "Ngày không được ở tương lai.",
   },
 };

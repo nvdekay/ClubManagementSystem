@@ -5,6 +5,8 @@ import { Link, useLocation } from "react-router";
 import { EventCheckInForm } from "@/components/custom/EventCheckInForm";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSelect } from "@/components/ui/select/AppSelect";
@@ -21,6 +23,7 @@ import type {
 } from "@/services/eventRegistrations";
 import { formatDate } from "@/utils/formatDate";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 interface EventRegistrationPanelProps {
   eventId: string;
@@ -92,6 +95,13 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
   const active = registration && registration.state !== "Cancelled" ? registration : null;
   const membersOnlyBlocked = event.audienceScope === "MEMBERS_ONLY" && !context.isActiveClubMember;
   const opensLater = event.registrationOpenAt ? new Date(event.registrationOpenAt) > now : false;
+  // Same presence rule the server applies to required answers (any non-blank value).
+  const validation = useFieldValidation(Object.fromEntries(context.formSchema.map((field) => {
+    const answer = answers[field.key];
+    const present = (Array.isArray(answer) ? answer : [answer ?? ""]).some((value) => value.trim());
+    const choice = field.type === "select" || field.type === "radio" || field.type === "checkbox";
+    return [field.key, field.required && !present ? t(choice ? "common.chooseRequired" : "common.fieldRequired") : null];
+  })));
 
   async function run(input: Parameters<typeof action.mutateAsync>[0], done: "registered" | "cancelled") {
     if (inFlight.current) return;
@@ -100,7 +110,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
     try {
       await action.mutateAsync(input);
       setFeedback(done);
-      if (done === "registered") setAnswers({});
+      if (done === "registered") { setAnswers({}); validation.reset(); }
     } catch {
       // action.isError renders the message below.
     } finally {
@@ -110,7 +120,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
 
   function submit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
-    if (!formEvent.currentTarget.reportValidity()) return;
+    if (!validation.touchAll()) return;
     void run({ kind: "register", eventId: event.id, csrfToken, answers }, "registered");
   }
 
@@ -169,14 +179,15 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
     main = <AppNotice tone="warning">{t("eventRegistrations.full")}</AppNotice>;
   } else {
     main = (
-      <form onSubmit={submit} className="space-y-5" noValidate={false}>
+      <form onSubmit={submit} className="space-y-5" noValidate>
         {registration?.state === "Cancelled" && <AppNotice tone="info">{t("eventRegistrations.reRegisterHint")}</AppNotice>}
         {full && <AppNotice tone="warning">{t("eventRegistrations.waitlistOpen")}</AppNotice>}
         {context.formSchema.length > 0 && (
           <fieldset className="space-y-4">
             <legend className="mb-1 font-semibold">{t("eventRegistrations.formTitle")}</legend>
             {context.formSchema.map((field) => (
-              <FormField key={field.key} field={field} value={answers[field.key]}
+              <FormField key={field.key} field={field} value={answers[field.key]} error={validation.error(field.key)}
+                onTouch={() => validation.touch(field.key)}
                 onChange={(value) => setAnswers((current) => ({ ...current, [field.key]: value }))} />
             ))}
           </fieldset>
@@ -205,14 +216,16 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
 interface FormFieldProps {
   field: EventRegistrationFormField;
   value: EventRegistrationAnswer | undefined;
+  error: string | null;
+  onTouch: () => void;
   onChange: (value: EventRegistrationAnswer) => void;
 }
 
-function FormField({ field, value, onChange }: FormFieldProps) {
+function FormField({ field, value, error, onTouch, onChange }: FormFieldProps) {
   const { t } = useTranslation();
   const id = `registration-${field.key}`;
   const label = <span className="flex flex-wrap items-baseline gap-2 text-sm font-medium">
-    {field.label}{field.required && <span className="text-xs text-danger-app">{t("eventRegistrations.required")}</span>}
+    <span>{field.label}{field.required && <AppRequiredMark />}</span>
   </span>;
   const text = typeof value === "string" ? value : "";
   const list = Array.isArray(value) ? value : [];
@@ -222,22 +235,22 @@ function FormField({ field, value, onChange }: FormFieldProps) {
     return <label htmlFor={id} className="block space-y-1.5">{label}
       {field.type === "text"
         ? <AppInput id={id} value={text} required={field.required} maxLength={2000} className="w-full"
-          onChange={(event) => onChange(event.target.value)} />
+          aria-invalid={error ? true : undefined} onBlur={onTouch} onChange={(event) => onChange(event.target.value)} />
         : <AppTextarea id={id} value={text} required={field.required} maxLength={2000} className="w-full"
-          onChange={(event) => onChange(event.target.value)} />}
+          aria-invalid={error ? true : undefined} onBlur={onTouch} onChange={(event) => onChange(event.target.value)} />}
+      <AppFieldError message={error} />
     </label>;
   }
   if (field.type === "select") {
     return <div className="space-y-1.5">{label}
-      <AppSelect label={field.label} value={text} className="w-full"
+      <AppSelect label={field.label} value={text} className="w-full" required={field.required} invalid={Boolean(error)}
         options={[{ value: "", label: t("eventRegistrations.choose") }, ...options.map((option) => ({ value: option, label: option }))]}
-        onChange={onChange} />
-      {/* AppSelect is a custom combobox; this hidden input lets the form enforce "required" natively. */}
-      {field.required && <input tabIndex={-1} aria-hidden="true" className="sr-only" required value={text} onChange={() => undefined} />}
+        onChange={(next) => { onChange(next); onTouch(); }} />
+      <AppFieldError message={error} />
     </div>;
   }
   return (
-    <fieldset className="space-y-1.5">
+    <fieldset className="space-y-1.5" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) onTouch(); }}>
       <legend>{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
@@ -246,13 +259,14 @@ function FormField({ field, value, onChange }: FormFieldProps) {
             <label key={option} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-app bg-bg-app px-4 text-sm has-checked:border-primary-app has-checked:bg-primary-soft-app has-checked:text-primary-app">
               <input type={field.type} name={id} value={option} checked={checked}
                 required={field.required && field.type === "radio"} className="accent-primary-app"
-                onChange={(event) => onChange(field.type === "radio" ? option
-                  : event.target.checked ? [...list, option] : list.filter((item) => item !== option))} />
+                onChange={(event) => { onChange(field.type === "radio" ? option
+                  : event.target.checked ? [...list, option] : list.filter((item) => item !== option)); onTouch(); }} />
               {option}
             </label>
           );
         })}
       </div>
+      <AppFieldError message={error} />
     </fieldset>
   );
 }

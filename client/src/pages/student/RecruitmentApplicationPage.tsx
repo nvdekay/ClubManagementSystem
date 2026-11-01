@@ -5,18 +5,22 @@ import type { TFunction } from "i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useMyCampaignApplication, useRecruitmentApplicationAction } from "@/hooks/useRecruitmentApplications";
 import { usePublicRecruitmentCampaign } from "@/hooks/useRecruitmentCampaigns";
 import type { RecruitmentApplication } from "@/services/recruitmentApplications";
 import type { RecruitmentAnswer } from "@/services/recruitmentApplications";
 import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { isHttpUrl } from "@/utils/validation";
 
 function stateLabel(state: RecruitmentApplication["state"], t: TFunction): string {
   switch (state) {
@@ -71,6 +75,16 @@ export function RecruitmentApplicationPage() {
   const form = campaign && formState?.campaignId === campaign.id ? formState : null;
   const position = form?.position || application?.position || campaign?.positions[0] || "";
   const answers = form?.answers ?? application?.answers ?? {};
+  const attachedKeys = new Set((application?.attachments ?? []).map((item) => item.fieldKey));
+  const validation = useFieldValidation(Object.fromEntries((campaign?.formSchema ?? []).map((field) => {
+    if (field.type === "file") return [field.key, field.required && !attachedKeys.has(field.key) ? t("common.fileRequired") : null];
+    const answer = answers[field.key] ?? "";
+    if (!([answer].flat().some((value) => value.trim()))) {
+      return [field.key, field.required ? t(field.type === "select" || field.type === "multiselect"
+        ? "common.chooseRequired" : "common.fieldRequired") : null];
+    }
+    return [field.key, field.type === "url" && typeof answer === "string" && !isHttpUrl(answer) ? t("common.invalidUrl") : null];
+  })));
 
   function changeAnswer(key: string, value: RecruitmentAnswer) {
     if (!campaign) return;
@@ -133,14 +147,14 @@ export function RecruitmentApplicationPage() {
 
   async function submit() {
     if (!auth.data || !campaign || submitting.current) return;
-    // Check required answers before asking to confirm, so nothing is created for an incomplete form.
-    const attached = new Set((application?.attachments ?? []).map((item) => item.fieldKey));
-    const missing = campaign.formSchema.filter((field) => field.required && (field.type === "file"
-      ? !attached.has(field.key)
-      : !([answers[field.key] ?? ""].flat().some((value) => value.trim())))).map((field) => field.label);
-    if (missing.length) {
+    // Check answers before asking to confirm, so nothing is created for an incomplete form.
+    if (!validation.touchAll()) {
+      // The summary helps on long forms where a flagged question may be off screen.
+      const missing = campaign.formSchema.filter((field) => field.required && (field.type === "file"
+        ? !attachedKeys.has(field.key)
+        : !([answers[field.key] ?? ""].flat().some((value) => value.trim())))).map((field) => field.label);
       setNotice("");
-      setPageError(t("recruitmentApplications.requiredMissing", { fields: missing.join(", ") }));
+      setPageError(missing.length ? t("recruitmentApplications.requiredMissing", { fields: missing.join(", ") }) : "");
       return;
     }
     submitting.current = true;
@@ -209,7 +223,7 @@ export function RecruitmentApplicationPage() {
   </AppNotice>;
 
   const appAttachments = application?.attachments ?? [];
-  const selectClass = "mt-2 min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 py-2 text-sm font-normal text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none";
+  const selectClass = "mt-2 min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 py-2 text-sm font-normal text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app";
   return <>
     <PageHeader title={campaign.title} back={{ to: `/clubs/${campaign.clubId}`, label: t("recruitmentApplications.back") }}
       actions={application && <AppBadge tone={stateTone(application.state)}>{stateLabel(application.state, t)}</AppBadge>} />
@@ -225,18 +239,19 @@ export function RecruitmentApplicationPage() {
           {application?.decisionReason && <AppNotice><p><strong>{t("recruitmentApplications.decisionReason")}: </strong>{application.decisionReason}</p></AppNotice>}
         </div>
 
-        <form className="mt-6 space-y-6" onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
+        <form noValidate className="mt-6 space-y-6" onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
           <fieldset disabled={!editable || action.isPending} className="space-y-6 disabled:opacity-80">
-            <label className="block text-sm font-semibold">{t("recruitmentApplications.positions")}
-              <select className={selectClass} value={position}
+            <label className="block text-sm font-semibold">{t("recruitmentApplications.positions")}<AppRequiredMark />
+              <select className={selectClass} value={position} required
                 onChange={(event) => setFormState({ campaignId: campaign.id,
                   position: event.target.value, answers })}>
                 {campaign.positions.map((item) => <option key={item} value={item}>{item}</option>)}
               </select></label>
             {campaign.formSchema.map((field) => {
-              const label = <span>{field.label}<span className="ml-2 text-xs font-normal text-muted-app">
-                {field.required ? t("recruitmentApplications.required") : t("recruitmentApplications.optional")}</span></span>;
+              const label = <span>{field.label}{field.required ? <AppRequiredMark />
+                : <span className="ml-2 text-xs font-normal text-muted-app">{t("recruitmentApplications.optional")}</span>}</span>;
               const value = answers[field.key];
+              const error = <AppFieldError message={validation.error(field.key)} />;
               const attachment = appAttachments.find((item) => item.fieldKey === field.key);
               if (field.type === "file") return <div key={field.key} className="border-t border-border-app pt-6">
                 <p className="text-sm font-semibold">{label}</p>
@@ -249,18 +264,21 @@ export function RecruitmentApplicationPage() {
                 </div> : <p className="mt-3 text-sm text-muted-app">{t("recruitmentApplications.noFile")}</p>}
                 {editable && <label className="mt-3 block text-sm">{t("recruitmentApplications.selectFile")}
                   <input className="mt-2 block w-full rounded-xl border border-dashed border-border-app bg-bg-app p-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-primary-soft-app file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-app" type="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
-                    onChange={(event) => void upload(field.key, event.target.files?.[0])} />
+                    onChange={(event) => { validation.touch(field.key); void upload(field.key, event.target.files?.[0]); }} />
                 </label>}
+                {error}
               </div>;
               if (field.type === "select") return <label key={field.key} className="block text-sm font-semibold">{label}
-                <select className={selectClass}
-                  value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)}>
+                <select className={selectClass} {...validation.control(field.key, field.required)}
+                  value={typeof value === "string" ? value : ""}
+                  onChange={(event) => { changeAnswer(field.key, event.target.value); validation.touch(field.key); }}>
                   <option value="">{t("recruitmentApplications.selectAnswer")}</option>
                   {(field.options ?? []).map((option) => <option key={option} value={option}>{option}</option>)}
-                </select></label>;
+                </select>{error}</label>;
               if (field.type === "multiselect") {
                 const values = Array.isArray(value) ? value : [];
-                return <fieldset key={field.key}>
+                return <fieldset key={field.key}
+                  onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) validation.touch(field.key); }}>
                   <legend className="text-sm font-semibold">{label}</legend>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">{(field.options ?? []).map((option) => <label key={option}
                     className={cn("flex min-h-11 items-start gap-2.5 rounded-xl border border-border-app px-3 py-2.5 text-sm transition-colors hover:border-primary-app", {
@@ -269,14 +287,16 @@ export function RecruitmentApplicationPage() {
                     <input type="checkbox" className="mt-0.5 size-4 accent-primary-app" checked={values.includes(option)} onChange={(event) => changeAnswer(field.key,
                       event.target.checked ? [...values, option] : values.filter((item) => item !== option))} />{option}
                   </label>)}</div>
+                  {error}
                 </fieldset>;
               }
               if (field.type === "textarea") return <label key={field.key} className="block text-sm font-semibold">{label}
-                <AppTextarea className="mt-2 min-h-28 w-full font-normal" maxLength={10_000}
-                  value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} /></label>;
+                <AppTextarea className="mt-2 min-h-28 w-full font-normal" maxLength={10_000} {...validation.control(field.key, field.required)}
+                  value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} />{error}</label>;
               return <label key={field.key} className="block text-sm font-semibold">{label}
                 <AppInput className="mt-2 w-full font-normal" type={field.type === "url" ? "url" : "text"} maxLength={10_000}
-                  value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} /></label>;
+                  {...validation.control(field.key, field.required)}
+                  value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} />{error}</label>;
             })}
           </fieldset>
           <div className="flex flex-wrap gap-3 border-t border-border-app pt-6">

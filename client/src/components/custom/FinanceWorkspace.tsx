@@ -7,6 +7,8 @@ import { useOpenViolation } from "@/hooks/useViolations";
 import type { accountability } from "@/i18n/accountability";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { AppSelect } from "@/components/ui/select/AppSelect";
@@ -15,6 +17,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import {
   useAccountabilityAction,
   useClubFinances,
@@ -93,6 +96,41 @@ function FinanceEditor({
     Record<string, { outcome: "Accepted" | "Rejected"; reason: string }>
   >({});
   const [page, setPage] = useState(0);
+  const today = new Date().toISOString().slice(0, 10);
+  const expenseField = useFieldValidation({
+    category: category.trim() ? null : t("common.fieldRequired"),
+    amount: !amount.trim()
+      ? t("common.fieldRequired")
+      : !Number.isSafeInteger(Number(amount))
+        ? t("common.invalidNumber")
+        : Number(amount) < 1
+          ? t("common.numberMin", { min: 1 })
+          : null,
+    date: !date
+      ? t("common.fieldRequired")
+      : date > today
+        ? t("accountability.dateNotFuture")
+        : null,
+  });
+  // The server accepts HTTPS evidence links only.
+  const evidenceField = useFieldValidation({
+    link: !link.trim()
+      ? t("common.fieldRequired")
+      : !URL.canParse(link) || new URL(link).protocol !== "https:"
+        ? t("accountability.httpsRequired")
+        : null,
+  });
+  const reasonField = useFieldValidation({
+    reason: reason.trim() ? null : t("common.fieldRequired"),
+  });
+  const reviewField = useFieldValidation(
+    Object.fromEntries(
+      data.expenses.map((expense) => [
+        expense.id,
+        reviews[expense.id]?.reason.trim() ? null : t("common.fieldRequired"),
+      ]),
+    ),
+  );
   const editable =
     !admin && ["Disbursed", "Reconciliation Pending"].includes(data.state);
   const overdue =
@@ -128,12 +166,15 @@ function FinanceEditor({
       });
       setEditing(null);
       setEvidenceFor("");
+      expenseField.reset();
+      evidenceField.reset();
     } catch {
       /* Render mutation error. */
     }
   }
   function edit(expense: Expense | "new") {
     setEditing(expense);
+    expenseField.reset();
     setCategory(
       expense === "new" ? (data.lines[0]?.category ?? "") : expense.category,
     );
@@ -317,6 +358,7 @@ function FinanceEditor({
                   onClick={() => {
                     setEvidenceFor(expense.id);
                     setLink("");
+                    evidenceField.reset();
                   }}
                 >
                   {t("accountability.addEvidence")}
@@ -351,9 +393,11 @@ function FinanceEditor({
                 />
                 <label className="text-sm">
                   {t("accountability.reason")}
+                  <AppRequiredMark />
                   <AppInput
                     className="mt-1 w-full"
                     maxLength={2000}
+                    {...reviewField.control(expense.id)}
                     value={reviews[expense.id]?.reason ?? ""}
                     onChange={(e) =>
                       setReviews({
@@ -367,6 +411,7 @@ function FinanceEditor({
                       })
                     }
                   />
+                  <AppFieldError message={reviewField.error(expense.id)} />
                 </label>
               </div>
             )}
@@ -411,17 +456,23 @@ function FinanceEditor({
       {admin && claimed && data.state === "Settlement Submitted" && (
         <label className="block text-sm">
           {t("accountability.reason")}
+          <AppRequiredMark />
           <AppTextarea
             value={reason}
             maxLength={2000}
             className="mt-2 w-full"
+            {...reasonField.control("reason")}
             onChange={(e) => setReason(e.target.value)}
           />
+          <AppFieldError message={reasonField.error("reason")} />
           <AppButton
             className="mt-3"
             variant="secondary"
-            disabled={!reason.trim() || mutation.isPending}
-            onClick={() => void act({ kind: "return", reason }, "submit")}
+            disabled={mutation.isPending}
+            onClick={() => {
+              if (!reasonField.touchAll()) return;
+              void act({ kind: "return", reason }, "submit");
+            }}
           >
             {t("accountability.return")}
           </AppButton>
@@ -429,11 +480,9 @@ function FinanceEditor({
       )}
       {reviewable && (
         <AppButton
-          disabled={
-            mutation.isPending ||
-            data.expenses.some((e) => !reviews[e.id]?.reason.trim())
-          }
-          onClick={() =>
+          disabled={mutation.isPending}
+          onClick={() => {
+            if (!reviewField.touchAll()) return;
             void act(
               {
                 kind: "finalize",
@@ -447,8 +496,8 @@ function FinanceEditor({
                 })),
               },
               "finalize",
-            )
-          }
+            );
+          }}
         >
           {t(
             overdue
@@ -472,12 +521,15 @@ function FinanceEditor({
           <section className="space-y-3 rounded-xl border border-border-app p-4">
             <label className="block text-sm">
               {t("accountability.reason")}
+              <AppRequiredMark />
               <AppTextarea
                 className="mt-2 w-full"
                 value={reason}
                 maxLength={2000}
+                {...reasonField.control("reason")}
                 onChange={(e) => setReason(e.target.value)}
               />
+              <AppFieldError message={reasonField.error("reason")} />
             </label>
             <AppSelect
               label={t("accountability.severity")}
@@ -498,8 +550,9 @@ function FinanceEditor({
               </Link>
             ) : (
               <AppButton
-                disabled={!reason.trim() || openViolation.isPending}
+                disabled={openViolation.isPending}
                 onClick={() => {
+                  if (!reasonField.touchAll()) return;
                   openViolation.mutate(
                     {
                       csrfToken: token,
@@ -569,9 +622,11 @@ function FinanceEditor({
         closeLabel={t("accountability.close")}
       >
         <form
+          noValidate
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!expenseField.touchAll()) return;
             void act({
               kind: "expense",
               expenseId: editing && editing !== "new" ? editing.id : undefined,
@@ -586,18 +641,21 @@ function FinanceEditor({
         >
           <label className="block text-sm">
             {t("accountability.category")}
+            <AppRequiredMark />
             <AppInput
-              required
+              {...expenseField.control("category")}
               maxLength={100}
               className="mt-1 w-full"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             />
+            <AppFieldError message={expenseField.error("category")} />
           </label>
           <label className="block text-sm">
             {t("accountability.amount")}
+            <AppRequiredMark />
             <AppInput
-              required
+              {...expenseField.control("amount")}
               type="number"
               min={1}
               step={1}
@@ -605,17 +663,20 @@ function FinanceEditor({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+            <AppFieldError message={expenseField.error("amount")} />
           </label>
           <label className="block text-sm">
             {t("accountability.date")}
+            <AppRequiredMark />
             <AppInput
-              required
+              {...expenseField.control("date")}
               type="date"
-              max={new Date().toISOString().slice(0, 10)}
+              max={today}
               className="mt-1 w-full"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
+            <AppFieldError message={expenseField.error("date")} />
           </label>
           <label className="block text-sm">
             {t("accountability.description")}
@@ -643,9 +704,11 @@ function FinanceEditor({
         closeLabel={t("accountability.close")}
       >
         <form
+          noValidate
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!evidenceField.touchAll()) return;
             void act({
               kind: "evidence",
               expenseId: evidenceFor,
@@ -668,16 +731,19 @@ function FinanceEditor({
           />
           <label className="block text-sm">
             {t("accountability.link")}
+            <AppRequiredMark />
             <AppInput
-              required
+              {...evidenceField.control("link")}
               type="url"
+              maxLength={2000}
               className="mt-1 w-full"
               value={link}
               onChange={(e) => setLink(e.target.value)}
             />
+            <AppFieldError message={evidenceField.error("link")} />
           </label>
           <AppButton
-            disabled={mutation.isPending || !link.startsWith("https://")}
+            disabled={mutation.isPending}
             type="submit"
           >
             {t("accountability.addEvidence")}
