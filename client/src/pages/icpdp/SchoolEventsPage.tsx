@@ -20,6 +20,9 @@ import {
 import type { InvitationStatus, ScheduleConflict } from "@/services/schoolEvents";
 import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
 function stateLabel(t: TFunction, state: string): string {
   switch (state) {
@@ -56,6 +59,14 @@ function iso(value: string): string | undefined {
   if (!value) return undefined;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+/** Optional reply deadline: when set it must be in the future and no later than the event start. */
+function deadlineError(t: TFunction, deadline: string, startAt: string | undefined): string | null {
+  const value = iso(deadline);
+  if (!value) return null;
+  if (new Date(value) <= new Date()) return t("common.dateNotPast");
+  return startAt && value > startAt ? t("schoolEvents.deadlineAfterStart") : null;
 }
 
 function details(value: unknown): string[] {
@@ -128,19 +139,25 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
   const [all, setAll] = useState(true);
   const [chosen, setChosen] = useState<string[]>([]);
   const [deadline, setDeadline] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const start = iso(startAt);
   const end = iso(endAt);
   const conflicts = useScheduleConflicts(useRoom && propertyId && start && end && end > start
     ? { propertyId, startAt: start, endAt: end } : null);
+  const places = Number(capacity);
+  const field = useFieldValidation({
+    title: title.trim() ? null : t("common.fieldRequired"),
+    startAt: !start ? t("common.fieldRequired") : new Date(start) <= new Date() ? t("common.dateNotPast") : null,
+    endAt: !end ? t("common.fieldRequired") : start && end <= start ? t("common.endAfterStart") : null,
+    propertyId: useRoom && !propertyId ? t("common.chooseRequired") : null,
+    venueText: !useRoom && !venueText.trim() ? t("common.fieldRequired") : null,
+    capacity: !capacity.trim() ? t("common.fieldRequired") : !Number.isInteger(places) ? t("common.invalidNumber")
+      : places < 1 ? t("common.numberMin", { min: 1 }) : places > 100_000 ? t("common.numberMax", { max: 100_000 }) : null,
+    deadline: deadlineError(t, deadline, start),
+  });
 
   async function submit() {
-    const places = Number(capacity);
-    if (!title.trim() || !start || !end || end <= start || (useRoom ? !propertyId : !venueText.trim())
-      || !Number.isInteger(places) || places < 1) {
-      setError(t("schoolEvents.required")); return;
-    }
-    setError(null);
+    // start/end are re-checked only so TypeScript knows they are set.
+    if (!field.touchAll() || !start || !end) return;
     try {
       const result = await create.mutateAsync({ csrfToken, input: { title: title.trim(), objective: objective.trim() || undefined,
         coordination: coordination.trim() || undefined, startAt: start, endAt: end,
@@ -154,37 +171,48 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
     <section className="mb-8 rounded-2xl bg-surface-app p-5">
       <h2 className="font-heading text-lg font-bold">{t("schoolEvents.create")}</h2>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <label className="block text-sm font-semibold md:col-span-2">{t("schoolEvents.name")}
-          <AppInput className="mt-2 w-full font-normal" value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} /></label>
+        <label className="block text-sm font-semibold md:col-span-2">{t("schoolEvents.name")}<AppRequiredMark />
+          <AppInput className="mt-2 w-full font-normal" value={title} maxLength={200} {...field.control("title")} onChange={(e) => setTitle(e.target.value)} />
+          <AppFieldError message={field.error("title")} /></label>
         <label className="block text-sm font-semibold md:col-span-2">{t("schoolEvents.objective")}
           <AppTextarea className="mt-2 min-h-20 w-full font-normal" value={objective} maxLength={5000} onChange={(e) => setObjective(e.target.value)} /></label>
         <label className="block text-sm font-semibold md:col-span-2">{t("schoolEvents.coordination")}
           <AppTextarea className="mt-2 min-h-20 w-full font-normal" value={coordination} maxLength={5000}
             placeholder={t("schoolEvents.coordinationHint")} onChange={(e) => setCoordination(e.target.value)} /></label>
-        <label className="block text-sm font-semibold">{t("schoolEvents.startAt")}
-          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={startAt} onChange={(e) => setStartAt(e.target.value)} /></label>
-        <label className="block text-sm font-semibold">{t("schoolEvents.endAt")}
-          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={endAt} min={startAt} onChange={(e) => setEndAt(e.target.value)} /></label>
-        <div className="text-sm font-semibold md:col-span-2">{t("schoolEvents.venue")}
+        <label className="block text-sm font-semibold">{t("schoolEvents.startAt")}<AppRequiredMark />
+          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={startAt} {...field.control("startAt")}
+            onChange={(e) => setStartAt(e.target.value)} />
+          <AppFieldError message={field.error("startAt")} /></label>
+        <label className="block text-sm font-semibold">{t("schoolEvents.endAt")}<AppRequiredMark />
+          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={endAt} min={startAt} {...field.control("endAt")}
+            onChange={(e) => setEndAt(e.target.value)} />
+          <AppFieldError message={field.error("endAt")} /></label>
+        <div className="text-sm font-semibold md:col-span-2">{t("schoolEvents.venue")}<AppRequiredMark />
           <div className="mt-2 grid grid-cols-2 gap-1 rounded-full bg-surface-strong-app p-1">{[false, true].map((value) =>
             <button key={String(value)} type="button" aria-pressed={useRoom === value} onClick={() => setUseRoom(value)}
               className={cn("min-h-11 rounded-full px-2 text-xs font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
                 "bg-bg-app text-primary-app shadow-sm hover:text-primary-app": useRoom === value,
               })}>{value ? t("schoolEvents.venueRoom") : t("schoolEvents.venueText")}</button>)}</div>
-          {useRoom ? <AppSelect className="mt-2 w-full" label={t("schoolEvents.venueRoom")} value={propertyId} onChange={setPropertyId}
+          {useRoom ? <AppSelect className="mt-2 w-full" label={t("schoolEvents.venueRoom")} value={propertyId}
+            required invalid={Boolean(field.error("propertyId"))} onChange={(value) => { setPropertyId(value); field.touch("propertyId"); }}
             options={[{ value: "", label: t("schoolEvents.chooseRoom") }, ...(properties.data ?? []).filter((item) => item.isActive && item.type !== "EQUIPMENT")
               .map((item) => ({ value: item.id, label: `${item.code} · ${item.name}${item.capacity ? ` (${item.capacity})` : ""}` }))]} />
             : <AppInput aria-label={t("schoolEvents.venueText")} className="mt-2 w-full font-normal" value={venueText} maxLength={200}
-              placeholder={t("schoolEvents.venuePlaceholder")} onChange={(e) => setVenueText(e.target.value)} />}
+              placeholder={t("schoolEvents.venuePlaceholder")} {...field.control("venueText")} onChange={(e) => setVenueText(e.target.value)} />}
+          <AppFieldError message={field.error(useRoom ? "propertyId" : "venueText")} />
           {conflicts.isFetching ? <p className="mt-2 text-xs font-normal text-muted-app">{t("schoolEvents.conflictChecking")}</p>
             : conflicts.data && (conflicts.data.length ? <div className="mt-2 rounded-xl bg-warning-app/12 p-3 font-normal text-warning-app">
               <p className="text-sm font-semibold">{t("schoolEvents.conflictWarning")}</p><ConflictList items={conflicts.data} /></div>
               : <p className="mt-2 text-xs font-normal text-success-app">{t("schoolEvents.conflictNone")}</p>)}
         </div>
-        <label className="block text-sm font-semibold">{t("schoolEvents.capacity")}
-          <AppInput type="number" min={1} inputMode="numeric" className="mt-2 w-full font-normal" value={capacity} onChange={(e) => setCapacity(e.target.value)} /></label>
+        <label className="block text-sm font-semibold">{t("schoolEvents.capacity")}<AppRequiredMark />
+          <AppInput type="number" min={1} inputMode="numeric" className="mt-2 w-full font-normal" value={capacity} {...field.control("capacity")}
+            onChange={(e) => setCapacity(e.target.value)} />
+          <AppFieldError message={field.error("capacity")} /></label>
         <label className="block text-sm font-semibold">{t("schoolEvents.deadline")}
-          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} max={startAt} onChange={(e) => setDeadline(e.target.value)} />
+          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} max={startAt} {...field.control("deadline", false)}
+            onChange={(e) => setDeadline(e.target.value)} />
+          <AppFieldError message={field.error("deadline")} />
           <span className="mt-1 block text-xs font-normal text-muted-app">{t("schoolEvents.deadlineHint")}</span></label>
         <div className="md:col-span-2"><p className="mb-1 text-sm font-semibold">{t("schoolEvents.invite")}</p>
           <ClubPicker all={all} onAll={setAll} chosen={chosen} onChosen={setChosen} /></div>
@@ -193,7 +221,6 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
         <AppButton disabled={create.isPending} onClick={() => void submit()}>{create.isPending ? t("schoolEvents.saving") : t("schoolEvents.submit")}</AppButton>
         <AppButton variant="secondary" onClick={onCancel}>{t("schoolEvents.cancel")}</AppButton>
       </div>
-      {error && <p role="alert" className="mt-3 text-sm text-danger-app">{error}</p>}
       {create.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{create.error.message}</p>}
     </section>
   );
@@ -262,7 +289,10 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
   const [all, setAll] = useState(false);
   const [chosen, setChosen] = useState<string[]>([]);
   const [deadline, setDeadline] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
+  const field = useFieldValidation({
+    clubs: all || chosen.length ? null : t("schoolEvents.inviteRequired"),
+    deadline: deadlineError(t, deadline, query.data?.startAt),
+  });
   const skipped = (useLocation().state as { skipped?: number } | null)?.skipped ?? 0;
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -280,12 +310,11 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
   const blocking = event.invitations.filter((item) => !["Withdrawn", "Expired"].includes(item.status)).map((item) => item.clubId);
 
   async function invite() {
-    if (!all && !chosen.length) { setFormError(t("schoolEvents.inviteRequired")); return; }
-    setFormError(null);
+    if (!field.touchAll()) return;
     try {
       await action.mutateAsync({ kind: "invite", id, csrfToken, input: { ...(all ? { allActiveClubs: true } : { clubIds: chosen }),
         deadline: iso(deadline) } });
-      setChosen([]); setAll(false);
+      setChosen([]); setAll(false); field.reset();
     } catch { /* Mutation state is rendered below. */ }
   }
 
@@ -349,15 +378,18 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
           </section>}
           {event.publishedAt && <AppNotice role="status">{t("schoolEvents.published", { date: date(event.publishedAt) })}</AppNotice>}
           {open && <section className="rounded-2xl bg-surface-app p-5">
-            <h2 className="font-heading text-lg font-bold">{t("schoolEvents.inviteMore")}</h2>
+            <h2 className="font-heading text-lg font-bold">{t("schoolEvents.inviteMore")}<AppRequiredMark /></h2>
             <p className="mt-1 mb-3 text-sm text-muted-app">{t("schoolEvents.inviteHint")}</p>
-            <ClubPicker all={all} onAll={setAll} chosen={chosen} onChosen={setChosen} exclude={blocking} />
+            <ClubPicker all={all} onAll={(value) => { setAll(value); field.touch("clubs"); }} chosen={chosen}
+              onChosen={(value) => { setChosen(value); field.touch("clubs"); }} exclude={blocking} />
+            <AppFieldError message={field.error("clubs")} />
             <label className="mt-4 block text-sm font-semibold">{t("schoolEvents.deadline")}
-              <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+              <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} {...field.control("deadline", false)}
+                onChange={(e) => setDeadline(e.target.value)} />
+              <AppFieldError message={field.error("deadline")} />
               <span className="mt-1 block text-xs font-normal text-muted-app">{t("schoolEvents.deadlineHint")}</span></label>
             <AppButton className="mt-4 w-full" disabled={action.isPending} onClick={() => void invite()}>{t("schoolEvents.sendInvites")}</AppButton>
           </section>}
-          {formError && <p role="alert" className="text-sm text-danger-app">{formError}</p>}
           {action.isError && <p role="alert" className="text-sm text-danger-app">{action.error.message}</p>}
           {action.isSuccess && <AppNotice role="status">{t("schoolEvents.success")}</AppNotice>}
         </aside>

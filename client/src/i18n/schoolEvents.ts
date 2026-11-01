@@ -33,6 +33,7 @@ const en = {
   confirmPublish: "Publish this event? Students will see it and can register.", published: "Published {{date}}",
   checkInCode: "Check-in code", conflicts: "Schedule conflicts", success: "Saved.",
   semester: "Semester {{code}}",
+  deadlineAfterStart: "The reply deadline cannot be later than the event start.",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -70,6 +71,7 @@ const vi: Record<keyof typeof en, string> = {
   confirmPublish: "Công bố sự kiện này? Sinh viên sẽ thấy và đăng ký được.", published: "Công bố lúc {{date}}",
   checkInCode: "Mã check-in", conflicts: "Trùng lịch", success: "Đã lưu.",
   semester: "Học kỳ {{code}}",
+  deadlineAfterStart: "Hạn phản hồi không được sau thời điểm sự kiện bắt đầu.",
 };
 
 export const schoolEvents = { en, vi };

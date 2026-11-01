@@ -5,6 +5,9 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import type { BookableHours, Property, PropertyDetails, PropertyType } from "@/services/properties";
 import { cn } from "@/utils/cn";
 
@@ -12,7 +15,7 @@ const days = [1, 2, 3, 4, 5, 6, 7];
 export const dayKeys = ["properties.day1", "properties.day2", "properties.day3", "properties.day4",
   "properties.day5", "properties.day6", "properties.day7"] as const;
 const types: PropertyType[] = ["ROOM", "HALL", "OUTDOOR", "STAGE", "EQUIPMENT"];
-const timeInputClass = "mt-1 min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none";
+const timeInputClass = "mt-1 min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app";
 
 interface BlackoutDraft {
   key: number;
@@ -61,6 +64,24 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
   const [blackouts, setBlackouts] = useState<BlackoutDraft[]>((property?.blackouts ?? []).map((blackout, index) => ({
     key: index, startAt: toLocalInput(blackout.startAt), endAt: toLocalInput(blackout.endAt), reason: blackout.reason })));
   const [nextKey, setNextKey] = useState(blackouts.length);
+  const bookableHours = days.flatMap((day) => hours[day] ? [{ day, ...(custom ? hours[day]! : shared) }] : []);
+  const capacityValue = Number(capacity);
+  const field = useFieldValidation<string>({
+    name: name.trim() ? null : t("common.fieldRequired"),
+    location: location.trim() ? null : t("common.fieldRequired"),
+    capacity: type === "EQUIPMENT" ? null : !capacity.trim() ? t("common.fieldRequired")
+      : !Number.isInteger(capacityValue) ? t("common.invalidNumber")
+        : capacityValue < 1 ? t("common.numberMin", { min: 1 })
+          : capacityValue > 10_000 ? t("common.numberMax", { max: 10_000 }) : null,
+    hours: bookableHours.length && bookableHours.every((window) => window.open && window.close && window.open < window.close)
+      ? null : t("properties.invalid_bookableHours"),
+    ...Object.fromEntries(blackouts.flatMap((blackout) => [
+      [`blackoutStart${blackout.key}`, blackout.startAt ? null : t("common.fieldRequired")],
+      [`blackoutEnd${blackout.key}`, !blackout.endAt ? t("common.fieldRequired")
+        : blackout.startAt && blackout.endAt <= blackout.startAt ? t("common.endAfterStart") : null],
+      [`blackoutReason${blackout.key}`, blackout.reason.trim() ? null : t("common.fieldRequired")],
+    ])),
+  });
 
   function addTag(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter" && event.key !== ",") return;
@@ -74,12 +95,12 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
 
   function toggleDay(day: number) {
     setHours({ ...hours, [day]: hours[day] ? null : { ...shared } });
+    field.touch("hours");
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const bookableHours = days.flatMap((day) => hours[day]
-      ? [{ day, ...(custom ? hours[day]! : shared) }] : []);
+    if (!field.touchAll()) return;
     onSubmit({
       type, name, location, equipment, bookableHours,
       ...(type === "EQUIPMENT" ? {} : { capacity: Number(capacity) }),
@@ -90,7 +111,7 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
   }
 
   return (
-    <form className="space-y-6 rounded-2xl bg-surface-app p-4 sm:p-6" onSubmit={submit}>
+    <form className="space-y-6 rounded-2xl bg-surface-app p-4 sm:p-6" noValidate onSubmit={submit}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="text-sm font-medium">{t("properties.type")}
           {property ? <p className="mt-2 font-normal">{property.code} · {t(`properties.type${property.type}`)}</p>
@@ -98,16 +119,20 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
               options={types.map((value) => ({ value, label: t(`properties.type${value}`) }))} />}
           {!property && <span className="mt-1 block text-xs font-normal text-muted-app">{t("properties.typeHint")}</span>}
         </div>
-        <label className="text-sm font-medium">{t("properties.name")}
-          <AppInput className="mt-2 block w-full" maxLength={120} value={name} onChange={(event) => setName(event.target.value)} />
+        <label className="text-sm font-medium">{t("properties.name")}<AppRequiredMark />
+          <AppInput className="mt-2 block w-full" maxLength={120} value={name} {...field.control("name")}
+            onChange={(event) => setName(event.target.value)} />
+          <AppFieldError message={field.error("name")} />
         </label>
-        <label className="text-sm font-medium">{t("properties.location")}
-          <AppInput className="mt-2 block w-full" maxLength={200} value={location}
+        <label className="text-sm font-medium">{t("properties.location")}<AppRequiredMark />
+          <AppInput className="mt-2 block w-full" maxLength={200} value={location} {...field.control("location")}
             onChange={(event) => setLocation(event.target.value)} />
+          <AppFieldError message={field.error("location")} />
         </label>
-        {type !== "EQUIPMENT" && <label className="text-sm font-medium">{t("properties.capacity")}
-          <AppInput className="mt-2 block w-full" type="number" min="1" max="10000" value={capacity}
+        {type !== "EQUIPMENT" && <label className="text-sm font-medium">{t("properties.capacity")}<AppRequiredMark />
+          <AppInput className="mt-2 block w-full" type="number" min="1" max="10000" value={capacity} {...field.control("capacity")}
             onChange={(event) => setCapacity(event.target.value)} />
+          <AppFieldError message={field.error("capacity")} />
         </label>}
       </div>
 
@@ -126,7 +151,7 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
       </div>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">{t("properties.hours")}</legend>
+        <legend className="text-sm font-medium">{t("properties.hours")}<AppRequiredMark /></legend>
         <div className="flex flex-wrap gap-2">
           {[false, true].map((value) => <button key={String(value)} type="button" onClick={() => setCustom(value)}
             className={cn("min-h-10 rounded-full border border-border-app px-4 text-sm text-muted-app",
@@ -142,9 +167,9 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
           </div>
           <div className="flex flex-wrap gap-4">
             <label className="text-sm">{t("properties.from")}<input type="time" className={cn(timeInputClass, "block")}
-              value={shared.open} onChange={(event) => setShared({ ...shared, open: event.target.value })} /></label>
+              value={shared.open} {...field.control("hours")} onChange={(event) => setShared({ ...shared, open: event.target.value })} /></label>
             <label className="text-sm">{t("properties.to")}<input type="time" className={cn(timeInputClass, "block")}
-              value={shared.close} onChange={(event) => setShared({ ...shared, close: event.target.value })} /></label>
+              value={shared.close} {...field.control("hours")} onChange={(event) => setShared({ ...shared, close: event.target.value })} /></label>
           </div>
         </>}
         {custom && <ul className="divide-y divide-border-app rounded-xl border border-border-app">{days.map((day) => {
@@ -155,12 +180,15 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
                 onChange={() => toggleDay(day)} />{t(dayKeys[day - 1]!)}</label>
             {window ? <div className="flex flex-wrap gap-3">
               <input type="time" aria-label={`${t(dayKeys[day - 1]!)} ${t("properties.from")}`} className={timeInputClass}
-                value={window.open} onChange={(event) => setHours({ ...hours, [day]: { ...window, open: event.target.value } })} />
+                value={window.open} {...field.control("hours")}
+                onChange={(event) => setHours({ ...hours, [day]: { ...window, open: event.target.value } })} />
               <input type="time" aria-label={`${t(dayKeys[day - 1]!)} ${t("properties.to")}`} className={timeInputClass}
-                value={window.close} onChange={(event) => setHours({ ...hours, [day]: { ...window, close: event.target.value } })} />
+                value={window.close} {...field.control("hours")}
+                onChange={(event) => setHours({ ...hours, [day]: { ...window, close: event.target.value } })} />
             </div> : <span className="text-sm text-muted-app">{t("properties.closed")}</span>}
           </li>;
         })}</ul>}
+        <AppFieldError message={field.error("hours")} />
       </fieldset>
 
       <fieldset className="space-y-3">
@@ -172,13 +200,16 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
             setBlackouts(blackouts.map((item) => item.key === blackout.key ? { ...item, ...update } : item));
           }
           return <div key={blackout.key} className="flex flex-wrap items-end gap-3 rounded-xl border border-border-app p-3">
-            <label className="text-sm">{t("properties.from")}<input type="datetime-local" className={cn(timeInputClass, "block")}
-              value={blackout.startAt} onChange={(event) => patch({ startAt: event.target.value })} /></label>
-            <label className="text-sm">{t("properties.to")}<input type="datetime-local" className={cn(timeInputClass, "block")}
-              value={blackout.endAt} onChange={(event) => patch({ endAt: event.target.value })} /></label>
-            <label className="min-w-0 flex-1 basis-48 text-sm">{t("properties.blackoutReason")}
-              <AppInput className="mt-1 block w-full" maxLength={200} value={blackout.reason}
-                onChange={(event) => patch({ reason: event.target.value })} /></label>
+            <label className="text-sm">{t("properties.from")}<AppRequiredMark /><input type="datetime-local" className={cn(timeInputClass, "block")}
+              value={blackout.startAt} {...field.control(`blackoutStart${blackout.key}`)} onChange={(event) => patch({ startAt: event.target.value })} />
+              <AppFieldError message={field.error(`blackoutStart${blackout.key}`)} /></label>
+            <label className="text-sm">{t("properties.to")}<AppRequiredMark /><input type="datetime-local" className={cn(timeInputClass, "block")}
+              value={blackout.endAt} {...field.control(`blackoutEnd${blackout.key}`)} onChange={(event) => patch({ endAt: event.target.value })} />
+              <AppFieldError message={field.error(`blackoutEnd${blackout.key}`)} /></label>
+            <label className="min-w-0 flex-1 basis-48 text-sm">{t("properties.blackoutReason")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full" maxLength={200} value={blackout.reason} {...field.control(`blackoutReason${blackout.key}`)}
+                onChange={(event) => patch({ reason: event.target.value })} />
+              <AppFieldError message={field.error(`blackoutReason${blackout.key}`)} /></label>
             <AppButton type="button" variant="ghost" onClick={() => setBlackouts(blackouts.filter((item) => item.key !== blackout.key))}>
               {t("properties.removeBlackout")}</AppButton>
           </div>;

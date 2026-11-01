@@ -1,11 +1,15 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSwitch } from "@/components/ui/switch/AppSwitch";
 import { useCreatePolicy } from "@/hooks/usePolicy";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import {
   CLUB_PROFILE_FORM_FIELDS, DEFAULT_FORM_REQUIREMENTS, FOUNDING_FORM_FIELDS, PolicyConflictError,
   type ClubProfileFormField, type CreatePolicyInput, type FormRequirements, type FoundingFormField,
@@ -149,6 +153,47 @@ function whole(value: string, min: number, section: PolicySection): number {
   return number;
 }
 
+function wholeError(t: TFunction, value: string, min: number): string | null {
+  const number = Number(value);
+  if (!value.trim()) return t("common.fieldRequired");
+  if (!Number.isInteger(number)) return t("common.invalidNumber");
+  return number < min ? t("common.numberMin", { min }) : null;
+}
+
+/** Inline errors keyed by field, plus the tab each key lives on so submit can open it. */
+function formErrors(t: TFunction, form: PolicyForm): Record<string, string | null> {
+  const errors: Record<string, string | null> = {
+    minFoundingMembers: wholeError(t, form.minFoundingMembers, 1),
+    feedbackWindowHours: wholeError(t, form.feedbackWindowHours, 1),
+    feedbackMinRespondents: wholeError(t, form.feedbackMinRespondents, 2),
+    conflictThresholdMinutes: wholeError(t, form.conflictThresholdMinutes, 0),
+    effectiveFrom: form.effectiveFrom && new Date(form.effectiveFrom) <= new Date() ? t("common.dateNotPast") : null,
+  };
+  form.academicCalendar.forEach((item, index) => {
+    errors[`semesterCode${index}`] = item.code.trim() ? null : t("common.fieldRequired");
+    errors[`semesterStart${index}`] = item.startAt ? null : t("common.fieldRequired");
+    errors[`semesterEnd${index}`] = !item.endAt ? t("common.fieldRequired")
+      : item.startAt && item.endAt <= item.startAt ? t("common.endAfterStart") : null;
+  });
+  form.reportDeadlines.forEach((item, index) => {
+    errors[`reportType${index}`] = item.reportType.trim() ? null : t("common.fieldRequired");
+    for (const field of deadlineNumberFields) errors[`${field}${index}`] = wholeError(t, item[field], 0);
+    // The server also requires escalation to come after the overdue mark.
+    const overdue = Number(item.overdueAfterDays);
+    if (!errors[`escalateAfterDays${index}`] && !errors[`overdueAfterDays${index}`] && Number(item.escalateAfterDays) <= overdue) {
+      errors[`escalateAfterDays${index}`] = t("common.numberMin", { min: overdue + 1 });
+    }
+  });
+  return errors;
+}
+
+function errorSection(key: string): PolicySection | null {
+  if (key === "minFoundingMembers") return "founding";
+  if (["feedbackWindowHours", "feedbackMinRespondents", "conflictThresholdMinutes"].includes(key)) return "events";
+  if (key.startsWith("semester")) return "calendar";
+  return key === "effectiveFrom" ? null : "reports";
+}
+
 function isoDate(value: string, section: PolicySection): string {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) throw new SectionError(section);
@@ -229,15 +274,19 @@ function ToggleRow({ label, checked, locked, hint, onChange }: ToggleRowProps) {
   );
 }
 
-function NumberSentence({ label, value, min, onChange }: {
+function NumberSentence({ label, value, min, onChange, control, error }: {
   label: string; value: string; min: number; onChange: (value: string) => void;
+  control: Pick<ComponentProps<"input">, "required" | "onBlur" | "aria-invalid">; error: string | null;
 }) {
   return (
-    <label className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-      <span className="min-w-0 flex-1">{label}</span>
-      <AppInput className="w-28" type="number" min={min} value={value}
-        onChange={(event) => onChange(event.target.value)} />
-    </label>
+    <>
+      <label className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+        <span className="min-w-0 flex-1">{label}<AppRequiredMark /></span>
+        <AppInput className="w-28" type="number" min={min} value={value} {...control}
+          onChange={(event) => onChange(event.target.value)} />
+      </label>
+      <AppFieldError message={error} />
+    </>
   );
 }
 
@@ -247,6 +296,8 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   const [section, setSection] = useState<PolicySection>("founding");
   const [localError, setLocalError] = useState<string | null>(null);
   const create = useCreatePolicy();
+  const errors = formErrors(t, form);
+  const field = useFieldValidation(errors);
 
   function updateDeadline(index: number, field: keyof DeadlineForm, value: string) {
     setForm((current) => ({ ...current, reportDeadlines: current.reportDeadlines.map((item, position) =>
@@ -271,6 +322,14 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocalError(null);
+    if (!field.touchAll()) {
+      // The first bad field may sit on another tab, so open it and keep the summary line.
+      const first = Object.keys(errors).find((key) => errors[key]);
+      const target = first ? errorSection(first) : null;
+      if (target) setSection(target);
+      setLocalError(t("policy.invalidForm"));
+      return;
+    }
     let input: CreatePolicyInput;
     try { input = payload(form); }
     catch (error) {
@@ -289,10 +348,11 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
         <label className="flex flex-wrap items-center gap-2 text-sm">
           <span>{t("policy.minFoundersBefore")}</span>
           <AppInput className="w-24" type="number" min="1" aria-label={t("policy.minFounders")}
-            value={form.minFoundingMembers}
+            value={form.minFoundingMembers} {...field.control("minFoundingMembers")}
             onChange={(event) => setForm({ ...form, minFoundingMembers: event.target.value })} />
-          <span>{t("policy.minFoundersAfter")}</span>
+          <span>{t("policy.minFoundersAfter")}<AppRequiredMark /></span>
         </label>
+        <AppFieldError message={field.error("minFoundingMembers")} />
         <div>
           <h4 className="font-heading font-semibold">{t("policy.foundingFieldsTitle")}</h4>
           <p className="mt-1 text-xs text-muted-app">{t("policy.foundingFieldsHint")}</p>
@@ -325,10 +385,13 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     body = (
       <ul className="divide-y divide-border-app">
         <li><NumberSentence label={t("policy.feedbackWindow")} min={1} value={form.feedbackWindowHours}
+          control={field.control("feedbackWindowHours")} error={field.error("feedbackWindowHours")}
           onChange={(value) => setForm({ ...form, feedbackWindowHours: value })} /></li>
         <li><NumberSentence label={t("policy.feedbackMinimum")} min={2} value={form.feedbackMinRespondents}
+          control={field.control("feedbackMinRespondents")} error={field.error("feedbackMinRespondents")}
           onChange={(value) => setForm({ ...form, feedbackMinRespondents: value })} /></li>
         <li><NumberSentence label={t("policy.conflictMinutes")} min={0} value={form.conflictThresholdMinutes}
+          control={field.control("conflictThresholdMinutes")} error={field.error("conflictThresholdMinutes")}
           onChange={(value) => setForm({ ...form, conflictThresholdMinutes: value })} /></li>
         <ToggleRow label={t("policy.overbooking")} hint={t("policy.overbookingHint")}
           checked={form.allowOverbooking}
@@ -340,17 +403,20 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       <div className="space-y-4">
         {form.academicCalendar.map((item, index) => (
           <div key={index} className="grid items-end gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="text-sm">{t("policy.semesterCode")}
-              <AppInput className="mt-1 block w-full" value={item.code}
+            <label className="text-sm">{t("policy.semesterCode")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full" value={item.code} {...field.control(`semesterCode${index}`)}
                 onChange={(event) => updateSemester(index, "code", event.target.value)} />
+              <AppFieldError message={field.error(`semesterCode${index}`)} />
             </label>
-            <label className="text-sm">{t("policy.semesterStart")}
-              <AppInput className="mt-1 block w-full" type="datetime-local" value={item.startAt}
+            <label className="text-sm">{t("policy.semesterStart")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full" type="datetime-local" value={item.startAt} {...field.control(`semesterStart${index}`)}
                 onChange={(event) => updateSemester(index, "startAt", event.target.value)} />
+              <AppFieldError message={field.error(`semesterStart${index}`)} />
             </label>
-            <label className="text-sm">{t("policy.semesterEnd")}
-              <AppInput className="mt-1 block w-full" type="datetime-local" value={item.endAt}
+            <label className="text-sm">{t("policy.semesterEnd")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full" type="datetime-local" value={item.endAt} {...field.control(`semesterEnd${index}`)}
                 onChange={(event) => updateSemester(index, "endAt", event.target.value)} />
+              <AppFieldError message={field.error(`semesterEnd${index}`)} />
             </label>
             <AppButton type="button" variant="secondary" disabled={form.academicCalendar.length === 1}
               onClick={() => setForm({ ...form,
@@ -370,14 +436,16 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       <div className="space-y-4">
         {form.reportDeadlines.map((item, index) => (
           <div key={index} className="grid items-end gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2">
-            <label className="text-sm sm:col-span-2">{t("policy.reportType")}
-              <AppInput className="mt-1 block w-full" value={item.reportType}
+            <label className="text-sm sm:col-span-2">{t("policy.reportType")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full" value={item.reportType} {...field.control(`reportType${index}`)}
                 onChange={(event) => updateDeadline(index, "reportType", event.target.value)} />
+              <AppFieldError message={field.error(`reportType${index}`)} />
             </label>
-            {deadlineNumberFields.map((field) => (
-              <label key={field} className="text-sm">{t(deadlineLabelKey(field))}
-                <AppInput className="mt-1 block w-full" type="number" min="0"
-                  value={item[field]} onChange={(event) => updateDeadline(index, field, event.target.value)} />
+            {deadlineNumberFields.map((name) => (
+              <label key={name} className="text-sm">{t(deadlineLabelKey(name))}<AppRequiredMark />
+                <AppInput className="mt-1 block w-full" type="number" min="0" {...field.control(`${name}${index}`)}
+                  value={item[name]} onChange={(event) => updateDeadline(index, name, event.target.value)} />
+                <AppFieldError message={field.error(`${name}${index}`)} />
               </label>
             ))}
             <AppButton type="button" variant="secondary" disabled={form.reportDeadlines.length === 1}
@@ -401,7 +469,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   }
 
   return (
-    <form className="space-y-6 border-t border-border-app pt-8" onSubmit={(event) => void submit(event)}>
+    <form className="space-y-6 border-t border-border-app pt-8" noValidate onSubmit={(event) => void submit(event)}>
       <div>
         <h2 className="font-heading text-xl font-bold">{t("policy.formTitle")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("policy.formDescription")}</p>
@@ -431,8 +499,9 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       <div className="grid gap-5 border-t border-border-app pt-6 sm:grid-cols-2">
         <h3 className="font-heading font-semibold sm:col-span-2">{t("policy.saveSection")}</h3>
         <label className="text-sm">{t("policy.effectiveFrom")}
-          <AppInput className="mt-2 block w-full" type="datetime-local" value={form.effectiveFrom}
+          <AppInput className="mt-2 block w-full" type="datetime-local" value={form.effectiveFrom} {...field.control("effectiveFrom", false)}
             onChange={(event) => setForm({ ...form, effectiveFrom: event.target.value })} />
+          <AppFieldError message={field.error("effectiveFrom")} />
           <span className="mt-1 block text-xs text-muted-app">{t("policy.effectiveHint")}</span>
         </label>
         <label className="text-sm">{t("policy.reason")}
