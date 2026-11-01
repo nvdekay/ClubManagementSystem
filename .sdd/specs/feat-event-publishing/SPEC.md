@@ -10,7 +10,7 @@ API nằm dưới `/clubs/{clubId}/events`; kiểm tra ownership và permission 
 Mọi mutation dùng CSRF/authGuard và transaction, kiểm tra lại quyền/trạng thái trước khi ghi.
 Response dùng phong bì chuẩn; lỗi validation/forbidden/not_found/conflict qua DomainError.
 UI có en/vi, sáng/tối, loading/error/empty, primitive dùng chung.
-Chi tiết hợp đồng và chính sách: [kế hoạch](../../../docs/05-implementation/WAVE_3_EVENTS_PLAN.md).
+Chi tiết hợp đồng và chính sách: kế hoạch.
 Chính sách triển khai theo chỉ dẫn người dùng làm theo khuyến nghị ngày 2026-10-11:
 UC25 báo trước 168 giờ; UC28 huỷ dưới 24 giờ là muộn; FIFO; chuỗi dùng chung
 registration/attendance; đổi lịch giữ đăng ký và đóng tiếp nhận tới khi duyệt/công bố lại;
@@ -33,7 +33,7 @@ UC27; FR-UC27; BR53/54.
 Bằng chứng: `server/tests/unit/club-event.test.ts`, `server/tests/unit/openapi.test.ts`,
 `server/tests/integration/mongo-club-event-repository.test.ts` và các regression UC15/26/29/31.
 Các kiểm thử dùng Mongo thật cho nghiệp vụ; browser QA dùng API fixture để kiểm tra bố cục.
-Chi tiết phạm vi kiểm chứng và giới hạn: [bàn giao](../../../docs/05-implementation/WAVE_3_EVENTS.md).
+Chi tiết phạm vi kiểm chứng và giới hạn: bàn giao.
 
 ## Ngoài phạm vi
 UI báo cáo/quyết toán Wave 4; không thay schema/dependency/env.

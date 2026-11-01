@@ -6,8 +6,8 @@ không giữ phần *làm thế nào*.
 
 ## Bắt đầu từ đây
 
-Tiếp tục công việc ở session mới: đọc [bàn giao 15/10/2026](05-implementation/SESSION_HANDOFF_2026-10-15.md)
-trước khi sửa hoặc commit các thay đổi tài liệu đang có.
+Tiếp tục công việc ở session mới: đọc [`CURRENT_IMPLEMENTATION.md`](CURRENT_IMPLEMENTATION.md)
+trước khi sửa code hoặc tài liệu.
 
 **[`CURRENT_IMPLEMENTATION.md`](CURRENT_IMPLEMENTATION.md) — ánh xạ code hiện tại.** Đọc file
 này trước khi hỏi chức năng nào đã có, actor nào được phép làm gì, hoặc còn thiếu UC nào.
@@ -43,8 +43,7 @@ nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và �
 3. [`03-diagrams/img/UCMS_Context_Diagram_01_Context-diagram.png`](03-diagrams/img/UCMS_Context_Diagram_01_Context-diagram.png) — biên hệ thống trong một hình.
 4. [`SRS.md`](SRS.md) §4 — use case bạn sắp làm, rồi §5 và §6 cho quy tắc và trạng thái của nó.
 5. [`04-design/UCMS_High_Level_Design.md`](04-design/UCMS_High_Level_Design.md) — code đặt ở đâu.
-6. [`05-implementation/TASKS.md`](05-implementation/TASKS.md) — lịch sử phân rã; trạng thái hiện hành lấy từ `CURRENT_IMPLEMENTATION.md` và SPEC/TASKS của feature.
-7. [`../.rules/README.md`](../.rules/README.md) — code phải trông như thế nào. Definition of Done: `npm run check` xanh.
+6. [`../.rules/README.md`](../.rules/README.md) — code phải trông như thế nào. Definition of Done: `npm run check` xanh.
 
 Use case diagram chuẩn là [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio)
 và chín ảnh `03-diagrams/img/UCMS_UseCase_ByActor_*.png`; report final chèn đúng bộ ảnh này (mục III.2.2.1).

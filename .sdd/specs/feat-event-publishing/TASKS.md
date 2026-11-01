@@ -10,4 +10,4 @@
 - [x] npm run check và build client.
 
 Kiểm chứng ngày 2026-10-11: 395 test/83 file xanh; client build thành công;
-browser QA bằng fixture, seed demo chạy hai lần không thêm trùng. Xem [bàn giao](../../../docs/05-implementation/WAVE_3_EVENTS.md).
+browser QA bằng fixture, seed demo chạy hai lần không thêm trùng. Xem bàn giao.

@@ -138,8 +138,8 @@ Phía CLB có thêm route UI cho UC12, UC14, UC38, UC40, UC43, UC54; UC36/37 dù
 ## 9. Kiểm chứng và phần còn lại
 
 `npm run check` ngày 15/10/2026 xanh: 296 pass, 118 Mongo integration skip. Không thay kết quả
-OAuth/Cloudinary thật hoặc visual QA của từng feature. Kế hoạch hiện hành:
-[`../05-implementation/REMAINING_UC_PLAN.md`](../05-implementation/REMAINING_UC_PLAN.md).
+OAuth/Cloudinary thật hoặc visual QA của từng feature. Trạng thái hiện hành:
+[`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 
 Đây là bản ghi nhận implementation đã quan sát, không phải quyết định kiến trúc mới. Các ADR
 cũ giữ nguyên lịch sử; mọi thay đổi kiến trúc về sau phải tuân theo quy trình `.rules/`.
