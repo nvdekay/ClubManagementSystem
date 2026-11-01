@@ -70,6 +70,10 @@ npm run seed:dashboard                         # ~150 sinh viên demo, 12 tháng
 ```
 
 Các lệnh seed chạy lại được, không tạo bản ghi trùng; `seed:dashboard` chỉ ghi vào DB localhost.
+
+> Cách nhanh hơn: nạp thẳng bản dump đầy đủ của nhóm thay cho ba lệnh trên —
+> `docker compose exec -T mongo mongorestore --drop --gzip --archive < seed-data/ucms-seed.archive.gz`
+> (xem [`seed-data/`](seed-data/README.md)).
 Tài khoản demo chỉ là dữ liệu — không đăng nhập Google được.
 
 ### 6. Chạy
