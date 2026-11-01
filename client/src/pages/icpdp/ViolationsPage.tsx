@@ -20,6 +20,10 @@ import {
 } from "@/services/violations";
 import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
+import { isHttpUrl } from "@/utils/validation";
 
 const filters = ["active", "awaiting", "actions", "closed", "all"] as const;
 type Filter = typeof filters[number];
@@ -155,8 +159,11 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
   const [description, setDescription] = useState("");
   const [related, setRelated] = useState("");
   const [evidence, setEvidence] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const sources = useViolationSources(clubId);
+  const field = useFieldValidation({
+    clubId: clubId ? null : t("common.chooseRequired"),
+    title: title.trim() ? null : t("common.fieldRequired"),
+  });
 
   const relatedOptions = [{ value: "", label: t("violations.relatedNone") },
     ...(sources.data?.events ?? []).map((event) => ({ value: event.id, label: t("violations.relatedEvent", {
@@ -164,8 +171,7 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
     ...(sources.data?.budgets ?? []).map((budget) => ({ value: budget.id, label: t("violations.relatedBudget", { title: budget.eventTitle }) }))];
 
   async function submit() {
-    if (!clubId || !title.trim()) { setError(t("violations.titleRequired")); return; }
-    setError(null);
+    if (!field.touchAll()) return;
     try {
       const created = await open.mutateAsync({ csrfToken, input: { clubId, originType, severity, title: title.trim(),
         description: description.trim() || undefined, originRefId: related || undefined, evidence: evidenceLines(evidence) } });
@@ -177,19 +183,22 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
     <section className="mb-8 rounded-2xl bg-surface-app p-5">
       <h2 className="font-heading text-lg font-bold">{t("violations.openCase")}</h2>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <div className="text-sm font-semibold">{t("violations.club")}
+        <div className="text-sm font-semibold">{t("violations.club")}<AppRequiredMark />
           <AppSelect className="mt-2 w-full" label={t("violations.club")} value={clubId}
-            onChange={(value) => { setClubId(value); setRelated(""); }}
+            required invalid={Boolean(field.error("clubId"))}
+            onChange={(value) => { setClubId(value); setRelated(""); field.touch("clubId"); }}
             options={[{ value: "", label: t("violations.chooseClub") },
-              ...(clubs.data?.clubs ?? []).map((club) => ({ value: club.id, label: club.name }))]} /></div>
+              ...(clubs.data?.clubs ?? []).map((club) => ({ value: club.id, label: club.name }))]} />
+          <AppFieldError message={field.error("clubId")} /></div>
         <div className="text-sm font-semibold">{t("violations.origin")}
           <AppSelect className="mt-2 w-full" label={t("violations.origin")} value={originType} onChange={setOriginType}
             options={VIOLATION_ORIGINS.map((origin) => ({ value: origin, label: originLabel(t, origin) }))} /></div>
         <div className="text-sm font-semibold md:col-span-2">{t("violations.severity")}
           <SeverityPicker value={severity} onChange={setSeverity} /></div>
-        <label className="block text-sm font-semibold md:col-span-2">{t("violations.caseTitle")}
+        <label className="block text-sm font-semibold md:col-span-2">{t("violations.caseTitle")}<AppRequiredMark />
           <AppInput className="mt-2 w-full font-normal" value={title} maxLength={200} placeholder={t("violations.caseTitleHint")}
-            onChange={(e) => setTitle(e.target.value)} /></label>
+            {...field.control("title")} onChange={(e) => setTitle(e.target.value)} />
+          <AppFieldError message={field.error("title")} /></label>
         <label className="block text-sm font-semibold md:col-span-2">{t("violations.caseDescription")}
           <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={description} maxLength={5000}
             onChange={(e) => setDescription(e.target.value)} /></label>
@@ -204,7 +213,6 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
         <AppButton disabled={open.isPending} onClick={() => void submit()}>{open.isPending ? t("violations.saving") : t("violations.submitOpen")}</AppButton>
         <AppButton variant="secondary" onClick={onCancel}>{t("violations.cancel")}</AppButton>
       </div>
-      {error && <p role="alert" className="mt-3 text-sm text-danger-app">{error}</p>}
       {open.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{open.error.message}</p>}
     </section>
   );
@@ -303,7 +311,25 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
   const [evidenceNote, setEvidenceNote] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [rows, setRows] = useState([{ description: "", dueAt: inputDate(14), link: "" }]);
-  const [formError, setFormError] = useState<string | null>(null);
+  const evidenceField = useFieldValidation({
+    evidenceUrl: !evidenceUrl.trim() || isHttpUrl(evidenceUrl) ? null : t("common.invalidUrl"),
+  });
+  const requestField = useFieldValidation({
+    message: message.trim() ? null : t("common.fieldRequired"),
+    dueAt: !dueAt ? t("common.fieldRequired") : new Date(endOfDay(dueAt)) <= new Date() ? t("common.dateNotPast") : null,
+  });
+  const responseField = useFieldValidation({ responseText: responseText.trim() ? null : t("common.fieldRequired") });
+  const decideField = useFieldValidation({
+    reason: reason.trim() ? null : t("violations.decisionReasonRequired"),
+    evidence: finding === "VIOLATION" && !evidenceLines(decisionEvidence).length ? t("violations.decisionEvidenceRequired") : null,
+  });
+  // Blank rows are skipped on save, so only the first description is required, and only while every row is blank.
+  const anyAction = rows.some((row) => row.description.trim());
+  const actionsField = useFieldValidation(Object.fromEntries(rows.flatMap((row, index) => [
+    [`description${index}`, index === 0 && !anyAction ? t("common.fieldRequired") : null],
+    [`dueAt${index}`, !row.description.trim() ? null : !row.dueAt ? t("common.fieldRequired")
+      : new Date(endOfDay(row.dueAt)) <= new Date() ? t("common.dateNotPast") : null],
+  ])));
   function day(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
   }
@@ -325,28 +351,25 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
 
   async function run(next: ViolationStep, confirmText?: string): Promise<boolean> {
     if (confirmText && !(await askConfirm(confirmText))) return false;
-    try { await step.mutateAsync({ id, csrfToken, step: next }); setFormError(null); return true; }
+    try { await step.mutateAsync({ id, csrfToken, step: next }); return true; }
     catch { return false; }
   }
 
   async function decide() {
-    if (!reason.trim()) { setFormError(t("violations.decisionReasonRequired")); return; }
+    if (!decideField.touchAll()) return;
     const evidence = evidenceLines(decisionEvidence);
-    if (finding === "VIOLATION" && !evidence.length) { setFormError(t("violations.decisionEvidenceRequired")); return; }
     if (await run({ type: "decide", finding, reason: reason.trim(), evidence },
       finding === "VIOLATION" ? t("violations.confirmDecision") : t("violations.confirmClose"))) {
-      setReason(""); setDecisionEvidence("");
+      setReason(""); setDecisionEvidence(""); decideField.reset();
     }
   }
 
   async function assign() {
+    if (!actionsField.touchAll()) return;
     const actions = rows.filter((row) => row.description.trim());
-    if (!actions.length || actions.some((row) => !row.dueAt || new Date(endOfDay(row.dueAt)) <= new Date())) {
-      setFormError(t("violations.actionsInvalid")); return;
-    }
     if (await run({ type: "addActions", actions: actions.map((row) => ({ description: row.description.trim(), dueAt: endOfDay(row.dueAt),
       ...(row.link === "SUSPEND" || row.link === "DISSOLVE" ? { linkedLifecycleAction: row.link } : {}) })) })) {
-      setRows([{ description: "", dueAt: inputDate(14), link: "" }]);
+      setRows([{ description: "", dueAt: inputDate(14), link: "" }]); actionsField.reset();
     }
   }
 
@@ -379,11 +402,17 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
             {!final && <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
               <AppInput aria-label={t("violations.evidenceNote")} placeholder={t("violations.evidenceNote")} value={evidenceNote}
                 maxLength={1000} onChange={(e) => setEvidenceNote(e.target.value)} />
-              <AppInput aria-label={t("violations.evidenceUrl")} placeholder={t("violations.evidenceUrl")} value={evidenceUrl}
-                maxLength={500} onChange={(e) => setEvidenceUrl(e.target.value)} />
+              <div>
+                <AppInput aria-label={t("violations.evidenceUrl")} placeholder={t("violations.evidenceUrl")} value={evidenceUrl}
+                  maxLength={500} className="w-full" {...evidenceField.control("evidenceUrl", false)} onChange={(e) => setEvidenceUrl(e.target.value)} />
+                <AppFieldError message={evidenceField.error("evidenceUrl")} />
+              </div>
               <AppButton variant="secondary" disabled={step.isPending || (!evidenceNote.trim() && !evidenceUrl.trim())}
-                onClick={() => void run({ type: "addEvidence", evidence: { note: evidenceNote.trim(), url: evidenceUrl.trim() || undefined } })
-                  .then((done) => { if (done) { setEvidenceNote(""); setEvidenceUrl(""); } })}>{t("violations.addEvidence")}</AppButton>
+                onClick={() => {
+                  if (!evidenceField.touchAll()) return;
+                  void run({ type: "addEvidence", evidence: { note: evidenceNote.trim(), url: evidenceUrl.trim() || undefined } })
+                    .then((done) => { if (done) { setEvidenceNote(""); setEvidenceUrl(""); evidenceField.reset(); } });
+                }}>{t("violations.addEvidence")}</AppButton>
             </div>}
           </section>
 
@@ -452,24 +481,35 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
 
               {(item.state === "Open" || item.state === "Under Investigation") && <div>
                 <h3 className="text-sm font-semibold">{t("violations.requestResponse")}</h3>
-                <label className="mt-3 block text-sm">{t("violations.requestMessage")}
-                  <AppTextarea className="mt-1.5 min-h-24 w-full" value={message} maxLength={2000} onChange={(e) => setMessage(e.target.value)} /></label>
-                <label className="mt-3 block text-sm">{t("violations.responseDueAt")}
-                  <AppInput type="date" className="mt-1.5 w-full" value={dueAt} min={inputDate(1)} onChange={(e) => setDueAt(e.target.value)} />
+                <label className="mt-3 block text-sm">{t("violations.requestMessage")}<AppRequiredMark />
+                  <AppTextarea className="mt-1.5 min-h-24 w-full" value={message} maxLength={2000} {...requestField.control("message")}
+                    onChange={(e) => setMessage(e.target.value)} />
+                  <AppFieldError message={requestField.error("message")} /></label>
+                <label className="mt-3 block text-sm">{t("violations.responseDueAt")}<AppRequiredMark />
+                  <AppInput type="date" className="mt-1.5 w-full" value={dueAt} min={inputDate(1)} {...requestField.control("dueAt")}
+                    onChange={(e) => setDueAt(e.target.value)} />
+                  <AppFieldError message={requestField.error("dueAt")} />
                   <span className="mt-1 block text-xs text-muted-app">{t("violations.responseDueHint")}</span></label>
-                <AppButton className="mt-3 w-full" disabled={step.isPending || !message.trim() || !dueAt}
-                  onClick={() => void run({ type: "requestResponse", message: message.trim(), dueAt: endOfDay(dueAt) })
-                    .then((done) => { if (done) setMessage(""); })}>{t("violations.sendRequest")}</AppButton>
+                <AppButton className="mt-3 w-full" disabled={step.isPending}
+                  onClick={() => {
+                    if (!requestField.touchAll()) return;
+                    void run({ type: "requestResponse", message: message.trim(), dueAt: endOfDay(dueAt) })
+                      .then((done) => { if (done) { setMessage(""); requestField.reset(); } });
+                  }}>{t("violations.sendRequest")}</AppButton>
               </div>}
 
               {item.state === "Awaiting Club Response" && response && !response.source && <div>
-                <h3 className="text-sm font-semibold">{t("violations.recordResponse")}</h3>
+                <h3 className="text-sm font-semibold">{t("violations.recordResponse")}<AppRequiredMark /></h3>
                 <p className="mt-1 text-xs text-muted-app">{t("violations.recordResponseHint")}</p>
                 <AppTextarea aria-label={t("violations.responseText")} className="mt-3 min-h-24 w-full" value={responseText} maxLength={5000}
-                  onChange={(e) => setResponseText(e.target.value)} />
-                <AppButton className="mt-3 w-full" variant="secondary" disabled={step.isPending || !responseText.trim()}
-                  onClick={() => void run({ type: "recordResponse", text: responseText.trim() })
-                    .then((done) => { if (done) setResponseText(""); })}>{t("violations.saveResponse")}</AppButton>
+                  {...responseField.control("responseText")} onChange={(e) => setResponseText(e.target.value)} />
+                <AppFieldError message={responseField.error("responseText")} />
+                <AppButton className="mt-3 w-full" variant="secondary" disabled={step.isPending}
+                  onClick={() => {
+                    if (!responseField.touchAll()) return;
+                    void run({ type: "recordResponse", text: responseText.trim() })
+                      .then((done) => { if (done) { setResponseText(""); responseField.reset(); } });
+                  }}>{t("violations.saveResponse")}</AppButton>
                 {responseOverdue && <AppButton className="mt-2 w-full" variant="secondary" disabled={step.isPending}
                   onClick={() => void run({ type: "recordResponse", noResponse: true })}>{t("violations.noResponse")}</AppButton>}
               </div>}
@@ -477,31 +517,41 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
               {!decided && <div>
                 <h3 className="text-sm font-semibold">{t("violations.decide")}</h3>
                 <div className="mt-3 grid grid-cols-2 gap-1 rounded-full bg-surface-strong-app p-1">{(["VIOLATION", "NO_VIOLATION"] as const).map((value) =>
-                  <button key={value} type="button" aria-pressed={finding === value} onClick={() => { setFinding(value); setFormError(null); }}
+                  <button key={value} type="button" aria-pressed={finding === value} onClick={() => setFinding(value)}
                     className={cn("min-h-11 rounded-full px-2 text-xs font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
                       "bg-bg-app text-primary-app shadow-sm hover:text-primary-app": finding === value,
                     })}>{value === "VIOLATION" ? t("violations.findViolation") : t("violations.findNoViolation")}</button>)}</div>
                 {finding === "VIOLATION" && !canDecideViolation ? <p className="mt-3 text-sm text-muted-app">{t("violations.needsResponseFirst")}</p> : <>
                   {finding === "NO_VIOLATION" && <p className="mt-3 text-xs text-muted-app">{t("violations.closeNoViolationHint")}</p>}
-                  <label className="mt-3 block text-sm">{t("violations.decisionReason")}
-                    <AppTextarea className="mt-1.5 min-h-24 w-full" value={reason} maxLength={5000} onChange={(e) => setReason(e.target.value)} /></label>
-                  <label className="mt-3 block text-sm">{t("violations.decisionEvidence")}
+                  <label className="mt-3 block text-sm">{t("violations.decisionReason")}<AppRequiredMark />
+                    <AppTextarea className="mt-1.5 min-h-24 w-full" value={reason} maxLength={5000} {...decideField.control("reason")}
+                      onChange={(e) => setReason(e.target.value)} />
+                    <AppFieldError message={decideField.error("reason")} /></label>
+                  <label className="mt-3 block text-sm">{t("violations.decisionEvidence")}{finding === "VIOLATION" && <AppRequiredMark />}
                     <AppTextarea className="mt-1.5 min-h-20 w-full" value={decisionEvidence} placeholder={t("violations.decisionEvidenceHint")}
-                      onChange={(e) => setDecisionEvidence(e.target.value)} /></label>
+                      {...decideField.control("evidence", finding === "VIOLATION")} onChange={(e) => setDecisionEvidence(e.target.value)} />
+                    <AppFieldError message={decideField.error("evidence")} /></label>
                   <AppButton className="mt-3 w-full" disabled={step.isPending} onClick={() => void decide()}>
                     {finding === "VIOLATION" ? t("violations.saveDecision") : t("violations.closeNoViolation")}</AppButton>
                 </>}
               </div>}
 
               {decided && <div>
-                <h3 className="text-sm font-semibold">{t("violations.addActions")}</h3>
+                <h3 className="text-sm font-semibold">{t("violations.addActions")}<AppRequiredMark /></h3>
                 <div className="mt-3 space-y-4">{rows.map((row, index) => <div key={index} className="space-y-2">
-                  <AppInput aria-label={t("violations.actionDescription")} placeholder={t("violations.actionDescription")} value={row.description}
-                    maxLength={1000} className="w-full"
-                    onChange={(e) => setRows((current) => current.map((item, at) => at === index ? { ...item, description: e.target.value } : item))} />
+                  <div>
+                    <AppInput aria-label={t("violations.actionDescription")} placeholder={t("violations.actionDescription")} value={row.description}
+                      maxLength={1000} className="w-full" {...actionsField.control(`description${index}`, index === 0)}
+                      onChange={(e) => setRows((current) => current.map((item, at) => at === index ? { ...item, description: e.target.value } : item))} />
+                    <AppFieldError message={actionsField.error(`description${index}`)} />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <AppInput type="date" aria-label={t("violations.actionDue")} value={row.dueAt} min={inputDate(1)} className="w-full"
-                      onChange={(e) => setRows((current) => current.map((item, at) => at === index ? { ...item, dueAt: e.target.value } : item))} />
+                    <div>
+                      <AppInput type="date" aria-label={t("violations.actionDue")} value={row.dueAt} min={inputDate(1)} className="w-full"
+                        {...actionsField.control(`dueAt${index}`, Boolean(row.description.trim()))}
+                        onChange={(e) => setRows((current) => current.map((item, at) => at === index ? { ...item, dueAt: e.target.value } : item))} />
+                      <AppFieldError message={actionsField.error(`dueAt${index}`)} />
+                    </div>
                     <AppSelect label={t("violations.actionLink")} value={row.link} className="w-full"
                       onChange={(value) => setRows((current) => current.map((item, at) => at === index ? { ...item, link: value } : item))}
                       options={[{ value: "", label: t("violations.actionLinkNone") }, { value: "SUSPEND", label: t("violations.actionLinkSUSPEND") },
@@ -516,8 +566,6 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
                   disabled={step.isPending || item.actions.some((action) => action.state === "Pending")}
                   onClick={() => void run({ type: "resolve" }, t("violations.confirmResolve"))}>{t("violations.resolve")}</AppButton>
               </div>}
-
-              {formError && <p role="alert" className="text-sm text-danger-app">{formError}</p>}
               {step.isError && <p role="alert" className="text-sm text-danger-app">{step.error.message}</p>}
             </section>
           )}

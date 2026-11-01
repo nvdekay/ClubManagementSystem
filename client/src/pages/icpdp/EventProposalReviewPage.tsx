@@ -16,6 +16,9 @@ import {
 } from "@/services/eventProposalReviews";
 import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
 const outcomes: EventReviewOutcome[] = ["Request revision", "Approve", "Reject"];
 
@@ -39,7 +42,29 @@ export function EventProposalReviewPage() {
   const [conditions, setConditions] = useState("");
   // Per-line edits keyed by line index; an untouched line retains the previous approval, or uses the requested amount.
   const [amounts, setAmounts] = useState<Record<number, { amount?: string; reason?: string }>>({});
-  const [formError, setFormError] = useState<string | null>(null);
+  // Derived before the early returns below, since the field validation hook needs them on every render.
+  const current = review.data?.versions.find((version) => version.revisionNo === review.data?.event.currentRevisionNo)
+    ?? review.data?.versions.at(-1);
+  const lines = current?.budgetLines ?? [];
+  const approvedAmounts = lines.map((line, index) => {
+    const raw = amounts[index]?.amount;
+    return raw === undefined ? review.data?.budget?.lines[index]?.approvedAmount ?? line.amount : Number(raw);
+  });
+  // Same rules the server enforces, shown per field as the officer fills the decision in.
+  const field = useFieldValidation<string>({
+    reason: outcome !== "Approve" && !reason.trim() ? t("eventReviews.reasonRequired") : null,
+    sections: outcome === "Request revision" && !sections.length ? t("eventReviews.sectionsRequired") : null,
+    deadline: outcome === "Request revision" && (!deadline || new Date(deadline) <= new Date()) ? t("eventReviews.deadlineRequired") : null,
+    ...Object.fromEntries(lines.flatMap((line, index) => {
+      const value = approvedAmounts[index]!;
+      const approve = outcome === "Approve";
+      return [
+        [`amount${index}`, approve && (!Number.isInteger(value) || value < 0 || value > line.amount) ? t("eventReviews.amountInvalid") : null],
+        [`amountReason${index}`, approve && value < line.amount
+          && !(amounts[index]?.reason?.trim() || review.data?.budget?.lines[index]?.reason?.trim()) ? t("eventReviews.amountReasonRequired") : null],
+      ];
+    })),
+  });
 
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -120,9 +145,7 @@ export function EventProposalReviewPage() {
   );
 
   const { event, task, club, decisions, versions, bookings, semesterBudgets, budget } = review.data;
-  const current = versions.find((version) => version.revisionNo === event.currentRevisionNo) ?? versions.at(-1);
   const payload = current?.payload ?? {};
-  const lines = current?.budgetLines ?? [];
   const occurrences = Array.isArray(payload.occurrences) ? payload.occurrences as { startAt?: string; endAt?: string }[] : [];
   const conflictMessage = event.conflictDetail && typeof event.conflictDetail === "object"
     ? text((event.conflictDetail as Record<string, unknown>).message) : undefined;
@@ -134,10 +157,6 @@ export function EventProposalReviewPage() {
   const riskTone: AppBadgeTone = event.riskCategory === "HIGH" ? "danger" : event.riskCategory === "MEDIUM" ? "warning" : "success";
   const conflictTone: AppBadgeTone = event.conflictResult === "Blocking Conflict" ? "danger"
     : event.conflictResult === "Warning" ? "warning" : "success";
-  const approvedAmounts = lines.map((line, index) => {
-    const raw = amounts[index]?.amount;
-    return raw === undefined ? budget?.lines[index]?.approvedAmount ?? line.amount : Number(raw);
-  });
   const approvedTotal = approvedAmounts.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
   const semesterTotal = semesterBudgets.reduce((sum, item) => sum + item.approvedTotal, 0);
 
@@ -149,17 +168,8 @@ export function EventProposalReviewPage() {
 
   async function decide() {
     if (!auth.data || !id) return;
-    // Same rules the server enforces, checked before asking for confirmation.
-    const badAmount = outcome === "Approve" && approvedAmounts.some((value, index) =>
-      !Number.isInteger(value) || value < 0 || value > lines[index]!.amount);
-    const missingLineReason = outcome === "Approve" && approvedAmounts.some((value, index) =>
-      value < lines[index]!.amount && !(amounts[index]?.reason?.trim() || budget?.lines[index]?.reason?.trim()));
-    const missing = outcome !== "Approve" && !reason.trim() ? t("eventReviews.reasonRequired")
-      : outcome === "Request revision" && !sections.length ? t("eventReviews.sectionsRequired")
-        : outcome === "Request revision" && (!deadline || new Date(deadline) <= new Date()) ? t("eventReviews.deadlineRequired")
-          : badAmount ? t("eventReviews.amountInvalid") : missingLineReason ? t("eventReviews.amountReasonRequired") : null;
-    setFormError(missing);
-    if (missing) return;
+    // Checked before asking for confirmation.
+    if (!field.touchAll()) return;
     const prompt = outcome === "Approve" ? t("eventReviews.confirmApprove")
       : outcome === "Reject" ? t("eventReviews.confirmReject") : t("eventReviews.confirmRevision");
     if (!(await askConfirm(prompt))) return;
@@ -303,19 +313,23 @@ export function EventProposalReviewPage() {
               <h2 className="font-heading text-lg font-bold">{t("eventReviews.decisionPanel")}</h2>
               <p className="mt-1 text-sm text-muted-app">{t("eventReviews.decisionHint")}</p>
               <div className="mt-5 grid grid-cols-3 gap-1 rounded-full bg-surface-strong-app p-1">{outcomes.map((value) =>
-                <button key={value} type="button" aria-pressed={outcome === value} onClick={() => { setOutcome(value); setFormError(null); }}
+                <button key={value} type="button" aria-pressed={outcome === value} onClick={() => setOutcome(value)}
                   className={cn("min-h-11 rounded-full px-2 py-2 text-xs font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
                     "bg-bg-app text-primary-app shadow-sm hover:text-primary-app": outcome === value,
                   })}>{outcomeLabel(value)}</button>)}</div>
 
               {outcome === "Request revision" && <fieldset className="mt-5">
-                <legend className="text-sm font-semibold">{t("eventReviews.sections")}</legend>
+                <legend className="text-sm font-semibold">{t("eventReviews.sections")}<AppRequiredMark /></legend>
                 <div className="mt-3 space-y-1">{EVENT_REVIEW_SECTIONS.map((section) =>
                   <label key={section} className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm hover:bg-surface-strong-app">
-                    <input type="checkbox" checked={sections.includes(section)} onChange={() => toggleSection(section)} className="size-4 accent-primary-app" />
+                    <input type="checkbox" checked={sections.includes(section)} onChange={() => { toggleSection(section); field.touch("sections"); }}
+                      className="size-4 accent-primary-app" />
                     {sectionLabel(section)}</label>)}</div>
-                <label className="mt-4 block text-sm font-semibold">{t("eventReviews.deadline")}
-                  <AppInput type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} className="mt-2 w-full font-normal" /></label>
+                <AppFieldError message={field.error("sections")} />
+                <label className="mt-4 block text-sm font-semibold">{t("eventReviews.deadline")}<AppRequiredMark />
+                  <AppInput type="datetime-local" value={deadline} {...field.control("deadline")} onChange={(e) => setDeadline(e.target.value)}
+                    className="mt-2 w-full font-normal" />
+                  <AppFieldError message={field.error("deadline")} /></label>
               </fieldset>}
 
               {outcome === "Approve" && lines.length > 0 && <fieldset className="mt-5">
@@ -328,11 +342,13 @@ export function EventProposalReviewPage() {
                       <span className="font-medium break-words">{line.category}</span>
                       <span className="text-xs text-muted-app">{t("eventReviews.requestedAmount")}: {money(line.amount)}</span></span>
                       <AppInput type="number" min={0} max={line.amount} step={1000} inputMode="numeric"
-                        value={amounts[index]?.amount ?? String(budget?.lines[index]?.approvedAmount ?? line.amount)}
-                        onChange={(e) => editLine(index, { amount: e.target.value })} className="mt-1.5 w-full tabular-nums" /></label>
+                        value={amounts[index]?.amount ?? String(budget?.lines[index]?.approvedAmount ?? line.amount)} {...field.control(`amount${index}`)}
+                        onChange={(e) => editLine(index, { amount: e.target.value })} className="mt-1.5 w-full tabular-nums" />
+                      <AppFieldError message={field.error(`amount${index}`)} /></label>
                     {lowered && <AppInput aria-label={t("eventReviews.reductionReason")} placeholder={t("eventReviews.reductionReason")}
-                      value={amounts[index]?.reason ?? budget?.lines[index]?.reason ?? ""} maxLength={500}
+                      value={amounts[index]?.reason ?? budget?.lines[index]?.reason ?? ""} maxLength={500} {...field.control(`amountReason${index}`)}
                       onChange={(e) => editLine(index, { reason: e.target.value })} className="mt-2 w-full" />}
+                    {lowered && <AppFieldError message={field.error(`amountReason${index}`)} />}
                   </div>;
                 })}</div>
                 <p className="mt-3 text-sm font-semibold">{t("eventReviews.approvedTotal", { amount: money(approvedTotal) })}</p>
@@ -342,15 +358,15 @@ export function EventProposalReviewPage() {
                 <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={conditions}
                   onChange={(e) => setConditions(e.target.value)} placeholder={t("eventReviews.conditionsHint")} /></label>}
 
-              <label className="mt-5 block text-sm font-semibold">{t("eventReviews.reason")}
-                <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={reason} maxLength={5000}
-                  onChange={(e) => setReason(e.target.value)} placeholder={t("eventReviews.reasonHint")} /></label>
+              <label className="mt-5 block text-sm font-semibold">{t("eventReviews.reason")}{outcome !== "Approve" && <AppRequiredMark />}
+                <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={reason} maxLength={5000} {...field.control("reason", outcome !== "Approve")}
+                  onChange={(e) => setReason(e.target.value)} placeholder={t("eventReviews.reasonHint")} />
+                <AppFieldError message={field.error("reason")} /></label>
               <label className="mt-5 block text-sm font-semibold">{t("eventReviews.reviewNote")}
                 <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={reviewNote} maxLength={10000}
                   onChange={(e) => setReviewNote(e.target.value)} placeholder={t("eventReviews.reviewNoteHint")} /></label>
               <AppButton className="mt-6 w-full" disabled={action.isPending} onClick={() => void decide()}>
                 {action.isPending ? t("eventReviews.submitting") : t("eventReviews.submit")}</AppButton>
-              {formError && <p role="alert" className="mt-3 text-sm text-danger-app">{formError}</p>}
               {action.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{action.error.message || t("eventReviews.actionError")}</p>}
             </section>
           ) : null}

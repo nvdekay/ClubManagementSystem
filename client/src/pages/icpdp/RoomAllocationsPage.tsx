@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
@@ -14,6 +16,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/ui/table/AppTable";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useBookingSlots } from "@/hooks/useFacilityBookings";
 import { useAllocateRoom, useRevokeRoomAllocation, useRoomAllocationOptions, useRoomAllocations, useRoomOccupancy } from "@/hooks/useRoomAllocations";
 import { RoomAllocationError, type RoomAllocation, type RoomAllocationConflict, type RoomAllocationOptions } from "@/services/roomAllocations";
@@ -66,9 +69,15 @@ export function RoomAllocationsPage() {
   const [clubFilter, setClubFilter] = useState("");
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [formError, setFormError] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<RoomAllocation | null>(null);
   const [reason, setReason] = useState("");
+  const field = useFieldValidation({
+    clubId: form.clubId ? null : t("common.chooseRequired"),
+    propertyId: form.propertyId ? null : t("common.chooseRequired"),
+    weekday: form.weekday ? null : t("common.chooseRequired"),
+    slot: form.slot ? null : t("common.chooseRequired"),
+  });
+  const revokeField = useFieldValidation({ reason: reason.trim() ? null : t("common.fieldRequired") });
   const slotList = useMemo(() => slots.data ?? [], [slots.data]);
   const rooms = useMemo(() => options.data?.rooms ?? [], [options.data]);
   const buildings = useMemo(() => [...new Set(rooms.map((item) => item.location))]
@@ -116,26 +125,26 @@ export function RoomAllocationsPage() {
   const table = useTable({ features: appTableFeatures, columns, data: filtered, initialState: { pagination: { pageIndex: 0, pageSize: 20 } } });
 
   function openCreate() {
-    setForm({ ...emptyForm, building: building }); setFormError(null); allocate.reset(); setCreating(true);
+    setForm({ ...emptyForm, building: building }); field.reset(); allocate.reset(); setCreating(true);
   }
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!form.clubId || !form.propertyId || !form.weekday || !form.slot || !auth.data) {
-      setFormError(t("roomAllocations.invalidForm")); return;
-    }
-    setFormError(null);
+    if (!field.touchAll() || !auth.data) return;
     try {
       await allocate.mutateAsync({ csrfToken: auth.data.csrfToken, input: { semesterCode: semester, clubId: form.clubId,
         propertyId: form.propertyId, weekday: Number(form.weekday), slot: Number(form.slot), ...(form.note.trim() ? { note: form.note.trim() } : {}) } });
       setCreating(false); appToast.success(t("roomAllocations.saved"));
     } catch { /* The mutation error and clashing dates are shown in the dialog. */ }
   }
+  function closeRevoke() {
+    setRevoking(null); revokeField.reset();
+  }
   async function confirmRevoke(event: FormEvent) {
     event.preventDefault();
-    if (!revoking || !auth.data || !reason.trim()) return;
+    if (!revokeField.touchAll() || !revoking || !auth.data) return;
     try {
       await revoke.mutateAsync({ id: revoking.id, reason: reason.trim(), csrfToken: auth.data.csrfToken });
-      setRevoking(null); appToast.success(t("roomAllocations.revokedToast"));
+      closeRevoke(); appToast.success(t("roomAllocations.revokedToast"));
     } catch { /* Shown in the dialog. */ }
   }
 
@@ -175,14 +184,22 @@ export function RoomAllocationsPage() {
     {creating && options.data && <AppDialog open title={t("roomAllocations.allocate")} closeLabel={t("roomAllocations.close")} onClose={() => setCreating(false)}>
       <form className="space-y-4" onSubmit={(event) => void submit(event)}>
         <p className="text-sm text-muted-app">{t("roomAllocations.semester")}: <span className="font-semibold text-text-app">{semester}</span></p>
-        <AppSelect label={t("roomAllocations.club")} value={form.clubId} onChange={(value) => setForm({ ...form, clubId: value })}
-          options={[{ value: "", label: t("roomAllocations.selectClub") }, ...options.data.clubs.map((item) => ({ value: item.id, label: item.name }))]} />
+        <div className="text-sm font-medium">{t("roomAllocations.club")}<AppRequiredMark />
+          <AppSelect className="mt-1 w-full" label={t("roomAllocations.club")} value={form.clubId} required invalid={Boolean(field.error("clubId"))}
+            onChange={(value) => { setForm({ ...form, clubId: value }); field.touch("clubId"); }}
+            options={[{ value: "", label: t("roomAllocations.selectClub") }, ...options.data.clubs.map((item) => ({ value: item.id, label: item.name }))]} />
+          <AppFieldError message={field.error("clubId")} /></div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <AppSelect label={t("roomAllocations.building")} value={form.building} onChange={(value) => setForm({ ...form, building: value, propertyId: "" })}
-            options={[{ value: "", label: t("roomAllocations.allBuildings") }, ...buildings.map((item) => ({ value: item, label: item }))]} />
-          <AppSelect label={t("roomAllocations.room")} value={form.propertyId} onChange={(value) => setForm({ ...form, propertyId: value })}
-            options={[{ value: "", label: t("roomAllocations.selectRoom") }, ...roomsInBuilding.map((item) => ({ value: item.id,
-              label: `${item.name} · ${item.location}${item.capacity ? ` · ${item.capacity}` : ""}` }))]} />
+          <div className="text-sm font-medium">{t("roomAllocations.building")}
+            <AppSelect className="mt-1 w-full" label={t("roomAllocations.building")} value={form.building}
+              onChange={(value) => setForm({ ...form, building: value, propertyId: "" })}
+              options={[{ value: "", label: t("roomAllocations.allBuildings") }, ...buildings.map((item) => ({ value: item, label: item }))]} /></div>
+          <div className="text-sm font-medium">{t("roomAllocations.room")}<AppRequiredMark />
+            <AppSelect className="mt-1 w-full" label={t("roomAllocations.room")} value={form.propertyId} required invalid={Boolean(field.error("propertyId"))}
+              onChange={(value) => { setForm({ ...form, propertyId: value }); field.touch("propertyId"); }}
+              options={[{ value: "", label: t("roomAllocations.selectRoom") }, ...roomsInBuilding.map((item) => ({ value: item.id,
+                label: `${item.name} · ${item.location}${item.capacity ? ` · ${item.capacity}` : ""}` }))]} />
+            <AppFieldError message={field.error("propertyId")} /></div>
         </div>
         {form.propertyId && <div className="space-y-2">
           <p className="text-sm font-medium">{t("roomAllocations.gridTitle", { semester })}</p>
@@ -201,7 +218,7 @@ export function RoomAllocationsPage() {
                   `${item.title} · ${dateTime.format(new Date(item.startAt))}`).join("; ") }) : undefined;
                 return <td key={day} className="p-1"><button type="button" disabled={Boolean(takenBy) || Boolean(busy)} aria-pressed={chosen}
                   title={busyDetail} aria-description={busyDetail}
-                  onClick={() => setForm({ ...form, weekday: String(day), slot: String(slot.number) })}
+                  onClick={() => { setForm({ ...form, weekday: String(day), slot: String(slot.number) }); field.touch("weekday"); field.touch("slot"); }}
                   className={cn("min-h-12 w-full rounded-lg border px-1 py-2 text-xs break-words", {
                     "border-primary-app bg-primary-soft-app font-semibold text-primary-app": chosen,
                     "cursor-not-allowed border-border-app bg-surface-strong-app text-muted-app": Boolean(takenBy),
@@ -215,15 +232,20 @@ export function RoomAllocationsPage() {
           </table></div>
         </div>}
         <div className="grid gap-4 sm:grid-cols-2">
-          <AppSelect label={t("roomAllocations.weekday")} value={form.weekday} onChange={(value) => setForm({ ...form, weekday: value })}
-            options={[{ value: "", label: t("roomAllocations.weekday") }, ...WEEKDAYS.map((day) => ({ value: String(day), label: weekdayLabel(t, day) }))]} />
-          <AppSelect label={t("roomAllocations.slot")} value={form.slot} onChange={(value) => setForm({ ...form, slot: value })}
-            options={[{ value: "", label: t("facilityBookings.selectSlot") }, ...slotList.map((slot) => ({ value: String(slot.number), label: slotLabel(t, slot.number, slotList) }))]} />
+          <div className="text-sm font-medium">{t("roomAllocations.weekday")}<AppRequiredMark />
+            <AppSelect className="mt-1 w-full" label={t("roomAllocations.weekday")} value={form.weekday} required invalid={Boolean(field.error("weekday"))}
+              onChange={(value) => { setForm({ ...form, weekday: value }); field.touch("weekday"); }}
+              options={[{ value: "", label: t("roomAllocations.weekday") }, ...WEEKDAYS.map((day) => ({ value: String(day), label: weekdayLabel(t, day) }))]} />
+            <AppFieldError message={field.error("weekday")} /></div>
+          <div className="text-sm font-medium">{t("roomAllocations.slot")}<AppRequiredMark />
+            <AppSelect className="mt-1 w-full" label={t("roomAllocations.slot")} value={form.slot} required invalid={Boolean(field.error("slot"))}
+              onChange={(value) => { setForm({ ...form, slot: value }); field.touch("slot"); }}
+              options={[{ value: "", label: t("facilityBookings.selectSlot") }, ...slotList.map((slot) => ({ value: String(slot.number), label: slotLabel(t, slot.number, slotList) }))]} />
+            <AppFieldError message={field.error("slot")} /></div>
         </div>
         <label className="block text-sm font-medium">{t("roomAllocations.note")}
           <AppInput className="mt-1 w-full" maxLength={500} value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} /></label>
         <p className="text-sm text-muted-app">{t("roomAllocations.rule")}</p>
-        {formError && <AppNotice tone="danger" role="alert">{formError}</AppNotice>}
         {allocate.isError && <AppNotice tone="danger" role="alert" title={conflicts.length ? t("roomAllocations.conflictTitle") : undefined}>
           {conflicts.length ? <ul className="space-y-1">{conflicts.map((item, index) => <li key={`${item.startAt}-${index}`} className="break-words">
             {dateTime.format(new Date(item.startAt))} · {item.source === "event" ? t("roomAllocations.conflictEvent") : t("roomAllocations.conflictBooking")}
@@ -235,16 +257,18 @@ export function RoomAllocationsPage() {
         </div>
       </form>
     </AppDialog>}
-    {revoking && <AppDialog open title={t("roomAllocations.revokeTitle")} closeLabel={t("roomAllocations.close")} onClose={() => setRevoking(null)}>
-      <form className="space-y-4" onSubmit={(event) => void confirmRevoke(event)}>
+    {revoking && <AppDialog open title={t("roomAllocations.revokeTitle")} closeLabel={t("roomAllocations.close")} onClose={closeRevoke}>
+      <form className="space-y-4" noValidate onSubmit={(event) => void confirmRevoke(event)}>
         <p className="font-semibold break-words">{revoking.clubName} · {revoking.propertyName} · {weekdayLabel(t, revoking.weekday)} · {slotLabel(t, revoking.slot, slotList)}</p>
         <p className="text-sm text-muted-app">{t("roomAllocations.revokeRule")}</p>
-        <label className="block text-sm font-medium">{t("roomAllocations.revokeReason")}
-          <AppInput className="mt-1 w-full" required maxLength={2000} value={reason} onChange={(event) => setReason(event.target.value)} /></label>
+        <label className="block text-sm font-medium">{t("roomAllocations.revokeReason")}<AppRequiredMark />
+          <AppInput className="mt-1 w-full" maxLength={2000} value={reason} {...revokeField.control("reason")}
+            onChange={(event) => setReason(event.target.value)} />
+          <AppFieldError message={revokeField.error("reason")} /></label>
         {revoke.isError && <AppNotice tone="danger" role="alert">{revoke.error.message}</AppNotice>}
         <div className="flex flex-wrap gap-3">
-          <AppButton type="submit" disabled={revoke.isPending || !reason.trim()}>{t("roomAllocations.revokeConfirm")}</AppButton>
-          <AppButton type="button" variant="secondary" onClick={() => setRevoking(null)}>{t("roomAllocations.close")}</AppButton>
+          <AppButton type="submit" disabled={revoke.isPending}>{t("roomAllocations.revokeConfirm")}</AppButton>
+          <AppButton type="button" variant="secondary" onClick={closeRevoke}>{t("roomAllocations.close")}</AppButton>
         </div>
       </form>
     </AppDialog>}
