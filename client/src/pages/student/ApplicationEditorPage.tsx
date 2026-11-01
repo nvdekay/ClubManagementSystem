@@ -20,6 +20,10 @@ import type {
 } from "@/services/applications";
 import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
+import { isEmail, isHttpUrl } from "@/utils/validation";
 
 function stateTone(state: string): AppBadgeTone {
   if (state === "Approved") return "success";
@@ -83,6 +87,17 @@ export function ApplicationEditorPage() {
     : me ? { clubName: "", fieldId: "", summary: "", objectives: "", fanpageUrl: "", contactEmail: "",
       founders: [{ userId: me.id, role: "LEADER" }] } : null);
   const documents = application?.draft.documents ?? [];
+  const requiredFields = config.data?.requirements.required;
+  const field = useFieldValidation(currentDraft ? {
+    clubName: currentDraft.clubName.trim() ? null : t("common.fieldRequired"),
+    fieldId: currentDraft.fieldId ? null : t("common.chooseRequired"),
+    summary: requiredFields?.summary && !currentDraft.summary.trim() ? t("common.fieldRequired") : null,
+    objectives: requiredFields?.objectives && !currentDraft.objectives.trim() ? t("common.fieldRequired") : null,
+    fanpageUrl: currentDraft.fanpageUrl.trim() ? (isHttpUrl(currentDraft.fanpageUrl) ? null : t("common.invalidUrl"))
+      : requiredFields?.fanpageUrl ? t("common.fieldRequired") : null,
+    contactEmail: currentDraft.contactEmail.trim() ? (isEmail(currentDraft.contactEmail) ? null : t("common.invalidEmail"))
+      : requiredFields?.contactEmail ? t("common.fieldRequired") : null,
+  } : {});
   const steps = [t("applications.stepClub"), t("applications.stepFounders"),
     t("applications.stepFiles"), t("applications.stepReview")];
 
@@ -142,6 +157,11 @@ export function ApplicationEditorPage() {
   }
 
   async function goTo(target: number) {
+    // Leaving step 1 reveals every club-information error; only name and field block a draft save.
+    if (editable && step === 0 && target > 0) {
+      field.touchAll();
+      if (!currentDraft?.clubName.trim() || !currentDraft.fieldId) return;
+    }
     if (editable && !(await persist())) return;
     setStep(target);
   }
@@ -283,11 +303,10 @@ export function ApplicationEditorPage() {
     return documents.find((item) => item.documentType === type);
   }
 
-  function label(text: string, field?: FoundingField | "always"): ReactNode {
-    const isRequired = field === "always" || (field ? required[field] : false);
-    return <span className="flex flex-wrap items-center gap-2">{text}
-      <span className={cn("text-xs font-normal text-muted-app", { "text-danger-app": isRequired })}>
-        {isRequired ? `* ${t("applications.required")}` : t("applications.optional")}</span></span>;
+  function label(text: string, requirement?: FoundingField | "always"): ReactNode {
+    const isRequired = requirement === "always" || (requirement ? required[requirement] : false);
+    return <span className="flex flex-wrap items-center gap-2"><span>{text}{isRequired && <AppRequiredMark />}</span>
+      {!isRequired && <span className="text-xs font-normal text-muted-app">{t("applications.optional")}</span>}</span>;
   }
 
   function fileCard(type: ApplicationDocumentType, title: string, hint: string, field: FoundingField) {
@@ -423,32 +442,40 @@ export function ApplicationEditorPage() {
           <p className="text-sm text-muted-app sm:col-span-2">{t("applications.publicHint")}</p>
           <label className="text-sm font-medium">{label(t("applications.clubName"), "always")}
             <AppInput className="mt-2 block w-full" maxLength={200} value={currentDraft.clubName}
-              onChange={(event) => change("clubName", event.target.value)} />
+              {...field.control("clubName")} onChange={(event) => change("clubName", event.target.value)} />
+            <AppFieldError message={field.error("clubName")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("applications.clubNameHint")}</span>
           </label>
           <div className="text-sm font-medium">{label(t("applications.field"), "always")}
             {fieldOptions.length ? <AppSelect className="mt-2 w-full" label={t("applications.field")}
-              value={currentDraft.fieldId} onChange={(value) => change("fieldId", value)}
+              required invalid={Boolean(field.error("fieldId"))} value={currentDraft.fieldId}
+              onChange={(value) => { change("fieldId", value); field.touch("fieldId"); }}
               options={[{ value: "", label: t("applications.fieldPlaceholder") }, ...fieldOptions]} />
               : <p className="mt-2 text-sm font-normal text-danger-app">{t("applications.noFields")}</p>}
+            <AppFieldError message={field.error("fieldId")} />
           </div>
           <label className="text-sm font-medium sm:col-span-2">{label(t("applications.summary"), "summary")}
             <AppTextarea className="mt-2 block w-full" maxLength={1000} rows={2} value={currentDraft.summary}
-              onChange={(event) => change("summary", event.target.value)} />
+              {...field.control("summary", required.summary)} onChange={(event) => change("summary", event.target.value)} />
+            <AppFieldError message={field.error("summary")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("applications.summaryHint")}</span>
           </label>
           <label className="text-sm font-medium sm:col-span-2">{label(t("applications.objectives"), "objectives")}
             <AppTextarea className="mt-2 block w-full" maxLength={5000} value={currentDraft.objectives}
-              onChange={(event) => change("objectives", event.target.value)} />
+              {...field.control("objectives", required.objectives)} onChange={(event) => change("objectives", event.target.value)} />
+            <AppFieldError message={field.error("objectives")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("applications.objectivesHint")}</span>
           </label>
           <label className="text-sm font-medium">{label(t("applications.fanpageUrl"), "fanpageUrl")}
             <AppInput className="mt-2 block w-full" type="url" maxLength={2000} value={currentDraft.fanpageUrl}
-              placeholder={t("applications.fanpagePlaceholder")} onChange={(event) => change("fanpageUrl", event.target.value)} />
+              placeholder={t("applications.fanpagePlaceholder")} {...field.control("fanpageUrl", required.fanpageUrl)}
+              onChange={(event) => change("fanpageUrl", event.target.value)} />
+            <AppFieldError message={field.error("fanpageUrl")} />
           </label>
           <label className="text-sm font-medium">{label(t("applications.contactEmail"), "contactEmail")}
             <AppInput className="mt-2 block w-full" type="email" maxLength={320} value={currentDraft.contactEmail}
-              onChange={(event) => change("contactEmail", event.target.value)} />
+              {...field.control("contactEmail", required.contactEmail)} onChange={(event) => change("contactEmail", event.target.value)} />
+            <AppFieldError message={field.error("contactEmail")} />
           </label>
         </section>}
 
@@ -506,7 +533,7 @@ export function ApplicationEditorPage() {
             onClick={() => void goTo(step - 1)}>{t("applications.previous")}</AppButton>}
           <AppButton type="button" variant="secondary" disabled={action.isPending} onClick={() => void saveOnly()}>
             {action.isPending ? t("applications.saving") : t("applications.save")}</AppButton>
-          {step < 3 && <AppButton type="button" disabled={action.isPending || !currentDraft.clubName.trim() || !currentDraft.fieldId}
+          {step < 3 && <AppButton type="button" disabled={action.isPending}
             onClick={() => void goTo(step + 1)}>{t("applications.next")}</AppButton>}
           {step === 3 && <AppButton type="button" disabled={action.isPending || preview.isPending || issues.length > 0}
             onClick={() => void submit()}><AppIcon name="send" className="size-4" />{t("applications.submit")}</AppButton>}

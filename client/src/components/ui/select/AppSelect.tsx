@@ -15,6 +15,9 @@ interface AppSelectProps<T> {
   /** Accessible name for the trigger — it only displays the selected label. */
   label: string;
   disabled?: boolean;
+  /** Marks the trigger as required / in error (red border), like `aria-invalid` on AppInput. */
+  required?: boolean;
+  invalid?: boolean;
   /** Sits on the positioning wrapper, so a width utility lands where it can take effect. */
   className?: string;
 }
@@ -64,6 +67,8 @@ export function AppSelect<T extends string | number>({
   onChange,
   label,
   disabled,
+  required,
+  invalid,
   className,
 }: AppSelectProps<T>) {
   const [open, setOpen] = useState(false);
@@ -157,9 +162,11 @@ export function AppSelect<T extends string | number>({
         aria-controls={open ? listId : undefined}
         aria-label={label}
         disabled={disabled}
+        aria-required={required || undefined}
+        aria-invalid={invalid || undefined}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onTriggerKeyDown}
-        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border-app bg-bg-app pr-2 pl-3.5 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-10"
+        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border-app bg-bg-app pr-2 pl-3.5 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-10 aria-[invalid=true]:border-danger-app aria-[invalid=true]:focus-visible:ring-danger-app"
       >
         <span>{options[selectedIndex]?.label ?? ""}</span>
         <ChevronDownIcon />
