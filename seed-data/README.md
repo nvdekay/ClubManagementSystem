@@ -17,8 +17,9 @@ docker compose exec -T mongo mongorestore --drop --gzip --archive < seed-data/uc
 `--drop` thay toàn bộ dữ liệu cũ của các collection có trong file, nên chạy lại được.
 Không cần chạy các lệnh `npm run seed*` nữa.
 
-Đăng nhập: đặt `BOOTSTRAP_ICPDP_EMAIL` bằng email Google của bạn. Tài khoản demo
-(`@demo.ucms.edu.vn`) chỉ là dữ liệu, không đăng nhập Google được.
+Đăng nhập: đặt `BOOTSTRAP_ICPDP_EMAIL` bằng email Google của bạn. 166 tài khoản sinh viên mẫu dùng email
+dạng sinh viên FPT (ví dụ `dungndhe170004@fpt.edu.vn`), đều `Active` nên nhập được khi gán ban chủ nhiệm
+lúc lập CLB; chúng chỉ là dữ liệu, không đăng nhập Google được.
 
 ## Cập nhật file dump
 

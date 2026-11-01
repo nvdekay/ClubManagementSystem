@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import type { AcademicSemester } from "../../domain/policy.js";
 import { loadConfig } from "../config/index.js";
+import { studentEmail } from "./seed-email.js";
 import { ensureUcmsDatabase, ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
@@ -50,9 +51,6 @@ const FAMILY = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Pha
 const MIDDLE = ["Văn", "Thị", "Minh", "Đức", "Thu", "Ngọc", "Hoàng", "Gia", "Thanh", "Bảo", "Khánh", "Quang", "Hải", "Phương"];
 const GIVEN = ["An", "Anh", "Bình", "Chi", "Dũng", "Duy", "Giang", "Hà", "Hân", "Hiếu", "Hoa", "Huy", "Khang", "Khoa", "Lan", "Linh",
   "Long", "Mai", "My", "Nam", "Ngân", "Nhi", "Phong", "Phúc", "Quân", "Quyên", "Sơn", "Tâm", "Thảo", "Trang", "Trí", "Tú", "Uyên", "Vy", "Yến"];
-function ascii(value: string): string {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
-}
 
 // The PDP snapshot leaves most clubs unclassified; these fields are a demo guess from each club's name.
 const DEMO_FIELDS: Record<string, string> = {
@@ -88,7 +86,7 @@ async function main() {
     const name = `${pick(FAMILY)} ${pick(MIDDLE)} ${pick(GIVEN)}`;
     const id = oid(`user:${index}`);
     students.push(id);
-    const email = `${ascii(name.split(" ").at(-1)!)}.${String(index).padStart(3, "0")}@demo.ucms.edu.vn`;
+    const email = studentEmail(name, 180000 + index);
     added("users", await insert(m.users!, { _id: id, email, displayName: name, accountState: "Active",
       createdAt: new Date(now.getTime() - int(20, 360) * DAY) }));
   }

@@ -50,6 +50,7 @@ import { mongoPropertyRepository } from "./mongo-property-repository.js";
 import { mongoRoomAllocationRepository } from "./mongo-room-allocation-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
+import { studentEmail } from "./seed-email.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
 
 const config = loadConfig();
@@ -70,7 +71,7 @@ if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ownerEmail)) {
   process.exit(1);
 }
 
-// Demo students: clearly demo addresses that cannot belong to a real person.
+// Demo students; addresses come from studentEmail (FPT student format).
 const students = [
   ["Trần Minh Anh", "minhanh"], ["Lê Hoàng Bảo", "hoangbao"], ["Phạm Thu Chi", "thuchi"],
   ["Nguyễn Đức Dũng", "ducdung"], ["Võ Ngọc Hà", "ngocha"], ["Đặng Quốc Huy", "quochuy"],
@@ -186,7 +187,7 @@ try {
     return created!._id as Types.ObjectId;
   }
   const owner = await user(ownerEmail, String(args["owner-name"] || ownerEmail.split("@")[0]));
-  const s = await Promise.all(students.map(([name, slug]) => user(`${slug}@demo.ucms.edu.vn`, name)));
+  const s = await Promise.all(students.map(([name], index) => user(studentEmail(name, 170001 + index), name)));
 
   const officerRole = await ucmsModels.roles!.findOne({ code: "ICPDP_OFFICER" }).lean();
   if (!officerRole) throw new Error("ICPDP_OFFICER role missing — start the server once so auth bootstrap runs");
