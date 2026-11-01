@@ -5,6 +5,8 @@ import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { AppSelect } from "@/components/ui/select/AppSelect";
@@ -13,6 +15,7 @@ import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/ui/table/AppTable";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useRecruitmentCampaigns } from "@/hooks/useRecruitmentCampaigns";
 import { useApplicationsForReview, useCandidateEvaluations, useReviewRecruitmentApplications } from "@/hooks/useRecruitmentApplications";
 import type { CandidateEvaluationGroup, RecruitmentApplication } from "@/services/recruitmentApplications";
@@ -51,6 +54,7 @@ export function RecruitmentReviewPage() {
   const [stateFilter, setStateFilter] = useState<StateFilter>("all");
   const [search, setSearch] = useState("");
   const [openId, setOpenId] = useState<string>();
+  const field = useFieldValidation({ reason: reason.trim() ? null : t("common.fieldRequired") });
   const userId = auth.data?.user.id;
 
   const allRows = useMemo(() => {
@@ -123,12 +127,14 @@ export function RecruitmentReviewPage() {
   async function bulk(actionName: "shortlist" | "decide") {
     if (!clubId || !campaignId || !auth.data || !selected.length) return;
     setError("");
+    if (!field.touchAll()) return;
     try {
       await action.mutateAsync({ clubId, campaignId, action: actionName, applicationIds: selected,
         ...(actionName === "shortlist" ? { reason: reason.trim() } : { outcome: "Rejected" as const, reason: reason.trim() }),
         csrfToken: auth.data.csrfToken });
       setSelected([]);
       setReason("");
+      field.reset();
       appToast.success(t("recruitmentApplications.actionDone"));
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
@@ -148,16 +154,17 @@ export function RecruitmentReviewPage() {
     {evaluations.isError && <AppNotice tone="warning" role="alert" className="mb-4" title={t("recruitmentApplications.evaluationLoadError")}>
       <AppButton variant="secondary" onClick={() => void evaluations.refetch()}>{t("recruitmentApplications.retry")}</AppButton></AppNotice>}
     {selected.length > 0 && <section aria-label={t("recruitmentApplications.reviewReason")} className="mb-6 space-y-3 rounded-2xl bg-surface-app p-4 sm:p-5">
-      <label className="block text-sm font-semibold">{t("recruitmentApplications.reviewReason")}
+      <label className="block text-sm font-semibold">{t("recruitmentApplications.reviewReason")}<AppRequiredMark />
         <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
-          className="mt-2 block min-h-20 w-full font-normal" />
+          {...field.control("reason")} className="mt-2 block min-h-20 w-full font-normal" />
+        <AppFieldError message={field.error("reason")} />
         <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentApplications.reviewReasonHint")}</span></label>
       {error && <AppNotice tone="danger" role="alert">{error}</AppNotice>}
       <div className="flex flex-wrap items-center gap-2">
-        <AppButton disabled={action.isPending || !reason.trim()} onClick={() => void bulk("shortlist")}>{t("recruitmentApplications.bulkShortlist")}</AppButton>
-        <AppButton className="bg-danger-app text-bg-app hover:opacity-90" disabled={action.isPending || !reason.trim()}
+        <AppButton disabled={action.isPending} onClick={() => void bulk("shortlist")}>{t("recruitmentApplications.bulkShortlist")}</AppButton>
+        <AppButton className="bg-danger-app text-bg-app hover:opacity-90" disabled={action.isPending}
           onClick={() => void bulk("decide")}>{t("recruitmentApplications.bulkReject")}</AppButton>
-        <AppButton variant="ghost" onClick={() => setSelected([])}>{t("recruitmentApplications.clearSelection")}</AppButton>
+        <AppButton variant="ghost" onClick={() => { setSelected([]); field.reset(); }}>{t("recruitmentApplications.clearSelection")}</AppButton>
         <AppBadge tone="info">{selected.length} {t("recruitmentApplications.selected")}</AppBadge>
       </div>
     </section>}
