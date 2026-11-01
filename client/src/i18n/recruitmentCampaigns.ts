@@ -26,6 +26,7 @@ const en = {
   stateDraft: "Draft", statePublished: "Published", stateAccepting: "Accepting applications",
   stateScreening: "Screening", stateCompleted: "Completed", stateCancelled: "Cancelled",
   reviewApplications: "Review applications",
+  keyFormat: "Start with a lowercase letter and use only a–z, 0–9 or _.", optionsMin: "Enter at least two options, separated by commas.",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -56,6 +57,7 @@ const vi: Record<keyof typeof en, string> = {
   stateDraft: "Bản nháp", statePublished: "Đã công bố", stateAccepting: "Đang nhận đơn",
   stateScreening: "Đang sàng lọc", stateCompleted: "Đã hoàn tất", stateCancelled: "Đã huỷ",
   reviewApplications: "Xét duyệt đơn",
+  keyFormat: "Bắt đầu bằng chữ thường, chỉ dùng a–z, 0–9 hoặc _.", optionsMin: "Nhập ít nhất hai lựa chọn, phân cách bằng dấu phẩy.",
 };
 
 export const recruitmentCampaigns = { en, vi };

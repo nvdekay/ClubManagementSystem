@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -21,6 +21,10 @@ import {
 } from "@/services/clubSettings";
 import type { ClubProfileFormField } from "@/services/policy";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
+import { isEmail, isHttpUrl } from "@/utils/validation";
 
 function profileLabelKey(field: ClubProfileFormField) {
   switch (field) {
@@ -52,8 +56,6 @@ export function ClubSettingsPage() {
   const [profileDraft, setProfileDraft] = useState<ClubProfileInput | null>(null);
   const [department, setDepartment] = useState<ClubDepartmentInput>(emptyDepartment);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [channelsMissing, setChannelsMissing] = useState(false);
-  const profileRef = useRef<HTMLFieldSetElement>(null);
 
   const loadedProfile = settings.data ? {
     description: settings.data.profile.description ?? "",
@@ -64,6 +66,31 @@ export function ClubSettingsPage() {
     operatingScope: settings.data.profile.operatingScope ?? "",
   } satisfies ClubProfileInput : emptyProfile;
   const profile = profileDraft ?? loadedProfile;
+  const requiredFields = settings.data?.requiredProfileFields;
+  const fieldRequired = t("common.fieldRequired");
+  const contactEmail = profile.contactEmail?.trim() ?? "";
+  const charterUrl = profile.charterUrl?.trim() ?? "";
+  const profileErrors: Record<string, string | null> = {
+    description: requiredFields?.description && !profile.description?.trim() ? fieldRequired : null,
+    operatingScope: requiredFields?.operatingScope && !profile.operatingScope?.trim() ? fieldRequired : null,
+    contactEmail: contactEmail ? (isEmail(contactEmail) ? null : t("common.invalidEmail"))
+      : requiredFields?.contactEmail ? fieldRequired : null,
+    contactPhone: requiredFields?.contactPhone && !profile.contactPhone?.trim() ? fieldRequired : null,
+    charterUrl: charterUrl ? (isHttpUrl(charterUrl) ? null : t("common.invalidUrl"))
+      : requiredFields?.charterUrl ? fieldRequired : null,
+    channels: requiredFields?.channels && !profile.channels.length ? t("clubSettings.channelsRequired") : null,
+  };
+  profile.channels.forEach((channel, index) => {
+    profileErrors[`channel.${index}.label`] = channel.label.trim() ? null : fieldRequired;
+    profileErrors[`channel.${index}.url`] = !channel.url.trim() ? fieldRequired : isHttpUrl(channel.url) ? null : t("common.invalidUrl");
+  });
+  const profileCheck = useFieldValidation(profileErrors);
+  const departmentCheck = useFieldValidation({
+    name: department.name.trim() ? null : fieldRequired,
+    sortOrder: !Number.isInteger(department.sortOrder) ? t("common.invalidNumber")
+      : department.sortOrder < 0 ? t("common.numberMin", { min: 0 })
+        : department.sortOrder > 10000 ? t("common.numberMax", { max: 10000 }) : null,
+  });
 
   function profileField<K extends keyof ClubProfileInput>(key: K, value: ClubProfileInput[K]) {
     setProfileDraft((current) => ({ ...(current ?? loadedProfile), [key]: value }));
@@ -78,17 +105,12 @@ export function ClubSettingsPage() {
   }
 
   async function saveProfile() {
-    if (!auth.data || !clubId) return;
-    // The profile is not a <form>, so run the browser constraint checks (email, URL, required) by hand.
-    const invalid = profileRef.current?.querySelector<HTMLInputElement>("input:invalid, textarea:invalid");
-    if (invalid) { invalid.reportValidity(); return; }
-    const needsChannel = Boolean(settings.data?.requiredProfileFields.channels) && !profile.channels.length;
-    setChannelsMissing(needsChannel);
-    if (needsChannel) return;
+    if (!auth.data || !clubId || !profileCheck.touchAll()) return;
     try {
       await action.mutateAsync({ kind: "profile", clubId, input: profile,
         csrfToken: auth.data.csrfToken });
       setProfileDraft(null);
+      profileCheck.reset();
     } catch { /* Mutation error is rendered below. */ }
   }
 
@@ -103,15 +125,17 @@ export function ClubSettingsPage() {
     setEditingId(value.id);
     setDepartment({ name: value.name, description: value.description ?? "",
       sortOrder: value.sortOrder });
+    departmentCheck.reset();
   }
 
   function resetDepartment() {
     setEditingId(null);
     setDepartment(emptyDepartment);
+    departmentCheck.reset();
   }
 
   async function saveDepartment() {
-    if (!auth.data || !clubId) return;
+    if (!auth.data || !clubId || !departmentCheck.touchAll()) return;
     try {
       await action.mutateAsync(editingId
         ? { kind: "updateDepartment", clubId, departmentId: editingId,
@@ -157,9 +181,7 @@ export function ClubSettingsPage() {
   const required = settings.data.requiredProfileFields;
   const anyRequired = Object.values(required).some(Boolean);
   function label(field: ClubProfileFormField) {
-    return <>{t(profileLabelKey(field))}{required[field] && (
-      <span className="text-danger-app"> *<span className="sr-only"> ({t("clubSettings.requiredMark")})</span></span>
-    )}</>;
+    return <>{t(profileLabelKey(field))}{required[field] && <AppRequiredMark />}</>;
   }
   const stateLabel = current.state === "Pending Setup" ? t("clubSettings.pendingSetup")
     : current.state === "Active" ? t("discovery.active")
@@ -185,36 +207,38 @@ export function ClubSettingsPage() {
 
       <div className="mt-10 grid items-start gap-x-12 gap-y-10 lg:grid-cols-2">
         <section>
-          <fieldset disabled={!canManage} ref={profileRef} className="contents">
+          <fieldset disabled={!canManage} className="contents">
           <h2 className="font-heading text-xl font-bold">{t("clubSettings.profile")}</h2>
           {anyRequired && <p className="mt-1 text-sm text-muted-app">{t("clubSettings.requiredHint")}</p>}
           <label className="mt-5 block text-sm font-semibold">{label("description")}
             <AppTextarea className="mt-2 block min-h-32 w-full font-normal" value={profile.description}
-              required={required.description}
+              {...profileCheck.control("description", required.description)}
               onChange={(event) => profileField("description", event.target.value)} maxLength={10000} />
+            <AppFieldError message={profileCheck.error("description")} />
           </label>
           <label className="mt-5 block text-sm font-semibold">{label("operatingScope")}
             <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={profile.operatingScope}
-              required={required.operatingScope}
+              {...profileCheck.control("operatingScope", required.operatingScope)}
               onChange={(event) => profileField("operatingScope", event.target.value)} maxLength={2000} />
+            <AppFieldError message={profileCheck.error("operatingScope")} />
           </label>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm font-semibold">{label("contactEmail")}<AppInput className="mt-2 block w-full font-normal" type="email" required={required.contactEmail} value={profile.contactEmail} onChange={(event) => profileField("contactEmail", event.target.value)} /></label>
-            <label className="block text-sm font-semibold">{label("contactPhone")}<AppInput className="mt-2 block w-full font-normal" required={required.contactPhone} value={profile.contactPhone} onChange={(event) => profileField("contactPhone", event.target.value)} /></label>
+            <label className="block text-sm font-semibold">{label("contactEmail")}<AppInput className="mt-2 block w-full font-normal" type="email" {...profileCheck.control("contactEmail", required.contactEmail)} value={profile.contactEmail} onChange={(event) => profileField("contactEmail", event.target.value)} /><AppFieldError message={profileCheck.error("contactEmail")} /></label>
+            <label className="block text-sm font-semibold">{label("contactPhone")}<AppInput className="mt-2 block w-full font-normal" {...profileCheck.control("contactPhone", required.contactPhone)} value={profile.contactPhone} onChange={(event) => profileField("contactPhone", event.target.value)} /><AppFieldError message={profileCheck.error("contactPhone")} /></label>
           </div>
-          <label className="mt-5 block text-sm font-semibold">{label("charterUrl")}<AppInput className="mt-2 block w-full font-normal" type="url" required={required.charterUrl} value={profile.charterUrl} onChange={(event) => profileField("charterUrl", event.target.value)} /></label>
+          <label className="mt-5 block text-sm font-semibold">{label("charterUrl")}<AppInput className="mt-2 block w-full font-normal" type="url" {...profileCheck.control("charterUrl", required.charterUrl)} value={profile.charterUrl} onChange={(event) => profileField("charterUrl", event.target.value)} /><AppFieldError message={profileCheck.error("charterUrl")} /></label>
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border-app pt-6"><h3 className="font-heading font-bold">{label("channels")}</h3><AppButton disabled={!canManage} variant="secondary" onClick={() => profileField("channels", [...profile.channels, { label: "", url: "" }])}><AppIcon name="plus" className="size-4" />{t("clubSettings.addChannel")}</AppButton></div>
           <div className="mt-3 divide-y divide-border-app">{profile.channels.map((channel, index) => (
             <div key={index} className="grid gap-2 py-3 sm:grid-cols-[1fr_1.4fr_auto]">
-              <AppInput required aria-label={t("clubSettings.channelLabel")} placeholder={t("clubSettings.channelLabel")} value={channel.label} onChange={(event) => channelField(index, "label", event.target.value)} />
-              <AppInput required aria-label={t("clubSettings.channelUrl")} type="url" placeholder={t("clubSettings.channelUrl")} value={channel.url} onChange={(event) => channelField(index, "url", event.target.value)} />
+              <div className="min-w-0"><AppInput className="w-full" {...profileCheck.control(`channel.${index}.label`)} aria-label={t("clubSettings.channelLabel")} placeholder={t("clubSettings.channelLabel")} value={channel.label} onChange={(event) => channelField(index, "label", event.target.value)} />
+                <AppFieldError message={profileCheck.error(`channel.${index}.label`)} /></div>
+              <div className="min-w-0"><AppInput className="w-full" {...profileCheck.control(`channel.${index}.url`)} aria-label={t("clubSettings.channelUrl")} type="url" placeholder={t("clubSettings.channelUrl")} value={channel.url} onChange={(event) => channelField(index, "url", event.target.value)} />
+                <AppFieldError message={profileCheck.error(`channel.${index}.url`)} /></div>
               <AppButton disabled={!canManage} variant="ghost" className="hover:text-danger-app" onClick={() => profileField("channels", profile.channels.filter((_, currentIndex) => currentIndex !== index))}>{t("clubSettings.removeChannel")}</AppButton>
             </div>
           ))}</div>
-          {channelsMissing && !profile.channels.length && (
-            <p role="alert" className="mt-2 text-sm text-danger-app">{t("clubSettings.channelsRequired")}</p>
-          )}
+          <AppFieldError message={profileCheck.error("channels")} />
           </fieldset>
           {canManage && <AppButton className="mt-6 w-full sm:w-auto" disabled={action.isPending} onClick={() => void saveProfile()}>{action.isPending ? t("clubSettings.saving") : t("clubSettings.saveProfile")}</AppButton>}
         </section>
@@ -235,10 +259,10 @@ export function ClubSettingsPage() {
 
           {canManage && <section className="rounded-2xl bg-surface-app p-5 sm:p-6">
             <h2 className="font-heading text-lg font-bold">{editingId ? t("clubSettings.editDepartment") : t("clubSettings.addDepartment")}</h2>
-            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentName")}<AppInput className="mt-2 block w-full font-normal" value={department.name} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, name: event.target.value }))} maxLength={120} /></label>
+            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentName")}<AppRequiredMark /><AppInput className="mt-2 block w-full font-normal" {...departmentCheck.control("name")} value={department.name} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, name: event.target.value }))} maxLength={120} /><AppFieldError message={departmentCheck.error("name")} /></label>
             <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentDescription")}<AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={department.description} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, description: event.target.value }))} maxLength={2000} /></label>
-            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.sortOrder")}<AppInput className="mt-2 block w-full font-normal" type="number" min={0} max={10000} value={department.sortOrder} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, sortOrder: Number(event.target.value) }))} /></label>
-            <div className="mt-5 flex flex-wrap gap-2"><AppButton disabled={action.isPending || !department.name.trim()} onClick={() => void saveDepartment()}>{t("clubSettings.saveDepartment")}</AppButton>{editingId && <AppButton variant="secondary" onClick={resetDepartment}>{t("clubSettings.cancel")}</AppButton>}</div>
+            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.sortOrder")}<AppInput className="mt-2 block w-full font-normal" type="number" min={0} max={10000} {...departmentCheck.control("sortOrder", false)} value={department.sortOrder} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, sortOrder: Number(event.target.value) }))} /><AppFieldError message={departmentCheck.error("sortOrder")} /></label>
+            <div className="mt-5 flex flex-wrap gap-2"><AppButton disabled={action.isPending} onClick={() => void saveDepartment()}>{t("clubSettings.saveDepartment")}</AppButton>{editingId && <AppButton variant="secondary" onClick={resetDepartment}>{t("clubSettings.cancel")}</AppButton>}</div>
           </section>}
         </div>
       </div>

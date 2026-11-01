@@ -15,6 +15,9 @@ import { cn } from "@/utils/cn";
 import { CampaignApiError, type OverlappingCampaign, type RecruitmentCampaign,
   type RecruitmentCampaignInput, type RecruitmentFormField, type RecruitmentRubricCriterion } from "@/services/recruitmentCampaigns";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
 interface CampaignForm {
   title: string;
@@ -64,6 +67,13 @@ function campaignInput(form: CampaignForm): RecruitmentCampaignInput {
   };
 }
 
+// Same key shape the server accepts for form fields and rubric criteria.
+const keyPattern = /^[a-z][a-z0-9_]{0,49}$/;
+
+function hasLine(value: string): boolean {
+  return value.split("\n").some((item) => item.trim());
+}
+
 function overlapsFrom(error: unknown): OverlappingCampaign[] {
   if (!(error instanceof CampaignApiError) || !error.details || typeof error.details !== "object") return [];
   const details = error.details as { overlaps?: unknown };
@@ -92,6 +102,29 @@ export function RecruitmentCampaignPage() {
   const [overlaps, setOverlaps] = useState<OverlappingCampaign[]>([]);
   const [notice, setNotice] = useState("");
   const [pageError, setPageError] = useState("");
+  const required = t("common.fieldRequired");
+  const capacity = Number(form.capacity);
+  const errors: Record<string, string | null> = {
+    title: form.title.trim() ? null : required,
+    positions: hasLine(form.positions) ? null : required,
+    windowStart: form.windowStart ? null : required,
+    windowEnd: !form.windowEnd ? required : form.windowStart && form.windowEnd <= form.windowStart ? t("common.endAfterStart") : null,
+    capacity: !form.capacity.trim() ? required : !Number.isInteger(capacity) ? t("common.invalidNumber")
+      : capacity < 1 ? t("common.numberMin", { min: 1 }) : capacity > 10000 ? t("common.numberMax", { max: 10000 }) : null,
+    steps: hasLine(form.steps) ? null : required,
+  };
+  form.fields.forEach((item, index) => {
+    errors[`field.${index}.key`] = !item.key.trim() ? required : keyPattern.test(item.key.trim()) ? null : t("recruitmentCampaigns.keyFormat");
+    errors[`field.${index}.label`] = item.label.trim() ? null : required;
+    errors[`field.${index}.options`] = ["select", "multiselect"].includes(item.type) && (item.options?.length ?? 0) < 2 ? t("recruitmentCampaigns.optionsMin") : null;
+  });
+  form.rubric.forEach((item, index) => {
+    errors[`rubric.${index}.key`] = !item.key.trim() ? required : keyPattern.test(item.key.trim()) ? null : t("recruitmentCampaigns.keyFormat");
+    errors[`rubric.${index}.label`] = item.label.trim() ? null : required;
+    errors[`rubric.${index}.maxScore`] = !Number.isInteger(item.maxScore) ? t("common.invalidNumber")
+      : item.maxScore < 1 ? t("common.numberMin", { min: 1 }) : item.maxScore > 100 ? t("common.numberMax", { max: 100 }) : null;
+  });
+  const validation = useFieldValidation(errors);
 
   function dateLabel(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
@@ -103,6 +136,7 @@ export function RecruitmentCampaignPage() {
     setOverlaps([]);
     setNotice("");
     setPageError("");
+    validation.reset();
   }
 
   function beginNew() {
@@ -111,24 +145,16 @@ export function RecruitmentCampaignPage() {
     setOverlaps([]);
     setNotice("");
     setPageError("");
+    validation.reset();
   }
 
   function field<K extends keyof CampaignForm>(key: K, value: CampaignForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
-  function formInput(): RecruitmentCampaignInput | null {
-    if (!form.windowStart || !form.windowEnd) {
-      setPageError(t("recruitmentCampaigns.actionError"));
-      return null;
-    }
-    return campaignInput(form);
-  }
-
   async function saveDraft() {
-    if (!auth.data || !clubId) return;
-    const input = formInput();
-    if (!input) return;
+    if (!auth.data || !clubId || !validation.touchAll()) return;
+    const input = campaignInput(form);
     setPageError("");
     setNotice("");
     try {
@@ -139,6 +165,7 @@ export function RecruitmentCampaignPage() {
       setSelectedId(result.campaign.id);
       setForm(campaignForm(result.campaign));
       setOverlaps(result.overlaps);
+      validation.reset();
       setNotice(t("recruitmentCampaigns.saved"));
     } catch (error) {
       setPageError(error instanceof Error ? error.message : t("recruitmentCampaigns.actionError"));
@@ -155,6 +182,7 @@ export function RecruitmentCampaignPage() {
       setOverlaps([]);
       setSelectedId(null);
       setForm({ ...emptyForm, steps: t("recruitmentCampaigns.defaultStep") });
+      validation.reset();
       setNotice(t("recruitmentCampaigns.publishedSuccess"));
     } catch (error) {
       const found = overlapsFrom(error);
@@ -261,30 +289,36 @@ export function RecruitmentCampaignPage() {
           {current && <AppBadge tone={stateTone[current.state]}>{stateLabel[current.state]}</AppBadge>}
         </div>
         <div className="mt-5 grid gap-5">
-          <label className="text-sm font-semibold">{t("recruitmentCampaigns.campaignName")}
+          <label className="text-sm font-semibold">{t("recruitmentCampaigns.campaignName")}<AppRequiredMark />
             <AppInput className="mt-2 block w-full font-normal" value={form.title} maxLength={150}
-              onChange={(event) => field("title", event.target.value)} /></label>
-          <label className="text-sm font-semibold">{t("recruitmentCampaigns.positions")}
+              {...validation.control("title")} onChange={(event) => field("title", event.target.value)} />
+            <AppFieldError message={validation.error("title")} /></label>
+          <label className="text-sm font-semibold">{t("recruitmentCampaigns.positions")}<AppRequiredMark />
             <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={form.positions}
-              onChange={(event) => field("positions", event.target.value)} />
+              {...validation.control("positions")} onChange={(event) => field("positions", event.target.value)} />
+            <AppFieldError message={validation.error("positions")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentCampaigns.positionsHint")}</span></label>
           <label className="text-sm font-semibold">{t("recruitmentCampaigns.criteria")}
             <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={form.criteria} maxLength={10_000}
               onChange={(event) => field("criteria", event.target.value)} /></label>
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="min-w-0 text-sm font-semibold">{t("recruitmentCampaigns.start")}
+            <label className="min-w-0 text-sm font-semibold">{t("recruitmentCampaigns.start")}<AppRequiredMark />
               <AppInput className="mt-2 block w-full min-w-0 font-normal" type="datetime-local" value={form.windowStart}
-                onChange={(event) => field("windowStart", event.target.value)} /></label>
-            <label className="min-w-0 text-sm font-semibold">{t("recruitmentCampaigns.end")}
+                {...validation.control("windowStart")} onChange={(event) => field("windowStart", event.target.value)} />
+              <AppFieldError message={validation.error("windowStart")} /></label>
+            <label className="min-w-0 text-sm font-semibold">{t("recruitmentCampaigns.end")}<AppRequiredMark />
               <AppInput className="mt-2 block w-full min-w-0 font-normal" type="datetime-local" value={form.windowEnd}
-                onChange={(event) => field("windowEnd", event.target.value)} /></label>
+                {...validation.control("windowEnd")} onChange={(event) => field("windowEnd", event.target.value)} />
+              <AppFieldError message={validation.error("windowEnd")} /></label>
           </div>
-          <label className="max-w-xs text-sm font-semibold">{t("recruitmentCampaigns.capacity")}
+          <label className="max-w-xs text-sm font-semibold">{t("recruitmentCampaigns.capacity")}<AppRequiredMark />
             <AppInput className="mt-2 block w-full font-normal" type="number" min={1} max={10000} value={form.capacity}
-              onChange={(event) => field("capacity", event.target.value)} /></label>
-          <label className="text-sm font-semibold">{t("recruitmentCampaigns.rounds")}
+              {...validation.control("capacity")} onChange={(event) => field("capacity", event.target.value)} />
+            <AppFieldError message={validation.error("capacity")} /></label>
+          <label className="text-sm font-semibold">{t("recruitmentCampaigns.rounds")}<AppRequiredMark />
             <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={form.steps}
-              onChange={(event) => field("steps", event.target.value)} />
+              {...validation.control("steps")} onChange={(event) => field("steps", event.target.value)} />
+            <AppFieldError message={validation.error("steps")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentCampaigns.roundsHint")}</span></label>
         </div>
 
@@ -293,18 +327,23 @@ export function RecruitmentCampaignPage() {
             <AppButton variant="secondary" onClick={addField}><AppIcon name="plus" className="size-4" />{t("recruitmentCampaigns.addField")}</AppButton></div>
           {!form.fields.length && <p className="mt-3 text-sm text-muted-app">{t("recruitmentCampaigns.optional")}</p>}
           <div className="mt-4 space-y-3">{form.fields.map((item, index) => <div key={`${item.key}-${index}`} className="grid gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2">
-            <label className={sub}>{t("recruitmentCampaigns.fieldKey")}
-              <AppInput className="mt-1 block w-full text-sm" value={item.key} onChange={(event) => updateField(index, { key: event.target.value })} /></label>
-            <label className={sub}>{t("recruitmentCampaigns.fieldLabel")}
-              <AppInput className="mt-1 block w-full text-sm" value={item.label} onChange={(event) => updateField(index, { label: event.target.value })} /></label>
+            <label className={sub}>{t("recruitmentCampaigns.fieldKey")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full text-sm" value={item.key} {...validation.control(`field.${index}.key`)}
+                onChange={(event) => updateField(index, { key: event.target.value })} />
+              <AppFieldError message={validation.error(`field.${index}.key`)} /></label>
+            <label className={sub}>{t("recruitmentCampaigns.fieldLabel")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full text-sm" value={item.label} {...validation.control(`field.${index}.label`)}
+                onChange={(event) => updateField(index, { label: event.target.value })} />
+              <AppFieldError message={validation.error(`field.${index}.label`)} /></label>
             <label className={sub}>{t("recruitmentCampaigns.fieldType")}
               <select className={select} value={item.type}
                 onChange={(event) => updateField(index, { type: event.target.value as RecruitmentFormField["type"], options: undefined })}>
                 {(["text", "textarea", "url", "select", "multiselect", "file"] as const).map((type) => <option key={type} value={type}>{t(`recruitmentCampaigns.${type}`)}</option>)}
               </select></label>
-            {(["select", "multiselect"] as string[]).includes(item.type) && <label className={sub}>{t("recruitmentCampaigns.options")}
-              <AppInput className="mt-1 block w-full text-sm" value={item.options?.join(", ") ?? ""}
-                onChange={(event) => updateField(index, { options: event.target.value.split(",").map((option) => option.trim()).filter(Boolean) })} /></label>}
+            {(["select", "multiselect"] as string[]).includes(item.type) && <label className={sub}>{t("recruitmentCampaigns.options")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full text-sm" value={item.options?.join(", ") ?? ""} {...validation.control(`field.${index}.options`)}
+                onChange={(event) => updateField(index, { options: event.target.value.split(",").map((option) => option.trim()).filter(Boolean) })} />
+              <AppFieldError message={validation.error(`field.${index}.options`)} /></label>}
             <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
               <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" className="size-4 accent-primary-app" checked={item.required}
                 onChange={(event) => updateField(index, { required: event.target.checked })} />{t("recruitmentCampaigns.required")}</label>
@@ -318,13 +357,18 @@ export function RecruitmentCampaignPage() {
             <AppButton variant="secondary" onClick={addRubric}><AppIcon name="plus" className="size-4" />{t("recruitmentCampaigns.addCriterion")}</AppButton></div>
           {!form.rubric.length && <p className="mt-3 text-sm text-muted-app">{t("recruitmentCampaigns.noRubric")}</p>}
           <div className="mt-4 space-y-3">{form.rubric.map((item, index) => <div key={`${item.key}-${index}`} className="grid gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-[0.7fr_1.5fr_0.5fr_auto] sm:items-end">
-            <label className={sub}>{t("recruitmentCampaigns.criterionKey")}
-              <AppInput className="mt-1 block w-full text-sm" value={item.key} onChange={(event) => updateRubric(index, { key: event.target.value })} /></label>
-            <label className={sub}>{t("recruitmentCampaigns.criterionLabel")}
-              <AppInput className="mt-1 block w-full text-sm" value={item.label} onChange={(event) => updateRubric(index, { label: event.target.value })} /></label>
-            <label className={sub}>{t("recruitmentCampaigns.maxScore")}
+            <label className={sub}>{t("recruitmentCampaigns.criterionKey")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full text-sm" value={item.key} {...validation.control(`rubric.${index}.key`)}
+                onChange={(event) => updateRubric(index, { key: event.target.value })} />
+              <AppFieldError message={validation.error(`rubric.${index}.key`)} /></label>
+            <label className={sub}>{t("recruitmentCampaigns.criterionLabel")}<AppRequiredMark />
+              <AppInput className="mt-1 block w-full text-sm" value={item.label} {...validation.control(`rubric.${index}.label`)}
+                onChange={(event) => updateRubric(index, { label: event.target.value })} />
+              <AppFieldError message={validation.error(`rubric.${index}.label`)} /></label>
+            <label className={sub}>{t("recruitmentCampaigns.maxScore")}<AppRequiredMark />
               <AppInput className="mt-1 block w-full text-sm" type="number" min={1} max={100} value={item.maxScore}
-                onChange={(event) => updateRubric(index, { maxScore: Number(event.target.value) })} /></label>
+                {...validation.control(`rubric.${index}.maxScore`)} onChange={(event) => updateRubric(index, { maxScore: Number(event.target.value) })} />
+              <AppFieldError message={validation.error(`rubric.${index}.maxScore`)} /></label>
             <AppButton variant="ghost" className="hover:text-danger-app" onClick={() => field("rubric", form.rubric.filter((_, itemIndex) => itemIndex !== index))}>{t("recruitmentCampaigns.remove")}</AppButton>
           </div>)}</div>
         </section>
