@@ -187,7 +187,7 @@ export function WorkspaceShell() {
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-1">
-          <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} />
+          <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} scope={context} />
           <IconButton label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")} onClick={toggleTheme}>
             <AppIcon name={theme === "dark" ? "sun" : "moon"} />
           </IconButton>
@@ -224,7 +224,7 @@ export function WorkspaceShell() {
             <span className="block truncate font-heading font-bold" title={workspaceName}>{workspaceName}</span>
             <span className="block text-xs text-muted-app">{roleName}</span>
           </span>
-          <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} />
+          <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} scope={context} />
         </header>
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-10">
           <div className="mx-auto w-full max-w-screen-2xl">

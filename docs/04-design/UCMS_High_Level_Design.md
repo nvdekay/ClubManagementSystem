@@ -80,7 +80,9 @@ Kênh email theo ma trận SRS §8.2 do `notificationChannels()` ở `domain/not
 yêu cầu sửa/duyệt/từ chối, đề xuất sự kiện duyệt/từ chối, quyết định booking, vi phạm yêu cầu giải trình/có quyết định).
 Transport hiện là `logMailTransport` (chỉ ghi người nhận + tiêu đề ra log); gửi SMTP thật cần thêm dependency SMTP và
 `SMTP_*` — xem `server/src/infra/mail/README.md`. Người dùng đọc thông báo qua `GET /notifications/mine` (chuông ở
-`WorkspaceShell`), đánh dấu đã đọc qua `POST /notifications/{id}/read` và `POST /notifications/mine/read-all`.
+`WorkspaceShell`), đánh dấu đã đọc qua `POST /notifications/{id}/read` và `POST /notifications/mine/read-all`. Chuông
+chỉ hiện thông báo của workspace đang mở: các endpoint `mine` nhận `scope=student|icpdp|club` (+ `clubId`), audience
+của từng `eventCode` do `notificationAudience()` ở `domain/notification.ts` quyết định.
 
 ## 5. Định danh và quyền truy cập
 

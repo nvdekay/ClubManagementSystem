@@ -5,6 +5,10 @@ import { DomainError } from "../../domain/errors.js";
 import { clubBoardUserIds, queueNotifications } from "./club-board.js";
 import { postEventDeadline } from "./post-event-report-deadlines.js";
 import { ucmsModels as m } from "./ucms-models.js";
+const OFFICER_CODES: Readonly<Record<string, string>> = {
+  REPORT_ESCALATED: "REPORT_ESCALATED_TO_ICPDP",
+  REFUND_OVERDUE: "REFUND_OVERDUE_TO_ICPDP",
+};
 async function remindOnce(
   session: ClientSession,
   type: string,
@@ -39,8 +43,10 @@ async function remindOnce(
     ],
     { session },
   );
-  const recipients: unknown[] = await clubBoardUserIds(clubId, session);
-  if (code.endsWith("ESCALATED") || code === "REFUND_OVERDUE") {
+  await queueNotifications(session, await clubBoardUserIds(clubId, session), code, type, id, { dueAt }, now);
+  // Escalations also reach ICPDP, under their own code so they show in the officers' workspace.
+  const officerCode = OFFICER_CODES[code];
+  if (officerCode) {
     const roles = await m
       .roles!.find({ code: "ICPDP_OFFICER", scope: "system" })
       .session(session)
@@ -52,9 +58,8 @@ async function remindOnce(
       })
       .session(session)
       .lean();
-    recipients.push(...assignments.map((a) => a.userId));
+    await queueNotifications(session, assignments.map((a) => a.userId), officerCode, type, id, { dueAt }, now);
   }
-  await queueNotifications(session, recipients, code, type, id, { dueAt }, now);
   return 1;
 }
 export function mongoAccountabilityReminderRepository(): AccountabilityReminderRepository {

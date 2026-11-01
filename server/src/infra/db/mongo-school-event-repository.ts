@@ -139,7 +139,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
       outcome.invited.push(clubId);
       await queueNotifications(session, await clubBoardUserIds(club._id as Types.ObjectId, session),
         "SCHOOL_EVENT_INVITATION", "Event", event._id as Types.ObjectId,
-        { title: event.title, startAt: event.startAt, deadline: invitation.deadline }, now);
+        { title: event.title, startAt: event.startAt, deadline: invitation.deadline, clubId }, now);
     }
     if (outcome.invited.length) {
       await audit(session, event._id as Types.ObjectId, "SCHOOL_EVENT_CLUBS_INVITED", officerId,
@@ -213,7 +213,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
         const event = await events.findById(eventId).select({ title: 1 }).session(session).lean();
         await audit(session, eventId, "SCHOOL_EVENT_INVITATION_WITHDRAWN", officerId, { clubId: invitation.clubId }, now);
         await queueNotifications(session, await clubBoardUserIds(invitation.clubId as Types.ObjectId, session),
-          "SCHOOL_EVENT_INVITATION_WITHDRAWN", "Event", eventId, { title: event?.title }, now);
+          "SCHOOL_EVENT_INVITATION_WITHDRAWN", "Event", eventId, { title: event?.title, clubId: String(invitation.clubId) }, now);
       });
       return (await detail(eventId))!;
     },

@@ -327,7 +327,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
               closedTerms: terms.modifiedCount, endedAssignments: assignments.modifiedCount, outstanding },
             undefined, now, randomUUID(), decisionId);
             await notify(session, members, "CLUB_DISSOLVED", "Club", id, {}, now);
-            await notify(session, officers, "CLUB_DISSOLVED", "Club", id, { clubName: club.name,
+            await notify(session, officers, "CLUB_DISSOLUTION_COMPLETED", "Club", id, { clubName: club.name,
               outstandingPeriodicReports: outstanding.periodicReports.length,
               outstandingPostEventReports: outstanding.postEventReports.length,
               outstandingBudgets: outstanding.budgets.length }, now);

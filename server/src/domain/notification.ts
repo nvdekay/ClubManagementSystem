@@ -18,18 +18,97 @@ export interface NotificationInbox {
   nextBefore?: string;
 }
 
+/**
+ * Which workspace a notification belongs to: the student personally (applicant, registrant, member,
+ * founder, recruitment candidate), ICPDP officers, or a club's management acting for that club.
+ */
+export type NotificationAudience = "student" | "icpdp" | "club";
+export const NOTIFICATION_AUDIENCES = ["student", "icpdp", "club"] as const satisfies readonly NotificationAudience[];
+
+/** Codes sent to a student about their own application, registration, membership or club. */
+export const STUDENT_NOTIFICATION_CODES: readonly string[] = [
+  "CLUB_APPLICATION_SUBMITTED", "CLUB_APPLICATION_WITHDRAWN", "CLUB_APPLICATION_APPROVED",
+  "CLUB_APPLICATION_REJECTED", "CLUB_APPLICATION_REVISION_REQUESTED", "CLUB_APPLICATION_EXPIRED",
+  "EVENT_REGISTRATION_CONFIRMED", "EVENT_REGISTRATION_WAITLISTED", "EVENT_REGISTRATION_PROMOTED",
+  "EVENT_REGISTRATION_CANCELLED", "EVENT_CANCELLED", "EVENT_RESCHEDULED", "EVENT_CHECKED_IN",
+  "RECRUITMENT_APPLICATION_ACCEPTED", "RECRUITMENT_APPLICATION_REJECTED", "RECRUITMENT_APPLICATION_WAITLISTED",
+  "RECRUITMENT_APPLICATION_ONBOARDED", "RECRUITMENT_APPLICATION_DECLINED", "RECRUITMENT_CAMPAIGN_CANCELLED",
+  "CLUB_MEMBERSHIP_ONBOARDED", "CLUB_MEMBERSHIP_ACTIVE", "CLUB_MEMBERSHIP_INACTIVE", "CLUB_MEMBERSHIP_BANNED",
+  "CLUB_MEMBERSHIP_LEFT", "MEMBERSHIP_RECONFIRMATION_REQUIRED", "MEMBERSHIP_RECONFIRMATION_EXPIRED",
+  "CLUB_SUSPENDED", "CLUB_REACTIVATED", "CLUB_DISSOLUTION_DECIDED", "CLUB_DISSOLVING", "CLUB_DISSOLVED",
+  // No longer sent (fixed club roles); kept so old rows stay in the member's own inbox.
+  "CLUB_ROLE_ASSIGNED", "CLUB_ROLE_REVOKED",
+];
+
+/** Codes sent to ICPDP officers: work waiting in a review queue or an alert about a club. */
+export const ICPDP_NOTIFICATION_CODES: readonly string[] = [
+  "BOOKING_SUBMITTED", "BOOKING_CANCELLED", "BOOKING_RELEASED", "BOARD_NOMINATION_SUBMITTED",
+  "SUSPENSION_REQUEST_SUBMITTED", "PERIODIC_REPORT_SUBMITTED", "VIOLATION_RESPONSE_SUBMITTED",
+  "CORRECTIVE_ACTION_SUBMITTED", "EVENT_INVITATION_ACCEPTED", "EVENT_INVITATION_DECLINED",
+  "CLUB_SUSPENSION_ENDING", "CLUB_LIFECYCLE_FAILED", "CLUB_DISSOLUTION_COMPLETED",
+  "REPORT_ESCALATED_TO_ICPDP", "REFUND_OVERDUE_TO_ICPDP",
+];
+
+/** Codes sent to the people running a club (leader, board, reviewers, the member who filed the request). */
+export const CLUB_NOTIFICATION_CODES: readonly string[] = [
+  "EVENT_PROPOSAL_APPROVED", "EVENT_PROPOSAL_REJECTED", "EVENT_PROPOSAL_REVISION_REQUESTED", "EVENT_PROPOSAL_EXPIRED",
+  "PROPERTY_BOOKING_STATUS", "ROOM_ALLOCATED", "ROOM_ALLOCATION_REVOKED",
+  "RECRUITMENT_APPLICATION_SUBMITTED", "RECRUITMENT_APPLICATION_WITHDRAWN", "MEMBERSHIP_WITHDRAWAL_REQUESTED",
+  "TRANSITION_PLAN_RETURNED", "LEADERSHIP_TRANSITION_CONFIRMED", "BOARD_NOMINATION_DECIDED",
+  "SUSPENSION_REQUEST_REJECTED",
+  "VIOLATION_RESPONSE_REQUESTED", "VIOLATION_CLOSED_NO_VIOLATION", "VIOLATION_DECIDED", "VIOLATION_ACTIONS_ASSIGNED",
+  "VIOLATION_ACTION_VERIFIED", "VIOLATION_ACTION_FAILED", "VIOLATION_RESOLVED",
+  "PERIODIC_REPORT_ACCEPTED", "PERIODIC_REPORT_RETURNED", "PERIODIC_REPORT_MISSING", "EVALUATION_PUBLISHED",
+  "SCHOOL_EVENT_INVITATION", "SCHOOL_EVENT_INVITATION_WITHDRAWN",
+  "REPORT_DUE_SOON", "REPORT_DEADLINE_PASSED", "REPORT_ESCALATED",
+  "REPORT_SAVE", "REPORT_SUBMIT", "REPORT_CLAIM", "REPORT_DECISION", "REPORT_OVERDUE",
+  "SETTLEMENT_DUE_SOON", "SETTLEMENT_OVERDUE", "REFUND_DUE_SOON", "REFUND_OVERDUE",
+  "SETTLEMENT_EXPENSE", "SETTLEMENT_EVIDENCE", "SETTLEMENT_SUBMIT", "SETTLEMENT_CLAIM", "SETTLEMENT_RETURN",
+  "SETTLEMENT_FINALIZE",
+  "BUDGET_ADVANCE_RECORDED", "BUDGET_TOPUP_RECORDED", "BUDGET_REFUND_RECORDED",
+];
+
+/**
+ * Codes that used to go to two audiences before they were split. A row written before the split is
+ * the ICPDP copy when its payload carries this key (CLUB_DISSOLVED → CLUB_DISSOLUTION_COMPLETED).
+ */
+export const LEGACY_ICPDP_PAYLOAD_KEYS: Readonly<Record<string, string>> = {
+  CLUB_DISSOLVED: "outstandingPeriodicReports",
+};
+
+const audienceByCode = new Map<string, NotificationAudience>([
+  ...STUDENT_NOTIFICATION_CODES.map((code) => [code, "student"] as const),
+  ...ICPDP_NOTIFICATION_CODES.map((code) => [code, "icpdp"] as const),
+  ...CLUB_NOTIFICATION_CODES.map((code) => [code, "club"] as const),
+]);
+
+/** Audience of one notification; an unknown code is treated as the student's own. */
+export function notificationAudience(eventCode: string, payload: Record<string, unknown> = {}): NotificationAudience {
+  const legacyKey = LEGACY_ICPDP_PAYLOAD_KEYS[eventCode];
+  if (legacyKey && payload[legacyKey] !== undefined) return "icpdp";
+  return audienceByCode.get(eventCode) ?? "student";
+}
+
+/** Inbox filter for one workspace; `clubId` narrows the club scope to a single club. */
+export interface NotificationScope {
+  audience: NotificationAudience;
+  clubId?: string;
+}
+
 export interface NotificationInboxQuery {
   limit: number;
   before?: Date;
   unreadOnly: boolean;
+  /** Absent: every notification of the user. */
+  scope?: NotificationScope;
 }
 
 export interface NotificationRepository {
   listMine(userId: string, query: NotificationInboxQuery): Promise<NotificationInbox>;
-  unreadCount(userId: string): Promise<number>;
+  unreadCount(userId: string, scope?: NotificationScope): Promise<number>;
   /** False when the notification does not exist or belongs to someone else. */
   markRead(userId: string, id: string, now: Date): Promise<boolean>;
-  markAllRead(userId: string, now: Date): Promise<number>;
+  markAllRead(userId: string, now: Date, scope?: NotificationScope): Promise<number>;
 }
 
 export const NOTIFICATION_CHANNEL_IN_APP = "IN_APP";

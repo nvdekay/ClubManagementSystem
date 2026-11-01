@@ -4,7 +4,7 @@ import {
   type ClaimedEmail, type MailOutboxRepository, type MailTransport, type NotificationRepository,
 } from "../../src/domain/notification.js";
 import {
-  deliverNotifications, markAllNotificationsRead, markNotificationRead, myNotifications,
+  deliverNotifications, markAllNotificationsRead, markNotificationRead, myNotifications, myUnreadNotificationCount,
 } from "../../src/usecase/notification.js";
 
 const now = new Date("2026-10-19T03:00:00Z");
@@ -111,5 +111,23 @@ describe("notification inbox usecases (NTF-04)", () => {
     await expect(markNotificationRead(inbox({ markRead: async () => false }), actor, "abcdefabcdefabcdefabcdef", now))
       .rejects.toMatchObject({ kind: "not_found" });
     expect(await markAllNotificationsRead(inbox(), actor, now)).toEqual({ marked: 3, unread: 2 });
+  });
+
+  it("forwards a workspace scope and rejects a club id outside the club scope", async () => {
+    const repo = inbox();
+    const clubId = "abcdefabcdefabcdefabcdef";
+    await myNotifications(repo, actor, { scope: "club", clubId });
+    expect(repo.listMine).toHaveBeenCalledWith(actor.id, { limit: 20, unreadOnly: false,
+      scope: { audience: "club", clubId } });
+    expect(await myUnreadNotificationCount(repo, actor, { scope: "icpdp" })).toEqual({ unread: 2 });
+    expect(repo.unreadCount).toHaveBeenCalledWith(actor.id, { audience: "icpdp" });
+    expect(await markAllNotificationsRead(repo, actor, now, { scope: "student" })).toEqual({ marked: 3, unread: 2 });
+    expect(repo.markAllRead).toHaveBeenCalledWith(actor.id, now, { audience: "student" });
+    await expect(myNotifications(repo, actor, { scope: "admin" })).rejects.toMatchObject({ kind: "validation" });
+    await expect(myUnreadNotificationCount(repo, actor, { clubId })).rejects.toMatchObject({ kind: "validation" });
+    await expect(markAllNotificationsRead(repo, actor, now, { scope: "student", clubId }))
+      .rejects.toMatchObject({ kind: "validation" });
+    await expect(myUnreadNotificationCount(repo, actor, { scope: "club", clubId: { $ne: "" } }))
+      .rejects.toMatchObject({ kind: "validation" });
   });
 });

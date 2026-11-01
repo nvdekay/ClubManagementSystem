@@ -12,14 +12,22 @@ function fixed(path: string) {
   return function link(): string { return path; };
 }
 
-// First match wins, so the specific codes sit above the family prefixes they belong to.
+/** Detail page `base/<entityId>`, or the list when the row has no entity. */
+function detail(base: string) {
+  return function link(item: AppNotification): string {
+    return item.entityId ? `${base}/${encodeURIComponent(item.entityId)}` : base;
+  };
+}
+
+// First match wins, so the specific codes sit above the family prefixes they belong to. Each code leads to
+// the workspace of the people who receive it (server: domain/notification.ts audience lists).
 const rules: Rule[] = [
   [/^(EVENT_REGISTRATION_|EVENT_CANCELLED$|EVENT_RESCHEDULED$|EVENT_CHECKED_IN$)/, fixed("/workspace/event-registrations")],
   [/^EVENT_PROPOSAL_/, club("/events")],
-  [/^CLUB_APPLICATION_(SUBMITTED|WITHDRAWN)$/, fixed("/workspace/reviews")],
-  [/^CLUB_APPLICATION_APPROVED$/, (item) => club("")(item) ?? "/workspace/applications"],
-  [/^CLUB_APPLICATION_/, fixed("/workspace/applications")],
-  [/^BOARD_NOMINATION_SUBMITTED$/, fixed("/workspace/board-nominations")],
+  // The founder's own application (receipts and decisions alike).
+  [/^CLUB_APPLICATION_APPROVED$/, (item) => club("")(item) ?? detail("/workspace/applications")(item)],
+  [/^CLUB_APPLICATION_/, detail("/workspace/applications")],
+  [/^BOARD_NOMINATION_SUBMITTED$/, detail("/workspace/board-nominations")],
   [/^BOARD_NOMINATION_/, club("/board")],
   [/^BOOKING_(SUBMITTED|CANCELLED|RELEASED)$/, fixed("/workspace/bookings")],
   [/^PROPERTY_BOOKING_STATUS$/, club("/bookings")],
@@ -34,16 +42,17 @@ const rules: Rule[] = [
   [/^(VIOLATION_RESPONSE_SUBMITTED|CORRECTIVE_ACTION_SUBMITTED)$/,
     (item) => item.entityId ? `/workspace/violations/${encodeURIComponent(item.entityId)}` : "/workspace/violations"],
   [/^VIOLATION_/, club("/violations")],
-  [/^PERIODIC_REPORT_SUBMITTED$/, fixed("/workspace/periodic-reports")],
+  [/^PERIODIC_REPORT_SUBMITTED$/, detail("/workspace/periodic-reports")],
   [/^PERIODIC_REPORT_/, club("/periodic-reports")],
   [/^EVALUATION_PUBLISHED$/, club("/evaluations")],
-  [/^CLUB_SUSPENSION_ENDING$/, fixed("/icpdp/clubs")],
+  [/^(CLUB_SUSPENSION_ENDING|CLUB_LIFECYCLE_FAILED|CLUB_DISSOLUTION_COMPLETED)$/, fixed("/icpdp/clubs")],
   [/^CLUB_/, (item) => item.clubId ? `/clubs/${encodeURIComponent(item.clubId)}` : undefined],
   [/^EVENT_INVITATION_/, (item) => typeof item.payload.eventId === "string"
     ? `/workspace/school-events/${encodeURIComponent(item.payload.eventId)}` : "/workspace/school-events"],
   [/^SCHOOL_EVENT_INVITATION/, club("/invitations")],
-  [/^REPORT_ESCALATED$/, fixed("/workspace/event-reports")],
+  [/^REPORT_ESCALATED_TO_ICPDP$/, fixed("/workspace/event-reports")],
   [/^REPORT_/, club("/event-reports")],
+  [/^REFUND_OVERDUE_TO_ICPDP$/, detail("/workspace/budgets")],
   [/^(BUDGET_|SETTLEMENT_|REFUND_)/, club("/budgets")],
 ];
 

@@ -9,18 +9,25 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import {
   useMarkAllNotificationsRead, useMarkNotificationRead, useNotificationInbox, useUnreadNotificationCount,
 } from "@/hooks/useNotifications";
-import type { AppNotification } from "@/services/notifications";
+import type { AppNotification, NotificationScope } from "@/services/notifications";
 import { cn } from "@/utils/cn";
 import { formatDate } from "@/utils/formatDate";
 import { notificationFamily, notificationLink, notificationSubject } from "@/utils/notificationLink";
 
-/** Bell with the unread count; opens the user's in-app inbox (NTF-04), the same in every workspace. */
-export function NotificationBell({ userId, csrfToken }: { userId: string; csrfToken: string }) {
+interface NotificationBellProps {
+  userId: string;
+  csrfToken: string;
+  /** The current workspace; only its notifications are counted and listed. */
+  scope: NotificationScope;
+}
+
+/** Bell with the unread count; opens the user's in-app inbox (NTF-04) for the current workspace. */
+export function NotificationBell({ userId, csrfToken, scope }: NotificationBellProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const count = useUnreadNotificationCount(userId);
-  const inbox = useNotificationInbox(userId, open);
+  const count = useUnreadNotificationCount(userId, scope);
+  const inbox = useNotificationInbox(userId, scope, open);
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
   const unread = count.data?.unread ?? 0;
@@ -55,7 +62,7 @@ export function NotificationBell({ userId, csrfToken }: { userId: string; csrfTo
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-app">{unread ? t("notifications.openUnread", { count: unread }) : t("notifications.title")}</p>
         <AppButton variant="secondary" disabled={!unread || markAll.isPending}
-          onClick={() => markAll.mutate(csrfToken)}>
+          onClick={() => markAll.mutate({ scope, csrfToken })}>
           <AppIcon name="check" className="size-4" />{t("notifications.markAll")}
         </AppButton>
       </div>

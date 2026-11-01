@@ -68,6 +68,68 @@ describe.skipIf(!uri)("Mongo notification inbox and mail outbox", () => {
     expect((await repo.listMine(String(user), { limit: 10, unreadOnly: true })).items).toEqual([]);
   });
 
+  it("filters the inbox, unread count and mark-all by workspace scope and club", async () => {
+    const multi = new Types.ObjectId(), otherClub = new Types.ObjectId(), schoolEvent = new Types.ObjectId();
+    await m.events!.create({ _id: schoolEvent, organizerType: "ICPDP", title: "Club Fair", eventType: "Workshop",
+      audienceScope: "PUBLIC", startAt: now, endAt: new Date(now.getTime() + 3_600_000), capacity: 10,
+      state: "Approved", semesterCode: "Fall 2026", createdAt: now });
+    await m.eventInvitations!.create({ eventId: schoolEvent, clubId, clubName: "Robotics", status: "Pending",
+      deadline: now, invitedAt: now, invitedBy: other, createdAt: now, updatedAt: now });
+    await m.notifications!.create([
+      // Written before invitations carried the club id: matched through the club's invitation.
+      row({ recipient: multi, eventCode: "SCHOOL_EVENT_INVITATION", minutesAgo: 62, entityType: "Event", entityId: schoolEvent }),
+      row({ recipient: multi, eventCode: "CLUB_APPLICATION_SUBMITTED", minutesAgo: 70 }),
+      row({ recipient: multi, eventCode: "CLUB_DISSOLVED", minutesAgo: 69, payload: { clubName: "Old" } }),
+      row({ recipient: multi, eventCode: "SOMETHING_UNCLASSIFIED", minutesAgo: 68 }),
+      row({ recipient: multi, eventCode: "BOOKING_SUBMITTED", minutesAgo: 67 }),
+      // Officer copy written before CLUB_DISSOLUTION_COMPLETED existed.
+      row({ recipient: multi, eventCode: "CLUB_DISSOLVED", minutesAgo: 66, payload: { outstandingPeriodicReports: 0 } }),
+      row({ recipient: multi, eventCode: "EVENT_PROPOSAL_APPROVED", minutesAgo: 65, entityType: "Event", entityId: eventId }),
+      row({ recipient: multi, eventCode: "SCHOOL_EVENT_INVITATION", minutesAgo: 64, entityType: "Event", entityId: eventId }),
+      row({ recipient: multi, eventCode: "MEMBERSHIP_WITHDRAWAL_REQUESTED", minutesAgo: 63,
+        payload: { clubId: String(otherClub) } }),
+    ]);
+    await m.notifications!.updateOne({ recipientUserId: multi, eventCode: "SCHOOL_EVENT_INVITATION" }, { $set: { readAt: now } });
+    const repo = mongoNotificationRepository();
+    const id = String(multi);
+    async function codes(scope: Parameters<typeof repo.unreadCount>[1]) {
+      const page = await repo.listMine(id, { limit: 10, unreadOnly: false, ...(scope ? { scope } : {}) });
+      return { codes: page.items.map((item) => item.eventCode), unread: page.unread };
+    }
+    expect(await codes({ audience: "student" })).toEqual({ unread: 3,
+      codes: ["SOMETHING_UNCLASSIFIED", "CLUB_DISSOLVED", "CLUB_APPLICATION_SUBMITTED"] });
+    expect(await codes({ audience: "icpdp" })).toEqual({ unread: 2, codes: ["CLUB_DISSOLVED", "BOOKING_SUBMITTED"] });
+    expect(await codes({ audience: "club" })).toEqual({ unread: 3, codes: ["SCHOOL_EVENT_INVITATION",
+      "MEMBERSHIP_WITHDRAWAL_REQUESTED", "SCHOOL_EVENT_INVITATION", "EVENT_PROPOSAL_APPROVED"] });
+    expect(await codes({ audience: "club", clubId: String(clubId) })).toEqual({ unread: 2,
+      codes: ["SCHOOL_EVENT_INVITATION", "SCHOOL_EVENT_INVITATION", "EVENT_PROPOSAL_APPROVED"] });
+    expect(await codes({ audience: "club", clubId: String(otherClub) })).toEqual({ unread: 1,
+      codes: ["MEMBERSHIP_WITHDRAWAL_REQUESTED"] });
+    expect(await codes(undefined)).toMatchObject({ unread: 8 });
+    expect(await repo.unreadCount(id, { audience: "student" })).toBe(3);
+    expect(await repo.unreadCount(id, { audience: "icpdp" })).toBe(2);
+    expect(await repo.unreadCount(id, { audience: "club", clubId: String(clubId) })).toBe(2);
+    expect(await repo.unreadCount(id, { audience: "club", clubId: String(otherClub) })).toBe(1);
+
+    // Club pages follow the same cursor as the plain inbox, and every row carries the club for its link.
+    const first = await repo.listMine(id, { limit: 2, unreadOnly: false, scope: { audience: "club", clubId: String(clubId) } });
+    expect(first.items.map((item) => item.clubId)).toEqual([String(clubId), String(clubId)]);
+    const second = await repo.listMine(id, { limit: 2, unreadOnly: false, before: new Date(first.nextBefore!),
+      scope: { audience: "club", clubId: String(clubId) } });
+    expect(second.items.map((item) => item.eventCode)).toEqual(["EVENT_PROPOSAL_APPROVED"]);
+    expect(second.nextBefore).toBeUndefined();
+    expect((await repo.listMine(id, { limit: 10, unreadOnly: true, scope: { audience: "club", clubId: String(clubId) } }))
+      .items.map((item) => item.eventCode)).toEqual(["SCHOOL_EVENT_INVITATION", "EVENT_PROPOSAL_APPROVED"]);
+
+    expect(await repo.markAllRead(id, now, { audience: "club", clubId: String(clubId) })).toBe(2);
+    expect(await repo.unreadCount(id, { audience: "club", clubId: String(otherClub) })).toBe(1);
+    expect(await repo.markAllRead(id, now, { audience: "icpdp" })).toBe(2);
+    expect(await repo.unreadCount(id, { audience: "student" })).toBe(3);
+    expect(await repo.unreadCount(id)).toBe(4);
+    expect(await repo.unreadCount(id, { audience: "club" })).toBe(1);
+    await m.notifications!.deleteMany({ recipientUserId: multi });
+  });
+
   it("claims an email once under a lease, logs each attempt, retries, then sends", async () => {
     const outbox = mongoMailOutboxRepository();
     const first = await outbox.claimNextEmail(now, MAIL_LEASE_MS);

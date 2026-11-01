@@ -142,7 +142,11 @@ CLB mới nhất khi tìm không ra.
 12. ~~Mail delivery worker và inbox notification tổng quát.~~ Đã làm 19/10/2026 (`.sdd/specs/feat-notification-inbox`):
     chuông + hộp thông báo in-app ở mọi workspace (`/notifications/mine`, đánh dấu đã đọc), worker outbox SCH-10 có
     claim/lease, `emailDeliveryLogs` và retry backoff; email theo ma trận SRS §8.2. Còn lại: transport hiện chỉ ghi log —
-    gửi SMTP thật cần duyệt thêm dependency (ví dụ `nodemailer`) và biến `SMTP_*`.
+    gửi SMTP thật cần duyệt thêm dependency (ví dụ `nodemailer`) và biến `SMTP_*`. Từ 01/11/2026 chuông lọc theo
+    workspace: `GET /notifications/mine`, `/mine/unread-count` và `POST /mine/read-all` nhận `scope=student|icpdp|club`
+    (+ `clubId` cho `club`); mỗi `eventCode` thuộc đúng một audience theo danh sách ở `server/src/domain/notification.ts`
+    (mã chưa phân loại tính là của sinh viên). Các mã từng gửi cho hai nhóm đã được tách: bản cho ICPDP là
+    `CLUB_DISSOLUTION_COMPLETED`, `REPORT_ESCALATED_TO_ICPDP`, `REFUND_OVERDUE_TO_ICPDP`.
 
 ### Ngoài phạm vi bản hiện tại (quyết định 17/10/2026)
 

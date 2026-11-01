@@ -14,11 +14,11 @@ export function notificationRoutes(deps: { repo: NotificationRepository; authRep
   r.get("/notifications/mine", authGuard(guard, false), async (req, res) => {
     ok(res, await myNotifications(deps.repo, res.locals.actor as AccessActor, req.query));
   });
-  r.get("/notifications/mine/unread-count", authGuard(guard, false), async (_req, res) => {
-    ok(res, await myUnreadNotificationCount(deps.repo, res.locals.actor as AccessActor));
+  r.get("/notifications/mine/unread-count", authGuard(guard, false), async (req, res) => {
+    ok(res, await myUnreadNotificationCount(deps.repo, res.locals.actor as AccessActor, req.query));
   });
-  r.post("/notifications/mine/read-all", authGuard(guard), async (_req, res) => {
-    ok(res, await markAllNotificationsRead(deps.repo, res.locals.actor as AccessActor, new Date()));
+  r.post("/notifications/mine/read-all", authGuard(guard), async (req, res) => {
+    ok(res, await markAllNotificationsRead(deps.repo, res.locals.actor as AccessActor, new Date(), req.query));
   });
   r.post("/notifications/:id/read", authGuard(guard), async (req, res) => {
     ok(res, await markNotificationRead(deps.repo, res.locals.actor as AccessActor, String(req.params.id), new Date()));

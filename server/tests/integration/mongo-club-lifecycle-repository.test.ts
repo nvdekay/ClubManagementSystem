@@ -133,7 +133,7 @@ describe.skipIf(!uri)("Mongo club lifecycle repository", () => {
       archivedAt: new Date("2027-05-01T00:00:00Z"),
       outstanding: { postEventReports: [{ eventId: String(seeded.past), title: "Đã diễn ra" }],
         budgets: [{ id: String(budget._id), state: "Disbursed" }] } });
-    expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: officer, eventCode: "CLUB_DISSOLVED",
+    expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: officer, eventCode: "CLUB_DISSOLUTION_COMPLETED",
       entityId: seeded.clubId, "payload.outstandingBudgets": 1 })).toBe(1);
     expect(await ucmsModels.clubTerms!.countDocuments({ clubId: seeded.clubId, state: "Active" })).toBe(0);
     expect(await ucmsModels.clubPositionAssignments!.countDocuments({ clubId: seeded.clubId, effectiveTo: null })).toBe(0);

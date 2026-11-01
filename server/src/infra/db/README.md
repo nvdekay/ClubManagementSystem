@@ -77,7 +77,10 @@ xác nhận, kế hoạch UC13 đã xác nhận, hoặc nhiệm kỳ khởi lậ
 `mongo-notification-repository.ts` (19/10/2026, NTF-04/SCH-10): hộp thông báo in-app của người dùng (kèm `clubId`
 suy ra từ payload hoặc thực thể để client dựng link) và outbox cho worker gửi email — claim nguyên tử bằng lease trên
 `dueAt`, mỗi lần thử ghi `emailDeliveryLogs`. Kênh email do `notificationChannels()` của domain quyết định, được
-`queueNotifications` (`club-board.ts`) và các repository hồ sơ thành lập, đề xuất sự kiện, booking dùng.
+`queueNotifications` (`club-board.ts`) và các repository hồ sơ thành lập, đề xuất sự kiện, booking dùng. Lọc theo
+workspace (01/11/2026): `scope` sinh viên/ICPDP/CLB lọc ở DB theo danh sách `eventCode` của domain; `scope=club` kèm
+`clubId` thì đọc các dòng CLB của người dùng, suy `clubId` từng dòng rồi lọc, nên số chưa đọc luôn khớp danh sách. Mã
+mới gửi đi phải được thêm vào một danh sách audience (test `notification-audience` quét mọi chỗ enqueue).
 
 `seed-dashboard.ts` (`npm run seed:dashboard`, 17/10/2026) — chạy sau `seed` + `seed:demo`, chỉ ghi vào DB
 local: ~150 tài khoản sinh viên demo, thành viên/sự kiện/đăng ký/check-in/phản hồi/ngân sách/đề xuất chờ duyệt

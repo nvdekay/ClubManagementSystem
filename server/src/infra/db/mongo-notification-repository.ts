@@ -1,7 +1,8 @@
 import { Types } from "mongoose";
 import {
-  NOTIFICATION_CHANNEL_EMAIL, type ClaimedEmail, type InboxNotification, type MailOutboxRepository,
-  type NotificationRepository,
+  CLUB_NOTIFICATION_CODES, ICPDP_NOTIFICATION_CODES, LEGACY_ICPDP_PAYLOAD_KEYS, NOTIFICATION_CHANNEL_EMAIL,
+  type ClaimedEmail, type InboxNotification, type MailOutboxRepository, type NotificationRepository,
+  type NotificationScope,
 } from "../../domain/notification.js";
 import { ROOM_ALLOCATION_ENTITY } from "../../domain/room-allocation.js";
 import { ucmsModels as m } from "./ucms-models.js";
@@ -58,6 +59,21 @@ async function clubIdsFor(docs: Doc[]): Promise<Map<string, string>> {
   return result;
 }
 
+/** Rows written before a code was split whose payload marks them as the ICPDP copy. */
+function legacyIcpdpRows(): Doc[] {
+  return Object.entries(LEGACY_ICPDP_PAYLOAD_KEYS).map(([eventCode, key]) => ({ eventCode, [`payload.${key}`]: { $exists: true } }));
+}
+
+/** DB filter for the codes of one audience; unknown codes fall to the student's own inbox. */
+function audienceFilter(scope: NotificationScope | undefined): Doc {
+  if (!scope) return {};
+  const legacy = legacyIcpdpRows();
+  if (scope.audience === "icpdp") return { $or: [{ eventCode: { $in: ICPDP_NOTIFICATION_CODES } }, ...legacy] };
+  if (scope.audience === "club") return { eventCode: { $in: CLUB_NOTIFICATION_CODES } };
+  return { eventCode: { $nin: [...ICPDP_NOTIFICATION_CODES, ...CLUB_NOTIFICATION_CODES] },
+    ...(legacy.length ? { $nor: legacy } : {}) };
+}
+
 function inboxItem(doc: Doc, clubId: string | undefined): InboxNotification {
   return {
     id: String(doc._id), eventCode: String(doc.eventCode), payload: (doc.payload ?? {}) as Record<string, unknown>,
@@ -79,21 +95,54 @@ export function mongoNotificationRepository(): NotificationRepository {
     await notifications.updateMany({ ...filter, readAt: { $ne: null }, state: { $in: ["Queued", "Sent"] },
       $or: [{ state: "Sent" }, { channels: { $ne: NOTIFICATION_CHANNEL_EMAIL } }] }, { $set: { state: "Read" } });
   }
+  /**
+   * Club scope narrowed to one club: the club is resolved per row (payload or owning entity), which a
+   * query cannot express, so the user's club rows are resolved first. Inbox volumes are small.
+   */
+  async function clubRows(recipientUserId: Types.ObjectId, clubId: string, extra: Doc = {}) {
+    const docs = await notifications.find({ recipientUserId, eventCode: { $in: CLUB_NOTIFICATION_CODES }, ...extra })
+      .sort({ createdAt: -1, _id: -1 }).lean();
+    const clubs = await clubIdsFor(docs);
+    // A school event belongs to ICPDP; older invitation rows carry no club, so match them by this club's invitation.
+    const unresolved = docs.filter((doc) => !clubs.has(String(doc._id)) && doc.entityType === "Event" && doc.entityId);
+    if (unresolved.length) {
+      const invited = new Set((await m.eventInvitations!.find({ clubId: new Types.ObjectId(clubId),
+        eventId: { $in: unresolved.map((doc) => doc.entityId as Types.ObjectId) } }).select({ eventId: 1 }).lean())
+        .map((row) => String(row.eventId)));
+      for (const doc of unresolved) if (invited.has(String(doc.entityId))) clubs.set(String(doc._id), clubId);
+    }
+    return { docs: docs.filter((doc) => clubs.get(String(doc._id)) === clubId), clubs };
+  }
   return {
     async listMine(userId, query) {
       const recipientUserId = new Types.ObjectId(userId);
-      const docs = await notifications.find({ recipientUserId, ...(query.unreadOnly ? { readAt: null } : {}),
+      if (query.scope?.audience === "club" && query.scope.clubId) {
+        const { docs, clubs } = await clubRows(recipientUserId, query.scope.clubId);
+        const unread = docs.filter((doc) => !doc.readAt).length;
+        const matching = docs.filter((doc) => (!query.unreadOnly || !doc.readAt)
+          && (!query.before || (doc.createdAt as Date) < query.before));
+        const page = matching.slice(0, query.limit);
+        const last = page.at(-1);
+        return { items: page.map((doc) => inboxItem(doc, clubs.get(String(doc._id)))), unread,
+          ...(matching.length > query.limit && last ? { nextBefore: (last.createdAt as Date).toISOString() } : {}) };
+      }
+      const scoped = { recipientUserId, ...audienceFilter(query.scope) };
+      const docs = await notifications.find({ ...scoped, ...(query.unreadOnly ? { readAt: null } : {}),
         ...(query.before ? { createdAt: { $lt: query.before } } : {}) })
         .sort({ createdAt: -1, _id: -1 }).limit(query.limit + 1).lean();
       const page = docs.slice(0, query.limit);
       const clubs = await clubIdsFor(page);
-      const unread = await notifications.countDocuments({ recipientUserId, readAt: null });
+      const unread = await notifications.countDocuments({ ...scoped, readAt: null });
       const last = page.at(-1);
       return { items: page.map((doc) => inboxItem(doc, clubs.get(String(doc._id)))), unread,
         ...(docs.length > query.limit && last ? { nextBefore: (last.createdAt as Date).toISOString() } : {}) };
     },
-    unreadCount(userId) {
-      return notifications.countDocuments({ recipientUserId: new Types.ObjectId(userId), readAt: null });
+    async unreadCount(userId, scope) {
+      const recipientUserId = new Types.ObjectId(userId);
+      if (scope?.audience === "club" && scope.clubId) {
+        return (await clubRows(recipientUserId, scope.clubId, { readAt: null })).docs.length;
+      }
+      return notifications.countDocuments({ recipientUserId, readAt: null, ...audienceFilter(scope) });
     },
     async markRead(userId, id, now) {
       const filter = { _id: new Types.ObjectId(id), recipientUserId: new Types.ObjectId(userId) };
@@ -102,9 +151,12 @@ export function mongoNotificationRepository(): NotificationRepository {
       await settleReadState(filter);
       return true;
     },
-    async markAllRead(userId, now) {
+    async markAllRead(userId, now, scope) {
       const recipientUserId = new Types.ObjectId(userId);
-      const changed = await notifications.updateMany({ recipientUserId, readAt: null }, { $set: { readAt: now } });
+      const filter = scope?.audience === "club" && scope.clubId
+        ? { _id: { $in: (await clubRows(recipientUserId, scope.clubId, { readAt: null })).docs.map((doc) => doc._id) } }
+        : audienceFilter(scope);
+      const changed = await notifications.updateMany({ recipientUserId, readAt: null, ...filter }, { $set: { readAt: now } });
       await settleReadState({ recipientUserId });
       return changed.modifiedCount;
     },
