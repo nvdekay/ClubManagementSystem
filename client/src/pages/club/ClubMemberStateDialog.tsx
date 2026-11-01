@@ -4,9 +4,12 @@ import { useTranslation } from "react-i18next";
 import { membershipStateLabels } from "@/components/custom/MembershipStateBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useMembershipAction } from "@/hooks/useMemberSpace";
 import type { ClubRosterMember, ManagedMembershipState } from "@/services/memberSpace";
 import { cn } from "@/utils/cn";
@@ -39,11 +42,12 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
   const [target, setTarget] = useState<ManagedMembershipState | undefined>(options[0]);
   const [reason, setReason] = useState("");
   const banned = target === "Banned";
+  const field = useFieldValidation({ reason: banned && !reason.trim() ? t("common.fieldRequired") : null });
   const name = member.displayName ?? "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!auth.data || !target || inFlight.current || !event.currentTarget.reportValidity()) return;
+    if (!field.touchAll() || !auth.data || !target || inFlight.current || !event.currentTarget.reportValidity()) return;
     inFlight.current = true;
     try {
       await action.mutateAsync({ kind: "state", clubId, membershipId: member.id, state: target,
@@ -59,7 +63,7 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
 
   return (
     <AppDialog open title={t("memberSpace.changeState")} closeLabel={t("memberSpace.close")} onClose={onClose}>
-      <form onSubmit={(event) => void submit(event)} className="space-y-4">
+      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
         <fieldset>
           <legend className="mb-2 text-sm font-medium">{t("memberSpace.newState")}</legend>
           <div className="flex flex-wrap gap-2">
@@ -82,9 +86,10 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
             {banned && <p className="text-sm font-medium text-danger-app">{t("memberSpace.banWarning")}</p>}
             <div className="space-y-1.5">
               <label htmlFor={reasonId} className="block text-sm font-medium">
-                {banned ? t("memberSpace.stateReason") : t("memberSpace.stateReasonOptional")}</label>
-              <AppTextarea id={reasonId} value={reason} required={banned} maxLength={2000} rows={3}
+                {banned ? <>{t("memberSpace.stateReason")}<AppRequiredMark /></> : t("memberSpace.stateReasonOptional")}</label>
+              <AppTextarea id={reasonId} value={reason} maxLength={2000} rows={3} {...field.control("reason", banned)}
                 className="w-full" onChange={(event) => setReason(event.target.value)} />
+              <AppFieldError message={field.error("reason")} />
             </div>
           </div>
         )}
@@ -92,7 +97,7 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
           <p>{action.error.message}</p></AppNotice>}
         <div className="flex flex-wrap justify-end gap-2">
           <AppButton type="button" variant="ghost" onClick={onClose}>{t("memberSpace.cancel")}</AppButton>
-          <AppButton type="submit" disabled={!target || action.isPending || (banned && !reason.trim())}
+          <AppButton type="submit" disabled={!target || action.isPending}
             className={cn({ "bg-danger-app": banned })}>
             {action.isPending ? t("memberSpace.stateSaving") : t("memberSpace.stateConfirm")}</AppButton>
         </div>

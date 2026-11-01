@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -14,6 +16,7 @@ import type { RecruitmentRubricCriterion } from "@/services/recruitmentCampaigns
 import { CandidateEvaluationPanel } from "./CandidateEvaluationPanel";
 import { formatDate, stateTone } from "./recruitmentReviewFormat";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 interface ApplicationReviewDialogProps {
   onClose: () => void;
@@ -44,13 +47,17 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
   const [error, setError] = useState("");
   const busy = action.isPending || onboarding.isPending;
   const state = application.state;
+  const field = useFieldValidation({ reason: reason.trim() ? null : t("common.fieldRequired") });
 
   async function run(kind: "screen" | "shortlist" | "decide" | "promote", outcome?: "Accepted" | "Rejected" | "Waitlisted") {
     setError("");
+    // Shortlisting and rejecting record a reason; accept, waitlist and promote do not.
+    if ((kind === "shortlist" || outcome === "Rejected") && !field.touchAll()) return;
     try {
       await action.mutateAsync({ clubId, campaignId, action: kind, applicationIds: [application.id],
         ...(outcome ? { outcome } : {}), ...(reason.trim() ? { reason: reason.trim() } : {}), csrfToken });
       setReason("");
+      field.reset();
       appToast.success(t("recruitmentApplications.actionDone"));
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
@@ -91,16 +98,20 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
       <section aria-labelledby="review-decision" className="space-y-3 rounded-2xl bg-surface-app p-4">
         <h3 id="review-decision" className="font-heading font-bold">{t("recruitmentApplications.decisionSection")}</h3>
         {needsReason && <label className="block text-sm font-semibold">{t("recruitmentApplications.actionReason")}
+          {state === "Screening" && <AppRequiredMark />}
+          {/* Only Screening needs the reason for every action, so only there is it checked on blur. */}
           <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
-            className="mt-2 block min-h-16 w-full font-normal" /></label>}
+            {...(state === "Screening" ? field.control("reason") : { "aria-invalid": field.error("reason") ? true : undefined })}
+            className="mt-2 block min-h-16 w-full font-normal" />
+          <AppFieldError message={field.error("reason")} /></label>}
         {error && <AppNotice tone="danger" role="alert">{error}</AppNotice>}
         <div className="flex flex-wrap gap-2">
           {state === "Submitted" && <AppButton disabled={busy} onClick={() => void run("screen")}>{t("recruitmentApplications.startScreening")}</AppButton>}
-          {state === "Screening" && <><AppButton disabled={busy || !reason.trim()} onClick={() => void run("shortlist")}>{t("recruitmentApplications.shortlist")}</AppButton>
-            <AppButton className={DANGER} disabled={busy || !reason.trim()} onClick={() => void run("decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
+          {state === "Screening" && <><AppButton disabled={busy} onClick={() => void run("shortlist")}>{t("recruitmentApplications.shortlist")}</AppButton>
+            <AppButton className={DANGER} disabled={busy} onClick={() => void run("decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
           {state === "Shortlisted" && <><AppButton disabled={busy} onClick={() => void run("decide", "Accepted")}>{t("recruitmentApplications.accept")}</AppButton>
             <AppButton variant="secondary" disabled={busy} onClick={() => void run("decide", "Waitlisted")}>{t("recruitmentApplications.waitlist")}</AppButton>
-            <AppButton className={DANGER} disabled={busy || !reason.trim()} onClick={() => void run("decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
+            <AppButton className={DANGER} disabled={busy} onClick={() => void run("decide", "Rejected")}>{t("recruitmentApplications.reject")}</AppButton></>}
           {state === "Waitlisted" && <AppButton disabled={busy} onClick={() => void run("promote", "Accepted")}>{t("recruitmentApplications.promote")}</AppButton>}
           {state === "Accepted" && <><AppButton disabled={busy} onClick={() => void onboard("onboard")}>{t("recruitmentApplications.onboard")}</AppButton>
             <AppButton variant="secondary" disabled={busy} onClick={() => void onboard("decline")}>{t("recruitmentApplications.recordDecline")}</AppButton></>}
