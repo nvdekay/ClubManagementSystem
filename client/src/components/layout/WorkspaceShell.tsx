@@ -11,6 +11,7 @@ import { useAuth, useLogout } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import type { Workspace } from "@/services/auth";
 import { cn } from "@/utils/cn";
+import { workspaceIcon } from "@/utils/workspaceIcon";
 
 type Context = { kind: "student" } | { kind: "icpdp" } | { kind: "club"; clubId: string };
 
@@ -39,6 +40,12 @@ function group(key: string, label: string, icon: AppIconName, children: NavItem[
 
 const linkClass = "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
 const activeLinkClass = "bg-primary-soft-app font-semibold text-primary-app hover:bg-primary-soft-app hover:text-primary-app";
+
+const collapsedKey = "sidebarCollapsed";
+
+function readCollapsed(): boolean {
+  try { return localStorage.getItem(collapsedKey) === "1"; } catch { return false; }
+}
 
 function isCurrent(item: NavItem, pathname: string): boolean {
   return pathname === item.to || (!item.end && pathname.startsWith(`${item.to}/`));
@@ -73,6 +80,7 @@ export function WorkspaceShell() {
   const menuButton = useRef<HTMLButtonElement>(null);
   // Explicit open/closed choices per group; a group without one follows the current page.
   const [folded, setFolded] = useState<Record<string, boolean>>({});
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   const context = contextFor(location.pathname);
   const workspace = auth.data?.workspaces.find((item) => matches(item, context));
 
@@ -91,8 +99,8 @@ export function WorkspaceShell() {
 
   if (auth.isPending) {
     return <div className="flex h-full">
-      <div className="hidden w-68 shrink-0 border-r border-border-app bg-sidebar-app p-5 lg:block">
-        <AppSkeleton className="h-9 w-32" /><AppSkeleton className="mt-8 h-14 w-full" />
+      <div className={cn("hidden w-68 shrink-0 border-r border-border-app bg-sidebar-app p-5 lg:block", { "w-18 p-3": collapsed })}>
+        <AppSkeleton className="h-9 w-full" /><AppSkeleton className="mt-8 h-14 w-full" />
         <div className="mt-8 space-y-3">{[0, 1, 2, 3].map((item) => <AppSkeleton key={item} className="h-9 w-full" />)}</div>
       </div>
       <div className="flex-1 space-y-4 p-6 sm:p-10"><AppSkeleton className="h-10 w-1/2" /><AppSkeleton className="h-64 w-full" /></div>
@@ -110,10 +118,16 @@ export function WorkspaceShell() {
   const roleName = workspace?.kind === "club" && workspace.role ? t(`auth.${workspace.role}`)
     : context.kind === "icpdp" ? t("auth.officerRole") : t("auth.student");
 
-  function navLink(item: NavItem) {
-    return <NavLink to={item.to} end={item.end} className={({ isActive }) => cn(linkClass, { [activeLinkClass]: isActive })}>
+  function setSidebarCollapsed(next: boolean) {
+    setCollapsed(next);
+    try { localStorage.setItem(collapsedKey, next ? "1" : "0"); } catch { /* The choice just lasts this visit. */ }
+  }
+
+  function navLink(item: NavItem, compact: boolean) {
+    return <NavLink to={item.to} end={item.end} title={compact ? item.label : undefined} aria-label={compact ? item.label : undefined}
+      className={({ isActive }) => cn(linkClass, { [activeLinkClass]: isActive, "justify-center px-0": compact })}>
       <AppIcon name={item.icon} />
-      <span className="min-w-0 flex-1">{item.label}</span>
+      {!compact && <span className="min-w-0 flex-1">{item.label}</span>}
     </NavLink>;
   }
 
@@ -126,36 +140,52 @@ export function WorkspaceShell() {
     }
   }
 
-  const sidebar = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between gap-3 px-5 pt-5">
-        <Link to="/" aria-label={t("auth.brand")} className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+  function sidebar(compact: boolean) {
+    const toggleLabel = compact ? t("common.expandSidebar") : t("common.collapseSidebar");
+    return <div className="flex h-full flex-col">
+      <div className={cn("flex items-center justify-between gap-3 px-5 pt-5", { "justify-center px-3": compact })}>
+        {!compact && <Link to="/" aria-label={t("auth.brand")} className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
           <UniversityLogo alt={t("auth.schoolLogo")} className="w-38" />
-        </Link>
+        </Link>}
+        <button type="button" onClick={() => setSidebarCollapsed(!compact)} aria-label={toggleLabel} title={toggleLabel} aria-expanded={!compact}
+          className="hidden size-10 shrink-0 items-center justify-center rounded-full text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app lg:flex">
+          <AppIcon name="panelLeft" />
+        </button>
         <button type="button" onClick={() => setMenuPath(null)} aria-label={t("common.closeMenu")}
           className="flex size-10 items-center justify-center rounded-full text-muted-app hover:bg-surface-strong-app focus-visible:outline-2 focus-visible:outline-ring-app lg:hidden">
           <AppIcon name="close" />
         </button>
       </div>
 
-      <Link to="/workspace" title={t("auth.switchWorkspace")} className="group mx-3 mt-6 flex items-center gap-3 rounded-xl border border-border-app bg-bg-app px-3 py-2.5 transition-colors hover:border-primary-app focus-visible:outline-2 focus-visible:outline-ring-app">
+      <Link to="/workspace" title={compact ? `${workspaceName} · ${roleName}` : t("auth.switchWorkspace")} aria-label={compact ? `${workspaceName} · ${t("auth.switchWorkspace")}` : undefined}
+        className={cn("group mx-3 mt-6 flex items-center gap-3 rounded-xl border border-border-app bg-bg-app px-3 py-2.5 transition-colors hover:border-primary-app focus-visible:outline-2 focus-visible:outline-ring-app", { "justify-center border-transparent bg-transparent px-0 py-0": compact })}>
         <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft-app text-primary-app">
-          <AppIcon name={context.kind === "club" ? "users" : context.kind === "icpdp" ? "shield" : "sparkles"} className="size-4.5" />
+          <AppIcon name={workspaceIcon(context.kind)} className="size-4.5" />
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="line-clamp-2 text-sm font-bold break-words text-text-app" title={workspaceName}>{workspaceName}</span>
-          <span className="block text-xs text-muted-app">{roleName}<span className="sr-only"> · {t("auth.switchWorkspace")}</span></span>
-        </span>
-        <AppIcon name="chevronRight" className="size-4 text-muted-app group-hover:text-primary-app" />
+        {!compact && <>
+          <span className="min-w-0 flex-1">
+            <span className="line-clamp-2 text-sm font-bold break-words text-text-app" title={workspaceName}>{workspaceName}</span>
+            <span className="block text-xs text-muted-app">{roleName}<span className="sr-only"> · {t("auth.switchWorkspace")}</span></span>
+          </span>
+          <AppIcon name="chevronRight" className="size-4 text-muted-app group-hover:text-primary-app" />
+        </>}
       </Link>
 
       <nav aria-label={t("common.workspaceNav")} className="mt-6 flex-1 overflow-y-auto px-3 pb-4">
         {nav.map((section) => section.items.length > 0 && (
-          <div key={section.title} className="mb-5">
-            <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-muted-app uppercase">{section.title}</p>
+          <div key={section.title} className={cn("mb-5", { "mb-3 border-b border-border-app pb-3 last:border-b-0": compact })}>
+            {!compact && <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-muted-app uppercase">{section.title}</p>}
             <ul className="space-y-1">{section.items.map((entry) => {
-              if (!("group" in entry)) return <li key={entry.to}>{navLink(entry)}</li>;
+              if (!("group" in entry)) return <li key={entry.to}>{navLink(entry, compact)}</li>;
               const containsCurrent = entry.children.some((child) => isCurrent(child, location.pathname));
+              // Icons alone can't show a nested list, so a group opens the sidebar on that group.
+              if (compact) return <li key={entry.group}>
+                <button type="button" title={entry.label} aria-label={entry.label}
+                  onClick={() => { setFolded({ ...folded, [entry.group]: false }); setSidebarCollapsed(false); }}
+                  className={cn(linkClass, "w-full justify-center px-0", { [activeLinkClass]: containsCurrent })}>
+                  <AppIcon name={entry.icon} />
+                </button>
+              </li>;
               const open = folded[entry.group] === undefined ? containsCurrent : !folded[entry.group];
               const listId = `nav-group-${entry.group}`;
               return <li key={entry.group}>
@@ -168,7 +198,7 @@ export function WorkspaceShell() {
                   <AppIcon name="chevronRight" className={cn("size-4 transition-transform", { "rotate-90": open })} />
                 </button>
                 {open && <ul id={listId} className="mt-1 ml-5 space-y-1 border-l border-border-app pl-2">
-                  {entry.children.map((child) => <li key={child.to}>{navLink(child)}</li>)}
+                  {entry.children.map((child) => <li key={child.to}>{navLink(child, false)}</li>)}
                 </ul>}
               </li>;
             })}</ul>
@@ -176,17 +206,17 @@ export function WorkspaceShell() {
         ))}
       </nav>
 
-      <div className="border-t border-border-app px-3 py-4">
-        <div className="flex items-center gap-3 px-2">
+      <div className={cn("border-t border-border-app px-3 py-4", { "px-2": compact })}>
+        <div className={cn("flex items-center gap-3 px-2", { "justify-center px-0": compact })} title={compact ? `${me.user.displayName} · ${me.user.email}` : undefined}>
           <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
             {me.user.displayName.trim().charAt(0).toUpperCase()}
           </span>
-          <span className="min-w-0 flex-1">
+          {!compact && <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold" title={me.user.displayName}>{me.user.displayName}</span>
             <span className="block truncate text-xs text-muted-app" title={me.user.email}>{me.user.email}</span>
-          </span>
+          </span>}
         </div>
-        <div className="mt-3 flex flex-wrap gap-1">
+        <div className={cn("mt-3 flex items-center justify-center gap-1", { "flex-col": compact })}>
           <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} scope={context} />
           <IconButton label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")} onClick={toggleTheme}>
             <AppIcon name={theme === "dark" ? "sun" : "moon"} />
@@ -194,24 +224,25 @@ export function WorkspaceShell() {
           <IconButton label={t("common.switchLanguage")} onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}>
             <span className="text-xs font-bold">{i18n.language === "vi" ? "EN" : "VI"}</span>
           </IconButton>
-          <button type="button" disabled={logout.isPending} onClick={() => void signOut()}
-            className="ml-auto inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-muted-app transition-colors hover:bg-surface-strong-app hover:text-danger-app focus-visible:outline-2 focus-visible:outline-ring-app disabled:opacity-50">
-            <AppIcon name="logout" className="size-4.5" />{t("auth.logout")}
-          </button>
         </div>
+        <button type="button" disabled={logout.isPending} onClick={() => void signOut()}
+          title={compact ? t("auth.logout") : undefined} aria-label={compact ? t("auth.logout") : undefined}
+          className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-app transition-colors hover:bg-surface-strong-app hover:text-danger-app focus-visible:outline-2 focus-visible:outline-ring-app disabled:opacity-50">
+          <AppIcon name="logout" className="size-4.5" />{!compact && t("auth.logout")}
+        </button>
         {logout.isError && <p role="alert" className="mt-2 px-2 text-xs text-danger-app">{t("auth.logoutError")}</p>}
       </div>
-    </div>
-  );
+    </div>;
+  }
 
   return (
     <div className="flex min-h-full">
-      <aside className="sticky top-0 hidden h-dvh w-68 shrink-0 border-r border-border-app bg-sidebar-app lg:block">{sidebar}</aside>
+      <aside className={cn("sticky top-0 hidden h-dvh w-68 shrink-0 border-r border-border-app bg-sidebar-app transition-[width] duration-200 lg:block", { "w-18": collapsed })}>{sidebar(collapsed)}</aside>
 
       {menuOpen && <div className="fixed inset-0 z-40 lg:hidden">
         <button type="button" aria-label={t("common.closeMenu")} tabIndex={-1} onClick={() => setMenuPath(null)}
           className="absolute inset-0 bg-text-app/40" />
-        <aside className="absolute inset-y-0 left-0 w-[min(18rem,85vw)] border-r border-border-app bg-sidebar-app shadow-xl">{sidebar}</aside>
+        <aside className="absolute inset-y-0 left-0 w-[min(18rem,85vw)] border-r border-border-app bg-sidebar-app shadow-xl">{sidebar(false)}</aside>
       </div>}
 
       <div className="flex min-w-0 flex-1 flex-col">

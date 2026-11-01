@@ -3,11 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth, useLoginError } from "@/hooks/useAuth";
 import type { Workspace } from "@/services/auth";
 import { LoginPage } from "@/pages/auth/LoginPage";
+import { workspaceIcon } from "@/utils/workspaceIcon";
 
 function workspaceKey(workspace: Workspace): string {
   return `${workspace.kind}:${workspace.clubId ?? ""}`;
@@ -17,12 +18,6 @@ function workspacePath(workspace: Workspace): string {
   if (workspace.kind === "student") return "/student";
   if (workspace.kind === "icpdp") return "/icpdp";
   return `/club/${encodeURIComponent(workspace.clubId ?? "")}`;
-}
-
-function workspaceIcon(workspace: Workspace): AppIconName {
-  if (workspace.kind === "student") return "graduationCap";
-  if (workspace.kind === "icpdp") return "shield";
-  return "briefcase";
 }
 
 export function AuthWorkspacePage() {
@@ -131,7 +126,7 @@ export function AuthWorkspacePage() {
                     <button type="button" onClick={() => selectWorkspace(workspace)}
                       className="group flex w-full flex-col items-start gap-4 rounded-2xl border border-border-app bg-bg-app p-7 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-app hover:shadow-lg focus-visible:border-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
                       <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft-app text-primary-app transition-colors group-hover:bg-primary-app group-hover:text-on-primary-app">
-                        <AppIcon name={workspaceIcon(workspace)} className="size-6" />
+                        <AppIcon name={workspaceIcon(workspace.kind)} className="size-6" />
                       </span>
                       <span className="font-heading text-2xl leading-tight font-bold text-balance text-text-app">{workspaceTitle(workspace)}</span>
                       <span className="leading-7 text-pretty text-muted-app">{workspaceSubtitle(workspace)}</span>
