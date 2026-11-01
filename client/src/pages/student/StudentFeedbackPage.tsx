@@ -5,6 +5,8 @@ import { ClubLogo } from "@/components/custom/ClubLogo";
 import { StudentFeedbackList } from "@/components/custom/StudentFeedbackList";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
@@ -12,6 +14,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClub, useClubs } from "@/hooks/useDiscovery";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useMyStudentFeedback, useSendStudentFeedback } from "@/hooks/useStudentFeedback";
 import type { FeedbackCategory, FeedbackRecipient } from "@/services/studentFeedback";
 import { cn } from "@/utils/cn";
@@ -41,21 +44,27 @@ export function StudentFeedbackPage() {
   const clubDetail = useClub(club?.id ?? "");
   const events = clubDetail.data ? [...clubDetail.data.upcomingEvents, ...clubDetail.data.history] : [];
   const clubMissing = recipient === "CLUB" && !club;
+  const field = useFieldValidation({
+    club: clubMissing ? t("studentFeedback.clubRequired") : null,
+    message: message.trim() ? null : t("common.fieldRequired"),
+  });
 
   function chooseClub(next: { id: string; name: string } | null) {
     setClub(next);
     setEventId("");
+    if (next) field.touch("club");
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!auth.data || inFlight.current || clubMissing || !event.currentTarget.reportValidity()) return;
+    if (!field.touchAll() || !auth.data || inFlight.current) return;
     inFlight.current = true;
     setDone(false);
     try {
       await send.mutateAsync({ recipient, category, message: message.trim(), isAnonymous,
         ...(club ? { clubId: club.id } : {}), ...(club && eventId ? { eventId } : {}), csrfToken: auth.data.csrfToken });
       setMessage("");
+      field.reset();
       setDone(true);
     } catch {
       // send.isError renders the message below.
@@ -70,7 +79,7 @@ export function StudentFeedbackPage() {
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <section aria-labelledby="feedback-form-title" className="rounded-3xl bg-surface-app p-5 sm:p-6">
           <h2 id="feedback-form-title" className="font-heading text-xl font-bold">{t("studentFeedback.formTitle")}</h2>
-          <form onSubmit={(event) => void submit(event)} className="mt-5 space-y-5">
+          <form noValidate onSubmit={(event) => void submit(event)} className="mt-5 space-y-5">
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">{t("studentFeedback.recipientLabel")}</legend>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -87,8 +96,10 @@ export function StudentFeedbackPage() {
               </div>
             </fieldset>
 
-            <div className="space-y-2">
-              <p className="text-sm font-medium">{recipient === "CLUB" ? t("studentFeedback.clubLabel") : t("studentFeedback.clubOptionalLabel")}</p>
+            <div className="space-y-2"
+              onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) field.touch("club"); }}>
+              <p className="text-sm font-medium">{recipient === "CLUB"
+                ? <>{t("studentFeedback.clubLabel")}<AppRequiredMark /></> : t("studentFeedback.clubOptionalLabel")}</p>
               {club ? (
                 <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-primary-app bg-bg-app p-3">
                   <span className="min-w-0 flex-1 text-sm font-semibold break-words">{t("studentFeedback.clubSelected", { name: club.name })}</span>
@@ -114,7 +125,8 @@ export function StudentFeedbackPage() {
                             </li>
                           ))}
                         </ul>}
-                  {recipient === "CLUB" && <p className="text-xs text-muted-app">{t("studentFeedback.clubRequired")}</p>}
+                  {recipient === "CLUB" && (field.error("club") ? <AppFieldError message={field.error("club")} />
+                    : <p className="text-xs text-muted-app">{t("studentFeedback.clubRequired")}</p>)}
                 </div>
               )}
             </div>
@@ -142,9 +154,10 @@ export function StudentFeedbackPage() {
             </fieldset>
 
             <div className="space-y-1.5">
-              <label htmlFor={messageId} className="block text-sm font-medium">{t("studentFeedback.messageLabel")}</label>
-              <AppTextarea id={messageId} value={message} required maxLength={MAX_MESSAGE} rows={5} className="w-full"
+              <label htmlFor={messageId} className="block text-sm font-medium">{t("studentFeedback.messageLabel")}<AppRequiredMark /></label>
+              <AppTextarea id={messageId} value={message} {...field.control("message")} maxLength={MAX_MESSAGE} rows={5} className="w-full"
                 placeholder={t("studentFeedback.messagePlaceholder")} onChange={(event) => setMessage(event.target.value)} />
+              <AppFieldError message={field.error("message")} />
               <p className="text-right text-xs text-muted-app tabular-nums">
                 {t("studentFeedback.messageCount", { count: message.length, max: MAX_MESSAGE })}</p>
             </div>
@@ -158,7 +171,7 @@ export function StudentFeedbackPage() {
               </label>
             </div>
 
-            <AppButton type="submit" disabled={send.isPending || clubMissing || !message.trim()}>
+            <AppButton type="submit" disabled={send.isPending}>
               {send.isPending ? t("studentFeedback.submitting") : t("studentFeedback.submit")}
             </AppButton>
             {done && !send.isError && <p role="status" className="text-sm font-semibold text-success-app">{t("studentFeedback.sent")}</p>}

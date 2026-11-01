@@ -2,10 +2,13 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { useAuth } from "@/hooks/useAuth";
 import { useEventCheckIn } from "@/hooks/useEventCheckIns";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import type { Locale } from "@/i18n";
 import type { CheckInResult } from "@/services/eventCheckIns";
 import { formatDate } from "@/utils/formatDate";
@@ -28,10 +31,11 @@ export function EventCheckInForm({ eventId, initialCode = "", autoFocus, onCheck
   const inputId = useId();
   const [code, setCode] = useState(initialCode);
   const [result, setResult] = useState<CheckInResult | null>(null);
+  const field = useFieldValidation({ code: code.trim() ? null : t("common.fieldRequired") });
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!auth.data || inFlight.current || !code.trim()) return;
+    if (!field.touchAll() || !auth.data || inFlight.current) return;
     inFlight.current = true;
     try {
       const done = await checkIn.mutateAsync({ eventId, code: code.trim(), csrfToken: auth.data.csrfToken });
@@ -57,17 +61,18 @@ export function EventCheckInForm({ eventId, initialCode = "", autoFocus, onCheck
   }
 
   return (
-    <form onSubmit={(event) => void submit(event)} className="space-y-3">
-      <label htmlFor={inputId} className="block text-sm font-medium">{t("eventRegistrations.checkInCode")}</label>
+    <form noValidate onSubmit={(event) => void submit(event)} className="space-y-3">
+      <label htmlFor={inputId} className="block text-sm font-medium">{t("eventRegistrations.checkInCode")}<AppRequiredMark /></label>
       <p className="text-sm text-muted-app">{t("eventRegistrations.checkInHint")}</p>
       <div className="flex flex-wrap gap-2">
-        <AppInput id={inputId} value={code} required maxLength={64} autoComplete="off" autoCapitalize="characters"
+        <AppInput id={inputId} value={code} {...field.control("code")} maxLength={64} autoComplete="off" autoCapitalize="characters"
           spellCheck={false} autoFocus={autoFocus} onChange={(event) => setCode(event.target.value)}
           className="min-w-0 flex-1 basis-48 font-mono tracking-wider uppercase" />
-        <AppButton type="submit" disabled={checkIn.isPending || !code.trim()} className="shrink-0">
+        <AppButton type="submit" disabled={checkIn.isPending} className="shrink-0">
           {checkIn.isPending ? t("eventRegistrations.checkingIn") : t("eventRegistrations.checkInSubmit")}
         </AppButton>
       </div>
+      <AppFieldError message={field.error("code")} />
       {checkIn.isError && <AppNotice tone="danger" role="alert" title={t("eventRegistrations.checkInError")}>
         <p>{checkIn.error.message}</p></AppNotice>}
     </form>

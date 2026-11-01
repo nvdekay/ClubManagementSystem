@@ -2,12 +2,15 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppStarRating } from "@/components/ui/star-rating/AppStarRating";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubmitEventFeedback } from "@/hooks/useEventFeedback";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import type { Locale } from "@/i18n";
 import type { MyEventFeedback } from "@/services/eventFeedback";
 import { cn } from "@/utils/cn";
@@ -62,10 +65,14 @@ export function EventFeedbackForm({ eventId, closesAt, onSubmitted }: EventFeedb
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const field = useFieldValidation({
+    rating: rating > 0 ? null : t("common.chooseRequired"),
+    comment: comment.trim() ? null : t("common.fieldRequired"),
+  });
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!auth.data || inFlight.current || !event.currentTarget.reportValidity()) return;
+    if (!field.touchAll() || !auth.data || inFlight.current) return;
     inFlight.current = true;
     try {
       const saved = await submit.mutateAsync({ eventId, rating, comment: comment.trim(), isAnonymous,
@@ -79,20 +86,22 @@ export function EventFeedbackForm({ eventId, closesAt, onSubmitted }: EventFeedb
   }
 
   return (
-    <form onSubmit={(event) => void send(event)} className="space-y-4">
+    <form noValidate onSubmit={(event) => void send(event)} className="space-y-4">
       <p className="text-sm text-muted-app">{t("eventFeedback.intro")}</p>
       <div className="space-y-1.5">
-        <p className="text-sm font-medium">{t("eventFeedback.ratingLabel")}</p>
-        <div className="flex flex-wrap items-center gap-3">
+        <p className="text-sm font-medium">{t("eventFeedback.ratingLabel")}<AppRequiredMark /></p>
+        <div className="flex flex-wrap items-center gap-3" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) field.touch("rating"); }}>
           <AppStarRating value={rating} onChange={setRating} required label={t("eventFeedback.ratingLabel")}
             starLabel={(count) => t("eventFeedback.star", { count })} />
           {rating > 0 && <span className="text-sm font-semibold text-warning-app">{t(ratingWord(rating))}</span>}
         </div>
+        <AppFieldError message={field.error("rating")} />
       </div>
       <div className="space-y-1.5">
-        <label htmlFor={commentId} className="block text-sm font-medium">{t("eventFeedback.commentLabel")}</label>
-        <AppTextarea id={commentId} value={comment} required maxLength={MAX_COMMENT} rows={4} className="w-full"
+        <label htmlFor={commentId} className="block text-sm font-medium">{t("eventFeedback.commentLabel")}<AppRequiredMark /></label>
+        <AppTextarea id={commentId} value={comment} {...field.control("comment")} maxLength={MAX_COMMENT} rows={4} className="w-full"
           placeholder={t("eventFeedback.commentPlaceholder")} onChange={(event) => setComment(event.target.value)} />
+        <AppFieldError message={field.error("comment")} />
         <p className="text-right text-xs text-muted-app tabular-nums">
           {t("eventFeedback.commentCount", { count: comment.length, max: MAX_COMMENT })}</p>
       </div>
@@ -105,7 +114,7 @@ export function EventFeedbackForm({ eventId, closesAt, onSubmitted }: EventFeedb
         </label>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <AppButton type="submit" disabled={submit.isPending || rating === 0 || !comment.trim()}>
+        <AppButton type="submit" disabled={submit.isPending}>
           {submit.isPending ? t("eventFeedback.submitting") : t("eventFeedback.submit")}
         </AppButton>
         {closesAt && <span className="text-xs text-muted-app">{t("eventFeedback.closesAt", { date: formatDate(closesAt, locale) })}</span>}

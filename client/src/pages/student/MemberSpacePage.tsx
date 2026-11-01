@@ -6,6 +6,8 @@ import { ClubLogo } from "@/components/custom/ClubLogo";
 import { MembershipStateBadge } from "@/components/custom/MembershipStateBadge";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -13,6 +15,7 @@ import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { isNotAMember, useMemberSpace, useMembershipAction } from "@/hooks/useMemberSpace";
 import type { Locale } from "@/i18n";
 import type { MemberSpace } from "@/services/memberSpace";
@@ -212,16 +215,25 @@ function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToke
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [date, setDate] = useState(todayInVietnam);
+  const field = useFieldValidation({
+    reason: reason.trim() ? null : t("common.fieldRequired"),
+    date: !date ? t("common.fieldRequired") : date < todayInVietnam() ? t("common.dateNotPast") : null,
+  });
+
+  function close() {
+    setOpen(false);
+    field.reset();
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (inFlight.current || !event.currentTarget.reportValidity()) return;
+    if (!field.touchAll() || inFlight.current) return;
     inFlight.current = true;
     try {
       // Noon in Vietnam keeps the chosen calendar day whatever the browser's timezone.
       await action.mutateAsync({ kind: "request", membershipId, reason: reason.trim(),
         requestedEffectiveDate: new Date(`${date}T12:00:00+07:00`).toISOString(), csrfToken });
-      setOpen(false);
+      close();
     } catch {
       // action.isError renders below.
     } finally {
@@ -238,21 +250,23 @@ function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToke
         <AppButton variant="secondary" className="mt-4" onClick={() => setOpen(true)}>
           <AppIcon name="logout" className="size-4" />{t("memberSpace.leaveOpen")}</AppButton>
       ) : (
-        <form onSubmit={(event) => void submit(event)} className="mt-4 space-y-3">
+        <form noValidate onSubmit={(event) => void submit(event)} className="mt-4 space-y-3">
           <div className="space-y-1.5">
-            <label htmlFor={reasonId} className="block text-sm font-medium">{t("memberSpace.leaveReason")}</label>
-            <AppTextarea id={reasonId} value={reason} required maxLength={2000} rows={3} className="w-full"
+            <label htmlFor={reasonId} className="block text-sm font-medium">{t("memberSpace.leaveReason")}<AppRequiredMark /></label>
+            <AppTextarea id={reasonId} value={reason} {...field.control("reason")} maxLength={2000} rows={3} className="w-full"
               onChange={(event) => setReason(event.target.value)} />
+            <AppFieldError message={field.error("reason")} />
           </div>
           <div className="space-y-1.5">
-            <label htmlFor={dateId} className="block text-sm font-medium">{t("memberSpace.leaveDate")}</label>
-            <AppInput id={dateId} type="date" value={date} min={todayInVietnam()} required className="w-full"
+            <label htmlFor={dateId} className="block text-sm font-medium">{t("memberSpace.leaveDate")}<AppRequiredMark /></label>
+            <AppInput id={dateId} type="date" value={date} min={todayInVietnam()} {...field.control("date")} className="w-full"
               onChange={(event) => setDate(event.target.value)} />
+            <AppFieldError message={field.error("date")} />
           </div>
           <div className="flex flex-wrap gap-2">
-            <AppButton type="submit" disabled={action.isPending || !reason.trim()}>
+            <AppButton type="submit" disabled={action.isPending}>
               {action.isPending ? t("memberSpace.leaveSubmitting") : t("memberSpace.leaveSubmit")}</AppButton>
-            <AppButton type="button" variant="ghost" onClick={() => setOpen(false)}>{t("memberSpace.cancel")}</AppButton>
+            <AppButton type="button" variant="ghost" onClick={close}>{t("memberSpace.cancel")}</AppButton>
           </div>
           {action.isError && <AppNotice tone="danger" role="alert" title={t("memberSpace.leaveError")}><p>{action.error.message}</p></AppNotice>}
         </form>

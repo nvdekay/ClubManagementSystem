@@ -6,6 +6,8 @@ import { formatDay } from "@/utils/formatDate";
 import type { accountability } from "@/i18n/accountability";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -13,6 +15,7 @@ import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { useAuth } from "@/hooks/useAuth";
+import { useFieldValidation } from "@/hooks/useFieldValidation";
 import {
   useAccountabilityAction,
   useReportDetail,
@@ -167,6 +170,19 @@ function ReportEditor({
     "report",
     data.obligation.eventId,
   );
+  const reportField = useFieldValidation({
+    actualResult: input.actualResult.trim() ? null : t("common.fieldRequired"),
+  });
+  // Evidence links are optional, but the server accepts HTTPS links only.
+  const evidenceField = useFieldValidation({
+    url:
+      url.trim() && (!URL.canParse(url) || new URL(url).protocol !== "https:")
+        ? t("accountability.httpsRequired")
+        : null,
+  });
+  const reasonField = useFieldValidation({
+    reason: reason.trim() ? null : t("common.fieldRequired"),
+  });
   const openViolation = useOpenViolation();
   const claimable =
     latest?.state === "Submitted" &&
@@ -194,7 +210,7 @@ function ReportEditor({
     }
   }
   async function finding() {
-    if (!latest || !reason.trim()) return;
+    if (!reasonField.touchAll() || !latest) return;
     try {
       const created = await openViolation.mutateAsync({
         csrfToken: token,
@@ -265,9 +281,11 @@ function ReportEditor({
       )}
       {!admin && draft ? (
         <form
+          noValidate
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
+            if (!reportField.touchAll()) return;
             void act({ kind: "save", input });
           }}
         >
@@ -275,15 +293,21 @@ function ReportEditor({
             (key) => (
               <label key={key} className="block text-sm font-semibold">
                 {t(`accountability.${key}`)}
+                {key === "actualResult" && <AppRequiredMark />}
                 <AppTextarea
                   className="mt-2 w-full"
-                  required={key === "actualResult"}
+                  {...(key === "actualResult"
+                    ? reportField.control("actualResult")
+                    : {})}
                   maxLength={10000}
                   value={input[key] ?? ""}
                   onChange={(e) =>
                     setInput({ ...input, [key]: e.target.value })
                   }
                 />
+                {key === "actualResult" && (
+                  <AppFieldError message={reportField.error("actualResult")} />
+                )}
               </label>
             ),
           )}
@@ -295,9 +319,12 @@ function ReportEditor({
             <AppInput
               className="mt-1 w-full"
               type="url"
+              maxLength={2000}
+              {...evidenceField.control("url", false)}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
+            <AppFieldError message={evidenceField.error("url")} />
           </label>
           <label className="block text-sm">
             {t("accountability.evidenceNote")}
@@ -310,16 +337,16 @@ function ReportEditor({
           <AppButton
             type="button"
             variant="secondary"
-            disabled={
-              !url.startsWith("https://") || input.evidence.length >= 20
-            }
+            disabled={!url.trim() || input.evidence.length >= 20}
             onClick={() => {
+              if (!evidenceField.touchAll()) return;
               setInput({
                 ...input,
                 evidence: [...input.evidence, { note, url }],
               });
               setUrl("");
               setNote("");
+              evidenceField.reset();
             }}
           >
             {t("accountability.addEvidence")}
@@ -413,37 +440,42 @@ function ReportEditor({
           {(claimed || data.obligation.overdue) && (
             <label className="block text-sm font-semibold">
               {t("accountability.reason")}
+              <AppRequiredMark />
               <AppTextarea
                 className="mt-2 w-full"
                 value={reason}
                 maxLength={2000}
+                {...reasonField.control("reason")}
                 onChange={(e) => setReason(e.target.value)}
               />
+              <AppFieldError message={reasonField.error("reason")} />
             </label>
           )}
           {claimed && (
             <>
               <div className="flex flex-wrap gap-3">
                 <AppButton
-                  disabled={!reason.trim() || mutation.isPending}
-                  onClick={() =>
+                  disabled={mutation.isPending}
+                  onClick={() => {
+                    if (!reasonField.touchAll()) return;
                     void act(
                       { kind: "decision", outcome: "accept", reason },
                       true,
-                    )
-                  }
+                    );
+                  }}
                 >
                   {t("accountability.accept")}
                 </AppButton>
                 <AppButton
                   variant="secondary"
-                  disabled={!reason.trim() || mutation.isPending}
-                  onClick={() =>
+                  disabled={mutation.isPending}
+                  onClick={() => {
+                    if (!reasonField.touchAll()) return;
                     void act(
                       { kind: "decision", outcome: "return", reason },
                       true,
-                    )
-                  }
+                    );
+                  }}
                 >
                   {t("accountability.return")}
                 </AppButton>
@@ -461,9 +493,7 @@ function ReportEditor({
               <div className="flex flex-wrap items-center gap-3">
                 <AppButton
                   variant="secondary"
-                  disabled={
-                    !reason.trim() || !!violationId || openViolation.isPending
-                  }
+                  disabled={!!violationId || openViolation.isPending}
                   onClick={() => void finding()}
                 >
                   {t("accountability.openViolation")}
@@ -477,8 +507,9 @@ function ReportEditor({
                       {t("accountability.violation")}
                     </Link>
                     <AppButton
-                      disabled={!reason.trim() || mutation.isPending}
-                      onClick={() =>
+                      disabled={mutation.isPending}
+                      onClick={() => {
+                        if (!reasonField.touchAll()) return;
                         void act(
                           {
                             kind: "decision",
@@ -487,8 +518,8 @@ function ReportEditor({
                             violationId,
                           },
                           true,
-                        )
-                      }
+                        );
+                      }}
                     >
                       {t("accountability.finding")}
                     </AppButton>
@@ -500,8 +531,11 @@ function ReportEditor({
           {data.obligation.overdue && (
             <AppButton
               variant="secondary"
-              disabled={!reason.trim() || mutation.isPending}
-              onClick={() => void act({ kind: "overdue", reason }, true)}
+              disabled={mutation.isPending}
+              onClick={() => {
+                if (!reasonField.touchAll()) return;
+                void act({ kind: "overdue", reason }, true);
+              }}
             >
               {t("accountability.missing")}
             </AppButton>
