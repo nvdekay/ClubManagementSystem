@@ -173,13 +173,6 @@ function ReportEditor({
   const reportField = useFieldValidation({
     actualResult: input.actualResult.trim() ? null : t("common.fieldRequired"),
   });
-  // Evidence links are optional, but the server accepts HTTPS links only.
-  const evidenceField = useFieldValidation({
-    url:
-      url.trim() && (!URL.canParse(url) || new URL(url).protocol !== "https:")
-        ? t("accountability.httpsRequired")
-        : null,
-  });
   const reasonField = useFieldValidation({
     reason: reason.trim() ? null : t("common.fieldRequired"),
   });
@@ -320,11 +313,9 @@ function ReportEditor({
               className="mt-1 w-full"
               type="url"
               maxLength={2000}
-              {...evidenceField.control("url", false)}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
-            <AppFieldError message={evidenceField.error("url")} />
           </label>
           <label className="block text-sm">
             {t("accountability.evidenceNote")}
@@ -337,16 +328,16 @@ function ReportEditor({
           <AppButton
             type="button"
             variant="secondary"
-            disabled={!url.trim() || input.evidence.length >= 20}
+            disabled={
+              !url.startsWith("https://") || input.evidence.length >= 20
+            }
             onClick={() => {
-              if (!evidenceField.touchAll()) return;
               setInput({
                 ...input,
                 evidence: [...input.evidence, { note, url }],
               });
               setUrl("");
               setNote("");
-              evidenceField.reset();
             }}
           >
             {t("accountability.addEvidence")}

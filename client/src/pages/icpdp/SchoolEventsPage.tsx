@@ -61,14 +61,6 @@ function iso(value: string): string | undefined {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
-/** Optional reply deadline: when set it must be in the future and no later than the event start. */
-function deadlineError(t: TFunction, deadline: string, startAt: string | undefined): string | null {
-  const value = iso(deadline);
-  if (!value) return null;
-  if (new Date(value) <= new Date()) return t("common.dateNotPast");
-  return startAt && value > startAt ? t("schoolEvents.deadlineAfterStart") : null;
-}
-
 function details(value: unknown): string[] {
   if (!value || typeof value !== "object") return [];
   return Object.values(value as Record<string, unknown>).filter((item) => ["string", "number"].includes(typeof item)).map(String);
@@ -152,7 +144,6 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
     venueText: !useRoom && !venueText.trim() ? t("common.fieldRequired") : null,
     capacity: !capacity.trim() ? t("common.fieldRequired") : !Number.isInteger(places) ? t("common.invalidNumber")
       : places < 1 ? t("common.numberMin", { min: 1 }) : places > 100_000 ? t("common.numberMax", { max: 100_000 }) : null,
-    deadline: deadlineError(t, deadline, start),
   });
 
   async function submit() {
@@ -210,9 +201,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
             onChange={(e) => setCapacity(e.target.value)} />
           <AppFieldError message={field.error("capacity")} /></label>
         <label className="block text-sm font-semibold">{t("schoolEvents.deadline")}
-          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} max={startAt} {...field.control("deadline", false)}
-            onChange={(e) => setDeadline(e.target.value)} />
-          <AppFieldError message={field.error("deadline")} />
+          <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} max={startAt} onChange={(e) => setDeadline(e.target.value)} />
           <span className="mt-1 block text-xs font-normal text-muted-app">{t("schoolEvents.deadlineHint")}</span></label>
         <div className="md:col-span-2"><p className="mb-1 text-sm font-semibold">{t("schoolEvents.invite")}</p>
           <ClubPicker all={all} onAll={setAll} chosen={chosen} onChosen={setChosen} /></div>
@@ -291,7 +280,6 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
   const [deadline, setDeadline] = useState("");
   const field = useFieldValidation({
     clubs: all || chosen.length ? null : t("schoolEvents.inviteRequired"),
-    deadline: deadlineError(t, deadline, query.data?.startAt),
   });
   const skipped = (useLocation().state as { skipped?: number } | null)?.skipped ?? 0;
   function date(value: string) {
@@ -384,9 +372,7 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
               onChosen={(value) => { setChosen(value); field.touch("clubs"); }} exclude={blocking} />
             <AppFieldError message={field.error("clubs")} />
             <label className="mt-4 block text-sm font-semibold">{t("schoolEvents.deadline")}
-              <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} {...field.control("deadline", false)}
-                onChange={(e) => setDeadline(e.target.value)} />
-              <AppFieldError message={field.error("deadline")} />
+              <AppInput type="datetime-local" className="mt-2 w-full font-normal" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
               <span className="mt-1 block text-xs font-normal text-muted-app">{t("schoolEvents.deadlineHint")}</span></label>
             <AppButton className="mt-4 w-full" disabled={action.isPending} onClick={() => void invite()}>{t("schoolEvents.sendInvites")}</AppButton>
           </section>}

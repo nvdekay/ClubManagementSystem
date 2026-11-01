@@ -22,18 +22,15 @@ export function ClubInvitationsPage() {
     setDrafts((current) => ({ ...current, [id]: { ...(current[id] ?? { note: "", representative: "", members: "" }), [field]: value } }));
   }
   // One response form per invitation. The note is only required to decline, so it is checked on that click.
-  const errors: Record<string, string | null> = Object.fromEntries((list.data ?? []).flatMap(({ id }) => {
-    const members = drafts[id]?.members ?? "";
-    return [["note:" + id, drafts[id]?.note.trim() ? null : t("clubInvitations.declineReasonRequired")],
-      ["members:" + id, !members || (Number.isInteger(Number(members)) && Number(members) >= 0) ? null
-        : Number(members) < 0 ? t("common.numberMin", { min: 0 }) : t("common.invalidNumber")]];
-  }));
+  const errors: Record<string, string | null> = Object.fromEntries((list.data ?? []).map(({ id }) =>
+    ["note:" + id, drafts[id]?.note.trim() ? null : t("clubInvitations.declineReasonRequired")]));
   const field = useFieldValidation(errors);
   async function respond(id: string, outcome: "Accepted" | "Declined") {
     if (!auth.data || action.isPending) return;
-    const key = (outcome === "Accepted" ? "members:" : "note:") + id;
-    field.touch(key);
-    if (errors[key]) return;
+    if (outcome === "Declined") {
+      field.touch("note:" + id);
+      if (errors["note:" + id]) return;
+    }
     const draft = drafts[id];
     try {
       await action.mutateAsync({ id, csrfToken: auth.data.csrfToken, input: { outcome, responseNote: draft?.note,
@@ -68,9 +65,8 @@ export function ClubInvitationsPage() {
             className="block w-full rounded-lg border border-border-app bg-bg-app p-3" value={draft?.representative ?? ""}
             onChange={(e) => edit(invitation.id, "representative", e.target.value)} /></label>
           <label className="block">{t("clubInvitations.members")}<input type="number" min="0" step="1"
-            className="block w-full rounded-lg border border-border-app bg-bg-app p-3 aria-[invalid=true]:border-danger-app" value={draft?.members ?? ""}
-            {...field.control("members:" + invitation.id, false)} onChange={(e) => edit(invitation.id, "members", e.target.value)} />
-            <AppFieldError message={field.error("members:" + invitation.id)} /></label>
+            className="block w-full rounded-lg border border-border-app bg-bg-app p-3" value={draft?.members ?? ""}
+            onChange={(e) => edit(invitation.id, "members", e.target.value)} /></label>
           <label className="block">{t("clubInvitations.note")}<textarea maxLength={5000}
             className="block w-full rounded-lg border border-border-app bg-bg-app p-3 aria-[invalid=true]:border-danger-app" value={draft?.note ?? ""}
             aria-invalid={field.error("note:" + invitation.id) ? true : undefined} onChange={(e) => edit(invitation.id, "note", e.target.value)} />

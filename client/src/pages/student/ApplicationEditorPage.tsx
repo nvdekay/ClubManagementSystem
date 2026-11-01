@@ -93,10 +93,11 @@ export function ApplicationEditorPage() {
     fieldId: currentDraft.fieldId ? null : t("common.chooseRequired"),
     summary: requiredFields?.summary && !currentDraft.summary.trim() ? t("common.fieldRequired") : null,
     objectives: requiredFields?.objectives && !currentDraft.objectives.trim() ? t("common.fieldRequired") : null,
-    fanpageUrl: currentDraft.fanpageUrl.trim() ? (isHttpUrl(currentDraft.fanpageUrl) ? null : t("common.invalidUrl"))
-      : requiredFields?.fanpageUrl ? t("common.fieldRequired") : null,
-    contactEmail: currentDraft.contactEmail.trim() ? (isEmail(currentDraft.contactEmail) ? null : t("common.invalidEmail"))
-      : requiredFields?.contactEmail ? t("common.fieldRequired") : null,
+    // Fanpage and contact email are only checked when the policy requires them.
+    fanpageUrl: !requiredFields?.fanpageUrl ? null : !currentDraft.fanpageUrl.trim() ? t("common.fieldRequired")
+      : isHttpUrl(currentDraft.fanpageUrl) ? null : t("common.invalidUrl"),
+    contactEmail: !requiredFields?.contactEmail ? null : !currentDraft.contactEmail.trim() ? t("common.fieldRequired")
+      : isEmail(currentDraft.contactEmail) ? null : t("common.invalidEmail"),
   } : {});
   const steps = [t("applications.stepClub"), t("applications.stepFounders"),
     t("applications.stepFiles"), t("applications.stepReview")];

@@ -73,11 +73,12 @@ export function ClubSettingsPage() {
   const profileErrors: Record<string, string | null> = {
     description: requiredFields?.description && !profile.description?.trim() ? fieldRequired : null,
     operatingScope: requiredFields?.operatingScope && !profile.operatingScope?.trim() ? fieldRequired : null,
-    contactEmail: contactEmail ? (isEmail(contactEmail) ? null : t("common.invalidEmail"))
-      : requiredFields?.contactEmail ? fieldRequired : null,
+    // Contact email and charter link are only checked when the policy requires them.
+    contactEmail: !requiredFields?.contactEmail ? null : !contactEmail ? fieldRequired
+      : isEmail(contactEmail) ? null : t("common.invalidEmail"),
     contactPhone: requiredFields?.contactPhone && !profile.contactPhone?.trim() ? fieldRequired : null,
-    charterUrl: charterUrl ? (isHttpUrl(charterUrl) ? null : t("common.invalidUrl"))
-      : requiredFields?.charterUrl ? fieldRequired : null,
+    charterUrl: !requiredFields?.charterUrl ? null : !charterUrl ? fieldRequired
+      : isHttpUrl(charterUrl) ? null : t("common.invalidUrl"),
     channels: requiredFields?.channels && !profile.channels.length ? t("clubSettings.channelsRequired") : null,
   };
   profile.channels.forEach((channel, index) => {
@@ -87,9 +88,6 @@ export function ClubSettingsPage() {
   const profileCheck = useFieldValidation(profileErrors);
   const departmentCheck = useFieldValidation({
     name: department.name.trim() ? null : fieldRequired,
-    sortOrder: !Number.isInteger(department.sortOrder) ? t("common.invalidNumber")
-      : department.sortOrder < 0 ? t("common.numberMin", { min: 0 })
-        : department.sortOrder > 10000 ? t("common.numberMax", { max: 10000 }) : null,
   });
 
   function profileField<K extends keyof ClubProfileInput>(key: K, value: ClubProfileInput[K]) {
@@ -261,7 +259,7 @@ export function ClubSettingsPage() {
             <h2 className="font-heading text-lg font-bold">{editingId ? t("clubSettings.editDepartment") : t("clubSettings.addDepartment")}</h2>
             <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentName")}<AppRequiredMark /><AppInput className="mt-2 block w-full font-normal" {...departmentCheck.control("name")} value={department.name} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, name: event.target.value }))} maxLength={120} /><AppFieldError message={departmentCheck.error("name")} /></label>
             <label className="mt-4 block text-sm font-semibold">{t("clubSettings.departmentDescription")}<AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={department.description} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, description: event.target.value }))} maxLength={2000} /></label>
-            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.sortOrder")}<AppInput className="mt-2 block w-full font-normal" type="number" min={0} max={10000} {...departmentCheck.control("sortOrder", false)} value={department.sortOrder} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, sortOrder: Number(event.target.value) }))} /><AppFieldError message={departmentCheck.error("sortOrder")} /></label>
+            <label className="mt-4 block text-sm font-semibold">{t("clubSettings.sortOrder")}<AppInput className="mt-2 block w-full font-normal" type="number" min={0} max={10000} value={department.sortOrder} onChange={(event) => setDepartment((currentDepartment) => ({ ...currentDepartment, sortOrder: Number(event.target.value) }))} /></label>
             <div className="mt-5 flex flex-wrap gap-2"><AppButton disabled={action.isPending} onClick={() => void saveDepartment()}>{t("clubSettings.saveDepartment")}</AppButton>{editingId && <AppButton variant="secondary" onClick={resetDepartment}>{t("clubSettings.cancel")}</AppButton>}</div>
           </section>}
         </div>

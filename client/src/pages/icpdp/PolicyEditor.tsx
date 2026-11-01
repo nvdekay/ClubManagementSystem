@@ -167,7 +167,6 @@ function formErrors(t: TFunction, form: PolicyForm): Record<string, string | nul
     feedbackWindowHours: wholeError(t, form.feedbackWindowHours, 1),
     feedbackMinRespondents: wholeError(t, form.feedbackMinRespondents, 2),
     conflictThresholdMinutes: wholeError(t, form.conflictThresholdMinutes, 0),
-    effectiveFrom: form.effectiveFrom && new Date(form.effectiveFrom) <= new Date() ? t("common.dateNotPast") : null,
   };
   form.academicCalendar.forEach((item, index) => {
     errors[`semesterCode${index}`] = item.code.trim() ? null : t("common.fieldRequired");
@@ -187,11 +186,11 @@ function formErrors(t: TFunction, form: PolicyForm): Record<string, string | nul
   return errors;
 }
 
-function errorSection(key: string): PolicySection | null {
+function errorSection(key: string): PolicySection {
   if (key === "minFoundingMembers") return "founding";
   if (["feedbackWindowHours", "feedbackMinRespondents", "conflictThresholdMinutes"].includes(key)) return "events";
   if (key.startsWith("semester")) return "calendar";
-  return key === "effectiveFrom" ? null : "reports";
+  return "reports";
 }
 
 function isoDate(value: string, section: PolicySection): string {
@@ -325,8 +324,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     if (!field.touchAll()) {
       // The first bad field may sit on another tab, so open it and keep the summary line.
       const first = Object.keys(errors).find((key) => errors[key]);
-      const target = first ? errorSection(first) : null;
-      if (target) setSection(target);
+      if (first) setSection(errorSection(first));
       setLocalError(t("policy.invalidForm"));
       return;
     }
@@ -499,9 +497,8 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       <div className="grid gap-5 border-t border-border-app pt-6 sm:grid-cols-2">
         <h3 className="font-heading font-semibold sm:col-span-2">{t("policy.saveSection")}</h3>
         <label className="text-sm">{t("policy.effectiveFrom")}
-          <AppInput className="mt-2 block w-full" type="datetime-local" value={form.effectiveFrom} {...field.control("effectiveFrom", false)}
+          <AppInput className="mt-2 block w-full" type="datetime-local" value={form.effectiveFrom}
             onChange={(event) => setForm({ ...form, effectiveFrom: event.target.value })} />
-          <AppFieldError message={field.error("effectiveFrom")} />
           <span className="mt-1 block text-xs text-muted-app">{t("policy.effectiveHint")}</span>
         </label>
         <label className="text-sm">{t("policy.reason")}

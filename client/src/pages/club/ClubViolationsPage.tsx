@@ -10,18 +10,16 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubViolations, useSubmitComplianceResponse } from "@/hooks/useClubCompliance";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
-import { isHttpUrl } from "@/utils/validation";
 export function ClubViolationsPage() {
   const { clubId = "" } = useParams(); const { t, i18n } = useTranslation(); const auth = useAuth();
   const allowed = Boolean(auth.data?.workspaces.some((w) => w.kind === "club" && w.clubId === clubId && w.permissions.includes("club.complaint.respond")));
   const query = useClubViolations(clubId, allowed); const action = useSubmitComplianceResponse(clubId); const [texts, setTexts] = useState<Record<string, string>>({}); const [urls, setUrls] = useState<Record<string, string>>({});
   // Each explanation / corrective action is its own form, keyed by the case or action id.
-  const errors: Record<string, string | null> = Object.fromEntries((query.data ?? []).flatMap((v) => [v.id, ...v.actions.map((a) => a.id)]).flatMap((key) => [
-    ["text:" + key, texts[key]?.trim() ? null : t("common.fieldRequired")],
-    ["urls:" + key, (urls[key] ?? "").split("\n").some((u) => u.trim() && !isHttpUrl(u)) ? t("common.invalidUrl") : null]]));
+  const errors: Record<string, string | null> = Object.fromEntries((query.data ?? []).flatMap((v) => [v.id, ...v.actions.map((a) => a.id)]).map((key) =>
+    ["text:" + key, texts[key]?.trim() ? null : t("common.fieldRequired")]));
   const field = useFieldValidation(errors);
   async function submit(id: string, actionId?: string) { if (!auth.data) return; const key = actionId ?? id;
-    const keys = actionId ? ["text:" + key, "urls:" + key] : ["text:" + key]; keys.forEach((name) => field.touch(name)); if (keys.some((name) => errors[name])) return; try { await action.mutateAsync({ csrfToken: auth.data.csrfToken,
+    field.touch("text:" + key); if (errors["text:" + key]) return; try { await action.mutateAsync({ csrfToken: auth.data.csrfToken,
     action: actionId ? { id, actionId, note: texts[key] ?? "", evidence: (urls[key] ?? "").split("\n").filter((u) => u.trim()).map((url) => ({ note: "", url })) } : { id, text: texts[key] ?? "" } }); } catch { /* The mutation error is displayed below. */ } }
   const inputClass = "block w-full rounded-xl border border-border-app bg-bg-app p-3 text-text-app aria-[invalid=true]:border-danger-app";
   if (auth.isPending) return <AppSkeleton className="h-64 w-full" />;
@@ -37,7 +35,7 @@ export function ClubViolationsPage() {
       {v.actions.map((a) => <div key={a.id} className="space-y-3 border-t border-border-app pt-3"><h3 className="font-semibold">{a.description}</h3><p>{t("clubCompliance.due")}: {new Date(a.dueAt).toLocaleDateString(i18n.language)}</p>
         {a.submission ? <AppNotice><p>{a.submission.note}</p><p className="font-semibold">{t(a.state === "Verified" ? "clubCompliance.verified" : a.state === "Failed" ? "clubCompliance.failed" : "clubCompliance.awaiting")}</p>{a.submission.evidence.map((e, n) => <p key={n} className="break-words">{e.note !== e.url && e.note} {e.url}</p>)}</AppNotice>
           : a.state === "Pending" && v.state === "Corrective Action" && <><label className="block">{t("clubCompliance.note")}<AppRequiredMark /><textarea className={inputClass} maxLength={5000} {...field.control("text:" + a.id)} value={texts[a.id] ?? ""} onChange={(e) => setTexts((s) => ({ ...s, [a.id]: e.target.value }))} /><AppFieldError message={field.error("text:" + a.id)} /></label>
-            <label className="block">{t("clubCompliance.urls")}<textarea className={inputClass} {...field.control("urls:" + a.id, false)} value={urls[a.id] ?? ""} onChange={(e) => setUrls((s) => ({ ...s, [a.id]: e.target.value }))} /><AppFieldError message={field.error("urls:" + a.id)} /></label><AppButton disabled={action.isPending} onClick={() => void submit(v.id, a.id)}>{t("clubCompliance.submitAction")}</AppButton></>}
+            <label className="block">{t("clubCompliance.urls")}<textarea className={inputClass} value={urls[a.id] ?? ""} onChange={(e) => setUrls((s) => ({ ...s, [a.id]: e.target.value }))} /></label><AppButton disabled={action.isPending} onClick={() => void submit(v.id, a.id)}>{t("clubCompliance.submitAction")}</AppButton></>}
       </div>)}
     </section>)}</div></>;
 }

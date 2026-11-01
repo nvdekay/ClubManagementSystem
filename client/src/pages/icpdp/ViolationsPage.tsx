@@ -23,7 +23,6 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
-import { isHttpUrl } from "@/utils/validation";
 
 const filters = ["active", "awaiting", "actions", "closed", "all"] as const;
 type Filter = typeof filters[number];
@@ -311,9 +310,6 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
   const [evidenceNote, setEvidenceNote] = useState("");
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [rows, setRows] = useState([{ description: "", dueAt: inputDate(14), link: "" }]);
-  const evidenceField = useFieldValidation({
-    evidenceUrl: !evidenceUrl.trim() || isHttpUrl(evidenceUrl) ? null : t("common.invalidUrl"),
-  });
   const requestField = useFieldValidation({
     message: message.trim() ? null : t("common.fieldRequired"),
     dueAt: !dueAt ? t("common.fieldRequired") : new Date(endOfDay(dueAt)) <= new Date() ? t("common.dateNotPast") : null,
@@ -402,17 +398,11 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
             {!final && <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
               <AppInput aria-label={t("violations.evidenceNote")} placeholder={t("violations.evidenceNote")} value={evidenceNote}
                 maxLength={1000} onChange={(e) => setEvidenceNote(e.target.value)} />
-              <div>
-                <AppInput aria-label={t("violations.evidenceUrl")} placeholder={t("violations.evidenceUrl")} value={evidenceUrl}
-                  maxLength={500} className="w-full" {...evidenceField.control("evidenceUrl", false)} onChange={(e) => setEvidenceUrl(e.target.value)} />
-                <AppFieldError message={evidenceField.error("evidenceUrl")} />
-              </div>
+              <AppInput aria-label={t("violations.evidenceUrl")} placeholder={t("violations.evidenceUrl")} value={evidenceUrl}
+                maxLength={500} onChange={(e) => setEvidenceUrl(e.target.value)} />
               <AppButton variant="secondary" disabled={step.isPending || (!evidenceNote.trim() && !evidenceUrl.trim())}
-                onClick={() => {
-                  if (!evidenceField.touchAll()) return;
-                  void run({ type: "addEvidence", evidence: { note: evidenceNote.trim(), url: evidenceUrl.trim() || undefined } })
-                    .then((done) => { if (done) { setEvidenceNote(""); setEvidenceUrl(""); evidenceField.reset(); } });
-                }}>{t("violations.addEvidence")}</AppButton>
+                onClick={() => void run({ type: "addEvidence", evidence: { note: evidenceNote.trim(), url: evidenceUrl.trim() || undefined } })
+                  .then((done) => { if (done) { setEvidenceNote(""); setEvidenceUrl(""); } })}>{t("violations.addEvidence")}</AppButton>
             </div>}
           </section>
 

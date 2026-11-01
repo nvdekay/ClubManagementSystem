@@ -8,7 +8,6 @@ import { useChangePeriodicReport } from "@/hooks/useClubPeriodicReports";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import type { PeriodicReportDetail } from "@/services/periodicReports";
 import { formatMoney } from "@/utils/formatMoney";
-import { isHttpUrl } from "@/utils/validation";
 
 interface Props { clubId: string; csrfToken: string; report: PeriodicReportDetail }
 export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
@@ -25,16 +24,13 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
   const figures = editable || !report.preloadedFigures.capturedAt ? report.live : report.preloadedFigures;
   const dirty = narrative !== (report.narrative ?? "") || nextPlan !== (report.nextPlan ?? "") || notes !== initialNotes || urls !== initialUrls;
   const inputClass = "block min-h-28 w-full rounded-xl border border-border-app bg-bg-app p-3 text-text-app disabled:cursor-not-allowed disabled:opacity-70 aria-[invalid=true]:border-danger-app";
-  // A draft may be saved incomplete; only a bad link blocks it. Submitting needs every section.
-  const urlsError = urls.split("\n").some((url) => url.trim() && !isHttpUrl(url)) ? t("common.invalidUrl") : null;
+  // A draft may be saved incomplete. Submitting needs every section.
   const field = useFieldValidation({
     narrative: narrative.trim() ? null : t("common.fieldRequired"),
     nextPlan: nextPlan.trim() ? null : t("common.fieldRequired"),
     evidence: notes.trim() || urls.trim() ? null : t("clubPeriodicReports.evidenceRequired"),
-    urls: urlsError,
   });
   async function change(kind: "save" | "submit") {
-    if (kind === "save" && urlsError) { field.touch("urls"); return; }
     if (kind === "submit" && !field.touchAll()) return;
     try {
       await action.mutateAsync({ csrfToken, action: kind === "submit" ? { kind, id: report.id, revision: report.revision ?? 0 }
@@ -53,8 +49,8 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
     <label className="block">{t("clubPeriodicReports.narrative")}<AppRequiredMark /><textarea className={inputClass} maxLength={20000} {...field.control("narrative")} value={narrative} disabled={!editable || action.isPending} onChange={(e) => setNarrative(e.target.value)} /><AppFieldError message={field.error("narrative")} /></label>
     <label className="block">{t("clubPeriodicReports.nextPlan")}<AppRequiredMark /><textarea className={inputClass} maxLength={20000} {...field.control("nextPlan")} value={nextPlan} disabled={!editable || action.isPending} onChange={(e) => setNextPlan(e.target.value)} /><AppFieldError message={field.error("nextPlan")} /></label>
     <label className="block">{t("clubPeriodicReports.evidence")}<textarea className={inputClass} value={notes} disabled={!editable || action.isPending} onChange={(e) => setNotes(e.target.value)} /></label>
-    <label className="block">{t("clubPeriodicReports.evidenceUrls")}<textarea className={inputClass} {...field.control("urls", false)} onBlur={() => { field.touch("urls"); field.touch("evidence"); }} value={urls} disabled={!editable || action.isPending} onChange={(e) => setUrls(e.target.value)} />
-      <AppFieldError message={field.error("urls") ?? field.error("evidence")} /></label>
+    <label className="block">{t("clubPeriodicReports.evidenceUrls")}<textarea className={inputClass} onBlur={() => field.touch("evidence")} value={urls} disabled={!editable || action.isPending} onChange={(e) => setUrls(e.target.value)} />
+      <AppFieldError message={field.error("evidence")} /></label>
     {editable && <div className="flex flex-wrap gap-3"><AppButton disabled={action.isPending || !dirty} onClick={() => void change("save")}>{t("clubPeriodicReports.save")}</AppButton>
       <AppButton variant="secondary" disabled={action.isPending || dirty} onClick={() => void change("submit")}>{t("clubPeriodicReports.submit")}</AppButton></div>}
     {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}

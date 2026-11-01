@@ -83,7 +83,8 @@ export function RecruitmentApplicationPage() {
       return [field.key, field.required ? t(field.type === "select" || field.type === "multiselect"
         ? "common.chooseRequired" : "common.fieldRequired") : null];
     }
-    return [field.key, field.type === "url" && typeof answer === "string" && !isHttpUrl(answer) ? t("common.invalidUrl") : null];
+    // Link format is only checked on required questions; optional answers are left to the server.
+    return [field.key, field.required && field.type === "url" && typeof answer === "string" && !isHttpUrl(answer) ? t("common.invalidUrl") : null];
   })));
 
   function changeAnswer(key: string, value: RecruitmentAnswer) {

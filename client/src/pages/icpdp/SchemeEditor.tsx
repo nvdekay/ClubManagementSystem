@@ -19,9 +19,9 @@ interface Row {
   allowsManual: boolean;
 }
 
-/** Whole number in [min, max], or the message saying why not; blank is `blankError` (null = allowed). */
-function wholeNumberError(t: TFunction, value: string, min: number, max: number, blankError: string | null): string | null {
-  if (!value.trim()) return blankError;
+/** Whole number in [min, max], or the message saying why not. */
+function wholeNumberError(t: TFunction, value: string, min: number, max: number): string | null {
+  if (!value.trim()) return t("common.fieldRequired");
   const number = Number(value);
   return !Number.isInteger(number) ? t("common.invalidNumber") : number < min ? t("common.numberMin", { min })
     : number > max ? t("common.numberMax", { max }) : null;
@@ -49,13 +49,11 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
     fair: String(scheme.thresholds.fair) });
   const included = catalogue.filter((dimension) => rows[dimension.code]!.included);
   const total = included.reduce((sum, dimension) => sum + (Number(rows[dimension.code]!.weight) || 0), 0);
-  // Server rules: whole-percent weights, and bands with 100 >= excellent > good > fair > 0.
-  const field = useFieldValidation<string>({
-    ...Object.fromEntries(included.map((dimension) =>
-      [`weight:${dimension.code}`, wholeNumberError(t, rows[dimension.code]!.weight, 0, 100, null)])),
-    excellent: wholeNumberError(t, bands.excellent, 3, 100, t("common.fieldRequired")),
-    good: wholeNumberError(t, bands.good, 2, (Number(bands.excellent) || 100) - 1, t("common.fieldRequired")),
-    fair: wholeNumberError(t, bands.fair, 1, (Number(bands.good) || 100) - 1, t("common.fieldRequired")),
+  // Server rules: bands with 100 >= excellent > good > fair > 0.
+  const field = useFieldValidation({
+    excellent: wholeNumberError(t, bands.excellent, 3, 100),
+    good: wholeNumberError(t, bands.good, 2, (Number(bands.excellent) || 100) - 1),
+    fair: wholeNumberError(t, bands.fair, 1, (Number(bands.good) || 100) - 1),
   });
 
   function patch(code: DimensionCode, update: Partial<Row>) {
@@ -111,9 +109,7 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
             {row.included && <div className="flex flex-wrap items-center gap-4">
               <label className="text-sm">{t("evaluationSchemes.weight")}
                 <AppInput className="mt-1 block w-24" type="number" min="0" max="100" step="1" value={row.weight}
-                  {...field.control(`weight:${dimension.code}`, false)}
                   onChange={(event) => patch(dimension.code, { weight: event.target.value })} />
-                <AppFieldError message={field.error(`weight:${dimension.code}`)} />
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <AppSwitch checked={row.allowsManual} onChange={(value) => patch(dimension.code, { allowsManual: value })} />

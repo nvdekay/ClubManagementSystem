@@ -34,16 +34,10 @@ function parsed(draft: FieldDraft): ClubFieldInput | null {
   return { name, sortOrder };
 }
 
-/** Inline errors for the same rules as `parsed`; a blank order is allowed (it falls back to a default). */
+/** Inline error for the required name; the optional order is only checked by `parsed` on submit. */
 function draftErrors(t: TFunction, draft: FieldDraft | null) {
   if (!draft) return {};
-  const order = draft.sortOrder.trim();
-  const sortOrder = Number(order);
-  return {
-    name: draft.name.trim() ? null : t("common.fieldRequired"),
-    sortOrder: !order ? null : !Number.isInteger(sortOrder) ? t("common.invalidNumber")
-      : sortOrder < 0 ? t("common.numberMin", { min: 0 }) : sortOrder > 10_000 ? t("common.numberMax", { max: 10_000 }) : null,
-  };
+  return { name: draft.name.trim() ? null : t("common.fieldRequired") };
 }
 
 interface FieldRowProps {
@@ -66,7 +60,8 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
     event.preventDefault();
     if (!draft) return;
     const input = parsed(draft);
-    if (!form.touchAll() || !input) return;
+    if (!form.touchAll()) return;
+    if (!input) { setError(t("clubFields.invalid")); return; }
     setError(null);
     try {
       await update.mutateAsync({ id: field.id, input, csrfToken });
@@ -101,8 +96,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
           </label>
           <label className="text-sm">{t("clubFields.order")}
             <AppInput className="mt-1 block w-full" type="number" min="0" max="10000" value={draft.sortOrder}
-              {...form.control("sortOrder", false)} onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
-            <AppFieldError message={form.error("sortOrder")} />
+              onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
           </label>
           <div className="flex flex-wrap gap-2">
             <AppButton type="submit" disabled={update.isPending}>
@@ -169,7 +163,8 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const input = parsed({ ...draft, sortOrder: draft.sortOrder || String(nextOrder) });
-    if (!field.touchAll() || !input) return;
+    if (!field.touchAll()) return;
+    if (!input) { setError(t("clubFields.invalid")); return; }
     setError(null);
     try {
       await create.mutateAsync({ input, csrfToken });
@@ -194,8 +189,7 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
         <label className="text-sm">{t("clubFields.order")}
           <AppInput className="mt-1 block w-full" type="number" min="0" max="10000"
             placeholder={String(nextOrder)} value={draft.sortOrder}
-            {...field.control("sortOrder", false)} onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
-          <AppFieldError message={field.error("sortOrder")} />
+            onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
         </label>
         <AppButton type="submit" disabled={create.isPending}>
           <AppIcon name="plus" className="size-4" />
