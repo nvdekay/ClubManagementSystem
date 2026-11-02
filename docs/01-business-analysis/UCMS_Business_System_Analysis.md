@@ -6,6 +6,8 @@
 > **Nguyên tắc thiết kế:** Business Problem → Business Process → Actor → Requirement → Use Case.  
 > **Quy mô mục tiêu:** 3 actor chính, 2 external system, 12 module nghiệp vụ, 57 business use case có liên kết end-to-end.  
 > **Nguồn chốt scope:** Context Diagram đã được team thống nhất (Student, ICPDP Officer, Club's Admin, Google OAuth, Google SMTP Service).
+>
+> **Lưu ý (02/11/2026):** tài liệu gốc, đã bị SRS thay thế ở nhiều điểm — gửi email qua Google SMTP, CLB `Pending Setup`, domain trong chính sách. Danh sách và trạng thái từng phần: [`README.md`](README.md); khi khác nhau, lấy theo [`../SRS.md`](../SRS.md).
 
 ---
 

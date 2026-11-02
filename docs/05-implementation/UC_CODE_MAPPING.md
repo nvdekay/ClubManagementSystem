@@ -1,6 +1,6 @@
 # Ma trận UC → code hiện hành
 
-> Đối chiếu `main` tại `655cad3` (code) ngày 17/10/2026; 56 mã; 4 mã UC05, UC23, UC51, UC52 đã rút, còn 52 trong phạm vi.
+> Đối chiếu `main` tại `655cad3` (code) ngày 17/10/2026; 56 mã, tất cả trong phạm vi (UC05, UC23, UC51, UC52 khôi phục 02/11/2026 theo use case diagram đã duyệt).
 > “Có” nghĩa route/UI đã tồn tại và nối trong app chính khi cấu hình Auth hợp lệ; không đồng nghĩa
 > mọi nhánh đã qua nghiệm thu Mongo/Google/Cloudinary thật. Route server mount tại `server.ts` (dependency từ `main.ts`);
 > route UI định nghĩa trong [client/src/main.tsx](../../client/src/main.tsx) (`App.tsx` chỉ render `AuthWorkspacePage`).
@@ -14,7 +14,7 @@
 | UC02 | Mở dashboard theo vai trò của tôi | [dashboard-routes.ts](../../server/src/interface/http/dashboard-routes.ts) | [RoleDashboard.tsx](../../client/src/components/custom/RoleDashboard.tsx), [InternalEventsPage.tsx](../../client/src/pages/icpdp/InternalEventsPage.tsx), [ClubBoardHistory.tsx](../../client/src/components/custom/ClubBoardHistory.tsx), [ClubBoardHistoryPage.tsx](../../client/src/pages/club/ClubBoardHistoryPage.tsx) | Có; sự kiện nội bộ `/workspace/internal-events`, lịch sử cơ cấu/ban chủ nhiệm trong hộp quản lý CLB của ICPDP và `/club/:clubId/board-history` |
 | UC03 | Quản lý tài khoản và gán vai trò | [account-admin-routes.ts](../../server/src/interface/http/account-admin-routes.ts) | [AccountsPage.tsx](../../client/src/pages/icpdp/AccountsPage.tsx) | Có; tìm kiếm hiện CLB/trạng thái thành viên/ghế đang giữ; A1 khoá có thể gắn hồ sơ UC40 đang mở (audit hai phía) |
 | UC04 | Cấu hình chính sách và deadline của nhà trường | [policy-routes.ts](../../server/src/interface/http/policy-routes.ts) | [PolicyPage.tsx](../../client/src/pages/icpdp/PolicyPage.tsx) | Có; domain lấy ALLOWED_DOMAIN. Danh mục lĩnh vực CLB ([club-field-routes.ts](../../server/src/interface/http/club-field-routes.ts), [ClubFieldsPage.tsx](../../client/src/pages/icpdp/ClubFieldsPage.tsx), `/workspace/club-fields`) là dữ liệu hỗ trợ cho UC06/UC07, không thuộc FR nào của UC04 |
-| UC05 | Đã rút: Cấu hình quy tắc định tuyến phê duyệt | — | — | Đã rút |
+| UC05 | Cấu hình quy tắc định tuyến phê duyệt | — | — | **Chưa làm — code chưa theo kịp mô hình đã duyệt** |
 | UC06 | Khám phá CLB và hoạt động đang mở | [public-discovery-routes.ts](../../server/src/interface/http/public-discovery-routes.ts) | [ClubDirectory.tsx](../../client/src/pages/public/ClubDirectory.tsx), [ClubDetail.tsx](../../client/src/pages/public/ClubDetail.tsx), [EventDirectory.tsx](../../client/src/pages/public/EventDirectory.tsx), [EventDetail.tsx](../../client/src/pages/public/EventDetail.tsx) | Có; Guest xem được (chỉ đọc); E1 gợi ý CLB mới nhất |
 | UC07 | Nộp hồ sơ đề nghị thành lập CLB | [club-application-routes.ts](../../server/src/interface/http/club-application-routes.ts) | [ApplicationsPage.tsx](../../client/src/pages/student/ApplicationsPage.tsx), [ApplicationEditorPage.tsx](../../client/src/pages/student/ApplicationEditorPage.tsx) | Có; E3 cảnh báo trùng tên hiện cho cả sinh viên và ICPDP (trang thẩm định UC08); cần Cloudinary thật và dọn asset mồ côi |
 | UC08 | Thẩm định và quyết định hồ sơ thành lập CLB | [club-application-review-routes.ts](../../server/src/interface/http/club-application-review-routes.ts) | [ApplicationReviewQueuePage.tsx](../../client/src/pages/icpdp/ApplicationReviewQueuePage.tsx), [ApplicationReviewDetailPage.tsx](../../client/src/pages/icpdp/ApplicationReviewDetailPage.tsx) | Có; duyệt tạo Active ngay; job `application-expiry-job` chuyển hồ sơ quá hạn sửa sang `Expired` |
@@ -32,7 +32,7 @@
 | UC20 | Tiếp nhận ứng viên trúng tuyển | [recruitment-application-routes.ts](../../server/src/interface/http/recruitment-application-routes.ts) | [RecruitmentReviewPage.tsx](../../client/src/pages/club/RecruitmentReviewPage.tsx); A1: [membership-routes.ts](../../server/src/interface/http/membership-routes.ts) `POST /clubs/:clubId/memberships`, [ClubMemberOnboardDialog.tsx](../../client/src/pages/club/ClubMemberOnboardDialog.tsx) | Có |
 | UC21 | Quản lý trạng thái thành viên | [membership-routes.ts](../../server/src/interface/http/membership-routes.ts) | [ClubMembersPage.tsx](../../client/src/pages/club/ClubMembersPage.tsx) | Có; quá hạn A2 → `Inactive`, Leader kích hoạt lại qua UC21; A2 qua [membership-reconfirmation-routes.ts](../../server/src/interface/http/membership-reconfirmation-routes.ts) và `membership-reconfirmation-job` |
 | UC22 | Xin rời CLB | [membership-routes.ts](../../server/src/interface/http/membership-routes.ts) | [MyClubsPage.tsx](../../client/src/pages/student/MyClubsPage.tsx), [MyWithdrawalRequests.tsx](../../client/src/pages/student/MyWithdrawalRequests.tsx) | Có; Leader thi hành qua ClubMembersPage; sinh viên theo dõi yêu cầu ở dashboard và "CLB của tôi" |
-| UC23 | Đã rút: Quản lý vai trò CLB | — | — | Đã rút 13/10/2026: role CLB cố định, API/UI role động đã gỡ |
+| UC23 | Quản lý vai trò CLB và phân quyền | — | — | **Chưa làm — code chưa theo kịp mô hình đã duyệt**: API/UI role động đã gỡ 13/10/2026, cần làm lại |
 | UC24 | Sử dụng không gian thành viên của tôi | [member-space-routes.ts](../../server/src/interface/http/member-space-routes.ts) | [MemberSpacePage.tsx](../../client/src/pages/student/MemberSpacePage.tsx) | Có; Active/Inactive được đọc |
 | UC25 | Nộp đề xuất tổ chức sự kiện | [club-event-routes.ts](../../server/src/interface/http/club-event-routes.ts) | [ClubEventsPage.tsx](../../client/src/pages/club/ClubEventsPage.tsx) | Có |
 | UC26 | Thẩm định và quyết định đề xuất sự kiện | [event-proposal-review-routes.ts](../../server/src/interface/http/event-proposal-review-routes.ts) | [EventProposalQueuePage.tsx](../../client/src/pages/icpdp/EventProposalQueuePage.tsx), [EventProposalReviewPage.tsx](../../client/src/pages/icpdp/EventProposalReviewPage.tsx) | Có |
@@ -59,9 +59,9 @@
 | UC47 | Theo dõi và huỷ / trả cơ sở vật chất đã đặt | [facility-booking-routes.ts](../../server/src/interface/http/facility-booking-routes.ts) | [ClubBookingsPage.tsx](../../client/src/pages/club/ClubBookingsPage.tsx) | Có; không huỷ ROOM qua luồng này |
 | UC48 | Gửi phản hồi sau sự kiện | [event-feedback-routes.ts](../../server/src/interface/http/event-feedback-routes.ts) | [EventFeedbackForm.tsx](../../client/src/components/custom/EventFeedbackForm.tsx) | Có; một điểm tổng (chấm theo tiêu chí ngoài phạm vi) |
 | UC49 | Xem phản hồi sự kiện | [club-event-routes.ts](../../server/src/interface/http/club-event-routes.ts) | [ClubEventsPage.tsx](../../client/src/pages/club/ClubEventsPage.tsx) | Có; mode feedback, ngưỡng ẩn danh; điểm tổng kèm trung bình và phân bố (theo tiêu chí ngoài phạm vi) |
-| UC50 | Gửi góp ý cho CLB hoặc ICPDP | [student-feedback-routes.ts](../../server/src/interface/http/student-feedback-routes.ts) | [StudentFeedbackPage.tsx](../../client/src/pages/student/StudentFeedbackPage.tsx) | Có; một chiều; inbox [ClubFeedbackInboxPage.tsx](../../client/src/pages/club/ClubFeedbackInboxPage.tsx) và [StudentFeedbackInboxPage.tsx](../../client/src/pages/icpdp/StudentFeedbackInboxPage.tsx) |
-| UC51 | Đã rút: Phân loại khiếu nại | — | — | Đã rút 09/10/2026: UC50 là góp ý một chiều |
-| UC52 | Đã rút: Trả lời khiếu nại được chuyển xuống | — | — | Đã rút 09/10/2026: UC50 là góp ý một chiều |
+| UC50 | Gửi khiếu nại về một CLB | [student-feedback-routes.ts](../../server/src/interface/http/student-feedback-routes.ts) | [StudentFeedbackPage.tsx](../../client/src/pages/student/StudentFeedbackPage.tsx) | **Một phần — code chưa theo kịp mô hình đã duyệt**: code là góp ý một chiều; inbox [ClubFeedbackInboxPage.tsx](../../client/src/pages/club/ClubFeedbackInboxPage.tsx) và [StudentFeedbackInboxPage.tsx](../../client/src/pages/icpdp/StudentFeedbackInboxPage.tsx) |
+| UC51 | Phân loại khiếu nại | — | — | **Chưa làm — code chưa theo kịp mô hình đã duyệt** |
+| UC52 | Trả lời khiếu nại được chuyển xuống | — | — | **Chưa làm — code chưa theo kịp mô hình đã duyệt** |
 | UC53 | Tạo sự kiện cấp trường và mời câu lạc bộ tham gia | [school-event-routes.ts](../../server/src/interface/http/school-event-routes.ts) | [SchoolEventsPage.tsx](../../client/src/pages/icpdp/SchoolEventsPage.tsx) (`SchoolEventsPage`, `SchoolEventDetailPage`) | Có gửi/thu hồi lời mời và publish; báo sinh viên khi publish ngoài phạm vi |
 | UC54 | Phản hồi lời mời tham gia sự kiện | [club-invitation-routes.ts](../../server/src/interface/http/club-invitation-routes.ts) | [ClubInvitationsPage.tsx](../../client/src/pages/club/ClubInvitationsPage.tsx) | Có |
 | UC55 | Xuất dữ liệu và báo cáo | [export-routes.ts](../../server/src/interface/http/export-routes.ts) | [DataExportPage.tsx](../../client/src/pages/icpdp/DataExportPage.tsx) | Có; Leader còn có xuất roster riêng tại UI |
@@ -72,11 +72,11 @@
 - [main.ts](../../server/src/main.ts): dependency thực được truyền vào `buildApp`.
 - [server.ts](../../server/src/interface/http/server.ts): điều kiện mount route theo dependency.
 - [main.tsx](../../client/src/main.tsx): route UI thật (mọi route; `App.tsx` chỉ render `AuthWorkspacePage`).
-- [access.ts](../../server/src/domain/access.ts): 14 permission cố định và resolver Leader/Member.
+- [access.ts](../../server/src/domain/access.ts): 14 permission cố định và resolver Leader/Member (code chưa theo kịp UC23 đã duyệt: role chưa mang permission).
 - [member-space.ts](../../server/src/usecase/member-space.ts): roster chỉ đọc cho Active/Inactive.
 - [room-allocation.ts](../../server/src/usecase/room-allocation.ts): UC58 phía CLB yêu cầu `club.booking.manage`.
 - [PublicLayout.tsx](../../client/src/components/layout/PublicLayout.tsx): UI danh bạ vẫn yêu cầu đăng nhập.
-- [student-feedback.ts](../../server/src/usecase/student-feedback.ts): góp ý một chiều, đúng nơi nhận và bảo vệ danh tính.
+- [student-feedback.ts](../../server/src/usecase/student-feedback.ts): góp ý một chiều, đúng nơi nhận và bảo vệ danh tính (code chưa theo kịp UC50–UC52 đã duyệt).
 
 ## Giới hạn kiểm thử
 

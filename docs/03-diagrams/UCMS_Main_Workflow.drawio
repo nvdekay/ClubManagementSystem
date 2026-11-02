@@ -64,23 +64,17 @@
                 <mxCell id="f1_rej_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Rejected" vertex="1">
                     <mxGeometry height="18" width="140" x="983" y="461" as="geometry"/>
                 </mxCell>
-                <mxCell id="f1_s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Create the club in Pending Setup and notify the founder" vertex="1">
-                    <mxGeometry height="78" width="206" x="950" y="530" as="geometry"/>
+                <mxCell id="f1_s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Create the club as Active with the founding term, founding members and confirmed President / Vice-President seats; notify the founders" vertex="1">
+                    <mxGeometry height="98" width="206" x="950" y="520" as="geometry"/>
                 </mxCell>
-                <mxCell id="f1_s4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Set up the club profile and departments, nominate the board" vertex="1">
-                    <mxGeometry height="78" width="206" x="426" y="650" as="geometry"/>
-                </mxCell>
-                <mxCell id="f1_s5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Confirm the board" vertex="1">
-                    <mxGeometry height="78" width="206" x="688" y="650" as="geometry"/>
-                </mxCell>
-                <mxCell id="f1_s6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Activate the club and open its first term" vertex="1">
-                    <mxGeometry height="78" width="206" x="950" y="650" as="geometry"/>
+                <mxCell id="f1_s4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Complete the club profile and departments" vertex="1">
+                    <mxGeometry height="78" width="206" x="426" y="665" as="geometry"/>
                 </mxCell>
                 <mxCell id="f1_end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
-                    <mxGeometry height="34" width="34" x="1036" y="770" as="geometry"/>
+                    <mxGeometry height="34" width="34" x="512" y="785" as="geometry"/>
                 </mxCell>
-                <mxCell id="f1_end_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Club activated" vertex="1">
-                    <mxGeometry height="18" width="140" x="983" y="807" as="geometry"/>
+                <mxCell id="f1_end_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Club operating" vertex="1">
+                    <mxGeometry height="18" width="140" x="459" y="822" as="geometry"/>
                 </mxCell>
                 <mxCell id="f1_lbl_rev" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Revision requested" vertex="1">
                     <mxGeometry height="20" width="134" x="450" y="418" as="geometry"/>
@@ -122,18 +116,12 @@
                 <mxCell id="f1_e7" edge="1" parent="1" source="f1_s3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f1_s4">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1053" y="625"/>
-                            <mxPoint x="529" y="625"/>
+                            <mxPoint x="1053" y="637"/>
+                            <mxPoint x="529" y="637"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="f1_e8" edge="1" parent="1" source="f1_s4" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f1_s5">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f1_e9" edge="1" parent="1" source="f1_s5" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f1_s6">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f1_e10" edge="1" parent="1" source="f1_s6" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f1_end">
+                <mxCell id="f1_e8" edge="1" parent="1" source="f1_s4" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f1_end">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
             </root>

@@ -7,8 +7,9 @@
 ## 1. Các container và phụ thuộc
 
 React 19/Vite SPA gọi Express 5 API dưới `/api/v1`; API dùng Mongoose/MongoDB. Google OAuth
-được nối khi đủ cấu hình Auth; Cloudinary được nối khi đủ credentials. Google SMTP còn là phụ
-thuộc thiết kế, chưa có delivery worker trong `main.ts`.
+được nối khi đủ cấu hình Auth; Cloudinary được nối khi đủ credentials. Google SMTP là kênh email
+dự kiến: `main.ts` đã nối `notification-delivery-job` nhưng với `logMailTransport`, nên email chỉ
+được ghi log (người nhận + tiêu đề), chưa gửi (sửa 2026-11-02).
 
 `docker-compose.yml` hiện chỉ khởi động Mongo 7 dạng single-node replica set. Server và client
 chạy bằng npm workspace; không có container server/Nginx trong compose hiện tại.
@@ -40,7 +41,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 |---|---|---|
 | M01 Identity, Access, Configuration | User, session, system role, policy, dashboard | Có; OAuth thật còn gate nghiệm thu |
 | M02 Club Lifecycle | Hồ sơ thành lập, profile, lifecycle | UC08 tạo Active ngay; UC14 CLB xin tạm ngừng và UC15 ICPDP quyết định; job hết hạn hồ sơ UC07/08 |
-| M03 Leadership & Term | Term, position, assignment, transition | UC10–UC13 có (UC12/13 kiểm tra BR06); UC23 đã rút |
+| M03 Leadership & Term | Term, position, assignment, transition | UC10–UC13 có (UC12/13 kiểm tra BR06); UC23 chưa làm — code chưa theo kịp mô hình đã duyệt |
 | M04 Recruitment & Membership | Campaign, application, candidate evaluation, membership | Có, gồm job tái xác nhận đầu kỳ UC21 A2 |
 | M05 Event & Activity | Proposal, event, school event, invitation | Có, gồm UC54 CLB nhận/từ chối lời mời |
 | M06 Registration & Attendance | Registration, waitlist, attendance | Có |
@@ -49,7 +50,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 | M09 Evaluation & Export | Scheme, evaluation, export | Có ICPDP và màn CLB xem kết quả đã công bố (UC43) |
 | M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Có; hộp thông báo in-app chung và worker outbox (từ 19/10/2026) — email đi qua transport ghi log, SMTP thật chờ duyệt dependency |
 | M11 Properties & Booking | Property, non-room booking, room allocation | Có; UC58 CLB xem chỉ dành Leader |
-| M12 Feedback | Event feedback và góp ý một chiều | Có; physical complaints giữ tên cũ; UC51/52 đã rút |
+| M12 Feedback | Event feedback và khiếu nại | Một phần: code là góp ý một chiều lưu ở `complaints`; UC51/52 chưa làm — code chưa theo kịp mô hình đã duyệt |
 
 ## 4. Workflow, thông báo và audit thật
 
@@ -86,15 +87,18 @@ của từng `eventCode` do `notificationAudience()` ở `domain/notification.ts
 
 ## 5. Định danh và quyền truy cập
 
-Auth dùng Google OAuth, cookie phiên ký, `httpOnly`, `SameSite=Lax`, Secure theo môi trường,
-CSRF token cho request thay đổi dữ liệu. Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
-không lấy từ policy UC04. System role gồm `ICPDP_OFFICER` và quyền đặc biệt attendance unlock.
+Auth dùng Google OpenID Connect (Authorization Code + PKCE S256, `state`, `nonce`, ID token RS256
+kiểm qua JWKS), phiên lưu phía server trong `authSessions` (chỉ hash), cookie phiên ký HMAC,
+`httpOnly`, `SameSite=Lax`, `Secure` khi `NODE_ENV=production`, CSRF token theo phiên cho request
+thay đổi dữ liệu. Toàn bộ cơ chế và hạn chế đã biết: [`../SRS.md` §12.1](../SRS.md#121-cơ-chế-bảo-mật). Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
+không lấy từ policy UC04. System role gồm `ICPDP_OFFICER` và quyền đặc biệt attendance unlock; `ICPDP_HEAD` và định tuyến UC05 chưa làm (code chưa theo kịp mô hình đã duyệt).
 
-Phía CLB chỉ có hai role cố định. `resolveClubPermissions` yêu cầu membership Active, term
+Code hiện chỉ có hai role cố định phía CLB (code chưa theo kịp mô hình đã duyệt: SRS yêu cầu role mang permission ở UC23 và hai permission mặc định cho thành viên). `resolveClubPermissions` yêu cầu membership Active, term
 Active còn hiệu lực, position active, assignment đúng membership/term còn hiệu lực và đã
 `confirmedBy`. Ghế `isLeaderRole` hoặc `isBoardSeat` nhận toàn bộ 14 permission; còn lại nhận
-rỗng. Cơ cấu chuẩn là Chủ nhiệm/Phó chủ nhiệm/Thành viên. Approved founder Pending Setup chỉ
-nhận `club.profile.manage` và `club.board.nominate`.
+rỗng. Cơ cấu chuẩn là Chủ nhiệm/Phó chủ nhiệm/Thành viên. UC08 tạo CLB `Active` với ghế
+Chủ nhiệm/Phó chủ nhiệm đã xác nhận; quy tắc "approved founder của CLB `Pending Setup` chỉ nhận
+`club.profile.manage` và `club.board.nominate`" chỉ còn để tương thích dữ liệu cũ.
 
 Không có role tự tạo, API roles/role-directory hay UI cấu hình permission. Field cũ được giữ
 cho tương thích, không cấp quyền. Client ẩn menu theo `/auth/me`; server vẫn kiểm tra quyền.
