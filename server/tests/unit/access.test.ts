@@ -72,6 +72,14 @@ describe("club permission resolver", () => {
     expect(resolveClubPermissions(vice, now)).toContain("club.suspension.request");
   });
 
+  it("grants nothing beyond the defaults for any other title, even a confirmed board seat (BR47, BR55)", () => {
+    const vice = viceLeader();
+    const head = { ...vice, positions: [{ ...vice.positions[0]!, code: "HEAD_EVENTS" }] };
+    expect(resolveClubPermissions(head, now)).toEqual([...DEFAULT_MEMBER_PERMISSIONS]);
+    expect(CLUB_PERMISSIONS).toHaveLength(15);
+    expect(CLUB_PERMISSIONS).not.toContain("club.role.manage" as never);
+  });
+
   it("needs ICPDP confirmation before a board seat grants anything", () => {
     const vice = viceLeader();
     expect(resolveClubPermissions({ ...vice, assignments: [{ ...vice.assignments[0]!, confirmedBy: null }] }, now))

@@ -95,5 +95,4 @@ quyền còn thiếu và lý do.
 `approval-routing.ts` là phần dùng chung của UC05 cho UC08/UC26/UC46: đóng băng route (`requiredLevel`,
 `currentLevel`, SLA) lên `approvalTasks` lúc mở task, chỉ cho `ICPDP_HEAD` nhận/quyết định cấp 2, chặn người
 đã duyệt cấp 1, và chuyển task lên cấp 2 mà không có tác dụng phụ cuối. `mongo-approval-routing-repository.ts`
-giữ `routingRuleSets` (nháp, kích hoạt có audit, mẫu mô phỏng chỉ đọc). `club-role-upgrade.ts` chuẩn hoá role
-CLB cũ lúc khởi động (idempotent). `club-permission-holders.ts` tìm thành viên đang có một permission.
+giữ `routingRuleSets` (nháp, kích hoạt có audit, mẫu mô phỏng chỉ đọc). `club-permission-holders.ts` tìm thành viên đang có một permission.

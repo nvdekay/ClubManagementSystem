@@ -55,8 +55,6 @@ import type { EventFeedbackRepository } from "../../domain/event-feedback.js";
 import type { ComplaintRepository } from "../../domain/complaint.js";
 import type { MemberSpaceRepository } from "../../domain/member-space.js";
 import { accessDenialAuditor, errorHandler, requestLogger } from "./middleware.js";
-import type { ClubRoleRepository } from "../../domain/club-role.js";
-import { clubRoleRoutes } from "./club-role-routes.js";
 import type { AccessDenialAuditRepository } from "../../domain/access-denial.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
@@ -116,7 +114,6 @@ const docsHtml = `<!doctype html>
 export function buildApp(deps: {
   auth?: AuthRouteDeps;
   accessDenialAudit?: AccessDenialAuditRepository;
-  clubRoleRepo?: ClubRoleRepository;
   adminRepo?: AccountAdminRepository;
   policyRepo?: PolicyManagementRepository;
   applicationRepo?: ClubApplicationRepository;
@@ -218,10 +215,6 @@ export function buildApp(deps: {
       app.use("/api/v1", propertyRoutes({
         repo: deps.propertyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
-    }
-    if (deps.clubRoleRepo) {
-      app.use("/api/v1", clubRoleRoutes({ repo: deps.clubRoleRepo, accessRepo: deps.auth.accessRepo,
-        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.boardNominationRepo) {
       app.use("/api/v1", boardNominationRoutes({
@@ -363,7 +356,6 @@ export function buildApp(deps: {
   const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
   const hasClubProfiles = Boolean(hasPolicy && deps.clubProfileRepo);
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
-  const hasClubRoles = Boolean(deps.auth && deps.clubRoleRepo);
   const hasBookings = Boolean(deps.auth && deps.facilityBookingRepo && deps.propertyRepo && deps.policyRepo);
   const hasProperties = Boolean(hasAdmin && deps.propertyRepo);
   const hasRoomAllocations = Boolean(deps.auth && deps.roomAllocationRepo && deps.propertyRepo && deps.policyRepo);
@@ -439,7 +431,6 @@ export function buildApp(deps: {
         || path.startsWith("/clubs/{clubId}/profile")
         || path.startsWith("/clubs/{clubId}/departments")) return hasClubProfiles;
       if (path.startsWith("/clubs/{clubId}/board-nomination")) return hasBoardNominations;
-      if (path.startsWith("/clubs/{clubId}/roles") || path.startsWith("/clubs/{clubId}/role-directory")) return hasClubRoles;
       if (/\/evaluations?$/.test(path)) return hasCandidateEvaluations;
       if (path.startsWith("/clubs/{clubId}/recruitment/campaigns")) return hasRecruitmentCampaigns;
       return true;

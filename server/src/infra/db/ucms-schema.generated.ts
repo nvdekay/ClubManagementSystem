@@ -796,9 +796,6 @@ export const ucmsTables = {
       "unit": {
         "type": "string"
       },
-      "description": {
-        "type": "text"
-      },
       "isBoardSeat": {
         "type": "bool",
         "required": true,

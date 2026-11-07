@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import {
-  CLUB_PERMISSIONS, LEADER_RESERVED_PERMISSIONS, normalizeAllowedGoogleEmail,
+  CLUB_PERMISSIONS, DEFAULT_MEMBER_PERMISSIONS, normalizeAllowedGoogleEmail,
 } from "../../domain/access.js";
 import type { AuthConfig } from "../config/index.js";
 import { ucmsModels } from "./ucms-models.js";
@@ -8,7 +8,6 @@ import { ucmsModels } from "./ucms-models.js";
 const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"] as const;
 const PERMISSION_MODULES: Record<string, string> = {
   "club.profile.manage": "M02",
-  "club.role.manage": "M02",
   "club.recruitment.manage": "M04",
   "club.application.review": "M04",
   "club.member.manage": "M04",
@@ -39,13 +38,15 @@ export async function ensureAuthBootstrap(config: AuthConfig): Promise<void> {
     { unique: true, name: "uq_ura_active", partialFilterExpression: { revokedAt: null } },
   );
 
-  // The fixed club catalogue (BR55); only the four reserved codes are flagged as leader-only.
+  // The fixed club catalogue (SRS §2.3): every code except the two member defaults is Club Leader only.
   for (const code of CLUB_PERMISSIONS) {
     await permissions.updateOne({ code }, {
       $setOnInsert: { code, name: code, module: PERMISSION_MODULES[code], scope: "club" },
-      $set: { isLeaderReserved: LEADER_RESERVED_PERMISSIONS.includes(code) },
+      $set: { isLeaderReserved: !DEFAULT_MEMBER_PERMISSIONS.includes(code) },
     }, { upsert: true });
   }
+  // Codes outside the catalogue (club.role.manage from the withdrawn UC23) are not kept.
+  await permissions.deleteMany({ scope: "club", code: { $nin: [...CLUB_PERMISSIONS] } });
 
   for (const code of SYSTEM_ROLE_CODES) {
     await roles.updateOne({ code }, { $setOnInsert: {

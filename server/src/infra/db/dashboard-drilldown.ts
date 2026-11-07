@@ -133,8 +133,7 @@ export async function clubBoardHistory(clubId: string): Promise<ClubBoardHistory
       ...(optionalText(version.reason) ? { reason: String(version.reason) } : {}),
       roles: ((version.roles ?? []) as Doc[]).map((role) => ({ code: String(role.code), name: String(role.name),
         ...(optionalText(role.unit) ? { unit: String(role.unit) } : {}),
-        isBoardSeat: Boolean(role.isBoardSeat), isLeaderRole: Boolean(role.isLeaderRole),
-        permissionCodes: Array.isArray(role.permissionCodes) ? role.permissionCodes.map(String) : [] })),
+        isBoardSeat: Boolean(role.isBoardSeat), isLeaderRole: Boolean(role.isLeaderRole) })),
     })),
     terms: terms.map((term) => ({
       id: String(term._id), name: String(term.name), state: String(term.state),

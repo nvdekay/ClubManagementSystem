@@ -23,7 +23,7 @@ const expected: Record<NotificationAudience, string[]> = {
     "CLUB_MEMBERSHIP_ONBOARDED", "CLUB_MEMBERSHIP_ACTIVE", "CLUB_MEMBERSHIP_INACTIVE", "CLUB_MEMBERSHIP_BANNED",
     "CLUB_MEMBERSHIP_LEFT", "MEMBERSHIP_RECONFIRMATION_REQUIRED", "MEMBERSHIP_RECONFIRMATION_EXPIRED",
     "CLUB_SUSPENDED", "CLUB_REACTIVATED", "CLUB_DISSOLUTION_DECIDED", "CLUB_DISSOLVING", "CLUB_DISSOLVED",
-    // UC23 role changes → the member who holds the role
+    // legacy, no longer sent (UC23 withdrawn)
     "CLUB_ROLE_ASSIGNED", "CLUB_ROLE_REVOKED", "CLUB_ROLE_UPDATED",
     // mongo-complaint-repository → the complainant
     "COMPLAINT_TRIAGED", "COMPLAINT_CLOSED", "COMPLAINT_ESCALATED",
@@ -80,7 +80,7 @@ const dynamicCodes = [
   // constants in mongo-room-allocation-repository and the officer copies of accountability reminders
   "ROOM_ALLOCATED", "ROOM_ALLOCATION_REVOKED", "REPORT_ESCALATED_TO_ICPDP", "REFUND_OVERDUE_TO_ICPDP",
 ];
-// Sent through the notify() helper of mongo-club-role-repository, which the call scan does not follow.
+// Legacy codes from the withdrawn UC23; no server code sends them any more.
 const legacyCodes = ["CLUB_ROLE_ASSIGNED", "CLUB_ROLE_REVOKED", "CLUB_ROLE_UPDATED"];
 
 const code = /"([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)"/g;

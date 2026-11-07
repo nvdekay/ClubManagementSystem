@@ -25,7 +25,6 @@ import mongoose from "mongoose";
 import { buildApp } from "./interface/http/server.js";
 import { loadConfig, mailConfig, optionalAuthConfig, optionalCloudinaryConfig } from "./infra/config/index.js";
 import { ensureUcmsDatabase } from "./infra/db/ucms-models.js";
-import { upgradeClubRoles } from "./infra/db/club-role-upgrade.js";
 import { ensureAuthSessionIndexes, mongoSessionRepository } from "./infra/db/mongo-auth-session-repository.js";
 import { mongoAuthRepository } from "./infra/db/mongo-auth-repository.js";
 import { mongoAccessRepository } from "./infra/db/mongo-access-repository.js";
@@ -67,7 +66,6 @@ import { mongoComplaintRepository } from "./infra/db/mongo-complaint-repository.
 import { mongoApprovalRoutingRepository } from "./infra/db/mongo-approval-routing-repository.js";
 import { mongoMemberSpaceRepository } from "./infra/db/mongo-member-space-repository.js";
 import { mongoAccessDenialAuditRepository } from "./infra/db/mongo-access-denial-audit-repository.js";
-import { mongoClubRoleRepository } from "./infra/db/mongo-club-role-repository.js";
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
 import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
 
@@ -82,8 +80,6 @@ try {
   await mongoose.connect(config.MONGO_URI);
   await ensureUcmsDatabase();
   await ensureDefaultClubFields();
-  const roleUpgrade = await upgradeClubRoles();
-  if (roleUpgrade.clubs || roleUpgrade.skippedClubIds.length) console.log(JSON.stringify({ msg: "club roles upgraded", ...roleUpgrade }));
   if (authConfig) {
     await ensureAuthSessionIndexes();
     await ensureAuthBootstrap(authConfig);
@@ -106,7 +102,6 @@ const schoolEventRepo = mongoSchoolEventRepository();
 const app = authConfig ? buildApp({
   ...commonDeps,
   accessDenialAudit: mongoAccessDenialAuditRepository(),
-  clubRoleRepo: mongoClubRoleRepository(),
   clubEvaluationRepo: mongoClubEvaluationRepository(),
   clubViolationRepo: mongoClubViolationRepository(),
   membershipReconfirmationRepo,

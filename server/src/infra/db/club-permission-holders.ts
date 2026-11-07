@@ -17,8 +17,7 @@ export async function clubUserIdsWithPermission(clubId: Types.ObjectId, permissi
   const base = { clubId: String(clubId), clubName: String(club.name), clubState: String(club.state), isApprovedFounder: false,
     terms: terms.map((t) => ({ id: String(t._id), clubId: String(clubId), state: String(t.state), startAt: t.startAt as Date, endAt: t.endAt as Date })),
     positions: positions.map((p) => ({ id: String(p._id), clubId: String(clubId), code: String(p.code), isActive: true,
-      isLeaderRole: p.isLeaderRole === true, isBoardSeat: p.isBoardSeat === true, isDefaultMemberRole: p.isDefaultMemberRole === true,
-      permissionCodes: Array.isArray(p.permissionCodes) ? p.permissionCodes.map(String) : [] })) };
+      isLeaderRole: p.isLeaderRole === true, isBoardSeat: p.isBoardSeat === true })) };
   return memberships.filter((membership) => {
     const snapshot: ClubAccessSnapshot = { ...base,
       membership: { id: String(membership._id), clubId: String(clubId), state: "Active" },

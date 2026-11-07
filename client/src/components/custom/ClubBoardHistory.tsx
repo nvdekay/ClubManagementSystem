@@ -55,9 +55,7 @@ export function ClubBoardHistory({ clubId, headingClassName }: ClubBoardHistoryP
               <ul className="mt-2 flex flex-wrap gap-2">
                 {version.roles.map((role) => <li key={role.code}>
                   <AppBadge tone={role.isLeaderRole ? "info" : role.isBoardSeat ? "warning" : "neutral"}>
-                    {role.unit ? `${role.name} · ${role.unit}` : role.name}
-                    {!role.isLeaderRole && role.permissionCodes.length > 0
-                      && ` · ${t("clubOversight.rolePermissionCount", { count: role.permissionCodes.length })}`}</AppBadge>
+                    {role.unit ? `${role.name} · ${role.unit}` : role.name}</AppBadge>
                 </li>)}
               </ul>
             </li>)}

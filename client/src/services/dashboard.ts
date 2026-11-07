@@ -92,7 +92,7 @@ export interface ClubBoardHistory {
     effectiveFrom: string;
     source: string;
     reason?: string;
-    roles: { code: string; name: string; unit?: string; isBoardSeat: boolean; isLeaderRole: boolean; permissionCodes: string[] }[];
+    roles: { code: string; name: string; unit?: string; isBoardSeat: boolean; isLeaderRole: boolean }[];
   }[];
   terms: {
     id: string;

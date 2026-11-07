@@ -52,7 +52,6 @@ import { PeriodicReportReviewPage, PeriodicReportsPage } from "./pages/icpdp/Per
 import { SchoolEventDetailPage, SchoolEventsPage } from "./pages/icpdp/SchoolEventsPage.js";
 import { EvaluationDetailPage, EvaluationsPage } from "./pages/icpdp/EvaluationsPage.js";
 import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
-import { ClubRolesPage } from "./pages/club/ClubRolesPage.js";
 import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
 import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
 import { BoardNominationDetailPage } from "./pages/icpdp/BoardNominationDetailPage.js";
@@ -156,7 +155,6 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />
               <Route path="workspace/leadership-transitions/:id" element={<LeadershipTransitionDetailPage />} />
               <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
-              <Route path="club/:clubId/roles" element={<ClubRolesPage />} />
               <Route path="club/:clubId/board" element={<BoardNominationPage />} />
               <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />
               <Route path="club/:clubId/recruitment/:campaignId/review" element={<RecruitmentReviewPage />} />

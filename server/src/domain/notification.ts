@@ -36,7 +36,7 @@ export const STUDENT_NOTIFICATION_CODES: readonly string[] = [
   "CLUB_MEMBERSHIP_ONBOARDED", "CLUB_MEMBERSHIP_ACTIVE", "CLUB_MEMBERSHIP_INACTIVE", "CLUB_MEMBERSHIP_BANNED",
   "CLUB_MEMBERSHIP_LEFT", "MEMBERSHIP_RECONFIRMATION_REQUIRED", "MEMBERSHIP_RECONFIRMATION_EXPIRED",
   "CLUB_SUSPENDED", "CLUB_REACTIVATED", "CLUB_DISSOLUTION_DECIDED", "CLUB_DISSOLVING", "CLUB_DISSOLVED",
-  // UC23 role changes, to the member who holds the role.
+  // No longer sent (UC23 withdrawn); kept so old rows stay in the member's own inbox.
   "CLUB_ROLE_ASSIGNED", "CLUB_ROLE_REVOKED", "CLUB_ROLE_UPDATED",
   // UC50/UC51: the complainant hears the triage outcome and the final close or escalation.
   "COMPLAINT_TRIAGED", "COMPLAINT_CLOSED", "COMPLAINT_ESCALATED",

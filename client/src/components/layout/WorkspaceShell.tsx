@@ -354,7 +354,6 @@ function navigation(context: Context, workspace: Workspace | undefined,
       ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "badge" as const }] : []),
       ...(can("club.board.nominate") ? [{ to: `${base}/board-history`, label: t("common.navBoardHistory"), icon: "layers" as const }] : []),
       ...(can("club.profile.manage") ? [{ to: `${base}/settings`, label: t("common.navSettings"), icon: "settings" as const }] : []),
-      ...(can("club.role.manage") ? [{ to: `${base}/roles`, label: t("common.navClubRoles"), icon: "badge" as const }] : []),
     ]),
     ...group("club-events", t("common.groupClubEvents"), "calendar", [
       ...(can("club.event.manage") ? [{ to: `${base}/invitations`, label: t("common.navInvitations"), icon: "inbox" as const }] : []),

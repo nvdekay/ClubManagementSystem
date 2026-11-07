@@ -11,14 +11,9 @@ Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`;
 đối chiếu workspace và quyền hiện hành từ `/auth/me`.
 
 Quyền phía CLB theo BR47/BR54/BR55: **Club Leader** (ghế Chủ nhiệm / Phó chủ nhiệm đã được ICPDP
-xác nhận) có mọi permission CLB; role khác mang permission do Club Leader cấu hình ở UC23; mọi
-thành viên `Active` có `club.attendance.manage` và `club.room.view`. Mỗi trang gate theo permission.
-
-`ClubRolesPage` (route `/club/:clubId/roles`, UC23) chỉ mở với `club.role.manage`: dùng
-`ClubRolesPanel` (danh sách role, `ClubRoleDialog` tạo/sửa, `ClubRoleAssignDialog` gán người giữ,
-`ClubRoleHistory` so sánh phiên bản cơ cấu). Bốn quyền giữ riêng và hai quyền mặc định không xuất
-hiện trong danh sách chọn. `ClubMemberRoles` (UC24) hiện các role của CLB và đánh dấu role người
-xem đang giữ, ở trang thành viên chỉ đọc.
+xác nhận) có mọi permission CLB; mọi thành viên `Active` có `club.attendance.manage` và
+`club.room.view`; chức danh khác không cấp quyền. Không có trang quản lý role (UC23 đã rút). Mỗi trang
+gate theo permission.
 
 `ClubSettingsPage` triển khai UC09: chỉ workspace có `club.profile.manage` (Club Leader) mới mở màn
 hồ sơ vận hành và cơ cấu ban/bộ phận; các trường định danh do ICPDP quản lý chỉ được hiển thị.
@@ -50,9 +45,8 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 đã chuyển xuống, không có danh tính người khiếu nại (D5); trả lời một lần kèm hành động cụ thể.
 
 `ClubMembersPage` mở cho workspace CLB; `ClubRosterReadOnly` dùng member space để hiển thị
-danh sách tên/trạng thái/vị trí (gồm cả role UC23) cho Club Member, không chia sẻ email, và bên dưới là
-`ClubMemberRoles` (UC24, `GET /clubs/:clubId/role-directory`): danh mục role của CLB, đánh dấu role người xem
-đang giữ. Chỉ người có `club.member.manage` thấy bảng quản trị:
+danh sách tên/trạng thái/vị trí cho Club Member, không chia sẻ email. Chỉ người có
+`club.member.manage` thấy bảng quản trị:
  các yêu cầu rời CLB (UC22) đang chờ nằm
 ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
 thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong
