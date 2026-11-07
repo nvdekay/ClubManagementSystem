@@ -21,7 +21,7 @@ task và ghi đúng một quyết định xác nhận toàn phần hoặc một 
 `IcpdpHomePage` triển khai dashboard UC02: hàng đợi, SLA, trạng thái CLB, báo cáo, tài chính,
 vi phạm, lịch đặt, sự kiện nội bộ và lịch sử cơ cấu/ban điều hành.
 
-`StudentFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho ICPDP; chỉ ICPDP Officer đọc.
+`ComplaintReviewPage` (UC51, `/workspace/complaint-review`) là hàng đợi khiếu nại của ICPDP: mở xem xét, quyết định Dismissed / Forwarded / Escalated có lý do, rồi đóng hoặc leo thang sau khi CLB trả lời.
 
 `PolicyPage` + `PolicyEditor` (UC04) chia chính sách theo luồng nghiệp vụ (Thành lập CLB, Hồ sơ CLB,
 Sự kiện, Năm học, Báo cáo); ICPDP bật/tắt field bắt buộc của form cố định, mỗi lần lưu tạo phiên bản mới.
@@ -88,3 +88,7 @@ hàng đợi và xác nhận chuyển giao nhiệm kỳ.
 `ReconciliationPage` (UC37, `/workspace/budgets/:id/reconciliation`, dùng `FinanceWorkspace`): đối soát kinh phí.
 `RoomAllocationsPage` (UC58) là trang "Phân phòng CLB" mô tả ở trên; `PropertyBookingConflicts` là component con
 của `PropertiesPage`.
+
+`RoutingRulesPage` (UC05, `/workspace/routing-rules`): mọi ICPDP Officer đọc và mô phỏng rule định tuyến; chỉ
+`ICPDP_HEAD` tạo nháp, sửa và kích hoạt. Ba trang thẩm định UC08/UC26/UC46 hiện `ApprovalLevelBadge` khi hồ sơ
+cần hai cấp; cấp 2 chỉ Head nhận và quyết định.

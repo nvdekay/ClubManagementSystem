@@ -195,10 +195,9 @@ Club Member - Events & bookings chứa các use case mọi thành viên `Active`
 hành CLB còn lại — hồ sơ, thành viên, tuyển, đơn ứng tuyển, sự kiện, booking CSVC, báo cáo, khoản
 chi, phản hồi, khiếu nại, role CLB, ban chủ nhiệm, chuyển giao, tạm ngừng (BR54, BR55). Oval
 `Configure role permissions` của `Manage club roles` đã bị bỏ vì role không mang permission.
-> **Cập nhật 2026-10-17:** theo quyết định Club Member không có permission quản lý, code chỉ cho
-> Club Leader dùng `Manage attendance` (UC30/UC32) và `View allocated rooms` (UC58, cần
-> `club.booking.manage`). Trang Club Member - Events & bookings trong `.drawio` vẫn vẽ các oval
-> này, cần chuyển sang trang Club Leader.
+> **Cập nhật 2026-11-07:** code đã khớp sơ đồ: mọi thành viên `Active` có `club.attendance.manage`
+> và `club.room.view` mặc định (BR54), nên dùng được `Manage attendance` (UC30/UC32) và
+> `View allocated rooms` (UC58). Ghi chú 2026-10-17 (chỉ Club Leader) không còn đúng.
 
 **Xem danh sách thành viên (2026-10-14):** `Club membership` của Club Member
 include `View member list` (UC24), dành cho thành viên `Active`/`Inactive` trong

@@ -65,3 +65,20 @@ secret hoặc Cloudinary asset ID; route kiểm tra chủ hồ sơ rồi trả U
 60 giây. Cloudinary hỗ trợ upload backend có xác thực và URL truy cập tạm thời cho tài sản
 `private`/`authenticated` ([Upload API](https://cloudinary.com/documentation/image_upload_api_reference),
 [quyền truy cập media](https://cloudinary.com/documentation/control_access_to_media)).
+
+## Gửi email (Google SMTP, EXT-02)
+
+Không bắt buộc khi phát triển: để trống mọi biến dưới đây thì email chỉ được ghi log (người nhận, tiêu đề).
+Production bắt buộc cấu hình đủ.
+
+| Biến | Giá trị cho Gmail / Google Workspace |
+|---|---|
+| `MAIL_TRANSPORT` | `smtp` (hoặc để trống — có biến SMTP là tự dùng SMTP) |
+| `SMTP_HOST` | `smtp.gmail.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_SECURE` | `false` (587 nâng TLS bằng STARTTLS; dùng `true` với cổng 465) |
+| `SMTP_USER` | Địa chỉ Gmail gửi thư |
+| `SMTP_PASSWORD` | App Password 16 ký tự (Google Account → Security → App passwords; cần bật xác minh 2 bước) |
+| `MAIL_FROM` | `UCMS <địa-chỉ-gửi@…>` — nên trùng `SMTP_USER` để Gmail không đổi người gửi |
+
+Thiếu một biến hoặc sai định dạng thì server dừng lúc khởi động và chỉ nêu tên biến. Không commit `.env`.

@@ -38,3 +38,5 @@ Xoá collection/field role trong DBML. Diagram đã bỏ UC23; xem ma trận run
 
 ## Changelog
 - v1.0.0 (2026-10-13) — người dùng chốt: Phó chủ nhiệm = Club Leader; Club Member chỉ xem và tham gia; gỡ UI + API, giữ collection.
+
+- v1.1.0 (2026-11-07) — **Thay thế** bởi `feat-club-role-management` (baseline SRS 02/11/2026 khôi phục UC23).

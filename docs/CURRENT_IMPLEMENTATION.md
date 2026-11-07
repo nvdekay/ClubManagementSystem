@@ -6,23 +6,27 @@
 
 ## 1. Mô hình truy cập phía CLB
 
-Code hiện chỉ có hai role cố định phía CLB — **code chưa theo kịp mô hình đã duyệt** (SRS: role CLB mang permission do Club Leader cấu hình ở UC23, mọi thành viên `Active` có `club.attendance.manage` và `club.room.view`):
+Từ 07/11/2026 code theo đúng BR47, BR54, BR55 (`server/src/domain/access.ts`):
 
 - **Club Leader**: membership `Active`, giữ ghế Chủ nhiệm (`isLeaderRole`) hoặc Phó chủ nhiệm
-  (`isBoardSeat`) đã được ICPDP xác nhận (`confirmedBy`) trong nhiệm kỳ `Active` còn hiệu lực.
-  Chủ nhiệm và Phó chủ nhiệm nhận cùng toàn bộ 14 permission trong
-  `server/src/domain/access.ts`.
-- **Club Member**: mọi membership `Active` còn lại. Không nhận permission quản lý; chỉ xem và
-  tham gia trong member space, xem danh sách thành viên chỉ đọc, xin rời CLB, cùng
-  các chức năng Student.
+  (`isBoardSeat` với mã `VICE_LEADER`/`VICE`) đã được ICPDP xác nhận (`confirmedBy`) trong nhiệm kỳ
+  `Active` còn hiệu lực. Có toàn bộ 16 permission (`CLUB_PERMISSIONS`), gồm bốn quyền giữ riêng
+  `club.role.manage`, `club.board.nominate`, `club.transition.plan`, `club.suspension.request`.
+- **Ghế ban điều hành khác** (ví dụ Trưởng ban) đã được ICPDP xác nhận: chỉ nhận permission của
+  chính role đó.
+- **Role thường của UC23**: Club Leader tạo, chọn permission (không bao giờ có bốn quyền giữ riêng)
+  và gán thành viên `Active`; không cần ICPDP xác nhận, hiệu lực ngay. Giữ nhiều role thì quyền là
+  hợp các role.
+- **Mọi thành viên `Active`**: hai permission mặc định `club.attendance.manage` (UC30, UC32) và
+  `club.room.view` (UC58), không cần bản gán (BR54). Role Members không mang permission nào khác.
 - **Approved founder khi CLB `Pending Setup`**: chỉ có `club.profile.manage` và
   `club.board.nominate` — quy tắc tương thích cho dữ liệu cũ; UC08 hiện tạo CLB `Active` nên không
   CLB mới nào rơi vào trường hợp này.
 
-Không còn role tự tạo, không cấu hình permission theo role và không gán permission lẻ cho thành
-viên. API `/clubs/:clubId/roles*`, `/clubs/:clubId/role-directory` và UI “Vai trò & phân quyền”
-đã bị gỡ. `clubPositions.permissionCodes` và `clubRoleStructureVersions` vẫn tồn tại trong schema
-để tương thích dữ liệu nhưng không cấp quyền. Việc gỡ UC23 ngày 13/10/2026 đã bị đảo ngược ngày 02/11/2026: UC23 thuộc phạm vi và phải được làm lại.
+Workspace CLB trong `/auth/me` mang `role = "leader"` chỉ khi người dùng giữ ghế Chủ nhiệm / Phó chủ
+nhiệm hợp lệ, không suy ra từ `club.member.manage`. Dữ liệu ghi trong giai đoạn role cố định
+(13/10–07/11/2026) được chuẩn hoá lúc server khởi động bởi `infra/db/club-role-upgrade.ts`
+(idempotent, ghi một phiên bản cơ cấu `MIGRATION` nếu có thay đổi).
 
 ## 2. Ánh xạ theo actor
 
@@ -43,17 +47,18 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Student | UC29 đăng ký sự kiện | Có |
 | Student | UC31 check-in | Có |
 | Student | UC48 phản hồi sự kiện | Có; một điểm tổng (chấm theo tiêu chí ngoài phạm vi) |
-| Student | UC50 khiếu nại | **Một phần — code chưa theo kịp mô hình đã duyệt**: code là góp ý một chiều gửi thẳng CLB/ICPDP (quyết định 09/10/2026 đã đảo ngược); thiếu luồng khiếu nại đi thẳng tới ICPDP, rút khiếu nại và liên kết khiếu nại trùng |
+| Student | UC50 khiếu nại | Có (07/11/2026), tại `/workspace/complaints`: chọn CLB (bắt buộc), sự kiện (tuỳ chọn), loại, mô tả, liên kết chứng cứ; luôn gửi ICPDP (BR38); theo dõi trạng thái, rút khi chưa có quyết định, khiếu nại trùng được gộp |
 | Club Member | UC22 xin rời CLB | Có; sinh viên theo dõi yêu cầu rời ở dashboard và trang "CLB của tôi" (19/10) |
 | Club Member | UC24 member space | Có |
 | Club Member | Xem danh sách thành viên | Có, qua `member-space`; không truy cập API quản trị `/memberships` |
-| Club Member | Xem phòng được phân | **Chưa được phép — code chưa theo kịp mô hình đã duyệt**: API và menu yêu cầu `club.booking.manage`, chỉ Leader có quyền |
+| Club Member | UC58 xem phòng được phân | Có (07/11/2026): mọi thành viên `Active` có `club.room.view` mặc định (BR54); tạo booking UC45 vẫn cần `club.booking.manage` |
+| Club Member | UC30 danh sách chờ, UC32 chốt điểm danh | Có (07/11/2026): mọi thành viên `Active` có `club.attendance.manage` mặc định (BR54); payload lược nội dung quản trị sự kiện |
 | Club Leader | UC09 hồ sơ/cơ cấu CLB | Có; GET và mutation đều yêu cầu `club.profile.manage` |
 | Club Leader | UC10 đề cử ban chủ nhiệm | Một phần; CLB không thấy trạng thái/lý do trả lại |
 | Club Leader | UC12 lập kế hoạch chuyển giao | Có, tại `/club/:clubId/transition-plans` (A2 đổi danh sách ghế ngoài phạm vi) |
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
-| Club Leader | UC23 quản lý role và phân quyền | **Chưa làm — code chưa theo kịp mô hình đã duyệt**: role cố định, API/UI role động đã gỡ 13/10/2026 |
+| Club Leader | UC23 quản lý role và phân quyền | Có (07/11/2026), tại `/club/:clubId/roles`: tạo/sửa/ngừng role, chọn permission, gán/thu hồi người giữ, lịch sử phiên bản; mỗi thay đổi ghi phiên bản cơ cấu, audit và thông báo. ICPDP xem cơ cấu và permission theo phiên bản ở lịch sử ban chủ nhiệm của CLB |
 | Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
 | Club Leader | UC36 khoản chi/quyết toán | Có, đã nối vào app chính; chứng từ bắt buộc (BR25), hạn hoàn trả 7 ngày (BR58) |
@@ -62,20 +67,23 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC43 xem kết quả đánh giá | Có, tại `/club/:clubId/evaluations`; chỉ thấy kết quả `Published` |
 | Club Leader | UC45, UC47 booking ngoài `ROOM` | Có |
 | Club Leader | UC49 xem tổng hợp feedback | Có; điểm tổng kèm trung bình và phân bố (tổng hợp theo tiêu chí ngoài phạm vi) |
-| Club Leader | UC52 trả lời khiếu nại được chuyển xuống | **Chưa làm — code chưa theo kịp mô hình đã duyệt** |
+| Club Leader | UC52 trả lời khiếu nại được chuyển xuống | Có (07/11/2026), tại `/club/:clubId/complaints` (`club.complaint.respond`): chỉ thấy khiếu nại đã `Forwarded`, không bao giờ thấy danh tính người khiếu nại (D5); trả lời một lần kèm hành động; quá hạn có tín hiệu tuân thủ |
 | ICPDP | UC03, UC04 tài khoản/chính sách | Có; UC03 chưa nối khoá tài khoản với hồ sơ UC40 |
 | ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests`; UC15 giải thể dọn việc còn mở, lưu nghĩa vụ tồn đọng và cảnh báo đối soát (A1 liên kết hồ sơ UC40 ngoài phạm vi) |
 | ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính |
 | ICPDP | UC37 đối soát | Có, đã nối vào app chính; A2 đối soát tối đa bằng số đã tạm ứng, không cấp bù |
 | ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42 **Một phần** (nguồn dữ liệu bản nháp); UC43 có (E1 khiếu nại kết quả ngoài phạm vi) |
-| ICPDP | UC05 định tuyến phê duyệt | **Chưa làm — code chưa theo kịp mô hình đã duyệt**: chỉ có `ICPDP_OFFICER`, mỗi hồ sơ một quyết định; không có `ICPDP_HEAD` hay cấp duyệt thứ hai |
-| ICPDP | UC51 phân loại khiếu nại | **Chưa làm — code chưa theo kịp mô hình đã duyệt**: collection `complaints` vẫn có `triage`, `clubResponse`, `violationId`, `linkedComplaintId` và các trạng thái `Under Triage`/`Forwarded`/`Escalated` nhưng chưa use case nào ghi |
+| ICPDP | UC05 định tuyến phê duyệt | Có (07/11/2026), tại `/workspace/routing-rules`: bộ rule đánh phiên bản `Draft → Active`, từ chối rule chồng nhau, mô phỏng trên hồ sơ đã quyết định; UC08/UC26/UC46 khớp rule cần cấp 2 do `ICPDP_HEAD` quyết định (cấp kèm `ICPDP_OFFICER`, D1); cấp 1 duyệt không có hiệu lực cuối |
+| ICPDP | UC51 phân loại khiếu nại | Có (07/11/2026), tại `/workspace/complaint-review`: mở xem xét, quyết định Dismissed / Forwarded (kèm hạn trả lời) / Escalated (mở hồ sơ UC40 liên kết hai chiều), lý do bắt buộc; sau khi CLB trả lời thì đóng hoặc leo thang. Kết quả đi vào UC42 qua hồ sơ vi phạm (D8) |
 | ICPDP | UC53 sự kiện cấp trường | Có |
 | Club Leader | UC54 phản hồi lời mời | Có, tại `/club/:clubId/invitations`; từ chối phải kèm lý do |
 | ICPDP | UC55 xuất dữ liệu | Có |
-| ICPDP/Club Leader | UC58 phân/xem phòng học theo học kỳ | Có; Club Member hiện bị từ chối ở API (code chưa theo kịp mô hình đã duyệt) |
+| ICPDP/Club Member | UC58 phân/xem phòng học theo học kỳ | Có; mọi thành viên `Active` xem được (`club.room.view`) |
 
 ## 3. Khoảng trống phải xử lý
+
+Đã sửa ngày 07/11/2026: mỗi lần người dùng đã đăng nhập bị 403 vì thiếu quyền được ghi một dòng
+`auditLogs` `ACCESS_DENIED` (SEC-08, AC17), xem `.sdd/specs/feat-forbidden-access-audit`.
 
 UC12, UC14, UC21 A2, UC36–UC38, UC40, UC43, UC54 và job hết hạn hồ sơ UC07/08 đã hoàn thành
 ngày 15/10/2026; `655cad3` (16/10) vá các lỗ hổng tìm thấy khi đi hết luồng nghiệp vụ. Kiểm toán
@@ -143,8 +151,8 @@ CLB mới nhất khi tìm không ra.
     asset mồ côi cố ý chưa viết vì code xoá asset trên Cloudinary không kiểm thử được khi không có tài khoản thật (19/10).
 12. ~~Mail delivery worker và inbox notification tổng quát.~~ Đã làm 19/10/2026 (`.sdd/specs/feat-notification-inbox`):
     chuông + hộp thông báo in-app ở mọi workspace (`/notifications/mine`, đánh dấu đã đọc), worker outbox SCH-10 có
-    claim/lease, `emailDeliveryLogs` và retry backoff; email theo ma trận SRS §8.2. Còn lại: transport hiện chỉ ghi log —
-    gửi SMTP thật cần duyệt thêm dependency (ví dụ `nodemailer`) và biến `SMTP_*`. Từ 01/11/2026 chuông lọc theo
+    claim/lease, `emailDeliveryLogs` và retry backoff; email theo ma trận SRS §8.2. Từ 07/11/2026 gửi thật qua Google SMTP
+    (`nodemailer`) khi đủ biến `SMTP_*`/`MAIL_FROM` (bắt buộc ở production); khi phát triển không cấu hình thì chỉ ghi log. Từ 01/11/2026 chuông lọc theo
     workspace: `GET /notifications/mine`, `/mine/unread-count` và `POST /mine/read-all` nhận `scope=student|icpdp|club`
     (+ `clubId` cho `club`); mỗi `eventCode` thuộc đúng một audience theo danh sách ở `server/src/domain/notification.ts`
     (mã chưa phân loại tính là của sinh viên). Các mã từng gửi cho hai nhóm đã được tách: bản cho ICPDP là
@@ -207,13 +215,14 @@ CLB mới nhất khi tìm không ra.
 - UC43: chỉ Leader xem kết quả đã công bố.
 - UC44: từ chối xoá nếu từng có booking; mã tự sinh; tài sản mới ở trạng thái active.
 - UC46: thông báo quyết định chỉ gửi người nộp gần nhất. UC55: mọi loại xuất đều có PDF.
-- `StudentFeedback` là giao diện domain; collection vật lý vẫn là `complaints`, lưu `Submitted`,
-  `recipient`, `type`, `isAnonymous`, `complainantId`. Field ticket cũ được giữ nhưng không dùng.
+- Khiếu nại (`domain/complaint.ts`) lưu ở `complaints`. Bản ghi góp ý một chiều cũ (trước 07/11/2026) vẫn
+  giữ trường `recipient` và loại `suggestion`/`praise`/`issue`; chúng hiện trong hàng đợi ICPDP như khiếu
+  nại `Submitted` để ICPDP bác bỏ có lý do, và được xuất dưới nhãn "Góp ý gửi CLB/ICPDP".
 - Guest (chưa đăng nhập) dùng được khu Public của client, chỉ đọc: Home, Clubs, Club detail, Events,
   Event detail và Not found (`PublicLayout` trong `client/src/main.tsx`), gọi API `/public/*` của
   `public-discovery-routes.ts`; mọi màn hình khác nằm sau UC01 (sửa 02/11/2026).
 - `club.transition.plan` (UC12) và `club.suspension.request` (UC14) đã có route nghiệp vụ.
-  `club.complaint.respond` hiện dùng cho màn tuân thủ UC40 phía CLB; luồng trả lời khiếu nại UC52 chưa làm (code chưa theo kịp mô hình đã duyệt).
+  `club.complaint.respond` dùng cho màn tuân thủ UC40 phía CLB và trả lời khiếu nại UC52.
 - `isBoardSeat` là cờ kỹ thuật: resolver cấp quyền cho mọi vị trí active mang cờ này và assignment
   đã xác nhận. Cơ cấu chuẩn hiện tạo Chủ nhiệm/Phó chủ nhiệm; dữ liệu cũ gắn cờ cho ghế khác cũng
   được resolver coi là Leader.

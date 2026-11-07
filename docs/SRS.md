@@ -110,7 +110,7 @@ theo vai trò.
 | Hạng mục | Số lượng |
 |---|---|
 | Actor là người | 4 (Student, Club Member, Club Leader, ICPDP Officer); Student ◁ Club Member ◁ Club Leader |
-| Hệ thống ngoài | 3 (Google OAuth, Google SMTP — dự kiến, bản hiện tại chỉ ghi log email, Cloudinary) |
+| Hệ thống ngoài | 3 (Google OAuth, Google SMTP, Cloudinary) |
 | Module nghiệp vụ | 12 (M01–M12) |
 | Use case | 56 (UC01–UC55, UC58) |
 | Quy tắc nghiệp vụ | 61 quy tắc còn hiệu lực (BR01–BR62, BR43 đã rút) |
@@ -217,7 +217,7 @@ khác.
         Club Leader ─┼──HTTPS──► UCMS SPA ──/api/v1──► UCMS API ──► MongoDB
       ICPDP Officer ─┘                                    │
                                                           ├──► Google OAuth   (đăng nhập)
-                                                          ├──► Google SMTP    (dự kiến gửi email; bản hiện tại chỉ ghi log)
+                                                          ├──► Google SMTP    (gửi email từ outbox)
                                                           └──► Cloudinary     (lưu ảnh tải lên)
 ```
 
@@ -303,9 +303,9 @@ giữ nhiều role; quyền là hợp các permission của các role đó. Quy�
 
 Thành viên `Active` giữ ghế **Chủ nhiệm** hoặc **Phó chủ nhiệm** được duyệt cùng hồ sơ thành lập ở
 UC08 hoặc được ICPDP xác nhận ở UC11 / UC13 trong nhiệm kỳ đang hoạt động (BR47). Kế thừa Club Member,
-có **mọi permission CLB**, và giữ riêng bốn quyền không cấp được cho role nào (BR55). Club Leader không uỷ
-quyền vận hành cho thành viên qua permission của role (UC23), nhưng không uỷ quyền bốn quyền giữ riêng
-(BR55).
+có **mọi permission CLB**, và giữ riêng bốn quyền không cấp được cho role nào (BR55). Club Leader có thể
+uỷ quyền vận hành cho thành viên qua permission của role (UC23), nhưng không thể uỷ quyền bốn quyền giữ
+riêng (BR55).
 
 - **Trách nhiệm:** vận hành hồ sơ và ban/bộ phận CLB; tuyển thành viên và quản lý danh sách; đề
   xuất, công bố, huỷ và đổi lịch sự kiện; nộp báo cáo sau sự kiện và báo cáo định kỳ; xin ngân
@@ -345,7 +345,7 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 |---|---|---|---|
 | **ES1** | Google OAuth | UCMS → Google | `Authentication request` |
 | | | Google → UCMS | `Identity data` — email, họ tên, ảnh đại diện |
-| **ES2** | Google SMTP Service | UCMS → Google | `Email message` cho mọi thông báo có kênh email — kênh dự kiến; bản hiện tại chỉ ghi log người nhận và tiêu đề, chưa gửi (EXT-02) |
+| **ES2** | Google SMTP Service | UCMS → Google | `Email message` cho mọi thông báo có kênh email (EXT-02); môi trường phát triển không cấu hình SMTP chỉ ghi log người nhận và tiêu đề |
 | **ES3** | Cloudinary | UCMS → Cloudinary | `Image file` — ảnh người dùng tải lên |
 | | | Cloudinary → UCMS | `Image URL` — hệ thống lưu URL thay cho file |
 
@@ -615,7 +615,7 @@ ICPDP quyết định giải thể (UC15): huỷ ngay mọi thứ kết thúc sa
 | Cơ sở dữ liệu | MongoDB 7 chạy dạng replica set (bắt buộc — repository dùng transaction đa document) | Lưu dữ liệu nghiệp vụ, hàng đợi thông báo và nhật ký audit |
 | Scheduler | Interval trong tiến trình, bảo vệ bằng một lease document trong Mongo | Không dùng hệ thống queue; chỉ tách ra worker riêng khi API chạy nhiều instance |
 | Xác thực | Google OpenID Connect, Authorization Code flow + PKCE; phiên lưu phía server, cookie được ký, `httpOnly`, `SameSite=Lax`; CSRF token theo phiên | Không lưu bất kỳ mật khẩu nào — xem §12.1 |
-| Email | Google SMTP (dự kiến) | Gửi từ outbox, không bao giờ gửi đồng bộ trong transaction. Bản hiện tại nối `logMailTransport` (`server/src/main.ts`): chỉ ghi người nhận và tiêu đề ra log, chưa gửi email |
+| Email | Google SMTP | Gửi từ outbox, không bao giờ gửi đồng bộ trong transaction. `server/src/main.ts` chọn `smtpMailTransport` khi đủ cấu hình (bắt buộc ở production), `logMailTransport` khi phát triển |
 | Triển khai | `docker compose` chạy MongoDB (replica set `rs0`); server và client build bằng npm, client tĩnh đặt sau web server / reverse proxy | Biến môi trường được validate lúc khởi động bởi `infra/config/` |
 | Công cụ | npm workspaces, ESLint, vitest, `npm run check` là Definition of Done | |
 | Trình duyệt | Chrome, Edge, Firefox, Safari bản hiện hành; bề rộng 375 / 768 / 1024 / 1440 px | Không làm app mobile native |
@@ -755,7 +755,7 @@ client/src/pages/
 | Khía cạnh | Yêu cầu |
 |---|---|
 | Dùng cho | Mọi thông báo có kênh email |
-| Trạng thái hiện tại | **Chưa nối SMTP (sửa 2026-11-02).** Worker rút outbox giao email cho `logMailTransport` (`server/src/main.ts`, `infra/mail/log-mail-transport.ts`), chỉ ghi người nhận và tiêu đề ra log server; cần thêm thư viện SMTP client và biến `SMTP_*` mới gửi thật |
+| Trạng thái hiện tại | **Đã nối SMTP (sửa 2026-11-07).** Worker rút outbox giao email cho `smtpMailTransport` (`infra/mail/smtp-mail-transport.ts`, `nodemailer`) khi đủ `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`; production thiếu cấu hình thì server không khởi động. Khi phát triển không cấu hình SMTP thì dùng `logMailTransport` (chỉ người nhận và tiêu đề) |
 | Kích hoạt | Scheduler rút hàng đợi outbox — không bao giờ gọi đồng bộ bên trong transaction nghiệp vụ (CON-09) |
 | Nhật ký | Mỗi lần gửi ghi một dòng `EmailDeliveryLog` với trạng thái, số lần thử và lỗi |
 | Retry | Gửi thất bại được thử lại với backoff; số lần thử và mốc thử tiếp theo nằm trên document outbox |
@@ -2423,7 +2423,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC52-01 | Hiển thị khiếu nại đã chuyển xuống cho CMB, chỉ để lộ danh tính người khiếu nại ở mức chính sách cho phép (quyết định còn mở D5) |
+| FR-UC52-01 | Hiển thị khiếu nại đã chuyển xuống cho CMB, **không** kèm danh tính người khiếu nại (D5 đã chốt 2026-11-07); ICPDP vẫn thấy danh tính để xử lý và chống lạm dụng |
 | FR-UC52-02 | Cho ban chủ nhiệm nhập phần trả lời và đính kèm chứng cứ |
 | FR-UC52-03 | Chuyển `Club Responded` khi nộp và trả khiếu nại về ICPDP cho UC51 |
 | FR-UC52-04 | *(A1)* Cho phần trả lời nêu một hành động cụ thể, mà ICPDP có thể xác minh trước khi đóng |
@@ -2975,7 +2975,7 @@ Năm đối tượng nghiệp vụ đi qua *nộp → thẩm định → sửa �
 usecase commit thay đổi nghiệp vụ
   → notification.enqueue(event, recipients, channels)      # cùng request, ghi vào Mongo
   → scheduler rút outbox → dòng in-app / mail transport → EmailDeliveryLog (+ retry)
-    # bản hiện tại: logMailTransport chỉ ghi người nhận + tiêu đề ra log; Google SMTP chưa nối
+    # SMTP khi đủ cấu hình (bắt buộc ở production); khi phát triển có thể chỉ ghi log
 ```
 
 | ID | Yêu cầu |
@@ -3236,8 +3236,8 @@ Sửa 2026-11-02: các dòng SEC dưới đây được đối chiếu lại v�
 | SEC-05 | Phiên lưu phía server (`authSessions`, chỉ lưu hash SHA-256 của token, hết hạn sau 7 ngày, TTL index); cookie `ucms_session` ký HMAC-SHA256, `httpOnly`, `SameSite=Lax`, chỉ cho đường dẫn `/api/v1`, có cờ `Secure` khi `NODE_ENV=production`. Đăng xuất thu hồi phiên; khoá tài khoản hoặc đổi vai trò hệ thống thu hồi ngay mọi phiên của người đó (FR-UC03-04) |
 | SEC-06 | Tài khoản bị khoá bị từ chối ngay khi đăng nhập và ở mọi request; lần đăng nhập đó được audit (FR-UC01-10) |
 | SEC-07 | Mọi dữ liệu vào được validate bằng zod ở biên (phần lớn ở chế độ strict, id phải là ObjectId 24 ký tự hex) trước mọi truy vấn Mongoose; không bao giờ đưa thẳng `req.body` / `req.query` / `req.params` vào truy vấn — `scripts/check-constitution.sh` chặn việc này. Đây là thứ chặn NoSQL injection |
-| SEC-08 | Một lần thử trái phép thực hiện hành động chỉ dành cho ICPDP (ví dụ duyệt booking) bị từ chối với 403 (AC17). *Chưa đạt theo code (2026-11-02):* lần bị từ chối 403 **chưa được ghi audit**; chỉ các lần đăng nhập bị từ chối được audit (§12.1 mục 8) |
-| SEC-09 | **Quyền riêng tư khiếu nại**: khiếu nại chỉ ICPDP thấy được cho tới khi UC51 chuyển xuống; danh tính người khiếu nại chỉ hiển thị cho CMB ở mức chính sách cho phép (quyết định còn mở D5) |
+| SEC-08 | Một lần thử trái phép thực hiện hành động chỉ dành cho ICPDP (ví dụ duyệt booking) bị từ chối với 403 (AC17). Mỗi lần người dùng đã đăng nhập bị từ chối 403 vì thiếu quyền được ghi một dòng `auditLogs` `ACCESS_DENIED` (actor, route, đối tượng, quyền còn thiếu, lý do); không ghi body, cookie hay token (đạt theo code từ 07/11/2026) |
+| SEC-09 | **Quyền riêng tư khiếu nại**: khiếu nại chỉ ICPDP thấy được cho tới khi UC51 chuyển xuống; CMB không bao giờ thấy danh tính người khiếu nại, kể cả trong thông báo (D5 đã chốt 2026-11-07) |
 | SEC-10 | **Quyền riêng tư phản hồi sự kiện** (sửa 2026-11-02): CLB chỉ thấy phản hồi qua bản tổng hợp UC49. Dưới số người phản hồi tối thiểu cấu hình được, CLB chỉ thấy là *có* phản hồi; từ mức đó trở lên, CLB thấy điểm trung bình, phân bố điểm tổng 1–5 và từng nhận xét, nhưng không bao giờ thấy danh tính người phản hồi (BR37, BR40) |
 | SEC-11 | Dữ liệu cá nhân UCMS lưu giới hạn ở những gì Google OAuth trả về cộng hồ sơ sinh viên của trường; hệ thống không bao giờ hỏi mật khẩu, thông tin thanh toán hay giấy tờ tuỳ thân |
 | SEC-12 | Bản ghi audit, document version và kỳ đánh giá đã công bố là chỉ-ghi-thêm; không vai trò nào sửa hoặc xoá được qua ứng dụng. *Theo code:* đây là quy ước ở tầng ứng dụng, database không chặn |
@@ -3271,7 +3271,7 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 - `authGuard` xác thực mọi route ghi; một test duyệt router Express thật và làm hỏng build nếu route POST / PATCH / PUT / DELETE nào thiếu guard.
 - Ba kiểu kiểm tra trong use case:
   - *Vai trò hệ thống* — thao tác ICPDP đòi `ICPDP_OFFICER` (không có → 403 "ICPDP officer role required"); `ATTENDANCE_UNLOCK` bảo vệ việc mở lại điểm danh đã chốt (BR19).
-  - *Phạm vi CLB, ghế và nhiệm kỳ* — `assertClubAccess(actor, clubId, permission)` dựng snapshot của người dùng trong CLB đó; chỉ có quyền khi đồng thời: membership `Active` trong đúng CLB, nhiệm kỳ `Active` và ngày hiện tại nằm trong nhiệm kỳ, bản gán ghế đang hiệu lực, ghế là Chủ nhiệm / Phó chủ nhiệm, và đã được xác nhận. Người đó là Club Leader, giữ cả 14 permission; thành viên khác không có permission nào — *code chưa theo kịp mô hình đã duyệt*: chưa có role mang permission (UC23, BR54) và hai permission mặc định của thành viên (UC30, UC32, UC58). CLB mới duyệt ở UC08 đã `Active` với ghế sáng lập đã xác nhận nên leader có quyền ngay. Code vẫn cho người sáng lập của CLB **đã** ở `Pending Setup` hai quyền `club.profile.manage` và `club.board.nominate` (tương thích; không kiểm ngày tạo). Sai → 403 "club access denied". `clubId` luôn lấy từ URL, nên leader CLB này không thao tác được CLB khác.
+  - *Phạm vi CLB, ghế và nhiệm kỳ* — `assertClubAccess(actor, clubId, permission)` dựng snapshot của người dùng trong CLB đó. Mọi membership `Active` của đúng CLB có hai quyền mặc định `club.attendance.manage`, `club.room.view`. Ngoài ra, chỉ tính các bản gán đang hiệu lực trong nhiệm kỳ `Active` còn hiệu lực, vào position đang active: ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận → Club Leader, đủ 16 permission; ghế ban điều hành khác đã xác nhận hoặc role thường của UC23 → permission của role đó (không bao giờ có bốn quyền giữ riêng); nhiều role thì lấy hợp (đạt theo code từ 07/11/2026). Code vẫn cho người sáng lập của CLB **đã** ở `Pending Setup` hai quyền `club.profile.manage` và `club.board.nominate` (tương thích; không kiểm ngày tạo). Sai → 403 "club access denied" kèm `requiredPermission`. `clubId` luôn lấy từ URL, nên người của CLB này không thao tác được CLB khác.
   - *Quyền sở hữu* — bản ghi cá nhân (hồ sơ thành lập, đơn ứng tuyển, đăng ký sự kiện của chính mình) được tải theo cả id lẫn id người gọi; bản ghi của người khác coi như không tồn tại (404).
 - Officer không tự khoá được tài khoản mình hay tự thu hồi vai trò `ICPDP_OFFICER` cuối cùng của mình.
 - Với ghi nhạy cảm (đề xuất sự kiện, booking gắn kèm), repository kiểm lại quyền CLB bên trong transaction.
@@ -3294,12 +3294,11 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 - Chưa có rate limiting hay chống brute-force ở bất kỳ route nào, kể cả login và callback.
 - Không dùng helmet; chỉ có bốn header ở mục 7 — chưa có Content-Security-Policy và HSTS.
 - Không kiểm tra Origin / Referer; chống cross-site dựa vào cookie `SameSite=Lax`, CSRF token và việc không bật CORS.
-- Lần bị từ chối 403 không được audit; chỉ lần đăng nhập bị từ chối được audit (SEC-08).
 - Chưa audit: scheduler chuyển sự kiện sang `Ongoing` / `Completed`, điểm đánh giá ứng viên (UC19), tạo / đăng xuất / thu hồi phiên, cờ đã đọc của thông báo; lần đăng nhập bị từ chối vì `googleSubject` không khớp cũng không được audit.
 - Audit chỉ-ghi-thêm theo quy ước, database không chặn sửa.
 - Log truy cập ghi URL đầy đủ nên `code` và `state` của callback OAuth lọt vào log; error handler ghi `err.message`. Cần che.
 - Email thông báo chỉ được ghi log, chưa gửi, cho tới khi nối transport SMTP.
-- Code chưa theo kịp mô hình đã duyệt: chưa có định tuyến đa cấp và `ICPDP_HEAD` (UC05, BR16), role CLB mang permission (UC23, BR54, BR55), hai permission mặc định của thành viên, phân loại / chuyển xuống / trả lời khiếu nại (UC51, UC52); collection `complaints` vẫn có các trường `triage`, `clubResponse`, `violationId`, `linkedComplaintId` nhưng chưa use case nào ghi chúng.
+- Từ 07/11/2026 code đã theo mô hình đã duyệt ở các điểm trước đây còn thiếu: định tuyến đa cấp và `ICPDP_HEAD` (UC05, BR16), role CLB mang permission (UC23), hai permission mặc định của thành viên, luồng khiếu nại UC50–UC52.
 - Phân quyền nằm trong từng use case chứ không ở một middleware theo permission; test tự động chỉ bảo đảm xác thực trên mọi route ghi, còn phân quyền dựa vào code review và unit test.
 
 | Mối đe doạ | Biện pháp | Vị trí trong code (`server/src/`) |
@@ -3351,7 +3350,7 @@ Chúng là hạt giống của bộ test hệ thống.
 | **AC14** Tạm ngừng | **Cho** CLB đang `Active`, **khi** ICPDP tạm ngừng, **thì** CLB chuyển `Suspended`, không thể công bố đợt tuyển mới và không thể nộp đề xuất sự kiện mới |
 | **AC15** Đánh giá | **Cho** một kỳ đánh giá đã được cấu hình, **khi** ICPDP sinh bản nháp, **thì** mọi dimension đều truy vết được về dữ liệu nguồn |
 | **AC16** Xung đột booking | **Cho** property P đã có booking `Approved` từ 14:00–16:00 ngày D, **khi** một CLB khác xin P từ 15:00–17:00 ngày D, **thì** hệ thống trả `Blocking Conflict` và booking không thể chuyển `Approved` khi chính sách cấm overbooking. **Với phòng học (2026-10-11):** **cho** phòng R đã phân Thứ 4 slot 4 cho CLB A trong học kỳ S, **khi** ICPDP phân R Thứ 4 slot 4 cho CLB B trong S, **thì** cả đợt bị từ chối và các ngày xung đột được liệt kê, kể cả khi `allowOverbooking` bật |
-| **AC17** Thẩm quyền booking | **Cho** một booking đang `Requested`, **khi** một người dùng không phải ICPDP cố phê duyệt, **thì** hệ thống từ chối thao tác **và ghi audit lần thử trái quyền đó**. *Chưa đạt theo code (2026-11-02):* hệ thống trả 403 nhưng chưa ghi audit lần thử (SEC-08) |
+| **AC17** Thẩm quyền booking | **Cho** một booking đang `Requested`, **khi** một người dùng không phải ICPDP cố phê duyệt, **thì** hệ thống từ chối thao tác **và ghi audit lần thử trái quyền đó**. Đạt theo code từ 07/11/2026: 403 kèm một dòng audit `ACCESS_DENIED` (SEC-08) |
 | **AC18** Phản hồi sự kiện | **Cho** sinh viên đã check-in sự kiện E và window đang mở, **khi** họ gửi phản hồi lần đầu, **thì** một bản ghi `EventFeedback` được tạo; **khi** chính sinh viên đó gửi lần hai cho E, **thì** bị từ chối; **khi** window đã đóng, **thì** bị từ chối |
 | **AC19** Định tuyến khiếu nại | **Cho** sinh viên gửi khiếu nại về CLB X, **khi** khiếu nại được tạo, **thì** chỉ ICPDP thấy nội dung gốc, CLB X không nhận được gì cho tới khi ICPDP chọn `Forwarded`, và khi ICPDP chọn `Escalated` thì một `Violation` được tạo và trỏ ngược về khiếu nại |
 | **AC20** Đăng nhập Google OAuth | **Cho** người dùng đã xác thực thành công với Google, **khi** email trả về nằm ngoài domain đã cấu hình, **thì** không tạo phiên và không tạo bản ghi `User`; **khi** email thuộc domain hợp lệ và chưa có `User`, **thì** đúng một `User` và một `StudentProfile` được tạo |
@@ -3521,7 +3520,7 @@ Mọi luồng trên context diagram (R5) đều được tạo ra hoặc tiêu t
 | Hệ thống → ICPDP | Exported data & end-of-term club reports | UC55 (file report cuối kỳ của các CLB, bảng so sánh điểm xếp loại theo kỳ, dữ liệu xlsx/csv/pdf) |
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Identity data | UC01 |
-| Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2); bản hiện tại chỉ ghi log email, chưa nối SMTP (EXT-02) |
+| Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2), qua outbox (EXT-02) |
 | Hệ thống → Cloudinary | Image file | mọi UC có tải ảnh lên |
 | Cloudinary → Hệ thống | Image URL | mọi UC có tải ảnh lên |
 
@@ -3602,11 +3601,11 @@ UC45 A2), và vòng 9 đặt cuối vì UC42 cần dữ liệu trọn một kỳ
 
 | # | Quyết định | Vì sao không thể mặc định | Hệ quả nếu chốt muộn |
 |---|---|---|---|
-| **D1** | Cấp duyệt thứ hai là một quyền RBAC hay một actor thứ tư (`ICPDP Head`)? | BR31 như đang viết cấm actor thứ tư; tính năng định tuyến lại đòi cấp thứ hai. Hiện cả hai cùng đúng chỉ vì mọi cấp đều do một ICPDP Officer thực hiện | Đổi sơ đồ actor, §2.3 và mô hình quyền — cần chốt **trước khi** làm UC05 |
+| **D1 — đã chốt 2026-11-07** | Cấp duyệt thứ hai là quyền RBAC: system role `ICPDP_HEAD`, chỉ cấp cho người giữ `ICPDP_OFFICER`; không thêm actor | Người dùng chọn phương án giữ diagram bốn actor | Code: `ICPDP_HEAD`, UC05, cấp 2 cho UC08/UC26/UC46 (07/11/2026) |
 | **D2** | Ngoài danh sách của UC04, những giá trị nào nữa được sửa trong sản phẩm? | Mỗi giá trị thêm vào tốn một màn hình, một schema và một đường validate; danh sách phải đến từ quy trình thật của ICPDP | Đổi UC04 và BR42 — cần chốt trước khi đóng băng màn hình cấu hình |
 | **D3** | Số người phản hồi tối thiểu ban đầu cho BR40 | Đây là con số chính sách, không phải con số kỹ thuật. Năm là mức sàn phổ biến | Thấp — giá trị này cấu hình được ở UC04 |
 | **D4 — đã chốt 2026-10-11** | Mọi thay đổi thời gian/địa điểm của sự kiện đã duyệt phải được UC26 duyệt lại; nội bộ không ngân sách theo BR53 chỉ ghi nhận lại | Người dùng chọn phương án đề xuất khi lập kế hoạch Wave 3 | FR-UC28-02 đã cập nhật; chính sách triển khai Wave 3 ghi bên dưới và trong SPEC |
-| **D5** | UC52 có cho CMB thấy danh tính người khiếu nại không? | Đây là quy tắc riêng tư mà nhà trường phải đặt ra; mô hình hỗ trợ cả hai hướng | Đổi FR-UC52-01 và SEC-09 |
+| **D5 — đã chốt 2026-11-07** | CMB không thấy danh tính người khiếu nại; ICPDP thấy | Người dùng chọn phương án an toàn mặc định | FR-UC52-01 và SEC-09 đã cập nhật |
 
 
 **Chính sách Wave 3, chốt theo chỉ dẫn triển khai khuyến nghị ngày 2026-10-11:** UC25
@@ -3779,7 +3778,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 | M08 | `GET|POST /events/:id/report`, `POST /event-reports/:id/decision`, `GET|POST /clubs/:id/periodic-reports`, `POST /periodic-reports/:id/decision`, `GET|POST /violations`, `PATCH /violations/:id`, `POST /violations/:id/corrective-actions` |
 | M09 | `GET|POST /evaluation-schemes`, `POST /evaluation-schemes/:id/activate`, `POST /evaluations/generate`, `GET /evaluations`, `POST /evaluations/:id/finalize`, `POST /evaluations/:id/publish`, `GET /exports?type=&format=&period=&clubId=` (UC55) |
 | M10 | `GET /approvals` (hộp thư phê duyệt dùng chung), `GET /approvals/:id`, `GET /notifications`, `PATCH /notifications/:id/read`, `GET /audit-logs?entityType=&entityId=` |
-| M11 | `GET|POST /properties`, `PATCH /properties/:id`, `GET /properties/:id/availability`, `GET|POST /property-bookings`, `PATCH /property-bookings/:id`, `POST /property-bookings/:id/decision`, `POST /property-bookings/:id/cancel`, `GET /admin/room-allocations?semesterCode=` (UC58), `GET /admin/room-allocations/options` (UC58), `POST /admin/room-allocations` (UC58), `POST /admin/room-allocations/{id}/revoke` (UC58), `GET /clubs/{clubId}/room-allocations` (UC58, chỉ đọc, cần `club.booking.manage`) |
+| M11 | `GET|POST /properties`, `PATCH /properties/:id`, `GET /properties/:id/availability`, `GET|POST /property-bookings`, `PATCH /property-bookings/:id`, `POST /property-bookings/:id/decision`, `POST /property-bookings/:id/cancel`, `GET /admin/room-allocations?semesterCode=` (UC58), `GET /admin/room-allocations/options` (UC58), `POST /admin/room-allocations` (UC58), `POST /admin/room-allocations/{id}/revoke` (UC58), `GET /clubs/{clubId}/room-allocations` (UC58, chỉ đọc, cần `club.room.view` — mọi thành viên `Active`) |
 | M12 | `POST /events/:id/feedback`, `GET /events/:id/feedback/summary`, `GET|POST /complaints`, `POST /complaints/:id/withdraw`, `POST /complaints/:id/triage`, `POST /complaints/:id/response` |
 
 Quy ước: endpoint **decision** mang kết quả (`request-revision` / `approve` / `reject`) kèm lý do

@@ -13,7 +13,7 @@ trước khi sửa code hoặc tài liệu.
 này trước khi hỏi chức năng nào đã có, actor nào được phép làm gì, hoặc còn thiếu UC nào.
 
 **[`SRS.md`](SRS.md) — Đặc tả yêu cầu phần mềm.** Một baseline hợp nhất duy nhất: phạm vi,
-actor, 56 mã UC (52 trong phạm vi; UC05, UC23, UC51, UC52 đã rút) dưới dạng yêu cầu chức năng được đánh số, danh mục quy tắc nghiệp vụ và
+actor, 56 use case, cả 56 trong phạm vi (baseline 02/11/2026 khôi phục UC05, UC23, UC51, UC52) dưới dạng yêu cầu chức năng được đánh số, danh mục quy tắc nghiệp vụ và
 vòng đời thực thể, mô hình dữ liệu, thiết kế xuyên suốt cho workflow / thông báo / audit, mô
 hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu chí nghiệm thu và các ma trận
 truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác
@@ -30,7 +30,7 @@ nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và �
 | Thư mục | Bên trong có gì | Đọc khi nào |
 |---|---|---|
 | [`01-business-analysis/`](01-business-analysis/) | Bản phân tích nghiệp vụ và hệ thống gốc: vấn đề, các bên liên quan, luồng nghiệp vụ, user story, domain model, mô hình đánh giá, các feature nổi bật | Bạn cần hiểu *vì sao* có một yêu cầu, hoặc cần phần nền mà SRS đã tóm tắt lại |
-| [`02-use-cases/`](02-use-cases/) | Use case model v2, đặc tả chi tiết và nhật ký review; UC23/RBAC động là lịch sử đã bị mô hình hai role cố định thay thế | Bạn cần bản kể đầy đủ của một use case hoặc lịch sử của một lần sửa |
+| [`02-use-cases/`](02-use-cases/) | Use case model v2, đặc tả chi tiết và nhật ký review; UC23 (role CLB mang permission) được khôi phục theo baseline 02/11/2026 | Bạn cần bản kể đầy đủ của một use case hoặc lịch sử của một lần sửa |
 | [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram hiện hành [`UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) (ảnh v1, v2, v2.1 là lịch sử), use case diagram theo actor, state diagram, ERD, package diagram, screen flow, swimlane các luồng nghiệp vụ chính (main workflow) | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
 | [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
 | [`05-implementation/`](05-implementation/) | Danh sách công việc triển khai (database, backend, frontend) và thiết kế cơ sở dữ liệu dạng DBML cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |

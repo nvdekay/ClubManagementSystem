@@ -22,5 +22,6 @@ Các component còn lại (đối chiếu 17/10/2026):
   hộp quản lý CLB của ICPDP và trang lịch sử ban chủ nhiệm của Club Leader.
 - `EventRegistrationPanel`, `EventCheckInForm` — đăng ký và check-in sự kiện (UC29, UC31).
 - `EventFeedbackPanel`, `EventFeedbackForm` — gửi phản hồi sự kiện (UC48).
-- `StudentFeedbackList` — danh sách góp ý UC50 (trang gửi của Student và hai hộp thư CLB/ICPDP).
+- `ComplaintCard` — một khiếu nại UC50–UC52 (trang Student, hàng đợi ICPDP, hộp thư CLB); nơi gọi tự chọn trường được hiện (CLB không bao giờ có danh tính người khiếu nại).
 - `PublicEventCard`, `ClubLogo`, `ClubCover`, `UniversityLogo`, `MembershipStateBadge` — hiển thị dùng chung.
+- `ApprovalLevelBadge` — nhãn "Cấp x/2" của hồ sơ cần hai cấp duyệt (UC05) trên ba trang thẩm định ICPDP.

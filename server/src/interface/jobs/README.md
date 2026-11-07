@@ -23,4 +23,6 @@ Không chứa logic nghiệp vụ — mọi quyết định nằm ở usecase đ
 - `notification-delivery-job.ts` — SCH-10 (từ 19/10/2026): chạy lúc khởi động và mỗi phút, gọi `deliverNotifications`:
   thông báo chỉ in-app đến hạn → `Sent`; thông báo có kênh `EMAIL` được claim nguyên tử với lease 5 phút (không gửi trùng
   giữa nhiều instance), gửi qua `MailTransport`, ghi `emailDeliveryLogs` mỗi lần thử, retry backoff tới 5 lần rồi `Failed`.
-  Transport hiện là `infra/mail/log-mail-transport.ts`; SMTP thật cần thêm dependency (xem `infra/mail/README.md`).
+  Transport là SMTP thật khi đủ cấu hình (bắt buộc ở production), log transport khi phát triển (xem `infra/mail/README.md`).
+- `complaint-response-job.ts` — UC52 E1: chạy lúc khởi động và mỗi giờ: khiếu nại `Forwarded` quá `responseDueAt`
+  được ghi một tín hiệu tuân thủ (audit `COMPLAINT_RESPONSE_OVERDUE` + thông báo ICPDP), đúng một lần.

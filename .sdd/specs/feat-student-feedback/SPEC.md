@@ -43,3 +43,5 @@ theo dõi tiến trình, UC51/UC52 xử lý). Nhóm muốn một kênh **góp ý
 
 ## Changelog
 - v0.1.0 (2026-10-09) — định nghĩa lại UC50 thành góp ý một chiều theo quyết định người dùng.
+
+- v2.0.0 (2026-11-07) — **Thay thế** bởi `feat-complaint-workflow` (baseline SRS 02/11/2026 khôi phục UC51/UC52, BR38).

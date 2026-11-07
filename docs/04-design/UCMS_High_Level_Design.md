@@ -7,9 +7,9 @@
 ## 1. Các container và phụ thuộc
 
 React 19/Vite SPA gọi Express 5 API dưới `/api/v1`; API dùng Mongoose/MongoDB. Google OAuth
-được nối khi đủ cấu hình Auth; Cloudinary được nối khi đủ credentials. Google SMTP là kênh email
-dự kiến: `main.ts` đã nối `notification-delivery-job` nhưng với `logMailTransport`, nên email chỉ
-được ghi log (người nhận + tiêu đề), chưa gửi (sửa 2026-11-02).
+được nối khi đủ cấu hình Auth; Cloudinary được nối khi đủ credentials. Google SMTP gửi email qua
+`notification-delivery-job` khi đủ biến `SMTP_*`/`MAIL_FROM` (bắt buộc ở production); khi phát triển không
+cấu hình SMTP thì dùng `logMailTransport` chỉ ghi người nhận + tiêu đề (sửa 2026-11-07).
 
 `docker-compose.yml` hiện chỉ khởi động Mongo 7 dạng single-node replica set. Server và client
 chạy bằng npm workspace; không có container server/Nginx trong compose hiện tại.
@@ -50,7 +50,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 | M09 Evaluation & Export | Scheme, evaluation, export | Có ICPDP và màn CLB xem kết quả đã công bố (UC43) |
 | M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Có; hộp thông báo in-app chung và worker outbox (từ 19/10/2026) — email đi qua transport ghi log, SMTP thật chờ duyệt dependency |
 | M11 Properties & Booking | Property, non-room booking, room allocation | Có; UC58 CLB xem chỉ dành Leader |
-| M12 Feedback | Event feedback và khiếu nại | Một phần: code là góp ý một chiều lưu ở `complaints`; UC51/52 chưa làm — code chưa theo kịp mô hình đã duyệt |
+| M12 Feedback | Event feedback và khiếu nại | Có: UC48/49 phản hồi sự kiện; UC50–UC52 khiếu nại đi thẳng ICPDP, triage, chuyển CLB, leo thang thành hồ sơ UC40 (`usecase/complaint.ts`, `infra/db/mongo-complaint-repository.ts`) |
 
 ## 4. Workflow, thông báo và audit thật
 
@@ -79,8 +79,8 @@ Jobs được nối trong `main.ts`:
 
 Kênh email theo ma trận SRS §8.2 do `notificationChannels()` ở `domain/notification.ts` quyết định (hồ sơ thành lập
 yêu cầu sửa/duyệt/từ chối, đề xuất sự kiện duyệt/từ chối, quyết định booking, vi phạm yêu cầu giải trình/có quyết định).
-Transport hiện là `logMailTransport` (chỉ ghi người nhận + tiêu đề ra log); gửi SMTP thật cần thêm dependency SMTP và
-`SMTP_*` — xem `server/src/infra/mail/README.md`. Người dùng đọc thông báo qua `GET /notifications/mine` (chuông ở
+Transport là `smtpMailTransport` (`nodemailer`, Google SMTP) khi đủ cấu hình, `logMailTransport` khi phát triển
+— xem `server/src/infra/mail/README.md`. Người dùng đọc thông báo qua `GET /notifications/mine` (chuông ở
 `WorkspaceShell`), đánh dấu đã đọc qua `POST /notifications/{id}/read` và `POST /notifications/mine/read-all`. Chuông
 chỉ hiện thông báo của workspace đang mở: các endpoint `mine` nhận `scope=student|icpdp|club` (+ `clubId`), audience
 của từng `eventCode` do `notificationAudience()` ở `domain/notification.ts` quyết định.
@@ -91,13 +91,17 @@ Auth dùng Google OpenID Connect (Authorization Code + PKCE S256, `state`, `nonc
 kiểm qua JWKS), phiên lưu phía server trong `authSessions` (chỉ hash), cookie phiên ký HMAC,
 `httpOnly`, `SameSite=Lax`, `Secure` khi `NODE_ENV=production`, CSRF token theo phiên cho request
 thay đổi dữ liệu. Toàn bộ cơ chế và hạn chế đã biết: [`../SRS.md` §12.1](../SRS.md#121-cơ-chế-bảo-mật). Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
-không lấy từ policy UC04. System role gồm `ICPDP_OFFICER` và quyền đặc biệt attendance unlock; `ICPDP_HEAD` và định tuyến UC05 chưa làm (code chưa theo kịp mô hình đã duyệt).
+không lấy từ policy UC04. System role gồm `ICPDP_OFFICER`, `ICPDP_HEAD` (cấp duyệt thứ hai, chỉ cấp kèm Officer — D1) và quyền đặc biệt attendance unlock. Định tuyến UC05: `domain/approval-routing.ts` khớp rule; `infra/db/approval-routing.ts` đóng băng route lên `approvalTasks` lúc mở task và chặn cấp 2 cho Head trong transaction quyết định của UC08/UC26/UC46; `approvalDecisions` có `level`.
 
-Code hiện chỉ có hai role cố định phía CLB (code chưa theo kịp mô hình đã duyệt: SRS yêu cầu role mang permission ở UC23 và hai permission mặc định cho thành viên). `resolveClubPermissions` yêu cầu membership Active, term
-Active còn hiệu lực, position active, assignment đúng membership/term còn hiệu lực và đã
-`confirmedBy`. Ghế `isLeaderRole` hoặc `isBoardSeat` nhận toàn bộ 14 permission; còn lại nhận
-rỗng. Cơ cấu chuẩn là Chủ nhiệm/Phó chủ nhiệm/Thành viên. UC08 tạo CLB `Active` với ghế
-Chủ nhiệm/Phó chủ nhiệm đã xác nhận; quy tắc "approved founder của CLB `Pending Setup` chỉ nhận
+`resolveClubPermissions` (BR47, BR54, BR55) cho mọi membership `Active` hai quyền mặc định
+`club.attendance.manage`, `club.room.view`. Ngoài ra chỉ tính bản gán còn hiệu lực trong term `Active`
+còn hiệu lực, vào position active: ghế Chủ nhiệm / Phó chủ nhiệm đã `confirmedBy` nhận toàn bộ 16
+permission; ghế ban điều hành khác đã xác nhận hoặc role thường của UC23 nhận đúng `permissionCodes`
+của role (lọc bỏ mã lạ và bốn quyền giữ riêng); nhiều role thì lấy hợp. Re-check trong transaction
+(`infra/db/club-event-access.ts`) dựng cùng snapshot nên cùng ngữ nghĩa. UC23 (`usecase/club-role.ts`,
+`infra/db/mongo-club-role-repository.ts`) ghi role, bản gán, một phiên bản `clubRoleStructureVersions`
+(`ROLE_EDIT`), audit và thông báo trong một transaction. UC08 tạo CLB `Active` với ghế Chủ nhiệm/Phó
+chủ nhiệm đã xác nhận; quy tắc "approved founder của CLB `Pending Setup` chỉ nhận
 `club.profile.manage` và `club.board.nominate`" chỉ còn để tương thích dữ liệu cũ.
 
 Không có role tự tạo, API roles/role-directory hay UI cấu hình permission. Field cũ được giữ

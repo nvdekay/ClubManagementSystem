@@ -31,7 +31,7 @@ index TTL chỉ dọn rác, việc kiểm tra hết hạn diễn ra ở mỗi re
 email dạng sinh viên FPT (`seed-email.ts`, ví dụ `anhtmhe170001@fpt.edu.vn`); cơ cấu và thành viên cho HEBE, Mây Mưa, EHC, FDS (người dùng `--owner` là Chủ
 nhiệm HEBE, thành viên Mây Mưa và được cấp `ICPDP_OFFICER`); đợt tuyển và đơn chờ xét (một đơn HEBE đã ở `Shortlisted` kèm hai bản đánh giá UC19); hồ sơ thành lập
 chờ duyệt và một hồ sơ đã duyệt (CLB hoạt động ngay với ban chủ nhiệm khởi lập); sự kiện sắp tới/đang diễn ra/đã kết thúc kèm đăng ký,
-điểm danh, phản hồi; góp ý một chiều; kế hoạch chuyển giao chờ ICPDP. Ghi qua use case/repository khi
+điểm danh, phản hồi; khiếu nại chờ ICPDP; kế hoạch chuyển giao chờ ICPDP. Ghi qua use case/repository khi
 luồng đã có; chạy lại an toàn (mỗi phần tự bỏ qua nếu đã có). Hồ sơ thành lập cần Cloudinary để
 upload đề án PDF và logo PNG; thiếu cấu hình thì bỏ qua phần đó.
 
@@ -87,3 +87,13 @@ local: ~150 tài khoản sinh viên demo, thành viên/sự kiện/đăng ký/ch
 trong 12 tháng cho ~12 CLB, đơn ứng tuyển đợt tuyển HEBE và lĩnh vực đoán theo tên cho CLB "Chưa phân loại".
 Mọi bản ghi có id cố định theo khoá nên chạy lại không tạo trùng; thành viên đang hoạt động được ghi sẵn
 tái xác nhận học kỳ hiện tại để job UC21 A2 không chuyển họ sang Inactive.
+
+`mongo-access-denial-audit-repository.ts` ghi một dòng `auditLogs` `ACCESS_DENIED` cho mỗi lần người dùng
+đã đăng nhập bị từ chối 403 (SEC-08, AC17); chỉ gồm method, mẫu route, đối tượng bị nhắm tới, CLB,
+quyền còn thiếu và lý do.
+
+`approval-routing.ts` là phần dùng chung của UC05 cho UC08/UC26/UC46: đóng băng route (`requiredLevel`,
+`currentLevel`, SLA) lên `approvalTasks` lúc mở task, chỉ cho `ICPDP_HEAD` nhận/quyết định cấp 2, chặn người
+đã duyệt cấp 1, và chuyển task lên cấp 2 mà không có tác dụng phụ cuối. `mongo-approval-routing-repository.ts`
+giữ `routingRuleSets` (nháp, kích hoạt có audit, mẫu mô phỏng chỉ đọc). `club-role-upgrade.ts` chuẩn hoá role
+CLB cũ lúc khởi động (idempotent). `club-permission-holders.ts` tìm thành viên đang có một permission.

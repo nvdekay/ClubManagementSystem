@@ -12,8 +12,8 @@ và liên kết tới luồng nghiệp vụ đang có.
 check-in/đã huỷ, cho huỷ trước giờ bắt đầu và check-in bằng mã hoặc QR deep link (`?checkin=&code=`); panel đăng ký trên event detail nằm ở `components/custom/EventRegistrationPanel`.
 Tab “Đã check-in” còn cho gửi phản hồi sao + nhận xét (UC48) qua `components/custom/EventFeedbackForm`.
 
-`StudentFeedbackPage` (UC50, góp ý một chiều) cho Student gửi góp ý tới một CLB hoặc ICPDP, tuỳ chọn ẩn
-danh, và xem lại danh sách đã gửi.
+`ComplaintsPage` (UC50, `/workspace/complaints`) cho Student gửi khiếu nại về một CLB tới ICPDP (BR38),
+theo dõi trạng thái và rút khiếu nại chưa có quyết định.
 
 `MyClubsPage` và `MemberSpacePage` (UC24) là “CLB của tôi” và không gian thành viên chỉ đọc của một CLB, kèm
 form xin rời CLB (UC22).

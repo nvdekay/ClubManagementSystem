@@ -3,17 +3,22 @@
 `ClubBookingsPage` dùng `BookingWorkspace` cho UC45–47: chỉ gửi yêu cầu `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`
 (Draft/sửa/nộp lại, ICPDP duyệt), xem lịch sử và huỷ. Cần `club.booking.manage`. CLB không đặt phòng học.
 
-`ClubRoomsPage` — trang "Phòng được phân" (route `/club/:clubId/rooms`, UC58) chỉ đọc, chỉ Club Leader
-(`club.booking.manage`, Club Member không có) trong đúng CLB để xuất trình lịch cho bảo vệ khi nhận chìa khoá:
+`ClubRoomsPage` — trang "Phòng được phân" (route `/club/:clubId/rooms`, UC58) chỉ đọc, cho mọi thành viên
+`Active` (`club.room.view`, quyền mặc định — BR54) trong đúng CLB để xuất trình lịch cho bảo vệ khi nhận chìa khoá:
 lịch tuần học kỳ hiện tại/sắp tới (thứ, slot, giờ, phòng, toà, ghi chú) và các buổi sắp tới do ICPDP phân.
 
 Các trang nghiệp vụ theo ngữ cảnh một CLB. Route luôn mang `clubId`; page chỉ hiển thị sau khi
 đối chiếu workspace và quyền hiện hành từ `/auth/me`.
 
-Phía CLB chỉ có hai role cố định (từ 13/10/2026, UC23 đã rút): **Club Leader** là người giữ ghế
-Chủ nhiệm hoặc Phó chủ nhiệm đã được ICPDP xác nhận và có mọi permission CLB; **Club Member** là
-thành viên `Active` còn lại, không có permission quản lý nào. Permission vẫn dùng để gate từng
-trang, nhưng không còn role tự tạo hay màn phân quyền.
+Quyền phía CLB theo BR47/BR54/BR55: **Club Leader** (ghế Chủ nhiệm / Phó chủ nhiệm đã được ICPDP
+xác nhận) có mọi permission CLB; role khác mang permission do Club Leader cấu hình ở UC23; mọi
+thành viên `Active` có `club.attendance.manage` và `club.room.view`. Mỗi trang gate theo permission.
+
+`ClubRolesPage` (route `/club/:clubId/roles`, UC23) chỉ mở với `club.role.manage`: dùng
+`ClubRolesPanel` (danh sách role, `ClubRoleDialog` tạo/sửa, `ClubRoleAssignDialog` gán người giữ,
+`ClubRoleHistory` so sánh phiên bản cơ cấu). Bốn quyền giữ riêng và hai quyền mặc định không xuất
+hiện trong danh sách chọn. `ClubMemberRoles` (UC24) hiện các role của CLB và đánh dấu role người
+xem đang giữ, ở trang thành viên chỉ đọc.
 
 `ClubSettingsPage` triển khai UC09: chỉ workspace có `club.profile.manage` (Club Leader) mới mở màn
 hồ sơ vận hành và cơ cấu ban/bộ phận; các trường định danh do ICPDP quản lý chỉ được hiển thị.
@@ -41,8 +46,8 @@ chấm rubric/nhận xét của chính reviewer, chỉ khi đơn `Shortlisted`).
 `ClubHomePage` triển khai dashboard UC02 theo `clubId`; panel nhạy cảm chỉ được trả về khi
 membership hiện hành có đúng permission tương ứng, còn Leader nhận toàn bộ panel quản trị.
 
-`ClubFeedbackInboxPage` (UC50) là hộp thư góp ý sinh viên gửi cho CLB, cần `club.feedback.view`;
-người gửi ẩn danh không bao giờ được hiển thị.
+`ClubComplaintsPage` (UC52, `/club/:clubId/complaints`) chỉ mở với `club.complaint.respond`: khiếu nại ICPDP
+đã chuyển xuống, không có danh tính người khiếu nại (D5); trả lời một lần kèm hành động cụ thể.
 
 `ClubMembersPage` mở cho workspace CLB; `ClubRosterReadOnly` dùng member space để hiển thị
 danh sách tên/trạng thái/vị trí cho Club Member, không chia sẻ email. Không còn tab role hay
