@@ -52,7 +52,7 @@ function isCurrent(item: NavItem, pathname: string): boolean {
 }
 
 const studentPrefixes = ["/student", "/workspace/applications", "/workspace/recruitment",
-  "/workspace/event-registrations", "/workspace/feedback", "/workspace/clubs"];
+  "/workspace/event-registrations", "/workspace/complaints", "/workspace/clubs"];
 
 /** The workspace a management URL belongs to; the sidebar and access check follow it. */
 function contextFor(pathname: string): Context {
@@ -296,7 +296,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       ]),
       ...group("student-events", t("common.groupEventsFeedback"), "calendar", [
         { to: "/workspace/event-registrations", label: t("common.navMyEvents"), icon: "calendar" },
-        { to: "/workspace/feedback", label: t("common.navFeedback"), icon: "megaphone" },
+        { to: "/workspace/complaints", label: t("common.navComplaints"), icon: "megaphone" },
       ]),
     ] }, explore];
   }
@@ -330,7 +330,8 @@ function navigation(context: Context, workspace: Workspace | undefined,
         { to: "/workspace/violations", label: t("common.icpdpViolations"), icon: "shield" },
         { to: "/workspace/exports", label: t("common.icpdpExports"), icon: "file" },
       ] },
-      { to: "/workspace/student-feedback", label: t("common.icpdpFeedback"), icon: "megaphone" },
+      { to: "/workspace/complaint-review", label: t("common.icpdpComplaints"), icon: "megaphone" },
+      { to: "/workspace/routing-rules", label: t("common.icpdpRouting"), icon: "layers" },
       { group: "system", label: t("common.groupSystem"), icon: "settings", children: [
         { to: "/workspace/policy", label: t("common.icpdpPolicy"), icon: "shield" },
         { to: "/icpdp/accounts", label: t("common.icpdpAccounts"), icon: "users" },
@@ -353,6 +354,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "badge" as const }] : []),
       ...(can("club.board.nominate") ? [{ to: `${base}/board-history`, label: t("common.navBoardHistory"), icon: "layers" as const }] : []),
       ...(can("club.profile.manage") ? [{ to: `${base}/settings`, label: t("common.navSettings"), icon: "settings" as const }] : []),
+      ...(can("club.role.manage") ? [{ to: `${base}/roles`, label: t("common.navClubRoles"), icon: "badge" as const }] : []),
     ]),
     ...group("club-events", t("common.groupClubEvents"), "calendar", [
       ...(can("club.event.manage") ? [{ to: `${base}/invitations`, label: t("common.navInvitations"), icon: "inbox" as const }] : []),
@@ -364,12 +366,12 @@ function navigation(context: Context, workspace: Workspace | undefined,
     ]),
     ...group("club-resources", t("common.groupFinanceFacilities"), "mapPin", [
       ...(can("club.expense.record") ? [{ to: `${base}/budgets`, label: t("common.navEventFinances"), icon: "file" as const }] : []),
-      ...(can("club.booking.manage") ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "calendar" as const }] : []),
+      ...(can("club.room.view") ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "calendar" as const }] : []),
       ...(can("club.booking.manage") ? [{ to: `${base}/bookings`, label: t("common.navBookings"), icon: "mapPin" as const }] : []),
     ]),
     ...(can("club.complaint.respond") ? [{ to: `${base}/violations`, label: t("common.navCompliance"), icon: "file" as const }] : []),
     ...(can("club.report.submit") ? [{ to: `${base}/evaluations`, label: t("common.navClubEvaluations"), icon: "file" as const }] : []),
-    ...(can("club.feedback.view") ? [{ to: `${base}/feedback`, label: t("common.navFeedbackInbox"), icon: "inbox" as const }] : []),
+    ...(can("club.complaint.respond") ? [{ to: `${base}/complaints`, label: t("common.navClubComplaints"), icon: "inbox" as const }] : []),
     { to: `/clubs/${encodeURIComponent(context.clubId)}`, label: t("common.navPublicPage"), icon: "globe" },
   ] }, explore];
 }

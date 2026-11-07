@@ -26,7 +26,8 @@ import { dashboard } from "./dashboard";
 import { leadershipTransitions } from "./leadershipTransitions";
 import { eventRegistrations } from "./eventRegistrations";
 import { eventFeedback } from "./eventFeedback";
-import { studentFeedback } from "./studentFeedback";
+import { complaints } from "./complaints";
+import { routing } from "./routing";
 import { memberSpace } from "./memberSpace";
 import { clubFields } from "./clubFields";
 import { properties } from "./properties";
@@ -41,6 +42,7 @@ import { violations } from "./violations";
 import { schoolEvents } from "./schoolEvents";
 import { evaluations } from "./evaluations";
 import { clubOversight } from "./clubOversight";
+import { clubRoles } from "./clubRoles";
 import { notifications } from "./notifications";
 
 export type Locale = "en" | "vi";
@@ -49,19 +51,19 @@ export type Locale = "en" | "vi";
 export const resources = {
   en: { translation: { clubCompliance: clubCompliance.en, membershipReconfirmations: membershipReconfirmations.en, suspensionRequests: suspensionRequests.en, clubTransitionPlans: clubTransitionPlans.en, clubPeriodicReports: clubPeriodicReports.en, clubInvitations: clubInvitations.en, facilityBookings: facilityBookings.en, common: common.en, auth: auth.en, discovery: discovery.en,
     policy: policy.en, applications: applications.en, reviews: reviews.en,
-    clubSettings: clubSettings.en, boardNominations: boardNominations.en,
+    clubSettings: clubSettings.en, clubRoles: clubRoles.en, boardNominations: boardNominations.en,
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
-    accountability: accountability.en, studentFeedback: studentFeedback.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, periodicReports: periodicReports.en, roomAllocations: roomAllocations.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
+    accountability: accountability.en, complaints: complaints.en, routing: routing.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, periodicReports: periodicReports.en, roomAllocations: roomAllocations.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
     clubEvents: clubEvents.en, clubOversight: clubOversight.en, notifications: notifications.en, demo: demo.en } },
   vi: { translation: { clubCompliance: clubCompliance.vi, membershipReconfirmations: membershipReconfirmations.vi, suspensionRequests: suspensionRequests.vi, clubTransitionPlans: clubTransitionPlans.vi, clubPeriodicReports: clubPeriodicReports.vi, clubInvitations: clubInvitations.vi, facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
-    clubSettings: clubSettings.vi, boardNominations: boardNominations.vi,
+    clubSettings: clubSettings.vi, clubRoles: clubRoles.vi, boardNominations: boardNominations.vi,
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
     eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
-    accountability: accountability.vi, studentFeedback: studentFeedback.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, periodicReports: periodicReports.vi, roomAllocations: roomAllocations.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
+    accountability: accountability.vi, complaints: complaints.vi, routing: routing.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, periodicReports: periodicReports.vi, roomAllocations: roomAllocations.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
     clubEvents: clubEvents.vi, clubOversight: clubOversight.vi, notifications: notifications.vi, demo: demo.vi } },
 };
 

@@ -1,6 +1,7 @@
 import type { EventFinanceRepository } from "../../src/domain/event-finance.js";
 import type { PostEventReportRepository } from "../../src/domain/post-event-report.js";
 import type { ClubEventRepository } from "../../src/domain/club-event.js";
+import type { ClubRoleRepository } from "../../src/domain/club-role.js";
 import type { FacilityBookingRepository } from "../../src/domain/facility-booking.js";
 import type { RoomAllocationRepository } from "../../src/domain/room-allocation.js";
 import { describe, expect, it, vi } from "vitest";
@@ -30,7 +31,8 @@ import type { LeadershipTransitionRepository } from "../../src/domain/leadership
 import type { EventRegistrationRepository } from "../../src/domain/event-registration.js";
 import type { EventCheckInRepository } from "../../src/domain/event-checkin.js";
 import type { EventFeedbackRepository } from "../../src/domain/event-feedback.js";
-import type { StudentFeedbackRepository } from "../../src/domain/student-feedback.js";
+import type { ComplaintRepository } from "../../src/domain/complaint.js";
+import type { ApprovalRoutingRepository } from "../../src/domain/approval-routing.js";
 import type { MemberSpaceRepository } from "../../src/domain/member-space.js";
 import { openApiDocument } from "../../src/interface/http/openapi.js";
 import { buildApp } from "../../src/interface/http/server.js";
@@ -60,6 +62,10 @@ const stubAuth: AuthRouteDeps = {
   secureCookies: false,
 };
 
+const stubClubRoles: ClubRoleRepository = {
+  overview: async () => null, createRole: async () => undefined, updateRole: async () => undefined,
+  deactivateRole: async () => undefined, assign: async () => undefined, revoke: async () => undefined,
+};
 const stubClubEvents: ClubEventRepository = {
   list: async () => [], options: async () => ({ properties: [], bookings: [] }), find: async () => null,
   participants: async () => [], feedback: async () => [], create: async () => { throw new Error("unused"); }, act: async () => { throw new Error("unused"); },
@@ -246,9 +252,16 @@ const stubCandidateEvaluations: CandidateEvaluationRepository = {
   save: async () => { throw new Error("unused"); },
 };
 const stubMemberSpace: MemberSpaceRepository = { find: async () => null };
-const stubStudentFeedback: StudentFeedbackRepository = {
-  club: async () => null, eventBelongsToClub: async () => false, listMine: async () => [], inbox: async () => [],
-  submit: async () => { throw new Error("unused"); },
+const stubRouting: ApprovalRoutingRepository = {
+  list: async () => [], find: async () => null, recentDecided: async () => [],
+  createDraft: async () => { throw new Error("unused"); }, saveDraft: async () => { throw new Error("unused"); },
+  activate: async () => { throw new Error("unused"); },
+};
+const stubComplaints: ComplaintRepository = {
+  club: async () => null, eventBelongsToClub: async () => false, listMine: async () => [], withdraw: async () => null,
+  queue: async () => [], findForIcpdp: async () => null, clubInbox: async () => [], flagOverdueResponses: async () => 0,
+  submit: async () => { throw new Error("unused"); }, decide: async () => { throw new Error("unused"); },
+  respond: async () => { throw new Error("unused"); },
 };
 const stubEventFeedback: EventFeedbackRepository = {
   target: async () => null, listMine: async () => [],
@@ -280,7 +293,7 @@ describe("openapi document", () => {
   // a route that doesn't exist) fails here. Field-level drift is caught at compile time:
   // openapi.ts's User schema `satisfies` the domain entity's wire shape.
   it("matches the routes the app actually serves", () => {
-    const app = buildApp({ clubViolationRepo: { list: async () => [], respond: async () => {}, submitAction: async () => {} }, clubEvaluationRepo: { listPublished: async () => [] }, clubTransitionPlanRepo: { context: async () => { throw new Error("unused"); }, create: async () => { throw new Error("unused"); }, save: async () => { throw new Error("unused"); }, submit: async () => { throw new Error("unused"); } }, suspensionRequestRepo: { context: async () => ({ requests: [], impacts: [] }), list: async () => [], submit: async () => { throw new Error("unused"); }, decide: async () => {} }, membershipReconfirmationRepo: { listMine: async () => [], confirm: async () => { throw new Error("unused"); }, run: async () => ({ opened: 0, expired: 0, exempt: 0 }), expireOverdue: async () => ({ expired: 0, exempt: 0 }) }, clubPeriodicReportRepo: { list: async () => [], create: async () => { throw new Error("unused"); }, save: async () => { throw new Error("unused"); }, submit: async () => { throw new Error("unused"); } }, clubInvitationRepo: { list: async () => [], respond: async () => { throw new Error("unused"); } }, auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
+    const app = buildApp({ clubRoleRepo: stubClubRoles, clubViolationRepo: { list: async () => [], respond: async () => {}, submitAction: async () => {} }, clubEvaluationRepo: { listPublished: async () => [] }, clubTransitionPlanRepo: { context: async () => { throw new Error("unused"); }, create: async () => { throw new Error("unused"); }, save: async () => { throw new Error("unused"); }, submit: async () => { throw new Error("unused"); } }, suspensionRequestRepo: { context: async () => ({ requests: [], impacts: [] }), list: async () => [], submit: async () => { throw new Error("unused"); }, decide: async () => {} }, membershipReconfirmationRepo: { listMine: async () => [], confirm: async () => { throw new Error("unused"); }, run: async () => ({ opened: 0, expired: 0, exempt: 0 }), expireOverdue: async () => ({ expired: 0, exempt: 0 }) }, clubPeriodicReportRepo: { list: async () => [], create: async () => { throw new Error("unused"); }, save: async () => { throw new Error("unused"); }, submit: async () => { throw new Error("unused"); } }, clubInvitationRepo: { list: async () => [], respond: async () => { throw new Error("unused"); } }, auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings, roomAllocationRepo: stubRoomAllocations,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle,
       applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
@@ -295,7 +308,7 @@ describe("openapi document", () => {
       eventRegistrationRepo: stubEventRegistrations,
       eventCheckInRepo: stubEventCheckIns,
       eventFeedbackRepo: stubEventFeedback,
-      studentFeedbackRepo: stubStudentFeedback,
+      complaintRepo: stubComplaints, approvalRoutingRepo: stubRouting,
       memberSpaceRepo: stubMemberSpace,
       notificationRepo: { listMine: async () => ({ items: [], unread: 0 }), unreadCount: async () => 0,
         markRead: async () => true, markAllRead: async () => 0 },
@@ -337,7 +350,7 @@ describe("openapi document", () => {
   });
 
   it("guards every mutation or explicitly lists it as public", () => {
-    const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
+    const app = buildApp({ clubRoleRepo: stubClubRoles, auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings, roomAllocationRepo: stubRoomAllocations,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,

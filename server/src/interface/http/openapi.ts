@@ -29,12 +29,33 @@ import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
 import { eventCheckInBody } from "./event-checkin-routes.js";
 import { eventFeedbackBody } from "./event-feedback-routes.js";
-import { studentFeedbackBody } from "./student-feedback-routes.js";
+import { complaintBody, complaintCloseBody, complaintEscalateBody, complaintQuery, complaintResponseBody,
+  complaintTriageBody } from "./complaint-routes.js";
+import { COMPLAINT_STATES } from "../../domain/complaint.js";
+import { routingRulesBody, routingSimulationQuery } from "./approval-routing-routes.js";
 import { recruitmentCampaignBody } from "./recruitment-campaign-routes.js";
 import { createRecruitmentApplicationBody, updateRecruitmentApplicationBody } from "./recruitment-application-routes.js";
 import { candidateEvaluationBody } from "./candidate-evaluation-routes.js";
+import { clubRoleAssignmentBody, clubRoleBody } from "./club-role-routes.js";
 import type { ClubMembershipRecord, MembershipWithdrawalRequest } from "../../domain/membership.js";
 
+const ClubRoleDefinition = z.object({
+  code: z.string(), name: z.string(), unit: z.string().optional(), description: z.string().optional(),
+  isBoardSeat: z.boolean(), isLeaderRole: z.boolean(), isDefaultMemberRole: z.boolean(), isSingleHolder: z.boolean(),
+  permissionCodes: z.array(z.string()),
+});
+const ClubRoleOverview = z.object({
+  clubId: z.string(), clubState: z.string(), activeTermId: z.string().nullable(),
+  roles: z.array(ClubRoleDefinition.extend({ id: z.string(), isActive: z.boolean(),
+    holders: z.array(z.object({ assignmentId: z.string(), membershipId: z.string(), displayName: z.string(),
+      email: z.string(), effectiveFrom: z.string().datetime(), effectiveTo: z.string().datetime().optional() })) })),
+  members: z.array(z.object({ membershipId: z.string(), displayName: z.string(), email: z.string(), state: z.string() })),
+  departments: z.array(z.string()),
+  versions: z.array(z.object({ id: z.string(), versionNo: z.number().int(), effectiveFrom: z.string().datetime(),
+    source: z.string(), reason: z.string().optional(), createdBy: z.string(), createdAt: z.string().datetime(),
+    roles: z.array(ClubRoleDefinition.extend({ positionId: z.string() })) })),
+  grantablePermissions: z.array(z.string()),
+});
 const ApiError = z.object({
   statusCode: z.number(),
   error: z.string(),
@@ -153,7 +174,7 @@ const ApplicationVersion = z.object({
 const ApplicationDocumentPath = z.object({ id: z.string(), documentId: z.string() });
 const ApplicationReviewTask = z.object({
   id: z.string(), applicationId: z.string(), title: z.string(),
-  state: z.enum(["Open", "Decided", "Closed"]), assigneeId: z.string().optional(),
+  state: z.enum(["Open", "Decided", "Closed"]), assigneeId: z.string().optional(), requiredLevel: z.number().int(), currentLevel: z.number().int(),
   openedAt: z.string(), slaDueAt: z.string().optional(),
 });
 const ApplicationReviewDecision = z.object({
@@ -174,7 +195,7 @@ const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
 });
 const EventProposalTask = z.object({
   id: z.string(), eventId: z.string(), title: z.string(), state: z.enum(["Open", "Decided", "Closed"]),
-  assigneeId: z.string().optional(), openedAt: z.string(), slaDueAt: z.string().optional(),
+  assigneeId: z.string().optional(), openedAt: z.string(), slaDueAt: z.string().optional(), requiredLevel: z.number().int(), currentLevel: z.number().int(),
 });
 const EventProposalSummary = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(), objective: z.string().optional(),
@@ -439,12 +460,29 @@ const MyEventFeedback = z.object({ id: z.string(), eventId: z.string(), eventTit
   submittedAt: z.string() });
 const EventFeedbackContext = z.object({ attended: z.boolean(), canSubmit: z.boolean(),
   opensAt: z.string().nullable(), closesAt: z.string().nullable(), feedback: MyEventFeedback.nullable() });
-const SentFeedback = z.object({ id: z.string(), recipient: z.enum(["CLUB", "ICPDP"]),
-  clubId: z.string().optional(), clubName: z.string().optional(), eventId: z.string().optional(),
-  eventTitle: z.string().optional(), category: z.enum(["suggestion", "praise", "issue"]), message: z.string(),
-  isAnonymous: z.boolean(), submittedAt: z.string() });
-const ReceivedFeedback = SentFeedback.extend({
-  sender: z.object({ displayName: z.string(), email: z.string() }).optional() });
+const RoutingRuleSet = z.object({ id: z.string(), versionNo: z.number().int(), state: z.enum(["Draft", "Active", "Superseded"]),
+  rules: routingRulesBody.shape.rules, createdBy: z.string(), createdAt: z.string(), updatedAt: z.string().optional(),
+  activatedBy: z.string().optional(), activatedAt: z.string().optional(), supersededAt: z.string().optional() });
+const RoutingSimulation = z.object({ total: z.number().int(), secondLevel: z.number().int(), items: z.array(z.object({
+  entityType: z.string(), entityId: z.string(), title: z.string(), decidedAt: z.string(), requiredLevel: z.number().int(),
+  ruleId: z.string().optional() })) });
+const ComplaintEvidence = z.object({ label: z.string(), url: z.string() });
+const ComplaintResponse = z.object({ text: z.string(), action: z.string(), evidence: z.array(ComplaintEvidence), at: z.string() });
+const Complaint = z.object({ id: z.string(), clubId: z.string().optional(), clubName: z.string().optional(),
+  clubState: z.string().optional(), eventId: z.string().optional(), eventTitle: z.string().optional(), type: z.string(),
+  description: z.string(), evidence: z.array(ComplaintEvidence), state: z.enum(COMPLAINT_STATES),
+  triage: z.object({ severity: z.string(), validity: z.string(), outcome: z.string(), reason: z.string(), actorId: z.string(),
+    at: z.string() }).optional(),
+  clubResponse: ComplaintResponse.optional(), closure: z.object({ reason: z.string(), at: z.string() }).optional(),
+  forwardedAt: z.string().optional(), respondedAt: z.string().optional(), responseDueAt: z.string().optional(),
+  violationId: z.string().optional(), linkedComplaintId: z.string().optional(), submittedAt: z.string(),
+  withdrawnAt: z.string().optional(), closedAt: z.string().optional() });
+const ComplaintForIcpdp = Complaint.extend({ complainant: z.object({ id: z.string(), displayName: z.string(), email: z.string() }),
+  linkedComplaintIds: z.array(z.string()) });
+// D5: no complainant field exists in what a club receives.
+const ComplaintForClub = z.object({ id: z.string(), clubId: z.string(), eventTitle: z.string().optional(), type: z.string(),
+  description: z.string(), evidence: z.array(ComplaintEvidence), state: z.enum(["Forwarded", "Club Responded", "Closed", "Escalated"]),
+  forwardNote: z.string(), forwardedAt: z.string(), responseDueAt: z.string().optional(), clubResponse: ComplaintResponse.optional() });
 const MemberSpace = z.object({
   club: z.object({ id: z.string(), name: z.string(), logoUrl: z.string().optional(), state: z.string() }),
   membership: z.object({ id: z.string(), state: z.string(), joinedAt: z.string(), positions: z.array(z.string()),
@@ -535,15 +573,16 @@ const roomAllocationPaths = {
         "403": { description: "ICPDP officer required" }, "404": { description: "Allocation not found" }, "409": { description: "Already revoked" } } },
   },
   "/clubs/{clubId}/room-allocations": {
-    get: { summary: "Rooms ICPDP allocated to the club with their remaining dates (read-only, club.booking.manage required)",
+    get: { summary: "Rooms ICPDP allocated to the club with their remaining dates (read-only, club.room.view: every Active member)",
       requestParams: { path: z.object({ clubId: z.string() }) },
       responses: { "200": { description: "Active allocations", content: { "application/json": { schema: envelope(z.array(RoomAllocation)) } } },
-        "403": { description: "Active club membership with club.booking.manage required" } } },
+        "403": { description: "Active club membership required (club.room.view)" } } },
   },
 } as const;
 const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Property.nullable(),
   club: z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() }).nullable(),
-  task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string() }).nullable(),
+  task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string(),
+    requiredLevel: z.number().int(), currentLevel: z.number().int() }).nullable(),
   versions: z.array(z.object({ versionNo: z.number().int(), payload: bookingBody, submittedBy: z.string(), submittedAt: z.string() })),
   decisions: z.array(bookingDecisionBody.extend({ id: z.string(), taskId: z.string(), actorId: z.string(), at: z.string() })),
   check: BookingCheck.nullable(), obligations: z.array(z.string()) });
@@ -1840,30 +1879,100 @@ export const openApiDocument = createDocument({
         responses: { "200": { description: "Own feedback", content: {
           "application/json": { schema: envelope(z.array(MyEventFeedback)) } } } } },
     },
-    "/student-feedback": {
-      post: { summary: "Send one-way feedback to a club or to ICPDP, optionally anonymous (requires CSRF token)",
-        requestBody: { content: { "application/json": { schema: studentFeedbackBody } } },
-        responses: { "201": { description: "Sent feedback", content: { "application/json": { schema: envelope(SentFeedback) } } },
-          "400": { description: "Missing club, unrelated event or invalid message", content: { "application/json": { schema: ApiError } } },
+    "/admin/routing-rules": {
+      get: { summary: "UC05: approval routing rule sets, newest first (ICPDP officers)",
+        responses: { "200": { description: "Rule sets", content: { "application/json": { schema: envelope(z.array(RoutingRuleSet)) } } },
+          "403": { description: "ICPDP officer role required", content: { "application/json": { schema: ApiError } } } } },
+      post: { summary: "UC05: create a draft rule set (ICPDP_HEAD, CSRF); overlapping rules are refused",
+        requestBody: { content: { "application/json": { schema: routingRulesBody } } },
+        responses: { "201": { description: "Draft", content: { "application/json": { schema: envelope(RoutingRuleSet) } } },
+          "400": { description: "Invalid or overlapping rules", content: { "application/json": { schema: ApiError } } },
+          "403": { description: "ICPDP_HEAD role required", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/routing-rules/{id}": {
+      put: { summary: "UC05: replace the rules of a draft (ICPDP_HEAD, CSRF)",
+        requestParams: { path: z.object({ id: z.string() }) },
+        requestBody: { content: { "application/json": { schema: routingRulesBody } } },
+        responses: { "200": { description: "Draft", content: { "application/json": { schema: envelope(RoutingRuleSet) } } },
+          "409": { description: "Not a draft", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/routing-rules/{id}/activate": {
+      post: { summary: "UC05: activate a draft; the previous set is superseded and only new requests use it (ICPDP_HEAD, CSRF)",
+        requestParams: { path: z.object({ id: z.string() }) },
+        responses: { "200": { description: "Active", content: { "application/json": { schema: envelope(RoutingRuleSet) } } } } },
+    },
+    "/admin/routing-rules/{id}/simulation": {
+      get: { summary: "UC05 A1: which of the last N decided requests this set would send to a second level (read only)",
+        requestParams: { path: z.object({ id: z.string() }), query: routingSimulationQuery },
+        responses: { "200": { description: "Simulation", content: { "application/json": { schema: envelope(RoutingSimulation) } } } } },
+    },
+    "/complaints": {
+      post: { summary: "UC50: complain about a club to ICPDP (BR38); creates an ICPDP task (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: complaintBody } } },
+        responses: { "201": { description: "Submitted complaint", content: { "application/json": { schema: envelope(Complaint) } } },
+          "400": { description: "Invalid type, text, evidence or unrelated event", content: { "application/json": { schema: ApiError } } },
           "404": { description: "Club not found or dissolved", content: { "application/json": { schema: ApiError } } } } },
     },
-    "/student-feedback/mine": {
-      get: { summary: "List the feedback the authenticated student has sent",
-        responses: { "200": { description: "Sent feedback", content: {
-          "application/json": { schema: envelope(z.array(SentFeedback)) } } } } },
+    "/complaints/mine": {
+      get: { summary: "UC50: the authenticated student's complaints with their progress",
+        responses: { "200": { description: "Own complaints", content: { "application/json": { schema: envelope(z.array(Complaint)) } } } } },
     },
-    "/clubs/{clubId}/student-feedback": {
-      get: { summary: "Read feedback students sent to this club (requires club.feedback.view)",
-        requestParams: { path: z.object({ clubId: z.string() }) },
-        responses: { "200": { description: "Club feedback inbox; anonymous senders are omitted", content: {
-          "application/json": { schema: envelope(z.array(ReceivedFeedback)) } } },
-        "403": { description: "Missing club.feedback.view", content: { "application/json": { schema: ApiError } } } } },
+    "/complaints/{id}/withdraw": {
+      post: { summary: "UC50 A1: withdraw an own complaint ICPDP has not decided (requires CSRF token)",
+        requestParams: { path: z.object({ id: z.string() }) },
+        responses: { "200": { description: "Withdrawn complaint", content: { "application/json": { schema: envelope(Complaint) } } },
+          "409": { description: "Already decided or not yours", content: { "application/json": { schema: ApiError } } } } },
     },
-    "/admin/student-feedback": {
-      get: { summary: "Read feedback students sent to ICPDP (ICPDP officer only)",
-        responses: { "200": { description: "ICPDP feedback inbox; anonymous senders are omitted", content: {
-          "application/json": { schema: envelope(z.array(ReceivedFeedback)) } } },
+    "/admin/complaints": {
+      get: { summary: "UC51: ICPDP complaint queue (ICPDP officer only)",
+        requestParams: { query: complaintQuery },
+        responses: { "200": { description: "Complaints with complainant", content: {
+          "application/json": { schema: envelope(z.array(ComplaintForIcpdp)) } } },
         "403": { description: "ICPDP officer role required", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/complaints/{id}": {
+      get: { summary: "UC51: one complaint with its complainant and linked duplicates (ICPDP officer only)",
+        requestParams: { path: z.object({ id: z.string() }) },
+        responses: { "200": { description: "Complaint", content: { "application/json": { schema: envelope(ComplaintForIcpdp) } } } } },
+    },
+    "/admin/complaints/{id}/open": {
+      post: { summary: "UC51: open a submitted complaint for triage (Submitted → Under Triage)",
+        requestParams: { path: z.object({ id: z.string() }) },
+        responses: { "200": { description: "Under triage", content: { "application/json": { schema: envelope(ComplaintForIcpdp) } } },
+          "409": { description: "No longer Submitted", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/complaints/{id}/triage": {
+      post: { summary: "UC51: Dismissed, Forwarded (to the club, with deadline) or Escalated (opens a UC40 case); reason required",
+        requestParams: { path: z.object({ id: z.string() }) },
+        requestBody: { content: { "application/json": { schema: complaintTriageBody } } },
+        responses: { "200": { description: "Triaged", content: { "application/json": { schema: envelope(ComplaintForIcpdp) } } },
+          "409": { description: "Not under triage, or club dissolved", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/complaints/{id}/close": {
+      post: { summary: "UC51 A1: close a complaint after a satisfying club response",
+        requestParams: { path: z.object({ id: z.string() }) },
+        requestBody: { content: { "application/json": { schema: complaintCloseBody } } },
+        responses: { "200": { description: "Closed", content: { "application/json": { schema: envelope(ComplaintForIcpdp) } } } } },
+    },
+    "/admin/complaints/{id}/escalate": {
+      post: { summary: "UC51 A1: escalate a complaint after the club response into a UC40 violation case",
+        requestParams: { path: z.object({ id: z.string() }) },
+        requestBody: { content: { "application/json": { schema: complaintEscalateBody } } },
+        responses: { "200": { description: "Escalated", content: { "application/json": { schema: envelope(ComplaintForIcpdp) } } } } },
+    },
+    "/clubs/{clubId}/complaints": {
+      get: { summary: "UC52: complaints ICPDP forwarded to this club, without the complainant (club.complaint.respond)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Forwarded complaints", content: {
+          "application/json": { schema: envelope(z.array(ComplaintForClub)) } } },
+        "403": { description: "Missing club.complaint.respond", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/clubs/{clubId}/complaints/{id}/response": {
+      post: { summary: "UC52: answer a forwarded complaint once, with the concrete action taken (club.complaint.respond, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), id: z.string() }) },
+        requestBody: { content: { "application/json": { schema: complaintResponseBody } } },
+        responses: { "200": { description: "Club Responded", content: { "application/json": { schema: envelope(ComplaintForClub) } } },
+          "409": { description: "Not forwarded to this club or already answered", content: { "application/json": { schema: ApiError } } } } },
     },
     "/attendances/mine": {
       get: { summary: "List the authenticated student's check-ins with their feedback windows",
@@ -2096,6 +2205,61 @@ export const openApiDocument = createDocument({
         responses: { "200": { description: "Updated club profile", content: {
           "application/json": { schema: envelope(ClubProfile) },
         } } },
+      },
+    },
+    "/clubs/{clubId}/role-directory": {
+      get: { summary: "UC24: club roles, their permissions and holders for current club members (read-only)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Role directory", content: {
+          "application/json": { schema: envelope(z.object({ clubId: z.string(), roles: z.array(z.object({
+            id: z.string(), code: z.string(), name: z.string(), unit: z.string().optional(),
+            isLeaderRole: z.boolean(), isBoardSeat: z.boolean(), isDefaultMemberRole: z.boolean(),
+            heldByMe: z.boolean(),
+            permissionCodes: z.array(z.string()),
+          })) })) },
+        } }, "401": { description: "Authentication required" }, "403": { description: "Current club membership required" } },
+      },
+    },
+    "/clubs/{clubId}/roles": {
+      get: {
+        summary: "UC23: club roles and permissions (current members); holders, members and versions need club.role.manage",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        responses: { "200": { description: "Club roles", content: { "application/json": { schema: envelope(ClubRoleOverview) } } } },
+      },
+      post: {
+        summary: "UC23: create a regular club role; appends a role structure version (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubRoleBody } } },
+        responses: { "201": { description: "Role created", content: { "application/json": { schema: envelope(ClubRoleOverview) } } },
+          "400": { description: "Unknown or leader-reserved permission" }, "409": { description: "Name taken or club not editable" } },
+      },
+    },
+    "/clubs/{clubId}/roles/{roleId}": {
+      patch: {
+        summary: "UC23: edit a club role and its permissions, effective at once; appends a version (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubRoleBody } } },
+        responses: { "200": { description: "Role updated", content: { "application/json": { schema: envelope(ClubRoleOverview) } } } },
+      },
+      delete: {
+        summary: "UC23: deactivate a regular club role without holders; appends a version (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
+        responses: { "200": { description: "Role deactivated", content: { "application/json": { schema: envelope(ClubRoleOverview) } } } },
+      },
+    },
+    "/clubs/{clubId}/roles/{roleId}/assignments": {
+      post: {
+        summary: "UC23: assign an Active member to a regular club role (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string() }) },
+        requestBody: { content: { "application/json": { schema: clubRoleAssignmentBody } } },
+        responses: { "201": { description: "Member assigned", content: { "application/json": { schema: envelope(ClubRoleOverview) } } } },
+      },
+    },
+    "/clubs/{clubId}/roles/{roleId}/assignments/{assignmentId}": {
+      delete: {
+        summary: "UC23: revoke a member's club role (club.role.manage, CSRF)",
+        requestParams: { path: z.object({ clubId: z.string(), roleId: z.string(), assignmentId: z.string() }) },
+        responses: { "200": { description: "Role revoked", content: { "application/json": { schema: envelope(ClubRoleOverview) } } } },
       },
     },
     "/clubs/{clubId}/departments/template": {

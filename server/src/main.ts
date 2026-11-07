@@ -1,5 +1,6 @@
 import { mongoApplicationExpiryRepository } from "./infra/db/mongo-application-expiry-repository.js";
 import { startApplicationExpiryJob } from "./interface/jobs/application-expiry-job.js";
+import { startComplaintResponseJob } from "./interface/jobs/complaint-response-job.js";
 import { mongoClubEvaluationRepository } from "./infra/db/mongo-club-evaluation-repository.js";
 import { mongoClubViolationRepository } from "./infra/db/mongo-club-violation-repository.js";
 import { startMembershipReconfirmationJob } from "./interface/jobs/membership-reconfirmation-job.js";
@@ -19,10 +20,12 @@ import { startFacilityBookingJob } from "./interface/jobs/facility-booking-job.j
 import { startNotificationDeliveryJob } from "./interface/jobs/notification-delivery-job.js";
 import { mongoMailOutboxRepository, mongoNotificationRepository } from "./infra/db/mongo-notification-repository.js";
 import { logMailTransport } from "./infra/mail/log-mail-transport.js";
+import { createSmtpSender, smtpMailTransport } from "./infra/mail/smtp-mail-transport.js";
 import mongoose from "mongoose";
 import { buildApp } from "./interface/http/server.js";
-import { loadConfig, optionalAuthConfig, optionalCloudinaryConfig } from "./infra/config/index.js";
+import { loadConfig, mailConfig, optionalAuthConfig, optionalCloudinaryConfig } from "./infra/config/index.js";
 import { ensureUcmsDatabase } from "./infra/db/ucms-models.js";
+import { upgradeClubRoles } from "./infra/db/club-role-upgrade.js";
 import { ensureAuthSessionIndexes, mongoSessionRepository } from "./infra/db/mongo-auth-session-repository.js";
 import { mongoAuthRepository } from "./infra/db/mongo-auth-repository.js";
 import { mongoAccessRepository } from "./infra/db/mongo-access-repository.js";
@@ -60,19 +63,27 @@ import { mongoLeadershipTransitionRepository } from "./infra/db/mongo-leadership
 import { mongoEventRegistrationRepository } from "./infra/db/mongo-event-registration-repository.js";
 import { mongoEventCheckInRepository } from "./infra/db/mongo-event-checkin-repository.js";
 import { mongoEventFeedbackRepository } from "./infra/db/mongo-event-feedback-repository.js";
-import { mongoStudentFeedbackRepository } from "./infra/db/mongo-student-feedback-repository.js";
+import { mongoComplaintRepository } from "./infra/db/mongo-complaint-repository.js";
+import { mongoApprovalRoutingRepository } from "./infra/db/mongo-approval-routing-repository.js";
 import { mongoMemberSpaceRepository } from "./infra/db/mongo-member-space-repository.js";
+import { mongoAccessDenialAuditRepository } from "./infra/db/mongo-access-denial-audit-repository.js";
+import { mongoClubRoleRepository } from "./infra/db/mongo-club-role-repository.js";
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
 import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
 
 const config = loadConfig(); // first thing — exits if env is invalid
 const authConfig = optionalAuthConfig(config);
+// EXT-02: SMTP when configured (required in production); the log transport is a development-only choice.
+const mail = mailConfig(config);
+const mailTransport = mail.transport === "smtp" ? smtpMailTransport(mail, createSmtpSender(mail)) : logMailTransport();
 const cloudinaryConfig = optionalCloudinaryConfig(config);
 
 try {
   await mongoose.connect(config.MONGO_URI);
   await ensureUcmsDatabase();
   await ensureDefaultClubFields();
+  const roleUpgrade = await upgradeClubRoles();
+  if (roleUpgrade.clubs) console.log(JSON.stringify({ msg: "club roles upgraded", ...roleUpgrade }));
   if (authConfig) {
     await ensureAuthSessionIndexes();
     await ensureAuthBootstrap(authConfig);
@@ -94,6 +105,8 @@ const facilityBookingRepo = mongoFacilityBookingRepository();
 const schoolEventRepo = mongoSchoolEventRepository();
 const app = authConfig ? buildApp({
   ...commonDeps,
+  accessDenialAudit: mongoAccessDenialAuditRepository(),
+  clubRoleRepo: mongoClubRoleRepository(),
   clubEvaluationRepo: mongoClubEvaluationRepository(),
   clubViolationRepo: mongoClubViolationRepository(),
   membershipReconfirmationRepo,
@@ -128,7 +141,8 @@ const app = authConfig ? buildApp({
   eventRegistrationRepo: mongoEventRegistrationRepository(),
   eventCheckInRepo: mongoEventCheckInRepository(),
   eventFeedbackRepo: mongoEventFeedbackRepository(),
-  studentFeedbackRepo: mongoStudentFeedbackRepository(),
+  complaintRepo: mongoComplaintRepository(),
+  approvalRoutingRepo: mongoApprovalRoutingRepository(),
   memberSpaceRepo: mongoMemberSpaceRepository(),
   notificationRepo: mongoNotificationRepository(),
   recruitmentCampaignRepo: mongoRecruitmentCampaignRepository(),
@@ -153,13 +167,14 @@ const app = authConfig ? buildApp({
   },
 }) : buildApp(commonDeps);
 const stopApplicationExpiryJob = startApplicationExpiryJob(mongoApplicationExpiryRepository());
+const stopComplaintResponseJob = startComplaintResponseJob(mongoComplaintRepository());
 const stopReconfirmationJob = startMembershipReconfirmationJob(membershipReconfirmationRepo, mongoPolicyRepository());
 const stopAccountabilityJob = startAccountabilityReminderJob(mongoAccountabilityReminderRepository());
 const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
 const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo);
 // ponytail: log transport until an SMTP client dependency is approved (see infra/mail/README.md).
-const stopNotificationJob = startNotificationDeliveryJob(mongoMailOutboxRepository(), logMailTransport(),
+const stopNotificationJob = startNotificationDeliveryJob(mongoMailOutboxRepository(), mailTransport,
   authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {});
 const server = app.listen(config.PORT, () => {
   console.log(`server listening on :${config.PORT} (${config.NODE_ENV})`);
@@ -171,6 +186,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     if (shuttingDown) process.exit(1); // second signal = stop waiting, exit now
     shuttingDown = true;
     stopApplicationExpiryJob();
+    stopComplaintResponseJob();
     stopReconfirmationJob();
     stopLifecycleJob();
     stopBookingJob();

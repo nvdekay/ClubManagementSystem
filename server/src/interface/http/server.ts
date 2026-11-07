@@ -52,9 +52,12 @@ import type { LeadershipTransitionRepository } from "../../domain/leadership-tra
 import type { EventRegistrationRepository } from "../../domain/event-registration.js";
 import type { EventCheckInRepository } from "../../domain/event-checkin.js";
 import type { EventFeedbackRepository } from "../../domain/event-feedback.js";
-import type { StudentFeedbackRepository } from "../../domain/student-feedback.js";
+import type { ComplaintRepository } from "../../domain/complaint.js";
 import type { MemberSpaceRepository } from "../../domain/member-space.js";
-import { errorHandler, requestLogger } from "./middleware.js";
+import { accessDenialAuditor, errorHandler, requestLogger } from "./middleware.js";
+import type { ClubRoleRepository } from "../../domain/club-role.js";
+import { clubRoleRoutes } from "./club-role-routes.js";
+import type { AccessDenialAuditRepository } from "../../domain/access-denial.js";
 import { openApiDocument } from "./openapi.js";
 import { fail } from "./response.js";
 import { publicDiscoveryRoutes } from "./public-discovery-routes.js";
@@ -83,7 +86,9 @@ import { leadershipTransitionRoutes } from "./leadership-transition-routes.js";
 import { eventRegistrationRoutes } from "./event-registration-routes.js";
 import { eventCheckInRoutes } from "./event-checkin-routes.js";
 import { eventFeedbackRoutes } from "./event-feedback-routes.js";
-import { studentFeedbackRoutes } from "./student-feedback-routes.js";
+import { complaintRoutes } from "./complaint-routes.js";
+import type { ApprovalRoutingRepository } from "../../domain/approval-routing.js";
+import { approvalRoutingRoutes } from "./approval-routing-routes.js";
 import { memberSpaceRoutes } from "./member-space-routes.js";
 import type { NotificationRepository } from "../../domain/notification.js";
 import { notificationRoutes } from "./notification-routes.js";
@@ -110,6 +115,8 @@ const docsHtml = `<!doctype html>
 
 export function buildApp(deps: {
   auth?: AuthRouteDeps;
+  accessDenialAudit?: AccessDenialAuditRepository;
+  clubRoleRepo?: ClubRoleRepository;
   adminRepo?: AccountAdminRepository;
   policyRepo?: PolicyManagementRepository;
   applicationRepo?: ClubApplicationRepository;
@@ -144,7 +151,8 @@ export function buildApp(deps: {
   eventRegistrationRepo?: EventRegistrationRepository;
   eventCheckInRepo?: EventCheckInRepository;
   eventFeedbackRepo?: EventFeedbackRepository;
-  studentFeedbackRepo?: StudentFeedbackRepository;
+  complaintRepo?: ComplaintRepository;
+  approvalRoutingRepo?: ApprovalRoutingRepository;
   memberSpaceRepo?: MemberSpaceRepository;
   notificationRepo?: NotificationRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
@@ -211,6 +219,10 @@ export function buildApp(deps: {
         repo: deps.propertyRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions,
       }));
     }
+    if (deps.clubRoleRepo) {
+      app.use("/api/v1", clubRoleRoutes({ repo: deps.clubRoleRepo, accessRepo: deps.auth.accessRepo,
+        authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
     if (deps.boardNominationRepo) {
       app.use("/api/v1", boardNominationRoutes({
         repo: deps.boardNominationRepo, accessRepo: deps.auth.accessRepo,
@@ -262,8 +274,11 @@ export function buildApp(deps: {
     if (deps.notificationRepo) {
       app.use("/api/v1", notificationRoutes({ repo: deps.notificationRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
-    if (deps.studentFeedbackRepo) {
-      app.use("/api/v1", studentFeedbackRoutes({ repo: deps.studentFeedbackRepo,
+    if (deps.approvalRoutingRepo) {
+      app.use("/api/v1", approvalRoutingRoutes({ repo: deps.approvalRoutingRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+    }
+    if (deps.complaintRepo) {
+      app.use("/api/v1", complaintRoutes({ repo: deps.complaintRepo,
         accessRepo: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
     }
     if (deps.eventFeedbackRepo && deps.policyRepo) {
@@ -348,6 +363,7 @@ export function buildApp(deps: {
   const hasApplicationReviews = Boolean(hasApplications && deps.applicationReviewRepo);
   const hasClubProfiles = Boolean(hasPolicy && deps.clubProfileRepo);
   const hasBoardNominations = Boolean(hasAdmin && deps.boardNominationRepo);
+  const hasClubRoles = Boolean(deps.auth && deps.clubRoleRepo);
   const hasBookings = Boolean(deps.auth && deps.facilityBookingRepo && deps.propertyRepo && deps.policyRepo);
   const hasProperties = Boolean(hasAdmin && deps.propertyRepo);
   const hasRoomAllocations = Boolean(deps.auth && deps.roomAllocationRepo && deps.propertyRepo && deps.policyRepo);
@@ -368,7 +384,8 @@ export function buildApp(deps: {
   const hasEventRegistrations = Boolean(hasPolicy && deps.eventRegistrationRepo);
   const hasEventCheckIns = Boolean(hasPolicy && deps.eventCheckInRepo);
   const hasEventFeedback = Boolean(hasPolicy && deps.eventFeedbackRepo);
-  const hasStudentFeedback = Boolean(hasAdmin && deps.studentFeedbackRepo);
+  const hasComplaints = Boolean(hasAdmin && deps.complaintRepo);
+  const hasRouting = Boolean(deps.auth && deps.approvalRoutingRepo);
   const hasMemberSpace = Boolean(hasPolicy && deps.memberSpaceRepo);
   const availablePaths = Object.fromEntries(Object.entries(openApiDocument.paths ?? {})
     .filter(([path]) => {
@@ -401,7 +418,8 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/school-events")) return hasSchoolEvents;
       if (path.startsWith("/admin/board-nominations")) return hasBoardNominations;
       if (path.startsWith("/admin/leadership-transitions")) return hasLeadershipTransitions;
-      if (path.startsWith("/admin/student-feedback")) return hasStudentFeedback;
+      if (path.startsWith("/admin/complaints")) return hasComplaints;
+      if (path.startsWith("/admin/routing-rules")) return hasRouting;
       if (path.startsWith("/admin/")) return hasAdmin;
       if (path.startsWith("/applications/recruitment")) return hasRecruitmentApplications;
       if (path.startsWith("/dashboard")) return hasDashboard;
@@ -412,8 +430,8 @@ export function buildApp(deps: {
         || path.startsWith("/attendances")) return hasEventCheckIns;
       if (path.startsWith("/events/{id}/feedback")
         || path.startsWith("/event-feedbacks")) return hasEventFeedback;
-      if (path.startsWith("/student-feedback")
-        || path.startsWith("/clubs/{clubId}/student-feedback")) return hasStudentFeedback;
+      if (path.startsWith("/complaints")
+        || /^\/clubs\/\{clubId\}\/complaints/.test(path)) return hasComplaints;
       if (path.startsWith("/clubs/{clubId}/events")) return Boolean(hasPolicy && deps.clubEventRepo);
       if (path.startsWith("/clubs/{clubId}/member-space")) return hasMemberSpace;
       if (path.startsWith("/applications")) return hasApplications;
@@ -421,6 +439,7 @@ export function buildApp(deps: {
         || path.startsWith("/clubs/{clubId}/profile")
         || path.startsWith("/clubs/{clubId}/departments")) return hasClubProfiles;
       if (path.startsWith("/clubs/{clubId}/board-nomination")) return hasBoardNominations;
+      if (path.startsWith("/clubs/{clubId}/roles") || path.startsWith("/clubs/{clubId}/role-directory")) return hasClubRoles;
       if (/\/evaluations?$/.test(path)) return hasCandidateEvaluations;
       if (path.startsWith("/clubs/{clubId}/recruitment/campaigns")) return hasRecruitmentCampaigns;
       return true;
@@ -435,6 +454,7 @@ export function buildApp(deps: {
   app.use((req, res) => {
     fail(res, req, 404, "not_found", "not found"); // keep the error envelope contract on unknown paths
   });
+  if (deps.accessDenialAudit) app.use(accessDenialAuditor(deps.accessDenialAudit));
   app.use(errorHandler);
   return app;
 }

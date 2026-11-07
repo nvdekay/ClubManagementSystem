@@ -52,6 +52,7 @@ import { PeriodicReportReviewPage, PeriodicReportsPage } from "./pages/icpdp/Per
 import { SchoolEventDetailPage, SchoolEventsPage } from "./pages/icpdp/SchoolEventsPage.js";
 import { EvaluationDetailPage, EvaluationsPage } from "./pages/icpdp/EvaluationsPage.js";
 import { ClubSettingsPage } from "./pages/club/ClubSettingsPage.js";
+import { ClubRolesPage } from "./pages/club/ClubRolesPage.js";
 import { BoardNominationPage } from "./pages/club/BoardNominationPage.js";
 import { BoardNominationQueuePage } from "./pages/icpdp/BoardNominationQueuePage.js";
 import { BoardNominationDetailPage } from "./pages/icpdp/BoardNominationDetailPage.js";
@@ -62,12 +63,13 @@ import { RecruitmentReviewPage } from "./pages/club/RecruitmentReviewPage.js";
 import { RecruitmentApplicationPage } from "./pages/student/RecruitmentApplicationPage.js";
 import { RecruitmentApplicationsPage } from "./pages/student/RecruitmentApplicationsPage.js";
 import { MyEventRegistrationsPage } from "./pages/student/MyEventRegistrationsPage.js";
-import { StudentFeedbackPage } from "./pages/student/StudentFeedbackPage.js";
+import { ComplaintsPage } from "./pages/student/ComplaintsPage.js";
 import { MyClubsPage } from "./pages/student/MyClubsPage.js";
 import { MemberSpacePage } from "./pages/student/MemberSpacePage.js";
 import { ClubMembersPage } from "./pages/club/ClubMembersPage.js";
-import { ClubFeedbackInboxPage } from "./pages/club/ClubFeedbackInboxPage.js";
-import { StudentFeedbackInboxPage } from "./pages/icpdp/StudentFeedbackInboxPage.js";
+import { ClubComplaintsPage } from "./pages/club/ClubComplaintsPage.js";
+import { ComplaintReviewPage } from "./pages/icpdp/ComplaintReviewPage.js";
+import { RoutingRulesPage } from "./pages/icpdp/RoutingRulesPage.js";
 import { InternalEventDetailPage, InternalEventsPage } from "./pages/icpdp/InternalEventsPage.js";
 import { ClubBoardHistoryPage } from "./pages/club/ClubBoardHistoryPage.js";
 
@@ -125,12 +127,13 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/recruitment" element={<RecruitmentApplicationsPage />} />
               <Route path="workspace/recruitment/:campaignId" element={<RecruitmentApplicationPage />} />
               <Route path="workspace/event-registrations" element={<MyEventRegistrationsPage />} />
-              <Route path="workspace/feedback" element={<StudentFeedbackPage />} />
+              <Route path="workspace/complaints" element={<ComplaintsPage />} />
               <Route path="workspace/clubs" element={<MyClubsPage />} />
               <Route path="workspace/clubs/:clubId" element={<MemberSpacePage />} />
               <Route path="club/:clubId/members" element={<ClubMembersPage />} />
-              <Route path="workspace/student-feedback" element={<StudentFeedbackInboxPage />} />
-              <Route path="club/:clubId/feedback" element={<ClubFeedbackInboxPage />} />
+              <Route path="workspace/complaint-review" element={<ComplaintReviewPage />} />
+              <Route path="workspace/routing-rules" element={<RoutingRulesPage />} />
+              <Route path="club/:clubId/complaints" element={<ClubComplaintsPage />} />
               <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
               <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
               <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
@@ -153,6 +156,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/leadership-transitions" element={<LeadershipTransitionQueuePage />} />
               <Route path="workspace/leadership-transitions/:id" element={<LeadershipTransitionDetailPage />} />
               <Route path="club/:clubId/settings" element={<ClubSettingsPage />} />
+              <Route path="club/:clubId/roles" element={<ClubRolesPage />} />
               <Route path="club/:clubId/board" element={<BoardNominationPage />} />
               <Route path="club/:clubId/recruitment" element={<RecruitmentCampaignPage />} />
               <Route path="club/:clubId/recruitment/:campaignId/review" element={<RecruitmentReviewPage />} />

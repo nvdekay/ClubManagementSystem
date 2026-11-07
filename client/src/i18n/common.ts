@@ -19,11 +19,11 @@ const en = {
   navOverview: "Overview", navRecruitment: "Join a club", navApplications: "Found a club",
   navDiscover: "Discover clubs", navEvents: "Events",
   navMyEvents: "My events",
-  navFeedback: "Feedback",
-  navFeedbackInbox: "Student feedback",
+  navComplaints: "Complaints",
+  navClubComplaints: "Complaints",
   navMyClubs: "My clubs",
   navMembers: "Members",
-  navBoard: "Board", navBoardHistory: "Board history", navCampaigns: "Recruitment", navSettings: "Club settings",
+  navBoard: "Board", navBoardHistory: "Board history", navCampaigns: "Recruitment", navSettings: "Club settings", navClubRoles: "Roles & permissions",
   navPublicPage: "Public page", sectionWork: "Workspace", sectionExplore: "Explore",
   openMenu: "Open menu", closeMenu: "Close menu", collapseSidebar: "Collapse sidebar", expandSidebar: "Expand sidebar", lightMode: "Light mode",
   switchLanguage: "Switch to Vietnamese", signedInAs: "Signed in as {{name}}",
@@ -33,7 +33,7 @@ const en = {
   icpdpClubs: "Manage clubs", icpdpReviews: "Founding applications", icpdpNominations: "Board confirmations",
   icpdpTransitions: "Leadership handovers", icpdpClubFields: "Club fields", icpdpEvents: "Event calendar",
   icpdpEventProposals: "Event proposals", icpdpInternalEvents: "Internal events", icpdpBudgets: "Event budgets", icpdpPeriodicReports: "Periodic reports", icpdpViolations: "Compliance cases", icpdpSchoolEvents: "School events", icpdpEvaluations: "Club evaluations", icpdpProperties: "Rooms & equipment", icpdpSchemes: "Evaluation criteria", icpdpExports: "Export reports",
-  icpdpFeedback: "Student feedback inbox", icpdpPolicy: "School policy", icpdpAccounts: "Accounts & roles",
+  icpdpComplaints: "Complaints", icpdpRouting: "Approval routing", icpdpPolicy: "School policy", icpdpAccounts: "Accounts & roles",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -57,11 +57,11 @@ const vi: Record<keyof typeof en, string> = {
   navOverview: "Tổng quan", navRecruitment: "Ứng tuyển CLB", navApplications: "Thành lập CLB",
   navDiscover: "Khám phá CLB", navEvents: "Sự kiện",
   navMyEvents: "Sự kiện của tôi",
-  navFeedback: "Góp ý",
-  navFeedbackInbox: "Góp ý sinh viên",
+  navComplaints: "Khiếu nại",
+  navClubComplaints: "Khiếu nại",
   navMyClubs: "CLB của tôi",
   navMembers: "Thành viên",
-  navBoard: "Ban chủ nhiệm", navBoardHistory: "Lịch sử ban chủ nhiệm", navCampaigns: "Tuyển thành viên", navSettings: "Thiết lập CLB",
+  navBoard: "Ban chủ nhiệm", navBoardHistory: "Lịch sử ban chủ nhiệm", navCampaigns: "Tuyển thành viên", navSettings: "Thiết lập CLB", navClubRoles: "Vai trò & phân quyền",
   navPublicPage: "Trang công khai", sectionWork: "Không gian làm việc", sectionExplore: "Khám phá",
   openMenu: "Mở menu", closeMenu: "Đóng menu", collapseSidebar: "Thu gọn thanh bên", expandSidebar: "Mở rộng thanh bên", lightMode: "Chế độ sáng",
   switchLanguage: "Chuyển sang tiếng Anh", signedInAs: "Đăng nhập với {{name}}",
@@ -71,7 +71,7 @@ const vi: Record<keyof typeof en, string> = {
   icpdpClubs: "Quản lý CLB", icpdpReviews: "Duyệt hồ sơ thành lập", icpdpNominations: "Xác nhận ban chủ nhiệm",
   icpdpTransitions: "Duyệt chuyển giao nhiệm kỳ", icpdpClubFields: "Lĩnh vực CLB", icpdpEvents: "Lịch sự kiện",
   icpdpEventProposals: "Duyệt đề xuất sự kiện", icpdpInternalEvents: "Sự kiện nội bộ", icpdpBudgets: "Giải ngân kinh phí", icpdpPeriodicReports: "Báo cáo định kỳ", icpdpViolations: "Hồ sơ vi phạm", icpdpSchoolEvents: "Sự kiện cấp trường", icpdpEvaluations: "Đánh giá CLB", icpdpProperties: "Phòng & thiết bị", icpdpSchemes: "Tiêu chí đánh giá CLB", icpdpExports: "Xuất báo cáo",
-  icpdpFeedback: "Hộp thư góp ý", icpdpPolicy: "Chính sách nhà trường", icpdpAccounts: "Tài khoản & phân quyền",
+  icpdpComplaints: "Khiếu nại", icpdpRouting: "Định tuyến phê duyệt", icpdpPolicy: "Chính sách nhà trường", icpdpAccounts: "Tài khoản & phân quyền",
 };
 
 export const common = { en, vi };
