@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
+import { ApprovalLevelBadge } from "@/components/custom/ApprovalLevelBadge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -302,6 +303,7 @@ export function EventProposalReviewPage() {
         </div>
 
         <aside className="min-w-0 space-y-6 lg:sticky lg:top-6">
+          <ApprovalLevelBadge requiredLevel={task.requiredLevel} currentLevel={task.currentLevel} />
           {isOpen && !mine ? (
             <div className="rounded-2xl bg-surface-app p-5">
               <p className="text-sm text-muted-app">{task.assigneeId ? t("eventReviews.claimedByOther") : t("eventReviews.claimHint")}</p>

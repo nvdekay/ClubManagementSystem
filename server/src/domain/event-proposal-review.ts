@@ -13,6 +13,9 @@ export interface EventProposalTask {
   assigneeId?: string;
   openedAt: Date;
   slaDueAt?: Date;
+  /** UC05: approval levels this request needs and the level now waiting (2 = ICPDP_HEAD). */
+  requiredLevel: number;
+  currentLevel: number;
 }
 
 /** One requested budget line as the club submitted it (UC25 FR-18). */

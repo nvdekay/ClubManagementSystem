@@ -463,6 +463,37 @@ describe.skipIf(!uri)("E2E: simplified club founding", () => {
     expect(queue.body.data.map((item: { application: { id: string } }) => item.application.id)).not.toContain(withdrawnId);
   });
 
+  it("16b. UC05: a routed application creates the club only after ICPDP_HEAD approves level 2", async () => {
+    const officerDoc = await ucmsModels.users!.findOne({ email: "officer@e2e.edu" }).lean();
+    const rules = await ucmsModels.routingRuleSets!.create({ versionNo: 1, state: "Active", createdBy: officerDoc!._id, createdAt: new Date(),
+      rules: [{ id: "all-clubs", requestType: "CLUB_APPLICATION", requiredLevel: 2, slaHours: 48 }] });
+    try {
+      const id = await completeApplication(students.chi!, "CLB Hai cấp", [
+        { userId: students.chi!.id, role: "LEADER" }, { userId: students.giang!.id, role: "VICE_LEADER" },
+        { userId: students.dung!.id, role: "MEMBER" }]);
+      expect((await call(students.chi!, "POST", `/applications/${id}/submit`)).status).toBe(201);
+      const level1 = await approve(id);
+      expect(level1.status).toBe(200);
+      expect(level1.body.data.application.state).toBe("Under Review");
+      expect(level1.body.data.task).toMatchObject({ requiredLevel: 2, currentLevel: 2 });
+      expect((await ucmsModels.clubApplications!.findById(id).lean())?.createdClubId).toBeUndefined();
+      expect((await call(officer, "POST", `/admin/application-reviews/${id}/claim`)).status).toBe(403);
+      const head = await signIn("head@e2e.edu", "Head");
+      for (const code of ["ICPDP_OFFICER", "ICPDP_HEAD"]) {
+        const role = await ucmsModels.roles!.findOne({ code }).lean();
+        await ucmsModels.userRoleAssignments!.create({ userId: new Types.ObjectId(head.id), roleId: role!._id,
+          grantedBy: officerDoc!._id, grantedAt: new Date() });
+      }
+      expect((await call(head, "POST", `/admin/application-reviews/${id}/claim`)).status).toBe(200);
+      const final = await call(head, "POST", `/admin/application-reviews/${id}/decision`, { outcome: "Approve", sections: [] });
+      expect(final.status).toBe(200);
+      expect(final.body.data.application.state).toBe("Approved");
+      expect((await ucmsModels.clubApplications!.findById(id).lean())?.createdClubId).toBeDefined();
+    } finally {
+      await ucmsModels.routingRuleSets!.deleteOne({ _id: rules._id });
+    }
+  });
+
   it("17. Policy changes apply at submission: optional fields, minimum founders", async () => {
     const relaxed = await call(officer, "POST", "/admin/policies", policyBody({ minFoundingMembers: 2,
       formRequirements: { ...DEFAULT_FORM_REQUIREMENTS, clubFounding: { ...DEFAULT_FORM_REQUIREMENTS.clubFounding,

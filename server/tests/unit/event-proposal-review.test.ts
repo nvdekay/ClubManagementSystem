@@ -19,7 +19,7 @@ const lines = [
 
 function detail(budgetLines = lines): EventProposalDetail {
   return {
-    task: { id: "000000000000000000000004", eventId, title: "Workshop", state: "Open", openedAt: now },
+    task: { id: "000000000000000000000004", eventId, title: "Workshop", state: "Open", openedAt: now, requiredLevel: 1, currentLevel: 1 },
     event: { id: eventId, clubId: "000000000000000000000003", clubName: "HEBE", title: "Workshop",
       startAt: tomorrow, endAt: tomorrow, semesterCode: "Fall 2026", audienceScope: "PUBLIC", capacity: 50,
       state: "Under Review", approvalConditions: [], currentRevisionNo: 2, requestedBudgetTotal: 5_000_000 },

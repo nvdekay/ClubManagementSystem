@@ -7,6 +7,7 @@ import { assertEventNotice, eventConflictResult, validateClubEventInput, validat
 import { DomainError } from "../../domain/errors.js";
 import type { AcademicSemester } from "../../domain/policy.js";
 import { checkInCode } from "../../domain/school-event.js";
+import { openViolationCount, routedTaskFields } from "./approval-routing.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
 import { clubEventFrom, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
 import { applyEventAttendanceAction } from "./event-attendance-actions.js";
@@ -108,8 +109,12 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
     conflictResult: assessment.conflictResult, submittedBy: actorId, submittedAt: now }], { session });
   await m.events!.updateOne({ _id: event._id }, { $set: { ...fields(input, assessment.semesterCode), state, currentRevisionNo: revisionNo,
     conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail }, $unset: { revisionDeadlineAt: "" } }, { session });
+  // UC05: budget, risk and the club's open cases decide, once, how many approval levels the proposal needs.
   if (!direct) await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
-    title: input.title, state: "Open", openedAt: now }], { session });
+    title: input.title, state: "Open", openedAt: now,
+    ...(await routedTaskFields(session, { requestType: "EVENT_PROPOSAL", riskCategory: input.riskCategory,
+      amount: input.budgetLines.reduce((sum, line) => sum + line.amount, 0),
+      openViolations: await openViolationCount(event.clubId, session) }, now)) }], { session });
   const linked = await m.propertyBookings!.find({ eventId: event._id }).session(session).lean();
   if (requireBookingPermission && (linked.length !== input.bookingIds.length || linked.some((booking) => !input.bookingIds.includes(String(booking._id))))) {
     await assertEventWriteAccess(session, event.clubId as Types.ObjectId, actorId, "club.booking.manage", now);

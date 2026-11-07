@@ -8,6 +8,8 @@ export interface EventProposalTask {
   title: string;
   state: "Open" | "Decided" | "Closed";
   assigneeId?: string;
+  requiredLevel?: number;
+  currentLevel?: number;
   openedAt: string;
 }
 

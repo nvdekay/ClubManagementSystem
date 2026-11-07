@@ -14,12 +14,12 @@ const target: AuthUser = {
 };
 const now = new Date("2026-10-03T10:00:00Z");
 
-function fixture(actorRoles = ["ICPDP_OFFICER"]) {
+function fixture(actorRoles = ["ICPDP_OFFICER"], targetRoles: string[] = []) {
   const changes: string[] = [];
   const repo: AccountAdminRepository = {
     async listUsers() { return { items: [], total: 0 }; },
     async findUser(id) { return id === target.id ? target : id === actor.id ? actor : null; },
-    async systemRoles() { return actorRoles; },
+    async systemRoles(id) { return id === target.id ? targetRoles : actorRoles; },
     async applyRoleChange(input) { changes.push(`${input.action}:${input.roleCode}`); },
     async setLock(input) { changes.push(input.locked ? "locked" : "unlocked"); },
   };
@@ -41,8 +41,18 @@ describe("UC03 account administration", () => {
     await expect(changeSystemRole(officer.repo, officer.sessions, actor, target.id,
       "CLUB_PRESIDENT", "grant", undefined, now)).rejects.toMatchObject({ kind: "validation" });
     await expect(changeSystemRole(officer.repo, officer.sessions, actor, target.id,
-      "ICPDP_HEAD", "grant", undefined, now)).rejects.toMatchObject({ kind: "validation" });
+      "ICPDP_SUPERVISOR", "grant", undefined, now)).rejects.toMatchObject({ kind: "validation" });
     expect(changes).toEqual([]);
+  });
+
+  it("D1: grants ICPDP_HEAD only to a current ICPDP officer", async () => {
+    const plain = fixture();
+    await expect(changeSystemRole(plain.repo, plain.sessions, actor, target.id, "ICPDP_HEAD", "grant", undefined, now))
+      .rejects.toMatchObject({ kind: "conflict" });
+    expect(plain.changes).toEqual([]);
+    const officerTarget = fixture(["ICPDP_OFFICER"], ["ICPDP_OFFICER"]);
+    await changeSystemRole(officerTarget.repo, officerTarget.sessions, actor, target.id, "ICPDP_HEAD", "grant", undefined, now);
+    expect(officerTarget.changes).toEqual(["grant:ICPDP_HEAD", `revoke:${target.id}`]);
   });
 
   it("requires a reason for revoke, lock and unlock", async () => {

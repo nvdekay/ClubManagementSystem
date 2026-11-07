@@ -78,6 +78,64 @@ describe.skipIf(!uri)("Mongo facility booking repository", () => {
     await expect(repo.submit(id, clubId, 1, actor, now)).rejects.toMatchObject({ kind: "conflict" });
     expect(await m.notifications!.countDocuments({ entityId: new Types.ObjectId(id) })).toBe(3);
   });
+  it("UC05: routes a matching request to ICPDP_HEAD at level 2 with no side effect at level 1 (BR16, D1)", async () => {
+    const head = new Types.ObjectId();
+    const roles = [await m.roles!.findOne({ code: "ICPDP_OFFICER" }).lean(),
+      await m.roles!.create({ code: "ICPDP_HEAD", name: "Head", scope: "system", isSystem: true, permissionCodes: [] })];
+    for (const role of roles) await m.userRoleAssignments!.create({ userId: head, roleId: role!._id, grantedAt: now, grantedBy: head });
+    const set = await m.routingRuleSets!.create({ versionNo: 1, state: "Active", createdBy: head, createdAt: now,
+      rules: [{ id: "stage", requestType: "PROPERTY_BOOKING", propertyTypes: ["STAGE"], requiredLevel: 2, slaHours: 24 }] });
+    try {
+      const hall = await fixture("HALL");
+      const single = await submitted(hall.clubId, hall.input);
+      expect(single.task).toMatchObject({ requiredLevel: 1, currentLevel: 1 });
+      const stage = await fixture("STAGE");
+      const request = await submitted(stage.clubId, stage.input);
+      const id = request.booking.id;
+      expect(request.task).toMatchObject({ requiredLevel: 2, currentLevel: 1 });
+      expect((await m.approvalTasks!.findOne({ entityId: new Types.ObjectId(id) }).lean())?.routingRuleSetId).toEqual(set._id);
+      // A new version does not reroute the open request.
+      await m.routingRuleSets!.updateOne({ _id: set._id }, { $set: { rules: [] } });
+      await repo.claim(id, officer, now);
+      const afterLevel1 = await repo.decide(id, officer, { outcome: "Approve", reason: "Level 1 ok" }, now);
+      expect(afterLevel1.booking.state).toBe("Under Review");
+      expect(afterLevel1.task).toMatchObject({ currentLevel: 2 });
+      expect(afterLevel1.task?.assigneeId).toBeUndefined();
+      expect(await m.notifications!.countDocuments({ eventCode: "APPROVAL_LEVEL2_REQUIRED", recipientUserId: head })).toBe(1);
+      await expect(repo.claim(id, officer, now)).rejects.toMatchObject({ kind: "forbidden" });
+      await repo.claim(id, String(head), now);
+      const final = await repo.decide(id, String(head), { outcome: "Approve", reason: "Level 2 ok" }, now);
+      expect(final.booking.state).toBe("Approved");
+      expect((await m.approvalDecisions!.find({}).sort({ level: 1 }).lean()).map((row) => row.level)).toEqual([1, 2]);
+    } finally {
+      await m.routingRuleSets!.deleteMany({});
+      await m.userRoleAssignments!.deleteMany({ userId: head });
+    }
+  });
+  it("UC05 four eyes: the officer who approved level 1 cannot decide level 2, and a level-1 refusal is final", async () => {
+    const both = new Types.ObjectId();
+    for (const code of ["ICPDP_OFFICER", "ICPDP_HEAD"]) {
+      const role = await m.roles!.findOne({ code }).lean() ?? await m.roles!.create({ code, name: code, scope: "system", isSystem: true, permissionCodes: [] });
+      await m.userRoleAssignments!.create({ userId: both, roleId: role._id, grantedAt: now, grantedBy: both });
+    }
+    await m.routingRuleSets!.create({ versionNo: 2, state: "Active", createdBy: both, createdAt: now,
+      rules: [{ id: "stage", requestType: "PROPERTY_BOOKING", propertyTypes: ["STAGE"], requiredLevel: 2, slaHours: 24 }] });
+    try {
+      const stage = await fixture("STAGE");
+      const id = (await submitted(stage.clubId, stage.input)).booking.id;
+      await repo.claim(id, String(both), now);
+      await repo.decide(id, String(both), { outcome: "Approve", reason: "Level 1" }, now);
+      await repo.claim(id, String(both), now);
+      await expect(repo.decide(id, String(both), { outcome: "Approve", reason: "Level 2" }, now)).rejects.toMatchObject({ kind: "forbidden" });
+      const other = await fixture("STAGE");
+      const refused = (await submitted(other.clubId, { ...other.input, purpose: "Other" })).booking.id;
+      await repo.claim(refused, officer, now);
+      expect((await repo.decide(refused, officer, { outcome: "Reject", reason: "No" }, now)).booking.state).toBe("Rejected");
+    } finally {
+      await m.routingRuleSets!.deleteMany({});
+      await m.userRoleAssignments!.deleteMany({ userId: both });
+    }
+  });
   it("claims exclusively and records only one decision per task", async () => {
     const { clubId, input } = await fixture(); const request = await submitted(clubId, input); const id = request.booking.id;
     const results = await Promise.allSettled([repo.claim(id, officer, now), repo.claim(id, actor, now)]);

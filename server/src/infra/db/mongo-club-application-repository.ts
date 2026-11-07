@@ -7,6 +7,7 @@ import {
   type ClubApplicationDraft, type ClubApplicationRecord, type ClubApplicationRepository,
   type ClubApplicationState, type ClubApplicationVersion, type FoundingMember,
 } from "../../domain/club-application.js";
+import { routedTaskFields } from "./approval-routing.js";
 import { ucmsModels } from "./ucms-models.js";
 
 function documentFrom(raw: ApplicationDocument): ApplicationDocument {
@@ -214,10 +215,12 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         }], { session });
         await tasks.updateMany({ entityType: "CLUB_APPLICATION", entityId: id,
           state: "Open" }, { $set: { state: "Closed", closedAt: input.now } }, { session });
+        // UC05: the active routing rules decide, once, how many approval levels this application needs.
         await tasks.create([{
           entityType: "CLUB_APPLICATION", entityId: id,
           title: `Club application: ${input.snapshot.clubName}`,
           state: "Open", openedAt: input.now,
+          ...(await routedTaskFields(session, { requestType: "CLUB_APPLICATION", openViolations: 0 }, input.now)),
         }], { session });
         await audits.create([{
           entityType: "ClubApplication", entityId: id,

@@ -62,6 +62,10 @@ export async function changeSystemRole(
   if (action === "revoke" && target === actorId && role === "ICPDP_OFFICER") {
     throw new DomainError("cannot revoke your last admin role", "forbidden");
   }
+  // D1: the second approval level belongs to an ICPDP officer; revoking the officer role also drops it.
+  if (action === "grant" && role === "ICPDP_HEAD" && !(await repo.systemRoles(target)).includes("ICPDP_OFFICER")) {
+    throw new DomainError("grant ICPDP_OFFICER before ICPDP_HEAD", "conflict");
+  }
   await repo.applyRoleChange({
     actorId, targetId: target, roleCode: role, action,
     reason: reason?.success ? reason.data : undefined, now,

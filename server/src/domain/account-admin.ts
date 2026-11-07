@@ -1,6 +1,7 @@
 import type { AuthUser } from "./auth.js";
 
-export const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ATTENDANCE_UNLOCK"] as const;
+/** ICPDP_HEAD (D1) is the second approval level of UC05; it is held only together with ICPDP_OFFICER. */
+export const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"] as const;
 export type SystemRoleCode = (typeof SYSTEM_ROLE_CODES)[number];
 
 /** UC03 step 2: a club the user belongs to, with the board seats they hold there. */

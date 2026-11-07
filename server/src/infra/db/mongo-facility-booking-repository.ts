@@ -8,6 +8,7 @@ import { assertBookingNotice, assertRequestableProperty, assessBooking, bookingI
   type BookingInput, type BookingVersion, type FacilityBookingRepository } from "../../domain/facility-booking.js";
 import type { PolicyVersion } from "../../domain/policy.js";
 import type { Property } from "../../domain/property.js";
+import { advanceToSecondLevel, approvalDecisionStep, assertApprovalLevelReviewer, openViolationCount, routedTaskFields } from "./approval-routing.js";
 import { ucmsModels as m } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
@@ -190,6 +191,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     const task = taskDocs[0];
     return { booking, property: property ? propertyFrom(property) : null, club: club ? clubFrom(club) : null,
       task: task ? { id: String(task._id), state: String(task.state), openedAt: task.openedAt as Date,
+        requiredLevel: Number(task.requiredLevel ?? 1), currentLevel: Number(task.currentLevel ?? 1),
         ...(task.assigneeId ? { assigneeId: String(task.assigneeId) } : {}) } : null,
       versions: versionDocs.map((item): BookingVersion => {
         const after = item.after as { versionNo: number; payload: BookingInput };
@@ -277,8 +279,12 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         await bookings.updateOne({ _id: before._id }, { $set: { state: "Requested", currentVersionNo: versionNo,
           semesterCode: check.semesterCode, conflictResult: check.conflictResult },
         $unset: { decisionReason: "", decidedAt: "", decidedBy: "" } }, { session });
+        const property = await m.properties!.findById(before.propertyId).select({ type: 1 }).session(session).lean();
+        // UC05: the active routing rules decide, once, how many approval levels this request needs.
         await tasks.create([{ entityType: taskType, entityId: before._id, clubId: oid(clubId),
-          title: `${before.clubName}: ${input.purpose}`, state: "Open", openedAt: now }], { session });
+          title: `${before.clubName}: ${input.purpose}`, state: "Open", openedAt: now,
+          ...(await routedTaskFields(session, { requestType: "PROPERTY_BOOKING", propertyType: String(property?.type ?? ""),
+            openViolations: await openViolationCount(oid(clubId), session) }, now)) }], { session });
         await audit(before._id as Types.ObjectId, "BOOKING_SUBMITTED", actorId, { state: before.state },
           { versionNo, payload: input, state: "Requested" }, now, session);
         await notify(before._id as Types.ObjectId, "BOOKING_SUBMITTED", await officers(session),
@@ -292,6 +298,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
         const task = await tasks.findOne({ entityType: taskType, entityId: before._id, state: "Open" }).session(session).lean();
         if (!task || !["Requested", "Under Review"].includes(String(before.state))) conflict("booking review is not open");
         if (task.assigneeId && String(task.assigneeId) !== officerId) conflict("booking is assigned to another officer");
+        await assertApprovalLevelReviewer(session, task, officerId);
         await tasks.updateOne({ _id: task._id }, { $set: { assigneeId: oid(officerId) } }, { session });
         await bookings.updateOne({ _id: before._id }, { $set: { state: "Under Review" } }, { session });
         if (before.state === "Requested") await audit(before._id as Types.ObjectId, "BOOKING_REVIEW_CLAIMED", officerId,
@@ -327,9 +334,17 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
             } else { outcome = "Request revision"; reason = "Slot conflict detected during approval; choose another slot or provide an overbooking reason"; }
           }
         }
+        const comments = { alternative: input.alternative, ...(overbooking ? { overbookingReason: overbooking.reason, overbooking } : {}) };
+        const step = await approvalDecisionStep(session, task, officerId, outcome);
+        if (!step.final) {
+          // Level 1 of a two-level request: no booking state change until ICPDP_HEAD decides.
+          await advanceToSecondLevel(session, { task, decision: { reason, reviewNote: input.reviewNote, comments }, actorId: officerId,
+            auditEntityType: "PropertyBooking", entityId: before._id as Types.ObjectId, now });
+          return;
+        }
         const state = outcome === "Approve" ? "Approved" : outcome === "Reject" ? "Rejected" : "Revision Requested";
-        await decisions.create([{ approvalTaskId: task._id, outcome, reason, reviewNote: input.reviewNote,
-          comments: { alternative: input.alternative, ...(overbooking ? { overbookingReason: overbooking.reason, overbooking } : {}) }, actorId: oid(officerId), at: now }], { session });
+        await decisions.create([{ approvalTaskId: task._id, level: step.level, outcome, reason, reviewNote: input.reviewNote,
+          comments, actorId: oid(officerId), at: now }], { session });
         await tasks.updateOne({ _id: task._id }, { $set: { state: "Decided", closedAt: now } }, { session });
         await bookings.updateOne({ _id: before._id }, { $set: { state, decisionReason: reason,
           conflictResult: checkResult, decidedBy: oid(officerId), decidedAt: now } }, { session });
