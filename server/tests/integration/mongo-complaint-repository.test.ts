@@ -107,6 +107,33 @@ describe.skipIf(!uri)("Mongo complaint repository (UC50–UC52)", () => {
     expect(await repo.clubInbox(String(ids.clubA))).toEqual([]);
   });
 
+  it("UC50 E1: links only the same incident while it is undecided, once under concurrency, and cascades later steps", async () => {
+    const repo = mongoComplaintRepository();
+    const eventId = new Types.ObjectId();
+    const base = { studentId: String(ids.student), clubId: String(ids.clubA), type: "CONDUCT" as const, description: "x", evidence: [], now };
+    const [a, b] = await Promise.all([repo.submit(base), repo.submit(base)]);
+    expect([a.linkedComplaintId, b.linkedComplaintId].filter(Boolean)).toHaveLength(1);
+    const root = a.linkedComplaintId ? b : a;
+    // Another event, another type: different incidents.
+    expect((await repo.submit({ ...base, eventId: String(eventId) })).linkedComplaintId).toBeUndefined();
+    expect((await repo.submit({ ...base, type: "FINANCE" })).linkedComplaintId).toBeUndefined();
+    await repo.decide(root.id, String(ids.officer), { kind: "open" }, now);
+    await repo.decide(root.id, String(ids.officer), { kind: "triage", outcome: "Forwarded", ...triage,
+      responseDueAt: new Date("2026-11-20T00:00:00Z") }, now);
+    // Once the root is decided, a new complaint starts its own review.
+    expect((await repo.submit(base)).linkedComplaintId).toBeUndefined();
+    const inbox = await repo.clubInbox(String(ids.clubA));
+    expect(inbox.map((item) => item.id)).toEqual([root.id]);
+    await repo.respond(String(ids.clubA), root.id, String(ids.leader), { text: "Sorry", action: "Fixed", evidence: [] }, now);
+    await repo.decide(root.id, String(ids.officer), { kind: "escalate", severity: "MINOR", reason: "Repeated" }, now);
+    const pair = await m.complaints!.find({ _id: { $in: [new Types.ObjectId(a.id), new Types.ObjectId(b.id)] } }).lean();
+    expect(pair.map((doc) => doc.state)).toEqual(["Escalated", "Escalated"]);
+    expect(new Set(pair.map((doc) => String(doc.violationId))).size).toBe(1);
+    const follower = a.linkedComplaintId ? a : b;
+    const audits = await m.auditLogs!.find({ entityId: new Types.ObjectId(follower.id), action: "COMPLAINT_FORWARDED" }).lean();
+    expect(audits[0]?.before).toEqual({ state: "Submitted" });
+  });
+
   it("withdraws only an undecided own complaint, and two concurrent openings let exactly one win", async () => {
     const repo = mongoComplaintRepository();
     const created = await submitted();
@@ -126,7 +153,9 @@ describe.skipIf(!uri)("Mongo complaint repository (UC50–UC52)", () => {
     await repo.decide(created.id, String(ids.officer), { kind: "triage", outcome: "Forwarded", ...triage,
       responseDueAt: new Date("2026-11-08T00:00:00Z") }, now);
     const later = new Date("2026-11-09T00:00:00Z");
-    expect(await repo.flagOverdueResponses(later)).toBe(1);
+    // Two workers (e.g. two server instances) racing still raise the signal once.
+    const [first, second] = await Promise.all([repo.flagOverdueResponses(later), mongoComplaintRepository().flagOverdueResponses(later)]);
+    expect(first + second).toBe(1);
     expect(await repo.flagOverdueResponses(later)).toBe(0);
     expect(await m.notifications!.countDocuments({ eventCode: "COMPLAINT_RESPONSE_OVERDUE" })).toBe(1);
   });

@@ -6,13 +6,14 @@ import { ComplaintCard } from "@/components/custom/ComplaintCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
+import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubComplaints, useRespondToComplaint } from "@/hooks/useComplaints";
-import type { ComplaintForClub } from "@/services/complaints";
+import type { ComplaintEvidence, ComplaintForClub } from "@/services/complaints";
 
 /** UC52: complaints ICPDP forwarded to this club (never with the complainant, D5), answered once each. */
 export function ClubComplaintsPage() {
@@ -43,11 +44,12 @@ function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClu
   const respond = useRespondToComplaint();
   const [text, setText] = useState("");
   const [action, setAction] = useState("");
+  const [evidence, setEvidence] = useState<ComplaintEvidence[]>([]);
 
   async function send() {
     if (!auth.data || !text.trim() || !action.trim()) return;
     try {
-      await respond.mutateAsync({ clubId, id: item.id, response: { text, action, evidence: [] }, csrfToken: auth.data.csrfToken });
+      await respond.mutateAsync({ clubId, id: item.id, response: { text, action, evidence: evidence.filter((item) => item.url.trim()) }, csrfToken: auth.data.csrfToken });
       appToast.success(t("complaints.answered"));
     } catch (error) {
       appToast.danger(error instanceof Error ? error.message : t("complaints.error"));
@@ -65,6 +67,24 @@ function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClu
         <label className="block text-sm font-semibold">{t("complaints.answerAction")}<AppRequiredMark />
           <AppTextarea className="mt-1 block w-full font-normal" rows={2} maxLength={2000} value={action}
             onChange={(event) => setAction(event.target.value)} /></label>
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-semibold">{t("complaints.evidenceLabel")}</legend>
+          <p className="text-xs text-muted-app">{t("complaints.evidenceHint")}</p>
+          {evidence.map((item, index) => (
+            <div key={index} className="flex flex-wrap items-center gap-2">
+              <AppInput className="min-w-0 flex-1 basis-40" aria-label={t("complaints.evidenceName")} placeholder={t("complaints.evidenceName")}
+                value={item.label} maxLength={120}
+                onChange={(event) => setEvidence((list) => list.map((row, at) => at === index ? { ...row, label: event.target.value } : row))} />
+              <AppInput className="min-w-0 flex-[2] basis-56" type="url" aria-label={t("complaints.evidenceUrl")}
+                placeholder={t("complaints.evidenceUrl")} value={item.url} maxLength={500}
+                onChange={(event) => setEvidence((list) => list.map((row, at) => at === index ? { ...row, url: event.target.value } : row))} />
+              <AppButton type="button" variant="secondary" onClick={() => setEvidence((list) => list.filter((_row, at) => at !== index))}>
+                {t("complaints.removeEvidence")}</AppButton>
+            </div>
+          ))}
+          {evidence.length < 5 && <AppButton type="button" variant="secondary"
+            onClick={() => setEvidence((list) => [...list, { label: "", url: "" }])}>{t("complaints.addEvidence")}</AppButton>}
+        </fieldset>
         <AppButton type="submit" disabled={respond.isPending || !text.trim() || !action.trim()}>{t("complaints.answerSubmit")}</AppButton>
       </form> : undefined} />
   );

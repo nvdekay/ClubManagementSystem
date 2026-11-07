@@ -10,7 +10,7 @@ import type {
   ComplaintState,
   ComplaintTriage,
 } from "../../domain/complaint.js";
-import { OPEN_COMPLAINT_STATES, UNDECIDED_COMPLAINT_STATES } from "../../domain/complaint.js";
+import { UNDECIDED_COMPLAINT_STATES } from "../../domain/complaint.js";
 import { DomainError } from "../../domain/errors.js";
 import { queueNotifications } from "./club-board.js";
 import { clubUserIdsWithPermission } from "./club-permission-holders.js";
@@ -128,6 +128,11 @@ export function mongoComplaintRepository(): ComplaintRepository {
     return (await forIcpdp([doc as Doc]))[0]!;
   }
 
+  /** Duplicates that follow a root complaint and sit in the same state as it. */
+  async function linkedFollowers(session: ClientSession, rootId: Types.ObjectId, state: ComplaintState) {
+    return complaints.find({ linkedComplaintId: rootId, state }).session(session).lean();
+  }
+
   /** Opens a UC40 case linked both ways (BR28, FR-UC51-02) inside the caller's transaction. */
   async function openViolation(session: ClientSession, complaint: Doc, severity: string, reason: string, officerId: string,
     now: Date): Promise<Types.ObjectId> {
@@ -155,10 +160,13 @@ export function mongoComplaintRepository(): ComplaintRepository {
     async submit(input) {
       const id = new Types.ObjectId();
       await mongoose.connection.transaction(async (session) => {
-        // UC50 E1: a new complaint of the same student about the same club (and event) links to the open one.
+        // Serializes this student's submissions, so two concurrent duplicates cannot both become a root.
+        await m.users!.updateOne({ _id: oid(input.studentId) }, { $inc: { __v: 1 } }, { session });
+        // UC50 E1 — the same incident: same student, club, event (or both without one) and type, while the
+        // first complaint is still undecided, so the triage outcome can be shared with the duplicate.
         const duplicate = await complaints.findOne({ complainantId: oid(input.studentId), clubId: oid(input.clubId),
-          ...(input.eventId ? { eventId: oid(input.eventId) } : {}), state: { $in: [...OPEN_COMPLAINT_STATES] },
-          linkedComplaintId: { $exists: false } }).sort({ submittedAt: 1 }).session(session).lean();
+          eventId: input.eventId ? oid(input.eventId) : null, type: input.type,
+          state: { $in: [...UNDECIDED_COMPLAINT_STATES] }, linkedComplaintId: null }).sort({ submittedAt: 1 }).session(session).lean();
         await complaints.create([{ _id: id, complainantId: oid(input.studentId), clubId: oid(input.clubId),
           ...(input.eventId ? { eventId: oid(input.eventId) } : {}), type: input.type, description: input.description,
           evidence: input.evidence, isAnonymous: false, state: "Submitted", submittedAt: input.now,
@@ -248,32 +256,37 @@ export function mongoComplaintRepository(): ComplaintRepository {
                 violationId, closedAt: now } }, { session });
               await closeTask(session, group, now);
             }
-            for (const target of group) {
-              await audit(session, target, `COMPLAINT_${decision.outcome.toUpperCase()}`, officerId, "ICPDP Officer", { state: from },
-                { state: decision.outcome, severity: decision.severity, validity: decision.validity }, decision.reason, now);
+            // Duplicates follow the root from here on; only the root keeps an open ICPDP task.
+            if (linked.length) await closeTask(session, group.slice(1), now);
+            const previous = [{ id, state: from }, ...linked.map((row) => ({ id: row._id as Types.ObjectId, state: String(row.state) }))];
+            for (const target of previous) {
+              await audit(session, target.id, `COMPLAINT_${decision.outcome.toUpperCase()}`, officerId, "ICPDP Officer", { state: target.state },
+                { state: decision.outcome, severity: decision.severity, validity: decision.validity,
+                  ...(String(target.id) !== String(id) ? { linkedComplaintId: String(id) } : {}) }, decision.reason, now);
             }
             const students = [...student, ...linked.map((row) => row.complainantId)];
             // The student hears the outcome under its own code; COMPLAINT_FORWARDED belongs to the club inbox.
             await queueNotifications(session, students, "COMPLAINT_TRIAGED", ENTITY, id, { outcome: decision.outcome }, now);
             return;
           }
-          case "close": {
-            await move([id], ["Club Responded"], { state: "Closed", closedAt: now, closure: { reason: decision.reason,
-              actorId: oid(officerId), at: now } });
-            await closeTask(session, [id], now);
-            await audit(session, id, "COMPLAINT_CLOSED", officerId, "ICPDP Officer", { state: from }, { state: "Closed" },
-              decision.reason, now);
-            await queueNotifications(session, student, "COMPLAINT_CLOSED", ENTITY, id, { outcome: "Closed" }, now);
-            return;
-          }
+          case "close":
           case "escalate": {
-            const violationId = await openViolation(session, current as Doc, decision.severity, decision.reason, officerId, now);
-            await move([id], ["Club Responded"], { state: "Escalated", violationId, closedAt: now,
-              closure: { reason: decision.reason, actorId: oid(officerId), at: now } });
+            const closure = { reason: decision.reason, actorId: oid(officerId), at: now };
+            const violationId = decision.kind === "escalate"
+              ? await openViolation(session, current as Doc, decision.severity, decision.reason, officerId, now) : undefined;
+            const state = decision.kind === "close" ? "Closed" : "Escalated";
+            const set = { state, closedAt: now, closure, ...(violationId ? { violationId } : {}) };
+            await move([id], ["Club Responded"], set);
+            // Linked duplicates share the root's answer and outcome.
+            const followers = await linkedFollowers(session, id, "Club Responded");
+            if (followers.length) await complaints.updateMany({ _id: { $in: followers.map((row) => row._id) } }, { $set: set }, { session });
             await closeTask(session, [id], now);
-            await audit(session, id, "COMPLAINT_ESCALATED", officerId, "ICPDP Officer", { state: from },
-              { state: "Escalated", violationId: String(violationId) }, decision.reason, now);
-            await queueNotifications(session, student, "COMPLAINT_ESCALATED", ENTITY, id, { outcome: "Escalated" }, now);
+            for (const target of [id, ...followers.map((row) => row._id as Types.ObjectId)]) {
+              await audit(session, target, `COMPLAINT_${state.toUpperCase()}`, officerId, "ICPDP Officer", { state: "Club Responded" },
+                { state, ...(violationId ? { violationId: String(violationId) } : {}) }, decision.reason, now);
+            }
+            await queueNotifications(session, [...student, ...followers.map((row) => row.complainantId)],
+              decision.kind === "close" ? "COMPLAINT_CLOSED" : "COMPLAINT_ESCALATED", ENTITY, id, { outcome: state }, now);
           }
         }
       });
@@ -282,7 +295,8 @@ export function mongoComplaintRepository(): ComplaintRepository {
 
     async clubInbox(clubId) {
       // BR38: Submitted, Under Triage, Dismissed and Withdrawn complaints never reach the club.
-      const docs = await complaints.find({ clubId: oid(clubId), forwardedAt: { $exists: true },
+      // Linked duplicates are answered through their root, so the club sees each incident once.
+      const docs = await complaints.find({ clubId: oid(clubId), forwardedAt: { $exists: true }, linkedComplaintId: null,
         state: { $in: ["Forwarded", "Club Responded", "Closed", "Escalated"] } }).sort({ forwardedAt: -1, _id: -1 }).limit(200).lean();
       return forClub(docs);
     },
@@ -294,6 +308,11 @@ export function mongoComplaintRepository(): ComplaintRepository {
           { $set: { state: "Club Responded", respondedAt: now, clubResponse: { ...response, actorId: oid(actorId), at: now } } },
           { session });
         if (changed.matchedCount !== 1) conflict("only a forwarded complaint of this club can be answered, once");
+        const followers = await linkedFollowers(session, id, "Forwarded");
+        if (followers.length) {
+          await complaints.updateMany({ _id: { $in: followers.map((row) => row._id) } }, { $set: { state: "Club Responded",
+            respondedAt: now, clubResponse: { ...response, actorId: oid(actorId), at: now } } }, { session });
+        }
         await audit(session, id, "COMPLAINT_CLUB_RESPONDED", actorId, "Club", { state: "Forwarded" }, { state: "Club Responded" },
           undefined, now);
         const task = await tasks.findOne({ entityType: TASK, entityId: id, state: "Open" }).session(session).lean();
@@ -304,11 +323,14 @@ export function mongoComplaintRepository(): ComplaintRepository {
     },
 
     async flagOverdueResponses(now) {
-      const overdue = await complaints.find({ state: "Forwarded", responseDueAt: { $lt: now } }).select({ _id: 1 }).lean();
+      const overdue = await complaints.find({ state: "Forwarded", responseDueAt: { $lt: now }, linkedComplaintId: null })
+        .select({ _id: 1 }).lean();
       let flagged = 0;
       for (const row of overdue) {
         await mongoose.connection.transaction(async (session) => {
-          // Idempotent: one audit row per complaint marks the signal as raised.
+          // Writing the complaint first makes two workers on two processes conflict here; the retried one then
+          // finds the audit row and stops, so the signal is raised once per complaint.
+          await complaints.updateOne({ _id: row._id }, { $inc: { __v: 1 } }, { session });
           if (await audits.exists({ entityType: ENTITY, entityId: row._id, action: "COMPLAINT_RESPONSE_OVERDUE" }).session(session)) return;
           await audit(session, row._id as Types.ObjectId, "COMPLAINT_RESPONSE_OVERDUE", null, "SYSTEM", null,
             { state: "Forwarded", complianceSignal: true }, "UC52 E1", now);

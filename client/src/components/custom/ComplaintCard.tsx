@@ -85,7 +85,12 @@ export function ComplaintCard(props: ComplaintCardProps) {
         <p className="font-semibold">{t("complaints.clubAnswer")}</p>
         <p className="break-words whitespace-pre-line">{props.clubResponse.text}</p>
         <p className="mt-2 font-semibold">{t("complaints.clubAction")}</p>
-        <p className="break-words whitespace-pre-line">{props.clubResponse.action}</p></div>}
+        <p className="break-words whitespace-pre-line">{props.clubResponse.action}</p>
+        {props.clubResponse.evidence.length > 0 && <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+          {props.clubResponse.evidence.map((item) => <li key={item.url}>
+            <a className="break-all text-primary-app underline" href={item.url} target="_blank" rel="noreferrer noopener">{item.label}</a>
+          </li>)}
+        </ul>}</div>}
       {props.closureReason && <div className="mt-3 rounded-xl bg-surface-app p-3 text-sm">
         <p className="font-semibold">{t("complaints.closureReason")}</p><p className="break-words">{props.closureReason}</p></div>}
       {props.actions && <div className="mt-4 flex flex-wrap gap-2">{props.actions}</div>}
