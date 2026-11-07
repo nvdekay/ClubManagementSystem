@@ -145,7 +145,9 @@ export function mongoExportRepository(): ExportRepository {
       ...complaints.map((doc) => {
         const sender = doc.isAnonymous === true ? "Ẩn danh" : users.get(String(doc.complainantId));
         return { at: (doc.submittedAt as Date).getTime(), row: [
-          doc.recipient === "ICPDP" ? "Góp ý gửi ICPDP" : "Góp ý gửi CLB", text(clubs.get(String(doc.clubId))?.name),
+          // Rows written before 07/11/2026 were one-way feedback with a recipient; later rows are UC50 complaints.
+          doc.recipient === "ICPDP" ? "Góp ý gửi ICPDP" : doc.recipient === "CLUB" ? "Góp ý gửi CLB" : "Khiếu nại",
+          text(clubs.get(String(doc.clubId))?.name),
           text(doc.type), text(doc.description), null, text(doc.state),
           typeof sender === "string" ? sender : sender ? `${String(sender.displayName)} <${String(sender.email)}>` : null,
           date(doc.submittedAt)] };

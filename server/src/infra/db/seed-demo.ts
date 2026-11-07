@@ -26,7 +26,7 @@ import {
   saveRecruitmentApplicationDraft,
   submitRecruitmentApplication,
 } from "../../usecase/recruitment-application.js";
-import { sendStudentFeedback } from "../../usecase/student-feedback.js";
+import { submitComplaint } from "../../usecase/complaint.js";
 import { loadConfig, optionalCloudinaryConfig } from "../config/index.js";
 import { cloudinaryApplicationFiles } from "../files/cloudinary-application-files.js";
 import { mongoAccessRepository } from "./mongo-access-repository.js";
@@ -45,7 +45,7 @@ import { mongoPolicyRepository } from "./mongo-policy-repository.js";
 import { mongoRecruitmentApplicationRepository } from "./mongo-recruitment-application-repository.js";
 import { mongoRecruitmentCampaignRepository } from "./mongo-recruitment-campaign-repository.js";
 import { mongoCandidateEvaluationRepository } from "./mongo-candidate-evaluation-repository.js";
-import { mongoStudentFeedbackRepository } from "./mongo-student-feedback-repository.js";
+import { mongoComplaintRepository } from "./mongo-complaint-repository.js";
 import { mongoPropertyRepository } from "./mongo-property-repository.js";
 import { mongoRoomAllocationRepository } from "./mongo-room-allocation-repository.js";
 import { pdpClubs } from "./pdp-demo-data.js";
@@ -682,24 +682,20 @@ try {
     await schemes.activate(draft.id, String(owner), now);
   }
 
-  // ── One-way student feedback (UC50) ────────────────────────────────────────────────────────
-  const studentFeedback = mongoStudentFeedbackRepository();
+  // ── Complaints (UC50) waiting for ICPDP triage ───────────────────────────────────────────────
+  const complaintsRepo = mongoComplaintRepository();
   const hebe = club("HEBE").id.toString();
-  const messages: Array<[number, Parameters<typeof sendStudentFeedback>[2]]> = [
-    [4, { recipient: "CLUB", clubId: hebe, eventId: welcome.toString(), category: "praise",
-      message: "Đêm nhạc chào tân sinh viên quá đỉnh, âm thanh ánh sáng rất chuyên nghiệp!", isAnonymous: false }],
-    [6, { recipient: "CLUB", clubId: hebe, category: "suggestion",
-      message: "CLB có thể đăng lịch tập lên sớm hơn 1 tuần để mọi người sắp xếp không ạ?", isAnonymous: true }],
-    [12, { recipient: "CLUB", clubId: hebe, category: "issue",
-      message: "Buổi tập tối thứ 5 kết thúc muộn, gần giờ đóng cửa ký túc xá.", isAnonymous: true }],
-    [10, { recipient: "ICPDP", category: "suggestion",
-      message: "Nhà trường có thể mở thêm phòng tập cho các CLB nghệ thuật vào cuối tuần không ạ?", isAnonymous: false }],
-    [13, { recipient: "ICPDP", clubId: club("FBC").id.toString(), category: "issue",
-      message: "Lịch sử dụng nhà thi đấu của CLB cầu lông hay bị trùng với lịch thể dục.", isAnonymous: true }],
+  const complaints: Array<[number, Parameters<typeof submitComplaint>[2]]> = [
+    [6, { clubId: hebe, eventId: welcome.toString(), type: "EVENT", evidence: [],
+      description: "Đêm nhạc chào tân sinh viên kết thúc muộn hơn lịch đã công bố gần 1 tiếng, không có thông báo trước." }],
+    [12, { clubId: hebe, type: "CONDUCT", evidence: [],
+      description: "Buổi tập tối thứ 5 kết thúc muộn, gần giờ đóng cửa ký túc xá, thành viên bị nhắc nhở nhưng không thay đổi." }],
+    [13, { clubId: club("FBC").id.toString(), type: "OTHER", evidence: [],
+      description: "Lịch sử dụng nhà thi đấu của CLB cầu lông hay bị trùng với lịch thể dục của lớp." }],
   ];
-  for (const [index, input] of messages) {
-    if (await ucmsModels.complaints!.exists({ complainantId: s[index], description: input.message })) continue;
-    await sendStudentFeedback(studentFeedback, actor(s[index]!), input, now);
+  for (const [index, input] of complaints) {
+    if (await ucmsModels.complaints!.exists({ complainantId: s[index], description: input.description })) continue;
+    await submitComplaint(complaintsRepo, actor(s[index]!), input, now);
   }
 
   // ── Leadership transition waiting for ICPDP (UC13; UC12 is not built yet, so the plan is inserted) ──

@@ -46,7 +46,8 @@ describe.skipIf(!uri)("Mongo export repository", () => {
     await m.attendances!.insertMany([
       { eventId: finalized, studentId: an, clubId: robotics, checkedInAt: now, method: "self", finalized: true },
       { eventId: open, studentId: an, clubId: robotics, checkedInAt: now, method: "self" }]);
-    await m.complaints!.insertMany([
+    // Legacy one-way feedback rows keep their `recipient`, which the current schema no longer declares.
+    await m.complaints!.collection.insertMany([
       { complainantId: an, recipient: "ICPDP", clubId: robotics, type: "Góp ý", description: "Ẩn danh",
         isAnonymous: true, state: "Submitted", submittedAt: new Date("2026-10-02") },
       { complainantId: binh, recipient: "CLUB", clubId: robotics, type: "Khen", description: "Công khai",
