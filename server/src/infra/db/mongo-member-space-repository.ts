@@ -34,20 +34,25 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
       ]);
       if (!club || !mine) return null;
 
-      // Current positions: confirmed, in effect, inside an Active term — the same rule as permissions.
+      // Current positions, by the same rule as permissions: in effect inside an Active term; board seats
+      // (and the leader seat) count only once ICPDP confirmed them, UC23 roles need no confirmation.
       const activeTerms = await terms.find({ clubId: clubObjectId, state: "Active", startAt: { $lte: now },
         endAt: { $gt: now } }).select({ _id: 1 }).lean();
       const [assignmentDocs, positionDocs, memberDocs] = await Promise.all([
         activeTerms.length ? assignments.find({ clubId: clubObjectId, termId: { $in: activeTerms.map((term) => term._id) },
-          effectiveFrom: { $lte: now }, confirmedBy: { $exists: true, $ne: null },
+          effectiveFrom: { $lte: now },
           $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null }, { effectiveTo: { $gt: now } }] }).lean() : [],
-        positions.find({ clubId: clubObjectId, isActive: true }).select({ name: 1, isBoardSeat: 1 }).lean(),
+        positions.find({ clubId: clubObjectId, isActive: true }).select({ name: 1, isBoardSeat: 1, isLeaderRole: 1 }).lean(),
         memberships.find({ clubId: clubObjectId, state: { $in: ["Active", "Inactive"] } })
           .sort({ state: 1, joinedAt: 1 }).lean(),
       ]);
       const positionById = new Map(positionDocs.map((position) => [String(position._id), position]));
+      const heldAssignments = assignmentDocs.filter((assignment) => {
+        const position = positionById.get(String(assignment.positionId));
+        return position && (!(position.isBoardSeat === true || position.isLeaderRole === true) || Boolean(assignment.confirmedBy));
+      });
       function positionsOf(membershipId: unknown): string[] {
-        return assignmentDocs
+        return heldAssignments
           .filter((assignment) => String(assignment.membershipId) === String(membershipId))
           .flatMap((assignment) => {
             const position = positionById.get(String(assignment.positionId));
@@ -59,7 +64,7 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
       const nameById = new Map(userDocs.map((user) => [String(user._id), String(user.displayName)]));
       const members = memberDocs.map((member) => ({ displayName: nameById.get(String(member.userId)) ?? "",
         state: member.state as MembershipState, positions: positionsOf(member._id) }));
-      const board = memberDocs.flatMap((member) => assignmentDocs
+      const board = memberDocs.flatMap((member) => heldAssignments
         .filter((assignment) => String(assignment.membershipId) === String(member._id)
           && positionById.get(String(assignment.positionId))?.isBoardSeat === true && member.state === "Active")
         .map((assignment) => ({ positionName: String(positionById.get(String(assignment.positionId))!.name),

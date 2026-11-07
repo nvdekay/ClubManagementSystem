@@ -41,6 +41,15 @@ describe.skipIf(!uri)("Mongo member space repository", () => {
       permissionCodes: [], isActive: true });
     await ucmsModels.clubPositionAssignments!.create({ clubId, termId, positionId: boardSeat,
       membershipId: myMembership, effectiveFrom: new Date("2026-01-01"), assignedBy: peer, confirmedBy: peer });
+    // A UC23 role counts without ICPDP confirmation; an unconfirmed board seat does not.
+    const [regular, pendingSeat] = await ucmsModels.clubPositions!.create([
+      { clubId, code: "MEDIA", name: "Media", isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: false,
+        isSingleHolder: false, permissionCodes: ["club.event.manage"], isActive: true },
+      { clubId, code: "HEAD", name: "Head of events", isBoardSeat: true, isLeaderRole: false, isDefaultMemberRole: false,
+        isSingleHolder: true, permissionCodes: [], isActive: true }]);
+    await ucmsModels.clubPositionAssignments!.create([
+      { clubId, termId, positionId: regular!._id, membershipId: peerMembership, effectiveFrom: new Date("2026-01-01"), assignedBy: me },
+      { clubId, termId, positionId: pendingSeat!._id, membershipId: myMembership, effectiveFrom: new Date("2026-01-01"), assignedBy: peer }]);
     const base = { organizerType: "CLUB", clubId, clubName: "Space Club", semesterCode: "FA26", audienceScope: "PUBLIC",
       capacity: 10, confirmedRegistrationCount: 0, nextWaitlistPosition: 1, waitlistEnabled: false, allowWalkIn: false,
       currentRevisionNo: 1, publishedAt: now, attendanceFinalized: false, createdAt: now };
@@ -59,7 +68,7 @@ describe.skipIf(!uri)("Mongo member space repository", () => {
     expect(space?.membership).toMatchObject({ state: "Active", positions: ["Treasurer"] });
     expect(space?.members).toEqual([
       { displayName: "Me", state: "Active", positions: ["Treasurer"] },
-      { displayName: "Peer", state: "Inactive", positions: [] },
+      { displayName: "Peer", state: "Inactive", positions: ["Media"] },
     ]);
     expect(JSON.stringify(space?.members)).not.toContain("@example.edu");
     expect(space?.board).toEqual([{ positionName: "Treasurer", memberName: "Me" }]);
