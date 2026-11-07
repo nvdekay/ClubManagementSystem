@@ -34,6 +34,18 @@ describe.skipIf(!uri)("Mongo approval routing repository (UC05)", () => {
     expect((await repo.find(first.id))?.rules[0]?.slaHours).toBe(48);
   });
 
+  it("keeps exactly one Active set when two drafts are activated at the same time", async () => {
+    const repo = mongoApprovalRoutingRepository();
+    await m.routingRuleSets!.deleteMany({});
+    const head = String(new Types.ObjectId());
+    const [one, two] = [await repo.createDraft([], head, now), await repo.createDraft([], head, now)];
+    const results = await Promise.allSettled([repo.activate(one.id, head, now), repo.activate(two.id, head, now)]);
+    expect(await m.routingRuleSets!.countDocuments({ state: "Active" })).toBe(1);
+    for (const result of results) {
+      if (result.status === "rejected") expect(result.reason).toMatchObject({ kind: "conflict" });
+    }
+  });
+
   it("reads recent decided requests for simulation without writing", async () => {
     const repo = mongoApprovalRoutingRepository();
     const clubId = new Types.ObjectId();
@@ -49,5 +61,23 @@ describe.skipIf(!uri)("Mongo approval routing repository (UC05)", () => {
     expect(samples).toEqual([expect.objectContaining({ entityType: "PROPERTY_BOOKING", entityId: String(booking._id),
       facts: { requestType: "PROPERTY_BOOKING", propertyType: "STAGE", openViolations: 0 } })]);
     expect(await m.approvalTasks!.find({}).lean()).toEqual(before);
+  });
+  it("simulates with the facts of the reviewed revision and the cases open at that time", async () => {
+    await m.approvalTasks!.deleteMany({});
+    const repo = mongoApprovalRoutingRepository();
+    const clubId = new Types.ObjectId();
+    const eventId = new Types.ObjectId();
+    const opened = new Date("2026-10-01T00:00:00Z");
+    await m.eventProposalVersions!.collection.insertMany([
+      { eventId, revisionNo: 1, submittedAt: new Date("2026-09-30T00:00:00Z"), requestedBudgetTotal: 30_000_000, payload: { riskCategory: "HIGH" } },
+      { eventId, revisionNo: 2, submittedAt: new Date("2026-10-05T00:00:00Z"), requestedBudgetTotal: 0, payload: { riskCategory: "LOW" } }]);
+    await m.violations!.collection.insertMany([
+      { clubId, state: "Open", openedAt: new Date("2026-09-01T00:00:00Z") },
+      { clubId, state: "Resolved", openedAt: new Date("2026-08-01T00:00:00Z"), resolvedAt: new Date("2026-09-15T00:00:00Z") },
+      { clubId, state: "Open", openedAt: new Date("2026-10-10T00:00:00Z") }]);
+    await m.approvalTasks!.create({ entityType: "EVENT_PROPOSAL", entityId: eventId, clubId, title: "Gala", state: "Decided",
+      openedAt: opened, closedAt: new Date("2026-10-02T00:00:00Z") });
+    expect((await repo.recentDecided(5))[0]?.facts).toEqual({ requestType: "EVENT_PROPOSAL", amount: 30_000_000,
+      riskCategory: "HIGH", openViolations: 1 });
   });
 });

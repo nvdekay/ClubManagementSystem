@@ -483,7 +483,11 @@ export const ucmsTables = {
         "fields": [
           "state"
         ],
-        "name": "ix_routing_state"
+        "unique": true,
+        "name": "uq_routing_active",
+        "partialFilterExpression": {
+          "state": "Active"
+        }
       }
     ]
   },

@@ -360,7 +360,7 @@ Table routingRuleSets {
   Note: 'Bộ rule định tuyến phê duyệt đánh phiên bản (UC05, BR16). Hồ sơ UC08 / UC26 / UC46 đóng băng rule khớp lúc mở task; kích hoạt bộ mới chỉ áp cho hồ sơ mới. Hồ sơ không khớp rule nào được quyết định ở một cấp.'
   indexes {
     versionNo [unique, name: 'uq_routing_version']
-    state [name: 'ix_routing_state']
+    state [unique, name: 'uq_routing_active', partialFilterExpression: '{"state":"Active"}', note: 'Đúng một bộ Active: hai lần kích hoạt đồng thời thì một lần thất bại (409).']
   }
 }
 
