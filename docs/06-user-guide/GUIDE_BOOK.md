@@ -1,7 +1,8 @@
 # UCMS — Guide book hướng dẫn sử dụng
 
-> **Đối chiếu code ngày 17/10/2026 (`655cad3`).** Phía CLB có hai role cố định;
-> UC23 đã rút vì role CLB cố định, UC50 là góp ý một chiều và UC51/UC52 đã rút.
+> **Đối chiếu code ngày 07/11/2026.** Chương 4 (vai trò CLB, UC23) và chương 19 (khiếu nại UC50–UC52,
+> định tuyến phê duyệt UC05) đã viết lại theo code mới; ảnh chụp các chương này vẫn là giao diện trước
+> 07/11/2026 và cần chụp lại.
 > Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
 
 
@@ -33,7 +34,7 @@ khi seed, bằng các tài khoản mẫu; xem phần **Phụ lục** để biế
 16. Kinh phí: tạm ứng, quyết toán, đối soát.
 17. Hồ sơ vi phạm.
 18. Đánh giá CLB.
-19. Góp ý của sinh viên.
+19. Khiếu nại và định tuyến phê duyệt.
 20. ICPDP quản lý vòng đời CLB.
 21. Thiết lập hệ thống: chính sách, lĩnh vực CLB, tài khoản.
 22. Xuất dữ liệu.
@@ -91,15 +92,15 @@ Thanh bên chia nhóm theo không gian:
 |---|---|---|
 | Sinh viên | — | Tổng quan |
 | Sinh viên | Câu lạc bộ | CLB của tôi · Ứng tuyển CLB · Thành lập CLB |
-| Sinh viên | Sự kiện & góp ý | Sự kiện của tôi · Góp ý |
-| CLB | Thành viên & tổ chức | Thành viên · Tuyển thành viên · Ban chủ nhiệm · Thiết lập CLB |
+| Sinh viên | Sự kiện & khiếu nại | Sự kiện của tôi · Khiếu nại |
+| CLB | Thành viên & tổ chức | Thành viên · Tuyển thành viên · Ban chủ nhiệm · Thiết lập CLB · Vai trò & phân quyền |
 | CLB | Sự kiện | Sự kiện CLB · Đăng ký & điểm danh · Phản hồi sự kiện · Báo cáo sau sự kiện |
 | CLB | Tài chính & cơ sở vật chất | Khoản chi và quyết toán · Phòng được phân · Yêu cầu cơ sở vật chất |
-| CLB | — | Góp ý sinh viên · Trang công khai |
+| CLB | — | Khiếu nại · Trang công khai |
 | ICPDP | Câu lạc bộ | Quản lý CLB · Duyệt hồ sơ thành lập · Xác nhận ban chủ nhiệm · Duyệt chuyển giao nhiệm kỳ · Lĩnh vực CLB |
 | ICPDP | Sự kiện & cơ sở vật chất | Duyệt đề xuất sự kiện · Báo cáo sau sự kiện · Giải ngân kinh phí · Sự kiện cấp trường · Lịch sự kiện · Phân phòng CLB · Yêu cầu cơ sở vật chất · Phòng & thiết bị |
 | ICPDP | Đánh giá & báo cáo | Tiêu chí đánh giá CLB · Báo cáo định kỳ · Đánh giá CLB · Hồ sơ vi phạm · Xuất báo cáo |
-| ICPDP | — | Hộp thư góp ý |
+| ICPDP | — | Khiếu nại · Định tuyến phê duyệt |
 | ICPDP | Thiết lập hệ thống | Chính sách nhà trường · Tài khoản & phân quyền |
 
 Sinh viên và CLB còn có phần **Khám phá** (Khám phá CLB, Sự kiện) ở cuối thanh bên.
@@ -139,38 +140,31 @@ sửa hoặc từ chối.
 
 ![ICPDP thẩm định một hồ sơ thành lập](images/10-founding-review-detail.png)
 
-## 4. Thiết lập CLB và hai vai trò trong CLB
+## 4. Thiết lập CLB và vai trò trong CLB
 
-Phía CLB chỉ có **hai vai trò cố định**, không tự tạo thêm vai trò hay chia quyền lẻ:
+Quyền trong CLB đến từ ba nguồn (BR47, BR54, BR55):
 
 - **Club Leader**: Chủ nhiệm và các Phó chủ nhiệm đã được ICPDP xác nhận (qua hồ sơ thành lập,
-  đề cử ban chủ nhiệm hoặc chuyển giao nhiệm kỳ). Có toàn quyền quản lý CLB; Chủ nhiệm và Phó chủ
-  nhiệm có quyền như nhau.
-- **Club Member**: mọi thành viên đang hoạt động khác. Chỉ xem và tham gia.
+  đề cử ban chủ nhiệm hoặc chuyển giao nhiệm kỳ). Có mọi quyền CLB, gồm bốn quyền giữ riêng: quản lý
+  vai trò, đề cử ban chủ nhiệm, lập kế hoạch chuyển giao, xin tạm ngừng.
+- **Vai trò do Club Leader tạo** (ví dụ Thủ quỹ, Trưởng ban Sự kiện): mang đúng các quyền Club Leader
+  chọn, không bao giờ có bốn quyền giữ riêng. Giữ nhiều vai trò thì có hợp các quyền. Ghế ban điều hành
+  khác (do ICPDP xác nhận) cũng chỉ có quyền của chính ghế đó.
+- **Mọi thành viên đang hoạt động**: tự có hai quyền **điểm danh / danh sách chờ** và **xem phòng được
+  phân**, không cần được giao vai trò.
 
-| Việc | Club Leader | Club Member |
-|---|---|---|
-| Xem Tổng quan CLB, trang công khai | Có | Có |
-| Xem danh sách thành viên | Có (quản lý được) | Có (chỉ xem) |
-| Không gian thành viên, xin rời CLB, đăng ký sự kiện, check-in, phản hồi, góp ý | Có | Có |
-| Sửa hồ sơ vận hành và cơ cấu ban/bộ phận (Thiết lập CLB) | Có | Không |
-| Đổi trạng thái thành viên, xử lý yêu cầu rời, xuất Excel | Có | Không |
-| Tạo đợt tuyển, xét đơn, chấm rubric, tiếp nhận thành viên | Có | Không |
-| Đề cử ban chủ nhiệm | Có | Không |
-| Đề xuất, công bố, đổi lịch, huỷ sự kiện; quản lý sức chứa | Có | Không |
-| Điểm danh hộ, chốt điểm danh | Có | Không |
-| Xem phản hồi sự kiện và góp ý sinh viên gửi CLB | Có | Không |
-| Báo cáo sau sự kiện, báo cáo định kỳ | Có | Không |
-| Ghi khoản chi, nộp quyết toán | Có | Không |
-| Xem phòng được phân, gửi yêu cầu cơ sở vật chất | Có | Không |
-| Lập kế hoạch chuyển giao, xin tạm ngừng hoạt động | Có | Không |
+**Vai trò & phân quyền** (`/club/:clubId/roles`, chỉ Club Leader):
 
-Ba việc Club Leader có quyền nhưng **chưa có màn hình phía CLB**: nộp báo cáo định kỳ (chương 15),
-lập kế hoạch chuyển giao (chương 5) và xin tạm ngừng hoạt động.
+1. **Thêm vai trò**: đặt tên, chọn ban (nếu có), nhiệm vụ, một hay nhiều người giữ, rồi tick các quyền.
+2. Bấm vào vai trò để **Gán thành viên** (chọn thành viên đang hoạt động, ngày bắt đầu/kết thúc tuỳ chọn)
+   hoặc **Thu hồi**. Quyền có hiệu lực ngay; người được gán/thu hồi nhận thông báo.
+3. **Sửa** quyền của vai trò áp dụng ngay cho mọi người đang giữ. **Ngừng** chỉ được khi vai trò không
+   còn người giữ.
+4. Tab **Lịch sử** so sánh hai phiên bản cơ cấu; mỗi lần tạo/sửa/ngừng là một phiên bản mới.
 
-Thành viên muốn có quyền quản lý thì phải được đề cử vào ghế Phó chủ nhiệm và được ICPDP xác nhận
-(chương 5). Khi CLB mới được duyệt và còn ở bước thiết lập, người đứng đơn chỉ sửa được hồ sơ CLB
-và đề cử ban chủ nhiệm.
+Không sửa được: vai trò Chủ nhiệm/Phó chủ nhiệm, vai trò Thành viên (không gán tay, không thêm quyền),
+và danh sách ghế ban điều hành (chỉ đổi qua chuyển giao nhiệm kỳ). Chỉ CLB đang hoạt động mới sửa được
+cơ cấu. Thành viên thường xem các vai trò của CLB và vai trò mình đang giữ ở trang **Thành viên**.
 
 ![Không gian CLB của Club Leader: đủ các nhóm quản lý](images/11-club-leader-home.png)
 
@@ -656,30 +650,38 @@ Trạng thái: Bản nháp → Đang áp dụng → Đã thay thế.
 
 ![Bảng đánh giá CLB theo học kỳ](images/54-evaluations.png)
 
-## 19. Góp ý của sinh viên
+## 19. Khiếu nại và định tuyến phê duyệt
 
-Góp ý là kênh **một chiều**: sinh viên gửi, CLB hoặc ICPDP đọc. Hiện chưa có luồng phân loại,
-trả lời hay theo dõi trạng thái xử lý.
+Khiếu nại luôn đi tới **ICPDP trước**; CLB chỉ thấy khiếu nại khi ICPDP chuyển xuống và **không bao giờ
+thấy ai gửi** (BR38, D5).
 
-**Sinh viên** — **Góp ý** (`/workspace/feedback`):
+**Sinh viên** — **Khiếu nại** (`/workspace/complaints`):
 
-1. Chọn **Gửi tới**: **Một câu lạc bộ** hoặc **ICPDP (nhà trường)**.
-2. Chọn CLB (bắt buộc khi gửi CLB, không bắt buộc khi gửi ICPDP) và sự kiện liên quan nếu có.
-3. Chọn loại: Góp ý / Khen ngợi / Phản ánh; nhập nội dung (tối đa 2000 ký tự); có thể
-   **Gửi ẩn danh**.
-4. Bấm **Gửi góp ý**; xem lại ở **Góp ý bạn đã gửi**.
+1. Chọn CLB (bắt buộc) và sự kiện liên quan nếu có; chọn loại (Hành vi / Sự kiện / Tiền bạc / An toàn /
+   Khác); mô tả việc đã xảy ra; thêm tối đa 5 liên kết chứng cứ.
+2. Bấm **Gửi ICPDP**; theo dõi trạng thái ở **Khiếu nại của tôi**. Khi ICPDP chưa quyết định có thể
+   **Rút khiếu nại**. Gửi lại cùng một sự việc (cùng CLB, sự kiện, loại) khi khiếu nại trước còn chờ thì
+   được gộp và xử lý chung.
 
-**CLB** — **Góp ý sinh viên** (`/club/:clubId/feedback`, Club Leader) và **ICPDP** —
-**Hộp thư góp ý** (`/workspace/student-feedback`): danh sách để đọc, có loại, CLB và sự kiện
-liên quan, thời điểm gửi. Người gửi ẩn danh không bao giờ được hiển thị.
+**ICPDP** — **Khiếu nại** (`/workspace/complaint-review`):
 
-**Kết quả:** góp ý không sửa được sau khi gửi.
+1. **Bắt đầu xem xét** một khiếu nại mới; thấy người gửi, chứng cứ và số khiếu nại trùng.
+2. **Ra quyết định** kèm mức độ, tính hợp lệ và lý do (bắt buộc): **Bác bỏ**, **Chuyển xuống CLB** (kèm
+   hạn trả lời, mặc định 7 ngày) hoặc **Leo thang** (mở hồ sơ vi phạm, chương 17). CLB đã giải thể chỉ
+   bác bỏ được.
+3. Sau khi CLB trả lời: **Đóng** nếu hài lòng, hoặc **Leo thang**. Quá hạn mà CLB chưa trả lời thì ICPDP
+   nhận cảnh báo.
 
-![Sinh viên gửi góp ý](images/55-student-feedback.png)
+**CLB** — **Khiếu nại** (`/club/:clubId/complaints`, cần quyền trả lời khiếu nại): đọc khiếu nại đã chuyển
+xuống cùng ghi chú của ICPDP, gửi **một** lần trả lời gồm nội dung, hành động đã/sẽ làm và liên kết chứng
+cứ. CLB không sửa, bác bỏ hay đóng khiếu nại.
 
-![Góp ý sinh viên gửi cho CLB](images/56-club-feedback-inbox.png)
-
-![Hộp thư góp ý của ICPDP](images/57-icpdp-feedback-inbox.png)
+**Định tuyến phê duyệt** — ICPDP (`/workspace/routing-rules`): rule quyết định hồ sơ thành lập CLB, đề xuất
+sự kiện (theo ngân sách, mức rủi ro) hay yêu cầu cơ sở vật chất (theo loại) cần **Trưởng ICPDP** duyệt cấp
+hai. Mọi cán bộ xem và **mô phỏng**; chỉ Trưởng ICPDP tạo nháp, sửa và **Kích hoạt** (chỉ áp cho hồ sơ mới).
+Hồ sơ cần hai cấp hiện nhãn "Cấp 1/2"; duyệt ở cấp 1 chuyển hồ sơ cho Trưởng ICPDP, từ chối hoặc yêu cầu
+sửa ở cấp 1 là kết quả cuối. Người duyệt cấp 1 không được duyệt cấp 2. Vai trò Trưởng ICPDP được cấp ở
+**Tài khoản & phân quyền**, chỉ cho người đã là cán bộ ICPDP.
 
 ## 20. ICPDP quản lý vòng đời CLB
 

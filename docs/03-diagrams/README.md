@@ -137,8 +137,9 @@ cho mọi thực thể, bản số ghi bằng nhãn, tham gia toàn phần vẽ 
   - bỏ vì là hạ tầng kỹ thuật, không phải khái niệm nghiệp vụ: `approvalTasks`, `approvalDecisions`,
     `notifications`, `emailDeliveryLogs`, `auditLogs` (vì vậy module M10 không có trang), và bốn
     collection RBAC `roles`, `permissions`, `userRoleAssignments`, `clubRoleStructureVersions` (từ
-    13/10/2026 phía CLB chỉ còn hai role cố định `Club Leader` / `Club Member`, bộ quyền là hằng số
-    trong `server/src/domain/access.ts`; vai trò hệ thống của tài khoản là thuộc tính `System role` của
+    13/10 đến 07/11/2026 phía CLB chỉ có hai role cố định `Club Leader` / `Club Member`; từ 07/11/2026 role
+    CLB mang permission theo UC23, danh mục quyền là hằng số trong `server/src/domain/access.ts` — ERD chưa
+    vẽ lại theo mô hình này, xem `../05-implementation/CODE_DIAGRAM_GAPS.md`; vai trò hệ thống của tài khoản là thuộc tính `System role` của
     `User`). `Club Position` vẫn còn vì ghế Chủ nhiệm / Phó chủ nhiệm quyết định ai là Club Leader.
     Mọi collection trên vẫn nằm trong DBML và database; ERD chỉ không vẽ chúng.
 - Mỗi trường tham chiếu trong DBML được thay bằng **một quan hệ có tên** (ví dụ `Club organises Event`,

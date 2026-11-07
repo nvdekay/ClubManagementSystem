@@ -10,7 +10,24 @@ Mỗi khoảng trống dưới đây là một tính năng mới: trước khi c
 
 ## Lệch so với diagram
 
-Không còn khoảng lệch nào (07/11/2026): G1–G5 đã khớp, xem mục *Đã khớp*.
+Code đã khớp use case diagram và context diagram ở G1–G5 (07/11/2026, xem mục *Đã khớp*), kể cả các lỗi
+review sau đó (gộp khiếu nại trùng theo đúng sự việc, một bộ rule `Active` bằng index unique, kiểm tra nhiệm kỳ
+khi gán role, migration không đổi dữ liệu nếu không ghi được phiên bản, job quá hạn chống chạy trùng nhiều
+instance, mô phỏng dùng dữ liệu lúc quyết định, CLB đính kèm chứng cứ khi trả lời).
+
+## Diagram phụ còn mô tả mô hình cũ (người dùng chọn chưa sửa, 07/11/2026)
+
+Các diagram dưới đây không phải nguồn chuẩn nhưng vẫn vẽ mô hình trước 07/11/2026; ảnh PNG/SVG trong
+`../03-diagrams/img/` và báo cáo Google Doc cũng chưa sinh lại:
+
+| Diagram | Còn lệch |
+|---|---|
+| `UCMS_Organization_and_Flows.drawio` | Ghi "only two club roles", "UC23 withdrawn", Club Member không có permission quản lý; chưa có `ICPDP_HEAD` và duyệt cấp 1 → cấp 2 |
+| `UCMS_Screen_Flow.drawio` | Còn "Student feedback" / "Student feedback inbox"; thiếu Vai trò & phân quyền, Khiếu nại (CLB, ICPDP), Định tuyến phê duyệt |
+| `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Thiếu `routingRuleSets`, `approvalTasks.routingRuleSetId/routingRuleId/requiredLevel/currentLevel`, `approvalDecisions.level`; complaint còn là góp ý một chiều, chưa liên kết `Violation` |
+| `UCMS_Sequence_Diagrams.drawio` | Chưa có luồng duyệt hai cấp với `ICPDP_HEAD` |
+| `UCMS_Security_Architecture.drawio` | Chưa có audit `ACCESS_DENIED` (SEC-08) |
+| `../06-user-guide/GUIDE_BOOK.pdf`, ảnh chương 4 và 19 | Chưa xuất lại / chụp lại (Markdown và HTML đã cập nhật) |
 
 G2 (quyền mặc định của thành viên) **không** đi qua role của UC23: mọi membership `Active` tự có
 `club.attendance.manage` và `club.room.view`, không cần bản gán (BR54, BR47 c).

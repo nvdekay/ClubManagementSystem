@@ -18,7 +18,7 @@
 > **Thay đổi 2026-11-02:** UC05, UC23, UC51, UC52 khôi phục theo use case diagram đã duyệt (đảo ngược
 > việc rút ngày 2026-10-08 / 2026-10-16 và bản sửa I66); context diagram giữ 46 luồng (§15).
 
-4 actor (Student, Club Member, Club Leader, ICPDP Officer — CMB được tách ở I58), 3 hệ thống ngoài (Google OAuth, Google SMTP — dự kiến, bản hiện tại chỉ ghi log email, Cloudinary), 12 module.
+4 actor (Student, Club Member, Club Leader, ICPDP Officer — CMB được tách ở I58), 3 hệ thống ngoài (Google OAuth, Google SMTP — gửi email từ outbox từ 07/11/2026, Cloudinary), 12 module.
 
 ---
 
@@ -1297,7 +1297,7 @@ các dữ liệu cùng loại, nên những use case đứng sau nó được li
 | Hệ thống → ICPDP | Exported data & end-of-term club reports | UC55 (file report cuối kỳ của các CLB, bảng so sánh điểm xếp loại theo kỳ, dữ liệu xlsx/csv/pdf) |
 | Hệ thống → Google OAuth | Authentication request | UC01 |
 | Google OAuth → Hệ thống | Identity data | UC01 |
-| Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2); bản hiện tại chỉ ghi log email, chưa nối SMTP (SRS EXT-02) |
+| Hệ thống → Google SMTP | Email message | mọi thông báo có kênh email (§8.2), qua outbox (SRS EXT-02) |
 | Hệ thống → Cloudinary | Image file | mọi UC có tải ảnh lên |
 | Cloudinary → Hệ thống | Image URL | mọi UC có tải ảnh lên |
 

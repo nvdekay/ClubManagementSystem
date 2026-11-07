@@ -12,7 +12,7 @@ Guide book cho người dùng UCMS, theo ba không gian Student, CLB và ICPDP.
 
 Nội dung đối chiếu 15/10/2026; ảnh chụp 13/10/2026. Bản ảnh phủ các màn hình đã chụp (23 chương, 64 ảnh). Client yêu cầu đăng nhập cho mọi
 trang, kể cả trang chủ/danh bạ; API `/public/*` vẫn công khai. Toàn bộ ảnh được chụp lại ngày 13/10/2026 theo giao diện hiện tại (thanh
-bên chia nhóm, phía CLB chỉ còn hai vai trò Club Leader / Club Member), trên database demo
+bên chia nhóm, khi đó phía CLB chỉ có hai vai trò Club Leader / Club Member), trên database demo
 `ucms_guide_demo`. Ảnh UC36 và UC37 chụp trên bản demo có nối API trước khi server chính được
 nối ngày 15/10/2026. Các màn CLB thêm ngày 15/10/2026 (UC12, UC14, UC21 A2, UC38, UC40, UC43, UC54)
 mới được nhắc tên mục, chưa có ảnh. Đối chiếu phạm vi với
@@ -46,3 +46,7 @@ python3 docs/06-user-guide/build-guide.py
 
 Mở HTML, chọn In → lưu PDF, khổ A4 ngang, bật hình nền. PDF bàn giao đã được xuất và kiểm tra
 font tiếng Việt, ảnh, số trang và khả năng đọc trên trình duyệt.
+
+Từ 07/11/2026 nội dung chương 4 (vai trò CLB do Club Leader cấu hình, UC23; mọi thành viên `Active` có
+quyền điểm danh và xem phòng) và chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) theo code mới;
+ảnh của hai chương này chưa chụp lại.

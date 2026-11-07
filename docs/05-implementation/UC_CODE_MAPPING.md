@@ -1,6 +1,6 @@
 # Ma trận UC → code hiện hành
 
-> Đối chiếu `main` tại `655cad3` (code) ngày 17/10/2026; 56 mã, tất cả trong phạm vi (UC05, UC23, UC51, UC52 khôi phục 02/11/2026 theo use case diagram đã duyệt).
+> Đối chiếu `main` tại `46b9d9a` (code) ngày 07/11/2026; 56 mã, tất cả trong phạm vi (UC05, UC23, UC51, UC52 khôi phục 02/11/2026 theo use case diagram đã duyệt và đã có code từ 07/11/2026). Danh sách route chính xác: `/docs` của server.
 > “Có” nghĩa route/UI đã tồn tại và nối trong app chính khi cấu hình Auth hợp lệ; không đồng nghĩa
 > mọi nhánh đã qua nghiệm thu Mongo/Google/Cloudinary thật. Route server mount tại `server.ts` (dependency từ `main.ts`);
 > route UI định nghĩa trong [client/src/main.tsx](../../client/src/main.tsx) (`App.tsx` chỉ render `AuthWorkspacePage`).

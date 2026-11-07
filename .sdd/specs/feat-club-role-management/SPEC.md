@@ -36,7 +36,7 @@ SPEC này thay `feat-fixed-club-roles` và kế thừa phần hiện thực UC23
 ### API (`/api/v1/clubs/:clubId/...`)
 | Endpoint | Quyền | Ghi chú |
 |---|---|---|
-| `GET roles` | thành viên hiện tại; holder, danh sách thành viên và phiên bản chỉ trả cho `club.role.manage` | kèm `grantablePermissions` (10 mã: trừ 4 giữ riêng và 2 mặc định) |
+| `GET roles` | thành viên hiện tại; holder, danh sách thành viên và phiên bản chỉ trả cho `club.role.manage` | kèm `grantablePermissions` (12 mã: trừ 4 giữ riêng) |
 | `POST roles` | `club.role.manage` + CSRF | tạo role thường |
 | `PATCH roles/:roleId` | như trên | sửa tên, ban, mô tả, số người giữ, permission — hiệu lực ngay |
 | `DELETE roles/:roleId` | như trên | ngừng role không còn người giữ |
@@ -44,7 +44,7 @@ SPEC này thay `feat-fixed-club-roles` và kế thừa phần hiện thực UC23
 | `DELETE roles/:roleId/assignments/:assignmentId` | như trên | thu hồi |
 | `GET role-directory` | thành viên `Active`/`Inactive` | UC24: role, permission, `heldByMe`; không lộ người giữ khác |
 
-CLB phải ở `Active` hoặc `Pending Setup` để thay đổi; gán cần nhiệm kỳ đang hoạt động.
+CLB phải ở `Active` để thay đổi; gán cần nhiệm kỳ đang hoạt động.
 
 ### Transaction, phiên bản, audit, thông báo
 Mỗi mutation chạy trong một transaction Mongo: ghi `clubPositions`/`clubPositionAssignments`, append
@@ -81,3 +81,4 @@ Thêm/bỏ role ban điều hành (chỉ qua UC12/UC13); thông báo cho ICPDP m
 
 ## Changelog
 - v1.0.0 (2026-11-07) — người dùng duyệt theo prompt sửa lệch code/diagram; thay `feat-fixed-club-roles`.
+- v1.1.0 (2026-11-07) — sửa sau review: chỉ CLB `Active` sửa cơ cấu (đúng tiền điều kiện UC23); danh mục cấp được = 12 mã (danh mục trừ bốn quyền giữ riêng, BR55); gán role kiểm nhiệm kỳ tồn tại, đúng CLB, đang hiệu lực trong transaction; role UC23 không ghi `confirmedBy`; migration không đổi CLB nào nếu không ghi được phiên bản/audit (trả `skippedClubIds`).

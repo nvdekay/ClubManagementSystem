@@ -26,7 +26,7 @@
 >
 > **Thay đổi 2026-11-02:** đối chiếu với code và report final — CLB mới `Active` ngay ở UC08, không
 > còn quyền sáng lập tạm thời; domain đăng nhập lấy từ `ALLOWED_DOMAIN`, không thuộc UC04; email
-> mới chỉ được ghi log, chưa gửi qua Google SMTP; UC48/UC49 dùng một điểm tổng 1–5; audit ghi
+> mới chỉ được ghi log, chưa gửi qua Google SMTP (đã nối SMTP ngày 07/11/2026, xem EXT-02); UC48/UC49 dùng một điểm tổng 1–5; audit ghi
 > ở repository trong cùng transaction; thêm §12.1 Cơ chế bảo mật
 > và sửa các dòng SEC. **UC05, UC23, UC51, UC52 khôi phục theo use case diagram đã duyệt**: duyệt
 > nhiều cấp theo rule định tuyến (UC05, `ICPDP_HEAD`), role CLB mang permission do Club Leader cấu
@@ -760,7 +760,7 @@ client/src/pages/
 | Nhật ký | Mỗi lần gửi ghi một dòng `EmailDeliveryLog` với trạng thái, số lần thử và lỗi |
 | Retry | Gửi thất bại được thử lại với backoff; số lần thử và mốc thử tiếp theo nằm trên document outbox |
 | Cô lập lỗi | Lỗi SMTP không bao giờ rollback hay chặn thay đổi nghiệp vụ đã commit |
-| Bí mật | `SMTP_*` sẽ được validate lúc khởi động bởi `infra/config/` khi có transport SMTP; hiện chưa có biến nào |
+| Bí mật | `MAIL_TRANSPORT`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` được `infra/config/` validate lúc khởi động; production bắt buộc đủ, lỗi chỉ nêu tên biến, không in giá trị |
 
 ## 3.3 Giao diện API
 
@@ -3242,7 +3242,7 @@ Sửa 2026-11-02: các dòng SEC dưới đây được đối chiếu lại v�
 | SEC-11 | Dữ liệu cá nhân UCMS lưu giới hạn ở những gì Google OAuth trả về cộng hồ sơ sinh viên của trường; hệ thống không bao giờ hỏi mật khẩu, thông tin thanh toán hay giấy tờ tuỳ thân |
 | SEC-12 | Bản ghi audit, document version và kỳ đánh giá đã công bố là chỉ-ghi-thêm; không vai trò nào sửa hoặc xoá được qua ứng dụng. *Theo code:* đây là quy ước ở tầng ứng dụng, database không chặn |
 | SEC-13 | Chứng từ và tài liệu hồ sơ được tải lên chỉ truy cập được bởi các vai trò mà use case sở hữu cho phép (CLB đã nộp nó, và ICPDP), qua URL truy cập ngắn hạn; asset id nội bộ bị loại khỏi response. Ngoại lệ: logo CLB đề xuất là upload công khai với URL công khai lâu dài |
-| SEC-14 | Bí mật (`GOOGLE_CLIENT_ID/SECRET`, `SESSION_SECRET` ≥ 32 ký tự, `MONGO_URI`, `CLOUDINARY_*`) chỉ đọc từ biến môi trường, chỉ trong `infra/config/`, validate bằng zod lúc khởi động (nhóm xác thực và nhóm Cloudinary: có một biến thì phải đủ cả nhóm); `.env` bị `.gitignore` loại và CI chạy gitleaks. Log truy cập không ghi token phiên, cookie hay body; mail transport chỉ ghi người nhận và tiêu đề. *Chưa đạt theo code:* log truy cập ghi URL đầy đủ nên mã `code` và `state` một lần của callback OAuth lọt vào log, và error handler ghi `err.message` — với request lỗi định dạng có thể chứa một phần body; cả hai cần che (redact). Chưa có biến `SMTP_*` |
+| SEC-14 | Bí mật (`GOOGLE_CLIENT_ID/SECRET`, `SESSION_SECRET` ≥ 32 ký tự, `MONGO_URI`, `CLOUDINARY_*`, `SMTP_*`, `MAIL_FROM`) chỉ đọc từ biến môi trường, chỉ trong `infra/config/`, validate bằng zod lúc khởi động (nhóm xác thực, nhóm Cloudinary và nhóm SMTP: có một biến thì phải đủ cả nhóm); `.env` bị `.gitignore` loại và CI chạy gitleaks. Log truy cập không ghi token phiên, cookie hay body; mail transport không ghi nội dung thư hay mật khẩu SMTP; log transport (chỉ khi phát triển) ghi người nhận và tiêu đề. *Chưa đạt theo code:* log truy cập ghi URL đầy đủ nên mã `code` và `state` một lần của callback OAuth lọt vào log, và error handler ghi `err.message` — với request lỗi định dạng có thể chứa một phần body; cả hai cần che (redact). |
 | SEC-15 | MongoDB không bao giờ mở ra ngoài; file compose ở môi trường dev bind nó vào `127.0.0.1` |
 
 ## 12.1 Cơ chế bảo mật
@@ -3297,7 +3297,6 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 - Chưa audit: scheduler chuyển sự kiện sang `Ongoing` / `Completed`, điểm đánh giá ứng viên (UC19), tạo / đăng xuất / thu hồi phiên, cờ đã đọc của thông báo; lần đăng nhập bị từ chối vì `googleSubject` không khớp cũng không được audit.
 - Audit chỉ-ghi-thêm theo quy ước, database không chặn sửa.
 - Log truy cập ghi URL đầy đủ nên `code` và `state` của callback OAuth lọt vào log; error handler ghi `err.message`. Cần che.
-- Email thông báo chỉ được ghi log, chưa gửi, cho tới khi nối transport SMTP.
 - Từ 07/11/2026 code đã theo mô hình đã duyệt ở các điểm trước đây còn thiếu: định tuyến đa cấp và `ICPDP_HEAD` (UC05, BR16), role CLB mang permission (UC23), hai permission mặc định của thành viên, luồng khiếu nại UC50–UC52.
 - Phân quyền nằm trong từng use case chứ không ở một middleware theo permission; test tự động chỉ bảo đảm xác thực trên mọi route ghi, còn phân quyền dựa vào code review và unit test.
 
@@ -3768,9 +3767,9 @@ request và response do schema zod định nghĩa và được công bố tại 
 
 | Module | Endpoint (dự kiến) |
 |---|---|
-| M01 | `GET /auth/google`, `GET /auth/google/callback`, `POST /auth/logout`, `GET /me`, `GET /dashboard`, `GET|PATCH /users/:id/roles`, `POST /users/:id/lock`, `GET|PUT /policies`, `GET|PUT /approval-routing` |
+| M01 | `GET /auth/google`, `GET /auth/google/callback`, `POST /auth/logout`, `GET /me`, `GET /dashboard`, `GET|PATCH /users/:id/roles`, `POST /users/:id/lock`, `GET|PUT /policies`; UC05 hiện thực: `GET|POST /admin/routing-rules`, `PUT /admin/routing-rules/:id`, `POST /admin/routing-rules/:id/activate`, `GET /admin/routing-rules/:id/simulation?limit=` |
 | M02 | `GET /clubs`, `GET /clubs/:id`, `POST /club-applications`, `PATCH /club-applications/:id` (nộp lại → version mới), `POST /club-applications/:id/withdraw`, `POST /club-applications/:id/decision`, `PATCH /clubs/:id/profile`, `POST /clubs/:id/suspension-requests`, `POST /clubs/:id/lifecycle` |
-| M03 | `POST /clubs/:id/terms/nominations`, `POST /nominations/:id/decision`, `POST /clubs/:id/transitions`, `POST /transitions/:id/decision`, `GET|POST /clubs/:id/positions`, `POST /clubs/:id/position-assignments` |
+| M03 | `POST /clubs/:id/terms/nominations`, `POST /nominations/:id/decision`, `POST /clubs/:id/transitions`, `POST /transitions/:id/decision`, UC23 hiện thực: `GET|POST /clubs/:clubId/roles`, `PATCH|DELETE /clubs/:clubId/roles/:roleId`, `POST /clubs/:clubId/roles/:roleId/assignments`, `DELETE /clubs/:clubId/roles/:roleId/assignments/:assignmentId`, `GET /clubs/:clubId/role-directory` (UC24) |
 | M04 | `GET|POST /clubs/:id/campaigns`, `POST /campaigns/:id/publish`, `GET|POST /campaigns/:id/applications`, `POST /applications/:id/withdraw`, `POST /applications/:id/screening`, `POST /applications/:id/decision`, `POST /applications/:id/evaluations`, `POST /applications/:id/onboard`, `GET /clubs/:id/members`, `PATCH /memberships/:id/status`, `POST /memberships/:id/leave-requests`, `GET /me/memberships` |
 | M05 | `GET|POST /events`, `POST /events/university` (UC53), `POST /events/:id/invitations` (UC53), `DELETE /event-invitations/:id` (UC53), `GET /clubs/:id/event-invitations` (UC54), `PATCH /event-invitations/:id/respond` (UC54), `PATCH /events/:id` (nộp lại → bản sửa mới), `POST /events/:id/decision`, `POST /events/:id/publish`, `POST /events/:id/cancel`, `POST /events/:id/reschedule` |
 | M06 | `POST /events/:id/registrations`, `DELETE /registrations/:id`, `GET /events/:id/registrations`, `PATCH /events/:id/capacity`, `POST /registrations/:id/promote`, `POST /events/:id/check-ins`, `POST /events/:id/attendance/finalize`, `POST /events/:id/attendance/unlock` |
@@ -3779,7 +3778,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 | M09 | `GET|POST /evaluation-schemes`, `POST /evaluation-schemes/:id/activate`, `POST /evaluations/generate`, `GET /evaluations`, `POST /evaluations/:id/finalize`, `POST /evaluations/:id/publish`, `GET /exports?type=&format=&period=&clubId=` (UC55) |
 | M10 | `GET /approvals` (hộp thư phê duyệt dùng chung), `GET /approvals/:id`, `GET /notifications`, `PATCH /notifications/:id/read`, `GET /audit-logs?entityType=&entityId=` |
 | M11 | `GET|POST /properties`, `PATCH /properties/:id`, `GET /properties/:id/availability`, `GET|POST /property-bookings`, `PATCH /property-bookings/:id`, `POST /property-bookings/:id/decision`, `POST /property-bookings/:id/cancel`, `GET /admin/room-allocations?semesterCode=` (UC58), `GET /admin/room-allocations/options` (UC58), `POST /admin/room-allocations` (UC58), `POST /admin/room-allocations/{id}/revoke` (UC58), `GET /clubs/{clubId}/room-allocations` (UC58, chỉ đọc, cần `club.room.view` — mọi thành viên `Active`) |
-| M12 | `POST /events/:id/feedback`, `GET /events/:id/feedback/summary`, `GET|POST /complaints`, `POST /complaints/:id/withdraw`, `POST /complaints/:id/triage`, `POST /complaints/:id/response` |
+| M12 | `POST /events/:id/feedback`, `GET /events/:id/feedback/summary`, UC50–UC52 hiện thực: `POST /complaints`, `GET /complaints/mine`, `POST /complaints/:id/withdraw`, `GET /admin/complaints?state=`, `GET /admin/complaints/:id`, `POST /admin/complaints/:id/open`, `POST /admin/complaints/:id/triage`, `POST /admin/complaints/:id/close`, `POST /admin/complaints/:id/escalate`, `GET /clubs/:clubId/complaints`, `POST /clubs/:clubId/complaints/:id/response` |
 
 Quy ước: endpoint **decision** mang kết quả (`request-revision` / `approve` / `reject`) kèm lý do
 và nhận xét, và idempotent theo từng quyết định (API-07). **Nộp lại** là một `PATCH` trên chính

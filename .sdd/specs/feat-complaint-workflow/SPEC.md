@@ -77,3 +77,4 @@ Tải file chứng cứ (chỉ liên kết); tự động mở hồ sơ UC40 khi
 
 ## Changelog
 - v1.0.0 (2026-11-07) — người dùng duyệt theo prompt sửa lệch code/diagram; D5 chốt: CLB không thấy danh tính.
+- v1.1.0 (2026-11-07) — sửa sau review: khiếu nại trùng = cùng sinh viên, CLB, sự kiện (hoặc cùng không có), loại, và khiếu nại gốc còn chưa có quyết định; khoá theo sinh viên để nộp đồng thời chỉ có một gốc; khiếu nại trùng theo gốc qua trả lời/đóng/leo thang và chỉ gốc hiện cho CLB; audit dùng trạng thái riêng của từng khiếu nại; CLB đính kèm liên kết chứng cứ khi trả lời; tín hiệu quá hạn chống trùng giữa nhiều instance.
