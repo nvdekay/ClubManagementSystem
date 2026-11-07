@@ -95,43 +95,83 @@ describe.skipIf(!uri)("Mongo complaint repository (UC50–UC52)", () => {
     expect(await repo.clubInbox(String(ids.clubA))).toEqual([]);
   });
 
-  it("dismisses with a reason, closes the task, links duplicates and lets them share the outcome (UC50 E1)", async () => {
+  /** UC50 E1: ICPDP links `follower` into `root` while reviewing. */
+  async function link(followerId: string, rootId: string) {
+    return mongoComplaintRepository().decide(followerId, String(ids.officer), { kind: "link", targetId: rootId, reason: "Same incident" }, now);
+  }
+
+  it("UC50 E1: never links at submission; ICPDP links only the same student's undecided complaints about the same club", async () => {
     const repo = mongoComplaintRepository();
     const first = await submitted();
     const second = await submitted();
-    expect(second.linkedComplaintId).toBe(first.id);
-    await repo.decide(first.id, String(ids.officer), { kind: "open" }, now);
-    await repo.decide(first.id, String(ids.officer), { kind: "triage", outcome: "Dismissed", ...triage }, now);
-    expect((await m.complaints!.find({}).lean()).map((doc) => doc.state)).toEqual(["Dismissed", "Dismissed"]);
-    expect(await m.approvalTasks!.countDocuments({ state: "Open" })).toBe(0);
-    expect(await repo.clubInbox(String(ids.clubA))).toEqual([]);
+    expect(second.linkedComplaintId).toBeUndefined();
+    expect(await m.approvalTasks!.countDocuments({ state: "Open" })).toBe(2);
+    const otherClub = await repo.submit({ studentId: String(ids.student), clubId: String(ids.clubB), type: "CONDUCT",
+      description: "x", evidence: [], now });
+    const otherStudent = await repo.submit({ studentId: String(ids.member), clubId: String(ids.clubA), type: "CONDUCT",
+      description: "x", evidence: [], now });
+    for (const target of [otherClub.id, otherStudent.id, second.id]) {
+      await expect(link(target === second.id ? second.id : first.id, target)).rejects.toMatchObject({ kind: "conflict" });
+    }
+    await link(second.id, first.id);
+    expect((await m.complaints!.findById(second.id).lean())?.linkedComplaintId?.toString()).toBe(first.id);
+    expect(await m.approvalTasks!.countDocuments({ entityId: new Types.ObjectId(second.id), state: "Open" })).toBe(0);
+    expect(await m.auditLogs!.countDocuments({ entityId: new Types.ObjectId(second.id), action: "COMPLAINT_LINKED" })).toBe(1);
+    // A decided complaint cannot be linked or linked to.
+    await repo.decide(otherClub.id, String(ids.officer), { kind: "open" }, now);
+    await repo.decide(otherClub.id, String(ids.officer), { kind: "triage", outcome: "Dismissed", ...triage }, now);
+    await expect(link(otherClub.id, first.id)).rejects.toMatchObject({ kind: "conflict" });
   });
 
-  it("UC50 E1: links only the same incident while it is undecided, once under concurrency, and cascades later steps", async () => {
+  it("linked duplicates share the triage outcome, the club answer and the final outcome", async () => {
     const repo = mongoComplaintRepository();
-    const eventId = new Types.ObjectId();
-    const base = { studentId: String(ids.student), clubId: String(ids.clubA), type: "CONDUCT" as const, description: "x", evidence: [], now };
-    const [a, b] = await Promise.all([repo.submit(base), repo.submit(base)]);
-    expect([a.linkedComplaintId, b.linkedComplaintId].filter(Boolean)).toHaveLength(1);
-    const root = a.linkedComplaintId ? b : a;
-    // Another event, another type: different incidents.
-    expect((await repo.submit({ ...base, eventId: String(eventId) })).linkedComplaintId).toBeUndefined();
-    expect((await repo.submit({ ...base, type: "FINANCE" })).linkedComplaintId).toBeUndefined();
+    const root = await submitted();
+    const follower = await submitted();
+    await link(follower.id, root.id);
     await repo.decide(root.id, String(ids.officer), { kind: "open" }, now);
     await repo.decide(root.id, String(ids.officer), { kind: "triage", outcome: "Forwarded", ...triage,
       responseDueAt: new Date("2026-11-20T00:00:00Z") }, now);
-    // Once the root is decided, a new complaint starts its own review.
-    expect((await repo.submit(base)).linkedComplaintId).toBeUndefined();
-    const inbox = await repo.clubInbox(String(ids.clubA));
-    expect(inbox.map((item) => item.id)).toEqual([root.id]);
+    expect((await repo.clubInbox(String(ids.clubA))).map((item) => item.id)).toEqual([root.id]);
     await repo.respond(String(ids.clubA), root.id, String(ids.leader), { text: "Sorry", action: "Fixed", evidence: [] }, now);
     await repo.decide(root.id, String(ids.officer), { kind: "escalate", severity: "MINOR", reason: "Repeated" }, now);
-    const pair = await m.complaints!.find({ _id: { $in: [new Types.ObjectId(a.id), new Types.ObjectId(b.id)] } }).lean();
+    const pair = await m.complaints!.find({ _id: { $in: [new Types.ObjectId(root.id), new Types.ObjectId(follower.id)] } }).lean();
     expect(pair.map((doc) => doc.state)).toEqual(["Escalated", "Escalated"]);
     expect(new Set(pair.map((doc) => String(doc.violationId))).size).toBe(1);
-    const follower = a.linkedComplaintId ? a : b;
-    const audits = await m.auditLogs!.find({ entityId: new Types.ObjectId(follower.id), action: "COMPLAINT_FORWARDED" }).lean();
-    expect(audits[0]?.before).toEqual({ state: "Submitted" });
+    const forwarded = await m.auditLogs!.findOne({ entityId: new Types.ObjectId(follower.id), action: "COMPLAINT_FORWARDED" }).lean();
+    expect(forwarded?.before).toEqual({ state: "Submitted" });
+    expect(await m.auditLogs!.countDocuments({ entityId: new Types.ObjectId(follower.id), action: "COMPLAINT_CLUB_RESPONDED" })).toBe(1);
+  });
+
+  it("never handles a linked duplicate on its own: not queued and refused by every step", async () => {
+    const repo = mongoComplaintRepository();
+    const root = await submitted();
+    const follower = await submitted();
+    await link(follower.id, root.id);
+    expect((await repo.queue({})).map((item) => item.id)).toEqual([root.id]);
+    expect((await repo.findForIcpdp(root.id))?.linkedComplaintIds).toEqual([follower.id]);
+    for (const decision of [{ kind: "open" as const }, { kind: "triage" as const, outcome: "Forwarded" as const, ...triage },
+      { kind: "close" as const, reason: "x" }, { kind: "escalate" as const, severity: "MINOR" as const, reason: "x" },
+      { kind: "link" as const, targetId: root.id, reason: "x" }]) {
+      await expect(repo.decide(follower.id, String(ids.officer), decision, now)).rejects.toMatchObject({ kind: "conflict" });
+    }
+    await repo.decide(root.id, String(ids.officer), { kind: "open" }, now);
+    await repo.decide(root.id, String(ids.officer), { kind: "triage", outcome: "Forwarded", ...triage }, now);
+    await expect(repo.respond(String(ids.clubA), follower.id, String(ids.leader), { text: "t", action: "a", evidence: [] }, now))
+      .rejects.toMatchObject({ kind: "conflict" });
+  });
+
+  it("hands the review to the oldest duplicate when the root is withdrawn", async () => {
+    const repo = mongoComplaintRepository();
+    const root = await submitted();
+    const first = await submitted();
+    const second = await submitted();
+    await link(first.id, root.id);
+    await link(second.id, root.id);
+    await repo.withdraw(String(ids.student), root.id, now);
+    expect((await m.complaints!.findById(first.id).lean())?.linkedComplaintId).toBeUndefined();
+    expect(String((await m.complaints!.findById(second.id).lean())?.linkedComplaintId)).toBe(first.id);
+    expect(await m.approvalTasks!.countDocuments({ entityId: new Types.ObjectId(first.id), state: "Open" })).toBe(1);
+    expect((await repo.queue({ state: "Submitted" })).map((item) => item.id)).toEqual([first.id]);
   });
 
   it("withdraws only an undecided own complaint, and two concurrent openings let exactly one win", async () => {

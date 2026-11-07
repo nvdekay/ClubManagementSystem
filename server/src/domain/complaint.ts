@@ -15,7 +15,7 @@ export const TRIAGE_OUTCOMES = ["Dismissed", "Forwarded", "Escalated"] as const;
 export type TriageOutcome = (typeof TRIAGE_OUTCOMES)[number];
 export const TRIAGE_VALIDITIES = ["VALID", "PARTLY_VALID", "UNFOUNDED"] as const;
 export type TriageValidity = (typeof TRIAGE_VALIDITIES)[number];
-/** States a student may still withdraw from (UC50 A1) and that a new duplicate links to (UC50 E1). */
+/** States a student may still withdraw from (UC50 A1) and that ICPDP may link as one incident (UC50 E1). */
 export const UNDECIDED_COMPLAINT_STATES: readonly ComplaintState[] = ["Submitted", "Under Triage"];
 export const OPEN_COMPLAINT_STATES: readonly ComplaintState[] = ["Submitted", "Under Triage", "Forwarded", "Club Responded"];
 export const MAX_COMPLAINT_TEXT = 4_000;
@@ -94,7 +94,9 @@ export type ComplaintDecision =
   | { kind: "triage"; outcome: TriageOutcome; severity: ViolationSeverity; validity: TriageValidity; reason: string;
     responseDueAt?: Date }
   | { kind: "close"; reason: string }
-  | { kind: "escalate"; severity: ViolationSeverity; reason: string };
+  | { kind: "escalate"; severity: ViolationSeverity; reason: string }
+  /** UC50 E1: ICPDP judges two complaints of one student about one club to be the same incident. */
+  | { kind: "link"; targetId: string; reason: string };
 
 export interface ComplaintRepository {
   club(clubId: string): Promise<{ id: string; name: string; state: string } | null>;
@@ -163,6 +165,11 @@ export function assertComplaintDecision(current: Pick<Complaint, "state" | "club
     }
     case "close":
       if (current.state !== "Club Responded") throw new DomainError("only a complaint the club answered can be closed", "conflict");
+      return { ...decision, reason: complaintText(decision.reason, "reason", 2_000) };
+    case "link":
+      if (!UNDECIDED_COMPLAINT_STATES.includes(current.state)) {
+        throw new DomainError("only an undecided complaint can be linked to another", "conflict");
+      }
       return { ...decision, reason: complaintText(decision.reason, "reason", 2_000) };
     case "escalate":
       if (current.state !== "Club Responded") throw new DomainError("only a complaint the club answered can be escalated here", "conflict");

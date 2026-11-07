@@ -36,6 +36,7 @@ export const complaintTriageBody = z.object({
   reason: z.string().max(4_000), responseDueAt: z.string().datetime().optional(),
 }).strict();
 export const complaintCloseBody = z.object({ reason: z.string().max(4_000) }).strict();
+export const complaintLinkBody = z.object({ targetId: id, reason: z.string().max(4_000) }).strict();
 export const complaintEscalateBody = z.object({ reason: z.string().max(4_000), severity: z.enum(VIOLATION_SEVERITIES) }).strict();
 export const complaintResponseBody = z.object({
   text: z.string().max(MAX_COMPLAINT_TEXT * 2), action: z.string().max(4_000), evidence: evidence.optional(),
@@ -86,6 +87,9 @@ export function complaintRoutes(deps: ComplaintRouteDeps): Router {
     const body = parsed(complaintTriageBody, req.body);
     ok(res, await decide(res, req.params.id, { kind: "triage", ...body,
       responseDueAt: body.responseDueAt ? new Date(body.responseDueAt) : undefined }));
+  });
+  router.post("/admin/complaints/:id/link", authGuard(guard), async (req, res) => {
+    ok(res, await decide(res, req.params.id, { kind: "link", ...parsed(complaintLinkBody, req.body) }));
   });
   router.post("/admin/complaints/:id/close", authGuard(guard), async (req, res) => {
     ok(res, await decide(res, req.params.id, { kind: "close", ...parsed(complaintCloseBody, req.body) }));

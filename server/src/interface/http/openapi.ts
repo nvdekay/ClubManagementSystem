@@ -29,7 +29,7 @@ import { transitionDecisionBody } from "./leadership-transition-routes.js";
 import { eventRegistrationBody } from "./event-registration-routes.js";
 import { eventCheckInBody } from "./event-checkin-routes.js";
 import { eventFeedbackBody } from "./event-feedback-routes.js";
-import { complaintBody, complaintCloseBody, complaintEscalateBody, complaintQuery, complaintResponseBody,
+import { complaintBody, complaintCloseBody, complaintLinkBody, complaintEscalateBody, complaintQuery, complaintResponseBody,
   complaintTriageBody } from "./complaint-routes.js";
 import { COMPLAINT_STATES } from "../../domain/complaint.js";
 import { routingRulesBody, routingSimulationQuery } from "./approval-routing-routes.js";
@@ -1947,6 +1947,13 @@ export const openApiDocument = createDocument({
         requestBody: { content: { "application/json": { schema: complaintTriageBody } } },
         responses: { "200": { description: "Triaged", content: { "application/json": { schema: envelope(ComplaintForIcpdp) } } },
           "409": { description: "Not under triage, or club dissolved", content: { "application/json": { schema: ApiError } } } } },
+    },
+    "/admin/complaints/{id}/link": {
+      post: { summary: "UC50 E1: link an undecided complaint to another of the same student and club; it then follows that complaint",
+        requestParams: { path: z.object({ id: z.string() }) },
+        requestBody: { content: { "application/json": { schema: complaintLinkBody } } },
+        responses: { "200": { description: "Linked", content: { "application/json": { schema: envelope(ComplaintForIcpdp) } } },
+          "409": { description: "Not undecided, already linked, or another student or club", content: { "application/json": { schema: ApiError } } } } },
     },
     "/admin/complaints/{id}/close": {
       post: { summary: "UC51 A1: close a complaint after a satisfying club response",

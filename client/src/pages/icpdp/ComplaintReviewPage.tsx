@@ -61,12 +61,14 @@ export function ComplaintReviewPage() {
           <p>{queue.error.message}</p>
           <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("complaints.retry")}</AppButton></AppNotice>
           : queue.data.length === 0 ? <p className="py-10 text-center text-muted-app">{t("complaints.queueEmpty")}</p>
-            : <ul className="space-y-3">{queue.data.map((item) => <li key={item.id}><ReviewItem item={item} /></li>)}</ul>}
+            : <ul className="space-y-3">{queue.data.map((item) => <li key={item.id}><ReviewItem item={item}
+              candidates={queue.data.filter((other) => other.id !== item.id && other.complainant.id === item.complainant.id
+                && other.clubId === item.clubId && ["Submitted", "Under Triage"].includes(other.state))} /></li>)}</ul>}
     </>
   );
 }
 
-function ReviewItem({ item }: { item: ComplaintForIcpdp }) {
+function ReviewItem({ item, candidates }: { item: ComplaintForIcpdp; candidates: ComplaintForIcpdp[] }) {
   const { t } = useTranslation();
   const auth = useAuth();
   const decide = useDecideComplaint();
@@ -76,6 +78,7 @@ function ReviewItem({ item }: { item: ComplaintForIcpdp }) {
   const [validity, setValidity] = useState<Validity>("VALID");
   const [reason, setReason] = useState("");
   const [due, setDue] = useState("");
+  const [linkTarget, setLinkTarget] = useState("");
 
   async function run(decision: ComplaintDecisionInput) {
     if (!auth.data) return;
@@ -123,7 +126,21 @@ function ReviewItem({ item }: { item: ComplaintForIcpdp }) {
           {outcome === "Forwarded" && <label className="block text-sm font-semibold">{t("complaints.responseDue")}
             <AppInput type="date" className="mt-1 block font-normal" value={due} onChange={(event) => setDue(event.target.value)} /></label>}
           {reasonField}
-          <AppButton type="submit" disabled={decide.isPending || !reason.trim()}>{t("complaints.triage")}</AppButton>
+          <div className="flex flex-wrap gap-2">
+            <AppButton type="submit" disabled={decide.isPending || !reason.trim()}>{t("complaints.triage")}</AppButton>
+          </div>
+          {candidates.length > 0 && <div className="space-y-2 rounded-xl border border-border-app p-3">
+            <p className="text-sm font-semibold">{t("complaints.linkTitle")}</p>
+            <p className="text-xs text-muted-app">{t("complaints.linkHint")}</p>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="min-w-0 flex-1 basis-56 text-sm font-semibold">{t("complaints.linkTarget")}
+                <AppSelect label={t("complaints.linkTarget")} value={linkTarget} className="mt-1 w-full font-normal" onChange={setLinkTarget}
+                  options={[{ value: "", label: t("complaints.linkNone") }, ...candidates.map((other) => ({ value: other.id,
+                    label: `${other.description.slice(0, 60)}${other.description.length > 60 ? "…" : ""}` }))]} /></div>
+              <AppButton type="button" variant="secondary" disabled={decide.isPending || !linkTarget || !reason.trim()}
+                onClick={() => void run({ kind: "link", targetId: linkTarget, reason })}>{t("complaints.linkButton")}</AppButton>
+            </div>
+          </div>}
         </form>
           : item.state === "Club Responded" ? <div className="w-full space-y-3">
             <p className="text-sm font-semibold">{t("complaints.closeTitle")}</p>

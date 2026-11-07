@@ -160,23 +160,16 @@ export function mongoComplaintRepository(): ComplaintRepository {
     async submit(input) {
       const id = new Types.ObjectId();
       await mongoose.connection.transaction(async (session) => {
-        // Serializes this student's submissions, so two concurrent duplicates cannot both become a root.
-        await m.users!.updateOne({ _id: oid(input.studentId) }, { $inc: { __v: 1 } }, { session });
-        // UC50 E1 — the same incident: same student, club, event (or both without one) and type, while the
-        // first complaint is still undecided, so the triage outcome can be shared with the duplicate.
-        const duplicate = await complaints.findOne({ complainantId: oid(input.studentId), clubId: oid(input.clubId),
-          eventId: input.eventId ? oid(input.eventId) : null, type: input.type,
-          state: { $in: [...UNDECIDED_COMPLAINT_STATES] }, linkedComplaintId: null }).sort({ submittedAt: 1 }).session(session).lean();
         await complaints.create([{ _id: id, complainantId: oid(input.studentId), clubId: oid(input.clubId),
           ...(input.eventId ? { eventId: oid(input.eventId) } : {}), type: input.type, description: input.description,
-          evidence: input.evidence, isAnonymous: false, state: "Submitted", submittedAt: input.now,
-          ...(duplicate ? { linkedComplaintId: duplicate._id } : {}) }], { session });
+          evidence: input.evidence, isAnonymous: false, state: "Submitted", submittedAt: input.now }], { session });
         const club = await m.clubs!.findById(oid(input.clubId)).select({ name: 1 }).session(session).lean();
+        // UC50 E1: duplicates are linked by ICPDP while reviewing ("link"), never guessed at submission.
         await tasks.create([{ entityType: TASK, entityId: id, clubId: oid(input.clubId),
           title: `Khiếu nại về ${String(club?.name ?? "")}`, state: "Open", openedAt: input.now }], { session });
         // The audit and ICPDP notification never carry the complaint text.
         await audit(session, id, "COMPLAINT_SUBMITTED", input.studentId, "STUDENT", null,
-          { state: "Submitted", clubId: input.clubId, type: input.type, ...(duplicate ? { linkedComplaintId: String(duplicate._id) } : {}) },
+          { state: "Submitted", clubId: input.clubId, type: input.type },
           undefined, input.now);
         await queueNotifications(session, await officers(session), "COMPLAINT_SUBMITTED", ENTITY, id,
           { clubName: String(club?.name ?? ""), type: input.type }, input.now);
@@ -197,12 +190,28 @@ export function mongoComplaintRepository(): ComplaintRepository {
         if (!withdrawn) return;
         await closeTask(session, [oid(complaintId)], now);
         await audit(session, oid(complaintId), "COMPLAINT_WITHDRAWN", studentId, "STUDENT", null, { state: "Withdrawn" }, undefined, now);
+        // The oldest undecided duplicate takes over as the root, so the incident is still reviewed.
+        const followers = await complaints.find({ linkedComplaintId: oid(complaintId), state: { $in: [...UNDECIDED_COMPLAINT_STATES] } })
+          .sort({ submittedAt: 1, _id: 1 }).session(session).lean();
+        const [heir, ...rest] = followers;
+        if (heir) {
+          await complaints.updateOne({ _id: heir._id }, { $unset: { linkedComplaintId: "" } }, { session });
+          if (rest.length) await complaints.updateMany({ _id: { $in: rest.map((row) => row._id) } },
+            { $set: { linkedComplaintId: heir._id } }, { session });
+          const task = await tasks.findOne({ entityType: TASK, entityId: oid(complaintId) }).session(session).lean();
+          await tasks.create([{ entityType: TASK, entityId: heir._id, clubId: heir.clubId, title: String(task?.title ?? "Khiếu nại"),
+            state: "Open", openedAt: now }], { session });
+          await audit(session, heir._id as Types.ObjectId, "COMPLAINT_ROOT_REASSIGNED", null, "SYSTEM", { linkedComplaintId: complaintId },
+            { linkedComplaintId: null }, "the linked complaint was withdrawn", now);
+        }
       });
       return withdrawn ? (await base([withdrawn]))[0]! : null;
     },
 
     async queue(filter) {
-      const docs = await complaints.find(filter.state ? { state: filter.state } : {}).sort({ submittedAt: -1, _id: -1 }).limit(300).lean();
+      // Linked duplicates are shown inside their root (linkedComplaintIds), never as separate work.
+      const docs = await complaints.find({ linkedComplaintId: null, ...(filter.state ? { state: filter.state } : {}) })
+        .sort({ submittedAt: -1, _id: -1 }).limit(300).lean();
       return forIcpdp(docs);
     },
     async findForIcpdp(complaintId) {
@@ -215,14 +224,31 @@ export function mongoComplaintRepository(): ComplaintRepository {
       await mongoose.connection.transaction(async (session) => {
         const current = await complaints.findById(id).session(session).lean();
         if (!current) throw new DomainError("complaint not found", "not_found");
+        if (current.linkedComplaintId) conflict("this complaint follows a linked complaint; decide the linked complaint instead");
         const from = String(current.state) as ComplaintState;
         // Every write below is conditional on the state just read, so two officers cannot both win.
         async function move(ids: Types.ObjectId[], states: readonly ComplaintState[], set: Doc) {
-          const changed = await complaints.updateMany({ _id: { $in: ids }, state: { $in: [...states] } }, { $set: set }, { session });
+          const changed = await complaints.updateMany({ _id: { $in: ids }, state: { $in: [...states] }, linkedComplaintId: null },
+            { $set: set }, { session });
           if (changed.matchedCount < 1) conflict("the complaint changed meanwhile; reload and retry");
         }
         const student = [current.complainantId];
         switch (decision.kind) {
+          case "link": {
+            // Same student and club, both undecided roots: the complaint and its own duplicates follow the target.
+            const target = await complaints.findOneAndUpdate({ _id: oid(decision.targetId), complainantId: current.complainantId,
+              clubId: current.clubId, state: { $in: [...UNDECIDED_COMPLAINT_STATES] }, linkedComplaintId: null },
+            { $inc: { __v: 1 } }, { session }).lean();
+            if (!target || String(target._id) === String(id)) {
+              conflict("link only to another undecided complaint of the same student about the same club");
+            }
+            await move([id], UNDECIDED_COMPLAINT_STATES, { linkedComplaintId: target._id });
+            await complaints.updateMany({ linkedComplaintId: id }, { $set: { linkedComplaintId: target._id } }, { session });
+            await closeTask(session, [id], now);
+            await audit(session, id, "COMPLAINT_LINKED", officerId, "ICPDP Officer", { state: from, linkedComplaintId: null },
+              { state: from, linkedComplaintId: String(target._id) }, decision.reason, now);
+            return;
+          }
           case "open": {
             await move([id], ["Submitted"], { state: "Under Triage" });
             await tasks.updateOne({ entityType: TASK, entityId: id, state: "Open" }, { $set: { assigneeId: oid(officerId) } }, { session });
@@ -304,7 +330,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
     async respond(clubId, complaintId, actorId, response, now) {
       const id = oid(complaintId);
       await mongoose.connection.transaction(async (session) => {
-        const changed = await complaints.updateOne({ _id: id, clubId: oid(clubId), state: "Forwarded" },
+        const changed = await complaints.updateOne({ _id: id, clubId: oid(clubId), state: "Forwarded", linkedComplaintId: null },
           { $set: { state: "Club Responded", respondedAt: now, clubResponse: { ...response, actorId: oid(actorId), at: now } } },
           { session });
         if (changed.matchedCount !== 1) conflict("only a forwarded complaint of this club can be answered, once");
@@ -312,6 +338,10 @@ export function mongoComplaintRepository(): ComplaintRepository {
         if (followers.length) {
           await complaints.updateMany({ _id: { $in: followers.map((row) => row._id) } }, { $set: { state: "Club Responded",
             respondedAt: now, clubResponse: { ...response, actorId: oid(actorId), at: now } } }, { session });
+          for (const follower of followers) {
+            await audit(session, follower._id as Types.ObjectId, "COMPLAINT_CLUB_RESPONDED", actorId, "Club", { state: "Forwarded" },
+              { state: "Club Responded", linkedComplaintId: complaintId }, undefined, now);
+          }
         }
         await audit(session, id, "COMPLAINT_CLUB_RESPONDED", actorId, "Club", { state: "Forwarded" }, { state: "Club Responded" },
           undefined, now);

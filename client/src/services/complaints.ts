@@ -65,7 +65,8 @@ export type ComplaintDecisionInput =
   | { kind: "open" }
   | { kind: "triage"; outcome: TriageOutcome; severity: Severity; validity: Validity; reason: string; responseDueAt?: string }
   | { kind: "close"; reason: string }
-  | { kind: "escalate"; severity: Severity; reason: string };
+  | { kind: "escalate"; severity: Severity; reason: string }
+  | { kind: "link"; targetId: string; reason: string };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });

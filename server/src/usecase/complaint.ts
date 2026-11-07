@@ -83,6 +83,9 @@ export async function decideComplaint(repo: ComplaintRepository, auth: Pick<Auth
   const officerId = await officer(auth, actor);
   const current = await repo.findForIcpdp(id(complaintId, "complaint id"));
   if (!current) throw new DomainError("complaint not found", "not_found");
+  if (current.linkedComplaintId) {
+    throw new DomainError("this complaint follows a linked complaint; decide the linked complaint instead", "conflict");
+  }
   return repo.decide(current.id, officerId, assertComplaintDecision(current, decision, now), now);
 }
 

@@ -36,6 +36,8 @@ const en = {
   clubTitle: "Complaints", clubDescription: "Complaints ICPDP forwarded to the club. Answer each one once, with the action taken.",
   clubEmpty: "No forwarded complaints.", forwardNote: "ICPDP note", answer: "Answer", answerText: "Your answer",
   answerAction: "Action the club took or will take", answerSubmit: "Send answer", answered: "Answer sent to ICPDP.",
+  linkTitle: "Same incident as another complaint?", linkTarget: "Link to", linkNone: "Choose a complaint",
+  linkButton: "Link", linkHint: "Only this student's undecided complaints about the same club. The linked complaint follows that one's outcome.",
   overdue: "Overdue", forbidden: "Only club members who handle complaints can open this page.",
 };
 
@@ -74,7 +76,10 @@ const vi: Record<keyof typeof en, string> = {
   clubTitle: "Khiếu nại", clubDescription: "Khiếu nại ICPDP đã chuyển xuống CLB. Trả lời mỗi khiếu nại một lần, kèm hành động cụ thể.",
   clubEmpty: "Chưa có khiếu nại nào được chuyển xuống.", forwardNote: "Ghi chú của ICPDP", answer: "Trả lời",
   answerText: "Nội dung trả lời", answerAction: "Hành động CLB đã hoặc sẽ thực hiện", answerSubmit: "Gửi trả lời",
-  answered: "Đã gửi trả lời cho ICPDP.", overdue: "Quá hạn",
+  answered: "Đã gửi trả lời cho ICPDP.", linkTitle: "Cùng sự việc với khiếu nại khác?", linkTarget: "Gộp vào",
+  linkNone: "Chọn khiếu nại", linkButton: "Gộp",
+  linkHint: "Chỉ các khiếu nại chưa có quyết định của cùng sinh viên về cùng CLB. Khiếu nại được gộp sẽ theo kết quả của khiếu nại kia.",
+  overdue: "Quá hạn",
   forbidden: "Chỉ thành viên được giao xử lý khiếu nại của CLB mới mở được trang này.",
 };
 
