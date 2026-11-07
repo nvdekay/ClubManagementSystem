@@ -15,6 +15,13 @@ const schema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
+  MAIL_TRANSPORT: z.enum(["log", "smtp"]).optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_SECURE: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  MAIL_FROM: z.string().optional(),
 });
 
 const authSchema = z.object({
@@ -46,6 +53,44 @@ export function optionalCloudinaryConfig(config: Config): CloudinaryConfig | nul
     throw new Error(`Cloudinary configuration missing or invalid: ${Object.keys(parsed.error.flatten().fieldErrors).join(", ")}`);
   }
   return parsed.data;
+}
+
+// "Name <address>" or a bare address; the address part is what has to be valid.
+const mailFrom = z.string().trim().refine((value) => {
+  const address = /<([^<>]+)>$/.exec(value)?.[1] ?? value;
+  return z.string().email().safeParse(address).success && !/[\r\n]/.test(value);
+}, "MAIL_FROM must be an email address or Name <address>");
+
+const smtpSchema = z.object({
+  SMTP_HOST: z.string().trim().min(1),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535),
+  // true = TLS from the first byte (port 465); false = STARTTLS upgrade (port 587), which Google requires.
+  SMTP_SECURE: z.enum(["true", "false"]).transform((value) => value === "true"),
+  SMTP_USER: z.string().trim().min(1),
+  SMTP_PASSWORD: z.string().min(1),
+  MAIL_FROM: mailFrom,
+});
+export type SmtpConfig = z.infer<typeof smtpSchema>;
+export type MailConfig = { transport: "log" } | ({ transport: "smtp" } & SmtpConfig);
+
+/**
+ * EXT-02: picks the mail transport and fails fast. Production must send through SMTP; a partial
+ * SMTP setup never falls back to the log transport silently. Error messages name keys, never values.
+ */
+export function mailConfig(config: Config): MailConfig {
+  const smtpKeys = ["SMTP_HOST", "SMTP_PORT", "SMTP_SECURE", "SMTP_USER", "SMTP_PASSWORD", "MAIL_FROM"] as const;
+  const anySmtp = smtpKeys.some((key) => Boolean(config[key]));
+  const transport = config.MAIL_TRANSPORT ?? (config.NODE_ENV === "production" || anySmtp ? "smtp" : "log");
+  if (transport === "log") {
+    if (config.NODE_ENV === "production") throw new Error("MAIL_TRANSPORT=log is not allowed in production");
+    if (anySmtp) throw new Error("SMTP settings are present but MAIL_TRANSPORT=log; remove them or use smtp");
+    return { transport: "log" };
+  }
+  const parsed = smtpSchema.safeParse(config);
+  if (!parsed.success) {
+    throw new Error(`SMTP configuration missing or invalid: ${Object.keys(parsed.error.flatten().fieldErrors).join(", ")}`);
+  }
+  return { transport: "smtp", ...parsed.data };
 }
 
 export function requireAuthConfig(config: Config): AuthConfig {
