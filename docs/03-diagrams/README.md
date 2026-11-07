@@ -66,6 +66,11 @@ sửa ở repo trước, rồi tải đè file tương ứng lên Drive.
 | Hồng | `#FFCDD2` | **Club Leader** | Mọi màn hình còn lại của Club workspace: `Recruitment` → `Application screening`, `Leadership handover`, `Suspension requests`, `Board`, `Board history`, `Club settings`, `School event invitations`, `Club events`, `Registration & attendance`, `Event feedback`, `Periodic reports`, `Post-event reports`, `Expenses & settlement`, `Allocated rooms`, `Facility requests`, `Compliance and explanations`, `Published evaluations`, `Student feedback` |
 | Xanh lá | `#C8F7C5` | **ICPDP Officer** | ICPDP workspace: `Overview`; nhóm Clubs (`Manage clubs`, `Founding applications` → `Application snapshot`, `Suspension requests`, `Board confirmations` → `Board nomination`, `Leadership handovers` → `Leadership transition`, `Club fields`); nhóm Events & facilities (`Event proposals` → `Event proposal`, `Internal events` → `Internal event`, `Post-event reports`, `Event budgets` → `Event budget` → `Budget reconciliation`, `School events` → `School event`, `Events` của khu public — nhãn sidebar *Event calendar*, `Room allocation`, `Facility requests`, `Rooms & equipment`); nhóm Evaluation & reports (`Evaluation criteria`, `Periodic reports` → `Periodic report`, `Club evaluations` → `Club evaluation`, `Compliance cases` → `Compliance case`, `Export reports`); `Student feedback inbox` (ngoài nhóm); nhóm System settings (`School policy`, `Accounts & roles`) |
 
+> **Lưu ý 07/11/2026:** bảng trên mô tả đúng nội dung file `UCMS_Screen_Flow.drawio` hiện có, vẽ trước khi
+> code đổi. App hiện tại đã thay `Feedback` / `Student feedback inbox` bằng `Complaints` (Student, ICPDP) và
+> thêm `Roles & permissions`, `Complaints` (Club), `Approval routing` (ICPDP); diagram chưa vẽ lại — xem
+> `../05-implementation/CODE_DIAGRAM_GAPS.md`.
+
 Không có màu cho Guest: Guest không phải actor (use case model §3), khu public là UC06 của Student và mọi màn hình
 đều đứng sau UC01. Hộp nét đứt chữ nghiêng (`Clubs`, `Events`, `Club detail`, `Event detail`, `Join this club`,
 `Found a club`) là màn hình của khung khác được lặp lại để khung đang xem tự đủ; mũi tên vào hộp đó vẽ nét đứt.

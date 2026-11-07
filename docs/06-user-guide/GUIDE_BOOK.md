@@ -660,12 +660,14 @@ thấy ai gửi** (BR38, D5).
 1. Chọn CLB (bắt buộc) và sự kiện liên quan nếu có; chọn loại (Hành vi / Sự kiện / Tiền bạc / An toàn /
    Khác); mô tả việc đã xảy ra; thêm tối đa 5 liên kết chứng cứ.
 2. Bấm **Gửi ICPDP**; theo dõi trạng thái ở **Khiếu nại của tôi**. Khi ICPDP chưa quyết định có thể
-   **Rút khiếu nại**. Gửi lại cùng một sự việc (cùng CLB, sự kiện, loại) khi khiếu nại trước còn chờ thì
-   được gộp và xử lý chung.
+   **Rút khiếu nại**. Nếu ICPDP thấy hai khiếu nại của bạn là cùng một sự việc, ICPDP gộp chúng và xử lý
+   chung; khiếu nại được gộp hiện kết quả của khiếu nại kia.
 
 **ICPDP** — **Khiếu nại** (`/workspace/complaint-review`):
 
-1. **Bắt đầu xem xét** một khiếu nại mới; thấy người gửi, chứng cứ và số khiếu nại trùng.
+1. **Bắt đầu xem xét** một khiếu nại mới; thấy người gửi, chứng cứ và số khiếu nại đã gộp. Nếu cùng sinh viên
+   còn khiếu nại chưa có quyết định về cùng CLB và là cùng sự việc, chọn khiếu nại đó ở **Gộp vào**, ghi lý do
+   và bấm **Gộp**; khiếu nại được gộp rời hàng đợi và theo kết quả của khiếu nại kia.
 2. **Ra quyết định** kèm mức độ, tính hợp lệ và lý do (bắt buộc): **Bác bỏ**, **Chuyển xuống CLB** (kèm
    hạn trả lời, mặc định 7 ngày) hoặc **Leo thang** (mở hồ sơ vi phạm, chương 17). CLB đã giải thể chỉ
    bác bỏ được.

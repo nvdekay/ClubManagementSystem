@@ -11,11 +11,14 @@ Mỗi khoảng trống dưới đây là một tính năng mới: trước khi c
 ## Lệch so với diagram
 
 Code đã khớp use case diagram và context diagram ở G1–G5 (07/11/2026, xem mục *Đã khớp*), kể cả các lỗi
-review sau đó (gộp khiếu nại trùng theo đúng sự việc, một bộ rule `Active` bằng index unique, kiểm tra nhiệm kỳ
+review sau đó (khiếu nại trùng do ICPDP gộp tay, không đoán lúc nộp, một bộ rule `Active` bằng index unique, kiểm tra nhiệm kỳ
 khi gán role, migration không đổi dữ liệu nếu không ghi được phiên bản, job quá hạn chống chạy trùng nhiều
-instance, mô phỏng dùng dữ liệu lúc quyết định, CLB đính kèm chứng cứ khi trả lời).
+instance, mô phỏng dùng dữ liệu lúc quyết định, CLB đính kèm chứng cứ khi trả lời) và lần review thứ hai
+(khiếu nại đi theo không có task, không vào hàng đợi, mọi bước xử lý trực tiếp bị từ chối, rút khiếu nại gốc thì
+khiếu nại đi theo cũ nhất làm gốc; Member Space hiện role UC23 không cần ICPDP xác nhận; kích hoạt rule đồng
+thời trả đúng một 409).
 
-## Diagram phụ còn mô tả mô hình cũ (người dùng chọn chưa sửa, 07/11/2026)
+## Diagram phụ còn mô tả mô hình cũ (người dùng chọn để nguyên khi được hỏi ngày 07/11/2026)
 
 Các diagram dưới đây không phải nguồn chuẩn nhưng vẫn vẽ mô hình trước 07/11/2026; ảnh PNG/SVG trong
 `../03-diagrams/img/` và báo cáo Google Doc cũng chưa sinh lại:

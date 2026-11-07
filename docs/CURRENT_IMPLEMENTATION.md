@@ -47,7 +47,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Student | UC29 đăng ký sự kiện | Có |
 | Student | UC31 check-in | Có |
 | Student | UC48 phản hồi sự kiện | Có; một điểm tổng (chấm theo tiêu chí ngoài phạm vi) |
-| Student | UC50 khiếu nại | Có (07/11/2026), tại `/workspace/complaints`: chọn CLB (bắt buộc), sự kiện (tuỳ chọn), loại, mô tả, liên kết chứng cứ; luôn gửi ICPDP (BR38); theo dõi trạng thái, rút khi chưa có quyết định, khiếu nại trùng được gộp |
+| Student | UC50 khiếu nại | Có (07/11/2026), tại `/workspace/complaints`: chọn CLB (bắt buộc), sự kiện (tuỳ chọn), loại, mô tả, liên kết chứng cứ; luôn gửi ICPDP (BR38); theo dõi trạng thái, rút khi chưa có quyết định; ICPDP gộp tay khiếu nại cùng sự việc của cùng sinh viên về cùng CLB (UC50 E1) |
 | Club Member | UC22 xin rời CLB | Có; sinh viên theo dõi yêu cầu rời ở dashboard và trang "CLB của tôi" (19/10) |
 | Club Member | UC24 member space | Có |
 | Club Member | Xem danh sách thành viên | Có, qua `member-space`; không truy cập API quản trị `/memberships` |

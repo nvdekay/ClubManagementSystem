@@ -82,3 +82,4 @@ Thêm/bỏ role ban điều hành (chỉ qua UC12/UC13); thông báo cho ICPDP m
 ## Changelog
 - v1.0.0 (2026-11-07) — người dùng duyệt theo prompt sửa lệch code/diagram; thay `feat-fixed-club-roles`.
 - v1.1.0 (2026-11-07) — sửa sau review: chỉ CLB `Active` sửa cơ cấu (đúng tiền điều kiện UC23); danh mục cấp được = 12 mã (danh mục trừ bốn quyền giữ riêng, BR55); gán role kiểm nhiệm kỳ tồn tại, đúng CLB, đang hiệu lực trong transaction; role UC23 không ghi `confirmedBy`; migration không đổi CLB nào nếu không ghi được phiên bản/audit (trả `skippedClubIds`).
+- v1.2.0 (2026-11-07) — Member Space (UC24) hiện role UC23 không cần `confirmedBy`; ghế ban điều hành vẫn cần ICPDP xác nhận.

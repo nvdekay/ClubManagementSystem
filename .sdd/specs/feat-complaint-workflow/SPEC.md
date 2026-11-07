@@ -21,8 +21,10 @@ hồ sơ vi phạm); SEC-09; AC19; D5 (chốt 07/11/2026: CLB không thấy danh
   `type ∈ CONDUCT|EVENT|FINANCE|SAFETY|OTHER`, `description` 1–4.000 ký tự, `evidence` tối đa 5 liên kết http(s).
   Một transaction: tạo `Complaint` `Submitted`, `approvalTasks` `COMPLAINT` `Open`, audit
   `COMPLAINT_SUBMITTED` (không chứa nội dung), thông báo `COMPLAINT_SUBMITTED` cho ICPDP. Không thông báo CLB.
-- E1: nếu cùng sinh viên còn khiếu nại mở về cùng CLB (và cùng sự kiện), khiếu nại mới mang
-  `linkedComplaintId`; kết quả triage của khiếu nại gốc áp cho các khiếu nại trùng chưa có quyết định.
+- E1 (sửa v1.3.0): hệ thống không tự đoán "cùng sự việc". ICPDP gộp tay ở UC51
+  (`POST /admin/complaints/:id/link { targetId, reason }`): chỉ giữa hai khiếu nại chưa có quyết định của cùng
+  sinh viên về cùng CLB; khiếu nại được gộp mang `linkedComplaintId`, đóng task, rời hàng đợi, và theo kết quả
+  của khiếu nại gốc (triage, trả lời của CLB, đóng / leo thang).
 - `GET /complaints/mine`; `POST /complaints/:id/withdraw` chỉ cho khiếu nại của mình ở `Submitted`/`Under
   Triage` → `Withdrawn`, đóng task (409 nếu không còn rút được).
 
@@ -78,3 +80,5 @@ Tải file chứng cứ (chỉ liên kết); tự động mở hồ sơ UC40 khi
 ## Changelog
 - v1.0.0 (2026-11-07) — người dùng duyệt theo prompt sửa lệch code/diagram; D5 chốt: CLB không thấy danh tính.
 - v1.1.0 (2026-11-07) — sửa sau review: khiếu nại trùng = cùng sinh viên, CLB, sự kiện (hoặc cùng không có), loại, và khiếu nại gốc còn chưa có quyết định; khoá theo sinh viên để nộp đồng thời chỉ có một gốc; khiếu nại trùng theo gốc qua trả lời/đóng/leo thang và chỉ gốc hiện cho CLB; audit dùng trạng thái riêng của từng khiếu nại; CLB đính kèm liên kết chứng cứ khi trả lời; tín hiệu quá hạn chống trùng giữa nhiều instance.
+- v1.2.0 (2026-11-07) — review lần hai: khiếu nại đi theo không có task, không vào hàng đợi ICPDP, mọi bước xử lý trực tiếp → 409; rút khiếu nại gốc thì khiếu nại đi theo cũ nhất thành gốc mới (có task); khiếu nại đi theo được audit khi CLB trả lời.
+- v1.3.0 (2026-11-07) — người dùng chọn: bỏ tự gộp lúc nộp, ICPDP gộp tay (`link`) vì chỉ người đọc nội dung mới biết có cùng sự việc.

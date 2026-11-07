@@ -15,7 +15,8 @@ nhau, lấy theo SRS. Không xoá gì cả, để một quyết định luôn tr
 được đưa ra.
 
 **Các điểm đã lỗi thời ngay trong phần còn hiệu lực** (đối chiếu code 02/11/2026; lấy theo SRS):
-- Email "gửi qua Google SMTP" (§5, §19) — SMTP là kênh dự kiến; bản hiện tại chỉ ghi log email.
+- Email "gửi qua Google SMTP" (§5, §19) — đã đúng từ 07/11/2026: email gửi qua Google SMTP khi đủ cấu hình
+  (bắt buộc ở production); môi trường phát triển không cấu hình SMTP thì chỉ ghi log.
 - CLB mới vào `Pending Setup` — nay UC08 tạo CLB `Active` với ban chủ nhiệm sáng lập đã xác nhận,
   không còn quyền sáng lập tạm thời.
 - Domain email được phép là giá trị chính sách — nay lấy từ biến môi trường `ALLOWED_DOMAIN`.

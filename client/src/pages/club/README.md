@@ -50,8 +50,9 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 đã chuyển xuống, không có danh tính người khiếu nại (D5); trả lời một lần kèm hành động cụ thể.
 
 `ClubMembersPage` mở cho workspace CLB; `ClubRosterReadOnly` dùng member space để hiển thị
-danh sách tên/trạng thái/vị trí cho Club Member, không chia sẻ email. Không còn tab role hay
-`ClubMemberRoles`, API role-directory hoặc hook/service role. Chỉ Leader có `club.member.manage` thấy bảng quản trị:
+danh sách tên/trạng thái/vị trí (gồm cả role UC23) cho Club Member, không chia sẻ email, và bên dưới là
+`ClubMemberRoles` (UC24, `GET /clubs/:clubId/role-directory`): danh mục role của CLB, đánh dấu role người xem
+đang giữ. Chỉ người có `club.member.manage` thấy bảng quản trị:
  các yêu cầu rời CLB (UC22) đang chờ nằm
 ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
 thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong

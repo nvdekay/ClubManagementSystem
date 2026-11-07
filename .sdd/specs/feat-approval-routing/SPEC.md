@@ -71,3 +71,4 @@ hiện hiển thị qua `slaDueAt`).
 ## Changelog
 - v1.0.0 (2026-11-07) — người dùng duyệt theo prompt sửa lệch code/diagram; D1 chốt theo hướng RBAC.
 - v1.1.0 (2026-11-07) — sửa sau review: index unique một phần `uq_routing_active` (người dùng duyệt) bảo đảm đúng một bộ `Active`, kích hoạt đồng thời → 409; mô phỏng dùng revision và số hồ sơ vi phạm mở tại lúc mở task.
+- v1.2.0 (2026-11-07) — kích hoạt chạy một lần, không tự thử lại: hai lần đồng thời thì đúng một thành công, một nhận 409.
