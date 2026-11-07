@@ -63,25 +63,32 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
     },
     async activate(id, actorId, now) {
       const target = new Types.ObjectId(id);
+      // One attempt, no automatic retry: a concurrent activation must surface as 409, not silently
+      // supersede the set the other head just activated.
+      const session = await mongoose.startSession();
       try {
-        await mongoose.connection.transaction(async (session) => {
-          const draft = await sets.findOne({ _id: target, state: "Draft" }).session(session).lean();
-          if (!draft) throw new DomainError("only a draft rule set can be activated", "conflict");
-          // Supersede first: the partial unique index uq_routing_active allows one Active set at any time.
-          const previous = await sets.findOneAndUpdate({ state: "Active" }, { $set: { state: "Superseded", supersededAt: now } },
-            { session }).lean();
-          await sets.updateOne({ _id: target, state: "Draft" },
-            { $set: { state: "Active", activatedBy: new Types.ObjectId(actorId), activatedAt: now } }, { session });
-          await m.auditLogs!.create([{ entityType: "RoutingRuleSet", entityId: target, action: "ROUTING_RULES_ACTIVATED",
-            actorId: new Types.ObjectId(actorId), actorRole: "ICPDP Head",
-            before: previous ? { activeVersionId: String(previous._id), versionNo: previous.versionNo } : undefined,
-            after: { state: "Active" }, correlationId: randomUUID(), at: now }], { session });
-        });
+        session.startTransaction();
+        const draft = await sets.findOne({ _id: target, state: "Draft" }).session(session).lean();
+        if (!draft) throw new DomainError("only a draft rule set can be activated", "conflict");
+        // Supersede first: the partial unique index uq_routing_active allows one Active set at any time.
+        const previous = await sets.findOneAndUpdate({ state: "Active" }, { $set: { state: "Superseded", supersededAt: now } },
+          { session }).lean();
+        await sets.updateOne({ _id: target, state: "Draft" },
+          { $set: { state: "Active", activatedBy: new Types.ObjectId(actorId), activatedAt: now } }, { session });
+        await m.auditLogs!.create([{ entityType: "RoutingRuleSet", entityId: target, action: "ROUTING_RULES_ACTIVATED",
+          actorId: new Types.ObjectId(actorId), actorRole: "ICPDP Head",
+          before: previous ? { activeVersionId: String(previous._id), versionNo: previous.versionNo } : undefined,
+          after: { state: "Active" }, correlationId: randomUUID(), at: now }], { session });
+        await session.commitTransaction();
       } catch (error) {
-        if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
+        if (session.inTransaction()) await session.abortTransaction();
+        if (error instanceof mongoose.mongo.MongoServerError
+          && (error.code === 11000 || error.code === 112 || error.hasErrorLabel("TransientTransactionError"))) {
           throw new DomainError("another rule set was activated meanwhile; reload and retry", "conflict");
         }
         throw error;
+      } finally {
+        await session.endSession();
       }
       return required(target);
     },

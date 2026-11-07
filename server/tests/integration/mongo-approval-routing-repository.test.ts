@@ -41,9 +41,11 @@ describe.skipIf(!uri)("Mongo approval routing repository (UC05)", () => {
     const [one, two] = [await repo.createDraft([], head, now), await repo.createDraft([], head, now)];
     const results = await Promise.allSettled([repo.activate(one.id, head, now), repo.activate(two.id, head, now)]);
     expect(await m.routingRuleSets!.countDocuments({ state: "Active" })).toBe(1);
-    for (const result of results) {
-      if (result.status === "rejected") expect(result.reason).toMatchObject({ kind: "conflict" });
-    }
+    // Exactly one activation wins; the other gets a 409 conflict.
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0]!.reason).toMatchObject({ kind: "conflict" });
   });
 
   it("reads recent decided requests for simulation without writing", async () => {
