@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { CLUB_LEADER_PERMISSIONS, resolveClubPermissions } from "../../src/domain/access.js";
+import { CLUB_PERMISSIONS, resolveClubPermissions } from "../../src/domain/access.js";
 import { mongoAccessRepository } from "../../src/infra/db/mongo-access-repository.js";
 import { ucmsModels } from "../../src/infra/db/ucms-models.js";
 
@@ -58,7 +58,7 @@ describe.skipIf(!uri)("Mongo club access repository", () => {
     const own = await repo.findSnapshot(userId.toString(), clubId.toString());
     expect(own).not.toBeNull();
     expect(own?.assignments).toHaveLength(1);
-    expect(resolveClubPermissions(own!, now)).toEqual([...CLUB_LEADER_PERMISSIONS]);
+    expect(resolveClubPermissions(own!, now)).toEqual([...CLUB_PERMISSIONS]);
     expect(await repo.findSnapshot(userId.toString(), new Types.ObjectId().toString())).toBeNull();
   });
 });

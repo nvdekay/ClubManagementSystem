@@ -6,7 +6,7 @@ import { mongoClubViolationRepository } from "../../src/infra/db/mongo-club-viol
 import { mongoClubEvaluationRepository } from "../../src/infra/db/mongo-club-evaluation-repository.js";
 import { mongoApplicationExpiryRepository } from "../../src/infra/db/mongo-application-expiry-repository.js";
 import { mongoAccessRepository } from "../../src/infra/db/mongo-access-repository.js";
-import { resolveClubPermissions } from "../../src/domain/access.js";
+import { DEFAULT_MEMBER_PERMISSIONS, resolveClubPermissions } from "../../src/domain/access.js";
 import mongoose, { Types } from "mongoose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mongoClubInvitationRepository } from "../../src/infra/db/mongo-club-invitation-repository.js";
@@ -112,7 +112,7 @@ describe.skipIf(!uri)("remaining club UC transactions", () => {
     const stale = plan.revision;
     plan = await repo.submit(String(g.id), plan.id, plan.revision, String(g.president), now);
     await expect(repo.submit(String(g.id), plan.id, stale, String(g.president), now)).rejects.toMatchObject({ kind: "conflict" });
-    expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(g.candidateUser), String(g.id)))!, now)).toEqual([]);
+    expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(g.candidateUser), String(g.id)))!, now)).toEqual([...DEFAULT_MEMBER_PERMISSIONS]);
     await review.claim(plan.id, String(officer), now);
     await review.decide(plan.id, String(officer), { outcome: "Request revision", reason: "More details", followUpObligationIds: [] }, now);
     plan = (await repo.context(String(g.id), now)).plans[0]!;
@@ -122,7 +122,7 @@ describe.skipIf(!uri)("remaining club UC transactions", () => {
     const confirmed = await review.decide(plan.id, String(officer), { outcome: "Approve", followUpObligationIds: [`EVENT:${String(event._id)}`] }, now);
     expect(confirmed.decisions).toHaveLength(2);
     expect(confirmed.followUpConditions).toHaveLength(1);
-    expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(g.president), String(g.id)))!, now)).toEqual([]);
+    expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(g.president), String(g.id)))!, now)).toEqual([...DEFAULT_MEMBER_PERMISSIONS]);
     expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(g.candidateUser), String(g.id)))!, now)).toContain("club.transition.plan");
   });
   it("UC12/13 rejects a president candidate who leads another club in an overlapping term (BR06)", async () => {
@@ -141,7 +141,7 @@ describe.skipIf(!uri)("remaining club UC transactions", () => {
     await review.claim(plan.id, String(officer), now);
     await expect(review.decide(plan.id, String(officer), { outcome: "Approve", followUpObligationIds: [] }, now)).rejects.toThrow(/BR06/);
     expect(await m.transitionPlans!.findById(plan.id).lean()).toMatchObject({ state: "Pending Confirmation" });
-    expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(a.candidateUser), String(a.id)))!, now)).toEqual([]);
+    expect(resolveClubPermissions((await mongoAccessRepository().findSnapshot(String(a.candidateUser), String(a.id)))!, now)).toEqual([...DEFAULT_MEMBER_PERMISSIONS]);
   });
   it("UC14/15 requires fresh impact acknowledgement and commits only one competing decision", async () => {
     const g = await governedClub(); const repo = mongoSuspensionRequestRepository();

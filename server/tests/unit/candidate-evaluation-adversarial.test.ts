@@ -29,7 +29,7 @@ function accessRepo(permission = true): ClubAccessRepository {
     terms: [{ id: "666666666666666666666666", clubId, state: "Active",
       startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01") }],
     positions: [{ id: "777777777777777777777777", clubId, isActive: true,
-      isLeaderRole: false, isBoardSeat: true }],
+      isLeaderRole: false, isBoardSeat: true, code: "VICE_LEADER" }],
     // A confirmed board seat makes the caller a Club Leader; without it they are a plain Club Member.
     assignments: [{ clubId, termId: "666666666666666666666666",
       positionId: "777777777777777777777777", membershipId: "555555555555555555555555",

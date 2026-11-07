@@ -49,8 +49,10 @@ export function mongoAccessRepository(): ClubAccessRepository {
       }));
       const mappedPositions: ClubPositionAccess[] = positionDocs.map((position) => ({
         id: id(position._id), clubId: id(position.clubId),
-        isActive: position.isActive === true, isLeaderRole: position.isLeaderRole === true,
-        isBoardSeat: position.isBoardSeat === true,
+        code: String(position.code), isActive: position.isActive === true,
+        isLeaderRole: position.isLeaderRole === true, isBoardSeat: position.isBoardSeat === true,
+        isDefaultMemberRole: position.isDefaultMemberRole === true,
+        permissionCodes: Array.isArray(position.permissionCodes) ? position.permissionCodes.map(String) : [],
       }));
       const mappedAssignments: ClubAssignmentAccess[] = assignmentDocs.map((assignment) => ({
         clubId: id(assignment.clubId), termId: id(assignment.termId),

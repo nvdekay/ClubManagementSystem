@@ -22,6 +22,7 @@ import type { ClubRosterMember, WithdrawalRequest } from "@/services/memberSpace
 import { formatDay } from "@/utils/formatDate";
 
 import { ClubMemberOnboardDialog } from "./ClubMemberOnboardDialog";
+import { ClubMemberRoles } from "./ClubMemberRoles";
 import { ClubMemberStateDialog } from "./ClubMemberStateDialog";
 import { exportClubMembers } from "./exportClubMembers";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -276,6 +277,8 @@ function ClubRosterReadOnly({ clubId }: { clubId: string }) {
             ))}
           </ul>
         )}
+      {/* UC24: the roles of this club, with the ones the member holds marked. */}
+      <div className="mt-10"><ClubMemberRoles clubId={clubId} enabled /></div>
     </>
   );
 }

@@ -70,10 +70,10 @@ export async function revokeRoomAllocation(deps: RoomAllocationDeps, actor: Acce
   return deps.repo.revoke(allocationId(id), allocationReason(reason), officerId, now);
 }
 
-/** Read-only club view: active allocations with their remaining usable dates, shown when collecting the key. */
+/** Read-only club view for every Active member: allocations with their remaining usable dates. */
 export async function clubRoomAllocations(deps: RoomAllocationDeps, actor: AccessActor | null,
   clubId: string, now: Date): Promise<RoomAllocation[]> {
-  await assertClubAccess(deps.access, actor, clubId, "club.booking.manage", now);
+  await assertClubAccess(deps.access, actor, clubId, "club.room.view", now);
   const allocations = await deps.repo.list({ clubId: allocationId(clubId) });
   return allocations.filter((item) => !item.revokedAt).map((item) => ({ ...item,
     occurrences: item.occurrences.filter((occurrence) => occurrence.endAt > now

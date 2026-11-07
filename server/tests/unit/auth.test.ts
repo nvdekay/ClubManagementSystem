@@ -98,7 +98,7 @@ describe("Google login use case", () => {
           terms: [{ id: `term-${clubId}`, clubId, state: "Active",
             startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01") }],
           positions: [{ id: `position-${clubId}`, clubId, isActive: true,
-            isLeaderRole: false, isBoardSeat: clubId === "club-b" }],
+            isLeaderRole: false, isBoardSeat: clubId === "club-b", code: "VICE_LEADER" }],
           assignments: [{ clubId, termId: `term-${clubId}`, positionId: `position-${clubId}`,
             membershipId: `member-${clubId}`, effectiveFrom: new Date("2026-01-01"), confirmedBy: "officer" }],
         };
@@ -108,10 +108,27 @@ describe("Google login use case", () => {
     expect(result.workspaces.map((workspace) => workspace.kind))
       .toEqual(["student", "icpdp", "club", "club"]);
     expect(result.workspaces[2]).toMatchObject({
-      clubId: "club-a", role: "member", permissions: [],
+      clubId: "club-a", role: "member", permissions: ["club.attendance.manage", "club.room.view"],
     });
     expect(result.workspaces[3]).toMatchObject({ clubId: "club-b", role: "leader" });
     expect(result.workspaces[3]?.permissions).toContain("club.event.manage");
+  });
+
+  it("keeps a regular role holder a member even with club.member.manage (UC23)", async () => {
+    const fixture = fixtures();
+    const accessRepo: ClubAccessRepository = { async findSnapshot(_userId, clubId) {
+      return { clubId, clubName: clubId, clubState: "Active", isApprovedFounder: false,
+        membership: { id: "member", clubId, state: "Active" },
+        terms: [{ id: "term", clubId, state: "Active", startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01") }],
+        positions: [{ id: "secretary", clubId, code: "ROLE_SECRETARY", isActive: true, isLeaderRole: false,
+          permissionCodes: ["club.member.manage", "club.role.manage"] }],
+        assignments: [{ clubId, termId: "term", positionId: "secretary", membershipId: "member",
+          effectiveFrom: new Date("2026-01-01") }] };
+    } };
+    const repo: AuthRepository = { ...fixture.repo, async clubIds() { return ["club-a"]; } };
+    const result = await currentUser(repo, accessRepo, fixture.sessions, "signed", now);
+    expect(result.workspaces.at(-1)).toMatchObject({ role: "member",
+      permissions: ["club.member.manage", "club.attendance.manage", "club.room.view"] });
   });
 
   it("does not grant an ICPDP workspace for the withdrawn legacy head role", async () => {

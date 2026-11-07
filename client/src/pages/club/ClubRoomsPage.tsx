@@ -17,13 +17,13 @@ function vietnamDay(value: string | Date): string {
   return new Date(new Date(value).getTime() + 7 * 3600000).toISOString().slice(0, 10);
 }
 
-/** Read-only view of the rooms ICPDP allocated to the club; shown as proof when collecting the key. */
+/** Read-only view of the rooms ICPDP allocated to the club for every Active member (UC58, club.room.view). */
 export function ClubRoomsPage() {
   const { clubId = "" } = useParams();
   const { t, i18n } = useTranslation();
   const auth = useAuth();
   const can = Boolean(auth.data?.workspaces.some((item) => item.clubId === clubId
-    && item.permissions.includes("club.booking.manage")));
+    && item.permissions.includes("club.room.view")));
   const allocations = useClubRoomAllocations(clubId, can);
   const slots = useBookingSlots(can);
   const slotList = slots.data ?? [];

@@ -1,14 +1,13 @@
 import { DomainError } from "./errors.js";
 
 /**
- * The club side has exactly two fixed roles. A Club Leader is anyone holding a confirmed
- * board seat (Chủ nhiệm or Phó chủ nhiệm) in the active term and gets every permission below.
- * A Club Member is any other Active member and gets none of them: members only read and take
- * part (member space, roster, events). Viewing allocated rooms needs club.booking.manage, so
- * only a Club Leader sees them. There are no custom roles.
+ * The fixed club permission catalogue (BR55). A Club Leader holds every code. Every Active member
+ * holds the two default codes without any role assignment (BR54). The four reserved codes belong
+ * to the Club Leader only and can never be granted through a role.
  */
-export const CLUB_LEADER_PERMISSIONS = [
+export const CLUB_PERMISSIONS = [
   "club.profile.manage",
+  "club.role.manage",
   "club.recruitment.manage",
   "club.application.review",
   "club.member.manage",
@@ -17,6 +16,7 @@ export const CLUB_LEADER_PERMISSIONS = [
   "club.report.submit",
   "club.expense.record",
   "club.booking.manage",
+  "club.room.view",
   "club.feedback.view",
   "club.complaint.respond",
   "club.board.nominate",
@@ -24,7 +24,15 @@ export const CLUB_LEADER_PERMISSIONS = [
   "club.suspension.request",
 ] as const;
 
-export type ClubPermission = (typeof CLUB_LEADER_PERMISSIONS)[number];
+export type ClubPermission = (typeof CLUB_PERMISSIONS)[number];
+
+/** Held by every Active member of the club, whatever roles they hold (BR54, BR47 c). */
+export const DEFAULT_MEMBER_PERMISSIONS: readonly ClubPermission[] = ["club.attendance.manage", "club.room.view"];
+
+/** Held only by the Club Leader; never stored on or granted through another role (BR55). */
+export const LEADER_RESERVED_PERMISSIONS: readonly ClubPermission[] = [
+  "club.role.manage", "club.board.nominate", "club.transition.plan", "club.suspension.request",
+];
 
 export interface ClubMembershipAccess {
   id: string;
@@ -40,13 +48,36 @@ export interface ClubTermAccess {
   endAt: Date;
 }
 
+/** Role grantable through UC23: the catalogue minus the four leader-reserved codes. */
+export const ROLE_GRANTABLE_PERMISSIONS: readonly ClubPermission[] = CLUB_PERMISSIONS
+  .filter((code) => !LEADER_RESERVED_PERMISSIONS.includes(code));
+
+/** Codes of the Phó chủ nhiệm seat: UC07/UC08 write VICE_LEADER, older data uses VICE. */
+export const VICE_LEADER_SEAT_CODES: readonly string[] = ["VICE_LEADER", "VICE"];
+
 export interface ClubPositionAccess {
   id: string;
   clubId: string;
+  code?: string;
   isActive: boolean;
+  /** The Chủ nhiệm seat. */
   isLeaderRole: boolean;
-  /** Chủ nhiệm and Phó chủ nhiệm seats; a confirmed holder is a Club Leader. */
+  /** Board seat whose holder ICPDP confirms (UC08/UC11/UC13). */
   isBoardSeat?: boolean;
+  /** The default Members role: never held through an assignment, grants nothing itself. */
+  isDefaultMemberRole?: boolean;
+  permissionCodes?: readonly string[];
+}
+
+/** A confirmed holder of this seat is a Club Leader (BR47 a). */
+export function isClubLeaderSeat(position: Pick<ClubPositionAccess, "isLeaderRole" | "isBoardSeat" | "code">): boolean {
+  return position.isLeaderRole
+    || (position.isBoardSeat === true && VICE_LEADER_SEAT_CODES.includes(position.code ?? ""));
+}
+
+/** Keeps only catalogued codes a role may carry (BR55): unknown and reserved codes are dropped. */
+export function grantablePermissions(codes: readonly string[]): ClubPermission[] {
+  return ROLE_GRANTABLE_PERMISSIONS.filter((code) => codes.includes(code));
 }
 
 export interface ClubAssignmentAccess {
@@ -74,40 +105,57 @@ export interface ClubAccessRepository {
   findSnapshot(userId: string, clubId: string): Promise<ClubAccessSnapshot | null>;
 }
 
-const allClubPermissions: readonly ClubPermission[] = CLUB_LEADER_PERMISSIONS;
+function activeMembershipOf(snapshot: ClubAccessSnapshot): ClubMembershipAccess | null {
+  return snapshot.membership?.state === "Active" && snapshot.membership.clubId === snapshot.clubId
+    ? snapshot.membership : null;
+}
 
+/** Positions the caller holds right now: running assignment, current Active term, active position. */
+function heldPositions(snapshot: ClubAccessSnapshot, now: Date): Array<{ position: ClubPositionAccess; confirmed: boolean }> {
+  const membership = activeMembershipOf(snapshot);
+  if (!membership) return [];
+  const terms = new Set(snapshot.terms.filter((term) =>
+    term.clubId === snapshot.clubId && term.state === "Active" && term.startAt <= now && now < term.endAt,
+  ).map((term) => term.id));
+  const positions = new Map(snapshot.positions.filter((position) =>
+    position.clubId === snapshot.clubId && position.isActive && !position.isDefaultMemberRole,
+  ).map((position) => [position.id, position]));
+  return snapshot.assignments.flatMap((assignment) => {
+    const position = positions.get(assignment.positionId);
+    if (!position || assignment.clubId !== snapshot.clubId || assignment.membershipId !== membership.id
+      || !terms.has(assignment.termId) || assignment.effectiveFrom > now
+      || (assignment.effectiveTo && assignment.effectiveTo <= now)) return [];
+    return [{ position, confirmed: Boolean(assignment.confirmedBy) }];
+  });
+}
+
+/** BR47 a: holds a confirmed Chủ nhiệm or Phó chủ nhiệm seat in the current term. */
+export function isClubLeader(snapshot: ClubAccessSnapshot, now: Date): boolean {
+  return heldPositions(snapshot, now).some(({ position, confirmed }) => confirmed && isClubLeaderSeat(position));
+}
+
+/**
+ * BR47: a Club Leader holds every code; a confirmed board seat or a UC23 role grants its own codes
+ * (never a reserved one); every Active member holds the two defaults (BR54). Several roles add up.
+ */
 export function resolveClubPermissions(snapshot: ClubAccessSnapshot, now: Date): ClubPermission[] {
   const permissions = new Set<ClubPermission>();
-  const activeMembership = snapshot.membership?.state === "Active"
-    && snapshot.membership.clubId === snapshot.clubId ? snapshot.membership : null;
-
-  if (activeMembership) {
-    const terms = new Map(snapshot.terms.filter((term) =>
-      term.clubId === snapshot.clubId && term.state === "Active"
-      && term.startAt <= now && now < term.endAt,
-    ).map((term) => [term.id, term]));
-    const positions = new Map(snapshot.positions.filter((position) =>
-      position.clubId === snapshot.clubId && position.isActive,
-    ).map((position) => [position.id, position]));
-
-    for (const assignment of snapshot.assignments) {
-      if (assignment.clubId !== snapshot.clubId
-        || assignment.membershipId !== activeMembership.id
-        || !terms.has(assignment.termId)
-        || assignment.effectiveFrom > now
-        || (assignment.effectiveTo && assignment.effectiveTo <= now)) continue;
-      const position = positions.get(assignment.positionId);
-      if (position && (position.isLeaderRole || position.isBoardSeat) && assignment.confirmedBy) {
-        for (const permission of allClubPermissions) permissions.add(permission);
-      }
-    }
+  if (activeMembershipOf(snapshot)) {
+    for (const permission of DEFAULT_MEMBER_PERMISSIONS) permissions.add(permission);
   }
-
+  for (const { position, confirmed } of heldPositions(snapshot, now)) {
+    if (isClubLeaderSeat(position)) {
+      if (confirmed) for (const permission of CLUB_PERMISSIONS) permissions.add(permission);
+      continue;
+    }
+    if (position.isBoardSeat && !confirmed) continue;
+    for (const permission of grantablePermissions(position.permissionCodes ?? [])) permissions.add(permission);
+  }
   if (snapshot.clubState === "Pending Setup" && snapshot.isApprovedFounder) {
     permissions.add("club.profile.manage");
     permissions.add("club.board.nominate");
   }
-  return allClubPermissions.filter((permission) => permissions.has(permission));
+  return CLUB_PERMISSIONS.filter((permission) => permissions.has(permission));
 }
 
 export function requireClubPermission(
@@ -116,7 +164,7 @@ export function requireClubPermission(
   now: Date,
 ): void {
   if (!resolveClubPermissions(snapshot, now).includes(permission)) {
-    throw new DomainError("club access denied", "forbidden");
+    throw new DomainError("club access denied", "forbidden", { requiredPermission: permission });
   }
 }
 

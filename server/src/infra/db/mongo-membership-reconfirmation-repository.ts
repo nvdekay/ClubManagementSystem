@@ -1,3 +1,4 @@
+import { VICE_LEADER_SEAT_CODES } from "../../domain/access.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
@@ -13,7 +14,9 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
   }
   async function isLeader(session: ClientSession, member: Doc, now: Date) {
     const terms = await m.clubTerms!.find({ clubId: member.clubId, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } }).session(session).lean();
-    const positions = await m.clubPositions!.find({ clubId: member.clubId, isActive: true, $or: [{ isLeaderRole: true }, { isBoardSeat: true }] }).session(session).lean();
+    // Only Club Leader seats (Chủ nhiệm, Phó chủ nhiệm) are exempt, not every board seat (BR47 a).
+    const positions = await m.clubPositions!.find({ clubId: member.clubId, isActive: true,
+      $or: [{ isLeaderRole: true }, { isBoardSeat: true, code: { $in: [...VICE_LEADER_SEAT_CODES] } }] }).session(session).lean();
     const assignment = await m.clubPositionAssignments!.findOne({ membershipId: member._id, clubId: member.clubId, termId: { $in: terms.map((t) => t._id) },
       positionId: { $in: positions.map((p) => p._id) }, confirmedBy: { $ne: null }, effectiveFrom: { $lte: now }, $or: [{ effectiveTo: null }, { effectiveTo: { $gt: now } }] }).session(session).lean();
     if (assignment) {

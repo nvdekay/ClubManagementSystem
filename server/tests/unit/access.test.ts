@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  CLUB_LEADER_PERMISSIONS,
+  CLUB_PERMISSIONS,
+  DEFAULT_MEMBER_PERMISSIONS,
   normalizeAllowedGoogleEmail,
   requireClubPermission,
   resolveClubPermissions,
@@ -11,7 +12,7 @@ import { assertClubAccess } from "../../src/usecase/access.js";
 
 const now = new Date("2026-10-02T12:00:00.000Z");
 
-// A plain Active member: holds the default Members position, which grants nothing.
+// A plain Active member: holds a position that grants nothing beyond the two default permissions.
 function snapshot(): ClubAccessSnapshot {
   return {
     clubId: "club-a",
@@ -36,17 +37,28 @@ function viceLeader(): ClubAccessSnapshot {
   const base = snapshot();
   return {
     ...base,
-    positions: [{ ...base.positions[0]!, isBoardSeat: true }],
+    positions: [{ ...base.positions[0]!, isBoardSeat: true, code: "VICE_LEADER" }],
     assignments: [{ ...base.assignments[0]!, confirmedBy: "officer-a" }],
   };
 }
 
 describe("club permission resolver", () => {
-  it("gives a Club Member no management permission", () => {
-    expect(resolveClubPermissions(snapshot(), now)).toEqual([]);
+  it("gives a plain Active member exactly the two default permissions (BR54)", () => {
+    expect(resolveClubPermissions(snapshot(), now)).toEqual(["club.attendance.manage", "club.room.view"]);
+    expect(resolveClubPermissions({ ...snapshot(), positions: [], assignments: [], terms: [] }, now))
+      .toEqual([...DEFAULT_MEMBER_PERMISSIONS]);
     expect(() => requireClubPermission(snapshot(), "club.event.manage", now)).toThrowError(
       expect.objectContaining({ kind: "forbidden" }),
     );
+  });
+
+  it("withholds the default permissions from Inactive, Left and Banned members and from other clubs", () => {
+    for (const state of ["Inactive", "Left", "Banned"]) {
+      expect(resolveClubPermissions({ ...snapshot(), membership: { id: "member-a", clubId: "club-a", state } }, now))
+        .toEqual([]);
+    }
+    expect(resolveClubPermissions({ ...snapshot(), membership: { id: "member-a", clubId: "club-b", state: "Active" } }, now))
+      .toEqual([]);
   });
 
   it("gives every club permission to a confirmed Chủ nhiệm or Phó chủ nhiệm", () => {
@@ -55,7 +67,7 @@ describe("club permission resolver", () => {
       ...vice, positions: [{ ...vice.positions[0]!, isBoardSeat: false, isLeaderRole: true }],
     };
     for (const leader of [vice, president]) {
-      expect(resolveClubPermissions(leader, now)).toEqual([...CLUB_LEADER_PERMISSIONS]);
+      expect(resolveClubPermissions(leader, now)).toEqual([...CLUB_PERMISSIONS]);
     }
     expect(resolveClubPermissions(vice, now)).toContain("club.suspension.request");
   });
@@ -63,15 +75,18 @@ describe("club permission resolver", () => {
   it("needs ICPDP confirmation before a board seat grants anything", () => {
     const vice = viceLeader();
     expect(resolveClubPermissions({ ...vice, assignments: [{ ...vice.assignments[0]!, confirmedBy: null }] }, now))
-      .toEqual([]);
+      .toEqual([...DEFAULT_MEMBER_PERMISSIONS]);
   });
 
   it("rejects mismatched membership, club, expired term, expired assignment and disabled position", () => {
     const base = viceLeader();
-    const changes: ClubAccessSnapshot[] = [
-      { ...base, membership: { id: "member-b", clubId: "club-a", state: "Active" } },
+    for (const outsider of [
       { ...base, membership: { id: "member-a", clubId: "club-b", state: "Active" } },
       { ...base, membership: { id: "member-a", clubId: "club-a", state: "Left" } },
+    ]) expect(resolveClubPermissions(outsider, now)).toEqual([]);
+    // Still an Active member of club A, so only the leader grant is lost.
+    const changes: ClubAccessSnapshot[] = [
+      { ...base, membership: { id: "member-b", clubId: "club-a", state: "Active" } },
       { ...base, terms: [{ ...base.terms[0]!, state: "Closed" }] },
       { ...base, terms: [{ ...base.terms[0]!, endAt: now }] },
       { ...base, assignments: [{ ...base.assignments[0]!, clubId: "club-b" }] },
@@ -79,7 +94,7 @@ describe("club permission resolver", () => {
       { ...base, positions: [{ ...base.positions[0]!, clubId: "club-b" }] },
       { ...base, positions: [{ ...base.positions[0]!, isActive: false }] },
     ];
-    for (const changed of changes) expect(resolveClubPermissions(changed, now)).toEqual([]);
+    for (const changed of changes) expect(resolveClubPermissions(changed, now)).toEqual([...DEFAULT_MEMBER_PERMISSIONS]);
   });
 
   it("limits an approved founder to the club profile and board nomination during Pending Setup", () => {

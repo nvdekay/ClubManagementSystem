@@ -72,6 +72,7 @@ function handover(value: unknown): TransitionHandover {
 export function roleSnapshot(doc: Doc) {
   return { positionId: String(doc._id), code: String(doc.code), name: String(doc.name),
     ...(typeof doc.unit === "string" ? { unit: doc.unit } : {}),
+    ...(typeof doc.description === "string" ? { description: doc.description } : {}),
     isBoardSeat: doc.isBoardSeat === true, isLeaderRole: doc.isLeaderRole === true,
     isDefaultMemberRole: doc.isDefaultMemberRole === true,
     isSingleHolder: doc.isSingleHolder !== false, permissionCodes: stringArray(doc.permissionCodes) };

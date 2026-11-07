@@ -32,7 +32,7 @@ function deps(propertyType: Property["type"] = "HALL"): BookingDeps {
     terms: [{ id: "term", clubId: ids.club, state: "Active", startAt: new Date("2026-01-01"), endAt: new Date("2027-12-31") }],
     assignments: [{ clubId: ids.club, termId: "term", positionId: "vice", membershipId: "member",
       effectiveFrom: new Date("2026-01-01"), confirmedBy: ids.user }],
-    positions: [{ id: "vice", clubId: ids.club, isActive: true, isLeaderRole: false, isBoardSeat: true }] };
+    positions: [{ id: "vice", clubId: ids.club, isActive: true, isLeaderRole: false, isBoardSeat: true, code: "VICE_LEADER" }] };
   const repo: FacilityBookingRepository = { events: vi.fn(async () => []), list: vi.fn(async () => [detail.booking]), find: vi.fn(async () => detail),
     club: vi.fn(async () => club), eventBelongsToClub: vi.fn(async () => true), conflicts: vi.fn(async () => []),
     create: vi.fn(async () => detail), save: vi.fn(async () => detail), submit: vi.fn(async () => detail),
@@ -114,6 +114,13 @@ describe("facility booking use cases", () => {
     vi.mocked(d.access.findSnapshot).mockResolvedValue(null);
     await expect(cancelBooking(d, actor, ids.club, ids.booking, "Unused", now)).rejects.toMatchObject({ kind: "forbidden" });
     expect(d.repo.cancel).not.toHaveBeenCalled();
+  });
+  it("keeps booking creation from a plain member who may only view allocated rooms (UC45 vs UC58)", async () => {
+    const d = deps();
+    const snapshot = (await d.access.findSnapshot(actor.id, ids.club))!;
+    snapshot.assignments = [];
+    await expect(saveBooking(d, actor, ids.club, null, input, now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(d.repo.create).not.toHaveBeenCalled();
   });
   it("requires ICPDP for all review paths", async () => {
     const d = deps(); vi.mocked(d.auth.systemRoleCodes).mockResolvedValue([]);

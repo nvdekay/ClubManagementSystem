@@ -1,13 +1,14 @@
 import { Types } from "mongoose";
 import {
-  CLUB_LEADER_PERMISSIONS, normalizeAllowedGoogleEmail,
+  CLUB_PERMISSIONS, LEADER_RESERVED_PERMISSIONS, normalizeAllowedGoogleEmail,
 } from "../../domain/access.js";
 import type { AuthConfig } from "../config/index.js";
 import { ucmsModels } from "./ucms-models.js";
 
-const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ATTENDANCE_UNLOCK"] as const;
+const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"] as const;
 const PERMISSION_MODULES: Record<string, string> = {
   "club.profile.manage": "M02",
+  "club.role.manage": "M02",
   "club.recruitment.manage": "M04",
   "club.application.review": "M04",
   "club.member.manage": "M04",
@@ -16,6 +17,7 @@ const PERMISSION_MODULES: Record<string, string> = {
   "club.report.submit": "M08",
   "club.expense.record": "M07",
   "club.booking.manage": "M11",
+  "club.room.view": "M11",
   "club.feedback.view": "M12",
   "club.complaint.respond": "M12",
   "club.board.nominate": "M03",
@@ -37,11 +39,12 @@ export async function ensureAuthBootstrap(config: AuthConfig): Promise<void> {
     { unique: true, name: "uq_ura_active", partialFilterExpression: { revokedAt: null } },
   );
 
-  // Every club permission belongs to the fixed Club Leader role; Club Members hold none.
-  for (const code of CLUB_LEADER_PERMISSIONS) {
-    await permissions.updateOne({ code }, { $setOnInsert: {
-      code, name: code, module: PERMISSION_MODULES[code], scope: "club", isLeaderReserved: true,
-    } }, { upsert: true });
+  // The fixed club catalogue (BR55); only the four reserved codes are flagged as leader-only.
+  for (const code of CLUB_PERMISSIONS) {
+    await permissions.updateOne({ code }, {
+      $setOnInsert: { code, name: code, module: PERMISSION_MODULES[code], scope: "club" },
+      $set: { isLeaderReserved: LEADER_RESERVED_PERMISSIONS.includes(code) },
+    }, { upsert: true });
   }
 
   for (const code of SYSTEM_ROLE_CODES) {

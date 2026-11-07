@@ -92,7 +92,7 @@ describe("UC02 dashboard use case", () => {
       allowed.repo, allowed.authRepo, allowed.accessRepo, user,
       { workspace: "club", clubId }, now,
     );
-    expect(allowed.club).toHaveBeenCalledWith(clubId, [], now);
+    expect(allowed.club).toHaveBeenCalledWith(clubId, ["club.attendance.manage", "club.room.view"], now);
   });
 
   it("keeps the internal-event drill-down to ICPDP and validates its filter (FR-UC02-02)", async () => {

@@ -3,26 +3,26 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClubAccessSnapshot } from "../../src/domain/access.js";
 import type { ClubEventRepository } from "../../src/domain/club-event.js";
 import { eventActionPermission } from "../../src/domain/club-event.js";
-import { actOnClubEvent, clubEventFeedback, clubEventParticipants, type ClubEventDeps } from "../../src/usecase/club-event.js";
+import { actOnClubEvent, clubEventFeedback, clubEventParticipants, createClubEvent, listClubEvents, type ClubEventDeps } from "../../src/usecase/club-event.js";
 import { clubEventBody, clubEventPublishBody } from "../../src/interface/http/club-event-routes.js";
 
 const clubId = "111111111111111111111111";
 const id = "222222222222222222222222";
 const actor = { id: "333333333333333333333333", accountState: "Active" as const };
 const now = new Date("2026-10-11T00:00:00Z");
-// A Club Leader holds a confirmed board seat; a Club Member holds nothing and gets no permission.
-function deps(role: "leader" | "member" = "leader"): ClubEventDeps {
+// A Club Leader holds a confirmed board seat; a plain member holds only the two default permissions.
+function deps(role: "leader" | "member" | "left" = "leader"): ClubEventDeps {
   const snapshot: ClubAccessSnapshot = { clubId, clubName: "Test", clubState: "Active",
-    membership: { id, clubId, state: "Active" }, isApprovedFounder: false,
+    membership: { id, clubId, state: role === "left" ? "Left" : "Active" }, isApprovedFounder: false,
     terms: [{ id, clubId, state: "Active", startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01") }],
     assignments: role === "leader" ? [{ clubId, termId: id, positionId: id, membershipId: id,
       effectiveFrom: new Date("2026-01-01"), confirmedBy: actor.id }] : [],
-    positions: [{ id, clubId, isActive: true, isLeaderRole: false, isBoardSeat: true }] };
+    positions: [{ id, clubId, isActive: true, isLeaderRole: false, isBoardSeat: true, code: "VICE_LEADER" }] };
   return { access: { findSnapshot: async () => snapshot }, auth: { systemRoleCodes: async () => [] },
     repo: { options: vi.fn(), list: vi.fn(), find: vi.fn(), create: vi.fn(), act: vi.fn(), participants: vi.fn(), feedback: vi.fn() } as ClubEventRepository };
 }
 describe("club event access and HTTP validation", () => {
-  it("lets a Club Leader read feedback and participants but not a Club Member", async () => {
+  it("lets a Club Leader read feedback and participants; a plain member reads participants only", async () => {
     const d = deps();
     await clubEventFeedback(d, actor, clubId, [id, id], now);
     expect(d.repo.feedback).toHaveBeenCalledWith(clubId, [id], now);
@@ -30,9 +30,31 @@ describe("club event access and HTTP validation", () => {
     expect(d.repo.participants).toHaveBeenCalled();
     const member = deps("member");
     await expect(clubEventFeedback(member, actor, clubId, [id], now)).rejects.toMatchObject({ kind: "forbidden" });
-    await expect(clubEventParticipants(member, actor, clubId, id, now)).rejects.toMatchObject({ kind: "forbidden" });
-    expect(member.repo.participants).not.toHaveBeenCalled();
+    await clubEventParticipants(member, actor, clubId, id, now);
+    expect(member.repo.participants).toHaveBeenCalled();
+    const left = deps("left");
+    await expect(clubEventParticipants(left, actor, clubId, id, now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(left.repo.participants).not.toHaveBeenCalled();
     expect(eventActionPermission({ kind: "finalize" })).toBe("club.attendance.manage");
+  });
+  it("lets a plain member run waitlist and attendance actions (UC30, UC32) without event management data", async () => {
+    const member = deps("member");
+    vi.mocked(member.repo.list).mockResolvedValue([{ id, clubId, title: "Event", objective: "Secret goal", plan: "Plan",
+      budgetLines: [{ category: "Room", purpose: "Rent", amount: 1 }], bookingIds: [id], registrationForm: [],
+      checkInCode: "ABC123" } as unknown as Awaited<ReturnType<ClubEventRepository["list"]>>[number]]);
+    const [listed] = await listClubEvents(member, actor, clubId, now);
+    expect(listed).toMatchObject({ objective: "", plan: "", budgetLines: [], bookingIds: [], checkInCode: "ABC123" });
+    vi.mocked(member.repo.act).mockResolvedValue({ event: { id, objective: "Secret goal", plan: "Plan" } as unknown as
+      Awaited<ReturnType<ClubEventRepository["act"]>>["event"], versions: [{} as never], decisions: [{} as never], bookings: [] });
+    for (const action of [{ kind: "promote" as const, registrationId: id }, { kind: "finalize" as const }]) {
+      const result = await actOnClubEvent(member, actor, clubId, id, action, now);
+      expect(result.event).toMatchObject({ objective: "", plan: "" });
+      expect(result.versions).toEqual([]);
+      expect(result.decisions).toEqual([]);
+    }
+    await expect(createClubEvent(member, actor, clubId, {} as Parameters<typeof createClubEvent>[3], now))
+      .rejects.toMatchObject({ kind: "forbidden" });
+    await expect(actOnClubEvent(deps("left"), actor, clubId, id, { kind: "finalize" }, now)).rejects.toMatchObject({ kind: "forbidden" });
   });
   it("rejects missing, locked and invalid actors before accessing private feedback", async () => {
     const d = deps();

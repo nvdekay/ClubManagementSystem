@@ -27,7 +27,7 @@ const snapshot: ClubAccessSnapshot = {
   terms: [{ id: "555555555555555555555555", clubId, state: "Active",
     startAt: new Date("2026-09-01T00:00:00.000Z"), endAt: new Date("2027-09-01T00:00:00.000Z") }],
   positions: [{ id: "666666666666666666666666", clubId, isActive: true,
-    isLeaderRole: false, isBoardSeat: true }],
+    isLeaderRole: false, isBoardSeat: true, code: "VICE_LEADER" }],
   assignments: [{ clubId, termId: "555555555555555555555555",
     positionId: "666666666666666666666666", membershipId: "444444444444444444444444",
     effectiveFrom: new Date("2026-09-01T00:00:00.000Z"), confirmedBy: "777777777777777777777777" }],

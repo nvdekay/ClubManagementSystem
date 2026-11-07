@@ -1,5 +1,5 @@
 import {
-  normalizeAllowedGoogleEmail, resolveClubPermissions,
+  isClubLeader, normalizeAllowedGoogleEmail, resolveClubPermissions,
   type ClubAccessRepository, type ClubPermission,
 } from "../domain/access.js";
 import type { AuthRepository, AuthUser } from "../domain/auth.js";
@@ -80,8 +80,7 @@ export async function currentUser(
     const permissions = resolveClubPermissions(snapshot, now);
     workspaces.push({
       kind: "club", clubId: snapshot.clubId, clubName: snapshot.clubName,
-      role: isPendingFounder ? "founder"
-        : permissions.includes("club.member.manage") ? "leader" : "member",
+      role: isPendingFounder ? "founder" : isClubLeader(snapshot, now) ? "leader" : "member",
       permissions,
     });
   }
