@@ -14,9 +14,8 @@ Từ 07/11/2026 code theo đúng BR47, BR54, BR55 (`server/src/domain/access.ts`
   `club.role.manage`, `club.board.nominate`, `club.transition.plan`, `club.suspension.request`.
 - **Ghế ban điều hành khác** (ví dụ Trưởng ban) đã được ICPDP xác nhận: chỉ nhận permission của
   chính role đó.
-- **Role thường của UC23**: Club Leader tạo, chọn permission (không bao giờ có bốn quyền giữ riêng)
-  và gán thành viên `Active`; không cần ICPDP xác nhận, hiệu lực ngay. Giữ nhiều role thì quyền là
-  hợp các role.
+- **Khoảng lệch cần gỡ:** code hiện còn cho Club Leader tạo role UC23, chọn permission và gán thành
+  viên. SRS hiện hành đã rút UC23; chức danh không được tham gia quyết định quyền.
 - **Mọi thành viên `Active`**: hai permission mặc định `club.attendance.manage` (UC30, UC32) và
   `club.room.view` (UC58), không cần bản gán (BR54). Role Members không mang permission nào khác.
 - **Approved founder khi CLB `Pending Setup`**: chỉ có `club.profile.manage` và
@@ -31,7 +30,8 @@ nhiệm hợp lệ, không suy ra từ `club.member.manage`. Dữ liệu ghi tro
 ## 2. Ánh xạ theo actor
 
 Ma trận đủ 56 mã UC với link route/UI: [UC_CODE_MAPPING.md](05-implementation/UC_CODE_MAPPING.md).
-Danh mục có 56 mã, **tất cả trong phạm vi** (UC05, UC23, UC51, UC52 khôi phục 02/11/2026 theo use case diagram đã duyệt). Số này không phải số UC đã hoàn thành.
+Danh mục có 56 mã, **55 trong phạm vi**: UC05, UC51, UC52 được khôi phục; UC23 đã rút theo quyết
+định role cố định. Số này không phải số UC đã hoàn thành.
 
 Ký hiệu: **Có** = route/use case/UI hiện hành; **Một phần** = có một phía hoặc còn thiếu nhánh
 nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp mô hình đã duyệt.
@@ -58,7 +58,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC12 lập kế hoạch chuyển giao | Có, tại `/club/:clubId/transition-plans` (A2 đổi danh sách ghế ngoài phạm vi) |
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
-| Club Leader | UC23 quản lý role và phân quyền | Có (07/11/2026), tại `/club/:clubId/roles`: tạo/sửa/ngừng role, chọn permission, gán/thu hồi người giữ, lịch sử phiên bản; mỗi thay đổi ghi phiên bản cơ cấu, audit và thông báo. ICPDP xem cơ cấu và permission theo phiên bản ở lịch sử ban chủ nhiệm của CLB |
+| Club Leader | UC23 quản lý role và phân quyền | **Ngoài phạm vi nhưng code còn tồn tại**: `/club/:clubId/roles` và resolver permission động phải được gỡ/thu hẹp; role truy cập phía CLB là cố định |
 | Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
 | Club Leader | UC36 khoản chi/quyết toán | Có, đã nối vào app chính; chứng từ bắt buộc (BR25), hạn hoàn trả 7 ngày (BR58) |

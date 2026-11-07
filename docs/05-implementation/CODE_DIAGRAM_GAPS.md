@@ -1,22 +1,23 @@
 # Code lệch so với diagram đã duyệt
 
-Đối chiếu ngày 02/11/2026, commit `2f6f5dd`; cập nhật sau khi sửa ngày 07/11/2026. Nguồn chuẩn là **use case diagram**
-(`../03-diagrams/UCMS_UseCase_ByActor.drawio`) và **context diagram**
-(`../03-diagrams/UCMS_Context_Diagram.drawio`, 46 luồng) đã được duyệt, cùng `../SRS.md`.
-Chỗ nào code khác diagram thì **code sai** và phải sửa code, không sửa yêu cầu.
+Đối chiếu `main` ngày 07/11/2026. Nguồn chuẩn là `../SRS.md`, context diagram và diagram mới nhất
+cho từng quyết định. Riêng role CLB, `UCMS_Organization_and_Flows.drawio` (02/11) mới hơn
+`UCMS_UseCase_ByActor.drawio` (19/10), nên quyết định hai role cố định/UC23 bị rút được ưu tiên.
 
-Mỗi khoảng trống dưới đây là một tính năng mới: trước khi code, lập
-`.sdd/specs/feat-{name}/SPEC.md` + `TASKS.md` theo `.rules/README.md`.
+Trước khi sửa code cho một khoảng trống, cập nhật SPEC/TASKS tương ứng theo `.rules/README.md`.
 
 ## Lệch so với diagram
 
-Code đã khớp use case diagram và context diagram ở G1–G5 (07/11/2026, xem mục *Đã khớp*), kể cả các lỗi
-review sau đó (khiếu nại trùng do ICPDP gộp tay, không đoán lúc nộp, một bộ rule `Active` bằng index unique, kiểm tra nhiệm kỳ
-khi gán role, migration không đổi dữ liệu nếu không ghi được phiên bản, job quá hạn chống chạy trùng nhiều
-instance, mô phỏng dùng dữ liệu lúc quyết định, CLB đính kèm chứng cứ khi trả lời) và lần review thứ hai
+Code đã khớp G2–G5 (07/11/2026, xem mục *Đã khớp*), kể cả các lỗi review sau đó (khiếu nại trùng
+do ICPDP gộp tay, không đoán lúc nộp, một bộ rule `Active` bằng index unique, job quá hạn chống chạy
+trùng nhiều instance, mô phỏng dùng dữ liệu lúc quyết định, CLB đính kèm chứng cứ khi trả lời) và lần review thứ hai
 (khiếu nại đi theo không có task, không vào hàng đợi, mọi bước xử lý trực tiếp bị từ chối, rút khiếu nại gốc thì
-khiếu nại đi theo cũ nhất làm gốc; Member Space hiện role UC23 không cần ICPDP xác nhận; kích hoạt rule đồng
+khiếu nại đi theo cũ nhất làm gốc; kích hoạt rule đồng
 thời trả đúng một 409).
+
+**G1 mở lại ngày 07/11/2026:** đối chiếu lịch sử trên `main` cho thấy `UCMS_Organization_and_Flows.drawio`
+(02/11) mới hơn use case diagram có CRUD role (19/10) và ghi rõ chỉ hai role cố định, UC23 bị rút.
+Code vừa khôi phục UC23 là sai hướng và phải quay về role/quyền cố định.
 
 ## Diagram phụ còn mô tả mô hình cũ (người dùng chọn để nguyên khi được hỏi ngày 07/11/2026)
 
@@ -25,8 +26,9 @@ Các diagram dưới đây không phải nguồn chuẩn nhưng vẫn vẽ mô h
 
 | Diagram | Còn lệch |
 |---|---|
-| `UCMS_Organization_and_Flows.drawio` | Ghi "only two club roles", "UC23 withdrawn", Club Member không có permission quản lý; chưa có `ICPDP_HEAD` và duyệt cấp 1 → cấp 2 |
-| `UCMS_Screen_Flow.drawio` | Còn "Student feedback" / "Student feedback inbox"; thiếu Vai trò & phân quyền, Khiếu nại (CLB, ICPDP), Định tuyến phê duyệt |
+| `UCMS_Organization_and_Flows.drawio` | **Phần role là đúng**: hai role cố định, UC23 bị rút. Diagram vẫn thiếu `ICPDP_HEAD` và duyệt cấp 1 → cấp 2 |
+| `UCMS_UseCase_ByActor.drawio` | Nhóm `Manage club roles` / CRUD role của UC23 là cũ và cần bỏ để khớp diagram cơ cấu mới hơn |
+| `UCMS_Screen_Flow.drawio` | Còn "Student feedback" / "Student feedback inbox"; thiếu Khiếu nại (CLB, ICPDP), Định tuyến phê duyệt. Không bổ sung `Roles & permissions`; màn này phải gỡ khỏi code |
 | `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Thiếu `routingRuleSets`, `approvalTasks.routingRuleSetId/routingRuleId/requiredLevel/currentLevel`, `approvalDecisions.level`; complaint còn là góp ý một chiều, chưa liên kết `Violation` |
 | `UCMS_Sequence_Diagrams.drawio` | Chưa có luồng duyệt hai cấp với `ICPDP_HEAD` |
 | `UCMS_Security_Architecture.drawio` | Chưa có audit `ACCESS_DENIED` (SEC-08) |
@@ -35,9 +37,10 @@ Các diagram dưới đây không phải nguồn chuẩn nhưng vẫn vẽ mô h
 G2 (quyền mặc định của thành viên) **không** đi qua role của UC23: mọi membership `Active` tự có
 `club.attendance.manage` và `club.room.view`, không cần bản gán (BR54, BR47 c).
 
-## Lệch so với SRS (không thể hiện trên diagram)
+## Lệch so với SRS
 
-Không còn khoảng lệch nào ngoài diagram: S3 đã khớp, S1 và S2 là kết luận sai (xem dưới).
+- **G1:** code hiện có API/UI/resolver UC23 động trong khi SRS đã rút UC23 và yêu cầu hai role cố định.
+- Ngoài G1, S3 đã khớp; S1 và S2 là kết luận sai (xem dưới).
 
 ### Kết luận sai đã loại bỏ (07/11/2026)
 
@@ -52,11 +55,6 @@ Không còn khoảng lệch nào ngoài diagram: S3 đã khớp, S1 và S2 là k
   `club.room.view` mặc định (`DEFAULT_MEMBER_PERMISSIONS` trong `server/src/domain/access.ts`);
   xem phòng được phân dùng `club.room.view` thay cho `club.booking.manage`, tạo booking UC45 vẫn cần
   `club.booking.manage`. SPEC: `.sdd/specs/feat-member-default-permissions/`.
-- **G1 (07/11/2026)** — UC23: Club Leader tạo/sửa/ngừng role, chọn permission (bốn quyền giữ riêng
-  không cấp được), gán/thu hồi người giữ; mỗi thay đổi là một phiên bản cơ cấu `ROLE_EDIT`, có audit
-  và thông báo. Resolver theo BR47: chỉ ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận là Club Leader;
-  ghế ban điều hành khác và role thường nhận permission của chính role. Dữ liệu cũ được chuẩn hoá
-  bởi `server/src/infra/db/club-role-upgrade.ts`. SPEC: `.sdd/specs/feat-club-role-management/`.
 - **G3 (07/11/2026)** — UC50–UC52: khiếu nại luôn tới ICPDP (BR38) kèm task; ICPDP mở xem xét và quyết định
   Dismissed / Forwarded / Escalated có lý do (BR39); CLB (`club.complaint.respond`) chỉ thấy khiếu nại đã
   `Forwarded`, không có danh tính người khiếu nại (D5), trả lời một lần; ICPDP đóng hoặc leo thang; leo thang
@@ -81,7 +79,7 @@ Không còn khoảng lệch nào ngoài diagram: S3 đã khớp, S1 và S2 là k
 
 1. ~~**G2**~~ — đã xong 07/11/2026.
 2. ~~**S3**~~ — đã xong 07/11/2026.
-3. ~~**G1**~~ — đã xong 07/11/2026.
+3. **G1** — gỡ UC23 động, quay về role/quyền cố định.
 4. ~~**G3**~~ — đã xong 07/11/2026.
 5. ~~**G4**~~ — đã xong 07/11/2026.
 6. ~~**G5**~~ — đã xong 07/11/2026.

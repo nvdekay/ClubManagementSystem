@@ -1,6 +1,8 @@
 # Ma trận UC → code hiện hành
 
-> Đối chiếu `main` tại `46b9d9a` (code) ngày 07/11/2026; 56 mã, tất cả trong phạm vi (UC05, UC23, UC51, UC52 khôi phục 02/11/2026 theo use case diagram đã duyệt và đã có code từ 07/11/2026). Danh sách route chính xác: `/docs` của server.
+> Đối chiếu `main` ngày 07/11/2026; 56 mã, 55 trong phạm vi. UC05, UC51, UC52 được khôi phục;
+> UC23 đã rút theo quyết định role cố định. Route UC23 vẫn tồn tại trong code là khoảng lệch cần gỡ.
+> Danh sách route đang chạy chính xác: `/docs` của server.
 > “Có” nghĩa route/UI đã tồn tại và nối trong app chính khi cấu hình Auth hợp lệ; không đồng nghĩa
 > mọi nhánh đã qua nghiệm thu Mongo/Google/Cloudinary thật. Route server mount tại `server.ts` (dependency từ `main.ts`);
 > route UI định nghĩa trong [client/src/main.tsx](../../client/src/main.tsx) (`App.tsx` chỉ render `AuthWorkspacePage`).
@@ -32,7 +34,7 @@
 | UC20 | Tiếp nhận ứng viên trúng tuyển | [recruitment-application-routes.ts](../../server/src/interface/http/recruitment-application-routes.ts) | [RecruitmentReviewPage.tsx](../../client/src/pages/club/RecruitmentReviewPage.tsx); A1: [membership-routes.ts](../../server/src/interface/http/membership-routes.ts) `POST /clubs/:clubId/memberships`, [ClubMemberOnboardDialog.tsx](../../client/src/pages/club/ClubMemberOnboardDialog.tsx) | Có |
 | UC21 | Quản lý trạng thái thành viên | [membership-routes.ts](../../server/src/interface/http/membership-routes.ts) | [ClubMembersPage.tsx](../../client/src/pages/club/ClubMembersPage.tsx) | Có; quá hạn A2 → `Inactive`, Leader kích hoạt lại qua UC21; A2 qua [membership-reconfirmation-routes.ts](../../server/src/interface/http/membership-reconfirmation-routes.ts) và `membership-reconfirmation-job` |
 | UC22 | Xin rời CLB | [membership-routes.ts](../../server/src/interface/http/membership-routes.ts) | [MyClubsPage.tsx](../../client/src/pages/student/MyClubsPage.tsx), [MyWithdrawalRequests.tsx](../../client/src/pages/student/MyWithdrawalRequests.tsx) | Có; Leader thi hành qua ClubMembersPage; sinh viên theo dõi yêu cầu ở dashboard và "CLB của tôi" |
-| UC23 | Quản lý vai trò CLB và phân quyền | [club-role-routes.ts](../../server/src/interface/http/club-role-routes.ts) | [ClubRolesPage.tsx](../../client/src/pages/club/ClubRolesPage.tsx) | Có (07/11/2026) |
+| UC23 | Quản lý vai trò CLB và phân quyền | [club-role-routes.ts](../../server/src/interface/http/club-role-routes.ts) | [ClubRolesPage.tsx](../../client/src/pages/club/ClubRolesPage.tsx) | **Đã rút; code/UI còn tồn tại và phải gỡ** |
 | UC24 | Sử dụng không gian thành viên của tôi | [member-space-routes.ts](../../server/src/interface/http/member-space-routes.ts), `GET /clubs/:clubId/role-directory` | [MemberSpacePage.tsx](../../client/src/pages/student/MemberSpacePage.tsx), [ClubMemberRoles.tsx](../../client/src/pages/club/ClubMemberRoles.tsx) | Có; Active/Inactive được đọc, thấy role mình giữ |
 | UC25 | Nộp đề xuất tổ chức sự kiện | [club-event-routes.ts](../../server/src/interface/http/club-event-routes.ts) | [ClubEventsPage.tsx](../../client/src/pages/club/ClubEventsPage.tsx) | Có |
 | UC26 | Thẩm định và quyết định đề xuất sự kiện | [event-proposal-review-routes.ts](../../server/src/interface/http/event-proposal-review-routes.ts) | [EventProposalQueuePage.tsx](../../client/src/pages/icpdp/EventProposalQueuePage.tsx), [EventProposalReviewPage.tsx](../../client/src/pages/icpdp/EventProposalReviewPage.tsx) | Có |
@@ -72,7 +74,7 @@
 - [main.ts](../../server/src/main.ts): dependency thực được truyền vào `buildApp`.
 - [server.ts](../../server/src/interface/http/server.ts): điều kiện mount route theo dependency.
 - [main.tsx](../../client/src/main.tsx): route UI thật (mọi route; `App.tsx` chỉ render `AuthWorkspacePage`).
-- [access.ts](../../server/src/domain/access.ts): danh mục 16 permission, hai quyền mặc định, bốn quyền giữ riêng và resolver theo BR47 (Leader, ghế ban điều hành, role UC23).
+- [access.ts](../../server/src/domain/access.ts): implementation hiện tại còn resolver role UC23 động; thiết kế đích chỉ dùng Club Leader / Club Member cố định.
 - [member-space.ts](../../server/src/usecase/member-space.ts): roster chỉ đọc cho Active/Inactive.
 - [room-allocation.ts](../../server/src/usecase/room-allocation.ts): UC58 phía CLB yêu cầu `club.room.view` (mọi thành viên `Active`, BR54).
 - [PublicLayout.tsx](../../client/src/components/layout/PublicLayout.tsx): UI danh bạ vẫn yêu cầu đăng nhập.

@@ -1,6 +1,10 @@
 # 02 — Use case model và đặc tả (v2, hiện hành)
 
-Tài liệu use case có thẩm quyền: **53 mã use case (UC01–UC52 và UC58 — phân phòng học theo học kỳ, thêm 2026-10-11)**, tất cả trong phạm vi; cùng UC53–UC55 của SRS là 56 use case (UC05, UC23, UC51, UC52 khôi phục 2026-11-02 theo use case diagram đã duyệt), 4 actor (Student, Club Member, Club Leader, ICPDP Officer), 3 hệ thống
+Thư mục này có **53 mã use case (UC01–UC52 và UC58 — phân phòng học theo học kỳ, thêm 2026-10-11)**;
+cùng UC53–UC55 của SRS là 56 mã, trong đó **55 use case nằm trong phạm vi**. UC05, UC51, UC52 được
+khôi phục; UC23 bị rút vì role/quyền CLB do hệ thống định nghĩa cố định. Các đoạn mô tả UC23 động
+trong model/spec cũ là lịch sử và không có thẩm quyền cao hơn SRS hiện hành. Hệ thống có 4 actor
+(Student, Club Member, Club Leader, ICPDP Officer), 3 hệ thống
 ngoài, 12 module. Mọi mã số trong thư mục này là v2; cách đánh số v1 (UC01–UC57) chỉ còn tồn tại trong
 [`../01-business-analysis/`](../01-business-analysis/).
 

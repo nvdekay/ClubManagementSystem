@@ -41,7 +41,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 |---|---|---|
 | M01 Identity, Access, Configuration | User, session, system role, policy, dashboard | Có; OAuth thật còn gate nghiệm thu |
 | M02 Club Lifecycle | Hồ sơ thành lập, profile, lifecycle | UC08 tạo Active ngay; UC14 CLB xin tạm ngừng và UC15 ICPDP quyết định; job hết hạn hồ sơ UC07/08 |
-| M03 Leadership & Term | Term, position, assignment, transition | UC10–UC13 có (UC12/13 kiểm tra BR06); UC23 chưa làm — code chưa theo kịp mô hình đã duyệt |
+| M03 Leadership & Term | Term, position, assignment, transition | UC10–UC13 có (UC12/13 kiểm tra BR06); UC23 đã rút nhưng API/UI role động còn tồn tại và phải gỡ |
 | M04 Recruitment & Membership | Campaign, application, candidate evaluation, membership | Có, gồm job tái xác nhận đầu kỳ UC21 A2 |
 | M05 Event & Activity | Proposal, event, school event, invitation | Có, gồm UC54 CLB nhận/từ chối lời mời |
 | M06 Registration & Attendance | Registration, waitlist, attendance | Có |
@@ -93,19 +93,16 @@ kiểm qua JWKS), phiên lưu phía server trong `authSessions` (chỉ hash), co
 thay đổi dữ liệu. Toàn bộ cơ chế và hạn chế đã biết: [`../SRS.md` §12.1](../SRS.md#121-cơ-chế-bảo-mật). Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
 không lấy từ policy UC04. System role gồm `ICPDP_OFFICER`, `ICPDP_HEAD` (cấp duyệt thứ hai, chỉ cấp kèm Officer — D1) và quyền đặc biệt attendance unlock. Định tuyến UC05: `domain/approval-routing.ts` khớp rule; `infra/db/approval-routing.ts` đóng băng route lên `approvalTasks` lúc mở task và chặn cấp 2 cho Head trong transaction quyết định của UC08/UC26/UC46; `approvalDecisions` có `level`.
 
-`resolveClubPermissions` (BR47, BR54, BR55) cho mọi membership `Active` hai quyền mặc định
-`club.attendance.manage`, `club.room.view`. Ngoài ra chỉ tính bản gán còn hiệu lực trong term `Active`
-còn hiệu lực, vào position active: ghế Chủ nhiệm / Phó chủ nhiệm đã `confirmedBy` nhận toàn bộ 16
-permission; ghế ban điều hành khác đã xác nhận hoặc role thường của UC23 nhận đúng `permissionCodes`
-của role (lọc bỏ mã lạ và bốn quyền giữ riêng); nhiều role thì lấy hợp. Re-check trong transaction
-(`infra/db/club-event-access.ts`) dựng cùng snapshot nên cùng ngữ nghĩa. UC23 (`usecase/club-role.ts`,
-`infra/db/mongo-club-role-repository.ts`) ghi role, bản gán, một phiên bản `clubRoleStructureVersions`
-(`ROLE_EDIT`), audit và thông báo trong một transaction. UC08 tạo CLB `Active` với ghế Chủ nhiệm/Phó
-chủ nhiệm đã xác nhận; quy tắc "approved founder của CLB `Pending Setup` chỉ nhận
-`club.profile.manage` và `club.board.nominate`" chỉ còn để tương thích dữ liệu cũ.
+Thiết kế đích theo BR47, BR54, BR55 dùng hai role phía CLB cố định. Membership `Active` tạo
+`Club Member` với capability thành viên cố định; ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong
+term `Active` tạo `Club Leader` với toàn bộ quyền quản lý cố định. Các chức danh khác và
+`permissionCodes` trên position không cấp quyền. Re-check trong transaction phải dựng cùng snapshot.
+UC08 tạo CLB `Active` với ghế Chủ nhiệm/Phó chủ nhiệm đã xác nhận.
 
-Không có role tự tạo, API roles/role-directory hay UI cấu hình permission. Field cũ được giữ
-cho tương thích, không cấp quyền. Client ẩn menu theo `/auth/me`; server vẫn kiểm tra quyền.
+Không có role tự tạo, API roles/role-directory hay UI cấu hình permission. Field cũ được giữ cho
+tương thích, không cấp quyền. Code hiện tại còn phần UC23 động (`club-role.ts`,
+`mongo-club-role-repository.ts`, `ROLE_EDIT`) và phải gỡ/thu hẹp để trở lại thiết kế này. Client ẩn
+menu theo `/auth/me`; server vẫn kiểm tra quyền.
 Member roster đọc qua member-space, chỉ tên/vị trí/trạng thái. GET profile/departments cho current
 member đọc, dù UI settings chỉ mở cho Leader. UC58 yêu cầu Leader ngay cả khi chỉ đọc.
 
