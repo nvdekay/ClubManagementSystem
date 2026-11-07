@@ -150,6 +150,14 @@ export async function ensureUcmsDatabase(): Promise<void> {
         await model.collection.dropIndex(legacy.name);
       }
     }
+    // UC05 allows one decision per level, so the old one-decision-per-task constraint is replaced.
+    if (model.collection.name === "approvalDecisions") {
+      const indexes = await model.collection.indexes();
+      if (indexes.some((index) => index.name === "uq_decision_task")) {
+        await model.collection.createIndex({ approvalTaskId: 1, level: 1 }, { unique: true, name: "uq_decision_task_level" });
+        await model.collection.dropIndex("uq_decision_task");
+      }
+    }
     const existing = await model.collection.indexes();
     for (const [keys, options] of model.schema.indexes()) {
       if (!existing.some((index) => sameIndex(index, keys, options))) {

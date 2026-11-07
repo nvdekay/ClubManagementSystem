@@ -185,11 +185,6 @@ Enum violationState {
   Closed
 }
 
-Enum feedbackRecipient {
-  CLUB
-  ICPDP
-}
-
 Enum complaintState {
   Submitted
   "Under Triage"
@@ -299,16 +294,16 @@ Table permissions {
   code string [unique, not null, note: 'ví dụ: club.event.propose, icpdp.booking.decide, attendance.unlock (BR19).']
   name string [not null]
   module string [not null, note: 'M01 … M12.']
-  scope roleScope [not null, note: 'system: vai trò hệ thống (UC03). club: permission CLB trong danh mục cố định; role CLB cố định Leader/Member, Club Leader có toàn bộ permission CLB, Club Member không có (UC23 đã rút).']
-  isLeaderReserved bool [not null, default: false, note: 'Giữ để tương thích dữ liệu. Với role cố định (UC23 đã rút) mọi permission CLB chỉ Club Leader có, nên cờ này không còn được dùng để phân quyền.']
+  scope roleScope [not null, note: 'system: vai trò hệ thống (UC03). club: danh mục cố định 16 permission CLB (BR55); Club Leader có toàn bộ, mọi thành viên Active có club.attendance.manage và club.room.view (BR54), role khác mang permission do Club Leader cấu hình ở UC23.']
+  isLeaderReserved bool [not null, default: false, note: 'true với bốn quyền giữ riêng của Club Leader (club.role.manage, club.board.nominate, club.transition.plan, club.suspension.request): không role nào khác mang được (BR55).']
   description string
 }
 
 Table roles {
   id objectId [pk]
-  code string [unique, not null, note: 'ICPDP_OFFICER, ATTENDANCE_UNLOCK, CLUB_PRESIDENT, CLUB_TREASURER …']
+  code string [unique, not null, note: 'Vai trò hệ thống: ICPDP_OFFICER, ICPDP_HEAD (cấp duyệt thứ hai UC05, chỉ cấp kèm ICPDP_OFFICER — D1), ATTENDANCE_UNLOCK.']
   name string [not null]
-  scope roleScope [not null, note: 'Một vai trò gắn CLB chỉ có hiệu lực thông qua một bản gán chức vụ bên trong một nhiệm kỳ đang hoạt động (SEC-04). Phía CLB chỉ có hai role cố định Club Leader/Club Member, không có role tự tạo (UC23 đã rút).']
+  scope roleScope [not null, note: 'Một vai trò gắn CLB chỉ có hiệu lực thông qua một bản gán chức vụ bên trong một nhiệm kỳ đang hoạt động (SEC-04). Role phía CLB nằm ở clubPositions (UC23), không ở bảng này.']
   permissionCodes "string[]" [not null]
   isSystem bool [default: false]
 }
@@ -350,8 +345,27 @@ Table policyVersions {
   }
 }
 
+Table routingRuleSets {
+  id objectId [pk]
+  versionNo int [not null]
+  state string [not null, note: 'Draft | Active | Superseded (UC05). Chỉ một bộ Active; bộ Active không bao giờ bị sửa tại chỗ.']
+  rules json [not null, note: '[{ id, requestType: CLUB_APPLICATION | EVENT_PROPOSAL | PROPERTY_BOOKING, minAmount?, maxAmount?, riskCategories?[], propertyTypes?[], minOpenViolations?, maxOpenViolations?, requiredLevel: 1 | 2, slaHours }]. Không hai rule nào chồng nhau (FR-UC05-02).']
+  createdBy objectId [not null]
+  createdAt datetime [not null]
+  updatedAt datetime
+  activatedBy objectId
+  activatedAt datetime
+  supersededAt datetime
+
+  Note: 'Bộ rule định tuyến phê duyệt đánh phiên bản (UC05, BR16). Hồ sơ UC08 / UC26 / UC46 đóng băng rule khớp lúc mở task; kích hoạt bộ mới chỉ áp cho hồ sơ mới. Hồ sơ không khớp rule nào được quyết định ở một cấp.'
+  indexes {
+    versionNo [unique, name: 'uq_routing_version']
+    state [name: 'ix_routing_state']
+  }
+}
+
 // =====================================================================
-// M02 / M03 — VÒNG ĐỜI CLB, QUẢN TRỊ & NHIỆM KỲ  (UC06–UC15; UC23 đã rút)
+// M02 / M03 — VÒNG ĐỜI CLB, QUẢN TRỊ & NHIỆM KỲ  (UC06–UC15, UC23)
 // =====================================================================
 
 Table clubs {
@@ -461,14 +475,15 @@ Table clubPositions {
   code string [not null]
   name string [not null]
   unit string [note: 'Ban hoặc bộ phận (UC09) mà role này thuộc về.']
-  isBoardSeat bool [not null, default: false, note: 'Role ban điều hành, do chủ nhiệm đánh dấu trong hồ sơ UC07 và chỉ đổi qua chuyển giao UC12/UC13 (UC23 E6). Người giữ chỉ đến từ UC10/UC11/UC13; người giữ ghế đã xác nhận là Club Leader (role cố định, UC23 đã rút). Bản gán của nó tạo nên lịch sử ban điều hành theo nhiệm kỳ (BR55, BR56).']
+  description text [note: 'Mô tả nhiệm vụ của role (UC23).']
+  isBoardSeat bool [not null, default: false, note: 'Role ban điều hành, do chủ nhiệm đánh dấu trong hồ sơ UC07 và chỉ đổi qua chuyển giao UC12/UC13 (UC23 E6). Người giữ chỉ đến từ UC10/UC11/UC13 và phải được ICPDP xác nhận. Ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận là Club Leader; ghế ban điều hành khác chỉ nhận permission của chính role đó (BR47). Bản gán của nó tạo nên lịch sử ban điều hành theo nhiệm kỳ (BR55, BR56).']
   isLeaderRole bool [not null, default: false, note: 'Role Chủ nhiệm: đúng một role mỗi CLB, cố định, không sửa/xoá được; người giữ là Club Leader với mọi permission CLB (BR47, BR56).']
-  isDefaultMemberRole bool [not null, default: false, note: 'Role Members: đúng một role mỗi CLB, không xoá được; UC20 đọc role này và lưu `defaultRole` trên membership, không tạo bản gán; Club Member cố định không có permission quản lý (UC23 đã rút, BR56).']
-  isSingleHolder bool [not null, default: true, note: 'Giữ để tương thích dữ liệu (luật từ UC23 E2, UC23 đã rút).']
-  permissionCodes "string[]" [not null, note: 'Giữ để tương thích dữ liệu. Quyền thực tế lấy từ role cố định (Leader có toàn bộ permission CLB, Member không có), không đọc từ trường này; UC23 đã rút nên không có màn sửa.']
+  isDefaultMemberRole bool [not null, default: false, note: 'Role Members: đúng một role mỗi CLB, không xoá, không gán tay; UC20 đọc role này và lưu `defaultRole` trên membership, không tạo bản gán. Hai permission mặc định đến từ tư cách thành viên Active, không từ role này (BR54, BR56).']
+  isSingleHolder bool [not null, default: true, note: 'Role một người giữ: không thêm người giữ thứ hai (UC23 E2).']
+  permissionCodes "string[]" [not null, note: 'Permission role này cấp, chọn từ danh mục cố định trừ bốn quyền giữ riêng (BR55); Club Leader sửa ở UC23, hiệu lực ngay cho mọi người giữ. Bỏ qua với ghế Chủ nhiệm / Phó chủ nhiệm (Leader có toàn bộ) và role Members.']
   isActive bool [not null, default: true]
 
-  Note: 'Role CLB (I58): trạng thái hiện hành của cơ cấu, bằng phiên bản mới nhất trong clubRoleStructureVersions. Tạo từ hồ sơ đã duyệt ở UC08; chỉ đổi qua chuyển giao UC12/UC13 (mỗi lần đổi ghi một phiên bản mới — BR56). Không có sửa role tự do: role CLB cố định Leader/Member, UC23 đã rút.'
+  Note: 'Role CLB (I58): trạng thái hiện hành của cơ cấu, bằng phiên bản mới nhất trong clubRoleStructureVersions. Tạo từ hồ sơ đã duyệt ở UC08; Club Leader sửa role thường ở UC23, role ban điều hành chỉ đổi qua chuyển giao UC12/UC13; mỗi lần đổi ghi một phiên bản mới (BR56).'
   indexes {
     (clubId, code) [unique, name: 'uq_position_club_code']
   }
@@ -500,10 +515,10 @@ Table clubPositionAssignments {
   membershipId objectId [not null]
   effectiveFrom datetime [not null]
   effectiveTo datetime [note: 'Null khi bản gán còn hiệu lực. Được đặt khi thành viên rời đi hoặc nhiệm kỳ đóng lại.']
-  assignedBy objectId [not null, note: 'Officer ICPDP xác nhận ghế ban chủ nhiệm ở UC08/UC11/UC13 (UC23 đã rút, không còn gán role thủ công).']
-  confirmedBy objectId [note: 'Chỉ có giá trị với ghế ban chủ nhiệm (UC11/UC13).']
+  assignedBy objectId [not null, note: 'Officer ICPDP với ghế ban chủ nhiệm (UC08/UC11/UC13); Club Leader với role thường gán ở UC23.']
+  confirmedBy objectId [note: 'Bắt buộc với ghế ban điều hành (ICPDP xác nhận ở UC08/UC11/UC13); role thường của UC23 không cần xác nhận.']
 
-  Note: 'Phép giao tạo ra thẩm quyền: bản gán ∩ nhiệm kỳ đang hoạt động, cộng role cố định (ghế ban chủ nhiệm đã xác nhận = Club Leader với toàn bộ permission CLB, còn lại = Club Member) = quyền (SEC-04, BR47, BR54). Bị thu hồi tự động khi tư cách thành viên kết thúc (UC21 FR-03) hoặc khi nhiệm kỳ đóng lại (UC13). Không bao giờ xoá: các bản gán role ban điều hành (gắn termId, confirmedBy) chính là lịch sử ban điều hành theo nhiệm kỳ mà ICPDP đọc ở UC02 (BR56). Role Members không tạo bản gán: UC20 chỉ lưu `defaultRole` trên membership.'
+  Note: 'Phép giao tạo ra thẩm quyền: bản gán ∩ nhiệm kỳ đang hoạt động = quyền (SEC-04, BR47, BR54): ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận → Club Leader, toàn bộ permission; ghế ban điều hành khác đã xác nhận hoặc role thường → permission của role đó; cộng hai quyền mặc định của mọi thành viên Active. Bị thu hồi tự động khi tư cách thành viên kết thúc (UC21 FR-03) hoặc khi nhiệm kỳ đóng lại (UC13). Không bao giờ xoá: các bản gán role ban điều hành (gắn termId, confirmedBy) chính là lịch sử ban điều hành theo nhiệm kỳ mà ICPDP đọc ở UC02 (BR56). Role Members không tạo bản gán: UC20 chỉ lưu `defaultRole` trên membership.'
   indexes {
     (clubId, termId, positionId) [name: 'ix_assign_lookup']
     (membershipId, effectiveTo) [name: 'ix_assign_member_active']
@@ -515,9 +530,9 @@ Table clubRoleStructureVersions {
   clubId objectId [not null]
   versionNo int [not null, note: '1 = cơ cấu được duyệt cùng hồ sơ thành lập ở UC08.']
   effectiveFrom datetime [not null]
-  source string [not null, note: 'APPLICATION (UC08) | TRANSITION (UC13, khi kế hoạch chuyển giao đổi danh sách role ban điều hành). ROLE_EDIT giữ để tương thích dữ liệu; UC23 đã rút nên không còn được ghi.']
-  sourceRefId objectId [note: 'clubApplicationVersions.id, hoặc transitionPlans.id.']
-  roles json [not null, note: 'Bản chụp đầy đủ: [{positionId, code, name, unit, isBoardSeat, isLeaderRole, isDefaultMemberRole, isSingleHolder, permissionCodes[]}].']
+  source string [not null, note: 'APPLICATION (UC08) | TRANSITION (UC13, khi kế hoạch chuyển giao đổi danh sách role ban điều hành) | ROLE_EDIT (UC23) | MIGRATION (chuẩn hoá dữ liệu cũ).']
+  sourceRefId objectId [note: 'clubApplicationVersions.id, transitionPlans.id, hoặc clubPositions.id (ROLE_EDIT).']
+  roles json [not null, note: 'Bản chụp đầy đủ: [{positionId, code, name, unit, description, isBoardSeat, isLeaderRole, isDefaultMemberRole, isSingleHolder, permissionCodes[]}].']
   createdBy objectId [not null]
   reason string
   createdAt datetime [not null]
@@ -1102,30 +1117,31 @@ Table eventFeedbacks {
 
 Table complaints {
   id objectId [pk]
-  complainantId objectId [not null]
-  recipient feedbackRecipient [not null, default: 'CLUB', note: 'UC50 (quyết định 2026-10-09): sinh viên chọn gửi góp ý cho CLB hoặc ICPDP.']
-  clubId objectId [note: 'Bắt buộc khi recipient = CLUB; tuỳ chọn khi gửi ICPDP.']
-  eventId objectId
-  type string [not null]
+  complainantId objectId [not null, note: 'Chỉ ICPDP thấy danh tính người khiếu nại; CLB không bao giờ thấy (D5, SEC-09).']
+  clubId objectId [note: 'Bắt buộc với mọi khiếu nại mới (UC50); chỉ bản ghi góp ý cũ trước 07/11/2026 có thể trống.']
+  eventId objectId [note: 'Tuỳ chọn; phải thuộc clubId.']
+  type string [not null, note: 'CONDUCT | EVENT | FINANCE | SAFETY | OTHER (UC50). Bản ghi góp ý cũ giữ suggestion | praise | issue.']
   description text [not null]
-  isAnonymous bool [not null, default: false, note: 'Ẩn danh với người nhận; complainantId chỉ giữ nội bộ để chống spam.']
-  evidence json
+  isAnonymous bool [not null, default: false, note: 'Giữ để tương thích dữ liệu góp ý cũ; với khiếu nại, CLB không bao giờ thấy danh tính nên trường này không còn đổi gì.']
+  evidence json [note: 'Danh sách { label, url } (http/https), tối đa 5 mục.']
   state complaintState [not null, default: 'Submitted']
   triage json [note: 'Nhúng: { severity, validity, outcome, reason, actorId, at } (UC51, BR39).']
-  clubResponse json [note: 'Nhúng: { text, evidence, actorId, at }, do UC52 ghi.']
+  clubResponse json [note: 'Nhúng: { text, action, evidence, actorId, at }, do UC52 ghi một lần, không sửa.']
+  closure json [note: 'Nhúng: { reason, actorId, at } khi ICPDP đóng sau phần trả lời của CLB (UC51 A1) hoặc đóng khiếu nại về CLB đã giải thể (UC51 E1).']
+  forwardedAt datetime [note: 'Lúc ICPDP chuyển xuống CLB; CLB chỉ đọc được từ thời điểm này (BR38).']
+  respondedAt datetime
   responseDueAt datetime [note: 'Quá hạn là một tín hiệu tuân thủ cho UC40 (UC52 E1).']
-  violationId objectId [note: 'Được đặt khi leo thang và được hồ sơ liên kết ngược lại (UC51 FR-02).']
-  linkedComplaintId objectId [note: 'Các khiếu nại trùng về cùng sự việc được liên kết và phân loại chung (UC50 E1).']
+  violationId objectId [note: 'Được đặt khi leo thang; hồ sơ vi phạm liên kết ngược qua originType COMPLAINT + originRefId (UC51 FR-02).']
+  linkedComplaintId objectId [note: 'Khiếu nại trước đó của cùng sinh viên về cùng CLB (và sự kiện) còn đang mở; được phân loại chung (UC50 E1).']
   submittedAt datetime [not null]
   withdrawnAt datetime
   closedAt datetime
 
-  Note: 'UC50 là góp ý MỘT CHIỀU (quyết định 2026-10-09): bản ghi bất biến, luôn ở Submitted; CLB chỉ đọc góp ý gửi cho CLB mình (club.feedback.view), ICPDP đọc góp ý gửi ICPDP. Các trường triage/clubResponse/responseDueAt/violationId/linkedComplaintId/withdrawnAt/closedAt thuộc mô hình ticket cũ và không được dùng.'
+  Note: 'Khiếu nại chính thức (UC50–UC52): sinh viên gửi thẳng ICPDP (BR38), ICPDP phân loại Dismissed / Forwarded / Escalated có lý do (BR39), CLB chỉ thấy khiếu nại đã Forwarded và trả lời một lần, ICPDP đóng hoặc leo thang. Mỗi bước có audit; khiếu nại có một approvalTasks entityType COMPLAINT trong hộp thư ICPDP.'
   indexes {
     (state, submittedAt) [name: 'ix_complaint_queue']
     (clubId, state) [name: 'ix_complaint_club']
     (complainantId, state) [name: 'ix_complaint_mine']
-    (recipient, clubId, submittedAt) [name: 'ix_complaint_inbox', note: 'Hộp thư góp ý của CLB và ICPDP.']
   }
 }
 
@@ -1213,7 +1229,11 @@ Table approvalTasks {
   title string [not null, note: 'Nhãn được denormalize cho hộp thư hợp nhất.']
   state approvalTaskState [not null, default: 'Open']
   assigneeId objectId [note: 'Một ICPDP Officer được phân công xử lý; null nghĩa là task còn ở hàng đợi chung.']
-  slaDueAt datetime [note: 'Việc vi phạm SLA được hiển thị dưới dạng approval aging trên dashboard ICPDP (WF-06).']
+  slaDueAt datetime [note: 'Việc vi phạm SLA được hiển thị dưới dạng approval aging trên dashboard ICPDP (WF-06). Đặt lại khi task lên cấp 2.']
+  routingRuleSetId objectId [note: 'Bộ rule UC05 đang Active lúc mở task; null khi chưa có bộ nào.']
+  routingRuleId string [note: 'Rule khớp lúc mở task; null nghĩa là không khớp rule nào (một cấp, BR16).']
+  requiredLevel int [not null, default: 1, note: 'Số cấp duyệt hồ sơ cần, đóng băng lúc mở task (UC05).']
+  currentLevel int [not null, default: 1, note: 'Cấp đang chờ quyết định; cấp 2 chỉ người có ICPDP_HEAD quyết định.']
   openedAt datetime [not null]
   closedAt datetime
 
@@ -1227,6 +1247,7 @@ Table approvalTasks {
 Table approvalDecisions {
   id objectId [pk]
   approvalTaskId objectId [not null]
+  level int [not null, default: 1, note: 'Cấp duyệt của quyết định này (UC05). Cấp 1 duyệt ở hồ sơ cần hai cấp chỉ chuyển task lên cấp 2, chưa có hiệu lực cuối.']
   outcome reviewOutcome [not null]
   reason text [note: 'Bắt buộc với kết quả Từ chối và Yêu cầu chỉnh sửa (BR05).']
   comments json [note: 'Các nhận xét có cấu trúc theo từng phần của một yêu cầu chỉnh sửa.']
@@ -1234,9 +1255,9 @@ Table approvalDecisions {
   actorId objectId [not null]
   at datetime [not null]
 
-  Note: 'Chỉ-ghi-thêm. Mỗi task có đúng một quyết định; bản nộp lại tạo task mới (BR16, WF-05).'
+  Note: 'Chỉ-ghi-thêm. Mỗi cấp của một task có đúng một quyết định (hai cấp khi rule UC05 yêu cầu); bản nộp lại tạo task mới (BR16, WF-05).'
   indexes {
-    approvalTaskId [unique, name: 'uq_decision_task']
+    (approvalTaskId, level) [unique, name: 'uq_decision_task_level']
   }
 }
 
@@ -1309,6 +1330,8 @@ Ref: studentProfiles.userId - users.id
 Ref: userRoleAssignments.userId > users.id
 Ref: userRoleAssignments.roleId > roles.id
 Ref: policyVersions.createdBy > users.id
+Ref: routingRuleSets.createdBy > users.id
+Ref: approvalTasks.routingRuleSetId > routingRuleSets.id
 
 // M02 / M03
 Ref: clubApplications.founderUserId > users.id
@@ -1433,6 +1456,7 @@ TableGroup "M01 Định danh, truy cập & cấu hình" {
   permissions
   userRoleAssignments
   policyVersions
+  routingRuleSets
 }
 
 TableGroup "M02 / M03 Vòng đời CLB, quản trị & nhiệm kỳ" {

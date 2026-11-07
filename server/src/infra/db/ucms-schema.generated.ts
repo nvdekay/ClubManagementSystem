@@ -129,10 +129,6 @@ export const ucmsEnums = {
     "Resolved",
     "Closed"
   ],
-  "feedbackRecipient": [
-    "CLUB",
-    "ICPDP"
-  ],
   "complaintState": [
     "Submitted",
     "Under Triage",
@@ -440,6 +436,57 @@ export const ucmsTables = {
       }
     ]
   },
+  "routingRuleSets": {
+    "fields": {
+      "versionNo": {
+        "type": "int",
+        "required": true
+      },
+      "state": {
+        "type": "string",
+        "required": true
+      },
+      "rules": {
+        "type": "json",
+        "required": true
+      },
+      "createdBy": {
+        "type": "objectId",
+        "required": true
+      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "updatedAt": {
+        "type": "datetime"
+      },
+      "activatedBy": {
+        "type": "objectId"
+      },
+      "activatedAt": {
+        "type": "datetime"
+      },
+      "supersededAt": {
+        "type": "datetime"
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "versionNo"
+        ],
+        "unique": true,
+        "name": "uq_routing_version"
+      },
+      {
+        "fields": [
+          "state"
+        ],
+        "name": "ix_routing_state"
+      }
+    ]
+  },
   "clubs": {
     "fields": {
       "code": {
@@ -744,6 +791,9 @@ export const ucmsTables = {
       },
       "unit": {
         "type": "string"
+      },
+      "description": {
+        "type": "text"
       },
       "isBoardSeat": {
         "type": "bool",
@@ -2616,11 +2666,6 @@ export const ucmsTables = {
         "type": "objectId",
         "required": true
       },
-      "recipient": {
-        "type": "feedbackRecipient",
-        "required": true,
-        "default": "CLUB"
-      },
       "clubId": {
         "type": "objectId"
       },
@@ -2653,6 +2698,15 @@ export const ucmsTables = {
       },
       "clubResponse": {
         "type": "json"
+      },
+      "closure": {
+        "type": "json"
+      },
+      "forwardedAt": {
+        "type": "datetime"
+      },
+      "respondedAt": {
+        "type": "datetime"
       },
       "responseDueAt": {
         "type": "datetime"
@@ -2695,14 +2749,6 @@ export const ucmsTables = {
           "state"
         ],
         "name": "ix_complaint_mine"
-      },
-      {
-        "fields": [
-          "recipient",
-          "clubId",
-          "submittedAt"
-        ],
-        "name": "ix_complaint_inbox"
       }
     ]
   },
@@ -2924,6 +2970,22 @@ export const ucmsTables = {
       "slaDueAt": {
         "type": "datetime"
       },
+      "routingRuleSetId": {
+        "type": "objectId"
+      },
+      "routingRuleId": {
+        "type": "string"
+      },
+      "requiredLevel": {
+        "type": "int",
+        "required": true,
+        "default": 1
+      },
+      "currentLevel": {
+        "type": "int",
+        "required": true,
+        "default": 1
+      },
       "openedAt": {
         "type": "datetime",
         "required": true
@@ -2956,6 +3018,11 @@ export const ucmsTables = {
         "type": "objectId",
         "required": true
       },
+      "level": {
+        "type": "int",
+        "required": true,
+        "default": 1
+      },
       "outcome": {
         "type": "reviewOutcome",
         "required": true
@@ -2981,10 +3048,11 @@ export const ucmsTables = {
     "indexes": [
       {
         "fields": [
-          "approvalTaskId"
+          "approvalTaskId",
+          "level"
         ],
         "unique": true,
-        "name": "uq_decision_task"
+        "name": "uq_decision_task_level"
       }
     ]
   },
