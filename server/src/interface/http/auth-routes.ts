@@ -59,6 +59,9 @@ export function authGuard(deps: Pick<AuthRouteDeps, "repo" | "sessions">, csrfRe
         throw new DomainError("invalid CSRF token", "forbidden");
       }
       _res.locals.actor = user;
+      // Normalized route context for SEC-08 denial audits; the raw body is never kept.
+      _res.locals.accessContext = { method: req.method, route: `${req.baseUrl ?? ""}${typeof req.route?.path === "string" ? req.route.path : ""}`,
+        params: Object.fromEntries(Object.entries(req.params ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string")) };
       next();
     } catch (error) { next(error); }
   };

@@ -1,6 +1,9 @@
+import { randomUUID } from "node:crypto";
 import { STATUS_CODES } from "node:http";
 import type { NextFunction, Request, Response } from "express";
 import { DomainError, type DomainErrorKind } from "../../domain/errors.js";
+import type { AccessDenialAuditRepository } from "../../domain/access-denial.js";
+import { recordAccessDenial } from "../../usecase/access-denial.js";
 import { fail } from "./response.js";
 
 const DOMAIN_STATUS: Record<DomainErrorKind, number> = {
@@ -36,6 +39,35 @@ function clientErrorStatus(err: unknown): number | undefined {
   const { status, statusCode } = err as { status?: unknown; statusCode?: unknown };
   const code = typeof status === "number" ? status : statusCode;
   return typeof code === "number" && code >= 400 && code < 500 ? code : undefined;
+}
+
+interface AccessContext { method: string; route: string; params: Record<string, string> }
+
+function accessContext(value: unknown): AccessContext | null {
+  if (typeof value !== "object" || value === null) return null;
+  const { method, route, params } = value as Partial<AccessContext>;
+  return typeof method === "string" && typeof route === "string" && typeof params === "object" && params !== null
+    ? { method, route, params } : null;
+}
+
+/**
+ * SEC-08 / AC17: the single place that audits a 403 for an authenticated caller. It runs before
+ * errorHandler and never changes the response; a failed audit write is only logged.
+ */
+export function accessDenialAuditor(repo: AccessDenialAuditRepository) {
+  return async function auditAccessDenial(err: unknown, req: Request, res: Response, next: NextFunction) {
+    const actor = res.locals.actor as { id?: unknown } | undefined;
+    const context = accessContext(res.locals.accessContext);
+    if (err instanceof DomainError && err.kind === "forbidden" && typeof actor?.id === "string" && context) {
+      try {
+        await recordAccessDenial(repo, { actorId: actor.id, ...context, reason: err.message, details: err.details,
+          correlationId: randomUUID(), at: new Date() });
+      } catch (auditError) {
+        console.error(`access denial audit failed for ${req.method} ${context.route}: ${auditError instanceof Error ? auditError.name : "error"}`);
+      }
+    }
+    next(err);
+  };
 }
 
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction) {

@@ -32,7 +32,7 @@ export async function assertClubAccess(
     throw new DomainError("invalid identifier", "validation");
   }
   const snapshot = await repo.findSnapshot(userIdResult.data, clubIdResult.data);
-  if (!snapshot) throw new DomainError("club access denied", "forbidden");
+  if (!snapshot) throw new DomainError("club access denied", "forbidden", { requiredPermission: permission });
   requireClubPermission(snapshot, permission, now);
 }
 
