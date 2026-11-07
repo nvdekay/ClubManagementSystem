@@ -28,11 +28,16 @@ function byPosition<T extends { positionId: string }>(items: readonly T[]): T[] 
  * appends one MIGRATION structure version (with an audit row) only when the live roles differ
  * from the latest version. It never touches assignments or earlier versions, so a rerun is a no-op.
  */
-export async function upgradeClubRoles(now: Date = new Date()): Promise<{ clubs: number; roles: number }> {
+/** Thrown inside the transaction to roll a club back when its change could not be versioned. */
+class NoVersionAuthor extends Error {}
+
+export async function upgradeClubRoles(now: Date = new Date()): Promise<{ clubs: number; roles: number; skippedClubIds: string[] }> {
   let clubs = 0;
   let roles = 0;
+  const skippedClubIds: string[] = [];
   const clubIds = await m.clubPositions!.distinct("clubId");
   for (const clubId of clubIds as Types.ObjectId[]) {
+    try {
     await mongoose.connection.transaction(async (session) => {
       const positions = await m.clubPositions!.find({ clubId }).session(session).lean();
       let changed = 0;
@@ -53,7 +58,8 @@ export async function upgradeClubRoles(now: Date = new Date()): Promise<{ clubs:
       // A structure version needs a creator: the author of the previous version, else whoever assigned a seat.
       const systemActor = latest?.createdBy
         ?? (await m.clubPositionAssignments!.findOne({ clubId }).sort({ effectiveFrom: 1 }).session(session).lean())?.assignedBy;
-      if (!systemActor) return;
+      // Never change roles without the version and audit that explain it: roll this club back instead.
+      if (!systemActor) throw new NoVersionAuthor();
       await m.clubRoleStructureVersions!.create([{ clubId, versionNo, effectiveFrom: now, source: "MIGRATION",
         roles: snapshot, createdBy: systemActor, reason: "BR55 permission catalogue clean-up", createdAt: now }], { session });
       await m.auditLogs!.create([{ entityType: "Club", entityId: clubId, action: "CLUB_ROLE_STRUCTURE_MIGRATED",
@@ -62,6 +68,10 @@ export async function upgradeClubRoles(now: Date = new Date()): Promise<{ clubs:
       clubs += 1;
       roles += changed;
     });
+    } catch (error) {
+      if (!(error instanceof NoVersionAuthor)) throw error;
+      skippedClubIds.push(String(clubId));
+    }
   }
-  return { clubs, roles };
+  return { clubs, roles, skippedClubIds };
 }

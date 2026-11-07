@@ -1,4 +1,4 @@
-import { CLUB_PERMISSIONS, DEFAULT_MEMBER_PERMISSIONS, isClubLeaderSeat, resolveClubPermissions, ROLE_GRANTABLE_PERMISSIONS,
+import { CLUB_PERMISSIONS, isClubLeaderSeat, resolveClubPermissions, ROLE_GRANTABLE_PERMISSIONS,
   type ClubAccessRepository } from "../domain/access.js";
 import {
   assertClubRoleAssignable,
@@ -16,7 +16,8 @@ import { DomainError } from "../domain/errors.js";
 import { assertClubSettingsRead, assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
-const editableClubStates = new Set(["Active", "Pending Setup"]);
+// UC23 precondition: only an Active club edits its role structure.
+const editableClubStates = new Set(["Active"]);
 
 export interface ClubRoleAssignmentRequest {
   membershipId: string;
@@ -42,7 +43,7 @@ async function loadForChange(repo: ClubRoleRepository, access: ClubAccessReposit
   actor: AccessActor | null, clubId: string, now: Date) {
   const loaded = await load(repo, access, actor, clubId, now);
   if (!editableClubStates.has(loaded.overview.clubState)) {
-    throw new DomainError("club roles can change only while the club is Active or Pending Setup", "conflict");
+    throw new DomainError("club roles can change only while the club is Active", "conflict");
   }
   return loaded;
 }
@@ -54,10 +55,10 @@ async function result(repo: ClubRoleRepository, clubId: string, now: Date) {
 }
 
 function withCatalog(overview: ClubRoleOverview) {
-  // Offered in the UI: what a role can add on top of the two codes every Active member already holds.
+  // BR55: the whole catalogue minus the four leader-reserved codes.
   // Both leader seats (Chủ nhiệm, Phó chủ nhiệm) are shown as the fixed leader role.
   return { ...overview, roles: overview.roles.map((role) => ({ ...role, isLeaderRole: isClubLeaderSeat(role) })),
-    grantablePermissions: ROLE_GRANTABLE_PERMISSIONS.filter((code) => !DEFAULT_MEMBER_PERMISSIONS.includes(code)) };
+    grantablePermissions: [...ROLE_GRANTABLE_PERMISSIONS] };
 }
 
 export async function getClubRoles(repo: ClubRoleRepository, access: ClubAccessRepository,

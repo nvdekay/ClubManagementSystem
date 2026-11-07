@@ -156,7 +156,7 @@ describe("UC23 club role management", () => {
 
   it("step 3: offers only the grantable catalogue, never leader-only permissions", async () => {
     const overview = await getClubRoles(fakeRepo().repo, leaderAccess(), leader, clubId, now);
-    expect(overview.grantablePermissions).toHaveLength(10);
+    expect(overview.grantablePermissions).toHaveLength(12);
     for (const code of LEADER_RESERVED_PERMISSIONS) expect(overview.grantablePermissions).not.toContain(code);
   });
 
@@ -304,8 +304,10 @@ describe("UC23 club role management", () => {
       { name: "Phó chủ nhiệm", isSingleHolder: false, permissionCodes: [] }, now)).rejects.toMatchObject({ kind: "conflict" });
   });
 
-  it("refuses changes outside Active / Pending Setup and assignments without an active term", async () => {
+  it("refuses changes outside an Active club and assignments without an active term", async () => {
     await expect(createClubRole(fakeRepo("Suspended").repo, leaderAccess("Suspended"), leader, clubId, treasurer, now))
+      .rejects.toMatchObject({ kind: "conflict" });
+    await expect(createClubRole(fakeRepo("Pending Setup").repo, leaderAccess("Pending Setup"), leader, clubId, treasurer, now))
       .rejects.toMatchObject({ kind: "conflict" });
     const noTerm = fakeRepo("Active", null);
     const created = await createClubRole(noTerm.repo, leaderAccess(), leader, clubId, treasurer, now);

@@ -35,7 +35,7 @@ describe.skipIf(!uri)("club role upgrade (BR55 migration)", () => {
     await m.clubRoleStructureVersions!.create({ clubId, versionNo: 1, effectiveFrom: now, source: "APPLICATION",
       roles: docs.map((doc) => roleSnapshot(doc.toObject())), createdBy: officer, createdAt: now });
 
-    expect(await upgradeClubRoles(now)).toEqual({ clubs: 1, roles: 5 });
+    expect(await upgradeClubRoles(now)).toEqual({ clubs: 1, roles: 5, skippedClubIds: [] });
     const codes = Object.fromEntries((await m.clubPositions!.find({ clubId }).lean())
       .map((doc) => [String(doc.code), doc.permissionCodes]));
     expect(codes).toEqual({ CLUB_LEADER: [], VICE_LEADER: [], HEAD: ["club.event.manage"],
@@ -44,8 +44,18 @@ describe.skipIf(!uri)("club role upgrade (BR55 migration)", () => {
     expect(versions.map((item) => [item.versionNo, item.source])).toEqual([[1, "APPLICATION"], [2, "MIGRATION"]]);
     expect(await m.auditLogs!.countDocuments({ action: "CLUB_ROLE_STRUCTURE_MIGRATED", entityId: clubId })).toBe(1);
 
-    expect(await upgradeClubRoles(now)).toEqual({ clubs: 0, roles: 0 });
+    expect(await upgradeClubRoles(now)).toEqual({ clubs: 0, roles: 0, skippedClubIds: [] });
     expect(await m.clubRoleStructureVersions!.countDocuments({ clubId })).toBe(2);
     expect(await m.auditLogs!.countDocuments({ action: "CLUB_ROLE_STRUCTURE_MIGRATED", entityId: clubId })).toBe(1);
+  });
+
+  it("leaves a club untouched when no version author can be found", async () => {
+    const clubId = new Types.ObjectId();
+    await m.clubPositions!.create({ clubId, code: "T", name: "Thủ quỹ", isActive: true, isBoardSeat: false, isLeaderRole: false,
+      isDefaultMemberRole: false, isSingleHolder: true, permissionCodes: ["club.role.manage"] });
+    const result = await upgradeClubRoles(now);
+    expect(result.skippedClubIds).toContain(String(clubId));
+    expect((await m.clubPositions!.findOne({ clubId }).lean())?.permissionCodes).toEqual(["club.role.manage"]);
+    expect(await m.clubRoleStructureVersions!.countDocuments({ clubId })).toBe(0);
   });
 });

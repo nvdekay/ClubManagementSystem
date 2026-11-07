@@ -118,7 +118,8 @@ describe.skipIf(!uri)("Mongo club role repository", () => {
     const now = new Date("2026-10-10T12:00:00Z");
     const clubId = new Types.ObjectId();
     const actorId = new Types.ObjectId();
-    const termId = new Types.ObjectId();
+    const termId = (await ucmsModels.clubTerms!.create({ clubId, name: "T", state: "Active", startAt: new Date("2026-01-01"),
+      endAt: new Date("2027-01-01") }))._id;
     const members = await ucmsModels.clubMemberships!.create(Array.from({ length: 6 }, () => ({
       clubId, userId: new Types.ObjectId(), state: "Active", joinedAt: now, statusHistory: [],
     })));
@@ -138,6 +139,17 @@ describe.skipIf(!uri)("Mongo club role repository", () => {
       expect(await ucmsModels.clubPositionAssignments!.countDocuments({ positionId: role._id })).toBe(1);
       expect(await ucmsModels.auditLogs!.countDocuments({ entityType: "ClubPositionAssignment",
         action: "CLUB_ROLE_ASSIGNED", "after.positionId": String(role._id) })).toBe(1);
+      // A UC23 role is not confirmed by ICPDP, so the assignment never carries confirmedBy.
+      expect(await ucmsModels.clubPositionAssignments!.countDocuments({ positionId: role._id, confirmedBy: { $ne: null } })).toBe(0);
+    }
+    // The term must exist, belong to this club and be current.
+    const otherTerm = (await ucmsModels.clubTerms!.create({ clubId: new Types.ObjectId(), name: "X", state: "Active",
+      startAt: new Date("2026-01-01"), endAt: new Date("2027-01-01") }))._id;
+    const extra = await ucmsModels.clubPositions!.create({ clubId, code: "EXTRA", name: "Extra", isActive: true, isSingleHolder: false,
+      isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: false, permissionCodes: [] });
+    for (const wrong of [new Types.ObjectId(), otherTerm]) {
+      await expect(repo.assign(String(clubId), String(extra._id), String(wrong), String(actorId),
+        { membershipId: String(members[1]!._id), effectiveFrom: now }, now)).rejects.toMatchObject({ kind: "conflict" });
     }
   }, 60_000);
 

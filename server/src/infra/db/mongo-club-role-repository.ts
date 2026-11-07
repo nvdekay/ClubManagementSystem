@@ -217,6 +217,10 @@ export function mongoClubRoleRepository(): ClubRoleRepository {
         ]);
         if (!position) return conflict("club role changed; reload and retry");
         if (!membership) return conflict("only Active members can hold a club role");
+        // The term must be this club's current Active term; bumping it serializes against a term change.
+        const term = await terms.findOneAndUpdate({ _id: new Types.ObjectId(termId), clubId: club, state: "Active",
+          startAt: { $lte: now }, endAt: { $gt: now } }, { $inc: { __v: 1 } }, { session }).lean();
+        if (!term) return conflict("the club term changed; reload and retry");
         // Retried transactions see the holder committed by the preceding assignment.
         if (await assignments.exists({ clubId: club, termId: new Types.ObjectId(termId),
           positionId: role, membershipId, ...openAt(now) }).session(session)) {
@@ -230,7 +234,8 @@ export function mongoClubRoleRepository(): ClubRoleRepository {
         const [created] = await assignments.create([{ clubId: club, termId: new Types.ObjectId(termId),
           positionId: role, membershipId, effectiveFrom: input.effectiveFrom,
           ...(input.effectiveTo ? { effectiveTo: input.effectiveTo } : {}),
-          assignedBy: actor, confirmedBy: actor }], { session });
+          // UC23 roles need no ICPDP confirmation; confirmedBy is reserved for board seats (BR55).
+          assignedBy: actor }], { session });
         const assignmentId = created!._id as Types.ObjectId;
         const after = { positionId: roleId, roleName: String(position.name), membershipId: input.membershipId,
           effectiveFrom: input.effectiveFrom, effectiveTo: input.effectiveTo };

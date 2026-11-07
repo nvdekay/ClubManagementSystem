@@ -83,7 +83,7 @@ try {
   await ensureUcmsDatabase();
   await ensureDefaultClubFields();
   const roleUpgrade = await upgradeClubRoles();
-  if (roleUpgrade.clubs) console.log(JSON.stringify({ msg: "club roles upgraded", ...roleUpgrade }));
+  if (roleUpgrade.clubs || roleUpgrade.skippedClubIds.length) console.log(JSON.stringify({ msg: "club roles upgraded", ...roleUpgrade }));
   if (authConfig) {
     await ensureAuthSessionIndexes();
     await ensureAuthBootstrap(authConfig);
