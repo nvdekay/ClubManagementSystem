@@ -41,7 +41,7 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 |---|---|---|
 | M01 Identity, Access, Configuration | User, session, system role, policy, dashboard | Có; OAuth thật còn gate nghiệm thu |
 | M02 Club Lifecycle | Hồ sơ thành lập, profile, lifecycle | UC08 tạo Active ngay; UC14 CLB xin tạm ngừng và UC15 ICPDP quyết định; job hết hạn hồ sơ UC07/08 |
-| M03 Leadership & Term | Term, position, assignment, transition | UC10–UC13 có (UC12/13 kiểm tra BR06); UC23 đã rút nhưng API/UI role động còn tồn tại và phải gỡ |
+| M03 Leadership & Term | Term, position, assignment, transition | UC10–UC13 có (UC12/13 kiểm tra BR06); UC23 đã rút; API/UI role động đã gỡ 07/11/2026 |
 | M04 Recruitment & Membership | Campaign, application, candidate evaluation, membership | Có, gồm job tái xác nhận đầu kỳ UC21 A2 |
 | M05 Event & Activity | Proposal, event, school event, invitation | Có, gồm UC54 CLB nhận/từ chối lời mời |
 | M06 Registration & Attendance | Registration, waitlist, attendance | Có |
@@ -100,11 +100,10 @@ term `Active` tạo `Club Leader` với toàn bộ quyền quản lý cố đị
 UC08 tạo CLB `Active` với ghế Chủ nhiệm/Phó chủ nhiệm đã xác nhận.
 
 Không có role tự tạo, API roles/role-directory hay UI cấu hình permission. Field cũ được giữ cho
-tương thích, không cấp quyền. Code hiện tại còn phần UC23 động (`club-role.ts`,
-`mongo-club-role-repository.ts`, `ROLE_EDIT`) và phải gỡ/thu hẹp để trở lại thiết kế này. Client ẩn
+tương thích, không cấp quyền; phần UC23 động thêm tạm ngày 07/11/2026 đã gỡ. Client ẩn
 menu theo `/auth/me`; server vẫn kiểm tra quyền.
 Member roster đọc qua member-space, chỉ tên/vị trí/trạng thái. GET profile/departments cho current
-member đọc, dù UI settings chỉ mở cho Leader. UC58 yêu cầu Leader ngay cả khi chỉ đọc.
+member đọc, dù UI settings chỉ mở cho Leader. UC58 xem phòng được phân mở cho mọi thành viên `Active` (`club.room.view`).
 
 ## 6. MongoDB và tính nguyên tử
 

@@ -47,6 +47,6 @@ python3 docs/06-user-guide/build-guide.py
 Mở HTML, chọn In → lưu PDF, khổ A4 ngang, bật hình nền. PDF bàn giao đã được xuất và kiểm tra
 font tiếng Việt, ảnh, số trang và khả năng đọc trên trình duyệt.
 
-Từ 07/11/2026 nội dung chương 4 (vai trò CLB do Club Leader cấu hình, UC23; mọi thành viên `Active` có
-quyền điểm danh và xem phòng) và chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) theo code mới;
+Từ 07/11/2026 nội dung chương 4 (hai vai trò cố định; mọi thành viên `Active` có quyền điểm danh và
+xem phòng) và chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) theo code mới;
 ảnh của hai chương này chưa chụp lại.

@@ -8,16 +8,16 @@ Trước khi sửa code cho một khoảng trống, cập nhật SPEC/TASKS tư�
 
 ## Lệch so với diagram
 
-Code đã khớp G2–G5 (07/11/2026, xem mục *Đã khớp*), kể cả các lỗi review sau đó (khiếu nại trùng
+Code đã khớp G1–G5 (07/11/2026, xem mục *Đã khớp*), kể cả các lỗi review sau đó (khiếu nại trùng
 do ICPDP gộp tay, không đoán lúc nộp, một bộ rule `Active` bằng index unique, job quá hạn chống chạy
 trùng nhiều instance, mô phỏng dùng dữ liệu lúc quyết định, CLB đính kèm chứng cứ khi trả lời) và lần review thứ hai
 (khiếu nại đi theo không có task, không vào hàng đợi, mọi bước xử lý trực tiếp bị từ chối, rút khiếu nại gốc thì
 khiếu nại đi theo cũ nhất làm gốc; kích hoạt rule đồng
 thời trả đúng một 409).
 
-**G1 mở lại ngày 07/11/2026:** đối chiếu lịch sử trên `main` cho thấy `UCMS_Organization_and_Flows.drawio`
-(02/11) mới hơn use case diagram có CRUD role (19/10) và ghi rõ chỉ hai role cố định, UC23 bị rút.
-Code vừa khôi phục UC23 là sai hướng và phải quay về role/quyền cố định.
+**G1 đóng lại ngày 07/11/2026:** `UCMS_Organization_and_Flows.drawio` (02/11) mới hơn use case diagram có
+CRUD role (19/10) và ghi rõ chỉ hai role cố định, UC23 bị rút. Code UC23 (API, trang, menu, resolver
+permission theo role, migration `club-role-upgrade`) đã gỡ; quyền CLB quay về hai role cố định của BR47/BR54/BR55.
 
 ## Diagram phụ còn mô tả mô hình cũ (người dùng chọn để nguyên khi được hỏi ngày 07/11/2026)
 
@@ -28,19 +28,18 @@ Các diagram dưới đây không phải nguồn chuẩn nhưng vẫn vẽ mô h
 |---|---|
 | `UCMS_Organization_and_Flows.drawio` | **Phần role là đúng**: hai role cố định, UC23 bị rút. Diagram vẫn thiếu `ICPDP_HEAD` và duyệt cấp 1 → cấp 2 |
 | `UCMS_UseCase_ByActor.drawio` | Nhóm `Manage club roles` / CRUD role của UC23 là cũ và cần bỏ để khớp diagram cơ cấu mới hơn |
-| `UCMS_Screen_Flow.drawio` | Còn "Student feedback" / "Student feedback inbox"; thiếu Khiếu nại (CLB, ICPDP), Định tuyến phê duyệt. Không bổ sung `Roles & permissions`; màn này phải gỡ khỏi code |
+| `UCMS_Screen_Flow.drawio` | Còn "Student feedback" / "Student feedback inbox"; thiếu Khiếu nại (CLB, ICPDP), Định tuyến phê duyệt. Không có `Roles & permissions` (đúng, màn này đã gỡ khỏi code) |
 | `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Thiếu `routingRuleSets`, `approvalTasks.routingRuleSetId/routingRuleId/requiredLevel/currentLevel`, `approvalDecisions.level`; complaint còn là góp ý một chiều, chưa liên kết `Violation` |
 | `UCMS_Sequence_Diagrams.drawio` | Chưa có luồng duyệt hai cấp với `ICPDP_HEAD` |
 | `UCMS_Security_Architecture.drawio` | Chưa có audit `ACCESS_DENIED` (SEC-08) |
 | `../06-user-guide/GUIDE_BOOK.pdf`, ảnh chương 4 và 19 | Chưa xuất lại / chụp lại (Markdown và HTML đã cập nhật) |
 
-G2 (quyền mặc định của thành viên) **không** đi qua role của UC23: mọi membership `Active` tự có
-`club.attendance.manage` và `club.room.view`, không cần bản gán (BR54, BR47 c).
+G2 (quyền mặc định của thành viên): mọi membership `Active` tự có `club.attendance.manage` và
+`club.room.view`, không cần bản gán (BR54).
 
 ## Lệch so với SRS
 
-- **G1:** code hiện có API/UI/resolver UC23 động trong khi SRS đã rút UC23 và yêu cầu hai role cố định.
-- Ngoài G1, S3 đã khớp; S1 và S2 là kết luận sai (xem dưới).
+Không còn lệch: G1 (UC23 động) đã gỡ, S3 đã khớp; S1 và S2 là kết luận sai (xem dưới).
 
 ### Kết luận sai đã loại bỏ (07/11/2026)
 
@@ -51,6 +50,10 @@ G2 (quyền mặc định của thành viên) **không** đi qua role của UC23
 
 ## Đã khớp
 
+- **G1 (07/11/2026)** — UC23 đã rút theo SRS hiện hành: không còn API `/clubs/:clubId/roles*` /
+  `role-directory`, trang `/club/:clubId/roles`, menu "Vai trò & phân quyền", resolver permission theo role hay
+  migration `club-role-upgrade`. Danh mục còn 15 permission (bỏ `club.role.manage`); Club Leader có toàn bộ,
+  Club Member có hai quyền mặc định, chức danh khác không cấp quyền (BR47, BR54, BR55).
 - **G2 (07/11/2026)** — UC30, UC32, UC58: mọi thành viên `Active` có `club.attendance.manage` và
   `club.room.view` mặc định (`DEFAULT_MEMBER_PERMISSIONS` trong `server/src/domain/access.ts`);
   xem phòng được phân dùng `club.room.view` thay cho `club.booking.manage`, tạo booking UC45 vẫn cần
@@ -79,7 +82,7 @@ G2 (quyền mặc định của thành viên) **không** đi qua role của UC23
 
 1. ~~**G2**~~ — đã xong 07/11/2026.
 2. ~~**S3**~~ — đã xong 07/11/2026.
-3. **G1** — gỡ UC23 động, quay về role/quyền cố định.
+3. ~~**G1**~~ — UC23 động đã gỡ 07/11/2026, quyền quay về hai role cố định.
 4. ~~**G3**~~ — đã xong 07/11/2026.
 5. ~~**G4**~~ — đã xong 07/11/2026.
 6. ~~**G5**~~ — đã xong 07/11/2026.

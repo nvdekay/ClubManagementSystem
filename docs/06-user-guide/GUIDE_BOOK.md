@@ -1,7 +1,7 @@
 # UCMS — Guide book hướng dẫn sử dụng
 
-> **Đối chiếu code ngày 07/11/2026.** Chương 4 (vai trò CLB, UC23) và chương 19 (khiếu nại UC50–UC52,
-> định tuyến phê duyệt UC05) đã viết lại theo code mới; ảnh chụp các chương này vẫn là giao diện trước
+> **Đối chiếu code ngày 07/11/2026.** Chương 4 (hai vai trò cố định, quyền mặc định của thành viên) và
+> chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) đã viết lại theo code mới; ảnh chụp các chương này vẫn là giao diện trước
 > 07/11/2026 và cần chụp lại.
 > Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
 
@@ -93,7 +93,7 @@ Thanh bên chia nhóm theo không gian:
 | Sinh viên | — | Tổng quan |
 | Sinh viên | Câu lạc bộ | CLB của tôi · Ứng tuyển CLB · Thành lập CLB |
 | Sinh viên | Sự kiện & khiếu nại | Sự kiện của tôi · Khiếu nại |
-| CLB | Thành viên & tổ chức | Thành viên · Tuyển thành viên · Ban chủ nhiệm · Thiết lập CLB · Vai trò & phân quyền |
+| CLB | Thành viên & tổ chức | Thành viên · Tuyển thành viên · Ban chủ nhiệm · Thiết lập CLB |
 | CLB | Sự kiện | Sự kiện CLB · Đăng ký & điểm danh · Phản hồi sự kiện · Báo cáo sau sự kiện |
 | CLB | Tài chính & cơ sở vật chất | Khoản chi và quyết toán · Phòng được phân · Yêu cầu cơ sở vật chất |
 | CLB | — | Khiếu nại · Trang công khai |
@@ -140,31 +140,36 @@ sửa hoặc từ chối.
 
 ![ICPDP thẩm định một hồ sơ thành lập](images/10-founding-review-detail.png)
 
-## 4. Thiết lập CLB và vai trò trong CLB
+## 4. Thiết lập CLB và hai vai trò trong CLB
 
-Quyền trong CLB đến từ ba nguồn (BR47, BR54, BR55):
+Phía CLB chỉ có **hai vai trò cố định** do hệ thống định nghĩa, không tự tạo thêm vai trò hay chia quyền lẻ
+(BR47, BR54, BR55):
 
-- **Club Leader**: Chủ nhiệm và các Phó chủ nhiệm đã được ICPDP xác nhận (qua hồ sơ thành lập,
-  đề cử ban chủ nhiệm hoặc chuyển giao nhiệm kỳ). Có mọi quyền CLB, gồm bốn quyền giữ riêng: quản lý
-  vai trò, đề cử ban chủ nhiệm, lập kế hoạch chuyển giao, xin tạm ngừng.
-- **Vai trò do Club Leader tạo** (ví dụ Thủ quỹ, Trưởng ban Sự kiện): mang đúng các quyền Club Leader
-  chọn, không bao giờ có bốn quyền giữ riêng. Giữ nhiều vai trò thì có hợp các quyền. Ghế ban điều hành
-  khác (do ICPDP xác nhận) cũng chỉ có quyền của chính ghế đó.
-- **Mọi thành viên đang hoạt động**: tự có hai quyền **điểm danh / danh sách chờ** và **xem phòng được
-  phân**, không cần được giao vai trò.
+- **Club Leader**: Chủ nhiệm và các Phó chủ nhiệm đã được ICPDP xác nhận (qua hồ sơ thành lập, đề cử ban
+  chủ nhiệm hoặc chuyển giao nhiệm kỳ). Có toàn quyền quản lý CLB; Chủ nhiệm và Phó chủ nhiệm có quyền như
+  nhau.
+- **Club Member**: mọi thành viên đang hoạt động khác. Xem và tham gia, cộng hai việc mọi thành viên đều
+  làm được: **quản lý danh sách chờ / chốt điểm danh** sự kiện và **xem phòng được phân**.
 
-**Vai trò & phân quyền** (`/club/:clubId/roles`, chỉ Club Leader):
+Các chức danh khác trong cơ cấu CLB (Trưởng ban, Thủ quỹ…) chỉ để hiển thị, không cấp thêm quyền.
 
-1. **Thêm vai trò**: đặt tên, chọn ban (nếu có), nhiệm vụ, một hay nhiều người giữ, rồi tick các quyền.
-2. Bấm vào vai trò để **Gán thành viên** (chọn thành viên đang hoạt động, ngày bắt đầu/kết thúc tuỳ chọn)
-   hoặc **Thu hồi**. Quyền có hiệu lực ngay; người được gán/thu hồi nhận thông báo.
-3. **Sửa** quyền của vai trò áp dụng ngay cho mọi người đang giữ. **Ngừng** chỉ được khi vai trò không
-   còn người giữ.
-4. Tab **Lịch sử** so sánh hai phiên bản cơ cấu; mỗi lần tạo/sửa/ngừng là một phiên bản mới.
+| Việc | Club Leader | Club Member |
+|---|---|---|
+| Xem Tổng quan CLB, trang công khai, danh sách thành viên | Có (quản lý được) | Có (chỉ xem) |
+| Không gian thành viên, xin rời CLB, đăng ký sự kiện, check-in, phản hồi, khiếu nại | Có | Có |
+| Danh sách chờ, điểm danh hộ, chốt điểm danh | Có | Có |
+| Xem phòng được phân | Có | Có |
+| Sửa hồ sơ vận hành và cơ cấu ban/bộ phận (Thiết lập CLB) | Có | Không |
+| Đổi trạng thái thành viên, xử lý yêu cầu rời, xuất Excel | Có | Không |
+| Tạo đợt tuyển, xét đơn, chấm rubric, tiếp nhận thành viên | Có | Không |
+| Đề cử ban chủ nhiệm, lập kế hoạch chuyển giao, xin tạm ngừng | Có | Không |
+| Đề xuất, công bố, đổi lịch, huỷ sự kiện; quản lý sức chứa | Có | Không |
+| Xem phản hồi sự kiện, trả lời khiếu nại được chuyển xuống | Có | Không |
+| Báo cáo sau sự kiện, báo cáo định kỳ, ghi khoản chi, nộp quyết toán | Có | Không |
+| Gửi yêu cầu cơ sở vật chất | Có | Không |
 
-Không sửa được: vai trò Chủ nhiệm/Phó chủ nhiệm, vai trò Thành viên (không gán tay, không thêm quyền),
-và danh sách ghế ban điều hành (chỉ đổi qua chuyển giao nhiệm kỳ). Chỉ CLB đang hoạt động mới sửa được
-cơ cấu. Thành viên thường xem các vai trò của CLB và vai trò mình đang giữ ở trang **Thành viên**.
+Thành viên muốn có quyền quản lý thì phải được đề cử vào ghế Phó chủ nhiệm và được ICPDP xác nhận
+(chương 5).
 
 ![Không gian CLB của Club Leader: đủ các nhóm quản lý](images/11-club-leader-home.png)
 

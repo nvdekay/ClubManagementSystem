@@ -65,3 +65,4 @@ Role CLB cấu hình được và cấp quyền qua role (feat-club-role-managem
 
 ## Changelog
 - v1.0.0 (2026-11-07) — người dùng duyệt theo prompt sửa lệch code/diagram.
+- v1.1.0 (2026-11-07) — SRS hiện hành rút UC23: danh mục còn 15 mã (bỏ `club.role.manage`), không còn `LEADER_RESERVED_PERMISSIONS`; Club Leader có cả 15, thành viên `Active` vẫn có hai quyền mặc định.

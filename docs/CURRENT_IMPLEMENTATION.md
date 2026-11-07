@@ -6,26 +6,24 @@
 
 ## 1. Mô hình truy cập phía CLB
 
-Từ 07/11/2026 code theo đúng BR47, BR54, BR55 (`server/src/domain/access.ts`):
+Code theo đúng BR47, BR54, BR55 của SRS hiện hành — hai role cố định (`server/src/domain/access.ts`):
 
 - **Club Leader**: membership `Active`, giữ ghế Chủ nhiệm (`isLeaderRole`) hoặc Phó chủ nhiệm
   (`isBoardSeat` với mã `VICE_LEADER`/`VICE`) đã được ICPDP xác nhận (`confirmedBy`) trong nhiệm kỳ
-  `Active` còn hiệu lực. Có toàn bộ 16 permission (`CLUB_PERMISSIONS`), gồm bốn quyền giữ riêng
-  `club.role.manage`, `club.board.nominate`, `club.transition.plan`, `club.suspension.request`.
-- **Ghế ban điều hành khác** (ví dụ Trưởng ban) đã được ICPDP xác nhận: chỉ nhận permission của
-  chính role đó.
-- **Khoảng lệch cần gỡ:** code hiện còn cho Club Leader tạo role UC23, chọn permission và gán thành
-  viên. SRS hiện hành đã rút UC23; chức danh không được tham gia quyết định quyền.
-- **Mọi thành viên `Active`**: hai permission mặc định `club.attendance.manage` (UC30, UC32) và
-  `club.room.view` (UC58), không cần bản gán (BR54). Role Members không mang permission nào khác.
+  `Active` còn hiệu lực. Có toàn bộ 15 permission của danh mục cố định (`CLUB_PERMISSIONS`).
+- **Club Member**: mọi membership `Active` khác. Có hai permission mặc định `club.attendance.manage`
+  (UC30, UC32) và `club.room.view` (UC58); ngoài ra chỉ xem và tham gia.
+- **Chức danh khác** (Trưởng ban, Thủ quỹ…, kể cả ghế ban điều hành khác đã xác nhận): chỉ để hiển thị,
+  không cấp permission (BR55). Không có RBAC tuỳ biến theo CLB.
 - **Approved founder khi CLB `Pending Setup`**: chỉ có `club.profile.manage` và
   `club.board.nominate` — quy tắc tương thích cho dữ liệu cũ; UC08 hiện tạo CLB `Active` nên không
   CLB mới nào rơi vào trường hợp này.
 
 Workspace CLB trong `/auth/me` mang `role = "leader"` chỉ khi người dùng giữ ghế Chủ nhiệm / Phó chủ
-nhiệm hợp lệ, không suy ra từ `club.member.manage`. Dữ liệu ghi trong giai đoạn role cố định
-(13/10–07/11/2026) được chuẩn hoá lúc server khởi động bởi `infra/db/club-role-upgrade.ts`
-(idempotent, ghi một phiên bản cơ cấu `MIGRATION` nếu có thay đổi).
+nhiệm hợp lệ. UC23 đã rút: API `/clubs/:clubId/roles*`, `/clubs/:clubId/role-directory`, trang
+`/club/:clubId/roles` và resolver permission theo role đã gỡ khỏi code ngày 07/11/2026; quyền
+`club.role.manage` bị xoá khỏi danh mục. Phiên bản cơ cấu `ROLE_EDIT` / `MIGRATION` ghi trong lúc UC23 còn
+trong code (07/11/2026) vẫn nằm trong lịch sử, không ảnh hưởng quyền.
 
 ## 2. Ánh xạ theo actor
 
@@ -58,7 +56,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC12 lập kế hoạch chuyển giao | Có, tại `/club/:clubId/transition-plans` (A2 đổi danh sách ghế ngoài phạm vi) |
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
-| Club Leader | UC23 quản lý role và phân quyền | **Ngoài phạm vi nhưng code còn tồn tại**: `/club/:clubId/roles` và resolver permission động phải được gỡ/thu hẹp; role truy cập phía CLB là cố định |
+| Club Leader | UC23 quản lý role và phân quyền | **Đã rút** (SRS hiện hành, role cố định); code UC23 đã gỡ 07/11/2026 |
 | Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
 | Club Leader | UC36 khoản chi/quyết toán | Có, đã nối vào app chính; chứng từ bắt buộc (BR25), hạn hoàn trả 7 ngày (BR58) |

@@ -143,8 +143,8 @@ cho mọi thực thể, bản số ghi bằng nhãn, tham gia toàn phần vẽ 
   - bỏ vì là hạ tầng kỹ thuật, không phải khái niệm nghiệp vụ: `approvalTasks`, `approvalDecisions`,
     `notifications`, `emailDeliveryLogs`, `auditLogs` (vì vậy module M10 không có trang), và bốn
     collection RBAC `roles`, `permissions`, `userRoleAssignments`, `clubRoleStructureVersions`. Phía CLB
-    dùng hai role cố định `Club Leader` / `Club Member`; chức danh không mang permission. Code UC23 động
-    thêm ngày 07/11/2026 là khoảng lệch cần gỡ, không phải mô hình để ERD chạy theo; vai trò hệ thống của tài khoản là thuộc tính `System role` của
+    dùng hai role cố định `Club Leader` / `Club Member`; chức danh không mang permission (code UC23 động
+    thêm tạm ngày 07/11/2026 đã gỡ); vai trò hệ thống của tài khoản là thuộc tính `System role` của
     `User`). `Club Position` vẫn còn vì ghế Chủ nhiệm / Phó chủ nhiệm quyết định ai là Club Leader.
     Mọi collection trên vẫn nằm trong DBML và database; ERD chỉ không vẽ chúng.
 - Mỗi trường tham chiếu trong DBML được thay bằng **một quan hệ có tên** (ví dụ `Club organises Event`,
