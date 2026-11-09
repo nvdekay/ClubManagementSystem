@@ -104,6 +104,7 @@ function EvidenceInputBlock({
   value,
   editable,
   disabled,
+  showMissingError,
   onChange,
   onPreview,
   onRemoveRow,
@@ -113,6 +114,7 @@ function EvidenceInputBlock({
   value?: string;
   editable: boolean;
   disabled: boolean;
+  showMissingError?: boolean;
   onChange: (nextUrl: string) => void;
   onPreview: (url: string, title: string) => void;
   onRemoveRow?: () => void;
@@ -120,9 +122,11 @@ function EvidenceInputBlock({
   const { t } = useTranslation();
   const fileRef = useRef<HTMLInputElement>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const hasValue = Boolean(value?.trim());
   const isUploaded = Boolean(value?.startsWith("data:image/"));
   const imgFailed = Boolean(value && failedUrl === value);
   const displayTitle = label || t("clubPeriodicReports.eventEvidenceUrl");
+  const isMissing = Boolean(required && showMissingError && !hasValue);
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -159,17 +163,20 @@ function EvidenceInputBlock({
         </span>
       )}
       <div className="flex flex-wrap items-center gap-2.5">
-        <input
-          placeholder={t("clubPeriodicReports.evidenceUrlPlaceholder")}
-          className="min-h-10 min-w-60 flex-1 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app disabled:cursor-not-allowed disabled:opacity-70"
-          value={isUploaded ? "" : (value ?? "")}
-          disabled={!editable || disabled}
-          onPaste={(e) => void handlePaste(e)}
-          onChange={(e) => {
-            setFailedUrl(null);
-            onChange(e.target.value);
-          }}
-        />
+        {!isUploaded && (
+          <input
+            placeholder={t("clubPeriodicReports.evidenceUrlPlaceholder")}
+            aria-invalid={isMissing ? true : undefined}
+            className="min-h-10 min-w-60 flex-1 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app aria-[invalid=true]:border-danger-app disabled:cursor-not-allowed disabled:opacity-70"
+            value={value ?? ""}
+            disabled={!editable || disabled}
+            onPaste={(e) => void handlePaste(e)}
+            onChange={(e) => {
+              setFailedUrl(null);
+              onChange(e.target.value);
+            }}
+          />
+        )}
         {editable && (
           <>
             <input
@@ -189,7 +196,7 @@ function EvidenceInputBlock({
             </AppButton>
           </>
         )}
-        {editable && value && (
+        {editable && hasValue && (
           <AppButton
             variant="secondary"
             disabled={disabled}
@@ -207,6 +214,8 @@ function EvidenceInputBlock({
           </AppButton>
         )}
       </div>
+
+      {isMissing && <AppFieldError message={t("clubPeriodicReports.validationEvidenceMissing")} />}
 
       {value && (
         <div className="flex flex-wrap items-start gap-3 rounded-xl border border-border-app bg-surface-app p-3">
@@ -600,6 +609,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 value={ev.evidenceUrl}
                 editable={editable}
                 disabled={action.isPending}
+                showMissingError={Boolean(field.error("events"))}
                 onChange={(evidenceUrl) => updateEvent(idx, { evidenceUrl })}
                 onPreview={(url, title) => setPreviewImage({ url, title: ev.title || title })}
                 onRemoveRow={() => setEvents((prev) => prev.filter((_, i) => i !== idx))}
@@ -655,6 +665,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 value={ach.evidenceUrl}
                 editable={editable}
                 disabled={action.isPending}
+                showMissingError={Boolean(field.error("achievements"))}
                 onChange={(evidenceUrl) => updateAchievement(idx, { evidenceUrl })}
                 onPreview={(url, title) => setPreviewImage({ url, title: ach.title || title })}
                 onRemoveRow={() => setAchievements((prev) => prev.filter((_, i) => i !== idx))}
@@ -699,9 +710,11 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                 )}
                 {cf.type === "evidence" && (
                   <EvidenceInputBlock
+                    required={cf.required}
                     value={answer?.evidenceUrl}
                     editable={editable}
                     disabled={action.isPending}
+                    showMissingError={Boolean(field.error("customAnswers"))}
                     onChange={(evidenceUrl) => updateCustomAnswer(cf.id, cf.label, "evidence", { evidenceUrl })}
                     onPreview={(url) => setPreviewImage({ url, title: cf.label })}
                   />
