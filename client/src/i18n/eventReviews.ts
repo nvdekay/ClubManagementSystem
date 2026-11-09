@@ -59,7 +59,7 @@ const vi: Record<keyof typeof en, string> = {
   openCount: "{{count}} đề xuất đang chờ",
   none: "Không có đề xuất nào đang chờ.", noneHint: "Đề xuất CLB gửi lên sẽ tự xuất hiện tại đây.",
   loadError: "Không tải được danh sách đề xuất.", retry: "Thử lại", open: "Mở", claiming: "Đang mở…",
-  unassigned: "Chưa ai nhận", assignedToYou: "Bạn đang duyệt", assigned: "Cán bộ khác đang duyệt",
+  unassigned: "Chờ nhận duyệt", assignedToYou: "Bạn đang duyệt", assigned: "Cán bộ khác đang duyệt",
   waitingSince: "Gửi lúc {{date}}", revision: "Bản {{number}}", noBudget: "Không xin kinh phí",
   requested: "Xin {{amount}}",
   signIn: "Đăng nhập để duyệt đề xuất sự kiện.", signInLink: "Đăng nhập và tiếp tục",
