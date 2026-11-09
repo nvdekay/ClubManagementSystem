@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { SidebarAccountMenu } from "@/components/layout/SidebarAccountMenu";
 import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { common } from "@/i18n/common";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth, useLogout } from "@/hooks/useAuth";
-import { useTheme } from "@/hooks/useTheme";
 import type { Workspace } from "@/services/auth";
 import { cn } from "@/utils/cn";
 import { workspaceIcon } from "@/utils/workspaceIcon";
@@ -69,11 +69,10 @@ function matches(workspace: Workspace, context: Context): boolean {
 
 /** Left-sidebar frame for every Student, ICPDP and club management screen. */
 export function WorkspaceShell() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const location = useLocation();
   const auth = useAuth();
   const logout = useLogout();
-  const { theme, toggleTheme } = useTheme();
   // The drawer remembers the path it was opened on, so navigating closes it without an effect.
   const [menuPath, setMenuPath] = useState<string | null>(null);
   const menuOpen = menuPath === location.pathname;
@@ -206,30 +205,11 @@ export function WorkspaceShell() {
         ))}
       </nav>
 
-      <div className={cn("border-t border-border-app px-3 py-4", { "px-2": compact })}>
-        <div className={cn("flex items-center gap-3 px-2", { "justify-center px-0": compact })} title={compact ? `${me.user.displayName} · ${me.user.email}` : undefined}>
-          <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
-            {me.user.displayName.trim().charAt(0).toUpperCase()}
-          </span>
-          {!compact && <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold" title={me.user.displayName}>{me.user.displayName}</span>
-            <span className="block truncate text-xs text-muted-app" title={me.user.email}>{me.user.email}</span>
-          </span>}
-        </div>
-        <div className={cn("mt-3 flex items-center justify-center gap-1", { "flex-col": compact })}>
+      <div className={cn("border-t border-border-app px-2 py-2", { "px-1": compact })}>
+        <div className={cn("flex items-center gap-1", { "flex-col": compact })}>
+          <SidebarAccountMenu user={me.user} compact={compact} signingOut={logout.isPending} onSignOut={() => void signOut()} />
           <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} scope={context} />
-          <IconButton label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")} onClick={toggleTheme}>
-            <AppIcon name={theme === "dark" ? "sun" : "moon"} />
-          </IconButton>
-          <IconButton label={t("common.switchLanguage")} onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}>
-            <span className="text-xs font-bold">{i18n.language === "vi" ? "EN" : "VI"}</span>
-          </IconButton>
         </div>
-        <button type="button" disabled={logout.isPending} onClick={() => void signOut()}
-          title={compact ? t("auth.logout") : undefined} aria-label={compact ? t("auth.logout") : undefined}
-          className="mt-2 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-app transition-colors hover:bg-surface-strong-app hover:text-danger-app focus-visible:outline-2 focus-visible:outline-ring-app disabled:opacity-50">
-          <AppIcon name="logout" className="size-4.5" />{!compact && t("auth.logout")}
-        </button>
         {logout.isError && <p role="alert" className="mt-2 px-2 text-xs text-danger-app">{t("auth.logoutError")}</p>}
       </div>
     </div>;
@@ -271,13 +251,6 @@ export function WorkspaceShell() {
       </div>
     </div>
   );
-}
-
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
-  return <button type="button" aria-label={label} title={label} onClick={onClick}
-    className="flex size-10 items-center justify-center rounded-full text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app">
-    {children}
-  </button>;
 }
 
 function navigation(context: Context, workspace: Workspace | undefined,

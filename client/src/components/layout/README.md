@@ -15,6 +15,8 @@ Các khung bố cục cấu trúc. Không có tiền tố `App`.
   sidebar thành drawer. Tự kiểm tra đăng nhập và quyền truy cập workspace theo URL. Menu của cả ba
   workspace gom thành tab cha (`NavGroup`, bấm để mở/thu gọn, tự mở khi đang ở một tab con); với CLB
   mỗi tab con vẫn lọc theo permission của role, nhóm chỉ còn một tab hiện thành link thường, nhóm rỗng ẩn đi.
+- `SidebarAccountMenu` — chân sidebar của `WorkspaceShell`: avatar, tên và email; bấm mở menu (mở lên trên, hoặc sang
+  phải khi sidebar thu gọn) gồm đổi chế độ sáng/tối, đổi ngôn ngữ và "Đăng xuất" (màu đỏ). Đóng bằng Escape hoặc bấm ra ngoài.
 - `NotificationBell` — chuông thông báo in-app (NTF-04) ở chân sidebar và header mobile của `WorkspaceShell`: badge số
   chưa đọc (làm mới mỗi phút), bấm mở hộp thoại danh sách mới nhất trước, "Xem cũ hơn" theo trang, "Đánh dấu tất cả đã
   đọc"; bấm một dòng thì đánh dấu đã đọc và mở trang liên quan (`utils/notificationLink`). Chuông chỉ đếm và liệt kê
