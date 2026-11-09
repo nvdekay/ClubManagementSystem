@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type DashboardKind = "student" | "club" | "icpdp";
 
 export const dashboardPanelKeys = [
@@ -113,7 +114,7 @@ export interface ClubBoardHistory {
 }
 
 /** Non-2xx response; keeps the status so a 404 reads differently from a failed request. */
-export class DashboardRequestError extends Error {
+export class DashboardRequestError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);
     this.name = "DashboardRequestError";
@@ -121,7 +122,7 @@ export class DashboardRequestError extends Error {
 }
 
 async function get<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/v1/dashboard${path}`, { signal, credentials: "same-origin" });
+  const response = await apiFetch(`/api/v1/dashboard${path}`, { signal, credentials: "same-origin" });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
     throw new DashboardRequestError(body?.message ?? `HTTP ${response.status}`, response.status);

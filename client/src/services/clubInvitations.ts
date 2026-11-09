@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface ClubInvitation {
   id: string; clubId: string; status: "Pending" | "Accepted" | "Declined" | "Expired" | "Withdrawn"; deadline: string; responseNote?: string;
   responseDetails?: Record<string, string | number>;
@@ -8,10 +9,10 @@ export interface InvitationResponse {
   outcome: "Accepted" | "Declined"; responseNote?: string; responseDetails?: Record<string, string | number>;
 }
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/invitations${path}`, { credentials: "same-origin", ...init });
+  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/invitations${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${res.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${res.status}`);
   }
   return (await res.json() as { data: T }).data;
 }

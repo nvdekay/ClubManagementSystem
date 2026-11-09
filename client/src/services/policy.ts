@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface ReportDeadline {
   reportType: string;
   dueDaysAfterPeriodEnd: number;
@@ -76,7 +77,7 @@ export interface PolicyDecisionImpact {
   reasons: PolicyImpactReason[];
 }
 
-export class PolicyConflictError extends Error {
+export class PolicyConflictError extends ApiError {
   constructor(message: string, readonly affectedRecords: PolicyDecisionImpact[]) {
     super(message);
     this.name = "PolicyConflictError";
@@ -84,17 +85,17 @@ export class PolicyConflictError extends Error {
 }
 
 export async function fetchPolicies(signal: AbortSignal): Promise<PolicyList> {
-  const response = await fetch("/api/v1/admin/policies", { signal, credentials: "same-origin" });
+  const response = await apiFetch("/api/v1/admin/policies", { signal, credentials: "same-origin" });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
   }
   const body: { data: PolicyList } = await response.json();
   return body.data;
 }
 
 export async function createPolicy(input: CreatePolicyInput, csrfToken: string): Promise<PolicyVersion> {
-  const response = await fetch("/api/v1/admin/policies", {
+  const response = await apiFetch("/api/v1/admin/policies", {
     method: "POST", credentials: "same-origin",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     body: JSON.stringify(input),
@@ -110,7 +111,7 @@ export async function createPolicy(input: CreatePolicyInput, csrfToken: string):
         body.details.affectedRecords,
       );
     }
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
   }
   const body: { data: PolicyVersion } = await response.json();
   return body.data;

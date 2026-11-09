@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface ClubFieldUsage {
   id: string;
   name: string;
@@ -15,7 +16,7 @@ export interface ClubFieldInput {
 export type ClubFieldRemoval = "deleted" | "deactivated";
 
 /** 409 from the server: another field already uses this name. */
-export class DuplicateClubFieldError extends Error {
+export class DuplicateClubFieldError extends ApiError {
   constructor(message: string) {
     super(message);
     this.name = "DuplicateClubFieldError";
@@ -26,12 +27,12 @@ async function failure(response: Response): Promise<never> {
   const body = (await response.json().catch(() => null)) as { message?: string } | null;
   const message = body?.message ?? `HTTP ${response.status}`;
   if (response.status === 409) throw new DuplicateClubFieldError(message);
-  throw new Error(message);
+  throw new ApiError(message);
 }
 
 async function mutate<T>(path: string, method: "POST" | "PATCH" | "DELETE", csrfToken: string,
   body?: ClubFieldInput): Promise<T> {
-  const response = await fetch(path, {
+  const response = await apiFetch(path, {
     method, credentials: "same-origin",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}),
@@ -42,7 +43,7 @@ async function mutate<T>(path: string, method: "POST" | "PATCH" | "DELETE", csrf
 }
 
 export async function fetchClubFields(signal: AbortSignal): Promise<ClubFieldUsage[]> {
-  const response = await fetch("/api/v1/admin/club-fields", { signal, credentials: "same-origin" });
+  const response = await apiFetch("/api/v1/admin/club-fields", { signal, credentials: "same-origin" });
   if (!response.ok) return failure(response);
   const body: { data: ClubFieldUsage[] } = await response.json();
   return body.data;

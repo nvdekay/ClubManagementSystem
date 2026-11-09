@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type FounderRole = "LEADER" | "VICE_LEADER" | "MEMBER";
 export type ApplicationDocumentType = "PROPOSAL" | "LOGO";
 
@@ -109,14 +110,14 @@ export interface ApplicationDetail {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1/applications${path}`, {
+  const response = await apiFetch(`/api/v1/applications${path}`, {
     credentials: "same-origin", ...init,
   });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as
       { message?: string; details?: unknown } | null;
     // Keep the status so callers can tell "not found" apart from other failures.
-    throw Object.assign(new Error(body?.message ?? `HTTP ${response.status}`), {
+    throw Object.assign(new ApiError(body?.message ?? `HTTP ${response.status}`), {
       status: response.status,
       ...(body?.details && typeof body.details === "object" ? { details: body.details } : {}),
     });

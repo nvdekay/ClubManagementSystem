@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type EvaluationState = "Draft" | "Data Ready" | "Under Review" | "Finalized" | "Published";
 export type Classification = "EXCELLENT" | "GOOD" | "FAIR" | "NEEDS_IMPROVEMENT";
 
@@ -63,14 +64,14 @@ export interface EvaluationDetail {
 }
 
 /** Non-2xx response; `pendingReviewClubs` names the clubs whose periodic report still waits for UC39. */
-export class EvaluationRequestError extends Error {
+export class EvaluationRequestError extends ApiError {
   constructor(message: string, readonly pendingReviewClubs: string[] = []) {
     super(message);
   }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1/admin/evaluations${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1/admin/evaluations${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as
       { message?: string; details?: { field?: unknown; clubs?: unknown } } | null;

@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type MembershipState = "Active" | "Inactive" | "Left" | "Banned";
 export type WithdrawalState = "Pending" | "Held" | "Executed" | "Cancelled";
 
@@ -59,14 +60,14 @@ export interface MemberSpace {
 }
 
 /** Carries the HTTP status so the page can show "not a member" (403) instead of a generic error. */
-export class MemberSpaceError extends Error {
+export class MemberSpaceError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);
   }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null;
     throw new MemberSpaceError(body?.message ?? `HTTP ${response.status}`, response.status);

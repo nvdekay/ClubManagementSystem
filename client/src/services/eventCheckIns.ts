@@ -1,3 +1,4 @@
+import { apiFetch } from "@/services/apiError";
 import { EventRegistrationError } from "@/services/eventRegistrations";
 
 export type AttendanceMethod = "self" | "manual" | "walk-in";
@@ -22,7 +23,7 @@ export interface CheckInResult extends Attendance {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null;
     throw new EventRegistrationError(body?.message ?? `HTTP ${response.status}`, response.status);

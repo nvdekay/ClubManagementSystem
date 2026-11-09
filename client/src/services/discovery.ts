@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface PublicClub {
   id: string;
   code: string;
@@ -60,14 +61,14 @@ export interface ClubDetail {
   history: PublicEvent[];
 }
 
-export class PublicApiError extends Error {
+export class PublicApiError extends ApiError {
   constructor(public readonly statusCode: number, message: string) {
     super(message);
   }
 }
 
 async function publicGet<T>(path: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(`/api/v1/public/${path}`, { signal });
+  const response = await apiFetch(`/api/v1/public/${path}`, { signal });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
     throw new PublicApiError(response.status, body?.message ?? `HTTP ${response.status}`);

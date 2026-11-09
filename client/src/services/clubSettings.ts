@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 import type { ClubProfileFormField } from "@/services/policy";
 
 export interface ClubChannel {
@@ -55,7 +56,7 @@ export interface ClubSettings {
 }
 
 /** 400 listing the profile fields school policy requires but the save left empty. */
-export class MissingProfileFieldsError extends Error {
+export class MissingProfileFieldsError extends ApiError {
   constructor(message: string, readonly missing: ClubProfileFormField[]) {
     super(message);
     this.name = "MissingProfileFieldsError";
@@ -63,14 +64,14 @@ export class MissingProfileFieldsError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1/clubs${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1/clubs${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as {
       message?: string; details?: { missing?: ClubProfileFormField[] };
     } | null;
     const message = body?.message ?? `HTTP ${response.status}`;
     if (Array.isArray(body?.details?.missing)) throw new MissingProfileFieldsError(message, body.details.missing);
-    throw new Error(message);
+    throw new ApiError(message);
   }
   const body: { data: T } = await response.json();
   return body.data;

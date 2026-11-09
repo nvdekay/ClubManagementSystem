@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 import type { RecruitmentFormField, RecruitmentRubricCriterion } from "./recruitmentCampaigns";
 
 export type RecruitmentAnswer = string | string[];
@@ -33,10 +34,10 @@ export interface RecruitmentApplication {
 export type RecruitmentReviewAction = "screen" | "shortlist" | "decide" | "promote" | "close-withdrawn";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
   }
   const body: { data: T } = await response.json();
   return body.data;
@@ -72,14 +73,14 @@ export function saveRecruitmentApplication(applicationId: string, position: stri
 
 export async function uploadRecruitmentFile(applicationId: string, field: RecruitmentFormField,
   file: File, csrfToken: string) {
-  const response = await fetch(`/api/v1/applications/recruitment/${encodeURIComponent(applicationId)}/attachments`, {
+  const response = await apiFetch(`/api/v1/applications/recruitment/${encodeURIComponent(applicationId)}/attachments`, {
     method: "POST", credentials: "same-origin", body: file,
     headers: { "X-CSRF-Token": csrfToken, "X-Field-Key": encodeURIComponent(field.key),
       "X-Filename": encodeURIComponent(file.name), "Content-Type": file.type },
   });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
   }
   const body: { data: RecruitmentApplication } = await response.json();
   return body.data;

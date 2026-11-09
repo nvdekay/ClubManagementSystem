@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type RoutedRequestType = "CLUB_APPLICATION" | "EVENT_PROPOSAL" | "PROPERTY_BOOKING";
 export type RiskCategory = "LOW" | "MEDIUM" | "HIGH";
 export type RoutedPropertyType = "HALL" | "OUTDOOR" | "STAGE" | "EQUIPMENT";
@@ -31,11 +32,11 @@ export interface RoutingSimulation {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string; details?: { overlaps?: string[][] } } | null;
     const overlaps = body?.details?.overlaps?.map((pair) => pair.join(" ↔ ")).join(", ");
-    throw new Error(overlaps ? `${body?.message ?? "error"}: ${overlaps}` : body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(overlaps ? `${body?.message ?? "error"}: ${overlaps}` : body?.message ?? `HTTP ${response.status}`);
   }
   const body = await response.json() as { data: T };
   return body.data;

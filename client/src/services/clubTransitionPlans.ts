@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface TransitionInput {
   toTerm: { name: string; startAt: string; endAt: string };
   candidates: { positionCode: string; membershipId: string }[];
@@ -14,8 +15,8 @@ export interface TransitionContext {
   obligations: { id: string; description: string }[]; plans: TransitionPlan[];
 }
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const r = await fetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/transition-plans${path}`, { credentials: "same-origin", ...init });
-  if (!r.ok) { const b = await r.json().catch(() => null) as { message?: string } | null; throw new Error(b?.message ?? `HTTP ${r.status}`); }
+  const r = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/transition-plans${path}`, { credentials: "same-origin", ...init });
+  if (!r.ok) { const b = await r.json().catch(() => null) as { message?: string } | null; throw new ApiError(b?.message ?? `HTTP ${r.status}`); }
   return (await r.json() as { data: T }).data;
 }
 export function fetchTransitionContext(clubId: string, signal: AbortSignal): Promise<TransitionContext> { return request(clubId, "", { signal }); }

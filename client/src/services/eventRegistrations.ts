@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type EventRegistrationState = "Confirmed" | "Waitlisted" | "Cancelled";
 export type EventRegistrationAnswer = string | string[];
 
@@ -50,14 +51,14 @@ export interface EventRegistrationContext {
 }
 
 /** Carries the HTTP status so screens can tell "sign in first" (401) from real failures. */
-export class EventRegistrationError extends Error {
+export class EventRegistrationError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);
   }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null;
     throw new EventRegistrationError(body?.message ?? `HTTP ${response.status}`, response.status);

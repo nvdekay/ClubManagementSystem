@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type PropertyType = "ROOM" | "HALL" | "OUTDOOR" | "STAGE" | "EQUIPMENT";
 
 /** `day` 1 = Monday … 7 = Sunday; days not listed cannot be booked. */
@@ -30,7 +31,7 @@ export interface Property extends PropertyDetails {
 }
 
 /** Non-2xx response; `field` names the invalid input when the server reports one. */
-export class PropertyRequestError extends Error {
+export class PropertyRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string) {
     super(message);
     this.name = "PropertyRequestError";
@@ -38,7 +39,7 @@ export class PropertyRequestError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1/admin/properties${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1/admin/properties${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as
       { message?: string; details?: { field?: unknown } } | null;

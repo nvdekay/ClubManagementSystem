@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 import type { Property } from "./properties";
 
 export interface RoomAllocationOccurrence { bookingId: string; startAt: string; endAt: string; state: string }
@@ -23,12 +24,12 @@ export interface RoomAllocationConflict { startAt: string; endAt: string; source
 export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
 
 /** Keeps the server's `details` (e.g. the clashing dates) next to the message. */
-export class RoomAllocationError extends Error {
+export class RoomAllocationError extends ApiError {
   constructor(message: string, readonly details?: unknown) { super(message); this.name = "RoomAllocationError"; }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const res = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string; details?: unknown } | null;
     throw new RoomAllocationError(body?.message ?? `HTTP ${res.status}`, body?.details);

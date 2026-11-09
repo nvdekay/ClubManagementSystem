@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 import type { Property } from "./properties";
 
 export interface BookingInput {
@@ -27,10 +28,10 @@ export interface BookingDetail {
   decisions: Array<BookingDecisionInput & { id: string; taskId: string; actorId: string; at: string }>;
 }
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const res = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${res.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${res.status}`);
   }
   return ((await res.json()) as { data: T }).data;
 }

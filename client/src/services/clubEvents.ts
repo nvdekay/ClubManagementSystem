@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface EventBudgetLine { category: string; amount: number; purpose: string; plannedItems?: string }
 export interface EventFormField { key: string; label: string; type: "text" | "textarea" | "select" | "radio" | "checkbox"; required: boolean; options?: string[] }
 export interface ClubEventInput {
@@ -28,7 +29,7 @@ export interface EventFeedbackSummary {
   distribution?: Record<number, number>; comments?: string[];
 }
 /** Non-2xx response; keeps what the server names: overdue obligations, affected registrations, schedule conflicts. */
-export class ClubEventError extends Error {
+export class ClubEventError extends ApiError {
   constructor(message: string, readonly details: { obligations?: string[]; registrationIds?: string[]; conflicts?: string[] }) {
     super(message);
   }
@@ -37,7 +38,7 @@ function strings(value: unknown): string[] | undefined {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : undefined;
 }
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/events${path}`, { credentials: "same-origin", ...init });
+  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/events${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string; details?: Record<string, unknown> } | null;
     throw new ClubEventError(body?.message ?? `HTTP ${res.status}`, { obligations: strings(body?.details?.obligations),

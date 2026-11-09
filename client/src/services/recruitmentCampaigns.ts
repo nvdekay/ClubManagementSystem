@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface RecruitmentSelectionStep {
   name: string;
   description?: string;
@@ -71,7 +72,7 @@ export interface CampaignResult {
   overlaps: OverlappingCampaign[];
 }
 
-export class CampaignApiError extends Error {
+export class CampaignApiError extends ApiError {
   readonly status: number;
   readonly details: unknown;
 
@@ -84,7 +85,7 @@ export class CampaignApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, {
+  const response = await apiFetch(`/api/v1${path}`, {
     credentials: "same-origin", ...init,
   });
   if (!response.ok) {

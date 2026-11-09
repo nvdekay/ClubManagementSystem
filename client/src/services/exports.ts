@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type ExportType = "CLUBS" | "MEMBERS" | "EVENTS" | "FINANCE" | "COMPLIANCE" | "EVALUATIONS";
 export type ExportFormat = "xlsx" | "csv" | "pdf";
 
@@ -17,7 +18,7 @@ export interface ExportOptions {
 }
 
 /** Non-2xx response; 404 means nothing matched the filter (no file is produced). */
-export class ExportRequestError extends Error {
+export class ExportRequestError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);
     this.name = "ExportRequestError";
@@ -30,12 +31,12 @@ async function failure(response: Response): Promise<never> {
 }
 
 function post(path: string, csrfToken: string, body: object): Promise<Response> {
-  return fetch(`/api/v1/admin/exports${path}`, { method: "POST", credentials: "same-origin",
+  return apiFetch(`/api/v1/admin/exports${path}`, { method: "POST", credentials: "same-origin",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
 }
 
 export async function fetchExportOptions(signal: AbortSignal): Promise<ExportOptions> {
-  const response = await fetch("/api/v1/admin/exports/options", { signal, credentials: "same-origin" });
+  const response = await apiFetch("/api/v1/admin/exports/options", { signal, credentials: "same-origin" });
   if (!response.ok) return failure(response);
   const body: { data: ExportOptions } = await response.json();
   return body.data;

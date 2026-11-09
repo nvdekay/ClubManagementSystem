@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface ClubSuspension {
   reason: string;
   suspendedAt: string;
@@ -58,7 +59,7 @@ export interface CascadeResult {
 }
 
 /** Non-2xx response; keeps the status so 409 (state changed) reads differently from 400. */
-export class LifecycleRequestError extends Error {
+export class LifecycleRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string) {
     super(message);
     this.name = "LifecycleRequestError";
@@ -66,7 +67,7 @@ export class LifecycleRequestError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1/admin/clubs${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1/admin/clubs${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string; details?: { field?: unknown } } | null;
     throw new LifecycleRequestError(body?.message ?? `HTTP ${response.status}`, response.status,

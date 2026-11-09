@@ -1,7 +1,8 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface Reconfirmation { id: string; clubName: string; periodCode: string; dueAt: string; state: "Pending" | "Confirmed" | "Exempt" | "Expired" }
 async function request<T>(path: string, init: RequestInit): Promise<T> {
-  const r = await fetch(`/api/v1/memberships/reconfirmations${path}`, { credentials: "same-origin", ...init });
-  if (!r.ok) { const b = await r.json().catch(() => null) as { message?: string } | null; throw new Error(b?.message ?? `HTTP ${r.status}`); }
+  const r = await apiFetch(`/api/v1/memberships/reconfirmations${path}`, { credentials: "same-origin", ...init });
+  if (!r.ok) { const b = await r.json().catch(() => null) as { message?: string } | null; throw new ApiError(b?.message ?? `HTTP ${r.status}`); }
   return (await r.json() as { data: T }).data;
 }
 export function fetchReconfirmations(signal: AbortSignal): Promise<Reconfirmation[]> { return request("/mine", { signal }); }

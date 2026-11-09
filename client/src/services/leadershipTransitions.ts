@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export interface TransitionTerm {
   id: string; name: string; startAt: string; endAt: string; state: string;
 }
@@ -36,10 +37,10 @@ export interface TransitionDecisionInput {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
   }
   const body = await response.json() as { data: T };
   return body.data;

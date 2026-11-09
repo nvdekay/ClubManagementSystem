@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 import type { ApplicationRecord, ApplicationVersion, FounderProfile } from "./applications";
 
 export type ReviewOutcome = "Request revision" | "Approve" | "Reject";
@@ -46,12 +47,12 @@ export interface ReviewDecisionInput {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1/admin/application-reviews${path}`, {
+  const response = await apiFetch(`/api/v1/admin/application-reviews${path}`, {
     credentials: "same-origin", ...init,
   });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
   }
   const body: { data: T } = await response.json();
   return body.data;

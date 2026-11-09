@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 import type { PeriodicReportDetail } from "./periodicReports";
 export interface ClubPeriodicOverview {
   periods: { code: string; startAt: string; endAt: string; dueAt: string }[];
@@ -7,10 +8,10 @@ export interface PeriodicDraft {
   narrative: string; nextPlan: string; evidence: { note?: string; url?: string }[];
 }
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/periodic-reports${path}`, { credentials: "same-origin", ...init });
+  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/periodic-reports${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${res.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${res.status}`);
   }
   return (await res.json() as { data: T }).data;
 }

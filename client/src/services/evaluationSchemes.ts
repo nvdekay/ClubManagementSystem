@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export type DimensionCode = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7" | "D8";
 export type SchemeState = "Draft" | "Active" | "Superseded";
 export type ActivationIssue = "totalWeight" | "coreWeight";
@@ -44,7 +45,7 @@ export interface SchemeCatalogue {
 }
 
 /** Non-2xx response; keeps `field` / `issues` from the server's details. */
-export class SchemeRequestError extends Error {
+export class SchemeRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string,
     readonly issues: ActivationIssue[] = []) {
     super(message);
@@ -53,7 +54,7 @@ export class SchemeRequestError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1/admin/evaluation-schemes${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1/admin/evaluation-schemes${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as
       { message?: string; details?: { field?: unknown; issues?: unknown } } | null;

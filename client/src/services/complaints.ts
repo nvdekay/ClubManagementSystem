@@ -1,3 +1,4 @@
+import { ApiError, apiFetch } from "@/services/apiError";
 export const COMPLAINT_TYPES = ["CONDUCT", "EVENT", "FINANCE", "SAFETY", "OTHER"] as const;
 export type ComplaintType = (typeof COMPLAINT_TYPES)[number];
 export type ComplaintState = "Submitted" | "Under Triage" | "Dismissed" | "Forwarded" | "Club Responded" | "Escalated"
@@ -69,10 +70,10 @@ export type ComplaintDecisionInput =
   | { kind: "link"; targetId: string; reason: string };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
+  const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { message?: string } | null;
-    throw new Error(body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(body?.message ?? `HTTP ${response.status}`);
   }
   const body = await response.json() as { data: T };
   return body.data;
