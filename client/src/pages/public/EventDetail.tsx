@@ -6,15 +6,50 @@ import { EventRegistrationPanel } from "@/components/custom/EventRegistrationPan
 import { EventStatusBadge } from "@/components/custom/PublicEventCard";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { useAuth } from "@/hooks/useAuth";
 import { useEvent } from "@/hooks/useDiscovery";
+import { useEventRegistrationContext } from "@/hooks/useEventRegistrations";
+import type { EventRegistrationContext } from "@/services/eventRegistrations";
 import { PublicApiError } from "@/services/discovery";
 import { formatDate } from "@/utils/formatDate";
+
+/**
+ * A student who registered keeps access to an event the public page hides: one moved back to approval
+ * after a reschedule (UC28), a cancelled one, or one limited to club members. It reads the student's
+ * own registration context, which the API returns in any event state.
+ */
+function RegisteredEventView({ context }: { context: EventRegistrationContext }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === "vi" ? "vi" : "en";
+  const { event } = context;
+  const ended = new Date(event.endAt) <= new Date();
+  const notice = ["Cancelled", "Expired", "Rejected"].includes(event.state) ? t("discovery.registeredCancelled")
+    : ["Approved", "Pending Approval", "Under Review", "Revision Requested"].includes(event.state) ? t("discovery.registeredRescheduling")
+      : event.audienceScope === "MEMBERS_ONLY" ? t("discovery.registeredMembersOnly") : null;
+  return <div className="mt-7 max-w-4xl">
+    <h1 className="font-heading text-3xl font-bold tracking-tight text-balance sm:text-5xl">{event.title}</h1>
+    <p className="mt-4 text-muted-app">{t("discovery.hostedBy")}: {event.clubId
+      ? <Link to={`/clubs/${event.clubId}`} className="font-semibold text-accent-app">{event.clubName}</Link>
+      : <span className="font-semibold">{event.clubName}</span>}</p>
+    {notice && <AppNotice tone="warning" className="mt-6">{notice}</AppNotice>}
+    <dl className="mt-8 grid gap-x-8 gap-y-5 border-y border-border-app py-6 sm:grid-cols-2">
+      <div><dt className="text-sm text-muted-app">{t("discovery.starts")}</dt><dd className="font-semibold">{formatDate(event.startAt, locale)}</dd></div>
+      <div><dt className="text-sm text-muted-app">{t("discovery.ends")}</dt><dd className="font-semibold">{formatDate(event.endAt, locale)}</dd></div>
+    </dl>
+    {!ended && !["Cancelled", "Expired", "Rejected"].includes(event.state) && <EventRegistrationPanel eventId={event.id} />}
+    <EventFeedbackPanel eventId={event.id} />
+  </div>;
+}
 
 export function EventDetail() {
   const { t, i18n } = useTranslation();
   const { id = "" } = useParams();
   const detail = useEvent(id);
+  const auth = useAuth();
+  const hidden = detail.isError && detail.error instanceof PublicApiError && detail.error.statusCode === 404;
+  const registered = useEventRegistrationContext(id, hidden && Boolean(auth.data));
   const locale = i18n.language === "vi" ? "vi" : "en";
   return (
     <section>
@@ -27,9 +62,11 @@ export function EventDetail() {
           <AppSkeleton className="h-40 w-full" />
           <AppSkeleton className="h-48 w-full" />
         </div>
-      ) : detail.isError && detail.error instanceof PublicApiError
-        && detail.error.statusCode === 404 ? (
-        <p className="mt-8" role="alert">{t("discovery.notFound")}</p>
+      ) : hidden ? (
+        auth.isPending || (auth.data && registered.isPending) ? <AppSkeleton className="mt-8 h-40 w-full" />
+          : registered.data && (registered.data.registration || registered.data.isActiveClubMember)
+            ? <RegisteredEventView context={registered.data} />
+            : <p className="mt-8" role="alert">{t("discovery.notFound")}</p>
       ) : detail.isError ? (
         <div role="alert" className="mt-8 space-y-3">
           <p className="text-danger-app">{t("discovery.loadError")}</p>
