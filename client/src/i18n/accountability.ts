@@ -4,8 +4,9 @@ export const accountability = {
       "Finalize this event's attendance before writing the report: the report uses the final attendance figures.",
     openAttendance: "Open registration & attendance",
     confirmDecision: "Confirm this decision?",
-    deadlineMissing:
-      "Report deadline is not configured for this event. Contact ICPDP to resolve its historical policy.",
+    deadlineMissingTitle: "{{count}} past events have no report deadline",
+    deadlineMissingHint: "They ended before any reporting policy applied, so no report can be filed. Contact ICPDP to resolve their historical policy.",
+    deadlineMissingList: "Show events",
     severity: "Severity",
     minor: "Minor",
     moderate: "Moderate",
@@ -121,8 +122,9 @@ export const accountability = {
       "Hãy chốt điểm danh của sự kiện trước khi viết báo cáo: báo cáo dùng số liệu điểm danh đã chốt.",
     openAttendance: "Mở trang đăng ký và điểm danh",
     confirmDecision: "Xác nhận quyết định này?",
-    deadlineMissing:
-      "Chưa có hạn báo cáo cho sự kiện này. Liên hệ ICPDP để xử lý chính sách lịch sử.",
+    deadlineMissingTitle: "{{count}} sự kiện cũ chưa có hạn báo cáo",
+    deadlineMissingHint: "Các sự kiện này kết thúc trước khi có chính sách báo cáo nên chưa lập báo cáo được. Liên hệ ICPDP để xử lý chính sách lịch sử.",
+    deadlineMissingList: "Xem danh sách",
     severity: "Mức độ",
     minor: "Nhẹ",
     moderate: "Trung bình",
