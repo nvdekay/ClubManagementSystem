@@ -27,7 +27,8 @@ interface CampaignForm {
   windowEnd: string;
   capacity: string;
   steps: string;
-  fields: RecruitmentFormField[];
+  /** Choice options stay as the typed text (commas and spaces intact) and are split only when sent. */
+  fields: Array<Omit<RecruitmentFormField, "options"> & { options?: string }>;
   rubric: RecruitmentRubricCriterion[];
 }
 
@@ -49,9 +50,13 @@ function campaignForm(campaign: RecruitmentCampaign): CampaignForm {
     criteria: campaign.criteria ?? "", windowStart: localDateTime(campaign.windowStart),
     windowEnd: localDateTime(campaign.windowEnd), capacity: String(campaign.capacity),
     steps: campaign.selectionSteps.map((step) => step.name).join("\n"),
-    fields: campaign.formSchema.map((field) => ({ ...field, options: field.options ? [...field.options] : undefined })),
+    fields: campaign.formSchema.map((field) => ({ ...field, options: field.options?.join(", ") })),
     rubric: campaign.rubric.map((item) => ({ ...item })),
   };
+}
+
+function splitOptions(text: string | undefined): string[] {
+  return (text ?? "").split(",").map((option) => option.trim()).filter(Boolean);
 }
 
 function campaignInput(form: CampaignForm): RecruitmentCampaignInput {
@@ -62,7 +67,7 @@ function campaignInput(form: CampaignForm): RecruitmentCampaignInput {
     windowEnd: new Date(form.windowEnd).toISOString(), capacity: Number(form.capacity),
     selectionSteps: form.steps.split("\n").map((name) => name.trim()).filter(Boolean).map((name) => ({ name })),
     formSchema: form.fields.map((field) => ({ ...field,
-      ...(field.options?.length ? { options: field.options } : { options: undefined }) })),
+      options: splitOptions(field.options).length ? splitOptions(field.options) : undefined })),
     rubric: form.rubric,
   };
 }
@@ -116,7 +121,7 @@ export function RecruitmentCampaignPage() {
   form.fields.forEach((item, index) => {
     errors[`field.${index}.key`] = !item.key.trim() ? required : keyPattern.test(item.key.trim()) ? null : t("recruitmentCampaigns.keyFormat");
     errors[`field.${index}.label`] = item.label.trim() ? null : required;
-    errors[`field.${index}.options`] = ["select", "multiselect"].includes(item.type) && (item.options?.length ?? 0) < 2 ? t("recruitmentCampaigns.optionsMin") : null;
+    errors[`field.${index}.options`] = ["select", "multiselect"].includes(item.type) && splitOptions(item.options).length < 2 ? t("recruitmentCampaigns.optionsMin") : null;
   });
   form.rubric.forEach((item, index) => {
     errors[`rubric.${index}.key`] = !item.key.trim() ? required : keyPattern.test(item.key.trim()) ? null : t("recruitmentCampaigns.keyFormat");
@@ -216,7 +221,7 @@ export function RecruitmentCampaignPage() {
       type: "text", required: false }]);
   }
 
-  function updateField(index: number, update: Partial<RecruitmentFormField>) {
+  function updateField(index: number, update: Partial<CampaignForm["fields"][number]>) {
     field("fields", form.fields.map((item, fieldIndex) => fieldIndex === index
       ? { ...item, ...update } : item));
   }
@@ -341,8 +346,8 @@ export function RecruitmentCampaignPage() {
                 {(["text", "textarea", "url", "select", "multiselect", "file"] as const).map((type) => <option key={type} value={type}>{t(`recruitmentCampaigns.${type}`)}</option>)}
               </select></label>
             {(["select", "multiselect"] as string[]).includes(item.type) && <label className={sub}>{t("recruitmentCampaigns.options")}<AppRequiredMark />
-              <AppInput className="mt-1 block w-full text-sm" value={item.options?.join(", ") ?? ""} {...validation.control(`field.${index}.options`)}
-                onChange={(event) => updateField(index, { options: event.target.value.split(",").map((option) => option.trim()).filter(Boolean) })} />
+              <AppInput className="mt-1 block w-full text-sm" value={item.options ?? ""} {...validation.control(`field.${index}.options`)}
+                onChange={(event) => updateField(index, { options: event.target.value })} />
               <AppFieldError message={validation.error(`field.${index}.options`)} /></label>}
             <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
               <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" className="size-4 accent-primary-app" checked={item.required}
