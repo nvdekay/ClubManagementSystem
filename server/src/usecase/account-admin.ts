@@ -9,6 +9,10 @@ import type { AccessActor } from "./access.js";
 const objectId = z.string().regex(/^[0-9a-f]{24}$/i);
 const reasonSchema = z.string().trim().min(1).max(1000);
 const searchSchema = z.string().trim().max(100);
+const pageSchema = z.object({
+  page: z.coerce.number().int().min(1).max(100_000).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(50),
+});
 
 async function requireAdmin(repo: AccountAdminRepository, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
@@ -36,11 +40,13 @@ function parseRole(roleCode: string): SystemRoleCode {
 
 export async function searchAdminUsers(
   repo: AccountAdminRepository, actor: AccessActor | null, rawSearch: unknown,
+  rawPage: { page?: unknown; pageSize?: unknown } = {},
 ): Promise<AdminUserPage> {
   await requireAdmin(repo, actor);
   const parsed = searchSchema.safeParse(rawSearch ?? "");
-  if (!parsed.success) throw new DomainError("invalid search", "validation");
-  return repo.listUsers(parsed.data, 50);
+  const paging = pageSchema.safeParse(rawPage);
+  if (!parsed.success || !paging.success) throw new DomainError("invalid search", "validation");
+  return repo.listUsers(parsed.data, paging.data.page, paging.data.pageSize);
 }
 
 export async function changeSystemRole(
@@ -62,7 +68,7 @@ export async function changeSystemRole(
   if (action === "revoke" && target === actorId && role === "ICPDP_OFFICER") {
     throw new DomainError("cannot revoke your last admin role", "forbidden");
   }
-  // D1: the second approval level belongs to an ICPDP officer; revoking the officer role also drops it.
+  // D1: ICPDP_HEAD is held only by an ICPDP officer; revoking the officer role also drops it.
   if (action === "grant" && role === "ICPDP_HEAD" && !(await repo.systemRoles(target)).includes("ICPDP_OFFICER")) {
     throw new DomainError("grant ICPDP_OFFICER before ICPDP_HEAD", "conflict");
   }

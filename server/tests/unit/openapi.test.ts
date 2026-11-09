@@ -66,7 +66,7 @@ const stubClubEvents: ClubEventRepository = {
   participants: async () => [], feedback: async () => [], create: async () => { throw new Error("unused"); }, act: async () => { throw new Error("unused"); },
 };
 const stubAdmin = {
-  listUsers: async () => ({ items: [], total: 0 }),
+  listUsers: async () => ({ items: [], total: 0, page: 1, pageSize: 50 }),
   findUser: async () => null,
   systemRoles: async () => [],
   applyRoleChange: async () => undefined,

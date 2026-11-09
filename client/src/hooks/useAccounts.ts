@@ -1,16 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { authKeyRoot } from "@/hooks/useAuth";
 import { applyAccountAction, fetchAdminUsers, type AccountAction } from "@/services/accounts";
 
 const accountsKeyRoot = ["accounts"] as const;
 
-export function useAccounts(search: string, enabled: boolean) {
+/** One page of accounts (page starts at 1); the previous page stays on screen while the next loads. */
+export function useAccounts(search: string, page: number, pageSize: number, enabled: boolean) {
   return useQuery({
-    queryKey: [...accountsKeyRoot, search],
-    queryFn: ({ signal }) => fetchAdminUsers(search, signal),
+    queryKey: [...accountsKeyRoot, search, page, pageSize],
+    queryFn: ({ signal }) => fetchAdminUsers(search, page, pageSize, signal),
     enabled,
     retry: false,
+    placeholderData: keepPreviousData,
   });
 }
 

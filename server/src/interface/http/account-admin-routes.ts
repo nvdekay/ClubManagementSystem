@@ -41,7 +41,8 @@ export function accountAdminRoutes(deps: AccountAdminRouteDeps): Router {
   const guardDeps = { repo: deps.authRepo, sessions: deps.sessions };
 
   router.get("/admin/users", authGuard(guardDeps, false), async (req, res) => {
-    ok(res, await searchAdminUsers(deps.adminRepo, actor(res), req.query.search));
+    ok(res, await searchAdminUsers(deps.adminRepo, actor(res), req.query.search,
+      { page: req.query.page, pageSize: req.query.pageSize }));
   });
 
   router.post("/admin/users/:id/roles", authGuard(guardDeps), async (req, res) => {

@@ -22,10 +22,13 @@ export interface AdminLockCase {
 export interface AdminUserPage {
   items: Array<{ user: AuthUser; systemRoles: string[]; clubs: AdminUserClub[]; lockCase?: AdminLockCase }>;
   total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface AccountAdminRepository {
-  listUsers(search: string, limit: number): Promise<AdminUserPage>;
+  /** One page of users matching the search, sorted by email; `page` starts at 1. */
+  listUsers(search: string, page: number, pageSize: number): Promise<AdminUserPage>;
   findUser(userId: string): Promise<AuthUser | null>;
   systemRoles(userId: string): Promise<string[]>;
   applyRoleChange(input: {

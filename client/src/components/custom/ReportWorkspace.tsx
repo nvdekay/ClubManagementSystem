@@ -606,11 +606,6 @@ export function ReportWorkspace({
   return (
     <div className="space-y-6">
       <PageHeader title={t("accountability.reports")} />
-      {configurationIssues.map((item) => (
-        <AppNotice key={item.eventId} tone="warning">
-          {item.eventTitle}: {t("accountability.deadlineMissing")}
-        </AppNotice>
-      ))}
       {list.isPending ? (
         <AppSkeleton className="h-32 w-full" />
       ) : list.isError ? (
@@ -673,6 +668,24 @@ export function ReportWorkspace({
         <p className="text-sm text-muted-app">
           {t("accountability.noSelection")}
         </p>
+      )}
+      {configurationIssues.length > 0 && (
+        <AppNotice
+          tone="warning"
+          title={t("accountability.deadlineMissingTitle", { count: configurationIssues.length })}
+        >
+          <p>{t("accountability.deadlineMissingHint")}</p>
+          <details>
+            <summary className="w-fit text-xs font-semibold text-muted-app hover:text-text-app">
+              {t("accountability.deadlineMissingList")}
+            </summary>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {configurationIssues.map((item) => (
+                <li key={item.eventId}>{item.eventTitle}</li>
+              ))}
+            </ul>
+          </details>
+        </AppNotice>
       )}
     </div>
   );

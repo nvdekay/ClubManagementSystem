@@ -70,7 +70,11 @@ const AdminUsers = z.object({
     lockCase: z.object({ violationId: z.string(), title: z.string(), clubName: z.string() }).optional(),
   })),
   total: z.number().int(),
+  page: z.number().int(),
+  pageSize: z.number().int(),
 });
+const adminUsersQuery = z.object({ search: z.string().max(100).optional(), page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).max(50).optional() });
 const Changed = z.object({ changed: z.literal(true) });
 const Dashboard = z.object({
   kind: z.enum(["student", "club", "icpdp"]),
@@ -994,7 +998,8 @@ export const openApiDocument = createDocument({
     },
     "/admin/users": {
       get: {
-        summary: "Search users (ICPDP only)",
+        summary: "Search users (ICPDP only), one page at a time sorted by email",
+        requestParams: { query: adminUsersQuery },
         responses: {
           "200": { description: "Users and current system roles",
             content: { "application/json": { schema: envelope(AdminUsers) } } },

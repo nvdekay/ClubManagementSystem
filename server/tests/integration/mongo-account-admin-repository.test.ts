@@ -45,7 +45,7 @@ describe.skipIf(!uri)("Mongo account administration (UC03)", () => {
     await repo.setLock({ actorId: officer.toString(), targetId: student.toString(), locked: true,
       reason: "Emergency lock", violationId: String(openCase!._id), now });
 
-    const page = await repo.listUsers("student.admin", 10);
+    const page = await repo.listUsers("student.admin", 1, 10);
     expect(page.items[0]).toMatchObject({
       user: { accountState: "Locked" },
       clubs: [{ clubId: String(clubId), clubName: "Admin Club", membershipState: "Active", positions: ["Chủ nhiệm"] }],

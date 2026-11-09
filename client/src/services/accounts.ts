@@ -14,6 +14,8 @@ export interface AdminUserPage {
   items: Array<{ user: AuthUser; systemRoles: string[]; clubs: AdminUserClub[];
     lockCase?: { violationId: string; title: string; clubName: string } }>;
   total: number;
+  page: number;
+  pageSize: number;
 }
 
 export type AccountAction =
@@ -34,8 +36,9 @@ async function accountRequest(path: string, method: "POST" | "DELETE", csrfToken
   }
 }
 
-export async function fetchAdminUsers(search: string, signal: AbortSignal): Promise<AdminUserPage> {
-  const params = new URLSearchParams({ search });
+export async function fetchAdminUsers(search: string, page: number, pageSize: number,
+  signal: AbortSignal): Promise<AdminUserPage> {
+  const params = new URLSearchParams({ search, page: String(page), pageSize: String(pageSize) });
   const response = await apiFetch(`/api/v1/admin/users?${params}`, { signal, credentials: "same-origin" });
   if (!response.ok) {
     const result = (await response.json().catch(() => null)) as { message?: string } | null;
