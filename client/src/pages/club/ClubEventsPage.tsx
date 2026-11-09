@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { Link, useParams } from "react-router";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppInput } from "@/components/ui/input/AppInput";
@@ -32,9 +33,12 @@ function freshEvent(): ClubEventInput {
   return { title: "", objective: "", plan: "", startAt: start.toISOString(), endAt: new Date(start.getTime() + 2 * 3600000).toISOString(),
     venueText: "", audienceScope: "PUBLIC", capacity: 40, riskCategory: "LOW", budgetLines: [], bookingIds: [], registrationForm: [], occurrences: [] };
 }
-function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string | null; children: ReactNode }) {
-  return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="font-medium">{label}{required && <AppRequiredMark />}</span>{children}<AppFieldError message={error} /></label>;
+function Field({ label, required, error, flagged, children }: { label: string; required?: boolean; error?: string | null; flagged?: string; children: ReactNode }) {
+  return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="flex flex-wrap items-center gap-2 font-medium"><span>{label}{required && <AppRequiredMark />}</span>
+    {flagged && <AppBadge tone="warning">{flagged}</AppBadge>}</span>{children}<AppFieldError message={error} /></label>;
 }
+/** Comments ICPDP stores on a decision (UC26): the parts to revise and any approval conditions. */
+type DecisionComments = { sections?: string[]; conditions?: string[] };
 function numberError(t: TFunction, value: number, min: number, max: number) {
   if (!Number.isInteger(value)) return t("common.invalidNumber");
   if (value < min) return t("common.numberMin", { min });
@@ -112,6 +116,22 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const feedback = useClubEventFeedback(clubId, compare, allowed && mode === "feedback");
   const rows = events.data ?? eventsEmpty;
   const active = mode === "events" ? detail.data?.event : rows.find((e) => e.id === selected);
+  // The latest revision request on the open proposal: which parts ICPDP asked the club to fix.
+  const revisionRequest = [...(detail.data?.decisions ?? [])].reverse().find((d) => d.outcome === "Request revision");
+  const revisionSections = active?.state === "Revision Requested" ? (revisionRequest?.comments as DecisionComments | undefined)?.sections ?? [] : [];
+  function flag(...parts: string[]) {
+    return editing !== "new" && parts.some((part) => revisionSections.includes(part)) ? t("common.revisionFlagged") : undefined;
+  }
+  function sectionLabel(value: string) {
+    switch (value) {
+      case "schedule": return t("eventReviews.sectionschedule");
+      case "venue": return t("eventReviews.sectionvenue");
+      case "content": return t("eventReviews.sectioncontent");
+      case "risk": return t("eventReviews.sectionrisk");
+      case "budget": return t("eventReviews.sectionbudget");
+      default: return t("eventReviews.sectionother");
+    }
+  }
   const format = useMemo(() => new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }), [i18n.language]);
   const filtered = useMemo(() => rows.filter((e) => (!filter || e.state === filter) && e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())), [rows, filter, search]);
   const columns = useMemo(() => eventColumns.columns([
@@ -236,7 +256,14 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         <h2 className="mb-2 text-xl font-semibold">{active.title}</h2><p>{t(`clubEvents.${active.state}`, { defaultValue: active.state })} · {format.format(new Date(active.startAt))} – {format.format(new Date(active.endAt))}</p>
         <p className="mt-2 break-words">{active.objective}</p><p className="mt-2 whitespace-pre-wrap break-words">{active.plan}</p>
         <p className="mt-2">{t("clubEvents.venue")}: {active.venueText ?? options.data?.properties.find((p) => p.id === active.propertyId)?.name ?? "—"} · {t(`clubEvents.${active.audienceScope}`)}</p>
-        {active.revisionDeadlineAt && <p className="mt-2">{t("clubEvents.revisionDeadline")}: {format.format(new Date(active.revisionDeadlineAt))}</p>}
+        {active.state === "Revision Requested" && revisionRequest ? <div role="status" className="mt-4 rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
+          <p className="font-semibold">{t("clubEvents.revisionTitle")}</p>
+          {revisionSections.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-2"><span>{t("clubEvents.revisionSections")}:</span>
+            {revisionSections.map((section) => <AppBadge key={section} tone="warning">{sectionLabel(section)}</AppBadge>)}</div>}
+          {revisionRequest.reason && <p className="mt-2 whitespace-pre-wrap break-words">{revisionRequest.reason}</p>}
+          {active.revisionDeadlineAt && <p className="mt-2"><span className="font-semibold">{t("clubEvents.revisionDeadline")}:</span> {format.format(new Date(active.revisionDeadlineAt))}</p>}
+          <p className="mt-2 text-muted-app">{t("clubEvents.revisionHint")}</p>
+        </div> : active.revisionDeadlineAt && <p className="mt-2">{t("clubEvents.revisionDeadline")}: {format.format(new Date(active.revisionDeadlineAt))}</p>}
         {active.approvalConditions?.length > 0 && <div className="mt-3"><h3 className="font-semibold">{t("clubEvents.conditions")}</h3><ul className="mt-2 list-inside list-disc">{active.approvalConditions.map((condition, index) => <li key={index}>{condition}</li>)}</ul></div>}
         {active.conflictResult && <p className="mt-3">{t(`clubEvents.${active.conflictResult}`, { defaultValue: active.conflictResult })}</p>}
         {detail.data.budget && <p className="mt-2">{t("clubEvents.approvedBudget")}: {new Intl.NumberFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { style: "currency", currency: "VND" }).format(detail.data.budget.approvedTotal)}</p>}
@@ -252,7 +279,9 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           <p className="mt-2 whitespace-pre-wrap break-words">{String((v.payload as { plan?: string })?.plan ?? "")}</p>
           {v.budgetLines.map((line, index) => <p key={index} className="mt-2">{line.category}: {line.amount.toLocaleString(i18n.language)} VND — {line.purpose}</p>)}</details>)}
         <h3 className="mt-5 font-semibold">{t("clubEvents.decisions")}</h3>
-        {detail.data.decisions.map((d, index) => <p key={index} className="mt-2">{t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {d.reason ?? ""}</p>)}
+        {detail.data.decisions.map((d, index) => <div key={index} className="mt-2"><p>{t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {format.format(new Date(d.at))}{d.reason ? ` · ${d.reason}` : ""}</p>
+          {((d.comments as DecisionComments | undefined)?.sections ?? []).length > 0 && <div className="mt-1 flex flex-wrap gap-2">{(d.comments as DecisionComments).sections!.map((section) =>
+            <AppBadge key={section} tone="warning">{sectionLabel(section)}</AppBadge>)}</div>}</div>)}
       </>}
     </section>}
     {mode === "attendance" && active && <section className="mt-6 space-y-4 rounded-xl border border-border-app p-5">
@@ -285,20 +314,23 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     <AppDialog open={editing !== null} title={t(editing === "new" ? "clubEvents.create" : "clubEvents.edit")} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) setEditing(null); }}>
       <form noValidate onSubmit={(event) => void save(event)} className="space-y-4">
         <p className="text-sm text-muted-app">{t("clubEvents.notice")}</p><ErrorMessage error={formError ?? options.error} />
-        <Field label={t("clubEvents.titleField")} required error={eventField.error("title")}><AppInput {...eventField.control("title")} maxLength={200} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></Field>
-        <Field label={t("clubEvents.objective")} required error={eventField.error("objective")}><AppTextarea {...eventField.control("objective")} maxLength={5000} value={draft.objective} onChange={(e) => setDraft({ ...draft, objective: e.target.value })} /></Field>
-        <Field label={t("clubEvents.plan")} required error={eventField.error("plan")}><AppTextarea {...eventField.control("plan")} maxLength={20000} value={draft.plan} onChange={(e) => setDraft({ ...draft, plan: e.target.value })} /></Field>
-        <div className="grid gap-4 sm:grid-cols-2"><Field label={t("clubEvents.start")} required error={eventField.error("startAt")}><AppInput {...eventField.control("startAt")} type="datetime-local" value={localTime(draft.startAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, startAt: iso(e.target.value) }); }} /></Field>
-          <Field label={t("clubEvents.end")} required error={eventField.error("endAt")}><AppInput {...eventField.control("endAt")} type="datetime-local" value={localTime(draft.endAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, endAt: iso(e.target.value) }); }} /></Field></div>
-        <Field label={t("clubEvents.property")}><AppSelect label={t("clubEvents.property")} value={draft.propertyId ?? ""} options={roomOptions} onChange={(value) => setDraft({ ...draft, propertyId: value || undefined, bookingIds: [] })} /></Field>
-        <Field label={t("clubEvents.venue")} required={!draft.propertyId} error={eventField.error("venue")}><AppInput {...eventField.control("venue", !draft.propertyId)} value={draft.venueText ?? ""} onChange={(e) => setDraft({ ...draft, venueText: e.target.value })} /></Field>
-        <div className="grid gap-4 sm:grid-cols-2"><Field label={t("clubEvents.scope")}><AppSelect label={t("clubEvents.scope")} value={draft.audienceScope} options={(["PUBLIC", "MEMBERS_ONLY"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, audienceScope: value })} /></Field>
-          <Field label={t("clubEvents.capacity")} required error={eventField.error("capacity")}><AppInput {...eventField.control("capacity")} type="number" min={1} max={100000} value={draft.capacity} onChange={(e) => setDraft({ ...draft, capacity: Number(e.target.value) })} /></Field></div>
-        <Field label={t("clubEvents.risk")}><AppSelect label={t("clubEvents.risk")} value={draft.riskCategory} options={(["LOW", "MEDIUM", "HIGH"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, riskCategory: value })} /></Field>
-        <Field label={t("clubEvents.riskNote")}><AppTextarea value={draft.riskNote ?? ""} onChange={(e) => setDraft({ ...draft, riskNote: e.target.value })} /></Field>
-        <Field label={t("clubEvents.facilityNeeds")}><AppTextarea value={draft.facilityNeeds ?? ""} onChange={(e) => setDraft({ ...draft, facilityNeeds: e.target.value })} /></Field>
-        <details><summary className="font-semibold">{t("clubEvents.bookings")}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.bookingsHint")}</p>{!permissions.includes("club.booking.manage") && <p className="mt-2 text-sm text-muted-app">{t("clubEvents.bookingPermissionHint")}</p>}<div className="mt-3 space-y-2">{!linkableBookings.length && <p className="text-sm text-muted-app">{t("clubEvents.bookingsEmpty")}</p>}{linkableBookings.map((b) => <label key={b.id} className="flex items-start gap-2"><input type="checkbox" checked={draft.bookingIds.includes(b.id)} disabled={!permissions.includes("club.booking.manage")} onChange={(e) => setDraft({ ...draft, bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id) })} /><span>{b.title} · {format.format(new Date(b.startAt))}</span></label>)}</div></details>
-        <details><summary className="font-semibold">{t("clubEvents.budget")}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.budgetHint")}</p><div className="mt-3 space-y-4">{draft.budgetLines.map((line, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
+        {editing !== "new" && revisionSections.length > 0 && <div role="status" className="rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
+          <p className="font-semibold">{t("clubEvents.revisionSections")}: {revisionSections.map(sectionLabel).join(", ")}</p>
+          {revisionRequest?.reason && <p className="mt-1 whitespace-pre-wrap break-words">{revisionRequest.reason}</p>}</div>}
+        <Field flagged={flag("content")} label={t("clubEvents.titleField")} required error={eventField.error("title")}><AppInput {...eventField.control("title")} maxLength={200} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></Field>
+        <Field flagged={flag("content")} label={t("clubEvents.objective")} required error={eventField.error("objective")}><AppTextarea {...eventField.control("objective")} maxLength={5000} value={draft.objective} onChange={(e) => setDraft({ ...draft, objective: e.target.value })} /></Field>
+        <Field flagged={flag("content")} label={t("clubEvents.plan")} required error={eventField.error("plan")}><AppTextarea {...eventField.control("plan")} maxLength={20000} value={draft.plan} onChange={(e) => setDraft({ ...draft, plan: e.target.value })} /></Field>
+        <div className="grid gap-4 sm:grid-cols-2"><Field flagged={flag("schedule")} label={t("clubEvents.start")} required error={eventField.error("startAt")}><AppInput {...eventField.control("startAt")} type="datetime-local" value={localTime(draft.startAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, startAt: iso(e.target.value) }); }} /></Field>
+          <Field flagged={flag("schedule")} label={t("clubEvents.end")} required error={eventField.error("endAt")}><AppInput {...eventField.control("endAt")} type="datetime-local" value={localTime(draft.endAt)} onChange={(e) => { if (e.target.value) setDraft({ ...draft, endAt: iso(e.target.value) }); }} /></Field></div>
+        <Field flagged={flag("venue")} label={t("clubEvents.property")}><AppSelect label={t("clubEvents.property")} value={draft.propertyId ?? ""} options={roomOptions} onChange={(value) => setDraft({ ...draft, propertyId: value || undefined, bookingIds: [] })} /></Field>
+        <Field flagged={flag("venue")} label={t("clubEvents.venue")} required={!draft.propertyId} error={eventField.error("venue")}><AppInput {...eventField.control("venue", !draft.propertyId)} value={draft.venueText ?? ""} onChange={(e) => setDraft({ ...draft, venueText: e.target.value })} /></Field>
+        <div className="grid gap-4 sm:grid-cols-2"><Field flagged={flag("content")} label={t("clubEvents.scope")}><AppSelect label={t("clubEvents.scope")} value={draft.audienceScope} options={(["PUBLIC", "MEMBERS_ONLY"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, audienceScope: value })} /></Field>
+          <Field flagged={flag("content")} label={t("clubEvents.capacity")} required error={eventField.error("capacity")}><AppInput {...eventField.control("capacity")} type="number" min={1} max={100000} value={draft.capacity} onChange={(e) => setDraft({ ...draft, capacity: Number(e.target.value) })} /></Field></div>
+        <Field flagged={flag("risk")} label={t("clubEvents.risk")}><AppSelect label={t("clubEvents.risk")} value={draft.riskCategory} options={(["LOW", "MEDIUM", "HIGH"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, riskCategory: value })} /></Field>
+        <Field flagged={flag("risk")} label={t("clubEvents.riskNote")}><AppTextarea value={draft.riskNote ?? ""} onChange={(e) => setDraft({ ...draft, riskNote: e.target.value })} /></Field>
+        <Field flagged={flag("venue")} label={t("clubEvents.facilityNeeds")}><AppTextarea value={draft.facilityNeeds ?? ""} onChange={(e) => setDraft({ ...draft, facilityNeeds: e.target.value })} /></Field>
+        <details><summary className="font-semibold">{t("clubEvents.bookings")}{flag("venue") && <AppBadge tone="warning" className="ml-2">{flag("venue")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.bookingsHint")}</p>{!permissions.includes("club.booking.manage") && <p className="mt-2 text-sm text-muted-app">{t("clubEvents.bookingPermissionHint")}</p>}<div className="mt-3 space-y-2">{!linkableBookings.length && <p className="text-sm text-muted-app">{t("clubEvents.bookingsEmpty")}</p>}{linkableBookings.map((b) => <label key={b.id} className="flex items-start gap-2"><input type="checkbox" checked={draft.bookingIds.includes(b.id)} disabled={!permissions.includes("club.booking.manage")} onChange={(e) => setDraft({ ...draft, bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id) })} /><span>{b.title} · {format.format(new Date(b.startAt))}</span></label>)}</div></details>
+        <details><summary className="font-semibold">{t("clubEvents.budget")}{flag("budget") && <AppBadge tone="warning" className="ml-2">{flag("budget")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.budgetHint")}</p><div className="mt-3 space-y-4">{draft.budgetLines.map((line, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
           {(["category", "purpose"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key}`)} required error={eventField.error(`budget.${index}.${key}`)}><AppInput {...eventField.control(`budget.${index}.${key}`)} value={line[key]} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, [key]: e.target.value } : l) })} /></Field>)}
           <Field label={t("clubEvents.planItems")}><AppTextarea value={line.plannedItems ?? ""} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, plannedItems: e.target.value } : l) })} /></Field>
           <Field label={t("clubEvents.amount")} required error={eventField.error(`budget.${index}.amount`)}><AppMoneyInput {...eventField.control(`budget.${index}.amount`)} value={line.amount ? line.amount : ""} onValueChange={(digits) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, amount: Number(digits) } : l) })} /></Field>
@@ -311,7 +343,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           {["select", "radio", "checkbox"].includes(field.type) && <Field label={t("clubEvents.options")} required error={eventField.error(`form.${index}.options`)}><AppTextarea {...eventField.control(`form.${index}.options`)} value={field.options?.join("\n") ?? ""} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, options: e.target.value.split("\n") } : f) })} /></Field>}
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, registrationForm: draft.registrationForm?.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, registrationForm: [...draft.registrationForm ?? [], { key: `field_${crypto.randomUUID().replaceAll("-", "")}`, label: "", type: "text", required: true }] })}>{t("clubEvents.addField")}</AppButton></div></details>
-        <details><summary className="font-semibold">{t("clubEvents.occurrences")}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.occurrencesHint")}</p><div className="mt-3 space-y-3">{draft.occurrences?.map((o, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
+        <details><summary className="font-semibold">{t("clubEvents.occurrences")}{flag("schedule") && <AppBadge tone="warning" className="ml-2">{flag("schedule")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.occurrencesHint")}</p><div className="mt-3 space-y-3">{draft.occurrences?.map((o, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
           {(["startAt", "endAt"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "startAt" ? "start" : "end"}`)} required error={eventField.error(`occurrence.${index}.${key}`)}><AppInput {...eventField.control(`occurrence.${index}.${key}`)} type="datetime-local" value={localTime(o[key])} onChange={(e) => { if (e.target.value) setDraft({ ...draft, occurrences: draft.occurrences?.map((item, i) => i === index ? { ...item, [key]: iso(e.target.value) } : item) }); }} /></Field>)}
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, occurrences: draft.occurrences?.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, occurrences: [...draft.occurrences ?? [], { startAt: draft.startAt, endAt: draft.endAt }] })}>{t("clubEvents.addOccurrence")}</AppButton></div></details>

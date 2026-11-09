@@ -101,6 +101,10 @@ export function ApplicationEditorPage() {
   } : {});
   const steps = [t("applications.stepClub"), t("applications.stepFounders"),
     t("applications.stepFiles"), t("applications.stepReview")];
+  // Which step holds each part ICPDP can flag, so a revision request points at the steps to fix.
+  const flaggedSteps = state === "Revision Requested" && latestDecision?.outcome === "Request revision"
+    ? new Set(latestDecision.sections.flatMap((section) => section === "club-information" ? [0]
+      : section === "founders" ? [1] : section === "documents" ? [2] : [])) : new Set<number>();
 
   function stateLabel(value: string): string {
     switch (value) {
@@ -434,6 +438,7 @@ export function ApplicationEditorPage() {
                 className={cn("flex min-h-10 items-center gap-2 rounded-full border border-border-app px-4 text-sm font-medium text-muted-app",
                   { "border-primary-app bg-primary-soft-app text-primary-app": index === step })}>
                 <span className="font-bold">{index + 1}</span>{name}
+                {flaggedSteps.has(index) && <AppBadge tone="warning">{t("common.revisionFlagged")}</AppBadge>}
               </button>
             </li>
           ))}</ol>
