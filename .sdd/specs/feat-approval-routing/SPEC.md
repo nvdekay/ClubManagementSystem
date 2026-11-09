@@ -1,5 +1,12 @@
 # SPEC: feat-approval-routing
 
+> **Sửa đổi 09/11/2026 — bỏ cấp duyệt thứ hai.** Người dùng chọn cho mọi hồ sơ UC08, UC26, UC46 được
+> một ICPDP Officer quyết định ở **một cấp**. Rule UC05 không còn `requiredLevel`, chỉ đặt `slaHours`
+> cho hồ sơ khớp rule; mô phỏng (A1) trả `matched` và SLA thay cho `secondLevel`. Bỏ chặn cấp 2 cho Head,
+> chặn bốn mắt, thông báo `APPROVAL_LEVEL2_REQUIRED` và nhãn "Cấp x/2". `ICPDP_HEAD` chỉ còn quyền tạo,
+> sửa, kích hoạt rule. Quyết định luôn ghi `level: 1`; `requiredLevel`/`currentLevel` trên task cũ bị bỏ
+> qua, và `requiredLevel` trong bộ rule cũ bị bỏ khi đọc. Phần bên dưới là thiết kế gốc 07/11/2026.
+
 ## Vấn đề
 UC05 (diagram, context) cho ICPDP cấu hình rule định tuyến phê duyệt đánh phiên bản: hồ sơ UC08,
 UC26, UC46 khớp rule phải qua cấp duyệt thứ hai (`ICPDP_HEAD`) trước khi quyết định có hiệu lực. Code

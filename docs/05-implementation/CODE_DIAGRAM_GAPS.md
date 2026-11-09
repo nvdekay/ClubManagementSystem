@@ -26,11 +26,11 @@ Các diagram dưới đây không phải nguồn chuẩn nhưng vẫn vẽ mô h
 
 | Diagram | Còn lệch |
 |---|---|
-| `UCMS_Organization_and_Flows.drawio` | **Phần role là đúng**: hai role cố định, UC23 bị rút. Diagram vẫn thiếu `ICPDP_HEAD` và duyệt cấp 1 → cấp 2 |
+| `UCMS_Organization_and_Flows.drawio` | **Phần role là đúng**: hai role cố định, UC23 bị rút. Diagram vẫn thiếu `ICPDP_HEAD` (chỉ cấu hình rule UC05); từ 09/11/2026 code duyệt một cấp nên không cần luồng cấp 1 → cấp 2 |
 | `UCMS_UseCase_ByActor.drawio` | Nhóm `Manage club roles` / CRUD role của UC23 là cũ và cần bỏ để khớp diagram cơ cấu mới hơn |
 | `UCMS_Screen_Flow.drawio` | Còn "Student feedback" / "Student feedback inbox"; thiếu Khiếu nại (CLB, ICPDP), Định tuyến phê duyệt. Không có `Roles & permissions` (đúng, màn này đã gỡ khỏi code) |
 | `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Thiếu `routingRuleSets`, `approvalTasks.routingRuleSetId/routingRuleId/requiredLevel/currentLevel`, `approvalDecisions.level`; complaint còn là góp ý một chiều, chưa liên kết `Violation` |
-| `UCMS_Sequence_Diagrams.drawio` | Chưa có luồng duyệt hai cấp với `ICPDP_HEAD` |
+| `UCMS_Sequence_Diagrams.drawio` | Khớp: từ 09/11/2026 code bỏ duyệt hai cấp, mọi hồ sơ một cấp như diagram |
 | `UCMS_Security_Architecture.drawio` | Chưa có audit `ACCESS_DENIED` (SEC-08) |
 | `../06-user-guide/GUIDE_BOOK.pdf`, ảnh chương 4 và 19 | Chưa xuất lại / chụp lại (Markdown và HTML đã cập nhật) |
 
@@ -66,7 +66,9 @@ Không còn lệch: G1 (UC23 động) đã gỡ, S3 đã khớp; S1 và S2 là k
 - **G4 (07/11/2026)** — UC05: bộ rule định tuyến đánh phiên bản (`routingRuleSets`), từ chối rule chồng
   nhau, mô phỏng chỉ đọc; `ICPDP_HEAD` là system role cấp kèm `ICPDP_OFFICER` (D1); UC08, UC26, UC46 khớp
   rule cần cấp 2 — cấp 1 duyệt không tạo tác dụng phụ cuối, Head nhận và quyết định cấp 2, người duyệt cấp 1
-  không quyết định cấp 2. SPEC: `.sdd/specs/feat-approval-routing/`.
+  không quyết định cấp 2. SPEC: `.sdd/specs/feat-approval-routing/`. **Sửa 09/11/2026:** người dùng bỏ cấp
+  duyệt thứ hai; rule chỉ đặt SLA, mọi hồ sơ UC08/UC26/UC46 do một ICPDP Officer quyết định, `ICPDP_HEAD` chỉ
+  cấu hình rule.
 - **G5 (07/11/2026)** — Context: email đi ra Google SMTP qua `smtpMailTransport` (`nodemailer`) khi đủ cấu
   hình; production bắt buộc SMTP và dừng khởi động nếu thiếu; outbox, lease, retry giữ nguyên. Credential
   SMTP do người vận hành điền vào `.env`. SPEC: `.sdd/specs/feat-google-smtp/`.

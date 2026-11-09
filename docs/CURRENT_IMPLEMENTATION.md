@@ -71,7 +71,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính |
 | ICPDP | UC37 đối soát | Có, đã nối vào app chính; A2 đối soát tối đa bằng số đã tạm ứng, không cấp bù |
 | ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42 **Một phần** (nguồn dữ liệu bản nháp); UC43 có (E1 khiếu nại kết quả ngoài phạm vi) |
-| ICPDP | UC05 định tuyến phê duyệt | Có (07/11/2026), tại `/workspace/routing-rules`: bộ rule đánh phiên bản `Draft → Active`, từ chối rule chồng nhau, mô phỏng trên hồ sơ đã quyết định; UC08/UC26/UC46 khớp rule cần cấp 2 do `ICPDP_HEAD` quyết định (cấp kèm `ICPDP_OFFICER`, D1); cấp 1 duyệt không có hiệu lực cuối |
+| ICPDP | UC05 định tuyến phê duyệt | Có (07/11/2026), tại `/workspace/routing-rules`: bộ rule đánh phiên bản `Draft → Active`, từ chối rule chồng nhau, mô phỏng trên hồ sơ đã quyết định; rule chỉ đặt SLA thẩm định, chỉ `ICPDP_HEAD` (cấp kèm `ICPDP_OFFICER`, D1) sửa và kích hoạt; UC08/UC26/UC46 duyệt một cấp (bỏ cấp 2 từ 09/11/2026) |
 | ICPDP | UC51 phân loại khiếu nại | Có (07/11/2026), tại `/workspace/complaint-review`: mở xem xét, quyết định Dismissed / Forwarded (kèm hạn trả lời) / Escalated (mở hồ sơ UC40 liên kết hai chiều), lý do bắt buộc; sau khi CLB trả lời thì đóng hoặc leo thang. Kết quả đi vào UC42 qua hồ sơ vi phạm (D8) |
 | ICPDP | UC53 sự kiện cấp trường | Có |
 | Club Leader | UC54 phản hồi lời mời | Có, tại `/club/:clubId/invitations`; từ chối phải kèm lý do |

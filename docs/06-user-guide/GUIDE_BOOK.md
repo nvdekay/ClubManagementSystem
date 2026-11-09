@@ -683,12 +683,11 @@ thấy ai gửi** (BR38, D5).
 xuống cùng ghi chú của ICPDP, gửi **một** lần trả lời gồm nội dung, hành động đã/sẽ làm và liên kết chứng
 cứ. CLB không sửa, bác bỏ hay đóng khiếu nại.
 
-**Định tuyến phê duyệt** — ICPDP (`/workspace/routing-rules`): rule quyết định hồ sơ thành lập CLB, đề xuất
-sự kiện (theo ngân sách, mức rủi ro) hay yêu cầu cơ sở vật chất (theo loại) cần **Trưởng ICPDP** duyệt cấp
-hai. Mọi cán bộ xem và **mô phỏng**; chỉ Trưởng ICPDP tạo nháp, sửa và **Kích hoạt** (chỉ áp cho hồ sơ mới).
-Hồ sơ cần hai cấp hiện nhãn "Cấp 1/2"; duyệt ở cấp 1 chuyển hồ sơ cho Trưởng ICPDP, từ chối hoặc yêu cầu
-sửa ở cấp 1 là kết quả cuối. Người duyệt cấp 1 không được duyệt cấp 2. Vai trò Trưởng ICPDP được cấp ở
-**Tài khoản & phân quyền**, chỉ cho người đã là cán bộ ICPDP.
+**Định tuyến phê duyệt** — ICPDP (`/workspace/routing-rules`): rule đặt **SLA thẩm định** (số giờ) cho hồ sơ
+thành lập CLB, đề xuất sự kiện (theo ngân sách, mức rủi ro) hay yêu cầu cơ sở vật chất (theo loại). Mọi hồ sơ
+đều do một cán bộ ICPDP duyệt ở **một cấp**: nhận xử lý rồi quyết định là xong. Mọi cán bộ xem và **mô
+phỏng**; chỉ Trưởng ICPDP tạo nháp, sửa và **Kích hoạt** (chỉ áp cho hồ sơ mới). Vai trò Trưởng ICPDP được cấp
+ở **Tài khoản & phân quyền**, chỉ cho người đã là cán bộ ICPDP.
 
 ## 20. ICPDP quản lý vòng đời CLB
 

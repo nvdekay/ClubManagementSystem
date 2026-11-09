@@ -91,7 +91,7 @@ Auth dùng Google OpenID Connect (Authorization Code + PKCE S256, `state`, `nonc
 kiểm qua JWKS), phiên lưu phía server trong `authSessions` (chỉ hash), cookie phiên ký HMAC,
 `httpOnly`, `SameSite=Lax`, `Secure` khi `NODE_ENV=production`, CSRF token theo phiên cho request
 thay đổi dữ liệu. Toàn bộ cơ chế và hạn chế đã biết: [`../SRS.md` §12.1](../SRS.md#121-cơ-chế-bảo-mật). Domain lấy từ `ALLOWED_DOMAIN` (danh sách hoặc `*`),
-không lấy từ policy UC04. System role gồm `ICPDP_OFFICER`, `ICPDP_HEAD` (cấp duyệt thứ hai, chỉ cấp kèm Officer — D1) và quyền đặc biệt attendance unlock. Định tuyến UC05: `domain/approval-routing.ts` khớp rule; `infra/db/approval-routing.ts` đóng băng route lên `approvalTasks` lúc mở task và chặn cấp 2 cho Head trong transaction quyết định của UC08/UC26/UC46; `approvalDecisions` có `level`.
+không lấy từ policy UC04. System role gồm `ICPDP_OFFICER`, `ICPDP_HEAD` (cấu hình rule định tuyến UC05, chỉ cấp kèm Officer — D1) và quyền đặc biệt attendance unlock. Định tuyến UC05: `domain/approval-routing.ts` khớp rule; `infra/db/approval-routing.ts` đóng băng rule khớp và SLA lên `approvalTasks` lúc mở task; UC08/UC26/UC46 duyệt một cấp (BR16, BR31).
 
 Thiết kế đích theo BR47, BR54, BR55 dùng hai role phía CLB cố định. Membership `Active` tạo
 `Club Member` với capability thành viên cố định; ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong

@@ -256,29 +256,28 @@ quyền và luồng của từng use case giữ theo đặc tả dưới đây.
 
 - **Actor chính:** ICPDP Officer
 - **Module:** M01
-- **Mục tiêu nghiệp vụ:** Quyết định hồ sơ nào cần một cấp duyệt thứ hai trong nội bộ ICPDP, mà
-  không hard-code các ngưỡng.
+- **Mục tiêu nghiệp vụ:** Đặt SLA thẩm định cho từng nhóm hồ sơ mà không hard-code các ngưỡng; mọi
+  hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp (sửa 09/11/2026).
 - **Kích hoạt:** ICPDP thay đổi phân cấp thẩm quyền nội bộ của mình.
 - **Tiền điều kiện:** Người gọi có quyền cấu hình định tuyến.
 - **Dữ liệu vào:** Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng cơ sở vật chất, lịch sử
-  tuân thủ của CLB → cấp duyệt yêu cầu và SLA của nó.
+  tuân thủ của CLB → SLA thẩm định.
 - **Luồng chính:**
   1. Officer mở bộ quy tắc định tuyến.
-  2. Officer thêm hoặc sửa một rule: một điều kiện và cấp duyệt mà điều kiện đó đòi hỏi.
-  3. Hệ thống validate rằng không có hai rule nào chồng nhau; hồ sơ không khớp rule nào thì được
-     quyết định ở một cấp (BR16).
+  2. Officer thêm hoặc sửa một rule: một điều kiện và SLA thẩm định cho hồ sơ khớp điều kiện đó.
+  3. Hệ thống validate rằng không có hai rule nào chồng nhau, để mỗi hồ sơ khớp nhiều nhất một rule
+     (BR16).
   4. Officer kích hoạt bộ rule.
   5. Hệ thống đánh phiên bản và ghi audit; các hồ sơ mới đi theo bộ rule đó.
 - **Luồng thay thế:**
   - **A1 Mô phỏng:** officer chạy bộ rule nháp trên N hồ sơ đã quyết định gần nhất và xem hồ sơ
-    nào lẽ ra đã cần cấp duyệt thứ hai.
+    nào khớp rule nào, với SLA tương ứng.
 - **Ngoại lệ:** **E1** hai rule chồng nhau → từ chối kích hoạt.
 - **Hậu điều kiện:** Tồn tại một bộ rule định tuyến đang hoạt động; UC08, UC26 và UC46 tra
   cứu nó.
 - **Quy tắc nghiệp vụ:** Đây chính là use case mà Feature nổi bật 1 còn thiếu ở v1. Nó là thứ
-  làm BR16 cưỡng chế được: một hồ sơ không khớp rule nào thì được quyết định ở một cấp duy nhất
-  (§11 của tài liệu mô hình). Việc cấp thứ hai là một quyền hay một actor thứ tư là quyết định
-  còn mở D1.
+  làm BR16 cưỡng chế được: mọi hồ sơ được quyết định ở một cấp duy nhất (§11 của tài liệu mô hình).
+  D1 đã chốt: `ICPDP_HEAD` là quyền RBAC dùng để cấu hình rule, không có cấp duyệt thứ hai.
 - **Đầu ra:** Bộ rule định tuyến, bản ghi audit.
 - **Use case liên quan:** UC08, UC26, UC46
 

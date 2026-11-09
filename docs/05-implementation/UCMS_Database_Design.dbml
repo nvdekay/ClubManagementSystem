@@ -301,7 +301,7 @@ Table permissions {
 
 Table roles {
   id objectId [pk]
-  code string [unique, not null, note: 'Vai trò hệ thống: ICPDP_OFFICER, ICPDP_HEAD (cấp duyệt thứ hai UC05, chỉ cấp kèm ICPDP_OFFICER — D1), ATTENDANCE_UNLOCK.']
+  code string [unique, not null, note: 'Vai trò hệ thống: ICPDP_OFFICER, ICPDP_HEAD (cấu hình rule định tuyến UC05, chỉ cấp kèm ICPDP_OFFICER — D1), ATTENDANCE_UNLOCK.']
   name string [not null]
   scope roleScope [not null, note: 'Một vai trò gắn CLB chỉ có hiệu lực thông qua một bản gán chức vụ bên trong một nhiệm kỳ đang hoạt động (SEC-04). Phía CLB chỉ có hai role cố định Club Leader / Club Member, suy ra từ membership và ghế đã xác nhận, không lưu ở bảng này (UC23 đã rút).']
   permissionCodes "string[]" [not null]
@@ -349,7 +349,7 @@ Table routingRuleSets {
   id objectId [pk]
   versionNo int [not null]
   state string [not null, note: 'Draft | Active | Superseded (UC05). Chỉ một bộ Active; bộ Active không bao giờ bị sửa tại chỗ.']
-  rules json [not null, note: '[{ id, requestType: CLUB_APPLICATION | EVENT_PROPOSAL | PROPERTY_BOOKING, minAmount?, maxAmount?, riskCategories?[], propertyTypes?[], minOpenViolations?, maxOpenViolations?, requiredLevel: 1 | 2, slaHours }]. Không hai rule nào chồng nhau (FR-UC05-02).']
+  rules json [not null, note: '[{ id, requestType: CLUB_APPLICATION | EVENT_PROPOSAL | PROPERTY_BOOKING, minAmount?, maxAmount?, riskCategories?[], propertyTypes?[], minOpenViolations?, maxOpenViolations?, slaHours }]. Rule chỉ đặt SLA thẩm định; bộ rule cũ có thể còn requiredLevel, bị bỏ qua. Không hai rule nào chồng nhau (FR-UC05-02).']
   createdBy objectId [not null]
   createdAt datetime [not null]
   updatedAt datetime
@@ -1228,11 +1228,11 @@ Table approvalTasks {
   title string [not null, note: 'Nhãn được denormalize cho hộp thư hợp nhất.']
   state approvalTaskState [not null, default: 'Open']
   assigneeId objectId [note: 'Một ICPDP Officer được phân công xử lý; null nghĩa là task còn ở hàng đợi chung.']
-  slaDueAt datetime [note: 'Việc vi phạm SLA được hiển thị dưới dạng approval aging trên dashboard ICPDP (WF-06). Đặt lại khi task lên cấp 2.']
+  slaDueAt datetime [note: 'Việc vi phạm SLA được hiển thị dưới dạng approval aging trên dashboard ICPDP (WF-06). Tính từ SLA của rule UC05 khớp lúc mở task.']
   routingRuleSetId objectId [note: 'Bộ rule UC05 đang Active lúc mở task; null khi chưa có bộ nào.']
   routingRuleId string [note: 'Rule khớp lúc mở task; null nghĩa là không khớp rule nào (một cấp, BR16).']
-  requiredLevel int [not null, default: 1, note: 'Số cấp duyệt hồ sơ cần, đóng băng lúc mở task (UC05).']
-  currentLevel int [not null, default: 1, note: 'Cấp đang chờ quyết định; cấp 2 chỉ người có ICPDP_HEAD quyết định.']
+  requiredLevel int [not null, default: 1, note: 'Không còn dùng (từ 09/11/2026 mọi hồ sơ duyệt một cấp, BR16); giữ cho dữ liệu cũ.']
+  currentLevel int [not null, default: 1, note: 'Không còn dùng (từ 09/11/2026 mọi hồ sơ duyệt một cấp, BR16); giữ cho dữ liệu cũ.']
   openedAt datetime [not null]
   closedAt datetime
 
@@ -1246,7 +1246,7 @@ Table approvalTasks {
 Table approvalDecisions {
   id objectId [pk]
   approvalTaskId objectId [not null]
-  level int [not null, default: 1, note: 'Cấp duyệt của quyết định này (UC05). Cấp 1 duyệt ở hồ sơ cần hai cấp chỉ chuyển task lên cấp 2, chưa có hiệu lực cuối.']
+  level int [not null, default: 1, note: 'Luôn là 1 từ 09/11/2026 (một cấp duyệt, BR16); dữ liệu cũ có thể có quyết định cấp 2.']
   outcome reviewOutcome [not null]
   reason text [note: 'Bắt buộc với kết quả Từ chối và Yêu cầu chỉnh sửa (BR05).']
   comments json [note: 'Các nhận xét có cấu trúc theo từng phần của một yêu cầu chỉnh sửa.']
@@ -1254,7 +1254,7 @@ Table approvalDecisions {
   actorId objectId [not null]
   at datetime [not null]
 
-  Note: 'Chỉ-ghi-thêm. Mỗi cấp của một task có đúng một quyết định (hai cấp khi rule UC05 yêu cầu); bản nộp lại tạo task mới (BR16, WF-05).'
+  Note: 'Chỉ-ghi-thêm. Mỗi task có đúng một quyết định (một cấp, BR16); bản nộp lại tạo task mới (WF-05).'
   indexes {
     (approvalTaskId, level) [unique, name: 'uq_decision_task_level']
   }

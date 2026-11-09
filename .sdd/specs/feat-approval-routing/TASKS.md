@@ -10,3 +10,11 @@
 - [x] Client: `RoutingRulesPage`, `ApprovalLevelBadge` ở ba trang thẩm định, claim cấp 2 cho booking, `ICPDP_HEAD` ở trang tài khoản, i18n en/vi, menu.
 - [x] Tài liệu: CURRENT_IMPLEMENTATION, UC_CODE_MAPPING, CODE_DIAGRAM_GAPS, HLD, SRS (D1), README.
 - [x] `npm run check` xanh.
+
+## Sửa đổi 09/11/2026 — một cấp duyệt
+- [x] Bỏ `requiredLevel` khỏi rule (domain, Zod, OpenAPI, client); bộ rule cũ bị bỏ trường này khi đọc.
+- [x] Bỏ nhánh cấp 2 trong UC08/UC26/UC46 (`advanceToSecondLevel`, `approvalDecisionStep`, `assertApprovalLevelReviewer`), quyết định ghi `level: 1`.
+- [x] Mô phỏng trả `matched` + SLA; bỏ thông báo `APPROVAL_LEVEL2_REQUIRED`, `ApprovalLevelBadge`, ô chọn số cấp.
+- [x] Test: task cũ có `requiredLevel: 2` vẫn được một officer quyết định xong; rule khớp đặt đúng SLA.
+- [x] SRS (BR16, UC05, D1, actor Head), DBML notes, README, GUIDE_BOOK, HLD, CURRENT_IMPLEMENTATION.
+

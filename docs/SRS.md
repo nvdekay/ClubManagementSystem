@@ -351,7 +351,7 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 
 | Cấp | Nguồn cấp quyền | Ví dụ |
 |---|---|---|
-| Vai trò hệ thống | Cấp trong UC03 | `ICPDP_OFFICER`, `ICPDP_HEAD` (cấp duyệt thứ hai, D1), `ATTENDANCE_UNLOCK` (BR19) |
+| Vai trò hệ thống | Cấp trong UC03 | `ICPDP_OFFICER`, `ICPDP_HEAD` (cấu hình định tuyến UC05, D1), `ATTENDANCE_UNLOCK` (BR19) |
 | Club Leader (ghế Chủ nhiệm hoặc Phó chủ nhiệm) | Duyệt cùng hồ sơ thành lập ở UC08 hoặc xác nhận ở UC11 / UC13, gắn nhiệm kỳ; tập permission quản lý cố định | Chủ nhiệm, Phó chủ nhiệm |
 | Club Member | Membership `Active`; tập khả năng thành viên cố định, không cấu hình theo CLB | Members |
 | Chức danh tổ chức | Khai báo trong hồ sơ/cơ cấu và dùng để hiển thị, không cấp thêm permission | Trưởng ban, Thủ quỹ, Event coordinator |
@@ -400,7 +400,7 @@ Mục này mô tả **bộ máy thật** mà UCMS phục vụ: ai đứng ở đ
 ```text
 Nhà trường
 ├── ICPDP ─────────────────────────────── cấp phê duyệt duy nhất phía nhà trường (BR31)
-│   ├── ICPDP Head          vai trò ICPDP_HEAD — cấp duyệt thứ hai theo rule UC05 (BR16, D1)
+│   ├── ICPDP Head          vai trò ICPDP_HEAD — cấu hình rule định tuyến UC05 (D1)
 │   └── ICPDP Officer       vai trò ICPDP_OFFICER — thẩm định, quyết định, giải ngân, đối soát
 │
 ├── Đơn vị tham vấn (ngoài hệ thống): Tài chính, Cơ sở vật chất, An ninh, cố vấn khoa
@@ -419,7 +419,7 @@ kiện, người gửi phản hồi / khiếu nại, người đứng đơn thà
 | Vị trí trong tổ chức | Actor / quyền trong UCMS | Ai cấp, ở đâu | Quyết định thuộc về vị trí này |
 |---|---|---|---|
 | ICPDP Officer | ICPDP Officer, vai trò `ICPDP_OFFICER` | UC03 | Thành lập CLB, xác nhận ban chủ nhiệm và chuyển giao, duyệt sự kiện kèm ngân sách, giải ngân và đối soát, duyệt cơ sở vật chất, phân loại khiếu nại, hồ sơ vi phạm, đánh giá, cấu hình |
-| ICPDP Head | ICPDP Officer, vai trò `ICPDP_HEAD` | UC03 | Cấp duyệt thứ hai cho hồ sơ khớp rule định tuyến của UC05 (rủi ro cao, quy mô lớn, ngân sách vượt ngưỡng) |
+| ICPDP Head | ICPDP Officer, vai trò `ICPDP_HEAD` | UC03 | Tạo, sửa và kích hoạt bộ rule định tuyến UC05; vẫn duyệt hồ sơ ở một cấp như mọi ICPDP Officer |
 | Đơn vị tham vấn | — (không dùng hệ thống) | — | Không quyết định trong hệ thống; ý kiến nằm trong review note của ICPDP |
 | Chủ nhiệm, Phó chủ nhiệm CLB | Club Leader | UC08 (ban sáng lập) hoặc UC11 / UC13 (ghế Chủ nhiệm / Phó chủ nhiệm) | Mọi việc vận hành CLB (BR54), đề cử ban chủ nhiệm, kế hoạch chuyển giao, xin tạm ngừng; có tập permission quản lý cố định |
 | Người đứng đơn thành lập | Student; sau UC08 giữ ghế đã khai trong hồ sơ | UC08 | Là Club Leader nếu giữ ghế Chủ nhiệm hoặc Phó chủ nhiệm, ngược lại là Club Member (BR47, sửa 2026-11-01) |
@@ -945,23 +945,23 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 |---|---|
 | **Module · Ưu tiên** | M01 · P1 |
 | **Actor chính** | ICPDP Officer |
-| **Mục tiêu nghiệp vụ** | Quyết định hồ sơ nào cần cấp duyệt thứ hai trong nội bộ ICPDP, không hard-code ngưỡng |
+| **Mục tiêu nghiệp vụ** | Đặt SLA thẩm định theo loại hồ sơ, ngưỡng ngân sách, mức rủi ro, hạng property, lịch sử tuân thủ, không hard-code ngưỡng; mọi hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp |
 | **Kích hoạt** | ICPDP thay đổi phân cấp thẩm quyền nội bộ |
 | **Tiền điều kiện** | Người gọi có quyền cấu hình định tuyến |
-| **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng property, lịch sử tuân thủ của CLB → cấp duyệt yêu cầu và SLA |
+| **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng property, lịch sử tuân thủ của CLB → SLA thẩm định |
 | **Thực thể / trạng thái** | `RoutingRuleSet` — đánh phiên bản, `Draft → Active` |
 | **Quy tắc** | BR16 (đã sửa đổi), BR31 |
 | **Liên quan** | UC08, UC26, UC46 |
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC05-01 | Cho officer thêm hoặc sửa một rule định tuyến gồm điều kiện và cấp duyệt mà điều kiện đó đòi hỏi, kèm SLA |
-| FR-UC05-02 | Validate rằng không có hai rule nào chồng nhau; hồ sơ không khớp rule nào được quyết định ở một cấp (BR16) |
+| FR-UC05-01 | Cho officer thêm hoặc sửa một rule định tuyến gồm điều kiện và SLA thẩm định áp cho hồ sơ khớp điều kiện |
+| FR-UC05-02 | Validate rằng không có hai rule nào chồng nhau, để mỗi hồ sơ khớp nhiều nhất một rule (BR16) |
 | FR-UC05-03 | *(E1)* Từ chối kích hoạt khi hai rule chồng nhau |
 | FR-UC05-04 | Đánh phiên bản và audit bộ rule đã kích hoạt, và chỉ áp dụng cho hồ sơ mới |
-| FR-UC05-05 | Quyết định ở một cấp duy nhất với mọi hồ sơ không khớp rule nào (BR16) |
-| FR-UC05-06 | Giữ cho mọi cấp duyệt đều do một ICPDP Officer thực hiện, để BR31 (một cấp phê duyệt duy nhất) vẫn đúng |
-| FR-UC05-07 | *(A1)* Cho officer mô phỏng bộ rule nháp trên *N* hồ sơ đã quyết định gần nhất và xem hồ sơ nào lẽ ra cần cấp duyệt thứ hai |
+| FR-UC05-05 | Quyết định mọi hồ sơ ở một cấp duy nhất, dù khớp rule hay không; hồ sơ không khớp rule nào không có SLA theo rule (BR16) |
+| FR-UC05-06 | Để một ICPDP Officer bất kỳ nhận và quyết định hồ sơ, đúng BR31 (một cấp phê duyệt duy nhất) |
+| FR-UC05-07 | *(A1)* Cho officer mô phỏng bộ rule nháp trên *N* hồ sơ đã quyết định gần nhất và xem hồ sơ nào khớp rule nào, với SLA tương ứng |
 
 **Hậu điều kiện** — tồn tại một bộ rule định tuyến đang hoạt động; UC08, UC26 và UC46 tra cứu nó.
 **Đầu ra** — `RoutingRuleSet` version, bản ghi audit.
@@ -2515,7 +2515,7 @@ của nó không bao giờ được dùng lại.**
 | BR13 | Tư cách thành viên chỉ được tạo từ một ứng viên trúng tuyển hoặc một lần tiếp nhận thủ công có thẩm quyền | UC20, UC17 |
 | BR14 | Sự kiện chỉ được công khai khi đã `Approved` **và** được công bố ở UC27 (`Upcoming`) | UC26, UC27 |
 | BR15 | **Quy tắc xung đột** — trùng thời gian trên cùng một property, nơi một sự kiện hoặc booking đã duyệt chặn lại, cho kết quả `Blocking Conflict`; trùng nhẹ cho `Warning`; ngưỡng được cấu hình ở UC04. Đây là một quy tắc, không phải use case | UC25, UC45, UC28 |
-| BR16 | **Đã sửa đổi** — duyệt đa cấp theo rule định tuyến của UC05; hồ sơ không khớp rule nào được quyết định ở một cấp, và mọi cấp đều do ICPDP Officer thực hiện nên BR31 vẫn đúng | UC05, UC08, UC26, UC46 |
+| BR16 | **Đã sửa đổi (09/11/2026)** — mọi hồ sơ được một ICPDP Officer quyết định ở một cấp; rule định tuyến của UC05 chỉ đặt SLA thẩm định cho hồ sơ khớp rule, nên BR31 vẫn đúng | UC05, UC08, UC26, UC46 |
 | BR17 | Số đăng ký đã xác nhận không bao giờ vượt sức chứa trừ khi chính sách cho phép overbooking | UC29, UC30 |
 | BR18 | Mỗi người tham dự chỉ có một bản ghi điểm danh chính thức cho mỗi sự kiện | UC31, UC32 |
 | BR19 | Bảng điểm danh đã chốt chỉ được mở khoá bởi một vai trò đặc biệt, cấp ở UC03 | UC32, UC03 |
@@ -2831,7 +2831,7 @@ giờ được sửa tại chỗ (BR30).
 | `StudentProfile` | userId, studentCode, fullName, faculty, các trường đồng bộ từ OAuth |
 | `Role` / `Permission` | code, scope (`system` / `club`), danh sách mã quyền |
 | `PolicyVersion` | chín giá trị của UC04, effectiveFrom, createdBy, createdAt |
-| `RoutingRuleSet` | version, state, rules[] {requestType, amountThreshold, riskCategory, propertyClass, complianceCondition, requiredLevel, slaHours} |
+| `RoutingRuleSet` | version, state, rules[] {requestType, amountThreshold, riskCategory, propertyClass, complianceCondition, slaHours} |
 | `Club` | code, name, field, state, description, contact, charter, channels, các trường thuộc thẩm quyền nhà trường, dissolutionDecision {decidedAt, effectiveSemester, reason}, createdAt |
 | `ClubApplication` | clubName, field, objectives, foundingMembers[], documents[], proposedRoleStructure (chức danh, ban/bộ phận, ghế lãnh đạo; không có permission tuỳ biến), state, currentVersion, lịch sử quyết định |
 | `ClubApplicationVersion` | applicationId, versionNo, bản chụp payload, submittedBy, submittedAt (bất biến) |
@@ -2863,7 +2863,7 @@ giờ được sửa tại chỗ (BR30).
 | `EvaluationScheme` | period, version, state, dimensions[] {code (D1–D8, D1–D3 bắt buộc theo BR60), name, weight, scoringRule}, thresholds[] |
 | `Evaluation` | clubId, period, schemeVersion, state, totalScore, classification, dimensionResults[], revisions[] |
 | `EvaluationDimensionResult` | evaluationId, dimensionCode, score, cờ `Insufficient data`, evidence[] {metric, sourceEntity, sourceId, sourcePeriod} |
-| `ApprovalTask` | entityType, entityId, state, assigneeRole, requiredLevel, slaDueAt, createdAt, decisions[] |
+| `ApprovalTask` | entityType, entityId, state, assigneeRole, routingRuleId, slaDueAt, createdAt, decisions[] |
 | `ApprovalDecision` | approvalTaskId, level, outcome, reason, comments[], actor, at |
 | `Notification` | recipientId, event, channels[], payload, state, dueAt, attempts, lastError |
 | `EmailDeliveryLog` | notificationId, to, status, attempt, providerResponse, at |
@@ -2927,7 +2927,7 @@ Năm đối tượng nghiệp vụ đi qua *nộp → thẩm định → sửa �
 
 | ID | Yêu cầu |
 |---|---|
-| WF-01 | Tất cả dùng chung **một** aggregate `ApprovalTask` `{ entityType, entityId, state, assignee, requiredLevel, slaDueAt, decisions[] }`, đây chính là thứ tạo ra một hộp thư phê duyệt hợp nhất cho ICPDP |
+| WF-01 | Tất cả dùng chung **một** aggregate `ApprovalTask` `{ entityType, entityId, state, assignee, routingRuleId, slaDueAt, decisions[] }`, đây chính là thứ tạo ra một hộp thư phê duyệt hợp nhất cho ICPDP |
 | WF-02 | Module giữ trạng thái thực thể của mình (`Event.status`); approval task giữ trạng thái *thẩm định*. Use case gọi `approval.open(entityType, entityId, …)`, và callback quyết định lật trạng thái thực thể thông qua use case **sở hữu** nó |
 | WF-03 | Mọi use case assess-and-decide cung cấp đúng ba kết quả — yêu cầu chỉnh sửa, phê duyệt, từ chối — và ghi actor, thời điểm và lý do (BR05) |
 | WF-04 | Một lần nộp lại tạo ra **document version mới** và đưa thực thể về trạng thái chờ quyết định (`Submitted` / `Pending Approval` / `Requested`); nó không bao giờ sửa version trước (BR04, CON-08) |
@@ -3567,7 +3567,7 @@ UC45 A2), và vòng 9 đặt cuối vì UC42 cần dữ liệu trọn một kỳ
 
 | # | Quyết định | Vì sao không thể mặc định | Hệ quả nếu chốt muộn |
 |---|---|---|---|
-| **D1 — đã chốt 2026-11-07** | Cấp duyệt thứ hai là quyền RBAC: system role `ICPDP_HEAD`, chỉ cấp cho người giữ `ICPDP_OFFICER`; không thêm actor | Người dùng chọn phương án giữ diagram bốn actor | Code: `ICPDP_HEAD`, UC05, cấp 2 cho UC08/UC26/UC46 (07/11/2026) |
+| **D1 — đã chốt 2026-11-07, sửa 2026-11-09** | `ICPDP_HEAD` là quyền RBAC chỉ cấp cho người giữ `ICPDP_OFFICER`; không thêm actor. Từ 09/11/2026 bỏ cấp duyệt thứ hai: Head chỉ cấu hình rule UC05, mọi hồ sơ duyệt một cấp | Người dùng chọn phương án giữ diagram bốn actor (07/11), rồi chọn bỏ cấp 2 (09/11) | Code: `ICPDP_HEAD` cấu hình UC05; UC08/UC26/UC46 một cấp (09/11/2026) |
 | **D2** | Ngoài danh sách của UC04, những giá trị nào nữa được sửa trong sản phẩm? | Mỗi giá trị thêm vào tốn một màn hình, một schema và một đường validate; danh sách phải đến từ quy trình thật của ICPDP | Đổi UC04 và BR42 — cần chốt trước khi đóng băng màn hình cấu hình |
 | **D3** | Số người phản hồi tối thiểu ban đầu cho BR40 | Đây là con số chính sách, không phải con số kỹ thuật. Năm là mức sàn phổ biến | Thấp — giá trị này cấu hình được ở UC04 |
 | **D4 — đã chốt 2026-10-11** | Mọi thay đổi thời gian/địa điểm của sự kiện đã duyệt phải được UC26 duyệt lại; nội bộ không ngân sách theo BR53 chỉ ghi nhận lại | Người dùng chọn phương án đề xuất khi lập kế hoạch Wave 3 | FR-UC28-02 đã cập nhật; chính sách triển khai Wave 3 ghi bên dưới và trong SPEC |

@@ -363,11 +363,11 @@ còn hiệu lực.
 
 #### UC05 — Cấu hình quy tắc định tuyến phê duyệt
 - **Actor:** ICPDP
-- **Mục tiêu:** Quyết định hồ sơ nào cần cấp duyệt thứ hai trong nội bộ ICPDP.
+- **Mục tiêu:** Đặt SLA thẩm định cho từng nhóm hồ sơ; mọi hồ sơ duyệt một cấp.
 - **Dữ liệu:** loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng cơ sở vật chất, lịch sử tuân
-  thủ của CLB → cấp duyệt yêu cầu và SLA.
+  thủ của CLB → SLA thẩm định.
 - **Quy tắc:** đây chính là use case mà Feature nổi bật 1 còn thiếu. Nó là thứ làm BR16 cưỡng
-  chế được: một hồ sơ không khớp rule nào thì được quyết định ở một cấp duy nhất.
+  chế được: mọi hồ sơ được quyết định ở một cấp duy nhất.
 - **Liên quan:** UC08, UC26, UC46
 
 ### M02 / M03 — Vòng đời CLB, quản trị và nhiệm kỳ
