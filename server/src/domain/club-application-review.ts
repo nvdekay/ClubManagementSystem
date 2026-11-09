@@ -14,9 +14,6 @@ export interface ApplicationReviewTask {
   assigneeId?: string;
   openedAt: Date;
   slaDueAt?: Date;
-  /** UC05: approval levels this request needs and the level now waiting (2 = ICPDP_HEAD). */
-  requiredLevel: number;
-  currentLevel: number;
 }
 
 export interface ApplicationReviewDecision {

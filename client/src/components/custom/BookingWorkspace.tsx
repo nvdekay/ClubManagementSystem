@@ -14,7 +14,6 @@ import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/ui/table/AppTable";
 import { AppTableLimitSelect } from "@/components/ui/table/AppTableLimitSelect";
 import { AppInput } from "@/components/ui/input/AppInput";
-import { ApprovalLevelBadge } from "@/components/custom/ApprovalLevelBadge";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { appToast } from "@/components/ui/toast/AppToast";
@@ -266,7 +265,6 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
                   <label className="block text-sm font-medium">{t("facilityBookings.cancelReason")}<AppRequiredMark /><AppInput className="mt-1 w-full" {...cancelField.control("reason")} maxLength={2000}
                     value={reason} onChange={(event) => setReason(event.target.value)} /><AppFieldError message={cancelField.error("reason")} /></label>
                   <AppButton type="submit" variant="secondary" disabled={action.isPending}>{t("facilityBookings.cancel")}</AppButton></form>}
-                {!clubId && <ApprovalLevelBadge requiredLevel={detail.data.task?.requiredLevel} currentLevel={detail.data.task?.currentLevel} />}
                 {!clubId && (booking.state === "Requested" || (booking.state === "Under Review" && detail.data.task && !detail.data.task.assigneeId))
                   && <AppButton disabled={action.isPending}
                   onClick={() => void mutate({ kind: "claim", id: booking.id })}>{t("facilityBookings.claim")}</AppButton>}

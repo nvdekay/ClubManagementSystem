@@ -3,8 +3,8 @@ import { PROPERTY_TYPES, type PropertyType } from "./property.js";
 
 /**
  * UC05 / BR16: versioned approval routing. A rule names the request type and a set of conditions;
- * a request that matches a rule needs `requiredLevel` approvals (level 2 is decided by ICPDP_HEAD),
- * anything else is decided at one level. Rules never overlap, so at most one rule matches.
+ * a request that matches a rule gets that rule's SLA. Every request is decided at one level by an
+ * ICPDP Officer (BR31). Rules never overlap, so at most one rule matches.
  */
 export const ROUTED_REQUEST_TYPES = ["CLUB_APPLICATION", "EVENT_PROPOSAL", "PROPERTY_BOOKING"] as const;
 export type RoutedRequestType = (typeof ROUTED_REQUEST_TYPES)[number];
@@ -27,7 +27,6 @@ export interface RoutingRule {
   /** Open UC40 cases of the club: [minOpenViolations, maxOpenViolations). */
   minOpenViolations?: number;
   maxOpenViolations?: number;
-  requiredLevel: 1 | 2;
   slaHours: number;
 }
 
@@ -56,7 +55,6 @@ export interface RoutingFacts {
 export interface ApprovalRoute {
   routingRuleSetId?: string;
   routingRuleId?: string;
-  requiredLevel: 1 | 2;
   slaHours?: number;
 }
 
@@ -65,9 +63,10 @@ export interface RoutingSample { entityType: RoutedRequestType; entityId: string
 
 export interface RoutingSimulation {
   total: number;
-  secondLevel: number;
-  items: Array<{ entityType: RoutedRequestType; entityId: string; title: string; decidedAt: Date; requiredLevel: 1 | 2;
-    ruleId?: string }>;
+  /** Samples that match a rule of the draft (and so get its SLA). */
+  matched: number;
+  items: Array<{ entityType: RoutedRequestType; entityId: string; title: string; decidedAt: Date;
+    ruleId?: string; slaHours?: number }>;
 }
 
 export interface ApprovalRoutingRepository {
@@ -97,10 +96,9 @@ function range(min: number | undefined, max: number | undefined, label: string):
 export function normalizeRoutingRule(rule: RoutingRule): RoutingRule {
   if (!/^[A-Za-z0-9_-]{1,40}$/.test(rule.id)) invalid("invalid rule id");
   if (!ROUTED_REQUEST_TYPES.includes(rule.requestType)) invalid("invalid request type");
-  if (rule.requiredLevel !== 1 && rule.requiredLevel !== 2) invalid("required level must be 1 or 2");
   if (!Number.isInteger(rule.slaHours) || rule.slaHours < 1 || rule.slaHours > 24 * 60) invalid("SLA must be 1–1440 hours");
   range(rule.minOpenViolations, rule.maxOpenViolations, "open violations");
-  const base = { id: rule.id, requestType: rule.requestType, requiredLevel: rule.requiredLevel, slaHours: rule.slaHours,
+  const base = { id: rule.id, requestType: rule.requestType, slaHours: rule.slaHours,
     ...(rule.minOpenViolations !== undefined ? { minOpenViolations: rule.minOpenViolations } : {}),
     ...(rule.maxOpenViolations !== undefined ? { maxOpenViolations: rule.maxOpenViolations } : {}) };
   if (rule.requestType === "EVENT_PROPOSAL") {
@@ -162,25 +160,19 @@ export function routingRuleMatches(rule: RoutingRule, facts: RoutingFacts): bool
     && within(facts.openViolations, rule.minOpenViolations, rule.maxOpenViolations);
 }
 
-/** FR-UC05-05: no active rule set or no matching rule → one level. */
+/** FR-UC05-05: no active rule set or no matching rule → no rule SLA. */
 export function resolveApprovalRoute(ruleSet: Pick<RoutingRuleSet, "id" | "rules"> | null, facts: RoutingFacts): ApprovalRoute {
   const rule = ruleSet?.rules.find((item) => routingRuleMatches(item, facts));
   return { ...(ruleSet ? { routingRuleSetId: ruleSet.id } : {}),
-    ...(rule ? { routingRuleId: rule.id, slaHours: rule.slaHours } : {}), requiredLevel: rule?.requiredLevel ?? 1 };
+    ...(rule ? { routingRuleId: rule.id, slaHours: rule.slaHours } : {}) };
 }
 
-/** UC05 A1: which of the samples the draft would send to a second level; reads only. */
+/** UC05 A1: which rule of the draft each sample would match, and the SLA it would get; reads only. */
 export function simulateRouting(rules: readonly RoutingRule[], samples: readonly RoutingSample[]): RoutingSimulation {
   const items = samples.map((sample) => {
     const route = resolveApprovalRoute({ id: "draft", rules: [...rules] }, sample.facts);
     return { entityType: sample.entityType, entityId: sample.entityId, title: sample.title, decidedAt: sample.decidedAt,
-      requiredLevel: route.requiredLevel, ...(route.routingRuleId ? { ruleId: route.routingRuleId } : {}) };
+      ...(route.routingRuleId ? { ruleId: route.routingRuleId, slaHours: route.slaHours } : {}) };
   });
-  return { total: items.length, secondLevel: items.filter((item) => item.requiredLevel === 2).length, items };
-}
-
-/** Level-2 gate (D1): a level-1 approval of a two-level request only moves it up; anything else is final. */
-export function approvalStep(task: { requiredLevel?: number; currentLevel?: number }, outcome: string): { level: 1 | 2; final: boolean } {
-  const level = (task.currentLevel ?? 1) >= 2 ? 2 : 1;
-  return { level, final: level >= (task.requiredLevel ?? 1) || outcome !== "Approve" };
+  return { total: items.length, matched: items.filter((item) => item.ruleId).length, items };
 }

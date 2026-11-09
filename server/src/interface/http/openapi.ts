@@ -156,7 +156,7 @@ const ApplicationVersion = z.object({
 const ApplicationDocumentPath = z.object({ id: z.string(), documentId: z.string() });
 const ApplicationReviewTask = z.object({
   id: z.string(), applicationId: z.string(), title: z.string(),
-  state: z.enum(["Open", "Decided", "Closed"]), assigneeId: z.string().optional(), requiredLevel: z.number().int(), currentLevel: z.number().int(),
+  state: z.enum(["Open", "Decided", "Closed"]), assigneeId: z.string().optional(),
   openedAt: z.string(), slaDueAt: z.string().optional(),
 });
 const ApplicationReviewDecision = z.object({
@@ -177,7 +177,7 @@ const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
 });
 const EventProposalTask = z.object({
   id: z.string(), eventId: z.string(), title: z.string(), state: z.enum(["Open", "Decided", "Closed"]),
-  assigneeId: z.string().optional(), openedAt: z.string(), slaDueAt: z.string().optional(), requiredLevel: z.number().int(), currentLevel: z.number().int(),
+  assigneeId: z.string().optional(), openedAt: z.string(), slaDueAt: z.string().optional(),
 });
 const EventProposalSummary = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(), objective: z.string().optional(),
@@ -445,9 +445,9 @@ const EventFeedbackContext = z.object({ attended: z.boolean(), canSubmit: z.bool
 const RoutingRuleSet = z.object({ id: z.string(), versionNo: z.number().int(), state: z.enum(["Draft", "Active", "Superseded"]),
   rules: routingRulesBody.shape.rules, createdBy: z.string(), createdAt: z.string(), updatedAt: z.string().optional(),
   activatedBy: z.string().optional(), activatedAt: z.string().optional(), supersededAt: z.string().optional() });
-const RoutingSimulation = z.object({ total: z.number().int(), secondLevel: z.number().int(), items: z.array(z.object({
-  entityType: z.string(), entityId: z.string(), title: z.string(), decidedAt: z.string(), requiredLevel: z.number().int(),
-  ruleId: z.string().optional() })) });
+const RoutingSimulation = z.object({ total: z.number().int(), matched: z.number().int(), items: z.array(z.object({
+  entityType: z.string(), entityId: z.string(), title: z.string(), decidedAt: z.string(),
+  ruleId: z.string().optional(), slaHours: z.number().int().optional() })) });
 const ComplaintEvidence = z.object({ label: z.string(), url: z.string() });
 const ComplaintResponse = z.object({ text: z.string(), action: z.string(), evidence: z.array(ComplaintEvidence), at: z.string() });
 const Complaint = z.object({ id: z.string(), clubId: z.string().optional(), clubName: z.string().optional(),
@@ -563,8 +563,7 @@ const roomAllocationPaths = {
 } as const;
 const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Property.nullable(),
   club: z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() }).nullable(),
-  task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string(),
-    requiredLevel: z.number().int(), currentLevel: z.number().int() }).nullable(),
+  task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string() }).nullable(),
   versions: z.array(z.object({ versionNo: z.number().int(), payload: bookingBody, submittedBy: z.string(), submittedAt: z.string() })),
   decisions: z.array(bookingDecisionBody.extend({ id: z.string(), taskId: z.string(), actorId: z.string(), at: z.string() })),
   check: BookingCheck.nullable(), obligations: z.array(z.string()) });
@@ -1884,7 +1883,7 @@ export const openApiDocument = createDocument({
         responses: { "200": { description: "Active", content: { "application/json": { schema: envelope(RoutingRuleSet) } } } } },
     },
     "/admin/routing-rules/{id}/simulation": {
-      get: { summary: "UC05 A1: which of the last N decided requests this set would send to a second level (read only)",
+      get: { summary: "UC05 A1: which rule of this set the last N decided requests would match, and their SLA (read only)",
         requestParams: { path: z.object({ id: z.string() }), query: routingSimulationQuery },
         responses: { "200": { description: "Simulation", content: { "application/json": { schema: envelope(RoutingSimulation) } } } } },
     },

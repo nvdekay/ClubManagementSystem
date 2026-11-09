@@ -12,7 +12,6 @@ import { notificationChannels } from "../../domain/notification.js";
 import {
   applicationDraftFrom, mapApplicationRecord, mapApplicationVersion,
 } from "./mongo-club-application-repository.js";
-import { advanceToSecondLevel, approvalDecisionStep, assertApprovalLevelReviewer } from "./approval-routing.js";
 import { ucmsModels } from "./ucms-models.js";
 
 function taskFrom(doc: Record<string, unknown>): ApplicationReviewTask {
@@ -22,7 +21,6 @@ function taskFrom(doc: Record<string, unknown>): ApplicationReviewTask {
     assigneeId: doc.assigneeId ? String(doc.assigneeId) : undefined,
     openedAt: doc.openedAt as Date,
     slaDueAt: doc.slaDueAt as Date | undefined,
-    requiredLevel: Number(doc.requiredLevel ?? 1), currentLevel: Number(doc.currentLevel ?? 1),
   };
 }
 
@@ -134,7 +132,6 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         if (task.assigneeId && String(task.assigneeId) !== officerId) {
           return conflict("application review is assigned to another officer");
         }
-        await assertApprovalLevelReviewer(session, task, officerId);
         const claimed = await tasks.updateOne({ _id: task._id, state: "Open",
           $or: [{ assigneeId: { $exists: false } }, { assigneeId: null }, { assigneeId: actorId }] },
         { $set: { assigneeId: actorId } }, { session });
@@ -169,13 +166,6 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         const task = await tasks.findOne({ entityType: "CLUB_APPLICATION", entityId: id,
           state: "Open", assigneeId: actorId }).sort({ openedAt: -1 }).session(session).lean();
         if (!application || !task) return conflict("application review cannot be decided");
-        const step = await approvalDecisionStep(session, task, officerId, input.outcome);
-        if (!step.final) {
-          // Level 1 of a two-level application: the club is created only when ICPDP_HEAD approves.
-          await advanceToSecondLevel(session, { task, decision: { reason: input.reason, reviewNote: input.reviewNote,
-            comments: { sections: input.sections } }, actorId: officerId, auditEntityType: "ClubApplication", entityId: id, now });
-          return;
-        }
         const version = await versions.findOne({ applicationId: id,
           versionNo: application.currentVersionNo }).session(session).lean();
         if (!version) return conflict("submitted application version is missing");
@@ -258,7 +248,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         }
 
         await decisions.create([{
-          approvalTaskId: task._id, level: step.level, outcome: input.outcome, reason: input.reason,
+          approvalTaskId: task._id, level: 1, outcome: input.outcome, reason: input.reason,
           comments: { sections: input.sections, policyVersionId: payload.policyVersionId },
           reviewNote: input.reviewNote,
           actorId, at: now,

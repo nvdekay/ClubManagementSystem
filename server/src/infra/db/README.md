@@ -92,7 +92,7 @@ tái xác nhận học kỳ hiện tại để job UC21 A2 không chuyển họ 
 đã đăng nhập bị từ chối 403 (SEC-08, AC17); chỉ gồm method, mẫu route, đối tượng bị nhắm tới, CLB,
 quyền còn thiếu và lý do.
 
-`approval-routing.ts` là phần dùng chung của UC05 cho UC08/UC26/UC46: đóng băng route (`requiredLevel`,
-`currentLevel`, SLA) lên `approvalTasks` lúc mở task, chỉ cho `ICPDP_HEAD` nhận/quyết định cấp 2, chặn người
-đã duyệt cấp 1, và chuyển task lên cấp 2 mà không có tác dụng phụ cuối. `mongo-approval-routing-repository.ts`
+`approval-routing.ts` là phần dùng chung của UC05 cho UC08/UC26/UC46: đóng băng rule khớp (`routingRuleSetId`,
+`routingRuleId`) và SLA lên `approvalTasks` lúc mở task. Mọi hồ sơ được một ICPDP Officer quyết định ở một cấp
+(quyết định ghi `level: 1`); `requiredLevel`/`currentLevel` cũ trên task không còn tác dụng. `mongo-approval-routing-repository.ts`
 giữ `routingRuleSets` (nháp, kích hoạt có audit, mẫu mô phỏng chỉ đọc). `club-permission-holders.ts` tìm thành viên đang có một permission.

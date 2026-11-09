@@ -36,8 +36,6 @@ const expected: Record<NotificationAudience, string[]> = {
     "REPORT_ESCALATED_TO_ICPDP", "REFUND_OVERDUE_TO_ICPDP",
     // mongo-complaint-repository → ICPDP officers
     "COMPLAINT_SUBMITTED", "COMPLAINT_CLUB_RESPONDED", "COMPLAINT_RESPONSE_OVERDUE",
-    // approval-routing → ICPDP_HEAD holders when a request reaches the second level (UC05)
-    "APPROVAL_LEVEL2_REQUIRED",
   ],
   club: [
     "EVENT_PROPOSAL_APPROVED", "EVENT_PROPOSAL_REJECTED", "EVENT_PROPOSAL_REVISION_REQUESTED", "EVENT_PROPOSAL_EXPIRED",

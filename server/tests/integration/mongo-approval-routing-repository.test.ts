@@ -19,7 +19,7 @@ describe.skipIf(!uri)("Mongo approval routing repository (UC05)", () => {
   it("versions drafts, activates one set at a time with an audit, and never edits an active set", async () => {
     const repo = mongoApprovalRoutingRepository();
     const head = String(new Types.ObjectId());
-    const rule = { id: "stage", requestType: "PROPERTY_BOOKING" as const, propertyTypes: ["STAGE" as const], requiredLevel: 2 as const, slaHours: 24 };
+    const rule = { id: "stage", requestType: "PROPERTY_BOOKING" as const, propertyTypes: ["STAGE" as const], slaHours: 24 };
     const first = await repo.createDraft([rule], head, now);
     expect(first).toMatchObject({ versionNo: 1, state: "Draft" });
     await repo.saveDraft(first.id, [{ ...rule, slaHours: 48 }], head, now);

@@ -90,7 +90,6 @@ function RuleList({ rules }: { rules: RoutingRule[] }) {
   return <ul className="mt-3 space-y-2">{rules.map((rule) => <li key={rule.id} className="rounded-xl border border-border-app p-3 text-sm">
     <div className="flex flex-wrap items-center gap-2">
       <span className="font-semibold">{rule.id}</span><AppBadge>{t(typeKey(rule.requestType))}</AppBadge>
-      <AppBadge tone={rule.requiredLevel === 2 ? "warning" : "neutral"}>{rule.requiredLevel === 2 ? t("routing.level_2") : t("routing.level_1")}</AppBadge>
       <span className="text-muted-app">{t("routing.sla")}: {rule.slaHours}</span>
     </div>
     <p className="mt-1 text-muted-app break-words">{[
@@ -113,9 +112,9 @@ function Simulation({ set }: { set: RoutingRuleSet }) {
   if (simulation.isError) return <AppNotice className="mt-3" tone="danger">{simulation.error.message}</AppNotice>;
   if (!simulation.data.total) return <p className="mt-3 text-sm text-muted-app">{t("routing.simulationEmpty")}</p>;
   return <div className="mt-3 rounded-xl bg-surface-app p-3 text-sm">
-    <p className="font-semibold">{t("routing.simulationTitle", { second: simulation.data.secondLevel, total: simulation.data.total })}</p>
-    <ul className="mt-2 space-y-1">{simulation.data.items.filter((item) => item.requiredLevel === 2).map((item) =>
-      <li key={item.entityId} className="break-words">{t(typeKey(item.entityType))}: {item.title} ({item.ruleId})</li>)}</ul>
+    <p className="font-semibold">{t("routing.simulationTitle", { matched: simulation.data.matched, total: simulation.data.total })}</p>
+    <ul className="mt-2 space-y-1">{simulation.data.items.filter((item) => item.ruleId).map((item) =>
+      <li key={item.entityId} className="break-words">{t(typeKey(item.entityType))}: {item.title} ({item.ruleId} · {t("routing.sla")}: {item.slaHours})</li>)}</ul>
   </div>;
 }
 
@@ -149,16 +148,13 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
     <section aria-labelledby="routing-draft" className="rounded-3xl bg-surface-app p-4 sm:p-6">
       <h2 id="routing-draft" className="font-heading text-xl font-bold">{draft ? t("routing.draft", { version: draft.versionNo }) : t("routing.newDraft")}</h2>
       <ul className="mt-4 space-y-4">{rules.map((rule, index) => <li key={index} className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-3">
           <label className="block text-sm font-semibold">{t("routing.ruleId")}
             <AppInput className="mt-1 block w-full font-normal" value={rule.id} maxLength={40} onChange={(event) => update(index, { id: event.target.value })} /></label>
           <div className="min-w-0 text-sm font-semibold">{t("routing.requestType")}<AppSelect label={t("routing.requestType")} value={rule.requestType} className="mt-1 w-full font-normal"
             onChange={(value) => update(index, { requestType: value as RoutedRequestType, riskCategories: undefined, propertyTypes: undefined,
               minAmount: undefined, maxAmount: undefined })}
             options={TYPES.map((value) => ({ value, label: t(typeKey(value)) }))} /></div>
-          <div className="min-w-0 text-sm font-semibold">{t("routing.level")}<AppSelect label={t("routing.level")} value={String(rule.requiredLevel)} className="mt-1 w-full font-normal"
-            onChange={(value) => update(index, { requiredLevel: value === "2" ? 2 : 1 })}
-            options={[{ value: "1", label: t("routing.level_1") }, { value: "2", label: t("routing.level_2") }]} /></div>
           <label className="block text-sm font-semibold">{t("routing.sla")}
             <AppInput className="mt-1 block w-full font-normal" type="number" min={1} max={1440} value={rule.slaHours}
               onChange={(event) => update(index, { slaHours: Math.max(1, Math.floor(Number(event.target.value) || 1)) })} /></label>
@@ -195,7 +191,7 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
       </li>)}</ul>
       <div className="mt-4 flex flex-wrap gap-2">
         <AppButton variant="secondary" onClick={() => setRules((list) => [...list,
-          { id: `rule-${list.length + 1}`, requestType: "EVENT_PROPOSAL", requiredLevel: 2, slaHours: 72 }])}>{t("routing.addRule")}</AppButton>
+          { id: `rule-${list.length + 1}`, requestType: "EVENT_PROPOSAL", slaHours: 72 }])}>{t("routing.addRule")}</AppButton>
         <AppButton disabled={action.isPending} onClick={() => void run("save")}>{t("routing.saveDraft")}</AppButton>
         {draft && <AppButton disabled={action.isPending} onClick={() => void run("activate")}>{t("routing.activate")}</AppButton>}
       </div>

@@ -51,7 +51,7 @@ export async function activateRoutingRuleSet(repo: ApprovalRoutingRepository, au
   return repo.activate(draft.id, actorId, now);
 }
 
-/** UC05 A1: what a rule set would have routed to a second level among the last N decided requests; reads only. */
+/** UC05 A1: which rule of a rule set the last N decided requests would match, and their SLA; reads only. */
 export async function simulateRoutingRuleSet(repo: ApprovalRoutingRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, ruleSetId: string, limit: number) {
   await holder(auth, actor, "ICPDP_OFFICER");

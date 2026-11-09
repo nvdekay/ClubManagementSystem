@@ -22,7 +22,7 @@ export interface BookingDecisionInput {
 export interface BookingDetail {
   booking: Booking; property: Property | null;
   club: { id: string; name: string; state: string } | null;
-  task: { id: string; state: string; assigneeId?: string; openedAt: string; requiredLevel?: number; currentLevel?: number } | null;
+  task: { id: string; state: string; assigneeId?: string; openedAt: string } | null;
   check: BookingCheck | null; obligations: string[];
   versions: Array<{ versionNo: number; payload: BookingInput; submittedBy: string; submittedAt: string }>;
   decisions: Array<BookingDecisionInput & { id: string; taskId: string; actorId: string; at: string }>;

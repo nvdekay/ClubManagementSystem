@@ -11,7 +11,6 @@ import {
   type EventProposalReviewRepository, type EventProposalSummary, type EventProposalTask,
   type EventProposalVersion, type EventReviewDecision, type RequestedBudgetLine,
 } from "../../domain/event-proposal-review.js";
-import { advanceToSecondLevel, approvalDecisionStep, assertApprovalLevelReviewer } from "./approval-routing.js";
 import { ucmsModels } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
@@ -59,7 +58,6 @@ function taskFrom(doc: Doc): EventProposalTask {
     state: doc.state as EventProposalTask["state"],
     assigneeId: doc.assigneeId ? String(doc.assigneeId) : undefined,
     openedAt: doc.openedAt as Date, slaDueAt: doc.slaDueAt as Date | undefined,
-    requiredLevel: Number(doc.requiredLevel ?? 1), currentLevel: Number(doc.currentLevel ?? 1),
   };
 }
 
@@ -208,7 +206,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         const task = await tasks.findOne({ entityType: TASK_TYPE, entityId: id, state: "Open" })
           .sort({ openedAt: -1 }).session(session).lean();
         if (!task) return conflict("event proposal review is no longer open");
-        await assertApprovalLevelReviewer(session, task, officerId);
         if (task.assigneeId && String(task.assigneeId) !== officerId) {
           return conflict("event proposal review is assigned to another officer");
         }
@@ -244,17 +241,9 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         if (!version) return conflict("submitted proposal revision is missing");
         const lines = input.outcome === "Approve"
           ? approvedBudget(requestedLines(version.budgetLines), input.budgetLines) : [];
-        const step = await approvalDecisionStep(session, task, officerId, input.outcome);
-        if (!step.final) {
-          // Level 1 of a two-level proposal: no Approved state or EventBudget until ICPDP_HEAD decides.
-          await advanceToSecondLevel(session, { task, decision: { reason: input.reason, reviewNote: input.reviewNote,
-            comments: { sections: input.sections, conditions: input.conditions, budgetLines: lines } },
-            actorId: officerId, auditEntityType: "Event", entityId: id, now });
-          return;
-        }
 
         const decisionId = new Types.ObjectId();
-        await decisions.create([{ _id: decisionId, approvalTaskId: task._id, level: step.level, outcome: input.outcome,
+        await decisions.create([{ _id: decisionId, approvalTaskId: task._id, level: 1, outcome: input.outcome,
           reason: input.reason, reviewNote: input.reviewNote,
           comments: { sections: input.sections, conditions: input.conditions,
             ...(lines.length ? { budgetLines: lines } : {}) },

@@ -29,7 +29,7 @@ const routingRule = z.object({
   riskCategories: z.array(z.enum(RISK_CATEGORIES)).max(3).optional(),
   propertyTypes: z.array(z.enum(ROUTED_PROPERTY_TYPES as [PropertyType, ...PropertyType[]])).max(4).optional(),
   minOpenViolations: z.number().int().min(0).max(1000).optional(), maxOpenViolations: z.number().int().min(0).max(1000).optional(),
-  requiredLevel: z.union([z.literal(1), z.literal(2)]), slaHours: z.number().int().min(1).max(1440),
+  slaHours: z.number().int().min(1).max(1440),
 }).strict();
 export const routingRulesBody = z.object({ rules: z.array(routingRule).max(MAX_ROUTING_RULES) }).strict();
 export const routingSimulationQuery = z.object({ limit: z.coerce.number().int().min(1).max(200).default(50) }).strict();

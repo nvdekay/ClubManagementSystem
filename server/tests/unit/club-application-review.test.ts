@@ -22,7 +22,7 @@ const draft: ClubApplicationDraft = {
 };
 const detail: ApplicationReviewDetail = {
   task: { id: "000000000000000000000004", applicationId, title: "Robotics",
-    state: "Open", openedAt: now, requiredLevel: 1, currentLevel: 1 },
+    state: "Open", openedAt: now },
   application: { id: applicationId, founderUserId: "000000000000000000000003",
     state: "Submitted", currentVersionNo: 1, draftRevision: 0, draft, createdAt: now },
   versions: [], decisions: [], founders: [], nameConflicts: [],

@@ -90,5 +90,5 @@ hàng đợi và xác nhận chuyển giao nhiệm kỳ.
 của `PropertiesPage`.
 
 `RoutingRulesPage` (UC05, `/workspace/routing-rules`): mọi ICPDP Officer đọc và mô phỏng rule định tuyến; chỉ
-`ICPDP_HEAD` tạo nháp, sửa và kích hoạt. Ba trang thẩm định UC08/UC26/UC46 hiện `ApprovalLevelBadge` khi hồ sơ
-cần hai cấp; cấp 2 chỉ Head nhận và quyết định.
+`ICPDP_HEAD` tạo nháp, sửa và kích hoạt. Rule chỉ đặt SLA thẩm định; mọi hồ sơ UC08/UC26/UC46 đều do một cán bộ
+ICPDP quyết định ở một cấp.

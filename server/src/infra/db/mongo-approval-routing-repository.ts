@@ -12,9 +12,16 @@ function date(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined;
 }
 
+/** Rule sets saved while two-level approval existed still carry `requiredLevel`; it means nothing now. */
+function withoutLegacyLevel(rule: Doc): RoutingRule {
+  const copy = { ...rule };
+  delete copy.requiredLevel;
+  return copy as unknown as RoutingRule;
+}
+
 function ruleSetFrom(doc: Doc): RoutingRuleSet {
   return { id: String(doc._id), versionNo: Number(doc.versionNo), state: doc.state as RoutingRuleSet["state"],
-    rules: (Array.isArray(doc.rules) ? doc.rules : []) as RoutingRule[], createdBy: String(doc.createdBy), createdAt: doc.createdAt as Date,
+    rules: (Array.isArray(doc.rules) ? doc.rules as Record<string, unknown>[] : []).map(withoutLegacyLevel), createdBy: String(doc.createdBy), createdAt: doc.createdAt as Date,
     ...(date(doc.updatedAt) ? { updatedAt: date(doc.updatedAt) } : {}),
     ...(doc.activatedBy ? { activatedBy: String(doc.activatedBy) } : {}),
     ...(date(doc.activatedAt) ? { activatedAt: date(doc.activatedAt) } : {}),

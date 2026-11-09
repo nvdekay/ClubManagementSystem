@@ -215,7 +215,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         }], { session });
         await tasks.updateMany({ entityType: "CLUB_APPLICATION", entityId: id,
           state: "Open" }, { $set: { state: "Closed", closedAt: input.now } }, { session });
-        // UC05: the active routing rules decide, once, how many approval levels this application needs.
+        // UC05: the active routing rules decide, once, the SLA of this review.
         await tasks.create([{
           entityType: "CLUB_APPLICATION", entityId: id,
           title: `Club application: ${input.snapshot.clubName}`,

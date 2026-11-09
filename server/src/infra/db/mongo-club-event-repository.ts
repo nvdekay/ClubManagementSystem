@@ -109,7 +109,7 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
     conflictResult: assessment.conflictResult, submittedBy: actorId, submittedAt: now }], { session });
   await m.events!.updateOne({ _id: event._id }, { $set: { ...fields(input, assessment.semesterCode), state, currentRevisionNo: revisionNo,
     conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail }, $unset: { revisionDeadlineAt: "" } }, { session });
-  // UC05: budget, risk and the club's open cases decide, once, how many approval levels the proposal needs.
+  // UC05: budget, risk and the club's open cases decide, once, the SLA of its review.
   if (!direct) await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
     title: input.title, state: "Open", openedAt: now,
     ...(await routedTaskFields(session, { requestType: "EVENT_PROPOSAL", riskCategory: input.riskCategory,

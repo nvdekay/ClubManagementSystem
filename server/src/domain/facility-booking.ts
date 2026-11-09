@@ -53,8 +53,6 @@ export interface Booking extends BookingInput {
 }
 export interface BookingTask {
   id: string; state: string; assigneeId?: string; openedAt: Date;
-  /** UC05: approval levels this request needs and the level now waiting (2 = ICPDP_HEAD). */
-  requiredLevel: number; currentLevel: number;
 }
 export interface BookingVersion {
   versionNo: number; payload: BookingInput; submittedBy: string; submittedAt: Date;

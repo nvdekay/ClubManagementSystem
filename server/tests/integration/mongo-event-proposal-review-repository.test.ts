@@ -113,28 +113,17 @@ describe.skipIf(!uri)("Mongo event proposal review repository", () => {
       conditions: [], budgetLines: [] }, now)).event.state).toBe("Rejected");
   });
 
-  it("UC05: a two-level proposal gets no Approved state or budget until ICPDP_HEAD approves level 2", async () => {
+  it("UC05: one officer's approval is final, even for a task opened while two levels existed (BR31)", async () => {
     const repo = mongoEventProposalReviewRepository();
-    const head = new Types.ObjectId();
-    for (const code of ["ICPDP_OFFICER", "ICPDP_HEAD"]) {
-      const role = await ucmsModels.roles!.create({ code, name: code, scope: "system", isSystem: true, permissionCodes: [] });
-      await ucmsModels.userRoleAssignments!.create({ userId: head, roleId: role._id, grantedAt: now, grantedBy: head });
-    }
     const id = await submit("Đại nhạc hội", budgetLines);
     await ucmsModels.approvalTasks!.updateOne({ entityId: new Types.ObjectId(id) }, { $set: { requiredLevel: 2, currentLevel: 1 } });
     await repo.claim(id, String(officer), now);
     const approved = [{ approvedAmount: 2_000_000 }, { approvedAmount: 3_000_000 }];
-    const level1 = await repo.decide(id, String(officer), { outcome: "Approve", sections: [], conditions: [], budgetLines: approved }, now);
-    expect(level1.event.state).toBe("Under Review");
-    expect(level1.budget).toBeUndefined();
-    expect(await ucmsModels.eventBudgets!.countDocuments({ eventId: new Types.ObjectId(id) })).toBe(0);
-    await expect(repo.claim(id, String(otherOfficer), now)).rejects.toMatchObject({ kind: "forbidden" });
-    await repo.claim(id, String(head), now);
-    const final = await repo.decide(id, String(head), { outcome: "Approve", sections: [], conditions: [], budgetLines: approved }, now);
+    const final = await repo.decide(id, String(officer), { outcome: "Approve", sections: [], conditions: [], budgetLines: approved }, now);
     expect(final.event.state).toBe("Approved");
     expect(await ucmsModels.eventBudgets!.countDocuments({ eventId: new Types.ObjectId(id) })).toBe(1);
     expect((await ucmsModels.approvalDecisions!.find({ approvalTaskId: (await ucmsModels.approvalTasks!
-      .findOne({ entityId: new Types.ObjectId(id) }).lean())!._id }).lean()).map((row) => row.level).sort()).toEqual([1, 2]);
+      .findOne({ entityId: new Types.ObjectId(id) }).lean())!._id }).lean()).map((row) => row.level)).toEqual([1]);
   });
 
   it("expires overdue revisions and moves published events along their own times", async () => {

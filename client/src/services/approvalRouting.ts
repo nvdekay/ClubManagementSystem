@@ -12,7 +12,6 @@ export interface RoutingRule {
   propertyTypes?: RoutedPropertyType[];
   minOpenViolations?: number;
   maxOpenViolations?: number;
-  requiredLevel: 1 | 2;
   slaHours: number;
 }
 
@@ -27,8 +26,8 @@ export interface RoutingRuleSet {
 
 export interface RoutingSimulation {
   total: number;
-  secondLevel: number;
-  items: Array<{ entityType: RoutedRequestType; entityId: string; title: string; decidedAt: string; requiredLevel: 1 | 2; ruleId?: string }>;
+  matched: number;
+  items: Array<{ entityType: RoutedRequestType; entityId: string; title: string; decidedAt: string; ruleId?: string; slaHours?: number }>;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
