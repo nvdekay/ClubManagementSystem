@@ -81,6 +81,12 @@ const en = {
   versionSelectBase: "Compare with previous version",
   versionNoDiff: "Only one submission version so far.",
   versionDiffSummary: "Version {{current}} vs Version {{prev}}: {{memberDiff}} members, {{eventDiff}} events, {{achievementDiff}} achievements",
+  viewImage: "View image",
+  saveImage: "Save image",
+  openOriginalLink: "Open link",
+  closeImagePreview: "Close image preview",
+  uploadedImageBadge: "Uploaded image",
+  linkedEvidenceBadge: "External link",
 };
 
 const vi: typeof en = {
@@ -166,6 +172,12 @@ const vi: typeof en = {
   versionSelectBase: "Đối chiếu với lần nộp",
   versionNoDiff: "Báo cáo mới có 1 lần nộp.",
   versionDiffSummary: "Lần nộp {{current}} so với Lần nộp {{prev}}: Thành viên ({{memberDiff}}), Sự kiện ({{eventDiff}}), Thành tích ({{achievementDiff}})",
+  viewImage: "Xem ảnh",
+  saveImage: "Lưu ảnh",
+  openOriginalLink: "Mở liên kết",
+  closeImagePreview: "Đóng xem ảnh",
+  uploadedImageBadge: "Ảnh tải lên hệ thống",
+  linkedEvidenceBadge: "Liên kết ngoài",
 };
 
 export const periodicReports = { en, vi };

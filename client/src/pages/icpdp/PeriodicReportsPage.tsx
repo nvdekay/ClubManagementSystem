@@ -5,6 +5,7 @@ import type { TFunction } from "i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -398,6 +399,106 @@ function Figure({ label, frozen, live }: { label: string; frozen: ReactNode; liv
   );
 }
 
+function safeFileName(title: string, url: string): string {
+  const base = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/gi, "-")
+    .replace(/^-+|-+$/g, "") || "evidence-image";
+  const match = url.match(/^data:image\/([a-z0-9.+-]+);base64,/i);
+  const rawExt = match?.[1]?.toLowerCase() ?? "png";
+  const ext = rawExt === "jpeg" ? "jpg" : rawExt === "svg+xml" ? "svg" : rawExt;
+  return `${base}.${ext}`;
+}
+
+async function saveEvidenceImage(url: string, title: string) {
+  const filename = safeFileName(title, url);
+  if (url.startsWith("data:image/")) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return;
+  }
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+function EvidenceDisplay({
+  url,
+  title,
+  onPreview,
+}: {
+  url: string;
+  title: string;
+  onPreview: (url: string, title: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const isUploaded = url.startsWith("data:image/");
+  const imgFailed = failedUrl === url;
+
+  return (
+    <div className="mt-2 flex flex-wrap items-start gap-3 rounded-xl border border-border-app bg-bg-app p-3">
+      {!imgFailed ? (
+        <img
+          src={url}
+          alt={title}
+          onError={() => setFailedUrl(url)}
+          className="max-h-44 rounded-lg border border-border-app object-contain"
+        />
+      ) : (
+        <a href={url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
+          {url}
+        </a>
+      )}
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <AppBadge tone={isUploaded ? "success" : "info"}>
+            {isUploaded ? t("periodicReports.uploadedImageBadge") : t("periodicReports.linkedEvidenceBadge")}
+          </AppBadge>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {!imgFailed && (
+            <>
+              <AppButton variant="secondary" onClick={() => onPreview(url, title)}>
+                {t("periodicReports.viewImage")}
+              </AppButton>
+              <AppButton variant="secondary" onClick={() => void saveEvidenceImage(url, title)}>
+                {t("periodicReports.saveImage")}
+              </AppButton>
+            </>
+          )}
+          {!isUploaded && (
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-10 items-center rounded-xl border border-border-app bg-surface-app px-3 py-1.5 text-xs font-semibold text-accent-app"
+            >
+              {t("periodicReports.openOriginalLink")}
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -410,6 +511,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
   const [sections, setSections] = useState<ReturnSection[]>([]);
   const [resubmitDueAt, setResubmitDueAt] = useState("");
   const [compareVersionNo, setCompareVersionNo] = useState<number | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const field = useFieldValidation(outcome === "Return" ? {
     reason: reason.trim() ? null : t("periodicReports.reasonMissing"),
@@ -602,15 +704,11 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                     </p>
                     <p className="whitespace-pre-wrap break-words text-sm">{ev.description}</p>
                     {ev.evidenceUrl && (
-                      <div className="pt-1">
-                        {ev.evidenceUrl.startsWith("data:image/") ? (
-                          <img src={ev.evidenceUrl} alt={ev.title} className="max-h-44 rounded-lg border border-border-app object-contain" />
-                        ) : (
-                          <a href={ev.evidenceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
-                            {ev.evidenceUrl}
-                          </a>
-                        )}
-                      </div>
+                      <EvidenceDisplay
+                        url={ev.evidenceUrl}
+                        title={ev.title}
+                        onPreview={(url, title) => setPreviewImage({ url, title })}
+                      />
                     )}
                   </div>
                 );
@@ -643,13 +741,11 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                     <h3 className="font-bold">{ach.title}</h3>
                     <p className="whitespace-pre-wrap break-words text-sm">{ach.description}</p>
                     {ach.evidenceUrl && (
-                      ach.evidenceUrl.startsWith("data:image/") ? (
-                        <img src={ach.evidenceUrl} alt={ach.title} className="max-h-44 rounded-lg border border-border-app object-contain" />
-                      ) : (
-                        <a href={ach.evidenceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
-                          {ach.evidenceUrl}
-                        </a>
-                      )
+                      <EvidenceDisplay
+                        url={ach.evidenceUrl}
+                        title={ach.title}
+                        onPreview={(url, title) => setPreviewImage({ url, title })}
+                      />
                     )}
                   </div>
                 ))}
@@ -678,13 +774,11 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                       {item.answer?.textValue && <p className="whitespace-pre-wrap break-words">{item.answer.textValue}</p>}
                       {item.answer?.numberValue !== undefined && <p className="font-bold tabular-nums">{item.answer.numberValue}</p>}
                       {item.answer?.evidenceUrl && (
-                        item.answer.evidenceUrl.startsWith("data:image/") ? (
-                          <img src={item.answer.evidenceUrl} alt={item.label} className="mt-2 max-h-44 rounded-lg border border-border-app object-contain" />
-                        ) : (
-                          <a href={item.answer.evidenceUrl} target="_blank" rel="noreferrer" className="font-semibold text-accent-app break-all">
-                            {item.answer.evidenceUrl}
-                          </a>
-                        )
+                        <EvidenceDisplay
+                          url={item.answer.evidenceUrl}
+                          title={item.label}
+                          onPreview={(url, title) => setPreviewImage({ url, title })}
+                        />
                       )}
                       {!item.answer?.textValue && item.answer?.numberValue === undefined && !item.answer?.evidenceUrl && (
                         <span className="text-muted-app">{t("periodicReports.empty")}</span>
@@ -840,6 +934,29 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
           {decide.isSuccess && <AppNotice role="status" className="mt-4">{t("periodicReports.decided")}</AppNotice>}
         </aside>
       </div>
+
+      <AppDialog
+        open={Boolean(previewImage)}
+        title={previewImage?.title ?? ""}
+        closeLabel={t("periodicReports.closeImagePreview")}
+        onClose={() => setPreviewImage(null)}
+        className="w-[min(100%-2rem,56rem)]"
+      >
+        {previewImage && (
+          <div className="space-y-4">
+            <img
+              src={previewImage.url}
+              alt={previewImage.title}
+              className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
+            />
+            <div className="flex flex-wrap justify-end gap-2">
+              <AppButton variant="secondary" onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}>
+                {t("periodicReports.saveImage")}
+              </AppButton>
+            </div>
+          </div>
+        )}
+      </AppDialog>
     </>
   );
 }

@@ -1,7 +1,8 @@
-import { useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent, type ClipboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -23,13 +24,237 @@ interface Props {
   report: PeriodicReportDetail;
 }
 
-function readImageDataUrl(file: File): Promise<string> {
+function readRawDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result ?? ""));
     reader.onerror = () => reject(new Error("Could not read file"));
     reader.readAsDataURL(file);
   });
+}
+
+async function readImageDataUrl(file: File): Promise<string> {
+  const raw = await readRawDataUrl(file);
+  if (raw.length <= 900_000 || file.type === "image/gif" || file.type === "image/svg+xml") {
+    return raw;
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 1600;
+      const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(raw);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => resolve(raw);
+    img.src = raw;
+  });
+}
+
+function safeFileName(title: string, url: string): string {
+  const base = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/gi, "-")
+    .replace(/^-+|-+$/g, "") || "evidence-image";
+  const match = url.match(/^data:image\/([a-z0-9.+-]+);base64,/i);
+  const rawExt = match?.[1]?.toLowerCase() ?? "png";
+  const ext = rawExt === "jpeg" ? "jpg" : rawExt === "svg+xml" ? "svg" : rawExt;
+  return `${base}.${ext}`;
+}
+
+async function saveEvidenceImage(url: string, title: string) {
+  const filename = safeFileName(title, url);
+  if (url.startsWith("data:image/")) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return;
+  }
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+function EvidenceInputBlock({
+  label,
+  required,
+  value,
+  editable,
+  disabled,
+  onChange,
+  onPreview,
+  onRemoveRow,
+}: {
+  label?: string;
+  required?: boolean;
+  value?: string;
+  editable: boolean;
+  disabled: boolean;
+  onChange: (nextUrl: string) => void;
+  onPreview: (url: string, title: string) => void;
+  onRemoveRow?: () => void;
+}) {
+  const { t } = useTranslation();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const isUploaded = Boolean(value?.startsWith("data:image/"));
+  const imgFailed = Boolean(value && failedUrl === value);
+  const displayTitle = label || t("clubPeriodicReports.eventEvidenceUrl");
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const dataUrl = await readImageDataUrl(file);
+    setFailedUrl(null);
+    onChange(dataUrl);
+  }
+
+  async function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          event.preventDefault();
+          const dataUrl = await readImageDataUrl(file);
+          setFailedUrl(null);
+          onChange(dataUrl);
+          return;
+        }
+      }
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {label && (
+        <span className="block text-xs font-semibold">
+          {label}
+          {required && <AppRequiredMark />}
+        </span>
+      )}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <input
+          placeholder={t("clubPeriodicReports.evidenceUrlPlaceholder")}
+          className="min-h-10 min-w-60 flex-1 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app disabled:cursor-not-allowed disabled:opacity-70"
+          value={isUploaded ? "" : (value ?? "")}
+          disabled={!editable || disabled}
+          onPaste={(e) => void handlePaste(e)}
+          onChange={(e) => {
+            setFailedUrl(null);
+            onChange(e.target.value);
+          }}
+        />
+        {editable && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={disabled}
+              onChange={(e) => void handleFileChange(e)}
+            />
+            <AppButton
+              variant="secondary"
+              disabled={disabled}
+              onClick={() => fileRef.current?.click()}
+            >
+              {isUploaded ? t("clubPeriodicReports.changeImage") : t("clubPeriodicReports.uploadImage")}
+            </AppButton>
+          </>
+        )}
+        {editable && value && (
+          <AppButton
+            variant="secondary"
+            disabled={disabled}
+            onClick={() => {
+              setFailedUrl(null);
+              onChange("");
+            }}
+          >
+            {t("clubPeriodicReports.removeImage")}
+          </AppButton>
+        )}
+        {editable && onRemoveRow && (
+          <AppButton variant="secondary" disabled={disabled} onClick={onRemoveRow}>
+            {t("clubPeriodicReports.remove")}
+          </AppButton>
+        )}
+      </div>
+
+      {value && (
+        <div className="flex flex-wrap items-start gap-3 rounded-xl border border-border-app bg-surface-app p-3">
+          {!imgFailed ? (
+            <img
+              src={value}
+              alt={displayTitle}
+              onError={() => setFailedUrl(value)}
+              className="max-h-40 rounded-lg border border-border-app object-contain"
+            />
+          ) : (
+            <a href={value} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
+              {value}
+            </a>
+          )}
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <AppBadge tone={isUploaded ? "success" : "info"}>
+                {isUploaded ? t("clubPeriodicReports.uploadedImageReady") : t("periodicReports.linkedEvidenceBadge")}
+              </AppBadge>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {!imgFailed && (
+                <>
+                  <AppButton variant="secondary" onClick={() => onPreview(value, displayTitle)}>
+                    {t("clubPeriodicReports.viewImage")}
+                  </AppButton>
+                  <AppButton variant="secondary" onClick={() => void saveEvidenceImage(value, displayTitle)}>
+                    {t("clubPeriodicReports.saveImage")}
+                  </AppButton>
+                </>
+              )}
+              {!isUploaded && (
+                <a
+                  href={value}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-10 items-center rounded-xl border border-border-app bg-bg-app px-3 py-1.5 text-xs font-semibold text-accent-app"
+                >
+                  {t("periodicReports.openOriginalLink")}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function sectionNameKey(section: ReturnSection) {
@@ -59,6 +284,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
   const [events, setEvents] = useState<PeriodicEventEntry[]>(initialEvents);
   const [achievements, setAchievements] = useState<PeriodicAchievementEntry[]>(initialAchievements);
   const [customAnswers, setCustomAnswers] = useState<PeriodicCustomAnswer[]>(initialAnswers);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   const customFields = report.campaign?.customFields ?? [];
   const editable = ["Draft", "Returned for correction"].includes(report.state);
@@ -138,46 +364,29 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
     });
   }
 
-  async function handleEventImageUpload(index: number, event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const dataUrl = await readImageDataUrl(file);
-    updateEvent(index, { evidenceUrl: dataUrl });
-  }
-
-  async function handleAchievementImageUpload(index: number, event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const dataUrl = await readImageDataUrl(file);
-    updateAchievement(index, { evidenceUrl: dataUrl });
-  }
-
-  async function handleCustomImageUpload(fieldId: string, label: string, event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const dataUrl = await readImageDataUrl(file);
-    updateCustomAnswer(fieldId, label, "evidence", { evidenceUrl: dataUrl });
-  }
-
   async function change(kind: "save" | "submit") {
     if (kind === "submit" && !field.touchAll()) return;
     try {
-      await action.mutateAsync({
+      const saved = await action.mutateAsync({
         csrfToken,
-        action: kind === "submit"
-          ? { kind, id: report.id, revision: report.revision ?? 0 }
-          : {
-              kind,
-              id: report.id,
-              revision: report.revision ?? 0,
-              input: {
-                members,
-                events,
-                achievements,
-                customAnswers,
-              },
-            },
+        action: {
+          kind: "save",
+          id: report.id,
+          revision: report.revision ?? 0,
+          input: {
+            members,
+            events,
+            achievements,
+            customAnswers,
+          },
+        },
       });
+      if (kind === "submit") {
+        await action.mutateAsync({
+          csrfToken,
+          action: { kind: "submit", id: report.id, revision: saved.revision ?? (report.revision ?? 0) + 1 },
+        });
+      }
     } catch { /* The mutation error is displayed below. */ }
   }
 
@@ -385,50 +594,16 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   onChange={(e) => updateEvent(idx, { description: e.target.value })}
                 />
               </label>
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="min-w-64 flex-1 text-xs font-semibold">
-                  {t("clubPeriodicReports.eventEvidenceUrl")}<AppRequiredMark />
-                  <input
-                    placeholder="https://..."
-                    className={inputBase}
-                    value={ev.evidenceUrl?.startsWith("data:image/") ? "" : (ev.evidenceUrl ?? "")}
-                    disabled={!editable || action.isPending}
-                    onChange={(e) => updateEvent(idx, { evidenceUrl: e.target.value })}
-                  />
-                </label>
-                {editable && (
-                  <label className="inline-flex min-h-10 items-center rounded-xl border border-border-app bg-surface-app px-3 py-2 text-xs font-semibold">
-                    {t("clubPeriodicReports.uploadImage")}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      disabled={action.isPending}
-                      onChange={(e) => void handleEventImageUpload(idx, e)}
-                    />
-                  </label>
-                )}
-                {editable && (
-                  <AppButton
-                    variant="secondary"
-                    disabled={action.isPending}
-                    onClick={() => setEvents((prev) => prev.filter((_, i) => i !== idx))}
-                  >
-                    {t("clubPeriodicReports.remove")}
-                  </AppButton>
-                )}
-              </div>
-              {ev.evidenceUrl && (
-                <div className="pt-1">
-                  {ev.evidenceUrl.startsWith("data:image/") ? (
-                    <img src={ev.evidenceUrl} alt={ev.title} className="max-h-36 rounded-lg border border-border-app object-contain" />
-                  ) : (
-                    <a href={ev.evidenceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
-                      {ev.evidenceUrl}
-                    </a>
-                  )}
-                </div>
-              )}
+              <EvidenceInputBlock
+                label={t("clubPeriodicReports.eventEvidenceUrl")}
+                required
+                value={ev.evidenceUrl}
+                editable={editable}
+                disabled={action.isPending}
+                onChange={(evidenceUrl) => updateEvent(idx, { evidenceUrl })}
+                onPreview={(url, title) => setPreviewImage({ url, title: ev.title || title })}
+                onRemoveRow={() => setEvents((prev) => prev.filter((_, i) => i !== idx))}
+              />
             </div>
           ))}
         </div>
@@ -474,50 +649,16 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   onChange={(e) => updateAchievement(idx, { description: e.target.value })}
                 />
               </label>
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="min-w-64 flex-1 text-xs font-semibold">
-                  {t("clubPeriodicReports.achievementEvidenceUrl")}<AppRequiredMark />
-                  <input
-                    placeholder="https://..."
-                    className={inputBase}
-                    value={ach.evidenceUrl?.startsWith("data:image/") ? "" : (ach.evidenceUrl ?? "")}
-                    disabled={!editable || action.isPending}
-                    onChange={(e) => updateAchievement(idx, { evidenceUrl: e.target.value })}
-                  />
-                </label>
-                {editable && (
-                  <label className="inline-flex min-h-10 items-center rounded-xl border border-border-app bg-surface-app px-3 py-2 text-xs font-semibold">
-                    {t("clubPeriodicReports.uploadImage")}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="sr-only"
-                      disabled={action.isPending}
-                      onChange={(e) => void handleAchievementImageUpload(idx, e)}
-                    />
-                  </label>
-                )}
-                {editable && (
-                  <AppButton
-                    variant="secondary"
-                    disabled={action.isPending}
-                    onClick={() => setAchievements((prev) => prev.filter((_, i) => i !== idx))}
-                  >
-                    {t("clubPeriodicReports.remove")}
-                  </AppButton>
-                )}
-              </div>
-              {ach.evidenceUrl && (
-                <div className="pt-1">
-                  {ach.evidenceUrl.startsWith("data:image/") ? (
-                    <img src={ach.evidenceUrl} alt={ach.title} className="max-h-36 rounded-lg border border-border-app object-contain" />
-                  ) : (
-                    <a href={ach.evidenceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
-                      {ach.evidenceUrl}
-                    </a>
-                  )}
-                </div>
-              )}
+              <EvidenceInputBlock
+                label={t("clubPeriodicReports.achievementEvidenceUrl")}
+                required
+                value={ach.evidenceUrl}
+                editable={editable}
+                disabled={action.isPending}
+                onChange={(evidenceUrl) => updateAchievement(idx, { evidenceUrl })}
+                onPreview={(url, title) => setPreviewImage({ url, title: ach.title || title })}
+                onRemoveRow={() => setAchievements((prev) => prev.filter((_, i) => i !== idx))}
+              />
             </div>
           ))}
         </div>
@@ -531,7 +672,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
           {customFields.map((cf) => {
             const answer = customAnswers.find((a) => a.fieldId === cf.id);
             return (
-              <div key={cf.id} className="space-y-1.5 rounded-xl border border-border-app bg-bg-app p-4">
+              <div key={cf.id} className="space-y-2 rounded-xl border border-border-app bg-bg-app p-4">
                 <label className="block text-sm font-semibold">
                   {cf.label}
                   {cf.required && <AppRequiredMark />}
@@ -557,38 +698,13 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   />
                 )}
                 {cf.type === "evidence" && (
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <input
-                        placeholder="https://..."
-                        className="min-h-10 min-w-64 flex-1 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app"
-                        value={answer?.evidenceUrl?.startsWith("data:image/") ? "" : (answer?.evidenceUrl ?? "")}
-                        disabled={!editable || action.isPending}
-                        onChange={(e) => updateCustomAnswer(cf.id, cf.label, "evidence", { evidenceUrl: e.target.value })}
-                      />
-                      {editable && (
-                        <label className="inline-flex min-h-10 items-center rounded-xl border border-border-app bg-surface-app px-3 py-2 text-xs font-semibold">
-                          {t("clubPeriodicReports.uploadImage")}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="sr-only"
-                            disabled={action.isPending}
-                            onChange={(e) => void handleCustomImageUpload(cf.id, cf.label, e)}
-                          />
-                        </label>
-                      )}
-                    </div>
-                    {answer?.evidenceUrl && (
-                      answer.evidenceUrl.startsWith("data:image/") ? (
-                        <img src={answer.evidenceUrl} alt={cf.label} className="max-h-36 rounded-lg border border-border-app object-contain" />
-                      ) : (
-                        <a href={answer.evidenceUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
-                          {answer.evidenceUrl}
-                        </a>
-                      )
-                    )}
-                  </div>
+                  <EvidenceInputBlock
+                    value={answer?.evidenceUrl}
+                    editable={editable}
+                    disabled={action.isPending}
+                    onChange={(evidenceUrl) => updateCustomAnswer(cf.id, cf.label, "evidence", { evidenceUrl })}
+                    onPreview={(url) => setPreviewImage({ url, title: cf.label })}
+                  />
                 )}
               </div>
             );
@@ -602,7 +718,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
           <AppButton disabled={action.isPending || !dirty} onClick={() => void change("save")}>
             {t("clubPeriodicReports.save")}
           </AppButton>
-          <AppButton variant="secondary" disabled={action.isPending || dirty || !canSubmit} onClick={() => void change("submit")}>
+          <AppButton variant="secondary" disabled={action.isPending || !canSubmit} onClick={() => void change("submit")}>
             {t("clubPeriodicReports.submit")}
           </AppButton>
         </div>
@@ -650,6 +766,29 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
           ))}
         </div>
       </details>
+
+      <AppDialog
+        open={Boolean(previewImage)}
+        title={previewImage?.title ?? ""}
+        closeLabel={t("periodicReports.closeImagePreview")}
+        onClose={() => setPreviewImage(null)}
+        className="w-[min(100%-2rem,56rem)]"
+      >
+        {previewImage && (
+          <div className="space-y-4">
+            <img
+              src={previewImage.url}
+              alt={previewImage.title}
+              className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
+            />
+            <div className="flex flex-wrap justify-end gap-2">
+              <AppButton variant="secondary" onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}>
+                {t("clubPeriodicReports.saveImage")}
+              </AppButton>
+            </div>
+          </div>
+        )}
+      </AppDialog>
     </section>
   );
 }
