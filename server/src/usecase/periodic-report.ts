@@ -1,8 +1,9 @@
 import type { AuthRepository } from "../domain/auth.js";
 import { DomainError } from "../domain/errors.js";
 import {
-  normalizedPeriodicDecision, periodicDueAt, periodicDueDays,
-  type PeriodicDecisionInput, type PeriodicOverview, type PeriodicReportRepository,
+  normalizedPeriodicCampaign, normalizedPeriodicDecision, periodicDueAt, periodicDueDays,
+  type PeriodicCampaign, type PeriodicCampaignInput, type PeriodicDecisionInput,
+  type PeriodicOverview, type PeriodicReportRepository,
 } from "../domain/periodic-report.js";
 import type { PolicyRepository } from "../domain/policy.js";
 import { VIOLATION_SEVERITIES, type ViolationSeverity } from "../domain/violation.js";
@@ -50,8 +51,29 @@ export async function periodicReportOverview(deps: PeriodicReportDeps, actor: Ac
     throw new DomainError("this period is not in the academic calendar", "validation", { field: "period" });
   }
   if (!chosen) return { periods: listed, rows: [] };
-  const dueAt = periodicDueAt(chosen, dueDays);
-  return { periods: listed, periodCode: chosen.code, dueAt, rows: await deps.repo.overview(chosen.code, dueAt, now) };
+  const campaign = await deps.repo.getCampaign?.(chosen.code) ?? undefined;
+  const dueAt = campaign?.dueAt ?? periodicDueAt(chosen, dueDays);
+  return {
+    periods: listed,
+    periodCode: chosen.code,
+    dueAt,
+    ...(campaign ? { campaign } : {}),
+    rows: await deps.repo.overview(chosen.code, dueAt, now),
+  };
+}
+
+export async function savePeriodicCampaign(deps: PeriodicReportDeps, actor: AccessActor | null,
+  input: PeriodicCampaignInput, now: Date): Promise<PeriodicCampaign> {
+  const officerId = await officer(deps.auth, actor);
+  const normalized = normalizedPeriodicCampaign(input);
+  const { periods } = await calendar(deps.policy, now);
+  if (!periods.some((item) => item.code === normalized.periodCode)) {
+    throw new DomainError("this period is not in the academic calendar", "validation", { field: "periodCode" });
+  }
+  if (!deps.repo.saveCampaign) {
+    throw new DomainError("campaign configuration is not supported", "conflict");
+  }
+  return deps.repo.saveCampaign(officerId, normalized, now);
 }
 
 export async function getPeriodicReport(deps: PeriodicReportDeps, actor: AccessActor | null, id: string) {
@@ -78,7 +100,9 @@ export async function recordMissingPeriodicReport(deps: PeriodicReportDeps, acto
   const { periods, dueDays } = await calendar(deps.policy, now);
   const period = periods.find((item) => item.code === input.periodCode);
   if (!period) throw new DomainError("this period is not in the academic calendar", "validation", { field: "periodCode" });
-  const dueAt = periodicDueAt(period, dueDays);
+  const campaign = await deps.repo.getCampaign?.(input.periodCode);
+  if (campaign && !campaign.isOpen) throw new DomainError("reporting is not open for this period", "conflict");
+  const dueAt = campaign?.dueAt ?? periodicDueAt(period, dueDays);
   if (dueAt > now) throw new DomainError("the report is not due yet", "conflict");
   return deps.repo.recordMissing(input.clubId, input.periodCode, dueAt, officerId, { severity: input.severity, note }, now);
 }

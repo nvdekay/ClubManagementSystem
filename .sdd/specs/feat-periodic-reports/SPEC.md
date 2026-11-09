@@ -65,6 +65,7 @@ xét có cấu trúc, và ghi nhận CLB không nộp đúng hạn (E1).
 UC38 (form nộp phía CLB), kỳ báo cáo năm học/tuỳ chỉnh, nhắc hạn/leo thang tự động (SCH-09), email.
 
 ## Changelog
+- 2026-11-09 — cập nhật luồng báo cáo hàng kỳ: ICPDP mở đợt nộp báo cáo (`isOpen`, `dueAt`, `announcement`, `customFields`), CLB kê khai danh sách thành viên hoạt động (kèm điểm phong trào 0–10), sự kiện đã tổ chức (kèm ảnh minh chứng), thành tích trong kỳ và các trường động; chặn nộp mới khi quá hạn; đối chiếu dữ liệu gốc hệ thống và lịch sử các lần nộp (Version diff).
 - 2026-10-11 — đồng bộ I65: nhóm `Manage evaluation`, yêu cầu kiểm tra mẫu, nội dung và minh chứng,
   giữ version cũ và xét lại báo cáo đến khi chấp nhận; bổ sung tiêu chí chưa nghiệm thu.
 - v0.1.0 (2026-10-10) — backend, API, UI, i18n, seed demo (thêm học kỳ Summer 2026 vào lịch demo) và test

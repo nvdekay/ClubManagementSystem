@@ -16,3 +16,4 @@
 
 - [x] UC38: API/UI tạo draft, nộp và nộp lại version sau Return (xong ở `feat-club-periodic-submission`, 15/10/2026).
 - [x] Nghiệm thu vòng UC38 → UC39 → UC38 với app chính, không chỉ dữ liệu seed (xem mục trên).
+- [x] Cập nhật 09/11/2026: ICPDP mở đợt báo cáo (`PUT /admin/periodic-reports/campaign`), đặt deadline & các trường động (`customFields`), đối chiếu danh sách thành viên/sự kiện CLB kê khai với dữ liệu gốc hệ thống và so sánh các phiên bản nộp (`versions`).

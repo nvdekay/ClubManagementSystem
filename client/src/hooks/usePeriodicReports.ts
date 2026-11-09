@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   decidePeriodicReport, fetchPeriodicOverview, fetchPeriodicReport, recordMissingPeriodicReport,
-  type PeriodicDecisionInput, type Severity,
+  savePeriodicCampaign, type PeriodicCampaignInput, type PeriodicDecisionInput, type Severity,
 } from "@/services/periodicReports";
 
 const periodicKey = ["periodic-reports"] as const;
@@ -9,6 +9,17 @@ const periodicKey = ["periodic-reports"] as const;
 export function usePeriodicOverview(period: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...periodicKey, "overview", period ?? ""], queryFn: ({ signal }) => fetchPeriodicOverview(period, signal),
     enabled, retry: false });
+}
+
+export function useSavePeriodicCampaign() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (action: { input: PeriodicCampaignInput; csrfToken: string }) =>
+      savePeriodicCampaign(action.input, action.csrfToken),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [...periodicKey] });
+    },
+  });
 }
 
 export function usePeriodicReport(id: string | undefined, enabled: boolean) {
