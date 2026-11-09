@@ -184,7 +184,7 @@ export function normalizePeriodicDraft(
   const evidence = rawEvidence.map((entry) => {
     const note = entry.note?.trim();
     const url = entry.url?.trim();
-    if ((note?.length ?? 0) > 2_000 || (url?.length ?? 0) > 1_500_000) throw new DomainError("evidence is too long", "validation");
+    if ((note?.length ?? 0) > 2_000 || (url?.length ?? 0) > 5_000_000) throw new DomainError("evidence is too long", "validation");
     if (url && !isValidEvidenceLink(url)) {
       throw new DomainError("invalid evidence URL", "validation");
     }

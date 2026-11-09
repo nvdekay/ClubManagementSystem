@@ -87,12 +87,6 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
           versionNo: 1,
           preloadedFigures: {
             systemData,
-            clubData: {
-              members: systemData.members,
-              events: systemData.events,
-              achievements: [],
-              customAnswers: [],
-            },
           },
           narrative: "",
           nextPlan: "",
@@ -148,11 +142,8 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
         if (campaign && !campaign.isOpen) {
           throw new DomainError("ICPDP has closed periodic report submission for this period", "conflict");
         }
-        if (String(report.state) === "Draft") {
-          const effectiveDue = campaign?.dueAt ?? (report.dueAt as Date);
-          if (now > effectiveDue) {
-            throw new DomainError("the periodic report submission deadline has passed", "conflict");
-          }
+        if (String(report.state) === "Draft" && campaign && now > campaign.dueAt) {
+          throw new DomainError("the periodic report submission deadline has passed", "conflict");
         } else if (String(report.state) === "Returned for correction") {
           const returnedAudit = await m.auditLogs!.findOne({
             entityType: "PeriodicReport",

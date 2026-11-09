@@ -211,8 +211,8 @@ function trimmed(value: string | undefined): string | undefined {
 }
 
 export function isValidEvidenceLink(url: string): boolean {
-  if (!url || url.length > 1_500_000) return false;
-  if (/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=\s]+$/i.test(url)) return true;
+  if (!url || url.length > 5_000_000) return false;
+  if (/^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/i.test(url)) return true;
   if (url.length > 2_000) return false;
   try {
     const parsed = new URL(url);

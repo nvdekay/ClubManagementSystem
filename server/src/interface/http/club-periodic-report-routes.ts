@@ -31,7 +31,7 @@ const eventEntryBody = z.object({
   description: z.string().max(5_000),
   heldAt: z.string().max(100),
   participantCount: z.number().int().nonnegative(),
-  evidenceUrl: z.string().max(1_500_000).optional(),
+  evidenceUrl: z.string().max(5_000_000).optional(),
   evidenceNote: z.string().max(1_000).optional(),
   source: z.enum(["SYSTEM", "MANUAL"]).optional(),
 }).strict();
@@ -39,7 +39,7 @@ const eventEntryBody = z.object({
 const achievementEntryBody = z.object({
   title: z.string().max(300),
   description: z.string().max(5_000),
-  evidenceUrl: z.string().max(1_500_000).optional(),
+  evidenceUrl: z.string().max(5_000_000).optional(),
   evidenceNote: z.string().max(1_000).optional(),
 }).strict();
 
@@ -49,7 +49,7 @@ const customAnswerBody = z.object({
   type: z.enum(CUSTOM_FIELD_TYPES).optional(),
   textValue: z.string().max(10_000).optional(),
   numberValue: z.number().optional(),
-  evidenceUrl: z.string().max(1_500_000).optional(),
+  evidenceUrl: z.string().max(5_000_000).optional(),
 }).strict();
 
 export const clubPeriodicDraftBody = clubPeriodicVersionBody.extend({
@@ -57,7 +57,7 @@ export const clubPeriodicDraftBody = clubPeriodicVersionBody.extend({
   nextPlan: z.string().max(20_000).optional(),
   evidence: z.array(z.object({
     note: z.string().max(2_000).optional(),
-    url: z.string().max(1_500_000).optional(),
+    url: z.string().max(5_000_000).optional(),
   }).strict()).max(50).optional(),
   members: z.array(memberEntryBody).max(500).optional(),
   events: z.array(eventEntryBody).max(200).optional(),
