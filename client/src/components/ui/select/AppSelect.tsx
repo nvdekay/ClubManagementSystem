@@ -20,6 +20,8 @@ interface AppSelectProps<T> {
   invalid?: boolean;
   /** Sits on the positioning wrapper, so a width utility lands where it can take effect. */
   className?: string;
+  /** Keep the option list exactly as wide as the trigger and wrap long labels (inside dialogs). */
+  fitWidth?: boolean;
 }
 
 function ChevronDownIcon() {
@@ -70,6 +72,7 @@ export function AppSelect<T extends string | number>({
   required,
   invalid,
   className,
+  fitWidth,
 }: AppSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const selectedIndex = options.findIndex((option) => option.value === value);
@@ -168,7 +171,7 @@ export function AppSelect<T extends string | number>({
         onKeyDown={onTriggerKeyDown}
         className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border-app bg-bg-app pr-2 pl-3.5 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-10 aria-[invalid=true]:border-danger-app aria-[invalid=true]:focus-visible:ring-danger-app"
       >
-        <span>{options[selectedIndex]?.label ?? ""}</span>
+        <span className="min-w-0 truncate text-left">{options[selectedIndex]?.label ?? ""}</span>
         <ChevronDownIcon />
       </button>
       {open && (
@@ -180,7 +183,8 @@ export function AppSelect<T extends string | number>({
           aria-activedescendant={`${listId}-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className="absolute z-20 mt-1 max-h-60 w-max min-w-full overflow-auto rounded-xl border border-border-app bg-bg-app p-1 shadow-lg focus:outline-none"
+          className={cn("absolute z-20 mt-1 max-h-60 overflow-auto rounded-xl border border-border-app bg-bg-app p-1 shadow-lg focus:outline-none",
+            fitWidth ? "w-full" : "w-max max-w-[calc(100vw-2rem)] min-w-full")}
         >
           {options.map((option, index) => (
             <li
@@ -197,7 +201,7 @@ export function AppSelect<T extends string | number>({
                 "text-muted-app opacity-50": option.disabled,
               })}
             >
-              {option.label}
+              <span className="min-w-0 break-words">{option.label}</span>
               {option.value === value && <CheckIcon />}
             </li>
           ))}
