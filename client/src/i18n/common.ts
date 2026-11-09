@@ -34,6 +34,9 @@ const en = {
   icpdpTransitions: "Leadership handovers", icpdpClubFields: "Club fields", icpdpEvents: "Event calendar",
   icpdpEventProposals: "Event proposals", icpdpInternalEvents: "Internal events", icpdpBudgets: "Event budgets", icpdpPeriodicReports: "Periodic reports", icpdpViolations: "Compliance cases", icpdpSchoolEvents: "School events", icpdpEvaluations: "Club evaluations", icpdpProperties: "Rooms & equipment", icpdpSchemes: "Evaluation criteria", icpdpExports: "Export reports",
   icpdpComplaints: "Complaints", icpdpRouting: "Approval routing", icpdpPolicy: "School policy", icpdpAccounts: "Accounts & roles",
+  revisionChangesTitle: "Changes since version {{number}}", revisionRequested: "ICPDP asked to revise:",
+  revisionBefore: "Before", revisionAfter: "Now", revisionNoChanges: "Nothing changed since version {{number}}.",
+  revisionFlagged: "Needs revision",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -72,6 +75,9 @@ const vi: Record<keyof typeof en, string> = {
   icpdpTransitions: "Duyệt chuyển giao nhiệm kỳ", icpdpClubFields: "Lĩnh vực CLB", icpdpEvents: "Lịch sự kiện",
   icpdpEventProposals: "Duyệt đề xuất sự kiện", icpdpInternalEvents: "Sự kiện nội bộ", icpdpBudgets: "Giải ngân kinh phí", icpdpPeriodicReports: "Báo cáo định kỳ", icpdpViolations: "Hồ sơ vi phạm", icpdpSchoolEvents: "Sự kiện cấp trường", icpdpEvaluations: "Đánh giá CLB", icpdpProperties: "Phòng & thiết bị", icpdpSchemes: "Tiêu chí đánh giá CLB", icpdpExports: "Xuất báo cáo",
   icpdpComplaints: "Khiếu nại", icpdpRouting: "Định tuyến phê duyệt", icpdpPolicy: "Chính sách nhà trường", icpdpAccounts: "Tài khoản & phân quyền",
+  revisionChangesTitle: "Thay đổi so với bản {{number}}", revisionRequested: "ICPDP đã yêu cầu sửa:",
+  revisionBefore: "Trước", revisionAfter: "Bây giờ", revisionNoChanges: "Không có thay đổi nào so với bản {{number}}.",
+  revisionFlagged: "Cần sửa",
 };
 
 export const common = { en, vi };

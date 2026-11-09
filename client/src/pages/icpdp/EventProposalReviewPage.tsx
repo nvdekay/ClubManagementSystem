@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
+import { RevisionChanges } from "@/components/custom/RevisionChanges";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -13,9 +14,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEventProposal, useEventProposalAction } from "@/hooks/useEventProposalReviews";
 import {
   EVENT_REVIEW_SECTIONS,
-  type ClubObligation, type EventReviewOutcome, type EventReviewSection,
+  type ClubObligation, type EventProposalVersion, type EventReviewOutcome, type EventReviewSection,
 } from "@/services/eventProposalReviews";
 import { cn } from "@/utils/cn";
+import { diffFields, type DiffField } from "@/utils/revisionDiff";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
@@ -146,6 +148,38 @@ export function EventProposalReviewPage() {
   );
 
   const { event, task, club, decisions, versions, bookings, semesterBudgets, budget } = review.data;
+  // The version submitted before the current one, and the revision request that sent it back.
+  const previous = current && versions.filter((version) => version.revisionNo < current.revisionNo)
+    .sort((a, b) => b.revisionNo - a.revisionNo)[0];
+  const revisionRequest = current && [...decisions].reverse().find((decision) => decision.outcome === "Request revision"
+    && new Date(decision.at) <= new Date(current.submittedAt));
+  function range(start: unknown, end: unknown) {
+    return typeof start === "string" && typeof end === "string" ? `${date(start)} – ${date(end)}` : "";
+  }
+  const versionFields: DiffField<EventProposalVersion>[] = [
+    { key: "title", label: t("eventReviews.fieldTitle"), read: (v) => text(v.payload.title) ?? "" },
+    { key: "when", label: t("eventReviews.when"), read: (v) => range(v.payload.startAt, v.payload.endAt) },
+    { key: "property", label: t("eventReviews.fieldProperty"), read: (v) => {
+      const id = text(v.payload.propertyId);
+      return !id ? "" : id === event.property?.id ? event.property.name : t("eventReviews.otherProperty");
+    } },
+    { key: "venue", label: t("eventReviews.where"), read: (v) => text(v.payload.venueText) ?? "" },
+    { key: "audience", label: t("eventReviews.audience"), read: (v) => v.payload.audienceScope === "MEMBERS_ONLY"
+      ? t("eventReviews.audienceMembers") : t("eventReviews.audiencePublic") },
+    { key: "capacity", label: t("eventReviews.capacity"), read: (v) => String(v.payload.capacity ?? "") },
+    { key: "objective", label: t("eventReviews.objective"), read: (v) => text(v.payload.objective) ?? "" },
+    { key: "plan", label: t("eventReviews.plan"), read: (v) => text(v.payload.plan) ?? "" },
+    { key: "risk", label: t("eventReviews.risk"), read: (v) => riskLabel(text(v.payload.riskCategory) ?? "") },
+    { key: "riskNote", label: t("eventReviews.riskNote"), read: (v) => text(v.payload.riskNote) ?? "" },
+    { key: "facilityNeeds", label: t("eventReviews.facilityNeeds"), read: (v) => text(v.payload.facilityNeeds) ?? "" },
+    { key: "occurrences", label: t("eventReviews.occurrences"), read: (v) => (Array.isArray(v.payload.occurrences)
+      ? v.payload.occurrences as { startAt?: unknown; endAt?: unknown }[] : []).map((o) => range(o.startAt, o.endAt)).join("\n") },
+    { key: "budget", label: t("eventReviews.budget"), read: (v) => v.budgetLines.map((line) =>
+      `${line.category}: ${money(line.amount)} — ${line.purpose}${line.plannedItems ? `\n  ${line.plannedItems}` : ""}`).join("\n") },
+    { key: "form", label: t("eventReviews.fieldForm"), read: (v) => (Array.isArray(v.payload.registrationForm)
+      ? v.payload.registrationForm as { label?: string; required?: boolean }[] : [])
+      .map((field) => `${field.label ?? ""}${field.required ? " *" : ""}`).join("\n") },
+  ];
   const payload = current?.payload ?? {};
   const occurrences = Array.isArray(payload.occurrences) ? payload.occurrences as { startAt?: string; endAt?: string }[] : [];
   const conflictMessage = event.conflictDetail && typeof event.conflictDetail === "object"
@@ -195,6 +229,9 @@ export function EventProposalReviewPage() {
 
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-10">
+          {previous && current && <RevisionChanges previousNumber={previous.revisionNo}
+            changes={diffFields(previous, current, versionFields)}
+            requestedSections={revisionRequest?.sections.map(sectionLabel)} reason={revisionRequest?.reason} />}
           <section>
             <h2 className="font-heading text-xl font-bold">{t("eventReviews.overview")}</h2>
             <dl className="mt-5 grid gap-5 sm:grid-cols-2">

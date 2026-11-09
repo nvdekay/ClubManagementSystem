@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RevisionChanges } from "@/components/custom/RevisionChanges";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
@@ -14,7 +15,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useApplicationReview, useApplicationReviewAction,
   useReviewDocumentAccess } from "@/hooks/useApplicationReviews";
 import type { ReviewOutcome } from "@/services/applicationReviews";
+import type { ApplicationVersion } from "@/services/applications";
 import { cn } from "@/utils/cn";
+import { diffFields, type DiffField } from "@/utils/revisionDiff";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 
@@ -124,6 +127,31 @@ export function ApplicationReviewDetailPage() {
   const { application, task, decisions } = review.data;
   const founders = [...currentVersion.snapshot.founders].sort((left, right) => roleOrder[left.role] - roleOrder[right.role]);
   const logo = currentVersion.snapshot.documents.find((document) => document.documentType === "LOGO");
+  // The version submitted before the current one, and the revision request that sent it back.
+  const previous = review.data.versions.filter((version) => version.versionNo < currentVersion.versionNo)
+    .sort((a, b) => b.versionNo - a.versionNo)[0];
+  const revisionRequest = [...decisions].reverse().find((decision) => decision.outcome === "Request revision"
+    && new Date(decision.at) <= new Date(currentVersion.submittedAt));
+  const profiles = review.data.founders;
+  function founderName(userId: string) {
+    return profiles.find((item) => item.id === userId)?.displayName ?? userId;
+  }
+  function documentLabel(type: string) {
+    return type === "LOGO" ? t("applications.logo") : type === "PROPOSAL" ? t("applications.proposal") : type;
+  }
+  const versionFields: DiffField<ApplicationVersion>[] = [
+    { key: "clubName", label: t("reviews.clubName"), read: (v) => v.snapshot.clubName },
+    { key: "field", label: t("reviews.field"), read: (v) => v.snapshot.field ?? "" },
+    { key: "summary", label: t("reviews.summary"), read: (v) => v.snapshot.summary },
+    { key: "objectives", label: t("reviews.objectives"), read: (v) => v.snapshot.objectives },
+    { key: "fanpageUrl", label: t("reviews.fanpageUrl"), read: (v) => v.snapshot.fanpageUrl },
+    { key: "contactEmail", label: t("reviews.contactEmail"), read: (v) => v.snapshot.contactEmail },
+    { key: "founders", label: t("reviews.founders"), read: (v) => [...v.snapshot.founders]
+      .sort((left, right) => roleOrder[left.role] - roleOrder[right.role])
+      .map((founder) => `${founderName(founder.userId)} — ${t(`applications.role${founder.role}`)}`).join("\n") },
+    { key: "documents", label: t("reviews.documents"), read: (v) => v.snapshot.documents
+      .map((document) => `${documentLabel(document.documentType)}: ${document.fileName}`).join("\n") },
+  ];
   const mine = task.assigneeId === auth.data.user.id;
   const isOpen = task.state === "Open" && ["Submitted", "Under Review"].includes(application.state);
   const stateTone = application.state === "Approved" ? "success"
@@ -144,6 +172,8 @@ export function ApplicationReviewDetailPage() {
 
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-10">
+          {previous && <RevisionChanges previousNumber={previous.versionNo} changes={diffFields(previous, currentVersion, versionFields)}
+            requestedSections={revisionRequest?.sections.map(sectionLabel)} reason={revisionRequest?.reason} />}
           <section>
             <h2 className="font-heading text-xl font-bold">{t("reviews.overview")}</h2>
             <dl className="mt-5 grid gap-5 sm:grid-cols-2">
