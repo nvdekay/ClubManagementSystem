@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
+import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
@@ -261,7 +262,6 @@ export function RecruitmentCampaignPage() {
     Screening: "warning", Completed: "neutral", Cancelled: "danger",
   };
   const sub = "text-xs font-semibold text-muted-app";
-  const select = "mt-1 min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 text-sm font-normal text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none";
 
   return <>
     <PageHeader title={t("recruitmentCampaigns.title")} description={t("recruitmentCampaigns.description")}
@@ -340,11 +340,10 @@ export function RecruitmentCampaignPage() {
               <AppInput className="mt-1 block w-full text-sm" value={item.label} {...validation.control(`field.${index}.label`)}
                 onChange={(event) => updateField(index, { label: event.target.value })} />
               <AppFieldError message={validation.error(`field.${index}.label`)} /></label>
-            <label className={sub}>{t("recruitmentCampaigns.fieldType")}
-              <select className={select} value={item.type}
-                onChange={(event) => updateField(index, { type: event.target.value as RecruitmentFormField["type"], options: undefined })}>
-                {(["text", "textarea", "url", "select", "multiselect", "file"] as const).map((type) => <option key={type} value={type}>{t(`recruitmentCampaigns.${type}`)}</option>)}
-              </select></label>
+            <div className={sub}>{t("recruitmentCampaigns.fieldType")}
+              <AppSelect className="mt-1 w-full" label={t("recruitmentCampaigns.fieldType")} value={item.type}
+                onChange={(type) => updateField(index, { type, options: undefined })}
+                options={(["text", "textarea", "url", "select", "multiselect", "file"] as const).map((type) => ({ value: type, label: t(`recruitmentCampaigns.${type}`) }))} /></div>
             {(["select", "multiselect"] as string[]).includes(item.type) && <label className={sub}>{t("recruitmentCampaigns.options")}<AppRequiredMark />
               <AppInput className="mt-1 block w-full text-sm" value={item.options ?? ""} {...validation.control(`field.${index}.options`)}
                 onChange={(event) => updateField(index, { options: event.target.value })} />

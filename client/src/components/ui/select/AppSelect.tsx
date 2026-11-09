@@ -169,7 +169,7 @@ export function AppSelect<T extends string | number>({
         aria-invalid={invalid || undefined}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onTriggerKeyDown}
-        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border-app bg-bg-app pr-2 pl-3.5 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-10 aria-[invalid=true]:border-danger-app aria-[invalid=true]:focus-visible:ring-danger-app"
+        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border-app bg-bg-app px-3.5 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-10 aria-[invalid=true]:border-danger-app aria-[invalid=true]:focus-visible:ring-danger-app"
       >
         <span className="min-w-0 truncate text-left">{options[selectedIndex]?.label ?? ""}</span>
         <ChevronDownIcon />
