@@ -9,6 +9,7 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -142,6 +143,14 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   ]), [t, format, mutation]);
   const table = useTable({ features: appTableFeatures, columns, data: filtered, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   const people = participants.data ?? participantsEmpty;
+  const [attendanceFilter, setAttendanceFilter] = useState<"all" | "checked" | "missing">("all");
+  // Check-in is open once the event is published and running, until attendance is finalized (UC31, UC32).
+  const canCheckIn = Boolean(active && !active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed"].includes(active.state));
+  const confirmedPeople = people.filter((p) => p.state === "Confirmed" || p.attendanceId);
+  const checkedCount = people.filter((p) => p.attendanceId && !p.abnormalFlags.includes("no-show")).length;
+  const shownPeople = attendanceFilter === "all" ? people
+    : attendanceFilter === "checked" ? people.filter((p) => p.attendanceId && !p.abnormalFlags.includes("no-show"))
+      : people.filter((p) => p.state === "Confirmed" && (!p.attendanceId || p.abnormalFlags.includes("no-show")));
 
 
   const runAction = useCallback(async function runAction(action: string, body: object) {
@@ -166,13 +175,21 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const pcolumns = useMemo(() => participantColumns.columns([
     participantColumns.accessor("name", { header: t("clubEvents.name"), cell: (info) => <span className="break-words">{info.getValue()}<br /><span className="text-muted-app">{info.row.original.email}</span></span> }),
     participantColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <span>{info.getValue() ? t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" }) : "—"}{info.row.original.waitlistPosition ? ` #${info.row.original.waitlistPosition}` : ""}</span> }),
+    participantColumns.accessor("checkedInAt", { header: t("clubEvents.checkInColumn"), cell: (info) => {
+      const row = info.row.original;
+      if (!row.attendanceId) return <span className="text-muted-app">{t("clubEvents.notCheckedIn")}</span>;
+      if (row.abnormalFlags.includes("no-show")) return <span className="text-danger-app">{t("clubEvents.noShow")}</span>;
+      return <span className="text-success-app">{row.checkedInAt ? format.format(new Date(row.checkedInAt)) : "✓"}
+        <br /><span className="text-muted-app">{row.method === "self" ? t("clubEvents.methodSelf") : t("clubEvents.methodManual")}</span></span>;
+    } }),
     participantColumns.accessor("abnormalFlags", { header: t("clubEvents.flags"), cell: (info) => <div className="flex flex-col gap-1">{info.getValue().map((flag) => <span key={flag}>{t(`clubEvents.${flag}`, { defaultValue: flag })}</span>)}{info.row.original.correctionReason && <p className="text-muted-app">{info.row.original.correctionReason}</p>}</div> }),
     participantColumns.display({ id: "actions", header: t("clubEvents.action"), cell: (info) => <div className="flex flex-wrap gap-2">
+      {canCheckIn && info.row.original.state === "Confirmed" && !info.row.original.attendanceId && <AppButton onClick={() => openOperation("check-in", info.row.original)}>{t("clubEvents.checkInRow")}</AppButton>}
       {info.row.original.state === "Waitlisted" && active?.state === "Upcoming" && <AppButton disabled={mutation.isPending} onClick={() => void runAction("promote", { registrationId: info.row.original.registrationId })}>{t("clubEvents.promote")}</AppButton>}
       {active?.state === "Completed" && !active.attendanceFinalized && <AppButton onClick={() => openOperation("correct", info.row.original)}>{t("clubEvents.correct")}</AppButton>}
     </div> }),
-  ]), [t, active, mutation.isPending, runAction, openOperation]);
-  const ptable = useTable({ features: appTableFeatures, columns: pcolumns, data: people, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
+  ]), [t, active, mutation.isPending, runAction, openOperation, canCheckIn, format]);
+  const ptable = useTable({ features: appTableFeatures, columns: pcolumns, data: shownPeople, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   async function save(event: FormEvent) {
     event.preventDefault(); if (!auth.data || !eventField.touchAll()) return;
     setFormError(null);
@@ -285,7 +302,12 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       </>}
     </section>}
     {mode === "attendance" && active && <section className="mt-6 space-y-4 rounded-xl border border-border-app p-5">
-      <h2 className="text-xl font-semibold">{active.title}</h2><p>{active.confirmedRegistrationCount} / {active.capacity}</p>
+      <h2 className="text-xl font-semibold">{active.title}</h2>
+      <p>{t("clubEvents.registeredOfCapacity", { count: active.confirmedRegistrationCount, capacity: active.capacity })}
+        {" · "}<strong>{t("clubEvents.checkInStats", { checked: checkedCount, confirmed: confirmedPeople.length })}</strong></p>
+      {active.checkInOpenAt && active.checkInCloseAt && <p className="text-sm text-muted-app">{t("clubEvents.checkInWindow")}: {format.format(new Date(active.checkInOpenAt))} – {format.format(new Date(active.checkInCloseAt))}</p>}
+      {!canCheckIn && !active.attendanceFinalized && <AppNotice tone="warning">{active.state === "Approved" && active.publishedAt
+        ? t("clubEvents.checkInRepublish") : t("clubEvents.checkInNotOpen")}</AppNotice>}
       {active.checkInCode && <p>{t("clubEvents.code")}: <strong>{active.checkInCode}</strong></p>}
       {active.attendanceFinalized && <p>{t("clubEvents.attendanceLocked")}</p>}
       <ErrorMessage error={participants.error} />
@@ -295,6 +317,10 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         {active.state === "Completed" && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={async () => { if (await askConfirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
         {active.attendanceFinalized && auth.data?.systemRoles.includes("ATTENDANCE_UNLOCK") && <AppButton onClick={() => openOperation("unlock")}>{t("clubEvents.unlock")}</AppButton>}
       </div>
+      <div className="w-full sm:w-64"><AppSelect label={t("clubEvents.attendanceFilter")} value={attendanceFilter}
+        onChange={(value) => { setAttendanceFilter(value as typeof attendanceFilter); ptable.setPageIndex(0); }}
+        options={[{ value: "all", label: t("clubEvents.filterAll") }, { value: "checked", label: t("clubEvents.filterChecked") },
+          { value: "missing", label: t("clubEvents.filterMissing") }]} /></div>
       <AppTable table={ptable} emptyMessage={t("clubEvents.noParticipants")} loading={participants.isPending} />
       <TablePager pageIndex={ptable.state.pagination.pageIndex} pageCount={ptable.getPageCount()} onChange={(v) => ptable.setPageIndex(v)} />
     </section>}
