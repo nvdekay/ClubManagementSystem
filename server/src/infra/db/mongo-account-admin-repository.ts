@@ -85,12 +85,12 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
   }
 
   return {
-    async listUsers(search, limit): Promise<AdminUserPage> {
+    async listUsers(search, page, pageSize): Promise<AdminUserPage> {
       const filter = search ? { $or: [
         { email: escapedRegex(search) }, { displayName: escapedRegex(search) },
       ] } : {};
       const [docs, total] = await Promise.all([
-        users.find(filter).sort({ email: 1 }).limit(limit).lean(),
+        users.find(filter).sort({ email: 1, _id: 1 }).skip((page - 1) * pageSize).limit(pageSize).lean(),
         users.countDocuments(filter),
       ]);
       const ids = docs.map((doc) => doc._id);
@@ -110,7 +110,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
             .map((assignment) => roleById.get(String(assignment.roleId)))
             .filter((code): code is string => Boolean(code)),
         })),
-        total,
+        total, page, pageSize,
       };
     },
     async findUser(userId) {
