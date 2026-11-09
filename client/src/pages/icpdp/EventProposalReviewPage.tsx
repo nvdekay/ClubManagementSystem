@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppInput } from "@/components/ui/input/AppInput";
+import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
@@ -238,7 +239,7 @@ export function EventProposalReviewPage() {
                     return <tr key={index} className="align-top">
                       <td className="py-2.5 pr-3 font-medium">{line.category}</td>
                       <td className="py-2.5 pr-3"><p className="break-words">{line.purpose}</p>
-                        {line.plannedItems && <p className="mt-0.5 text-xs text-muted-app">{line.plannedItems}</p>}</td>
+                        {line.plannedItems && <p className="mt-0.5 whitespace-pre-line text-xs text-muted-app">{line.plannedItems}</p>}</td>
                       <td className="py-2.5 pr-3 text-right tabular-nums">{money(line.amount)}</td>
                       {budget && <td className="py-2.5 text-right tabular-nums">{approved ? money(approved.approvedAmount) : "—"}
                         {approved?.reason && <p className="mt-0.5 text-xs text-muted-app">{approved.reason}</p>}</td>}
@@ -343,9 +344,9 @@ export function EventProposalReviewPage() {
                     <label className="block text-sm"><span className="flex flex-wrap justify-between gap-2">
                       <span className="font-medium break-words">{line.category}</span>
                       <span className="text-xs text-muted-app">{t("eventReviews.requestedAmount")}: {money(line.amount)}</span></span>
-                      <AppInput type="number" min={0} max={line.amount} step={1000} inputMode="numeric"
+                      <AppMoneyInput
                         value={amounts[index]?.amount ?? String(budget?.lines[index]?.approvedAmount ?? line.amount)} {...field.control(`amount${index}`)}
-                        onChange={(e) => editLine(index, { amount: e.target.value })} className="mt-1.5 w-full tabular-nums" />
+                        onValueChange={(digits) => editLine(index, { amount: digits })} className="mt-1.5 w-full tabular-nums" />
                       <AppFieldError message={field.error(`amount${index}`)} /></label>
                     {lowered && <AppInput aria-label={t("eventReviews.reductionReason")} placeholder={t("eventReviews.reductionReason")}
                       value={amounts[index]?.reason ?? budget?.lines[index]?.reason ?? ""} maxLength={500} {...field.control(`amountReason${index}`)}

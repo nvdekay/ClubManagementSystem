@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppInput } from "@/components/ui/input/AppInput";
+import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -164,11 +165,11 @@ function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRu
         </div>
         {rule.requestType === "EVENT_PROPOSAL" && <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm font-semibold">{t("routing.minAmount")}
-            <AppInput className="mt-1 block w-full font-normal" type="number" min={0} value={rule.minAmount ?? ""} placeholder={t("routing.anyValue")}
-              onChange={(event) => update(index, { minAmount: optionalNumber(event.target.value) })} /></label>
+            <AppMoneyInput className="mt-1 block w-full font-normal" value={rule.minAmount ?? ""} placeholder={t("routing.anyValue")}
+              onValueChange={(digits) => update(index, { minAmount: optionalNumber(digits) })} /></label>
           <label className="block text-sm font-semibold">{t("routing.maxAmount")}
-            <AppInput className="mt-1 block w-full font-normal" type="number" min={0} value={rule.maxAmount ?? ""} placeholder={t("routing.anyValue")}
-              onChange={(event) => update(index, { maxAmount: optionalNumber(event.target.value) })} /></label>
+            <AppMoneyInput className="mt-1 block w-full font-normal" value={rule.maxAmount ?? ""} placeholder={t("routing.anyValue")}
+              onValueChange={(digits) => update(index, { maxAmount: optionalNumber(digits) })} /></label>
         </div>}
         {rule.requestType === "EVENT_PROPOSAL" && <fieldset className="flex flex-wrap items-center gap-3 text-sm">
           <legend className="mb-1 font-semibold">{t("routing.risks")}</legend>

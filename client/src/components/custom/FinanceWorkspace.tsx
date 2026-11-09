@@ -10,6 +10,7 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
+import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -654,14 +655,11 @@ function FinanceEditor({
           <label className="block text-sm">
             {t("accountability.amount")}
             <AppRequiredMark />
-            <AppInput
+            <AppMoneyInput
               {...expenseField.control("amount")}
-              type="number"
-              min={1}
-              step={1}
               className="mt-1 w-full"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onValueChange={setAmount}
             />
             <AppFieldError message={expenseField.error("amount")} />
           </label>

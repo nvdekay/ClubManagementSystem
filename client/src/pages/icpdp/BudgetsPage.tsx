@@ -9,6 +9,7 @@ import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
+import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
@@ -289,8 +290,8 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
               <h2 className="font-heading text-lg font-bold">{heading}</h2>
               <p className="mt-1 text-sm text-muted-app">{hint}</p>
               <label className="mt-5 block text-sm font-semibold">{t("budgets.amount")}<AppRequiredMark />
-                <AppInput type="number" min={1} max={allowed.max} step={1000} inputMode="numeric" value={amountValue}
-                  readOnly={allowed.exact !== undefined} {...field.control("amount")} onChange={(e) => setAmount(e.target.value)}
+                <AppMoneyInput value={amountValue}
+                  readOnly={allowed.exact !== undefined} {...field.control("amount")} onValueChange={setAmount}
                   className="mt-2 w-full font-normal tabular-nums" />
                 <AppFieldError message={field.error("amount")} />
                 <span className="mt-1 block text-xs font-normal text-muted-app">{t("budgets.amountMax", { amount: money(allowed.max) })}</span></label>
