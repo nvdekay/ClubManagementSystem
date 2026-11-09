@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AuthRepository } from "../../src/domain/auth.js";
 import {
-  normalizedPeriodicDecision, periodicDueAt, periodicDueDays, type PeriodicReportRepository,
+  normalizedPeriodicCampaign, normalizedPeriodicDecision, periodicDueAt, periodicDueDays,
+  type PeriodicReportRepository,
 } from "../../src/domain/periodic-report.js";
 import type { PolicyRepository } from "../../src/domain/policy.js";
-import { periodicReportOverview, recordMissingPeriodicReport } from "../../src/usecase/periodic-report.js";
+import { periodicReportOverview, recordMissingPeriodicReport, savePeriodicCampaign } from "../../src/usecase/periodic-report.js";
 
 const now = new Date("2026-10-10T08:00:00Z");
 const officer = { id: "000000000000000000000001", accountState: "Active" as const };
@@ -14,8 +15,14 @@ const calendar = [
 ];
 
 function deps(roles = ["ICPDP_OFFICER"]) {
-  const repo: PeriodicReportRepository = { overview: vi.fn(async () => []), find: vi.fn(async () => null),
-    decide: vi.fn(async () => ({}) as never), recordMissing: vi.fn(async () => ({ violationId: "x" })) };
+  const repo: PeriodicReportRepository = {
+    overview: vi.fn(async () => []),
+    getCampaign: vi.fn(async () => null),
+    saveCampaign: vi.fn(async (_officerId, input) => ({ ...input, updatedAt: now })),
+    find: vi.fn(async () => null),
+    decide: vi.fn(async () => ({}) as never),
+    recordMissing: vi.fn(async () => ({ violationId: "x" })),
+  };
   const policy: PolicyRepository = { findEffective: vi.fn(async () => ({ academicCalendar: calendar, reportDeadlines: [] }) as never) };
   const auth: Pick<AuthRepository, "systemRoleCodes"> = { systemRoleCodes: async () => roles };
   return { repo, policy, auth };
@@ -29,13 +36,48 @@ describe("periodic report rules", () => {
     expect(periodicDueAt(calendar[0]!, 7).toISOString()).toBe("2026-09-07T00:00:00.000Z");
   });
 
-  it("accepts with an optional observation and returns only with a reason and sections", () => {
+  it("accepts with an optional observation and returns only with a reason, sections and optional resubmitDueAt", () => {
     expect(normalizedPeriodicDecision({ outcome: "Accept", observation: " Thiếu ảnh " })).toEqual({ outcome: "Accept", observation: "Thiếu ảnh" });
     expect(() => normalizedPeriodicDecision({ outcome: "Accept", reason: "x" })).toThrow(/return/);
-    expect(() => normalizedPeriodicDecision({ outcome: "Return", sections: ["narrative"] })).toThrow(/reason/);
+    expect(() => normalizedPeriodicDecision({ outcome: "Return", sections: ["members"] })).toThrow(/reason/);
     expect(() => normalizedPeriodicDecision({ outcome: "Return", reason: "Sửa" })).toThrow(/parts/);
-    expect(normalizedPeriodicDecision({ outcome: "Return", reason: "Sửa", sections: ["figures", "figures"] }))
-      .toEqual({ outcome: "Return", reason: "Sửa", sections: ["figures"] });
+    const resubmitDueAt = new Date("2026-10-20T00:00:00Z");
+    expect(normalizedPeriodicDecision({ outcome: "Return", reason: "Sửa điểm phong trào", sections: ["members", "members"], resubmitDueAt }))
+      .toEqual({ outcome: "Return", reason: "Sửa điểm phong trào", sections: ["members"], resubmitDueAt });
+  });
+
+  it("validates and saves ICPDP periodic report campaign with custom fields", async () => {
+    const ok = deps();
+    const dueAt = new Date("2026-10-25T16:59:59Z");
+    const saved = await savePeriodicCampaign(ok, officer, {
+      periodCode: "Fall 2026",
+      isOpen: true,
+      dueAt,
+      announcement: " Đã mở cổng nộp báo cáo kỳ Fall 2026 ",
+      customFields: [
+        { id: "sponsor", label: " Nhà tài trợ trong kỳ ", type: "text", required: true },
+        { id: "hours", label: "Số giờ tình nguyện", type: "number", required: false },
+      ],
+    }, now);
+    expect(saved).toMatchObject({
+      periodCode: "Fall 2026",
+      isOpen: true,
+      dueAt,
+      announcement: "Đã mở cổng nộp báo cáo kỳ Fall 2026",
+      customFields: [
+        { id: "sponsor", label: "Nhà tài trợ trong kỳ", type: "text", required: true },
+        { id: "hours", label: "Số giờ tình nguyện", type: "number", required: false },
+      ],
+    });
+    expect(() => normalizedPeriodicCampaign({
+      periodCode: "Fall 2026",
+      isOpen: true,
+      dueAt,
+      customFields: [
+        { id: "dup", label: "A", type: "text", required: true },
+        { id: "dup", label: "B", type: "number", required: false },
+      ],
+    })).toThrow(/duplicate/);
   });
 
   it("defaults to the latest ended semester and refuses a missing report before it is due", async () => {

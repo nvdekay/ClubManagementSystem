@@ -172,7 +172,7 @@ export function buildApp(deps: {
     next();
   });
   app.use(requestLogger); // before body parsing, so requests the parser rejects still get a log line
-  app.use(express.json());
+  app.use(express.json({ limit: "5mb" }));
   app.get("/api/v1/health", (_req, res) => {
     const ok = deps.dbReady(); // 503 when the DB is down, so orchestrators stop routing here
     res.status(ok ? 200 : 503).json({ ok });

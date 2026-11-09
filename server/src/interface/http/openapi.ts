@@ -13,7 +13,7 @@ import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
-import { periodicDecisionBody, periodicMissingBody, periodicOverviewQuery } from "./periodic-report-routes.js";
+import { periodicCampaignBody, periodicDecisionBody, periodicMissingBody, periodicOverviewQuery } from "./periodic-report-routes.js";
 import { violationOpenBody, violationStepBody } from "./violation-routes.js";
 import { schoolEventBody, schoolEventConflictQuery, schoolEventInviteBody } from "./school-event-routes.js";
 import { evaluationManualBody, evaluationOverviewQuery, evaluationPeriodBody } from "./evaluation-routes.js";
@@ -218,9 +218,16 @@ const PeriodFigures = z.object({
     disbursedTotal: z.number().optional() }).optional(),
   capturedAt: z.string().optional(),
 });
+const PeriodicCampaign = z.object({
+  periodCode: z.string(), isOpen: z.boolean(), dueAt: z.string(), announcement: z.string().optional(),
+  customFields: z.array(z.object({ id: z.string(), label: z.string(), description: z.string().optional(),
+    type: z.enum(["text", "number", "evidence"]), required: z.boolean() })),
+  updatedAt: z.string().optional(),
+});
 const PeriodicOverview = z.object({
   periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
   periodCode: z.string().optional(), dueAt: z.string().optional(),
+  campaign: PeriodicCampaign.optional(),
   rows: z.array(z.object({ clubId: z.string(), clubName: z.string(), clubState: z.string(), dueAt: z.string(),
     reportId: z.string().optional(), state: z.string().optional(), versionNo: z.number().optional(),
     lateFlag: z.boolean().optional(), submittedAt: z.string().optional(), overdue: z.boolean(),
@@ -1555,6 +1562,17 @@ export const openApiDocument = createDocument({
         requestParams: { query: periodicOverviewQuery },
         responses: {
           "200": { description: "Overview", content: { "application/json": { schema: envelope(PeriodicOverview) } } },
+          "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/periodic-reports/campaign": {
+      put: {
+        summary: "Open or update periodic report submission campaign, deadline and custom fields for a semester (requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: periodicCampaignBody } } },
+        responses: {
+          "200": { description: "Saved campaign", content: { "application/json": { schema: envelope(PeriodicCampaign) } } },
+          "400": { description: "Invalid period, deadline or custom fields", content: { "application/json": { schema: ApiError } } },
           "403": { description: "ICPDP Officer role required", content: { "application/json": { schema: ApiError } } },
         },
       },
