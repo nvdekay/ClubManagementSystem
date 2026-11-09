@@ -1,161 +1,101 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
-import { AppInput } from "@/components/ui/input/AppInput";
+import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
-import { AppSelect } from "@/components/ui/select/AppSelect";
-import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { useAccountAction, useAccounts } from "@/hooks/useAccounts";
-import { useAuth } from "@/hooks/useAuth";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
-import { useViolations } from "@/hooks/useViolations";
-import { type AccountAction, type AdminUserClub, type SystemRoleCode } from "@/services/accounts";
-import { cn } from "@/utils/cn";
+import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/ui/table/AppTable";
+import { useAccounts } from "@/hooks/useAccounts";
+import { type AdminUserClub, type AdminUserPage } from "@/services/accounts";
+import { AccountManageDialog } from "./AccountManageDialog";
+
+type AccountRow = AdminUserPage["items"][number];
+
+const PAGE_SIZE = 10;
+const columns = createColumnHelper<AppTableFeatures, AccountRow>();
+const emptyRows: AccountRow[] = [];
 
 export function AccountsPage() {
   const { t } = useTranslation();
-  const auth = useAuth();
-  const [search, setSearch] = useState("");
+  // Search term and page move together: a new term always starts again from page 1.
+  const [query, setQuery] = useState({ search: "", page: 1 });
+  const { search, page } = query;
   const [targetId, setTargetId] = useState("");
-  const [roleCode, setRoleCode] = useState<SystemRoleCode>("ICPDP_OFFICER");
-  const [reason, setReason] = useState("");
-  const [violationId, setViolationId] = useState("");
-  const accounts = useAccounts(search, true);
-  const accountAction = useAccountAction();
-  // Revoke, lock and unlock need a reason (granting does not), so it is only flagged when one of those is pressed.
-  const field = useFieldValidation({ reason: reason.trim() ? null : t("common.fieldRequired") });
-  const target = accounts.data?.items.find((item) => item.user.id === targetId);
-  // UC03 A1: an emergency lock may be recorded under an open UC40 case.
-  const violations = useViolations(Boolean(target));
-  const caseOptions = [{ value: "", label: t("auth.noLinkedCase") },
-    ...(violations.data ?? []).filter((item) => !["Resolved", "Closed"].includes(item.state))
-      .map((item) => ({ value: item.id, label: `${item.title} · ${item.clubName}` }))];
-  const roleOptions: Array<{ value: SystemRoleCode; label: string }> = [
-    { value: "ICPDP_OFFICER", label: t("auth.officerRole") },
-    { value: "ICPDP_HEAD", label: t("auth.headRole") },
-    { value: "ATTENDANCE_UNLOCK", label: t("auth.attendanceRole") },
-  ];
+  const accounts = useAccounts(search, page, PAGE_SIZE, true);
+  // AppSearchInput calls this again after renders with the same term, so the page only resets on a new term.
+  const applySearch = useCallback((value: string) => {
+    setQuery((current) => current.search === value ? current : { search: value, page: 1 });
+  }, []);
+  const rows = accounts.data?.items ?? emptyRows;
+  const target = rows.find((item) => item.user.id === targetId);
+  const pageCount = accounts.data ? Math.max(1, Math.ceil(accounts.data.total / PAGE_SIZE)) : 1;
 
-  function clubLabel(club: AdminUserClub): string {
-    const state = club.membershipState === "Active" ? t("auth.membershipActive")
+  function membershipLabel(club: AdminUserClub): string {
+    return club.membershipState === "Active" ? t("auth.membershipActive")
       : club.membershipState === "Inactive" ? t("auth.membershipInactive")
         : club.membershipState === "Banned" ? t("auth.membershipBanned") : club.membershipState;
-    return [club.clubName, state, ...club.positions].join(" · ");
   }
 
   function systemRoleLabel(code: string): string {
-    if (code === "ICPDP_OFFICER") return t("auth.officerRole");
-    if (code === "ICPDP_HEAD") return t("auth.headRole");
-    if (code === "ATTENDANCE_UNLOCK") return t("auth.attendanceRole");
+    if (code === "ICPDP_OFFICER") return t("auth.officerRoleShort");
+    if (code === "ICPDP_HEAD") return t("auth.headRoleShort");
+    if (code === "ATTENDANCE_UNLOCK") return t("auth.attendanceRoleShort");
     return code;
   }
 
-  async function updateAccount(kind: AccountAction["kind"]) {
-    if (!auth.data || !target || (kind !== "grant" && !field.touchAll())) return;
-    const action: AccountAction = kind === "grant" || kind === "revoke"
-      ? { kind, userId: target.user.id, roleCode, reason }
-      : kind === "lock" ? { kind, userId: target.user.id, reason, ...(violationId ? { violationId } : {}) }
-        : { kind, userId: target.user.id, reason };
-    try {
-      await accountAction.mutateAsync({ action, csrfToken: auth.data.csrfToken });
-      setReason("");
-      setViolationId("");
-      field.reset();
-    } catch {
-      // The mutation exposes the error state below.
-    }
-  }
+
+  const tableColumns = useMemo(() => columns.columns([
+    columns.accessor((row) => row.user.displayName, { id: "user", header: t("auth.colUser"), cell: (info) => <div className="min-w-0">
+      <p className="font-semibold break-words">{info.row.original.user.displayName}</p>
+      <p className="text-xs break-all text-muted-app">{info.row.original.user.email}</p>
+    </div> }),
+    columns.accessor((row) => row.user.accountState, { id: "state", header: t("auth.colState"), cell: (info) => <div>
+      <AppBadge tone={info.getValue() === "Locked" ? "danger" : "success"}>
+        {info.getValue() === "Locked" ? t("auth.lockedState") : t("auth.activeState")}</AppBadge>
+      {info.row.original.lockCase && <p className="mt-1 max-w-56 text-xs break-words text-danger-app">
+        {t("auth.lockCase", { title: info.row.original.lockCase.title, club: info.row.original.lockCase.clubName })}</p>}
+    </div> }),
+    columns.accessor((row) => row.systemRoles.join(","), { id: "roles", header: t("auth.colRoles"), cell: (info) =>
+      info.row.original.systemRoles.length ? <div className="flex flex-wrap gap-1">{info.row.original.systemRoles.map((code) =>
+        <AppBadge key={code} tone="info">{systemRoleLabel(code)}</AppBadge>)}</div>
+        : <span className="text-muted-app">—</span> }),
+    columns.accessor((row) => row.clubs.length, { id: "clubs", header: t("auth.colClubs"), cell: (info) => {
+      const clubs = info.row.original.clubs;
+      if (!clubs.length) return <span className="text-muted-app">{t("auth.noClubs")}</span>;
+      return <ul className="space-y-0.5 text-xs">{clubs.slice(0, 2).map((club) => <li key={club.clubId} className="break-words">
+        <span className="font-medium">{club.clubName}</span>
+        <span className="text-muted-app"> · {[membershipLabel(club), ...club.positions].join(" · ")}</span></li>)}
+        {clubs.length > 2 && <li className="text-muted-app">{t("auth.moreClubs", { count: clubs.length - 2 })}</li>}</ul>;
+    } }),
+    columns.display({ id: "actions", header: t("auth.colActions"), cell: (info) =>
+      <AppButton variant="secondary" onClick={() => setTargetId(info.row.original.user.id)}>{t("auth.manage")}</AppButton> }),
+  // The label helpers only read t.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ]), [t]);
+  const table = useTable({ features: appTableFeatures, columns: tableColumns, data: rows,
+    initialState: { pagination: { pageIndex: 0, pageSize: PAGE_SIZE } } });
 
   return (
     <>
       <PageHeader title={t("auth.manageAccounts")} description={t("auth.manageAccountsDescription")} />
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <section aria-label={t("auth.manageAccounts")}>
-          <AppSearchInput className="w-full" placeholder={t("auth.searchUsers")} onSearch={setSearch} />
-          {accounts.isPending ? (
-            <div className="mt-4 space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-16 w-full" />)}</div>
-          ) : accounts.isError ? (
-            <p role="alert" className="mt-4 text-sm text-danger-app">{accounts.error.message}</p>
-          ) : accounts.data.items.length === 0 ? (
-            <p className="mt-6 text-sm text-muted-app">{t("auth.noUsers")}</p>
-          ) : (
-            <ul className="mt-4 divide-y divide-border-app border-y border-border-app">
-              {accounts.data.items.map((item) => (
-                <li key={item.user.id} className={cn("flex flex-wrap items-center justify-between gap-3 px-2 py-3.5", {
-                  "bg-primary-soft-app": item.user.id === targetId,
-                })}>
-                  <div className="min-w-0">
-                    <p className="font-semibold">{item.user.displayName}</p>
-                    <p className="truncate text-sm text-muted-app">{item.user.email}</p>
-                    <p className="mt-1 text-xs text-muted-app">
-                      <span className={cn("font-semibold", item.user.accountState === "Locked" ? "text-danger-app" : "text-success-app")}>
-                        {item.user.accountState === "Locked" ? t("auth.lockedState") : t("auth.activeState")}
-                      </span>
-                      {item.systemRoles.length > 0 && ` · ${item.systemRoles.map(systemRoleLabel).join(", ")}`}
-                    </p>
-                    <p className="mt-1 text-xs break-words text-muted-app">
-                      {item.clubs.length ? item.clubs.map(clubLabel).join("; ") : t("auth.noClubs")}
-                    </p>
-                    {item.lockCase && <p className="mt-1 text-xs break-words text-danger-app">
-                      {t("auth.lockCase", { title: item.lockCase.title, club: item.lockCase.clubName })}</p>}
-                  </div>
-                  <AppButton variant="secondary" aria-pressed={item.user.id === targetId}
-                    onClick={() => { setTargetId(item.user.id); setReason(""); setViolationId(""); accountAction.reset(); field.reset(); }}>
-                    {t("auth.manage")}
-                  </AppButton>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      <section aria-label={t("auth.manageAccounts")} className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <AppSearchInput className="w-full sm:max-w-md" placeholder={t("auth.searchUsers")}
+            onSearch={applySearch} />
+          {accounts.data && <p className="text-sm text-muted-app">{t("auth.totalUsers", { count: accounts.data.total })}</p>}
+        </div>
+        {accounts.isError ? <p role="alert" className="text-sm text-danger-app">{accounts.error.message}</p> : <>
+          <AppTable table={table} emptyMessage={t("auth.noUsers")} loading={accounts.isPending} />
+          <AppPagination pageIndex={page - 1} pageCount={pageCount} onPageChange={(index) => setQuery((current) => ({ ...current, page: index + 1 }))}
+            prevLabel={t("users.previousPage")} nextLabel={t("users.nextPage")}
+            pageLabel={(value) => t("users.gotoPage", { page: value })} navLabel={t("users.paginationLabel")} />
+        </>}
+      </section>
 
-        {target && (
-          <section aria-label={target.user.displayName} className="space-y-4 rounded-2xl bg-surface-app p-5 lg:sticky lg:top-6">
-            <div>
-              <h2 className="font-heading text-lg font-bold">{target.user.displayName}</h2>
-              <p className="truncate text-sm text-muted-app">{target.user.email}</p>
-            </div>
-            <label className="block text-sm font-medium">
-              {t("auth.role")}
-              <AppSelect className="mt-2 block w-full" label={t("auth.role")}
-                value={roleCode} options={roleOptions} onChange={setRoleCode} />
-            </label>
-            <label className="block text-sm font-medium">
-              {t("auth.reason")}
-              <AppInput className="mt-2 block w-full" value={reason} aria-invalid={field.error("reason") ? true : undefined}
-                onChange={(event) => setReason(event.target.value)} maxLength={1000} />
-              <AppFieldError message={field.error("reason")} />
-            </label>
-            {target.user.accountState === "Active" && <label className="block text-sm font-medium">
-              {t("auth.linkedCase")}
-              <AppSelect className="mt-2 block w-full" label={t("auth.linkedCase")}
-                value={violationId} options={caseOptions} onChange={setViolationId} />
-            </label>}
-            <div className="flex flex-wrap gap-2">
-              <AppButton disabled={accountAction.isPending} onClick={() => void updateAccount("grant")}>
-                {t("auth.grant")}
-              </AppButton>
-              <AppButton variant="secondary" disabled={accountAction.isPending}
-                onClick={() => void updateAccount("revoke")}>{t("auth.revoke")}</AppButton>
-              <AppButton variant="secondary" disabled={accountAction.isPending}
-                onClick={() => void updateAccount("lock")}>{t("auth.lock")}</AppButton>
-              <AppButton variant="secondary" disabled={accountAction.isPending}
-                onClick={() => void updateAccount("unlock")}>{t("auth.unlock")}</AppButton>
-            </div>
-            {accountAction.isError && (
-              <p role="alert" className="text-sm text-danger-app">
-                {t("auth.saveError")} {accountAction.error.message}
-              </p>
-            )}
-            {accountAction.isSuccess && (
-              <p role="status" className="text-sm text-success-app">{t("auth.saveSuccess")}</p>
-            )}
-          </section>
-        )}
-      </div>
+      <AccountManageDialog account={target} onClose={() => setTargetId("")} />
     </>
   );
 }
