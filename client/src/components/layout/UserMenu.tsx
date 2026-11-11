@@ -71,7 +71,7 @@ export function UserMenu({ user, csrfToken }: UserMenuProps) {
       </button>
       {open && (
         <div id={menuId} role="menu" aria-label={t("common.accountMenu", { name: user.displayName })}
-          className="absolute top-full right-0 z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-border-app bg-bg-app p-2 shadow-xl">
+          className="absolute top-full right-0 z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-border-app bg-bg-app p-2 shadow-xl transition-[opacity,translate] duration-150 ease-out starting:-translate-y-1 starting:opacity-0">
           <div className="flex items-center gap-3 px-3 pt-2 pb-3">
             {avatar("size-11 text-base")}
             <span className="min-w-0 flex-1">

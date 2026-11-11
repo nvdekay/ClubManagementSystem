@@ -62,7 +62,7 @@ export function SidebarAccountMenu({ user, compact, signingOut, onSignOut }: Sid
       </button>
       {open && (
         <div id={menuId} role="menu" aria-label={label}
-          className={cn("absolute z-40 w-60 rounded-2xl border border-border-app bg-bg-app p-1.5 shadow-xl",
+          className={cn("absolute z-40 w-60 rounded-2xl border border-border-app bg-bg-app p-1.5 shadow-xl transition-[opacity,translate] duration-150 ease-out starting:translate-y-1 starting:opacity-0",
             compact ? "bottom-0 left-full ml-2" : "bottom-full left-0 mb-2")}>
           <button role="menuitem" type="button" onClick={toggleTheme} className={cn(itemClass, "text-text-app hover:bg-surface-app")}>
             <AppIcon name={theme === "dark" ? "sun" : "moon"} className="size-4.5 text-muted-app" />

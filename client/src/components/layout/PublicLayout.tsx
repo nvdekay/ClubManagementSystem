@@ -5,6 +5,7 @@ import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { useAuth } from "@/hooks/useAuth";
+import { usePageTransition } from "@/hooks/usePageTransition";
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/utils/cn";
 
@@ -24,6 +25,7 @@ export function PublicLayout() {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const pageRef = usePageTransition<HTMLElement>();
   const auth = useAuth();
   // Bring the visitor back to the page they were reading after signing in.
   const loginTarget = `/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
@@ -57,7 +59,7 @@ export function PublicLayout() {
         </div>
       </header>
       {/* The landing page draws full-width bands, so it manages its own width. */}
-      <main className={cn("mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12", { "max-w-none p-0 sm:p-0": location.pathname === "/" })}>
+      <main ref={pageRef} className={cn("mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12", { "max-w-none p-0 sm:p-0": location.pathname === "/" })}>
         <Outlet />
       </main>
       <footer className="bg-hero-app text-on-hero-app">
