@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -16,13 +17,13 @@ export function ClubEvaluationsPage() {
   if (!allowed) return <AppNotice tone="danger">{t("clubCompliance.denied")}</AppNotice>;
   return <><PageHeader title={t("clubCompliance.evaluations")} />{query.isPending && <AppSkeleton className="h-64 w-full" />}
     {query.isError && <AppNotice tone="danger" role="alert">{query.error.message}<AppButton onClick={() => void query.refetch()}>{t("clubCompliance.retry")}</AppButton></AppNotice>}
-    {query.data?.length === 0 && <AppNotice>{t("clubCompliance.empty")}</AppNotice>}
-    <div className="space-y-6">{query.data?.map((e) => <section key={e.id} className="space-y-4 rounded-2xl border border-border-app bg-surface-app p-5">
-      <h2 className="text-xl font-bold">{e.periodCode} · {t("clubCompliance.version")} {e.revisionNo}</h2>
+    {query.data?.length === 0 && <AppEmptyState variant="boxed" message={t("clubCompliance.empty")} />}
+    <div className="space-y-6">{query.data?.map((e) => <section key={e.id} className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <h2 className="font-heading text-base font-semibold">{e.periodCode} · {t("clubCompliance.version")} {e.revisionNo}</h2>
       {e.publishedAt && <p>{new Date(e.publishedAt).toLocaleString(i18n.language)}</p>}
-      <p className="text-lg font-bold">{t("clubCompliance.score")}: {e.totalScore ?? t("clubCompliance.missing")} {e.classification && `· ${t(`evaluations.rating${e.classification}`)}`}</p>
+      <p className="text-xl font-semibold tabular-nums">{t("clubCompliance.score")}: {e.totalScore ?? t("clubCompliance.missing")} {e.classification && `· ${t(`evaluations.rating${e.classification}`)}`}</p>
       <div className="space-y-3">{e.dimensions.map((d) => <article key={d.code} className="border-t border-border-app pt-3">
-        <div className="flex flex-wrap justify-between gap-3"><h3 className="font-semibold">{d.name}</h3><span>{d.score ?? t("clubCompliance.missing")} · {t("evaluations.weight")}: {d.weight}%</span></div>
+        <div className="flex flex-wrap justify-between gap-3"><h3 className="text-sm font-semibold">{d.name}</h3><span>{d.score ?? t("clubCompliance.missing")} · {t("evaluations.weight")}: {d.weight}%</span></div>
         {d.justification && <p className="whitespace-pre-wrap break-words">{d.justification}</p>}
         <details><summary>{t("clubCompliance.sources")}</summary><dl className="grid grid-cols-2 gap-2 pt-2">{d.evidence.map((s, n) => <div key={n} className="col-span-2 flex flex-wrap justify-between gap-2"><dt>{metric(s.metric)} ({s.sourcePeriod})</dt><dd>{s.value}</dd></div>)}</dl></details>
       </article>)}</div>

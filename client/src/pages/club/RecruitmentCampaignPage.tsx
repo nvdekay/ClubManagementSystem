@@ -5,6 +5,7 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppInput } from "@/components/ui/input/AppInput";
@@ -261,7 +262,7 @@ export function RecruitmentCampaignPage() {
     Draft: "neutral", Published: "info", "Accepting Applications": "success",
     Screening: "warning", Completed: "neutral", Cancelled: "danger",
   };
-  const sub = "text-xs font-semibold text-muted-app";
+  const sub = "text-xs font-medium text-muted-app";
 
   return <>
     <PageHeader title={t("recruitmentCampaigns.title")} description={t("recruitmentCampaigns.description")}
@@ -270,12 +271,12 @@ export function RecruitmentCampaignPage() {
     {notice && <AppNotice tone="success" role="status" className="mb-4">{notice}</AppNotice>}
     {pageError && <AppNotice tone="danger" role="alert" className="mb-4">{pageError}</AppNotice>}
 
-    {overlaps.length > 0 && <section className="mb-6 rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-5 py-4" aria-live="polite">
-      <h2 className="font-heading font-bold text-warning-app">{t("recruitmentCampaigns.overlapTitle")}</h2>
+    {overlaps.length > 0 && <section className="mb-6 rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs" aria-live="polite">
+      <h2 className="font-heading text-base font-semibold text-warning-app">{t("recruitmentCampaigns.overlapTitle")}</h2>
       <p className="mt-1 text-sm">{t("recruitmentCampaigns.overlapDescription")}</p>
       <ul className="mt-3 divide-y divide-border-app">{overlaps.map((overlap) => <li key={overlap.id} className="py-3">
-        <span className="text-xs font-semibold text-muted-app uppercase">{t("recruitmentCampaigns.overlapWith")}</span>
-        <p className="mt-1 font-semibold break-words">{overlap.title}</p>
+        <span className="text-xs font-medium text-muted-app">{t("recruitmentCampaigns.overlapWith")}</span>
+        <p className="mt-1 font-medium break-words">{overlap.title}</p>
         <p className="mt-1 text-sm text-muted-app">{overlap.positions.join(", ")} · {dateLabel(overlap.windowStart)} – {dateLabel(overlap.windowEnd)}</p>
       </li>)}</ul>
       <div className="mt-3 flex flex-wrap gap-3">
@@ -286,52 +287,52 @@ export function RecruitmentCampaignPage() {
       </div>
     </section>}
 
-    <div className="grid items-start gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.8fr)]">
-      <section aria-label={t("recruitmentCampaigns.formTitle")} className="min-w-0">
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.8fr)]">
+      <section aria-label={t("recruitmentCampaigns.formTitle")} className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div><p className="text-xs font-bold tracking-wide text-primary-app uppercase">{t("recruitmentCampaigns.formTitle")}</p>
-            <h2 className="mt-1 font-heading text-xl font-bold">{current ? t("recruitmentCampaigns.edit") : t("recruitmentCampaigns.create")}</h2></div>
+          <div><p className="text-xs font-medium text-muted-app">{t("recruitmentCampaigns.formTitle")}</p>
+            <h2 className="mt-0.5 font-heading text-base font-semibold">{current ? t("recruitmentCampaigns.edit") : t("recruitmentCampaigns.create")}</h2></div>
           {current && <AppBadge tone={stateTone[current.state]}>{stateLabel[current.state]}</AppBadge>}
         </div>
         <div className="mt-5 grid gap-5">
-          <label className="text-sm font-semibold">{t("recruitmentCampaigns.campaignName")}<AppRequiredMark />
-            <AppInput className="mt-2 block w-full font-normal" value={form.title} maxLength={150}
+          <label className="text-sm font-medium text-text-app">{t("recruitmentCampaigns.campaignName")}<AppRequiredMark />
+            <AppInput className="mt-1.5 block w-full font-normal" value={form.title} maxLength={150}
               {...validation.control("title")} onChange={(event) => field("title", event.target.value)} />
             <AppFieldError message={validation.error("title")} /></label>
-          <label className="text-sm font-semibold">{t("recruitmentCampaigns.positions")}<AppRequiredMark />
-            <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={form.positions}
+          <label className="text-sm font-medium text-text-app">{t("recruitmentCampaigns.positions")}<AppRequiredMark />
+            <AppTextarea className="mt-1.5 block min-h-24 w-full font-normal" value={form.positions}
               {...validation.control("positions")} onChange={(event) => field("positions", event.target.value)} />
             <AppFieldError message={validation.error("positions")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentCampaigns.positionsHint")}</span></label>
-          <label className="text-sm font-semibold">{t("recruitmentCampaigns.criteria")}
-            <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={form.criteria} maxLength={10_000}
+          <label className="text-sm font-medium text-text-app">{t("recruitmentCampaigns.criteria")}
+            <AppTextarea className="mt-1.5 block min-h-24 w-full font-normal" value={form.criteria} maxLength={10_000}
               onChange={(event) => field("criteria", event.target.value)} /></label>
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="min-w-0 text-sm font-semibold">{t("recruitmentCampaigns.start")}<AppRequiredMark />
-              <AppInput className="mt-2 block w-full min-w-0 font-normal" type="datetime-local" value={form.windowStart}
+            <label className="min-w-0 text-sm font-medium text-text-app">{t("recruitmentCampaigns.start")}<AppRequiredMark />
+              <AppInput className="mt-1.5 block w-full min-w-0 font-normal" type="datetime-local" value={form.windowStart}
                 {...validation.control("windowStart")} onChange={(event) => field("windowStart", event.target.value)} />
               <AppFieldError message={validation.error("windowStart")} /></label>
-            <label className="min-w-0 text-sm font-semibold">{t("recruitmentCampaigns.end")}<AppRequiredMark />
-              <AppInput className="mt-2 block w-full min-w-0 font-normal" type="datetime-local" value={form.windowEnd}
+            <label className="min-w-0 text-sm font-medium text-text-app">{t("recruitmentCampaigns.end")}<AppRequiredMark />
+              <AppInput className="mt-1.5 block w-full min-w-0 font-normal" type="datetime-local" value={form.windowEnd}
                 {...validation.control("windowEnd")} onChange={(event) => field("windowEnd", event.target.value)} />
               <AppFieldError message={validation.error("windowEnd")} /></label>
           </div>
-          <label className="max-w-xs text-sm font-semibold">{t("recruitmentCampaigns.capacity")}<AppRequiredMark />
-            <AppInput className="mt-2 block w-full font-normal" type="number" min={1} max={10000} value={form.capacity}
+          <label className="max-w-xs text-sm font-medium text-text-app">{t("recruitmentCampaigns.capacity")}<AppRequiredMark />
+            <AppInput className="mt-1.5 block w-full font-normal" type="number" min={1} max={10000} value={form.capacity}
               {...validation.control("capacity")} onChange={(event) => field("capacity", event.target.value)} />
             <AppFieldError message={validation.error("capacity")} /></label>
-          <label className="text-sm font-semibold">{t("recruitmentCampaigns.rounds")}<AppRequiredMark />
-            <AppTextarea className="mt-2 block min-h-24 w-full font-normal" value={form.steps}
+          <label className="text-sm font-medium text-text-app">{t("recruitmentCampaigns.rounds")}<AppRequiredMark />
+            <AppTextarea className="mt-1.5 block min-h-24 w-full font-normal" value={form.steps}
               {...validation.control("steps")} onChange={(event) => field("steps", event.target.value)} />
             <AppFieldError message={validation.error("steps")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentCampaigns.roundsHint")}</span></label>
         </div>
 
-        <section className="mt-10 border-t border-border-app pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-heading text-lg font-bold">{t("recruitmentCampaigns.applicationForm")}</h3>
+        <section className="mt-8 border-t border-border-app pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-heading text-sm font-semibold">{t("recruitmentCampaigns.applicationForm")}</h3>
             <AppButton variant="secondary" onClick={addField}><AppIcon name="plus" className="size-4" />{t("recruitmentCampaigns.addField")}</AppButton></div>
           {!form.fields.length && <p className="mt-3 text-sm text-muted-app">{t("recruitmentCampaigns.optional")}</p>}
-          <div className="mt-4 space-y-3">{form.fields.map((item, index) => <div key={`${item.key}-${index}`} className="grid gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2">
+          <div className="mt-4 space-y-3">{form.fields.map((item, index) => <div key={`${item.key}-${index}`} className="grid gap-3 rounded-xl border border-border-app bg-surface-app p-4 sm:grid-cols-2">
             <label className={sub}>{t("recruitmentCampaigns.fieldKey")}<AppRequiredMark />
               <AppInput className="mt-1 block w-full text-sm" value={item.key} {...validation.control(`field.${index}.key`)}
                 onChange={(event) => updateField(index, { key: event.target.value })} />
@@ -351,16 +352,16 @@ export function RecruitmentCampaignPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
               <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" className="size-4 accent-primary-app" checked={item.required}
                 onChange={(event) => updateField(index, { required: event.target.checked })} />{t("recruitmentCampaigns.required")}</label>
-              <AppButton variant="ghost" className="hover:text-danger-app" onClick={() => field("fields", form.fields.filter((_, itemIndex) => itemIndex !== index))}>{t("recruitmentCampaigns.remove")}</AppButton>
+              <AppButton variant="ghost" className="text-muted-app hover:text-danger-app" onClick={() => field("fields", form.fields.filter((_, itemIndex) => itemIndex !== index))}>{t("recruitmentCampaigns.remove")}</AppButton>
             </div>
           </div>)}</div>
         </section>
 
-        <section className="mt-10 border-t border-border-app pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-heading text-lg font-bold">{t("recruitmentCampaigns.rubric")}</h3>
+        <section className="mt-8 border-t border-border-app pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-heading text-sm font-semibold">{t("recruitmentCampaigns.rubric")}</h3>
             <AppButton variant="secondary" onClick={addRubric}><AppIcon name="plus" className="size-4" />{t("recruitmentCampaigns.addCriterion")}</AppButton></div>
-          {!form.rubric.length && <p className="mt-3 text-sm text-muted-app">{t("recruitmentCampaigns.noRubric")}</p>}
-          <div className="mt-4 space-y-3">{form.rubric.map((item, index) => <div key={`${item.key}-${index}`} className="grid gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-[0.7fr_1.5fr_0.5fr_auto] sm:items-end">
+          {!form.rubric.length && <div className="mt-3"><AppEmptyState variant="boxed" message={t("recruitmentCampaigns.noRubric")} /></div>}
+          <div className="mt-4 space-y-3">{form.rubric.map((item, index) => <div key={`${item.key}-${index}`} className="grid gap-3 rounded-xl border border-border-app bg-surface-app p-4 sm:grid-cols-[0.7fr_1.5fr_0.5fr_auto] sm:items-start">
             <label className={sub}>{t("recruitmentCampaigns.criterionKey")}<AppRequiredMark />
               <AppInput className="mt-1 block w-full text-sm" value={item.key} {...validation.control(`rubric.${index}.key`)}
                 onChange={(event) => updateRubric(index, { key: event.target.value })} />
@@ -373,11 +374,11 @@ export function RecruitmentCampaignPage() {
               <AppInput className="mt-1 block w-full text-sm" type="number" min={1} max={100} value={item.maxScore}
                 {...validation.control(`rubric.${index}.maxScore`)} onChange={(event) => updateRubric(index, { maxScore: Number(event.target.value) })} />
               <AppFieldError message={validation.error(`rubric.${index}.maxScore`)} /></label>
-            <AppButton variant="ghost" className="hover:text-danger-app" onClick={() => field("rubric", form.rubric.filter((_, itemIndex) => itemIndex !== index))}>{t("recruitmentCampaigns.remove")}</AppButton>
+            <AppButton variant="ghost" className="text-muted-app hover:text-danger-app sm:mt-5" onClick={() => field("rubric", form.rubric.filter((_, itemIndex) => itemIndex !== index))}>{t("recruitmentCampaigns.remove")}</AppButton>
           </div>)}</div>
         </section>
 
-        <div className="mt-10 flex flex-wrap gap-3 border-t border-border-app pt-6">
+        <div className="mt-8 flex flex-wrap gap-3 border-t border-border-app pt-6">
           <AppButton disabled={action.isPending} onClick={() => void saveDraft()}>
             {action.isPending ? t("recruitmentCampaigns.saving") : t("recruitmentCampaigns.saveDraft")}</AppButton>
           {current?.state === "Draft" && <AppButton variant="secondary" disabled={action.isPending}
@@ -385,18 +386,18 @@ export function RecruitmentCampaignPage() {
         </div>
       </section>
 
-      <section className="min-w-0 lg:sticky lg:top-6">
-        <h2 className="font-heading text-lg font-bold">{t("recruitmentCampaigns.campaignList")}</h2>
+      <section className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs lg:sticky lg:top-20">
+        <h2 className="font-heading text-base font-semibold">{t("recruitmentCampaigns.campaignList")}</h2>
         {!campaigns.data.length ? <AppNotice className="mt-4" title={t("recruitmentCampaigns.empty")}>
           <p className="text-muted-app">{t("recruitmentCampaigns.emptyHint")}</p>
-        </AppNotice> : <ul className="mt-4 divide-y divide-border-app border-y border-border-app">{campaigns.data.map((campaign) => <li key={campaign.id}
-          className={cn("px-1 py-4", { "bg-primary-soft-app": campaign.id === selectedId })}>
+        </AppNotice> : <ul className="-mx-5 mt-4 divide-y divide-border-app border-t border-border-app">{campaigns.data.map((campaign) => <li key={campaign.id}
+          className={cn("px-5 py-4", { "bg-surface-app": campaign.id === selectedId })}>
           <div className="flex flex-wrap items-start justify-between gap-2">
             {campaign.state === "Draft" ? <button className="min-w-0 flex-1 rounded-lg text-left hover:text-primary-app focus-visible:outline-2 focus-visible:outline-ring-app" onClick={() => selectCampaign(campaign)}>
-              <span className="block font-heading font-bold break-words">{campaign.title}</span>
+              <span className="block font-medium break-words">{campaign.title}</span>
               <span className="mt-1 block text-sm text-muted-app">{campaign.positions.join(" · ")}</span>
             </button> : <div className="min-w-0 flex-1">
-              <span className="block font-heading font-bold break-words">{campaign.title}</span>
+              <span className="block font-medium break-words">{campaign.title}</span>
               <span className="mt-1 block text-sm text-muted-app">{campaign.positions.join(" · ")}</span>
             </div>}
             <AppBadge tone={stateTone[campaign.state]}>{stateLabel[campaign.state]}</AppBadge>
@@ -404,14 +405,14 @@ export function RecruitmentCampaignPage() {
           <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <AppIcon name="calendar" className="size-4 text-muted-app" />
             <span className="sr-only">{t("recruitmentCampaigns.openWindow")}</span>
-            <span className="font-semibold">{dateLabel(campaign.windowStart)} – {dateLabel(campaign.windowEnd)}</span>
+            <span className="font-medium">{dateLabel(campaign.windowStart)} – {dateLabel(campaign.windowEnd)}</span>
             <span className="text-muted-app">· {campaign.capacity} {t("recruitmentCampaigns.places")}</span>
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {campaign.state === "Draft" && <AppButton variant="secondary" onClick={() => selectCampaign(campaign)}>{t("recruitmentCampaigns.edit")}</AppButton>}
-            {!( ["Draft", "Cancelled"].includes(campaign.state)) && <Link className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app shadow-sm transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-10"
+            {!( ["Draft", "Cancelled"].includes(campaign.state)) && <Link className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
               to={`/club/${clubId}/recruitment/${campaign.id}/review`}>{t("recruitmentCampaigns.reviewApplications")}<AppIcon name="chevronRight" className="size-4" /></Link>}
-            {!(["Cancelled", "Completed"].includes(campaign.state)) && <AppButton variant="ghost" className="hover:text-danger-app"
+            {!(["Cancelled", "Completed"].includes(campaign.state)) && <AppButton variant="ghost" className="text-muted-app hover:text-danger-app"
               disabled={action.isPending} onClick={() => void cancel(campaign)}>{t("recruitmentCampaigns.cancelCampaign")}</AppButton>}
           </div>
         </li>)}</ul>}

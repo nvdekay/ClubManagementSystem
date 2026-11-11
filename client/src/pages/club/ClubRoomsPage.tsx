@@ -48,10 +48,10 @@ export function ClubRoomsPage() {
         <p>{allocations.error.message}</p>
         <AppButton onClick={() => void allocations.refetch()}>{t("roomAllocations.retry")}</AppButton>
       </AppNotice> : !items.length ? <AppEmptyState message={t("roomAllocations.clubEmpty")} /> : <div className="space-y-6">
-        {todays.length > 0 && <section className="space-y-3 rounded-2xl border border-primary-app bg-primary-soft-app p-5">
-          <h2 className="text-lg font-bold">{t("roomAllocations.todayTitle")} · {date.format(new Date())}</h2>
+        {todays.length > 0 && <section className="space-y-3 rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-5 shadow-xs">
+          <h2 className="font-heading text-base font-semibold">{t("roomAllocations.todayTitle")} · {date.format(new Date())}</h2>
           {todays.map(({ item, occurrence }) => <div key={occurrence.bookingId} className="space-y-1">
-            <p className="text-2xl font-bold break-words">{item.propertyName}</p>
+            <p className="text-xl font-semibold break-words">{item.propertyName}</p>
             <p className="break-words">{item.location}</p>
             <p className="font-medium">{slotLabel(t, item.slot, slotList)} · {time.format(new Date(occurrence.startAt))}–{time.format(new Date(occurrence.endAt))}</p>
             <p className="text-sm text-muted-app">{t("roomAllocations.semesterLabel", { code: item.semesterCode })}</p>
@@ -63,7 +63,7 @@ export function ClubRoomsPage() {
             return <AppCard key={item.id} className="min-w-0">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-xl font-bold break-words">{item.propertyName}</p>
+                  <p className="font-heading text-base font-semibold break-words">{item.propertyName}</p>
                   <p className="text-sm break-words text-muted-app">{item.location}</p>
                 </div>
                 <AppBadge tone="info">{t("roomAllocations.semesterLabel", { code: item.semesterCode })}</AppBadge>
@@ -74,7 +74,7 @@ export function ClubRoomsPage() {
                 <span className="text-muted-app">{t("roomAllocations.nextSession")}: </span>
                 {vietnamDay(next.startAt) === today ? t("roomAllocations.today") : date.format(new Date(next.startAt))}
               </p>
-              <details className="text-sm"><summary className="text-primary-app">{t("roomAllocations.upcoming")} ({item.occurrences.length})</summary>
+              <details className="text-sm"><summary className="font-medium text-primary-app">{t("roomAllocations.upcoming")} ({item.occurrences.length})</summary>
                 <ul className="mt-2 space-y-1">{item.occurrences.map((occurrence) => <li key={occurrence.bookingId}>{date.format(new Date(occurrence.startAt))}</li>)}</ul>
               </details>
               <p className="text-xs text-muted-app">{t("roomAllocations.allocatedOn", { name: t("roomAllocations.icpdp"),

@@ -55,28 +55,28 @@ export function ClubMemberOnboardDialog({ clubId, onClose, onSaved }: ClubMember
     : status === 403 ? t("memberSpace.onboardBanned") : action.error?.message;
 
   return (
-    <AppDialog open title={t("memberSpace.onboardTitle")} closeLabel={t("memberSpace.close")} onClose={onClose}>
-      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
+    <AppDialog open title={t("memberSpace.onboardTitle")} closeLabel={t("memberSpace.close")} onClose={onClose}
+      footer={<>
+        <AppButton type="button" variant="ghost" onClick={onClose}>{t("memberSpace.cancel")}</AppButton>
+        <AppButton type="submit" form={`${emailId}-form`} disabled={action.isPending}>
+          {action.isPending ? t("memberSpace.onboardSaving") : t("memberSpace.onboardSubmit")}</AppButton>
+      </>}>
+      <form id={`${emailId}-form`} noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
         <p className="text-sm text-muted-app">{t("memberSpace.onboardHint")}</p>
         <div className="space-y-1.5">
-          <label htmlFor={emailId} className="block text-sm font-medium">{t("memberSpace.onboardEmail")}<AppRequiredMark /></label>
+          <label htmlFor={emailId} className="block text-sm font-medium text-text-app">{t("memberSpace.onboardEmail")}<AppRequiredMark /></label>
           <AppInput id={emailId} type="email" maxLength={320} autoComplete="off" value={email} className="w-full"
             {...field.control("email")} onChange={(event) => { setEmail(event.target.value); action.reset(); }} />
           <AppFieldError message={field.error("email")} />
         </div>
         <div className="space-y-1.5">
-          <label htmlFor={reasonId} className="block text-sm font-medium">{t("memberSpace.onboardReason")}<AppRequiredMark /></label>
+          <label htmlFor={reasonId} className="block text-sm font-medium text-text-app">{t("memberSpace.onboardReason")}<AppRequiredMark /></label>
           <AppTextarea id={reasonId} maxLength={2000} rows={3} value={reason} className="w-full"
             {...field.control("reason")} onChange={(event) => setReason(event.target.value)} />
           <AppFieldError message={field.error("reason")} />
         </div>
         {action.isError && <AppNotice tone="danger" role="alert" title={t("memberSpace.onboardError")}>
           <p>{errorText}</p></AppNotice>}
-        <div className="flex flex-wrap justify-end gap-2">
-          <AppButton type="button" variant="ghost" onClick={onClose}>{t("memberSpace.cancel")}</AppButton>
-          <AppButton type="submit" disabled={action.isPending}>
-            {action.isPending ? t("memberSpace.onboardSaving") : t("memberSpace.onboardSubmit")}</AppButton>
-        </div>
       </form>
     </AppDialog>
   );

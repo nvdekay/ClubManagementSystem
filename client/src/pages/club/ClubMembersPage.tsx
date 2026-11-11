@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppSearchInput } from "@/components/ui/search-input/AppSearchInput";
@@ -77,9 +78,9 @@ export function ClubMembersPage() {
 
   const columns = useMemo(() => helper.columns([
     helper.accessor((member) => member.displayName ?? "", { id: "name", header: t("memberSpace.colName"),
-      sortFn: "text", cell: (info) => <span className="font-medium break-words">{info.getValue()}</span> }),
+      sortFn: "text", cell: (info) => <span className="block min-w-32 font-medium break-words">{info.getValue()}</span> }),
     helper.accessor("email", { header: t("memberSpace.colEmail"), enableSorting: false,
-      cell: (info) => <span className="break-all text-muted-app">{info.getValue()}</span> }),
+      cell: (info) => <span className="whitespace-nowrap text-muted-app">{info.getValue()}</span> }),
     helper.accessor("positions", { header: t("memberSpace.colPositions"), enableSorting: false,
       cell: (info) => info.getValue().length ? (
         <div className="flex min-w-36 flex-wrap gap-1">
@@ -89,12 +90,12 @@ export function ClubMembersPage() {
     helper.accessor("state", { header: t("memberSpace.colState"), enableSorting: false,
       cell: (info) => <MembershipStateBadge state={info.getValue()} /> }),
     helper.accessor("joinedAt", { header: t("memberSpace.colJoined"), sortFn: "text",
-      cell: (info) => <span className="tabular-nums">{formatDay(info.getValue(), locale)}</span> }),
+      cell: (info) => <span className="whitespace-nowrap tabular-nums">{formatDay(info.getValue(), locale)}</span> }),
     helper.display({ id: "actions", header: t("memberSpace.colActions"), cell: ({ row }) => (
       <div className="flex min-w-48 flex-wrap gap-1">
         <AppButton variant="secondary" className="min-h-9 px-3 sm:min-h-9"
           onClick={() => setDialog({ kind: "state", member: row.original })}>{t("memberSpace.changeState")}</AppButton>
-        <AppButton variant="ghost" className="min-h-9 px-3 sm:min-h-9"
+        <AppButton variant="ghost" className="min-h-9 px-3 text-muted-app hover:text-text-app sm:min-h-9"
           onClick={() => setDialog({ kind: "history", member: row.original })}>{t("memberSpace.history")}</AppButton>
       </div>
     ) }),
@@ -151,8 +152,8 @@ export function ClubMembersPage() {
       {error ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}><p>{error.message}</p></AppNotice> : (
         <div className="min-w-0 space-y-8">
           {(waiting.length > 0 || action.isError || doneId) && (
-            <section aria-labelledby="leave-requests" className="rounded-2xl border border-warning-app/40 bg-warning-app/5 p-4 sm:p-5">
-              <h2 id="leave-requests" className="flex flex-wrap items-center gap-2 font-heading text-lg font-bold">
+            <section aria-labelledby="leave-requests" className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs">
+              <h2 id="leave-requests" className="flex flex-wrap items-center gap-2 font-heading text-base font-semibold">
                 {t("memberSpace.withdrawals")}
                 {waiting.length > 0 && <AppBadge tone="warning" className="whitespace-normal">{t("memberSpace.withdrawalsCount", { count: waiting.length })}</AppBadge>}
               </h2>
@@ -160,26 +161,26 @@ export function ClubMembersPage() {
                 <p>{action.error.message}</p></AppNotice>}
               {doneId && !action.isError && <p role="status" className="mt-3 text-sm font-semibold text-success-app">{t("memberSpace.executed")}</p>}
               {waiting.length > 0 && (
-                <div className="mt-3 overflow-x-auto rounded-lg border border-border-app bg-bg-app">
-                  <table className="w-full text-sm">
-                    <thead className="bg-surface-app text-left text-xs font-medium tracking-wide text-muted-app uppercase">
+                <div className="mt-4 overflow-x-auto rounded-xl border border-border-app bg-bg-app">
+                  <table className="w-full min-w-2xl text-sm">
+                    <thead className="bg-surface-app text-left text-xs font-medium text-muted-app">
                       <tr>
-                        <th className="px-3 py-2">{t("memberSpace.colMember")}</th>
-                        <th className="px-3 py-2">{t("memberSpace.colReason")}</th>
-                        <th className="px-3 py-2">{t("memberSpace.colRequestedFor")}</th>
-                        <th className="px-3 py-2"><span className="sr-only">{t("memberSpace.colActions")}</span></th>
+                        <th className="px-4 py-2.5 font-medium">{t("memberSpace.colMember")}</th>
+                        <th className="px-4 py-2.5 font-medium">{t("memberSpace.colReason")}</th>
+                        <th className="px-4 py-2.5 font-medium">{t("memberSpace.colRequestedFor")}</th>
+                        <th className="px-4 py-2.5 font-medium"><span className="sr-only">{t("memberSpace.colActions")}</span></th>
                       </tr>
                     </thead>
                     <tbody>
                       {waiting.map((request) => (
                         <tr key={request.id} className="border-t border-border-app align-top">
-                          <td className="px-3 py-2">
-                            <p className="min-w-32 font-semibold break-words">{request.memberName}</p>
+                          <td className="px-4 py-3">
+                            <p className="min-w-32 font-medium break-words">{request.memberName}</p>
                             {request.state === "Held" && <AppBadge tone="warning" className="mt-1 whitespace-normal">{t("memberSpace.held")}</AppBadge>}
                           </td>
-                          <td className="min-w-48 px-3 py-2 break-words whitespace-pre-line">{request.reason}</td>
-                          <td className="px-3 py-2 tabular-nums">{formatDay(request.requestedEffectiveDate, locale)}</td>
-                          <td className="px-3 py-2 text-right">
+                          <td className="min-w-48 px-4 py-3 break-words whitespace-pre-line">{request.reason}</td>
+                          <td className="px-4 py-3 tabular-nums">{formatDay(request.requestedEffectiveDate, locale)}</td>
+                          <td className="px-4 py-3 text-right">
                             <AppButton className="min-h-9 px-3 sm:min-h-9" disabled={action.isPending || new Date(request.requestedEffectiveDate).getTime() > currentTime}
                               onClick={() => void execute(request)}>
                               {action.isPending ? t("memberSpace.executing") : new Date(request.requestedEffectiveDate).getTime() > currentTime
@@ -194,7 +195,7 @@ export function ClubMembersPage() {
             </section>
           )}
           <section aria-labelledby="roster" className="space-y-4">
-            <h2 id="roster" className="font-heading text-lg font-bold">{t("memberSpace.roster")}</h2>
+            <h2 id="roster" className="font-heading text-base font-semibold">{t("memberSpace.roster")}</h2>
             {stateNotice && <p role="status" className="text-sm font-semibold text-success-app">{stateNotice}</p>}
             <div className="flex flex-wrap items-center gap-2">
               <AppSearchInput onSearch={setSearch} aria-label={t("memberSpace.searchLabel")}
@@ -235,10 +236,10 @@ export function ClubMembersPage() {
       {dialog?.kind === "history" && (
         <AppDialog open title={t("memberSpace.history")} closeLabel={t("memberSpace.close")} onClose={closeDialog}>
           <p className="mb-3 font-semibold break-words">{dialog.member.displayName}</p>
-          {(dialog.member.statusHistory ?? []).length === 0 ? <p className="text-sm text-muted-app">{t("memberSpace.historyEmpty")}</p> : (
+          {(dialog.member.statusHistory ?? []).length === 0 ? <AppEmptyState variant="boxed" message={t("memberSpace.historyEmpty")} /> : (
             <ol className="space-y-2 text-sm">
               {(dialog.member.statusHistory ?? []).map((item, index) => (
-                <li key={`${item.at}-${index}`} className="rounded-xl bg-surface-app px-3 py-2">
+                <li key={`${item.at}-${index}`} className="rounded-lg border border-border-app px-3 py-2">
                   <span>{t("memberSpace.historyItem", { from: t(membershipStateLabels[item.fromState]),
                     to: t(membershipStateLabels[item.toState]), date: formatDay(item.effectiveDate, locale) })}</span>
                   {item.reason && <span className="block break-words text-muted-app">{item.reason}</span>}
@@ -260,9 +261,9 @@ function ClubRosterReadOnly({ clubId }: { clubId: string }) {
       <PageHeader title={t("memberSpace.membersPageTitle")} description={t("memberSpace.rosterReadOnlyDescription")} />
       {space.isPending ? <AppSkeleton className="h-48 w-full" /> : space.error || !space.data
         ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")} /> : (
-          <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          <ul className="grid gap-x-6 gap-y-1 rounded-2xl border border-border-app bg-bg-app p-3 shadow-xs sm:grid-cols-2">
             {space.data.members.map((member, index) => (
-              <li key={`${member.displayName}-${index}`} className="flex items-center gap-3">
+              <li key={`${member.displayName}-${index}`} className="flex items-center gap-3 rounded-lg px-2 py-2">
                 <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
                   {member.displayName.trim().charAt(0).toUpperCase()}</span>
                 <span className="min-w-0">

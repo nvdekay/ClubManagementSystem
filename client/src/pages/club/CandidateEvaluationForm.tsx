@@ -61,9 +61,9 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
 
-  return <form noValidate className="space-y-4 rounded-xl border border-border-app p-4"
+  return <form noValidate className="space-y-4 rounded-xl border border-border-app bg-bg-app p-4"
     onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-    <h4 className="font-heading font-bold">{t("recruitmentApplications.evaluationYours")}</h4>
+    <h4 className="font-heading text-sm font-semibold">{t("recruitmentApplications.evaluationYours")}</h4>
     {!rubric.length && <p className="text-sm text-muted-app">{t("recruitmentApplications.evaluationNoRubric")}</p>}
     {rubric.map((criterion) => {
       const value = scores[criterion.key] ?? "";
@@ -72,7 +72,7 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
       const quickPicks = criterion.maxScore <= 10 && Number.isInteger(criterion.maxScore);
       return <div key={criterion.key} className="space-y-2 border-b border-border-app pb-4 last:border-b-0">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <label htmlFor={id + criterion.key} className="min-w-0 text-sm font-semibold break-words">
+          <label htmlFor={id + criterion.key} className="min-w-0 text-sm font-medium text-text-app break-words">
             {criterion.label}<AppRequiredMark /> <span className="font-normal text-muted-app">({t("recruitmentApplications.evaluationMax", { max: criterion.maxScore })})</span></label>
           <AppInput id={id + criterion.key} type="number" inputMode="decimal" min={0} max={criterion.maxScore} step="any"
             value={value} {...field.control("score:" + criterion.key)} aria-invalid={Boolean(fieldError)} aria-describedby={fieldError ? id + criterion.key + "-error" : undefined}
@@ -84,8 +84,8 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
           {Array.from({ length: criterion.maxScore + 1 }, (_, score) => <button key={score} type="button"
             aria-pressed={value !== "" && Number(value) === score}
             onClick={() => { setScores((old) => ({ ...old, [criterion.key]: String(score) })); field.touch("score:" + criterion.key); }}
-            className={cn("min-h-11 min-w-11 rounded-lg border border-border-app bg-bg-app text-sm tabular-nums transition-colors hover:border-primary-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none sm:min-h-9 sm:min-w-9", {
-              "border-primary-app bg-primary-app text-on-primary-app": value !== "" && Number(value) === score,
+            className={cn("min-h-11 min-w-11 rounded-lg border border-border-app bg-bg-app text-sm text-muted-app tabular-nums transition-colors hover:bg-surface-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none sm:min-h-9 sm:min-w-9", {
+              "border-brand-app bg-primary-soft-app font-semibold text-primary-app hover:bg-primary-soft-app": value !== "" && Number(value) === score,
             })}>{score}</button>)}
         </div>}
         {fieldError && <p id={id + criterion.key + "-error"} className="text-sm text-danger-app">{fieldError}</p>}
@@ -93,11 +93,11 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
     })}
     {rubric.length > 0 && <p className="text-sm font-semibold tabular-nums" aria-live="polite">
       {t("recruitmentApplications.evaluationTotal")}: {formatScore(total)}/{formatScore(maxTotal)}</p>}
-    <label className="block text-sm font-semibold">{t("recruitmentApplications.evaluationComment")}{!rubric.length && <AppRequiredMark />}
+    <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.evaluationComment")}{!rubric.length && <AppRequiredMark />}
       <AppTextarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={2000}
         {...field.control("comment", !rubric.length)}
         aria-invalid={Boolean(commentError)} aria-describedby={commentError ? id + "comment-error" : undefined}
-        className={cn("mt-1 block min-h-20 w-full font-normal", { "border-danger-app": Boolean(commentError) })} /></label>
+        className={cn("mt-1.5 block min-h-20 w-full font-normal", { "border-danger-app": Boolean(commentError) })} /></label>
     {commentError && <p id={id + "comment-error"} className="-mt-2 text-sm text-danger-app">{commentError}</p>}
     {error && <AppNotice tone="danger" role="alert">{error}</AppNotice>}
     <div className="flex flex-wrap gap-2">
