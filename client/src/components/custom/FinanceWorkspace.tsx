@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { formatMoney } from "@/utils/formatMoney";
@@ -6,6 +6,7 @@ import { formatDay } from "@/utils/formatDate";
 import { useOpenViolation } from "@/hooks/useViolations";
 import type { accountability } from "@/i18n/accountability";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
@@ -17,6 +18,7 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import {
@@ -76,6 +78,9 @@ function FinanceEditor({
 }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
+  // The dialogs' submit buttons live in the pinned footer, outside their <form>, and point back with form={id}.
+  const expenseFormId = useId();
+  const evidenceFormId = useId();
   const admin = context.kind === "admin";
   const openViolation = useOpenViolation();
   const [findingId, setFindingId] = useState("");
@@ -191,20 +196,20 @@ function FinanceEditor({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <h2 className="font-heading text-xl font-bold">{data.eventTitle}</h2>
-        <span className="rounded-full bg-surface-app px-3 py-1 text-sm">
+        <h2 className="font-heading text-lg font-semibold break-words">{data.eventTitle}</h2>
+        <AppBadge>
           {t(`accountability.${stateKey(data.state)}`)}
-        </span>
+        </AppBadge>
         {data.isSettlementLate && (
-          <span className="text-sm text-danger-app">
+          <AppBadge tone="danger">
             {t("accountability.late")}
-          </span>
+          </AppBadge>
         )}
       </div>
       {data.eventState === "Closed" && (
         <AppNotice>{t("accountability.reportClosed")}</AppNotice>
       )}
-      <dl className="grid grid-cols-2 gap-4 rounded-xl border border-border-app p-4 lg:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {(
           [
             "approvedTotal",
@@ -215,62 +220,62 @@ function FinanceEditor({
             "remaining",
           ] as const
         ).map((key, i) => (
-          <div key={key}>
-            <dt className="text-sm text-muted-app">
+          <div key={key} className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs">
+            <dt className="text-xs text-muted-app">
               {t(
                 `accountability.${(["approved", "advanced", "recorded", "supported", "unsupported", "remaining"] as const)[i]}`,
               )}
             </dt>
-            <dd className="mt-1 break-words text-lg font-semibold tabular-nums">
+            <dd className="mt-1 break-words text-xl font-semibold tabular-nums">
               {formatMoney(data.totals[key], i18n.language)}
             </dd>
           </div>
         ))}
-        <div>
-          <dt className="text-sm text-muted-app">{t("accountability.due")}</dt>
-          <dd>{formatDay(data.settlementDueAt, i18n.language)}</dd>
+        <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs">
+          <dt className="text-xs text-muted-app">{t("accountability.due")}</dt>
+          <dd className="mt-1 text-xl font-semibold tabular-nums">{formatDay(data.settlementDueAt, i18n.language)}</dd>
         </div>
         {data.settlementBalance !== undefined && (
-          <div>
-            <dt className="text-sm text-muted-app">
+          <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs">
+            <dt className="text-xs text-muted-app">
               {t("accountability.balance")}
             </dt>
-            <dd className="tabular-nums">
+            <dd className="mt-1 text-xl font-semibold tabular-nums">
               {formatMoney(data.settlementBalance, i18n.language)}
             </dd>
           </div>
         )}
         {data.recoveryAmount !== undefined && data.recoveryAmount > 0 && (
           <>
-            <div>
-              <dt className="text-sm text-muted-app">
+            <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs">
+              <dt className="text-xs text-muted-app">
                 {t("accountability.refund")}
               </dt>
-              <dd className="tabular-nums">
+              <dd className="mt-1 text-xl font-semibold tabular-nums">
                 {formatMoney(
                   data.recoveryAmount - data.refundedTotal,
                   i18n.language,
                 )}
               </dd>
             </div>
-            <div>
-              <dt className="text-sm text-muted-app">
+            <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs">
+              <dt className="text-xs text-muted-app">
                 {t("accountability.recoveryDue")}
               </dt>
-              <dd>{formatDay(data.recoveryDueAt, i18n.language)}</dd>
+              <dd className="mt-1 text-xl font-semibold tabular-nums">{formatDay(data.recoveryDueAt, i18n.language)}</dd>
             </div>
           </>
         )}
       </dl>
-      <section>
-        <h3 className="mb-3 font-heading text-lg font-bold">
+      <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+        <h3 className="mb-3 font-heading text-base font-semibold">
           {t("accountability.approved")}
         </h3>
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="divide-y divide-border-app">
           {data.lines.map((line, i) => (
             <li
               key={i}
-              className="flex flex-wrap justify-between gap-3 rounded-lg bg-surface-app p-3"
+              className="flex flex-wrap justify-between gap-3 py-2.5 text-sm"
             >
               <span className="break-words">{line.category}</span>
               <span className="tabular-nums">
@@ -282,7 +287,7 @@ function FinanceEditor({
       </section>
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-heading text-lg font-bold">
+          <h3 className="font-heading text-base font-semibold">
             {t("accountability.expenses")}
           </h3>
           {editable && (
@@ -292,12 +297,12 @@ function FinanceEditor({
           )}
         </div>
         {!data.expenses.length && (
-          <AppNotice>{t("accountability.empty")}</AppNotice>
+          <AppEmptyState variant="boxed" message={t("accountability.empty")} />
         )}
         {expensePage.map((expense) => (
           <article
             key={expense.id}
-            className="space-y-3 rounded-xl border border-border-app p-4"
+            className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"
           >
             <div className="flex flex-wrap justify-between gap-3">
               <div>
@@ -336,7 +341,7 @@ function FinanceEditor({
               {expense.evidences.map((evidence) => (
                 <li key={evidence.id}>
                   <a
-                    className="break-all text-sm text-accent-app underline"
+                    className="break-all text-sm text-primary-app hover:underline"
                     href={evidence.externalLink}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -392,11 +397,11 @@ function FinanceEditor({
                     })
                   }
                 />
-                <label className="text-sm">
+                <label className="text-sm font-medium text-text-app">
                   {t("accountability.reason")}
                   <AppRequiredMark />
                   <AppInput
-                    className="mt-1 w-full"
+                    className="mt-1.5 block w-full font-normal"
                     maxLength={2000}
                     {...reviewField.control(expense.id)}
                     value={reviews[expense.id]?.reason ?? ""}
@@ -455,7 +460,7 @@ function FinanceEditor({
         </AppButton>
       )}
       {admin && claimed && data.state === "Settlement Submitted" && (
-        <label className="block text-sm">
+        <label className="block text-sm font-medium text-text-app">
           {t("accountability.reason")}
           <AppRequiredMark />
           <AppTextarea
@@ -509,7 +514,7 @@ function FinanceEditor({
       )}
       {admin && ["Reconciled", "Recovery Pending"].includes(data.state) && (
         <Link
-          className="inline-block text-accent-app underline"
+          className="inline-block text-sm font-medium text-primary-app hover:underline"
           to={`/workspace/budgets/${data.id}`}
         >
           {t("accountability.flow")}
@@ -519,8 +524,8 @@ function FinanceEditor({
         data.state === "Recovery Pending" &&
         data.recoveryDueAt &&
         new Date(data.recoveryDueAt) < new Date() && (
-          <section className="space-y-3 rounded-xl border border-border-app p-4">
-            <label className="block text-sm">
+          <section className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <label className="block text-sm font-medium text-text-app">
               {t("accountability.reason")}
               <AppRequiredMark />
               <AppTextarea
@@ -544,7 +549,7 @@ function FinanceEditor({
             />
             {findingId ? (
               <Link
-                className="text-accent-app underline"
+                className="text-sm font-medium text-primary-app hover:underline"
                 to={`/workspace/violations/${findingId}`}
               >
                 {t("accountability.details")}
@@ -586,11 +591,11 @@ function FinanceEditor({
         </AppNotice>
       )}
       <section className="space-y-3">
-        <h3 className="font-heading text-lg font-bold">
+        <h3 className="font-heading text-base font-semibold">
           {t("accountability.history")}
         </h3>
         {data.history.map((entry, i) => (
-          <details key={i} className="rounded-lg border border-border-app p-3">
+          <details key={i} className="rounded-xl border border-border-app bg-bg-app px-4 py-3 text-sm">
             <summary>
               {formatDay(entry.at, i18n.language)} ·{" "}
               {t(`accountability.${historyKey(entry.action)}`)}
@@ -621,8 +626,14 @@ function FinanceEditor({
         )}
         onClose={() => setEditing(null)}
         closeLabel={t("accountability.close")}
+        footer={
+          <AppButton disabled={mutation.isPending} type="submit" form={expenseFormId}>
+            {t("accountability.save")}
+          </AppButton>
+        }
       >
         <form
+          id={expenseFormId}
           noValidate
           className="space-y-4"
           onSubmit={(e) => {
@@ -640,54 +651,51 @@ function FinanceEditor({
             });
           }}
         >
-          <label className="block text-sm">
+          <label className="block text-sm font-medium text-text-app">
             {t("accountability.category")}
             <AppRequiredMark />
             <AppInput
               {...expenseField.control("category")}
               maxLength={100}
-              className="mt-1 w-full"
+              className="mt-1.5 block w-full font-normal"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             />
             <AppFieldError message={expenseField.error("category")} />
           </label>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium text-text-app">
             {t("accountability.amount")}
             <AppRequiredMark />
             <AppMoneyInput
               {...expenseField.control("amount")}
-              className="mt-1 w-full"
+              className="mt-1.5 block w-full font-normal"
               value={amount}
               onValueChange={setAmount}
             />
             <AppFieldError message={expenseField.error("amount")} />
           </label>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium text-text-app">
             {t("accountability.date")}
             <AppRequiredMark />
             <AppInput
               {...expenseField.control("date")}
               type="date"
               max={today}
-              className="mt-1 w-full"
+              className="mt-1.5 block w-full font-normal"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
             <AppFieldError message={expenseField.error("date")} />
           </label>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium text-text-app">
             {t("accountability.description")}
             <AppTextarea
               maxLength={2000}
-              className="mt-1 w-full"
+              className="mt-1.5 block w-full font-normal"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </label>
-          <AppButton disabled={mutation.isPending} type="submit">
-            {t("accountability.save")}
-          </AppButton>
           {mutation.isError && (
             <AppNotice tone="danger" role="alert">
               {mutation.error.message}
@@ -700,8 +708,14 @@ function FinanceEditor({
         title={t("accountability.addEvidence")}
         onClose={() => setEvidenceFor("")}
         closeLabel={t("accountability.close")}
+        footer={
+          <AppButton disabled={mutation.isPending} type="submit" form={evidenceFormId}>
+            {t("accountability.addEvidence")}
+          </AppButton>
+        }
       >
         <form
+          id={evidenceFormId}
           noValidate
           className="space-y-4"
           onSubmit={(e) => {
@@ -727,25 +741,19 @@ function FinanceEditor({
             ]}
             onChange={setEvidenceType}
           />
-          <label className="block text-sm">
+          <label className="block text-sm font-medium text-text-app">
             {t("accountability.link")}
             <AppRequiredMark />
             <AppInput
               {...evidenceField.control("link")}
               type="url"
               maxLength={2000}
-              className="mt-1 w-full"
+              className="mt-1.5 block w-full font-normal"
               value={link}
               onChange={(e) => setLink(e.target.value)}
             />
             <AppFieldError message={evidenceField.error("link")} />
           </label>
-          <AppButton
-            disabled={mutation.isPending}
-            type="submit"
-          >
-            {t("accountability.addEvidence")}
-          </AppButton>
           {mutation.isError && (
             <AppNotice tone="danger" role="alert">
               {mutation.error.message}
@@ -804,6 +812,7 @@ export function FinanceWorkspace({
           </AppNotice>
         ) : list.data?.length ? (
           <AppSelect
+            className="w-full sm:max-w-xl"
             label={t("accountability.select")}
             value={selected}
             onChange={setSelected}
@@ -814,10 +823,9 @@ export function FinanceWorkspace({
                 label: `${item.eventTitle} · ${t(`accountability.${stateKey(item.state)}`)}`,
               })),
             ]}
-            className="w-full"
           />
         ) : (
-          <AppNotice>{t("accountability.empty")}</AppNotice>
+          <AppEmptyState variant="boxed" message={t("accountability.empty")} />
         ))}
       {selected ? (
         detail.isPending ? (

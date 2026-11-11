@@ -38,7 +38,7 @@ export function EventFeedbackSummary({ feedback }: { feedback: MyEventFeedback }
             star <= feedback.rating ? "fill-current text-warning-app" : "text-border-app")} />)}
         </span>
         <span className="text-sm font-semibold">{t(ratingWord(feedback.rating))}</span>
-        {feedback.isAnonymous && <span className="rounded-full bg-surface-strong-app px-2.5 py-0.5 text-xs font-semibold text-muted-app">
+        {feedback.isAnonymous && <span className="rounded-md bg-surface-strong-app px-2 py-0.5 text-xs font-medium text-muted-app">
           {t("eventFeedback.anonymousTag")}</span>}
       </div>
       <p className="text-sm break-words whitespace-pre-line">{feedback.comment}</p>

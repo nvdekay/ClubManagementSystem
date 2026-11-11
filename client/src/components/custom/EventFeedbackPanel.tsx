@@ -22,8 +22,8 @@ export function EventFeedbackPanel({ eventId }: { eventId: string }) {
   if (!context.data.attended) return null;
   const { feedback, canSubmit, closesAt } = context.data;
   return (
-    <section aria-labelledby="event-feedback-title" className="mt-8 rounded-3xl bg-surface-app p-5 sm:p-6">
-      <h2 id="event-feedback-title" className="font-heading text-xl font-bold">{t("eventFeedback.title")}</h2>
+    <section aria-labelledby="event-feedback-title" className="mt-8 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
+      <h2 id="event-feedback-title" className="font-heading text-lg font-semibold">{t("eventFeedback.title")}</h2>
       <div className="mt-4">
         {feedback ? <div className="space-y-2">
           {justSent && <p role="status" className="text-sm font-semibold text-success-app">{t("eventFeedback.submitted")}</p>}
