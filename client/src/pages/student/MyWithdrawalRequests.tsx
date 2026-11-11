@@ -29,14 +29,14 @@ export function MyWithdrawalRequests() {
   if (!requests.data?.length) return null;
 
   return (
-    <section aria-labelledby="my-withdrawals-title" className="mt-10">
-      <h2 id="my-withdrawals-title" className="font-heading text-xl font-bold text-text-app">{t("memberSpace.myWithdrawalsTitle")}</h2>
+    <section aria-labelledby="my-withdrawals-title" className="mt-8">
+      <h2 id="my-withdrawals-title" className="font-heading text-base font-semibold text-text-app">{t("memberSpace.myWithdrawalsTitle")}</h2>
       <p className="mt-1 text-sm text-muted-app">{t("memberSpace.myWithdrawalsHint")}</p>
-      <ul className="mt-4 divide-y divide-border-app border-y border-border-app">
+      <ul className="mt-4 divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
         {requests.data.map((request) => (
-          <li key={request.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 px-2 py-4">
+          <li key={request.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4">
             <div className="min-w-0 flex-1 basis-56">
-              <Link to={`/workspace/clubs/${request.clubId}`} className="font-semibold break-words text-text-app hover:underline">
+              <Link to={`/workspace/clubs/${request.clubId}`} className="font-medium break-words text-text-app hover:text-primary-app">
                 {request.clubName ?? request.clubId}</Link>
               <p className="mt-0.5 text-sm break-words text-muted-app">{request.reason}</p>
               <p className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted-app">

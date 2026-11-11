@@ -29,23 +29,24 @@ export function MyClubsPage() {
         : memberships.isError ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}>
           <AppButton variant="secondary" onClick={() => void memberships.refetch()}>{t("memberSpace.retry")}</AppButton></AppNotice>
           : memberships.data.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-muted-app">{t("memberSpace.myClubsEmpty")}</p>
-              <Link to="/clubs" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app hover:opacity-90">
+            <div className="rounded-xl border border-dashed border-border-app px-4 py-10 text-center">
+              <span aria-hidden="true" className="mx-auto flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="users" className="size-4.5" /></span>
+              <p className="mt-3 text-sm text-muted-app">{t("memberSpace.myClubsEmpty")}</p>
+              <Link to="/clubs" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
                 {t("memberSpace.browseClubs")}</Link>
             </div>
           ) : (
-            <ul className="divide-y divide-border-app border-y border-border-app">
+            <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
               {memberships.data.map((membership) => (
                 <li key={membership.id}>
-                  <Link to={`/workspace/clubs/${membership.clubId}`} className="group flex flex-wrap items-center gap-4 px-2 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
+                  <Link to={`/workspace/clubs/${membership.clubId}`} className="group flex flex-wrap items-center gap-4 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
                     <ClubLogo name={membership.clubName ?? ""} size={48} />
                     <span className="min-w-0 flex-1 basis-48">
-                      <span className="block font-semibold break-words text-text-app">{membership.clubName}</span>
+                      <span className="block font-medium break-words text-text-app">{membership.clubName}</span>
                       <span className="block text-sm text-muted-app">{t("memberSpace.joinedOn", { date: formatDay(membership.joinedAt, locale) })}</span>
                     </span>
                     <MembershipStateBadge state={membership.state} />
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-app">
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-app group-hover:text-text-app">
                       {t("memberSpace.open")}<AppIcon name="chevronRight" className="size-4" /></span>
                   </Link>
                 </li>

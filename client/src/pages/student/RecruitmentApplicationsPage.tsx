@@ -68,19 +68,19 @@ export function RecruitmentApplicationsPage() {
   return <>
     {header}
     {action.isError && <AppNotice tone="danger" role="alert" className="mb-5">{action.error.message || t("recruitmentApplications.actionError")}</AppNotice>}
-    {applications.data.length === 0 ? <div className="py-16 text-center">
-      <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="send" className="size-7" /></span>
-      <p className="mt-4 font-semibold">{t("recruitmentApplications.noApplications")}</p>
-      <Link to="/clubs" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+    {applications.data.length === 0 ? <div className="rounded-xl border border-dashed border-border-app px-4 py-10 text-center">
+      <span aria-hidden="true" className="mx-auto flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="send" className="size-4.5" /></span>
+      <p className="mt-3 text-sm text-muted-app">{t("recruitmentApplications.noApplications")}</p>
+      <Link to="/clubs" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
         <AppIcon name="compass" className="size-4" />{t("recruitmentApplications.explore")}</Link>
-    </div> : <ul className="divide-y divide-border-app border-y border-border-app">
-      {applications.data.map((application) => <li key={application.id} className="flex flex-wrap items-start gap-x-4 gap-y-3 px-2 py-5">
-        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+    </div> : <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
+      {applications.data.map((application) => <li key={application.id} className="flex flex-wrap items-start gap-x-4 gap-y-3 px-5 py-4">
+        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
           <AppIcon name="send" />
         </span>
         <div className="min-w-0 flex-1 basis-60">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="min-w-0 font-heading text-lg font-bold break-words">{application.campaignTitle ?? application.position}</h2>
+            <h2 className="min-w-0 font-heading text-base font-semibold break-words">{application.campaignTitle ?? application.position}</h2>
             <AppBadge tone={stateTone(application.state)}>{stateLabel(application.state)}</AppBadge>
           </div>
           <p className="mt-1 text-sm text-muted-app">
@@ -93,7 +93,7 @@ export function RecruitmentApplicationsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {application.state === "Draft" && <Link to={`/workspace/recruitment/${application.campaignId}`}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
             {t("recruitmentApplications.formTitle")}<AppIcon name="chevronRight" className="size-4" /></Link>}
           {["Submitted", "Screening", "Shortlisted"].includes(application.state)
             && <AppButton variant="secondary" disabled={action.isPending}

@@ -14,6 +14,7 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { isNotAMember, useMemberSpace, useMembershipAction } from "@/hooks/useMemberSpace";
@@ -32,8 +33,8 @@ function todayInVietnam(): string {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="border-t border-border-app pt-6 first:border-t-0 first:pt-0">
-      <h2 className="mb-3 font-heading text-lg font-bold">{title}</h2>
+    <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <h2 className="mb-3 font-heading text-base font-semibold">{title}</h2>
       {children}
     </section>
   );
@@ -52,9 +53,9 @@ export function MemberSpacePage() {
   if (space.isError) {
     return isNotAMember(space.error) ? (
       <section className="mx-auto max-w-lg py-16 text-center">
-        <h1 className="font-heading text-2xl font-bold">{t("memberSpace.notMemberTitle")}</h1>
+        <h1 className="font-heading text-2xl font-semibold">{t("memberSpace.notMemberTitle")}</h1>
         <p className="mt-2 text-muted-app">{t("memberSpace.notMemberText")}</p>
-        <Link to={`/clubs/${clubId ?? ""}`} className="mt-6 inline-flex min-h-11 items-center rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app hover:opacity-90">
+        <Link to={`/clubs/${clubId ?? ""}`} className="mt-6 inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
           {t("memberSpace.publicPage")}</Link>
       </section>
     ) : (
@@ -80,10 +81,10 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
       <header className="mb-8 flex flex-wrap items-center gap-4">
         <ClubLogo name={club.name} logoUrl={club.logoUrl} size={64} />
         <div className="min-w-0 flex-1 basis-56">
-          <h1 className="font-heading text-2xl font-bold tracking-tight break-words sm:text-3xl">{club.name}</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight break-words">{club.name}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <MembershipStateBadge state={membership.state} />
-            <Link to={`/clubs/${club.id}`} className="text-sm font-semibold text-accent-app hover:underline">
+            <Link to={`/clubs/${club.id}`} className="text-sm font-medium text-primary-app hover:underline">
               {t("memberSpace.publicPage")}</Link>
           </div>
         </div>
@@ -99,23 +100,23 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
 
       {membership.state === "Inactive" && <AppNotice tone="warning" className="mb-6">{t("memberSpace.inactiveNote")}</AppNotice>}
 
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-8">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-5">
           <Section title={t("memberSpace.todo")}>
-            {!hasTodo ? <p className="text-sm text-muted-app">{t("memberSpace.todoEmpty")}</p> : (
+            {!hasTodo ? <AppEmptyState message={t("memberSpace.todoEmpty")} /> : (
               <ul className="space-y-2">
                 {pending && (
                   <li><AppNotice tone="warning">{pending.state === "Held" ? t("memberSpace.withdrawalHeld")
                     : t("memberSpace.withdrawalPending", { date: formatDay(pending.requestedEffectiveDate, locale) })}</AppNotice></li>
                 )}
                 {space.feedbackToSend.map((item) => (
-                  <li key={item.eventId} className="flex flex-wrap items-center gap-3 rounded-2xl bg-primary-soft-app p-3">
-                    <AppIcon name="star" className="size-5 text-primary-app" />
+                  <li key={item.eventId} className="flex flex-wrap items-center gap-3 rounded-xl border border-border-app p-3">
+                    <AppIcon name="star" className="size-5 text-brand-app" />
                     <span className="min-w-0 flex-1 text-sm break-words">
                       {t("memberSpace.feedbackOwed", { title: item.eventTitle })}
                       {item.closesAt && <span className="text-muted-app"> · {t("memberSpace.feedbackUntil", { date: formatDate(item.closesAt, locale) })}</span>}
                     </span>
-                    <Link to={`/events/${item.eventId}`} className="inline-flex min-h-10 items-center rounded-full bg-primary-app px-4 text-sm font-semibold text-on-primary-app hover:opacity-90">
+                    <Link to={`/events/${item.eventId}`} className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
                       {t("memberSpace.giveFeedback")}</Link>
                   </li>
                 ))}
@@ -124,19 +125,19 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
           </Section>
 
           <Section title={t("memberSpace.upcoming")}>
-            {space.upcomingEvents.length === 0 ? <p className="text-sm text-muted-app">{t("memberSpace.upcomingEmpty")}</p> : (
+            {space.upcomingEvents.length === 0 ? <AppEmptyState message={t("memberSpace.upcomingEmpty")} /> : (
               <ul className="divide-y divide-border-app">
                 {space.upcomingEvents.map((event) => (
                   <li key={event.id} className="flex flex-wrap items-center gap-3 py-3">
                     <div className="min-w-0 flex-1 basis-56">
-                      <Link to={`/events/${event.id}`} className="font-semibold break-words hover:text-primary-app hover:underline">{event.title}</Link>
+                      <Link to={`/events/${event.id}`} className="font-medium break-words text-text-app hover:text-primary-app">{event.title}</Link>
                       <p className="text-sm text-muted-app">{formatDate(event.startAt, locale)}{event.venueText && ` · ${event.venueText}`}</p>
                     </div>
                     {event.registrationState ? (
                       <AppBadge tone={event.registrationState === "Confirmed" ? "success" : event.registrationState === "Waitlisted" ? "warning" : "neutral"}>
                         {t(registrationLabels[event.registrationState])}</AppBadge>
                     ) : (
-                      <Link to={`/events/${event.id}`} className="inline-flex min-h-10 items-center rounded-full border border-border-app px-4 text-sm font-semibold hover:border-primary-app hover:text-primary-app">
+                      <Link to={`/events/${event.id}`} className="inline-flex min-h-11 items-center rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium shadow-xs hover:bg-surface-app sm:min-h-9">
                         {t("memberSpace.register")}</Link>
                     )}
                   </li>
@@ -146,11 +147,11 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
           </Section>
 
           <Section title={t("memberSpace.attendance")}>
-            {space.attendance.length === 0 ? <p className="text-sm text-muted-app">{t("memberSpace.attendanceEmpty")}</p> : (
+            {space.attendance.length === 0 ? <AppEmptyState message={t("memberSpace.attendanceEmpty")} /> : (
               <ul className="divide-y divide-border-app">
                 {space.attendance.map((item) => (
                   <li key={item.eventId} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                    <Link to={`/events/${item.eventId}`} className="min-w-0 font-semibold break-words hover:text-primary-app hover:underline">{item.eventTitle}</Link>
+                    <Link to={`/events/${item.eventId}`} className="min-w-0 font-medium break-words text-text-app hover:text-primary-app">{item.eventTitle}</Link>
                     <span className="text-sm text-muted-app">{t("memberSpace.checkedIn", { date: formatDate(item.checkedInAt, locale) })}</span>
                   </li>
                 ))}
@@ -177,18 +178,19 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
           </Section>
         </div>
 
-        <aside className="space-y-6 lg:sticky lg:top-6">
-          <section className="rounded-3xl bg-surface-app p-5">
-            <h2 className="font-heading text-lg font-bold">{t("memberSpace.yourMembership")}</h2>
+        {/* Phones: membership, board and leave actions come before the long member list. */}
+        <aside className="order-first space-y-5 lg:sticky lg:top-22 lg:order-none">
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("memberSpace.yourMembership")}</h2>
             <dl className="mt-3 space-y-2 text-sm">
               <div><dt className="text-muted-app">{t("memberSpace.positions")}</dt>
                 <dd className="font-semibold">{membership.positions.join(", ") || t("memberSpace.noPosition")}</dd></div>
             </dl>
             <p className="mt-2 text-sm text-muted-app">{t("memberSpace.joinedOn", { date: formatDay(membership.joinedAt, locale) })}</p>
           </section>
-          <section className="rounded-3xl bg-surface-app p-5">
-            <h2 className="font-heading text-lg font-bold">{t("memberSpace.board")}</h2>
-            {space.board.length === 0 ? <p className="mt-2 text-sm text-muted-app">{t("memberSpace.boardEmpty")}</p> : (
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("memberSpace.board")}</h2>
+            {space.board.length === 0 ? <div className="mt-2"><AppEmptyState message={t("memberSpace.boardEmpty")} /></div> : (
               <ul className="mt-3 space-y-2 text-sm">
                 {space.board.map((seat) => (
                   <li key={`${seat.positionName}-${seat.memberName}`}>
@@ -242,8 +244,8 @@ function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToke
   }
 
   return (
-    <section className="rounded-3xl border border-border-app p-5">
-      <h2 className="font-heading text-lg font-bold">{t("memberSpace.leaveTitle")}</h2>
+    <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <h2 className="font-heading text-base font-semibold">{t("memberSpace.leaveTitle")}</h2>
       <p className="mt-1 text-sm text-muted-app">{t("memberSpace.leaveIntro")}</p>
       {action.isSuccess && <p role="status" className="mt-3 text-sm font-semibold text-success-app">{t("memberSpace.leaveSent")}</p>}
       {!open ? (

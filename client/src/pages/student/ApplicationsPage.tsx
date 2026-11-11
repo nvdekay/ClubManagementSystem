@@ -7,6 +7,7 @@ import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications } from "@/hooks/useApplications";
 
@@ -39,7 +40,7 @@ export function ApplicationsPage() {
   return (
     <>
       <PageHeader title={t("applications.title")} description={t("applications.description")} actions={
-        <Link to="/workspace/applications/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app shadow-sm transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none">
+        <Link to="/workspace/applications/new" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9">
           <AppIcon name="plus" className="size-4" />{t("applications.new")}
         </Link>
       } />
@@ -52,25 +53,25 @@ export function ApplicationsPage() {
       ) : !auth.data ? (
         <AppNotice>
           <p>{t("applications.signIn")}</p>
-          <Link to="/login?returnTo=%2Fworkspace%2Fapplications" className="inline-block font-semibold text-accent-app">
+          <Link to="/login?returnTo=%2Fworkspace%2Fapplications" className="inline-block font-medium text-primary-app hover:underline">
             {t("applications.signInLink")}
           </Link>
         </AppNotice>
       ) : applications.data?.length ? (
-        <ul className="divide-y divide-border-app border-y border-border-app">
+        <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {applications.data.map((application) => (
             <li key={application.id}>
-              <Link to={`/workspace/applications/${application.id}`} className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
-                <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+              <Link to={`/workspace/applications/${application.id}`} className="group flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
+                <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
                   <AppIcon name="file" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-semibold break-words text-text-app">{application.draft.clubName}</span>
+                  <span className="block font-medium break-words text-text-app">{application.draft.clubName}</span>
                   {application.state !== "Draft" && <span className="mt-0.5 block text-sm text-muted-app">
                     {t("applications.version", { number: application.currentVersionNo })}</span>}
                 </span>
                 <AppBadge tone={stateTone(application.state)}>{stateLabel(application.state)}</AppBadge>
-                <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-app">
+                <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-app group-hover:text-text-app">
                   {t("applications.edit")}<AppIcon name="chevronRight" className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </Link>
@@ -78,10 +79,7 @@ export function ApplicationsPage() {
           ))}
         </ul>
       ) : (
-        <div className="py-16 text-center">
-          <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="sparkles" className="size-7" /></span>
-          <p className="mt-4 text-muted-app">{t("applications.none")}</p>
-        </div>
+        <AppEmptyState variant="boxed" message={t("applications.none")} />
       )}
     </>
   );

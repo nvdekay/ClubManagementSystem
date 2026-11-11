@@ -14,6 +14,7 @@ import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { appToast } from "@/components/ui/toast/AppToast";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyComplaints, useSubmitComplaint, useWithdrawComplaint } from "@/hooks/useComplaints";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -87,15 +88,15 @@ export function ComplaintsPage() {
   return (
     <>
       <PageHeader title={t("complaints.title")} description={t("complaints.description")} />
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section aria-labelledby="complaint-form-title" className="rounded-3xl bg-surface-app p-5 sm:p-6">
-          <h2 id="complaint-form-title" className="font-heading text-xl font-bold">{t("complaints.formTitle")}</h2>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <section aria-labelledby="complaint-form-title" className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
+          <h2 id="complaint-form-title" className="font-heading text-base font-semibold">{t("complaints.formTitle")}</h2>
           <form noValidate onSubmit={(event) => void submit(event)} className="mt-5 space-y-5">
             <div className="space-y-2"
               onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) field.touch("club"); }}>
               <p className="text-sm font-medium">{t("complaints.clubLabel")}<AppRequiredMark /></p>
               {club ? (
-                <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-primary-app bg-bg-app p-3">
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-brand-app bg-primary-soft-app p-3">
                   <span className="min-w-0 flex-1 text-sm font-semibold break-words">{t("complaints.clubSelected", { name: club.name })}</span>
                   <AppButton type="button" variant="secondary" onClick={() => chooseClub(null)}>
                     {t("complaints.clubChange")}
@@ -107,12 +108,12 @@ export function ComplaintsPage() {
                     aria-label={t("complaints.clubSearch")} onSearch={setClubSearch} />
                   {clubs.isPending ? <AppSkeleton className="h-24 w-full" />
                     : clubs.isError ? <p role="alert" className="text-sm text-danger-app">{clubs.error.message}</p>
-                      : clubs.data.items.length === 0 ? <p className="text-sm text-muted-app">{t("complaints.clubNone")}</p>
-                        : <ul className="max-h-64 divide-y divide-border-app overflow-y-auto rounded-2xl border border-border-app bg-bg-app">
+                      : clubs.data.items.length === 0 ? <AppEmptyState message={t("complaints.clubNone")} />
+                        : <ul className="max-h-64 divide-y divide-border-app overflow-y-auto rounded-lg border border-border-app bg-bg-app">
                           {clubs.data.items.map((item) => (
                             <li key={item.id}>
                               <button type="button" onClick={() => chooseClub({ id: item.id, name: item.name })}
-                                className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-primary-soft-app focus-visible:bg-primary-soft-app focus-visible:outline-none">
+                                className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-surface-app focus-visible:bg-surface-app focus-visible:outline-none">
                                 <ClubLogo name={item.name} logoUrl={item.logoUrl} size={32} className="rounded-lg" />
                                 <span className="min-w-0 flex-1 break-words">{item.name}</span>
                               </button>
@@ -134,11 +135,11 @@ export function ComplaintsPage() {
               </div>
             )}
 
-            <fieldset className="space-y-2">
+            <fieldset className="space-y-1.5">
               <legend className="text-sm font-medium">{t("complaints.typeLabel")}</legend>
               <div className="flex flex-wrap gap-2">
                 {COMPLAINT_TYPES.map((value) => (
-                  <label key={value} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-app bg-bg-app px-4 text-sm has-checked:border-primary-app has-checked:bg-primary-soft-app has-checked:text-primary-app">
+                  <label key={value} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm sm:min-h-9 has-checked:border-brand-app has-checked:bg-primary-soft-app has-checked:text-primary-app">
                     <input type="radio" name="type" value={value} checked={type === value}
                       onChange={() => setType(value)} className="accent-primary-app" />
                     {t(complaintTypeKey(value))}
@@ -157,7 +158,7 @@ export function ComplaintsPage() {
                 {t("complaints.count", { count: description.length, max: MAX_TEXT })}</p>
             </div>
 
-            <fieldset className="space-y-2">
+            <fieldset className="space-y-1.5">
               <legend className="text-sm font-medium">{t("complaints.evidenceLabel")}</legend>
               <p className="text-xs text-muted-app">{t("complaints.evidenceHint")}</p>
               {evidence.map((item, index) => (
@@ -185,11 +186,11 @@ export function ComplaintsPage() {
         </section>
 
         <section aria-labelledby="complaint-mine-title">
-          <h2 id="complaint-mine-title" className="mb-4 font-heading text-xl font-bold">{t("complaints.mineTitle")}</h2>
+          <h2 id="complaint-mine-title" className="mb-4 font-heading text-base font-semibold">{t("complaints.mineTitle")}</h2>
           {mine.isPending ? <AppSkeleton className="h-40 w-full" />
             : mine.isError ? <AppNotice tone="danger" role="alert" title={t("complaints.loadError")}>
               <AppButton variant="secondary" onClick={() => void mine.refetch()}>{t("complaints.retry")}</AppButton></AppNotice>
-              : mine.data.length === 0 ? <p className="py-10 text-center text-muted-app">{t("complaints.mineEmpty")}</p>
+              : mine.data.length === 0 ? <AppEmptyState variant="boxed" message={t("complaints.mineEmpty")} />
                 : <ul className="space-y-3">{mine.data.map((item) => <li key={item.id}>
                   <ComplaintCard title={item.clubName ?? ""} state={item.state} type={item.type} description={item.description}
                     evidence={item.evidence} eventTitle={item.eventTitle} at={item.submittedAt} responseDueAt={item.responseDueAt}
