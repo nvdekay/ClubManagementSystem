@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useBoardNomination, useBoardNominationAction } from "@/hooks/useBoardNominations";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { cn } from "@/utils/cn";
 
 export function BoardNominationDetailPage() {
   const { id } = useParams();
@@ -45,6 +46,10 @@ export function BoardNominationDetailPage() {
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language,
       { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  }
+  // A term runs whole days, so its bounds read better without the midnight time.
+  function day(value: string) {
+    return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
   }
 
   async function claim() {
@@ -91,34 +96,41 @@ export function BoardNominationDetailPage() {
   }
   return <>
     <PageHeader title={nomination.clubName} back={back}
-      description={`${nomination.term.name} · ${date(nomination.term.startAt)} – ${date(nomination.term.endAt)}`}
+      description={`${nomination.term.name} · ${day(nomination.term.startAt)} – ${day(nomination.term.endAt)}`}
       actions={<AppBadge tone={tone(nomination.state)}>{stateLabel(nomination.state)}</AppBadge>} />
     <div className="space-y-3">
       {saved && <AppNotice tone="success" role="status">{t("boardNominations.successDecision")}</AppNotice>}
       {nomination.clubState === "Active" && <AppNotice tone="success" role="status">{t("boardNominations.activeClub")}</AppNotice>}
     </div>
-    <div className="mt-6 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section className="min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-heading text-xl font-bold">{t("boardNominations.seats")}</h2>
+    <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <section className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-heading text-base font-semibold">{t("boardNominations.seats")}</h2>
           <span className="text-sm text-muted-app">{t("boardNominations.waitingSince", { date: date(nomination.submittedAt) })}</span></div>
-        <ul className="mt-4 divide-y divide-border-app border-y border-border-app">
-          {nomination.seats.map((seat) => <li key={seat.id} className="px-2 py-4">
+        <ul className="mt-3 divide-y divide-border-app">
+          {nomination.seats.map((seat) => <li key={seat.id} className="py-4 last:pb-0">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app"><AppIcon name="badge" className="size-4.5" /></span>
-              <div className="min-w-0 flex-1"><h3 className="font-bold">{seat.positionName}</h3><p className="text-sm text-muted-app">{seat.displayName}</p></div>
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app"><AppIcon name="badge" className="size-4.5" /></span>
+              <div className="min-w-0 flex-1"><h3 className="font-medium">{seat.positionName}</h3><p className="text-sm text-muted-app">{seat.displayName}</p></div>
               <AppBadge tone={tone(seat.state)}>{seat.state === "Confirmed" ? t("boardNominations.confirmed")
                 : seat.state === "Returned" ? t("boardNominations.returned") : t("boardNominations.pending")}</AppBadge>
             </div>
-            {seat.state === "Returned" && <p className="mt-2 text-sm break-words text-muted-app">{seat.reason}</p>}
-            {canDecide && seat.state === "Pending Confirmation" && <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <select className="min-h-11 rounded-xl border border-border-app bg-bg-app px-3.5 text-sm text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none"
-                aria-label={`${t("boardNominations.status")}: ${seat.positionName}`}
-                value={decisions[seat.id] ?? "confirm"}
-                onChange={(event) => setDecisions((current) => ({ ...current,
-                  [seat.id]: event.target.value as "confirm" | "return" }))}>
-                <option value="confirm">{t("boardNominations.confirmSeat")}</option>
-                <option value="return">{t("boardNominations.returnSeat")}</option>
-              </select>
+            {seat.state === "Returned" && <p className="mt-3 rounded-lg border-l-2 border-danger-app bg-surface-app px-3 py-2 text-sm break-words text-muted-app sm:ml-14">{seat.reason}</p>}
+            {canDecide && seat.state === "Pending Confirmation" && <div className="mt-3 space-y-2 sm:ml-14">
+              <div role="group" aria-label={`${t("boardNominations.status")}: ${seat.positionName}`}
+                className="inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
+                {(["confirm", "return"] as const).map((choice) => {
+                  const chosen = (decisions[seat.id] ?? "confirm") === choice;
+                  return <button key={choice} type="button" aria-pressed={chosen}
+                    onClick={() => setDecisions((current) => ({ ...current, [seat.id]: choice }))}
+                    className={cn("inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-muted-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9", {
+                      "bg-segment-app text-success-app shadow-xs hover:text-success-app": chosen && choice === "confirm",
+                      "bg-segment-app text-danger-app shadow-xs hover:text-danger-app": chosen && choice === "return",
+                    })}>
+                    <AppIcon name={choice === "confirm" ? "check" : "arrowLeft"} className="size-4" />
+                    {choice === "confirm" ? t("boardNominations.confirmSeat") : t("boardNominations.returnSeat")}
+                  </button>;
+                })}
+              </div>
               {decisions[seat.id] === "return" && <div><AppInput aria-label={`${t("boardNominations.reason")}: ${seat.positionName}`}
                 placeholder={t("boardNominations.reason")} value={reasons[seat.id] ?? ""} className="w-full"
                 {...field.control(`seat:${seat.id}`)}
@@ -128,26 +140,28 @@ export function BoardNominationDetailPage() {
           </li>)}
         </ul>
       </section>
-      <aside className="min-w-0 lg:sticky lg:top-6">
-        {nomination.task.state === "Decided" ? <section>
-          <h2 className="font-heading text-lg font-bold">{t("boardNominations.history")}</h2>
-          <ol className="mt-4 space-y-4">{nomination.decisions.map((decision) => <li key={decision.id} className="border-l-2 border-primary-app pl-3">
-            <p className="font-semibold">{decision.outcome === "Approve" ? t("boardNominations.outcomeApprove") : decision.outcome === "Reject" ? t("boardNominations.outcomeReject") : decision.outcome} · {date(decision.at)}</p>
+      <aside className="min-w-0 xl:sticky xl:top-24">
+        {nomination.task.state === "Decided" ? <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+          <h2 className="font-heading text-base font-semibold">{t("boardNominations.history")}</h2>
+          <ol className="mt-4 space-y-4">{nomination.decisions.map((decision) => <li key={decision.id} className="border-l-2 border-brand-app pl-3">
+            <p className="font-medium">{decision.outcome === "Approve" ? t("boardNominations.outcomeApprove") : decision.outcome === "Reject" ? t("boardNominations.outcomeReject") : decision.outcome}</p>
+            <p className="text-xs text-muted-app">{date(decision.at)}</p>
             {decision.reason && <p className="mt-1 text-sm break-words text-muted-app">{decision.reason}</p>}
             <p className="mt-2 text-sm text-muted-app">{t("boardNominations.confirmedLabel")}: {decision.confirmedSeatIds.length} · {t("boardNominations.returnedLabel")}: {decision.returnedSeatIds.length}</p>
           </li>)}</ol>
-        </section> : canDecide ? <section className="rounded-2xl bg-surface-app p-5">
-          <h2 className="font-heading text-lg font-bold">{t("boardNominations.decisionTitle")}</h2>
+        </section> : canDecide ? <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+          <h2 className="font-heading text-base font-semibold">{t("boardNominations.decisionTitle")}</h2>
           <p className="mt-1 text-sm text-muted-app">{t("boardNominations.decisionHint")}</p>
-          <label className="mt-4 block text-sm font-semibold">{t("boardNominations.generalReason")}{returningAll && <AppRequiredMark />}
-            <AppInput className="mt-2 w-full font-normal" value={decisionNote} {...field.control("decisionNote", returningAll)}
+          <label className="mt-4 block text-sm font-medium text-text-app">{t("boardNominations.generalReason")}{returningAll && <AppRequiredMark />}
+            <AppInput className="mt-1.5 w-full font-normal" value={decisionNote} {...field.control("decisionNote", returningAll)}
               onChange={(event) => setDecisionNote(event.target.value)} />
             <AppFieldError message={field.error("decisionNote")} />
           </label>
           <AppButton className="mt-5 w-full" disabled={action.isPending} onClick={() => void decide()}>
             {action.isPending ? t("boardNominations.deciding") : t("boardNominations.submitDecision")}</AppButton>
         </section> : assignedElsewhere ? <AppNotice tone="warning"><p role="status">{t("boardNominations.claimedByOther")}</p></AppNotice>
-          : nomination.task.state === "Open" ? <div className="rounded-2xl bg-surface-app p-5">
+          : nomination.task.state === "Open" ? <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="mb-4 font-heading text-base font-semibold">{t("boardNominations.decisionTitle")}</h2>
             <AppButton className="w-full" disabled={action.isPending} onClick={() => void claim()}>
               {action.isPending ? t("boardNominations.claiming") : t("boardNominations.claim")}</AppButton>
           </div> : <AppNotice>{t("boardNominations.readOnly")}</AppNotice>}

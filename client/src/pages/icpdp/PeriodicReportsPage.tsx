@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -103,7 +104,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   if (auth.isPending) return <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-20 w-full" />)}</div>;
   if (!auth.data) return <AppNotice>
     <p>{t("periodicReports.signIn")}</p>
-    <Link className="inline-block font-semibold text-accent-app"
+    <Link className="inline-block font-semibold text-primary-app hover:underline"
       to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("periodicReports.signInLink")}</Link>
   </AppNotice>;
   if (!auth.data.systemRoles.includes("ICPDP_OFFICER")) {
@@ -152,10 +153,10 @@ function CampaignPanel({
   }
 
   return (
-    <div className="mb-6 rounded-2xl border border-border-app bg-surface-app p-5">
+    <div className="mb-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-heading text-base font-bold">{t("periodicReports.campaignTitle")}</h2>
+          <h2 className="font-heading text-base font-semibold">{t("periodicReports.campaignTitle")}</h2>
           <AppBadge tone={campaign?.isOpen ? "success" : "neutral"}>
             {campaign?.isOpen ? t("periodicReports.campaignOpen") : t("periodicReports.campaignClosed")}
           </AppBadge>
@@ -170,7 +171,7 @@ function CampaignPanel({
       {expanded && (
         <div className="mt-4 space-y-4 border-t border-border-app pt-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="flex items-center gap-2.5 text-sm font-semibold">
+            <label className="flex items-center gap-2.5 text-sm font-medium text-text-app">
               <input
                 type="checkbox"
                 checked={isOpen}
@@ -179,21 +180,21 @@ function CampaignPanel({
               />
               {t("periodicReports.campaignOpen")}
             </label>
-            <label className="block text-sm font-semibold">
+            <label className="block text-sm font-medium text-text-app">
               {t("periodicReports.campaignDeadline")}<AppRequiredMark />
-              <input
+              <AppInput
                 type="date"
                 value={dueAt}
                 onChange={(e) => setDueAt(e.target.value)}
-                className="mt-1 block min-h-10 w-full rounded-xl border border-border-app bg-bg-app px-3 py-2 text-sm text-text-app"
+                className="mt-1.5 block w-full"
               />
             </label>
           </div>
 
-          <label className="block text-sm font-semibold">
+          <label className="block text-sm font-medium text-text-app">
             {t("periodicReports.campaignAnnouncement")}
             <AppTextarea
-              className="mt-1 min-h-20 w-full font-normal"
+              className="mt-1.5 block min-h-20 w-full font-normal"
               value={announcement}
               maxLength={5000}
               placeholder={t("periodicReports.campaignAnnouncementPlaceholder")}
@@ -203,7 +204,7 @@ function CampaignPanel({
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-semibold">{t("periodicReports.customFieldsTitle")}</span>
+              <span className="text-sm font-medium text-text-app">{t("periodicReports.customFieldsTitle")}</span>
               <AppButton
                 variant="secondary"
                 onClick={() =>
@@ -218,30 +219,27 @@ function CampaignPanel({
             </div>
             {customFields.map((field, idx) => (
               <div key={field.id} className="grid gap-3 rounded-xl border border-border-app bg-bg-app p-3 sm:grid-cols-[1fr_1fr_10rem_auto_auto]">
-                <input
+                <AppInput
                   placeholder={t("periodicReports.fieldLabel")}
                   value={field.label}
                   onChange={(e) => updateField(idx, { label: e.target.value })}
-                  className="min-h-10 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app"
+                  className="min-w-0"
                 />
-                <input
+                <AppInput
                   placeholder={t("periodicReports.fieldDescription")}
                   value={field.description ?? ""}
                   onChange={(e) => updateField(idx, { description: e.target.value })}
-                  className="min-h-10 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app"
+                  className="min-w-0"
                 />
-                <select
+                <AppSelect
+                  label={t("periodicReports.fieldType")}
                   value={field.type}
-                  onChange={(e) => updateField(idx, { type: e.target.value as CustomFieldType })}
-                  className="min-h-10 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app"
-                >
-                  {fieldTypes.map((ft) => (
-                    <option key={ft} value={ft}>
-                      {ft === "text" ? t("periodicReports.fieldTypeText") : ft === "number" ? t("periodicReports.fieldTypeNumber") : t("periodicReports.fieldTypeEvidence")}
-                    </option>
-                  ))}
-                </select>
-                <label className="flex items-center gap-1.5 text-xs font-semibold">
+                  onChange={(value) => updateField(idx, { type: value })}
+                  options={fieldTypes.map((ft) => ({ value: ft,
+                    label: ft === "text" ? t("periodicReports.fieldTypeText") : ft === "number" ? t("periodicReports.fieldTypeNumber") : t("periodicReports.fieldTypeEvidence") }))}
+                  className="w-full"
+                />
+                <label className="flex items-center gap-1.5 text-sm font-medium text-text-app">
                   <input
                     type="checkbox"
                     checked={field.required}
@@ -288,14 +286,14 @@ function Row({ row, periodCode, csrfToken }: { row: PeriodicReportRow; periodCod
   }
 
   return (
-    <li className="px-2 py-5">
+    <li className="px-5 py-4">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+        <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
           <AppIcon name="file" />
         </span>
         <div className="min-w-0 flex-1 basis-64">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-heading text-lg font-bold break-words">{row.clubName}</h2>
+            <h2 className="font-heading text-base font-semibold break-words">{row.clubName}</h2>
             <AppBadge tone={stateTone(row.state)}>{stateLabel(t, row.state)}</AppBadge>
             {row.overdue && <AppBadge tone="danger">{t("periodicReports.overdue")}</AppBadge>}
             {row.lateFlag && <AppBadge tone="warning">{t("periodicReports.late")}</AppBadge>}
@@ -305,16 +303,16 @@ function Row({ row, periodCode, csrfToken }: { row: PeriodicReportRow; periodCod
             {row.versionNo && row.versionNo > 1 && ` · ${t("periodicReports.version", { number: row.versionNo })}`}</p>
         </div>
         {row.reportId && row.state !== "Draft" ? (
-          <Link to={`/workspace/periodic-reports/${row.reportId}`} className="inline-flex items-center gap-1 font-semibold text-primary-app">
+          <Link to={`/workspace/periodic-reports/${row.reportId}`} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9">
             {row.state === "Submitted" ? t("periodicReports.open") : t("periodicReports.view")}<AppIcon name="chevronRight" className="size-4" />
           </Link>
         ) : row.violationId ? (
-          <Link className="font-semibold text-accent-app" to={`/workspace/violations/${row.violationId}`}>
+          <Link className="font-semibold text-primary-app hover:underline" to={`/workspace/violations/${row.violationId}`}>
             {t("periodicReports.recorded")} · {t("periodicReports.viewCase")}</Link>
         ) : row.overdue && !open && <AppButton variant="secondary" onClick={() => setOpen(true)}>{t("periodicReports.recordMissing")}</AppButton>}
       </div>
       {open && !row.violationId && (
-        <div className="mt-4 rounded-2xl bg-surface-app p-4">
+        <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4">
           <p className="text-sm text-muted-app">{t("periodicReports.missingHint")}</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
             <AppSelect className="w-full" label={t("periodicReports.severity")} value={severity} onChange={setSeverity}
@@ -362,16 +360,16 @@ function Overview({ csrfToken }: { csrfToken: string }) {
         campaign={data.campaign}
         csrfToken={csrfToken}
       />
-      <div role="group" aria-label={t("periodicReports.title")} className="mb-6 flex flex-wrap gap-2">{filters.map((value) =>
+      <div role="group" aria-label={t("periodicReports.title")} className="mb-5 flex w-fit max-w-full flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">{filters.map((value) =>
         <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}
-          className={cn("min-h-11 rounded-full border border-border-app px-4 text-sm font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
-            "border-primary-app bg-primary-soft-app text-primary-app hover:text-primary-app": filter === value,
+          className={cn("inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
+            "bg-segment-app text-text-app shadow-xs hover:text-text-app": filter === value,
           })}>{filterLabel(t, value)} · {data.rows.filter((row) => matches(value, row)).length}</button>)}</div>
-      {shown.length ? <ul className="divide-y divide-border-app border-y border-border-app">
+      {shown.length ? <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
         {shown.map((row) => <Row key={row.clubId} row={row} periodCode={periodCode} csrfToken={csrfToken} />)}</ul>
-        : <div className="py-16 text-center">
-          <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="sparkles" className="size-7" /></span>
-          <h2 className="mt-4 font-heading text-xl font-bold">{t("periodicReports.none")}</h2>
+        : <div className="rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
+          <span aria-hidden="true" className="mx-auto flex size-12 items-center justify-center rounded-xl border border-border-app bg-bg-app text-muted-app"><AppIcon name="sparkles" className="size-6" /></span>
+          <h2 className="mt-4 font-heading text-base font-semibold">{t("periodicReports.none")}</h2>
           <p className="mt-2 text-sm text-muted-app">{t("periodicReports.noneHint")}</p>
         </div>}
     </>
@@ -462,7 +460,7 @@ function EvidenceDisplay({
           className="max-h-44 rounded-lg border border-border-app object-contain"
         />
       ) : (
-        <a href={url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
+        <a href={url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary-app hover:underline break-all">
           {url}
         </a>
       )}
@@ -488,7 +486,7 @@ function EvidenceDisplay({
               href={url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-10 items-center rounded-xl border border-border-app bg-surface-app px-3 py-1.5 text-xs font-semibold text-accent-app"
+              className="inline-flex min-h-9 items-center rounded-lg border border-border-app bg-bg-app px-3 text-xs font-medium text-text-app shadow-xs hover:bg-surface-app"
             >
               {t("periodicReports.openOriginalLink")}
             </a>
@@ -587,17 +585,17 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
         actions={<span className="flex flex-wrap gap-2">
           {data.lateFlag && <AppBadge tone="warning">{t("periodicReports.late")}</AppBadge>}
           <AppBadge tone={stateTone(data.state)}>{stateLabel(t, data.state)}</AppBadge></span>} />
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="min-w-0 space-y-10">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-5">
           {/* Overview Figures */}
-          <section>
-            <h2 className="font-heading text-xl font-bold">{t("periodicReports.figures")}</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("periodicReports.figures")}</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[26rem] text-sm">
                 <thead><tr className="border-b border-border-app text-muted-app">
-                  <th scope="col" className="py-2 pr-3 text-left font-semibold"><span className="sr-only">{t("periodicReports.figures")}</span></th>
-                  <th scope="col" className="py-2 pr-3 text-right font-semibold">{t("periodicReports.frozen")}</th>
-                  <th scope="col" className="py-2 text-right font-semibold">{t("periodicReports.system")}</th>
+                  <th scope="col" className="py-2 pr-3 text-left text-xs font-medium"><span className="sr-only">{t("periodicReports.figures")}</span></th>
+                  <th scope="col" className="py-2 pr-3 text-right text-xs font-medium">{t("periodicReports.frozen")}</th>
+                  <th scope="col" className="py-2 text-right text-xs font-medium">{t("periodicReports.system")}</th>
                 </tr></thead>
                 <tbody className="divide-y divide-border-app">
                   <Figure label={t("periodicReports.eventsHeld")} frozen={frozen.events?.completed} live={live.events?.completed} />
@@ -614,17 +612,17 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
           </section>
 
           {/* 1. Active Members & System Comparison */}
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("periodicReports.membersSection")} ({clubMembers.length})</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("periodicReports.membersSection")} ({clubMembers.length})</h2>
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[32rem] text-sm">
+              <table className="w-full min-w-xl text-sm">
                 <thead>
                   <tr className="border-b border-border-app text-left text-muted-app">
-                    <th className="py-2 pr-3 font-semibold">{t("periodicReports.memberName")}</th>
-                    <th className="py-2 pr-3 font-semibold">{t("periodicReports.memberCode")}</th>
-                    <th className="py-2 pr-3 font-semibold">{t("periodicReports.memberEmail")}</th>
-                    <th className="py-2 pr-3 text-right font-semibold">{t("periodicReports.memberScore")}</th>
-                    <th className="py-2 text-right font-semibold">{t("periodicReports.memberSource")}</th>
+                    <th className="py-2 pr-3 text-xs font-medium">{t("periodicReports.memberName")}</th>
+                    <th className="py-2 pr-3 text-xs font-medium">{t("periodicReports.memberCode")}</th>
+                    <th className="py-2 pr-3 text-xs font-medium">{t("periodicReports.memberEmail")}</th>
+                    <th className="py-2 pr-3 text-right text-xs font-medium">{t("periodicReports.memberScore")}</th>
+                    <th className="py-2 text-right text-xs font-medium">{t("periodicReports.memberSource")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-app">
@@ -638,9 +636,9 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                     return (
                       <tr key={idx}>
                         <td className="py-2.5 pr-3 font-medium">{m.fullName}</td>
-                        <td className="py-2.5 pr-3 tabular-nums">{m.studentCode}</td>
-                        <td className="py-2.5 pr-3 break-all">{m.email}</td>
-                        <td className="py-2.5 pr-3 text-right font-bold tabular-nums">{m.activityScore}</td>
+                        <td className="py-2.5 pr-3 whitespace-nowrap tabular-nums">{m.studentCode}</td>
+                        <td className="py-2.5 pr-3 whitespace-nowrap">{m.email}</td>
+                        <td className="py-2.5 pr-3 text-right font-semibold tabular-nums">{m.activityScore}</td>
                         <td className="py-2.5 text-right">
                           <AppBadge tone={matchedSys ? "info" : "warning"}>
                             {matchedSys ? t("periodicReports.sourceSystem") : t("periodicReports.sourceManual")}
@@ -654,7 +652,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             </div>
             {removedMembers.length > 0 && (
               <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4">
-                <p className="text-xs font-bold text-warning-app">
+                <p className="text-xs font-semibold text-warning-app">
                   {t("periodicReports.removedMembersTitle", { count: removedMembers.length })}
                 </p>
                 <ul className="mt-2 space-y-1 text-xs text-muted-app">
@@ -670,8 +668,8 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
           </section>
 
           {/* 2. Events Organized & System Comparison */}
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("periodicReports.eventsSection")} ({clubEvents.length})</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("periodicReports.eventsSection")} ({clubEvents.length})</h2>
             <div className="mt-4 space-y-4">
               {clubEvents.map((ev, idx) => {
                 const matchedSys = sysEvents.find(
@@ -684,9 +682,9 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                     matchedSys.participantCount !== ev.participantCount),
                 );
                 return (
-                  <div key={idx} className="space-y-2 rounded-2xl border border-border-app bg-surface-app p-4">
+                  <div key={idx} className="space-y-2 rounded-xl border border-border-app bg-surface-app p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <h3 className="font-bold">{ev.title}</h3>
+                      <h3 className="font-semibold">{ev.title}</h3>
                       <div className="flex flex-wrap gap-2">
                         <AppBadge tone={matchedSys ? "info" : "warning"}>
                           {matchedSys ? t("periodicReports.sourceSystem") : t("periodicReports.sourceManual")}
@@ -715,7 +713,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
               })}
               {removedEvents.length > 0 && (
                 <div className="rounded-xl border border-border-app bg-surface-app p-4">
-                  <p className="text-xs font-bold text-warning-app">
+                  <p className="text-xs font-semibold text-warning-app">
                     {t("periodicReports.removedEventsTitle", { count: removedEvents.length })}
                   </p>
                   <ul className="mt-2 space-y-1 text-xs text-muted-app">
@@ -732,13 +730,13 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
           </section>
 
           {/* 3. Achievements */}
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("periodicReports.achievementsSection")} ({achievements.length})</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("periodicReports.achievementsSection")} ({achievements.length})</h2>
             {achievements.length ? (
               <div className="mt-4 space-y-4">
                 {achievements.map((ach, idx) => (
-                  <div key={idx} className="space-y-2 rounded-2xl border border-border-app bg-surface-app p-4">
-                    <h3 className="font-bold">{ach.title}</h3>
+                  <div key={idx} className="space-y-2 rounded-xl border border-border-app bg-surface-app p-4">
+                    <h3 className="font-semibold">{ach.title}</h3>
                     <p className="whitespace-pre-wrap break-words text-sm">{ach.description}</p>
                     {ach.evidenceUrl && (
                       <EvidenceDisplay
@@ -751,14 +749,14 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                 ))}
               </div>
             ) : (
-              <p className="mt-3 text-sm text-muted-app">{t("periodicReports.noAchievements")}</p>
+              <div className="mt-3"><AppEmptyState message={t("periodicReports.noAchievements")} /></div>
             )}
           </section>
 
           {/* 4. Additional ICPDP Custom Fields */}
           {(customFields.length > 0 || customAnswers.length > 0) && (
-            <section className="border-t border-border-app pt-8">
-              <h2 className="font-heading text-xl font-bold">{t("periodicReports.customFieldsSection")}</h2>
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t("periodicReports.customFieldsSection")}</h2>
               <dl className="mt-4 space-y-4">
                 {(customFields.length
                   ? customFields.map((cf) => ({
@@ -769,7 +767,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
                   : customAnswers.map((a) => ({ id: a.fieldId, label: a.label ?? a.fieldId, answer: a }))
                 ).map((item) => (
                   <div key={item.id} className="rounded-xl border border-border-app bg-surface-app p-4">
-                    <dt className="text-xs font-semibold uppercase text-muted-app">{item.label}</dt>
+                    <dt className="text-xs text-muted-app">{item.label}</dt>
                     <dd className="mt-1 text-sm">
                       {item.answer?.textValue && <p className="whitespace-pre-wrap break-words">{item.answer.textValue}</p>}
                       {item.answer?.numberValue !== undefined && <p className="font-bold tabular-nums">{item.answer.numberValue}</p>}
@@ -792,29 +790,29 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
 
           {/* Legacy narrative/nextPlan fallback if present */}
           {(data.narrative || data.nextPlan || data.evidence.length > 0) && (
-            <section className="border-t border-border-app pt-8">
-              <h2 className="font-heading text-xl font-bold">{t("periodicReports.content")}</h2>
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t("periodicReports.content")}</h2>
               <dl className="mt-4 space-y-5">
                 {data.narrative && (
                   <div>
-                    <dt className="text-xs font-semibold uppercase text-muted-app">{t("periodicReports.narrative")}</dt>
+                    <dt className="text-xs text-muted-app">{t("periodicReports.narrative")}</dt>
                     <dd className="mt-1 whitespace-pre-line break-words">{data.narrative}</dd>
                   </div>
                 )}
                 {data.nextPlan && (
                   <div>
-                    <dt className="text-xs font-semibold uppercase text-muted-app">{t("periodicReports.nextPlan")}</dt>
+                    <dt className="text-xs text-muted-app">{t("periodicReports.nextPlan")}</dt>
                     <dd className="mt-1 whitespace-pre-line break-words">{data.nextPlan}</dd>
                   </div>
                 )}
                 {data.evidence.length > 0 && (
                   <div>
-                    <dt className="text-xs font-semibold uppercase text-muted-app">{t("periodicReports.evidence")}</dt>
+                    <dt className="text-xs text-muted-app">{t("periodicReports.evidence")}</dt>
                     <dd className="mt-1">
                       <ul className="space-y-1">
                         {data.evidence.map((item, index) => (
                           <li key={index} className="break-words">
-                            {item.url ? <a className="font-semibold text-accent-app" href={item.url} target="_blank" rel="noreferrer">{item.note || item.url}</a> : item.note}
+                            {item.url ? <a className="font-semibold text-primary-app hover:underline" href={item.url} target="_blank" rel="noreferrer">{item.note || item.url}</a> : item.note}
                           </li>
                         ))}
                       </ul>
@@ -826,15 +824,15 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
           )}
 
           {/* Version History & Comparison */}
-          <section className="border-t border-border-app pt-8">
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-heading text-xl font-bold">{t("periodicReports.versionCompareTitle")}</h2>
+              <h2 className="font-heading text-base font-semibold">{t("periodicReports.versionCompareTitle")}</h2>
               {versions.length > 1 && (
                 <select
                   value={compareVersion?.versionNo ?? ""}
                   onChange={(e) => setCompareVersionNo(Number(e.target.value))}
                   aria-label={t("periodicReports.versionSelectBase")}
-                  className="min-h-10 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app"
+                  className="h-11 rounded-lg border border-border-app bg-bg-app px-3 text-sm text-text-app shadow-xs focus-visible:border-ring-app focus-visible:ring-3 focus-visible:ring-ring-app/20 focus-visible:outline-none sm:h-9"
                 >
                   {versions.map((v) => (
                     <option key={v.versionNo} value={v.versionNo}>
@@ -845,7 +843,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
               )}
             </div>
             {compareVersion && versions.length > 1 && (
-              <div className="mt-4 rounded-2xl border border-border-app bg-surface-app p-4 text-sm">
+              <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4 text-sm">
                 <p className="font-semibold">
                   {t("periodicReports.versionDiffSummary", {
                     current: data.versionNo,
@@ -864,53 +862,53 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             )}
             {data.history.length ? <ol className="mt-5 space-y-4 border-l-2 border-border-app pl-5">{data.history.map((item, index) =>
               <li key={index} className="relative">
-                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-primary-app" />
+                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-brand-app" />
                 <p className="font-semibold">{item.action === "PERIODIC_REPORT_ACCEPTED" ? t("periodicReports.actionAccepted")
                   : item.action === "PERIODIC_REPORT_RETURNED" ? t("periodicReports.actionReturned") : item.action}</p>
                 <p className="text-sm text-muted-app">{day(item.at)}{item.actorName && ` · ${item.actorName}`}</p>
                 {item.reason && <p className="mt-1 text-sm break-words">{item.reason}</p>}
               </li>)}</ol>
-              : <p className="mt-3 text-sm text-muted-app">{t("periodicReports.noHistory")}</p>}
+              : <div className="mt-3"><AppEmptyState message={t("periodicReports.noHistory")} /></div>}
           </section>
         </div>
 
-        <aside className="min-w-0 lg:sticky lg:top-6">
+        <aside className="min-w-0 lg:sticky lg:top-24">
           {data.state === "Submitted" ? (
-            <section className="rounded-2xl bg-surface-app p-5">
-              <h2 className="font-heading text-lg font-bold">{t("periodicReports.decide")}</h2>
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t("periodicReports.decide")}</h2>
               <div role="radiogroup" aria-label={t("periodicReports.decide")} className="mt-4 grid gap-2">
                 {(["Accept", "Return"] as const).map((value) => <button key={value} type="button" role="radio" aria-checked={outcome === value}
                   onClick={() => setOutcome(value)}
-                  className={cn("min-h-11 rounded-xl border border-border-app px-4 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-ring-app", {
+                  className={cn("min-h-11 rounded-lg border border-border-app px-4 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring-app", {
                     "border-primary-app bg-primary-soft-app text-primary-app": outcome === value,
                   })}>{value === "Accept" ? t("periodicReports.outcomeAccept") : t("periodicReports.outcomeReturn")}</button>)}
               </div>
               {outcome === "Accept" ? (
-                <label className="mt-5 block text-sm font-semibold">{t("periodicReports.observation")}
-                  <AppTextarea className="mt-2 min-h-20 w-full font-normal" value={observation} maxLength={2000}
+                <label className="mt-5 block text-sm font-medium text-text-app">{t("periodicReports.observation")}
+                  <AppTextarea className="mt-1.5 block min-h-20 w-full font-normal" value={observation} maxLength={2000}
                     onChange={(e) => setObservation(e.target.value)} />
                   <span className="mt-1 block text-xs font-normal text-muted-app">{t("periodicReports.observationHint")}</span></label>
               ) : <>
                 <fieldset className="mt-5">
-                  <legend className="text-sm font-semibold">{t("periodicReports.sections")}<AppRequiredMark /></legend>
-                  <div className="mt-2 flex flex-wrap gap-2">{RETURN_SECTIONS.map((section) =>
+                  <legend className="text-sm font-medium text-text-app">{t("periodicReports.sections")}<AppRequiredMark /></legend>
+                  <div className="mt-1.5 flex flex-wrap gap-2">{RETURN_SECTIONS.map((section) =>
                     <button key={section} type="button" aria-pressed={sections.includes(section)} onClick={() => toggle(section)}
-                      className={cn("min-h-11 rounded-full border border-border-app px-4 text-sm font-semibold text-muted-app transition-colors focus-visible:outline-2 focus-visible:outline-ring-app", {
+                      className={cn("min-h-11 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9", {
                         "border-primary-app bg-primary-soft-app text-primary-app": sections.includes(section),
                       })}>{sectionLabel(t, section)}</button>)}</div>
                   <AppFieldError message={field.error("sections")} />
                 </fieldset>
-                <label className="mt-5 block text-sm font-semibold">{t("periodicReports.resubmitDueAt")}
-                  <input
+                <label className="mt-5 block text-sm font-medium text-text-app">{t("periodicReports.resubmitDueAt")}
+                  <AppInput
                     type="date"
                     value={resubmitDueAt}
                     onChange={(e) => setResubmitDueAt(e.target.value)}
-                    className="mt-2 block min-h-10 w-full rounded-xl border border-border-app bg-bg-app px-3 py-2 text-sm font-normal text-text-app"
+                    className="mt-1.5 block w-full font-normal"
                   />
                   <span className="mt-1 block text-xs font-normal text-muted-app">{t("periodicReports.resubmitDueAtHint")}</span>
                 </label>
-                <label className="mt-5 block text-sm font-semibold">{t("periodicReports.reason")}<AppRequiredMark />
-                  <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={reason} maxLength={5000}
+                <label className="mt-5 block text-sm font-medium text-text-app">{t("periodicReports.reason")}<AppRequiredMark />
+                  <AppTextarea className="mt-1.5 block min-h-24 w-full font-normal" value={reason} maxLength={5000}
                     {...field.control("reason")} onChange={(e) => setReason(e.target.value)} />
                   <AppFieldError message={field.error("reason")} />
                   <span className="mt-1 block text-xs font-normal text-muted-app">{t("periodicReports.reasonHint")}</span></label>
@@ -920,8 +918,8 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
               {decide.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{decide.error.message}</p>}
             </section>
           ) : data.decision ? (
-            <section className="rounded-2xl bg-surface-app p-5">
-              <h2 className="font-heading text-lg font-bold">{data.decision.outcome === "Accept" ? t("periodicReports.outcomeAccept")
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{data.decision.outcome === "Accept" ? t("periodicReports.outcomeAccept")
                 : t("periodicReports.outcomeReturn")}</h2>
               <p className="mt-1 text-sm text-muted-app">{t("periodicReports.decisionBy", { name: data.decision.decidedByName ?? "—",
                 date: day(data.decision.decidedAt) })}</p>
@@ -941,20 +939,18 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
         closeLabel={t("periodicReports.closeImagePreview")}
         onClose={() => setPreviewImage(null)}
         className="w-[min(100%-2rem,56rem)]"
+        footer={previewImage && (
+          <AppButton variant="secondary" onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}>
+            {t("periodicReports.saveImage")}
+          </AppButton>
+        )}
       >
         {previewImage && (
-          <div className="space-y-4">
-            <img
-              src={previewImage.url}
-              alt={previewImage.title}
-              className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
-            />
-            <div className="flex flex-wrap justify-end gap-2">
-              <AppButton variant="secondary" onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}>
-                {t("periodicReports.saveImage")}
-              </AppButton>
-            </div>
-          </div>
+          <img
+            src={previewImage.url}
+            alt={previewImage.title}
+            className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
+          />
         )}
       </AppDialog>
     </>

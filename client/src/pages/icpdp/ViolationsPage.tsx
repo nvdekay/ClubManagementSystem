@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -128,7 +129,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   if (auth.isPending) return <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-20 w-full" />)}</div>;
   if (!auth.data) return <AppNotice>
     <p>{t("violations.signIn")}</p>
-    <Link className="inline-block font-semibold text-accent-app"
+    <Link className="inline-block font-semibold text-primary-app hover:underline"
       to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("violations.signInLink")}</Link>
   </AppNotice>;
   if (!auth.data.systemRoles.includes("ICPDP_OFFICER")) {
@@ -139,10 +140,10 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
 
 function SeverityPicker({ value, onChange }: { value: ViolationSeverity; onChange: (value: ViolationSeverity) => void }) {
   const { t } = useTranslation();
-  return <div className="mt-2 grid grid-cols-3 gap-1 rounded-full bg-surface-strong-app p-1">{VIOLATION_SEVERITIES.map((item) =>
+  return <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-lg border border-border-app bg-surface-app p-1">{VIOLATION_SEVERITIES.map((item) =>
     <button key={item} type="button" aria-pressed={value === item} onClick={() => onChange(item)}
-      className={cn("min-h-11 rounded-full px-2 text-xs font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
-        "bg-bg-app text-primary-app shadow-sm hover:text-primary-app": value === item,
+      className={cn("min-h-11 rounded-md px-2 text-xs font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9", {
+        "bg-segment-app text-text-app shadow-xs hover:text-text-app": value === item,
       })}>{severityLabel(t, item)}</button>)}</div>;
 }
 
@@ -179,33 +180,33 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
   }
 
   return (
-    <section className="mb-8 rounded-2xl bg-surface-app p-5">
-      <h2 className="font-heading text-lg font-bold">{t("violations.openCase")}</h2>
+    <section className="mb-8 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <h2 className="font-heading text-base font-semibold">{t("violations.openCase")}</h2>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <div className="text-sm font-semibold">{t("violations.club")}<AppRequiredMark />
-          <AppSelect className="mt-2 w-full" label={t("violations.club")} value={clubId}
+        <div className="block text-sm font-medium text-text-app">{t("violations.club")}<AppRequiredMark />
+          <AppSelect className="mt-1.5 w-full" label={t("violations.club")} value={clubId}
             required invalid={Boolean(field.error("clubId"))}
             onChange={(value) => { setClubId(value); setRelated(""); field.touch("clubId"); }}
             options={[{ value: "", label: t("violations.chooseClub") },
               ...(clubs.data?.clubs ?? []).map((club) => ({ value: club.id, label: club.name }))]} />
           <AppFieldError message={field.error("clubId")} /></div>
-        <div className="text-sm font-semibold">{t("violations.origin")}
-          <AppSelect className="mt-2 w-full" label={t("violations.origin")} value={originType} onChange={setOriginType}
+        <div className="block text-sm font-medium text-text-app">{t("violations.origin")}
+          <AppSelect className="mt-1.5 w-full" label={t("violations.origin")} value={originType} onChange={setOriginType}
             options={VIOLATION_ORIGINS.map((origin) => ({ value: origin, label: originLabel(t, origin) }))} /></div>
-        <div className="text-sm font-semibold md:col-span-2">{t("violations.severity")}
+        <div className="block text-sm font-medium text-text-app md:col-span-2">{t("violations.severity")}
           <SeverityPicker value={severity} onChange={setSeverity} /></div>
-        <label className="block text-sm font-semibold md:col-span-2">{t("violations.caseTitle")}<AppRequiredMark />
-          <AppInput className="mt-2 w-full font-normal" value={title} maxLength={200} placeholder={t("violations.caseTitleHint")}
+        <label className="block text-sm md:col-span-2 font-medium text-text-app">{t("violations.caseTitle")}<AppRequiredMark />
+          <AppInput className="mt-1.5 w-full font-normal" value={title} maxLength={200} placeholder={t("violations.caseTitleHint")}
             {...field.control("title")} onChange={(e) => setTitle(e.target.value)} />
           <AppFieldError message={field.error("title")} /></label>
-        <label className="block text-sm font-semibold md:col-span-2">{t("violations.caseDescription")}
-          <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={description} maxLength={5000}
+        <label className="block text-sm md:col-span-2 font-medium text-text-app">{t("violations.caseDescription")}
+          <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" value={description} maxLength={5000}
             onChange={(e) => setDescription(e.target.value)} /></label>
-        {clubId && <div className="text-sm font-semibold md:col-span-2">{t("violations.related")}
-          <AppSelect className="mt-2 w-full" label={t("violations.related")} value={related} onChange={setRelated}
+        {clubId && <div className="block text-sm font-medium text-text-app md:col-span-2">{t("violations.related")}
+          <AppSelect className="mt-1.5 w-full" label={t("violations.related")} value={related} onChange={setRelated}
             options={relatedOptions} /></div>}
-        <label className="block text-sm font-semibold md:col-span-2">{t("violations.evidence")}
-          <AppTextarea className="mt-2 min-h-20 w-full font-normal" value={evidence} placeholder={t("violations.decisionEvidenceHint")}
+        <label className="block text-sm md:col-span-2 font-medium text-text-app">{t("violations.evidence")}
+          <AppTextarea className="mt-1.5 min-h-20 w-full font-normal" value={evidence} placeholder={t("violations.decisionEvidenceHint")}
             onChange={(e) => setEvidence(e.target.value)} /></label>
       </div>
       <div className="mt-5 flex flex-wrap gap-2">
@@ -234,21 +235,21 @@ function ViolationList({ csrfToken }: { csrfToken: string }) {
         : list.isError ? <AppNotice tone="danger" role="alert" title={list.error.message || t("violations.loadError")}>
           <AppButton variant="secondary" onClick={() => void list.refetch()}>{t("violations.retry")}</AppButton></AppNotice>
           : <>
-            <div role="group" aria-label={t("violations.title")} className="mb-6 flex flex-wrap gap-2">{filters.map((value) =>
+            <div role="group" aria-label={t("violations.title")} className="mb-5 flex w-fit max-w-full flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">{filters.map((value) =>
               <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}
-                className={cn("min-h-11 rounded-full border border-border-app px-4 text-sm font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
-                  "border-primary-app bg-primary-soft-app text-primary-app hover:text-primary-app": filter === value,
+                className={cn("inline-flex min-h-9 items-center justify-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
+                  "bg-segment-app text-text-app shadow-xs hover:text-text-app": filter === value,
                 })}>{filterLabel(t, value)} · {list.data.filter((item) => matches(value, item)).length}</button>)}</div>
             {list.data.some((item) => matches(filter, item)) ? (
-              <ul className="divide-y divide-border-app border-y border-border-app">{list.data.filter((item) => matches(filter, item)).map((item) =>
+              <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">{list.data.filter((item) => matches(filter, item)).map((item) =>
                 <li key={item.id}>
                   <Link to={`/workspace/violations/${item.id}`}
-                    className="flex flex-wrap items-center gap-x-6 gap-y-3 px-2 py-5 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
-                    <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-danger-app/10 text-danger-app">
+                    className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring-app">
+                    <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
                       <AppIcon name="shield" /></span>
                     <span className="min-w-0 flex-1 basis-64">
                       <span className="flex flex-wrap items-center gap-2">
-                        <span className="font-heading text-lg font-bold break-words">{item.title}</span>
+                        <span className="font-heading text-base font-semibold break-words">{item.title}</span>
                         <AppBadge tone={stateTone(item.state)}>{stateLabel(t, item.state)}</AppBadge>
                       </span>
                       <span className="mt-1 block text-sm text-muted-app">{item.clubName} · {originLabel(t, item.originType)} · {t("violations.openedOn", { date: day(item.openedAt) })}</span>
@@ -264,9 +265,9 @@ function ViolationList({ csrfToken }: { csrfToken: string }) {
                   </Link>
                 </li>)}</ul>
             ) : (
-              <div className="py-16 text-center">
+              <div className="rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
                 <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="sparkles" className="size-7" /></span>
-                <h2 className="mt-4 font-heading text-xl font-bold">{t("violations.none")}</h2>
+                <h2 className="mt-4 font-heading text-base font-semibold">{t("violations.none")}</h2>
                 <p className="mt-2 text-sm text-muted-app">{t("violations.noneHint")}</p>
               </div>
             )}
@@ -285,12 +286,21 @@ export function ViolationsPage() {
   );
 }
 
+/** One block of the "next step" panel: a numbered marker, highlighted while it is the step the case is at. */
+function Step({ number, current, children }: { number: number; current: boolean; children: ReactNode }) {
+  return <div className="flex gap-3" aria-current={current ? "step" : undefined}>
+    <span aria-hidden="true" className={cn("flex size-6 shrink-0 items-center justify-center rounded-full border border-border-app text-xs font-semibold text-muted-app",
+      { "border-brand-app text-brand-app": current })}>{number}</span>
+    <div className={cn("min-w-0 flex-1", { "[&>h3]:text-muted-app": !current })}>{children}</div>
+  </div>;
+}
+
 function EvidenceList({ items, names }: { items: ViolationEvidence[]; names: Record<string, string> }) {
   const { t, i18n } = useTranslation();
-  if (!items.length) return <p className="mt-3 text-sm text-muted-app">{t("violations.noEvidence")}</p>;
+  if (!items.length) return <div className="mt-3"><AppEmptyState message={t("violations.noEvidence")} /></div>;
   return <ul className="mt-3 space-y-2 text-sm">{items.map((item, index) =>
     <li key={index} className="rounded-xl border border-border-app px-3 py-2">
-      {item.url ? <a href={item.url} target="_blank" rel="noreferrer noopener" className="font-medium break-all text-accent-app hover:underline">{item.note}</a>
+      {item.url ? <a href={item.url} target="_blank" rel="noreferrer noopener" className="font-medium break-all text-primary-app hover:underline">{item.note}</a>
         : <p className="break-words">{item.note}</p>}
       <p className="mt-0.5 text-xs text-muted-app">{names[item.addedBy] ?? item.addedBy} · {new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(item.addedAt))}</p>
     </li>)}</ul>;
@@ -343,7 +353,16 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
   const responseOverdue = Boolean(response && !response.source && new Date(response.dueAt) < new Date());
   const decided = item.state === "Decision Issued" || item.state === "Corrective Action";
   const canDecideViolation = item.state === "Awaiting Club Response" && Boolean(response?.source);
-  const label = "text-xs font-semibold tracking-wide text-muted-app uppercase";
+  const label = "text-xs text-muted-app";
+  // The panel's blocks read as numbered steps; the record's state decides which one is current.
+  const steps = [item.state === "Open" && "investigate", (item.state === "Open" || item.state === "Under Investigation") && "request",
+    item.state === "Awaiting Club Response" && response && !response.source && "record", !decided && "decide", decided && "actions"]
+    .filter((key): key is string => Boolean(key));
+  const currentStep = item.state === "Open" ? "investigate" : item.state === "Under Investigation" ? "request"
+    : item.state === "Awaiting Club Response" ? (response && !response.source ? "record" : "decide") : decided ? "actions" : "";
+  function stepProps(key: string) {
+    return { number: steps.indexOf(key) + 1, current: currentStep === key };
+  }
 
   async function run(next: ViolationStep, confirmText?: string): Promise<boolean> {
     if (confirmText && !(await askConfirm(confirmText))) return false;
@@ -379,9 +398,9 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
         description={`${item.clubName} · ${originLabel(t, item.originType)} · ${t("violations.openedOn", { date: day(item.openedAt) })}`}
         actions={<div className="flex flex-wrap gap-2"><AppBadge tone={severityTone(item.severity)}>{severityLabel(t, item.severity)}</AppBadge>
           <AppBadge tone={stateTone(item.state)}>{stateLabel(t, item.state)}</AppBadge></div>} />
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="min-w-0 space-y-10">
-          <section>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-5">
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <dl className="grid gap-5 sm:grid-cols-2">
               <div><dt className={label}>{t("violations.club")}</dt><dd className="mt-1 font-medium">{item.clubName} · {item.clubState}</dd></div>
               <div><dt className={label}>{t("violations.related")}</dt><dd className="mt-1 font-medium break-words">
@@ -392,8 +411,8 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
             </dl>
           </section>
 
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("violations.evidence")}</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("violations.evidence")}</h2>
             <EvidenceList items={item.evidence} names={item.names} />
             {!final && <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
               <AppInput aria-label={t("violations.evidenceNote")} placeholder={t("violations.evidenceNote")} value={evidenceNote}
@@ -406,31 +425,31 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
             </div>}
           </section>
 
-          {response && <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("violations.clubResponse")}</h2>
+          {response && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("violations.clubResponse")}</h2>
             <p className="mt-2 text-sm text-muted-app">{t("violations.requestedOn", { date: day(response.requestedAt), due: day(response.dueAt) })}</p>
             <p className="mt-2 text-sm break-words whitespace-pre-wrap">{response.requestMessage}</p>
-            {response.source ? <div className="mt-4 rounded-2xl bg-surface-app p-4">
+            {response.source ? <div className="mt-4 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs">
               <AppBadge tone={response.source === "NO_RESPONSE" ? "danger" : "info"}>{response.source === "CLUB" ? t("violations.responseByClub")
                 : response.source === "RECORDED_BY_ICPDP" ? t("violations.responseRecorded") : t("violations.responseNone")}</AppBadge>
               {response.text && <p className="mt-3 leading-7 break-words whitespace-pre-wrap">{response.text}</p>}
             </div> : <p className="mt-3 text-sm text-muted-app">{responseOverdue ? t("violations.responseOverdue") : t("violations.waitingForClub")}</p>}
           </section>}
 
-          {item.decisionReason && <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("violations.decide")}</h2>
+          {item.decisionReason && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("violations.decide")}</h2>
             {item.decidedAt && <p className="mt-2 text-sm text-muted-app">{t("violations.decisionOn", { date: day(item.decidedAt) })}</p>}
             <p className="mt-2 leading-7 break-words whitespace-pre-wrap">{item.decisionReason}</p>
             {item.decisionEvidence.length > 0 && <EvidenceList items={item.decisionEvidence} names={item.names} />}
           </section>}
 
-          {(decided || item.actions.length > 0) && <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("violations.actions")}</h2>
-            {item.actions.length ? <ul className="mt-4 divide-y divide-border-app border-y border-border-app">{item.actions.map((action) =>
-              <li key={action.id} className="flex flex-wrap items-center gap-3 py-3">
+          {(decided || item.actions.length > 0) && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("violations.actions")}</h2>
+            {item.actions.length ? <ul className="mt-4 divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">{item.actions.map((action) =>
+              <li key={action.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1 basis-56">
                   <p className="font-medium break-words">{action.description}</p>
-                  {action.submission && <div className="my-2 rounded-lg bg-bg-app p-3"><p className="whitespace-pre-wrap break-words">{action.submission.note}</p>{action.submission.evidence.map((e, n) => <p key={n} className="break-words">{e.note !== e.url && e.note} {e.url && <a href={e.url} target="_blank" rel="noreferrer" className="text-accent-app underline">{e.url}</a>}</p>)}</div>}
+                  {action.submission && <div className="my-2 rounded-lg bg-surface-app p-3"><p className="whitespace-pre-wrap break-words">{action.submission.note}</p>{action.submission.evidence.map((e, n) => <p key={n} className="break-words">{e.note !== e.url && e.note} {e.url && <a href={e.url} target="_blank" rel="noreferrer" className="text-primary-app hover:underline">{e.url}</a>}</p>)}</div>}
                   <p className="text-xs text-muted-app">{t("violations.actionDue")}: {day(action.dueAt)}
                     {action.linkedLifecycleAction && ` · ${action.linkedLifecycleAction === "SUSPEND" ? t("violations.actionLinkSUSPEND") : t("violations.actionLinkDISSOLVE")}`}</p>
                 </div>
@@ -440,17 +459,17 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
                   <AppButton variant="secondary" disabled={step.isPending}
                     onClick={() => void run({ type: "verifyAction", actionId: action.id, outcome: "Failed" })}>{t("violations.markFailed")}</AppButton>
                 </div> : <p className="text-sm text-muted-app">{t("violations.awaitingEvidence")}</p> : <AppBadge tone={action.state === "Verified" ? "success" : action.state === "Failed" ? "danger" : "warning"}>{actionStateLabel(action.state)}</AppBadge>}
-              </li>)}</ul> : <p className="mt-3 text-sm text-muted-app">{t("violations.noActions")}</p>}
+              </li>)}</ul> : <div className="mt-3"><AppEmptyState message={t("violations.noActions")} /></div>}
             {item.actions.some((action) => action.linkedLifecycleAction) && <Link to="/icpdp/clubs"
-              className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent-app hover:underline">
+              className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary-app hover:underline">
               {t("violations.manageClub")}<AppIcon name="external" className="size-3.5" /></Link>}
           </section>}
 
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("violations.history")}</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("violations.history")}</h2>
             <ol className="mt-5 space-y-4 border-l-2 border-border-app pl-5">{item.history.map((entry, index) =>
               <li key={index} className="relative">
-                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-primary-app" />
+                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-brand-app" />
                 <p className="font-semibold">{historyLabel(t, entry.action)}</p>
                 <p className="text-sm text-muted-app">{entry.actorName ? `${entry.actorName} · ` : ""}{day(entry.at)}</p>
                 {entry.reason && <p className="mt-1 text-sm break-words">{entry.reason}</p>}
@@ -458,24 +477,24 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
           </section>
         </div>
 
-        <aside className="min-w-0 space-y-6 lg:sticky lg:top-6">
+        <aside className="min-w-0 space-y-6 lg:sticky lg:top-24">
           {final ? <AppNotice role="status">{stateLabel(t, item.state)}{item.resolvedAt && ` · ${t("violations.resolvedOn", { date: day(item.resolvedAt) })}`}</AppNotice> : (
-            <section className="space-y-6 rounded-2xl bg-surface-app p-5">
-              <h2 className="font-heading text-lg font-bold">{t("violations.nextStep")}</h2>
+            <section className="space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t("violations.nextStep")}</h2>
 
-              {item.state === "Open" && <div>
+              {item.state === "Open" && <Step {...stepProps("investigate")}>
                 <p className="text-sm text-muted-app">{t("violations.investigateHint")}</p>
                 <AppButton className="mt-3 w-full" variant="secondary" disabled={step.isPending}
                   onClick={() => void run({ type: "investigate" })}>{t("violations.investigate")}</AppButton>
-              </div>}
+              </Step>}
 
-              {(item.state === "Open" || item.state === "Under Investigation") && <div>
+              {(item.state === "Open" || item.state === "Under Investigation") && <Step {...stepProps("request")}>
                 <h3 className="text-sm font-semibold">{t("violations.requestResponse")}</h3>
-                <label className="mt-3 block text-sm">{t("violations.requestMessage")}<AppRequiredMark />
+                <label className="mt-3 block text-sm font-medium text-text-app">{t("violations.requestMessage")}<AppRequiredMark />
                   <AppTextarea className="mt-1.5 min-h-24 w-full" value={message} maxLength={2000} {...requestField.control("message")}
                     onChange={(e) => setMessage(e.target.value)} />
                   <AppFieldError message={requestField.error("message")} /></label>
-                <label className="mt-3 block text-sm">{t("violations.responseDueAt")}<AppRequiredMark />
+                <label className="mt-3 block text-sm font-medium text-text-app">{t("violations.responseDueAt")}<AppRequiredMark />
                   <AppInput type="date" className="mt-1.5 w-full" value={dueAt} min={inputDate(1)} {...requestField.control("dueAt")}
                     onChange={(e) => setDueAt(e.target.value)} />
                   <AppFieldError message={requestField.error("dueAt")} />
@@ -486,9 +505,9 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
                     void run({ type: "requestResponse", message: message.trim(), dueAt: endOfDay(dueAt) })
                       .then((done) => { if (done) { setMessage(""); requestField.reset(); } });
                   }}>{t("violations.sendRequest")}</AppButton>
-              </div>}
+              </Step>}
 
-              {item.state === "Awaiting Club Response" && response && !response.source && <div>
+              {item.state === "Awaiting Club Response" && response && !response.source && <Step {...stepProps("record")}>
                 <h3 className="text-sm font-semibold">{t("violations.recordResponse")}<AppRequiredMark /></h3>
                 <p className="mt-1 text-xs text-muted-app">{t("violations.recordResponseHint")}</p>
                 <AppTextarea aria-label={t("violations.responseText")} className="mt-3 min-h-24 w-full" value={responseText} maxLength={5000}
@@ -502,31 +521,31 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
                   }}>{t("violations.saveResponse")}</AppButton>
                 {responseOverdue && <AppButton className="mt-2 w-full" variant="secondary" disabled={step.isPending}
                   onClick={() => void run({ type: "recordResponse", noResponse: true })}>{t("violations.noResponse")}</AppButton>}
-              </div>}
+              </Step>}
 
-              {!decided && <div>
+              {!decided && <Step {...stepProps("decide")}>
                 <h3 className="text-sm font-semibold">{t("violations.decide")}</h3>
-                <div className="mt-3 grid grid-cols-2 gap-1 rounded-full bg-surface-strong-app p-1">{(["VIOLATION", "NO_VIOLATION"] as const).map((value) =>
+                <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg border border-border-app bg-surface-app p-1">{(["VIOLATION", "NO_VIOLATION"] as const).map((value) =>
                   <button key={value} type="button" aria-pressed={finding === value} onClick={() => setFinding(value)}
-                    className={cn("min-h-11 rounded-full px-2 text-xs font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
-                      "bg-bg-app text-primary-app shadow-sm hover:text-primary-app": finding === value,
+                    className={cn("min-h-11 rounded-md px-2 text-xs font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9", {
+                      "bg-segment-app text-text-app shadow-xs hover:text-text-app": finding === value,
                     })}>{value === "VIOLATION" ? t("violations.findViolation") : t("violations.findNoViolation")}</button>)}</div>
                 {finding === "VIOLATION" && !canDecideViolation ? <p className="mt-3 text-sm text-muted-app">{t("violations.needsResponseFirst")}</p> : <>
                   {finding === "NO_VIOLATION" && <p className="mt-3 text-xs text-muted-app">{t("violations.closeNoViolationHint")}</p>}
-                  <label className="mt-3 block text-sm">{t("violations.decisionReason")}<AppRequiredMark />
+                  <label className="mt-3 block text-sm font-medium text-text-app">{t("violations.decisionReason")}<AppRequiredMark />
                     <AppTextarea className="mt-1.5 min-h-24 w-full" value={reason} maxLength={5000} {...decideField.control("reason")}
                       onChange={(e) => setReason(e.target.value)} />
                     <AppFieldError message={decideField.error("reason")} /></label>
-                  <label className="mt-3 block text-sm">{t("violations.decisionEvidence")}{finding === "VIOLATION" && <AppRequiredMark />}
+                  <label className="mt-3 block text-sm font-medium text-text-app">{t("violations.decisionEvidence")}{finding === "VIOLATION" && <AppRequiredMark />}
                     <AppTextarea className="mt-1.5 min-h-20 w-full" value={decisionEvidence} placeholder={t("violations.decisionEvidenceHint")}
                       {...decideField.control("evidence", finding === "VIOLATION")} onChange={(e) => setDecisionEvidence(e.target.value)} />
                     <AppFieldError message={decideField.error("evidence")} /></label>
                   <AppButton className="mt-3 w-full" disabled={step.isPending} onClick={() => void decide()}>
                     {finding === "VIOLATION" ? t("violations.saveDecision") : t("violations.closeNoViolation")}</AppButton>
                 </>}
-              </div>}
+              </Step>}
 
-              {decided && <div>
+              {decided && <Step {...stepProps("actions")}>
                 <h3 className="text-sm font-semibold">{t("violations.addActions")}<AppRequiredMark /></h3>
                 <div className="mt-3 space-y-4">{rows.map((row, index) => <div key={index} className="space-y-2">
                   <div>
@@ -548,14 +567,14 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
                         { value: "DISSOLVE", label: t("violations.actionLinkDISSOLVE") }]} />
                   </div>
                 </div>)}</div>
-                <button type="button" className="mt-3 text-sm font-semibold text-accent-app hover:underline"
+                <button type="button" className="mt-3 text-sm font-semibold text-primary-app hover:underline rounded-sm focus-visible:outline-2 focus-visible:outline-ring-app"
                   onClick={() => setRows((current) => [...current, { description: "", dueAt: inputDate(14), link: "" }])}>{t("violations.addActionRow")}</button>
                 <AppButton className="mt-3 w-full" disabled={step.isPending} onClick={() => void assign()}>{t("violations.saveActions")}</AppButton>
                 <p className="mt-5 text-xs text-muted-app">{t("violations.resolveHint")}</p>
                 <AppButton className="mt-2 w-full" variant="secondary"
                   disabled={step.isPending || item.actions.some((action) => action.state === "Pending")}
                   onClick={() => void run({ type: "resolve" }, t("violations.confirmResolve"))}>{t("violations.resolve")}</AppButton>
-              </div>}
+              </Step>}
               {step.isError && <p role="alert" className="text-sm text-danger-app">{step.error.message}</p>}
             </section>
           )}

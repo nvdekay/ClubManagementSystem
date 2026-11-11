@@ -76,7 +76,7 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-surface-app p-4">
         <div className="min-w-0">
-          <p className="font-semibold break-words">{user.displayName}</p>
+          <p className="font-medium break-words">{user.displayName}</p>
           <p className="text-sm break-all text-muted-app">{user.email}</p>
         </div>
         <AppBadge tone={locked ? "danger" : "success"}>{locked ? t("auth.lockedState") : t("auth.activeState")}</AppBadge>
@@ -86,7 +86,7 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
       {action.isError && <AppNotice tone="danger" role="alert">{t("auth.saveError")} {action.error.message}</AppNotice>}
 
       <section aria-labelledby="account-roles">
-        <h3 id="account-roles" className="font-heading font-bold">{t("auth.rolesSection")}</h3>
+        <h3 id="account-roles" className="font-heading text-sm font-semibold">{t("auth.rolesSection")}</h3>
         <p className="mt-1 text-sm text-muted-app">{t("auth.rolesSectionHint")}</p>
         <ul className="mt-3 divide-y divide-border-app rounded-xl border border-border-app">
           {ROLES.map((code) => {
@@ -110,8 +110,8 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
                 event.preventDefault(); setShown((s) => ({ ...s, revoke: true }));
                 if (revokeReason.trim()) void run({ kind: "revoke", userId: user.id, roleCode: code, reason: revokeReason }, t("auth.revoked", { role: roleName(code) }));
               }}>
-                <label className="block text-sm font-medium">{t("auth.revokeReason")}<AppRequiredMark />
-                  <AppInput className="mt-1 block w-full" value={revokeReason} maxLength={1000} autoFocus
+                <label className="block text-sm font-medium text-text-app">{t("auth.revokeReason")}<AppRequiredMark />
+                  <AppInput className="mt-1.5 block w-full font-normal" value={revokeReason} maxLength={1000} autoFocus
                     aria-invalid={revokeError ? true : undefined} onChange={(event) => setRevokeReason(event.target.value)} /></label>
                 <AppFieldError message={revokeError} />
                 <div className="flex flex-wrap gap-2">
@@ -126,7 +126,7 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
       </section>
 
       <section aria-labelledby="account-lock" className="rounded-xl border border-danger-app/40 p-4">
-        <h3 id="account-lock" className="font-heading font-bold text-danger-app">{locked ? t("auth.unlockSection") : t("auth.lockSection")}</h3>
+        <h3 id="account-lock" className="font-heading text-sm font-semibold text-danger-app">{locked ? t("auth.unlockSection") : t("auth.lockSection")}</h3>
         <p className="mt-1 text-sm text-muted-app">{locked ? t("auth.unlockSectionHint") : t("auth.lockSectionHint")}</p>
         {locked && account.lockCase && <p className="mt-2 text-sm break-words">
           {t("auth.lockCase", { title: account.lockCase.title, club: account.lockCase.clubName })}</p>}
@@ -137,12 +137,12 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
             : { kind: "lock", userId: user.id, reason: lockReason, ...(violationId ? { violationId } : {}) },
           locked ? t("auth.unlocked") : t("auth.locked"));
         }}>
-          <label className="block text-sm font-medium">{locked ? t("auth.unlockReason") : t("auth.lockReason")}<AppRequiredMark />
-            <AppInput className="mt-1 block w-full" value={lockReason} maxLength={1000}
+          <label className="block text-sm font-medium text-text-app">{locked ? t("auth.unlockReason") : t("auth.lockReason")}<AppRequiredMark />
+            <AppInput className="mt-1.5 block w-full font-normal" value={lockReason} maxLength={1000}
               aria-invalid={lockError ? true : undefined} onChange={(event) => setLockReason(event.target.value)} /></label>
           <AppFieldError message={lockError} />
-          {!locked && <div className="text-sm font-medium">{t("auth.linkedCase")}
-            <AppSelect fitWidth className="mt-1 block w-full" label={t("auth.linkedCase")}
+          {!locked && <div className="text-sm font-medium text-text-app">{t("auth.linkedCase")}
+            <AppSelect fitWidth className="mt-1.5 block w-full font-normal" label={t("auth.linkedCase")}
               value={violationId} options={caseOptions} onChange={setViolationId} /></div>}
           <AppButton type="submit" variant={locked ? "primary" : "secondary"} disabled={action.isPending}
             className={locked ? undefined : "border-danger-app text-danger-app hover:border-danger-app hover:text-danger-app"}>

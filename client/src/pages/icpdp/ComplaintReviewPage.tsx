@@ -12,6 +12,7 @@ import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { appToast } from "@/components/ui/toast/AppToast";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useComplaintQueue, useDecideComplaint } from "@/hooks/useComplaints";
 import type { ComplaintDecisionInput, ComplaintForIcpdp, ComplaintState, Severity, TriageOutcome, Validity } from "@/services/complaints";
@@ -53,14 +54,14 @@ export function ComplaintReviewPage() {
     <>
       <PageHeader title={t("complaints.queueTitle")} description={t("complaints.queueDescription")} />
       <div className="mb-4 max-w-xs">
-        <div className="min-w-0 text-sm font-semibold">{t("complaints.filterState")}<AppSelect label={t("complaints.filterState")} value={state} className="mt-1 w-full font-normal" onChange={(value) => setState(value as ComplaintState | "")}
+        <div className="min-w-0 text-sm font-medium text-text-app">{t("complaints.filterState")}<AppSelect label={t("complaints.filterState")} value={state} className="mt-1.5 block w-full font-normal" onChange={(value) => setState(value as ComplaintState | "")}
           options={[{ value: "", label: t("complaints.filterAll") }, ...STATES.map((value) => ({ value, label: t(complaintStateKey(value)) }))]} /></div>
       </div>
       {queue.isPending ? <AppSkeleton className="h-48 w-full" />
         : queue.isError ? <AppNotice tone="danger" role="alert" title={t("complaints.loadError")}>
           <p>{queue.error.message}</p>
           <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("complaints.retry")}</AppButton></AppNotice>
-          : queue.data.length === 0 ? <p className="py-10 text-center text-muted-app">{t("complaints.queueEmpty")}</p>
+          : queue.data.length === 0 ? <AppEmptyState variant="boxed" message={t("complaints.queueEmpty")} />
             : <ul className="space-y-3">{queue.data.map((item) => <li key={item.id}><ReviewItem item={item}
               candidates={queue.data.filter((other) => other.id !== item.id && other.complainant.id === item.complainant.id
                 && other.clubId === item.clubId && ["Submitted", "Under Triage"].includes(other.state))} /></li>)}</ul>}
@@ -91,12 +92,12 @@ function ReviewItem({ item, candidates }: { item: ComplaintForIcpdp; candidates:
     }
   }
 
-  const reasonField = <label className="block text-sm font-semibold">{t("complaints.reason")}<AppRequiredMark />
-    <AppTextarea className="mt-1 block w-full font-normal" rows={2} maxLength={2000} value={reason}
+  const reasonField = <label className="block text-sm font-medium text-text-app">{t("complaints.reason")}<AppRequiredMark />
+    <AppTextarea className="mt-1.5 block w-full font-normal" rows={2} maxLength={2000} value={reason}
       onChange={(event) => setReason(event.target.value)} />
     <span className="block text-xs font-normal text-muted-app">{t("complaints.reasonHint")}</span></label>;
 
-  const severityField = <div className="min-w-0 text-sm font-semibold">{t("complaints.severity")}<AppSelect label={t("complaints.severity")} value={severity} className="mt-1 w-full font-normal"
+  const severityField = <div className="min-w-0 text-sm font-medium text-text-app">{t("complaints.severity")}<AppSelect label={t("complaints.severity")} value={severity} className="mt-1.5 block w-full font-normal"
     onChange={(value) => setSeverity(value as Severity)} options={SEVERITIES.map((value) => ({ value, label: t(severityKey(value)) }))} /></div>;
 
   return (
@@ -117,14 +118,14 @@ function ReviewItem({ item, candidates }: { item: ComplaintForIcpdp; candidates:
             ...(outcome === "Forwarded" && due ? { responseDueAt: new Date(`${due}T23:59:59+07:00`).toISOString() } : {}) }); }}>
           {dissolved && <AppNotice tone="warning">{t("complaints.dissolvedHint")}</AppNotice>}
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="min-w-0 text-sm font-semibold">{t("complaints.outcome")}<AppSelect label={t("complaints.outcome")} value={outcome} className="mt-1 w-full font-normal" disabled={dissolved}
+            <div className="min-w-0 text-sm font-medium text-text-app">{t("complaints.outcome")}<AppSelect label={t("complaints.outcome")} value={outcome} className="mt-1.5 block w-full font-normal" disabled={dissolved}
               onChange={(value) => setOutcome(value as TriageOutcome)} options={OUTCOMES.map((value) => ({ value, label: t(outcomeKey(value)) }))} /></div>
             {severityField}
-            <div className="min-w-0 text-sm font-semibold">{t("complaints.validity")}<AppSelect label={t("complaints.validity")} value={validity} className="mt-1 w-full font-normal"
+            <div className="min-w-0 text-sm font-medium text-text-app">{t("complaints.validity")}<AppSelect label={t("complaints.validity")} value={validity} className="mt-1.5 block w-full font-normal"
               onChange={(value) => setValidity(value as Validity)} options={VALIDITIES.map((value) => ({ value, label: t(validityKey(value)) }))} /></div>
           </div>
-          {outcome === "Forwarded" && <label className="block text-sm font-semibold">{t("complaints.responseDue")}
-            <AppInput type="date" className="mt-1 block font-normal" value={due} onChange={(event) => setDue(event.target.value)} /></label>}
+          {outcome === "Forwarded" && <label className="block text-sm font-medium text-text-app">{t("complaints.responseDue")}
+            <AppInput type="date" className="mt-1.5 block font-normal" value={due} onChange={(event) => setDue(event.target.value)} /></label>}
           {reasonField}
           <div className="flex flex-wrap gap-2">
             <AppButton type="submit" disabled={decide.isPending || !reason.trim()}>{t("complaints.triage")}</AppButton>
@@ -133,8 +134,8 @@ function ReviewItem({ item, candidates }: { item: ComplaintForIcpdp; candidates:
             <p className="text-sm font-semibold">{t("complaints.linkTitle")}</p>
             <p className="text-xs text-muted-app">{t("complaints.linkHint")}</p>
             <div className="flex flex-wrap items-end gap-2">
-              <div className="min-w-0 flex-1 basis-56 text-sm font-semibold">{t("complaints.linkTarget")}
-                <AppSelect label={t("complaints.linkTarget")} value={linkTarget} className="mt-1 w-full font-normal" onChange={setLinkTarget}
+              <div className="min-w-0 flex-1 basis-56 text-sm font-medium text-text-app">{t("complaints.linkTarget")}
+                <AppSelect label={t("complaints.linkTarget")} value={linkTarget} className="mt-1.5 block w-full font-normal" onChange={setLinkTarget}
                   options={[{ value: "", label: t("complaints.linkNone") }, ...candidates.map((other) => ({ value: other.id,
                     label: `${other.description.slice(0, 60)}${other.description.length > 60 ? "…" : ""}` }))]} /></div>
               <AppButton type="button" variant="secondary" disabled={decide.isPending || !linkTarget || !reason.trim()}

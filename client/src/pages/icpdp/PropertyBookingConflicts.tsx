@@ -31,9 +31,9 @@ export function PropertyBookingConflicts({ propertyId, blackoutKey }: PropertyBo
           return <AppNotice key={item.id} tone={pendingStates.includes(item.state) ? "warning" : "danger"}>
             <div className="flex flex-wrap items-center gap-2">
               {allocation
-                ? <Link to="/workspace/room-allocations" className="font-medium text-primary-app underline">
+                ? <Link to="/workspace/room-allocations" className="font-medium text-primary-app hover:underline">
                   {item.clubName} · {t("facilityBookings.roomSession")}</Link>
-                : <Link to={`/workspace/bookings?id=${encodeURIComponent(item.id)}`} className="font-medium text-primary-app underline">
+                : <Link to={`/workspace/bookings?id=${encodeURIComponent(item.id)}`} className="font-medium text-primary-app hover:underline">
                   {item.clubName} · {item.purpose}</Link>}
               <AppBadge tone={pendingStates.includes(item.state) ? "warning" : "info"}>
                 {t(`facilityBookings.states.${item.state as ConflictState}`)}</AppBadge>

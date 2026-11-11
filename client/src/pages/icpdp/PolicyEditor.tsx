@@ -258,7 +258,7 @@ function ToggleRow({ label, checked, locked, hint, onChange }: ToggleRowProps) {
   const { t } = useTranslation();
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 py-3">
-      <div className="min-w-0 flex-1">
+      <div className={cn("min-w-0 flex-1", { "basis-56": Boolean(hint) })}>
         <p className="text-sm font-medium">{label}</p>
         {hint && <p className="mt-0.5 text-xs text-muted-app">{hint}</p>}
       </div>
@@ -280,7 +280,7 @@ function NumberSentence({ label, value, min, onChange, control, error }: {
   return (
     <>
       <label className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-        <span className="min-w-0 flex-1">{label}<AppRequiredMark /></span>
+        <span className="min-w-0 flex-1 basis-56">{label}<AppRequiredMark /></span>
         <AppInput className="w-28" type="number" min={min} value={value} {...control}
           onChange={(event) => onChange(event.target.value)} />
       </label>
@@ -400,19 +400,19 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     body = (
       <div className="space-y-4">
         {form.academicCalendar.map((item, index) => (
-          <div key={index} className="grid items-end gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="text-sm">{t("policy.semesterCode")}<AppRequiredMark />
-              <AppInput className="mt-1 block w-full" value={item.code} {...field.control(`semesterCode${index}`)}
+          <div key={index} className="grid items-end gap-3 rounded-xl border border-border-app bg-surface-app p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="block text-sm font-medium text-text-app">{t("policy.semesterCode")}<AppRequiredMark />
+              <AppInput className="mt-1.5 block w-full" value={item.code} {...field.control(`semesterCode${index}`)}
                 onChange={(event) => updateSemester(index, "code", event.target.value)} />
               <AppFieldError message={field.error(`semesterCode${index}`)} />
             </label>
-            <label className="text-sm">{t("policy.semesterStart")}<AppRequiredMark />
-              <AppInput className="mt-1 block w-full" type="datetime-local" value={item.startAt} {...field.control(`semesterStart${index}`)}
+            <label className="block text-sm font-medium text-text-app">{t("policy.semesterStart")}<AppRequiredMark />
+              <AppInput className="mt-1.5 block w-full" type="datetime-local" value={item.startAt} {...field.control(`semesterStart${index}`)}
                 onChange={(event) => updateSemester(index, "startAt", event.target.value)} />
               <AppFieldError message={field.error(`semesterStart${index}`)} />
             </label>
-            <label className="text-sm">{t("policy.semesterEnd")}<AppRequiredMark />
-              <AppInput className="mt-1 block w-full" type="datetime-local" value={item.endAt} {...field.control(`semesterEnd${index}`)}
+            <label className="block text-sm font-medium text-text-app">{t("policy.semesterEnd")}<AppRequiredMark />
+              <AppInput className="mt-1.5 block w-full" type="datetime-local" value={item.endAt} {...field.control(`semesterEnd${index}`)}
                 onChange={(event) => updateSemester(index, "endAt", event.target.value)} />
               <AppFieldError message={field.error(`semesterEnd${index}`)} />
             </label>
@@ -433,15 +433,15 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     body = (
       <div className="space-y-4">
         {form.reportDeadlines.map((item, index) => (
-          <div key={index} className="grid items-end gap-3 rounded-2xl bg-surface-app p-4 sm:grid-cols-2">
-            <label className="text-sm sm:col-span-2">{t("policy.reportType")}<AppRequiredMark />
-              <AppInput className="mt-1 block w-full" value={item.reportType} {...field.control(`reportType${index}`)}
+          <div key={index} className="grid items-end gap-3 rounded-xl border border-border-app bg-surface-app p-4 sm:grid-cols-2">
+            <label className="block text-sm sm:col-span-2 font-medium text-text-app">{t("policy.reportType")}<AppRequiredMark />
+              <AppInput className="mt-1.5 block w-full" value={item.reportType} {...field.control(`reportType${index}`)}
                 onChange={(event) => updateDeadline(index, "reportType", event.target.value)} />
               <AppFieldError message={field.error(`reportType${index}`)} />
             </label>
             {deadlineNumberFields.map((name) => (
-              <label key={name} className="text-sm">{t(deadlineLabelKey(name))}<AppRequiredMark />
-                <AppInput className="mt-1 block w-full" type="number" min="0" {...field.control(`${name}${index}`)}
+              <label key={name} className="block text-sm font-medium text-text-app">{t(deadlineLabelKey(name))}<AppRequiredMark />
+                <AppInput className="mt-1.5 block w-full" type="number" min="0" {...field.control(`${name}${index}`)}
                   value={item[name]} onChange={(event) => updateDeadline(index, name, event.target.value)} />
                 <AppFieldError message={field.error(`${name}${index}`)} />
               </label>
@@ -467,26 +467,26 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   }
 
   return (
-    <form className="space-y-6 border-t border-border-app pt-8" noValidate onSubmit={(event) => void submit(event)}>
+    <form className="space-y-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs" noValidate onSubmit={(event) => void submit(event)}>
       <div>
-        <h2 className="font-heading text-xl font-bold">{t("policy.formTitle")}</h2>
+        <h2 className="font-heading text-base font-semibold">{t("policy.formTitle")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("policy.formDescription")}</p>
       </div>
 
-      <div role="tablist" aria-label={t("policy.formTitle")} className="flex flex-wrap gap-2">
+      <div role="tablist" aria-label={t("policy.formTitle")} className="flex w-fit max-w-full flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
         {sections.map((item) => (
           <button key={item} type="button" role="tab" aria-selected={section === item}
             onClick={() => setSection(item)}
-            className={cn("min-h-10 rounded-full border border-border-app px-4 text-sm font-medium text-muted-app",
-              { "border-primary-app bg-primary-soft-app text-primary-app": section === item })}>
+            className={cn("inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app",
+              { "bg-segment-app text-text-app shadow-xs": section === item })}>
             {t(sectionTitleKey(item))}
           </button>
         ))}
       </div>
 
-      <section role="tabpanel" className="space-y-5 rounded-2xl border border-border-app p-5">
+      <section role="tabpanel" className="space-y-5 rounded-xl border border-border-app p-5">
         <div>
-          <h3 className="font-heading text-lg font-semibold">{t(sectionTitleKey(section))}</h3>
+          <h3 className="font-heading text-sm font-semibold">{t(sectionTitleKey(section))}</h3>
           <p className="mt-1 text-sm text-muted-app">
             {t("policy.appliesTo", { flows: t(sectionAppliesKey(section)) })}
           </p>
@@ -495,14 +495,14 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       </section>
 
       <div className="grid gap-5 border-t border-border-app pt-6 sm:grid-cols-2">
-        <h3 className="font-heading font-semibold sm:col-span-2">{t("policy.saveSection")}</h3>
-        <label className="text-sm">{t("policy.effectiveFrom")}
-          <AppInput className="mt-2 block w-full" type="datetime-local" value={form.effectiveFrom}
+        <h3 className="font-heading text-sm font-semibold sm:col-span-2">{t("policy.saveSection")}</h3>
+        <label className="block text-sm font-medium text-text-app">{t("policy.effectiveFrom")}
+          <AppInput className="mt-1.5 block w-full" type="datetime-local" value={form.effectiveFrom}
             onChange={(event) => setForm({ ...form, effectiveFrom: event.target.value })} />
           <span className="mt-1 block text-xs text-muted-app">{t("policy.effectiveHint")}</span>
         </label>
-        <label className="text-sm">{t("policy.reason")}
-          <AppInput className="mt-2 block w-full" maxLength={1000} value={form.reason}
+        <label className="block text-sm font-medium text-text-app">{t("policy.reason")}
+          <AppInput className="mt-1.5 block w-full" maxLength={1000} value={form.reason}
             onChange={(event) => setForm({ ...form, reason: event.target.value })} />
         </label>
       </div>

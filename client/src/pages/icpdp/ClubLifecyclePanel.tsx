@@ -8,22 +8,22 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { appToast } from "@/components/ui/toast/AppToast";
+import { AppInput } from "@/components/ui/input/AppInput";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useClubLifecycle, useClubLifecycleAction } from "@/hooks/useClubLifecycle";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { cn } from "@/utils/cn";
 
 type Decision = "suspend" | "reactivate" | "dissolve";
-const dateInputClass = "mt-1 block min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app";
-const choiceClass = "min-h-10 rounded-full border border-border-app px-4 text-sm text-muted-app";
-const activeChoiceClass = "border-primary-app bg-primary-soft-app text-primary-app";
+const choiceClass = "inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app sm:min-h-9";
+const activeChoiceClass = "bg-segment-app text-text-app shadow-xs";
 
 interface ClubLifecyclePanelProps {
   clubId: string;
   csrfToken: string;
-  onClose: () => void;
 }
 
-export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecyclePanelProps) {
+export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProps) {
   const { t, i18n } = useTranslation();
   const detail = useClubLifecycle(clubId);
   const action = useClubLifecycleAction();
@@ -115,7 +115,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
     && (decision === "dissolve" || Boolean(club.dissolution));
 
   return (
-    <div className="mt-4 space-y-6 border-t border-border-app pt-4">
+    <div className="space-y-6 pt-4">
       {club.suspension && <AppNotice tone="warning">{t("clubLifecycle.suspendedSince", {
         date: date(club.suspension.suspendedAt), reason: club.suspension.reason })} · {club.suspension.until
         ? t("clubLifecycle.until", { date: date(club.suspension.until) }) : t("clubLifecycle.indefinite")}</AppNotice>}
@@ -146,11 +146,11 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
         <div><h3 className="text-sm font-semibold">{t("clubLifecycle.openCampaigns")}</h3>
           {club.openCampaigns.length ? <ul className="mt-1 space-y-1 text-sm">{club.openCampaigns.map((item) =>
             <li key={item.id}>{item.title} · {date(item.windowEnd)}</li>)}</ul>
-            : <p className="mt-1 text-sm text-muted-app">{t("clubLifecycle.none")}</p>}</div>
+            : <div className="mt-1"><AppEmptyState message={t("clubLifecycle.none")} /></div>}</div>
         <div><h3 className="text-sm font-semibold">{t("clubLifecycle.upcomingEvents")}</h3>
           {club.upcomingEvents.length ? <ul className="mt-1 space-y-1 text-sm">{club.upcomingEvents.map((item) =>
             <li key={item.id}>{item.title} · {date(item.startAt)} · {t("clubLifecycle.registrations", { count: item.registrations })}</li>)}</ul>
-            : <p className="mt-1 text-sm text-muted-app">{t("clubLifecycle.none")}</p>}</div>
+            : <div className="mt-1"><AppEmptyState message={t("clubLifecycle.none")} /></div>}</div>
         <div><h3 className="text-sm font-semibold">{t("clubLifecycle.activeTerm")}</h3>
           <p className="mt-1 text-sm">{club.activeTerm ? `${club.activeTerm.name} · ${date(club.activeTerm.startAt)} – ${date(club.activeTerm.endAt)}`
             : t("clubLifecycle.none")}</p></div>
@@ -161,28 +161,29 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
           {t("clubLifecycle.suspend")}</AppButton>}
         {canReactivate && <AppButton variant={decision === "reactivate" ? "primary" : "secondary"} onClick={() => choose("reactivate")}>
           {t("clubLifecycle.reactivate")}</AppButton>}
-        {canDissolve && <AppButton variant={decision === "dissolve" ? "primary" : "ghost"} onClick={() => choose("dissolve")}>
+        {canDissolve && <AppButton variant={decision === "dissolve" ? "primary" : "secondary"}
+          className={cn({ "text-danger-app": decision !== "dissolve" })} onClick={() => choose("dissolve")}>
           {t("clubLifecycle.dissolve")}</AppButton>}
       </div>}
 
-      {decision && <section className="space-y-4 rounded-2xl bg-surface-app p-4">
+      {decision && <section className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs">
         <p className="text-sm text-muted-app">{decision === "suspend" ? t("clubLifecycle.suspendHint")
           : decision === "reactivate" ? t("clubLifecycle.reactivateHint")
             : nextSemester ? t("clubLifecycle.dissolveHint", { semester: nextSemester.code }) : t("clubLifecycle.noNextSemester")}</p>
         {decision === "suspend" && <fieldset className="space-y-3">
           <legend className="text-sm font-medium">{t("clubLifecycle.duration")}</legend>
-          <div className="flex flex-wrap gap-2">{[true, false].map((value) => (
+          <div className="inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">{[true, false].map((value) => (
             <button key={String(value)} type="button" aria-pressed={timed === value} onClick={() => setTimed(value)}
               className={cn(choiceClass, { [activeChoiceClass]: timed === value })}>
               {value ? t("clubLifecycle.durationUntil") : t("clubLifecycle.durationOpen")}</button>))}
           </div>
-          {timed && <label className="block text-sm">{t("clubLifecycle.untilDate")}<AppRequiredMark />
-            <input type="date" className={dateInputClass} value={until} {...field.control("until")}
+          {timed && <label className="block text-sm font-medium text-text-app">{t("clubLifecycle.untilDate")}<AppRequiredMark />
+            <AppInput type="date" className="mt-1.5 block font-normal" value={until} {...field.control("until")}
               onChange={(event) => setUntil(event.target.value)} />
             <AppFieldError message={field.error("until")} /></label>}
         </fieldset>}
-        <label className="block text-sm font-medium">{t("clubLifecycle.reason")}<AppRequiredMark />
-          <AppTextarea className="mt-2 min-h-24 w-full font-normal" maxLength={2000} value={reason}
+        <label className="block text-sm font-medium text-text-app">{t("clubLifecycle.reason")}<AppRequiredMark />
+          <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" maxLength={2000} value={reason}
             {...field.control("reason")} onChange={(event) => setReason(event.target.value)} />
           <AppFieldError message={field.error("reason")} /></label>
         {error && <p role="alert" className="text-sm text-danger-app">{error}</p>}
@@ -193,15 +194,14 @@ export function ClubLifecyclePanel({ clubId, csrfToken, onClose }: ClubLifecycle
         </div>
       </section>}
 
-      <section><h3 className="font-heading font-bold">{t("clubLifecycle.history")}</h3>
+      <section><h3 className="font-heading text-sm font-semibold">{t("clubLifecycle.history")}</h3>
         {club.history.length ? <ol className="mt-3 space-y-3 border-l-2 border-border-app pl-4">{club.history.map((item, index) => (
           <li key={`${item.action}-${item.at}-${index}`} className="text-sm">
-            <p><span className="font-semibold">{actionLabel(item.action)}</span> · {date(item.at)} · {item.actorName
+            <p><span className="font-medium">{actionLabel(item.action)}</span> · {date(item.at)} · {item.actorName
               ? t("clubLifecycle.by", { name: item.actorName }) : t("clubLifecycle.system")}</p>
             {item.reason && <p className="mt-0.5 text-muted-app">{item.reason}</p>}
-          </li>))}</ol> : <p className="mt-2 text-sm text-muted-app">{t("clubLifecycle.noHistory")}</p>}
+          </li>))}</ol> : <div className="mt-2"><AppEmptyState message={t("clubLifecycle.noHistory")} /></div>}
       </section>
-      <AppButton variant="ghost" onClick={onClose}>{t("clubLifecycle.close")}</AppButton>
     </div>
   );
 }

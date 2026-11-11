@@ -48,7 +48,7 @@ export function ApplicationReviewQueuePage() {
       {auth.isPending || (isOfficer && queue.isPending) ? loading : !auth.data ? (
         <AppNotice>
           <p>{t("reviews.signIn")}</p>
-          <Link className="inline-block font-semibold text-accent-app"
+          <Link className="inline-block font-semibold text-primary-app hover:underline"
             to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
             {t("reviews.signInLink")}</Link>
         </AppNotice>
@@ -59,18 +59,18 @@ export function ApplicationReviewQueuePage() {
           <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("reviews.retry")}</AppButton>
         </AppNotice>
       ) : queue.data?.length ? (
-        <ul className="divide-y divide-border-app border-y border-border-app">
+        <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {queue.data.map(({ task, application }) => {
             const mine = task.assigneeId === currentUserId;
             const assignedElsewhere = Boolean(task.assigneeId && !mine);
             return (
-              <li key={task.id} className="flex flex-wrap items-center gap-x-6 gap-y-3 px-2 py-5">
-                <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+              <li key={task.id} className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
+                <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
                   <AppIcon name="inbox" />
                 </span>
                 <div className="min-w-0 flex-1 basis-56">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-heading text-lg font-bold break-words">{application.draft.clubName}</h2>
+                    <h2 className="font-heading text-base font-semibold break-words">{application.draft.clubName}</h2>
                     <AppBadge tone={mine ? "success" : assignedElsewhere ? "danger" : "neutral"}>
                       {mine ? t("reviews.assignedToYou") : assignedElsewhere
                         ? t("reviews.assigned") : t("reviews.unassigned")}
@@ -92,10 +92,10 @@ export function ApplicationReviewQueuePage() {
           })}
         </ul>
       ) : (
-        <div className="py-16 text-center">
-          <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="sparkles" className="size-7" /></span>
-          <h2 className="mt-4 font-heading text-xl font-bold">{t("reviews.none")}</h2>
-          <p className="mt-2 text-sm text-muted-app">{t("reviews.noneHint")}</p>
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
+          <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="sparkles" className="size-4.5" /></span>
+          <h2 className="mt-3 font-heading text-base font-semibold">{t("reviews.none")}</h2>
+          <p className="mt-1 max-w-md text-sm text-muted-app">{t("reviews.noneHint")}</p>
         </div>
       )}
       {action.isError && <AppNotice tone="danger" role="alert" className="mt-4">{action.error.message}</AppNotice>}

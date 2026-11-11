@@ -12,6 +12,7 @@ import { AppInput } from "@/components/ui/input/AppInput";
 import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useBudget, useBudgets, useRecordBudgetFlow } from "@/hooks/useBudgets";
 import type { BudgetFlowKind, BudgetSummary } from "@/services/budgets";
@@ -79,7 +80,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   if (auth.isPending) return <div className="space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-20 w-full" />)}</div>;
   if (!auth.data) return <AppNotice>
     <p>{t("budgets.signIn")}</p>
-    <Link className="inline-block font-semibold text-accent-app"
+    <Link className="inline-block font-semibold text-primary-app hover:underline"
       to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("budgets.signInLink")}</Link>
   </AppNotice>;
   if (!auth.data.systemRoles.includes("ICPDP_OFFICER")) {
@@ -106,25 +107,25 @@ function BudgetList() {
   const shown = list.data.filter((budget) => matches(filter, budget));
   return (
     <>
-      <div role="group" aria-label={t("budgets.title")} className="mb-6 flex flex-wrap gap-2">{filters.map((value) => {
+      <div role="group" aria-label={t("budgets.title")} className="mb-5 inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">{filters.map((value) => {
         const count = list.data.filter((budget) => matches(value, budget)).length;
         return <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}
-          className={cn("min-h-11 rounded-full border border-border-app px-4 text-sm font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
-            "border-primary-app bg-primary-soft-app text-primary-app hover:text-primary-app": filter === value,
+          className={cn("inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9", {
+            "bg-segment-app text-text-app shadow-xs": filter === value,
           })}>{filterLabel(t, value)} · {count}</button>;
       })}</div>
       {shown.length ? (
-        <ul className="divide-y divide-border-app border-y border-border-app">{shown.map((budget) => {
+        <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">{shown.map((budget) => {
           const remaining = budget.approvedTotal - budget.disbursedTotal;
           return <li key={budget.id}>
             <Link to={`/workspace/budgets/${budget.id}`}
-              className="flex flex-wrap items-center gap-x-6 gap-y-3 px-2 py-5 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
-              <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+              className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
                 <AppIcon name="file" />
               </span>
               <span className="min-w-0 flex-1 basis-64">
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-heading text-lg font-bold break-words">{budget.eventTitle}</span>
+                  <span className="font-heading text-base font-semibold break-words">{budget.eventTitle}</span>
                   <AppBadge tone={stateTone(budget.state)}>{stateLabel(t, budget.state)}</AppBadge>
                 </span>
                 <span className="mt-1 block text-sm text-muted-app">
@@ -132,20 +133,21 @@ function BudgetList() {
                   {budget.settlementDueAt && ` · ${t("budgets.settlementDueValue", { date: day(budget.settlementDueAt) })}`}
                 </span>
               </span>
-              <span className="grid grid-cols-2 gap-x-6 text-right text-sm tabular-nums">
-                <span className="text-muted-app">{t("budgets.approved")}</span><span className="font-semibold">{money(budget.approvedTotal)}</span>
-                <span className="text-muted-app">{t("budgets.transferred")}</span><span>{money(budget.disbursedTotal)}</span>
+              {/* Same minimum width on every row so the amount columns line up down the list. */}
+              <span className="grid w-full grid-cols-[1fr_auto] gap-x-6 text-sm tabular-nums sm:w-auto sm:min-w-72">
+                <span className="text-muted-app">{t("budgets.approved")}</span><span className="text-right font-semibold">{money(budget.approvedTotal)}</span>
+                <span className="text-muted-app">{t("budgets.transferred")}</span><span className="text-right">{money(budget.disbursedTotal)}</span>
                 {remaining > 0 && ["Approved", "Disbursed"].includes(budget.state) && <>
-                  <span className="text-muted-app">{t("budgets.remaining")}</span><span>{money(remaining)}</span></>}
+                  <span className="text-muted-app">{t("budgets.remaining")}</span><span className="text-right">{money(remaining)}</span></>}
               </span>
             </Link>
           </li>;
         })}</ul>
       ) : (
-        <div className="py-16 text-center">
-          <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="sparkles" className="size-7" /></span>
-          <h2 className="mt-4 font-heading text-xl font-bold">{t("budgets.none")}</h2>
-          <p className="mt-2 text-sm text-muted-app">{t("budgets.noneHint")}</p>
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
+          <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="sparkles" className="size-4.5" /></span>
+          <h2 className="mt-3 font-heading text-base font-semibold">{t("budgets.none")}</h2>
+          <p className="mt-1 max-w-md text-sm text-muted-app">{t("budgets.noneHint")}</p>
         </div>
       )}
     </>
@@ -203,7 +205,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
 
   const data = budget.data;
   const allowed = data.allowed;
-  const label = "text-xs font-semibold tracking-wide text-muted-app uppercase";
+  const label = "text-xs text-muted-app";
   const remaining = data.approvedTotal - data.disbursedTotal;
   const eventClosed = ["Cancelled", "Rejected", "Expired"].includes(data.eventState);
 
@@ -231,79 +233,82 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
     <>
       <PageHeader title={data.eventTitle} back={back}
         description={`${data.clubName} · ${t("budgets.eventOn", { date: day(data.eventStartAt) })}`}
-        actions={<AppBadge tone={stateTone(data.state)}>{stateLabel(t, data.state)}</AppBadge>} />
-      <Link className="mb-6 inline-block text-accent-app underline" to={`/workspace/budgets/${id}/reconciliation`}>{t("accountability.review")}</Link>
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="min-w-0 space-y-10">
-          <dl className="grid gap-5 sm:grid-cols-4">
-            <div><dt className={label}>{t("budgets.approved")}</dt><dd className="mt-1 font-heading text-xl font-bold tabular-nums">{money(data.approvedTotal)}</dd></div>
-            <div><dt className={label}>{t("budgets.transferred")}</dt><dd className="mt-1 font-heading text-xl font-bold tabular-nums">{money(data.disbursedTotal)}</dd></div>
+        actions={<>
+          <AppBadge tone={stateTone(data.state)}>{stateLabel(t, data.state)}</AppBadge>
+          <Link className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9"
+            to={`/workspace/budgets/${id}/reconciliation`}>{t("accountability.review")}<AppIcon name="chevronRight" className="size-4" /></Link>
+        </>} />
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-6">
+          <dl className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
+            <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs"><dt className={label}>{t("budgets.approved")}</dt><dd className="mt-1 text-lg font-semibold break-words tabular-nums sm:text-xl">{money(data.approvedTotal)}</dd></div>
+            <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs"><dt className={label}>{t("budgets.transferred")}</dt><dd className="mt-1 text-lg font-semibold break-words tabular-nums sm:text-xl">{money(data.disbursedTotal)}</dd></div>
             {data.refundedTotal > 0 || data.state === "Recovery Pending"
-              ? <div><dt className={label}>{t("budgets.refunded")}</dt><dd className="mt-1 font-heading text-xl font-bold tabular-nums">{money(data.refundedTotal)}</dd></div>
-              : <div><dt className={label}>{t("budgets.remaining")}</dt><dd className="mt-1 font-heading text-xl font-bold tabular-nums">{money(Math.max(remaining, 0))}</dd></div>}
-            <div><dt className={label}>{t("budgets.settlementDue")}</dt><dd className="mt-1 font-medium">{data.settlementDueAt ? day(data.settlementDueAt) : "—"}</dd></div>
+              ? <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs"><dt className={label}>{t("budgets.refunded")}</dt><dd className="mt-1 text-lg font-semibold break-words tabular-nums sm:text-xl">{money(data.refundedTotal)}</dd></div>
+              : <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs"><dt className={label}>{t("budgets.remaining")}</dt><dd className="mt-1 text-lg font-semibold break-words tabular-nums sm:text-xl">{money(Math.max(remaining, 0))}</dd></div>}
+            <div className="rounded-xl border border-border-app bg-bg-app p-4 shadow-xs"><dt className={label}>{t("budgets.settlementDue")}</dt><dd className="mt-1 text-lg font-semibold break-words tabular-nums sm:text-xl">{data.settlementDueAt ? day(data.settlementDueAt) : "—"}</dd></div>
           </dl>
 
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("budgets.lines")}</h2>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[28rem] text-left text-sm">
-                <thead><tr className="border-b border-border-app text-muted-app">
-                  <th scope="col" className="py-2 pr-3 font-semibold">{t("budgets.category")}</th>
-                  <th scope="col" className="py-2 pr-3 text-right font-semibold">{t("budgets.requestedAmount")}</th>
-                  <th scope="col" className="py-2 text-right font-semibold">{t("budgets.approvedAmount")}</th>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("budgets.lines")}</h2>
+            <div className="mt-4 overflow-x-auto rounded-xl border border-border-app bg-bg-app">
+              <table className="w-full min-w-[22rem] text-left text-sm">
+                <thead className="bg-surface-app"><tr className="text-xs text-muted-app">
+                  <th scope="col" className="px-4 py-2.5 font-medium">{t("budgets.category")}</th>
+                  <th scope="col" className="px-4 py-2.5 text-right font-medium">{t("budgets.requestedAmount")}</th>
+                  <th scope="col" className="px-4 py-2.5 text-right font-medium">{t("budgets.approvedAmount")}</th>
                 </tr></thead>
-                <tbody className="divide-y divide-border-app">{data.lines.map((line, index) =>
-                  <tr key={index} className="align-top">
-                    <td className="py-2.5 pr-3 font-medium break-words">{line.category}</td>
-                    <td className="py-2.5 pr-3 text-right tabular-nums">{money(line.requestedAmount)}</td>
-                    <td className="py-2.5 text-right tabular-nums">{money(line.approvedAmount)}
+                <tbody>{data.lines.map((line, index) =>
+                  <tr key={index} className="border-t border-border-app align-top">
+                    <td className="px-4 py-3 font-medium break-words">{line.category}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{money(line.requestedAmount)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{money(line.approvedAmount)}
                       {line.reason && <p className="mt-0.5 text-xs text-muted-app">{line.reason}</p>}</td>
                   </tr>)}</tbody>
-                <tfoot><tr className="border-t border-border-app font-semibold">
-                  <td className="py-2.5 pr-3">{t("budgets.total")}</td>
-                  <td className="py-2.5 pr-3 text-right tabular-nums">{money(data.requestedTotal)}</td>
-                  <td className="py-2.5 text-right tabular-nums">{money(data.approvedTotal)}</td>
+                <tfoot><tr className="border-t border-border-app bg-surface-app font-semibold">
+                  <td className="px-4 py-3">{t("budgets.total")}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{money(data.requestedTotal)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{money(data.approvedTotal)}</td>
                 </tr></tfoot>
               </table>
             </div>
           </section>
 
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("budgets.flows")}</h2>
-            {data.flows.length ? <ol className="mt-5 space-y-4 border-l-2 border-border-app pl-5">{[...data.flows].reverse().map((flow) =>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("budgets.flows")}</h2>
+            {data.flows.length ? <ol className="mt-4 ml-1 space-y-4 border-l-2 border-border-app pl-5">{[...data.flows].reverse().map((flow) =>
               <li key={flow.id} className="relative">
-                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-primary-app" />
-                <p className="font-semibold">{kindLabel(t, flow.kind)} · <span className="tabular-nums">{money(flow.amount)}</span></p>
+                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-brand-app" />
+                <p className="font-medium">{kindLabel(t, flow.kind)} · <span className="tabular-nums">{money(flow.amount)}</span></p>
                 <p className="text-sm text-muted-app">{day(flow.disbursedAt)}
                   {flow.paymentReference && ` · ${t("budgets.reference", { value: flow.paymentReference })}`}
                   {` · ${t("budgets.flowBy", { name: flow.recordedByName ?? flow.recordedBy })}`}</p>
                 {flow.note && <p className="mt-1 text-sm break-words">{flow.note}</p>}
               </li>)}</ol>
-              : <p className="mt-3 text-sm text-muted-app">{t("budgets.noFlows")}</p>}
+              : <div className="mt-3"><AppEmptyState message={t("budgets.noFlows")} /></div>}
           </section>
         </div>
 
-        <aside className="min-w-0 lg:sticky lg:top-6">
+        <aside className="min-w-0 xl:sticky xl:top-24">
           {allowed ? (
-            <section className="rounded-2xl bg-surface-app p-5">
-              <h2 className="font-heading text-lg font-bold">{heading}</h2>
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{heading}</h2>
               <p className="mt-1 text-sm text-muted-app">{hint}</p>
-              <label className="mt-5 block text-sm font-semibold">{t("budgets.amount")}<AppRequiredMark />
+              <label className="mt-4 block text-sm font-medium text-text-app">{t("budgets.amount")}<AppRequiredMark />
                 <AppMoneyInput value={amountValue}
                   readOnly={allowed.exact !== undefined} {...field.control("amount")} onValueChange={setAmount}
-                  className="mt-2 w-full font-normal tabular-nums" />
+                  className="mt-1.5 w-full font-normal tabular-nums" />
                 <AppFieldError message={field.error("amount")} />
                 <span className="mt-1 block text-xs font-normal text-muted-app">{t("budgets.amountMax", { amount: money(allowed.max) })}</span></label>
-              <label className="mt-4 block text-sm font-semibold">{t("budgets.date")}<AppRequiredMark />
+              <label className="mt-4 block text-sm font-medium text-text-app">{t("budgets.date")}<AppRequiredMark />
                 <AppInput type="date" value={date} max={todayInput()} {...field.control("date")}
-                  onChange={(e) => setDate(e.target.value)} className="mt-2 w-full font-normal" />
+                  onChange={(e) => setDate(e.target.value)} className="mt-1.5 block w-full font-normal" />
                 <AppFieldError message={field.error("date")} /></label>
-              <label className="mt-4 block text-sm font-semibold">{t("budgets.paymentReference")}
+              <label className="mt-4 block text-sm font-medium text-text-app">{t("budgets.paymentReference")}
                 <AppInput value={paymentReference} maxLength={100} placeholder={t("budgets.paymentReferenceHint")}
-                  onChange={(e) => setPaymentReference(e.target.value)} className="mt-2 w-full font-normal" /></label>
-              <label className="mt-4 block text-sm font-semibold">{t("budgets.note")}
-                <AppInput value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} className="mt-2 w-full font-normal" /></label>
+                  onChange={(e) => setPaymentReference(e.target.value)} className="mt-1.5 block w-full font-normal" /></label>
+              <label className="mt-4 block text-sm font-medium text-text-app">{t("budgets.note")}
+                <AppInput value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} className="mt-1.5 block w-full font-normal" /></label>
               <AppButton className="mt-6 w-full" disabled={record.isPending} onClick={() => void submit()}>
                 {record.isPending ? t("budgets.submitting") : t("budgets.submit")}</AppButton>
               {record.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{record.error.message}</p>}
