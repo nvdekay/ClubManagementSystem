@@ -39,8 +39,9 @@ interface AppTableProps<T extends RowData> {
 export function AppTable<T extends RowData>({ table, emptyMessage, loading }: AppTableProps<T>) {
   const rows = table.getRowModel().rows;
   return (
-    <div aria-busy={loading} className="overflow-x-auto rounded-lg border border-border-app">
-      <table className="w-full text-sm">
+    <div aria-busy={loading} className="overflow-x-auto rounded-xl border border-border-app bg-bg-app">
+      {/* min-w: on phones the wrapper scrolls sideways instead of squeezing columns until emails break per letter. */}
+      <table className="w-full min-w-3xl text-sm">
         <thead className="bg-surface-app">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -50,7 +51,7 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
                   <th
                     key={header.id}
                     aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined}
-                    className="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-app uppercase"
+                    className="px-4 py-2.5 text-left text-xs font-medium text-muted-app"
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
@@ -76,7 +77,7 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
             Array.from({ length: table.options.state?.pagination?.pageSize ?? 5 }, (_, i) => (
               <tr key={i} className="border-t border-border-app">
                 {table.getVisibleLeafColumns().map((column) => (
-                  <td key={column.id} className="px-3 py-2">
+                  <td key={column.id} className="px-4 py-3">
                     <AppSkeleton className="h-5" />
                   </td>
                 ))}
@@ -84,15 +85,16 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
             ))
           ) : rows.length === 0 ? (
             <tr className="border-t border-border-app">
-              <td colSpan={table.getVisibleLeafColumns().length} className="px-3 py-8 text-center">
-                <AppEmptyState message={emptyMessage} />
+              <td colSpan={table.getVisibleLeafColumns().length} className="px-4 py-10 sm:text-center">
+                {/* Pinned to the visible part of the scroll box so phones never cut the message off. */}
+                <div className="sticky left-4 max-w-[calc(100vw-6rem)] sm:max-w-none"><AppEmptyState message={emptyMessage} /></div>
               </td>
             </tr>
           ) : (
             rows.map((row) => (
               <tr key={row.id} className="border-t border-border-app hover:bg-surface-app">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2">
+                  <td key={cell.id} className="px-4 py-3">
                     <table.FlexRender cell={cell} />
                   </td>
                 ))}

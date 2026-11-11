@@ -20,8 +20,8 @@ export function AppStatTile({ label, value, hint, icon, tone = "default", href }
     <>
       <span className="flex items-center justify-between gap-3">
         <span className="text-sm font-medium text-muted-app">{label}</span>
-        <span aria-hidden="true" className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app",
-          { "bg-danger-app/10 text-danger-app": tone === "attention" })}>
+        <span aria-hidden="true" className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg border border-border-app text-muted-app",
+          { "border-transparent bg-danger-app/10 text-danger-app": tone === "attention" })}>
           <AppIcon name={icon} className="size-4.5" />
         </span>
       </span>
@@ -29,7 +29,7 @@ export function AppStatTile({ label, value, hint, icon, tone = "default", href }
       {hint && <span className={cn("mt-1 block text-xs text-muted-app", { "text-danger-app": tone === "attention" })}>{hint}</span>}
     </>
   );
-  const className = "block h-full rounded-2xl border border-border-app bg-bg-app p-5";
-  return href ? <Link to={href} className={cn(className, "transition-colors hover:border-primary-app focus-visible:outline-2 focus-visible:outline-ring-app")}>{body}</Link>
+  const className = "block h-full rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs";
+  return href ? <Link to={href} className={cn(className, "transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app")}>{body}</Link>
     : <div className={className}>{body}</div>;
 }

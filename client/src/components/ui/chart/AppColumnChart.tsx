@@ -34,7 +34,9 @@ export function AppColumnChart({ points, tones, seriesLabels, formatValue = Stri
             <span className="border-t border-chart-grid-app" /><span className="border-t border-chart-grid-app" /><span className="border-t border-border-app" />
           </div>
           <ul className="relative flex h-full items-end">
-            {points.map((point) => {
+            {points.map((point, pointIndex) => {
+              // Edge columns anchor their tooltip inward so it never sticks out past the screen edge (phones scrolled sideways).
+              const edge = pointIndex < 2 ? "start" : pointIndex >= points.length - 2 ? "end" : "middle";
               const summary = [point.title ?? point.label, ...point.values.map((value, index) => `${seriesLabels[index] ?? ""}: ${formatValue(value)}`)].join(", ");
               const top = Math.max(...point.values);
               return (
@@ -49,7 +51,7 @@ export function AppColumnChart({ points, tones, seriesLabels, formatValue = Stri
                       )}
                     </span>
                   ))}
-                  <span role="tooltip" className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-56 -translate-x-1/2 rounded-lg border border-border-app bg-bg-app px-3 py-2 text-xs shadow-lg group-hover:visible group-focus-visible:visible">
+                  <span role="tooltip" className={cn("pointer-events-none invisible absolute bottom-full z-10 mb-2 w-max max-w-56 rounded-lg border border-border-app bg-bg-app px-3 py-2 text-xs shadow-lg group-hover:visible group-focus-visible:visible", { "left-0": edge === "start", "right-0": edge === "end", "left-1/2 -translate-x-1/2": edge === "middle" })}>
                     <span className="block font-semibold break-words text-text-app">{point.title ?? point.label}</span>
                     {point.values.map((value, index) => (
                       <span key={index} className="mt-1 flex items-center gap-2 text-muted-app">

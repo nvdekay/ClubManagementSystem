@@ -46,7 +46,7 @@ function ChevronIcon({ left }: { left?: boolean }) {
 }
 
 // AppButton already sets the 44px-on-touch height; this only pins the width and digits.
-const CONTROL = "min-w-11 px-2 text-sm tabular-nums";
+const CONTROL = "min-w-11 px-2 text-sm tabular-nums sm:min-w-9";
 
 export function AppPagination({
   pageIndex,
@@ -80,11 +80,11 @@ export function AppPagination({
         ) : (
           <AppButton
             key={item}
-            variant={item === pageIndex ? "primary" : "secondary"}
+            variant="secondary"
             aria-label={pageLabel(item + 1)}
             aria-current={item === pageIndex ? "page" : undefined}
             onClick={() => onPageChange(item)}
-            className={CONTROL}
+            className={cn(CONTROL, { "border-text-app font-semibold": item === pageIndex })}
           >
             {item + 1}
           </AppButton>
