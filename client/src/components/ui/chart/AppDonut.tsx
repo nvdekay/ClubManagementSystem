@@ -51,7 +51,7 @@ export function AppDonut({ segments, centerValue, centerLabel, formatValue = Str
         </svg>
         <span aria-hidden="true" className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="font-heading text-2xl font-semibold text-text-app tabular-nums">{centerValue}</span>
-          <span className="max-w-20 text-[11px] leading-tight text-muted-app">{centerLabel}</span>
+          <span className="max-w-20 text-[0.6875rem] leading-tight text-muted-app">{centerLabel}</span>
         </span>
       </div>
       <ul className="w-full min-w-0 flex-1 space-y-2 text-sm">

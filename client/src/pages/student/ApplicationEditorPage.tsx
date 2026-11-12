@@ -556,7 +556,7 @@ export function ApplicationEditorPage() {
           <h2 className={sectionTitleClass}>{t("applications.history")}</h2>
           {detail.data?.versions.length ? <ol className="space-y-0">{detail.data.versions.map((version) => (
             <li key={version.id} className="relative space-y-2 border-l-2 border-border-app pb-6 pl-6 last:pb-0">
-              <span aria-hidden="true" className="absolute top-1 -left-[7px] size-3 rounded-full bg-brand-app" />
+              <span aria-hidden="true" className="absolute top-1 -left-[0.4375rem] size-3 rounded-full bg-brand-app" />
               <h3 className="font-semibold font-heading">{t("applications.version", { number: version.versionNo })}</h3>
               <p className="text-sm text-muted-app">{t("applications.submittedAt", { date:
                 new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-US", {

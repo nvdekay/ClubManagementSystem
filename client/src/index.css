@@ -13,6 +13,16 @@ body {
   overflow: hidden;
 }
 
+/* UI scale: from tablet width up, the root font size is 90% of the browser's, so every rem-based size
+   (text, spacing, sidebar, cards, tables) shrinks evenly like a 90% zoom and more fits on screen.
+   Percent, not px, so a user's own browser font setting still applies. Phones keep 100% so text and
+   44px touch targets stay comfortable. */
+@media (min-width: 768px) {
+  html {
+    font-size: 90%;
+  }
+}
+
 #root {
   overflow-y: auto;
   /* Reserve the scrollbar lane so content never shifts sideways between short and long pages. */
