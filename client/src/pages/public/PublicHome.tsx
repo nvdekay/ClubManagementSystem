@@ -127,21 +127,16 @@ export function PublicHome() {
         {/* Darken the bottom-left where the copy sits, and the top where the header sits. */}
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/35 to-black/45" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-black/55 via-black/10 to-transparent" />
-        {/* Hairline frame with corner dots, as in the reference. */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-4 top-24 bottom-6 border-x border-white/15 sm:inset-x-8 lg:inset-x-12">
-          <span className="absolute inset-x-0 top-0 h-px bg-white/15" />
-          <span className="absolute -top-1 -left-1 size-2 rounded-full bg-white/60" />
-          <span className="absolute -top-1 -right-1 size-2 rounded-full bg-white/60" />
-        </div>
 
-        <div className="mx-auto mt-auto grid w-full max-w-7xl gap-10 px-6 pt-40 pb-14 sm:px-12 lg:grid-cols-[1.25fr_0.75fr] lg:items-end lg:px-16 lg:pb-16">
-          <div className="min-w-0">
+        {/* Copy sits a little above the vertical middle; the live numbers and next event share a bar at the bottom. */}
+        <div className="mx-auto flex w-full max-w-7xl flex-1 items-center px-6 pt-36 pb-10 sm:px-12 md:pt-28 lg:px-16">
+          <div className="max-w-3xl lg:-translate-y-[4vh]">
             <p className="inline-flex flex-wrap items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium backdrop-blur-md">
               <span aria-hidden="true" className="size-1.5 rounded-full bg-brand-app" />
               {firstName ? t("discovery.heroGreeting", { name: firstName }) : t("discovery.heroEyebrow")}
               <span className="text-white/60">· {t("discovery.term")}</span>
             </p>
-            <h1 className="mt-6 max-w-3xl font-heading text-4xl leading-[1.08] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 font-heading text-4xl leading-[1.08] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
               {t("discovery.heroTitleLead")}{" "}
               <span className="font-normal text-white/70">{t("discovery.heroTitleAccent")}</span>
             </h1>
@@ -167,36 +162,33 @@ export function PublicHome() {
               </Link>
             </div>
           </div>
+        </div>
 
-          {/* Right column: the next event as a glass card, and the live numbers styled like a "sponsored by" row. */}
-          <div className="flex min-w-0 flex-col gap-6 lg:items-end">
+        <div className="border-t border-white/15 bg-black/20 backdrop-blur-sm">
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-x-10 gap-y-5 px-6 py-6 sm:px-12 lg:px-16">
+            <ul aria-label={t("discovery.statsLabel")} className="grid w-full grid-cols-3 gap-4 sm:flex sm:w-auto sm:flex-wrap sm:gap-x-10 sm:gap-y-3">
+              {stats.map((stat) => (
+                <li key={stat.label} className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2.5">
+                  <span className="font-heading text-3xl leading-none font-semibold tabular-nums">{stat.value ?? "—"}</span>
+                  <span className="text-xs text-white/70 sm:text-sm">{stat.label}</span>
+                </li>
+              ))}
+            </ul>
             {nextEvent ? (
               <Link to={`/events/${nextEvent.id}`}
-                className={cn("group flex w-full max-w-sm items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-3 text-white no-underline backdrop-blur-md transition-colors hover:bg-white/15", focusRing)}>
-                <span className="relative size-18 shrink-0 overflow-hidden rounded-xl bg-white/10">
+                className={cn("group flex min-w-0 items-center gap-3 rounded-xl py-1 pr-1 text-white no-underline", focusRing)}>
+                <span className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-white/10">
                   {nextEvent.coverImageUrl
-                    ? <img src={nextEvent.coverImageUrl} alt="" className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    : <span aria-hidden="true" className="flex size-full items-center justify-center"><AppIcon name="sparkles" className="size-6 text-white/80" /></span>}
+                    ? <img src={nextEvent.coverImageUrl} alt="" className="size-full object-cover" />
+                    : <span aria-hidden="true" className="flex size-full items-center justify-center"><AppIcon name="sparkles" className="size-5 text-white/80" /></span>}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[0.6875rem] font-semibold tracking-[0.16em] text-white/60 uppercase">{t("discovery.featuredEvent")}</span>
-                  <span className="mt-1 line-clamp-2 font-heading text-sm leading-snug font-semibold">{nextEvent.title}</span>
-                  <span className="mt-1 block text-xs text-white/70">{when(nextEvent.startAt)}</span>
+                <span className="min-w-0">
+                  <span className="block text-xs text-white/60">{t("discovery.featuredEvent")} · {when(nextEvent.startAt)}</span>
+                  <span className="line-clamp-1 font-heading text-sm font-semibold group-hover:underline">{nextEvent.title}</span>
                 </span>
                 <AppIcon name="chevronRight" className="size-4 shrink-0 text-white/60 transition-transform group-hover:translate-x-0.5" />
               </Link>
-            ) : upcoming.isPending ? <AppSkeleton className="h-24 w-full max-w-sm rounded-2xl bg-white/10" /> : null}
-            <div className="lg:text-right">
-              <p className="text-xs text-white/60">{t("discovery.statsLabel")}</p>
-              <ul className="mt-3 flex flex-wrap gap-x-8 gap-y-3 lg:justify-end">
-                {stats.map((stat) => (
-                  <li key={stat.label}>
-                    <span className="block font-heading text-3xl leading-none font-semibold tabular-nums">{stat.value ?? "—"}</span>
-                    <span className="mt-1.5 block text-xs text-white/70">{stat.label}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            ) : upcoming.isPending ? <AppSkeleton className="h-12 w-64 rounded-xl bg-white/10" /> : null}
           </div>
         </div>
       </section>
