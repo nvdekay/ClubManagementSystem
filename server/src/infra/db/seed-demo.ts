@@ -4,7 +4,6 @@ import type { ClubEventInput } from "../../domain/club-event.js";
 // Usage: npm run seed:demo -- --owner=<your Google email> [--owner-name="Your Name"]
 // Safe to re-run: each section skips what already exists. Writes go through the app's use cases and
 // repositories wherever a flow exists, so the data obeys the same rules as the UI.
-import { crc32, deflateSync } from "node:zlib";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import type { FounderRole } from "../../domain/club-application.js";
@@ -38,7 +37,8 @@ import { mongoBudgetDisbursementRepository } from "./mongo-budget-disbursement-r
 import { mongoViolationRepository } from "./mongo-violation-repository.js";
 import { mongoSchoolEventRepository } from "./mongo-school-event-repository.js";
 import { mongoEvaluationSchemeRepository } from "./mongo-evaluation-scheme-repository.js";
-import { DEFAULT_SCHEME_SETTINGS } from "../../domain/evaluation-scheme.js";
+import { DEFAULT_SCHEME_SETTINGS, EVALUATION_DIMENSIONS } from "../../domain/evaluation-scheme.js";
+import { classify } from "../../domain/evaluation.js";
 import { mongoEventRegistrationRepository } from "./mongo-event-registration-repository.js";
 import { mongoMembershipRepository } from "./mongo-membership-repository.js";
 import { mongoPolicyRepository } from "./mongo-policy-repository.js";
@@ -51,6 +51,7 @@ import { mongoRoomAllocationRepository } from "./mongo-room-allocation-repositor
 import { pdpClubs } from "./pdp-demo-data.js";
 import { ensureDefaultClubFields, mongoClubFieldRepository } from "./mongo-club-field-repository.js";
 import { studentEmail } from "./seed-email.js";
+import { charterPdf, logoPng } from "./seed-files.js";
 import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
 
 const config = loadConfig();
@@ -101,30 +102,6 @@ async function once(label: string, step: () => Promise<unknown>): Promise<void> 
   }
 }
 
-/** A small, valid one-page PDF so the ICPDP reviewer can really open the charter. */
-function charterPdf(title: string): Buffer {
-  const ascii = title.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
-  const text = `BT /F1 20 Tf 72 760 Td (${ascii}) Tj 0 -32 Td /F1 12 Tf (Dieu le cau lac bo - ban demo) Tj ET`;
-  const objects = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
-    `<< /Length ${text.length} >>\nstream\n${text}\nendstream`,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-  ];
-  let body = "%PDF-1.4\n";
-  const offsets = objects.map((object, index) => {
-    const offset = body.length;
-    body += `${index + 1} 0 obj\n${object}\nendobj\n`;
-    return offset;
-  });
-  const xref = body.length;
-  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  body += offsets.map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("");
-  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
-  return Buffer.from(body, "latin1");
-}
-
 const policySettings: PolicySettings = {
   minFoundingMembers: 3,
   formRequirements: DEFAULT_FORM_REQUIREMENTS,
@@ -149,26 +126,6 @@ const boardPermissions = {
   TREASURER: ["club.expense.record", "club.report.submit"],
   MEDIA: ["club.profile.manage", "club.recruitment.manage", "club.feedback.view"],
 };
-
-/** A solid-colour square PNG, standing in for the proposed logo a student would upload. */
-function logoPng(rgb: [number, number, number], size = 64): Buffer {
-  function chunk(type: string, data: Buffer): Buffer {
-    const length = Buffer.alloc(4);
-    length.writeUInt32BE(data.length);
-    const body = Buffer.concat([Buffer.from(type, "latin1"), data]);
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(crc32(body));
-    return Buffer.concat([length, body, crc]);
-  }
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(size, 0);
-  header.writeUInt32BE(size, 4);
-  header.set([8, 2, 0, 0, 0], 8);
-  const row = Buffer.concat([Buffer.from([0]), Buffer.from(Array.from({ length: size }, () => rgb).flat())]);
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", header),
-    chunk("IDAT", deflateSync(Buffer.concat(Array.from({ length: size }, () => row)))),
-    chunk("IEND", Buffer.alloc(0))]);
-}
 
 try {
   await mongoose.connect(config.MONGO_URI, { serverSelectionTimeoutMS: 5_000 });
@@ -680,6 +637,84 @@ try {
     const schemes = mongoEvaluationSchemeRepository();
     const draft = await schemes.createDraft("Fall 2026", DEFAULT_SCHEME_SETTINGS, String(owner), now);
     await schemes.activate(draft.id, String(owner), now);
+  }
+
+  // ── Annual report (UC55 A2): Published evaluations and Accepted periodic reports across the 2026 academic year ──
+  // HEBE rises, FDS falls, EHC holds steady, Mây Mưa has no Spring evaluation. Inserted directly: UC42/UC43 would need
+  // the live activity of past semesters. HEBE's Fall report stays open so the UC38 demo still works.
+  if (!(await ucmsModels.evaluations!.exists({ periodCode: "Spring 2026", state: "Published" }))) {
+    const schemes = mongoEvaluationSchemeRepository();
+    const schemeIds = new Map<string, Types.ObjectId>();
+    for (const periodCode of ["Spring 2026", "Summer 2026", "Fall 2026"]) {
+      let active = await ucmsModels.evaluationSchemes!.findOne({ periodCode, state: "Active" }).lean();
+      if (!active) {
+        const draft = await schemes.createDraft(periodCode, DEFAULT_SCHEME_SETTINGS, String(owner), now);
+        await schemes.activate(draft.id, String(owner), now);
+        active = await ucmsModels.evaluationSchemes!.findById(draft.id).lean();
+      }
+      schemeIds.set(periodCode, active!._id as Types.ObjectId);
+    }
+    const publishedAt: Record<string, Date> = { "Spring 2026": new Date("2026-05-10T03:00:00Z"),
+      "Summer 2026": new Date("2026-09-12T03:00:00Z"), "Fall 2026": at(-1 * DAY) };
+    // Weighted sum of these offsets is 0 under the default weights, so the dimension scores add up to the total.
+    const offsets = [5, -4, 2, -3, 4, -6, 1, -3];
+    const plan: [string, string, number, { members: number; events: number; attendances: number; openCases: number }][] = [
+      ["HEBE", "Spring 2026", 72, { members: 18, events: 2, attendances: 90, openCases: 0 }],
+      ["HEBE", "Summer 2026", 78, { members: 20, events: 2, attendances: 110, openCases: 0 }],
+      ["HEBE", "Fall 2026", 86, { members: 26, events: 4, attendances: 230, openCases: 0 }],
+      ["FDS", "Spring 2026", 81, { members: 15, events: 3, attendances: 120, openCases: 0 }],
+      ["FDS", "Summer 2026", 74, { members: 12, events: 1, attendances: 40, openCases: 0 }],
+      ["FDS", "Fall 2026", 68, { members: 11, events: 1, attendances: 35, openCases: 0 }],
+      ["EHC", "Spring 2026", 65, { members: 9, events: 2, attendances: 60, openCases: 0 }],
+      ["EHC", "Summer 2026", 66, { members: 9, events: 2, attendances: 35, openCases: 0 }],
+      ["EHC", "Fall 2026", 67, { members: 10, events: 2, attendances: 70, openCases: 1 }],
+      ["Mây Mưa Club", "Summer 2026", 44, { members: 7, events: 1, attendances: 15, openCases: 1 }],
+      ["Mây Mưa Club", "Fall 2026", 47, { members: 8, events: 1, attendances: 20, openCases: 1 }],
+    ];
+    for (const [code, periodCode, total, figures] of plan) {
+      const clubId = club(code).id;
+      if (await ucmsModels.evaluations!.exists({ clubId, periodCode })) continue;
+      const when = publishedAt[periodCode]!;
+      const evaluation = await ucmsModels.evaluations!.create({ clubId, periodCode, schemeId: schemeIds.get(periodCode),
+        state: "Published", totalScore: Types.Decimal128.fromString(String(total)),
+        classification: classify(total, DEFAULT_SCHEME_SETTINGS.thresholds), revisionNo: 1,
+        generatedAt: new Date(when.getTime() - 3 * DAY), finalizedBy: owner, finalizedAt: new Date(when.getTime() - DAY),
+        publishedAt: when });
+      function lineage(metric: string, value: number) {
+        return { metric, sourceEntity: "seed-demo", sourceIds: [], sourcePeriod: periodCode, value };
+      }
+      await ucmsModels.evaluationDimensionResults!.insertMany(EVALUATION_DIMENSIONS.map((dimension, index) => ({
+        evaluationId: evaluation._id, dimensionCode: dimension.code,
+        score: Types.Decimal128.fromString(String(total + offsets[index]!)), isInsufficientData: false, isManual: false,
+        evidence: dimension.code === "D1" ? [lineage("attendances", figures.attendances), lineage("activeMembers", figures.members),
+          lineage("completedEvents", figures.events)]
+          : dimension.code === "D8" ? [lineage("violationPenalty", 0), lineage("openViolations", figures.openCases)] : [] })));
+    }
+
+    const reportPlan: [string, string, { approved: number; disbursed: number; achievements: { title: string; description: string }[] }][] = [
+      ["HEBE", "Spring 2026", { approved: 6_000_000, disbursed: 5_200_000, achievements: [
+        { title: "Giải nhất cuộc thi nhảy K-pop sinh viên Hà Nội 2026", description: "Đội nhảy HEBE vượt qua 24 đội của 12 trường." }] }],
+      ["FDS", "Spring 2026", { approved: 4_500_000, disbursed: 4_500_000, achievements: [
+        { title: "Top 3 Kaggle Student Challenge", description: "Nhóm 4 thành viên đạt hạng 3 bảng sinh viên Đông Nam Á." },
+        { title: "Chuỗi workshop Python cơ bản", description: "5 buổi workshop cho 180 lượt sinh viên năm nhất." }] }],
+      ["EHC", "Spring 2026", { approved: 3_000_000, disbursed: 2_100_000, achievements: [] }],
+      ["Mây Mưa Club", "Summer 2026", { approved: 1_500_000, disbursed: 1_200_000, achievements: [
+        { title: "Triển lãm đồ thủ công tái chế", description: "Trưng bày 60 sản phẩm tại sảnh tòa Alpha trong 3 ngày." }] }],
+      ["EHC", "Fall 2026", { approved: 5_000_000, disbursed: 3_500_000, achievements: [
+        { title: "Giải nhì CTF An toàn thông tin sinh viên 2026", description: "Đội EHC đạt giải nhì vòng chung kết toàn quốc." }] }],
+    ];
+    for (const [code, periodCode, input] of reportPlan) {
+      const clubId = club(code).id;
+      if (await ucmsModels.periodicReports!.exists({ clubId, periodCode })) continue;
+      const submittedAt = new Date(publishedAt[periodCode]!.getTime() - 10 * DAY);
+      await ucmsModels.periodicReports!.create({ clubId, periodCode, periodType: "SEMESTER",
+        preloadedFigures: { finance: { budgets: 2, approvedTotal: input.approved, disbursedTotal: input.disbursed },
+          capturedAt: submittedAt, clubData: { achievements: input.achievements } },
+        narrative: `Báo cáo hoạt động ${periodCode} — ${club(code).name}.`, nextPlan: "Tiếp tục kế hoạch hoạt động kỳ sau.",
+        evidence: [], state: "Accepted", versionNo: 1, lateFlag: false, submittedBy: owner, submittedAt,
+        decisionOutcome: "Accept", decidedBy: owner, decidedAt: new Date(submittedAt.getTime() + DAY),
+        dueAt: new Date(submittedAt.getTime() + 2 * DAY) });
+    }
   }
 
   // ── Complaints (UC50) waiting for ICPDP triage ───────────────────────────────────────────────

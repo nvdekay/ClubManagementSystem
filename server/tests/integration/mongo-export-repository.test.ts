@@ -110,6 +110,37 @@ describe.skipIf(!uri)("Mongo export repository", () => {
     expect((await mongoExportRepository().table("FINANCE", fa26)).rows).toEqual([]);
   });
 
+  it("totals budgets per club from the same budgets as FINANCE, with a zero row for a club without one", async () => {
+    const m = ucmsModels;
+    const budget = { eventId: finalized, clubId: robotics, lines: [], approvedByDecisionId: new Types.ObjectId(),
+      isSettlementLate: false, periodCode: "FA26" };
+    function decimal(value: string) { return new Types.Decimal128(value); }
+    await m.eventBudgets!.insertMany([
+      { ...budget, requestedTotal: decimal("5000000"), approvedTotal: decimal("4000000"), disbursedTotal: decimal("3000000"),
+        acceptedTotal: decimal("2500000"), recoveryAmount: decimal("500000"), refundedTotal: decimal("200000"),
+        state: "Recovery Pending", createdAt: new Date("2026-10-02") },
+      { ...budget, eventId: open, requestedTotal: decimal("1000000"), approvedTotal: decimal("1000000"),
+        disbursedTotal: decimal("1000000"), refundedTotal: decimal("0"), state: "Disbursed", createdAt: new Date("2026-10-06") },
+      // Outside FA26: counted by neither type.
+      { ...budget, eventId: new Types.ObjectId(), periodCode: "SU26", requestedTotal: decimal("9"), approvedTotal: decimal("9"), disbursedTotal: decimal("9"),
+        refundedTotal: decimal("0"), state: "Closed", createdAt: new Date("2026-06-01") }]);
+    const repo = mongoExportRepository();
+    const [finance, budgets] = await Promise.all([repo.table("FINANCE", fa26), repo.table("CLUB_BUDGETS", fa26)]);
+    expect(budgets.columns).toEqual(["CLB", "Số ngân sách", "Tổng được duyệt", "Tổng đã giải ngân", "Chi thực tế đã quyết toán",
+      "Phải hoàn", "Đã hoàn", "Chưa đối soát"]);
+    expect(budgets.rows).toEqual([["CLB Âm nhạc", 0, 0, 0, 0, 0, 0, 0],
+      ["CLB Robotics", 2, 5_000_000, 4_000_000, 2_500_000, 500_000, 200_000, 1]]);
+    function total(table: typeof finance, column: number) {
+      return table.rows.reduce((sum, row) => sum + Number(row[column] ?? 0), 0);
+    }
+    expect(total(budgets, 2)).toBe(total(finance, 4));
+    expect(total(budgets, 3)).toBe(total(finance, 5));
+    // No budget in scope at all: the type is empty, like any other type without data.
+    expect((await repo.table("CLUB_BUDGETS", { ...fa26, clubId: music.toString() })).rows).toEqual([]);
+    expect((await repo.table("CLUB_BUDGETS", { from: new Date("2025-01-01"), to: new Date("2025-12-31") })).rows).toEqual([]);
+    await m.eventBudgets!.deleteMany({});
+  });
+
   it("audits each export", async () => {
     const officer = new Types.ObjectId().toString();
     await mongoExportRepository().audit({ actorId: officer, type: "CLUBS", format: "xlsx", filter: {}, rowCount: 2, at: now });

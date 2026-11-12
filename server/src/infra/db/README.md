@@ -35,6 +35,37 @@ chờ duyệt và một hồ sơ đã duyệt (CLB hoạt động ngay với ban
 luồng đã có; chạy lại an toàn (mỗi phần tự bỏ qua nếu đã có). Hồ sơ thành lập cần Cloudinary để
 upload đề án PDF và logo PNG; thiếu cấu hình thì bỏ qua phần đó.
 
+Báo cáo năm học (UC55 A2, 12/11/2026): `seed:demo` thêm scheme cho `Spring 2026`, `Summer 2026` (dùng lại scheme
+`Fall 2026`), đánh giá `Published` của HEBE (tăng), FDS (giảm), EHC (ổn định) và Mây Mưa (thiếu kỳ Spring), cùng báo
+cáo định kỳ `Accepted` có thành tích và số liệu tài chính. Ghi thẳng vào collection; bỏ qua nếu đã có đánh giá `Published`
+của `Spring 2026`. Kỳ `Fall 2026` của HEBE không có báo cáo định kỳ để luồng UC38 demo vẫn chạy được.
+`mongo-export-repository.ts` đọc nguồn cho báo cáo năm: bản `Published` có `revisionNo` lớn nhất theo CLB và kỳ, báo
+cáo định kỳ `Accepted`, danh sách CLB; audit ghi chung `DATA_EXPORTED` với `after.type = "ANNUAL_REPORT"`.
+Loại `CLUB_BUDGETS` (FR-UC55-12) cộng dồn theo CLB đúng các `eventBudgets` mà loại `FINANCE` đọc (cùng hàm truy vấn),
+nên tổng hai sheet luôn khớp.
+
+`seed-annual-hints.ts` (`npm run seed:annual-hints -- --officer=<email officer> --applicant=<email sinh viên>`, 12/11/2026) thêm dữ liệu nghiệm thu cho báo cáo năm học và gợi ý
+CLB tương tự lên database demo đang có (không cần chạy lại `seed:demo`). Chỉ thêm, không sửa dữ liệu cũ, chạy lại an
+toàn. Báo cáo năm: scheme cho `Spring/Summer/Fall 2025` (Fall 2025 dùng ngưỡng 88/75/55) và `Spring/Summer 2026`; đánh
+giá `Published` của 9 CLB năm 2025 (đủ ba kỳ) và 6 CLB năm 2026 (tạm tính), có xu hướng tăng/giảm/ổn định, chênh đúng
+±5, CLB thiếu kỳ, bản sửa sau công bố, một bản `Finalized` không được tính và một tiêu chí thiếu dữ liệu; báo cáo
+định kỳ `Accepted` có tài chính, thành tích, cộng một báo cáo `Submitted` không được cộng. Không bao giờ tạo đánh giá
+cho `Fall 2026`. Gợi ý CLB tương tự: năm hồ sơ thành lập `Submitted` (qua use case UC07, upload đề án và logo lên
+Cloudinary) và một bản nháp của tài khoản truyền qua `--applicant`. Khi chạy lần đầu, seed xoá các bản ghi nhập tay cũ
+(`evaluations` `dea…01`–`dea…06` kèm kết quả tiêu chí, `periodicReports` `deb…01`–`deb…03`). `seed-files.ts` chứa file
+PDF/PNG giả dùng chung với `seed-demo.ts`.
+
+`seed-periodic-reports.ts` (`npm run seed:periodic-reports -- --officer=<email officer> [--reserve=<email,email>]`, 12/11/2026) thêm báo cáo định kỳ `Summer 2026` cho mọi CLB
+`Active` chưa có báo cáo kỳ này, để trang báo cáo định kỳ của ICPDP không còn gần như toàn bộ CLB quá hạn. Chỉ thêm, chạy
+lại an toàn (CLB đã có báo cáo `Summer 2026` thì bỏ qua). Phân bổ: đa số `Accepted` (hai bản bị trả về rồi nộp lại version 2),
+4 `Submitted` chờ duyệt (có task `PERIODIC_REPORT` mở), 2 `Returned for correction` có lý do, mục cần sửa và hạn nộp lại
+trong tương lai, 4 bản nộp trễ; `FTTC` và `FUSW` cố ý để trống cho luồng quá hạn/ghi nhận thiếu báo cáo (UC39 A1/E1).
+Phía CLB (tạo, lưu nháp, nộp) ghi đúng các thao tác của `mongo-club-periodic-report-repository.ts` vì các CLB này chưa có
+Chủ nhiệm để qua kiểm tra quyền; quyết định của ICPDP đi qua use case UC39 thật. Cả hai chạy với đồng hồ lùi về
+tháng 8–11/2026. Thành viên và sự kiện lấy từ dữ liệu hệ thống khi CLB có, nếu không thì nhập tay (tên giả, mã `HE19xxxx`).
+`preloadedFigures.finance` là số liệu CLB khai báo vì chưa có ngân sách `Summer 2026`, nên trang duyệt tô màu dòng tài
+chính là khác với hệ thống. Không gửi thông báo cho lượt nộp; lượt quyết định chỉ báo cho thành viên đã nộp (in-app).
+
 `clubFields` là danh mục lĩnh vực CLB do ICPDP quản lý. `ensureDefaultClubFields()` (gọi lúc khởi động
 server, `npm run db:init` và `seed:demo`) tạo sẵn 6 lĩnh vực trên database mới; khi ICPDP đã từng sửa danh
 mục (có audit `ClubField`) thì không tạo lại. Domain email đăng nhập không còn nằm trong policy mà lấy từ

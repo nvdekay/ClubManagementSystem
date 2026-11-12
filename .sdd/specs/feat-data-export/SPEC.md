@@ -31,8 +31,46 @@ ICPDP cần lấy dữ liệu ra file để báo cáo nhà trường mà không 
 - [x] Điểm danh chưa chốt không ra số; góp ý ẩn danh không có tên/email; chỉ đánh giá `Published`.
 - [x] File xlsx/csv/pdf hợp lệ, có dòng đầu thời điểm/người xuất/bộ lọc; mỗi lần xuất có audit.
 
+## Bổ sung v1.1.0 — Báo cáo tổng hợp nhiều loại dữ liệu trong một file
+Yêu cầu của người dùng (2026-11-12): ICPDP xuất được một bản báo cáo đầy đủ gồm kết quả hoạt động
+các CLB, các sự kiện diễn ra trong năm và ngân sách chi cho từng CLB hàng năm.
+
+- **Chọn nhiều loại**: form xuất cho tick nhiều loại dữ liệu và có nút "Chọn tất cả". Request đổi
+  từ `type` sang `types` (mảng, ít nhất 1, không trùng).
+- **Một file `xlsx`, mỗi loại một sheet**, đứng trước là sheet "Thông tin" ghi thời điểm xuất, người
+  xuất, bộ lọc và danh sách sheet kèm số dòng (FR-05). Chọn từ hai loại trở lên thì chỉ được xuất
+  `xlsx`; `csv`/`pdf` vẫn dành cho một loại.
+- **Bộ lọc** kỳ / khoảng ngày / CLB áp dụng chung cho mọi loại đã chọn. Lọc theo trạng thái chỉ
+  dùng được khi chọn đúng một loại, vì mỗi loại có danh sách trạng thái riêng.
+- **Loại mới `CLUB_BUDGETS` — "Ngân sách theo CLB"**: mỗi dòng một CLB trong phạm vi lọc, gồm số
+  ngân sách, tổng được duyệt, tổng đã giải ngân, tổng chi thực tế đã quyết toán, số phải hoàn/đã
+  hoàn và số ngân sách chưa đối soát. CLB không có ngân sách trong phạm vi vẫn có dòng với số 0.
+  Số liệu lấy từ cùng nguồn với loại `FINANCE` nên tổng của hai sheet khớp nhau.
+- **Xem trước** trả số dòng của từng loại đã chọn: `{ rowCount, types: [{ type, rowCount }] }`.
+- **Tên file** nhiều loại: `bao-cao-tong-hop-<yyyy-mm-dd>.xlsx`; một loại giữ tên cũ. Mỗi loại có tên sheet ngắn
+  riêng (`EXPORT_SHEET_NAMES`) vì Excel giới hạn 31 ký tự và cấm `[]:*?/\`.
+- **`CLUB_BUDGETS` khi không có ngân sách nào trong phạm vi** (kể cả khi lọc một CLB không có ngân sách): loại này
+  rỗng như mọi loại khác (404 nếu xuất riêng, sheet "Không có dữ liệu" nếu xuất chung), không sinh bảng toàn số 0.
+  "Chưa đối soát" = ngân sách ở trạng thái `Approved`, `Disbursed`, `Settlement Submitted`, `Reconciliation Pending`.
+  Không có bộ lọc trạng thái cho loại này.
+- **Không có dữ liệu**: 404 khi mọi loại đã chọn đều rỗng. Khi chỉ một số loại rỗng, sheet của loại
+  đó vẫn có tiêu đề cột và một dòng "Không có dữ liệu khớp bộ lọc".
+- **Audit**: mỗi loại trong lần xuất ghi một bản ghi như cũ (FR-07).
+- Giữ nguyên: chỉ `ICPDP_OFFICER`; đánh giá chỉ bản `Published`; điểm danh chỉ khi đã chốt; không
+  xuất danh tính người gửi góp ý ẩn danh.
+
+Tiêu chí nghiệm thu bổ sung:
+- [x] Chọn `EVALUATIONS` + `EVENTS` + `CLUB_BUDGETS` với khoảng ngày cả năm → một file `xlsx` có sheet
+  "Thông tin" và ba sheet dữ liệu đúng cột.
+- [x] Hai loại trở lên với `csv`/`pdf`, hoặc kèm bộ lọc trạng thái → 400.
+- [x] Mọi loại rỗng → 404; một loại rỗng → sheet đó có dòng "Không có dữ liệu khớp bộ lọc".
+- [x] Tổng được duyệt và tổng giải ngân của `CLUB_BUDGETS` bằng tổng tương ứng của `FINANCE` cùng bộ lọc.
+- [x] Mỗi loại trong một lần xuất có một bản ghi audit.
+- [x] Xuất một loại vẫn hoạt động như trước với cả ba định dạng.
+
 ## Ngoài phạm vi
 Lập lịch xuất định kỳ, gửi file qua email.
 
 ## Changelog
+- v1.1.0 (2026-11-12) — người dùng yêu cầu: xuất nhiều loại trong một file `xlsx`, thêm loại `CLUB_BUDGETS`.
 - v1.0.0 (2026-10-10) — được người dùng duyệt.

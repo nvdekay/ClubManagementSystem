@@ -9,6 +9,7 @@ import {
   type FounderRole, type FoundingIssue,
 } from "../domain/club-application.js";
 import type { FoundingRequirements, PolicyRepository } from "../domain/policy.js";
+import { similarClubHints, type SimilarClubHint } from "../domain/similar-club.js";
 import type { AccessActor } from "./access.js";
 import { foundingRequirementsAt } from "./policy.js";
 
@@ -204,6 +205,14 @@ async function submissionIssues(repo: ClubApplicationRepository, fields: ClubFie
   return issues;
 }
 
+/** Advisory only (UC07): public clubs that look like this draft; never blocks saving or submitting. */
+async function publicSimilarClubs(repo: ClubApplicationRepository,
+  record: ClubApplicationRecord): Promise<SimilarClubHint[]> {
+  const { clubName, field, summary, objectives } = record.draft;
+  return similarClubHints({ name: clubName, field, text: `${summary} ${objectives}` },
+    await repo.publicSimilarityCandidates(record.id));
+}
+
 export async function previewApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
   fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date) {
   const ownerId = owner(actor);
@@ -212,12 +221,13 @@ export async function previewApplication(repo: ClubApplicationRepository, policy
   const requirements = await foundingRequirementsAt(policy, now);
   return { requirements,
     issues: await submissionIssues(repo, fields, record.draft, ownerId, requirements, now),
-    activeNameConflict: await repo.activeClubNameExists(record.draft.clubName) };
+    activeNameConflict: await repo.activeClubNameExists(record.draft.clubName),
+    similarClubs: await publicSimilarClubs(repo, record) };
 }
 
 export async function submitApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
   fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date): Promise<{
-  version: ClubApplicationVersion; activeNameConflict: boolean;
+  version: ClubApplicationVersion; activeNameConflict: boolean; similarClubs: SimilarClubHint[];
 }> {
   const ownerId = owner(actor);
   const record = await owned(repo, id, ownerId);
@@ -233,10 +243,11 @@ export async function submitApplication(repo: ClubApplicationRepository, policy:
     throw new DomainError("founding member not found", "validation");
   }
   const activeNameConflict = await repo.activeClubNameExists(record.draft.clubName);
+  const similarClubs = await publicSimilarClubs(repo, record);
   const version = await repo.submit({ id: record.id, ownerId,
     snapshot: record.draft, expectedDraftRevision: record.draftRevision,
     policyVersionId: requirements.policyVersionId, now });
-  return { version, activeNameConflict };
+  return { version, activeNameConflict, similarClubs };
 }
 
 export async function withdrawApplication(repo: ClubApplicationRepository,

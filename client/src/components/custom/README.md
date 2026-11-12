@@ -23,5 +23,6 @@ Các component còn lại (đối chiếu 17/10/2026):
 - `EventRegistrationPanel`, `EventCheckInForm` — đăng ký và check-in sự kiện (UC29, UC31).
 - `EventFeedbackPanel`, `EventFeedbackForm` — gửi phản hồi sự kiện (UC48).
 - `ComplaintCard` — một khiếu nại UC50–UC52 (trang Student, hàng đợi ICPDP, hộp thư CLB); nơi gọi tự chọn trường được hiện (CLB không bao giờ có danh tính người khiếu nại).
+- `SimilarClubHints` — gợi ý CLB tương tự cho hồ sơ thành lập: bước xem lại/kết quả nộp của sinh viên (UC07, không hiện gì khi rỗng) và trang thẩm định ICPDP (UC08, báo "không có" khi rỗng).
 - `RevisionChanges` — khung "Thay đổi so với bản N" trên trang duyệt ICPDP (UC08, UC26): các phần đã yêu cầu sửa và từng trường đổi giữa hai phiên bản (dùng `utils/revisionDiff`).
 - `PublicEventCard`, `ClubLogo`, `ClubCover`, `UniversityLogo`, `MembershipStateBadge` — hiển thị dùng chung.

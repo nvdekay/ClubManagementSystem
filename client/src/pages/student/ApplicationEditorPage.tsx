@@ -16,7 +16,7 @@ import { useApplication, useApplicationAction, useApplicationConfig,
 import { useAuth } from "@/hooks/useAuth";
 import type {
   ApplicationDocument, ApplicationDocumentType, ApplicationDraft, ApplicationRequestError, DraftInput,
-  FounderProfile, FounderRole, FoundingField, FoundingIssue,
+  FounderProfile, FounderRole, FoundingField, FoundingIssue, SimilarClubHint,
 } from "@/services/applications";
 import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -24,6 +24,7 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
+import { SimilarClubHints } from "@/components/custom/SimilarClubHints";
 import { isEmail, isHttpUrl } from "@/utils/validation";
 
 function stateTone(state: string): AppBadgeTone {
@@ -71,6 +72,7 @@ export function ApplicationEditorPage() {
   const [notice, setNotice] = useState<{ tone: "danger" | "success"; text: string } | null>(null);
   const [submitIssues, setSubmitIssues] = useState<FoundingIssue[] | null>(null);
   const [nameConflict, setNameConflict] = useState(false);
+  const [submittedHints, setSubmittedHints] = useState<SimilarClubHint[]>([]);
   const [founderEmail, setFounderEmail] = useState("");
   const [founderError, setFounderError] = useState<string | null>(null);
   const [addedFounders, setAddedFounders] = useState<Record<string, FounderProfile>>({});
@@ -259,7 +261,10 @@ export function ApplicationEditorPage() {
     setNotice(null);
     try {
       const result = await action.mutateAsync({ kind: "submit", id, csrfToken: auth.data.csrfToken });
-      if ("activeNameConflict" in result) setNameConflict(result.activeNameConflict);
+      if ("activeNameConflict" in result) {
+        setNameConflict(result.activeNameConflict);
+        setSubmittedHints(result.similarClubs);
+      }
       setNotice({ tone: "success", text: t("applications.submitted") });
     } catch (error) {
       const issues = (error as ApplicationRequestError).details?.issues;
@@ -430,6 +435,7 @@ export function ApplicationEditorPage() {
       {notice && <AppNotice tone={notice.tone} role={notice.tone === "danger" ? "alert" : "status"} className="mb-6">
         {notice.text}</AppNotice>}
       {nameConflict && <AppNotice tone="warning" role="status" className="mb-6">{t("applications.submitWarning")}</AppNotice>}
+      <SimilarClubHints hints={submittedHints} audience="applicant" className="mb-6" />
 
       {!editable && application ? <section className="space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">{summary(application.draft)}</section> : <>
         <nav aria-label={t("applications.stepOf", { current: step + 1, total: steps.length })} className="mb-5">
@@ -533,6 +539,7 @@ export function ApplicationEditorPage() {
                 </li>)}</ul>
               </AppNotice> : <AppNotice tone="success" role="status">{t("applications.reviewReady")}</AppNotice>}
           {preview.data?.activeNameConflict && <AppNotice tone="warning">{t("applications.submitWarning")}</AppNotice>}
+          {preview.data && <SimilarClubHints hints={preview.data.similarClubs} audience="applicant" />}
           {summary({ ...currentDraft, field: application?.draft.field })}
         </section>}
 

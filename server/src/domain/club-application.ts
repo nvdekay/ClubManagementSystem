@@ -1,5 +1,6 @@
 import { DomainError } from "./errors.js";
 import type { FoundingRequirements } from "./policy.js";
+import type { SimilarityCandidate } from "./similar-club.js";
 
 export const FOUNDER_ROLES = ["LEADER", "VICE_LEADER", "MEMBER"] as const;
 export type FounderRole = (typeof FOUNDER_ROLES)[number];
@@ -114,6 +115,8 @@ export interface ClubApplicationRepository {
   removeDocument(id: string, ownerId: string, documentId: string): Promise<ClubApplicationRecord>;
   usersExist(ids: readonly string[]): Promise<boolean>;
   activeClubNameExists(name: string): Promise<boolean>;
+  /** Clubs an applicant may be compared with: public states only, never applications or `Pending Setup`. */
+  publicSimilarityCandidates(applicationId: string): Promise<SimilarityCandidate[]>;
   /** Users among `userIds` holding a confirmed club-leader seat in a term still running at `at`. */
   activeLeaderUserIds(userIds: readonly string[], at: Date): Promise<string[]>;
   submit(input: { id: string; ownerId: string; snapshot: ClubApplicationDraft;

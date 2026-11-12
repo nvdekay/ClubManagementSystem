@@ -312,6 +312,9 @@ describe.skipIf(!uri)("E2E: simplified club founding", () => {
     const submitted = await call(students.an!, "POST", `/applications/${mainId}/submit`);
     expect(submitted.status).toBe(201);
     expect(submitted.body.data).toMatchObject({ activeNameConflict: true, version: { versionNo: 1 } });
+    // A HIGH similar-club hint is advisory only: the submission above still went through.
+    expect(submitted.body.data.similarClubs[0]).toMatchObject({ kind: "CLUB", name: "clb robotics fptu",
+      level: "HIGH", reasons: { name: 1, field: 1 } });
     await ucmsModels.clubs!.deleteOne({ code: "CLB-DUP" });
     expect((await call(students.an!, "PATCH", `/applications/${mainId}/draft`, { ...draftBody(), draftRevision: 99 })).status).toBe(409);
     expect((await upload(students.an!, mainId, "LOGO", "l.png", "image/png", png)).status).toBe(409);
@@ -372,6 +375,8 @@ describe.skipIf(!uri)("E2E: simplified club founding", () => {
     expect(approved.body.data.application.state).toBe("Approved");
     const app = await ucmsModels.clubApplications!.findById(mainId).lean();
     const clubId = String(app!.createdClubId);
+    // The club created from this application is never offered as similar to it.
+    expect(approved.body.data.similarClubs.map((hint: { id: string }) => hint.id)).not.toContain(clubId);
     const club = await ucmsModels.clubs!.findById(clubId).lean();
     expect(club).toMatchObject({ name: "CLB Robotics FPTU", field: "Công nghệ", state: "Active",
       description: "Chế tạo robot", contactEmail: "robotics@e2e.edu",

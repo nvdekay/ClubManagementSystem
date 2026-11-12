@@ -10,7 +10,7 @@ import { FOUNDING_POSITIONS } from "../../domain/club-application.js";
 import { DomainError } from "../../domain/errors.js";
 import { notificationChannels } from "../../domain/notification.js";
 import {
-  applicationDraftFrom, mapApplicationRecord, mapApplicationVersion,
+  applicationDraftFrom, mapApplicationRecord, mapApplicationVersion, similarityCandidates,
 } from "./mongo-club-application-repository.js";
 import { ucmsModels } from "./ucms-models.js";
 
@@ -120,6 +120,10 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       return [...found.application.draft.documents,
         ...found.versions.flatMap((version) => version.snapshot.documents)]
         .find((document) => document.id === documentId) ?? null;
+    },
+
+    async similarityCandidates(applicationId) {
+      return similarityCandidates(applicationId, false);
     },
 
     async claim(applicationId, officerId, now) {

@@ -34,6 +34,19 @@ export interface ApplicationDraft extends DraftInput {
   documents: ApplicationDocument[];
 }
 
+/** Advisory similar-club hint (UC07/UC08); never blocks submitting or reviewing. */
+export interface SimilarClubHint {
+  kind: "CLUB" | "APPLICATION";
+  id: string;
+  name: string;
+  field: string;
+  state: string;
+  score: number;
+  level: "HIGH" | "MEDIUM";
+  /** Component similarities in 0–1; `content` is null when one side has no description. */
+  reasons: { name: number; content: number | null; field: number; sharedWords: string[] };
+}
+
 export type FoundingField = "summary" | "objectives" | "proposal" | "logo" | "fanpageUrl" | "contactEmail";
 
 /** Everything that blocks submission, as reported by the server preview or a rejected submit. */
@@ -145,6 +158,7 @@ export function fetchApplication(id: string, signal: AbortSignal): Promise<Appli
 
 export function previewApplication(id: string, signal: AbortSignal): Promise<{
   requirements: FoundingRequirements; issues: FoundingIssue[]; activeNameConflict: boolean;
+  similarClubs: SimilarClubHint[];
 }> {
   return request(`/${encodeURIComponent(id)}/preview`, { signal });
 }
@@ -160,7 +174,7 @@ export function saveDraft(id: string, input: DraftInput, draftRevision: number,
 }
 
 export function submitDraft(id: string, csrfToken: string): Promise<{
-  version: ApplicationVersion; activeNameConflict: boolean;
+  version: ApplicationVersion; activeNameConflict: boolean; similarClubs: SimilarClubHint[];
 }> {
   return request(`/${encodeURIComponent(id)}/submit`, mutation("POST", csrfToken));
 }

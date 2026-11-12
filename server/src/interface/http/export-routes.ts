@@ -1,12 +1,14 @@
 import { Router, type Response } from "express";
 import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
-import type { ExportFileWriter, ExportFilter, ExportRepository } from "../../domain/data-export.js";
+import { EXPORT_TYPES, type ExportFileWriter, type ExportFilter, type ExportRepository } from "../../domain/data-export.js";
 import { DomainError } from "../../domain/errors.js";
 import type { PolicyRepository } from "../../domain/policy.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { exportData, exportOptions, previewExport } from "../../usecase/data-export.js";
+import {
+  exportAnnualReport, exportData, exportOptions, previewAnnualReport, previewExport,
+} from "../../usecase/data-export.js";
 import { authGuard } from "./auth-routes.js";
 import { download, ok } from "./response.js";
 
@@ -26,9 +28,17 @@ const filterBody = z.object({
   status: z.string().max(50).optional(),
 }).strict();
 export const exportPreviewBody = z.object({
-  type: z.enum(["CLUBS", "MEMBERS", "EVENTS", "FINANCE", "COMPLIANCE", "EVALUATIONS"]), filter: filterBody,
+  types: z.array(z.enum(EXPORT_TYPES)).min(1).max(EXPORT_TYPES.length)
+    .describe("One or more distinct types; two or more give one xlsx with a sheet per type (FR-UC55-12)"),
+  filter: filterBody,
 }).strict();
 export const exportBody = exportPreviewBody.extend({ format: z.enum(["xlsx", "csv", "pdf"]) }).strict();
+export const annualPreviewBody = z.object({ year: z.number().int().min(1000).max(9999) }).strict();
+export const annualExportBody = annualPreviewBody.extend({
+  format: z.enum(["pdf", "xlsx"]),
+  remarks: z.string().max(2000).optional(),
+  achievementKeys: z.array(z.string().max(100)).max(20).optional(),
+}).strict();
 
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
@@ -57,12 +67,21 @@ export function exportRoutes(deps: ExportRouteDeps): Router {
   router.post("/admin/exports/preview", authGuard(guard), async (req, res) => {
     const body = parsed(exportPreviewBody, req.body);
     ok(res, await previewExport(deps.repo, deps.policy, deps.authRepo, actor(res),
-      { type: body.type, filter: filter(body.filter) }, new Date()));
+      { types: body.types, filter: filter(body.filter) }, new Date()));
   });
   router.post("/admin/exports", authGuard(guard), async (req, res) => {
     const body = parsed(exportBody, req.body);
     const result = await exportData(deps.repo, deps.writer, deps.policy, deps.authRepo, actor(res),
-      { type: body.type, format: body.format, filter: filter(body.filter) }, new Date());
+      { types: body.types, format: body.format, filter: filter(body.filter) }, new Date());
+    download(res, result.file, result.fileName);
+  });
+  router.post("/admin/exports/annual-report/preview", authGuard(guard), async (req, res) => {
+    const body = parsed(annualPreviewBody, req.body);
+    ok(res, await previewAnnualReport(deps.repo, deps.authRepo, actor(res), body));
+  });
+  router.post("/admin/exports/annual-report", authGuard(guard), async (req, res) => {
+    const body = parsed(annualExportBody, req.body);
+    const result = await exportAnnualReport(deps.repo, deps.writer, deps.authRepo, actor(res), body, new Date());
     download(res, result.file, result.fileName);
   });
 

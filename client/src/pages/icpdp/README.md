@@ -37,8 +37,11 @@ chỉ xoá được khi chưa từng có booking.
 D4–D8 (D1–D3 luôn có), trọng số % (tổng 100, có "Chia đều"), cho phép chấm tay, 3 mốc xếp loại; nháp sửa/xoá
 được, kích hoạt thay thế scheme đang áp dụng của kỳ, scheme đã kích hoạt chỉ "tạo bản sửa".
 
-`DataExportPage` (UC55) xuất dữ liệu ra `xlsx`/`csv`/`pdf`: chọn loại dữ liệu, thời gian (toàn bộ, học kỳ,
-khoảng ngày), CLB, trạng thái; đếm số dòng trước khi tải; không có dòng nào thì không tạo file.
+`DataExportPage` (UC55) xuất dữ liệu ra `xlsx`/`csv`/`pdf`: chọn một hoặc nhiều loại dữ liệu (có "Chọn tất cả"),
+thời gian (toàn bộ, học kỳ, khoảng ngày), CLB, trạng thái; đếm số dòng (theo từng loại) trước khi tải; không có dòng nào
+thì không tạo file. Từ hai loại trở lên chỉ xuất `xlsx` (mỗi loại một sheet) và khoá bộ lọc trạng thái, kèm dòng giải thích.
+Bên dưới là `AnnualReportSection` (UC55 A2): chọn năm học, xem ba kỳ đã công bố, xem trước sáu phần báo cáo,
+tick tối đa 20 thành tích, nhập nhận xét (tối đa 2000 ký tự) rồi tải `pdf`/`xlsx`.
 
 `IcpdpClubsPage` (route `/icpdp/clubs`) là màn CLB duy nhất của ICPDP: giao diện lưới thẻ như Khám phá CLB
 nhưng gồm mọi CLB ở mọi trạng thái, lọc theo tên/lĩnh vực/trạng thái, khối "Sắp hết hạn tạm ngừng"; nút Quản lý

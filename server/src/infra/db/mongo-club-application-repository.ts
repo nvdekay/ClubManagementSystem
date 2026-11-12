@@ -7,6 +7,7 @@ import {
   type ClubApplicationDraft, type ClubApplicationRecord, type ClubApplicationRepository,
   type ClubApplicationState, type ClubApplicationVersion, type FoundingMember,
 } from "../../domain/club-application.js";
+import type { SimilarityCandidate } from "../../domain/similar-club.js";
 import { routedTaskFields } from "./approval-routing.js";
 import { ucmsModels } from "./ucms-models.js";
 
@@ -67,6 +68,40 @@ export function mapApplicationVersion(doc: Record<string, unknown>): ClubApplica
 function profileFrom(doc: Record<string, unknown>): FounderProfile {
   return { id: String(doc._id), email: String(doc.email),
     displayName: typeof doc.displayName === "string" && doc.displayName ? doc.displayName : String(doc.email) };
+}
+
+const publicClubStates = ["Active", "Suspended", "Dissolving", "Dissolved"];
+const pendingApplicationStates = ["Submitted", "Under Review", "Revision Requested"];
+
+/**
+ * Comparison candidates for similar-club hints. Never the application itself nor the club
+ * created from it. `publicOnly` (applicant view) keeps public club states and no applications.
+ */
+export async function similarityCandidates(applicationId: string,
+  publicOnly: boolean): Promise<SimilarityCandidate[]> {
+  const id = new Types.ObjectId(applicationId);
+  const self = await ucmsModels.clubApplications!.findById(id).select("createdClubId").lean();
+  const createdClubId = self?.createdClubId as Types.ObjectId | undefined;
+  // ponytail: full scan per request; add an index or cache if clubs reach thousands
+  const [clubDocs, applicationDocs] = await Promise.all([
+    ucmsModels.clubs!.find({
+      sourceApplicationId: { $ne: id },
+      ...(createdClubId ? { _id: { $ne: createdClubId } } : {}),
+      ...(publicOnly ? { state: { $in: publicClubStates } } : {}),
+    }).select("_id name field state description").lean(),
+    publicOnly ? [] : ucmsModels.clubApplications!.find({ _id: { $ne: id },
+      state: { $in: pendingApplicationStates } }).select("_id founderUserId state draftPayload").lean(),
+  ]);
+  return [
+    ...clubDocs.map((doc) => ({ kind: "CLUB" as const, id: String(doc._id), name: String(doc.name),
+      field: text(doc.field), state: String(doc.state), text: text(doc.description) })),
+    ...applicationDocs.map((doc) => {
+      const draft = applicationDraftFrom(doc.draftPayload as Record<string, unknown> | undefined,
+        String(doc.founderUserId));
+      return { kind: "APPLICATION" as const, id: String(doc._id), name: draft.clubName,
+        field: draft.field, state: String(doc.state), text: `${draft.summary} ${draft.objectives}` };
+    }),
+  ];
 }
 
 function conflict(): never {
@@ -174,6 +209,9 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
     async activeClubNameExists(name) {
       return Boolean(await clubs.exists({ name, state: "Active" })
         .collation({ locale: "en", strength: 2 }));
+    },
+    async publicSimilarityCandidates(applicationId) {
+      return similarityCandidates(applicationId, true);
     },
     async activeLeaderUserIds(userIds, at) {
       const ids = [...new Set(userIds)].filter((value) => Types.ObjectId.isValid(value))

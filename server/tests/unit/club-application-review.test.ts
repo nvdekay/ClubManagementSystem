@@ -41,7 +41,7 @@ function auth(roles: string[]): AuthRepository {
 function repository(overrides: Partial<ClubApplicationReviewRepository> = {}) {
   const repo: ClubApplicationReviewRepository = {
     listOpen: async () => [detail], find: async () => detail,
-    findDocument: async () => null,
+    findDocument: async () => null, similarityCandidates: async () => [],
     claim: async () => detail, decide: async () => detail, ...overrides,
   };
   return repo;
@@ -62,6 +62,21 @@ describe("UC08 club application review use case", () => {
     await claimApplicationReview(repository({ claim }), auth(["ICPDP_OFFICER"]),
       officer, applicationId, now);
     expect(claim).toHaveBeenCalledWith(applicationId, officer.id, now);
+  });
+
+  it("adds advisory similar-club hints from the candidates of this application", async () => {
+    const similarityCandidates = vi.fn(async () => [
+      { kind: "CLUB" as const, id: "c1", name: "CLB Robotics", field: "Technology",
+        state: "Dissolved", text: "Build robots" },
+      { kind: "APPLICATION" as const, id: "a1", name: "Robotics", field: "Technology",
+        state: "Submitted", text: "" },
+      { kind: "CLUB" as const, id: "c2", name: "Chess", field: "Sport", state: "Active", text: "Play chess" },
+    ]);
+    const result = await claimApplicationReview(repository({ similarityCandidates }),
+      auth(["ICPDP_OFFICER"]), officer, applicationId, now);
+    expect(similarityCandidates).toHaveBeenCalledWith(applicationId);
+    expect(result.similarClubs.map((hint) => [hint.kind, hint.id, hint.level]))
+      .toEqual([["CLUB", "c1", "HIGH"], ["APPLICATION", "a1", "HIGH"]]);
   });
 
   it("validates revision feedback before the repository write", async () => {

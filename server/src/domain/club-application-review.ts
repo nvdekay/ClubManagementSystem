@@ -3,6 +3,7 @@ import type {
   ClubApplicationRecord,
   ClubApplicationVersion, FounderProfile,
 } from "./club-application.js";
+import type { SimilarityCandidate } from "./similar-club.js";
 
 export type ApplicationReviewOutcome = "Request revision" | "Approve" | "Reject";
 
@@ -54,6 +55,8 @@ export interface ClubApplicationReviewRepository {
   listOpen(): Promise<ApplicationReviewQueueItem[]>;
   find(applicationId: string): Promise<ApplicationReviewDetail | null>;
   findDocument(applicationId: string, documentId: string): Promise<ApplicationDocument | null>;
+  /** Clubs in every state plus other pending applications, excluding this one and its created club. */
+  similarityCandidates(applicationId: string): Promise<SimilarityCandidate[]>;
   claim(applicationId: string, officerId: string, now: Date): Promise<ApplicationReviewDetail>;
   decide(applicationId: string, officerId: string,
     input: ApplicationReviewDecisionInput, now: Date): Promise<ApplicationReviewDetail>;

@@ -64,6 +64,15 @@ const en = {
   unconfigured: "The founding policy is not configured yet. Ask ICPDP to configure it first.",
   notFound: "Application unavailable or you do not own it.",
   noFields: "ICPDP has not set up any club fields yet.",
+  similarTitle: "Similar clubs",
+  similarApplicantHint: "These clubs look like yours. This is only a hint: you can still submit, and ICPDP decides.",
+  similarOfficerHint: "Advisory only: existing clubs and pending applications that look like this one. It never decides the outcome.",
+  similarNone: "No similar club or pending application was found.",
+  similarHigh: "High similarity", similarMedium: "Medium similarity", similarScore: "{{score}}/100",
+  similarKindClub: "Club", similarKindApplication: "Pending application",
+  similarName: "Name {{value}}%", similarContent: "Content {{value}}%",
+  similarNoContent: "No description to compare", similarSameField: "Same field",
+  similarOtherField: "Different field", similarSharedWords: "Shared words: {{words}}",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -132,6 +141,15 @@ const vi: Record<keyof typeof en, string> = {
   unconfigured: "Chính sách thành lập CLB chưa được cấu hình. Hãy liên hệ ICPDP.",
   notFound: "Không tìm thấy hồ sơ hoặc bạn không phải người đứng đơn.",
   noFields: "ICPDP chưa thiết lập lĩnh vực CLB nào.",
+  similarTitle: "CLB tương tự",
+  similarApplicantHint: "Các CLB này có vẻ giống CLB của bạn. Đây chỉ là gợi ý: bạn vẫn có thể nộp và ICPDP sẽ quyết định.",
+  similarOfficerHint: "Chỉ để tham khảo: các CLB và hồ sơ đang chờ có vẻ giống hồ sơ này. Gợi ý không quyết định kết quả thẩm định.",
+  similarNone: "Không tìm thấy CLB hay hồ sơ đang chờ nào tương tự.",
+  similarHigh: "Giống nhiều", similarMedium: "Giống vừa", similarScore: "{{score}}/100",
+  similarKindClub: "CLB", similarKindApplication: "Hồ sơ đang chờ",
+  similarName: "Tên {{value}}%", similarContent: "Nội dung {{value}}%",
+  similarNoContent: "Không có mô tả để so", similarSameField: "Cùng lĩnh vực",
+  similarOtherField: "Khác lĩnh vực", similarSharedWords: "Từ trùng: {{words}}",
 };
 
 export const applications = { en, vi };

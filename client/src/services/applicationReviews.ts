@@ -1,5 +1,5 @@
 import { ApiError, apiFetch } from "@/services/apiError";
-import type { ApplicationRecord, ApplicationVersion, FounderProfile } from "./applications";
+import type { ApplicationRecord, ApplicationVersion, FounderProfile, SimilarClubHint } from "./applications";
 
 export type ReviewOutcome = "Request revision" | "Approve" | "Reject";
 
@@ -34,6 +34,7 @@ export interface ReviewDetail extends ReviewQueueItem {
   decisions: ReviewDecision[];
   founders: FounderProfile[];
   nameConflicts: Array<{ id: string; code: string; name: string }>;
+  similarClubs: SimilarClubHint[];
 }
 
 export interface ReviewDecisionInput {

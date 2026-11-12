@@ -1,10 +1,11 @@
 import type { AuthRepository } from "../domain/auth.js";
 import type {
-  ApplicationReviewDecisionInput,
+  ApplicationReviewDecisionInput, ApplicationReviewDetail,
   ClubApplicationReviewRepository,
 } from "../domain/club-application-review.js";
 import type { ApplicationFileStorage } from "../domain/club-application.js";
 import { DomainError } from "../domain/errors.js";
+import { similarClubHints, type SimilarClubHint } from "../domain/similar-club.js";
 import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
@@ -54,6 +55,18 @@ function normalizedDecision(input: ApplicationReviewDecisionInput, now: Date) {
     revisionDeadlineAt: input.revisionDeadlineAt };
 }
 
+export type ApplicationReviewView = ApplicationReviewDetail & { similarClubs: SimilarClubHint[] };
+
+/** Advisory only (UC08): compares the latest submitted version; never picks an outcome. */
+async function withSimilarClubs(repo: ClubApplicationReviewRepository,
+  detail: ApplicationReviewDetail): Promise<ApplicationReviewView> {
+  const { clubName, field, summary, objectives } = detail.versions.at(-1)?.snapshot
+    ?? detail.application.draft;
+  return { ...detail, similarClubs: similarClubHints(
+    { name: clubName, field, text: `${summary} ${objectives}` },
+    await repo.similarityCandidates(detail.application.id)) };
+}
+
 export async function listApplicationReviews(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, actor: AccessActor | null) {
   await officer(auth, actor);
@@ -65,19 +78,20 @@ export async function getApplicationReview(repo: ClubApplicationReviewRepository
   await officer(auth, actor);
   const detail = await repo.find(applicationId(id));
   if (!detail) throw new DomainError("application review not found", "not_found");
-  return detail;
+  return withSimilarClubs(repo, detail);
 }
 
 export async function claimApplicationReview(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, actor: AccessActor | null, id: string, now: Date) {
-  return repo.claim(applicationId(id), await officer(auth, actor), now);
+  return withSimilarClubs(repo, await repo.claim(applicationId(id), await officer(auth, actor), now));
 }
 
 export async function decideApplicationReview(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, actor: AccessActor | null, id: string,
   input: ApplicationReviewDecisionInput, now: Date) {
   const officerId = await officer(auth, actor);
-  return repo.decide(applicationId(id), officerId, normalizedDecision(input, now), now);
+  return withSimilarClubs(repo,
+    await repo.decide(applicationId(id), officerId, normalizedDecision(input, now), now));
 }
 
 export async function applicationReviewDocumentAccess(repo: ClubApplicationReviewRepository,

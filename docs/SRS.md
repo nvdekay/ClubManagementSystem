@@ -1024,7 +1024,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC07-07 | *(A3)* Cho người nộp rút hồ sơ chưa có quyết định (`Submitted`, `Under Review` hoặc `Revision Requested`) → `Withdrawn`, đồng thời đóng review task đang mở |
 | FR-UC07-08 | *(E1)* Từ chối nộp và giữ hồ sơ ở `Draft` khi thiếu một tài liệu bắt buộc |
 | FR-UC07-09 | *(E2)* Từ chối nộp khi số thành viên sáng lập ít hơn mức BR03 cho phép |
-| FR-UC07-10 | *(E3)* Cảnh báo khi đã có một CLB đang hoạt động trùng tên, và để quyết định cho UC08 |
+| FR-UC07-10 | *(E3)* Cảnh báo khi đã có một CLB đang hoạt động trùng tên, và để quyết định cho UC08. **Mở rộng 2026-11-12:** khi xem bản nháp trước khi nộp và khi nộp, gợi ý thêm tối đa 5 CLB `Active`, `Suspended`, `Dissolving` hoặc `Dissolved` có độ giống từ 35/100 trở lên (tên, nội dung, lĩnh vực — xem FR-UC08-14), kèm lý do; không bao giờ lộ hồ sơ của người khác hay CLB `Pending Setup`, và không chặn việc lưu nháp hay nộp |
 | FR-UC07-11 | Không bao giờ ghi đè một version đã nộp (BR04); một version hồ sơ bao gồm cả cơ cấu tổ chức dự kiến |
 | FR-UC07-12 | Thu thập **cơ cấu tổ chức dự kiến**: có sẵn role Chủ nhiệm (cố định, thuộc ban điều hành) và role Members (mặc định); cho người nộp thêm các role khác (ví dụ Phó chủ nhiệm, Trưởng ban A, Trưởng ban B), và đánh dấu role nào thuộc ban điều hành (BR55, BR56) |
 | FR-UC07-13 | *(E4)* Từ chối nộp khi cơ cấu không có role Chủ nhiệm, hoặc có role được gán permission (BR54, BR55) |
@@ -1061,6 +1061,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC08-11 | *(E2)* Để scheduler chuyển `Expired` khi hết deadline chỉnh sửa mà không có bản nộp lại; người nộp phải làm hồ sơ mới |
 | FR-UC08-12 | Không bao giờ cho ICPDP sửa dữ liệu thay cho người nộp |
 | FR-UC08-13 | Gắn lịch sử quyết định vào hồ sơ và cho đọc ngay tại đây (đây chính là cách BP15 được giải quyết mà không cần một use case audit riêng) |
+| FR-UC08-14 | Gợi ý tối đa 5 CLB (mọi trạng thái) và hồ sơ thành lập khác đang `Submitted`, `Under Review` hoặc `Revision Requested` giống hồ sơ đang thẩm định. Điểm 0–100 = tên 40 (Dice trên bigram ký tự của tên đã chuẩn hoá) + nội dung 40 (Dice trên tập từ của `summary + objectives` so với `description`) + lĩnh vực 20; một trong hai bên không có mô tả thì nội dung tính 0 (điểm tối đa 60). `HIGH` ≥ 60, `MEDIUM` 35–59, dưới 35 ẩn. Mỗi dòng có loại, tên, lĩnh vực, trạng thái, điểm, mức và lý do (điểm từng thành phần, tối đa 10 từ trùng). Không so với chính hồ sơ và CLB tạo ra từ nó; chỉ để tham khảo, không chặn và không tự chọn kết quả nào |
 
 **Hậu điều kiện** — hồ sơ ở `Revision Requested`, `Approved` hoặc `Rejected`; khi duyệt thì tồn tại một `Club` ở `Active` với nhiệm kỳ sáng lập và ban chủ nhiệm sáng lập.
 **Đầu ra** — `ApprovalDecision`, `Club` và phiên bản cơ cấu 1 (khi duyệt), bản ghi audit, thông báo.
@@ -2484,6 +2485,8 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 | FR-UC55-08 | *(A1)* Xuất bảng so sánh các CLB trong một kỳ: mỗi dòng một CLB, mỗi cột một dimension của bảng điểm chung, kèm tổng điểm và xếp loại |
 | FR-UC55-09 | *(E1)* Báo không có dữ liệu khớp bộ lọc và không tạo file rỗng |
 | FR-UC55-10 | *(E2)* Từ chối nếu người gọi không phải ICPDP Officer (BR61) |
+| FR-UC55-11 | *(A2)* Sinh báo cáo tổng kết năm học gửi nhà trường (`pdf` hoặc `xlsx`) từ các đánh giá `Published` và báo cáo định kỳ `Accepted` của ba kỳ `SPRING`, `SUMMER`, `FALL` cùng năm (suy ra từ `periodCode`): tổng quan phong trào, xếp loại năm theo điểm trung bình các kỳ, tám tiêu chí, tài chính, tuân thủ, thành tích do officer chọn và nhận xét; xem trước được, năm thiếu kỳ ghi "Báo cáo tạm tính", không chứa dữ liệu cá nhân sinh viên, mỗi lần xuất ghi audit `ANNUAL_REPORT` |
+| FR-UC55-12 | Cho chọn nhiều loại dữ liệu (kèm "Chọn tất cả") trong một lần xuất: từ hai loại trở lên sinh một file `xlsx` gồm sheet "Thông tin" (thời điểm, người xuất, bộ lọc, danh sách sheet kèm số dòng) rồi mỗi loại một sheet; `csv`/`pdf` và lọc trạng thái chỉ dùng với đúng một loại; bộ lọc kỳ/khoảng ngày/CLB áp dụng chung; xem trước trả số dòng từng loại; mọi loại rỗng thì không tạo file (E1), loại rỗng giữ tiêu đề cột kèm dòng "Không có dữ liệu khớp bộ lọc"; mỗi loại ghi một audit. Thêm loại `CLUB_BUDGETS` (ngân sách theo CLB): mỗi CLB một dòng gồm số ngân sách, tổng được duyệt, đã giải ngân, chi đã quyết toán, phải hoàn, đã hoàn, số chưa đối soát, lấy cùng nguồn với loại tài chính nên tổng khớp nhau |
 
 **Hậu điều kiện** — file được tải về máy officer; một bản ghi audit.
 **Đầu ra** — file `xlsx` / `csv` / `pdf`, bản ghi audit.

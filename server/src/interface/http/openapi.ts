@@ -21,7 +21,7 @@ import { clubDepartmentBody, clubProfileBody } from "./club-profile-routes.js";
 import { clubFieldBody } from "./club-field-routes.js";
 import { propertyActivationBody, propertyCreateBody, propertyDetailsBody } from "./property-routes.js";
 import { evaluationSchemeCreateBody, evaluationSchemeSettingsBody } from "./evaluation-scheme-routes.js";
-import { exportBody, exportPreviewBody } from "./export-routes.js";
+import { annualExportBody, annualPreviewBody, exportBody, exportPreviewBody } from "./export-routes.js";
 import { lifecycleReasonBody, suspendBody } from "./club-lifecycle-routes.js";
 import { boardNominationBody, boardNominationDecisionBody } from "./board-nomination-routes.js";
 import { lockBody } from "./account-admin-routes.js";
@@ -174,10 +174,23 @@ const ApplicationReviewQueueItem = z.object({
   task: ApplicationReviewTask, application: ApplicationRecord,
 });
 const FounderProfile = z.object({ id: z.string(), displayName: z.string(), email: z.string() });
+/** Advisory similar-club hints (UC07/UC08): never block submitting or any review outcome. */
+const SimilarClubHint = z.object({
+  kind: z.enum(["CLUB", "APPLICATION"]), id: z.string(), name: z.string(), field: z.string(),
+  state: z.string(), score: z.number().int().min(35).max(100), level: z.enum(["HIGH", "MEDIUM"]),
+  reasons: z.object({
+    name: z.number().min(0).max(1),
+    content: z.number().min(0).max(1).nullable()
+      .describe("Null when one side has no descriptive text; content then counts as 0"),
+    field: z.number().min(0).max(1), sharedWords: z.array(z.string()).max(10),
+  }),
+});
 const ApplicationReviewDetail = ApplicationReviewQueueItem.extend({
   versions: z.array(ApplicationVersion), decisions: z.array(ApplicationReviewDecision),
   founders: z.array(FounderProfile),
   nameConflicts: z.array(z.object({ id: z.string(), code: z.string(), name: z.string() })),
+  similarClubs: z.array(SimilarClubHint).max(5)
+    .describe("Clubs in any state and other pending applications that look similar"),
 });
 const EventProposalTask = z.object({
   id: z.string(), eventId: z.string(), title: z.string(), state: z.enum(["Open", "Decided", "Closed"]),
@@ -289,6 +302,43 @@ const SchoolEventDetail = SchoolEventSummary.extend({
 const InvitationOutcome = z.object({ invited: z.array(z.string()),
   skipped: z.array(z.object({ clubId: z.string(), reason: z.enum(["notActive", "alreadyInvited"]) })) });
 const EvaluationClassification = z.enum(["EXCELLENT", "GOOD", "FAIR", "NEEDS_IMPROVEMENT"]);
+const Season = z.enum(["SPRING", "SUMMER", "FALL"]);
+const AnnualTerms = z.array(z.object({ season: Season, periodCodes: z.array(z.string())
+  .describe("Period codes parsed into this term; two spellings of one term are merged"), published: z.boolean() }));
+const ClubRef = z.object({ clubId: z.string(), clubName: z.string() });
+function BySeason<T extends z.ZodTypeAny>(item: T) {
+  return z.object({ SPRING: item, SUMMER: item, FALL: item });
+}
+const AnnualReport = z.object({
+  year: z.number(),
+  provisional: z.boolean().describe("Fewer than three terms have Published evaluations"),
+  terms: AnnualTerms,
+  missingTerms: z.array(Season),
+  thresholds: z.object({ excellent: z.number(), good: z.number(), fair: z.number() })
+    .describe("Scheme thresholds of the latest term with Published evaluations"),
+  overview: z.object({ clubsByState: z.record(z.string(), z.number()), clubsCreated: z.number(), activeMembers: z.number(),
+    completedEvents: z.number(), participations: z.number() }),
+  evaluation: z.object({
+    evaluatedClubs: z.number(),
+    byClassification: z.record(EvaluationClassification, z.number()),
+    averageYearScore: z.number().nullable(),
+    averageByTerm: BySeason(z.number().nullable()),
+    rows: z.array(z.object({ clubId: z.string(), clubName: z.string(), field: z.string().nullable(), state: z.string(),
+      terms: BySeason(z.object({ score: z.number(), classification: EvaluationClassification }).nullable()),
+      evaluatedTerms: z.number().describe("0 = no evaluation this year; such rows come last"),
+      yearScore: z.number().nullable(), yearClassification: EvaluationClassification.nullable(),
+      trend: z.enum(["UP", "DOWN", "STABLE"]).nullable(), dimensions: z.record(z.string(), z.number().nullable()) })),
+    top: z.array(ClubRef.extend({ yearScore: z.number() })),
+  }),
+  dimensions: z.object({ averages: z.array(z.object({ code: z.string(), name: z.string(), average: z.number().nullable() })),
+    highest: z.string().nullable(), lowest: z.string().nullable() }),
+  finance: z.object({ hasData: z.boolean(), approvedTotal: z.number(), disbursedTotal: z.number(),
+    disbursementRate: z.number().nullable(), clubsWithoutAcceptedReport: z.number() }),
+  compliance: z.object({ openViolations: z.number(), needsImprovement: z.array(ClubRef), declining: z.array(ClubRef),
+    suspendedOrDissolving: z.array(ClubRef.extend({ state: z.string() })) }),
+  achievements: z.array(z.object({ key: z.string().describe("Pass back in achievementKeys to print it"), clubName: z.string(),
+    title: z.string(), description: z.string(), periodCode: z.string(), season: Season })),
+});
 const EvaluationOverview = z.object({
   periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string(), hasActiveScheme: z.boolean() })),
   periodCode: z.string().optional(), scheme: z.object({ id: z.string(), version: z.number() }).optional(),
@@ -1088,24 +1138,52 @@ export const openApiDocument = createDocument({
           formats: z.array(z.string()),
           periods: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
           clubs: z.array(z.object({ id: z.string(), name: z.string() })),
+          annualYears: z.array(z.object({ year: z.number(), terms: AnnualTerms }))
+            .describe("Academic years with at least one Published evaluation, newest first (UC55 A2)"),
         })) } } } },
+      },
+    },
+    "/admin/exports/annual-report/preview": {
+      post: {
+        summary: "Annual club evaluation report of an academic year, as JSON; not audited (UC55 A2, requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: annualPreviewBody } } },
+        responses: {
+          "200": { description: "The six report sections and the selectable achievements",
+            content: { "application/json": { schema: envelope(AnnualReport) } } },
+          "404": { description: "The year has no Published evaluation", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/exports/annual-report": {
+      post: {
+        summary: "Download the annual report as pdf or xlsx; audited as ANNUAL_REPORT (UC55 A2, requires CSRF token)",
+        requestBody: { content: { "application/json": { schema: annualExportBody } } },
+        responses: {
+          "200": { description: "bao-cao-danh-gia-clb-{year}.{pdf|xlsx}, sent as an attachment" },
+          "404": { description: "The year has no Published evaluation; no file is produced",
+            content: { "application/json": { schema: ApiError } } },
+        },
       },
     },
     "/admin/exports/preview": {
       post: {
-        summary: "Count the rows an export would contain (requires CSRF token)",
+        summary: "Count the rows an export would contain, per selected type (requires CSRF token)",
         requestBody: { content: { "application/json": { schema: exportPreviewBody } } },
-        responses: { "200": { description: "Row count",
-          content: { "application/json": { schema: envelope(z.object({ rowCount: z.number() })) } } } },
+        responses: { "200": { description: "Total row count and the count of each selected type",
+          content: { "application/json": { schema: envelope(z.object({ rowCount: z.number(),
+            types: z.array(z.object({ type: z.string(), rowCount: z.number() })) })) } } } },
       },
     },
     "/admin/exports": {
       post: {
-        summary: "Download the data as xlsx, csv or pdf; audited (requires CSRF token)",
+        summary: "Download the data as xlsx, csv or pdf; several types go in one xlsx; one audit record per type (requires CSRF token)",
         requestBody: { content: { "application/json": { schema: exportBody } } },
         responses: {
-          "200": { description: "The file, sent as an attachment" },
-          "404": { description: "No data matches the filter; no file is produced",
+          "200": { description: "One type: ucms-{type}-{date}.{xlsx|csv|pdf}. Several: bao-cao-tong-hop-{date}.xlsx with a "
+            + "\"Thông tin\" sheet then one sheet per type; an empty type keeps its headers. Sent as an attachment" },
+          "400": { description: "Invalid filter, duplicate types, or csv/pdf/status filter with more than one type",
+            content: { "application/json": { schema: ApiError } } },
+          "404": { description: "No selected type has data for the filter; no file is produced",
             content: { "application/json": { schema: ApiError } } },
         },
       },
@@ -1381,6 +1459,8 @@ export const openApiDocument = createDocument({
           content: { "application/json": { schema: envelope(z.object({
             requirements: FoundingRequirements, issues: z.array(FoundingIssue),
             activeNameConflict: z.boolean(),
+            similarClubs: z.array(SimilarClubHint).max(5)
+              .describe("Public clubs (Active, Suspended, Dissolving, Dissolved) that look similar"),
           })) } } } },
       },
     },
@@ -1402,6 +1482,8 @@ export const openApiDocument = createDocument({
         responses: { "201": { description: "Application submitted",
           content: { "application/json": { schema: envelope(z.object({
             version: ApplicationVersion, activeNameConflict: z.boolean(),
+            similarClubs: z.array(SimilarClubHint).max(5)
+              .describe("Public clubs (Active, Suspended, Dissolving, Dissolved) that look similar"),
           })) } } } },
       },
     },

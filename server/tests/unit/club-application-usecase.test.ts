@@ -68,6 +68,7 @@ function repository(overrides: Partial<ClubApplicationRepository> = {}) {
     saveDraft: async () => record(), addDocument: async () => record(),
     removeDocument: async () => record(), usersExist: async () => true,
     activeClubNameExists: async () => false, activeLeaderUserIds: async () => [],
+    publicSimilarityCandidates: async () => [],
     submit: async () => version,
     withdraw: async () => ({ ...record(), state: "Withdrawn" }), ...overrides,
   };
@@ -89,6 +90,17 @@ describe("UC07 application submission use case", () => {
     expect(submit).toHaveBeenCalledWith(expect.objectContaining({
       expectedDraftRevision: 0, policyVersionId: "000000000000000000000003",
     }));
+  });
+
+  it("returns similar public clubs with the preview and still submits a HIGH match", async () => {
+    const publicSimilarityCandidates = vi.fn(async () => [{ kind: "CLUB" as const,
+      id: "c1", name: "Robotics", field: draft.field, state: "Active", text: "Build robots" }]);
+    const repo = repository({ publicSimilarityCandidates });
+    const preview = await previewApplication(repo, policy(), fields(), actor, record().id, now);
+    expect(preview.similarClubs).toMatchObject([{ id: "c1", level: "HIGH" }]);
+    const submitted = await submitApplication(repo, policy(), fields(), actor, record().id, now);
+    expect(submitted.similarClubs).toMatchObject([{ id: "c1", level: "HIGH" }]);
+    expect(publicSimilarityCandidates).toHaveBeenCalledWith(record().id);
   });
 
   it("does not submit when policy is missing or the applicant does not own the draft", async () => {

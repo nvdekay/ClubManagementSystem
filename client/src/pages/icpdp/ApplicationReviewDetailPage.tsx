@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { RevisionChanges } from "@/components/custom/RevisionChanges";
+import { SimilarClubHints } from "@/components/custom/SimilarClubHints";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
@@ -171,6 +172,7 @@ export function ApplicationReviewDetailPage() {
       {review.data.nameConflicts.length > 0 && <AppNotice tone="warning" role="status" className="mb-8">
         {t("reviews.nameConflict", { clubs: review.data.nameConflicts.map((club) => `${club.name} (${club.code})`).join(", ") })}
       </AppNotice>}
+      <SimilarClubHints hints={review.data.similarClubs} audience="officer" className="mb-8" />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-6">

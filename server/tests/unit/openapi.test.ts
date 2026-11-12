@@ -101,6 +101,7 @@ const stubApplications: ClubApplicationRepository = {
   removeDocument: async () => { throw new Error("unused"); },
   usersExist: async () => false,
   activeClubNameExists: async () => false,
+  publicSimilarityCandidates: async () => [],
   activeLeaderUserIds: async () => [],
   submit: async () => { throw new Error("unused"); },
   withdraw: async () => { throw new Error("unused"); },
@@ -123,6 +124,7 @@ const stubSchemes: EvaluationSchemeRepository = {
 };
 const stubExports: ExportRepository = {
   table: async () => ({ columns: [], rows: [] }), clubs: async () => [], audit: async () => undefined,
+  publishedPeriodCodes: async () => [], annualSource: async () => ({ evaluations: [], reports: [], clubs: [] }),
 };
 async function unusedLifecycle(): Promise<never> { throw new Error("unused"); }
 const stubBookings: FacilityBookingRepository = {
@@ -142,10 +144,13 @@ const stubLifecycle: ClubLifecycleRepository = {
   expiredSuspensions: async () => [], startDissolving: async () => ({ done: [], failed: [] }),
   completeDissolutions: async () => ({ done: [], failed: [] }), officerIds: async () => [], alertOfficers: async () => false,
 };
-const stubWriter: ExportFileWriter = { write: async () => { throw new Error("unused"); } };
+const stubWriter: ExportFileWriter = {
+  write: async () => { throw new Error("unused"); }, writeAnnual: async () => { throw new Error("unused"); },
+  writeWorkbook: async () => { throw new Error("unused"); },
+};
 const stubApplicationReviews: ClubApplicationReviewRepository = {
   listOpen: async () => [], find: async () => null,
-  findDocument: async () => null,
+  findDocument: async () => null, similarityCandidates: async () => [],
   claim: async () => { throw new Error("unused"); },
   decide: async () => { throw new Error("unused"); },
 };

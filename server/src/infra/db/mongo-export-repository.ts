@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Types } from "mongoose";
+import type { AnnualEvaluation, AnnualPeriodicReport } from "../../domain/annual-report.js";
 import {
   EXPORT_STATUSES, type ExportCell, type ExportFilter, type ExportRepository, type ExportTable, type ExportType,
 } from "../../domain/data-export.js";
-import { EVALUATION_DIMENSIONS } from "../../domain/evaluation-scheme.js";
+import type { Classification } from "../../domain/evaluation.js";
+import { EVALUATION_DIMENSIONS, type SchemeThresholds } from "../../domain/evaluation-scheme.js";
 import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
@@ -19,6 +21,16 @@ function money(value: unknown): ExportCell {
 
 function text(value: unknown): ExportCell {
   return typeof value === "string" && value ? value : null;
+}
+
+function optionalNumber(value: unknown): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  const parsed = Number(String(value));
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function object(value: unknown): Doc {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Doc : {};
 }
 
 function range(filter: ExportFilter): Record<string, Date> | null {
@@ -103,12 +115,17 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
-  async function financeTable(filter: ExportFilter): Promise<ExportTable> {
+  /** FINANCE and CLUB_BUDGETS read the same budgets, so their totals always agree. */
+  function budgets(filter: ExportFilter) {
     const window = range(filter);
-    const docs = await models.eventBudgets!.find({
+    return models.eventBudgets!.find({
       ...club(filter), ...(filter.status ? { state: filter.status } : {}),
       ...(filter.periodCode ? { periodCode: filter.periodCode } : window ? { createdAt: window } : {}),
     }).sort({ createdAt: 1 }).lean();
+  }
+
+  async function financeTable(filter: ExportFilter): Promise<ExportTable> {
+    const docs = await budgets(filter);
     const [clubs, events, reconciliations] = await Promise.all([
       names(docs.map((doc) => doc.clubId), "clubs"), names(docs.map((doc) => doc.eventId), "events"),
       models.financialReconciliations!.find({ eventBudgetId: { $in: docs.map((doc) => doc._id) } }).lean(),
@@ -121,6 +138,30 @@ export function mongoExportRepository(): ExportRepository {
         text(doc.periodCode), money(doc.requestedTotal), money(doc.approvedTotal), money(doc.disbursedTotal),
         money(doc.acceptedTotal), money(doc.settlementBalance), money(doc.recoveryAmount), money(doc.refundedTotal),
         text(doc.state), text(outcome.get(String(doc._id)))]),
+    };
+  }
+
+  async function clubBudgetsTable(filter: ExportFilter): Promise<ExportTable> {
+    const docs = await budgets(filter);
+    const columns = ["CLB", "Số ngân sách", "Tổng được duyệt", "Tổng đã giải ngân", "Chi thực tế đã quyết toán",
+      "Phải hoàn", "Đã hoàn", "Chưa đối soát"];
+    // No budget in scope at all: the type is empty (E1), not a sheet of zeros.
+    if (!docs.length) return { columns, rows: [] };
+    const clubs = await models.clubs!.find(filter.clubId ? { _id: new Types.ObjectId(filter.clubId) } : {})
+      .select("name").sort({ name: 1 }).collation({ locale: "vi" }).lean();
+    function sum(own: Doc[], field: string): number {
+      return own.reduce((total, doc) => total + (optionalNumber(doc[field]) ?? 0), 0);
+    }
+    return {
+      columns,
+      rows: clubs.map((item) => {
+        const own = docs.filter((doc) => String(doc.clubId) === String(item._id));
+        // Not reconciled yet: still before ICPDP decided the settlement (UC37).
+        const open = own.filter((doc) => ["Approved", "Disbursed", "Settlement Submitted", "Reconciliation Pending"]
+          .includes(String(doc.state))).length;
+        return [text(item.name), own.length, sum(own, "approvedTotal"), sum(own, "disbursedTotal"), sum(own, "acceptedTotal"),
+          sum(own, "recoveryAmount"), sum(own, "refundedTotal"), open];
+      }),
     };
   }
 
@@ -191,7 +232,7 @@ export function mongoExportRepository(): ExportRepository {
   }
 
   const tables: Record<ExportType, (filter: ExportFilter) => Promise<ExportTable>> = {
-    CLUBS: clubsTable, MEMBERS: membersTable, EVENTS: eventsTable, FINANCE: financeTable,
+    CLUBS: clubsTable, MEMBERS: membersTable, EVENTS: eventsTable, FINANCE: financeTable, CLUB_BUDGETS: clubBudgetsTable,
     COMPLIANCE: complianceTable, EVALUATIONS: evaluationsTable,
   };
 
@@ -202,6 +243,70 @@ export function mongoExportRepository(): ExportRepository {
     async clubs() {
       const docs = await models.clubs!.find().select("name").sort({ name: 1 }).collation({ locale: "vi" }).lean();
       return docs.map((doc) => ({ id: String(doc._id), name: String(doc.name) }));
+    },
+    async publishedPeriodCodes() {
+      return (await models.evaluations!.distinct("periodCode", { state: "Published" })).map(String);
+    },
+    async annualSource(inYear) {
+      const [evaluationCodes, reportCodes] = await Promise.all([
+        models.evaluations!.distinct("periodCode", { state: "Published" }),
+        models.periodicReports!.distinct("periodCode", { state: "Accepted" })]);
+      // BR30: the latest Published revision of each club and period; drafts and later unpublished revisions never count.
+      const latest = await models.evaluations!.aggregate<{ doc: Doc }>([
+        { $match: { state: "Published", periodCode: { $in: evaluationCodes.map(String).filter(inYear) } } },
+        { $sort: { revisionNo: -1 } },
+        { $group: { _id: { clubId: "$clubId", periodCode: "$periodCode" }, doc: { $first: "$$ROOT" } } }]);
+      const docs = latest.map((item) => item.doc);
+      const [results, schemes, reports, clubs] = await Promise.all([
+        models.evaluationDimensionResults!.find({ evaluationId: { $in: docs.map((doc) => doc._id) } }).lean(),
+        models.evaluationSchemes!.find({ _id: { $in: docs.map((doc) => doc.schemeId) } }).select({ thresholds: 1 }).lean(),
+        // UC39: only reports ICPDP accepted; the report row holds the accepted version.
+        models.periodicReports!.find({ state: "Accepted", periodCode: { $in: reportCodes.map(String).filter(inYear) } })
+          .select({ clubId: 1, periodCode: 1, versionNo: 1, preloadedFigures: 1 }).lean(),
+        models.clubs!.find().select({ name: 1, field: 1, state: 1, createdAt: 1 }).lean(),
+      ]);
+      const thresholds = new Map(schemes.map((scheme) => [String(scheme._id), scheme.thresholds as SchemeThresholds]));
+      const evaluations: AnnualEvaluation[] = docs.map((doc) => {
+        const own = results.filter((item) => String(item.evaluationId) === String(doc._id));
+        const evidence = own.flatMap((item) => (Array.isArray(item.evidence) ? item.evidence as Doc[] : []));
+        function metric(key: string): number | undefined {
+          return optionalNumber(evidence.find((item) => item.metric === key)?.value);
+        }
+        const total = optionalNumber(doc.totalScore);
+        return {
+          clubId: String(doc.clubId), periodCode: String(doc.periodCode), revisionNo: Number(doc.revisionNo ?? 1),
+          ...(doc.publishedAt instanceof Date ? { publishedAt: doc.publishedAt } : {}),
+          ...(total !== undefined ? { totalScore: total } : {}),
+          ...(typeof doc.classification === "string" && doc.classification
+            ? { classification: doc.classification as Classification } : {}),
+          thresholds: thresholds.get(String(doc.schemeId)) ?? { excellent: 85, good: 70, fair: 50 },
+          dimensions: own.map((item) => {
+            const score = optionalNumber(item.score);
+            return { code: String(item.dimensionCode), ...(score !== undefined ? { score } : {}),
+              insufficientData: item.isInsufficientData === true };
+          }),
+          metrics: { activeMembers: metric("activeMembers"), completedEvents: metric("completedEvents"),
+            attendances: metric("attendances"), openViolations: metric("openViolations") },
+        };
+      });
+      const accepted: AnnualPeriodicReport[] = reports.map((doc) => {
+        const figures = object(doc.preloadedFigures);
+        const finance = object(figures.finance);
+        const achievements = object(figures.clubData).achievements;
+        return {
+          id: String(doc._id), clubId: String(doc.clubId), periodCode: String(doc.periodCode),
+          versionNo: Number(doc.versionNo ?? 1),
+          approvedTotal: optionalNumber(finance.approvedTotal), disbursedTotal: optionalNumber(finance.disbursedTotal),
+          achievements: (Array.isArray(achievements) ? achievements as unknown[] : []).map((item) => ({
+            title: String(object(item).title ?? ""), description: String(object(item).description ?? "") })),
+        };
+      });
+      return {
+        evaluations, reports: accepted,
+        clubs: clubs.map((doc) => ({ id: String(doc._id), name: String(doc.name ?? ""),
+          ...(typeof doc.field === "string" && doc.field ? { field: doc.field } : {}), state: String(doc.state),
+          ...(doc.createdAt instanceof Date ? { createdAt: doc.createdAt } : {}) })),
+      };
     },
     async audit(input) {
       await models.auditLogs!.create({ entityType: "DataExport", entityId: new Types.ObjectId(),
