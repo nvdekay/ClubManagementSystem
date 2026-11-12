@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
@@ -87,7 +88,8 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
         <ul className="mt-2 divide-y divide-border-app border-y border-border-app">
           {version.reportDeadlines.map((item) => (
             <li key={item.reportType} className="py-3">
-              <span className="font-medium">{item.reportType}</span>
+              <span className="font-medium">{item.reportType === "PERIODIC" ? t("common.navPeriodicReports")
+                : item.reportType === "POST_EVENT" ? t("common.navEventReports") : item.reportType}</span>
               <dl className="mt-2 grid gap-2 sm:grid-cols-2">
                 {deadlineFields.map((field) => (
                   <div key={field}><dt className="text-muted-app">{t(deadlineLabelKey(field))}</dt>
@@ -126,7 +128,7 @@ export function PolicyPage() {
       ) : !auth.data ? (
         <AppNotice>
           <p>{t("policy.signIn")}</p>
-          <Link className="font-semibold text-accent-app"
+          <Link className="font-semibold text-primary-app"
             to="/login?returnTo=%2Fworkspace%2Fpolicy">{t("policy.signInLink")}</Link>
         </AppNotice>
       ) : !isOfficer ? (
@@ -138,31 +140,31 @@ export function PolicyPage() {
           <AppButton onClick={() => void policies.refetch()}>{t("policy.retry")}</AppButton>
         </AppNotice>
       ) : (
-        <div className="space-y-10">
-          <section className="rounded-2xl bg-primary-soft-app p-5 sm:p-6">
+        <div className="space-y-5">
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <div className="flex flex-wrap items-center gap-2">
-              <AppIcon name="shield" className="text-primary-app" />
-              <h2 className="font-heading text-lg font-bold">{t("policy.current")}</h2>
+              <AppIcon name="shield" className="size-4.5 text-brand-app" />
+              <h2 className="font-heading text-base font-semibold">{t("policy.current")}</h2>
             </div>
             {policies.data.current ? (
               <div className="mt-2 text-sm">
                 <p className="text-muted-app">{t("policy.currentFrom", { date: date(policies.data.current.effectiveFrom) })}</p>
                 <PolicyDetails version={policies.data.current} language={i18n.language} />
               </div>
-            ) : <p className="mt-3 text-sm text-muted-app">{t("policy.noCurrent")}</p>}
+            ) : <div className="mt-3"><AppEmptyState message={t("policy.noCurrent")} /></div>}
           </section>
 
           <PolicyEditor key={policies.data.versions[0]?.id ?? "first"}
             latest={policies.data.versions[0]} csrfToken={auth.data.csrfToken} />
 
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("policy.history")}</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("policy.history")}</h2>
             {policies.data.versions.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-app">{t("policy.noHistory")}</p>
+              <div className="mt-3"><AppEmptyState message={t("policy.noHistory")} /></div>
             ) : (
-              <ul className="mt-4 divide-y divide-border-app border-y border-border-app">
+              <ul className="mt-3 divide-y divide-border-app">
                 {policies.data.versions.map((version) => (
-                  <li key={version.id} className="flex flex-wrap items-start justify-between gap-3 px-2 py-4">
+                  <li key={version.id} className="flex flex-wrap items-start justify-between gap-3 py-4">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">{date(version.effectiveFrom)}</p>
                       <p className="mt-1 text-sm break-words text-muted-app">
@@ -170,7 +172,7 @@ export function PolicyPage() {
                       </p>
                       <p className="mt-1 text-xs text-muted-app">{t("policy.created", { date: date(version.createdAt) })}</p>
                       <details className="mt-2">
-                        <summary className="inline-flex min-h-10 items-center text-sm font-semibold text-accent-app">{t("policy.showDetails")}</summary>
+                        <summary className="inline-flex min-h-10 items-center text-sm font-semibold text-primary-app">{t("policy.showDetails")}</summary>
                         <PolicyDetails version={version} language={i18n.language} />
                       </details>
                     </div>

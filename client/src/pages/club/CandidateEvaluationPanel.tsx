@@ -49,7 +49,7 @@ export function CandidateEvaluationPanel({ clubId, campaignId, applicationId, st
     {stats.length > 0 && <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{stats.map(([label, value]) =>
       <div key={label} className="rounded-xl border border-border-app px-3 py-2">
         <dt className="text-xs text-muted-app">{label}</dt>
-        <dd className="mt-0.5 font-heading text-lg font-bold tabular-nums">{value}</dd></div>)}</dl>}
+        <dd className="mt-1 text-xl font-semibold tabular-nums">{value}</dd></div>)}</dl>}
 
     {stats.length > 0 && rubric.length > 0 && <div>
       <h4 className="mb-2 text-sm font-semibold">{t("recruitmentApplications.criterionAverages")}</h4>
@@ -59,14 +59,14 @@ export function CandidateEvaluationPanel({ clubId, campaignId, applicationId, st
           <span className="tabular-nums text-muted-app">{average === undefined ? "—" : formatScore(average)}/{formatScore(criterion.maxScore)}</span>
         </div>
         <div aria-hidden="true" className="mt-1 h-2 overflow-hidden rounded-full bg-surface-strong-app">
-          <div className="h-full rounded-full bg-primary-app"
+          <div className="h-full rounded-full bg-brand-app"
             style={{ width: Math.min(100, ((average ?? 0) / (criterion.maxScore || 1)) * 100) + "%" }} />
         </div>
       </li>)}</ul>
     </div>}
 
     {!evaluations.length ? <p className="text-sm text-muted-app">{t("recruitmentApplications.evaluationNone")}</p>
-      : <ul className="space-y-3">{evaluations.map((evaluation) => <li key={evaluation.id} className="rounded-xl bg-surface-app px-4 py-3 text-sm">
+      : <ul className="space-y-3">{evaluations.map((evaluation) => <li key={evaluation.id} className="rounded-lg border border-border-app px-4 py-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="flex flex-wrap items-center gap-2">
             <span className="font-semibold break-words">{evaluation.reviewerName || t("recruitmentApplications.evaluationReviewer")}</span>

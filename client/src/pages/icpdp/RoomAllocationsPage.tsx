@@ -112,8 +112,10 @@ export function RoomAllocationsPage() {
           : <span>{t("roomAllocations.remainingCount", { remaining, total: item.occurrences.length })}</span>}
         {item.revokeReason && <p className="text-sm break-words text-muted-app">{item.revokeReason}</p>}
         <details className="text-sm"><summary className="text-primary-app">{t("roomAllocations.sessions", { count: item.occurrences.length })}</summary>
-          <ul className="mt-2 space-y-1">{item.occurrences.map((value) => <li key={value.bookingId}>
-            {dateTime.format(new Date(value.startAt))} · {occurrenceLabel(t, value.state)}</li>)}</ul></details>
+          {/* max-w caps this cell's width when expanded, so the table doesn't squeeze its other columns. */}
+          <ul className="mt-2 max-w-60 space-y-1 text-xs">{item.occurrences.map((value) => <li key={value.bookingId} className="flex flex-wrap gap-x-1.5">
+            <span className="whitespace-nowrap tabular-nums">{dateTime.format(new Date(value.startAt))}</span>
+            <span className="text-muted-app">{occurrenceLabel(t, value.state)}</span></li>)}</ul></details>
       </div>;
     } }),
     column.accessor("allocatedByName", { header: t("roomAllocations.allocatedBy"), cell: (cell) => <span className="text-sm">
@@ -181,21 +183,26 @@ export function RoomAllocationsPage() {
               navLabel={t("facilityBookings.pages")} />
           </>}
       </div>}
-    {creating && options.data && <AppDialog open title={t("roomAllocations.allocate")} closeLabel={t("roomAllocations.close")} onClose={() => setCreating(false)}>
-      <form className="space-y-4" onSubmit={(event) => void submit(event)}>
+    {creating && options.data && <AppDialog open title={t("roomAllocations.allocate")} closeLabel={t("roomAllocations.close")} onClose={() => setCreating(false)}
+      footer={<>
+        {/* Outside the <form> so they stay pinned; `form` keeps them submitting it. */}
+        <AppButton type="submit" form="room-allocation-form" disabled={allocate.isPending}>{t("roomAllocations.save")}</AppButton>
+        <AppButton type="button" variant="secondary" onClick={() => setCreating(false)}>{t("roomAllocations.close")}</AppButton>
+      </>}>
+      <form id="room-allocation-form" className="space-y-4" onSubmit={(event) => void submit(event)}>
         <p className="text-sm text-muted-app">{t("roomAllocations.semester")}: <span className="font-semibold text-text-app">{semester}</span></p>
-        <div className="text-sm font-medium">{t("roomAllocations.club")}<AppRequiredMark />
-          <AppSelect className="mt-1 w-full" label={t("roomAllocations.club")} value={form.clubId} required invalid={Boolean(field.error("clubId"))}
+        <div className="block text-sm font-medium text-text-app">{t("roomAllocations.club")}<AppRequiredMark />
+          <AppSelect className="mt-1.5 w-full" label={t("roomAllocations.club")} value={form.clubId} required invalid={Boolean(field.error("clubId"))}
             onChange={(value) => { setForm({ ...form, clubId: value }); field.touch("clubId"); }}
             options={[{ value: "", label: t("roomAllocations.selectClub") }, ...options.data.clubs.map((item) => ({ value: item.id, label: item.name }))]} />
           <AppFieldError message={field.error("clubId")} /></div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="text-sm font-medium">{t("roomAllocations.building")}
-            <AppSelect className="mt-1 w-full" label={t("roomAllocations.building")} value={form.building}
+          <div className="block text-sm font-medium text-text-app">{t("roomAllocations.building")}
+            <AppSelect className="mt-1.5 w-full" label={t("roomAllocations.building")} value={form.building}
               onChange={(value) => setForm({ ...form, building: value, propertyId: "" })}
               options={[{ value: "", label: t("roomAllocations.allBuildings") }, ...buildings.map((item) => ({ value: item, label: item }))]} /></div>
-          <div className="text-sm font-medium">{t("roomAllocations.room")}<AppRequiredMark />
-            <AppSelect className="mt-1 w-full" label={t("roomAllocations.room")} value={form.propertyId} required invalid={Boolean(field.error("propertyId"))}
+          <div className="block text-sm font-medium text-text-app">{t("roomAllocations.room")}<AppRequiredMark />
+            <AppSelect className="mt-1.5 w-full" label={t("roomAllocations.room")} value={form.propertyId} required invalid={Boolean(field.error("propertyId"))}
               onChange={(value) => { setForm({ ...form, propertyId: value }); field.touch("propertyId"); }}
               options={[{ value: "", label: t("roomAllocations.selectRoom") }, ...roomsInBuilding.map((item) => ({ value: item.id,
                 label: `${item.name} · ${item.location}${item.capacity ? ` · ${item.capacity}` : ""}` }))]} />
@@ -219,7 +226,7 @@ export function RoomAllocationsPage() {
                 return <td key={day} className="p-1"><button type="button" disabled={Boolean(takenBy) || Boolean(busy)} aria-pressed={chosen}
                   title={busyDetail} aria-description={busyDetail}
                   onClick={() => { setForm({ ...form, weekday: String(day), slot: String(slot.number) }); field.touch("weekday"); field.touch("slot"); }}
-                  className={cn("min-h-12 w-full rounded-lg border px-1 py-2 text-xs break-words", {
+                  className={cn("min-h-12 w-full rounded-lg border px-1 py-2 text-xs break-words focus-visible:outline-2 focus-visible:outline-ring-app", {
                     "border-primary-app bg-primary-soft-app font-semibold text-primary-app": chosen,
                     "cursor-not-allowed border-border-app bg-surface-strong-app text-muted-app": Boolean(takenBy),
                     "cursor-not-allowed border-warning-app bg-warning-app/10 text-text-app": Boolean(busy),
@@ -232,44 +239,41 @@ export function RoomAllocationsPage() {
           </table></div>
         </div>}
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="text-sm font-medium">{t("roomAllocations.weekday")}<AppRequiredMark />
-            <AppSelect className="mt-1 w-full" label={t("roomAllocations.weekday")} value={form.weekday} required invalid={Boolean(field.error("weekday"))}
+          <div className="block text-sm font-medium text-text-app">{t("roomAllocations.weekday")}<AppRequiredMark />
+            <AppSelect className="mt-1.5 w-full" label={t("roomAllocations.weekday")} value={form.weekday} required invalid={Boolean(field.error("weekday"))}
               onChange={(value) => { setForm({ ...form, weekday: value }); field.touch("weekday"); }}
               options={[{ value: "", label: t("roomAllocations.weekday") }, ...WEEKDAYS.map((day) => ({ value: String(day), label: weekdayLabel(t, day) }))]} />
             <AppFieldError message={field.error("weekday")} /></div>
-          <div className="text-sm font-medium">{t("roomAllocations.slot")}<AppRequiredMark />
-            <AppSelect className="mt-1 w-full" label={t("roomAllocations.slot")} value={form.slot} required invalid={Boolean(field.error("slot"))}
+          <div className="block text-sm font-medium text-text-app">{t("roomAllocations.slot")}<AppRequiredMark />
+            <AppSelect className="mt-1.5 w-full" label={t("roomAllocations.slot")} value={form.slot} required invalid={Boolean(field.error("slot"))}
               onChange={(value) => { setForm({ ...form, slot: value }); field.touch("slot"); }}
               options={[{ value: "", label: t("facilityBookings.selectSlot") }, ...slotList.map((slot) => ({ value: String(slot.number), label: slotLabel(t, slot.number, slotList) }))]} />
             <AppFieldError message={field.error("slot")} /></div>
         </div>
-        <label className="block text-sm font-medium">{t("roomAllocations.note")}
-          <AppInput className="mt-1 w-full" maxLength={500} value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} /></label>
+        <label className="block text-sm font-medium text-text-app">{t("roomAllocations.note")}
+          <AppInput className="mt-1.5 w-full" maxLength={500} value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} /></label>
         <p className="text-sm text-muted-app">{t("roomAllocations.rule")}</p>
         {allocate.isError && <AppNotice tone="danger" role="alert" title={conflicts.length ? t("roomAllocations.conflictTitle") : undefined}>
           {conflicts.length ? <ul className="space-y-1">{conflicts.map((item, index) => <li key={`${item.startAt}-${index}`} className="break-words">
             {dateTime.format(new Date(item.startAt))} · {item.source === "event" ? t("roomAllocations.conflictEvent") : t("roomAllocations.conflictBooking")}
             {item.clubName ? ` · ${item.clubName}` : ""}</li>)}</ul> : <p>{allocate.error.message}</p>}
         </AppNotice>}
-        <div className="flex flex-wrap gap-3">
-          <AppButton type="submit" disabled={allocate.isPending}>{t("roomAllocations.save")}</AppButton>
-          <AppButton type="button" variant="secondary" onClick={() => setCreating(false)}>{t("roomAllocations.close")}</AppButton>
-        </div>
       </form>
     </AppDialog>}
-    {revoking && <AppDialog open title={t("roomAllocations.revokeTitle")} closeLabel={t("roomAllocations.close")} onClose={closeRevoke}>
-      <form className="space-y-4" noValidate onSubmit={(event) => void confirmRevoke(event)}>
+    {revoking && <AppDialog open title={t("roomAllocations.revokeTitle")} closeLabel={t("roomAllocations.close")} onClose={closeRevoke}
+      footer={<>
+        {/* Outside the <form> so they stay pinned; `form` keeps them submitting it. */}
+        <AppButton type="submit" form="room-revoke-form" disabled={revoke.isPending}>{t("roomAllocations.revokeConfirm")}</AppButton>
+        <AppButton type="button" variant="secondary" onClick={closeRevoke}>{t("roomAllocations.close")}</AppButton>
+      </>}>
+      <form id="room-revoke-form" className="space-y-4" noValidate onSubmit={(event) => void confirmRevoke(event)}>
         <p className="font-semibold break-words">{revoking.clubName} · {revoking.propertyName} · {weekdayLabel(t, revoking.weekday)} · {slotLabel(t, revoking.slot, slotList)}</p>
         <p className="text-sm text-muted-app">{t("roomAllocations.revokeRule")}</p>
-        <label className="block text-sm font-medium">{t("roomAllocations.revokeReason")}<AppRequiredMark />
-          <AppInput className="mt-1 w-full" maxLength={2000} value={reason} {...revokeField.control("reason")}
+        <label className="block text-sm font-medium text-text-app">{t("roomAllocations.revokeReason")}<AppRequiredMark />
+          <AppInput className="mt-1.5 w-full" maxLength={2000} value={reason} {...revokeField.control("reason")}
             onChange={(event) => setReason(event.target.value)} />
           <AppFieldError message={revokeField.error("reason")} /></label>
         {revoke.isError && <AppNotice tone="danger" role="alert">{revoke.error.message}</AppNotice>}
-        <div className="flex flex-wrap gap-3">
-          <AppButton type="submit" disabled={revoke.isPending}>{t("roomAllocations.revokeConfirm")}</AppButton>
-          <AppButton type="button" variant="secondary" onClick={closeRevoke}>{t("roomAllocations.close")}</AppButton>
-        </div>
       </form>
     </AppDialog>}
   </>;

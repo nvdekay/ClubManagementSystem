@@ -2,11 +2,12 @@ import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { Link, useParams } from "react-router";
+import { NavLink, useParams } from "react-router";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -21,9 +22,16 @@ import type { ClubEvent, ClubEventError, ClubEventInput, EventParticipant } from
 import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { cn } from "@/utils/cn";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
 const eventsEmpty: ClubEvent[] = [];
+const stateTones: Record<string, AppBadgeTone> = {
+  Draft: "neutral", "Pending Approval": "warning", "Revision Requested": "warning", Approved: "success", Upcoming: "success",
+  Ongoing: "success", Completed: "neutral", "Report Submitted": "neutral", Closed: "neutral", Rejected: "danger", Cancelled: "danger",
+};
+const tabClass = "inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
+const activeTabClass = "bg-segment-app text-text-app shadow-xs";
 const participantsEmpty: EventParticipant[] = [];
 const eventColumns = createColumnHelper<AppTableFeatures, ClubEvent>();
 const participantColumns = createColumnHelper<AppTableFeatures, EventParticipant>();
@@ -35,7 +43,7 @@ function freshEvent(): ClubEventInput {
     venueText: "", audienceScope: "PUBLIC", capacity: 40, riskCategory: "LOW", budgetLines: [], bookingIds: [], registrationForm: [], occurrences: [] };
 }
 function Field({ label, required, error, flagged, children }: { label: string; required?: boolean; error?: string | null; flagged?: string; children: ReactNode }) {
-  return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="flex flex-wrap items-center gap-2 font-medium"><span>{label}{required && <AppRequiredMark />}</span>
+  return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="flex flex-wrap items-center gap-2 font-medium text-text-app"><span>{label}{required && <AppRequiredMark />}</span>
     {flagged && <AppBadge tone="warning">{flagged}</AppBadge>}</span>{children}<AppFieldError message={error} /></label>;
 }
 /** Comments ICPDP stores on a decision (UC26): the parts to revise and any approval conditions. */
@@ -87,6 +95,10 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState("");
+  // The detail panel renders under the table, off-screen on most laptops; bring it into view on pick.
+  function revealDetail() {
+    requestAnimationFrame(() => document.getElementById("club-event-detail")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
   const [compare, setCompare] = useState<string[]>([]);
   const [editing, setEditing] = useState<ClubEvent | "new" | null>(null);
   const [draft, setDraft] = useState<ClubEventInput>(freshEvent);
@@ -136,8 +148,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const format = useMemo(() => new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }), [i18n.language]);
   const filtered = useMemo(() => rows.filter((e) => (!filter || e.state === filter) && e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())), [rows, filter, search]);
   const columns = useMemo(() => eventColumns.columns([
-    eventColumns.accessor("title", { header: t("clubEvents.titleField"), cell: (info) => <button className="text-left font-medium text-primary-app underline" onClick={() => { setSelected(info.row.original.id); mutation.reset(); setSuccess(false); }}>{info.getValue()}</button> }),
-    eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" }) }),
+    eventColumns.accessor("title", { header: t("clubEvents.titleField"), cell: (info) => <button type="button" className="text-left font-medium text-text-app hover:text-primary-app" onClick={() => { setSelected(info.row.original.id); mutation.reset(); setSuccess(false); revealDetail(); }}>{info.getValue()}</button> }),
+    eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" })}</AppBadge> }),
     eventColumns.accessor("startAt", { header: t("clubEvents.start"), cell: (info) => format.format(new Date(info.getValue())) }),
     eventColumns.accessor("capacity", { header: t("clubEvents.capacity"), cell: (info) => `${info.row.original.confirmedRegistrationCount} / ${info.getValue()}` }),
   ]), [t, format, mutation]);
@@ -173,7 +185,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     setWalkIn(active.allowWalkIn); setWaitlist(active.waitlistEnabled); setNoRegistration(false); setStudentId(participant?.studentId ?? "");
   }, [active, mutation, setOperation, setFormError, setSuccess, setReason, setTarget, setCorrected, setAbsent, setCapacity, setNewStart, setNewEnd, setVenue, setProperty, setRegistrationOpen, setRegistrationClose, setCheckOpen, setCheckClose, setWalkIn, setWaitlist, setNoRegistration, setStudentId]);
   const pcolumns = useMemo(() => participantColumns.columns([
-    participantColumns.accessor("name", { header: t("clubEvents.name"), cell: (info) => <span className="break-words">{info.getValue()}<br /><span className="text-muted-app">{info.row.original.email}</span></span> }),
+    participantColumns.accessor("name", { header: t("clubEvents.name"), cell: (info) => <span className="block min-w-40 font-medium break-words">{info.getValue()}<span className="block text-xs font-normal whitespace-nowrap text-muted-app">{info.row.original.email}</span></span> }),
     participantColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <span>{info.getValue() ? t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" }) : "—"}{info.row.original.waitlistPosition ? ` #${info.row.original.waitlistPosition}` : ""}</span> }),
     participantColumns.accessor("checkedInAt", { header: t("clubEvents.checkInColumn"), cell: (info) => {
       const row = info.row.original;
@@ -252,11 +264,11 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   if (!allowed) return <p role="alert">{t("clubEvents.noAccess")}</p>;
   return <>
     <PageHeader title={t(`clubEvents.${mode === "events" ? "title" : mode}`)} description={t("clubEvents.description")} />
-    <div className="mb-5 flex flex-wrap gap-3">
-      {permissions.includes("club.event.manage") && <Link className="text-primary-app underline" to={`/club/${clubId}/events`}>{t("clubEvents.title")}</Link>}
-      {permissions.includes("club.attendance.manage") && <Link className="text-primary-app underline" to={`/club/${clubId}/event-attendance`}>{t("clubEvents.attendance")}</Link>}
-      {permissions.includes("club.feedback.view") && <Link className="text-primary-app underline" to={`/club/${clubId}/event-feedback`}>{t("clubEvents.feedback")}</Link>}
-    </div>
+    <nav aria-label={t("clubEvents.title")} className="mb-5 inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
+      {permissions.includes("club.event.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/events`}>{t("clubEvents.title")}</NavLink>}
+      {permissions.includes("club.attendance.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-attendance`}>{t("clubEvents.attendance")}</NavLink>}
+      {permissions.includes("club.feedback.view") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-feedback`}>{t("clubEvents.feedback")}</NavLink>}
+    </nav>
     <ErrorMessage error={events.error ?? formError} />
     {success && <p role="status" className="mb-3 text-success-app">{t("clubEvents.success")}</p>}
     {mode !== "feedback" && <>
@@ -267,10 +279,10 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       <AppTable table={table} emptyMessage={t("clubEvents.empty")} loading={events.isPending} />
       <TablePager pageIndex={table.state.pagination.pageIndex} pageCount={table.getPageCount()} onChange={(v) => table.setPageIndex(v)} />
     </>}
-    {mode === "events" && selected && <section className="mt-6 rounded-xl border border-border-app p-5">
+    {mode === "events" && selected && <section id="club-event-detail" className="mt-6 scroll-mt-24 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs">
       <ErrorMessage error={detail.error} />
       {detail.isPending ? <AppSkeleton className="h-48" /> : detail.data && active && <>
-        <h2 className="mb-2 text-xl font-semibold">{active.title}</h2><p>{t(`clubEvents.${active.state}`, { defaultValue: active.state })} · {format.format(new Date(active.startAt))} – {format.format(new Date(active.endAt))}</p>
+        <h2 className="mb-2 font-heading text-base font-semibold break-words">{active.title}</h2><p className="flex flex-wrap items-center gap-2 text-sm text-muted-app"><AppBadge tone={stateTones[active.state] ?? "neutral"}>{t(`clubEvents.${active.state}`, { defaultValue: active.state })}</AppBadge> {format.format(new Date(active.startAt))} – {format.format(new Date(active.endAt))}</p>
         <p className="mt-2 break-words">{active.objective}</p><p className="mt-2 whitespace-pre-wrap break-words">{active.plan}</p>
         <p className="mt-2">{t("clubEvents.venue")}: {active.venueText ?? options.data?.properties.find((p) => p.id === active.propertyId)?.name ?? "—"} · {t(`clubEvents.${active.audienceScope}`)}</p>
         {active.state === "Revision Requested" && revisionRequest ? <div role="status" className="mt-4 rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
@@ -291,18 +303,18 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           {["Approved", "Upcoming", "Ongoing"].includes(active.state) && !active.attendanceFinalized && <AppButton variant="ghost" onClick={() => openOperation("cancel")}>{t("clubEvents.cancel")}</AppButton>}
         </div>
         {active.checkInCode && <p>{t("clubEvents.code")}: <strong>{active.checkInCode}</strong></p>}
-        <h3 className="mt-5 font-semibold">{t("clubEvents.versions")}</h3>
-        {detail.data.versions.map((v) => <details key={v.revisionNo} className="mt-2 rounded border border-border-app p-3"><summary>#{v.revisionNo} · {format.format(new Date(v.submittedAt))}</summary>
+        <h3 className="mt-5 text-sm font-semibold">{t("clubEvents.versions")}</h3>
+        {detail.data.versions.map((v) => <details key={v.revisionNo} className="mt-2 rounded-lg border border-border-app p-3"><summary>#{v.revisionNo} · {format.format(new Date(v.submittedAt))}</summary>
           <p className="mt-2 whitespace-pre-wrap break-words">{String((v.payload as { plan?: string })?.plan ?? "")}</p>
           {v.budgetLines.map((line, index) => <p key={index} className="mt-2">{line.category}: {line.amount.toLocaleString(i18n.language)} VND — {line.purpose}</p>)}</details>)}
-        <h3 className="mt-5 font-semibold">{t("clubEvents.decisions")}</h3>
+        <h3 className="mt-5 text-sm font-semibold">{t("clubEvents.decisions")}</h3>
         {detail.data.decisions.map((d, index) => <div key={index} className="mt-2"><p>{t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {format.format(new Date(d.at))}{d.reason ? ` · ${d.reason}` : ""}</p>
           {((d.comments as DecisionComments | undefined)?.sections ?? []).length > 0 && <div className="mt-1 flex flex-wrap gap-2">{(d.comments as DecisionComments).sections!.map((section) =>
             <AppBadge key={section} tone="warning">{sectionLabel(section)}</AppBadge>)}</div>}</div>)}
       </>}
     </section>}
-    {mode === "attendance" && active && <section className="mt-6 space-y-4 rounded-xl border border-border-app p-5">
-      <h2 className="text-xl font-semibold">{active.title}</h2>
+    {mode === "attendance" && active && <section id="club-event-detail" className="mt-6 scroll-mt-24 space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs">
+      <h2 className="font-heading text-base font-semibold break-words">{active.title}</h2>
       <p>{t("clubEvents.registeredOfCapacity", { count: active.confirmedRegistrationCount, capacity: active.capacity })}
         {" · "}<strong>{t("clubEvents.checkInStats", { checked: checkedCount, confirmed: confirmedPeople.length })}</strong></p>
       {active.checkInOpenAt && active.checkInCloseAt && <p className="text-sm text-muted-app">{t("clubEvents.checkInWindow")}: {format.format(new Date(active.checkInOpenAt))} – {format.format(new Date(active.checkInCloseAt))}</p>}
@@ -325,20 +337,23 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       <TablePager pageIndex={ptable.state.pagination.pageIndex} pageCount={ptable.getPageCount()} onChange={(v) => ptable.setPageIndex(v)} />
     </section>}
     {mode === "feedback" && <section className="space-y-5">
-      <h2 className="font-semibold">{t("clubEvents.compare")}</h2>
-      {events.isPending && <AppSkeleton className="h-32" />}
-      <div className="flex flex-wrap gap-3">{rows.map((e) => <label key={e.id} className="flex items-center gap-2"><input type="checkbox" checked={compare.includes(e.id)} disabled={!compare.includes(e.id) && compare.length >= 20}
-        onChange={(change) => setCompare(change.target.checked ? [...compare, e.id] : compare.filter((id) => id !== e.id))} />{e.title}</label>)}</div>
-      {!events.isPending && !rows.length && <p>{t("clubEvents.empty")}</p>}
+      <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <h2 className="font-heading text-base font-semibold">{t("clubEvents.compare")}</h2>
+      {events.isPending && <AppSkeleton className="mt-4 h-32" />}
+      <div className="mt-4 flex flex-wrap gap-2">{rows.map((e) => <label key={e.id} className="inline-flex min-h-9 max-w-full items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3 py-1.5 text-sm break-words transition-colors hover:bg-surface-app has-checked:border-brand-app has-checked:bg-primary-soft-app has-disabled:opacity-50"><input type="checkbox" className="accent-primary-app" checked={compare.includes(e.id)} disabled={!compare.includes(e.id) && compare.length >= 20}
+        onChange={(change) => setCompare(change.target.checked ? [...compare, e.id] : compare.filter((id) => id !== e.id))} /><span className="min-w-0">{e.title}</span></label>)}</div>
+      {!events.isPending && !rows.length && <div className="mt-4"><AppEmptyState variant="boxed" message={t("clubEvents.empty")} /></div>}
+      </div>
       <ErrorMessage error={feedback.error} />{feedback.isPending && compare.length > 0 && <AppSkeleton className="h-40" />}
-      <div className="grid gap-4 md:grid-cols-2">{feedback.data?.map((f) => <article key={f.eventId} className="min-w-0 rounded-xl border border-border-app p-5"><h3 className="font-semibold">{f.title}</h3><p>{t("clubEvents.responses")}: {f.respondents}</p>
+      <div className="grid gap-4 md:grid-cols-2">{feedback.data?.map((f) => <article key={f.eventId} className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs"><h3 className="font-heading text-base font-semibold break-words">{f.title}</h3><p className="mt-1 text-sm text-muted-app">{t("clubEvents.responses")}: {f.respondents}</p>
         {!f.visible ? <p className="mt-3 text-muted-app">{t("clubEvents.noFeedback")}</p> : <><p className="mt-3">{t("clubEvents.average")}: <strong>{f.averageRating?.toLocaleString(i18n.language)} / 5</strong></p>
           <div className="mt-3 space-y-2">{[1, 2, 3, 4, 5].map((score) => <div key={score} className="flex items-center gap-3"><span>{score} ★</span><div role="meter" aria-label={`${score} / 5`} aria-valuemin={0} aria-valuemax={f.respondents || 1} aria-valuenow={f.distribution?.[score] ?? 0} className="h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-app"><div className="h-full rounded-full bg-primary-app" style={{ width: `${100 * (f.distribution?.[score] ?? 0) / (f.respondents || 1)}%` }} /></div><span>{f.distribution?.[score] ?? 0}</span></div>)}</div>
-          <h4 className="mt-4 font-semibold">{t("clubEvents.comments")}</h4>{f.comments?.map((c, index) => <p key={index} className="mt-2 whitespace-pre-wrap break-words text-muted-app">{c}</p>)}</>}
+          <h4 className="mt-4 text-sm font-semibold">{t("clubEvents.comments")}</h4>{f.comments?.map((c, index) => <p key={index} className="mt-2 whitespace-pre-wrap break-words text-muted-app">{c}</p>)}</>}
       </article>)}</div>
     </section>}
-    <AppDialog open={editing !== null} title={t(editing === "new" ? "clubEvents.create" : "clubEvents.edit")} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) setEditing(null); }}>
-      <form noValidate onSubmit={(event) => void save(event)} className="space-y-4">
+    <AppDialog open={editing !== null} title={t(editing === "new" ? "clubEvents.create" : "clubEvents.edit")} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) setEditing(null); }}
+      footer={<AppButton type="submit" form="club-event-form" disabled={mutation.isPending}>{t("clubEvents.save")}</AppButton>}>
+      <form id="club-event-form" noValidate onSubmit={(event) => void save(event)} className="space-y-4">
         <p className="text-sm text-muted-app">{t("clubEvents.notice")}</p><ErrorMessage error={formError ?? options.error} />
         {editing !== "new" && revisionSections.length > 0 && <div role="status" className="rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
           <p className="font-semibold">{t("clubEvents.revisionSections")}: {revisionSections.map(sectionLabel).join(", ")}</p>
@@ -356,28 +371,28 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         <Field flagged={flag("risk")} label={t("clubEvents.riskNote")}><AppTextarea value={draft.riskNote ?? ""} onChange={(e) => setDraft({ ...draft, riskNote: e.target.value })} /></Field>
         <Field flagged={flag("venue")} label={t("clubEvents.facilityNeeds")}><AppTextarea value={draft.facilityNeeds ?? ""} onChange={(e) => setDraft({ ...draft, facilityNeeds: e.target.value })} /></Field>
         <details><summary className="font-semibold">{t("clubEvents.bookings")}{flag("venue") && <AppBadge tone="warning" className="ml-2">{flag("venue")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.bookingsHint")}</p>{!permissions.includes("club.booking.manage") && <p className="mt-2 text-sm text-muted-app">{t("clubEvents.bookingPermissionHint")}</p>}<div className="mt-3 space-y-2">{!linkableBookings.length && <p className="text-sm text-muted-app">{t("clubEvents.bookingsEmpty")}</p>}{linkableBookings.map((b) => <label key={b.id} className="flex items-start gap-2"><input type="checkbox" checked={draft.bookingIds.includes(b.id)} disabled={!permissions.includes("club.booking.manage")} onChange={(e) => setDraft({ ...draft, bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id) })} /><span>{b.title} · {format.format(new Date(b.startAt))}</span></label>)}</div></details>
-        <details><summary className="font-semibold">{t("clubEvents.budget")}{flag("budget") && <AppBadge tone="warning" className="ml-2">{flag("budget")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.budgetHint")}</p><div className="mt-3 space-y-4">{draft.budgetLines.map((line, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
+        <details><summary className="font-semibold">{t("clubEvents.budget")}{flag("budget") && <AppBadge tone="warning" className="ml-2">{flag("budget")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.budgetHint")}</p><div className="mt-3 space-y-4">{draft.budgetLines.map((line, index) => <div key={index} className="space-y-2 rounded-lg border border-border-app p-3">
           {(["category", "purpose"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key}`)} required error={eventField.error(`budget.${index}.${key}`)}><AppInput {...eventField.control(`budget.${index}.${key}`)} value={line[key]} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, [key]: e.target.value } : l) })} /></Field>)}
           <Field label={t("clubEvents.planItems")}><AppTextarea value={line.plannedItems ?? ""} onChange={(e) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, plannedItems: e.target.value } : l) })} /></Field>
           <Field label={t("clubEvents.amount")} required error={eventField.error(`budget.${index}.amount`)}><AppMoneyInput {...eventField.control(`budget.${index}.amount`)} value={line.amount ? line.amount : ""} onValueChange={(digits) => setDraft({ ...draft, budgetLines: draft.budgetLines.map((l, i) => i === index ? { ...l, amount: Number(digits) } : l) })} /></Field>
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, budgetLines: draft.budgetLines.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, budgetLines: [...draft.budgetLines, { category: "", purpose: "", amount: 0 }] })}>{t("clubEvents.addLine")}</AppButton></div></details>
-        <details><summary className="font-semibold">{t("clubEvents.form")}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.formHint")}</p><div className="mt-3 space-y-4">{draft.registrationForm?.map((field, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
+        <details><summary className="font-semibold">{t("clubEvents.form")}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.formHint")}</p><div className="mt-3 space-y-4">{draft.registrationForm?.map((field, index) => <div key={index} className="space-y-2 rounded-lg border border-border-app p-3">
           {(["label"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "label" ? "question" : key}`)} required error={eventField.error(`form.${index}.${key}`)}><AppInput {...eventField.control(`form.${index}.${key}`)} value={field[key]} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, [key]: e.target.value } : f) })} /></Field>)}
           <Field label={t("clubEvents.type")}><AppSelect label={t("clubEvents.type")} value={field.type} options={(["text", "textarea", "select", "radio", "checkbox"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))} onChange={(value) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, type: value } : f) })} /></Field>
           <label className="flex items-center gap-2"><input type="checkbox" checked={field.required} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, required: e.target.checked } : f) })} />{t("clubEvents.required")}</label>
           {["select", "radio", "checkbox"].includes(field.type) && <Field label={t("clubEvents.options")} required error={eventField.error(`form.${index}.options`)}><AppTextarea {...eventField.control(`form.${index}.options`)} value={field.options?.join("\n") ?? ""} onChange={(e) => setDraft({ ...draft, registrationForm: draft.registrationForm?.map((f, i) => i === index ? { ...f, options: e.target.value.split("\n") } : f) })} /></Field>}
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, registrationForm: draft.registrationForm?.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, registrationForm: [...draft.registrationForm ?? [], { key: `field_${crypto.randomUUID().replaceAll("-", "")}`, label: "", type: "text", required: true }] })}>{t("clubEvents.addField")}</AppButton></div></details>
-        <details><summary className="font-semibold">{t("clubEvents.occurrences")}{flag("schedule") && <AppBadge tone="warning" className="ml-2">{flag("schedule")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.occurrencesHint")}</p><div className="mt-3 space-y-3">{draft.occurrences?.map((o, index) => <div key={index} className="space-y-2 rounded border border-border-app p-3">
+        <details><summary className="font-semibold">{t("clubEvents.occurrences")}{flag("schedule") && <AppBadge tone="warning" className="ml-2">{flag("schedule")}</AppBadge>}</summary><p className="mt-2 text-sm text-muted-app">{t("clubEvents.occurrencesHint")}</p><div className="mt-3 space-y-3">{draft.occurrences?.map((o, index) => <div key={index} className="space-y-2 rounded-lg border border-border-app p-3">
           {(["startAt", "endAt"] as const).map((key) => <Field key={key} label={t(`clubEvents.${key === "startAt" ? "start" : "end"}`)} required error={eventField.error(`occurrence.${index}.${key}`)}><AppInput {...eventField.control(`occurrence.${index}.${key}`)} type="datetime-local" value={localTime(o[key])} onChange={(e) => { if (e.target.value) setDraft({ ...draft, occurrences: draft.occurrences?.map((item, i) => i === index ? { ...item, [key]: iso(e.target.value) } : item) }); }} /></Field>)}
           <AppButton type="button" variant="ghost" onClick={() => setDraft({ ...draft, occurrences: draft.occurrences?.filter((_, i) => i !== index) })}>{t("clubEvents.remove")}</AppButton>
         </div>)}<AppButton type="button" onClick={() => setDraft({ ...draft, occurrences: [...draft.occurrences ?? [], { startAt: draft.startAt, endAt: draft.endAt }] })}>{t("clubEvents.addOccurrence")}</AppButton></div></details>
-        <AppButton type="submit" disabled={mutation.isPending}>{t("clubEvents.save")}</AppButton>
       </form>
     </AppDialog>
-    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) closeOperation(); }}>
-      <form noValidate onSubmit={(event) => void execute(event)} className="space-y-4"><ErrorMessage error={formError} />
+    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) closeOperation(); }}
+      footer={<AppButton type="submit" form="club-event-operation-form" disabled={mutation.isPending}>{t("clubEvents.confirm")}</AppButton>}>
+      <form id="club-event-operation-form" noValidate onSubmit={(event) => void execute(event)} className="space-y-4"><ErrorMessage error={formError} />
         {operation === "publish" && <>
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration} onChange={(e) => setNoRegistration(e.target.checked)} />{t("clubEvents.noRegistration")}</label>
           {!noRegistration && <><Field label={t("clubEvents.registrationOpen")} required error={opField.error("registrationOpen")}><AppInput {...opField.control("registrationOpen")} type="datetime-local" value={registrationOpen} onChange={(e) => setRegistrationOpen(e.target.value)} /></Field><Field label={t("clubEvents.registrationClose")} required error={opField.error("registrationClose")}><AppInput {...opField.control("registrationClose")} type="datetime-local" value={registrationClose} onChange={(e) => setRegistrationClose(e.target.value)} /></Field></>}
@@ -392,7 +407,6 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         {operation === "correct" && <><p>{target?.name}</p><label className="flex items-center gap-2"><input type="checkbox" checked={absent} disabled={Boolean(target?.attendanceId && !target.abnormalFlags.includes("no-show"))} onChange={(e) => setAbsent(e.target.checked)} />{t("clubEvents.absent")}</label>
           {!absent && <Field label={t("clubEvents.correctedTime")}><AppInput type="datetime-local" value={corrected} onChange={(e) => setCorrected(e.target.value)} /></Field>}</>}
         {["cancel", "reschedule", "unlock", "correct", "check-in"].includes(operation ?? "") && <Field label={t("clubEvents.reason")} required={operation !== "check-in"} error={opField.error("reason")}><AppTextarea {...opField.control("reason", operation !== "check-in")} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>}
-        <AppButton type="submit" disabled={mutation.isPending}>{t("clubEvents.confirm")}</AppButton>
       </form>
     </AppDialog>
   </>;

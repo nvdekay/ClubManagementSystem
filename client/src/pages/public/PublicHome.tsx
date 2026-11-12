@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router";
 import { ClubLogo } from "@/components/custom/ClubLogo";
 import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubs, useEvents } from "@/hooks/useDiscovery";
 import type { PublicEventStatus } from "@/services/discovery";
@@ -204,7 +205,7 @@ export function PublicHome() {
               </li>
             )}
           </ul>
-        ) : <p className="mt-8 text-sm text-muted-app">{t("discovery.noClubs")}</p>}
+        ) : <div className="mt-8"><AppEmptyState variant="boxed" message={t("discovery.noClubs")} /></div>}
       </section>
 
       {/* Events by status --------------------------------------------------------------------- */}

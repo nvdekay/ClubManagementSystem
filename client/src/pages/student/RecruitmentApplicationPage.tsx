@@ -12,6 +12,7 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useMyCampaignApplication, useRecruitmentApplicationAction } from "@/hooks/useRecruitmentApplications";
@@ -206,7 +207,7 @@ export function RecruitmentApplicationPage() {
   }
   if (!auth.data) return <AppNotice className="max-w-3xl">
     <p>{t("recruitmentApplications.signInFirst")}</p>
-    <Link className="inline-block font-semibold text-accent-app" to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
+    <Link className="inline-block font-medium text-primary-app hover:underline" to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
       {t("recruitmentApplications.signInLink")}</Link>
   </AppNotice>;
   // 404 means the campaign is no longer public (closed or completed): not something a retry fixes.
@@ -214,7 +215,7 @@ export function RecruitmentApplicationPage() {
   if (campaignQuery.isError || !campaign) return <AppNotice tone="danger" className="max-w-3xl">
     <p role="alert" className="font-semibold text-danger-app">{campaignGone || !campaignQuery.error
       ? t("recruitmentApplications.unavailable") : campaignQuery.error.message}</p>
-    {campaignGone ? <Link className="inline-block font-semibold text-accent-app" to="/workspace/recruitment">
+    {campaignGone ? <Link className="inline-block font-medium text-primary-app hover:underline" to="/workspace/recruitment">
       {t("recruitmentApplications.backToApplications")}</Link>
       : <AppButton variant="secondary" onClick={() => void campaignQuery.refetch()}>{t("recruitmentApplications.retry")}</AppButton>}
   </AppNotice>;
@@ -224,14 +225,15 @@ export function RecruitmentApplicationPage() {
   </AppNotice>;
 
   const appAttachments = application?.attachments ?? [];
-  const selectClass = "mt-2 min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 py-2 text-sm font-normal text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app";
+  // Native <select>: it lives in a disabled <fieldset> and spreads the validation control; styled like AppSelect's trigger.
+  const selectClass = "mt-1.5 block h-11 w-full rounded-lg border border-border-app bg-bg-app px-3 text-sm font-normal text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:border-ring-app focus-visible:ring-3 focus-visible:ring-ring-app/20 focus-visible:outline-none aria-[invalid=true]:border-danger-app sm:h-9";
   return <>
     <PageHeader title={campaign.title} back={{ to: `/clubs/${campaign.clubId}`, label: t("recruitmentApplications.back") }}
       actions={application && <AppBadge tone={stateTone(application.state)}>{stateLabel(application.state, t)}</AppBadge>} />
-    <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section aria-labelledby="recruitment-form-title" className="min-w-0 lg:order-1">
-        <p className="text-xs font-semibold tracking-wide text-primary-app uppercase">{t("recruitmentApplications.answers")}</p>
-        <h2 id="recruitment-form-title" className="mt-1 font-heading text-xl font-bold">{t("recruitmentApplications.formTitle")}</h2>
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <section aria-labelledby="recruitment-form-title" className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6 lg:order-1">
+        <p className="text-xs font-medium text-muted-app">{t("recruitmentApplications.answers")}</p>
+        <h2 id="recruitment-form-title" className="mt-0.5 font-heading text-lg font-semibold">{t("recruitmentApplications.formTitle")}</h2>
         <div className="mt-5 space-y-3">
           {paused && <AppNotice tone="warning" role="status" title={t("recruitmentApplications.clubSuspendedTitle")}>
             <p>{t("recruitmentApplications.clubSuspended")}</p></AppNotice>}
@@ -240,9 +242,9 @@ export function RecruitmentApplicationPage() {
           {application?.decisionReason && <AppNotice><p><strong>{t("recruitmentApplications.decisionReason")}: </strong>{application.decisionReason}</p></AppNotice>}
         </div>
 
-        <form noValidate className="mt-6 space-y-6" onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
-          <fieldset disabled={!editable || action.isPending} className="space-y-6 disabled:opacity-80">
-            <label className="block text-sm font-semibold">{t("recruitmentApplications.positions")}<AppRequiredMark />
+        <form noValidate className="mt-6 space-y-5" onSubmit={(event) => { event.preventDefault(); void saveDraft(); }}>
+          <fieldset disabled={!editable || action.isPending} className="space-y-5 disabled:opacity-80">
+            <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.positions")}<AppRequiredMark />
               <select className={selectClass} value={position} required
                 onChange={(event) => setFormState({ campaignId: campaign.id,
                   position: event.target.value, answers })}>
@@ -255,21 +257,21 @@ export function RecruitmentApplicationPage() {
               const error = <AppFieldError message={validation.error(field.key)} />;
               const attachment = appAttachments.find((item) => item.fieldKey === field.key);
               if (field.type === "file") return <div key={field.key} className="border-t border-border-app pt-6">
-                <p className="text-sm font-semibold">{label}</p>
+                <p className="text-sm font-medium text-text-app">{label}</p>
                 <p className="mt-1 text-xs text-muted-app">{t("recruitmentApplications.fileHint")}</p>
-                {attachment ? <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-surface-app px-3 py-2">
-                  <AppIcon name="file" className="text-primary-app" />
+                {attachment ? <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border-app bg-surface-app px-3 py-2">
+                  <AppIcon name="file" className="text-muted-app" />
                   <span className="min-w-0 flex-1 text-sm break-all">{attachment.fileName}</span>
                   <AppButton type="button" variant="secondary" disabled={action.isPending}
                     onClick={() => void download(attachment.id)}>{t("recruitmentApplications.download")}</AppButton>
-                </div> : <p className="mt-3 text-sm text-muted-app">{t("recruitmentApplications.noFile")}</p>}
-                {editable && <label className="mt-3 block text-sm">{t("recruitmentApplications.selectFile")}
-                  <input className="mt-2 block w-full rounded-xl border border-dashed border-border-app bg-bg-app p-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-primary-soft-app file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-app" type="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
+                </div> : <div className="mt-3"><AppEmptyState message={t("recruitmentApplications.noFile")} /></div>}
+                {editable && <label className="mt-3 block text-sm font-medium text-text-app">{t("recruitmentApplications.selectFile")}
+                  <input className="mt-1.5 block w-full rounded-lg border border-dashed border-border-app bg-bg-app p-3 text-sm file:mr-3 file:rounded-md file:border file:border-border-app file:bg-surface-app file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-text-app" type="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
                     onChange={(event) => { validation.touch(field.key); void upload(field.key, event.target.files?.[0]); }} />
                 </label>}
                 {error}
               </div>;
-              if (field.type === "select") return <label key={field.key} className="block text-sm font-semibold">{label}
+              if (field.type === "select") return <label key={field.key} className="block text-sm font-medium text-text-app">{label}
                 <select className={selectClass} {...validation.control(field.key, field.required)}
                   value={typeof value === "string" ? value : ""}
                   onChange={(event) => { changeAnswer(field.key, event.target.value); validation.touch(field.key); }}>
@@ -280,10 +282,10 @@ export function RecruitmentApplicationPage() {
                 const values = Array.isArray(value) ? value : [];
                 return <fieldset key={field.key}
                   onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) validation.touch(field.key); }}>
-                  <legend className="text-sm font-semibold">{label}</legend>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">{(field.options ?? []).map((option) => <label key={option}
-                    className={cn("flex min-h-11 items-start gap-2.5 rounded-xl border border-border-app px-3 py-2.5 text-sm transition-colors hover:border-primary-app", {
-                      "border-primary-app bg-primary-soft-app": values.includes(option),
+                  <legend className="text-sm font-medium text-text-app">{label}</legend>
+                  <div className="mt-1.5 grid gap-2 sm:grid-cols-2">{(field.options ?? []).map((option) => <label key={option}
+                    className={cn("flex min-h-11 items-start gap-2.5 rounded-lg border border-border-app px-3 py-2.5 text-sm transition-colors hover:bg-surface-app", {
+                      "border-brand-app bg-primary-soft-app": values.includes(option),
                     })}>
                     <input type="checkbox" className="mt-0.5 size-4 accent-primary-app" checked={values.includes(option)} onChange={(event) => changeAnswer(field.key,
                       event.target.checked ? [...values, option] : values.filter((item) => item !== option))} />{option}
@@ -291,11 +293,11 @@ export function RecruitmentApplicationPage() {
                   {error}
                 </fieldset>;
               }
-              if (field.type === "textarea") return <label key={field.key} className="block text-sm font-semibold">{label}
-                <AppTextarea className="mt-2 min-h-28 w-full font-normal" maxLength={10_000} {...validation.control(field.key, field.required)}
+              if (field.type === "textarea") return <label key={field.key} className="block text-sm font-medium text-text-app">{label}
+                <AppTextarea className="mt-1.5 block min-h-28 w-full font-normal" maxLength={10_000} {...validation.control(field.key, field.required)}
                   value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} />{error}</label>;
-              return <label key={field.key} className="block text-sm font-semibold">{label}
-                <AppInput className="mt-2 w-full font-normal" type={field.type === "url" ? "url" : "text"} maxLength={10_000}
+              return <label key={field.key} className="block text-sm font-medium text-text-app">{label}
+                <AppInput className="mt-1.5 block w-full font-normal" type={field.type === "url" ? "url" : "text"} maxLength={10_000}
                   {...validation.control(field.key, field.required)}
                   value={typeof value === "string" ? value : ""} onChange={(event) => changeAnswer(field.key, event.target.value)} />{error}</label>;
             })}
@@ -310,25 +312,25 @@ export function RecruitmentApplicationPage() {
             </>}
             {canWithdraw && <AppButton type="button" variant="secondary" disabled={action.isPending}
               onClick={() => void withdraw()}>{t("recruitmentApplications.withdraw")}</AppButton>}
-            <Link to="/workspace/recruitment" className="inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-accent-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app">
+            <Link to="/workspace/recruitment" className="inline-flex min-h-11 items-center justify-center rounded-lg px-3.5 text-sm font-medium text-muted-app hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9">
               {t("recruitmentApplications.backToApplications")}</Link>
           </div>
         </form>
       </section>
 
-      <aside aria-label={t("recruitmentApplications.campaign")} className="space-y-5 rounded-2xl bg-surface-app p-5 lg:sticky lg:top-6 lg:order-2">
-        <p className="text-xs font-semibold tracking-wide text-primary-app uppercase">{t("recruitmentApplications.campaign")}</p>
+      <aside aria-label={t("recruitmentApplications.campaign")} className="space-y-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs lg:sticky lg:top-22 lg:order-2">
+        <p className="font-heading text-base font-semibold">{t("recruitmentApplications.campaign")}</p>
         <dl className="grid grid-cols-2 gap-4 lg:grid-cols-1">
           <div><dt className="text-sm text-muted-app">{t("recruitmentApplications.closes")}</dt>
             <dd className="mt-1 font-semibold">{new Intl.DateTimeFormat(dateLocale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(campaign.windowEnd))}</dd></div>
           <div><dt className="text-sm text-muted-app">{t("recruitmentApplications.places")}</dt><dd className="mt-1 font-semibold">{campaign.capacity}</dd></div>
         </dl>
-        {campaign.criteria && <div className="border-t border-border-app pt-4"><h2 className="text-sm font-bold">{t("recruitmentApplications.criteria")}</h2>
+        {campaign.criteria && <div className="border-t border-border-app pt-4"><h2 className="text-sm font-semibold">{t("recruitmentApplications.criteria")}</h2>
           <p className="mt-1 text-sm whitespace-pre-wrap text-muted-app">{campaign.criteria}</p></div>}
-        <div className="border-t border-border-app pt-4"><h2 className="text-sm font-bold">{t("recruitmentApplications.rounds")}</h2>
+        <div className="border-t border-border-app pt-4"><h2 className="text-sm font-semibold">{t("recruitmentApplications.rounds")}</h2>
           <ol className="mt-3 space-y-2">{campaign.selectionSteps.map((step, index) => <li key={`${step.name}-${index}`}
             className="flex items-center gap-3 text-sm">
-            <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-xs font-bold text-primary-app">{index + 1}</span>
+            <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full border border-border-app text-xs font-semibold text-muted-app">{index + 1}</span>
             <span className="min-w-0 break-words">{step.name}</span></li>)}</ol></div>
       </aside>
     </div>

@@ -14,8 +14,8 @@ export function RevisionChanges({ previousNumber, changes, requestedSections = [
   reason?: string;
 }) {
   const { t } = useTranslation();
-  return <section className="rounded-2xl border border-warning-app/40 bg-warning-app/5 p-5">
-    <h2 className="font-heading text-lg font-bold">{t("common.revisionChangesTitle", { number: previousNumber })}</h2>
+  return <section className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs">
+    <h2 className="font-heading text-base font-semibold">{t("common.revisionChangesTitle", { number: previousNumber })}</h2>
     {(requestedSections.length > 0 || reason) && <div className="mt-3 text-sm">
       <p className="font-semibold">{t("common.revisionRequested")}</p>
       {requestedSections.length > 0 && <ul className="mt-2 flex flex-wrap gap-2">{requestedSections.map((section) =>
@@ -23,7 +23,7 @@ export function RevisionChanges({ previousNumber, changes, requestedSections = [
       {reason && <p className="mt-2 whitespace-pre-wrap break-words text-muted-app">{reason}</p>}
     </div>}
     {changes.length ? <ul className="mt-4 space-y-3">{changes.map((change) =>
-      <li key={change.key} className="rounded-xl bg-bg-app p-3 text-sm">
+      <li key={change.key} className="rounded-xl border border-border-app bg-surface-app p-3 text-sm">
         <p className="font-semibold">{change.label}</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <div className="min-w-0"><p className="text-xs font-semibold text-muted-app">{t("common.revisionBefore")}</p>

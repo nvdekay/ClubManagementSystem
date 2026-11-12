@@ -4,8 +4,10 @@ import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
+import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBoardNominationAction, useBoardNominationContext,
@@ -33,15 +35,15 @@ function NominationHistory({ clubId }: { clubId: string }) {
     return t("boardNominations.pending");
   }
   const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" });
-  return <section className="mt-12">
-    <h2 className="font-heading text-xl font-bold">{t("boardNominations.clubHistory")}</h2>
+  return <section className="mt-8">
+    <h2 className="font-heading text-base font-semibold">{t("boardNominations.clubHistory")}</h2>
     {history.isPending ? <AppSkeleton className="mt-4 h-32 w-full" />
       : history.isError ? <AppNotice tone="danger" role="alert" className="mt-4">{t("boardNominations.clubHistoryError")}</AppNotice>
-        : !history.data.length ? <AppNotice className="mt-4">{t("boardNominations.clubHistoryEmpty")}</AppNotice>
-          : <ul className="mt-4 space-y-4">
+        : !history.data.length ? <div className="mt-4"><AppEmptyState variant="boxed" message={t("boardNominations.clubHistoryEmpty")} /></div>
+          : <ul className="mt-4 space-y-3">
             {history.data.map((nomination) => {
               const note = nomination.decisions.at(-1)?.reason;
-              return <li key={nomination.id} className="rounded-2xl border border-border-app px-5 py-4">
+              return <li key={nomination.id} className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
                 <div className="flex flex-wrap items-center gap-2">
                   <AppBadge tone={nominationTone(nomination.state)}>{stateLabel(nomination.state)}</AppBadge>
                   <span className="text-sm text-muted-app">{nomination.term.name} · {t("boardNominations.waitingSince",
@@ -50,7 +52,7 @@ function NominationHistory({ clubId }: { clubId: string }) {
                 <ul className="mt-3 divide-y divide-border-app">
                   {nomination.seats.map((seat) => <li key={seat.id} className="flex flex-wrap items-start justify-between gap-2 py-2">
                     <div className="min-w-0">
-                      <p className="font-semibold break-words">{seat.positionName} · {seat.displayName}</p>
+                      <p className="font-medium break-words">{seat.positionName} · {seat.displayName}</p>
                       {seat.reason && <p className="mt-0.5 text-sm text-muted-app break-words">
                         {t("boardNominations.seatReason", { reason: seat.reason })}</p>}
                     </div>
@@ -113,22 +115,22 @@ export function BoardNominationPage() {
   return <>
     <PageHeader title={t("boardNominations.title")} description={t("boardNominations.description")} />
     {submitted && <AppNotice tone="success" role="status" className="mb-6">{t("boardNominations.success")}</AppNotice>}
-    <section aria-label={context.data.clubName} className="flex flex-wrap items-center gap-4 rounded-2xl bg-surface-app px-5 py-4">
-      <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+    <section aria-label={context.data.clubName} className="flex flex-wrap items-center gap-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
         <AppIcon name="calendar" />
       </span>
       <div className="min-w-0 flex-1">
-        <h2 className="font-heading text-lg font-bold break-words">{context.data.clubName}</h2>
+        <h2 className="font-heading text-base font-semibold break-words">{context.data.clubName}</h2>
         <p className="mt-0.5 text-sm text-muted-app">{context.data.term
           ? `${context.data.term.name} · ${date(context.data.term.startAt)} – ${date(context.data.term.endAt)}`
           : t("boardNominations.term")}</p>
       </div>
     </section>
-    <section className="mt-10">
-      <h2 className="font-heading text-xl font-bold">{t("boardNominations.positions")}</h2>
-      {!available.length ? <AppNotice className="mt-4">{t("boardNominations.noSeats")}</AppNotice>
-        : !context.data.candidates.length ? <AppNotice className="mt-4">{t("boardNominations.noCandidates")}</AppNotice>
-          : <div className="mt-4 divide-y divide-border-app border-y border-border-app">
+    <section className="mt-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <h2 className="font-heading text-base font-semibold">{t("boardNominations.positions")}</h2>
+      {!available.length ? <div className="mt-4"><AppEmptyState variant="boxed" message={t("boardNominations.noSeats")} /></div>
+        : !context.data.candidates.length ? <div className="mt-4"><AppEmptyState variant="boxed" message={t("boardNominations.noCandidates")} /></div>
+          : <div className="mt-4 divide-y divide-border-app border-t border-border-app">
             {available.map((position) => {
               const conflictIds = position.isLeaderRole ? context.data!.presidentConflictMembershipIds : [];
               // One person holds at most one seat, so a member picked elsewhere is not offered here.
@@ -137,22 +139,20 @@ export function BoardNominationPage() {
               const candidates = context.data!.candidates.filter((candidate) =>
                 !conflictIds.includes(candidate.membershipId) && !takenIds.includes(candidate.membershipId)
                 && !seated.includes(candidate.membershipId));
-              return <label key={position.id} className="grid gap-3 px-1 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,1fr)] sm:items-center">
-                <span className="flex min-w-0 flex-wrap items-center gap-2 font-semibold">{position.name}
+              return <div key={position.id} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,1fr)] sm:items-center">
+                <span className="flex min-w-0 flex-wrap items-center gap-2 font-medium">{position.name}
                   {position.unit && <span className="text-sm font-normal text-muted-app">{position.unit}</span>}
                   {position.isLeaderRole && <AppBadge tone="info">{t("boardNominations.leader")}</AppBadge>}
                   {!position.isSingleHolder && <AppBadge>{t("boardNominations.multiHolder")}</AppBadge>}
                 </span>
-                <select className="min-h-11 w-full rounded-xl border border-border-app bg-bg-app px-3.5 py-2 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none"
-                  aria-label={`${t("boardNominations.candidate")}: ${position.name}`}
+                <AppSelect className="block w-full"
+                  label={`${t("boardNominations.candidate")}: ${position.name}`}
                   value={selection[position.id] ?? ""}
-                  onChange={(event) => setSelection((current) => ({ ...current, [position.id]: event.target.value }))}>
-                  <option value="">{t("boardNominations.selectCandidate")}</option>
-                  {candidates.map((candidate) => <option key={candidate.membershipId} value={candidate.membershipId}>
-                    {candidate.displayName}</option>)}
-                </select>
+                  options={[{ value: "", label: t("boardNominations.selectCandidate") },
+                    ...candidates.map((candidate) => ({ value: candidate.membershipId, label: candidate.displayName }))]}
+                  onChange={(value) => setSelection((current) => ({ ...current, [position.id]: value }))} />
                 {position.isLeaderRole && !candidates.length && <span className="text-sm text-warning-app sm:col-start-2">{t("boardNominations.conflict")}</span>}
-              </label>;
+              </div>;
             })}
           </div>}
       <AppButton className="mt-6 w-full sm:w-auto" disabled={action.isPending

@@ -50,7 +50,9 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
     return charts.clubsByState.find((item) => item.state === name)?.count ?? 0;
   }
   const queueRows = charts.queues.map((queue) => ({ key: queue.entityType,
-    label: t(`dashboard.queue_${queue.entityType}` as "dashboard.queue_EVENT_PROPOSAL", { defaultValue: queue.entityType }),
+    // Complaint tasks have no dashboard.queue_* key; reuse the ICPDP menu label instead of showing the raw code.
+    label: queue.entityType === "COMPLAINT" ? t("common.icpdpComplaints")
+      : t(`dashboard.queue_${queue.entityType}` as "dashboard.queue_EVENT_PROPOSAL", { defaultValue: queue.entityType }),
     values: [queue.onTime, queue.overdue], href: queueHref[queue.entityType] }));
   const fieldRows = charts.clubsByField.map((item) => ({ key: item.field || "none",
     label: item.field === "other" ? t("dashboard.otherFields") : item.field || t("dashboard.noField"), values: [item.count] }));
@@ -72,10 +74,10 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
 
       <div className="grid gap-5 lg:grid-cols-3">
         <AppChartFrame className="lg:col-span-2" title={t("dashboard.queueTitle")} description={t("dashboard.queueDescription")}
-          legend={[{ label: t("dashboard.onTime"), tone: "chart-1" }, { label: t("dashboard.overdue"), tone: "danger" }]}
+          legend={[{ label: t("dashboard.onTime"), tone: "chart-2" }, { label: t("dashboard.overdue"), tone: "danger" }]}
           table={{ label: t("dashboard.tableView"), columns: [t("dashboard.queueType"), t("dashboard.onTime"), t("dashboard.overdue")],
             rows: queueRows.map((row) => [row.label, row.values[0]!, row.values[1]!]) }}>
-          <AppBarList rows={queueRows} tones={["chart-1", "danger"]} seriesLabels={[t("dashboard.onTime"), t("dashboard.overdue")]}
+          <AppBarList rows={queueRows} tones={["chart-2", "danger"]} seriesLabels={[t("dashboard.onTime"), t("dashboard.overdue")]}
             emptyLabel={t("dashboard.queueEmpty")} />
         </AppChartFrame>
         <DashboardTaskList title={t("dashboard.needsAttention")} description={t("dashboard.needsAttentionDescription")} tasks={[

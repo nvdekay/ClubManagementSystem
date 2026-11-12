@@ -19,7 +19,7 @@ interface WorkspaceHomeProps {
   children?: ReactNode;
 }
 
-/** Overview page rendered inside WorkspaceShell: a greeting band and a list of shortcuts. */
+/** Overview page rendered inside WorkspaceShell: a one-line greeting and a list of shortcuts. */
 export function WorkspaceHome({ subtitle, actions, children }: WorkspaceHomeProps) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -27,30 +27,27 @@ export function WorkspaceHome({ subtitle, actions, children }: WorkspaceHomeProp
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-3xl bg-primary-soft-app px-6 py-8 sm:px-10 sm:py-10">
-        <div className="relative max-w-2xl">
-          <p className="text-sm font-semibold text-primary-app">{subtitle}</p>
-          <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-balance sm:text-4xl">
-            {t("auth.overviewGreeting", { name })}
-          </h1>
-          <p className="mt-3 text-pretty text-muted-app">{t("auth.workspaceHomeDescription")}</p>
-        </div>
-      </section>
+      <header className="mb-2">
+        <p className="text-sm text-muted-app">{subtitle}</p>
+        <h1 className="mt-0.5 font-heading text-2xl font-semibold tracking-tight break-words text-balance">
+          {t("auth.overviewGreeting", { name })}
+        </h1>
+      </header>
 
       {children}
 
       <ul className="mt-8 grid gap-x-8 sm:grid-cols-2">
         {actions.map((action) => (
           <li key={action.href} className="border-b border-border-app">
-            <Link to={action.href} className="group flex items-center gap-4 rounded-xl px-2 py-4 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
-              <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface-strong-app text-primary-app transition-colors group-hover:bg-primary-app group-hover:text-on-primary-app">
+            <Link to={action.href} className="group flex items-center gap-4 rounded-xl px-2 py-3.5 transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
+              <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app transition-colors group-hover:text-brand-app">
                 <AppIcon name={action.icon} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-semibold text-text-app">{action.label}</span>
                 <span className="mt-0.5 block text-sm text-muted-app">{action.description}</span>
               </span>
-              <AppIcon name="chevronRight" className="size-5 text-muted-app transition-transform group-hover:translate-x-0.5 group-hover:text-primary-app" />
+              <AppIcon name="chevronRight" className="size-5 text-muted-app transition-transform group-hover:translate-x-0.5 group-hover:text-text-app" />
             </Link>
           </li>
         ))}

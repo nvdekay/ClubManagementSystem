@@ -75,7 +75,7 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
   if (charts) {
     return <section aria-labelledby="dashboard-title" className="mt-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-        <h2 id="dashboard-title" className="font-heading text-2xl font-bold">{t("dashboard.overviewTitle")}</h2>
+        <h2 id="dashboard-title" className="font-heading text-base font-semibold">{t("dashboard.overviewTitle")}</h2>
         <p className="text-xs text-muted-app">{generated}</p>
       </div>
       {dashboard.data.icpdpCharts ? <IcpdpDashboard data={dashboard.data} charts={dashboard.data.icpdpCharts} />
@@ -88,7 +88,7 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
   return <section aria-labelledby="dashboard-title" className="mt-8">
     <div className="flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h2 id="dashboard-title" className="font-heading text-2xl font-bold">{t("dashboard.title")}</h2>
+        <h2 id="dashboard-title" className="font-heading text-base font-semibold">{t("dashboard.title")}</h2>
         <p className="mt-1 text-sm text-muted-app">{t("dashboard.description")}</p>
       </div>
       <p className="text-xs text-muted-app">{generated}</p>
@@ -103,18 +103,18 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
         const href = panelHref(item.key, context);
         const labelKey: `dashboard.${DashboardPanelKey}` = `dashboard.${item.key}`;
         const content = <>
-          <p className="text-sm font-semibold text-muted-app">
+          <p className="text-sm font-medium text-muted-app">
             {t(labelKey)}
           </p>
-          {item.status === "ready" ? <p className="mt-3 font-heading text-3xl font-bold text-text-app">
+          {item.status === "ready" ? <p className="mt-2 font-heading text-3xl font-semibold tabular-nums text-text-app">
             {item.count}<span className="sr-only"> {t("dashboard.itemCount", { count: item.count })}</span>
           </p> : <p role="status" className="mt-3 text-sm text-danger-app">{t("dashboard.panelError")}</p>}
         </>;
         return <li key={item.key} className="min-w-0">
           {href && item.status === "ready" ? <Link to={href}
-            className="block h-full rounded-2xl border border-border-app bg-bg-app p-5 transition-colors hover:border-primary-app hover:bg-primary-soft-app focus-visible:outline-2 focus-visible:outline-ring-app">
+            className="block h-full rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
             {content}
-          </Link> : <div className="h-full rounded-2xl border border-border-app bg-bg-app p-5">{content}</div>}
+          </Link> : <div className="h-full rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">{content}</div>}
         </li>;
       })}
     </ul>

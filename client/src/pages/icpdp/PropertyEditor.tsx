@@ -5,6 +5,7 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppInput } from "@/components/ui/input/AppInput";
 import { AppSelect } from "@/components/ui/select/AppSelect";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
@@ -15,8 +16,6 @@ const days = [1, 2, 3, 4, 5, 6, 7];
 export const dayKeys = ["properties.day1", "properties.day2", "properties.day3", "properties.day4",
   "properties.day5", "properties.day6", "properties.day7"] as const;
 const types: PropertyType[] = ["ROOM", "HALL", "OUTDOOR", "STAGE", "EQUIPMENT"];
-const timeInputClass = "mt-1 min-h-11 rounded-xl border border-border-app bg-bg-app px-3 text-text-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none aria-[invalid=true]:border-danger-app";
-
 interface BlackoutDraft {
   key: number;
   startAt: string;
@@ -111,78 +110,79 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
   }
 
   return (
-    <form className="space-y-6 rounded-2xl bg-surface-app p-4 sm:p-6" noValidate onSubmit={submit}>
+    <form className="space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs" noValidate onSubmit={submit}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="text-sm font-medium">{t("properties.type")}
-          {property ? <p className="mt-2 font-normal">{property.code} · {t(`properties.type${property.type}`)}</p>
-            : <AppSelect className="mt-2 w-full" label={t("properties.type")} value={type} onChange={setType}
+        <div className="block text-sm font-medium text-text-app">{t("properties.type")}
+          {property ? <p className="mt-1.5 font-normal">{property.code} · {t(`properties.type${property.type}`)}</p>
+            : <AppSelect className="mt-1.5 w-full" label={t("properties.type")} value={type} onChange={setType}
               options={types.map((value) => ({ value, label: t(`properties.type${value}`) }))} />}
           {!property && <span className="mt-1 block text-xs font-normal text-muted-app">{t("properties.typeHint")}</span>}
         </div>
-        <label className="text-sm font-medium">{t("properties.name")}<AppRequiredMark />
-          <AppInput className="mt-2 block w-full" maxLength={120} value={name} {...field.control("name")}
+        <label className="block text-sm font-medium text-text-app">{t("properties.name")}<AppRequiredMark />
+          <AppInput className="mt-1.5 block w-full" maxLength={120} value={name} {...field.control("name")}
             onChange={(event) => setName(event.target.value)} />
           <AppFieldError message={field.error("name")} />
         </label>
-        <label className="text-sm font-medium">{t("properties.location")}<AppRequiredMark />
-          <AppInput className="mt-2 block w-full" maxLength={200} value={location} {...field.control("location")}
+        <label className="block text-sm font-medium text-text-app">{t("properties.location")}<AppRequiredMark />
+          <AppInput className="mt-1.5 block w-full" maxLength={200} value={location} {...field.control("location")}
             onChange={(event) => setLocation(event.target.value)} />
           <AppFieldError message={field.error("location")} />
         </label>
-        {type !== "EQUIPMENT" && <label className="text-sm font-medium">{t("properties.capacity")}<AppRequiredMark />
-          <AppInput className="mt-2 block w-full" type="number" min="1" max="10000" value={capacity} {...field.control("capacity")}
+        {type !== "EQUIPMENT" && <label className="block text-sm font-medium text-text-app">{t("properties.capacity")}<AppRequiredMark />
+          <AppInput className="mt-1.5 block w-full" type="number" min="1" max="10000" value={capacity} {...field.control("capacity")}
             onChange={(event) => setCapacity(event.target.value)} />
           <AppFieldError message={field.error("capacity")} />
         </label>}
       </div>
 
-      <div className="text-sm font-medium">{t("properties.equipment")}
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-border-app bg-bg-app p-2">
-          {equipment.map((item) => <span key={item} className="flex items-center gap-1 rounded-full bg-primary-soft-app px-3 py-1 text-sm font-normal text-primary-app">
+      <div className="block text-sm font-medium text-text-app">{t("properties.equipment")}
+        {/* Tag box sized like AppInput; the inner field is borderless because the box is the visible control. */}
+        <div className="mt-1.5 flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border border-border-app bg-bg-app px-2 py-0.5 shadow-xs transition-colors focus-within:border-ring-app focus-within:ring-3 focus-within:ring-ring-app/20 sm:min-h-9">
+          {equipment.map((item) => <span key={item} className="flex items-center gap-1 rounded-md bg-surface-strong-app px-2 py-0.5 text-sm font-normal text-text-app">
             {item}
             <button type="button" aria-label={t("properties.removeTag", { name: item })}
               onClick={() => setEquipment(equipment.filter((value) => value !== item))}>
               <AppIcon name="close" className="size-3.5" /></button>
           </span>)}
-          <input className="min-w-40 flex-1 bg-transparent px-2 py-1 font-normal text-text-app outline-none" value={tag}
+          <input className="h-7 min-w-40 flex-1 bg-transparent px-1 text-sm font-normal text-text-app outline-none placeholder:text-muted-app" value={tag}
             placeholder={t("properties.equipmentPlaceholder")} maxLength={60}
             onChange={(event) => setTag(event.target.value)} onKeyDown={addTag} />
         </div>
       </div>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">{t("properties.hours")}<AppRequiredMark /></legend>
-        <div className="flex flex-wrap gap-2">
+        <legend className="text-sm font-medium text-text-app">{t("properties.hours")}<AppRequiredMark /></legend>
+        <div className="inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
           {[false, true].map((value) => <button key={String(value)} type="button" onClick={() => setCustom(value)}
-            className={cn("min-h-10 rounded-full border border-border-app px-4 text-sm text-muted-app",
-              { "border-primary-app bg-primary-soft-app text-primary-app": custom === value })}>
+            className={cn("inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app",
+              { "bg-segment-app text-text-app shadow-xs": custom === value })}>
             {value ? t("properties.hoursCustom") : t("properties.hoursSame")}</button>)}
         </div>
         {!custom && <>
           <div className="flex flex-wrap gap-2">{days.map((day) => (
             <button key={day} type="button" aria-pressed={Boolean(hours[day])} onClick={() => toggleDay(day)}
-              className={cn("min-h-10 min-w-12 rounded-full border border-border-app px-3 text-sm text-muted-app",
-                { "border-primary-app bg-primary-app text-white": Boolean(hours[day]) })}>
+              className={cn("min-h-10 min-w-12 rounded-lg border border-border-app bg-bg-app px-3 text-sm font-medium text-muted-app transition-colors hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app",
+                { "border-brand-app bg-primary-soft-app text-primary-app hover:bg-primary-soft-app hover:text-primary-app": Boolean(hours[day]) })}>
               {t(dayKeys[day - 1]!)}</button>))}
           </div>
           <div className="flex flex-wrap gap-4">
-            <label className="text-sm">{t("properties.from")}<input type="time" className={cn(timeInputClass, "block")}
+            <label className="block text-sm font-medium text-text-app">{t("properties.from")}<AppInput type="time" className="mt-1.5 block"
               value={shared.open} {...field.control("hours")} onChange={(event) => setShared({ ...shared, open: event.target.value })} /></label>
-            <label className="text-sm">{t("properties.to")}<input type="time" className={cn(timeInputClass, "block")}
+            <label className="block text-sm font-medium text-text-app">{t("properties.to")}<AppInput type="time" className="mt-1.5 block"
               value={shared.close} {...field.control("hours")} onChange={(event) => setShared({ ...shared, close: event.target.value })} /></label>
           </div>
         </>}
         {custom && <ul className="divide-y divide-border-app rounded-xl border border-border-app">{days.map((day) => {
           const window = hours[day];
           return <li key={day} className="flex flex-wrap items-center gap-3 px-3 py-2">
-            <label className="flex min-h-10 w-24 items-center gap-2 text-sm font-medium">
+            <label className="flex min-h-10 w-24 items-center gap-2 text-sm font-medium text-text-app">
               <input type="checkbox" className="size-4 accent-primary-app" checked={Boolean(window)}
                 onChange={() => toggleDay(day)} />{t(dayKeys[day - 1]!)}</label>
             {window ? <div className="flex flex-wrap gap-3">
-              <input type="time" aria-label={`${t(dayKeys[day - 1]!)} ${t("properties.from")}`} className={timeInputClass}
+              <AppInput type="time" aria-label={`${t(dayKeys[day - 1]!)} ${t("properties.from")}`}
                 value={window.open} {...field.control("hours")}
                 onChange={(event) => setHours({ ...hours, [day]: { ...window, open: event.target.value } })} />
-              <input type="time" aria-label={`${t(dayKeys[day - 1]!)} ${t("properties.to")}`} className={timeInputClass}
+              <AppInput type="time" aria-label={`${t(dayKeys[day - 1]!)} ${t("properties.to")}`}
                 value={window.close} {...field.control("hours")}
                 onChange={(event) => setHours({ ...hours, [day]: { ...window, close: event.target.value } })} />
             </div> : <span className="text-sm text-muted-app">{t("properties.closed")}</span>}
@@ -192,22 +192,22 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">{t("properties.blackouts")}</legend>
+        <legend className="text-sm font-medium text-text-app">{t("properties.blackouts")}</legend>
         <p className="text-xs text-muted-app">{t("properties.blackoutsHint")}</p>
-        {blackouts.length === 0 && <p className="text-sm text-muted-app">{t("properties.noBlackouts")}</p>}
+        {blackouts.length === 0 && <AppEmptyState message={t("properties.noBlackouts")} />}
         {blackouts.map((blackout) => {
           function patch(update: Partial<BlackoutDraft>) {
             setBlackouts(blackouts.map((item) => item.key === blackout.key ? { ...item, ...update } : item));
           }
           return <div key={blackout.key} className="flex flex-wrap items-end gap-3 rounded-xl border border-border-app p-3">
-            <label className="text-sm">{t("properties.from")}<AppRequiredMark /><input type="datetime-local" className={cn(timeInputClass, "block")}
+            <label className="block text-sm font-medium text-text-app">{t("properties.from")}<AppRequiredMark /><AppInput type="datetime-local" className="mt-1.5 block"
               value={blackout.startAt} {...field.control(`blackoutStart${blackout.key}`)} onChange={(event) => patch({ startAt: event.target.value })} />
               <AppFieldError message={field.error(`blackoutStart${blackout.key}`)} /></label>
-            <label className="text-sm">{t("properties.to")}<AppRequiredMark /><input type="datetime-local" className={cn(timeInputClass, "block")}
+            <label className="block text-sm font-medium text-text-app">{t("properties.to")}<AppRequiredMark /><AppInput type="datetime-local" className="mt-1.5 block"
               value={blackout.endAt} {...field.control(`blackoutEnd${blackout.key}`)} onChange={(event) => patch({ endAt: event.target.value })} />
               <AppFieldError message={field.error(`blackoutEnd${blackout.key}`)} /></label>
-            <label className="min-w-0 flex-1 basis-48 text-sm">{t("properties.blackoutReason")}<AppRequiredMark />
-              <AppInput className="mt-1 block w-full" maxLength={200} value={blackout.reason} {...field.control(`blackoutReason${blackout.key}`)}
+            <label className="min-w-0 flex-1 basis-48 block text-sm font-medium text-text-app">{t("properties.blackoutReason")}<AppRequiredMark />
+              <AppInput className="mt-1.5 block w-full" maxLength={200} value={blackout.reason} {...field.control(`blackoutReason${blackout.key}`)}
                 onChange={(event) => patch({ reason: event.target.value })} />
               <AppFieldError message={field.error(`blackoutReason${blackout.key}`)} /></label>
             <AppButton type="button" variant="ghost" onClick={() => setBlackouts(blackouts.filter((item) => item.key !== blackout.key))}>

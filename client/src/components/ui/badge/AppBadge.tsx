@@ -12,9 +12,9 @@ interface AppBadgeProps {
 /** Small status pill; the text carries the meaning, tone only reinforces it. */
 export function AppBadge({ tone = "neutral", className, children }: AppBadgeProps) {
   return (
-    <span className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap", {
+    <span className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap", {
       "bg-surface-strong-app text-muted-app": tone === "neutral",
-      "bg-primary-soft-app text-primary-app": tone === "info",
+      "bg-info-soft-app text-info-app": tone === "info",
       "bg-mint-soft-app text-success-app": tone === "success",
       "bg-warning-app/12 text-warning-app": tone === "warning",
       "bg-danger-app/10 text-danger-app": tone === "danger",

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
@@ -32,7 +33,7 @@ export function ClubComplaintsPage() {
           : inbox.isError ? <AppNotice tone="danger" role="alert" title={t("complaints.loadError")}>
             <p>{inbox.error.message}</p>
             <AppButton variant="secondary" onClick={() => void inbox.refetch()}>{t("complaints.retry")}</AppButton></AppNotice>
-            : inbox.data.length === 0 ? <p className="py-10 text-center text-muted-app">{t("complaints.clubEmpty")}</p>
+            : inbox.data.length === 0 ? <AppEmptyState variant="boxed" message={t("complaints.clubEmpty")} />
               : <ul className="space-y-3">{inbox.data.map((item) => <li key={item.id}><ClubComplaint clubId={clubId} item={item} /></li>)}</ul>}
     </>
   );
@@ -61,11 +62,11 @@ function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClu
       evidence={item.evidence} at={item.forwardedAt} responseDueAt={item.responseDueAt} clubResponse={item.clubResponse}
       note={{ label: t("complaints.forwardNote"), text: item.forwardNote }}
       actions={item.state === "Forwarded" ? <form className="w-full space-y-3" onSubmit={(event) => { event.preventDefault(); void send(); }}>
-        <label className="block text-sm font-semibold">{t("complaints.answerText")}<AppRequiredMark />
-          <AppTextarea className="mt-1 block w-full font-normal" rows={3} maxLength={4000} value={text}
+        <label className="block text-sm font-medium text-text-app">{t("complaints.answerText")}<AppRequiredMark />
+          <AppTextarea className="mt-1.5 block w-full font-normal" rows={3} maxLength={4000} value={text}
             onChange={(event) => setText(event.target.value)} /></label>
-        <label className="block text-sm font-semibold">{t("complaints.answerAction")}<AppRequiredMark />
-          <AppTextarea className="mt-1 block w-full font-normal" rows={2} maxLength={2000} value={action}
+        <label className="block text-sm font-medium text-text-app">{t("complaints.answerAction")}<AppRequiredMark />
+          <AppTextarea className="mt-1.5 block w-full font-normal" rows={2} maxLength={2000} value={action}
             onChange={(event) => setAction(event.target.value)} /></label>
         <fieldset className="space-y-2">
           <legend className="text-sm font-semibold">{t("complaints.evidenceLabel")}</legend>

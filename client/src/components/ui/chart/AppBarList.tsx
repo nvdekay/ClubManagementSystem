@@ -41,7 +41,7 @@ export function AppBarList({ rows, tones, seriesLabels, emptyLabel, formatValue 
               </span>
               <span className="text-sm font-semibold text-text-app tabular-nums">{formatValue(total)}</span>
             </span>
-            <span role="tooltip" className="pointer-events-none invisible absolute bottom-full left-1/3 z-10 mb-1 rounded-lg border border-border-app bg-bg-app px-3 py-2 text-xs shadow-lg group-hover:visible group-focus-visible:visible">
+            <span role="tooltip" className="pointer-events-none invisible absolute bottom-full left-0 z-10 mb-1 max-w-56 rounded-lg border border-border-app bg-bg-app px-3 py-2 text-xs shadow-lg group-hover:visible group-focus-visible:visible">
               <span className="block font-semibold text-text-app">{row.label}</span>
               {row.values.map((value, index) => (
                 <span key={index} className="mt-1 flex items-center gap-2 text-muted-app">

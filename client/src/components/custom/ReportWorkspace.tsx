@@ -14,6 +14,7 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import {
@@ -64,14 +65,14 @@ function Figures({ figures }: { figures: ReportSnapshot }) {
     comments?: string[];
   } | null;
   return (
-    <div className="space-y-4 rounded-xl border border-border-app p-4">
+    <div className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {(["confirmed", "attended", "absent"] as const).map((key) => (
-          <div key={key}>
-            <dt className="text-sm text-muted-app">
+          <div key={key} className="rounded-xl border border-border-app p-4">
+            <dt className="text-xs text-muted-app">
               {t(`accountability.${key}`)}
             </dt>
-            <dd className="text-xl font-semibold tabular-nums">
+            <dd className="mt-1 text-xl font-semibold tabular-nums">
               {figures.attendance[key]}
             </dd>
           </div>
@@ -238,7 +239,7 @@ function ReportEditor({
         ) : null}
       </div>
       <section>
-        <h2 className="mb-3 font-heading text-lg font-bold">
+        <h2 className="mb-3 font-heading text-base font-semibold">
           {t(
             latest?.submittedAt
               ? "accountability.snapshot"
@@ -264,7 +265,7 @@ function ReportEditor({
           {t("accountability.attendanceRequired")}{" "}
           {context.kind === "club" && (
             <Link
-              className="font-semibold text-accent-app underline"
+              className="font-semibold text-primary-app hover:underline"
               to={`/club/${context.clubId}/event-attendance`}
             >
               {t("accountability.openAttendance")}
@@ -288,7 +289,7 @@ function ReportEditor({
                 {t(`accountability.${key}`)}
                 {key === "actualResult" && <AppRequiredMark />}
                 <AppTextarea
-                  className="mt-2 w-full"
+                  className="mt-1.5 block w-full font-normal"
                   {...(key === "actualResult"
                     ? reportField.control("actualResult")
                     : {})}
@@ -307,20 +308,20 @@ function ReportEditor({
           <p className="text-sm text-muted-app">
             {t("accountability.evidenceHint")}
           </p>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium text-text-app">
             {t("accountability.link")}
             <AppInput
-              className="mt-1 w-full"
+              className="mt-1.5 block w-full font-normal"
               type="url"
               maxLength={2000}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
           </label>
-          <label className="block text-sm">
+          <label className="block text-sm font-medium text-text-app">
             {t("accountability.evidenceNote")}
             <AppInput
-              className="mt-1 w-full"
+              className="mt-1.5 block w-full font-normal"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -346,7 +347,7 @@ function ReportEditor({
             {input.evidence.map((item, i) => (
               <li key={i}>
                 <a
-                  className="break-all text-accent-app underline"
+                  className="break-all text-primary-app hover:underline"
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -407,7 +408,7 @@ function ReportEditor({
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block break-all text-accent-app underline"
+                className="block break-all text-primary-app hover:underline"
               >
                 {item.note || item.url}
               </a>
@@ -429,11 +430,11 @@ function ReportEditor({
             <AppNotice>{t("accountability.taskAssigned")}</AppNotice>
           )}
           {(claimed || data.obligation.overdue) && (
-            <label className="block text-sm font-semibold">
+            <label className="block text-sm font-medium text-text-app">
               {t("accountability.reason")}
               <AppRequiredMark />
               <AppTextarea
-                className="mt-2 w-full"
+                className="mt-1.5 block w-full font-normal"
                 value={reason}
                 maxLength={2000}
                 {...reasonField.control("reason")}
@@ -492,7 +493,7 @@ function ReportEditor({
                 {violationId && (
                   <>
                     <Link
-                      className="text-accent-app underline"
+                      className="text-primary-app hover:underline"
                       to={`/workspace/violations/${violationId}`}
                     >
                       {t("accountability.violation")}
@@ -544,13 +545,13 @@ function ReportEditor({
         </AppNotice>
       )}
       <section className="space-y-3">
-        <h2 className="font-heading text-lg font-bold">
+        <h2 className="font-heading text-base font-semibold">
           {t("accountability.history")}
         </h2>
         {data.versions.map((version) => (
           <details
             key={version.id}
-            className="rounded-xl border border-border-app p-3"
+            className="rounded-xl border border-border-app bg-bg-app px-4 py-3 text-sm"
           >
             <summary>
               {t("accountability.version", { number: version.versionNo })} ·{" "}
@@ -616,8 +617,12 @@ export function ReportWorkspace({
           </AppButton>
         </AppNotice>
       ) : items.length ? (
-        <>
+        // One box for the picker and its pager, so the page numbers read as paging the event list, not the report.
+        <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+          <p className="text-sm font-medium">{t("accountability.select")}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
           <AppSelect
+            className="w-full min-w-0 flex-1 sm:max-w-xl"
             label={t("accountability.select")}
             value={selected}
             options={[
@@ -628,7 +633,6 @@ export function ReportWorkspace({
               })),
             ]}
             onChange={setSelected}
-            className="w-full"
           />
           <AppPagination
             pageIndex={page}
@@ -639,9 +643,12 @@ export function ReportWorkspace({
             pageLabel={(p) => t("accountability.page", { page: p })}
             navLabel={t("accountability.pagination")}
           />
-        </>
+          </div>
+          <p className="mt-2 text-xs text-muted-app">{t("accountability.listRange",
+            { from: page * 10 + 1, to: Math.min(page * 10 + 10, items.length), total: items.length })}</p>
+        </div>
       ) : (
-        <AppNotice>{t("accountability.empty")}</AppNotice>
+        <AppEmptyState variant="boxed" message={t("accountability.empty")} />
       )}
       {selected ? (
         detail.isPending ? (

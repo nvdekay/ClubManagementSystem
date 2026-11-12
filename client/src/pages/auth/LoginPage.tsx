@@ -58,14 +58,14 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
       <section className="flex flex-[1_1_420px] items-center p-[clamp(24px,5vw,64px)]">
         <div className="flex w-full max-w-100 flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="m-0 font-auth-heading text-4xl leading-[1.2] font-bold tracking-[-0.025em]">
+            <h1 className="m-0 font-auth-heading text-3xl leading-[1.2] font-semibold tracking-tight">
               {t("auth.signInTitle")}
             </h1>
             <p className="m-0 text-auth-page-muted-app">{t("auth.signInDescription")}</p>
           </div>
 
           {authError && (
-            <div role="alert" className="flex items-start gap-3 rounded-xl border-l-4 border-danger-app bg-auth-danger-surface-app p-4 text-danger-app">
+            <div role="alert" className="flex items-start gap-3 rounded-lg border-l-4 border-danger-app bg-auth-danger-surface-app p-4 text-danger-app">
               <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-0.5 size-5 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z" />
                 <path d="M12 9v4" /><path d="M12 17h.01" />
@@ -81,7 +81,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
               if (isPending || loginBusy) event.preventDefault();
               else setLoginBusy(true);
             }}
-            className={cn("flex min-h-13 items-center justify-center gap-3 rounded-full border border-auth-button-border-app bg-auth-page-bg-app px-6 text-base font-semibold text-auth-page-text-app no-underline shadow-sm transition-colors hover:border-primary-app hover:bg-auth-button-hover-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
+            className={cn("flex min-h-12 items-center justify-center gap-3 rounded-lg border border-auth-button-border-app bg-auth-page-bg-app px-5 text-sm font-medium text-auth-page-text-app no-underline shadow-xs transition-[color,background-color,border-color,scale] hover:bg-auth-button-hover-app active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app", {
               "pointer-events-none opacity-50": isPending || loginBusy,
             })}
           >

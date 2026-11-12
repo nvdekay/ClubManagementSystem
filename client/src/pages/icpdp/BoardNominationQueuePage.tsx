@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -30,11 +31,11 @@ export function BoardNominationQueuePage() {
             : queue.isError ? <AppNotice tone="danger" role="alert" title={queue.error.message || t("boardNominations.queueError")}>
               <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("boardNominations.retry")}</AppButton>
             </AppNotice>
-              : queue.data.length ? <ul className="divide-y divide-border-app border-y border-border-app">
-                {queue.data.map((nomination) => <li key={nomination.id} className="flex flex-wrap items-center gap-x-6 gap-y-3 px-2 py-5">
+              : queue.data.length ? <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
+                {queue.data.map((nomination) => <li key={nomination.id} className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
                   <div className="min-w-0 flex-1 basis-64">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-heading text-lg font-bold">{nomination.clubName}</h2>
+                      <h2 className="font-heading text-base font-semibold break-words">{nomination.clubName}</h2>
                       <AppBadge tone="warning">{nomination.term.name}</AppBadge>
                     </div>
                     <p className="mt-1 text-sm text-muted-app">{t("boardNominations.waitingSince", { date: date(nomination.submittedAt) })}</p>
@@ -44,10 +45,6 @@ export function BoardNominationQueuePage() {
                   <AppButton onClick={() => navigate(`/workspace/board-nominations/${nomination.id}`)}>
                     {t("boardNominations.open")}<AppIcon name="chevronRight" className="size-4" /></AppButton>
                 </li>)}
-              </ul> : <div className="py-16 text-center">
-                <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="badge" className="size-7" /></span>
-                <h2 className="mt-4 font-heading text-xl font-bold">{t("boardNominations.queueEmpty")}</h2>
-                <p className="mt-2 text-muted-app">{t("boardNominations.queueEmptyHint")}</p>
-              </div>}
+              </ul> : <AppEmptyState variant="boxed" icon="badge" title={t("boardNominations.queueEmpty")} message={t("boardNominations.queueEmptyHint")} />}
   </>;
 }

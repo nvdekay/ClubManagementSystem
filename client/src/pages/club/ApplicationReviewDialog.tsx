@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -95,14 +96,14 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
       {application.decisionReason && <p className="text-sm break-words">
         <span className="font-semibold">{t("recruitmentApplications.decisionReason")}:</span> {application.decisionReason}</p>}
 
-      <section aria-labelledby="review-decision" className="space-y-3 rounded-2xl bg-surface-app p-4">
-        <h3 id="review-decision" className="font-heading font-bold">{t("recruitmentApplications.decisionSection")}</h3>
-        {needsReason && <label className="block text-sm font-semibold">{t("recruitmentApplications.actionReason")}
+      <section aria-labelledby="review-decision" className="space-y-3 rounded-xl border border-border-app bg-surface-app p-4">
+        <h3 id="review-decision" className="font-heading text-sm font-semibold">{t("recruitmentApplications.decisionSection")}</h3>
+        {needsReason && <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.actionReason")}
           {state === "Screening" && <AppRequiredMark />}
           {/* Only Screening needs the reason for every action, so only there is it checked on blur. */}
           <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
             {...(state === "Screening" ? field.control("reason") : { "aria-invalid": field.error("reason") ? true : undefined })}
-            className="mt-2 block min-h-16 w-full font-normal" />
+            className="mt-1.5 block min-h-16 w-full font-normal" />
           <AppFieldError message={field.error("reason")} /></label>}
         {error && <AppNotice tone="danger" role="alert">{error}</AppNotice>}
         <div className="flex flex-wrap gap-2">
@@ -121,14 +122,14 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
       </section>
 
       <section aria-labelledby="review-answers" className="space-y-3">
-        <h3 id="review-answers" className="font-heading font-bold">{t("recruitmentApplications.answersTitle")}</h3>
-        {!answers.length && !application.attachments.length && <p className="text-sm text-muted-app">{t("recruitmentApplications.noAnswers")}</p>}
+        <h3 id="review-answers" className="font-heading text-sm font-semibold">{t("recruitmentApplications.answersTitle")}</h3>
+        {!answers.length && !application.attachments.length && <AppEmptyState variant="boxed" message={t("recruitmentApplications.noAnswers")} />}
         {answers.length > 0 && <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">{answers.map(([key, value]) =>
-          <div key={key} className="min-w-0 border-l-2 border-primary-app/40 pl-3">
-            <dt className="text-xs font-semibold text-muted-app">{questionLabels.get(key) ?? key}</dt>
+          <div key={key} className="min-w-0 border-l-2 border-border-app pl-3">
+            <dt className="text-xs font-medium text-muted-app">{questionLabels.get(key) ?? key}</dt>
             <dd className="mt-1 text-sm break-words whitespace-pre-wrap">{Array.isArray(value) ? value.join(", ") : value}</dd></div>)}</dl>}
-        {application.attachments.map((attachment) => <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-app px-4 py-3">
-          <span className="flex min-w-0 items-center gap-2 text-sm break-words"><AppIcon name="file" className="size-4 shrink-0 text-primary-app" />
+        {application.attachments.map((attachment) => <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-app px-4 py-3">
+          <span className="flex min-w-0 items-center gap-2 text-sm break-words"><AppIcon name="file" className="size-4 shrink-0 text-muted-app" />
             <span className="min-w-0"><span className="font-semibold">{questionLabels.get(attachment.fieldKey) ?? attachment.fieldKey}</span>: {attachment.fileName}</span></span>
           <AppButton variant="secondary" disabled={attachmentAccess.isPending}
             onClick={() => void openAttachment(attachment.id)}>{t("recruitmentApplications.openAttachment")}</AppButton>
@@ -136,7 +137,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
       </section>
 
       <section aria-labelledby="review-evaluations" className="space-y-3">
-        <h3 id="review-evaluations" className="font-heading font-bold">{t("recruitmentApplications.evaluations")}</h3>
+        <h3 id="review-evaluations" className="font-heading text-sm font-semibold">{t("recruitmentApplications.evaluations")}</h3>
         {evaluationsLoading ? <AppSkeleton className="h-32 w-full" />
           : !rubric ? <AppNotice tone="danger" role="alert">{t("recruitmentApplications.evaluationLoadError")}</AppNotice>
             : <CandidateEvaluationPanel clubId={clubId} campaignId={campaignId} applicationId={application.id}

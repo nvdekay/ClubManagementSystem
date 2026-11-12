@@ -4,8 +4,10 @@ import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
+import { AppInput } from "@/components/ui/input/AppInput";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
+import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useChangePeriodicReport } from "@/hooks/useClubPeriodicReports";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import type {
@@ -157,17 +159,17 @@ function EvidenceInputBlock({
   return (
     <div className="space-y-2">
       {label && (
-        <span className="block text-xs font-semibold">
+        <span className="block text-sm font-medium text-text-app">
           {label}
           {required && <AppRequiredMark />}
         </span>
       )}
       <div className="flex flex-wrap items-center gap-2.5">
         {!isUploaded && (
-          <input
+          <AppInput
             placeholder={t("clubPeriodicReports.evidenceUrlPlaceholder")}
             aria-invalid={isMissing ? true : undefined}
-            className="min-h-10 min-w-60 flex-1 rounded-xl border border-border-app bg-surface-app px-3 py-2 text-sm text-text-app aria-[invalid=true]:border-danger-app disabled:cursor-not-allowed disabled:opacity-70"
+            className="min-w-60 flex-1 disabled:opacity-70"
             value={value ?? ""}
             disabled={!editable || disabled}
             onPaste={(e) => void handlePaste(e)}
@@ -218,7 +220,7 @@ function EvidenceInputBlock({
       {isMissing && <AppFieldError message={t("clubPeriodicReports.validationEvidenceMissing")} />}
 
       {value && (
-        <div className="flex flex-wrap items-start gap-3 rounded-xl border border-border-app bg-surface-app p-3">
+        <div className="flex flex-wrap items-start gap-3 rounded-lg border border-border-app bg-surface-app p-3">
           {!imgFailed ? (
             <img
               src={value}
@@ -227,7 +229,7 @@ function EvidenceInputBlock({
               className="max-h-40 rounded-lg border border-border-app object-contain"
             />
           ) : (
-            <a href={value} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-app break-all">
+            <a href={value} target="_blank" rel="noreferrer" className="text-xs font-medium text-primary-app break-all hover:underline">
               {value}
             </a>
           )}
@@ -253,7 +255,7 @@ function EvidenceInputBlock({
                   href={value}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex min-h-10 items-center rounded-xl border border-border-app bg-bg-app px-3 py-1.5 text-xs font-semibold text-accent-app"
+                  className="inline-flex min-h-10 items-center rounded-lg border border-border-app bg-bg-app px-3 py-1.5 text-xs font-medium text-text-app shadow-xs hover:bg-surface-app"
                 >
                   {t("periodicReports.openOriginalLink")}
                 </a>
@@ -400,12 +402,12 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
   }
 
   const status = report.state as "Draft" | "Submitted" | "Accepted" | "Returned for correction";
-  const inputBase = "block min-h-10 w-full rounded-xl border border-border-app bg-bg-app px-3 py-2 text-sm text-text-app disabled:cursor-not-allowed disabled:opacity-70";
+  const inputBase = "mt-1.5 block w-full font-normal disabled:opacity-70";
 
   return (
-    <section className="space-y-6 rounded-2xl border border-border-app bg-surface-app p-5">
+    <section className="space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-bold">{report.periodCode}</h2>
+        <h2 className="font-heading text-base font-semibold">{report.periodCode}</h2>
         <div className="flex flex-wrap items-center gap-2">
           <AppBadge tone={status === "Accepted" ? "success" : status === "Submitted" ? "info" : status === "Returned for correction" ? "warning" : "neutral"}>
             {t(`clubPeriodicReports.${status}`)}
@@ -451,7 +453,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-base font-bold">{t("clubPeriodicReports.membersTitle")}<AppRequiredMark /></h3>
+            <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.membersTitle")}<AppRequiredMark /></h3>
             <p className="text-xs text-muted-app">{t("clubPeriodicReports.membersHint")}</p>
           </div>
           {editable && (
@@ -474,28 +476,28 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
 
         <div className="space-y-3">
           {members.map((member, idx) => (
-            <div key={idx} className="grid gap-3 rounded-xl border border-border-app bg-bg-app p-3 sm:grid-cols-2 lg:grid-cols-[1fr_9rem_1fr_8rem_auto]">
-              <label className="block text-xs font-semibold">
+            <div key={idx} className="grid gap-3 rounded-xl border border-border-app bg-bg-app p-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[1fr_9rem_1fr_10rem_auto]">
+              <label className="block text-sm font-medium text-text-app">
                 {t("clubPeriodicReports.memberName")}
-                <input
+                <AppInput
                   className={inputBase}
                   value={member.fullName}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateMember(idx, { fullName: e.target.value })}
                 />
               </label>
-              <label className="block text-xs font-semibold">
+              <label className="block text-sm font-medium text-text-app">
                 {t("clubPeriodicReports.memberCode")}
-                <input
+                <AppInput
                   className={inputBase}
                   value={member.studentCode}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateMember(idx, { studentCode: e.target.value })}
                 />
               </label>
-              <label className="block text-xs font-semibold">
+              <label className="block text-sm font-medium text-text-app">
                 {t("clubPeriodicReports.memberEmail")}
-                <input
+                <AppInput
                   type="email"
                   className={inputBase}
                   value={member.email}
@@ -503,9 +505,9 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   onChange={(e) => updateMember(idx, { email: e.target.value })}
                 />
               </label>
-              <label className="block text-xs font-semibold">
+              <label className="block text-sm font-medium text-text-app">
                 {t("clubPeriodicReports.memberScore")}
-                <input
+                <AppInput
                   type="number"
                   min={0}
                   max={10}
@@ -537,7 +539,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-base font-bold">{t("clubPeriodicReports.eventsTitle")}</h3>
+            <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.eventsTitle")}</h3>
             <p className="text-xs text-muted-app">{t("clubPeriodicReports.eventsHint")}</p>
           </div>
           {editable && (
@@ -562,18 +564,18 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
           {events.map((ev, idx) => (
             <div key={idx} className="space-y-3 rounded-xl border border-border-app bg-bg-app p-4">
               <div className="grid gap-3 sm:grid-cols-3">
-                <label className="block text-xs font-semibold sm:col-span-1">
+                <label className="block text-sm font-medium text-text-app sm:col-span-1">
                   {t("clubPeriodicReports.eventTitle")}<AppRequiredMark />
-                  <input
+                  <AppInput
                     className={inputBase}
                     value={ev.title}
                     disabled={!editable || action.isPending}
                     onChange={(e) => updateEvent(idx, { title: e.target.value })}
                   />
                 </label>
-                <label className="block text-xs font-semibold">
+                <label className="block text-sm font-medium text-text-app">
                   {t("clubPeriodicReports.eventHeldAt")}<AppRequiredMark />
-                  <input
+                  <AppInput
                     type="date"
                     className={inputBase}
                     value={ev.heldAt.slice(0, 10)}
@@ -581,9 +583,9 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                     onChange={(e) => updateEvent(idx, { heldAt: e.target.value })}
                   />
                 </label>
-                <label className="block text-xs font-semibold">
+                <label className="block text-sm font-medium text-text-app">
                   {t("clubPeriodicReports.eventParticipants")}<AppRequiredMark />
-                  <input
+                  <AppInput
                     type="number"
                     min={0}
                     step={1}
@@ -594,10 +596,10 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
                   />
                 </label>
               </div>
-              <label className="block text-xs font-semibold">
+              <label className="block text-sm font-medium text-text-app">
                 {t("clubPeriodicReports.eventDescription")}<AppRequiredMark />
-                <textarea
-                  className="mt-1 block min-h-20 w-full rounded-xl border border-border-app bg-surface-app p-3 text-sm text-text-app disabled:cursor-not-allowed disabled:opacity-70"
+                <AppTextarea
+                  className="mt-1.5 block w-full font-normal disabled:opacity-70"
                   value={ev.description}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateEvent(idx, { description: e.target.value })}
@@ -624,7 +626,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 className="text-base font-bold">{t("clubPeriodicReports.achievementsTitle")}</h3>
+            <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.achievementsTitle")}</h3>
             <p className="text-xs text-muted-app">{t("clubPeriodicReports.achievementsHint")}</p>
           </div>
           {editable && (
@@ -641,19 +643,19 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         <div className="space-y-4">
           {achievements.map((ach, idx) => (
             <div key={idx} className="space-y-3 rounded-xl border border-border-app bg-bg-app p-4">
-              <label className="block text-xs font-semibold">
+              <label className="block text-sm font-medium text-text-app">
                 {t("clubPeriodicReports.achievementTitle")}<AppRequiredMark />
-                <input
+                <AppInput
                   className={inputBase}
                   value={ach.title}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateAchievement(idx, { title: e.target.value })}
                 />
               </label>
-              <label className="block text-xs font-semibold">
+              <label className="block text-sm font-medium text-text-app">
                 {t("clubPeriodicReports.achievementDescription")}<AppRequiredMark />
-                <textarea
-                  className="mt-1 block min-h-20 w-full rounded-xl border border-border-app bg-surface-app p-3 text-sm text-text-app disabled:cursor-not-allowed disabled:opacity-70"
+                <AppTextarea
+                  className="mt-1.5 block w-full font-normal disabled:opacity-70"
                   value={ach.description}
                   disabled={!editable || action.isPending}
                   onChange={(e) => updateAchievement(idx, { description: e.target.value })}
@@ -679,26 +681,26 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
       {/* 4. Additional ICPDP Custom Fields */}
       {customFields.length > 0 && (
         <div className="space-y-4 border-t border-border-app pt-5">
-          <h3 className="text-base font-bold">{t("clubPeriodicReports.customFieldsTitle")}</h3>
+          <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.customFieldsTitle")}</h3>
           {customFields.map((cf) => {
             const answer = customAnswers.find((a) => a.fieldId === cf.id);
             return (
               <div key={cf.id} className="space-y-2 rounded-xl border border-border-app bg-bg-app p-4">
-                <label className="block text-sm font-semibold">
+                <label className="block text-sm font-medium text-text-app">
                   {cf.label}
                   {cf.required && <AppRequiredMark />}
                 </label>
                 {cf.description && <p className="text-xs text-muted-app">{cf.description}</p>}
                 {cf.type === "text" && (
-                  <textarea
-                    className="mt-1 block min-h-20 w-full rounded-xl border border-border-app bg-surface-app p-3 text-sm text-text-app disabled:cursor-not-allowed disabled:opacity-70"
+                  <AppTextarea
+                    className="mt-1.5 block w-full font-normal disabled:opacity-70"
                     value={answer?.textValue ?? ""}
                     disabled={!editable || action.isPending}
                     onChange={(e) => updateCustomAnswer(cf.id, cf.label, "text", { textValue: e.target.value })}
                   />
                 )}
                 {cf.type === "number" && (
-                  <input
+                  <AppInput
                     type="number"
                     className={inputBase}
                     value={answer?.numberValue ?? ""}
@@ -786,20 +788,18 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         closeLabel={t("periodicReports.closeImagePreview")}
         onClose={() => setPreviewImage(null)}
         className="w-[min(100%-2rem,56rem)]"
+        footer={previewImage && (
+          <AppButton variant="secondary" onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}>
+            {t("clubPeriodicReports.saveImage")}
+          </AppButton>
+        )}
       >
         {previewImage && (
-          <div className="space-y-4">
-            <img
-              src={previewImage.url}
-              alt={previewImage.title}
-              className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
-            />
-            <div className="flex flex-wrap justify-end gap-2">
-              <AppButton variant="secondary" onClick={() => void saveEvidenceImage(previewImage.url, previewImage.title)}>
-                {t("clubPeriodicReports.saveImage")}
-              </AppButton>
-            </div>
-          </div>
+          <img
+            src={previewImage.url}
+            alt={previewImage.title}
+            className="max-h-[70dvh] w-full rounded-xl border border-border-app bg-surface-app object-contain"
+          />
         )}
       </AppDialog>
     </section>

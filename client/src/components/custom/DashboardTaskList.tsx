@@ -26,11 +26,11 @@ export function DashboardTaskList({ title, description, tasks, variant = "attent
   const neutral = variant === "neutral";
   const open = tasks.filter((task) => (task.count ?? 0) > 0);
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl border border-border-app bg-bg-app p-5">
-      <h3 className="font-heading text-base font-bold text-text-app">{title}</h3>
+    <section className="flex min-w-0 flex-col rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+      <h3 className="font-heading text-base font-semibold text-text-app">{title}</h3>
       <p className="mt-0.5 text-sm text-muted-app">{description}</p>
       {!neutral && !open.length && (
-        <p className="mt-4 flex items-center gap-2 rounded-xl bg-mint-soft-app px-3 py-2.5 text-sm font-semibold text-mint-app">
+        <p className="mt-4 flex items-center gap-2 rounded-lg bg-mint-soft-app px-3 py-2.5 text-sm font-medium text-success-app">
           <AppIcon name="check" className="size-4" />{t("dashboard.allClear")}
         </p>
       )}
@@ -39,8 +39,8 @@ export function DashboardTaskList({ title, description, tasks, variant = "attent
           const due = !neutral && (task.count ?? 0) > 0;
           const body = (
             <>
-              <span aria-hidden="true" className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-app text-muted-app",
-                { "bg-danger-app/10 text-danger-app": due })}>
+              <span aria-hidden="true" className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app",
+                { "border-transparent bg-danger-app/10 text-danger-app": due })}>
                 <AppIcon name={neutral ? "chevronRight" : due ? "alert" : "check"} className="size-4" />
               </span>
               <span className={cn("min-w-0 flex-1 text-sm break-words text-muted-app", { "font-medium text-text-app": due || neutral })}>{task.label}</span>

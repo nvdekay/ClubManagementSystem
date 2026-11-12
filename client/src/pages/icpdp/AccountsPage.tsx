@@ -48,8 +48,8 @@ export function AccountsPage() {
 
 
   const tableColumns = useMemo(() => columns.columns([
-    columns.accessor((row) => row.user.displayName, { id: "user", header: t("auth.colUser"), cell: (info) => <div className="min-w-0">
-      <p className="font-semibold break-words">{info.row.original.user.displayName}</p>
+    columns.accessor((row) => row.user.displayName, { id: "user", header: t("auth.colUser"), cell: (info) => <div className="min-w-44">
+      <p className="font-medium break-words">{info.row.original.user.displayName}</p>
       <p className="text-xs break-all text-muted-app">{info.row.original.user.email}</p>
     </div> }),
     columns.accessor((row) => row.user.accountState, { id: "state", header: t("auth.colState"), cell: (info) => <div>
@@ -65,7 +65,7 @@ export function AccountsPage() {
     columns.accessor((row) => row.clubs.length, { id: "clubs", header: t("auth.colClubs"), cell: (info) => {
       const clubs = info.row.original.clubs;
       if (!clubs.length) return <span className="text-muted-app">{t("auth.noClubs")}</span>;
-      return <ul className="space-y-0.5 text-xs">{clubs.slice(0, 2).map((club) => <li key={club.clubId} className="break-words">
+      return <ul className="min-w-56 space-y-0.5 text-xs">{clubs.slice(0, 2).map((club) => <li key={club.clubId} className="break-words">
         <span className="font-medium">{club.clubName}</span>
         <span className="text-muted-app"> · {[membershipLabel(club), ...club.positions].join(" · ")}</span></li>)}
         {clubs.length > 2 && <li className="text-muted-app">{t("auth.moreClubs", { count: clubs.length - 2 })}</li>}</ul>;

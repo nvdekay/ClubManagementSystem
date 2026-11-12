@@ -62,14 +62,20 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
   }
 
   return (
-    <AppDialog open title={t("memberSpace.changeState")} closeLabel={t("memberSpace.close")} onClose={onClose}>
-      <form noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
+    <AppDialog open title={t("memberSpace.changeState")} closeLabel={t("memberSpace.close")} onClose={onClose}
+      footer={<>
+        <AppButton type="button" variant="ghost" onClick={onClose}>{t("memberSpace.cancel")}</AppButton>
+        <AppButton type="submit" form={`${reasonId}-form`} disabled={!target || action.isPending}
+          className={cn({ "bg-danger-app": banned })}>
+          {action.isPending ? t("memberSpace.stateSaving") : t("memberSpace.stateConfirm")}</AppButton>
+      </>}>
+      <form id={`${reasonId}-form`} noValidate onSubmit={(event) => void submit(event)} className="space-y-4">
         <fieldset>
-          <legend className="mb-2 text-sm font-medium">{t("memberSpace.newState")}</legend>
+          <legend className="mb-1.5 text-sm font-medium text-text-app">{t("memberSpace.newState")}</legend>
           <div className="flex flex-wrap gap-2">
             {options.map((state) => (
-              <label key={state} className={cn("flex min-h-11 items-center gap-2 rounded-full border border-border-app px-4 text-sm font-semibold", {
-                "border-primary-app bg-primary-soft-app": target === state && state !== "Banned",
+              <label key={state} className={cn("flex min-h-11 items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm font-medium text-muted-app hover:bg-surface-app sm:min-h-9", {
+                "border-brand-app bg-primary-soft-app text-primary-app hover:bg-primary-soft-app": target === state && state !== "Banned",
                 "border-danger-app bg-danger-app/10 text-danger-app": target === state && state === "Banned",
               })}>
                 <input type="radio" name="target" value={state} checked={target === state}
@@ -80,12 +86,12 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
           </div>
         </fieldset>
         {target && (
-          <div className={cn("space-y-3 rounded-2xl bg-surface-app p-4", { "bg-danger-app/10": banned })}>
+          <div className={cn("space-y-3 rounded-xl border border-border-app bg-surface-app p-4", { "border-danger-app/30 bg-danger-app/10": banned })}>
             <p className="font-semibold break-words">{t(formTitles[target], { name })}</p>
             <p className="text-sm text-muted-app">{t("memberSpace.stateEffective")}</p>
             {banned && <p className="text-sm font-medium text-danger-app">{t("memberSpace.banWarning")}</p>}
             <div className="space-y-1.5">
-              <label htmlFor={reasonId} className="block text-sm font-medium">
+              <label htmlFor={reasonId} className="block text-sm font-medium text-text-app">
                 {banned ? <>{t("memberSpace.stateReason")}<AppRequiredMark /></> : t("memberSpace.stateReasonOptional")}</label>
               <AppTextarea id={reasonId} value={reason} maxLength={2000} rows={3} {...field.control("reason", banned)}
                 className="w-full" onChange={(event) => setReason(event.target.value)} />
@@ -95,12 +101,6 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
         )}
         {action.isError && <AppNotice tone="danger" role="alert" title={t("memberSpace.stateError")}>
           <p>{action.error.message}</p></AppNotice>}
-        <div className="flex flex-wrap justify-end gap-2">
-          <AppButton type="button" variant="ghost" onClick={onClose}>{t("memberSpace.cancel")}</AppButton>
-          <AppButton type="submit" disabled={!target || action.isPending}
-            className={cn({ "bg-danger-app": banned })}>
-            {action.isPending ? t("memberSpace.stateSaving") : t("memberSpace.stateConfirm")}</AppButton>
-        </div>
       </form>
     </AppDialog>
   );
