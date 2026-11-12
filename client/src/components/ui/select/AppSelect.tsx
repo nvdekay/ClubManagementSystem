@@ -75,6 +75,8 @@ export function AppSelect<T extends string | number>({
   fitWidth,
 }: AppSelectProps<T>) {
   const [open, setOpen] = useState(false);
+  // Where the list fits: below the trigger by default, above it when the space under it is too short.
+  const [placement, setPlacement] = useState({ up: false, right: false, maxHeight: 240, maxWidth: 480 });
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,21 @@ export function AppSelect<T extends string | number>({
     listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, open]);
 
+  /** Measures the room around the trigger so the list never runs off the bottom of the screen. */
+  function place() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const below = window.innerHeight - rect.bottom - 12;
+    const above = rect.top - 12;
+    const up = below < 200 && above > below;
+    // A trigger in the right half grows its list leftwards, so a wide list never leaves the screen.
+    const right = rect.left > window.innerWidth / 2;
+    setPlacement({ up, right, maxHeight: Math.max(120, Math.min(240, up ? above : below)),
+      maxWidth: Math.max(rect.width, (right ? rect.right : window.innerWidth - rect.left) - 12) });
+  }
+
   function openList() {
+    place();
     setActiveIndex(selectedIndex < 0 ? 0 : selectedIndex);
     setOpen(true);
   }
@@ -141,6 +157,7 @@ export function AppSelect<T extends string | number>({
 
   function onTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key.length === 1 && event.key !== " " && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      place();
       setOpen(true);
       typeahead(event, selectedIndex < 0 ? -1 : selectedIndex);
       return;
@@ -213,8 +230,10 @@ export function AppSelect<T extends string | number>({
           aria-activedescendant={`${listId}-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className={cn("absolute z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border-app bg-bg-app p-1 shadow-lg transition-[opacity,translate] duration-150 ease-out focus:outline-none starting:-translate-y-1 starting:opacity-0",
-            fitWidth ? "w-full" : "w-max max-w-[calc(100vw-2rem)] min-w-full")}
+          style={{ maxHeight: placement.maxHeight, maxWidth: fitWidth ? undefined : placement.maxWidth }}
+          className={cn("absolute z-20 mt-1 overflow-auto rounded-lg border border-border-app bg-bg-app p-1 shadow-lg transition-[opacity,translate] duration-150 ease-out focus:outline-none starting:-translate-y-1 starting:opacity-0",
+            fitWidth ? "w-full" : "w-max max-w-[calc(100vw-2rem)] min-w-full",
+            { "bottom-full mt-0 mb-1 starting:translate-y-1": placement.up, "right-0": placement.right })}
         >
           {options.map((option, index) => (
             <li
