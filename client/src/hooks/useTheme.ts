@@ -46,25 +46,22 @@ export function useTheme() {
     const x = event && event.detail > 0 ? event.clientX : rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
     const y = event && event.detail > 0 ? event.clientY : rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
     const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
-    const collapse = next === "light";
     const root = document.documentElement;
-    // index.css lifts the old (dark) snapshot above the new one while it collapses.
-    if (collapse) root.dataset.themeCollapse = "";
+    // The wipe itself is a CSS animation on the snapshot pseudo-elements (index.css), so its first frame is
+    // already clipped; driving it from JS after `ready` left one frame of the full new page (a dark flash).
+    root.style.setProperty("--theme-x", `${x}px`);
+    root.style.setProperty("--theme-y", `${y}px`);
+    root.style.setProperty("--theme-r", `${radius}px`);
+    root.dataset.themeWipe = next === "light" ? "collapse" : "expand";
     const transition = document.startViewTransition(() => {
       // The snapshot of the "new" page is taken right after this callback, so the class must already be on <html>.
-      document.documentElement.classList.toggle("dark", next === "dark");
+      root.classList.toggle("dark", next === "dark");
       flushSync(() => setTheme(next));
     });
-    const small = `circle(0px at ${x}px ${y}px)`;
-    const full = `circle(${radius}px at ${x}px ${y}px)`;
-    void transition.ready.then(() => {
-      root.animate(
-        { clipPath: collapse ? [full, small] : [small, full] },
-        { duration: 550, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards",
-          pseudoElement: collapse ? "::view-transition-old(root)" : "::view-transition-new(root)" },
-      );
+    void transition.finished.finally(() => {
+      delete root.dataset.themeWipe;
+      for (const name of ["--theme-x", "--theme-y", "--theme-r"]) root.style.removeProperty(name);
     });
-    void transition.finished.finally(() => { delete root.dataset.themeCollapse; });
   }
 
   return { theme, setTheme, toggleTheme };
