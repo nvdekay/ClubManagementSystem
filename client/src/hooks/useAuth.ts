@@ -20,8 +20,10 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.clear();
+      // Update the live "me" query first: `clear()` would drop it, leaving mounted `useAuth` observers on the old
+      // query, so the UI stayed signed in until a reload.
       queryClient.setQueryData(authKey, null);
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== authKeyRoot[0] });
     },
   });
 }
