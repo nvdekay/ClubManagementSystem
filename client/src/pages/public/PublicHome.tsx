@@ -122,8 +122,10 @@ export function PublicHome() {
     <div className="overflow-x-clip">
       {/* Hero: full-bleed campus photo, framed by hairlines; the header floats over it (PublicLayout). ---------- */}
       <section className="relative isolate flex min-h-[max(40rem,100dvh)] flex-col overflow-hidden bg-black text-white">
+        {/* The photo (3:1) has a printed campus banner on its left ~40%. A box 173% as wide as the hero, anchored
+            right, keeps that part off-screen at every aspect ratio while the building fills the frame. */}
         <img src={CAMPUS_IMAGE_URL} alt="" aria-hidden="true" fetchPriority="high"
-          className="absolute inset-0 -z-20 size-full animate-hero-settle object-cover object-[70%_center] motion-reduce:animate-none" />
+          className="absolute inset-y-0 right-0 -z-20 h-full w-[173%] max-w-none origin-right animate-hero-settle object-cover object-right motion-reduce:animate-none" />
         {/* Darken the bottom-left where the copy sits, and the top where the header sits. */}
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/35 to-black/45" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-black/55 via-black/10 to-transparent" />
@@ -334,7 +336,7 @@ export function PublicHome() {
       <section className="px-4 pb-20 sm:px-8 sm:pb-24">
         <div className="reveal relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-black px-6 py-14 text-white sm:px-12 sm:py-20">
           {/* Anchored right: the photo carries a printed campus banner on its left half that would clash with the copy. */}
-          <img src={CAMPUS_IMAGE_URL} alt="" aria-hidden="true" className="absolute inset-y-0 right-0 -z-20 h-full w-[170%] max-w-none object-cover object-right" />
+          <img src={CAMPUS_IMAGE_URL} alt="" aria-hidden="true" className="absolute inset-y-0 right-0 -z-20 h-full w-[173%] max-w-none object-cover object-right" />
           <span aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-black/90 via-black/70 to-black/30" />
           <div className="grid items-end gap-8 lg:grid-cols-[1.4fr_1fr]">
             <div>
