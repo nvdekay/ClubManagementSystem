@@ -10,6 +10,7 @@ import { common } from "@/i18n/common";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth, useLogout } from "@/hooks/useAuth";
 import { usePageTransition } from "@/hooks/usePageTransition";
+import { useTheme } from "@/hooks/useTheme";
 import type { Workspace } from "@/services/auth";
 import { cn } from "@/utils/cn";
 import { workspaceIcon } from "@/utils/workspaceIcon";
@@ -44,6 +45,9 @@ const activeLinkClass = "bg-surface-app text-text-app hover:bg-surface-app";
 /** Orange marker on the sidebar edge beside the active top-level entry. */
 const markerClass = "before:absolute before:top-2 before:bottom-2 before:-left-3 before:w-1 before:rounded-r-full before:bg-brand-app";
 
+/** Top-bar icon buttons (theme, language) share the notification bell's shape. */
+const topbarButton = "flex size-10 items-center justify-center rounded-full text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
+
 const collapsedKey = "sidebarCollapsed";
 
 function readCollapsed(): boolean {
@@ -72,7 +76,8 @@ function matches(workspace: Workspace, context: Context): boolean {
 
 /** Left-sidebar frame for every Student, ICPDP and club management screen. */
 export function WorkspaceShell() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const auth = useAuth();
   const logout = useLogout();
@@ -293,7 +298,17 @@ export function WorkspaceShell() {
               <span className={cn("text-muted-app", { "font-medium text-text-app": index === crumbs.length - 1 })}>{crumb}</span>
             </span>)}
           </p>
-          <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} scope={context} />
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")}
+              title={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")} className={topbarButton}>
+              <AppIcon name={theme === "dark" ? "sun" : "moon"} className="size-5" />
+            </button>
+            <button type="button" onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}
+              aria-label={t("common.switchLanguage")} title={t("common.switchLanguage")} className={cn(topbarButton, "text-xs font-semibold")}>
+              {i18n.language === "vi" ? "EN" : "VI"}
+            </button>
+            <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} scope={context} />
+          </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
           <div ref={pageRef} className="mx-auto w-full max-w-screen-2xl">
