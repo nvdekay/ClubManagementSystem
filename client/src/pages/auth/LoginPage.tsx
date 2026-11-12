@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { googleLoginUrl } from "@/services/auth";
+import { CAMPUS_IMAGE_URL } from "@/utils/campusImage";
 import { cn } from "@/utils/cn";
 
 /** UC06: only the discovery pages are open to guests; any other target falls back to the home page. */
@@ -14,7 +15,6 @@ function guestTarget(returnTo: string): string {
 }
 
 // FPT University Hoa Lac campus, served by the university website.
-const campusImageUrl = "https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/banner-truong-dai-hoc-fpt-co-so-ha-noi.jpg";
 
 interface LoginPageProps {
   authError: string | null;
@@ -32,7 +32,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
       {/* The campus photo fills the whole left half, edge to edge. */}
       <section className="relative flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden bg-primary-soft-app p-[clamp(24px,5vw,64px)]">
         <img
-          src={campusImageUrl}
+          src={CAMPUS_IMAGE_URL}
           alt=""
           aria-hidden="true"
           decoding="async"
