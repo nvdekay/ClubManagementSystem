@@ -1,11 +1,25 @@
-/** Series colors a chart mark may wear; status red is for "past due" only, never a plain series. */
-export type ChartTone = "chart-1" | "chart-2" | "muted" | "danger";
+/**
+ * Series colors a chart mark may wear. chart-1/chart-2 are the validated categorical pair; the status tones
+ * (success, warning, danger) only mark a state such as "past due" or a club's lifecycle, always with a label.
+ */
+export type ChartTone = "chart-1" | "chart-2" | "muted" | "success" | "warning" | "danger";
 
 export const chartToneFill: Record<ChartTone, string> = {
   "chart-1": "bg-chart-1-app",
   "chart-2": "bg-chart-2-app",
   muted: "bg-chart-muted-app",
+  success: "bg-success-app",
+  warning: "bg-warning-app",
   danger: "bg-danger-app",
+};
+
+export const chartToneStroke: Record<ChartTone, string> = {
+  "chart-1": "stroke-chart-1-app",
+  "chart-2": "stroke-chart-2-app",
+  muted: "stroke-chart-muted-app",
+  success: "stroke-success-app",
+  warning: "stroke-warning-app",
+  danger: "stroke-danger-app",
 };
 
 /** Rounds an axis maximum up to 1, 2 or 5 times a power of ten so ticks land on clean numbers. */

@@ -196,7 +196,7 @@ export function PublicHome() {
               <li className="min-w-0">
                 <Link to="/clubs" title={t("discovery.viewDirectory")} className={cn("group flex flex-col items-center gap-2 rounded-2xl text-center no-underline", focusRing)}>
                   <span className="rounded-full p-1 ring-2 ring-border-app transition-colors group-hover:ring-primary-app">
-                    <span className="flex size-[72px] items-center justify-center rounded-full bg-primary-soft-app font-heading text-lg font-extrabold text-primary-app">
+                    <span className="flex size-18 items-center justify-center rounded-full bg-primary-soft-app font-heading text-lg font-extrabold text-primary-app">
                       +{(clubs.data?.total ?? 0) - LOGO_COUNT}
                     </span>
                   </span>

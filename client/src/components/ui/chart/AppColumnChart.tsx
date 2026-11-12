@@ -25,7 +25,7 @@ export function AppColumnChart({ points, tones, seriesLabels, formatValue = Stri
   const emphasis = points.some((point) => point.emphasized);
   return (
     <div className="flex gap-2">
-      <div aria-hidden="true" className="flex h-44 flex-col justify-between pb-0 text-right text-[11px] text-muted-app tabular-nums">
+      <div aria-hidden="true" className="flex h-44 flex-col justify-between pb-0 text-right text-[0.6875rem] text-muted-app tabular-nums">
         <span>{formatValue(max)}</span><span>{formatValue(max / 2)}</span><span>0</span>
       </div>
       <div className="min-w-0 flex-1">
@@ -67,7 +67,7 @@ export function AppColumnChart({ points, tones, seriesLabels, formatValue = Stri
         </div>
         <ul aria-hidden="true" className="mt-2 flex">
           {points.map((point) => (
-            <li key={point.key} className={cn("min-w-0 flex-1 px-0.5 text-center text-[11px] break-words text-muted-app", { "font-semibold text-text-app": point.emphasized })}>
+            <li key={point.key} className={cn("min-w-0 flex-1 px-0.5 text-center text-[0.6875rem] break-words text-muted-app", { "font-semibold text-text-app": point.emphasized })}>
               {point.label}
             </li>
           ))}

@@ -2,7 +2,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { useTheme } from "@/hooks/useTheme";
 import type { AuthUser } from "@/services/auth";
 import { cn } from "@/utils/cn";
 
@@ -16,10 +15,9 @@ interface SidebarAccountMenuProps {
 
 const itemClass = "flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring-app";
 
-/** Sidebar footer account button: the avatar opens a menu with theme, language and sign-out. */
+/** Sidebar footer account button: the avatar opens a menu with sign-out (theme and language live in the top bar). */
 export function SidebarAccountMenu({ user, compact, signingOut, onSignOut }: SidebarAccountMenuProps) {
-  const { t, i18n } = useTranslation();
-  const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -64,18 +62,6 @@ export function SidebarAccountMenu({ user, compact, signingOut, onSignOut }: Sid
         <div id={menuId} role="menu" aria-label={label}
           className={cn("absolute z-40 w-60 rounded-2xl border border-border-app bg-bg-app p-1.5 shadow-xl transition-[opacity,translate] duration-150 ease-out starting:translate-y-1 starting:opacity-0",
             compact ? "bottom-0 left-full ml-2" : "bottom-full left-0 mb-2")}>
-          <button role="menuitem" type="button" onClick={toggleTheme} className={cn(itemClass, "text-text-app hover:bg-surface-app")}>
-            <AppIcon name={theme === "dark" ? "sun" : "moon"} className="size-4.5 text-muted-app" />
-            <span className="min-w-0 flex-1">{theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")}</span>
-          </button>
-          <button role="menuitem" type="button" onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")}
-            className={cn(itemClass, "text-text-app hover:bg-surface-app")}>
-            <span aria-hidden="true" className="flex size-4.5 items-center justify-center text-[0.65rem] font-bold text-muted-app">
-              {i18n.language === "vi" ? "EN" : "VI"}
-            </span>
-            <span className="min-w-0 flex-1">{t("common.switchLanguage")}</span>
-          </button>
-          <div className="mx-2 my-1 border-t border-border-app" />
           <button role="menuitem" type="button" disabled={signingOut} onClick={onSignOut}
             className={cn(itemClass, "font-semibold text-danger-app hover:bg-danger-app/10 disabled:opacity-50")}>
             <AppIcon name="logout" className="size-4.5" />
