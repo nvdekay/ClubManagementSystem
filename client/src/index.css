@@ -93,13 +93,13 @@ body {
   --color-segment-app: #ffffff;
   /* Dimmed layer behind modal dialogs. */
   --color-backdrop-app: #0e121b66;
-  --color-auth-button-hover-app: #f0f9ff;
-  --color-auth-button-border-app: #94a3b8;
+  --color-auth-button-hover-app: #f5f7fa;
+  --color-auth-button-border-app: #d0d5dd;
   --color-auth-danger-surface-app: #fef2f2;
   --color-auth-page-bg-app: #ffffff;
-  --color-auth-page-text-app: #0f2233;
-  --color-auth-page-muted-app: #52677a;
-  --color-auth-page-border-app: #dbe7ee;
+  --color-auth-page-text-app: #0e121b;
+  --color-auth-page-muted-app: #525866;
+  --color-auth-page-border-app: #e4e7ec;
   --color-google-blue-app: #4285f4;
   --color-google-green-app: #34a853;
   --color-google-yellow-app: #fbbc05;
@@ -147,13 +147,13 @@ body {
   --color-info-soft-app: #172338;
   --color-segment-app: #2c323c;
   --color-backdrop-app: #000000b8;
-  --color-auth-button-hover-app: #16303f;
-  --color-auth-button-border-app: #3b5568;
+  --color-auth-button-hover-app: #20242c;
+  --color-auth-button-border-app: #3a404b;
   --color-auth-danger-surface-app: #3a1d22;
-  --color-auth-page-bg-app: #0b1620;
-  --color-auth-page-text-app: #e6f3fa;
-  --color-auth-page-muted-app: #9db6c7;
-  --color-auth-page-border-app: #21394a;
+  --color-auth-page-bg-app: #0f1115;
+  --color-auth-page-text-app: #eef0f3;
+  --color-auth-page-muted-app: #a3a9b5;
+  --color-auth-page-border-app: #2a2f38;
   --color-recruitment-app: #fb923c;
   --color-on-recruitment-app: #1c1917;
   --color-recruitment-soft-app: #653016;

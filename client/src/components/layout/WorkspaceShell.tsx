@@ -183,7 +183,7 @@ export function WorkspaceShell() {
         <Link to="/workspace" title={compact ? undefined : t("auth.switchWorkspace")} aria-label={compact ? `${workspaceName} · ${t("auth.switchWorkspace")}` : undefined}
           className={cn("group flex items-center gap-3 rounded-xl border border-border-app bg-bg-app px-3 py-2.5 shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app", { "justify-center border-transparent bg-transparent px-0 py-0 shadow-none": compact })}>
           <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft-app text-brand-app">
-            <AppIcon name={workspaceIcon(context.kind)} className="size-4.5" />
+            <AppIcon name={workspaceIcon(context.kind, workspace?.role)} className="size-4.5" />
           </span>
           {!compact && <>
             <span className="min-w-0 flex-1">
