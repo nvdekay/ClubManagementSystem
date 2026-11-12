@@ -178,6 +178,24 @@ export function WorkspaceShell() {
     }
   }
 
+  function switcher(compact: boolean) {
+    return (
+        <Link to="/workspace" title={compact ? undefined : t("auth.switchWorkspace")} aria-label={compact ? `${workspaceName} · ${t("auth.switchWorkspace")}` : undefined}
+          className={cn("group flex items-center gap-3 rounded-xl border border-border-app bg-bg-app px-3 py-2.5 shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app", { "justify-center border-transparent bg-transparent px-0 py-0 shadow-none": compact })}>
+          <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft-app text-brand-app">
+            <AppIcon name={workspaceIcon(context.kind)} className="size-4.5" />
+          </span>
+          {!compact && <>
+            <span className="min-w-0 flex-1">
+              <span className="line-clamp-2 text-sm font-semibold break-words text-text-app" title={workspaceName}>{workspaceName}</span>
+              <span className="block text-xs text-muted-app">{roleName}<span className="sr-only"> · {t("auth.switchWorkspace")}</span></span>
+            </span>
+            <AppIcon name="chevronRight" className="size-4 text-muted-app group-hover:text-text-app" />
+          </>}
+        </Link>
+    );
+  }
+
   function sidebar(compact: boolean) {
     const toggleLabel = compact ? t("common.expandSidebar") : t("common.collapseSidebar");
     return <div className="flex h-full flex-col">
@@ -195,19 +213,9 @@ export function WorkspaceShell() {
         </button>
       </div>
 
-      <Link to="/workspace" title={compact ? `${workspaceName} · ${roleName}` : t("auth.switchWorkspace")} aria-label={compact ? `${workspaceName} · ${t("auth.switchWorkspace")}` : undefined}
-        className={cn("group mx-3 mt-5 flex items-center gap-3 rounded-xl border border-border-app bg-bg-app px-3 py-2.5 shadow-xs transition-colors hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app", { "justify-center border-transparent bg-transparent px-0 py-0": compact })}>
-        <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft-app text-brand-app">
-          <AppIcon name={workspaceIcon(context.kind)} className="size-4.5" />
-        </span>
-        {!compact && <>
-          <span className="min-w-0 flex-1">
-            <span className="line-clamp-2 text-sm font-semibold break-words text-text-app" title={workspaceName}>{workspaceName}</span>
-            <span className="block text-xs text-muted-app">{roleName}<span className="sr-only"> · {t("auth.switchWorkspace")}</span></span>
-          </span>
-          <AppIcon name="chevronRight" className="size-4 text-muted-app group-hover:text-text-app" />
-        </>}
-      </Link>
+      {/* Collapsed: the switcher shows workspace + role in the same flyout as the menu icons, not a browser tooltip. */}
+      {compact ? <ul className="mt-5 px-3">{compactEntry("workspace-switcher", switcher(true), `${workspaceName} · ${roleName}`)}</ul>
+        : <div className="mx-3 mt-5">{switcher(false)}</div>}
 
       <div className={cn("mx-5 mt-5 border-t border-border-app", { "mx-3": compact })} />
       <nav aria-label={t("common.workspaceNav")} className="mt-4 flex-1 overflow-y-auto px-3 pb-4">

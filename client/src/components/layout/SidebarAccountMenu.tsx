@@ -49,7 +49,7 @@ export function SidebarAccountMenu({ user, compact, signingOut, onSignOut }: Sid
         className={cn("flex w-full items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-surface-strong-app focus-visible:outline-2 focus-visible:outline-ring-app", {
           "bg-surface-strong-app": open, "justify-center": compact,
         })}>
-        <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
+        <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app">
           {user.displayName.trim().charAt(0).toUpperCase()}
         </span>
         {!compact && <>

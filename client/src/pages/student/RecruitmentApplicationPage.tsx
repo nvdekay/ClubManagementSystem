@@ -207,7 +207,7 @@ export function RecruitmentApplicationPage() {
   }
   if (!auth.data) return <AppNotice className="max-w-3xl">
     <p>{t("recruitmentApplications.signInFirst")}</p>
-    <Link className="inline-block font-semibold text-accent-app" to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
+    <Link className="inline-block font-medium text-primary-app hover:underline" to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
       {t("recruitmentApplications.signInLink")}</Link>
   </AppNotice>;
   // 404 means the campaign is no longer public (closed or completed): not something a retry fixes.
@@ -215,7 +215,7 @@ export function RecruitmentApplicationPage() {
   if (campaignQuery.isError || !campaign) return <AppNotice tone="danger" className="max-w-3xl">
     <p role="alert" className="font-semibold text-danger-app">{campaignGone || !campaignQuery.error
       ? t("recruitmentApplications.unavailable") : campaignQuery.error.message}</p>
-    {campaignGone ? <Link className="inline-block font-semibold text-accent-app" to="/workspace/recruitment">
+    {campaignGone ? <Link className="inline-block font-medium text-primary-app hover:underline" to="/workspace/recruitment">
       {t("recruitmentApplications.backToApplications")}</Link>
       : <AppButton variant="secondary" onClick={() => void campaignQuery.refetch()}>{t("recruitmentApplications.retry")}</AppButton>}
   </AppNotice>;

@@ -163,7 +163,7 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
             <ul className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
               {space.members.map((member, index) => (
                 <li key={`${member.displayName}-${index}`} className="flex items-center gap-3">
-                  <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
+                  <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app">
                     {member.displayName.trim().charAt(0).toUpperCase()}</span>
                   <span className="min-w-0">
                     <span className="block truncate font-medium" title={member.displayName}>{member.displayName}</span>

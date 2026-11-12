@@ -196,7 +196,7 @@ export function ApplicationReviewDetailPage() {
               <ul className="mt-4 divide-y divide-border-app">{founders.map(({ userId: founder, role }) => {
                 const profile = review.data.founders.find((item) => item.id === founder);
                 return <li key={founder} className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
-                  <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-mint-app"><AppIcon name="users" className="size-4" /></span>
+                  <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-primary-app"><AppIcon name="users" className="size-4" /></span>
                   <span className="min-w-0">
                     {profile ? <><span className="block font-medium">{profile.displayName}</span>
                       <span className="block text-xs break-all text-muted-app">{profile.email}</span></>

@@ -265,7 +265,7 @@ function CampaignPanel({
           {save.isError && <p role="alert" className="text-sm text-danger-app">{save.error.message}</p>}
         </div>
       )}
-      {save.isSuccess && !expanded && <p role="status" className="mt-2 text-xs text-mint-app">{t("periodicReports.campaignSaved")}</p>}
+      {save.isSuccess && !expanded && <p role="status" className="mt-2 text-xs text-success-app">{t("periodicReports.campaignSaved")}</p>}
     </div>
   );
 }

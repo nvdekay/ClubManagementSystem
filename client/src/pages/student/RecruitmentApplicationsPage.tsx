@@ -57,7 +57,7 @@ export function RecruitmentApplicationsPage() {
   }
   if (!auth.data) return <>{header}<AppNotice>
     <p>{t("recruitmentApplications.signIn")}</p>
-    <Link className="inline-block font-semibold text-accent-app"
+    <Link className="inline-block font-medium text-primary-app hover:underline"
       to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
       {t("recruitmentApplications.signInLink")}</Link>
   </AppNotice></>;

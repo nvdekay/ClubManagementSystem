@@ -26,7 +26,7 @@ export function UserMenu({ user, csrfToken }: UserMenuProps) {
   /** Google profile photo, or the first letter of the name when there is none or it fails to load. */
   function avatar(className?: string) {
     return (
-      <span aria-hidden="true" className={cn("flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-mint-soft-app text-sm font-bold text-mint-app", className)}>
+      <span aria-hidden="true" className={cn("flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app", className)}>
         {showImage && user.avatarUrl
           ? <img src={user.avatarUrl} alt="" referrerPolicy="no-referrer" className="size-full object-cover" onError={() => setFailedUrl(user.avatarUrl ?? null)} />
           : user.displayName.trim().charAt(0).toUpperCase()}

@@ -281,7 +281,7 @@ export function ApplicationEditorPage() {
   if (!auth.data) {
     return <AppNotice className="max-w-3xl">
       <p>{t("applications.signIn")}</p>
-      <Link className="inline-block font-semibold text-accent-app"
+      <Link className="inline-block font-medium text-primary-app hover:underline"
         to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("applications.signInLink")}</Link>
     </AppNotice>;
   }
@@ -354,7 +354,7 @@ export function ApplicationEditorPage() {
     const profile = founderProfile(userId);
     const name = profile?.displayName ?? userId;
     return <li key={userId} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
-      <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
+      <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app">
         {name.trim().charAt(0).toUpperCase()}</span>
       <span className="min-w-0 flex-1 basis-40">
         <span className="block font-semibold break-words">{name}{userId === me?.id && ` (${t("applications.you")})`}</span>
@@ -528,7 +528,7 @@ export function ApplicationEditorPage() {
                 <p className="font-semibold">{t("applications.reviewBlocked")}</p>
                 <ul className="mt-2 space-y-1">{issues.map((issue) => <li key={issue} className="flex flex-wrap items-center gap-2">
                   <span>{t(`applications.issue_${issue}`, { count: requirements.minFoundingMembers })}</span>
-                  <button type="button" className="text-sm font-semibold text-accent-app"
+                  <button type="button" className="text-sm font-medium text-primary-app hover:underline"
                     onClick={() => setStep(issueStep[issue])}>{t("applications.fix")}</button>
                 </li>)}</ul>
               </AppNotice> : <AppNotice tone="success" role="status">{t("applications.reviewReady")}</AppNotice>}
