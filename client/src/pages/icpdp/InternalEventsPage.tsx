@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
@@ -89,20 +90,20 @@ export function InternalEventsPage() {
         : events.isError ? <AppNotice tone="danger" role="alert" className="mt-6" title={t("clubOversight.internalLoadError")}>
           <AppButton variant="secondary" onClick={() => void events.refetch()}>{t("clubOversight.retry")}</AppButton>
         </AppNotice>
-          : events.data.items.length === 0 ? <p className="py-16 text-center text-muted-app">{t("clubOversight.internalEmpty")}</p>
-            : <ul className="mt-6 divide-y divide-border-app border-y border-border-app">
+          : events.data.items.length === 0 ? <div className="mt-6"><AppEmptyState variant="boxed" message={t("clubOversight.internalEmpty")} /></div>
+            : <ul className="mt-6 divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
               {events.data.items.map((event) => <li key={event.id}>
                 <Link to={`/workspace/internal-events/${event.id}`}
-                  className="flex flex-wrap items-center gap-x-6 gap-y-2 px-2 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-ring-app">
+                  className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring-app">
                   <span className="min-w-0 flex-1 basis-64">
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="font-heading text-base font-bold break-words text-text-app">{event.title}</span>
+                      <span className="font-heading text-base font-semibold break-words text-text-app">{event.title}</span>
                       <AppBadge tone={stateTones[event.state] ?? "neutral"}>{stateLabel(event.state)}</AppBadge>
                     </span>
-                    <span className="mt-0.5 block text-sm font-semibold text-primary-app">{event.clubName} · {event.semesterCode}</span>
+                    <span className="mt-0.5 block text-sm font-medium text-text-app">{event.clubName} · {event.semesterCode}</span>
                     <span className="mt-1 block"><EventFacts event={event} /></span>
                   </span>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-accent-app">
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-app">
                     {t("clubOversight.open")}<AppIcon name="chevronRight" className="size-4" /></span>
                 </Link>
               </li>)}
@@ -119,7 +120,7 @@ export function InternalEventDetailPage() {
   const stateLabel = useStateLabel();
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const event = useInternalEvent(id, isOfficer);
-  const back = <Link to="/workspace/internal-events" className="inline-flex items-center gap-1 text-sm font-semibold text-accent-app hover:underline">
+  const back = <Link to="/workspace/internal-events" className="inline-flex min-h-9 items-center gap-1.5 rounded-md text-sm font-medium text-muted-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app">
     <AppIcon name="arrowLeft" className="size-4" />{t("clubOversight.back")}</Link>;
 
   function method(value: string): string {
@@ -127,7 +128,7 @@ export function InternalEventDetailPage() {
   }
 
   return <OfficerOnly>
-    <div className="mb-4">{back}</div>
+    <div className="mb-2">{back}</div>
     {event.isPending ? <AppSkeleton className="h-64 w-full" />
       : event.isError ? <AppNotice tone="danger" role="alert"
         title={event.error instanceof DashboardRequestError && event.error.status === 404 ? t("clubOversight.eventNotFound") : t("clubOversight.internalLoadError")}>
@@ -137,16 +138,16 @@ export function InternalEventDetailPage() {
           <PageHeader title={event.data.title} description={`${event.data.clubName} · ${event.data.semesterCode}`}
             actions={<AppBadge tone={stateTones[event.data.state] ?? "neutral"}>{stateLabel(event.data.state)}</AppBadge>} />
           <EventFacts event={event.data} />
-          {event.data.objective && <section className="mt-6">
-            <h2 className="font-heading text-lg font-bold">{t("clubOversight.objective")}</h2>
-            <p className="mt-1 whitespace-pre-line text-text-app">{event.data.objective}</p>
+          {event.data.objective && <section className="mt-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("clubOversight.objective")}</h2>
+            <p className="mt-2 text-sm leading-6 whitespace-pre-line text-text-app">{event.data.objective}</p>
           </section>}
-          <section className="mt-8">
-            <h2 className="font-heading text-lg font-bold">{t("clubOversight.attendanceTitle")}</h2>
+          <section className="mt-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("clubOversight.attendanceTitle")}</h2>
             <p className="mt-1 text-sm text-muted-app">{t("clubOversight.attendanceHint")}</p>
-            {event.data.attendance.length === 0 ? <p className="py-8 text-center text-muted-app">{t("clubOversight.attendanceEmpty")}</p>
-              : <ul className="mt-3 divide-y divide-border-app border-y border-border-app">
-                {event.data.attendance.map((row, index) => <li key={`${row.email}-${index}`} className="flex flex-wrap items-center gap-x-6 gap-y-1 px-2 py-3">
+            {event.data.attendance.length === 0 ? <div className="mt-4"><AppEmptyState variant="boxed" message={t("clubOversight.attendanceEmpty")} /></div>
+              : <ul className="mt-4 divide-y divide-border-app overflow-hidden rounded-xl border border-border-app">
+                {event.data.attendance.map((row, index) => <li key={`${row.email}-${index}`} className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3">
                   <span className="min-w-0 flex-1 basis-56">
                     <span className="block font-semibold break-words text-text-app">{row.studentName}</span>
                     <span className="block text-sm break-all text-muted-app">{row.email}</span>

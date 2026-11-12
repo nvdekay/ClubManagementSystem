@@ -16,6 +16,7 @@ import { RoomAllocationsPage } from "./pages/icpdp/RoomAllocationsPage.js";
 import { ClubRoomsPage } from "./pages/club/ClubRoomsPage.js";
 import "./index.css";
 import "./i18n"; // initializes i18next before first render
+import { applyInitialTheme } from "./hooks/useTheme.js";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -76,6 +77,8 @@ const queryClient = new QueryClient({
   // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
   defaultOptions: { queries: { staleTime: 30_000 } },
 });
+
+applyInitialTheme();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

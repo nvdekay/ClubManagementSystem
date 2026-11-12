@@ -15,10 +15,18 @@ export function useFieldValidation<K extends string>(errors: FieldErrors<K>) {
     setTouched((current) => (current.has(name) ? current : new Set(current).add(name)));
   }, []);
 
-  /** Reveals every error; returns true when the form may be sent. */
-  function touchAll(): boolean {
+  /** Reveals every error; returns true when the form may be sent. `reveal: false` skips scrolling to the first error. */
+  function touchAll(reveal = true): boolean {
     setSubmitted(true);
-    return !Object.values(errors).some(Boolean);
+    const valid = !Object.values(errors).some(Boolean);
+    // Long forms keep the submit button far below the first problem: bring that field into view
+    // once the errors have rendered, so a click never looks like it did nothing.
+    if (!valid && reveal) requestAnimationFrame(() => {
+      const field = document.querySelector<HTMLElement>('[aria-invalid="true"]');
+      field?.scrollIntoView({ block: "center", behavior: "smooth" });
+      field?.focus({ preventScroll: true });
+    });
+    return valid;
   }
 
   function reset() {

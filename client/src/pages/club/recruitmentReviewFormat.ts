@@ -9,7 +9,7 @@ export function formatScore(value: number) {
 export function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
   if (state === "Accepted" || state === "Onboarded") return "success";
   if (state === "Rejected") return "danger";
-  if (state === "Waitlisted" || state === "Shortlisted") return "warning";
+  if (state === "Waitlisted") return "warning";
   if (state === "Withdrawn" || state === "Declined") return "neutral";
   return "info";
 }

@@ -23,6 +23,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { isEmail, isHttpUrl } from "@/utils/validation";
 
 function stateTone(state: string): AppBadgeTone {
@@ -33,7 +34,7 @@ function stateTone(state: string): AppBadgeTone {
   return "info";
 }
 
-const sectionTitleClass = "font-heading text-lg font-bold";
+const sectionTitleClass = "font-heading text-base font-semibold";
 const roles: FounderRole[] = ["LEADER", "VICE_LEADER", "MEMBER"];
 const fileRules: Record<ApplicationDocumentType, { accept: string; types: string[]; maxBytes: number; size: string }> = {
   PROPOSAL: { accept: ".pdf,.docx", maxBytes: 10 * 1024 * 1024, size: "10 MB",
@@ -164,7 +165,8 @@ export function ApplicationEditorPage() {
   async function goTo(target: number) {
     // Leaving step 1 reveals every club-information error; only name and field block a draft save.
     if (editable && step === 0 && target > 0) {
-      field.touchAll();
+      // Only flags the step-1 errors; the page may still move on, so it must not scroll back to them.
+      field.touchAll(false);
       if (!currentDraft?.clubName.trim() || !currentDraft.fieldId) return;
     }
     if (editable && !(await persist())) return;
@@ -279,7 +281,7 @@ export function ApplicationEditorPage() {
   if (!auth.data) {
     return <AppNotice className="max-w-3xl">
       <p>{t("applications.signIn")}</p>
-      <Link className="inline-block font-semibold text-accent-app"
+      <Link className="inline-block font-medium text-primary-app hover:underline"
         to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("applications.signInLink")}</Link>
     </AppNotice>;
   }
@@ -317,17 +319,17 @@ export function ApplicationEditorPage() {
   function fileCard(type: ApplicationDocumentType, title: string, hint: string, field: FoundingField) {
     const current = uploaded(type);
     const rule = fileRules[type];
-    return <section className="space-y-3 rounded-2xl bg-surface-app p-4 sm:p-5">
+    return <section className="space-y-3 rounded-xl border border-border-app bg-bg-app p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1 basis-60">
-          <h3 className="font-heading font-bold">{label(title, field)}</h3>
+          <h3 className="font-heading text-sm font-semibold">{label(title, field)}</h3>
           <p className="mt-1 text-sm text-muted-app">{hint}</p>
         </div>
         {type === "LOGO" && current?.publicUrl && <img src={current.publicUrl} alt={t("applications.logoPreview")}
           className="size-20 shrink-0 rounded-xl border border-border-app object-cover" />}
       </div>
       {current && <div className="flex flex-wrap items-center gap-3">
-        <AppIcon name="file" className="text-primary-app" />
+        <AppIcon name="file" className="text-muted-app" />
         <span className="min-w-0 flex-1 basis-40 break-words text-sm">{current.fileName}</span>
         <div className="flex flex-wrap gap-2">
           <AppButton type="button" variant="secondary" onClick={() => void download(current.id)}>
@@ -352,7 +354,7 @@ export function ApplicationEditorPage() {
     const profile = founderProfile(userId);
     const name = profile?.displayName ?? userId;
     return <li key={userId} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
-      <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-soft-app text-sm font-bold text-mint-app">
+      <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app">
         {name.trim().charAt(0).toUpperCase()}</span>
       <span className="min-w-0 flex-1 basis-40">
         <span className="block font-semibold break-words">{name}{userId === me?.id && ` (${t("applications.you")})`}</span>
@@ -380,7 +382,7 @@ export function ApplicationEditorPage() {
         <dt className="text-sm font-medium text-muted-app">{term}</dt>
         <dd className="text-sm break-words whitespace-pre-wrap">{text || "—"}</dd></div>)}</dl>
       <div>
-        <h3 className="font-heading font-bold">{t("applications.founders")}</h3>
+        <h3 className="font-heading text-sm font-semibold">{t("applications.founders")}</h3>
         <ul className="mt-2 divide-y divide-border-app rounded-xl border border-border-app">
           {value.founders.map((founder) => founderRow(founder.userId, founder.role, true))}</ul>
       </div>
@@ -388,11 +390,11 @@ export function ApplicationEditorPage() {
         {(["PROPOSAL", "LOGO"] as const).map((type) => {
           const current = uploaded(type);
           return <div key={type} className="min-w-0 flex-1 basis-56">
-            <h3 className="font-heading font-bold">{type === "PROPOSAL" ? t("applications.proposal") : t("applications.logo")}</h3>
+            <h3 className="font-heading text-sm font-semibold">{type === "PROPOSAL" ? t("applications.proposal") : t("applications.logo")}</h3>
             {current ? <div className="mt-2 flex flex-wrap items-center gap-3">
               {type === "LOGO" && current.publicUrl && <img src={current.publicUrl} alt={t("applications.logoPreview")}
                 className="size-14 rounded-lg border border-border-app object-cover" />}
-              <button type="button" className="text-left text-sm font-semibold break-all text-accent-app"
+              <button type="button" className="text-left text-sm font-medium break-all text-primary-app hover:underline"
                 onClick={() => void download(current.id)}>{current.fileName}</button>
             </div> : <p className="mt-2 text-sm text-muted-app">—</p>}
           </div>;
@@ -408,7 +410,7 @@ export function ApplicationEditorPage() {
         back={{ to: "/workspace/applications", label: t("applications.back") }}
         actions={state && <AppBadge tone={stateTone(state)}>{t("applications.state")}: {stateLabel(state)}</AppBadge>} />
       {latestDecision && (state === "Revision Requested" || state === "Rejected") && (
-        <section role="status" className={cn("mb-8 rounded-xl border-l-4 px-5 py-4", {
+        <section role="status" className={cn("mb-6 rounded-xl border-l-4 px-5 py-4", {
           "border-warning-app bg-warning-app/10": state === "Revision Requested",
           "border-danger-app bg-danger-app/10": state === "Rejected",
         })}>
@@ -429,63 +431,63 @@ export function ApplicationEditorPage() {
         {notice.text}</AppNotice>}
       {nameConflict && <AppNotice tone="warning" role="status" className="mb-6">{t("applications.submitWarning")}</AppNotice>}
 
-      {!editable && application ? <section className="space-y-6">{summary(application.draft)}</section> : <>
-        <nav aria-label={t("applications.stepOf", { current: step + 1, total: steps.length })} className="mb-8">
+      {!editable && application ? <section className="space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">{summary(application.draft)}</section> : <>
+        <nav aria-label={t("applications.stepOf", { current: step + 1, total: steps.length })} className="mb-5">
           <ol className="flex flex-wrap gap-2">{steps.map((name, index) => (
             <li key={name}>
               <button type="button" aria-current={index === step ? "step" : undefined}
                 disabled={action.isPending || (!id && index > 0)} onClick={() => void goTo(index)}
-                className={cn("flex min-h-10 items-center gap-2 rounded-full border border-border-app px-4 text-sm font-medium text-muted-app",
-                  { "border-primary-app bg-primary-soft-app text-primary-app": index === step })}>
-                <span className="font-bold">{index + 1}</span>{name}
+                className={cn("group flex min-h-11 items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3 text-sm font-medium text-muted-app shadow-xs hover:bg-surface-app sm:min-h-9",
+                  { "text-text-app": index === step })}>
+                <span className={cn("flex size-6 items-center justify-center rounded-full border border-border-app text-xs font-semibold", { "border-brand-app text-brand-app": index === step })}>{index + 1}</span>{name}
                 {flaggedSteps.has(index) && <AppBadge tone="warning">{t("common.revisionFlagged")}</AppBadge>}
               </button>
             </li>
           ))}</ol>
         </nav>
 
-        {step === 0 && <section className="grid gap-5 sm:grid-cols-2">
+        {step === 0 && <section className="grid gap-5 sm:grid-cols-2 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
           <p className="text-sm text-muted-app sm:col-span-2">{t("applications.publicHint")}</p>
-          <label className="text-sm font-medium">{label(t("applications.clubName"), "always")}
-            <AppInput className="mt-2 block w-full" maxLength={200} value={currentDraft.clubName}
+          <label className="text-sm font-medium text-text-app">{label(t("applications.clubName"), "always")}
+            <AppInput className="mt-1.5 block w-full" maxLength={200} value={currentDraft.clubName}
               {...field.control("clubName")} onChange={(event) => change("clubName", event.target.value)} />
             <AppFieldError message={field.error("clubName")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("applications.clubNameHint")}</span>
           </label>
           <div className="text-sm font-medium">{label(t("applications.field"), "always")}
-            {fieldOptions.length ? <AppSelect className="mt-2 w-full" label={t("applications.field")}
+            {fieldOptions.length ? <AppSelect className="mt-1.5 w-full" label={t("applications.field")}
               required invalid={Boolean(field.error("fieldId"))} value={currentDraft.fieldId}
               onChange={(value) => { change("fieldId", value); field.touch("fieldId"); }}
               options={[{ value: "", label: t("applications.fieldPlaceholder") }, ...fieldOptions]} />
               : <p className="mt-2 text-sm font-normal text-danger-app">{t("applications.noFields")}</p>}
             <AppFieldError message={field.error("fieldId")} />
           </div>
-          <label className="text-sm font-medium sm:col-span-2">{label(t("applications.summary"), "summary")}
-            <AppTextarea className="mt-2 block w-full" maxLength={1000} rows={2} value={currentDraft.summary}
+          <label className="text-sm font-medium text-text-app sm:col-span-2">{label(t("applications.summary"), "summary")}
+            <AppTextarea className="mt-1.5 block w-full" maxLength={1000} rows={2} value={currentDraft.summary}
               {...field.control("summary", required.summary)} onChange={(event) => change("summary", event.target.value)} />
             <AppFieldError message={field.error("summary")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("applications.summaryHint")}</span>
           </label>
-          <label className="text-sm font-medium sm:col-span-2">{label(t("applications.objectives"), "objectives")}
-            <AppTextarea className="mt-2 block w-full" maxLength={5000} value={currentDraft.objectives}
+          <label className="text-sm font-medium text-text-app sm:col-span-2">{label(t("applications.objectives"), "objectives")}
+            <AppTextarea className="mt-1.5 block w-full" maxLength={5000} value={currentDraft.objectives}
               {...field.control("objectives", required.objectives)} onChange={(event) => change("objectives", event.target.value)} />
             <AppFieldError message={field.error("objectives")} />
             <span className="mt-1 block text-xs font-normal text-muted-app">{t("applications.objectivesHint")}</span>
           </label>
-          <label className="text-sm font-medium">{label(t("applications.fanpageUrl"), "fanpageUrl")}
-            <AppInput className="mt-2 block w-full" type="url" maxLength={2000} value={currentDraft.fanpageUrl}
+          <label className="text-sm font-medium text-text-app">{label(t("applications.fanpageUrl"), "fanpageUrl")}
+            <AppInput className="mt-1.5 block w-full" type="url" maxLength={2000} value={currentDraft.fanpageUrl}
               placeholder={t("applications.fanpagePlaceholder")} {...field.control("fanpageUrl", required.fanpageUrl)}
               onChange={(event) => change("fanpageUrl", event.target.value)} />
             <AppFieldError message={field.error("fanpageUrl")} />
           </label>
-          <label className="text-sm font-medium">{label(t("applications.contactEmail"), "contactEmail")}
-            <AppInput className="mt-2 block w-full" type="email" maxLength={320} value={currentDraft.contactEmail}
+          <label className="text-sm font-medium text-text-app">{label(t("applications.contactEmail"), "contactEmail")}
+            <AppInput className="mt-1.5 block w-full" type="email" maxLength={320} value={currentDraft.contactEmail}
               {...field.control("contactEmail", required.contactEmail)} onChange={(event) => change("contactEmail", event.target.value)} />
             <AppFieldError message={field.error("contactEmail")} />
           </label>
         </section>}
 
-        {step === 1 && <section className="space-y-5">
+        {step === 1 && <section className="space-y-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className={sectionTitleClass}>{t("applications.founders")}</h2>
             <AppBadge tone={missingFounders ? "warning" : "success"}>{t("applications.foundersProgress",
@@ -498,8 +500,8 @@ export function ApplicationEditorPage() {
           <p className={cn("text-sm text-muted-app", { "text-danger-app": !rolesValid })}>
             {t("applications.rolesRule", { max: maxViceLeaders })}</p>
           <div className="flex flex-wrap items-end gap-2">
-            <label className="min-w-0 flex-1 basis-56 text-sm font-medium">{t("applications.founderEmail")}
-              <AppInput className="mt-2 block w-full" type="email" value={founderEmail}
+            <label className="min-w-0 flex-1 basis-56 text-sm font-medium text-text-app">{t("applications.founderEmail")}
+              <AppInput className="mt-1.5 block w-full" type="email" value={founderEmail}
                 onChange={(event) => { setFounderEmail(event.target.value); setFounderError(null); }}
                 onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void addFounder(); } }} />
             </label>
@@ -511,14 +513,14 @@ export function ApplicationEditorPage() {
           <AppNotice>{t("applications.rolesHint")}</AppNotice>
         </section>}
 
-        {step === 2 && <section className="space-y-5">
+        {step === 2 && <section className="space-y-5 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
           {!id && <p className="text-sm text-muted-app">{t("applications.saveFirst")}</p>}
           {fileCard("PROPOSAL", t("applications.proposal"), t("applications.proposalHint"), "proposal")}
           {fileCard("LOGO", t("applications.logo"), t("applications.logoHint"), "logo")}
           <p className="text-sm text-muted-app">{t("applications.otherDocumentsHint")}</p>
         </section>}
 
-        {step === 3 && <section className="space-y-6">
+        {step === 3 && <section className="space-y-6 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
           <h2 className={sectionTitleClass}>{t("applications.reviewTitle")}</h2>
           {preview.isPending && !submitIssues ? <AppSkeleton className="h-20 w-full" />
             : preview.isError && !submitIssues ? <AppNotice tone="danger" role="alert">{preview.error.message}</AppNotice>
@@ -526,7 +528,7 @@ export function ApplicationEditorPage() {
                 <p className="font-semibold">{t("applications.reviewBlocked")}</p>
                 <ul className="mt-2 space-y-1">{issues.map((issue) => <li key={issue} className="flex flex-wrap items-center gap-2">
                   <span>{t(`applications.issue_${issue}`, { count: requirements.minFoundingMembers })}</span>
-                  <button type="button" className="text-sm font-semibold text-accent-app"
+                  <button type="button" className="text-sm font-medium text-primary-app hover:underline"
                     onClick={() => setStep(issueStep[issue])}>{t("applications.fix")}</button>
                 </li>)}</ul>
               </AppNotice> : <AppNotice tone="success" role="status">{t("applications.reviewReady")}</AppNotice>}
@@ -534,7 +536,7 @@ export function ApplicationEditorPage() {
           {summary({ ...currentDraft, field: application?.draft.field })}
         </section>}
 
-        <div className="mt-8 flex flex-wrap gap-3 border-t border-border-app pt-6">
+        <div className="mt-5 flex flex-wrap gap-3">
           {step > 0 && <AppButton type="button" variant="secondary" disabled={action.isPending}
             onClick={() => void goTo(step - 1)}>{t("applications.previous")}</AppButton>}
           <AppButton type="button" variant="secondary" disabled={action.isPending} onClick={() => void saveOnly()}>
@@ -550,11 +552,11 @@ export function ApplicationEditorPage() {
         onClick={() => void withdraw()}>{t("applications.withdraw")}</AppButton></div>}
 
       {application && (
-        <section className="mt-10 space-y-3 border-t border-border-app pt-8">
+        <section className="mt-6 space-y-3 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
           <h2 className={sectionTitleClass}>{t("applications.history")}</h2>
           {detail.data?.versions.length ? <ol className="space-y-0">{detail.data.versions.map((version) => (
             <li key={version.id} className="relative space-y-2 border-l-2 border-border-app pb-6 pl-6 last:pb-0">
-              <span aria-hidden="true" className="absolute top-1 -left-[7px] size-3 rounded-full bg-primary-app" />
+              <span aria-hidden="true" className="absolute top-1 -left-[0.4375rem] size-3 rounded-full bg-brand-app" />
               <h3 className="font-semibold font-heading">{t("applications.version", { number: version.versionNo })}</h3>
               <p className="text-sm text-muted-app">{t("applications.submittedAt", { date:
                 new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-US", {
@@ -562,14 +564,14 @@ export function ApplicationEditorPage() {
                 }).format(new Date(version.submittedAt)) })}</p>
               <p className="text-xs text-muted-app">{t("applications.policyVersion", { id: version.policyVersionId })}</p>
               <details>
-                <summary className="inline-flex min-h-10 items-center text-sm font-medium text-accent-app">{version.snapshot.clubName}</summary>
+                <summary className="inline-flex min-h-10 items-center text-sm font-medium text-primary-app">{version.snapshot.clubName}</summary>
                 <p className="mt-2 text-sm">{version.snapshot.summary || version.snapshot.objectives}</p>
                 <p className="mt-2 text-xs text-muted-app">
                   {version.snapshot.documents.map((item: ApplicationDocument) => item.fileName).join(", ")}
                 </p>
               </details>
             </li>
-          ))}</ol> : <p className="text-sm text-muted-app">{t("applications.historyEmpty")}</p>}
+          ))}</ol> : <AppEmptyState message={t("applications.historyEmpty")} />}
         </section>
       )}
     </div>

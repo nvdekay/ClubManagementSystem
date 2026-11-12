@@ -21,7 +21,7 @@ export function AppAreaChart({ points, seriesLabel, formatValue = String }: AppA
   const last = points.at(-1);
   return (
     <div className="flex gap-2">
-      <div aria-hidden="true" className="flex h-44 flex-col justify-between text-right text-[11px] text-muted-app tabular-nums">
+      <div aria-hidden="true" className="flex h-44 flex-col justify-between text-right text-[0.6875rem] text-muted-app tabular-nums">
         <span>{formatValue(max)}</span><span>{formatValue(max / 2)}</span><span>0</span>
       </div>
       <div className="min-w-0 flex-1">
@@ -60,7 +60,7 @@ export function AppAreaChart({ points, seriesLabel, formatValue = String }: AppA
         </div>
         <ul aria-hidden="true" className="mt-2 flex">
           {points.map((point, index) => (
-            <li key={point.key} className="min-w-0 flex-1 text-center text-[11px] text-muted-app">
+            <li key={point.key} className="min-w-0 flex-1 text-center text-[0.6875rem] text-muted-app">
               {index % 2 === points.length % 2 || points.length <= 6 ? point.label : ""}
             </li>
           ))}

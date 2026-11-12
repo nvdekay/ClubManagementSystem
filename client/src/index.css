@@ -13,8 +13,20 @@ body {
   overflow: hidden;
 }
 
+/* UI scale: from tablet width up, the root font size is 90% of the browser's, so every rem-based size
+   (text, spacing, sidebar, cards, tables) shrinks evenly like a 90% zoom and more fits on screen.
+   Percent, not px, so a user's own browser font setting still applies. Phones keep 100% so text and
+   44px touch targets stay comfortable. */
+@media (min-width: 768px) {
+  html {
+    font-size: 90%;
+  }
+}
+
 #root {
   overflow-y: auto;
+  /* Reserve the scrollbar lane so content never shifts sideways between short and long pages. */
+  scrollbar-gutter: stable;
   background-color: var(--color-bg-app);
   color: var(--color-text-app);
 }
@@ -50,44 +62,54 @@ body {
   --font-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-auth-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
   --font-auth-heading: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
-  /* Pills for buttons/single-line inputs; multi-line fields and panels use lg/xl. */
-  --radius-md: 999px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* Soft-square corners (dashboard style): controls use lg, panels and cards xl/2xl. */
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 14px;
+  --radius-3xl: 16px;
 
-  /* Fresh & cool: cyan primary, sky links, mint highlights on a bright white canvas.
-     Every text/background pair below meets WCAG AA (4.5:1) in its own theme. */
-  --color-brand-app: #06b6d4;
+  /* Neutral canvas with an FPT-orange accent. `brand` is the vivid logo orange for non-text
+     accents (active markers, focus ring, charts); `primary` is a deeper orange so white text on it
+     and orange text on white meet WCAG AA (4.5:1). Every text/background pair meets AA in its theme. */
+  --color-brand-app: #f37021;
   --color-on-brand-app: #ffffff;
   --color-brand-blue-app: #38bdf8;
   --color-brand-green-app: #34d399;
 
-  --color-text-app: #0f2233;
+  --color-text-app: #0e121b;
   --color-bg-app: #ffffff;
-  --color-surface-app: #f4f9fc;
-  --color-surface-strong-app: #e7f2f8;
-  --color-border-app: #dbe7ee;
-  --color-muted-app: #52677a;
-  --color-sidebar-app: #f7fbfd;
-  --color-primary-soft-app: #e3f5fa;
-  --color-mint-soft-app: #e3f8ef;
+  --color-surface-app: #f5f7fa;
+  --color-surface-strong-app: #ebeef2;
+  --color-border-app: #e4e7ec;
+  --color-muted-app: #525866;
+  --color-sidebar-app: #ffffff;
+  --color-primary-soft-app: #fff1e8;
+  --color-mint-soft-app: #e7f7ee;
 
-  --color-primary-app: #0e7490;
+  --color-primary-app: #c84c0c;
   --color-on-primary-app: #ffffff;
-  --color-accent-app: #0369a1;
-  --color-ring-app: #0284c7;
+  --color-accent-app: #c84c0c;
+  --color-ring-app: #f37021;
   --color-mint-app: #047857;
 
   --color-success-app: #047857;
-  --color-warning-app: #9a4a0b;
-  --color-danger-app: #b91c1c;
-  --color-auth-button-hover-app: #f0f9ff;
-  --color-auth-button-border-app: #94a3b8;
+  --color-warning-app: #b45309;
+  --color-danger-app: #d02533;
+  /* Informational badges: blue, so "info" never reads like the orange accent or the amber warning. */
+  --color-info-app: #1d5fd1;
+  --color-info-soft-app: #eaf1fd;
+  /* Selected item of a segmented control, raised above its surface track in both themes. */
+  --color-segment-app: #ffffff;
+  /* Dimmed layer behind modal dialogs. */
+  --color-backdrop-app: #0e121b66;
+  --color-auth-button-hover-app: #f5f7fa;
+  --color-auth-button-border-app: #d0d5dd;
   --color-auth-danger-surface-app: #fef2f2;
   --color-auth-page-bg-app: #ffffff;
-  --color-auth-page-text-app: #0f2233;
-  --color-auth-page-muted-app: #52677a;
-  --color-auth-page-border-app: #dbe7ee;
+  --color-auth-page-text-app: #0e121b;
+  --color-auth-page-muted-app: #525866;
+  --color-auth-page-border-app: #e4e7ec;
   --color-google-blue-app: #4285f4;
   --color-google-green-app: #34a853;
   --color-google-yellow-app: #fbbc05;
@@ -100,10 +122,10 @@ body {
   --color-hero-app: #0b2533;
   /* Dashboard charts: two categorical slots validated with the dataviz palette checks on the
      light (#ffffff) and dark (#0b1620) surfaces, a de-emphasis gray and a hairline grid. */
-  --color-chart-1-app: #0891b2;
-  --color-chart-2-app: #ea580c;
-  --color-chart-muted-app: #c4d3dd;
-  --color-chart-grid-app: #e6eef3;
+  --color-chart-1-app: #e8650f;
+  --color-chart-2-app: #2f6fe0;
+  --color-chart-muted-app: #d5d9e0;
+  --color-chart-grid-app: #eef0f3;
   --color-on-hero-app: #ffffff;
 }
 
@@ -112,42 +134,79 @@ body {
    so every generated *-app utility repaints without touching components. */
 :root.dark {
   color-scheme: dark;
-  --color-brand-app: #22d3ee;
-  --color-on-brand-app: #062a33;
-  --color-text-app: #e6f3fa;
-  --color-bg-app: #0b1620;
-  --color-surface-app: #10212e;
-  --color-surface-strong-app: #16303f;
-  --color-border-app: #21394a;
-  --color-muted-app: #9db6c7;
-  --color-sidebar-app: #0d1b26;
-  --color-primary-soft-app: #0f3443;
-  --color-mint-soft-app: #0f3329;
-  --color-primary-app: #22d3ee;
-  --color-on-primary-app: #062a33;
-  --color-accent-app: #7dd3fc;
-  --color-ring-app: #38bdf8;
+  --color-brand-app: #fb923c;
+  --color-on-brand-app: #14161b;
+  --color-text-app: #eef0f3;
+  --color-bg-app: #0f1115;
+  --color-surface-app: #171a20;
+  --color-surface-strong-app: #20242c;
+  --color-border-app: #2a2f38;
+  --color-muted-app: #a3a9b5;
+  --color-sidebar-app: #0f1115;
+  --color-primary-soft-app: #3a2112;
+  --color-mint-soft-app: #0f2e22;
+  --color-primary-app: #fb923c;
+  --color-on-primary-app: #14161b;
+  --color-accent-app: #fdba74;
+  --color-ring-app: #fb923c;
   --color-mint-app: #6ee7b7;
   --color-success-app: #6ee7b7;
   --color-warning-app: #fcd34d;
   --color-danger-app: #fca5a5;
-  --color-auth-button-hover-app: #16303f;
-  --color-auth-button-border-app: #3b5568;
+  --color-info-app: #93b8f7;
+  --color-info-soft-app: #172338;
+  --color-segment-app: #2c323c;
+  --color-backdrop-app: #000000b8;
+  --color-auth-button-hover-app: #20242c;
+  --color-auth-button-border-app: #3a404b;
   --color-auth-danger-surface-app: #3a1d22;
-  --color-auth-page-bg-app: #0b1620;
-  --color-auth-page-text-app: #e6f3fa;
-  --color-auth-page-muted-app: #9db6c7;
-  --color-auth-page-border-app: #21394a;
+  --color-auth-page-bg-app: #0f1115;
+  --color-auth-page-text-app: #eef0f3;
+  --color-auth-page-muted-app: #a3a9b5;
+  --color-auth-page-border-app: #2a2f38;
   --color-recruitment-app: #fb923c;
   --color-on-recruitment-app: #1c1917;
   --color-recruitment-soft-app: #653016;
   --color-recruitment-glow-app: #7c2d12;
   --color-hero-app: #0e2635;
-  --color-chart-1-app: #0aa0c0;
-  --color-chart-2-app: #e5641f;
-  --color-chart-muted-app: #34505f;
-  --color-chart-grid-app: #1b3040;
+  --color-chart-1-app: #e06b1e;
+  --color-chart-2-app: #5b8def;
+  --color-chart-muted-app: #3a404b;
+  --color-chart-grid-app: #232831;
   --color-on-hero-app: #e6f3fa;
+}
+
+/* Theme switch (see useTheme): a circular wipe anchored on the toggle. useTheme sets --theme-x/-y/-r and
+   data-theme-wipe before the view transition starts, so the clip is in place from the very first frame. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@keyframes theme-wipe-grow {
+  from { clip-path: circle(0 at var(--theme-x) var(--theme-y)); }
+  to { clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y)); }
+}
+
+@keyframes theme-wipe-shrink {
+  from { clip-path: circle(var(--theme-r) at var(--theme-x) var(--theme-y)); }
+  to { clip-path: circle(0 at var(--theme-x) var(--theme-y)); }
+}
+
+/* Light → dark: the new (dark) page grows out of the toggle. */
+:root[data-theme-wipe="expand"]::view-transition-new(root) {
+  animation: theme-wipe-grow 550ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Dark → light: the old (dark) page sits on top and shrinks back into the toggle. */
+:root[data-theme-wipe="collapse"]::view-transition-old(root) {
+  z-index: 2;
+  animation: theme-wipe-shrink 550ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+:root[data-theme-wipe="collapse"]::view-transition-new(root) {
+  z-index: 1;
 }
 
 /* Honour reduced-motion: keep state changes, drop the movement. */
@@ -158,6 +217,12 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Native checkboxes, radios and ranges follow the brand accent instead of the browser's blue. */
+input:is([type="checkbox"], [type="radio"], [type="range"]),
+progress {
+  accent-color: var(--color-primary-app);
 }
 
 /* Clickable elements must show a pointer cursor — the browser UA stylesheet

@@ -75,12 +75,16 @@ export function AppSelect<T extends string | number>({
   fitWidth,
 }: AppSelectProps<T>) {
   const [open, setOpen] = useState(false);
+  // Where the list fits: below the trigger by default, above it when the space under it is too short.
+  const [placement, setPlacement] = useState({ up: false, right: false, maxHeight: 240, maxWidth: 480 });
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const listId = useId();
+  // Type-to-jump like a native <select>: letters typed within a short pause form one search string.
+  const typed = useRef({ text: "", at: 0 });
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +103,21 @@ export function AppSelect<T extends string | number>({
     listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, open]);
 
+  /** Measures the room around the trigger so the list never runs off the bottom of the screen. */
+  function place() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const below = window.innerHeight - rect.bottom - 12;
+    const above = rect.top - 12;
+    const up = below < 200 && above > below;
+    // A trigger in the right half grows its list leftwards, so a wide list never leaves the screen.
+    const right = rect.left > window.innerWidth / 2;
+    setPlacement({ up, right, maxHeight: Math.max(120, Math.min(240, up ? above : below)),
+      maxWidth: Math.max(rect.width, (right ? rect.right : window.innerWidth - rect.left) - 12) });
+  }
+
   function openList() {
+    place();
     setActiveIndex(selectedIndex < 0 ? 0 : selectedIndex);
     setOpen(true);
   }
@@ -115,13 +133,42 @@ export function AppSelect<T extends string | number>({
     close();
   }
 
+  /** Highlights the next option whose label starts with the typed text; true when the key was consumed. */
+  function typeahead(event: KeyboardEvent, from: number): boolean {
+    if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return false;
+    const now = event.timeStamp; // ms since page load; only differences between keys matter
+    // A space only searches while a word is being typed; on its own it keeps selecting the option.
+    if (event.key === " " && now - typed.current.at > 700) return false;
+    const text = (now - typed.current.at > 700 ? "" : typed.current.text) + fold(event.key);
+    typed.current = { text, at: now };
+    // A fresh single letter steps past the current option, so repeating it cycles through matches.
+    const start = text.length === 1 ? from + 1 : from;
+    for (let step = 0; step < options.length; step++) {
+      const index = (start + step) % options.length;
+      const option = options[index]!;
+      if (!option.disabled && fold(option.label).startsWith(text)) {
+        setActiveIndex(index);
+        break;
+      }
+    }
+    event.preventDefault();
+    return true;
+  }
+
   function onTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key.length === 1 && event.key !== " " && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      place();
+      setOpen(true);
+      typeahead(event, selectedIndex < 0 ? -1 : selectedIndex);
+      return;
+    }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
     event.preventDefault(); // both would scroll the page instead
     openList();
   }
 
   function onListKeyDown(event: KeyboardEvent<HTMLUListElement>) {
+    if (typeahead(event, activeIndex)) return;
     switch (event.key) {
       case "ArrowDown":
         event.preventDefault();
@@ -169,7 +216,7 @@ export function AppSelect<T extends string | number>({
         aria-invalid={invalid || undefined}
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onTriggerKeyDown}
-        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-border-app bg-bg-app px-3.5 text-sm text-text-app transition-colors hover:border-primary-app focus-visible:border-ring-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:outline-none disabled:opacity-50 sm:h-10 aria-[invalid=true]:border-danger-app aria-[invalid=true]:focus-visible:ring-danger-app"
+        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-border-app bg-bg-app px-3 text-sm text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:border-ring-app focus-visible:ring-3 focus-visible:ring-ring-app/20 focus-visible:outline-none disabled:opacity-50 sm:h-9 aria-[invalid=true]:border-danger-app aria-[invalid=true]:focus-visible:ring-danger-app"
       >
         <span className="min-w-0 truncate text-left">{options[selectedIndex]?.label ?? ""}</span>
         <ChevronDownIcon />
@@ -183,8 +230,10 @@ export function AppSelect<T extends string | number>({
           aria-activedescendant={`${listId}-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className={cn("absolute z-20 mt-1 max-h-60 overflow-auto rounded-xl border border-border-app bg-bg-app p-1 shadow-lg focus:outline-none",
-            fitWidth ? "w-full" : "w-max max-w-[calc(100vw-2rem)] min-w-full")}
+          style={{ maxHeight: placement.maxHeight, maxWidth: fitWidth ? undefined : placement.maxWidth }}
+          className={cn("absolute z-20 mt-1 overflow-auto rounded-lg border border-border-app bg-bg-app p-1 shadow-lg transition-[opacity,translate] duration-150 ease-out focus:outline-none starting:-translate-y-1 starting:opacity-0",
+            fitWidth ? "w-full" : "w-max max-w-[calc(100vw-2rem)] min-w-full",
+            { "bottom-full mt-0 mb-1 starting:translate-y-1": placement.up, "right-0": placement.right })}
         >
           {options.map((option, index) => (
             <li
@@ -196,8 +245,8 @@ export function AppSelect<T extends string | number>({
               data-active={index === activeIndex}
               onPointerEnter={() => setActiveIndex(index)}
               onClick={() => select(index)}
-              className={cn("flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm", {
-                "bg-primary-soft-app text-primary-app": index === activeIndex,
+              className={cn("flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-sm", {
+                "bg-surface-app text-text-app": index === activeIndex,
                 "text-muted-app opacity-50": option.disabled,
               })}
             >
@@ -209,4 +258,9 @@ export function AppSelect<T extends string | number>({
       )}
     </div>
   );
+}
+
+/** Lower-cased and without Vietnamese diacritics, so typing "nguy" finds "Nguyễn". */
+function fold(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();
 }

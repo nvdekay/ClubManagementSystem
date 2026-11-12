@@ -59,7 +59,7 @@ export function ComplaintCard(props: ComplaintCardProps) {
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const overdue = props.state === "Forwarded" && props.responseDueAt && new Date(props.responseDueAt) < new Date();
   return (
-    <article className="rounded-2xl border border-border-app p-4 sm:p-5">
+    <article className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
       <div className="flex flex-wrap items-center gap-2">
         <AppBadge tone={stateTone[props.state]}>{t(complaintStateKey(props.state))}</AppBadge>
         <AppBadge>{t(complaintTypeKey(props.type))}</AppBadge>
@@ -69,7 +69,7 @@ export function ComplaintCard(props: ComplaintCardProps) {
       <p className="mt-2 break-words whitespace-pre-line">{props.description}</p>
       {props.evidence.length > 0 && <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {props.evidence.map((item) => <li key={item.url}>
-          <a className="break-all text-primary-app underline" href={item.url} target="_blank" rel="noreferrer noopener">{item.label}</a>
+          <a className="break-all text-primary-app hover:underline" href={item.url} target="_blank" rel="noreferrer noopener">{item.label}</a>
         </li>)}
       </ul>}
       <p className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-app">
@@ -79,19 +79,19 @@ export function ComplaintCard(props: ComplaintCardProps) {
           && <span>{t("complaints.dueOn", { date: formatDate(props.responseDueAt, locale) })}</span>}
       </p>
       {props.extra}
-      {props.note && props.note.text && <div className="mt-3 rounded-xl bg-surface-app p-3 text-sm">
+      {props.note && props.note.text && <div className="mt-3 rounded-xl border border-border-app bg-surface-app p-3 text-sm">
         <p className="font-semibold">{props.note.label}</p><p className="break-words whitespace-pre-line">{props.note.text}</p></div>}
-      {props.clubResponse && <div className="mt-3 rounded-xl bg-surface-app p-3 text-sm">
+      {props.clubResponse && <div className="mt-3 rounded-xl border border-border-app bg-surface-app p-3 text-sm">
         <p className="font-semibold">{t("complaints.clubAnswer")}</p>
         <p className="break-words whitespace-pre-line">{props.clubResponse.text}</p>
         <p className="mt-2 font-semibold">{t("complaints.clubAction")}</p>
         <p className="break-words whitespace-pre-line">{props.clubResponse.action}</p>
         {props.clubResponse.evidence.length > 0 && <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
           {props.clubResponse.evidence.map((item) => <li key={item.url}>
-            <a className="break-all text-primary-app underline" href={item.url} target="_blank" rel="noreferrer noopener">{item.label}</a>
+            <a className="break-all text-primary-app hover:underline" href={item.url} target="_blank" rel="noreferrer noopener">{item.label}</a>
           </li>)}
         </ul>}</div>}
-      {props.closureReason && <div className="mt-3 rounded-xl bg-surface-app p-3 text-sm">
+      {props.closureReason && <div className="mt-3 rounded-xl border border-border-app bg-surface-app p-3 text-sm">
         <p className="font-semibold">{t("complaints.closureReason")}</p><p className="break-words">{props.closureReason}</p></div>}
       {props.actions && <div className="mt-4 flex flex-wrap gap-2">{props.actions}</div>}
     </article>

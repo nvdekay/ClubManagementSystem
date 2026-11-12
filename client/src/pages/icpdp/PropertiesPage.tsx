@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppConfirmDialog } from "@/components/ui/dialog/AppConfirmDialog";
@@ -83,7 +84,7 @@ export function PropertiesPage() {
       {auth.isPending ? <AppSkeleton className="h-44 w-full" />
         : !auth.data ? <AppNotice>
           <p>{t("properties.signIn")}</p>
-          <Link className="font-semibold text-accent-app" to="/login?returnTo=%2Fworkspace%2Fproperties">
+          <Link className="font-semibold text-primary-app hover:underline" to="/login?returnTo=%2Fworkspace%2Fproperties">
             {t("properties.signInLink")}</Link>
         </AppNotice>
           : !isOfficer ? <AppNotice tone="danger" role="alert">{t("properties.forbidden")}</AppNotice>
@@ -94,17 +95,17 @@ export function PropertiesPage() {
               </AppNotice> : <div className="space-y-6">
                 {editing === "new" && <PropertyEditor pending={action.isPending} error={formError}
                   onSubmit={(value) => void save(undefined, value)} onCancel={() => setEditing(null)} />}
-                {properties.data.length === 0 && editing !== "new" && <AppNotice>{t("properties.empty")}</AppNotice>}
-                <ul className="space-y-4">{properties.data.map((property) => (
+                {properties.data.length === 0 && editing !== "new" && <AppEmptyState variant="boxed" message={t("properties.empty")} />}
+                <ul className="space-y-3">{properties.data.map((property) => (
                   <li key={property.id}>
                     {editing === property.id ? <PropertyEditor property={property} pending={action.isPending}
                       error={formError} onSubmit={(value) => void save(property, value)} onCancel={() => setEditing(null)} />
-                      : <article className="rounded-2xl border border-border-app p-4 sm:p-5">
+                      : <article className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0 flex-1 basis-64">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="font-mono text-sm text-muted-app">{property.code}</span>
-                              <h2 className="font-heading font-bold break-words">{property.name}</h2>
+                              <h2 className="font-heading font-semibold break-words">{property.name}</h2>
                               <AppBadge tone="info">{t(`properties.type${property.type}`)}</AppBadge>
                               <AppBadge tone={property.isActive ? "success" : "neutral"}>
                                 {property.isActive ? t("properties.active") : t("properties.inactive")}</AppBadge>
@@ -120,11 +121,11 @@ export function PropertiesPage() {
                           <div className="flex flex-wrap gap-2">
                             <AppButton variant="secondary" onClick={() => { setEditing(property.id); setFormError(null); }}>
                               {t("properties.edit")}</AppButton>
-                            <AppButton variant="secondary" disabled={action.isPending}
+                            <AppButton variant="ghost" className="text-muted-app hover:text-text-app" disabled={action.isPending}
                               title={property.isActive ? t("properties.deactivateHint") : undefined}
                               onClick={() => void run(property, "activation")}>
                               {property.isActive ? t("properties.deactivate") : t("properties.activate")}</AppButton>
-                            <AppButton variant="ghost" disabled={action.isPending}
+                            <AppButton variant="ghost" className="text-muted-app hover:text-text-app" disabled={action.isPending}
                               onClick={() => setDeleting(property)}>{t("properties.delete")}</AppButton>
                           </div>
                         </div>

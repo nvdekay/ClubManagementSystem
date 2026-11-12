@@ -26,7 +26,7 @@ export function UserMenu({ user, csrfToken }: UserMenuProps) {
   /** Google profile photo, or the first letter of the name when there is none or it fails to load. */
   function avatar(className?: string) {
     return (
-      <span aria-hidden="true" className={cn("flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-mint-soft-app text-sm font-bold text-mint-app", className)}>
+      <span aria-hidden="true" className={cn("flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app", className)}>
         {showImage && user.avatarUrl
           ? <img src={user.avatarUrl} alt="" referrerPolicy="no-referrer" className="size-full object-cover" onError={() => setFailedUrl(user.avatarUrl ?? null)} />
           : user.displayName.trim().charAt(0).toUpperCase()}
@@ -71,7 +71,7 @@ export function UserMenu({ user, csrfToken }: UserMenuProps) {
       </button>
       {open && (
         <div id={menuId} role="menu" aria-label={t("common.accountMenu", { name: user.displayName })}
-          className="absolute top-full right-0 z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-border-app bg-bg-app p-2 shadow-xl">
+          className="absolute top-full right-0 z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-border-app bg-bg-app p-2 shadow-xl transition-[opacity,translate] duration-150 ease-out starting:-translate-y-1 starting:opacity-0">
           <div className="flex items-center gap-3 px-3 pt-2 pb-3">
             {avatar("size-11 text-base")}
             <span className="min-w-0 flex-1">

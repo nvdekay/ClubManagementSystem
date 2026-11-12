@@ -19,10 +19,10 @@ interface AppChartFrameProps {
 /** Card around one chart: heading, legend, the chart, and a collapsible table view. */
 export function AppChartFrame({ title, description, legend, action, table, className, children }: AppChartFrameProps) {
   return (
-    <section className={cn("flex min-w-0 flex-col rounded-2xl border border-border-app bg-bg-app p-5", className)}>
+    <section className={cn("flex min-w-0 flex-col rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs", className)}>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
-          <h3 className="font-heading text-base font-bold text-text-app">{title}</h3>
+          <h3 className="font-heading text-base font-semibold text-text-app">{title}</h3>
           {description && <p className="mt-0.5 text-sm text-muted-app">{description}</p>}
         </div>
         {action}

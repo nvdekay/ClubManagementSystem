@@ -16,12 +16,12 @@ interface AppConfirmDialogProps {
 export function AppConfirmDialog({ open, title, message, confirmLabel, cancelLabel, pending = false,
   onConfirm, onCancel }: AppConfirmDialogProps) {
   return (
-    <AppDialog open={open} title={title} closeLabel={cancelLabel} onClose={() => { if (!pending) onCancel(); }}>
-      <p className="text-sm text-muted-app">{message}</p>
-      <div className="mt-6 flex flex-wrap justify-end gap-3">
+    <AppDialog open={open} title={title} closeLabel={cancelLabel} onClose={() => { if (!pending) onCancel(); }}
+      footer={<>
         <AppButton variant="ghost" disabled={pending} onClick={onCancel}>{cancelLabel}</AppButton>
         <AppButton disabled={pending} onClick={onConfirm}>{confirmLabel}</AppButton>
-      </div>
+      </>}>
+      <p className="text-sm text-muted-app">{message}</p>
     </AppDialog>
   );
 }

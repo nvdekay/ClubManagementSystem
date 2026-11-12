@@ -84,7 +84,7 @@ export function RecruitmentReviewPage() {
     column.accessor((row) => applicantName(row.application), { id: "applicant",
       header: () => t("recruitmentApplications.colApplicant"),
       cell: ({ row, getValue }) => <div className="min-w-40">
-        <p className="font-semibold break-words">{getValue()}</p>
+        <p className="font-medium break-words">{getValue()}</p>
         <p className="text-xs text-muted-app break-words">{row.original.application.position}</p></div> }),
     column.accessor((row) => row.application.submittedAt ?? "", { id: "submitted",
       header: () => t("recruitmentApplications.colSubmitted"),
@@ -153,21 +153,6 @@ export function RecruitmentReviewPage() {
     {header}
     {evaluations.isError && <AppNotice tone="warning" role="alert" className="mb-4" title={t("recruitmentApplications.evaluationLoadError")}>
       <AppButton variant="secondary" onClick={() => void evaluations.refetch()}>{t("recruitmentApplications.retry")}</AppButton></AppNotice>}
-    {selected.length > 0 && <section aria-label={t("recruitmentApplications.reviewReason")} className="mb-6 space-y-3 rounded-2xl bg-surface-app p-4 sm:p-5">
-      <label className="block text-sm font-semibold">{t("recruitmentApplications.reviewReason")}<AppRequiredMark />
-        <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
-          {...field.control("reason")} className="mt-2 block min-h-20 w-full font-normal" />
-        <AppFieldError message={field.error("reason")} />
-        <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentApplications.reviewReasonHint")}</span></label>
-      {error && <AppNotice tone="danger" role="alert">{error}</AppNotice>}
-      <div className="flex flex-wrap items-center gap-2">
-        <AppButton disabled={action.isPending} onClick={() => void bulk("shortlist")}>{t("recruitmentApplications.bulkShortlist")}</AppButton>
-        <AppButton className="bg-danger-app text-bg-app hover:opacity-90" disabled={action.isPending}
-          onClick={() => void bulk("decide")}>{t("recruitmentApplications.bulkReject")}</AppButton>
-        <AppButton variant="ghost" onClick={() => { setSelected([]); field.reset(); }}>{t("recruitmentApplications.clearSelection")}</AppButton>
-        <AppBadge tone="info">{selected.length} {t("recruitmentApplications.selected")}</AppBadge>
-      </div>
-    </section>}
     <div className="mb-4 flex flex-wrap items-end gap-3">
       <AppSearchInput onSearch={setSearch} aria-label={t("recruitmentApplications.searchApplicant")}
         placeholder={t("recruitmentApplications.searchApplicant")} className="w-full min-w-0 sm:w-72" />
@@ -180,6 +165,22 @@ export function RecruitmentReviewPage() {
       onPageChange={(index) => table.setPageIndex(index)} prevLabel={t("recruitmentApplications.prevPage")}
       nextLabel={t("recruitmentApplications.nextPage")} navLabel={t("recruitmentApplications.pagination")}
       pageLabel={(page) => t("recruitmentApplications.pageNumber", { page })} />
+    {/* Bulk bar sits after the list and sticks to the viewport bottom, so ticking a row never pushes the table down (in normal flow on phones, where it would cover the list). */}
+    {selected.length > 0 && <section aria-label={t("recruitmentApplications.reviewReason")} className="mt-6 space-y-3 rounded-2xl border border-border-app bg-bg-app p-5 shadow-lg sm:sticky sm:bottom-4 sm:z-20">
+      <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.reviewReason")}<AppRequiredMark />
+        <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
+          {...field.control("reason")} className="mt-1.5 block min-h-20 w-full font-normal" />
+        <AppFieldError message={field.error("reason")} />
+        <span className="mt-1 block text-xs font-normal text-muted-app">{t("recruitmentApplications.reviewReasonHint")}</span></label>
+      {error && <AppNotice tone="danger" role="alert">{error}</AppNotice>}
+      <div className="flex flex-wrap items-center gap-2">
+        <AppButton disabled={action.isPending} onClick={() => void bulk("shortlist")}>{t("recruitmentApplications.bulkShortlist")}</AppButton>
+        <AppButton className="bg-danger-app text-bg-app hover:opacity-90" disabled={action.isPending}
+          onClick={() => void bulk("decide")}>{t("recruitmentApplications.bulkReject")}</AppButton>
+        <AppButton variant="ghost" onClick={() => { setSelected([]); field.reset(); }}>{t("recruitmentApplications.clearSelection")}</AppButton>
+        <AppBadge tone="info">{selected.length} {t("recruitmentApplications.selected")}</AppBadge>
+      </div>
+    </section>}
     {clubId && campaignId && auth.data && opened && <ApplicationReviewDialog key={opened.application.id} onClose={() => setOpenId(undefined)}
       clubId={clubId} campaignId={campaignId} application={opened.application} group={opened.group}
       rubric={evaluations.data?.rubric} evaluationsLoading={evaluations.isPending} canReview={canReview}

@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router";
 import { ClubLogo } from "@/components/custom/ClubLogo";
 import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubs, useEvents } from "@/hooks/useDiscovery";
 import type { PublicEventStatus } from "@/services/discovery";
@@ -195,7 +196,7 @@ export function PublicHome() {
               <li className="min-w-0">
                 <Link to="/clubs" title={t("discovery.viewDirectory")} className={cn("group flex flex-col items-center gap-2 rounded-2xl text-center no-underline", focusRing)}>
                   <span className="rounded-full p-1 ring-2 ring-border-app transition-colors group-hover:ring-primary-app">
-                    <span className="flex size-[72px] items-center justify-center rounded-full bg-primary-soft-app font-heading text-lg font-extrabold text-primary-app">
+                    <span className="flex size-18 items-center justify-center rounded-full bg-primary-soft-app font-heading text-lg font-extrabold text-primary-app">
                       +{(clubs.data?.total ?? 0) - LOGO_COUNT}
                     </span>
                   </span>
@@ -204,7 +205,7 @@ export function PublicHome() {
               </li>
             )}
           </ul>
-        ) : <p className="mt-8 text-sm text-muted-app">{t("discovery.noClubs")}</p>}
+        ) : <div className="mt-8"><AppEmptyState variant="boxed" message={t("discovery.noClubs")} /></div>}
       </section>
 
       {/* Events by status --------------------------------------------------------------------- */}

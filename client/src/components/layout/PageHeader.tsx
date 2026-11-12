@@ -14,13 +14,13 @@ interface PageHeaderProps {
 /** Title block at the top of every workspace page: no card, just type and whitespace. */
 export function PageHeader({ title, description, back, actions }: PageHeaderProps) {
   return (
-    <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0 max-w-3xl">
-        {back && <Link to={back.to} className="mb-3 inline-flex min-h-10 items-center gap-1.5 rounded-full text-sm font-semibold text-accent-app hover:underline focus-visible:outline-2 focus-visible:outline-ring-app">
+        {back && <Link to={back.to} className="mb-2 inline-flex min-h-9 items-center gap-1.5 rounded-md text-sm font-medium text-muted-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app">
           <AppIcon name="arrowLeft" className="size-4" />{back.label}
         </Link>}
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-balance sm:text-3xl">{title}</h1>
-        {description && <p className="mt-2 text-pretty text-muted-app">{description}</p>}
+        <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance">{title}</h1>
+        {description && <p className="mt-1 text-sm text-pretty text-muted-app">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>

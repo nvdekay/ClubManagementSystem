@@ -13,6 +13,7 @@ import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { appToast } from "@/components/ui/toast/AppToast";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import {
@@ -87,18 +88,18 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
 
   if (draft) {
     return (
-      <li className="py-4">
-        <form noValidate className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_auto]" onSubmit={(event) => void save(event)}>
-          <label className="text-sm">{t("clubFields.name")}<AppRequiredMark />
-            <AppInput className="mt-1 block w-full" maxLength={100} value={draft.name} autoFocus
+      <li className="px-5 py-4">
+        <form noValidate className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_auto]" onSubmit={(event) => void save(event)}>
+          <label className="block text-sm font-medium text-text-app">{t("clubFields.name")}<AppRequiredMark />
+            <AppInput className="mt-1.5 block w-full font-normal" maxLength={100} value={draft.name} autoFocus
               {...form.control("name")} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
             <AppFieldError message={form.error("name")} />
           </label>
-          <label className="text-sm">{t("clubFields.order")}
-            <AppInput className="mt-1 block w-full" type="number" min="0" max="10000" value={draft.sortOrder}
+          <label className="block text-sm font-medium text-text-app">{t("clubFields.order")}
+            <AppInput className="mt-1.5 block w-full font-normal" type="number" min="0" max="10000" value={draft.sortOrder}
               onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 sm:mt-6.5">
             <AppButton type="submit" disabled={update.isPending}>
               {update.isPending ? t("clubFields.saving") : t("clubFields.save")}
             </AppButton>
@@ -114,11 +115,11 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
   }
 
   return (
-    <li className="py-4">
+    <li className="px-5 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold break-words">{field.name}</p>
+            <p className="font-medium break-words">{field.name}</p>
             {!field.isActive && <AppBadge tone="warning">{t("clubFields.hidden")}</AppBadge>}
           </div>
           <p className="mt-1 text-sm text-muted-app">
@@ -132,7 +133,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
               onClick={() => setDraft({ name: field.name, sortOrder: String(field.sortOrder) })}>
               {t("clubFields.edit")}
             </AppButton>
-            <AppButton variant="ghost" onClick={() => setConfirming(true)}>{t("clubFields.delete")}</AppButton>
+            <AppButton variant="ghost" className="text-muted-app hover:text-text-app" onClick={() => setConfirming(true)}>{t("clubFields.delete")}</AppButton>
           </div>
         )}
       </div>
@@ -178,20 +179,20 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
   }
 
   return (
-    <form noValidate className="space-y-3 rounded-2xl bg-surface-app p-4 sm:p-5" onSubmit={(event) => void submit(event)}>
-      <h2 className="font-heading font-semibold">{t("clubFields.addTitle")}</h2>
-      <div className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_auto]">
-        <label className="text-sm">{t("clubFields.name")}<AppRequiredMark />
-          <AppInput className="mt-1 block w-full" maxLength={100} value={draft.name}
+    <form noValidate className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs sm:p-5" onSubmit={(event) => void submit(event)}>
+      <h2 className="font-heading text-base font-semibold">{t("clubFields.addTitle")}</h2>
+      <div className="grid items-start gap-3 sm:grid-cols-[1fr_8rem_auto]">
+        <label className="block text-sm font-medium text-text-app">{t("clubFields.name")}<AppRequiredMark />
+          <AppInput className="mt-1.5 block w-full font-normal" maxLength={100} value={draft.name}
             {...field.control("name")} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
           <AppFieldError message={field.error("name")} />
         </label>
-        <label className="text-sm">{t("clubFields.order")}
-          <AppInput className="mt-1 block w-full" type="number" min="0" max="10000"
+        <label className="block text-sm font-medium text-text-app">{t("clubFields.order")}
+          <AppInput className="mt-1.5 block w-full font-normal" type="number" min="0" max="10000"
             placeholder={String(nextOrder)} value={draft.sortOrder}
             onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} />
         </label>
-        <AppButton type="submit" disabled={create.isPending}>
+        <AppButton type="submit" disabled={create.isPending} className="sm:mt-6.5">
           <AppIcon name="plus" className="size-4" />
           {create.isPending ? t("clubFields.adding") : t("clubFields.add")}
         </AppButton>
@@ -223,7 +224,7 @@ export function ClubFieldsPage() {
       ) : !auth.data ? (
         <AppNotice>
           <p>{t("clubFields.signIn")}</p>
-          <Link className="font-semibold text-accent-app"
+          <Link className="font-semibold text-primary-app hover:underline"
             to="/login?returnTo=%2Fworkspace%2Fclub-fields">{t("clubFields.signInLink")}</Link>
         </AppNotice>
       ) : !isOfficer ? (
@@ -237,9 +238,9 @@ export function ClubFieldsPage() {
       ) : (
         <div className="space-y-6">
           {fields.data.length === 0 ? (
-            <AppNotice>{t("clubFields.empty")}</AppNotice>
+            <AppEmptyState variant="boxed" message={t("clubFields.empty")} />
           ) : (
-            <ul className="divide-y divide-border-app border-y border-border-app">
+            <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
               {fields.data.map((field) => (
                 <FieldRow key={field.id} field={field} csrfToken={csrfToken} />
               ))}

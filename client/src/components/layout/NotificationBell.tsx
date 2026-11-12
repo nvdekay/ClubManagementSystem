@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppDialog } from "@/components/ui/dialog/AppDialog";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import {
@@ -71,7 +72,7 @@ export function NotificationBell({ userId, csrfToken, scope }: NotificationBellP
           {t("notifications.error")}
           <AppButton variant="secondary" onClick={() => void inbox.refetch()}>{t("notifications.retry")}</AppButton>
         </div>
-        : items.length === 0 ? <p className="mt-6 mb-2 text-center text-sm text-muted-app">{t("notifications.empty")}</p>
+        : items.length === 0 ? <div className="mt-4"><AppEmptyState variant="boxed" message={t("notifications.empty")} /></div>
         : <ul className="mt-4 divide-y divide-border-app rounded-xl border border-border-app">
           {items.map((item) => {
             const subject = notificationSubject(item);

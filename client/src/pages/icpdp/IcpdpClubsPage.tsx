@@ -8,6 +8,7 @@ import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppInput } from "@/components/ui/input/AppInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppPagination } from "@/components/ui/pagination/AppPagination";
 import { AppSelect } from "@/components/ui/select/AppSelect";
@@ -61,7 +62,7 @@ export function IcpdpClubsPage() {
   if (auth.isPending) return <AppSkeleton className="h-72 w-full" />;
   if (!auth.data) return <AppNotice>
     <p>{t("clubLifecycle.signIn")}</p>
-    <Link className="font-semibold text-accent-app" to="/login?returnTo=%2Ficpdp%2Fclubs">{t("clubLifecycle.signInLink")}</Link>
+    <Link className="font-semibold text-primary-app hover:underline" to="/login?returnTo=%2Ficpdp%2Fclubs">{t("clubLifecycle.signInLink")}</Link>
   </AppNotice>;
   if (!isOfficer) return <AppNotice tone="danger" role="alert">{t("clubLifecycle.forbidden")}</AppNotice>;
 
@@ -76,44 +77,44 @@ export function IcpdpClubsPage() {
 
   return (
     <section>
-      <div className="text-center">
-        <h1 className="font-heading text-3xl font-extrabold tracking-tight text-text-app sm:text-4xl">{t("discovery.clubsTitle")}</h1>
-        <p className="mt-3 text-muted-app">
-          {t("discovery.clubsCountPrefix")} <strong className="font-bold text-recruitment-app">{visible.length}</strong> {t("discovery.clubsCountSuffix")}
+      <header className="mb-6">
+        <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance text-text-app">{t("discovery.clubsTitle")}</h1>
+        <p className="mt-1 text-sm text-muted-app">
+          {t("discovery.clubsCountPrefix")} <strong className="font-semibold text-text-app">{visible.length}</strong> {t("discovery.clubsCountSuffix")}
         </p>
-      </div>
+      </header>
 
       {clubs.data && clubs.data.expiringSuspensions.length > 0 && (
-        <AppNotice tone="warning" className="mt-6" title={t("clubLifecycle.expiringTitle")}>
+        <AppNotice tone="warning" className="mb-6" title={t("clubLifecycle.expiringTitle")}>
           <p>{t("clubLifecycle.expiringHint")}</p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">{clubs.data.expiringSuspensions.map((club) => <li key={club.id}>
-            <button type="button" className="font-semibold text-accent-app hover:underline" onClick={() => setManaging(club.id)}>
+            <button type="button" className="font-semibold text-primary-app hover:underline rounded-sm focus-visible:outline-2 focus-visible:outline-ring-app" onClick={() => setManaging(club.id)}>
               {club.name}</button>{club.suspension?.until ? ` · ${t("clubLifecycle.until", { date: date(club.suspension.until) })}` : ""}</li>)}</ul>
         </AppNotice>
       )}
 
-      <div className="mt-7 rounded-xl bg-surface-app p-3">
-        <form onSubmit={(event) => { event.preventDefault(); filter(() => setSearch(query.trim())); }} className="flex">
-          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)}
+      <div className="flex flex-wrap items-center gap-2">
+        <form onSubmit={(event) => { event.preventDefault(); filter(() => setSearch(query.trim())); }} className="flex w-full min-w-0 gap-2 sm:w-auto sm:flex-1 lg:max-w-md">
+          <AppInput type="search" value={query} onChange={(event) => setQuery(event.target.value)}
             aria-label={t("discovery.searchPlaceholder")} placeholder={t("discovery.searchPlaceholder")}
-            className="min-h-11 min-w-0 flex-1 rounded-l-lg border border-r-0 border-border-app bg-bg-app px-4 text-text-app placeholder:text-muted-app focus:border-recruitment-app focus:ring-2 focus:ring-recruitment-soft-app focus:outline-none" />
-          <button type="submit" className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-r-lg bg-recruitment-app px-4 font-semibold text-on-recruitment-app transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-recruitment-app sm:px-6">
-            <AppIcon name="search" className="size-5" />
+            className="min-w-0 flex-1" />
+          <AppButton type="submit" variant="secondary" className="shrink-0">
+            <AppIcon name="search" className="size-4" />
             <span className="hidden sm:inline">{t("discovery.searchAction")}</span>
-          </button>
+          </AppButton>
         </form>
-        <div className="mt-3 flex flex-wrap justify-end gap-3">
-          <AppSelect className="w-full sm:w-56" label={t("clubLifecycle.stateFilter")} value={state}
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto lg:ml-auto">
+          <AppSelect className="w-full sm:w-48" label={t("clubLifecycle.stateFilter")} value={state}
             options={[{ value: "", label: t("clubLifecycle.allStates") }, ...states.map((value) => ({ value, label: stateLabel(value) }))]}
             onChange={(value) => filter(() => setState(value))} />
-          <AppSelect className="w-full sm:w-56" label={t("discovery.fields")} value={field}
+          <AppSelect className="w-full sm:w-48" label={t("discovery.fields")} value={field}
             options={[{ value: "", label: t("discovery.allFields") }, ...fields.map((value) => ({ value, label: value }))]}
             onChange={(value) => filter(() => setField(value))} />
         </div>
       </div>
 
       {clubs.isPending ? (
-        <div role="status" className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div role="status" className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <span className="sr-only">{t("discovery.loading")}</span>
           {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((item) => <AppSkeleton key={item} className="h-72 w-full rounded-2xl" />)}
         </div>
@@ -131,9 +132,9 @@ export function IcpdpClubsPage() {
         </div>
       ) : (
         <>
-          <ul className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <ul className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {pageItems.map((club) => (
-              <li key={club.id} className="group relative flex min-h-72 flex-col overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-md transition duration-200 hover:-translate-y-1 hover:shadow-xl">
+              <li key={club.id} className="group relative flex min-h-72 flex-col overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs transition duration-200 hover:shadow-md">
                 <button type="button" onClick={() => setManaging(club.id)} aria-label={t("clubLifecycle.manageLabel", { club: club.name })}
                   className="focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring-app">
                   <ClubCover name={club.name} logoUrl={club.logoUrl} />
@@ -141,7 +142,7 @@ export function IcpdpClubsPage() {
                 <ClubLogo name={club.name} logoUrl={club.logoUrl} size={72}
                   className="absolute top-19 left-1/2 -translate-x-1/2 rounded-full border-2 border-bg-app shadow-sm" />
                 <div className="flex flex-1 flex-col items-center px-4 pt-11 pb-5 text-center">
-                  <span title={club.name} className="line-clamp-1 font-heading text-lg font-bold text-primary-app">{club.name}</span>
+                  <span title={club.name} className="line-clamp-1 font-heading text-base font-semibold text-text-app">{club.name}</span>
                   <span className="mt-1 line-clamp-1 w-full text-xs text-muted-app" title={club.contactEmail ?? club.code}>
                     {club.contactEmail ?? club.code}
                   </span>

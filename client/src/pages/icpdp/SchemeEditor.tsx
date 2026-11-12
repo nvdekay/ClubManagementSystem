@@ -85,17 +85,17 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
       {readOnly && <p className="text-sm text-muted-app">{t("evaluationSchemes.lockedHint")}</p>}
       <fieldset disabled={readOnly} className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <legend className="font-heading font-bold">{t("evaluationSchemes.criteria")}</legend>
+          <legend className="font-heading text-sm font-semibold">{t("evaluationSchemes.criteria")}</legend>
           <div className="flex flex-wrap items-center gap-3">
             <span className={cn("text-sm font-semibold text-success-app", { "text-danger-app": total !== 100 })}>
               {t("evaluationSchemes.total", { total })}</span>
             {!readOnly && <AppButton type="button" variant="secondary" onClick={spread}>{t("evaluationSchemes.spread")}</AppButton>}
           </div>
         </div>
-        <ul className="divide-y divide-border-app rounded-xl border border-border-app">{catalogue.map((dimension) => {
+        <ul className="divide-y divide-border-app rounded-xl border border-border-app bg-bg-app">{catalogue.map((dimension) => {
           const row = rows[dimension.code]!;
           const name = t(`evaluationSchemes.dim_${dimension.code}`);
-          return <li key={dimension.code} className={cn("flex flex-wrap items-center gap-4 px-3 py-3", { "opacity-60": !row.included })}>
+          return <li key={dimension.code} className={cn("flex flex-wrap items-center gap-4 px-4 py-3", { "opacity-60": !row.included })}>
             <div className="flex min-w-0 flex-1 basis-64 items-start gap-3">
               {dimension.core ? <span className="mt-0.5 w-9 shrink-0" />
                 : <AppSwitch className="mt-0.5 shrink-0" checked={row.included} aria-label={t("evaluationSchemes.include", { name })}
@@ -107,8 +107,8 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
               </div>
             </div>
             {row.included && <div className="flex flex-wrap items-center gap-4">
-              <label className="text-sm">{t("evaluationSchemes.weight")}
-                <AppInput className="mt-1 block w-24" type="number" min="0" max="100" step="1" value={row.weight}
+              <label className="block text-sm font-medium text-text-app">{t("evaluationSchemes.weight")}
+                <AppInput className="mt-1.5 block w-24" type="number" min="0" max="100" step="1" value={row.weight}
                   onChange={(event) => patch(dimension.code, { weight: event.target.value })} />
               </label>
               <label className="flex items-center gap-2 text-sm">
@@ -123,11 +123,11 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
       </fieldset>
 
       <fieldset disabled={readOnly} className="space-y-3">
-        <legend className="font-heading font-bold">{t("evaluationSchemes.bands")}</legend>
+        <legend className="font-heading text-sm font-semibold">{t("evaluationSchemes.bands")}</legend>
         <div className="flex flex-wrap gap-4">
-          {(["excellent", "good", "fair"] as const).map((band) => <label key={band} className="text-sm">
+          {(["excellent", "good", "fair"] as const).map((band) => <label key={band} className="block text-sm font-medium text-text-app">
             {t(`evaluationSchemes.${band}`)}<AppRequiredMark />
-            <AppInput className="mt-1 block w-24" type="number" min="1" max="100" step="1" value={bands[band]}
+            <AppInput className="mt-1.5 block w-24" type="number" min="1" max="100" step="1" value={bands[band]}
               {...field.control(band)} onChange={(event) => setBands({ ...bands, [band]: event.target.value })} />
             <AppFieldError message={field.error(band)} />
           </label>)}

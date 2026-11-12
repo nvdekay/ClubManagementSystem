@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -52,7 +53,7 @@ export function EventProposalQueuePage() {
       {auth.isPending || (isOfficer && queue.isPending) ? loading : !auth.data ? (
         <AppNotice>
           <p>{t("eventReviews.signIn")}</p>
-          <Link className="inline-block font-semibold text-accent-app"
+          <Link className="inline-block font-semibold text-primary-app hover:underline"
             to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("eventReviews.signInLink")}</Link>
         </AppNotice>
       ) : !isOfficer ? (
@@ -62,18 +63,18 @@ export function EventProposalQueuePage() {
           <AppButton variant="secondary" onClick={() => void queue.refetch()}>{t("eventReviews.retry")}</AppButton>
         </AppNotice>
       ) : queue.data?.length ? (
-        <ul className="divide-y divide-border-app border-y border-border-app">
+        <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {queue.data.map(({ task, event }) => {
             const mine = task.assigneeId === auth.data?.user.id;
             const takenElsewhere = Boolean(task.assigneeId && !mine);
             return (
-              <li key={task.id} className="flex flex-wrap items-center gap-x-6 gap-y-3 px-2 py-5">
-                <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+              <li key={task.id} className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
+                <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
                   <AppIcon name="calendar" />
                 </span>
                 <div className="min-w-0 flex-1 basis-64">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="font-heading text-lg font-bold break-words">{event.title}</h2>
+                    <h2 className="font-heading text-base font-semibold break-words">{event.title}</h2>
                     <AppBadge tone={mine ? "success" : takenElsewhere ? "danger" : "neutral"}>
                       {mine ? t("eventReviews.assignedToYou") : takenElsewhere ? t("eventReviews.assigned") : t("eventReviews.unassigned")}
                     </AppBadge>
@@ -99,11 +100,7 @@ export function EventProposalQueuePage() {
           })}
         </ul>
       ) : (
-        <div className="py-16 text-center">
-          <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="sparkles" className="size-7" /></span>
-          <h2 className="mt-4 font-heading text-xl font-bold">{t("eventReviews.none")}</h2>
-          <p className="mt-2 text-sm text-muted-app">{t("eventReviews.noneHint")}</p>
-        </div>
+        <AppEmptyState variant="boxed" icon="sparkles" title={t("eventReviews.none")} message={t("eventReviews.noneHint")} />
       )}
       {action.isError && <AppNotice tone="danger" role="alert" className="mt-4">{action.error.message}</AppNotice>}
     </>

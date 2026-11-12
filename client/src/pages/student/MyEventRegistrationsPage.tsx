@@ -7,6 +7,7 @@ import { EventFeedbackForm, EventFeedbackSummary } from "@/components/custom/Eve
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -87,10 +88,10 @@ export function MyEventRegistrationsPage() {
       <PageHeader title={t("eventRegistrations.title")} description={t("eventRegistrations.description")} />
 
       {deepLink && !pending && (
-        <section aria-labelledby="deep-link-check-in" className="mb-8 rounded-3xl bg-primary-soft-app p-5 sm:p-6">
+        <section aria-labelledby="deep-link-check-in" className="mb-6 rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-5 shadow-xs sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 id="deep-link-check-in" className="font-heading text-lg font-bold">{t("eventRegistrations.deepLinkTitle")}</h2>
+              <h2 id="deep-link-check-in" className="font-heading text-base font-semibold">{t("eventRegistrations.deepLinkTitle")}</h2>
               {deepLinkTitle && <p className="mt-1 text-sm break-words text-muted-app">{deepLinkTitle}</p>}
             </div>
             <AppButton variant="ghost" aria-label={t("eventRegistrations.closeCheckIn")} onClick={closeDeepLink} className="size-10 shrink-0 px-0">
@@ -113,15 +114,15 @@ export function MyEventRegistrationsPage() {
         </AppNotice>
       ) : (
         <>
-          <div role="group" aria-label={t("eventRegistrations.title")} className="mb-4 inline-flex max-w-full flex-wrap rounded-3xl bg-surface-app p-1">
+          <div role="group" aria-label={t("eventRegistrations.title")} className="mb-4 inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
             {(["active", "attended", "cancelled"] as const).map((value) => (
               <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}
-                className={cn("min-h-10 rounded-full px-4 text-sm font-semibold text-muted-app transition-colors focus-visible:outline-2 focus-visible:outline-ring-app", {
-                  "bg-bg-app text-primary-app shadow-sm": filter === value,
+                className={cn("inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
+                  "bg-segment-app text-text-app shadow-xs": filter === value,
                 })}>
                 {value === "active" ? t("eventRegistrations.filterActive")
                   : value === "attended" ? t("eventRegistrations.filterAttended") : t("eventRegistrations.filterCancelled")}
-                <span className="ml-1.5 tabular-nums">{counts[value]}</span>
+                <span className="ml-1.5 text-muted-app tabular-nums">{counts[value]}</span>
               </button>
             ))}
           </div>
@@ -141,12 +142,12 @@ export function MyEventRegistrationsPage() {
 
           {filter === "attended" ? (
             attended.length === 0 ? <EmptyState message={t("eventRegistrations.attendedEmpty")} />
-              : <ul className="divide-y divide-border-app border-y border-border-app">
+              : <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
                 {attended.map((item) => <AttendanceRow key={item.id} attendance={item} locale={locale} nowTime={nowTime}
                   feedback={feedbackByEvent.get(item.eventId)} />)}
               </ul>
           ) : items.length === 0 ? <EmptyState message={t("eventRegistrations.empty")} /> : (
-            <ul className="divide-y divide-border-app border-y border-border-app">
+            <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
               {items.map((registration) => {
                 const started = new Date(registration.eventStartAt).getTime() <= nowTime;
                 const checkedIn = attendedEvents.has(registration.eventId);
@@ -154,12 +155,12 @@ export function MyEventRegistrationsPage() {
                   && nowTime < new Date(registration.checkInClosesAt).getTime();
                 const canCheckIn = registration.state === "Confirmed" && !checkedIn && inCheckInWindow;
                 return (
-                  <li key={registration.id} className="px-2 py-4">
+                  <li key={registration.id} className="px-5 py-4">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                      <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-soft-app text-primary-app">
+                      <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
                         <AppIcon name="calendar" /></span>
                       <div className="min-w-0 flex-1 basis-56">
-                        <Link to={`/events/${registration.eventId}`} className="font-semibold break-words text-text-app hover:text-primary-app hover:underline">
+                        <Link to={`/events/${registration.eventId}`} className="font-medium break-words text-text-app hover:text-primary-app">
                           {registration.eventTitle}</Link>
                         <p className="mt-0.5 text-sm text-muted-app">
                           {registration.clubName} · {t("eventRegistrations.starts", { date: formatDate(registration.eventStartAt, locale) })}
@@ -194,7 +195,7 @@ export function MyEventRegistrationsPage() {
                       </div>
                     </div>
                     {canCheckIn && openCheckIn === registration.id && (
-                      <div className="mt-4 rounded-2xl bg-surface-app p-4">
+                      <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4">
                         <EventCheckInForm eventId={registration.eventId} autoFocus
                           onCheckedIn={(result) => { setLastCheckIn(result); setOpenCheckIn(null); }} />
                       </div>
@@ -223,12 +224,12 @@ function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowP
   const [justSent, setJustSent] = useState(false);
   const feedbackOpen = !attendance.feedbackClosesAt || new Date(attendance.feedbackClosesAt).getTime() > nowTime;
   return (
-    <li className="px-2 py-4">
+    <li className="px-5 py-4">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-mint-soft-app text-mint-app">
+        <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-success-app">
           <AppIcon name="badge" /></span>
         <div className="min-w-0 flex-1 basis-56">
-          <Link to={`/events/${attendance.eventId}`} className="font-semibold break-words text-text-app hover:text-primary-app hover:underline">
+          <Link to={`/events/${attendance.eventId}`} className="font-medium break-words text-text-app hover:text-primary-app">
             {attendance.eventTitle}</Link>
           <p className="mt-0.5 text-sm text-muted-app">
             {attendance.clubName} · {t("eventRegistrations.checkedInAt", { date: formatDate(attendance.checkedInAt, locale) })}
@@ -251,12 +252,12 @@ function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowP
         )}
       </div>
       {feedback ? (
-        <div className="mt-3 space-y-2 rounded-2xl bg-surface-app p-4">
+        <div className="mt-3 space-y-2 rounded-xl border border-border-app bg-surface-app p-4">
           {justSent && <p role="status" className="text-sm font-semibold text-success-app">{t("eventFeedback.submitted")}</p>}
           <EventFeedbackSummary feedback={feedback} />
         </div>
       ) : open && feedbackOpen && (
-        <div className="mt-4 rounded-2xl bg-surface-app p-4">
+        <div className="mt-4 rounded-xl border border-border-app bg-surface-app p-4">
           <EventFeedbackForm eventId={attendance.eventId} closesAt={attendance.feedbackClosesAt}
             onSubmitted={() => { setOpen(false); setJustSent(true); }} />
         </div>
@@ -268,12 +269,8 @@ function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowP
 function EmptyState({ message }: { message: string }) {
   const { t } = useTranslation();
   return (
-    <div className="py-16 text-center">
-      <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app">
-        <AppIcon name="calendar" className="size-7" /></span>
-      <p className="mt-4 text-muted-app">{message}</p>
-      <Link to="/events" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
-        {t("eventRegistrations.browseEvents")}</Link>
-    </div>
+    <AppEmptyState variant="boxed" icon="calendar" message={message}
+      action={<Link to="/events" className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
+        {t("eventRegistrations.browseEvents")}</Link>} />
   );
 }

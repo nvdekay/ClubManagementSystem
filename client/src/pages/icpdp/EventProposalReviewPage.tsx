@@ -22,6 +22,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 
 const outcomes: EventReviewOutcome[] = ["Request revision", "Approve", "Reject"];
 
@@ -126,7 +127,7 @@ export function EventProposalReviewPage() {
   }
 
   const back = { to: "/workspace/event-proposals", label: t("eventReviews.back") };
-  const label = "text-xs font-semibold tracking-wide text-muted-app uppercase";
+  const label = "text-xs text-muted-app";
 
   // A disabled query stays pending forever, so only wait for a proposal the user may load.
   if (auth.isPending || (isOfficer && review.isPending)) return <div className="space-y-4">
@@ -134,7 +135,7 @@ export function EventProposalReviewPage() {
   </div>;
   if (!auth.data) return <AppNotice>
     <p>{t("eventReviews.signIn")}</p>
-    <Link className="inline-block font-semibold text-accent-app"
+    <Link className="inline-block font-semibold text-primary-app hover:underline"
       to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>{t("eventReviews.signInLink")}</Link>
   </AppNotice>;
   if (!isOfficer) return <AppNotice tone="danger" role="alert">{t("eventReviews.unauthorized")}</AppNotice>;
@@ -227,14 +228,14 @@ export function EventProposalReviewPage() {
         description={`${event.clubName} · ${t("eventReviews.revision", { number: event.currentRevisionNo })}`}
         actions={<AppBadge tone={stateTone}>{t("eventReviews.status")}: {stateLabel(event.state)}</AppBadge>} />
 
-      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <div className="min-w-0 space-y-10">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <div className="min-w-0 space-y-6">
           {previous && current && <RevisionChanges previousNumber={previous.revisionNo}
             changes={diffFields(previous, current, versionFields)}
             requestedSections={revisionRequest?.sections.map(sectionLabel)} reason={revisionRequest?.reason} />}
-          <section>
-            <h2 className="font-heading text-xl font-bold">{t("eventReviews.overview")}</h2>
-            <dl className="mt-5 grid gap-5 sm:grid-cols-2">
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("eventReviews.overview")}</h2>
+            <dl className="mt-4 grid gap-5 sm:grid-cols-2">
               <div><dt className={label}>{t("eventReviews.when")}</dt><dd className="mt-1 font-medium">{date(event.startAt)} – {date(event.endAt)}</dd></div>
               <div><dt className={label}>{t("eventReviews.where")}</dt><dd className="mt-1 font-medium break-words">
                 {event.property ? `${event.property.code} · ${event.property.name}` : event.venueText ?? "—"}</dd></div>
@@ -259,37 +260,37 @@ export function EventProposalReviewPage() {
             </dl>
           </section>
 
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("eventReviews.budget")}</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("eventReviews.budget")}</h2>
             {lines.length ? (
-              <div className="mt-4 overflow-x-auto">
+              <div className="mt-4 overflow-x-auto rounded-xl border border-border-app bg-bg-app">
                 <table className="w-full min-w-[32rem] text-left text-sm">
-                  <thead><tr className="border-b border-border-app text-muted-app">
-                    <th scope="col" className="py-2 pr-3 font-semibold">{t("eventReviews.category")}</th>
-                    <th scope="col" className="py-2 pr-3 font-semibold">{t("eventReviews.purpose")}</th>
-                    <th scope="col" className="py-2 pr-3 text-right font-semibold">{t("eventReviews.requestedAmount")}</th>
-                    {budget && <th scope="col" className="py-2 text-right font-semibold">{t("eventReviews.approvedAmount")}</th>}
+                  <thead className="bg-surface-app"><tr className="text-xs text-muted-app">
+                    <th scope="col" className="px-4 py-2.5 font-medium">{t("eventReviews.category")}</th>
+                    <th scope="col" className="px-4 py-2.5 font-medium">{t("eventReviews.purpose")}</th>
+                    <th scope="col" className="px-4 py-2.5 text-right font-medium">{t("eventReviews.requestedAmount")}</th>
+                    {budget && <th scope="col" className="px-4 py-2.5 text-right font-medium">{t("eventReviews.approvedAmount")}</th>}
                   </tr></thead>
-                  <tbody className="divide-y divide-border-app">{lines.map((line, index) => {
+                  <tbody>{lines.map((line, index) => {
                     const approved = budget?.lines[index];
-                    return <tr key={index} className="align-top">
-                      <td className="py-2.5 pr-3 font-medium">{line.category}</td>
-                      <td className="py-2.5 pr-3"><p className="break-words">{line.purpose}</p>
+                    return <tr key={index} className="border-t border-border-app align-top">
+                      <td className="px-4 py-3 font-medium">{line.category}</td>
+                      <td className="px-4 py-3"><p className="break-words">{line.purpose}</p>
                         {line.plannedItems && <p className="mt-0.5 whitespace-pre-line text-xs text-muted-app">{line.plannedItems}</p>}</td>
-                      <td className="py-2.5 pr-3 text-right tabular-nums">{money(line.amount)}</td>
-                      {budget && <td className="py-2.5 text-right tabular-nums">{approved ? money(approved.approvedAmount) : "—"}
+                      <td className="px-4 py-3 text-right tabular-nums">{money(line.amount)}</td>
+                      {budget && <td className="px-4 py-3 text-right tabular-nums">{approved ? money(approved.approvedAmount) : "—"}
                         {approved?.reason && <p className="mt-0.5 text-xs text-muted-app">{approved.reason}</p>}</td>}
                     </tr>;
                   })}</tbody>
-                  <tfoot><tr className="border-t border-border-app font-semibold">
-                    <td className="py-2.5 pr-3" colSpan={2}>{t("eventReviews.total")}</td>
-                    <td className="py-2.5 pr-3 text-right tabular-nums">{money(current?.requestedBudgetTotal ?? 0)}</td>
-                    {budget && <td className="py-2.5 text-right tabular-nums">{money(budget.approvedTotal)}</td>}
+                  <tfoot><tr className="border-t border-border-app bg-surface-app font-semibold">
+                    <td className="px-4 py-3" colSpan={2}>{t("eventReviews.total")}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{money(current?.requestedBudgetTotal ?? 0)}</td>
+                    {budget && <td className="px-4 py-3 text-right tabular-nums">{money(budget.approvedTotal)}</td>}
                   </tr></tfoot>
                 </table>
               </div>
             ) : <p className="mt-3 text-sm text-muted-app">{t("eventReviews.budgetNone")}</p>}
-            <div className="mt-6 rounded-2xl bg-surface-app p-4">
+            <div className="mt-5 rounded-xl border border-border-app bg-surface-app p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-semibold">{t("eventReviews.semesterBudgets")}</h3>
                 {semesterBudgets.length > 0 && <AppBadge tone="info">{t("eventReviews.semesterTotal", { amount: money(semesterTotal) })}</AppBadge>}
@@ -303,17 +304,17 @@ export function EventProposalReviewPage() {
             </div>
           </section>
 
-          <div className="grid gap-10 border-t border-border-app pt-8 md:grid-cols-2">
-            <section className="min-w-0">
-              <h2 className="font-heading text-lg font-bold">{t("eventReviews.clubSection")}</h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            <section className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t("eventReviews.clubSection")}</h2>
               <p className="mt-3 text-sm"><span className="text-muted-app">{t("eventReviews.clubState")}: </span>
                 <span className="font-semibold">{club.name}</span> · {club.state}</p>
               {club.obligations.length ? <ul className="mt-3 space-y-2">{club.obligations.map((item) =>
                 <li key={item}><AppBadge tone="danger">{obligationLabel(item)}</AppBadge></li>)}</ul>
-                : <p className="mt-3 text-sm text-muted-app">{t("eventReviews.noObligations")}</p>}
+                : <div className="mt-3"><AppEmptyState message={t("eventReviews.noObligations")} /></div>}
             </section>
-            <section className="min-w-0">
-              <h2 className="font-heading text-lg font-bold">{t("eventReviews.bookings")}</h2>
+            <section className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t("eventReviews.bookings")}</h2>
               {bookings.length ? <ul className="mt-3 divide-y divide-border-app text-sm">{bookings.map((booking) =>
                 <li key={booking.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <span className="min-w-0"><span className="block font-medium break-words">
@@ -321,17 +322,17 @@ export function EventProposalReviewPage() {
                   <span className="block text-xs text-muted-app">{date(booking.startAt)} – {date(booking.endAt)}</span></span>
                   <AppBadge>{booking.state}</AppBadge>
                 </li>)}</ul>
-                : <p className="mt-3 text-sm text-muted-app">{t("eventReviews.noBookings")}</p>}
+                : <div className="mt-3"><AppEmptyState message={t("eventReviews.noBookings")} /></div>}
               <p className="mt-3 text-xs text-muted-app">{t("eventReviews.bookingsHint")}</p>
             </section>
           </div>
 
-          <section className="border-t border-border-app pt-8">
-            <h2 className="font-heading text-xl font-bold">{t("eventReviews.history")}</h2>
-            <ol className="mt-5 space-y-4 border-l-2 border-border-app pl-5">{versions.map((version) =>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("eventReviews.history")}</h2>
+            <ol className="mt-4 ml-1 space-y-4 border-l-2 border-border-app pl-5">{versions.map((version) =>
               <li key={version.id} className="relative">
-                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-primary-app" />
-                <p className="font-semibold">{t("eventReviews.revision", { number: version.revisionNo })}
+                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-brand-app" />
+                <p className="font-medium">{t("eventReviews.revision", { number: version.revisionNo })}
                   {version.requestedBudgetTotal > 0 && <span className="font-normal text-muted-app"> · {money(version.requestedBudgetTotal)}</span>}</p>
                 <p className="text-sm text-muted-app">{t("eventReviews.submittedBy", {
                   name: version.submittedByName ?? version.submittedBy, date: date(version.submittedAt) })}</p>
@@ -339,44 +340,44 @@ export function EventProposalReviewPage() {
           </section>
         </div>
 
-        <aside className="min-w-0 space-y-6 lg:sticky lg:top-6">
+        <aside className="min-w-0 space-y-6 xl:sticky xl:top-24">
           {isOpen && !mine ? (
-            <div className="rounded-2xl bg-surface-app p-5">
+            <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
               <p className="text-sm text-muted-app">{task.assigneeId ? t("eventReviews.claimedByOther") : t("eventReviews.claimHint")}</p>
               {!task.assigneeId && <AppButton className="mt-5 w-full" disabled={action.isPending} onClick={() => void claim()}>
                 {action.isPending ? t("eventReviews.claiming") : t("eventReviews.claim")}</AppButton>}
             </div>
           ) : isOpen ? (
-            <section className="rounded-2xl bg-surface-app p-5">
-              <h2 className="font-heading text-lg font-bold">{t("eventReviews.decisionPanel")}</h2>
+            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+              <h2 className="font-heading text-base font-semibold">{t("eventReviews.decisionPanel")}</h2>
               <p className="mt-1 text-sm text-muted-app">{t("eventReviews.decisionHint")}</p>
-              <div className="mt-5 grid grid-cols-3 gap-1 rounded-full bg-surface-strong-app p-1">{outcomes.map((value) =>
+              <div className="mt-5 grid grid-cols-3 gap-1 rounded-lg border border-border-app bg-surface-app p-1">{outcomes.map((value) =>
                 <button key={value} type="button" aria-pressed={outcome === value} onClick={() => setOutcome(value)}
-                  className={cn("min-h-11 rounded-full px-2 py-2 text-xs font-semibold text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app", {
-                    "bg-bg-app text-primary-app shadow-sm hover:text-primary-app": outcome === value,
+                  className={cn("min-h-11 rounded-md px-2 py-1.5 text-xs font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9", {
+                    "bg-segment-app text-text-app shadow-xs": outcome === value,
                   })}>{outcomeLabel(value)}</button>)}</div>
 
               {outcome === "Request revision" && <fieldset className="mt-5">
-                <legend className="text-sm font-semibold">{t("eventReviews.sections")}<AppRequiredMark /></legend>
+                <legend className="text-sm font-medium text-text-app">{t("eventReviews.sections")}<AppRequiredMark /></legend>
                 <div className="mt-3 space-y-1">{EVENT_REVIEW_SECTIONS.map((section) =>
-                  <label key={section} className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm hover:bg-surface-strong-app">
+                  <label key={section} className="flex min-h-10 items-center gap-3 rounded-lg px-2 text-sm hover:bg-surface-app">
                     <input type="checkbox" checked={sections.includes(section)} onChange={() => { toggleSection(section); field.touch("sections"); }}
                       className="size-4 accent-primary-app" />
                     {sectionLabel(section)}</label>)}</div>
                 <AppFieldError message={field.error("sections")} />
-                <label className="mt-4 block text-sm font-semibold">{t("eventReviews.deadline")}<AppRequiredMark />
+                <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.deadline")}<AppRequiredMark />
                   <AppInput type="datetime-local" value={deadline} {...field.control("deadline")} onChange={(e) => setDeadline(e.target.value)}
-                    className="mt-2 w-full font-normal" />
+                    className="mt-1.5 block w-full font-normal" />
                   <AppFieldError message={field.error("deadline")} /></label>
               </fieldset>}
 
               {outcome === "Approve" && lines.length > 0 && <fieldset className="mt-5">
-                <legend className="text-sm font-semibold">{t("eventReviews.approveAmounts")}</legend>
+                <legend className="text-sm font-medium text-text-app">{t("eventReviews.approveAmounts")}</legend>
                 <p className="mt-1 text-xs text-muted-app">{t("eventReviews.approveAmountsHint")}</p>
                 <div className="mt-3 space-y-4">{lines.map((line, index) => {
                   const lowered = approvedAmounts[index]! < line.amount;
                   return <div key={index}>
-                    <label className="block text-sm"><span className="flex flex-wrap justify-between gap-2">
+                    <label className="block text-sm font-medium text-text-app"><span className="flex flex-wrap justify-between gap-2">
                       <span className="font-medium break-words">{line.category}</span>
                       <span className="text-xs text-muted-app">{t("eventReviews.requestedAmount")}: {money(line.amount)}</span></span>
                       <AppMoneyInput
@@ -392,16 +393,16 @@ export function EventProposalReviewPage() {
                 <p className="mt-3 text-sm font-semibold">{t("eventReviews.approvedTotal", { amount: money(approvedTotal) })}</p>
               </fieldset>}
 
-              {outcome === "Approve" && <label className="mt-5 block text-sm font-semibold">{t("eventReviews.conditions")}
-                <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={conditions}
+              {outcome === "Approve" && <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.conditions")}
+                <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" value={conditions}
                   onChange={(e) => setConditions(e.target.value)} placeholder={t("eventReviews.conditionsHint")} /></label>}
 
-              <label className="mt-5 block text-sm font-semibold">{t("eventReviews.reason")}{outcome !== "Approve" && <AppRequiredMark />}
-                <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={reason} maxLength={5000} {...field.control("reason", outcome !== "Approve")}
+              <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.reason")}{outcome !== "Approve" && <AppRequiredMark />}
+                <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" value={reason} maxLength={5000} {...field.control("reason", outcome !== "Approve")}
                   onChange={(e) => setReason(e.target.value)} placeholder={t("eventReviews.reasonHint")} />
                 <AppFieldError message={field.error("reason")} /></label>
-              <label className="mt-5 block text-sm font-semibold">{t("eventReviews.reviewNote")}
-                <AppTextarea className="mt-2 min-h-24 w-full font-normal" value={reviewNote} maxLength={10000}
+              <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.reviewNote")}
+                <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" value={reviewNote} maxLength={10000}
                   onChange={(e) => setReviewNote(e.target.value)} placeholder={t("eventReviews.reviewNoteHint")} /></label>
               <AppButton className="mt-6 w-full" disabled={action.isPending} onClick={() => void decide()}>
                 {action.isPending ? t("eventReviews.submitting") : t("eventReviews.submit")}</AppButton>
@@ -410,22 +411,22 @@ export function EventProposalReviewPage() {
           ) : null}
           {action.isSuccess && action.variables?.kind === "decide" && <AppNotice role="status">{t("eventReviews.success")}</AppNotice>}
 
-          {event.approvalConditions.length > 0 && <section>
-            <h2 className="font-heading text-lg font-bold">{t("eventReviews.conditions")}</h2>
+          {event.approvalConditions.length > 0 && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("eventReviews.conditions")}</h2>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{event.approvalConditions.map((item, index) => <li key={index} className="break-words">{item}</li>)}</ul>
           </section>}
 
-          <section>
-            <h2 className="font-heading text-lg font-bold">{t("eventReviews.decisions")}</h2>
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("eventReviews.decisions")}</h2>
             {decisions.length ? <ol className="mt-4 space-y-4">{[...decisions].reverse().map((decision) =>
-              <li key={decision.id} className="border-l-2 border-primary-app pl-3">
-                <p className="font-semibold">{outcomeLabel(decision.outcome)}</p>
+              <li key={decision.id} className="border-l-2 border-brand-app pl-3">
+                <p className="font-medium">{outcomeLabel(decision.outcome)}</p>
                 <p className="mt-1 text-xs text-muted-app">{t("eventReviews.decidedAt", { date: date(decision.at) })}</p>
                 {decision.sections.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">{decision.sections.map((section) =>
                   <AppBadge key={section} tone="warning">{sectionLabel(section)}</AppBadge>)}</div>}
                 {decision.reason && <p className="mt-2 text-sm break-words">{decision.reason}</p>}
               </li>)}</ol>
-              : <p className="mt-3 text-sm text-muted-app">{t("eventReviews.noDecisions")}</p>}
+              : <div className="mt-3"><AppEmptyState message={t("eventReviews.noDecisions")} /></div>}
           </section>
         </aside>
       </div>

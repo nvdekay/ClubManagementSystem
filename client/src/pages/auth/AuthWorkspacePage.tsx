@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 
+import { UniversityLogo } from "@/components/custom/UniversityLogo";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth, useLoginError } from "@/hooks/useAuth";
@@ -97,42 +99,41 @@ export function AuthWorkspacePage() {
           </div>
         ) : auth.isError ? (
           <div className="mx-auto space-y-4 text-center">
-            <h1 className="font-heading text-2xl font-bold">{t("auth.accountError")}</h1>
+            <h1 className="font-heading text-2xl font-semibold">{t("auth.accountError")}</h1>
             <p role="alert" className="text-sm text-danger-app">{auth.error.message}</p>
             <AppButton onClick={() => void auth.refetch()}>{t("auth.retry")}</AppButton>
           </div>
         ) : (
-          <section aria-labelledby="workspace-heading" className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-            <div className="flex flex-col gap-2">
+          <section aria-labelledby="workspace-heading" className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+            <UniversityLogo alt={t("auth.schoolLogo")} className="w-38" />
+            <div className="flex flex-col gap-1">
               <p className="text-sm text-muted-app">{auth.data.user.email}</p>
-              <h1 id="workspace-heading" className="m-0 max-w-2xl font-heading text-[clamp(30px,5vw,44px)] leading-[1.15] font-extrabold tracking-[-0.025em] text-balance text-text-app">
+              <h1 id="workspace-heading" className="m-0 max-w-2xl font-heading text-xl font-semibold tracking-tight break-words text-balance text-text-app sm:text-2xl">
                 {t("auth.chooseWorkspaceTitle", {
                   name: i18n.language === "vi"
                     ? auth.data.user.displayName.trim().split(/\s+/).at(-1)
                     : auth.data.user.displayName.trim().split(/\s+/)[0],
                 })}
               </h1>
-              <p className="m-0 text-muted-app">{t("auth.chooseWorkspaceHint")}</p>
+              <p className="m-0 text-sm text-muted-app">{t("auth.chooseWorkspaceHint")}</p>
             </div>
 
             {workspaces.length === 0 ? (
-              <div className="rounded-2xl border border-border-app bg-surface-app p-8 text-muted-app">
-                {t("auth.noWorkspaces")}
-              </div>
+              <AppEmptyState variant="boxed" message={t("auth.noWorkspaces")} />
             ) : (
-              <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {workspaces.map((workspace) => (
                   <li key={workspaceKey(workspace)} className="flex">
                     <button type="button" onClick={() => selectWorkspace(workspace)}
-                      className="group flex w-full flex-col items-start gap-4 rounded-2xl border border-border-app bg-bg-app p-7 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-app hover:shadow-lg focus-visible:border-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
-                      <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft-app text-primary-app transition-colors group-hover:bg-primary-app group-hover:text-on-primary-app">
-                        <AppIcon name={workspaceIcon(workspace.kind)} className="size-6" />
+                      className="group flex w-full flex-col items-start gap-3 rounded-2xl border border-border-app bg-bg-app p-5 text-left shadow-xs transition-[background-color,border-color,scale] duration-200 hover:border-muted-app/40 hover:bg-surface-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app active:scale-[0.99]">
+                      <span aria-hidden="true" className="flex size-10 items-center justify-center rounded-lg bg-primary-soft-app text-brand-app">
+                        <AppIcon name={workspaceIcon(workspace.kind, workspace.role)} className="size-5" />
                       </span>
-                      <span className="font-heading text-2xl leading-tight font-bold text-balance text-text-app">{workspaceTitle(workspace)}</span>
-                      <span className="leading-7 text-pretty text-muted-app">{workspaceSubtitle(workspace)}</span>
-                      <span className="mt-auto flex items-center gap-2 pt-3 font-semibold text-primary-app">
+                      <span className="font-heading text-lg leading-snug font-semibold text-balance text-text-app">{workspaceTitle(workspace)}</span>
+                      <span className="text-sm text-pretty text-muted-app">{workspaceSubtitle(workspace)}</span>
+                      <span className="mt-auto flex items-center gap-1.5 pt-2 text-sm font-medium text-primary-app">
                         {t("auth.openWorkspace")}
-                        <AppIcon name="chevronRight" className="transition-transform group-hover:translate-x-1" />
+                        <AppIcon name="chevronRight" className="size-4 transition-transform group-hover:translate-x-0.5" />
                       </span>
                     </button>
                   </li>

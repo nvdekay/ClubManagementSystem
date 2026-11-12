@@ -4,6 +4,7 @@ import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useClubBoardHistory } from "@/hooks/useDashboard";
 import type { Locale } from "@/i18n";
 import { formatDay } from "@/utils/formatDate";
@@ -34,17 +35,17 @@ export function ClubBoardHistory({ clubId, headingClassName }: ClubBoardHistoryP
       <AppButton variant="secondary" onClick={() => void history.refetch()}>{t("clubOversight.retry")}</AppButton>
     </AppNotice>;
   }
-  const heading = cn("font-heading text-lg font-bold text-text-app", headingClassName);
+  const heading = cn("font-heading text-base font-semibold text-text-app", headingClassName);
   const { structures, terms } = history.data;
 
   return (
     <div className="space-y-8">
       <section>
         <h3 className={heading}>{t("clubOversight.structuresTitle")}</h3>
-        {structures.length === 0 ? <p className="mt-2 text-sm text-muted-app">{t("clubOversight.structuresEmpty")}</p>
+        {structures.length === 0 ? <div className="mt-2"><AppEmptyState message={t("clubOversight.structuresEmpty")} /></div>
           : <ol className="mt-3 space-y-3">
             {structures.map((version, index) => <li key={version.versionNo}
-              className={cn("rounded-xl border border-border-app p-4", { "border-primary-app bg-primary-soft-app": index === 0 })}>
+              className={cn("rounded-xl border border-border-app bg-bg-app p-4", { "border-l-4 border-l-brand-app": index === 0 })}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold text-text-app">{t("clubOversight.version", { number: version.versionNo })}</span>
                 {index === 0 && <AppBadge tone="success">{t("clubOversight.currentVersion")}</AppBadge>}
@@ -64,9 +65,9 @@ export function ClubBoardHistory({ clubId, headingClassName }: ClubBoardHistoryP
 
       <section>
         <h3 className={heading}>{t("clubOversight.termsTitle")}</h3>
-        {terms.length === 0 ? <p className="mt-2 text-sm text-muted-app">{t("clubOversight.termsEmpty")}</p>
+        {terms.length === 0 ? <div className="mt-2"><AppEmptyState message={t("clubOversight.termsEmpty")} /></div>
           : <ol className="mt-3 space-y-4">
-            {terms.map((term) => <li key={term.id} className="rounded-xl border border-border-app p-4">
+            {terms.map((term) => <li key={term.id} className="rounded-xl border border-border-app bg-bg-app p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold break-words text-text-app">{term.name}</span>
                 <AppBadge tone={term.state === "Active" ? "success" : term.state === "Planned" ? "info" : "neutral"}>
@@ -74,7 +75,7 @@ export function ClubBoardHistory({ clubId, headingClassName }: ClubBoardHistoryP
                 <span className="text-sm text-muted-app">{t("clubOversight.seatPeriod", {
                   from: formatDay(term.startAt, locale), to: formatDay(term.endAt, locale) })}</span>
               </div>
-              {term.seats.length === 0 ? <p className="mt-2 text-sm text-muted-app">{t("clubOversight.seatsEmpty")}</p>
+              {term.seats.length === 0 ? <div className="mt-2"><AppEmptyState message={t("clubOversight.seatsEmpty")} /></div>
                 : <ul className="mt-2 divide-y divide-border-app">
                   {term.seats.map((seat, index) => <li key={`${seat.positionName}-${seat.memberName}-${index}`}
                     className="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-2 text-sm">

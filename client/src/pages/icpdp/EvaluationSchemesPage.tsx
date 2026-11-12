@@ -11,6 +11,7 @@ import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { appToast } from "@/components/ui/toast/AppToast";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useEvaluationSchemeAction, useEvaluationSchemes } from "@/hooks/useEvaluationSchemes";
 import { SchemeRequestError, type EvaluationScheme, type SchemeSettings } from "@/services/evaluationSchemes";
@@ -83,7 +84,7 @@ export function EvaluationSchemesPage() {
       {auth.isPending ? <AppSkeleton className="h-44 w-full" />
         : !auth.data ? <AppNotice>
           <p>{t("evaluationSchemes.signIn")}</p>
-          <Link className="font-semibold text-accent-app" to="/login?returnTo=%2Fworkspace%2Fevaluation-schemes">
+          <Link className="font-semibold text-primary-app hover:underline" to="/login?returnTo=%2Fworkspace%2Fevaluation-schemes">
             {t("evaluationSchemes.signInLink")}</Link>
         </AppNotice>
           : !isOfficer ? <AppNotice tone="danger" role="alert">{t("evaluationSchemes.forbidden")}</AppNotice>
@@ -92,16 +93,16 @@ export function EvaluationSchemesPage() {
                 title={`${t("evaluationSchemes.loadError")} ${catalogue.error?.message ?? ""}`}>
                 <AppButton onClick={() => void catalogue.refetch()}>{t("evaluationSchemes.retry")}</AppButton>
               </AppNotice> : <div className="space-y-6">
-                <section className="space-y-3 rounded-2xl bg-surface-app p-4 sm:p-5">
-                  <h2 className="font-heading font-semibold">{t("evaluationSchemes.createTitle")}</h2>
+                <section className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs sm:p-5">
+                  <h2 className="font-heading text-base font-semibold">{t("evaluationSchemes.createTitle")}</h2>
                   {data.periods.length === 0 ? <AppNotice tone="warning">{t("evaluationSchemes.noPeriods")}</AppNotice>
                     : <div className="flex flex-wrap items-end gap-3">
-                      <div className="text-sm">{t("evaluationSchemes.period")}<AppRequiredMark />
-                        <AppSelect className="mt-1 w-40" label={t("evaluationSchemes.period")} value={periodCode} required
+                      <div className="text-sm font-medium text-text-app">{t("evaluationSchemes.period")}<AppRequiredMark />
+                        <AppSelect className="mt-1.5 block w-40 font-normal" label={t("evaluationSchemes.period")} value={periodCode} required
                           onChange={setPeriod} options={data.periods.map((item) => ({ value: item.code, label: item.code }))} />
                       </div>
-                      <div className="min-w-0 flex-1 basis-56 text-sm">{t("evaluationSchemes.copyFrom")}
-                        <AppSelect className="mt-1 w-full" label={t("evaluationSchemes.copyFrom")} value={copyFrom}
+                      <div className="min-w-0 flex-1 basis-56 text-sm font-medium text-text-app">{t("evaluationSchemes.copyFrom")}
+                        <AppSelect className="mt-1.5 block w-full font-normal" label={t("evaluationSchemes.copyFrom")} value={copyFrom}
                           onChange={setCopyFrom} options={[{ value: "", label: t("evaluationSchemes.copyDefault") },
                             ...data.schemes.map((scheme) => ({ value: scheme.id,
                               label: t("evaluationSchemes.copyOption", { period: scheme.periodCode, version: scheme.version }) }))]} />
@@ -114,15 +115,15 @@ export function EvaluationSchemesPage() {
                   {error?.id === "new" && <p role="alert" className="text-sm text-danger-app">{error.text}</p>}
                 </section>
 
-                {data.schemes.length === 0 ? <AppNotice>{t("evaluationSchemes.empty")}</AppNotice>
-                  : <ul className="space-y-4">{data.schemes.map((scheme) => {
+                {data.schemes.length === 0 ? <AppEmptyState variant="boxed" message={t("evaluationSchemes.empty")} />
+                  : <ul className="space-y-3">{data.schemes.map((scheme) => {
                     const draft = scheme.state === "Draft";
                     const pinned = data.periods.some((item) => item.code === scheme.periodCode && item.evaluated);
-                    return <li key={scheme.id} className="rounded-2xl border border-border-app p-4 sm:p-5">
+                    return <li key={scheme.id} className="rounded-2xl border border-border-app bg-bg-app p-4 shadow-xs sm:p-5">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 flex-1 basis-64">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="font-heading font-bold">{scheme.periodCode}</h2>
+                            <h2 className="font-heading text-base font-semibold">{scheme.periodCode}</h2>
                             <span className="text-sm text-muted-app">{t("evaluationSchemes.version", { number: scheme.version })}</span>
                             <AppBadge tone={stateTone[scheme.state]}>{t(`evaluationSchemes.state${scheme.state}`)}</AppBadge>
                           </div>
@@ -136,7 +137,7 @@ export function EvaluationSchemesPage() {
                           {draft ? <>
                             <AppButton disabled={action.isPending || pinned} onClick={() => void run(scheme, "activate")}>
                               {t("evaluationSchemes.activate")}</AppButton>
-                            <AppButton variant="ghost" disabled={action.isPending} onClick={() => void run(scheme, "delete")}>
+                            <AppButton variant="ghost" className="text-muted-app hover:text-text-app" disabled={action.isPending} onClick={() => void run(scheme, "delete")}>
                               {t("evaluationSchemes.delete")}</AppButton>
                           </> : <AppButton variant="secondary" disabled={action.isPending}
                             onClick={() => void create(scheme.periodCode, scheme.id)}>{t("evaluationSchemes.revise")}</AppButton>}

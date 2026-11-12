@@ -4,9 +4,11 @@ import { useTranslation } from "react-i18next";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
+import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubPeriodicReports, useChangePeriodicReport } from "@/hooks/useClubPeriodicReports";
@@ -47,12 +49,12 @@ export function ClubPeriodicReportsPage() {
     {query.isPending && <AppSkeleton className="h-64 w-full" />}
     {query.isError && <AppNotice tone="danger" role="alert">{query.error.message}<AppButton onClick={() => void query.refetch()}>{t("clubPeriodicReports.retry")}</AppButton></AppNotice>}
     {query.data && (
-      <div className="mb-6 space-y-4 rounded-2xl border border-border-app bg-surface-app p-5">
+      <div className="mb-6 space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {query.data.periods.map((p) => {
             const expired = new Date(p.dueAt) < now;
             return (
-              <span key={p.code} className="inline-flex flex-wrap items-center gap-2 rounded-xl border border-border-app bg-bg-app px-3 py-1.5 text-sm">
+              <span key={p.code} className="inline-flex flex-wrap items-center gap-2 rounded-lg border border-border-app bg-surface-app px-3 py-1.5 text-sm">
                 <span className="font-semibold">{p.code}</span>
                 {!p.isOpen ? (
                   <AppBadge tone="neutral">{t("clubPeriodicReports.periodClosedBadge")}</AppBadge>
@@ -67,19 +69,19 @@ export function ClubPeriodicReportsPage() {
         </div>
         {availablePeriods.length > 0 ? (
           <div className="flex flex-wrap items-end gap-3">
-            <label className="min-w-56">
-              {t("clubPeriodicReports.period")}<AppRequiredMark />
-              <select
-                className="mt-1 block min-h-11 w-full rounded-xl border border-border-app bg-bg-app p-3 aria-[invalid=true]:border-danger-app"
+            <div className="min-w-56">
+              <p className="text-sm font-medium text-text-app">{t("clubPeriodicReports.period")}<AppRequiredMark /></p>
+              <AppSelect
+                className="mt-1.5 block w-full"
+                label={t("clubPeriodicReports.period")}
                 value={period}
-                {...field.control("period")}
-                onChange={(e) => { setPeriod(e.target.value); field.touch("period"); }}
-              >
-                <option value="">—</option>
-                {availablePeriods.map((p) => <option key={p.code} value={p.code}>{p.code}</option>)}
-              </select>
+                required
+                invalid={Boolean(field.error("period"))}
+                options={[{ value: "", label: "—" }, ...availablePeriods.map((p) => ({ value: p.code, label: p.code }))]}
+                onChange={(value) => { setPeriod(value); field.touch("period"); }}
+              />
               <AppFieldError message={field.error("period")} />
-            </label>
+            </div>
             <AppButton disabled={action.isPending} onClick={() => void create()}>{t("clubPeriodicReports.create")}</AppButton>
           </div>
         ) : (
@@ -93,7 +95,7 @@ export function ClubPeriodicReportsPage() {
       </div>
     )}
     {action.isError && <AppNotice tone="danger" role="alert">{action.error.message}</AppNotice>}
-    {query.data?.reports.length === 0 && <AppNotice>{t("clubPeriodicReports.empty")}</AppNotice>}
+    {query.data?.reports.length === 0 && <AppEmptyState variant="boxed" message={t("clubPeriodicReports.empty")} />}
     <div className="space-y-6">
       {query.data?.reports.map((r) => (
         <ClubPeriodicReportEditor

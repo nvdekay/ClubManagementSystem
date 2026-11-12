@@ -11,9 +11,9 @@ export function MembershipReconfirmationPanel() {
   if (query.isPending) return <AppSkeleton className="mb-6 h-24 w-full" />;
   return <section className="mb-6 space-y-3">
     {query.isError && <AppNotice tone="danger" role="alert">{query.error.message}<AppButton onClick={() => void query.refetch()}>{t("membershipReconfirmations.retry")}</AppButton></AppNotice>}
-    {Boolean(query.data?.length) && <><h2 className="text-xl font-bold">{t("membershipReconfirmations.title")}</h2><p>{t("membershipReconfirmations.description")}</p></>}
-    {query.data?.map((r) => <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border-app bg-surface-app p-4">
-      <div><p className="font-semibold">{r.clubName} · {r.periodCode}</p><p>{t(`membershipReconfirmations.${r.state}`)}</p><p>{t("membershipReconfirmations.deadline")}: {new Date(r.dueAt).toLocaleString(i18n.language)}</p></div>
+    {Boolean(query.data?.length) && <><h2 className="font-heading text-base font-semibold">{t("membershipReconfirmations.title")}</h2><p className="text-sm text-muted-app">{t("membershipReconfirmations.description")}</p></>}
+    {query.data?.map((r) => <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-4 text-sm shadow-xs">
+      <div><p className="font-semibold">{r.clubName} · {r.periodCode}</p><p className="text-muted-app">{t(`membershipReconfirmations.${r.state}`)}</p><p className="text-muted-app">{t("membershipReconfirmations.deadline")}: {new Date(r.dueAt).toLocaleString(i18n.language)}</p></div>
       {r.state === "Pending" && new Date(r.dueAt) > new Date() && <AppButton disabled={mutation.isPending} onClick={() => void confirm(r.id)}>{t("membershipReconfirmations.confirm")}</AppButton>}
     </div>)}
     {mutation.isError && <AppNotice tone="danger" role="alert">{mutation.error.message}</AppNotice>}

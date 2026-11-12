@@ -58,8 +58,8 @@ export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps)
   }
 
   return (
-    <section aria-labelledby="event-registration-title" className="mt-8 rounded-3xl bg-surface-app p-5 sm:p-6">
-      <h2 id="event-registration-title" className="font-heading text-xl font-bold">{t("eventRegistrations.panelTitle")}</h2>
+    <section aria-labelledby="event-registration-title" className="mt-8 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6">
+      <h2 id="event-registration-title" className="font-heading text-lg font-semibold">{t("eventRegistrations.panelTitle")}</h2>
       <div className="mt-4">{body}</div>
     </section>
   );
@@ -70,7 +70,7 @@ function SignInPrompt({ to }: { to: string }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <p className="text-muted-app">{t("eventRegistrations.signInToRegister")}</p>
-      <Link to={to} className="inline-flex min-h-11 items-center rounded-full bg-primary-app px-5 text-sm font-semibold text-on-primary-app shadow-sm hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
+      <Link to={to} className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-4 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
         {t("eventRegistrations.signIn")}
       </Link>
     </div>
@@ -162,7 +162,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
           <p>{t("eventRegistrations.checkedInAt", { date: formatDate(attendance.checkedInAt, locale) })}</p>
         </AppNotice>
       ) : active.state === "Confirmed" && new Date(active.checkInOpensAt) <= now && now < new Date(active.checkInClosesAt) && (
-        <div className="rounded-2xl bg-bg-app p-4">
+        <div className="rounded-xl border border-border-app bg-surface-app p-4">
           <h3 className="mb-2 font-semibold">{t("eventRegistrations.checkInOpen")}</h3>
           <EventCheckInForm eventId={event.id} />
         </div>
@@ -256,7 +256,7 @@ function FormField({ field, value, error, onTouch, onChange }: FormFieldProps) {
         {options.map((option) => {
           const checked = field.type === "radio" ? text === option : list.includes(option);
           return (
-            <label key={option} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-app bg-bg-app px-4 text-sm has-checked:border-primary-app has-checked:bg-primary-soft-app has-checked:text-primary-app">
+            <label key={option} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 text-sm sm:min-h-9 has-checked:border-brand-app has-checked:bg-primary-soft-app has-checked:text-primary-app">
               <input type={field.type} name={id} value={option} checked={checked}
                 required={field.required && field.type === "radio"} className="accent-primary-app"
                 onChange={(event) => { onChange(field.type === "radio" ? option
