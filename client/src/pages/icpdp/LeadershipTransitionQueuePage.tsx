@@ -2,6 +2,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
@@ -41,11 +42,6 @@ export function LeadershipTransitionQueuePage() {
             </div>
             <AppButton variant="secondary" onClick={() => navigate(`/workspace/leadership-transitions/${plan.id}`)}>
               {t("leadershipTransitions.open")}<AppIcon name="chevronRight" className="size-4" /></AppButton>
-          </li>)}</ul> : <div className="rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
-          <span aria-hidden="true" className="mx-auto flex size-12 items-center justify-center rounded-xl border border-border-app bg-bg-app text-muted-app">
-            <AppIcon name="badge" className="size-6" /></span>
-          <h2 className="mt-4 font-heading text-base font-semibold">{t("leadershipTransitions.empty")}</h2>
-          <p className="mt-1 text-sm text-muted-app">{t("leadershipTransitions.emptyHint")}</p>
-        </div>}
+          </li>)}</ul> : <AppEmptyState variant="boxed" icon="badge" title={t("leadershipTransitions.empty")} message={t("leadershipTransitions.emptyHint")} />}
   </>;
 }

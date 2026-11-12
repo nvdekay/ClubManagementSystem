@@ -7,6 +7,7 @@ import { ClubLogo } from "@/components/custom/ClubLogo";
 import { MembershipStateBadge } from "@/components/custom/MembershipStateBadge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -29,12 +30,9 @@ export function MyClubsPage() {
         : memberships.isError ? <AppNotice tone="danger" role="alert" title={t("memberSpace.loadError")}>
           <AppButton variant="secondary" onClick={() => void memberships.refetch()}>{t("memberSpace.retry")}</AppButton></AppNotice>
           : memberships.data.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border-app px-4 py-10 text-center">
-              <span aria-hidden="true" className="mx-auto flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="users" className="size-4.5" /></span>
-              <p className="mt-3 text-sm text-muted-app">{t("memberSpace.myClubsEmpty")}</p>
-              <Link to="/clubs" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
-                {t("memberSpace.browseClubs")}</Link>
-            </div>
+            <AppEmptyState variant="boxed" icon="users" message={t("memberSpace.myClubsEmpty")}
+      action={<Link to="/clubs" className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90 sm:min-h-9">
+                {t("memberSpace.browseClubs")}</Link>} />
           ) : (
             <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
               {memberships.data.map((membership) => (

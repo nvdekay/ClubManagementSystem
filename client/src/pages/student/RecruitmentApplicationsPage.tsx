@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -68,12 +69,9 @@ export function RecruitmentApplicationsPage() {
   return <>
     {header}
     {action.isError && <AppNotice tone="danger" role="alert" className="mb-5">{action.error.message || t("recruitmentApplications.actionError")}</AppNotice>}
-    {applications.data.length === 0 ? <div className="rounded-xl border border-dashed border-border-app px-4 py-10 text-center">
-      <span aria-hidden="true" className="mx-auto flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="send" className="size-4.5" /></span>
-      <p className="mt-3 text-sm text-muted-app">{t("recruitmentApplications.noApplications")}</p>
-      <Link to="/clubs" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
-        <AppIcon name="compass" className="size-4" />{t("recruitmentApplications.explore")}</Link>
-    </div> : <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
+    {applications.data.length === 0 ? <AppEmptyState variant="boxed" icon="send" message={t("recruitmentApplications.noApplications")}
+      action={<Link to="/clubs" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app shadow-xs transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
+        <AppIcon name="compass" className="size-4" />{t("recruitmentApplications.explore")}</Link>} /> : <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
       {applications.data.map((application) => <li key={application.id} className="flex flex-wrap items-start gap-x-4 gap-y-3 px-5 py-4">
         <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border-app bg-bg-app text-muted-app">
           <AppIcon name="send" />

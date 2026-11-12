@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -44,10 +45,6 @@ export function BoardNominationQueuePage() {
                   <AppButton onClick={() => navigate(`/workspace/board-nominations/${nomination.id}`)}>
                     {t("boardNominations.open")}<AppIcon name="chevronRight" className="size-4" /></AppButton>
                 </li>)}
-              </ul> : <div className="flex flex-col items-center rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
-                <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="badge" className="size-4.5" /></span>
-                <h2 className="mt-3 font-heading text-base font-semibold">{t("boardNominations.queueEmpty")}</h2>
-                <p className="mt-1 max-w-md text-sm text-muted-app">{t("boardNominations.queueEmptyHint")}</p>
-              </div>}
+              </ul> : <AppEmptyState variant="boxed" icon="badge" title={t("boardNominations.queueEmpty")} message={t("boardNominations.queueEmptyHint")} />}
   </>;
 }

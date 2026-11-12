@@ -144,11 +144,7 @@ function BudgetList() {
           </li>;
         })}</ul>
       ) : (
-        <div className="flex flex-col items-center rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
-          <span aria-hidden="true" className="flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app"><AppIcon name="sparkles" className="size-4.5" /></span>
-          <h2 className="mt-3 font-heading text-base font-semibold">{t("budgets.none")}</h2>
-          <p className="mt-1 max-w-md text-sm text-muted-app">{t("budgets.noneHint")}</p>
-        </div>
+        <AppEmptyState variant="boxed" icon="sparkles" title={t("budgets.none")} message={t("budgets.noneHint")} />
       )}
     </>
   );

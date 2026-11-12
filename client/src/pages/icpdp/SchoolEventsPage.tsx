@@ -253,11 +253,7 @@ function SchoolEventList({ csrfToken }: { csrfToken: string }) {
                 <AppIcon name="chevronRight" className="size-4 text-muted-app" />
               </Link>
             </li>)}</ul>
-            : <div className="rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
-              <span aria-hidden="true" className="mx-auto flex size-12 items-center justify-center rounded-xl border border-border-app bg-bg-app text-muted-app"><AppIcon name="sparkles" className="size-6" /></span>
-              <h2 className="mt-4 font-heading text-base font-semibold">{t("schoolEvents.none")}</h2>
-              <p className="mt-2 text-sm text-muted-app">{t("schoolEvents.noneHint")}</p>
-            </div>}
+            : <AppEmptyState variant="boxed" icon="sparkles" title={t("schoolEvents.none")} message={t("schoolEvents.noneHint")} />}
     </>
   );
 }

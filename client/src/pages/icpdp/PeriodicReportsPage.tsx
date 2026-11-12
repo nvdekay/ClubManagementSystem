@@ -367,11 +367,7 @@ function Overview({ csrfToken }: { csrfToken: string }) {
           })}>{filterLabel(t, value)} · {data.rows.filter((row) => matches(value, row)).length}</button>)}</div>
       {shown.length ? <ul className="divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
         {shown.map((row) => <Row key={row.clubId} row={row} periodCode={periodCode} csrfToken={csrfToken} />)}</ul>
-        : <div className="rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
-          <span aria-hidden="true" className="mx-auto flex size-12 items-center justify-center rounded-xl border border-border-app bg-bg-app text-muted-app"><AppIcon name="sparkles" className="size-6" /></span>
-          <h2 className="mt-4 font-heading text-base font-semibold">{t("periodicReports.none")}</h2>
-          <p className="mt-2 text-sm text-muted-app">{t("periodicReports.noneHint")}</p>
-        </div>}
+        : <AppEmptyState variant="boxed" icon="sparkles" title={t("periodicReports.none")} message={t("periodicReports.noneHint")} />}
     </>
   );
 }

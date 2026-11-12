@@ -7,6 +7,7 @@ import { EventFeedbackForm, EventFeedbackSummary } from "@/components/custom/Eve
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -268,12 +269,8 @@ function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowP
 function EmptyState({ message }: { message: string }) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-xl border border-dashed border-border-app px-4 py-10 text-center">
-      <span aria-hidden="true" className="mx-auto flex size-9 items-center justify-center rounded-lg border border-border-app text-muted-app">
-        <AppIcon name="calendar" className="size-4.5" /></span>
-      <p className="mt-3 text-sm text-muted-app">{message}</p>
-      <Link to="/events" className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
-        {t("eventRegistrations.browseEvents")}</Link>
-    </div>
+    <AppEmptyState variant="boxed" icon="calendar" message={message}
+      action={<Link to="/events" className="inline-flex min-h-11 items-center rounded-lg bg-primary-app px-3.5 text-sm font-medium text-on-primary-app hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app sm:min-h-9">
+        {t("eventRegistrations.browseEvents")}</Link>} />
   );
 }

@@ -265,11 +265,7 @@ function ViolationList({ csrfToken }: { csrfToken: string }) {
                   </Link>
                 </li>)}</ul>
             ) : (
-              <div className="rounded-xl border border-dashed border-border-app px-4 py-12 text-center">
-                <span aria-hidden="true" className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-mint-soft-app text-mint-app"><AppIcon name="sparkles" className="size-7" /></span>
-                <h2 className="mt-4 font-heading text-base font-semibold">{t("violations.none")}</h2>
-                <p className="mt-2 text-sm text-muted-app">{t("violations.noneHint")}</p>
-              </div>
+              <AppEmptyState variant="boxed" icon="sparkles" title={t("violations.none")} message={t("violations.noneHint")} />
             )}
           </>}
     </>
