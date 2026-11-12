@@ -176,6 +176,14 @@ body {
   --color-on-hero-app: #e6f3fa;
 }
 
+/* Theme switch (see useTheme): the browser's default cross-fade is replaced by a circular reveal
+   driven from JS, so both snapshots stay fully opaque and the new one simply grows over the old. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 /* Honour reduced-motion: keep state changes, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
