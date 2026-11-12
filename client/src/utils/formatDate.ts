@@ -47,3 +47,29 @@ export function vnDayBoundary(day: string, edge: "start" | "end"): string {
 export function vnTomorrowInput(): string {
   return vnDateInput(Date.now() + 86_400_000);
 }
+
+const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
+/**
+ * Event time in one fixed order for both languages, in Vietnam time:
+ * "Th 6, 13/11 · 22:26" (vi) and "Fri 13 Nov · 22:26" (en). The browser's own vi pattern puts the time first.
+ */
+export function formatEventWhen(value: string | number | Date, locale: string): string {
+  const date = new Date(value);
+  const vi = locale.startsWith("vi");
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: VN_TIME_ZONE }).format(date);
+  const day = new Intl.DateTimeFormat(locale, vi ? { day: "2-digit", month: "2-digit", timeZone: VN_TIME_ZONE }
+    : { day: "numeric", month: "short", timeZone: VN_TIME_ZONE }).format(date).replace("-", "/");
+  const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: VN_TIME_ZONE }).format(date);
+  return `${weekday}${vi ? "," : ""} ${day} · ${time}`;
+}
+
+/** A calendar-badge pair, short enough for a narrow tile: { day: "13", month: "T11" } (vi) or "Nov" (en). */
+export function formatDayBadge(value: string | number | Date, locale: string): { day: string; month: string } {
+  const date = new Date(value);
+  const day = new Intl.DateTimeFormat(locale, { day: "2-digit", timeZone: VN_TIME_ZONE }).format(date);
+  const month = locale.startsWith("vi")
+    ? `T${new Intl.DateTimeFormat("en-GB", { month: "numeric", timeZone: VN_TIME_ZONE }).format(date)}`
+    : new Intl.DateTimeFormat(locale, { month: "short", timeZone: VN_TIME_ZONE }).format(date);
+  return { day, month };
+}

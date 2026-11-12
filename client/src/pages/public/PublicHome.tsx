@@ -11,6 +11,7 @@ import { useClubs, useEvents } from "@/hooks/useDiscovery";
 import type { PublicClub, PublicEventStatus } from "@/services/discovery";
 import { CAMPUS_IMAGE_URL } from "@/utils/campusImage";
 import { cn } from "@/utils/cn";
+import { formatDayBadge, formatEventWhen } from "@/utils/formatDate";
 
 const audiences = [
   { icon: "graduationCap", title: "discovery.audienceStudentTitle", text: "discovery.audienceStudentText" },
@@ -69,17 +70,8 @@ export function PublicHome() {
     const query = search.trim();
     void navigate(query ? `/clubs?search=${encodeURIComponent(query)}` : "/clubs");
   }
-  function dayParts(value: string) {
-    const date = new Date(value);
-    return {
-      day: new Intl.DateTimeFormat(locale, { day: "2-digit", timeZone: "Asia/Ho_Chi_Minh" }).format(date),
-      month: new Intl.DateTimeFormat(locale, { month: "short", timeZone: "Asia/Ho_Chi_Minh" }).format(date),
-    };
-  }
-  function when(value: string) {
-    return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-      timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(value));
-  }
+  function dayParts(value: string) { return formatDayBadge(value, locale); }
+  function when(value: string) { return formatEventWhen(value, locale); }
   function sectionHead({ kicker, title, description, action }: SectionHeadProps) {
     return (
       <div className="flex flex-wrap items-end justify-between gap-6">
@@ -151,7 +143,7 @@ export function PublicHome() {
             </p>
             <h1 className="mt-6 max-w-3xl font-heading text-4xl leading-[1.08] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
               {t("discovery.heroTitleLead")}{" "}
-              <span className="font-serif font-medium text-white/95 italic">{t("discovery.heroTitleAccent")}</span>
+              <span className="font-normal text-white/70">{t("discovery.heroTitleAccent")}</span>
             </h1>
             <p className="mt-5 max-w-xl text-base text-pretty text-white/80 sm:text-lg">{t("discovery.heroDescription")}</p>
             <form role="search" onSubmit={submitSearch}
@@ -267,7 +259,7 @@ export function PublicHome() {
               <span aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/30 to-transparent" />
               <span className="absolute top-5 left-5 flex flex-col items-center rounded-xl bg-white px-3 py-1.5 text-neutral-900 shadow-md">
                 <span className="font-heading text-xl leading-none font-semibold">{dayParts(featured.startAt).day}</span>
-                <span className="text-xs font-semibold text-primary-app uppercase">{dayParts(featured.startAt).month}</span>
+                <span className="text-xs font-semibold text-primary-app">{dayParts(featured.startAt).month}</span>
               </span>
               <span className="text-xs font-semibold tracking-[0.16em] text-white/70 uppercase">{featured.clubName}</span>
               <span className="mt-2 font-heading text-2xl leading-tight font-semibold text-balance sm:text-3xl">{featured.title}</span>
@@ -287,7 +279,7 @@ export function PublicHome() {
                     <Link to={`/events/${event.id}`} className={cn("group flex items-start gap-4 p-5 no-underline transition-colors hover:bg-surface-app", focusRing)}>
                       <span className="flex w-14 shrink-0 flex-col items-center rounded-xl border border-border-app py-2">
                         <span className="font-heading text-xl leading-none font-semibold text-text-app">{parts.day}</span>
-                        <span className="mt-1 text-xs font-semibold text-primary-app uppercase">{parts.month}</span>
+                        <span className="mt-1 text-xs font-semibold text-primary-app">{parts.month}</span>
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-xs font-medium break-words text-muted-app">{event.clubName}</span>
@@ -318,7 +310,7 @@ export function PublicHome() {
                   <span aria-hidden="true" className="flex size-11 items-center justify-center rounded-xl border border-border-app text-brand-app">
                     <AppIcon name={item.icon} className="size-5" />
                   </span>
-                  <span aria-hidden="true" className="font-serif text-4xl text-muted-app/40 italic">0{index + 1}</span>
+                  <span aria-hidden="true" className="font-heading text-3xl font-semibold text-muted-app/30 tabular-nums">0{index + 1}</span>
                 </span>
                 <h3 className="font-heading text-xl font-semibold text-text-app">{t(item.title)}</h3>
                 <p className="text-pretty text-muted-app">{t(item.text)}</p>
