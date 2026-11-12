@@ -334,19 +334,19 @@ function navigation(context: Context, workspace: Workspace | undefined,
   t: (key: `common.${keyof typeof common.en}`) => string): Array<{ title: string; items: NavEntry[] }> {
   const explore = { title: t("common.sectionExplore"), items: [
     { to: "/clubs", label: t("common.navDiscover"), icon: "compass" as const },
-    { to: "/events", label: t("common.navEvents"), icon: "calendar" as const },
+    { to: "/events", label: t("common.navEvents"), icon: "sparkles" as const },
   ] };
   if (context.kind === "student") {
     return [{ title: t("common.sectionWork"), items: [
       { to: "/student", label: t("common.navOverview"), icon: "home", end: true },
-      ...group("student-clubs", t("common.groupClubs"), "users", [
+      ...group("student-clubs", t("common.groupClubs"), "building", [
         { to: "/workspace/clubs", label: t("common.navMyClubs"), icon: "users" },
-        { to: "/workspace/recruitment", label: t("common.navRecruitment"), icon: "send" },
-        { to: "/workspace/applications", label: t("common.navApplications"), icon: "file" },
+        { to: "/workspace/recruitment", label: t("common.navRecruitment"), icon: "userPlus" },
+        { to: "/workspace/applications", label: t("common.navApplications"), icon: "filePlus" },
       ]),
-      ...group("student-events", t("common.groupEventsFeedback"), "calendar", [
+      ...group("student-events", t("common.groupEventsFeedback"), "ticket", [
         { to: "/workspace/event-registrations", label: t("common.navMyEvents"), icon: "calendar" },
-        { to: "/workspace/complaints", label: t("common.navComplaints"), icon: "megaphone" },
+        { to: "/workspace/complaints", label: t("common.navComplaints"), icon: "message" },
       ]),
     ] }, explore];
   }
@@ -354,37 +354,37 @@ function navigation(context: Context, workspace: Workspace | undefined,
     // Grouped by job so the long ICPDP menu reads as a few areas instead of one flat list.
     return [{ title: t("common.sectionWork"), items: [
       { to: "/icpdp", label: t("common.navOverview"), icon: "home", end: true },
-      { group: "clubs", label: t("common.groupClubs"), icon: "users", children: [
-        { to: "/icpdp/clubs", label: t("common.icpdpClubs"), icon: "compass" },
-        { to: "/workspace/reviews", label: t("common.icpdpReviews"), icon: "inbox" },
-        { to: "/workspace/suspension-requests", label: t("common.navSuspensions"), icon: "file" },
-        { to: "/workspace/board-nominations", label: t("common.icpdpNominations"), icon: "badge" },
-        { to: "/workspace/leadership-transitions", label: t("common.icpdpTransitions"), icon: "calendar" },
-        { to: "/workspace/club-fields", label: t("common.icpdpClubFields"), icon: "layers" },
+      { group: "clubs", label: t("common.groupClubs"), icon: "building", children: [
+        { to: "/icpdp/clubs", label: t("common.icpdpClubs"), icon: "grid" },
+        { to: "/workspace/reviews", label: t("common.icpdpReviews"), icon: "filePlus" },
+        { to: "/workspace/suspension-requests", label: t("common.navSuspensions"), icon: "pause" },
+        { to: "/workspace/board-nominations", label: t("common.icpdpNominations"), icon: "crown" },
+        { to: "/workspace/leadership-transitions", label: t("common.icpdpTransitions"), icon: "repeat" },
+        { to: "/workspace/club-fields", label: t("common.icpdpClubFields"), icon: "tag" },
       ] },
-      { group: "events", label: t("common.groupEvents"), icon: "calendar", children: [
+      { group: "events", label: t("common.groupEvents"), icon: "ticket", children: [
         { to: "/workspace/event-proposals", label: t("common.icpdpEventProposals"), icon: "inbox" },
         { to: "/workspace/internal-events", label: t("common.icpdpInternalEvents"), icon: "users" },
         { to: "/workspace/event-reports", label: t("common.navEventReports"), icon: "file" },
-        { to: "/workspace/budgets", label: t("common.icpdpBudgets"), icon: "file" },
-        { to: "/workspace/school-events", label: t("common.icpdpSchoolEvents"), icon: "megaphone" },
+        { to: "/workspace/budgets", label: t("common.icpdpBudgets"), icon: "coins" },
+        { to: "/workspace/school-events", label: t("common.icpdpSchoolEvents"), icon: "flag" },
         { to: "/events", label: t("common.icpdpEvents"), icon: "calendar" },
-        { to: "/workspace/room-allocations", label: t("common.navRoomAllocations"), icon: "calendar" },
-        { to: "/workspace/bookings", label: t("common.navBookings"), icon: "inbox" },
-        { to: "/workspace/properties", label: t("common.icpdpProperties"), icon: "mapPin" },
+        { to: "/workspace/room-allocations", label: t("common.navRoomAllocations"), icon: "door" },
+        { to: "/workspace/bookings", label: t("common.navBookings"), icon: "mapPin" },
+        { to: "/workspace/properties", label: t("common.icpdpProperties"), icon: "monitor" },
       ] },
-      { group: "evaluation", label: t("common.groupEvaluation"), icon: "star", children: [
-        { to: "/workspace/evaluation-schemes", label: t("common.icpdpSchemes"), icon: "star" },
-        { to: "/workspace/periodic-reports", label: t("common.icpdpPeriodicReports"), icon: "file" },
-        { to: "/workspace/evaluations", label: t("common.icpdpEvaluations"), icon: "badge" },
-        { to: "/workspace/violations", label: t("common.icpdpViolations"), icon: "shield" },
-        { to: "/workspace/exports", label: t("common.icpdpExports"), icon: "file" },
+      { group: "evaluation", label: t("common.groupEvaluation"), icon: "barChart", children: [
+        { to: "/workspace/evaluation-schemes", label: t("common.icpdpSchemes"), icon: "listChecks" },
+        { to: "/workspace/periodic-reports", label: t("common.icpdpPeriodicReports"), icon: "clipboard" },
+        { to: "/workspace/evaluations", label: t("common.icpdpEvaluations"), icon: "star" },
+        { to: "/workspace/violations", label: t("common.icpdpViolations"), icon: "scale" },
+        { to: "/workspace/exports", label: t("common.icpdpExports"), icon: "download" },
       ] },
-      { to: "/workspace/complaint-review", label: t("common.icpdpComplaints"), icon: "megaphone" },
-      { to: "/workspace/routing-rules", label: t("common.icpdpRouting"), icon: "layers" },
+      { to: "/workspace/complaint-review", label: t("common.icpdpComplaints"), icon: "message" },
+      { to: "/workspace/routing-rules", label: t("common.icpdpRouting"), icon: "route" },
       { group: "system", label: t("common.groupSystem"), icon: "settings", children: [
-        { to: "/workspace/policy", label: t("common.icpdpPolicy"), icon: "shield" },
-        { to: "/icpdp/accounts", label: t("common.icpdpAccounts"), icon: "users" },
+        { to: "/workspace/policy", label: t("common.icpdpPolicy"), icon: "book" },
+        { to: "/icpdp/accounts", label: t("common.icpdpAccounts"), icon: "key" },
       ] },
     ] }];
   }
@@ -396,30 +396,30 @@ function navigation(context: Context, workspace: Workspace | undefined,
   // Club pages are grouped like the ICPDP menu; each child still follows the role's permissions.
   return [{ title: t("common.sectionWork"), items: [
     { to: base, label: t("common.navOverview"), icon: "home", end: true },
-    ...group("club-people", t("common.groupPeople"), "users", [
+    ...group("club-people", t("common.groupPeople"), "building", [
       ...(member ? [{ to: `${base}/members`, label: t("common.navMembers"), icon: "users" as const }] : []),
-      ...(can("club.recruitment.manage") ? [{ to: `${base}/recruitment`, label: t("common.navCampaigns"), icon: "megaphone" as const }] : []),
-      ...(can("club.transition.plan") ? [{ to: `${base}/transition-plans`, label: t("common.navTransitions"), icon: "badge" as const }] : []),
-      ...(can("club.suspension.request") ? [{ to: `${base}/suspension-requests`, label: t("common.navSuspensions"), icon: "file" as const }] : []),
-      ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "badge" as const }] : []),
-      ...(can("club.board.nominate") ? [{ to: `${base}/board-history`, label: t("common.navBoardHistory"), icon: "layers" as const }] : []),
+      ...(can("club.recruitment.manage") ? [{ to: `${base}/recruitment`, label: t("common.navCampaigns"), icon: "userPlus" as const }] : []),
+      ...(can("club.transition.plan") ? [{ to: `${base}/transition-plans`, label: t("common.navTransitions"), icon: "repeat" as const }] : []),
+      ...(can("club.suspension.request") ? [{ to: `${base}/suspension-requests`, label: t("common.navSuspensions"), icon: "pause" as const }] : []),
+      ...(can("club.board.nominate") ? [{ to: `${base}/board`, label: t("common.navBoard"), icon: "crown" as const }] : []),
+      ...(can("club.board.nominate") ? [{ to: `${base}/board-history`, label: t("common.navBoardHistory"), icon: "history" as const }] : []),
       ...(can("club.profile.manage") ? [{ to: `${base}/settings`, label: t("common.navSettings"), icon: "settings" as const }] : []),
     ]),
-    ...group("club-events", t("common.groupClubEvents"), "calendar", [
-      ...(can("club.event.manage") ? [{ to: `${base}/invitations`, label: t("common.navInvitations"), icon: "inbox" as const }] : []),
+    ...group("club-events", t("common.groupClubEvents"), "ticket", [
+      ...(can("club.event.manage") ? [{ to: `${base}/invitations`, label: t("common.navInvitations"), icon: "mail" as const }] : []),
       ...(can("club.event.manage") ? [{ to: `${base}/events`, label: t("common.navClubEvents"), icon: "megaphone" as const }] : []),
-      ...(can("club.attendance.manage") ? [{ to: `${base}/event-attendance`, label: t("common.navEventAttendance"), icon: "users" as const }] : []),
-      ...(can("club.feedback.view") ? [{ to: `${base}/event-feedback`, label: t("common.navEventFeedback"), icon: "megaphone" as const }] : []),
-      ...(can("club.report.submit") ? [{ to: `${base}/periodic-reports`, label: t("common.navPeriodicReports"), icon: "file" as const }] : []),
+      ...(can("club.attendance.manage") ? [{ to: `${base}/event-attendance`, label: t("common.navEventAttendance"), icon: "clipboardCheck" as const }] : []),
+      ...(can("club.feedback.view") ? [{ to: `${base}/event-feedback`, label: t("common.navEventFeedback"), icon: "message" as const }] : []),
+      ...(can("club.report.submit") ? [{ to: `${base}/periodic-reports`, label: t("common.navPeriodicReports"), icon: "clipboard" as const }] : []),
       ...(can("club.report.submit") ? [{ to: `${base}/event-reports`, label: t("common.navEventReports"), icon: "file" as const }] : []),
     ]),
-    ...group("club-resources", t("common.groupFinanceFacilities"), "mapPin", [
-      ...(can("club.expense.record") ? [{ to: `${base}/budgets`, label: t("common.navEventFinances"), icon: "file" as const }] : []),
-      ...(can("club.room.view") ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "calendar" as const }] : []),
+    ...group("club-resources", t("common.groupFinanceFacilities"), "wallet", [
+      ...(can("club.expense.record") ? [{ to: `${base}/budgets`, label: t("common.navEventFinances"), icon: "coins" as const }] : []),
+      ...(can("club.room.view") ? [{ to: `${base}/rooms`, label: t("common.navClubRooms"), icon: "door" as const }] : []),
       ...(can("club.booking.manage") ? [{ to: `${base}/bookings`, label: t("common.navBookings"), icon: "mapPin" as const }] : []),
     ]),
-    ...(can("club.complaint.respond") ? [{ to: `${base}/violations`, label: t("common.navCompliance"), icon: "file" as const }] : []),
-    ...(can("club.report.submit") ? [{ to: `${base}/evaluations`, label: t("common.navClubEvaluations"), icon: "file" as const }] : []),
+    ...(can("club.complaint.respond") ? [{ to: `${base}/violations`, label: t("common.navCompliance"), icon: "scale" as const }] : []),
+    ...(can("club.report.submit") ? [{ to: `${base}/evaluations`, label: t("common.navClubEvaluations"), icon: "star" as const }] : []),
     ...(can("club.complaint.respond") ? [{ to: `${base}/complaints`, label: t("common.navClubComplaints"), icon: "inbox" as const }] : []),
     { to: `/clubs/${encodeURIComponent(context.clubId)}`, label: t("common.navPublicPage"), icon: "globe" },
   ] }, explore];
