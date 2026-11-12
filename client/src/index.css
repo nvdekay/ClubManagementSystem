@@ -184,6 +184,15 @@ body {
   mix-blend-mode: normal;
 }
 
+/* Dark → light: the old (dark) page sits on top and shrinks back into the toggle. */
+:root[data-theme-collapse]::view-transition-old(root) {
+  z-index: 2;
+}
+
+:root[data-theme-collapse]::view-transition-new(root) {
+  z-index: 1;
+}
+
 /* Honour reduced-motion: keep state changes, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
