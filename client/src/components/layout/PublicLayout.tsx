@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 
@@ -12,10 +13,12 @@ import { cn } from "@/utils/cn";
 /** Contact details published on the FPT Education PDP site footer. */
 const FPT_EDUCATION = { name: "FPT Education", address: "Hoa Lac High Tech Park, Hanoi, Vietnam", email: "fpteducation@fe.edu.vn" };
 
-function navClass({ isActive }: { isActive: boolean }) {
-  return cn(
+function navClass(overlay: boolean) {
+  return ({ isActive }: { isActive: boolean }) => cn(
     "relative inline-flex min-h-11 items-center px-3 text-sm font-semibold text-text-app no-underline transition-colors hover:text-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app",
     { "text-primary-app after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-primary-app": isActive },
+    // Over the landing photo: white text, and the active marker turns white too.
+    { "text-white/80 hover:text-white": overlay, "text-white after:bg-white": overlay && isActive },
   );
 }
 
@@ -29,25 +32,53 @@ export function PublicLayout() {
   const auth = useAuth();
   // Bring the visitor back to the page they were reading after signing in.
   const loginTarget = `/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
+  // On the landing page the header floats transparently over the hero photo until the page scrolls.
+  const onHome = location.pathname === "/";
+  const [scrolled, setScrolled] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const overlay = onHome && !scrolled;
+
+  useEffect(() => {
+    if (!onHome) return;
+    const root = document.getElementById("root");
+    if (!root) return;
+    const scroller = root;
+    function update() { setScrolled(scroller.scrollTop > 40); }
+    update();
+    scroller.addEventListener("scroll", update, { passive: true });
+    return () => scroller.removeEventListener("scroll", update);
+  }, [onHome]);
+
+  // The hero slides up under the sticky header by exactly its height (it wraps to two rows on phones).
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const observer = new ResizeObserver(() => setHeaderHeight(header.offsetHeight));
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-30">
-        <div className="border-b border-border-app bg-bg-app/95 shadow-sm backdrop-blur">
+      <header ref={headerRef} className="sticky top-0 z-30">
+        <div className={cn("border-b border-border-app bg-bg-app/95 shadow-sm backdrop-blur transition-[background-color,border-color,box-shadow] duration-300",
+          { "border-transparent bg-transparent shadow-none backdrop-blur-none": overlay })}>
           <nav aria-label={t("common.navigation")} className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2.5 sm:px-8">
             <Link to="/" aria-label={t("auth.brand")} className="mr-auto rounded-sm no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
               <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-34 sm:w-40" />
             </Link>
             <div className="order-last flex w-full items-center gap-1 md:order-none md:w-auto">
-              <NavLink to="/" end className={navClass}>{t("discovery.navHome")}</NavLink>
-              <NavLink to="/clubs" className={navClass}>{t("discovery.navClubs")}</NavLink>
-              <NavLink to="/events" className={navClass}>{t("discovery.navEvents")}</NavLink>
+              <NavLink to="/" end className={navClass(overlay)}>{t("discovery.navHome")}</NavLink>
+              <NavLink to="/clubs" className={navClass(overlay)}>{t("discovery.navClubs")}</NavLink>
+              <NavLink to="/events" className={navClass(overlay)}>{t("discovery.navEvents")}</NavLink>
             </div>
-            <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")} className={iconButton}>
+            <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? t("common.lightMode") : t("common.darkModeLabel")}
+              className={cn(iconButton, { "text-white/85 hover:bg-white/10 hover:text-white": overlay })}>
               <AppIcon name={theme === "dark" ? "sun" : "moon"} />
             </button>
             <button type="button" onClick={() => void i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")} aria-label={t("common.switchLanguage")}
-              className={cn(iconButton, "text-xs font-bold")}>
+              className={cn(iconButton, "text-xs font-bold", { "text-white/85 hover:bg-white/10 hover:text-white": overlay })}>
               {i18n.language === "vi" ? "EN" : "VI"}
             </button>
             {/* UC06: guests browse read-only; applying or registering sends them through UC01 and back. */}
@@ -59,7 +90,8 @@ export function PublicLayout() {
         </div>
       </header>
       {/* The landing page draws full-width bands, so it manages its own width. */}
-      <main ref={pageRef} className={cn("mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12", { "max-w-none p-0 sm:p-0": location.pathname === "/" })}>
+      <main ref={pageRef} style={onHome ? { marginTop: -headerHeight } : undefined}
+        className={cn("mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12", { "max-w-none p-0 sm:p-0": onHome })}>
         <Outlet />
       </main>
       <footer className="bg-hero-app text-on-hero-app">

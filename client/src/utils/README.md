@@ -6,3 +6,4 @@ Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `f
 `validation` — `isEmail`, `isHttpUrl`: cùng quy tắc với server, dùng cho kiểm tra trường ngay khi nhập (`useFieldValidation`).
 `workspaceIcon` — icon của từng loại workspace, dùng chung cho màn chọn workspace và sidebar.
 `revisionDiff` — `diffFields`: so hai phiên bản hồ sơ theo danh sách trường có nhãn, trả các trường có nội dung khác nhau.
+`campusImage` — `CAMPUS_IMAGE_URL`: ảnh khuôn viên trường dùng chung cho trang đăng nhập và hero trang chủ.
