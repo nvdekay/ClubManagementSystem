@@ -36,6 +36,7 @@ import { evaluationSchemes } from "./evaluationSchemes";
 import { exports } from "./exports";
 import { clubLifecycle } from "./clubLifecycle";
 import { eventReviews } from "./eventReviews";
+import { eventDefense } from "./eventDefense";
 import { budgets } from "./budgets";
 import { periodicReports } from "./periodicReports";
 import { roomAllocations } from "./roomAllocations";
@@ -55,7 +56,7 @@ export const resources = {
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
     users: users.en, dashboard: dashboard.en, leadershipTransitions: leadershipTransitions.en,
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
-    accountability: accountability.en, complaints: complaints.en, routing: routing.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, budgets: budgets.en, periodicReports: periodicReports.en, roomAllocations: roomAllocations.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
+    accountability: accountability.en, complaints: complaints.en, routing: routing.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, eventDefense: eventDefense.en, budgets: budgets.en, periodicReports: periodicReports.en, roomAllocations: roomAllocations.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
     clubEvents: clubEvents.en, clubOversight: clubOversight.en, notifications: notifications.en, demo: demo.en } },
   vi: { translation: { apiErrors: apiErrors.vi, clubCompliance: clubCompliance.vi, membershipReconfirmations: membershipReconfirmations.vi, suspensionRequests: suspensionRequests.vi, clubTransitionPlans: clubTransitionPlans.vi, clubPeriodicReports: clubPeriodicReports.vi, clubInvitations: clubInvitations.vi, facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
@@ -63,7 +64,7 @@ export const resources = {
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,
     users: users.vi, dashboard: dashboard.vi, leadershipTransitions: leadershipTransitions.vi,
     eventRegistrations: eventRegistrations.vi, eventFeedback: eventFeedback.vi,
-    accountability: accountability.vi, complaints: complaints.vi, routing: routing.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, budgets: budgets.vi, periodicReports: periodicReports.vi, roomAllocations: roomAllocations.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
+    accountability: accountability.vi, complaints: complaints.vi, routing: routing.vi, memberSpace: memberSpace.vi, clubFields: clubFields.vi, properties: properties.vi, evaluationSchemes: evaluationSchemes.vi, exports: exports.vi, clubLifecycle: clubLifecycle.vi, eventReviews: eventReviews.vi, eventDefense: eventDefense.vi, budgets: budgets.vi, periodicReports: periodicReports.vi, roomAllocations: roomAllocations.vi, violations: violations.vi, schoolEvents: schoolEvents.vi, evaluations: evaluations.vi,
     clubEvents: clubEvents.vi, clubOversight: clubOversight.vi, notifications: notifications.vi, demo: demo.vi } },
 };
 

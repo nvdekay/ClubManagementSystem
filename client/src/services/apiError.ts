@@ -20,6 +20,13 @@ function localizedApiMessage(message: string): string {
   if (!vietnamese) return message || apiErrors.en.unknown!;
   const notice = /^submit at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(message);
   if (notice) return String(i18next.t("apiErrors.eventNotice", { hours: notice[1], defaultValue: apiErrors.vi.eventNotice }));
+  const earlyStart = /^defense can only start at most (\d+) minutes before the scheduled start time$/.exec(message);
+  if (earlyStart) {
+    return String(i18next.t("apiErrors.defenseEarlyStart", {
+      minutes: earlyStart[1],
+      defaultValue: apiErrors.vi.defenseEarlyStart,
+    }));
+  }
   const key = Object.hasOwn(apiErrorKeys, message) ? apiErrorKeys[message]! : httpErrorKey(message);
   return String(i18next.t(`apiErrors.${key}`, { defaultValue: apiErrors.vi[key] }));
 }

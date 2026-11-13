@@ -17,6 +17,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/ui/table/AppTable";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
+import { useClubEventDefense, useEventDefenseActions } from "@/hooks/useEventDefense";
 import { useClubEvent, useClubEventFeedback, useClubEventMutation, useClubEventOptions, useClubEvents, useEventParticipants } from "@/hooks/useClubEvents";
 import type { ClubEvent, ClubEventError, ClubEventInput, EventParticipant } from "@/services/clubEvents";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -27,7 +28,7 @@ import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
 const eventsEmpty: ClubEvent[] = [];
 const stateTones: Record<string, AppBadgeTone> = {
-  Draft: "neutral", "Pending Approval": "warning", "Revision Requested": "warning", Approved: "success", Upcoming: "success",
+  Draft: "neutral", "Pending Approval": "warning", "Revision Requested": "warning", "Re-defense Pending": "info", Approved: "success", Upcoming: "success",
   Ongoing: "success", Completed: "neutral", "Report Submitted": "neutral", Closed: "neutral", Rejected: "danger", Cancelled: "danger",
 };
 const tabClass = "inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
@@ -123,7 +124,12 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const [absent, setAbsent] = useState(false);
   const [success, setSuccess] = useState(false);
   const [formError, setFormError] = useState<unknown>(null);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [rescheduleReason, setRescheduleReason] = useState("");
+  const [renderedAt] = useState(() => Date.now());
   const detail = useClubEvent(clubId, selected, allowed && mode === "events");
+  const defense = useClubEventDefense(clubId, selected || undefined, allowed && mode === "events" && Boolean(selected));
+  const defenseAction = useEventDefenseActions();
   const options = useClubEventOptions(clubId, allowed && mode === "events");
   const participants = useEventParticipants(clubId, selected, allowed && mode === "attendance");
   const feedback = useClubEventFeedback(clubId, compare, allowed && mode === "feedback");
@@ -296,6 +302,72 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         {active.approvalConditions?.length > 0 && <div className="mt-3"><h3 className="font-semibold">{t("clubEvents.conditions")}</h3><ul className="mt-2 list-inside list-disc">{active.approvalConditions.map((condition, index) => <li key={index}>{condition}</li>)}</ul></div>}
         {active.conflictResult && <p className="mt-3">{t(`clubEvents.${active.conflictResult}`, { defaultValue: active.conflictResult })}</p>}
         {detail.data.budget && <p className="mt-2">{t("clubEvents.approvedBudget")}: {new Intl.NumberFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { style: "currency", currency: "VND" }).format(detail.data.budget.approvedTotal)}</p>}
+        {active.state === "Re-defense Pending" && (
+          <div className="mt-4">
+            <AppNotice tone="info">{t("eventDefense.clubReDefenseBanner")}</AppNotice>
+          </div>
+        )}
+        {defense.isError && (
+          <div className="mt-4">
+            <AppNotice tone="danger" role="alert">{t("eventDefense.loadClubDefenseFailed")}</AppNotice>
+          </div>
+        )}
+        {defense.data?.activeSession && (() => {
+          const ds = defense.data.activeSession;
+          const within24h = new Date(ds.startAt).getTime() - renderedAt < 24 * 3600_000;
+          return (
+            <div className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-heading text-sm font-semibold">{t("eventDefense.clubCardTitle")}</h3>
+                <AppBadge tone={ds.state === "CONFIRMED" || ds.state === "IN_PROGRESS" ? "success" : ds.state === "RESCHEDULE_REQUESTED" ? "warning" : ds.state === "NO_SHOW" ? "danger" : "info"}>
+                  {t(`eventDefense.state_${ds.state}`)}
+                </AppBadge>
+              </div>
+              <p className="font-medium">{ds.title}</p>
+              <p className="text-muted-app">
+                {format.format(new Date(ds.startAt))} · {t("eventDefense.durationValue", { minutes: ds.durationMinutes })} · {ds.propertyName}
+              </p>
+              {ds.note && <p className="whitespace-pre-wrap break-words text-muted-app">{ds.note}</p>}
+              {ds.state === "SCHEDULED" && (
+                <AppNotice tone={within24h ? "warning" : "info"}>{t("eventDefense.clubConfirmNotice")}</AppNotice>
+              )}
+              {ds.confirmedAt && (
+                <p className="text-xs text-success-app">{t("eventDefense.clubConfirmedLabel", { time: format.format(new Date(ds.confirmedAt)) })}</p>
+              )}
+              {ds.state === "RESCHEDULE_REQUESTED" && ds.rescheduleReason && (
+                <p className="text-xs text-muted-app">{t("eventDefense.rescheduleReasonLabel")}: {ds.rescheduleReason}</p>
+              )}
+              {ds.state === "NO_SHOW" && <AppNotice tone="danger">{t("eventDefense.clubNoShowBanner")}</AppNotice>}
+              {defenseAction.isError && <p role="alert" className="text-danger-app">{defenseAction.error.message}</p>}
+              <div className="flex flex-wrap gap-2">
+                {ds.state === "SCHEDULED" && auth.data && (
+                  <AppButton
+                    type="button"
+                    disabled={within24h || defenseAction.isPending}
+                    onClick={() => {
+                      defenseAction.reset();
+                      void defenseAction
+                        .mutateAsync({ kind: "confirmClub", clubId, eventId: active.id, csrfToken: auth.data!.csrfToken })
+                        .catch((error) => console.error("[ClubEventsPage] confirm defense failed:", error));
+                    }}
+                  >
+                    {t("eventDefense.clubConfirmButton")}
+                  </AppButton>
+                )}
+                {(ds.state === "SCHEDULED" || ds.state === "CONFIRMED") && auth.data && (
+                  <AppButton
+                    type="button"
+                    variant="secondary"
+                    disabled={within24h || defenseAction.isPending}
+                    onClick={() => { defenseAction.reset(); setRescheduleReason(""); setRescheduleOpen(true); }}
+                  >
+                    {t("eventDefense.clubRequestRescheduleButton")}
+                  </AppButton>
+                )}
+              </div>
+            </div>
+          );
+        })()}
         <div className="my-4 flex flex-wrap gap-2">
           {["Draft", "Revision Requested"].includes(active.state) && <><AppButton onClick={() => openEditor(active)}>{t("clubEvents.edit")}</AppButton><AppButton disabled={mutation.isPending} onClick={() => void runAction("submit", { expectedVersion: active.version })}>{t("clubEvents.submit")}</AppButton></>}
           {active.state === "Approved" && <AppButton onClick={() => openOperation("publish")}>{t("clubEvents.publish")}</AppButton>}
@@ -308,7 +380,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           <p className="mt-2 whitespace-pre-wrap break-words">{String((v.payload as { plan?: string })?.plan ?? "")}</p>
           {v.budgetLines.map((line, index) => <p key={index} className="mt-2">{line.category}: {line.amount.toLocaleString(i18n.language)} VND — {line.purpose}</p>)}</details>)}
         <h3 className="mt-5 text-sm font-semibold">{t("clubEvents.decisions")}</h3>
-        {detail.data.decisions.map((d, index) => <div key={index} className="mt-2"><p>{t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {format.format(new Date(d.at))}{d.reason ? ` · ${d.reason}` : ""}</p>
+        {detail.data.decisions.map((d, index) => <div key={index} className="mt-2"><p>{d.outcome === "Re-defense" ? t("eventDefense.outcomeReDefense") : t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {format.format(new Date(d.at))}{d.reason ? ` · ${d.reason}` : ""}</p>
           {((d.comments as DecisionComments | undefined)?.sections ?? []).length > 0 && <div className="mt-1 flex flex-wrap gap-2">{(d.comments as DecisionComments).sections!.map((section) =>
             <AppBadge key={section} tone="warning">{sectionLabel(section)}</AppBadge>)}</div>}</div>)}
       </>}
@@ -407,6 +479,50 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         {operation === "correct" && <><p>{target?.name}</p><label className="flex items-center gap-2"><input type="checkbox" checked={absent} disabled={Boolean(target?.attendanceId && !target.abnormalFlags.includes("no-show"))} onChange={(e) => setAbsent(e.target.checked)} />{t("clubEvents.absent")}</label>
           {!absent && <Field label={t("clubEvents.correctedTime")}><AppInput type="datetime-local" value={corrected} onChange={(e) => setCorrected(e.target.value)} /></Field>}</>}
         {["cancel", "reschedule", "unlock", "correct", "check-in"].includes(operation ?? "") && <Field label={t("clubEvents.reason")} required={operation !== "check-in"} error={opField.error("reason")}><AppTextarea {...opField.control("reason", operation !== "check-in")} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>}
+      </form>
+    </AppDialog>
+    <AppDialog
+      open={rescheduleOpen}
+      title={t("eventDefense.clubRescheduleDialogTitle")}
+      closeLabel={t("clubEvents.close")}
+      onClose={() => { if (!defenseAction.isPending) setRescheduleOpen(false); }}
+      footer={(
+        <AppButton
+          type="submit"
+          form="club-defense-reschedule-form"
+          disabled={defenseAction.isPending || !rescheduleReason.trim()}
+        >
+          {t("clubEvents.confirm")}
+        </AppButton>
+      )}
+    >
+      <form
+        id="club-defense-reschedule-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!auth.data || !active || !rescheduleReason.trim()) return;
+          defenseAction.reset();
+          void defenseAction.mutateAsync({
+            kind: "requestReschedule",
+            clubId,
+            eventId: active.id,
+            reason: rescheduleReason.trim(),
+            csrfToken: auth.data.csrfToken,
+          })
+            .then(() => setRescheduleOpen(false))
+            .catch((error) => console.error("[ClubEventsPage] request reschedule failed:", error));
+        }}
+        className="space-y-4"
+      >
+        <p className="text-sm text-muted-app">{t("eventDefense.clubRescheduleDeadlineHint")}</p>
+        <Field label={t("eventDefense.clubRescheduleReasonLabel")} required>
+          <AppTextarea
+            maxLength={2000}
+            value={rescheduleReason}
+            onChange={(e) => setRescheduleReason(e.target.value)}
+          />
+        </Field>
+        {defenseAction.isError && <p role="alert" className="text-sm text-danger-app">{defenseAction.error.message}</p>}
       </form>
     </AppDialog>
   </>;

@@ -1,74 +1,58 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { RevisionChanges } from "@/components/custom/RevisionChanges";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
+import { AppDialog } from "@/components/ui/dialog/AppDialog";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
+import { useEventDefenseActions } from "@/hooks/useEventDefense";
 import { useEventProposal, useEventProposalAction } from "@/hooks/useEventProposalReviews";
+import { apiErrors } from "@/i18n/apiErrors";
+import { ProposalDecisionPanel } from "@/pages/icpdp/ProposalDecisionPanel";
+import { ScheduleDefenseDialog } from "@/pages/icpdp/ScheduleDefenseDialog";
 import {
-  EVENT_REVIEW_SECTIONS,
-  type ClubObligation, type EventProposalVersion, type EventReviewOutcome, type EventReviewSection,
+  type ClubObligation, type EventProposalVersion, type EventReviewOutcome,
 } from "@/services/eventProposalReviews";
-import { cn } from "@/utils/cn";
 import { diffFields, type DiffField } from "@/utils/revisionDiff";
 import { useConfirm } from "@/hooks/useConfirm";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
-import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
-
-const outcomes: EventReviewOutcome[] = ["Request revision", "Approve", "Reject"];
 
 function text(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
+function resolveI18nError(error: Error | null | undefined, fallback: string): string {
+  if (!error) return fallback;
+  if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
+    return fallback;
+  }
+  return error.message || fallback;
+}
+
 export function EventProposalReviewPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
   const auth = useAuth();
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const review = useEventProposal(id, isOfficer);
   const action = useEventProposalAction();
-  const [outcome, setOutcome] = useState<EventReviewOutcome>("Approve");
-  const [reason, setReason] = useState("");
-  const [reviewNote, setReviewNote] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [sections, setSections] = useState<EventReviewSection[]>([]);
-  const [conditions, setConditions] = useState("");
-  // Per-line edits keyed by line index; an untouched line retains the previous approval, or uses the requested amount.
-  const [amounts, setAmounts] = useState<Record<number, { amount?: string; reason?: string }>>({});
-  // Derived before the early returns below, since the field validation hook needs them on every render.
+  const defenseAction = useEventDefenseActions();
+
+  const [scheduleDialogMode, setScheduleDialogMode] = useState<"schedule" | "reschedule" | null>(null);
+  const [reasonModalKind, setReasonModalKind] = useState<"cancel" | "rejectReschedule" | "noShow" | null>(null);
+  const [modalReason, setModalReason] = useState("");
+  const [renderedAt] = useState(() => Date.now());
   const current = review.data?.versions.find((version) => version.revisionNo === review.data?.event.currentRevisionNo)
     ?? review.data?.versions.at(-1);
   const lines = current?.budgetLines ?? [];
-  const approvedAmounts = lines.map((line, index) => {
-    const raw = amounts[index]?.amount;
-    return raw === undefined ? review.data?.budget?.lines[index]?.approvedAmount ?? line.amount : Number(raw);
-  });
-  // Same rules the server enforces, shown per field as the officer fills the decision in.
-  const field = useFieldValidation<string>({
-    reason: outcome !== "Approve" && !reason.trim() ? t("eventReviews.reasonRequired") : null,
-    sections: outcome === "Request revision" && !sections.length ? t("eventReviews.sectionsRequired") : null,
-    deadline: outcome === "Request revision" && (!deadline || new Date(deadline) <= new Date()) ? t("eventReviews.deadlineRequired") : null,
-    ...Object.fromEntries(lines.flatMap((line, index) => {
-      const value = approvedAmounts[index]!;
-      const approve = outcome === "Approve";
-      return [
-        [`amount${index}`, approve && (!Number.isInteger(value) || value < 0 || value > line.amount) ? t("eventReviews.amountInvalid") : null],
-        [`amountReason${index}`, approve && value < line.amount
-          && !(amounts[index]?.reason?.trim() || review.data?.budget?.lines[index]?.reason?.trim()) ? t("eventReviews.amountReasonRequired") : null],
-      ];
-    })),
-  });
 
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -88,6 +72,7 @@ export function EventProposalReviewPage() {
       case "Pending Approval": return t("eventReviews.statePendingApproval");
       case "Under Review": return t("eventReviews.stateUnderReview");
       case "Revision Requested": return t("eventReviews.stateRevisionRequested");
+      case "Re-defense Pending": return t("eventDefense.stateReDefensePending");
       case "Approved": return t("eventReviews.stateApproved");
       case "Rejected": return t("eventReviews.stateRejected");
       case "Expired": return t("eventReviews.stateExpired");
@@ -114,16 +99,7 @@ export function EventProposalReviewPage() {
 
   function outcomeLabel(value: EventReviewOutcome) {
     return value === "Approve" ? t("eventReviews.approve") : value === "Reject" ? t("eventReviews.reject")
-      : t("eventReviews.requestRevision");
-  }
-
-  function toggleSection(section: EventReviewSection) {
-    setSections((current) => current.includes(section)
-      ? current.filter((item) => item !== section) : [...current, section]);
-  }
-
-  function editLine(index: number, change: { amount?: string; reason?: string }) {
-    setAmounts((current) => ({ ...current, [index]: { ...current[index], ...change } }));
+      : value === "Re-defense" ? t("eventDefense.outcomeReDefense") : t("eventReviews.requestRevision");
   }
 
   const back = { to: "/workspace/event-proposals", label: t("eventReviews.back") };
@@ -142,13 +118,13 @@ export function EventProposalReviewPage() {
   if (review.isError || !review.data) return (
     <>
       <PageHeader title={t("eventReviews.proposal")} back={back} />
-      <AppNotice tone="danger" role="alert" title={review.error?.message ?? t("eventReviews.loadError")}>
+      <AppNotice tone="danger" role="alert" title={resolveI18nError(review.error, t("eventReviews.loadError"))}>
         <AppButton variant="secondary" onClick={() => void review.refetch()}>{t("eventReviews.retry")}</AppButton>
       </AppNotice>
     </>
   );
 
-  const { event, task, club, decisions, versions, bookings, semesterBudgets, budget } = review.data;
+  const { event, task, club, decisions, versions, bookings, semesterBudgets, budget, activeDefenseSession, defenseHistory } = review.data;
   // The version submitted before the current one, and the revision request that sent it back.
   const previous = current && versions.filter((version) => version.revisionNo < current.revisionNo)
     .sort((a, b) => b.revisionNo - a.revisionNo)[0];
@@ -186,40 +162,60 @@ export function EventProposalReviewPage() {
   const conflictMessage = event.conflictDetail && typeof event.conflictDetail === "object"
     ? text((event.conflictDetail as Record<string, unknown>).message) : undefined;
   const mine = task.assigneeId === auth.data.user.id;
-  const isOpen = task.state === "Open" && ["Pending Approval", "Under Review"].includes(event.state);
+  const isOpen = task.state === "Open" && ["Pending Approval", "Under Review", "Re-defense Pending"].includes(event.state);
   const stateTone: AppBadgeTone = event.state === "Approved" ? "success"
     : ["Rejected", "Expired", "Cancelled"].includes(event.state) ? "danger"
       : event.state === "Revision Requested" ? "warning" : "info";
   const riskTone: AppBadgeTone = event.riskCategory === "HIGH" ? "danger" : event.riskCategory === "MEDIUM" ? "warning" : "success";
   const conflictTone: AppBadgeTone = event.conflictResult === "Blocking Conflict" ? "danger"
     : event.conflictResult === "Warning" ? "warning" : "success";
-  const approvedTotal = approvedAmounts.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
   const semesterTotal = semesterBudgets.reduce((sum, item) => sum + item.approvedTotal, 0);
+  const confirmOverdue = Boolean(
+    activeDefenseSession && activeDefenseSession.state === "SCHEDULED"
+    && new Date(activeDefenseSession.startAt).getTime() - renderedAt < 24 * 3600_000,
+  );
 
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Mutation state is rendered below. */ }
+    catch (error) { console.error("[EventProposalReviewPage] claim failed:", error); }
   }
 
-  async function decide() {
+  async function handleStartDefense() {
     if (!auth.data || !id) return;
-    // Checked before asking for confirmation.
-    if (!field.touchAll()) return;
-    const prompt = outcome === "Approve" ? t("eventReviews.confirmApprove")
-      : outcome === "Reject" ? t("eventReviews.confirmReject") : t("eventReviews.confirmRevision");
-    if (!(await askConfirm(prompt))) return;
+    defenseAction.reset();
     try {
-      await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken, input: {
-        outcome, reason: reason.trim() || undefined, reviewNote: reviewNote.trim() || undefined,
-        ...(outcome === "Request revision" ? { sections, revisionDeadlineAt: new Date(deadline).toISOString() } : {}),
-        ...(outcome === "Approve" ? {
-          conditions: conditions.split("\n").map((item) => item.trim()).filter(Boolean),
-          budgetLines: approvedAmounts.map((approvedAmount, index) => ({ approvedAmount,
-            ...(approvedAmount < lines[index]!.amount ? { reason: amounts[index]?.reason?.trim() || budget?.lines[index]?.reason } : {}) })),
-        } : {}),
-      } });
-    } catch { /* Mutation state is rendered below. */ }
+      await defenseAction.mutateAsync({ kind: "start", eventId: id, csrfToken: auth.data.csrfToken });
+      void navigate(`/workspace/event-proposals/${id}/defense`);
+    } catch (error) {
+      console.error("[EventProposalReviewPage] start defense failed:", error);
+    }
+  }
+
+  async function submitReasonModal(e: FormEvent) {
+    e.preventDefault();
+    if (!auth.data || !id || !reasonModalKind) return;
+    const trimmedReason = modalReason.trim();
+    if (!trimmedReason) return;
+    try {
+      if (reasonModalKind === "cancel") {
+        await defenseAction.mutateAsync({ kind: "cancel", eventId: id, reason: trimmedReason, csrfToken: auth.data.csrfToken });
+      } else if (reasonModalKind === "rejectReschedule") {
+        await defenseAction.mutateAsync({
+          kind: "respondReschedule",
+          eventId: id,
+          input: { accept: false, reason: trimmedReason },
+          csrfToken: auth.data.csrfToken,
+        });
+      } else {
+        if (!(await askConfirm(t("eventDefense.noShowWarning")))) return;
+        await defenseAction.mutateAsync({ kind: "noShow", eventId: id, reason: trimmedReason, csrfToken: auth.data.csrfToken });
+      }
+      setReasonModalKind(null);
+      setModalReason("");
+    } catch (error) {
+      console.error("[EventProposalReviewPage] defense modal action failed:", reasonModalKind, error);
+    }
   }
 
   return (
@@ -327,6 +323,111 @@ export function EventProposalReviewPage() {
             </section>
           </div>
 
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-heading text-base font-semibold">{t("eventDefense.sectionTitle")}</h2>
+              {isOpen && mine && !activeDefenseSession && (
+                <AppButton type="button" onClick={() => { defenseAction.reset(); setScheduleDialogMode("schedule"); }}>
+                  {t("eventDefense.scheduleButton")}
+                </AppButton>
+              )}
+            </div>
+
+            {activeDefenseSession ? (
+              <div className="space-y-3 rounded-xl border border-border-app bg-surface-app p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold">{activeDefenseSession.title}</span>
+                  <AppBadge tone={activeDefenseSession.state === "CONFIRMED" || activeDefenseSession.state === "IN_PROGRESS" ? "success"
+                    : activeDefenseSession.state === "RESCHEDULE_REQUESTED" ? "warning"
+                      : activeDefenseSession.state === "DEFENDED" ? "info" : "neutral"}>
+                    {t(`eventDefense.state_${activeDefenseSession.state}`)}
+                  </AppBadge>
+                </div>
+                <p className="text-muted-app">
+                  {date(activeDefenseSession.startAt)} · {t("eventDefense.durationValue", { minutes: activeDefenseSession.durationMinutes })} · {activeDefenseSession.propertyName}
+                </p>
+                {activeDefenseSession.note && (
+                  <p className="whitespace-pre-wrap break-words text-muted-app">{activeDefenseSession.note}</p>
+                )}
+
+                {confirmOverdue && (
+                  <AppNotice tone="warning">{t("eventDefense.overdueConfirmWarning")}</AppNotice>
+                )}
+
+                {activeDefenseSession.state === "RESCHEDULE_REQUESTED" && activeDefenseSession.rescheduleReason && (
+                  <AppNotice tone="warning" title={t("eventDefense.reschedulePendingTitle")}>
+                    <p>{t("eventDefense.rescheduleReasonLabel")}: {activeDefenseSession.rescheduleReason}</p>
+                  </AppNotice>
+                )}
+
+                {defenseAction.isError && (
+                  <p role="alert" className="text-danger-app">{resolveI18nError(defenseAction.error, t("eventDefense.defenseActionFailed"))}</p>
+                )}
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {mine && (activeDefenseSession.state === "SCHEDULED" || activeDefenseSession.state === "CONFIRMED") && (
+                    <AppButton type="button" disabled={defenseAction.isPending} onClick={() => void handleStartDefense()}>
+                      {t("eventDefense.startDefenseButton")}
+                    </AppButton>
+                  )}
+                  {(activeDefenseSession.state === "IN_PROGRESS" || activeDefenseSession.state === "DEFENDED") && (
+                    <Link
+                      className="inline-flex min-h-9 items-center justify-center rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs hover:opacity-90"
+                      to={`/workspace/event-proposals/${event.id}/defense`}
+                    >
+                      {t("eventDefense.openLiveRoomButton")}
+                    </Link>
+                  )}
+                  {mine && activeDefenseSession.state === "RESCHEDULE_REQUESTED" && (
+                    <>
+                      <AppButton type="button" onClick={() => { defenseAction.reset(); setScheduleDialogMode("reschedule"); }}>
+                        {t("eventDefense.acceptReschedule")}
+                      </AppButton>
+                      <AppButton type="button" variant="secondary" onClick={() => { defenseAction.reset(); setModalReason(""); setReasonModalKind("rejectReschedule"); }}>
+                        {t("eventDefense.rejectReschedule")}
+                      </AppButton>
+                    </>
+                  )}
+                  {mine && ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED"].includes(activeDefenseSession.state) && (
+                    <AppButton type="button" variant="secondary" onClick={() => { defenseAction.reset(); setModalReason(""); setReasonModalKind("cancel"); }}>
+                      {t("eventDefense.cancelButton")}
+                    </AppButton>
+                  )}
+                  {mine && ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"].includes(activeDefenseSession.state) && (
+                    <AppButton type="button" variant="ghost" onClick={() => { defenseAction.reset(); setModalReason(""); setReasonModalKind("noShow"); }}>
+                      {t("eventDefense.noShowButton")}
+                    </AppButton>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-app">{t("eventDefense.scheduleHint")}</p>
+            )}
+
+            {defenseHistory && defenseHistory.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold">{t("eventDefense.historyTitle")}</h3>
+                <ul className="mt-2 space-y-2 text-sm">
+                  {defenseHistory.map((item) => (
+                    <li key={item.id} className="rounded-lg border border-border-app px-3 py-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium">{item.title} · {t("eventDefense.revisionTag", { number: item.revisionNo })}</span>
+                        <AppBadge>{t(`eventDefense.state_${item.state}`)}</AppBadge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-app">
+                        {date(item.startAt)} · {item.propertyName}
+                        {item.outcome ? ` · ${t(`eventDefense.outcome_${item.outcome}`)}` : ""}
+                      </p>
+                      {(item.cancelReason || item.outcomeReason) && (
+                        <p className="mt-1 text-xs text-muted-app">{item.cancelReason ?? item.outcomeReason}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.history")}</h2>
             <ol className="mt-4 ml-1 space-y-4 border-l-2 border-border-app pl-5">{versions.map((version) =>
@@ -348,68 +449,12 @@ export function EventProposalReviewPage() {
                 {action.isPending ? t("eventReviews.claiming") : t("eventReviews.claim")}</AppButton>}
             </div>
           ) : isOpen ? (
-            <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-              <h2 className="font-heading text-base font-semibold">{t("eventReviews.decisionPanel")}</h2>
-              <p className="mt-1 text-sm text-muted-app">{t("eventReviews.decisionHint")}</p>
-              <div className="mt-5 grid grid-cols-3 gap-1 rounded-lg border border-border-app bg-surface-app p-1">{outcomes.map((value) =>
-                <button key={value} type="button" aria-pressed={outcome === value} onClick={() => setOutcome(value)}
-                  className={cn("min-h-11 rounded-md px-2 py-1.5 text-xs font-medium text-muted-app transition-colors hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app sm:min-h-9", {
-                    "bg-segment-app text-text-app shadow-xs": outcome === value,
-                  })}>{outcomeLabel(value)}</button>)}</div>
-
-              {outcome === "Request revision" && <fieldset className="mt-5">
-                <legend className="text-sm font-medium text-text-app">{t("eventReviews.sections")}<AppRequiredMark /></legend>
-                <div className="mt-3 space-y-1">{EVENT_REVIEW_SECTIONS.map((section) =>
-                  <label key={section} className="flex min-h-10 items-center gap-3 rounded-lg px-2 text-sm hover:bg-surface-app">
-                    <input type="checkbox" checked={sections.includes(section)} onChange={() => { toggleSection(section); field.touch("sections"); }}
-                      className="size-4 accent-primary-app" />
-                    {sectionLabel(section)}</label>)}</div>
-                <AppFieldError message={field.error("sections")} />
-                <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.deadline")}<AppRequiredMark />
-                  <AppInput type="datetime-local" value={deadline} {...field.control("deadline")} onChange={(e) => setDeadline(e.target.value)}
-                    className="mt-1.5 block w-full font-normal" />
-                  <AppFieldError message={field.error("deadline")} /></label>
-              </fieldset>}
-
-              {outcome === "Approve" && lines.length > 0 && <fieldset className="mt-5">
-                <legend className="text-sm font-medium text-text-app">{t("eventReviews.approveAmounts")}</legend>
-                <p className="mt-1 text-xs text-muted-app">{t("eventReviews.approveAmountsHint")}</p>
-                <div className="mt-3 space-y-4">{lines.map((line, index) => {
-                  const lowered = approvedAmounts[index]! < line.amount;
-                  return <div key={index}>
-                    <label className="block text-sm font-medium text-text-app"><span className="flex flex-wrap justify-between gap-2">
-                      <span className="font-medium break-words">{line.category}</span>
-                      <span className="text-xs text-muted-app">{t("eventReviews.requestedAmount")}: {money(line.amount)}</span></span>
-                      <AppMoneyInput
-                        value={amounts[index]?.amount ?? String(budget?.lines[index]?.approvedAmount ?? line.amount)} {...field.control(`amount${index}`)}
-                        onValueChange={(digits) => editLine(index, { amount: digits })} className="mt-1.5 w-full tabular-nums" />
-                      <AppFieldError message={field.error(`amount${index}`)} /></label>
-                    {lowered && <AppInput aria-label={t("eventReviews.reductionReason")} placeholder={t("eventReviews.reductionReason")}
-                      value={amounts[index]?.reason ?? budget?.lines[index]?.reason ?? ""} maxLength={500} {...field.control(`amountReason${index}`)}
-                      onChange={(e) => editLine(index, { reason: e.target.value })} className="mt-2 w-full" />}
-                    {lowered && <AppFieldError message={field.error(`amountReason${index}`)} />}
-                  </div>;
-                })}</div>
-                <p className="mt-3 text-sm font-semibold">{t("eventReviews.approvedTotal", { amount: money(approvedTotal) })}</p>
-              </fieldset>}
-
-              {outcome === "Approve" && <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.conditions")}
-                <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" value={conditions}
-                  onChange={(e) => setConditions(e.target.value)} placeholder={t("eventReviews.conditionsHint")} /></label>}
-
-              <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.reason")}{outcome !== "Approve" && <AppRequiredMark />}
-                <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" value={reason} maxLength={5000} {...field.control("reason", outcome !== "Approve")}
-                  onChange={(e) => setReason(e.target.value)} placeholder={t("eventReviews.reasonHint")} />
-                <AppFieldError message={field.error("reason")} /></label>
-              <label className="mt-4 block text-sm font-medium text-text-app">{t("eventReviews.reviewNote")}
-                <AppTextarea className="mt-1.5 min-h-24 w-full font-normal" value={reviewNote} maxLength={10000}
-                  onChange={(e) => setReviewNote(e.target.value)} placeholder={t("eventReviews.reviewNoteHint")} /></label>
-              <AppButton className="mt-6 w-full" disabled={action.isPending} onClick={() => void decide()}>
-                {action.isPending ? t("eventReviews.submitting") : t("eventReviews.submit")}</AppButton>
-              {action.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{action.error.message || t("eventReviews.actionError")}</p>}
-            </section>
+            <ProposalDecisionPanel
+              detail={review.data}
+              csrfToken={auth.data.csrfToken}
+              postDefense={Boolean(activeDefenseSession?.state === "DEFENDED" && !activeDefenseSession.outcome)}
+            />
           ) : null}
-          {action.isSuccess && action.variables?.kind === "decide" && <AppNotice role="status">{t("eventReviews.success")}</AppNotice>}
 
           {event.approvalConditions.length > 0 && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.conditions")}</h2>
@@ -430,6 +475,52 @@ export function EventProposalReviewPage() {
           </section>
         </aside>
       </div>
+
+      {scheduleDialogMode !== null && (
+        <ScheduleDefenseDialog
+          open
+          mode={scheduleDialogMode}
+          eventId={event.id}
+          eventTitle={event.title}
+          csrfToken={auth.data.csrfToken}
+          excludeDefenseId={scheduleDialogMode === "reschedule" ? activeDefenseSession?.id : undefined}
+          onClose={() => setScheduleDialogMode(null)}
+        />
+      )}
+
+      <AppDialog
+        open={reasonModalKind !== null}
+        title={reasonModalKind === "cancel"
+          ? t("eventDefense.cancelTitle")
+          : reasonModalKind === "noShow"
+            ? t("eventDefense.noShowTitle")
+            : t("eventDefense.rejectReschedule")}
+        closeLabel={t("clubEvents.close")}
+        onClose={() => { if (!defenseAction.isPending) setReasonModalKind(null); }}
+        footer={(
+          <AppButton type="submit" form="defense-reason-modal-form" disabled={defenseAction.isPending || !modalReason.trim()}>
+            {t("clubEvents.confirm")}
+          </AppButton>
+        )}
+      >
+        <form id="defense-reason-modal-form" onSubmit={(e) => void submitReasonModal(e)} className="space-y-4">
+          {reasonModalKind === "noShow" && <AppNotice tone="danger">{t("eventDefense.noShowWarning")}</AppNotice>}
+          <label className="block text-sm font-medium text-text-app">
+            {reasonModalKind === "cancel"
+              ? t("eventDefense.cancelReasonLabel")
+              : reasonModalKind === "noShow"
+                ? t("eventDefense.noShowReasonLabel")
+                : t("eventDefense.rejectRescheduleReasonLabel")}<AppRequiredMark />
+            <AppTextarea
+              value={modalReason}
+              maxLength={2000}
+              onChange={(e) => setModalReason(e.target.value)}
+              className="mt-1.5 min-h-24 w-full font-normal"
+            />
+          </label>
+          {defenseAction.isError && <p role="alert" className="text-sm text-danger-app">{resolveI18nError(defenseAction.error, t("eventDefense.defenseActionFailed"))}</p>}
+        </form>
+      </AppDialog>
     </>
   );
 }

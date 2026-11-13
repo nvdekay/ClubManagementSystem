@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run src/services/apiError.test.ts",
+    "test": "vitest run src/services/apiError.test.ts src/services/eventDefense.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },

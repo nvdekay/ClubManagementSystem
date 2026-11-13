@@ -47,6 +47,7 @@ import { ApplicationReviewQueuePage } from "./pages/icpdp/ApplicationReviewQueue
 import { ApplicationReviewDetailPage } from "./pages/icpdp/ApplicationReviewDetailPage.js";
 import { EventProposalQueuePage } from "./pages/icpdp/EventProposalQueuePage.js";
 import { EventProposalReviewPage } from "./pages/icpdp/EventProposalReviewPage.js";
+import { LiveDefenseRoomPage } from "./pages/icpdp/LiveDefenseRoomPage.js";
 import { BudgetDetailPage, BudgetsPage } from "./pages/icpdp/BudgetsPage.js";
 import { ViolationDetailPage, ViolationsPage } from "./pages/icpdp/ViolationsPage.js";
 import { PeriodicReportReviewPage, PeriodicReportsPage } from "./pages/icpdp/PeriodicReportsPage.js";
@@ -143,6 +144,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/internal-events/:id" element={<InternalEventDetailPage />} />
               <Route path="club/:clubId/board-history" element={<ClubBoardHistoryPage />} />
               <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
+              <Route path="workspace/event-proposals/:id/defense" element={<LiveDefenseRoomPage />} />
               <Route path="workspace/budgets" element={<BudgetsPage />} />
               <Route path="workspace/budgets/:id" element={<BudgetDetailPage />} />
               <Route path="workspace/periodic-reports" element={<PeriodicReportsPage />} />
