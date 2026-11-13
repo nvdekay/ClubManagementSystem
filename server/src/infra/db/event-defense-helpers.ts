@@ -258,8 +258,18 @@ export async function applyProposalDecisionInSession(
   );
   if (changed.modifiedCount !== 1) conflict("event proposal changed while deciding");
 
-  if (input.outcome !== "Re-defense") {
-    await tasks.updateOne({ _id: task._id, state: "Open" }, { $set: { state: "Decided", closedAt: now } }, { session });
+  await tasks.updateOne({ _id: task._id, state: "Open" }, { $set: { state: "Decided", closedAt: now } }, { session });
+  if (input.outcome === "Re-defense") {
+    await tasks.create([{
+      entityType: "EVENT_PROPOSAL",
+      entityId: eventId,
+      clubId: task.clubId,
+      title: task.title,
+      state: "Open",
+      assigneeId: task.assigneeId,
+      claimedAt: task.claimedAt ?? now,
+      openedAt: now,
+    }], { session });
   }
 
   if (pendingDefended) {

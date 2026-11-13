@@ -226,6 +226,7 @@ Enum reviewOutcome {
   "Request revision"
   Approve
   Reject
+  "Re-defense"
 }
 Enum approvalTaskState {
   Open

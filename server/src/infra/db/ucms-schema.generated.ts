@@ -165,7 +165,8 @@ export const ucmsEnums = {
   "reviewOutcome": [
     "Request revision",
     "Approve",
-    "Reject"
+    "Reject",
+    "Re-defense"
   ],
   "approvalTaskState": [
     "Open",

@@ -80,6 +80,7 @@ describe.skipIf(!uri)("Mongo event defense repository", () => {
       type: "ROOM",
       location: "Beta",
       capacity: 30,
+      bookableHours: Array.from({ length: 7 }, (_, day) => ({ day: day + 1, open: "07:00", close: "21:00" })),
       isActive: true,
       createdAt: now,
     });
