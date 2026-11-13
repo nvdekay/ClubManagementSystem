@@ -10,9 +10,13 @@ Guide book cho người dùng UCMS, theo ba không gian Student, CLB và ICPDP.
 - `build-guide.py`: dựng lại HTML từ Markdown và PNG bằng Python standard library,
   không cần cài thêm dependency.
 
-Nội dung đối chiếu 15/10/2026; ảnh chụp 13/10/2026. Bản ảnh phủ các màn hình đã chụp (23 chương, 64 ảnh). Client yêu cầu đăng nhập cho mọi
-trang, kể cả trang chủ/danh bạ; API `/public/*` vẫn công khai. Toàn bộ ảnh được chụp lại ngày 13/10/2026 theo giao diện hiện tại (thanh
-bên chia nhóm, khi đó phía CLB chỉ có hai vai trò Club Leader / Club Member), trên database demo
+`GUIDE_BOOK.md` đối chiếu code ngày 14/11/2026; ảnh chụp 13/10/2026. **`GUIDE_BOOK.pdf` (16/10/2026) và
+`GUIDE_BOOK.html` (07/11/2026) chưa dựng lại** sau các lần sửa Markdown ngày 09/11 và 14/11/2026 (mục buổi bảo
+vệ đề xuất BR63, khu công khai không cần đăng nhập, quyền xem phòng của mọi thành viên) — khi khác nhau, lấy
+theo Markdown. Bản ảnh phủ các màn hình đã chụp (23 chương, 64 ảnh). Khu công khai (trang chủ, danh bạ CLB,
+sự kiện và trang chi tiết) đọc được khi chưa đăng nhập; API `/public/*` công khai. Toàn bộ ảnh được chụp
+ngày 13/10/2026, **trước đợt làm lại giao diện 11–12/11/2026** (nay dùng tông cam FPT, bố cục khác), nên ảnh
+không còn khớp giao diện hiện tại; khi đó phía CLB chỉ có hai vai trò Club Leader / Club Member, trên database demo
 `ucms_guide_demo`. Ảnh UC36 và UC37 chụp trên bản demo có nối API trước khi server chính được
 nối ngày 15/10/2026. Các màn CLB thêm ngày 15/10/2026 (UC12, UC14, UC21 A2, UC38, UC40, UC43, UC54)
 mới được nhắc tên mục, chưa có ảnh. Đối chiếu phạm vi với
@@ -28,8 +32,8 @@ mới được nhắc tên mục, chưa có ảnh. Đối chiếu phạm vi vớ
 
 Seed guide copy các collection nghiệp vụ một lần, giữ liên kết và lịch sử, không copy phiên
 đăng nhập. Chạy lại không reset thao tác của người dùng trong database demo. Policy POST_EVENT
-7 ngày và chứng từ mẫu chỉ phục vụ demo. Hạn hoàn trả BR58 đã chốt 7 ngày (server chính dùng 7;
-`seed-guide.ts` còn đặt 14 ngày cho bộ demo).
+7 ngày và chứng từ mẫu chỉ phục vụ demo. Hạn hoàn trả BR58 đã chốt 7 ngày (server chính và
+`seed-guide.ts` đều dùng 7).
 Link `example.org` là placeholder, không phải chứng từ thanh toán thật.
 
 Dữ liệu wave 4 có sự kiện Completed/Cancelled, điểm danh, phản hồi, báo cáo nháp/đã nộp/trả sửa,
@@ -49,4 +53,4 @@ font tiếng Việt, ảnh, số trang và khả năng đọc trên trình duy�
 
 Từ 07/11/2026 nội dung chương 4 (hai vai trò cố định; mọi thành viên `Active` có quyền điểm danh và
 xem phòng) và chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) theo code mới;
-ảnh của hai chương này chưa chụp lại.
+ảnh của hai chương này chưa chụp lại. Ngày 14/11/2026 chương 8 thêm mục buổi bảo vệ đề xuất (BR63), chưa có ảnh.

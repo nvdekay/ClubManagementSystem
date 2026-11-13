@@ -1,6 +1,6 @@
 # Hiện trạng triển khai và ánh xạ use case
 
-> Đối chiếu `main` tại `655cad3` (code) ngày 17/10/2026. Đây là nguồn hiện hành để
+> Đối chiếu code nhánh `main` ngày 14/11/2026 (lần đối chiếu đầy đủ trước: `655cad3`, 17/10/2026). Đây là nguồn hiện hành để
 > đọc phạm vi **đã có trong code**. `SRS.md` mô tả phạm vi nghiệp vụ đích; các tài liệu kế hoạch
 > theo wave và review issue chỉ giữ giá trị lịch sử.
 
@@ -40,7 +40,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Mọi user | UC02 dashboard | Có; từ 19/10 có danh sách sự kiện nội bộ cho ICPDP và lịch sử cơ cấu/ban chủ nhiệm theo CLB (ICPDP và Club Leader) |
 | Student | UC06 khám phá CLB/sự kiện | Có; Guest xem được danh bạ/chi tiết (chỉ đọc), ứng tuyển/đăng ký mới yêu cầu đăng nhập; E1 gợi ý CLB mới nhất (19/10) |
 | Student | UC07 hồ sơ thành lập CLB | Có; hồ sơ quá hạn sửa tự chuyển `Expired`; còn QA Cloudinary thật và dọn asset mồ côi |
-| Student | UC17 ứng tuyển thành viên | Một phần; thành viên `Inactive` vẫn nộp được (E3/BR13) |
+| Student | UC17 ứng tuyển thành viên | Có; thành viên `Active` hoặc `Inactive` của CLB không nộp được (E3/BR13, sửa 17/10/2026) |
 | Club Member | UC21 A2 tái xác nhận thành viên đầu kỳ | Có, tại `/workspace/clubs`; quá hạn chuyển `Inactive`, Leader kích hoạt lại qua UC21 |
 | Student | UC29 đăng ký sự kiện | Có |
 | Student | UC31 check-in | Có |
@@ -52,7 +52,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Member | UC58 xem phòng được phân | Có (07/11/2026): mọi thành viên `Active` có `club.room.view` mặc định (BR54); tạo booking UC45 vẫn cần `club.booking.manage` |
 | Club Member | UC30 danh sách chờ, UC32 chốt điểm danh | Có (07/11/2026): mọi thành viên `Active` có `club.attendance.manage` mặc định (BR54); payload lược nội dung quản trị sự kiện |
 | Club Leader | UC09 hồ sơ/cơ cấu CLB | Có; GET và mutation đều yêu cầu `club.profile.manage` |
-| Club Leader | UC10 đề cử ban chủ nhiệm | Một phần; CLB không thấy trạng thái/lý do trả lại |
+| Club Leader | UC10 đề cử ban chủ nhiệm | Có (19/10/2026); CLB thấy các đề cử đã nộp, trạng thái từng ghế và lý do trả lại; một lần nộp chỉ đề cử một người cho mỗi ghế (§3 mục 6) |
 | Club Leader | UC12 lập kế hoạch chuyển giao | Có, tại `/club/:clubId/transition-plans` (A2 đổi danh sách ghế ngoài phạm vi) |
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
@@ -66,11 +66,11 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC45, UC47 booking ngoài `ROOM` | Có |
 | Club Leader | UC49 xem tổng hợp feedback | Có; điểm tổng kèm trung bình và phân bố (tổng hợp theo tiêu chí ngoài phạm vi) |
 | Club Leader | UC52 trả lời khiếu nại được chuyển xuống | Có (07/11/2026), tại `/club/:clubId/complaints` (`club.complaint.respond`): chỉ thấy khiếu nại đã `Forwarded`, không bao giờ thấy danh tính người khiếu nại (D5); trả lời một lần kèm hành động; quá hạn có tín hiệu tuân thủ |
-| ICPDP | UC03, UC04 tài khoản/chính sách | Có; UC03 chưa nối khoá tài khoản với hồ sơ UC40 |
+| ICPDP | UC03, UC04 tài khoản/chính sách | Có; UC03 A1 khoá tài khoản có thể gắn hồ sơ UC40 đang mở (19/10/2026) |
 | ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests`; UC15 giải thể dọn việc còn mở, lưu nghĩa vụ tồn đọng và cảnh báo đối soát (A1 liên kết hồ sơ UC40 ngoài phạm vi) |
 | ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính; UC26 có buổi bảo vệ đề xuất (BR63, PR #26): xếp lịch phòng `ROOM`, CLB xác nhận/xin dời, Live Defense Room, quyết định sau bảo vệ gồm Bảo vệ lại |
 | ICPDP | UC37 đối soát | Có, đã nối vào app chính; A2 đối soát tối đa bằng số đã tạm ứng, không cấp bù |
-| ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42 **Một phần** (nguồn dữ liệu bản nháp); UC43 có (E1 khiếu nại kết quả ngoài phạm vi) |
+| ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42 có (nguồn dữ liệu bản nháp đã sửa 19/10/2026, §3 mục 9); UC43 có (E1 khiếu nại kết quả ngoài phạm vi) |
 | ICPDP | UC05 định tuyến phê duyệt | Có (07/11/2026), tại `/workspace/routing-rules`: bộ rule đánh phiên bản `Draft → Active`, từ chối rule chồng nhau, mô phỏng trên hồ sơ đã quyết định; rule chỉ đặt SLA thẩm định, chỉ `ICPDP_HEAD` (cấp kèm `ICPDP_OFFICER`, D1) sửa và kích hoạt; UC08/UC26/UC46 duyệt một cấp (bỏ cấp 2 từ 09/11/2026) |
 | ICPDP | UC51 phân loại khiếu nại | Có (07/11/2026), tại `/workspace/complaint-review`: mở xem xét, quyết định Dismissed / Forwarded (kèm hạn trả lời) / Escalated (mở hồ sơ UC40 liên kết hai chiều), lý do bắt buộc; sau khi CLB trả lời thì đóng hoặc leo thang. Kết quả đi vào UC42 qua hồ sơ vi phạm (D8) |
 | ICPDP | UC53 sự kiện cấp trường | Có |
@@ -85,7 +85,8 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 
 UC12, UC14, UC21 A2, UC36–UC38, UC40, UC43, UC54 và job hết hạn hồ sơ UC07/08 đã hoàn thành
 ngày 15/10/2026; `655cad3` (16/10) vá các lỗ hổng tìm thấy khi đi hết luồng nghiệp vụ. Kiểm toán
-ngày 17/10/2026 còn ghi nhận các luồng thiếu dưới đây (chưa sửa).
+ngày 17/10/2026 ghi nhận các luồng thiếu dưới đây. Đến 14/11/2026 các mục gạch ngang đều đã sửa;
+chỉ còn mục 11 và phần "Còn lại" của mục 6 chưa làm.
 
 Đã sửa ngày 17/10/2026 (nhánh `agent/fix-business-gaps`): panel sự kiện nội bộ UC02 đếm sự kiện
 `MEMBERS_ONLY`; BR21 coi kỳ đã quá hạn mà CLB chưa mở báo cáo là nghĩa vụ quá hạn
@@ -125,8 +126,7 @@ CLB mới nhất khi tìm không ra.
    transaction, lỗi thì CLB ở lại `Dissolving` và ICPDP nhận `CLUB_LIFECYCLE_FAILED` (audit + thông báo,
    tối đa một lần/ngày; job hỏng toàn bộ cũng báo); E1 liệt kê ngân sách chưa đối soát khi chọn giải thể.
 
-**Thành viên**
-
+**Thành viên** — không còn mục mở.
 
 **Sự kiện, ngân sách, cơ sở vật chất**
 
@@ -186,7 +186,8 @@ CLB mới nhất khi tìm không ra.
   `PropertiesPage`/`BookingWorkspace` đã chuyển sang `AppConfirmDialog` ngày 19/10.
 - Tên tiêu chí đánh giá tiếng Việt khi ở `en`; so sánh feedback gồm cả sự kiện `Draft`/`Pending`;
   nhãn "active clubs" trên bộ lọc suspended ở `/icpdp/clubs`; lỗi form tuyển không nêu tên trường.
-- `seed-guide.ts:60` và `seed-wave4.ts:82` dùng `recoveryDueDays` 14 (prod 7, BR58).
+- ~~`seed-guide.ts` và `seed-wave4.ts` dùng `recoveryDueDays` 14 (prod 7, BR58).~~ Đã sửa: `seed-guide.ts` dùng 7
+  như `main.ts`; `seed-wave4.ts` không còn đặt giá trị này.
 
 ## 4. Các điểm cần đọc đúng khi đối chiếu
 
@@ -230,7 +231,8 @@ CLB mới nhất khi tìm không ra.
 
 ## 5. Cổng kiểm chứng
 
-Lần đối chiếu ngày 17/10/2026: `npm run check` xanh, 442 test đều qua, không skip (chạy kèm
-`MONGO_URI` tới một Mongo replica set riêng). Các màn mới đã nghiệm thu trên trình duyệt với database QA
+Số test ngày 14/11/2026: server 398 unit test / 62 file và 179 integration test / 48 file
+(integration cần `MONGO_URI` tới Mongo replica set; thiếu biến này thì bị bỏ qua), client 27 test / 2 file.
+Lần đối chiếu ngày 17/10/2026: `npm run check` xanh, 442 test đều qua, không skip. Các màn mới đã nghiệm thu trên trình duyệt với database QA
 riêng, ở `en`/sáng/desktop và `vi`/tối/mobile: không lỗi console hay API, không tràn ngang, và
 Member bị từ chối ở cả menu lẫn API. Khi code hoặc phạm vi thay đổi, cập nhật file này cùng SRS, SPEC/TASKS liên quan và sơ đồ.

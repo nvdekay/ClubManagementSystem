@@ -1,8 +1,13 @@
 # UCMS — Guide book hướng dẫn sử dụng
 
-> **Đối chiếu code ngày 07/11/2026.** Chương 4 (hai vai trò cố định, quyền mặc định của thành viên) và
-> chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) đã viết lại theo code mới; ảnh chụp các chương này vẫn là giao diện trước
-> 07/11/2026 và cần chụp lại.
+> **Đối chiếu code ngày 14/11/2026.** Chương 4 (hai vai trò cố định, quyền mặc định của thành viên) và
+> chương 19 (khiếu nại UC50–UC52, định tuyến phê duyệt UC05) viết lại ngày 07/11/2026; chương 8 thêm mục
+> buổi bảo vệ đề xuất sự kiện (BR63) ngày 14/11/2026; chương 1 và 12.3 sửa theo code hiện hành.
+>
+> **Về ảnh chụp và bản dựng:** mọi ảnh trong tài liệu chụp ngày 13/10/2026, **trước đợt làm lại giao diện
+> 11–12/11/2026** (giao diện hiện tại dùng tông cam FPT và bố cục khác), nên màu sắc, vị trí nút và một số
+> màn hình trong ảnh không còn giống app; mục buổi bảo vệ chưa có ảnh. `GUIDE_BOOK.pdf` và `GUIDE_BOOK.html`
+> chưa dựng lại sau các thay đổi này — khi khác nhau, lấy theo file Markdown này.
 > Trạng thái API/UI và khoảng trống triển khai: [CURRENT_IMPLEMENTATION.md](../CURRENT_IMPLEMENTATION.md).
 
 
@@ -11,8 +16,9 @@ ICPDP. Mỗi luồng ghi nơi bắt đầu, vai trò cần có, từng bước t
 màn hình, và kết quả cần kiểm tra.
 
 Tên nút, bộ lọc và trạng thái trong tài liệu lấy từ giao diện tiếng Việt của bản hiện tại.
-Toàn bộ ảnh minh hoạ được chụp lại ngày 13/10/2026 từ app đang chạy với API và MongoDB thật sau
-khi seed, bằng các tài khoản mẫu; xem phần **Phụ lục** để biết nguồn dữ liệu.
+Toàn bộ ảnh minh hoạ được chụp ngày 13/10/2026 (trước đợt làm lại giao diện tháng 11/2026) từ app
+đang chạy với API và MongoDB thật sau khi seed, bằng các tài khoản mẫu; xem phần **Phụ lục** để biết
+nguồn dữ liệu.
 
 ## Mục lục
 
@@ -23,7 +29,7 @@ khi seed, bằng các tài khoản mẫu; xem phần **Phụ lục** để biế
 5. Ban chủ nhiệm và chuyển giao nhiệm kỳ.
 6. Tuyển thành viên.
 7. Thành viên và yêu cầu rời CLB.
-8. Sự kiện CLB: đề xuất, thẩm định, công bố, đổi lịch, huỷ.
+8. Sự kiện CLB: đề xuất, thẩm định, buổi bảo vệ đề xuất, công bố, đổi lịch, huỷ.
 9. Sự kiện cấp trường.
 10. Đăng ký sự kiện, check-in và gửi phản hồi.
 11. Chốt điểm danh và xem phản hồi.
@@ -42,14 +48,15 @@ khi seed, bằng các tài khoản mẫu; xem phần **Phụ lục** để biế
 
 ## 1. Đăng nhập và khám phá
 
-**Nơi bắt đầu:** `/login`. Mọi trang, kể cả trang chủ `/`, danh bạ `/clubs` và lịch sự kiện
-`/events`, đều yêu cầu đăng nhập. Mở một trang khi chưa đăng nhập, app chuyển về `/login` và
-quay lại đúng trang đó sau khi đăng nhập xong.
+**Nơi bắt đầu:** trang chủ `/` hoặc `/login`. Khu công khai — trang chủ `/`, danh bạ `/clubs`,
+lịch sự kiện `/events` và trang chi tiết CLB/sự kiện — đọc được khi chưa đăng nhập (chỉ xem). Ứng
+tuyển, đăng ký sự kiện và mọi khu làm việc cần đăng nhập; nút **Đăng nhập** ở góc phải thanh menu
+mở `/login` và quay lại đúng trang đang xem sau khi đăng nhập xong.
 
-1. Mở app, chọn **Đăng nhập với Google**.
+1. Mở app, bấm **Đăng nhập** rồi chọn **Đăng nhập với Google**.
 2. Chọn tài khoản Google thuộc domain mà nhà trường cho phép. Nếu trình duyệt có nhiều tài
    khoản, chọn đúng tài khoản sinh viên hoặc cán bộ.
-3. Sau khi đăng nhập, dùng thanh menu **Trang chủ / Câu lạc bộ / Sự kiện** để khám phá.
+3. Dùng thanh menu **Trang chủ / Câu lạc bộ / Sự kiện** để khám phá (được cả khi chưa đăng nhập).
 4. Ở **Câu lạc bộ**, tìm theo tên và lọc theo lĩnh vực; mở một CLB để xem giới thiệu, ban chủ
    nhiệm, đợt tuyển đang mở và hoạt động.
 5. Ở **Sự kiện**, mở một sự kiện để xem thời gian, địa điểm, số chỗ và khung đăng ký.
@@ -312,6 +319,42 @@ quá hạn mà chưa được xử lý sẽ tự chuyển **Hết hạn**.
 
 ![Thẩm định đề xuất và từng dòng ngân sách](images/26-event-proposal-review.png)
 
+### Buổi bảo vệ đề xuất (BR63)
+
+ICPDP có thể yêu cầu CLB bảo vệ trực tiếp một đề xuất trước khi quyết định. **Vai trò:** cán bộ
+ICPDP phụ trách đề xuất (người đã nhận thẩm định) xếp lịch và điều khiển buổi bảo vệ; Club Leader
+xác nhận hoặc xin dời lịch. Mục này chưa có ảnh chụp.
+
+1. **ICPDP xếp lịch.** Ở trang thẩm định đề xuất (`/workspace/event-proposals/:id`), khung
+   **Buổi bảo vệ đề án sự kiện** cạnh bảng quyết định, bấm **Tạo lịch bảo vệ**: nhập tiêu đề,
+   thời gian bắt đầu, thời lượng (15–240 phút), chọn phòng học cơ sở (phòng `ROOM` đang hoạt
+   động; phòng bận hiện nhãn **BẬN**) và ghi chú. Lịch phải tạo trước giờ bảo vệ ít nhất 48 giờ;
+   phòng bị khoá trong khung giờ đó.
+2. Khi còn lịch bảo vệ hiệu lực, nút **Phê duyệt**, **Từ chối** và **Bảo vệ lại** tạm khoá. Cán bộ
+   vẫn **Yêu cầu sửa** được, với hạn nộp bản sửa trước giờ bảo vệ ít nhất 12 giờ, hoặc
+   **Hủy lịch bảo vệ** kèm lý do để mở lại các nút quyết định.
+3. **Club Leader xác nhận.** Ở **Sự kiện CLB** (`/club/:clubId/events`), thẻ **Lịch hẹn bảo vệ đề
+   án với ICPDP** hiện thời gian, thời lượng, phòng và ghi chú. Bấm **Xác nhận tham gia**, hoặc
+   **Đề xuất dời lịch** kèm lý do; cả hai phải làm trước giờ bảo vệ ít nhất 24 giờ. Quá hạn mà chưa
+   xác nhận thì cán bộ ICPDP thấy cảnh báo.
+4. **ICPDP xử lý xin dời lịch:** **Chấp nhận & chọn lịch mới**, hoặc **Từ chối dời lịch (giữ lịch
+   cũ)** kèm lý do.
+5. **Phòng bảo vệ trực tiếp.** Đến giờ (sớm nhất 30 phút trước giờ hẹn), cán bộ phụ trách bấm
+   **Bắt đầu bảo vệ**; app mở **Phòng bảo vệ đề án trực tiếp**
+   (`/workspace/event-proposals/:id/defense`). Cột trái là thông tin đề án và ngân sách; cột phải
+   là biên bản ghi chú Markdown, mỗi cán bộ một tab **Ghi chú của tôi** tự lưu mỗi 2 giây, tab
+   **Ghi chú hội đồng** xem ghi chú của mọi người. Cán bộ khác vào bằng **Vào phòng bảo vệ**. Chỉ cán
+   bộ phụ trách bấm được **Kết thúc bảo vệ**.
+6. **Quyết định sau bảo vệ:** quay lại trang thẩm định, khung **Quyết định sau bảo vệ** cho chọn
+   một trong bốn kết quả — **Phê duyệt** (nếu có ngân sách thì nhập số tiền duyệt từng hạng mục,
+   giảm phải có lý do), **Từ chối**, **Yêu cầu sửa** hoặc **Bảo vệ lại** (đề xuất chuyển **Chờ bảo vệ lại**, ICPDP tạo lịch mới; không giới hạn số lần).
+7. **CLB vắng mặt:** cán bộ bấm **Đánh dấu vắng mặt (No-show)** kèm ghi chú → đề xuất bị
+   **Từ chối** ngay và phòng được giải phóng.
+
+**Kết quả:** mỗi buổi bảo vệ được lưu trong **Lịch sử các buổi bảo vệ** kèm ghi chú của mọi cán bộ.
+Nếu CLB không nộp bản sửa trước hạn (trước giờ bảo vệ 12 giờ), đề xuất **Hết hạn** và lịch bảo vệ tự
+huỷ. CLB bị tạm ngừng thì các lịch bảo vệ chưa diễn ra cũng bị huỷ.
+
 ### Công bố, sức chứa, đổi lịch và huỷ
 
 1. Sự kiện **Đã duyệt**: bấm **Công bố**, đặt thời gian mở/đóng đăng ký và check-in, chọn
@@ -436,7 +479,8 @@ hội trường, sân trường, sân khấu và thiết bị.
 
 ### 12.3. CLB xem phòng được phân
 
-**Vai trò:** Club Leader (người đi nhận chìa khoá). **Nơi bắt đầu:** **Phòng được phân**
+**Vai trò:** mọi thành viên `Active` của CLB (quyền mặc định `club.room.view`), thường là người đi
+nhận chìa khoá. **Nơi bắt đầu:** **Phòng được phân**
 (`/club/:clubId/rooms`).
 
 1. Xem lịch tuần của học kỳ hiện tại và sắp tới: thứ, slot, giờ, phòng, toà nhà, ghi chú.

@@ -1,6 +1,5 @@
 import type { AuthUser } from "./auth.js";
 
-/** ICPDP_HEAD (D1) is the second approval level of UC05; it is held only together with ICPDP_OFFICER. */
 export const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"] as const;
 export type SystemRoleCode = (typeof SYSTEM_ROLE_CODES)[number];
 

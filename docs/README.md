@@ -20,22 +20,23 @@ hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu
 truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác
 nhau về một yêu cầu, **lấy theo SRS**.
 
-**Report final hiện hành:** [`Group1_SE1939-NJ_Report_Final.docx`](Group1_SE1939-NJ_Report_Final.docx) — dựng lại
-19/10/2026 từ bộ sơ đồ hiện hành trong `03-diagrams/img/` (context, use case theo actor, main workflow, screen flow,
-state, ERD Chen + Crow's Foot, database schema, package, kiến trúc); mở bằng Word và chấp nhận cập nhật field để làm
-mới mục lục. `v2.docx`, DOCX đặc tả và sơ đồ cũ, các file thuyết trình và review rời đã được xoá (19/10/2026);
-nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và đối chiếu.
+**Report final hiện hành:** báo cáo Google Doc của nhóm (bản final, 13–14/11/2026), dùng bộ sơ đồ
+trong `03-diagrams/img/`. Các bản `.docx` cũ trong repo (`Group1_SE1939-NJ_Report_Final.docx` dựng 19/10/2026 và
+`03-diagrams/UCMS_Diagrams.docx`) đã lỗi thời nên được xoá ngày 14/11/2026; `v2.docx`, DOCX đặc tả, các file
+thuyết trình và review rời đã được xoá từ 19/10/2026. Nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và
+đối chiếu.
 
 ## Bản đồ thư mục
 
 | Thư mục | Bên trong có gì | Đọc khi nào |
 |---|---|---|
 | [`01-business-analysis/`](01-business-analysis/) | Bản phân tích nghiệp vụ và hệ thống gốc: vấn đề, các bên liên quan, luồng nghiệp vụ, user story, domain model, mô hình đánh giá, các feature nổi bật | Bạn cần hiểu *vì sao* có một yêu cầu, hoặc cần phần nền mà SRS đã tóm tắt lại |
-| [`02-use-cases/`](02-use-cases/) | Use case model v2, đặc tả chi tiết và nhật ký review; phần UC23 động là lịch sử, đã bị quyết định role cố định thay thế | Bạn cần bản kể đầy đủ của một use case hoặc lịch sử của một lần sửa |
+| [`02-use-cases/`](02-use-cases/) | Use case model v2, đặc tả chi tiết và nhật ký review — bản lịch sử, đã được `SRS.md` thay thế (UC23 đã rút, phê duyệt một cấp) | Bạn cần bản kể đầy đủ của một use case hoặc lịch sử của một lần sửa |
 | [`03-diagrams/`](03-diagrams/) | Nguồn draw.io và bản xuất PNG: context diagram hiện hành [`UCMS_Context_Diagram.drawio`](03-diagrams/UCMS_Context_Diagram.drawio) (ảnh v1, v2, v2.1 là lịch sử), use case diagram theo actor, state diagram, ERD, package diagram, screen flow, swimlane các luồng nghiệp vụ chính (main workflow) | Bạn cần một sơ đồ, hoặc bạn đang sửa sơ đồ |
 | [`04-design/`](04-design/) | Thiết kế mức cao và bộ quy tắc giao diện | Bạn chuẩn bị viết code hoặc dựng một màn hình |
-| [`05-implementation/`](05-implementation/) | Danh sách công việc triển khai (database, backend, frontend) và thiết kế cơ sở dữ liệu dạng DBML cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
-| [`06-user-guide/`](06-user-guide/) | Guide book PDF/HTML/Markdown và ảnh chụp các luồng chính với dữ liệu đã seed | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
+| [`05-implementation/`](05-implementation/) | Ma trận UC → code, các chỗ code lệch sơ đồ, thiết lập Auth/SMTP và thiết kế cơ sở dữ liệu dạng DBML (54 bảng) cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
+| [`06-user-guide/`](06-user-guide/) | Guide book PDF/HTML/Markdown và ảnh chụp các luồng chính với dữ liệu đã seed (ảnh chụp trước đợt làm lại giao diện 11/2026) | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
+| [`07-demo-videos/`](07-demo-videos/) | 18 video demo các luồng nghiệp vụ chính | Bạn chuẩn bị demo hoặc cần xem một luồng chạy thật |
 
 ## Thứ tự đọc cho người mới
 
@@ -47,9 +48,8 @@ nguồn Markdown, draw.io và PNG vẫn được giữ để chỉnh sửa và �
 6. [`../.rules/README.md`](../.rules/README.md) — code phải trông như thế nào. Definition of Done: `npm run check` xanh.
 
 Use case diagram [`03-diagrams/UCMS_UseCase_ByActor.drawio`](03-diagrams/UCMS_UseCase_ByActor.drawio)
-là bản 19/10/2026; riêng các oval CRUD role của UC23 đã cũ. Quyết định role cố định mới hơn nằm trong
-`UCMS_Organization_and_Flows.drawio` ngày 02/11/2026 và SRS hiện hành. Cần sửa/xuất lại bộ ảnh use
-case và dựng lại report.
+đã bỏ các oval CRUD role của UC23 và xuất lại ảnh ngày 13/11/2026, khớp quyết định role cố định trong
+`UCMS_Organization_and_Flows.drawio` và SRS hiện hành.
 
 ## Quy ước
 
@@ -59,7 +59,7 @@ case và dựng lại report.
   Anh vì chúng xuất hiện nguyên văn trong code.
 - Một use case được định danh bằng số **v2** (UC01–UC55, UC58) ở mọi nơi trừ bên trong tài liệu v1.
   Dùng §5 của use case model để chuyển đổi giữa v1 và v2.
-- Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR61** (60 quy tắc còn hiệu lực), trong đó BR43 đã
+- Quy tắc nghiệp vụ dùng chung một dãy số trên mọi tài liệu: **BR01–BR63** (62 quy tắc còn hiệu lực), trong đó BR43 đã
   được rút. Danh sách hợp nhất, đã áp dụng mọi sửa đổi, nằm ở `SRS.md` §5.
 - Tài liệu nguồn đã bị thay thế được giữ làm lịch sử; các DOCX cũ đã được xoá theo yêu cầu.
   Khi v1 và v2 nói khác nhau, **lấy theo v2**.

@@ -2,9 +2,11 @@
 
 > Ghi chú dọn tài liệu: 2026-10-11 chỉ giữ report v2 làm bản DOCX sử dụng; 2026-10-19 xoá nốt
 > report v2, `UCMS_UseCase_ByActor.docx`, `UC_Diagram_Presentation.*`, `Context_Diagram_QA.md`,
-> `Context_Diagram_Glossary.md` và các file review rời. Bản Word duy nhất còn giữ là `../v2.docx`
-> (chín use case diagram theo actor). Các tên DOCX và file cũ bên dưới là ghi nhận lịch sử review;
-> những file này đã được xoá và không còn là hạng mục cần cập nhật hoặc xuất lại.
+> `Context_Diagram_Glossary.md` và các file review rời, cùng `../v2.docx`; 2026-11-14 xoá
+> `../Group1_SE1939-NJ_Report_Final.docx` và `../03-diagrams/UCMS_Diagrams.docx` vì đã lỗi thời. Report
+> final hiện hành là báo cáo Google Doc của nhóm (bản final, 13–14/11/2026); repo không còn bản Word nào.
+> Các tên DOCX và file cũ bên dưới là ghi nhận lịch sử review; những file này đã được xoá và không còn là
+> hạng mục cần cập nhật hoặc xuất lại. Baseline hiện hành là `../SRS.md`.
 
 Đối chiếu 4 tài liệu:
 
