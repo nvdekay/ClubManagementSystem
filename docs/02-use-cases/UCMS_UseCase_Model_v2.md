@@ -146,7 +146,7 @@ Hai mâu thuẫn của v1 quanh mô hình actor được giải quyết tại đ
 | ID | Use case | Actor | Mục tiêu nghiệp vụ |
 |---|---|---|---|
 | UC25 | Nộp đề xuất tổ chức sự kiện | Club Leader | Xin phép tổ chức một sự kiện |
-| UC26 | Thẩm định và quyết định đề xuất sự kiện | ICPDP | Kiểm tra, yêu cầu chỉnh sửa, phê duyệt hoặc từ chối |
+| UC26 | Thẩm định và quyết định đề xuất sự kiện | ICPDP | Kiểm tra, tổ chức bảo vệ trực tiếp, yêu cầu chỉnh sửa, phê duyệt, từ chối hoặc cho phép bảo vệ lại |
 | UC27 | Công bố sự kiện và mở đăng ký | Club Leader | Cho phép tham gia |
 | UC28 | Huỷ hoặc đổi lịch sự kiện | Club Leader | Xử lý một thay đổi cùng mọi hệ quả của nó |
 
