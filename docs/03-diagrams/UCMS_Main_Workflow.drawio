@@ -968,7 +968,35 @@
                 <mxCell id="f7_e23" edge="1" parent="1" source="f7_s14" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_end">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-            </root>
+            
+  <mxCell id="f7_s3b" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Confirm schedule and defend proposal in Live Room (when required) (BR63)" vertex="1">
+      <mxGeometry height="78" width="206" x="426" y="711" as="geometry"/>
+  </mxCell>
+  <mxCell id="f7_e_defense_sch" edge="1" parent="1" source="f7_s3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=1;entryY=0.5;dashed=1;" target="f7_s3b">
+      <mxGeometry relative="1" as="geometry"/>
+  </mxCell>
+  <mxCell id="f7_lbl_sch_def" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Defense scheduled" vertex="1">
+      <mxGeometry height="20" width="110" x="550" y="740" as="geometry"/>
+  </mxCell>
+  <mxCell id="f7_e_defense_done" edge="1" parent="1" source="f7_s3b" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" target="f7_d2">
+      <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+              <mxPoint x="529" y="878"/>
+          </Array>
+      </mxGeometry>
+  </mxCell>
+  <mxCell id="f7_e_redefense" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.2;exitY=0;entryX=0.8;entryY=1;edgeStyle=orthogonalEdgeStyle;dashed=1;" target="f7_s3b">
+      <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+              <mxPoint x="740" y="810"/>
+              <mxPoint x="590" y="810"/>
+          </Array>
+      </mxGeometry>
+  </mxCell>
+  <mxCell id="f7_lbl_redef" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Re-defense" vertex="1">
+      <mxGeometry height="20" width="70" x="635" y="800" as="geometry"/>
+  </mxCell>
+</root>
         </mxGraphModel>
     </diagram>
 </mxfile>

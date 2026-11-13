@@ -1,5 +1,7 @@
 import { ApiError, apiFetch } from "@/services/apiError";
-export type EventReviewOutcome = "Request revision" | "Approve" | "Reject";
+import type { EventDefenseSession } from "@/services/eventDefense";
+
+export type EventReviewOutcome = "Request revision" | "Approve" | "Reject" | "Re-defense";
 export const EVENT_REVIEW_SECTIONS = ["schedule", "venue", "content", "risk", "budget", "other"] as const;
 export type EventReviewSection = typeof EVENT_REVIEW_SECTIONS[number];
 
@@ -88,6 +90,8 @@ export interface EventProposalDetail extends EventProposalQueueItem {
   bookings: { id: string; propertyCode?: string; propertyName?: string; startAt: string; endAt: string; state: string }[];
   semesterBudgets: EventBudgetSummary[];
   budget?: EventBudgetSummary;
+  activeDefenseSession?: EventDefenseSession;
+  defenseHistory?: EventDefenseSession[];
 }
 
 export interface EventReviewDecisionInput {

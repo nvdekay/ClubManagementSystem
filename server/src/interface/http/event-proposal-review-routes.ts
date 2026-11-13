@@ -21,7 +21,7 @@ export interface EventProposalReviewRouteDeps {
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i);
 export const eventReviewDecisionBody = z.object({
-  outcome: z.enum(["Request revision", "Approve", "Reject"]),
+  outcome: z.enum(["Request revision", "Approve", "Reject", "Re-defense"]),
   reason: z.string().max(5_000).optional(),
   sections: z.array(z.enum(EVENT_REVIEW_SECTIONS)).max(EVENT_REVIEW_SECTIONS.length).optional(),
   reviewNote: z.string().max(10_000).optional(),

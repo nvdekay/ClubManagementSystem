@@ -1,56 +1,23 @@
 import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { cancelEventInSession } from "./event-cancellation.js";
-import { settlementDueAt } from "../../domain/budget-disbursement.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
-import { notificationChannels } from "../../domain/notification.js";
+import { ACTIVE_DEFENSE_STATES } from "../../domain/event-defense.js";
 import {
-  approvedBudget,
-  type ApprovedBudgetLine, type ClubObligation, type EventBudgetSummary, type EventProposalDetail,
+  type ClubObligation, type EventBudgetSummary, type EventProposalDetail,
   type EventProposalReviewRepository, type EventProposalSummary, type EventProposalTask,
-  type EventProposalVersion, type EventReviewDecision, type RequestedBudgetLine,
+  type EventProposalVersion, type EventReviewDecision,
 } from "../../domain/event-proposal-review.js";
+import {
+  applyProposalDecisionInSession, approvedLines, conflict, mapDefenseSession, money, optionalText, requestedLines,
+} from "./event-defense-helpers.js";
 import { ucmsModels } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type Doc = Record<string, unknown>;
 const TASK_TYPE = "EVENT_PROPOSAL";
-const reviewableStates = ["Pending Approval", "Under Review"];
-
-function money(value: unknown): number {
-  if (value === null || value === undefined) return 0;
-  const parsed = Number(String(value));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function decimal(value: number) {
-  return Types.Decimal128.fromString(String(value));
-}
-
-function optionalText(value: unknown): string | undefined {
-  return typeof value === "string" && value ? value : undefined;
-}
-
-function conflict(message: string): never {
-  throw new DomainError(message, "conflict");
-}
-
-function requestedLines(raw: unknown): RequestedBudgetLine[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.flatMap((item: unknown) => {
-    if (!item || typeof item !== "object") return [];
-    const line = item as Doc;
-    return [{ category: String(line.category ?? ""), amount: money(line.amount), purpose: String(line.purpose ?? ""),
-      ...(optionalText(line.plannedItems) ? { plannedItems: String(line.plannedItems) } : {}) }];
-  });
-}
-
-function approvedLines(raw: unknown): ApprovedBudgetLine[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map((item: Doc) => ({ category: String(item.category ?? ""), requestedAmount: money(item.requestedAmount),
-    approvedAmount: money(item.approvedAmount), ...(optionalText(item.reason) ? { reason: String(item.reason) } : {}) }));
-}
+const reviewableStates = ["Pending Approval", "Under Review", "Re-defense Pending"];
 
 function taskFrom(doc: Doc): EventProposalTask {
   return {
@@ -123,7 +90,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
     const task = taskDocs[0];
     if (!event || !task || !event.clubId) return null;
     const clubId = event.clubId as Types.ObjectId;
-    const [decisionDocs, club, property, submitters, bookingDocs, budgetDocs, owed] = await Promise.all([
+    const [decisionDocs, club, property, submitters, bookingDocs, budgetDocs, owed, defenseDocs] = await Promise.all([
       decisions.find({ approvalTaskId: { $in: taskDocs.map((item) => item._id) } }).sort({ at: 1 }).lean(),
       m.clubs!.findById(clubId).select({ name: 1, state: 1 }).lean(),
       event.propertyId ? m.properties!.findById(event.propertyId).select({ code: 1, name: 1 }).lean() : null,
@@ -132,6 +99,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       m.propertyBookings!.find({ eventId }).sort({ startAt: 1 }).lean(),
       budgets.find({ clubId, $or: [{ eventId }, { periodCode: event.semesterCode }] }).sort({ createdAt: -1 }).lean(),
       obligations(clubId, now),
+      m.eventDefenseSessions!.find({ eventId }).sort({ createdAt: -1, _id: -1 }).lean(),
     ]);
     const propertyIds = bookingDocs.map((booking) => booking.propertyId);
     const [bookingProperties, budgetEvents] = await Promise.all([
@@ -152,6 +120,9 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
     const current = mappedVersions.find((version) => version.revisionNo === Number(event.currentRevisionNo))
       ?? mappedVersions.at(-1);
     const own = budgetDocs.find((budget) => String(budget.eventId) === String(eventId));
+    const defenseHistory = defenseDocs.map(mapDefenseSession);
+    const activeDefenseSession = defenseHistory.find((session) =>
+      ACTIVE_DEFENSE_STATES.has(session.state) || (session.state === "DEFENDED" && !session.outcome));
     return {
       task: taskFrom(task),
       event: eventFrom(event, current?.requestedBudgetTotal ?? 0,
@@ -167,6 +138,8 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       semesterBudgets: budgetDocs.filter((budget) => budget !== own)
         .map((budget) => budgetFrom(budget, titleById.get(String(budget.eventId)))),
       ...(own ? { budget: budgetFrom(own, String(event.title)) } : {}),
+      ...(activeDefenseSession ? { activeDefenseSession } : {}),
+      ...(defenseHistory.length ? { defenseHistory } : {}),
     };
   }
 
@@ -230,74 +203,8 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
 
     async decide(eventId, officerId, input, now) {
       const id = new Types.ObjectId(eventId);
-      const actorId = new Types.ObjectId(officerId);
       await mongoose.connection.transaction(async (session) => {
-        const event = await events.findOne({ _id: id, state: "Under Review" }).session(session).lean();
-        const task = await tasks.findOne({ entityType: TASK_TYPE, entityId: id, state: "Open", assigneeId: actorId })
-          .sort({ openedAt: -1 }).session(session).lean();
-        if (!event || !task) return conflict("event proposal cannot be decided");
-        const version = await versions.findOne({ eventId: id, revisionNo: event.currentRevisionNo ?? 1 })
-          .session(session).lean();
-        if (!version) return conflict("submitted proposal revision is missing");
-        const lines = input.outcome === "Approve"
-          ? approvedBudget(requestedLines(version.budgetLines), input.budgetLines) : [];
-
-        const decisionId = new Types.ObjectId();
-        await decisions.create([{ _id: decisionId, approvalTaskId: task._id, level: 1, outcome: input.outcome,
-          reason: input.reason, reviewNote: input.reviewNote,
-          comments: { sections: input.sections, conditions: input.conditions,
-            ...(lines.length ? { budgetLines: lines } : {}) },
-          actorId, at: now }], { session });
-        const nextState = input.outcome === "Approve" ? "Approved"
-          : input.outcome === "Reject" ? "Rejected" : "Revision Requested";
-        const changed = await events.updateOne({ _id: id, state: "Under Review" }, {
-          $set: { state: nextState,
-            ...(input.revisionDeadlineAt ? { revisionDeadlineAt: input.revisionDeadlineAt } : {}),
-            ...(input.outcome === "Approve" ? { approvalConditions: input.conditions } : {}) },
-          ...(!input.revisionDeadlineAt ? { $unset: { revisionDeadlineAt: "" } } : {}),
-        }, { session });
-        if (changed.modifiedCount !== 1) return conflict("event proposal changed while deciding");
-        await tasks.updateOne({ _id: task._id, state: "Open" }, { $set: { state: "Decided", closedAt: now } }, { session });
-
-        if (input.outcome === "Reject" && await audits.exists({ entityType: "Event", entityId: id, action: "EVENT_RESCHEDULED" }).session(session)) {
-          await cancelEventInSession(session, { ...event, state: nextState }, input.reason ?? "Reschedule rejected", now, "PROPOSAL_REJECTION", 24, actorId, decisionId);
-          await events.updateOne({ _id: id, state: "Cancelled" }, { $set: { state: nextState } }, { session });
-        }
-
-        let budgetId: Types.ObjectId | undefined;
-        if (lines.length) {
-          const requestedTotal = lines.reduce((sum, line) => sum + line.requestedAmount, 0);
-          const approvedTotal = lines.reduce((sum, line) => sum + line.approvedAmount, 0);
-          const existingBudget = await budgets.findOne({ eventId: id }).session(session).lean();
-          if (existingBudget) {
-            budgetId = existingBudget._id as Types.ObjectId;
-            const disbursed = money(existingBudget.disbursedTotal);
-            const existingLines = approvedLines(existingBudget.lines);
-            if (disbursed > 0 && (approvedTotal !== money(existingBudget.approvedTotal) || lines.length !== existingLines.length ||
-              lines.some((line, index) => line.category !== existingLines[index]?.category || line.approvedAmount !== existingLines[index]?.approvedAmount))) {
-              return conflict("a reschedule cannot change an already disbursed budget");
-            }
-            if (approvedTotal < disbursed) return conflict("approved budget cannot be less than the amount already disbursed");
-            await budgets.updateOne({ _id: budgetId }, { $set: { lines: lines.map((line) => ({ ...line })),
-              requestedTotal: decimal(requestedTotal), approvedTotal: decimal(approvedTotal), approvedByDecisionId: decisionId,
-              periodCode: event.semesterCode, ...(disbursed === 0 ? { state: "Approved" } : { settlementDueAt: settlementDueAt(event.endAt as Date) }) }, $inc: { __v: 1 } }, { session });
-          } else {
-            budgetId = new Types.ObjectId();
-            await budgets.create([{ _id: budgetId, eventId: id, clubId: event.clubId,
-              lines: lines.map((line) => ({ ...line })), requestedTotal: decimal(requestedTotal),
-              approvedTotal: decimal(approvedTotal), approvedByDecisionId: decisionId, disbursedTotal: decimal(0),
-              refundedTotal: decimal(0), isSettlementLate: false, state: "Approved",
-              periodCode: event.semesterCode, createdAt: now }], { session });
-          }
-        }
-        const action = `EVENT_PROPOSAL_${nextState.toUpperCase().replace(" ", "_")}`;
-        await audits.create([{ entityType: "Event", entityId: id, action, actorId, actorRole: "ICPDP_OFFICER",
-          before: { state: "Under Review" }, after: { state: nextState, revisionNo: version.revisionNo, budgetId },
-          reason: input.reason, correlationId: randomUUID(), at: now }], { session });
-        await notifications.create([{ recipientUserId: version.submittedBy, eventCode: action, entityType: "Event",
-          entityId: id, channels: notificationChannels(action), payload: { title: event.title, outcome: input.outcome, reason: input.reason,
-            sections: input.sections, revisionDeadlineAt: input.revisionDeadlineAt, conditions: input.conditions },
-          state: "Queued", dueAt: now, attempts: 0, createdAt: now }], { session });
+        await applyProposalDecisionInSession(session, id, officerId, input, now, { requireDefendedSession: false });
       });
       return required(id, now);
     },
@@ -311,6 +218,11 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
           const changed = await events.updateOne({ _id: event._id, state: "Revision Requested" },
             { $set: { state: "Expired" } }, { session });
           if (changed.modifiedCount !== 1) return;
+          await m.eventDefenseSessions!.updateMany(
+            { eventId: event._id, state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] } },
+            { $set: { state: "CANCELLED", cancelReason: "Proposal revision deadline expired", updatedAt: now } },
+            { session },
+          );
           if (await audits.exists({ entityType: "Event", entityId: event._id, action: "EVENT_RESCHEDULED" }).session(session)) {
             const expiredEvent = await events.findById(event._id).session(session).lean();
             if (expiredEvent) {

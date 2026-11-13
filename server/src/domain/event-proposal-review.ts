@@ -1,6 +1,7 @@
 import { DomainError } from "./errors.js";
+import type { EventDefenseSession } from "./event-defense.js";
 
-export type EventReviewOutcome = "Request revision" | "Approve" | "Reject";
+export type EventReviewOutcome = "Request revision" | "Approve" | "Reject" | "Re-defense";
 export const EVENT_REVIEW_SECTIONS = ["schedule", "venue", "content", "risk", "budget", "other"] as const;
 export type EventReviewSection = typeof EVENT_REVIEW_SECTIONS[number];
 export const MAX_APPROVAL_CONDITIONS = 10;
@@ -112,6 +113,8 @@ export interface EventProposalDetail extends EventProposalQueueItem {
   /** Other budgets the club already holds in the same semester (FR-UC26-13). */
   semesterBudgets: EventBudgetSummary[];
   budget?: EventBudgetSummary;
+  activeDefenseSession?: EventDefenseSession;
+  defenseHistory?: EventDefenseSession[];
 }
 
 export interface EventReviewDecisionInput {

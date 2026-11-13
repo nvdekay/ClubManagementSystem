@@ -4,6 +4,7 @@ import { clubPeriodicCreateBody, clubPeriodicDraftBody, clubPeriodicVersionBody 
 import { invitationResponseBody } from "./club-invitation-routes.js";
 import { accountabilityOpenApiPaths } from "./openapi-accountability.js";
 import { clubEventOpenApiPaths } from "./openapi-club-events.js";
+import { eventDefenseOpenApiPaths, EventDefenseSessionSchema } from "./openapi-event-defense.js";
 import { roomAllocationBody, roomAllocationQuery, roomAllocationRevokeBody, roomOccupancyQuery } from "./room-allocation-routes.js";
 import { bookingBody, bookingSaveBody, bookingVersionBody, bookingReasonBody, bookingDecisionBody, bookingAvailabilityQuery } from "./facility-booking-routes.js";
 import { z } from "zod";
@@ -370,7 +371,7 @@ const EventProposalDetail = EventProposalQueueItem.extend({
     submittedByName: z.string().optional(), submittedAt: z.string(),
   })),
   decisions: z.array(z.object({
-    id: z.string(), taskId: z.string(), outcome: z.enum(["Request revision", "Approve", "Reject"]),
+    id: z.string(), taskId: z.string(), outcome: z.enum(["Request revision", "Approve", "Reject", "Re-defense"]),
     reason: z.string().optional(), sections: z.array(z.string()), conditions: z.array(z.string()),
     reviewNote: z.string().optional(), actorId: z.string(), at: z.string(),
   })),
@@ -379,6 +380,8 @@ const EventProposalDetail = EventProposalQueueItem.extend({
   bookings: z.array(z.object({ id: z.string(), propertyCode: z.string().optional(),
     propertyName: z.string().optional(), startAt: z.string(), endAt: z.string(), state: z.string() })),
   semesterBudgets: z.array(EventBudgetSummary), budget: EventBudgetSummary.optional(),
+  activeDefenseSession: EventDefenseSessionSchema.optional(),
+  defenseHistory: z.array(EventDefenseSessionSchema).optional(),
 });
 const ClubProfile = clubProfileBody.extend({
   id: z.string(), code: z.string(), name: z.string(), field: z.string(), state: z.string(),
@@ -669,6 +672,7 @@ export const openApiDocument = createDocument({
     },
     ...accountabilityOpenApiPaths,
     ...clubEventOpenApiPaths,
+    ...eventDefenseOpenApiPaths,
     ...roomAllocationPaths,
     "/booking-slots": {
       get: { summary: "Four fixed campus booking slots (Vietnam time)",

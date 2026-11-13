@@ -36,6 +36,7 @@ import type { ClubLifecycleRepository } from "../../domain/club-lifecycle.js";
 import type { ApplicationFileStorage, ClubApplicationRepository } from "../../domain/club-application.js";
 import type { ClubApplicationReviewRepository } from "../../domain/club-application-review.js";
 import type { EventProposalReviewRepository } from "../../domain/event-proposal-review.js";
+import type { EventDefenseRepository } from "../../domain/event-defense.js";
 import type { BudgetDisbursementRepository } from "../../domain/budget-disbursement.js";
 import type { ViolationRepository } from "../../domain/violation.js";
 import type { PeriodicReportRepository } from "../../domain/periodic-report.js";
@@ -63,6 +64,7 @@ import { policyRoutes } from "./policy-routes.js";
 import { clubApplicationRoutes } from "./club-application-routes.js";
 import { clubApplicationReviewRoutes } from "./club-application-review-routes.js";
 import { eventProposalReviewRoutes } from "./event-proposal-review-routes.js";
+import { eventDefenseRoutes } from "./event-defense-routes.js";
 import { budgetDisbursementRoutes } from "./budget-disbursement-routes.js";
 import { violationRoutes } from "./violation-routes.js";
 import { periodicReportRoutes } from "./periodic-report-routes.js";
@@ -159,6 +161,7 @@ export function buildApp(deps: {
   membershipReconfirmationRepo?: MembershipReconfirmationRepository;
   clubViolationRepo?: ClubViolationRepository;
   clubEvaluationRepo?: ClubEvaluationRepository;
+  eventDefenseRepo?: EventDefenseRepository;
   publicRepo: PublicDiscoveryRepository;
   dbReady: () => boolean;
 }) {
@@ -285,6 +288,15 @@ export function buildApp(deps: {
       if (deps.eventProposalReviewRepo) {
         app.use("/api/v1", eventProposalReviewRoutes({ repo: deps.eventProposalReviewRepo,
           authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+        if (deps.eventDefenseRepo) {
+          app.use("/api/v1", eventDefenseRoutes({
+            repo: deps.eventDefenseRepo,
+            reviewRepo: deps.eventProposalReviewRepo,
+            accessRepo: deps.auth.accessRepo,
+            authRepo: deps.auth.repo,
+            sessions: deps.auth.sessions,
+          }));
+        }
       }
       if (deps.eventFinanceRepo) app.use("/api/v1", eventFinanceRoutes({ repo: deps.eventFinanceRepo,
         access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
@@ -363,6 +375,7 @@ export function buildApp(deps: {
   const hasExports = Boolean(hasPolicy && deps.exportRepo && deps.exportWriter);
   const hasClubLifecycle = Boolean(hasPolicy && deps.clubLifecycleRepo);
   const hasEventProposalReviews = Boolean(hasPolicy && deps.eventProposalReviewRepo);
+  const hasEventDefenses = Boolean(hasEventProposalReviews && deps.eventDefenseRepo);
   const hasBudgets = Boolean(hasPolicy && deps.budgetDisbursementRepo);
   const hasViolations = Boolean(hasPolicy && deps.violationRepo);
   const hasPeriodicReports = Boolean(hasPolicy && deps.periodicReportRepo);
@@ -401,6 +414,7 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/exports")) return hasExports;
       if (path.startsWith("/admin/clubs")) return hasClubLifecycle;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
+      if (path.startsWith("/admin/event-defense") || path.includes("/defense")) return hasEventDefenses;
       if (path.startsWith("/admin/event-proposals")) return hasEventProposalReviews;
       if (path.includes("/event-reports")) return Boolean(hasPolicy && deps.postEventReportRepo);
       if (path.startsWith("/clubs/{clubId}/budgets") || path.includes("/reconciliation")) return Boolean(hasPolicy && deps.eventFinanceRepo);

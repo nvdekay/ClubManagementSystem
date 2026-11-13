@@ -111,13 +111,17 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       ...(excludeId ? { _id: { $ne: oid(excludeId) } } : {}), ...interval });
     const eventQuery = m.events!.find({ propertyId: oid(input.propertyId), state: { $in: ["Approved", "Upcoming", "Ongoing"] },
       ...(input.eventId ? { _id: { $ne: oid(input.eventId) } } : {}), ...interval });
-    if (session) { bookingQuery.session(session); eventQuery.session(session); }
+    const defenseQuery = m.eventDefenseSessions!.find({ propertyId: oid(input.propertyId),
+      state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...interval });
+    if (session) { bookingQuery.session(session); eventQuery.session(session); defenseQuery.session(session); }
     // Operations in a Mongo transaction run sequentially.
     const bookingDocs = await bookingQuery.lean();
     const eventDocs = await eventQuery.lean();
+    const defenseDocs = await defenseQuery.lean();
     return [...bookingDocs.map((doc) => ({ id: String(doc._id), startAt: doc.startAt as Date,
       endAt: doc.endAt as Date, source: "booking" as const })), ...eventDocs.map((doc) => ({ id: String(doc._id),
-      startAt: doc.startAt as Date, endAt: doc.endAt as Date, source: "event" as const }))]
+      startAt: doc.startAt as Date, endAt: doc.endAt as Date, source: "event" as const })), ...defenseDocs.map((doc) => ({
+      id: String(doc._id), startAt: doc.startAt as Date, endAt: doc.endAt as Date, source: "defense" as const }))]
       .filter((item) => bookingIntervalsConflict(input.startAt, input.endAt, item.startAt, item.endAt, thresholdMinutes));
   }
   async function assess(input: BookingInput, clubId: string, now: Date, excludeId?: string, session?: ClientSession) {

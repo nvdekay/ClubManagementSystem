@@ -119,4 +119,12 @@ describe("UC26 event proposal review use case", () => {
       officer, eventId, { outcome: "Approve" }, now);
     expect(decide).toHaveBeenCalledOnce();
   });
+
+  it("requires a reason for Re-defense and rejects approval budget lines on it", () => {
+    expect(() => normalizedEventDecision({ outcome: "Re-defense" }, now)).toThrow("decision reason is required");
+    expect(() => normalizedEventDecision({ outcome: "Re-defense", reason: "Present again", conditions: ["x"] }, now))
+      .toThrow("only apply to an approval");
+    expect(normalizedEventDecision({ outcome: "Re-defense", reason: "  Present logistics again  " }, now))
+      .toMatchObject({ outcome: "Re-defense", reason: "Present logistics again" });
+  });
 });

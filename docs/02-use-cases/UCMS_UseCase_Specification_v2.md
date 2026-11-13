@@ -971,6 +971,9 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
     sự kiện nội bộ trên dashboard ICPDP (UC02). Các bước 2–3 và mọi ngoại lệ vẫn áp dụng. Nếu có
     đính kèm yêu cầu booking (chỉ tài sản ngoài `ROOM`), booking đó vẫn chờ UC46 quyết định. Sự kiện `Internal` có phần
     ngân sách đi luồng chính.
+  - **A5 Xác nhận hoặc đề xuất dời lịch bảo vệ sự kiện (BR60):** khi ICPDP xếp lịch bảo vệ (UC26 A4), Club Leader nhận thông báo (tiêu đề, thời gian bắt đầu, thời lượng dự kiến, địa điểm phòng học `ROOM`, ghi chú). Club Leader xem chi tiết lịch hẹn và thực hiện một trong hai hành động:
+    - **Xác nhận tham gia (`Confirm`)**: Bắt buộc thực hiện **trước giờ bảo vệ ít nhất 24 giờ**. Nếu quá hạn 24 giờ mà chưa xác nhận, hệ thống gửi cảnh báo quá hạn cho ICPDP Officer;
+    - **Đề xuất dời lịch (`Request Reschedule`)**: Nếu CLB gặp sự cố bất khả kháng (trùng lịch thi, lịch học của các thành viên chủ chốt), Club Leader nhập lý do chi tiết và gửi đề xuất xin dời lịch lên ICPDP. Trạng thái buổi bảo vệ chuyển sang `Reschedule Requested` và chờ ICPDP phản hồi (chấp thuận đổi giờ/phòng mới hoặc bác bỏ giữ nguyên lịch).
 - **Ngoại lệ:**
   - **E1** có xung đột chặn trong khi chính sách cấm chồng lịch → từ chối nộp;
   - **E2** một nghĩa vụ bắt buộc (báo cáo, quyết toán, hoàn trả) đã quá hạn và công tắc cưỡng
@@ -981,11 +984,13 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   - **E5** CLB đã có quyết định giải thể và sự kiện kết thúc sau học kỳ `Dissolving` của nó →
     từ chối (BR45).
   - **E6** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54).
+  - **E7** CLB vắng mặt buổi bảo vệ (`NO_SHOW`, BR60) → Officer ghi nhận `NO_SHOW`, sự kiện bị từ chối (`Rejected`) ngay lập tức và ghi nhận điểm trừ uy tín CLB.
+  - **E8** quá hạn nộp bản sửa khi đang có lịch bảo vệ (BR60) → nếu sự kiện được yêu cầu sửa đổi trong lúc đã có lịch bảo vệ, hạn chót sửa (`revisionDeadlineAt`) bắt buộc phải trước giờ bảo vệ ít nhất 12 giờ. Nếu quá hạn 12 giờ mà CLB không nộp bản sửa, sự kiện chuyển `Expired` và lịch bảo vệ tự động bị hủy (`Cancelled`), phòng học được giải phóng.
 - **Hậu điều kiện:** Đề xuất ở `Pending Approval` với một bản sửa bất biến; tồn tại một review
-  task. Với A4: sự kiện ở `Approved`, có bản ghi audit và ICPDP xem được ở UC02.
-- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR10, BR15, BR21, BR22, BR44, BR45, BR53. Phát hiện xung đột là một quy tắc được
+  task. Với A4: sự kiện ở `Approved`, có bản ghi audit và ICPDP xem được ở UC02. Với A5: lịch bảo vệ chuyển sang `Confirmed` hoặc `Reschedule Requested`.
+- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR10, BR15, BR21, BR22, BR44, BR45, BR53, BR60. Phát hiện xung đột là một quy tắc được
   đánh giá tại đây, không phải một use case (v1 từng đếm nó thành UC25 với actor là `System`).
-- **Đầu ra:** EventProposal, bản sửa (gồm phần ngân sách), ApprovalTask, yêu cầu PropertyBooking nếu có.
+- **Đầu ra:** EventProposal, bản sửa (gồm phần ngân sách), ApprovalTask, yêu cầu PropertyBooking nếu có, xác nhận hoặc đề xuất dời lịch bảo vệ.
 - **Use case liên quan:** UC26, UC45, UC04, UC02
 - **Pain point:** BP05, BP06, BP09
 
@@ -993,12 +998,12 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 
 - **Actor chính:** ICPDP Officer
 - **Module:** M05
-- **Mục tiêu nghiệp vụ:** Một phiên thẩm định duy nhất kết thúc bằng một trong ba kết quả, với
-  lập luận của nhà trường được lưu lại.
-- **Kích hoạt:** Một review task từ UC25.
-- **Tiền điều kiện:** Đề xuất đang ở `Pending Approval`.
+- **Mục tiêu nghiệp vụ:** Một phiên thẩm định duy nhất kết thúc bằng một trong các kết quả, với
+  lập luận của nhà trường được lưu lại; hỗ trợ tổ chức buổi bảo vệ trực tiếp (Live Defense) đối với sự kiện phức tạp.
+- **Kích hoạt:** Một review task từ UC25 hoặc sự kiện ở trạng thái chờ bảo vệ lại.
+- **Tiền điều kiện:** Đề xuất đang ở `Pending Approval` hoặc `Re-defense Pending`.
 - **Dữ liệu vào:** Ghi chú thẩm định, các nhận xét có cấu trúc, quyết định và lý do; số tiền
-  duyệt theo từng dòng ngân sách.
+  duyệt theo từng dòng ngân sách; thông tin tạo lịch bảo vệ (phòng học `ROOM`, thời lượng dự kiến, ghi chú); ghi chú Note Markdown của từng cán bộ trong buổi bảo vệ trực tiếp.
 - **Luồng chính:**
   1. Officer mở đề xuất → `Under Review`.
   2. Officer xem xét mức độ tuân thủ, địa điểm, thời gian, mức rủi ro, các nghĩa vụ quá hạn của
@@ -1011,32 +1016,46 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
      - **Phê duyệt** → `Approved`; nếu có phần ngân sách, officer chốt **số tiền duyệt** theo
        từng dòng (có thể thấp hơn số xin ở nơi chính sách cho phép, mỗi dòng giảm kèm lý do), và
        hệ thống tạo `EventBudget` ở `Approved`, lưu số duyệt tách biệt với số xin;
-     - **Từ chối** — bắt buộc có lý do → `Rejected`.
+     - **Từ chối** — bắt buộc có lý do → `Rejected`;
+     - **Tạo lịch bảo vệ sự kiện** — đối với sự kiện lớn, phức tạp hoặc cần đối thoại trực tiếp, officer khởi tạo lịch bảo vệ theo luồng thay thế A4.
   5. Hệ thống lưu trạng thái, người xử lý, thời điểm, phiên bản hồ sơ và nhận xét vào lịch sử; thông báo trạng thái và nội dung cần bổ sung cho Club Leader.
-  6. ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện, gồm phiên bản hiện tại, lịch sử thẩm định và hạn bổ sung. Trạng thái xử lý gồm `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời.
+  6. ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện, gồm phiên bản hiện tại, lịch sử thẩm định và hạn bổ sung. Trạng thái xử lý gồm `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`, `Re-defense Pending`; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời.
 - **Luồng thay thế:**
-  - **A1 Cấp thứ hai:** một sự kiện rủi ro cao hoặc quy mô lớn được định tuyến lên cấp ICPDP thứ
-    hai theo UC05 và BR16.
+  - **A1 Cấp thẩm định và SLA (sửa 09/11/2026, D1):** người dùng đã bỏ cấp duyệt thứ hai; mọi hồ sơ do một ICPDP Officer quyết định. Quy tắc rủi ro và ngân sách của UC05 được dùng để tự động tính thời hạn giải quyết SLA (`slaDueAt`) của review task.
   - **A2 Phê duyệt kèm điều kiện:** việc phê duyệt mang theo các điều kiện mà CLB phải đáp ứng;
     chúng được kiểm tra lại ở UC34.
   - **A2 Hồ sơ thiếu và thẩm định lại:** ICPDP yêu cầu bổ sung như bước 4; Club Leader hoàn thiện báo cáo và nộp phiên bản mới qua UC25 A2 → `Pending Approval`. ICPDP mở lại → `Under Review`, đối chiếu phần bổ sung với nhận xét cũ rồi ra quyết định. Lặp khi vẫn thiếu; không ghi đè hồ sơ hoặc nhận xét trước. Báo cáo này là đề xuất trước khi duyệt, khác UC33/UC34.
-  - **A3 Ngân sách vượt ngưỡng:** tổng ngân sách vượt ngưỡng được định tuyến lên cấp ICPDP thứ
-    hai theo UC05 và BR16.
+  - **A4 Tổ chức buổi bảo vệ đề xuất sự kiện (BR60):**
+    1. **Tạo lịch bảo vệ**: Officer phụ trách task (Assignee) tạo lịch hẹn bảo vệ: chọn phòng học (từ danh mục phòng `ROOM` đang `Active`), chọn thời lượng dự kiến (phút, hệ thống tự tính thời gian kết thúc), nhập tiêu đề và ghi chú. Lịch phải được tạo trước giờ diễn ra ít nhất 48 giờ.
+    2. **Khóa phòng & Khóa quyền**: Hệ thống đánh dấu phòng học là BẬN (`LOCKED`) trong khung giờ bảo vệ để chống xếp đè lịch. Trong thời gian đang có lịch bảo vệ hiệu lực, hệ thống **khóa tạm thời 2 nút Phê duyệt và Từ chối** sự kiện (Officer chỉ có thể Yêu cầu sửa đổi với hạn nộp trước giờ bảo vệ $\ge 12$ giờ).
+    3. **Hủy lịch bảo vệ**: Officer có thể chủ động bấm "Hủy lịch bảo vệ" kèm lý do → giải phóng phòng học, mở lại quyền Phê duyệt/Từ chối thông thường.
+    4. **Phản hồi đề xuất dời lịch**: Khi CLB xin dời lịch (UC25 A5), Officer chọn *Chấp thuận* (chọn phòng/giờ mới) hoặc *Bác bỏ* (giữ nguyên lịch cũ, cảnh báo CLB nếu không đến sẽ bị tính `NO_SHOW`).
+    5. **Màn hình bảo vệ trực tiếp (Live Defense Room)**:
+       - Đến giờ hẹn (hoặc trước tối đa 30 phút), Officer bấm "Bắt đầu bảo vệ" → mở Màn hình bảo vệ riêng gồm 2 cột:
+         - Cột 1: Thông tin đề án (kế hoạch, mục tiêu, rủi ro, dự trù ngân sách);
+         - Cột 2: Khung ghi chú Markdown cá nhân. Hệ thống hỗ trợ nhiều cán bộ ICPDP cùng tham gia buổi bảo vệ; mỗi cán bộ có tab ghi chú riêng được tự động lưu nháp (Auto-save mỗi 2 giây); đồng bộ trạng thái buổi bảo vệ qua Polling nhẹ 3 giây.
+       - Cán bộ chủ trì (Assignee) bấm "Kết thúc bảo vệ" → buổi bảo vệ chuyển sang `Defended`, lưu toàn bộ ghi chú của mọi cán bộ tham gia vào biên bản thẩm định.
+    6. **Bốn nhánh Quyết định sau bảo vệ**:
+       - **Từ chối (`Rejected`)**: Buổi bảo vệ không đạt yêu cầu → nhập lý do từ chối → sự kiện chuyển `Rejected`;
+       - **Phê duyệt (`Approved`)**: Buổi bảo vệ đạt yêu cầu → nếu sự kiện có phần ngân sách, bắt buộc mở form chốt số tiền duyệt theo từng dòng (`approvedAmount` kèm lý do nếu giảm) → hệ thống tạo `EventBudget` ở `Approved` và chuyển sự kiện sang `Approved`;
+       - **Yêu cầu sửa đổi (`Revision Requested`)**: Nhập nội dung cần sửa và hạn nộp mới → sự kiện chuyển `Revision Requested`;
+       - **Bảo vệ lại (`Re-defense`)**: Cho phép CLB thuyết trình lại → sự kiện chuyển sang trạng thái `Re-defense Pending` để chờ xếp lịch bảo vệ lần tiếp theo. Không giới hạn số lần bảo vệ lại (do ICPDP toàn quyền quyết định).
 - **Ngoại lệ:**
-  - **E1** CLB bị tạm ngừng giữa lúc nộp và lúc quyết định → đề xuất chuyển `Cancelled` bởi UC15;
-  - **E2** hết deadline chỉnh sửa → scheduler chuyển đề xuất sang `Expired`; CLB phải nộp một đề
-    xuất mới.
+  - **E1** CLB bị tạm ngừng giữa lúc nộp và lúc quyết định → đề xuất chuyển `Cancelled` bởi UC15, toàn bộ lịch bảo vệ chưa diễn ra tự động bị hủy;
+  - **E2** hết deadline chỉnh sửa → scheduler chuyển đề xuất sang `Expired`; nếu có lịch bảo vệ đang chờ mà quá hạn sửa 12 giờ trước bảo vệ thì lịch bảo vệ cũng tự động bị hủy, phòng học được giải phóng;
   - **E3** hạn mức ngân sách của kỳ đã cạn → officer yêu cầu chỉnh sửa hoặc từ chối, kèm lý do
-    được ghi lại.
-  - **E4** yêu cầu bổ sung không nêu nội dung còn thiếu hoặc nhận xét rỗng → từ chối lưu, giữ nguyên trạng thái.
-- **Hậu điều kiện:** Đề xuất ở `Revision Requested`, `Approved` hoặc `Rejected`; chỉ một sự kiện
+    được ghi lại;
+  - **E4** yêu cầu bổ sung không nêu nội dung còn thiếu hoặc nhận xét rỗng → từ chối lưu, giữ nguyên trạng thái;
+  - **E5** CLB vắng mặt buổi bảo vệ (`NO_SHOW`, BR60) → đến giờ bảo vệ nhưng CLB không có mặt, officer ấn "Đánh dấu Vắng mặt" → sự kiện tự động chuyển sang `Rejected` và ghi nhận điểm trừ uy tín;
+  - **E6** trùng lịch phòng học → phòng học đã có lịch sinh hoạt kỳ (UC58) hoặc có lịch bảo vệ khác trong cùng khung giờ → từ chối tạo lịch, yêu cầu chọn phòng hoặc khung giờ khác.
+- **Hậu điều kiện:** Đề xuất ở `Revision Requested`, `Approved`, `Rejected`, hoặc `Re-defense Pending`; chỉ một sự kiện
   đã duyệt mới công bố được ở UC27. Đề xuất được duyệt có phần ngân sách thì có `EventBudget` ở
-  `Approved`, là đầu vào của UC35.
-- **Quy tắc nghiệp vụ:** BR05, BR14, BR16, BR22, BR31, BR53. Việc duyệt một đề xuất có kèm yêu cầu booking
+  `Approved`, là đầu vào của UC35. Khi có bảo vệ, tồn tại bản ghi lịch sử `EventDefenseSession` kèm toàn bộ ghi chú của các cán bộ tham gia.
+- **Quy tắc nghiệp vụ:** BR05, BR14, BR16, BR22, BR31, BR53, BR60. Việc duyệt một đề xuất có kèm yêu cầu booking
   **không** đồng nghĩa duyệt booking đó — UC46 quyết định nó riêng. Sự kiện nội bộ ghi nhận thẳng
   theo BR53 không tạo review task ở đây; ICPDP xem chúng ở UC02 và xử lý sai phạm qua UC40.
-- **Đầu ra:** ApprovalDecision, EventBudget (khi có phần ngân sách), bản ghi audit, thông báo.
-- **Use case liên quan:** UC25, UC27, UC35, UC46, UC05
+- **Đầu ra:** ApprovalDecision, EventBudget (khi có phần ngân sách), EventDefenseSession và DefenseNotes (khi có bảo vệ), bản ghi audit, thông báo.
+- **Use case liên quan:** UC25, UC27, UC35, UC46, UC05, UC58
 - **Pain point:** BP05, BP09, BP15
 
 ## UC27 – Công bố sự kiện và mở đăng ký
