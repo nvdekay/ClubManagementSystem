@@ -800,6 +800,9 @@ Table eventDefenseSessions {
   notes json [note: 'Mảng ghi chú Markdown theo từng cán bộ: [{ officerId, officerName, content, updatedAt }].']
   outcome string [note: 'PASSED | FAILED | REVISION_REQUIRED | RE_DEFENSE']
   outcomeReason string
+  cancelReason string
+  createdAt datetime [not null]
+  updatedAt datetime [not null]
 
   Note: 'Buổi bảo vệ đề xuất sự kiện trực tiếp giữa CLB và ICPDP (UC25 A5, UC26 A4, BR63).'
   indexes {

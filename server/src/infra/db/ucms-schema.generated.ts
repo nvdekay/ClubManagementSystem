@@ -58,6 +58,7 @@ export const ucmsEnums = {
     "Pending Approval",
     "Under Review",
     "Revision Requested",
+    "Re-defense Pending",
     "Approved",
     "Upcoming",
     "Ongoing",
@@ -67,6 +68,15 @@ export const ucmsEnums = {
     "Cancelled",
     "Rejected",
     "Expired"
+  ],
+  "eventDefenseState": [
+    "SCHEDULED",
+    "CONFIRMED",
+    "RESCHEDULE_REQUESTED",
+    "IN_PROGRESS",
+    "DEFENDED",
+    "CANCELLED",
+    "NO_SHOW"
   ],
   "eventOrganizerType": [
     "CLUB",
@@ -1651,6 +1661,106 @@ export const ucmsTables = {
         ],
         "unique": true,
         "name": "uq_eventrev"
+      }
+    ]
+  },
+  "eventDefenseSessions": {
+    "fields": {
+      "eventId": {
+        "type": "objectId",
+        "required": true
+      },
+      "revisionNo": {
+        "type": "int",
+        "required": true
+      },
+      "title": {
+        "type": "string",
+        "required": true
+      },
+      "startAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "endAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "durationMinutes": {
+        "type": "int",
+        "required": true
+      },
+      "propertyId": {
+        "type": "objectId",
+        "required": true
+      },
+      "propertyName": {
+        "type": "string",
+        "required": true
+      },
+      "note": {
+        "type": "string"
+      },
+      "state": {
+        "type": "eventDefenseState",
+        "required": true,
+        "default": "SCHEDULED"
+      },
+      "rescheduleReason": {
+        "type": "string"
+      },
+      "confirmedAt": {
+        "type": "datetime"
+      },
+      "confirmedBy": {
+        "type": "objectId"
+      },
+      "startedAt": {
+        "type": "datetime"
+      },
+      "endedAt": {
+        "type": "datetime"
+      },
+      "leadOfficerId": {
+        "type": "objectId",
+        "required": true
+      },
+      "notes": {
+        "type": "json"
+      },
+      "outcome": {
+        "type": "string"
+      },
+      "outcomeReason": {
+        "type": "string"
+      },
+      "cancelReason": {
+        "type": "string"
+      },
+      "createdAt": {
+        "type": "datetime",
+        "required": true
+      },
+      "updatedAt": {
+        "type": "datetime",
+        "required": true
+      }
+    },
+    "indexes": [
+      {
+        "fields": [
+          "eventId",
+          "revisionNo"
+        ],
+        "name": "ix_defense_event"
+      },
+      {
+        "fields": [
+          "propertyId",
+          "startAt",
+          "endAt"
+        ],
+        "name": "ix_defense_room_schedule"
       }
     ]
   },
