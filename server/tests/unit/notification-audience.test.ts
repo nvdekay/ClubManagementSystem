@@ -36,9 +36,13 @@ const expected: Record<NotificationAudience, string[]> = {
     "REPORT_ESCALATED_TO_ICPDP", "REFUND_OVERDUE_TO_ICPDP",
     // mongo-complaint-repository → ICPDP officers
     "COMPLAINT_SUBMITTED", "COMPLAINT_CLUB_RESPONDED", "COMPLAINT_RESPONSE_OVERDUE",
+    // event defense lifecycle → ICPDP officers
+    "EVENT_DEFENSE_CONFIRMED", "EVENT_DEFENSE_RESCHEDULE_REQUESTED", "EVENT_DEFENSE_CONFIRM_OVERDUE",
   ],
   club: [
-    "EVENT_PROPOSAL_APPROVED", "EVENT_PROPOSAL_REJECTED", "EVENT_PROPOSAL_REVISION_REQUESTED", "EVENT_PROPOSAL_EXPIRED",
+    "EVENT_PROPOSAL_APPROVED", "EVENT_PROPOSAL_REJECTED", "EVENT_PROPOSAL_REVISION_REQUESTED",
+    "EVENT_PROPOSAL_RE-DEFENSE_PENDING", "EVENT_PROPOSAL_EXPIRED",
+    "EVENT_DEFENSE_SCHEDULED", "EVENT_DEFENSE_CANCELLED", "EVENT_DEFENSE_RESCHEDULE_DECIDED", "EVENT_DEFENSE_NO_SHOW",
     "PROPERTY_BOOKING_STATUS", "ROOM_ALLOCATED", "ROOM_ALLOCATION_REVOKED",
     "RECRUITMENT_APPLICATION_SUBMITTED", "RECRUITMENT_APPLICATION_WITHDRAWN", "MEMBERSHIP_WITHDRAWAL_REQUESTED",
     "TRANSITION_PLAN_RETURNED", "LEADERSHIP_TRANSITION_CONFIRMED", "BOARD_NOMINATION_DECIDED",
@@ -60,9 +64,10 @@ const expected: Record<NotificationAudience, string[]> = {
  * read. Keep this in step when such a site changes.
  */
 const dynamicCodes = [
-  // `CLUB_APPLICATION_${nextState}` / `EVENT_PROPOSAL_${nextState}`: Approved | Rejected | Revision Requested
+  // `CLUB_APPLICATION_${nextState}` / `EVENT_PROPOSAL_${nextState}`: Approved | Rejected | Revision Requested | Re-defense Pending
   "CLUB_APPLICATION_APPROVED", "CLUB_APPLICATION_REJECTED", "CLUB_APPLICATION_REVISION_REQUESTED",
   "EVENT_PROPOSAL_APPROVED", "EVENT_PROPOSAL_REJECTED", "EVENT_PROPOSAL_REVISION_REQUESTED",
+  "EVENT_PROPOSAL_RE-DEFENSE_PENDING",
   // `RECRUITMENT_APPLICATION_${nextState}` and `CLUB_MEMBERSHIP_${state}`
   "RECRUITMENT_APPLICATION_ACCEPTED", "RECRUITMENT_APPLICATION_REJECTED", "RECRUITMENT_APPLICATION_WAITLISTED",
   "CLUB_MEMBERSHIP_ACTIVE", "CLUB_MEMBERSHIP_INACTIVE", "CLUB_MEMBERSHIP_BANNED",
@@ -108,7 +113,7 @@ function enqueuedLiteralCodes(): Set<string> {
     for (const match of text.matchAll(/eventCode:\s*([^,\n]+)/g)) {
       for (const literal of match[1]!.matchAll(code)) found.add(literal[1]!);
     }
-    for (const match of text.matchAll(/\b(queueNotifications|notify|remindOnce)\(/g)) {
+    for (const match of text.matchAll(/\b(queueNotifications|notify|notifyRecipients|remindOnce)\(/g)) {
       if (/function\s+$/.test(text.slice(Math.max(0, match.index - 20), match.index))) continue;
       for (const literal of callText(text, match.index + match[0].length - 1).matchAll(code)) found.add(literal[1]!);
     }

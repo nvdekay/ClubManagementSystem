@@ -14,6 +14,7 @@ import type { EvaluationSchemeRepository } from "../../src/domain/evaluation-sch
 import type { ExportFileWriter, ExportRepository } from "../../src/domain/data-export.js";
 import type { ClubLifecycleRepository } from "../../src/domain/club-lifecycle.js";
 import type { EventProposalReviewRepository } from "../../src/domain/event-proposal-review.js";
+import type { EventDefenseRepository } from "../../src/domain/event-defense.js";
 import type { BudgetDisbursementRepository } from "../../src/domain/budget-disbursement.js";
 import type { ViolationRepository } from "../../src/domain/violation.js";
 import type { PeriodicReportRepository } from "../../src/domain/periodic-report.js";
@@ -160,6 +161,22 @@ const stubEventProposalReviews: EventProposalReviewRepository = {
   decide: async () => { throw new Error("unused"); },
   advanceLifecycle: async () => ({ expired: 0, started: 0, completed: 0 }),
 };
+const stubEventDefenses: EventDefenseRepository = {
+  listAvailableRooms: async () => [],
+  getLiveSession: async () => null,
+  getClubDefense: async () => null,
+  schedule: async () => { throw new Error("unused"); },
+  cancel: async () => { throw new Error("unused"); },
+  respondReschedule: async () => { throw new Error("unused"); },
+  start: async () => { throw new Error("unused"); },
+  saveNote: async () => { throw new Error("unused"); },
+  end: async () => { throw new Error("unused"); },
+  markNoShow: async () => { throw new Error("unused"); },
+  decideAfterDefense: async () => { throw new Error("unused"); },
+  confirmByClub: async () => { throw new Error("unused"); },
+  requestRescheduleByClub: async () => { throw new Error("unused"); },
+  alertOverdueConfirmations: async () => 0,
+};
 const stubEventFinance: EventFinanceRepository = { list: async () => [], find: async () => null, act: async () => { throw new Error("unused"); } };
 const stubPostReports: PostEventReportRepository = { list: async () => [], find: async () => null, act: async () => { throw new Error("unused"); } };
 const stubBudgets: BudgetDisbursementRepository = {
@@ -296,7 +313,7 @@ describe("openapi document", () => {
     const app = buildApp({ clubViolationRepo: { list: async () => [], respond: async () => {}, submitAction: async () => {} }, clubEvaluationRepo: { listPublished: async () => [] }, clubTransitionPlanRepo: { context: async () => { throw new Error("unused"); }, create: async () => { throw new Error("unused"); }, save: async () => { throw new Error("unused"); }, submit: async () => { throw new Error("unused"); } }, suspensionRequestRepo: { context: async () => ({ requests: [], impacts: [] }), list: async () => [], submit: async () => { throw new Error("unused"); }, decide: async () => {} }, membershipReconfirmationRepo: { listMine: async () => [], confirm: async () => { throw new Error("unused"); }, run: async () => ({ opened: 0, expired: 0, exempt: 0 }), expireOverdue: async () => ({ expired: 0, exempt: 0 }) }, clubPeriodicReportRepo: { list: async () => [], create: async () => { throw new Error("unused"); }, save: async () => { throw new Error("unused"); }, submit: async () => { throw new Error("unused"); } }, clubInvitationRepo: { list: async () => [], respond: async () => { throw new Error("unused"); } }, auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings, roomAllocationRepo: stubRoomAllocations,
       evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle,
-      applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
+      applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, eventDefenseRepo: stubEventDefenses, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
@@ -352,7 +369,7 @@ describe("openapi document", () => {
   it("guards every mutation or explicitly lists it as public", () => {
     const app = buildApp({ auth: stubAuth, adminRepo: stubAdmin, policyRepo: stubPolicy,
       applicationRepo: stubApplications, clubFieldRepo: stubClubFields, propertyRepo: stubProperties, facilityBookingRepo: stubBookings, roomAllocationRepo: stubRoomAllocations,
-      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
+      evaluationSchemeRepo: stubSchemes, exportRepo: stubExports, exportWriter: stubWriter, clubLifecycleRepo: stubLifecycle, applicationReviewRepo: stubApplicationReviews, eventProposalReviewRepo: stubEventProposalReviews, eventDefenseRepo: stubEventDefenses, budgetDisbursementRepo: stubBudgets, eventFinanceRepo: stubEventFinance, postEventReportRepo: stubPostReports, violationRepo: stubViolations, periodicReportRepo: stubPeriodicReports, clubEventRepo: stubClubEvents, schoolEventRepo: stubSchoolEvents, evaluationRepo: stubEvaluations,
       clubProfileRepo: stubClubProfiles,
       boardNominationRepo: stubBoardNominations,
       recruitmentCampaignRepo: stubRecruitmentCampaigns,
