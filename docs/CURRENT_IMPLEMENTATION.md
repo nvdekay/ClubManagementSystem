@@ -68,7 +68,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC52 trả lời khiếu nại được chuyển xuống | Có (07/11/2026), tại `/club/:clubId/complaints` (`club.complaint.respond`): chỉ thấy khiếu nại đã `Forwarded`, không bao giờ thấy danh tính người khiếu nại (D5); trả lời một lần kèm hành động; quá hạn có tín hiệu tuân thủ |
 | ICPDP | UC03, UC04 tài khoản/chính sách | Có; UC03 chưa nối khoá tài khoản với hồ sơ UC40 |
 | ICPDP | UC08, UC11, UC13, UC15 vòng đời CLB | Có; UC13/UC15 nhận đầu vào UC12/UC14 từ phía CLB; UC15 duyệt yêu cầu tại `/workspace/suspension-requests`; UC15 giải thể dọn việc còn mở, lưu nghĩa vụ tồn đọng và cảnh báo đối soát (A1 liên kết hồ sơ UC40 ngoài phạm vi) |
-| ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính |
+| ICPDP | UC26, UC34, UC35 | Có route/UI và đã nối vào app chính; UC26 có buổi bảo vệ đề xuất (BR63, PR #26): xếp lịch phòng `ROOM`, CLB xác nhận/xin dời, Live Defense Room, quyết định sau bảo vệ gồm Bảo vệ lại |
 | ICPDP | UC37 đối soát | Có, đã nối vào app chính; A2 đối soát tối đa bằng số đã tạm ứng, không cấp bù |
 | ICPDP | UC39–UC44, UC46 | Có; vòng trả sửa–nộp lại UC38/UC39 chạy end-to-end; UC42 **Một phần** (nguồn dữ liệu bản nháp); UC43 có (E1 khiếu nại kết quả ngoài phạm vi) |
 | ICPDP | UC05 định tuyến phê duyệt | Có (07/11/2026), tại `/workspace/routing-rules`: bộ rule đánh phiên bản `Draft → Active`, từ chối rule chồng nhau, mô phỏng trên hồ sơ đã quyết định; rule chỉ đặt SLA thẩm định, chỉ `ICPDP_HEAD` (cấp kèm `ICPDP_OFFICER`, D1) sửa và kích hoạt; UC08/UC26/UC46 duyệt một cấp (bỏ cấp 2 từ 09/11/2026) |
