@@ -105,6 +105,7 @@ Enum eventState {
   "Pending Approval"
   "Under Review"
   "Revision Requested"
+  "Re-defense Pending"
   Approved
   Upcoming
   Ongoing
@@ -114,6 +115,16 @@ Enum eventState {
   Cancelled
   Rejected
   Expired
+}
+
+Enum eventDefenseState {
+  SCHEDULED
+  CONFIRMED
+  RESCHEDULE_REQUESTED
+  IN_PROGRESS
+  DEFENDED
+  CANCELLED
+  NO_SHOW
 }
 
 Enum eventOrganizerType {
@@ -768,6 +779,35 @@ Table eventProposalVersions {
   }
 }
 
+Table eventDefenseSessions {
+  id objectId [pk]
+  eventId objectId [not null, note: 'Sự kiện được xếp lịch bảo vệ (UC26 A4).']
+  revisionNo int [not null, note: 'Bản sửa đề xuất tại thời điểm xếp lịch bảo vệ.']
+  title string [not null]
+  startAt datetime [not null]
+  endAt datetime [not null]
+  durationMinutes int [not null, note: 'Thời lượng dự kiến (phút) dùng để tính endAt và check xung đột phòng học.']
+  propertyId objectId [not null, note: 'Phòng học (type: ROOM) được chọn để bảo vệ; tự động khóa BẬN trong khung giờ (BR63).']
+  propertyName string [not null]
+  note string
+  state eventDefenseState [not null, default: 'SCHEDULED']
+  rescheduleReason string [note: 'Lý do xin dời lịch từ Club Leader (UC25 A5).']
+  confirmedAt datetime
+  confirmedBy objectId [note: 'Club Leader xác nhận tham gia trước giờ bảo vệ ít nhất 24h.']
+  startedAt datetime [note: 'Thời điểm officer bấm Bắt đầu bảo vệ.']
+  endedAt datetime [note: 'Thời điểm officer bấm Kết thúc bảo vệ.']
+  leadOfficerId objectId [not null, note: 'Officer phụ trách task (Assignee) chủ trì buổi bảo vệ.']
+  notes json [note: 'Mảng ghi chú Markdown theo từng cán bộ: [{ officerId, officerName, content, updatedAt }].']
+  outcome string [note: 'PASSED | FAILED | REVISION_REQUIRED | RE_DEFENSE']
+  outcomeReason string
+
+  Note: 'Buổi bảo vệ đề xuất sự kiện trực tiếp giữa CLB và ICPDP (UC25 A5, UC26 A4, BR63).'
+  indexes {
+    (eventId, revisionNo) [name: 'ix_defense_event']
+    (propertyId, startAt, endAt) [name: 'ix_defense_room_schedule']
+  }
+}
+
 Table eventInvitations {
   id objectId [pk]
   eventId objectId [not null, note: 'Sự kiện cấp trường được mời (UC53).']
@@ -1382,6 +1422,10 @@ Ref: events.clubId > clubs.id
 Ref: events.propertyId > properties.id
 Ref: eventProposalVersions.eventId > events.id
 Ref: eventProposalVersions.submittedBy > users.id
+Ref: eventDefenseSessions.eventId > events.id
+Ref: eventDefenseSessions.propertyId > properties.id
+Ref: eventDefenseSessions.leadOfficerId > users.id
+Ref: eventDefenseSessions.confirmedBy > users.id
 Ref: eventRegistrations.eventId > events.id
 Ref: eventRegistrations.studentId > users.id
 Ref: eventRegistrations.clubId > clubs.id
