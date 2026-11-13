@@ -6,7 +6,7 @@ tương ứng của VS Code.
 | File | Thể hiện điều gì |
 |---|---|
 | [`UCMS_Context_Diagram.drawio`](UCMS_Context_Diagram.drawio) | **Context diagram hiện hành** (nội dung v2.1; file `UCMS_Context_Diagram_v2.1.drawio` cũ đã gộp vào đây và bị xoá ngày 14/10/2026, commit `402dafa`) — biên hệ thống và 46 luồng dữ liệu giữa UCMS và 7 thực thể: 4 actor (Student, Club Member, Club Leader, ICPDP Officer) và 3 hệ thống ngoài (Google OAuth, Google SMTP, Cloudinary). Mỗi luồng là một nhóm dữ liệu, mỗi luồng một mũi tên thẳng; bảng ánh xạ luồng → use case ở `../SRS.md` §14.4 (review issue I56, I57, I58, I61, I64). Ảnh `img/UCMS_Context_Diagram_01_Context-diagram.png` (xuất lại 13/11/2026: luồng role CLB của UC23 đã rút được thay bằng luồng xác nhận/xin dời lịch bảo vệ sự kiện BR63, lịch bảo vệ gộp vào luồng quyết định thẩm định, Cloudinary ghi `Uploaded file`/`File URL`; các ảnh `_v2`, `_v2.1` là lịch sử) |
-| [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | Use case diagram ngày 19/10/2026, phủ UC01–UC55 và UC58. Các oval `Manage club roles` / CRUD role của UC23 đã cũ và phải bỏ; quyết định mới hơn trong `UCMS_Organization_and_Flows.drawio` ngày 02/11/2026 và SRS hiện hành dùng hai role cố định, không có custom role |
+| [`UCMS_UseCase_ByActor.drawio`](UCMS_UseCase_ByActor.drawio) | Use case diagram phủ UC01–UC55 và UC58 (bản 19/10/2026, sửa 13/11/2026). Các oval `Manage club roles` / CRUD role của UC23 đã bỏ và ảnh đã xuất lại ngày 13/11/2026, khớp quyết định hai role cố định trong `UCMS_Organization_and_Flows.drawio` và SRS hiện hành (không có custom role) |
 | [`UCMS_State_Diagrams.drawio`](UCMS_State_Diagrams.drawio) | **Máy trạng thái hiện hành** — Club Application, Club, Membership, Recruitment Campaign, Recruitment Application, Event (bổ sung trạng thái `Re-defense Pending` theo BR63), Event Budget (ngân sách của sự kiện đã duyệt), Property Booking (buổi phòng học `ROOM` do UC58 sinh thẳng ở `Approved`), Event Defense Session (phiên bảo vệ đề xuất sự kiện giữa CLB và ICPDP: `SCHEDULED`, `CONFIRMED`, `RESCHEDULE_REQUESTED`, `IN_PROGRESS`, `DEFENDED`, `CANCELLED`, `NO_SHOW` theo BR63). Trang Club theo SRS §6.2 sửa 2026-11-01: CLB mới tạo thẳng ở `Active` khi UC08 duyệt, không còn `Pending Setup` (sửa sơ đồ và xuất lại `img/UCMS_State_Diagrams_02_Club.png` ngày 02/11/2026) |
 | [`UCMS_ERD.drawio`](UCMS_ERD.drawio) | **ERD hiện hành** (19/10/2026) — mô hình **khái niệm**, 33 thực thể (màu theo module), 188 thuộc tính nghiệp vụ (183 của thực thể + 5 của hai quan hệ N:M), **mỗi ký pháp đúng một hình**: trang 1 *ERD Chen* theo **ký pháp Chen chuẩn** (hình chữ nhật, elip thuộc tính, elip đôi là đa trị, hình thoi quan hệ, mỗi thực thể có **thuộc tính khoá gạch chân** — thêm elip `ID` cho 28 thực thể không có khoá tự nhiên nên trang này có 216 thuộc tính), bản số ghi bằng nhãn `1` / `N` / `M` cạnh thực thể, **nét đôi** là tham gia toàn phần, 53 quan hệ; trang 2 *ERD Crow's Foot* theo **ký pháp Crow's Foot** thuần (bảng thực thể liệt kê thuộc tính, đường nối thẳng giữa hai bảng, tên quan hệ ghi trên đường, hai quan hệ N:M vẽ thành thực thể liên kết `Candidate Evaluation` / `Dimension Result`), 55 đường nối; trang 3–4 *(no legend)* là chính hai hình đó bỏ tiêu đề / chú giải / dải màu module, để dán vào report. Không có Role / Permission, không có bảng kỹ thuật (approval, notification, audit). Không ghi kiểu dữ liệu hay ràng buộc; khoá chỉ vẽ ở trang Chen. Đối chiếu từ [`../05-implementation/UCMS_Database_Design.dbml`](../05-implementation/UCMS_Database_Design.dbml); xem mục *Ký hiệu ERD* bên dưới. Ảnh `img/UCMS_ERD_01_ERD-Chen.png`, `img/UCMS_ERD_02_ERD-Crow-s-Foot.png` (có chú giải, để đọc), `img/UCMS_ERD_03_ERD-Chen-no-legend.png`, `img/UCMS_ERD_04_ERD-Crow-s-Foot-no-legend.png` (không chú giải, để dán vào report) và `.svg` cùng tên |
 | [`UCMS_Database_Schema.drawio`](UCMS_Database_Schema.drawio) | **Database schema hiện hành** — mô hình **vật lý** MongoDB theo ký pháp Crow's Foot, sinh từ `docs/05-implementation/UCMS_Database_Design.dbml` (nguồn mà server dùng để tạo collection và index) cộng `authSessions`: 55 collection (54 bảng của DBML, gồm `routingRuleSets` ở M01 và `eventDefenseSessions` ở M05/M06, cộng `authSessions`; sinh lại 13/11/2026), mỗi trường ghi tên, kiểu BSON (`ObjectId`, `String`, `Int (Number)`, `Decimal128`, `Boolean`, `Date`, `Object (embedded)`, `String[]`, `String · enum X`) và ràng buộc `PK`/`FK`/`UQ`/`NN`/giá trị mặc định; unique ghép ghi ở dòng vàng cuối bảng. 12 trang: tổng quan (chỉ khoá và tham chiếu), 10 trang theo module, trang *Enums* liệt kê đúng 28 enum của DBML (bổ sung `eventDefenseState`, cập nhật `eventState` và `reviewOutcome`, bỏ `feedbackRecipient`) và trường dùng chúng. Ảnh `img/UCMS_Database_Schema_*.png` |
@@ -23,8 +23,9 @@ tương ứng của VS Code.
 
 ## Bộ sơ đồ dùng trong report final
 
-Report final hiện hành là [`../Group1_SE1939-NJ_Report_Final.docx`](../Group1_SE1939-NJ_Report_Final.docx)
-(dựng lại 19/10/2026); bảng dưới cho biết mục nào của report dùng sơ đồ nào. Ảnh chèn vào report là các PNG
+Report final hiện hành là báo cáo Google Doc của nhóm (bản final, 13–14/11/2026). Các bản `.docx` cũ trong
+repo (`../Group1_SE1939-NJ_Report_Final.docx` dựng 19/10/2026 và `UCMS_Diagrams.docx`) đã lỗi thời nên được xoá
+ngày 14/11/2026. Bảng dưới cho biết mục nào của report dùng sơ đồ nào. Ảnh chèn vào report là các PNG
 trong [`img/`](img/); report viết bằng tiếng Anh theo mẫu môn học, tên trạng thái, collection, trường và role
 giữ nguyên như trong code.
 
@@ -131,7 +132,7 @@ cho mọi thực thể, bản số ghi bằng nhãn, tham gia toàn phần vẽ 
   3 một-một (`establishes`, `is funded by`, `entitles`), 2 nhiều-nhiều (`evaluates`, `scores`); hình vẽ 53
   trong số đó (xem *Quan hệ vẽ trong hình* bên dưới). **Không vẽ quan hệ đệ quy**: `previousTermId` của `clubTerms` suy ra từ thứ tự nhiệm kỳ trong cùng CLB, `lockedBy` của
   `users` là chi tiết audit; cả hai vẫn nằm trong DBML.
-- **33 thực thể** từ 52 collection của DBML (quyết định 19/10/2026):
+- **33 thực thể** từ 52 collection của DBML lúc quyết định 19/10/2026 (DBML nay có 54 bảng, thêm `routingRuleSets` và `eventDefenseSessions`; tổng 55 collection kể cả `authSessions`):
   - gộp vào thực thể cha vì là mở rộng 1:1 hoặc phiên bản: `studentProfiles` → `User`,
     `financialReconciliations` → `Event Budget`, `clubApplicationVersions` → `Club Application`,
     `eventProposalVersions` → `Event`, `attendances` → `Event Registration` (nên `Event Feedback` nối với
@@ -201,7 +202,7 @@ Club Member - Events & bookings chứa các use case mọi thành viên `Active`
 `Manage allocated rooms` (`club.room.view` mặc định). Ba trang Club Leader chứa mọi use case vận
 hành CLB còn lại — hồ sơ, thành viên, tuyển, đơn ứng tuyển, sự kiện, booking CSVC, báo cáo, khoản
 chi, phản hồi, khiếu nại, ban chủ nhiệm, chuyển giao, tạm ngừng (BR54, BR55). Toàn bộ nhóm
-`Manage club roles` còn sót lại là cũ vì UC23 đã rút; không chỉ oval `Configure role permissions`.
+`Manage club roles` của UC23 (không chỉ oval `Configure role permissions`) đã bỏ khỏi sơ đồ ngày 13/11/2026 vì UC23 đã rút.
 > **Cập nhật 2026-11-07:** code đã khớp sơ đồ: mọi thành viên `Active` có `club.attendance.manage`
 > và `club.room.view` mặc định (BR54), nên dùng được `Manage attendance` (UC30/UC32) và
 > `View allocated rooms` (UC58). Ghi chú 2026-10-17 (chỉ Club Leader) không còn đúng.
@@ -226,12 +227,12 @@ kế thừa tham chiếu sang trang của actor cha, không cần lặp lại ov
 `03_Club-Member-Events-bookings`, `04_Club-Leader`, `05_Club-Leader-Club-recruitment`,
 `06_Club-Leader-Events-bookings-finance`, `07_ICPDP-1-Access-club-lifecycle`,
 `08_ICPDP-2-Events-bookings-finance`, `09_ICPDP-3-Compliance-evaluation`. Report final
-(`../Group1_SE1939-NJ_Report_Final.docx`, mục III.2.2.1) dùng đúng bộ ảnh này (cập nhật 2026-10-19).
+(báo cáo Google Doc của nhóm, mục III.2.2.1) dùng bộ ảnh này (xuất lại 13/11/2026 sau khi bỏ UC23).
 
 **Luồng phòng học và CSVC (đối chiếu code ngày 2026-10-12):** ICPDP cấp phòng học `ROOM`
 theo học kỳ qua `Manage room allocations` (UC58), gồm cấp, xem và thu hồi. CLB xem qua
 `Manage allocated rooms «include» View allocated rooms` ở trang Club Member - Events & bookings.
-Theo code hiện hành chỉ Club Leader xem được lịch (cần `club.booking.manage`; xem ghi chú 2026-10-17 ở trên) để xuất trình cho bảo vệ
+Theo code hiện hành (từ 07/11/2026) mọi thành viên `Active` xem được lịch (`club.room.view` mặc định, xem cập nhật 2026-11-07 ở trên) để xuất trình cho bảo vệ
 khi nhận chìa khoá; CLB không đặt, xin duyệt hay tự huỷ phòng học. Nhóm
 `Manage facility bookings` chỉ áp dụng cho `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT`: CLB gửi
 `Request non-room facility booking` (UC45), ICPDP xử lý `Decide non-room facility request`

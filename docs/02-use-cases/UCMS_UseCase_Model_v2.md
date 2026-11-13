@@ -1,5 +1,7 @@
 # UCMS — Use Case Model v2 (bản sửa đổi)
 
+> **Bản lịch sử — đã được docs/SRS.md thay thế.** UC23 đã rút (07/11/2026), phê duyệt một cấp (09/11/2026), email gửi qua Google SMTP. Khi khác nhau, lấy theo SRS.
+
 > **Trạng thái:** bản sửa đổi của §8–§11, §14–§15, §21–§22 trong
 > [`UCMS_Business_System_Analysis.md`](../01-business-analysis/UCMS_Business_System_Analysis.md).
 > Các mục đó vẫn được giữ nguyên làm lịch sử; khi hai bên nói khác nhau, **lấy theo tài liệu này**.
@@ -561,7 +563,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   thành viên bị thu hồi.
 - **Liên quan:** UC21, UC24
 
-#### UC23 — Quản lý vai trò CLB và phân quyền
+#### UC23 — Quản lý vai trò CLB và phân quyền (đã rút)
 - **Actor:** Club Leader (quyền giữ riêng `club.role.manage`, BR55)
 - **Mục tiêu:** Chủ nhiệm tự tổ chức CLB — tạo role, quyết định mỗi role làm được gì, và giao
   role cho thành viên (khôi phục 2026-11-02).

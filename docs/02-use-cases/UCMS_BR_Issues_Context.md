@@ -1,5 +1,7 @@
 # UCMS — Context các issue liên quan đến Business Rule (BR)
 
+> **Bản lịch sử — đã được docs/SRS.md thay thế.** UC23 đã rút (07/11/2026), phê duyệt một cấp (09/11/2026), email gửi qua Google SMTP. Khi khác nhau, lấy theo SRS.
+
 File này gom mọi issue trong [`UCMS_Review_Issues.md`](UCMS_Review_Issues.md) có dính tới BR, và
 giải thích **vì sao nó là vấn đề** để đọc mà không phải mở song song 4–5 tài liệu. File này
 **không thay** tracker: trạng thái và mục "Xử lý" vẫn ghi ở `UCMS_Review_Issues.md`.

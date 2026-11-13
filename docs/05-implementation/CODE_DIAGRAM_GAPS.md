@@ -1,6 +1,6 @@
 # Code lệch so với diagram đã duyệt
 
-Đối chiếu `main` ngày 07/11/2026. Nguồn chuẩn là `../SRS.md`, context diagram và diagram mới nhất
+Đối chiếu `main` ngày 07/11/2026; mục *Diagram phụ* cập nhật 14/11/2026. Nguồn chuẩn là `../SRS.md`, context diagram và diagram mới nhất
 cho từng quyết định. Riêng role CLB, `UCMS_Organization_and_Flows.drawio` (02/11) mới hơn
 `UCMS_UseCase_ByActor.drawio` (19/10), nên quyết định hai role cố định/UC23 bị rút được ưu tiên.
 
@@ -19,20 +19,23 @@ thời trả đúng một 409).
 CRUD role (19/10) và ghi rõ chỉ hai role cố định, UC23 bị rút. Code UC23 (API, trang, menu, resolver
 permission theo role, migration `club-role-upgrade`) đã gỡ; quyền CLB quay về hai role cố định của BR47/BR54/BR55.
 
-## Diagram phụ còn mô tả mô hình cũ (người dùng chọn để nguyên khi được hỏi ngày 07/11/2026)
+## Diagram phụ (cập nhật 14/11/2026)
 
-Các diagram dưới đây không phải nguồn chuẩn nhưng vẫn vẽ mô hình trước 07/11/2026; ảnh PNG/SVG trong
-`../03-diagrams/img/` và báo cáo Google Doc cũng chưa sinh lại:
+Ngày 07/11/2026 người dùng chọn để nguyên các diagram phụ còn vẽ mô hình cũ. Hai commit ngày 13/11/2026
+(`c514f63` cho buổi bảo vệ đề xuất BR63, `022b47c` đồng bộ với code) đã sửa và xuất lại PNG/SVG trong
+`../03-diagrams/img/`, nên các lệch ghi ở đây ngày 07/11 đã đóng:
 
-| Diagram | Còn lệch |
+| Diagram | Trạng thái 14/11/2026 |
 |---|---|
-| `UCMS_Organization_and_Flows.drawio` | **Phần role là đúng**: hai role cố định, UC23 bị rút. Diagram vẫn thiếu `ICPDP_HEAD` (chỉ cấu hình rule UC05); từ 09/11/2026 code duyệt một cấp nên không cần luồng cấp 1 → cấp 2 |
-| `UCMS_UseCase_ByActor.drawio` | Nhóm `Manage club roles` / CRUD role của UC23 là cũ và cần bỏ để khớp diagram cơ cấu mới hơn |
-| `UCMS_Screen_Flow.drawio` | Còn "Student feedback" / "Student feedback inbox"; thiếu Khiếu nại (CLB, ICPDP), Định tuyến phê duyệt. Không có `Roles & permissions` (đúng, màn này đã gỡ khỏi code) |
-| `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Thiếu `routingRuleSets`, `approvalTasks.routingRuleSetId/routingRuleId/requiredLevel/currentLevel`, `approvalDecisions.level`; complaint còn là góp ý một chiều, chưa liên kết `Violation` |
-| `UCMS_Sequence_Diagrams.drawio` | Khớp: từ 09/11/2026 code bỏ duyệt hai cấp, mọi hồ sơ một cấp như diagram |
-| `UCMS_Security_Architecture.drawio` | Chưa có audit `ACCESS_DENIED` (SEC-08) |
-| `../06-user-guide/GUIDE_BOOK.pdf`, ảnh chương 4 và 19 | Chưa xuất lại / chụp lại (Markdown và HTML đã cập nhật) |
+| `UCMS_Organization_and_Flows.drawio` | Khớp: hai role cố định, UC23 rút, có `ICPDP Head` (system role `ICPDP_HEAD`, chỉ cấu hình rule UC05); duyệt một cấp |
+| `UCMS_UseCase_ByActor.drawio` | Khớp: nhóm `Manage club roles` / CRUD role của UC23 đã bỏ (13/11/2026) |
+| `UCMS_Screen_Flow.drawio` | Khớp: đã thay góp ý cũ bằng `Complaints` (sinh viên, CLB, ICPDP), có `Approval routing` và `Event defense room` |
+| `UCMS_Database_Schema.drawio`, `UCMS_ERD.drawio` | Khớp DBML 54 bảng: có `routingRuleSets`, `eventDefenseSessions`, khiếu nại liên kết `Violation`. `requiredLevel`/`currentLevel`/`level` vẫn vẽ vì còn trong DBML cho dữ liệu cũ, không còn dùng từ 09/11/2026 |
+| `UCMS_Sequence_Diagrams.drawio` | Khớp: duyệt một cấp; hình 06 thêm trang buổi bảo vệ (BR63) |
+| `UCMS_Security_Architecture.drawio` | Khớp: có audit `ACCESS_DENIED` (SEC-08) |
+| `../06-user-guide/` | Markdown đã cập nhật (07/11 và 14/11/2026); ảnh chụp từ 13/10/2026, trước đợt làm lại giao diện 11/2026; `GUIDE_BOOK.pdf`/`GUIDE_BOOK.html` chưa dựng lại sau các thay đổi đó |
+
+Báo cáo final là báo cáo Google Doc của nhóm (13–14/11/2026); các bản `.docx` cũ trong repo đã xoá.
 
 G2 (quyền mặc định của thành viên): mọi membership `Active` tự có `club.attendance.manage` và
 `club.room.view`, không cần bản gán (BR54).

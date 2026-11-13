@@ -57,7 +57,7 @@ try {
         .filter((deadline) => deadline.reportType !== "POST_EVENT"), reportDeadline] });
   }
   // These values are demo fixtures only, not approved BR25/BR58 production policy.
-  const finance = mongoEventFinanceRepository({ recoveryDueDays: 14, evidenceTypes: ["INVOICE", "RECEIPT", "PROOF_OF_PAYMENT"] });
+  const finance = mongoEventFinanceRepository({ recoveryDueDays: 7, evidenceTypes: ["INVOICE", "RECEIPT", "PROOF_OF_PAYMENT"] });
   await seedWave4(owner, clubId, now, finance);
   const events = await m.events!.find({ clubId, title: /^Wave 4 demo:/ }).lean();
   const members = await m.clubMemberships!.find({ clubId, state: "Active" }).limit(5).lean();

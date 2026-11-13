@@ -29,7 +29,7 @@
 > mới chỉ được ghi log, chưa gửi qua Google SMTP (đã nối SMTP ngày 07/11/2026, xem EXT-02); UC48/UC49 dùng một điểm tổng 1–5; audit ghi
 > ở repository trong cùng transaction; thêm §12.1 Cơ chế bảo mật
 > và sửa các dòng SEC. UC05, UC51, UC52 được khôi phục: duyệt nhiều cấp theo rule định tuyến
-> (UC05, `ICPDP_HEAD`), khiếu nại đi qua phân loại và chuyển xuống CLB (UC50–UC52); context diagram
+> (UC05, `ICPDP_HEAD`; từ 09/11/2026 bỏ cấp duyệt thứ hai, UC05 chỉ đặt SLA, mọi hồ sơ duyệt một cấp), khiếu nại đi qua phân loại và chuyển xuống CLB (UC50–UC52); context diagram
 > giữ 46 luồng. **UC23 không được khôi phục**: theo sơ đồ cơ cấu tổ chức mới nhất trên `main` và
 > quyết định người dùng ngày 07/11/2026, role/quyền CLB là tập cố định do hệ thống quản lý, không
 > có RBAC tuỳ biến theo từng CLB.
@@ -116,7 +116,7 @@ theo vai trò.
 | Use case | 56 mã (UC01–UC55, UC58); **55 trong phạm vi** — UC23 đã rút |
 | Quy tắc nghiệp vụ | 62 quy tắc còn hiệu lực (BR01–BR63, BR43 đã rút) |
 | Vấn đề nghiệp vụ (pain point) | 19 (BP01–BP19) |
-| Vòng đời thực thể | 12 |
+| Vòng đời thực thể | 14 (§6.1–§6.13 và §6.6a) |
 | User story | 41 (US01–US41) |
 | Tiêu chí nghiệm thu | 20 (AC01–AC20) + 2 bổ sung |
 | Luồng dữ liệu trên context diagram | 46 (sửa 2026-11-02) |
@@ -325,8 +325,9 @@ khiếu nại, hồ sơ vi phạm, đánh giá, và toàn bộ cấu hình.
 - **Vì sao không có actor thứ tư:** Phòng Tài chính, Quản lý cơ sở vật chất, An ninh hay cố vấn
   khoa **không tương tác trực tiếp** với UCMS. Khi cần ý kiến chuyên môn của họ, ICPDP lấy ý
   kiến **ngoài hệ thống** và ghi vào review note của chính quyết định mình. Hệ quả: hệ thống chỉ
-  có một cấp phê duyệt; duyệt đa cấp là **nội bộ ICPDP** (theo rule định tuyến của UC05, BR16);
-  phân cấp trong ICPDP (officer, senior officer, head) là RBAC — xem quyết định còn mở D1.
+  có một cấp phê duyệt và mọi hồ sơ được một ICPDP Officer quyết định ở một cấp (BR16); rule định
+  tuyến của UC05 chỉ đặt SLA thẩm định. Phân cấp trong ICPDP là RBAC: quyền `ICPDP_HEAD` (chỉ tính
+  khi đi kèm `ICPDP_OFFICER`) sửa và kích hoạt bộ rule UC05, không thêm cấp duyệt — xem D1 (đã chốt).
 - **Use case:** UC01, UC02, UC03, UC04, UC05, UC08, UC11, UC13, UC15, UC26, UC34, UC35,
   UC37, UC39, UC40, UC41, UC42, UC43, UC44, UC46, UC51, UC53, UC55, UC58.
 
@@ -431,8 +432,8 @@ kiện, người gửi phản hồi / khiếu nại, người đứng đơn thà
 
 **Nguyên tắc của bộ máy.**
 
-1. **Một cửa phía nhà trường.** Mọi yêu cầu gửi lên nhà trường chỉ đi tới ICPDP (BR31). Duyệt
-   nhiều cấp là chuyện nội bộ ICPDP (UC05, BR16), không phải chuyền qua phòng ban khác.
+1. **Một cửa phía nhà trường.** Mọi yêu cầu gửi lên nhà trường chỉ đi tới ICPDP (BR31). Mọi hồ
+   sơ được một ICPDP Officer quyết định ở một cấp (BR16); UC05 chỉ đặt SLA, không chuyền qua phòng ban khác.
 2. **Quyền theo role cố định, không theo chức danh tuỳ biến.** Membership `Active` tạo Club Member;
    ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong nhiệm kỳ tạo Club Leader (BR47).
 3. **Không có RBAC tuỳ biến theo CLB.** Chức danh/ban/bộ phận chỉ mô tả tổ chức; Club Leader không
@@ -624,7 +625,7 @@ ICPDP quyết định giải thể (UC15): huỷ ngay mọi thứ kết thúc sa
 | CON-03 | Client theo chuỗi `services/<domain>.ts` → `hooks/use<Domain>.ts` (React Query sở hữu query key) → component; không dùng thư viện HTTP, dùng `fetch` gốc | ADR-002, R10 |
 | CON-04 | REST dưới `/api/v1`, bọc response bằng `{ data }`, `DomainError` kind → 400/409/404, lỗi khác → 500, validate bằng zod ở biên trước mọi truy vấn Mongoose, mỗi module một file route | R8 §7 |
 | CON-05 | Sở hữu dữ liệu theo module: use case chỉ ghi aggregate của module mình (xem §2.2) | R8 §3 |
-| CON-06 | Quy tắc nghiệp vụ và **kiểm tra phạm vi (scope check)** nằm ở tầng usecase để unit-test được mà không cần HTTP; middleware ở route chỉ chặn sớm theo quyền thô | R8 §5 |
+| CON-06 | Quy tắc nghiệp vụ và **kiểm tra phạm vi (scope check)** nằm ở tầng usecase để unit-test được mà không cần HTTP; middleware ở route chỉ xác thực (`authGuard`, CSRF), không có middleware phân quyền theo permission | R8 §5 |
 | CON-07 | **Sửa 2026-11-02 (theo code)** — Mọi lần ghi nhiều document chạy trong một MongoDB transaction (cần replica set); thay đổi trạng thái có điều kiện bảo vệ ("chỉ khi vẫn ở `Under Review`") nên ghi đồng thời xung đột trả 409. Sức chứa đăng ký dùng tăng có điều kiện nguyên tử, cùng unique index | R8 §6, `server/src/infra/db/` |
 | CON-08 | Bản sửa là document version chỉ-ghi-thêm; bản đã nộp không bao giờ bị sửa đổi | BR04, R8 §4.1 |
 | CON-09 | Email được gửi từ outbox bởi scheduler. Gửi email thất bại không bao giờ được làm hỏng một transaction nghiệp vụ đã commit | R1 §19, R8 §4.2 |
@@ -764,7 +765,7 @@ client/src/pages/
 | API-01 | Mọi endpoint nằm dưới `/api/v1`; response bọc trong `{ data }` |
 | API-02 | Lỗi ánh xạ `DomainError` kind → HTTP 400 / 404 / 409; lỗi ngoài dự kiến → 500. Chưa xác thực → 401, thiếu quyền hoặc sai phạm vi → 403, tài khoản bị khoá → 423 |
 | API-03 | Mọi body, tham số đường dẫn và query đều được validate bằng zod **trước** mọi truy vấn Mongoose |
-| API-04 | Tên tài nguyên theo aggregate: `/clubs`, `/clubs/:id/members`, `/events`, `/events/:id/registrations`, `/budget-requests`, `/property-bookings`, `/complaints`, `/approvals` (hộp thư phê duyệt dùng chung), `/notifications` — xem Phụ lục C |
+| API-04 | **Sửa 2026-11-14 (theo code)** — Tài nguyên chia theo khu: `/public/*` (khách, chỉ đọc), `/auth/*`, khu sinh viên (`/applications`, `/memberships`, `/event-registrations`, `/attendances`, `/event-feedbacks`, `/complaints`, `/notifications`, `/dashboard`), khu CLB `/clubs/:clubId/*` và khu ICPDP `/admin/*`. Danh sách route đúng là tài liệu OpenAPI ở `/docs`; Phụ lục C chỉ là bản dự kiến |
 | API-05 | OpenAPI sinh từ schema zod và phục vụ tại `/docs` |
 | API-06 | Endpoint dạng danh sách hỗ trợ phân trang và lọc theo các trạng thái nêu ở §6 |
 | API-07 | Mọi endpoint làm đổi trạng thái phải idempotent với việc gửi trùng cùng một quyết định — quyết định giống hệt lần hai không tạo thêm `ApprovalDecision` |
@@ -946,10 +947,10 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 | | |
 |---|---|
 | **Module · Ưu tiên** | M01 · P1 |
-| **Actor chính** | ICPDP Officer |
+| **Actor chính** | ICPDP Officer (sửa và kích hoạt cần thêm quyền `ICPDP_HEAD`) |
 | **Mục tiêu nghiệp vụ** | Đặt SLA thẩm định theo loại hồ sơ, ngưỡng ngân sách, mức rủi ro, hạng property, lịch sử tuân thủ, không hard-code ngưỡng; mọi hồ sơ vẫn do một ICPDP Officer quyết định ở một cấp |
-| **Kích hoạt** | ICPDP thay đổi phân cấp thẩm quyền nội bộ |
-| **Tiền điều kiện** | Người gọi có quyền cấu hình định tuyến |
+| **Kích hoạt** | ICPDP cần đổi SLA thẩm định cho một nhóm hồ sơ |
+| **Tiền điều kiện** | Mọi ICPDP Officer xem và mô phỏng bộ rule; chỉ người giữ `ICPDP_HEAD` (kèm `ICPDP_OFFICER`) tạo, sửa và kích hoạt |
 | **Dữ liệu vào** | Loại hồ sơ, ngưỡng số tiền, mức rủi ro sự kiện, hạng property, lịch sử tuân thủ của CLB → SLA thẩm định |
 | **Thực thể / trạng thái** | `RoutingRuleSet` — đánh phiên bản, `Draft → Active` |
 | **Quy tắc** | BR16 (đã sửa đổi), BR31 |
@@ -957,7 +958,7 @@ Sửa 2026-11-02 (theo `server/src/domain/policy.ts`): domain email được ph�
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC05-01 | Cho officer thêm hoặc sửa một rule định tuyến gồm điều kiện và SLA thẩm định áp cho hồ sơ khớp điều kiện |
+| FR-UC05-01 | Cho người giữ `ICPDP_HEAD` thêm hoặc sửa một rule định tuyến gồm điều kiện và SLA thẩm định áp cho hồ sơ khớp điều kiện |
 | FR-UC05-02 | Validate rằng không có hai rule nào chồng nhau, để mỗi hồ sơ khớp nhiều nhất một rule (BR16) |
 | FR-UC05-03 | *(E1)* Từ chối kích hoạt khi hai rule chồng nhau |
 | FR-UC05-04 | Đánh phiên bản và audit bộ rule đã kích hoạt, và chỉ áp dụng cho hồ sơ mới |
@@ -997,7 +998,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC06-05 | Cho đi tiếp sang UC17 (ứng tuyển) hoặc UC29 (đăng ký sự kiện) ngay từ trang CLB |
 | FR-UC06-06 | *(A1)* Cho sinh viên duyệt các sự kiện công khai sắp tới của mọi CLB và đi ngược từ sự kiện về CLB |
 | FR-UC06-07 | Phục vụ toàn bộ UC06 cho cả khách chưa đăng nhập (Guest), chỉ đọc; khi Guest chọn đi tiếp sang UC17 / UC29, chuyển sang UC01 rồi quay lại đúng trang đó |
-| FR-UC06-07 | *(E1)* Gợi ý bỏ bớt bộ lọc và hiển thị các CLB active mới nhất khi không có kết quả nào |
+| FR-UC06-08 | *(E1)* Gợi ý bỏ bớt bộ lọc và hiển thị các CLB active mới nhất khi không có kết quả nào |
 
 **Hậu điều kiện** — không có. **Đầu ra** — không ghi dữ liệu.
 
@@ -1010,7 +1011,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | **Mục tiêu nghiệp vụ** | Đề xuất một CLB mới qua một quy trình chuẩn, truy vết được |
 | **Kích hoạt** | Một nhóm sinh viên muốn lập CLB |
 | **Tiền điều kiện** | Đã đăng nhập bằng tài khoản không bị `Locked`; hệ thống không kiểm tra điều kiện lập CLB nào khác |
-| **Dữ liệu vào** | Tên CLB, lĩnh vực, mục tiêu; danh sách thành viên sáng lập; các tài liệu bắt buộc; **cơ cấu tổ chức dự kiến** — danh sách role (tên, ban/bộ phận, một hay nhiều người giữ, có thuộc ban điều hành không); role không mang permission (BR54) |
+| **Dữ liệu vào** | Tên CLB, lĩnh vực, mục tiêu; danh sách thành viên sáng lập; các tài liệu bắt buộc; ghế của từng thành viên sáng lập trong **cơ cấu cố định** (một Chủ nhiệm, một hoặc hai Phó chủ nhiệm, còn lại Members) — không khai báo role hay permission (BR55, BR56) |
 | **Thực thể / trạng thái** | `ClubApplication`: `Draft → Submitted`; `Revision Requested → Submitted` (version mới); `… → Withdrawn` |
 | **Quy tắc** | BR02, BR03, BR04, BR55, BR56 |
 | **Liên quan · Pain point** | UC02, UC08 · BP04 |
@@ -1027,7 +1028,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | FR-UC07-08 | *(E1)* Từ chối nộp và giữ hồ sơ ở `Draft` hoặc `Revision Requested` khi thiếu một tài liệu bắt buộc |
 | FR-UC07-09 | *(E2)* Từ chối nộp khi số thành viên sáng lập ít hơn mức BR03 cho phép |
 | FR-UC07-10 | *(E3)* Cảnh báo khi đã có một CLB đang hoạt động trùng tên, và để quyết định cho UC08. **Mở rộng 2026-11-12:** khi xem bản nháp trước khi nộp và khi nộp, gợi ý thêm tối đa 5 CLB `Active`, `Suspended`, `Dissolving` hoặc `Dissolved` có độ giống từ 35/100 trở lên (tên, nội dung, lĩnh vực — xem FR-UC08-14), kèm lý do; không bao giờ lộ hồ sơ của người khác hay CLB `Pending Setup`, và không chặn việc lưu nháp hay nộp |
-| FR-UC07-11 | Không bao giờ ghi đè một version đã nộp (BR04); một version hồ sơ bao gồm cả cơ cấu tổ chức dự kiến |
+| FR-UC07-11 | Không bao giờ ghi đè một version đã nộp (BR04); một version hồ sơ bao gồm cả danh sách sáng lập kèm ghế |
 | FR-UC07-12 | Thu thập thành viên sáng lập kèm ghế trong cơ cấu cố định: đúng một Chủ nhiệm, một hoặc hai Phó chủ nhiệm, còn lại là Members; người nộp phải là một thành viên sáng lập (BR55, BR56) |
 | FR-UC07-13 | *(E4)* Từ chối nộp khi không có đúng một Chủ nhiệm, không có một hoặc hai Phó chủ nhiệm, một thành viên bị liệt kê hai lần, hoặc Chủ nhiệm đang lãnh đạo CLB khác trong nhiệm kỳ đang chạy (BR06, BR55) |
 
@@ -1051,7 +1052,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC08-01 | Chuyển hồ sơ sang `Under Review` khi officer nhận (claim) hồ sơ; chỉ officer đã nhận mới được quyết định |
-| FR-UC08-02 | Hiển thị thông tin CLB, thành viên sáng lập, tài liệu, **cơ cấu tổ chức dự kiến** (role, ban/bộ phận, role ban điều hành) và toàn bộ lịch sử version trên cùng một màn hình |
+| FR-UC08-02 | Hiển thị thông tin CLB, thành viên sáng lập, tài liệu, ghế của từng thành viên sáng lập trong cơ cấu cố định (Chủ nhiệm, Phó chủ nhiệm, Members) và toàn bộ lịch sử version trên cùng một màn hình |
 | FR-UC08-03 | Ghi lại ghi chú thẩm định của officer, gồm cả ý kiến lấy từ ngoài hệ thống |
 | FR-UC08-04 | Cung cấp đúng ba kết quả: **yêu cầu chỉnh sửa**, **phê duyệt**, **từ chối** |
 | FR-UC08-05 | Khi **yêu cầu chỉnh sửa**: bắt buộc đánh dấu phần chưa đạt (kể cả cơ cấu tổ chức) và nhập nhận xét có cấu trúc, cho phép đặt deadline, chuyển `Revision Requested` và thông báo người nộp |
@@ -1281,7 +1282,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 | **Kích hoạt** | CLB cần thành viên cho một nhiệm kỳ hoặc một bộ phận |
 | **Tiền điều kiện** | CLB đang `Active` (BR01); người gọi có quyền tuyển thành viên |
 | **Dữ liệu vào** | Vị trí cần tuyển, tiêu chí, khung thời gian nhận đơn, chỉ tiêu, các vòng tuyển, các trường của form ứng tuyển |
-| **Thực thể / trạng thái** | `RecruitmentCampaign`: `Draft → Published → Accepting Applications → Screening → Completed`, hoặc `→ Cancelled` |
+| **Thực thể / trạng thái** | `RecruitmentCampaign`: `Draft → Published → Completed`, hoặc `→ Cancelled`; `Accepting Applications` / `Screening` có trong enum nhưng không chuyển trạng thái nào tới (§6.3) |
 | **Quy tắc** | BR01, BR09, BR11, BR54 |
 | **Liên quan · Pain point** | UC06, UC17, UC18 · BP11 |
 
@@ -1563,9 +1564,9 @@ không đổi số các use case còn lại.
 | **Actor chính** | ICPDP Officer |
 | **Mục tiêu nghiệp vụ** | Một phiên thẩm định kết thúc bằng một trong ba kết quả, kèm lập luận của nhà trường được lưu lại |
 | **Kích hoạt** | Một review task từ UC25 |
-| **Tiền điều kiện** | Đề xuất đang `Pending Approval` |
+| **Tiền điều kiện** | Đề xuất đang `Pending Approval`, hoặc `Re-defense Pending` chờ xếp lịch bảo vệ lại (A4) |
 | **Dữ liệu vào** | Ghi chú thẩm định, nhận xét có cấu trúc, quyết định và lý do; số tiền duyệt theo từng dòng ngân sách |
-| **Thực thể / trạng thái** | `Event`: `Pending Approval → Under Review → {Revision Requested, Approved, Rejected}`; tạo `EventBudget` ở `Approved` khi duyệt đề xuất có phần ngân sách |
+| **Thực thể / trạng thái** | `Event`: `Pending Approval → Under Review → {Revision Requested, Approved, Rejected, Re-defense Pending}`; `Re-defense Pending → Under Review` khi xếp lịch bảo vệ mới (BR63); tạo `EventBudget` ở `Approved` khi duyệt đề xuất có phần ngân sách |
 | **Quy tắc** | BR05, BR14, BR16, BR22, BR31, BR63 |
 | **Liên quan · Pain point** | UC05, UC25, UC27, UC35, UC46 · BP05, BP09, BP15 |
 
@@ -1589,8 +1590,8 @@ không đổi số các use case còn lại.
 | FR-UC26-16 | *(E3)* Cho officer yêu cầu chỉnh sửa hoặc từ chối kèm lý do được ghi lại khi hạn mức ngân sách của kỳ đã cạn |
 | FR-UC26-17 | Cho ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện của CLB: `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`; hiển thị phiên bản hiện tại, lịch sử xử lý, nhận xét và hạn bổ sung; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời hiện hành |
 | FR-UC26-18 | Khi báo cáo đề xuất chưa đầy đủ, cho ICPDP yêu cầu CLB bổ sung; bắt buộc ghi rõ từng nội dung hoặc tài liệu còn thiếu và nhận xét hướng dẫn tương ứng, gắn với phiên bản được thẩm định, kèm hạn bổ sung theo chính sách; không chấp nhận yêu cầu có nhận xét rỗng |
-| FR-UC26-20 | *(A4)* Cho ICPDP xếp lịch bảo vệ trực tiếp (BR63): phòng `ROOM` đang hoạt động, bắt đầu sau ít nhất 48 giờ, thời lượng 15–240 phút, phòng không trùng sự kiện, booking, phân phòng hay buổi bảo vệ khác; chỉ cán bộ giữ review task được hủy, trả lời xin dời (khi chấp thuận, giờ mới chỉ cần ở tương lai — mốc 48 giờ chỉ áp cho lần xếp lịch đầu), bắt đầu (sớm tối đa 30 phút), kết thúc (`DEFENDED`) hoặc ghi vắng mặt (`NO_SHOW` → `Rejected`). Khi lịch còn hiệu lực, khóa Phê duyệt/Từ chối/Bảo vệ lại (409) và hạn sửa phải trước giờ bảo vệ ít nhất 12 giờ (400); sau `DEFENDED` cho chọn thêm **Bảo vệ lại** → `Re-defense Pending`, mở review task mới cho cùng cán bộ |
 | FR-UC26-19 | Khi gửi yêu cầu bổ sung, chuyển sang `Revision Requested`, lưu người xử lý, thời điểm, nội dung thiếu và nhận xét trong lịch sử; thông báo trạng thái và phản hồi cho Club Leader. Sau khi CLB nộp phiên bản mới ở UC25, đưa về `Pending Approval` để ICPDP thẩm định lại; giữ nguyên các phiên bản và nhận xét trước, lặp đến khi được duyệt, bị từ chối hoặc kết thúc theo vòng đời |
+| FR-UC26-20 | *(A4)* Cho ICPDP xếp lịch bảo vệ trực tiếp (BR63): phòng `ROOM` đang hoạt động, bắt đầu sau ít nhất 48 giờ, thời lượng 15–240 phút, phòng không trùng sự kiện, booking, phân phòng hay buổi bảo vệ khác; chỉ cán bộ giữ review task được hủy, trả lời xin dời (khi chấp thuận, giờ mới chỉ cần ở tương lai — mốc 48 giờ chỉ áp cho lần xếp lịch đầu), bắt đầu (sớm tối đa 30 phút), kết thúc (`DEFENDED`) hoặc ghi vắng mặt (`NO_SHOW` → `Rejected`). Khi lịch còn hiệu lực, khóa Phê duyệt/Từ chối/Bảo vệ lại (409) và hạn sửa phải trước giờ bảo vệ ít nhất 12 giờ (400); sau `DEFENDED` cho chọn thêm **Bảo vệ lại** → `Re-defense Pending`, mở review task mới cho cùng cán bộ |
 | FR-UC26-21 | *(E4)* Từ chối quyết định và giữ nguyên trạng thái khi: yêu cầu chỉnh sửa thiếu phần cần sửa hoặc deadline tương lai; Yêu cầu chỉnh sửa, Từ chối hoặc Bảo vệ lại thiếu lý do; deadline chỉnh sửa đi kèm kết quả khác; hoặc điều kiện hay số tiền duyệt đi kèm kết quả khác Phê duyệt |
 
 Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức sự kiện trước khi duyệt**, khác báo cáo sau sự kiện UC33/UC34. Các oval bổ sung là chức năng con của UC25/UC26, không tạo mã UC hay trạng thái mới.
@@ -1607,15 +1608,15 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | **Mục tiêu nghiệp vụ** | Cho khán giả thấy sự kiện và tham gia được |
 | **Kích hoạt** | Sự kiện đã được phê duyệt |
 | **Tiền điều kiện** | Sự kiện đang `Approved` (BR14) |
-| **Dữ liệu vào** | Khung thời gian đăng ký, mô tả công khai, phạm vi đối tượng, sức chứa |
+| **Dữ liệu vào** | Khung thời gian đăng ký, khung giờ check-in, mô tả công khai, phạm vi đối tượng, sức chứa |
 | **Thực thể / trạng thái** | `Event`: `Approved → Upcoming` |
 | **Quy tắc** | BR14, BR17, BR50, BR53, BR54 |
 | **Liên quan · Pain point** | UC06, UC24, UC26, UC29 · BP05 |
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC27-01 | Cho CMB đặt khung thời gian đăng ký, phạm vi đối tượng, sức chứa và thông tin công khai của một sự kiện đã duyệt |
-| FR-UC27-02 | Chuyển `Upcoming` khi công bố và hiển thị sự kiện trong UC06 và UC24. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh viên (thông báo chỉ được lưu, không có mail worker). |
+| FR-UC27-01 | Cho CMB đặt khung thời gian đăng ký, khung giờ check-in (mặc định từ giờ bắt đầu tới giờ kết thúc sự kiện), phạm vi đối tượng, sức chứa và thông tin công khai của một sự kiện đã duyệt |
+| FR-UC27-02 | Chuyển `Upcoming` khi công bố và hiển thị sự kiện trong UC06 và UC24. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh viên. |
 | FR-UC27-03 | Suy ra "đang mở đăng ký" và "đã đóng đăng ký" từ khung thời gian đăng ký, chứ không từ một trạng thái riêng của sự kiện |
 | FR-UC27-04 | *(A1)* Với sự kiện `Internal` (phạm vi chọn ở UC25), giới hạn đối tượng về thành viên CLB và chỉ hiển thị trong UC24, không hiển thị ở UC06 |
 | FR-UC27-05 | *(A2)* Cho phép công bố sự kiện mở tự do, không cần khung thời gian đăng ký, nhưng vẫn áp dụng check-in |
@@ -1647,7 +1648,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC28-03 | Cập nhật hoặc giải phóng booking cơ sở vật chất liên quan qua UC47 (BR35) |
 | FR-UC28-04 | Thông báo cho mọi người đã đăng ký về việc huỷ hoặc thời gian mới |
 | FR-UC28-05 | Tính lại các nghĩa vụ báo cáo và ngân sách của sự kiện: khi huỷ, `EventBudget` chưa tạm ứng chuyển `Cancelled`; đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi ở UC37 (BR57, BR58) |
-| FR-UC28-06 | *(A1)* Huỷ sự kiện **không cần thao tác của CMB** khi UC15 (tạm ngừng, giải thể) hoặc UC40 (kết quả hồ sơ vi phạm) yêu cầu, ghi quyết định đó làm lý do, liên kết tới nó, và vẫn thực hiện FR-UC28-03…05; E2 không áp dụng cho cascade này và ICPDP **không** phải actor của use case này |
+| FR-UC28-06 | *(A1)* Huỷ sự kiện **không cần thao tác của CMB** khi UC15 (tạm ngừng, giải thể) yêu cầu, hoặc khi bản đổi lịch đưa về UC26 bị từ chối hoặc hết hạn chỉnh sửa (UC40 không huỷ sự kiện nào), ghi quyết định đó làm lý do, liên kết tới nó, và vẫn thực hiện FR-UC28-03…05; E2 không áp dụng cho cascade này và ICPDP **không** phải actor của use case này |
 | FR-UC28-07 | *(E1)* Từ chối huỷ một sự kiện đã chốt điểm danh; sự kiện đó phải đóng qua UC33 và UC34 |
 | FR-UC28-08 | *(E2)* Ghi nhận việc huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* việc huỷ sát giờ chỉ được đánh dấu `isLateCancellation`, không tự tạo hồ sơ UC40 và không đưa vào chấm điểm UC42. |
 | FR-UC28-09 | Ghi audit lý do và trạng thái kết quả |
@@ -1721,7 +1722,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | **Actor chính** | Student · **Hỗ trợ:** Club Member (mọi thành viên `Active`, check-in thủ công) |
 | **Mục tiêu nghiệp vụ** | Chứng minh việc có mặt ngay tại nơi sự kiện diễn ra |
 | **Kích hoạt** | Người tham dự đến địa điểm |
-| **Tiền điều kiện** | Sự kiện đang `Upcoming` hoặc `Ongoing` và trong khung giờ check-in do CLB đặt cho từng sự kiện ở UC25 (mặc định từ giờ bắt đầu tới giờ kết thúc sự kiện); sinh viên có đăng ký đã xác nhận, hoặc sự kiện là loại mở tự do |
+| **Tiền điều kiện** | Sự kiện đang `Upcoming` hoặc `Ongoing` và trong khung giờ check-in do CLB đặt cho từng sự kiện khi công bố ở UC27 (mặc định từ giờ bắt đầu tới giờ kết thúc sự kiện); sinh viên có đăng ký đã xác nhận, hoặc sự kiện là loại mở tự do |
 | **Dữ liệu vào** | Mã check-in hoặc QR của sự kiện; hoặc định danh người tham dự khi check-in thủ công |
 | **Thực thể / trạng thái** | Tạo `Attendance`; mở feedback window của người đó |
 | **Quy tắc** | BR18, BR36 |
@@ -1939,7 +1940,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | **Actor chính** | Club Leader (`club.report.submit`) |
 | **Mục tiêu nghiệp vụ** | Hoàn thành nghĩa vụ báo cáo từ chính dữ liệu hệ thống đã có |
 | **Kích hoạt** | Kỳ báo cáo kết thúc, hoặc deadline đến gần |
-| **Tiền điều kiện** | CLB đang `Active`, hoặc `Suspended` nhưng còn nghĩa vụ; kỳ báo cáo được định nghĩa ở UC04 |
+| **Tiền điều kiện** | CLB đang `Active`, `Suspended` hoặc `Dissolving`; kỳ báo cáo được định nghĩa ở UC04 |
 | **Dữ liệu vào** | Phần thuyết minh, kế hoạch kỳ sau, minh chứng mà hệ thống không có sẵn |
 | **Thực thể / trạng thái** | `PeriodicReport`: `Draft → Submitted`; `Returned for correction → Submitted` (version mới) |
 | **Quy tắc** | BR20, BR54 |
@@ -1953,7 +1954,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC38-04 | Chuyển `Submitted` khi nộp, đóng băng số liệu nạp sẵn và tạo task cho ICPDP |
 | FR-UC38-05 | *(A1)* Cho lưu báo cáo ở `Draft` và hoàn thiện trước deadline |
 | FR-UC38-06 | *(A2)* Cho thành viên xem nhận xét của ICPDP, sửa các phần chưa đúng mẫu hoặc còn thiếu và nộp lại báo cáo bị UC39 trả về như một version mới; giữ lịch sử các version, chuyển về `Submitted` và tạo task thẩm định mới. Lặp lại UC38–UC39 đến khi báo cáo được chấp nhận |
-| FR-UC38-07 | *(E1)* Vẫn nhận báo cáo trễ nhưng đánh dấu trễ, dữ liệu này đi vào BR21 và kỳ đánh giá |
+| FR-UC38-07 | *(E1)* Khi ICPDP đã mở đợt nộp cho kỳ, từ chối tạo hoặc nộp báo cáo sau hạn nộp của đợt (409); kỳ không có đợt nộp thì báo cáo nộp sau `dueAt` vẫn được nhận nhưng gắn cờ trễ (`lateFlag`), dữ liệu này đi vào BR21 và kỳ đánh giá |
 | FR-UC38-08 | Lấy deadline và các mốc nhắc từ UC04 và §8.2 |
 | FR-UC38-09 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.report.submit`) đó (BR54) |
 | FR-UC38-10 | *(E2)* Từ chối sửa hoặc nộp (409) khi báo cáo đã thay đổi từ lúc mở hoặc không còn sửa được, hoặc hạn nộp lại đặt ở UC39 đã qua |
@@ -2062,7 +2063,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 
 | ID | Hệ thống phải … |
 |---|---|
-| FR-UC42-01 | Thu thập cho mỗi CLB trong phạm vi: hoạt động (UC26–UC34), điểm danh (UC32), thành viên (UC21), tài chính (UC37), báo cáo (UC39), vi phạm (UC40), phản hồi (UC48), kết quả khiếu nại (UC51), lời mời sự kiện cấp trường đã chấp nhận (UC54) và mức tuân thủ booking (UC46, UC47) |
+| FR-UC42-01 | Thu thập cho mỗi CLB trong phạm vi: hoạt động (UC26–UC34), điểm danh (UC32), thành viên (UC21), tài chính (UC37), báo cáo (UC39), vi phạm (UC40), phản hồi (UC48), khiếu nại bị leo thang (chỉ qua hồ sơ vi phạm UC40 mà UC51 tạo ra), lời mời sự kiện cấp trường đã chấp nhận (UC54) và mức tuân thủ booking (UC46, UC47) |
 | FR-UC42-02 | Áp dụng scheme đang hoạt động của UC41 và tính điểm cho từng dimension |
 | FR-UC42-03 | Lưu **chứng cứ và data lineage** phía sau mỗi kết quả dimension: `kết quả dimension → chỉ số → thực thể nguồn → kỳ dữ liệu nguồn` |
 | FR-UC42-04 | Đặt bản nháp ở `Data Ready` và không bao giờ công bố nó khi chưa qua UC43 |
@@ -2123,7 +2124,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC44-03 | Làm cho property đã kích hoạt trở nên chọn được: `ROOM` ở UC58, các loại khác ở UC45 |
 | FR-UC44-04 | *(A1)* Cho ngừng kích hoạt một property, các booking đã duyệt hiện có vẫn giữ nguyên |
 | FR-UC44-05 | *(A2)* Cho khoá một giai đoạn để bảo trì và hiển thị các yêu cầu bị xung đột với nó |
-| FR-UC44-06 | *(E1)* Từ chối xoá khi còn booking tương lai đã duyệt, và chỉ cho ngừng kích hoạt (BR41) |
+| FR-UC44-06 | *(E1)* Từ chối xoá khi property đã có bất kỳ booking nào, và chỉ cho ngừng kích hoạt (BR41) |
 | FR-UC44-07 | Không bao giờ làm vô hiệu một quyết định đã ra khi khung giờ được đặt thay đổi |
 | FR-UC44-08 | Chỉ lưu những property được mở cho hoạt động CLB — UCMS không thay thế hệ thống đặt phòng chung của trường |
 
@@ -2146,7 +2147,7 @@ booking `ROOM` cũ (đặt trực tiếp, đặt trùng, ROOM legacy qua review)
 | **Actor chính** | Club Leader (`club.booking.manage`) |
 | **Mục tiêu nghiệp vụ** | Xin `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` qua một quy trình truy vết được và gắn với sự kiện |
 | **Kích hoạt** | CLB cần hội trường, sân, sân khấu hoặc thiết bị cho một sự kiện hay hoạt động |
-| **Tiền điều kiện** | CLB đang `Active` (BR34); người gọi có quyền; property đang hoạt động trong UC44 |
+| **Tiền điều kiện** | CLB đang `Active`, hoặc `Dissolving` với booking kết thúc trong học kỳ giải thể (BR34, BR45); người gọi có quyền; property đang hoạt động trong UC44 |
 | **Dữ liệu vào** | Property, mục đích sử dụng, thời điểm bắt đầu và kết thúc, số người dự kiến, thiết bị đi kèm, sự kiện liên quan nếu có |
 | **Thực thể / trạng thái** | `PropertyBooking`: `Draft → Requested`; `Revision Requested → Requested` (version mới) |
 | **Quy tắc** | BR15, BR33, BR34, BR45, BR54 |
@@ -2206,7 +2207,7 @@ lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong App
 |---|---|
 | FR-UC46-01 | Chuyển yêu cầu sang `Under Review` khi officer mở nó |
 | FR-UC46-02 | Hiển thị trạng thái CLB, mục đích, các xung đột và các nghĩa vụ quá hạn của CLB |
-| FR-UC46-03 | Cung cấp đúng ba kết quả: **yêu cầu chỉnh sửa**, **phê duyệt**, **từ chối** — bắt buộc lý do với hai kết quả sau |
+| FR-UC46-03 | Cung cấp đúng ba kết quả: **yêu cầu chỉnh sửa**, **phê duyệt**, **từ chối** — bắt buộc lý do với cả ba kết quả |
 | FR-UC46-04 | Khoá khung giờ khi phê duyệt để không booking nào khác được duyệt chồng lên (BR33) |
 | FR-UC46-05 | Ghi audit quyết định, cập nhật trạng thái và gửi `Property booking status` cho CMB |
 | FR-UC46-06 | *(A1)* Cho officer đề xuất một khung giờ hoặc property thay thế (không phải `ROOM`), CLB chấp nhận qua UC45 A3 |
@@ -2228,7 +2229,7 @@ lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong App
 | **Actor chính** | Club Leader (`club.booking.manage`) |
 | **Mục tiêu nghiệp vụ** | Giải phóng nguồn lực không còn cần tới để CLB khác đặt được |
 | **Kích hoạt** | Sự kiện bị huỷ hoặc đổi lịch (UC28), hoặc CLB không cần property nữa |
-| **Tiền điều kiện** | Booking `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` đang `Requested` hoặc `Approved`, hoặc `In Use` khi việc huỷ đến từ UC15 hoặc UC40 (A1). Buổi phòng học của UC58 chỉ ICPDP thu hồi |
+| **Tiền điều kiện** | Booking `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` đang `Requested` hoặc `Approved`; booking `In Use` không bao giờ bị huỷ hay giải phóng, kể cả qua cascade. Buổi phòng học của UC58 chỉ ICPDP thu hồi |
 | **Dữ liệu vào** | Lý do huỷ |
 | **Thực thể / trạng thái** | `PropertyBooking`: `Requested`/`Approved → Cancelled`; `Approved → Released` |
 | **Quy tắc** | BR35, BR54 |
@@ -2239,7 +2240,7 @@ lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong App
 | FR-UC47-01 | Cho CMB huỷ một booking `Requested` hoặc `Approved` kèm lý do |
 | FR-UC47-02 | Giải phóng khung giờ ngay lập tức và đưa nó trở lại trạng thái đặt được ở UC45 |
 | FR-UC47-03 | Thông báo cho ICPDP về việc huỷ hoặc trả |
-| FR-UC47-04 | *(A1)* Tự động giải phóng booking khi sự kiện của nó bị huỷ hoặc đổi lịch ở UC28 (BR35); khi việc huỷ đó đến từ UC15 hoặc UC40 thì giải phóng cả booking đang `In Use` và không áp dụng E2 |
+| FR-UC47-04 | *(A1)* Tự động giải phóng booking chưa diễn ra (tới `Approved`) khi sự kiện của nó bị huỷ hoặc đổi lịch ở UC28, hoặc khi UC15 tạm ngừng / giải thể CLB (BR35); E2 không áp dụng cho cascade này. UC40 không huỷ booking |
 | FR-UC47-05 | *(E1)* Từ chối huỷ thủ công một booking đã `In Use` hoặc `Completed` |
 | FR-UC47-06 | *(E2)* Ghi nhận lần huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* chỉ đánh dấu `isLateCancellation`, không tự tạo hồ sơ UC40 và không đưa vào chấm điểm UC42; ngưỡng huỷ sát giờ của booking cố định 24 giờ, không phải trường của chính sách. |
 | FR-UC47-07 | Để scheduler chuyển `Approved → In Use → Completed` theo mốc giờ của chính booking |
@@ -2268,7 +2269,7 @@ lịch sử booking là bảng có phân trang; tạo/sửa yêu cầu trong App
 | FR-UC58-02 | Cho chọn CLB `Active`/`Dissolving`, phòng `ROOM` đang hoạt động ở toà nhà bất kỳ, một thứ trong tuần, một slot campus (1: 07:30–09:50, 2: 10:00–12:20, 3: 12:50–15:10, 4: 15:20–17:40, UTC+7) và ghi chú tuỳ chọn |
 | FR-UC58-03 | Hiển thị lưới chiếm dụng theo tuần (thứ × slot) của phòng đã chọn trong học kỳ |
 | FR-UC58-04 | Tính mọi ngày khớp thứ đó trong học kỳ mà slot chưa bắt đầu; bỏ qua ngày trùng blackout của phòng; yêu cầu khung giờ được đặt của phòng phủ thứ/slot đó |
-| FR-UC58-05 | Kiểm tra xung đột từng ngày với booking `Approved`/`In Use` và sự kiện `Approved`/`Upcoming`/`Ongoing` trên cùng phòng; có bất kỳ xung đột nào thì từ chối cả đợt và liệt kê các ngày xung đột (BR62) — không có ngoại lệ đặt trùng (BR33) |
+| FR-UC58-05 | Kiểm tra xung đột từng ngày với booking `Approved`/`In Use`, sự kiện `Approved`/`Upcoming`/`Ongoing` và buổi bảo vệ còn hiệu lực (BR63) trên cùng phòng; có bất kỳ xung đột nào thì từ chối cả đợt và liệt kê các ngày xung đột (BR62) — không có ngoại lệ đặt trùng (BR33) |
 | FR-UC58-06 | Trong một transaction, sinh một `PropertyBooking` cho mỗi ngày: `Approved`, purpose `ICPDP room allocation`, `currentVersionNo` 0, `conflictResult` `No Conflict`, `decidedBy`/`decidedAt` = officer/thời điểm phân; không tạo task |
 | FR-UC58-07 | Ghi audit `ROOM_ALLOCATED` (`entityType = RoomAllocation`, `after` = semesterCode, clubId, clubName, propertyId, weekday, slot, note, bookingIds) và gửi thông báo in-app `ROOM_ALLOCATED` tới Club Leader và các ghế ban chủ nhiệm |
 | FR-UC58-08 | *(A1)* Cho thu hồi một đợt phân phòng với lý do bắt buộc: buổi chưa bắt đầu chuyển `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử; ghi audit và gửi thông báo `ROOM_ALLOCATION_REVOKED`. Không có thao tác sửa — đổi bằng thu hồi rồi phân lại |
@@ -2387,7 +2388,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 | FR-UC51-05 | Chỉ nhận lệnh bác bỏ hoặc leo thang từ ICPDP |
 | FR-UC51-06 | *(A1)* Đóng khiếu nại đã chuyển xuống khi phần trả lời của CLB làm officer hài lòng, ngược lại thì leo thang |
 | FR-UC51-07 | *(E1)* Ghi nhận và đóng khiếu nại về một CLB đã giải thể, giữ nguyên lịch sử |
-| FR-UC51-08 | Đưa kết quả khiếu nại thành đầu vào của UC42 |
+| FR-UC51-08 | Khi leo thang, tạo hồ sơ vi phạm ở UC40; kết quả khiếu nại chỉ đi vào UC42 qua hồ sơ đó (D8), khiếu nại bác bỏ hay đóng không tính điểm |
 
 **Hậu điều kiện** — khiếu nại ở `Dismissed`, `Forwarded`, `Escalated` hoặc `Closed`; khi leo thang thì tồn tại một `Violation` liên kết ngược lại.
 **Đầu ra** — quyết định phân loại, `Violation` khi leo thang, bản ghi audit, thông báo.
@@ -2427,9 +2428,9 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 | **Actor chính** | ICPDP Officer |
 | **Mục tiêu nghiệp vụ** | Nhà trường chủ động tổ chức các sự kiện quy mô toàn trường (ngày hội CLB, hội thao, lễ vinh danh, tập huấn) và điều phối các CLB tham gia |
 | **Kích hoạt** | ICPDP lên kế hoạch tổ chức sự kiện cấp trường |
-| **Tiền điều kiện** | Người dùng đã đăng nhập với vai trò `ICPDP_OFFICER` hoặc `ICPDP_HEAD` |
+| **Tiền điều kiện** | Người dùng đã đăng nhập với vai trò `ICPDP_OFFICER` |
 | **Dữ liệu vào** | Tên sự kiện, mục tiêu, thời gian bắt đầu/kết thúc, địa điểm/cơ sở vật chất, sức chứa, mô tả/yêu cầu phối hợp, danh sách CLB được mời, hạn chót phản hồi |
-| **Thực thể / trạng thái** | `Event`: `Draft → Approved` (hoặc trực tiếp `Upcoming` khi công bố); `EventInvitation`: `(tạo mới) → Pending` |
+| **Thực thể / trạng thái** | `Event`: tạo thẳng ở `Approved` (không qua `Draft` hay UC26), `Approved → Upcoming` khi công bố (A2); `EventInvitation`: `(tạo mới) → Pending` |
 | **Quy tắc** | BR15 (xung đột địa điểm/thời gian), BR44 (trong cùng học kỳ), BR59 (quy tắc lời mời sự kiện cấp trường) |
 | **Liên quan · Pain point** | UC27, UC44, UC45, UC54 · BP05, BP06 |
 
@@ -2438,7 +2439,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 | FR-UC53-01 | Cho phép ICPDP Officer nhập thông tin sự kiện với `organizerType = 'ICPDP'` và `clubId = null` |
 | FR-UC53-02 | Tự động đánh giá xung đột thời gian và cơ sở vật chất (BR15); trùng với sự kiện hoặc booking đã duyệt khác chỉ là `Warning`, không bao giờ chặn việc tạo sự kiện cấp trường |
 | FR-UC53-03 | Cho phép chọn danh sách các CLB được gửi lời mời (hoặc chọn "Tất cả CLB đang Active"), kèm hạn chót phản hồi (`deadline`) |
-| FR-UC53-04 | Tạo các bản ghi `EventInvitation` ở trạng thái `Pending` cho từng CLB được chọn và phát thông báo in-app/email tới Ban chủ nhiệm các CLB đó |
+| FR-UC53-04 | Tạo các bản ghi `EventInvitation` ở trạng thái `Pending` cho từng CLB được chọn và phát thông báo in-app (không gửi email) tới Ban chủ nhiệm các CLB đó |
 | FR-UC53-05 | Cho phép ICPDP theo dõi danh sách phản hồi của các CLB trong thời gian thực (số CLB đã nhận, đã chấp nhận, đã từ chối, chưa phản hồi) |
 | FR-UC53-06 | Cho phép ICPDP thu hồi lời mời (`Withdrawn`) đối với một CLB chỉ khi lời mời còn `Pending` và chưa đến hạn chót, nếu kế hoạch phối hợp thay đổi |
 | FR-UC53-07 | *(A1)* Cho phép ICPDP bổ sung lời mời tới các CLB khác sau khi sự kiện đã tạo |
@@ -2497,7 +2498,7 @@ buổi tương lai và không khôi phục khi kích hoạt lại.
 |---|---|
 | FR-UC55-01 | Cho officer chọn loại dữ liệu từ một danh mục cố định: danh sách CLB và trạng thái; thành viên theo CLB; sự kiện kèm đăng ký và điểm danh; ngân sách, giải ngân và đối soát; hồ sơ vi phạm và khiếu nại; kết quả đánh giá |
 | FR-UC55-02 | Lọc theo kỳ hoặc khoảng thời gian, CLB và trạng thái, và hiển thị số dòng trước khi xuất |
-| FR-UC55-03 | Sinh file `xlsx` hoặc `csv` cho mọi loại dữ liệu; kết quả đánh giá xuất thêm được `pdf` theo bảng điểm chung (BR60) |
+| FR-UC55-03 | Sinh file `xlsx`, `csv` hoặc `pdf` khi xuất đúng một loại dữ liệu; từ hai loại trở lên chỉ sinh `xlsx` (FR-UC55-12). Kết quả đánh giá dùng bảng điểm chung (BR60) |
 | FR-UC55-04 | Chỉ xuất kết quả đánh giá đã `Published` (BR30) và điểm danh đã chốt (UC32) |
 | FR-UC55-05 | Ghi vào đầu file thời điểm xuất, người xuất và bộ lọc đã dùng |
 | FR-UC55-06 | Áp dụng cùng quy tắc hiển thị như trên màn hình: không xuất danh tính người gửi phản hồi ẩn danh (BR61) |
@@ -2552,7 +2553,7 @@ của nó không bao giờ được dùng lại.**
 | BR27 | Thang phân loại mức độ vi phạm định nghĩa trong tài liệu chính sách | UC40 |
 | BR28 | Quyết định về vi phạm phải có lý do và chứng cứ | UC40 |
 | BR29 | Tổng trọng số đánh giá phải hợp lệ trước khi một scheme được kích hoạt | UC41, UC42 |
-| BR30 | Kỳ đánh giá đã công bố không bao giờ được sửa tại chỗ; phải tạo bản sửa hoặc bản chụp mới | UC43 |
+| BR30 | Kỳ đánh giá đã công bố không bao giờ được sửa tại chỗ; phải tạo bản sửa hoặc bản chụp mới | UC43, UC55 |
 | BR31 | ICPDP là cấp phê duyệt duy nhất cho mọi yêu cầu CLB hoặc sinh viên gửi lên nhà trường; quyết định nội bộ CLB do CMB của CLB đó đưa ra trong phạm vi của mình | UC08, UC26, UC46, UC51 |
 | BR32 | Hệ thống chỉ chấp nhận đăng nhập qua Google OAuth với email đã được Google xác minh và thuộc domain cấu hình ở biến môi trường `ALLOWED_DOMAIN` của server (một hoặc nhiều domain cách nhau bởi dấu phẩy); giá trị `*` (đứng một mình) cho phép mọi domain. Sửa 2026-11-02: domain không còn là giá trị chính sách UC04 | UC01 |
 | BR33 | **Sửa 2026-10-11** — Booking cơ sở vật chất `HALL`/`OUTDOOR`/`STAGE`/`EQUIPMENT` chỉ được duyệt khi khung giờ còn trống; ICPDP chỉ được duyệt trùng ở UC46 khi policy `allowOverbooking = true` và nhập `overbookingReason` (≤ 2000 ký tự), ghi officer, lý do, thời điểm và lịch trùng trong audit cùng transaction; blackout không bao giờ được bỏ qua. Phòng học `ROOM` không bao giờ được đặt trùng (BR62) | UC46, UC58 |
@@ -2566,7 +2567,7 @@ của nó không bao giờ được dùng lại.**
 | BR41 | **Mới** — không được xoá một property đã có bất kỳ booking nào; chỉ được ngừng kích hoạt | UC44 |
 | BR42 | **Mới** — màn hình cấu hình chỉ bao gồm các giá trị liệt kê ở UC04; mọi giá trị chính sách khác là hằng số định nghĩa trong tài liệu chính sách (danh sách ngay dưới bảng) | UC04 |
 | ~~BR43~~ | **Đã rút** — nó từng dùng để giữ bản phát hành đầu độc lập với các use case bị hoãn; nay mọi use case ra cùng một bản phát hành. Số hiệu không được dùng lại | — |
-| BR44 | **Mới** — một sự kiện phải bắt đầu và kết thúc trong cùng một học kỳ của lịch học kỳ | UC25, UC15 |
+| BR44 | **Mới** — một sự kiện phải bắt đầu và kết thúc trong cùng một học kỳ của lịch học kỳ | UC25, UC15, UC53 |
 | BR45 | **Mới** — khi một CLB đã có quyết định giải thể, không sự kiện, đề xuất hay booking nào của CLB đó được kết thúc sau học kỳ `Dissolving` của nó; UC25 và UC45 từ chối những hồ sơ như vậy, UC15 huỷ những gì đã tồn tại | UC15, UC25, UC45 |
 | BR46 | **Mới** — sinh viên có tư cách thành viên `Banned` ở một CLB không được nộp đơn vào, hoặc được tiếp nhận lại vào, CLB đó | UC17, UC20, UC21 |
 | BR47 | Quyền truy cập phía CLB chỉ đến từ hai role cố định: membership `Active` → Club Member; ghế Chủ nhiệm hoặc Phó chủ nhiệm được duyệt ở UC08 hoặc xác nhận ở UC11 / UC13 trong nhiệm kỳ đang hoạt động → Club Leader. Chức danh khác không cấp permission. UC03 không cấp role CLB và không CLB mới nào nhận quyền sáng lập tạm thời | UC01, UC03, UC08, UC11, UC13, UC20, UC24 |
@@ -2584,12 +2585,12 @@ của nó không bao giờ được dùng lại.**
 | BR59 | **Mới (I61)** — Sự kiện cấp trường do ICPDP khởi tạo (UC53) chỉ gửi lời mời tới các CLB đang `Active`. Lời mời có hạn chót phản hồi (`deadline`); quá hạn chót mà CLB chưa phản hồi thì hệ thống tự động chuyển trạng thái lời mời sang `Expired`. CLB có thể `Accepted` hoặc `Declined` (bắt buộc nêu lý do khi từ chối, UC54); ICPDP chỉ thu hồi được (`Withdrawn`) khi lời mời còn `Pending` và chưa đến hạn chót. Khi CLB chấp nhận, tư cách tham gia của CLB được ghi nhận chính thức vào sự kiện | UC53, UC54 |
 | BR60 | **Mới (I63)** — Đánh giá CLB dùng một **format chung**: danh mục dimension D1–D8 do hệ thống định nghĩa (§9), ICPDP chỉ chọn dimension áp dụng, đặt trọng số và ngưỡng. Mọi scheme bắt buộc gồm ba dimension chung D1 Số người tham gia, D2 Tầm ảnh hưởng, D3 Mức độ hài lòng với trọng số > 0; thiếu một trong ba thì không kích hoạt được. Mọi CLB trong cùng kỳ được chấm bằng cùng một scheme và công bố dưới cùng một bảng điểm | UC41, UC42, UC43, UC55 |
 | BR61 | **Mới (I64)** — Chỉ ICPDP Officer xuất được dữ liệu (UC55). Bản xuất tuân theo cùng quy tắc hiển thị như trên màn hình — phản hồi gửi ẩn danh không kèm danh tính người gửi, kết quả đánh giá chỉ xuất bản đã `Published`. Mọi lần xuất được ghi audit: người xuất, loại dữ liệu, bộ lọc, số dòng | UC55 |
-| BR62 | **Mới (2026-10-11)** — Phân phòng theo học kỳ: mỗi lần phân gồm một học kỳ chưa kết thúc (`academicCalendar`), một CLB `Active`/`Dissolving`, một phòng `ROOM` đang hoạt động, một thứ trong tuần và một slot campus. Hệ thống sinh một booking `Approved` cho mỗi ngày khớp trong học kỳ mà slot chưa bắt đầu, bỏ qua ngày trùng blackout; khung giờ được đặt của phòng phải phủ thứ/slot đó. Có bất kỳ ngày nào xung đột với booking `Approved`/`In Use` hoặc sự kiện `Approved`/`Upcoming`/`Ongoing` cùng phòng → từ chối cả đợt và liệt kê ngày xung đột. Không kế thừa sang học kỳ sau. Thu hồi bắt buộc lý do: buổi chưa bắt đầu → `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử. Muốn đổi thì thu hồi rồi phân lại | UC15, UC58 |
-| BR63 | **Mới (2026-11-13)** — Bảo vệ đề xuất sự kiện: Đối với sự kiện quy mô lớn, phức tạp hoặc xin kinh phí cao, ICPDP có thể xếp lịch hẹn bảo vệ trực tiếp (phòng học `ROOM`, thời lượng dự kiến, ghi chú). Lịch bảo vệ phải được tạo trước giờ diễn ra ít nhất 48 giờ. Phòng học được chọn tự động khóa (đánh dấu BẬN) để chống xếp đè lịch. Trong thời gian có lịch bảo vệ hiệu lực, hệ thống khóa tạm thời hai nút Phê duyệt và Từ chối sự kiện (chỉ cho phép Yêu cầu sửa đổi với hạn nộp trước giờ bảo vệ ít nhất 12 giờ; quá hạn nộp sự kiện chuyển `Expired` và lịch bảo vệ tự động bị hủy). CLB bắt buộc xác nhận tham gia (`Confirm`) trước giờ bảo vệ ít nhất 24 giờ, hoặc gửi đề xuất xin dời lịch kèm lý do. CLB vắng mặt (`NO_SHOW`) dẫn đến sự kiện bị từ chối (`Rejected`) ngay lập tức và ghi nhận điểm trừ uy tín. Màn hình bảo vệ trực tiếp (Live Defense Room) hỗ trợ hiển thị 2 cột (thông tin đề án và ghi chú Markdown cá nhân của từng cán bộ với cơ chế tự lưu nháp 2s và đồng bộ 3s). Cán bộ chủ trì bấm kết thúc bảo vệ để lưu toàn bộ ghi chú và mở 4 quyết định: Từ chối (`Rejected`), Phê duyệt (`Approved` - nếu có ngân sách bắt buộc chốt số tiền duyệt từng dòng), Yêu cầu sửa đổi (`Revision Requested`), hoặc Bảo vệ lại (`Re-defense Pending`, không giới hạn số lần do ICPDP quyết định). Lịch bảo vệ đang hiệu lực được tính là xung đột phòng ở UC25, UC45, UC58; UC15 đình chỉ/giải thể và UC28 huỷ sự kiện cũng huỷ lịch bảo vệ | UC25, UC26, UC15, UC45, UC58 |
+| BR62 | **Mới (2026-10-11)** — Phân phòng theo học kỳ: mỗi lần phân gồm một học kỳ chưa kết thúc (`academicCalendar`), một CLB `Active`/`Dissolving`, một phòng `ROOM` đang hoạt động, một thứ trong tuần và một slot campus. Hệ thống sinh một booking `Approved` cho mỗi ngày khớp trong học kỳ mà slot chưa bắt đầu, bỏ qua ngày trùng blackout; khung giờ được đặt của phòng phải phủ thứ/slot đó. Có bất kỳ ngày nào xung đột với booking `Approved`/`In Use`, sự kiện `Approved`/`Upcoming`/`Ongoing` hoặc buổi bảo vệ còn hiệu lực (BR63) cùng phòng → từ chối cả đợt và liệt kê ngày xung đột. Không kế thừa sang học kỳ sau. Thu hồi bắt buộc lý do: buổi chưa bắt đầu → `Released` (`releasedBy = ROOM_ALLOCATION_REVOKED`), buổi đã qua giữ làm lịch sử. Muốn đổi thì thu hồi rồi phân lại | UC15, UC58 |
+| BR63 | **Mới (2026-11-13)** — Bảo vệ đề xuất sự kiện: Đối với sự kiện quy mô lớn, phức tạp hoặc xin kinh phí cao, ICPDP có thể xếp lịch hẹn bảo vệ trực tiếp (phòng học `ROOM`, thời lượng dự kiến, ghi chú). Lịch bảo vệ phải được tạo trước giờ diễn ra ít nhất 48 giờ. Phòng học được chọn tự động khóa (đánh dấu BẬN) để chống xếp đè lịch. Trong thời gian có lịch bảo vệ hiệu lực, hệ thống khóa tạm thời hai nút Phê duyệt và Từ chối sự kiện (chỉ cho phép Yêu cầu sửa đổi với hạn nộp trước giờ bảo vệ ít nhất 12 giờ; quá hạn nộp sự kiện chuyển `Expired` và lịch bảo vệ tự động bị hủy). CLB bắt buộc xác nhận tham gia (`Confirm`) trước giờ bảo vệ ít nhất 24 giờ, hoặc gửi đề xuất xin dời lịch kèm lý do. CLB vắng mặt (`NO_SHOW`) dẫn đến sự kiện bị từ chối (`Rejected`) ngay lập tức, kèm bản ghi audit và thông báo cho CLB; không có điểm trừ nào khác. Màn hình bảo vệ trực tiếp (Live Defense Room) hỗ trợ hiển thị 2 cột (thông tin đề án và ghi chú Markdown cá nhân của từng cán bộ với cơ chế tự lưu nháp 2s và đồng bộ 3s). Cán bộ chủ trì bấm kết thúc bảo vệ để lưu toàn bộ ghi chú và mở 4 quyết định: Từ chối (`Rejected`), Phê duyệt (`Approved` - nếu có ngân sách bắt buộc chốt số tiền duyệt từng dòng), Yêu cầu sửa đổi (`Revision Requested`), hoặc Bảo vệ lại (`Re-defense Pending`, không giới hạn số lần do ICPDP quyết định). Lịch bảo vệ đang hiệu lực được tính là xung đột phòng ở UC25, UC45, UC58; UC15 đình chỉ/giải thể và UC28 huỷ sự kiện cũng huỷ lịch bảo vệ | UC25, UC26, UC15, UC28, UC45, UC58 |
 
 **Cấu hình được và hằng số (BR42).** Chỉ chín giá trị liệt kê ở UC04 là sửa được trong sản
 phẩm. Mọi giá trị chính sách khác là **hằng số định nghĩa trong tài liệu chính sách** cho tới khi có nhu
-cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); các loại chứng từ chi được chấp nhận, như nhau cho mọi hạng mục (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58); hạn phản hồi lời mời sự kiện cấp trường mặc định 3 ngày trước sự kiện, ICPDP đổi được cho từng sự kiện (BR59); thời hạn tạo lịch bảo vệ, hạn CLB xác nhận và hạn nộp bản sửa trước bảo vệ (BR63). Khung giờ check-in **không** phải giá trị chính sách: CLB đặt cho từng sự kiện (UC25), mặc định từ giờ bắt đầu tới giờ kết thúc sự kiện (UC31).
+cầu thật — xem quyết định còn mở D2. Danh sách hằng số: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); các loại chứng từ chi được chấp nhận, như nhau cho mọi hạng mục (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58); hạn phản hồi lời mời sự kiện cấp trường mặc định 3 ngày trước sự kiện, ICPDP đổi được cho từng sự kiện (BR59); thời hạn tạo lịch bảo vệ, hạn CLB xác nhận và hạn nộp bản sửa trước bảo vệ (BR63). Khung giờ check-in **không** phải giá trị chính sách: CLB đặt cho từng sự kiện khi công bố (UC27), mặc định từ giờ bắt đầu tới giờ kết thúc sự kiện (UC31).
 
 ---
 
@@ -2671,8 +2672,8 @@ Active | Inactive → Banned (cuối)
 | Từ → Đến | Tác nhân |
 |---|---|
 | (chưa có) → Active | UC20 tiếp nhận |
-| Active → Inactive | UC21 (ngừng tham gia; hoặc UC21 A2 không đăng ký lại) — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận |
-| Inactive → Active | UC21 (tham gia lại; hoặc UC21 A2 đã đăng ký lại) |
+| Active → Inactive | UC21 (ngừng tham gia), hoặc **Scheduler** của UC21 A2 khi quá hạn xác nhận lại — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận |
+| Inactive → Active | UC21 (Club Leader kích hoạt lại thủ công); UC21 A2 chỉ áp cho membership `Active`, không đưa `Inactive` về `Active` |
 | Active / Inactive → Left | UC21 A1, thực thi yêu cầu của UC22 — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận |
 | Active / Inactive → Banned | UC21, bắt buộc lý do — bị từ chối khi đang giữ ghế ban chủ nhiệm đã xác nhận |
 
@@ -2706,7 +2707,7 @@ Draft → Pending Approval → Under Review ──┬──→ {Revision Request
 | Report Submitted → Closed | UC34 (chấp nhận) |
 | Report Submitted → Completed | UC34 (trả báo cáo về để sửa) |
 | Completed → Closed | UC32 A2 — sự kiện nội bộ ghi nhận thẳng, không có báo cáo (BR53) |
-| Approved / Upcoming / Ongoing → Cancelled | UC28, hoặc UC15 / UC40 tác động lên CLB |
+| Approved / Upcoming / Ongoing → Cancelled | UC28 (kể cả A1 khi bản đổi lịch bị UC26 từ chối hoặc hết hạn), hoặc UC15 tác động lên CLB; UC40 không huỷ sự kiện |
 | Draft / Pending Approval / Under Review / Revision Requested / Re-defense Pending → Cancelled | UC15 (tạm ngừng, hoặc giải thể theo BR45), hoặc **Scheduler** khi CLB chuyển `Dissolved` |
 | Revision Requested → Expired | **Scheduler** (deadline chỉnh sửa đặt ở UC26); là trạng thái cuối — CLB phải nộp đề xuất mới |
 
@@ -2975,9 +2976,9 @@ repository.
 ## 8.1 Workflow phê duyệt
 
 Năm đối tượng nghiệp vụ đi qua *nộp → thẩm định → sửa → quyết định*: hồ sơ thành lập (UC07/08),
-đề xuất sự kiện kèm ngân sách (UC25/26), đặt cơ sở vật chất (UC45/48), khiếu nại
-(UC50/53) và tạm ngừng CLB (UC14/15). Xác nhận ban chủ nhiệm (UC10/11), chuyển giao nhiệm kỳ
-(UC12/13) và hai loại thẩm định báo cáo (UC33/34, UC38/41) dùng cùng cơ chế task.
+đề xuất sự kiện kèm ngân sách (UC25/26), đặt cơ sở vật chất (UC45/46), khiếu nại
+(UC50/51) và tạm ngừng CLB (UC14/15). Xác nhận ban chủ nhiệm (UC10/11), chuyển giao nhiệm kỳ
+(UC12/13) và hai loại thẩm định báo cáo (UC33/34, UC38/39) dùng cùng cơ chế task.
 
 | ID | Yêu cầu |
 |---|---|
@@ -2985,7 +2986,7 @@ Năm đối tượng nghiệp vụ đi qua *nộp → thẩm định → sửa �
 | WF-02 | Module giữ trạng thái thực thể của mình (`Event.status`); approval task giữ trạng thái *thẩm định*. Use case gọi `approval.open(entityType, entityId, …)`, và callback quyết định lật trạng thái thực thể thông qua use case **sở hữu** nó |
 | WF-03 | Mọi use case assess-and-decide cung cấp đúng ba kết quả — yêu cầu chỉnh sửa, phê duyệt, từ chối — và ghi actor, thời điểm và lý do (BR05) |
 | WF-04 | Một lần nộp lại tạo ra **document version mới** và đưa thực thể về trạng thái chờ quyết định (`Submitted` / `Pending Approval` / `Requested`); nó không bao giờ sửa version trước (BR04, CON-08) |
-| WF-05 | Định tuyến đa cấp được đánh giá từ `RoutingRuleSet` đang hoạt động của UC05; hồ sơ không khớp rule nào được quyết định ở một cấp (BR16). Mọi cấp đều là ICPDP Officer (BR31) |
+| WF-05 | Mọi hồ sơ được một ICPDP Officer quyết định ở một cấp (BR16, BR31). `RoutingRuleSet` đang hoạt động của UC05 chỉ đặt SLA thẩm định cho hồ sơ khớp rule; hồ sơ không khớp rule nào không có SLA theo rule |
 | WF-06 | Việc vi phạm SLA trên một task đang mở được hiển thị ở dashboard ICPDP dưới dạng *approval aging* và được leo thang theo §8.2 |
 | WF-07 | Deadline chỉnh sửa trôi qua mà không có bản nộp lại sẽ đưa thực thể sang `Expired` qua scheduler (hồ sơ thành lập, đề xuất sự kiện) |
 | WF-08 | Lịch sử quyết định đọc được ngay trong chính màn hình assess-and-decide — đó là cách BP15 được giải quyết mà không cần một use case audit riêng |
@@ -3049,7 +3050,7 @@ usecase commit thay đổi nghiệp vụ
 | AUD-03 | Bắt buộc audit mạnh cho: quyết định hồ sơ thành lập, thay đổi trạng thái CLB, xác nhận ban chủ nhiệm, chuyển giao nhiệm kỳ, duyệt sự kiện, ghi nhận sự kiện nội bộ không qua duyệt (BR53), duyệt và giải ngân ngân sách, quyết định booking, phân phòng học và thu hồi (UC58), sửa đổi khoản chi và chứng từ, quyết định vi phạm, công bố đánh giá, thay đổi RBAC, và **các lần đăng nhập Google OAuth bị từ chối** (sai domain, tài khoản bị khoá) |
 | AUD-04 | Bản ghi audit là chỉ-ghi-thêm: không use case hay repository nào sửa hoặc xoá chúng. *Theo code:* đây là quy ước của ứng dụng, database không chặn việc sửa collection |
 | AUD-05 | Một `correlationId` buộc chung mọi bản ghi sinh ra từ một lần ghi, bao gồm cả các cascade UC15 → UC28 A1 / UC47 A1 trong cùng transaction. *Theo code:* id được sinh theo từng lần ghi, chưa truyền xuyên suốt một request |
-| AUD-06 | *Hạn chế đã biết (theo code):* chưa audit các lần bị từ chối 403, việc scheduler chuyển sự kiện sang `Ongoing` / `Completed`, điểm đánh giá ứng viên (UC19), tạo / thu hồi phiên và cờ đã đọc của thông báo (§12.1) |
+| AUD-06 | *Hạn chế đã biết (theo code):* 403 do thiếu quyền ở use case đã được audit `ACCESS_DENIED` (SEC-08); còn chưa audit 403 do thiếu hoặc sai CSRF token, việc scheduler chuyển sự kiện sang `Ongoing` / `Completed`, điểm đánh giá ứng viên (UC19), tạo / thu hồi phiên và cờ đã đọc của thông báo (§12.1) |
 
 Ví dụ:
 
@@ -3101,7 +3102,7 @@ các kỳ.
 | **D5** | Kỷ luật báo cáo | mức độ hoàn thành báo cáo, ngày đến hạn, số ngày trễ, số lần phải sửa | CLB có tuân thủ nghĩa vụ báo cáo không? |
 | **D6** | Tuân thủ tài chính | ngân sách được duyệt, số đã giải ngân, khoản chi, chứng từ, kết quả đối soát | CLB dùng ngân sách có minh bạch và đúng quy trình không? |
 | **D7** | Quản trị | ban chủ nhiệm hợp lệ, nhiệm kỳ, chuyển giao, hồ sơ thành viên, tỉ lệ giữ chân thành viên | CLB có bộ máy vận hành và khả năng kế thừa tốt không? |
-| **D8** | Tuân thủ và rủi ro | số lượng và mức độ vi phạm, hồ sơ chưa xử lý xong, biện pháp khắc phục, khiếu nại bị leo thang, số lần huỷ booking sát giờ | CLB có tạo ra rủi ro quản trị hoặc tuân thủ cho nhà trường không? |
+| **D8** | Tuân thủ và rủi ro | tổng điểm trừ theo mức độ của các hồ sơ vi phạm (UC40) và số hồ sơ còn mở; khiếu nại leo thang chỉ tính qua hồ sơ vi phạm, huỷ sát giờ không tính điểm | CLB có tạo ra rủi ro quản trị hoặc tuân thủ cho nhà trường không? |
 
 ```text
 Evaluation Scheme
@@ -3268,7 +3269,7 @@ Sửa 2026-11-02: các dòng SEC dưới đây được đối chiếu lại v�
 
 ## 12.1 Cơ chế bảo mật
 
-Mô tả cơ chế đang chạy trong code (đối chiếu 2026-11-02, khớp mục IV.1.3 *Security Mechanism* của report
+Mô tả cơ chế đang chạy trong code (đối chiếu 2026-11-14, khớp mục IV.1.3 *Security Mechanism* của report
 final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì lớp sau vẫn chặn.
 
 **1. Xác thực (OIDC + PKCE).** UCMS không lưu mật khẩu; đăng nhập uỷ thác hoàn toàn cho Google.
@@ -3292,7 +3293,7 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 - `authGuard` xác thực mọi route ghi; một test dựng app với các nhóm route chính được mount, duyệt router Express thật và làm hỏng build nếu route POST / PATCH / PUT / DELETE nào của các nhóm đó thiếu guard; các nhóm route còn lại theo cùng quy ước và được kiểm bằng code review.
 - Ba kiểu kiểm tra trong use case:
   - *Vai trò hệ thống* — thao tác ICPDP đòi `ICPDP_OFFICER` (không có → 403 "ICPDP officer role required"); `ATTENDANCE_UNLOCK` bảo vệ việc mở lại điểm danh đã chốt (BR19).
-  - *Phạm vi CLB, ghế và nhiệm kỳ* — implementation đích dựng snapshot của người dùng trong đúng CLB: membership `Active` → Club Member với capability cố định; ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong nhiệm kỳ `Active` → Club Leader với tập quyền quản lý cố định. Mọi chức danh khác và `permissionCodes` trên position không được tham gia quyết định quyền. Sai phạm vi → 403; `clubId` luôn lấy từ URL nên người của CLB này không thao tác được CLB khác. Code hiện tại còn hỗ trợ role/permission tuỳ biến và phải được đưa về mô hình này.
+  - *Phạm vi CLB, ghế và nhiệm kỳ* — implementation đích dựng snapshot của người dùng trong đúng CLB: membership `Active` → Club Member với capability cố định; ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận trong nhiệm kỳ `Active` → Club Leader với tập quyền quản lý cố định. Mọi chức danh khác và `permissionCodes` trên position không được tham gia quyết định quyền. Sai phạm vi → 403; `clubId` luôn lấy từ URL nên người của CLB này không thao tác được CLB khác. Code đã theo đúng mô hình này (`resolveClubPermissions` ở `domain/access.ts`); không còn role/permission tuỳ biến.
   - *Quyền sở hữu* — bản ghi cá nhân (hồ sơ thành lập, đơn ứng tuyển, đăng ký sự kiện của chính mình) được tải theo cả id lẫn id người gọi; bản ghi của người khác coi như không tồn tại (404).
 - Officer không tự khoá được tài khoản mình hay tự thu hồi vai trò `ICPDP_OFFICER` cuối cùng của mình.
 - Với ghi nhạy cảm (đề xuất sự kiện, booking gắn kèm), repository kiểm lại quyền CLB bên trong transaction.
@@ -3300,12 +3301,12 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 **4. Validate đầu vào và bảo vệ dữ liệu.**
 - Zod validate body, path param và query ở biên HTTP (phần lớn strict, id là ObjectId 24 ký tự hex); domain validate tiếp quy tắc nghiệp vụ.
 - Không bao giờ đưa object request thô vào truy vấn MongoDB (chặn `{"$gt": ""}`); constitution check làm hỏng build nếu `req.body` / `req.query` / `req.params` xuất hiện trong lời gọi truy vấn, và Mongoose chỉ được import ở tầng `infra` và ở `main.ts` (mở và đóng kết nối).
-- Body JSON dùng giới hạn mặc định của Express; upload tối đa 10 MB mỗi request; mỗi tài liệu hồ sơ thành lập còn được kiểm danh sách MIME cho phép, giới hạn theo loại (đề án 10 MB, logo 2 MB) và chữ ký magic byte (PDF, PNG, JPEG, DOCX).
+- Body JSON tối đa 15 MB; upload tối đa 10 MB mỗi request; mỗi tài liệu hồ sơ thành lập còn được kiểm danh sách MIME cho phép, giới hạn theo loại (đề án 10 MB, logo 2 MB) và chữ ký magic byte (PDF, PNG, JPEG, DOCX).
 - Mọi ghi nhiều document chạy trong transaction; cập nhật trạng thái có điều kiện, nên xung đột đồng thời trả 409 thay vì hỏng dữ liệu; sức chứa sự kiện dùng tăng có điều kiện nguyên tử.
 - Quyền riêng tư phản hồi: SEC-09, SEC-10.
 - Lỗi nội bộ trả thông điệp chung ("internal server error"); stack trace chỉ ghi ở log server.
 
-**5. Audit.** Phần lớn thay đổi trạng thái nghiệp vụ được repository ghi vào `auditLogs` trong cùng transaction (§8.3). Đăng nhập, khoá / mở khoá tài khoản, cấp / thu hồi vai trò hệ thống và xuất dữ liệu cũng được ghi. Thông báo được đưa vào hàng đợi trong cùng transaction; worker gửi email hiện chỉ ghi log người nhận và tiêu đề (EXT-02). Mỗi request HTTP ghi một dòng JSON: method, URL, status, thời gian xử lý.
+**5. Audit.** Phần lớn thay đổi trạng thái nghiệp vụ được repository ghi vào `auditLogs` trong cùng transaction (§8.3). Đăng nhập, khoá / mở khoá tài khoản, cấp / thu hồi vai trò hệ thống và xuất dữ liệu cũng được ghi. Thông báo được đưa vào hàng đợi trong cùng transaction; worker gửi email qua Google SMTP, chỉ khi phát triển không cấu hình SMTP mới dùng log transport ghi người nhận và tiêu đề (EXT-02). Mỗi request HTTP ghi một dòng JSON: method, URL, status, thời gian xử lý.
 
 **6. Bí mật và cấu hình.** Biến môi trường chỉ đọc ở `infra/config/` (constitution check chặn `process.env` ở chỗ khác); validate bằng zod lúc khởi động, sai là dừng tiến trình trước khi phục vụ request. Nhóm xác thực là tất cả hoặc không: khi một trong năm biến `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ALLOWED_DOMAIN`, `BOOTSTRAP_ICPDP_EMAIL` được đặt thì bắt buộc đủ cả năm (`SESSION_SECRET` ≥ 32 ký tự) cùng `APP_BASE_URL`, `CLIENT_BASE_URL`, thiếu một biến là server không khởi động; không đặt biến nào trong năm biến đó thì server chỉ phục vụ khu công khai. Cloudinary cũng là nhóm tất cả hoặc không. `.env` bị git bỏ qua, CI chạy gitleaks trên toàn lịch sử. Lỗi validate chỉ in tên biến, không in giá trị.
 
@@ -3313,12 +3314,11 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 
 **8. Hạn chế đã biết (việc cần làm tiếp).**
 - Chưa có rate limiting hay chống brute-force ở bất kỳ route nào, kể cả login và callback.
-- Không dùng helmet; chỉ có bốn header ở mục 7 — chưa có Content-Security-Policy và HSTS.
+- Không dùng helmet; chỉ có ba header ở mục 7 (cộng việc tắt `X-Powered-By`) — chưa có Content-Security-Policy và HSTS.
 - Không kiểm tra Origin / Referer; chống cross-site dựa vào cookie `SameSite=Lax`, CSRF token và việc không bật CORS.
 - Chưa audit: scheduler chuyển sự kiện sang `Ongoing` / `Completed`, điểm đánh giá ứng viên (UC19), tạo / đăng xuất / thu hồi phiên, cờ đã đọc của thông báo; lần đăng nhập bị từ chối vì `googleSubject` không khớp cũng không được audit.
 - Audit chỉ-ghi-thêm theo quy ước, database không chặn sửa.
 - Log truy cập ghi URL đầy đủ nên `code` và `state` của callback OAuth lọt vào log; error handler ghi `err.message`. Cần che.
-- Từ 07/11/2026 code đã khớp định tuyến đa cấp/`ICPDP_HEAD` (UC05, BR16), capability cố định của thành viên và luồng khiếu nại UC50–UC52. Phần role/permission tuỳ biến của UC23 là lệch mới so với quyết định role cố định và phải gỡ khỏi code.
 - Phân quyền nằm trong từng use case chứ không ở một middleware theo permission; test tự động chỉ kiểm tra xác thực trên các route ghi của những nhóm route mà nó mount, các nhóm còn lại dựa vào code review; phân quyền không do test đó kiểm tra mà dựa vào code review và unit test.
 
 | Mối đe doạ | Biện pháp | Vị trí trong code (`server/src/`) |
@@ -3339,7 +3339,7 @@ final). Mỗi request đi qua nhiều lớp độc lập, lớp này hỏng thì
 | Upload độc hại / quá lớn | Giới hạn 10 MB; danh sách MIME, giới hạn theo loại, kiểm magic byte | `club-application-routes.ts`, `usecase/club-application.ts` |
 | Race condition, đặt trùng, vượt sức chứa | Transaction; cập nhật có điều kiện trả 409; tăng sức chứa nguyên tử | `infra/db/mongo-*-repository.ts`, `event-waitlist.ts` |
 | Chối bỏ quyết định | Audit trong cùng transaction với quyết định; đăng nhập audit riêng | `infra/db/mongo-*-repository.ts`, `mongo-auth-repository.ts` |
-| Lộ danh tính người gửi ẩn danh | Không tra người gửi ẩn danh; phản hồi sự kiện chỉ hiện khi đủ số người tối thiểu, không kèm danh tính | `infra/db/mongo-student-feedback-repository.ts`, `domain/event-feedback.ts` |
+| Lộ danh tính người gửi ẩn danh | Không tra người gửi ẩn danh; phản hồi sự kiện chỉ hiện khi đủ số người tối thiểu, không kèm danh tính | `infra/db/mongo-event-feedback-repository.ts`, `domain/event-feedback.ts` |
 | Lộ chi tiết lỗi nội bộ | Thông điệp 500 chung; chi tiết chỉ ở log server | `interface/http/middleware.ts` |
 | Lộ bí mật / cấu hình sai | Env chỉ ở `infra/config`; zod, fail-fast; `SESSION_SECRET` ≥ 32; `.env` bị bỏ qua; gitleaks trong CI | `infra/config/index.ts`, `.gitignore`, `.github/workflows/ci.yml` |
 | Clickjacking, MIME sniffing, lộ referrer | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer` | `interface/http/server.ts` |

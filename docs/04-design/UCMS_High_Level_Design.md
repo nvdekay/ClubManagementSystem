@@ -1,6 +1,6 @@
 # UCMS — Thiết kế mức cao đối chiếu implementation
 
-> Cập nhật 15/10/2026 theo commit `60fc2db`. Mapping UC đầy đủ:
+> Đối chiếu code nhánh `main` ngày 14/11/2026 (bản trước: 15/10/2026, commit `60fc2db`). Mapping UC đầy đủ:
 > [`../05-implementation/UC_CODE_MAPPING.md`](../05-implementation/UC_CODE_MAPPING.md).
 > Phạm vi đã có và còn thiếu: [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 
@@ -48,8 +48,8 @@ Không có thư mục `domain/event/`, `usecase/event/` hoặc `pages/events/` t
 | M07 Finance & Budget | Budget, disbursement, expense, evidence, reconciliation | UC35–UC37 đã nối vào app chính |
 | M08 Reporting & Compliance | Event report, periodic report, violation | Có, gồm UC38 CLB nộp/nộp lại và UC40 CLB giải trình, khắc phục |
 | M09 Evaluation & Export | Scheme, evaluation, export | Có ICPDP và màn CLB xem kết quả đã công bố (UC43) |
-| M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Có; hộp thông báo in-app chung và worker outbox (từ 19/10/2026) — email đi qua transport ghi log, SMTP thật chờ duyệt dependency |
-| M11 Properties & Booking | Property, non-room booking, room allocation | Có; UC58 CLB xem chỉ dành Leader |
+| M10 Workflow, Notification, Audit | Task/decision, notifications, audit, jobs | Có; hộp thông báo in-app chung và worker outbox (từ 19/10/2026); email gửi thật qua Google SMTP khi đủ `SMTP_*` (bắt buộc ở production), chỉ ghi log khi phát triển |
+| M11 Properties & Booking | Property, non-room booking, room allocation | Có; UC58 CLB xem phòng được phân mở cho mọi thành viên `Active` (`club.room.view`) |
 | M12 Feedback | Event feedback và khiếu nại | Có: UC48/49 phản hồi sự kiện; UC50–UC52 khiếu nại đi thẳng ICPDP, triage, chuyển CLB, leo thang thành hồ sơ UC40 (`usecase/complaint.ts`, `infra/db/mongo-complaint-repository.ts`) |
 
 ## 4. Workflow, thông báo và audit thật
@@ -102,19 +102,21 @@ UC08 tạo CLB `Active` với ghế Chủ nhiệm/Phó chủ nhiệm đã xác n
 Không có role tự tạo, API roles/role-directory hay UI cấu hình permission. Field cũ được giữ cho
 tương thích, không cấp quyền; phần UC23 động thêm tạm ngày 07/11/2026 đã gỡ. Client ẩn
 menu theo `/auth/me`; server vẫn kiểm tra quyền.
-Member roster đọc qua member-space, chỉ tên/vị trí/trạng thái. GET profile/departments cho current
-member đọc, dù UI settings chỉ mở cho Leader. UC58 xem phòng được phân mở cho mọi thành viên `Active` (`club.room.view`).
+Member roster đọc qua member-space, chỉ tên/vị trí/trạng thái. GET settings (profile/departments)
+của CLB cần `club.profile.manage`, tức chỉ Club Leader đọc và sửa. UC58 xem phòng được phân mở cho mọi thành viên `Active` (`club.room.view`).
 
 ## 6. MongoDB và tính nguyên tử
 
-DBML có 51 collection nghiệp vụ; authSessions là collection vận hành ngoài DBML. Repository
+DBML có 54 bảng (collection nghiệp vụ); `authSessions` là collection vận hành ngoài DBML, tổng cộng 55 collection. Repository
 thực sự dùng multi-document transaction, vì vậy Mongo phải hỗ trợ replica set. Unique index,
 guarded update và khoá/version trong transaction bảo vệ race ở slot, capacity và quyết định.
 Không giữ tuyên bố cũ “không dùng transaction đa document”.
 
 `ensureUcmsDatabase` tạo schema/index lúc boot. Schema sinh từ DBML; `_id` là ObjectId, các
-reference không phải foreign key được Mongo cưỡng chế. `complaints` lưu UC50 góp ý Submitted
-bất biến với recipient/type/isAnonymous; ticket fields cũ không dùng.
+reference không phải foreign key được Mongo cưỡng chế. `complaints` lưu khiếu nại chính thức UC50–UC52:
+`Submitted → Under Triage → Dismissed | Forwarded | Escalated`, CLB trả lời một lần (`Club Responded`),
+ICPDP đóng hoặc leo thang thành hồ sơ UC40; `triage`, `clubResponse`, `closure` nhúng trong bản ghi.
+Bản ghi góp ý cũ trước 07/11/2026 vẫn đọc được.
 
 ## 7. API và response
 
@@ -133,15 +135,16 @@ UC36/37 không hoạt động chỉ vì đã có file route hoặc entry OpenAPI
 ## 8. Client
 
 Router declarative trong `client/src/main.tsx`. `services → hooks → component`, React Query quản
-lý server state, i18next en/vi, Tailwind token theme. PublicLayout hiện yêu cầu đăng nhập cho
-cả home/danh bạ; API `/public/*` vẫn mở. WorkspaceShell kiểm tra workspace và menu theo permission.
+lý server state, i18next en/vi, Tailwind token theme. Khu công khai (`PublicLayout`: home, danh bạ
+CLB, sự kiện và trang chi tiết) đọc được khi chưa đăng nhập, header chỉ hiện nút đăng nhập; API `/public/*` mở. WorkspaceShell kiểm tra workspace và menu theo permission.
 
 Các trang nằm ở `pages/auth`, `pages/public`, `pages/student`, `pages/club`, `pages/icpdp`.
 Phía CLB có thêm route UI cho UC12, UC14, UC38, UC40, UC43, UC54; UC36/37 dùng API đã nối trong app chính.
 
 ## 9. Kiểm chứng và phần còn lại
 
-`npm run check` ngày 15/10/2026 xanh: 296 pass, 118 Mongo integration skip. Không thay kết quả
+Số test ngày 14/11/2026: server 398 unit test / 62 file và 179 integration test / 48 file (cần Mongo),
+client 27 test / 2 file. Không thay kết quả
 OAuth/Cloudinary thật hoặc visual QA của từng feature. Trạng thái hiện hành:
 [`../CURRENT_IMPLEMENTATION.md`](../CURRENT_IMPLEMENTATION.md).
 

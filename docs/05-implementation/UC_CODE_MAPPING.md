@@ -1,6 +1,6 @@
 # Ma trận UC → code hiện hành
 
-> Đối chiếu `main` ngày 07/11/2026; 56 mã, 55 trong phạm vi. UC05, UC51, UC52 được khôi phục;
+> Đối chiếu `main` ngày 14/11/2026; 56 mã, 55 trong phạm vi. UC05, UC51, UC52 được khôi phục;
 > UC23 đã rút theo quyết định role cố định; code UC23 đã gỡ ngày 07/11/2026.
 > Danh sách route đang chạy chính xác: `/docs` của server.
 > “Có” nghĩa route/UI đã tồn tại và nối trong app chính khi cấu hình Auth hợp lệ; không đồng nghĩa
@@ -53,7 +53,7 @@
 | UC39 | Thẩm định báo cáo hoạt động định kỳ | [periodic-report-routes.ts](../../server/src/interface/http/periodic-report-routes.ts) | [PeriodicReportsPage.tsx](../../client/src/pages/icpdp/PeriodicReportsPage.tsx) (`PeriodicReportsPage`, `PeriodicReportReviewPage`) | Có; nhận bài nộp và nộp lại từ UC38 |
 | UC40 | Quản lý hồ sơ vi phạm và tuân thủ | [violation-routes.ts](../../server/src/interface/http/violation-routes.ts) | [ViolationsPage.tsx](../../client/src/pages/icpdp/ViolationsPage.tsx) (`ViolationsPage`, `ViolationDetailPage`) | Có; CLB giải trình và khắc phục qua [club-violation-routes.ts](../../server/src/interface/http/club-violation-routes.ts), [ClubViolationsPage.tsx](../../client/src/pages/club/ClubViolationsPage.tsx) |
 | UC41 | Cấu hình scheme đánh giá | [evaluation-scheme-routes.ts](../../server/src/interface/http/evaluation-scheme-routes.ts) | [EvaluationSchemesPage.tsx](../../client/src/pages/icpdp/EvaluationSchemesPage.tsx) | Có |
-| UC42 | Sinh bản nháp đánh giá hiệu quả CLB | [evaluation-routes.ts](../../server/src/interface/http/evaluation-routes.ts) | [EvaluationsPage.tsx](../../client/src/pages/icpdp/EvaluationsPage.tsx) (`EvaluationsPage`, `EvaluationDetailPage`) | Một phần; bản nháp đếm cả báo cáo `Returned`, không đọc tuân thủ booking |
+| UC42 | Sinh bản nháp đánh giá hiệu quả CLB | [evaluation-routes.ts](../../server/src/interface/http/evaluation-routes.ts) | [EvaluationsPage.tsx](../../client/src/pages/icpdp/EvaluationsPage.tsx) (`EvaluationsPage`, `EvaluationDetailPage`) | Có; D5 chỉ tính báo cáo được chấp nhận và trừ điểm theo số lần trả sửa, D4 đọc booking CSVC được duyệt/đã dùng (sửa 19/10/2026) |
 | UC43 | Xem lại, chốt và công bố đánh giá | [evaluation-routes.ts](../../server/src/interface/http/evaluation-routes.ts) | [EvaluationsPage.tsx](../../client/src/pages/icpdp/EvaluationsPage.tsx) (`EvaluationDetailPage`) | Có (E1 khiếu nại kết quả ngoài phạm vi); CLB xem kết quả đã công bố qua [club-evaluation-routes.ts](../../server/src/interface/http/club-evaluation-routes.ts), [ClubEvaluationsPage.tsx](../../client/src/pages/club/ClubEvaluationsPage.tsx) |
 | UC44 | Quản lý danh mục cơ sở vật chất | [property-routes.ts](../../server/src/interface/http/property-routes.ts) | [PropertiesPage.tsx](../../client/src/pages/icpdp/PropertiesPage.tsx) | Có |
 | UC45 | Gửi yêu cầu đặt cơ sở vật chất (hội trường, sân, sân khấu, thiết bị) | [facility-booking-routes.ts](../../server/src/interface/http/facility-booking-routes.ts) | [ClubBookingsPage.tsx](../../client/src/pages/club/ClubBookingsPage.tsx) | Có; không nhận ROOM |
@@ -69,7 +69,7 @@
 | UC55 | Xuất dữ liệu và báo cáo | [export-routes.ts](../../server/src/interface/http/export-routes.ts) | [DataExportPage.tsx](../../client/src/pages/icpdp/DataExportPage.tsx) | Có; Leader còn có xuất roster riêng tại UI |
 | UC55 A2 | Báo cáo tổng kết đánh giá CLB theo năm học (FR-UC55-11) | [export-routes.ts](../../server/src/interface/http/export-routes.ts) (`/admin/exports/annual-report`) | [DataExportPage.tsx](../../client/src/pages/icpdp/DataExportPage.tsx) | Có phía server (12/11/2026); tổng hợp ở `domain/annual-report.ts` |
 | UC55 (FR-UC55-12) | Báo cáo tổng hợp nhiều loại dữ liệu trong một file `xlsx`, loại `CLUB_BUDGETS` | [export-routes.ts](../../server/src/interface/http/export-routes.ts) (`types` trong `/admin/exports`, `/admin/exports/preview`) | [DataExportPage.tsx](../../client/src/pages/icpdp/DataExportPage.tsx) | Có (12/11/2026); bảng `CLUB_BUDGETS` ở `infra/db/mongo-export-repository.ts`, workbook ở `infra/files/export-file-writer.ts` |
-| UC58 | Phân phòng học cho CLB theo học kỳ | [room-allocation-routes.ts](../../server/src/interface/http/room-allocation-routes.ts) | [RoomAllocationsPage.tsx](../../client/src/pages/icpdp/RoomAllocationsPage.tsx) | Có; CLB xem qua [ClubRoomsPage.tsx](../../client/src/pages/club/ClubRoomsPage.tsx), chỉ Leader |
+| UC58 | Phân phòng học cho CLB theo học kỳ | [room-allocation-routes.ts](../../server/src/interface/http/room-allocation-routes.ts) | [RoomAllocationsPage.tsx](../../client/src/pages/icpdp/RoomAllocationsPage.tsx) | Có; CLB xem qua [ClubRoomsPage.tsx](../../client/src/pages/club/ClubRoomsPage.tsx), mọi thành viên `Active` (`club.room.view`) |
 
 ## Nguồn kiểm chứng xuyên suốt
 
@@ -79,12 +79,13 @@
 - [access.ts](../../server/src/domain/access.ts): danh mục 15 permission cố định; hai role cố định Club Leader (ghế Chủ nhiệm / Phó chủ nhiệm đã xác nhận) và Club Member (hai quyền mặc định) — BR47, BR54, BR55.
 - [member-space.ts](../../server/src/usecase/member-space.ts): roster chỉ đọc cho Active/Inactive.
 - [room-allocation.ts](../../server/src/usecase/room-allocation.ts): UC58 phía CLB yêu cầu `club.room.view` (mọi thành viên `Active`, BR54).
-- [PublicLayout.tsx](../../client/src/components/layout/PublicLayout.tsx): UI danh bạ vẫn yêu cầu đăng nhập.
+- [PublicLayout.tsx](../../client/src/components/layout/PublicLayout.tsx): khu công khai (home, danh bạ CLB/sự kiện, trang chi tiết) đọc được khi chưa đăng nhập.
 - [complaint.ts](../../server/src/usecase/complaint.ts): khiếu nại UC50–UC52 — luôn tới ICPDP trước (BR38), triage có lý do (BR39), CLB chỉ thấy khiếu nại đã chuyển xuống và không thấy danh tính người khiếu nại (D5).
 
 ## Giới hạn kiểm thử
 
-`npm run check` ngày 17/10/2026 xanh. Chạy kèm `MONGO_URI` tới Mongo replica set riêng: 442 test
+Số test ngày 14/11/2026: server 398 unit test / 62 file và 179 integration test / 48 file (cần
+`MONGO_URI` tới Mongo replica set), client 27 test / 2 file. Lần chạy `npm run check` ngày 17/10/2026: 442 test
 đều qua, không skip. Nghiệm thu trình duyệt các màn mới chạy trên database QA riêng, không đụng dữ liệu thật.
 Danh sách test hiện có ở [server/tests](../../server/tests/); checklist mở ở `.sdd/specs/` được
 giữ nguyên nếu chưa có bằng chứng nghiệm thu.
