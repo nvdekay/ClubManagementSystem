@@ -147,13 +147,18 @@
 <mxCell id="e19" value="UC28 / UC15 / UC40" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="on" target="ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
 <mxCell id="e20" value="UC15 / Scheduler&lt;br&gt;[club Dissolved]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="dr" target="ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
 <mxCell id="e21" value="UC15 / Scheduler&lt;br&gt;[club Dissolved]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="pa" target="ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e22" value="UC15 / Scheduler&lt;br&gt;[club Dissolved]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ur" target="ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
+<mxCell id="e22" value="UC15 / Scheduler&lt;br&gt;[club Dissolved]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.2;exitY=1;entryX=0.2;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="ur" target="ca"><mxGeometry x="-0.2" relative="1" as="geometry"><Array as="points"><mxPoint x="940" y="290"/><mxPoint x="940" y="530"/></Array><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
 <mxCell id="e23" value="UC15 / Scheduler&lt;br&gt;[club Dissolved]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.85;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="rr" target="ca"><mxGeometry x="-0.15" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
 <mxCell id="ex" value="Expired" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="660" y="80" width="170" height="60" as="geometry"/></mxCell>
 <mxCell id="f_ex" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="580" y="95" width="30" height="30" as="geometry"/></mxCell>
 <mxCell id="e24" value="Scheduler:&lt;br&gt;revision deadline" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.3;entryX=1;entryY=0.3;" edge="1" parent="1" source="rr" target="ex"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
 <mxCell id="e25" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ex" target="f_ex"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e26" value="UC25 record internal event&lt;br&gt;[Internal, no budget] (BR53)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;dashed=1;exitX=0.2;exitY=1;entryX=0.9;entryY=1;" edge="1" parent="1" source="dr" target="ap"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="384" y="650"/><mxPoint x="1433" y="650"/></Array></mxGeometry></mxCell><mxCell id="e27" value="UC32 finalize attendance&lt;br&gt;[internal event] (BR53)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;dashed=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="co" target="cl"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1810" y="410"/><mxPoint x="1810" y="710"/></Array></mxGeometry></mxCell></root></mxGraphModel></diagram>
+<mxCell id="e26" value="UC25 record internal event&lt;br&gt;[Internal, no budget] (BR53)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;dashed=1;exitX=0.2;exitY=1;entryX=0.9;entryY=1;" edge="1" parent="1" source="dr" target="ap"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="384" y="650"/><mxPoint x="1433" y="650"/></Array></mxGeometry></mxCell><mxCell id="e27" value="UC32 finalize attendance&lt;br&gt;[internal event] (BR53)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;dashed=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="co" target="cl"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1810" y="410"/><mxPoint x="1810" y="710"/></Array></mxGeometry></mxCell>
+<mxCell id="rd" value="Re-defense Pending" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="970" y="380" width="170" height="60" as="geometry"/></mxCell>
+<mxCell id="e_ur_rd" value="UC26 re-defense (BR63)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ur" target="rd"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
+<mxCell id="e_rd_ur" value="UC26 schedule defense" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.3;entryX=1;entryY=0.7;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="rd" target="ur"><mxGeometry x="0" relative="1" as="geometry"><Array as="points"><mxPoint x="1170" y="398"/><mxPoint x="1170" y="272"/></Array><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
+<mxCell id="e_rd_ca" value="UC15 / Scheduler&lt;br&gt;[club Dissolved]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="rd" target="ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
+</root></mxGraphModel></diagram>
 <diagram id="event-budget" name="Event Budget"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="title" value="State diagram — Event Budget" style="text;html=1;fontSize=20;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="600" height="30" as="geometry"/></mxCell><mxCell id="init" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="220" y="95" width="30" height="30" as="geometry"/></mxCell><mxCell id="ap" value="Approved" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="640" y="80" width="170" height="60" as="geometry"/></mxCell><mxCell id="di" value="Disbursed" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="950" y="80" width="170" height="60" as="geometry"/></mxCell><mxCell id="ss" value="Settlement Submitted" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1260" y="80" width="170" height="60" as="geometry"/></mxCell><mxCell id="rp" value="Reconciliation Pending" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1600" y="80" width="170" height="60" as="geometry"/></mxCell><mxCell id="rv" value="Recovery Pending" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="950" y="330" width="170" height="60" as="geometry"/></mxCell><mxCell id="rc" value="Reconciled" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1260" y="330" width="170" height="60" as="geometry"/></mxCell><mxCell id="cl" value="Closed" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1100" y="560" width="170" height="60" as="geometry"/></mxCell><mxCell id="f_cl" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="1360" y="575" width="30" height="30" as="geometry"/></mxCell><mxCell id="ca" value="Cancelled" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="640" y="230" width="170" height="60" as="geometry"/></mxCell><mxCell id="f_ca" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="710" y="350" width="30" height="30" as="geometry"/></mxCell><mxCell id="e1" value="UC26 approve proposal&lt;br&gt;with a budget (approved amount)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="init" target="ap"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e2" value="UC35 first advance&lt;br&gt;(partial or full)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ap" target="di"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e3" value="UC36 submit settlement&lt;br&gt;[event ended / cancelled]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="di" target="ss"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e4" value="UC37 A1 return for evidence" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.25;entryX=0;entryY=0.25;" edge="1" parent="1" source="ss" target="rp"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e5" value="UC36 A3 resubmit" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.75;entryX=1;entryY=0.75;" edge="1" parent="1" source="rp" target="ss"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e6" value="UC37&lt;br&gt;[accepted ≥ advanced]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ss" target="rc"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e7" value="UC37&lt;br&gt;[accepted &amp;lt; advanced]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ss" target="rv"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e8" value="UC37 A2&lt;br&gt;[settlement overdue]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="di" target="rv"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e9" value="UC37 A2 [settlement overdue]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" edge="1" parent="1" source="rp" target="rv"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1685" y="700"/><mxPoint x="910" y="700"/><mxPoint x="910" y="360"/></Array></mxGeometry></mxCell><mxCell id="e10" value="[balance = 0] UC37, or&lt;br&gt;UC35 A2 top-up (BR26)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="rc" target="cl"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e11" value="UC35 A3 refunded&lt;br&gt;in full (BR26, BR58)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="rv" target="cl"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e12" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="cl" target="f_cl"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e13" value="UC28 / UC15 / UC40&lt;br&gt;[event cancelled before advance]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ap" target="ca"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="e14" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ca" target="f_ca"><mxGeometry relative="1" as="geometry"/></mxCell><mxCell id="n1" value="Overdue refund → overdue obligation (BR21);&lt;br&gt;ICPDP may open a violation case (UC40)." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=6;" vertex="1" parent="1"><mxGeometry x="560" y="440" width="300" height="50" as="geometry"/></mxCell><mxCell id="e15" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=none;" edge="1" parent="1" source="n1" target="rv"><mxGeometry relative="1" as="geometry"/></mxCell></root></mxGraphModel></diagram>
 <diagram id="property-booking" name="Property Booking"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
 <mxCell id="title" value="State diagram — Property Booking" style="text;html=1;fontSize=20;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="600" height="30" as="geometry"/></mxCell>
@@ -189,4 +194,100 @@
 <mxCell id="e15" value="UC47 cancel" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ap" target="ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
 <mxCell id="e16" value="UC28 via BR35, UC47,&lt;br&gt;UC15, or UC58 revoke" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ap" target="re"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
 <mxCell id="room-reserve" value="UC58 allocate room by semester&lt;br&gt;(ROOM occurrence created directly as Approved)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;entryX=0.5;entryY=0;" edge="1" parent="1" source="init" target="ap"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/><Array as="points"><mxPoint x="55" y="65"/><mxPoint x="1365" y="65"/></Array></mxGeometry></mxCell><mxCell id="room-note" value="ROOM (classroom): no Draft / review.&lt;br&gt;UC58 generates one Approved occurrence per matching date&lt;br&gt;of the semester (future slots only, blackout dates skipped).&lt;br&gt;UC58 revoke: not-yet-started occurrences → Released&lt;br&gt;(releasedBy ROOM_ALLOCATION_REVOKED); past ones kept.&lt;br&gt;UC47 cancel applies to non-ROOM bookings only." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=6;" vertex="1" parent="1"><mxGeometry x="1590" y="370" width="400" height="110" as="geometry"/></mxCell></root></mxGraphModel></diagram>
+  <diagram id="event-defense-session" name="Event Defense Session">
+    <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="State diagram — Event Defense Session" style="text;html=1;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="600" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="init" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="245" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="sch" value="SCHEDULED" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="230" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="req" value="RESCHEDULE_REQUESTED" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="70" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="cnf" value="CONFIRMED" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="230" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="inp" value="IN_PROGRESS" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="230" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="def" value="DEFENDED" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="230" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="f_def" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1310" y="245" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="nos" value="NO_SHOW" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="420" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="f_nos" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="720" y="435" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="cnc" value="CANCELLED" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="420" width="180" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="f_cnc" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="435" width="30" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Transitions -->
+        <mxCell id="ed_init_sch" value="UC26 schedule defense" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="init" target="sch">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_sch_cnf" value="UC25 confirm (&amp;gt;= 24h)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="sch" target="cnf">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_sch_req" value="UC25 request reschedule&lt;br&gt;(&amp;gt;= 24h, reason)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.3;exitY=0;entryX=0.3;entryY=1;" edge="1" parent="1" source="sch" target="req">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_req_sch" value="UC26 accept reschedule&lt;br&gt;(new time/room)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.7;exitY=1;entryX=0.7;entryY=0;" edge="1" parent="1" source="req" target="sch">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_req_cnf" value="UC26 reject reschedule&lt;br&gt;(keep schedule)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="req" target="cnf">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_req_cnc" value="UC26 cancel /&lt;br&gt;UC15 dissolved" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="req" target="cnc">
+          <mxGeometry x="0" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="100"/>
+              <mxPoint x="120" y="450"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ed_sch_nos" value="Scheduler: unconfirmed&lt;br&gt;(&amp;lt; 24h) (BR63)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.8;exitY=1;entryX=0.2;entryY=0;" edge="1" parent="1" source="sch" target="nos">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_cnf_nos" value="UC26 mark absent&lt;br&gt;at defense start" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="cnf" target="nos">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_cnf_inp" value="UC26 start defense&lt;br&gt;(Live Room)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="cnf" target="inp">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_inp_def" value="UC26 finish defense" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="inp" target="def">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_def_f" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="def" target="f_def">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_sch_cnc" value="UC26 cancel / UC15 dissolved /&lt;br&gt;Revision expired (&amp;lt; 12h)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="sch" target="cnc">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_cnf_cnc" value="UC26 cancel / UC15 dissolved" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.2;exitY=1;entryX=0.8;entryY=0;" edge="1" parent="1" source="cnf" target="cnc">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_nos_f" value="Auto reject proposal&lt;br&gt;&amp;amp; release room" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="nos" target="f_nos">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ed_cnc_f" value="Release room lock" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="cnc" target="f_cnc">
+          <mxGeometry x="0" relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>

@@ -153,7 +153,10 @@
                 <mxCell id="e30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#333333;" edge="1" parent="1" source="picker" target="icp0"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1009.0" y="266.0"/><mxPoint x="2173.0" y="266.0"/><mxPoint x="2173.0" y="414.0"/></Array></mxGeometry></mxCell>
                 <mxCell id="e31" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#333333;" edge="1" parent="1" source="picker" target="clb0"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="964.0" y="290.0"/><mxPoint x="1607.0" y="290.0"/><mxPoint x="1607.0" y="414.0"/></Array></mxGeometry></mxCell>
                 <mxCell id="e32" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#333333;" edge="1" parent="1" source="picker" target="stu0"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="919.0" y="314.0"/><mxPoint x="801.0" y="314.0"/><mxPoint x="801.0" y="414.0"/></Array></mxGeometry></mxCell>
-            </root>
+            
+                <mxCell id="icp_defense_room" value="Event defense room" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8F7C5;strokeColor=#5FB85C;fontSize=12;" vertex="1" parent="1"><mxGeometry x="2726" y="925.1999999999999" width="180" height="44" as="geometry"/></mxCell>
+                <mxCell id="e_defense_room" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#333333;" edge="1" parent="1" source="icp32" target="icp_defense_room"><mxGeometry relative="1" as="geometry"/></mxCell>
+</root>
         </mxGraphModel>
     </diagram>
 </mxfile>
