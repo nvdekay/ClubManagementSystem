@@ -41,6 +41,7 @@ import { mongoExportRepository } from "./infra/db/mongo-export-repository.js";
 import { mongoClubLifecycleRepository } from "./infra/db/mongo-club-lifecycle-repository.js";
 import { startClubLifecycleJob } from "./interface/jobs/club-lifecycle-job.js";
 import { mongoEventProposalReviewRepository } from "./infra/db/mongo-event-proposal-review-repository.js";
+import { mongoEventDefenseRepository } from "./infra/db/mongo-event-defense-repository.js";
 import { mongoBudgetDisbursementRepository } from "./infra/db/mongo-budget-disbursement-repository.js";
 import { mongoViolationRepository } from "./infra/db/mongo-violation-repository.js";
 import { mongoPeriodicReportRepository } from "./infra/db/mongo-periodic-report-repository.js";
@@ -97,6 +98,7 @@ const commonDeps = {
 };
 const clubLifecycleRepo = mongoClubLifecycleRepository();
 const eventProposalReviewRepo = mongoEventProposalReviewRepository();
+const eventDefenseRepo = mongoEventDefenseRepository(eventProposalReviewRepo);
 const facilityBookingRepo = mongoFacilityBookingRepository();
 const schoolEventRepo = mongoSchoolEventRepository();
 const app = authConfig ? buildApp({
@@ -119,6 +121,7 @@ const app = authConfig ? buildApp({
   exportWriter: exportFileWriter(),
   clubLifecycleRepo,
   eventProposalReviewRepo,
+  eventDefenseRepo,
   budgetDisbursementRepo: mongoBudgetDisbursementRepository(),
   postEventReportRepo: mongoPostEventReportRepository(),
   violationRepo: mongoViolationRepository(),
@@ -167,7 +170,7 @@ const stopReconfirmationJob = startMembershipReconfirmationJob(membershipReconfi
 const stopAccountabilityJob = startAccountabilityReminderJob(mongoAccountabilityReminderRepository());
 const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
-const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo);
+const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo, eventDefenseRepo);
 // ponytail: log transport until an SMTP client dependency is approved (see infra/mail/README.md).
 const stopNotificationJob = startNotificationDeliveryJob(mongoMailOutboxRepository(), mailTransport,
   authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {});
