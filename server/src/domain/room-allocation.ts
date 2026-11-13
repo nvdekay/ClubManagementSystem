@@ -22,7 +22,7 @@ export interface RoomAllocation {
   occurrences: RoomAllocationOccurrence[];
 }
 export interface RoomAllocationClub { id: string; name: string; state: string; dissolutionSemester?: string }
-export interface RoomAllocationConflict { startAt: Date; endAt: Date; source: "booking" | "event"; title: string; clubName?: string }
+export interface RoomAllocationConflict { startAt: Date; endAt: Date; source: "booking" | "event" | "defense"; title: string; clubName?: string }
 /** One weekly grid cell (UC58 A3) and the approved events or bookings that would block it. */
 export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
 export interface RoomAllocationPlan { input: RoomAllocationInput; dates: Array<{ startAt: Date; endAt: Date }>; skipped: Date[] }

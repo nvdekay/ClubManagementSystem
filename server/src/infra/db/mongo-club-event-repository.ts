@@ -77,6 +77,8 @@ async function assess(session: ClientSession, clubId: Types.ObjectId, input: Clu
         state: { $in: ["Approved", "Upcoming", "Ongoing"] }, ...overlap }).session(session).lean());
       intervalConflicts.push(...await m.propertyBookings!.find({ propertyId: property._id, state: { $in: ["Approved", "In Use"] },
         _id: { $nin: input.bookingIds.map(oid) }, ...(eventId ? { eventId: { $ne: eventId } } : {}), ...overlap }).session(session).lean());
+      intervalConflicts.push(...await m.eventDefenseSessions!.find({ propertyId: property._id,
+        state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...overlap }).session(session).lean());
       found.push(...intervalConflicts);
       overlaps.push(...intervalConflicts.map((item) => (Math.min((item.endAt as Date).getTime(), interval.endAt.getTime()) - Math.max((item.startAt as Date).getTime(), interval.startAt.getTime())) / 60000));
     }
@@ -103,7 +105,13 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
   const existingBudget = await m.eventBudgets!.findOne({ eventId: event._id }).session(session).lean();
   if (existingBudget && !input.budgetLines.length) conflict("an event with an approved budget must keep its budget lines when resubmitting");
   const direct = input.audienceScope === "MEMBERS_ONLY" && input.budgetLines.length === 0 && !existingBudget;
-  const state = direct ? "Approved" : "Pending Approval";
+  const activeDefense = !direct
+    ? await m.eventDefenseSessions!.findOne({
+      eventId: event._id,
+      state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] },
+    }).session(session).lean()
+    : null;
+  const state = direct ? "Approved" : activeDefense ? "Under Review" : "Pending Approval";
   await m.eventProposalVersions!.create([{ eventId: event._id, revisionNo, payload: input, budgetLines: input.budgetLines,
     requestedBudgetTotal: Types.Decimal128.fromString(String(input.budgetLines.reduce((sum, line) => sum + line.amount, 0))),
     conflictResult: assessment.conflictResult, submittedBy: actorId, submittedAt: now }], { session });
@@ -112,6 +120,7 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
   // UC05: budget, risk and the club's open cases decide, once, the SLA of its review.
   if (!direct) await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
     title: input.title, state: "Open", openedAt: now,
+    ...(activeDefense ? { assigneeId: activeDefense.leadOfficerId } : {}),
     ...(await routedTaskFields(session, { requestType: "EVENT_PROPOSAL", riskCategory: input.riskCategory,
       amount: input.budgetLines.reduce((sum, line) => sum + line.amount, 0),
       openViolations: await openViolationCount(event.clubId, session) }, now)) }], { session });

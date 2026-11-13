@@ -93,14 +93,18 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
     async roomCommitments(propertyId, from, to) {
       const property = oid(propertyId);
       const window = { startAt: { $lt: to }, endAt: { $gt: from } };
-      const [bookingDocs, eventDocs] = await Promise.all([
+      const [bookingDocs, eventDocs, defenseDocs] = await Promise.all([
         m.propertyBookings!.find({ propertyId: property, state: { $in: ["Approved", "In Use"] },
           purpose: { $ne: ROOM_ALLOCATION_PURPOSE }, ...window }).sort({ startAt: 1 }).lean(),
         m.events!.find({ propertyId: property, state: { $in: ["Approved", "Upcoming", "Ongoing"] }, ...window })
           .sort({ startAt: 1 }).lean(),
+        m.eventDefenseSessions!.find({ propertyId: property,
+          state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...window })
+          .sort({ startAt: 1 }).lean(),
       ]);
       return [...bookingDocs.map((doc) => ({ source: "booking" as const, title: String(doc.purpose), doc })),
-        ...eventDocs.map((doc) => ({ source: "event" as const, title: String(doc.title), doc }))]
+        ...eventDocs.map((doc) => ({ source: "event" as const, title: String(doc.title), doc })),
+        ...defenseDocs.map((doc) => ({ source: "defense" as const, title: String(doc.title), doc }))]
         .map(({ source, title, doc }) => ({ startAt: doc.startAt as Date, endAt: doc.endAt as Date, source, title,
           ...(doc.clubName ? { clubName: String(doc.clubName) } : {}) }));
     },
@@ -122,8 +126,12 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
           .session(session).lean();
         const eventDocs = await m.events!.find({ propertyId, state: { $in: ["Approved", "Upcoming", "Ongoing"] }, ...window })
           .session(session).lean();
+        const defenseDocs = await m.eventDefenseSessions!.find({ propertyId,
+          state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...window })
+          .session(session).lean();
         const taken = [...bookingDocs.map((doc) => ({ doc, source: "booking" as const, title: String(doc.purpose) })),
-          ...eventDocs.map((doc) => ({ doc, source: "event" as const, title: String(doc.title) }))];
+          ...eventDocs.map((doc) => ({ doc, source: "event" as const, title: String(doc.title) })),
+          ...defenseDocs.map((doc) => ({ doc, source: "defense" as const, title: String(doc.title) }))];
         const conflicts: RoomAllocationConflict[] = dates.flatMap((date) => taken
           .filter(({ doc }) => bookingIntervalsConflict(date.startAt, date.endAt, doc.startAt as Date, doc.endAt as Date, thresholdMinutes))
           .map(({ doc, source, title }) => ({ startAt: date.startAt, endAt: date.endAt, source, title,

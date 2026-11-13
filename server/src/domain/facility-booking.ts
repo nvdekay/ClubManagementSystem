@@ -65,7 +65,7 @@ export interface BookingDecisionInput {
 export interface BookingDecision extends BookingDecisionInput {
   id: string; taskId: string; actorId: string; at: Date;
 }
-export interface BookingConflict { id: string; startAt: Date; endAt: Date; source: "booking" | "event" }
+export interface BookingConflict { id: string; startAt: Date; endAt: Date; source: "booking" | "event" | "defense" }
 export interface BookingCheck {
   conflicts: BookingConflict[]; capacityWarning: boolean; conflictResult: string;
 }

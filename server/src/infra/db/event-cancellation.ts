@@ -21,6 +21,11 @@ export async function cancelEventInSession(session: ClientSession, event: Doc, r
   await m.eventRegistrations!.updateMany({ _id: { $in: registrations.map((r) => r._id) } },
     { $set: { state: "Cancelled", cancelledAt: now }, $unset: { waitlistPosition: "" } }, { session });
   await m.approvalTasks!.updateMany({ entityType: "EVENT_PROPOSAL", entityId: id, state: "Open" }, { $set: { state: "Closed", closedAt: now } }, { session });
+  await m.eventDefenseSessions!.updateMany(
+    { eventId: id, state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] } },
+    { $set: { state: "CANCELLED", cancelReason: reason, updatedAt: now } },
+    { session },
+  );
   await releaseFacilityBookingsInSession(session, { eventId: id, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }, source, reason, now);
   const budget = await m.eventBudgets!.findOne({ eventId: id }).session(session).lean();
   if (budget && !["Closed", "Cancelled"].includes(String(budget.state))) {

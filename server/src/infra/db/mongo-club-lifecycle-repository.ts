@@ -15,8 +15,8 @@ import { ucmsModels } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
 const scheduledEventStates = ["Approved", "Upcoming"];
 /** Proposals and events that may still run; BR45 cancels those ending after the dissolution semester. */
-const liveEventStates = ["Draft", "Pending Approval", "Under Review", "Revision Requested", "Approved", "Upcoming"];
-const undecidedProposalStates = ["Pending Approval", "Under Review", "Revision Requested"];
+const liveEventStates = ["Draft", "Pending Approval", "Under Review", "Revision Requested", "Re-defense Pending", "Approved", "Upcoming"];
+const undecidedProposalStates = ["Pending Approval", "Under Review", "Revision Requested", "Re-defense Pending"];
 const undecidedBookingStates = ["Draft", "Requested", "Under Review", "Revision Requested"];
 const openCampaignStates = ["Published", "Accepting Applications"];
 const settledBudgetStates = ["Reconciled", "Closed", "Cancelled"];
