@@ -133,16 +133,19 @@
                     <mxGeometry height="160" width="960" x="250" y="690" as="geometry"/>
                 </mxCell>
                 <mxCell id="be-packages_9" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="db&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Mongoose models, repositories&lt;/span&gt;" vertex="1">
-                    <mxGeometry height="80" width="205" x="280" y="750" as="geometry"/>
+                    <mxGeometry height="80" width="165" x="280" y="750" as="geometry"/>
                 </mxCell>
                 <mxCell id="be-packages_10" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="auth&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Google OIDC, sessions&lt;/span&gt;" vertex="1">
-                    <mxGeometry height="80" width="205" x="512" y="750" as="geometry"/>
+                    <mxGeometry height="80" width="165" x="463" y="750" as="geometry"/>
                 </mxCell>
                 <mxCell id="be-packages_11" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="files&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;Cloudinary, export files&lt;/span&gt;" vertex="1">
-                    <mxGeometry height="80" width="205" x="744" y="750" as="geometry"/>
+                    <mxGeometry height="80" width="165" x="646" y="750" as="geometry"/>
                 </mxCell>
                 <mxCell id="be-packages_12" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="config&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;environment validation&lt;/span&gt;" vertex="1">
-                    <mxGeometry height="80" width="205" x="976" y="750" as="geometry"/>
+                    <mxGeometry height="80" width="165" x="1012" y="750" as="geometry"/>
+                </mxCell>
+                <mxCell id="be-packages_22" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#ffffff;strokeColor=#9673a6;" value="mail&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;SMTP / log mail transport&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="80" width="165" x="829" y="750" as="geometry"/>
                 </mxCell>
                 <mxCell id="be-packages_13" edge="1" parent="1" source="be-packages_4" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" target="be-packages_6" value="">
                     <mxGeometry relative="1" as="geometry"/>

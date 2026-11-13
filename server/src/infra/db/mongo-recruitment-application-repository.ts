@@ -7,6 +7,7 @@ import type {
   RecruitmentApplicationState, RecruitmentAttachment, RecruitmentEligibility,
 } from "../../domain/recruitment-application.js";
 import { validateRecruitmentAnswers } from "../../domain/recruitment-application.js";
+import { clubUserIdsWithPermission } from "./club-permission-holders.js";
 import { ucmsModels } from "./ucms-models.js";
 
 function records(value: unknown): Record<string, unknown>[] {
@@ -80,9 +81,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
   const clubs = ucmsModels.clubs!;
   const users = ucmsModels.users!;
   const memberships = ucmsModels.clubMemberships!;
-  const terms = ucmsModels.clubTerms!;
   const positions = ucmsModels.clubPositions!;
-  const assignments = ucmsModels.clubPositionAssignments!;
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
 
@@ -111,28 +110,9 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
     return { userActive: Boolean(user), activeMembership: Boolean(active), bannedMembership: Boolean(banned) };
   }
 
+  /** Every Club Leader of the club (President and Vice-Presidents of the active term), by the shared access rule. */
   async function reviewerIds(clubId: Types.ObjectId, now: Date, session: ClientSession) {
-    const activeTerms = await terms.find({ clubId, state: "Active", startAt: { $lte: now },
-      endAt: { $gt: now } }).select("_id").session(session).lean();
-    if (!activeTerms.length) return [];
-    const clubPositions = await positions.find({ clubId, isActive: true,
-      $or: [{ isLeaderRole: true }, { permissionCodes: "club.application.review" }] })
-      .select("_id isLeaderRole").session(session).lean();
-    if (!clubPositions.length) return [];
-    const positionById = new Map(clubPositions.map((position) =>
-      [String(position._id), position.isLeaderRole === true]));
-    const assignmentsForClub = await assignments.find({ clubId,
-      termId: { $in: activeTerms.map((term) => term._id) },
-      positionId: { $in: clubPositions.map((position) => position._id) },
-      effectiveFrom: { $lte: now },
-      $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null }, { effectiveTo: { $gt: now } }],
-    }).select("positionId membershipId confirmedBy").session(session).lean();
-    const reviewerMemberships = assignmentsForClub.filter((assignment) =>
-      positionById.get(String(assignment.positionId)) !== true || Boolean(assignment.confirmedBy))
-      .map((assignment) => assignment.membershipId);
-    const members = await memberships.find({ _id: { $in: reviewerMemberships }, clubId, state: "Active" })
-      .select("userId").session(session).lean();
-    return [...new Map(members.map((member) => [String(member.userId), member.userId])).values()];
+    return clubUserIdsWithPermission(clubId, "club.application.review", now, session);
   }
 
   async function notifyReviewers(input: { clubId: Types.ObjectId; applicationId: Types.ObjectId;
