@@ -39,16 +39,45 @@ describe.skipIf(!uri)("Mongo recruitment application repository", () => {
     ]);
     await ucmsModels.clubTerms!.create({ _id: termId, clubId, name: "Term 2026",
       state: "Active", startAt: new Date("2026-09-01"), endAt: new Date("2027-09-01") });
-    await ucmsModels.clubPositions!.create({ _id: positionId, clubId, code: "RECRUITER",
-      name: "Recruiter", isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: false,
-      isSingleHolder: false, permissionCodes: ["club.application.review"], isActive: true });
+    // Reviewers are the Club Leaders: the confirmed President and Vice-President seats of the active term.
+    // A legacy title that still lists club.application.review grants nothing (BR55) and is not notified.
+    const presidentId = new Types.ObjectId();
+    const presidentMembershipId = new Types.ObjectId();
+    const presidentSeatId = new Types.ObjectId();
+    const titleHolderId = new Types.ObjectId();
+    const titleMembershipId = new Types.ObjectId();
+    const legacyTitleId = new Types.ObjectId();
+    await ucmsModels.users!.create([
+      { _id: presidentId, email: "president@example.edu", displayName: "President",
+        accountState: "Active", createdAt: now },
+      { _id: titleHolderId, email: "recruiter@example.edu", displayName: "Recruiter",
+        accountState: "Active", createdAt: now },
+    ]);
+    await ucmsModels.clubPositions!.create([
+      { _id: positionId, clubId, code: "VICE_LEADER", name: "Phó chủ nhiệm", isBoardSeat: true,
+        isLeaderRole: false, isDefaultMemberRole: false, isSingleHolder: false, permissionCodes: [], isActive: true },
+      { _id: presidentSeatId, clubId, code: "CLUB_LEADER", name: "Chủ nhiệm", isBoardSeat: true,
+        isLeaderRole: true, isDefaultMemberRole: false, isSingleHolder: true, permissionCodes: [], isActive: true },
+      { _id: legacyTitleId, clubId, code: "RECRUITER", name: "Recruiter", isBoardSeat: false,
+        isLeaderRole: false, isDefaultMemberRole: false, isSingleHolder: false,
+        permissionCodes: ["club.application.review"], isActive: true },
+    ]);
     await ucmsModels.clubPositions!.create({ _id: membersRoleId, clubId, code: "MEMBERS",
       name: "Members", isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: true,
       isSingleHolder: false, permissionCodes: [], isActive: true });
-    await ucmsModels.clubMemberships!.create({ _id: reviewerMembershipId, clubId,
-      userId: reviewerId, state: "Active", joinedAt: now, statusHistory: [] });
-    await ucmsModels.clubPositionAssignments!.create({ clubId, termId, positionId,
-      membershipId: reviewerMembershipId, effectiveFrom: new Date("2026-09-01"), assignedBy: reviewerId });
+    await ucmsModels.clubMemberships!.create([
+      { _id: reviewerMembershipId, clubId, userId: reviewerId, state: "Active", joinedAt: now, statusHistory: [] },
+      { _id: presidentMembershipId, clubId, userId: presidentId, state: "Active", joinedAt: now, statusHistory: [] },
+      { _id: titleMembershipId, clubId, userId: titleHolderId, state: "Active", joinedAt: now, statusHistory: [] },
+    ]);
+    await ucmsModels.clubPositionAssignments!.create([
+      { clubId, termId, positionId, membershipId: reviewerMembershipId,
+        effectiveFrom: new Date("2026-09-01"), assignedBy: reviewerId, confirmedBy: presidentId },
+      { clubId, termId, positionId: presidentSeatId, membershipId: presidentMembershipId,
+        effectiveFrom: new Date("2026-09-01"), assignedBy: presidentId, confirmedBy: presidentId },
+      { clubId, termId, positionId: legacyTitleId, membershipId: titleMembershipId,
+        effectiveFrom: new Date("2026-09-01"), assignedBy: presidentId },
+    ]);
     await ucmsModels.recruitmentCampaigns!.create({ _id: campaignId, clubId,
       title: "Autumn intake", positions: ["Designer", "Developer"], criteria: "Interested students",
       windowStart: new Date("2026-10-01"), windowEnd: new Date("2026-11-01"), capacity: 20,
@@ -91,6 +120,10 @@ describe.skipIf(!uri)("Mongo recruitment application repository", () => {
       .toBeNull();
     expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: reviewerId,
       eventCode: "RECRUITMENT_APPLICATION_SUBMITTED", entityId: new Types.ObjectId(draft.id) })).toBe(1);
+    expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: presidentId,
+      eventCode: "RECRUITMENT_APPLICATION_SUBMITTED", entityId: new Types.ObjectId(draft.id) })).toBe(1);
+    expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: titleHolderId,
+      entityId: new Types.ObjectId(draft.id) })).toBe(0);
     const withdrawn = await repo.withdraw(draft.id, studentId.toString(), now);
     expect(withdrawn.state).toBe("Withdrawn");
     await expect(repo.withdraw(draft.id, studentId.toString(), now)).rejects.toMatchObject({ kind: "conflict" });
