@@ -22,7 +22,7 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 
 const metricKeys = ["registrations", "attendances", "uniqueAttendees", "outsiderAttendees", "activeMembers", "completedEvents",
   "publicCompletedEvents", "cancelledEvents", "acceptedInvitations", "applications", "feedbackCount", "feedbackAverage",
-  "reportsDue", "reportsOnTime", "reportReturns", "bookingsGranted", "bookingsUsed", "budgets", "budgetsClean", "leaderSeated", "membersLeft", "violationPenalty", "openViolations"] as const;
+  "reportsDue", "reportsOnTime", "reportReturns", "bookingsGranted", "bookingsUsed", "budgets", "budgetsClean", "leaderSeated", "membersLeft", "violationPenalty", "openViolations", "periodicReportOverdue"] as const;
 type MetricKey = typeof metricKeys[number];
 type DimensionCode = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7" | "D8";
 
@@ -90,7 +90,6 @@ function Overview({ csrfToken }: { csrfToken: string }) {
   const data = overview.data;
   if (!data.periodCode) return <AppNotice>{t("evaluations.noPeriods")}</AppNotice>;
   const periodCode = data.periodCode;
-  const missing = data.rows.filter((row) => !row.evaluationId).length;
 
   return (
     <>
@@ -103,13 +102,7 @@ function Overview({ csrfToken }: { csrfToken: string }) {
       {!data.scheme ? <AppNotice className="mb-6">
         <p>{t("evaluations.noScheme")}</p>
         <Link to="/workspace/evaluation-schemes" className="mt-2 inline-block font-semibold text-primary-app hover:underline">{t("evaluations.schemeLink")}</Link>
-      </AppNotice> : <div className="mb-8 grid gap-4 md:grid-cols-2">
-        <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-          <p className="text-sm text-muted-app">{t("evaluations.generateHint")}</p>
-          <AppButton className="mt-4" disabled={action.isPending || missing === 0}
-            onClick={() => action.mutate({ kind: "generate", periodCode, csrfToken })}>
-            {action.isPending && action.variables?.kind === "generate" ? t("evaluations.generating") : `${t("evaluations.generate")} · ${missing}`}</AppButton>
-        </section>
+      </AppNotice> : <div className="mb-8">
         <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
           <p className="text-sm text-muted-app">{t("evaluations.publishHint")}</p>
           <AppButton className="mt-4" disabled={action.isPending || !data.canPublish}
@@ -169,6 +162,7 @@ function DimensionRow({ dimension, editable, busy, onSave }: { dimension: Dimens
   const [score, setScore] = useState(String(dimension.score ?? ""));
   const [justification, setJustification] = useState(dimension.justification ?? "");
   const value = Number(score);
+  const penalized = dimension.evidence.some((item) => item.metric === "periodicReportOverdue" && item.value > 0);
   const field = useFieldValidation({
     score: !score.trim() ? t("common.fieldRequired") : !Number.isFinite(value) ? t("common.invalidNumber")
       : value < 0 ? t("common.numberMin", { min: 0 }) : value > 100 ? t("common.numberMax", { max: 100 }) : null,
@@ -198,7 +192,7 @@ function DimensionRow({ dimension, editable, busy, onSave }: { dimension: Dimens
       <div className="mt-2 flex flex-wrap gap-4 text-sm">
         <button type="button" className="font-semibold text-primary-app hover:underline" aria-expanded={showData}
           onClick={() => setShowData((value) => !value)}>{showData ? t("evaluations.hideData") : t("evaluations.showData")}</button>
-        {editable && dimension.allowsManual && !editing && <button type="button" className="font-semibold text-primary-app hover:underline"
+        {editable && !penalized && dimension.allowsManual && !editing && <button type="button" className="font-semibold text-primary-app hover:underline"
           onClick={() => setEditing(true)}>{t("evaluations.scoreByHand")}</button>}
         {editable && dimension.isManual && !editing && <button type="button" className="font-semibold text-primary-app hover:underline"
           disabled={busy} onClick={() => void onSave(null)}>{t("evaluations.clearManual")}</button>}
@@ -241,6 +235,7 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
       <AppButton variant="secondary" onClick={() => void query.refetch()}>{t("evaluations.retry")}</AppButton></AppNotice>
   </>;
   const item = query.data;
+  const penalized = item.dimensions.some((dimension) => dimension.evidence.some((entry) => entry.metric === "periodicReportOverdue" && entry.value > 0));
   const editable = ["Draft", "Data Ready", "Under Review"].includes(item.state);
   const isLatest = (item.revisions[0]?.revisionNo ?? item.revisionNo) === item.revisionNo;
   function date(value: string) {
@@ -264,6 +259,7 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
         actions={<AppBadge tone={stateTone(item.state)}>{stateLabel(t, item.state)}</AppBadge>} />
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <section className="min-w-0">
+          {penalized && <AppNotice tone="warning" className="mb-4">{t("evaluations.reportPenalty")}</AppNotice>}
           <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">{item.dimensions.map((dimension) =>
             <DimensionRow key={`${dimension.code}-${dimension.score}-${dimension.isManual}`} dimension={dimension} editable={editable && isLatest}
               busy={action.isPending}
@@ -281,8 +277,6 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
             {isLatest && <div className="mt-5 space-y-2">
               {editable && <AppButton className="w-full" disabled={action.isPending}
                 onClick={() => void run({ kind: "finalize" }, t("evaluations.confirmFinalize"))}>{t("evaluations.finalize")}</AppButton>}
-              {editable && <AppButton className="w-full" variant="secondary" disabled={action.isPending}
-                onClick={() => void run({ kind: "regenerate" }, t("evaluations.confirmRegenerate"))}>{t("evaluations.regenerate")}</AppButton>}
               {item.state === "Finalized" && <AppButton className="w-full" variant="secondary" disabled={action.isPending}
                 onClick={() => void run({ kind: "reopen" })}>{t("evaluations.reopen")}</AppButton>}
               {item.state === "Published" && <>

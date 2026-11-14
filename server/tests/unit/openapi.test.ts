@@ -205,6 +205,7 @@ const stubEvaluations: EvaluationRepository = {
   clubsInScope: async () => [], latest: async () => [], find: async () => null,
   collectMetrics: async () => { throw new Error("unused"); },
   unreviewedReports: async () => [],
+  reportPenalty: async () => ({ value: 0, sourceEntity: "periodicReports", sourceIds: [] }),
   writeDraft: async () => { throw new Error("unused"); },
   setManual: async () => { throw new Error("unused"); },
   finalize: async () => { throw new Error("unused"); },

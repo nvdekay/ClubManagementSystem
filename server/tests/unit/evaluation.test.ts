@@ -11,6 +11,14 @@ function metrics(values: Partial<Record<MetricKey, number>>): ClubMetrics {
 const thresholds = { excellent: 85, good: 70, fair: 50 };
 
 describe("evaluation scoring", () => {
+  it("assigns zero to every dimension for a late or missing overdue periodic report", () => {
+    const results = scoreDimensions(metrics({ periodicReportOverdue: 1, registrations: 10, attendances: 10,
+      feedbackCount: 20, feedbackAverage: 5 }), DEFAULT_SCHEME_SETTINGS, "Fall 2026", 5);
+    expect(results.every((item) => item.score === 0 && !item.insufficientData && !item.isManual)).toBe(true);
+    expect(results.every((item) => item.evidence.some((entry) => entry.metric === "periodicReportOverdue" && entry.value === 1))).toBe(true);
+    expect(totalOf(results.map((item) => ({ ...item, weight: 1 })), thresholds))
+      .toEqual({ totalScore: 0, classification: "NEEDS_IMPROVEMENT" });
+  });
   it("scores each dimension from operational data and keeps the lineage", () => {
     const results = scoreDimensions(metrics({ registrations: 10, attendances: 8, uniqueAttendees: 8, activeMembers: 10,
       outsiderAttendees: 4, publicCompletedEvents: 2, acceptedInvitations: 1, applications: 5, completedEvents: 3,
