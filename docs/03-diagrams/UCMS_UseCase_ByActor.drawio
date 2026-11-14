@@ -370,38 +370,44 @@
 <mxCell id="p5m_eventsa" edge="1" parent="1" source="p5actor" style="endArrow=none;html=1;strokeColor=#000000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="p5m_events" value="">
     <mxGeometry relative="1" as="geometry"/>
 </mxCell>
-<mxCell id="p5m_events_c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Submit event proposal" vertex="1">
-    <mxGeometry x="680" y="90" width="230" height="56" as="geometry"/>
+<mxCell id="p5m_events_c0" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Propose event to ICPDP" vertex="1">
+    <mxGeometry x="680" y="90" width="230" height="50" as="geometry"/>
 </mxCell>
 <mxCell id="p5m_events_c0i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c0" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
     <mxGeometry relative="1" as="geometry"/>
 </mxCell>
+<mxCell id="p5m_events_c_int" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Create internal club event" vertex="1">
+    <mxGeometry x="680" y="152" width="230" height="50" as="geometry"/>
+</mxCell>
+<mxCell id="p5m_events_c_inti" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c_int" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
+    <mxGeometry relative="1" as="geometry"/>
+</mxCell>
 <mxCell id="p5m_events_c1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Publish event" vertex="1">
-    <mxGeometry x="680" y="165" width="230" height="56" as="geometry"/>
+    <mxGeometry x="680" y="214" width="230" height="50" as="geometry"/>
 </mxCell>
 <mxCell id="p5m_events_c1i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c1" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
     <mxGeometry relative="1" as="geometry"/>
 </mxCell>
 <mxCell id="p5m_events_c2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Cancel / reschedule event" vertex="1">
-    <mxGeometry x="680" y="240" width="230" height="56" as="geometry"/>
+    <mxGeometry x="680" y="276" width="230" height="50" as="geometry"/>
 </mxCell>
 <mxCell id="p5m_events_c2i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c2" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
     <mxGeometry relative="1" as="geometry"/>
 </mxCell>
 <mxCell id="p5m_events_c3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Respond to event invitation" vertex="1">
-    <mxGeometry x="680" y="315" width="230" height="56" as="geometry"/>
+    <mxGeometry x="680" y="338" width="230" height="50" as="geometry"/>
 </mxCell>
 <mxCell id="p5m_events_c3i" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5m_events_c3" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
     <mxGeometry relative="1" as="geometry"/>
 </mxCell>
 <mxCell id="p5eventStatus" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="View proposal status and review comments" vertex="1">
-    <mxGeometry x="680" y="390" width="230" height="56" as="geometry"/>
+    <mxGeometry x="680" y="400" width="230" height="50" as="geometry"/>
 </mxCell>
 <mxCell id="p5eventStatusi" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5eventStatus" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
     <mxGeometry relative="1" as="geometry"/>
 </mxCell>
 <mxCell id="p5eventResubmit" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;" value="Supplement and resubmit event proposal" vertex="1">
-    <mxGeometry x="680" y="465" width="230" height="56" as="geometry"/>
+    <mxGeometry x="680" y="462" width="230" height="50" as="geometry"/>
 </mxCell>
 <mxCell id="p5eventResubmiti" edge="1" parent="1" source="p5m_events" style="endArrow=open;dashed=1;html=1;strokeColor=#000000;fontSize=10;labelBackgroundColor=#ffffff;" target="p5eventResubmit" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;">
     <mxGeometry relative="1" as="geometry"/>
