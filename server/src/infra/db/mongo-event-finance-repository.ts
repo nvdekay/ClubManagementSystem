@@ -192,6 +192,7 @@ export function mongoEventFinanceRepository(rules: {
           .session(session)
           .lean();
         if (!found) throw new DomainError("budget not found", "not_found");
+        if (found.sponsoredItems) throw new DomainError("use the sponsored item invoice workflow", "conflict");
         if (clubId)
           await assertEventWriteAccess(
             session,

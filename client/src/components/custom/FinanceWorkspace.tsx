@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
+import { SponsoredItems } from "./SponsoredItems";
 import { formatMoney } from "@/utils/formatMoney";
 import { formatDay } from "@/utils/formatDate";
 import { useOpenViolation } from "@/hooks/useViolations";
@@ -773,7 +774,15 @@ export function FinanceWorkspace({
 }) {
   const { t } = useTranslation();
   const auth = useAuth();
-  const [selected, setSelected] = useState(id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  function setSelected(value: string) {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value) next.set("budget", value); else next.delete("budget");
+      next.delete("event");
+      return next;
+    }, { replace: true });
+  }
   const allowed =
     context.kind === "admin"
       ? auth.data?.systemRoles.includes("ICPDP_OFFICER")
@@ -787,6 +796,8 @@ export function FinanceWorkspace({
     context.kind === "club" ? context.clubId : "",
     !!allowed && context.kind === "club",
   );
+  const selected = id || searchParams.get("budget")
+    || list.data?.find((item) => item.eventId === searchParams.get("event"))?.id || "";
   const detail = useFinanceDetail(context, selected, !!allowed);
   if (auth.isPending) return <AppSkeleton className="h-40 w-full" />;
   if (!allowed || !auth.data)
@@ -839,13 +850,15 @@ export function FinanceWorkspace({
           </AppNotice>
         ) : (
           detail.data && (
-            <FinanceEditor
+            <SponsoredItems key={selected} budgetId={selected}
+              clubId={context.kind === "club" ? context.clubId : undefined} csrfToken={auth.data.csrfToken}
+              fallback={<FinanceEditor
               key={`${selected}-${detail.data.revision}`}
               data={detail.data}
               context={context}
               token={auth.data.csrfToken}
               actorId={auth.data.user.id}
-            />
+              />} />
           )
         )
       ) : (

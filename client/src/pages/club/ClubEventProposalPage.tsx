@@ -193,7 +193,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
 
     if (!shouldSubmit) {
       appToast.success(t("clubEvents.success"));
-      navigate(`${eventsListUrl}?selected=${encodeURIComponent(savedEvent.id)}`);
+      navigate(`${eventsListUrl}?event=${encodeURIComponent(savedEvent.id)}`);
       return;
     }
 
@@ -206,7 +206,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         csrfToken,
       });
       appToast.success(t("clubEvents.submittedSuccess"));
-      navigate(`${eventsListUrl}?selected=${encodeURIComponent(submitted.event.id)}`);
+      navigate(`${eventsListUrl}?event=${encodeURIComponent(submitted.event.id)}`);
     } catch (error) {
       setFormError(error);
     }

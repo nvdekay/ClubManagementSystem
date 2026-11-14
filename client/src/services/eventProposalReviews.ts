@@ -73,7 +73,7 @@ export interface EventBudgetSummary {
   state: string;
   requestedTotal: number;
   approvedTotal: number;
-  lines: { category: string; requestedAmount: number; approvedAmount: number; reason?: string }[];
+  lines: { category: string; requestedAmount: number; approvedAmount: number; fundingDecision?: "NOT_SPONSORED" | "BEFORE_EVENT" | "AFTER_EVENT"; reason?: string }[];
 }
 
 export type ClubObligation = "overdueSettlement" | "overdueRefund" | "overdueReport";
@@ -101,7 +101,7 @@ export interface EventReviewDecisionInput {
   reviewNote?: string;
   revisionDeadlineAt?: string;
   conditions?: string[];
-  budgetLines?: { approvedAmount: number; reason?: string }[];
+  budgetLines?: { approvedAmount: number; fundingDecision?: "NOT_SPONSORED" | "BEFORE_EVENT" | "AFTER_EVENT"; reason?: string }[];
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

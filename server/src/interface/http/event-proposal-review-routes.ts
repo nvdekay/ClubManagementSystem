@@ -28,6 +28,7 @@ export const eventReviewDecisionBody = z.object({
   revisionDeadlineAt: z.string().datetime().optional(),
   conditions: z.array(z.string().max(500)).max(MAX_APPROVAL_CONDITIONS).optional(),
   budgetLines: z.array(z.object({
+    fundingDecision: z.enum(["NOT_SPONSORED", "BEFORE_EVENT", "AFTER_EVENT"]),
     approvedAmount: z.number().int().min(0),
     reason: z.string().max(500).optional(),
   }).strict()).max(50).optional(),

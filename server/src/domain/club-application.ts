@@ -129,7 +129,7 @@ export interface ApplicationFileStorage {
   upload(input: { ownerId: string; applicationId: string; documentType: string;
     fileName: string; mimeType: string; bytes: Buffer; visibility: "private" | "public";
     now: Date }): Promise<ApplicationDocument>;
-  accessUrl(assetId: string): Promise<string>;
+  accessUrl(assetId: string, options?: { inline: boolean }): Promise<string>;
 }
 
 const objectId = /^[0-9a-f]{24}$/i;

@@ -2273,6 +2273,9 @@ export const ucmsTables = {
   },
   "eventBudgets": {
     "fields": {
+      "sponsoredItems": {
+        "type": "json"
+      },
       "eventId": {
         "type": "objectId",
         "unique": true,

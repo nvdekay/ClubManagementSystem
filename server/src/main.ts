@@ -68,6 +68,7 @@ import { mongoApprovalRoutingRepository } from "./infra/db/mongo-approval-routin
 import { mongoMemberSpaceRepository } from "./infra/db/mongo-member-space-repository.js";
 import { mongoAccessDenialAuditRepository } from "./infra/db/mongo-access-denial-audit-repository.js";
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
+import { mongoSponsoredItemRepository } from "./infra/db/mongo-sponsored-item-repository.js";
 import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
 
 const config = loadConfig(); // first thing — exits if env is invalid
@@ -128,6 +129,7 @@ const app = authConfig ? buildApp({
   periodicReportRepo: mongoPeriodicReportRepository(),
   clubPeriodicReportRepo: mongoClubPeriodicReportRepository(),
   eventFinanceRepo: mongoEventFinanceRepository({ recoveryDueDays: 7, evidenceTypes: ["INVOICE", "RECEIPT", "PROOF_OF_PAYMENT"] }),
+  sponsoredItemRepo: mongoSponsoredItemRepository(),
   schoolEventRepo,
   clubInvitationRepo: mongoClubInvitationRepository(),
   clubEventRepo: mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 }),

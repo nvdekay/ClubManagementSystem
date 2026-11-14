@@ -127,3 +127,9 @@ quyền còn thiếu và lý do.
 `routingRuleId`) và SLA lên `approvalTasks` lúc mở task. Mọi hồ sơ được một ICPDP Officer quyết định ở một cấp
 (quyết định ghi `level: 1`); `requiredLevel`/`currentLevel` cũ trên task không còn tác dụng. `mongo-approval-routing-repository.ts`
 giữ `routingRuleSets` (nháp, kích hoạt có audit, mẫu mô phỏng chỉ đọc). `club-permission-holders.ts` tìm thành viên đang có một permission.
+
+`seed-sponsored-payments.ts` (`npm run seed:sponsored-payments -w server`, 14/11/2026) — chạy sau `seed:demo`, cần
+`CLOUDINARY_*` vì ảnh hóa đơn là asset riêng tư. Thêm một sự kiện `Completed` của HEBE Club có ngân sách tài trợ theo
+hạng mục, mỗi hạng mục ở một trạng thái để demo UC36 → UC37 → UC35: `Paid`, `Accepted` (CLB bấm xác nhận đã nhận
+tiền), `Submitted` (ICPDP duyệt đối soát), `Draft` (CLB ghi chi và nộp), và một hạng mục `NOT_SPONSORED`. Dữ liệu đi
+qua repository thật nên có đủ khoản chi, audit và thông báo. Chỉ thêm; chạy lại không tạo trùng.
