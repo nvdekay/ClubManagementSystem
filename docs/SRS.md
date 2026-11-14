@@ -34,6 +34,14 @@
 > quyết định người dùng ngày 07/11/2026, role/quyền CLB là tập cố định do hệ thống quản lý, không
 > có RBAC tuỳ biến theo từng CLB.
 >
+> **Thay đổi 2026-11-14:** sự kiện nội bộ CLB (`feat-internal-club-events`, BR53) — tách hai nút
+> "Đề xuất sự kiện với ICPDP" và "Tạo sự kiện nội bộ"; sự kiện nội bộ không ngân sách có vòng đời
+> riêng `DRAFT → CREATED → PUBLIC → ONGOING → FINISH` / `CANCELLED`, báo trước `>= 24` giờ khi tạo
+> chính thức (không ngoại lệ), chỉ sửa/đổi lịch ở `CREATED` (lịch mới `>= now + 24h`), từ `PUBLIC`
+> khoá lịch và chỉ còn huỷ. Phương án B: đề xuất ICPDP nhận `PUBLIC` hoặc `MEMBERS_ONLY` có ít nhất
+> 1 hạng mục ngân sách; `MEMBERS_ONLY` không ngân sách phải đi luồng nội bộ. UC02 đếm sự kiện nội
+> bộ trừ `DRAFT`/huỷ và tách biểu đồ tháng thành 2 chuỗi `publicCount` / `internalCount`.
+>
 > **Ngôn ngữ.** Tài liệu này viết bằng tiếng Việt theo yêu cầu của chủ nhiệm đồ án. Đây là
 > **ngoại lệ có chủ đích** so với quy tắc "English only" của
 > [`../.rules/README.md`](../.rules/README.md) (rule 5); mọi tài liệu khác và toàn bộ code, comment,
@@ -505,8 +513,10 @@ Club Member tạo và công bố đợt tuyển (UC16) → Published
 
 ```text
 Club Member nộp đề xuất: phạm vi, kế hoạch, rủi ro, phần ngân sách, yêu cầu booking (UC25, UC45)
-    ├─ sự kiện Internal không có ngân sách → ghi nhận thẳng Approved (BR53)
-    └─ còn lại → Pending Approval
+    ├─ nút "Tạo sự kiện nội bộ" (MEMBERS_ONLY, không ngân sách) → DRAFT → CREATED (báo trước ≥ 24h)
+    │     → UC27 → PUBLIC (khoá lịch) → ONGOING → FINISH, không qua ICPDP (BR53)
+    └─ nút "Đề xuất sự kiện với ICPDP" (PUBLIC, hoặc MEMBERS_ONLY có ≥ 1 hạng mục ngân sách,
+          báo trước 7 ngày) → Pending Approval
 → ICPDP thẩm định (UC26) một cấp, có thể xếp lịch bảo vệ trực tiếp trước khi quyết định (BR63) → Revision Requested | Approved | Rejected
 Sự kiện cấp trường: ICPDP tạo sự kiện và gửi lời mời tới các CLB Active (UC53)
     → Club Member/Leader xem và phản hồi Chấp nhận / Từ chối (UC54, BR59) → EventInvitation: Accepted | Declined | Expired
@@ -901,7 +911,7 @@ theo thời gian** là chức năng scheduler, đặc tả ở [§8.4](#84-sched
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC02-01 | Xác định vai trò và ngữ cảnh CLB của người gọi, và chỉ hiển thị những CLB và bản ghi mà vai trò đó cho phép |
-| FR-UC02-02 | Hiển thị dashboard **ICPDP**: các hồ sơ chờ duyệt theo loại và theo độ trễ, CLB theo trạng thái, báo cáo quá hạn, ngân sách chưa đối soát, quyết toán quá hạn và khoản phải hoàn, hồ sơ vi phạm đang mở, booking sắp tới, và **sự kiện nội bộ đã ghi nhận** của mọi CLB (BR53) — lọc theo CLB và học kỳ, mở ra xem chi tiết và điểm danh ở chế độ chỉ đọc; và, trên trang từng CLB, **phiên bản cơ cấu hiện hành, lịch sử các phiên bản cơ cấu, và lịch sử ban điều hành theo nhiệm kỳ** — ai giữ role ban điều hành nào, từ khi nào tới khi nào, được xác nhận ở UC11 / UC13 nào (BR56) |
+| FR-UC02-02 | Hiển thị dashboard **ICPDP**: các hồ sơ chờ duyệt theo loại và theo độ trễ, CLB theo trạng thái, báo cáo quá hạn, ngân sách chưa đối soát, quyết toán quá hạn và khoản phải hoàn, hồ sơ vi phạm đang mở, booking sắp tới, và **sự kiện nội bộ đã ghi nhận** của mọi CLB (BR53; `MEMBERS_ONLY` ở `CREATED`, `PUBLIC`, `ONGOING`, `FINISH` hoặc `Approved`…`Closed`, trừ `DRAFT`/`Draft` và trạng thái huỷ/từ chối/hết hạn; biểu đồ `Events by month` tách 2 chuỗi `publicCount` và `internalCount` trên cùng tập trạng thái ghi nhận — sửa 2026-11-14) — lọc theo CLB và học kỳ, mở ra xem chi tiết và điểm danh ở chế độ chỉ đọc; và, trên trang từng CLB, **phiên bản cơ cấu hiện hành, lịch sử các phiên bản cơ cấu, và lịch sử ban điều hành theo nhiệm kỳ** — ai giữ role ban điều hành nào, từ khi nào tới khi nào, được xác nhận ở UC11 / UC13 nào (BR56) |
 | FR-UC02-03 | Hiển thị dashboard phía CLB theo hai role cố định: **Club Member** chỉ thấy các chức năng thành viên; **Club Leader** thấy toàn bộ chức năng quản lý cùng lịch sử cơ cấu và ban điều hành của CLB mình (BR54, BR56). Không có màn hình cấu hình role/permission |
 | FR-UC02-04 | Hiển thị dashboard **Student**: đơn của tôi và trạng thái, đăng ký của tôi, lịch sử check-in, các CLB tôi thuộc về, khiếu nại của tôi |
 | FR-UC02-05 | Mở bất kỳ mục nào sang use case sở hữu nó, không nhân bản logic của use case đó |
@@ -1538,7 +1548,7 @@ không đổi số các use case còn lại.
 |---|---|
 | FR-UC24-01 | Hiển thị bản ghi tư cách thành viên và chức vụ của người gọi trong CLB đang chọn |
 | FR-UC24-02 | Hiển thị danh sách thành viên và ban chủ nhiệm của CLB |
-| FR-UC24-03 | Hiển thị các sự kiện sắp tới của CLB kèm trạng thái đăng ký của người gọi |
+| FR-UC24-03 | Hiển thị các sự kiện sắp tới của CLB kèm trạng thái đăng ký của người gọi — sự kiện đã công bố ở `Upcoming`…`Closed` (mọi `audienceScope`) và sự kiện nội bộ ở `PUBLIC`/`ONGOING`/`FINISH`; không bao giờ hiện `DRAFT`/`CREATED` (BR53, sửa 2026-11-14) |
 | FR-UC24-04 | Hiển thị lịch sử điểm danh của người gọi tại CLB đó |
 | FR-UC24-05 | Hiển thị các nghĩa vụ còn treo của người gọi — phản hồi chưa gửi, yêu cầu rời CLB đang chờ |
 | FR-UC24-06 | Liên kết tới UC29, UC31, UC48 và UC22 **chỉ như điều hướng giao diện**; mỗi cái vẫn là use case độc lập của Student, không phải quan hệ «extend» của UC24 |
@@ -1558,21 +1568,21 @@ không đổi số các use case còn lại.
 |---|---|
 | **Module · Ưu tiên** | M05 · P1 |
 | **Actor chính** | Club Leader (`club.event.manage`) |
-| **Mục tiêu nghiệp vụ** | Xin phép tổ chức sự kiện công khai qua một workflow duy nhất, truy vết được; với sự kiện nội bộ CLB thì tạo trực tiếp và công bố cho thành viên mà không qua đề xuất ICPDP |
+| **Mục tiêu nghiệp vụ** | Xin phép tổ chức sự kiện công khai hoặc sự kiện nội bộ có xin ngân sách trường qua một workflow duy nhất, truy vết được; với sự kiện nội bộ CLB không ngân sách thì tạo trực tiếp và công bố cho thành viên mà không qua đề xuất ICPDP |
 | **Kích hoạt** | CLB lên kế hoạch một hoạt động |
 | **Tiền điều kiện** | CLB đang `Active` (BR10) và người gọi có quyền về sự kiện |
-| **Dữ liệu vào** | Phạm vi (`PUBLIC` / `MEMBERS_ONLY`), mục tiêu, thời gian, địa điểm (`venueText` / `propertyId` phòng được phân / `bookingIds` thiết bị-CSVC đính kèm), đối tượng, sức chứa, kế hoạch, mức rủi ro, phần ngân sách (chỉ luồng đề xuất) |
-| **Thực thể / trạng thái** | Đề xuất công khai: `Draft → Pending Approval`; `Revision Requested → Pending Approval` (bản sửa mới). Sự kiện nội bộ CLB (`MEMBERS_ONLY`): `DRAFT → CREATED` (BR53) |
+| **Dữ liệu vào** | Phạm vi (`PUBLIC` / `MEMBERS_ONLY`), mục tiêu, thời gian, địa điểm (`venueText` / `propertyId` phòng được phân / `bookingIds` thiết bị-CSVC đính kèm), đối tượng, sức chứa, kế hoạch, mức rủi ro, phần ngân sách (chỉ luồng đề xuất; bắt buộc ít nhất 1 hạng mục khi `MEMBERS_ONLY`) |
+| **Thực thể / trạng thái** | Đề xuất ICPDP (`PUBLIC`, hoặc `MEMBERS_ONLY` có ngân sách): `Draft → Pending Approval`; `Revision Requested → Pending Approval` (bản sửa mới). Sự kiện nội bộ CLB không ngân sách: `DRAFT → CREATED`, hoặc tạo & công bố ngay `→ PUBLIC` (BR53) |
 | **Quy tắc** | BR10, BR15, BR21, BR22, BR44, BR45, BR53, BR54, BR63 |
 | **Liên quan · Pain point** | UC04, UC26, UC45 · BP05, BP06, BP09 |
 
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC25-01 | Thu thập toàn bộ thông tin sự kiện — mục tiêu, thời gian, địa điểm (`venueText`, phòng `propertyId` và/hoặc `bookingIds`), đối tượng, sức chứa, kế hoạch, mức rủi ro và nhu cầu cơ sở vật chất |
-| FR-UC25-02 | Validate tính đầy đủ và thời gian báo trước tối thiểu định nghĩa trong tài liệu chính sách *(không áp dụng giới hạn báo trước 7 ngày đối với sự kiện nội bộ CLB `MEMBERS_ONLY`)* |
+| FR-UC25-02 | Validate tính đầy đủ và thời gian báo trước tối thiểu: đề xuất ICPDP theo `proposalNoticeHours` của tài liệu chính sách (7 ngày); sự kiện nội bộ CLB không ngân sách theo `INTERNAL_EVENT_NOTICE_HOURS = 24` — `startAt >= now + 24h` khi tạo chính thức, **không ngoại lệ** (kể cả chỉ dùng `venueText` hoặc phòng UC58) *(sửa 2026-11-14)* |
 | FR-UC25-03 | Đánh giá quy tắc xung đột **BR15** khi nộp/tạo và hiển thị `No Conflict`, `Warning` hoặc `Blocking Conflict`, đồng thời lưu kết quả phân tích xung đột cùng sự kiện |
 | FR-UC25-04 | Cho phép đính kèm phòng học đã phân cho CLB (UC58) hoặc booking cơ sở vật chất/thiết bị (`bookingIds`, UC45); riêng luồng đề xuất công khai không tự gắn được booking phòng học thay cấp phép ngoài |
-| FR-UC25-05 | Với đề xuất công khai (`PUBLIC`), chuyển `Pending Approval` khi nộp và tạo review task cho ICPDP |
+| FR-UC25-05 | Với đề xuất ICPDP (`PUBLIC`, hoặc `MEMBERS_ONLY` có ngân sách), chuyển `Pending Approval` khi nộp và tạo review task cho ICPDP |
 | FR-UC25-06 | *(A1)* Cho lưu ở `Draft` (hoặc `DRAFT` với sự kiện nội bộ) trước khi chính thức nộp/tạo |
 | FR-UC25-07 | *(A2)* Từ `Revision Requested` (luồng đề xuất), cho CMB sửa và nộp lại; tạo **bản sửa mới**, đưa đề xuất về `Pending Approval`, và không bao giờ ghi đè bản sửa trước |
 | FR-UC25-08 | *(A3)* Chấp nhận chuỗi hoạt động định kỳ như một đề xuất/sự kiện duy nhất liệt kê các lần diễn ra |
@@ -1581,16 +1591,18 @@ không đổi số các use case còn lại.
 | FR-UC25-11 | *(E3)* Từ chối nộp/tạo khi CLB đang `Suspended` (BR10) |
 | FR-UC25-12 | *(E4)* Từ chối sự kiện không bắt đầu và kết thúc trong cùng một học kỳ (BR44) |
 | FR-UC25-13 | *(E5)* Từ chối sự kiện kết thúc sau học kỳ `Dissolving` khi CLB đã có quyết định giải thể (BR45) |
-| FR-UC25-14 | Tách riêng 2 chức năng (2 nút bấm và luồng validate độc lập): **"Đề xuất sự kiện với ICPDP"** (`PUBLIC`, qua UC26) và **"Tạo sự kiện nội bộ"** (`MEMBERS_ONLY`, BR53 — không nộp ICPDP) để tránh gộp chung validate giữa 2 loại sự kiện |
-| FR-UC25-15 | *(A4)* Với chức năng **Tạo sự kiện nội bộ (`MEMBERS_ONLY`)**: không nộp đề xuất lên ICPDP, không qua bảo vệ, không có mục ngân sách trường và **bỏ giới hạn báo trước 7 ngày**. Khi tạo chính thức chuyển `DRAFT → CREATED`, không tạo `ApprovalTask`, ghi audit `CREATE_INTERNAL_EVENT` và hiển thị ở danh sách & biểu đồ Sự kiện nội bộ cho ICPDP xem ở UC02 (BR53). Vẫn kiểm tra BR10, BR15, BR44, BR45 |
-| FR-UC25-16 | *(A4)* Sự kiện nội bộ CLB (`MEMBERS_ONLY`) có schema/form tách riêng không chứa phần ngân sách trường; nếu sự kiện cần xin ngân sách/bảo trợ cấp trường phải dùng nút **"Đề xuất sự kiện với ICPDP"** (`PUBLIC`, UC26). Địa điểm hỗ trợ đồng thời `venueText` và gắn phòng/booking thiết bị; các booking CSVC/thiết bị ngoài phòng học đính kèm luôn do UC46 quyết định riêng (BR35) |
+| FR-UC25-14 | Tách riêng 2 chức năng (2 nút bấm và luồng validate độc lập): **"Đề xuất sự kiện với ICPDP"** (`/club/:clubId/events/new` — `PUBLIC`, hoặc `MEMBERS_ONLY` có ít nhất 1 hạng mục ngân sách, qua UC26) và **"Tạo sự kiện nội bộ"** (`/club/:clubId/events/internal/new` — `MEMBERS_ONLY` không ngân sách, BR53 — không nộp ICPDP) để tránh gộp chung validate giữa 2 loại sự kiện |
+| FR-UC25-15 | *(A4)* Với chức năng **Tạo sự kiện nội bộ (`MEMBERS_ONLY`)**: không nộp đề xuất lên ICPDP, không qua bảo vệ, không có mục ngân sách trường; báo trước **`>= 24` giờ** khi tạo chính thức (`DRAFT → CREATED`, hoặc "Tạo & Công bố ngay" `→ PUBLIC` kèm cấu hình UC27), không ngoại lệ; lưu nháp `DRAFT` không kiểm tra mốc 24 giờ. Cho sửa nội dung ở `DRAFT` và `CREATED` (đổi lịch ở `CREATED` cần `newStartAt >= now + 24h`). Khi tạo chính thức chuyển `DRAFT → CREATED`, không tạo `ApprovalTask`, ghi audit `INTERNAL_EVENT_CREATED` và hiển thị ở danh sách & biểu đồ Sự kiện nội bộ cho ICPDP xem ở UC02 (BR53). Vẫn kiểm tra BR10, BR15, BR44, BR45 |
+| FR-UC25-16 | *(A4)* Sự kiện nội bộ CLB (`MEMBERS_ONLY`) có schema/form tách riêng không chứa phần ngân sách trường; nếu sự kiện cần xin ngân sách/bảo trợ cấp trường phải dùng nút **"Đề xuất sự kiện với ICPDP"** (`PUBLIC`, hoặc `MEMBERS_ONLY` kèm ít nhất 1 hạng mục ngân sách — Phương án B, UC26). Địa điểm hỗ trợ đồng thời `venueText` và gắn phòng/booking thiết bị; các booking CSVC/thiết bị ngoài phòng học đính kèm luôn do UC46 quyết định riêng (BR35) |
 | FR-UC25-17 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.event.manage`) đó (BR54) |
-| FR-UC25-18 | Cho đề xuất `PUBLIC` kèm **phần ngân sách** tuỳ chọn: các dòng ngân sách (hạng mục, số tiền, mục đích, khoản chi dự kiến) và tổng số tiền xin; validate tổng số. Đây là cách duy nhất để CLB xin kinh phí (BR22) |
+| FR-UC25-18 | Cho đề xuất ICPDP kèm **phần ngân sách** — tuỳ chọn với `PUBLIC`, bắt buộc ít nhất 1 dòng với `MEMBERS_ONLY` (Phương án B): các dòng ngân sách (hạng mục, số tiền, mục đích, khoản chi dự kiến) và tổng số tiền xin; validate tổng số. Đây là cách duy nhất để CLB xin kinh phí (BR22) |
 | FR-UC25-19 | Đóng băng phần ngân sách trong bản sửa của đề xuất; một lần nộp lại ở A2 tạo bản sửa mới chứa cả ngân sách, không ghi đè bản trước |
 | FR-UC25-20 | Cho Club Leader xem trạng thái yêu cầu tạo sự kiện, phiên bản hồ sơ, nhận xét của ICPDP, danh sách nội dung hoặc tài liệu còn thiếu và hạn bổ sung; từ `Revision Requested`, bổ sung báo cáo đề xuất theo phản hồi rồi nộp lại qua UC25 A2 |
 | FR-UC25-21 | *(A5)* Khi ICPDP xếp lịch bảo vệ (BR63), cho Club Leader xác nhận tham gia (`SCHEDULED → CONFIRMED`) hoặc xin dời lịch kèm lý do (`SCHEDULED`/`CONFIRMED → RESCHEDULE_REQUESTED`), chậm nhất 24 giờ trước giờ bảo vệ; quá hạn thì từ chối (409). Nộp lại bản sửa khi còn lịch bảo vệ hiệu lực thì đề xuất vào thẳng `Under Review` và giao cho cán bộ chủ trì |
 | FR-UC25-22 | *(E6)* Từ chối lưu hoặc nộp lại (409) khi hạn sửa do ICPDP đặt đã qua; đề xuất hết hạn theo UC26 |
 | FR-UC25-23 | *(E7)* Từ chối lần nộp lại (409) bỏ phần ngân sách của một sự kiện đã có `EventBudget`; các dòng ngân sách phải được giữ |
+| FR-UC25-24 | *(E8, 2026-11-14)* Ở luồng đề xuất ICPDP, từ chối (400) tạo/lưu/nộp `MEMBERS_ONLY` khi `budgetLines` rỗng (`internal events without university budget must use the internal event flow`) và hướng dẫn dùng nút **"Tạo sự kiện nội bộ"** |
+| FR-UC25-25 | *(E9, 2026-11-14)* Ở luồng nội bộ, từ chối (400) tạo chính thức hoặc tạo & công bố khi `startAt < now + 24h`, và từ chối thân yêu cầu có `audienceScope` hoặc `budgetLines` |
 
 **Hậu điều kiện** — đề xuất ở `Pending Approval` với một bản sửa bất biến và một review task, hoặc ở `Under Review` khi một buổi bảo vệ của đề xuất còn hiệu lực (A5); hoặc, với sự kiện nội bộ CLB theo BR53, sự kiện ở `CREATED` (chưa công bố cho thành viên) và ICPDP xem được ở danh sách sự kiện nội bộ.
 **Đầu ra** — `Event`, `EventProposalVersion` (với đề xuất), `ApprovalTask` (với đề xuất), có thể kèm yêu cầu `PropertyBooking`.
@@ -1621,8 +1633,8 @@ không đổi số các use case còn lại.
 | FR-UC26-08 | *(A2)* Hỗ trợ phê duyệt kèm điều kiện, và các điều kiện này được kiểm tra lại ở UC34 |
 | FR-UC26-09 | *(E1)* Chấp nhận việc đề xuất bị `Cancelled` bởi UC15 khi CLB bị tạm ngừng hoặc giải thể giữa lúc nộp và quyết định |
 | FR-UC26-10 | *(E2)* Để scheduler chuyển `Expired` khi hết deadline chỉnh sửa; CLB phải nộp đề xuất mới |
-| FR-UC26-11 | Chỉ cho phép công bố ở UC27 với sự kiện đề xuất đã `Approved` (BR14); sự kiện nội bộ `MEMBERS_ONLY` đi từ `CREATED → PUBLIC` ở UC27 không qua UC26 |
-| FR-UC26-12 | Không nhận đề xuất, không hiện trong hàng đợi đề xuất sự kiện và không tạo review task/buổi bảo vệ cho sự kiện nội bộ CLB (`MEMBERS_ONLY`); ICPDP xem danh sách sự kiện nội bộ (khác `DRAFT`) và biểu đồ thống kê ở UC02, xử lý sai phạm (nếu có) qua UC40 |
+| FR-UC26-11 | Chỉ cho phép công bố ở UC27 với sự kiện đề xuất đã `Approved` (BR14); sự kiện nội bộ không ngân sách đi từ `CREATED → PUBLIC` ở UC27 không qua UC26 |
+| FR-UC26-12 | Không nhận đề xuất, không hiện trong hàng đợi đề xuất sự kiện và không tạo review task/buổi bảo vệ cho sự kiện nội bộ CLB không ngân sách; đề xuất `MEMBERS_ONLY` có ngân sách (Phương án B) được thẩm định như đề xuất `PUBLIC`. ICPDP xem danh sách sự kiện nội bộ (trừ `DRAFT` và đã huỷ) và biểu đồ thống kê ở UC02, xử lý sai phạm (nếu có) qua UC40 |
 | FR-UC26-13 | Với đề xuất có phần ngân sách, hiển thị cho officer điều kiện, hạn mức còn lại của kỳ và khả năng trùng lặp với các ngân sách khác của CLB; yêu cầu chỉnh sửa có thể nhắm riêng vào phần ngân sách |
 | FR-UC26-14 | Khi duyệt đề xuất, bắt buộc quyết định từng hạng mục: không tài trợ (trần 0, lý do), hoặc tài trợ trả trước/trả sau (trần bằng toàn bộ số xin, không sửa tiền tại bước duyệt); dòng chưa quyết định chặn duyệt. Lưu riêng số xin, trần và quyết định; tạo EventBudget, thông báo đầy đủ ba nhóm kèm hạn và liên kết hồ sơ cho dashboard CLB |
 | FR-UC26-15 | *(A3)* Đề xuất có tổng ngân sách vượt ngưỡng vẫn được quyết định ở một cấp; rule của UC05 chỉ đặt SLA thẩm định (BR16) |
@@ -1657,7 +1669,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC27-01 | Cho CMB đặt khung thời gian đăng ký, khung giờ check-in (mặc định từ giờ bắt đầu tới giờ kết thúc sự kiện), phạm vi đối tượng, sức chứa và thông tin hiển thị của một sự kiện đã duyệt hoặc nội bộ đã tạo (`CREATED`) |
 | FR-UC27-02 | Chuyển `Upcoming` khi công bố sự kiện đề xuất và hiển thị trong UC06 và UC24; chuyển `PUBLIC` khi công bố sự kiện nội bộ CLB (`MEMBERS_ONLY`). *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh viên. |
 | FR-UC27-03 | Suy ra "đang mở đăng ký" và "đã đóng đăng ký" từ khung thời gian đăng ký, chứ không từ một trạng thái riêng của sự kiện |
-| FR-UC27-04 | *(A1)* Với sự kiện nội bộ CLB (`MEMBERS_ONLY`), khi công bố sang `PUBLIC` chỉ hiển thị cho các thành viên `Active` trong không gian thành viên UC24 và **không bao giờ hiển thị** trên màn hình khám phá công khai UC06; ở trạng thái `DRAFT` hoặc `CREATED`, thành viên thường chưa nhìn thấy sự kiện |
+| FR-UC27-04 | *(A1)* Với sự kiện nội bộ CLB (`MEMBERS_ONLY`), khi công bố sang `PUBLIC` chỉ hiển thị cho các thành viên `Active` trong không gian thành viên UC24 và **không bao giờ hiển thị** trên màn hình khám phá công khai UC06; ở trạng thái `DRAFT` hoặc `CREATED`, thành viên thường chưa nhìn thấy sự kiện. Công bố `CREATED → PUBLIC` khoá lịch và địa điểm của sự kiện nội bộ; sau đó chỉ còn huỷ ở UC28 |
 | FR-UC27-05 | *(A2)* Cho phép công bố sự kiện mở tự do, không cần khung thời gian đăng ký, nhưng vẫn áp dụng check-in |
 | FR-UC27-06 | *(E1)* Từ chối công bố sự kiện đề xuất chưa `Approved` hoặc sự kiện nội bộ đang ở `DRAFT` / `CANCELLED` (BR14, BR53) |
 | FR-UC27-07 | *(E2)* Từ chối khung thời gian đăng ký kết thúc sau khi sự kiện đã bắt đầu |
@@ -1674,16 +1686,16 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | **Actor chính** | Club Leader (`club.event.manage`) |
 | **Mục tiêu nghiệp vụ** | Thay đổi một sự kiện đã duyệt hoặc sự kiện nội bộ mà không mất vết và không để rò rỉ phòng/thiết bị đã đặt |
 | **Kích hoạt** | CLB không thể tổ chức sự kiện như kế hoạch |
-| **Tiền điều kiện** | Sự kiện đề xuất đang `Approved`, `Upcoming` hoặc `Ongoing`; hoặc sự kiện nội bộ đang `DRAFT` (chỉ huỷ/sửa nháp), `CREATED`, `PUBLIC` hoặc `ONGOING` |
+| **Tiền điều kiện** | Sự kiện đề xuất đang `Approved`, `Upcoming` hoặc `Ongoing` (đổi lịch chỉ ở `Approved`/`Upcoming`); hoặc sự kiện nội bộ đang `DRAFT` (huỷ), `CREATED` (huỷ hoặc đổi lịch), `PUBLIC` hoặc `ONGOING` (chỉ huỷ) |
 | **Dữ liệu vào** | Lý do; với đổi lịch là thời gian và địa điểm mới (`venueText` / `propertyId` / `bookingIds`) |
-| **Thực thể / trạng thái** | `Event`: `… → Cancelled` (hoặc `CANCELLED` với nội bộ), hoặc được đổi lịch (đề xuất quay lại UC26; nội bộ giữ nguyên `CREATED`/`PUBLIC`/`ONGOING`) |
+| **Thực thể / trạng thái** | `Event`: `… → Cancelled` (hoặc `CANCELLED` với nội bộ), hoặc được đổi lịch (đề xuất quay lại UC26; nội bộ giữ nguyên `CREATED`) |
 | **Quy tắc** | BR15 (đánh giá lại), BR35, BR44, BR45, BR53, BR54; D4 đã chốt ngày 2026-10-11 |
 | **Liên quan** | UC15, UC27, UC40, UC47 |
 
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC28-01 | Cho CMB chọn `Huỷ` hoặc `Đổi lịch` và bắt buộc nhập lý do |
-| FR-UC28-02 | Đánh giá lại BR15, BR44, BR45 khi đổi thời gian hoặc địa điểm và đưa sự kiện đã duyệt quay lại UC26 để có quyết định mới (D4, chốt ngày 2026-10-11); sự kiện nội bộ `MEMBERS_ONLY` (BR53) chỉ đánh giá lại xung đột và cập nhật trực tiếp, **không quay lại UC26** và không bị giới hạn báo trước 7 ngày |
+| FR-UC28-02 | Đánh giá lại BR15, BR44, BR45 khi đổi thời gian hoặc địa điểm và đưa sự kiện đã duyệt quay lại UC26 để có quyết định mới (D4, chốt ngày 2026-10-11); sự kiện nội bộ không ngân sách (BR53) chỉ đổi lịch được ở `CREATED`: lịch mới phải `newStartAt >= now + 24h`, đánh giá lại xung đột và cập nhật trực tiếp, **không quay lại UC26** *(sửa 2026-11-14)* |
 | FR-UC28-03 | Cập nhật hoặc giải phóng booking cơ sở vật chất liên quan qua UC47 (BR35) |
 | FR-UC28-04 | Thông báo cho mọi người đã đăng ký về việc huỷ hoặc thời gian mới |
 | FR-UC28-05 | Khi hủy/đổi lịch, bảo toàn lịch sử tài trợ, hóa đơn và thanh toán. Chính sách xử lý chi phí phát sinh và thay đổi hạn cần chốt riêng trước triển khai; không tự áp dụng luồng tạm ứng/thu hồi cũ, không tự gia hạn hoặc trả trùng |
@@ -1692,6 +1704,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC28-08 | *(E2)* Ghi nhận việc huỷ trong thời hạn báo trước định nghĩa trong tài liệu chính sách như một tín hiệu tuân thủ cho UC40. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* việc huỷ sát giờ chỉ được đánh dấu `isLateCancellation`, không tự tạo hồ sơ UC40 và không đưa vào chấm điểm UC42. |
 | FR-UC28-09 | Ghi audit lý do và trạng thái kết quả |
 | FR-UC28-10 | *(E)* Từ chối khi người gọi không phải Club Leader của CLB (`club.event.manage`) đó (BR54) |
+| FR-UC28-11 | *(E3, 2026-11-14)* Từ chối (409) đổi lịch hoặc sửa sự kiện nội bộ đã `PUBLIC`/`ONGOING` (`published internal event schedule is locked; only cancellation is allowed`); từ chối (400) đổi lịch sự kiện nội bộ `CREATED` khi `newStartAt < now + 24h` |
 
 **Hậu điều kiện** — sự kiện `Cancelled`, hoặc đã đổi lịch với booking và danh sách đăng ký được cập nhật.
 **Đầu ra** — trạng thái sự kiện, booking được giải phóng, thông báo, bản ghi audit.
@@ -2621,7 +2634,7 @@ của nó không bao giờ được dùng lại.**
 | BR50 | **Mới** — `Registration Open` / `Registration Closed` suy ra từ registration window đặt ở UC27, không bao giờ lưu thành trạng thái của sự kiện. | UC27, UC29 |
 | BR51 | **Mới** — Một scheme đánh giá đã được dùng thì bị khoá; muốn thay đổi phải tạo version mới, và kỳ đánh giá dùng version có hiệu lực cho kỳ đó. | UC41, UC42 |
 | BR52 | **Mới** — Thành viên đang giữ một ghế ban chủ nhiệm đã xác nhận phải được thay qua UC10/UC11 trước khi tư cách thành viên của họ kết thúc. | UC21, UC22 |
-| BR53 | **Cập nhật — Sự kiện nội bộ CLB (`MEMBERS_ONLY`)** — Sự kiện nội bộ chỉ dành cho thành viên CLB không cần nộp đề xuất lên ICPDP, không cần bảo vệ, không có phần ngân sách trường, không hiện trong hàng đợi đề xuất sự kiện của ICPDP, và **bỏ giới hạn báo trước 7 ngày**. Vòng đời sự kiện nội bộ gồm: `DRAFT` (bản nháp) → `CREATED` (tạo chính thức, chưa công bố cho thành viên) → `PUBLIC` (BCN công bố cho thành viên CLB ở UC24, không bao giờ hiện ở khám phá công khai UC06) → `ONGOING` → `FINISH` (hoặc `CANCELLED`). Địa điểm hỗ trợ đồng thời `venueText` và gắn phòng/booking thiết bị (vẫn kiểm tra xung đột BR15; booking ngoài phòng học vẫn do UC46 quyết định). Vẫn ràng buộc trong một học kỳ (BR44) và không vượt quá kỳ `Dissolving` (BR45). Chốt điểm danh (UC32) chỉ khoá bộ `Attendance` và giữ `FINISH`, không cần báo cáo sau sự kiện (UC33/UC34); sự kiện được tự động tổng hợp vào Báo cáo định kỳ (UC38). ICPDP xem được danh sách sự kiện nội bộ (trừ `DRAFT`) và số liệu trên biểu đồ dashboard ở UC02. Nếu sự kiện cần xin ngân sách/bảo trợ cấp trường phải đi luồng đề xuất `PUBLIC` (UC26) | UC02, UC24, UC25, UC26, UC27, UC28, UC32, UC33, UC38 |
+| BR53 | **Cập nhật — Sự kiện nội bộ CLB (`MEMBERS_ONLY`)** — Sự kiện nội bộ chỉ dành cho thành viên CLB không cần nộp đề xuất lên ICPDP, không cần bảo vệ, không có phần ngân sách trường, không hiện trong hàng đợi đề xuất sự kiện của ICPDP, và báo trước **`>= 24` giờ** thay cho 7 ngày khi tạo chính thức (`DRAFT → CREATED` hoặc tạo & công bố ngay), **không ngoại lệ**. Chỉ ở `CREATED` mới sửa/đổi lịch được (lịch mới `>= now + 24h`); từ `PUBLIC` lịch và địa điểm bị khoá, chỉ còn huỷ (sửa 2026-11-14). Vòng đời sự kiện nội bộ gồm: `DRAFT` (bản nháp) → `CREATED` (tạo chính thức, chưa công bố cho thành viên) → `PUBLIC` (BCN công bố cho thành viên CLB ở UC24, không bao giờ hiện ở khám phá công khai UC06) → `ONGOING` → `FINISH` (hoặc `CANCELLED`). Địa điểm hỗ trợ đồng thời `venueText` và gắn phòng/booking thiết bị (vẫn kiểm tra xung đột BR15; booking ngoài phòng học vẫn do UC46 quyết định). Vẫn ràng buộc trong một học kỳ (BR44) và không vượt quá kỳ `Dissolving` (BR45). Chốt điểm danh (UC32) chỉ khoá bộ `Attendance` và giữ `FINISH`, không cần báo cáo sau sự kiện (UC33/UC34); sự kiện được tự động tổng hợp vào Báo cáo định kỳ (UC38). ICPDP xem được danh sách sự kiện nội bộ (trừ `DRAFT` và đã huỷ) và chuỗi `internalCount` trên biểu đồ tháng ở UC02. Nếu sự kiện nội bộ cần xin ngân sách/bảo trợ cấp trường thì đi luồng đề xuất ICPDP (UC26) với `MEMBERS_ONLY` và ít nhất 1 hạng mục ngân sách (Phương án B), theo vòng đời đề xuất | UC02, UC24, UC25, UC26, UC27, UC28, UC32, UC33, UC38 |
 | BR54 | Ánh xạ capability/permission của `Club Leader` và `Club Member` là cố định do hệ thống định nghĩa. Mỗi use case kiểm tra đúng role cố định trong đúng CLB; chức danh nội bộ không cộng dồn hoặc cấp thêm quyền. Mọi membership `Active` có hai capability hiện hành `club.attendance.manage` và `club.room.view`; các permission quản lý khác chỉ Club Leader có | UC09, UC16, UC18–UC21, UC25, UC27, UC28, UC30, UC32, UC33, UC36, UC38, UC45, UC47, UC49, UC52, UC54, UC58 |
 | BR55 | Không có RBAC tuỳ biến theo CLB: Club Leader không được tạo role truy cập, sửa permission hoặc gán permission cho chức danh. Cơ cấu tổ chức có thể lưu tên chức danh/ban/bộ phận để hiển thị và truy vết nhưng không tham gia quyết định quyền. Ghế Chủ nhiệm / Phó chủ nhiệm chỉ đổi qua UC08, UC10 / UC11 hoặc UC12 / UC13 | UC07, UC08, UC09, UC10, UC11, UC12, UC13 |
 | BR56 | Cơ cấu tổ chức được đánh phiên bản: phiên bản 1 là cơ cấu cố định được duyệt ở UC08 (Chủ nhiệm, Phó chủ nhiệm, Members), và một phiên bản đã lưu không bao giờ bị ghi đè. Sửa ở UC09 không tạo phiên bản mới; luồng UC12 / UC13 hiện tại cũng không tạo, vì UC12 không gửi danh sách role đề xuất. Phiên bản cơ cấu không chứa ánh xạ permission tuỳ biến và không có nguồn `ROLE_EDIT` từ UC23 | UC02, UC07, UC08, UC13 |
@@ -2746,10 +2759,11 @@ DRAFT → CREATED → PUBLIC → ONGOING → FINISH
 | Từ → Đến | Tác nhân |
 |---|---|
 | Draft → Pending Approval | UC25 (đề xuất công khai) |
-| DRAFT → CREATED | UC25 A4 — tạo sự kiện nội bộ CLB chính thức, chưa công bố (BR53) |
-| CREATED → PUBLIC | UC27 — công bố sự kiện nội bộ cho thành viên CLB ở UC24 (BR53) |
+| DRAFT → CREATED | UC25 A4 — tạo sự kiện nội bộ CLB chính thức, chưa công bố, `startAt >= now + 24h` (BR53) |
+| CREATED → CREATED | UC25 A4 sửa / UC28 đổi lịch — cập nhật trực tiếp, lịch mới `newStartAt >= now + 24h` (BR53) |
+| CREATED → PUBLIC | UC27 — công bố sự kiện nội bộ cho thành viên CLB ở UC24, khoá lịch (BR53) |
 | PUBLIC → ONGOING | **Scheduler** (giờ bắt đầu — sự kiện nội bộ) |
-| ONGOING → FINISH | **Scheduler** (giờ kết thúc — sự kiện nội bộ; chốt điểm danh UC32 khoá `Attendance` và giữ `FINISH`, tự động tổng hợp vào UC38) |
+| ONGOING → FINISH (và PUBLIC → FINISH nếu scheduler trễ) | **Scheduler** (giờ kết thúc — sự kiện nội bộ; chốt điểm danh UC32 khoá `Attendance` và giữ `FINISH`, tự động tổng hợp vào UC38) |
 | DRAFT / CREATED / PUBLIC / ONGOING → CANCELLED | UC28 (huỷ sự kiện nội bộ), hoặc UC15 / **Scheduler** khi CLB bị tạm ngừng/giải thể |
 | Pending Approval → Under Review | UC26 |
 | Under Review → Revision Requested | UC26 |
@@ -3109,7 +3123,7 @@ Scheduler **không phải actor**. Nó sở hữu đúng các hành vi sau, mỗ
 
 | ID | Hành vi theo lịch | Nguồn chân lý |
 |---|---|---|
-| SCH-01 | `Upcoming → Ongoing → Completed` (sự kiện đề xuất) và `PUBLIC → ONGOING → FINISH` (sự kiện nội bộ CLB) | giờ bắt đầu và kết thúc của chính sự kiện |
+| SCH-01 | `Upcoming → Ongoing → Completed` (sự kiện đề xuất) và `PUBLIC → ONGOING → FINISH` (sự kiện nội bộ CLB; `PUBLIC → FINISH` khi scheduler trễ) | giờ bắt đầu và kết thúc của chính sự kiện |
 | SCH-02 | `Approved → In Use → Completed` của booking | giờ bắt đầu và kết thúc của chính booking |
 | SCH-03 | **Không có (theo code)** — không job nào mở (`Accepting Applications`) hay đóng (`Screening`) đợt tuyển; khung nhận đơn được kiểm tra ở mỗi request (`windowStart ≤ now < windowEnd`) | khung thời gian của đợt tuyển |
 | SCH-04 | `Revision Requested → Expired` của hồ sơ thành lập và đề xuất sự kiện | deadline chỉnh sửa đặt ở UC08 / UC26 |
@@ -3184,7 +3198,7 @@ trạng thái.
 | Hồ sơ chờ duyệt theo loại | Những hồ sơ nào đang chờ ICPDP? *(không gồm sự kiện nội bộ CLB `MEMBERS_ONLY`)* |
 | Approval aging / vi phạm SLA | Hồ sơ nào đã chờ quá lâu? |
 | Sự kiện sắp diễn ra | Sự kiện nào sắp tới? |
-| Sự kiện nội bộ CLB & biểu đồ | Danh sách sự kiện nội bộ các CLB (trạng thái `CREATED`/`PUBLIC`/`ONGOING`/`FINISH`/`CANCELLED`, trừ `DRAFT`) và biểu đồ thống kê hoạt động nội bộ là bao nhiêu? (BR53) |
+| Sự kiện nội bộ CLB & biểu đồ | Danh sách sự kiện nội bộ các CLB (trạng thái `CREATED`/`PUBLIC`/`ONGOING`/`FINISH` và `MEMBERS_ONLY` có ngân sách `Approved`…`Closed`; trừ `DRAFT` và đã huỷ) và biểu đồ `Events by month` 2 chuỗi `publicCount` / `internalCount` là bao nhiêu? (BR53) |
 | Cơ cấu và ban điều hành CLB | CLB có những role nào, cơ cấu đổi khi nào, và ai giữ ban điều hành qua từng nhiệm kỳ? (BR56) |
 | Cảnh báo xung đột | Có sự kiện hay booking nào trùng lịch không? |
 | Mức độ cam kết ngân sách | Tổng đã duyệt, đã giải ngân và đã đối soát là bao nhiêu? |
@@ -3667,12 +3681,12 @@ UC45 A2), và vòng 9 đặt cuối vì UC42 cần dữ liệu trọn một kỳ
 | **D1 — đã chốt 2026-11-07, sửa 2026-11-09** | `ICPDP_HEAD` là quyền RBAC chỉ cấp cho người giữ `ICPDP_OFFICER`; không thêm actor. Từ 09/11/2026 bỏ cấp duyệt thứ hai: Head chỉ cấu hình rule UC05, mọi hồ sơ duyệt một cấp | Người dùng chọn phương án giữ diagram bốn actor (07/11), rồi chọn bỏ cấp 2 (09/11) | Code: `ICPDP_HEAD` cấu hình UC05; UC08/UC26/UC46 một cấp (09/11/2026) |
 | **D2** | Ngoài danh sách của UC04, những giá trị nào nữa được sửa trong sản phẩm? | Mỗi giá trị thêm vào tốn một màn hình, một schema và một đường validate; danh sách phải đến từ quy trình thật của ICPDP | Đổi UC04 và BR42 — cần chốt trước khi đóng băng màn hình cấu hình |
 | **D3** | Số người phản hồi tối thiểu ban đầu cho BR40 | Đây là con số chính sách, không phải con số kỹ thuật. Năm là mức sàn phổ biến | Thấp — giá trị này cấu hình được ở UC04 |
-| **D4 — đã chốt 2026-10-11 (cập nhật BR53)** | Mọi thay đổi thời gian/địa điểm của sự kiện đã duyệt phải được UC26 duyệt lại; sự kiện nội bộ CLB (`MEMBERS_ONLY`) theo BR53 chỉ cập nhật trực tiếp và kiểm tra xung đột BR15, không quay lại UC26 | Người dùng chọn phương án đề xuất khi lập kế hoạch Wave 3 | FR-UC28-02 đã cập nhật; chính sách triển khai Wave 3 ghi bên dưới và trong SPEC |
+| **D4 — đã chốt 2026-10-11 (cập nhật BR53)** | Mọi thay đổi thời gian/địa điểm của sự kiện đã duyệt phải được UC26 duyệt lại; sự kiện nội bộ CLB không ngân sách theo BR53 chỉ đổi lịch ở `CREATED` (lịch mới `>= now + 24h`), cập nhật trực tiếp và kiểm tra xung đột BR15, không quay lại UC26; từ `PUBLIC` khoá lịch (sửa 2026-11-14) | Người dùng chọn phương án đề xuất khi lập kế hoạch Wave 3 | FR-UC28-02 đã cập nhật; chính sách triển khai Wave 3 ghi bên dưới và trong SPEC |
 | **D5 — đã chốt 2026-11-07** | CMB không thấy danh tính người khiếu nại; ICPDP thấy | Người dùng chọn phương án an toàn mặc định | FR-UC52-01 và SEC-09 đã cập nhật |
 
 
 **Chính sách Wave 3, chốt theo chỉ dẫn triển khai khuyến nghị ngày 2026-10-11 (cập nhật BR53):** UC25
-báo trước tối thiểu 168 giờ *(không áp dụng cho sự kiện nội bộ CLB `MEMBERS_ONLY`)*; UC28 huỷ dưới 24 giờ là muộn. UC30 dùng FIFO.
+báo trước tối thiểu 168 giờ *(sự kiện nội bộ CLB không ngân sách dùng mốc 24 giờ, không ngoại lệ — sửa 2026-11-14)*; UC28 huỷ dưới 24 giờ là muộn. UC30 dùng FIFO.
 Chuỗi hoạt động dùng chung registration/attendance. Đổi lịch giữ đăng ký, tạm đóng tiếp nhận
 và check-in tới khi duyệt/công bố lại; không đổi số duyệt của ngân sách đã giải ngân.
 Huỷ giữ nghĩa vụ tài chính đã phát sinh; booking `In Use` giữ tới hết slot.
@@ -3835,7 +3849,7 @@ request và response do schema zod định nghĩa và được công bố tại 
 | M02 | `GET /clubs`, `GET /clubs/:id`, `POST /club-applications`, `PATCH /club-applications/:id` (nộp lại → version mới), `POST /club-applications/:id/withdraw`, `POST /club-applications/:id/decision`, `PATCH /clubs/:id/profile`, `POST /clubs/:id/suspension-requests`, `POST /clubs/:id/lifecycle` |
 | M03 | `POST /clubs/:id/terms/nominations`, `POST /nominations/:id/decision`, `POST /clubs/:id/transitions`, `POST /transitions/:id/decision`; **không có endpoint UC23** tạo/sửa role hoặc permission tuỳ biến |
 | M04 | `GET|POST /clubs/:id/campaigns`, `POST /campaigns/:id/publish`, `GET|POST /campaigns/:id/applications`, `POST /applications/:id/withdraw`, `POST /applications/:id/screening`, `POST /applications/:id/decision`, `POST /applications/:id/evaluations`, `POST /applications/:id/onboard`, `GET /clubs/:id/members`, `PATCH /memberships/:id/status`, `POST /memberships/:id/leave-requests`, `GET /me/memberships` |
-| M05 | `GET|POST /events`, `POST /events/university` (UC53), `POST /events/:id/invitations` (UC53), `DELETE /event-invitations/:id` (UC53), `GET /clubs/:id/event-invitations` (UC54), `PATCH /event-invitations/:id/respond` (UC54), `PATCH /events/:id` (nộp lại → bản sửa mới), `POST /events/:id/decision`, `POST /events/:id/publish`, `POST /events/:id/cancel`, `POST /events/:id/reschedule` |
+| M05 | `GET|POST /events`, `POST /events/university` (UC53), `POST /events/:id/invitations` (UC53), `DELETE /event-invitations/:id` (UC53), `GET /clubs/:id/event-invitations` (UC54), `PATCH /event-invitations/:id/respond` (UC54), `PATCH /events/:id` (nộp lại → bản sửa mới), `POST /events/:id/decision`, `POST /events/:id/publish`, `POST /events/:id/cancel`, `POST /events/:id/reschedule`; sự kiện nội bộ (BR53, 2026-11-14): `POST /clubs/:clubId/internal-events`, `PUT /clubs/:clubId/internal-events/:id`, `POST /clubs/:clubId/internal-events/:id/create` |
 | M06 | `POST /events/:id/registrations`, `DELETE /registrations/:id`, `GET /events/:id/registrations`, `PATCH /events/:id/capacity`, `POST /registrations/:id/promote`, `POST /events/:id/check-ins`, `POST /events/:id/attendance/finalize`, `POST /events/:id/attendance/unlock` |
 | M07 (API code cũ, chưa đáp ứng luồng mới) | `GET /event-budgets/:id`, `POST /event-budgets/:id/disbursements` (`Advance` / `TopUp` / `Refund`), `GET|POST /event-budgets/:id/expenses`, `POST /expenses/:id/evidence`, `POST /event-budgets/:id/settlement`, `GET|POST /event-budgets/:id/reconciliation` — ngân sách được xin và duyệt qua `/events` (M05) |
 

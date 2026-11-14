@@ -487,13 +487,13 @@
                 <mxCell id="f04-8" parent="1" style="ellipse;html=1;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
                     <mxGeometry height="30" width="30" x="180" y="180" as="geometry"/>
                 </mxCell>
-                <mxCell id="f04-9" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="2 separate actions: Propose to ICPDP (PUBLIC, 7d notice) OR Create internal event (MEMBERS_ONLY, no 7d)" vertex="1">
+                <mxCell id="f04-9" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="2 separate actions: Propose to ICPDP (PUBLIC or budgeted MEMBERS_ONLY, 7d) OR Create internal (no budget, ≥ 24h)" vertex="1">
                     <mxGeometry height="62" width="220" x="85" y="314" as="geometry"/>
                 </mxCell>
                 <mxCell id="f04-10" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Check conflicts (venueText/room/bookings). Blocking conflict?" vertex="1">
                     <mxGeometry height="96" width="190" x="760" y="447" as="geometry"/>
                 </mxCell>
-                <mxCell id="f04-11" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Internal club event (MEMBERS_ONLY)?" vertex="1">
+                <mxCell id="f04-11" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Unbudgeted internal club event?" vertex="1">
                     <mxGeometry height="96" width="190" x="760" y="597" as="geometry"/>
                 </mxCell>
                 <mxCell id="f04-12" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Submit a Pending Approval version with check results and warnings" vertex="1">
@@ -511,8 +511,8 @@
                 <mxCell id="f04-16" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Reject and notify the reason; publication is not allowed" vertex="1">
                     <mxGeometry height="62" width="220" x="745" y="1454" as="geometry"/>
                 </mxCell>
-                <mxCell id="f04-17" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Approve after all funding decisions (notify caps, windows → Approved) or CREATED (internal → PUBLIC for members)" vertex="1">
-                    <mxGeometry height="62" width="220" x="85" y="1604" as="geometry"/>
+                <mxCell id="f04-17" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Approve after all funding decisions (notify caps, windows → Approved) or CREATED (internal → PUBLIC for members; schedule locked once PUBLIC)" vertex="1">
+                    <mxGeometry height="76" width="220" x="85" y="1597" as="geometry"/>
                 </mxCell>
                 <mxCell id="f04-18" parent="1" style="ellipse;html=1;shape=endState;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
                     <mxGeometry height="30" width="30" x="180" y="1770" as="geometry"/>
@@ -601,8 +601,8 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="f04-35" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Yes - CREATED directly (no ICPDP proposal; shown in UC02)" vertex="1">
-                    <mxGeometry height="18" width="173" x="468" y="624" as="geometry"/>
+                <mxCell id="f04-35" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Yes - CREATED directly&lt;br&gt;(≥ 24h notice; reschedule only&lt;br&gt;before PUBLIC; shown in UC02)" vertex="1">
+                    <mxGeometry height="42" width="173" x="468" y="612" as="geometry"/>
                 </mxCell>
                 <mxCell id="f04-36" edge="1" parent="1" source="f04-16" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="f04-18">
                     <mxGeometry relative="1" as="geometry">
