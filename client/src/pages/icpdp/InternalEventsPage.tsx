@@ -18,7 +18,10 @@ import { formatDate } from "@/utils/formatDate";
 const stateTones: Record<string, AppBadgeTone> = {
   Approved: "info", Upcoming: "info", Ongoing: "success", Completed: "neutral",
   "Report Submitted": "neutral", Closed: "neutral", Cancelled: "danger",
+  CREATED: "info", PUBLIC: "info", ONGOING: "success", FINISH: "neutral",
 };
+/** UC02 recorded internal events: self-funded lifecycle plus budgeted proposals from approval on. */
+const recordedStates = ["CREATED", "PUBLIC", "ONGOING", "FINISH", "Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"];
 
 function useStateLabel() {
   const { t } = useTranslation();
@@ -60,8 +63,10 @@ export function InternalEventsPage() {
   const [params, setParams] = useSearchParams();
   const [clubId, setClubId] = useState(() => params.get("clubId") ?? "");
   const [semesterCode, setSemesterCode] = useState(() => params.get("semester") ?? "");
+  const [state, setState] = useState("");
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const events = useInternalEvents({ clubId, semesterCode }, isOfficer);
+  const items = events.data?.items.filter((event) => !state || event.state === state) ?? [];
 
   function filter(next: { clubId: string; semesterCode: string }) {
     setClubId(next.clubId);
@@ -74,7 +79,7 @@ export function InternalEventsPage() {
 
   return <>
     <PageHeader title={t("clubOversight.internalTitle")} description={t("clubOversight.internalDescription")}
-      actions={events.data && <AppBadge tone="info">{t("clubOversight.internalCount", { count: events.data.items.length })}</AppBadge>} />
+      actions={events.data && <AppBadge tone="info">{t("clubOversight.internalCount", { count: items.length })}</AppBadge>} />
     <OfficerOnly>
       <div className="flex flex-wrap gap-3">
         <AppSelect className="w-full sm:w-64" label={t("clubOversight.filterClub")} value={clubId}
@@ -85,14 +90,17 @@ export function InternalEventsPage() {
           options={[{ value: "", label: t("clubOversight.allSemesters") },
             ...(events.data?.semesters ?? []).map((value) => ({ value, label: value }))]}
           onChange={(value) => filter({ clubId, semesterCode: value })} />
+        <AppSelect className="w-full sm:w-56" label={t("clubOversight.filterState")} value={state}
+          options={[{ value: "", label: t("clubOversight.allStates") }, ...recordedStates.map((value) => ({ value, label: stateLabel(value) }))]}
+          onChange={setState} />
       </div>
       {events.isPending ? <div className="mt-6 space-y-2">{[0, 1, 2].map((item) => <AppSkeleton key={item} className="h-20 w-full" />)}</div>
         : events.isError ? <AppNotice tone="danger" role="alert" className="mt-6" title={t("clubOversight.internalLoadError")}>
           <AppButton variant="secondary" onClick={() => void events.refetch()}>{t("clubOversight.retry")}</AppButton>
         </AppNotice>
-          : events.data.items.length === 0 ? <div className="mt-6"><AppEmptyState variant="boxed" message={t("clubOversight.internalEmpty")} /></div>
+          : items.length === 0 ? <div className="mt-6"><AppEmptyState variant="boxed" message={t("clubOversight.internalEmpty")} /></div>
             : <ul className="mt-6 divide-y divide-border-app overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
-              {events.data.items.map((event) => <li key={event.id}>
+              {items.map((event) => <li key={event.id}>
                 <Link to={`/workspace/internal-events/${event.id}`}
                   className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4 hover:bg-surface-app focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring-app">
                   <span className="min-w-0 flex-1 basis-64">

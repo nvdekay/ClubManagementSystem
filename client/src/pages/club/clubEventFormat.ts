@@ -18,7 +18,24 @@ export const stateTones: Record<string, AppBadgeTone> = {
   Closed: "neutral",
   Rejected: "danger",
   Cancelled: "danger",
+  DRAFT: "neutral",
+  CREATED: "success",
+  PUBLIC: "success",
+  ONGOING: "success",
+  FINISH: "neutral",
+  CANCELLED: "danger",
 };
+
+/** States of the self-funded internal event lifecycle; proposals to ICPDP use the title-case states. */
+const internalStates = ["DRAFT", "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"];
+export function isInternalState(state: string) {
+  return internalStates.includes(state);
+}
+
+/** `clubEvents.PUBLIC` is the audience label, so the internal `PUBLIC` state has its own key. */
+export function stateLabel(t: TFunction, state: string) {
+  return state === "PUBLIC" ? t("clubEvents.statePUBLIC") : t(`clubEvents.${state}`, { defaultValue: state });
+}
 
 export function localTime(value: string) {
   return new Date(new Date(value).getTime() + 7 * 3600000).toISOString().slice(0, 16);

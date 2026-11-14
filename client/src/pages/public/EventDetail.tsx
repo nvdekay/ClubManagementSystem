@@ -25,7 +25,7 @@ function RegisteredEventView({ context }: { context: EventRegistrationContext })
   const locale = i18n.language === "vi" ? "vi" : "en";
   const { event } = context;
   const ended = new Date(event.endAt) <= new Date();
-  const notice = ["Cancelled", "Expired", "Rejected"].includes(event.state) ? t("discovery.registeredCancelled")
+  const notice = ["Cancelled", "CANCELLED", "Expired", "Rejected"].includes(event.state) ? t("discovery.registeredCancelled")
     : ["Approved", "Pending Approval", "Under Review", "Revision Requested"].includes(event.state) ? t("discovery.registeredRescheduling")
       : event.audienceScope === "MEMBERS_ONLY" ? t("discovery.registeredMembersOnly") : null;
   return <div className="mt-7 max-w-4xl">
@@ -38,7 +38,7 @@ function RegisteredEventView({ context }: { context: EventRegistrationContext })
       <div><dt className="text-sm text-muted-app">{t("discovery.starts")}</dt><dd className="font-semibold">{formatDate(event.startAt, locale)}</dd></div>
       <div><dt className="text-sm text-muted-app">{t("discovery.ends")}</dt><dd className="font-semibold">{formatDate(event.endAt, locale)}</dd></div>
     </dl>
-    {!ended && !["Cancelled", "Expired", "Rejected"].includes(event.state) && <EventRegistrationPanel eventId={event.id} />}
+    {!ended && !["Cancelled", "CANCELLED", "Expired", "Rejected"].includes(event.state) && <EventRegistrationPanel eventId={event.id} />}
     <EventFeedbackPanel eventId={event.id} />
   </div>;
 }

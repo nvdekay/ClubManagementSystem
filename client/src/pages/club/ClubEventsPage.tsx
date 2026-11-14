@@ -25,7 +25,7 @@ import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { cn } from "@/utils/cn";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { ClubEventErrorMessage } from "@/pages/club/ClubEventErrorMessage";
-import { iso, localTime, numberError, sectionLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
+import { iso, isInternalState, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
 
 const eventsEmpty: ClubEvent[] = [];
 const tabClass = "inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
@@ -104,7 +104,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const filtered = useMemo(() => rows.filter((e) => (!filter || e.state === filter) && e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())), [rows, filter, search]);
   const columns = useMemo(() => eventColumns.columns([
     eventColumns.accessor("title", { header: t("clubEvents.titleField"), cell: (info) => <button type="button" className="text-left font-medium text-text-app hover:text-primary-app" onClick={() => { setSelected(info.row.original.id); mutation.reset(); setSuccess(false); revealDetail(); }}>{info.getValue()}</button> }),
-    eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" })}</AppBadge> }),
+    eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{stateLabel(t, info.getValue())}</AppBadge> }),
     eventColumns.accessor("startAt", { header: t("clubEvents.start"), cell: (info) => format.format(new Date(info.getValue())) }),
     eventColumns.accessor("capacity", { header: t("clubEvents.capacity"), cell: (info) => `${info.row.original.confirmedRegistrationCount} / ${info.getValue()}` }),
   ]), [t, format, mutation, setSelected]);
@@ -112,7 +112,10 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const people = participants.data ?? participantsEmpty;
   const [attendanceFilter, setAttendanceFilter] = useState<"all" | "checked" | "missing">("all");
   // Check-in is open once the event is published and running, until attendance is finalized (UC31, UC32).
-  const canCheckIn = Boolean(active && !active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed"].includes(active.state));
+  // Internal events mirror proposals: PUBLIC ↔ Upcoming, ONGOING ↔ Ongoing, FINISH ↔ Completed.
+  const published = Boolean(active && ["Upcoming", "PUBLIC"].includes(active.state));
+  const finished = Boolean(active && ["Completed", "FINISH"].includes(active.state));
+  const canCheckIn = Boolean(active && !active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed", "PUBLIC", "ONGOING", "FINISH"].includes(active.state));
   const confirmedPeople = people.filter((p) => p.state === "Confirmed" || p.attendanceId);
   const checkedCount = people.filter((p) => p.attendanceId && !p.abnormalFlags.includes("no-show")).length;
   const shownPeople = attendanceFilter === "all" ? people
@@ -126,6 +129,15 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     try { await mutation.mutateAsync({ kind: "action", id: selected, action, body, csrfToken: auth.data.csrfToken }); setSuccess(true); setOperation(null); }
     catch (error) { setFormError(error); }
   }, [auth.data, selected, mutation, setSuccess, setFormError, setOperation]);
+  const internal = Boolean(active && isInternalState(active.state));
+  async function confirmInternal() {
+    if (!auth.data || !active) return;
+    setSuccess(false); setFormError(null);
+    // Same 24-hour notice the server enforces on DRAFT → CREATED; saves a round trip.
+    if (Date.parse(active.startAt) - Date.now() < 24 * 3600_000) { setFormError(new Error(t("clubEvents.notice24h"))); return; }
+    try { await mutation.mutateAsync({ kind: "internal-confirm", id: active.id, expectedVersion: active.version, csrfToken: auth.data.csrfToken }); setSuccess(true); }
+    catch (error) { setFormError(error); }
+  }
   const openOperation = useCallback(function openOperation(kind: NonNullable<typeof operation>, participant: EventParticipant | null = null) {
     if (!active) return;
     mutation.reset(); setFormError(null); setSuccess(false); setOperation(kind); setReason(""); setTarget(participant); setCorrected(""); setAbsent(participant?.abnormalFlags.includes("no-show") ?? false);
@@ -146,10 +158,10 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     participantColumns.accessor("abnormalFlags", { header: t("clubEvents.flags"), cell: (info) => <div className="flex flex-col gap-1">{info.getValue().map((flag) => <span key={flag}>{t(`clubEvents.${flag}`, { defaultValue: flag })}</span>)}{info.row.original.correctionReason && <p className="text-muted-app">{info.row.original.correctionReason}</p>}</div> }),
     participantColumns.display({ id: "actions", header: t("clubEvents.action"), cell: (info) => <div className="flex flex-wrap gap-2">
       {canCheckIn && info.row.original.state === "Confirmed" && !info.row.original.attendanceId && <AppButton onClick={() => openOperation("check-in", info.row.original)}>{t("clubEvents.checkInRow")}</AppButton>}
-      {info.row.original.state === "Waitlisted" && active?.state === "Upcoming" && <AppButton disabled={mutation.isPending} onClick={() => void runAction("promote", { registrationId: info.row.original.registrationId })}>{t("clubEvents.promote")}</AppButton>}
-      {active?.state === "Completed" && !active.attendanceFinalized && <AppButton onClick={() => openOperation("correct", info.row.original)}>{t("clubEvents.correct")}</AppButton>}
+      {info.row.original.state === "Waitlisted" && published && <AppButton disabled={mutation.isPending} onClick={() => void runAction("promote", { registrationId: info.row.original.registrationId })}>{t("clubEvents.promote")}</AppButton>}
+      {finished && !active?.attendanceFinalized && <AppButton onClick={() => openOperation("correct", info.row.original)}>{t("clubEvents.correct")}</AppButton>}
     </div> }),
-  ]), [t, active, mutation.isPending, runAction, openOperation, canCheckIn, format]);
+  ]), [t, active, mutation.isPending, runAction, openOperation, canCheckIn, published, finished, format]);
   const ptable = useTable({ features: appTableFeatures, columns: pcolumns, data: shownPeople, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   async function execute(event: FormEvent) {
     event.preventDefault(); if (!active || !operation || !opField.touchAll()) return;
@@ -173,7 +185,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     registrationClose: !publishing ? null : !registrationClose ? required : registrationOpen && registrationClose <= registrationOpen ? t("common.endAfterStart") : null,
     checkOpen: operation === "publish" && !checkOpen ? required : null,
     checkClose: operation !== "publish" ? null : !checkClose ? required : checkOpen && checkClose <= checkOpen ? t("common.endAfterStart") : null,
-    newStart: operation === "reschedule" && !newStart ? required : null,
+    newStart: operation !== "reschedule" ? null : !newStart ? required
+      : active?.state === "CREATED" && iso(newStart) !== active.startAt && Date.parse(iso(newStart)) - renderedAt < 24 * 3600_000 ? t("clubEvents.notice24h") : null,
     newEnd: operation !== "reschedule" ? null : !newEnd ? required : newStart && newEnd <= newStart ? t("common.endAfterStart") : null,
     capacity: operation === "capacity" ? numberError(t, capacity, 1, 100000) : null,
     studentId: operation === "check-in" && !studentId ? t("common.chooseRequired") : null,
@@ -194,16 +207,23 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     {success && <p role="status" className="mb-3 text-success-app">{t("clubEvents.success")}</p>}
     {mode !== "feedback" && <>
       <div className="mb-4 flex flex-wrap items-center gap-3"><AppInput aria-label={t("clubEvents.search")} placeholder={t("clubEvents.search")} value={search} onChange={(e) => { setSearch(e.target.value); table.setPageIndex(0); }} />
-        <AppSelect label={t("clubEvents.state")} value={filter} onChange={(v) => { setFilter(v); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.all") }, ...[...new Set(rows.map((e) => e.state))].map((s) => ({ value: s, label: t(`clubEvents.${s}`, { defaultValue: s }) }))]} />
-        {mode === "events" && (
+        <AppSelect label={t("clubEvents.state")} value={filter} onChange={(v) => { setFilter(v); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.all") }, ...[...new Set(rows.map((e) => e.state))].map((s) => ({ value: s, label: stateLabel(t, s) }))]} />
+        {mode === "events" && <>
           <Link
-            to={`/club/${encodeURIComponent(clubId)}/events/new`}
+            to={`/club/${encodeURIComponent(clubId)}/events/internal/new`}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
           >
             <AppIcon name="plus" className="size-4" />
-            {t("clubEvents.create")}
+            {t("clubEvents.createInternal")}
           </Link>
-        )}
+          <Link
+            to={`/club/${encodeURIComponent(clubId)}/events/new`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 font-heading text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
+          >
+            <AppIcon name="send" className="size-4" />
+            {t("clubEvents.proposeIcpdp")}
+          </Link>
+        </>}
       </div>
       <AppTable table={table} emptyMessage={t("clubEvents.empty")} loading={events.isPending} />
       <TablePager pageIndex={table.state.pagination.pageIndex} pageCount={table.getPageCount()} onChange={(v) => table.setPageIndex(v)} />
@@ -211,9 +231,9 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     {mode === "events" && selected && <section id="club-event-detail" className="mt-6 scroll-mt-24 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs">
       <ClubEventErrorMessage error={detail.error} />
       {detail.isPending ? <AppSkeleton className="h-48" /> : detail.data && active && <>
-        <h2 className="mb-2 font-heading text-base font-semibold break-words">{active.title}</h2><p className="flex flex-wrap items-center gap-2 text-sm text-muted-app"><AppBadge tone={stateTones[active.state] ?? "neutral"}>{t(`clubEvents.${active.state}`, { defaultValue: active.state })}</AppBadge> {format.format(new Date(active.startAt))} – {format.format(new Date(active.endAt))}</p>
+        <h2 className="mb-2 font-heading text-base font-semibold break-words">{active.title}</h2><p className="flex flex-wrap items-center gap-2 text-sm text-muted-app"><AppBadge tone={stateTones[active.state] ?? "neutral"}>{stateLabel(t, active.state)}</AppBadge> {format.format(new Date(active.startAt))} – {format.format(new Date(active.endAt))}</p>
         <p className="mt-2 break-words">{active.objective}</p><p className="mt-2 whitespace-pre-wrap break-words">{active.plan}</p>
-        <p className="mt-2">{t("clubEvents.venue")}: {active.venueText ?? options.data?.properties.find((p) => p.id === active.propertyId)?.name ?? "—"} · {t(`clubEvents.${active.audienceScope}`)}</p>
+        <p className="mt-2">{t("clubEvents.venue")}: {active.venueText || (options.data?.properties.find((p) => p.id === active.propertyId)?.name ?? "—")} · {internal ? t("clubEvents.internalBadge") : t(`clubEvents.${active.audienceScope}`)}</p>
         {active.state === "Revision Requested" && revisionRequest ? <div role="status" className="mt-4 rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
           <p className="font-semibold">{t("clubEvents.revisionTitle")}</p>
           {revisionSections.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-2"><span>{t("clubEvents.revisionSections")}:</span>
@@ -305,11 +325,22 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
               <AppButton disabled={mutation.isPending} onClick={() => void runAction("submit", { expectedVersion: active.version })}>{t("clubEvents.submit")}</AppButton>
             </>
           )}
-          {active.state === "Approved" && <AppButton onClick={() => openOperation("publish")}>{t("clubEvents.publish")}</AppButton>}
-          {["Approved", "Upcoming"].includes(active.state) && <AppButton onClick={() => openOperation("reschedule")}>{t("clubEvents.reschedule")}</AppButton>}
-          {["Approved", "Upcoming", "Ongoing"].includes(active.state) && !active.attendanceFinalized && <AppButton variant="ghost" onClick={() => openOperation("cancel")}>{t("clubEvents.cancel")}</AppButton>}
+          {["DRAFT", "CREATED"].includes(active.state) && (
+            <Link
+              to={`/club/${encodeURIComponent(clubId)}/events/${encodeURIComponent(active.id)}/internal-edit`}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
+            >
+              {t("clubEvents.editInternal")}
+            </Link>
+          )}
+          {active.state === "DRAFT" && <AppButton disabled={mutation.isPending} onClick={() => void confirmInternal()}>{t("clubEvents.createInternalAction")}</AppButton>}
+          {["Approved", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("publish")}>{t(internal ? "clubEvents.publishMembers" : "clubEvents.publish")}</AppButton>}
+          {/* A published internal event (PUBLIC, ONGOING) keeps its schedule: cancellation only. */}
+          {["Approved", "Upcoming", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("reschedule")}>{t("clubEvents.reschedule")}</AppButton>}
+          {["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(active.state) && !active.attendanceFinalized && <AppButton variant="ghost" onClick={() => openOperation("cancel")}>{t("clubEvents.cancel")}</AppButton>}
         </div>
         {active.checkInCode && <p>{t("clubEvents.code")}: <strong>{active.checkInCode}</strong></p>}
+        {!internal && <>
         <h3 className="mt-5 text-sm font-semibold">{t("clubEvents.versions")}</h3>
         {detail.data.versions.map((v) => <details key={v.revisionNo} className="mt-2 rounded-lg border border-border-app p-3"><summary>#{v.revisionNo} · {format.format(new Date(v.submittedAt))}</summary>
           <p className="mt-2 whitespace-pre-wrap break-words">{String((v.payload as { plan?: string })?.plan ?? "")}</p>
@@ -318,6 +349,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         {detail.data.decisions.map((d, index) => <div key={index} className="mt-2"><p>{d.outcome === "Re-defense" ? t("eventDefense.outcomeReDefense") : t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {format.format(new Date(d.at))}{d.reason ? ` · ${d.reason}` : ""}</p>
           {((d.comments as DecisionComments | undefined)?.sections ?? []).length > 0 && <div className="mt-1 flex flex-wrap gap-2">{(d.comments as DecisionComments).sections!.map((section) =>
             <AppBadge key={section} tone="warning">{sectionLabel(t, section)}</AppBadge>)}</div>}</div>)}
+        </>}
       </>}
     </section>}
     {mode === "attendance" && active && <section id="club-event-detail" className="mt-6 scroll-mt-24 space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs">
@@ -331,9 +363,9 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       {active.attendanceFinalized && <p>{t("clubEvents.attendanceLocked")}</p>}
       <ClubEventErrorMessage error={participants.error} />
       <div className="flex flex-wrap gap-2">
-        {active.state === "Upcoming" && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.capacity")}</AppButton>}
-        {!active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed"].includes(active.state) && <AppButton onClick={() => openOperation("check-in")}>{t("clubEvents.checkin")}</AppButton>}
-        {active.state === "Completed" && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={async () => { if (await askConfirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
+        {published && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.capacity")}</AppButton>}
+        {canCheckIn && <AppButton onClick={() => openOperation("check-in")}>{t("clubEvents.checkin")}</AppButton>}
+        {finished && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={async () => { if (await askConfirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
         {active.attendanceFinalized && auth.data?.systemRoles.includes("ATTENDANCE_UNLOCK") && <AppButton onClick={() => openOperation("unlock")}>{t("clubEvents.unlock")}</AppButton>}
       </div>
       <div className="w-full sm:w-64"><AppSelect label={t("clubEvents.attendanceFilter")} value={attendanceFilter}

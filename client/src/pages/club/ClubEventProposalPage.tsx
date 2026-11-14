@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubEvent, useClubEventMutation, useClubEventOptions } from "@/hooks/useClubEvents";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { ClubEventErrorMessage } from "@/pages/club/ClubEventErrorMessage";
-import { iso, localTime, numberError, sectionLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
+import { iso, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
 import type { ClubEvent, ClubEventDetail, ClubEventInput, ClubEventOptions } from "@/services/clubEvents";
 
 const sectionCardClass = "space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6";
@@ -142,6 +142,8 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     endAt: Date.parse(draft.endAt) > Date.parse(draft.startAt) ? null : t("common.endAfterStart"),
     venue: draft.venueText?.trim() || draft.propertyId ? null : t("clubEvents.venueRequired"),
     capacity: numberError(t, draft.capacity, 1, 100000),
+    // Plan B: a members-only proposal must ask for budget; a self-funded one goes through the internal event flow.
+    budget: draft.audienceScope === "MEMBERS_ONLY" && draft.budgetLines.length === 0 ? t("clubEvents.membersOnlyNeedsBudget") : null,
   };
   draft.budgetLines.forEach((line, index) => {
     eventErrors[`budget.${index}.category`] = line.category.trim() ? null : required;
@@ -226,7 +228,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         actions={
           existing && (
             <AppBadge tone={stateTones[existing.state] ?? "neutral"}>
-              {t(`clubEvents.${existing.state}`, { defaultValue: existing.state })}
+              {stateLabel(t, existing.state)}
             </AppBadge>
           )
         }
@@ -295,6 +297,14 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
               />
             </Field>
           </div>
+          {draft.audienceScope === "MEMBERS_ONLY" && (
+            <AppNotice tone="info">
+              <p>{t("clubEvents.membersOnlyBudgetHint")}</p>
+              <Link to={`/club/${encodeURIComponent(clubId)}/events/internal/new`} className="mt-1 inline-flex font-medium text-primary-app hover:underline">
+                {t("clubEvents.createInternal")}
+              </Link>
+            </AppNotice>
+          )}
         </section>
 
         <section className={sectionCardClass}>
@@ -463,6 +473,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
                 {flag("budget") && <AppBadge tone="warning">{flag("budget")}</AppBadge>}
               </h2>
               <p className="mt-1 text-sm text-muted-app">{t("clubEvents.budgetHint")}</p>
+              <AppFieldError message={eventField.error("budget")} />
             </div>
             <AppButton
               type="button"
@@ -700,7 +711,7 @@ export function ClubEventProposalPage() {
           back={{ to: eventsListUrl, label: t("clubEvents.back") }}
           actions={
             <AppBadge tone={stateTones[detail.data.event.state] ?? "neutral"}>
-              {t(`clubEvents.${detail.data.event.state}`, { defaultValue: detail.data.event.state })}
+              {stateLabel(t, detail.data.event.state)}
             </AppBadge>
           }
         />

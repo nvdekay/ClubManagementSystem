@@ -69,6 +69,8 @@ Các trang khác (đối chiếu 17/10/2026), đều chỉ dành cho Club Leader
 `/club/:clubId/event-attendance` và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
 `ClubEventProposalPage` (UC25: trang riêng cho tạo và chỉnh sửa đề xuất sự kiện tại `/club/:clubId/events/new`
 và `/club/:clubId/events/:eventId/edit`, dùng chung `ClubEventErrorMessage` và `clubEventFormat.ts` với `ClubEventsPage`),
+`InternalClubEventPage` (sự kiện nội bộ tự túc, `MEMBERS_ONLY` không ngân sách: tạo nháp/tạo/tạo & công bố tại
+`/club/:clubId/events/internal/new`, sửa ở `DRAFT`/`CREATED` tại `/club/:clubId/events/:eventId/internal-edit`; báo trước 24 giờ),
 `ClubBookingsPage` (UC45–47, xem trên), `ClubReportsPage` (UC33, dùng `ReportWorkspace`, route
 `/club/:clubId/event-reports`) và `ClubBudgetsPage` (UC36, dùng `FinanceWorkspace`, route `/club/:clubId/budgets`).
 
