@@ -1,4 +1,7 @@
 const messages = {
+  evaluationZeroPenalty: ["late or missing periodic reports require a zero evaluation score", "Báo cáo định kỳ nộp muộn hoặc quá hạn chưa nộp phải nhận 0 điểm, không được chấm tay ghi đè."],
+  evaluationScoreRequired: ["an evaluation needs a total score before finalizing", "Cần có tổng điểm trước khi chốt đánh giá."],
+  evaluationReportChanged: ["periodic report status changed; reopen and finalize the evaluation again", "Tình trạng báo cáo đã thay đổi. Hãy mở lại và chốt đánh giá để cập nhật điểm trước khi công bố."],
   unknown: ["The request could not be completed. Please try again.", "Không thể hoàn tất yêu cầu. Vui lòng thử lại."],
   network: ["Network request failed", "Không thể kết nối đến máy chủ. Kiểm tra kết nối mạng rồi thử lại."],
   validation: ["Invalid input", "Thông tin chưa hợp lệ. Kiểm tra các trường đã nhập rồi thử lại."],

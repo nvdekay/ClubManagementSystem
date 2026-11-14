@@ -14,7 +14,7 @@ export interface MetricValue {
 export const METRIC_KEYS = ["registrations", "attendances", "uniqueAttendees", "outsiderAttendees", "activeMembers",
   "completedEvents", "publicCompletedEvents", "cancelledEvents", "acceptedInvitations", "applications", "feedbackCount",
   "feedbackAverage", "reportsDue", "reportsOnTime", "reportReturns", "bookingsGranted", "bookingsUsed", "budgets", "budgetsClean", "leaderSeated", "membersLeft",
-  "violationPenalty", "openViolations"] as const;
+  "violationPenalty", "openViolations", "periodicReportOverdue"] as const;
 export type MetricKey = (typeof METRIC_KEYS)[number];
 export type ClubMetrics = Record<MetricKey, MetricValue>;
 
@@ -108,6 +108,7 @@ export interface EvaluationRepository {
   latest(periodCode: string): Promise<EvaluationRecord[]>;
   find(id: string): Promise<EvaluationDetail | null>;
   collectMetrics(clubId: string, period: PeriodWindow, now: Date): Promise<ClubMetrics>;
+  reportPenalty(clubId: string, periodCode: string, now: Date): Promise<MetricValue>;
   /** Clubs whose periodic report of the period still waits for the UC39 review (UC42 precondition). */
   unreviewedReports(periodCode: string, clubId?: string): Promise<{ clubId: string; clubName: string }[]>;
   writeDraft(input: { clubId: string; periodCode: string; scheme: EvaluationScheme; results: DimensionResult[];
@@ -182,9 +183,18 @@ export function scoreDimensions(metrics: ClubMetrics, scheme: Pick<EvaluationSch
     const computed = rule.score(metrics, minRespondents);
     const evidence = rule.metrics.map((metric) => ({ metric, sourceEntity: metrics[metric].sourceEntity,
       sourceIds: metrics[metric].sourceIds.slice(0, 50), sourcePeriod: periodCode, value: round(metrics[metric].value) }));
+    if (metrics.periodicReportOverdue.value > 0) {
+      return { code, score: 0, computedScore: 0, insufficientData: false, isManual: false,
+        justification: "Periodic report submitted late or not submitted by the deadline",
+        evidence: [...evidence, { metric: "periodicReportOverdue", ...metrics.periodicReportOverdue, sourcePeriod: periodCode }] };
+    }
     return { code, ...(computed !== undefined ? { score: round(computed), computedScore: round(computed) } : {}),
       insufficientData: computed === undefined, isManual: false, evidence };
   });
+}
+
+export function hasReportPenalty(dimensions: Pick<DimensionResult, "evidence">[]): boolean {
+  return dimensions.some((dimension) => dimension.evidence.some((item) => item.metric === "periodicReportOverdue" && item.value > 0));
 }
 
 export function classify(total: number, thresholds: SchemeThresholds): Classification {
