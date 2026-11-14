@@ -2,6 +2,8 @@ import { Router, type Response } from "express";
 import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
 import { DomainError } from "../../domain/errors.js";
+import type { EvaluationRepository } from "../../domain/evaluation.js";
+import type { EvaluationSchemeRepository } from "../../domain/evaluation-scheme.js";
 import { CUSTOM_FIELD_TYPES, RETURN_SECTIONS, type PeriodicReportRepository } from "../../domain/periodic-report.js";
 import type { PolicyRepository } from "../../domain/policy.js";
 import type { SessionService } from "../../domain/session.js";
@@ -19,6 +21,8 @@ export interface PeriodicReportRouteDeps {
   policy: PolicyRepository;
   authRepo: AuthRepository;
   sessions: SessionService;
+  evaluationRepo?: EvaluationRepository;
+  evaluationSchemeRepo?: EvaluationSchemeRepository;
 }
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i);
@@ -66,7 +70,9 @@ function actor(res: Response): AccessActor {
 export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
-  const usecase: PeriodicReportDeps = { repo: deps.repo, policy: deps.policy, auth: deps.authRepo };
+  const usecase: PeriodicReportDeps = { repo: deps.repo, policy: deps.policy, auth: deps.authRepo,
+    ...(deps.evaluationRepo && deps.evaluationSchemeRepo ? { evaluation: { repo: deps.evaluationRepo,
+      schemes: deps.evaluationSchemeRepo, policy: deps.policy, auth: deps.authRepo } } : {}) };
 
   router.get("/admin/periodic-reports", authGuard(guard, false), async (req, res) => {
     ok(res, await periodicReportOverview(usecase, actor(res), parsed(periodicOverviewQuery, req.query).period, new Date()));

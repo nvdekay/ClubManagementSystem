@@ -2046,7 +2046,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | FR-UC39-03 | Ghi audit kết quả và thông báo cho CLB |
 | FR-UC39-04 | *(A1)* Hỗ trợ chấp nhận kèm một ghi nhận được lưu lại cho kỳ đánh giá |
 | FR-UC39-05 | *(E1)* Cho officer ghi nhận việc không nộp đúng hạn, dữ liệu này đi vào BR21 và kỳ đánh giá |
-| FR-UC39-06 | Đưa báo cáo được chấp nhận thành đầu vào đánh giá cho UC42 |
+| FR-UC39-06 | Đưa báo cáo được chấp nhận thành đầu vào đánh giá cho UC42; khi chấp nhận, tự tạo bản đánh giá `Data Ready` của CLB cho kỳ đó nếu CLB chưa có và kỳ đã có scheme áp dụng |
 
 **Hậu điều kiện** — báo cáo ở `Accepted` hoặc `Returned for correction`. Chỉ báo cáo được chấp nhận trở thành đầu vào UC42; báo cáo trả về chờ CLB sửa và nộp lại qua UC38. **Đầu ra** — quyết định về báo cáo, nhận xét chỉ rõ phần cần sửa, thông báo cho CLB và bản ghi audit.
 

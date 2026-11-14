@@ -128,6 +128,20 @@ export async function generateEvaluations(deps: EvaluationDeps, actor: AccessAct
   return evaluationOverview(deps, actor, periodCode, now);
 }
 
+/** UC42 after UC39 Accept: the club's Data Ready draft for the period; quietly does nothing when it cannot be made yet. */
+export async function generateClubEvaluation(deps: EvaluationDeps, actor: AccessActor | null, clubId: string,
+  periodCode: string, now: Date): Promise<void> {
+  const officerId = await officer(deps.auth, actor);
+  const { calendar, minRespondents, schemes } = await context(deps, now);
+  const window = calendar.find((item) => item.code === periodCode);
+  if (!window) return;
+  const [clubs, latest] = await Promise.all([deps.repo.clubsInScope(), deps.repo.latest(periodCode)]);
+  const scheme = periodScheme(schemes, periodCode, latest[0]?.schemeId);
+  if (!scheme || !clubs.some((club) => club.id === clubId) || latest.some((item) => item.clubId === clubId)) return;
+  await deps.repo.writeDraft({ clubId, periodCode, scheme, target: { kind: "new" },
+    results: await computed(deps, clubId, window, scheme, minRespondents, now) }, officerId, now);
+}
+
 export async function getEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string) {
   await officer(deps.auth, actor);
   return evaluation(deps.repo, id);

@@ -8,6 +8,7 @@ import {
 import type { PolicyRepository } from "../domain/policy.js";
 import { VIOLATION_SEVERITIES, type ViolationSeverity } from "../domain/violation.js";
 import type { AccessActor } from "./access.js";
+import { generateClubEvaluation, type EvaluationDeps } from "./evaluation.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
@@ -15,6 +16,8 @@ export interface PeriodicReportDeps {
   repo: PeriodicReportRepository;
   policy: PolicyRepository;
   auth: Pick<AuthRepository, "systemRoleCodes">;
+  /** When present, accepting a report also creates the club's evaluation draft for the period (UC42). */
+  evaluation?: EvaluationDeps;
 }
 
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
@@ -86,7 +89,15 @@ export async function getPeriodicReport(deps: PeriodicReportDeps, actor: AccessA
 export async function decidePeriodicReport(deps: PeriodicReportDeps, actor: AccessActor | null, id: string,
   input: PeriodicDecisionInput, now: Date) {
   const officerId = await officer(deps.auth, actor);
-  return deps.repo.decide(checkedId(id, "report"), officerId, normalizedPeriodicDecision(input), now);
+  const decision = normalizedPeriodicDecision(input);
+  const report = await deps.repo.decide(checkedId(id, "report"), officerId, decision, now);
+  if (decision.outcome === "Accept" && deps.evaluation) {
+    // The acceptance already stands; a draft that cannot be made yet stays for the officer to handle later.
+    await generateClubEvaluation(deps.evaluation, actor, report.clubId, report.periodCode, now).catch((error: unknown) => {
+      if (!(error instanceof DomainError)) throw error;
+    });
+  }
+  return report;
 }
 
 /** UC39 E1: the club did not submit on time — recorded as an overdue-report case for BR21 and the evaluation. */

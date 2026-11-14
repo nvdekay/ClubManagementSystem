@@ -77,3 +77,4 @@ UC43 E1 (CLB phản biện kết quả → hồ sơ UC40), trang CLB xem kết q
 - Chỉ công bố khi mọi CLB trong phạm vi có bản mới nhất đã chốt/công bố và có tổng điểm hợp lệ; không chốt bản hoàn toàn thiếu điểm.
 - Không sửa kết quả đã công bố; thay đổi sau công bố đi qua bản sửa hiện có.
 - Theo yêu cầu giao diện: ẩn nút Sinh bản nháp và Sinh lại từ dữ liệu hiện tại; không tự sinh đánh giá khi mở trang. Giữ API và luồng tạo bản sửa sau công bố.
+- Khi ICPDP chấp nhận báo cáo định kỳ (UC39 Accept), hệ thống tự tạo bản đánh giá `Data Ready` của CLB đó cho kỳ của báo cáo. Bỏ qua, không báo lỗi, nếu CLB đã có bản đánh giá của kỳ, kỳ chưa có scheme dùng được, kỳ không thuộc lịch học vụ hoặc CLB không thuộc phạm vi; việc chấp nhận báo cáo không bị ảnh hưởng.

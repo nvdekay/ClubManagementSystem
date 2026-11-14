@@ -321,7 +321,8 @@ export function buildApp(deps: {
         policy: deps.policyRepo, access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       if (deps.periodicReportRepo) {
         app.use("/api/v1", periodicReportRoutes({ repo: deps.periodicReportRepo, policy: deps.policyRepo,
-          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions, evaluationRepo: deps.evaluationRepo,
+          evaluationSchemeRepo: deps.evaluationSchemeRepo }));
       }
       if (deps.clubEventRepo) {
         app.use("/api/v1", clubEventRoutes({ repo: deps.clubEventRepo, access: deps.auth.accessRepo,
