@@ -487,8 +487,8 @@
                 <mxCell id="f04-8" parent="1" style="ellipse;html=1;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
                     <mxGeometry height="30" width="30" x="180" y="180" as="geometry"/>
                 </mxCell>
-                <mxCell id="f04-9" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="2 separate actions: Propose to ICPDP (PUBLIC or budgeted MEMBERS_ONLY, 7d) OR Create internal (no budget, ≥ 24h)" vertex="1">
-                    <mxGeometry height="62" width="220" x="85" y="314" as="geometry"/>
+                <mxCell id="f04-9" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="2 separate actions: Propose to ICPDP (PUBLIC or budgeted MEMBERS_ONLY, 7d) — download ICPDP proposal template, fill form &amp;amp; upload required proposal document (PDF/DOCX) — OR Create internal (no budget, ≥ 24h, no document)" vertex="1">
+                    <mxGeometry height="110" width="220" x="85" y="290" as="geometry"/>
                 </mxCell>
                 <mxCell id="f04-10" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Check conflicts (venueText/room/bookings). Blocking conflict?" vertex="1">
                     <mxGeometry height="96" width="190" x="760" y="447" as="geometry"/>
@@ -496,11 +496,11 @@
                 <mxCell id="f04-11" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Unbudgeted internal club event?" vertex="1">
                     <mxGeometry height="96" width="190" x="760" y="597" as="geometry"/>
                 </mxCell>
-                <mxCell id="f04-12" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Submit a Pending Approval version with check results and warnings" vertex="1">
-                    <mxGeometry height="62" width="220" x="745" y="764" as="geometry"/>
+                <mxCell id="f04-12" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Submit a Pending Approval version with check results, warnings and frozen proposalDocument; reject if proposal document missing" vertex="1">
+                    <mxGeometry height="90" width="220" x="745" y="750" as="geometry"/>
                 </mxCell>
-                <mxCell id="f04-13" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Review proposal; explicitly decide sponsorship and Before / After Event for EVERY budget line" vertex="1">
-                    <mxGeometry height="62" width="220" x="415" y="914" as="geometry"/>
+                <mxCell id="f04-13" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Review proposal content, budget and attached proposal document (proposalDocument, view/download per revision); explicitly decide sponsorship and Before / After Event for EVERY budget line" vertex="1">
+                    <mxGeometry height="106" width="220" x="415" y="870" as="geometry"/>
                 </mxCell>
                 <mxCell id="f04-14" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Decision?" vertex="1">
                     <mxGeometry height="96" width="190" x="430" y="1287" as="geometry"/>

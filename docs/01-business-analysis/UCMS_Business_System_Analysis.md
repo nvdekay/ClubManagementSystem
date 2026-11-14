@@ -1117,9 +1117,9 @@ User chọn đăng nhập
 
 - **Primary Actor:** CMB
 - **Precondition:** Club Active và người dùng có quyền.
-- **Input:** mục tiêu, thời gian (trong 1 học kỳ), địa điểm (`venueText` / phòng học được cấp / booking CSVC-thiết bị đính kèm), audience, capacity, plan, risk, budget estimate (chỉ luồng đề xuất ICPDP; bắt buộc ít nhất 1 hạng mục nếu `MEMBERS_ONLY`), nhu cầu cơ sở vật chất.
-- **Flow (Đề xuất ICPDP — `PUBLIC`, hoặc `MEMBERS_ONLY` có ngân sách):** Validate (kể cả giới hạn báo trước tối thiểu theo policy) → UC25 conflict check → (tùy chọn) UC51 property booking request → Submitted/Pending Approval.
-- **Flow (Sự kiện nội bộ CLB — `MEMBERS_ONLY`):** Tạo sự kiện (`DRAFT → CREATED`) không cần nộp đề xuất lên ICPDP, không cần bảo vệ, không có ngân sách trường, **báo trước `>= 24` giờ khi tạo chính thức, không ngoại lệ** (bản nháp `DRAFT` chưa kiểm tra), chỉ sửa/đổi lịch ở `CREATED`; `MEMBERS_ONLY` không ngân sách gửi qua luồng đề xuất bị từ chối, vẫn kiểm tra xung đột (UC25) nếu dùng phòng/booking thiết bị đính kèm (booking CSVC ngoài phòng học vẫn do UC46 quyết định riêng).
+- **Input:** mục tiêu, thời gian (trong 1 học kỳ), địa điểm (`venueText` / phòng học được cấp / booking CSVC-thiết bị đính kèm), audience, capacity, plan, risk, budget estimate (chỉ luồng đề xuất ICPDP; bắt buộc ít nhất 1 hạng mục nếu `MEMBERS_ONLY`), nhu cầu cơ sở vật chất, file đề án sự kiện `proposalDocument` (chỉ luồng đề xuất ICPDP; `.docx`/`.pdf`, tối đa 10 MB, soạn theo mẫu của ICPDP).
+- **Flow (Đề xuất ICPDP — `PUBLIC`, hoặc `MEMBERS_ONLY` có ngân sách):** Tải file mẫu đề án hiện hành của ICPDP (mặc định `docs/Template Đề án sự kiện.docx`) → điền form và upload file đề án (lưu nháp không bắt buộc file) → Validate (kể cả giới hạn báo trước tối thiểu theo policy; **thiếu `proposalDocument` thì chặn nộp**) → UC25 conflict check → (tùy chọn) UC51 property booking request → Submitted/Pending Approval, file đề án được đóng băng trong bản sửa.
+- **Flow (Sự kiện nội bộ CLB — `MEMBERS_ONLY`):** Tạo sự kiện (`DRAFT → CREATED`) không cần nộp đề xuất lên ICPDP, không cần bảo vệ, không có ngân sách trường, **báo trước `>= 24` giờ khi tạo chính thức, không ngoại lệ** (bản nháp `DRAFT` chưa kiểm tra), chỉ sửa/đổi lịch ở `CREATED`; `MEMBERS_ONLY` không ngân sách gửi qua luồng đề xuất bị từ chối, vẫn kiểm tra xung đột (UC25) nếu dùng phòng/booking thiết bị đính kèm (booking CSVC ngoài phòng học vẫn do UC46 quyết định riêng). Luồng này không có file mẫu và không yêu cầu file đề án.
 - **Related:** UC25, UC26, UC51.
 
 ## UC25 – Phát hiện xung đột sự kiện
@@ -1133,7 +1133,8 @@ User chọn đăng nhập
 ## UC26 – Thẩm định đề xuất sự kiện
 
 - **Primary Actor:** ICPDP
-- **Review:** compliance, venue, time, budget, safety, overdue obligations, property booking đi kèm.
+- **Review:** compliance, venue, time, budget, safety, overdue obligations, property booking đi kèm, file đề án `proposalDocument` của từng revision (xem/tải về).
+- **Template:** ICPDP quản lý file mẫu đề án sự kiện — chỉ tải về hoặc upload mẫu mới thay thế (`.docx`/`.pdf`/`.xlsx`, tối đa 10 MB), không xoá; mẫu khởi tạo là `docs/Template Đề án sự kiện.docx`.
 - **Rule:** ICPDP là điểm duyệt duy nhất. Ý kiến Facility/Security/Finance (nếu cần) được ICPDP thu thập ngoài hệ thống và ghi vào review note.
 - **Outcome:** Revision hoặc UC29.
 
@@ -1141,12 +1142,12 @@ User chọn đăng nhập
 
 - **Primary Actor:** ICPDP
 - **Status:** Under Review → Revision Requested.
-- **Requirement:** Có structured comments.
+- **Requirement:** Có structured comments; mục `content` bao gồm cả nội dung, kế hoạch và file đề án đính kèm.
 
 ## UC28 – Nộp lại đề xuất sự kiện
 
 - **Primary Actor:** CMB
-- **Rule:** Tạo revision version mới, không overwrite.
+- **Rule:** Tạo revision version mới, không overwrite; có thể thay file đề án, file của mỗi revision được giữ nguyên để đối chiếu.
 
 ## UC29 – Phê duyệt/Từ chối sự kiện
 

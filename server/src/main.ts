@@ -70,6 +70,7 @@ import { mongoAccessDenialAuditRepository } from "./infra/db/mongo-access-denial
 import { cloudinaryApplicationFiles } from "./infra/files/cloudinary-application-files.js";
 import { mongoSponsoredItemRepository } from "./infra/db/mongo-sponsored-item-repository.js";
 import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
+import { cloudinaryEventProposalFiles } from "./infra/files/event-proposal-files.js";
 
 const config = loadConfig(); // first thing — exits if env is invalid
 const authConfig = optionalAuthConfig(config);
@@ -152,6 +153,7 @@ const app = authConfig ? buildApp({
     dashboardRepo: mongoDashboardRepository(),
   recruitmentAttachmentStorage: cloudinaryConfig ? cloudinaryRecruitmentFiles(cloudinaryConfig) : null,
   applicationFiles: cloudinaryConfig ? cloudinaryApplicationFiles(cloudinaryConfig) : null,
+  eventProposalFiles: cloudinaryConfig ? cloudinaryEventProposalFiles(cloudinaryConfig) : null,
   auth: {
     repo: mongoAuthRepository(authConfig.ALLOWED_DOMAIN),
     accessRepo: mongoAccessRepository(),

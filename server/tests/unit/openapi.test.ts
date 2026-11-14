@@ -66,6 +66,8 @@ const stubClubEvents: ClubEventRepository = {
   list: async () => [], options: async () => ({ properties: [], bookings: [] }), find: async () => null,
   participants: async () => [], feedback: async () => [], create: async () => { throw new Error("unused"); }, act: async () => { throw new Error("unused"); },
   createInternal: async () => { throw new Error("unused"); },
+  proposalDocument: async () => null, proposalTemplate: async () => { throw new Error("unused"); },
+  saveProposalTemplate: async () => { throw new Error("unused"); },
 };
 const stubAdmin = {
   listUsers: async () => ({ items: [], total: 0, page: 1, pageSize: 50 }),

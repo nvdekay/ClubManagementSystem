@@ -62,6 +62,8 @@ const messages = {
   upload: ["file upload failed", "Không thể tải tệp lên. Vui lòng thử lại."],
   storageUnavailable: ["file storage unavailable", "Dịch vụ lưu trữ tệp chưa sẵn sàng. Vui lòng liên hệ ICPDP."],
   storageMissing: ["file storage is not configured", "Dịch vụ lưu trữ tệp chưa được cấu hình. Vui lòng liên hệ ICPDP."],
+  proposalDocumentRequired: ["event proposal document is required before submission", "Cần tải lên file đề án sự kiện trước khi gửi duyệt."],
+  proposalFileInvalid: ["invalid event proposal file", "File không hợp lệ: sai định dạng cho phép, rỗng hoặc vượt quá 10 MB."],
   defenseStartRequired: ["valid defense start time is required", "Vui lòng chọn thời gian bắt đầu buổi bảo vệ hợp lệ."],
   defenseStartInvalid: ["valid start time is required", "Vui lòng chọn thời gian bắt đầu hợp lệ."],
   defenseFutureStart: ["future defense start time is required", "Thời gian bắt đầu buổi bảo vệ phải ở trong tương lai."],

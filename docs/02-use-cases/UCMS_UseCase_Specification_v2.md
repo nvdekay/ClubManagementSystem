@@ -961,7 +961,9 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Dữ liệu vào:** Phạm vi (`PUBLIC` / `MEMBERS_ONLY`), mục tiêu, thời gian (trong 1 học kỳ, BR44),
   địa điểm (`venueText`, phòng `propertyId` được phân và/hoặc booking thiết bị `bookingIds`), đối tượng,
   sức chứa, kế hoạch, mức rủi ro, nhu cầu cơ sở vật chất; **phần ngân sách** (chỉ áp cho luồng đề xuất ICPDP; tuỳ chọn với `PUBLIC`, bắt buộc ít nhất 1 dòng với `MEMBERS_ONLY`) — các dòng
-  ngân sách (hạng mục, số tiền, mục đích, khoản chi dự kiến) và tổng số tiền xin.
+  ngân sách (hạng mục, số tiền, mục đích, khoản chi dự kiến) và tổng số tiền xin; **file đề án sự kiện**
+  `proposalDocument` (2026-11-14, chỉ luồng đề xuất ICPDP): soạn theo file mẫu của ICPDP, `.docx` hoặc `.pdf`,
+  tối đa 10 MB, bắt buộc khi nộp/nộp lại, không bắt buộc khi lưu nháp. Sự kiện nội bộ CLB tự túc (A4) không có trường này.
 - **Luồng chính (Đề xuất ICPDP — nút "Đề xuất sự kiện với ICPDP", `/club/:clubId/events/new`):**
   1. Thành viên mở chức năng đề xuất sự kiện với ICPDP (`PUBLIC`, hoặc `MEMBERS_ONLY` có ngân sách — Phương án B) và nhập nội dung đề xuất, kèm phần ngân sách nếu sự kiện cần kinh
      phí. Đây là cách duy nhất để CLB xin kinh phí (BR22).
@@ -970,14 +972,23 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
      `Blocking Conflict`.
   4. Thành viên có thể đính kèm một yêu cầu đặt cơ sở vật chất ngoài `ROOM` (UC45). Phòng học
      không gắn được vào đề xuất; sự kiện trùng một buổi phòng học đã phân (UC58) vẫn bị BR15 chặn.
-  5. Thành viên nộp → `Pending Approval`.
-  6. ICPDP nhận một review task; Club Leader xem được trạng thái yêu cầu, phiên bản hồ sơ và phản hồi thẩm định.
+  5. Thành viên tải file mẫu đề án hiện hành của ICPDP ngay trên trang đề xuất
+     (`GET /api/v1/events/proposal-template/download`: trả thẳng file mặc định `docs/Template Đề án sự kiện.docx`
+     khi ICPDP chưa thay mẫu, ngược lại chuyển hướng 302 tới URL ký 60 giây), hoàn thiện ngoài hệ thống rồi chọn file ở trường **"Upload đề án sự kiện"**.
+     Việc tải mẫu không làm mất dữ liệu đang nhập. Khi lưu, hệ thống lưu thông tin form trước rồi tải file lên
+     bản nháp (`POST /api/v1/clubs/:clubId/events/:id/proposal-document`); bản nháp chỉ giữ một file đang hiệu lực.
+     Các trường thời gian, địa điểm, sức chứa, ngân sách trên form là dữ liệu chính thức để kiểm tra xung đột
+     và hạn mức; file đề án là văn bản chi tiết trình ICPDP.
+  6. Thành viên nộp → `Pending Approval`; file đề án được đóng băng trong bản sửa
+     (`eventProposalVersions.payload.proposalDocument`). Khi đổi lịch (UC28), bản sửa mới kế thừa file hiện có;
+     sự kiện cũ chưa có file vẫn đổi lịch được vì chỉ hành động nộp kiểm tra file.
+  7. ICPDP nhận một review task; Club Leader xem được trạng thái yêu cầu, phiên bản hồ sơ và phản hồi thẩm định.
 - **Luồng thay thế:**
   - **A1 Bản nháp:** đề xuất được lưu ở `Draft` (hoặc `DRAFT` trong chức năng Tạo sự kiện nội bộ CLB).
-  - **A2 Bổ sung và nộp lại báo cáo đề xuất (UC28 của v1):** từ `Revision Requested`, Club Leader xem danh sách nội dung hoặc tài liệu còn thiếu, nhận xét của ICPDP và hạn bổ sung; hoàn thiện báo cáo đề xuất (kể cả phần ngân sách) rồi nộp lại. Hệ thống tạo **bản sửa mới**, đưa đề xuất về `Pending Approval` và chuyển lại ICPDP thẩm định. Giữ nguyên mọi bản sửa và nhận xét cũ; vòng này có thể lặp khi hồ sơ vẫn thiếu.
+  - **A2 Bổ sung và nộp lại báo cáo đề xuất (UC28 của v1):** từ `Revision Requested`, Club Leader xem danh sách nội dung hoặc tài liệu còn thiếu, nhận xét của ICPDP và hạn bổ sung; hoàn thiện báo cáo đề xuất (kể cả phần ngân sách và file đề án — có thể thay file mới) rồi nộp lại. Hệ thống tạo **bản sửa mới**, đưa đề xuất về `Pending Approval` và chuyển lại ICPDP thẩm định. Giữ nguyên mọi bản sửa và nhận xét cũ; vòng này có thể lặp khi hồ sơ vẫn thiếu.
   - **A3 Hoạt động định kỳ:** một chuỗi hoạt động được nộp như một đề xuất duy nhất, liệt kê các
     lần diễn ra của nó.
-  - **A4 Tạo sự kiện nội bộ CLB (`MEMBERS_ONLY`, BR53 — nút "Tạo sự kiện nội bộ" tách riêng):** chức năng và bộ validate được **tách riêng hoàn toàn** khỏi form đề xuất ICPDP để tránh trộn lẫn quy tắc kiểm tra. Sự kiện nội bộ **không nộp đề xuất lên ICPDP, không qua bảo vệ, không có mục ngân sách trường, không hiện trong hàng đợi đề xuất của ICPDP**; trang riêng `/club/:clubId/events/internal/new` và `/club/:clubId/events/:eventId/internal-edit`. Form có 3 hành động: `Lưu nháp` (`DRAFT`, chưa kiểm tra mốc 24 giờ), `Tạo sự kiện nội bộ` (`CREATED`) và `Tạo & Công bố ngay` (`PUBLIC`, kèm cấu hình UC27). Khi tạo chính thức bắt buộc **`startAt >= now + 24h`, không ngoại lệ** (kể cả chỉ dùng `venueText` hay phòng UC58). Cho sửa nội dung ở `DRAFT` và `CREATED`; sửa lịch ở `CREATED` cần `newStartAt >= now + 24h`; từ `PUBLIC` không sửa được nữa. Hệ thống cho phép nhập đồng thời `venueText` và gắn phòng học được phân / booking thiết bị (booking CSVC ngoài phòng học đính kèm vẫn do UC46 quyết định riêng). Khi BCN xác nhận tạo chính thức, hệ thống chuyển `DRAFT → CREATED`, **không** tạo `ApprovalTask`, ghi audit `INTERNAL_EVENT_CREATED`, và hiển thị trong danh sách Sự kiện nội bộ (trừ `DRAFT`) cùng biểu đồ trên dashboard ICPDP (UC02). Vẫn kiểm tra BR10, BR15, BR44, BR45.
+  - **A4 Tạo sự kiện nội bộ CLB (`MEMBERS_ONLY`, BR53 — nút "Tạo sự kiện nội bộ" tách riêng):** chức năng và bộ validate được **tách riêng hoàn toàn** khỏi form đề xuất ICPDP để tránh trộn lẫn quy tắc kiểm tra. Sự kiện nội bộ **không nộp đề xuất lên ICPDP, không qua bảo vệ, không có mục ngân sách trường, không hiện trong hàng đợi đề xuất của ICPDP**; trang riêng `/club/:clubId/events/internal/new` và `/club/:clubId/events/:eventId/internal-edit`. Form có 3 hành động: `Lưu nháp` (`DRAFT`, chưa kiểm tra mốc 24 giờ), `Tạo sự kiện nội bộ` (`CREATED`) và `Tạo & Công bố ngay` (`PUBLIC`, kèm cấu hình UC27). Khi tạo chính thức bắt buộc **`startAt >= now + 24h`, không ngoại lệ** (kể cả chỉ dùng `venueText` hay phòng UC58). Cho sửa nội dung ở `DRAFT` và `CREATED`; sửa lịch ở `CREATED` cần `newStartAt >= now + 24h`; từ `PUBLIC` không sửa được nữa. Hệ thống cho phép nhập đồng thời `venueText` và gắn phòng học được phân / booking thiết bị (booking CSVC ngoài phòng học đính kèm vẫn do UC46 quyết định riêng). Khi BCN xác nhận tạo chính thức, hệ thống chuyển `DRAFT → CREATED`, **không** tạo `ApprovalTask`, ghi audit `INTERNAL_EVENT_CREATED`, và hiển thị trong danh sách Sự kiện nội bộ (trừ `DRAFT`) cùng biểu đồ trên dashboard ICPDP (UC02). Vẫn kiểm tra BR10, BR15, BR44, BR45. Luồng này **không có file mẫu và trường đề án sự kiện**; tải file đề án lên sự kiện nội bộ bị từ chối.
   - **A5 Xác nhận hoặc đề xuất dời lịch bảo vệ sự kiện (BR63):** khi ICPDP xếp lịch bảo vệ (UC26 A4), Club Leader nhận thông báo (tiêu đề, thời gian bắt đầu, thời lượng dự kiến, địa điểm phòng học `ROOM`, ghi chú). Club Leader xem chi tiết lịch hẹn và thực hiện một trong hai hành động:
     - **Xác nhận tham gia (`Confirm`)**: Bắt buộc thực hiện **trước giờ bảo vệ ít nhất 24 giờ**. Nếu quá hạn 24 giờ mà chưa xác nhận, hệ thống gửi cảnh báo quá hạn cho ICPDP Officer;
     - **Đề xuất dời lịch (`Request Reschedule`)**: Nếu CLB gặp sự cố bất khả kháng (trùng lịch thi, lịch học của các thành viên chủ chốt), Club Leader nhập lý do chi tiết và gửi đề xuất xin dời lịch lên ICPDP. Trạng thái buổi bảo vệ chuyển sang `Reschedule Requested` và chờ ICPDP phản hồi (chấp thuận đổi giờ/phòng mới hoặc bác bỏ giữ nguyên lịch).
@@ -996,11 +1007,12 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   - **E9** thân yêu cầu ở luồng nội bộ gửi kèm `budgetLines` hoặc `audienceScope` → từ chối; sự kiện nội bộ cần xin ngân sách/bảo trợ cấp trường phải dùng luồng đề xuất ICPDP (UC26) với `MEMBERS_ONLY` và ít nhất 1 hạng mục ngân sách.
   - **E10** (2026-11-14) luồng đề xuất ICPDP nhận `MEMBERS_ONLY` với `budgetLines` rỗng (tạo, lưu hoặc nộp) → từ chối kèm hướng dẫn dùng nút "Tạo sự kiện nội bộ".
   - **E11** (2026-11-14) luồng nội bộ tạo chính thức hoặc tạo & công bố khi `startAt < now + 24h` → từ chối; bản nháp vẫn lưu được ở `DRAFT`.
+  - **E12** (2026-11-14) nộp/nộp lại đề xuất ICPDP khi bản nháp chưa có `proposalDocument` → từ chối (`event proposal document is required before submission`); file đề án sai định dạng, rỗng, vượt 10 MB hoặc chữ ký byte không khớp → từ chối tải lên (400); tải file lên sự kiện nội bộ → 400; sự kiện không ở `Draft` / `Revision Requested` → 409. Bản nháp vẫn lưu được ở `Draft`.
 - **Hậu điều kiện:** Đề xuất ở `Pending Approval` với một bản sửa bất biến; tồn tại một review
   task. Với A4: sự kiện nội bộ ở `CREATED` (chưa công bố cho thành viên) hoặc `PUBLIC` (tạo & công bố ngay), có bản ghi audit và ICPDP xem được ở danh sách sự kiện nội bộ UC02. Với A5: lịch bảo vệ chuyển sang `Confirmed` hoặc `Reschedule Requested`.
 - **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR10, BR15, BR21, BR22, BR44, BR45, BR53, BR63. Phát hiện xung đột là một quy tắc được
   đánh giá tại đây, không phải một use case (v1 từng đếm nó thành UC25 với actor là `System`).
-- **Đầu ra:** Event, bản sửa đề xuất (nếu `PUBLIC`), ApprovalTask (nếu `PUBLIC`), yêu cầu PropertyBooking nếu có, xác nhận hoặc đề xuất dời lịch bảo vệ.
+- **Đầu ra:** Event, bản sửa đề xuất kèm snapshot file đề án (nếu `PUBLIC`), ApprovalTask (nếu `PUBLIC`), yêu cầu PropertyBooking nếu có, xác nhận hoặc đề xuất dời lịch bảo vệ.
 - **Use case liên quan:** UC26, UC45, UC04, UC02
 - **Pain point:** BP05, BP06, BP09
 
@@ -1013,16 +1025,19 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Kích hoạt:** Một review task từ UC25 hoặc sự kiện ở trạng thái chờ bảo vệ lại.
 - **Tiền điều kiện:** Đề xuất đang ở `Pending Approval` hoặc `Re-defense Pending`.
 - **Dữ liệu vào:** Ghi chú thẩm định, các nhận xét có cấu trúc, quyết định và lý do; quyết định tài trợ, thời điểm trả trước/trả sau và trần
-  duyệt theo từng dòng ngân sách; thông tin tạo lịch bảo vệ (phòng học `ROOM`, thời lượng dự kiến, ghi chú); ghi chú Note Markdown của từng cán bộ trong buổi bảo vệ trực tiếp.
+  duyệt theo từng dòng ngân sách; thông tin tạo lịch bảo vệ (phòng học `ROOM`, thời lượng dự kiến, ghi chú); ghi chú Note Markdown của từng cán bộ trong buổi bảo vệ trực tiếp; file mẫu đề án sự kiện mới (`.docx`/`.pdf`/`.xlsx`, tối đa 10 MB) khi officer thay mẫu (A5).
 - **Luồng chính:**
   1. Officer mở đề xuất → `Under Review`.
   2. Officer xem xét mức độ tuân thủ, địa điểm, thời gian, mức rủi ro, các nghĩa vụ quá hạn của
      CLB, yêu cầu booking đính kèm, và phần ngân sách — điều kiện, hạn mức còn lại của kỳ, khả
-     năng trùng lặp với các ngân sách khác của CLB.
+     năng trùng lặp với các ngân sách khác của CLB. Officer xem trực tiếp (PDF) hoặc tải về file đề án
+     `proposalDocument` của bản sửa hiện tại và mọi bản sửa trước
+     (`GET /api/v1/admin/event-proposals/:id/document/access?revisionNo=&inline=`, URL ký 60 giây, mặc định bản sửa mới nhất); bảng so sánh
+     bản sửa hiển thị cả thay đổi file đề án. Đề xuất cũ chưa có file hiển thị "Chưa có file đề án đính kèm".
   3. Officer ghi lại ghi chú thẩm định, gồm cả ý kiến của Cơ sở vật chất, An ninh hay Tài chính
      lấy từ ngoài hệ thống.
   4. Officer chọn một kết quả:
-     - **Yêu cầu bổ sung báo cáo đề xuất** — bắt buộc chỉ rõ từng nội dung hoặc tài liệu còn thiếu, kèm nhận xét hướng dẫn và hạn bổ sung theo chính sách; phản hồi gắn với phiên bản được thẩm định, có thể nhắm riêng phần ngân sách → `Revision Requested`;
+     - **Yêu cầu bổ sung báo cáo đề xuất** — bắt buộc chỉ rõ từng nội dung hoặc tài liệu còn thiếu, kèm nhận xét hướng dẫn và hạn bổ sung theo chính sách; phản hồi gắn với phiên bản được thẩm định, có thể nhắm riêng phần ngân sách; phần `content` ("Nội dung, kế hoạch & file đề án") bao gồm cả file đề án đính kèm → `Revision Requested`;
      - **Phê duyệt** → `Approved`; với mỗi dòng ngân sách, officer bắt buộc quyết định
        `Not Sponsored` (lý do, trần 0) hoặc tài trợ (`Before Event`/`After Event`, trần bằng toàn bộ số xin, không sửa tiền tại bước duyệt). Dòng chưa quyết định chặn phê duyệt.
        Tạo `EventBudget` và lưu riêng số xin, trần, thời điểm trả cùng phiên bản quyết định;
@@ -1050,6 +1065,12 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
        - **Phê duyệt (`Approved`)**: Buổi bảo vệ đạt yêu cầu → nếu sự kiện có phần ngân sách, bắt buộc chọn quyết định tài trợ từng dòng (`approvedAmount` bằng toàn bộ số xin khi trả trước/trả sau, bằng 0 kèm lý do khi không tài trợ; không sửa tiền tại đây) → hệ thống tạo `EventBudget` ở `Approved` và chuyển sự kiện sang `Approved`;
        - **Yêu cầu sửa đổi (`Revision Requested`)**: Nhập nội dung cần sửa và hạn nộp mới → sự kiện chuyển `Revision Requested`;
        - **Bảo vệ lại (`Re-defense`)**: Cho phép CLB thuyết trình lại → sự kiện chuyển sang trạng thái `Re-defense Pending` để chờ xếp lịch bảo vệ lần tiếp theo. Không giới hạn số lần bảo vệ lại (do ICPDP toàn quyền quyết định).
+  - **A5 Quản lý file mẫu đề án sự kiện (2026-11-14):** trên trang hàng đợi đề xuất, officer xem mẫu hiện hành
+    (tên file, dung lượng, ngày cập nhật hoặc nhãn "Mẫu mặc định hệ thống"), tải về, hoặc tải lên mẫu mới để thay thế
+    (`POST /api/v1/admin/event-proposals/template` → 201; `.docx`, `.pdf`, `.xlsx`, tối đa 10 MB). Mẫu ban đầu là
+    `docs/Template Đề án sự kiện.docx`; **không có thao tác xoá hay vô hiệu hoá** mẫu. Mỗi lần thay ghi audit
+    `EVENT_PROPOSAL_TEMPLATE_UPDATED` (`entityType: "SystemTemplate"`); CLB tải mẫu từ thời điểm đó nhận bản mới,
+    còn đề xuất đã nộp giữ nguyên file đề án của CLB.
 - **Ngoại lệ:**
   - **E1** CLB bị tạm ngừng giữa lúc nộp và lúc quyết định → đề xuất chuyển `Cancelled` bởi UC15, toàn bộ lịch bảo vệ chưa diễn ra tự động bị hủy;
   - **E2** hết deadline chỉnh sửa → scheduler chuyển đề xuất sang `Expired`; nếu có lịch bảo vệ đang chờ mà quá hạn sửa 12 giờ trước bảo vệ thì lịch bảo vệ cũng tự động bị hủy, phòng học được giải phóng;
@@ -1057,13 +1078,14 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
     được ghi lại;
   - **E4** yêu cầu bổ sung không nêu nội dung còn thiếu hoặc nhận xét rỗng → từ chối lưu, giữ nguyên trạng thái;
   - **E5** CLB vắng mặt buổi bảo vệ (`NO_SHOW`, BR63) → đến giờ bảo vệ nhưng CLB không có mặt, officer ấn "Đánh dấu Vắng mặt" → sự kiện tự động chuyển sang `Rejected`;
-  - **E6** trùng lịch phòng học → phòng học đã có lịch sinh hoạt kỳ (UC58) hoặc có lịch bảo vệ khác trong cùng khung giờ → từ chối tạo lịch, yêu cầu chọn phòng hoặc khung giờ khác.
+  - **E6** trùng lịch phòng học → phòng học đã có lịch sinh hoạt kỳ (UC58) hoặc có lịch bảo vệ khác trong cùng khung giờ → từ chối tạo lịch, yêu cầu chọn phòng hoặc khung giờ khác;
+  - **E7** (2026-11-14) file mẫu đề án thay thế sai định dạng, rỗng, vượt 10 MB hoặc chữ ký byte không khớp → từ chối, giữ nguyên mẫu hiện hành.
 - **Hậu điều kiện:** Đề xuất ở `Revision Requested`, `Approved`, `Rejected`, hoặc `Re-defense Pending`; chỉ một sự kiện
   đã duyệt mới công bố được ở UC27. Đề xuất được duyệt có phần ngân sách thì có `EventBudget` ở
   `Approved`, là đầu vào để CLB ghi chi phí/nộp bộ hóa đơn ở UC36; sau đối soát UC37 mới thanh toán ở UC35. Khi có bảo vệ, tồn tại bản ghi lịch sử `EventDefenseSession` kèm toàn bộ ghi chú của các cán bộ tham gia.
 - **Quy tắc nghiệp vụ:** BR05, BR14, BR16, BR22, BR31, BR53, BR63. Việc duyệt một đề xuất có kèm yêu cầu booking
   **không** đồng nghĩa duyệt booking đó — UC46 quyết định nó riêng. Sự kiện nội bộ CLB không ngân sách (BR53) không nộp qua và không hiện trong hàng đợi đề xuất UC26 (đề xuất `MEMBERS_ONLY` có ngân sách theo Phương án B vẫn được thẩm định ở đây); ICPDP xem danh sách (trừ `DRAFT` và đã huỷ) và biểu đồ ở UC02 và xử lý sai phạm (nếu có) qua UC40.
-- **Đầu ra:** ApprovalDecision, EventBudget (khi có phần ngân sách), EventDefenseSession và DefenseNotes (khi có bảo vệ), bản ghi audit, thông báo.
+- **Đầu ra:** ApprovalDecision, EventBudget (khi có phần ngân sách), EventDefenseSession và DefenseNotes (khi có bảo vệ), bản ghi audit (kể cả `EVENT_PROPOSAL_TEMPLATE_UPDATED` khi thay mẫu), thông báo.
 - **Use case liên quan:** UC25, UC27, UC35, UC46, UC05, UC58
 - **Pain point:** BP05, BP09, BP15
 

@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { summarizeFeedback, FEEDBACK_CRITERION } from "../../domain/event-feedback.js";
-import type { ClubEvent, ClubEventDetail, ClubFeedbackSummary, EventParticipant } from "../../domain/club-event.js";
+import { publicEventPayload, type ClubEvent, type ClubEventDetail, type ClubFeedbackSummary, type EventParticipant } from "../../domain/club-event.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
@@ -8,7 +8,7 @@ type Doc = Record<string, unknown>;
 function oid(id: string) { return new Types.ObjectId(id); }
 export function eventMoney(value: unknown): number { return Number(String(value ?? 0)); }
 export function clubEventFrom(doc: Doc, payload: Doc = {}): ClubEvent {
-  return { ...payload, id: String(doc._id), clubId: String(doc.clubId), clubName: String(doc.clubName),
+  return { ...publicEventPayload(payload), id: String(doc._id), clubId: String(doc.clubId), clubName: String(doc.clubName),
     title: String(doc.title), objective: String(doc.objective ?? ""), plan: String(payload.plan ?? ""),
     startAt: doc.startAt as Date, endAt: doc.endAt as Date, semesterCode: String(doc.semesterCode),
     venueText: doc.venueText as string | undefined, propertyId: doc.propertyId ? String(doc.propertyId) : undefined,
@@ -26,7 +26,7 @@ export function clubEventFrom(doc: Doc, payload: Doc = {}): ClubEvent {
 }
 /** Audit actions whose `after.payload` holds the latest event input (plan text, bookingIds, budget lines). */
 export const EVENT_PAYLOAD_ACTIONS = ["EVENT_DRAFT_CREATED", "EVENT_DRAFT_SAVED", "EVENT_PROPOSAL_SUBMITTED", "RECORD_INTERNAL",
-  "EVENT_RESCHEDULED", "INTERNAL_EVENT_DRAFT_SAVED", "INTERNAL_EVENT_CREATED", "INTERNAL_EVENT_SAVED"];
+  "EVENT_RESCHEDULED", "INTERNAL_EVENT_DRAFT_SAVED", "INTERNAL_EVENT_CREATED", "INTERNAL_EVENT_SAVED", "EVENT_PROPOSAL_DOCUMENT_UPLOADED"];
 export async function eventDraftPayload(eventId: Types.ObjectId): Promise<Doc> {
   const audit = await m.auditLogs!.findOne({ entityType: "Event", entityId: eventId, action: { $in: EVENT_PAYLOAD_ACTIONS } })
     .sort({ "after.eventVersion": -1, at: -1, _id: -1 }).lean();
@@ -45,7 +45,7 @@ export async function readClubEvent(clubId: string, eventId: string): Promise<Cl
   const properties = await m.properties!.find({ _id: { $in: bookings.map((item) => item.propertyId) } }).lean();
   const current = Object.keys(payload).length ? payload : ((versions.at(-1)?.payload ?? {}) as Doc);
   return { event: clubEventFrom(doc, { ...current, budgetLines: current.budgetLines ?? versions.at(-1)?.budgetLines ?? [] }),
-    versions: versions.map((v) => ({ revisionNo: Number(v.revisionNo), payload: v.payload,
+    versions: versions.map((v) => ({ revisionNo: Number(v.revisionNo), payload: publicEventPayload(v.payload),
       budgetLines: (v.budgetLines ?? []) as ClubEvent["budgetLines"], submittedAt: v.submittedAt as Date })),
     decisions: decisions.map((d) => ({ outcome: String(d.outcome), reason: d.reason as string | undefined, comments: d.comments, at: d.at as Date })),
     bookings: bookings.map((b) => ({ id: String(b._id), state: String(b.state), propertyId: String(b.propertyId),

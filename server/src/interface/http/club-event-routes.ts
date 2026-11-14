@@ -1,13 +1,14 @@
-import { Router, type Response } from "express";
+import { raw, Router, type Request, type Response } from "express";
 import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
 import type { ClubAccessRepository } from "../../domain/access.js";
-import type { ClubEventAction, ClubEventInput, ClubEventRepository, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
+import type { ClubEventAction, ClubEventInput, ClubEventRepository, EventProposalFileStorage, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
 import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { actOnClubEvent, clubEventOptions, clubEventFeedback, clubEventParticipants, createClubEvent, createInternalClubEvent, getClubEvent,
-  listClubEvents } from "../../usecase/club-event.js";
+import { actOnClubEvent, clubEventOptions, clubEventFeedback, clubEventParticipants, clubEventProposalDocumentAccess, createClubEvent,
+  createInternalClubEvent, downloadEventProposalTemplate, eventProposalTemplateInfo, getClubEvent, listClubEvents,
+  reviewEventProposalDocumentAccess, uploadEventProposalDocument, uploadEventProposalTemplate } from "../../usecase/club-event.js";
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
 
@@ -47,6 +48,8 @@ export const clubEventCheckInBody = z.object({ studentId: eventObjectId, reason:
 export const clubEventCorrectBody = z.object({ studentId: eventObjectId, reason, checkedInAt: date.optional(), absent: z.boolean() }).strict();
 export const clubEventReasonBody = z.object({ reason }).strict();
 export const clubEventFeedbackQuery = z.object({ eventIds: z.string().min(1).max(1000) }).strict();
+export const proposalDocumentAccessQuery = z.object({ revisionNo: z.string().regex(/^[1-9][0-9]{0,5}$/).optional(),
+  inline: z.enum(["true", "false"]).optional() }).strict();
 const emptyBody = z.object({}).strict();
 function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   const result = schema.safeParse(raw);
@@ -66,13 +69,33 @@ function publishInput(body: z.infer<typeof publishSettings>): EventPublishInput 
     registrationCloseAt: body.registrationCloseAt ? new Date(body.registrationCloseAt) : undefined,
     checkInOpenAt: new Date(body.checkInOpenAt), checkInCloseAt: new Date(body.checkInCloseAt) };
 }
+/** Raw upload: body bytes, `Content-Type`, and the URI-encoded `X-Filename` header. */
+function uploadedFile(req: Request): { fileName: string; mimeType: string; bytes: Buffer } {
+  if (!Buffer.isBuffer(req.body)) throw new DomainError("file body is required", "validation");
+  const header = req.header("X-Filename");
+  if (!header) throw new DomainError("file name is required", "validation");
+  try { return { fileName: decodeURIComponent(header), mimeType: req.header("Content-Type") ?? "", bytes: req.body }; }
+  catch { throw new DomainError("invalid file name", "validation"); }
+}
+function documentQuery(raw: unknown): { revisionNo?: number; inline: boolean } {
+  const query = parse(proposalDocumentAccessQuery, raw);
+  return { revisionNo: query.revisionNo ? Number(query.revisionNo) : undefined, inline: query.inline === "true" };
+}
+/** `attachment` with an ASCII fallback name and the exact UTF-8 name (RFC 5987) for Vietnamese file names. */
+function attachmentHeader(fileName: string): string {
+  const ascii = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
+    .replace(/[^\x20-\x7e]|["\\]/g, "_");
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName).replace(/['()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)}`;
+}
 export interface ClubEventRouteDeps {
   repo: ClubEventRepository; access: ClubAccessRepository; authRepo: AuthRepository; sessions: SessionService;
+  files?: EventProposalFileStorage | null;
 }
 export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
-  const usecases = { repo: deps.repo, access: deps.access, auth: deps.authRepo };
+  const usecases = { repo: deps.repo, access: deps.access, auth: deps.authRepo, files: deps.files ?? null };
+  const upload = raw({ type: () => true, limit: "10mb" });
   const base = "/clubs/:clubId/events";
   router.get(base, authGuard(guard, false), async (req, res) => {
     ok(res, await listClubEvents(usecases, actor(res), parse(eventObjectId, req.params.clubId), new Date()));
@@ -123,6 +146,33 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   router.post(`${internalBase}/:id/create`, authGuard(guard), async (req, res) => {
     ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       { kind: "create-internal", ...parse(clubEventVersionBody, req.body) }, new Date()));
+  });
+  router.get("/events/proposal-template", authGuard(guard, false), async (_req, res) => {
+    ok(res, await eventProposalTemplateInfo(usecases, actor(res)));
+  });
+  router.get("/events/proposal-template/download", authGuard(guard, false), async (_req, res) => {
+    const result = await downloadEventProposalTemplate(usecases, actor(res));
+    if (result.kind === "redirect") return res.redirect(302, result.url);
+    res.setHeader("Content-Disposition", attachmentHeader(result.fileName));
+    res.type(result.mimeType).send(result.content);
+  });
+  router.post(`${base}/:id/proposal-document`, authGuard(guard), upload, async (req, res) => {
+    const file = uploadedFile(req);
+    ok(res, await uploadEventProposalDocument(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
+      file.fileName, file.mimeType, file.bytes, new Date()));
+  });
+  router.get(`${base}/:id/proposal-document/access`, authGuard(guard, false), async (req, res) => {
+    const query = documentQuery(req.query);
+    ok(res, await clubEventProposalDocumentAccess(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
+      query.revisionNo, query.inline, new Date()));
+  });
+  router.post("/admin/event-proposals/template", authGuard(guard), upload, async (req, res) => {
+    const file = uploadedFile(req);
+    ok(res, await uploadEventProposalTemplate(usecases, actor(res), file.fileName, file.mimeType, file.bytes, new Date()), 201);
+  });
+  router.get("/admin/event-proposals/:id/document/access", authGuard(guard, false), async (req, res) => {
+    const query = documentQuery(req.query);
+    ok(res, await reviewEventProposalDocumentAccess(usecases, actor(res), parse(eventObjectId, req.params.id), query.revisionNo, query.inline));
   });
   return router;
 }

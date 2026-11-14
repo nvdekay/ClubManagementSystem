@@ -773,7 +773,7 @@ Table eventProposalVersions {
   id objectId [pk]
   eventId objectId [not null]
   revisionNo int [not null]
-  payload json [not null, note: 'Bản chụp bất biến của đề xuất đã nộp.']
+  payload json [not null, note: 'Bản chụp bất biến của đề xuất đã nộp, gồm cả snapshot file đề án proposalDocument { id, fileName, mimeType, bytes, assetId, uploadedAt, uploadedBy } (UC25; bản nháp giữ proposalDocument trong auditLogs EVENT_PROPOSAL_DOCUMENT_UPLOADED, đổi lịch UC28 kế thừa). Template đề án của ICPDP không có bảng riêng: auditLogs entityType SystemTemplate, action EVENT_PROPOSAL_TEMPLATE_UPDATED, bản mới nhất là bản hiện hành.']
   budgetLines json [note: 'Phần ngân sách của đề xuất (UC25 FR-18): [{ category, amount, purpose, plannedItems }]; null khi sự kiện không xin kinh phí. Đóng băng theo bản sửa.']
   requestedBudgetTotal decimal [note: 'Tổng số tiền xin trong bản sửa này (BR22).']
   conflictResult conflictResult

@@ -1,4 +1,5 @@
 import mongoose, { Types, type ClientSession } from "mongoose";
+import { publicEventPayload } from "../../domain/club-event.js";
 import { DomainError } from "../../domain/errors.js";
 import {
   summarizeFeedback,
@@ -93,7 +94,7 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
       proposal: proposal
         ? {
             revisionNo: proposal.revisionNo,
-            payload: proposal.payload,
+            payload: publicEventPayload(proposal.payload),
             budgetLines: proposal.budgetLines,
             conditions: event.approvalConditions ?? [],
           }

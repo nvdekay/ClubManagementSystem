@@ -11,13 +11,15 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useEventDefenseActions } from "@/hooks/useEventDefense";
-import { useEventProposal, useEventProposalAction } from "@/hooks/useEventProposalReviews";
+import { useEventProposal, useEventProposalAction, useReviewProposalDocumentAccess } from "@/hooks/useEventProposalReviews";
 import { apiErrors } from "@/i18n/apiErrors";
 import { ProposalDecisionPanel } from "@/pages/icpdp/ProposalDecisionPanel";
 import { ScheduleDefenseDialog } from "@/pages/icpdp/ScheduleDefenseDialog";
 import {
   type ClubObligation, type EventProposalVersion, type EventReviewOutcome,
 } from "@/services/eventProposalReviews";
+import type { EventProposalDocumentInfo } from "@/services/clubEvents";
+import { formatBytes } from "@/utils/proposalFile";
 import { diffFields, type DiffField } from "@/utils/revisionDiff";
 import { useConfirm } from "@/hooks/useConfirm";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
@@ -25,6 +27,12 @@ import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 
 function text(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+/** Proposal file frozen into a submitted revision; absent on proposals made before the feature. */
+function proposalDocument(version: EventProposalVersion | undefined): EventProposalDocumentInfo | undefined {
+  const value = version?.payload.proposalDocument;
+  return value && typeof value === "object" ? value as EventProposalDocumentInfo : undefined;
 }
 
 function resolveI18nError(error: Error | null | undefined, fallback: string): string {
@@ -45,6 +53,7 @@ export function EventProposalReviewPage() {
   const review = useEventProposal(id, isOfficer);
   const action = useEventProposalAction();
   const defenseAction = useEventDefenseActions();
+  const documentAccess = useReviewProposalDocumentAccess();
 
   const [scheduleDialogMode, setScheduleDialogMode] = useState<"schedule" | "reschedule" | null>(null);
   const [reasonModalKind, setReasonModalKind] = useState<"cancel" | "rejectReschedule" | "noShow" | null>(null);
@@ -156,7 +165,12 @@ export function EventProposalReviewPage() {
     { key: "form", label: t("eventReviews.fieldForm"), read: (v) => (Array.isArray(v.payload.registrationForm)
       ? v.payload.registrationForm as { label?: string; required?: boolean }[] : [])
       .map((field) => `${field.label ?? ""}${field.required ? " *" : ""}`).join("\n") },
+    { key: "proposalDocument", label: t("eventReviews.fieldDocument"), read: (v) => {
+      const file = proposalDocument(v);
+      return file ? `${file.fileName} · ${formatBytes(file.bytes)} · ${date(file.uploadedAt)}` : "";
+    } },
   ];
+  const currentDocument = proposalDocument(current);
   const payload = current?.payload ?? {};
   const occurrences = Array.isArray(payload.occurrences) ? payload.occurrences as { startAt?: string; endAt?: string }[] : [];
   const conflictMessage = event.conflictDetail && typeof event.conflictDetail === "object"
@@ -174,6 +188,16 @@ export function EventProposalReviewPage() {
     activeDefenseSession && activeDefenseSession.state === "SCHEDULED"
     && new Date(activeDefenseSession.startAt).getTime() - renderedAt < 24 * 3600_000,
   );
+
+  async function openDocument(revisionNo: number, inline: boolean) {
+    if (!id) return;
+    try {
+      const access = await documentAccess.mutateAsync({ id, revisionNo, inline });
+      window.open(access.url, "_blank", "noopener,noreferrer");
+    } catch {
+      // Mutation error is rendered in the proposal document section.
+    }
+  }
 
   async function claim() {
     if (!auth.data || !id) return;
@@ -229,6 +253,37 @@ export function EventProposalReviewPage() {
           {previous && current && <RevisionChanges previousNumber={previous.revisionNo}
             changes={diffFields(previous, current, versionFields)}
             requestedSections={revisionRequest?.sections.map(sectionLabel)} reason={revisionRequest?.reason} />}
+          <section className="rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-5 shadow-xs">
+            <h2 className="font-heading text-base font-semibold">{t("eventReviews.documentTitle")}</h2>
+            {currentDocument && current ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                <div className="min-w-0 flex-1 basis-56">
+                  <p className="font-medium break-words">{currentDocument.fileName}</p>
+                  <p className="text-muted-app">{formatBytes(currentDocument.bytes)} · {t("eventReviews.documentUploaded", { date: date(currentDocument.uploadedAt) })}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <AppButton disabled={documentAccess.isPending} onClick={() => void openDocument(current.revisionNo, false)}>
+                    {t("eventReviews.documentDownload")}</AppButton>
+                  {currentDocument.mimeType === "application/pdf" && <AppButton variant="secondary" disabled={documentAccess.isPending}
+                    onClick={() => void openDocument(current.revisionNo, true)}>{t("eventReviews.documentView")}</AppButton>}
+                </div>
+              </div>
+            ) : <p className="mt-3 text-sm text-muted-app">{t("eventReviews.documentNone")}</p>}
+            {versions.length > 1 && <div className="mt-4 border-t border-border-app pt-3">
+              <h3 className="text-sm font-semibold">{t("eventReviews.documentByRevision")}</h3>
+              <ul className="mt-2 divide-y divide-border-app text-sm">{versions.map((version) => {
+                const file = proposalDocument(version);
+                return <li key={version.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span className="min-w-0 break-words"><span className="font-medium">{t("eventReviews.revision", { number: version.revisionNo })}</span>
+                    {" · "}{file ? `${file.fileName} · ${formatBytes(file.bytes)}` : <span className="text-muted-app">{t("eventReviews.documentNone")}</span>}</span>
+                  {file && <AppButton variant="ghost" disabled={documentAccess.isPending} onClick={() => void openDocument(version.revisionNo, false)}>
+                    {t("eventReviews.documentDownload")}</AppButton>}
+                </li>;
+              })}</ul>
+            </div>}
+            {documentAccess.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{documentAccess.error.message}</p>}
+          </section>
+
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.overview")}</h2>
             <dl className="mt-4 grid gap-5 sm:grid-cols-2">

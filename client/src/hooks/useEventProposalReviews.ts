@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { eventProposalTemplateKey } from "@/hooks/useClubEvents";
 import {
-  claimEventProposal, decideEventProposal, fetchEventProposal, fetchEventProposalQueue,
+  accessReviewProposalDocument, claimEventProposal, uploadProposalTemplate, decideEventProposal, fetchEventProposal, fetchEventProposalQueue,
   type EventReviewDecisionInput,
 } from "@/services/eventProposalReviews";
 
@@ -29,4 +30,18 @@ export function useEventProposalAction() {
       await queryClient.invalidateQueries({ queryKey: [...eventProposalKey, "queue"] });
     },
   });
+}
+
+export function useUploadProposalTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { file: File; mimeType: string; csrfToken: string }) =>
+      uploadProposalTemplate(input.file, input.mimeType, input.csrfToken),
+    onSuccess: (template) => { queryClient.setQueryData(eventProposalTemplateKey, template); },
+  });
+}
+
+export function useReviewProposalDocumentAccess() {
+  return useMutation({ mutationFn: (input: { id: string; revisionNo?: number; inline?: boolean }) =>
+    accessReviewProposalDocument(input.id, input.revisionNo, input.inline) });
 }

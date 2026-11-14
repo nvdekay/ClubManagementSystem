@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 
@@ -16,13 +16,15 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
-import { useClubEvent, useClubEventMutation, useClubEventOptions } from "@/hooks/useClubEvents";
+import { useClubEvent, useClubEventMutation, useClubEventOptions, useEventProposalDocumentAccess, useEventProposalTemplate } from "@/hooks/useClubEvents";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { ClubEventErrorMessage } from "@/pages/club/ClubEventErrorMessage";
 import { iso, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
-import type { ClubEvent, ClubEventDetail, ClubEventInput, ClubEventOptions } from "@/services/clubEvents";
+import { EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL, type ClubEvent, type ClubEventDetail, type ClubEventInput, type ClubEventOptions } from "@/services/clubEvents";
+import { formatBytes, proposalFileType } from "@/utils/proposalFile";
 
 const sectionCardClass = "space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6";
+const secondaryLinkClass = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 font-heading text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9";
 
 function freshEvent(): ClubEventInput {
   const start = new Date(Date.now() + 10 * 86400000);
@@ -109,13 +111,24 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
   const existing = detail?.event;
   const [draft, setDraft] = useState<ClubEventInput>(() => (existing ? inputFromEvent(existing) : freshEvent()));
   const [editorOpenedAt] = useState(() => Date.now());
-  const [createdDraft, setCreatedDraft] = useState<{ id: string; version: number } | null>(null);
+  // Latest server copy of the event once this form has saved it; newer than `existing` until the detail refetches.
+  const [createdDraft, setCreatedDraft] = useState<ClubEvent | null>(null);
   const [formError, setFormError] = useState<unknown>(null);
+  // Kept in memory until the event exists, so closing the tab never leaves an orphan upload.
+  const [pendingFile, setPendingFile] = useState<{ file: File; mimeType: string } | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [documentMissing, setDocumentMissing] = useState(false);
+  const [uploadFailed, setUploadFailed] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const template = useEventProposalTemplate(true);
+  const documentAccess = useEventProposalDocumentAccess(clubId);
 
   const eventsListUrl = `/club/${encodeURIComponent(clubId)}/events`;
   const isNew = !existing && !createdDraft;
   const activeId = existing?.id ?? createdDraft?.id;
-  const activeVersion = existing?.version ?? createdDraft?.version ?? 0;
+  const activeVersion = createdDraft?.version ?? existing?.version ?? 0;
+  const savedDocument = createdDraft ? createdDraft.proposalDocument : existing?.proposalDocument;
+  const documentError = fileError ?? (documentMissing && !savedDocument && !pendingFile ? t("common.fieldRequired") : null);
 
   const revisionRequest = [...(detail?.decisions ?? [])].reverse().find((d) => d.outcome === "Request revision");
   const revisionSections =
@@ -168,9 +181,34 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
   );
   const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
 
+  function pickFile(file: File | undefined) {
+    if (!file) return;
+    const mimeType = proposalFileType(file, ["docx", "pdf"]);
+    setFileError(mimeType ? null : t("clubEvents.proposalDocumentInvalid"));
+    if (mimeType) setPendingFile({ file, mimeType });
+  }
+
+  async function openDocument(inline: boolean) {
+    if (!activeId) return;
+    try {
+      const access = await documentAccess.mutateAsync({ id: activeId, inline });
+      // A new tab keeps this form mounted whether the browser downloads or displays the file.
+      window.open(access.url, "_blank", "noopener,noreferrer");
+    } catch {
+      // Mutation error is rendered under the document.
+    }
+  }
+
   async function persist(shouldSubmit: boolean) {
-    if (!eventField.touchAll()) return;
+    const fieldsValid = eventField.touchAll();
+    if (shouldSubmit && !savedDocument && !pendingFile) {
+      setDocumentMissing(true);
+      if (fieldsValid) requestAnimationFrame(() => document.getElementById("proposal-document")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+      return;
+    }
+    if (!fieldsValid) return;
     setFormError(null);
+    setUploadFailed(false);
     let savedEvent: ClubEvent;
     try {
       const result = activeId
@@ -187,10 +225,31 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
             csrfToken,
           });
       savedEvent = result.event;
-      setCreatedDraft({ id: savedEvent.id, version: savedEvent.version });
+      setCreatedDraft(savedEvent);
     } catch (error) {
       setFormError(error);
       return;
+    }
+
+    // Upload only once the event exists; its response carries the bumped version the submit must send.
+    if (pendingFile) {
+      try {
+        const uploaded = await mutation.mutateAsync({
+          kind: "upload-document",
+          id: savedEvent.id,
+          file: pendingFile.file,
+          mimeType: pendingFile.mimeType,
+          csrfToken,
+        });
+        savedEvent = uploaded.event;
+        setCreatedDraft(savedEvent);
+        setPendingFile(null);
+      } catch (error) {
+        // The draft now exists (createdDraft), so a retry saves it instead of creating a duplicate.
+        setUploadFailed(true);
+        setFormError(error);
+        return;
+      }
     }
 
     if (!shouldSubmit) {
@@ -246,9 +305,97 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
 
         {(Boolean(formError) || Boolean(optionsError)) && (
           <AppNotice tone="danger">
+            {uploadFailed && <p className="mb-1 text-sm font-semibold">{t("clubEvents.proposalDocumentUploadFailed")}</p>}
             <ClubEventErrorMessage error={formError ?? optionsError} />
           </AppNotice>
         )}
+
+        <section id="proposal-document" className={sectionCardClass}>
+          <div>
+            <h2 className="font-heading text-base font-semibold">{t("clubEvents.proposalDocumentSection")}</h2>
+            <p className="mt-1 text-sm text-muted-app">{t("clubEvents.proposalDocumentHint")}</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border-app bg-surface-app p-4 text-sm">
+            <div className="min-w-0">
+              <p className="font-medium">{t("clubEvents.templateTitle")}</p>
+              {template.data ? (
+                <p className="break-words text-muted-app">
+                  {template.data.fileName} · {formatBytes(template.data.bytes)} ·{" "}
+                  {template.data.isSystemDefault
+                    ? t("clubEvents.templateDefault")
+                    : t("clubEvents.templateUpdated", { date: format.format(new Date(template.data.updatedAt)) })}
+                </p>
+              ) : template.isError ? (
+                <p className="text-danger-app">{t("clubEvents.templateLoadError")}</p>
+              ) : (
+                <AppSkeleton className="mt-1 h-4 w-48" />
+              )}
+            </div>
+            {/* Attachment or redirect to a signed URL; a new tab keeps this form mounted either way. */}
+            <a href={EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className={secondaryLinkClass}>
+              <AppIcon name="download" className="size-4" />
+              {t("clubEvents.templateDownload")}
+            </a>
+          </div>
+          <div className="space-y-2 text-sm">
+            <p className="flex flex-wrap items-center gap-2 font-medium text-text-app">
+              <span>
+                {t("clubEvents.proposalDocumentField")}
+                <AppRequiredMark />
+              </span>
+              {flag("content") && <AppBadge tone="warning">{flag("content")}</AppBadge>}
+            </p>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".docx,.pdf"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+              onChange={(e) => {
+                pickFile(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            {pendingFile ? (
+              <div className="rounded-xl border border-border-app bg-surface-app p-3">
+                <p className="break-words font-medium">{pendingFile.file.name} · {formatBytes(pendingFile.file.size)}</p>
+                <p className="text-muted-app">{t("clubEvents.proposalDocumentPending")}</p>
+              </div>
+            ) : savedDocument ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border-app bg-surface-app p-3">
+                <div className="min-w-0 flex-1 basis-56">
+                  <p className="break-words font-medium">{savedDocument.fileName} · {formatBytes(savedDocument.bytes)}</p>
+                  <p className="text-muted-app">{t("clubEvents.proposalDocumentUploaded", { date: format.format(new Date(savedDocument.uploadedAt)) })}</p>
+                </div>
+                <AppButton type="button" variant="secondary" disabled={documentAccess.isPending} onClick={() => void openDocument(false)}>
+                  <AppIcon name="download" className="size-4" />
+                  {t("clubEvents.proposalDocumentDownload")}
+                </AppButton>
+                {savedDocument.mimeType === "application/pdf" && (
+                  <AppButton type="button" variant="ghost" disabled={documentAccess.isPending} onClick={() => void openDocument(true)}>
+                    {t("clubEvents.proposalDocumentView")}
+                  </AppButton>
+                )}
+              </div>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-3">
+              <AppButton
+                type="button"
+                variant="secondary"
+                disabled={mutation.isPending}
+                aria-invalid={documentError ? true : undefined}
+                onClick={() => fileInput.current?.click()}
+              >
+                <AppIcon name="file" className="size-4" />
+                {t(pendingFile ? "clubEvents.proposalDocumentRechoose" : savedDocument ? "clubEvents.proposalDocumentReplace" : "clubEvents.proposalDocumentChoose")}
+              </AppButton>
+              <span className="text-muted-app">{t("clubEvents.proposalDocumentAccept")}</span>
+            </div>
+            <AppFieldError message={documentError} />
+            {documentAccess.isError && <ClubEventErrorMessage error={documentAccess.error} />}
+          </div>
+        </section>
 
         <section className={sectionCardClass}>
           <h2 className="font-heading text-base font-semibold">{t("clubEvents.basicInfo")}</h2>
@@ -652,10 +799,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         </section>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Link
-            to={eventsListUrl}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border-app bg-bg-app px-3.5 font-heading text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
-          >
+          <Link to={eventsListUrl} className={secondaryLinkClass}>
             {t("clubEvents.cancelForm")}
           </Link>
           <AppButton type="submit" variant="secondary" disabled={mutation.isPending}>

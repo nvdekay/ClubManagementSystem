@@ -19,13 +19,19 @@ function input(scope: "PUBLIC" | "MEMBERS_ONLY" = "PUBLIC", budget = false): Clu
   return { title: "Event", objective: "Goal", plan: "Plan", startAt, endAt, venueText: "Campus", capacity: 2, riskCategory: "LOW", audienceScope: scope,
     budgetLines: budget ? [{ category: "Supplies", amount: 100000, purpose: "Workshop" }] : [], bookingIds: [] };
 }
+/** A proposal draft with its required proposal document already attached (UC25). */
+async function draft(value: ClubEventInput) {
+  const d = await repo.create(String(club), value, String(actor), now);
+  return repo.act(String(club), d.event.id, { kind: "attach-document", document: { id: "doc-1", fileName: "plan.pdf", mimeType: "application/pdf",
+    bytes: 10, assetId: "asset-1", uploadedAt: now, uploadedBy: String(actor) } }, String(actor), now);
+}
 async function approve(id: string, budget = false) {
   const r = mongoEventProposalReviewRepository(); await r.claim(id, String(actor), now);
   await r.decide(id, String(actor), { outcome: "Approve", sections: [], conditions: [], budgetLines: budget ? [{ approvedAmount: 100000 }] : [] }, now);
   return (await repo.find(String(club), id))!;
 }
 async function submitted(scope: "PUBLIC" | "MEMBERS_ONLY" = "PUBLIC", budget = false) {
-  const d = await repo.create(String(club), input(scope, budget), String(actor), now);
+  const d = await draft(input(scope, budget));
   const s = await repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now);
   return s.event.state === "Pending Approval" ? approve(d.event.id, budget) : s;
 }
@@ -60,13 +66,13 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
       capacity: 100, equipment: [], blackouts: [], bookableHours: [{ day: 7, open: "07:00", close: "21:00" }] });
     const booking = await m.propertyBookings!.create({ propertyId: property._id, clubId: club, clubName: "Wave 3", purpose: "Outdoor activity",
       startAt, endAt, headcount: 2, state: "Requested", currentVersionNo: 1, semesterCode: "Fall", createdAt: now });
-    const draft = await repo.create(String(club), { ...input(), propertyId: String(property._id), bookingIds: [String(booking._id)] }, String(actor), now);
+    const created = await draft({ ...input(), propertyId: String(property._id), bookingIds: [String(booking._id)] });
     await setLeader(false);
-    await expect(repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
-    expect(await m.eventProposalVersions!.countDocuments({ eventId: draft.event.id })).toBe(0);
+    await expect(repo.act(String(club), created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(await m.eventProposalVersions!.countDocuments({ eventId: created.event.id })).toBe(0);
     expect((await m.propertyBookings!.findById(booking._id).lean())?.eventId).toBeUndefined();
     await setLeader(true);
-    const sent = await repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now);
+    const sent = await repo.act(String(club), created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(actor), now);
     expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
     await m.events!.updateOne({ _id: sent.event.id }, { $set: { state: "Revision Requested" } });
     const revised = await repo.act(String(club), sent.event.id, { kind: "save", input: { ...input(), propertyId: String(property._id), bookingIds: [] }, expectedVersion: sent.event.version }, String(actor), now);
@@ -87,12 +93,12 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     const booking = await m.propertyBookings!.create({ propertyId: property._id, clubId: club, clubName: "Wave 3", purpose: "Sound equipment",
       startAt, endAt, headcount: 2, state: "Requested", currentVersionNo: 1, semesterCode: "Fall", createdAt: now });
     expect((await repo.options(String(club))).bookings).toContainEqual(expect.objectContaining({ id: String(booking._id), propertyType: "EQUIPMENT" }));
-    const draft = await repo.create(String(club), { ...input(), bookingIds: [String(booking._id)] }, String(actor), now);
-    const sent = await repo.act(String(club), draft.event.id, { kind: "submit", expectedVersion: draft.event.version }, String(actor), now);
+    const created = await draft({ ...input(), bookingIds: [String(booking._id)] });
+    const sent = await repo.act(String(club), created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(actor), now);
     expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
   });
   it("serializes submission and preserves immutable revisions", async () => {
-    const d = await repo.create(String(club), input(), String(actor), now);
+    const d = await draft(input());
     const results = await Promise.allSettled([1, 2].map(() => repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now)));
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
     expect(await m.eventProposalVersions!.countDocuments({ eventId: d.event.id })).toBe(1);
@@ -110,7 +116,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
   });
   it("sends unbudgeted members-only proposals to the internal flow and accepts budgeted ones (Plan B)", async () => {
     await expect(repo.create(String(club), input("MEMBERS_ONLY"), String(actor), now)).rejects.toMatchObject({ kind: "validation" });
-    const d = await repo.create(String(club), input(), String(actor), now);
+    const d = await draft(input());
     await expect(repo.act(String(club), d.event.id, { kind: "save", input: input("MEMBERS_ONLY"), expectedVersion: d.event.version }, String(actor), now))
       .rejects.toMatchObject({ kind: "validation", message: "internal events without university budget must use the internal event flow" });
     // A draft saved before Plan B may still be members-only without budget; submitting it is refused too.
@@ -154,13 +160,13 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     expect((await repo.act(String(club), d.event.id, { kind: "cancel", expectedVersion: a.event.version, reason: "Cancelled" }, String(actor), now)).budget?.state).toBe("Cancelled");
   });
   it("re-checks permission inside the write transaction", async () => {
-    const d = await repo.create(String(club), input(), String(actor), now);
+    const d = await draft(input());
     await setLeader(false);
     await expect(repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
     await setLeader(true);
   });
   it("rejects notice, semester, dissolution and overdue obligations without partial submission", async () => {
-    const late = await repo.create(String(club), { ...input(), startAt: new Date(now.getTime() + 3600000), endAt: new Date(now.getTime() + 7200000) }, String(actor), now);
+    const late = await draft({ ...input(), startAt: new Date(now.getTime() + 3600000), endAt: new Date(now.getTime() + 7200000) });
     await expect(repo.act(String(club), late.event.id, { kind: "submit", expectedVersion: late.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "validation" });
     expect(await m.eventProposalVersions!.countDocuments({ eventId: late.event.id })).toBe(0);
     await expect(repo.create(String(club), { ...input(), endAt: new Date("2027-01-02Z") }, String(actor), now)).rejects.toMatchObject({ kind: "validation" });
@@ -169,7 +175,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     await m.clubs!.updateOne({ _id: club }, { $unset: { dissolution: "" } });
     const funded = await submitted("PUBLIC", true);
     await m.eventBudgets!.updateOne({ eventId: funded.event.id }, { $set: { state: "Disbursed", disbursedTotal: Types.Decimal128.fromString("50000"), settlementDueAt: new Date(now.getTime() - 1000) } });
-    const blocked = await repo.create(String(club), input(), String(actor), now);
+    const blocked = await draft(input());
     await expect(repo.act(String(club), blocked.event.id, { kind: "submit", expectedVersion: blocked.event.version }, String(actor), now)).rejects.toMatchObject({ details: { obligations: ["overdueSettlement"] } });
     await m.eventBudgets!.updateOne({ eventId: funded.event.id }, { $set: { settlementDueAt: new Date(now.getTime() + 86400000) } });
     const cancelled = await repo.act(String(club), funded.event.id, { kind: "cancel", expectedVersion: funded.event.version, reason: "Funding obligation retained" }, String(actor), now);
@@ -178,7 +184,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     expect((await m.auditLogs!.findOne({ entityId: funded.event.id, action: "EVENT_CANCELLED" }).lean())?.after).toMatchObject({ settlementRequired: true });
   });
   it("keeps earlier revisions and blocks a resubmission after its deadline", async () => {
-    const d = await repo.create(String(club), input(), String(actor), now);
+    const d = await draft(input());
     await repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now);
     const review = mongoEventProposalReviewRepository(); await review.claim(d.event.id, String(actor), now);
     await review.decide(d.event.id, String(actor), { outcome: "Request revision", reason: "Clarify plan", sections: [], conditions: [], budgetLines: [], revisionDeadlineAt: new Date(now.getTime() + 3600000) }, now);

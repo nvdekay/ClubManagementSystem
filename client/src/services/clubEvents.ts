@@ -7,11 +7,17 @@ export interface ClubEventInput {
   riskNote?: string; facilityNeeds?: string; occurrences?: { startAt: string; endAt: string }[];
   budgetLines: EventBudgetLine[]; bookingIds: string[]; registrationForm?: EventFormField[];
 }
+/** Proposal file attached to the current draft or frozen into a submitted revision (`versions[].payload.proposalDocument`). */
+export interface EventProposalDocumentInfo { id: string; fileName: string; mimeType: string; bytes: number; uploadedAt: string; uploadedBy: string }
+export interface EventProposalTemplateInfo { fileName: string; mimeType: string; bytes: number; updatedAt: string; isSystemDefault: boolean }
+/** Short-lived signed link to a stored file. */
+export interface FileAccess { fileName: string; mimeType: string; url: string }
 export interface ClubEvent extends ClubEventInput {
   id: string; clubId: string; clubName: string; state: string; semesterCode: string; version: number;
   currentRevisionNo: number; confirmedRegistrationCount: number; approvalConditions: string[]; attendanceFinalized: boolean;
   conflictResult?: string; conflictDetail?: unknown; publishedAt?: string; registrationOpenAt?: string; registrationCloseAt?: string;
   checkInCode?: string; checkInOpenAt?: string; checkInCloseAt?: string; allowWalkIn: boolean; waitlistEnabled: boolean; revisionDeadlineAt?: string;
+  proposalDocument?: EventProposalDocumentInfo;
 }
 export interface ClubEventDetail {
   event: ClubEvent;
@@ -81,3 +87,24 @@ export function confirmInternalClubEvent(clubId: string, id: string, expectedVer
 
 export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; title: string; startAt: string; endAt: string }[] }
 export function fetchClubEventOptions(clubId: string, signal: AbortSignal): Promise<ClubEventOptions> { return request(clubId, "/options", { signal }); }
+
+/** Same-origin download: the default template streams as an attachment, an ICPDP upload redirects to a signed URL. */
+export const EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL = "/api/v1/events/proposal-template/download";
+export async function fetchEventProposalTemplate(signal: AbortSignal): Promise<EventProposalTemplateInfo> {
+  const res = await apiFetch("/api/v1/events/proposal-template", { credentials: "same-origin", signal });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null) as { message?: string } | null;
+    throw new ApiError(body?.message ?? `HTTP ${res.status}`);
+  }
+  return ((await res.json()) as { data: EventProposalTemplateInfo }).data;
+}
+/** Raw upload; the response's `event.version` is the one to submit with. */
+export function uploadEventProposalDocument(clubId: string, id: string, file: File, mimeType: string, csrfToken: string): Promise<ClubEventDetail> {
+  return request(clubId, `/${encodeURIComponent(id)}/proposal-document`, { method: "POST", body: file,
+    headers: { "Content-Type": mimeType, "X-CSRF-Token": csrfToken, "X-Filename": encodeURIComponent(file.name) } });
+}
+/** No `revisionNo`: the current draft's file. */
+export function accessEventProposalDocument(clubId: string, id: string, revisionNo?: number, inline = false): Promise<FileAccess> {
+  const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });
+  return request(clubId, `/${encodeURIComponent(id)}/proposal-document/access?${query}`, {});
+}

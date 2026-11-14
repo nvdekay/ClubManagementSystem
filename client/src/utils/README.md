@@ -8,3 +8,4 @@ Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `f
 `revisionDiff` — `diffFields`: so hai phiên bản hồ sơ theo danh sách trường có nhãn, trả các trường có nội dung khác nhau.
 `campusImage` — `CAMPUS_IMAGE_URL`: ảnh khuôn viên trường dùng chung cho trang đăng nhập và hero trang chủ.
 `saveFile` — đưa file tải từ API (blob + tên file) cho trình duyệt lưu xuống.
+`proposalFile` — `proposalFileType` (kiểm tra nhanh đuôi file + giới hạn 10 MB của file đề án/template sự kiện, trả MIME để upload) và `formatBytes` (dung lượng KB/MB).

@@ -10,7 +10,7 @@ import type { AccessActor } from "./access.js";
 const objectId = /^[0-9a-f]{24}$/i;
 const sections = new Set<string>(EVENT_REVIEW_SECTIONS);
 
-async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
+export async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
     throw new DomainError(actor.lockReason || "account locked", "locked");

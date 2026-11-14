@@ -1,5 +1,5 @@
 import { mongoClubEventRepository } from "./mongo-club-event-repository.js";
-import type { ClubEventInput } from "../../domain/club-event.js";
+import type { ClubEventInput, EventProposalDocument } from "../../domain/club-event.js";
 // Clean, realistic demo data on top of `npm run seed`, so every implemented flow can be tried end to end.
 // Usage: npm run seed:demo -- --owner=<your Google email> [--owner-name="Your Name"]
 // Safe to re-run: each section skips what already exists. Writes go through the app's use cases and
@@ -451,6 +451,11 @@ try {
   // ── Event proposals waiting for ICPDP (UC26; UC25 is the club side, so proposals are inserted) ──
   // Shape follows the UC25 data contract in .sdd/specs/feat-event-proposal-review/SPEC.md.
   type BudgetLine = { category: string; amount: number; purpose: string; plannedItems?: string };
+  // Metadata only: the asset is not uploaded, so opening the demo file needs a real upload first.
+  function demoProposalDocument(key: string, fileName: string, uploadedBy: Types.ObjectId, uploadedAt: Date): EventProposalDocument {
+    return { id: `demo-proposal-${key}`, fileName, mimeType: "application/pdf", bytes: 48_000,
+      assetId: `ucms/event-proposals/demo/${key}.pdf`, uploadedAt, uploadedBy: String(uploadedBy) };
+  }
   async function proposal(id: string, code: string, submittedBy: Types.ObjectId, input: {
     title: string; objective: string; plan: string; startAt: Date; hours: number; venueText: string; capacity: number;
     audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; riskCategory: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string;
@@ -475,7 +480,8 @@ try {
         payload: { title: input.title, objective: input.objective, plan: input.plan, startAt: input.startAt, endAt,
           venueText: input.venueText, capacity: input.capacity, audienceScope: input.audienceScope ?? "PUBLIC",
           riskCategory: input.riskCategory, ...(input.riskNote ? { riskNote: input.riskNote } : {}),
-          ...(input.facilityNeeds ? { facilityNeeds: input.facilityNeeds } : {}) },
+          ...(input.facilityNeeds ? { facilityNeeds: input.facilityNeeds } : {}),
+          proposalDocument: demoProposalDocument(`${id}-${index + 1}`, `De an ${input.title} v${index + 1}.pdf`, submittedBy, revision.submittedAt) },
         ...(lines.length ? { budgetLines: lines,
           requestedBudgetTotal: Types.Decimal128.fromString(String(lines.reduce((sum, line) => sum + line.amount, 0))) } : {}) });
       const last = index === input.revisions.length - 1;
@@ -858,7 +864,9 @@ try {
         budgetLines: [{ category: "Materials", amount: 300000, purpose: "Workshop supplies" }] };
       const created = await wave3.create(hebe, input, String(owner), now);
       if (!example.submit) continue;
-      await wave3.act(hebe, created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(owner), now);
+      const attached = await wave3.act(hebe, created.event.id, { kind: "attach-document",
+        document: demoProposalDocument(created.event.id, "De an Wave 3.pdf", owner, now) }, String(owner), now);
+      await wave3.act(hebe, created.event.id, { kind: "submit", expectedVersion: attached.event.version }, String(owner), now);
     }
   }
 

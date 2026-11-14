@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { actOnClubEvent, confirmInternalClubEvent, createInternalClubEvent, fetchClubEventOptions, createClubEvent, fetchClubEvent, fetchClubEventFeedback, fetchClubEvents, fetchEventParticipants, updateInternalClubEvent,
+import { accessEventProposalDocument, actOnClubEvent, confirmInternalClubEvent, fetchEventProposalTemplate, uploadEventProposalDocument, createInternalClubEvent, fetchClubEventOptions, createClubEvent, fetchClubEvent, fetchClubEventFeedback, fetchClubEvents, fetchEventParticipants, updateInternalClubEvent,
   type ClubEventInput, type EventPublishInput, type InternalClubEventInput, type InternalCreateMode } from "@/services/clubEvents";
 export const clubEventsKeyRoot = ["club-events"] as const;
 export function useClubEvents(clubId: string, enabled: boolean) {
@@ -20,12 +20,14 @@ export function useClubEventMutation(clubId: string) {
     { kind: "create"; input: ClubEventInput } | { kind: "action"; id: string; action: string; body: object }
     | { kind: "internal-create"; input: InternalClubEventInput; mode: InternalCreateMode; publishInput?: EventPublishInput }
     | { kind: "internal-save"; id: string; input: InternalClubEventInput; expectedVersion: number }
-    | { kind: "internal-confirm"; id: string; expectedVersion: number })) => {
+    | { kind: "internal-confirm"; id: string; expectedVersion: number }
+    | { kind: "upload-document"; id: string; file: File; mimeType: string })) => {
     switch (input.kind) {
       case "create": return createClubEvent(clubId, input.input, input.csrfToken);
       case "internal-create": return createInternalClubEvent(clubId, input.input, input.mode, input.publishInput, input.csrfToken);
       case "internal-save": return updateInternalClubEvent(clubId, input.id, input.input, input.expectedVersion, input.csrfToken);
       case "internal-confirm": return confirmInternalClubEvent(clubId, input.id, input.expectedVersion, input.csrfToken);
+      case "upload-document": return uploadEventProposalDocument(clubId, input.id, input.file, input.mimeType, input.csrfToken);
       default: return actOnClubEvent(clubId, input.id, input.action, input.body, input.csrfToken);
     }
   },
@@ -34,4 +36,14 @@ export function useClubEventMutation(clubId: string) {
 
 export function useClubEventOptions(clubId: string, enabled: boolean) {
   return useQuery({ queryKey: [...clubEventsKeyRoot, clubId, "options"], queryFn: ({ signal }) => fetchClubEventOptions(clubId, signal), enabled, retry: false });
+}
+
+/** Shared with the ICPDP template card, which writes the new template into this entry. */
+export const eventProposalTemplateKey = ["event-proposal-template"] as const;
+export function useEventProposalTemplate(enabled: boolean) {
+  return useQuery({ queryKey: eventProposalTemplateKey, queryFn: ({ signal }) => fetchEventProposalTemplate(signal), enabled, retry: false });
+}
+export function useEventProposalDocumentAccess(clubId: string) {
+  return useMutation({ mutationFn: (input: { id: string; revisionNo?: number; inline?: boolean }) =>
+    accessEventProposalDocument(clubId, input.id, input.revisionNo, input.inline) });
 }

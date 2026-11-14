@@ -18,7 +18,7 @@ import { eventFinanceRoutes } from "./event-finance-routes.js";
 import { sponsoredItemRoutes } from "./sponsored-item-routes.js";
 import type { SponsoredItemRepository } from "../../domain/sponsored-item.js";
 import { postEventReportRoutes } from "./post-event-report-routes.js";
-import type { ClubEventRepository } from "../../domain/club-event.js";
+import type { ClubEventRepository, EventProposalFileStorage } from "../../domain/club-event.js";
 import { clubEventRoutes } from "./club-event-routes.js";
 import type { FacilityBookingRepository } from "../../domain/facility-booking.js";
 import { facilityBookingRoutes } from "./facility-booking-routes.js";
@@ -159,6 +159,7 @@ export function buildApp(deps: {
   notificationRepo?: NotificationRepository;
   recruitmentAttachmentStorage?: RecruitmentAttachmentStorage | null;
   applicationFiles?: ApplicationFileStorage | null;
+  eventProposalFiles?: EventProposalFileStorage | null;
   clubTransitionPlanRepo?: ClubTransitionPlanRepository;
   suspensionRequestRepo?: SuspensionRequestRepository;
   membershipReconfirmationRepo?: MembershipReconfirmationRepository;
@@ -324,7 +325,7 @@ export function buildApp(deps: {
       }
       if (deps.clubEventRepo) {
         app.use("/api/v1", clubEventRoutes({ repo: deps.clubEventRepo, access: deps.auth.accessRepo,
-          authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
+          authRepo: deps.auth.repo, sessions: deps.auth.sessions, files: deps.eventProposalFiles ?? null }));
       }
       if (deps.schoolEventRepo) {
         app.use("/api/v1", schoolEventRoutes({ repo: deps.schoolEventRepo, policy: deps.policyRepo,
@@ -421,6 +422,8 @@ export function buildApp(deps: {
       if (path.startsWith("/admin/clubs")) return hasClubLifecycle;
       if (path.startsWith("/admin/application-reviews")) return hasApplicationReviews;
       if (path.startsWith("/admin/event-defense") || path.includes("/defense")) return hasEventDefenses;
+      if (path.startsWith("/events/proposal-template") || path === "/admin/event-proposals/template"
+        || path === "/admin/event-proposals/{id}/document/access") return Boolean(hasPolicy && deps.clubEventRepo);
       if (path.startsWith("/admin/event-proposals")) return hasEventProposalReviews;
       if (path.includes("/event-reports")) return Boolean(hasPolicy && deps.postEventReportRepo);
       if (path.includes("/budgets/{id}/items")) return Boolean(hasPolicy && deps.sponsoredItemRepo);

@@ -2,13 +2,19 @@ import { z } from "zod";
 import type { createDocument } from "zod-openapi";
 import { clubEventBody, clubEventCancelBody, clubEventCapacityBody, clubEventCheckInBody, clubEventCorrectBody,
   clubEventFeedbackQuery, clubEventPromoteBody, clubEventPublishBody, clubEventReasonBody, clubEventRescheduleBody,
-  clubEventSaveBody, clubEventVersionBody, eventObjectId, internalClubEventCreateBody, internalClubEventSaveBody } from "./club-event-routes.js";
+  clubEventSaveBody, clubEventVersionBody, eventObjectId, internalClubEventCreateBody, internalClubEventSaveBody,
+  proposalDocumentAccessQuery } from "./club-event-routes.js";
 const date = z.string().datetime();
+const ProposalDocument = z.object({ id: z.string(), fileName: z.string(), mimeType: z.string(), bytes: z.number(), uploadedAt: date, uploadedBy: eventObjectId });
+const TemplateInfo = z.object({ fileName: z.string(), mimeType: z.string(), bytes: z.number(), updatedAt: date, isSystemDefault: z.boolean() });
+const DocumentAccess = z.object({ fileName: z.string(), mimeType: z.string(), url: z.string().url() });
+const rawFile = { content: { "application/octet-stream": { schema: z.string() } } };
 const Event = clubEventBody.extend({ id: eventObjectId, clubId: eventObjectId, clubName: z.string(), state: z.string(), semesterCode: z.string(),
   version: z.number(), currentRevisionNo: z.number(), confirmedRegistrationCount: z.number(), approvalConditions: z.array(z.string()), attendanceFinalized: z.boolean(),
   publishedAt: date.optional(), registrationOpenAt: date.optional(), registrationCloseAt: date.optional(), checkInCode: z.string().optional(),
   checkInOpenAt: date.optional(), checkInCloseAt: date.optional(), allowWalkIn: z.boolean(), waitlistEnabled: z.boolean(),
-  conflictResult: z.string().optional(), conflictDetail: z.unknown().optional(), revisionDeadlineAt: date.optional() });
+  conflictResult: z.string().optional(), conflictDetail: z.unknown().optional(), revisionDeadlineAt: date.optional(),
+  proposalDocument: ProposalDocument.optional() });
 const Detail = z.object({ event: Event, versions: z.array(z.object({ revisionNo: z.number(), payload: z.unknown(), budgetLines: clubEventBody.shape.budgetLines, submittedAt: date })),
   decisions: z.array(z.object({ outcome: z.string(), reason: z.string().optional(), comments: z.unknown().optional(), at: date })),
   bookings: z.array(z.object({ id: eventObjectId, propertyId: eventObjectId, propertyName: z.string(), state: z.string(), startAt: date, endAt: date })),
@@ -38,6 +44,18 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
     requestParams: { path: eventPath }, requestBody: { content: { "application/json": { schema: internalClubEventSaveBody } } }, responses: response(Detail) } },
   "/clubs/{clubId}/internal-events/{id}/create": { post: { summary: "Turn an internal draft into a CREATED event (24-hour notice)",
     requestParams: { path: eventPath }, requestBody: { content: { "application/json": { schema: clubEventVersionBody } } }, responses: response(Detail) } },
+  "/events/proposal-template": { get: { summary: "Read the active ICPDP event proposal template (system default until ICPDP uploads one)", responses: response(TemplateInfo) } },
+  "/events/proposal-template/download": { get: { summary: "Download the active template: the system default as an attachment, or a redirect to a 60-second signed URL",
+    responses: { "200": { description: "Template file", content: { "application/octet-stream": { schema: z.string() } } }, "302": { description: "Redirect to a signed URL" },
+      "401": { description: "Authentication required" } } } },
+  [`${base}/{id}/proposal-document`]: { post: { summary: "Attach or replace the proposal document (PDF/DOCX <= 10MB, URI-encoded X-Filename) of a Draft or Revision Requested ICPDP proposal",
+    requestParams: { path: eventPath }, requestBody: rawFile, responses: response(Detail) } },
+  [`${base}/{id}/proposal-document/access`]: { get: { summary: "60-second signed URL to the draft's proposal document or a submitted revision's",
+    requestParams: { path: eventPath, query: proposalDocumentAccessQuery }, responses: response(DocumentAccess) } },
+  "/admin/event-proposals/template": { post: { summary: "ICPDP officer replaces the event proposal template (DOCX/PDF/XLSX <= 10MB, URI-encoded X-Filename)",
+    requestBody: rawFile, responses: response(TemplateInfo, "201") } },
+  "/admin/event-proposals/{id}/document/access": { get: { summary: "ICPDP officer reads a 60-second signed URL to the proposal document of the latest or a given revision",
+    requestParams: { path: z.object({ id: eventObjectId }), query: proposalDocumentAccessQuery }, responses: response(DocumentAccess) } },
   [`${base}/{id}/participants`]: { get: { summary: "Read registrations and attendance review", requestParams: { path: eventPath }, responses: response(z.array(Participant)) } },
 };
 const operations: [string, z.ZodType, string][] = [

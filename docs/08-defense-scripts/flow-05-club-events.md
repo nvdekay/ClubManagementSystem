@@ -11,7 +11,7 @@
 
 **Club Leader** lập, nộp, công bố và điều chỉnh sự kiện; nộp báo cáo sau sự kiện và xem tổng hợp phản hồi. **ICPDP Officer** thẩm định đề xuất và báo cáo ở một cấp. **Student** đăng ký, check-in và gửi phản hồi cho hoạt động đã tham dự. Riêng quản lý sức chứa, danh sách chờ, check-in thủ công và chốt điểm danh thuộc tập quyền cố định của mọi **Club Member có membership `Active`**, nên Leader cũng thực hiện được. Chức danh “điều phối sự kiện” không tự tạo thêm quyền quản trị.
 
-Để bắt đầu, CLB phải `Active`, người nộp có `club.event.manage`, lịch sự kiện nằm gọn trong một học kỳ và đáp ứng thời gian báo trước. Server kiểm tra địa điểm, xung đột và nghĩa vụ quá hạn khi công tắc cưỡng chế được bật. Phần ngân sách, nếu có, nằm trong cùng đề xuất; booking CSVC liên quan vẫn cần quyết định riêng.
+Để bắt đầu, CLB phải `Active`, người nộp có `club.event.manage`, lịch sự kiện nằm gọn trong một học kỳ và đáp ứng thời gian báo trước. Server kiểm tra địa điểm, xung đột và nghĩa vụ quá hạn khi công tắc cưỡng chế được bật. Phần ngân sách, nếu có, nằm trong cùng đề xuất; booking CSVC liên quan vẫn cần quyết định riêng. Đề xuất gửi ICPDP phải kèm file đề án sự kiện (`proposalDocument`, `.docx`/`.pdf`, tối đa 10 MB) soạn theo file mẫu do ICPDP quản lý; lưu nháp thì chưa bắt buộc. Sự kiện nội bộ tự túc không cần file này.
 
 Luồng chính bắt đầu từ `Draft → Pending Approval`. ICPDP nhận hồ sơ, thẩm định ở `Under Review`, rồi duyệt, yêu cầu chỉnh sửa hoặc từ chối. Hồ sơ được duyệt mới công bố thành `Upcoming`. Sinh viên đăng ký trong cửa sổ đăng ký; danh sách xác nhận và danh sách chờ được quản lý theo sức chứa. Tại sự kiện, check-in tạo dữ liệu có mặt. Sau khi sự kiện `Completed`, CLB xử lý bất thường và chốt điểm danh. Leader lập báo cáo, ICPDP thẩm định để đóng sự kiện ở `Closed`, hoặc trả báo cáo về để bổ sung.
 
@@ -23,8 +23,9 @@ Chuẩn bị ba phiên đăng nhập: Leader của một CLB `Active`, ICPDP Off
 
 | Màn hình đã có trong router | Dữ liệu cần chuẩn bị |
 |---|---|
-| `/club/:clubId/events` | Đề xuất nháp với mục tiêu, kế hoạch, thời gian tương lai, địa điểm, sức chứa; một hồ sơ có lịch sử trả sửa; một hồ sơ đã `Approved` để công bố |
-| `/workspace/event-proposals` và `/workspace/event-proposals/:id` | Hồ sơ chờ ICPDP nhận; có phần ngân sách nếu muốn minh hoạ số xin và số duyệt |
+| `/club/:clubId/events` | Đề xuất nháp với mục tiêu, kế hoạch, thời gian tương lai, địa điểm, sức chứa (chưa đính file đề án, để minh hoạ bị chặn khi nộp); một hồ sơ có lịch sử trả sửa; một hồ sơ đã `Approved` để công bố |
+| `/club/:clubId/events/new` hoặc `/club/:clubId/events/:eventId/edit` | Một file đề án `.docx` hoặc `.pdf` (dưới 10 MB) soạn sẵn từ mẫu để tải lên khi demo |
+| `/workspace/event-proposals` và `/workspace/event-proposals/:id` | Hồ sơ chờ ICPDP nhận, có file đề án (PDF để xem trực tiếp); có phần ngân sách nếu muốn minh hoạ số xin và số duyệt; một file mẫu đề án mới (`.docx`) để minh hoạ thay mẫu trên hàng đợi |
 | `/events/:id` | Sự kiện `PUBLIC`, `Upcoming`, đang mở đăng ký; có một bản gần đầy để minh hoạ danh sách chờ |
 | `/workspace/event-registrations` | Một đăng ký `Confirmed` đang trong khung check-in; một lượt tham dự chưa gửi phản hồi |
 | `/club/:clubId/event-attendance` | Một sự kiện `Completed` có bản ghi bất thường đã chuẩn bị và một sự kiện đã đủ điều kiện chốt |
@@ -48,11 +49,11 @@ Kiểm tra trước ngày demo các khung đăng ký, check-in, hạn sửa và 
 
 ### 0:25–1:05 — Nộp đề xuất và quyết định
 
-“Leader nhập kế hoạch, địa điểm và phần kinh phí nếu cần, rồi nộp đề xuất. Hệ thống kiểm tra điều kiện của CLB, lịch học kỳ và xung đột trước khi gửi sang ICPDP. Cán bộ nhận hồ sơ để thẩm định. Ở đây có thể yêu cầu sửa, từ chối hoặc phê duyệt; lý do và phiên bản được giữ lại. Nếu có ngân sách, số được duyệt lưu riêng với số CLB đã xin. Nhà trường chỉ có một cấp phê duyệt.”
+“ICPDP quản lý một file mẫu đề án sự kiện ngay trên hàng đợi: chỉ tải về hoặc thay bằng mẫu mới, không xoá được, nên CLB luôn có mẫu để dùng. Leader tải mẫu đó ngay trên trang đề xuất mà không mất dữ liệu đang nhập, điền kế hoạch, địa điểm và phần kinh phí nếu cần, rồi tải file đề án đã hoàn thiện lên. Lưu nháp thì chưa cần file, nhưng nộp mà thiếu file thì hệ thống chặn. Các trường lịch, địa điểm, sức chứa và ngân sách trên form vẫn là dữ liệu chính thức để kiểm tra trùng lịch và hạn mức; file đề án là văn bản chi tiết trình nhà trường. Hệ thống kiểm tra điều kiện của CLB, lịch học kỳ và xung đột trước khi gửi sang ICPDP. Cán bộ nhận hồ sơ để thẩm định. Ở đây có thể yêu cầu sửa, từ chối hoặc phê duyệt; lý do và phiên bản được giữ lại, kể cả file đề án của từng lần nộp để cán bộ mở lại hoặc so sánh. Nếu có ngân sách, số được duyệt lưu riêng với số CLB đã xin. Nhà trường chỉ có một cấp phê duyệt.”
 
 “Trường hợp cần trao đổi trực tiếp, cán bộ có thể xếp lịch bảo vệ trong giai đoạn này. Đây là một nhánh thẩm định, không phải cấp duyệt thứ hai.”
 
-**Thao tác demo:** Nộp nháp hợp lệ, chuyển sang ICPDP tại `/workspace/event-proposals/:id`, nhận hồ sơ và chỉ vào lịch sử/nhận xét. Dùng hồ sơ đã chuẩn bị đủ nội dung để ra quyết định. Chỉ chỉ vào khu vực lịch bảo vệ; không mở toàn bộ nhánh này trong thời lượng chính.
+**Thao tác demo:** Tại `/workspace/event-proposals`, chỉ thẻ mẫu đề án và bấm thay mẫu mới. Chuyển sang Leader, mở nháp trên trang đề xuất, bấm tải file mẫu, thử nộp khi chưa có file để thấy lỗi bắt buộc, rồi tải file đề án lên và nộp. Chuyển sang ICPDP tại `/workspace/event-proposals/:id`, nhận hồ sơ, bấm xem/tải file đề án và chỉ vào lịch sử/nhận xét. Dùng hồ sơ đã chuẩn bị đủ nội dung để ra quyết định. Chỉ chỉ vào khu vực lịch bảo vệ; không mở toàn bộ nhánh này trong thời lượng chính.
 
 ### 1:05–1:35 — Công bố và mở đăng ký
 
@@ -88,8 +89,9 @@ Kiểm tra trước ngày demo các khung đăng ký, check-in, hạn sửa và 
 
 | Tình huống | Cách giải thích và kết quả cần chỉ ra |
 |---|---|
-| Hồ sơ bị trả sửa | `Revision Requested` giữ nhận xét và hạn bổ sung; nộp lại tạo bản sửa mới. Hết hạn sửa thì thao tác lưu/nộp bị từ chối, scheduler xử lý `Expired`. Nếu còn lịch bảo vệ hiệu lực, bản nộp lại có thể vào thẳng `Under Review`. |
-| Nội bộ không ngân sách | `MEMBERS_ONLY` và không có dòng ngân sách đi luồng riêng "Tạo sự kiện nội bộ": `DRAFT → CREATED → PUBLIC → ONGOING → FINISH` (hoặc `CANCELLED`), báo trước ít nhất 24 giờ, không qua ICPDP. Vẫn kiểm tra điều kiện CLB, lịch và xung đột, có audit. Sau `PUBLIC` thì khoá lịch, chỉ còn huỷ. Không sinh nghĩa vụ báo cáo sau sự kiện; chốt điểm danh vẫn giữ `FINISH`. Form đề xuất ICPDP từ chối `MEMBERS_ONLY` không có dòng ngân sách. Booking đính kèm vẫn cần UC46. |
+| Hồ sơ bị trả sửa | `Revision Requested` giữ nhận xét và hạn bổ sung; mục `content` gồm cả file đề án, CLB có thể thay file. Nộp lại tạo bản sửa mới, file của bản cũ vẫn mở được theo `revisionNo`. Hết hạn sửa thì thao tác lưu/nộp bị từ chối, scheduler xử lý `Expired`. Nếu còn lịch bảo vệ hiệu lực, bản nộp lại có thể vào thẳng `Under Review`. |
+| Nội bộ không ngân sách | `MEMBERS_ONLY` và không có dòng ngân sách đi luồng riêng "Tạo sự kiện nội bộ": `DRAFT → CREATED → PUBLIC → ONGOING → FINISH` (hoặc `CANCELLED`), báo trước ít nhất 24 giờ, không qua ICPDP, không có file mẫu hay file đề án. Vẫn kiểm tra điều kiện CLB, lịch và xung đột, có audit. Sau `PUBLIC` thì khoá lịch, chỉ còn huỷ. Không sinh nghĩa vụ báo cáo sau sự kiện; chốt điểm danh vẫn giữ `FINISH`. Form đề xuất ICPDP từ chối `MEMBERS_ONLY` không có dòng ngân sách. Booking đính kèm vẫn cần UC46. |
+| Thiếu hoặc sai file đề án | Nộp khi bản nháp chưa có `proposalDocument` bị từ chối (400, `event proposal document is required before submission`); lưu nháp vẫn được. File không phải `.docx`/`.pdf`, rỗng, quá 10 MB hoặc đổi đuôi giả mạo (chữ ký byte không khớp) bị server từ chối. Đề xuất cũ chưa có file hiển thị "Chưa có file đề án đính kèm". Đổi lịch sự kiện đã duyệt thì bản sửa mới kế thừa file hiện có; sự kiện cũ chưa có file vẫn đổi lịch được vì chỉ hành động nộp kiểm tra file. |
 | Huỷ hoặc đổi lịch | Cần lý do. `Ongoing` còn có thể huỷ nếu chưa chốt điểm danh, nhưng không đổi lịch. Đổi lịch chỉ áp dụng `Approved`/`Upcoming`, chưa check-in; sự kiện thông thường quay lại thẩm định, booking tương lai được giải phóng. |
 | Đầy chỗ, giảm sức chứa hoặc đẩy waitlist sai thứ tự | Không có overbooking thì không vượt sức chứa; không giảm dưới số `Confirmed`. Việc đẩy waitlist chỉ trong cửa sổ đăng ký và chỉ chọn đầu hàng. |
 | Check-in sai mã, ngoài giờ hoặc chưa xác nhận | Server từ chối. Walk-in chỉ khi sự kiện cho phép; check-in thủ công ngoài giờ cần lý do và vẫn chịu các kiểm tra đối tượng/sức chứa. |

@@ -2,6 +2,7 @@ import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { cancelEventInSession } from "./event-cancellation.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
+import { publicEventPayload } from "../../domain/club-event.js";
 import { DomainError } from "../../domain/errors.js";
 import { ACTIVE_DEFENSE_STATES } from "../../domain/event-defense.js";
 import {
@@ -112,7 +113,7 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       optionalText(user.displayName) ?? String(user.email)]));
     const mappedVersions: EventProposalVersion[] = versionDocs.map((version) => ({
       id: String(version._id), revisionNo: Number(version.revisionNo),
-      payload: (version.payload ?? {}) as Record<string, unknown>,
+      payload: publicEventPayload((version.payload ?? {}) as Record<string, unknown>),
       budgetLines: requestedLines(version.budgetLines), requestedBudgetTotal: money(version.requestedBudgetTotal),
       conflictResult: optionalText(version.conflictResult), submittedBy: String(version.submittedBy),
       submittedByName: nameById.get(String(version.submittedBy)), submittedAt: version.submittedAt as Date,

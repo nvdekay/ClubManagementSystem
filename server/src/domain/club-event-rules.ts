@@ -1,4 +1,4 @@
-import type { ClubEventInput, EventPublishInput } from "./club-event.js";
+import type { ClubEventInput, EventProposalDocument, EventPublishInput } from "./club-event.js";
 import { DomainError } from "./errors.js";
 import type { AcademicSemester } from "./policy.js";
 import { semesterOf } from "./school-event.js";
@@ -74,4 +74,32 @@ export function eventConflictResult(overlaps: number[], thresholdMinutes: number
 }
 export function eventCancellationIsLate(startAt: Date, now: Date, noticeHours: number): boolean {
   return startAt.getTime() - now.getTime() < noticeHours * 3600000;
+}
+
+export const PROPOSAL_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
+const PDF = "application/pdf";
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const extensionForMime: Record<string, string> = { [PDF]: "pdf", [DOCX]: "docx", [XLSX]: "xlsx" };
+export const PROPOSAL_DOCUMENT_MIME_TYPES: ReadonlySet<string> = new Set([PDF, DOCX]);
+export const PROPOSAL_TEMPLATE_MIME_TYPES: ReadonlySet<string> = new Set([PDF, DOCX, XLSX]);
+function signatureMatches(mimeType: string, bytes: Buffer): boolean {
+  if (mimeType === PDF) return bytes.subarray(0, 5).toString("latin1") === "%PDF-";
+  const zip = bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) && bytes.includes(Buffer.from("[Content_Types].xml"));
+  return zip && bytes.includes(Buffer.from(mimeType === DOCX ? "word/" : "xl/"));
+}
+/** Checks name, size, declared type, extension and magic bytes of an uploaded proposal document or template; returns the trimmed name. */
+export function validateEventProposalFile(fileName: string, mimeType: string, bytes: Buffer, allowedMimes: ReadonlySet<string>): string {
+  const name = fileName.trim();
+  const extension = extensionForMime[mimeType];
+  // eslint-disable-next-line no-control-regex
+  if (!name || name.length > 255 || /[\u0000-\u001f\u007f/\\]/.test(name) || !allowedMimes.has(mimeType) || !extension ||
+    !name.toLowerCase().endsWith(`.${extension}`) || bytes.length === 0 || bytes.length > PROPOSAL_DOCUMENT_MAX_BYTES ||
+    !signatureMatches(mimeType, bytes)) {
+    throw new DomainError("invalid event proposal file", "validation", { maxBytes: PROPOSAL_DOCUMENT_MAX_BYTES, mimeTypes: [...allowedMimes] });
+  }
+  return name;
+}
+export function assertProposalDocumentPresent(document: EventProposalDocument | undefined): void {
+  if (!document) throw new DomainError("event proposal document is required before submission", "validation", { field: "proposalDocument" });
 }

@@ -1,4 +1,5 @@
 import { ApiError, apiFetch } from "@/services/apiError";
+import type { EventProposalTemplateInfo, FileAccess } from "@/services/clubEvents";
 import type { EventDefenseSession } from "@/services/eventDefense";
 
 export type EventReviewOutcome = "Request revision" | "Approve" | "Reject" | "Re-defense";
@@ -134,4 +135,16 @@ export function claimEventProposal(id: string, csrfToken: string): Promise<Event
 export function decideEventProposal(id: string, input: EventReviewDecisionInput,
   csrfToken: string): Promise<EventProposalDetail> {
   return request(`/${encodeURIComponent(id)}/decision`, mutation(csrfToken, input));
+}
+
+/** Replaces the active template (ICPDP_OFFICER); there is no delete. */
+export function uploadProposalTemplate(file: File, mimeType: string, csrfToken: string): Promise<EventProposalTemplateInfo> {
+  return request("/template", { method: "POST", body: file,
+    headers: { "Content-Type": mimeType, "X-CSRF-Token": csrfToken, "X-Filename": encodeURIComponent(file.name) } });
+}
+
+/** No `revisionNo`: the latest submitted revision's file. */
+export function accessReviewProposalDocument(id: string, revisionNo?: number, inline = false): Promise<FileAccess> {
+  const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });
+  return request(`/${encodeURIComponent(id)}/document/access?${query}`);
 }

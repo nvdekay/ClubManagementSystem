@@ -1,9 +1,9 @@
 import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { randomInt, randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
-import type { ClubEventInput, ClubEventRepository, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
+import type { ClubEventInput, ClubEventRepository, EventProposalDocument, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
 import { eventActionPermission, isInternalClubEventState } from "../../domain/club-event.js";
-import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, eventConflictResult,
+import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent, eventConflictResult,
   validateClubEventInput, validateEventPublication } from "../../domain/club-event-rules.js";
 import { DomainError } from "../../domain/errors.js";
 import type { AcademicSemester } from "../../domain/policy.js";
@@ -12,6 +12,7 @@ import { openViolationCount, routedTaskFields } from "./approval-routing.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
 import { clubEventFrom, EVENT_PAYLOAD_ACTIONS, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
 import { applyEventAttendanceAction } from "./event-attendance-actions.js";
+import { loadDefaultEventProposalTemplate } from "../files/event-proposal-files.js";
 import { cancelEventInSession } from "./event-cancellation.js";
 import { promoteEventWaitlist } from "./event-waitlist.js";
 import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
@@ -19,6 +20,8 @@ import { ucmsModels as m } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type Doc = Record<string, unknown>;
+/** Fixed audit entity for the single, replace-only ICPDP event proposal template. */
+const PROPOSAL_TEMPLATE_ENTITY = new Types.ObjectId("000000000000000000000e01");
 export interface ClubEventRules { proposalNoticeHours: number; cancellationNoticeHours: number }
 function oid(id: string) { return new Types.ObjectId(id); }
 function conflict(message: string): never { throw new DomainError(message, "conflict"); }
@@ -191,6 +194,33 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
       return Promise.all(docs.map(async (doc) => clubEventFrom(doc, await eventDraftPayload(doc._id as Types.ObjectId))));
     },
     find: readClubEvent, participants: readEventParticipants, feedback: readClubFeedback,
+    async proposalDocument(eventId, revision) {
+      const event = await m.events!.findOne({ _id: oid(eventId), organizerType: "CLUB" }).select({ clubId: 1 }).lean();
+      if (!event) return null;
+      const versions = m.eventProposalVersions!.findOne({ eventId: event._id, ...(typeof revision === "number" ? { revisionNo: revision } : {}) })
+        .sort({ revisionNo: -1 }).select({ payload: 1 });
+      let payload = revision === "draft" ? await eventDraftPayload(event._id as Types.ObjectId) : {};
+      // Events created before draft audits fall back to their latest revision, as readClubEvent does.
+      if (!Object.keys(payload).length) payload = ((await versions.lean())?.payload ?? {}) as Doc;
+      return { clubId: String(event.clubId), document: (payload.proposalDocument as EventProposalDocument | undefined) ?? null };
+    },
+    async proposalTemplate() {
+      const log = await m.auditLogs!.findOne({ entityType: "SystemTemplate", entityId: PROPOSAL_TEMPLATE_ENTITY,
+        action: "EVENT_PROPOSAL_TEMPLATE_UPDATED" }).sort({ at: -1, _id: -1 }).lean();
+      const uploaded = log?.after as EventProposalDocument | undefined;
+      if (uploaded) {
+        return { fileName: uploaded.fileName, mimeType: uploaded.mimeType, bytes: uploaded.bytes, updatedAt: uploaded.uploadedAt,
+          isSystemDefault: false as const, assetId: uploaded.assetId };
+      }
+      const fallback = await loadDefaultEventProposalTemplate();
+      return { ...fallback, bytes: fallback.content.length, isSystemDefault: true as const };
+    },
+    async saveProposalTemplate(document, actorId, now) {
+      // Append-only: the newest record is the active template; earlier ones stay as history.
+      await m.auditLogs!.create({ entityType: "SystemTemplate", entityId: PROPOSAL_TEMPLATE_ENTITY, action: "EVENT_PROPOSAL_TEMPLATE_UPDATED",
+        actorId: oid(actorId), actorRole: "ICPDP Officer", after: document, correlationId: randomUUID(), at: now });
+      return { fileName: document.fileName, mimeType: document.mimeType, bytes: document.bytes, updatedAt: document.uploadedAt, isSystemDefault: false };
+    },
     async create(clubId, input, actorId, now) {
       assertProposalAudience(input);
       const id = new Types.ObjectId();
@@ -221,12 +251,21 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           ...("expectedVersion" in action ? { __v: action.expectedVersion } : {}) }, { $inc: { __v: 1 } }, { session }).lean();
         if (!event) conflict("event changed or is not available in this club; reload and retry");
         const payload = await payloadInSession(session, event._id as Types.ObjectId);
-        const input = { ...clubEventFrom(event, payload), budgetLines: (payload.budgetLines ?? []) as ClubEventInput["budgetLines"] };
-        if (action.kind === "save" || action.kind === "submit") {
+        // The stored document keeps its asset id, so submit and reschedule freeze the full metadata in the revision.
+        const proposalDocument = payload.proposalDocument as EventProposalDocument | undefined;
+        const input = { ...clubEventFrom(event, payload), budgetLines: (payload.budgetLines ?? []) as ClubEventInput["budgetLines"],
+          ...(proposalDocument ? { proposalDocument } : {}) };
+        if (action.kind === "save" || action.kind === "submit" || action.kind === "attach-document") {
           if (!["Draft", "Revision Requested"].includes(String(event.state))) conflict("event cannot be edited or submitted");
           if (event.revisionDeadlineAt && (event.revisionDeadlineAt as Date) <= now) conflict("revision deadline has passed");
-          const next = action.kind === "save" ? action.input : input;
+          if (action.kind === "attach-document") {
+            await audit(session, oid(eventId), "EVENT_PROPOSAL_DOCUMENT_UPLOADED", oid(actorId), { payload: { ...payload, proposalDocument: action.document } }, now);
+            return;
+          }
+          // Saving the text fields keeps the document attached earlier.
+          const next = action.kind === "save" ? { ...action.input, ...(proposalDocument ? { proposalDocument } : {}) } : input;
           assertProposalAudience(next);
+          if (action.kind === "submit") assertProposalDocumentPresent(proposalDocument);
           const assessment = await assess(session, oid(clubId), next, oid(eventId), now, action.kind === "submit", rules);
           if (action.kind === "save") {
             await m.events!.updateOne({ _id: event._id }, { $set: { ...fields(next, assessment.semesterCode), conflictResult: assessment.conflictResult,

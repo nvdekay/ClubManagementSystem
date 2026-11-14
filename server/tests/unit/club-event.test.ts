@@ -1,11 +1,13 @@
-import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, eventCancellationIsLate,
-  eventConflictResult, validateEventPublication } from "../../src/domain/club-event-rules.js";
+import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent,
+  eventCancellationIsLate, eventConflictResult, PROPOSAL_DOCUMENT_MAX_BYTES, PROPOSAL_DOCUMENT_MIME_TYPES, PROPOSAL_TEMPLATE_MIME_TYPES,
+  validateEventProposalFile, validateEventPublication } from "../../src/domain/club-event-rules.js";
+import { loadDefaultEventProposalTemplate } from "../../src/infra/files/event-proposal-files.js";
 import { describe, expect, it, vi } from "vitest";
 import type { ClubAccessSnapshot } from "../../src/domain/access.js";
 import type { ClubEventRepository } from "../../src/domain/club-event.js";
-import { eventActionPermission } from "../../src/domain/club-event.js";
+import { eventActionPermission, publicEventPayload, type EventProposalDocument } from "../../src/domain/club-event.js";
 import { actOnClubEvent, clubEventFeedback, clubEventParticipants, createClubEvent, createInternalClubEvent, listClubEvents,
-  type ClubEventDeps } from "../../src/usecase/club-event.js";
+  type ClubEventDeps, uploadEventProposalDocument, uploadEventProposalTemplate } from "../../src/usecase/club-event.js";
 import { clubEventBody, clubEventPublishBody, internalClubEventCreateBody } from "../../src/interface/http/club-event-routes.js";
 
 const clubId = "111111111111111111111111";
@@ -21,7 +23,8 @@ function deps(role: "leader" | "member" | "left" = "leader"): ClubEventDeps {
       effectiveFrom: new Date("2026-01-01"), confirmedBy: actor.id }] : [],
     positions: [{ id, clubId, isActive: true, isLeaderRole: false, isBoardSeat: true, code: "VICE_LEADER" }] };
   return { access: { findSnapshot: async () => snapshot }, auth: { systemRoleCodes: async () => [] },
-    repo: { options: vi.fn(), list: vi.fn(), find: vi.fn(), create: vi.fn(), createInternal: vi.fn(), act: vi.fn(), participants: vi.fn(), feedback: vi.fn() } as ClubEventRepository };
+    repo: { options: vi.fn(), list: vi.fn(), find: vi.fn(), create: vi.fn(), createInternal: vi.fn(), act: vi.fn(), participants: vi.fn(), feedback: vi.fn(),
+      proposalDocument: vi.fn(), proposalTemplate: vi.fn(), saveProposalTemplate: vi.fn() } as ClubEventRepository };
 }
 describe("club event access and HTTP validation", () => {
   it("lets a Club Leader read feedback and participants; a plain member reads participants only", async () => {
@@ -146,5 +149,65 @@ describe("internal club events", () => {
     expect(internalClubEventCreateBody.safeParse({ ...body, audienceScope: "MEMBERS_ONLY" }).success).toBe(false);
     expect(internalClubEventCreateBody.safeParse({ ...body, budgetLines: [] }).success).toBe(false);
     expect(internalClubEventCreateBody.safeParse({ ...body, mode: "approve" }).success).toBe(false);
+  });
+});
+
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const docx = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from("[Content_Types].xml word/document.xml")]);
+const xlsx = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from("[Content_Types].xml xl/workbook.xml")]);
+const pdf = Buffer.from("%PDF-1.7\n%%EOF\n", "latin1");
+describe("event proposal document (UC25/UC26)", () => {
+  it("accepts DOCX and PDF up to 10MB with matching extension and magic bytes", () => {
+    expect(validateEventProposalFile("  Đề án sự kiện.docx ", DOCX, docx, PROPOSAL_DOCUMENT_MIME_TYPES)).toBe("Đề án sự kiện.docx");
+    expect(validateEventProposalFile("plan.PDF", "application/pdf", pdf, PROPOSAL_DOCUMENT_MIME_TYPES)).toBe("plan.PDF");
+    const max = Buffer.concat([pdf, Buffer.alloc(PROPOSAL_DOCUMENT_MAX_BYTES - pdf.length)]);
+    expect(() => validateEventProposalFile("big.pdf", "application/pdf", max, PROPOSAL_DOCUMENT_MIME_TYPES)).not.toThrow();
+  });
+  it("rejects empty, oversized, wrong-type, renamed and spoofed files", () => {
+    const xlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    const cases: [string, string, Buffer, ReadonlySet<string>][] = [
+      ["empty.pdf", "application/pdf", Buffer.alloc(0), PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["big.pdf", "application/pdf", Buffer.concat([pdf, Buffer.alloc(PROPOSAL_DOCUMENT_MAX_BYTES)]), PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["image.png", "image/png", Buffer.from([137, 80, 78, 71]), PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["sheet.xlsx", xlsxMime, xlsx, PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["plan.docx", "application/pdf", pdf, PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["fake.pdf", "application/pdf", docx, PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["fake.docx", DOCX, xlsx, PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["../plan.pdf", "application/pdf", pdf, PROPOSAL_DOCUMENT_MIME_TYPES],
+      ["   ", "application/pdf", pdf, PROPOSAL_DOCUMENT_MIME_TYPES],
+    ];
+    for (const [name, mime, bytes, allowed] of cases) {
+      expect(() => validateEventProposalFile(name, mime, bytes, allowed), name).toThrow(expect.objectContaining({ kind: "validation" }));
+    }
+    expect(validateEventProposalFile("budget.xlsx", xlsxMime, xlsx, PROPOSAL_TEMPLATE_MIME_TYPES)).toBe("budget.xlsx");
+  });
+  it("blocks submission without a document, never a draft save", () => {
+    expect(() => assertProposalDocumentPresent(undefined)).toThrow(expect.objectContaining({ kind: "validation",
+      message: "event proposal document is required before submission" }));
+    expect(() => assertProposalDocumentPresent({ id: "d", fileName: "a.pdf", mimeType: "application/pdf", bytes: 1, assetId: "x",
+      uploadedAt: now, uploadedBy: actor.id })).not.toThrow();
+  });
+  it("hides the storage asset id in event payloads", () => {
+    const document: EventProposalDocument = { id: "d", fileName: "a.pdf", mimeType: "application/pdf", bytes: 1, assetId: "secret", uploadedAt: now, uploadedBy: actor.id };
+    expect(publicEventPayload({ plan: "Plan", proposalDocument: document })).toEqual({ plan: "Plan",
+      proposalDocument: { id: "d", fileName: "a.pdf", mimeType: "application/pdf", bytes: 1, uploadedAt: now, uploadedBy: actor.id } });
+    expect(publicEventPayload({ plan: "Plan" })).toEqual({ plan: "Plan" });
+  });
+  it("always has the bundled default template to serve", async () => {
+    const template = await loadDefaultEventProposalTemplate();
+    expect(template.fileName).toBe("Template Đề án sự kiện.docx");
+    expect(validateEventProposalFile(template.fileName, template.mimeType, template.content, PROPOSAL_TEMPLATE_MIME_TYPES)).toBe(template.fileName);
+  });
+  it("refuses uploads without storage, for internal events, and template uploads by non-officers", async () => {
+    const d = deps();
+    await expect(uploadEventProposalDocument(d, actor, clubId, id, "a.pdf", "application/pdf", pdf, now)).rejects.toMatchObject({ kind: "unavailable" });
+    const files = { uploadProposalDocument: vi.fn(), uploadTemplateDocument: vi.fn(), accessUrl: vi.fn() };
+    vi.mocked(d.repo.find).mockResolvedValue({ event: { state: "DRAFT" }, versions: [], decisions: [], bookings: [] } as unknown as
+      Awaited<ReturnType<ClubEventRepository["find"]>>);
+    await expect(uploadEventProposalDocument({ ...d, files }, actor, clubId, id, "a.pdf", "application/pdf", pdf, now)).rejects.toMatchObject({ kind: "validation" });
+    await expect(uploadEventProposalDocument({ ...deps("member"), files }, actor, clubId, id, "a.pdf", "application/pdf", pdf, now)).rejects.toMatchObject({ kind: "forbidden" });
+    await expect(uploadEventProposalTemplate({ ...d, files }, actor, "t.docx", DOCX, docx, now)).rejects.toMatchObject({ kind: "forbidden" });
+    expect(files.uploadProposalDocument).not.toHaveBeenCalled();
+    expect(files.uploadTemplateDocument).not.toHaveBeenCalled();
   });
 });

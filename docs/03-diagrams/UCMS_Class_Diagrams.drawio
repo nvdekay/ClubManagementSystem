@@ -334,7 +334,7 @@
                     <mxGeometry height="74" width="430" y="66" as="geometry"/>
                 </mxCell>
                 <mxCell id="p104" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#90A4AE;strokeWidth=1.5;verticalAlign=top;align=center;fontColor=#546E7A;fontSize=12;fontFamily=Arial;container=1;collapsible=0;spacingTop=4;" value="domain" vertex="1">
-                    <mxGeometry height="890" width="1340" x="220" y="570" as="geometry"/>
+                    <mxGeometry height="890" width="1480" x="220" y="570" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_EventProposalReviewRepository_c105" parent="p104" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F3E5F5;swimlaneFillColor=#F3E5F5;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«interface»&lt;/i&gt;&lt;br&gt;&lt;b&gt;&lt;i&gt;EventProposalReviewRepository&lt;/i&gt;&lt;/b&gt;" vertex="1">
                     <mxGeometry height="120" width="410" x="270" y="40" as="geometry"/>
@@ -409,16 +409,16 @@
                     <mxGeometry height="31" width="200" y="229" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_EventProposalVersion_c129" parent="p104" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E8F5E9;swimlaneFillColor=#E8F5E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«entity»&lt;/i&gt;&lt;br&gt;&lt;b&gt;EventProposalVersion&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="200" width="320" x="840" y="660" as="geometry"/>
+                    <mxGeometry height="216" width="320" x="840" y="660" as="geometry"/>
                 </mxCell>
-                <mxCell id="c130" parent="k_EventProposalVersion_c129" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+id : string&lt;br&gt;+revisionNo : number&lt;br&gt;+payload : Record&amp;lt;string, unknown&amp;gt;&lt;br&gt;+budgetLines : RequestedBudgetLine[]&lt;br&gt;+requestedBudgetTotal : number&lt;br&gt;+submittedBy : string&lt;br&gt;+submittedAt : Date" vertex="1">
-                    <mxGeometry height="113" width="320" y="48" as="geometry"/>
+                <mxCell id="c130" parent="k_EventProposalVersion_c129" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+id : string&lt;br&gt;+revisionNo : number&lt;br&gt;+payload : Record&amp;lt;string, unknown&amp;gt;&lt;br&gt;+budgetLines : RequestedBudgetLine[]&lt;br&gt;+requestedBudgetTotal : number&lt;br&gt;+submittedBy : string&lt;br&gt;+submittedAt : Date&lt;br&gt;+proposalDocument : EventProposalDocument [0..1]" vertex="1">
+                    <mxGeometry height="129" width="320" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="c131" parent="k_EventProposalVersion_c129" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1">
-                    <mxGeometry height="8" width="320" y="161" as="geometry"/>
+                    <mxGeometry height="8" width="320" y="177" as="geometry"/>
                 </mxCell>
                 <mxCell id="c132" parent="k_EventProposalVersion_c129" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+isCurrentOf(event : EventProposalSummary) : boolean" vertex="1">
-                    <mxGeometry height="31" width="320" y="169" as="geometry"/>
+                    <mxGeometry height="31" width="320" y="185" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_AttachedBooking_c133" parent="p104" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F1F8E9;swimlaneFillColor=#F1F8E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«datatype»&lt;/i&gt;&lt;br&gt;&lt;b&gt;AttachedBooking&lt;/b&gt;" vertex="1">
                     <mxGeometry height="150" width="180" x="1130" y="280" as="geometry"/>
@@ -465,8 +465,8 @@
                 <mxCell id="c147" parent="k_ucmsModels_c144" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1">
                     <mxGeometry height="16" width="200" y="124" as="geometry"/>
                 </mxCell>
-                <mxCell id="n148" parent="1" style="shape=note;whiteSpace=nowrap;html=1;size=14;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fillColor=#FFFFF4;strokeColor=#B0BEC5;fontSize=10;fontFamily=Arial;" value="&lt;b&gt;Entity operations -&amp;gt; source&lt;/b&gt;&lt;br&gt;EventProposalTask.claim(): guard in mongoEventProposalReviewRepository.claim()&lt;br&gt;(state = Open, assigneeId empty or the same officer)&lt;br&gt;EventProposalSummary.startReview(): Pending Approval -&amp;gt; Under Review, same transaction&lt;br&gt;EventProposalQueueItem.isReviewable(): filter of listOpen() (task Open, event in reviewableStates)&lt;br&gt;EventProposalDetail.currentVersion() / EventProposalVersion.isCurrentOf():&lt;br&gt;revisionNo = event.currentRevisionNo (usecase decideEventProposalReview, repository detail())" vertex="1">
-                    <mxGeometry height="130" width="500" x="1280" as="geometry"/>
+                <mxCell id="n148" parent="1" style="shape=note;whiteSpace=nowrap;html=1;size=14;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fillColor=#FFFFF4;strokeColor=#B0BEC5;fontSize=10;fontFamily=Arial;" value="&lt;b&gt;Entity operations -&amp;gt; source&lt;/b&gt;&lt;br&gt;EventProposalTask.claim(): guard in mongoEventProposalReviewRepository.claim()&lt;br&gt;(state = Open, assigneeId empty or the same officer)&lt;br&gt;EventProposalSummary.startReview(): Pending Approval -&amp;gt; Under Review, same transaction&lt;br&gt;EventProposalQueueItem.isReviewable(): filter of listOpen() (task Open, event in reviewableStates)&lt;br&gt;EventProposalDetail.currentVersion() / EventProposalVersion.isCurrentOf():&lt;br&gt;revisionNo = event.currentRevisionNo (usecase decideEventProposalReview, repository detail())&lt;br&gt;&lt;b&gt;Proposal document and template (2026-11-14)&lt;/b&gt;: not part of eventProposalReviewRoutes.&lt;br&gt;GET /admin/event-proposals/:id/document/access and POST /admin/event-proposals/template are&lt;br&gt;mounted in clubEventRoutes -&amp;gt; usecase club-event (reviewEventProposalDocumentAccess,&lt;br&gt;uploadEventProposalTemplate; role check reuses officer() of this module) -&amp;gt; ClubEventRepository&lt;br&gt;.proposalDocument(id, revisionNo ?? &quot;latest&quot;) / .saveProposalTemplate(); see page 03." vertex="1">
+                    <mxGeometry height="205" width="560" x="1280" as="geometry"/>
                 </mxCell>
                 <mxCell id="e149" edge="1" parent="1" source="k_EventProposalReviewRepository_c105" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.3415;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.1000;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_EventProposalQueueItem_c113" value="">
                     <mxGeometry relative="1" as="geometry">
@@ -541,7 +541,7 @@
                 <mxCell id="c167" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;event" vertex="1">
                     <mxGeometry height="1" width="1" x="454" y="867" as="geometry"/>
                 </mxCell>
-                <mxCell id="e168" edge="1" parent="1" source="k_EventProposalDetail_c117" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=1;startSize=16;endArrow=none;exitX=1.0000;exitY=0.1667;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.1500;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_EventProposalVersion_c129" value="">
+                <mxCell id="e168" edge="1" parent="1" source="k_EventProposalDetail_c117" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=1;startSize=16;endArrow=none;exitX=1.0000;exitY=0.1667;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.1389;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_EventProposalVersion_c129" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points"/>
                     </mxGeometry>
@@ -606,7 +606,7 @@
                 <mxCell id="c182" connectable="0" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="invokes" vertex="1">
                     <mxGeometry height="15" width="44" x="85" y="208" as="geometry"/>
                 </mxCell>
-            </root>
+            <mxCell id="k_EventProposalDocument_pd1" parent="p104" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F1F8E9;swimlaneFillColor=#F1F8E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«datatype»&lt;/i&gt;&lt;br&gt;&lt;b&gt;EventProposalDocument&lt;/b&gt;" vertex="1"><mxGeometry height="195" width="200" x="1280" y="660" as="geometry"/></mxCell><mxCell id="k_EventProposalDocument_pd1_a" parent="k_EventProposalDocument_pd1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+id : string&lt;br&gt;+fileName : string&lt;br&gt;+mimeType : string&lt;br&gt;+bytes : number&lt;br&gt;+assetId : string (stripped by&lt;br&gt;      publicProposalDocument)&lt;br&gt;+uploadedAt : Date&lt;br&gt;+uploadedBy : string" vertex="1"><mxGeometry height="128" width="200" y="48" as="geometry"/></mxCell><mxCell id="k_EventProposalDocument_pd1_l" parent="k_EventProposalDocument_pd1" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1"><mxGeometry height="8" width="200" y="176" as="geometry"/></mxCell><mxCell id="k_EventProposalDocument_pd1_o" parent="k_EventProposalDocument_pd1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1"><mxGeometry height="11" width="200" y="184" as="geometry"/></mxCell><mxCell id="e_pd1" edge="1" parent="1" source="k_EventProposalVersion_c129" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=0;startSize=16;endArrow=none;exitX=1.0000;exitY=0.2778;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.3077;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_EventProposalDocument_pd1" value=""><mxGeometry relative="1" as="geometry"></mxGeometry></mxCell><mxCell id="l_pd1a" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1"><mxGeometry height="1" width="1" x="1386" y="1288" as="geometry"/></mxCell><mxCell id="l_pd1b" connectable="0" parent="1" style="text;html=1;align=right;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="0..1&lt;br&gt;proposalDocument" vertex="1"><mxGeometry height="1" width="1" x="1494" y="1288" as="geometry"/></mxCell></root>
         </mxGraphModel>
     </diagram>
     <diagram name="02 Request-Event-Proposal-Revision" id="02RequestEventProposalRevision">
@@ -726,10 +726,10 @@
                     <mxGeometry height="76" width="160" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_EventReviewSection_c665" parent="p638" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFFDE7;swimlaneFillColor=#FFFDE7;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«enumeration»&lt;/i&gt;&lt;br&gt;&lt;b&gt;EventReviewSection&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="150" width="150" x="480" y="300" as="geometry"/>
+                    <mxGeometry height="167" width="150" x="480" y="300" as="geometry"/>
                 </mxCell>
-                <mxCell id="c666" parent="k_EventReviewSection_c665" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="schedule&lt;br&gt;venue&lt;br&gt;content&lt;br&gt;risk&lt;br&gt;budget&lt;br&gt;other" vertex="1">
-                    <mxGeometry height="102" width="150" y="48" as="geometry"/>
+                <mxCell id="c666" parent="k_EventReviewSection_c665" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="schedule&lt;br&gt;venue&lt;br&gt;content&lt;br&gt;&amp;nbsp; + proposal document&lt;br&gt;risk&lt;br&gt;budget&lt;br&gt;other" vertex="1">
+                    <mxGeometry height="119" width="150" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="p667" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#90A4AE;strokeWidth=1.5;verticalAlign=top;align=center;fontColor=#546E7A;fontSize=12;fontFamily=Arial;container=1;collapsible=0;spacingTop=4;" value="infra/db" vertex="1">
                     <mxGeometry height="210" width="640" x="540" as="geometry"/>
@@ -914,45 +914,45 @@
         </mxGraphModel>
     </diagram>
     <diagram name="03 Resubmit-Event-Proposal" id="03ResubmitEventProposal">
-        <mxGraphModel dx="2390" dy="1493" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1910" pageHeight="1610" math="0" shadow="0">
+        <mxGraphModel dx="2390" dy="1493" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1910" pageHeight="1770" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
                 <mxCell id="p1156" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#90A4AE;strokeWidth=1.5;verticalAlign=top;align=center;fontColor=#546E7A;fontSize=12;fontFamily=Arial;container=1;collapsible=0;spacingTop=4;" value="interface/http" vertex="1">
-                    <mxGeometry height="190" width="290" x="80" as="geometry"/>
+                    <mxGeometry height="264" width="410" x="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_clubEventRoutes_c1157" parent="p1156" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E3F2FD;swimlaneFillColor=#E3F2FD;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«boundary»&lt;/i&gt;&lt;br&gt;&lt;b&gt;clubEventRoutes&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="120" width="230" x="30" y="40" as="geometry"/>
+                    <mxGeometry height="204" width="350" x="30" y="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1158" parent="k_clubEventRoutes_c1157" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1">
-                    <mxGeometry height="10" width="230" y="48" as="geometry"/>
+                    <mxGeometry height="10" width="350" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1159" parent="k_clubEventRoutes_c1157" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1">
-                    <mxGeometry height="8" width="230" y="58" as="geometry"/>
+                    <mxGeometry height="8" width="350" y="58" as="geometry"/>
                 </mxCell>
-                <mxCell id="c1160" parent="k_clubEventRoutes_c1157" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+GET /clubs/:clubId/events/:id&lt;br&gt;+POST /clubs/:clubId/events/:id/save&lt;br&gt;+POST /clubs/:clubId/events/:id/submit" vertex="1">
-                    <mxGeometry height="54" width="230" y="66" as="geometry"/>
+                <mxCell id="c1160" parent="k_clubEventRoutes_c1157" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+GET /clubs/:clubId/events/:id&lt;br&gt;+POST /clubs/:clubId/events/:id/save&lt;br&gt;+POST /clubs/:clubId/events/:id/submit&lt;br&gt;+GET /events/proposal-template&lt;br&gt;+GET /events/proposal-template/download&lt;br&gt;+POST /clubs/:clubId/events/:id/proposal-document&lt;br&gt;+GET /clubs/:clubId/events/:id/proposal-document/access&lt;br&gt;+POST /admin/event-proposals/template&lt;br&gt;+GET /admin/event-proposals/:id/document/access" vertex="1">
+                    <mxGeometry height="138" width="350" y="66" as="geometry"/>
                 </mxCell>
                 <mxCell id="p1161" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#90A4AE;strokeWidth=1.5;verticalAlign=top;align=center;fontColor=#546E7A;fontSize=12;fontFamily=Arial;container=1;collapsible=0;spacingTop=4;" value="usecase" vertex="1">
-                    <mxGeometry height="180" width="460" y="250" as="geometry"/>
+                    <mxGeometry height="320" width="530" y="340" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_UC_c1162" parent="p1161" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF3E0;swimlaneFillColor=#FFF3E0;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«control»&lt;/i&gt;&lt;br&gt;&lt;b&gt;club-event&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="110" width="400" x="30" y="40" as="geometry"/>
+                    <mxGeometry height="250" width="470" x="30" y="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1163" parent="k_UC_c1162" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1">
-                    <mxGeometry height="10" width="400" y="48" as="geometry"/>
+                    <mxGeometry height="10" width="470" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1164" parent="k_UC_c1162" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1">
-                    <mxGeometry height="8" width="400" y="58" as="geometry"/>
+                    <mxGeometry height="8" width="470" y="58" as="geometry"/>
                 </mxCell>
-                <mxCell id="c1165" parent="k_UC_c1162" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+getClubEvent(deps, actor, clubId, id, now) : ClubEventDetail&lt;br&gt;+actOnClubEvent(deps, actor, clubId, id, action, now) : ClubEventDetail" vertex="1">
-                    <mxGeometry height="44" width="400" y="66" as="geometry"/>
+                <mxCell id="c1165" parent="k_UC_c1162" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+getClubEvent(deps, actor, clubId, id, now) : ClubEventDetail&lt;br&gt;+actOnClubEvent(deps, actor, clubId, id, action, now) : ClubEventDetail&lt;br&gt;+eventProposalTemplateInfo(deps, actor) : EventProposalTemplateInfo&lt;br&gt;+downloadEventProposalTemplate(deps, actor) : file | redirect&lt;br&gt;+uploadEventProposalDocument(deps, actor, clubId, id, fileName,&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; mimeType, bytes, now) : ClubEventDetail&lt;br&gt;+clubEventProposalDocumentAccess(deps, actor, clubId, id, revisionNo,&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; inline, now) : {fileName, mimeType, url}&lt;br&gt;+uploadEventProposalTemplate(deps, actor, fileName, mimeType, bytes,&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; now) : EventProposalTemplateInfo&lt;br&gt;+reviewEventProposalDocumentAccess(deps, actor, id, revisionNo,&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; inline) : {fileName, mimeType, url}" vertex="1">
+                    <mxGeometry height="184" width="470" y="66" as="geometry"/>
                 </mxCell>
                 <mxCell id="p1166" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#90A4AE;strokeWidth=1.5;verticalAlign=top;align=center;fontColor=#546E7A;fontSize=12;fontFamily=Arial;container=1;collapsible=0;spacingTop=4;" value="domain" vertex="1">
-                    <mxGeometry height="950" width="1540" x="120" y="540" as="geometry"/>
+                    <mxGeometry height="950" width="1540" x="120" y="700" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_ClubEventRepository_c1167" parent="p1166" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F3E5F5;swimlaneFillColor=#F3E5F5;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«interface»&lt;/i&gt;&lt;br&gt;&lt;b&gt;&lt;i&gt;ClubEventRepository&lt;/i&gt;&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="120" width="450" x="30" y="40" as="geometry"/>
+                    <mxGeometry height="176" width="450" x="30" y="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1168" parent="k_ClubEventRepository_c1167" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1">
                     <mxGeometry height="10" width="450" y="48" as="geometry"/>
@@ -960,8 +960,8 @@
                 <mxCell id="c1169" parent="k_ClubEventRepository_c1167" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1">
                     <mxGeometry height="8" width="450" y="58" as="geometry"/>
                 </mxCell>
-                <mxCell id="c1170" parent="k_ClubEventRepository_c1167" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+find(clubId : string, eventId : string) : ClubEventDetail&lt;br&gt;+act(clubId : string, eventId : string, action : ClubEventAction, actorId : string, now&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; : Date) : ClubEventDetail" vertex="1">
-                    <mxGeometry height="54" width="450" y="66" as="geometry"/>
+                <mxCell id="c1170" parent="k_ClubEventRepository_c1167" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+find(clubId : string, eventId : string) : ClubEventDetail&lt;br&gt;+act(clubId : string, eventId : string, action : ClubEventAction, actorId : string, now&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; : Date) : ClubEventDetail&lt;br&gt;+proposalDocument(eventId, revision : number | &quot;draft&quot; | &quot;latest&quot;) :&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; {clubId, document : EventProposalDocument [0..1]} [0..1]&lt;br&gt;+proposalTemplate() : EventProposalTemplate&lt;br&gt;+saveProposalTemplate(document, actorId, now) : EventProposalTemplateInfo" vertex="1">
+                    <mxGeometry height="110" width="450" y="66" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_ClubAccessRepository_c1171" parent="p1166" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F3E5F5;swimlaneFillColor=#F3E5F5;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«interface»&lt;/i&gt;&lt;br&gt;&lt;b&gt;&lt;i&gt;ClubAccessRepository&lt;/i&gt;&lt;/b&gt;" vertex="1">
                     <mxGeometry height="90" width="380" x="640" y="40" as="geometry"/>
@@ -976,16 +976,16 @@
                     <mxGeometry height="24" width="380" y="66" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_ClubEventAction_c1175" parent="p1166" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FAFAFA;swimlaneFillColor=#FAFAFA;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«dto»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ClubEventAction&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="140" width="240" x="1270" y="280" as="geometry"/>
+                    <mxGeometry height="154" width="265" x="1270" y="280" as="geometry"/>
                 </mxCell>
-                <mxCell id="c1176" parent="k_ClubEventAction_c1175" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+kind : &amp;quot;save&amp;quot; | &amp;quot;submit&amp;quot; | ...&lt;br&gt;+input : ClubEventInput [0..1]&lt;br&gt;+expectedVersion : number" vertex="1">
-                    <mxGeometry height="53" width="240" y="48" as="geometry"/>
+                <mxCell id="c1176" parent="k_ClubEventAction_c1175" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+kind : &amp;quot;save&amp;quot; | &amp;quot;submit&amp;quot; | &amp;quot;attach-document&amp;quot; | ...&lt;br&gt;+input : ClubEventInput [0..1]&lt;br&gt;+expectedVersion : number&lt;br&gt;+document : EventProposalDocument [0..1]" vertex="1">
+                    <mxGeometry height="67" width="265" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1177" parent="k_ClubEventAction_c1175" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1">
-                    <mxGeometry height="8" width="240" y="101" as="geometry"/>
+                    <mxGeometry height="8" width="265" y="115" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1178" parent="k_ClubEventAction_c1175" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+requiredPermission() : ClubPermission" vertex="1">
-                    <mxGeometry height="31" width="240" y="109" as="geometry"/>
+                    <mxGeometry height="31" width="265" y="123" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_ClubEventDetail_c1179" parent="p1166" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E8F5E9;swimlaneFillColor=#E8F5E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«entity»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ClubEventDetail&lt;/b&gt;" vertex="1">
                     <mxGeometry height="140" width="340" x="30" y="280" as="geometry"/>
@@ -1012,16 +1012,16 @@
                     <mxGeometry height="46" width="350" y="244" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_ClubEvent_c1187" parent="p1166" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E8F5E9;swimlaneFillColor=#E8F5E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«entity»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ClubEvent&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="230" width="250" x="530" y="280" as="geometry"/>
+                    <mxGeometry height="269" width="305" x="530" y="280" as="geometry"/>
                 </mxCell>
-                <mxCell id="c1188" parent="k_ClubEvent_c1187" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+id : string&lt;br&gt;+clubId : string&lt;br&gt;+state : ClubEventState&lt;br&gt;+semesterCode : string&lt;br&gt;+version : number&lt;br&gt;+currentRevisionNo : number&lt;br&gt;+conflictResult : string [0..1]&lt;br&gt;+revisionDeadlineAt : Date [0..1]" vertex="1">
-                    <mxGeometry height="128" width="250" y="48" as="geometry"/>
+                <mxCell id="c1188" parent="k_ClubEvent_c1187" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+id : string&lt;br&gt;+clubId : string&lt;br&gt;+state : ClubEventState&lt;br&gt;+semesterCode : string&lt;br&gt;+version : number&lt;br&gt;+currentRevisionNo : number&lt;br&gt;+conflictResult : string [0..1]&lt;br&gt;+revisionDeadlineAt : Date [0..1]&lt;br&gt;+proposalDocument : PublicEventProposalDocument [0..1]" vertex="1">
+                    <mxGeometry height="144" width="305" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1189" parent="k_ClubEvent_c1187" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1">
-                    <mxGeometry height="8" width="250" y="176" as="geometry"/>
+                    <mxGeometry height="8" width="305" y="192" as="geometry"/>
                 </mxCell>
-                <mxCell id="c1190" parent="k_ClubEvent_c1187" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+canResubmit(now : Date) : boolean&lt;br&gt;+submit(actorId : string, now : Date) : void" vertex="1">
-                    <mxGeometry height="46" width="250" y="184" as="geometry"/>
+                <mxCell id="c1190" parent="k_ClubEvent_c1187" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+canResubmit(now : Date) : boolean&lt;br&gt;+submit(actorId : string, now : Date) : void&lt;br&gt;+assertProposalDocumentPresent() : void" vertex="1">
+                    <mxGeometry height="69" width="305" y="200" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_RequestedBudgetLine_c1191" parent="p1166" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F1F8E9;swimlaneFillColor=#F1F8E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«datatype»&lt;/i&gt;&lt;br&gt;&lt;b&gt;RequestedBudgetLine&lt;/b&gt;" vertex="1">
                     <mxGeometry height="140" width="170" x="940" y="280" as="geometry"/>
@@ -1068,19 +1068,19 @@
                 <mxCell id="c1205" parent="k_ucmsModels_c1202" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1">
                     <mxGeometry height="11" width="200" y="109" as="geometry"/>
                 </mxCell>
-                <mxCell id="n1206" parent="1" style="shape=note;whiteSpace=nowrap;html=1;size=14;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fillColor=#FFFFF4;strokeColor=#B0BEC5;fontSize=10;fontFamily=Arial;" value="&lt;b&gt;Entity operations -&amp;gt; source&lt;/b&gt;&lt;br&gt;ClubEventInput.validate(): domain validateClubEventInput() (returns semesterCode);&lt;br&gt;ICPDP proposal: PUBLIC, or MEMBERS_ONLY with budgetLines &amp;gt;= 1 (else validation error)&lt;br&gt;ClubEventInput.assertNotice(): domain assertEventNotice() (proposalNoticeHours)&lt;br&gt;ClubEvent.canResubmit(): mongo act() - state in {Draft, Revision Requested}&lt;br&gt;and revisionDeadlineAt not passed&lt;br&gt;ClubEvent.submit(): submitVersion() - revisionNo + 1, Pending Approval&lt;br&gt;(an active defense -&amp;gt; Under Review, task assigned to the defense lead officer),&lt;br&gt;new eventProposalVersions row and approval task with the UC05 SLA (routedTaskFields)&lt;br&gt;Unbudgeted MEMBERS_ONLY -&amp;gt; separate internal flow (/internal-events,&lt;br&gt;&amp;gt;= 24h notice, DRAFT -&amp;gt; CREATED; no proposal version / approval task)&lt;br&gt;ClubEventAction.requiredPermission(): domain eventActionPermission()&lt;br&gt;ClubEventDetail.maskedForAttendance(): usecase actOnClubEvent() result masking" vertex="1">
-                    <mxGeometry height="200" width="480" x="1360" as="geometry"/>
+                <mxCell id="n1206" parent="1" style="shape=note;whiteSpace=nowrap;html=1;size=14;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fillColor=#FFFFF4;strokeColor=#B0BEC5;fontSize=10;fontFamily=Arial;" value="&lt;b&gt;Entity operations -&amp;gt; source&lt;/b&gt;&lt;br&gt;ClubEventInput.validate(): domain validateClubEventInput() (returns semesterCode);&lt;br&gt;ICPDP proposal: PUBLIC, or MEMBERS_ONLY with budgetLines &amp;gt;= 1 (else validation error)&lt;br&gt;ClubEventInput.assertNotice(): domain assertEventNotice() (proposalNoticeHours)&lt;br&gt;ClubEvent.canResubmit(): mongo act() - state in {Draft, Revision Requested}&lt;br&gt;and revisionDeadlineAt not passed&lt;br&gt;ClubEvent.submit(): submitVersion() - revisionNo + 1, Pending Approval&lt;br&gt;(an active defense -&amp;gt; Under Review, task assigned to the defense lead officer),&lt;br&gt;new eventProposalVersions row and approval task with the UC05 SLA (routedTaskFields)&lt;br&gt;ClubEvent.assertProposalDocumentPresent(): domain assertProposalDocumentPresent(), called by&lt;br&gt;mongo act() for kind &quot;submit&quot; only (400 without proposalDocument; reschedule is not blocked);&lt;br&gt;submitVersion() freezes the stored document in the revision payload&lt;br&gt;act(&quot;attach-document&quot;): same transaction and __v lock as save; audit EVENT_PROPOSAL_DOCUMENT_UPLOADED&lt;br&gt;EventProposalFileStorage: adapter cloudinaryEventProposalFiles (infra/files/event-proposal-files.ts);&lt;br&gt;proposalTemplate(): latest EVENT_PROPOSAL_TEMPLATE_UPDATED audit, else bundled default file&lt;br&gt;Unbudgeted MEMBERS_ONLY -&amp;gt; separate internal flow (/internal-events,&lt;br&gt;&amp;gt;= 24h notice, DRAFT -&amp;gt; CREATED; no proposal version / approval task)&lt;br&gt;ClubEventAction.requiredPermission(): domain eventActionPermission()&lt;br&gt;ClubEventDetail.maskedForAttendance(): usecase actOnClubEvent() result masking" vertex="1">
+                    <mxGeometry height="285" width="560" x="1360" as="geometry"/>
                 </mxCell>
-                <mxCell id="e1207" edge="1" parent="1" source="k_clubEventRoutes_c1157" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.0870;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.2500;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_UC_c1162" value="">
+                <mxCell id="e1207" edge="1" parent="1" source="k_clubEventRoutes_c1157" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.0572;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.2128;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_UC_c1162" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1208" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1">
-                    <mxGeometry height="1" width="1" x="135" y="163" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="135" y="247" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1209" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1">
-                    <mxGeometry height="1" width="1" x="135" y="286" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="135" y="376" as="geometry"/>
                 </mxCell>
                 <mxCell id="e1210" edge="1" parent="1" source="k_ClubEventRepository_c1167" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.0444;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0588;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventDetail_c1179" value="">
                     <mxGeometry relative="1" as="geometry">
@@ -1088,21 +1088,21 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1211" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1">
-                    <mxGeometry height="1" width="1" x="175" y="703" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="175" y="919" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1212" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="0..*" vertex="1">
-                    <mxGeometry height="1" width="1" x="175" y="816" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="175" y="976" as="geometry"/>
                 </mxCell>
-                <mxCell id="e1213" edge="1" parent="1" source="k_ClubEvent_c1187" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.1600;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.1429;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventState_c1195" value="">
+                <mxCell id="e1213" edge="1" parent="1" source="k_ClubEvent_c1187" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.1311;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.1429;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventState_c1195" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1214" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="0..*" vertex="1">
-                    <mxGeometry height="1" width="1" x="695" y="1053" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="695" y="1252" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1215" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;state" vertex="1">
-                    <mxGeometry height="1" width="1" x="695" y="1166" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="695" y="1326" as="geometry"/>
                 </mxCell>
                 <mxCell id="e1216" edge="1" parent="1" source="k_ClubEventInput_c1183" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=1;startSize=16;endArrow=none;exitX=0.3143;exitY=0.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.1176;entryY=1.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_RequestedBudgetLine_c1191" value="">
                     <mxGeometry relative="1" as="geometry">
@@ -1110,21 +1110,21 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1217" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1">
-                    <mxGeometry height="1" width="1" x="1085" y="1166" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="1085" y="1326" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1218" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="0..*&lt;br&gt;budgetLines" vertex="1">
-                    <mxGeometry height="1" width="1" x="1085" y="963" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="1085" y="1123" as="geometry"/>
                 </mxCell>
-                <mxCell id="e1219" edge="1" parent="1" source="k_UC_c1162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.3500;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0444;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventRepository_c1167" value="">
+                <mxCell id="e1219" edge="1" parent="1" source="k_UC_c1162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.2979;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0444;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventRepository_c1167" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1220" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1">
-                    <mxGeometry height="1" width="1" x="175" y="403" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="175" y="633" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1221" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;repo" vertex="1">
-                    <mxGeometry height="1" width="1" x="175" y="576" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="175" y="736" as="geometry"/>
                 </mxCell>
                 <mxCell id="e1222" edge="1" parent="1" source="k_mongoClubEventRepository_c1198" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.0000;exitY=0.1504;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1.0000;entryY=0.1667;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ucmsModels_c1202" value="">
                     <mxGeometry relative="1" as="geometry">
@@ -1137,75 +1137,75 @@
                 <mxCell id="c1224" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;m" vertex="1">
                     <mxGeometry height="1" width="1" x="754" y="57" as="geometry"/>
                 </mxCell>
-                <mxCell id="e1225" edge="1" parent="1" source="k_ClubEventDetail_c1179" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=1;startSize=16;endArrow=none;exitX=1.0000;exitY=0.1429;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.0870;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEvent_c1187" value="">
+                <mxCell id="e1225" edge="1" parent="1" source="k_ClubEventDetail_c1179" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=1;startSize=16;endArrow=none;exitX=1.0000;exitY=0.1429;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.0743;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEvent_c1187" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1226" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1">
-                    <mxGeometry height="1" width="1" x="494" y="837" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="494" y="997" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1227" connectable="0" parent="1" style="text;html=1;align=right;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;event" vertex="1">
-                    <mxGeometry height="1" width="1" x="645" y="837" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="645" y="997" as="geometry"/>
                 </mxCell>
-                <mxCell id="e1228" edge="1" parent="1" source="k_ClubEvent_c1187" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=block;endFill=0;endSize=14;exitX=0.9200;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.0690;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventInput_c1183" value="">
+                <mxCell id="e1228" edge="1" parent="1" source="k_ClubEvent_c1187" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=block;endFill=0;endSize=14;exitX=0.7541;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.0690;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventInput_c1183" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="880" y="1190"/>
+                            <mxPoint x="880" y="1350"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e1229" edge="1" parent="1" source="k_ClubEventAction_c1175" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.0000;exitY=0.8571;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.9429;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventInput_c1183" value="">
+                <mxCell id="e1229" edge="1" parent="1" source="k_ClubEventAction_c1175" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.0000;exitY=0.7792;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.9429;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventInput_c1183" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1300" y="940"/>
+                            <mxPoint x="1300" y="1100"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1230" connectable="0" parent="1" style="text;html=1;align=right;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="0..*" vertex="1">
-                    <mxGeometry height="1" width="1" x="1385" y="937" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="1385" y="1097" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1231" connectable="0" parent="1" style="text;html=1;align=right;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="0..1&lt;br&gt;input" vertex="1">
-                    <mxGeometry height="1" width="1" x="1294" y="1166" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="1294" y="1326" as="geometry"/>
                 </mxCell>
-                <mxCell id="e1232" edge="1" parent="1" source="k_UC_c1162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=1.0000;exitY=0.8182;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0526;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubAccessRepository_c1171" value="">
+                <mxCell id="e1232" edge="1" parent="1" source="k_UC_c1162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=1.0000;exitY=0.3600;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0526;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubAccessRepository_c1171" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="780" y="380"/>
+                            <mxPoint x="780" y="470"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1233" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1">
-                    <mxGeometry height="1" width="1" x="434" y="377" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="505" y="467" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1234" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;access" vertex="1">
-                    <mxGeometry height="1" width="1" x="785" y="576" as="geometry"/>
+                    <mxGeometry height="1" width="1" x="785" y="736" as="geometry"/>
                 </mxCell>
                 <mxCell id="e1235" edge="1" parent="1" source="k_mongoClubEventRepository_c1198" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=block;endFill=0;endSize=14;dashed=1;exitX=0.0556;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.9556;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventRepository_c1167" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="930" y="500"/>
-                            <mxPoint x="580" y="500"/>
+                            <mxPoint x="930" y="590"/>
+                            <mxPoint x="580" y="590"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e1236" edge="1" parent="1" source="k_UC_c1162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;dashed=1;exitX=1.0000;exitY=0.3636;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0833;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventAction_c1175" value="">
+                <mxCell id="e1236" edge="1" parent="1" source="k_UC_c1162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;dashed=1;exitX=1.0000;exitY=0.1600;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0754;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventAction_c1175" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="1410" y="330"/>
+                            <mxPoint x="1410" y="420"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="c1237" connectable="0" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="invokes" vertex="1">
-                    <mxGeometry height="15" width="44" x="135" y="218" as="geometry"/>
+                    <mxGeometry height="15" width="44" x="135" y="300" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1238" connectable="0" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="finds" vertex="1">
-                    <mxGeometry height="15" width="30" x="175" y="752" as="geometry"/>
+                    <mxGeometry height="15" width="30" x="175" y="942" as="geometry"/>
                 </mxCell>
                 <mxCell id="c1239" connectable="0" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="«use»" vertex="1">
-                    <mxGeometry height="15" width="37" x="902" y="322" as="geometry"/>
+                    <mxGeometry height="15" width="37" x="902" y="412" as="geometry"/>
                 </mxCell>
-            </root>
+            <mxCell id="k_EventProposalFileStorage_pd3" parent="p1166" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F3E5F5;swimlaneFillColor=#F3E5F5;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«interface»&lt;/i&gt;&lt;br&gt;&lt;b&gt;&lt;i&gt;EventProposalFileStorage&lt;/i&gt;&lt;/b&gt;" vertex="1"><mxGeometry height="142" width="235" x="1040" y="40" as="geometry"/></mxCell><mxCell id="k_EventProposalFileStorage_pd3_a" parent="k_EventProposalFileStorage_pd3" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1"><mxGeometry height="10" width="235" y="48" as="geometry"/></mxCell><mxCell id="k_EventProposalFileStorage_pd3_l" parent="k_EventProposalFileStorage_pd3" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1"><mxGeometry height="8" width="235" y="58" as="geometry"/></mxCell><mxCell id="k_EventProposalFileStorage_pd3_o" parent="k_EventProposalFileStorage_pd3" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+uploadProposalDocument(input) :&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; EventProposalDocument&lt;br&gt;+uploadTemplateDocument(input) :&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; EventProposalDocument&lt;br&gt;+accessUrl(assetId, {inline}) : string" vertex="1"><mxGeometry height="76" width="235" y="66" as="geometry"/></mxCell><mxCell id="e_pd3" edge="1" parent="1" source="k_UC_c1162" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=1.0000;exitY=0.2400;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.1277;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_EventProposalFileStorage_pd3" value=""><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1190" y="440"/></Array></mxGeometry></mxCell><mxCell id="l_pd3a" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1" vertex="1"><mxGeometry height="1" width="1" x="505" y="437" as="geometry"/></mxCell><mxCell id="l_pd3b" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="0..1&lt;br&gt;files" vertex="1"><mxGeometry height="1" width="1" x="1195" y="736" as="geometry"/></mxCell></root>
         </mxGraphModel>
     </diagram>
     <diagram name="04 Approve-or-Reject-Event-Proposal" id="04ApproveorRejectEventProposal">
@@ -2996,7 +2996,7 @@
                     <mxGeometry height="24" width="400" y="66" as="geometry"/>
                 </mxCell>
                 <mxCell id="p4622" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#90A4AE;strokeWidth=1.5;verticalAlign=top;align=center;fontColor=#546E7A;fontSize=12;fontFamily=Arial;container=1;collapsible=0;spacingTop=4;" value="domain" vertex="1">
-                    <mxGeometry height="530" width="1520" y="550" as="geometry"/>
+                    <mxGeometry height="550" width="1520" y="550" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_ClubEventRepository_c4623" parent="p4622" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#F3E5F5;swimlaneFillColor=#F3E5F5;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«interface»&lt;/i&gt;&lt;br&gt;&lt;b&gt;&lt;i&gt;ClubEventRepository&lt;/i&gt;&lt;/b&gt;" vertex="1">
                     <mxGeometry height="110" width="450" x="350" y="40" as="geometry"/>
@@ -3035,16 +3035,16 @@
                     <mxGeometry height="31" width="240" y="169" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_ClubEvent_c4635" parent="p4622" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E8F5E9;swimlaneFillColor=#E8F5E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«entity»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ClubEvent&lt;/b&gt;" vertex="1">
-                    <mxGeometry height="230" width="410" x="380" y="270" as="geometry"/>
+                    <mxGeometry height="266" width="410" x="380" y="270" as="geometry"/>
                 </mxCell>
-                <mxCell id="c4636" parent="k_ClubEvent_c4635" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+id : string&lt;br&gt;+state : ClubEventState&lt;br&gt;+startAt : Date&lt;br&gt;+endAt : Date&lt;br&gt;+version : number&lt;br&gt;+currentRevisionNo : number&lt;br&gt;+attendanceFinalized : boolean" vertex="1">
-                    <mxGeometry height="113" width="410" y="48" as="geometry"/>
+                <mxCell id="c4636" parent="k_ClubEvent_c4635" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+id : string&lt;br&gt;+state : ClubEventState&lt;br&gt;+startAt : Date&lt;br&gt;+endAt : Date&lt;br&gt;+version : number&lt;br&gt;+currentRevisionNo : number&lt;br&gt;+attendanceFinalized : boolean&lt;br&gt;+proposalDocument : PublicEventProposalDocument [0..1]" vertex="1">
+                    <mxGeometry height="129" width="410" y="48" as="geometry"/>
                 </mxCell>
                 <mxCell id="c4637" parent="k_ClubEvent_c4635" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=#37474F;" value="" vertex="1">
-                    <mxGeometry height="8" width="410" y="161" as="geometry"/>
+                    <mxGeometry height="8" width="410" y="177" as="geometry"/>
                 </mxCell>
-                <mxCell id="c4638" parent="k_ClubEvent_c4635" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+cancel(reason : string, now : Date, noticeHours : number) : void&lt;br&gt;+isLateCancellation(now : Date, noticeHours : number) : boolean&lt;br&gt;+reschedule(startAt : Date, endAt : Date, reason : string, now : Date) : void" vertex="1">
-                    <mxGeometry height="61" width="410" y="169" as="geometry"/>
+                <mxCell id="c4638" parent="k_ClubEvent_c4635" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="+cancel(reason : string, now : Date, noticeHours : number) : void&lt;br&gt;+isLateCancellation(now : Date, noticeHours : number) : boolean&lt;br&gt;+reschedule(startAt : Date, endAt : Date, reason : string, now : Date) : void&lt;br&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; (ICPDP proposal: new revision carries proposalDocument over, if any)" vertex="1">
+                    <mxGeometry height="81" width="410" y="185" as="geometry"/>
                 </mxCell>
                 <mxCell id="k_EventRegistration_c4639" parent="p4622" style="swimlane;fontStyle=0;html=1;whiteSpace=nowrap;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=48;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E8F5E9;swimlaneFillColor=#E8F5E9;strokeColor=#37474F;fontSize=11;fontFamily=Arial;spacingTop=2;" value="&lt;i&gt;«entity»&lt;/i&gt;&lt;br&gt;&lt;b&gt;EventRegistration&lt;/b&gt;" vertex="1">
                     <mxGeometry height="150" width="190" x="30" y="270" as="geometry"/>
@@ -3115,8 +3115,8 @@
                 <mxCell id="c4661" parent="k_ucmsModels_c4658" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=6;spacingRight=4;spacingTop=0;whiteSpace=nowrap;overflow=visible;rotatable=0;fontSize=11;fontFamily=Arial;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="" vertex="1">
                     <mxGeometry height="16" width="170" y="154" as="geometry"/>
                 </mxCell>
-                <mxCell id="n4662" parent="1" style="shape=note;whiteSpace=nowrap;html=1;size=14;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fillColor=#FFFFF4;strokeColor=#B0BEC5;fontSize=10;fontFamily=Arial;" value="&lt;b&gt;Entity operations -&amp;gt; source&lt;/b&gt;&lt;br&gt;ClubEvent.cancel(): mongo act(&quot;cancel&quot;) + cancelEventInSession() - public {Approved, Upcoming, Ongoing} or&lt;br&gt;internal {DRAFT, CREATED, PUBLIC, ONGOING}, attendance not finalized; -&amp;gt; Cancelled/CANCELLED,&lt;br&gt;registrations Cancelled, open tasks Closed, bookings released, budget handled, registrants notified&lt;br&gt;ClubEvent.isLateCancellation(): domain eventCancellationIsLate(startAt, now, cancellationNoticeHours)&lt;br&gt;ClubEvent.reschedule(): act(&quot;reschedule&quot;) - ICPDP proposal {Approved, Upcoming}: no check-ins,&lt;br&gt;no blocking conflict; frees linked bookings unless reattached; new revision -&amp;gt; Pending Approval (UC26);&lt;br&gt;internal CREATED: updated directly (newStartAt &amp;gt;= now + 24h, conflicts re-assessed), stays CREATED;&lt;br&gt;internal PUBLIC / ONGOING: schedule locked (conflict), only cancel() is allowed;&lt;br&gt;EVENT_RESCHEDULED in-app notice to Confirmed / Waitlisted registrants" vertex="1">
-                    <mxGeometry height="200" width="560" x="1000" y="1140" as="geometry"/>
+                <mxCell id="n4662" parent="1" style="shape=note;whiteSpace=nowrap;html=1;size=14;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fillColor=#FFFFF4;strokeColor=#B0BEC5;fontSize=10;fontFamily=Arial;" value="&lt;b&gt;Entity operations -&amp;gt; source&lt;/b&gt;&lt;br&gt;ClubEvent.cancel(): mongo act(&quot;cancel&quot;) + cancelEventInSession() - public {Approved, Upcoming, Ongoing} or&lt;br&gt;internal {DRAFT, CREATED, PUBLIC, ONGOING}, attendance not finalized; -&amp;gt; Cancelled/CANCELLED,&lt;br&gt;registrations Cancelled, open tasks Closed, bookings released, budget handled, registrants notified&lt;br&gt;ClubEvent.isLateCancellation(): domain eventCancellationIsLate(startAt, now, cancellationNoticeHours)&lt;br&gt;ClubEvent.reschedule(): act(&quot;reschedule&quot;) - ICPDP proposal {Approved, Upcoming}: no check-ins,&lt;br&gt;no blocking conflict; frees linked bookings unless reattached; new revision -&amp;gt; Pending Approval (UC26), carrying proposalDocument over if any;&lt;br&gt;internal CREATED: updated directly (newStartAt &amp;gt;= now + 24h, conflicts re-assessed), stays CREATED;&lt;br&gt;internal PUBLIC / ONGOING: schedule locked (conflict), only cancel() is allowed;&lt;br&gt;EVENT_RESCHEDULED in-app notice to Confirmed / Waitlisted registrants" vertex="1">
+                    <mxGeometry height="200" width="600" x="1000" y="1140" as="geometry"/>
                 </mxCell>
                 <mxCell id="e4663" edge="1" parent="1" source="k_clubEventRoutes_c4613" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=0.0800;exitY=1.0000;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.2500;entryY=0.0000;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_UC_c4618" value="">
                     <mxGeometry relative="1" as="geometry">
@@ -3162,7 +3162,7 @@
                 <mxCell id="c4674" connectable="0" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;rules" vertex="1">
                     <mxGeometry height="1" width="1" x="1145" y="153" as="geometry"/>
                 </mxCell>
-                <mxCell id="e4675" edge="1" parent="1" source="k_ClubEvent_c4635" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=1.0000;exitY=0.1304;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.1667;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventState_c4643" value="">
+                <mxCell id="e4675" edge="1" parent="1" source="k_ClubEvent_c4635" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;endArrow=open;endFill=0;endSize=10;exitX=1.0000;exitY=0.1127;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.0000;entryY=0.1667;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_ClubEventState_c4643" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points"/>
                     </mxGeometry>
@@ -3173,7 +3173,7 @@
                 <mxCell id="c4677" connectable="0" parent="1" style="text;html=1;align=right;verticalAlign=bottom;fontSize=10;fontFamily=Arial;labelBackgroundColor=#FFFFFF;spacing=0;whiteSpace=nowrap;" value="1&lt;br&gt;state" vertex="1">
                     <mxGeometry height="1" width="1" x="945" y="847" as="geometry"/>
                 </mxCell>
-                <mxCell id="e4678" edge="1" parent="1" source="k_ClubEvent_c4635" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=0;startSize=16;endArrow=none;exitX=0.0000;exitY=0.0870;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1.0000;entryY=0.1333;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_EventRegistration_c4639" value="">
+                <mxCell id="e4678" edge="1" parent="1" source="k_ClubEvent_c4635" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=10;fontFamily=Arial;strokeColor=#37474F;labelBackgroundColor=#FFFFFF;startArrow=diamondThin;startFill=0;startSize=16;endArrow=none;exitX=0.0000;exitY=0.0752;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1.0000;entryY=0.1333;entryDx=0;entryDy=0;entryPerimeter=0;" target="k_EventRegistration_c4639" value="">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points"/>
                     </mxGeometry>

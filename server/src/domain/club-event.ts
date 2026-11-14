@@ -22,7 +22,36 @@ export interface ClubEventInput {
 export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" |
   "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
 export type InternalClubEventMode = "draft" | "create" | "publish";
+/** The proposal document (UC25) a club attaches to an ICPDP proposal; frozen in every submitted revision. */
+export interface EventProposalDocument {
+  id: string; fileName: string; mimeType: string; bytes: number; assetId: string; uploadedAt: Date; uploadedBy: string;
+}
+/** What clients see: the storage asset id never leaves the server. */
+export type PublicEventProposalDocument = Omit<EventProposalDocument, "assetId">;
+export function publicProposalDocument(document: EventProposalDocument): PublicEventProposalDocument {
+  const { assetId: _assetId, ...rest } = document;
+  return rest;
+}
+/** Drops the asset id from the `proposalDocument` inside a stored event payload, leaving everything else as is. */
+export function publicEventPayload<T>(payload: T): T {
+  if (!payload || typeof payload !== "object" || !("proposalDocument" in payload)) return payload;
+  const { proposalDocument, ...rest } = payload as Record<string, unknown>;
+  return (proposalDocument && typeof proposalDocument === "object"
+    ? { ...rest, proposalDocument: publicProposalDocument(proposalDocument as EventProposalDocument) } : rest) as T;
+}
+export interface EventProposalTemplateInfo { fileName: string; mimeType: string; bytes: number; updatedAt: Date; isSystemDefault: boolean }
+/** The active template: the bundled system default (served from its bytes) or the latest ICPDP upload (served from storage). */
+export type EventProposalTemplate = EventProposalTemplateInfo &
+  ({ isSystemDefault: true; content: Buffer } | { isSystemDefault: false; assetId: string });
+export interface EventProposalFileStorage {
+  uploadProposalDocument(input: { clubId: string; eventId: string; actorId: string; fileName: string; mimeType: string;
+    bytes: Buffer; now: Date }): Promise<EventProposalDocument>;
+  uploadTemplateDocument(input: { actorId: string; fileName: string; mimeType: string; bytes: Buffer; now: Date }): Promise<EventProposalDocument>;
+  /** Short-lived signed URL. */
+  accessUrl(assetId: string, options?: { inline: boolean }): Promise<string>;
+}
 export interface ClubEvent extends ClubEventInput {
+  proposalDocument?: PublicEventProposalDocument;
   id: string; clubId: string; clubName: string; state: ClubEventState; semesterCode: string;
   version: number; currentRevisionNo: number; confirmedRegistrationCount: number;
   approvalConditions: string[]; attendanceFinalized: boolean; conflictResult?: string; conflictDetail?: unknown;
@@ -50,6 +79,7 @@ export interface EventPublishInput {
 export type ClubEventAction =
   | { kind: "save"; input: ClubEventInput; expectedVersion: number }
   | { kind: "submit"; expectedVersion: number }
+  | { kind: "attach-document"; document: EventProposalDocument }
   | { kind: "save-internal"; input: InternalClubEventInput; expectedVersion: number }
   | { kind: "create-internal"; expectedVersion: number }
   | { kind: "publish"; input: EventPublishInput; expectedVersion: number }
@@ -71,6 +101,10 @@ export interface ClubEventRepository {
   act(clubId: string, eventId: string, action: ClubEventAction, actorId: string, now: Date): Promise<ClubEventDetail>;
   participants(clubId: string, eventId: string): Promise<EventParticipant[]>;
   feedback(clubId: string, eventIds: string[], now: Date): Promise<ClubFeedbackSummary[]>;
+  /** "draft" is the club's working copy, "latest" the highest submitted revision; null when the event does not exist. */
+  proposalDocument(eventId: string, revision: number | "draft" | "latest"): Promise<{ clubId: string; document: EventProposalDocument | null } | null>;
+  proposalTemplate(): Promise<EventProposalTemplate>;
+  saveProposalTemplate(document: EventProposalDocument, actorId: string, now: Date): Promise<EventProposalTemplateInfo>;
 }
 export function eventActionPermission(action: ClubEventAction): ClubPermission {
   return ["capacity", "promote", "check-in", "correct", "finalize", "unlock"].includes(action.kind)

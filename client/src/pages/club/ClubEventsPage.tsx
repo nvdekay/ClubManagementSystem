@@ -17,7 +17,8 @@ import { AppTable, appTableFeatures, type AppTableFeatures } from "@/components/
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubEventDefense, useEventDefenseActions } from "@/hooks/useEventDefense";
-import { useClubEvent, useClubEventFeedback, useClubEventMutation, useClubEventOptions, useClubEvents, useEventParticipants } from "@/hooks/useClubEvents";
+import { useClubEvent, useClubEventFeedback, useClubEventMutation, useClubEventOptions, useClubEvents, useEventParticipants, useEventProposalDocumentAccess } from "@/hooks/useClubEvents";
+import { formatBytes } from "@/utils/proposalFile";
 import type { ClubEvent, EventParticipant } from "@/services/clubEvents";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
@@ -93,6 +94,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const defense = useClubEventDefense(clubId, selected || undefined, allowed && mode === "events" && Boolean(selected));
   const defenseAction = useEventDefenseActions();
   const options = useClubEventOptions(clubId, allowed && mode === "events");
+  const documentAccess = useEventProposalDocumentAccess(clubId);
   const participants = useEventParticipants(clubId, selected, allowed && mode === "attendance");
   const feedback = useClubEventFeedback(clubId, compare, allowed && mode === "feedback");
   const rows = events.data ?? eventsEmpty;
@@ -130,6 +132,10 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     catch (error) { setFormError(error); }
   }, [auth.data, selected, mutation, setSuccess, setFormError, setOperation]);
   const internal = Boolean(active && isInternalState(active.state));
+  async function downloadDocument(id: string) {
+    try { window.open((await documentAccess.mutateAsync({ id })).url, "_blank", "noopener,noreferrer"); }
+    catch { /* Mutation error is rendered next to the file. */ }
+  }
   async function confirmInternal() {
     if (!auth.data || !active) return;
     setSuccess(false); setFormError(null);
@@ -234,6 +240,15 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         <h2 className="mb-2 font-heading text-base font-semibold break-words">{active.title}</h2><p className="flex flex-wrap items-center gap-2 text-sm text-muted-app"><AppBadge tone={stateTones[active.state] ?? "neutral"}>{stateLabel(t, active.state)}</AppBadge> {format.format(new Date(active.startAt))} – {format.format(new Date(active.endAt))}</p>
         <p className="mt-2 break-words">{active.objective}</p><p className="mt-2 whitespace-pre-wrap break-words">{active.plan}</p>
         <p className="mt-2">{t("clubEvents.venue")}: {active.venueText || (options.data?.properties.find((p) => p.id === active.propertyId)?.name ?? "—")} · {internal ? t("clubEvents.internalBadge") : t(`clubEvents.${active.audienceScope}`)}</p>
+        {!internal && <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="font-medium">{t("clubEvents.proposalDocumentSection")}:</span>
+          {active.proposalDocument ? <>
+            <span className="min-w-0 break-words">{active.proposalDocument.fileName} · {formatBytes(active.proposalDocument.bytes)}</span>
+            <AppButton variant="secondary" disabled={documentAccess.isPending} onClick={() => void downloadDocument(active.id)}>
+              <AppIcon name="download" className="size-4" />{t("clubEvents.proposalDocumentDownload")}</AppButton>
+          </> : <span className="text-muted-app">{t("clubEvents.proposalDocumentNone")}</span>}
+          {documentAccess.isError && <ClubEventErrorMessage error={documentAccess.error} />}
+        </div>}
         {active.state === "Revision Requested" && revisionRequest ? <div role="status" className="mt-4 rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
           <p className="font-semibold">{t("clubEvents.revisionTitle")}</p>
           {revisionSections.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-2"><span>{t("clubEvents.revisionSections")}:</span>
