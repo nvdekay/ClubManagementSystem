@@ -109,7 +109,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       endAt: { $gt: new Date(input.startAt.getTime() - buffer) } };
     const bookingQuery = bookings.find({ propertyId: oid(input.propertyId), state: { $in: ["Approved", "In Use"] },
       ...(excludeId ? { _id: { $ne: oid(excludeId) } } : {}), ...interval });
-    const eventQuery = m.events!.find({ propertyId: oid(input.propertyId), state: { $in: ["Approved", "Upcoming", "Ongoing"] },
+    const eventQuery = m.events!.find({ propertyId: oid(input.propertyId), state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] },
       ...(input.eventId ? { _id: { $ne: oid(input.eventId) } } : {}), ...interval });
     const defenseQuery = m.eventDefenseSessions!.find({ propertyId: oid(input.propertyId),
       state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...interval });
@@ -135,7 +135,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     if (!policy) throw new DomainError("policy is not configured", "unavailable");
     if (input.eventId) {
       const eventQuery = m.events!.findOne({ _id: oid(input.eventId), clubId: oid(clubId),
-        state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired"] } });
+        state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired", "CANCELLED", "FINISH"] } });
       if (session) eventQuery.session(session);
       if (!(await eventQuery.lean())) throw new DomainError("event is not available in this club", "validation");
     }
@@ -230,13 +230,13 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     }, find: detail,
     async club(id) { const doc = await m.clubs!.findById(oid(id)).lean(); return doc ? clubFrom(doc) : null; },
     async events(clubId) {
-      const docs = await m.events!.find({ clubId: oid(clubId), state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired"] } })
+      const docs = await m.events!.find({ clubId: oid(clubId), state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired", "CANCELLED", "FINISH"] } })
         .select({ title: 1, startAt: 1 }).sort({ startAt: 1 }).lean();
       return docs.map((doc) => ({ id: String(doc._id), title: String(doc.title), startAt: doc.startAt as Date }));
     },
     async eventBelongsToClub(eventId, clubId) {
       return Boolean(await m.events!.exists({ _id: oid(eventId), clubId: oid(clubId),
-        state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired"] } }));
+        state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired", "CANCELLED", "FINISH"] } }));
     }, conflicts,
     async create(clubId, input, actorId, now) {
       const id = new Types.ObjectId();

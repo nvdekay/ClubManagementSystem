@@ -38,11 +38,13 @@ export type DashboardPanel = {
 export interface DashboardQueue { entityType: string; onTime: number; overdue: number }
 /** `month` is a Vietnam-time calendar month, `YYYY-MM`. */
 export interface DashboardMonthCount { month: string; count: number }
+/** `count = publicCount + internalCount`; internal means `MEMBERS_ONLY`. */
+export interface DashboardMonthEventCount extends DashboardMonthCount { publicCount: number; internalCount: number }
 
 export interface IcpdpDashboardCharts {
   queues: DashboardQueue[];
   /** Approved-or-later events per month, five months back to two months ahead. */
-  eventsByMonth: DashboardMonthCount[];
+  eventsByMonth: DashboardMonthEventCount[];
   /** Clubs that still operate, by field; the tail past seven folds into `other`. */
   clubsByField: { field: string; count: number }[];
   clubsByState: { state: string; count: number }[];
@@ -70,9 +72,9 @@ export interface DashboardSnapshot {
   clubCharts?: ClubDashboardCharts;
 }
 
-/** Event states that mean an internal event was recorded (BR53) and later ran, ended or was cancelled. */
+/** Event states that mean an event was recorded (BR53): approved proposals and internal events past DRAFT, never cancelled. */
 export const RECORDED_EVENT_STATES = [
-  "Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "Cancelled",
+  "Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "CREATED", "PUBLIC", "ONGOING", "FINISH",
 ] as const;
 
 /** UC02 drill-down (FR-UC02-02): a recorded `MEMBERS_ONLY` event of any club, read-only for ICPDP. */

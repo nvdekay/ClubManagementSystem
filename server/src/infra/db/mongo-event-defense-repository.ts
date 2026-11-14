@@ -56,7 +56,7 @@ async function findRoomConflictInSession(
 
   const eventQuery = m.events!.findOne({
     propertyId,
-    state: { $in: ["Approved", "Upcoming", "Ongoing"] },
+    state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] },
     ...overlap,
   }).select({ _id: 1 });
   if (session) eventQuery.session(session);
@@ -146,7 +146,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
         properties.find({ type: "ROOM", isActive: true }).sort({ code: 1, name: 1 }).lean(),
         m.propertyBookings!.find({ state: { $in: ["Approved", "In Use"] }, ...overlap })
           .select({ propertyId: 1 }).lean(),
-        events.find({ state: { $in: ["Approved", "Upcoming", "Ongoing"] }, propertyId: { $ne: null }, ...overlap })
+        events.find({ state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] }, propertyId: { $ne: null }, ...overlap })
           .select({ propertyId: 1 }).lean(),
         sessions.find({
           state: { $in: ACTIVE_STATES_ARRAY },

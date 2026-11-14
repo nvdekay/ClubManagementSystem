@@ -10,7 +10,7 @@ import { clubBoardUserIds, queueNotifications } from "./club-board.js";
 import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
-const busyEventStates = ["Approved", "Upcoming", "Ongoing"];
+const busyEventStates = ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"];
 const busyBookingStates = ["Approved", "In Use"];
 
 function optionalText(value: unknown): string | undefined {

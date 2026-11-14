@@ -88,7 +88,7 @@ const Dashboard = z.object({
   ])),
   icpdpCharts: z.object({
     queues: z.array(z.object({ entityType: z.string(), onTime: z.number().int(), overdue: z.number().int() })),
-    eventsByMonth: z.array(z.object({ month: z.string(), count: z.number().int() })),
+    eventsByMonth: z.array(z.object({ month: z.string(), count: z.number().int(), publicCount: z.number().int(), internalCount: z.number().int() })),
     clubsByField: z.array(z.object({ field: z.string(), count: z.number().int() })),
     clubsByState: z.array(z.object({ state: z.string(), count: z.number().int() })),
     budget: z.object({ periodCode: z.string().optional(), approved: z.number(), disbursed: z.number() }),

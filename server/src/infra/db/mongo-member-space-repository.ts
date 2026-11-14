@@ -9,7 +9,8 @@ function date(value: unknown): Date {
   return value;
 }
 
-const shownEventStates = ["Upcoming", "Ongoing"];
+/** UC24: published events of the club; internal events appear from PUBLIC, never as DRAFT or CREATED. */
+const shownEventStates = ["Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "PUBLIC", "ONGOING", "FINISH"];
 
 export function mongoMemberSpaceRepository(): MemberSpaceRepository {
   const clubs = ucmsModels.clubs!;

@@ -13,9 +13,10 @@ import { overduePeriodicReports } from "./periodic-report-obligations.js";
 import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
-const scheduledEventStates = ["Approved", "Upcoming"];
+const scheduledEventStates = ["Approved", "Upcoming", "CREATED", "PUBLIC"];
 /** Proposals and events that may still run; BR45 cancels those ending after the dissolution semester. */
-const liveEventStates = ["Draft", "Pending Approval", "Under Review", "Revision Requested", "Re-defense Pending", "Approved", "Upcoming"];
+const liveEventStates = ["Draft", "Pending Approval", "Under Review", "Revision Requested", "Re-defense Pending", "Approved", "Upcoming",
+  "DRAFT", "CREATED", "PUBLIC"];
 const undecidedProposalStates = ["Pending Approval", "Under Review", "Revision Requested", "Re-defense Pending"];
 const undecidedBookingStates = ["Draft", "Requested", "Under Review", "Revision Requested"];
 const openCampaignStates = ["Published", "Accepting Applications"];
@@ -304,7 +305,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
             const members = await memberIds(id, session);
             const decisionId = new Types.ObjectId();
             // Proposals and booking requests still awaiting a decision are cancelled.
-            const proposals = await m.events!.find({ clubId: id, state: { $in: ["Draft", ...undecidedProposalStates] } })
+            const proposals = await m.events!.find({ clubId: id, state: { $in: ["Draft", "DRAFT", ...undecidedProposalStates] } })
               .session(session).lean();
             for (const proposal of proposals) {
               await cancelEventInSession(session, proposal, "Club dissolved", now, "DISSOLUTION", 24, undefined, decisionId);

@@ -24,9 +24,11 @@ export function clubEventFrom(doc: Doc, payload: Doc = {}): ClubEvent {
     allowWalkIn: doc.allowWalkIn === true, waitlistEnabled: doc.waitlistEnabled === true,
     revisionDeadlineAt: doc.revisionDeadlineAt as Date | undefined };
 }
+/** Audit actions whose `after.payload` holds the latest event input (plan text, bookingIds, budget lines). */
+export const EVENT_PAYLOAD_ACTIONS = ["EVENT_DRAFT_CREATED", "EVENT_DRAFT_SAVED", "EVENT_PROPOSAL_SUBMITTED", "RECORD_INTERNAL",
+  "EVENT_RESCHEDULED", "INTERNAL_EVENT_DRAFT_SAVED", "INTERNAL_EVENT_CREATED", "INTERNAL_EVENT_SAVED"];
 export async function eventDraftPayload(eventId: Types.ObjectId): Promise<Doc> {
-  const audit = await m.auditLogs!.findOne({ entityType: "Event", entityId: eventId,
-    action: { $in: ["EVENT_DRAFT_CREATED", "EVENT_DRAFT_SAVED", "EVENT_PROPOSAL_SUBMITTED", "RECORD_INTERNAL", "EVENT_RESCHEDULED"] } })
+  const audit = await m.auditLogs!.findOne({ entityType: "Event", entityId: eventId, action: { $in: EVENT_PAYLOAD_ACTIONS } })
     .sort({ "after.eventVersion": -1, at: -1, _id: -1 }).lean();
   return ((audit?.after as Doc | undefined)?.payload ?? {}) as Doc;
 }

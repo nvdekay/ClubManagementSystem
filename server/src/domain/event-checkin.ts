@@ -45,7 +45,7 @@ export interface EventCheckInRepository {
 }
 
 /** States in which a published event accepts check-in (the scheduler may not have flipped it to Ongoing yet). */
-export const checkInStates = ["Upcoming", "Ongoing"] as const;
+export const checkInStates = ["Upcoming", "Ongoing", "PUBLIC", "ONGOING"] as const;
 
 /** UC31 window: the event's configured check-in window, defaulting to the event's own start/end. */
 export function checkInWindow(event: CheckInTarget["event"]): { opensAt: Date; closesAt: Date } {

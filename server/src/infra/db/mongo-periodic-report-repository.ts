@@ -29,7 +29,7 @@ const TASK_TYPE = "PERIODIC_REPORT";
 /** Clubs that owe a periodic report (UC38 precondition: Active, or Suspended/Dissolving with duties left). */
 const owingStates = ["Active", "Suspended", "Dissolving"];
 const submittedStates = ["Submitted", "Accepted", "Returned for correction"];
-const heldEventStates = ["Completed", "Report Submitted", "Closed"];
+const heldEventStates = ["Completed", "Report Submitted", "Closed", "FINISH"];
 
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
@@ -235,7 +235,7 @@ export async function periodicLiveFigures(
   const held = eventDocs.filter((item) => heldEventStates.includes(String(item.state)));
   const total = await m.attendances!.countDocuments({ eventId: { $in: held.map((item) => item._id) } }).session(session ?? null);
   return {
-    events: { completed: held.length, cancelled: eventDocs.filter((item) => item.state === "Cancelled").length },
+    events: { completed: held.length, cancelled: eventDocs.filter((item) => item.state === "Cancelled" || item.state === "CANCELLED").length },
     members: { active },
     attendance: { total },
     finance: {

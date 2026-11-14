@@ -1,13 +1,12 @@
 import { Types } from "mongoose";
-import type { ClubDashboardCharts, DashboardMonthCount, IcpdpDashboardCharts } from "../../domain/dashboard.js";
+import { RECORDED_EVENT_STATES, type ClubDashboardCharts, type DashboardMonthCount, type IcpdpDashboardCharts } from "../../domain/dashboard.js";
 import { FEEDBACK_CRITERION } from "../../domain/event-feedback.js";
 import type { AcademicSemester } from "../../domain/policy.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 const VN_OFFSET = 7 * 3600_000;
-const HELD_EVENT_STATES = ["Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"];
-const FINISHED_EVENT_STATES = ["Completed", "Report Submitted", "Closed"];
+const FINISHED_EVENT_STATES = ["Completed", "Report Submitted", "Closed", "FINISH"];
 const FIELD_LIMIT = 7;
 
 /** First instant of the Vietnam-time month `offset` months away from `now`. */
@@ -34,8 +33,8 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
   const window = months(now, -5, 2);
   const [tasks, events, fields, states, policy] = await Promise.all([
     m.approvalTasks!.find({ state: { $in: ["Open", "Escalated"] } }).select({ entityType: 1, slaDueAt: 1 }).lean(),
-    m.events!.find({ state: { $in: HELD_EVENT_STATES }, startAt: { $gte: window[0]!.start, $lt: window.at(-1)!.end } })
-      .select({ startAt: 1 }).lean(),
+    m.events!.find({ state: { $in: [...RECORDED_EVENT_STATES] }, startAt: { $gte: window[0]!.start, $lt: window.at(-1)!.end } })
+      .select({ startAt: 1, audienceScope: 1 }).lean(),
     m.clubs!.aggregate<{ _id: string | null; count: number }>([
       { $match: { state: { $in: ["Active", "Suspended", "Dissolving"] } } },
       { $group: { _id: "$field", count: { $sum: 1 } } }, { $sort: { count: -1, _id: 1 } }]),
@@ -60,8 +59,11 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
   return {
     queues: [...queues].map(([entityType, counts]) => ({ entityType, ...counts }))
       .sort((a, b) => b.onTime + b.overdue - (a.onTime + a.overdue) || a.entityType.localeCompare(b.entityType)),
-    eventsByMonth: window.map((month) => ({ month: month.key,
-      count: events.filter((event) => (event.startAt as Date) >= month.start && (event.startAt as Date) < month.end).length })),
+    eventsByMonth: window.map((month) => {
+      const inMonth = events.filter((event) => (event.startAt as Date) >= month.start && (event.startAt as Date) < month.end);
+      const internalCount = inMonth.filter((event) => event.audienceScope === "MEMBERS_ONLY").length;
+      return { month: month.key, count: inMonth.length, publicCount: inMonth.length - internalCount, internalCount };
+    }),
     clubsByField: tail ? [...head, { field: "other", count: tail }] : head,
     clubsByState: states.map((item) => ({ state: item._id, count: item.count })),
     budget: { ...(semester ? { periodCode: semester.code } : {}), approved: money(budget?.approved), disbursed: money(budget?.disbursed) },

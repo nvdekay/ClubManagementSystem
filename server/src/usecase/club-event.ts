@@ -1,7 +1,8 @@
 import { resolveClubPermissions } from "../domain/access.js";
 import type { ClubAccessRepository } from "../domain/access.js";
 import type { AuthRepository } from "../domain/auth.js";
-import { eventActionPermission, type ClubEventAction, type ClubEventInput, type ClubEventRepository } from "../domain/club-event.js";
+import { eventActionPermission, type ClubEventAction, type ClubEventInput, type ClubEventRepository, type EventPublishInput,
+  type InternalClubEventInput, type InternalClubEventMode } from "../domain/club-event.js";
 import { DomainError } from "../domain/errors.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
 
@@ -34,6 +35,12 @@ export async function getClubEvent(deps: ClubEventDeps, actor: AccessActor | nul
 export async function createClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, input: ClubEventInput, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   return deps.repo.create(clubEventId(clubId), input, actor!.id, now);
+}
+export async function createInternalClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, input: InternalClubEventInput,
+  mode: InternalClubEventMode, publishInput: EventPublishInput | undefined, now: Date) {
+  if ((mode === "publish") !== Boolean(publishInput)) throw new DomainError("publish settings are required only when publishing", "validation");
+  await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
+  return deps.repo.createInternal(clubEventId(clubId), input, mode, publishInput, actor!.id, now);
 }
 export async function actOnClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string,
   id: string, action: ClubEventAction, now: Date) {

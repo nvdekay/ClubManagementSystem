@@ -165,7 +165,7 @@ export function mongoViolationRepository(): ViolationRepository {
       const id = new Types.ObjectId(clubId);
       if (!(await m.clubs!.exists({ _id: id }))) return null;
       const [eventDocs, budgetDocs] = await Promise.all([
-        m.events!.find({ clubId: id, state: { $ne: "Draft" } }).sort({ startAt: -1 }).limit(50)
+        m.events!.find({ clubId: id, state: { $nin: ["Draft", "DRAFT"] } }).sort({ startAt: -1 }).limit(50)
           .select({ title: 1, startAt: 1, state: 1 }).lean(),
         m.eventBudgets!.find({ clubId: id }).sort({ createdAt: -1 }).limit(50).select({ eventId: 1, state: 1 }).lean(),
       ]);

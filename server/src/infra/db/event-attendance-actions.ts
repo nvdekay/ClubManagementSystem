@@ -13,15 +13,16 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
     if (await m.postEventReports!.exists({ eventId, state: { $in: ["Submitted", "Accepted", "Returned for correction"] } }).session(session)) {
       conflict("submitted report history prevents attendance unlocking");
     }
-    if (event.attendanceFinalized !== true || !["Completed", "Closed"].includes(String(event.state))) conflict("attendance is not finalized");
-    await m.events!.updateOne({ _id: eventId }, { $set: { attendanceFinalized: false, state: "Completed" } }, { session });
+    if (event.attendanceFinalized !== true || !["Completed", "Closed", "FINISH"].includes(String(event.state))) conflict("attendance is not finalized");
+    // Internal events end at FINISH and stay there; proposals reopen at Completed.
+    await m.events!.updateOne({ _id: eventId }, { $set: { attendanceFinalized: false, state: event.state === "FINISH" ? "FINISH" : "Completed" } }, { session });
     await m.attendances!.updateMany({ eventId }, { $set: { finalized: false, unlockedBy: actorId, unlockReason: action.reason },
       $unset: { finalizedAt: "", finalizedBy: "" } }, { session });
     return;
   }
   if (event.attendanceFinalized === true) conflict("attendance is finalized");
   if (action.kind === "finalize") {
-    if (event.state !== "Completed" || (event.endAt as Date) > now) conflict("only completed events can finalize attendance");
+    if (!["Completed", "FINISH"].includes(String(event.state)) || (event.endAt as Date) > now) conflict("only completed events can finalize attendance");
     const registrations = await m.eventRegistrations!.find({ eventId, state: "Confirmed" }).session(session).lean();
     const attendances = await m.attendances!.find({ eventId }).session(session).lean();
     const missing = registrations.filter((r) => !attendances.some((a) => String(a.studentId) === String(r.studentId)));
@@ -29,7 +30,7 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
     if (missing.length || unresolved.length) throw new DomainError("resolve every abnormal attendance and no-show before finalizing", "conflict",
       { studentIds: [...missing, ...unresolved].map((a) => String(a.studentId)) });
     await m.attendances!.updateMany({ eventId }, { $set: { finalized: true, finalizedBy: actorId, finalizedAt: now } }, { session });
-    await m.events!.updateOne({ _id: eventId }, { $set: { attendanceFinalized: true, ...(internalWithoutBudget ? { state: "Closed" } : {}) } }, { session });
+    await m.events!.updateOne({ _id: eventId }, { $set: { attendanceFinalized: true, ...(internalWithoutBudget && event.state === "Completed" ? { state: "Closed" } : {}) } }, { session });
     return;
   }
   if (action.kind !== "check-in" && action.kind !== "correct") return;
@@ -37,7 +38,7 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
   const existing = await m.attendances!.findOne({ eventId, studentId }).session(session).lean();
   const registration = await m.eventRegistrations!.findOne({ eventId, studentId }).session(session).lean();
   if (action.kind === "check-in") {
-    if (!event.publishedAt || !["Upcoming", "Ongoing", "Completed"].includes(String(event.state))) conflict("event is not open for check-in");
+    if (!event.publishedAt || !["Upcoming", "Ongoing", "Completed", "PUBLIC", "ONGOING", "FINISH"].includes(String(event.state))) conflict("event is not open for check-in");
     if (existing) return;
     const outside = now < (event.checkInOpenAt as Date ?? event.startAt as Date) || now >= (event.checkInCloseAt as Date ?? event.endAt as Date);
     if (outside && !action.reason?.trim()) throw new DomainError("manual check-in outside the window requires a reason", "validation");
@@ -60,7 +61,7 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
       correctionReason: action.reason, finalized: false }], { session });
     return;
   }
-  if (event.state !== "Completed") conflict("attendance can only be corrected after completion");
+  if (!["Completed", "FINISH"].includes(String(event.state))) conflict("attendance can only be corrected after completion");
   if (!existing && registration?.state !== "Confirmed") throw new DomainError("participant not found", "not_found");
   if (action.absent && existing && !(existing.abnormalFlags as string[] | undefined)?.includes("no-show")) {
     conflict("an existing check-in cannot be converted to a no-show");

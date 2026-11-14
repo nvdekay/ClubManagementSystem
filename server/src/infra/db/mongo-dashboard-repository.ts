@@ -6,7 +6,7 @@ import type {
 import { ucmsModels } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 import { clubCharts, icpdpCharts } from "./dashboard-charts.js";
-import { clubBoardHistory, internalEvent, internalEvents } from "./dashboard-drilldown.js";
+import { clubBoardHistory, internalEvent, internalEvents, recordedInternal } from "./dashboard-drilldown.js";
 
 type UcmsDocument = Record<string, unknown>;
 
@@ -101,7 +101,7 @@ export function mongoDashboardRepository(): DashboardRepository {
           clubId: club, state: { $in: ["Published", "Accepting Applications"] },
         }),
         panel("upcomingEvents", "events", {
-          clubId: club, state: "Upcoming", startAt: { $gte: now },
+          clubId: club, state: { $in: ["Upcoming", "PUBLIC"] }, startAt: { $gte: now },
         }),
         ...(allowed.has("club.event.manage") ? [panel("pendingEventProposals", "events", {
           clubId: club, state: { $in: ["Pending Approval", "Under Review", "Revision Requested"] },
@@ -163,9 +163,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         panel("upcomingBookings", "propertyBookings", {
           state: { $in: ["Requested", "Under Review"] }, startAt: { $gte: now },
         }),
-        panel("internalEvents", "events", {
-          audienceScope: "MEMBERS_ONLY", state: { $in: ["Upcoming", "Ongoing"] },
-        }),
+        panel("internalEvents", "events", recordedInternal()),
         panel("roleStructures", "clubRoleStructureVersions", {}),
         panel("boardHistory", "clubPositionAssignments", { confirmedBy: { $exists: true } }),
       ], undefined, icpdpCharts(now).then((icpdpCharts) => ({ icpdpCharts })));

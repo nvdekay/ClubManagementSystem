@@ -27,10 +27,10 @@ async function approve(id: string, budget = false) {
 async function submitted(scope: "PUBLIC" | "MEMBERS_ONLY" = "PUBLIC", budget = false) {
   const d = await repo.create(String(club), input(scope, budget), String(actor), now);
   const s = await repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now);
-  return scope === "MEMBERS_ONLY" && !budget ? s : approve(d.event.id, budget);
+  return s.event.state === "Pending Approval" ? approve(d.event.id, budget) : s;
 }
-async function published(scope: "PUBLIC" | "MEMBERS_ONLY" = "PUBLIC") {
-  const d = await submitted(scope);
+async function published() {
+  const d = await submitted();
   return repo.act(String(club), d.event.id, { kind: "publish", expectedVersion: d.event.version, input: {
     registrationOpenAt: now, registrationCloseAt: startAt, checkInOpenAt: startAt, checkInCloseAt: endAt, allowWalkIn: true, waitlistEnabled: true } }, String(actor), now);
 }
@@ -108,8 +108,24 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     expect((await repo.find(String(club), d.event.id))?.event.confirmedRegistrationCount).toBe(2);
     await expect(repo.act(String(club), d.event.id, { kind: "capacity", capacity: 1 }, String(actor), now)).rejects.toMatchObject({ kind: "conflict" });
   });
-  it("closes internal attendance, excludes no-shows from feedback, and unlocks with audit", async () => {
-    const d = await published("MEMBERS_ONLY"); expect(await m.approvalTasks!.countDocuments({ entityId: d.event.id })).toBe(0);
+  it("sends unbudgeted members-only proposals to the internal flow and accepts budgeted ones (Plan B)", async () => {
+    await expect(repo.create(String(club), input("MEMBERS_ONLY"), String(actor), now)).rejects.toMatchObject({ kind: "validation" });
+    const d = await repo.create(String(club), input(), String(actor), now);
+    await expect(repo.act(String(club), d.event.id, { kind: "save", input: input("MEMBERS_ONLY"), expectedVersion: d.event.version }, String(actor), now))
+      .rejects.toMatchObject({ kind: "validation", message: "internal events without university budget must use the internal event flow" });
+    // A draft saved before Plan B may still be members-only without budget; submitting it is refused too.
+    await m.events!.updateOne({ _id: new Types.ObjectId(d.event.id) }, { $set: { audienceScope: "MEMBERS_ONLY" } });
+    await expect(repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "validation" });
+    const funded = await submitted("MEMBERS_ONLY", true);
+    expect(funded.event).toMatchObject({ state: "Approved", audienceScope: "MEMBERS_ONLY" });
+  });
+  it("closes legacy direct internal attendance, excludes no-shows from feedback, and unlocks with audit", async () => {
+    // Events recorded through the removed direct branch (MEMBERS_ONLY, no budget, published as Upcoming) keep closing on finalize.
+    const legacy = await m.events!.create({ organizerType: "CLUB", clubId: club, clubName: "Wave 3", title: "Legacy", objective: "Goal", startAt, endAt,
+      venueText: "Campus", audienceScope: "MEMBERS_ONLY", capacity: 2, riskCategory: "LOW", semesterCode: "Fall", state: "Upcoming", currentRevisionNo: 1,
+      publishedAt: now, registrationOpenAt: now, registrationCloseAt: startAt, checkInOpenAt: startAt, checkInCloseAt: endAt, checkInCode: "LEGACY1",
+      allowWalkIn: true, waitlistEnabled: true, createdAt: now });
+    const d = (await repo.find(String(club), String(legacy._id)))!;
     const r = mongoEventRegistrationRepository();
     for (const s of students.slice(0, 2)) await r.register({ eventId: d.event.id, studentId: String(s), answers: {}, allowOverbooking: false, now });
     await repo.act(String(club), d.event.id, { kind: "check-in", studentId: String(students[0]) }, String(actor), startAt);

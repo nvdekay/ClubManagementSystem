@@ -14,6 +14,27 @@ export function assertEventNotice(startAt: Date, now: Date, noticeHours: number)
     throw new DomainError(`submit at least ${noticeHours} hours before the event starts`, "validation", { noticeHours });
   }
 }
+export const INTERNAL_EVENT_NOTICE_HOURS = 24;
+/** An internal event becomes official (CREATED/PUBLIC) or moves its CREATED schedule only 24 hours ahead. */
+export function assertInternalEventNotice(startAt: Date, now: Date): void {
+  if (startAt.getTime() - now.getTime() < INTERNAL_EVENT_NOTICE_HOURS * 3600000) {
+    throw new DomainError(`internal event must start at least ${INTERNAL_EVENT_NOTICE_HOURS} hours from now`, "validation",
+      { noticeHours: INTERNAL_EVENT_NOTICE_HOURS });
+  }
+}
+/** Only DRAFT and CREATED internal events are editable; once published the schedule is locked. */
+export function assertInternalEventEditable(state: string): void {
+  if (state === "PUBLIC" || state === "ONGOING") {
+    throw new DomainError("published internal event schedule is locked; only cancellation is allowed", "conflict");
+  }
+  if (state !== "DRAFT" && state !== "CREATED") throw new DomainError("internal event cannot be edited in its current state", "conflict");
+}
+/** Plan B: an ICPDP proposal is PUBLIC, or MEMBERS_ONLY with at least one requested budget line. */
+export function assertProposalAudience(input: Pick<ClubEventInput, "audienceScope" | "budgetLines">): void {
+  if (input.audienceScope === "MEMBERS_ONLY" && input.budgetLines.length === 0) {
+    throw new DomainError("internal events without university budget must use the internal event flow", "validation");
+  }
+}
 export function validateClubEventInput(input: ClubEventInput, calendar: readonly AcademicSemester[], now: Date): string {
   if (!input.title.trim() || !input.objective.trim() || !input.plan.trim()) throw new DomainError("title, objective and plan are required", "validation");
   if (!input.venueText?.trim() && !input.propertyId) throw new DomainError("choose a property or enter a venue", "validation");

@@ -115,6 +115,12 @@ Enum eventState {
   Cancelled
   Rejected
   Expired
+  DRAFT
+  CREATED
+  PUBLIC
+  ONGOING
+  FINISH
+  CANCELLED
 }
 
 Enum eventDefenseState {
