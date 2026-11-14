@@ -63,6 +63,8 @@ const CLUB_EVENT_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
   "event cannot be cancelled in its current state": "cancelStateInvalid",
   "finalized attendance prevents cancellation": "cancelFinalized",
   "event changed while cancelling": "cancelConcurrent",
+  "event cancellation is already awaiting icpdp confirmation": "cancelPendingAlready",
+  "event action is paused while cancellation is awaiting icpdp confirmation": "cancelActionPaused",
   "only an unstarted approved event can be rescheduled": "rescheduleApprovedOnly",
   "an event with check-ins cannot be rescheduled": "rescheduleHasCheckIns",
   "event has already started": "eventStarted",
@@ -156,9 +158,13 @@ export function resolveClubEventErrorDescriptor(
   if (internalNotice?.[1]) {
     return { key: "internalNoticeHours", params: { hours: internalNotice[1] } };
   }
+  const cancelNotice = /^(?:approved event cancellation must be requested|cancellation request must be submitted) at least (\d+(?:\.\d+)?) hours before the event starts$/i.exec(normalized);
+  if (cancelNotice?.[1]) {
+    return { key: "cancelNoticeHours", params: { hours: cancelNotice[1] } };
+  }
   if (typeof details?.noticeHours === "number" && details.noticeHours > 0) {
     return {
-      key: details.noticeHours === 24 ? "internalNoticeHours" : "proposalNotice",
+      key: details.noticeHours === 24 ? "internalNoticeHours" : details.noticeHours === 72 ? "cancelNoticeHours" : "proposalNotice",
       params: { hours: details.noticeHours },
     };
   }

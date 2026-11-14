@@ -60,6 +60,20 @@ const en = {
   status: "Status",
   statePendingApproval: "Waiting for review", stateUnderReview: "Under review", stateRevisionRequested: "Revision requested",
   stateApproved: "Approved", stateRejected: "Rejected", stateExpired: "Expired", stateCancelled: "Cancelled",
+  stateUpcoming: "Upcoming", stateOngoing: "Ongoing",
+  cancellationBadge: "Cancellation request",
+  cancellationPanel: "Event cancellation request",
+  cancellationRequestedAt: "Requested {{date}}",
+  cancellationClubReason: "Club's cancellation reason",
+  cancellationPendingHint: "Approving this request cancels the event, releases attached facility bookings, cancels student registrations, and pauses/cancels any approved budget. Rejecting keeps the event active.",
+  cancellationApprove: "Confirm cancellation",
+  cancellationReject: "Reject cancellation",
+  cancellationRejectionReasonHint: "Required when rejecting the club's cancellation request.",
+  cancellationSubmit: "Save cancellation decision",
+  cancellationConfirmApprove: "Confirm cancelling this event?",
+  cancellationConfirmReject: "Reject the club's cancellation request and keep the event active?",
+  cancellationDecidedApproved: "Cancellation confirmed ({{date}})",
+  cancellationDecidedRejected: "Cancellation request rejected ({{date}})",
 };
 
 const vi: Record<keyof typeof en, string> = {
@@ -124,6 +138,20 @@ const vi: Record<keyof typeof en, string> = {
   status: "Trạng thái",
   statePendingApproval: "Chờ duyệt", stateUnderReview: "Đang duyệt", stateRevisionRequested: "Chờ CLB sửa",
   stateApproved: "Đã duyệt", stateRejected: "Bị từ chối", stateExpired: "Quá hạn sửa", stateCancelled: "Đã huỷ",
+  stateUpcoming: "Sắp diễn ra", stateOngoing: "Đang diễn ra",
+  cancellationBadge: "Yêu cầu huỷ sự kiện",
+  cancellationPanel: "Yêu cầu huỷ sự kiện từ CLB",
+  cancellationRequestedAt: "Gửi yêu cầu lúc {{date}}",
+  cancellationClubReason: "Lý do xin huỷ của CLB",
+  cancellationPendingHint: "Chấp nhận yêu cầu sẽ huỷ sự kiện, giải phóng các phòng đã đặt, huỷ đăng ký của sinh viên và huỷ/dừng ngân sách tài trợ (nếu có). Từ chối sẽ giữ nguyên sự kiện để CLB tiếp tục tổ chức.",
+  cancellationApprove: "Chấp nhận huỷ sự kiện",
+  cancellationReject: "Từ chối yêu cầu huỷ",
+  cancellationRejectionReasonHint: "Bắt buộc nhập lý do khi từ chối yêu cầu huỷ của CLB.",
+  cancellationSubmit: "Lưu quyết định yêu cầu huỷ",
+  cancellationConfirmApprove: "Xác nhận cho phép huỷ sự kiện này?",
+  cancellationConfirmReject: "Từ chối yêu cầu huỷ và yêu cầu CLB tiếp tục tổ chức sự kiện?",
+  cancellationDecidedApproved: "Đã chấp nhận huỷ sự kiện ({{date}})",
+  cancellationDecidedRejected: "Đã từ chối yêu cầu huỷ ({{date}})",
 };
 
 export const eventReviews = { en, vi };

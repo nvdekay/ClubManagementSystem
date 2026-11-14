@@ -37,7 +37,8 @@ const rules: Rule[] = [
   }],
   [/^EVENT_PUBLISHED$/, detail("/events")],
   [/^(EVENT_REGISTRATION_|EVENT_CANCELLED$|EVENT_RESCHEDULED$|EVENT_CHECKED_IN$)/, fixed("/workspace/event-registrations")],
-  [/^EVENT_PROPOSAL_/, clubEvent],
+  [/^EVENT_CANCELLATION_REQUESTED$/, detail("/workspace/event-proposals")],
+  [/^(EVENT_PROPOSAL_|EVENT_CANCELLATION_DECIDED$)/, clubEvent],
   // The founder's own application (receipts and decisions alike).
   [/^CLUB_APPLICATION_APPROVED$/, (item) => club("")(item) ?? detail("/workspace/applications")(item)],
   [/^CLUB_APPLICATION_/, detail("/workspace/applications")],

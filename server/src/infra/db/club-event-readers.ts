@@ -1,14 +1,14 @@
 import { Types } from "mongoose";
 import { summarizeFeedback, FEEDBACK_CRITERION } from "../../domain/event-feedback.js";
-import { publicEventPayload, type ClubEvent, type ClubEventDetail, type ClubFeedbackSummary, type EventParticipant } from "../../domain/club-event.js";
+import { publicEventPayload, type ClubEvent, type ClubEventDetail, type ClubFeedbackSummary, type EventCancellationRequest, type EventParticipant } from "../../domain/club-event.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 function oid(id: string) { return new Types.ObjectId(id); }
 export function eventMoney(value: unknown): number { return Number(String(value ?? 0)); }
-export function clubEventFrom(doc: Doc, payload: Doc = {}): ClubEvent {
-  return { ...publicEventPayload(payload), id: String(doc._id), clubId: String(doc.clubId), clubName: String(doc.clubName),
+export function clubEventFrom(doc: Doc, payload: Doc = {}, cancellationRequest?: EventCancellationRequest): ClubEvent {
+  return { ...publicEventPayload(payload), ...(cancellationRequest ? { cancellationRequest } : {}), id: String(doc._id), clubId: String(doc.clubId), clubName: String(doc.clubName),
     title: String(doc.title), objective: String(doc.objective ?? ""), plan: String(payload.plan ?? ""),
     startAt: doc.startAt as Date, endAt: doc.endAt as Date, semesterCode: String(doc.semesterCode),
     venueText: doc.venueText as string | undefined, propertyId: doc.propertyId ? String(doc.propertyId) : undefined,
@@ -32,21 +32,68 @@ export async function eventDraftPayload(eventId: Types.ObjectId): Promise<Doc> {
     .sort({ "after.eventVersion": -1, at: -1, _id: -1 }).lean();
   return ((audit?.after as Doc | undefined)?.payload ?? {}) as Doc;
 }
+export const EVENT_CANCELLATION_ACTIONS = [
+  "EVENT_CANCELLATION_REQUESTED",
+  "EVENT_CANCELLATION_APPROVED",
+  "EVENT_CANCELLATION_REJECTED",
+] as const;
+export async function eventCancellationRequest(eventId: Types.ObjectId): Promise<EventCancellationRequest | undefined> {
+  const audit = await m.auditLogs!
+    .findOne({ entityType: "Event", entityId: eventId, action: { $in: EVENT_CANCELLATION_ACTIONS } })
+    .sort({ at: -1, _id: -1 })
+    .lean();
+  if (!audit) return undefined;
+  const after = (audit.after as Doc | undefined) ?? {};
+  const action = String(audit.action);
+  const state = action === "EVENT_CANCELLATION_REQUESTED"
+    ? "Pending"
+    : action === "EVENT_CANCELLATION_APPROVED"
+      ? "Approved"
+      : "Rejected";
+  return {
+    state,
+    reason: String(after.reason ?? audit.reason ?? ""),
+    requestedAt: (after.requestedAt as Date | undefined) ?? (audit.at as Date),
+    ...(after.reviewReason ? { reviewReason: String(after.reviewReason) } : {}),
+    ...(state !== "Pending" ? { decidedAt: audit.at as Date } : {}),
+  };
+}
 export async function readClubEvent(clubId: string, eventId: string): Promise<ClubEventDetail | null> {
   const doc = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }).lean();
   if (!doc) return null;
-  const [payload, versions, tasks, bookings, budget] = await Promise.all([
+  const [payload, cancellation, versions, tasks, bookings, budget] = await Promise.all([
     eventDraftPayload(doc._id as Types.ObjectId),
+    eventCancellationRequest(doc._id as Types.ObjectId),
     m.eventProposalVersions!.find({ eventId: doc._id }).sort({ revisionNo: 1 }).lean(),
     m.approvalTasks!.find({ entityType: "EVENT_PROPOSAL", entityId: doc._id }).lean(),
     m.propertyBookings!.find({ eventId: doc._id }).lean(), m.eventBudgets!.findOne({ eventId: doc._id }).lean(),
   ]);
-  const decisions = await m.approvalDecisions!.find({ approvalTaskId: { $in: tasks.map((task) => task._id) } }).sort({ at: 1 }).lean();
-  const properties = await m.properties!.find({ _id: { $in: bookings.map((item) => item.propertyId) } }).lean();
+  const submitterIds = [...new Set(versions.map((v) => v.submittedBy).filter(Boolean).map((id) => String(id)))].map(oid);
+  const [decisions, properties, submitters] = await Promise.all([
+    m.approvalDecisions!.find({ approvalTaskId: { $in: tasks.map((task) => task._id) } }).sort({ at: 1 }).lean(),
+    m.properties!.find({ _id: { $in: bookings.map((item) => item.propertyId) } }).lean(),
+    submitterIds.length ? m.users!.find({ _id: { $in: submitterIds } }).select({ displayName: 1 }).lean() : Promise.resolve([]),
+  ]);
+  const submitterNames = new Map(submitters.map((u) => [String(u._id), String(u.displayName ?? "")]));
   const current = Object.keys(payload).length ? payload : ((versions.at(-1)?.payload ?? {}) as Doc);
-  return { event: clubEventFrom(doc, { ...current, budgetLines: current.budgetLines ?? versions.at(-1)?.budgetLines ?? [] }),
-    versions: versions.map((v) => ({ revisionNo: Number(v.revisionNo), payload: publicEventPayload(v.payload),
-      budgetLines: (v.budgetLines ?? []) as ClubEvent["budgetLines"], submittedAt: v.submittedAt as Date })),
+  return { event: clubEventFrom(doc, { ...current, budgetLines: current.budgetLines ?? versions.at(-1)?.budgetLines ?? [] }, cancellation),
+    versions: versions.map((v) => {
+      const budgetLines = (v.budgetLines ?? []) as ClubEvent["budgetLines"];
+      const submittedBy = v.submittedBy ? String(v.submittedBy) : undefined;
+      const submittedByName = submittedBy ? submitterNames.get(submittedBy) || undefined : undefined;
+      return {
+        revisionNo: Number(v.revisionNo),
+        payload: publicEventPayload(v.payload),
+        budgetLines,
+        requestedBudgetTotal: v.requestedBudgetTotal !== undefined
+          ? eventMoney(v.requestedBudgetTotal)
+          : budgetLines.reduce((sum, line) => sum + Number(line.amount ?? 0), 0),
+        ...(v.conflictResult ? { conflictResult: String(v.conflictResult) } : {}),
+        ...(submittedBy ? { submittedBy } : {}),
+        ...(submittedByName ? { submittedByName } : {}),
+        submittedAt: v.submittedAt as Date,
+      };
+    }),
     decisions: decisions.map((d) => ({ outcome: String(d.outcome), reason: d.reason as string | undefined, comments: d.comments, at: d.at as Date })),
     bookings: bookings.map((b) => ({ id: String(b._id), state: String(b.state), propertyId: String(b.propertyId),
       propertyName: String(properties.find((p) => String(p._id) === String(b.propertyId))?.name ?? ""), startAt: b.startAt as Date, endAt: b.endAt as Date })),

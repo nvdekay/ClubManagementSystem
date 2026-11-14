@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventProposalTemplateKey } from "@/hooks/useClubEvents";
 import {
-  accessReviewProposalDocument, claimEventProposal, uploadProposalTemplate, decideEventProposal, fetchEventProposal, fetchEventProposalQueue,
-  type EventReviewDecisionInput,
+  accessReviewProposalDocument, claimEventProposal, decideEventCancellation, decideEventProposal, fetchEventProposal, fetchEventProposalQueue,
+  uploadProposalTemplate, type EventReviewDecisionInput,
 } from "@/services/eventProposalReviews";
 
 const eventProposalKey = ["event-proposal-reviews"] as const;
@@ -22,9 +22,12 @@ export function useEventProposalAction() {
   return useMutation({
     mutationFn: (action:
       | { kind: "claim"; id: string; csrfToken: string }
-      | { kind: "decide"; id: string; input: EventReviewDecisionInput; csrfToken: string }) =>
-      action.kind === "claim" ? claimEventProposal(action.id, action.csrfToken)
-        : decideEventProposal(action.id, action.input, action.csrfToken),
+      | { kind: "decide"; id: string; input: EventReviewDecisionInput; csrfToken: string }
+      | { kind: "decideCancellation"; id: string; input: { approve: boolean; reason?: string }; csrfToken: string }) => {
+      if (action.kind === "claim") return claimEventProposal(action.id, action.csrfToken);
+      if (action.kind === "decideCancellation") return decideEventCancellation(action.id, action.input, action.csrfToken);
+      return decideEventProposal(action.id, action.input, action.csrfToken);
+    },
     onSuccess: async (detail) => {
       queryClient.setQueryData([...eventProposalKey, "detail", detail.event.id], detail);
       await queryClient.invalidateQueries({ queryKey: [...eventProposalKey, "queue"] });

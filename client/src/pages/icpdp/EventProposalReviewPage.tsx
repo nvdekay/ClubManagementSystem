@@ -58,6 +58,9 @@ export function EventProposalReviewPage() {
   const [scheduleDialogMode, setScheduleDialogMode] = useState<"schedule" | "reschedule" | null>(null);
   const [reasonModalKind, setReasonModalKind] = useState<"cancel" | "rejectReschedule" | "noShow" | null>(null);
   const [modalReason, setModalReason] = useState("");
+  const [cancelApprove, setCancelApprove] = useState(true);
+  const [cancelReviewReason, setCancelReviewReason] = useState("");
+  const [cancelReviewError, setCancelReviewError] = useState<string | null>(null);
   const [renderedAt] = useState(() => Date.now());
   const current = review.data?.versions.find((version) => version.revisionNo === review.data?.event.currentRevisionNo)
     ?? review.data?.versions.at(-1);
@@ -83,6 +86,8 @@ export function EventProposalReviewPage() {
       case "Revision Requested": return t("eventReviews.stateRevisionRequested");
       case "Re-defense Pending": return t("eventDefense.stateReDefensePending");
       case "Approved": return t("eventReviews.stateApproved");
+      case "Upcoming": return t("eventReviews.stateUpcoming");
+      case "Ongoing": return t("eventReviews.stateOngoing");
       case "Rejected": return t("eventReviews.stateRejected");
       case "Expired": return t("eventReviews.stateExpired");
       case "Cancelled": return t("eventReviews.stateCancelled");
@@ -133,7 +138,7 @@ export function EventProposalReviewPage() {
     </>
   );
 
-  const { event, task, club, decisions, versions, bookings, semesterBudgets, budget, activeDefenseSession, defenseHistory } = review.data;
+  const { event, task, club, decisions, versions, bookings, semesterBudgets, budget, activeDefenseSession, defenseHistory, cancellationRequest } = review.data;
   // The version submitted before the current one, and the revision request that sent it back.
   const previous = current && versions.filter((version) => version.revisionNo < current.revisionNo)
     .sort((a, b) => b.revisionNo - a.revisionNo)[0];
@@ -192,7 +197,8 @@ export function EventProposalReviewPage() {
     ? text((event.conflictDetail as Record<string, unknown>).message) : undefined;
   const mine = task.assigneeId === auth.data.user.id;
   const isOpen = task.state === "Open" && ["Pending Approval", "Under Review", "Re-defense Pending"].includes(event.state);
-  const stateTone: AppBadgeTone = event.state === "Approved" ? "success"
+  const isPendingCancellation = task.state === "Open" && cancellationRequest?.state === "Pending";
+  const stateTone: AppBadgeTone = ["Approved", "Upcoming", "Ongoing"].includes(event.state) ? "success"
     : ["Rejected", "Expired", "Cancelled"].includes(event.state) ? "danger"
       : event.state === "Revision Requested" ? "warning" : "info";
   const riskTone: AppBadgeTone = event.riskCategory === "HIGH" ? "danger" : event.riskCategory === "MEDIUM" ? "warning" : "success";
@@ -218,6 +224,30 @@ export function EventProposalReviewPage() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
     catch (error) { console.error("[EventProposalReviewPage] claim failed:", error); }
+  }
+
+  async function submitCancellationDecision(e: FormEvent) {
+    e.preventDefault();
+    if (!auth.data || !id) return;
+    setCancelReviewError(null);
+    const trimmed = cancelReviewReason.trim();
+    if (!cancelApprove && !trimmed) {
+      setCancelReviewError(t("eventReviews.reasonRequired"));
+      return;
+    }
+    const prompt = cancelApprove ? t("eventReviews.cancellationConfirmApprove") : t("eventReviews.cancellationConfirmReject");
+    if (!(await askConfirm(prompt))) return;
+    try {
+      await action.mutateAsync({
+        kind: "decideCancellation",
+        id,
+        input: { approve: cancelApprove, ...(trimmed ? { reason: trimmed } : {}) },
+        csrfToken: auth.data.csrfToken,
+      });
+      setCancelReviewReason("");
+    } catch (error) {
+      console.error("[EventProposalReviewPage] decideCancellation failed:", error);
+    }
   }
 
   async function handleStartDefense() {
@@ -514,7 +544,77 @@ export function EventProposalReviewPage() {
         </div>
 
         <aside className="min-w-0 space-y-6 xl:sticky xl:top-24">
-          {isOpen && !mine ? (
+          {cancellationRequest && (
+            <section className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="font-heading text-base font-semibold">{t("eventReviews.cancellationPanel")}</h2>
+                <AppBadge tone={cancellationRequest.state === "Approved" ? "success" : cancellationRequest.state === "Rejected" ? "danger" : "warning"}>
+                  {cancellationRequest.state === "Approved"
+                    ? t("eventReviews.stateApproved")
+                    : cancellationRequest.state === "Rejected"
+                      ? t("eventReviews.stateRejected")
+                      : t("eventReviews.statePendingApproval")}
+                </AppBadge>
+              </div>
+              <p className="text-xs text-muted-app">{t("eventReviews.cancellationRequestedAt", { date: date(cancellationRequest.requestedAt) })}</p>
+              <div className="rounded-xl border border-border-app bg-surface-app p-3 text-sm">
+                <p className="text-xs font-medium text-muted-app">{t("eventReviews.cancellationClubReason")}</p>
+                <p className="mt-1 whitespace-pre-wrap break-words">{cancellationRequest.reason}</p>
+              </div>
+              {cancellationRequest.state === "Pending" && (
+                <p className="text-xs text-muted-app">{t("eventReviews.cancellationPendingHint")}</p>
+              )}
+              {cancellationRequest.state !== "Pending" && cancellationRequest.decidedAt && (
+                <div className="border-t border-border-app pt-2 text-xs text-muted-app space-y-1">
+                  <p className="font-medium text-text-app">
+                    {t(cancellationRequest.state === "Approved" ? "eventReviews.cancellationDecidedApproved" : "eventReviews.cancellationDecidedRejected", {
+                      date: date(cancellationRequest.decidedAt),
+                    })}
+                  </p>
+                  {cancellationRequest.reviewReason && <p className="whitespace-pre-wrap break-words">{cancellationRequest.reviewReason}</p>}
+                </div>
+              )}
+              {isPendingCancellation && mine && (
+                <form onSubmit={(e) => void submitCancellationDecision(e)} className="space-y-3 border-t border-border-app pt-3 text-sm">
+                  <div className="grid grid-cols-2 gap-2">
+                    <AppButton
+                      type="button"
+                      variant={cancelApprove ? "primary" : "secondary"}
+                      onClick={() => { setCancelApprove(true); setCancelReviewError(null); }}
+                    >
+                      {t("eventReviews.cancellationApprove")}
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant={!cancelApprove ? "primary" : "secondary"}
+                      onClick={() => { setCancelApprove(false); setCancelReviewError(null); }}
+                    >
+                      {t("eventReviews.cancellationReject")}
+                    </AppButton>
+                  </div>
+                  <label className="block font-medium text-text-app">
+                    {t("eventReviews.reason")}{!cancelApprove && <AppRequiredMark />}
+                    <span className="mt-0.5 block text-xs font-normal text-muted-app">{t("eventReviews.cancellationRejectionReasonHint")}</span>
+                    <AppTextarea
+                      value={cancelReviewReason}
+                      maxLength={2000}
+                      onChange={(e) => { setCancelReviewReason(e.target.value); if (cancelReviewError) setCancelReviewError(null); }}
+                      className="mt-1.5 min-h-20 w-full font-normal"
+                    />
+                  </label>
+                  {(cancelReviewError || action.isError) && (
+                    <p role="alert" className="text-sm text-danger-app">
+                      {cancelReviewError ?? resolveI18nError(action.error, t("eventReviews.actionError"))}
+                    </p>
+                  )}
+                  <AppButton type="submit" className="w-full" disabled={action.isPending}>
+                    {action.isPending ? t("eventReviews.submitting") : t("eventReviews.cancellationSubmit")}
+                  </AppButton>
+                </form>
+              )}
+            </section>
+          )}
+          {(isOpen || isPendingCancellation) && !mine ? (
             <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
               <p className="text-sm text-muted-app">{task.assigneeId ? t("eventReviews.claimedByOther") : t("eventReviews.claimHint")}</p>
               {!task.assigneeId && <AppButton className="mt-5 w-full" disabled={action.isPending} onClick={() => void claim()}>

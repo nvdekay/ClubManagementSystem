@@ -33,7 +33,8 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
           if (isClubAction(action)) throw new DomainError("club action required", "forbidden");
         }
         const event = await m.events!.findOneAndUpdate({ _id: budget.eventId }, { $inc: { __v: 1 } }, { session }).lean();
-        if (!event || !["Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"].includes(String(event.state))) {
+        if (!event || !["Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"].includes(String(event.state))
+          || await m.approvalTasks!.exists({ entityType: "EVENT_CANCELLATION", entityId: budget.eventId, state: "Open" }).session(session)) {
           throw new DomainError("event finance is paused while the event is cancelled or awaiting approval", "conflict");
         }
         const items = budget.sponsoredItems as SponsoredItem[];

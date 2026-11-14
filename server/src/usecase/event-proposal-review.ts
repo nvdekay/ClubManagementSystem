@@ -106,6 +106,23 @@ export async function decideEventProposalReview(repo: EventProposalReviewReposit
   return repo.decide(detail.event.id, officerId, decision, now);
 }
 
+export async function decideEventCancellationReview(repo: EventProposalReviewRepository,
+  auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
+  input: { approve: boolean; reason?: string }, now: Date) {
+  const officerId = await officer(auth, actor);
+  const reason = trimmed(input.reason);
+  if (!input.approve && !reason) {
+    throw new DomainError("decision reason is required", "validation", { field: "reason" });
+  }
+  if (reason && reason.length > 5_000) {
+    throw new DomainError("review text is too long", "validation");
+  }
+  if (!repo.decideCancellation) {
+    throw new DomainError("event cancellation review is not supported", "unavailable");
+  }
+  return repo.decideCancellation(eventId(id), officerId, { approve: input.approve, reason }, now);
+}
+
 export async function runEventLifecycleJob(repo: EventProposalReviewRepository, now: Date) {
   return repo.advanceLifecycle(now);
 }

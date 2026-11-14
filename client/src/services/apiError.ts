@@ -27,6 +27,13 @@ function localizedApiMessage(message: string): string {
       defaultValue: apiErrors.vi.internalEventNotice,
     }));
   }
+  const cancelNotice = /^(?:approved event cancellation must be requested|cancellation request must be submitted) at least (\d+(?:\.\d+)?) hours before the event starts$/.exec(message);
+  if (cancelNotice) {
+    return String(i18next.t("apiErrors.cancelNoticeHours", {
+      hours: cancelNotice[1],
+      defaultValue: apiErrors.vi.cancelNoticeHours,
+    }));
+  }
   const earlyStart = /^defense can only start at most (\d+) minutes before the scheduled start time$/.exec(message);
   if (earlyStart) {
     return String(i18next.t("apiErrors.defenseEarlyStart", {

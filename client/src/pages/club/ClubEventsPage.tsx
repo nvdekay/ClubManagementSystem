@@ -109,7 +109,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const columns = useMemo(() => eventColumns.columns([
     eventColumns.accessor("title", { header: t("clubEvents.titleField"), cell: (info) => <button type="button" className="text-left font-medium text-text-app hover:text-primary-app" onClick={() => { setSelected(info.row.original.id); mutation.reset(); setSuccess(false); revealDetail(); }}>{info.getValue()}</button> }),
     eventColumns.accessor("audienceScope", { header: t("clubEvents.eventTypeColumn"), cell: (info) => <AppBadge tone={info.getValue() === "MEMBERS_ONLY" ? "info" : "neutral"}>{t(info.getValue() === "MEMBERS_ONLY" ? "clubEvents.eventTypeInternal" : "clubEvents.eventTypePublic")}</AppBadge> }),
-    eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{stateLabel(t, info.getValue())}</AppBadge> }),
+    eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <span className="inline-flex flex-wrap items-center gap-1.5"><AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{stateLabel(t, info.getValue())}</AppBadge>{info.row.original.cancellationRequest?.state === "Pending" && <AppBadge tone="warning">{t("clubEvents.requestCancel")}</AppBadge>}</span> }),
     eventColumns.accessor("startAt", { header: t("clubEvents.startTime"), cell: (info) => format.format(new Date(info.getValue())) }),
     eventColumns.accessor("capacity", { header: t("clubEvents.maxParticipants"), cell: (info) => `${info.row.original.confirmedRegistrationCount} / ${info.getValue()}` }),
   ]), [t, format, mutation, setSelected]);
@@ -135,8 +135,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     catch (error) { setFormError(error); }
   }, [auth.data, selected, mutation, setSuccess, setFormError, setOperation]);
   const internal = Boolean(active && isInternalState(active.state));
-  async function downloadDocument(id: string) {
-    try { window.open((await documentAccess.mutateAsync({ id })).url, "_blank", "noopener,noreferrer"); }
+  async function downloadDocument(id: string, revisionNo?: number, inline = false) {
+    try { window.open((await documentAccess.mutateAsync({ id, revisionNo, inline })).url, "_blank", "noopener,noreferrer"); }
     catch { /* Mutation error is rendered next to the file. */ }
   }
   async function confirmInternal() {
@@ -209,9 +209,9 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   return <>
     <PageHeader title={t(`clubEvents.${mode === "events" ? "title" : mode}`)} description={t("clubEvents.description")} />
     <nav aria-label={t("clubEvents.title")} className="mb-5 inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
-      {permissions.includes("club.event.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/events`}>{t("clubEvents.title")}</NavLink>}
-      {permissions.includes("club.attendance.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-attendance`}>{t("clubEvents.attendance")}</NavLink>}
-      {permissions.includes("club.feedback.view") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-feedback`}>{t("clubEvents.feedback")}</NavLink>}
+      {permissions.includes("club.event.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/events${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.title")}</NavLink>}
+      {permissions.includes("club.attendance.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-attendance${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.attendance")}</NavLink>}
+      {permissions.includes("club.feedback.view") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-feedback${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.feedback")}</NavLink>}
     </nav>
     <ClubEventErrorMessage error={events.error ?? formError} />
     {success && <p role="status" className="mb-3 text-success-app">{t("clubEvents.success")}</p>}
@@ -333,38 +333,246 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
             </div>
           );
         })()}
-        <div className="my-4 flex flex-wrap gap-2">
-          {["Draft", "Revision Requested"].includes(active.state) && (
+        {active.cancellationRequest?.state === "Pending" && (
+          <div className="mt-4">
+            <AppNotice tone="warning" title={t("clubEvents.cancelPendingTitle")}>
+              <p>{t("clubEvents.cancelPendingHint", { date: format.format(new Date(active.cancellationRequest.requestedAt)), reason: active.cancellationRequest.reason })}</p>
+            </AppNotice>
+          </div>
+        )}
+        {active.cancellationRequest?.state === "Rejected" && (
+          <div className="mt-4">
+            <AppNotice tone="danger" title={t("clubEvents.cancelRejectedTitle")}>
+              <p>{t("clubEvents.cancelRejectedHint", { date: active.cancellationRequest.decidedAt ? format.format(new Date(active.cancellationRequest.decidedAt)) : "—", reason: active.cancellationRequest.reviewReason ?? "—" })}</p>
+            </AppNotice>
+          </div>
+        )}
+        {(() => {
+          const cancellationPending = active.cancellationRequest?.state === "Pending";
+          const approvedProposalEvent = ["Approved", "Upcoming", "Ongoing"].includes(active.state);
+          const withinCancelCutoff = approvedProposalEvent && Date.parse(active.startAt) - renderedAt < 72 * 3600_000;
+          return (
             <>
-              <Link
-                to={`/club/${encodeURIComponent(clubId)}/events/${encodeURIComponent(active.id)}/edit`}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
-              >
-                {t("clubEvents.edit")}
-              </Link>
-              <AppButton disabled={mutation.isPending} onClick={() => void runAction("submit", { expectedVersion: active.version })}>{t("clubEvents.submit")}</AppButton>
+              <div className="my-4 flex flex-wrap gap-2">
+                {["Draft", "Revision Requested"].includes(active.state) && (
+                  <>
+                    <Link
+                      to={`/club/${encodeURIComponent(clubId)}/events/${encodeURIComponent(active.id)}/edit`}
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
+                    >
+                      {t("clubEvents.edit")}
+                    </Link>
+                    <AppButton disabled={mutation.isPending} onClick={() => void runAction("submit", { expectedVersion: active.version })}>{t("clubEvents.submit")}</AppButton>
+                  </>
+                )}
+                {["DRAFT", "CREATED"].includes(active.state) && (
+                  <Link
+                    to={`/club/${encodeURIComponent(clubId)}/events/${encodeURIComponent(active.id)}/internal-edit`}
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
+                  >
+                    {t("clubEvents.editInternal")}
+                  </Link>
+                )}
+                {active.state === "DRAFT" && <AppButton disabled={mutation.isPending} onClick={() => void confirmInternal()}>{t("clubEvents.createInternalAction")}</AppButton>}
+                {!cancellationPending && ["Approved", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("publish")}>{t(internal ? "clubEvents.publishMembers" : "clubEvents.publish")}</AppButton>}
+                {/* A published internal event (PUBLIC, ONGOING) keeps its schedule: cancellation only. */}
+                {!cancellationPending && ["Approved", "Upcoming", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("reschedule")}>{t("clubEvents.reschedule")}</AppButton>}
+                {!cancellationPending && ["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(active.state) && !active.attendanceFinalized && (
+                  <AppButton variant="ghost" disabled={withinCancelCutoff} onClick={() => openOperation("cancel")}>
+                    {t(approvedProposalEvent ? "clubEvents.requestCancel" : "clubEvents.cancel")}
+                  </AppButton>
+                )}
+              </div>
+              {!cancellationPending && withinCancelCutoff && !active.attendanceFinalized && (
+                <p className="mb-3 text-xs text-muted-app">{t("clubEvents.cancelCutoffNotice")}</p>
+              )}
             </>
-          )}
-          {["DRAFT", "CREATED"].includes(active.state) && (
-            <Link
-              to={`/club/${encodeURIComponent(clubId)}/events/${encodeURIComponent(active.id)}/internal-edit`}
-              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
-            >
-              {t("clubEvents.editInternal")}
-            </Link>
-          )}
-          {active.state === "DRAFT" && <AppButton disabled={mutation.isPending} onClick={() => void confirmInternal()}>{t("clubEvents.createInternalAction")}</AppButton>}
-          {["Approved", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("publish")}>{t(internal ? "clubEvents.publishMembers" : "clubEvents.publish")}</AppButton>}
-          {/* A published internal event (PUBLIC, ONGOING) keeps its schedule: cancellation only. */}
-          {["Approved", "Upcoming", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("reschedule")}>{t("clubEvents.reschedule")}</AppButton>}
-          {["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(active.state) && !active.attendanceFinalized && <AppButton variant="ghost" onClick={() => openOperation("cancel")}>{t("clubEvents.cancel")}</AppButton>}
-        </div>
+          );
+        })()}
         {active.checkInCode && <p>{t("clubEvents.code")}: <strong>{active.checkInCode}</strong></p>}
         {!internal && <>
         <h3 className="mt-5 text-sm font-semibold">{t("clubEvents.versions")}</h3>
-        {detail.data.versions.map((v) => <details key={v.revisionNo} className="mt-2 rounded-lg border border-border-app p-3"><summary>#{v.revisionNo} · {format.format(new Date(v.submittedAt))}</summary>
-          <p className="mt-2 whitespace-pre-wrap break-words">{String((v.payload as { plan?: string })?.plan ?? "")}</p>
-          {v.budgetLines.map((line, index) => <p key={index} className="mt-2">{line.category}: {line.amount.toLocaleString(i18n.language)} VND — {line.purpose}</p>)}</details>)}
+        {detail.data.versions.map((v) => {
+          const vp = v.payload ?? {};
+          function resolveRoomName(propId?: string) {
+            return propId
+              ? (options.data?.properties.find((p) => p.id === propId)?.name
+                ?? detail.data?.bookings.find((b) => b.propertyId === propId)?.propertyName
+                ?? propId)
+              : undefined;
+          }
+          const vStart = vp.startAt ?? active.startAt;
+          const vEnd = vp.endAt ?? active.endAt;
+          const vVenue = [resolveRoomName(vp.propertyId), vp.venueText].filter(Boolean).join(" · ") || "—";
+          const vScope = vp.audienceScope ?? active.audienceScope;
+          const vRisk = vp.riskCategory ?? active.riskCategory;
+          const vOccurrences = Array.isArray(vp.occurrences) ? vp.occurrences : [];
+          const vForm = Array.isArray(vp.registrationForm) ? vp.registrationForm : [];
+          const vDoc = vp.proposalDocument;
+          const vBudgetTotal = v.requestedBudgetTotal ?? v.budgetLines.reduce((sum, line) => sum + line.amount, 0);
+          const vSubmitter = v.submittedByName ?? v.submittedBy;
+          const vConflictTone = v.conflictResult === "Blocking Conflict" ? "danger" : v.conflictResult === "Warning" ? "warning" : "success";
+          const vRiskTone = vRisk === "HIGH" ? "danger" : vRisk === "MEDIUM" ? "warning" : "success";
+          return (
+            <details key={v.revisionNo} className="mt-2 rounded-xl border border-border-app bg-surface-app/40 p-4">
+              <summary className="font-medium">
+                <span>#{v.revisionNo} · {format.format(new Date(v.submittedAt))}</span>
+                {vSubmitter && <span className="ml-2 font-normal text-muted-app">· {t("clubEvents.submittedByLabel", { name: vSubmitter })}</span>}
+                {v.conflictResult && (
+                  <span className="ml-2 inline-flex align-middle">
+                    <AppBadge tone={vConflictTone}>{t(`clubEvents.${v.conflictResult}`, { defaultValue: v.conflictResult })}</AppBadge>
+                  </span>
+                )}
+                <span className="ml-2 font-normal text-muted-app">
+                  · {vBudgetTotal > 0 ? `${vBudgetTotal.toLocaleString(i18n.language)} VND` : t("clubEvents.noBudgetRequested")}
+                </span>
+              </summary>
+              <div className="mt-4 space-y-4 border-t border-border-app pt-4 text-sm">
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs text-muted-app">{t("clubEvents.titleField")}</dt>
+                    <dd className="mt-0.5 font-medium break-words">{vp.title ?? active.title}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-app">{t("clubEvents.scheduleVenue")}</dt>
+                    <dd className="mt-0.5 font-medium">{format.format(new Date(vStart))} – {format.format(new Date(vEnd))}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-app">{t("clubEvents.venue")}</dt>
+                    <dd className="mt-0.5 font-medium break-words">{vVenue}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-app">{t("clubEvents.scope")}</dt>
+                    <dd className="mt-0.5 font-medium">{t(`clubEvents.${vScope}`)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-app">{t("clubEvents.maxParticipants")}</dt>
+                    <dd className="mt-0.5 font-medium">{vp.capacity ?? active.capacity}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted-app">{t("clubEvents.risk")}</dt>
+                    <dd className="mt-0.5"><AppBadge tone={vRiskTone}>{t(`clubEvents.${vRisk}`)}</AppBadge></dd>
+                  </div>
+                </dl>
+
+                {(vp.objective ?? active.objective) && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-app">{t("clubEvents.objective")}</p>
+                    <p className="mt-1 whitespace-pre-wrap break-words">{vp.objective ?? active.objective}</p>
+                  </div>
+                )}
+
+                {vp.plan && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-app">{t("clubEvents.plan")}</p>
+                    <p className="mt-1 whitespace-pre-wrap break-words">{vp.plan}</p>
+                  </div>
+                )}
+
+                {vp.riskNote && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-app">{t("clubEvents.riskNote")}</p>
+                    <p className="mt-1 whitespace-pre-wrap break-words">{vp.riskNote}</p>
+                  </div>
+                )}
+
+                {vp.facilityNeeds && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-app">{t("clubEvents.facilityNeeds")}</p>
+                    <p className="mt-1 whitespace-pre-wrap break-words">{vp.facilityNeeds}</p>
+                  </div>
+                )}
+
+                {vOccurrences.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-app">{t("clubEvents.occurrences")}</p>
+                    <ul className="mt-1 list-inside list-disc space-y-1">
+                      {vOccurrences.map((occ, idx) => {
+                        const occLocation = [resolveRoomName(occ.propertyId), occ.venueText].filter(Boolean).join(" · ");
+                        return (
+                          <li key={idx}>
+                            <span className="font-medium">{t("clubEvents.sessionIndex", { index: idx + 1 })}:</span>{" "}
+                            {format.format(new Date(occ.startAt))} – {format.format(new Date(occ.endAt))}
+                            {occLocation ? ` (${occLocation})` : ""}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
+                {vDoc && (
+                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border-app bg-bg-app px-3 py-2">
+                    <span className="font-medium">{t("clubEvents.proposalDocumentSection")}:</span>
+                    <span className="min-w-0 break-words">
+                      {vDoc.fileName} · {formatBytes(vDoc.bytes)} · {t("clubEvents.proposalDocumentUploaded", { date: format.format(new Date(vDoc.uploadedAt)) })}
+                    </span>
+                    <AppButton variant="secondary" disabled={documentAccess.isPending} onClick={() => void downloadDocument(active.id, v.revisionNo, false)}>
+                      <AppIcon name="download" className="size-4" />{t("clubEvents.proposalDocumentDownload")}
+                    </AppButton>
+                    {vDoc.mimeType === "application/pdf" && (
+                      <AppButton variant="ghost" disabled={documentAccess.isPending} onClick={() => void downloadDocument(active.id, v.revisionNo, true)}>
+                        {t("clubEvents.proposalDocumentView")}
+                      </AppButton>
+                    )}
+                  </div>
+                )}
+
+                {vForm.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-app">{t("clubEvents.form")}</p>
+                    <ul className="mt-1 list-inside list-disc space-y-1">
+                      {vForm.map((field, idx) => (
+                        <li key={idx} className="break-words">
+                          <span className="font-medium">{field.label}</span>
+                          {field.required ? " *" : ""} ({t(`clubEvents.${field.type}`, { defaultValue: field.type })})
+                          {field.options?.length ? `: ${field.options.join(", ")}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs font-medium text-muted-app">{t("clubEvents.budget")}</p>
+                  {v.budgetLines.length > 0 ? (
+                    <div className="mt-1.5 overflow-x-auto rounded-lg border border-border-app bg-bg-app">
+                      <table className="w-full min-w-[26rem] text-left text-sm">
+                        <thead className="bg-surface-app text-xs text-muted-app">
+                          <tr>
+                            <th scope="col" className="px-3 py-2 font-medium">{t("clubEvents.category")}</th>
+                            <th scope="col" className="px-3 py-2 font-medium">{t("clubEvents.purpose")}</th>
+                            <th scope="col" className="px-3 py-2 text-right font-medium">{t("clubEvents.amount")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {v.budgetLines.map((line, index) => (
+                            <tr key={index} className="border-t border-border-app align-top">
+                              <td className="px-3 py-2 font-medium">{line.category}</td>
+                              <td className="px-3 py-2">
+                                <p className="break-words">{line.purpose}</p>
+                                {line.plannedItems && <p className="mt-0.5 whitespace-pre-line text-xs text-muted-app">{line.plannedItems}</p>}
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums">{line.amount.toLocaleString(i18n.language)} VND</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t border-border-app bg-surface-app font-semibold">
+                            <td className="px-3 py-2" colSpan={2}>{t("clubEvents.requestedTotal")}</td>
+                            <td className="px-3 py-2 text-right tabular-nums">{vBudgetTotal.toLocaleString(i18n.language)} VND</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-muted-app">{t("clubEvents.noBudgetRequested")}</p>
+                  )}
+                </div>
+              </div>
+            </details>
+          );
+        })}
         <h3 className="mt-5 text-sm font-semibold">{t("clubEvents.decisions")}</h3>
         {detail.data.decisions.map((d, index) => <div key={index} className="mt-2"><p>{d.outcome === "Re-defense" ? t("eventDefense.outcomeReDefense") : t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {format.format(new Date(d.at))}{d.reason ? ` · ${d.reason}` : ""}</p>
           {((d.comments as DecisionComments | undefined)?.sections ?? []).length > 0 && <div className="mt-1 flex flex-wrap gap-2">{(d.comments as DecisionComments).sections!.map((section) =>
@@ -410,9 +618,12 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           <h4 className="mt-4 text-sm font-semibold">{t("clubEvents.comments")}</h4>{f.comments?.map((c, index) => <p key={index} className="mt-2 whitespace-pre-wrap break-words text-muted-app">{c}</p>)}</>}
       </article>)}</div>
     </section>}
-    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation === "capacity" ? "maxParticipants" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) closeOperation(); }}
+    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation === "capacity" ? "maxParticipants" : operation === "cancel" && active && ["Approved", "Upcoming", "Ongoing"].includes(active.state) ? "requestCancel" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) closeOperation(); }}
       footer={<AppButton type="submit" form="club-event-operation-form" disabled={mutation.isPending}>{t("clubEvents.confirm")}</AppButton>}>
       <form id="club-event-operation-form" noValidate onSubmit={(event) => void execute(event)} className="space-y-4"><ClubEventErrorMessage error={formError} />
+        {operation === "cancel" && active && ["Approved", "Upcoming", "Ongoing"].includes(active.state) && (
+          <AppNotice tone="info">{t("clubEvents.cancelApprovedHint")}</AppNotice>
+        )}
         {operation === "publish" && <>
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration} onChange={(e) => setNoRegistration(e.target.checked)} />{t("clubEvents.noRegistration")}</label>
           {!noRegistration && <><Field label={t("clubEvents.registrationOpen")} required error={opField.error("registrationOpen")}><AppInput {...opField.control("registrationOpen")} type="datetime-local" value={registrationOpen} onChange={(e) => setRegistrationOpen(e.target.value)} /></Field><Field label={t("clubEvents.registrationClose")} required error={opField.error("registrationClose")}><AppInput {...opField.control("registrationClose")} type="datetime-local" value={registrationClose} onChange={(e) => setRegistrationClose(e.target.value)} /></Field></>}

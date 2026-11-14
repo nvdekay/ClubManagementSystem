@@ -8,7 +8,7 @@ import {
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
 import {
-  claimEventProposalReview, decideEventProposalReview, getEventProposalReview, listEventProposalReviews,
+  claimEventProposalReview, decideEventCancellationReview, decideEventProposalReview, getEventProposalReview, listEventProposalReviews,
 } from "../../usecase/event-proposal-review.js";
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
@@ -32,6 +32,11 @@ export const eventReviewDecisionBody = z.object({
     approvedAmount: z.number().int().min(0),
     reason: z.string().max(500).optional(),
   }).strict()).max(50).optional(),
+}).strict();
+
+export const eventCancellationDecisionBody = z.object({
+  approve: z.boolean(),
+  reason: z.string().max(5_000).optional(),
 }).strict();
 
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
@@ -66,6 +71,10 @@ export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): R
     ok(res, await decideEventProposalReview(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), {
       ...body, revisionDeadlineAt: body.revisionDeadlineAt ? new Date(body.revisionDeadlineAt) : undefined,
     }, new Date()));
+  });
+  router.post("/admin/event-proposals/:id/cancellation-decision", authGuard(guard), async (req, res) => {
+    const body = parsed(eventCancellationDecisionBody, req.body);
+    ok(res, await decideEventCancellationReview(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), body, new Date()));
   });
 
   return router;

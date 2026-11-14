@@ -131,6 +131,9 @@ export function EventProposalQueuePage() {
                 <div className="min-w-0 flex-1 basis-64">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="font-heading text-base font-semibold break-words">{event.title}</h2>
+                    {event.hasPendingCancellation && (
+                      <AppBadge tone="warning">{t("eventReviews.cancellationBadge")}</AppBadge>
+                    )}
                     <AppBadge tone={mine ? "success" : takenElsewhere ? "danger" : "neutral"}>
                       {mine ? t("eventReviews.assignedToYou") : takenElsewhere ? t("eventReviews.assigned") : t("eventReviews.unassigned")}
                     </AppBadge>

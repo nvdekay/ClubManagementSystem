@@ -13,16 +13,34 @@ export interface EventProposalDocumentInfo { id: string; fileName: string; mimeT
 export interface EventProposalTemplateInfo { fileName: string; mimeType: string; bytes: number; updatedAt: string; isSystemDefault: boolean }
 /** Short-lived signed link to a stored file. */
 export interface FileAccess { fileName: string; mimeType: string; url: string }
+export interface EventCancellationRequest {
+  state: "Pending" | "Approved" | "Rejected";
+  reason: string;
+  requestedAt: string;
+  reviewReason?: string;
+  decidedAt?: string;
+}
 export interface ClubEvent extends ClubEventInput {
   id: string; clubId: string; clubName: string; state: string; semesterCode: string; version: number;
   currentRevisionNo: number; confirmedRegistrationCount: number; approvalConditions: string[]; attendanceFinalized: boolean;
   conflictResult?: string; conflictDetail?: unknown; publishedAt?: string; registrationOpenAt?: string; registrationCloseAt?: string;
   checkInCode?: string; checkInOpenAt?: string; checkInCloseAt?: string; allowWalkIn: boolean; waitlistEnabled: boolean; revisionDeadlineAt?: string;
   proposalDocument?: EventProposalDocumentInfo;
+  cancellationRequest?: EventCancellationRequest;
+}
+export interface ClubEventSubmittedVersion {
+  revisionNo: number;
+  payload: Partial<ClubEventInput> & { proposalDocument?: EventProposalDocumentInfo };
+  budgetLines: EventBudgetLine[];
+  requestedBudgetTotal?: number;
+  conflictResult?: string;
+  submittedBy?: string;
+  submittedByName?: string;
+  submittedAt: string;
 }
 export interface ClubEventDetail {
   event: ClubEvent;
-  versions: { revisionNo: number; payload: unknown; budgetLines: EventBudgetLine[]; submittedAt: string }[];
+  versions: ClubEventSubmittedVersion[];
   decisions: { outcome: string; reason?: string; comments?: unknown; at: string }[];
   bookings: { id: string; state: string; propertyId: string; propertyName: string; startAt: string; endAt: string }[];
   budget?: { id?: string; state: string; approvedTotal: number; disbursedTotal: number };

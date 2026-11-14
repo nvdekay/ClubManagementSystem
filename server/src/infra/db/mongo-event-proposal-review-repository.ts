@@ -1,5 +1,7 @@
 import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { cancelEventInSession } from "./event-cancellation.js";
+import { clubBoardUserIds, queueNotifications } from "./club-board.js";
+import { eventCancellationRequest } from "./club-event-readers.js";
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { publicEventPayload } from "../../domain/club-event.js";
@@ -18,7 +20,9 @@ import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type Doc = Record<string, unknown>;
 const TASK_TYPE = "EVENT_PROPOSAL";
+const CANCELLATION_TASK_TYPE = "EVENT_CANCELLATION";
 const reviewableStates = ["Pending Approval", "Under Review", "Re-defense Pending"];
+const cancellableStates = ["Approved", "Upcoming", "Ongoing"];
 
 function taskFrom(doc: Doc): EventProposalTask {
   return {
@@ -45,7 +49,8 @@ function budgetFrom(doc: Doc, eventTitle?: string): EventBudgetSummary {
     lines: approvedLines(doc.lines) };
 }
 
-function eventFrom(doc: Doc, requestedBudgetTotal: number, property?: EventProposalSummary["property"]): EventProposalSummary {
+function eventFrom(doc: Doc, requestedBudgetTotal: number, property?: EventProposalSummary["property"],
+  hasPendingCancellation?: boolean): EventProposalSummary {
   return {
     id: String(doc._id), clubId: String(doc.clubId ?? ""), clubName: String(doc.clubName ?? ""),
     title: String(doc.title), objective: optionalText(doc.objective),
@@ -57,6 +62,7 @@ function eventFrom(doc: Doc, requestedBudgetTotal: number, property?: EventPropo
     approvalConditions: Array.isArray(doc.approvalConditions) ? doc.approvalConditions.map(String) : [],
     currentRevisionNo: Number(doc.currentRevisionNo ?? 1),
     revisionDeadlineAt: doc.revisionDeadlineAt as Date | undefined, requestedBudgetTotal,
+    ...(hasPendingCancellation ? { hasPendingCancellation: true } : {}),
   };
 }
 
@@ -83,12 +89,15 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
   }
 
   async function detail(eventId: Types.ObjectId, now: Date): Promise<EventProposalDetail | null> {
-    const [event, taskDocs, versionDocs] = await Promise.all([
+    const [event, taskDocs, cancelTaskDocs, cancellation, versionDocs] = await Promise.all([
       events.findById(eventId).lean(),
       tasks.find({ entityType: TASK_TYPE, entityId: eventId }).sort({ openedAt: -1, _id: -1 }).lean(),
+      tasks.find({ entityType: CANCELLATION_TASK_TYPE, entityId: eventId }).sort({ openedAt: -1, _id: -1 }).lean(),
+      eventCancellationRequest(eventId),
       versions.find({ eventId }).sort({ revisionNo: 1 }).lean(),
     ]);
-    const task = taskDocs[0];
+    const openCancelTask = cancelTaskDocs.find((item) => item.state === "Open");
+    const task = openCancelTask ?? taskDocs[0];
     if (!event || !task || !event.clubId) return null;
     const clubId = event.clubId as Types.ObjectId;
     const [decisionDocs, club, property, submitters, bookingDocs, budgetDocs, owed, defenseDocs] = await Promise.all([
@@ -127,7 +136,8 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
     return {
       task: taskFrom(task),
       event: eventFrom(event, current?.requestedBudgetTotal ?? 0,
-        property ? { id: String(property._id), code: String(property.code), name: String(property.name) } : undefined),
+        property ? { id: String(property._id), code: String(property.code), name: String(property.name) } : undefined,
+        Boolean(openCancelTask)),
       versions: mappedVersions, decisions: decisionDocs.map(decisionFrom),
       club: { id: String(clubId), name: String(club?.name ?? event.clubName ?? ""), state: String(club?.state ?? ""),
         obligations: owed },
@@ -142,6 +152,15 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       ...(own ? { budget: budgetFrom(own, String(event.title)) } : {}),
       ...(activeDefenseSession ? { activeDefenseSession } : {}),
       ...(defenseHistory.length ? { defenseHistory } : {}),
+      ...(cancellation ? {
+        cancellationRequest: {
+          ...cancellation,
+          ...(openCancelTask ? {
+            taskId: String(openCancelTask._id),
+            assigneeId: openCancelTask.assigneeId ? String(openCancelTask.assigneeId) : undefined,
+          } : {}),
+        },
+      } : {}),
     };
   }
 
@@ -153,10 +172,11 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
 
   return {
     async listOpen() {
-      const taskDocs = await tasks.find({ entityType: TASK_TYPE, state: "Open" }).sort({ openedAt: 1, _id: 1 }).lean();
+      const taskDocs = await tasks.find({ entityType: { $in: [TASK_TYPE, CANCELLATION_TASK_TYPE] }, state: "Open" })
+        .sort({ openedAt: 1, _id: 1 }).lean();
       if (!taskDocs.length) return [];
       const eventDocs = await events.find({ _id: { $in: taskDocs.map((task) => task.entityId) },
-        state: { $in: reviewableStates } }).lean();
+        state: { $in: [...reviewableStates, ...cancellableStates] } }).lean();
       const versionDocs = await versions.find({ eventId: { $in: eventDocs.map((event) => event._id) } })
         .select({ eventId: 1, revisionNo: 1, requestedBudgetTotal: 1 }).lean();
       const totals = new Map(versionDocs.map((version) =>
@@ -165,8 +185,12 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       return taskDocs.flatMap((task) => {
         const event = byId.get(String(task.entityId));
         if (!event) return [];
+        const isCancel = task.entityType === CANCELLATION_TASK_TYPE;
+        if (isCancel ? !cancellableStates.includes(String(event.state)) : !reviewableStates.includes(String(event.state))) {
+          return [];
+        }
         const total = totals.get(`${String(event._id)}:${String(event.currentRevisionNo ?? 1)}`) ?? 0;
-        return [{ task: taskFrom(task), event: eventFrom(event, total) }];
+        return [{ task: taskFrom(task), event: eventFrom(event, total, undefined, isCancel) }];
       });
     },
 
@@ -178,6 +202,18 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       const id = new Types.ObjectId(eventId);
       const actorId = new Types.ObjectId(officerId);
       await mongoose.connection.transaction(async (session) => {
+        const cancelTask = await tasks.findOne({ entityType: CANCELLATION_TASK_TYPE, entityId: id, state: "Open" })
+          .sort({ openedAt: -1 }).session(session).lean();
+        if (cancelTask) {
+          if (cancelTask.assigneeId && String(cancelTask.assigneeId) !== officerId) {
+            return conflict("event proposal review is assigned to another officer");
+          }
+          const claimedCancel = await tasks.updateOne({ _id: cancelTask._id, state: "Open",
+            $or: [{ assigneeId: { $exists: false } }, { assigneeId: null }, { assigneeId: actorId }] },
+          { $set: { assigneeId: actorId } }, { session });
+          if (claimedCancel.matchedCount !== 1) return conflict("event proposal review was claimed");
+          return;
+        }
         const task = await tasks.findOne({ entityType: TASK_TYPE, entityId: id, state: "Open" })
           .sort({ openedAt: -1 }).session(session).lean();
         if (!task) return conflict("event proposal review is no longer open");
@@ -207,6 +243,53 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       const id = new Types.ObjectId(eventId);
       await mongoose.connection.transaction(async (session) => {
         await applyProposalDecisionInSession(session, id, officerId, input, now, { requireDefendedSession: false });
+      });
+      return required(id, now);
+    },
+
+    async decideCancellation(eventId, officerId, input, now) {
+      const id = new Types.ObjectId(eventId);
+      const actorId = new Types.ObjectId(officerId);
+      await mongoose.connection.transaction(async (session) => {
+        const task = await tasks.findOne({ entityType: CANCELLATION_TASK_TYPE, entityId: id, state: "Open" })
+          .sort({ openedAt: -1 }).session(session).lean();
+        if (!task) return conflict("event cancellation request is no longer open");
+        if (task.assigneeId && String(task.assigneeId) !== officerId) {
+          return conflict("event proposal review is assigned to another officer");
+        }
+        const event = await events.findById(id).session(session).lean();
+        if (!event || !cancellableStates.includes(String(event.state))) {
+          return conflict("event cannot be cancelled in its current state");
+        }
+        const requestAudit = await audits.findOne({ entityType: "Event", entityId: id, action: "EVENT_CANCELLATION_REQUESTED" })
+          .sort({ at: -1, _id: -1 }).session(session).lean();
+        const after = (requestAudit?.after as Doc | undefined) ?? {};
+        const requestedReason = String(after.reason ?? requestAudit?.reason ?? "Approved by ICPDP");
+        const requestedAt = (after.requestedAt as Date | undefined) ?? (requestAudit?.at as Date | undefined) ?? now;
+        await tasks.updateOne({ _id: task._id, state: "Open" },
+          { $set: { state: "Decided", assigneeId: actorId, closedAt: now } }, { session });
+        if (input.approve) {
+          await cancelEventInSession(session, event, requestedReason, now, "CMB", 24, actorId);
+          await audits.create([{ entityType: "Event", entityId: id, action: "EVENT_CANCELLATION_APPROVED",
+            actorId, actorRole: "ICPDP_OFFICER", reason: input.reason,
+            after: { reason: requestedReason, requestedAt, reviewReason: input.reason, decidedAt: now },
+            correlationId: randomUUID(), at: now }], { session });
+        } else {
+          await events.updateOne({ _id: id }, { $inc: { __v: 1 } }, { session });
+          await audits.create([{ entityType: "Event", entityId: id, action: "EVENT_CANCELLATION_REJECTED",
+            actorId, actorRole: "ICPDP_OFFICER", reason: input.reason,
+            after: { reason: requestedReason, requestedAt, reviewReason: input.reason, decidedAt: now },
+            correlationId: randomUUID(), at: now }], { session });
+        }
+        if (event.clubId) {
+          const recipients = await clubBoardUserIds(event.clubId as Types.ObjectId, session);
+          await queueNotifications(session, recipients, "EVENT_CANCELLATION_DECIDED", "Event", id, {
+            title: event.title,
+            clubId: String(event.clubId),
+            approved: input.approve,
+            reason: input.reason ?? requestedReason,
+          }, now);
+        }
       });
       return required(id, now);
     },

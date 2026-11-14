@@ -15,6 +15,14 @@ export function assertEventNotice(startAt: Date, now: Date, noticeHours: number)
   }
 }
 export const INTERNAL_EVENT_NOTICE_HOURS = 24;
+export const APPROVED_EVENT_CANCEL_NOTICE_HOURS = 72;
+/** An approved ICPDP event can only request cancellation at least 72 hours before startAt. */
+export function assertApprovedEventCancellationNotice(startAt: Date, now: Date, noticeHours = APPROVED_EVENT_CANCEL_NOTICE_HOURS): void {
+  if (startAt.getTime() - now.getTime() < noticeHours * 3600000) {
+    throw new DomainError(`cancellation request must be submitted at least ${noticeHours} hours before the event starts`, "conflict",
+      { noticeHours });
+  }
+}
 /** An internal event becomes official (CREATED/PUBLIC) or moves its CREATED schedule only 24 hours ahead. */
 export function assertInternalEventNotice(startAt: Date, now: Date): void {
   if (startAt.getTime() - now.getTime() < INTERNAL_EVENT_NOTICE_HOURS * 3600000) {

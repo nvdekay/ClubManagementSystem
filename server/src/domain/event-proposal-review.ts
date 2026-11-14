@@ -59,6 +59,7 @@ export interface EventProposalSummary {
   currentRevisionNo: number;
   revisionDeadlineAt?: Date;
   requestedBudgetTotal: number;
+  hasPendingCancellation?: boolean;
 }
 
 export interface EventReviewDecision {
@@ -108,6 +109,16 @@ export interface EventProposalQueueItem {
   event: EventProposalSummary;
 }
 
+export interface EventCancellationReviewInfo {
+  taskId?: string;
+  assigneeId?: string;
+  state: "Pending" | "Approved" | "Rejected";
+  reason: string;
+  requestedAt: Date;
+  reviewReason?: string;
+  decidedAt?: Date;
+}
+
 export interface EventProposalDetail extends EventProposalQueueItem {
   versions: EventProposalVersion[];
   decisions: EventReviewDecision[];
@@ -118,6 +129,7 @@ export interface EventProposalDetail extends EventProposalQueueItem {
   budget?: EventBudgetSummary;
   activeDefenseSession?: EventDefenseSession;
   defenseHistory?: EventDefenseSession[];
+  cancellationRequest?: EventCancellationReviewInfo;
 }
 
 export interface EventReviewDecisionInput {
@@ -152,6 +164,8 @@ export interface EventProposalReviewRepository {
   find(eventId: string, now: Date): Promise<EventProposalDetail | null>;
   claim(eventId: string, officerId: string, now: Date): Promise<EventProposalDetail>;
   decide(eventId: string, officerId: string, input: NormalizedEventDecision,
+    now: Date): Promise<EventProposalDetail>;
+  decideCancellation?(eventId: string, officerId: string, input: { approve: boolean; reason?: string },
     now: Date): Promise<EventProposalDetail>;
   /** Scheduler: expire overdue revisions and move published events along their own times. */
   advanceLifecycle(now: Date): Promise<EventLifecycleResult>;

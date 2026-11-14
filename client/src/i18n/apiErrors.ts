@@ -144,6 +144,11 @@ const messages = {
   publishApprovedOnly: ["only approved events can be published", "Chỉ sự kiện đã được phê duyệt hoặc đã tạo mới có thể công bố."],
   cancelStateInvalid: ["event cannot be cancelled in its current state", "Không thể huỷ sự kiện ở trạng thái hiện tại."],
   cancelFinalized: ["finalized attendance prevents cancellation", "Không thể huỷ sự kiện khi điểm danh đã được chốt."],
+  cancelNoticeHours: ["Approved event cancellation must be requested at least {{hours}} hours before the event starts.", "Yêu cầu huỷ sự kiện đã duyệt phải được gửi trước giờ bắt đầu sự kiện ít nhất {{hours}} giờ."],
+  cancelPendingAlready: ["event cancellation is already awaiting ICPDP confirmation", "Yêu cầu huỷ sự kiện đang chờ ICPDP xác nhận."],
+  cancelActionPaused: ["event action is paused while cancellation is awaiting ICPDP confirmation", "Thao tác trên sự kiện đang tạm dừng trong thời gian chờ ICPDP xác nhận huỷ sự kiện."],
+  cancelFinancePaused: ["sponsored expense action is paused while event cancellation is awaiting ICPDP confirmation", "Thao tác ngân sách tài trợ đang tạm dừng trong thời gian chờ ICPDP xác nhận huỷ sự kiện."],
+  cancelRequestNotFound: ["no open event cancellation request found", "Không tìm thấy yêu cầu huỷ sự kiện đang chờ xử lý."],
   rescheduleApprovedOnly: ["only an unstarted approved event can be rescheduled", "Chỉ sự kiện đã duyệt và chưa bắt đầu mới có thể đổi lịch."],
   rescheduleHasCheckIns: ["an event with check-ins cannot be rescheduled", "Không thể đổi lịch sự kiện đã có người điểm danh."],
 } satisfies Record<string, [string, string]>;

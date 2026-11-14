@@ -56,8 +56,16 @@ export interface EventProposalFileStorage {
   /** Short-lived signed URL. */
   accessUrl(assetId: string, options?: { inline: boolean }): Promise<string>;
 }
+export interface EventCancellationRequest {
+  state: "Pending" | "Approved" | "Rejected";
+  reason: string;
+  requestedAt: Date;
+  reviewReason?: string;
+  decidedAt?: Date;
+}
 export interface ClubEvent extends ClubEventInput {
   proposalDocument?: PublicEventProposalDocument;
+  cancellationRequest?: EventCancellationRequest;
   id: string; clubId: string; clubName: string; state: ClubEventState; semesterCode: string;
   version: number; currentRevisionNo: number; confirmedRegistrationCount: number;
   approvalConditions: string[]; attendanceFinalized: boolean; conflictResult?: string; conflictDetail?: unknown;
@@ -67,7 +75,16 @@ export interface ClubEvent extends ClubEventInput {
 }
 export interface ClubEventDetail {
   event: ClubEvent;
-  versions: { revisionNo: number; payload: unknown; budgetLines: RequestedBudgetLine[]; submittedAt: Date }[];
+  versions: {
+    revisionNo: number;
+    payload: unknown;
+    budgetLines: RequestedBudgetLine[];
+    requestedBudgetTotal?: number;
+    conflictResult?: string;
+    submittedBy?: string;
+    submittedByName?: string;
+    submittedAt: Date;
+  }[];
   decisions: { outcome: string; reason?: string; comments?: unknown; at: Date }[];
   bookings: { id: string; state: string; propertyId: string; propertyName: string; startAt: Date; endAt: Date }[];
   budget?: { id?: string; state: string; approvedTotal: number; disbursedTotal: number };

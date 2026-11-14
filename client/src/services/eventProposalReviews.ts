@@ -36,6 +36,7 @@ export interface EventProposalSummary {
   currentRevisionNo: number;
   revisionDeadlineAt?: string;
   requestedBudgetTotal: number;
+  hasPendingCancellation?: boolean;
 }
 
 export interface RequestedBudgetLine {
@@ -84,6 +85,15 @@ export interface EventProposalQueueItem {
   event: EventProposalSummary;
 }
 
+export interface EventCancellationReviewInfo {
+  state: "Pending" | "Approved" | "Rejected";
+  reason: string;
+  requestedAt: string;
+  requestedBy?: string;
+  reviewReason?: string;
+  decidedAt?: string;
+}
+
 export interface EventProposalDetail extends EventProposalQueueItem {
   versions: EventProposalVersion[];
   decisions: EventReviewDecision[];
@@ -93,6 +103,7 @@ export interface EventProposalDetail extends EventProposalQueueItem {
   budget?: EventBudgetSummary;
   activeDefenseSession?: EventDefenseSession;
   defenseHistory?: EventDefenseSession[];
+  cancellationRequest?: EventCancellationReviewInfo;
 }
 
 export interface EventReviewDecisionInput {
@@ -135,6 +146,14 @@ export function claimEventProposal(id: string, csrfToken: string): Promise<Event
 export function decideEventProposal(id: string, input: EventReviewDecisionInput,
   csrfToken: string): Promise<EventProposalDetail> {
   return request(`/${encodeURIComponent(id)}/decision`, mutation(csrfToken, input));
+}
+
+export function decideEventCancellation(
+  id: string,
+  input: { approve: boolean; reason?: string },
+  csrfToken: string,
+): Promise<EventProposalDetail> {
+  return request(`/${encodeURIComponent(id)}/cancellation-decision`, mutation(csrfToken, input));
 }
 
 /** Replaces the active template (ICPDP_OFFICER); there is no delete. */

@@ -54,7 +54,7 @@ const GIVEN = ["An", "Anh", "Bình", "Chi", "Dũng", "Duy", "Giang", "Hà", "Hâ
 
 // The PDP snapshot leaves most clubs unclassified; these fields are a demo guess from each club's name.
 const DEMO_FIELDS: Record<string, string> = {
-  "HEBE Club": "Nghệ thuật", "Mây Mưa Club": "Nghệ thuật", BoardGame: "Cộng đồng", BUK: "Kỹ năng", Business: "Kỹ năng",
+  "HEBE Club": "Nghệ thuật", "Mây Mưa Club": "Nghệ thuật", "Peace Club": "Cộng đồng", BoardGame: "Cộng đồng", BUK: "Kỹ năng", Business: "Kỹ năng",
   Chess: "Thể thao", "Color Team": "Nghệ thuật", Dango: "Ngôn ngữ", ESC: "Ngôn ngữ", "F-Logi": "Kỹ năng", FAIC: "Công nghệ",
   FCOC: "Công nghệ", FFC: "Thể thao", FGC: "Nghệ thuật", FGoC: "Thể thao", FKC: "Ngôn ngữ", FMUC: "Nghệ thuật", FMVC: "Nghệ thuật",
   FNC: "Cộng đồng", FPC: "Nghệ thuật", FTIC: "Công nghệ", FTTC: "Thể thao", FUB: "Thể thao", FUP: "Nghệ thuật",
@@ -97,7 +97,7 @@ async function main() {
   function semesterOf(date: Date): string | undefined {
     return calendar.find((item) => item.startAt <= date && date < item.endAt)?.code;
   }
-  const named = ["HEBE Club", "Mây Mưa Club", "FPTU Ethical Hackers Club", "FPTU Data Science Club"];
+  const named = ["HEBE Club", "Mây Mưa Club", "Peace Club", "FPTU Ethical Hackers Club", "FPTU Data Science Club"];
   const clubs = [
     ...await m.clubs!.find({ name: { $in: named }, state: "Active" }).lean(),
     ...await m.clubs!.find({ name: { $nin: named }, state: "Active", field: { $ne: "Chưa phân loại" } }).sort({ name: 1 }).limit(9).lean(),
@@ -201,6 +201,84 @@ async function main() {
           ...(finished ? { settlementDueAt: new Date(endAt.getTime() + 14 * DAY) } : {}),
           ...(settled ? { settlementSubmittedAt: new Date(endAt.getTime() + 7 * DAY), acceptedTotal: money(approved) } : {}),
           createdAt: new Date(startAt.getTime() - 25 * DAY) }));
+      }
+    }
+
+    // Backfill feedback on existing past events of Peace Club that were created outside seed:dashboard.
+    if (clubName === "Peace Club") {
+      const existingEvents = await m.events!.find({
+        clubId,
+        endAt: { $lte: now },
+        state: { $in: ["Completed", "Closed", "Approved", "FINISH"] },
+      }).lean();
+      for (const existingEvent of existingEvents) {
+        const existingEventId = existingEvent._id as Types.ObjectId;
+        const currentFeedbackCount = await m.eventFeedbacks!.countDocuments({ eventId: existingEventId });
+        if (currentFeedbackCount >= 5) continue;
+        reseed(`peace-existing:${String(existingEventId)}`);
+        const existingStartAt = existingEvent.startAt as Date;
+        const existingEndAt = existingEvent.endAt as Date;
+        const respondents = sample(students, 7);
+        for (const [idx, studentId] of respondents.entries()) {
+          const registrationId = oid(`registration:${String(existingEventId)}:${String(studentId)}`);
+          const attendanceId = oid(`attendance:${String(existingEventId)}:${String(studentId)}`);
+          const feedbackId = oid(`feedback:${String(existingEventId)}:${String(studentId)}`);
+          await m.eventRegistrations!.updateOne(
+            { eventId: existingEventId, studentId },
+            {
+              $setOnInsert: {
+                _id: registrationId,
+                eventId: existingEventId,
+                studentId,
+                clubId,
+                state: "Confirmed",
+                createdAt: new Date(existingStartAt.getTime() - int(2, 7) * DAY),
+              },
+            },
+            { upsert: true },
+          );
+          const regDoc = await m.eventRegistrations!.findOne({ eventId: existingEventId, studentId }).lean();
+          await m.attendances!.updateOne(
+            { eventId: existingEventId, studentId },
+            {
+              $setOnInsert: {
+                _id: attendanceId,
+                eventId: existingEventId,
+                studentId,
+                registrationId: regDoc!._id,
+                clubId,
+                checkedInAt: new Date(existingStartAt.getTime() + int(1, 15) * 60_000),
+                method: "self",
+                abnormalFlags: [],
+                finalized: true,
+                finalizedAt: existingEndAt,
+              },
+            },
+            { upsert: true },
+          );
+          const attDoc = await m.attendances!.findOne({ eventId: existingEventId, studentId }).lean();
+          const score = pick([5, 5, 5, 4, 4, 4, 3]);
+          const res = await m.eventFeedbacks!.updateOne(
+            { eventId: existingEventId, studentId },
+            {
+              $setOnInsert: {
+                _id: feedbackId,
+                eventId: existingEventId,
+                attendanceId: attDoc!._id,
+                studentId,
+                clubId,
+                scores: [{ criterionCode: "overall", score }],
+                isAnonymous: idx % 2 === 0,
+                comment: pick(COMMENTS),
+                submittedAt: new Date(existingEndAt.getTime() + (idx + 1) * 3600_000),
+              },
+            },
+            { upsert: true },
+          );
+          added("feedback", res.upsertedCount === 1);
+        }
+        const confirmedTotal = await m.eventRegistrations!.countDocuments({ eventId: existingEventId, state: "Confirmed" });
+        await m.events!.updateOne({ _id: existingEventId }, { $set: { confirmedRegistrationCount: confirmedTotal } });
       }
     }
 

@@ -3,7 +3,7 @@ import { randomInt, randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import type { ClubEventInput, ClubEventRepository, EventProposalDocument, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
 import { eventActionPermission, isInternalClubEventState } from "../../domain/club-event.js";
-import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent, eventConflictResult,
+import { assertApprovedEventCancellationNotice, assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent, eventConflictResult,
   validateClubEventInput, validateEventPublication } from "../../domain/club-event-rules.js";
 import { DomainError } from "../../domain/errors.js";
 import { bookingCoversEventSchedule, mergeConsecutiveBookingIntervals, type BookingTimeInterval } from "../../domain/facility-booking.js";
@@ -12,7 +12,7 @@ import { checkInCode } from "../../domain/school-event.js";
 import { openViolationCount, routedTaskFields } from "./approval-routing.js";
 import { queueNotifications } from "./club-board.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
-import { clubEventFrom, EVENT_PAYLOAD_ACTIONS, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
+import { clubEventFrom, EVENT_PAYLOAD_ACTIONS, eventCancellationRequest, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
 import { applyEventAttendanceAction } from "./event-attendance-actions.js";
 import { loadDefaultEventProposalTemplate } from "../files/event-proposal-files.js";
 import { cancelEventInSession } from "./event-cancellation.js";
@@ -268,7 +268,11 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
     },
     async list(clubId) {
       const docs = await m.events!.find({ clubId: oid(clubId), organizerType: "CLUB" }).sort({ startAt: -1, _id: -1 }).lean();
-      return Promise.all(docs.map(async (doc) => clubEventFrom(doc, await eventDraftPayload(doc._id as Types.ObjectId))));
+      return Promise.all(docs.map(async (doc) => clubEventFrom(
+        doc,
+        await eventDraftPayload(doc._id as Types.ObjectId),
+        await eventCancellationRequest(doc._id as Types.ObjectId),
+      )));
     },
     find: readClubEvent, participants: readEventParticipants, feedback: readClubFeedback,
     async proposalDocument(eventId, revision) {
@@ -363,11 +367,31 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
             action.kind === "create-internal" ? "INTERNAL_EVENT_CREATED" : state === "DRAFT" ? "INTERNAL_EVENT_DRAFT_SAVED" : "INTERNAL_EVENT_SAVED", true);
         } else if (action.kind === "publish") {
           if (event.state !== "Approved" && event.state !== "CREATED") conflict("only approved events can be published");
+          if (await m.approvalTasks!.exists({ entityType: "EVENT_CANCELLATION", entityId: event._id, state: "Open" }).session(session)) {
+            conflict("event has a pending cancellation request");
+          }
           await publishInSession(session, event._id as Types.ObjectId, oid(clubId), String(event.title), event.startAt as Date, event.endAt as Date,
             action.input, event.state === "CREATED" ? "PUBLIC" : "Upcoming", oid(actorId), now);
         } else if (action.kind === "cancel") {
-          if (!["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(String(event.state))) conflict("event cannot be cancelled in its current state");
-          await cancelEventInSession(session, event, action.reason, now, "CMB", rules.cancellationNoticeHours, oid(actorId));
+          if (["Approved", "Upcoming", "Ongoing"].includes(String(event.state))) {
+            if (event.attendanceFinalized === true) conflict("finalized attendance prevents cancellation");
+            assertApprovedEventCancellationNotice(event.startAt as Date, now);
+            if (await m.approvalTasks!.exists({ entityType: "EVENT_CANCELLATION", entityId: event._id, state: "Open" }).session(session)) {
+              conflict("event cancellation request is already pending ICPDP confirmation");
+            }
+            const changed = await m.events!.updateOne({ _id: event._id, state: event.state, attendanceFinalized: { $ne: true } }, { $inc: { __v: 1 } }, { session });
+            if (changed.modifiedCount !== 1) conflict("event changed while cancelling");
+            await m.approvalTasks!.create([{ entityType: "EVENT_CANCELLATION", entityId: event._id, clubId: oid(clubId), title: String(event.title), state: "Open", openedAt: now }], { session });
+            await audit(session, oid(eventId), "EVENT_CANCELLATION_REQUESTED", oid(actorId), { reason: action.reason, requestedAt: now }, now, action.reason);
+            const officerRoles = await m.roles!.find({ code: "ICPDP_OFFICER", scope: "system" }).session(session).distinct("_id");
+            const officers = await m.userRoleAssignments!.find({ roleId: { $in: officerRoles }, revokedAt: null }).session(session).distinct("userId");
+            await queueNotifications(session, officers, "EVENT_CANCELLATION_REQUESTED", "Event", event._id as Types.ObjectId,
+              { title: event.title, clubId, clubName: event.clubName, reason: action.reason }, now);
+          } else if (["DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(String(event.state))) {
+            await cancelEventInSession(session, event, action.reason, now, "CMB", rules.cancellationNoticeHours, oid(actorId));
+          } else {
+            conflict("event cannot be cancelled in its current state");
+          }
         } else if (action.kind === "reschedule" && isInternalClubEventState(String(event.state))) {
           assertInternalEventEditable(String(event.state));
           if (event.state !== "CREATED") conflict("only a created internal event can be rescheduled");
@@ -375,6 +399,9 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
             venueText: action.venueText, propertyId: action.propertyId, bookingIds: [] }, "CREATED", oid(actorId), now, rules, "EVENT_RESCHEDULED", false, action.reason);
         } else if (action.kind === "reschedule") {
           if (!["Approved", "Upcoming"].includes(String(event.state)) || event.attendanceFinalized === true) conflict("only an unstarted approved event can be rescheduled");
+          if (await m.approvalTasks!.exists({ entityType: "EVENT_CANCELLATION", entityId: event._id, state: "Open" }).session(session)) {
+            conflict("event has a pending cancellation request");
+          }
           if (await m.attendances!.exists({ eventId: event._id }).session(session)) conflict("an event with check-ins cannot be rescheduled");
           const offset = action.startAt.getTime() - input.startAt.getTime();
           const next = { ...input, startAt: action.startAt, endAt: action.endAt, propertyId: action.propertyId, venueText: action.venueText, bookingIds: [],

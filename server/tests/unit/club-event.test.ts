@@ -1,4 +1,4 @@
-import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent,
+import { APPROVED_EVENT_CANCEL_NOTICE_HOURS, assertApprovedEventCancellationNotice, assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent,
   eventCancellationIsLate, eventConflictResult, PROPOSAL_DOCUMENT_MAX_BYTES, PROPOSAL_DOCUMENT_MIME_TYPES, PROPOSAL_TEMPLATE_MIME_TYPES,
   validateClubEventInput, validateEventProposalFile, validateEventPublication } from "../../src/domain/club-event-rules.js";
 import { loadDefaultEventProposalTemplate } from "../../src/infra/files/event-proposal-files.js";
@@ -109,6 +109,14 @@ describe("event rules at exact policy boundaries", () => {
     expect(() => assertEventNotice(start, new Date(now.getTime() + 1), 24)).toThrow();
     expect(eventCancellationIsLate(start, now, 24)).toBe(false);
     expect(eventCancellationIsLate(start, new Date(now.getTime() + 1), 24)).toBe(true);
+    const cancelCutoffStart = new Date(now.getTime() + APPROVED_EVENT_CANCEL_NOTICE_HOURS * 3600000);
+    expect(() => assertApprovedEventCancellationNotice(cancelCutoffStart, now)).not.toThrow();
+    expect(() => assertApprovedEventCancellationNotice(cancelCutoffStart, new Date(now.getTime() + 1))).toThrow(
+      expect.objectContaining({
+        kind: "conflict",
+        message: "cancellation request must be submitted at least 72 hours before the event starts",
+      }),
+    );
   });
   it("distinguishes blocking and warning conflicts using the effective policy", () => {
     expect(eventConflictResult([], 15, false)).toBe("No Conflict");
