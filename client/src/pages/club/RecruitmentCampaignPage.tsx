@@ -58,7 +58,12 @@ function campaignForm(campaign: RecruitmentCampaign): CampaignForm {
 }
 
 function splitOptions(text: string | undefined): string[] {
-  return (text ?? "").split(",").map((option) => option.trim()).filter(Boolean);
+  // The server rejects options that repeat case-insensitively, so repeats are dropped here.
+  const seen = new Set<string>();
+  return (text ?? "").split(",").map((option) => option.trim()).filter((option) => {
+    const key = option.toLocaleLowerCase("vi-VN");
+    return option && !seen.has(key) && Boolean(seen.add(key));
+  });
 }
 
 function campaignInput(form: CampaignForm): RecruitmentCampaignInput {
