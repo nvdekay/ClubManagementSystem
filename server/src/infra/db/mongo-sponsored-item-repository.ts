@@ -80,7 +80,7 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
           await queueNotifications(session, recipients, action.kind === "submit" ? "SPONSORED_ITEM_SUBMITTED" : "SPONSORED_ITEM_UPDATED",
             "Event", budget.eventId as Types.ObjectId, { title: event.title,
               category: updated.category, status: updated.status, payable: updated.payable,
-              reason: updated.reviewReason, clubId: String(budget.clubId) }, now);
+              reason: updated.reviewReason, clubId: String(budget.clubId), budgetId: id }, now);
         }
       });
       const result = await find(id, clubId);

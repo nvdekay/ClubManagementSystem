@@ -526,7 +526,7 @@ UC25: CLB đề xuất ngân sách (không đổi)
 → UC26: ICPDP quyết định từng dòng: không tài trợ / tài trợ trả trước / tài trợ trả sau + trần
 → Thông báo kết quả tại dashboard CLB, liên kết về thông tin đề xuất
 → UC36: ghi khoản chi ngay sau duyệt, không cần giải ngân
-→ UC36: nộp đủ bộ hóa đơn mỗi hạng mục tại thông tin đề xuất trong cửa sổ BR57
+→ UC36: nộp đủ bộ hóa đơn mỗi hạng mục tại Khoản chi và quyết toán trong cửa sổ BR57
 → UC37: xét hóa đơn, chốt payable = min(hóa đơn hợp lệ, trần từng hạng mục)
 → UC35: ghi nhận thanh toán toàn bộ payable một lần → Paid
 → Đóng ngân sách khi mọi hạng mục kết thúc; kết quả vào báo cáo và đánh giá CLB
@@ -560,7 +560,7 @@ kèm ảnh đã bị hủy trước đó.
 - Club Leader (`club.expense.record`) được ghi khoản chi ngay từ khi đề xuất/ngân sách được
   duyệt, không cần giải ngân trước. Hạng mục không tài trợ vẫn có thể ghi chi phí thực tế,
   nhưng không được gửi yêu cầu thanh toán từ kinh phí trường.
-- Tạo, sửa, đính kèm và nộp bộ hóa đơn tại **thông tin đề xuất sự kiện**; không thêm dashboard
+- Tạo, sửa, đính kèm và nộp bộ hóa đơn tại trang **Khoản chi và quyết toán** của CLB; không thêm dashboard
   thanh toán riêng. Dashboard CLB nhận thông báo kết quả đề xuất kèm cả ba nhóm quyết định,
   trần, lý do, thời gian được nộp, hạn `D` và liên kết mở đúng đề xuất/hạng mục.
 - Trước nộp có thể lưu nháp; nộp thì khóa phiên bản. ICPDP có thể trả về sửa trước `D`;
@@ -1882,7 +1882,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
   nhóm `After Event` đã tới `E`. Không đòi ngân sách từng được tạm ứng.
 - **Dữ liệu vào:** Sự kiện, hạng mục, phiên bản đối soát, số tiền, ngày thanh toán, mã tham chiếu.
 - **Luồng chính:**
-  1. Officer mở bộ hóa đơn đã đối soát trong hồ sơ đề xuất sự kiện.
+  1. Officer mở bộ hóa đơn đã đối soát tại trang **Giải ngân kinh phí**, trong chi tiết ngân sách sự kiện.
   2. Hệ thống hiển thị quyết định tài trợ, tổng hóa đơn hợp lệ, trần và số phải trả.
   3. Officer ghi giao dịch đúng toàn bộ số phải trả, không nhập phần trăm hoặc chia đợt.
   4. Hệ thống kiểm tra lại quyền, trạng thái, số tiền, thời điểm và việc chưa thanh toán trong cùng
@@ -1912,7 +1912,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 - **Tiền điều kiện:** Đề xuất/ngân sách được duyệt; đúng quyền trong CLB. Không yêu cầu giải ngân trước.
 - **Dữ liệu vào:** Hạng mục, khoản chi, số tiền, ngày, mô tả và bộ hóa đơn/chứng từ liên quan.
 - **Luồng chính:**
-  1. Club Leader mở **thông tin đề xuất sự kiện**, xem ba nhóm quyết định tài trợ và hạn nộp.
+  1. Club Leader mở trang **Khoản chi và quyết toán**, chọn ngân sách sự kiện, xem ba nhóm quyết định tài trợ và hạn nộp.
   2. Ghi khoản chi ngay sau duyệt, lưu nháp và tập hợp một hoặc nhiều hóa đơn cho hạng mục.
   3. Hệ thống kiểm tra liên kết chứng từ, dữ liệu bắt buộc, hạng mục và dấu hiệu trùng;
      cảnh báo chi vượt trần hoặc không được tài trợ, vẫn cho ghi chi phí thực tế.
@@ -1933,7 +1933,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | Mã FR | Yêu cầu chức năng |
 |---|---|
 | FR-UC36-01 | Cho Club Leader ghi khoản chi ngay sau duyệt, không cần tạm ứng hoặc giải ngân trước |
-| FR-UC36-02 | Tập hợp đủ một bộ nhiều hóa đơn cho từng hạng mục, tạo/sửa/nộp tại thông tin đề xuất sự kiện |
+| FR-UC36-02 | Tập hợp đủ một bộ nhiều hóa đơn cho từng hạng mục, tạo/sửa/nộp tại trang Khoản chi và quyết toán của CLB |
 | FR-UC36-03 | Kiểm tra liên kết, quyền, dữ liệu và hóa đơn trùng; khoản không tài trợ chỉ được ghi chi phí thực tế |
 | FR-UC36-04 | Before Event nộp trong [A,D]; After Event nộp trong [E,D]; D=E+14 ngày |
 | FR-UC36-05 | Nộp thì khóa phiên bản, tạo task UC37; sửa/nộp lại khi được trả về chỉ trong cửa sổ gốc, không hạn bổ sung riêng |
@@ -1946,7 +1946,7 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 - **Kích hoạt:** Task từ UC36 hoặc hạng mục chưa nộp đủ hồ sơ khi đã qua `D`.
 - **Tiền điều kiện:** Có bộ `Submitted` để xét; hoặc hạng mục `Draft`/`Returned` đã quá hạn để chốt `Expired`.
 - **Luồng chính:**
-  1. Officer mở bộ hóa đơn tại hồ sơ đề xuất; xem quyết định tài trợ, trần và dấu thời gian nộp.
+  1. Officer mở bộ hóa đơn tại chi tiết **Giải ngân kinh phí**; xem quyết định tài trợ, trần và dấu thời gian nộp.
   2. Đối chiếu từng chứng từ/khoản chi; chấp nhận hoặc loại với lý do, loại chứng từ không hợp lệ
      và không tính trùng hóa đơn. Không cộng hóa đơn chưa được CLB nộp vào hồ sơ đang xét.
   3. Tính `payable = min(tổng hóa đơn hợp lệ được chấp nhận, trần hạng mục)`;
@@ -3396,7 +3396,7 @@ Chúng là hạt giống của bộ test hệ thống.
 | **AC09** Chốt điểm danh | **Cho** sự kiện đã kết thúc, **khi** CMB chốt điểm danh, **thì** bộ dữ liệu bị khoá và mọi thay đổi sau đó cần vai trò mở khoá đặc biệt |
 | **AC10** Báo cáo sau sự kiện | **Cho** sự kiện đã `Completed` và điểm danh đã chốt, **khi** CMB mở form báo cáo, **thì** số liệu điểm danh đã chốt được nạp sẵn |
 | **AC11** Duyệt ngân sách | Mỗi dòng phải có quyết định rõ không tài trợ/trả trước/trả sau và trần hợp lệ; thiếu một dòng thì chặn duyệt. Khi duyệt lưu snapshot và thông báo dashboard CLB kèm liên kết hồ sơ |
-| **AC12** Chứng từ tài chính | Club Leader ghi khoản chi sau duyệt mà không cần giải ngân; nộp đủ bộ hóa đơn trong thông tin đề xuất. Before Event: [A,D], After Event: [E,D], D=E+14 ngày; không có hạn bổ sung riêng |
+| **AC12** Chứng từ tài chính | Club Leader ghi khoản chi sau duyệt mà không cần giải ngân; nộp đủ bộ hóa đơn trong trang Khoản chi và quyết toán. Before Event: [A,D], After Event: [E,D], D=E+14 ngày; không có hạn bổ sung riêng |
 | **AC13** Đối soát | Trần 10 triệu và hóa đơn hợp lệ 8 triệu thì chốt trả 8 triệu một lần; hóa đơn hợp lệ 12 triệu thì tối đa 10 triệu. Không trả lần hai/đổi trần giữa dòng; Submitted đúng hạn vẫn được xét/trả sau D |
 | **AC14** Tạm ngừng | **Cho** CLB đang `Active`, **khi** ICPDP tạm ngừng, **thì** CLB chuyển `Suspended`, không thể công bố đợt tuyển mới và không thể nộp đề xuất sự kiện mới |
 | **AC15** Đánh giá | **Cho** một kỳ đánh giá đã được cấu hình, **khi** ICPDP sinh bản nháp, **thì** mọi dimension đều truy vết được về dữ liệu nguồn |

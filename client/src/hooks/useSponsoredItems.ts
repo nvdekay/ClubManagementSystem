@@ -1,4 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { budgetsKeyRoot } from "./useBudgets";
+import { accountabilityKeyRoot } from "./useAccountability";
+import { dashboardKeyRoot } from "./useDashboard";
 import { changeSponsoredItem, fetchInvoiceImageUrl, fetchSponsoredBudget, uploadInvoiceImage,
   type ItemAction, type SponsoredBudget } from "@/services/sponsoredItems";
 
@@ -25,5 +28,7 @@ export function useSponsoredItemAction(id: string, clubId: string | undefined, c
     }
     return result;
   }, onSuccess: (result) => { if (result) client.setQueryData([...sponsoredKey, id, clubId], result); },
-  onSettled: async () => { await client.invalidateQueries({ queryKey: [...sponsoredKey, id, clubId] }); } });
+  onSettled: async () => { await Promise.all([
+    [...sponsoredKey, id, clubId], budgetsKeyRoot, accountabilityKeyRoot, dashboardKeyRoot,
+  ].map((queryKey) => client.invalidateQueries({ queryKey }))); } });
 }

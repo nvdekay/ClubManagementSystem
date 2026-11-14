@@ -27,8 +27,14 @@ function detail(base: string) {
 // First match wins, so the specific codes sit above the family prefixes they belong to. Each code leads to
 // the workspace of the people who receive it (server: domain/notification.ts audience lists).
 const rules: Rule[] = [
-  [/^SPONSORED_ITEM_SUBMITTED$/, detail("/workspace/event-proposals")],
-  [/^SPONSORED_ITEM_/, clubEvent],
+  [/^SPONSORED_ITEM_SUBMITTED$/, (item) => typeof item.payload.budgetId === "string"
+    ? `/workspace/budgets/${encodeURIComponent(item.payload.budgetId)}` : detail("/workspace/event-proposals")(item)],
+  [/^SPONSORED_ITEM_/, (item) => {
+    const path = club("/budgets")(item);
+    if (!path) return undefined;
+    if (typeof item.payload.budgetId === "string") return `${path}?budget=${encodeURIComponent(item.payload.budgetId)}`;
+    return item.entityId ? `${path}?event=${encodeURIComponent(item.entityId)}` : path;
+  }],
   [/^(EVENT_REGISTRATION_|EVENT_CANCELLED$|EVENT_RESCHEDULED$|EVENT_CHECKED_IN$)/, fixed("/workspace/event-registrations")],
   [/^EVENT_PROPOSAL_/, clubEvent],
   // The founder's own application (receipts and decisions alike).

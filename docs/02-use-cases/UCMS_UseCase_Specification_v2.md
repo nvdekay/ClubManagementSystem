@@ -1343,7 +1343,7 @@ kèm ảnh đã bị hủy trước đó.
 - Club Leader (`club.expense.record`) được ghi khoản chi ngay từ khi đề xuất/ngân sách được
   duyệt, không cần giải ngân trước. Hạng mục không tài trợ vẫn có thể ghi chi phí thực tế,
   nhưng không được gửi yêu cầu thanh toán từ kinh phí trường.
-- Tạo, sửa, đính kèm và nộp bộ hóa đơn tại **thông tin đề xuất sự kiện**; không thêm dashboard
+- Tạo, sửa, đính kèm và nộp bộ hóa đơn tại trang **Khoản chi và quyết toán** của CLB; không thêm dashboard
   thanh toán riêng. Dashboard CLB nhận thông báo kết quả đề xuất kèm cả ba nhóm quyết định,
   trần, lý do, thời gian được nộp, hạn `D` và liên kết mở đúng đề xuất/hạng mục.
 - Trước nộp có thể lưu nháp; nộp thì khóa phiên bản. ICPDP có thể trả về sửa trước `D`;
@@ -1366,7 +1366,7 @@ kèm ảnh đã bị hủy trước đó.
   nhóm `After Event` đã tới `E`. Không đòi ngân sách từng được tạm ứng.
 - **Dữ liệu vào:** Sự kiện, hạng mục, phiên bản đối soát, số tiền, ngày thanh toán, mã tham chiếu.
 - **Luồng chính:**
-  1. Officer mở bộ hóa đơn đã đối soát trong hồ sơ đề xuất sự kiện.
+  1. Officer mở bộ hóa đơn đã đối soát tại trang **Giải ngân kinh phí**, trong chi tiết ngân sách sự kiện.
   2. Hệ thống hiển thị quyết định tài trợ, tổng hóa đơn hợp lệ, trần và số phải trả.
   3. Officer ghi giao dịch đúng toàn bộ số phải trả, không nhập phần trăm hoặc chia đợt.
   4. Hệ thống kiểm tra lại quyền, trạng thái, số tiền, thời điểm và việc chưa thanh toán trong cùng
@@ -1388,7 +1388,7 @@ kèm ảnh đã bị hủy trước đó.
 - **Tiền điều kiện:** Đề xuất/ngân sách được duyệt; đúng quyền trong CLB. Không yêu cầu giải ngân trước.
 - **Dữ liệu vào:** Hạng mục, khoản chi, số tiền, ngày, mô tả và bộ hóa đơn/chứng từ liên quan.
 - **Luồng chính:**
-  1. Club Leader mở **thông tin đề xuất sự kiện**, xem ba nhóm quyết định tài trợ và hạn nộp.
+  1. Club Leader mở trang **Khoản chi và quyết toán**, chọn ngân sách sự kiện, xem ba nhóm quyết định tài trợ và hạn nộp.
   2. Ghi khoản chi ngay sau duyệt, lưu nháp và tập hợp ảnh hóa đơn cho hạng mục. Cho chọn nhiều ảnh JPG/PNG cùng lúc, tối đa **5 ảnh trên toàn bộ hạng mục**, mỗi ảnh tối đa **5 MiB**. Có ảnh xem trước và bỏ/thay ảnh khi hồ sơ còn được sửa; server kiểm tra quyền, loại file, dung lượng và giới hạn số ảnh kể cả khi upload đồng thời.
   3. Hệ thống kiểm tra liên kết chứng từ, dữ liệu bắt buộc, hạng mục và dấu hiệu trùng;
      cảnh báo chi vượt trần hoặc không được tài trợ, vẫn cho ghi chi phí thực tế.
@@ -1413,7 +1413,7 @@ kèm ảnh đã bị hủy trước đó.
 - **Kích hoạt:** Task từ UC36 hoặc hạng mục chưa nộp đủ hồ sơ khi đã qua `D`.
 - **Tiền điều kiện:** Có bộ `Submitted` để xét; hoặc hạng mục `Draft`/`Returned` đã quá hạn để chốt `Expired`.
 - **Luồng chính:**
-  1. Officer mở bộ hóa đơn tại hồ sơ đề xuất; xem quyết định tài trợ, trần và dấu thời gian nộp.
+  1. Officer mở bộ hóa đơn tại chi tiết **Giải ngân kinh phí**; xem quyết định tài trợ, trần và dấu thời gian nộp.
   2. Đối chiếu từng chứng từ/khoản chi; chấp nhận hoặc loại với lý do, loại chứng từ không hợp lệ
      và không tính trùng hóa đơn. Không cộng hóa đơn chưa được CLB nộp vào hồ sơ đang xét.
   3. Tính `payable = min(tổng hóa đơn hợp lệ được chấp nhận, trần hạng mục)`;

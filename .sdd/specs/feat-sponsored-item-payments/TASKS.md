@@ -21,3 +21,11 @@
 ## Giới hạn xác minh
 
 Chưa thực hiện upload thật lên Cloudinary trong lượt này. Adapter dùng kho riêng tư hiện có và URL có thời hạn; test quyền dùng storage giả. Thanh toán là ghi nhận giao dịch đã chuyển, không gọi ngân hàng.
+
+## Điều chỉnh vị trí thao tác
+
+- [x] Chuyển ghi chi/ảnh của CLB sang /club/:clubId/budgets và đối soát/thanh toán của ICPDP sang /workspace/budgets/:id.
+- [x] Giữ quyết định tài trợ ở duyệt sự kiện; thay khối chứng từ trong đề xuất bằng liên kết tài chính.
+- [x] Giữ giao diện cũ cho ngân sách legacy; tổng tiền hồ sơ mới tính từ các hạng mục, không hiển thị form tạm ứng cũ.
+- [x] Thông báo chọn đúng ngân sách; cập nhật cache tổng tiền sau thao tác.
+- [x] Kiểm tra trực tiếp hai trang bằng tài khoản CLB/ICPDP; thêm 4 test liên kết thông báo.

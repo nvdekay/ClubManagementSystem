@@ -1,4 +1,3 @@
-import { SponsoredItems } from "@/components/custom/SponsoredItems";
 import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
@@ -308,7 +307,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         </div> : active.revisionDeadlineAt && <p className="mt-2">{t("clubEvents.revisionDeadline")}: {format.format(new Date(active.revisionDeadlineAt))}</p>}
         {active.approvalConditions?.length > 0 && <div className="mt-3"><h3 className="font-semibold">{t("clubEvents.conditions")}</h3><ul className="mt-2 list-inside list-disc">{active.approvalConditions.map((condition, index) => <li key={index}>{condition}</li>)}</ul></div>}
         {active.conflictResult && <p className="mt-3">{t(`clubEvents.${active.conflictResult}`, { defaultValue: active.conflictResult })}</p>}
-        {detail.data.budget?.id && <SponsoredItems budgetId={detail.data.budget.id} clubId={clubId} csrfToken={auth.data!.csrfToken} />}
+        {detail.data.budget?.id && <NavLink className="inline-flex rounded-lg border border-border-app px-4 py-2 text-sm font-medium text-primary-app hover:bg-surface-app"
+          to={`/club/${clubId}/budgets?budget=${detail.data.budget.id}`}>{t("accountability.finances")}</NavLink>}
         {detail.data.budget && <p className="mt-2">{t("clubEvents.approvedBudget")}: {new Intl.NumberFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { style: "currency", currency: "VND" }).format(detail.data.budget.approvedTotal)}</p>}
         {active.state === "Re-defense Pending" && (
           <div className="mt-4">

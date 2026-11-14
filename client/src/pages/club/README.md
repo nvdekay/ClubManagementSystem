@@ -69,3 +69,7 @@ Các trang khác (đối chiếu 17/10/2026), đều chỉ dành cho Club Leader
 `/club/:clubId/event-attendance` và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
 `ClubBookingsPage` (UC45–47, xem trên), `ClubReportsPage` (UC33, dùng `ReportWorkspace`, route
 `/club/:clubId/event-reports`) và `ClubBudgetsPage` (UC36, dùng `FinanceWorkspace`, route `/club/:clubId/budgets`).
+
+`ClubBudgetsPage` chứa phần khoản chi và ảnh chứng từ của ngân sách tài trợ theo hạng mục
+(`SponsoredItems`), hỗ trợ chọn đúng ngân sách bằng `?budget=...`; thông báo cũ có thể dùng `?event=...`.
+Ngân sách legacy vẫn dùng form quyết toán cũ. Trang sự kiện chỉ giữ liên kết dẫn tới ngân sách.
