@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { ApplicationFileStorage } from "../domain/club-application.js";
 import { DomainError } from "../domain/errors.js";
-import { assertInvoiceEditable, MAX_INVOICE_IMAGES, validateInvoiceImage,
+import { assertInvoiceEditable, isClubAction, MAX_INVOICE_IMAGES, validateInvoiceImage,
   type SponsoredItemRepository, type SponsoredItemAction } from "../domain/sponsored-item.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
 import { assertFinanceOfficer, financeId, type EventFinanceDeps } from "./event-finance.js";
@@ -27,8 +27,7 @@ export async function actOnSponsoredItem(deps: SponsoredItemDeps, actor: AccessA
   action: SponsoredItemAction, now: Date) {
   await getSponsoredBudget(deps, actor, id, clubId, now);
   if (!Number.isInteger(revision) || revision < 0) throw new DomainError("invalid revision", "validation");
-  const clubAction = ["save", "image", "removeImage", "submit"].includes(action.kind);
-  if (clubAction !== Boolean(clubId)) throw new DomainError("action not allowed for this role", "forbidden");
+  if (isClubAction(action) !== Boolean(clubId)) throw new DomainError("action not allowed for this role", "forbidden");
   return deps.repo.act(id, itemId, revision, actor!.id, clubId, action, now);
 }
 

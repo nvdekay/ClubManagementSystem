@@ -9,7 +9,7 @@ export const sponsoredItemOpenApiPaths: Paths = {};
 for (const base of ["/clubs/{clubId}/budgets/{id}/items", "/admin/budgets/{id}/items"]) {
   sponsoredItemOpenApiPaths[base] = { get: { summary: "Read sponsored item invoice packs", responses: response } };
   sponsoredItemOpenApiPaths[`${base}/{itemId}/actions`] = { post: {
-    summary: "Save, submit, review or pay a sponsored item", responses: response,
+    summary: "Save, submit or review a sponsored item, or confirm the club received its payment", responses: response,
     requestBody: { content: { "application/json": { schema: sponsoredActionBody } } },
   } };
   sponsoredItemOpenApiPaths[`${base}/{itemId}/images/{imageId}`] = { get: {

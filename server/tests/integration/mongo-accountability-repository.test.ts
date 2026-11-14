@@ -132,8 +132,11 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
       { kind: "removeImage", imageId: "image-0" }, now)).rejects.toMatchObject({ kind: "conflict" });
     detail = await repo.act(budgetId, item.id, detail.revision, String(actor), undefined,
       { kind: "review", validAmount: 80, reason: "Valid invoices" }, now);
-    const payments = await Promise.allSettled(["BANK-1", "BANK-2"].map((paymentReference) => repo.act(budgetId,
-      item.id, detail.revision, String(actor), undefined, { kind: "pay", amount: 80, paidAt: now.toISOString(), paymentReference }, now)));
+    expect(detail.items[0]!.status).toBe("Accepted");
+    await expect(repo.act(budgetId, item.id, detail.revision, String(actor), undefined, { kind: "pay" }, now))
+      .rejects.toMatchObject({ kind: "forbidden" });
+    const payments = await Promise.allSettled([1, 2].map(() => repo.act(budgetId,
+      item.id, detail.revision, String(actor), String(club), { kind: "pay" }, now)));
     expect(payments.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     const stored = await m.eventBudgets!.findById(budgetId).lean();
     expect(stored?.state).toBe("Closed");

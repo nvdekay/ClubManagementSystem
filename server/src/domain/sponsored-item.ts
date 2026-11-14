@@ -55,7 +55,8 @@ export type SponsoredItemAction =
   | { kind: "submit" }
   | { kind: "return"; reason: string }
   | { kind: "review"; validAmount: number; reason: string }
-  | { kind: "pay"; amount: number; paidAt: string; paymentReference: string };
+  /** The club confirms it received the money; the accountant who transfers it is outside the system. */
+  | { kind: "pay" };
 
 export interface SponsoredItemRepository {
   find(budgetId: string, clubId?: string): Promise<SponsoredBudget | null>;
@@ -63,9 +64,15 @@ export interface SponsoredItemRepository {
     clubId: string | undefined, action: SponsoredItemAction, now: Date): Promise<SponsoredBudget>;
 }
 
+const CLUB_EDIT_ACTIONS = ["save", "image", "removeImage", "submit"];
+/** Actions the club performs; every other action belongs to the ICPDP officer. */
+export function isClubAction(action: SponsoredItemAction): boolean {
+  return action.kind === "pay" || CLUB_EDIT_ACTIONS.includes(action.kind);
+}
+
 export function changeSponsoredItem(item: SponsoredItem, action: SponsoredItemAction, now: Date): SponsoredItem {
   const next = { ...item, images: [...item.images] };
-  if (["save", "image", "removeImage", "submit"].includes(action.kind)) assertInvoiceEditable(item, now);
+  if (CLUB_EDIT_ACTIONS.includes(action.kind)) assertInvoiceEditable(item, now);
   switch (action.kind) {
     case "save":
       if (!Number.isSafeInteger(action.amount) || action.amount <= 0 || action.description.length > 2000) {
@@ -102,11 +109,11 @@ export function changeSponsoredItem(item: SponsoredItem, action: SponsoredItemAc
       next.status = next.payable > 0 ? "Accepted" : "Rejected";
       break;
     case "pay":
-      assertItemPayment(item, action.amount, new Date(action.paidAt), now);
-      if (!action.paymentReference.trim() || action.paymentReference.length > 200) throw new DomainError("payment reference is required", "validation");
+      if (item.status !== "Accepted" || !item.payable || item.paidAt) {
+        throw new DomainError("this item is not awaiting payment", "conflict");
+      }
       next.status = "Paid";
-      next.paidAt = new Date(action.paidAt).toISOString();
-      next.paymentReference = action.paymentReference.trim();
+      next.paidAt = now.toISOString();
       break;
   }
   return next;
@@ -147,17 +154,6 @@ export function invoicePayable(item: SponsoredItem, validAmount: number): number
     throw new DomainError("accepted invoice value must be between zero and the submitted amount", "validation");
   }
   return Math.min(validAmount, item.approvedAmount);
-}
-
-export function assertItemPayment(item: SponsoredItem, amount: number, paidAt: Date, now: Date): void {
-  if (item.status !== "Accepted" || !item.payable || item.paidAt) {
-    throw new DomainError("this item is not awaiting payment", "conflict");
-  }
-  if (amount !== item.payable || !Number.isFinite(paidAt.getTime()) || paidAt > now
-    || paidAt < new Date(item.approvedAt)
-    || (item.fundingDecision === "AFTER_EVENT" && paidAt < new Date(item.eventEndAt))) {
-    throw new DomainError("record one full payment with a valid payment date", "validation");
-  }
 }
 
 export function validateInvoiceImage(mimeType: string, bytes: Uint8Array): "image/jpeg" | "image/png" {

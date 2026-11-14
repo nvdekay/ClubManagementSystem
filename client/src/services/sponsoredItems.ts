@@ -15,7 +15,7 @@ export type ItemAction =
   | { kind: "submit" }
   | { kind: "return"; reason: string }
   | { kind: "review"; validAmount: number; reason: string }
-  | { kind: "pay"; amount: number; paidAt: string; paymentReference: string };
+  | { kind: "pay" };
 
 function base(id: string, clubId?: string): string {
   return `/api/v1/${clubId ? `clubs/${clubId}` : "admin"}/budgets/${id}/items`;

@@ -11,7 +11,7 @@ Luồng cũ yêu cầu giải ngân trước khi ghi chi phí, dùng link chứn
 - Ảnh lưu riêng tư qua Cloudinary; truy cập qua kiểm tra quyền CLB/ICPDP. Không nhận URL tùy ý cho hồ sơ mới.
 - BEFORE_EVENT nộp từ lúc duyệt đến E+14 ngày; AFTER_EVENT từ E đến E+14 ngày. Không hạn bổ sung riêng. Hồ sơ Submitted đúng hạn tiếp tục được xét/thanh toán sau hạn.
 - Mỗi hạng mục nộp một bộ đầy đủ có phiên bản. Chỉ sửa nháp hoặc Returned trong hạn; khóa Submitted/Accepted/Paid.
-- ICPDP chốt payable=min(chi hợp lệ, trần hạng mục); thanh toán toàn bộ payable một lần, chống thao tác đồng thời và thanh toán trùng.
+- ICPDP duyệt đối soát, chốt payable=min(chi hợp lệ, trần hạng mục) → `Accepted` ("Đã duyệt"). Kế toán (ngoài hệ thống) chuyển tiền; CLB bấm xác nhận đã nhận tiền → `Paid`, một lần, chống thao tác đồng thời và xác nhận trùng.
 - Thông báo kết quả về dashboard CLB với liên kết ngân sách; dùng các trang tài chính hiện có.
 - Dữ liệu cũ giữ lịch sử, không chuyển tạm ứng cũ thành thanh toán mới. Hủy/đổi lịch có tài chính chưa có chính sách mới: không tự gia hạn hoặc ghi lại thanh toán; bảo toàn hồ sơ.
 
@@ -36,3 +36,5 @@ Chuyển tiền qua ngân hàng, OCR tự đọc giá trị hóa đơn, tự quy
 - v1.0.0 (2026-11-14) — người dùng duyệt kế hoạch và yêu cầu triển khai, gồm JPG/PNG 5 MiB/ảnh.
 
 - v1.1.0 (2026-11-14) — chỉnh vị trí theo yêu cầu mới: CLB /club/:clubId/budgets, ICPDP /workspace/budgets/:id; duyệt tài trợ vẫn ở UC26.
+
+- v1.2.0 (2026-11-14) — ICPDP chỉ duyệt tiền (`Accepted` = "Đã duyệt"); việc chuyển tiền do kế toán ngoài hệ thống; CLB xác nhận đã nhận tiền mới sang `Paid`. Bỏ nhập số tiền/ngày/mã tham chiếu.

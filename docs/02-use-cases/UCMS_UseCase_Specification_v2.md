@@ -1358,23 +1358,23 @@ kèm ảnh đã bị hủy trước đó.
 
 ## UC35 – Ghi nhận thanh toán hạng mục tài trợ
 
-- **Actor chính:** ICPDP Officer; **Module:** M07.
-- **Mục tiêu:** Ghi nhận một lần chuyển tiền thực tế cho bộ hóa đơn đã được đối soát của một hạng mục.
-- **Kích hoạt:** ICPDP đã thanh toán ngoài hệ thống; UCMS chỉ ghi nhận, không thực hiện chuyển tiền.
-- **Tiền điều kiện:** Hạng mục được tài trợ; UC37 đã chốt số phải trả dương; chưa có lần thanh toán;
-  nhóm `After Event` đã tới `E`. Không đòi ngân sách từng được tạm ứng.
-- **Dữ liệu vào:** Sự kiện, hạng mục, phiên bản đối soát, số tiền, ngày thanh toán, mã tham chiếu.
+- **Actor chính:** Club Leader (quyền `club.expense.record`); **Module:** M07.
+- **Mục tiêu:** CLB xác nhận đã nhận đủ tiền cho bộ hóa đơn ICPDP đã duyệt đối soát của một hạng mục.
+- **Kích hoạt:** ICPDP chỉ duyệt tiền; kế toán (ngoài hệ thống, không phải actor của UCMS) chuyển tiền
+  cho CLB. UCMS chỉ ghi nhận xác nhận của CLB, không thực hiện chuyển tiền.
+- **Tiền điều kiện:** Hạng mục được tài trợ; UC37 đã duyệt đối soát với số phải trả dương (hạng mục
+  `Accepted` — hiển thị "Đã duyệt"); chưa có lần xác nhận nào. Không đòi ngân sách từng được tạm ứng.
+- **Dữ liệu vào:** Sự kiện, hạng mục, phiên bản đối soát. Không nhập số tiền, ngày hay mã tham chiếu.
 - **Luồng chính:**
-  1. Officer mở bộ hóa đơn đã đối soát tại trang **Giải ngân kinh phí**, trong chi tiết ngân sách sự kiện.
-  2. Hệ thống hiển thị quyết định tài trợ, tổng hóa đơn hợp lệ, trần và số phải trả.
-  3. Officer ghi giao dịch đúng toàn bộ số phải trả, không nhập phần trăm hoặc chia đợt.
-  4. Hệ thống kiểm tra lại quyền, trạng thái, số tiền, thời điểm và việc chưa thanh toán trong cùng
-     thao tác nguyên tử; ghi nhận giao dịch, chuyển hạng mục `Paid`, khóa bộ đã trả.
+  1. CLB mở hạng mục `Accepted` tại trang **Khoản chi và quyết toán** của CLB.
+  2. Hệ thống hiển thị quyết định tài trợ, trần và số được duyệt thanh toán.
+  3. Sau khi nhận tiền từ kế toán, CLB bấm **Xác nhận đã nhận tiền** và xác nhận lại.
+  4. Hệ thống kiểm tra lại quyền, trạng thái và việc chưa xác nhận trong cùng thao tác nguyên tử;
+     chuyển hạng mục `Paid`, ghi thời điểm xác nhận, khóa bộ đã trả.
   5. Thông báo kết quả cho CLB, lưu audit. Ngân sách chỉ `Closed` khi mọi hạng mục đã kết thúc.
-- **Luồng thay thế:** `Before Event` được thanh toán sau `E` nếu hồ sơ nộp đúng hạn;
-  ICPDP có thể thanh toán sau `D` cho bộ đã nộp đúng hạn và được chấp nhận.
-- **Ngoại lệ:** Chưa đối soát, không tài trợ, số phải trả bằng 0, sai số tiền, trả nhóm
-  `After Event` trước `E`, hoặc đã `Paid` → từ chối; thao tác lặp không tạo giao dịch thứ hai.
+- **Luồng thay thế:** Bộ đã nộp đúng hạn và được duyệt vẫn được CLB xác nhận nhận tiền sau `E`/`D`.
+- **Ngoại lệ:** Chưa đối soát, không tài trợ, số phải trả bằng 0, hoặc đã `Paid` → từ chối;
+  ICPDP Officer không được xác nhận thay CLB; thao tác lặp không tạo xác nhận thứ hai.
 - **Hậu điều kiện:** Hạng mục `Paid`; số đã trả bằng số phải trả; không còn lần lĩnh thêm.
 - **Quy tắc:** BR23, BR26, BR58; quy ước tài chính 14/11/2026.
 - **Đầu ra:** Bản ghi thanh toán, thông báo và audit; **Liên quan:** UC26, UC36, UC37; **Pain point:** BP10.

@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
-import { AppInput } from "@/components/ui/input/AppInput";
 import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
@@ -30,7 +29,6 @@ function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget
   const [description, setDescription] = useState(item.description);
   const [valid, setValid] = useState(String(item.amount));
   const [reason, setReason] = useState("");
-  const [reference, setReference] = useState("");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [error, setError] = useState("");
   const deadline = new Date(new Date(item.eventEndAt).getTime() + 14 * 86400000);
@@ -99,12 +97,8 @@ function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget
       <div className="flex flex-wrap gap-2"><AppButton disabled={mutation.isPending || !reason.trim()} onClick={() => void act({ kind: "review", validAmount: Number(valid), reason })}>{t("sponsoredItems.review")}</AppButton>
         <AppButton variant="ghost" disabled={mutation.isPending || !reason.trim() || now >= deadline} onClick={() => void act({ kind: "return", reason })}>{t("sponsoredItems.return")}</AppButton></div>
     </div>}
-    {!clubId && active && item.status === "Accepted" && <div className="mt-4 space-y-3">
-      <label className="block text-sm">{t("sponsoredItems.reference")}<AppInput value={reference} onChange={(event) => setReference(event.target.value)} maxLength={200} className="mt-1 w-full" /></label>
-      <AppButton disabled={mutation.isPending || !reference.trim() || (item.fundingDecision === "AFTER_EVENT" && now < new Date(item.eventEndAt))}
-        onClick={async () => { if (await confirm(t("sponsoredItems.payConfirm", { amount: money(item.payable!) })))
-          await act({ kind: "pay", amount: item.payable!, paidAt: new Date().toISOString(), paymentReference: reference }); }}>{t("sponsoredItems.pay")}</AppButton>
-    </div>}
+    {clubId && active && item.status === "Accepted" && <AppButton className="mt-4" disabled={mutation.isPending}
+      onClick={async () => { if (await confirm(t("sponsoredItems.payConfirm", { amount: money(item.payable!) }))) await act({ kind: "pay" }); }}>{t("sponsoredItems.pay")}</AppButton>}
     {!active && <p className="mt-3 text-sm text-warning-app">{t("sponsoredItems.paused")}</p>}
     {error && <p role="alert" className="mt-3 text-sm text-danger-app">{error}</p>}
   </article>;

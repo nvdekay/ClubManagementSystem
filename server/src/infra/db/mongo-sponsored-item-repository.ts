@@ -1,7 +1,7 @@
 import mongoose, { Types } from "mongoose";
 import { randomUUID } from "node:crypto";
 import { DomainError } from "../../domain/errors.js";
-import { changeSponsoredItem, invoiceDeadline, type SponsoredBudget, type SponsoredItem,
+import { changeSponsoredItem, invoiceDeadline, isClubAction, type SponsoredBudget, type SponsoredItem,
   type SponsoredItemRepository } from "../../domain/sponsored-item.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
 import { assertAccountabilityOfficer } from "./accountability-workflow.js";
@@ -27,10 +27,10 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
         if (!budget || !Array.isArray(budget.sponsoredItems)) throw new DomainError("sponsored budget not found", "not_found");
         if (clubId) {
           await assertEventWriteAccess(session, new Types.ObjectId(clubId), actorId, "club.expense.record", now);
-          if (!["save", "image", "removeImage", "submit"].includes(action.kind)) throw new DomainError("officer action required", "forbidden");
+          if (!isClubAction(action)) throw new DomainError("officer action required", "forbidden");
         } else {
           await assertAccountabilityOfficer(session, actorId);
-          if (!["return", "review", "pay"].includes(action.kind)) throw new DomainError("club action required", "forbidden");
+          if (isClubAction(action)) throw new DomainError("club action required", "forbidden");
         }
         const event = await m.events!.findOneAndUpdate({ _id: budget.eventId }, { $inc: { __v: 1 } }, { session }).lean();
         if (!event || !["Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"].includes(String(event.state))) {

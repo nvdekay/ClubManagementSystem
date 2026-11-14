@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  assertInvoiceSubmission, changeSponsoredItem, invoicePayable, validateInvoiceImage,
+  assertInvoiceSubmission, changeSponsoredItem, invoicePayable, isClubAction, validateInvoiceImage,
   type SponsoredItem, type InvoiceImage,
 } from "../../src/domain/sponsored-item.js";
 
@@ -32,10 +32,13 @@ describe("sponsored item invoice lifecycle", () => {
     const now = new Date("2026-12-01");
     const accepted = changeSponsoredItem(item({ status: "Submitted" }), { kind: "review", validAmount: 8_000_000, reason: "Valid" }, now);
     expect(accepted.payable).toBe(8_000_000);
-    const paid = changeSponsoredItem(accepted, { kind: "pay", amount: 8_000_000, paidAt: now.toISOString(), paymentReference: "BANK-1" }, now);
-    expect(paid.status).toBe("Paid");
-    expect(() => changeSponsoredItem(paid, { kind: "pay", amount: 8_000_000, paidAt: now.toISOString(), paymentReference: "BANK-2" }, now)).toThrow();
-    expect(() => changeSponsoredItem(accepted, { kind: "pay", amount: 4_000_000, paidAt: now.toISOString(), paymentReference: "PART" }, now)).toThrow();
+    expect(accepted.status).toBe("Accepted");
+    const paid = changeSponsoredItem(accepted, { kind: "pay" }, now);
+    expect(paid).toMatchObject({ status: "Paid", paidAt: now.toISOString() });
+    expect(() => changeSponsoredItem(paid, { kind: "pay" }, now)).toThrow();
+    expect(() => changeSponsoredItem(item({ status: "Submitted" }), { kind: "pay" }, now)).toThrow();
+    expect(isClubAction({ kind: "pay" })).toBe(true);
+    expect(isClubAction({ kind: "review", validAmount: 1, reason: "x" })).toBe(false);
     expect(invoicePayable(item({ status: "Submitted", amount: 12_000_000 }), 12_000_000)).toBe(10_000_000);
   });
   it("prevents late correction but permits timely submitted packs to be reviewed after deadline", () => {

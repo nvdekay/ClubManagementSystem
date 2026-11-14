@@ -62,7 +62,7 @@ duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối
 tiền và form ghi đúng một loại dòng tiền mà kinh phí đang nhận (tạm ứng / cấp bù / CLB hoàn trả).
 
 Với ngân sách tài trợ theo hạng mục, `BudgetDetailPage` tại `/workspace/budgets/:id` dùng
-`SponsoredItems` để xem ảnh, trả sửa, chốt đối soát và ghi nhận thanh toán một lần. Không hiển thị
+`SponsoredItems` để xem ảnh, trả sửa và duyệt đối soát (hạng mục thành `Accepted`). ICPDP không ghi nhận thanh toán: CLB tự xác nhận đã nhận tiền. Không hiển thị
 form tạm ứng cũ cho hồ sơ này. `EventProposalReviewPage` chỉ quyết định tài trợ và dẫn sang trang tài chính.
 
 `ViolationsPage` (UC40) gồm `ViolationsPage` (danh sách hồ sơ vi phạm theo nhóm trạng thái, form mở hồ sơ:

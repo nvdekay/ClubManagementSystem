@@ -17,7 +17,7 @@ export const sponsoredActionBody = z.object({
     z.object({ kind: z.literal("submit") }).strict(),
     z.object({ kind: z.literal("return"), reason: z.string().min(1).max(2000) }).strict(),
     z.object({ kind: z.literal("review"), validAmount: z.number().int().nonnegative(), reason: z.string().min(1).max(2000) }).strict(),
-    z.object({ kind: z.literal("pay"), amount: z.number().int().positive(), paidAt: z.string().datetime(), paymentReference: z.string().min(1).max(200) }).strict(),
+    z.object({ kind: z.literal("pay") }).strict(),
   ]),
 }).strict();
 
