@@ -663,6 +663,8 @@ Create Recruitment Campaign
 
 ## Flow 4 – Event Lifecycle
 
+**Sự kiện công khai / cấp trường (cần ICPDP duyệt):**
+
 ```text
 Event Proposal
 → Conflict Check
@@ -678,6 +680,17 @@ Event Proposal
 → Event Feedback
 → ICPDP Close
 → Evaluation Input
+```
+
+**Sự kiện nội bộ CLB (`MEMBERS_ONLY` — cập nhật nghiệp vụ):**
+
+```text
+Tạo sự kiện nội bộ (DRAFT → CREATED, không giới hạn báo trước 7 ngày)
+→ Conflict Check (venueText / phòng được cấp / booking thiết bị đính kèm)
+→ Publish cho thành viên CLB (PUBLIC — không nộp đề xuất ICPDP, không bảo vệ)
+→ Registration & Check-in (chỉ thành viên CLB)
+→ Attendance Finalization (FINISH)
+→ Tự động tổng hợp vào Báo cáo định kỳ (Periodic Report) & biểu đồ ICPDP
 ```
 
 ## Flow 5 – Budget Lifecycle
@@ -1097,12 +1110,13 @@ User chọn đăng nhập
 - **CMB:** Initiate removal theo business rule.
 - **Rule:** Sensitive removal phải có reason/audit.
 
-## UC24 – Gửi đề xuất tổ chức sự kiện
+## UC24 – Gửi đề xuất tổ chức sự kiện / Tạo sự kiện nội bộ
 
 - **Primary Actor:** CMB
 - **Precondition:** Club Active và người dùng có quyền.
-- **Input:** mục tiêu, thời gian, địa điểm, audience, capacity, plan, risk, budget estimate, nhu cầu cơ sở vật chất.
-- **Flow:** Validate → UC25 conflict check → (tùy chọn) UC51 property booking request → Submitted/Pending Approval.
+- **Input:** mục tiêu, thời gian (trong 1 học kỳ), địa điểm (`venueText` / phòng học được cấp / booking CSVC-thiết bị đính kèm), audience, capacity, plan, risk, budget estimate (chỉ luồng đề xuất công khai), nhu cầu cơ sở vật chất.
+- **Flow (Công khai / cần duyệt):** Validate (kể cả giới hạn báo trước tối thiểu theo policy) → UC25 conflict check → (tùy chọn) UC51 property booking request → Submitted/Pending Approval.
+- **Flow (Sự kiện nội bộ CLB — `MEMBERS_ONLY`):** Tạo sự kiện (`DRAFT → CREATED`) không cần nộp đề xuất lên ICPDP, không cần bảo vệ, không có ngân sách trường, **bỏ giới hạn báo trước 7 ngày**, vẫn kiểm tra xung đột (UC25) nếu dùng phòng/booking thiết bị đính kèm (booking CSVC ngoài phòng học vẫn do UC46 quyết định riêng).
 - **Related:** UC25, UC26, UC51.
 
 ## UC25 – Phát hiện xung đột sự kiện
@@ -1140,7 +1154,7 @@ User chọn đăng nhập
 ## UC30 – Công bố sự kiện và mở đăng ký
 
 - **Primary Actor:** CMB
-- **State:** Approved → Open for Registration.
+- **State:** `Approved → Open for Registration` (với sự kiện công khai/đề xuất), hoặc `CREATED → PUBLIC` (với sự kiện nội bộ CLB — chỉ hiển thị trong không gian thành viên CLB, không hiện trên khám phá công khai).
 - **Rule:** Enforce registration window và capacity.
 
 ## UC31 – Đăng ký tham gia sự kiện
@@ -1163,7 +1177,7 @@ User chọn đăng nhập
 ## UC34 – Chốt attendance sự kiện
 
 - **Primary Actor:** CMB
-- **Flow:** Review abnormal check-in → finalize → lock.
+- **Flow:** Review abnormal check-in → finalize → lock. Sự kiện nội bộ sau khi kết thúc (`FINISH`) chỉ cần chốt điểm danh tại đây và giữ nguyên `FINISH` để tự động tổng hợp vào Báo cáo định kỳ (không nộp báo cáo sau sự kiện UC36).
 - **Output:** Official Attendance dataset.
 
 ## UC35 – Hủy/Đổi lịch sự kiện
@@ -2055,6 +2069,8 @@ Draft
 
 ## 15.5 Event
 
+**Sự kiện có đề xuất / công khai:**
+
 ```text
 Draft
 → Pending Approval
@@ -2074,6 +2090,23 @@ Exceptional:
 ```text
 Approved / Open for Registration / Ongoing
 → Cancelled
+```
+
+**Sự kiện nội bộ CLB (`MEMBERS_ONLY`):**
+
+```text
+DRAFT
+→ CREATED
+→ PUBLIC
+→ ONGOING
+→ FINISH
+```
+
+Exceptional:
+
+```text
+DRAFT / CREATED / PUBLIC / ONGOING
+→ CANCELLED
 ```
 
 ## 15.6 Budget Request
@@ -2486,9 +2519,10 @@ Reporting Compliance
 | Widget | Business Question |
 |---|---|
 | Active/Suspended Clubs | Hiện có bao nhiêu CLB đang hoạt động hợp lệ? |
-| Pending Approvals | Những request nào đang chờ ICPDP xử lý? |
+| Pending Approvals | Những request nào đang chờ ICPDP xử lý? *(không gồm sự kiện nội bộ CLB — không đi qua hàng đợi đề xuất)* |
 | Approval Aging | Request nào chờ quá lâu? |
 | Upcoming Events | Sự kiện nào sắp diễn ra? |
+| Internal Events | Danh sách & biểu đồ thống kê sự kiện nội bộ các CLB (trạng thái khác `DRAFT`) là bao nhiêu? |
 | Conflict Alerts | Có sự kiện nào trùng lịch/địa điểm? |
 | Budget Exposure | Tổng approved/disbursed/reconciled là bao nhiêu? |
 | Property Booking Queue | Yêu cầu đặt cơ sở vật chất nào đang chờ duyệt? |

@@ -941,21 +941,22 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 
 # M05 — Sự kiện và hoạt động
 
-## UC25 – Nộp đề xuất tổ chức sự kiện
+## UC25 – Nộp đề xuất tổ chức sự kiện / Tạo sự kiện nội bộ
 
 - **Actor chính:** Club Leader (`club.event.manage`, BR54)
 - **Module:** M05
-- **Mục tiêu nghiệp vụ:** Xin phép tổ chức một sự kiện qua một workflow duy nhất, truy vết được;
-  với sự kiện nội bộ thì ghi nhận nó vào hệ thống để ICPDP theo dõi.
+- **Mục tiêu nghiệp vụ:** Xin phép tổ chức sự kiện công khai qua một workflow duy nhất, truy vết được;
+  với sự kiện nội bộ CLB thì tạo trực tiếp và công bố cho thành viên mà không qua đề xuất ICPDP.
 - **Kích hoạt:** CLB lên kế hoạch một hoạt động.
 - **Tiền điều kiện:** CLB đang `Active` (BR10) và người gọi có quyền về sự kiện.
-- **Dữ liệu vào:** Phạm vi (`Public` / `Internal`), mục tiêu, thời gian, địa điểm, đối tượng,
-  sức chứa, kế hoạch, mức rủi ro, nhu cầu cơ sở vật chất; **phần ngân sách** tuỳ chọn — các dòng
+- **Dữ liệu vào:** Phạm vi (`PUBLIC` / `MEMBERS_ONLY`), mục tiêu, thời gian (trong 1 học kỳ, BR44),
+  địa điểm (`venueText`, phòng `propertyId` được phân và/hoặc booking thiết bị `bookingIds`), đối tượng,
+  sức chứa, kế hoạch, mức rủi ro, nhu cầu cơ sở vật chất; **phần ngân sách** tuỳ chọn (chỉ áp cho luồng đề xuất `PUBLIC`) — các dòng
   ngân sách (hạng mục, số tiền, mục đích, khoản chi dự kiến) và tổng số tiền xin.
-- **Luồng chính:**
-  1. Thành viên chọn phạm vi và nhập nội dung đề xuất, kèm phần ngân sách nếu sự kiện cần kinh
+- **Luồng chính (Đề xuất `PUBLIC` — nút "Đề xuất sự kiện với ICPDP"):**
+  1. Thành viên mở chức năng đề xuất sự kiện với ICPDP (`PUBLIC`) và nhập nội dung đề xuất, kèm phần ngân sách nếu sự kiện cần kinh
      phí. Đây là cách duy nhất để CLB xin kinh phí (BR22).
-  2. Hệ thống validate tính đầy đủ, tổng số của phần ngân sách, và thời gian báo trước tối thiểu định nghĩa trong tài liệu chính sách.
+  2. Hệ thống validate theo luật đề xuất ICPDP: tính đầy đủ, tổng số của phần ngân sách, và thời gian báo trước tối thiểu định nghĩa trong tài liệu chính sách.
   3. Hệ thống đánh giá quy tắc xung đột BR15 và hiển thị `No Conflict`, `Warning` hoặc
      `Blocking Conflict`.
   4. Thành viên có thể đính kèm một yêu cầu đặt cơ sở vật chất ngoài `ROOM` (UC45). Phòng học
@@ -963,36 +964,32 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   5. Thành viên nộp → `Pending Approval`.
   6. ICPDP nhận một review task; Club Leader xem được trạng thái yêu cầu, phiên bản hồ sơ và phản hồi thẩm định.
 - **Luồng thay thế:**
-  - **A1 Bản nháp:** đề xuất được lưu ở `Draft`.
+  - **A1 Bản nháp:** đề xuất được lưu ở `Draft` (hoặc `DRAFT` trong chức năng Tạo sự kiện nội bộ CLB).
   - **A2 Bổ sung và nộp lại báo cáo đề xuất (UC28 của v1):** từ `Revision Requested`, Club Leader xem danh sách nội dung hoặc tài liệu còn thiếu, nhận xét của ICPDP và hạn bổ sung; hoàn thiện báo cáo đề xuất (kể cả phần ngân sách) rồi nộp lại. Hệ thống tạo **bản sửa mới**, đưa đề xuất về `Pending Approval` và chuyển lại ICPDP thẩm định. Giữ nguyên mọi bản sửa và nhận xét cũ; vòng này có thể lặp khi hồ sơ vẫn thiếu.
   - **A3 Hoạt động định kỳ:** một chuỗi hoạt động được nộp như một đề xuất duy nhất, liệt kê các
     lần diễn ra của nó.
-  - **A4 Ghi nhận sự kiện nội bộ (BR53):** ở bước 5, nếu phạm vi là `Internal` và không có phần
-    ngân sách, hệ thống **ghi nhận thẳng** sự kiện sang `Approved` thay vì `Pending Approval`,
-    không tạo review task, ghi audit hành động `RECORD_INTERNAL`, và đưa sự kiện vào danh sách
-    sự kiện nội bộ trên dashboard ICPDP (UC02). Các bước 2–3 và mọi ngoại lệ vẫn áp dụng. Nếu có
-    đính kèm yêu cầu booking (chỉ tài sản ngoài `ROOM`), booking đó vẫn chờ UC46 quyết định. Sự kiện `Internal` có phần
-    ngân sách đi luồng chính.
+  - **A4 Tạo sự kiện nội bộ CLB (`MEMBERS_ONLY`, BR53 — nút "Tạo sự kiện nội bộ" tách riêng):** chức năng và bộ validate được **tách riêng hoàn toàn** khỏi form đề xuất ICPDP để tránh trộn lẫn quy tắc kiểm tra. Sự kiện nội bộ **không nộp đề xuất lên ICPDP, không qua bảo vệ, không có mục ngân sách trường, không hiện trong hàng đợi đề xuất của ICPDP và bỏ giới hạn báo trước 7 ngày**. Hệ thống cho phép nhập đồng thời `venueText` và gắn phòng học được phân / booking thiết bị (booking CSVC ngoài phòng học đính kèm vẫn do UC46 quyết định riêng). Khi BCN xác nhận tạo chính thức, hệ thống chuyển `DRAFT → CREATED`, **không** tạo `ApprovalTask`, ghi audit `CREATE_INTERNAL_EVENT`, và hiển thị trong danh sách Sự kiện nội bộ (trừ `DRAFT`) cùng biểu đồ trên dashboard ICPDP (UC02). Vẫn kiểm tra BR10, BR15, BR44, BR45.
   - **A5 Xác nhận hoặc đề xuất dời lịch bảo vệ sự kiện (BR63):** khi ICPDP xếp lịch bảo vệ (UC26 A4), Club Leader nhận thông báo (tiêu đề, thời gian bắt đầu, thời lượng dự kiến, địa điểm phòng học `ROOM`, ghi chú). Club Leader xem chi tiết lịch hẹn và thực hiện một trong hai hành động:
     - **Xác nhận tham gia (`Confirm`)**: Bắt buộc thực hiện **trước giờ bảo vệ ít nhất 24 giờ**. Nếu quá hạn 24 giờ mà chưa xác nhận, hệ thống gửi cảnh báo quá hạn cho ICPDP Officer;
     - **Đề xuất dời lịch (`Request Reschedule`)**: Nếu CLB gặp sự cố bất khả kháng (trùng lịch thi, lịch học của các thành viên chủ chốt), Club Leader nhập lý do chi tiết và gửi đề xuất xin dời lịch lên ICPDP. Trạng thái buổi bảo vệ chuyển sang `Reschedule Requested` và chờ ICPDP phản hồi (chấp thuận đổi giờ/phòng mới hoặc bác bỏ giữ nguyên lịch).
 - **Ngoại lệ:**
-  - **E1** có xung đột chặn trong khi chính sách cấm chồng lịch → từ chối nộp;
-  - **E2** một nghĩa vụ bắt buộc (báo cáo, quyết toán, hoàn trả) đã quá hạn và công tắc cưỡng
+  - **E1** có xung đột chặn trong khi chính sách cấm chồng lịch → từ chối nộp/tạo (vẫn lưu được ở `Draft`/`DRAFT`);
+  - **E2** (luồng đề xuất `PUBLIC`) một nghĩa vụ bắt buộc (báo cáo, quyết toán, hoàn trả) đã quá hạn và công tắc cưỡng
     chế BR21 đang bật → từ chối, kèm
     tên nghĩa vụ đó;
   - **E3** CLB đang `Suspended` → từ chối (BR10);
   - **E4** sự kiện không bắt đầu và kết thúc trong cùng một học kỳ → từ chối (BR44);
   - **E5** CLB đã có quyết định giải thể và sự kiện kết thúc sau học kỳ `Dissolving` của nó →
-    từ chối (BR45).
-  - **E6** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54).
-  - **E7** CLB vắng mặt buổi bảo vệ (`NO_SHOW`, BR63) → Officer ghi nhận `NO_SHOW`, sự kiện bị từ chối (`Rejected`) ngay lập tức.
-  - **E8** quá hạn nộp bản sửa khi đang có lịch bảo vệ (BR63) → nếu sự kiện được yêu cầu sửa đổi trong lúc đã có lịch bảo vệ, hạn chót sửa (`revisionDeadlineAt`) bắt buộc phải trước giờ bảo vệ ít nhất 12 giờ. Nếu quá hạn 12 giờ mà CLB không nộp bản sửa, sự kiện chuyển `Expired` và lịch bảo vệ tự động bị hủy (`Cancelled`), phòng học được giải phóng.
+    từ chối (BR45);
+  - **E6** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54);
+  - **E7** CLB vắng mặt buổi bảo vệ (`NO_SHOW`, BR63) → Officer ghi nhận `NO_SHOW`, sự kiện bị từ chối (`Rejected`) ngay lập tức;
+  - **E8** quá hạn nộp bản sửa khi đang có lịch bảo vệ (BR63) → nếu sự kiện được yêu cầu sửa đổi trong lúc đã có lịch bảo vệ, hạn chót sửa (`revisionDeadlineAt`) bắt buộc phải trước giờ bảo vệ ít nhất 12 giờ. Nếu quá hạn 12 giờ mà CLB không nộp bản sửa, sự kiện chuyển `Expired` và lịch bảo vệ tự động bị hủy (`Cancelled`), phòng học được giải phóng;
+  - **E9** sự kiện nội bộ `MEMBERS_ONLY` gửi kèm `budgetLines` (ngân sách trường) → từ chối; phải dùng luồng đề xuất `PUBLIC` qua UC26 nếu xin ngân sách/bảo trợ cấp trường.
 - **Hậu điều kiện:** Đề xuất ở `Pending Approval` với một bản sửa bất biến; tồn tại một review
-  task. Với A4: sự kiện ở `Approved`, có bản ghi audit và ICPDP xem được ở UC02. Với A5: lịch bảo vệ chuyển sang `Confirmed` hoặc `Reschedule Requested`.
+  task. Với A4: sự kiện nội bộ ở `CREATED` (chưa công bố cho thành viên), có bản ghi audit và ICPDP xem được ở danh sách sự kiện nội bộ UC02. Với A5: lịch bảo vệ chuyển sang `Confirmed` hoặc `Reschedule Requested`.
 - **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR10, BR15, BR21, BR22, BR44, BR45, BR53, BR63. Phát hiện xung đột là một quy tắc được
   đánh giá tại đây, không phải một use case (v1 từng đếm nó thành UC25 với actor là `System`).
-- **Đầu ra:** EventProposal, bản sửa (gồm phần ngân sách), ApprovalTask, yêu cầu PropertyBooking nếu có, xác nhận hoặc đề xuất dời lịch bảo vệ.
+- **Đầu ra:** Event, bản sửa đề xuất (nếu `PUBLIC`), ApprovalTask (nếu `PUBLIC`), yêu cầu PropertyBooking nếu có, xác nhận hoặc đề xuất dời lịch bảo vệ.
 - **Use case liên quan:** UC26, UC45, UC04, UC02
 - **Pain point:** BP05, BP06, BP09
 
@@ -1054,8 +1051,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   đã duyệt mới công bố được ở UC27. Đề xuất được duyệt có phần ngân sách thì có `EventBudget` ở
   `Approved`, là đầu vào của UC35. Khi có bảo vệ, tồn tại bản ghi lịch sử `EventDefenseSession` kèm toàn bộ ghi chú của các cán bộ tham gia.
 - **Quy tắc nghiệp vụ:** BR05, BR14, BR16, BR22, BR31, BR53, BR63. Việc duyệt một đề xuất có kèm yêu cầu booking
-  **không** đồng nghĩa duyệt booking đó — UC46 quyết định nó riêng. Sự kiện nội bộ ghi nhận thẳng
-  theo BR53 không tạo review task ở đây; ICPDP xem chúng ở UC02 và xử lý sai phạm qua UC40.
+  **không** đồng nghĩa duyệt booking đó — UC46 quyết định nó riêng. Sự kiện nội bộ CLB (`MEMBERS_ONLY`, BR53) không nộp qua và không hiện trong hàng đợi đề xuất UC26; ICPDP xem danh sách (trừ `DRAFT`) và biểu đồ ở UC02 và xử lý sai phạm (nếu có) qua UC40.
 - **Đầu ra:** ApprovalDecision, EventBudget (khi có phần ngân sách), EventDefenseSession và DefenseNotes (khi có bảo vệ), bản ghi audit, thông báo.
 - **Use case liên quan:** UC25, UC27, UC35, UC46, UC05, UC58
 - **Pain point:** BP05, BP09, BP15
@@ -1064,25 +1060,25 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 
 - **Actor chính:** Club Leader (`club.event.manage`, BR54)
 - **Module:** M05
-- **Mục tiêu nghiệp vụ:** Cho khán giả thấy sự kiện và tham gia được.
-- **Kích hoạt:** Sự kiện đã được phê duyệt.
-- **Tiền điều kiện:** Sự kiện đang `Approved` (BR14).
-- **Dữ liệu vào:** Khung thời gian đăng ký, mô tả công khai, phạm vi đối tượng, sức chứa.
+- **Mục tiêu nghiệp vụ:** Cho khán giả hoặc thành viên CLB thấy sự kiện và tham gia được.
+- **Kích hoạt:** Sự kiện đề xuất đã được phê duyệt hoặc sự kiện nội bộ đã tạo chính thức (`CREATED`).
+- **Tiền điều kiện:** Sự kiện đề xuất đang `Approved` (BR14), hoặc sự kiện nội bộ CLB đang `CREATED` (BR53).
+- **Dữ liệu vào:** Khung thời gian đăng ký, mô tả hiển thị, phạm vi đối tượng, sức chứa.
 - **Luồng chính:**
-  1. Thành viên mở sự kiện đã được duyệt.
-  2. Thành viên đặt khung thời gian đăng ký, phạm vi đối tượng và thông tin công khai.
-  3. Thành viên công bố → `Upcoming`.
-  4. Sự kiện xuất hiện ở UC06 và UC24; khung thời gian đăng ký được cưỡng chế ở UC29.
+  1. Thành viên mở sự kiện đã được duyệt (hoặc sự kiện nội bộ ở `CREATED`).
+  2. Thành viên đặt khung thời gian đăng ký, phạm vi đối tượng và thông tin hiển thị.
+  3. Thành viên công bố → `Upcoming` (với sự kiện đề xuất) hoặc `PUBLIC` (với sự kiện nội bộ CLB).
+  4. Sự kiện đề xuất xuất hiện ở UC06 và UC24; sự kiện nội bộ `PUBLIC` chỉ xuất hiện ở UC24 cho thành viên CLB. Khung thời gian đăng ký được cưỡng chế ở UC29.
 - **Luồng thay thế:**
-  - **A1 Sự kiện nội bộ:** với sự kiện `Internal` (phạm vi chọn ở UC25), đối tượng giới hạn trong
-    thành viên CLB, và chỉ UC24 hiển thị nó, không hiển thị ở UC06.
+  - **A1 Sự kiện nội bộ CLB (`MEMBERS_ONLY`):** công bố chuyển `CREATED → PUBLIC`, đối tượng giới hạn trong
+    thành viên `Active` của CLB và chỉ UC24 hiển thị nó, **không bao giờ hiển thị** ở UC06 (khi đang `DRAFT` hoặc `CREATED`, thành viên chưa thấy).
   - **A2 Không cần đăng ký:** một sự kiện mở tự do được công bố mà không có khung thời gian đăng
     ký; việc check-in vẫn áp dụng.
-- **Ngoại lệ:** **E1** sự kiện chưa `Approved` → từ chối (BR14); **E2** khung thời gian đăng ký
-  kết thúc sau khi sự kiện bắt đầu → từ chối.
+- **Ngoại lệ:** **E1** sự kiện đề xuất chưa `Approved` hoặc sự kiện nội bộ chưa `CREATED` (đang `DRAFT`/`CANCELLED`) → từ chối (BR14, BR53); **E2** khung thời gian đăng ký
+  kết thúc sau khi sự kiện bắt đầu → từ chối;
   **E3** người gọi không phải Club Leader của CLB (`club.event.manage`) → từ chối (BR54).
-- **Hậu điều kiện:** Sự kiện ở `Upcoming` và hiển thị công khai.
-- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR14, BR17, BR50, BR53. Scheduler chuyển sự kiện sang `Ongoing` và `Completed` theo
+- **Hậu điều kiện:** Sự kiện đề xuất ở `Upcoming` và hiển thị công khai; sự kiện nội bộ ở `PUBLIC` và hiển thị cho thành viên CLB.
+- **Quy tắc nghiệp vụ:** BR54 (`club.event.manage`). BR14, BR17, BR50, BR53. Scheduler chuyển sự kiện đề xuất sang `Ongoing → Completed` và sự kiện nội bộ sang `ONGOING → FINISH` theo
   chính mốc giờ của nó (§7 của tài liệu mô hình).
 - **Đầu ra:** Event đã công bố, các thông báo. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* không gửi thông báo công bố tới sinh
   viên (thông báo chỉ được lưu, không có mail worker).
@@ -1093,22 +1089,21 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 
 - **Actor chính:** Club Leader (`club.event.manage`, BR54)
 - **Module:** M05
-- **Mục tiêu nghiệp vụ:** Thay đổi một sự kiện đã duyệt mà không mất vết và không để rò rỉ một
-  căn phòng đã đặt.
-- **Kích hoạt:** CLB không thể tổ chức sự kiện như đã được duyệt.
-- **Tiền điều kiện:** Sự kiện đang `Approved`, `Upcoming` hoặc `Ongoing`.
-- **Dữ liệu vào:** Lý do; với việc đổi lịch là thời gian và địa điểm mới.
+- **Mục tiêu nghiệp vụ:** Thay đổi một sự kiện đã duyệt hoặc sự kiện nội bộ mà không mất vết và không để rò rỉ một
+  căn phòng/thiết bị đã đặt.
+- **Kích hoạt:** CLB không thể tổ chức sự kiện như kế hoạch.
+- **Tiền điều kiện:** Sự kiện đề xuất đang `Approved`, `Upcoming` hoặc `Ongoing`; hoặc sự kiện nội bộ đang `CREATED`, `PUBLIC`, `ONGOING` (hoặc `DRAFT` khi huỷ nháp).
+- **Dữ liệu vào:** Lý do; với việc đổi lịch là thời gian và địa điểm mới (`venueText` / `propertyId` / `bookingIds`).
 - **Luồng chính:**
   1. Thành viên mở sự kiện và chọn `Huỷ` hoặc `Đổi lịch`.
   2. Thành viên nhập lý do.
-  3. Với việc đổi thời gian hoặc địa điểm, hệ thống đánh giá lại BR15 và đưa sự kiện đã duyệt
-     quay lại UC26 để có một quyết định mới; sự kiện nội bộ không ngân sách theo BR53 chỉ được
-     ghi nhận lại (D4, chốt ngày 2026-10-11).
+  3. Với việc đổi thời gian hoặc địa điểm, hệ thống đánh giá lại BR15, BR44, BR45 và đưa sự kiện đã duyệt
+     quay lại UC26 để có một quyết định mới; sự kiện nội bộ `MEMBERS_ONLY` theo BR53 chỉ cập nhật trực tiếp và giữ nguyên `CREATED`/`PUBLIC`/`ONGOING`, **không quay lại UC26** và không áp giới hạn báo trước 7 ngày (D4, chốt ngày 2026-10-11).
   4. Hệ thống cập nhật hoặc giải phóng booking liên quan (UC47).
   5. Hệ thống thông báo cho mọi người đã đăng ký.
   6. Hệ thống tính lại các nghĩa vụ báo cáo và ngân sách: khi huỷ, `EventBudget` chưa giải ngân
      chuyển `Cancelled`; đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi ở
-     UC37 (BR57, BR58).
+     UC37 (BR57, BR58). Với sự kiện nội bộ bị huỷ → `CANCELLED`.
 - **Luồng thay thế:**
   - **A1 Bị huỷ bởi một quyết định vòng đời:** khi UC15 (tạm ngừng, giải thể) hoặc UC40 (kết quả
     hồ sơ) yêu cầu, hệ thống huỷ sự kiện mà không cần một bước của CMB, ghi quyết định đó làm lý
@@ -1139,7 +1134,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Mục tiêu nghiệp vụ:** Ghi nhận người tham gia ngay trên chính hồ sơ sự kiện, không phải trên
   một biểu mẫu riêng.
 - **Kích hoạt:** Sinh viên tìm thấy một sự kiện đã công bố ở UC06 hoặc UC24.
-- **Tiền điều kiện:** Sự kiện đang `Upcoming` và nằm trong khung thời gian đăng ký.
+- **Tiền điều kiện:** Sự kiện đề xuất đang `Upcoming` (hoặc sự kiện nội bộ CLB đang `PUBLIC`) và nằm trong khung thời gian đăng ký.
 - **Dữ liệu vào:** Sự kiện, và mọi câu trả lời mà biểu mẫu đăng ký của sự kiện yêu cầu.
 - **Luồng chính:**
   1. Sinh viên mở sự kiện và chọn đăng ký.
@@ -1168,7 +1163,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Module:** M06
 - **Mục tiêu nghiệp vụ:** Lấp đầy chỗ khi danh sách đăng ký biến động.
 - **Kích hoạt:** Một suất trống ra, hoặc CLB thay đổi sức chứa.
-- **Tiền điều kiện:** Sự kiện đang `Upcoming`, trong khung thời gian đăng ký, và có danh sách chờ.
+- **Tiền điều kiện:** Sự kiện đề xuất đang `Upcoming` (hoặc sự kiện nội bộ CLB đang `PUBLIC`), trong khung thời gian đăng ký, và có danh sách chờ.
 - **Luồng chính:**
   1. Thành viên mở danh sách đăng ký của sự kiện.
   2. Thành viên điều chỉnh sức chứa hoặc đẩy một sinh viên từ danh sách chờ lên.
@@ -1192,7 +1187,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Module:** M06
 - **Mục tiêu nghiệp vụ:** Chứng minh việc có mặt ngay tại nơi sự kiện diễn ra.
 - **Kích hoạt:** Người tham dự đến địa điểm.
-- **Tiền điều kiện:** Sự kiện đang `Ongoing` hoặc nằm trong khung giờ check-in định nghĩa trong tài liệu chính sách;
+- **Tiền điều kiện:** Sự kiện đề xuất đang `Ongoing` (hoặc `Upcoming` trong khung giờ check-in), hoặc sự kiện nội bộ CLB đang `PUBLIC`/`ONGOING` trong khung giờ check-in định nghĩa trong tài liệu chính sách;
   sinh viên có một bản đăng ký đã xác nhận, hoặc sự kiện là loại mở tự do.
 - **Dữ liệu vào:** Mã check-in hoặc QR của sự kiện, hoặc định danh người tham dự khi check-in
   thủ công.
@@ -1224,7 +1219,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Module:** M06
 - **Mục tiêu nghiệp vụ:** Tạo ra bộ dữ liệu điểm danh chính thức mà báo cáo và kỳ đánh giá dựa vào.
 - **Kích hoạt:** Sự kiện đã kết thúc.
-- **Tiền điều kiện:** Sự kiện đang `Completed`; điểm danh chưa được chốt.
+- **Tiền điều kiện:** Sự kiện đề xuất đang `Completed`, hoặc sự kiện nội bộ CLB đang `FINISH`; điểm danh chưa được chốt.
 - **Dữ liệu vào:** Các hiệu chỉnh cho lượt check-in bất thường, kèm lý do.
 - **Luồng chính:**
   1. Thành viên mở danh sách điểm danh của sự kiện.
@@ -1235,17 +1230,17 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Luồng thay thế:**
   - **A1 Mở khoá:** người giữ vai trò đặc biệt mở khoá bộ dữ liệu kèm lý do, và lần mở khoá được
     ghi audit (BR19).
-  - **A2 Sự kiện nội bộ (BR53):** với sự kiện ghi nhận thẳng ở UC25 A4, việc chốt đưa sự kiện
-    `Completed → Closed`; bộ điểm danh đã chốt là bản ghi hoạt động mà ICPDP xem ở UC02, và
-    không có báo cáo sau sự kiện.
+  - **A2 Sự kiện nội bộ CLB (BR53):** với sự kiện nội bộ ở `FINISH`, việc chốt chỉ khoá bộ dữ liệu
+    `Attendance` và **giữ nguyên trạng thái `FINISH`**; bộ điểm danh đã chốt là bản ghi hoạt động
+    mà ICPDP xem ở UC02, tự động tổng hợp vào Báo cáo định kỳ (UC38) và không có báo cáo sau sự kiện (UC33/UC34).
 - **Ngoại lệ:** **E1** còn bản ghi bị đánh dấu chưa được sửa hoặc xác nhận kèm lý do → từ chối
   chốt cho tới khi mọi bản ghi bị đánh dấu được xử lý.
   **E2** người gọi không có tư cách thành viên `Active` trong CLB → từ chối (BR54).
-- **Hậu điều kiện:** Bộ dữ liệu điểm danh chính thức bị khoá và là đầu vào của UC33 và UC42.
+- **Hậu điều kiện:** Bộ dữ liệu điểm danh chính thức bị khoá và là đầu vào của UC33 (nếu là sự kiện đề xuất), UC38 và UC42.
 - **Quy tắc nghiệp vụ:** BR54 (`club.attendance.manage`). BR18, BR19, BR53. Việc chốt **không** điều khiển feedback window — BR36 đã mở
   nó từ lúc check-in, và đây là phần sửa của v2 so với UC54 của v1.
 - **Đầu ra:** Bộ Attendance chính thức, bản ghi audit.
-- **Use case liên quan:** UC31, UC33, UC42
+- **Use case liên quan:** UC31, UC33, UC38, UC42
 - **Pain point:** BP07
 
 ---
@@ -1276,7 +1271,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   - **E3** người gọi không phải Club Leader của CLB (`club.report.submit`) → từ chối (BR54).
 - **Hậu điều kiện:** Sự kiện ở `Report Submitted`; các số liệu nạp sẵn của báo cáo đã bị đóng băng.
 - **Quy tắc nghiệp vụ:** BR54 (`club.report.submit`). BR20 — deadline đến từ UC04; một báo cáo quá hạn đi vào BR21. Sự kiện
-  nội bộ ghi nhận thẳng (BR53) không sinh nghĩa vụ báo cáo — nó đóng ở UC32 A2.
+  nội bộ CLB (`MEMBERS_ONLY`, BR53) không sinh nghĩa vụ báo cáo sau sự kiện — kết thúc ở `FINISH` và được tổng hợp vào Báo cáo định kỳ (UC38).
 - **Đầu ra:** Báo cáo sau sự kiện, ApprovalTask.
 - **Use case liên quan:** UC32, UC34, UC36, UC49
 - **Pain point:** BP08
@@ -1450,7 +1445,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 - **Dữ liệu vào:** Phần thuyết minh và minh chứng mà hệ thống chưa có.
 - **Luồng chính:**
   1. Thành viên mở báo cáo cho kỳ tương ứng — học kỳ, năm học hoặc một kỳ khác định nghĩa trong tài liệu chính sách.
-  2. Hệ thống nạp sẵn các sự kiện, số liệu thành viên, điểm danh và tình hình tài chính.
+  2. Hệ thống nạp sẵn các sự kiện trong kỳ (gồm cả sự kiện đề xuất đã hoàn thành/đóng và sự kiện nội bộ CLB đã `FINISH`), số liệu thành viên, điểm danh và tình hình tài chính.
   3. Thành viên thêm phần thuyết minh, kế hoạch kỳ sau và mọi minh chứng bên ngoài.
   4. Thành viên nộp → `Submitted`; ICPDP nhận một task.
 - **Luồng thay thế:**
