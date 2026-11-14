@@ -82,7 +82,7 @@ function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget
           {editable && <AppButton variant="ghost" disabled={mutation.isPending} onClick={() => void act({ kind: "removeImage", imageId: image.id })}>{t("sponsoredItems.remove")}</AppButton>}
         </div>)}
       </div>
-      {editable && item.images.length < 5 && <label className="mt-3 inline-flex min-h-10 items-center rounded-lg border border-border-app bg-surface-app px-4 text-sm font-medium text-primary-app hover:bg-surface-strong-app focus-within:outline-2 focus-within:outline-ring-app">
+      {editable && item.images.length < 5 && <label className="relative mt-3 inline-flex min-h-10 items-center rounded-lg border border-border-app bg-surface-app px-4 text-sm font-medium text-primary-app hover:bg-surface-strong-app focus-within:outline-2 focus-within:outline-ring-app">
         {t("sponsoredItems.upload")}<input type="file" accept="image/jpeg,image/png" multiple disabled={mutation.isPending}
           className="sr-only" onChange={(event) => { void upload(Array.from(event.target.files ?? [])); event.target.value = ""; }} /></label>}
       {progress.total > 0 && <p role="status" className="mt-2 text-sm text-muted-app">{t("sponsoredItems.progress", progress)}</p>}
