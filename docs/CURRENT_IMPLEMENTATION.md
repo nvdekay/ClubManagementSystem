@@ -37,7 +37,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Actor | Use case | Hiện trạng |
 |---|---|---|
 | Mọi user | UC01 đăng nhập Google | Có; cần nghiệm thu callback Google thật |
-| Mọi user | UC02 dashboard | Có; từ 19/10 có danh sách sự kiện nội bộ cho ICPDP và lịch sử cơ cấu/ban chủ nhiệm theo CLB (ICPDP và Club Leader) |
+| Mọi user | UC02 dashboard | Có; từ 19/10 có danh sách sự kiện nội bộ cho ICPDP và lịch sử cơ cấu/ban chủ nhiệm theo CLB (ICPDP và Club Leader); nhánh `internal-event` (14/11/2026): tập sự kiện nội bộ ghi nhận bỏ `DRAFT`/`CANCELLED`/`Cancelled`, biểu đồ tháng 2 chuỗi `publicCount`/`internalCount` |
 | Student | UC06 khám phá CLB/sự kiện | Có; Guest xem được danh bạ/chi tiết (chỉ đọc), ứng tuyển/đăng ký mới yêu cầu đăng nhập; E1 gợi ý CLB mới nhất (19/10) |
 | Student | UC07 hồ sơ thành lập CLB | Có; hồ sơ quá hạn sửa tự chuyển `Expired`; còn QA Cloudinary thật và dọn asset mồ côi |
 | Student | UC17 ứng tuyển thành viên | Có; thành viên `Active` hoặc `Inactive` của CLB không nộp được (E3/BR13, sửa 17/10/2026) |
@@ -57,7 +57,7 @@ nghiệp vụ; **Chưa làm** = thuộc phạm vi nhưng code chưa theo kịp m
 | Club Leader | UC14 xin tạm ngừng | Có, tại `/club/:clubId/suspension-requests`, kèm xác nhận sự kiện/booking bị ảnh hưởng |
 | Club Leader | UC16, UC18–UC21 tuyển và quản lý thành viên | Có, gồm job tái xác nhận đầu kỳ UC21 A2 (Leader được miễn); UC20 A1 tiếp nhận thủ công (email + lý do) có từ 17/10 |
 | Club Leader | UC23 quản lý role và phân quyền | **Đã rút** (SRS hiện hành, role cố định); code UC23 đã gỡ 07/11/2026 |
-| Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có |
+| Club Leader | UC25, UC27, UC28, UC30, UC32 sự kiện | Có; nhánh `internal-event` (14/11/2026, `.sdd/specs/feat-internal-club-events`) thêm luồng sự kiện nội bộ `DRAFT → CREATED → PUBLIC → ONGOING → FINISH` / `CANCELLED`: server `POST`/`PUT /clubs/:clubId/internal-events`, `POST /clubs/:clubId/internal-events/:id/create`; client `/club/:clubId/events/internal/new`, `/club/:clubId/events/:eventId/internal-edit` (`client/src/pages/club/InternalClubEventPage.tsx`) |
 | Club Leader | UC33 báo cáo sau sự kiện | Có |
 | Club Leader | UC36 khoản chi/quyết toán | Có, đã nối vào app chính; chứng từ bắt buộc (BR25), hạn hoàn trả 7 ngày (BR58) |
 | Club Leader | UC38 báo cáo định kỳ | Có, tại `/club/:clubId/periodic-reports`; mỗi lần nộp lưu snapshot riêng |

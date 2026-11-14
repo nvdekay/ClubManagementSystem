@@ -459,227 +459,235 @@
         </mxGraphModel>
     </diagram>
     <diagram id="swim-04" name="04 Event Proposal">
-  <mxGraphModel dx="2779" dy="1604" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1050" pageHeight="1650" math="0" shadow="0">
-    <root>
-      <mxCell id="0" />
-      <mxCell id="1" parent="0" />
-      <mxCell id="f04-1" parent="1" style="text;html=1;fontSize=20;fontStyle=1;align=left;verticalAlign=middle;" value="Flow 4 - Event Proposal and Approval" vertex="1">
-        <mxGeometry height="34" width="990" x="30" y="20" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="" vertex="1">
-        <mxGeometry height="1800" width="330" x="30" y="120" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="&lt;b&gt;Club Leader&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;President or vice president&lt;/span&gt;" vertex="1">
-        <mxGeometry height="50" width="330" x="30" y="70" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="" vertex="1">
-        <mxGeometry height="1800" width="330" x="360" y="120" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="&lt;b&gt;ICPDP Officer&lt;/b&gt;" vertex="1">
-        <mxGeometry height="50" width="330" x="360" y="70" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="" vertex="1">
-        <mxGeometry height="1800" width="330" x="690" y="120" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="&lt;b&gt;UCMS&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;System and scheduler&lt;/span&gt;" vertex="1">
-        <mxGeometry height="50" width="330" x="690" y="70" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-8" parent="1" style="ellipse;html=1;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
-        <mxGeometry height="30" width="30" x="180" y="180" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-9" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Create a proposal: objectives, scope, schedule, venue, risks, budget lines" vertex="1">
-        <mxGeometry height="62" width="220" x="85" y="314" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-10" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Check conflicts. Any blocking conflict?" vertex="1">
-        <mxGeometry height="96" width="190" x="760" y="447" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-11" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Internal event without budget?" vertex="1">
-        <mxGeometry height="96" width="190" x="760" y="597" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-12" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Submit a Pending Approval version with check results and warnings" vertex="1">
-        <mxGeometry height="62" width="220" x="745" y="764" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-13" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Review proposal; explicitly decide sponsorship and Before / After Event for EVERY budget line" vertex="1">
-        <mxGeometry height="62" width="220" x="415" y="914" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-14" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Decision?" vertex="1">
-        <mxGeometry height="96" width="190" x="430" y="1287" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-15" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Receive the revision request; create a new version and resubmit" vertex="1">
-        <mxGeometry height="62" width="220" x="85" y="1454" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-16" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Reject and notify the reason; publication is not allowed" vertex="1">
-        <mxGeometry height="62" width="220" x="745" y="1454" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-17" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Approve only after all funding decisions; notify club with caps, reasons, invoice windows and proposal link" vertex="1">
-        <mxGeometry height="62" width="220" x="85" y="1604" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-18" parent="1" style="ellipse;html=1;shape=endState;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
-        <mxGeometry height="30" width="30" x="180" y="1770" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-19" edge="1" parent="1" source="f04-8" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-9">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points" />
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-20" edge="1" parent="1" source="f04-10" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-11">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points" />
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-21" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="No / warning only" vertex="1">
-        <mxGeometry height="18" width="131" x="861" y="561" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-22" edge="1" parent="1" source="f04-11" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-12">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points" />
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-23" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="No" vertex="1">
-        <mxGeometry height="18" width="26" x="861" y="720" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-24" edge="1" parent="1" source="f04-13" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.8;exitY=1;entryX=0.8;entryY=0;" target="f04-14">
-        <mxGeometry relative="1" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-lbl-direct" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Direct review (no defense)" vertex="1">
-        <mxGeometry height="18" width="140" x="530" y="1090" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-25" edge="1" parent="1" source="f04-17" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-18">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points" />
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-26" edge="1" parent="1" source="f04-9" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-10">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="855" y="345" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-27" edge="1" parent="1" source="f04-12" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-13">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="525" y="795" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-28" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-15">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="195" y="1095" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-29" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Request revision" vertex="1">
-        <mxGeometry height="18" width="124" x="204" y="1314" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-30" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-16">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="855" y="1095" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-31" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Reject" vertex="1">
-        <mxGeometry height="18" width="54" x="710" y="1314" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-32" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="f04-17">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="525" y="1395" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-33" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Approve" vertex="1">
-        <mxGeometry height="18" width="61" x="531" y="1500" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-34" edge="1" parent="1" source="f04-11" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f04-17">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="76" y="645" />
-            <mxPoint x="76" y="1395" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-35" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Yes - approved directly" vertex="1">
-        <mxGeometry height="18" width="173" x="468" y="624" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-36" edge="1" parent="1" source="f04-16" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="f04-18">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="855" y="1545" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-37" edge="1" parent="1" source="f04-10" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="f04-9">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="195" y="495" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-38" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Yes - adjust" vertex="1">
-        <mxGeometry height="18" width="96" x="430" y="474" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-39" edge="1" parent="1" source="f04-15" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f04-9">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="71" y="1245" />
-            <mxPoint x="71" y="345" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-40" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Review again" vertex="1">
-        <mxGeometry height="18" width="96" x="77" y="786" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-def-sch" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;dashed=1;" value="Schedule defense session &amp; lock classroom (&amp;gt;= 48h) (BR63)" vertex="1">
-        <mxGeometry height="62" width="220" x="415" y="1000" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-def-conf" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;dashed=1;" value="Confirm defense schedule or request reschedule (&amp;gt;= 24h)" vertex="1">
-        <mxGeometry height="62" width="220" x="85" y="1080" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-def-room" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Conduct defense in Live Room (auto-save Markdown notes)" vertex="1">
-        <mxGeometry height="62" width="220" x="415" y="1160" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-e-sch" edge="1" parent="1" source="f04-13" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.2;exitY=1;entryX=0.2;entryY=0;" target="f04-def-sch">
-        <mxGeometry relative="1" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-lbl-reqdef" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Defense required" vertex="1">
-        <mxGeometry height="18" width="90" x="380" y="978" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-e-conf" edge="1" parent="1" source="f04-def-sch" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="f04-def-conf">
-        <mxGeometry relative="1" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-e-room" edge="1" parent="1" source="f04-def-conf" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f04-def-room">
-        <mxGeometry relative="1" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-e-finish" edge="1" parent="1" source="f04-def-room" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f04-14">
-        <mxGeometry relative="1" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-e-noshow" edge="1" parent="1" source="f04-def-conf" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.5;exitY=1;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;dashed=1;" target="f04-16">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="195" y="1485" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-lbl-noshow" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="NO_SHOW (auto reject)" vertex="1">
-        <mxGeometry height="18" width="130" x="220" y="1476" as="geometry" />
-      </mxCell>
-      <mxCell id="f04-e-redef" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.2;exitY=0;entryX=0.8;entryY=1;edgeStyle=orthogonalEdgeStyle;dashed=1;" target="f04-def-sch">
-        <mxGeometry relative="1" as="geometry">
-          <Array as="points">
-            <mxPoint x="468" y="1250" />
-            <mxPoint x="591" y="1250" />
-          </Array>
-        </mxGeometry>
-      </mxCell>
-      <mxCell id="f04-lbl-redef" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Re-defense pending" vertex="1">
-        <mxGeometry height="18" width="110" x="530" y="1240" as="geometry" />
-      </mxCell>
-    </root>
-  </mxGraphModel>
-</diagram>
+        <mxGraphModel dx="2779" dy="1604" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1050" pageHeight="1650" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="f04-1" parent="1" style="text;html=1;fontSize=20;fontStyle=1;align=left;verticalAlign=middle;" value="Flow 4 - Event Proposal and Approval" vertex="1">
+                    <mxGeometry height="34" width="990" x="30" y="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="" vertex="1">
+                    <mxGeometry height="1800" width="330" x="30" y="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="&lt;b&gt;Club Leader&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;President or vice president&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="50" width="330" x="30" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="" vertex="1">
+                    <mxGeometry height="1800" width="330" x="360" y="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="&lt;b&gt;ICPDP Officer&lt;/b&gt;" vertex="1">
+                    <mxGeometry height="50" width="330" x="360" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="" vertex="1">
+                    <mxGeometry height="1800" width="330" x="690" y="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="&lt;b&gt;UCMS&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:10px;font-weight:normal;&quot;&gt;System and scheduler&lt;/span&gt;" vertex="1">
+                    <mxGeometry height="50" width="330" x="690" y="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-8" parent="1" style="ellipse;html=1;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+                    <mxGeometry height="30" width="30" x="180" y="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-9" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="2 separate actions: Propose to ICPDP (PUBLIC or budgeted MEMBERS_ONLY, 7d) OR Create internal (no budget, ≥ 24h)" vertex="1">
+                    <mxGeometry height="62" width="220" x="85" y="314" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-10" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Check conflicts (venueText/room/bookings). Blocking conflict?" vertex="1">
+                    <mxGeometry height="96" width="190" x="760" y="447" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-11" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Unbudgeted internal club event?" vertex="1">
+                    <mxGeometry height="96" width="190" x="760" y="597" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-12" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Submit a Pending Approval version with check results and warnings" vertex="1">
+                    <mxGeometry height="62" width="220" x="745" y="764" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-13" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Review proposal; explicitly decide sponsorship and Before / After Event for EVERY budget line" vertex="1">
+                    <mxGeometry height="62" width="220" x="415" y="914" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-14" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="Decision?" vertex="1">
+                    <mxGeometry height="96" width="190" x="430" y="1287" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-15" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Receive the revision request; create a new version and resubmit" vertex="1">
+                    <mxGeometry height="62" width="220" x="85" y="1454" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-16" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Reject and notify the reason; publication is not allowed" vertex="1">
+                    <mxGeometry height="62" width="220" x="745" y="1454" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-17" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Approve after all funding decisions (notify caps, windows → Approved) or CREATED (internal → PUBLIC for members; schedule locked once PUBLIC)" vertex="1">
+                    <mxGeometry height="76" width="220" x="85" y="1597" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-18" parent="1" style="ellipse;html=1;shape=endState;aspect=fixed;fillColor=#000000;strokeColor=#000000;" value="" vertex="1">
+                    <mxGeometry height="30" width="30" x="180" y="1770" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-19" edge="1" parent="1" source="f04-8" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-9">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-20" edge="1" parent="1" source="f04-10" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-11">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-21" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="No / warning only" vertex="1">
+                    <mxGeometry height="18" width="131" x="861" y="561" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-22" edge="1" parent="1" source="f04-11" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-12">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-23" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="No" vertex="1">
+                    <mxGeometry height="18" width="26" x="861" y="720" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-24" edge="1" parent="1" source="f04-13" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.8;exitY=1;entryX=0.8;entryY=0;" target="f04-14">
+<mxGeometry relative="1" as="geometry"/>
+</mxCell>
+<mxCell id="f04-lbl-direct" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Direct review (no defense)" vertex="1">
+<mxGeometry height="18" width="140" x="530" y="1090" as="geometry"/>
+</mxCell>
+                <mxCell id="f04-25" edge="1" parent="1" source="f04-17" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-18">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-26" edge="1" parent="1" source="f04-9" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-10">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="855" y="345"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-27" edge="1" parent="1" source="f04-12" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-13">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="525" y="795"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-28" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-15">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="195" y="1095"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-29" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Request revision" vertex="1">
+                    <mxGeometry height="18" width="124" x="204" y="1314" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-30" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="f04-16">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="855" y="1095"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-31" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Reject" vertex="1">
+                    <mxGeometry height="18" width="54" x="710" y="1314" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-32" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="f04-17">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="525" y="1395"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-33" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Approve" vertex="1">
+                    <mxGeometry height="18" width="61" x="531" y="1500" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-34" edge="1" parent="1" source="f04-11" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f04-17">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="76" y="645"/>
+                            <mxPoint x="76" y="1395"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-35" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Yes - CREATED directly&lt;br&gt;(≥ 24h notice; reschedule only&lt;br&gt;before PUBLIC; shown in UC02)" vertex="1">
+                    <mxGeometry height="42" width="173" x="468" y="612" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-36" edge="1" parent="1" source="f04-16" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="f04-18">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="855" y="1545"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-37" edge="1" parent="1" source="f04-10" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="f04-9">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="195" y="495"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-38" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Yes - adjust" vertex="1">
+                    <mxGeometry height="18" width="96" x="430" y="474" as="geometry"/>
+                </mxCell>
+                <mxCell id="f04-39" edge="1" parent="1" source="f04-15" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;edgeStyle=none;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="f04-9">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="71" y="1245"/>
+                            <mxPoint x="71" y="345"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="f04-40" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Review again" vertex="1">
+                    <mxGeometry height="18" width="96" x="77" y="786" as="geometry"/>
+                </mxCell>
+            
+<mxCell id="f04-def-sch" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;dashed=1;" value="Schedule defense session &amp; lock classroom (&amp;gt;= 48h) (BR63)" vertex="1">
+<mxGeometry height="62" width="220" x="415" y="1000" as="geometry"/>
+</mxCell>
+<mxCell id="f04-def-conf" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;dashed=1;" value="Confirm defense schedule or request reschedule (&amp;gt;= 24h)" vertex="1">
+<mxGeometry height="62" width="220" x="85" y="1080" as="geometry"/>
+</mxCell>
+<mxCell id="f04-def-room" parent="1" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Conduct defense in Live Room (auto-save Markdown notes)" vertex="1">
+<mxGeometry height="62" width="220" x="415" y="1160" as="geometry"/>
+</mxCell>
+
+<!-- Edges for defense -->
+<mxCell id="f04-e-sch" edge="1" parent="1" source="f04-13" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.2;exitY=1;entryX=0.2;entryY=0;" target="f04-def-sch">
+<mxGeometry relative="1" as="geometry"/>
+</mxCell>
+<mxCell id="f04-lbl-reqdef" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Defense required" vertex="1">
+<mxGeometry height="18" width="90" x="380" y="978" as="geometry"/>
+</mxCell>
+
+<mxCell id="f04-e-conf" edge="1" parent="1" source="f04-def-sch" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="f04-def-conf">
+<mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="f04-e-room" edge="1" parent="1" source="f04-def-conf" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f04-def-room">
+<mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="f04-e-finish" edge="1" parent="1" source="f04-def-room" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f04-14">
+<mxGeometry relative="1" as="geometry"/>
+</mxCell>
+
+<mxCell id="f04-e-noshow" edge="1" parent="1" source="f04-def-conf" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.5;exitY=1;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;dashed=1;" target="f04-16">
+<mxGeometry relative="1" as="geometry">
+  <Array as="points">
+    <mxPoint x="195" y="1485"/>
+  </Array>
+</mxGeometry>
+</mxCell>
+<mxCell id="f04-lbl-noshow" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="NO_SHOW (auto reject)" vertex="1">
+<mxGeometry height="18" width="130" x="220" y="1476" as="geometry"/>
+</mxCell>
+
+<mxCell id="f04-e-redef" edge="1" parent="1" source="f04-14" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;exitX=0.2;exitY=0;entryX=0.8;entryY=1;edgeStyle=orthogonalEdgeStyle;dashed=1;" target="f04-def-sch">
+<mxGeometry relative="1" as="geometry">
+  <Array as="points">
+    <mxPoint x="468" y="1250"/>
+    <mxPoint x="591" y="1250"/>
+  </Array>
+</mxGeometry>
+</mxCell>
+<mxCell id="f04-lbl-redef" parent="1" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;labelBackgroundColor=#ffffff;" value="Re-defense pending" vertex="1">
+<mxGeometry height="18" width="110" x="530" y="1240" as="geometry"/>
+</mxCell>
+</root>
+        </mxGraphModel>
+    </diagram>
     <diagram id="swim-05" name="05 Event Execution">
         <mxGraphModel dx="1380" dy="2278" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1380" pageHeight="2278" math="0" shadow="0">
             <root>
@@ -727,22 +735,22 @@
                 <mxCell id="f05-14" value="Confirm the registration" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="1075" y="642" width="220" height="62" as="geometry"/>
                 </mxCell>
-                <mxCell id="f05-15" value="At start time: move the event to Ongoing" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+                <mxCell id="f05-15" value="At start time: move the event to Ongoing / ONGOING" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="1075" y="792" width="220" height="62" as="geometry"/>
                 </mxCell>
                 <mxCell id="f05-16" value="Check in with the event code" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="85" y="942" width="220" height="62" as="geometry"/>
                 </mxCell>
-                <mxCell id="f05-17" value="At end time: move the event to Completed" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+                <mxCell id="f05-17" value="At end time: move to Completed (public) or FINISH (internal)" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="1075" y="1092" width="220" height="62" as="geometry"/>
                 </mxCell>
                 <mxCell id="f05-18" value="Send feedback within the feedback window" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="85" y="1242" width="220" height="62" as="geometry"/>
                 </mxCell>
-                <mxCell id="f05-19" value="Close the attendance list" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+                <mxCell id="f05-19" value="Finalize and lock attendance list" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="415" y="1242" width="220" height="62" as="geometry"/>
                 </mxCell>
-                <mxCell id="f05-20" value="Submit the post-event report with attendance and evidence" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+                <mxCell id="f05-20" value="Public event: submit post-event report (internal FINISH skips → Periodic Report)" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="415" y="1392" width="220" height="62" as="geometry"/>
                 </mxCell>
                 <mxCell id="f05-21" value="Review the report against attendance data" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
@@ -754,7 +762,7 @@
                 <mxCell id="f05-23" value="Receive the comments; correct the report" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="415" y="1842" width="220" height="62" as="geometry"/>
                 </mxCell>
-                <mxCell id="f05-24" value="Close the event (Closed)" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+                <mxCell id="f05-24" value="Close public event (Closed); internal FINISH feeds Periodic Report" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
                     <mxGeometry x="1075" y="1842" width="220" height="62" as="geometry"/>
                 </mxCell>
                 <mxCell id="f05-25" value="Open a violation case (see Flow 11)" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;dashed=1;fontSize=11;" vertex="1" parent="1">

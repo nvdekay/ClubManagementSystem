@@ -26,10 +26,12 @@ export interface FailedDashboardPanel {
 }
 
 export interface DashboardMonthCount { month: string; count: number }
+/** UC02: `count = publicCount + internalCount` (internal = members-only, budgeted or self-funded). */
+export interface DashboardMonthEventCount extends DashboardMonthCount { publicCount: number; internalCount: number }
 
 export interface IcpdpDashboardCharts {
   queues: { entityType: string; onTime: number; overdue: number }[];
-  eventsByMonth: DashboardMonthCount[];
+  eventsByMonth: DashboardMonthEventCount[];
   clubsByField: { field: string; count: number }[];
   clubsByState: { state: string; count: number }[];
   budget: { periodCode?: string; approved: number; disbursed: number };

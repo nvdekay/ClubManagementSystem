@@ -12,7 +12,7 @@ function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
-function recordedInternal(): Doc {
+export function recordedInternal(): Doc {
   return { organizerType: { $ne: "ICPDP" }, audienceScope: "MEMBERS_ONLY", state: { $in: [...RECORDED_EVENT_STATES] } };
 }
 

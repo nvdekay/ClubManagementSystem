@@ -89,7 +89,7 @@ Kiểm tra trước ngày demo các khung đăng ký, check-in, hạn sửa và 
 | Tình huống | Cách giải thích và kết quả cần chỉ ra |
 |---|---|
 | Hồ sơ bị trả sửa | `Revision Requested` giữ nhận xét và hạn bổ sung; nộp lại tạo bản sửa mới. Hết hạn sửa thì thao tác lưu/nộp bị từ chối, scheduler xử lý `Expired`. Nếu còn lịch bảo vệ hiệu lực, bản nộp lại có thể vào thẳng `Under Review`. |
-| Nội bộ không ngân sách | `MEMBERS_ONLY` và không có dòng ngân sách được ghi nhận thẳng `Approved`, có audit; vẫn kiểm tra điều kiện CLB, lịch và xung đột. Không sinh nghĩa vụ báo cáo sau sự kiện; chốt điểm danh thì `Closed`. Booking đính kèm vẫn cần UC46. |
+| Nội bộ không ngân sách | `MEMBERS_ONLY` và không có dòng ngân sách đi luồng riêng "Tạo sự kiện nội bộ": `DRAFT → CREATED → PUBLIC → ONGOING → FINISH` (hoặc `CANCELLED`), báo trước ít nhất 24 giờ, không qua ICPDP. Vẫn kiểm tra điều kiện CLB, lịch và xung đột, có audit. Sau `PUBLIC` thì khoá lịch, chỉ còn huỷ. Không sinh nghĩa vụ báo cáo sau sự kiện; chốt điểm danh vẫn giữ `FINISH`. Form đề xuất ICPDP từ chối `MEMBERS_ONLY` không có dòng ngân sách. Booking đính kèm vẫn cần UC46. |
 | Huỷ hoặc đổi lịch | Cần lý do. `Ongoing` còn có thể huỷ nếu chưa chốt điểm danh, nhưng không đổi lịch. Đổi lịch chỉ áp dụng `Approved`/`Upcoming`, chưa check-in; sự kiện thông thường quay lại thẩm định, booking tương lai được giải phóng. |
 | Đầy chỗ, giảm sức chứa hoặc đẩy waitlist sai thứ tự | Không có overbooking thì không vượt sức chứa; không giảm dưới số `Confirmed`. Việc đẩy waitlist chỉ trong cửa sổ đăng ký và chỉ chọn đầu hàng. |
 | Check-in sai mã, ngoài giờ hoặc chưa xác nhận | Server từ chối. Walk-in chỉ khi sự kiện cho phép; check-in thủ công ngoài giờ cần lý do và vẫn chịu các kiểm tra đối tượng/sức chứa. |
@@ -108,7 +108,7 @@ Kiểm tra trước ngày demo các khung đăng ký, check-in, hạn sửa và 
 
 ### 3. Có phải mọi sự kiện đều cần ICPDP phê duyệt và nộp báo cáo?
 
-“Dạ không. Theo BR53, sự kiện nội bộ `MEMBERS_ONLY` không có dòng ngân sách được ghi nhận thẳng `Approved`. Hệ thống vẫn giữ đề xuất và audit để nhà trường theo dõi. Khi kết thúc và chốt điểm danh, sự kiện đóng luôn. Nếu có ngân sách, dù chỉ dành cho thành viên, vẫn đi qua UC26 và báo cáo theo luồng thông thường.” Nhánh này nằm ở `submitVersion` trong `mongo-club-event-repository.ts`; việc đóng sau điểm danh nằm ở `event-attendance-actions.ts`.
+“Dạ không. Theo BR53, sự kiện nội bộ `MEMBERS_ONLY` không xin ngân sách trường do CLB tự tạo qua chức năng riêng, báo trước ít nhất 24 giờ, không cần ICPDP phê duyệt. Vòng đời là `DRAFT → CREATED → PUBLIC → ONGOING → FINISH`; từ `CREATED` nhà trường đã thấy sự kiện trên dashboard UC02, và mọi thao tác đều có audit. Sự kiện kết thúc ở `FINISH`, không phải nộp báo cáo. Nếu có ngân sách, dù chỉ dành cho thành viên, vẫn đi qua UC26 và báo cáo theo luồng thông thường.” Luồng này nằm ở `writeInternal` trong `mongo-club-event-repository.ts`; quy tắc 24 giờ và khoá lịch ở `club-event-rules.ts`; chốt điểm danh giữ `FINISH` ở `event-attendance-actions.ts`.
 
 ### 4. Bảo vệ đề xuất có phải một cấp duyệt bổ sung? Live Defense Room làm được gì?
 

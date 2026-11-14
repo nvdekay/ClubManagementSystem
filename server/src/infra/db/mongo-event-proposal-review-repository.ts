@@ -245,9 +245,14 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       }
       const completed = await events.updateMany({ state: { $in: ["Upcoming", "Ongoing"] }, endAt: { $lte: now } },
         { $set: { state: "Completed" } });
+      const finished = await events.updateMany({ state: { $in: ["PUBLIC", "ONGOING"] }, endAt: { $lte: now } },
+        { $set: { state: "FINISH" } });
       const started = await events.updateMany({ state: "Upcoming", startAt: { $lte: now }, endAt: { $gt: now } },
         { $set: { state: "Ongoing" } });
-      return { expired, started: started.modifiedCount, completed: completed.modifiedCount };
+      const startedInternal = await events.updateMany({ state: "PUBLIC", startAt: { $lte: now }, endAt: { $gt: now } },
+        { $set: { state: "ONGOING" } });
+      return { expired, started: started.modifiedCount + startedInternal.modifiedCount,
+        completed: completed.modifiedCount + finished.modifiedCount };
     },
   };
 }

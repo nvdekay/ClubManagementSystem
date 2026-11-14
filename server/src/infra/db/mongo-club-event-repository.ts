@@ -1,15 +1,16 @@
 import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { randomInt, randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
-import type { ClubEventInput, ClubEventRepository } from "../../domain/club-event.js";
-import { eventActionPermission } from "../../domain/club-event.js";
-import { assertEventNotice, eventConflictResult, validateClubEventInput, validateEventPublication } from "../../domain/club-event-rules.js";
+import type { ClubEventInput, ClubEventRepository, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
+import { eventActionPermission, isInternalClubEventState } from "../../domain/club-event.js";
+import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, eventConflictResult,
+  validateClubEventInput, validateEventPublication } from "../../domain/club-event-rules.js";
 import { DomainError } from "../../domain/errors.js";
 import type { AcademicSemester } from "../../domain/policy.js";
 import { checkInCode } from "../../domain/school-event.js";
 import { openViolationCount, routedTaskFields } from "./approval-routing.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
-import { clubEventFrom, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
+import { clubEventFrom, EVENT_PAYLOAD_ACTIONS, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
 import { applyEventAttendanceAction } from "./event-attendance-actions.js";
 import { cancelEventInSession } from "./event-cancellation.js";
 import { promoteEventWaitlist } from "./event-waitlist.js";
@@ -32,8 +33,7 @@ async function audit(session: ClientSession, id: Types.ObjectId, action: string,
     correlationId: randomUUID(), at: now }], { session });
 }
 async function payloadInSession(session: ClientSession, id: Types.ObjectId): Promise<Doc> {
-  const log = await m.auditLogs!.findOne({ entityType: "Event", entityId: id,
-    action: { $in: ["EVENT_DRAFT_CREATED", "EVENT_DRAFT_SAVED", "EVENT_PROPOSAL_SUBMITTED", "RECORD_INTERNAL", "EVENT_RESCHEDULED"] } })
+  const log = await m.auditLogs!.findOne({ entityType: "Event", entityId: id, action: { $in: EVENT_PAYLOAD_ACTIONS } })
     .sort({ "after.eventVersion": -1, at: -1, _id: -1 }).session(session).lean();
   if (log) return ((log.after as Doc)?.payload ?? {}) as Doc;
   const version = await m.eventProposalVersions!.findOne({ eventId: id }).sort({ revisionNo: -1 }).session(session).lean();
@@ -74,9 +74,12 @@ async function assess(session: ClientSession, clubId: Types.ObjectId, input: Clu
       const overlap = { startAt: { $lt: interval.endAt }, endAt: { $gt: interval.startAt } };
       const intervalConflicts: Doc[] = [];
       intervalConflicts.push(...await m.events!.find({ propertyId: property._id, ...(eventId ? { _id: { $ne: eventId } } : {}),
-        state: { $in: ["Approved", "Upcoming", "Ongoing"] }, ...overlap }).session(session).lean());
-      intervalConflicts.push(...await m.propertyBookings!.find({ propertyId: property._id, state: { $in: ["Approved", "In Use"] },
-        _id: { $nin: input.bookingIds.map(oid) }, ...(eventId ? { eventId: { $ne: eventId } } : {}), ...overlap }).session(session).lean());
+        state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] }, ...overlap }).session(session).lean());
+      const bookings = await m.propertyBookings!.find({ propertyId: property._id, state: { $in: ["Approved", "In Use"] },
+        _id: { $nin: input.bookingIds.map(oid) }, ...(eventId ? { eventId: { $ne: eventId } } : {}), ...overlap }).session(session).lean();
+      // UC58: the club's own room allocation covering the whole slot is its right to use the room, not a conflict.
+      intervalConflicts.push(...bookings.filter((b) => !(property.type === "ROOM" && String(b.clubId) === String(clubId) &&
+        (b.startAt as Date) <= interval.startAt && (b.endAt as Date) >= interval.endAt)));
       intervalConflicts.push(...await m.eventDefenseSessions!.find({ propertyId: property._id,
         state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...overlap }).session(session).lean());
       found.push(...intervalConflicts);
@@ -104,33 +107,67 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
   const revisionNo = Number(event.currentRevisionNo ?? 0) + 1;
   const existingBudget = await m.eventBudgets!.findOne({ eventId: event._id }).session(session).lean();
   if (existingBudget && !input.budgetLines.length) conflict("an event with an approved budget must keep its budget lines when resubmitting");
-  const direct = input.audienceScope === "MEMBERS_ONLY" && input.budgetLines.length === 0 && !existingBudget;
-  const activeDefense = !direct
-    ? await m.eventDefenseSessions!.findOne({
-      eventId: event._id,
-      state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] },
-    }).session(session).lean()
-    : null;
-  const state = direct ? "Approved" : activeDefense ? "Under Review" : "Pending Approval";
+  const activeDefense = await m.eventDefenseSessions!.findOne({
+    eventId: event._id,
+    state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] },
+  }).session(session).lean();
+  const state = activeDefense ? "Under Review" : "Pending Approval";
   await m.eventProposalVersions!.create([{ eventId: event._id, revisionNo, payload: input, budgetLines: input.budgetLines,
     requestedBudgetTotal: Types.Decimal128.fromString(String(input.budgetLines.reduce((sum, line) => sum + line.amount, 0))),
     conflictResult: assessment.conflictResult, submittedBy: actorId, submittedAt: now }], { session });
   await m.events!.updateOne({ _id: event._id }, { $set: { ...fields(input, assessment.semesterCode), state, currentRevisionNo: revisionNo,
     conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail }, $unset: { revisionDeadlineAt: "" } }, { session });
   // UC05: budget, risk and the club's open cases decide, once, the SLA of its review.
-  if (!direct) await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
+  await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
     title: input.title, state: "Open", openedAt: now,
     ...(activeDefense ? { assigneeId: activeDefense.leadOfficerId } : {}),
     ...(await routedTaskFields(session, { requestType: "EVENT_PROPOSAL", riskCategory: input.riskCategory,
       amount: input.budgetLines.reduce((sum, line) => sum + line.amount, 0),
       openViolations: await openViolationCount(event.clubId, session) }, now)) }], { session });
-  const linked = await m.propertyBookings!.find({ eventId: event._id }).session(session).lean();
-  if (requireBookingPermission && (linked.length !== input.bookingIds.length || linked.some((booking) => !input.bookingIds.includes(String(booking._id))))) {
-    await assertEventWriteAccess(session, event.clubId as Types.ObjectId, actorId, "club.booking.manage", now);
+  await linkEventBookings(session, event._id as Types.ObjectId, event.clubId as Types.ObjectId, input.bookingIds, actorId, now, requireBookingPermission);
+  await audit(session, event._id as Types.ObjectId, "EVENT_PROPOSAL_SUBMITTED", actorId, { payload: input, state, revisionNo }, now);
+}
+async function linkEventBookings(session: ClientSession, eventId: Types.ObjectId, clubId: Types.ObjectId, bookingIds: string[],
+  actorId: Types.ObjectId, now: Date, requireBookingPermission: boolean) {
+  const linked = await m.propertyBookings!.find({ eventId }).session(session).lean();
+  if (requireBookingPermission && (linked.length !== bookingIds.length || linked.some((booking) => !bookingIds.includes(String(booking._id))))) {
+    await assertEventWriteAccess(session, clubId, actorId, "club.booking.manage", now);
   }
-  await m.propertyBookings!.updateMany({ eventId: event._id, _id: { $nin: input.bookingIds.map(oid) } }, { $unset: { eventId: "" } }, { session });
-  for (const bookingId of input.bookingIds) await m.propertyBookings!.updateOne({ _id: oid(bookingId), clubId: event.clubId }, { $set: { eventId: event._id } }, { session });
-  await audit(session, event._id as Types.ObjectId, direct ? "RECORD_INTERNAL" : "EVENT_PROPOSAL_SUBMITTED", actorId, { payload: input, state, revisionNo }, now);
+  await m.propertyBookings!.updateMany({ eventId, _id: { $nin: bookingIds.map(oid) } }, { $unset: { eventId: "" } }, { session });
+  for (const bookingId of bookingIds) await m.propertyBookings!.updateOne({ _id: oid(bookingId), clubId }, { $set: { eventId } }, { session });
+}
+async function publishInSession(session: ClientSession, id: Types.ObjectId, startAt: Date, endAt: Date, input: EventPublishInput,
+  state: "Upcoming" | "PUBLIC", actorId: Types.ObjectId, now: Date) {
+  validateEventPublication(input, startAt, endAt, now);
+  const code = checkInCode(() => randomInt(1000000) / 1000000);
+  await m.events!.updateOne({ _id: id }, { $set: { ...input, state, publishedAt: now, checkInCode: code } }, { session });
+  await audit(session, id, "EVENT_PUBLISHED", actorId, { state, ...input }, now);
+}
+/** Internal events reuse the proposal input shape: always members-only and never with a university budget. */
+function internalInput(source: InternalClubEventInput): ClubEventInput {
+  return { title: source.title, objective: source.objective, plan: source.plan, startAt: source.startAt, endAt: source.endAt,
+    venueText: source.venueText, propertyId: source.propertyId, capacity: source.capacity, riskCategory: source.riskCategory,
+    bookingIds: source.bookingIds, audienceScope: "MEMBERS_ONLY", budgetLines: [] };
+}
+/** One write path for internal create, edit and CREATED reschedule; the 24-hour notice applies when the schedule becomes official or moves. */
+async function writeInternal(session: ClientSession, clubId: Types.ObjectId, event: Doc | null, next: ClubEventInput,
+  state: "DRAFT" | "CREATED", actorId: Types.ObjectId, now: Date, rules: ClubEventRules, action: string,
+  requireBookingPermission: boolean, reason?: string): Promise<Types.ObjectId> {
+  const id = (event?._id ?? new Types.ObjectId()) as Types.ObjectId;
+  const assessment = await assess(session, clubId, next, event ? id : undefined, now, false, rules);
+  if (state === "CREATED") {
+    if (!event || event.state !== "CREATED" || (event.startAt as Date).getTime() !== next.startAt.getTime() ||
+      (event.endAt as Date).getTime() !== next.endAt.getTime()) assertInternalEventNotice(next.startAt, now);
+    if (assessment.conflictResult === "Blocking Conflict") {
+      throw new DomainError("event schedule has blocking conflicts", "conflict", { conflicts: assessment.conflictDetail.map((d) => d.id) });
+    }
+  }
+  const set = { ...fields(next, assessment.semesterCode), state, conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail };
+  if (event) await m.events!.updateOne({ _id: id }, { $set: set }, { session });
+  else await m.events!.create([{ _id: id, organizerType: "CLUB", clubId, clubName: assessment.club.name, currentRevisionNo: 0, createdAt: now, ...set }], { session });
+  if (state === "CREATED") await linkEventBookings(session, id, clubId, next.bookingIds, actorId, now, requireBookingPermission);
+  await audit(session, id, action, actorId, { payload: next, state }, now, reason);
+  return id;
 }
 export function mongoClubEventRepository(rules: ClubEventRules): ClubEventRepository {
   async function required(clubId: string, eventId: string) {
@@ -155,6 +192,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
     },
     find: readClubEvent, participants: readEventParticipants, feedback: readClubFeedback,
     async create(clubId, input, actorId, now) {
+      assertProposalAudience(input);
       const id = new Types.ObjectId();
       await mongoose.connection.transaction(async (session) => {
         await assertEventWriteAccess(session, oid(clubId), oid(actorId), "club.event.manage", now);
@@ -163,6 +201,16 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           ...fields(input, assessment.semesterCode), state: "Draft", currentRevisionNo: 0, createdAt: now,
           conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail }], { session });
         await audit(session, id, "EVENT_DRAFT_CREATED", oid(actorId), { payload: input }, now);
+      });
+      return required(clubId, String(id));
+    },
+    async createInternal(clubId, input, mode, publishInput, actorId, now) {
+      let id = new Types.ObjectId();
+      await mongoose.connection.transaction(async (session) => {
+        await assertEventWriteAccess(session, oid(clubId), oid(actorId), "club.event.manage", now);
+        id = await writeInternal(session, oid(clubId), null, internalInput(input), mode === "draft" ? "DRAFT" : "CREATED", oid(actorId), now, rules,
+          mode === "draft" ? "INTERNAL_EVENT_DRAFT_SAVED" : "INTERNAL_EVENT_CREATED", true);
+        if (mode === "publish") await publishInSession(session, id, input.startAt, input.endAt, publishInput!, "PUBLIC", oid(actorId), now);
       });
       return required(clubId, String(id));
     },
@@ -178,21 +226,31 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           if (!["Draft", "Revision Requested"].includes(String(event.state))) conflict("event cannot be edited or submitted");
           if (event.revisionDeadlineAt && (event.revisionDeadlineAt as Date) <= now) conflict("revision deadline has passed");
           const next = action.kind === "save" ? action.input : input;
+          assertProposalAudience(next);
           const assessment = await assess(session, oid(clubId), next, oid(eventId), now, action.kind === "submit", rules);
           if (action.kind === "save") {
             await m.events!.updateOne({ _id: event._id }, { $set: { ...fields(next, assessment.semesterCode), conflictResult: assessment.conflictResult,
               conflictDetail: assessment.conflictDetail } }, { session });
             await audit(session, oid(eventId), "EVENT_DRAFT_SAVED", oid(actorId), { payload: next }, now);
           } else await submitVersion(session, event, next, oid(actorId), now, assessment);
+        } else if (action.kind === "save-internal" || action.kind === "create-internal") {
+          if (action.kind === "save-internal") assertInternalEventEditable(String(event.state));
+          else if (event.state !== "DRAFT") conflict("only an internal draft can be created");
+          const state = action.kind === "create-internal" ? "CREATED" : event.state as "DRAFT" | "CREATED";
+          await writeInternal(session, oid(clubId), event, internalInput(action.kind === "save-internal" ? action.input : input), state, oid(actorId), now, rules,
+            action.kind === "create-internal" ? "INTERNAL_EVENT_CREATED" : state === "DRAFT" ? "INTERNAL_EVENT_DRAFT_SAVED" : "INTERNAL_EVENT_SAVED", true);
         } else if (action.kind === "publish") {
-          if (event.state !== "Approved") conflict("only approved events can be published");
-          validateEventPublication(action.input, event.startAt as Date, event.endAt as Date, now);
-          const code = checkInCode(() => randomInt(1000000) / 1000000);
-          await m.events!.updateOne({ _id: event._id }, { $set: { ...action.input, state: "Upcoming", publishedAt: now, checkInCode: code } }, { session });
-          await audit(session, oid(eventId), "EVENT_PUBLISHED", oid(actorId), { state: "Upcoming", ...action.input }, now);
+          if (event.state !== "Approved" && event.state !== "CREATED") conflict("only approved events can be published");
+          await publishInSession(session, event._id as Types.ObjectId, event.startAt as Date, event.endAt as Date, action.input,
+            event.state === "CREATED" ? "PUBLIC" : "Upcoming", oid(actorId), now);
         } else if (action.kind === "cancel") {
-          if (!["Approved", "Upcoming", "Ongoing"].includes(String(event.state))) conflict("event cannot be cancelled in its current state");
+          if (!["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(String(event.state))) conflict("event cannot be cancelled in its current state");
           await cancelEventInSession(session, event, action.reason, now, "CMB", rules.cancellationNoticeHours, oid(actorId));
+        } else if (action.kind === "reschedule" && isInternalClubEventState(String(event.state))) {
+          assertInternalEventEditable(String(event.state));
+          if (event.state !== "CREATED") conflict("only a created internal event can be rescheduled");
+          await writeInternal(session, oid(clubId), event, { ...internalInput(input), startAt: action.startAt, endAt: action.endAt,
+            venueText: action.venueText, propertyId: action.propertyId, bookingIds: [] }, "CREATED", oid(actorId), now, rules, "EVENT_RESCHEDULED", false, action.reason);
         } else if (action.kind === "reschedule") {
           if (!["Approved", "Upcoming"].includes(String(event.state)) || event.attendanceFinalized === true) conflict("only an unstarted approved event can be rescheduled");
           if (await m.attendances!.exists({ eventId: event._id }).session(session)) conflict("an event with check-ins cannot be rescheduled");
@@ -208,7 +266,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           if (registrations.length) await m.notifications!.create(registrations.map((r) => ({ recipientUserId: r.studentId, eventCode: "EVENT_RESCHEDULED", entityType: "Event", entityId: event._id,
             channels: ["IN_APP"], payload: { title: event.title, startAt: action.startAt, endAt: action.endAt, reason: action.reason }, state: "Queued", dueAt: now, attempts: 0, createdAt: now })), { session, ordered: true });
         } else if (action.kind === "capacity" || action.kind === "promote") {
-          if (event.state !== "Upcoming" || (event.startAt as Date) <= now || !(event.registrationOpenAt instanceof Date) || !(event.registrationCloseAt instanceof Date) ||
+          if (!["Upcoming", "PUBLIC"].includes(String(event.state)) || (event.startAt as Date) <= now || !(event.registrationOpenAt instanceof Date) || !(event.registrationCloseAt instanceof Date) ||
             event.registrationOpenAt > now || event.registrationCloseAt <= now) conflict("registration is not open");
           if (action.kind === "capacity") {
             if (action.capacity < Number(event.confirmedRegistrationCount)) {

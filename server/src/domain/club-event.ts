@@ -3,8 +3,15 @@ import type { RequestedBudgetLine } from "./event-proposal-review.js";
 import type { EventRegistrationFormField } from "./event-registration.js";
 import type { FeedbackSummary } from "./event-feedback.js";
 
+/** Lifecycle of a self-funded members-only event that never goes through ICPDP review. */
+export const INTERNAL_CLUB_EVENT_STATES = ["DRAFT", "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"] as const;
+export type InternalClubEventState = typeof INTERNAL_CLUB_EVENT_STATES[number];
+export function isInternalClubEventState(state: string): state is InternalClubEventState {
+  return (INTERNAL_CLUB_EVENT_STATES as readonly string[]).includes(state);
+}
 export type ClubEventState = "Draft" | "Pending Approval" | "Under Review" | "Revision Requested" |
-  "Approved" | "Rejected" | "Expired" | "Upcoming" | "Ongoing" | "Completed" | "Report Submitted" | "Cancelled" | "Closed";
+  "Approved" | "Rejected" | "Expired" | "Upcoming" | "Ongoing" | "Completed" | "Report Submitted" | "Cancelled" | "Closed" |
+  InternalClubEventState;
 export interface ClubEventInput {
   title: string; objective: string; plan: string; startAt: Date; endAt: Date;
   venueText?: string; propertyId?: string; audienceScope: "PUBLIC" | "MEMBERS_ONLY";
@@ -12,6 +19,9 @@ export interface ClubEventInput {
   occurrences?: { startAt: Date; endAt: Date }[]; budgetLines: RequestedBudgetLine[];
   bookingIds: string[]; registrationForm?: EventRegistrationFormField[];
 }
+export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" |
+  "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
+export type InternalClubEventMode = "draft" | "create" | "publish";
 export interface ClubEvent extends ClubEventInput {
   id: string; clubId: string; clubName: string; state: ClubEventState; semesterCode: string;
   version: number; currentRevisionNo: number; confirmedRegistrationCount: number;
@@ -40,6 +50,8 @@ export interface EventPublishInput {
 export type ClubEventAction =
   | { kind: "save"; input: ClubEventInput; expectedVersion: number }
   | { kind: "submit"; expectedVersion: number }
+  | { kind: "save-internal"; input: InternalClubEventInput; expectedVersion: number }
+  | { kind: "create-internal"; expectedVersion: number }
   | { kind: "publish"; input: EventPublishInput; expectedVersion: number }
   | { kind: "cancel"; reason: string; expectedVersion: number }
   | { kind: "reschedule"; startAt: Date; endAt: Date; venueText?: string; propertyId?: string; reason: string; expectedVersion: number }
@@ -54,6 +66,8 @@ export interface ClubEventRepository {
   list(clubId: string): Promise<ClubEvent[]>;
   find(clubId: string, eventId: string): Promise<ClubEventDetail | null>;
   create(clubId: string, input: ClubEventInput, actorId: string, now: Date): Promise<ClubEventDetail>;
+  createInternal(clubId: string, input: InternalClubEventInput, mode: InternalClubEventMode,
+    publishInput: EventPublishInput | undefined, actorId: string, now: Date): Promise<ClubEventDetail>;
   act(clubId: string, eventId: string, action: ClubEventAction, actorId: string, now: Date): Promise<ClubEventDetail>;
   participants(clubId: string, eventId: string): Promise<EventParticipant[]>;
   feedback(clubId: string, eventIds: string[], now: Date): Promise<ClubFeedbackSummary[]>;

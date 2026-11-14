@@ -96,7 +96,7 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
       const [bookingDocs, eventDocs, defenseDocs] = await Promise.all([
         m.propertyBookings!.find({ propertyId: property, state: { $in: ["Approved", "In Use"] },
           purpose: { $ne: ROOM_ALLOCATION_PURPOSE }, ...window }).sort({ startAt: 1 }).lean(),
-        m.events!.find({ propertyId: property, state: { $in: ["Approved", "Upcoming", "Ongoing"] }, ...window })
+        m.events!.find({ propertyId: property, state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] }, ...window })
           .sort({ startAt: 1 }).lean(),
         m.eventDefenseSessions!.find({ propertyId: property,
           state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...window })
@@ -124,7 +124,7 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
           endAt: { $gt: new Date(dates[0]!.startAt.getTime() - buffer) } };
         const bookingDocs = await m.propertyBookings!.find({ propertyId, state: { $in: ["Approved", "In Use"] }, ...window })
           .session(session).lean();
-        const eventDocs = await m.events!.find({ propertyId, state: { $in: ["Approved", "Upcoming", "Ongoing"] }, ...window })
+        const eventDocs = await m.events!.find({ propertyId, state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] }, ...window })
           .session(session).lean();
         const defenseDocs = await m.eventDefenseSessions!.find({ propertyId,
           state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...window })

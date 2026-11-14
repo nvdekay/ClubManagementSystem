@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { actOnClubEvent, fetchClubEventOptions, createClubEvent, fetchClubEvent, fetchClubEventFeedback, fetchClubEvents, fetchEventParticipants, type ClubEventInput } from "@/services/clubEvents";
+import { actOnClubEvent, confirmInternalClubEvent, createInternalClubEvent, fetchClubEventOptions, createClubEvent, fetchClubEvent, fetchClubEventFeedback, fetchClubEvents, fetchEventParticipants, updateInternalClubEvent,
+  type ClubEventInput, type EventPublishInput, type InternalClubEventInput, type InternalCreateMode } from "@/services/clubEvents";
 export const clubEventsKeyRoot = ["club-events"] as const;
 export function useClubEvents(clubId: string, enabled: boolean) {
   return useQuery({ queryKey: [...clubEventsKeyRoot, clubId, "list"], queryFn: ({ signal }) => fetchClubEvents(clubId, signal), enabled, retry: false });
@@ -16,8 +17,18 @@ export function useClubEventFeedback(clubId: string, ids: string[], enabled: boo
 export function useClubEventMutation(clubId: string) {
   const cache = useQueryClient();
   return useMutation({ mutationFn: (input: { csrfToken: string } & (
-    { kind: "create"; input: ClubEventInput } | { kind: "action"; id: string; action: string; body: object })) =>
-    input.kind === "create" ? createClubEvent(clubId, input.input, input.csrfToken) : actOnClubEvent(clubId, input.id, input.action, input.body, input.csrfToken),
+    { kind: "create"; input: ClubEventInput } | { kind: "action"; id: string; action: string; body: object }
+    | { kind: "internal-create"; input: InternalClubEventInput; mode: InternalCreateMode; publishInput?: EventPublishInput }
+    | { kind: "internal-save"; id: string; input: InternalClubEventInput; expectedVersion: number }
+    | { kind: "internal-confirm"; id: string; expectedVersion: number })) => {
+    switch (input.kind) {
+      case "create": return createClubEvent(clubId, input.input, input.csrfToken);
+      case "internal-create": return createInternalClubEvent(clubId, input.input, input.mode, input.publishInput, input.csrfToken);
+      case "internal-save": return updateInternalClubEvent(clubId, input.id, input.input, input.expectedVersion, input.csrfToken);
+      case "internal-confirm": return confirmInternalClubEvent(clubId, input.id, input.expectedVersion, input.csrfToken);
+      default: return actOnClubEvent(clubId, input.id, input.action, input.body, input.csrfToken);
+    }
+  },
     onSuccess: async () => { await cache.invalidateQueries({ queryKey: clubEventsKeyRoot }); } });
 }
 

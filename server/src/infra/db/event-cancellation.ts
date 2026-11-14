@@ -2,6 +2,7 @@ import { settlementDueAt } from "../../domain/budget-disbursement.js";
 import { randomUUID } from "node:crypto";
 import { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
+import { isInternalClubEventState } from "../../domain/club-event.js";
 import { eventCancellationIsLate } from "../../domain/club-event-rules.js";
 import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
@@ -12,8 +13,9 @@ export async function cancelEventInSession(session: ClientSession, event: Doc, r
   source: string, noticeHours: number, actorId?: Types.ObjectId, sourceRefId?: Types.ObjectId): Promise<number> {
   if (event.attendanceFinalized === true) throw new DomainError("finalized attendance prevents cancellation", "conflict");
   const id = event._id as Types.ObjectId;
+  const state = isInternalClubEventState(String(event.state)) ? "CANCELLED" : "Cancelled";
   const changed = await m.events!.updateOne({ _id: id, state: event.state, attendanceFinalized: { $ne: true } },
-    { $set: { state: "Cancelled", cancelReason: reason, cancelSourceType: source, confirmedRegistrationCount: 0,
+    { $set: { state, cancelReason: reason, cancelSourceType: source, confirmedRegistrationCount: 0,
       isLateCancellation: source === "CMB" && eventCancellationIsLate(event.startAt as Date, now, noticeHours),
       ...(actorId ? { cancelledBy: actorId } : {}) }, $inc: { __v: 1 } }, { session });
   if (changed.modifiedCount !== 1) throw new DomainError("event changed while cancelling", "conflict");
@@ -37,7 +39,7 @@ export async function cancelEventInSession(session: ClientSession, event: Doc, r
   const correlationId = randomUUID();
   await m.auditLogs!.create([{ entityType: "Event", entityId: id, action: "EVENT_CANCELLED",
     ...(actorId ? { actorId, actorRole: source.startsWith("PROPOSAL_") ? "ICPDP_OFFICER" : "Club Member" } : { actorRole: "SYSTEM" }),
-    before: { state: event.state }, after: { state: "Cancelled", source, sourceRefId,
+    before: { state: event.state }, after: { state, source, sourceRefId,
       settlementRequired: budget && !budget.sponsoredItems ? Number(String(budget.disbursedTotal ?? 0)) > 0 : false, previousSettlementDueAt: budget?.settlementDueAt,
       ...(budget?.sponsoredItems ? { sponsoredFinancePaused: true } : {}),
       ...(budget && !budget.sponsoredItems && Number(String(budget.disbursedTotal ?? 0)) > 0 ? { settlementDueAt: settlementDueAt(now) } : {}) },

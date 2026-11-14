@@ -108,7 +108,7 @@
       <mxCell id="h3" value="F4 Event lifecycle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;fontStyle=1;align=left;spacingLeft=8;" vertex="1" parent="1">
         <mxGeometry x="40" y="344" width="200" height="54" as="geometry" />
       </mxCell>
-      <mxCell id="s3_0" value="Submit proposal&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;UC25&lt;/font&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxCell id="s3_0" value="Proposal / Create internal&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;UC25&lt;/font&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
         <mxGeometry x="270" y="344" width="150" height="54" as="geometry" />
       </mxCell>
       <mxCell id="e18" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;endArrow=none;dashed=1;" edge="1" parent="1" source="h3" target="s3_0">
@@ -144,7 +144,7 @@
       <mxCell id="e23" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="s3_4" target="s3_5">
         <mxGeometry relative="1" as="geometry" />
       </mxCell>
-      <mxCell id="s3_6" value="Post-event report&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;UC33&lt;/font&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxCell id="s3_6" value="Post-event report&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;UC33 (public only)&lt;/font&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
         <mxGeometry x="1742" y="344" width="150" height="54" as="geometry" />
       </mxCell>
       <mxCell id="e24" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="s3_5" target="s3_6">
@@ -279,7 +279,7 @@
       <mxCell id="h7" value="F8 Periodic report &amp; compliance" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;fontStyle=1;align=left;spacingLeft=8;" vertex="1" parent="1">
         <mxGeometry x="40" y="696" width="200" height="54" as="geometry" />
       </mxCell>
-      <mxCell id="s7_0" value="Submit / resubmit report&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;UC38: new version&lt;/font&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxCell id="s7_0" value="Submit / resubmit report&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;UC38 (incl. internal FINISH)&lt;/font&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
         <mxGeometry x="270" y="696" width="150" height="54" as="geometry" />
       </mxCell>
       <mxCell id="e44" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;endArrow=none;dashed=1;" edge="1" parent="1" source="h7" target="s7_0">

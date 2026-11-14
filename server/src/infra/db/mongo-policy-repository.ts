@@ -58,7 +58,7 @@ export function mongoPolicyRepository(): PolicyManagementRepository {
     settings: PolicySettings, effectiveFrom: Date,
   ): Promise<PolicyDecisionImpact[]> {
     const [eventDocs, bookingDocs, clubDocs, previousDoc] = await Promise.all([
-      events.find({ state: { $in: ["Approved", "Upcoming", "Ongoing"] },
+      events.find({ state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] },
         endAt: { $gt: effectiveFrom } })
         .select("_id semesterCode startAt endAt").lean(),
       bookings.find({ state: { $in: ["Approved", "In Use"] }, endAt: { $gt: effectiveFrom } })

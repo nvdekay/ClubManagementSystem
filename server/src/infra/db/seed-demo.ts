@@ -340,7 +340,7 @@ try {
   ];
   async function event(id: string, code: string, organizer: Types.ObjectId, input: {
     title: string; objective: string; startAt: Date; endAt: Date; venueText: string; capacity: number;
-    waitlistEnabled: boolean; audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; state: "Upcoming" | "Ongoing" | "Completed";
+    waitlistEnabled: boolean; audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; state: "Upcoming" | "Ongoing" | "Completed" | "PUBLIC";
     registrationOpenAt: Date; registrationCloseAt: Date; checkInCode?: string; allowWalkIn?: boolean;
   }): Promise<Types.ObjectId> {
     const eventId = new Types.ObjectId(id);
@@ -351,10 +351,11 @@ try {
       semesterCode: "Fall 2026", venueText: input.venueText, audienceScope: input.audienceScope ?? "PUBLIC",
       capacity: input.capacity, confirmedRegistrationCount: 0, nextWaitlistPosition: 1,
       waitlistEnabled: input.waitlistEnabled, state: input.state, allowWalkIn: input.allowWalkIn ?? false,
-      ...(input.checkInCode ? { checkInCode: input.checkInCode } : {}), currentRevisionNo: 1,
+      ...(input.checkInCode ? { checkInCode: input.checkInCode } : {}), currentRevisionNo: input.state === "PUBLIC" ? 0 : 1,
       publishedAt: at(-14 * DAY), registrationOpenAt: input.registrationOpenAt,
       registrationCloseAt: input.registrationCloseAt, attendanceFinalized: false, createdAt: at(-14 * DAY) });
-    await ucmsModels.eventProposalVersions!.create({ eventId, revisionNo: 1, payload: { registrationForm },
+    // A published internal event (PUBLIC) never went through an ICPDP proposal revision.
+    if (input.state !== "PUBLIC") await ucmsModels.eventProposalVersions!.create({ eventId, revisionNo: 1, payload: { registrationForm },
       submittedBy: organizer, submittedAt: at(-15 * DAY) });
     return eventId;
   }
@@ -401,7 +402,7 @@ try {
     title: "Sinh hoạt tháng 10: Trà đạo & Origami",
     objective: "Buổi sinh hoạt nội bộ dành riêng cho thành viên Mây Mưa Club.",
     startAt: at(4 * DAY), endAt: at(4 * DAY + 2 * HOUR), venueText: "Phòng 112, tòa Gamma", capacity: 25,
-    waitlistEnabled: false, audienceScope: "MEMBERS_ONLY", state: "Upcoming",
+    waitlistEnabled: false, audienceScope: "MEMBERS_ONLY", state: "PUBLIC",
     registrationOpenAt: at(-3 * DAY), registrationCloseAt: at(3 * DAY) });
   const festival = await event("de0000000000000000000e05", "HEBE", owner, {
     title: "Tuần lễ âm nhạc HEBE Unplugged",
@@ -844,15 +845,20 @@ try {
     ];
     for (const example of examples) {
       if (await ucmsModels.events!.exists({ clubId: club("HEBE").id, title: example.title })) continue;
+      if (example.scope === "MEMBERS_ONLY") {
+        // Self-funded members-only events use the internal flow: created and published in one step.
+        await wave3.createInternal(hebe, { title: example.title, objective: "Practice event management", plan: "Welcome participants, run the activity, and collect feedback.",
+          startAt: demoStart, endAt: demoEnd, venueText: "Campus activity space", capacity: 30, riskCategory: "LOW", bookingIds: [] }, "publish",
+        { registrationOpenAt: now, registrationCloseAt: demoStart, checkInOpenAt: demoStart, checkInCloseAt: demoEnd, allowWalkIn: true, waitlistEnabled: true }, String(owner), now);
+        continue;
+      }
       const input: ClubEventInput = { title: example.title, objective: "Practice event management", plan: "Welcome participants, run the activity, and collect feedback.",
         startAt: demoStart, endAt: demoEnd, venueText: "Campus activity space", audienceScope: example.scope, capacity: 30, riskCategory: "LOW", bookingIds: [],
         registrationForm: [{ key: "expectations", label: "What do you expect from this event?", type: "textarea", required: false }],
-        budgetLines: example.scope === "PUBLIC" ? [{ category: "Materials", amount: 300000, purpose: "Workshop supplies" }] : [] };
+        budgetLines: [{ category: "Materials", amount: 300000, purpose: "Workshop supplies" }] };
       const created = await wave3.create(hebe, input, String(owner), now);
       if (!example.submit) continue;
-      const submitted = await wave3.act(hebe, created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(owner), now);
-      if (example.scope === "MEMBERS_ONLY") await wave3.act(hebe, created.event.id, { kind: "publish", expectedVersion: submitted.event.version,
-        input: { registrationOpenAt: now, registrationCloseAt: demoStart, checkInOpenAt: demoStart, checkInCloseAt: demoEnd, allowWalkIn: true, waitlistEnabled: true } }, String(owner), now);
+      await wave3.act(hebe, created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(owner), now);
     }
   }
 

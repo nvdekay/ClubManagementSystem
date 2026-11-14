@@ -24,7 +24,7 @@ function id(value: string, label: string): string {
 
 function assertOpen(context: EventRegistrationContext, now: Date): void {
   const event = context.event;
-  if (event.state !== "Upcoming" || !event.registrationOpenAt || !event.registrationCloseAt
+  if (!["Upcoming", "PUBLIC"].includes(event.state) || !event.registrationOpenAt || !event.registrationCloseAt
     || event.registrationOpenAt > now || event.registrationCloseAt <= now || event.startAt <= now) {
     throw new DomainError("event registration is not open", "conflict");
   }
@@ -37,7 +37,7 @@ export async function getEventRegistrationContext(repo: EventRegistrationReposit
   actor: AccessActor | null, eventId: string, now: Date) {
   const result = await repo.context(id(eventId, "event id"), student(actor));
   if (!result) throw new DomainError("event not found", "not_found");
-  return { ...result, registrationOpen: result.event.state === "Upcoming"
+  return { ...result, registrationOpen: ["Upcoming", "PUBLIC"].includes(result.event.state)
     && Boolean(result.event.registrationOpenAt && result.event.registrationCloseAt)
     && result.event.registrationOpenAt! <= now && now < result.event.registrationCloseAt!
     && now < result.event.startAt };

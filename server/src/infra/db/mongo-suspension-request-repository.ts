@@ -18,7 +18,7 @@ export function mongoSuspensionRequestRepository(): SuspensionRequestRepository 
   }
   async function impacts(clubId: Types.ObjectId, now: Date, session?: ClientSession): Promise<SuspensionImpact[]> {
     const [events, bookings] = await Promise.all([
-      m.events!.find({ clubId, state: { $in: ["Approved", "Upcoming"] }, startAt: { $gt: now } }).session(session ?? null).lean(),
+      m.events!.find({ clubId, state: { $in: ["Approved", "Upcoming", "CREATED", "PUBLIC"] }, startAt: { $gt: now } }).session(session ?? null).lean(),
       m.propertyBookings!.find({ clubId, state: "Approved", startAt: { $gt: now } }).session(session ?? null).lean(),
     ]);
     return [...events.map((e) => ({ id: `event:${String(e._id)}`, kind: "event" as const, title: String(e.title), startAt: e.startAt as Date })),

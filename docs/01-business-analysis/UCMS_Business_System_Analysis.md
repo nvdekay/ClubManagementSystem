@@ -8,6 +8,8 @@
 > **Nguồn chốt scope:** Context Diagram đã được team thống nhất (Student, ICPDP Officer, Club's Admin, Google OAuth, Google SMTP Service).
 >
 > **Lưu ý (02/11/2026):** tài liệu gốc, đã bị SRS thay thế ở nhiều điểm — gửi email qua Google SMTP, CLB `Pending Setup`, domain trong chính sách. Danh sách và trạng thái từng phần: [`README.md`](README.md); khi khác nhau, lấy theo [`../SRS.md`](../SRS.md).
+>
+> **Lưu ý (14/11/2026):** sự kiện nội bộ CLB (`MEMBERS_ONLY`, BR53 của SRS) — tạo chính thức cần báo trước `>= 24` giờ, không ngoại lệ; chỉ sửa/đổi lịch ở `CREATED` (lịch mới `>= now + 24h`), từ `PUBLIC` khoá lịch và chỉ còn huỷ; đề xuất ICPDP nhận `PUBLIC` hoặc `MEMBERS_ONLY` có ít nhất 1 hạng mục ngân sách (Phương án B), `MEMBERS_ONLY` không ngân sách phải đi luồng nội bộ; dashboard ICPDP tách biểu đồ sự kiện theo tháng thành 2 chuỗi `publicCount` / `internalCount`.
 
 ---
 
@@ -663,6 +665,8 @@ Create Recruitment Campaign
 
 ## Flow 4 – Event Lifecycle
 
+**Sự kiện công khai / cấp trường (cần ICPDP duyệt):**
+
 ```text
 Event Proposal
 → Conflict Check
@@ -678,6 +682,18 @@ Event Proposal
 → Event Feedback
 → ICPDP Close
 → Evaluation Input
+```
+
+**Sự kiện nội bộ CLB (`MEMBERS_ONLY` — cập nhật nghiệp vụ):**
+
+```text
+Tạo sự kiện nội bộ không ngân sách (DRAFT → CREATED, báo trước ≥ 24 giờ, không ngoại lệ)
+→ Conflict Check (venueText / phòng được cấp / booking thiết bị đính kèm)
+→ Sửa / đổi lịch chỉ khi còn CREATED (lịch mới ≥ now + 24h)
+→ Publish cho thành viên CLB (PUBLIC — không nộp đề xuất ICPDP, không bảo vệ; khoá lịch, chỉ còn huỷ)
+→ Registration & Check-in (chỉ thành viên CLB)
+→ Attendance Finalization (FINISH)
+→ Tự động tổng hợp vào Báo cáo định kỳ (Periodic Report) & biểu đồ ICPDP
 ```
 
 ## Flow 5 – Budget Lifecycle
@@ -1097,12 +1113,13 @@ User chọn đăng nhập
 - **CMB:** Initiate removal theo business rule.
 - **Rule:** Sensitive removal phải có reason/audit.
 
-## UC24 – Gửi đề xuất tổ chức sự kiện
+## UC24 – Gửi đề xuất tổ chức sự kiện / Tạo sự kiện nội bộ
 
 - **Primary Actor:** CMB
 - **Precondition:** Club Active và người dùng có quyền.
-- **Input:** mục tiêu, thời gian, địa điểm, audience, capacity, plan, risk, budget estimate, nhu cầu cơ sở vật chất.
-- **Flow:** Validate → UC25 conflict check → (tùy chọn) UC51 property booking request → Submitted/Pending Approval.
+- **Input:** mục tiêu, thời gian (trong 1 học kỳ), địa điểm (`venueText` / phòng học được cấp / booking CSVC-thiết bị đính kèm), audience, capacity, plan, risk, budget estimate (chỉ luồng đề xuất ICPDP; bắt buộc ít nhất 1 hạng mục nếu `MEMBERS_ONLY`), nhu cầu cơ sở vật chất.
+- **Flow (Đề xuất ICPDP — `PUBLIC`, hoặc `MEMBERS_ONLY` có ngân sách):** Validate (kể cả giới hạn báo trước tối thiểu theo policy) → UC25 conflict check → (tùy chọn) UC51 property booking request → Submitted/Pending Approval.
+- **Flow (Sự kiện nội bộ CLB — `MEMBERS_ONLY`):** Tạo sự kiện (`DRAFT → CREATED`) không cần nộp đề xuất lên ICPDP, không cần bảo vệ, không có ngân sách trường, **báo trước `>= 24` giờ khi tạo chính thức, không ngoại lệ** (bản nháp `DRAFT` chưa kiểm tra), chỉ sửa/đổi lịch ở `CREATED`; `MEMBERS_ONLY` không ngân sách gửi qua luồng đề xuất bị từ chối, vẫn kiểm tra xung đột (UC25) nếu dùng phòng/booking thiết bị đính kèm (booking CSVC ngoài phòng học vẫn do UC46 quyết định riêng).
 - **Related:** UC25, UC26, UC51.
 
 ## UC25 – Phát hiện xung đột sự kiện
@@ -1140,7 +1157,7 @@ User chọn đăng nhập
 ## UC30 – Công bố sự kiện và mở đăng ký
 
 - **Primary Actor:** CMB
-- **State:** Approved → Open for Registration.
+- **State:** `Approved → Open for Registration` (với sự kiện công khai/đề xuất), hoặc `CREATED → PUBLIC` (với sự kiện nội bộ CLB — chỉ hiển thị trong không gian thành viên CLB, không hiện trên khám phá công khai).
 - **Rule:** Enforce registration window và capacity.
 
 ## UC31 – Đăng ký tham gia sự kiện
@@ -1163,13 +1180,14 @@ User chọn đăng nhập
 ## UC34 – Chốt attendance sự kiện
 
 - **Primary Actor:** CMB
-- **Flow:** Review abnormal check-in → finalize → lock.
+- **Flow:** Review abnormal check-in → finalize → lock. Sự kiện nội bộ sau khi kết thúc (`FINISH`) chỉ cần chốt điểm danh tại đây và giữ nguyên `FINISH` để tự động tổng hợp vào Báo cáo định kỳ (không nộp báo cáo sau sự kiện UC36).
 - **Output:** Official Attendance dataset.
 
 ## UC35 – Hủy/Đổi lịch sự kiện
 
 - **Primary Actor:** CMB/ICPDP
 - **Flow:** nhập reason → conflict check nếu đổi lịch → cập nhật/hủy property booking liên quan (UC53) → notify registrants → cập nhật deadline/report/budget impact.
+- **Sự kiện nội bộ CLB (14/11/2026):** chỉ đổi lịch ở `CREATED` (lịch mới `>= now + 24h`, cập nhật trực tiếp); ở `PUBLIC`/`ONGOING` lịch bị khoá, chỉ được huỷ → `CANCELLED`.
 
 ## UC36 – Nộp báo cáo sau sự kiện
 
@@ -2055,6 +2073,8 @@ Draft
 
 ## 15.5 Event
 
+**Sự kiện có đề xuất / công khai:**
+
 ```text
 Draft
 → Pending Approval
@@ -2074,6 +2094,23 @@ Exceptional:
 ```text
 Approved / Open for Registration / Ongoing
 → Cancelled
+```
+
+**Sự kiện nội bộ CLB (`MEMBERS_ONLY`):**
+
+```text
+DRAFT
+→ CREATED   (≥ 24h trước startAt; CREATED → CREATED khi sửa/đổi lịch, lịch mới ≥ now + 24h)
+→ PUBLIC    (khoá lịch)
+→ ONGOING
+→ FINISH
+```
+
+Exceptional:
+
+```text
+DRAFT / CREATED / PUBLIC / ONGOING
+→ CANCELLED
 ```
 
 ## 15.6 Budget Request
@@ -2486,9 +2523,10 @@ Reporting Compliance
 | Widget | Business Question |
 |---|---|
 | Active/Suspended Clubs | Hiện có bao nhiêu CLB đang hoạt động hợp lệ? |
-| Pending Approvals | Những request nào đang chờ ICPDP xử lý? |
+| Pending Approvals | Những request nào đang chờ ICPDP xử lý? *(không gồm sự kiện nội bộ CLB — không đi qua hàng đợi đề xuất)* |
 | Approval Aging | Request nào chờ quá lâu? |
 | Upcoming Events | Sự kiện nào sắp diễn ra? |
+| Internal Events | Danh sách & biểu đồ thống kê sự kiện nội bộ các CLB (trừ `DRAFT` và đã huỷ; biểu đồ theo tháng 2 chuỗi `publicCount` / `internalCount`) là bao nhiêu? |
 | Conflict Alerts | Có sự kiện nào trùng lịch/địa điểm? |
 | Budget Exposure | Tổng approved/disbursed/reconciled là bao nhiêu? |
 | Property Booking Queue | Yêu cầu đặt cơ sở vật chất nào đang chờ duyệt? |

@@ -158,7 +158,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         evaluationReportPenalty(clubId, period.code, now),
       ]);
       // An event that reached its report (UC33) or was closed by ICPDP (UC34) still took place.
-      const completed = eventDocs.filter((event) => ["Completed", "Report Submitted", "Closed"].includes(String(event.state)));
+      const completed = eventDocs.filter((event) => ["Completed", "Report Submitted", "Closed", "FINISH"].includes(String(event.state)));
       const completedIds = completed.map((event) => event._id);
       const [registrationDocs, attendanceDocs, feedbackDocs, postReportVersions, invitedEvents, leaderSeat, periodicReturns] = await Promise.all([
         m.eventRegistrations!.find({ eventId: { $in: completedIds }, state: "Confirmed" }).select({ _id: 1 }).lean(),
@@ -194,7 +194,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       const open = violationDocs.filter((item) => ["Open", "Under Investigation", "Awaiting Club Response"].includes(String(item.state)));
       const active = memberDocs.filter((item) => item.state === "Active");
       const publicCompleted = completed.filter((event) => event.audienceScope === "PUBLIC");
-      const cancelled = eventDocs.filter((event) => event.state === "Cancelled");
+      const cancelled = eventDocs.filter((event) => event.state === "Cancelled" || event.state === "CANCELLED");
       return {
         periodicReportOverdue: reportPenalty,
         registrations: metric(registrationDocs.length, "eventRegistrations", ids(registrationDocs)),

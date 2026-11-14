@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { createDocument } from "zod-openapi";
 import { clubEventBody, clubEventCancelBody, clubEventCapacityBody, clubEventCheckInBody, clubEventCorrectBody,
   clubEventFeedbackQuery, clubEventPromoteBody, clubEventPublishBody, clubEventReasonBody, clubEventRescheduleBody,
-  clubEventSaveBody, clubEventVersionBody, eventObjectId } from "./club-event-routes.js";
+  clubEventSaveBody, clubEventVersionBody, eventObjectId, internalClubEventCreateBody, internalClubEventSaveBody } from "./club-event-routes.js";
 const date = z.string().datetime();
 const Event = clubEventBody.extend({ id: eventObjectId, clubId: eventObjectId, clubName: z.string(), state: z.string(), semesterCode: z.string(),
   version: z.number(), currentRevisionNo: z.number(), confirmedRegistrationCount: z.number(), approvalConditions: z.array(z.string()), attendanceFinalized: z.boolean(),
@@ -32,14 +32,20 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
   [`${base}/feedback`]: { get: { summary: "Compare anonymized event feedback; hide content below policy threshold", requestParams: { path: clubPath, query: clubEventFeedbackQuery },
     responses: response(z.array(z.object({ eventId: eventObjectId, title: z.string(), respondents: z.number(), visible: z.boolean(), averageRating: z.number().optional(), distribution: z.record(z.number()).optional(), comments: z.array(z.string()).optional() }))) } },
   [`${base}/{id}`]: { get: { summary: "Read club event proposal and history", requestParams: { path: eventPath }, responses: response(Detail) } },
+  "/clubs/{clubId}/internal-events": { post: { summary: "Create a self-funded internal event as DRAFT, CREATED or PUBLIC (24-hour notice outside DRAFT)",
+    requestParams: { path: clubPath }, requestBody: { content: { "application/json": { schema: internalClubEventCreateBody } } }, responses: response(Detail, "201") } },
+  "/clubs/{clubId}/internal-events/{id}": { put: { summary: "Edit an internal event in DRAFT or CREATED; a published schedule is locked",
+    requestParams: { path: eventPath }, requestBody: { content: { "application/json": { schema: internalClubEventSaveBody } } }, responses: response(Detail) } },
+  "/clubs/{clubId}/internal-events/{id}/create": { post: { summary: "Turn an internal draft into a CREATED event (24-hour notice)",
+    requestParams: { path: eventPath }, requestBody: { content: { "application/json": { schema: clubEventVersionBody } } }, responses: response(Detail) } },
   [`${base}/{id}/participants`]: { get: { summary: "Read registrations and attendance review", requestParams: { path: eventPath }, responses: response(z.array(Participant)) } },
 };
 const operations: [string, z.ZodType, string][] = [
   ["save", clubEventSaveBody, "Save an editable draft using its expected version"],
   ["submit", clubEventVersionBody, "Submit a new immutable proposal revision"],
-  ["publish", clubEventPublishBody, "Publish an approved event and configure admission"],
+  ["publish", clubEventPublishBody, "Publish an approved event (Upcoming) or a created internal event (PUBLIC) and configure admission"],
   ["cancel", clubEventCancelBody, "Cancel event, registrations, bookings and financial obligations"],
-  ["reschedule", clubEventRescheduleBody, "Reschedule and request a new approval"],
+  ["reschedule", clubEventRescheduleBody, "Reschedule a proposal and request a new approval, or move a CREATED internal event directly"],
   ["capacity", clubEventCapacityBody, "Change capacity and promote FIFO waitlist"],
   ["promote", clubEventPromoteBody, "Promote the first waitlisted registration"],
   ["check-ins", clubEventCheckInBody, "Check in a participant manually"],

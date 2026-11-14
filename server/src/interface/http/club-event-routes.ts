@@ -2,11 +2,12 @@ import { Router, type Response } from "express";
 import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
 import type { ClubAccessRepository } from "../../domain/access.js";
-import type { ClubEventAction, ClubEventInput, ClubEventRepository } from "../../domain/club-event.js";
+import type { ClubEventAction, ClubEventInput, ClubEventRepository, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
 import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
-import { actOnClubEvent, clubEventOptions, clubEventFeedback, clubEventParticipants, createClubEvent, getClubEvent, listClubEvents } from "../../usecase/club-event.js";
+import { actOnClubEvent, clubEventOptions, clubEventFeedback, clubEventParticipants, createClubEvent, createInternalClubEvent, getClubEvent,
+  listClubEvents } from "../../usecase/club-event.js";
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
 
@@ -29,8 +30,14 @@ export const clubEventBody = z.object({
 }).strict();
 export const clubEventSaveBody = clubEventBody.extend({ expectedVersion }).strict();
 export const clubEventVersionBody = z.object({ expectedVersion }).strict();
-export const clubEventPublishBody = z.object({ expectedVersion, registrationOpenAt: date.optional(), registrationCloseAt: date.optional(),
+const publishSettings = z.object({ registrationOpenAt: date.optional(), registrationCloseAt: date.optional(),
   checkInOpenAt: date, checkInCloseAt: date, allowWalkIn: z.boolean(), waitlistEnabled: z.boolean() }).strict();
+export const clubEventPublishBody = publishSettings.extend({ expectedVersion }).strict();
+export const internalClubEventBody = clubEventBody.pick({ title: true, objective: true, plan: true, startAt: true, endAt: true,
+  venueText: true, propertyId: true, capacity: true, riskCategory: true, bookingIds: true }).strict();
+export const internalClubEventCreateBody = internalClubEventBody.extend({ mode: z.enum(["draft", "create", "publish"]).optional(),
+  publishInput: publishSettings.optional() }).strict();
+export const internalClubEventSaveBody = internalClubEventBody.extend({ expectedVersion }).strict();
 export const clubEventCancelBody = z.object({ expectedVersion, reason }).strict();
 export const clubEventRescheduleBody = z.object({ expectedVersion, reason, startAt: date, endAt: date,
   venueText: z.string().max(300).optional(), propertyId: eventObjectId.optional() }).strict();
@@ -50,6 +57,14 @@ function actor(res: Response): AccessActor { return res.locals.actor as AccessAc
 function input(body: z.infer<typeof clubEventBody>): ClubEventInput {
   return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt),
     occurrences: body.occurrences?.map((o) => ({ startAt: new Date(o.startAt), endAt: new Date(o.endAt) })) };
+}
+function internalInput(body: z.infer<typeof internalClubEventBody>): InternalClubEventInput {
+  return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) };
+}
+function publishInput(body: z.infer<typeof publishSettings>): EventPublishInput {
+  return { ...body, registrationOpenAt: body.registrationOpenAt ? new Date(body.registrationOpenAt) : undefined,
+    registrationCloseAt: body.registrationCloseAt ? new Date(body.registrationCloseAt) : undefined,
+    checkInOpenAt: new Date(body.checkInOpenAt), checkInCloseAt: new Date(body.checkInCloseAt) };
 }
 export interface ClubEventRouteDeps {
   repo: ClubEventRepository; access: ClubAccessRepository; authRepo: AuthRepository; sessions: SessionService;
@@ -81,10 +96,7 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   const actions: { path: string; parse: (raw: unknown) => ClubEventAction }[] = [
     { path: "save", parse: (raw) => { const { expectedVersion, ...body } = parse(clubEventSaveBody, raw); return { kind: "save", input: input(body), expectedVersion }; } },
     { path: "submit", parse: (raw) => ({ kind: "submit", ...parse(clubEventVersionBody, raw) }) },
-    { path: "publish", parse: (raw) => { const { expectedVersion, ...body } = parse(clubEventPublishBody, raw); return { kind: "publish", expectedVersion, input: { ...body,
-      registrationOpenAt: body.registrationOpenAt ? new Date(body.registrationOpenAt) : undefined,
-      registrationCloseAt: body.registrationCloseAt ? new Date(body.registrationCloseAt) : undefined,
-      checkInOpenAt: new Date(body.checkInOpenAt), checkInCloseAt: new Date(body.checkInCloseAt) } }; } },
+    { path: "publish", parse: (raw) => { const { expectedVersion, ...body } = parse(clubEventPublishBody, raw); return { kind: "publish", expectedVersion, input: publishInput(body) }; } },
     { path: "cancel", parse: (raw) => ({ kind: "cancel", ...parse(clubEventCancelBody, raw) }) },
     { path: "reschedule", parse: (raw) => { const body = parse(clubEventRescheduleBody, raw); return { kind: "reschedule", ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) }; } },
     { path: "capacity", parse: (raw) => ({ kind: "capacity", ...parse(clubEventCapacityBody, raw) }) },
@@ -96,6 +108,21 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   ];
   for (const action of actions) router.post(`${base}/:id/${action.path}`, authGuard(guard), async (req, res) => {
     ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id), action.parse(req.body), new Date()));
+  });
+  const internalBase = "/clubs/:clubId/internal-events";
+  router.post(internalBase, authGuard(guard), async (req, res) => {
+    const { mode, publishInput: settings, ...body } = parse(internalClubEventCreateBody, req.body);
+    ok(res, await createInternalClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), internalInput(body), mode ?? "draft",
+      settings ? publishInput(settings) : undefined, new Date()), 201);
+  });
+  router.put(`${internalBase}/:id`, authGuard(guard), async (req, res) => {
+    const { expectedVersion, ...body } = parse(internalClubEventSaveBody, req.body);
+    ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
+      { kind: "save-internal", input: internalInput(body), expectedVersion }, new Date()));
+  });
+  router.post(`${internalBase}/:id/create`, authGuard(guard), async (req, res) => {
+    ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
+      { kind: "create-internal", ...parse(clubEventVersionBody, req.body) }, new Date()));
   });
   return router;
 }

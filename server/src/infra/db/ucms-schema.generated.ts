@@ -67,7 +67,13 @@ export const ucmsEnums = {
     "Closed",
     "Cancelled",
     "Rejected",
-    "Expired"
+    "Expired",
+    "DRAFT",
+    "CREATED",
+    "PUBLIC",
+    "ONGOING",
+    "FINISH",
+    "CANCELLED"
   ],
   "eventDefenseState": [
     "SCHEDULED",

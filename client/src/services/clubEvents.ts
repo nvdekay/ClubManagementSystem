@@ -37,8 +37,8 @@ export class ClubEventError extends ApiError {
 function strings(value: unknown): string[] | undefined {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : undefined;
 }
-async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
-  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/events${path}`, { credentials: "same-origin", ...init });
+async function request<T>(clubId: string, path: string, init: RequestInit, resource: "events" | "internal-events" = "events"): Promise<T> {
+  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/${resource}${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string; details?: Record<string, unknown> } | null;
     throw new ClubEventError(body?.message ?? `HTTP ${res.status}`, { obligations: strings(body?.details?.obligations),
@@ -57,6 +57,26 @@ export function createClubEvent(clubId: string, input: ClubEventInput, csrfToken
 }
 export function actOnClubEvent(clubId: string, id: string, action: string, body: object, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}/${action}`, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
+}
+
+/** Self-funded members-only event (DRAFT → CREATED → PUBLIC → ONGOING → FINISH): no audience choice, no budget. */
+export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" | "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
+export interface EventPublishInput {
+  registrationOpenAt?: string; registrationCloseAt?: string; checkInOpenAt: string; checkInCloseAt: string; allowWalkIn: boolean; waitlistEnabled: boolean;
+}
+export type InternalCreateMode = "draft" | "create" | "publish";
+function jsonInit(method: string, body: object, csrfToken: string): RequestInit {
+  return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) };
+}
+export function createInternalClubEvent(clubId: string, input: InternalClubEventInput, mode: InternalCreateMode, publishInput: EventPublishInput | undefined, csrfToken: string): Promise<ClubEventDetail> {
+  return request(clubId, "", jsonInit("POST", { ...input, mode, ...(publishInput ? { publishInput } : {}) }, csrfToken), "internal-events");
+}
+export function updateInternalClubEvent(clubId: string, id: string, input: InternalClubEventInput, expectedVersion: number, csrfToken: string): Promise<ClubEventDetail> {
+  return request(clubId, `/${encodeURIComponent(id)}`, jsonInit("PUT", { ...input, expectedVersion }, csrfToken), "internal-events");
+}
+/** DRAFT → CREATED; the server enforces the 24-hour notice. */
+export function confirmInternalClubEvent(clubId: string, id: string, expectedVersion: number, csrfToken: string): Promise<ClubEventDetail> {
+  return request(clubId, `/${encodeURIComponent(id)}/create`, jsonInit("POST", { expectedVersion }, csrfToken), "internal-events");
 }
 
 export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; title: string; startAt: string; endAt: string }[] }

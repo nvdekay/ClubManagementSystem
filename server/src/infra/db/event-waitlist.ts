@@ -8,7 +8,7 @@ export async function promoteEventWaitlist(session: ClientSession, eventId: Type
   actorId?: Types.ObjectId, requestedRegistrationId?: Types.ObjectId): Promise<number> {
   let promoted = 0;
   while (true) {
-    const event = await m.events!.findOne({ _id: eventId, state: "Upcoming", startAt: { $gt: now },
+    const event = await m.events!.findOne({ _id: eventId, state: { $in: ["Upcoming", "PUBLIC"] }, startAt: { $gt: now },
       registrationOpenAt: { $lte: now }, registrationCloseAt: { $gt: now }, waitlistEnabled: true }).session(session).lean();
     if (!event || Number(event.confirmedRegistrationCount) >= Number(event.capacity)) {
       if (requestedRegistrationId) throw new DomainError("there is no available seat in the registration window", "conflict");
@@ -26,7 +26,7 @@ export async function promoteEventWaitlist(session: ClientSession, eventId: Type
         actorRole: "SYSTEM", after: { state: "Cancelled" }, correlationId: randomUUID(), at: now }], { session });
       continue;
     }
-    const changed = await m.events!.updateOne({ _id: eventId, state: "Upcoming", $expr: { $lt: ["$confirmedRegistrationCount", "$capacity"] } },
+    const changed = await m.events!.updateOne({ _id: eventId, state: { $in: ["Upcoming", "PUBLIC"] }, $expr: { $lt: ["$confirmedRegistrationCount", "$capacity"] } },
       { $inc: { confirmedRegistrationCount: 1 } }, { session });
     if (changed.modifiedCount !== 1) throw new DomainError("event capacity changed", "conflict");
     await m.eventRegistrations!.updateOne({ _id: head._id, state: "Waitlisted" },

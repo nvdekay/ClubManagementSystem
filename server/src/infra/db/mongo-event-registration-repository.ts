@@ -122,7 +122,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
         await mongoose.connection.transaction(async (session) => {
           const current = await registrations.findOne({ eventId, studentId }).session(session).lean();
           if (current && current.state !== "Cancelled") return conflict("student is already registered for this event");
-          const openFilter = { _id: eventId, state: "Upcoming",
+          const openFilter = { _id: eventId, state: { $in: ["Upcoming", "PUBLIC"] },
             publishedAt: { $exists: true, $ne: null }, registrationOpenAt: { $lte: input.now },
             registrationCloseAt: { $gt: input.now }, startAt: { $gt: input.now } };
           const confirmedEvent = await events.findOneAndUpdate({ ...openFilter,

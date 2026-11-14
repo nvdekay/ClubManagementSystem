@@ -29,7 +29,8 @@ export const EXPORT_SHEET_NAMES: Record<ExportType, string> = {
 export const EXPORT_STATUSES: Record<ExportType, readonly string[]> = {
   CLUBS: ["Pending Setup", "Active", "Suspended", "Dissolving", "Dissolved"],
   MEMBERS: ["Active", "Inactive", "Left", "Banned"],
-  EVENTS: ["Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "Cancelled"],
+  EVENTS: ["Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "Cancelled",
+    "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"],
   FINANCE: ["Approved", "Cancelled", "Disbursed", "Settlement Submitted", "Reconciliation Pending", "Reconciled",
     "Recovery Pending", "Closed"],
   // One row per club, so there is no lifecycle state to filter on.

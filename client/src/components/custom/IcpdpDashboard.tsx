@@ -132,11 +132,12 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
 
       <div className="grid gap-5 lg:grid-cols-3">
         <AppChartFrame className="lg:col-span-2" title={t("dashboard.eventsTitle")} description={t("dashboard.eventsDescription")}
-          table={{ label: t("dashboard.tableView"), columns: [t("dashboard.month"), t("dashboard.events")],
-            rows: charts.eventsByMonth.map((item) => [monthLong(item.month), item.count]) }}>
-          <AppColumnChart tones={["chart-1"]} seriesLabels={[t("dashboard.events")]}
+          legend={[{ label: t("dashboard.publicEvents"), tone: "chart-1" }, { label: t("dashboard.internalEventsSeries"), tone: "chart-2" }]}
+          table={{ label: t("dashboard.tableView"), columns: [t("dashboard.month"), t("dashboard.publicEvents"), t("dashboard.internalEventsSeries")],
+            rows: charts.eventsByMonth.map((item) => [monthLong(item.month), item.publicCount, item.internalCount]) }}>
+          <AppColumnChart tones={["chart-1", "chart-2"]} seriesLabels={[t("dashboard.publicEvents"), t("dashboard.internalEventsSeries")]}
             points={charts.eventsByMonth.map((item) => ({ key: item.month, label: monthName(item.month), title: monthLong(item.month),
-              values: [item.count], emphasized: item.month === current?.month }))} />
+              values: [item.publicCount, item.internalCount], emphasized: item.month === current?.month }))} />
         </AppChartFrame>
         <AppChartFrame title={t("dashboard.statesTitle")} description={t("dashboard.statesDescription")}
           table={{ label: t("dashboard.tableView"), columns: [t("dashboard.statesTitle"), t("dashboard.clubs")],
