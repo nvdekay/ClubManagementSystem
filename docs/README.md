@@ -20,6 +20,14 @@ hình đánh giá, dashboard, yêu cầu phi chức năng và bảo mật, tiêu
 truy vết. Thiết kế, code, test và review đều trỏ về nó. Khi SRS và một tài liệu nguồn nói khác
 nhau về một yêu cầu, **lấy theo SRS**.
 
+**[`UC_FLOW_GROUPS.md`](UC_FLOW_GROUPS.md) — phân công 11 flow cho 6 người bảo vệ.** Gom các
+flow liên quan thành sáu phần, kèm UC phụ trách, kịch bản demo, điểm cần giải thích, phân bổ
+thời lượng và cách bàn giao giữa người trình bày.
+
+**[`08-defense-scripts/`](08-defense-scripts/README.md) — lời thoại và Q&A cho từng flow.**
+11 file riêng theo bản phân công, có nghiệp vụ chính, chuẩn bị demo, lời thoại, nhánh xử lý
+và câu hỏi bảo vệ kèm câu trả lời để từng thành viên tập trình bày.
+
 **Report final hiện hành:** báo cáo Google Doc của nhóm (bản final, 13–14/11/2026), dùng bộ sơ đồ
 trong `03-diagrams/img/`. Các bản `.docx` cũ trong repo (`Group1_SE1939-NJ_Report_Final.docx` dựng 19/10/2026 và
 `03-diagrams/UCMS_Diagrams.docx`) đã lỗi thời nên được xoá ngày 14/11/2026; `v2.docx`, DOCX đặc tả, các file
@@ -37,6 +45,7 @@ thuyết trình và review rời đã được xoá từ 19/10/2026. Nguồn Mar
 | [`05-implementation/`](05-implementation/) | Ma trận UC → code, các chỗ code lệch sơ đồ, thiết lập Auth/SMTP và thiết kế cơ sở dữ liệu dạng DBML (54 bảng) cho dbdiagram.io | Bạn đang lập kế hoạch sprint, hoặc cần thiết kế collection, index, enum trạng thái |
 | [`06-user-guide/`](06-user-guide/) | Guide book PDF/HTML/Markdown và ảnh chụp các luồng chính với dữ liệu đã seed (ảnh chụp trước đợt làm lại giao diện 11/2026) | Bạn cần hướng dẫn thao tác theo vai trò hoặc chuẩn bị demo app |
 | [`07-demo-videos/`](07-demo-videos/) | 18 video demo các luồng nghiệp vụ chính | Bạn chuẩn bị demo hoặc cần xem một luồng chạy thật |
+| [`08-defense-scripts/`](08-defense-scripts/README.md) | Script thuyết trình và Q&A, mỗi flow một file Markdown | Bạn chuẩn bị lời thoại, câu trả lời và bàn giao giữa 6 người bảo vệ |
 
 ## Thứ tự đọc cho người mới
 
