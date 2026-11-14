@@ -4,6 +4,14 @@ Mỗi file gồm nghiệp vụ chính, điều kiện chuẩn bị demo, lời t
 lý cần giải thích và câu hỏi bảo vệ kèm câu trả lời. Số flow theo
 [bản phân công cho 6 người](../UC_FLOW_GROUPS.md), không phải mã F1–F11 trong SRS.
 
+Người phụ trách flow 1–3 có thể đọc trước
+[trọng tâm ôn bảo vệ flow 1, 2, 3](focus-flow-01-02-03.md): thứ tự ưu tiên, trạng thái,
+code cần nắm, câu hỏi tự luyện và checklist demo. Đây là tài liệu ôn tập chung cho một
+người phụ trách; lời thoại chi tiết của từng flow vẫn nằm trong các file bên dưới.
+
+Để tập trình bày liền mạch, dùng [lời thoại flow 1–3 khoảng 4 phút](script-noi-flow-01-02-03.md),
+kèm thao tác demo, câu chuyển khi dùng dữ liệu chuẩn bị và câu trả lời ngắn cho Q&A.
+
 ## Danh sách kịch bản
 
 | Flow | Nội dung | Người phụ trách | File | Thời lượng gợi ý |
