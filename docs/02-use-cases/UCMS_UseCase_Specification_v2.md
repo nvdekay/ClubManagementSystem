@@ -1016,8 +1016,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   4. Officer chọn một kết quả:
      - **Yêu cầu bổ sung báo cáo đề xuất** — bắt buộc chỉ rõ từng nội dung hoặc tài liệu còn thiếu, kèm nhận xét hướng dẫn và hạn bổ sung theo chính sách; phản hồi gắn với phiên bản được thẩm định, có thể nhắm riêng phần ngân sách → `Revision Requested`;
      - **Phê duyệt** → `Approved`; với mỗi dòng ngân sách, officer bắt buộc quyết định
-       `Not Sponsored` (lý do, trần 0) hoặc tài trợ (`Before Event`/`After Event`, trần dương
-       không vượt số xin). Dòng chưa quyết định chặn phê duyệt; giảm trần phải có lý do.
+       `Not Sponsored` (lý do, trần 0) hoặc tài trợ (`Before Event`/`After Event`, trần bằng toàn bộ số xin, không sửa tiền tại bước duyệt). Dòng chưa quyết định chặn phê duyệt.
        Tạo `EventBudget` và lưu riêng số xin, trần, thời điểm trả cùng phiên bản quyết định;
      - **Từ chối** — bắt buộc có lý do → `Rejected`;
      - **Tạo lịch bảo vệ sự kiện** — đối với sự kiện lớn, phức tạp hoặc cần đối thoại trực tiếp, officer khởi tạo lịch bảo vệ theo luồng thay thế A4.
@@ -1040,7 +1039,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
        - Cán bộ chủ trì (Assignee) bấm "Kết thúc bảo vệ" → buổi bảo vệ chuyển sang `Defended`, lưu toàn bộ ghi chú của mọi cán bộ tham gia vào biên bản thẩm định.
     6. **Bốn nhánh Quyết định sau bảo vệ**:
        - **Từ chối (`Rejected`)**: Buổi bảo vệ không đạt yêu cầu → nhập lý do từ chối → sự kiện chuyển `Rejected`;
-       - **Phê duyệt (`Approved`)**: Buổi bảo vệ đạt yêu cầu → nếu sự kiện có phần ngân sách, bắt buộc mở form chốt số tiền duyệt theo từng dòng (`approvedAmount` kèm lý do nếu giảm) → hệ thống tạo `EventBudget` ở `Approved` và chuyển sự kiện sang `Approved`;
+       - **Phê duyệt (`Approved`)**: Buổi bảo vệ đạt yêu cầu → nếu sự kiện có phần ngân sách, bắt buộc chọn quyết định tài trợ từng dòng (`approvedAmount` bằng toàn bộ số xin khi trả trước/trả sau, bằng 0 kèm lý do khi không tài trợ; không sửa tiền tại đây) → hệ thống tạo `EventBudget` ở `Approved` và chuyển sự kiện sang `Approved`;
        - **Yêu cầu sửa đổi (`Revision Requested`)**: Nhập nội dung cần sửa và hạn nộp mới → sự kiện chuyển `Revision Requested`;
        - **Bảo vệ lại (`Re-defense`)**: Cho phép CLB thuyết trình lại → sự kiện chuyển sang trạng thái `Re-defense Pending` để chờ xếp lịch bảo vệ lần tiếp theo. Không giới hạn số lần bảo vệ lại (do ICPDP toàn quyền quyết định).
 - **Ngoại lệ:**
@@ -1327,7 +1326,7 @@ kèm ảnh đã bị hủy trước đó.
   múi giờ của hạn. Hai đầu cửa sổ nộp đều được chấp nhận.
 - ICPDP phải quyết định rõ từng hạng mục: `Not Sponsored`, `Before Event` hoặc
   `After Event`. Dòng chưa quyết định chặn phê duyệt. Dòng không tài trợ có lý do và trần 0;
-  dòng tài trợ có trần dương không vượt số xin, giảm trần phải có lý do. Lưu riêng số xin,
+  dòng tài trợ có trần bằng toàn bộ số xin, không cho sửa tiền tại bước duyệt. Lưu riêng số xin,
   trần được duyệt và quyết định trả trước/trả sau.
 - `Before Event`: nộp đủ bộ hóa đơn trong `[A, D]`; có thể được thanh toán trước khi sự kiện
   kết thúc. Nếu nộp hoặc được duyệt sau `E` nhưng nộp đúng hạn, vẫn thanh toán sau sự kiện,

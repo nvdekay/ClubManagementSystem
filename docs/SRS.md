@@ -544,7 +544,7 @@ kèm ảnh đã bị hủy trước đó.
   múi giờ của hạn. Hai đầu cửa sổ nộp đều được chấp nhận.
 - ICPDP phải quyết định rõ từng hạng mục: `Not Sponsored`, `Before Event` hoặc
   `After Event`. Dòng chưa quyết định chặn phê duyệt. Dòng không tài trợ có lý do và trần 0;
-  dòng tài trợ có trần dương không vượt số xin, giảm trần phải có lý do. Lưu riêng số xin,
+  dòng tài trợ có trần bằng toàn bộ số xin, không cho sửa tiền tại bước duyệt. Lưu riêng số xin,
   trần được duyệt và quyết định trả trước/trả sau.
 - `Before Event`: nộp đủ bộ hóa đơn trong `[A, D]`; có thể được thanh toán trước khi sự kiện
   kết thúc. Nếu nộp hoặc được duyệt sau `E` nhưng nộp đúng hạn, vẫn thanh toán sau sự kiện,
@@ -1623,7 +1623,7 @@ không đổi số các use case còn lại.
 | FR-UC26-11 | Chỉ cho phép công bố ở UC27 với sự kiện đã `Approved` (BR14) |
 | FR-UC26-12 | Không nhận review task cho sự kiện nội bộ được ghi nhận thẳng theo BR53; ICPDP xem các sự kiện đó ở UC02 và xử lý sai phạm qua UC40 |
 | FR-UC26-13 | Với đề xuất có phần ngân sách, hiển thị cho officer điều kiện, hạn mức còn lại của kỳ và khả năng trùng lặp với các ngân sách khác của CLB; yêu cầu chỉnh sửa có thể nhắm riêng vào phần ngân sách |
-| FR-UC26-14 | Khi duyệt đề xuất, bắt buộc quyết định từng hạng mục: không tài trợ (trần 0, lý do), hoặc tài trợ trả trước/trả sau (trần dương không vượt số xin, giảm kèm lý do); dòng chưa quyết định chặn duyệt. Lưu riêng số xin, trần và quyết định; tạo EventBudget, thông báo đầy đủ ba nhóm kèm hạn và liên kết hồ sơ cho dashboard CLB |
+| FR-UC26-14 | Khi duyệt đề xuất, bắt buộc quyết định từng hạng mục: không tài trợ (trần 0, lý do), hoặc tài trợ trả trước/trả sau (trần bằng toàn bộ số xin, không sửa tiền tại bước duyệt); dòng chưa quyết định chặn duyệt. Lưu riêng số xin, trần và quyết định; tạo EventBudget, thông báo đầy đủ ba nhóm kèm hạn và liên kết hồ sơ cho dashboard CLB |
 | FR-UC26-15 | *(A3)* Đề xuất có tổng ngân sách vượt ngưỡng vẫn được quyết định ở một cấp; rule của UC05 chỉ đặt SLA thẩm định (BR16) |
 | FR-UC26-16 | *(E3)* Cho officer yêu cầu chỉnh sửa hoặc từ chối kèm lý do được ghi lại khi hạn mức ngân sách của kỳ đã cạn |
 | FR-UC26-17 | Cho ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện của CLB: `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`; hiển thị phiên bản hiện tại, lịch sử xử lý, nhận xét và hạn bổ sung; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời hiện hành |

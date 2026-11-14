@@ -29,3 +29,10 @@ Chưa thực hiện upload thật lên Cloudinary trong lượt này. Adapter d�
 - [x] Giữ giao diện cũ cho ngân sách legacy; tổng tiền hồ sơ mới tính từ các hạng mục, không hiển thị form tạm ứng cũ.
 - [x] Thông báo chọn đúng ngân sách; cập nhật cache tổng tiền sau thao tác.
 - [x] Kiểm tra trực tiếp hai trang bằng tài khoản CLB/ICPDP; thêm 4 test liên kết thông báo.
+
+## Khóa số tiền tại bước duyệt UC26
+
+- [x] Trả trước/trả sau lấy toàn bộ số xin; ô tiền chỉ đọc, không tài trợ bằng 0 kèm lý do.
+- [x] Domain từ chối số tiền bị sửa cho hạng mục tài trợ; dùng chung cho duyệt thường và sau bảo vệ.
+- [x] Đồng bộ SPEC, UC Specification và SRS; 15 test UC26 (unit và Mongo integration) đạt.
+- [x] npm run check đạt: constitution, lint, typecheck, 591 test server và 27 test client; integration chạy MongoDB thật.

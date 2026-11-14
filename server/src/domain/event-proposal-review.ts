@@ -166,7 +166,7 @@ export function approvedBudget(requested: RequestedBudgetLine[],
   return requested.map((line, index) => {
     const { approvedAmount, reason, fundingDecision } = decided[index]!;
     if (fundingDecision !== undefined && (!FUNDING_DECISIONS.includes(fundingDecision)
-      || (fundingDecision === "NOT_SPONSORED" ? approvedAmount !== 0 : approvedAmount <= 0))) {
+      || (fundingDecision === "NOT_SPONSORED" ? approvedAmount !== 0 : approvedAmount !== line.amount || approvedAmount <= 0))) {
       throw new DomainError("funding decision and approved amount disagree", "validation");
     }
     if (!Number.isInteger(approvedAmount) || approvedAmount < 0) {

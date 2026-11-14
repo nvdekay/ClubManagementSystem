@@ -4,7 +4,6 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppInput } from "@/components/ui/input/AppInput";
-import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -56,15 +55,12 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
   const [deadline, setDeadline] = useState("");
   const [sections, setSections] = useState<EventReviewSection[]>([]);
   const [conditions, setConditions] = useState("");
-  const [amounts, setAmounts] = useState<Record<number, { amount?: string; reason?: string }>>({});
+  const [amounts, setAmounts] = useState<Record<number, { reason?: string }>>({});
   const [funding, setFunding] = useState<Record<number, FundingDecision>>({});
 
   const current = versions.find((version) => version.revisionNo === event.currentRevisionNo) ?? versions.at(-1);
   const lines = current?.budgetLines ?? [];
-  const approvedAmounts = lines.map((line, index) => {
-    const raw = amounts[index]?.amount;
-    return raw === undefined ? budget?.lines[index]?.approvedAmount ?? line.amount : Number(raw);
-  });
+  const approvedAmounts = lines.map((line, index) => funding[index] === "NOT_SPONSORED" ? 0 : line.amount);
 
   const defenseCutoffMessage = (() => {
     if (outcome !== "Request revision" || !deadline) return null;
@@ -126,7 +122,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
     setSections((prev) => (prev.includes(section) ? prev.filter((item) => item !== section) : [...prev, section]));
   }
 
-  function editLine(index: number, change: { amount?: string; reason?: string }) {
+  function editLine(index: number, change: { reason?: string }) {
     setAmounts((prev) => ({ ...prev, [index]: { ...prev[index], ...change } }));
   }
 
@@ -269,8 +265,6 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
                       value={funding[index] ?? ""} onChange={(event) => {
                         const value = event.target.value as FundingDecision;
                         setFunding((previous) => ({ ...previous, [index]: value }));
-                        if (value === "NOT_SPONSORED") editLine(index, { amount: "0" });
-                        else if (approvedAmounts[index] === 0) editLine(index, { amount: String(line.amount) });
                       }}>
                       <option value="">{t("sponsoredItems.choose")}</option>
                       {(["NOT_SPONSORED", "BEFORE_EVENT", "AFTER_EVENT"] as const).map((value) => <option key={value} value={value}>{t(`sponsoredItems.${value}`)}</option>)}
@@ -284,12 +278,10 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
                         {t("eventReviews.requestedAmount")}: {money(line.amount)}
                       </span>
                     </span>
-                    <AppMoneyInput
-                      disabled={funding[index] === "NOT_SPONSORED" || isPending}
-                      value={amounts[index]?.amount ?? String(budget?.lines[index]?.approvedAmount ?? line.amount)}
-                      {...field.control(`amount${index}`)}
-                      onValueChange={(digits) => editLine(index, { amount: digits })}
-                      className="mt-1.5 w-full tabular-nums"
+                    <AppInput
+                      readOnly
+                      value={money(approvedAmounts[index]!)}
+                      className="mt-1.5 w-full bg-surface-app tabular-nums"
                     />
                     <AppFieldError message={field.error(`amount${index}`)} />
                   </label>

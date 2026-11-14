@@ -101,6 +101,24 @@ describe("UC26 event proposal review use case", () => {
     ]);
   });
 
+  it.each(["BEFORE_EVENT", "AFTER_EVENT"] as const)("requires the full requested amount for %s", (fundingDecision) => {
+    for (const approvedAmount of [0, 1_000_000, 2_500_000]) {
+      expect(() => approvedBudget([lines[0]!], [{ fundingDecision, approvedAmount, reason: "Changed amount" }]))
+        .toThrow("funding decision and approved amount disagree");
+    }
+    expect(approvedBudget([lines[0]!], [{ fundingDecision, approvedAmount: 2_000_000 }])[0])
+      .toMatchObject({ fundingDecision, approvedAmount: 2_000_000 });
+  });
+
+  it("requires zero and a reason for an unfunded item", () => {
+    expect(() => approvedBudget([lines[0]!], [{ fundingDecision: "NOT_SPONSORED", approvedAmount: 2_000_000 }]))
+      .toThrow("funding decision and approved amount disagree");
+    expect(() => approvedBudget([lines[0]!], [{ fundingDecision: "NOT_SPONSORED", approvedAmount: 0 }]))
+      .toThrow("needs a reason");
+    expect(approvedBudget([lines[0]!], [{ fundingDecision: "NOT_SPONSORED", approvedAmount: 0, reason: "Out of scope" }])[0])
+      .toMatchObject({ approvedAmount: 0, fundingDecision: "NOT_SPONSORED" });
+  });
+
   it("validates the approved budget of the current revision before writing", async () => {
     const decide = vi.fn(async () => detail());
     const repo = repository({ decide });

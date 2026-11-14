@@ -6,7 +6,7 @@ Luồng cũ yêu cầu giải ngân trước khi ghi chi phí, dùng link chứn
 
 ## Hành vi
 
-- UC26 yêu cầu quyết định rõ từng dòng: NOT_SPONSORED, BEFORE_EVENT, AFTER_EVENT; lưu trần, lý do và phiên bản quyết định.
+- UC26 yêu cầu quyết định rõ từng dòng: NOT_SPONSORED, BEFORE_EVENT, AFTER_EVENT; trả trước/trả sau luôn duyệt toàn bộ số tiền xin, không được sửa tiền tại bước duyệt; không tài trợ duyệt 0 và có lý do. Lưu trần, lý do và phiên bản quyết định.
 - Club Leader ghi chi ngay sau duyệt. Bộ chứng từ nằm trong trang Khoản chi và quyết toán của CLB; ICPDP đối soát/thanh toán ở Giải ngân kinh phí; tối đa 5 ảnh JPG/PNG mỗi hạng mục, mỗi ảnh tối đa 5 MiB, cho chọn nhiều ảnh. Kiểm tra nội dung file và số lượng tại server.
 - Ảnh lưu riêng tư qua Cloudinary; truy cập qua kiểm tra quyền CLB/ICPDP. Không nhận URL tùy ý cho hồ sơ mới.
 - BEFORE_EVENT nộp từ lúc duyệt đến E+14 ngày; AFTER_EVENT từ E đến E+14 ngày. Không hạn bổ sung riêng. Hồ sơ Submitted đúng hạn tiếp tục được xét/thanh toán sau hạn.

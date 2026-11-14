@@ -52,7 +52,7 @@ describe.skipIf(!uri)("Mongo event proposal review repository", () => {
     await mongoose.disconnect();
   });
 
-  it("claims, requests a revision, then approves the resubmission with a reduced budget", async () => {
+  it("claims, requests a revision, then approves the resubmission with full funding for each sponsored item", async () => {
     const repo = mongoEventProposalReviewRepository();
     const id = await submit("Đêm nhạc acoustic", budgetLines);
     expect((await repo.listOpen()).map((item) => [item.event.title, item.event.requestedBudgetTotal]))
@@ -76,17 +76,17 @@ describe.skipIf(!uri)("Mongo event proposal review repository", () => {
     await expect(repo.decide(id, String(officer), { outcome: "Approve", sections: [], conditions: [],
       budgetLines: [{ approvedAmount: 2_000_000 }] }, now)).rejects.toMatchObject({ kind: "validation" });
     const approved = await repo.decide(id, String(officer), { outcome: "Approve", sections: [],
-      conditions: ["Có bảo vệ trực"], budgetLines: [{ approvedAmount: 1_500_000, reason: "Giảm số poster", fundingDecision: "BEFORE_EVENT" },
+      conditions: ["Có bảo vệ trực"], budgetLines: [{ approvedAmount: 2_000_000, fundingDecision: "BEFORE_EVENT" },
         { approvedAmount: 3_000_000, fundingDecision: "AFTER_EVENT" }] }, now);
     expect(approved.event).toMatchObject({ state: "Approved", approvalConditions: ["Có bảo vệ trực"] });
     expect(approved.event.revisionDeadlineAt).toBeUndefined();
     expect(approved.decisions.map((decision) => decision.outcome)).toEqual(["Request revision", "Approve"]);
-    expect(approved.budget).toMatchObject({ state: "Approved", requestedTotal: 5_000_000, approvedTotal: 4_500_000,
-      lines: [{ category: "Truyền thông", requestedAmount: 2_000_000, approvedAmount: 1_500_000, reason: "Giảm số poster" },
+    expect(approved.budget).toMatchObject({ state: "Approved", requestedTotal: 5_000_000, approvedTotal: 5_000_000,
+      lines: [{ category: "Truyền thông", requestedAmount: 2_000_000, approvedAmount: 2_000_000 },
         { category: "Hậu cần", requestedAmount: 3_000_000, approvedAmount: 3_000_000 }] });
     expect(await ucmsModels.eventBudgets!.countDocuments({ eventId: new Types.ObjectId(id) })).toBe(1);
     expect((await ucmsModels.eventBudgets!.findOne({ eventId: new Types.ObjectId(id) }).lean())?.sponsoredItems).toMatchObject([
-      { fundingDecision: "BEFORE_EVENT", approvedAmount: 1_500_000, status: "Draft", images: [], approvedAt: now.toISOString() },
+      { fundingDecision: "BEFORE_EVENT", approvedAmount: 2_000_000, status: "Draft", images: [], approvedAt: now.toISOString() },
       { fundingDecision: "AFTER_EVENT", approvedAmount: 3_000_000, status: "Draft", images: [] },
     ]);
     expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: member, entityId: new Types.ObjectId(id) })).toBe(2);
@@ -97,7 +97,7 @@ describe.skipIf(!uri)("Mongo event proposal review repository", () => {
     await repo.claim(second, String(officer), now);
     const other = await repo.find(second, now);
     expect(other?.semesterBudgets.map((budget) => [budget.eventTitle, budget.approvedTotal]))
-      .toEqual([["Đêm nhạc acoustic", 4_500_000]]);
+      .toEqual([["Đêm nhạc acoustic", 5_000_000]]);
   });
 
   it("approves a proposal without budget lines without creating a budget, and rejects with a reason", async () => {
