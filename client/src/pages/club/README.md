@@ -67,5 +67,7 @@ hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộ
 Các trang khác (đối chiếu 17/10/2026), đều chỉ dành cho Club Leader:
 `ClubEventsPage` (UC25, UC27, UC28, UC30; cùng component với `mode="attendance"` cho UC32 tại
 `/club/:clubId/event-attendance` và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
+`ClubEventProposalPage` (UC25: trang riêng cho tạo và chỉnh sửa đề xuất sự kiện tại `/club/:clubId/events/new`
+và `/club/:clubId/events/:eventId/edit`, dùng chung `ClubEventErrorMessage` và `clubEventFormat.ts` với `ClubEventsPage`),
 `ClubBookingsPage` (UC45–47, xem trên), `ClubReportsPage` (UC33, dùng `ReportWorkspace`, route
 `/club/:clubId/event-reports`) và `ClubBudgetsPage` (UC36, dùng `FinanceWorkspace`, route `/club/:clubId/budgets`).
