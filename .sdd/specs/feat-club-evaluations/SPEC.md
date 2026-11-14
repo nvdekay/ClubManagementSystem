@@ -68,3 +68,12 @@ UC43 E1 (CLB phản biện kết quả → hồ sơ UC40), trang CLB xem kết q
   tính). Sinh/sinh lại nháp bị từ chối (409, `details.field = "periodicReports"`, `details.clubs`) khi còn báo cáo định kỳ
   của kỳ đang `Submitted` chờ UC39. Kỳ đã có đánh giá giữ phiên bản scheme đã dùng (BR51, BR60). Huỷ booking sát giờ
   vẫn không vào điểm (quyết định 17/10).
+
+## Điều chỉnh 2026-11-14: báo cáo quá hạn và công bố
+
+- Báo cáo định kỳ nộp muộn hoặc quá hạn chưa nộp: tự tính 0 cho toàn bộ tiêu chí và tổng điểm của kỳ; lưu lý do và nguồn dữ liệu. ICPDP vẫn phải chốt bản đánh giá.
+- Không cho điểm chấm tay ghi đè quy tắc 0 điểm; sinh lại và chốt kiểm tra lại tình trạng báo cáo.
+- Chưa hết hạn hoặc không thuộc nghĩa vụ nộp: không tự phạt 0. Báo cáo đúng hạn đang chờ thẩm định vẫn phải được xử lý trước khi sinh điểm.
+- Chỉ công bố khi mọi CLB trong phạm vi có bản mới nhất đã chốt/công bố và có tổng điểm hợp lệ; không chốt bản hoàn toàn thiếu điểm.
+- Không sửa kết quả đã công bố; thay đổi sau công bố đi qua bản sửa hiện có.
+- Theo yêu cầu giao diện: ẩn nút Sinh bản nháp và Sinh lại từ dữ liệu hiện tại; không tự sinh đánh giá khi mở trang. Giữ API và luồng tạo bản sửa sau công bố.

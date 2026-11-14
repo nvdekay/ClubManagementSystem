@@ -1,7 +1,7 @@
 import type { AuthRepository } from "../domain/auth.js";
 import { DomainError } from "../domain/errors.js";
 import {
-  checkManualScore, scoreDimensions, totalOf,
+  checkManualScore, hasReportPenalty, scoreDimensions, totalOf,
   type DimensionResult, type EvaluationDetail, type EvaluationOverview, type EvaluationRepository, type EvaluationRow,
   type PeriodWindow,
 } from "../domain/evaluation.js";
@@ -54,11 +54,13 @@ function periodScheme(schemes: EvaluationScheme[], periodCode: string, pinnedId?
 }
 
 /** UC42 precondition: the period's reports have been through UC39, so none is still waiting for a decision. */
-async function assertReportsReviewed(repo: EvaluationRepository, periodCode: string, clubId?: string): Promise<void> {
+async function assertReportsReviewed(repo: EvaluationRepository, periodCode: string, now: Date, clubId?: string): Promise<void> {
   const pending = await repo.unreviewedReports(periodCode, clubId);
-  if (pending.length) {
+  const blocking = (await Promise.all(pending.map(async (club) =>
+    (await repo.reportPenalty(club.clubId, periodCode, now)).value > 0 ? undefined : club))).filter((club) => club !== undefined);
+  if (blocking.length) {
     throw new DomainError("review the periodic reports of this period first", "conflict",
-      { field: "periodicReports", clubs: pending.map((club) => club.clubName) });
+      { field: "periodicReports", clubs: blocking.map((club) => club.clubName) });
   }
 }
 
@@ -70,6 +72,7 @@ function period(calendar: PeriodWindow[], code: string): PeriodWindow {
 
 /** Keeps the officer's manual scores when the data is generated again (UC42 A1). */
 function withManual(results: DimensionResult[], previous: EvaluationDetail | undefined, scheme: EvaluationScheme): DimensionResult[] {
+  if (hasReportPenalty(results)) return results;
   return results.map((result) => {
     const before = previous?.dimensions.find((item) => item.code === result.code && item.isManual);
     const allowed = scheme.dimensions.find((item) => item.code === result.code)?.allowsManual;
@@ -103,7 +106,8 @@ export async function evaluationOverview(deps: EvaluationDeps, actor: AccessActo
   });
   const scheme = periodScheme(schemes, chosen, latest[0]?.schemeId);
   return { periods, periodCode: chosen, ...(scheme ? { scheme: { id: scheme.id, version: scheme.version } } : {}), rows,
-    canPublish: rows.length > 0 && rows.every((row) => row.state === "Finalized" || row.state === "Published")
+    canPublish: rows.length > 0 && rows.every((row) => Number.isFinite(row.totalScore)
+      && (row.state === "Finalized" || row.state === "Published"))
       && rows.some((row) => row.state === "Finalized") };
 }
 
@@ -115,7 +119,7 @@ export async function generateEvaluations(deps: EvaluationDeps, actor: AccessAct
   const [clubs, latest] = await Promise.all([deps.repo.clubsInScope(), deps.repo.latest(periodCode)]);
   const scheme = periodScheme(schemes, periodCode, latest[0]?.schemeId);
   if (!scheme) throw new DomainError("activate an evaluation scheme for this period first", "conflict");
-  await assertReportsReviewed(deps.repo, periodCode);
+  await assertReportsReviewed(deps.repo, periodCode, now);
   const done = new Set(latest.map((item) => item.clubId));
   for (const club of clubs.filter((item) => !done.has(item.id))) {
     await deps.repo.writeDraft({ clubId: club.id, periodCode, scheme, target: { kind: "new" },
@@ -142,7 +146,7 @@ export async function regenerateEvaluation(deps: EvaluationDeps, actor: AccessAc
   if (!isPublished && !editableStates.has(current.state)) {
     throw new DomainError("reopen the finalized evaluation before generating it again", "conflict");
   }
-  await assertReportsReviewed(deps.repo, current.periodCode, current.clubId);
+  await assertReportsReviewed(deps.repo, current.periodCode, now, current.clubId);
   const results = withManual(await computed(deps, current.clubId, period(calendar, current.periodCode), scheme, minRespondents, now),
     current, scheme);
   const newId = await deps.repo.writeDraft({ clubId: current.clubId, periodCode: current.periodCode, scheme, results,
@@ -156,6 +160,9 @@ export async function setManualScore(deps: EvaluationDeps, actor: AccessActor | 
   const officerId = await officer(deps.auth, actor);
   const current = await evaluation(deps.repo, id);
   if (!editableStates.has(current.state)) throw new DomainError("only an evaluation under review can change", "conflict");
+  if (hasReportPenalty(current.dimensions) || (await deps.repo.reportPenalty(current.clubId, current.periodCode, now)).value > 0) {
+    throw new DomainError("late or missing periodic reports require a zero evaluation score", "conflict");
+  }
   const checked = checkManualScore(current.dimensions.find((item) => item.code === code), manual);
   await deps.repo.setManual(current.id, code, checked, officerId, now);
   return evaluation(deps.repo, current.id);
@@ -163,9 +170,16 @@ export async function setManualScore(deps: EvaluationDeps, actor: AccessActor | 
 
 export async function finalizeEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
-  const current = await evaluation(deps.repo, id);
+  let current = await evaluation(deps.repo, id);
   if (!editableStates.has(current.state)) throw new DomainError("this evaluation cannot be finalized now", "conflict");
-  await deps.repo.finalize(current.id, totalOf(current.dimensions, current.thresholds), officerId, now);
+  await assertReportsReviewed(deps.repo, current.periodCode, now, current.clubId);
+  const penalized = (await deps.repo.reportPenalty(current.clubId, current.periodCode, now)).value > 0;
+  if (penalized || hasReportPenalty(current.dimensions)) {
+    current = await regenerateEvaluation(deps, actor, id, now);
+  }
+  const total = totalOf(current.dimensions, current.thresholds);
+  if (!Number.isFinite(total.totalScore)) throw new DomainError("an evaluation needs a total score before finalizing", "conflict");
+  await deps.repo.finalize(current.id, total, officerId, now);
   return evaluation(deps.repo, current.id);
 }
 
@@ -182,6 +196,14 @@ export async function publishEvaluations(deps: EvaluationDeps, actor: AccessActo
   const officerId = await officer(deps.auth, actor);
   const overview = await evaluationOverview(deps, actor, periodCode, now);
   if (!overview.canPublish) throw new DomainError("finalize the evaluation of every club before publishing", "conflict");
+  for (const row of overview.rows.filter((item) => item.state === "Finalized")) {
+    const penalized = (await deps.repo.reportPenalty(row.clubId, periodCode, now)).value > 0;
+    const current = await evaluation(deps.repo, row.evaluationId!);
+    if (penalized !== hasReportPenalty(current.dimensions) || (penalized && row.totalScore !== 0)) {
+      throw new DomainError("periodic report status changed; reopen and finalize the evaluation again", "conflict");
+    }
+    await assertReportsReviewed(deps.repo, periodCode, now, row.clubId);
+  }
   await deps.repo.publish(periodCode, officerId, now);
   return evaluationOverview(deps, actor, periodCode, now);
 }

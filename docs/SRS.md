@@ -2152,8 +2152,8 @@ Báo cáo cần bổ sung ở UC25/UC26 là **báo cáo đề xuất tổ chức
 | ID | Hệ thống phải … |
 |---|---|
 | FR-UC43-01 | Hiển thị bản nháp kèm dữ liệu nguồn và cho officer kiểm tra các dimension `Insufficient data`; các dimension này nằm ngoài tổng điểm, trọng số của chúng được chia lại cho các dimension đã có điểm |
-| FR-UC43-02 | Cho officer chấm tay các dimension mà scheme đánh dấu là chấm tay, mỗi cái kèm lý giải |
-| FR-UC43-03 | Cho officer chốt (`Finalized`) rồi công bố (`Published`) theo bảng điểm chung — cùng các dimension, cùng thứ tự, kèm chỉ số thô — cho mọi CLB (BR60), và thông báo cho các CLB |
+| FR-UC43-02 | Cho officer chấm tay các dimension mà scheme đánh dấu là chấm tay, mỗi cái kèm lý giải; không ghi đè điểm 0 bắt buộc do báo cáo định kỳ nộp muộn hoặc quá hạn chưa nộp |
+| FR-UC43-03 | Báo cáo định kỳ nộp muộn hoặc quá hạn chưa nộp nhận 0 điểm toàn kỳ, lưu lý do và nguồn dữ liệu, vẫn cần ICPDP chốt. Chỉ công bố (`Published`) khi mọi CLB trong phạm vi có tổng điểm hợp lệ và bản mới nhất đã chốt (`Finalized`) hoặc công bố; còn ít nhất một bản cần công bố. Không chốt bản hoàn toàn thiếu điểm. Công bố bảng điểm chung và thông báo cho các CLB (BR60) |
 | FR-UC43-04 | Không bao giờ sửa tại chỗ một kỳ đánh giá đã công bố — phải tạo bản sửa hoặc bản chụp mới (BR30) |
 | FR-UC43-05 | *(A1)* Hỗ trợ bản sửa sau công bố như một version mới, giữ bản đã công bố vẫn đọc được |
 | FR-UC43-06 | *(E1)* Xử lý khiếu nại về kết quả như một hồ sơ ở UC40, mọi hiệu chỉnh trở thành một bản sửa mới. *Ngoài phạm vi bản hiện tại — quyết định 17/10/2026:* CLB không phản biện được kết quả đã công bố. |

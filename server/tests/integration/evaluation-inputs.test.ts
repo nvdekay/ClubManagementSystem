@@ -5,7 +5,8 @@ import { DEFAULT_SCHEME_SETTINGS } from "../../src/domain/evaluation-scheme.js";
 import { mongoEvaluationRepository } from "../../src/infra/db/mongo-evaluation-repository.js";
 import { mongoEvaluationSchemeRepository } from "../../src/infra/db/mongo-evaluation-scheme-repository.js";
 import { ensureUcmsDatabase, ucmsModels as m } from "../../src/infra/db/ucms-models.js";
-import { generateEvaluations, regenerateEvaluation, type EvaluationDeps } from "../../src/usecase/evaluation.js";
+import { evaluationOverview, finalizeEvaluation, generateEvaluations, publishEvaluations, regenerateEvaluation, setManualScore,
+  type EvaluationDeps } from "../../src/usecase/evaluation.js";
 
 const uri = process.env.MONGO_URI;
 const now = new Date("2026-10-11T00:00:00Z");
@@ -97,7 +98,7 @@ describe.skipIf(!uri)("UC42 evaluation inputs", () => {
     expect(figure("Accepted club", "D4", "bookingsGranted")).toBe(2);
     expect(figure("Accepted club", "D4", "bookingsUsed")).toBe(1);
     expect(dimension("Accepted club", "D4").score).toBe(50);
-    expect(dimension("Silent club", "D4").insufficientData).toBe(true);
+    expect(dimension("Silent club", "D4")).toMatchObject({ score: 0, insufficientData: false });
   });
 
   it("keeps the period on the scheme version its evaluations used (BR51, BR60)", async () => {
@@ -107,5 +108,57 @@ describe.skipIf(!uri)("UC42 evaluation inputs", () => {
     const [first] = (await deps.repo.latest(summer.code));
     const again = await regenerateEvaluation(deps, actor, first!.id, now);
     expect(again.schemeId).toBe(first!.schemeId);
+  });
+
+  it("gives late and missing reports zero, blocks manual overrides and publishes only after all scores are finalized", async () => {
+    await m.periodicReports!.updateOne({ _id: returnedReport }, { $set: {
+      state: "Submitted", submittedAt: new Date("2026-09-16Z"), lateFlag: true,
+    } });
+    const all = await deps.repo.latest(summer.code);
+    const late = all.find((item) => item.clubId === String(returned))!;
+    const zero = await regenerateEvaluation(deps, actor, late.id, now);
+    expect(zero.dimensions.every((item) => item.score === 0)).toBe(true);
+    await expect(setManualScore(deps, actor, late.id, "D5", { score: 100, justification: "Override" }, now))
+      .rejects.toThrow("zero evaluation score");
+    const quiet = all.find((item) => item.clubId === String(silent))!;
+    expect(await finalizeEvaluation(deps, actor, quiet.id, now)).toMatchObject({ totalScore: 0, state: "Finalized" });
+    expect(await finalizeEvaluation(deps, actor, late.id, now)).toMatchObject({ totalScore: 0, state: "Finalized" });
+    await expect(publishEvaluations(deps, actor, summer.code, now)).rejects.toThrow("every club");
+    const onTime = all.find((item) => item.clubId === String(accepted))!;
+    await finalizeEvaluation(deps, actor, onTime.id, now);
+    expect((await evaluationOverview(deps, actor, summer.code, now)).canPublish).toBe(true);
+    // Even a legacy Finalized record without a total must block publication.
+    await m.evaluations!.updateOne({ _id: new Types.ObjectId(onTime.id) }, { $unset: { totalScore: "" } });
+    expect((await evaluationOverview(deps, actor, summer.code, now)).canPublish).toBe(false);
+    await expect(deps.repo.publish(summer.code, String(officer), now)).rejects.toThrow("every club");
+    await m.evaluations!.updateOne({ _id: new Types.ObjectId(onTime.id) }, { $set: { state: "Under Review" } });
+    await finalizeEvaluation(deps, actor, onTime.id, now);
+    expect((await publishEvaluations(deps, actor, summer.code, now)).rows.every((row) => row.state === "Published")).toBe(true);
+  });
+
+  it("blocks a scoreless draft and refreshes the penalty when finalizing after the deadline", async () => {
+    const current = (await deps.repo.latest(summer.code)).find((item) => item.clubId === String(silent))!;
+    const deadline = new Date("2026-09-15Z");
+    const revision = await regenerateEvaluation(deps, actor, current.id, deadline);
+    expect(revision.dimensions.some((item) => (item.score ?? 0) > 0)).toBe(true);
+    await m.evaluationDimensionResults!.updateMany({ evaluationId: new Types.ObjectId(revision.id) }, { $unset: { score: "" } });
+    await expect(finalizeEvaluation(deps, actor, revision.id, deadline)).rejects.toThrow("needs a total score");
+    expect(await finalizeEvaluation(deps, actor, revision.id, now)).toMatchObject({ totalScore: 0, state: "Finalized" });
+  });
+
+  it("uses the exact deadline, honors extensions and keeps closed campaigns overdue", async () => {
+    const dueAt = new Date("2026-09-15Z");
+    expect((await deps.repo.reportPenalty(String(silent), summer.code, dueAt)).value).toBe(0);
+    expect((await deps.repo.reportPenalty(String(silent), summer.code, new Date(dueAt.getTime() + 1))).value).toBe(1);
+    await m.periodicReports!.updateOne({ _id: returnedReport }, { $set: { submittedAt: dueAt } });
+    expect((await deps.repo.reportPenalty(String(returned), summer.code, now)).value).toBe(0);
+    const audit = await m.auditLogs!.create({ entityType: "PeriodicCampaign", entityId: new Types.ObjectId(),
+      action: "PERIODIC_REPORT_CAMPAIGN_SAVED", actorId: officer, correlationId: "deadline-test", at: now,
+      after: { periodCode: summer.code, isOpen: false, dueAt: dueAt.toISOString() } });
+    expect((await deps.repo.reportPenalty(String(silent), summer.code, now)).value).toBe(1);
+    await m.auditLogs!.updateOne({ _id: audit._id }, { $set: { "after.dueAt": "2026-11-01T00:00:00Z" } });
+    expect((await deps.repo.reportPenalty(String(silent), summer.code, now)).value).toBe(0);
+    const newcomer = await m.clubs!.create({ code: "NEW", name: "New club", field: "Technology", state: "Active", createdAt: now });
+    expect((await deps.repo.reportPenalty(String(newcomer._id), summer.code, new Date("2026-12-01Z"))).value).toBe(0);
   });
 });

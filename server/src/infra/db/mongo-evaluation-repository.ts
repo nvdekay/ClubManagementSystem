@@ -9,6 +9,7 @@ import {
 import type { DimensionCode, SchemeThresholds } from "../../domain/evaluation-scheme.js";
 import { clubBoardUserIds, queueNotifications } from "./club-board.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
+import { evaluationReportPenalty } from "./evaluation-report-penalty.js";
 import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
@@ -96,6 +97,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
   }
 
   return {
+    reportPenalty: evaluationReportPenalty,
     async clubsInScope() {
       const clubs = await m.clubs!.find({ state: { $in: inScopeStates } }).sort({ name: 1 }).collation({ locale: "vi" })
         .select({ name: 1, state: 1 }).lean();
@@ -137,7 +139,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       const club = new Types.ObjectId(clubId);
       const inPeriod = { $gte: period.startAt, $lte: period.endAt };
       const [eventDocs, memberDocs, leftDocs, applicationDocs, invitationDocs, budgetDocs, violationDocs, periodicDocs,
-        leaderPositions, bookingDocs, owedPeriods] = await Promise.all([
+        leaderPositions, bookingDocs, owedPeriods, reportPenalty] = await Promise.all([
         m.events!.find({ clubId: club, semesterCode: period.code }).select({ state: 1, audienceScope: 1 }).lean(),
         m.clubMemberships!.find({ clubId: club, state: { $in: ["Active", "Inactive"] } }).select({ userId: 1, state: 1 }).lean(),
         m.clubMemberships!.find({ clubId: club, state: { $in: ["Left", "Banned"] }, leftAt: inPeriod }).select({ _id: 1 }).lean(),
@@ -153,6 +155,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
           $or: [{ state: { $in: ["In Use", "Completed"] } }, { state: "Cancelled", decidedAt: { $exists: true } }] })
           .select({ state: 1 }).lean(),
         overduePeriodicReports(club, now),
+        evaluationReportPenalty(clubId, period.code, now),
       ]);
       // An event that reached its report (UC33) or was closed by ICPDP (UC34) still took place.
       const completed = eventDocs.filter((event) => ["Completed", "Report Submitted", "Closed", "FINISH"].includes(String(event.state)));
@@ -193,6 +196,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       const publicCompleted = completed.filter((event) => event.audienceScope === "PUBLIC");
       const cancelled = eventDocs.filter((event) => event.state === "Cancelled" || event.state === "CANCELLED");
       return {
+        periodicReportOverdue: reportPenalty,
         registrations: metric(registrationDocs.length, "eventRegistrations", ids(registrationDocs)),
         attendances: metric(attendanceDocs.length, "attendances", ids(attendanceDocs)),
         uniqueAttendees: metric(attendees.size, "attendances"),
@@ -278,6 +282,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
     },
 
     async finalize(id, total, officerId, now) {
+      if (!Number.isFinite(total.totalScore)) throw new DomainError("an evaluation needs a total score before finalizing", "conflict");
       const evaluationId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
         const changed = await evaluations.updateOne({ _id: evaluationId, state: { $in: ["Draft", "Data Ready", "Under Review"] } }, {
@@ -304,9 +309,14 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       let published = 0;
       await mongoose.connection.transaction(async (session) => {
         published = 0;
-        const latestIds = await evaluations.aggregate<{ _id: Types.ObjectId; id: Types.ObjectId; state: string }>([
+        const latestIds = await evaluations.aggregate<{ _id: Types.ObjectId; id: Types.ObjectId; state: string; totalScore?: unknown }>([
           { $match: { periodCode } }, { $sort: { revisionNo: -1 } },
-          { $group: { _id: "$clubId", id: { $first: "$_id" }, state: { $first: "$state" } } }]).session(session);
+          { $group: { _id: "$clubId", id: { $first: "$_id" }, state: { $first: "$state" }, totalScore: { $first: "$totalScore" } } }]).session(session);
+        const clubs = await m.clubs!.find({ state: { $in: inScopeStates } }).select({ _id: 1 }).session(session).lean();
+        if (!clubs.length || clubs.some((club) => {
+          const item = latestIds.find((entry) => String(entry._id) === String(club._id));
+          return !item || !["Finalized", "Published"].includes(item.state) || optionalNumber(item.totalScore) === undefined;
+        })) throw new DomainError("finalize the evaluation of every club before publishing", "conflict");
         for (const item of latestIds.filter((entry) => entry.state === "Finalized")) {
           const doc = await evaluations.findOneAndUpdate({ _id: item.id, state: "Finalized" },
             { $set: { state: "Published", publishedAt: now } }, { session, new: true }).lean();
