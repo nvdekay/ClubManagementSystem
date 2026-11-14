@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { SponsoredItems } from "@/components/custom/SponsoredItems";
+import { useSponsoredItems } from "@/hooks/useSponsoredItems";
 import { Link, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -169,6 +171,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
   const budget = useBudget(id, true);
+  const sponsored = useSponsoredItems(id);
   const record = useRecordBudgetFlow();
   const [amount, setAmount] = useState<string | null>(null);
   const [date, setDate] = useState(todayInput());
@@ -204,6 +207,15 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
   const label = "text-xs text-muted-app";
   const remaining = data.approvedTotal - data.disbursedTotal;
   const eventClosed = ["Cancelled", "Rejected", "Expired"].includes(data.eventState);
+
+  if (sponsored.isPending) return <AppSkeleton className="h-96 w-full" />;
+  if (sponsored.isError) return <AppNotice tone="danger" role="alert">{t("sponsoredItems.error")}</AppNotice>;
+  if (sponsored.data) return <>
+    <PageHeader title={data.eventTitle} back={back}
+      description={`${data.clubName} · ${t("budgets.title")}`}
+      actions={<AppBadge tone={stateTone(data.state)}>{stateLabel(t, data.state)}</AppBadge>} />
+    <SponsoredItems budgetId={id} csrfToken={csrfToken} />
+  </>;
 
   async function submit() {
     if (!allowed || !field.touchAll()) return;

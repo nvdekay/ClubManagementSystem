@@ -28,7 +28,7 @@ export async function cancelEventInSession(session: ClientSession, event: Doc, r
   );
   await releaseFacilityBookingsInSession(session, { eventId: id, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }, source, reason, now);
   const budget = await m.eventBudgets!.findOne({ eventId: id }).session(session).lean();
-  if (budget && !["Closed", "Cancelled"].includes(String(budget.state))) {
+  if (budget && !budget.sponsoredItems && !["Closed", "Cancelled"].includes(String(budget.state))) {
     const disbursed = Number(String(budget.disbursedTotal ?? 0));
     if (disbursed === 0) await m.eventBudgets!.updateOne({ _id: budget._id }, { $set: { state: "Cancelled" } }, { session });
     // Amount to recover must be decided from real expenses in UC37; do not assume all advances are unspent.
@@ -38,8 +38,9 @@ export async function cancelEventInSession(session: ClientSession, event: Doc, r
   await m.auditLogs!.create([{ entityType: "Event", entityId: id, action: "EVENT_CANCELLED",
     ...(actorId ? { actorId, actorRole: source.startsWith("PROPOSAL_") ? "ICPDP_OFFICER" : "Club Member" } : { actorRole: "SYSTEM" }),
     before: { state: event.state }, after: { state: "Cancelled", source, sourceRefId,
-      settlementRequired: budget ? Number(String(budget.disbursedTotal ?? 0)) > 0 : false, previousSettlementDueAt: budget?.settlementDueAt,
-      ...(budget && Number(String(budget.disbursedTotal ?? 0)) > 0 ? { settlementDueAt: settlementDueAt(now) } : {}) },
+      settlementRequired: budget && !budget.sponsoredItems ? Number(String(budget.disbursedTotal ?? 0)) > 0 : false, previousSettlementDueAt: budget?.settlementDueAt,
+      ...(budget?.sponsoredItems ? { sponsoredFinancePaused: true } : {}),
+      ...(budget && !budget.sponsoredItems && Number(String(budget.disbursedTotal ?? 0)) > 0 ? { settlementDueAt: settlementDueAt(now) } : {}) },
     reason, correlationId, at: now }], { session });
   if (registrations.length) await m.notifications!.create(registrations.map((r) => ({ recipientUserId: r.studentId,
     eventCode: "EVENT_CANCELLED", entityType: "Event", entityId: id, channels: ["IN_APP"], payload: { title: event.title, reason, source },

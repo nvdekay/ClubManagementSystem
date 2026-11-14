@@ -708,298 +708,301 @@
         </mxGraphModel>
     </diagram>
     <diagram id="mw-07-event-management" name="07 Event management">
-        <mxGraphModel dx="2507" dy="2347" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1224" pageHeight="2616" math="0" shadow="0">
-            <root>
-                <mxCell id="0"/>
-                <mxCell id="1" parent="0"/>
-                <mxCell id="f7_title" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;" value="Main workflow - Event management" vertex="1">
-                    <mxGeometry height="36" width="1144" x="40" y="16" as="geometry"/>
-                </mxCell>
-                <mxCell id="legend_activity" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="Activity" vertex="1">
-                    <mxGeometry height="36" width="150" x="40" y="68" as="geometry"/>
-                </mxCell>
-                <mxCell id="legend_optional" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;dashed=1;" value="Only when needed" vertex="1">
-                    <mxGeometry height="36" width="150" x="208" y="68" as="geometry"/>
-                </mxCell>
-                <mxCell id="legend_auto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=12;" value="Automatic system step" vertex="1">
-                    <mxGeometry height="36" width="190" x="376" y="68" as="geometry"/>
-                </mxCell>
-                <mxCell id="legend_decision" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="Decision" vertex="1">
-                    <mxGeometry height="48" width="150" x="584" y="62" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_student_bg" parent="1" style="rounded=0;html=1;fillColor=#fbfcfe;strokeColor=#8a97a6;" value="" vertex="1">
-                    <mxGeometry height="2406" width="262" x="136" y="174" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_student_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="Student" vertex="1">
-                    <mxGeometry height="44" width="262" x="136" y="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_leader_bg" parent="1" style="rounded=0;html=1;fillColor=#f3f6fa;strokeColor=#8a97a6;" value="" vertex="1">
-                    <mxGeometry height="2406" width="262" x="398" y="174" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_leader_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="Club Leader" vertex="1">
-                    <mxGeometry height="44" width="262" x="398" y="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_icpdp_bg" parent="1" style="rounded=0;html=1;fillColor=#fbfcfe;strokeColor=#8a97a6;" value="" vertex="1">
-                    <mxGeometry height="2406" width="262" x="660" y="174" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_icpdp_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="ICPDP Officer" vertex="1">
-                    <mxGeometry height="44" width="262" x="660" y="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_ucms_bg" parent="1" style="rounded=0;html=1;fillColor=#f3f6fa;strokeColor=#8a97a6;" value="" vertex="1">
-                    <mxGeometry height="2406" width="262" x="922" y="174" as="geometry"/>
-                </mxCell>
-                <mxCell id="lane_ucms_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="UCMS (system)" vertex="1">
-                    <mxGeometry height="44" width="262" x="922" y="130" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_start" parent="1" style="ellipse;html=1;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
-                    <mxGeometry height="34" width="34" x="512" y="221" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_start_lbl" parent="1" style="text;html=1;align=left;fontSize=12;" value="Start" vertex="1">
-                    <mxGeometry height="20" width="50" x="552" y="228" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Plan the event and submit the proposal (with a budget when funding is needed)" vertex="1">
-                    <mxGeometry height="78" width="206" x="426" y="327" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Check schedule and venue conflicts" vertex="1">
-                    <mxGeometry height="78" width="206" x="950" y="455" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_d1" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;spacingLeft=26;spacingRight=26;" value="ICPDP approval needed?" vertex="1">
-                    <mxGeometry height="92" width="168" x="969" y="576" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Review the proposal and its budget" vertex="1">
-                    <mxGeometry height="78" width="206" x="688" y="711" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_d2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;spacingLeft=26;spacingRight=26;" value="Decision?" vertex="1">
-                    <mxGeometry height="92" width="168" x="707" y="1088" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_end_rej" parent="1" style="ellipse;html=1;shape=endState;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
-                    <mxGeometry height="34" width="34" x="996" y="1117" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_rej_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Rejected" vertex="1">
-                    <mxGeometry height="18" width="140" x="943" y="1154" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Record the budget advance (when budgeted)" vertex="1">
-                    <mxGeometry height="78" width="206" x="688" y="1223" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Publish the event and open registration" vertex="1">
-                    <mxGeometry height="78" width="206" x="426" y="1351" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Register for the event (waitlist when it is full)" vertex="1">
-                    <mxGeometry height="78" width="206" x="164" y="1479" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Confirm seats, promote the waitlist and send reminders" vertex="1">
-                    <mxGeometry height="78" width="206" x="950" y="1607" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Attend the event" vertex="1">
-                    <mxGeometry height="78" width="206" x="164" y="1735" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Run the event, check participants in and finalize attendance" vertex="1">
-                    <mxGeometry height="78" width="206" x="426" y="1735" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Give feedback on the event" vertex="1">
-                    <mxGeometry height="78" width="206" x="164" y="1863" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_end_fb" parent="1" style="ellipse;html=1;shape=endState;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
-                    <mxGeometry height="34" width="34" x="250" y="2013" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_fb_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Feedback recorded" vertex="1">
-                    <mxGeometry height="18" width="140" x="197" y="2050" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Submit the post-event report and the expense settlement (when budgeted)" vertex="1">
-                    <mxGeometry height="78" width="206" x="426" y="1991" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Assess the report and reconcile the budget" vertex="1">
-                    <mxGeometry height="78" width="206" x="688" y="2119" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_d3" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;spacingLeft=26;spacingRight=26;" value="Accepted?" vertex="1">
-                    <mxGeometry height="92" width="168" x="707" y="2240" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Open a violation case (when there are findings)" vertex="1">
-                    <mxGeometry height="78" width="206" x="688" y="2375" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_s14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Close the event, settle the balance and feed the results into the club evaluation" vertex="1">
-                    <mxGeometry height="78" width="206" x="950" y="2375" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
-                    <mxGeometry height="34" width="34" x="1036" y="2525" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_end_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Event closed" vertex="1">
-                    <mxGeometry height="18" width="140" x="983" y="2562" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_app_req" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Yes" vertex="1">
-                    <mxGeometry height="20" width="31" x="1060" y="673" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_app_no" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="No: internal event without a budget" vertex="1">
-                    <mxGeometry height="36" width="134" x="1026" y="772" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_rev" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Revision requested" vertex="1">
-                    <mxGeometry height="20" width="134" x="480" y="1111" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_rej" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Rejected" vertex="1">
-                    <mxGeometry height="20" width="65" x="881" y="1140" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_app" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Approved" vertex="1">
-                    <mxGeometry height="20" width="65" x="798" y="1185" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_ret_rev" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Returned for revision" vertex="1">
-                    <mxGeometry height="20" width="155" x="546" y="2263" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_find" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Findings" vertex="1">
-                    <mxGeometry height="20" width="65" x="798" y="2337" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_acc" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Accepted" vertex="1">
-                    <mxGeometry height="20" width="65" x="881" y="2263" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e1" edge="1" parent="1" source="f7_start" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e2" edge="1" parent="1" source="f7_s1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" target="f7_s2">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="1053" y="366"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e3" edge="1" parent="1" source="f7_s2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_d1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e4" edge="1" parent="1" source="f7_d1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=1;entryY=0.5;" target="f7_s3">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="1053" y="750"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e5" edge="1" parent="1" source="f7_d1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" target="f7_s5">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="1168" y="622"/>
-                            <mxPoint x="1168" y="1390"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e7" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" target="f7_s1">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="412" y="1134"/>
-                            <mxPoint x="412" y="366"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e8" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f7_end_rej">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e9" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s4">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e10" edge="1" parent="1" source="f7_s4" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s5">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="791" y="1326"/>
-                            <mxPoint x="529" y="1326"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e11" edge="1" parent="1" source="f7_s5" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s6">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="529" y="1454"/>
-                            <mxPoint x="267" y="1454"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e12" edge="1" parent="1" source="f7_s6" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s7">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="267" y="1582"/>
-                            <mxPoint x="1053" y="1582"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e13" edge="1" parent="1" source="f7_s7" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s8">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="1053" y="1710"/>
-                            <mxPoint x="267" y="1710"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e14" edge="1" parent="1" source="f7_s8" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f7_s9">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e15" edge="1" parent="1" source="f7_s8" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s10">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e16" edge="1" parent="1" source="f7_s10" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_end_fb">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e17" edge="1" parent="1" source="f7_s9" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s11">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e18" edge="1" parent="1" source="f7_s11" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" target="f7_s12">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="791" y="2030"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e19" edge="1" parent="1" source="f7_s12" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_d3">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e20" edge="1" parent="1" source="f7_d3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=0.5;entryY=1;" target="f7_s11">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="529" y="2286"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e21" edge="1" parent="1" source="f7_d3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;dashed=1;" target="f7_s13">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e22" edge="1" parent="1" source="f7_d3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" target="f7_s14">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="1053" y="2286"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e23" edge="1" parent="1" source="f7_s14" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_end">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-            
-                  <mxCell id="f7_def1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Schedule an in-person defense when needed (reserved room, at least 48h ahead) (BR63)" vertex="1">
-                    <mxGeometry height="78" width="206" x="688" y="839" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_def2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Confirm the defense slot or request a reschedule" vertex="1">
-                    <mxGeometry height="78" width="206" x="426" y="839" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_def3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Run the live defense room and record notes (no-show: proposal Rejected)" vertex="1">
-                    <mxGeometry height="78" width="206" x="688" y="967" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_lbl_redef" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Re-defense" vertex="1">
-                    <mxGeometry height="20" width="70" x="914" y="980" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e_def1" edge="1" parent="1" source="f7_s3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_def1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e_def2" edge="1" parent="1" source="f7_def1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="f7_def2">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e_def3" edge="1" parent="1" source="f7_def2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" target="f7_def3">
-                    <mxGeometry relative="1" as="geometry"><Array as="points">
-                            <mxPoint x="529" y="1006"/>
-                        </Array></mxGeometry>
-                </mxCell>
-                <mxCell id="f7_e_def4" edge="1" parent="1" source="f7_def3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_d2">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="f7_e_redef" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.75;exitY=0.25;entryX=1;entryY=0.5;dashed=1;" target="f7_def1">
-                    <mxGeometry relative="1" as="geometry"><Array as="points">
-                            <mxPoint x="908" y="1111"/>
-                            <mxPoint x="908" y="878"/>
-                        </Array></mxGeometry>
-                </mxCell>
-</root>
-        </mxGraphModel>
-    </diagram>
+  <mxGraphModel dx="2507" dy="2347" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1224" pageHeight="2616" math="0" shadow="0">
+    <root>
+      <mxCell id="0" />
+      <mxCell id="1" parent="0" />
+      <mxCell id="f7_title" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;" value="Main workflow - Event management" vertex="1">
+        <mxGeometry height="36" width="1144" x="40" y="16" as="geometry" />
+      </mxCell>
+      <mxCell id="legend_activity" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="Activity" vertex="1">
+        <mxGeometry height="36" width="150" x="40" y="68" as="geometry" />
+      </mxCell>
+      <mxCell id="legend_optional" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12;dashed=1;" value="Only when needed" vertex="1">
+        <mxGeometry height="36" width="150" x="208" y="68" as="geometry" />
+      </mxCell>
+      <mxCell id="legend_auto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=12;" value="Automatic system step" vertex="1">
+        <mxGeometry height="36" width="190" x="376" y="68" as="geometry" />
+      </mxCell>
+      <mxCell id="legend_decision" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="Decision" vertex="1">
+        <mxGeometry height="48" width="150" x="584" y="62" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_student_bg" parent="1" style="rounded=0;html=1;fillColor=#fbfcfe;strokeColor=#8a97a6;" value="" vertex="1">
+        <mxGeometry height="2406" width="262" x="136" y="174" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_student_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="Student" vertex="1">
+        <mxGeometry height="44" width="262" x="136" y="130" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_leader_bg" parent="1" style="rounded=0;html=1;fillColor=#f3f6fa;strokeColor=#8a97a6;" value="" vertex="1">
+        <mxGeometry height="2406" width="262" x="398" y="174" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_leader_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="Club Leader" vertex="1">
+        <mxGeometry height="44" width="262" x="398" y="130" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_icpdp_bg" parent="1" style="rounded=0;html=1;fillColor=#fbfcfe;strokeColor=#8a97a6;" value="" vertex="1">
+        <mxGeometry height="2406" width="262" x="660" y="174" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_icpdp_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="ICPDP Officer" vertex="1">
+        <mxGeometry height="44" width="262" x="660" y="130" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_ucms_bg" parent="1" style="rounded=0;html=1;fillColor=#f3f6fa;strokeColor=#8a97a6;" value="" vertex="1">
+        <mxGeometry height="2406" width="262" x="922" y="174" as="geometry" />
+      </mxCell>
+      <mxCell id="lane_ucms_header" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dfe7f1;strokeColor=#8a97a6;fontStyle=1;fontSize=16;" value="UCMS (system)" vertex="1">
+        <mxGeometry height="44" width="262" x="922" y="130" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_start" parent="1" style="ellipse;html=1;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
+        <mxGeometry height="34" width="34" x="512" y="221" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_start_lbl" parent="1" style="text;html=1;align=left;fontSize=12;" value="Start" vertex="1">
+        <mxGeometry height="20" width="50" x="552" y="228" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Plan the event and submit the proposal (with a budget when funding is needed)" vertex="1">
+        <mxGeometry height="78" width="206" x="426" y="327" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Check schedule and venue conflicts" vertex="1">
+        <mxGeometry height="78" width="206" x="950" y="455" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_d1" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;spacingLeft=26;spacingRight=26;" value="ICPDP approval needed?" vertex="1">
+        <mxGeometry height="92" width="168" x="969" y="576" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Review proposal; decide sponsorship, Before / After Event and cap for every budget item" vertex="1">
+        <mxGeometry height="78" width="206" x="688" y="711" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_d2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;spacingLeft=26;spacingRight=26;" value="Decision?" vertex="1">
+        <mxGeometry height="92" width="168" x="707" y="1088" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_end_rej" parent="1" style="ellipse;html=1;shape=endState;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
+        <mxGeometry height="34" width="34" x="996" y="1117" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_rej_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Rejected" vertex="1">
+        <mxGeometry height="18" width="140" x="943" y="1154" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Notify item funding results; expenses and invoices available in proposal details (see Event Finance flow)" vertex="1">
+        <mxGeometry height="78" width="206" x="688" y="1223" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Publish the event and open registration" vertex="1">
+        <mxGeometry height="78" width="206" x="426" y="1351" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Register for the event (waitlist when it is full)" vertex="1">
+        <mxGeometry height="78" width="206" x="164" y="1479" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Confirm seats, promote the waitlist and send reminders" vertex="1">
+        <mxGeometry height="78" width="206" x="950" y="1607" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Attend the event" vertex="1">
+        <mxGeometry height="78" width="206" x="164" y="1735" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Run the event, check participants in and finalize attendance" vertex="1">
+        <mxGeometry height="78" width="206" x="426" y="1735" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Give feedback on the event" vertex="1">
+        <mxGeometry height="78" width="206" x="164" y="1863" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_end_fb" parent="1" style="ellipse;html=1;shape=endState;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
+        <mxGeometry height="34" width="34" x="250" y="2013" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_fb_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Feedback recorded" vertex="1">
+        <mxGeometry height="18" width="140" x="197" y="2050" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Submit post-event report; finance follows its own invoice window (Before: A–D; After: E–D)" vertex="1">
+        <mxGeometry height="78" width="206" x="426" y="1991" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;" value="Assess report; review submitted invoice packs and record one full payment per accepted item" vertex="1">
+        <mxGeometry height="78" width="206" x="688" y="2119" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_d3" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;spacingLeft=26;spacingRight=26;" value="Accepted?" vertex="1">
+        <mxGeometry height="92" width="168" x="707" y="2240" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Open a violation case (when there are findings)" vertex="1">
+        <mxGeometry height="78" width="206" x="688" y="2375" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_s14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;fontSize=13;strokeWidth=1.3;spacing=10;" value="Close event and budget when obligations resolved; feed actual paid / reviewed results into evaluation" vertex="1">
+        <mxGeometry height="78" width="206" x="950" y="2375" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_end" parent="1" style="ellipse;html=1;shape=endState;fillColor=#333333;strokeColor=#333333;" value="" vertex="1">
+        <mxGeometry height="34" width="34" x="1036" y="2525" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_end_lbl" parent="1" style="text;html=1;whiteSpace=wrap;align=center;fontSize=12;" value="Event closed" vertex="1">
+        <mxGeometry height="18" width="140" x="983" y="2562" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_app_req" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Yes" vertex="1">
+        <mxGeometry height="20" width="31" x="1060" y="673" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_app_no" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="No: internal event without a budget" vertex="1">
+        <mxGeometry height="36" width="134" x="1026" y="772" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_rev" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Revision requested" vertex="1">
+        <mxGeometry height="20" width="134" x="480" y="1111" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_rej" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Rejected" vertex="1">
+        <mxGeometry height="20" width="65" x="881" y="1140" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_app" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Approved" vertex="1">
+        <mxGeometry height="20" width="65" x="798" y="1185" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_ret_rev" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Returned for revision" vertex="1">
+        <mxGeometry height="20" width="155" x="546" y="2263" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_find" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Findings" vertex="1">
+        <mxGeometry height="20" width="65" x="798" y="2337" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_acc" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Accepted" vertex="1">
+        <mxGeometry height="20" width="65" x="881" y="2263" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e1" edge="1" parent="1" source="f7_start" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s1">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e2" edge="1" parent="1" source="f7_s1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" target="f7_s2">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="1053" y="366" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e3" edge="1" parent="1" source="f7_s2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_d1">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e4" edge="1" parent="1" source="f7_d1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=1;entryY=0.5;" target="f7_s3">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="1053" y="750" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e5" edge="1" parent="1" source="f7_d1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" target="f7_s5">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="1168" y="622" />
+            <mxPoint x="1168" y="1390" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e7" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" target="f7_s1">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="412" y="1134" />
+            <mxPoint x="412" y="366" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e8" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f7_end_rej">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e9" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s4">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e10" edge="1" parent="1" source="f7_s4" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s5">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="791" y="1326" />
+            <mxPoint x="529" y="1326" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e11" edge="1" parent="1" source="f7_s5" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s6">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="529" y="1454" />
+            <mxPoint x="267" y="1454" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e12" edge="1" parent="1" source="f7_s6" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s7">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="267" y="1582" />
+            <mxPoint x="1053" y="1582" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e13" edge="1" parent="1" source="f7_s7" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s8">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="1053" y="1710" />
+            <mxPoint x="267" y="1710" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e14" edge="1" parent="1" source="f7_s8" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="f7_s9">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e15" edge="1" parent="1" source="f7_s8" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s10">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e16" edge="1" parent="1" source="f7_s10" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_end_fb">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e17" edge="1" parent="1" source="f7_s9" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_s11">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e18" edge="1" parent="1" source="f7_s11" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" target="f7_s12">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="791" y="2030" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e19" edge="1" parent="1" source="f7_s12" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_d3">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e20" edge="1" parent="1" source="f7_d3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=0.5;entryY=1;" target="f7_s11">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="529" y="2286" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e21" edge="1" parent="1" source="f7_d3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;dashed=1;" target="f7_s13">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e22" edge="1" parent="1" source="f7_d3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" target="f7_s14">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="1053" y="2286" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e23" edge="1" parent="1" source="f7_s14" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_end">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_def1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Schedule an in-person defense when needed (reserved room, at least 48h ahead) (BR63)" vertex="1">
+        <mxGeometry height="78" width="206" x="688" y="839" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_def2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Confirm the defense slot or request a reschedule" vertex="1">
+        <mxGeometry height="78" width="206" x="426" y="839" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_def3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=13;strokeWidth=1.3;spacing=10;dashed=1;" value="Run the live defense room and record notes (no-show: proposal Rejected)" vertex="1">
+        <mxGeometry height="78" width="206" x="688" y="967" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_lbl_redef" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=12;fontColor=#333333;labelBackgroundColor=#ffffff;" value="Re-defense" vertex="1">
+        <mxGeometry height="20" width="70" x="914" y="980" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e_def1" edge="1" parent="1" source="f7_s3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_def1">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e_def2" edge="1" parent="1" source="f7_def1" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="f7_def2">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e_def3" edge="1" parent="1" source="f7_def2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0;entryY=0.5;" target="f7_def3">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="529" y="1006" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="f7_e_def4" edge="1" parent="1" source="f7_def3" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="f7_d2">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="f7_e_redef" edge="1" parent="1" source="f7_d2" style="endArrow=block;endFill=1;html=1;rounded=0;strokeColor=#333333;strokeWidth=1.5;exitX=0.75;exitY=0.25;entryX=1;entryY=0.5;dashed=1;" target="f7_def1">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="908" y="1111" />
+            <mxPoint x="908" y="878" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+    </root>
+  </mxGraphModel>
+</diagram>
 </mxfile>

@@ -18,7 +18,7 @@ export interface ClubEventDetail {
   versions: { revisionNo: number; payload: unknown; budgetLines: EventBudgetLine[]; submittedAt: string }[];
   decisions: { outcome: string; reason?: string; comments?: unknown; at: string }[];
   bookings: { id: string; state: string; propertyId: string; propertyName: string; startAt: string; endAt: string }[];
-  budget?: { state: string; approvedTotal: number; disbursedTotal: number };
+  budget?: { id?: string; state: string; approvedTotal: number; disbursedTotal: number };
 }
 export interface EventParticipant {
   studentId: string; name: string; email: string; registrationId?: string; state?: string; waitlistPosition?: number;

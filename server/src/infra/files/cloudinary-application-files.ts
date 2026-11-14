@@ -52,9 +52,9 @@ export function cloudinaryApplicationFiles(config: CloudinaryConfig): Applicatio
         bytes: input.bytes.length, assetId: body.asset_id,
         ...(isPublic ? { publicUrl: String(body.secure_url) } : {}), uploadedAt: input.now };
     },
-    async accessUrl(assetId): Promise<string> {
+    async accessUrl(assetId, options): Promise<string> {
       const now = Math.floor(Date.now() / 1000);
-      const params = { asset_id: assetId, attachment: "true",
+      const params = { asset_id: assetId, attachment: options?.inline ? "false" : "true",
         expires_at: String(now + 60), timestamp: String(now) };
       const url = new URL(`${base}/asset/download`);
       for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
