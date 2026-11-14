@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { BOOKING_SLOTS, assertBookingNotice, bookingDeadline, bookingIntervalsConflict, bookingSlot,
-  assessBooking, isLateBookingCancellation, slotsConflict, validateBookingInput,
+import { BOOKING_SLOTS, assertBookingNotice, bookingCoversEventSchedule, bookingDeadline, bookingIntervalsConflict, bookingSlot,
+  assessBooking, isLateBookingCancellation, mergeConsecutiveBookingIntervals, slotsConflict, validateBookingInput,
   type BookingDetail, type BookingInput, type FacilityBookingRepository } from "../../src/domain/facility-booking.js";
 import type { Property } from "../../src/domain/property.js";
 import { DEFAULT_FORM_REQUIREMENTS, type PolicyVersion } from "../../src/domain/policy.js";
@@ -198,6 +198,23 @@ describe("campus slots and notice", () => {
     expect(bookingIntervalsConflict(input.startAt, input.endAt, input.startAt, input.endAt, 30)).toBe(true);
     expect(bookingIntervalsConflict(input.startAt, input.endAt,
       new Date("2026-10-12T10:00:00+07:00"), new Date("2026-10-12T11:00:00+07:00"), 30)).toBe(true);
+  });
+  it("merges consecutive campus slots on the same day to cover multi-slot events and rejects non-consecutive or superfluous slots", () => {
+    const slot1 = { startAt: new Date("2026-11-18T07:30:00+07:00"), endAt: new Date("2026-11-18T09:50:00+07:00") };
+    const slot2 = { startAt: new Date("2026-11-18T10:00:00+07:00"), endAt: new Date("2026-11-18T12:20:00+07:00") };
+    const slot3 = { startAt: new Date("2026-11-18T12:50:00+07:00"), endAt: new Date("2026-11-18T15:10:00+07:00") };
+    const slot4 = { startAt: new Date("2026-11-18T15:20:00+07:00"), endAt: new Date("2026-11-18T17:40:00+07:00") };
+    expect(mergeConsecutiveBookingIntervals([slot2, slot1])).toEqual([
+      { startAt: slot1.startAt, endAt: slot2.endAt },
+    ]);
+    expect(mergeConsecutiveBookingIntervals([slot1, slot3])).toEqual([slot1, slot3]);
+    const morningEvent = [{ startAt: new Date("2026-11-18T08:00:00+07:00"), endAt: new Date("2026-11-18T11:30:00+07:00") }];
+    expect(bookingCoversEventSchedule(slot1, [slot1, slot2], morningEvent)).toBe(true);
+    expect(bookingCoversEventSchedule(slot2, [slot1, slot2], morningEvent)).toBe(true);
+    expect(bookingCoversEventSchedule(slot4, [slot1, slot2, slot4], morningEvent)).toBe(false);
+    const fullDayGapEvent = [{ startAt: new Date("2026-11-18T08:00:00+07:00"), endAt: new Date("2026-11-18T14:30:00+07:00") }];
+    expect(bookingCoversEventSchedule(slot1, [slot1, slot3], fullDayGapEvent)).toBe(false);
+    expect(bookingCoversEventSchedule(slot2, [slot1, slot2, slot3], fullDayGapEvent)).toBe(true);
   });
 });
 

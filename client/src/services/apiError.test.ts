@@ -1,13 +1,18 @@
 import i18next from "i18next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apiErrors } from "@/i18n/apiErrors";
+import { clubEvents } from "@/i18n/clubEvents";
+import { resolveClubEventErrorDescriptor } from "@/pages/club/ClubEventErrorMessage";
 import { ApiError, apiFetch } from "@/services/apiError";
 import { actOnClubEvent, ClubEventError } from "@/services/clubEvents";
 
 beforeEach(async () => {
   await i18next.init({
     lng: "vi", fallbackLng: "en",
-    resources: { en: { translation: { apiErrors: apiErrors.en } }, vi: { translation: { apiErrors: apiErrors.vi } } },
+    resources: {
+      en: { translation: { apiErrors: apiErrors.en, clubEvents: clubEvents.en } },
+      vi: { translation: { apiErrors: apiErrors.vi, clubEvents: clubEvents.vi } },
+    },
   });
 });
 
@@ -77,5 +82,34 @@ describe("localized API errors", () => {
     const error = new DOMException("Aborted", "AbortError");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(error));
     await expect(apiFetch("/api/v1/test")).rejects.toBe(error);
+  });
+
+  it.each([
+    ["room_allocation", "room allocations cannot be attached to an event proposal", "bookingRoomAllocation"],
+    ["not_available", "booking does not belong to the club or is no longer available", "bookingNotAvailable"],
+    ["already_linked", "booking is already attached to another event", "bookingAlreadyLinked"],
+    ["property_mismatch", "booking facility does not match the selected event facility", "bookingPropertyMismatch"],
+    ["schedule_not_covered", "booking time slot does not cover the event schedule", "bookingScheduleNotCovered"],
+  ] as const)("resolves booking error %s (%s) to i18n key %s in both vi and en", async (bookingError, raw, expectedKey) => {
+    const byDetail = resolveClubEventErrorDescriptor("unmapped message", 400, { bookingError });
+    expect(byDetail.key).toBe(expectedKey);
+    const byMessage = resolveClubEventErrorDescriptor(raw, 400);
+    expect(byMessage.key).toBe(expectedKey);
+    expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).toBe(clubEvents.vi.errors[expectedKey]);
+    await i18next.changeLanguage("en");
+    expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).toBe(clubEvents.en.errors[expectedKey]);
+    expect(i18next.t(`clubEvents.errors.${byMessage.key}`)).not.toBe(raw);
+  });
+
+  it("resolves internal 24h notice and never leaks raw unmapped server messages in ClubEventErrorMessage", async () => {
+    const notice = resolveClubEventErrorDescriptor("internal event must start at least 24 hours from now", 400);
+    expect(notice).toEqual({ key: "internalNoticeHours", params: { hours: "24" } });
+    expect(i18next.t(`clubEvents.errors.${notice.key}`, notice.params)).toBe(
+      "Thời gian bắt đầu sự kiện nội bộ phải cách hiện tại ít nhất 24 giờ.",
+    );
+    const unknown400 = resolveClubEventErrorDescriptor("some raw backend validation text", 400);
+    expect(unknown400.key).toBe("validation");
+    await i18next.changeLanguage("en");
+    expect(i18next.t(`clubEvents.errors.${unknown400.key}`)).toBe(clubEvents.en.errors.validation);
   });
 });

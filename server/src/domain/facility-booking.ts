@@ -23,6 +23,63 @@ export function bookingSlot(startAt: Date, endAt: Date): typeof BOOKING_SLOTS[nu
     && end.slice(11) === `${slot.end}:00.000Z`);
 }
 
+export interface BookingTimeInterval {
+  startAt: Date;
+  endAt: Date;
+}
+
+/** True when `firstEnd` is the end of campus slot k and `secondStart` is the start of slot k+1 on the same Vietnam day. */
+function areAdjacentCampusSlots(firstEnd: Date, secondStart: Date): boolean {
+  const endIso = new Date(firstEnd.getTime() + 7 * 3600000).toISOString();
+  const startIso = new Date(secondStart.getTime() + 7 * 3600000).toISOString();
+  if (endIso.slice(0, 10) !== startIso.slice(0, 10)) return false;
+  const slotIndex = BOOKING_SLOTS.findIndex((slot) => endIso.slice(11) === `${slot.end}:00.000Z`);
+  if (slotIndex < 0 || slotIndex + 1 >= BOOKING_SLOTS.length) return false;
+  return startIso.slice(11) === `${BOOKING_SLOTS[slotIndex + 1]!.start}:00.000Z`;
+}
+
+/**
+ * Merges overlapping, touching, or consecutive campus-slot intervals on the same day
+ * into continuous windows so multi-slot events can be covered by consecutive slot bookings.
+ */
+export function mergeConsecutiveBookingIntervals(intervals: readonly BookingTimeInterval[]): BookingTimeInterval[] {
+  const sorted = [...intervals]
+    .filter((item) => Number.isFinite(item.startAt.getTime()) && Number.isFinite(item.endAt.getTime()) && item.startAt < item.endAt)
+    .sort((a, b) => a.startAt.getTime() - b.startAt.getTime() || a.endAt.getTime() - b.endAt.getTime());
+  const merged: BookingTimeInterval[] = [];
+  for (const item of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && (item.startAt.getTime() <= last.endAt.getTime() || areAdjacentCampusSlots(last.endAt, item.startAt))) {
+      if (item.endAt.getTime() > last.endAt.getTime()) {
+        last.endAt = item.endAt;
+      }
+    } else {
+      merged.push({ startAt: item.startAt, endAt: item.endAt });
+    }
+  }
+  return merged;
+}
+
+function intervalCoveredBy(interval: BookingTimeInterval, windows: readonly BookingTimeInterval[]): boolean {
+  return windows.some((w) => w.startAt <= interval.startAt && w.endAt >= interval.endAt);
+}
+
+/**
+ * True when `target` is part of a consecutive booking window for the same property that covers at least one
+ * event interval, and `target` is necessary for that coverage (not an unrelated booking outside the schedule).
+ */
+export function bookingCoversEventSchedule(
+  target: BookingTimeInterval,
+  samePropertyBookings: readonly BookingTimeInterval[],
+  eventIntervals: readonly BookingTimeInterval[],
+): boolean {
+  const allMerged = mergeConsecutiveBookingIntervals(samePropertyBookings);
+  const withoutTarget = mergeConsecutiveBookingIntervals(samePropertyBookings.filter((item) => item !== target));
+  return eventIntervals.some(
+    (interval) => intervalCoveredBy(interval, allMerged) && !intervalCoveredBy(interval, withoutTarget),
+  );
+}
+
 export function bookingIntervalsConflict(start: Date, end: Date, otherStart: Date, otherEnd: Date,
   thresholdMinutes: number): boolean {
   return slotsConflict(start, end, otherStart, otherEnd,
