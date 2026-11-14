@@ -24,7 +24,8 @@ export const clubEventBody = z.object({
   startAt: date, endAt: date, venueText: z.string().trim().max(300).optional(), propertyId: eventObjectId.optional(),
   audienceScope: z.enum(["PUBLIC", "MEMBERS_ONLY"]), capacity: z.number().int().min(1).max(100000),
   riskCategory: z.enum(["LOW", "MEDIUM", "HIGH"]), riskNote: z.string().max(5000).optional(), facilityNeeds: z.string().max(5000).optional(),
-  occurrences: z.array(z.object({ startAt: date, endAt: date }).strict()).max(50).optional(),
+  occurrences: z.array(z.object({ startAt: date, endAt: date, venueText: z.string().trim().max(300).optional(),
+    propertyId: eventObjectId.optional() }).strict()).max(50).optional(),
   budgetLines: z.array(z.object({ category: z.string().trim().min(1).max(200), amount: z.number().int().positive().max(1000000000000),
     purpose: z.string().trim().min(1).max(2000), plannedItems: z.string().max(5000).optional() }).strict()).max(50),
   bookingIds: z.array(eventObjectId).max(50), registrationForm: z.array(formField).max(30).optional(),
@@ -32,7 +33,8 @@ export const clubEventBody = z.object({
 export const clubEventSaveBody = clubEventBody.extend({ expectedVersion }).strict();
 export const clubEventVersionBody = z.object({ expectedVersion }).strict();
 const publishSettings = z.object({ registrationOpenAt: date.optional(), registrationCloseAt: date.optional(),
-  checkInOpenAt: date, checkInCloseAt: date, allowWalkIn: z.boolean(), waitlistEnabled: z.boolean() }).strict();
+  checkInOpenAt: date, checkInCloseAt: date, allowWalkIn: z.boolean(), waitlistEnabled: z.boolean(),
+  notifyMembers: z.boolean().optional() }).strict();
 export const clubEventPublishBody = publishSettings.extend({ expectedVersion }).strict();
 export const internalClubEventBody = clubEventBody.pick({ title: true, objective: true, plan: true, startAt: true, endAt: true,
   venueText: true, propertyId: true, capacity: true, riskCategory: true, bookingIds: true }).strict();
@@ -59,7 +61,8 @@ function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
 function actor(res: Response): AccessActor { return res.locals.actor as AccessActor; }
 function input(body: z.infer<typeof clubEventBody>): ClubEventInput {
   return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt),
-    occurrences: body.occurrences?.map((o) => ({ startAt: new Date(o.startAt), endAt: new Date(o.endAt) })) };
+    occurrences: body.occurrences?.map((o) => ({ startAt: new Date(o.startAt), endAt: new Date(o.endAt),
+      ...(o.venueText ? { venueText: o.venueText } : {}), ...(o.propertyId ? { propertyId: o.propertyId } : {}) })) };
 }
 function internalInput(body: z.infer<typeof internalClubEventBody>): InternalClubEventInput {
   return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) };

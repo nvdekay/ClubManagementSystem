@@ -19,6 +19,7 @@ import {
 } from "../../domain/event-proposal-review.js";
 import { notificationChannels } from "../../domain/notification.js";
 import { cancelEventInSession } from "./event-cancellation.js";
+import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
@@ -287,6 +288,80 @@ export async function applyProposalDecisionInSession(
         },
       },
       { session },
+    );
+  }
+
+  if (input.outcome === "Approve") {
+    const eventBookings = await m.propertyBookings!.find({
+      eventId,
+      state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested"] },
+    }).session(session).lean();
+    for (const booking of eventBookings) {
+      const prop = await m.properties!.findOneAndUpdate(
+        { _id: booking.propertyId, isActive: true },
+        { $inc: { __v: 1 } },
+        { session },
+      ).lean();
+      if (!prop) conflict("active property not found");
+      const blackouts = (prop.blackouts ?? []) as { startAt: Date; endAt: Date }[];
+      if (blackouts.some((b) => new Date(b.startAt) < (booking.endAt as Date) && new Date(b.endAt) > (booking.startAt as Date))) {
+        conflict("property is blacked out during the event");
+      }
+      const overlap = { startAt: { $lt: booking.endAt }, endAt: { $gt: booking.startAt } };
+      const [conflictingBooking, conflictingEvent, conflictingDefense] = await Promise.all([
+        m.propertyBookings!.exists({
+          propertyId: prop._id,
+          _id: { $ne: booking._id },
+          eventId: { $ne: eventId },
+          state: { $in: ["Approved", "In Use"] },
+          ...overlap,
+        }).session(session),
+        events.exists({
+          propertyId: prop._id,
+          _id: { $ne: eventId },
+          state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] },
+          ...overlap,
+        }).session(session),
+        defenseSessions.exists({
+          propertyId: prop._id,
+          state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] },
+          ...overlap,
+        }).session(session),
+      ]);
+      if (conflictingBooking || conflictingEvent || conflictingDefense) {
+        conflict("event schedule has blocking conflicts");
+      }
+      await m.propertyBookings!.updateOne(
+        { _id: booking._id },
+        {
+          $set: {
+            state: "Approved",
+            decidedBy: actorId,
+            decidedAt: now,
+            ...(input.reason ? { decisionReason: input.reason } : {}),
+          },
+        },
+        { session },
+      );
+      await tasks.updateMany(
+        { entityType: "PROPERTY_BOOKING", entityId: booking._id, state: "Open" },
+        { $set: { state: "Decided", closedAt: now } },
+        { session },
+      );
+    }
+  } else if (input.outcome === "Request revision") {
+    await m.propertyBookings!.updateMany(
+      { eventId, state: { $in: ["Requested", "Under Review"] } },
+      { $set: { state: "Revision Requested", ...(input.reason ? { decisionReason: input.reason } : {}) } },
+      { session },
+    );
+  } else if (input.outcome === "Reject") {
+    await releaseFacilityBookingsInSession(
+      session,
+      { eventId, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } },
+      "PROPOSAL_REJECTION",
+      input.reason ?? "Event proposal rejected",
+      now,
     );
   }
 

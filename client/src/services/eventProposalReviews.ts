@@ -88,7 +88,7 @@ export interface EventProposalDetail extends EventProposalQueueItem {
   versions: EventProposalVersion[];
   decisions: EventReviewDecision[];
   club: { id: string; name: string; state: string; obligations: ClubObligation[] };
-  bookings: { id: string; propertyCode?: string; propertyName?: string; startAt: string; endAt: string; state: string }[];
+  bookings: { id: string; propertyId?: string; propertyCode?: string; propertyName?: string; startAt: string; endAt: string; state: string }[];
   semesterBudgets: EventBudgetSummary[];
   budget?: EventBudgetSummary;
   activeDefenseSession?: EventDefenseSession;

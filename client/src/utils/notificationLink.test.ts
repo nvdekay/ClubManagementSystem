@@ -17,4 +17,7 @@ describe("sponsored finance notification destinations", () => {
   it("keeps event approval notices on event proposals", () => {
     expect(notificationLink({ ...notice, eventCode: "EVENT_PROPOSAL_APPROVED" })).toBe("/club/club/events?event=event");
   });
+  it("opens the event detail page for published internal club events", () => {
+    expect(notificationLink({ ...notice, eventCode: "EVENT_PUBLISHED" })).toBe("/events/event");
+  });
 });

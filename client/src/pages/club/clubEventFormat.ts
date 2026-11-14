@@ -61,3 +61,89 @@ export function sectionLabel(t: TFunction, value: string) {
     default: return t("eventReviews.sectionother");
   }
 }
+
+export interface BookingScheduleOption {
+  id: string;
+  propertyId: string;
+  propertyType?: string;
+  startAt: string;
+  endAt: string;
+}
+
+const CONSECUTIVE_SLOT_GAP_MS = 15 * 60_000;
+const TIMEZONE_OFFSET_MS = 7 * 3600_000;
+const DAY_MS = 86_400_000;
+
+function vietnamDayIndex(timeMs: number): number {
+  return Math.floor((timeMs + TIMEZONE_OFFSET_MS) / DAY_MS);
+}
+
+function mergeConsecutiveIntervals(intervals: readonly { startMs: number; endMs: number }[]) {
+  if (!intervals.length) return [];
+  const sorted = [...intervals].sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
+  const merged = [{ ...sorted[0]! }];
+  for (let i = 1; i < sorted.length; i += 1) {
+    const prev = merged[merged.length - 1]!;
+    const next = sorted[i]!;
+    const sameDay = vietnamDayIndex(prev.endMs - 1) === vietnamDayIndex(next.startMs);
+    if (next.startMs <= prev.endMs || (sameDay && next.startMs - prev.endMs <= CONSECUTIVE_SLOT_GAP_MS)) {
+      if (next.endMs > prev.endMs) prev.endMs = next.endMs;
+    } else {
+      merged.push({ ...next });
+    }
+  }
+  return merged;
+}
+
+/** Validates attached facility bookings against the selected property and event intervals on the client. */
+export function bookingsScheduleError(
+  t: TFunction,
+  bookingIds: readonly string[],
+  availableBookings: readonly BookingScheduleOption[] | undefined,
+  propertyId: string | undefined,
+  intervals: readonly { startAt: string; endAt: string; propertyId?: string }[],
+): string | null {
+  if (!bookingIds.length || !availableBookings) return null;
+  const parsedIntervals = intervals
+    .map((item) => ({
+      startMs: Date.parse(item.startAt),
+      endMs: Date.parse(item.endAt),
+      propertyId: item.propertyId || propertyId,
+    }))
+    .filter((item) => Number.isFinite(item.startMs) && Number.isFinite(item.endMs) && item.endMs > item.startMs);
+  if (!parsedIntervals.length) return null;
+
+  const sessionPropertyIds = new Set(
+    parsedIntervals.map((item) => item.propertyId).filter((id): id is string => Boolean(id)),
+  );
+  if (propertyId) sessionPropertyIds.add(propertyId);
+
+  const selected = bookingIds
+    .map((id) => availableBookings.find((b) => b.id === id))
+    .filter((b): b is BookingScheduleOption => Boolean(b));
+
+  for (const booking of selected) {
+    if (booking.propertyType !== "EQUIPMENT" && !sessionPropertyIds.has(booking.propertyId)) {
+      return t("clubEvents.errors.bookingPropertyMismatch");
+    }
+  }
+
+  for (const booking of selected) {
+    const startMs = Date.parse(booking.startAt);
+    const endMs = Date.parse(booking.endAt);
+    const sameProperty = selected
+      .filter((other) => other.propertyId === booking.propertyId)
+      .map((other) => ({ startMs: Date.parse(other.startAt), endMs: Date.parse(other.endAt) }))
+      .filter((item) => Number.isFinite(item.startMs) && Number.isFinite(item.endMs));
+    const merged = mergeConsecutiveIntervals(sameProperty);
+    const containing = merged.find((w) => w.startMs <= startMs && w.endMs >= endMs);
+    const targetIntervals =
+      booking.propertyType === "EQUIPMENT"
+        ? parsedIntervals
+        : parsedIntervals.filter((ev) => ev.propertyId === booking.propertyId);
+    if (!containing || !targetIntervals.some((ev) => containing.startMs <= ev.startMs && containing.endMs >= ev.endMs)) {
+      return t("clubEvents.errors.bookingScheduleNotCovered");
+    }
+  }
+  return null;
+}

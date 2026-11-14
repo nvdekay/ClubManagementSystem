@@ -142,6 +142,18 @@ export function EventProposalReviewPage() {
   function range(start: unknown, end: unknown) {
     return typeof start === "string" && typeof end === "string" ? `${date(start)} – ${date(end)}` : "";
   }
+  function propertyLabel(propertyId: string | undefined) {
+    if (!propertyId) return undefined;
+    if (event.property?.id === propertyId) return `${event.property.code} · ${event.property.name}`;
+    const booking = bookings.find((b) => b.propertyId === propertyId);
+    if (booking) return [booking.propertyCode, booking.propertyName].filter(Boolean).join(" · ") || undefined;
+    return t("eventReviews.otherProperty");
+  }
+  function occurrenceSummary(item: { startAt?: unknown; endAt?: unknown; propertyId?: unknown; venueText?: unknown }) {
+    const timeRange = range(item.startAt, item.endAt);
+    const location = [propertyLabel(text(item.propertyId)), text(item.venueText)].filter(Boolean).join(" · ");
+    return location ? `${timeRange} (${location})` : timeRange;
+  }
   const versionFields: DiffField<EventProposalVersion>[] = [
     { key: "title", label: t("eventReviews.fieldTitle"), read: (v) => text(v.payload.title) ?? "" },
     { key: "when", label: t("eventReviews.when"), read: (v) => range(v.payload.startAt, v.payload.endAt) },
@@ -159,7 +171,8 @@ export function EventProposalReviewPage() {
     { key: "riskNote", label: t("eventReviews.riskNote"), read: (v) => text(v.payload.riskNote) ?? "" },
     { key: "facilityNeeds", label: t("eventReviews.facilityNeeds"), read: (v) => text(v.payload.facilityNeeds) ?? "" },
     { key: "occurrences", label: t("eventReviews.occurrences"), read: (v) => (Array.isArray(v.payload.occurrences)
-      ? v.payload.occurrences as { startAt?: unknown; endAt?: unknown }[] : []).map((o) => range(o.startAt, o.endAt)).join("\n") },
+      ? v.payload.occurrences as { startAt?: unknown; endAt?: unknown; propertyId?: unknown; venueText?: unknown }[] : [])
+      .map(occurrenceSummary).join("\n") },
     { key: "budget", label: t("eventReviews.budget"), read: (v) => v.budgetLines.map((line) =>
       `${line.category}: ${money(line.amount)} — ${line.purpose}${line.plannedItems ? `\n  ${line.plannedItems}` : ""}`).join("\n") },
     { key: "form", label: t("eventReviews.fieldForm"), read: (v) => (Array.isArray(v.payload.registrationForm)
@@ -172,7 +185,9 @@ export function EventProposalReviewPage() {
   ];
   const currentDocument = proposalDocument(current);
   const payload = current?.payload ?? {};
-  const occurrences = Array.isArray(payload.occurrences) ? payload.occurrences as { startAt?: string; endAt?: string }[] : [];
+  const occurrences = Array.isArray(payload.occurrences)
+    ? payload.occurrences as { startAt?: string; endAt?: string; propertyId?: string; venueText?: string }[]
+    : [];
   const conflictMessage = event.conflictDetail && typeof event.conflictDetail === "object"
     ? text((event.conflictDetail as Record<string, unknown>).message) : undefined;
   const mine = task.assigneeId === auth.data.user.id;
@@ -307,7 +322,7 @@ export function EventProposalReviewPage() {
                   <dd className="mt-2 leading-7 break-words whitespace-pre-wrap">{value}</dd></div>))}
               {occurrences.length > 0 && <div className="sm:col-span-2"><dt className={label}>{t("eventReviews.occurrences")}</dt>
                 <dd className="mt-2"><ul className="space-y-1 text-sm">{occurrences.map((item, index) =>
-                  <li key={index}>{item.startAt ? date(item.startAt) : "—"} – {item.endAt ? date(item.endAt) : "—"}</li>)}</ul></dd></div>}
+                  <li key={index}>{occurrenceSummary(item)}</li>)}</ul></dd></div>}
             </dl>
           </section>
 

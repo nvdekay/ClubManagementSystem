@@ -13,9 +13,9 @@ const expected: Record<NotificationAudience, string[]> = {
     // mongo-club-application-repository / -review-repository / mongo-application-expiry-repository → founder
     "CLUB_APPLICATION_SUBMITTED", "CLUB_APPLICATION_WITHDRAWN", "CLUB_APPLICATION_APPROVED",
     "CLUB_APPLICATION_REJECTED", "CLUB_APPLICATION_REVISION_REQUESTED", "CLUB_APPLICATION_EXPIRED",
-    // event registration, waitlist, cancellation, reschedule, check-in → registrant
+    // event registration, waitlist, cancellation, reschedule, check-in, internal event publication → registrant / member
     "EVENT_REGISTRATION_CONFIRMED", "EVENT_REGISTRATION_WAITLISTED", "EVENT_REGISTRATION_PROMOTED",
-    "EVENT_REGISTRATION_CANCELLED", "EVENT_CANCELLED", "EVENT_RESCHEDULED", "EVENT_CHECKED_IN",
+    "EVENT_REGISTRATION_CANCELLED", "EVENT_PUBLISHED", "EVENT_CANCELLED", "EVENT_RESCHEDULED", "EVENT_CHECKED_IN",
     // recruitment outcome → applicant
     "RECRUITMENT_APPLICATION_ACCEPTED", "RECRUITMENT_APPLICATION_REJECTED", "RECRUITMENT_APPLICATION_WAITLISTED",
     "RECRUITMENT_APPLICATION_ONBOARDED", "RECRUITMENT_APPLICATION_DECLINED", "RECRUITMENT_CAMPAIGN_CANCELLED",

@@ -6,9 +6,11 @@ import { eventActionPermission, isInternalClubEventState } from "../../domain/cl
 import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent, eventConflictResult,
   validateClubEventInput, validateEventPublication } from "../../domain/club-event-rules.js";
 import { DomainError } from "../../domain/errors.js";
+import { bookingCoversEventSchedule, mergeConsecutiveBookingIntervals, type BookingTimeInterval } from "../../domain/facility-booking.js";
 import type { AcademicSemester } from "../../domain/policy.js";
 import { checkInCode } from "../../domain/school-event.js";
 import { openViolationCount, routedTaskFields } from "./approval-routing.js";
+import { queueNotifications } from "./club-board.js";
 import { assertEventWriteAccess } from "./club-event-access.js";
 import { clubEventFrom, EVENT_PAYLOAD_ACTIONS, eventDraftPayload, readClubEvent, readClubFeedback, readEventParticipants } from "./club-event-readers.js";
 import { applyEventAttendanceAction } from "./event-attendance-actions.js";
@@ -26,8 +28,11 @@ export interface ClubEventRules { proposalNoticeHours: number; cancellationNotic
 function oid(id: string) { return new Types.ObjectId(id); }
 function conflict(message: string): never { throw new DomainError(message, "conflict"); }
 function fields(input: ClubEventInput, semesterCode: string) {
+  const first = input.occurrences?.[0];
+  const venueText = input.venueText?.trim() || first?.venueText?.trim();
+  const propertyId = input.propertyId ?? first?.propertyId;
   return { title: input.title.trim(), objective: input.objective.trim(), startAt: input.startAt, endAt: input.endAt,
-    venueText: input.venueText?.trim(), propertyId: input.propertyId ? oid(input.propertyId) : null,
+    venueText, propertyId: propertyId ? oid(propertyId) : null,
     audienceScope: input.audienceScope, capacity: input.capacity, riskCategory: input.riskCategory, semesterCode };
 }
 async function audit(session: ClientSession, id: Types.ObjectId, action: string, actorId: Types.ObjectId, after: unknown, now: Date, reason?: string) {
@@ -67,38 +72,72 @@ async function assess(session: ClientSession, clubId: Types.ObjectId, input: Clu
   if (submitting) { assertEventNotice(input.startAt, now, rules.proposalNoticeHours); await assertObligations(session, clubId, now, policy); }
   const found: Doc[] = [];
   const overlaps: number[] = [];
-  if (input.propertyId) {
-    const property = await m.properties!.findOneAndUpdate({ _id: oid(input.propertyId), isActive: true }, { $inc: { __v: 1 } }, { session }).lean();
+  const intervals = input.occurrences?.length
+    ? input.occurrences.map((o) => ({ startAt: o.startAt, endAt: o.endAt, propertyId: o.propertyId ?? input.propertyId }))
+    : [{ startAt: input.startAt, endAt: input.endAt, propertyId: input.propertyId }];
+  for (const interval of intervals) {
+    if (!interval.propertyId) continue;
+    const property = await m.properties!.findOneAndUpdate({ _id: oid(interval.propertyId), isActive: true }, { $inc: { __v: 1 } }, { session }).lean();
     if (!property) throw new DomainError("active property not found", "validation");
     const blackouts = (property.blackouts ?? []) as { startAt: Date; endAt: Date }[];
-    if (blackouts.some((b) => new Date(b.startAt) < input.endAt && new Date(b.endAt) > input.startAt)) conflict("property is blacked out during the event");
-    const intervals = input.occurrences?.length ? input.occurrences : [{ startAt: input.startAt, endAt: input.endAt }];
-    for (const interval of intervals) {
-      const overlap = { startAt: { $lt: interval.endAt }, endAt: { $gt: interval.startAt } };
-      const intervalConflicts: Doc[] = [];
-      intervalConflicts.push(...await m.events!.find({ propertyId: property._id, ...(eventId ? { _id: { $ne: eventId } } : {}),
-        state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] }, ...overlap }).session(session).lean());
-      const bookings = await m.propertyBookings!.find({ propertyId: property._id, state: { $in: ["Approved", "In Use"] },
-        _id: { $nin: input.bookingIds.map(oid) }, ...(eventId ? { eventId: { $ne: eventId } } : {}), ...overlap }).session(session).lean();
-      // UC58: the club's own room allocation covering the whole slot is its right to use the room, not a conflict.
-      intervalConflicts.push(...bookings.filter((b) => !(property.type === "ROOM" && String(b.clubId) === String(clubId) &&
-        (b.startAt as Date) <= interval.startAt && (b.endAt as Date) >= interval.endAt)));
-      intervalConflicts.push(...await m.eventDefenseSessions!.find({ propertyId: property._id,
-        state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...overlap }).session(session).lean());
-      found.push(...intervalConflicts);
-      overlaps.push(...intervalConflicts.map((item) => (Math.min((item.endAt as Date).getTime(), interval.endAt.getTime()) - Math.max((item.startAt as Date).getTime(), interval.startAt.getTime())) / 60000));
-    }
+    if (blackouts.some((b) => new Date(b.startAt) < interval.endAt && new Date(b.endAt) > interval.startAt)) conflict("property is blacked out during the event");
+    const overlap = { startAt: { $lt: interval.endAt }, endAt: { $gt: interval.startAt } };
+    const intervalConflicts: Doc[] = [];
+    intervalConflicts.push(...await m.events!.find({ propertyId: property._id, ...(eventId ? { _id: { $ne: eventId } } : {}),
+      state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] }, ...overlap }).session(session).lean());
+    const bookings = await m.propertyBookings!.find({ propertyId: property._id, state: { $in: ["Approved", "In Use"] },
+      _id: { $nin: input.bookingIds.map(oid) }, ...(eventId ? { eventId: { $ne: eventId } } : {}), ...overlap }).session(session).lean();
+    // UC58: the club's own room allocation covering the whole slot (or consecutive slots) is its right to use the room, not a conflict.
+    const ownRoomWindows = property.type === "ROOM"
+      ? mergeConsecutiveBookingIntervals(
+          bookings
+            .filter((b) => String(b.clubId) === String(clubId))
+            .map((b) => ({ startAt: b.startAt as Date, endAt: b.endAt as Date })),
+        )
+      : [];
+    const coveredByOwnRoom = ownRoomWindows.some((w) => w.startAt <= interval.startAt && w.endAt >= interval.endAt);
+    intervalConflicts.push(...bookings.filter((b) => !(coveredByOwnRoom && String(b.clubId) === String(clubId))));
+    intervalConflicts.push(...await m.eventDefenseSessions!.find({ propertyId: property._id,
+      state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...overlap }).session(session).lean());
+    found.push(...intervalConflicts);
+    overlaps.push(...intervalConflicts.map((item) => (Math.min((item.endAt as Date).getTime(), interval.endAt.getTime()) - Math.max((item.startAt as Date).getTime(), interval.startAt.getTime())) / 60000));
   }
+  const sessionPropertyIds = new Set(intervals.map((iv) => iv.propertyId).filter((id): id is string => Boolean(id)));
+  const checkedBookings: Array<{ bookingId: string; propertyId: string; propertyType: string; interval: BookingTimeInterval }> = [];
   for (const bookingId of input.bookingIds) {
     const booking = await m.propertyBookings!.findOne({ _id: oid(bookingId), clubId, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }).session(session).lean();
     const bookingProperty = booking ? await m.properties!.findById(booking.propertyId).session(session).lean() : null;
     if (bookingProperty?.type === "ROOM") {
-      throw new DomainError("room allocations cannot be attached to an event proposal", "validation", { bookingId });
+      throw new DomainError("room allocations cannot be attached to an event proposal", "validation", { bookingId, bookingError: "room_allocation" });
     }
-    if (!booking || (booking.eventId && String(booking.eventId) !== String(eventId)) || (bookingProperty?.type !== "EQUIPMENT" && (!input.propertyId || String(booking.propertyId) !== input.propertyId)) ||
-      !(input.occurrences?.length ? input.occurrences : [{ startAt: input.startAt, endAt: input.endAt }]).some((interval) =>
-        (booking.startAt as Date) <= interval.startAt && (booking.endAt as Date) >= interval.endAt)) {
-      throw new DomainError("booking must belong to the club, be available and cover the event schedule", "validation", { bookingId });
+    if (!booking) {
+      throw new DomainError("booking does not belong to the club or is no longer available", "validation", { bookingId, bookingError: "not_available" });
+    }
+    if (booking.eventId && String(booking.eventId) !== String(eventId)) {
+      throw new DomainError("booking is already attached to another event", "validation", { bookingId, bookingError: "already_linked" });
+    }
+    if (bookingProperty?.type !== "EQUIPMENT" && !sessionPropertyIds.has(String(booking.propertyId))) {
+      throw new DomainError("booking facility does not match the selected event facility", "validation", { bookingId, bookingError: "property_mismatch" });
+    }
+    checkedBookings.push({
+      bookingId,
+      propertyId: String(booking.propertyId),
+      propertyType: String(bookingProperty?.type ?? ""),
+      interval: { startAt: booking.startAt as Date, endAt: booking.endAt as Date },
+    });
+  }
+  for (const item of checkedBookings) {
+    const samePropertyIntervals = checkedBookings
+      .filter((other) => other.propertyId === item.propertyId)
+      .map((other) => other.interval);
+    const targetIntervals = item.propertyType === "EQUIPMENT"
+      ? intervals
+      : intervals.filter((iv) => iv.propertyId === item.propertyId);
+    if (!bookingCoversEventSchedule(item.interval, samePropertyIntervals, targetIntervals)) {
+      throw new DomainError("booking time slot does not cover the event schedule", "validation", {
+        bookingId: item.bookingId,
+        bookingError: "schedule_not_covered",
+      });
     }
   }
   const conflictResult = eventConflictResult(overlaps, Number(policy.conflictThresholdMinutes), policy.allowOverbooking === true);
@@ -128,23 +167,61 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
       amount: input.budgetLines.reduce((sum, line) => sum + line.amount, 0),
       openViolations: await openViolationCount(event.clubId, session) }, now)) }], { session });
   await linkEventBookings(session, event._id as Types.ObjectId, event.clubId as Types.ObjectId, input.bookingIds, actorId, now, requireBookingPermission);
+  await syncProposalSessionBookings(session, event._id as Types.ObjectId, event.clubId as Types.ObjectId,
+    String(assessment.club.name), input, assessment.semesterCode, assessment.conflictResult, "Under Review", now);
   await audit(session, event._id as Types.ObjectId, "EVENT_PROPOSAL_SUBMITTED", actorId, { payload: input, state, revisionNo }, now);
 }
 async function linkEventBookings(session: ClientSession, eventId: Types.ObjectId, clubId: Types.ObjectId, bookingIds: string[],
   actorId: Types.ObjectId, now: Date, requireBookingPermission: boolean) {
-  const linked = await m.propertyBookings!.find({ eventId }).session(session).lean();
+  const linked = await m.propertyBookings!.find({ eventId, currentVersionNo: { $ne: 0 } }).session(session).lean();
   if (requireBookingPermission && (linked.length !== bookingIds.length || linked.some((booking) => !bookingIds.includes(String(booking._id))))) {
     await assertEventWriteAccess(session, clubId, actorId, "club.booking.manage", now);
   }
-  await m.propertyBookings!.updateMany({ eventId, _id: { $nin: bookingIds.map(oid) } }, { $unset: { eventId: "" } }, { session });
+  await m.propertyBookings!.updateMany({ eventId, currentVersionNo: { $ne: 0 }, _id: { $nin: bookingIds.map(oid) } }, { $unset: { eventId: "" } }, { session });
   for (const bookingId of bookingIds) await m.propertyBookings!.updateOne({ _id: oid(bookingId), clubId }, { $set: { eventId } }, { session });
 }
-async function publishInSession(session: ClientSession, id: Types.ObjectId, startAt: Date, endAt: Date, input: EventPublishInput,
-  state: "Upcoming" | "PUBLIC", actorId: Types.ObjectId, now: Date) {
+async function syncProposalSessionBookings(session: ClientSession, eventId: Types.ObjectId, clubId: Types.ObjectId,
+  clubName: string, input: ClubEventInput, semesterCode: string, conflictResult: string, bookingState: "Draft" | "Under Review", now: Date) {
+  await m.propertyBookings!.deleteMany({ eventId, currentVersionNo: 0 }, { session });
+  if (input.bookingIds.length) {
+    await m.propertyBookings!.updateMany(
+      { _id: { $in: input.bookingIds.map(oid) }, clubId, state: { $in: ["Draft", "Revision Requested", "Under Review"] } },
+      { $set: { state: bookingState } },
+      { session },
+    );
+  }
+  const intervals = input.occurrences?.length
+    ? input.occurrences.map((o) => ({ startAt: o.startAt, endAt: o.endAt, propertyId: o.propertyId ?? input.propertyId }))
+    : [{ startAt: input.startAt, endAt: input.endAt, propertyId: input.propertyId }];
+  const explicitBookings = input.bookingIds.length
+    ? await m.propertyBookings!.find({ _id: { $in: input.bookingIds.map(oid) }, clubId }).session(session).lean()
+    : [];
+  for (const iv of intervals) {
+    if (!iv.propertyId) continue;
+    const prop = await m.properties!.findById(oid(iv.propertyId)).session(session).lean();
+    if (!prop || prop.type === "ROOM") continue;
+    const sameProp = explicitBookings
+      .filter((b) => String(b.propertyId) === iv.propertyId)
+      .map((b) => ({ startAt: b.startAt as Date, endAt: b.endAt as Date }));
+    if (mergeConsecutiveBookingIntervals(sameProp).some((w) => w.startAt <= iv.startAt && w.endAt >= iv.endAt)) continue;
+    await m.propertyBookings!.create([{
+      propertyId: prop._id, clubId, clubName, eventId, purpose: input.title.trim(),
+      startAt: iv.startAt, endAt: iv.endAt, semesterCode, headcount: input.capacity,
+      state: bookingState, currentVersionNo: 0, conflictResult, createdAt: now,
+    }], { session });
+  }
+}
+async function publishInSession(session: ClientSession, id: Types.ObjectId, clubId: Types.ObjectId, title: string,
+  startAt: Date, endAt: Date, input: EventPublishInput, state: "Upcoming" | "PUBLIC", actorId: Types.ObjectId, now: Date) {
   validateEventPublication(input, startAt, endAt, now);
+  const { notifyMembers, ...schedule } = input;
   const code = checkInCode(() => randomInt(1000000) / 1000000);
-  await m.events!.updateOne({ _id: id }, { $set: { ...input, state, publishedAt: now, checkInCode: code } }, { session });
+  await m.events!.updateOne({ _id: id }, { $set: { ...schedule, state, publishedAt: now, checkInCode: code } }, { session });
   await audit(session, id, "EVENT_PUBLISHED", actorId, { state, ...input }, now);
+  if (state === "PUBLIC" && notifyMembers) {
+    const userIds = await m.clubMemberships!.find({ clubId, state: "Active" }).session(session).distinct("userId");
+    await queueNotifications(session, userIds, "EVENT_PUBLISHED", "Event", id, { clubId: String(clubId), title, startAt, endAt }, now);
+  }
 }
 /** Internal events reuse the proposal input shape: always members-only and never with a university budget. */
 function internalInput(source: InternalClubEventInput): ClubEventInput {
@@ -181,13 +258,13 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
   return {
     async options(clubId) {
       const [properties, bookings] = await Promise.all([m.properties!.find({ isActive: true }).sort({ name: 1 }).lean(),
-        m.propertyBookings!.find({ clubId: oid(clubId), state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }).lean()]);
+        m.propertyBookings!.find({ clubId: oid(clubId), currentVersionNo: { $ne: 0 }, state: { $in: ["Draft", "Requested", "Under Review", "Revision Requested", "Approved"] } }).lean()]);
       const requestBookings = bookings.filter((b) => {
         const property = properties.find((p) => String(p._id) === String(b.propertyId));
         return property && property.type !== "ROOM";
       });
       return { properties: properties.map((p) => ({ id: String(p._id), name: String(p.name) })),
-        bookings: requestBookings.map((b) => ({ id: String(b._id), propertyId: String(b.propertyId), propertyType: String(properties.find((p) => String(p._id) === String(b.propertyId))!.type), title: String(b.purpose), startAt: b.startAt as Date, endAt: b.endAt as Date })) };
+        bookings: requestBookings.map((b) => ({ id: String(b._id), propertyId: String(b.propertyId), propertyType: String(properties.find((p) => String(p._id) === String(b.propertyId))!.type), ...(b.eventId ? { eventId: String(b.eventId) } : {}), title: String(b.purpose), startAt: b.startAt as Date, endAt: b.endAt as Date })) };
     },
     async list(clubId) {
       const docs = await m.events!.find({ clubId: oid(clubId), organizerType: "CLUB" }).sort({ startAt: -1, _id: -1 }).lean();
@@ -230,6 +307,8 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
         await m.events!.create([{ _id: id, organizerType: "CLUB", clubId: oid(clubId), clubName: assessment.club.name,
           ...fields(input, assessment.semesterCode), state: "Draft", currentRevisionNo: 0, createdAt: now,
           conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail }], { session });
+        await linkEventBookings(session, id, oid(clubId), input.bookingIds, oid(actorId), now, true);
+        await syncProposalSessionBookings(session, id, oid(clubId), String(assessment.club.name), input, assessment.semesterCode, assessment.conflictResult, "Draft", now);
         await audit(session, id, "EVENT_DRAFT_CREATED", oid(actorId), { payload: input }, now);
       });
       return required(clubId, String(id));
@@ -240,7 +319,9 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
         await assertEventWriteAccess(session, oid(clubId), oid(actorId), "club.event.manage", now);
         id = await writeInternal(session, oid(clubId), null, internalInput(input), mode === "draft" ? "DRAFT" : "CREATED", oid(actorId), now, rules,
           mode === "draft" ? "INTERNAL_EVENT_DRAFT_SAVED" : "INTERNAL_EVENT_CREATED", true);
-        if (mode === "publish") await publishInSession(session, id, input.startAt, input.endAt, publishInput!, "PUBLIC", oid(actorId), now);
+        if (mode === "publish") {
+          await publishInSession(session, id, oid(clubId), input.title.trim(), input.startAt, input.endAt, publishInput!, "PUBLIC", oid(actorId), now);
+        }
       });
       return required(clubId, String(id));
     },
@@ -270,6 +351,8 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           if (action.kind === "save") {
             await m.events!.updateOne({ _id: event._id }, { $set: { ...fields(next, assessment.semesterCode), conflictResult: assessment.conflictResult,
               conflictDetail: assessment.conflictDetail } }, { session });
+            await linkEventBookings(session, oid(eventId), oid(clubId), next.bookingIds, oid(actorId), now, true);
+            await syncProposalSessionBookings(session, oid(eventId), oid(clubId), String(assessment.club.name), next, assessment.semesterCode, assessment.conflictResult, "Draft", now);
             await audit(session, oid(eventId), "EVENT_DRAFT_SAVED", oid(actorId), { payload: next }, now);
           } else await submitVersion(session, event, next, oid(actorId), now, assessment);
         } else if (action.kind === "save-internal" || action.kind === "create-internal") {
@@ -280,8 +363,8 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
             action.kind === "create-internal" ? "INTERNAL_EVENT_CREATED" : state === "DRAFT" ? "INTERNAL_EVENT_DRAFT_SAVED" : "INTERNAL_EVENT_SAVED", true);
         } else if (action.kind === "publish") {
           if (event.state !== "Approved" && event.state !== "CREATED") conflict("only approved events can be published");
-          await publishInSession(session, event._id as Types.ObjectId, event.startAt as Date, event.endAt as Date, action.input,
-            event.state === "CREATED" ? "PUBLIC" : "Upcoming", oid(actorId), now);
+          await publishInSession(session, event._id as Types.ObjectId, oid(clubId), String(event.title), event.startAt as Date, event.endAt as Date,
+            action.input, event.state === "CREATED" ? "PUBLIC" : "Upcoming", oid(actorId), now);
         } else if (action.kind === "cancel") {
           if (!["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(String(event.state))) conflict("event cannot be cancelled in its current state");
           await cancelEventInSession(session, event, action.reason, now, "CMB", rules.cancellationNoticeHours, oid(actorId));

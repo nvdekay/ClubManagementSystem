@@ -35,6 +35,7 @@ const rules: Rule[] = [
     if (typeof item.payload.budgetId === "string") return `${path}?budget=${encodeURIComponent(item.payload.budgetId)}`;
     return item.entityId ? `${path}?event=${encodeURIComponent(item.entityId)}` : path;
   }],
+  [/^EVENT_PUBLISHED$/, detail("/events")],
   [/^(EVENT_REGISTRATION_|EVENT_CANCELLED$|EVENT_RESCHEDULED$|EVENT_CHECKED_IN$)/, fixed("/workspace/event-registrations")],
   [/^EVENT_PROPOSAL_/, clubEvent],
   // The founder's own application (receipts and decisions alike).

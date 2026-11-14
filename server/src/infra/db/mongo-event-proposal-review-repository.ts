@@ -133,7 +133,8 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
         obligations: owed },
       bookings: bookingDocs.map((booking) => {
         const item = propertyById.get(String(booking.propertyId));
-        return { id: String(booking._id), propertyCode: optionalText(item?.code), propertyName: optionalText(item?.name),
+        return { id: String(booking._id), propertyId: booking.propertyId ? String(booking.propertyId) : undefined,
+          propertyCode: optionalText(item?.code), propertyName: optionalText(item?.name),
           startAt: booking.startAt as Date, endAt: booking.endAt as Date, state: String(booking.state) };
       }),
       semesterBudgets: budgetDocs.filter((budget) => budget !== own)

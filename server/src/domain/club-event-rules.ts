@@ -37,12 +37,16 @@ export function assertProposalAudience(input: Pick<ClubEventInput, "audienceScop
 }
 export function validateClubEventInput(input: ClubEventInput, calendar: readonly AcademicSemester[], now: Date): string {
   if (!input.title.trim() || !input.objective.trim() || !input.plan.trim()) throw new DomainError("title, objective and plan are required", "validation");
-  if (!input.venueText?.trim() && !input.propertyId) throw new DomainError("choose a property or enter a venue", "validation");
+  const hasTopVenue = Boolean(input.venueText?.trim() || input.propertyId);
+  if (!hasTopVenue && !input.occurrences?.length) throw new DomainError("choose a property or enter a venue", "validation");
   if (!Number.isInteger(input.capacity) || input.capacity < 1) throw new DomainError("invalid capacity", "validation");
   const semester = assertEventSchedule(input.startAt, input.endAt, calendar, now);
   for (const occurrence of input.occurrences ?? []) {
     if (assertEventSchedule(occurrence.startAt, occurrence.endAt, calendar, now) !== semester || occurrence.startAt < input.startAt || occurrence.endAt > input.endAt) {
       throw new DomainError("all occurrences must be inside the event dates and the same semester", "validation");
+    }
+    if (!occurrence.venueText?.trim() && !occurrence.propertyId && !hasTopVenue) {
+      throw new DomainError("choose a property or enter a venue", "validation");
     }
   }
   const occurrences = [...(input.occurrences ?? [])].sort((a, b) => a.startAt.getTime() - b.startAt.getTime());

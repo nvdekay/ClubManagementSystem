@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubEvent, useClubEventMutation, useClubEventOptions } from "@/hooks/useClubEvents";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { ClubEventErrorMessage } from "@/pages/club/ClubEventErrorMessage";
-import { iso, localTime, numberError, stateLabel, stateTones } from "@/pages/club/clubEventFormat";
+import { bookingsScheduleError, iso, localTime, numberError, stateLabel, stateTones } from "@/pages/club/clubEventFormat";
 import type { ClubEvent, ClubEventOptions, InternalClubEventInput, InternalCreateMode } from "@/services/clubEvents";
 
 const sectionCardClass = "space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6";
@@ -68,6 +68,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
   const [noRegistration, setNoRegistration] = useState(false);
   const [walkIn, setWalkIn] = useState(false);
   const [waitlist, setWaitlist] = useState(true);
+  const [notifyMembers, setNotifyMembers] = useState(true);
   const [registrationOpen, setRegistrationOpen] = useState("");
   const [registrationClose, setRegistrationClose] = useState("");
   const [checkOpen, setCheckOpen] = useState("");
@@ -91,6 +92,13 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
     endAt: Date.parse(draft.endAt) > Date.parse(draft.startAt) ? null : t("common.endAfterStart"),
     venue: draft.venueText?.trim() || draft.propertyId ? null : t("clubEvents.venueRequired"),
     capacity: numberError(t, draft.capacity, 1, 100000),
+    bookings: bookingsScheduleError(
+      t,
+      draft.bookingIds,
+      options?.bookings,
+      draft.propertyId,
+      [{ startAt: draft.startAt, endAt: draft.endAt }],
+    ),
   });
   const startError = eventField.error("startAt") ?? (strict || isCreated ? noticeError(now) : null);
 
@@ -121,7 +129,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
         ? await mutation.mutateAsync({ kind: "internal-save", id: existing!.id, input: draft, expectedVersion: existing!.version, csrfToken })
         : await mutation.mutateAsync({ kind: "internal-create", input: draft, mode, csrfToken, ...(mode === "publish" ? { publishInput: {
           ...(!noRegistration ? { registrationOpenAt: iso(registrationOpen), registrationCloseAt: iso(registrationClose) } : {}),
-          checkInOpenAt: iso(checkOpen), checkInCloseAt: iso(checkClose), allowWalkIn: noRegistration || walkIn, waitlistEnabled: !noRegistration && waitlist,
+          checkInOpenAt: iso(checkOpen), checkInCloseAt: iso(checkClose), allowWalkIn: noRegistration || walkIn, waitlistEnabled: !noRegistration && waitlist, notifyMembers,
         } } : {}) });
       setPublishOpen(false);
       appToast.success(t(mode === "create" ? "clubEvents.internalCreated" : mode === "publish" ? "clubEvents.internalPublished" : "clubEvents.success"));
@@ -140,6 +148,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
   function openPublish() {
     if (!validate(true)) return;
     publishField.reset();
+    setNotifyMembers(true);
     setRegistrationOpen(localTime(new Date().toISOString())); setRegistrationClose(localTime(draft.startAt));
     setCheckOpen(localTime(draft.startAt)); setCheckClose(localTime(draft.endAt));
     setPublishOpen(true);
@@ -163,10 +172,6 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
       />
 
       <form noValidate onSubmit={handleSubmit} className="space-y-6">
-        {(Boolean(formError) || Boolean(optionsError)) && (
-          <AppNotice tone="danger"><ClubEventErrorMessage error={formError ?? optionsError} /></AppNotice>
-        )}
-
         <section className={sectionCardClass}>
           <h2 className="font-heading text-base font-semibold">{t("clubEvents.basicInfo")}</h2>
           <Field label={t("clubEvents.titleField")} required error={eventField.error("title")}>
@@ -179,7 +184,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
             <AppTextarea {...eventField.control("plan")} maxLength={20000} rows={5} value={draft.plan} onChange={(e) => setDraft({ ...draft, plan: e.target.value })} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t("clubEvents.capacity")} required error={eventField.error("capacity")}>
+            <Field label={t("clubEvents.maxParticipants")} required error={eventField.error("capacity")}>
               <AppInput {...eventField.control("capacity")} type="number" min={1} max={100000} value={draft.capacity}
                 onChange={(e) => setDraft({ ...draft, capacity: Number(e.target.value) })} />
             </Field>
@@ -194,11 +199,11 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
         <section className={sectionCardClass}>
           <h2 className="font-heading text-base font-semibold">{t("clubEvents.scheduleVenue")}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t("clubEvents.start")} required error={startError}>
+            <Field label={t("clubEvents.startTime")} required error={startError}>
               <AppInput {...eventField.control("startAt")} aria-invalid={startError ? true : undefined} type="datetime-local" value={localTime(draft.startAt)}
                 onChange={(e) => { if (e.target.value) setDraft({ ...draft, startAt: iso(e.target.value) }); }} />
             </Field>
-            <Field label={t("clubEvents.end")} required error={eventField.error("endAt")}>
+            <Field label={t("clubEvents.endTime")} required error={eventField.error("endAt")}>
               <AppInput {...eventField.control("endAt")} type="datetime-local" value={localTime(draft.endAt)}
                 onChange={(e) => { if (e.target.value) setDraft({ ...draft, endAt: iso(e.target.value) }); }} />
             </Field>
@@ -220,12 +225,20 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
             {linkableBookings.map((b) => (
               <label key={b.id} className="flex items-start gap-2.5 text-sm">
                 <input type="checkbox" className="mt-1 accent-primary-app" checked={draft.bookingIds.includes(b.id)} disabled={!permissions.includes("club.booking.manage")}
-                  onChange={(e) => setDraft({ ...draft, bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id) })} />
-                <span>{b.title} · {format.format(new Date(b.startAt))}</span>
+                  onChange={(e) => {
+                    eventField.touch("bookings");
+                    setDraft({ ...draft, bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id) });
+                  }} />
+                <span>{b.title} · {format.format(new Date(b.startAt))} – {format.format(new Date(b.endAt))}</span>
               </label>
             ))}
+            <AppFieldError message={eventField.error("bookings")} />
           </div>
         </section>
+
+        {(Boolean(formError) || Boolean(optionsError)) && (
+          <AppNotice tone="danger"><ClubEventErrorMessage error={formError ?? optionsError} /></AppNotice>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <Link to={eventsListUrl}
@@ -251,6 +264,9 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
           </>}
           <Field label={t("clubEvents.checkInOpen")} required error={publishField.error("checkOpen")}><AppInput {...publishField.control("checkOpen")} type="datetime-local" value={checkOpen} onChange={(e) => setCheckOpen(e.target.value)} /></Field>
           <Field label={t("clubEvents.checkInClose")} required error={publishField.error("checkClose")}><AppInput {...publishField.control("checkClose")} type="datetime-local" value={checkClose} onChange={(e) => setCheckClose(e.target.value)} /></Field>
+          <AppSelect label={t("clubEvents.notifyMembersLabel")} value={notifyMembers ? "yes" : "no"}
+            onChange={(value) => setNotifyMembers(value === "yes")}
+            options={[{ value: "yes", label: t("clubEvents.notifyMembersYes") }, { value: "no", label: t("clubEvents.notifyMembersNo") }]} />
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration || walkIn} disabled={noRegistration} onChange={(e) => setWalkIn(e.target.checked)} />{t("clubEvents.walkIn")}</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={waitlist} onChange={(e) => setWaitlist(e.target.checked)} />{t("clubEvents.waitlist")}</label>
         </form>

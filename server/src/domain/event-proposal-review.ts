@@ -93,6 +93,7 @@ export interface EventBudgetSummary {
 
 export interface AttachedBooking {
   id: string;
+  propertyId?: string;
   propertyCode?: string;
   propertyName?: string;
   startAt: Date;

@@ -1,10 +1,11 @@
 import { ApiError, apiFetch } from "@/services/apiError";
 export interface EventBudgetLine { category: string; amount: number; purpose: string; plannedItems?: string }
 export interface EventFormField { key: string; label: string; type: "text" | "textarea" | "select" | "radio" | "checkbox"; required: boolean; options?: string[] }
+export interface EventOccurrence { startAt: string; endAt: string; propertyId?: string; venueText?: string }
 export interface ClubEventInput {
   title: string; objective: string; plan: string; startAt: string; endAt: string; venueText?: string; propertyId?: string;
   audienceScope: "PUBLIC" | "MEMBERS_ONLY"; capacity: number; riskCategory: "LOW" | "MEDIUM" | "HIGH";
-  riskNote?: string; facilityNeeds?: string; occurrences?: { startAt: string; endAt: string }[];
+  riskNote?: string; facilityNeeds?: string; occurrences?: EventOccurrence[];
   budgetLines: EventBudgetLine[]; bookingIds: string[]; registrationForm?: EventFormField[];
 }
 /** Proposal file attached to the current draft or frozen into a submitted revision (`versions[].payload.proposalDocument`). */
@@ -34,9 +35,17 @@ export interface EventFeedbackSummary {
   eventId: string; title: string; respondents: number; visible: boolean; averageRating?: number;
   distribution?: Record<number, number>; comments?: string[];
 }
-/** Non-2xx response; keeps what the server names: overdue obligations, affected registrations, schedule conflicts. */
+export interface ClubEventErrorDetails {
+  obligations?: string[];
+  registrationIds?: string[];
+  conflicts?: string[];
+  bookingId?: string;
+  bookingError?: string;
+  noticeHours?: number;
+}
+/** Non-2xx response; keeps what the server names: overdue obligations, affected registrations, schedule conflicts, booking errors. */
 export class ClubEventError extends ApiError {
-  constructor(message: string, readonly details: { obligations?: string[]; registrationIds?: string[]; conflicts?: string[] }) {
+  constructor(message: string, readonly details: ClubEventErrorDetails, readonly statusCode?: number) {
     super(message);
   }
 }
@@ -47,8 +56,15 @@ async function request<T>(clubId: string, path: string, init: RequestInit, resou
   const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/${resource}${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string; details?: Record<string, unknown> } | null;
-    throw new ClubEventError(body?.message ?? `HTTP ${res.status}`, { obligations: strings(body?.details?.obligations),
-      registrationIds: strings(body?.details?.registrationIds), conflicts: strings(body?.details?.conflicts) });
+    const d = body?.details;
+    throw new ClubEventError(body?.message ?? `HTTP ${res.status}`, {
+      obligations: strings(d?.obligations),
+      registrationIds: strings(d?.registrationIds),
+      conflicts: strings(d?.conflicts),
+      bookingId: typeof d?.bookingId === "string" ? d.bookingId : undefined,
+      bookingError: typeof d?.bookingError === "string" ? d.bookingError : undefined,
+      noticeHours: typeof d?.noticeHours === "number" ? d.noticeHours : undefined,
+    }, res.status);
   }
   return ((await res.json()) as { data: T }).data;
 }
@@ -69,6 +85,7 @@ export function actOnClubEvent(clubId: string, id: string, action: string, body:
 export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" | "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
 export interface EventPublishInput {
   registrationOpenAt?: string; registrationCloseAt?: string; checkInOpenAt: string; checkInCloseAt: string; allowWalkIn: boolean; waitlistEnabled: boolean;
+  notifyMembers?: boolean;
 }
 export type InternalCreateMode = "draft" | "create" | "publish";
 function jsonInit(method: string, body: object, csrfToken: string): RequestInit {
@@ -85,7 +102,7 @@ export function confirmInternalClubEvent(clubId: string, id: string, expectedVer
   return request(clubId, `/${encodeURIComponent(id)}/create`, jsonInit("POST", { expectedVersion }, csrfToken), "internal-events");
 }
 
-export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; title: string; startAt: string; endAt: string }[] }
+export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; eventId?: string; title: string; startAt: string; endAt: string }[] }
 export function fetchClubEventOptions(clubId: string, signal: AbortSignal): Promise<ClubEventOptions> { return request(clubId, "/options", { signal }); }
 
 /** Same-origin download: the default template streams as an attachment, an ICPDP upload redirects to a signed URL. */

@@ -1,6 +1,6 @@
 import { assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent,
   eventCancellationIsLate, eventConflictResult, PROPOSAL_DOCUMENT_MAX_BYTES, PROPOSAL_DOCUMENT_MIME_TYPES, PROPOSAL_TEMPLATE_MIME_TYPES,
-  validateEventProposalFile, validateEventPublication } from "../../src/domain/club-event-rules.js";
+  validateClubEventInput, validateEventProposalFile, validateEventPublication } from "../../src/domain/club-event-rules.js";
 import { loadDefaultEventProposalTemplate } from "../../src/infra/files/event-proposal-files.js";
 import { describe, expect, it, vi } from "vitest";
 import type { ClubAccessSnapshot } from "../../src/domain/access.js";
@@ -80,11 +80,25 @@ describe("club event access and HTTP validation", () => {
     const body = { title: "Event", objective: "Goal", plan: "Plan", startAt: "2026-10-30T00:00:00Z", endAt: "2026-10-30T02:00:00Z",
       venueText: "Campus", audienceScope: "PUBLIC", capacity: 20, riskCategory: "LOW", budgetLines: [], bookingIds: [] };
     expect(clubEventBody.safeParse(body).success).toBe(true);
+    expect(clubEventBody.safeParse({
+      ...body,
+      occurrences: [{ startAt: body.startAt, endAt: body.endAt, propertyId: id, venueText: "Hall B" }],
+    }).success).toBe(true);
     expect(clubEventBody.safeParse({ ...body, propertyId: { $ne: null } }).success).toBe(false);
     expect(clubEventBody.safeParse({ ...body, state: "Approved" }).success).toBe(false);
     expect(clubEventBody.safeParse({ ...body, budgetLines: [{ category: "Room", purpose: "Rental", amount: 1.5 }] }).success).toBe(false);
     expect(clubEventPublishBody.safeParse({ expectedVersion: 0, checkInOpenAt: body.startAt,
       checkInCloseAt: body.endAt, allowWalkIn: true, waitlistEnabled: true }).success).toBe(true);
+    const semester = { code: "FA26", startAt: new Date("2026-09-01T00:00:00Z"), endAt: new Date("2026-12-31T23:59:59Z") };
+    expect(validateClubEventInput({
+      title: "Event", objective: "Goal", plan: "Plan",
+      startAt: new Date("2026-10-30T00:00:00Z"), endAt: new Date("2026-10-31T02:00:00Z"),
+      audienceScope: "PUBLIC", capacity: 20, riskCategory: "LOW", budgetLines: [], bookingIds: [],
+      occurrences: [
+        { startAt: new Date("2026-10-30T00:00:00Z"), endAt: new Date("2026-10-30T02:00:00Z"), propertyId: id },
+        { startAt: new Date("2026-10-31T00:00:00Z"), endAt: new Date("2026-10-31T02:00:00Z"), venueText: "Outdoor yard" },
+      ],
+    }, [semester], now)).toBe("FA26");
   });
 });
 

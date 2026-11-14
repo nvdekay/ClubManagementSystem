@@ -55,6 +55,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const mutation = useClubEventMutation(clubId);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"" | "MEMBERS_ONLY" | "PUBLIC">("");
   const selected = searchParams.get("event") ?? searchParams.get("selected") ?? "";
   const setSelected = useCallback((id: string) => setSearchParams((previous) => {
     const next = new URLSearchParams(previous);
@@ -79,6 +80,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const [noRegistration, setNoRegistration] = useState(false);
   const [walkIn, setWalkIn] = useState(false);
   const [waitlist, setWaitlist] = useState(true);
+  const [notifyMembers, setNotifyMembers] = useState(true);
   const [registrationOpen, setRegistrationOpen] = useState("");
   const [registrationClose, setRegistrationClose] = useState("");
   const [checkOpen, setCheckOpen] = useState("");
@@ -103,12 +105,13 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const revisionRequest = [...(detail.data?.decisions ?? [])].reverse().find((d) => d.outcome === "Request revision");
   const revisionSections = active?.state === "Revision Requested" ? (revisionRequest?.comments as DecisionComments | undefined)?.sections ?? [] : [];
   const format = useMemo(() => new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }), [i18n.language]);
-  const filtered = useMemo(() => rows.filter((e) => (!filter || e.state === filter) && e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())), [rows, filter, search]);
+  const filtered = useMemo(() => rows.filter((e) => (!filter || e.state === filter) && (!typeFilter || e.audienceScope === typeFilter) && e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())), [rows, filter, typeFilter, search]);
   const columns = useMemo(() => eventColumns.columns([
     eventColumns.accessor("title", { header: t("clubEvents.titleField"), cell: (info) => <button type="button" className="text-left font-medium text-text-app hover:text-primary-app" onClick={() => { setSelected(info.row.original.id); mutation.reset(); setSuccess(false); revealDetail(); }}>{info.getValue()}</button> }),
+    eventColumns.accessor("audienceScope", { header: t("clubEvents.eventTypeColumn"), cell: (info) => <AppBadge tone={info.getValue() === "MEMBERS_ONLY" ? "info" : "neutral"}>{t(info.getValue() === "MEMBERS_ONLY" ? "clubEvents.eventTypeInternal" : "clubEvents.eventTypePublic")}</AppBadge> }),
     eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{stateLabel(t, info.getValue())}</AppBadge> }),
-    eventColumns.accessor("startAt", { header: t("clubEvents.start"), cell: (info) => format.format(new Date(info.getValue())) }),
-    eventColumns.accessor("capacity", { header: t("clubEvents.capacity"), cell: (info) => `${info.row.original.confirmedRegistrationCount} / ${info.getValue()}` }),
+    eventColumns.accessor("startAt", { header: t("clubEvents.startTime"), cell: (info) => format.format(new Date(info.getValue())) }),
+    eventColumns.accessor("capacity", { header: t("clubEvents.maxParticipants"), cell: (info) => `${info.row.original.confirmedRegistrationCount} / ${info.getValue()}` }),
   ]), [t, format, mutation, setSelected]);
   const table = useTable({ features: appTableFeatures, columns, data: filtered, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   const people = participants.data ?? participantsEmpty;
@@ -140,7 +143,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     if (!auth.data || !active) return;
     setSuccess(false); setFormError(null);
     // Same 24-hour notice the server enforces on DRAFT → CREATED; saves a round trip.
-    if (Date.parse(active.startAt) - Date.now() < 24 * 3600_000) { setFormError(new Error(t("clubEvents.notice24h"))); return; }
+    if (Date.parse(active.startAt) - Date.now() < 24 * 3600_000) { setFormError(new Error("internal event must start at least 24 hours from now")); return; }
     try { await mutation.mutateAsync({ kind: "internal-confirm", id: active.id, expectedVersion: active.version, csrfToken: auth.data.csrfToken }); setSuccess(true); }
     catch (error) { setFormError(error); }
   }
@@ -149,8 +152,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     mutation.reset(); setFormError(null); setSuccess(false); setOperation(kind); setReason(""); setTarget(participant); setCorrected(""); setAbsent(participant?.abnormalFlags.includes("no-show") ?? false);
     setCapacity(active.capacity); setNewStart(localTime(active.startAt)); setNewEnd(localTime(active.endAt)); setVenue(active.venueText ?? ""); setProperty(active.propertyId ?? "");
     setRegistrationOpen(localTime(new Date().toISOString())); setRegistrationClose(localTime(active.startAt)); setCheckOpen(localTime(active.checkInOpenAt ?? active.startAt)); setCheckClose(localTime(active.checkInCloseAt ?? active.endAt));
-    setWalkIn(active.allowWalkIn); setWaitlist(active.waitlistEnabled); setNoRegistration(false); setStudentId(participant?.studentId ?? "");
-  }, [active, mutation, setOperation, setFormError, setSuccess, setReason, setTarget, setCorrected, setAbsent, setCapacity, setNewStart, setNewEnd, setVenue, setProperty, setRegistrationOpen, setRegistrationClose, setCheckOpen, setCheckClose, setWalkIn, setWaitlist, setNoRegistration, setStudentId]);
+    setWalkIn(active.allowWalkIn); setWaitlist(active.waitlistEnabled); setNoRegistration(false); setNotifyMembers(true); setStudentId(participant?.studentId ?? "");
+  }, [active, mutation, setOperation, setFormError, setSuccess, setReason, setTarget, setCorrected, setAbsent, setCapacity, setNewStart, setNewEnd, setVenue, setProperty, setRegistrationOpen, setRegistrationClose, setCheckOpen, setCheckClose, setWalkIn, setWaitlist, setNoRegistration, setNotifyMembers, setStudentId]);
   const pcolumns = useMemo(() => participantColumns.columns([
     participantColumns.accessor("name", { header: t("clubEvents.name"), cell: (info) => <span className="block min-w-40 font-medium break-words">{info.getValue()}<span className="block text-xs font-normal whitespace-nowrap text-muted-app">{info.row.original.email}</span></span> }),
     participantColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <span>{info.getValue() ? t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" }) : "—"}{info.row.original.waitlistPosition ? ` #${info.row.original.waitlistPosition}` : ""}</span> }),
@@ -175,7 +178,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     try {
       const version = { expectedVersion: active.version };
       if (operation === "publish") await runAction("publish", { ...version, ...(!noRegistration ? { registrationOpenAt: iso(registrationOpen), registrationCloseAt: iso(registrationClose) } : {}),
-        checkInOpenAt: iso(checkOpen), checkInCloseAt: iso(checkClose), allowWalkIn: noRegistration || walkIn, waitlistEnabled: !noRegistration && waitlist });
+        checkInOpenAt: iso(checkOpen), checkInCloseAt: iso(checkClose), allowWalkIn: noRegistration || walkIn, waitlistEnabled: !noRegistration && waitlist,
+        ...(internal ? { notifyMembers } : {}) });
       else if (operation === "reschedule") await runAction("reschedule", { ...version, reason, startAt: iso(newStart), endAt: iso(newEnd), venueText: venue, ...(property ? { propertyId: property } : {}) });
       else if (operation === "cancel") await runAction("cancel", { ...version, reason });
       else if (operation === "capacity") await runAction("capacity", { capacity });
@@ -213,6 +217,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     {success && <p role="status" className="mb-3 text-success-app">{t("clubEvents.success")}</p>}
     {mode !== "feedback" && <>
       <div className="mb-4 flex flex-wrap items-center gap-3"><AppInput aria-label={t("clubEvents.search")} placeholder={t("clubEvents.search")} value={search} onChange={(e) => { setSearch(e.target.value); table.setPageIndex(0); }} />
+        <AppSelect label={t("clubEvents.eventTypeColumn")} value={typeFilter} onChange={(v) => { setTypeFilter(v as typeof typeFilter); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.eventTypeAll") }, { value: "MEMBERS_ONLY", label: t("clubEvents.eventTypeInternal") }, { value: "PUBLIC", label: t("clubEvents.eventTypePublic") }]} />
         <AppSelect label={t("clubEvents.state")} value={filter} onChange={(v) => { setFilter(v); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.all") }, ...[...new Set(rows.map((e) => e.state))].map((s) => ({ value: s, label: stateLabel(t, s) }))]} />
         {mode === "events" && <>
           <Link
@@ -378,7 +383,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       {active.attendanceFinalized && <p>{t("clubEvents.attendanceLocked")}</p>}
       <ClubEventErrorMessage error={participants.error} />
       <div className="flex flex-wrap gap-2">
-        {published && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.capacity")}</AppButton>}
+        {published && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.maxParticipants")}</AppButton>}
         {canCheckIn && <AppButton onClick={() => openOperation("check-in")}>{t("clubEvents.checkin")}</AppButton>}
         {finished && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={async () => { if (await askConfirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
         {active.attendanceFinalized && auth.data?.systemRoles.includes("ATTENDANCE_UNLOCK") && <AppButton onClick={() => openOperation("unlock")}>{t("clubEvents.unlock")}</AppButton>}
@@ -405,19 +410,22 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           <h4 className="mt-4 text-sm font-semibold">{t("clubEvents.comments")}</h4>{f.comments?.map((c, index) => <p key={index} className="mt-2 whitespace-pre-wrap break-words text-muted-app">{c}</p>)}</>}
       </article>)}</div>
     </section>}
-    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) closeOperation(); }}
+    <AppDialog open={operation !== null} title={t(`clubEvents.${operation === "check-in" ? "checkin" : operation === "capacity" ? "maxParticipants" : operation ?? "details"}`)} closeLabel={t("clubEvents.close")} onClose={() => { if (!mutation.isPending) closeOperation(); }}
       footer={<AppButton type="submit" form="club-event-operation-form" disabled={mutation.isPending}>{t("clubEvents.confirm")}</AppButton>}>
       <form id="club-event-operation-form" noValidate onSubmit={(event) => void execute(event)} className="space-y-4"><ClubEventErrorMessage error={formError} />
         {operation === "publish" && <>
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration} onChange={(e) => setNoRegistration(e.target.checked)} />{t("clubEvents.noRegistration")}</label>
           {!noRegistration && <><Field label={t("clubEvents.registrationOpen")} required error={opField.error("registrationOpen")}><AppInput {...opField.control("registrationOpen")} type="datetime-local" value={registrationOpen} onChange={(e) => setRegistrationOpen(e.target.value)} /></Field><Field label={t("clubEvents.registrationClose")} required error={opField.error("registrationClose")}><AppInput {...opField.control("registrationClose")} type="datetime-local" value={registrationClose} onChange={(e) => setRegistrationClose(e.target.value)} /></Field></>}
           <Field label={t("clubEvents.checkInOpen")} required error={opField.error("checkOpen")}><AppInput {...opField.control("checkOpen")} type="datetime-local" value={checkOpen} onChange={(e) => setCheckOpen(e.target.value)} /></Field><Field label={t("clubEvents.checkInClose")} required error={opField.error("checkClose")}><AppInput {...opField.control("checkClose")} type="datetime-local" value={checkClose} onChange={(e) => setCheckClose(e.target.value)} /></Field>
+          {internal && <AppSelect label={t("clubEvents.notifyMembersLabel")} value={notifyMembers ? "yes" : "no"}
+            onChange={(value) => setNotifyMembers(value === "yes")}
+            options={[{ value: "yes", label: t("clubEvents.notifyMembersYes") }, { value: "no", label: t("clubEvents.notifyMembersNo") }]} />}
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration || walkIn} disabled={noRegistration} onChange={(e) => setWalkIn(e.target.checked)} />{t("clubEvents.walkIn")}</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={waitlist} onChange={(e) => setWaitlist(e.target.checked)} />{t("clubEvents.waitlist")}</label>
         </>}
-        {operation === "reschedule" && <><Field label={t("clubEvents.start")} required error={opField.error("newStart")}><AppInput {...opField.control("newStart")} type="datetime-local" value={newStart} onChange={(e) => setNewStart(e.target.value)} /></Field><Field label={t("clubEvents.end")} required error={opField.error("newEnd")}><AppInput {...opField.control("newEnd")} type="datetime-local" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} /></Field>
+        {operation === "reschedule" && <><Field label={t("clubEvents.startTime")} required error={opField.error("newStart")}><AppInput {...opField.control("newStart")} type="datetime-local" value={newStart} onChange={(e) => setNewStart(e.target.value)} /></Field><Field label={t("clubEvents.endTime")} required error={opField.error("newEnd")}><AppInput {...opField.control("newEnd")} type="datetime-local" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} /></Field>
           <AppSelect label={t("clubEvents.property")} value={property} options={roomOptions} onChange={setProperty} /><Field label={t("clubEvents.venue")}><AppInput value={venue} onChange={(e) => setVenue(e.target.value)} /></Field></>}
-        {operation === "capacity" && <Field label={t("clubEvents.capacity")} required error={opField.error("capacity")}><AppInput {...opField.control("capacity")} type="number" min={1} max={100000} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} /></Field>}
+        {operation === "capacity" && <Field label={t("clubEvents.maxParticipants")} required error={opField.error("capacity")}><AppInput {...opField.control("capacity")} type="number" min={1} max={100000} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} /></Field>}
         {operation === "check-in" && <><Field label={t("clubEvents.studentId")} required error={opField.error("studentId")}><AppSelect required invalid={Boolean(opField.error("studentId"))} label={t("clubEvents.studentId")} value={studentId} onChange={(value) => { setStudentId(value); opField.touch("studentId"); }} options={[{ value: "", label: t("clubEvents.none") }, ...people.filter((p) => p.state === "Confirmed" && !p.attendanceId).map((p) => ({ value: p.studentId, label: `${p.name} · ${p.email}` }))]} /></Field><p className="text-sm text-muted-app">{t("clubEvents.manualReason")}</p></>}
         {operation === "correct" && <><p>{target?.name}</p><label className="flex items-center gap-2"><input type="checkbox" checked={absent} disabled={Boolean(target?.attendanceId && !target.abnormalFlags.includes("no-show"))} onChange={(e) => setAbsent(e.target.checked)} />{t("clubEvents.absent")}</label>
           {!absent && <Field label={t("clubEvents.correctedTime")}><AppInput type="datetime-local" value={corrected} onChange={(e) => setCorrected(e.target.value)} /></Field>}</>}

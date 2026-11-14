@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubEvent, useClubEventMutation, useClubEventOptions, useEventProposalDocumentAccess, useEventProposalTemplate } from "@/hooks/useClubEvents";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { ClubEventErrorMessage } from "@/pages/club/ClubEventErrorMessage";
-import { iso, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
+import { bookingsScheduleError, iso, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
 import { EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL, type ClubEvent, type ClubEventDetail, type ClubEventInput, type ClubEventOptions } from "@/services/clubEvents";
 import { formatBytes, proposalFileType } from "@/utils/proposalFile";
 
@@ -60,7 +60,12 @@ function inputFromEvent(event: ClubEvent): ClubEventInput {
     riskCategory: event.riskCategory,
     riskNote: event.riskNote,
     facilityNeeds: event.facilityNeeds,
-    occurrences: event.occurrences ?? [],
+    occurrences: (event.occurrences ?? []).map((o) => ({
+      startAt: o.startAt,
+      endAt: o.endAt,
+      propertyId: o.propertyId ?? event.propertyId,
+      venueText: o.venueText ?? event.venueText ?? "",
+    })),
     budgetLines: event.budgetLines,
     bookingIds: event.bookingIds,
     registrationForm: event.registrationForm ?? [],
@@ -153,8 +158,22 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     plan: draft.plan.trim() ? null : required,
     startAt: new Date(draft.startAt).getTime() > editorOpenedAt ? null : t("common.dateNotPast"),
     endAt: Date.parse(draft.endAt) > Date.parse(draft.startAt) ? null : t("common.endAfterStart"),
-    venue: draft.venueText?.trim() || draft.propertyId ? null : t("clubEvents.venueRequired"),
+    venue:
+      draft.venueText?.trim() ||
+      draft.propertyId ||
+      (draft.occurrences?.length && draft.occurrences.every((o) => Boolean(o.venueText?.trim() || o.propertyId)))
+        ? null
+        : t("clubEvents.venueRequired"),
     capacity: numberError(t, draft.capacity, 1, 100000),
+    bookings: bookingsScheduleError(
+      t,
+      draft.bookingIds,
+      options?.bookings,
+      draft.propertyId,
+      draft.occurrences?.length
+        ? draft.occurrences
+        : [{ startAt: draft.startAt, endAt: draft.endAt, propertyId: draft.propertyId }],
+    ),
     // Plan B: a members-only proposal must ask for budget; a self-funded one goes through the internal event flow.
     budget: draft.audienceScope === "MEMBERS_ONLY" && draft.budgetLines.length === 0 ? t("clubEvents.membersOnlyNeedsBudget") : null,
   };
@@ -173,11 +192,16 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
   draft.occurrences?.forEach((occurrence, index) => {
     eventErrors[`occurrence.${index}.endAt`] =
       Date.parse(occurrence.endAt) > Date.parse(occurrence.startAt) ? null : t("common.endAfterStart");
+    eventErrors[`occurrence.${index}.venue`] =
+      occurrence.venueText?.trim() || occurrence.propertyId ? null : t("clubEvents.venueRequired");
   });
   const eventField = useFieldValidation(eventErrors);
 
+  const selectedPropertyIds = new Set(
+    [draft.propertyId, ...(draft.occurrences ?? []).map((o) => o.propertyId)].filter((id): id is string => Boolean(id)),
+  );
   const linkableBookings = (options?.bookings ?? []).filter(
-    (b) => b.propertyId === draft.propertyId || b.propertyType === "EQUIPMENT",
+    (b) => (!b.eventId || b.eventId === activeId) && (selectedPropertyIds.has(b.propertyId) || b.propertyType === "EQUIPMENT"),
   );
   const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
 
@@ -301,13 +325,6 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
             </p>
             {revisionRequest?.reason && <p className="mt-1 whitespace-pre-wrap break-words">{revisionRequest.reason}</p>}
           </div>
-        )}
-
-        {(Boolean(formError) || Boolean(optionsError)) && (
-          <AppNotice tone="danger">
-            {uploadFailed && <p className="mb-1 text-sm font-semibold">{t("clubEvents.proposalDocumentUploadFailed")}</p>}
-            <ClubEventErrorMessage error={formError ?? optionsError} />
-          </AppNotice>
         )}
 
         <section id="proposal-document" className={sectionCardClass}>
@@ -514,7 +531,15 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
                 onClick={() =>
                   setDraft({
                     ...draft,
-                    occurrences: [...(draft.occurrences ?? []), { startAt: draft.startAt, endAt: draft.endAt }],
+                    occurrences: [
+                      ...(draft.occurrences ?? []),
+                      {
+                        startAt: draft.startAt,
+                        endAt: draft.endAt,
+                        propertyId: draft.propertyId,
+                        venueText: draft.venueText ?? "",
+                      },
+                    ],
                   })
                 }
               >
@@ -538,10 +563,21 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
                         value={localTime(o[key])}
                         onChange={(e) => {
                           if (e.target.value) {
+                            const nextIso = iso(e.target.value);
+                            const nextStart =
+                              key === "startAt" && Date.parse(nextIso) < Date.parse(draft.startAt)
+                                ? nextIso
+                                : draft.startAt;
+                            const nextEnd =
+                              key === "endAt" && Date.parse(nextIso) > Date.parse(draft.endAt)
+                                ? nextIso
+                                : draft.endAt;
                             setDraft({
                               ...draft,
+                              startAt: nextStart,
+                              endAt: nextEnd,
                               occurrences: draft.occurrences?.map((item, i) =>
-                                i === index ? { ...item, [key]: iso(e.target.value) } : item,
+                                i === index ? { ...item, [key]: nextIso } : item,
                               ),
                             });
                           }
@@ -549,6 +585,42 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
                       />
                     </Field>
                   ))}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field flagged={flag("venue")} label={t("clubEvents.property")}>
+                    <AppSelect
+                      label={t("clubEvents.property")}
+                      value={o.propertyId ?? ""}
+                      options={roomOptions}
+                      onChange={(value) =>
+                        setDraft({
+                          ...draft,
+                          occurrences: draft.occurrences?.map((item, i) =>
+                            i === index ? { ...item, propertyId: value || undefined } : item,
+                          ),
+                        })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    flagged={flag("venue")}
+                    label={t("clubEvents.venue")}
+                    required={!o.propertyId}
+                    error={eventField.error(`occurrence.${index}.venue`)}
+                  >
+                    <AppInput
+                      {...eventField.control(`occurrence.${index}.venue`, !o.propertyId)}
+                      value={o.venueText ?? ""}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          occurrences: draft.occurrences?.map((item, i) =>
+                            i === index ? { ...item, venueText: e.target.value } : item,
+                          ),
+                        })
+                      }
+                    />
+                  </Field>
                 </div>
                 <AppButton
                   type="button"
@@ -597,18 +669,20 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
                   className="mt-1 accent-primary-app"
                   checked={draft.bookingIds.includes(b.id)}
                   disabled={!permissions.includes("club.booking.manage")}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    eventField.touch("bookings");
                     setDraft({
                       ...draft,
                       bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id),
-                    })
-                  }
+                    });
+                  }}
                 />
                 <span>
-                  {b.title} · {format.format(new Date(b.startAt))}
+                  {b.title} · {format.format(new Date(b.startAt))} – {format.format(new Date(b.endAt))}
                 </span>
               </label>
             ))}
+            <AppFieldError message={eventField.error("bookings")} />
           </div>
         </section>
 
@@ -797,6 +871,13 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
             ))}
           </div>
         </section>
+
+        {(Boolean(formError) || Boolean(optionsError)) && (
+          <AppNotice tone="danger">
+            {uploadFailed && <p className="mb-1 text-sm font-semibold">{t("clubEvents.proposalDocumentUploadFailed")}</p>}
+            <ClubEventErrorMessage error={formError ?? optionsError} />
+          </AppNotice>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <Link to={eventsListUrl} className={secondaryLinkClass}>

@@ -12,11 +12,17 @@ export function isInternalClubEventState(state: string): state is InternalClubEv
 export type ClubEventState = "Draft" | "Pending Approval" | "Under Review" | "Revision Requested" |
   "Approved" | "Rejected" | "Expired" | "Upcoming" | "Ongoing" | "Completed" | "Report Submitted" | "Cancelled" | "Closed" |
   InternalClubEventState;
+export interface EventOccurrence {
+  startAt: Date;
+  endAt: Date;
+  propertyId?: string;
+  venueText?: string;
+}
 export interface ClubEventInput {
   title: string; objective: string; plan: string; startAt: Date; endAt: Date;
   venueText?: string; propertyId?: string; audienceScope: "PUBLIC" | "MEMBERS_ONLY";
   capacity: number; riskCategory: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string; facilityNeeds?: string;
-  occurrences?: { startAt: Date; endAt: Date }[]; budgetLines: RequestedBudgetLine[];
+  occurrences?: EventOccurrence[]; budgetLines: RequestedBudgetLine[];
   bookingIds: string[]; registrationForm?: EventRegistrationFormField[];
 }
 export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" |
@@ -75,6 +81,7 @@ export type ClubFeedbackSummary = FeedbackSummary & { eventId: string; title: st
 export interface EventPublishInput {
   registrationOpenAt?: Date; registrationCloseAt?: Date;
   checkInOpenAt: Date; checkInCloseAt: Date; allowWalkIn: boolean; waitlistEnabled: boolean;
+  notifyMembers?: boolean;
 }
 export type ClubEventAction =
   | { kind: "save"; input: ClubEventInput; expectedVersion: number }
@@ -92,7 +99,7 @@ export type ClubEventAction =
   | { kind: "finalize" }
   | { kind: "unlock"; reason: string };
 export interface ClubEventRepository {
-  options(clubId: string): Promise<{ properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; title: string; startAt: Date; endAt: Date }[] }>;
+  options(clubId: string): Promise<{ properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; eventId?: string; title: string; startAt: Date; endAt: Date }[] }>;
   list(clubId: string): Promise<ClubEvent[]>;
   find(clubId: string, eventId: string): Promise<ClubEventDetail | null>;
   create(clubId: string, input: ClubEventInput, actorId: string, now: Date): Promise<ClubEventDetail>;
