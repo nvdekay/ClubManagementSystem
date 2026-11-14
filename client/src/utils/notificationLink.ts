@@ -12,6 +12,11 @@ function fixed(path: string) {
   return function link(): string { return path; };
 }
 
+function clubEvent(item: AppNotification): string | undefined {
+  const path = club("/events")(item);
+  return path && item.entityId ? `${path}?event=${encodeURIComponent(item.entityId)}` : path;
+}
+
 /** Detail page `base/<entityId>`, or the list when the row has no entity. */
 function detail(base: string) {
   return function link(item: AppNotification): string {
@@ -22,8 +27,10 @@ function detail(base: string) {
 // First match wins, so the specific codes sit above the family prefixes they belong to. Each code leads to
 // the workspace of the people who receive it (server: domain/notification.ts audience lists).
 const rules: Rule[] = [
+  [/^SPONSORED_ITEM_SUBMITTED$/, detail("/workspace/event-proposals")],
+  [/^SPONSORED_ITEM_/, clubEvent],
   [/^(EVENT_REGISTRATION_|EVENT_CANCELLED$|EVENT_RESCHEDULED$|EVENT_CHECKED_IN$)/, fixed("/workspace/event-registrations")],
-  [/^EVENT_PROPOSAL_/, club("/events")],
+  [/^EVENT_PROPOSAL_/, clubEvent],
   // The founder's own application (receipts and decisions alike).
   [/^CLUB_APPLICATION_APPROVED$/, (item) => club("")(item) ?? detail("/workspace/applications")(item)],
   [/^CLUB_APPLICATION_/, detail("/workspace/applications")],

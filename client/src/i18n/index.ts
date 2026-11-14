@@ -45,12 +45,13 @@ import { schoolEvents } from "./schoolEvents";
 import { evaluations } from "./evaluations";
 import { clubOversight } from "./clubOversight";
 import { notifications } from "./notifications";
+import { sponsoredItems } from "./sponsoredItems";
 
 export type Locale = "en" | "vi";
 
 // New module: create i18n/<module>.ts (same en/vi shape), then add it to both locales here.
 export const resources = {
-  en: { translation: { apiErrors: apiErrors.en, clubCompliance: clubCompliance.en, membershipReconfirmations: membershipReconfirmations.en, suspensionRequests: suspensionRequests.en, clubTransitionPlans: clubTransitionPlans.en, clubPeriodicReports: clubPeriodicReports.en, clubInvitations: clubInvitations.en, facilityBookings: facilityBookings.en, common: common.en, auth: auth.en, discovery: discovery.en,
+  en: { translation: { sponsoredItems: sponsoredItems.en, apiErrors: apiErrors.en, clubCompliance: clubCompliance.en, membershipReconfirmations: membershipReconfirmations.en, suspensionRequests: suspensionRequests.en, clubTransitionPlans: clubTransitionPlans.en, clubPeriodicReports: clubPeriodicReports.en, clubInvitations: clubInvitations.en, facilityBookings: facilityBookings.en, common: common.en, auth: auth.en, discovery: discovery.en,
     policy: policy.en, applications: applications.en, reviews: reviews.en,
     clubSettings: clubSettings.en, boardNominations: boardNominations.en,
     recruitmentCampaigns: recruitmentCampaigns.en, recruitmentApplications: recruitmentApplications.en,
@@ -58,7 +59,7 @@ export const resources = {
     eventRegistrations: eventRegistrations.en, eventFeedback: eventFeedback.en,
     accountability: accountability.en, complaints: complaints.en, routing: routing.en, memberSpace: memberSpace.en, clubFields: clubFields.en, properties: properties.en, evaluationSchemes: evaluationSchemes.en, exports: exports.en, clubLifecycle: clubLifecycle.en, eventReviews: eventReviews.en, eventDefense: eventDefense.en, budgets: budgets.en, periodicReports: periodicReports.en, roomAllocations: roomAllocations.en, violations: violations.en, schoolEvents: schoolEvents.en, evaluations: evaluations.en,
     clubEvents: clubEvents.en, clubOversight: clubOversight.en, notifications: notifications.en, demo: demo.en } },
-  vi: { translation: { apiErrors: apiErrors.vi, clubCompliance: clubCompliance.vi, membershipReconfirmations: membershipReconfirmations.vi, suspensionRequests: suspensionRequests.vi, clubTransitionPlans: clubTransitionPlans.vi, clubPeriodicReports: clubPeriodicReports.vi, clubInvitations: clubInvitations.vi, facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
+  vi: { translation: { sponsoredItems: sponsoredItems.vi, apiErrors: apiErrors.vi, clubCompliance: clubCompliance.vi, membershipReconfirmations: membershipReconfirmations.vi, suspensionRequests: suspensionRequests.vi, clubTransitionPlans: clubTransitionPlans.vi, clubPeriodicReports: clubPeriodicReports.vi, clubInvitations: clubInvitations.vi, facilityBookings: facilityBookings.vi, common: common.vi, auth: auth.vi, discovery: discovery.vi,
     policy: policy.vi, applications: applications.vi, reviews: reviews.vi,
     clubSettings: clubSettings.vi, boardNominations: boardNominations.vi,
     recruitmentCampaigns: recruitmentCampaigns.vi, recruitmentApplications: recruitmentApplications.vi,

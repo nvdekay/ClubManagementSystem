@@ -12,6 +12,8 @@ import {
 } from "../../src/infra/db/ucms-models.js";
 import { DEFAULT_FORM_REQUIREMENTS } from "../../src/domain/policy.js";
 import type { FinanceDetail } from "../../src/domain/event-finance.js";
+import { mongoSponsoredItemRepository } from "../../src/infra/db/mongo-sponsored-item-repository.js";
+import type { SponsoredItem } from "../../src/domain/sponsored-item.js";
 const uri = process.env.MONGO_URI;
 const now = new Date("2026-10-11T00:00:00Z");
 const DAY = 86400000;
@@ -103,6 +105,42 @@ async function expense(
   return d;
 }
 describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
+  it("submits an item without an advance, caps concurrent images and records one payment", async () => {
+    const { budgetId } = await fixture(0);
+    const item: SponsoredItem = { id: "line-one", category: "Supplies", fundingDecision: "BEFORE_EVENT",
+      requestedAmount: 100, approvedAmount: 100, approvedAt: "2026-10-01T00:00:00Z", eventEndAt: now.toISOString(),
+      status: "Draft", amount: 80, description: "Invoice pack", images: [] };
+    await m.eventBudgets!.updateOne({ _id: new Types.ObjectId(budgetId) }, { $set: { sponsoredItems: [item], state: "Approved" } });
+    const repo = mongoSponsoredItemRepository();
+    let detail = (await repo.find(budgetId, String(club)))!;
+    expect(await repo.find(budgetId, String(new Types.ObjectId()))).toBeNull();
+    for (let index = 0; index < 4; index++) {
+      detail = await repo.act(budgetId, item.id, detail.revision, String(actor), String(club), { kind: "image", image: {
+        id: `image-${index}`, assetId: `private-${index}`, digest: `digest-${index}`, fileName: "invoice.png",
+        mimeType: "image/png", bytes: 100, uploadedAt: now.toISOString(), uploadedBy: String(actor),
+      } }, now);
+    }
+    const results = await Promise.allSettled([4, 5].map((index) => repo.act(budgetId, item.id, detail.revision,
+      String(actor), String(club), { kind: "image", image: { id: `image-${index}`, assetId: `private-${index}`,
+        digest: `digest-${index}`, fileName: "invoice.png", mimeType: "image/png", bytes: 100,
+        uploadedAt: now.toISOString(), uploadedBy: String(actor) } }, now)));
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    detail = (await repo.find(budgetId))!;
+    expect(detail.items[0]!.images).toHaveLength(5);
+    detail = await repo.act(budgetId, item.id, detail.revision, String(actor), String(club), { kind: "submit" }, now);
+    await expect(repo.act(budgetId, item.id, detail.revision, String(actor), String(club),
+      { kind: "removeImage", imageId: "image-0" }, now)).rejects.toMatchObject({ kind: "conflict" });
+    detail = await repo.act(budgetId, item.id, detail.revision, String(actor), undefined,
+      { kind: "review", validAmount: 80, reason: "Valid invoices" }, now);
+    const payments = await Promise.allSettled(["BANK-1", "BANK-2"].map((paymentReference) => repo.act(budgetId,
+      item.id, detail.revision, String(actor), undefined, { kind: "pay", amount: 80, paidAt: now.toISOString(), paymentReference }, now)));
+    expect(payments.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    const stored = await m.eventBudgets!.findById(budgetId).lean();
+    expect(stored?.state).toBe("Closed");
+    expect(Number(String(stored?.disbursedTotal))).toBe(80);
+    expect(await m.auditLogs!.countDocuments({ entityId: new Types.ObjectId(budgetId), action: "SPONSORED_ITEM_PAY" })).toBe(1);
+    expect(await m.notifications!.countDocuments({ eventCode: "SPONSORED_ITEM_SUBMITTED" })).toBeGreaterThan(0);
+  });
   beforeAll(async () => {
     await mongoose.connect(uri ?? "", {
       dbName: `ucms-wave4-test-${process.pid}`,

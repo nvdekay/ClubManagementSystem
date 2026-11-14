@@ -80,7 +80,7 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
       category: String(line.category ?? ""), requestedAmount: money(line.requestedAmount),
       approvedAmount: money(line.approvedAmount), ...(optionalText(line.reason) ? { reason: String(line.reason) } : {}),
     })) : [];
-    const allowed = allowedFlow(summary!);
+    const allowed = doc.sponsoredItems ? undefined : allowedFlow(summary!);
     return { ...summary!, lines, flows: mapped, ...(allowed ? { allowed } : {}) };
   }
 
@@ -100,6 +100,7 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
         await assertAccountabilityOfficer(session, actorId);
         const doc = await budgets.findById(budgetObjectId).session(session).lean();
         if (!doc) throw new DomainError("budget not found", "not_found");
+        if (doc.sponsoredItems) throw new DomainError("use the sponsored item payment workflow", "conflict");
         const event = await m.events!.findOneAndUpdate({ _id: doc.eventId }, { $inc: { __v: 1 } }, { session }).lean();
         const current = summaryFrom(doc, event as Doc | undefined, undefined);
         checkFlow(current, flow);

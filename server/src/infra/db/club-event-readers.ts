@@ -48,7 +48,7 @@ export async function readClubEvent(clubId: string, eventId: string): Promise<Cl
     decisions: decisions.map((d) => ({ outcome: String(d.outcome), reason: d.reason as string | undefined, comments: d.comments, at: d.at as Date })),
     bookings: bookings.map((b) => ({ id: String(b._id), state: String(b.state), propertyId: String(b.propertyId),
       propertyName: String(properties.find((p) => String(p._id) === String(b.propertyId))?.name ?? ""), startAt: b.startAt as Date, endAt: b.endAt as Date })),
-    ...(budget ? { budget: { state: String(budget.state), approvedTotal: eventMoney(budget.approvedTotal), disbursedTotal: eventMoney(budget.disbursedTotal) } } : {}) };
+    ...(budget ? { budget: { id: String(budget._id), state: String(budget.state), approvedTotal: eventMoney(budget.approvedTotal), disbursedTotal: eventMoney(budget.disbursedTotal) } } : {}) };
 }
 export async function readEventParticipants(clubId: string, eventId: string): Promise<EventParticipant[]> {
   const event = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }).select({ endAt: 1 }).lean();

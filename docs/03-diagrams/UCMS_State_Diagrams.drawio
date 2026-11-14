@@ -181,40 +181,103 @@
 <mxCell id="n1" value="BR63 defense: while a defense session is active, Approve / Reject are locked;&lt;br&gt;only Request revision is allowed (deadline ≥ 12 h before the defense).&lt;br&gt;Defense NO_SHOW rejects the proposal at once.&lt;br&gt;From Re-defense Pending the officer schedules a new defense (→ Under Review)&lt;br&gt;or may still decide directly." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=6;" vertex="1" parent="1"><mxGeometry x="1500" y="110" width="480" height="95" as="geometry"/></mxCell>
 <mxCell id="n2" value="UC28 reschedule submits a new revision (an internal event without budget&lt;br&gt;goes straight back to Approved). If that revision is Rejected or Expired,&lt;br&gt;its registrations, bookings and budget are cancelled as in UC28 cancel;&lt;br&gt;the event keeps state Rejected / Expired." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=6;" vertex="1" parent="1"><mxGeometry x="1500" y="260" width="480" height="80" as="geometry"/></mxCell>
 </root></mxGraphModel></diagram>
-<diagram id="event-budget" name="Event Budget"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
-<mxCell id="title" value="State diagram — Event Budget" style="text;html=1;fontSize=20;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="600" height="30" as="geometry"/></mxCell>
-<mxCell id="init" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="220" y="95" width="30" height="30" as="geometry"/></mxCell>
-<mxCell id="ap" value="Approved" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="640" y="80" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="di" value="Disbursed" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="950" y="80" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="ss" value="Settlement Submitted" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1260" y="80" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="rp" value="Reconciliation Pending" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1600" y="80" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="ca" value="Cancelled" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="640" y="230" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="f_ca" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="710" y="350" width="30" height="30" as="geometry"/></mxCell>
-<mxCell id="d" value="" style="rhombus;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" vertex="1" parent="1"><mxGeometry x="880" y="460" width="40" height="40" as="geometry"/></mxCell>
-<mxCell id="rv" value="Recovery Pending" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1040" y="440" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="rc" value="Reconciled" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1500" y="330" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="cl" value="Closed" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" vertex="1" parent="1"><mxGeometry x="1260" y="620" width="170" height="60" as="geometry"/></mxCell>
-<mxCell id="f_cl" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="1490" y="635" width="30" height="30" as="geometry"/></mxCell>
-<mxCell id="e1" value="UC26 approve proposal&lt;br&gt;with a budget (approved amount)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="init" target="ap"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e2" value="UC35 first advance&lt;br&gt;(partial or full)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ap" target="di"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e3" value="UC36 submit settlement&lt;br&gt;[event ended / cancelled]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="di" target="ss"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e4" value="UC37 A1 return for evidence" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="1" source="ss" target="rp"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e5" value="UC36 A3 resubmit" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="rp" target="ss"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e6" value="UC37&lt;br&gt;[accepted &amp;gt; advanced]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.82;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ss" target="rc"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e7" value="UC37&lt;br&gt;[accepted &amp;lt; advanced]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.18;exitY=1;exitDx=0;exitDy=0;entryX=0.82;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ss" target="rv"><mxGeometry x="-0.25" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e7b" value="UC37&lt;br&gt;[accepted = advanced]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ss" target="cl"><mxGeometry x="0.3" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e8" value="UC37 A2&lt;br&gt;[settlement overdue]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="di" target="d"><mxGeometry x="-0.35" relative="1" as="geometry"><Array as="points"><mxPoint x="967" y="410"/><mxPoint x="900" y="410"/></Array><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e9" value="UC37 A2 [settlement overdue]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="rp" target="d"><mxGeometry x="0" relative="1" as="geometry"><Array as="points"><mxPoint x="1685" y="780"/><mxPoint x="860" y="780"/><mxPoint x="860" y="480"/></Array><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e_d_rv" value="[accepted &amp;lt; advanced]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.67;entryDx=0;entryDy=0;" edge="1" parent="1" source="d" target="rv"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="-14" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e_d_cl" value="[accepted = advanced]" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="d" target="cl"><mxGeometry x="0.2" relative="1" as="geometry"><Array as="points"><mxPoint x="900" y="650"/></Array><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e10" value="UC35 A2 top-up (BR26)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.88;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="rc" target="cl"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e11" value="UC35 A3 refunded&lt;br&gt;in full (BR26, BR58)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.18;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="rv" target="cl"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e12" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="cl" target="f_cl"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e13" value="event cancelled before any advance&lt;br&gt;(UC28 / UC15)" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ap" target="ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="e14" value="" style="endArrow=block;endFill=1;html=1;rounded=0;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ca" target="f_ca"><mxGeometry x="0" relative="1" as="geometry"><mxPoint x="0" y="0" as="offset"/></mxGeometry></mxCell>
-<mxCell id="n1" value="Overdue refund → overdue&lt;br&gt;obligation (BR21); ICPDP may&lt;br&gt;open a violation case (UC40)." style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=6;" vertex="1" parent="1"><mxGeometry x="1010" y="190" width="200" height="58" as="geometry"/></mxCell>
-<mxCell id="n1_l" value="" style="html=1;rounded=0;dashed=1;endArrow=none;" edge="1" parent="1" source="n1" target="rv"><mxGeometry relative="1" as="geometry"/></mxCell>
-</root></mxGraphModel></diagram>
+<diagram name="Event Budget" id="finance-UCMS_State_Diagrams">
+  <mxGraphModel dx="1600" dy="1200" grid="1" page="1" pageWidth="1600" pageHeight="1200">
+    <root>
+      <mxCell id="0" />
+      <mxCell id="1" parent="0" />
+      <mxCell id="title" value="Event budget — item decisions and invoice/payment lifecycle" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=25;strokeColor=none;fontStyle=1;">
+        <mxGeometry x="40" y="20" width="1450" height="70" as="geometry" />
+      </mxCell>
+      <mxCell id="target" value="Target business rules · 14 Nov 2026 · UC26 / UC35–UC37 · not implemented code" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;fontSize=15;">
+        <mxGeometry x="40" y="95" width="1450" height="40" as="geometry" />
+      </mxCell>
+      <mxCell id="a" value="UC26: every item explicitly decided" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="60" y="190" width="400" height="80" as="geometry" />
+      </mxCell>
+      <mxCell id="b" value="Not Sponsored&lt;br&gt;cap = 0; reason required&lt;br&gt;terminal / no payment" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#f8cecc;strokeColor=#6c8ebf;">
+        <mxGeometry x="1080" y="190" width="400" height="110" as="geometry" />
+      </mxCell>
+      <mxCell id="c" value="Before Event / After Event&lt;br&gt;approved cap &gt; 0&lt;br&gt;Draft invoice pack" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="60" y="380" width="400" height="110" as="geometry" />
+      </mxCell>
+      <mxCell id="d" value="Submitted&lt;br&gt;timely complete pack; locked version" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="570" y="380" width="400" height="110" as="geometry" />
+      </mxCell>
+      <mxCell id="e" value="Returned&lt;br&gt;correction within original window" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;">
+        <mxGeometry x="570" y="590" width="400" height="90" as="geometry" />
+      </mxCell>
+      <mxCell id="f" value="Accepted&lt;br&gt;payable = min(valid invoices, cap) &gt; 0" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#dae8fc;strokeColor=#6c8ebf;">
+        <mxGeometry x="1080" y="380" width="400" height="110" as="geometry" />
+      </mxCell>
+      <mxCell id="g" value="Paid&lt;br&gt;one full payment; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#d5e8d4;strokeColor=#6c8ebf;">
+        <mxGeometry x="1080" y="590" width="400" height="90" as="geometry" />
+      </mxCell>
+      <mxCell id="h" value="Expired&lt;br&gt;Draft / Returned after D; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#f8cecc;strokeColor=#6c8ebf;">
+        <mxGeometry x="60" y="760" width="400" height="90" as="geometry" />
+      </mxCell>
+      <mxCell id="i" value="Rejected&lt;br&gt;no valid payable; reason; terminal" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#f8cecc;strokeColor=#6c8ebf;">
+        <mxGeometry x="1080" y="760" width="400" height="90" as="geometry" />
+      </mxCell>
+      <mxCell id="edge0" value="not sponsored" edge="1" parent="1" source="a" target="b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="edge1" value="sponsored" edge="1" parent="1" source="a" target="c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="edge2" value="UC36&lt;br&gt;within window" edge="1" parent="1" source="c" target="d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="edge3" value="UC37 return&lt;br&gt;before D" edge="1" parent="1" source="d" target="e" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;;exitX=0.4;exitY=1;entryX=0.4;entryY=0;">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="730" y="525" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="edge4" value="UC36 resubmit&lt;br&gt;by D" edge="1" parent="1" source="e" target="d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;;exitX=0.75;exitY=0;entryX=0.75;entryY=1;">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="870" y="525" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="edge5" value="UC37&lt;br&gt;accept" edge="1" parent="1" source="d" target="f" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="edge6" value="UC35 full payable once" edge="1" parent="1" source="f" target="g" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="edge7" value="now &gt; D" edge="1" parent="1" source="c" target="h" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;">
+        <mxGeometry relative="1" as="geometry" />
+      </mxCell>
+      <mxCell id="edge8" value="now &gt; D" edge="1" parent="1" source="e" target="h" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;;exitX=0.5;exitY=1;entryX=0.5;entryY=0;">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="780" y="715" />
+            <mxPoint x="260" y="715" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="edge9" value="UC37&lt;br&gt;payable = 0" edge="1" parent="1" source="d" target="i" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;exitX=1;exitY=0.9;entryX=1;entryY=0.5;">
+        <mxGeometry relative="1" as="geometry">
+          <Array as="points">
+            <mxPoint x="1020" y="474" />
+            <mxPoint x="1020" y="520" />
+            <mxPoint x="1550" y="520" />
+            <mxPoint x="1550" y="805" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="note0" value="Decision is separate from processing status. A = approval time; E = approved event end; D = E + 14 days.&lt;br&gt;Before Event submission: [A,D]; After Event: [E,D]. No new submission/correction after D.&lt;br&gt;Timely Submitted never auto-expires: review/payment may finish after D." vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;fontSize=15;align=left;spacing=12;">
+        <mxGeometry x="60" y="930" width="1440" height="105" as="geometry" />
+      </mxCell>
+      <mxCell id="note1" value="Budget aggregate: Approved → Closed only when ALL items are Not Sponsored / Paid / Rejected / Expired.&lt;br&gt;No Advance / TopUp / Refund lifecycle in the new normal flow. Cancellation/reschedule and legacy data need separate policy." vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;fillColor=#fff2cc;strokeColor=#6c8ebf;fontSize=15;align=left;spacing=12;">
+        <mxGeometry x="60" y="1060" width="1440" height="85" as="geometry" />
+      </mxCell>
+    </root>
+  </mxGraphModel>
+</diagram>
 <diagram id="property-booking" name="Property Booking"><mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" background="#ffffff"><root><mxCell id="0"/><mxCell id="1" parent="0"/>
 <mxCell id="title" value="State diagram — Property Booking" style="text;html=1;fontSize=20;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="40" y="20" width="600" height="30" as="geometry"/></mxCell>
 <mxCell id="init" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1"><mxGeometry x="40" y="255" width="30" height="30" as="geometry"/></mxCell>

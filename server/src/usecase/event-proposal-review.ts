@@ -37,7 +37,8 @@ export function normalizedEventDecision(input: EventReviewDecisionInput, now: Da
   const chosen = [...new Set((input.sections ?? []).map((section) => section.trim()))];
   const conditions = (input.conditions ?? []).map((condition) => condition.trim()).filter(Boolean);
   const budgetLines = (input.budgetLines ?? []).map((line) => ({
-    approvedAmount: line.approvedAmount, ...(trimmed(line.reason) ? { reason: trimmed(line.reason) } : {}),
+    approvedAmount: line.approvedAmount, fundingDecision: line.fundingDecision,
+    ...(trimmed(line.reason) ? { reason: trimmed(line.reason) } : {}),
   }));
   if (!reason && input.outcome !== "Approve") {
     throw new DomainError("decision reason is required", "validation", { field: "reason" });

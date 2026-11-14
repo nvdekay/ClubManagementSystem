@@ -1,6 +1,6 @@
 # UCMS — Đặc tả chi tiết Use Case v2
 
-> **Bản lịch sử — đã được docs/SRS.md thay thế.** UC23 đã rút (07/11/2026), phê duyệt một cấp (09/11/2026), email gửi qua Google SMTP. Khi khác nhau, lấy theo SRS.
+> **Bản đặc tả v2 — đối chiếu baseline tại [SRS](../SRS.md).** UC26, UC35–UC37 và liên kết tài chính được cập nhật theo nghiệp vụ đích ngày 14/11/2026; các phần khác giữ baseline trước đó. UC23 đã rút (07/11/2026), phê duyệt một cấp (09/11/2026), email gửi qua Google SMTP. Khi khác nhau, lấy theo SRS.
 
 > **Phạm vi:** đặc tả đầy đủ của cả 53 use case (UC01–UC52 và UC58) trong
 > [`UCMS_UseCase_Model_v2.md`](UCMS_UseCase_Model_v2.md). Tài liệu này thay thế §9 của
@@ -85,9 +85,9 @@ quyền và luồng của từng use case giữ theo đặc tả dưới đây.
 | UC32 | Chốt điểm danh sự kiện | Club Member | M06 |
 | UC33 | Nộp báo cáo sau sự kiện | Club Leader | M08 |
 | UC34 | Thẩm định và đóng báo cáo sự kiện | ICPDP | M08 |
-| UC35 | Ghi nhận giải ngân | ICPDP | M07 |
-| UC36 | Ghi nhận khoản chi và nộp quyết toán | Club Leader | M07 |
-| UC37 | Đối soát ngân sách và chi tiêu | ICPDP | M07 |
+| UC35 | Ghi nhận thanh toán hạng mục tài trợ | ICPDP | M07 |
+| UC36 | Ghi nhận khoản chi và nộp bộ hóa đơn | Club Leader | M07 |
+| UC37 | Đối soát hóa đơn và chốt số thanh toán | ICPDP | M07 |
 | UC38 | Nộp báo cáo hoạt động định kỳ | Club Leader | M08 |
 | UC39 | Thẩm định báo cáo hoạt động định kỳ | ICPDP | M08 |
 | UC40 | Quản lý hồ sơ vi phạm và tuân thủ | ICPDP | M08 |
@@ -248,7 +248,7 @@ quyền và luồng của từng use case giữ theo đặc tả dưới đây.
 - **Hậu điều kiện:** Một phiên bản chính sách mới đang có hiệu lực; những quyết định đã ra giữ
   nguyên các giá trị mà chúng được ra theo.
 - **Quy tắc nghiệp vụ:** BR42 — màn hình cấu hình chỉ phơi ra đúng danh sách trên. Mọi giá trị
-  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); hạn nộp quyết toán sau sự kiện (BR57); hạn hoàn trả khoản bị thu hồi (BR58). Các giá trị này
+  chính sách khác là hằng số định nghĩa trong tài liệu chính sách: điều kiện được lập CLB (UC07); thời gian báo trước tối thiểu của sự kiện (UC25); thời hạn báo trước khi huỷ (UC28, UC47); chính sách đẩy lên từ danh sách chờ (UC30); khung giờ check-in (UC31); yêu cầu chứng từ theo hạng mục chi (BR25); thang phân loại mức độ vi phạm (BR27); các kỳ báo cáo ngoài học kỳ (UC38); các loại khiếu nại (UC50); thời hạn CMB trả lời khiếu nại (UC52); cửa sổ nộp hóa đơn đến E + 14 ngày (BR57); nguyên tắc một bộ hóa đơn, một lần thanh toán (BR58). Các giá trị này
   chỉ trở nên sửa được khi có nhu cầu thật (§14 của tài liệu mô hình, quyết định D2).
 - **Đầu ra:** Phiên bản chính sách, bản ghi audit.
 - **Use case liên quan:** UC01, UC07, UC25, UC33, UC38, UC45, UC48
@@ -1004,7 +1004,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   lập luận của nhà trường được lưu lại; hỗ trợ tổ chức buổi bảo vệ trực tiếp (Live Defense) đối với sự kiện phức tạp.
 - **Kích hoạt:** Một review task từ UC25 hoặc sự kiện ở trạng thái chờ bảo vệ lại.
 - **Tiền điều kiện:** Đề xuất đang ở `Pending Approval` hoặc `Re-defense Pending`.
-- **Dữ liệu vào:** Ghi chú thẩm định, các nhận xét có cấu trúc, quyết định và lý do; số tiền
+- **Dữ liệu vào:** Ghi chú thẩm định, các nhận xét có cấu trúc, quyết định và lý do; quyết định tài trợ, thời điểm trả trước/trả sau và trần
   duyệt theo từng dòng ngân sách; thông tin tạo lịch bảo vệ (phòng học `ROOM`, thời lượng dự kiến, ghi chú); ghi chú Note Markdown của từng cán bộ trong buổi bảo vệ trực tiếp.
 - **Luồng chính:**
   1. Officer mở đề xuất → `Under Review`.
@@ -1015,12 +1015,13 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
      lấy từ ngoài hệ thống.
   4. Officer chọn một kết quả:
      - **Yêu cầu bổ sung báo cáo đề xuất** — bắt buộc chỉ rõ từng nội dung hoặc tài liệu còn thiếu, kèm nhận xét hướng dẫn và hạn bổ sung theo chính sách; phản hồi gắn với phiên bản được thẩm định, có thể nhắm riêng phần ngân sách → `Revision Requested`;
-     - **Phê duyệt** → `Approved`; nếu có phần ngân sách, officer chốt **số tiền duyệt** theo
-       từng dòng (có thể thấp hơn số xin ở nơi chính sách cho phép, mỗi dòng giảm kèm lý do), và
-       hệ thống tạo `EventBudget` ở `Approved`, lưu số duyệt tách biệt với số xin;
+     - **Phê duyệt** → `Approved`; với mỗi dòng ngân sách, officer bắt buộc quyết định
+       `Not Sponsored` (lý do, trần 0) hoặc tài trợ (`Before Event`/`After Event`, trần dương
+       không vượt số xin). Dòng chưa quyết định chặn phê duyệt; giảm trần phải có lý do.
+       Tạo `EventBudget` và lưu riêng số xin, trần, thời điểm trả cùng phiên bản quyết định;
      - **Từ chối** — bắt buộc có lý do → `Rejected`;
      - **Tạo lịch bảo vệ sự kiện** — đối với sự kiện lớn, phức tạp hoặc cần đối thoại trực tiếp, officer khởi tạo lịch bảo vệ theo luồng thay thế A4.
-  5. Hệ thống lưu trạng thái, người xử lý, thời điểm, phiên bản hồ sơ và nhận xét vào lịch sử; thông báo trạng thái và nội dung cần bổ sung cho Club Leader.
+  5. Hệ thống lưu trạng thái, người xử lý, thời điểm, phiên bản hồ sơ và nhận xét vào lịch sử; thông báo trạng thái và nội dung cần bổ sung cho Club Leader. Khi duyệt, dashboard CLB nhận kết quả từng hạng mục (không tài trợ/trả trước/trả sau), trần, lý do, cửa sổ nộp, hạn và liên kết tới thông tin đề xuất; không tạo dashboard thanh toán riêng.
   6. ICPDP theo dõi và cập nhật trạng thái bản báo cáo đề xuất tổ chức sự kiện, gồm phiên bản hiện tại, lịch sử thẩm định và hạn bổ sung. Trạng thái xử lý gồm `Pending Approval`, `Under Review`, `Revision Requested`, `Approved`, `Rejected`, `Re-defense Pending`; hiển thị `Expired` hoặc `Cancelled` khi phát sinh theo vòng đời.
 - **Luồng thay thế:**
   - **A1 Cấp thẩm định và SLA (sửa 09/11/2026, D1):** người dùng đã bỏ cấp duyệt thứ hai; mọi hồ sơ do một ICPDP Officer quyết định. Quy tắc rủi ro và ngân sách của UC05 được dùng để tự động tính thời hạn giải quyết SLA (`slaDueAt`) của review task.
@@ -1052,7 +1053,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
   - **E6** trùng lịch phòng học → phòng học đã có lịch sinh hoạt kỳ (UC58) hoặc có lịch bảo vệ khác trong cùng khung giờ → từ chối tạo lịch, yêu cầu chọn phòng hoặc khung giờ khác.
 - **Hậu điều kiện:** Đề xuất ở `Revision Requested`, `Approved`, `Rejected`, hoặc `Re-defense Pending`; chỉ một sự kiện
   đã duyệt mới công bố được ở UC27. Đề xuất được duyệt có phần ngân sách thì có `EventBudget` ở
-  `Approved`, là đầu vào của UC35. Khi có bảo vệ, tồn tại bản ghi lịch sử `EventDefenseSession` kèm toàn bộ ghi chú của các cán bộ tham gia.
+  `Approved`, là đầu vào để CLB ghi chi phí/nộp bộ hóa đơn ở UC36; sau đối soát UC37 mới thanh toán ở UC35. Khi có bảo vệ, tồn tại bản ghi lịch sử `EventDefenseSession` kèm toàn bộ ghi chú của các cán bộ tham gia.
 - **Quy tắc nghiệp vụ:** BR05, BR14, BR16, BR22, BR31, BR53, BR63. Việc duyệt một đề xuất có kèm yêu cầu booking
   **không** đồng nghĩa duyệt booking đó — UC46 quyết định nó riêng. Sự kiện nội bộ ghi nhận thẳng
   theo BR53 không tạo review task ở đây; ICPDP xem chúng ở UC02 và xử lý sai phạm qua UC40.
@@ -1106,9 +1107,7 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
      ghi nhận lại (D4, chốt ngày 2026-10-11).
   4. Hệ thống cập nhật hoặc giải phóng booking liên quan (UC47).
   5. Hệ thống thông báo cho mọi người đã đăng ký.
-  6. Hệ thống tính lại các nghĩa vụ báo cáo và ngân sách: khi huỷ, `EventBudget` chưa giải ngân
-     chuyển `Cancelled`; đã tạm ứng thì CLB phải quyết toán ở UC36 và phần chưa chi bị thu hồi ở
-     UC37 (BR57, BR58).
+  6. Hệ thống tính lại các nghĩa vụ báo cáo và ngân sách: khi hủy/đổi lịch, bảo toàn lịch sử tài trợ, hóa đơn và thanh toán. Chính sách xử lý chi phí phát sinh cần chốt riêng; không tự áp dụng luồng tạm ứng/thu hồi cũ hoặc tự gia hạn.
 - **Luồng thay thế:**
   - **A1 Bị huỷ bởi một quyết định vòng đời:** khi UC15 (tạm ngừng, giải thể) hoặc UC40 (kết quả
     hồ sơ) yêu cầu, hệ thống huỷ sự kiện mà không cần một bước của CMB, ghi quyết định đó làm lý
@@ -1316,124 +1315,123 @@ Club Member và Club Leader kế thừa quyền xem hồ sơ CLB qua `Browse clu
 
 # M07 — Tài chính và ngân sách
 
-## UC35 – Ghi nhận giải ngân
+### Quy ước tài chính áp dụng từ 14/11/2026
 
-- **Actor chính:** ICPDP Officer
-- **Module:** M07
-- **Mục tiêu nghiệp vụ:** Theo dõi mọi dòng tiền giữa nhà trường và CLB cho một ngân sách đã
-  duyệt: tạm ứng trước sự kiện, cấp bù sau đối soát, và tiền CLB hoàn trả khi bị thu hồi.
-- **Kích hoạt:** Kinh phí được chuyển cho CLB, hoặc CLB hoàn tiền cho nhà trường.
-- **Tiền điều kiện:** `EventBudget` của sự kiện đang ở `Approved` hoặc `Disbursed` (tạm ứng),
-  `Reconciled` (cấp bù — A2), hoặc `Recovery Pending` (hoàn trả — A3).
-- **Dữ liệu vào:** Loại dòng tiền (`Advance`, `TopUp`, `Refund`), số tiền, ngày, mã tham chiếu thanh toán.
-- **Luồng chính — tạm ứng:**
-  1. Officer mở ngân sách đã duyệt của sự kiện.
-  2. Officer ghi số tiền tạm ứng, ngày và mã tham chiếu. Số tạm ứng có thể là một phần hoặc
-     toàn bộ số duyệt, và được cấp trước khi sự kiện diễn ra.
-  3. Hệ thống đối chiếu tổng tạm ứng luỹ kế với số đã duyệt (BR23).
-  4. Trạng thái chuyển sang `Disbursed`; CLB được thông báo, kèm hạn quyết toán (BR57).
-- **Luồng thay thế:**
-  - **A1 Tạm ứng nhiều lần:** nhiều lần tạm ứng cộng dồn vào một lần duyệt, mỗi lần được ghi
-    riêng; trạng thái giữ nguyên `Disbursed`.
-  - **A2 Cấp bù sau đối soát:** ngân sách đang `Reconciled` với chi hợp lệ lớn hơn số đã tạm ứng
-    (UC37). Officer ghi khoản cấp bù đúng bằng chênh lệch tất toán; hệ thống chuyển `Closed`
-    (BR26) và thông báo cho CLB.
-  - **A3 Ghi nhận hoàn trả:** ngân sách đang `Recovery Pending`. Officer ghi số tiền CLB đã hoàn;
-    khi tổng hoàn đạt số phải hoàn, hệ thống chuyển `Closed` (BR26, BR58). Hoàn thiếu thì ngân
-    sách vẫn ở `Recovery Pending`, với phần còn phải hoàn hiển thị cho cả hai bên.
-- **Ngoại lệ:**
-  - **E1** tổng tạm ứng và cấp bù sẽ vượt số tiền đã duyệt → từ chối khi chưa có văn bản điều
-    chỉnh (BR23);
-  - **E2** khoản cấp bù khác chênh lệch tất toán, hoặc khoản hoàn vượt phần còn phải hoàn → từ chối.
-- **Hậu điều kiện:** Tổng đã tạm ứng là xác định và là đầu vào của UC36, UC37; với A2 và A3,
-  ngân sách ở `Closed`.
-- **Quy tắc nghiệp vụ:** BR23, BR26, BR58. Chỉ theo dõi — đây không phải một hệ thống kế toán
-  (§5.2). Không có nó thì UC37 không tính được gì.
-- **Đầu ra:** Bản ghi dòng tiền (`BudgetDisbursement`), thông báo.
-- **Use case liên quan:** UC26, UC36, UC37
-- **Pain point:** BP10
+Đây là yêu cầu nghiệp vụ đích, chưa xác nhận đã triển khai trong code. Giữ nguyên UC25
+và mã UC26, UC35–UC37; thay luồng tạm ứng/cấp bù/thu hồi thông thường bằng thanh toán
+một lần theo hóa đơn cho từng hạng mục. Không áp dụng lại yêu cầu xác nhận nhận tiền
+kèm ảnh đã bị hủy trước đó.
 
-## UC36 – Ghi nhận khoản chi và nộp quyết toán
+- Gọi `A` là thời điểm phê duyệt, `E` là thời điểm kết thúc sự kiện đã duyệt,
+  `D = E + 14 ngày`. Kiểm tra hạn bằng thời điểm máy chủ; giao diện hiển thị ngày, giờ và
+  múi giờ của hạn. Hai đầu cửa sổ nộp đều được chấp nhận.
+- ICPDP phải quyết định rõ từng hạng mục: `Not Sponsored`, `Before Event` hoặc
+  `After Event`. Dòng chưa quyết định chặn phê duyệt. Dòng không tài trợ có lý do và trần 0;
+  dòng tài trợ có trần dương không vượt số xin, giảm trần phải có lý do. Lưu riêng số xin,
+  trần được duyệt và quyết định trả trước/trả sau.
+- `Before Event`: nộp đủ bộ hóa đơn trong `[A, D]`; có thể được thanh toán trước khi sự kiện
+  kết thúc. Nếu nộp hoặc được duyệt sau `E` nhưng nộp đúng hạn, vẫn thanh toán sau sự kiện,
+  giữ nguyên quyết định ban đầu. `After Event`: chỉ nộp trong `[E, D]`, thanh toán sau `E`.
+  “Trả trước” là khả năng thanh toán sớm, không phải cam kết hoàn tất thanh toán trước `E`.
+- Mỗi hạng mục có thể có nhiều hóa đơn trong **một bộ đầy đủ**, được thanh toán **một lần**:
+  `payable = min(tổng giá trị hóa đơn hợp lệ được ICPDP chấp nhận, trần tài trợ hạng mục)`.
+  Không chia đợt, không tỷ lệ ứng trước, không nộp thêm hóa đơn để nhận lần hai sau thanh toán,
+  không tự chuyển phần trần còn dư giữa các hạng mục.
+- Ví dụ: trần 10 triệu, hóa đơn hợp lệ 8 triệu → thanh toán 8 triệu một lần và đóng hạng mục;
+  2 triệu còn lại không được lĩnh tiếp. Hóa đơn hợp lệ 12 triệu → tối đa 10 triệu, CLB tự chịu
+  phần vượt. Không có hóa đơn hợp lệ → không phát sinh khoản thanh toán.
+- Club Leader (`club.expense.record`) được ghi khoản chi ngay từ khi đề xuất/ngân sách được
+  duyệt, không cần giải ngân trước. Hạng mục không tài trợ vẫn có thể ghi chi phí thực tế,
+  nhưng không được gửi yêu cầu thanh toán từ kinh phí trường.
+- Tạo, sửa, đính kèm và nộp bộ hóa đơn tại **thông tin đề xuất sự kiện**; không thêm dashboard
+  thanh toán riêng. Dashboard CLB nhận thông báo kết quả đề xuất kèm cả ba nhóm quyết định,
+  trần, lý do, thời gian được nộp, hạn `D` và liên kết mở đúng đề xuất/hạng mục.
+- Trước nộp có thể lưu nháp; nộp thì khóa phiên bản. ICPDP có thể trả về sửa trước `D`;
+  mọi lần sửa/nộp lại vẫn phải trong cửa sổ ban đầu, **không có hạn bổ sung riêng**. Sau `D`
+  không nhận hóa đơn mới hoặc bản sửa. Bộ đã nộp đúng hạn vẫn được xét và thanh toán sau `D`.
+- Chứng từ trùng không được tính hai lần (trong cùng bộ hoặc các hạng mục); chứng từ không
+  hợp lệ bị loại kèm lý do. Kiểm tra quyền đúng CLB, liên kết đúng sự kiện/hạng mục và chống
+  thao tác lặp/đồng thời khi nộp, chốt đối soát, ghi nhận thanh toán. Lưu audit và phiên bản
+  quyết định để cả CLB và ICPDP thấy cùng kết quả.
+- Hủy/đổi lịch sau duyệt, xử lý chi phí không hoàn lại và dữ liệu tạm ứng cũ cần quyết định
+  nghiệp vụ/migration riêng; không tự chuyển chúng thành khoản trả mới, không tự gia hạn,
+  không xóa lịch sử hoặc cho thanh toán hai lần. Không tự động mở lại hạng mục đã trả.
 
-- **Actor chính:** Club Leader (`club.expense.record`, BR54)
-- **Module:** M07
-- **Mục tiêu nghiệp vụ:** Chứng minh chi tiêu thực tế của khoản đã tạm ứng và nộp quyết toán
-  đầy đủ sau sự kiện.
-- **Kích hoạt:** CLB chi tiền; sự kiện kết thúc hoặc bị huỷ, hoặc hạn quyết toán đến gần.
-- **Tiền điều kiện:** `EventBudget` của sự kiện đang `Disbursed` hoặc `Reconciliation Pending`;
-  người gọi là Club Leader (`club.expense.record`).
-- **Dữ liệu vào:** Hạng mục, số tiền, ngày, mô tả; hoá đơn, biên lai hoặc chứng từ thanh toán.
+## UC35 – Ghi nhận thanh toán hạng mục tài trợ
+
+- **Actor chính:** ICPDP Officer; **Module:** M07.
+- **Mục tiêu:** Ghi nhận một lần chuyển tiền thực tế cho bộ hóa đơn đã được đối soát của một hạng mục.
+- **Kích hoạt:** ICPDP đã thanh toán ngoài hệ thống; UCMS chỉ ghi nhận, không thực hiện chuyển tiền.
+- **Tiền điều kiện:** Hạng mục được tài trợ; UC37 đã chốt số phải trả dương; chưa có lần thanh toán;
+  nhóm `After Event` đã tới `E`. Không đòi ngân sách từng được tạm ứng.
+- **Dữ liệu vào:** Sự kiện, hạng mục, phiên bản đối soát, số tiền, ngày thanh toán, mã tham chiếu.
 - **Luồng chính:**
-  1. Thành viên ghi khoản chi vào `EventBudget` của sự kiện.
-  2. Thành viên đính kèm chứng từ mà hạng mục yêu cầu (BR25).
-  3. Hệ thống validate hạng mục theo phần đã duyệt và gắn cờ ngoại lệ cho khoản chi ngoài hạng
-     mục (BR24), rồi lưu khoản chi cùng chứng từ của nó.
-  4. Khi sự kiện đã `Completed` hoặc `Cancelled`, thành viên mở **quyết toán**: hệ thống hiển thị
-     đã tạm ứng, tổng chi, số dư chưa chi, các khoản chi thiếu chứng từ và các khoản bị gắn cờ.
-  5. Thành viên xác nhận nộp → `Settlement Submitted`; bộ khoản chi bị khoá; ICPDP nhận một task.
-- **Luồng thay thế:**
-  - **A1 Chứng từ bổ sung sau:** khoản chi được ghi mà chưa có chứng từ và xuất hiện dưới dạng
-    *thiếu chứng từ* cho tới khi chứng từ được bổ sung. Nộp quyết toán khi còn khoản thiếu chứng
-    từ vẫn được, nhưng hệ thống cảnh báo rằng khoản đó sẽ bị loại khi đối soát (BR58).
-  - **A2 Sửa lại:** một khoản chi được sửa trước khi nộp quyết toán; thay đổi được ghi audit.
-  - **A3 Nộp lại quyết toán:** từ `Reconciliation Pending` (UC37 A1), thành viên bổ sung chứng từ
-    hoặc khoản chi theo yêu cầu và nộp lại → `Settlement Submitted`.
-- **Ngoại lệ:**
-  - **E1** khoản chi vượt phần đã duyệt còn lại → được ghi nhận và gắn cờ ngoại lệ;
-  - **E2** chứng từ không tham chiếu tới một khoản chi nào → bất khả thi về mặt cấu trúc, và đó
-    chính là lý do UC43 và UC44 của v1 gộp thành một use case ở đây.
-  - **E3** người gọi không phải Club Leader của CLB (`club.expense.record`) → từ chối (BR54).
-  - **E4** nộp quyết toán khi sự kiện chưa kết thúc và chưa bị huỷ → từ chối.
-  - **E5** đã quá hạn quyết toán → quyết toán vẫn được nhận nhưng bị đánh dấu trễ và đi vào BR21,
-    trừ khi UC37 A2 đã chốt đối soát thì bị từ chối (BR57).
-- **Hậu điều kiện:** Ngân sách ở `Settlement Submitted` với bộ khoản chi đã khoá, là đầu vào của UC37.
-- **Quy tắc nghiệp vụ:** BR54 (`club.expense.record`). BR21, BR24, BR25, BR57. Mỗi chứng từ tham
-  chiếu đúng một khoản chi.
-- **Đầu ra:** Expense, FinancialEvidence, quyết toán đã nộp, ApprovalTask.
-- **Use case liên quan:** UC35, UC37, UC33
-- **Pain point:** BP09, BP10
+  1. Officer mở bộ hóa đơn đã đối soát trong hồ sơ đề xuất sự kiện.
+  2. Hệ thống hiển thị quyết định tài trợ, tổng hóa đơn hợp lệ, trần và số phải trả.
+  3. Officer ghi giao dịch đúng toàn bộ số phải trả, không nhập phần trăm hoặc chia đợt.
+  4. Hệ thống kiểm tra lại quyền, trạng thái, số tiền, thời điểm và việc chưa thanh toán trong cùng
+     thao tác nguyên tử; ghi nhận giao dịch, chuyển hạng mục `Paid`, khóa bộ đã trả.
+  5. Thông báo kết quả cho CLB, lưu audit. Ngân sách chỉ `Closed` khi mọi hạng mục đã kết thúc.
+- **Luồng thay thế:** `Before Event` được thanh toán sau `E` nếu hồ sơ nộp đúng hạn;
+  ICPDP có thể thanh toán sau `D` cho bộ đã nộp đúng hạn và được chấp nhận.
+- **Ngoại lệ:** Chưa đối soát, không tài trợ, số phải trả bằng 0, sai số tiền, trả nhóm
+  `After Event` trước `E`, hoặc đã `Paid` → từ chối; thao tác lặp không tạo giao dịch thứ hai.
+- **Hậu điều kiện:** Hạng mục `Paid`; số đã trả bằng số phải trả; không còn lần lĩnh thêm.
+- **Quy tắc:** BR23, BR26, BR58; quy ước tài chính 14/11/2026.
+- **Đầu ra:** Bản ghi thanh toán, thông báo và audit; **Liên quan:** UC26, UC36, UC37; **Pain point:** BP10.
 
-## UC37 – Đối soát ngân sách và chi tiêu
+## UC36 – Ghi nhận khoản chi và nộp bộ hóa đơn
 
-- **Actor chính:** ICPDP Officer
-- **Module:** M07
-- **Mục tiêu nghiệp vụ:** Xác lập rằng số đã duyệt, đã tạm ứng, đã chi và đã có chứng từ cùng
-  kể một câu chuyện, và chốt ai còn nợ ai bao nhiêu.
-- **Kích hoạt:** Một task quyết toán từ UC36, hoặc hạn quyết toán đã qua mà CLB chưa nộp (A2).
-- **Tiền điều kiện:** `EventBudget` đang ở `Settlement Submitted`, hoặc ở `Disbursed` /
-  `Reconciliation Pending` với hạn quyết toán đã qua (A2).
+- **Actor chính:** Club Leader (`club.expense.record`, BR54); **Module:** M07.
+- **Mục tiêu:** Ghi chi phí thực tế và nộp đủ hóa đơn theo từng hạng mục được tài trợ.
+- **Kích hoạt:** Phát sinh chi phí hoặc CLB đã tập hợp đủ hóa đơn của hạng mục.
+- **Tiền điều kiện:** Đề xuất/ngân sách được duyệt; đúng quyền trong CLB. Không yêu cầu giải ngân trước.
+- **Dữ liệu vào:** Hạng mục, khoản chi, số tiền, ngày, mô tả và bộ hóa đơn/chứng từ liên quan.
 - **Luồng chính:**
-  1. Officer mở quyết toán của sự kiện.
-  2. Hệ thống tính: đã duyệt, đã tạm ứng, khoản chi đã ghi nhận, khoản chi có chứng từ, khoản
-     chi thiếu chứng từ, số dư chưa chi.
-  3. Officer xem xét từng khoản chi, nhất là các ngoại lệ do UC36 gắn cờ, và **chấp nhận** hoặc
-     **loại** nó kèm lý do. Khoản chi thiếu chứng từ bị loại.
-  4. Hệ thống chốt **chi hợp lệ** (tổng khoản được chấp nhận, trần là số duyệt) và **chênh lệch
-     tất toán** = chi hợp lệ − đã tạm ứng:
-     - bằng 0 → `Reconciled`, rồi `Closed` ngay (BR26);
-     - dương → `Reconciled`; nhà trường cấp bù phần chênh ở UC35 A2;
-     - âm → `Recovery Pending`, với **số phải hoàn** và hạn hoàn trả (BR58).
-  5. Hệ thống ghi audit kết quả, thông báo cho CLB; CLB thấy nó ở UC02.
+  1. Club Leader mở **thông tin đề xuất sự kiện**, xem ba nhóm quyết định tài trợ và hạn nộp.
+  2. Ghi khoản chi ngay sau duyệt, lưu nháp và tập hợp ảnh hóa đơn cho hạng mục. Cho chọn nhiều ảnh JPG/PNG cùng lúc, tối đa **5 ảnh trên toàn bộ hạng mục**, mỗi ảnh tối đa **5 MiB**. Có ảnh xem trước và bỏ/thay ảnh khi hồ sơ còn được sửa; server kiểm tra quyền, loại file, dung lượng và giới hạn số ảnh kể cả khi upload đồng thời.
+  3. Hệ thống kiểm tra liên kết chứng từ, dữ liệu bắt buộc, hạng mục và dấu hiệu trùng;
+     cảnh báo chi vượt trần hoặc không được tài trợ, vẫn cho ghi chi phí thực tế.
+  4. Với hạng mục tài trợ, Club Leader xác nhận đây là bộ hóa đơn đầy đủ để thanh toán một lần.
+  5. Hệ thống kiểm tra thời điểm nộp: `Before Event` trong `[A,D]`, `After Event` trong `[E,D]`;
+     khóa phiên bản bộ hóa đơn → `Submitted`, lưu dấu thời gian và tạo task cho ICPDP (UC37).
 - **Luồng thay thế:**
-  - **A1 Trả về để bổ sung chứng từ:** officer yêu cầu phần chứng từ còn thiếu, và hồ sơ chờ ở
-    `Reconciliation Pending` cho tới khi CLB nộp lại ở UC36 A3.
-  - **A2 Quá hạn quyết toán:** hạn quyết toán đã qua mà CLB chưa nộp (hoặc chưa nộp lại). Officer
-    chốt đối soát trên các khoản chi đã có chứng từ; mọi phần còn lại của số đã tạm ứng thành số
-    phải hoàn → `Recovery Pending` (BR57, BR58).
-- **Ngoại lệ:**
-  - **E1** số tiền đã tạm ứng vượt số tiền đã duyệt → hồ sơ không đối soát được cho tới khi có
-    một văn bản điều chỉnh (BR23);
-  - **E2** quá hạn hoàn trả mà CLB chưa hoàn đủ → khoản phải hoàn là nghĩa vụ quá hạn theo BR21,
-    và officer mở một hồ sơ vi phạm ở UC40 (BR58).
-- **Hậu điều kiện:** Ngân sách ở `Reconciled` (chờ cấp bù), `Recovery Pending` (chờ hoàn trả),
-  hoặc `Closed`. Ngân sách chỉ đóng khi chênh lệch tất toán đã được xử lý (BR26).
-- **Quy tắc nghiệp vụ:** BR21, BR23, BR24, BR26, BR57, BR58. ICPDP là actor chính duy nhất; CMB
-  đọc cùng bộ số liệu qua UC02, và đó chính là thứ loại bỏ vấn đề hai actor chính của UC45 trong v1.
-- **Đầu ra:** Kết quả đối soát (chi hợp lệ, chênh lệch tất toán, số phải hoàn), bản ghi audit,
-  thông báo; đầu vào cho UC40 và UC42.
-- **Use case liên quan:** UC35, UC36, UC40, UC42
-- **Pain point:** BP10
+  - **A1 Nháp:** Cho ghi chi phí trước khi có hóa đơn; thiếu bộ hóa đơn đầy đủ thì chưa được nộp yêu cầu thanh toán.
+  - **A2 Sửa/nộp lại:** Khi ICPDP trả về trước `D`, CLB sửa và nộp lại trong cửa sổ gốc;
+    lưu phiên bản cũ và nhận xét, không có hạn bổ sung riêng.
+  - **A3 Không tài trợ:** Chỉ ghi chi phí để báo cáo, không tạo yêu cầu thanh toán.
+- **Ngoại lệ:** Sai quyền/CLB/sự kiện, chưa duyệt, chưa tới cửa sổ, sau `D`, bộ rỗng,
+  bộ đang khóa hoặc đã `Paid` → từ chối nộp/sửa. Chi vượt không tăng trần tài trợ.
+- **Hậu điều kiện:** Bộ hóa đơn `Submitted` chờ UC37; ghi khoản chi không đồng nghĩa được trường trả.
+- **Quy tắc:** BR24, BR25, BR54, BR57, BR58; quy ước tài chính 14/11/2026.
+- **Đầu ra:** Khoản chi, bộ hóa đơn theo phiên bản, task và audit; **Liên quan:** UC26, UC35, UC37, UC33; **Pain point:** BP09, BP10.
 
+## UC37 – Đối soát hóa đơn và chốt số thanh toán
+
+- **Actor chính:** ICPDP Officer; **Module:** M07.
+- **Mục tiêu:** Chốt số phải trả một lần cho mỗi hạng mục theo hóa đơn hợp lệ và trần đã duyệt.
+- **Kích hoạt:** Task từ UC36 hoặc hạng mục chưa nộp đủ hồ sơ khi đã qua `D`.
+- **Tiền điều kiện:** Có bộ `Submitted` để xét; hoặc hạng mục `Draft`/`Returned` đã quá hạn để chốt `Expired`.
+- **Luồng chính:**
+  1. Officer mở bộ hóa đơn tại hồ sơ đề xuất; xem quyết định tài trợ, trần và dấu thời gian nộp.
+  2. Đối chiếu từng chứng từ/khoản chi; chấp nhận hoặc loại với lý do, loại chứng từ không hợp lệ
+     và không tính trùng hóa đơn. Không cộng hóa đơn chưa được CLB nộp vào hồ sơ đang xét.
+  3. Tính `payable = min(tổng hóa đơn hợp lệ được chấp nhận, trần hạng mục)`;
+     phần vượt CLB tự chịu, không chuyển trần giữa hạng mục.
+  4. Chốt đối soát: số phải trả dương → `Accepted` chờ UC35; bằng 0 → `Rejected` kèm lý do.
+  5. Lưu phiên bản kết quả, audit và thông báo cho CLB; kết quả tài chính là đầu vào UC38/UC42.
+- **Luồng thay thế:**
+  - **A1 Trả về:** Chỉ trả về khi còn trước `D`, ghi nội dung cần sửa; `Returned`, nộp lại vẫn phải
+    trong cửa sổ gốc. Nếu đã hết hạn, xét bộ nộp đúng hạn đang có, không tạo hạn bổ sung.
+  - **A2 Quá hạn:** `Draft`/`Returned` chưa nộp đủ trước `D` → `Expired`, không thanh toán;
+    `Submitted` đúng hạn giữ quyền được xét và trả tiền sau `D`, không đánh dấu CLB nộp trễ vì ICPDP xét chậm.
+- **Ngoại lệ:** Không tài trợ, đã trả, phiên bản đã bị thay thế hoặc yêu cầu chốt đồng thời → từ chối;
+  giữ lịch sử hồ sơ bị loại/trả về. Không lấy khoản chi nháp làm căn cứ thanh toán.
+- **Hậu điều kiện:** Hạng mục `Accepted`, `Rejected` hoặc `Expired`; ngân sách đóng khi mọi hạng mục
+  ở `Not Sponsored`, `Paid`, `Rejected` hoặc `Expired`, không còn hồ sơ/giao dịch chờ xử lý.
+- **Quy tắc:** BR23–BR26, BR57, BR58; quy ước tài chính 14/11/2026.
+- **Đầu ra:** Tổng hợp hóa đơn hợp lệ, số phải trả, lý do loại, thông báo, audit và dữ liệu đánh giá.
+- **Liên quan:** UC35, UC36, UC38, UC40, UC42; **Pain point:** BP10.
 
 ---
 

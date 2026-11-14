@@ -13,6 +13,7 @@ import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
 import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
+import { sponsoredItemOpenApiPaths } from "./openapi-sponsored-items.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { periodicCampaignBody, periodicDecisionBody, periodicMissingBody, periodicOverviewQuery } from "./periodic-report-routes.js";
 import { violationOpenBody, violationStepBody } from "./violation-routes.js";
@@ -647,6 +648,7 @@ export const openApiDocument = createDocument({
   info: { title: "UCMS API", version: "1.0.0" },
   servers: [{ url: "/api/v1" }],
   paths: {
+    ...sponsoredItemOpenApiPaths,
     ...clubCompletionOpenApiPaths,
     ...notificationOpenApiPaths,
     "/clubs/{clubId}/periodic-reports": {

@@ -87,6 +87,15 @@ export function NotificationBell({ userId, csrfToken, scope }: NotificationBellP
                     {title(item)}{!item.readAt && <span className="sr-only"> · {t("notifications.unread")}</span>}
                   </span>
                   {subject && <span className="block text-sm break-words text-muted-app">{subject}</span>}
+                  {typeof item.payload.category === "string" && <span className="block text-xs text-muted-app">{item.payload.category}</span>}
+                  {typeof item.payload.status === "string" && ["Returned", "Accepted", "Rejected", "Paid"].includes(item.payload.status)
+                    && <span className="block text-xs text-primary-app">{t(`sponsoredItems.${item.payload.status as "Returned" | "Accepted" | "Rejected" | "Paid"}`)}</span>}
+                  {Array.isArray(item.payload.fundingItems) && item.payload.fundingItems.map((line: unknown, index: number) => {
+                    if (!line || typeof line !== "object" || !("fundingDecision" in line) || !("category" in line)) return null;
+                    const decision = line.fundingDecision;
+                    if (decision !== "NOT_SPONSORED" && decision !== "BEFORE_EVENT" && decision !== "AFTER_EVENT") return null;
+                    return <span key={index} className="mt-1 block text-xs text-muted-app">{String(line.category)}: {t(`sponsoredItems.${decision}`)}</span>;
+                  })}
                   {reason && <span className="line-clamp-2 block text-xs break-words text-muted-app">{t("notifications.reason", { reason })}</span>}
                   <span className="mt-1 block text-xs text-muted-app">{formatDate(item.createdAt, i18n.language)}</span>
                 </span>

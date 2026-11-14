@@ -19,6 +19,7 @@ import {
   type EventReviewSection,
 } from "@/services/eventProposalReviews";
 import { cn } from "@/utils/cn";
+import type { FundingDecision } from "@/services/sponsoredItems";
 
 function resolveDecisionError(error: Error | null | undefined, fallback: string): string {
   if (!error) return fallback;
@@ -56,6 +57,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
   const [sections, setSections] = useState<EventReviewSection[]>([]);
   const [conditions, setConditions] = useState("");
   const [amounts, setAmounts] = useState<Record<number, { amount?: string; reason?: string }>>({});
+  const [funding, setFunding] = useState<Record<number, FundingDecision>>({});
 
   const current = versions.find((version) => version.revisionNo === event.currentRevisionNo) ?? versions.at(-1);
   const lines = current?.budgetLines ?? [];
@@ -87,7 +89,9 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
       const value = approvedAmounts[index]!;
       const approve = outcome === "Approve";
       return [
-        [`amount${index}`, approve && (!Number.isInteger(value) || value < 0 || value > line.amount) ? t("eventReviews.amountInvalid") : null],
+        [`funding${index}`, approve && !funding[index] ? t("sponsoredItems.choose") : null],
+        [`amount${index}`, approve && (!Number.isInteger(value) || value < 0 || value > line.amount
+          || (funding[index] === "NOT_SPONSORED" ? value !== 0 : value === 0)) ? t("eventReviews.amountInvalid") : null],
         [`amountReason${index}`, approve && value < line.amount
           && !(amounts[index]?.reason?.trim() || budget?.lines[index]?.reason?.trim()) ? t("eventReviews.amountReasonRequired") : null],
       ];
@@ -154,6 +158,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
         conditions: conditions.split("\n").map((item) => item.trim()).filter(Boolean),
         budgetLines: approvedAmounts.map((approvedAmount, index) => ({
           approvedAmount,
+          fundingDecision: funding[index]!,
           ...(approvedAmount < lines[index]!.amount
             ? { reason: amounts[index]?.reason?.trim() || budget?.lines[index]?.reason }
             : {}),
@@ -259,6 +264,19 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
               const lowered = approvedAmounts[index]! < line.amount;
               return (
                 <div key={index}>
+                  <label className="mb-3 block text-sm font-medium">{t("sponsoredItems.funding")}
+                    <select className="mt-1 block w-full rounded-lg border border-border-app bg-bg-app p-2 text-text-app"
+                      value={funding[index] ?? ""} onChange={(event) => {
+                        const value = event.target.value as FundingDecision;
+                        setFunding((previous) => ({ ...previous, [index]: value }));
+                        if (value === "NOT_SPONSORED") editLine(index, { amount: "0" });
+                        else if (approvedAmounts[index] === 0) editLine(index, { amount: String(line.amount) });
+                      }}>
+                      <option value="">{t("sponsoredItems.choose")}</option>
+                      {(["NOT_SPONSORED", "BEFORE_EVENT", "AFTER_EVENT"] as const).map((value) => <option key={value} value={value}>{t(`sponsoredItems.${value}`)}</option>)}
+                    </select>
+                    <AppFieldError message={field.error(`funding${index}`)} />
+                  </label>
                   <label className="block text-sm font-medium text-text-app">
                     <span className="flex flex-wrap justify-between gap-2">
                       <span className="font-medium break-words">{line.category}</span>
@@ -267,6 +285,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
                       </span>
                     </span>
                     <AppMoneyInput
+                      disabled={funding[index] === "NOT_SPONSORED" || isPending}
                       value={amounts[index]?.amount ?? String(budget?.lines[index]?.approvedAmount ?? line.amount)}
                       {...field.control(`amount${index}`)}
                       onValueChange={(digits) => editLine(index, { amount: digits })}

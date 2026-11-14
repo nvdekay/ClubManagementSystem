@@ -218,6 +218,10 @@ export async function applyProposalDecisionInSession(
   const lines = input.outcome === "Approve"
     ? approvedBudget(requestedLines(version.budgetLines), input.budgetLines)
     : [];
+  const sponsoredItems = lines.length && lines.every((line) => line.fundingDecision)
+    ? lines.map((line) => ({ ...line, id: randomUUID(), approvedAt: now.toISOString(),
+      eventEndAt: (event.endAt as Date).toISOString(), status: "Draft", amount: 0,
+      description: "", images: [] })) : undefined;
 
   const decisionId = new Types.ObjectId();
   await decisions.create([{
@@ -297,6 +301,12 @@ export async function applyProposalDecisionInSession(
     const approvedTotal = lines.reduce((sum, line) => sum + line.approvedAmount, 0);
     const existingBudget = await budgets.findOne({ eventId }).session(session).lean();
     if (existingBudget) {
+      if (existingBudget.sponsoredItems) {
+        conflict("funded event changes require a finance policy decision before reapproval");
+      }
+      if (sponsoredItems && money(existingBudget.disbursedTotal) > 0) {
+        conflict("a legacy advance budget cannot be converted to sponsored item payments");
+      }
       budgetId = existingBudget._id as Types.ObjectId;
       const disbursed = money(existingBudget.disbursedTotal);
       const existingLines = approvedLines(existingBudget.lines);
@@ -313,6 +323,7 @@ export async function applyProposalDecisionInSession(
         {
           $set: {
             lines: lines.map((line) => ({ ...line })),
+            ...(sponsoredItems ? { sponsoredItems } : {}),
             requestedTotal: decimal(requestedTotal),
             approvedTotal: decimal(approvedTotal),
             approvedByDecisionId: decisionId,
@@ -330,6 +341,7 @@ export async function applyProposalDecisionInSession(
         eventId,
         clubId: event.clubId,
         lines: lines.map((line) => ({ ...line })),
+        ...(sponsoredItems ? { sponsoredItems } : {}),
         requestedTotal: decimal(requestedTotal),
         approvedTotal: decimal(approvedTotal),
         approvedByDecisionId: decisionId,
@@ -370,6 +382,8 @@ export async function applyProposalDecisionInSession(
       sections: input.sections,
       revisionDeadlineAt: input.revisionDeadlineAt,
       conditions: input.conditions,
+      fundingItems: lines,
+      invoiceDueAt: settlementDueAt(event.endAt as Date),
     },
     state: "Queued",
     dueAt: now,

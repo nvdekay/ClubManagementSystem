@@ -1,8 +1,9 @@
+import { SponsoredItems } from "@/components/custom/SponsoredItems";
 import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { NavLink, useParams } from "react-router";
+import { NavLink, useParams, useSearchParams } from "react-router";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -95,7 +96,13 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const mutation = useClubEventMutation(clubId);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
-  const [selected, setSelected] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selected = searchParams.get("event") ?? "";
+  const setSelected = useCallback((id: string) => setSearchParams((previous) => {
+    const next = new URLSearchParams(previous);
+    if (id) next.set("event", id); else next.delete("event");
+    return next;
+  }, { replace: true }), [setSearchParams]);
   // The detail panel renders under the table, off-screen on most laptops; bring it into view on pick.
   function revealDetail() {
     requestAnimationFrame(() => document.getElementById("club-event-detail")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -158,7 +165,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" })}</AppBadge> }),
     eventColumns.accessor("startAt", { header: t("clubEvents.start"), cell: (info) => format.format(new Date(info.getValue())) }),
     eventColumns.accessor("capacity", { header: t("clubEvents.capacity"), cell: (info) => `${info.row.original.confirmedRegistrationCount} / ${info.getValue()}` }),
-  ]), [t, format, mutation]);
+  ]), [t, format, mutation, setSelected]);
   const table = useTable({ features: appTableFeatures, columns, data: filtered, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   const people = participants.data ?? participantsEmpty;
   const [attendanceFilter, setAttendanceFilter] = useState<"all" | "checked" | "missing">("all");
@@ -301,6 +308,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         </div> : active.revisionDeadlineAt && <p className="mt-2">{t("clubEvents.revisionDeadline")}: {format.format(new Date(active.revisionDeadlineAt))}</p>}
         {active.approvalConditions?.length > 0 && <div className="mt-3"><h3 className="font-semibold">{t("clubEvents.conditions")}</h3><ul className="mt-2 list-inside list-disc">{active.approvalConditions.map((condition, index) => <li key={index}>{condition}</li>)}</ul></div>}
         {active.conflictResult && <p className="mt-3">{t(`clubEvents.${active.conflictResult}`, { defaultValue: active.conflictResult })}</p>}
+        {detail.data.budget?.id && <SponsoredItems budgetId={detail.data.budget.id} clubId={clubId} csrfToken={auth.data!.csrfToken} />}
         {detail.data.budget && <p className="mt-2">{t("clubEvents.approvedBudget")}: {new Intl.NumberFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { style: "currency", currency: "VND" }).format(detail.data.budget.approvedTotal)}</p>}
         {active.state === "Re-defense Pending" && (
           <div className="mt-4">

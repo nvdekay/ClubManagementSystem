@@ -985,6 +985,7 @@ Table correctiveActions {
 
 Table eventBudgets {
   id objectId [pk]
+  sponsoredItems json [note: 'Luồng tài trợ mới: từng hạng mục có quyết định, trần, bộ ảnh riêng tư, trạng thái nộp/đối soát/thanh toán. Null với dữ liệu tạm ứng cũ.']
   eventId objectId [unique, not null, note: 'Mỗi sự kiện có tối đa một ngân sách; ngân sách không tồn tại tách rời sự kiện (BR22).']
   clubId objectId [not null]
   lines json [not null, note: 'Nhúng: [{ category, requestedAmount, approvedAmount, reason }] — số xin lấy từ bản sửa đã duyệt của đề xuất; số duyệt và lý do giảm do UC26 chốt (FR-UC26-14).']

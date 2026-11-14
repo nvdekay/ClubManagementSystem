@@ -1,3 +1,4 @@
+import { SponsoredItems } from "@/components/custom/SponsoredItems";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -258,6 +259,7 @@ export function EventProposalReviewPage() {
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.budget")}</h2>
+            {budget && <SponsoredItems budgetId={budget.id} csrfToken={auth.data!.csrfToken} />}
             {lines.length ? (
               <div className="mt-4 overflow-x-auto rounded-xl border border-border-app bg-bg-app">
                 <table className="w-full min-w-[32rem] text-left text-sm">

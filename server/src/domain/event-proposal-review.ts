@@ -1,4 +1,5 @@
 import { DomainError } from "./errors.js";
+import { FUNDING_DECISIONS, type FundingDecision } from "./sponsored-item.js";
 import type { EventDefenseSession } from "./event-defense.js";
 
 export type EventReviewOutcome = "Request revision" | "Approve" | "Reject" | "Re-defense";
@@ -73,6 +74,7 @@ export interface EventReviewDecision {
 }
 
 export interface ApprovedBudgetLine {
+  fundingDecision?: FundingDecision;
   category: string;
   requestedAmount: number;
   approvedAmount: number;
@@ -125,7 +127,7 @@ export interface EventReviewDecisionInput {
   revisionDeadlineAt?: Date;
   conditions?: string[];
   /** Same order as the requested lines of the current revision. */
-  budgetLines?: { approvedAmount: number; reason?: string }[];
+  budgetLines?: { approvedAmount: number; reason?: string; fundingDecision?: FundingDecision }[];
 }
 
 export interface NormalizedEventDecision {
@@ -135,7 +137,7 @@ export interface NormalizedEventDecision {
   reviewNote?: string;
   revisionDeadlineAt?: Date;
   conditions: string[];
-  budgetLines: { approvedAmount: number; reason?: string }[];
+  budgetLines: { approvedAmount: number; reason?: string; fundingDecision?: FundingDecision }[];
 }
 
 export interface EventLifecycleResult {
@@ -156,13 +158,17 @@ export interface EventProposalReviewRepository {
 
 /** Checks the per-line approved amounts against the requested lines of the revision being decided. */
 export function approvedBudget(requested: RequestedBudgetLine[],
-  decided: { approvedAmount: number; reason?: string }[]): ApprovedBudgetLine[] {
+  decided: { approvedAmount: number; reason?: string; fundingDecision?: FundingDecision }[]): ApprovedBudgetLine[] {
   if (decided.length !== requested.length) {
     throw new DomainError("an approved amount is required for every budget line", "validation",
       { field: "budgetLines" });
   }
   return requested.map((line, index) => {
-    const { approvedAmount, reason } = decided[index]!;
+    const { approvedAmount, reason, fundingDecision } = decided[index]!;
+    if (fundingDecision !== undefined && (!FUNDING_DECISIONS.includes(fundingDecision)
+      || (fundingDecision === "NOT_SPONSORED" ? approvedAmount !== 0 : approvedAmount <= 0))) {
+      throw new DomainError("funding decision and approved amount disagree", "validation");
+    }
     if (!Number.isInteger(approvedAmount) || approvedAmount < 0) {
       throw new DomainError("approved amounts must be whole, non-negative numbers", "validation",
         { field: "budgetLines", index });
@@ -175,7 +181,7 @@ export function approvedBudget(requested: RequestedBudgetLine[],
       throw new DomainError("a reduced budget line needs a reason", "validation",
         { field: "budgetLines", index });
     }
-    return { category: line.category, requestedAmount: line.amount, approvedAmount,
+    return { category: line.category, requestedAmount: line.amount, approvedAmount, fundingDecision,
       ...(reason ? { reason } : {}) };
   });
 }

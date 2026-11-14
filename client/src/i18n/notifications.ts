@@ -4,6 +4,7 @@ export const notifications = {
     markAll: "Mark all as read", markRead: "Mark as read", unread: "Unread", empty: "You have no notifications yet.",
     error: "Could not load notifications.", retry: "Retry", loadMore: "Load older", reason: "Reason: {{reason}}",
     codes: {
+      SPONSORED_ITEM_SUBMITTED: "An invoice pack is awaiting review", SPONSORED_ITEM_UPDATED: "Your sponsored expense has been updated",
       CLUB_APPLICATION_SUBMITTED: "Club founding application submitted", CLUB_APPLICATION_WITHDRAWN: "You withdrew your founding application",
       CLUB_APPLICATION_APPROVED: "Your club founding application was approved", CLUB_APPLICATION_REJECTED: "Your club founding application was rejected",
       CLUB_APPLICATION_REVISION_REQUESTED: "Your founding application needs revision", CLUB_APPLICATION_EXPIRED: "Your founding application expired",
@@ -66,6 +67,7 @@ export const notifications = {
     markAll: "Đánh dấu tất cả đã đọc", markRead: "Đánh dấu đã đọc", unread: "Chưa đọc", empty: "Bạn chưa có thông báo nào.",
     error: "Không tải được thông báo.", retry: "Thử lại", loadMore: "Xem cũ hơn", reason: "Lý do: {{reason}}",
     codes: {
+      SPONSORED_ITEM_SUBMITTED: "Có bộ hóa đơn cần đối soát", SPONSORED_ITEM_UPDATED: "Khoản chi tài trợ của CLB có cập nhật",
       CLUB_APPLICATION_SUBMITTED: "Đã nộp hồ sơ thành lập CLB", CLUB_APPLICATION_WITHDRAWN: "Bạn đã rút hồ sơ thành lập CLB",
       CLUB_APPLICATION_APPROVED: "Hồ sơ thành lập CLB của bạn đã được duyệt", CLUB_APPLICATION_REJECTED: "Hồ sơ thành lập CLB của bạn bị từ chối",
       CLUB_APPLICATION_REVISION_REQUESTED: "Hồ sơ thành lập cần chỉnh sửa", CLUB_APPLICATION_EXPIRED: "Hồ sơ thành lập đã hết hạn",
