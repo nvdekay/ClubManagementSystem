@@ -14,6 +14,7 @@
     "seed:demo": "node --env-file-if-exists=../.env --import tsx src/infra/db/seed-demo.ts",
     "seed:dashboard": "node --env-file-if-exists=../.env --import tsx src/infra/db/seed-dashboard.ts",
     "seed:annual-hints": "node --env-file-if-exists=../.env --import tsx src/infra/db/seed-annual-hints.ts",
+    "seed:sponsored-payments": "node --env-file-if-exists=../.env --import tsx src/infra/db/seed-sponsored-payments.ts",
     "seed:periodic-reports": "node --env-file-if-exists=../.env --import tsx src/infra/db/seed-periodic-reports.ts",
     "db:init": "node --env-file-if-exists=../.env --import tsx src/infra/db/init.ts",
     "db:verify": "node --env-file-if-exists=../.env --import tsx src/infra/db/verify.ts",
