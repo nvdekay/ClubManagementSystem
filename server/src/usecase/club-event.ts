@@ -14,10 +14,12 @@ export interface ClubEventDeps {
   /** Null when file storage is not configured; the bundled default template still downloads. */
   files?: EventProposalFileStorage | null;
 }
+// Kiểm định dạng id sự kiện hoặc CLB
 export function clubEventId(value: string): string {
   if (!/^[0-9a-f]{24}$/i.test(value)) throw new DomainError("invalid event or club id", "validation");
   return value;
 }
+// Liệt kê sự kiện của CLB, ẩn chi tiết với người chỉ có quyền điểm danh hoặc xem feedback
 export async function listClubEvents(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, now: Date) {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError("account locked", "locked");
@@ -31,22 +33,26 @@ export async function listClubEvents(deps: ClubEventDeps, actor: AccessActor | n
     objective: "", plan: "", budgetLines: [], bookingIds: [], registrationForm: [], riskNote: undefined,
     checkInCode: permissions.includes("club.attendance.manage") ? event.checkInCode : undefined }));
 }
+// Xem chi tiết một sự kiện của CLB
 export async function getClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, id: string, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   const found = await deps.repo.find(clubEventId(clubId), clubEventId(id));
   if (!found) throw new DomainError("event not found", "not_found");
   return found;
 }
+// Tạo sự kiện mới ở trạng thái nháp
 export async function createClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, input: ClubEventInput, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   return deps.repo.create(clubEventId(clubId), input, actor!.id, now);
 }
+// Tạo sự kiện nội bộ CLB, lưu nháp hoặc công bố ngay
 export async function createInternalClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, input: InternalClubEventInput,
   mode: InternalClubEventMode, publishInput: EventPublishInput | undefined, now: Date) {
   if ((mode === "publish") !== Boolean(publishInput)) throw new DomainError("publish settings are required only when publishing", "validation");
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   return deps.repo.createInternal(clubEventId(clubId), input, mode, publishInput, actor!.id, now);
 }
+// Thực hiện thao tác vòng đời sự kiện (nộp, hủy, mở khóa điểm danh...) theo quyền tương ứng
 export async function actOnClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string,
   id: string, action: ClubEventAction, now: Date) {
   if (action.kind === "unlock") {
@@ -62,46 +68,55 @@ export async function actOnClubEvent(deps: ClubEventDeps, actor: AccessActor | n
     versions: [], decisions: [], bookings: [], budget: undefined };
 
 }
+// Xem danh sách người tham gia sự kiện để điểm danh
 export async function clubEventParticipants(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, id: string, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.attendance.manage", now);
   return deps.repo.participants(clubEventId(clubId), clubEventId(id));
 }
+// Xem feedback của một nhóm sự kiện (tối đa 20)
 export async function clubEventFeedback(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, ids: string[], now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.feedback.view", now);
   if (!ids.length || ids.length > 20) throw new DomainError("choose between one and twenty events", "validation");
   return deps.repo.feedback(clubEventId(clubId), [...new Set(ids.map(clubEventId))], now);
 }
 
+// Lấy các lựa chọn dùng cho form sự kiện của CLB
 export async function clubEventOptions(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   return deps.repo.options(clubEventId(clubId));
 }
 
+// Lấy kho file, báo lỗi nếu chưa cấu hình
 function fileStorage(deps: ClubEventDeps): EventProposalFileStorage {
   if (!deps.files) throw new DomainError("file storage is not configured", "unavailable");
   return deps.files;
 }
+// Kiểm người dùng đã đăng nhập và chưa bị khóa
 function signedIn(actor: AccessActor | null): AccessActor {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError("account locked", "locked");
   return actor;
 }
+// Cấp URL tạm xem hoặc tải tài liệu đề án
 async function documentAccess(deps: ClubEventDeps, document: EventProposalDocument | null | undefined, inline: boolean) {
   if (!document) throw new DomainError("event proposal document not found", "not_found");
   return { fileName: document.fileName, mimeType: document.mimeType, url: await fileStorage(deps).accessUrl(document.assetId, { inline }) };
 }
+// Xem thông tin template đề án sự kiện đang áp dụng
 /** Any signed-in user may read and download the active ICPDP proposal template. */
 export async function eventProposalTemplateInfo(deps: ClubEventDeps, actor: AccessActor | null): Promise<EventProposalTemplateInfo> {
   signedIn(actor);
   const { fileName, mimeType, bytes, updatedAt, isSystemDefault } = await deps.repo.proposalTemplate();
   return { fileName, mimeType, bytes, updatedAt, isSystemDefault };
 }
+// Tải template đề án sự kiện (file mặc định hoặc URL tạm)
 export async function downloadEventProposalTemplate(deps: ClubEventDeps, actor: AccessActor | null) {
   signedIn(actor);
   const template = await deps.repo.proposalTemplate();
   if (template.isSystemDefault) return { kind: "file" as const, fileName: template.fileName, mimeType: template.mimeType, content: template.content };
   return { kind: "redirect" as const, fileName: template.fileName, url: await fileStorage(deps).accessUrl(template.assetId, { inline: false }) };
 }
+// Tải lên hoặc thay tài liệu đề án của sự kiện đang sửa được
 /** UC25: attach or replace the proposal document of an editable ICPDP proposal; returns the detail with its bumped version. */
 export async function uploadEventProposalDocument(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, eventId: string,
   fileName: string, mimeType: string, bytes: Buffer, now: Date) {
@@ -116,6 +131,7 @@ export async function uploadEventProposalDocument(deps: ClubEventDeps, actor: Ac
   const document = await storage.uploadProposalDocument({ clubId, eventId, actorId: actor!.id, fileName: name, mimeType, bytes, now });
   return deps.repo.act(clubId, eventId, { kind: "attach-document", document }, actor!.id, now);
 }
+// CLB xem tài liệu đề án của bản nháp hoặc một phiên bản đã nộp
 export async function clubEventProposalDocumentAccess(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, eventId: string,
   revisionNo: number | undefined, inline: boolean, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
@@ -123,6 +139,7 @@ export async function clubEventProposalDocumentAccess(deps: ClubEventDeps, actor
   if (!found || found.clubId !== clubId) throw new DomainError("event not found", "not_found");
   return documentAccess(deps, found.document, inline);
 }
+// ICPDP đăng tải template đề án mới thay template hiện hành
 /** UC26: an ICPDP officer replaces the active template; templates are never deleted. */
 export async function uploadEventProposalTemplate(deps: ClubEventDeps, actor: AccessActor | null, fileName: string, mimeType: string,
   bytes: Buffer, now: Date): Promise<EventProposalTemplateInfo> {
@@ -132,6 +149,7 @@ export async function uploadEventProposalTemplate(deps: ClubEventDeps, actor: Ac
   const document = await storage.uploadTemplateDocument({ actorId: officerId, fileName: name, mimeType, bytes, now });
   return deps.repo.saveProposalTemplate(document, officerId, now);
 }
+// ICPDP xem tài liệu đề án của phiên bản hiện tại hoặc cũ hơn
 /** UC26: the officer opens the document of the current or any earlier revision. */
 export async function reviewEventProposalDocumentAccess(deps: ClubEventDeps, actor: AccessActor | null, eventId: string,
   revisionNo: number | undefined, inline: boolean) {

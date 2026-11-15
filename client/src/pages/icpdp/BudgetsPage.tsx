@@ -26,6 +26,7 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 const filters = ["all", "toAdvance", "disbursed", "reconcile", "topUp", "refund", "closed"] as const;
 type Filter = typeof filters[number];
 
+// Kiểm tra ngân sách có thuộc bộ lọc đang chọn không
 function matches(filter: Filter, budget: BudgetSummary): boolean {
   switch (filter) {
     case "toAdvance": return budget.state === "Approved";
@@ -40,6 +41,7 @@ function matches(filter: Filter, budget: BudgetSummary): boolean {
   }
 }
 
+// Dịch trạng thái ngân sách sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
   switch (state) {
     case "Approved": return t("budgets.stateApproved");
@@ -54,15 +56,18 @@ function stateLabel(t: TFunction, state: string): string {
   }
 }
 
+// Chọn màu badge theo trạng thái ngân sách
 function stateTone(state: string): AppBadgeTone {
   return state === "Approved" ? "info" : state === "Recovery Pending" || state === "Reconciled" ? "warning"
     : state === "Closed" ? "success" : state === "Cancelled" ? "danger" : "neutral";
 }
 
+// Dịch loại luồng tiền (tạm ứng, bổ sung, hoàn) sang nhãn
 function kindLabel(t: TFunction, kind: BudgetFlowKind): string {
   return kind === "Advance" ? t("budgets.kindAdvance") : kind === "TopUp" ? t("budgets.kindTopUp") : t("budgets.kindRefund");
 }
 
+// Dịch bộ lọc danh sách ngân sách sang nhãn hiển thị
 function filterLabel(t: TFunction, filter: Filter): string {
   switch (filter) {
     case "toAdvance": return t("budgets.filterToAdvance");
@@ -75,6 +80,7 @@ function filterLabel(t: TFunction, filter: Filter): string {
   }
 }
 
+// Cổng kiểm tra đăng nhập và quyền cho hai trang ngân sách
 /** Sign-in and role gate shared by both budget pages. */
 function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   const { t } = useTranslation();
@@ -91,6 +97,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   return <>{children(auth.data.csrfToken)}</>;
 }
 
+// Danh sách ngân sách sự kiện kèm bộ lọc theo trạng thái
 function BudgetList() {
   const { t, i18n } = useTranslation();
   const list = useBudgets(true);
@@ -152,6 +159,7 @@ function BudgetList() {
   );
 }
 
+// Trang ICPDP danh sách ngân sách sự kiện
 export function BudgetsPage() {
   const { t } = useTranslation();
   return (
@@ -162,11 +170,13 @@ export function BudgetsPage() {
   );
 }
 
+// Ngày hôm nay theo giờ địa phương, dạng giá trị input date
 function todayInput(): string {
   const now = new Date();
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
 
+// Chi tiết một ngân sách và form ghi nhận giải ngân/hoàn tiền
 function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -217,6 +227,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
     <SponsoredItems budgetId={id} csrfToken={csrfToken} />
   </>;
 
+  // Xác nhận và ghi nhận một luồng tiền của ngân sách
   async function submit() {
     if (!allowed || !field.touchAll()) return;
     const value = amountNumber;
@@ -331,6 +342,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
   );
 }
 
+// Trang ICPDP chi tiết một ngân sách sự kiện
 export function BudgetDetailPage() {
   const { id } = useParams();
   return <Gate>{(csrfToken) => id ? <BudgetDetailView id={id} csrfToken={csrfToken} /> : null}</Gate>;

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 
+// Dấu sao đỏ đánh dấu trường bắt buộc
 /** Red asterisk after a label; pair it with `required` on the control so screen readers hear it too. */
 export function AppRequiredMark() {
   const { t } = useTranslation();

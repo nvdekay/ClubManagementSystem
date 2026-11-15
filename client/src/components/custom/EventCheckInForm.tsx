@@ -21,6 +21,7 @@ interface EventCheckInFormProps {
   onCheckedIn?: (result: CheckInResult) => void;
 }
 
+// Form điểm danh sự kiện bằng mã
 /** UC31 self check-in: the student types (or a QR deep link pre-fills) the code shown at the venue. */
 export function EventCheckInForm({ eventId, initialCode = "", autoFocus, onCheckedIn }: EventCheckInFormProps) {
   const { t, i18n } = useTranslation();
@@ -33,6 +34,7 @@ export function EventCheckInForm({ eventId, initialCode = "", autoFocus, onCheck
   const [result, setResult] = useState<CheckInResult | null>(null);
   const field = useFieldValidation({ code: code.trim() ? null : t("common.fieldRequired") });
 
+  // Kiểm tra mã và gửi điểm danh, chống gửi trùng
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || !auth.data || inFlight.current) return;

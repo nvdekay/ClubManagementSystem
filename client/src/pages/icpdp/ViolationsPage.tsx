@@ -28,6 +28,7 @@ import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 const filters = ["active", "awaiting", "actions", "closed", "all"] as const;
 type Filter = typeof filters[number];
 
+// Kiểm tra ca vi phạm có thuộc bộ lọc đang chọn không
 function matches(filter: Filter, item: ViolationSummary): boolean {
   switch (filter) {
     case "active": return ["Open", "Under Investigation", "Decision Issued"].includes(item.state);
@@ -38,6 +39,7 @@ function matches(filter: Filter, item: ViolationSummary): boolean {
   }
 }
 
+// Dịch bộ lọc vi phạm sang nhãn hiển thị
 function filterLabel(t: TFunction, filter: Filter): string {
   switch (filter) {
     case "active": return t("violations.filterActive");
@@ -48,6 +50,7 @@ function filterLabel(t: TFunction, filter: Filter): string {
   }
 }
 
+// Dịch nguồn gốc ca vi phạm sang nhãn hiển thị
 function originLabel(t: TFunction, origin: ViolationOrigin): string {
   switch (origin) {
     case "COMPLAINT": return t("violations.originCOMPLAINT");
@@ -60,15 +63,18 @@ function originLabel(t: TFunction, origin: ViolationOrigin): string {
   }
 }
 
+// Dịch mức nghiêm trọng vi phạm sang nhãn hiển thị
 function severityLabel(t: TFunction, severity: ViolationSeverity): string {
   return severity === "SERIOUS" ? t("violations.severitySERIOUS") : severity === "MODERATE"
     ? t("violations.severityMODERATE") : t("violations.severityMINOR");
 }
 
+// Chọn màu badge theo mức nghiêm trọng
 function severityTone(severity: ViolationSeverity): AppBadgeTone {
   return severity === "SERIOUS" ? "danger" : severity === "MODERATE" ? "warning" : "neutral";
 }
 
+// Dịch trạng thái ca vi phạm sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
   switch (state) {
     case "Open": return t("violations.stateOpen");
@@ -82,11 +88,13 @@ function stateLabel(t: TFunction, state: string): string {
   }
 }
 
+// Chọn màu badge theo trạng thái ca vi phạm
 function stateTone(state: string): AppBadgeTone {
   return state === "Resolved" || state === "Closed" ? "success" : state === "Awaiting Club Response" ? "warning"
     : state === "Decision Issued" || state === "Corrective Action" ? "danger" : "info";
 }
 
+// Dịch hành động trong lịch sử ca vi phạm sang nhãn hiển thị
 function historyLabel(t: TFunction, action: string): string {
   switch (action) {
     case "VIOLATION_OPENED": return t("violations.historyVIOLATION_OPENED");
@@ -108,21 +116,25 @@ function historyLabel(t: TFunction, action: string): string {
   }
 }
 
+// Tách ô nhập thành từng minh chứng mỗi dòng
 /** One evidence item per non-empty line; a line that is a link is kept as the link. */
 function evidenceLines(value: string): EvidenceInput[] {
   return value.split("\n").map((line) => line.trim()).filter(Boolean)
     .map((line) => /^https?:\/\//i.test(line) ? { note: line, url: line } : { note: line });
 }
 
+// Ngày sau số ngày chỉ định, dạng giá trị input date
 function inputDate(daysAhead: number): string {
   const day = new Date(Date.now() + daysAhead * 86_400_000);
   return new Date(day.getTime() - day.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
 
+// Đổi ngày thành ISO cuối ngày 23:59 giờ địa phương
 function endOfDay(value: string): string {
   return new Date(`${value}T23:59:00`).toISOString();
 }
 
+// Cổng kiểm tra đăng nhập và quyền cho các trang vi phạm
 function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -138,6 +150,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   return <>{children(auth.data.csrfToken)}</>;
 }
 
+// Chọn mức nghiêm trọng bằng ba nút
 function SeverityPicker({ value, onChange }: { value: ViolationSeverity; onChange: (value: ViolationSeverity) => void }) {
   const { t } = useTranslation();
   return <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-lg border border-border-app bg-surface-app p-1">{VIOLATION_SEVERITIES.map((item) =>
@@ -147,6 +160,7 @@ function SeverityPicker({ value, onChange }: { value: ViolationSeverity; onChang
       })}>{severityLabel(t, item)}</button>)}</div>;
 }
 
+// Form ICPDP mở ca vi phạm mới cho một CLB
 function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () => void }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -170,6 +184,7 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
       title: `${event.title} (${new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(event.startAt))})` }) })),
     ...(sources.data?.budgets ?? []).map((budget) => ({ value: budget.id, label: t("violations.relatedBudget", { title: budget.eventTitle }) }))];
 
+  // Kiểm tra form rồi mở ca vi phạm và chuyển tới trang chi tiết
   async function submit() {
     if (!field.touchAll()) return;
     try {
@@ -218,6 +233,7 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
   );
 }
 
+// Danh sách ca vi phạm kèm bộ lọc và nút mở ca mới
 function ViolationList({ csrfToken }: { csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const list = useViolations(true);
@@ -272,6 +288,7 @@ function ViolationList({ csrfToken }: { csrfToken: string }) {
   );
 }
 
+// Trang ICPDP danh sách ca vi phạm của CLB
 export function ViolationsPage() {
   const { t } = useTranslation();
   return (
@@ -282,6 +299,7 @@ export function ViolationsPage() {
   );
 }
 
+// Một khối đánh số trong panel bước tiếp theo, nổi bật khi là bước hiện tại
 /** One block of the "next step" panel: a numbered marker, highlighted while it is the step the case is at. */
 function Step({ number, current, children }: { number: number; current: boolean; children: ReactNode }) {
   return <div className="flex gap-3" aria-current={current ? "step" : undefined}>
@@ -291,6 +309,7 @@ function Step({ number, current, children }: { number: number; current: boolean;
   </div>;
 }
 
+// Danh sách minh chứng của ca vi phạm
 function EvidenceList({ items, names }: { items: ViolationEvidence[]; names: Record<string, string> }) {
   const { t, i18n } = useTranslation();
   if (!items.length) return <div className="mt-3"><AppEmptyState message={t("violations.noEvidence")} /></div>;
@@ -302,6 +321,7 @@ function EvidenceList({ items, names }: { items: ViolationEvidence[]; names: Rec
     </li>)}</ul>;
 }
 
+// Chi tiết ca vi phạm và các bước xử lý theo quy trình
 function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -360,12 +380,14 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
     return { number: steps.indexOf(key) + 1, current: currentStep === key };
   }
 
+  // Chạy một bước xử lý vi phạm sau khi xác nhận nếu cần
   async function run(next: ViolationStep, confirmText?: string): Promise<boolean> {
     if (confirmText && !(await askConfirm(confirmText))) return false;
     try { await step.mutateAsync({ id, csrfToken, step: next }); return true; }
     catch { return false; }
   }
 
+  // Ghi quyết định kết luận ca vi phạm kèm lý do, minh chứng
   async function decide() {
     if (!decideField.touchAll()) return;
     const evidence = evidenceLines(decisionEvidence);
@@ -375,6 +397,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
     }
   }
 
+  // Giao các hành động khắc phục cho CLB
   async function assign() {
     if (!actionsField.touchAll()) return;
     const actions = rows.filter((row) => row.description.trim());
@@ -581,6 +604,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
   );
 }
 
+// Trang ICPDP chi tiết một ca vi phạm
 export function ViolationDetailPage() {
   const { id } = useParams();
   return <Gate>{(csrfToken) => id ? <ViolationDetailView id={id} csrfToken={csrfToken} /> : null}</Gate>;

@@ -9,17 +9,20 @@ type Props = Omit<ComponentProps<"input">, "value" | "onChange" | "type" | "ref"
   onValueChange: (digits: string) => void;
 };
 
+// Lọc chuỗi nhập về dãy chữ số, bỏ số 0 đầu
 /** Plain digits without leading zeros: "0500.000" -> "500000", "000" -> "0". */
 export function moneyDigits(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   return digits === "" ? "" : digits.replace(/^0+(?=\d)/, "");
 }
 
+// Nhóm hàng nghìn bằng dấu chấm
 /** Groups thousands with dots, as amounts are written in Vietnamese: "5000000" -> "5.000.000". */
 export function groupThousands(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+// Ô nhập số tiền VND có dấu phân cách hàng nghìn
 /** Text input for a whole VND amount that shows thousand separators while typing. */
 export function AppMoneyInput({ value, onValueChange, ...props }: Props) {
   const ref = useRef<HTMLInputElement>(null);

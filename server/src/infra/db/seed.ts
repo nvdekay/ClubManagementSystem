@@ -6,10 +6,12 @@ import { ensureUcmsDatabase, ucmsModels } from "./ucms-models.js";
 
 const config = loadConfig();
 
+// Chuyển chuỗi hex thành ObjectId
 function objectId(value: string): Types.ObjectId {
   return new Types.ObjectId(value);
 }
 
+// Tính mã học kỳ của một ngày
 // FPT University semesters: Spring Jan–Apr, Summer May–Aug, Fall Sep–Dec (Vietnam time).
 function semesterCode(date: Date): string {
   const local = new Date(date.getTime() + 7 * 3_600_000);
@@ -18,6 +20,7 @@ function semesterCode(date: Date): string {
   return `${season} ${local.getUTCFullYear()}`;
 }
 
+// Upsert hàng loạt document vào một collection theo _id
 async function upsertMany(
   collection: keyof typeof ucmsModels,
   documents: Array<Record<string, unknown> & { _id: Types.ObjectId }>,
@@ -33,6 +36,7 @@ async function upsertMany(
   })));
 }
 
+// Xoá dữ liệu demo hư cấu cũ do seed tạo
 // The earlier fictional demo (F-Code, F-Japan…) used these fixed ids; only those seed-owned
 // records are removed so the PDP snapshot replaces them.
 async function removeFictionalDemo(): Promise<void> {
@@ -54,6 +58,7 @@ async function removeFictionalDemo(): Promise<void> {
   }
 }
 
+// Seed snapshot dữ liệu CLB của PDP
 async function seedPdpSnapshot(now: Date): Promise<void> {
   const clubIdByCode = new Map(pdpClubs.map((club) => [club.code, objectId(club.id)]));
   const clubNameByCode = new Map(pdpClubs.map((club) => [club.code, club.name]));

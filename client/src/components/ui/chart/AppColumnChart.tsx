@@ -19,6 +19,7 @@ interface AppColumnChartProps {
   formatValue?: (value: number) => string;
 }
 
+// Biểu đồ cột dọc, nhóm cột khi có hai chuỗi
 /** Vertical columns on one baseline, grouped when there are two series; hover or focus a column for its values. */
 export function AppColumnChart({ points, tones, seriesLabels, formatValue = String }: AppColumnChartProps) {
   const max = niceMax(Math.max(0, ...points.flatMap((point) => point.values)));

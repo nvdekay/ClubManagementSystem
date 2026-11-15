@@ -19,6 +19,7 @@ interface ClubManageDialogProps {
   onClose: () => void;
 }
 
+// Dialog ICPDP xem và quản lý vòng đời của một CLB
 /** Native modal dialog: focus trapping, Esc to close and the backdrop come from the browser. */
 export function ClubManageDialog({ club, stateLabel, stateTone, csrfToken, onClose }: ClubManageDialogProps) {
   const { t } = useTranslation();

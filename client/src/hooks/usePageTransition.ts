@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 
+// Hiệu ứng chuyển trang: cuộn lên đầu và làm mờ dần khi đổi đường dẫn
 /**
  * Softens client-side navigation: when the path changes, the page area scrolls back to the top and
  * fades/slides in. It animates the existing element instead of remounting it, so page state

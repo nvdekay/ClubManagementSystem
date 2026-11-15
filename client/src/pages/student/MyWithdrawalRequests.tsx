@@ -14,6 +14,7 @@ const tones: Record<WithdrawalState, AppBadgeTone> = {
   Pending: "info", Held: "warning", Executed: "success", Cancelled: "neutral",
 };
 
+// Danh sách yêu cầu rút khỏi CLB của sinh viên
 /** UC22 FR-UC22-03: the student tracks every leave request they sent. Hidden until there is one. */
 export function MyWithdrawalRequests() {
   const { t, i18n } = useTranslation();

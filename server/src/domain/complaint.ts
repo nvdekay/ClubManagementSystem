@@ -117,10 +117,12 @@ export interface ComplaintRepository {
   flagOverdueResponses(now: Date): Promise<number>;
 }
 
+// Ném lỗi validation cho trường khiếu nại không hợp lệ
 function invalid(message: string, field: string): never {
   throw new DomainError(message, "validation", { field });
 }
 
+// Cắt khoảng trắng và kiểm tra độ dài nội dung khiếu nại
 export function complaintText(value: string, field: string, max = MAX_COMPLAINT_TEXT): string {
   const trimmed = value.trim();
   if (!trimmed) invalid(`${field} is required`, field);
@@ -128,6 +130,7 @@ export function complaintText(value: string, field: string, max = MAX_COMPLAINT_
   return trimmed;
 }
 
+// Kiểm tra và chuẩn hoá các link minh chứng đính kèm khiếu nại
 export function normalizeEvidence(items: readonly ComplaintEvidence[]): ComplaintEvidence[] {
   if (items.length > MAX_COMPLAINT_EVIDENCE) invalid(`attach at most ${MAX_COMPLAINT_EVIDENCE} evidence links`, "evidence");
   return items.map((item) => {
@@ -139,6 +142,7 @@ export function normalizeEvidence(items: readonly ComplaintEvidence[]): Complain
   });
 }
 
+// Kiểm tra bước quyết định của ICPDP hợp lệ với trạng thái khiếu nại hiện tại
 /** Checks one ICPDP step against the current state (BR39: a reason for every outcome). */
 export function assertComplaintDecision(current: Pick<Complaint, "state" | "clubState">, decision: ComplaintDecision,
   now: Date): ComplaintDecision {

@@ -1,6 +1,7 @@
 import type { MembershipReconfirmationRepository } from "../../domain/membership-reconfirmation.js";
 import type { PolicyRepository } from "../../domain/policy.js";
 import { runMembershipReconfirmation } from "../../usecase/membership-reconfirmation.js";
+// Hẹn giờ chạy job tái xác nhận thành viên mỗi giờ
 export function startMembershipReconfirmationJob(repo: MembershipReconfirmationRepository, policy: PolicyRepository, intervalMs = 3600000): () => void {
   let running = false;
   async function tick() {

@@ -24,6 +24,7 @@ const PERMISSION_MODULES: Record<string, string> = {
   "club.suspension.request": "M02",
 };
 
+// Khởi tạo permission, role hệ thống và tài khoản ICPDP officer đầu tiên
 export async function ensureAuthBootstrap(config: AuthConfig): Promise<void> {
   const email = normalizeAllowedGoogleEmail(
     config.BOOTSTRAP_ICPDP_EMAIL, true, [config.ALLOWED_DOMAIN],

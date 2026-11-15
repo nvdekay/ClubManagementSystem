@@ -8,14 +8,17 @@ import { ucmsModels as m } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
 const LIST_LIMIT = 200;
 
+// Trả chuỗi không rỗng hoặc undefined
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// Bộ lọc sự kiện nội bộ đã được ghi nhận
 export function recordedInternal(): Doc {
   return { organizerType: { $ne: "ICPDP" }, audienceScope: "MEMBERS_ONLY", state: { $in: [...RECORDED_EVENT_STATES] } };
 }
 
+// Tổng hợp số đăng ký và điểm danh cho danh sách sự kiện nội bộ
 async function summaries(docs: Doc[]): Promise<InternalEventSummary[]> {
   const ids = docs.map((doc) => doc._id as Types.ObjectId);
   const clubIds = [...new Set(docs.map((doc) => String(doc.clubId)))].map((id) => new Types.ObjectId(id));
@@ -40,6 +43,7 @@ async function summaries(docs: Doc[]): Promise<InternalEventSummary[]> {
   }));
 }
 
+// UC02: ICPDP xem danh sách sự kiện nội bộ của mọi CLB
 /** FR-UC02-02, BR53: recorded internal events of every club, newest first, filtered by club and semester. */
 export async function internalEvents(filter: InternalEventFilter): Promise<InternalEventList> {
   const base = recordedInternal();
@@ -60,6 +64,7 @@ export async function internalEvents(filter: InternalEventFilter): Promise<Inter
   };
 }
 
+// UC02: ICPDP xem chi tiết và điểm danh một sự kiện nội bộ
 /** The event and its attendance, read-only: ICPDP inspects, the club still owns every change. */
 export async function internalEvent(eventId: string): Promise<InternalEventDetail | null> {
   const doc = await m.events!.findOne({ _id: new Types.ObjectId(eventId), ...recordedInternal() }).lean();
@@ -80,6 +85,7 @@ export async function internalEvent(eventId: string): Promise<InternalEventDetai
   };
 }
 
+// UC02: đọc lịch sử ban chủ nhiệm và cơ cấu vai trò của CLB
 /**
  * BR56: every role-structure version and the board seats of every term. A seat names the step
  * that confirmed it — a confirmed UC11 nomination seat, a confirmed UC13 plan for that term, or

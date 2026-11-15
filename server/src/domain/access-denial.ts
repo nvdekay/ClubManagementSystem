@@ -22,10 +22,12 @@ export interface AccessDenialAuditRepository {
 
 const OBJECT_ID = /^[0-9a-f]{24}$/i;
 
+// Kiểm tra chuỗi có đúng định dạng ObjectId hay không
 export function isObjectId(value: unknown): value is string {
   return typeof value === "string" && OBJECT_ID.test(value);
 }
 
+// Xác định thực thể bị truy cập trái phép từ route và tham số để ghi log từ chối
 /**
  * The entity the caller tried to reach: the last ObjectId parameter on the route pattern, typed by
  * the static segment just before it (`/admin/bookings/:id` → `BOOKINGS`). With no such parameter

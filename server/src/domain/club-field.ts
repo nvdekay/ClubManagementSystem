@@ -36,10 +36,12 @@ export const DEFAULT_CLUB_FIELDS: readonly string[] = [
   "Công nghệ", "Ngôn ngữ", "Kỹ năng", "Nghệ thuật", "Thể thao", "Cộng đồng",
 ];
 
+// Chuẩn hoá tên lĩnh vực CLB để so sánh trùng lặp
 export function normalizeClubFieldName(name: string): string {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("vi-VN");
 }
 
+// Kiểm tra tên và thứ tự hiển thị của lĩnh vực CLB
 export function validateClubFieldInput(input: ClubFieldInput): ClubFieldInput {
   const name = input.name.trim().replace(/\s+/g, " ");
   if (!name || name.length > 100) throw new DomainError("club field name is required", "validation");

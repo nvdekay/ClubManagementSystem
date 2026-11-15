@@ -24,29 +24,35 @@ export const eventFeedbackBody = z.object({
   isAnonymous: z.boolean().default(false),
 }).strict();
 
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid feedback request", "validation", result.error.issues);
   return result.data;
 }
 
+// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
+// Mount các route phản hồi sự kiện của sinh viên
 export function eventFeedbackRoutes(deps: EventFeedbackRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
+  // Lấy ngữ cảnh gửi phản hồi cho sự kiện
   router.get("/events/:id/feedback", authGuard(guard, false), async (req, res) => {
     ok(res, await getEventFeedbackContext(deps.repo, deps.policy, actor(res), parsed(id, req.params.id), new Date()));
   });
+  // Sinh viên gửi phản hồi sự kiện
   router.post("/events/:id/feedback", authGuard(guard), async (req, res) => {
     const body = parsed(eventFeedbackBody, req.body);
     ok(res, await submitEventFeedback(deps.repo, deps.policy, actor(res), parsed(id, req.params.id),
       { ...body, isAnonymous: body.isAnonymous ?? false }, new Date()), 201);
   });
+  // Liệt kê phản hồi sự kiện của tôi
   router.get("/event-feedbacks/mine", authGuard(guard, false), async (_req, res) => {
     ok(res, await listMyEventFeedback(deps.repo, actor(res)));
   });

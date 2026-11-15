@@ -123,6 +123,7 @@ export class DashboardRequestError extends ApiError {
   }
 }
 
+// GET /dashboard và trả về data, ném lỗi kèm status nếu thất bại
 async function get<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await apiFetch(`/api/v1/dashboard${path}`, { signal, credentials: "same-origin" });
   if (!response.ok) {
@@ -133,10 +134,12 @@ async function get<T>(path: string, signal: AbortSignal): Promise<T> {
   return body.data;
 }
 
+// GET /dashboard: số liệu dashboard theo ngữ cảnh
 export function fetchDashboard(context: DashboardContext, signal: AbortSignal): Promise<Dashboard> {
   return get(`?${new URLSearchParams(context).toString()}`, signal);
 }
 
+// GET /dashboard/internal-events: sự kiện nội bộ lọc theo CLB và học kỳ
 export function fetchInternalEvents(filter: { clubId: string; semesterCode: string }, signal: AbortSignal): Promise<InternalEventList> {
   const params = new URLSearchParams();
   if (filter.clubId) params.set("clubId", filter.clubId);
@@ -145,10 +148,12 @@ export function fetchInternalEvents(filter: { clubId: string; semesterCode: stri
   return get(`/internal-events${query ? `?${query}` : ""}`, signal);
 }
 
+// GET chi tiết một sự kiện nội bộ
 export function fetchInternalEvent(id: string, signal: AbortSignal): Promise<InternalEventDetail> {
   return get(`/internal-events/${encodeURIComponent(id)}`, signal);
 }
 
+// GET lịch sử ban chủ nhiệm của CLB
 export function fetchClubBoardHistory(clubId: string, signal: AbortSignal): Promise<ClubBoardHistory> {
   return get(`/clubs/${encodeURIComponent(clubId)}/board-history`, signal);
 }

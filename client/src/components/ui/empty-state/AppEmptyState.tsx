@@ -17,6 +17,7 @@ interface AppEmptyStateProps {
   action?: ReactNode;
 }
 
+// Trạng thái rỗng khi chưa có dữ liệu
 export function AppEmptyState({ message, variant = "inline", title, icon = "inbox", action }: AppEmptyStateProps) {
   if (variant === "inline") return <p className="text-sm text-muted-app">{message}</p>;
   return (

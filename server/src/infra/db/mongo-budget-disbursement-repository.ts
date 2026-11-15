@@ -11,24 +11,29 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Chuyển giá trị tiền sang number, mặc định 0
 function money(value: unknown): number {
   if (value === null || value === undefined) return 0;
   const parsed = Number(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+// Chuyển giá trị tiền sang number hoặc undefined nếu trống
 function optionalMoney(value: unknown): number | undefined {
   return value === null || value === undefined ? undefined : money(value);
 }
 
+// Chuyển number thành Decimal128
 function decimal(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
 
+// Trả chuỗi không rỗng hoặc undefined
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// Ánh xạ ngân sách sự kiện thành BudgetSummary
 function summaryFrom(doc: Doc, event: Doc | undefined, clubName: string | undefined): BudgetSummary {
   return {
     id: String(doc._id), eventId: String(doc.eventId), eventTitle: String(event?.title ?? ""),
@@ -45,6 +50,7 @@ function summaryFrom(doc: Doc, event: Doc | undefined, clubName: string | undefi
   };
 }
 
+// Repository giải ngân ngân sách sự kiện do ICPDP ghi nhận
 export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepository {
   const m = ucmsModels;
   const budgets = m.eventBudgets!;
@@ -85,14 +91,17 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
   }
 
   return {
+    // Liệt kê ngân sách sự kiện mới nhất trước
     async list() {
       return summaries(await budgets.find().sort({ createdAt: -1, _id: -1 }).lean());
     },
 
+    // Tìm chi tiết ngân sách theo id
     async find(id) {
       return detail(new Types.ObjectId(id));
     },
 
+    // ICPDP ghi nhận một khoản giải ngân hoặc hoàn tiền và thông báo CLB
     async record(id, officerId, flow, now) {
       const budgetObjectId = new Types.ObjectId(id);
       const actorId = new Types.ObjectId(officerId);

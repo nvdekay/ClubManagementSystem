@@ -11,6 +11,7 @@ export interface BookingDeps {
   repo: FacilityBookingRepository; access: ClubAccessRepository; auth: Pick<AuthRepository, "systemRoleCodes">;
   properties: PropertyRepository; policy: PolicyRepository;
 }
+// Kiểm actor là ICPDP officer và trả id
 async function officer(deps: BookingDeps, actor: AccessActor | null) {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError("account locked", "locked");
@@ -19,15 +20,18 @@ async function officer(deps: BookingDeps, actor: AccessActor | null) {
   }
   return actor.id;
 }
+// Kiểm quyền quản lý booking của CLB và trả id actor
 async function member(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.booking.manage", now);
   return actor!.id;
 }
+// Lấy booking thuộc về CLB, không có thì báo not_found
 async function owned(deps: BookingDeps, clubId: string, id: string, now: Date) {
   const detail = await deps.repo.find(bookingId(id), now);
   if (!detail || detail.booking.clubId !== bookingId(clubId)) throw new DomainError("booking not found", "not_found");
   return detail;
 }
+// Đánh giá yêu cầu booking: thời hạn báo trước, tài sản, chính sách và xung đột lịch
 async function check(deps: BookingDeps, clubId: string, input: BookingInput, now: Date, excludeId?: string, requireNotice = true) {
   if (requireNotice) assertBookingNotice(input, now);
   const [club, property, policy] = await Promise.all([deps.repo.club(bookingId(clubId)),
@@ -41,18 +45,22 @@ async function check(deps: BookingDeps, clubId: string, input: BookingInput, now
   return assessBooking(input, property, club, policy,
     await deps.repo.conflicts(input, policy.conflictThresholdMinutes, excludeId), now);
 }
+// CLB xem các tài sản có thể đặt (trừ phòng)
 export async function listBookingProperties(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date) {
   await member(deps, actor, clubId, now);
   return (await deps.properties.list()).filter((item) => item.isActive && item.type !== "ROOM");
 }
+// CLB xem các sự kiện có thể gắn vào booking
 export async function listBookingEvents(deps: BookingDeps, actor: AccessActor | null, clubId: string, now: Date) {
   await member(deps, actor, clubId, now);
   return deps.repo.events(bookingId(clubId));
 }
+// Liệt kê booking của CLB hoặc của toàn trường cho ICPDP
 export async function listBookings(deps: BookingDeps, actor: AccessActor | null, clubId: string | null, now: Date) {
   if (clubId) await member(deps, actor, clubId, now); else await officer(deps, actor);
   return deps.repo.list(clubId ? bookingId(clubId) : undefined);
 }
+// Xem chi tiết một booking, theo CLB hoặc theo ICPDP
 export async function getBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string | null, id: string, now: Date) {
   if (clubId) { await member(deps, actor, clubId, now); return owned(deps, clubId, id, now); }
   await officer(deps, actor);
@@ -60,12 +68,14 @@ export async function getBooking(deps: BookingDeps, actor: AccessActor | null, c
   if (!detail) throw new DomainError("booking not found", "not_found");
   return detail;
 }
+// Kiểm tra slot booking còn trống hay đang xung đột
 export async function bookingAvailability(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   input: BookingInput, now: Date) {
   await member(deps, actor, clubId, now);
   const result = await check(deps, clubId, validateBookingInput(input), now, undefined, false);
   return result.conflicts.length ? { ...result, conflictResult: "Blocking Conflict" } : result;
 }
+// CLB tạo mới hoặc sửa bản nháp booking sau khi kiểm xung đột
 export async function saveBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   id: string | null, raw: BookingInput, now: Date, expectedVersion = 0) {
   const actorId = await member(deps, actor, clubId, now);
@@ -78,6 +88,7 @@ export async function saveBooking(deps: BookingDeps, actor: AccessActor | null, 
   }
   return deps.repo.save(bookingId(id), bookingId(clubId), input, expectedVersion, actorId, now);
 }
+// CLB nộp booking để ICPDP xét duyệt
 export async function submitBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   id: string, expectedVersion: number, now: Date) {
   const actorId = await member(deps, actor, clubId, now);
@@ -89,9 +100,11 @@ export async function submitBooking(deps: BookingDeps, actor: AccessActor | null
   }
   return deps.repo.submit(bookingId(id), bookingId(clubId), expectedVersion, actorId, now);
 }
+// ICPDP officer nhận xử lý một booking
 export async function claimBooking(deps: BookingDeps, actor: AccessActor | null, id: string, now: Date) {
   return deps.repo.claim(bookingId(id), await officer(deps, actor), now);
 }
+// ICPDP duyệt, từ chối hoặc yêu cầu sửa booking
 export async function decideBooking(deps: BookingDeps, actor: AccessActor | null,
   id: string, input: BookingDecisionInput, now: Date) {
   const actorId = await officer(deps, actor);
@@ -110,16 +123,19 @@ export async function decideBooking(deps: BookingDeps, actor: AccessActor | null
   }
   return deps.repo.decide(bookingId(id), actorId, { ...input, reason, overbookingReason }, now);
 }
+// CLB hủy booking kèm lý do
 export async function cancelBooking(deps: BookingDeps, actor: AccessActor | null, clubId: string,
   id: string, reason: string, now: Date) {
   const actorId = await member(deps, actor, clubId, now);
   assertRequestableProperty((await owned(deps, clubId, id, now)).property);
   return deps.repo.cancel(bookingId(id), bookingId(clubId), bookingReason(reason), actorId, now);
 }
+// ICPDP xem các booking xung đột với lịch chặn của một tài sản
 export async function propertyBookingConflicts(deps: BookingDeps, actor: AccessActor | null, id: string, now: Date) {
   await officer(deps, actor);
   return deps.repo.blackoutConflicts(bookingId(id), now);
 }
+// Giải phóng các booking theo sự kiện hoặc CLB kèm lý do
 export async function releaseBookings(repo: FacilityBookingRepository,
   input: Parameters<FacilityBookingRepository["release"]>[0]) {
   if ((input.source === "event" && !input.eventId) || (input.source === "club" && !input.clubId)) {
@@ -130,8 +146,10 @@ export async function releaseBookings(repo: FacilityBookingRepository,
     ...(input.eventId ? { eventId: bookingId(input.eventId) } : {}) });
 }
 
+// Job: chuyển trạng thái booking theo thời gian
 export async function runBookingLifecycleJob(repo: FacilityBookingRepository, now: Date) {
   return repo.advanceLifecycle(now);
 }
 
+// Trả danh sách khung giờ booking cố định
 export function listBookingSlots() { return BOOKING_SLOTS; }

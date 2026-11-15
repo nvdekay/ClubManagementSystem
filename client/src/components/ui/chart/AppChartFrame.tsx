@@ -16,6 +16,7 @@ interface AppChartFrameProps {
   children: ReactNode;
 }
 
+// Khung thẻ bao quanh biểu đồ, kèm chú thích và bảng số liệu
 /** Card around one chart: heading, legend, the chart, and a collapsible table view. */
 export function AppChartFrame({ title, description, legend, action, table, className, children }: AppChartFrameProps) {
   return (

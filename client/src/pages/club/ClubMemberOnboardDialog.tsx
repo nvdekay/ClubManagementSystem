@@ -20,6 +20,7 @@ interface ClubMemberOnboardDialogProps {
   onSaved: (message: string) => void;
 }
 
+// Hộp thoại thêm thành viên vào CLB bằng email và lý do
 /** UC20 A1: a Club Leader adds a student outside recruitment, with a recorded reason. Mount it only while open. */
 export function ClubMemberOnboardDialog({ clubId, onClose, onSaved }: ClubMemberOnboardDialogProps) {
   const { t } = useTranslation();
@@ -35,6 +36,7 @@ export function ClubMemberOnboardDialog({ clubId, onClose, onSaved }: ClubMember
     reason: reason.trim() ? null : t("common.fieldRequired"),
   });
 
+  // Gửi yêu cầu onboard thành viên sau khi kiểm tra form
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || !auth.data || inFlight.current || !event.currentTarget.reportValidity()) return;

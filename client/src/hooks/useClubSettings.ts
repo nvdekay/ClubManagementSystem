@@ -13,12 +13,14 @@ type ClubSettingsAction =
     input: ClubDepartmentInput; csrfToken: string }
   | { kind: "deactivateDepartment"; clubId: string; departmentId: string; csrfToken: string };
 
+// Query hồ sơ và phòng ban của CLB
 export function useClubSettings(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...settingsKey, clubId],
     queryFn: ({ signal }) => fetchClubSettings(clubId!, signal),
     enabled: enabled && Boolean(clubId), retry: false });
 }
 
+// Mutation sửa hồ sơ hoặc phòng ban CLB, rồi làm mới cache
 export function useClubSettingsAction() {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, ClubSettingsAction>({

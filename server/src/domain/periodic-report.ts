@@ -197,19 +197,23 @@ export interface PeriodicReportRepository {
     input: { severity: ViolationSeverity; note?: string }, now: Date): Promise<{ violationId: string }>;
 }
 
+// Lấy số ngày hạn nộp báo cáo định kỳ sau khi kỳ kết thúc từ chính sách
 export function periodicDueDays(deadlines: readonly ReportDeadline[] | undefined): number {
   const entry = deadlines?.find((item) => item.reportType.trim().toUpperCase() === PERIODIC_REPORT_TYPE);
   return entry ? entry.dueDaysAfterPeriodEnd : DEFAULT_PERIODIC_DUE_DAYS;
 }
 
+// Tính hạn nộp báo cáo định kỳ từ ngày kết thúc kỳ
 export function periodicDueAt(period: Pick<AcademicSemester, "endAt">, dueDays: number): Date {
   return new Date(period.endAt.getTime() + dueDays * DAY_MS);
 }
 
+// Cắt khoảng trắng chuỗi, giữ undefined nếu không có
 function trimmed(value: string | undefined): string | undefined {
   return value?.trim() || undefined;
 }
 
+// Kiểm tra link minh chứng hợp lệ
 export function isValidEvidenceLink(url: string): boolean {
   if (!url || url.length > 5_000_000) return false;
   if (/^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/i.test(url)) return true;
@@ -222,6 +226,7 @@ export function isValidEvidenceLink(url: string): boolean {
   }
 }
 
+// Kiểm tra và chuẩn hoá đợt báo cáo định kỳ do ICPDP mở
 export function normalizedPeriodicCampaign(input: PeriodicCampaignInput): PeriodicCampaign {
   const periodCode = input.periodCode.trim();
   if (!periodCode || periodCode.length > 100) {
@@ -273,6 +278,7 @@ export function normalizedPeriodicCampaign(input: PeriodicCampaignInput): Period
   };
 }
 
+// Kiểm tra và chuẩn hoá quyết định duyệt báo cáo định kỳ
 export function normalizedPeriodicDecision(input: PeriodicDecisionInput): PeriodicDecisionInput {
   const observation = trimmed(input.observation);
   const reason = trimmed(input.reason);

@@ -33,12 +33,14 @@ const IMAGE_IDS = ["5e000000-0000-4000-8000-000000000001", "5e000000-0000-4000-8
   "5e000000-0000-4000-8000-000000000003"];
 const DAY = 86_400_000;
 const now = new Date();
+// Thời điểm sau hiện tại ms mili giây
 function later(ms: number): Date {
   return new Date(now.getTime() + ms);
 }
 
 type Ids = Record<CastRole, Types.ObjectId>;
 
+// Lấy hoặc tạo tài khoản cho một vai demo
 /** A real (overridden) account must exist already and is never changed; a demo account is created when missing. */
 async function user(person: CastMember): Promise<Types.ObjectId> {
   const found = await m.users!.findOne({ email: person.email }).select("_id").lean();
@@ -49,6 +51,7 @@ async function user(person: CastMember): Promise<Types.ObjectId> {
   return created!._id as Types.ObjectId;
 }
 
+// Đảm bảo người dùng có vai trò ICPDP_OFFICER
 async function officerRole(officerId: Types.ObjectId): Promise<void> {
   if (cast.officer.overridden) {
     const roleIds = await m.roles!.find({ code: "ICPDP_OFFICER", scope: "system" }).distinct("_id");
@@ -66,6 +69,7 @@ async function officerRole(officerId: Types.ObjectId): Promise<void> {
   }
 }
 
+// Kiểm tra người dùng đang là Leader Active của CLB
 /** The cast leader must hold the club's leader seat; a club made by another seed is reused, never re-seated. */
 async function assertLeader(clubId: Types.ObjectId, leaderId: Types.ObjectId): Promise<void> {
   const membership = await m.clubMemberships!.findOne({ clubId, userId: leaderId, state: "Active" }).select("_id").lean();
@@ -105,6 +109,7 @@ async function ensureClub(ids: Ids): Promise<Types.ObjectId> {
   return clubId;
 }
 
+// Lấy kỳ học hiện tại và ngưỡng người phản hồi tối thiểu từ policy
 /** The semester the demo runs in, from the effective policy (UC04). */
 async function currentPeriod() {
   const policy = await mongoPolicyRepository().findEffective(now);
@@ -123,6 +128,7 @@ const lines: Line[] = [
     reason: "Không thuộc danh mục được Nhà trường tài trợ" },
 ];
 
+// Dựng metadata ảnh hoá đơn mẫu
 /** Metadata of a seeded invoice image; the bytes are never stored anywhere. */
 function image(index: number, fileName: string, uploadedBy: Types.ObjectId) {
   return { id: IMAGE_IDS[index]!, assetId: `defense-demo-p5/invoice-${index + 1}`, fileName, mimeType: "image/png" as const,
@@ -130,6 +136,7 @@ function image(index: number, fileName: string, uploadedBy: Types.ObjectId) {
     uploadedAt: now.toISOString(), uploadedBy: String(uploadedBy) };
 }
 
+// Đảm bảo có sự kiện đã kết thúc kèm ngân sách tài trợ, đăng ký, check-in
 async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: string): Promise<void> {
   if (await m.events!.exists({ clubId, title: EVENT_TITLE })) return;
   const endAt = new Date(now.getTime() - 2 * DAY);
@@ -168,6 +175,7 @@ async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: strin
   const repo = mongoSponsoredItemRepository();
   let detail = (await repo.find(budgetId))!;
   let tick = 0;
+  // Thực hiện một hành động trên hạng mục tài trợ thay mặt CLB hoặc ICPDP
   async function act(index: number, byClub: boolean, action: SponsoredItemAction) {
     tick += 1;
     detail = await repo.act(budgetId, detail.items[index]!.id, detail.revision, String(byClub ? ids.leader : ids.officer),
@@ -198,6 +206,7 @@ async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: strin
 
 // ── Flow 8: report campaign and the club's draft (UC38), scheme (UC41), other clubs' evaluations (UC42) ──
 
+// Đảm bảo có chiến dịch báo cáo định kỳ của kỳ, trả về hạn nộp
 async function ensureCampaign(periodCode: string, officerId: Types.ObjectId): Promise<Date> {
   const existing = await findPeriodicCampaign(periodCode);
   if (existing) {
@@ -215,6 +224,7 @@ async function ensureCampaign(periodCode: string, officerId: Types.ObjectId): Pr
   return dueAt;
 }
 
+// Đảm bảo CLB có bản nháp báo cáo định kỳ
 async function ensureReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectId, periodCode: string, dueAt: Date): Promise<void> {
   if (await m.periodicReports!.exists({ clubId, periodCode })) return;
   const repo = mongoClubPeriodicReportRepository();
@@ -237,6 +247,7 @@ async function ensureReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectI
   }, String(leaderId), later(1));
 }
 
+// Điền nội dung và nộp bản nháp báo cáo định kỳ
 /** UC38 through the real repository, so the report reaches ICPDP exactly as a leader's submission would. */
 async function submitReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectId, periodCode: string): Promise<void> {
   const draft = await m.periodicReports!.findOneAndUpdate({ clubId, periodCode, state: "Draft" },
@@ -247,6 +258,7 @@ async function submitReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectI
   await mongoClubPeriodicReportRepository().submit(String(clubId), String(draft._id), Number(draft.__v ?? 0), String(leaderId), now);
 }
 
+// Đảm bảo có scheme đánh giá Active cho kỳ
 async function ensureScheme(periodCode: string, officerId: Types.ObjectId) {
   const schemes = mongoEvaluationSchemeRepository();
   const active = (await schemes.list()).find((scheme) => scheme.periodCode === periodCode && scheme.state === "Active");
@@ -255,6 +267,7 @@ async function ensureScheme(periodCode: string, officerId: Types.ObjectId) {
   return schemes.activate(draft.id, String(officerId), new Date(now.getTime() - 7 * DAY));
 }
 
+// Tạo báo cáo định kỳ đã Accepted cho các CLB còn lại
 /**
  * An Accepted report for every other club, so its Finalized evaluation rests on a reviewed report (UC39 before UC42).
  * Inserted directly: UC38 would need each club's own leader. A club that already has a report is left alone.
@@ -272,6 +285,7 @@ async function ensureOtherReports(clubIds: string[], periodCode: string, officer
   }
 }
 
+// Chốt đánh giá cho các CLB còn lại để demo chỉ phải tạo đánh giá của CLB chính
 /** Every other club is already Finalized, so the live demo only generates, finalizes and publishes its own club. */
 async function ensureOtherEvaluations(clubId: Types.ObjectId, officerId: Types.ObjectId, dueAt: Date) {
   const { period, minRespondents } = await currentPeriod();

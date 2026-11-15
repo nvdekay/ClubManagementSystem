@@ -5,6 +5,7 @@ import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// BR21: liệt kê kỳ báo cáo định kỳ CLB còn nợ (quá hạn chưa nộp hoặc chưa mở)
 /**
  * Periodic report periods the club owes and has not finished (BR21, UC38 E1): a report past its due
  * date still in Draft or Returned, or a past-due period the club never opened a report for. A club

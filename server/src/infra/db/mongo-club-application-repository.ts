@@ -11,10 +11,12 @@ import type { SimilarityCandidate } from "../../domain/similar-club.js";
 import { routedTaskFields } from "./approval-routing.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Chuẩn hóa tài liệu đính kèm hồ sơ (ngày tải lên thành Date)
 function documentFrom(raw: ApplicationDocument): ApplicationDocument {
   return { ...raw, uploadedAt: new Date(raw.uploadedAt) };
 }
 
+// Chuẩn hóa danh sách founder của hồ sơ lập CLB
 function foundersFrom(raw: Record<string, unknown> | undefined, applicantId: string): FoundingMember[] {
   if (Array.isArray(raw?.founders)) {
     return (raw.founders as Record<string, unknown>[]).map((founder) => ({
@@ -28,10 +30,12 @@ function foundersFrom(raw: Record<string, unknown> | undefined, applicantId: str
     role: userId.toLowerCase() === applicantId.toLowerCase() ? "LEADER" : "MEMBER" }));
 }
 
+// Trả chuỗi hoặc chuỗi rỗng nếu không phải string
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+// Dựng bản nháp hồ sơ lập CLB từ payload lưu trong DB
 export function applicationDraftFrom(raw: Record<string, unknown> | undefined,
   applicantId: string): ClubApplicationDraft {
   return {
@@ -43,6 +47,7 @@ export function applicationDraftFrom(raw: Record<string, unknown> | undefined,
   };
 }
 
+// Ánh xạ document thành ClubApplicationRecord
 export function mapApplicationRecord(doc: Record<string, unknown>): ClubApplicationRecord {
   const raw = doc.draftPayload as Record<string, unknown> | undefined;
   return {
@@ -55,6 +60,7 @@ export function mapApplicationRecord(doc: Record<string, unknown>): ClubApplicat
   };
 }
 
+// Ánh xạ document thành ClubApplicationVersion
 export function mapApplicationVersion(doc: Record<string, unknown>): ClubApplicationVersion {
   const payload = doc.payload as { policyVersionId: string; snapshot: Record<string, unknown> };
   return {
@@ -65,6 +71,7 @@ export function mapApplicationVersion(doc: Record<string, unknown>): ClubApplica
   };
 }
 
+// Ánh xạ document user thành FounderProfile
 function profileFrom(doc: Record<string, unknown>): FounderProfile {
   return { id: String(doc._id), email: String(doc.email),
     displayName: typeof doc.displayName === "string" && doc.displayName ? doc.displayName : String(doc.email) };
@@ -73,6 +80,7 @@ function profileFrom(doc: Record<string, unknown>): FounderProfile {
 const publicClubStates = ["Active", "Suspended", "Dissolving", "Dissolved"];
 const pendingApplicationStates = ["Submitted", "Under Review", "Revision Requested"];
 
+// Tìm CLB/hồ sơ tương tự để gợi ý trùng lặp khi lập CLB
 /**
  * Comparison candidates for similar-club hints. Never the application itself nor the club
  * created from it. `publicOnly` (applicant view) keeps public club states and no applications.
@@ -104,10 +112,12 @@ export async function similarityCandidates(applicationId: string,
   ];
 }
 
+// Ném lỗi conflict khi hồ sơ đã đổi hoặc không còn sửa được
 function conflict(): never {
   throw new DomainError("application changed or is no longer editable", "conflict");
 }
 
+// Repository hồ sơ đề nghị thành lập CLB của founder (UC08)
 export function mongoClubApplicationRepository(): ClubApplicationRepository {
   const applications = ucmsModels.clubApplications!;
   const versions = ucmsModels.clubApplicationVersions!;
@@ -124,6 +134,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
   const editableStates = ["Draft", "Revision Requested"];
 
   return {
+    // Tạo hồ sơ lập CLB ở trạng thái Draft
     async createDraft(ownerId, draft, now) {
       const doc = await applications.create({
         clubName: draft.clubName, field: draft.field, objectives: draft.objectives,
@@ -132,26 +143,31 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
       });
       return mapApplicationRecord(doc.toObject());
     },
+    // Liệt kê hồ sơ lập CLB của người dùng
     async listMine(ownerId) {
       const docs = await applications.find({ founderUserId: new Types.ObjectId(ownerId) })
         .sort({ createdAt: -1, _id: -1 }).lean();
       return docs.map(mapApplicationRecord);
     },
+    // Tìm hồ sơ thuộc sở hữu của người dùng
     async findOwned(id, ownerId) {
       const doc = await applications.findOne({ _id: new Types.ObjectId(id),
         founderUserId: new Types.ObjectId(ownerId) }).lean();
       return doc ? mapApplicationRecord(doc) : null;
     },
+    // Liệt kê các phiên bản đã nộp của hồ sơ
     async versions(id) {
       const docs = await versions.find({ applicationId: new Types.ObjectId(id) })
         .sort({ versionNo: 1 }).lean();
       return docs.map(mapApplicationVersion);
     },
+    // Tìm user Active theo email để thêm founder
     async findActiveUserByEmail(email) {
       const doc = await users.findOne({ email: email.trim().toLowerCase(), accountState: "Active" })
         .select("_id displayName email").lean();
       return doc ? profileFrom(doc) : null;
     },
+    // Lấy thông tin hiển thị của các founder theo id
     async founderProfiles(ids) {
       const valid = [...new Set(ids)].filter((value) => Types.ObjectId.isValid(value));
       const docs = await users.find({ _id: { $in: valid.map((value) => new Types.ObjectId(value)) } })
@@ -159,6 +175,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
       const byId = new Map(docs.map((doc) => [String(doc._id), profileFrom(doc)]));
       return valid.flatMap((value) => byId.get(value) ?? []);
     },
+    // Lấy các quyết định và phản hồi ICPDP cho hồ sơ
     async decisionFeedback(id) {
       const taskIds = await tasks.find({ entityType: "CLUB_APPLICATION", entityId: new Types.ObjectId(id) })
         .distinct("_id");
@@ -170,6 +187,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         decidedAt: doc.at as Date,
       }));
     },
+    // Lưu bản nháp hồ sơ, kiểm tra revision để tránh ghi đè
     async saveDraft(id, ownerId, draft, expectedDraftRevision) {
       const updated = await applications.findOneAndUpdate({ _id: new Types.ObjectId(id),
         founderUserId: new Types.ObjectId(ownerId), state: { $in: editableStates },
@@ -180,6 +198,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
       if (!updated) return conflict();
       return mapApplicationRecord(updated);
     },
+    // Thêm tài liệu đính kèm vào hồ sơ đang sửa được
     async addDocument(id, ownerId, document) {
       const updated = await applications.findOneAndUpdate({ _id: new Types.ObjectId(id),
         founderUserId: new Types.ObjectId(ownerId), state: { $in: editableStates } }, {
@@ -189,6 +208,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
       if (!updated) return conflict();
       return mapApplicationRecord(updated);
     },
+    // Xóa tài liệu đính kèm khỏi hồ sơ đang sửa được
     async removeDocument(id, ownerId, documentId) {
       const updated = await applications.findOneAndUpdate({ _id: new Types.ObjectId(id),
         founderUserId: new Types.ObjectId(ownerId), state: { $in: editableStates },
@@ -199,6 +219,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
       if (!updated) return conflict();
       return mapApplicationRecord(updated);
     },
+    // Kiểm tra mọi id là user Active
     async usersExist(ids) {
       const distinct = [...new Set(ids.map((id) => id.toLowerCase()))];
       if (distinct.some((id) => !Types.ObjectId.isValid(id))) return false;
@@ -206,13 +227,16 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         accountState: "Active" })
         === distinct.length;
     },
+    // Kiểm tra tên trùng với CLB đang Active (không phân biệt hoa thường)
     async activeClubNameExists(name) {
       return Boolean(await clubs.exists({ name, state: "Active" })
         .collation({ locale: "en", strength: 2 }));
     },
+    // Lấy gợi ý CLB tương tự cho góc nhìn người nộp
     async publicSimilarityCandidates(applicationId) {
       return similarityCandidates(applicationId, true);
     },
+    // Tìm user đang là Club Leader của CLB nào đó trong nhiệm kỳ chạy
     async activeLeaderUserIds(userIds, at) {
       const ids = [...new Set(userIds)].filter((value) => Types.ObjectId.isValid(value))
         .map((value) => new Types.ObjectId(value));
@@ -227,6 +251,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         .distinct("userId");
       return holders.map(String);
     },
+    // Nộp hồ sơ: tạo phiên bản, mở task review ICPDP và queue thông báo
     async submit(input) {
       return mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(input.id);
@@ -278,6 +303,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         return mapApplicationVersion(created[0]!.toObject());
       });
     },
+    // Founder rút hồ sơ đang chờ duyệt và đóng task review
     async withdraw(id, ownerId, now) {
       return mongoose.connection.transaction(async (session) => {
         const objectId = new Types.ObjectId(id);

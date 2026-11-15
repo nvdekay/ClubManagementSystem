@@ -10,6 +10,7 @@ interface ClubLogoProps {
   className?: string;
 }
 
+// Dựng URL ảnh thu nhỏ Cloudinary, giữ nguyên URL khác
 /** Ask Cloudinary for a cropped, auto-format thumbnail instead of the full-size upload. */
 export function thumbnail(url: string, width: number, height = width): string {
   const marker = "/image/upload/";
@@ -24,6 +25,7 @@ export function thumbnail(url: string, width: number, height = width): string {
  */
 const LOGO_THUMBNAIL_SIZE = 96;
 
+// Logo CLB, dùng chữ cái đầu khi chưa có logo hoặc ảnh lỗi
 /** Club logo with an initial-letter fallback when there is no logo or it fails to load. */
 export function ClubLogo({ name, logoUrl, size = 56, className }: ClubLogoProps) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);

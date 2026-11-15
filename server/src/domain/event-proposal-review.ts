@@ -171,6 +171,7 @@ export interface EventProposalReviewRepository {
   advanceLifecycle(now: Date): Promise<EventLifecycleResult>;
 }
 
+// Kiểm tra số tiền duyệt cho từng dòng so với dòng ngân sách đề xuất
 /** Checks the per-line approved amounts against the requested lines of the revision being decided. */
 export function approvedBudget(requested: RequestedBudgetLine[],
   decided: { approvedAmount: number; reason?: string; fundingDecision?: FundingDecision }[]): ApprovedBudgetLine[] {

@@ -4,7 +4,9 @@ import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
+// Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never { throw new DomainError(message, "conflict"); }
+// Áp dụng thao tác điểm danh (check-in, sửa, chốt, mở khóa) cho sự kiện
 /** All callers hold the event write lock before reading or changing attendance. */
 export async function applyEventAttendanceAction(session: ClientSession, event: Doc, action: ClubEventAction,
   actorId: Types.ObjectId, now: Date, internalWithoutBudget: boolean): Promise<void> {

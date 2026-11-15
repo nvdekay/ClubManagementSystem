@@ -15,6 +15,7 @@ interface AppStarRatingProps {
   disabled?: boolean;
 }
 
+// Chọn số sao đánh giá
 /** 1–N star picker built on native radios: arrow keys move, Space selects, screen readers announce "n stars". */
 export function AppStarRating({ value, onChange, label, starLabel, max = 5, required, disabled }: AppStarRatingProps) {
   const name = useId();

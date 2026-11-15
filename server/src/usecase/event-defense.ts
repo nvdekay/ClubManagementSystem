@@ -20,6 +20,7 @@ import { normalizedEventDecision } from "./event-proposal-review.js";
 const OBJECT_ID = /^[0-9a-f]{24}$/i;
 const MINUTE_MS = 60 * 1000;
 
+// Kiểm actor là ICPDP officer và trả id
 async function requireOfficer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -32,11 +33,13 @@ async function requireOfficer(auth: Pick<AuthRepository, "systemRoleCodes">, act
   return actor.id;
 }
 
+// Kiểm định dạng ObjectId của một định danh
 function validObjectId(value: string, label: string): string {
   if (!OBJECT_ID.test(value)) throw new DomainError(`invalid ${label}`, "validation");
   return value;
 }
 
+// Cắt khoảng trắng và bắt buộc có giá trị, không quá độ dài tối đa
 function trimmedRequired(value: string | undefined, label: string, maxLength: number): string {
   const text = value?.trim() ?? "";
   if (!text) throw new DomainError(`${label} is required`, "validation");
@@ -46,6 +49,7 @@ function trimmedRequired(value: string | undefined, label: string, maxLength: nu
   return text;
 }
 
+// Cắt khoảng trắng chuỗi tùy chọn và kiểm độ dài tối đa
 function trimmedOptional(value: string | undefined, maxLength: number): string | undefined {
   const text = value?.trim();
   if (!text) return undefined;
@@ -55,6 +59,7 @@ function trimmedOptional(value: string | undefined, maxLength: number): string |
   return text;
 }
 
+// ICPDP xem các phòng còn trống cho buổi bảo vệ đề án theo giờ và thời lượng
 export async function listAvailableDefenseRooms(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -81,6 +86,7 @@ export async function listAvailableDefenseRooms(
   return repo.listAvailableRooms(startAt, endAt, excludeId);
 }
 
+// ICPDP lên lịch buổi bảo vệ đề án sự kiện (phòng, giờ, thời lượng)
 export async function scheduleEventDefense(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -98,6 +104,7 @@ export async function scheduleEventDefense(
   return repo.schedule(id, officerId, { ...slot, propertyId, title, ...(note ? { note } : {}) }, now);
 }
 
+// ICPDP hủy buổi bảo vệ đề án kèm lý do
 export async function cancelEventDefense(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -112,6 +119,7 @@ export async function cancelEventDefense(
   return repo.cancel(id, officerId, cleanReason, now);
 }
 
+// ICPDP chấp nhận (đặt lịch mới) hoặc từ chối yêu cầu dời lịch bảo vệ của CLB
 export async function respondDefenseReschedule(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -150,6 +158,7 @@ export async function respondDefenseReschedule(
   return repo.respondReschedule(id, officerId, { accept: false, reason }, now);
 }
 
+// ICPDP bắt đầu buổi bảo vệ đề án
 export async function startEventDefense(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -161,6 +170,7 @@ export async function startEventDefense(
   return repo.start(validObjectId(eventId, "event id"), officerId, now);
 }
 
+// ICPDP xem phiên bảo vệ đang diễn ra
 export async function getLiveDefenseSession(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -173,6 +183,7 @@ export async function getLiveDefenseSession(
   return session;
 }
 
+// ICPDP lưu ghi chú trong buổi bảo vệ
 export async function saveDefenseNote(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -188,6 +199,7 @@ export async function saveDefenseNote(
   return repo.saveNote(validObjectId(eventId, "event id"), officerId, content, now);
 }
 
+// ICPDP kết thúc buổi bảo vệ đề án
 export async function endEventDefense(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -199,6 +211,7 @@ export async function endEventDefense(
   return repo.end(validObjectId(eventId, "event id"), officerId, now);
 }
 
+// ICPDP ghi nhận CLB vắng mặt buổi bảo vệ
 export async function markDefenseNoShow(
   repo: EventDefenseRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -212,6 +225,7 @@ export async function markDefenseNoShow(
   return repo.markNoShow(validObjectId(eventId, "event id"), officerId, cleanReason, now);
 }
 
+// ICPDP ghi quyết định đề án sau buổi bảo vệ (duyệt, sửa, từ chối)
 export async function decideAfterDefense(
   defenseRepo: EventDefenseRepository,
   reviewRepo: EventProposalReviewRepository,
@@ -234,6 +248,7 @@ export async function decideAfterDefense(
   return defenseRepo.decideAfterDefense(id, officerId, decision, now);
 }
 
+// CLB xem thông tin buổi bảo vệ đề án của sự kiện mình
 export async function getClubEventDefense(
   repo: EventDefenseRepository,
   access: ClubAccessRepository,
@@ -248,6 +263,7 @@ export async function getClubEventDefense(
   return view;
 }
 
+// CLB xác nhận tham dự buổi bảo vệ đề án
 export async function confirmClubEventDefense(
   repo: EventDefenseRepository,
   access: ClubAccessRepository,
@@ -260,6 +276,7 @@ export async function confirmClubEventDefense(
   return repo.confirmByClub(validObjectId(clubId, "club id"), validObjectId(eventId, "event id"), actor!.id, now);
 }
 
+// CLB yêu cầu dời lịch bảo vệ đề án kèm lý do
 export async function requestClubDefenseReschedule(
   repo: EventDefenseRepository,
   access: ClubAccessRepository,
@@ -280,6 +297,7 @@ export async function requestClubDefenseReschedule(
   );
 }
 
+// Job: cảnh báo các buổi bảo vệ mà CLB quá hạn chưa xác nhận
 export async function runDefenseConfirmationAlertJob(repo: EventDefenseRepository, now: Date): Promise<number> {
   return repo.alertOverdueConfirmations(now);
 }

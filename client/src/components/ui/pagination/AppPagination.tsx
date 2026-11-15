@@ -18,6 +18,7 @@ interface AppPaginationProps {
 
 const GAP = "gap";
 
+// Chọn các số trang cần hiển thị, chèn dấu ... khi bỏ qua
 /**
  * First, last and current ±1 — a gap marker wherever numbers were skipped.
  * Caps the row at 7 numbers, so page 1 of 500 stays one line on mobile.
@@ -28,6 +29,7 @@ function pageItems(pageIndex: number, pageCount: number): (number | typeof GAP)[
   return shown.flatMap((p, i) => (i > 0 && p - shown[i - 1] > 1 ? [GAP, p] : [p]));
 }
 
+// Mũi tên chuyển trang trái hoặc phải
 function ChevronIcon({ left }: { left?: boolean }) {
   return (
     <svg
@@ -48,6 +50,7 @@ function ChevronIcon({ left }: { left?: boolean }) {
 // AppButton already sets the 44px-on-touch height; this only pins the width and digits.
 const CONTROL = "min-w-11 px-2 text-sm tabular-nums sm:min-w-9";
 
+// Thanh phân trang
 export function AppPagination({
   pageIndex,
   pageCount,

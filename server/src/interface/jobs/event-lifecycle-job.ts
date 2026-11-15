@@ -7,6 +7,7 @@ import { runInvitationExpiryJob } from "../../usecase/school-event.js";
 
 const HOUR_MS = 60 * 60 * 1000;
 
+// Hẹn giờ chạy job vòng đời sự kiện, lời mời và cảnh báo bảo vệ đề án mỗi giờ
 /** Runs once now, then hourly; returns a stop function. A failed run is logged and retried next hour. */
 export function startEventLifecycleJob(
   repo: EventProposalReviewRepository,

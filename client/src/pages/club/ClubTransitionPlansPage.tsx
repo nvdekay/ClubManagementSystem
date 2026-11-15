@@ -7,6 +7,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubTransitionPlans } from "@/hooks/useClubTransitionPlans";
 import { ClubTransitionPlanEditor } from "./ClubTransitionPlanEditor";
+// Trang kế hoạch chuyển giao nhiệm kỳ ban chủ nhiệm của CLB
 export function ClubTransitionPlansPage() {
   const { clubId = "" } = useParams(); const { t } = useTranslation(); const auth = useAuth();
   const allowed = Boolean(auth.data?.workspaces.some((w) => w.kind === "club" && w.clubId === clubId && w.permissions.includes("club.transition.plan")));

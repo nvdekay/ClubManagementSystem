@@ -81,10 +81,12 @@ export interface ApprovalRoutingRepository {
   recentDecided(limit: number): Promise<RoutingSample[]>;
 }
 
+// Ném lỗi validation với thông điệp và chi tiết đã cho
 function invalid(message: string, details?: unknown): never {
   throw new DomainError(message, "validation", details);
 }
 
+// Kiểm tra cặp cận dưới và cận trên là số nguyên không âm và hợp lệ
 function range(min: number | undefined, max: number | undefined, label: string): void {
   for (const value of [min, max]) {
     if (value !== undefined && (!Number.isInteger(value) || value < 0)) invalid(`${label} must be a non-negative whole number`);
@@ -92,6 +94,7 @@ function range(min: number | undefined, max: number | undefined, label: string):
   if (min !== undefined && max !== undefined && max <= min) invalid(`${label}: the upper bound must be above the lower bound`);
 }
 
+// Kiểm tra một rule định tuyến và bỏ các điều kiện không áp dụng cho loại yêu cầu
 /** Checks one rule and drops conditions that do not apply to its request type. */
 export function normalizeRoutingRule(rule: RoutingRule): RoutingRule {
   if (!/^[A-Za-z0-9_-]{1,40}$/.test(rule.id)) invalid("invalid rule id");
@@ -116,14 +119,17 @@ export function normalizeRoutingRule(rule: RoutingRule): RoutingRule {
   return base;
 }
 
+// Kiểm tra hai khoảng giá trị có giao nhau không
 function rangesMeet(aMin = 0, aMax = Infinity, bMin = 0, bMax = Infinity): boolean {
   return Math.max(aMin, bMin) < Math.min(aMax, bMax);
 }
 
+// Kiểm tra hai tập điều kiện có phần chung, tập không khai báo coi như khớp mọi giá trị
 function setsMeet<T>(a: readonly T[] | undefined, b: readonly T[] | undefined): boolean {
   return !a || !b || a.some((item) => b.includes(item));
 }
 
+// Kiểm tra hai rule có thể cùng khớp một yêu cầu hay không
 /** True when some request would match both rules (FR-UC05-02). */
 export function routingRulesOverlap(a: RoutingRule, b: RoutingRule): boolean {
   return a.requestType === b.requestType
@@ -133,6 +139,7 @@ export function routingRulesOverlap(a: RoutingRule, b: RoutingRule): boolean {
     && rangesMeet(a.minOpenViolations, a.maxOpenViolations, b.minOpenViolations, b.maxOpenViolations);
 }
 
+// Kiểm tra cả danh sách rule, từ chối khi có hai rule chồng lấn
 /** Validates a whole rule list; E1: overlapping rules are refused with the pairs that overlap. */
 export function validateRoutingRules(rules: readonly RoutingRule[]): RoutingRule[] {
   if (rules.length > MAX_ROUTING_RULES) invalid(`at most ${MAX_ROUTING_RULES} rules`);
@@ -146,12 +153,14 @@ export function validateRoutingRules(rules: readonly RoutingRule[]): RoutingRule
   return normalized;
 }
 
+// Kiểm tra giá trị nằm trong khoảng [min, max) nếu có khai báo
 function within(value: number | undefined, min?: number, max?: number): boolean {
   if (min === undefined && max === undefined) return true;
   if (value === undefined) return false;
   return (min === undefined || value >= min) && (max === undefined || value < max);
 }
 
+// Kiểm tra một rule có khớp các dữ kiện của yêu cầu không
 export function routingRuleMatches(rule: RoutingRule, facts: RoutingFacts): boolean {
   return rule.requestType === facts.requestType
     && within(facts.amount, rule.minAmount, rule.maxAmount)
@@ -160,6 +169,7 @@ export function routingRuleMatches(rule: RoutingRule, facts: RoutingFacts): bool
     && within(facts.openViolations, rule.minOpenViolations, rule.maxOpenViolations);
 }
 
+// Chọn rule khớp đầu tiên để lấy SLA duyệt cho yêu cầu
 /** FR-UC05-05: no active rule set or no matching rule → no rule SLA. */
 export function resolveApprovalRoute(ruleSet: Pick<RoutingRuleSet, "id" | "rules"> | null, facts: RoutingFacts): ApprovalRoute {
   const rule = ruleSet?.rules.find((item) => routingRuleMatches(item, facts));
@@ -167,6 +177,7 @@ export function resolveApprovalRoute(ruleSet: Pick<RoutingRuleSet, "id" | "rules
     ...(rule ? { routingRuleId: rule.id, slaHours: rule.slaHours } : {}) };
 }
 
+// Mô phỏng rule nháp nào sẽ khớp từng mẫu yêu cầu và SLA tương ứng
 /** UC05 A1: which rule of the draft each sample would match, and the SLA it would get; reads only. */
 export function simulateRouting(rules: readonly RoutingRule[], samples: readonly RoutingSample[]): RoutingSimulation {
   const items = samples.map((sample) => {

@@ -23,6 +23,7 @@ interface BlackoutDraft {
   reason: string;
 }
 
+// Đổi ISO sang giá trị datetime-local theo giờ địa phương
 /** `datetime-local` works in local time without a zone; convert at the boundary only. */
 function toLocalInput(iso: string): string {
   const date = new Date(iso);
@@ -30,6 +31,7 @@ function toLocalInput(iso: string): string {
   return local.toISOString().slice(0, 16);
 }
 
+// Kiểm tra mọi ngày có chung giờ mở/đóng cửa không
 function sameHours(hours: BookableHours[]): boolean {
   return hours.every((window) => window.open === hours[0]?.open && window.close === hours[0]?.close);
 }
@@ -43,6 +45,7 @@ interface PropertyEditorProps {
   onCancel: () => void;
 }
 
+// Form tạo hoặc sửa cơ sở vật chất: thông tin, giờ mở cửa, thẻ
 export function PropertyEditor({ property, pending, error, onSubmit, onCancel }: PropertyEditorProps) {
   const { t } = useTranslation();
   const initialHours = property?.bookableHours.length ? property.bookableHours
@@ -82,6 +85,7 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
     ])),
   });
 
+  // Thêm thẻ khi nhấn Enter hoặc dấu phẩy
   function addTag(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter" && event.key !== ",") return;
     event.preventDefault();
@@ -92,11 +96,13 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
     setTag("");
   }
 
+  // Bật/tắt một ngày trong tuần được phép booking
   function toggleDay(day: number) {
     setHours({ ...hours, [day]: hours[day] ? null : { ...shared } });
     field.touch("hours");
   }
 
+  // Kiểm tra form rồi gửi dữ liệu cơ sở vật chất
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll()) return;

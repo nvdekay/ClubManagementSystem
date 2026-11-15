@@ -16,6 +16,7 @@ const DOMAIN_STATUS: Record<DomainErrorKind, number> = {
   unavailable: 503,
 };
 
+// Ghi log JSON mỗi request kèm thời gian xử lý
 // Performance/access log: one JSON line per request with duration.
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = performance.now();
@@ -34,6 +35,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Lấy mã lỗi 4xx từ lỗi của framework, không phải 4xx thì trả undefined
 function clientErrorStatus(err: unknown): number | undefined {
   if (typeof err !== "object" || err === null) return undefined;
   const { status, statusCode } = err as { status?: unknown; statusCode?: unknown };
@@ -43,6 +45,7 @@ function clientErrorStatus(err: unknown): number | undefined {
 
 interface AccessContext { method: string; route: string; params: Record<string, string> }
 
+// Đọc accessContext từ res.locals, sai dạng thì trả null
 function accessContext(value: unknown): AccessContext | null {
   if (typeof value !== "object" || value === null) return null;
   const { method, route, params } = value as Partial<AccessContext>;
@@ -50,6 +53,7 @@ function accessContext(value: unknown): AccessContext | null {
     ? { method, route, params } : null;
 }
 
+// Tạo middleware ghi audit mỗi lần người dùng đã đăng nhập bị từ chối 403
 /**
  * SEC-08 / AC17: the single place that audits a 403 for an authenticated caller. It runs before
  * errorHandler and never changes the response; a failed audit write is only logged.
@@ -70,6 +74,7 @@ export function accessDenialAuditor(repo: AccessDenialAuditRepository) {
   };
 }
 
+// Middleware lỗi cuối cùng: đổi DomainError và lỗi khác thành envelope lỗi thống nhất
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction) {
   if (res.headersSent) return next(err); // too late to write a body — let express close the socket
   if (err instanceof DomainError) {

@@ -26,6 +26,7 @@ import { formatBytes, proposalFileType } from "@/utils/proposalFile";
 const sectionCardClass = "space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6";
 const secondaryLinkClass = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 font-heading text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9";
 
+// Giá trị mặc định cho đề xuất sự kiện mới
 function freshEvent(): ClubEventInput {
   const start = new Date(Date.now() + 10 * 86400000);
   start.setUTCMinutes(0, 0, 0);
@@ -46,6 +47,7 @@ function freshEvent(): ClubEventInput {
   };
 }
 
+// Chuyển sự kiện đã lưu thành dữ liệu form để sửa
 function inputFromEvent(event: ClubEvent): ClubEventInput {
   return {
     title: event.title,
@@ -72,6 +74,7 @@ function inputFromEvent(event: ClubEvent): ClubEventInput {
   };
 }
 
+// Khung nhãn cho một ô nhập, có dấu bắt buộc, lỗi và cờ cần sửa theo review
 function Field({
   label,
   required,
@@ -109,6 +112,7 @@ interface ProposalFormProps {
   optionsError?: unknown;
 }
 
+// Form soạn, lưu nháp và nộp đề xuất sự kiện kèm tài liệu đề xuất
 function ProposalForm({ clubId, csrfToken, permissions, detail, options, optionsError }: ProposalFormProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -141,6 +145,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
       ? (revisionRequest?.comments as DecisionComments | undefined)?.sections ?? []
       : [];
 
+  // Trả nhãn nếu mục này bị ICPDP yêu cầu chỉnh sửa trong lần review
   function flag(...parts: string[]) {
     return existing && parts.some((part) => revisionSections.includes(part)) ? t("common.revisionFlagged") : undefined;
   }
@@ -205,6 +210,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
   );
   const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
 
+  // Kiểm tra loại tệp (docx/pdf) rồi giữ lại để tải lên khi lưu
   function pickFile(file: File | undefined) {
     if (!file) return;
     const mimeType = proposalFileType(file, ["docx", "pdf"]);
@@ -212,6 +218,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     if (mimeType) setPendingFile({ file, mimeType });
   }
 
+  // Mở tài liệu đề xuất đã lưu trong tab mới
   async function openDocument(inline: boolean) {
     if (!activeId) return;
     try {
@@ -223,6 +230,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     }
   }
 
+  // Lưu bản nháp hoặc nộp đề xuất sự kiện, kèm tải tài liệu lên
   async function persist(shouldSubmit: boolean) {
     const fieldsValid = eventField.touchAll();
     if (shouldSubmit && !savedDocument && !pendingFile) {
@@ -297,6 +305,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     }
   }
 
+  // Submit form chỉ lưu nháp, việc nộp được bấm riêng
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     void persist(false);
@@ -896,6 +905,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
   );
 }
 
+// Trang tạo hoặc sửa đề xuất sự kiện công khai gửi ICPDP duyệt
 /** Dedicated page for creating or editing a club event proposal (UC25). */
 export function ClubEventProposalPage() {
   const { clubId = "", eventId } = useParams();

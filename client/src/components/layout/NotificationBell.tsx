@@ -22,6 +22,7 @@ interface NotificationBellProps {
   scope: NotificationScope;
 }
 
+// Chuông thông báo: số chưa đọc và hộp thư của workspace hiện tại
 /** Bell with the unread count; opens the user's in-app inbox (NTF-04) for the current workspace. */
 export function NotificationBell({ userId, csrfToken, scope }: NotificationBellProps) {
   const { t, i18n } = useTranslation();
@@ -36,10 +37,12 @@ export function NotificationBell({ userId, csrfToken, scope }: NotificationBellP
   const families = t("notifications.families", { returnObjects: true }) as Record<string, string>;
   const items = inbox.data?.pages.flatMap((page) => page.items) ?? [];
 
+  // Lấy tiêu đề hiển thị của một thông báo theo mã sự kiện
   function title(item: AppNotification): string {
     return codes[item.eventCode] ?? families[notificationFamily(item.eventCode)] ?? families.OTHER ?? item.eventCode;
   }
 
+  // Đánh dấu đã đọc và chuyển tới trang liên quan của thông báo
   function openItem(item: AppNotification) {
     if (!item.readAt) markRead.mutate({ id: item.id, csrfToken });
     const link = notificationLink(item);

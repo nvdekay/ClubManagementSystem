@@ -92,32 +92,38 @@ export interface PublicDiscoveryRepository {
   getEvent(id: string): Promise<PublicEvent | null>;
 }
 
+// Kiểm tra CLB có hiển thị trên trang khám phá công khai không
 export function isDiscoverableClub(club: PublicClub): boolean {
   return club.state === "Active" || club.state === "Suspended";
 }
 
+// Kiểm tra đợt tuyển có đang hiển thị công khai tại thời điểm hiện tại
 export function isVisibleCampaign(campaign: PublicCampaign, now: Date): boolean {
   return (campaign.state === "Published" || campaign.state === "Accepting Applications")
     && campaign.windowStart <= now && campaign.windowEnd > now;
 }
 
+// Kiểm tra sự kiện công khai sắp diễn ra
 export function isUpcomingPublicEvent(event: PublicEvent, now: Date): boolean {
   return event.state === "Upcoming" && event.audienceScope === "PUBLIC"
     && event.publishedAt !== undefined && event.startAt > now;
 }
 
+// Kiểm tra sự kiện công khai đã kết thúc
 export function isHistoricalPublicEvent(event: PublicEvent, now: Date): boolean {
   return ["Completed", "Report Submitted", "Closed"].includes(event.state)
     && event.audienceScope === "PUBLIC" && event.publishedAt !== undefined
     && event.endAt <= now;
 }
 
+// Kiểm tra sự kiện công khai đang diễn ra
 export function isOngoingPublicEvent(event: PublicEvent, now: Date): boolean {
   return (event.state === "Upcoming" || event.state === "Ongoing")
     && event.audienceScope === "PUBLIC" && event.publishedAt !== undefined
     && event.startAt <= now && event.endAt > now;
 }
 
+// Xác định trạng thái hiển thị của sự kiện công khai cho khách
 /** The visitor-facing status of a listed event, or null when the event is not public. */
 export function publicEventStatus(event: PublicEvent, now: Date): PublicEventStatus | null {
   if (isUpcomingPublicEvent(event, now)) return "upcoming";

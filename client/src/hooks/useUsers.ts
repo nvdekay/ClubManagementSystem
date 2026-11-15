@@ -5,10 +5,12 @@ import { createUser, fetchUsers } from "@/services/users";
 // Root key for cross-cutting cache ops (invalidate/cancel match by prefix);
 // usersKey(...) identifies one server page — every queryFn input is part of the key.
 const usersKeyRoot = ["users"] as const;
+// Query key của một trang danh sách người dùng
 function usersKey(search: string, limit: number, offset: number) {
   return [...usersKeyRoot, search, limit, offset] as const;
 }
 
+// Query danh sách người dùng có tìm kiếm và phân trang
 export function useUsers(search = "", limit = 20, offset = 0) {
   return useQuery({
     queryKey: usersKey(search, limit, offset),
@@ -18,6 +20,7 @@ export function useUsers(search = "", limit = 20, offset = 0) {
   });
 }
 
+// Mutation tạo người dùng, rồi làm mới danh sách
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -19,6 +19,7 @@ export interface EvaluationDeps {
   auth: Pick<AuthRepository, "systemRoleCodes">;
 }
 
+// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -31,6 +32,7 @@ async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: Acc
   return actor.id;
 }
 
+// Lấy đánh giá theo id, không có thì báo not_found
 async function evaluation(repo: EvaluationRepository, id: string): Promise<EvaluationDetail> {
   if (!objectId.test(id)) throw new DomainError("invalid evaluation id", "validation");
   const found = await repo.find(id);
@@ -38,21 +40,25 @@ async function evaluation(repo: EvaluationRepository, id: string): Promise<Evalu
   return found;
 }
 
+// Gom lịch học vụ, số người phản hồi tối thiểu và các khung đánh giá
 async function context(deps: EvaluationDeps, now: Date) {
   const policy = await deps.policy.findEffective(now);
   const schemes = await deps.schemes.list();
   return { calendar: [...(policy?.academicCalendar ?? [])], minRespondents: policy?.feedbackMinRespondents ?? 1, schemes };
 }
 
+// Tìm khung đánh giá đang Active của một kỳ
 function activeScheme(schemes: EvaluationScheme[], periodCode: string): EvaluationScheme | undefined {
   return schemes.find((scheme) => scheme.periodCode === periodCode && scheme.state === "Active");
 }
 
+// Chọn khung đánh giá của kỳ, ưu tiên khung đã gắn cho các đánh giá có sẵn
 /** BR51 + BR60: once a period has evaluations, every club of it is scored with the version they used. */
 function periodScheme(schemes: EvaluationScheme[], periodCode: string, pinnedId?: string): EvaluationScheme | undefined {
   return pinnedId ? schemes.find((scheme) => scheme.id === pinnedId) : activeScheme(schemes, periodCode);
 }
 
+// Yêu cầu báo cáo định kỳ của kỳ đã được xét trước khi đánh giá
 /** UC42 precondition: the period's reports have been through UC39, so none is still waiting for a decision. */
 async function assertReportsReviewed(repo: EvaluationRepository, periodCode: string, now: Date, clubId?: string): Promise<void> {
   const pending = await repo.unreviewedReports(periodCode, clubId);
@@ -64,12 +70,14 @@ async function assertReportsReviewed(repo: EvaluationRepository, periodCode: str
   }
 }
 
+// Tìm kỳ trong lịch học vụ, không có thì báo lỗi
 function period(calendar: PeriodWindow[], code: string): PeriodWindow {
   const found = calendar.find((item) => item.code === code);
   if (!found) throw new DomainError("this period is not in the academic calendar", "validation", { field: "periodCode" });
   return found;
 }
 
+// Giữ lại điểm nhập tay của officer khi sinh lại dữ liệu đánh giá
 /** Keeps the officer's manual scores when the data is generated again (UC42 A1). */
 function withManual(results: DimensionResult[], previous: EvaluationDetail | undefined, scheme: EvaluationScheme): DimensionResult[] {
   if (hasReportPenalty(results)) return results;
@@ -80,11 +88,13 @@ function withManual(results: DimensionResult[], previous: EvaluationDetail | und
   });
 }
 
+// Tính điểm các tiêu chí của CLB từ số liệu thu thập
 async function computed(deps: EvaluationDeps, clubId: string, window: PeriodWindow, scheme: EvaluationScheme,
   minRespondents: number, now: Date): Promise<DimensionResult[]> {
   return scoreDimensions(await deps.repo.collectMetrics(clubId, window, now), scheme, window.code, minRespondents);
 }
 
+// ICPDP xem tổng quan đánh giá các CLB trong một kỳ và khả năng công bố
 export async function evaluationOverview(deps: EvaluationDeps, actor: AccessActor | null, periodCode: string | undefined,
   now: Date): Promise<EvaluationOverview> {
   await officer(deps.auth, actor);
@@ -111,6 +121,7 @@ export async function evaluationOverview(deps: EvaluationDeps, actor: AccessActo
       && rows.some((row) => row.state === "Finalized") };
 }
 
+// Sinh bản nháp đánh giá cho mọi CLB trong phạm vi chưa có ở kỳ này
 /** UC42: a Data Ready draft for every club in scope that has none yet for the period. */
 export async function generateEvaluations(deps: EvaluationDeps, actor: AccessActor | null, periodCode: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
@@ -128,6 +139,7 @@ export async function generateEvaluations(deps: EvaluationDeps, actor: AccessAct
   return evaluationOverview(deps, actor, periodCode, now);
 }
 
+// Sinh bản nháp đánh giá cho một CLB sau khi báo cáo được chấp nhận
 /** UC42 after UC39 Accept: the club's Data Ready draft for the period; quietly does nothing when it cannot be made yet. */
 export async function generateClubEvaluation(deps: EvaluationDeps, actor: AccessActor | null, clubId: string,
   periodCode: string, now: Date): Promise<void> {
@@ -142,11 +154,13 @@ export async function generateClubEvaluation(deps: EvaluationDeps, actor: Access
     results: await computed(deps, clubId, window, scheme, minRespondents, now) }, officerId, now);
 }
 
+// ICPDP xem chi tiết một đánh giá CLB
 export async function getEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string) {
   await officer(deps.auth, actor);
   return evaluation(deps.repo, id);
 }
 
+// Tính lại đánh giá, tạo bản mới nếu đánh giá đã công bố
 /** UC42 A1 (draft not finalized yet) or UC43 A1 (new revision of a published result). */
 export async function regenerateEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
@@ -169,6 +183,7 @@ export async function regenerateEvaluation(deps: EvaluationDeps, actor: AccessAc
   return evaluation(deps.repo, newId);
 }
 
+// ICPDP nhập hoặc xóa điểm tay của một tiêu chí kèm lý do
 export async function setManualScore(deps: EvaluationDeps, actor: AccessActor | null, id: string, code: DimensionCode,
   manual: { score: number; justification: string } | null, now: Date) {
   const officerId = await officer(deps.auth, actor);
@@ -182,6 +197,7 @@ export async function setManualScore(deps: EvaluationDeps, actor: AccessActor | 
   return evaluation(deps.repo, current.id);
 }
 
+// ICPDP chốt đánh giá sau khi kiểm báo cáo và tổng điểm
 export async function finalizeEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
   let current = await evaluation(deps.repo, id);
@@ -197,6 +213,7 @@ export async function finalizeEvaluation(deps: EvaluationDeps, actor: AccessActo
   return evaluation(deps.repo, current.id);
 }
 
+// ICPDP mở lại đánh giá đã chốt nhưng chưa công bố
 export async function reopenEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
   const current = await evaluation(deps.repo, id);
@@ -205,6 +222,7 @@ export async function reopenEvaluation(deps: EvaluationDeps, actor: AccessActor 
   return evaluation(deps.repo, current.id);
 }
 
+// ICPDP công bố đánh giá của mọi CLB trong kỳ khi đã chốt hết
 /** UC43 FR-03: one scorecard for every club, so the period is published only when every club is finalized. */
 export async function publishEvaluations(deps: EvaluationDeps, actor: AccessActor | null, periodCode: string, now: Date) {
   const officerId = await officer(deps.auth, actor);

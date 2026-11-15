@@ -43,6 +43,7 @@ type Filter = (typeof filters)[number];
 const severities: Severity[] = ["MINOR", "MODERATE", "SERIOUS"];
 const fieldTypes: CustomFieldType[] = ["text", "number", "evidence"];
 
+// Kiểm tra báo cáo định kỳ có thuộc bộ lọc đang chọn không
 function matches(filter: Filter, row: PeriodicReportRow): boolean {
   switch (filter) {
     case "waiting": return row.state === "Submitted";
@@ -52,11 +53,13 @@ function matches(filter: Filter, row: PeriodicReportRow): boolean {
   }
 }
 
+// Dịch bộ lọc báo cáo định kỳ sang nhãn hiển thị
 function filterLabel(t: TFunction, filter: Filter): string {
   return filter === "waiting" ? t("periodicReports.filterWaiting") : filter === "overdue" ? t("periodicReports.filterOverdue")
     : filter === "accepted" ? t("periodicReports.filterAccepted") : t("periodicReports.filterAll");
 }
 
+// Dịch trạng thái báo cáo định kỳ sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string | undefined): string {
   switch (state) {
     case "Draft": return t("periodicReports.stateDraft");
@@ -68,10 +71,12 @@ function stateLabel(t: TFunction, state: string | undefined): string {
   }
 }
 
+// Chọn màu badge theo trạng thái báo cáo định kỳ
 function stateTone(state: string | undefined): AppBadgeTone {
   return state === "Accepted" ? "success" : state === "Submitted" ? "info" : state === "Returned for correction" ? "warning" : "neutral";
 }
 
+// Dịch mục cần chỉnh sửa của báo cáo sang nhãn hiển thị
 function sectionLabel(t: TFunction, section: ReturnSection): string {
   switch (section) {
     case "members": return t("periodicReports.sectionMembers");
@@ -86,11 +91,13 @@ function sectionLabel(t: TFunction, section: ReturnSection): string {
   }
 }
 
+// Dịch mức nghiêm trọng sang nhãn hiển thị
 function severityLabel(t: TFunction, value: Severity): string {
   return value === "MINOR" ? t("violations.severityMINOR") : value === "MODERATE" ? t("violations.severityMODERATE")
     : t("violations.severitySERIOUS");
 }
 
+// Hook trả hàm định dạng ngày theo ngôn ngữ hiện tại
 function useDay() {
   const { i18n } = useTranslation();
   return function day(value: string) {
@@ -98,6 +105,7 @@ function useDay() {
   };
 }
 
+// Cổng kiểm tra đăng nhập và quyền cho các trang báo cáo định kỳ
 function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -113,6 +121,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   return <>{children(auth.data.csrfToken)}</>;
 }
 
+// Panel mở/đóng đợt nộp báo cáo, đặt hạn nộp và các trường tuỳ chỉnh
 function CampaignPanel({
   periodCode,
   defaultDueAt,
@@ -132,10 +141,12 @@ function CampaignPanel({
   const [announcement, setAnnouncement] = useState(campaign?.announcement ?? "");
   const [customFields, setCustomFields] = useState<PeriodicCustomField[]>(campaign?.customFields ?? []);
 
+  // Cập nhật một trường tuỳ chỉnh của đợt báo cáo
   function updateField(index: number, patch: Partial<PeriodicCustomField>) {
     setCustomFields((prev) => prev.map((f, idx) => (idx === index ? { ...f, ...patch } : f)));
   }
 
+  // Lưu cấu hình đợt nộp báo cáo định kỳ
   async function handleSave() {
     try {
       await save.mutateAsync({
@@ -270,6 +281,7 @@ function CampaignPanel({
   );
 }
 
+// Một dòng CLB trong tổng quan, có thể ghi nhận vi phạm không nộp báo cáo
 function Row({ row, periodCode, csrfToken }: { row: PeriodicReportRow; periodCode: string; csrfToken: string }) {
   const { t } = useTranslation();
   const day = useDay();
@@ -278,6 +290,7 @@ function Row({ row, periodCode, csrfToken }: { row: PeriodicReportRow; periodCod
   const [severity, setSeverity] = useState<Severity>("MINOR");
   const [note, setNote] = useState("");
 
+  // Ghi nhận CLB không nộp báo cáo đúng hạn
   async function submit() {
     try {
       await record.mutateAsync({ csrfToken, input: { clubId: row.clubId, periodCode, severity, note: note.trim() || undefined } });
@@ -331,6 +344,7 @@ function Row({ row, periodCode, csrfToken }: { row: PeriodicReportRow; periodCod
   );
 }
 
+// Tổng quan tình hình nộp báo cáo định kỳ của các CLB theo kỳ
 function Overview({ csrfToken }: { csrfToken: string }) {
   const { t } = useTranslation();
   const day = useDay();
@@ -372,6 +386,7 @@ function Overview({ csrfToken }: { csrfToken: string }) {
   );
 }
 
+// Trang ICPDP danh sách báo cáo định kỳ của CLB
 export function PeriodicReportsPage() {
   const { t } = useTranslation();
   return (
@@ -382,6 +397,7 @@ export function PeriodicReportsPage() {
   );
 }
 
+// Một dòng so sánh số liệu đã đóng băng với số liệu hiện tại
 function Figure({ label, frozen, live }: { label: string; frozen: ReactNode; live: ReactNode }) {
   const differs = frozen !== undefined && live !== undefined && frozen !== live;
   return (
@@ -393,6 +409,7 @@ function Figure({ label, frozen, live }: { label: string; frozen: ReactNode; liv
   );
 }
 
+// Tạo tên file an toàn cho ảnh minh chứng từ tiêu đề
 function safeFileName(title: string, url: string): string {
   const base = title
     .trim()
@@ -405,6 +422,7 @@ function safeFileName(title: string, url: string): string {
   return `${base}.${ext}`;
 }
 
+// Tải ảnh minh chứng về máy
 async function saveEvidenceImage(url: string, title: string) {
   const filename = safeFileName(title, url);
   if (url.startsWith("data:image/")) {
@@ -432,6 +450,7 @@ async function saveEvidenceImage(url: string, title: string) {
   }
 }
 
+// Hiển thị một minh chứng dạng ảnh kèm xem trước và tải về
 function EvidenceDisplay({
   url,
   title,
@@ -493,6 +512,7 @@ function EvidenceDisplay({
   );
 }
 
+// Chi tiết một báo cáo định kỳ và form chấp nhận hoặc trả lại
 function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -550,11 +570,13 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
   const versions = data.versions ?? [];
   const compareVersion = versions.find((v) => v.versionNo === (compareVersionNo ?? (versions.length > 1 ? versions[versions.length - 1]?.versionNo : undefined)));
 
+  // Bật/tắt mục báo cáo cần chỉnh sửa khi trả lại
   function toggle(section: ReturnSection) {
     setSections((current) => current.includes(section) ? current.filter((item) => item !== section) : [...current, section]);
     field.touch("sections");
   }
 
+  // Xác nhận rồi gửi quyết định chấp nhận hoặc trả lại báo cáo
   async function submit() {
     if (!field.touchAll() || !(await askConfirm(outcome === "Accept" ? t("periodicReports.confirmAccept") : t("periodicReports.confirmReturn")))) return;
     try {
@@ -953,6 +975,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
   );
 }
 
+// Trang ICPDP chi tiết một báo cáo định kỳ
 export function PeriodicReportReviewPage() {
   const { id } = useParams();
   return <Gate>{(csrfToken) => id ? <Review id={id} csrfToken={csrfToken} /> : null}</Gate>;

@@ -11,11 +11,13 @@ interface SimilarClubHintsProps {
   className?: string;
 }
 
+// Gợi ý các CLB tương tự khi xét hồ sơ thành lập CLB
 /** Advisory similar-club hints for a founding application (UC07 applicant, UC08 ICPDP). */
 export function SimilarClubHints({ hints, audience, className }: SimilarClubHintsProps) {
   const { t } = useTranslation();
   if (!hints.length && audience === "applicant") return null;
 
+  // Dịch trạng thái CLB hoặc hồ sơ sang nhãn hiển thị
   function stateLabel(state: string): string {
     switch (state) {
       case "Pending Setup": return t("clubLifecycle.state_Pending Setup");
@@ -30,6 +32,7 @@ export function SimilarClubHints({ hints, audience, className }: SimilarClubHint
     }
   }
 
+  // Đổi tỉ lệ 0-1 sang phần trăm làm tròn
   function percent(value: number): number {
     return Math.round(value * 100);
   }

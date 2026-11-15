@@ -51,6 +51,7 @@ interface PlannedEvaluation {
   club: string; period: string; total: number; figures: Figures;
   revisionNo?: number; state?: "Published" | "Finalized"; insufficient?: string;
 }
+// Dựng bộ số liệu (thành viên, sự kiện, lượt tham dự, vụ mở) cho dữ liệu mẫu
 function f(members: number, events: number, attendances: number, openCases = 0): Figures {
   return { members, events, attendances, openCases };
 }
@@ -176,10 +177,12 @@ const applicationPlan: PlannedApplication[] = [
     objectives: "Tổ chức hoạt động tình nguyện vì cộng đồng tại Hà Nội, lan tỏa giá trị tích cực." },
 ];
 
+// Dựng actor Active từ id người dùng
 function actor(id: string): AccessActor {
   return { id, accountState: "Active" };
 }
 
+// Tìm id người dùng theo email, lỗi nếu chưa có trong DB
 async function userId(email: string): Promise<string> {
   const user = await m.users!.findOne({ email }).select("_id").lean();
   if (!user) throw new Error(`user ${email} not found in this database`);
@@ -187,6 +190,7 @@ async function userId(email: string): Promise<string> {
 }
 
 const clubIds = new Map<string, Types.ObjectId>();
+// Tìm id CLB theo mã (có cache), lỗi nếu chưa có trong DB
 async function clubId(code: string): Promise<Types.ObjectId> {
   if (!clubIds.has(code)) {
     const club = await m.clubs!.findOne({ code }).select("_id").lean();

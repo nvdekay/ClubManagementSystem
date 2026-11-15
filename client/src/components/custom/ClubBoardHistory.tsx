@@ -16,6 +16,7 @@ interface ClubBoardHistoryProps {
   headingClassName?: string;
 }
 
+// Hiển thị lịch sử ban chủ nhiệm của CLB
 /**
  * BR56, FR-UC02-02/03: a club's role-structure versions and who held each board seat in every
  * term, with the step that confirmed the seat. Read-only for ICPDP and the club's Club Leader.
@@ -25,6 +26,7 @@ export function ClubBoardHistory({ clubId, headingClassName }: ClubBoardHistoryP
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const history = useClubBoardHistory(clubId, true);
 
+  // Dịch nguồn bổ nhiệm sang nhãn hiển thị
   function source(value: string): string {
     return t(`clubOversight.source_${value}` as "clubOversight.source_APPLICATION", { defaultValue: value });
   }

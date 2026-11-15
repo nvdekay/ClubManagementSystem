@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubRoomAllocations } from "@/hooks/useRoomAllocations";
 import { slotLabel, weekdayLabel } from "@/utils/roomSchedule";
 
+// Định dạng ngày theo múi giờ Việt Nam
 function vietnamDay(value: string | Date): string {
   return new Date(new Date(value).getTime() + 7 * 3600000).toISOString().slice(0, 10);
 }

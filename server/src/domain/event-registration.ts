@@ -60,6 +60,7 @@ export interface EventRegistrationRepository {
   cancel(registrationId: string, studentId: string, now: Date): Promise<EventRegistration>;
 }
 
+// Kiểm tra câu trả lời đăng ký sự kiện theo các trường của form
 export function validateEventRegistrationAnswers(
   fields: readonly EventRegistrationFormField[],
   answers: Readonly<Record<string, EventRegistrationAnswer>>,

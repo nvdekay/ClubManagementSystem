@@ -21,24 +21,29 @@ export const sponsoredActionBody = z.object({
   ]),
 }).strict();
 
+// Mount các route hạng mục tài trợ và hoá đơn thuộc ngân sách
 export function sponsoredItemRoutes(deps: SponsoredItemDeps & { authRepo: AuthRepository; sessions: SessionService }) {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
   for (const base of ["/clubs/:clubId/budgets/:id/items", "/admin/budgets/:id/items"]) {
+    // Xem ngân sách cùng các hạng mục tài trợ
     router.get(base, authGuard(guard, false), async (req, res) => {
       ok(res, await getSponsoredBudget(deps, res.locals.actor as AccessActor, String(req.params.id), req.params.clubId as string | undefined, new Date()));
     });
+    // Thực hiện hành động trên hạng mục tài trợ
     router.post(`${base}/:itemId/actions`, authGuard(guard), async (req, res) => {
       const body = sponsoredActionBody.safeParse(req.body);
       if (!body.success) throw new DomainError("invalid sponsored item action", "validation", body.error.issues);
       ok(res, await actOnSponsoredItem(deps, res.locals.actor as AccessActor, String(req.params.id),
         req.params.clubId as string | undefined, String(req.params.itemId), body.data.revision, body.data.action, new Date()));
     });
+    // Lấy URL ảnh hoá đơn của hạng mục tài trợ
     router.get(`${base}/:itemId/images/:imageId`, authGuard(guard, false), async (req, res) => {
       ok(res, await invoiceImageUrl(deps, res.locals.actor as AccessActor, String(req.params.id),
         req.params.clubId as string | undefined, String(req.params.itemId), String(req.params.imageId), new Date()));
     });
   }
+  // Tải ảnh hoá đơn lên hạng mục tài trợ
   router.post("/clubs/:clubId/budgets/:id/items/:itemId/images", authGuard(guard),
     raw({ type: () => true, limit: "5mb" }), async (req, res) => {
       const revision = Number(req.query.revision);

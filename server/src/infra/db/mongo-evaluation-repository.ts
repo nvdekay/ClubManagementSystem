@@ -16,24 +16,29 @@ type Doc = Record<string, unknown>;
 const inScopeStates = ["Active", "Suspended", "Dissolving"];
 const COMPUTED = "computedScore";
 
+// Chuyển number thành Decimal128
 function decimal(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
 
+// Chuyển giá trị sang number hoặc undefined nếu không hợp lệ
 function optionalNumber(value: unknown): number | undefined {
   if (value === null || value === undefined) return undefined;
   const parsed = Number(String(value));
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+// Lấy danh sách id dạng chuỗi từ các document
 function ids(docs: { _id?: unknown }[]): string[] {
   return docs.map((doc) => String(doc._id));
 }
 
+// Dựng MetricValue gồm giá trị và nguồn dữ liệu
 function metric(value: number, sourceEntity: string, sourceIds: string[] = []): MetricValue {
   return { value, sourceEntity, sourceIds };
 }
 
+// Repository đánh giá hiệu quả CLB theo kỳ (UC42, UC43)
 export function mongoEvaluationRepository(): EvaluationRepository {
   const m = ucmsModels;
   const evaluations = m.evaluations!;
@@ -98,12 +103,14 @@ export function mongoEvaluationRepository(): EvaluationRepository {
 
   return {
     reportPenalty: evaluationReportPenalty,
+    // Liệt kê CLB thuộc phạm vi đánh giá
     async clubsInScope() {
       const clubs = await m.clubs!.find({ state: { $in: inScopeStates } }).sort({ name: 1 }).collation({ locale: "vi" })
         .select({ name: 1, state: 1 }).lean();
       return clubs.map((club) => ({ id: String(club._id), name: String(club.name), state: String(club.state) }));
     },
 
+    // Lấy bản đánh giá mới nhất của từng CLB trong kỳ
     async latest(periodCode) {
       const latestIds = await evaluations.aggregate<{ _id: Types.ObjectId; id: Types.ObjectId }>([
         { $match: { periodCode } }, { $sort: { revisionNo: -1 } },
@@ -111,6 +118,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       return records(await evaluations.find({ _id: { $in: latestIds.map((item) => item.id) } }).lean());
     },
 
+    // Lấy chi tiết đánh giá kèm các lần sửa đổi và scheme
     async find(id) {
       const doc = await evaluations.findById(new Types.ObjectId(id)).lean();
       if (!doc) return null;
@@ -135,6 +143,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       } satisfies EvaluationDetail;
     },
 
+    // Thu thập các chỉ số của CLB trong kỳ từ dữ liệu hệ thống
     async collectMetrics(clubId, period, now) {
       const club = new Types.ObjectId(clubId);
       const inPeriod = { $gte: period.startAt, $lte: period.endAt };
@@ -226,6 +235,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       } satisfies ClubMetrics;
     },
 
+    // Liệt kê CLB có báo cáo định kỳ đã nộp nhưng chưa thẩm định
     async unreviewedReports(periodCode, clubId) {
       const reports = await m.periodicReports!.find({ periodCode, state: "Submitted",
         ...(clubId ? { clubId: new Types.ObjectId(clubId) } : {}) }).select({ clubId: 1 }).lean();
@@ -233,6 +243,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       return clubs.map((club) => ({ clubId: String(club._id), clubName: String(club.name) }));
     },
 
+    // UC42: ghi bản nháp đánh giá (tạo mới hoặc thay thế)
     async writeDraft(input, officerId, now) {
       let id = new Types.ObjectId();
       await mongoose.connection.transaction(async (session) => {
@@ -262,6 +273,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       return String(id);
     },
 
+    // UC43: officer nhập điều chỉnh thủ công cho một tiêu chí
     async setManual(id, code, manual, officerId, now) {
       const evaluationId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
@@ -281,6 +293,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       });
     },
 
+    // UC43: chốt đánh giá với tổng điểm và xếp loại
     async finalize(id, total, officerId, now) {
       if (!Number.isFinite(total.totalScore)) throw new DomainError("an evaluation needs a total score before finalizing", "conflict");
       const evaluationId = new Types.ObjectId(id);
@@ -295,6 +308,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       });
     },
 
+    // UC43: mở lại đánh giá đã chốt về Under Review
     async reopen(id, officerId, now) {
       const evaluationId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
@@ -305,6 +319,7 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       });
     },
 
+    // UC43: công bố các đánh giá đã chốt của kỳ
     async publish(periodCode, officerId, now) {
       let published = 0;
       await mongoose.connection.transaction(async (session) => {

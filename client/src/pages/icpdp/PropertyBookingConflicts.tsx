@@ -12,6 +12,7 @@ const pendingStates = ["Requested", "Under Review", "Revision Requested"];
 type ConflictState = "Requested" | "Under Review" | "Revision Requested" | "Approved" | "In Use";
 
 interface PropertyBookingConflictsProps { propertyId: string; blackoutKey: string }
+// Danh sách booking bị xung đột bởi lịch bảo trì của cơ sở vật chất
 export function PropertyBookingConflicts({ propertyId, blackoutKey }: PropertyBookingConflictsProps) {
   const { t, i18n } = useTranslation();
   const bookings = useBlackoutBookings(propertyId, blackoutKey);

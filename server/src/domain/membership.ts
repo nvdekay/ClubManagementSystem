@@ -66,6 +66,7 @@ export interface MembershipRepository {
     now: Date }): Promise<ClubMembershipRecord>;
 }
 
+// Kiểm tra ngày có trước ngày hôm nay theo giờ Việt Nam
 export function isBeforeToday(value: Date, now: Date): boolean {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",

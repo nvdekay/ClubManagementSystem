@@ -25,12 +25,14 @@ import { formatDate, formatDay } from "@/utils/formatDate";
 const registrationLabels = { Confirmed: "memberSpace.regConfirmed", Waitlisted: "memberSpace.regWaitlisted",
   Cancelled: "memberSpace.regCancelled" } as const;
 
+// Ngày hôm nay (YYYY-MM-DD) theo múi giờ Việt Nam
 /** Today in Vietnam (the server compares leave dates by Asia/Ho_Chi_Minh calendar day). */
 function todayInVietnam(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit",
     day: "2-digit" }).format(new Date());
 }
 
+// Khối nội dung có tiêu đề trong không gian thành viên
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
@@ -40,6 +42,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+// Trang không gian thành viên của một CLB
 /** UC24 member space (read-only) with UC22 leave request; links to UC29/UC31/UC48 are navigation only. */
 export function MemberSpacePage() {
   const { t } = useTranslation();
@@ -68,6 +71,7 @@ export function MemberSpacePage() {
   return <MemberSpaceView space={space.data} csrfToken={auth.data!.csrfToken} />;
 }
 
+// Nội dung không gian thành viên: thông tin CLB, tư cách, ban chủ nhiệm, rút CLB
 function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
@@ -207,6 +211,7 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
   );
 }
 
+// Nút và hộp thoại gửi yêu cầu rút khỏi CLB
 /** UC22: the member asks to leave; the club executes it in UC21, so membership state does not change here. */
 function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToken: string }) {
   const { t } = useTranslation();
@@ -222,11 +227,13 @@ function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToke
     date: !date ? t("common.fieldRequired") : date < todayInVietnam() ? t("common.dateNotPast") : null,
   });
 
+  // Đóng hộp thoại rút CLB và xóa trạng thái kiểm tra
   function close() {
     setOpen(false);
     field.reset();
   }
 
+  // Gửi yêu cầu rút khỏi CLB kèm lý do
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || inFlight.current) return;

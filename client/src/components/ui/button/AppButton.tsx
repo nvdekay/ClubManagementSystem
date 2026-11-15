@@ -6,6 +6,7 @@ interface AppButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost";
 }
 
+// Nút bấm theo variant
 export function AppButton({ variant = "primary", className, ...props }: AppButtonProps) {
   return (
     <button

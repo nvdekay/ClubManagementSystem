@@ -23,6 +23,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 /** Surface gap between neighbouring segments, in the same units as the circumference. */
 const GAP = 2.2;
 
+// Biểu đồ vành khuyên thể hiện cơ cấu tổng thể
 /** Part-to-whole ring with a headline in the middle and a legend that carries every value as text. */
 export function AppDonut({ segments, centerValue, centerLabel, formatValue = String, label }: AppDonutProps) {
   const total = segments.reduce((sum, item) => sum + item.value, 0);

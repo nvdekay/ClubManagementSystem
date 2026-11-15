@@ -97,6 +97,7 @@ export interface ExportFileWriter {
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm tra bộ lọc kỳ hoặc khoảng ngày khi xuất dữ liệu
 export function validateExportFilter(type: ExportType, filter: ExportFilter): ExportFilter {
   if (filter.periodCode !== undefined && (filter.from || filter.to)) {
     throw new DomainError("choose a semester or a date range, not both", "validation", { field: "period" });

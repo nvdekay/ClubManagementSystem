@@ -2,6 +2,7 @@ import { Types, type ClientSession } from "mongoose";
 import { notificationChannels } from "../../domain/notification.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Lấy user giữ chức Club Leader hoặc ghế ban chủ nhiệm đang hiệu lực
 /** User ids currently holding the leader role or a board seat of the club — who ICPDP notifies. */
 export async function clubBoardUserIds(clubId: Types.ObjectId, session?: ClientSession): Promise<Types.ObjectId[]> {
   const m = ucmsModels;
@@ -16,6 +17,7 @@ export async function clubBoardUserIds(clubId: Types.ObjectId, session?: ClientS
   return userIds.map((userId) => new Types.ObjectId(String(userId)));
 }
 
+// Xếp hàng thông báo cho người nhận (không trùng) trong transaction
 /** Queues one notification per distinct recipient inside the caller's transaction (email too for SRS §8.2 events). */
 export async function queueNotifications(session: ClientSession, recipients: readonly unknown[], eventCode: string,
   entityType: string, entityId: Types.ObjectId, payload: Record<string, unknown>, now: Date): Promise<void> {
@@ -26,6 +28,7 @@ export async function queueNotifications(session: ClientSession, recipients: rea
     createdAt: now })), { session });
 }
 
+// BR06: tìm user đã là Club Leader CLB khác trong nhiệm kỳ chồng lấn
 /**
  * BR06: the users behind these memberships who already hold the leader role of another club in a
  * term overlapping [startAt, endAt). The club's own outgoing term is ignored, so a re-elected

@@ -16,6 +16,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useClubs } from "@/hooks/useDiscovery";
 import type { PublicClub } from "@/services/discovery";
 
+// Trang danh sách CLB công khai có tìm kiếm, lọc lĩnh vực, phân trang
 export function ClubDirectory() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -30,10 +31,12 @@ export function ClubDirectory() {
     setSearch(value);
     setPage(1);
   }, []);
+  // Đổi bộ lọc lĩnh vực và về trang đầu
   function changeField(value: string) {
     setField(value);
     setPage(1);
   }
+  // Xóa toàn bộ bộ lọc và về trang đầu
   function clearFilters() {
     setSearch("");
     setSearchKey((key) => key + 1);
@@ -114,6 +117,7 @@ export function ClubDirectory() {
   );
 }
 
+// Thẻ một CLB trong danh sách
 /** One directory card; also used for the UC06 E1 suggestions under an empty search. */
 function ClubCard({ club }: { club: PublicClub }) {
   const { t } = useTranslation();

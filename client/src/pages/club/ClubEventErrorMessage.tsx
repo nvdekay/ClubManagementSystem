@@ -117,6 +117,7 @@ const CLUB_EVENT_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
   "network request failed": "network",
 };
 
+// Ánh xạ mã HTTP của lỗi sự kiện sang khóa thông báo
 function statusErrorKey(statusCode?: number): ClubEventErrorKey {
   switch (statusCode) {
     case 400:
@@ -141,6 +142,7 @@ function statusErrorKey(statusCode?: number): ClubEventErrorKey {
   }
 }
 
+// Phân tích lỗi từ server thành mô tả thông báo (khóa i18n và tham số)
 export function resolveClubEventErrorDescriptor(
   rawMessage: string,
   statusCode?: number,
@@ -179,6 +181,7 @@ export function resolveClubEventErrorDescriptor(
   return { key: statusErrorKey(statusCode) };
 }
 
+// Dịch mã nghĩa vụ còn nợ của CLB thành nhãn hiển thị
 function obligationLabel(t: TFunction, item: string) {
   const [key, value] = item.split(":", 2);
   switch (key) {
@@ -190,6 +193,7 @@ function obligationLabel(t: TFunction, item: string) {
   }
 }
 
+// Hiển thị thông báo lỗi khi thao tác sự kiện CLB thất bại
 /** Spells out what the server named (UC25 E2 obligations, UC30 E1 affected registrations, booking & schedule rules) via i18n instead of raw messages. */
 export function ClubEventErrorMessage({ error }: ClubEventErrorMessageProps) {
   const { t } = useTranslation();

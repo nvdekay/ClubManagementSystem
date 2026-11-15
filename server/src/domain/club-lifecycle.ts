@@ -113,6 +113,7 @@ export interface ClubLifecycleRepository {
   alertOfficers(alert: ClubLifecycleAlert, officerIds: string[], now: Date): Promise<boolean>;
 }
 
+// Kiểm tra lý do thay đổi vòng đời CLB là bắt buộc và không quá dài
 export function validateLifecycleReason(reason: string): string {
   const normalized = typeof reason === "string" ? reason.trim() : "";
   if (!normalized || normalized.length > 2_000) {
@@ -121,6 +122,7 @@ export function validateLifecycleReason(reason: string): string {
   return normalized;
 }
 
+// Tìm học kỳ kế tiếp sau học kỳ đang diễn ra
 /** The semester after the one running at `now` (or the first one that has not started yet). */
 export function nextSemester<T extends { code: string; startAt: Date; endAt: Date }>(
   calendar: readonly T[], now: Date): T | null {

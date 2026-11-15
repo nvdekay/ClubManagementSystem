@@ -3,7 +3,9 @@ import mongoose, { Types } from "mongoose";
 import type { ApplicationExpiryRepository } from "../../domain/application-expiry.js";
 import { queueNotifications } from "./club-board.js";
 import { ucmsModels as m } from "./ucms-models.js";
+// Repository hết hạn hồ sơ lập CLB quá hạn chỉnh sửa
 export function mongoApplicationExpiryRepository(): ApplicationExpiryRepository {
+  // Chuyển hồ sơ Revision Requested quá hạn sang Expired và thông báo founder
   return { async expire(now) {
     const ids = await m.clubApplications!.find({ state: "Revision Requested", revisionDeadlineAt: { $lte: now } }).distinct("_id"); let count = 0;
     for (const id of ids) {

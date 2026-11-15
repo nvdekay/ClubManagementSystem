@@ -1,3 +1,4 @@
+// Sinh email sinh viên từ tên hiển thị và số thứ tự
 // Seeded students get FPT-style addresses (<given><initials>he<studentNo>@fpt.edu.vn) so a founder can
 // assign them by an email that looks like the real thing; studentNo keeps every address unique.
 export function studentEmail(displayName: string, studentNo: number): string {

@@ -13,11 +13,13 @@ interface ExportLabels {
 const vietnamDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric",
   month: "2-digit", day: "2-digit" });
 
+// Định dạng ngày theo múi giờ Việt Nam để so sánh/ghi ra file
 /** YYYY-MM-DD of the Vietnam calendar day — the day the server compares membership dates by. */
 function dayKey(value: string | Date): string {
   return vietnamDay.format(new Date(value));
 }
 
+// Tạo ô tiêu đề in đậm cho dòng đầu của file xlsx
 function header(value: string) {
   return { value, fontWeight: "bold" as const };
 }

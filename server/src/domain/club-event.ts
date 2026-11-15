@@ -6,6 +6,7 @@ import type { FeedbackSummary } from "./event-feedback.js";
 /** Lifecycle of a self-funded members-only event that never goes through ICPDP review. */
 export const INTERNAL_CLUB_EVENT_STATES = ["DRAFT", "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"] as const;
 export type InternalClubEventState = typeof INTERNAL_CLUB_EVENT_STATES[number];
+// Kiểm tra trạng thái có thuộc nhóm sự kiện nội bộ hay không
 export function isInternalClubEventState(state: string): state is InternalClubEventState {
   return (INTERNAL_CLUB_EVENT_STATES as readonly string[]).includes(state);
 }
@@ -34,10 +35,12 @@ export interface EventProposalDocument {
 }
 /** What clients see: the storage asset id never leaves the server. */
 export type PublicEventProposalDocument = Omit<EventProposalDocument, "assetId">;
+// Bỏ assetId khỏi tài liệu đề xuất trước khi trả ra ngoài
 export function publicProposalDocument(document: EventProposalDocument): PublicEventProposalDocument {
   const { assetId: _assetId, ...rest } = document;
   return rest;
 }
+// Bỏ assetId của tài liệu đề xuất trong payload sự kiện đã lưu
 /** Drops the asset id from the `proposalDocument` inside a stored event payload, leaving everything else as is. */
 export function publicEventPayload<T>(payload: T): T {
   if (!payload || typeof payload !== "object" || !("proposalDocument" in payload)) return payload;
@@ -130,6 +133,7 @@ export interface ClubEventRepository {
   proposalTemplate(): Promise<EventProposalTemplate>;
   saveProposalTemplate(document: EventProposalDocument, actorId: string, now: Date): Promise<EventProposalTemplateInfo>;
 }
+// Xác định permission CLB cần có cho một thao tác trên sự kiện
 export function eventActionPermission(action: ClubEventAction): ClubPermission {
   return ["capacity", "promote", "check-in", "correct", "finalize", "unlock"].includes(action.kind)
     ? "club.attendance.manage" : "club.event.manage";

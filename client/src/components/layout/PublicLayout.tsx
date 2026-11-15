@@ -13,6 +13,7 @@ import { cn } from "@/utils/cn";
 /** Contact details published on the FPT Education PDP site footer. */
 const FPT_EDUCATION = { name: "FPT Education", address: "Hoa Lac High Tech Park, Hanoi, Vietnam", email: "fpteducation@fe.edu.vn" };
 
+// Class cho liên kết điều hướng, đổi màu khi nằm trên ảnh hero
 function navClass(overlay: boolean) {
   return ({ isActive }: { isActive: boolean }) => cn(
     "relative inline-flex min-h-11 items-center px-3 text-sm font-semibold text-text-app no-underline transition-colors hover:text-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app",
@@ -24,6 +25,7 @@ function navClass(overlay: boolean) {
 
 const iconButton = "flex size-10 items-center justify-center rounded-full text-muted-app transition-colors hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
 
+// Khung trang công khai: header, điều hướng, đăng nhập và footer
 export function PublicLayout() {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();

@@ -1,6 +1,7 @@
 // Placeholder founding documents (proposal PDF, logo PNG) shared by the demo seeds.
 import { crc32, deflateSync } from "node:zlib";
 
+// Sinh file PDF điều lệ mẫu từ tiêu đề
 /** A small, valid one-page PDF so the ICPDP reviewer can really open the charter. */
 export function charterPdf(title: string): Buffer {
   const ascii = title.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
@@ -25,6 +26,7 @@ export function charterPdf(title: string): Buffer {
   return Buffer.from(body, "latin1");
 }
 
+// Sinh ảnh logo PNG một màu theo kích thước
 /** A solid-colour square PNG, standing in for the proposed logo a student would upload. */
 export function logoPng(rgb: [number, number, number], size = 64): Buffer {
   function chunk(type: string, data: Buffer): Buffer {

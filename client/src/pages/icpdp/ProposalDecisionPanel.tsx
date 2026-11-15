@@ -20,6 +20,7 @@ import {
 import { cn } from "@/utils/cn";
 import type { FundingDecision } from "@/services/sponsoredItems";
 
+// Chọn thông báo lỗi dịch được, dùng dự phòng nếu lỗi chung
 function resolveDecisionError(error: Error | null | undefined, fallback: string): string {
   if (!error) return fallback;
   if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
@@ -37,6 +38,7 @@ interface ProposalDecisionPanelProps {
 
 const ACTIVE_DEFENSE_STATES = new Set(["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"]);
 
+// Panel ICPDP quyết định đề xuất sự kiện: duyệt, từ chối, yêu cầu chỉnh sửa
 export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, onSuccess }: ProposalDecisionPanelProps) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -118,10 +120,12 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
     }
   }
 
+  // Bật/tắt mục đề xuất cần chỉnh sửa
   function toggleSection(section: EventReviewSection) {
     setSections((prev) => (prev.includes(section) ? prev.filter((item) => item !== section) : [...prev, section]));
   }
 
+  // Sửa lý do hoặc số tiền của một dòng ngân sách
   function editLine(index: number, change: { reason?: string }) {
     setAmounts((prev) => ({ ...prev, [index]: { ...prev[index], ...change } }));
   }
@@ -134,6 +138,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
 
   const approvedTotal = approvedAmounts.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
 
+  // Xác nhận rồi gửi quyết định về đề xuất sự kiện
   async function submitDecision() {
     if (!field.touchAll()) return;
     const prompt = outcome === "Approve"

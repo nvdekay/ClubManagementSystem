@@ -13,6 +13,7 @@ export interface PostEventReportDeps {
   access: ClubAccessRepository;
   auth: Pick<AuthRepository, "systemRoleCodes">;
 }
+// Kiểm quyền: CLB có quyền nộp báo cáo, hoặc ICPDP officer tài chính
 async function authorized(
   deps: PostEventReportDeps,
   actor: AccessActor | null,
@@ -29,6 +30,7 @@ async function authorized(
     );
   else await assertFinanceOfficer(deps.auth, actor);
 }
+// Liệt kê báo cáo sau sự kiện theo CLB hoặc cho ICPDP
 export async function listPostEventReports(
   deps: PostEventReportDeps,
   actor: AccessActor | null,
@@ -38,6 +40,7 @@ export async function listPostEventReports(
   await authorized(deps, actor, clubId, now);
   return deps.repo.list(clubId, now);
 }
+// Xem chi tiết báo cáo sau sự kiện
 export async function getPostEventReport(
   deps: PostEventReportDeps,
   actor: AccessActor | null,
@@ -50,6 +53,7 @@ export async function getPostEventReport(
   if (!detail) throw new DomainError("report event not found", "not_found");
   return detail;
 }
+// Thực hiện thao tác báo cáo sau sự kiện (lưu, nộp, nhận, quyết định, quá hạn)
 export async function actOnPostEventReport(
   deps: PostEventReportDeps,
   actor: AccessActor | null,

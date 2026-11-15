@@ -28,29 +28,35 @@ export const stateTones: Record<string, AppBadgeTone> = {
 
 /** States of the self-funded internal event lifecycle; proposals to ICPDP use the title-case states. */
 const internalStates = ["DRAFT", "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"];
+// Kiểm tra trạng thái có thuộc nhóm sự kiện nội bộ không
 export function isInternalState(state: string) {
   return internalStates.includes(state);
 }
 
+// Nhãn hiển thị của trạng thái sự kiện
 /** `clubEvents.PUBLIC` is the audience label, so the internal `PUBLIC` state has its own key. */
 export function stateLabel(t: TFunction, state: string) {
   return state === "PUBLIC" ? t("clubEvents.statePUBLIC") : t(`clubEvents.${state}`, { defaultValue: state });
 }
 
+// Đổi thời điểm ISO sang giờ Việt Nam cho ô nhập datetime-local
 export function localTime(value: string) {
   return new Date(new Date(value).getTime() + 7 * 3600000).toISOString().slice(0, 16);
 }
 
+// Đổi giá trị datetime-local (giờ Việt Nam) sang chuỗi ISO
 export function iso(value: string) {
   return new Date(`${value}:00+07:00`).toISOString();
 }
 
+// Kiểm tra số nguyên nằm trong khoảng cho phép, trả thông báo lỗi nếu sai
 export function numberError(t: TFunction, value: number, min: number, max: number) {
   if (!Number.isInteger(value)) return t("common.invalidNumber");
   if (value < min) return t("common.numberMin", { min });
   return value > max ? t("common.numberMax", { max }) : null;
 }
 
+// Nhãn của mục sự kiện bị yêu cầu chỉnh sửa khi review
 export function sectionLabel(t: TFunction, value: string) {
   switch (value) {
     case "schedule": return t("eventReviews.sectionschedule");
@@ -74,10 +80,12 @@ const CONSECUTIVE_SLOT_GAP_MS = 15 * 60_000;
 const TIMEZONE_OFFSET_MS = 7 * 3600_000;
 const DAY_MS = 86_400_000;
 
+// Tính chỉ số ngày theo múi giờ Việt Nam từ mốc thời gian
 function vietnamDayIndex(timeMs: number): number {
   return Math.floor((timeMs + TIMEZONE_OFFSET_MS) / DAY_MS);
 }
 
+// Gộp các khoảng thời gian liền kề hoặc chồng nhau thành một khoảng
 function mergeConsecutiveIntervals(intervals: readonly { startMs: number; endMs: number }[]) {
   if (!intervals.length) return [];
   const sorted = [...intervals].sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
@@ -95,6 +103,7 @@ function mergeConsecutiveIntervals(intervals: readonly { startMs: number; endMs:
   return merged;
 }
 
+// Kiểm tra các booking đã liên kết có phủ kín lịch sự kiện không
 /** Validates attached facility bookings against the selected property and event intervals on the client. */
 export function bookingsScheduleError(
   t: TFunction,

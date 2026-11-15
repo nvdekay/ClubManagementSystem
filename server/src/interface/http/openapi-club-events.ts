@@ -21,6 +21,7 @@ const Detail = z.object({ event: Event, versions: z.array(z.object({ revisionNo:
   budget: z.object({ state: z.string(), approvedTotal: z.number(), disbursedTotal: z.number() }).optional() });
 const Participant = z.object({ studentId: eventObjectId, name: z.string(), email: z.string(), registrationId: eventObjectId.optional(), state: z.string().optional(),
   waitlistPosition: z.number().optional(), attendanceId: eventObjectId.optional(), checkedInAt: date.optional(), method: z.string().optional(), abnormalFlags: z.array(z.string()), correctionReason: z.string().optional(), finalized: z.boolean() });
+// Tạo bộ response mẫu (200 kèm lỗi 400/401/403/409) cho endpoint sự kiện CLB
 function response(schema: z.ZodType, status = "200") {
   return { [status]: { description: "Success", content: { "application/json": { schema: z.object({ statusCode: z.number(), message: z.string(), data: schema, timestamp: date }) } } },
     "400": { description: "Invalid request" }, "401": { description: "Authentication required" }, "403": { description: "Permission required" }, "409": { description: "State or version conflict" } };

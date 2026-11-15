@@ -10,6 +10,7 @@ const require = createRequire(import.meta.url);
 const regularFont = require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans.ttf");
 const boldFont = require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans-Bold.ttf");
 
+// Escape một ô CSV và chặn CSV injection
 function csvCell(value: ExportCell): string {
   const raw = value === null ? "" : String(value);
   // Quote when needed, and neutralise spreadsheet formulas (CSV injection).
@@ -17,6 +18,7 @@ function csvCell(value: ExportCell): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replaceAll("\"", "\"\"")}"` : safe;
 }
 
+// Dựng file CSV (có BOM UTF-8) từ tiêu đề và bảng
 function csv(heading: string[], table: ExportTable): Buffer {
   const lines = [...heading.map((line) => csvCell(line)), "",
     table.columns.map(csvCell).join(","), ...table.rows.map((row) => row.map(csvCell).join(","))];
@@ -24,6 +26,7 @@ function csv(heading: string[], table: ExportTable): Buffer {
   return Buffer.from(`\uFEFF${lines.join("\r\n")}\r\n`, "utf8");
 }
 
+// Ghi tiêu đề và bảng dữ liệu vào một sheet Excel, cố định dòng header
 /** Title, heading lines, then the table with a frozen header; an empty table says so instead of looking broken. */
 function tableSheet(sheet: ExcelJS.Worksheet, title: string, heading: string[], table: ExportTable): void {
   sheet.addRow([title]).font = { bold: true, size: 14 };
@@ -39,6 +42,7 @@ function tableSheet(sheet: ExcelJS.Worksheet, title: string, heading: string[], 
   });
 }
 
+// Dựng file Excel một sheet từ bảng dữ liệu
 async function xlsx(title: string, heading: string[], table: ExportTable): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "UCMS";
@@ -47,6 +51,7 @@ async function xlsx(title: string, heading: string[], table: ExportTable): Promi
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
+// Dựng file Excel nhiều sheet kèm sheet mục lục "Thông tin"
 async function workbookOf(title: string, heading: string[],
   sheets: { name: string; title: string; table: ExportTable }[]): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
@@ -63,6 +68,7 @@ async function workbookOf(title: string, heading: string[],
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
+// Dựng file PDF khổ ngang chứa tiêu đề và bảng dữ liệu
 function pdf(title: string, heading: string[], table: ExportTable): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", layout: "landscape", margin: 32 });
@@ -82,6 +88,7 @@ function pdf(title: string, heading: string[], table: ExportTable): Promise<Buff
   });
 }
 
+// Vẽ bảng lên PDF, tự xuống trang và lặp lại dòng header
 function drawTable(doc: PDFKit.PDFDocument, table: ExportTable): void {
   const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const columnWidth = width / table.columns.length;
@@ -113,18 +120,22 @@ const CLASSIFICATION_LABEL: Record<Classification, string> = {
 };
 const TREND_LABEL: Record<Trend, string> = { UP: "Tăng", DOWN: "Giảm", STABLE: "Ổn định" };
 
+// Đổi mã học kỳ (SPRING...) thành tên viết hoa chữ đầu
 function seasonName(season: Season): string {
   return `${season.charAt(0)}${season.slice(1).toLowerCase()}`;
 }
 
+// Định dạng số tiền theo kiểu vi-VN kèm đơn vị đ
 function amount(value: number): string {
   return `${new Intl.NumberFormat("vi-VN").format(value)} đ`;
 }
 
+// Nối tên các CLB thành chuỗi, rỗng thì trả "không có"
 function names(items: { clubName: string }[]): string {
   return items.length ? items.map((item) => item.clubName).join(", ") : "không có";
 }
 
+// Định dạng điểm, null hiển thị dấu gạch
 function score(value: number | null): string {
   return value === null ? "–" : String(value);
 }
@@ -137,6 +148,7 @@ interface Block {
   closing?: string[];
 }
 
+// Dựng nội dung sáu phần báo cáo năm dùng chung cho PDF và Excel
 /** The six sections (ASM-AR-01) as text blocks and tables, shared by the pdf and the xlsx. */
 function annualContent({ report, achievements, remarks }: AnnualReportDocument) {
   const { overview, evaluation, dimensions, finance, compliance } = report;
@@ -207,6 +219,7 @@ function annualContent({ report, achievements, remarks }: AnnualReportDocument) 
   return { blocks, classified, criteria };
 }
 
+// Dựng file PDF báo cáo năm từ các khối nội dung
 function annualPdf(title: string, document: AnnualReportDocument): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", layout: "landscape", margin: 32 });
@@ -235,6 +248,7 @@ function annualPdf(title: string, document: AnnualReportDocument): Promise<Buffe
   });
 }
 
+// Thêm bảng có dòng header tô màu vào sheet Excel
 function addTable(sheet: ExcelJS.Worksheet, table: ExportTable): void {
   const header = sheet.addRow(table.columns);
   header.font = { bold: true };
@@ -242,6 +256,7 @@ function addTable(sheet: ExcelJS.Worksheet, table: ExportTable): void {
   for (const row of table.rows) sheet.addRow(row.map((cell) => cell ?? ""));
 }
 
+// Dựng file Excel báo cáo năm gồm các sheet Tổng quan, Xếp loại, Tiêu chí
 async function annualXlsx(title: string, document: AnnualReportDocument): Promise<Buffer> {
   const { blocks, classified, criteria } = annualContent(document);
   const workbook = new ExcelJS.Workbook();
@@ -270,8 +285,10 @@ async function annualXlsx(title: string, document: AnnualReportDocument): Promis
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
 
+// Tạo bộ ghi file export (CSV, Excel, PDF, workbook, báo cáo năm)
 export function exportFileWriter(): ExportFileWriter {
   return {
+    // Ghi một bảng dữ liệu ra file theo định dạng csv, xlsx hoặc pdf
     async write(format, title, heading, table) {
       switch (format) {
         case "csv": return { bytes: csv(heading, table), mimeType: "text/csv; charset=utf-8", extension: "csv" };
@@ -280,10 +297,12 @@ export function exportFileWriter(): ExportFileWriter {
         case "pdf": return { bytes: await pdf(title, heading, table), mimeType: "application/pdf", extension: "pdf" };
       }
     },
+    // Ghi nhiều bảng thành một workbook Excel nhiều sheet
     async writeWorkbook(title, heading, sheets) {
       return { bytes: await workbookOf(title, heading, sheets), extension: "xlsx",
         mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
     },
+    // Ghi báo cáo năm ra file PDF hoặc Excel
     async writeAnnual(format, title, document) {
       return format === "pdf"
         ? { bytes: await annualPdf(title, document), mimeType: "application/pdf", extension: "pdf" }

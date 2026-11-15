@@ -32,6 +32,7 @@ import type {
 } from "@/services/accountability";
 import { useConfirm } from "@/hooks/useConfirm";
 
+// Ánh xạ trạng thái báo cáo sự kiện sang key i18n
 function reportState(state: string): keyof typeof accountability.en {
   return (
     (
@@ -47,6 +48,7 @@ function reportState(state: string): keyof typeof accountability.en {
     )[state] ?? "state"
   );
 }
+// Hiển thị số liệu ngân sách và đề xuất chụp trong báo cáo
 function Figures({ figures }: { figures: ReportSnapshot }) {
   const { t, i18n } = useTranslation();
   const budget = figures.budget as {
@@ -134,6 +136,7 @@ function Figures({ figures }: { figures: ReportSnapshot }) {
     </div>
   );
 }
+// Chi tiết một báo cáo sau sự kiện: soạn, nộp, quyết định và lịch sử
 function ReportEditor({
   data,
   context,
@@ -182,6 +185,7 @@ function ReportEditor({
     latest?.state === "Submitted" &&
     (!latest.task?.assigneeId || latest.task.assigneeId === actorId);
   const claimed = latest?.task?.assigneeId === actorId;
+  // Gửi thao tác báo cáo (có xác nhận nếu cần) kèm revision hiện tại
   async function act(body: object, confirm = false) {
     if (
       confirm &&
@@ -203,6 +207,7 @@ function ReportEditor({
       /* Render mutation error. */
     }
   }
+  // Mở vi phạm từ phát hiện trong báo cáo
   async function finding() {
     if (!reasonField.touchAll() || !latest) return;
     try {
@@ -574,6 +579,7 @@ function ReportEditor({
     </div>
   );
 }
+// Workspace báo cáo sau sự kiện: danh sách nghĩa vụ và chi tiết (CLB hoặc ICPDP)
 export function ReportWorkspace({
   context,
 }: {

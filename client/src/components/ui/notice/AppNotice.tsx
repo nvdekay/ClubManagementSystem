@@ -10,6 +10,7 @@ interface AppNoticeProps {
   children?: ReactNode;
 }
 
+// Khung thông báo theo tone
 /** Flat inline message (error, empty state, hint) with a coloured left rule instead of a card. */
 export function AppNotice({ tone = "neutral", title, role, className, children }: AppNoticeProps) {
   return (

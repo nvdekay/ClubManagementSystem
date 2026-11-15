@@ -7,11 +7,13 @@ import {
 
 const propertiesKeyRoot = ["properties"] as const;
 
+// Query danh sách cơ sở vật chất
 export function useProperties(enabled: boolean) {
   return useQuery({ queryKey: [...propertiesKeyRoot, "catalogue"],
     queryFn: ({ signal }) => fetchProperties(signal), enabled, retry: false });
 }
 
+// Mutation tạo, sửa, bật/tắt hoặc xoá cơ sở vật chất, rồi làm mới cache
 /** The list is sorted server-side (active first, then code), so every change refetches it. */
 export function usePropertyAction() {
   const queryClient = useQueryClient();

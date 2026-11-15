@@ -35,6 +35,7 @@ import type {
 } from "@/services/accountability";
 import { useConfirm } from "@/hooks/useConfirm";
 
+// Ánh xạ trạng thái ngân sách sang key i18n
 function stateKey(state: string): keyof typeof accountability.en {
   return (
     (
@@ -51,6 +52,7 @@ function stateKey(state: string): keyof typeof accountability.en {
     )[state] ?? "state"
   );
 }
+// Ánh xạ hành động trong lịch sử quyết toán sang key i18n
 function historyKey(action: string): keyof typeof accountability.en {
   const suffix = action.replace(/^SETTLEMENT_/, "");
   return (
@@ -66,6 +68,7 @@ function historyKey(action: string): keyof typeof accountability.en {
     )[suffix] ?? "details"
   );
 }
+// Chi tiết một ngân sách: chi phí, minh chứng, quyết toán và đối soát
 function FinanceEditor({
   data,
   context,
@@ -154,6 +157,7 @@ function FinanceEditor({
     "Closed",
     "Cancelled",
   ].includes(data.eventState);
+  // Gửi thao tác tài chính (có xác nhận nếu cần) rồi đóng form
   async function act(body: object, confirm?: "submit" | "finalize") {
     if (
       confirm &&
@@ -179,6 +183,7 @@ function FinanceEditor({
       /* Render mutation error. */
     }
   }
+  // Mở form thêm hoặc sửa một khoản chi
   function edit(expense: Expense | "new") {
     setEditing(expense);
     expenseField.reset();
@@ -765,6 +770,7 @@ function FinanceEditor({
     </div>
   );
 }
+// Workspace tài chính sự kiện: chọn ngân sách và thao tác (CLB hoặc ICPDP)
 export function FinanceWorkspace({
   context,
   id = "",
@@ -775,6 +781,7 @@ export function FinanceWorkspace({
   const { t } = useTranslation();
   const auth = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  // Chọn ngân sách đang xem và lưu vào query string
   function setSelected(value: string) {
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous);

@@ -80,10 +80,12 @@ export interface BudgetDisbursementRepository {
 
 const closedEventStates = new Set(["Cancelled", "Rejected", "Expired"]);
 
+// Tính hạn quyết toán kể từ lúc sự kiện kết thúc
 export function settlementDueAt(eventEndAt: Date): Date {
   return new Date(eventEndAt.getTime() + SETTLEMENT_DUE_DAYS * DAY_MS);
 }
 
+// Xác định loại dòng tiền (tạm ứng, hoàn trả...) và mức tối đa ngân sách đang cho phép
 export function allowedFlow(budget: Pick<BudgetSummary, "state" | "approvedTotal" | "disbursedTotal"
   | "refundedTotal" | "settlementBalance" | "recoveryAmount" | "eventState">): AllowedFlow | undefined {
   if (budget.state === "Approved" || budget.state === "Disbursed") {
@@ -101,6 +103,7 @@ export function allowedFlow(budget: Pick<BudgetSummary, "state" | "approvedTotal
   return undefined;
 }
 
+// Từ chối dòng tiền mà ngân sách không thể nhận ở trạng thái hiện tại
 /** BR23 / BR26 / BR58: rejects a flow the budget cannot take in its current state. */
 export function checkFlow(budget: Parameters<typeof allowedFlow>[0] & Partial<Pick<BudgetSummary, "eventEndAt">>,
   flow: NormalizedBudgetFlow): void {
@@ -120,6 +123,7 @@ export function checkFlow(budget: Parameters<typeof allowedFlow>[0] & Partial<Pi
   }
 }
 
+// Tính trạng thái ngân sách sau khi ghi nhận dòng tiền
 /** What the budget becomes after the flow is recorded. */
 export function stateAfterFlow(budget: Pick<BudgetSummary, "state" | "refundedTotal" | "recoveryAmount">,
   flow: Pick<NormalizedBudgetFlow, "kind" | "amount">): string {

@@ -2,21 +2,25 @@ import type { AppNotification } from "@/services/notifications";
 
 type Rule = [RegExp, (item: AppNotification) => string | undefined];
 
+// Tạo hàm sinh link tới trang của CLB trong thông báo
 function club(path: string) {
   return function link(item: AppNotification): string | undefined {
     return item.clubId ? `/club/${encodeURIComponent(item.clubId)}${path}` : undefined;
   };
 }
 
+// Tạo hàm trả về link cố định
 function fixed(path: string) {
   return function link(): string { return path; };
 }
 
+// Link tới trang sự kiện của CLB, kèm id sự kiện nếu có
 function clubEvent(item: AppNotification): string | undefined {
   const path = club("/events")(item);
   return path && item.entityId ? `${path}?event=${encodeURIComponent(item.entityId)}` : path;
 }
 
+// Tạo hàm sinh link trang chi tiết theo entityId
 /** Detail page `base/<entityId>`, or the list when the row has no entity. */
 function detail(base: string) {
   return function link(item: AppNotification): string {
@@ -71,6 +75,7 @@ const rules: Rule[] = [
   [/^(BUDGET_|SETTLEMENT_|REFUND_)/, club("/budgets")],
 ];
 
+// Tìm trang mà một thông báo dẫn tới theo mã sự kiện
 /** Where a notification leads in the app, or undefined when there is no page for it. */
 export function notificationLink(item: AppNotification): string | undefined {
   const rule = rules.find(([pattern]) => pattern.test(item.eventCode));
@@ -84,11 +89,13 @@ const families = ["EVENT_REGISTRATION", "EVENT_PROPOSAL", "CLUB_APPLICATION", "B
 
 export type NotificationFamily = (typeof families)[number] | "OTHER";
 
+// Xác định nhóm chủ đề của mã thông báo
 /** Topic used for the fallback title of a code that has no title of its own. */
 export function notificationFamily(eventCode: string): NotificationFamily {
   return families.find((family) => eventCode === family || eventCode.startsWith(`${family}_`)) ?? "OTHER";
 }
 
+// Lấy chủ thể dễ đọc nhất trong payload thông báo
 /** The most specific human-readable subject in the payload (event title, club, period, room). */
 export function notificationSubject(item: AppNotification): string | undefined {
   for (const field of ["title", "eventTitle", "clubName", "periodCode", "propertyName", "semesterCode"]) {

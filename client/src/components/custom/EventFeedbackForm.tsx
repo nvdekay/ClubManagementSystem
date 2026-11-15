@@ -21,11 +21,13 @@ const MAX_COMMENT = 2000;
 const ratingWords = ["eventFeedback.ratingWord1", "eventFeedback.ratingWord2", "eventFeedback.ratingWord3",
   "eventFeedback.ratingWord4", "eventFeedback.ratingWord5"] as const;
 
+// Chọn từ mô tả tương ứng với số sao
 /** i18n key of the word shown next to a 1–5 rating. */
 function ratingWord(rating: number) {
   return ratingWords[Math.min(Math.max(rating, 1), 5) - 1]!;
 }
 
+// Xem lại phản hồi đã gửi của chính mình
 /** Read-only view of the author's own submission (stars, comment, date). */
 export function EventFeedbackSummary({ feedback }: { feedback: MyEventFeedback }) {
   const { t, i18n } = useTranslation();
@@ -53,6 +55,7 @@ interface EventFeedbackFormProps {
   onSubmitted?: (feedback: MyEventFeedback) => void;
 }
 
+// Form gửi phản hồi sự kiện: số sao, nhận xét và ẩn danh
 /** UC48: one immutable star rating + comment per checked-in attendee, optionally anonymous. */
 export function EventFeedbackForm({ eventId, closesAt, onSubmitted }: EventFeedbackFormProps) {
   const { t, i18n } = useTranslation();
@@ -70,6 +73,7 @@ export function EventFeedbackForm({ eventId, closesAt, onSubmitted }: EventFeedb
     comment: comment.trim() ? null : t("common.fieldRequired"),
   });
 
+  // Kiểm tra và gửi phản hồi sự kiện, chống gửi trùng
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || !auth.data || inFlight.current) return;

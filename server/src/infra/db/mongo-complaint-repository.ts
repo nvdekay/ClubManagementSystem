@@ -20,19 +20,24 @@ type Doc = Record<string, unknown>;
 const TASK = "COMPLAINT";
 const ENTITY = "Complaint";
 
+// Chuyển chuỗi id thành ObjectId (giữ nguyên nếu đã là ObjectId)
 function oid(value: string | Types.ObjectId): Types.ObjectId {
   return value instanceof Types.ObjectId ? value : new Types.ObjectId(value);
 }
+// Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
+// Trả Date nếu giá trị là Date, ngược lại undefined
 function optionalDate(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined;
 }
+// Chuẩn hóa danh sách minh chứng của khiếu nại
 function evidenceFrom(value: unknown): ComplaintEvidence[] {
   return Array.isArray(value) ? value.flatMap((item) => item && typeof item === "object"
     && typeof (item as Doc).url === "string" ? [{ label: String((item as Doc).label ?? ""), url: String((item as Doc).url) }] : []) : [];
 }
+// Ánh xạ dữ liệu phân loại (triage) khiếu nại
 function triageFrom(value: unknown): ComplaintTriage | undefined {
   if (!value || typeof value !== "object") return undefined;
   const doc = value as Doc;
@@ -40,12 +45,14 @@ function triageFrom(value: unknown): ComplaintTriage | undefined {
     outcome: doc.outcome as ComplaintTriage["outcome"], reason: String(doc.reason ?? ""), actorId: String(doc.actorId ?? ""),
     at: doc.at as Date };
 }
+// Ánh xạ phản hồi của CLB cho khiếu nại
 function responseFrom(value: unknown): ComplaintClubResponse | undefined {
   if (!value || typeof value !== "object") return undefined;
   const doc = value as Doc;
   return { text: String(doc.text ?? ""), action: String(doc.action ?? ""), evidence: evidenceFrom(doc.evidence), at: doc.at as Date };
 }
 
+// Repository khiếu nại về CLB: sinh viên gửi, ICPDP phân loại, CLB trả lời (UC50-UC52)
 export function mongoComplaintRepository(): ComplaintRepository {
   const complaints = m.complaints!;
   const tasks = m.approvalTasks!;
@@ -149,14 +156,17 @@ export function mongoComplaintRepository(): ComplaintRepository {
   }
 
   return {
+    // Lấy tên và trạng thái CLB bị khiếu nại
     async club(clubId) {
       const club = await m.clubs!.findById(oid(clubId)).select({ name: 1, state: 1 }).lean();
       return club ? { id: String(club._id), name: String(club.name), state: String(club.state) } : null;
     },
+    // Kiểm tra sự kiện thuộc CLB
     async eventBelongsToClub(eventId, clubId) {
       return Boolean(await m.events!.exists({ _id: oid(eventId), clubId: oid(clubId) }));
     },
 
+    // UC50: sinh viên gửi khiếu nại về một CLB
     async submit(input) {
       const id = new Types.ObjectId();
       await mongoose.connection.transaction(async (session) => {
@@ -177,10 +187,12 @@ export function mongoComplaintRepository(): ComplaintRepository {
       return (await base([(await complaints.findById(id).lean()) as Doc]))[0]!;
     },
 
+    // UC50: liệt kê khiếu nại của sinh viên
     async listMine(studentId) {
       return base(await complaints.find({ complainantId: oid(studentId) }).sort({ submittedAt: -1, _id: -1 }).limit(200).lean());
     },
 
+    // UC50: sinh viên rút khiếu nại chưa có quyết định
     async withdraw(studentId, complaintId, now) {
       let withdrawn: Doc | null = null;
       await mongoose.connection.transaction(async (session) => {
@@ -208,17 +220,20 @@ export function mongoComplaintRepository(): ComplaintRepository {
       return withdrawn ? (await base([withdrawn]))[0]! : null;
     },
 
+    // UC51: hàng đợi khiếu nại cho ICPDP, gom khiếu nại trùng vào bản gốc
     async queue(filter) {
       // Linked duplicates are shown inside their root (linkedComplaintIds), never as separate work.
       const docs = await complaints.find({ linkedComplaintId: null, ...(filter.state ? { state: filter.state } : {}) })
         .sort({ submittedAt: -1, _id: -1 }).limit(300).lean();
       return forIcpdp(docs);
     },
+    // UC51: ICPDP xem chi tiết một khiếu nại
     async findForIcpdp(complaintId) {
       const doc = await complaints.findById(oid(complaintId)).lean();
       return doc ? (await forIcpdp([doc as Doc]))[0]! : null;
     },
 
+    // UC51: ICPDP mở triage, gộp khiếu nại trùng và ra quyết định khiếu nại
     async decide(complaintId, officerId, decision, now) {
       const id = oid(complaintId);
       await mongoose.connection.transaction(async (session) => {
@@ -319,6 +334,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
       return icpdpDetail(id);
     },
 
+    // UC52: hộp thư khiếu nại đã chuyển xuống CLB
     async clubInbox(clubId) {
       // BR38: Submitted, Under Triage, Dismissed and Withdrawn complaints never reach the club.
       // Linked duplicates are answered through their root, so the club sees each incident once.
@@ -327,6 +343,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
       return forClub(docs);
     },
 
+    // UC52: CLB trả lời khiếu nại được chuyển xuống
     async respond(clubId, complaintId, actorId, response, now) {
       const id = oid(complaintId);
       await mongoose.connection.transaction(async (session) => {
@@ -352,6 +369,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
       return (await forClub([(await complaints.findById(id).lean()) as Doc]))[0]!;
     },
 
+    // Ghi nhận một lần khiếu nại CLB trả lời quá hạn và báo officer
     async flagOverdueResponses(now) {
       const overdue = await complaints.find({ state: "Forwarded", responseDueAt: { $lt: now }, linkedComplaintId: null })
         .select({ _id: 1 }).lean();

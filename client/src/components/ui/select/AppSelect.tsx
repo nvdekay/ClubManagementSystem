@@ -24,6 +24,7 @@ interface AppSelectProps<T> {
   fitWidth?: boolean;
 }
 
+// Mũi tên xuống của ô chọn
 function ChevronDownIcon() {
   return (
     <svg
@@ -41,6 +42,7 @@ function ChevronDownIcon() {
   );
 }
 
+// Dấu tick cho tuỳ chọn đang chọn
 function CheckIcon() {
   return (
     <svg
@@ -58,6 +60,7 @@ function CheckIcon() {
   );
 }
 
+// Ô chọn tuỳ biến, hỗ trợ bàn phím và gõ để tìm
 /**
  * Select-only combobox (WAI-ARIA APG). DOM focus stays on the list while it is open and
  * the highlighted option is reported through aria-activedescendant — the alternative,
@@ -103,6 +106,7 @@ export function AppSelect<T extends string | number>({
     listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, open]);
 
+  // Tính hướng mở và kích thước danh sách theo chỗ trống quanh nút
   /** Measures the room around the trigger so the list never runs off the bottom of the screen. */
   function place() {
     const rect = triggerRef.current?.getBoundingClientRect();
@@ -116,23 +120,27 @@ export function AppSelect<T extends string | number>({
       maxWidth: Math.max(rect.width, (right ? rect.right : window.innerWidth - rect.left) - 12) });
   }
 
+  // Mở danh sách và làm nổi bật tuỳ chọn đang chọn
   function openList() {
     place();
     setActiveIndex(selectedIndex < 0 ? 0 : selectedIndex);
     setOpen(true);
   }
 
+  // Đóng danh sách và trả focus về nút
   function close() {
     setOpen(false);
     triggerRef.current?.focus();
   }
 
+  // Chọn một tuỳ chọn rồi đóng danh sách
   function select(index: number) {
     if (!options[index] || options[index].disabled) return;
     onChange(options[index].value);
     close();
   }
 
+  // Gõ chữ để nhảy tới tuỳ chọn bắt đầu bằng chữ đó
   /** Highlights the next option whose label starts with the typed text; true when the key was consumed. */
   function typeahead(event: KeyboardEvent, from: number): boolean {
     if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return false;
@@ -155,6 +163,7 @@ export function AppSelect<T extends string | number>({
     return true;
   }
 
+  // Xử lý phím trên nút mở danh sách
   function onTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key.length === 1 && event.key !== " " && !event.ctrlKey && !event.metaKey && !event.altKey) {
       place();
@@ -167,6 +176,7 @@ export function AppSelect<T extends string | number>({
     openList();
   }
 
+  // Xử lý phím điều hướng và chọn trong danh sách
   function onListKeyDown(event: KeyboardEvent<HTMLUListElement>) {
     if (typeahead(event, activeIndex)) return;
     switch (event.key) {
@@ -260,6 +270,7 @@ export function AppSelect<T extends string | number>({
   );
 }
 
+// Chuẩn hoá chữ thường không dấu để so khớp khi gõ tìm
 /** Lower-cased and without Vietnamese diacritics, so typing "nguy" finds "Nguyễn". */
 function fold(text: string): string {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();

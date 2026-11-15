@@ -48,11 +48,13 @@ export interface RoomAllocationRepository {
 
 const OBJECT_ID = /^[0-9a-f]{24}$/i;
 
+// Kiểm tra và chuẩn hoá mã phân bổ phòng dạng ObjectId
 export function allocationId(value: string): string {
   if (typeof value !== "string" || !OBJECT_ID.test(value)) throw new DomainError("invalid room allocation identifier", "validation");
   return value.toLowerCase();
 }
 
+// Kiểm tra lý do thu hồi phân bổ phòng là bắt buộc và không quá dài
 export function allocationReason(value: unknown): string {
   if (typeof value !== "string" || !value.trim() || value.trim().length > 2000) {
     throw new DomainError("revoke reason is required (maximum 2000 characters)", "validation");
@@ -60,6 +62,7 @@ export function allocationReason(value: unknown): string {
   return value.trim();
 }
 
+// Kiểm tra dữ liệu yêu cầu phân bổ phòng theo học kỳ
 export function validateRoomAllocationInput(raw: RoomAllocationInput): RoomAllocationInput {
   const semesterCode = typeof raw.semesterCode === "string" ? raw.semesterCode.trim() : "";
   if (!semesterCode) throw new DomainError("semester is required", "validation");
@@ -71,12 +74,14 @@ export function validateRoomAllocationInput(raw: RoomAllocationInput): RoomAlloc
     weekday: raw.weekday, slot: raw.slot, ...(note ? { note } : {}) };
 }
 
+// Lấy ngày theo lịch Việt Nam và thứ trong tuần của một thời điểm
 /** Vietnam calendar day (YYYY-MM-DD) and ISO weekday of an instant. */
 function vietnamDay(at: Date): { day: string; weekday: number } {
   const local = new Date(at.getTime() + 7 * 3600000);
   return { day: local.toISOString().slice(0, 10), weekday: local.getUTCDay() || 7 };
 }
 
+// Liệt kê các buổi chưa diễn ra của slot hằng tuần trong học kỳ
 /** Every not-yet-started occurrence of the weekly slot inside the semester. */
 export function weeklySlotDates(semester: AcademicSemester, weekday: number, slotNumber: number,
   now: Date): Array<{ startAt: Date; endAt: Date }> {
@@ -95,6 +100,7 @@ export function weeklySlotDates(semester: AcademicSemester, weekday: number, slo
   return dates;
 }
 
+// Tính mức độ sử dụng phòng theo từng ô lịch từ các cam kết hiện có
 /**
  * UC58 A3: places each approved event or booking on the weekday × slot cells it would block, with the
  * same conflict rule the allocation uses, so the grid shows what E1 would reject before submitting.
@@ -116,6 +122,7 @@ export function roomOccupancy(commitments: readonly RoomAllocationConflict[], th
   return [...cells.values()].sort((a, b) => a.weekday - b.weekday || a.slot - b.slot);
 }
 
+// Kiểm tra phân bổ phòng theo danh mục, CLB và lịch học kỳ rồi lập kế hoạch các buổi
 /** Validates the allocation against catalogue, club and calendar rules; blackout dates are skipped. */
 export function planRoomAllocation(input: RoomAllocationInput, property: Property | null, club: RoomAllocationClub | null,
   calendar: readonly AcademicSemester[], now: Date): RoomAllocationPlan {

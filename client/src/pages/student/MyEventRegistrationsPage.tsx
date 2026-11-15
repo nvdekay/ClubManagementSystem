@@ -26,6 +26,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 type Filter = "active" | "attended" | "cancelled";
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Trang đăng ký sự kiện, điểm danh và phản hồi của sinh viên
 export function MyEventRegistrationsPage() {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -50,6 +51,7 @@ export function MyEventRegistrationsPage() {
   const deepLink = deepLinkEvent && objectId.test(deepLinkEvent)
     ? { eventId: deepLinkEvent, code: searchParams.get("code") ?? "" } : null;
 
+  // Xác nhận rồi hủy đăng ký sự kiện
   async function cancel(registration: EventRegistration) {
     if (!auth.data || inFlight.current || !(await askConfirm(t("eventRegistrations.cancelConfirm")))) return;
     inFlight.current = true;
@@ -64,6 +66,7 @@ export function MyEventRegistrationsPage() {
     }
   }
 
+  // Đóng hộp thoại check-in mở từ liên kết và xóa tham số URL
   function closeDeepLink() {
     setSearchParams((params) => {
       params.delete("checkin");
@@ -218,6 +221,7 @@ interface AttendanceRowProps {
   feedback: MyEventFeedback | undefined;
 }
 
+// Dòng một lần tham dự kèm form gửi phản hồi sự kiện
 function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -266,6 +270,7 @@ function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowP
   );
 }
 
+// Trạng thái trống có liên kết tới danh sách sự kiện
 function EmptyState({ message }: { message: string }) {
   const { t } = useTranslation();
   return (

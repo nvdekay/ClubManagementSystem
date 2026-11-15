@@ -23,6 +23,7 @@ const openCampaignStates = ["Published", "Accepting Applications"];
 const settledBudgetStates = ["Reconciled", "Closed", "Cancelled"];
 const ALERT_REPEAT_MS = 24 * 60 * 60 * 1000;
 
+// Ánh xạ dữ liệu đình chỉ CLB thành ClubSuspension
 function suspensionFrom(raw: unknown): ClubSuspension | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const value = raw as Doc;
@@ -31,6 +32,7 @@ function suspensionFrom(raw: unknown): ClubSuspension | undefined {
     ...(value.reminderSentAt instanceof Date ? { reminderSentAt: value.reminderSentAt } : {}) };
 }
 
+// Ánh xạ dữ liệu giải thể CLB thành ClubDissolution
 function dissolutionFrom(raw: unknown): ClubDissolution | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const value = raw as Doc;
@@ -43,6 +45,7 @@ function dissolutionFrom(raw: unknown): ClubDissolution | undefined {
       ? { outstanding: value.outstanding as OutstandingObligations } : {}) };
 }
 
+// Liệt kê ngân sách sự kiện của CLB chưa quyết toán xong
 /** UC15 E1: every budget of the club that has not reached reconciliation yet. */
 async function unreconciledBudgets(clubId: Types.ObjectId, session: ClientSession | null = null): Promise<UnreconciledBudget[]> {
   const budgets = await ucmsModels.eventBudgets!.find({ clubId, state: { $nin: settledBudgetStates } })
@@ -54,6 +57,7 @@ async function unreconciledBudgets(clubId: Types.ObjectId, session: ClientSessio
     state: String(item.state) }));
 }
 
+// Tổng hợp nghĩa vụ CLB còn dang dở (báo cáo quá hạn, nháp, sự kiện, ngân sách)
 /** UC15 step 6: what the club still owes when it is archived — open reports and unreconciled budgets. */
 async function outstandingObligations(clubId: Types.ObjectId, now: Date, session: ClientSession): Promise<OutstandingObligations> {
   const [overdue, drafts, completed, budgets] = await Promise.all([
@@ -78,14 +82,17 @@ async function outstandingObligations(clubId: Types.ObjectId, now: Date, session
     postEventReports, budgets };
 }
 
+// Lấy thông báo lỗi dạng chuỗi
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+// Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Repository vòng đời CLB: đình chỉ, kích hoạt lại, giải thể
 export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
   const m = ucmsModels;
 
@@ -149,9 +156,11 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
   }
 
   return {
+    // Liệt kê tóm tắt mọi CLB
     list() {
       return summaries({});
     },
+    // Lấy chi tiết CLB kèm đợt tuyển, sự kiện, nhiệm kỳ và ngân sách chưa quyết toán
     async detail(clubId, now) {
       const id = new Types.ObjectId(clubId);
       const [summary] = await summaries({ _id: id });
@@ -180,6 +189,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           ...(item.actorId ? { actorName: actorName.get(String(item.actorId)) ?? String(item.actorId) } : {}),
           at: item.at as Date })) };
     },
+    // ICPDP đình chỉ CLB (có thể theo yêu cầu đình chỉ của CLB), ghi audit và thông báo
     async suspend(clubId, input, actorId, now) {
       return mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
@@ -217,6 +227,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         return result;
       });
     },
+    // ICPDP kích hoạt lại CLB đang Suspended
     async reactivate(clubId, reason, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
@@ -229,6 +240,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           { reason, automatic: actorId === null }, now);
       });
     },
+    // ICPDP quyết định giải thể CLB và lưu học kỳ có hiệu lực
     async decideDissolution(clubId, decision, now) {
       return mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
@@ -249,10 +261,12 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         return result;
       });
     },
+    // Lấy CLB Suspended sắp hết hạn đình chỉ chưa được nhắc
     suspensionsDueForReminder(now) {
       return summaries({ state: "Suspended", "suspension.until": { $ne: null, $lte: new Date(now.getTime() + SUSPENSION_REMINDER_MS), $gt: now },
         "suspension.reminderSentAt": { $exists: false } });
     },
+    // Đánh dấu đã nhắc hết hạn đình chỉ và thông báo officer
     async markReminded(clubId, officerIds, now) {
       await mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
@@ -264,9 +278,11 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           { clubName: club.name, until: (club.suspension as Doc | undefined)?.until }, now);
       });
     },
+    // Lấy CLB Suspended đã quá hạn đình chỉ
     expiredSuspensions(now) {
       return summaries({ state: "Suspended", "suspension.until": { $ne: null, $lte: now } });
     },
+    // Chuyển CLB đến hạn giải thể sang Dissolving
     async startDissolving(now) {
       const due = await m.clubs!.find({ state: { $in: ["Active", "Suspended"] },
         "dissolution.effectiveFrom": { $lte: now } }).select("_id state").lean();
@@ -289,6 +305,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
       }
       return result;
     },
+    // Hoàn tất giải thể CLB đến hạn và thông báo officer
     async completeDissolutions(now) {
       const due = await m.clubs!.find({ state: "Dissolving", "dissolution.effectiveTo": { $lte: now } })
         .select("_id name").lean();
@@ -341,6 +358,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
       return result;
     },
     officerIds,
+    // Cảnh báo ICPDP officer khi bước vòng đời CLB thất bại (chống lặp)
     async alertOfficers(alert, officers, now) {
       const clubId = alert.clubId ? new Types.ObjectId(alert.clubId) : null;
       const since = new Date(now.getTime() - ALERT_REPEAT_MS);

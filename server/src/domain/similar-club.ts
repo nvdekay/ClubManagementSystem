@@ -43,16 +43,19 @@ export const MAX_SIMILAR_CLUBS = 5;
 const MAX_SHARED_WORDS = 10;
 const collator = new Intl.Collator("vi");
 
+// Chuẩn hoá chuỗi về chữ thường không dấu để so sánh
 /** Lowercase, strip Vietnamese diacritics (`đ → d`), keep only letters/digits as word breaks. */
 function fold(value: string): string {
   return value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, " ").trim();
 }
 
+// Tách chuỗi thành các từ dùng để so sánh độ giống
 export function similarityWords(value: string): string[] {
   return fold(value).split(" ").filter((word) => word && !SIMILAR_CLUB_STOPWORDS.has(word));
 }
 
+// Tạo tập bigram ký tự từ tên
 function bigrams(name: string): Set<string> {
   const value = similarityWords(name).join(" ");
   if (value.length < 2) return new Set(value ? [value] : []);
@@ -61,6 +64,7 @@ function bigrams(name: string): Set<string> {
   return result;
 }
 
+// Tính hệ số Dice giữa hai tập
 function dice(left: Set<string>, right: Set<string>): number {
   if (!left.size || !right.size) return 0;
   let shared = 0;
@@ -68,10 +72,12 @@ function dice(left: Set<string>, right: Set<string>): number {
   return (2 * shared) / (left.size + right.size);
 }
 
+// Làm tròn điểm giống nhau về số nguyên
 function rounded(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+// Tính điểm giống nhau 0-100 giữa hai CLB theo tên, nội dung và lĩnh vực
 /** Score 0–100 = name 40 + content 40 + field 20; content counts as 0 when either side has no text. */
 export function similarityScore(subject: SimilaritySubject,
   candidate: SimilarityCandidate): Omit<SimilarClubHint, "level"> {
@@ -91,6 +97,7 @@ export function similarityScore(subject: SimilaritySubject,
       content: content === null ? null : rounded(content), field, sharedWords } };
 }
 
+// Gợi ý các CLB giống nhất từ mức MEDIUM trở lên, sắp xếp điểm cao trước
 /** Hints at or above MEDIUM, best first (ties by `vi` name order), at most five. */
 export function similarClubHints(subject: SimilaritySubject,
   candidates: readonly SimilarityCandidate[]): SimilarClubHint[] {

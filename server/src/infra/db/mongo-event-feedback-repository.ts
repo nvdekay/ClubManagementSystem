@@ -6,11 +6,13 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid feedback date in database");
   return value;
 }
 
+// Lấy điểm đánh giá tổng quát từ danh sách điểm tiêu chí
 function rating(scores: unknown): number {
   const overall = Array.isArray(scores)
     ? scores.find((item) => item && typeof item === "object" && (item as Doc).criterionCode === FEEDBACK_CRITERION)
@@ -18,6 +20,7 @@ function rating(scores: unknown): number {
   return Number((overall as Doc | undefined)?.score ?? 0);
 }
 
+// Ánh xạ feedback và sự kiện thành MyEventFeedback
 function map(feedback: Doc, event: Doc): MyEventFeedback {
   return { id: String(feedback._id), eventId: String(feedback.eventId), eventTitle: String(event.title),
     clubName: String(event.clubName ?? ""), rating: rating(feedback.scores),
@@ -25,6 +28,7 @@ function map(feedback: Doc, event: Doc): MyEventFeedback {
     isAnonymous: feedback.isAnonymous === true, submittedAt: date(feedback.submittedAt) };
 }
 
+// Repository phản hồi sau sự kiện của sinh viên (UC48)
 export function mongoEventFeedbackRepository(): EventFeedbackRepository {
   const events = ucmsModels.events!;
   const attendances = ucmsModels.attendances!;
@@ -32,6 +36,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
   const audits = ucmsModels.auditLogs!;
 
   return {
+    // Lấy sự kiện, điểm danh và feedback hiện có để xét điều kiện gửi phản hồi
     async target(eventId, studentId) {
       const eventObjectId = new Types.ObjectId(eventId);
       const studentObjectId = new Types.ObjectId(studentId);
@@ -48,6 +53,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
       };
     },
 
+    // UC48: ghi phản hồi của sinh viên đã tham dự sự kiện
     async submit(input) {
       const studentId = new Types.ObjectId(input.studentId);
       let id: Types.ObjectId | undefined;
@@ -76,6 +82,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
       return map(feedback, event);
     },
 
+    // Liệt kê phản hồi sự kiện của sinh viên
     async listMine(studentId) {
       const docs = await feedbacks.find({ studentId: new Types.ObjectId(studentId) })
         .sort({ submittedAt: -1, _id: -1 }).lean();

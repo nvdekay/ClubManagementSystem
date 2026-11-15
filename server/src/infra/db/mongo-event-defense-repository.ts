@@ -28,6 +28,7 @@ type Doc = Record<string, unknown>;
 const ACTIVE_STATES_ARRAY = [...ACTIVE_DEFENSE_STATES];
 const HOUR_MS = 60 * 60 * 1000;
 
+// Trả lý do phòng không dùng được (bảo trì, booking, sự kiện, phiên bảo vệ khác) hoặc undefined
 async function findRoomConflictInSession(
   propertyId: Types.ObjectId,
   startAt: Date,
@@ -78,6 +79,7 @@ async function findRoomConflictInSession(
   return undefined;
 }
 
+// Xác nhận officer là người được giao task thẩm định của sự kiện
 async function assertOfficerAssignee(
   eventId: Types.ObjectId,
   officerId: string,
@@ -99,6 +101,7 @@ async function assertOfficerAssignee(
   return { event, task };
 }
 
+// Queue thông báo cho danh sách người nhận (không trùng) trong transaction
 async function notifyRecipients(
   recipientIds: Types.ObjectId[],
   eventCode: string,
@@ -126,6 +129,7 @@ async function notifyRecipients(
   );
 }
 
+// Repository phiên bảo vệ đề xuất sự kiện trước ICPDP
 export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepository): EventDefenseRepository {
   const sessions = m.eventDefenseSessions!;
   const events = m.events!;
@@ -140,6 +144,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
   }
 
   return {
+    // Liệt kê phòng còn trống trong khung giờ bảo vệ
     async listAvailableRooms(startAt, endAt, excludeDefenseId): Promise<AvailableDefenseRoom[]> {
       const overlap = { startAt: { $lt: endAt }, endAt: { $gt: startAt } };
       const [roomDocs, bookingDocs, eventDocs, defenseDocs] = await Promise.all([
@@ -185,12 +190,14 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       });
     },
 
+    // Lấy phiên bảo vệ mới nhất của sự kiện
     async getLiveSession(eventId): Promise<EventDefenseSession | null> {
       const id = oid(eventId);
       const doc = await sessions.findOne({ eventId: id }).sort({ createdAt: -1, _id: -1 }).lean();
       return doc ? mapDefenseSession(doc) : null;
     },
 
+    // Lấy phiên bảo vệ đang hoạt động và lịch sử cho góc nhìn CLB
     async getClubDefense(clubId, eventId): Promise<ClubEventDefenseView | null> {
       const id = oid(eventId);
       const event = await events.findOne({ _id: id, clubId: oid(clubId) })
@@ -209,6 +216,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       };
     },
 
+    // ICPDP lên lịch phiên bảo vệ (phòng, giờ), kiểm tra xung đột và thông báo CLB
     async schedule(eventId, officerId, input, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const actorId = oid(officerId);
@@ -307,6 +315,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(defenseId);
     },
 
+    // ICPDP hủy phiên bảo vệ chưa bắt đầu
     async cancel(eventId, officerId, reason, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const actorId = oid(officerId);
@@ -357,6 +366,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(updatedId!);
     },
 
+    // ICPDP phản hồi yêu cầu dời lịch bảo vệ của CLB
     async respondReschedule(eventId, officerId, input, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const actorId = oid(officerId);
@@ -468,6 +478,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(updatedId!);
     },
 
+    // ICPDP bắt đầu phiên bảo vệ (IN_PROGRESS)
     async start(eventId, officerId, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const actorId = oid(officerId);
@@ -505,6 +516,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(updatedId!);
     },
 
+    // Officer lưu ghi chú trong lúc phiên bảo vệ đang diễn ra
     async saveNote(eventId, officerId, content, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const actorId = oid(officerId);
@@ -542,6 +554,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(doc._id as Types.ObjectId);
     },
 
+    // ICPDP kết thúc phiên bảo vệ (DEFENDED)
     async end(eventId, officerId, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const actorId = oid(officerId);
@@ -576,6 +589,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(updatedId!);
     },
 
+    // ICPDP ghi nhận CLB vắng mặt buổi bảo vệ và từ chối đề xuất
     async markNoShow(eventId, officerId, reason, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const actorId = oid(officerId);
@@ -664,6 +678,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(updatedId!);
     },
 
+    // ICPDP ghi quyết định đề xuất sau khi bảo vệ xong
     async decideAfterDefense(eventId, officerId, input, now) {
       const id = oid(eventId);
       await mongoose.connection.transaction(async (session) => {
@@ -674,6 +689,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return updated;
     },
 
+    // CLB xác nhận lịch bảo vệ do ICPDP xếp
     async confirmByClub(clubId, eventId, actorId, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const userObjId = oid(actorId);
@@ -718,6 +734,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(updatedId!);
     },
 
+    // CLB yêu cầu dời lịch bảo vệ kèm lý do
     async requestRescheduleByClub(clubId, eventId, actorId, reason, now): Promise<EventDefenseSession> {
       const id = oid(eventId);
       const userObjId = oid(actorId);
@@ -770,6 +787,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
       return requireSessionById(updatedId!);
     },
 
+    // Cảnh báo lịch bảo vệ sắp tới mà CLB chưa xác nhận
     async alertOverdueConfirmations(now): Promise<number> {
       const cutoff = new Date(now.getTime() + DEFENSE_CONFIRM_NOTICE_HOURS * HOUR_MS);
       const unconfirmed = await sessions.find({

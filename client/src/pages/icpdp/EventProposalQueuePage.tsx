@@ -15,6 +15,7 @@ import { useEventProposalAction, useEventProposalQueue, useUploadProposalTemplat
 import { EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL } from "@/services/clubEvents";
 import { formatBytes, proposalFileType } from "@/utils/proposalFile";
 
+// Hàng đợi ICPDP các đề xuất sự kiện chờ xét duyệt
 export function EventProposalQueuePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export function EventProposalQueuePage() {
   const templateInput = useRef<HTMLInputElement>(null);
   const [templateError, setTemplateError] = useState<string | null>(null);
 
+  // Tải lên mẫu file đề xuất thay thế
   async function uploadTemplate(file: File | undefined) {
     if (!file || !auth.data) return;
     replaceTemplate.reset();
@@ -54,6 +56,7 @@ export function EventProposalQueuePage() {
     return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
   }
 
+  // Nhận đề xuất (claim) rồi mở trang xét duyệt
   async function open(eventId: string, takenElsewhere: boolean) {
     if (!auth.data) return;
     if (!takenElsewhere) {

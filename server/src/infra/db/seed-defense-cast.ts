@@ -15,6 +15,7 @@ export type CastMember = { email: string; name: string; overridden: boolean };
 
 export const DEMO_CLUB_NAME = "CLB Sáng tạo Công nghệ FPTU";
 
+// Đọc cast (email các vai demo) từ tham số dòng lệnh, có giá trị mặc định
 export function defenseCast(argv: string[] = process.argv.slice(2)): Record<CastRole, CastMember> {
   const cast = {} as Record<CastRole, CastMember>;
   for (const role of Object.keys(defaults) as CastRole[]) {

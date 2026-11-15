@@ -2,9 +2,11 @@ import { Types } from "mongoose";
 import type { EventFinanceRepository } from "../../domain/event-finance.js";
 import { mongoPostEventReportRepository } from "./mongo-post-event-report-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
+// Chuyển số thành Decimal128
 function decimal(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
+// Seed sự kiện demo Wave 4 (cân bằng, bổ sung, hoàn trả, huỷ) cho báo cáo sau sự kiện
 /** Creates only owned demo fixtures; an existing fixture is never reset after a user action. */
 export async function seedWave4(
   owner: Types.ObjectId,

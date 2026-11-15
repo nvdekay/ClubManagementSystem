@@ -14,6 +14,7 @@ interface AppDialogProps {
   footer?: ReactNode;
 }
 
+// Hộp thoại modal dựa trên thẻ dialog
 /** Modal on the native <dialog>: focus trap, Esc and top layer come from the browser. */
 export function AppDialog({ open, title, onClose, closeLabel, className, children, footer }: AppDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);

@@ -20,6 +20,7 @@ interface DashboardTaskListProps {
   variant?: "attention" | "neutral";
 }
 
+// Danh sách việc cần xử lý trên dashboard, kèm số lượng từng việc
 /** Status rows for overdue or owed work: an icon and the count carry the state, never color alone. */
 export function DashboardTaskList({ title, description, tasks, variant = "attention" }: DashboardTaskListProps) {
   const { t } = useTranslation();

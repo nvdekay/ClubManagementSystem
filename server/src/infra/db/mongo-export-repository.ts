@@ -10,41 +10,50 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Định dạng ngày giờ theo múi giờ Việt Nam cho ô export
 function date(value: unknown): ExportCell {
   return value instanceof Date ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short",
     timeZone: "Asia/Ho_Chi_Minh" }).format(value) : null;
 }
 
+// Chuyển giá trị tiền thành số cho ô export
 function money(value: unknown): ExportCell {
   return value === undefined || value === null ? null : Number(String(value));
 }
 
+// Lấy chuỗi không rỗng, ngược lại null
 function text(value: unknown): ExportCell {
   return typeof value === "string" && value ? value : null;
 }
 
+// Chuyển sang số hữu hạn, không hợp lệ thì undefined
 function optionalNumber(value: unknown): number | undefined {
   if (value === undefined || value === null) return undefined;
   const parsed = Number(String(value));
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+// Ép giá trị về object thường, ngược lại object rỗng
 function object(value: unknown): Doc {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Doc : {};
 }
 
+// Dựng điều kiện khoảng thời gian from/to của bộ lọc export
 function range(filter: ExportFilter): Record<string, Date> | null {
   if (!filter.from && !filter.to) return null;
   return { ...(filter.from ? { $gte: filter.from } : {}), ...(filter.to ? { $lte: filter.to } : {}) };
 }
 
+// Dựng điều kiện lọc theo CLB của bộ lọc export
 function club(filter: ExportFilter): Doc {
   return filter.clubId ? { clubId: new Types.ObjectId(filter.clubId) } : {};
 }
 
+// Repository xuất dữ liệu báo cáo của ICPDP từ MongoDB
 export function mongoExportRepository(): ExportRepository {
   const models = ucmsModels;
 
+  // Tra tên theo danh sách id trong collection clubs, users hoặc events
   async function names(ids: unknown[], model: "clubs" | "users" | "events") {
     const valid = [...new Set(ids.filter(Boolean).map(String))].map((value) => new Types.ObjectId(value));
     const docs = valid.length ? await models[model]!.find({ _id: { $in: valid } })
@@ -52,6 +61,7 @@ export function mongoExportRepository(): ExportRepository {
     return new Map(docs.map((doc) => [String(doc._id), doc as Doc]));
   }
 
+  // Bảng export danh sách CLB kèm số thành viên
   async function clubsTable(filter: ExportFilter): Promise<ExportTable> {
     const docs = await models.clubs!.find({
       ...(filter.clubId ? { _id: new Types.ObjectId(filter.clubId) } : {}),
@@ -68,6 +78,7 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
+  // Bảng export thành viên theo CLB và kỳ lọc
   async function membersTable(filter: ExportFilter): Promise<ExportTable> {
     // In a period: members who joined before it ended and had not left before it started.
     const docs = await models.clubMemberships!.find({
@@ -86,6 +97,7 @@ export function mongoExportRepository(): ExportRepository {
     return { columns: ["CLB", "Họ tên", "Email", "Trạng thái", "Vai trò", "Ngày tham gia", "Ngày rời"], rows };
   }
 
+  // Bảng export sự kiện kèm số lượng đăng ký
   async function eventsTable(filter: ExportFilter): Promise<ExportTable> {
     const window = range(filter);
     const docs = await models.events!.find({
@@ -115,6 +127,7 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
+  // Truy vấn ngân sách sự kiện theo bộ lọc export
   /** FINANCE and CLUB_BUDGETS read the same budgets, so their totals always agree. */
   function budgets(filter: ExportFilter) {
     const window = range(filter);
@@ -124,6 +137,7 @@ export function mongoExportRepository(): ExportRepository {
     }).sort({ createdAt: 1 }).lean();
   }
 
+  // Bảng export tài chính sự kiện kèm đối soát
   async function financeTable(filter: ExportFilter): Promise<ExportTable> {
     const docs = await budgets(filter);
     const [clubs, events, reconciliations] = await Promise.all([
@@ -141,6 +155,7 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
+  // Bảng export tổng hợp ngân sách theo từng CLB
   async function clubBudgetsTable(filter: ExportFilter): Promise<ExportTable> {
     const docs = await budgets(filter);
     const columns = ["CLB", "Số ngân sách", "Tổng được duyệt", "Tổng đã giải ngân", "Chi thực tế đã quyết toán",
@@ -165,6 +180,7 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
+  // Bảng export vi phạm và phản hồi/khiếu nại
   async function complianceTable(filter: ExportFilter): Promise<ExportTable> {
     const window = range(filter);
     const feedbackOnly = filter.status === "Submitted";
@@ -200,6 +216,7 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
+  // BR30/BR61: bảng export kết quả đánh giá đã Published
   async function evaluationsTable(filter: ExportFilter): Promise<ExportTable> {
     const window = range(filter);
     // BR30/BR61: only published results; the latest published revision per club and period.
@@ -237,16 +254,20 @@ export function mongoExportRepository(): ExportRepository {
   };
 
   return {
+    // Dựng bảng export theo loại dữ liệu
     table(type, filter) {
       return tables[type](filter);
     },
+    // Danh sách CLB (id, tên) cho bộ lọc export
     async clubs() {
       const docs = await models.clubs!.find().select("name").sort({ name: 1 }).collation({ locale: "vi" }).lean();
       return docs.map((doc) => ({ id: String(doc._id), name: String(doc.name) }));
     },
+    // Mã các kỳ đã có kết quả đánh giá Published
     async publishedPeriodCodes() {
       return (await models.evaluations!.distinct("periodCode", { state: "Published" })).map(String);
     },
+    // Nguồn dữ liệu tổng hợp theo năm từ đánh giá Published và báo cáo Accepted
     async annualSource(inYear) {
       const [evaluationCodes, reportCodes] = await Promise.all([
         models.evaluations!.distinct("periodCode", { state: "Published" }),
@@ -308,6 +329,7 @@ export function mongoExportRepository(): ExportRepository {
           ...(doc.createdAt instanceof Date ? { createdAt: doc.createdAt } : {}) })),
       };
     },
+    // Ghi audit log DATA_EXPORTED cho mỗi lần export
     async audit(input) {
       await models.auditLogs!.create({ entityType: "DataExport", entityId: new Types.ObjectId(),
         action: "DATA_EXPORTED", actorId: new Types.ObjectId(input.actorId), actorRole: "ICPDP_OFFICER",

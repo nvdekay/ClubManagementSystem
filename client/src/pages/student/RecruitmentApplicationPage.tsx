@@ -23,6 +23,7 @@ import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
 import { isHttpUrl } from "@/utils/validation";
 
+// Nhãn đã dịch của trạng thái hồ sơ ứng tuyển
 function stateLabel(state: RecruitmentApplication["state"], t: TFunction): string {
   switch (state) {
     case "Draft": return t("recruitmentApplications.stateDraft");
@@ -38,6 +39,7 @@ function stateLabel(state: RecruitmentApplication["state"], t: TFunction): strin
   }
 }
 
+// Màu badge theo trạng thái hồ sơ ứng tuyển
 function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
   if (state === "Accepted" || state === "Onboarded") return "success";
   if (state === "Rejected" || state === "Declined") return "danger";
@@ -46,10 +48,12 @@ function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
   return "info";
 }
 
+// Kiểm tra giá trị có phải hồ sơ ứng tuyển hay không
 function isApplication(value: unknown): value is RecruitmentApplication {
   return Boolean(value && typeof value === "object" && "id" in value && "attachments" in value);
 }
 
+// Trang sinh viên điền, lưu nháp, nộp và rút hồ sơ ứng tuyển vào CLB
 export function RecruitmentApplicationPage() {
   const { campaignId } = useParams();
   const { t, i18n } = useTranslation();
@@ -88,6 +92,7 @@ export function RecruitmentApplicationPage() {
     return [field.key, field.required && field.type === "url" && typeof answer === "string" && !isHttpUrl(answer) ? t("common.invalidUrl") : null];
   })));
 
+  // Cập nhật câu trả lời của một câu hỏi trong form
   function changeAnswer(key: string, value: RecruitmentAnswer) {
     if (!campaign) return;
     setFormState((current) => ({ campaignId: campaign.id,
@@ -96,6 +101,7 @@ export function RecruitmentApplicationPage() {
     setNotice("");
   }
 
+  // Tạo hồ sơ nháp nếu chưa có và trả mã hồ sơ
   async function ensureApplication(): Promise<string | null> {
     if (!auth.data || !campaign) return null;
     if (application) return application.id;
@@ -111,6 +117,7 @@ export function RecruitmentApplicationPage() {
     }
   }
 
+  // Lưu bản nháp hồ sơ ứng tuyển
   async function saveDraft(): Promise<string | null> {
     if (!auth.data || !campaign) return null;
     setPageError("");
@@ -129,6 +136,7 @@ export function RecruitmentApplicationPage() {
     }
   }
 
+  // Tải tệp đính kèm lên cho một câu hỏi của form
   async function upload(fieldKey: string, file: File | undefined) {
     if (!auth.data || !campaign || !file) return;
     const field = campaign.formSchema.find((item) => item.key === fieldKey);
@@ -147,6 +155,7 @@ export function RecruitmentApplicationPage() {
     }
   }
 
+  // Xác nhận rồi nộp hồ sơ ứng tuyển
   async function submit() {
     if (!auth.data || !campaign || submitting.current) return;
     // Check answers before asking to confirm, so nothing is created for an incomplete form.
@@ -176,6 +185,7 @@ export function RecruitmentApplicationPage() {
     }
   }
 
+  // Xác nhận rồi rút hồ sơ ứng tuyển
   async function withdraw() {
     if (!auth.data || !application || !(await askConfirm(t("recruitmentApplications.withdrawConfirm")))) return;
     setPageError("");
@@ -189,6 +199,7 @@ export function RecruitmentApplicationPage() {
     }
   }
 
+  // Tải tệp đính kèm của hồ sơ qua URL có chữ ký
   async function download(attachmentId: string) {
     if (!application) return;
     try {

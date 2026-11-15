@@ -115,6 +115,7 @@ const docsHtml = `<!doctype html>
 </body>
 </html>`;
 
+// Dựng ứng dụng Express, chỉ mount route khi đủ dependency và lọc OpenAPI theo route đã mount
 export function buildApp(deps: {
   auth?: AuthRouteDeps;
   accessDenialAudit?: AccessDenialAuditRepository;
@@ -180,6 +181,7 @@ export function buildApp(deps: {
   });
   app.use(requestLogger); // before body parsing, so requests the parser rejects still get a log line
   app.use(express.json({ limit: "15mb" }));
+  // Endpoint health check, trả 503 khi database chưa sẵn sàng
   app.get("/api/v1/health", (_req, res) => {
     const ok = deps.dbReady(); // 503 when the DB is down, so orchestrators stop routing here
     res.status(ok ? 200 : 503).json({ ok });
@@ -461,9 +463,11 @@ export function buildApp(deps: {
       return true;
     }));
   const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths });
+  // Phục vụ tài liệu OpenAPI JSON của các route đang mount
   app.get("/docs/openapi.json", (_req, res) => {
     res.type("json").send(availableDocumentJson);
   });
+  // Phục vụ trang tài liệu API /docs
   app.get("/docs", (_req, res) => {
     res.type("html").send(docsHtml);
   });

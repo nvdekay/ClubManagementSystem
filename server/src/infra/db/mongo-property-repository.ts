@@ -7,6 +7,7 @@ import {
 } from "../../domain/property.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ánh xạ document sang Property
 function propertyFrom(doc: Record<string, unknown>): Property {
   return {
     id: String(doc._id), code: String(doc.code), name: String(doc.name),
@@ -22,15 +23,18 @@ function propertyFrom(doc: Record<string, unknown>): Property {
   };
 }
 
+// Kiểm tra lỗi trùng khoá Mongo (mã tài sản trùng)
 function duplicateCode(error: unknown): boolean {
   return error instanceof mongoose.mongo.MongoServerError && error.code === 11000;
 }
 
+// Repository danh mục tài sản (phòng, thiết bị) do ICPDP quản lý
 export function mongoPropertyRepository(): PropertyRepository {
   const properties = ucmsModels.properties!;
   const bookings = ucmsModels.propertyBookings!;
   const audits = ucmsModels.auditLogs!;
 
+  // Ghi audit log cho tài sản
   async function audit(session: ClientSession, id: unknown, action: string, actorId: string,
     before: unknown, after: unknown, at: Date): Promise<void> {
     await audits.create([{ entityType: "Property", entityId: new Types.ObjectId(String(id)), action,
@@ -38,6 +42,7 @@ export function mongoPropertyRepository(): PropertyRepository {
       correlationId: randomUUID(), at }], { session });
   }
 
+  // Lấy document tài sản hiện tại, không có thì báo not_found
   async function current(id: string, session: ClientSession) {
     const doc = await properties.findById(new Types.ObjectId(id)).session(session).lean();
     if (!doc) throw new DomainError("property not found", "not_found");
@@ -45,14 +50,17 @@ export function mongoPropertyRepository(): PropertyRepository {
   }
 
   return {
+    // Liệt kê tài sản, đang hoạt động trước
     async list() {
       const docs = await properties.find().sort({ isActive: -1, code: 1 }).lean();
       return docs.map(propertyFrom);
     },
+    // Lấy một tài sản theo id
     async find(id) {
       const doc = await properties.findById(new Types.ObjectId(id)).lean();
       return doc ? propertyFrom(doc) : null;
     },
+    // Tạo tài sản mới với mã tự sinh theo loại
     async create(input, actorId, now) {
       for (let attempt = 0; attempt < 5; attempt += 1) {
         const prefix = PROPERTY_CODE_PREFIX[input.type];
@@ -71,6 +79,7 @@ export function mongoPropertyRepository(): PropertyRepository {
       }
       throw new DomainError("could not allocate a property code; retry", "conflict");
     },
+    // Cập nhật thông tin tài sản
     async update(id, details, actorId, now) {
       return mongoose.connection.transaction(async (session) => {
         const before = await current(id, session);
@@ -81,6 +90,7 @@ export function mongoPropertyRepository(): PropertyRepository {
         return propertyFrom(updated!);
       });
     },
+    // Bật hoặc tắt trạng thái hoạt động của tài sản
     async setActive(id, isActive, actorId, now) {
       return mongoose.connection.transaction(async (session) => {
         const before = await current(id, session);
@@ -93,9 +103,11 @@ export function mongoPropertyRepository(): PropertyRepository {
         return propertyFrom(updated!);
       });
     },
+    // Kiểm tra tài sản đã có booking chưa
     async hasBookings(id) {
       return Boolean(await bookings.exists({ propertyId: new Types.ObjectId(id) }));
     },
+    // Xoá tài sản nếu chưa có booking
     async remove(id, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const before = await current(id, session);

@@ -139,6 +139,7 @@ export type FoundingIssue =
   | "proposal" | "logo" | "foundersTooFew" | "applicantNotFounder" | "duplicateFounder"
   | "leaderCount" | "viceLeaderCount";
 
+// Liệt kê các điểm còn thiếu của hồ sơ thành lập CLB trước khi nộp
 /**
  * Everything that blocks submitting a founding application, so the review step can point at each
  * gap instead of failing on the first one. Catalog and cross-club checks live in the use case.
@@ -166,6 +167,7 @@ export function foundingSubmissionIssues(draft: ClubApplicationDraft, applicantI
   return issues;
 }
 
+// Ném lỗi validation nếu hồ sơ thành lập CLB chưa đủ điều kiện nộp
 export function validateClubApplicationSubmission(draft: ClubApplicationDraft, applicantId: string,
   requirements: FoundingRequirements): void {
   const issues = foundingSubmissionIssues(draft, applicantId, requirements);

@@ -7,6 +7,7 @@ interface AppSparklineProps {
   className?: string;
 }
 
+// Đường xu hướng nhỏ trong ô số liệu
 /** Decorative trend line inside a stat tile; the tile's number and hint carry the meaning in text. */
 export function AppSparkline({ values, highlight = values.length - 1, className }: AppSparklineProps) {
   if (values.length < 2) return null;

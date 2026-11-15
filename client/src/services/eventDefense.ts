@@ -150,6 +150,7 @@ interface DefenseErrorDescriptor {
   params?: Record<string, string | number>;
 }
 
+// Ánh xạ lỗi buổi bảo vệ sang key i18n và tham số hiển thị
 function resolveDefenseErrorDescriptor(rawMessage: string, statusCode?: number): DefenseErrorDescriptor {
   const normalized = rawMessage.trim();
   const earlyStart = /^defense can only start at most (\d+) minutes before the scheduled start time$/i.exec(normalized);
@@ -202,6 +203,7 @@ function resolveDefenseErrorDescriptor(rawMessage: string, statusCode?: number):
   }
 }
 
+// Thay các placeholder {{name}} trong mẫu bằng tham số
 function interpolateTemplate(template: string, params?: Record<string, string | number>): string {
   if (!params) return template;
   return template.replace(/\{\{(\w+)\}\}/g, (_match, name: string) => (
@@ -236,6 +238,7 @@ export class EventDefenseError extends ApiError {
   }
 }
 
+// Gọi API /api/v1 của buổi bảo vệ, ném lỗi đã chuẩn hoá nếu thất bại
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
@@ -259,6 +262,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit JSON có CSRF cho phương thức cho trước
 function jsonMutation(method: "POST" | "PUT", csrfToken: string, body?: object): RequestInit {
   return {
     method,
@@ -267,6 +271,7 @@ function jsonMutation(method: "POST" | "PUT", csrfToken: string, body?: object):
   };
 }
 
+// GET /admin/event-defense/rooms: phòng còn trống cho buổi bảo vệ
 export function fetchAvailableDefenseRooms(
   startAt: string,
   durationMinutes: number,
@@ -281,6 +286,7 @@ export function fetchAvailableDefenseRooms(
   return request(`/admin/event-defense/rooms?${params.toString()}`, { signal });
 }
 
+// POST /defense/schedule: ICPDP xếp lịch bảo vệ sự kiện
 export function scheduleEventDefense(
   eventId: string,
   input: ScheduleDefenseInput,
@@ -289,6 +295,7 @@ export function scheduleEventDefense(
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/schedule`, jsonMutation("POST", csrfToken, input));
 }
 
+// POST /defense/cancel: huỷ lịch bảo vệ
 export function cancelEventDefense(
   eventId: string,
   reason: string,
@@ -297,6 +304,7 @@ export function cancelEventDefense(
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/cancel`, jsonMutation("POST", csrfToken, { reason }));
 }
 
+// POST /defense/respond-reschedule: ICPDP phản hồi yêu cầu đổi lịch của CLB
 export function respondDefenseReschedule(
   eventId: string,
   input: RespondRescheduleInput,
@@ -305,14 +313,17 @@ export function respondDefenseReschedule(
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/respond-reschedule`, jsonMutation("POST", csrfToken, input));
 }
 
+// POST /defense/start: bắt đầu buổi bảo vệ
 export function startEventDefense(eventId: string, csrfToken: string): Promise<EventDefenseSession> {
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/start`, jsonMutation("POST", csrfToken, {}));
 }
 
+// GET /defense/session: phiên bảo vệ đang diễn ra
 export function fetchLiveDefenseSession(eventId: string, signal: AbortSignal): Promise<EventDefenseSession> {
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/session`, { signal });
 }
 
+// PUT /defense/notes: lưu ghi chú buổi bảo vệ
 export function saveDefenseNote(
   eventId: string,
   content: string,
@@ -321,10 +332,12 @@ export function saveDefenseNote(
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/notes`, jsonMutation("PUT", csrfToken, { content }));
 }
 
+// POST /defense/end: kết thúc buổi bảo vệ
 export function endEventDefense(eventId: string, csrfToken: string): Promise<EventDefenseSession> {
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/end`, jsonMutation("POST", csrfToken, {}));
 }
 
+// POST /defense/no-show: ghi nhận CLB vắng mặt
 export function markDefenseNoShow(
   eventId: string,
   reason: string | undefined,
@@ -333,6 +346,7 @@ export function markDefenseNoShow(
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/no-show`, jsonMutation("POST", csrfToken, reason ? { reason } : {}));
 }
 
+// POST /defense/decision: quyết định đề xuất sau bảo vệ
 export function decideAfterDefense(
   eventId: string,
   input: EventReviewDecisionInput,
@@ -341,6 +355,7 @@ export function decideAfterDefense(
   return request(`/admin/event-proposals/${encodeURIComponent(eventId)}/defense/decision`, jsonMutation("POST", csrfToken, input));
 }
 
+// GET thông tin buổi bảo vệ của sự kiện phía CLB
 export function fetchClubEventDefense(
   clubId: string,
   eventId: string,
@@ -349,6 +364,7 @@ export function fetchClubEventDefense(
   return request(`/clubs/${encodeURIComponent(clubId)}/events/${encodeURIComponent(eventId)}/defense`, { signal });
 }
 
+// POST /defense/confirm: CLB xác nhận lịch bảo vệ
 export function confirmClubEventDefense(
   clubId: string,
   eventId: string,
@@ -357,6 +373,7 @@ export function confirmClubEventDefense(
   return request(`/clubs/${encodeURIComponent(clubId)}/events/${encodeURIComponent(eventId)}/defense/confirm`, jsonMutation("POST", csrfToken, {}));
 }
 
+// POST /defense/reschedule-request: CLB xin đổi lịch bảo vệ
 export function requestClubDefenseReschedule(
   clubId: string,
   eventId: string,

@@ -30,6 +30,7 @@ interface ClubMemberStateDialogProps {
   onSaved: (message: string) => void;
 }
 
+// Hộp thoại đổi trạng thái thành viên CLB (Active, Inactive, ban...)
 /** UC21: change one member's status (effective today); a ban needs a reason. Mount it only while open. */
 export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: ClubMemberStateDialogProps) {
   const { t } = useTranslation();
@@ -45,6 +46,7 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
   const field = useFieldValidation({ reason: banned && !reason.trim() ? t("common.fieldRequired") : null });
   const name = member.displayName ?? "";
 
+  // Gửi yêu cầu đổi trạng thái thành viên kèm lý do
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || !auth.data || !target || inFlight.current || !event.currentTarget.reportValidity()) return;

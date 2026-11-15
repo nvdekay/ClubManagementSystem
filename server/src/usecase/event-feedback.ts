@@ -10,6 +10,7 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
 function student(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError(actor.lockReason || "account locked", "locked");
@@ -17,15 +18,18 @@ function student(actor: AccessActor | null): string {
   return actor.id;
 }
 
+// Kiểm định dạng id sự kiện
 function eventId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid event id", "validation");
   return value;
 }
 
+// Lấy số giờ cửa sổ feedback theo chính sách hiện hành
 async function windowHours(policy: PolicyRepository, now: Date): Promise<number | null> {
   return (await policy.findEffective(now))?.feedbackWindowHours ?? null;
 }
 
+// Cho biết sinh viên có thể gửi feedback sự kiện không và feedback đã gửi
 /** What the event page needs: whether the form may be shown (FR-01, E3) and the student's own record. */
 export async function getEventFeedbackContext(repo: EventFeedbackRepository, policy: PolicyRepository,
   actor: AccessActor | null, id: string, now: Date) {
@@ -37,6 +41,7 @@ export async function getEventFeedbackContext(repo: EventFeedbackRepository, pol
     opensAt: window.opensAt, closesAt: window.closesAt, feedback: target.feedback };
 }
 
+// Sinh viên đã điểm danh gửi feedback sự kiện trong cửa sổ cho phép
 export async function submitEventFeedback(repo: EventFeedbackRepository, policy: PolicyRepository,
   actor: AccessActor | null, id: string, input: { rating: number; comment: string; isAnonymous: boolean },
   now: Date) {
@@ -58,6 +63,7 @@ export async function submitEventFeedback(repo: EventFeedbackRepository, policy:
     clubId: target.attendance.clubId, ...valid, isAnonymous: input.isAnonymous, now });
 }
 
+// Sinh viên xem các feedback sự kiện mình đã gửi
 export async function listMyEventFeedback(repo: EventFeedbackRepository, actor: AccessActor | null) {
   return repo.listMine(student(actor));
 }

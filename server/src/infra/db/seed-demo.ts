@@ -58,6 +58,7 @@ const config = loadConfig();
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const now = new Date();
+// Thời điểm lệch offset mili giây so với hiện tại
 function at(offset: number): Date {
   return new Date(now.getTime() + offset);
 }
@@ -82,16 +83,19 @@ const students = [
   ["Mai Anh Tuấn", "anhtuan"],
 ] as const;
 
+// Tra CLB trong dữ liệu PDP theo mã, lỗi nếu chưa seed
 function club(code: string): { id: Types.ObjectId; name: string } {
   const found = pdpClubs.find((item) => item.code === code);
   if (!found) throw new Error(`PDP club ${code} missing — run npm run seed first`);
   return { id: new Types.ObjectId(found.id), name: found.name };
 }
 
+// Dựng actor Active từ id người dùng
 function actor(id: Types.ObjectId): AccessActor {
   return { id: id.toString(), accountState: "Active" };
 }
 
+// Chạy một bước seed, bỏ qua lỗi conflict, ném lỗi khác kèm nhãn
 /** Runs a step that may already have happened on a previous run (duplicate → conflict). */
 async function once(label: string, step: () => Promise<unknown>): Promise<void> {
   try {
@@ -136,6 +140,7 @@ try {
     throw new Error("PDP clubs are missing — run npm run seed first");
   }
 
+  // Lấy hoặc tạo người dùng theo email
   // ── Accounts ──────────────────────────────────────────────────────────────────────────────
   async function user(email: string, displayName: string): Promise<Types.ObjectId> {
     const existing = await ucmsModels.users!.findOne({ email }).select({ _id: 1 }).lean();
@@ -226,6 +231,7 @@ try {
   const access = mongoAccessRepository();
   const campaigns = mongoRecruitmentCampaignRepository();
   const recruitment = mongoRecruitmentApplicationRepository();
+  // Tạo và publish đợt tuyển của CLB demo
   async function campaign(code: string, leader: Types.ObjectId, title: string, positions: string[],
     criteria: string): Promise<string> {
     const { id: clubId } = club(code);
@@ -286,6 +292,7 @@ try {
   const clubFields = mongoClubFieldRepository();
   const cloudinary = optionalCloudinaryConfig(config);
   const storage = cloudinary ? cloudinaryApplicationFiles(cloudinary) : null;
+  // Tạo và nộp hồ sơ thành lập CLB demo kèm logo và đề án
   async function application(founder: Types.ObjectId, cofounders: Types.ObjectId[], clubName: string,
     fieldName: string, summary: string, objectives: string,
     logoColor: [number, number, number]): Promise<string | null> {
@@ -338,6 +345,7 @@ try {
       options: ["Chưa từng", "Đôi khi", "Thường xuyên"] },
     { key: "note", label: "Ghi chú cho ban tổ chức", type: "textarea", required: false },
   ];
+  // Tạo sự kiện demo của CLB ở trạng thái cho trước
   async function event(id: string, code: string, organizer: Types.ObjectId, input: {
     title: string; objective: string; startAt: Date; endAt: Date; venueText: string; capacity: number;
     waitlistEnabled: boolean; audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; state: "Upcoming" | "Ongoing" | "Completed" | "PUBLIC";
@@ -360,12 +368,14 @@ try {
     return eventId;
   }
   const registrations = mongoEventRegistrationRepository();
+  // Đăng ký danh sách sinh viên vào sự kiện
   async function register(eventId: Types.ObjectId, userIds: Types.ObjectId[]) {
     for (const userId of userIds) {
       await once("event registration", () => registerForEvent(registrations, policy, actor(userId), eventId.toString(),
         { phone: "0912345678", level: "Đôi khi" }, now));
     }
   }
+  // Ghi nhận danh sách sinh viên đã check-in sự kiện
   /** Attendance for events whose registration window is already over (no UI path can create these now). */
   async function attended(eventId: Types.ObjectId, clubCode: string, userIds: Types.ObjectId[], checkedInAt: Date) {
     const { id: clubId } = club(clubCode);
@@ -451,11 +461,13 @@ try {
   // ── Event proposals waiting for ICPDP (UC26; UC25 is the club side, so proposals are inserted) ──
   // Shape follows the UC25 data contract in .sdd/specs/feat-event-proposal-review/SPEC.md.
   type BudgetLine = { category: string; amount: number; purpose: string; plannedItems?: string };
+  // Dựng tài liệu đề án mẫu cho proposal sự kiện
   // Metadata only: the asset is not uploaded, so opening the demo file needs a real upload first.
   function demoProposalDocument(key: string, fileName: string, uploadedBy: Types.ObjectId, uploadedAt: Date): EventProposalDocument {
     return { id: `demo-proposal-${key}`, fileName, mimeType: "application/pdf", bytes: 48_000,
       assetId: `ucms/event-proposals/demo/${key}.pdf`, uploadedAt, uploadedBy: String(uploadedBy) };
   }
+  // Tạo proposal sự kiện demo ở trạng thái Pending Approval
   async function proposal(id: string, code: string, submittedBy: Types.ObjectId, input: {
     title: string; objective: string; plan: string; startAt: Date; hours: number; venueText: string; capacity: number;
     audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; riskCategory: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string;

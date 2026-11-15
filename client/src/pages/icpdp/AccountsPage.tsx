@@ -18,6 +18,7 @@ const PAGE_SIZE = 10;
 const columns = createColumnHelper<AppTableFeatures, AccountRow>();
 const emptyRows: AccountRow[] = [];
 
+// Trang ICPDP tìm kiếm, phân trang và mở quản lý tài khoản người dùng
 export function AccountsPage() {
   const { t } = useTranslation();
   // Search term and page move together: a new term always starts again from page 1.

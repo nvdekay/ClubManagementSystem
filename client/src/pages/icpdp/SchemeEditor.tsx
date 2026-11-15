@@ -19,6 +19,7 @@ interface Row {
   allowsManual: boolean;
 }
 
+// Lỗi nếu không phải số nguyên trong khoảng min–max, null nếu hợp lệ
 /** Whole number in [min, max], or the message saying why not. */
 function wholeNumberError(t: TFunction, value: string, min: number, max: number): string | null {
   if (!value.trim()) return t("common.fieldRequired");
@@ -37,6 +38,7 @@ interface SchemeEditorProps {
   onClose: () => void;
 }
 
+// Form chỉnh bộ tiêu chí đánh giá: chọn tiêu chí và trọng số
 export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSave, onClose }: SchemeEditorProps) {
   const { t } = useTranslation();
   const [rows, setRows] = useState<Record<string, Row>>(Object.fromEntries(catalogue.map((dimension) => {
@@ -56,10 +58,12 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
     fair: wholeNumberError(t, bands.fair, 1, (Number(bands.good) || 100) - 1),
   });
 
+  // Cập nhật dữ liệu của một tiêu chí
   function patch(code: DimensionCode, update: Partial<Row>) {
     setRows({ ...rows, [code]: { ...rows[code]!, ...update } });
   }
 
+  // Chia đều trọng số cho các tiêu chí được chọn
   /** Whole percents: the remainder goes to the first criteria so the total is exactly 100. */
   function spread() {
     const share = Math.floor(100 / included.length);
@@ -71,6 +75,7 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
     })));
   }
 
+  // Kiểm tra form rồi lưu bộ tiêu chí
   function save() {
     if (!field.touchAll()) return;
     onSave({

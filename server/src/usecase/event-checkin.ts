@@ -12,6 +12,7 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
 function student(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError(actor.lockReason || "account locked", "locked");
@@ -19,14 +20,17 @@ function student(actor: AccessActor | null): string {
   return actor.id;
 }
 
+// Lấy số giờ mở cửa sổ feedback theo chính sách hiện hành
 async function feedbackHours(policy: PolicyRepository, now: Date): Promise<number | null> {
   return (await policy.findEffective(now))?.feedbackWindowHours ?? null;
 }
 
+// Gắn thông tin cửa sổ feedback vào bản ghi điểm danh
 function view(attendance: Attendance, hours: number | null) {
   return { ...attendance, ...feedbackWindow(attendance, hours) };
 }
 
+// Sinh viên điểm danh sự kiện bằng mã, kiểm cửa sổ, đăng ký và đối tượng
 export async function checkInToEvent(repo: EventCheckInRepository, policy: PolicyRepository,
   actor: AccessActor | null, eventId: string, code: string, now: Date) {
   const studentId = student(actor);
@@ -57,6 +61,7 @@ export async function checkInToEvent(repo: EventCheckInRepository, policy: Polic
   return { ...view(result.attendance, await feedbackHours(policy, now)), alreadyCheckedIn: !result.created };
 }
 
+// Sinh viên xem lịch sử điểm danh của mình
 export async function listMyAttendances(repo: EventCheckInRepository, policy: PolicyRepository,
   actor: AccessActor | null, now: Date) {
   const studentId = student(actor);

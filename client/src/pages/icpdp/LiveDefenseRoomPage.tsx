@@ -17,6 +17,7 @@ import { ProposalDecisionPanel } from "@/pages/icpdp/ProposalDecisionPanel";
 import type { EventDefenseState } from "@/services/eventDefense";
 import { cn } from "@/utils/cn";
 
+// Chuyển markdown inline (đậm, nghiêng, code) thành phần tử React
 function renderInlineMarkdown(text: string): ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
   return parts.map((part, idx) => {
@@ -37,6 +38,7 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   });
 }
 
+// Xem trước nội dung markdown của biên bản
 function MarkdownPreview({ source, emptyText }: { source: string; emptyText: string }) {
   if (!source.trim()) {
     return <p className="text-sm text-muted-app">{emptyText}</p>;
@@ -82,6 +84,7 @@ function MarkdownPreview({ source, emptyText }: { source: string; emptyText: str
   );
 }
 
+// Chọn màu badge theo trạng thái buổi bảo vệ
 function defenseTone(state: EventDefenseState): AppBadgeTone {
   switch (state) {
     case "IN_PROGRESS":
@@ -99,10 +102,12 @@ function defenseTone(state: EventDefenseState): AppBadgeTone {
   }
 }
 
+// Trả về chuỗi nếu giá trị là chuỗi không rỗng
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
+// Chọn thông báo lỗi dịch được, dùng dự phòng nếu lỗi chung
 function resolveProposalError(error: Error | null | undefined, fallback: string): string {
   if (!error) return fallback;
   if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
@@ -111,6 +116,7 @@ function resolveProposalError(error: Error | null | undefined, fallback: string)
   return error.message || fallback;
 }
 
+// Trang phòng bảo vệ trực tiếp: bắt đầu, ghi biên bản, kết thúc hoặc no-show
 export function LiveDefenseRoomPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
@@ -218,6 +224,7 @@ export function LiveDefenseRoomPage() {
   const isInProgress = session.state === "IN_PROGRESS";
   const isEnded = session.state === "DEFENDED" || session.state === "NO_SHOW" || session.state === "CANCELLED";
 
+  // Bắt đầu buổi bảo vệ
   async function handleStart() {
     if (!id) return;
     resetDefenseMutation();
@@ -228,6 +235,7 @@ export function LiveDefenseRoomPage() {
     }
   }
 
+  // Xác nhận rồi kết thúc buổi bảo vệ
   async function handleEnd() {
     if (!id) return;
     if (!(await askConfirm(t("eventDefense.confirmEndDefense")))) return;
@@ -243,6 +251,7 @@ export function LiveDefenseRoomPage() {
     }
   }
 
+  // Xác nhận rồi ghi nhận CLB vắng mặt (no-show) buổi bảo vệ
   async function handleNoShow() {
     if (!id) return;
     if (!(await askConfirm(t("eventDefense.noShowWarning")))) return;

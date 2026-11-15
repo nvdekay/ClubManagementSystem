@@ -13,10 +13,12 @@ type Doc = Record<string, unknown>;
 const busyEventStates = ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"];
 const busyBookingStates = ["Approved", "In Use"];
 
+// Lấy chuỗi không rỗng, ngược lại undefined
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// Đếm lời mời theo từng trạng thái
 function counts(invitations: { status: InvitationStatus }[]): InvitationCounts {
   function of(status: InvitationStatus): number {
     return invitations.filter((item) => item.status === status).length;
@@ -25,6 +27,7 @@ function counts(invitations: { status: InvitationStatus }[]): InvitationCounts {
     expired: of("Expired"), withdrawn: of("Withdrawn") };
 }
 
+// Ánh xạ document lời mời sang EventInvitation
 function invitationFrom(doc: Doc): EventInvitation {
   return { id: String(doc._id), clubId: String(doc.clubId), clubName: String(doc.clubName),
     status: doc.status as InvitationStatus, deadline: doc.deadline as Date, invitedAt: doc.invitedAt as Date,
@@ -33,11 +36,13 @@ function invitationFrom(doc: Doc): EventInvitation {
     ...(doc.responseDetails !== undefined && doc.responseDetails !== null ? { responseDetails: doc.responseDetails } : {}) };
 }
 
+// Repository sự kiện cấp trường do ICPDP tổ chức
 export function mongoSchoolEventRepository(): SchoolEventRepository {
   const m = ucmsModels;
   const events = m.events!;
   const invitations = m.eventInvitations!;
 
+  // Dựng tóm tắt sự kiện trường kèm số lượng lời mời
   async function summaries(docs: Doc[]): Promise<SchoolEventSummary[]> {
     const ids = docs.map((doc) => doc._id);
     const [invitationDocs, properties] = await Promise.all([
@@ -60,6 +65,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
     });
   }
 
+  // Dựng chi tiết sự kiện trường kèm lời mời và phiên bản
   async function detail(id: Types.ObjectId): Promise<SchoolEventDetail | null> {
     const doc = await events.findOne({ _id: id, organizerType: "ICPDP" }).lean();
     if (!doc) return null;
@@ -82,12 +88,14 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
     };
   }
 
+  // Ghi audit log cho sự kiện trường
   async function audit(session: ClientSession, id: Types.ObjectId, action: string, officerId: string, after: unknown,
     now: Date): Promise<void> {
     await m.auditLogs!.create([{ entityType: "Event", entityId: id, action, actorId: new Types.ObjectId(officerId),
       actorRole: "ICPDP_OFFICER", after, correlationId: randomUUID(), at: now }], { session });
   }
 
+  // Tìm xung đột lịch của tài sản trong khung giờ sự kiện
   async function conflicts(propertyId: string | undefined, startAt: Date, endAt: Date, excludeEventId?: string,
     session?: ClientSession): Promise<ScheduleConflict[]> {
     if (!propertyId) return [];
@@ -107,6 +115,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
     ].sort((left, right) => left.startAt.getTime() - right.startAt.getTime());
   }
 
+  // Gửi lời mời tới các CLB và tạo thông báo
   /** Creates or re-opens invitations for Active clubs and tells each club board, inside the caller's transaction. */
   async function sendInvitations(session: ClientSession, event: Doc, invitation: NormalizedInvitation, officerId: string,
     now: Date): Promise<InvitationOutcome> {
@@ -149,18 +158,22 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
   }
 
   return {
+    // Liệt kê sự kiện trường, mới nhất trước
     async list() {
       return summaries(await events.find({ organizerType: "ICPDP" }).sort({ startAt: -1, _id: -1 }).lean());
     },
 
+    // Lấy chi tiết một sự kiện trường
     async find(id) {
       return detail(new Types.ObjectId(id));
     },
 
+    // Kiểm tra xung đột lịch của sự kiện trường
     async conflicts(propertyId, startAt, endAt, excludeEventId) {
       return conflicts(propertyId, startAt, endAt, excludeEventId);
     },
 
+    // ICPDP tạo sự kiện cấp trường kèm lời mời CLB
     async create(input, officerId, now) {
       const id = new Types.ObjectId();
       let outcome: InvitationOutcome = { invited: [], skipped: [] };
@@ -191,6 +204,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
       return { detail: (await detail(id))!, outcome };
     },
 
+    // Gửi thêm lời mời CLB tham gia sự kiện trường
     async invite(id, invitation, officerId, now) {
       const eventId = new Types.ObjectId(id);
       let outcome: InvitationOutcome = { invited: [], skipped: [] };
@@ -203,6 +217,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
       return { detail: (await detail(eventId))!, outcome };
     },
 
+    // Rút lời mời đã gửi cho CLB
     async withdraw(id, invitationId, officerId, now) {
       const eventId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
@@ -218,6 +233,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
       return (await detail(eventId))!;
     },
 
+    // Publish sự kiện trường đã Approved
     async publish(id, officerId, now) {
       const eventId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
@@ -232,6 +248,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
       return (await detail(eventId))!;
     },
 
+    // Chuyển lời mời Pending quá deadline sang Expired
     async expireInvitations(now) {
       const result = await invitations.updateMany({ status: "Pending", deadline: { $lte: now } },
         { $set: { status: "Expired", updatedAt: now } });

@@ -95,16 +95,19 @@ export class ExportRequestError extends ApiError {
   }
 }
 
+// Đổi response lỗi thành ExportRequestError
 async function failure(response: Response): Promise<never> {
   const body = (await response.json().catch(() => null)) as { message?: string } | null;
   throw new ExportRequestError(body?.message ?? `HTTP ${response.status}`, response.status);
 }
 
+// POST có CSRF tới /admin/exports và trả về response thô
 function post(path: string, csrfToken: string, body: object): Promise<Response> {
   return apiFetch(`/api/v1/admin/exports${path}`, { method: "POST", credentials: "same-origin",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
 }
 
+// GET /admin/exports/options: các loại dữ liệu và bộ lọc có thể xuất
 export async function fetchExportOptions(signal: AbortSignal): Promise<ExportOptions> {
   const response = await apiFetch("/api/v1/admin/exports/options", { signal, credentials: "same-origin" });
   if (!response.ok) return failure(response);
@@ -117,6 +120,7 @@ export interface ExportPreview {
   types: { type: ExportType; rowCount: number }[];
 }
 
+// POST /preview: xem trước dữ liệu sẽ xuất
 /** Several types: one xlsx, a sheet per type; csv/pdf and the status filter need exactly one (FR-UC55-12). */
 export async function previewExport(types: ExportType[], filter: ExportFilter, csrfToken: string): Promise<ExportPreview> {
   const response = await post("/preview", csrfToken, { types, filter });
@@ -125,6 +129,7 @@ export async function previewExport(types: ExportType[], filter: ExportFilter, c
   return body.data;
 }
 
+// Đọc response thành blob và tên file từ Content-Disposition
 /** The generated file; the name comes from the server's Content-Disposition. */
 async function file(response: Response, fallbackName: string): Promise<{ blob: Blob; fileName: string }> {
   if (!response.ok) return failure(response);
@@ -133,11 +138,13 @@ async function file(response: Response, fallbackName: string): Promise<{ blob: B
   return { blob: await response.blob(), fileName };
 }
 
+// POST /admin/exports: tải file dữ liệu xuất
 export async function downloadExport(types: ExportType[], filter: ExportFilter, format: ExportFormat,
   csrfToken: string): Promise<{ blob: Blob; fileName: string }> {
   return file(await post("", csrfToken, { types, filter, format }), `ucms-export.${format}`);
 }
 
+// POST /annual-report/preview: xem trước báo cáo đánh giá năm
 /** 404 when the year has no Published evaluation. */
 export async function previewAnnualReport(year: number, csrfToken: string): Promise<AnnualReport> {
   const response = await post("/annual-report/preview", csrfToken, { year });
@@ -146,6 +153,7 @@ export async function previewAnnualReport(year: number, csrfToken: string): Prom
   return body.data;
 }
 
+// POST /annual-report: tải báo cáo đánh giá năm
 export async function downloadAnnualReport(input: { year: number; format: AnnualFormat; remarks?: string;
   achievementKeys?: string[] }, csrfToken: string): Promise<{ blob: Blob; fileName: string }> {
   return file(await post("/annual-report", csrfToken, input), `bao-cao-danh-gia-clb-${input.year}.${input.format}`);

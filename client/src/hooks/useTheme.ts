@@ -3,6 +3,7 @@ import { flushSync } from "react-dom";
 
 export type Theme = "light" | "dark";
 
+// Đọc theme đã lưu, mặc định theo cài đặt hệ thống
 function initialTheme(): Theme {
   try {
     const stored = localStorage.getItem("theme");
@@ -13,6 +14,7 @@ function initialTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+// Áp theme đã lưu lên thẻ html trước khi React render
 /**
  * Applies the saved theme before React renders, so pages without a theme toggle (login, workspace picker)
  * follow the user's choice and no page flashes light before switching to dark. Called once in main.tsx.
@@ -21,6 +23,7 @@ export function applyInitialTheme() {
   document.documentElement.classList.toggle("dark", initialTheme() === "dark");
 }
 
+// Hook theme sáng/tối dùng chung, lưu lựa chọn vào localStorage
 /** Light/dark theme shared by every layout: toggles `.dark` on <html> and remembers the choice. */
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(initialTheme);

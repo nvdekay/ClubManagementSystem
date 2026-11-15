@@ -18,6 +18,7 @@ interface AppStatTileProps {
   chart?: ReactNode;
 }
 
+// Ô số liệu chính kèm nhãn, ghi chú và biểu đồ nhỏ
 /** One headline number: label, value and a short line of context. */
 export function AppStatTile({ label, value, hint, icon, tone = "default", href, delta, chart }: AppStatTileProps) {
   const body = (

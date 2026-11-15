@@ -3,6 +3,7 @@ import { requireClubPermission, type ClubAccessSnapshot, type ClubPermission } f
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
+// Kiểm tra quyền ghi sự kiện của actor và khóa các dòng cấp quyền
 export async function assertEventWriteAccess(session: ClientSession, clubId: Types.ObjectId, actorId: Types.ObjectId,
   permission: ClubPermission | "ATTENDANCE_UNLOCK", now: Date): Promise<void> {
   // These writes serialize against lifecycle, account locking, role edits and membership changes.

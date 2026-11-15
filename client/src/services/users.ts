@@ -13,6 +13,7 @@ export interface UserPage {
   total: number;
 }
 
+// GET /users: danh sách người dùng có tìm kiếm và phân trang
 export async function fetchUsers({
   search,
   limit,
@@ -35,6 +36,7 @@ export async function fetchUsers({
   return body.data;
 }
 
+// POST /users: tạo người dùng mới
 export async function createUser(input: { email: string; name: string }): Promise<User> {
   const res = await apiFetch("/api/v1/users", {
     method: "POST",

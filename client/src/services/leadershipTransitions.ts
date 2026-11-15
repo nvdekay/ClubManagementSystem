@@ -36,6 +36,7 @@ export interface TransitionDecisionInput {
   followUpObligationIds: string[];
 }
 
+// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -46,24 +47,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
 function mutation(csrfToken: string, body?: object): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
+// GET hàng đợi chuyển giao lãnh đạo CLB cho ICPDP
 export function fetchLeadershipTransitionQueue(signal: AbortSignal) {
   return request<LeadershipTransition[]>("/admin/leadership-transitions", { signal });
 }
 
+// GET chi tiết một yêu cầu chuyển giao lãnh đạo
 export function fetchLeadershipTransition(id: string, signal: AbortSignal) {
   return request<LeadershipTransition>(`/admin/leadership-transitions/${encodeURIComponent(id)}`, { signal });
 }
 
+// POST /claim: ICPDP nhận xử lý chuyển giao
 export function claimLeadershipTransition(id: string, csrfToken: string) {
   return request<LeadershipTransition>(`/admin/leadership-transitions/${encodeURIComponent(id)}/claim`,
     mutation(csrfToken));
 }
 
+// POST /decision: ICPDP quyết định chuyển giao lãnh đạo
 export function decideLeadershipTransition(id: string, input: TransitionDecisionInput, csrfToken: string) {
   return request<LeadershipTransition>(`/admin/leadership-transitions/${encodeURIComponent(id)}/decision`,
     mutation(csrfToken, input));

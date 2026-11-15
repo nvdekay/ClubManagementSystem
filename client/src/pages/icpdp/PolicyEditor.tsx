@@ -58,6 +58,7 @@ const deadlineNumberFields: readonly DeadlineNumberField[] = [
   "dueDaysAfterPeriodEnd", "remindBeforeDays", "overdueAfterDays", "escalateAfterDays",
 ];
 
+// Ánh xạ nhóm chính sách sang key i18n của tiêu đề
 export function sectionTitleKey(section: PolicySection) {
   switch (section) {
     case "founding": return "policy.sectionFounding" as const;
@@ -68,6 +69,7 @@ export function sectionTitleKey(section: PolicySection) {
   }
 }
 
+// Ánh xạ nhóm chính sách sang key i18n của mô tả phạm vi áp dụng
 export function sectionAppliesKey(section: PolicySection) {
   switch (section) {
     case "founding": return "policy.appliesFounding" as const;
@@ -78,6 +80,7 @@ export function sectionAppliesKey(section: PolicySection) {
   }
 }
 
+// Ánh xạ trường form thành lập CLB sang key i18n
 export function foundingFieldKey(field: FoundingFormField) {
   switch (field) {
     case "summary": return "policy.fieldSummary" as const;
@@ -89,6 +92,7 @@ export function foundingFieldKey(field: FoundingFormField) {
   }
 }
 
+// Ánh xạ trường form hồ sơ CLB sang key i18n
 export function profileFieldKey(field: ClubProfileFormField) {
   switch (field) {
     case "description": return "policy.fieldDescription" as const;
@@ -100,6 +104,7 @@ export function profileFieldKey(field: ClubProfileFormField) {
   }
 }
 
+// Ánh xạ trường hạn nộp báo cáo sang key i18n
 export function deadlineLabelKey(field: DeadlineNumberField) {
   switch (field) {
     case "dueDaysAfterPeriodEnd": return "policy.dueDays" as const;
@@ -109,11 +114,13 @@ export function deadlineLabelKey(field: DeadlineNumberField) {
   }
 }
 
+// Đổi ISO sang giá trị datetime-local theo giờ địa phương
 function localDateTime(value: string): string {
   const date = new Date(value);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 }
 
+// Dựng giá trị ban đầu của form từ phiên bản chính sách mới nhất
 function initialForm(latest?: PolicyVersion): PolicyForm {
   const requirements = latest?.formRequirements ?? DEFAULT_FORM_REQUIREMENTS;
   return {
@@ -147,12 +154,14 @@ class SectionError extends Error {
   }
 }
 
+// Đọc số nguyên tối thiểu min, ném lỗi gắn với nhóm chính sách nếu sai
 function whole(value: string, min: number, section: PolicySection): number {
   const number = Number(value);
   if (!value.trim() || !Number.isInteger(number) || number < min) throw new SectionError(section);
   return number;
 }
 
+// Thông báo lỗi cho số nguyên không hợp lệ, null nếu hợp lệ
 function wholeError(t: TFunction, value: string, min: number): string | null {
   const number = Number(value);
   if (!value.trim()) return t("common.fieldRequired");
@@ -160,6 +169,7 @@ function wholeError(t: TFunction, value: string, min: number): string | null {
   return number < min ? t("common.numberMin", { min }) : null;
 }
 
+// Gom lỗi inline của toàn form chính sách
 /** Inline errors keyed by field, plus the tab each key lives on so submit can open it. */
 function formErrors(t: TFunction, form: PolicyForm): Record<string, string | null> {
   const errors: Record<string, string | null> = {
@@ -186,6 +196,7 @@ function formErrors(t: TFunction, form: PolicyForm): Record<string, string | nul
   return errors;
 }
 
+// Xác định nhóm chính sách chứa trường bị lỗi
 function errorSection(key: string): PolicySection {
   if (key === "minFoundingMembers") return "founding";
   if (["feedbackWindowHours", "feedbackMinRespondents", "conflictThresholdMinutes"].includes(key)) return "events";
@@ -193,12 +204,14 @@ function errorSection(key: string): PolicySection {
   return "reports";
 }
 
+// Đổi giá trị ngày sang ISO, ném lỗi gắn với nhóm nếu sai
 function isoDate(value: string, section: PolicySection): string {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) throw new SectionError(section);
   return date.toISOString();
 }
 
+// Dựng dữ liệu gửi lên tạo phiên bản chính sách từ form
 function payload(form: PolicyForm): CreatePolicyInput {
   return {
     minFoundingMembers: whole(form.minFoundingMembers, 1, "founding"),
@@ -228,6 +241,7 @@ function payload(form: PolicyForm): CreatePolicyInput {
   };
 }
 
+// Ánh xạ lý do ảnh hưởng của chính sách sang key i18n
 function impactReasonKey(reason: PolicyImpactReason) {
   switch (reason) {
     case "EVENT_OUTSIDE_ACADEMIC_CALENDAR": return "policy.impactEventCalendar" as const;
@@ -237,6 +251,7 @@ function impactReasonKey(reason: PolicyImpactReason) {
   }
 }
 
+// Ánh xạ loại thực thể bị ảnh hưởng sang key i18n
 function impactEntityKey(entityType: PolicyDecisionImpact["entityType"]) {
   switch (entityType) {
     case "Event": return "policy.impactEntityEvent" as const;
@@ -253,6 +268,7 @@ interface ToggleRowProps {
   onChange?: (checked: boolean) => void;
 }
 
+// Một dòng bật/tắt cho yêu cầu hoặc quyền của chính sách
 /** One "is this required / is this allowed" row: plain label, switch, and its current meaning. */
 function ToggleRow({ label, checked, locked, hint, onChange }: ToggleRowProps) {
   const { t } = useTranslation();
@@ -273,6 +289,7 @@ function ToggleRow({ label, checked, locked, hint, onChange }: ToggleRowProps) {
   );
 }
 
+// Một ô nhập số nằm trong câu mô tả chính sách
 function NumberSentence({ label, value, min, onChange, control, error }: {
   label: string; value: string; min: number; onChange: (value: string) => void;
   control: Pick<ComponentProps<"input">, "required" | "onBlur" | "aria-invalid">; error: string | null;
@@ -289,6 +306,7 @@ function NumberSentence({ label, value, min, onChange, control, error }: {
   );
 }
 
+// Form ICPDP tạo phiên bản chính sách mới theo từng nhóm
 export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   const { t } = useTranslation();
   const [form, setForm] = useState<PolicyForm>(() => initialForm(latest));
@@ -298,26 +316,31 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
   const errors = formErrors(t, form);
   const field = useFieldValidation(errors);
 
+  // Cập nhật một trường của hạn nộp báo cáo
   function updateDeadline(index: number, field: keyof DeadlineForm, value: string) {
     setForm((current) => ({ ...current, reportDeadlines: current.reportDeadlines.map((item, position) =>
       position === index ? { ...item, [field]: value } : item) }));
   }
 
+  // Cập nhật một trường của học kỳ trong lịch học thuật
   function updateSemester(index: number, field: keyof SemesterForm, value: string) {
     setForm((current) => ({ ...current, academicCalendar: current.academicCalendar.map((item, position) =>
       position === index ? { ...item, [field]: value } : item) }));
   }
 
+  // Bật/tắt yêu cầu của form thành lập CLB
   function setFounding(field: FoundingFormField, value: boolean) {
     setForm((current) => ({ ...current, formRequirements: { ...current.formRequirements,
       clubFounding: { ...current.formRequirements.clubFounding, [field]: value } } }));
   }
 
+  // Bật/tắt yêu cầu của form hồ sơ CLB
   function setProfile(field: ClubProfileFormField, value: boolean) {
     setForm((current) => ({ ...current, formRequirements: { ...current.formRequirements,
       clubProfile: { ...current.formRequirements.clubProfile, [field]: value } } }));
   }
 
+  // Kiểm tra form rồi tạo phiên bản chính sách mới
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocalError(null);

@@ -18,6 +18,7 @@ const NEIGHBOUR_CLUB = "FPTU Robotics Club";
 const DAY = 86_400_000;
 const now = new Date();
 
+// Tìm ngày gần nhất rơi vào thứ weekday, cách hôm nay ít nhất minDays ngày
 /** Vietnam calendar day (YYYY-MM-DD) of the first given ISO weekday at least `minDays` from now. */
 function dayAhead(weekday: number, minDays: number): string {
   for (let offset = minDays; ; offset += 1) {
@@ -25,17 +26,21 @@ function dayAhead(weekday: number, minDays: number): string {
     if ((local.getUTCDay() || 7) === weekday) return local.toISOString().slice(0, 10);
   }
 }
+// Khung giờ (startAt, endAt) của ca học số number trong ngày
 function slotOn(day: string, number: number) {
   const slot = BOOKING_SLOTS.find((item) => item.number === number)!;
   return { startAt: new Date(`${day}T${slot.start}:00+07:00`), endAt: new Date(`${day}T${slot.end}:00+07:00`) };
 }
+// Khung giờ cả ngày theo giờ Việt Nam
 function wholeDay(day: string) {
   return { startAt: new Date(`${day}T00:00:00+07:00`), endAt: new Date(`${day}T23:59:00+07:00`) };
 }
+// Dựng giờ mở/đóng cửa cho các ngày trong tuần
 function weekdays(days: number[], open = "07:00", close = "18:00") {
   return days.map((day) => ({ day, open, close }));
 }
 
+// Lấy hoặc tạo tài khoản cho một vai trong cast
 /** Overridden accounts must exist already and are never modified; demo accounts are created when missing. */
 async function castUser(role: CastRole, person: CastMember): Promise<Types.ObjectId> {
   const found = await m.users!.findOne({ email: person.email }).lean();
@@ -45,6 +50,7 @@ async function castUser(role: CastRole, person: CastMember): Promise<Types.Objec
   return created!._id as Types.ObjectId;
 }
 
+// Đảm bảo người dùng có vai trò ICPDP_OFFICER
 async function ensureOfficer(userId: Types.ObjectId, person: CastMember): Promise<void> {
   const role = await m.roles!.findOne({ code: "ICPDP_OFFICER", scope: "system" }).lean();
   if (!role) throw new Error("ICPDP_OFFICER role is missing; start the server once so auth bootstrap creates it");
@@ -55,6 +61,7 @@ async function ensureOfficer(userId: Types.ObjectId, person: CastMember): Promis
     reason: "defense demo presenter 4" });
 }
 
+// Đảm bảo người dùng là thành viên Active của CLB
 /** Active membership in this club only; other clubs of the user are never read or changed here. */
 async function ensureMembership(clubId: Types.ObjectId, userId: Types.ObjectId, actorId: Types.ObjectId) {
   const found = await m.clubMemberships!.findOne({ clubId, userId }).lean();
@@ -67,6 +74,7 @@ async function ensureMembership(clubId: Types.ObjectId, userId: Types.ObjectId, 
   return created!._id as Types.ObjectId;
 }
 
+// Đảm bảo CLB demo tồn tại, tạo mới nếu chưa có
 /** Finds the club by name or creates it Active with an Active term and the standard seats. */
 async function ensureClub(name: string, contactEmail: string, officerId: Types.ObjectId): Promise<Types.ObjectId> {
   const found = await m.clubs!.findOne({ name }).lean();
@@ -88,6 +96,7 @@ async function ensureClub(name: string, contactEmail: string, officerId: Types.O
   return clubId;
 }
 
+// Đảm bảo người dùng giữ ghế Leader của CLB trong nhiệm kỳ Active
 /** Puts the leader in the club's leader seat unless already there; refuses what BR06 or the seat forbids. */
 async function ensureLeader(clubId: Types.ObjectId, userId: Types.ObjectId, person: CastMember, officerId: Types.ObjectId) {
   const membershipId = await ensureMembership(clubId, userId, officerId);
@@ -157,6 +166,7 @@ try {
 
   // UC45-UC47: a draft the leader submits live, and an approved booking the leader cancels live.
   const bookings = mongoFacilityBookingRepository();
+  // Tạo booking demo, tuỳ chọn gửi và duyệt ngay
   async function booking(purpose: string, input: Omit<Parameters<typeof bookings.create>[1], "purpose">, approve: boolean) {
     const found = await m.propertyBookings!.findOne({ clubId: club.id, purpose }).lean();
     if (found) return `${purpose}: ${String(found.state)} (kept)`;

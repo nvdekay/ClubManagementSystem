@@ -23,6 +23,7 @@ type TableDefinition = {
 const tables: Readonly<Record<string, TableDefinition>> = ucmsTables;
 const enums: Readonly<Record<string, readonly string[]>> = ucmsEnums;
 
+// Đổi kiểu trong DBML sang kiểu schema Mongoose
 function mongoType(type: string): unknown {
   switch (type) {
     case "objectId": return Schema.Types.ObjectId;
@@ -40,6 +41,7 @@ function mongoType(type: string): unknown {
   }
 }
 
+// Dựng schema Mongoose cho một bảng từ định nghĩa DBML
 function buildSchema(tableName: string, definition: TableDefinition): Schema {
   const paths: SchemaDefinition = {};
   for (const [fieldName, field] of Object.entries(definition.fields)) {
@@ -94,10 +96,12 @@ export const ucmsModels: Readonly<Record<string, Model<Record<string, unknown>>>
     return [tableName, model];
   }));
 
+// Danh sách tên collection của UCMS
 export function ucmsCollectionNames(): string[] {
   return Object.keys(tables);
 }
 
+// So sánh index hiện có với index mong đợi
 function sameIndex(
   existing: { key: Record<string, unknown>; unique?: boolean; sparse?: boolean;
     partialFilterExpression?: unknown },
@@ -111,6 +115,7 @@ function sameIndex(
       === JSON.stringify(options.partialFilterExpression ?? null);
 }
 
+// Kiểm tra DB: thiếu collection hoặc index nào so với schema
 export async function inspectUcmsDatabase(): Promise<{ database: string; missingCollections: string[]; missingIndexes: string[] }> {
   const db = mongoose.connection.db;
   if (!db) throw new Error("MongoDB is not connected");
@@ -133,6 +138,7 @@ export async function inspectUcmsDatabase(): Promise<{ database: string; missing
   return { database: db.databaseName, missingCollections, missingIndexes };
 }
 
+// Tạo collection và đồng bộ index theo schema, thay index cũ nếu cần
 export async function ensureUcmsDatabase(): Promise<void> {
   for (const model of Object.values(ucmsModels)) {
     try {

@@ -39,6 +39,7 @@ const emptyForm: CampaignForm = {
   capacity: "10", steps: "", fields: [], rubric: [],
 };
 
+// Đổi thời điểm ISO sang giờ máy cho ô nhập datetime-local
 function localDateTime(value: string | undefined): string {
   if (!value) return "";
   const date = new Date(value);
@@ -46,6 +47,7 @@ function localDateTime(value: string | undefined): string {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+// Chuyển đợt tuyển thành dữ liệu form để sửa
 function campaignForm(campaign: RecruitmentCampaign): CampaignForm {
   return {
     title: campaign.title, positions: campaign.positions.join("\n"),
@@ -57,6 +59,7 @@ function campaignForm(campaign: RecruitmentCampaign): CampaignForm {
   };
 }
 
+// Tách chuỗi lựa chọn bằng dấu phẩy và loại trùng không phân biệt hoa thường
 function splitOptions(text: string | undefined): string[] {
   // The server rejects options that repeat case-insensitively, so repeats are dropped here.
   const seen = new Set<string>();
@@ -66,6 +69,7 @@ function splitOptions(text: string | undefined): string[] {
   });
 }
 
+// Chuyển dữ liệu form thành payload gửi server
 function campaignInput(form: CampaignForm): RecruitmentCampaignInput {
   return {
     title: form.title, positions: form.positions.split("\n").map((item) => item.trim()).filter(Boolean),
@@ -82,16 +86,19 @@ function campaignInput(form: CampaignForm): RecruitmentCampaignInput {
 // Same key shape the server accepts for form fields and rubric criteria.
 const keyPattern = /^[a-z][a-z0-9_]{0,49}$/;
 
+// Kiểm tra chuỗi nhiều dòng có ít nhất một dòng không rỗng
 function hasLine(value: string): boolean {
   return value.split("\n").some((item) => item.trim());
 }
 
+// Lấy danh sách đợt tuyển bị chồng thời gian từ lỗi server
 function overlapsFrom(error: unknown): OverlappingCampaign[] {
   if (!(error instanceof CampaignApiError) || !error.details || typeof error.details !== "object") return [];
   const details = error.details as { overlaps?: unknown };
   return Array.isArray(details.overlaps) ? details.overlaps as OverlappingCampaign[] : [];
 }
 
+// Lấy lịch học kỳ từ lỗi khi cửa sổ tuyển nằm ngoài học kỳ
 // The server lists the academic calendar when a window does not fit one semester.
 function semestersFrom(error: unknown): Array<{ code: string; startAt: string; endAt: string }> {
   if (!(error instanceof CampaignApiError) || !error.details || typeof error.details !== "object") return [];
@@ -100,6 +107,7 @@ function semestersFrom(error: unknown): Array<{ code: string; startAt: string; e
     ? details.academicCalendar as Array<{ code: string; startAt: string; endAt: string }> : [];
 }
 
+// Trang quản lý đợt tuyển thành viên: soạn nháp, publish, hủy
 export function RecruitmentCampaignPage() {
   const { clubId } = useParams();
   const { t, i18n } = useTranslation();
@@ -138,10 +146,12 @@ export function RecruitmentCampaignPage() {
   });
   const validation = useFieldValidation(errors);
 
+  // Định dạng ngày theo ngôn ngữ hiện tại
   function dateLabel(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
   }
 
+  // Chọn một đợt tuyển để xem hoặc sửa (chỉ sửa được khi Draft)
   function selectCampaign(campaign: RecruitmentCampaign) {
     setSelectedId(campaign.state === "Draft" ? campaign.id : null);
     setForm(campaignForm(campaign));
@@ -151,6 +161,7 @@ export function RecruitmentCampaignPage() {
     validation.reset();
   }
 
+  // Bắt đầu soạn đợt tuyển mới với form trống
   function beginNew() {
     setSelectedId(null);
     setForm({ ...emptyForm, steps: t("recruitmentCampaigns.defaultStep") });
@@ -160,10 +171,12 @@ export function RecruitmentCampaignPage() {
     validation.reset();
   }
 
+  // Cập nhật một trường của form đợt tuyển
   function field<K extends keyof CampaignForm>(key: K, value: CampaignForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  // Lưu đợt tuyển ở trạng thái Draft
   async function saveDraft() {
     if (!auth.data || !clubId || !validation.touchAll()) return;
     const input = campaignInput(form);
@@ -184,6 +197,7 @@ export function RecruitmentCampaignPage() {
     }
   }
 
+  // Publish đợt tuyển, có thể xác nhận bỏ qua cảnh báo chồng thời gian
   async function publish(confirmOverlap: boolean) {
     if (!auth.data || !clubId || !selectedId) return;
     setPageError("");
@@ -208,6 +222,7 @@ export function RecruitmentCampaignPage() {
     }
   }
 
+  // Xác nhận rồi hủy đợt tuyển
   async function cancel(campaign: RecruitmentCampaign) {
     if (!auth.data || !clubId || !(await askConfirm(t("recruitmentCampaigns.cancelConfirm")))) return;
     setPageError("");
@@ -222,22 +237,26 @@ export function RecruitmentCampaignPage() {
     }
   }
 
+  // Thêm một câu hỏi mới vào biểu mẫu ứng tuyển
   function addField() {
     const index = form.fields.length + 1;
     field("fields", [...form.fields, { key: `question_${index}`, label: "",
       type: "text", required: false }]);
   }
 
+  // Sửa một câu hỏi của biểu mẫu ứng tuyển
   function updateField(index: number, update: Partial<CampaignForm["fields"][number]>) {
     field("fields", form.fields.map((item, fieldIndex) => fieldIndex === index
       ? { ...item, ...update } : item));
   }
 
+  // Thêm một tiêu chí chấm điểm mới
   function addRubric() {
     const index = form.rubric.length + 1;
     field("rubric", [...form.rubric, { key: `criterion_${index}`, label: "", maxScore: 5 }]);
   }
 
+  // Sửa một tiêu chí chấm điểm
   function updateRubric(index: number, update: Partial<RecruitmentRubricCriterion>) {
     field("rubric", form.rubric.map((item, itemIndex) => itemIndex === index
       ? { ...item, ...update } : item));

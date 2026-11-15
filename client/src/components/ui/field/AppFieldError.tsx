@@ -4,6 +4,7 @@ interface AppFieldErrorProps {
   id?: string;
 }
 
+// Thông báo lỗi dưới một trường nhập
 /** Inline message under a control; link it with `aria-describedby={id}` on the control. */
 export function AppFieldError({ message, id }: AppFieldErrorProps) {
   if (!message) return null;

@@ -32,6 +32,7 @@ const helper = createColumnHelper<AppTableFeatures, ClubRosterMember>();
 const ALL = "";
 const NO_ROLE = "__none__";
 
+// Trang quản lý thành viên CLB: danh sách, đổi trạng thái, rút khỏi CLB, xuất Excel
 /** UC21 A1 for members with club.member.manage: roster and leave requests (UC22) to execute. */
 export function ClubMembersPage() {
   const { t, i18n } = useTranslation();
@@ -105,6 +106,7 @@ export function ClubMembersPage() {
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   const { pageIndex, pageSize } = table.state.pagination;
 
+  // Xác nhận rồi thực thi yêu cầu rút khỏi CLB đã đến ngày hiệu lực
   async function execute(request: WithdrawalRequest) {
     if (new Date(request.requestedEffectiveDate).getTime() > currentTime) return;
     if (!auth.data || !clubId || inFlight.current || !(await askConfirm(t("memberSpace.executeConfirm")))) return;
@@ -120,6 +122,7 @@ export function ClubMembersPage() {
     }
   }
 
+  // Xuất danh sách thành viên đang lọc ra file xlsx
   async function exportRows() {
     setExporting(true);
     setExportFailed(false);
@@ -253,6 +256,7 @@ export function ClubMembersPage() {
   );
 }
 
+// Danh sách thành viên chỉ đọc cho người không có quyền quản lý
 function ClubRosterReadOnly({ clubId }: { clubId: string }) {
   const { t } = useTranslation();
   const space = useMemberSpace(clubId, true);

@@ -8,6 +8,7 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
@@ -21,17 +22,20 @@ async function officer(auth: Pick<AuthRepository, "systemRoleCodes">,
   return actor.id;
 }
 
+// Kiểm định dạng id tài sản
 function propertyId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid property id", "validation");
   return value;
 }
 
+// ICPDP xem danh sách tài sản (phòng, thiết bị)
 export async function listProperties(repo: PropertyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.list();
 }
 
+// ICPDP tạo tài sản mới theo loại
 export async function createProperty(repo: PropertyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, input: PropertyInput, now: Date) {
   const actorId = await officer(auth, actor);
@@ -41,6 +45,7 @@ export async function createProperty(repo: PropertyRepository,
   return repo.create({ type: input.type, ...validatePropertyDetails(input.type, input) }, actorId, now);
 }
 
+// ICPDP cập nhật thông tin một tài sản
 export async function updateProperty(repo: PropertyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
   details: PropertyDetails, now: Date) {
@@ -50,6 +55,7 @@ export async function updateProperty(repo: PropertyRepository,
   return repo.update(current.id, validatePropertyDetails(current.type, details), actorId, now);
 }
 
+// ICPDP bật hoặc tắt trạng thái hoạt động của tài sản
 export async function setPropertyActive(repo: PropertyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
   isActive: boolean, now: Date) {
@@ -57,6 +63,7 @@ export async function setPropertyActive(repo: PropertyRepository,
   return repo.setActive(propertyId(id), isActive, actorId, now);
 }
 
+// ICPDP xóa tài sản chưa từng được đặt
 /** BR41: a property that has ever been booked is only deactivated, never deleted. */
 export async function deleteProperty(repo: PropertyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string, now: Date) {

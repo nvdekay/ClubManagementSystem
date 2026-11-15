@@ -29,6 +29,7 @@ interface EventRegistrationPanelProps {
   eventId: string;
 }
 
+// Khu vực đăng ký sự kiện: yêu cầu đăng nhập rồi hiển thị trạng thái đăng ký
 /** UC29 call to action on the public event page: sign in, register (or waitlist), see status, cancel. */
 export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps) {
   const { t } = useTranslation();
@@ -65,6 +66,7 @@ export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps)
   );
 }
 
+// Lời nhắc đăng nhập để đăng ký sự kiện
 function SignInPrompt({ to }: { to: string }) {
   const { t } = useTranslation();
   return (
@@ -77,6 +79,7 @@ function SignInPrompt({ to }: { to: string }) {
   );
 }
 
+// Nội dung đăng ký: form, sức chứa, đăng ký hiện tại và huỷ đăng ký
 function RegistrationBody({ context, csrfToken }: { context: EventRegistrationContext; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -103,6 +106,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
     return [field.key, field.required && !present ? t(choice ? "common.chooseRequired" : "common.fieldRequired") : null];
   })));
 
+  // Chạy thao tác đăng ký hoặc huỷ, chống gửi trùng và báo kết quả
   async function run(input: Parameters<typeof action.mutateAsync>[0], done: "registered" | "cancelled") {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -118,12 +122,14 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
     }
   }
 
+  // Kiểm tra hợp lệ rồi gửi đăng ký sự kiện
   function submit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
     if (!validation.touchAll()) return;
     void run({ kind: "register", eventId: event.id, csrfToken, answers }, "registered");
   }
 
+  // Xin xác nhận rồi huỷ đăng ký hiện tại
   async function cancel() {
     if (!active || !(await askConfirm(t("eventRegistrations.cancelConfirm")))) return;
     void run({ kind: "cancel", registrationId: active.id, csrfToken }, "cancelled");
@@ -221,6 +227,7 @@ interface FormFieldProps {
   onChange: (value: EventRegistrationAnswer) => void;
 }
 
+// Hiển thị một trường của form đăng ký theo kiểu dữ liệu của trường
 function FormField({ field, value, error, onTouch, onChange }: FormFieldProps) {
   const { t } = useTranslation();
   const id = `registration-${field.key}`;

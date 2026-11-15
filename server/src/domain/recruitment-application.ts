@@ -83,6 +83,7 @@ export interface RecruitmentAttachmentStorage {
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm tra vị trí, câu trả lời và file đính kèm của hồ sơ ứng tuyển theo đợt tuyển
 export function validateRecruitmentAnswers(input: {
   campaign: PublicCampaign;
   position: string;

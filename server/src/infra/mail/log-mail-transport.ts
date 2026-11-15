@@ -1,5 +1,6 @@
 import type { MailTransport } from "../../domain/notification.js";
 
+// Transport email dev: chỉ ghi log người nhận và tiêu đề thay vì gửi thật
 /**
  * Development transport: writes one JSON line per email instead of delivering it. It logs the
  * recipient and subject only, never the body. A real SMTP transport needs an SMTP client
@@ -8,6 +9,7 @@ import type { MailTransport } from "../../domain/notification.js";
 export function logMailTransport(write: (line: string) => void = console.log): MailTransport {
   return {
     name: "log",
+    // Ghi một dòng JSON log cho email và coi như đã gửi
     async send(email) {
       write(JSON.stringify({ mail: "log", to: email.to, subject: email.subject }));
       return { providerResponse: "logged" };

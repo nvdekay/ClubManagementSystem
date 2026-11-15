@@ -30,20 +30,24 @@ interface IcpdpDashboardProps {
   charts: IcpdpDashboardCharts;
 }
 
+// Dashboard ICPDP: số liệu chính, hàng đợi duyệt, lịch sự kiện và tình trạng CLB
 /** ICPDP overview: headline numbers, the review queues, the event calendar and where clubs stand. */
 export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const { t, i18n } = useTranslation();
+  // Lấy số liệu của panel nếu đã tải xong
   function count(key: string) {
     const panel = data.panels.find((item) => item.key === key);
     return panel?.status === "ready" ? panel.count : undefined;
   }
   const number = new Intl.NumberFormat(i18n.language);
   const money = new Intl.NumberFormat(i18n.language, { notation: "compact", maximumFractionDigits: 1 });
+  // Nhãn tháng ngắn cho trục biểu đồ (T5 hoặc May)
   // Axis labels stay one short word: "T5" in Vietnamese ("Tháng 5" wraps on a phone), "May" in English.
   function monthName(month: string) {
     return i18n.language.startsWith("vi") ? `T${Number(month.slice(5))}`
       : new Intl.DateTimeFormat(i18n.language, { month: "short", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
   }
+  // Nhãn tháng đầy đủ kèm năm theo ngôn ngữ hiện tại
   function monthLong(month: string) {
     return new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
   }
@@ -51,6 +55,7 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const next = charts.eventsByMonth.at(-2);
   const overdue = charts.queues.reduce((sum, queue) => sum + queue.overdue, 0);
   const pending = charts.queues.reduce((sum, queue) => sum + queue.onTime + queue.overdue, 0);
+  // Đếm số CLB ở một trạng thái vòng đời
   function state(name: string) {
     return charts.clubsByState.find((item) => item.state === name)?.count ?? 0;
   }
@@ -68,6 +73,7 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const lateQueues = queueRows.filter((row) => (row.values[1] ?? 0) > 0).sort((a, b) => b.values[1]! - a.values[1]!).slice(0, 4);
   const stateTone: Record<string, ChartTone> = { Active: "success", Suspended: "warning", Dissolving: "danger" };
   const stateOrder = ["Active", "Suspended", "Dissolving"];
+  // Thứ tự hiển thị của một trạng thái CLB
   function rank(state: string) { return stateOrder.includes(state) ? stateOrder.indexOf(state) : stateOrder.length; }
   const stateSegments = [...charts.clubsByState].sort((a, b) => rank(a.state) - rank(b.state)).map((item) => ({ key: item.state,
     label: t(`clubLifecycle.state_${item.state}` as "clubLifecycle.state_Active", { defaultValue: item.state }),

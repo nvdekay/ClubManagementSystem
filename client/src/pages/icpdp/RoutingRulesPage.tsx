@@ -20,6 +20,7 @@ const TYPES: RoutedRequestType[] = ["CLUB_APPLICATION", "EVENT_PROPOSAL", "PROPE
 const RISKS: RiskCategory[] = ["LOW", "MEDIUM", "HIGH"];
 const PROPERTY_TYPES: RoutedPropertyType[] = ["HALL", "OUTDOOR", "STAGE", "EQUIPMENT"];
 
+// Ánh xạ loại yêu cầu được định tuyến sang key i18n
 function typeKey(value: RoutedRequestType) {
   switch (value) {
     case "CLUB_APPLICATION": return "routing.type_CLUB_APPLICATION" as const;
@@ -27,6 +28,7 @@ function typeKey(value: RoutedRequestType) {
     case "PROPERTY_BOOKING": return "routing.type_PROPERTY_BOOKING" as const;
   }
 }
+// Ánh xạ nhóm rủi ro sang key i18n
 function riskKey(value: RiskCategory) {
   switch (value) {
     case "LOW": return "routing.risk_LOW" as const;
@@ -34,6 +36,7 @@ function riskKey(value: RiskCategory) {
     case "HIGH": return "routing.risk_HIGH" as const;
   }
 }
+// Ánh xạ loại cơ sở vật chất sang key i18n
 function propertyKey(value: RoutedPropertyType) {
   switch (value) {
     case "HALL": return "routing.property_HALL" as const;
@@ -42,9 +45,11 @@ function propertyKey(value: RoutedPropertyType) {
     case "EQUIPMENT": return "routing.property_EQUIPMENT" as const;
   }
 }
+// Đọc số không âm từ chuỗi nhập, undefined nếu để trống
 function optionalNumber(value: string): number | undefined {
   return value.trim() === "" ? undefined : Math.max(0, Math.floor(Number(value)));
 }
+// Thêm hoặc bỏ một giá trị khỏi danh sách, undefined nếu rỗng
 function toggle<T>(list: T[] | undefined, value: T): T[] | undefined {
   const next = list?.includes(value) ? list.filter((item) => item !== value) : [...(list ?? []), value];
   return next.length ? next : undefined;
@@ -85,6 +90,7 @@ export function RoutingRulesPage() {
   );
 }
 
+// Danh sách các quy tắc định tuyến của một bộ quy tắc
 function RuleList({ rules }: { rules: RoutingRule[] }) {
   const { t } = useTranslation();
   if (!rules.length) return <div className="mt-2"><AppEmptyState message={t("routing.noRules")} /></div>;
@@ -104,6 +110,7 @@ function RuleList({ rules }: { rules: RoutingRule[] }) {
   </li>)}</ul>;
 }
 
+// Chạy mô phỏng định tuyến cho một bộ quy tắc
 function Simulation({ set }: { set: RoutingRuleSet }) {
   const { t } = useTranslation();
   const [run, setRun] = useState(false);
@@ -119,15 +126,18 @@ function Simulation({ set }: { set: RoutingRuleSet }) {
   </div>;
 }
 
+// Form sửa bản nháp quy tắc định tuyến, lưu hoặc kích hoạt
 function DraftEditor({ draft, base }: { draft?: RoutingRuleSet; base?: RoutingRuleSet }) {
   const { t } = useTranslation();
   const auth = useAuth();
   const confirm = useConfirm();
   const action = useRoutingAction();
   const [rules, setRules] = useState<RoutingRule[]>(draft?.rules ?? base?.rules ?? []);
+  // Cập nhật một quy tắc trong bản nháp
   function update(index: number, patch: Partial<RoutingRule>) {
     setRules((list) => list.map((rule, at) => (at === index ? { ...rule, ...patch } : rule)));
   }
+  // Lưu bản nháp hoặc kích hoạt bộ quy tắc định tuyến
   async function run(kind: "save" | "activate") {
     if (!auth.data) return;
     try {

@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 /** Field name → message, or null when the value is fine. Computed fresh from form state each render. */
 export type FieldErrors<K extends string> = Partial<Record<K, string | null>>;
 
+// Quản lý hiển thị lỗi từng trường: chỉ hiện sau khi rời trường hoặc khi submit
 /**
  * Shows a field's error once the user has left it (`touch`) or tried to submit (`touchAll`),
  * so required fields are flagged as they are filled in rather than only after submit.

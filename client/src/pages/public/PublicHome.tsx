@@ -42,6 +42,7 @@ interface SectionHeadProps {
   action?: ReactNode;
 }
 
+// Trang chủ công khai: tìm kiếm, sự kiện nổi bật, CLB, các bước tham gia
 /**
  * Landing page in an editorial style: a full-bleed campus hero under a transparent header, a sliding strip of
  * club logos, events as a featured story plus a list, then who the system serves and how to start.
@@ -65,13 +66,17 @@ export function PublicHome() {
   const nextEvent = upcoming.data?.items[0];
   const firstName = auth.data?.user.displayName.trim().split(/\s+/).at(-1) ?? "";
 
+  // Chuyển sang trang danh sách CLB với từ khóa tìm kiếm
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const query = search.trim();
     void navigate(query ? `/clubs?search=${encodeURIComponent(query)}` : "/clubs");
   }
+  // Tách ngày thành các phần để hiện huy hiệu ngày
   function dayParts(value: string) { return formatDayBadge(value, locale); }
+  // Định dạng thời gian diễn ra sự kiện theo ngôn ngữ
   function when(value: string) { return formatEventWhen(value, locale); }
+  // Phần tiêu đề của một khối trang chủ
   function sectionHead({ kicker, title, description, action }: SectionHeadProps) {
     return (
       <div className="flex flex-wrap items-end justify-between gap-6">
@@ -86,6 +91,7 @@ export function PublicHome() {
       </div>
     );
   }
+  // Hàng logo CLB chạy ngang liên tục
   function logoRow(items: PublicClub[], reverse: boolean) {
     // The list is drawn twice so the -50% loop is seamless; the copy is hidden from assistive tech and focus.
     return (

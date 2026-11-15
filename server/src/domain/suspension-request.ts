@@ -11,6 +11,7 @@ export interface SuspensionRequestRepository {
   list(): Promise<SuspensionRequest[]>;
   decide(id: string, outcome: "Approve" | "Reject", reason: string, officerId: string, now: Date): Promise<void>;
 }
+// Kiểm tra và chuẩn hoá yêu cầu tạm ngưng CLB
 export function normalizedSuspensionRequest(input: SuspensionRequestInput, now: Date): SuspensionRequestInput {
   const reason = input.reason.trim(); const obligationsPlan = input.obligationsPlan.trim(); const recoveryPlan = input.recoveryPlan.trim();
   if (!reason || reason.length > 2000 || !obligationsPlan || obligationsPlan.length > 5000 || !recoveryPlan || recoveryPlan.length > 5000

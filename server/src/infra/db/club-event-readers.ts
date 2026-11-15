@@ -5,8 +5,11 @@ import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
+// Chuyển chuỗi id thành ObjectId
 function oid(id: string) { return new Types.ObjectId(id); }
+// Chuyển giá trị tiền (Decimal/chuỗi) sang number
 export function eventMoney(value: unknown): number { return Number(String(value ?? 0)); }
+// Ánh xạ document sự kiện + payload thành ClubEvent của domain
 export function clubEventFrom(doc: Doc, payload: Doc = {}, cancellationRequest?: EventCancellationRequest): ClubEvent {
   return { ...publicEventPayload(payload), ...(cancellationRequest ? { cancellationRequest } : {}), id: String(doc._id), clubId: String(doc.clubId), clubName: String(doc.clubName),
     title: String(doc.title), objective: String(doc.objective ?? ""), plan: String(payload.plan ?? ""),
@@ -27,6 +30,7 @@ export function clubEventFrom(doc: Doc, payload: Doc = {}, cancellationRequest?:
 /** Audit actions whose `after.payload` holds the latest event input (plan text, bookingIds, budget lines). */
 export const EVENT_PAYLOAD_ACTIONS = ["EVENT_DRAFT_CREATED", "EVENT_DRAFT_SAVED", "EVENT_PROPOSAL_SUBMITTED", "RECORD_INTERNAL",
   "EVENT_RESCHEDULED", "INTERNAL_EVENT_DRAFT_SAVED", "INTERNAL_EVENT_CREATED", "INTERNAL_EVENT_SAVED", "EVENT_PROPOSAL_DOCUMENT_UPLOADED"];
+// Đọc payload bản nháp/đề xuất mới nhất của sự kiện từ audit log
 export async function eventDraftPayload(eventId: Types.ObjectId): Promise<Doc> {
   const audit = await m.auditLogs!.findOne({ entityType: "Event", entityId: eventId, action: { $in: EVENT_PAYLOAD_ACTIONS } })
     .sort({ "after.eventVersion": -1, at: -1, _id: -1 }).lean();
@@ -37,6 +41,7 @@ export const EVENT_CANCELLATION_ACTIONS = [
   "EVENT_CANCELLATION_APPROVED",
   "EVENT_CANCELLATION_REJECTED",
 ] as const;
+// Đọc yêu cầu hủy sự kiện gần nhất và trạng thái duyệt từ audit log
 export async function eventCancellationRequest(eventId: Types.ObjectId): Promise<EventCancellationRequest | undefined> {
   const audit = await m.auditLogs!
     .findOne({ entityType: "Event", entityId: eventId, action: { $in: EVENT_CANCELLATION_ACTIONS } })
@@ -58,6 +63,7 @@ export async function eventCancellationRequest(eventId: Types.ObjectId): Promise
     ...(state !== "Pending" ? { decidedAt: audit.at as Date } : {}),
   };
 }
+// Đọc chi tiết sự kiện CLB gồm phiên bản, quyết định, booking, ngân sách
 export async function readClubEvent(clubId: string, eventId: string): Promise<ClubEventDetail | null> {
   const doc = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }).lean();
   if (!doc) return null;
@@ -99,6 +105,7 @@ export async function readClubEvent(clubId: string, eventId: string): Promise<Cl
       propertyName: String(properties.find((p) => String(p._id) === String(b.propertyId))?.name ?? ""), startAt: b.startAt as Date, endAt: b.endAt as Date })),
     ...(budget ? { budget: { id: String(budget._id), state: String(budget.state), approvedTotal: eventMoney(budget.approvedTotal), disbursedTotal: eventMoney(budget.disbursedTotal) } } : {}) };
 }
+// Liệt kê người tham gia sự kiện kèm đăng ký, điểm danh, cờ bất thường
 export async function readEventParticipants(clubId: string, eventId: string): Promise<EventParticipant[]> {
   const event = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }).select({ endAt: 1 }).lean();
   if (!event) throw new DomainError("event not found", "not_found");
@@ -122,6 +129,7 @@ export async function readEventParticipants(clubId: string, eventId: string): Pr
       correctionReason: a?.correctionReason as string | undefined, finalized: a?.finalized === true };
   });
 }
+// Tổng hợp feedback sự kiện cho CLB, ẩn khi chưa đủ số người phản hồi tối thiểu
 export async function readClubFeedback(clubId: string, eventIds: string[], now: Date): Promise<ClubFeedbackSummary[]> {
   const events = await m.events!.find({ _id: { $in: eventIds.map(oid) }, clubId: oid(clubId), organizerType: "CLUB" }).lean();
   if (events.length !== eventIds.length) throw new DomainError("event not found", "not_found");

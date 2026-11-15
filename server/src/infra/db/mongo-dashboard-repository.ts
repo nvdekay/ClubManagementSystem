@@ -10,12 +10,14 @@ import { clubBoardHistory, internalEvent, internalEvents, recordedInternal } fro
 
 type UcmsDocument = Record<string, unknown>;
 
+// Lấy model UCMS theo tên, báo lỗi nếu chưa có
 function model(name: string): Model<UcmsDocument> {
   const value = ucmsModels[name];
   if (!value) throw new Error(`UCMS model is unavailable: ${name}`);
   return value;
 }
 
+// Đếm số bản ghi cho một panel dashboard, lỗi thì trả trạng thái lỗi
 async function panel(
   key: DashboardPanelKey,
   collection: string,
@@ -29,6 +31,7 @@ async function panel(
   }
 }
 
+// Đếm điều kiện theo dõi sau chuyển giao nhiệm kỳ của CLB
 async function transitionFollowUps(clubId: Types.ObjectId): Promise<DashboardPanel> {
   try {
     const totals = await model("transitionPlans").aggregate<{ count: number }>([
@@ -42,6 +45,7 @@ async function transitionFollowUps(clubId: Types.ObjectId): Promise<DashboardPan
   }
 }
 
+// Đếm báo cáo quá hạn (sau sự kiện và định kỳ)
 async function overdueReportsPanel(now: Date, clubId?: Types.ObjectId): Promise<DashboardPanel> {
   try {
     const [postEvents, periodic] = await Promise.all([overduePostEventReports(clubId, now), clubId
@@ -51,6 +55,7 @@ async function overdueReportsPanel(now: Date, clubId?: Types.ObjectId): Promise<
   } catch { return { key: "overdueReports", status: "error" }; }
 }
 
+// Gom các panel và biểu đồ thành snapshot dashboard
 function buildSnapshot(
   kind: DashboardSnapshot["kind"],
   generatedAt: Date,
@@ -65,8 +70,10 @@ function buildSnapshot(
   }));
 }
 
+// Repository dashboard cho sinh viên, CLB và ICPDP
 export function mongoDashboardRepository(): DashboardRepository {
   return {
+    // Dashboard sinh viên: hồ sơ lập CLB, đơn tuyển, thành viên...
     student(userId, now) {
       const user = new Types.ObjectId(userId);
       return buildSnapshot("student", now, [
@@ -91,6 +98,7 @@ export function mongoDashboardRepository(): DashboardRepository {
       ]);
     },
 
+    // Dashboard CLB: các panel theo permission của người xem
     club(clubId, permissions, now) {
       const club = new Types.ObjectId(clubId);
       const allowed = new Set(permissions);
@@ -132,6 +140,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         ? clubCharts(clubId, now).then((clubCharts) => ({ clubCharts })) : undefined);
     },
 
+    // Dashboard ICPDP: các hàng đợi việc đang mở và biểu đồ
     icpdp(now) {
       const openTasks = ["Open", "Escalated"];
       return buildSnapshot("icpdp", now, [

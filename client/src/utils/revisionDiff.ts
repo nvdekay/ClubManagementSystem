@@ -13,6 +13,7 @@ export interface DiffField<T> {
   read: (snapshot: T) => string;
 }
 
+// So sánh hai phiên bản và trả về các trường thay đổi
 /** Fields whose rendered text differs between the two snapshots, in the order given. */
 export function diffFields<T>(before: T, after: T, fields: readonly DiffField<T>[]): FieldChange[] {
   return fields.flatMap((field) => {

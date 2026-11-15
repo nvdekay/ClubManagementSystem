@@ -15,6 +15,7 @@ import type { EventRegistrationContext } from "@/services/eventRegistrations";
 import { PublicApiError } from "@/services/discovery";
 import { formatDate } from "@/utils/formatDate";
 
+// Chi tiết sự kiện cho người đã đăng ký: mã check-in và hủy đăng ký
 /**
  * A student who registered keeps access to an event the public page hides: one moved back to approval
  * after a reschedule (UC28), a cancelled one, or one limited to club members. It reads the student's
@@ -43,6 +44,7 @@ function RegisteredEventView({ context }: { context: EventRegistrationContext })
   </div>;
 }
 
+// Trang chi tiết sự kiện công khai kèm đăng ký tham dự
 export function EventDetail() {
   const { t, i18n } = useTranslation();
   const { id = "" } = useParams();

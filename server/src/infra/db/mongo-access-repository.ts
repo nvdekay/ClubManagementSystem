@@ -8,15 +8,18 @@ import type {
 } from "../../domain/access.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Chuyển giá trị id thành chuỗi
 function id(value: unknown): string {
   return String(value);
 }
 
+// Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid access date in database");
   return value;
 }
 
+// Repository đọc dữ liệu phân quyền của user trong một CLB
 export function mongoAccessRepository(): ClubAccessRepository {
   const clubs = ucmsModels.clubs!;
   const memberships = ucmsModels.clubMemberships!;
@@ -26,6 +29,7 @@ export function mongoAccessRepository(): ClubAccessRepository {
   const applications = ucmsModels.clubApplications!;
 
   return {
+    // Dựng snapshot quyền (membership, nhiệm kỳ, vị trí) của user tại CLB
     async findSnapshot(userId, clubId): Promise<ClubAccessSnapshot | null> {
       const userObjectId = new Types.ObjectId(userId);
       const clubObjectId = new Types.ObjectId(clubId);

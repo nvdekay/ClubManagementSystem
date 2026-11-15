@@ -14,6 +14,7 @@ const pageSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(50).default(50),
 });
 
+// Kiểm actor là ICPDP officer được quản trị tài khoản
 async function requireAdmin(repo: AccountAdminRepository, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError(actor.lockReason || "account locked", "locked");
@@ -25,12 +26,14 @@ async function requireAdmin(repo: AccountAdminRepository, actor: AccessActor | n
   return actor.id;
 }
 
+// Kiểm id người dùng đích hợp lệ
 function parseTarget(targetId: string): string {
   const parsed = objectId.safeParse(targetId);
   if (!parsed.success) throw new DomainError("invalid target user", "validation");
   return parsed.data;
 }
 
+// Kiểm mã role thuộc nhóm role hệ thống được quản lý
 function parseRole(roleCode: string): SystemRoleCode {
   if (!SYSTEM_ROLE_CODES.some((code) => code === roleCode)) {
     throw new DomainError("only system roles can be managed here", "validation");
@@ -38,6 +41,7 @@ function parseRole(roleCode: string): SystemRoleCode {
   return roleCode as SystemRoleCode;
 }
 
+// Tìm và phân trang người dùng cho trang quản trị tài khoản
 export async function searchAdminUsers(
   repo: AccountAdminRepository, actor: AccessActor | null, rawSearch: unknown,
   rawPage: { page?: unknown; pageSize?: unknown } = {},
@@ -49,6 +53,7 @@ export async function searchAdminUsers(
   return repo.listUsers(parsed.data, paging.data.page, paging.data.pageSize);
 }
 
+// Cấp hoặc thu hồi role hệ thống của người dùng và hủy phiên của họ
 export async function changeSystemRole(
   repo: AccountAdminRepository,
   sessions: SessionService,
@@ -79,6 +84,7 @@ export async function changeSystemRole(
   await sessions.revokeUser(target, now);
 }
 
+// Khóa hoặc mở khóa tài khoản (có thể gắn vụ vi phạm) và hủy phiên
 export async function setAccountLock(
   repo: AccountAdminRepository,
   sessions: SessionService,

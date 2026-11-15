@@ -3,11 +3,13 @@ import { checkInToEvent, fetchMyAttendances } from "@/services/eventCheckIns";
 
 const key = ["attendances"] as const;
 
+// Query lịch sử điểm danh của tôi
 export function useMyAttendances(enabled: boolean) {
   return useQuery({ queryKey: [...key, "mine"], queryFn: ({ signal }) => fetchMyAttendances(signal),
     enabled, retry: false });
 }
 
+// Mutation điểm danh sự kiện bằng mã, rồi làm mới cache
 export function useEventCheckIn() {
   const client = useQueryClient();
   return useMutation({

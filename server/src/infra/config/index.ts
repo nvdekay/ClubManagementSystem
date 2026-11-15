@@ -44,6 +44,7 @@ const cloudinarySchema = z.object({
 });
 export type CloudinaryConfig = z.infer<typeof cloudinarySchema>;
 
+// Đọc cấu hình Cloudinary, trả null nếu chưa cấu hình, lỗi nếu cấu hình thiếu
 export function optionalCloudinaryConfig(config: Config): CloudinaryConfig | null {
   const values = [config.CLOUDINARY_CLOUD_NAME, config.CLOUDINARY_API_KEY,
     config.CLOUDINARY_API_SECRET];
@@ -73,6 +74,7 @@ const smtpSchema = z.object({
 export type SmtpConfig = z.infer<typeof smtpSchema>;
 export type MailConfig = { transport: "log" } | ({ transport: "smtp" } & SmtpConfig);
 
+// Chọn transport email (log hoặc SMTP) và kiểm cấu hình hợp lệ
 /**
  * EXT-02: picks the mail transport and fails fast. Production must send through SMTP; a partial
  * SMTP setup never falls back to the log transport silently. Error messages name keys, never values.
@@ -93,6 +95,7 @@ export function mailConfig(config: Config): MailConfig {
   return { transport: "smtp", ...parsed.data };
 }
 
+// Bắt buộc có đủ cấu hình đăng nhập Google và phiên, thiếu thì báo lỗi
 export function requireAuthConfig(config: Config): AuthConfig {
   const parsed = authSchema.safeParse(config);
   if (!parsed.success) {
@@ -101,6 +104,7 @@ export function requireAuthConfig(config: Config): AuthConfig {
   return parsed.data;
 }
 
+// Trả cấu hình Auth nếu có khai báo, chưa khai báo thì trả null
 export function optionalAuthConfig(config: Config): AuthConfig | null {
   const hasAuthSetting = [
     config.GOOGLE_CLIENT_ID, config.GOOGLE_CLIENT_SECRET, config.SESSION_SECRET,
@@ -109,6 +113,7 @@ export function optionalAuthConfig(config: Config): AuthConfig | null {
   return hasAuthSetting ? requireAuthConfig(config) : null;
 }
 
+// Đọc và kiểm tra biến môi trường, sai thì dừng tiến trình ngay
 export function loadConfig(): Config {
   const parsed = schema.safeParse(process.env);
   if (!parsed.success) {

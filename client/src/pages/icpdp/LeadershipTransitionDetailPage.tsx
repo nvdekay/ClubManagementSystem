@@ -16,6 +16,7 @@ import { useLeadershipTransition, useLeadershipTransitionAction } from "@/hooks/
 import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 
+// Trang ICPDP xem chi tiết bàn giao lãnh đạo CLB và ra quyết định
 export function LeadershipTransitionDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
@@ -41,11 +42,13 @@ export function LeadershipTransitionDetailPage() {
   const loading = <div className="space-y-4"><AppSkeleton className="h-10 w-1/2" />
     <AppSkeleton className="h-96 w-full" /></div>;
 
+  // Officer nhận (claim) hồ sơ bàn giao lãnh đạo
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
     catch { /* Rendered below. */ }
   }
+  // Xác nhận rồi gửi quyết định về bàn giao lãnh đạo
   async function decide() {
     if (!auth.data || !id || inFlight.current || !field.touchAll() || !(await askConfirm(t("leadershipTransitions.confirmPrompt")))) return;
     inFlight.current = true;

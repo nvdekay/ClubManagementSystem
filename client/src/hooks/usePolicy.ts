@@ -6,6 +6,7 @@ import {
 
 const policyKeyRoot = ["policies"] as const;
 
+// Query các chính sách và phiên bản
 export function usePolicies(enabled: boolean) {
   return useQuery({
     queryKey: [...policyKeyRoot, "recent"],
@@ -15,6 +16,7 @@ export function usePolicies(enabled: boolean) {
   });
 }
 
+// Mutation tạo phiên bản chính sách mới, rồi làm mới cache
 export function useCreatePolicy() {
   const queryClient = useQueryClient();
   return useMutation({

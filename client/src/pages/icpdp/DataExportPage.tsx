@@ -23,6 +23,7 @@ const choiceClass = "inline-flex min-h-11 items-center rounded-md px-3 text-sm f
 const activeChoiceClass = "bg-segment-app text-text-app shadow-xs";
 const activeTypeClass = "border-brand-app bg-primary-soft-app ring-1 ring-brand-app";
 
+// Trang ICPDP chọn dữ liệu, xem trước số dòng và xuất file
 export function DataExportPage() {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -48,11 +49,13 @@ export function DataExportPage() {
   const fileFormat: ExportFormat = single ? format : "xlsx";
   const rowCount = result?.rowCount ?? null;
 
+  // Xoá kết quả và lỗi của lần xem trước/xuất trước
   function reset() {
     setResult(null);
     setError(null);
   }
 
+  // Chọn loại dữ liệu xuất, giữ đúng thứ tự danh mục
   function choose(next: ExportType[]) {
     // Keep the catalogue order, so the sheets follow the order of the cards.
     setTypes(data ? data.types.map((item) => item.type).filter((value) => next.includes(value)) : next);
@@ -60,6 +63,7 @@ export function DataExportPage() {
     reset();
   }
 
+  // Dựng bộ lọc xuất theo kỳ học hoặc khoảng ngày
   function filter(): ExportFilter {
     return {
       ...(mode === "semester" && semesterCode ? { periodCode: semesterCode } : {}),
@@ -70,12 +74,14 @@ export function DataExportPage() {
     };
   }
 
+  // Đếm số dòng sẽ xuất theo lựa chọn hiện tại
   async function count() {
     reset();
     try { setResult(await preview.mutateAsync({ types, filter: filter(), csrfToken })); }
     catch (failure) { setError(`${t("exports.failed")} ${(failure as Error).message}`); }
   }
 
+  // Tải file dữ liệu theo loại và bộ lọc đã chọn
   async function save() {
     reset();
     try {

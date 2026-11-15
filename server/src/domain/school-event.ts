@@ -107,16 +107,19 @@ export interface SchoolEventRepository {
   expireInvitations(now: Date): Promise<number>;
 }
 
+// Ném lỗi validation cho trường sự kiện trường không hợp lệ
 function invalid(message: string, field: string): never {
   throw new DomainError(message, "validation", { field });
 }
 
+// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của sự kiện trường
 function text(value: string | undefined, max: number, field: string): string | undefined {
   const trimmed = value?.trim();
   if (trimmed && trimmed.length > max) invalid(`${field} is too long`, field);
   return trimmed || undefined;
 }
 
+// BR44: tìm học kỳ chứa trọn sự kiện
 /** BR44: the semester that holds the whole event. */
 export function semesterOf(calendar: readonly AcademicSemester[], startAt: Date, endAt: Date): string {
   const found = calendar.find((semester) => semester.startAt <= startAt && endAt <= semester.endAt);
@@ -124,11 +127,13 @@ export function semesterOf(calendar: readonly AcademicSemester[], startAt: Date,
   return found.code;
 }
 
+// Tính hạn phản hồi lời mời mặc định trước ngày diễn ra sự kiện
 export function defaultInvitationDeadline(startAt: Date, now: Date): Date {
   const deadline = new Date(startAt.getTime() - INVITATION_DEADLINE_DAYS_BEFORE * DAY_MS);
   return deadline > now ? deadline : startAt;
 }
 
+// Chuẩn hoá danh sách CLB được mời và hạn phản hồi
 export function normalizedInvitation(input: { clubIds?: string[]; allActiveClubs?: boolean; deadline?: Date },
   startAt: Date, now: Date, requireClubs: boolean): NormalizedInvitation {
   const clubIds = [...new Set(input.clubIds ?? [])];
@@ -141,6 +146,7 @@ export function normalizedInvitation(input: { clubIds?: string[]; allActiveClubs
   return { clubIds, allActiveClubs: input.allActiveClubs === true, deadline };
 }
 
+// Kiểm tra và chuẩn hoá dữ liệu sự kiện do trường tổ chức
 export function normalizedSchoolEvent(input: SchoolEventInput, calendar: readonly AcademicSemester[], now: Date): NormalizedSchoolEvent {
   const title = text(input.title, 200, "title");
   if (!title) invalid("a title is required", "title");
@@ -158,6 +164,7 @@ export function normalizedSchoolEvent(input: SchoolEventInput, calendar: readonl
   };
 }
 
+// Sinh mã check-in ngắn cho sự kiện (UC31)
 /** A short code students type at the venue (UC31); ambiguous characters are left out. */
 export function checkInCode(random: () => number = Math.random): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

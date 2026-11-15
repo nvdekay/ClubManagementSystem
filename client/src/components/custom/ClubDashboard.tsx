@@ -18,21 +18,25 @@ interface ClubDashboardProps {
   charts: ClubDashboardCharts;
 }
 
+// Dashboard của CLB: số liệu thành viên, tuyển thành viên và lối tắt quản lý
 /** Club Leader overview: members, events, recruitment and feedback, plus what the club still owes. */
 export function ClubDashboard({ clubId, data, charts }: ClubDashboardProps) {
   const { t, i18n } = useTranslation();
   const base = `/club/${encodeURIComponent(clubId)}`;
+  // Lấy số liệu của panel nếu đã tải xong
   function count(key: string) {
     const panel = data.panels.find((item) => item.key === key);
     return panel?.status === "ready" ? panel.count : undefined;
   }
   const number = new Intl.NumberFormat(i18n.language);
   const decimal = new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  // Nhãn tháng ngắn cho trục biểu đồ (T5 hoặc May)
   // Axis labels stay one short word: "T5" in Vietnamese ("Tháng 5" wraps on a phone), "May" in English.
   function monthName(month: string) {
     return i18n.language.startsWith("vi") ? `T${Number(month.slice(5))}`
       : new Intl.DateTimeFormat(i18n.language, { month: "short", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
   }
+  // Nhãn tháng đầy đủ kèm năm theo ngôn ngữ hiện tại
   function monthLong(month: string) {
     return new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
   }

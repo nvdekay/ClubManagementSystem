@@ -10,6 +10,7 @@ import type { AccessActor } from "./access.js";
 const objectId = /^[0-9a-f]{24}$/i;
 const sections = new Set<string>(EVENT_REVIEW_SECTIONS);
 
+// Kiểm actor là ICPDP officer và trả id
 export async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -22,15 +23,18 @@ export async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, act
   return actor.id;
 }
 
+// Kiểm định dạng id sự kiện
 function eventId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid event id", "validation");
   return value;
 }
 
+// Cắt khoảng trắng, chuỗi rỗng trả undefined
 function trimmed(value: string | undefined): string | undefined {
   return value?.trim() || undefined;
 }
 
+// Chuẩn hóa và kiểm quyết định xét duyệt đề án (lý do, mục cần sửa, điều kiện, ngân sách)
 export function normalizedEventDecision(input: EventReviewDecisionInput, now: Date): NormalizedEventDecision {
   const reason = trimmed(input.reason);
   const reviewNote = trimmed(input.reviewNote);
@@ -71,12 +75,14 @@ export function normalizedEventDecision(input: EventReviewDecisionInput, now: Da
   };
 }
 
+// ICPDP xem các đề án sự kiện đang chờ xét duyệt
 export async function listEventProposalReviews(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.listOpen();
 }
 
+// ICPDP xem chi tiết một đề án sự kiện
 export async function getEventProposalReview(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string, now: Date) {
   await officer(auth, actor);
@@ -85,11 +91,13 @@ export async function getEventProposalReview(repo: EventProposalReviewRepository
   return detail;
 }
 
+// ICPDP officer nhận xử lý một đề án sự kiện
 export async function claimEventProposalReview(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string, now: Date) {
   return repo.claim(eventId(id), await officer(auth, actor), now);
 }
 
+// ICPDP ghi quyết định duyệt, yêu cầu sửa hoặc từ chối đề án sự kiện
 export async function decideEventProposalReview(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
   input: EventReviewDecisionInput, now: Date) {
@@ -106,6 +114,7 @@ export async function decideEventProposalReview(repo: EventProposalReviewReposit
   return repo.decide(detail.event.id, officerId, decision, now);
 }
 
+// ICPDP chấp thuận hoặc từ chối yêu cầu hủy sự kiện đã duyệt
 export async function decideEventCancellationReview(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
   input: { approve: boolean; reason?: string }, now: Date) {
@@ -123,6 +132,7 @@ export async function decideEventCancellationReview(repo: EventProposalReviewRep
   return repo.decideCancellation(eventId(id), officerId, { approve: input.approve, reason }, now);
 }
 
+// Job: chuyển trạng thái sự kiện theo thời gian (hết hạn, bắt đầu, hoàn thành)
 export async function runEventLifecycleJob(repo: EventProposalReviewRepository, now: Date) {
   return repo.advanceLifecycle(now);
 }

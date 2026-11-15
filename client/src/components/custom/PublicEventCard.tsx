@@ -9,6 +9,7 @@ interface PublicEventCardProps {
   event: PublicEvent;
 }
 
+// Dựng URL ảnh bìa sự kiện đã thu nhỏ qua Cloudinary
 /** Cloudinary covers are requested at card size (2x for dense screens) in an automatic format. */
 function coverUrl(url: string): string {
   const marker = "/image/upload/";
@@ -16,6 +17,7 @@ function coverUrl(url: string): string {
   return url.replace(marker, `${marker}c_fill,w_720,h_400,f_auto,q_auto/`);
 }
 
+// Định dạng khoảng ngày của sự kiện dd/MM/yyyy
 /** PDP-style date range: "08/09/2026 - 19/09/2026" (a single date when the event fits in one day). */
 export function eventDateRange(startAt: string, endAt: string): string {
   const format = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -24,6 +26,7 @@ export function eventDateRange(startAt: string, endAt: string): string {
   return start === end ? start : `${start} - ${end}`;
 }
 
+// Badge trạng thái sự kiện công khai (đang diễn ra, sắp tới, đã kết thúc)
 export function EventStatusBadge({ status }: { status: PublicEventStatus }) {
   const { t } = useTranslation();
   const tone: AppBadgeTone = status === "ongoing" ? "success" : status === "upcoming" ? "info" : "neutral";
@@ -32,6 +35,7 @@ export function EventStatusBadge({ status }: { status: PublicEventStatus }) {
   return <AppBadge tone={tone}>{label}</AppBadge>;
 }
 
+// Thẻ sự kiện trong danh sách sự kiện công khai
 export function PublicEventCard({ event }: PublicEventCardProps) {
   const { t } = useTranslation();
   return (

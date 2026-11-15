@@ -25,16 +25,19 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 
+// Trả về chuỗi nếu giá trị là chuỗi không rỗng
 function text(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
+// Lấy thông tin file đề xuất đã đóng băng trong một phiên bản
 /** Proposal file frozen into a submitted revision; absent on proposals made before the feature. */
 function proposalDocument(version: EventProposalVersion | undefined): EventProposalDocumentInfo | undefined {
   const value = version?.payload.proposalDocument;
   return value && typeof value === "object" ? value as EventProposalDocumentInfo : undefined;
 }
 
+// Chọn thông báo lỗi dịch được, dùng dự phòng nếu lỗi chung
 function resolveI18nError(error: Error | null | undefined, fallback: string): string {
   if (!error) return fallback;
   if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
@@ -43,6 +46,7 @@ function resolveI18nError(error: Error | null | undefined, fallback: string): st
   return error.message || fallback;
 }
 
+// Trang ICPDP xem chi tiết đề xuất sự kiện, nhận xử lý và quyết định
 export function EventProposalReviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -210,6 +214,7 @@ export function EventProposalReviewPage() {
     && new Date(activeDefenseSession.startAt).getTime() - renderedAt < 24 * 3600_000,
   );
 
+  // Mở file đề xuất của một phiên bản bằng link truy cập tạm thời
   async function openDocument(revisionNo: number, inline: boolean) {
     if (!id) return;
     try {
@@ -220,12 +225,14 @@ export function EventProposalReviewPage() {
     }
   }
 
+  // Officer nhận (claim) đề xuất sự kiện để xử lý
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
     catch (error) { console.error("[EventProposalReviewPage] claim failed:", error); }
   }
 
+  // Gửi quyết định xác nhận hoặc từ chối yêu cầu huỷ sự kiện
   async function submitCancellationDecision(e: FormEvent) {
     e.preventDefault();
     if (!auth.data || !id) return;
@@ -250,6 +257,7 @@ export function EventProposalReviewPage() {
     }
   }
 
+  // Bắt đầu buổi bảo vệ đề xuất sự kiện
   async function handleStartDefense() {
     if (!auth.data || !id) return;
     defenseAction.reset();
@@ -261,6 +269,7 @@ export function EventProposalReviewPage() {
     }
   }
 
+  // Gửi hành động cần lý do trong modal
   async function submitReasonModal(e: FormEvent) {
     e.preventDefault();
     if (!auth.data || !id || !reasonModalKind) return;

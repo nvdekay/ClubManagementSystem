@@ -12,6 +12,7 @@ import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubViolations, useSubmitComplianceResponse } from "@/hooks/useClubCompliance";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
+// Trang CLB xem vi phạm và gửi giải trình, hành động khắc phục
 export function ClubViolationsPage() {
   const { clubId = "" } = useParams(); const { t, i18n } = useTranslation(); const auth = useAuth();
   const allowed = Boolean(auth.data?.workspaces.some((w) => w.kind === "club" && w.clubId === clubId && w.permissions.includes("club.complaint.respond")));
@@ -20,6 +21,7 @@ export function ClubViolationsPage() {
   const errors: Record<string, string | null> = Object.fromEntries((query.data ?? []).flatMap((v) => [v.id, ...v.actions.map((a) => a.id)]).map((key) =>
     ["text:" + key, texts[key]?.trim() ? null : t("common.fieldRequired")]));
   const field = useFieldValidation(errors);
+  // Gửi giải trình cho vụ vi phạm hoặc báo cáo hành động khắc phục
   async function submit(id: string, actionId?: string) { if (!auth.data) return; const key = actionId ?? id;
     field.touch("text:" + key); if (errors["text:" + key]) return; try { await action.mutateAsync({ csrfToken: auth.data.csrfToken,
     action: actionId ? { id, actionId, note: texts[key] ?? "", evidence: (urls[key] ?? "").split("\n").filter((u) => u.trim()).map((url) => ({ note: "", url })) } : { id, text: texts[key] ?? "" } }); } catch { /* The mutation error is displayed below. */ } }

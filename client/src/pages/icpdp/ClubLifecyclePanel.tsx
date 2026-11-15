@@ -23,6 +23,7 @@ interface ClubLifecyclePanelProps {
   csrfToken: string;
 }
 
+// Panel ICPDP xem lịch sử và tạm ngưng, giải thể hoặc kích hoạt lại CLB
 export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProps) {
   const { t, i18n } = useTranslation();
   const detail = useClubLifecycle(clubId);
@@ -67,6 +68,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
     }
   }
 
+  // Chọn loại quyết định vòng đời và đặt lại form
   function choose(value: Decision) {
     setDecision(value);
     setReason("");
@@ -74,6 +76,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
     field.reset();
   }
 
+  // Xác nhận và gửi quyết định vòng đời CLB
   async function confirm() {
     if (!decision || !field.touchAll()) return;
     setError(null);

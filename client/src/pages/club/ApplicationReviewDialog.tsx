@@ -36,6 +36,7 @@ interface ApplicationReviewDialogProps {
 
 const DANGER = "bg-danger-app text-bg-app hover:opacity-90";
 
+// Hộp thoại reviewer xem hồ sơ ứng viên, chấm điểm và quyết định
 /** UC18 detail for one application: answers, screening actions and the UC19 evaluations. */
 export function ApplicationReviewDialog({ onClose, clubId, campaignId, application, group, rubric,
   evaluationsLoading, canReview, questionLabels, userId, csrfToken }: ApplicationReviewDialogProps) {
@@ -50,6 +51,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
   const state = application.state;
   const field = useFieldValidation({ reason: reason.trim() ? null : t("common.fieldRequired") });
 
+  // Thực hiện hành động review (screen, shortlist, quyết định, promote) lên hồ sơ
   async function run(kind: "screen" | "shortlist" | "decide" | "promote", outcome?: "Accepted" | "Rejected" | "Waitlisted") {
     setError("");
     // Shortlisting and rejecting record a reason; accept, waitlist and promote do not.
@@ -63,6 +65,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
 
+  // Xác nhận rồi onboard hoặc từ chối onboard ứng viên đã được nhận
   async function onboard(kind: "onboard" | "decline") {
     if (!(await askConfirm(t(kind === "onboard" ? "recruitmentApplications.onboardConfirm" : "recruitmentApplications.declineConfirm")))) return;
     setError("");
@@ -72,6 +75,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
 
+  // Tải tệp đính kèm của hồ sơ qua URL có chữ ký
   async function openAttachment(attachmentId: string) {
     setError("");
     try {

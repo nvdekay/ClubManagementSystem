@@ -4,6 +4,7 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   timeStyle: "short",
 };
 
+// Định dạng ngày giờ từ backend theo locale
 export function formatDate(
   value: string | number | Date,
   locale: string,
@@ -13,6 +14,7 @@ export function formatDate(
 
 const dayFormatters = new Map<string, Intl.DateTimeFormat>();
 
+// Định dạng chỉ ngày theo giờ Việt Nam
 /** Calendar day only, in Vietnam time — for dates the server compares by day (e.g. leave dates). */
 export function formatDay(
   value: string | number | Date | undefined,
@@ -33,16 +35,19 @@ export function formatDay(
 
 const inputFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
 
+// Đổi thời điểm thành giá trị YYYY-MM-DD của input ngày theo giờ Việt Nam
 /** The `YYYY-MM-DD` value of a date input for an instant, read in Vietnam time. */
 export function vnDateInput(value: string | number | Date = new Date()): string {
   return inputFormatter.format(new Date(value));
 }
 
+// Trả về mốc đầu hoặc cuối của một ngày theo giờ Việt Nam
 /** The instant a Vietnam calendar day (`YYYY-MM-DD`) starts, or the last millisecond of it. */
 export function vnDayBoundary(day: string, edge: "start" | "end"): string {
   return new Date(`${day}T${edge === "start" ? "00:00:00.000" : "23:59:59.999"}+07:00`).toISOString();
 }
 
+// Giá trị input ngày của ngày mai theo giờ Việt Nam
 /** The date input value of the day after today in Vietnam, for fields that must lie in the future. */
 export function vnTomorrowInput(): string {
   return vnDateInput(Date.now() + 86_400_000);
@@ -50,6 +55,7 @@ export function vnTomorrowInput(): string {
 
 const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";
 
+// Định dạng thời gian sự kiện theo thứ tự cố định cho cả hai ngôn ngữ
 /**
  * Event time in one fixed order for both languages, in Vietnam time:
  * "Th 6, 13/11 · 22:26" (vi) and "Fri 13 Nov · 22:26" (en). The browser's own vi pattern puts the time first.
@@ -64,6 +70,7 @@ export function formatEventWhen(value: string | number | Date, locale: string): 
   return `${weekday}${vi ? "," : ""} ${day} · ${time}`;
 }
 
+// Tách ngày và tháng ngắn cho huy hiệu lịch
 /** A calendar-badge pair, short enough for a narrow tile: { day: "13", month: "T11" } (vi) or "Nov" (en). */
 export function formatDayBadge(value: string | number | Date, locale: string): { day: string; month: string } {
   const date = new Date(value);

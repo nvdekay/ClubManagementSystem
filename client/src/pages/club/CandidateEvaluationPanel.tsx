@@ -20,6 +20,7 @@ interface CandidateEvaluationPanelProps {
   csrfToken: string;
 }
 
+// Panel hiển thị đánh giá của các reviewer cho ứng viên và mở form chấm điểm
 /** UC19: score summary, every reviewer's evaluation, and the caller's own evaluation form. */
 export function CandidateEvaluationPanel({ clubId, campaignId, applicationId, state, canReview, rubric, group,
   userId, csrfToken }: CandidateEvaluationPanelProps) {

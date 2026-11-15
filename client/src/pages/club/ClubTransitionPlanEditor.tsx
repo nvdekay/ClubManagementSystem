@@ -13,6 +13,7 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { cn } from "@/utils/cn";
 import type { TransitionContext, TransitionInput, TransitionPlan } from "@/services/clubTransitionPlans";
 interface Props { clubId: string; csrfToken: string; context: TransitionContext; plan?: TransitionPlan }
+// Form soạn kế hoạch chuyển giao nhiệm kỳ: nhiệm kỳ mới, bàn giao, ứng viên ghế
 export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: Props) {
   const { t, i18n } = useTranslation();
   const action = useWriteTransitionPlan(clubId);
@@ -40,7 +41,9 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
     ...Object.fromEntries(context.positions.map((p) => ["seat:" + p.code,
       Object.entries(candidates).some(([key, id]) => id && key.split(":")[0] === p.code) ? null : t("common.chooseRequired")])),
     ...Object.fromEntries(context.obligations.map((o) => ["obligation:" + o.id, assignees[o.id] ? null : t("common.chooseRequired")])) });
+  // Chạy thay đổi form và đánh dấu kế hoạch đã chỉnh sửa
   function edited(update: () => void) { update(); setDirty(true); }
+  // Lưu nháp hoặc nộp kế hoạch chuyển giao
   async function save(submit = false) {
     if (!submit && Object.values(termErrors).some(Boolean)) { Object.keys(termErrors).forEach(field.touch); return; }
     if (submit && !field.touchAll()) return;

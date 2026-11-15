@@ -6,21 +6,25 @@ import {
 
 const schoolEventKey = ["school-events"] as const;
 
+// Query danh sách sự kiện do trường tổ chức
 export function useSchoolEvents(enabled: boolean) {
   return useQuery({ queryKey: [...schoolEventKey, "list"], queryFn: ({ signal }) => fetchSchoolEvents(signal), enabled, retry: false });
 }
 
+// Query chi tiết một sự kiện của trường
 export function useSchoolEvent(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...schoolEventKey, "detail", id], queryFn: ({ signal }) => fetchSchoolEvent(id!, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
 
+// Query xung đột lịch của cơ sở vật chất trong khoảng thời gian
 /** BR15 warning while the form is filled; only asked once a room and a valid time range are chosen. */
 export function useScheduleConflicts(input: { propertyId: string; startAt: string; endAt: string } | null) {
   return useQuery({ queryKey: [...schoolEventKey, "conflicts", input], queryFn: ({ signal }) => fetchScheduleConflicts(input!, signal),
     enabled: Boolean(input), retry: false });
 }
 
+// Mutation tạo sự kiện của trường, rồi làm mới danh sách
 export function useCreateSchoolEvent() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -32,6 +36,7 @@ export function useCreateSchoolEvent() {
   });
 }
 
+// Mutation mời CLB, thu hồi lời mời hoặc công khai sự kiện, rồi làm mới cache
 export function useSchoolEventAction() {
   const queryClient = useQueryClient();
   return useMutation({

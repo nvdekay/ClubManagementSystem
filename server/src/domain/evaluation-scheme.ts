@@ -79,12 +79,14 @@ export const DEFAULT_SCHEME_SETTINGS: SchemeSettings = {
 
 export type ActivationIssue = "totalWeight" | "coreWeight";
 
+// Ném lỗi validation cho trường cấu hình đánh giá không hợp lệ
 function invalid(field: string): never {
   throw new DomainError(`invalid evaluation scheme ${field}`, "validation", { field });
 }
 
 const order = new Map(EVALUATION_DIMENSIONS.map((dimension, index) => [dimension.code as string, index]));
 
+// Kiểm tra cấu trúc cấu hình thang đánh giá của bản nháp
 /** Shape rules every saved draft must follow; weights may still be unbalanced until activation. */
 export function validateSchemeSettings(input: SchemeSettings): SchemeSettings {
   if (!Array.isArray(input.dimensions) || !input.dimensions.length) invalid("dimensions");
@@ -105,6 +107,7 @@ export function validateSchemeSettings(input: SchemeSettings): SchemeSettings {
   };
 }
 
+// Liệt kê các điều còn chặn việc kích hoạt thang đánh giá
 /** BR29 + BR60: what still blocks activating a draft. */
 export function schemeActivationIssues(settings: SchemeSettings): ActivationIssue[] {
   const issues: ActivationIssue[] = [];

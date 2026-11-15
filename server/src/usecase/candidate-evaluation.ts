@@ -6,12 +6,14 @@ import { assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm các id truyền vào đúng định dạng ObjectId
 function assertIds(ids: Record<string, string>): void {
   for (const [label, value] of Object.entries(ids)) {
     if (!objectId.test(value)) throw new DomainError(`invalid ${label} id`, "validation");
   }
 }
 
+// Liệt kê đánh giá ứng viên theo đơn kèm rubric và thống kê tổng hợp
 /** UC19 A1/UC18 step 4: campaign rubric + evaluations grouped by application, with aggregate and dispersion. */
 export async function listCandidateEvaluations(repo: CandidateEvaluationRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, campaignId: string,
@@ -31,6 +33,7 @@ export async function listCandidateEvaluations(repo: CandidateEvaluationReposito
   })) };
 }
 
+// Reviewer tạo hoặc cập nhật đánh giá của mình cho đơn đã Shortlisted
 /** UC19 main flow: create or update the caller's own evaluation of a Shortlisted application. */
 export async function recordCandidateEvaluation(repo: CandidateEvaluationRepository,
   access: ClubAccessRepository, actor: AccessActor | null,

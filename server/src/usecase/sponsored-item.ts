@@ -13,6 +13,7 @@ export interface SponsoredItemDeps {
   files: ApplicationFileStorage | null;
 }
 
+// Xem ngân sách hạng mục tài trợ theo quyền CLB hoặc ICPDP
 export async function getSponsoredBudget(deps: SponsoredItemDeps, actor: AccessActor | null,
   id: string, clubId: string | undefined, now: Date) {
   if (clubId) await assertClubAccess(deps.access, actor, financeId(clubId), "club.expense.record", now);
@@ -22,6 +23,7 @@ export async function getSponsoredBudget(deps: SponsoredItemDeps, actor: AccessA
   return budget;
 }
 
+// Thực hiện thao tác trên hạng mục tài trợ theo vai trò CLB hoặc ICPDP
 export async function actOnSponsoredItem(deps: SponsoredItemDeps, actor: AccessActor | null,
   id: string, clubId: string | undefined, itemId: string, revision: number,
   action: SponsoredItemAction, now: Date) {
@@ -31,6 +33,7 @@ export async function actOnSponsoredItem(deps: SponsoredItemDeps, actor: AccessA
   return deps.repo.act(id, itemId, revision, actor!.id, clubId, action, now);
 }
 
+// CLB tải ảnh hóa đơn cho hạng mục, chặn ảnh trùng và quá giới hạn
 export async function uploadInvoiceImage(deps: SponsoredItemDeps, actor: AccessActor | null,
   id: string, clubId: string, itemId: string, revision: number,
   input: { fileName: string; mimeType: string; bytes: Buffer }, now: Date) {
@@ -52,6 +55,7 @@ export async function uploadInvoiceImage(deps: SponsoredItemDeps, actor: AccessA
   } }, now);
 }
 
+// Cấp URL tạm để xem ảnh hóa đơn của hạng mục
 export async function invoiceImageUrl(deps: SponsoredItemDeps, actor: AccessActor | null,
   id: string, clubId: string | undefined, itemId: string, imageId: string, now: Date) {
   const budget = await getSponsoredBudget(deps, actor, id, clubId, now);

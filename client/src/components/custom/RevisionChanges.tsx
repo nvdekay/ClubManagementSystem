@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import type { FieldChange } from "@/utils/revisionDiff";
 
+// Hiển thị các thay đổi so với phiên bản đã nộp trước đó
 /**
  * What a resubmitted version changed against the one before it, next to the parts ICPDP asked to
  * revise, so the reviewer sees at a glance whether the requested fixes were made.

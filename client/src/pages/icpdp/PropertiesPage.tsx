@@ -18,6 +18,7 @@ import { PropertyRequestError, type Property, type PropertyDetails, type Propert
 import { PropertyBookingConflicts } from "./PropertyBookingConflicts";
 import { PropertyEditor, dayKeys } from "./PropertyEditor";
 
+// Trang ICPDP quản lý danh mục cơ sở vật chất cho booking
 export function PropertiesPage() {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -38,6 +39,7 @@ export function PropertiesPage() {
     return `${t("properties.failed")} ${(error as Error).message}`;
   }
 
+  // Tạo mới hoặc cập nhật cơ sở vật chất
   async function save(property: Property | undefined, value: PropertyDetails & { type: PropertyType }) {
     setFormError(null);
     try {
@@ -55,6 +57,7 @@ export function PropertiesPage() {
     }
   }
 
+  // Kích hoạt/ngưng hoạt động hoặc xoá cơ sở vật chất
   async function run(property: Property, kind: "activation" | "delete") {
     setRowError(null);
     try {

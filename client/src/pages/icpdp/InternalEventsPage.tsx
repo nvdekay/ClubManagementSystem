@@ -23,6 +23,7 @@ const stateTones: Record<string, AppBadgeTone> = {
 /** UC02 recorded internal events: self-funded lifecycle plus budgeted proposals from approval on. */
 const recordedStates = ["CREATED", "PUBLIC", "ONGOING", "FINISH", "Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"];
 
+// Hook trả hàm dịch trạng thái sự kiện nội bộ sang nhãn
 function useStateLabel() {
   const { t } = useTranslation();
   return function stateLabel(state: string): string {
@@ -30,6 +31,7 @@ function useStateLabel() {
   };
 }
 
+// Chặn nội dung trang nếu người dùng không phải officer ICPDP
 /** Wraps a page body in the officer check every ICPDP drill-down needs. */
 function OfficerOnly({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -42,6 +44,7 @@ function OfficerOnly({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+// Hiển thị các thông tin ngắn của một sự kiện nội bộ
 function EventFacts({ event }: { event: InternalEventSummary }) {
   const { t, i18n } = useTranslation();
   return (
@@ -55,6 +58,7 @@ function EventFacts({ event }: { event: InternalEventSummary }) {
   );
 }
 
+// Trang ICPDP danh sách sự kiện nội bộ, lọc theo CLB và học kỳ
 /** FR-UC02-02, BR53: every recorded internal event, filtered by club and semester. */
 export function InternalEventsPage() {
   const { t } = useTranslation();
@@ -68,6 +72,7 @@ export function InternalEventsPage() {
   const events = useInternalEvents({ clubId, semesterCode }, isOfficer);
   const items = events.data?.items.filter((event) => !state || event.state === state) ?? [];
 
+  // Áp dụng bộ lọc CLB/học kỳ và đồng bộ lên URL
   function filter(next: { clubId: string; semesterCode: string }) {
     setClubId(next.clubId);
     setSemesterCode(next.semesterCode);
@@ -120,6 +125,7 @@ export function InternalEventsPage() {
   </>;
 }
 
+// Trang ICPDP chi tiết sự kiện nội bộ và điểm danh
 /** One internal event and its attendance, read-only (FR-UC02-02). */
 export function InternalEventDetailPage() {
   const { t, i18n } = useTranslation();

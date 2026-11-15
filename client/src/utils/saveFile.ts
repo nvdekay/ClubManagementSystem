@@ -1,3 +1,4 @@
+// Lưu blob đã tải về thành file qua trình duyệt
 /** Hands a downloaded blob to the browser as a file save. */
 export function saveFile(file: { blob: Blob; fileName: string }): void {
   const url = URL.createObjectURL(file.blob);

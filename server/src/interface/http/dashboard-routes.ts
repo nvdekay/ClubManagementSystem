@@ -32,15 +32,18 @@ export const internalEventQuery = z.object({
   semesterCode: z.string().trim().min(1).max(40).optional(),
 }).strict();
 
+// Lấy người dùng đã xác thực từ res.locals
 function actor(res: Response): AuthUser {
   const value = res.locals.actor as AuthUser | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
+// Mount các route dashboard và sự kiện nội bộ theo workspace
 export function dashboardRoutes(deps: DashboardRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
+  // Lấy dữ liệu dashboard theo workspace của người dùng
   router.get("/dashboard", authGuard(guard, false), async (req, res) => {
     const query = dashboardQuery.safeParse(req.query);
     if (!query.success) {
@@ -50,6 +53,7 @@ export function dashboardRoutes(deps: DashboardRouteDeps): Router {
       deps.repo, deps.authRepo, deps.accessRepo, actor(res), query.data as DashboardContext,
     ));
   });
+  // Liệt kê sự kiện nội bộ trên dashboard
   // UC02 drill-downs: ICPDP opens a dashboard number into the records behind it (FR-UC02-02/03).
   router.get("/dashboard/internal-events", authGuard(guard, false), async (req, res) => {
     const query = internalEventQuery.safeParse(req.query);
@@ -59,9 +63,11 @@ export function dashboardRoutes(deps: DashboardRouteDeps): Router {
       ...(query.data.semesterCode ? { semesterCode: query.data.semesterCode } : {}),
     }));
   });
+  // Xem chi tiết một sự kiện nội bộ
   router.get("/dashboard/internal-events/:id", authGuard(guard, false), async (req, res) => {
     ok(res, await getInternalEvent(deps.repo, deps.authRepo, actor(res), String(req.params.id)));
   });
+  // Xem lịch sử ban chủ nhiệm của một CLB
   router.get("/dashboard/clubs/:clubId/board-history", authGuard(guard, false), async (req, res) => {
     ok(res, await getClubBoardHistory(deps.repo, deps.authRepo, deps.accessRepo, actor(res), String(req.params.clubId)));
   });

@@ -1,6 +1,7 @@
 import type { MailOutboxRepository, MailTransport } from "../../domain/notification.js";
 import { deliverNotifications } from "../../usecase/notification.js";
 
+// Hẹn giờ gửi email trong outbox thông báo mỗi phút
 /** SCH-10: drains the notification outbox every minute and retries failed emails with backoff. */
 export function startNotificationDeliveryJob(repo: MailOutboxRepository, transport: MailTransport,
   options: { appUrl?: string; intervalMs?: number } = {}): () => void {

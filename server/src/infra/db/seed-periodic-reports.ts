@@ -210,6 +210,7 @@ const middles = ["Văn", "Thị", "Minh", "Đức", "Thu", "Ngọc", "Quang", "T
 const givens = ["An", "Bình", "Châu", "Dũng", "Giang", "Hà", "Hiếu", "Hùng", "Khoa", "Linh", "Long", "Mai", "Nam", "Ngân",
   "Phúc", "Quân", "Sơn", "Tâm", "Thảo", "Trang", "Tú", "Vy", "Yến", "Huyền", "Đạt", "Nhung"];
 
+// Bộ sinh số ngẫu nhiên có seed cố định theo chuỗi
 /** Deterministic per-club randomness, so a re-run would produce the same content. */
 function rng(seed: string): () => number {
   let h = 2166136261;
@@ -220,32 +221,40 @@ function rng(seed: string): () => number {
     return ((h ^= h >>> 16) >>> 0) / 4294967296;
   };
 }
+// Chọn ngẫu nhiên một phần tử trong danh sách
 function pick<T>(r: () => number, list: readonly T[]): T {
   return list[Math.floor(r() * list.length)]!;
 }
+// Sinh số nguyên ngẫu nhiên trong khoảng [min, max]
 function between(r: () => number, min: number, max: number): number {
   return min + Math.floor(r() * (max - min + 1));
 }
+// Sinh id giả của tệp Google Drive
 function driveId(r: () => number): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
   return `1${Array.from({ length: 32 }, () => pick(r, [...chars])).join("")}`;
 }
+// Định dạng số tiền VNĐ
 function vnd(amount: number): string {
   return `${amount.toLocaleString("vi-VN")} đồng`;
 }
+// Sinh thời điểm ngẫu nhiên trong ngày cho trước
 function at(day: string, r: () => number): Date {
   return new Date(`${day}T${String(between(r, 1, 11)).padStart(2, "0")}:${String(between(r, 0, 59)).padStart(2, "0")}:00Z`);
 }
+// Cộng thêm số ngày và vài giờ ngẫu nhiên vào ngày
 function addDays(date: Date, days: number, r: () => number): Date {
   return new Date(date.getTime() + days * DAY + between(r, 0, 5) * 3_600_000);
 }
 
 interface ClubInfo { id: Types.ObjectId; code: string; name: string; field: string; pdpUrl?: string }
 
+// Tên hiển thị của CLB
 function label(club: ClubInfo): string {
   return club.name === club.code ? `CLB ${club.name}` : club.name;
 }
 
+// Sinh danh sách thành viên nhập tay cho báo cáo
 function manualMembers(club: ClubInfo, r: () => number, index: number): PeriodicMemberEntry[] {
   const count = between(r, 8, 14);
   const used = new Set<string>();
@@ -262,6 +271,7 @@ function manualMembers(club: ClubInfo, r: () => number, index: number): Periodic
   return members.sort((a, b) => a.fullName.localeCompare(b.fullName, "vi"));
 }
 
+// Sinh danh sách sự kiện nhập tay cho báo cáo
 function manualEvents(club: ClubInfo, r: () => number): PeriodicEventEntry[] {
   const pool = [...(clubActivities[club.code] ?? []), ...(fieldActivities[club.field] ?? fieldActivities["Kỹ năng"]!)];
   const count = between(r, 2, 3);
@@ -274,6 +284,7 @@ function manualEvents(club: ClubInfo, r: () => number): PeriodicEventEntry[] {
   }));
 }
 
+// Dựng nội dung nháp báo cáo định kỳ của CLB
 function content(club: ClubInfo, r: () => number, members: PeriodicMemberEntry[], events: PeriodicEventEntry[],
   finance: { approvedTotal: number; disbursedTotal: number }): PeriodicDraftInput {
   const total = events.reduce((sum, event) => sum + event.participantCount, 0);
@@ -306,6 +317,7 @@ function content(club: ClubInfo, r: () => number, members: PeriodicMemberEntry[]
   };
 }
 
+// Ghi audit log cho báo cáo định kỳ
 // ── Writes: the same operations as mongo-club-periodic-report-repository ──
 async function audit(session: ClientSession, id: Types.ObjectId, action: string, userId: Types.ObjectId | undefined,
   after: unknown, now: Date) {
@@ -313,6 +325,7 @@ async function audit(session: ClientSession, id: Types.ObjectId, action: string,
     actorRole: "Club Leader", after, correlationId: randomUUID(), at: now }], { session });
 }
 
+// Tạo báo cáo định kỳ Draft kèm dữ liệu hệ thống
 async function createDraft(session: ClientSession, club: ClubInfo, dueAt: Date, user: Types.ObjectId | undefined, now: Date) {
   const id = new Types.ObjectId();
   const systemData = await periodicSystemData(club.id, PERIOD, session);
@@ -322,6 +335,7 @@ async function createDraft(session: ClientSession, club: ClubInfo, dueAt: Date, 
   return id;
 }
 
+// Lưu nội dung nháp của báo cáo
 async function saveDraft(session: ClientSession, id: Types.ObjectId, raw: PeriodicDraftInput, user: Types.ObjectId | undefined, now: Date) {
   const input = normalizePeriodicDraft(raw);
   const report = await m.periodicReports!.findById(id).session(session).lean();
@@ -336,6 +350,7 @@ async function saveDraft(session: ClientSession, id: Types.ObjectId, raw: Period
   await audit(session, id, "PERIODIC_REPORT_DRAFT_SAVED", user, { revision: revision + 1 }, now);
 }
 
+// Nộp báo cáo định kỳ kèm số liệu tài chính
 async function submit(session: ClientSession, id: Types.ObjectId, club: ClubInfo, user: Types.ObjectId | undefined,
   finance: { budgets: number; approvedTotal: number; disbursedTotal: number }, now: Date) {
   const report = (await m.periodicReports!.findById(id).session(session).lean())!;

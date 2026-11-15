@@ -15,6 +15,7 @@ export class ApiError extends Error {
   }
 }
 
+// Dịch thông điệp lỗi API sang ngôn ngữ đang chọn qua i18n
 function localizedApiMessage(message: string): string {
   const vietnamese = (i18next.resolvedLanguage ?? i18next.language)?.split("-")[0] === "vi";
   if (!vietnamese) return message || apiErrors.en.unknown!;
@@ -45,6 +46,7 @@ function localizedApiMessage(message: string): string {
   return String(i18next.t(`apiErrors.${key}`, { defaultValue: apiErrors.vi[key] }));
 }
 
+// Quy mã trạng thái HTTP trong thông điệp lỗi về key i18n tương ứng
 function httpErrorKey(message: string): ApiErrorKey {
   const status = /^HTTP (\d{3})$/.exec(message)?.[1];
   switch (status) {
@@ -59,6 +61,7 @@ function httpErrorKey(message: string): ApiErrorKey {
   }
 }
 
+// Bọc fetch, đổi lỗi mạng thành ApiError nhưng giữ nguyên lỗi huỷ request
 /** Preserve cancellation while translating browser network errors. */
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   try {

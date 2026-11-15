@@ -80,6 +80,7 @@ export interface PostEventReportRepository {
     now: Date,
   ): Promise<ReportDetail>;
 }
+// Kiểm tra và chuẩn hoá nội dung báo cáo sau sự kiện
 export function normalizeReport(input: ReportInput): ReportInput {
   if (
     !input.actualResult.trim() ||
@@ -116,6 +117,7 @@ export function normalizeReport(input: ReportInput): ReportInput {
     lessonsLearned: input.lessonsLearned?.trim(),
   };
 }
+// Đảm bảo sự kiện đã hoàn thành và chốt điểm danh trước khi nộp báo cáo
 export function assertReportSubmission(
   state: string,
   finalized: boolean,

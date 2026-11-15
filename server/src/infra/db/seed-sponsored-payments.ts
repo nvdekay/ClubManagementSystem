@@ -25,6 +25,7 @@ const lines: { category: string; decision: FundingDecision; cap: number; spent: 
   { category: "Quà tặng khách mời", decision: "AFTER_EVENT", cap: 1_500_000, spent: 0, target: "Draft" },
   { category: "Tiệc liên hoan", decision: "NOT_SPONSORED", cap: 0, spent: 0, target: "Draft" },
 ];
+// Chuyển số thành Decimal128
 function decimal(value: number) {
   return Types.Decimal128.fromString(String(value));
 }

@@ -51,16 +51,19 @@ export interface PropertyRepository {
 
 const time = /^([01]\d|2[0-3]):[0-5]\d$/;
 
+// Ném lỗi validation cho trường tài sản không hợp lệ
 function invalid(field: string): never {
   throw new DomainError(`invalid property ${field}`, "validation", { field });
 }
 
+// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của tài sản
 function text(value: string, max: number, field: string, required = true): string {
   const normalized = typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
   if ((required && !normalized) || normalized.length > max) invalid(field);
   return normalized;
 }
 
+// Kiểm tra thông tin chi tiết của tài sản theo loại
 export function validatePropertyDetails(type: PropertyType, input: PropertyDetails): PropertyDetails {
   const name = text(input.name, 120, "name");
   const location = text(input.location, 200, "location");
@@ -100,6 +103,7 @@ export function validatePropertyDetails(type: PropertyType, input: PropertyDetai
   };
 }
 
+// Sinh mã tài sản kế tiếp theo tiền tố của loại tài sản
 export function nextPropertyCode(type: PropertyType, existingCodes: readonly string[]): string {
   const prefix = PROPERTY_CODE_PREFIX[type];
   const numbers = existingCodes.map((code) => new RegExp(`^${prefix}-(\\d+)$`).exec(code)?.[1])

@@ -23,6 +23,7 @@ interface CandidateEvaluationFormProps {
   onDone: () => void;
 }
 
+// Form chấm điểm ứng viên theo từng tiêu chí rubric kèm nhận xét
 /** UC19 create/edit of the caller's own evaluation; E1 (no rubric) makes the comment the evaluation. */
 export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rubric, mine, csrfToken,
   onDone }: CandidateEvaluationFormProps) {
@@ -34,6 +35,7 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
   const [comment, setComment] = useState(mine?.comment ?? "");
   const [error, setError] = useState("");
 
+  // Kiểm tra điểm tiêu chí có nhập và nằm trong thang điểm tối đa
   function scoreError(criterion: RecruitmentRubricCriterion) {
     const raw = scores[criterion.key] ?? "";
     if (raw === "") return t("recruitmentApplications.evaluationScoreRequired");
@@ -50,6 +52,7 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
   const total = rubric.reduce((sum, criterion) => sum + (scoreError(criterion) ? 0 : Number(scores[criterion.key])), 0);
   const maxTotal = rubric.reduce((sum, criterion) => sum + criterion.maxScore, 0);
 
+  // Lưu đánh giá ứng viên sau khi kiểm tra điểm
   async function submit() {
     setError("");
     if (!field.touchAll()) return;

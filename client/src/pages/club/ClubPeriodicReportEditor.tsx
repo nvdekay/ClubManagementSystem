@@ -26,6 +26,7 @@ interface Props {
   report: PeriodicReportDetail;
 }
 
+// Đọc tệp thành data URL
 function readRawDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -35,6 +36,7 @@ function readRawDataUrl(file: File): Promise<string> {
   });
 }
 
+// Đọc ảnh thành data URL, nén nếu ảnh quá lớn
 async function readImageDataUrl(file: File): Promise<string> {
   const raw = await readRawDataUrl(file);
   if (raw.length <= 900_000 || file.type === "image/gif" || file.type === "image/svg+xml") {
@@ -61,6 +63,7 @@ async function readImageDataUrl(file: File): Promise<string> {
   });
 }
 
+// Tạo tên tệp an toàn cho ảnh minh chứng từ tiêu đề
 function safeFileName(title: string, url: string): string {
   const base = title
     .trim()
@@ -73,6 +76,7 @@ function safeFileName(title: string, url: string): string {
   return `${base}.${ext}`;
 }
 
+// Tải ảnh minh chứng về máy
 async function saveEvidenceImage(url: string, title: string) {
   const filename = safeFileName(title, url);
   if (url.startsWith("data:image/")) {
@@ -100,6 +104,7 @@ async function saveEvidenceImage(url: string, title: string) {
   }
 }
 
+// Ô nhập minh chứng: dán/chọn ảnh hoặc nhập URL, kèm xem trước
 function EvidenceInputBlock({
   label,
   required,
@@ -130,6 +135,7 @@ function EvidenceInputBlock({
   const displayTitle = label || t("clubPeriodicReports.eventEvidenceUrl");
   const isMissing = Boolean(required && showMissingError && !hasValue);
 
+  // Xử lý khi chọn tệp ảnh minh chứng
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -139,6 +145,7 @@ function EvidenceInputBlock({
     onChange(dataUrl);
   }
 
+  // Xử lý khi dán ảnh từ clipboard làm minh chứng
   async function handlePaste(event: ClipboardEvent<HTMLInputElement>) {
     const items = event.clipboardData?.items;
     if (!items) return;
@@ -268,6 +275,7 @@ function EvidenceInputBlock({
   );
 }
 
+// Khóa i18n tên mục của báo cáo định kỳ
 function sectionNameKey(section: ReturnSection) {
   switch (section) {
     case "members": return "periodicReports.sectionMembers" as const;
@@ -282,6 +290,7 @@ function sectionNameKey(section: ReturnSection) {
   }
 }
 
+// Trình soạn báo cáo định kỳ: thành viên, sự kiện, thành tích, trường tùy chỉnh
 export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
   const { t, i18n } = useTranslation();
   const action = useChangePeriodicReport(clubId);
@@ -353,18 +362,22 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
     customAnswers: customValid ? null : t("clubPeriodicReports.validationCustomRequired"),
   });
 
+  // Cập nhật một dòng thành viên trong báo cáo
   function updateMember(index: number, patch: Partial<PeriodicMemberEntry>) {
     setMembers((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
   }
 
+  // Cập nhật một dòng sự kiện trong báo cáo
   function updateEvent(index: number, patch: Partial<PeriodicEventEntry>) {
     setEvents((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
   }
 
+  // Cập nhật một dòng thành tích trong báo cáo
   function updateAchievement(index: number, patch: Partial<PeriodicAchievementEntry>) {
     setAchievements((prev) => prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
   }
 
+  // Cập nhật hoặc thêm câu trả lời cho trường tùy chỉnh của báo cáo
   function updateCustomAnswer(fieldId: string, label: string, type: "text" | "number" | "evidence", patch: Partial<PeriodicCustomAnswer>) {
     setCustomAnswers((prev) => {
       const existing = prev.find((a) => a.fieldId === fieldId);
@@ -375,6 +388,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
     });
   }
 
+  // Lưu nháp hoặc nộp báo cáo định kỳ
   async function change(kind: "save" | "submit") {
     if (kind === "submit" && !field.touchAll()) return;
     try {

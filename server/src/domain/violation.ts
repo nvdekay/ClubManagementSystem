@@ -152,20 +152,24 @@ export interface ViolationRepository {
 
 const finalStates = new Set<ViolationState>(["Resolved", "Closed"]);
 
+// Ném lỗi validation cho dữ liệu vi phạm không hợp lệ
 function invalid(message: string, field?: string): never {
   throw new DomainError(message, "validation", field ? { field } : undefined);
 }
 
+// Ném lỗi conflict cho thao tác không hợp lệ với vụ việc
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của vụ việc
 function text(value: string | undefined, max: number, field: string): string | undefined {
   const trimmed = value?.trim();
   if (trimmed && trimmed.length > max) invalid(`${field} is too long`, field);
   return trimmed || undefined;
 }
 
+// Chuẩn hoá danh sách minh chứng của vụ việc vi phạm
 export function normalizedEvidence(items: readonly EvidenceInput[] | undefined, actorId: string, now: Date): ViolationEvidence[] {
   if ((items?.length ?? 0) > 20) invalid("too many evidence items", "evidence");
   return (items ?? []).flatMap((item) => {
@@ -177,6 +181,7 @@ export function normalizedEvidence(items: readonly EvidenceInput[] | undefined, 
   });
 }
 
+// Kiểm tra và chuẩn hoá dữ liệu mở vụ việc vi phạm
 export function normalizedOpenInput(input: OpenViolationInput): OpenViolationInput {
   if (!VIOLATION_ORIGINS.includes(input.originType)) invalid("invalid violation origin", "originType");
   if (!VIOLATION_SEVERITIES.includes(input.severity)) invalid("invalid violation severity", "severity");
@@ -185,6 +190,7 @@ export function normalizedOpenInput(input: OpenViolationInput): OpenViolationInp
   return { ...input, title, description: text(input.description, 5_000, "description") };
 }
 
+// UC40: áp dụng một bước của máy trạng thái vụ việc hoặc từ chối nếu không hợp lệ
 /** UC40 state machine: what a step does to a case, or why it is not allowed now. */
 export function applyViolationStep(current: ViolationCase, step: ViolationStep, actorId: string, now: Date): StepResult {
   if (finalStates.has(current.state)) conflict("this case is already closed");

@@ -5,6 +5,7 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// UC24: không gian thành viên của một CLB kèm các feedback còn phải gửi
 /** UC24: member space of one club, plus feedback still owed (FR-05) derived from the BR36 window. */
 export async function getMemberSpace(repo: MemberSpaceRepository, policy: PolicyRepository,
   actor: AccessActor | null, clubId: string, now: Date) {

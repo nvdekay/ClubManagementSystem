@@ -53,25 +53,31 @@ export const clubEventFeedbackQuery = z.object({ eventIds: z.string().min(1).max
 export const proposalDocumentAccessQuery = z.object({ revisionNo: z.string().regex(/^[1-9][0-9]{0,5}$/).optional(),
   inline: z.enum(["true", "false"]).optional() }).strict();
 const emptyBody = z.object({}).strict();
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   const result = schema.safeParse(raw);
   if (!result.success) throw new DomainError("invalid event request", "validation", result.error.issues);
   return result.data;
 }
+// Lấy actor đã xác thực từ res.locals
 function actor(res: Response): AccessActor { return res.locals.actor as AccessActor; }
+// Chuyển body sự kiện sang input với các trường ngày dạng Date
 function input(body: z.infer<typeof clubEventBody>): ClubEventInput {
   return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt),
     occurrences: body.occurrences?.map((o) => ({ startAt: new Date(o.startAt), endAt: new Date(o.endAt),
       ...(o.venueText ? { venueText: o.venueText } : {}), ...(o.propertyId ? { propertyId: o.propertyId } : {}) })) };
 }
+// Chuyển body sự kiện nội bộ sang input với ngày dạng Date
 function internalInput(body: z.infer<typeof internalClubEventBody>): InternalClubEventInput {
   return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) };
 }
+// Chuyển cài đặt xuất bản sự kiện sang input với ngày dạng Date
 function publishInput(body: z.infer<typeof publishSettings>): EventPublishInput {
   return { ...body, registrationOpenAt: body.registrationOpenAt ? new Date(body.registrationOpenAt) : undefined,
     registrationCloseAt: body.registrationCloseAt ? new Date(body.registrationCloseAt) : undefined,
     checkInOpenAt: new Date(body.checkInOpenAt), checkInCloseAt: new Date(body.checkInCloseAt) };
 }
+// Đọc file upload thô từ body và header X-Filename
 /** Raw upload: body bytes, `Content-Type`, and the URI-encoded `X-Filename` header. */
 function uploadedFile(req: Request): { fileName: string; mimeType: string; bytes: Buffer } {
   if (!Buffer.isBuffer(req.body)) throw new DomainError("file body is required", "validation");
@@ -80,10 +86,12 @@ function uploadedFile(req: Request): { fileName: string; mimeType: string; bytes
   try { return { fileName: decodeURIComponent(header), mimeType: req.header("Content-Type") ?? "", bytes: req.body }; }
   catch { throw new DomainError("invalid file name", "validation"); }
 }
+// Đọc query revisionNo và inline khi truy cập tài liệu
 function documentQuery(raw: unknown): { revisionNo?: number; inline: boolean } {
   const query = parse(proposalDocumentAccessQuery, raw);
   return { revisionNo: query.revisionNo ? Number(query.revisionNo) : undefined, inline: query.inline === "true" };
 }
+// Tạo header Content-Disposition attachment hỗ trợ tên file tiếng Việt
 /** `attachment` with an ASCII fallback name and the exact UTF-8 name (RFC 5987) for Vietnamese file names. */
 function attachmentHeader(fileName: string): string {
   const ascii = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
@@ -94,28 +102,35 @@ export interface ClubEventRouteDeps {
   repo: ClubEventRepository; access: ClubAccessRepository; authRepo: AuthRepository; sessions: SessionService;
   files?: EventProposalFileStorage | null;
 }
+// Mount các route sự kiện của CLB và hồ sơ đề xuất sự kiện
 export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
   const usecases = { repo: deps.repo, access: deps.access, auth: deps.authRepo, files: deps.files ?? null };
   const upload = raw({ type: () => true, limit: "10mb" });
   const base = "/clubs/:clubId/events";
+  // Liệt kê sự kiện của CLB
   router.get(base, authGuard(guard, false), async (req, res) => {
     ok(res, await listClubEvents(usecases, actor(res), parse(eventObjectId, req.params.clubId), new Date()));
   });
+  // Lấy các tuỳ chọn khi tạo hoặc sửa sự kiện của CLB
   router.get(`${base}/options`, authGuard(guard, false), async (req, res) => {
     ok(res, await clubEventOptions(usecases, actor(res), parse(eventObjectId, req.params.clubId), new Date()));
   });
+  // Lấy dữ liệu phản hồi của các sự kiện được chọn
   router.get(`${base}/feedback`, authGuard(guard, false), async (req, res) => {
     const query = parse(clubEventFeedbackQuery, req.query);
     ok(res, await clubEventFeedback(usecases, actor(res), parse(eventObjectId, req.params.clubId), query.eventIds.split(","), new Date()));
   });
+  // Xem chi tiết một sự kiện của CLB
   router.get(`${base}/:id`, authGuard(guard, false), async (req, res) => {
     ok(res, await getClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id), new Date()));
   });
+  // Liệt kê người tham gia sự kiện
   router.get(`${base}/:id/participants`, authGuard(guard, false), async (req, res) => {
     ok(res, await clubEventParticipants(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id), new Date()));
   });
+  // Tạo sự kiện của CLB
   router.post(base, authGuard(guard), async (req, res) => {
     ok(res, await createClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), input(parse(clubEventBody, req.body)), new Date()), 201);
   });
@@ -132,47 +147,57 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
     { path: "attendance/finalize", parse: (raw) => { parse(emptyBody, raw); return { kind: "finalize" }; } },
     { path: "attendance/unlock", parse: (raw) => ({ kind: "unlock", ...parse(clubEventReasonBody, raw) }) },
   ];
+  // Đăng ký các hành động trên sự kiện (lưu, nộp, công bố, huỷ, dời lịch, điểm danh...)
   for (const action of actions) router.post(`${base}/:id/${action.path}`, authGuard(guard), async (req, res) => {
     ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id), action.parse(req.body), new Date()));
   });
   const internalBase = "/clubs/:clubId/internal-events";
+  // Tạo sự kiện nội bộ của CLB (bản nháp hoặc tạo ngay)
   router.post(internalBase, authGuard(guard), async (req, res) => {
     const { mode, publishInput: settings, ...body } = parse(internalClubEventCreateBody, req.body);
     ok(res, await createInternalClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), internalInput(body), mode ?? "draft",
       settings ? publishInput(settings) : undefined, new Date()), 201);
   });
+  // Lưu chỉnh sửa sự kiện nội bộ
   router.put(`${internalBase}/:id`, authGuard(guard), async (req, res) => {
     const { expectedVersion, ...body } = parse(internalClubEventSaveBody, req.body);
     ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       { kind: "save-internal", input: internalInput(body), expectedVersion }, new Date()));
   });
+  // Xác nhận tạo sự kiện nội bộ từ bản nháp
   router.post(`${internalBase}/:id/create`, authGuard(guard), async (req, res) => {
     ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       { kind: "create-internal", ...parse(clubEventVersionBody, req.body) }, new Date()));
   });
+  // Lấy thông tin mẫu hồ sơ đề xuất sự kiện
   router.get("/events/proposal-template", authGuard(guard, false), async (_req, res) => {
     ok(res, await eventProposalTemplateInfo(usecases, actor(res)));
   });
+  // Tải về mẫu hồ sơ đề xuất sự kiện
   router.get("/events/proposal-template/download", authGuard(guard, false), async (_req, res) => {
     const result = await downloadEventProposalTemplate(usecases, actor(res));
     if (result.kind === "redirect") return res.redirect(302, result.url);
     res.setHeader("Content-Disposition", attachmentHeader(result.fileName));
     res.type(result.mimeType).send(result.content);
   });
+  // Tải lên tài liệu đề xuất của sự kiện
   router.post(`${base}/:id/proposal-document`, authGuard(guard), upload, async (req, res) => {
     const file = uploadedFile(req);
     ok(res, await uploadEventProposalDocument(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       file.fileName, file.mimeType, file.bytes, new Date()));
   });
+  // Lấy quyền truy cập tạm thời để mở tài liệu đề xuất của sự kiện
   router.get(`${base}/:id/proposal-document/access`, authGuard(guard, false), async (req, res) => {
     const query = documentQuery(req.query);
     ok(res, await clubEventProposalDocumentAccess(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       query.revisionNo, query.inline, new Date()));
   });
+  // ICPDP tải lên mẫu hồ sơ đề xuất sự kiện mới
   router.post("/admin/event-proposals/template", authGuard(guard), upload, async (req, res) => {
     const file = uploadedFile(req);
     ok(res, await uploadEventProposalTemplate(usecases, actor(res), file.fileName, file.mimeType, file.bytes, new Date()), 201);
   });
+  // ICPDP lấy quyền truy cập tài liệu đề xuất để duyệt
   router.get("/admin/event-proposals/:id/document/access", authGuard(guard, false), async (req, res) => {
     const query = documentQuery(req.query);
     ok(res, await reviewEventProposalDocumentAccess(usecases, actor(res), parse(eventObjectId, req.params.id), query.revisionNo, query.inline));

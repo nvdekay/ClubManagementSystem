@@ -19,6 +19,7 @@ interface WorkspaceHomeProps {
   children?: ReactNode;
 }
 
+// Trang tổng quan workspace: lời chào và danh sách lối tắt
 /** Overview page rendered inside WorkspaceShell: a one-line greeting and a list of shortcuts. */
 export function WorkspaceHome({ subtitle, actions, children }: WorkspaceHomeProps) {
   const { t } = useTranslation();

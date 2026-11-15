@@ -22,6 +22,7 @@ export const chartToneStroke: Record<ChartTone, string> = {
   danger: "stroke-danger-app",
 };
 
+// Làm tròn giá trị lớn nhất của trục lên số đẹp
 /** Rounds an axis maximum up to 1, 2 or 5 times a power of ten so ticks land on clean numbers. */
 export function niceMax(value: number): number {
   if (value <= 0) return 1;
@@ -30,6 +31,7 @@ export function niceMax(value: number): number {
   return step * power;
 }
 
+// Đổi giá trị so với max thành chuỗi phần trăm trong khoảng 0-100
 export function percent(value: number, max: number): string {
   return `${Math.max(0, Math.min(100, (value / max) * 100))}%`;
 }

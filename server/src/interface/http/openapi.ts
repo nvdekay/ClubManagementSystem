@@ -308,6 +308,7 @@ const Season = z.enum(["SPRING", "SUMMER", "FALL"]);
 const AnnualTerms = z.array(z.object({ season: Season, periodCodes: z.array(z.string())
   .describe("Period codes parsed into this term; two spellings of one term are merged"), published: z.boolean() }));
 const ClubRef = z.object({ clubId: z.string(), clubName: z.string() });
+// Tạo schema gồm ba mùa SPRING, SUMMER, FALL cùng kiểu phần tử
 function BySeason<T extends z.ZodTypeAny>(item: T) {
   return z.object({ SPRING: item, SUMMER: item, FALL: item });
 }
@@ -633,6 +634,7 @@ const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Pro
   decisions: z.array(bookingDecisionBody.extend({ id: z.string(), taskId: z.string(), actorId: z.string(), at: z.string() })),
   check: BookingCheck.nullable(), obligations: z.array(z.string()) });
 
+// Bọc schema dữ liệu vào envelope response thành công
 // Success envelope every 2xx response is wrapped in — see interface/http/response.ts.
 function envelope<T extends z.ZodTypeAny>(data: T) {
   return z.object({

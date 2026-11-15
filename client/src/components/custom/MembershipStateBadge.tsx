@@ -7,6 +7,7 @@ import type { MembershipState } from "@/services/memberSpace";
 export const membershipStateLabels = { Active: "memberSpace.stateActive", Inactive: "memberSpace.stateInactive",
   Left: "memberSpace.stateLeft", Banned: "memberSpace.stateBanned" } as const;
 
+// Badge trạng thái thành viên CLB
 export function MembershipStateBadge({ state }: { state: MembershipState }) {
   const { t } = useTranslation();
   return <AppBadge tone={state === "Active" ? "success" : state === "Inactive" ? "warning" : "neutral"}>

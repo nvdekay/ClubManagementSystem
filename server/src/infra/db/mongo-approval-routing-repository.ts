@@ -8,10 +8,12 @@ import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Trả Date nếu giá trị là Date, ngược lại undefined
 function date(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined;
 }
 
+// Bỏ trường requiredLevel cũ khỏi rule định tuyến
 /** Rule sets saved while two-level approval existed still carry `requiredLevel`; it means nothing now. */
 function withoutLegacyLevel(rule: Doc): RoutingRule {
   const copy = { ...rule };
@@ -19,6 +21,7 @@ function withoutLegacyLevel(rule: Doc): RoutingRule {
   return copy as unknown as RoutingRule;
 }
 
+// Ánh xạ document thành RoutingRuleSet
 function ruleSetFrom(doc: Doc): RoutingRuleSet {
   return { id: String(doc._id), versionNo: Number(doc.versionNo), state: doc.state as RoutingRuleSet["state"],
     rules: (Array.isArray(doc.rules) ? doc.rules as Record<string, unknown>[] : []).map(withoutLegacyLevel), createdBy: String(doc.createdBy), createdAt: doc.createdAt as Date,
@@ -28,10 +31,12 @@ function ruleSetFrom(doc: Doc): RoutingRuleSet {
     ...(date(doc.supersededAt) ? { supersededAt: date(doc.supersededAt) } : {}) };
 }
 
+// Chuyển giá trị tiền sang number, mặc định 0
 function money(value: unknown): number {
   return typeof value === "number" ? value : Number(String(value ?? 0)) || 0;
 }
 
+// Repository quản lý bộ rule định tuyến duyệt và SLA (UC05)
 export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
   const sets = m.routingRuleSets!;
 
@@ -42,13 +47,16 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
   }
 
   return {
+    // Liệt kê các phiên bản rule set mới nhất
     async list() {
       return (await sets.find({}).sort({ versionNo: -1 }).limit(50).lean()).map((doc) => ruleSetFrom(doc as Doc));
     },
+    // Tìm rule set theo id
     async find(id) {
       const doc = await sets.findById(new Types.ObjectId(id)).lean();
       return doc ? ruleSetFrom(doc as Doc) : null;
     },
+    // Tạo rule set Draft mới với số phiên bản kế tiếp
     async createDraft(rules, actorId, now) {
       const id = new Types.ObjectId();
       try {
@@ -63,11 +71,13 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
       }
       return required(id);
     },
+    // Lưu chỉnh sửa rule set đang Draft
     async saveDraft(id, rules, _actorId, now) {
       const changed = await sets.updateOne({ _id: new Types.ObjectId(id), state: "Draft" }, { $set: { rules, updatedAt: now } });
       if (changed.matchedCount !== 1) throw new DomainError("only a draft rule set can be edited", "conflict");
       return required(new Types.ObjectId(id));
     },
+    // Kích hoạt rule set Draft và chuyển bộ đang Active sang Superseded
     async activate(id, actorId, now) {
       const target = new Types.ObjectId(id);
       // One attempt, no automatic retry: a concurrent activation must surface as 409, not silently
@@ -99,6 +109,7 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
       }
       return required(target);
     },
+    // Lấy các task duyệt đã quyết định gần đây kèm tên CLB/sự kiện
     async recentDecided(limit) {
       const tasks = await m.approvalTasks!.find({ entityType: { $in: ["CLUB_APPLICATION", "EVENT_PROPOSAL", "PROPERTY_BOOKING"] },
         state: "Decided" }).sort({ closedAt: -1, _id: -1 }).limit(limit).lean();

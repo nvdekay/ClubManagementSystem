@@ -57,6 +57,7 @@ export interface ClubPositionAccess {
   isBoardSeat?: boolean;
 }
 
+// Kiểm tra ghế chức vụ có phải ghế Club Leader hay không
 /** A confirmed holder of this seat is a Club Leader (BR47). */
 export function isClubLeaderSeat(position: Pick<ClubPositionAccess, "isLeaderRole" | "isBoardSeat" | "code">): boolean {
   return position.isLeaderRole
@@ -88,11 +89,13 @@ export interface ClubAccessRepository {
   findSnapshot(userId: string, clubId: string): Promise<ClubAccessSnapshot | null>;
 }
 
+// Lấy membership `Active` của người dùng trong đúng CLB đang xét, nếu có
 function activeMembershipOf(snapshot: ClubAccessSnapshot): ClubMembershipAccess | null {
   return snapshot.membership?.state === "Active" && snapshot.membership.clubId === snapshot.clubId
     ? snapshot.membership : null;
 }
 
+// Kiểm tra người dùng đang là Club Leader của CLB tại thời điểm hiện tại
 /** BR47: holds a confirmed Chủ nhiệm or Phó chủ nhiệm seat, in effect inside the current Active term. */
 export function isClubLeader(snapshot: ClubAccessSnapshot, now: Date): boolean {
   const membership = activeMembershipOf(snapshot);
@@ -109,6 +112,7 @@ export function isClubLeader(snapshot: ClubAccessSnapshot, now: Date): boolean {
     && (!assignment.effectiveTo || assignment.effectiveTo > now));
 }
 
+// Tính danh sách permission của người dùng trong CLB theo vai trò và trạng thái membership
 /** BR47 / BR54: Club Leader → every code; Active member → the two defaults; nothing else grants access. */
 export function resolveClubPermissions(snapshot: ClubAccessSnapshot, now: Date): ClubPermission[] {
   if (isClubLeader(snapshot, now)) return [...CLUB_PERMISSIONS];
@@ -120,6 +124,7 @@ export function resolveClubPermissions(snapshot: ClubAccessSnapshot, now: Date):
   return CLUB_PERMISSIONS.filter((permission) => permissions.has(permission));
 }
 
+// Ném lỗi forbidden nếu người dùng thiếu permission yêu cầu trong CLB
 export function requireClubPermission(
   snapshot: ClubAccessSnapshot,
   permission: ClubPermission,
@@ -133,6 +138,7 @@ export function requireClubPermission(
 // Policy entry that admits any verified Google email, whatever its domain.
 export const ANY_EMAIL_DOMAIN = "*";
 
+// Chuẩn hoá email Google và chỉ chấp nhận email đã xác minh thuộc domain được phép
 export function normalizeAllowedGoogleEmail(
   email: string,
   verified: boolean,

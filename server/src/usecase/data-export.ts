@@ -14,6 +14,7 @@ import type { AccessActor } from "./access.js";
 const objectId = /^[0-9a-f]{24}$/i;
 type ExportAuth = Pick<AuthRepository, "systemRoleCodes" | "findUserById">;
 
+// Kiểm actor là ICPDP officer được phép xuất dữ liệu
 /** BR61: only ICPDP officers export. */
 async function officer(auth: ExportAuth, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
@@ -27,6 +28,7 @@ async function officer(auth: ExportAuth, actor: AccessActor | null): Promise<str
   return actor.id;
 }
 
+// Kiểm danh sách loại dữ liệu xuất phải hợp lệ và không trùng
 /** FR-UC55-12: one or more distinct types; a status filter belongs to a single type's lifecycle. */
 function exportTypes(values: string[], filter: ExportFilter): ExportType[] {
   const types = values.map((value) => {
@@ -43,10 +45,12 @@ function exportTypes(values: string[], filter: ExportFilter): ExportType[] {
   return types;
 }
 
+// Lấy danh sách học kỳ trong lịch học vụ hiện hành
 async function semesters(policy: PolicyRepository, now: Date) {
   return (await policy.findEffective(now))?.academicCalendar ?? [];
 }
 
+// Đổi học kỳ trong bộ lọc thành khoảng ngày để truy vấn
 /** A semester becomes its date window; the code is kept for entities that store it. */
 async function resolved(policy: PolicyRepository, type: ExportType, filter: ExportFilter,
   now: Date): Promise<ExportFilter> {
@@ -57,6 +61,7 @@ async function resolved(policy: PolicyRepository, type: ExportType, filter: Expo
   return { ...valid, from: semester.startAt, to: semester.endAt };
 }
 
+// Trả các lựa chọn cho màn xuất dữ liệu (loại, định dạng, học kỳ, CLB, năm)
 export async function exportOptions(repo: ExportRepository, policy: PolicyRepository, auth: ExportAuth,
   actor: AccessActor | null, now: Date) {
   await officer(auth, actor);
@@ -70,6 +75,7 @@ export async function exportOptions(repo: ExportRepository, policy: PolicyReposi
   };
 }
 
+// Đếm số dòng sẽ xuất cho từng loại dữ liệu trước khi xuất
 /** FR-02: the row count shown before exporting, per selected type. */
 export async function previewExport(repo: ExportRepository, policy: PolicyRepository, auth: ExportAuth,
   actor: AccessActor | null, input: { types: string[]; filter: ExportFilter }, now: Date) {
@@ -80,11 +86,13 @@ export async function previewExport(repo: ExportRepository, policy: PolicyReposi
   return { rowCount: counts.reduce((total, item) => total + item.rowCount, 0), types: counts };
 }
 
+// Định dạng ngày giờ theo vi-VN, múi giờ Việt Nam
 function dateTime(value: Date): string {
   return new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short",
     timeZone: "Asia/Ho_Chi_Minh" }).format(value);
 }
 
+// Xuất dữ liệu ra file csv, xlsx hoặc pdf và ghi audit từng loại
 export async function exportData(repo: ExportRepository, writer: ExportFileWriter, policy: PolicyRepository,
   auth: ExportAuth, actor: AccessActor | null,
   input: { types: string[]; filter: ExportFilter; format: string }, now: Date) {
@@ -125,6 +133,7 @@ export async function exportData(repo: ExportRepository, writer: ExportFileWrite
     : `bao-cao-tong-hop-${stamp}.${file.extension}`, file };
 }
 
+// Dựng báo cáo năm từ các đánh giá đã công bố của năm học
 async function annualReport(repo: ExportRepository, rawYear: unknown) {
   const year = validateAnnualYear(rawYear);
   // FR-UC55-09: a year without any Published evaluation produces nothing.
@@ -134,6 +143,7 @@ async function annualReport(repo: ExportRepository, rawYear: unknown) {
   return buildAnnualReport(year, await repo.annualSource((code) => parsePeriodCode(code)?.year === year));
 }
 
+// Xem trước báo cáo năm dưới dạng JSON, không ghi audit
 /** UC55 A2: the whole annual report as JSON, to read before exporting. Not audited. */
 export async function previewAnnualReport(repo: ExportRepository, auth: ExportAuth, actor: AccessActor | null,
   input: { year: unknown }) {
@@ -141,10 +151,12 @@ export async function previewAnnualReport(repo: ExportRepository, auth: ExportAu
   return annualReport(repo, input.year);
 }
 
+// Tạo tên học kỳ kèm năm, ví dụ Spring 2026
 function termName(season: Season, year: number): string {
   return `${season.charAt(0)}${season.slice(1).toLowerCase()} ${year}`;
 }
 
+// Xuất báo cáo năm ra PDF hoặc Excel kèm nhận xét, thành tích và audit
 export async function exportAnnualReport(repo: ExportRepository, writer: ExportFileWriter, auth: ExportAuth,
   actor: AccessActor | null, input: { year: unknown; format: string; remarks?: string; achievementKeys?: string[] }, now: Date) {
   const actorId = await officer(auth, actor);

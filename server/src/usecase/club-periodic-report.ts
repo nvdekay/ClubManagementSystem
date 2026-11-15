@@ -5,6 +5,7 @@ import { periodicDueAt, periodicDueDays } from "../domain/periodic-report.js";
 import type { PolicyRepository } from "../domain/policy.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
 
+// CLB xem các kỳ báo cáo định kỳ (hạn, trạng thái mở) và báo cáo đã có
 export async function listClubPeriodicReports(repo: ClubPeriodicReportRepository, policy: PolicyRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.report.submit", now);
@@ -24,6 +25,7 @@ export async function listClubPeriodicReports(repo: ClubPeriodicReportRepository
   return { periods, reports: await repo.list(clubId) };
 }
 
+// CLB tạo báo cáo định kỳ cho một kỳ đang mở và còn hạn
 export async function createClubPeriodicReport(repo: ClubPeriodicReportRepository, policy: PolicyRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, periodCode: string, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.report.submit", now);
@@ -43,6 +45,7 @@ export async function createClubPeriodicReport(repo: ClubPeriodicReportRepositor
   return repo.create(clubId, period.code, periodicDueAt(period, periodicDueDays(effective?.reportDeadlines)), actor!.id, now);
 }
 
+// CLB lưu bản nháp hoặc nộp báo cáo định kỳ
 export async function changeClubPeriodicReport(repo: ClubPeriodicReportRepository, access: ClubAccessRepository,
   actor: AccessActor | null, clubId: string, id: string, revision: number, input: PeriodicDraftInput | null, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.report.submit", now);

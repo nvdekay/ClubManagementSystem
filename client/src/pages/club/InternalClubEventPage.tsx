@@ -24,6 +24,7 @@ import type { ClubEvent, ClubEventOptions, InternalClubEventInput, InternalCreat
 const sectionCardClass = "space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6";
 const NOTICE_MS = 24 * 3600_000;
 
+// Giá trị mặc định cho sự kiện nội bộ mới
 function freshEvent(): InternalClubEventInput {
   const start = new Date(Date.now() + 3 * 86400000);
   start.setUTCMinutes(0, 0, 0);
@@ -31,11 +32,13 @@ function freshEvent(): InternalClubEventInput {
     venueText: "", capacity: 40, riskCategory: "LOW", bookingIds: [] };
 }
 
+// Chuyển sự kiện nội bộ đã lưu thành dữ liệu form
 function inputFromEvent(event: ClubEvent): InternalClubEventInput {
   return { title: event.title, objective: event.objective, plan: event.plan, startAt: event.startAt, endAt: event.endAt, venueText: event.venueText ?? "",
     propertyId: event.propertyId, capacity: event.capacity, riskCategory: event.riskCategory, bookingIds: event.bookingIds };
 }
 
+// Khung nhãn kèm dấu bắt buộc và lỗi cho một ô nhập
 function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string | null; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5 text-sm">
@@ -55,6 +58,7 @@ interface InternalEventFormProps {
   optionsError?: unknown;
 }
 
+// Form tạo, sửa và publish sự kiện nội bộ của CLB
 function InternalEventForm({ clubId, csrfToken, permissions, existing, options, optionsError }: InternalEventFormProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -79,6 +83,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
   const scheduleChanged = !existing || draft.startAt !== existing.startAt || draft.endAt !== existing.endAt;
   const format = new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" });
 
+  // Báo lỗi nếu lịch mới bắt đầu sớm hơn thời hạn báo trước 24 giờ
   function noticeError(at: number) {
     return scheduleChanged && Date.parse(draft.startAt) - at < NOTICE_MS ? t("clubEvents.notice24h") : null;
   }
@@ -113,6 +118,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
   const linkableBookings = (options?.bookings ?? []).filter((b) => b.propertyId === draft.propertyId || b.propertyType === "EQUIPMENT");
   const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
 
+  // Kiểm tra form, tùy chọn kiểm tra thêm thời hạn báo trước
   /** Validates the form; `notice` adds the 24-hour rule. Returns false and reveals errors when invalid. */
   function validate(notice: boolean) {
     const at = Date.now();
@@ -122,6 +128,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
     return valid && !(notice && noticeError(at));
   }
 
+  // Lưu sự kiện nội bộ (nháp, tạo hoặc publish) hoặc cập nhật bản đang sửa
   async function save(mode: InternalCreateMode | "edit") {
     setFormError(null);
     try {
@@ -139,12 +146,14 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
     }
   }
 
+  // Submit form: lưu thay đổi hoặc lưu nháp sau khi kiểm tra
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (existing) { if (validate(isCreated)) void save("edit"); }
     else if (validate(false)) void save("draft");
   }
 
+  // Mở hộp thoại publish với giá trị mặc định cho đăng ký và check-in
   function openPublish() {
     if (!validate(true)) return;
     publishField.reset();
@@ -154,6 +163,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
     setPublishOpen(true);
   }
 
+  // Xác nhận publish sự kiện sau khi kiểm tra form publish
   function confirmPublish(event: FormEvent) {
     event.preventDefault();
     if (publishField.touchAll()) void save("publish");
@@ -275,6 +285,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
   );
 }
 
+// Trang tạo hoặc sửa sự kiện nội bộ của CLB
 /** Self-funded members-only event: create (DRAFT / CREATED / PUBLIC) or edit while DRAFT or CREATED. */
 export function InternalClubEventPage() {
   const { clubId = "", eventId } = useParams();

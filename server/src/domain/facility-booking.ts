@@ -13,6 +13,7 @@ export const BOOKING_SLOTS = [
   { number: 4, start: "15:20", end: "17:40" },
 ] as const;
 
+// Nhận diện khung giờ (slot 1-4) của campus khớp với thời gian đặt
 /** Match an exact campus slot in Vietnam time, including seconds and milliseconds. */
 export function bookingSlot(startAt: Date, endAt: Date): typeof BOOKING_SLOTS[number] | undefined {
   if (!Number.isFinite(startAt.getTime()) || !Number.isFinite(endAt.getTime())) return undefined;
@@ -28,6 +29,7 @@ export interface BookingTimeInterval {
   endAt: Date;
 }
 
+// Kiểm tra hai mốc thời gian là hai slot campus liền kề
 /** True when `firstEnd` is the end of campus slot k and `secondStart` is the start of slot k+1 on the same Vietnam day. */
 function areAdjacentCampusSlots(firstEnd: Date, secondStart: Date): boolean {
   const endIso = new Date(firstEnd.getTime() + 7 * 3600000).toISOString();
@@ -38,6 +40,7 @@ function areAdjacentCampusSlots(firstEnd: Date, secondStart: Date): boolean {
   return startIso.slice(11) === `${BOOKING_SLOTS[slotIndex + 1]!.start}:00.000Z`;
 }
 
+// Gộp các khoảng đặt phòng liên tiếp thành khoảng liền mạch
 /**
  * Merges overlapping, touching, or consecutive campus-slot intervals on the same day
  * into continuous windows so multi-slot events can be covered by consecutive slot bookings.
@@ -60,10 +63,12 @@ export function mergeConsecutiveBookingIntervals(intervals: readonly BookingTime
   return merged;
 }
 
+// Kiểm tra một khoảng thời gian nằm trọn trong một khoảng khác
 function intervalCoveredBy(interval: BookingTimeInterval, windows: readonly BookingTimeInterval[]): boolean {
   return windows.some((w) => w.startAt <= interval.startAt && w.endAt >= interval.endAt);
 }
 
+// Kiểm tra booking thuộc chuỗi booking liên tiếp cần thiết để phủ lịch sự kiện
 /**
  * True when `target` is part of a consecutive booking window for the same property that covers at least one
  * event interval, and `target` is necessary for that coverage (not an unrelated booking outside the schedule).
@@ -80,11 +85,13 @@ export function bookingCoversEventSchedule(
   );
 }
 
+// Kiểm tra hai booking có xung đột thời gian không
 export function bookingIntervalsConflict(start: Date, end: Date, otherStart: Date, otherEnd: Date,
   thresholdMinutes: number): boolean {
   return slotsConflict(start, end, otherStart, otherEnd,
     bookingSlot(start, end) && bookingSlot(otherStart, otherEnd) ? 0 : thresholdMinutes);
 }
+// Tính hạn chót gửi yêu cầu đặt phòng cho slot
 /** Same-day notice rule agreed for the four campus slots. */
 export function bookingDeadline(startAt: Date, endAt: Date): Date {
   const slot = bookingSlot(startAt, endAt);
@@ -93,6 +100,7 @@ export function bookingDeadline(startAt: Date, endAt: Date): Date {
   const cutoff = slot.number <= 2 ? BOOKING_SLOTS[0].start : BOOKING_SLOTS[slot.number - 3]!.end;
   return new Date(`${day}T${cutoff}:00+07:00`);
 }
+// Đảm bảo yêu cầu đặt phòng gửi trước hạn chót
 export function assertBookingNotice(input: { startAt: Date; endAt: Date }, now: Date): void {
   if (now >= bookingDeadline(input.startAt, input.endAt)) {
     throw new DomainError("booking submission deadline has passed", "validation");
@@ -156,21 +164,25 @@ export interface FacilityBookingRepository {
   blackoutConflicts(propertyId: string, now: Date): Promise<Booking[]>;
 }
 
+// Đảm bảo tài sản CLB được phép yêu cầu đặt (không phải phòng do ICPDP phân bổ)
 /** Rooms are allocated by ICPDP each semester; clubs request every other facility type. */
 export function assertRequestableProperty(property: Pick<Property, "type"> | null | undefined): void {
   if (property?.type === "ROOM") throw new DomainError("rooms are allocated by ICPDP", "validation");
 }
 
+// Kiểm tra và chuẩn hoá mã booking dạng ObjectId
 export function bookingId(value: string): string {
   if (!/^[0-9a-f]{24}$/i.test(value)) throw new DomainError("invalid booking identifier", "validation");
   return value.toLowerCase();
 }
+// Kiểm tra lý do đặt phòng là bắt buộc và không quá dài
 export function bookingReason(value: string): string {
   if (typeof value !== "string" || !value.trim() || value.trim().length > 2000) {
     throw new DomainError("booking reason is required (maximum 2000 characters)", "validation");
   }
   return value.trim();
 }
+// Kiểm tra dữ liệu yêu cầu đặt phòng
 export function validateBookingInput(input: BookingInput): BookingInput {
   const propertyId = bookingId(input.propertyId);
   const purpose = bookingReason(input.purpose);
@@ -191,16 +203,19 @@ export function validateBookingInput(input: BookingInput): BookingInput {
     headcount: input.headcount, equipment, ...(input.eventId ? { eventId: bookingId(input.eventId) } : {}) };
 }
 
+// Kiểm tra hai khoảng thời gian chồng lấn tính cả khoảng đệm
 export function slotsConflict(startAt: Date, endAt: Date, otherStart: Date, otherEnd: Date,
   thresholdMinutes: number): boolean {
   const buffer = thresholdMinutes * 60000;
   return startAt.getTime() < otherEnd.getTime() + buffer && endAt.getTime() + buffer > otherStart.getTime();
 }
 
+// Kiểm tra việc huỷ booking có trễ so với thời gian báo trước không
 export function isLateBookingCancellation(startAt: Date, now: Date): boolean {
   return startAt.getTime() - now.getTime() < BOOKING_CANCELLATION_NOTICE_HOURS * 3600000;
 }
 
+// Đánh giá yêu cầu đặt phòng theo tài sản, CLB, chính sách và xung đột lịch
 export function assessBooking(input: BookingInput, property: Property, club: BookingClub,
   policy: PolicyVersion, conflicts: BookingConflict[], now: Date): BookingCheck & { semesterCode: string } {
   validateBookingInput(input);

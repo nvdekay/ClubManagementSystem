@@ -126,14 +126,17 @@ export const OPEN_CASE_PENALTY = 5;
 /** Points D5 loses for each time ICPDP returned a report of the period for correction (SRS §9 "số lần phải sửa"). */
 export const RETURN_PENALTY = 10;
 
+// Lấy điểm trừ tương ứng với mức độ nghiêm trọng của vi phạm
 export function severityPenalty(severity: string): number {
   return SEVERITY_PENALTY[severity as keyof typeof SEVERITY_PENALTY] ?? 0;
 }
 
+// Làm tròn số tới một chữ số thập phân
 function round(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+// Tính tỷ lệ phần trên tổng, giới hạn tối đa 1
 function ratio(part: number, whole: number): number {
   return whole > 0 ? Math.min(1, part / whole) : 0;
 }
@@ -175,6 +178,7 @@ const RULES: Record<DimensionCode, { metrics: MetricKey[]; score: (m: ClubMetric
     score: (m) => Math.max(0, 100 - m.violationPenalty.value - OPEN_CASE_PENALTY * m.openViolations.value) },
 };
 
+// UC42: chấm điểm từng tiêu chí của thang đánh giá từ số liệu CLB
 /** UC42: scores every dimension of the scheme; a dimension without data is marked, never scored 0 (E1). */
 export function scoreDimensions(metrics: ClubMetrics, scheme: Pick<EvaluationScheme, "dimensions">, periodCode: string,
   minRespondents: number): DimensionResult[] {
@@ -193,15 +197,18 @@ export function scoreDimensions(metrics: ClubMetrics, scheme: Pick<EvaluationSch
   });
 }
 
+// Kiểm tra CLB có bị trừ điểm do nộp báo cáo định kỳ quá hạn không
 export function hasReportPenalty(dimensions: Pick<DimensionResult, "evidence">[]): boolean {
   return dimensions.some((dimension) => dimension.evidence.some((item) => item.metric === "periodicReportOverdue" && item.value > 0));
 }
 
+// Xếp loại CLB theo tổng điểm và các ngưỡng của thang
 export function classify(total: number, thresholds: SchemeThresholds): Classification {
   return total >= thresholds.excellent ? "EXCELLENT" : total >= thresholds.good ? "GOOD"
     : total >= thresholds.fair ? "FAIR" : "NEEDS_IMPROVEMENT";
 }
 
+// Tính tổng điểm có trọng số và xếp loại, chia lại trọng số cho các tiêu chí có điểm
 /** Weighted total over the dimensions that have a score; weights are re-spread over them (decision 14). */
 export function totalOf(dimensions: Pick<DimensionView, "score" | "weight">[], thresholds: SchemeThresholds):
   { totalScore?: number; classification?: Classification } {
@@ -212,6 +219,7 @@ export function totalOf(dimensions: Pick<DimensionView, "score" | "weight">[], t
   return { totalScore, classification: classify(totalScore, thresholds) };
 }
 
+// UC43: chỉ cho chấm tay các tiêu chí mà thang cho phép
 /** UC43 FR-02: only a dimension the scheme marks as manual can be scored by hand, with a justification. */
 export function checkManualScore(dimension: Pick<DimensionView, "allowsManual"> | undefined,
   manual: { score: number; justification: string } | null): { score: number; justification: string } | null {

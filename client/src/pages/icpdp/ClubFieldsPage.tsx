@@ -26,6 +26,7 @@ interface FieldDraft {
   sortOrder: string;
 }
 
+// Kiểm tra và chuyển nháp lĩnh vực thành dữ liệu gửi lên, null nếu không hợp lệ
 function parsed(draft: FieldDraft): ClubFieldInput | null {
   const name = draft.name.trim();
   const sortOrder = Number(draft.sortOrder);
@@ -35,6 +36,7 @@ function parsed(draft: FieldDraft): ClubFieldInput | null {
   return { name, sortOrder };
 }
 
+// Lỗi inline cho tên lĩnh vực bắt buộc
 /** Inline error for the required name; the optional order is only checked by `parsed` on submit. */
 function draftErrors(t: TFunction, draft: FieldDraft | null) {
   if (!draft) return {};
@@ -46,6 +48,7 @@ interface FieldRowProps {
   csrfToken: string;
 }
 
+// Một dòng lĩnh vực CLB: sửa tại chỗ, xoá hoặc ngừng dùng
 function FieldRow({ field, csrfToken }: FieldRowProps) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<FieldDraft | null>(null);
@@ -57,6 +60,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
   const inUse = field.clubCount + field.applicationCount > 0;
   const counts = { clubs: field.clubCount, applications: field.applicationCount };
 
+  // Lưu chỉnh sửa lĩnh vực CLB
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft) return;
@@ -75,6 +79,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
     }
   }
 
+  // Xoá lĩnh vực, hoặc ngừng dùng nếu đã được CLB sử dụng
   async function confirmRemove() {
     try {
       const result = await remove.mutateAsync({ id: field.id, csrfToken });
@@ -154,6 +159,7 @@ function FieldRow({ field, csrfToken }: FieldRowProps) {
   );
 }
 
+// Form thêm lĩnh vực CLB mới
 function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: number }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<FieldDraft>({ name: "", sortOrder: "" });
@@ -161,6 +167,7 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
   const create = useCreateClubField();
   const field = useFieldValidation(draftErrors(t, draft));
 
+  // Tạo lĩnh vực CLB mới từ form
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const input = parsed({ ...draft, sortOrder: draft.sortOrder || String(nextOrder) });
@@ -203,6 +210,7 @@ function AddFieldForm({ csrfToken, nextOrder }: { csrfToken: string; nextOrder: 
   );
 }
 
+// Trang ICPDP quản lý danh mục lĩnh vực hoạt động của CLB
 export function ClubFieldsPage() {
   const { t } = useTranslation();
   const auth = useAuth();

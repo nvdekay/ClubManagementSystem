@@ -27,6 +27,7 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 const sectionKeys = ["club-information", "founders", "documents", "other"];
 const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const;
 
+// Trang ICPDP xem chi tiết hồ sơ lập CLB, nhận xử lý và ra quyết định
 export function ApplicationReviewDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
@@ -66,18 +67,21 @@ export function ApplicationReviewDetailPage() {
     return labels[section];
   }
 
+  // Bật/tắt mục hồ sơ cần chỉnh sửa khi yêu cầu bổ sung
   function toggleSection(section: string) {
     setSections((current) => current.includes(section)
       ? current.filter((item) => item !== section) : [...current, section]);
     field.touch("sections");
   }
 
+  // Officer nhận (claim) hồ sơ để tự xử lý
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
     catch { /* Mutation state is rendered below. */ }
   }
 
+  // Xác nhận rồi gửi quyết định duyệt, từ chối hoặc yêu cầu chỉnh sửa hồ sơ
   async function decide() {
     if (!auth.data || !id) return;
     // Checked before asking for confirmation.
@@ -94,6 +98,7 @@ export function ApplicationReviewDetailPage() {
     } catch { /* Mutation state is rendered below. */ }
   }
 
+  // Mở tài liệu đính kèm của hồ sơ bằng link truy cập tạm thời
   async function openDocument(documentId: string) {
     if (!id) return;
     try {

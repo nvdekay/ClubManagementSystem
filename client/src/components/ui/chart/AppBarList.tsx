@@ -20,6 +20,7 @@ interface AppBarListProps {
   formatValue?: (value: number) => string;
 }
 
+// Danh sách thanh ngang theo danh mục
 /** Horizontal bars, one row per category, value at the bar tip; a row with `href` opens it. */
 export function AppBarList({ rows, tones, seriesLabels, emptyLabel, formatValue = String }: AppBarListProps) {
   const max = niceMax(Math.max(0, ...rows.map((row) => row.values.reduce((sum, value) => sum + value, 0))));

@@ -12,6 +12,7 @@ interface AppAreaChartProps {
   formatValue?: (value: number) => string;
 }
 
+// Biểu đồ vùng một chuỗi theo thời gian
 /** One series over time: a 2px line on a light wash, the latest value labelled, a crosshair on hover or focus. */
 export function AppAreaChart({ points, seriesLabel, formatValue = String }: AppAreaChartProps) {
   const max = niceMax(Math.max(0, ...points.map((point) => point.value)));

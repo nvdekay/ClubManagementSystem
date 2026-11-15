@@ -18,6 +18,7 @@ type AccountRow = AdminUserPage["items"][number];
 
 const ROLES: SystemRoleCode[] = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"];
 
+// Dialog ICPDP cấp/thu hồi vai trò hệ thống và khoá/mở khoá một tài khoản
 /**
  * UC03 for one account, in two clearly separate parts: the ICPDP system roles it holds (grant at once,
  * revoke with a reason), and locking or unlocking the whole account (always with a reason).
@@ -46,6 +47,7 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
     return code === "ICPDP_OFFICER" ? t("auth.officerRoleHint") : code === "ICPDP_HEAD" ? t("auth.headRoleHint") : t("auth.attendanceRoleHint");
   }
 
+  // Đóng dialog và xoá toàn bộ trạng thái nhập liệu
   function close() {
     if (action.isPending) return;
     setRevoking(null); setRevokeReason(""); setLockReason(""); setViolationId("");
@@ -53,6 +55,7 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
     onClose();
   }
 
+  // Gửi một thao tác quản lý tài khoản rồi hiện kết quả
   async function run(next: AccountAction, message: string) {
     if (!auth.data) return;
     setDone(null);

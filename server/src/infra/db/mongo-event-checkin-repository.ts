@@ -8,15 +8,18 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid attendance date in database");
   return value;
 }
 
+// Trả Date nếu giá trị là Date, ngược lại undefined
 function optionalDate(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined;
 }
 
+// Repository check-in sự kiện của sinh viên (UC31)
 export function mongoEventCheckInRepository(): EventCheckInRepository {
   const events = ucmsModels.events!;
   const registrations = ucmsModels.eventRegistrations!;
@@ -44,6 +47,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
   }
 
   return {
+    // Lấy sự kiện, đăng ký, membership và điểm danh để xét điều kiện check-in
     async target(eventId, studentId) {
       const eventObjectId = new Types.ObjectId(eventId);
       const studentObjectId = new Types.ObjectId(studentId);
@@ -66,6 +70,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
       isActiveClubMember: Boolean(membership), attendance };
     },
 
+    // Ghi điểm danh sinh viên trong transaction, gắn cờ bất thường nếu có
     async checkIn(input) {
       const eventId = new Types.ObjectId(input.eventId);
       const studentId = new Types.ObjectId(input.studentId);
@@ -136,6 +141,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
       return { attendance, created };
     },
 
+    // Liệt kê các lần check-in của sinh viên (bỏ no-show)
     async listMine(studentId) {
       const docs = await attendances.find({ studentId: new Types.ObjectId(studentId), abnormalFlags: { $ne: "no-show" } })
         .sort({ checkedInAt: -1, _id: -1 }).lean();

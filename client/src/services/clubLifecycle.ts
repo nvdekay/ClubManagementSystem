@@ -66,6 +66,7 @@ export class LifecycleRequestError extends ApiError {
   }
 }
 
+// Gọi API /admin/clubs và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/clubs${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -77,31 +78,37 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit POST có CSRF và body JSON
 function post(path: string, csrfToken: string, body: object): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     body: JSON.stringify(body) };
 }
 
+// GET trạng thái vòng đời của các CLB cho ICPDP
 export function fetchClubLifecycles(signal: AbortSignal): Promise<{
   clubs: ClubLifecycleSummary[]; expiringSuspensions: ClubLifecycleSummary[];
 }> {
   return request("", { signal });
 }
 
+// GET chi tiết vòng đời một CLB
 export function fetchClubLifecycle(id: string, signal: AbortSignal): Promise<{
   club: ClubLifecycleDetail; nextSemester: { code: string; startAt: string; endAt: string } | null;
 }> {
   return request(`/${encodeURIComponent(id)}`, { signal });
 }
 
+// POST /suspend: tạm ngưng CLB
 export function suspendClub(id: string, input: { reason: string; until?: string }, csrfToken: string): Promise<CascadeResult> {
   return request(`/${encodeURIComponent(id)}/suspend`, post("", csrfToken, input));
 }
 
+// POST /reactivate: kích hoạt lại CLB
 export function reactivateClub(id: string, reason: string, csrfToken: string): Promise<{ reactivated: true }> {
   return request(`/${encodeURIComponent(id)}/reactivate`, post("", csrfToken, { reason }));
 }
 
+// POST /dissolve: giải thể CLB
 export function dissolveClub(id: string, reason: string, csrfToken: string): Promise<CascadeResult & {
   effectiveSemester: string; unreconciledBudgets: number;
 }> {

@@ -9,7 +9,9 @@ import { otherClubLeaderUserIds } from "./club-board.js";
 import { clubOutstandingObligations } from "./club-obligations.js";
 import { ucmsModels as m } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
+// Ánh xạ document thành TransitionTerm
 function term(d: Doc): TransitionTerm { return { id: String(d._id), name: String(d.name), state: String(d.state), startAt: d.startAt as Date, endAt: d.endAt as Date }; }
+// Repository kế hoạch chuyển giao nhiệm kỳ ban chủ nhiệm (UC12)
 export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepository {
   async function mapped(d: Doc): Promise<ClubTransitionPlan> {
     const target = await m.clubTerms!.findById(d.toTermId).lean();
@@ -52,6 +54,7 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
       handoverItems: { items: input.handoverItems, earlyReason: input.earlyReason } } };
   }
   return {
+    // Lấy ngữ cảnh chuyển giao: nhiệm kỳ, vị trí, thành viên, nghĩa vụ, các kế hoạch
     async context(clubId, now) {
       const club = new Types.ObjectId(clubId);
       const [active, positions, members, docs, obligations] = await Promise.all([
@@ -65,6 +68,7 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
       return { term: active ? term(active) : null, positions: positions.map((d) => ({ code: String(d.code), name: String(d.name), isLeaderRole: d.isLeaderRole === true, isSingleHolder: d.isSingleHolder !== false })),
         members: members.map((d) => ({ id: String(d._id), displayName: names.get(String(d.userId)) ?? "" })), obligations, plans: await Promise.all(docs.map(mapped)) };
     },
+    // Tạo bản nháp kế hoạch chuyển giao
     async create(clubId, raw, userId, now) {
       const id = new Types.ObjectId();
       const targetId = new Types.ObjectId();
@@ -82,6 +86,7 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
       });
       return required(clubId, String(id));
     },
+    // Lưu bản nháp kế hoạch chuyển giao, kiểm tra revision
     async save(clubId, id, revision, raw, userId, now) {
       await mongoose.connection.transaction(async (session) => {
         await lock(session, clubId, userId, now);
@@ -94,6 +99,7 @@ export function mongoClubTransitionPlanRepository(): ClubTransitionPlanRepositor
       });
       return required(clubId, id);
     },
+    // Nộp kế hoạch chuyển giao để ICPDP xác nhận
     async submit(clubId, id, revision, userId, now) {
       await mongoose.connection.transaction(async (session) => {
         await lock(session, clubId, userId, now);

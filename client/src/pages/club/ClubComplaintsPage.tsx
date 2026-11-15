@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubComplaints, useRespondToComplaint } from "@/hooks/useComplaints";
 import type { ComplaintEvidence, ComplaintForClub } from "@/services/complaints";
 
+// Trang Club Leader xem và phản hồi khiếu nại nhắm vào CLB
 /** UC52: complaints ICPDP forwarded to this club (never with the complainant, D5), answered once each. */
 export function ClubComplaintsPage() {
   const { clubId = "" } = useParams();
@@ -39,6 +40,7 @@ export function ClubComplaintsPage() {
   );
 }
 
+// Thẻ một khiếu nại kèm form phản hồi (nội dung, hành động, bằng chứng)
 function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClub }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -47,6 +49,7 @@ function ClubComplaint({ clubId, item }: { clubId: string; item: ComplaintForClu
   const [action, setAction] = useState("");
   const [evidence, setEvidence] = useState<ComplaintEvidence[]>([]);
 
+  // Gửi phản hồi của CLB cho khiếu nại
   async function send() {
     if (!auth.data || !text.trim() || !action.trim()) return;
     try {

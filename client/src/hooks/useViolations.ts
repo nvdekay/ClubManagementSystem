@@ -6,20 +6,24 @@ import {
 
 const violationKey = ["violations"] as const;
 
+// Query danh sách vi phạm của các CLB
 export function useViolations(enabled: boolean) {
   return useQuery({ queryKey: [...violationKey, "list"], queryFn: ({ signal }) => fetchViolations(signal), enabled, retry: false });
 }
 
+// Query chi tiết một vi phạm
 export function useViolation(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...violationKey, "detail", id], queryFn: ({ signal }) => fetchViolation(id!, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
 
+// Query nguồn dữ liệu để mở vi phạm cho một CLB
 export function useViolationSources(clubId: string) {
   return useQuery({ queryKey: [...violationKey, "sources", clubId], queryFn: ({ signal }) => fetchViolationSources(clubId, signal),
     enabled: Boolean(clubId), retry: false });
 }
 
+// Mutation mở hồ sơ vi phạm mới, rồi làm mới danh sách
 export function useOpenViolation() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -31,6 +35,7 @@ export function useOpenViolation() {
   });
 }
 
+// Mutation thực hiện bước xử lý vi phạm, rồi làm mới cache
 export function useViolationStep() {
   const queryClient = useQueryClient();
   return useMutation({

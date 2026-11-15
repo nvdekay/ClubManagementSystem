@@ -15,12 +15,14 @@ export const MAX_ACHIEVEMENTS = 20;
 export const TREND_DELTA = 5;
 const CLASSIFICATIONS: Classification[] = ["EXCELLENT", "GOOD", "FAIR", "NEEDS_IMPROVEMENT"];
 
+// Tách mã kỳ (vd `Fall 2026`) thành mùa và năm, trả null nếu không hợp lệ
 /** `Fall 2026`, `FALL 2026`, `fall2026` → FALL of 2026; any other code belongs to no academic year. */
 export function parsePeriodCode(code: string): { season: Season; year: number } | null {
   const match = /^\s*(spring|summer|fall)\s*(\d{4})\s*$/i.exec(code);
   return match ? { season: match[1]!.toUpperCase() as Season, year: Number(match[2]) } : null;
 }
 
+// Kiểm tra năm báo cáo là số nguyên 4 chữ số
 export function validateAnnualYear(year: unknown): number {
   if (typeof year !== "number" || !Number.isInteger(year) || year < 1000 || year > 9999) {
     throw new DomainError("year must be a 4-digit number", "validation", { field: "year" });
@@ -143,18 +145,22 @@ export interface AnnualReport {
   achievements: AnnualAchievement[];
 }
 
+// Làm tròn số tới một chữ số thập phân
 function round(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+// Tính trung bình cộng đã làm tròn, null nếu danh sách rỗng
 function mean(values: number[]): number | null {
   return values.length ? round(values.reduce((sum, value) => sum + value, 0) / values.length) : null;
 }
 
+// Tạo bản ghi theo ba mùa SPRING, SUMMER, FALL từ hàm sinh giá trị
 function bySeason<T>(make: (season: Season) => T): Record<Season, T> {
   return { SPRING: make("SPRING"), SUMMER: make("SUMMER"), FALL: make("FALL") };
 }
 
+// Liệt kê các năm có ít nhất một đánh giá Published cùng trạng thái ba kỳ
 /** Years that have at least one Published evaluation, newest first, with the state of their three terms. */
 export function annualYears(publishedPeriodCodes: string[]): AnnualYearOption[] {
   const years = new Map<number, Record<Season, string[]>>();
@@ -170,28 +176,34 @@ export function annualYears(publishedPeriodCodes: string[]): AnnualYearOption[] 
   }));
 }
 
+// Tạo khoá định danh một thành tích từ báo cáo, phiên bản và vị trí
 export function achievementKey(report: Pick<AnnualPeriodicReport, "id" | "versionNo">, index: number): string {
   return `${report.id}:${report.versionNo}:${index}`;
 }
 
+// Cộng các số, giá trị thiếu tính là 0
 function sum(values: (number | undefined)[]): number {
   return values.reduce<number>((total, value) => total + (value ?? 0), 0);
 }
 
+// Kiểm tra ngày tạo có thuộc năm đã cho theo giờ Việt Nam
 /** Calendar year in Vietnam time, like the semester windows. */
 function createdIn(date: Date | undefined, year: number): boolean {
   return date !== undefined && new Date(date.getTime() + 7 * 3_600_000).getUTCFullYear() === year;
 }
 
+// Rút gọn dòng CLB thành cặp mã và tên CLB
 function pick(row: AnnualClubRow): { clubId: string; clubName: string } {
   return { clubId: row.clubId, clubName: row.clubName };
 }
 
+// Xác định xu hướng tăng, giảm hoặc ổn định giữa giá trị đầu và cuối
 function trendOf(first: number, last: number): Trend {
   const delta = round(last - first);
   return delta >= TREND_DELTA ? "UP" : delta <= -TREND_DELTA ? "DOWN" : "STABLE";
 }
 
+// Dựng báo cáo năm sáu phần từ các nguồn đã được ICPDP xác nhận
 /** Builds the six sections of the annual report from the confirmed sources of one year. Never recomputes a score. */
 export function buildAnnualReport(year: number, source: AnnualSource): AnnualReport {
   const clubs = new Map(source.clubs.map((club) => [club.id, club]));

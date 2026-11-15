@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubInvitations, useRespondToInvitation } from "@/hooks/useClubInvitations";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 
+// Trang CLB nhận lời mời tham gia sự kiện và phản hồi
 export function ClubInvitationsPage() {
   const { clubId = "" } = useParams();
   const { t, i18n } = useTranslation();
@@ -22,6 +23,7 @@ export function ClubInvitationsPage() {
   const list = useClubInvitations(clubId, allowed);
   const action = useRespondToInvitation(clubId);
   const [drafts, setDrafts] = useState<Record<string, { note: string; representative: string; members: string }>>({});
+  // Cập nhật nháp ghi chú, người đại diện hoặc thành viên của một lời mời
   function edit(id: string, field: "note" | "representative" | "members", value: string) {
     setDrafts((current) => ({ ...current, [id]: { ...(current[id] ?? { note: "", representative: "", members: "" }), [field]: value } }));
   }
@@ -29,6 +31,7 @@ export function ClubInvitationsPage() {
   const errors: Record<string, string | null> = Object.fromEntries((list.data ?? []).map(({ id }) =>
     ["note:" + id, drafts[id]?.note.trim() ? null : t("clubInvitations.declineReasonRequired")]));
   const field = useFieldValidation(errors);
+  // Chấp nhận hoặc từ chối lời mời (từ chối cần lý do)
   async function respond(id: string, outcome: "Accepted" | "Declined") {
     if (!auth.data || action.isPending) return;
     if (outcome === "Declined") {

@@ -28,6 +28,7 @@ export class RoomAllocationError extends ApiError {
   constructor(message: string, readonly details?: unknown) { super(message); this.name = "RoomAllocationError"; }
 }
 
+// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
@@ -36,26 +37,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return ((await res.json()) as { data: T }).data;
 }
+// POST có CSRF và body JSON
 function post<T>(path: string, body: unknown, csrfToken: string): Promise<T> {
   return request(path, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     body: JSON.stringify(body) });
 }
 
+// GET /options: CLB, phòng và học kỳ có thể phân bổ
 export function fetchRoomAllocationOptions(signal: AbortSignal): Promise<RoomAllocationOptions> {
   return request("/admin/room-allocations/options", { signal });
 }
+// GET phân bổ phòng của một học kỳ
 export function fetchRoomAllocations(semesterCode: string, signal: AbortSignal): Promise<RoomAllocation[]> {
   return request(`/admin/room-allocations?${new URLSearchParams({ semesterCode })}`, { signal });
 }
+// GET /occupancy: tình trạng sử dụng của một phòng trong học kỳ
 export function fetchRoomOccupancy(semesterCode: string, propertyId: string, signal: AbortSignal): Promise<RoomOccupancyCell[]> {
   return request(`/admin/room-allocations/occupancy?${new URLSearchParams({ semesterCode, propertyId })}`, { signal });
 }
+// GET phòng được phân bổ cho CLB
 export function fetchClubRoomAllocations(clubId: string, signal: AbortSignal): Promise<RoomAllocation[]> {
   return request(`/clubs/${encodeURIComponent(clubId)}/room-allocations`, { signal });
 }
+// POST tạo phân bổ phòng cho CLB
 export function createRoomAllocation(input: RoomAllocationInput, csrfToken: string): Promise<RoomAllocation> {
   return post("/admin/room-allocations", input, csrfToken);
 }
+// POST /revoke: thu hồi phân bổ phòng
 export function revokeRoomAllocation(id: string, reason: string, csrfToken: string): Promise<RoomAllocation> {
   return post(`/admin/room-allocations/${encodeURIComponent(id)}/revoke`, { reason }, csrfToken);
 }

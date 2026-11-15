@@ -12,6 +12,7 @@ interface AppToasterProps {
   theme: ToasterProps["theme"];
 }
 
+// Vùng hiển thị toast, đồng bộ theme sáng/tối
 // Mount once, in App.tsx. `theme` keeps toasts in sync with the .dark toggle;
 // richColors gives each variant an accessible bg/text pair in both themes.
 export function AppToaster({ theme }: AppToasterProps) {

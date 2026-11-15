@@ -40,6 +40,7 @@ export interface CandidateEvaluationRepository {
     totalScore?: number; comment?: string; now: Date }): Promise<CandidateEvaluation>;
 }
 
+// Đảm bảo hồ sơ ứng tuyển đang ở trạng thái Shortlisted và đợt tuyển chưa bị huỷ để được chấm
 export function assertEvaluable(target: EvaluationTarget): void {
   if (target.campaignState === "Cancelled") {
     throw new DomainError("campaign is cancelled", "conflict");
@@ -49,6 +50,7 @@ export function assertEvaluable(target: EvaluationTarget): void {
   }
 }
 
+// Kiểm tra điểm theo rubric và dựng bản đánh giá ứng viên
 export function buildCandidateEvaluation(rubric: readonly RecruitmentRubricCriterion[],
   input: { scores: Record<string, number>; comment?: string }) {
   const comment = input.comment?.trim();
@@ -72,6 +74,7 @@ export function buildCandidateEvaluation(rubric: readonly RecruitmentRubricCrite
   return { scores, totalScore, ...(comment ? { comment } : {}) };
 }
 
+// Tổng hợp điểm trung bình và độ phân tán từ các bản đánh giá của ứng viên
 /** Aggregate (mean) and dispersion (min/max/population standard deviation) of total scores. */
 export function summarizeEvaluations(rubric: readonly RecruitmentRubricCriterion[],
   evaluations: readonly CandidateEvaluation[]): CandidateEvaluationSummary {

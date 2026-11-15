@@ -4,6 +4,7 @@ import type { MemberSpaceRepository } from "../../domain/member-space.js";
 import type { MembershipState } from "../../domain/membership.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ép giá trị đọc từ DB về Date, lỗi nếu không phải ngày hợp lệ
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid member space date in database");
   return value;
@@ -12,6 +13,7 @@ function date(value: unknown): Date {
 /** UC24: published events of the club; internal events appear from PUBLIC, never as DRAFT or CREATED. */
 const shownEventStates = ["Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "PUBLIC", "ONGOING", "FINISH"];
 
+// Repository không gian thành viên của sinh viên trong CLB
 export function mongoMemberSpaceRepository(): MemberSpaceRepository {
   const clubs = ucmsModels.clubs!;
   const memberships = ucmsModels.clubMemberships!;
@@ -26,6 +28,7 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
   const feedbacks = ucmsModels.eventFeedbacks!;
 
   return {
+    // Lấy dữ liệu không gian thành viên của sinh viên trong một CLB
     async find(userId, clubId, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const userObjectId = new Types.ObjectId(userId);

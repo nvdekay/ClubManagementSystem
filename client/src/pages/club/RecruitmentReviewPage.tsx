@@ -35,6 +35,7 @@ const REVIEW_STATES: RecruitmentApplication["state"][] = ["Submitted", "Screenin
 const NO_ROWS: ReviewRow[] = [];
 const column = createColumnHelper<AppTableFeatures, ReviewRow>();
 
+// Trang review hồ sơ ứng tuyển của một đợt tuyển: lọc, chọn nhiều, quyết định
 export function RecruitmentReviewPage() {
   const { clubId, campaignId } = useParams();
   const { t, i18n } = useTranslation();
@@ -124,6 +125,7 @@ export function RecruitmentReviewPage() {
   const table = useTable({ features: appTableFeatures, columns, data: rows });
   const opened = allRows.find((row) => row.application.id === openId);
 
+  // Shortlist hoặc quyết định hàng loạt các hồ sơ đã chọn
   async function bulk(actionName: "shortlist" | "decide") {
     if (!clubId || !campaignId || !auth.data || !selected.length) return;
     setError("");
@@ -188,6 +190,7 @@ export function RecruitmentReviewPage() {
   </>;
 }
 
+// Tên hiển thị của ứng viên, dùng đuôi mã hồ sơ nếu thiếu tên
 function applicantName(application: RecruitmentApplication) {
   return application.applicantName ?? application.id.slice(-6);
 }

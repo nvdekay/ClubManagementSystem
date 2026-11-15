@@ -22,11 +22,13 @@ const NEW_TERM = "Nhiệm kỳ 2026–2027";
 const DAY = 86_400_000;
 const VN_OFFSET = 7 * 3_600_000;
 const now = new Date();
+// Đầu ngày (giờ Việt Nam) cách hôm nay days ngày
 /** Midnight of a Vietnam calendar day, `days` after today. */
 function vnDayStart(days: number): Date {
   return new Date(Math.floor((now.getTime() + VN_OFFSET) / DAY) * DAY + days * DAY - VN_OFFSET);
 }
 
+// Lấy hoặc tạo tài khoản người dùng cho một vai demo
 /** A real (overridden) account must have signed in once; a demo account is created when missing. */
 async function user(person: CastMember): Promise<Types.ObjectId> {
   const found = await m.users!.findOne({ email: person.email }).select("_id").lean();
@@ -37,6 +39,7 @@ async function user(person: CastMember): Promise<Types.ObjectId> {
   return created!._id as Types.ObjectId;
 }
 
+// Đảm bảo người dùng có vai trò ICPDP_OFFICER
 /** Grants ICPDP_OFFICER to the demo officer only; a real officer account must already hold it. */
 async function officerRole(officerId: Types.ObjectId): Promise<void> {
   const role = cast.officer.overridden ? await m.roles!.findOne({ code: "ICPDP_OFFICER", scope: "system" }).lean()
@@ -89,6 +92,7 @@ async function ensureClub(ids: Ids): Promise<Types.ObjectId> {
   return clubId;
 }
 
+// Đảm bảo có học kỳ kế tiếp trong policy, trả về mã học kỳ
 /** UC15 needs a semester after today to schedule a dissolution; appended through the UC04 usecase. */
 async function ensureNextSemester(officerId: Types.ObjectId, config: { ALLOWED_DOMAIN?: string }): Promise<string> {
   const policies = mongoPolicyRepository();
@@ -109,6 +113,7 @@ async function ensureNextSemester(officerId: Types.ObjectId, config: { ALLOWED_D
   return code;
 }
 
+// Đảm bảo có các sự kiện demo của CLB
 /** One approved event ahead (cancelled by a suspension) and one past event whose budget is not reconciled. */
 async function ensureEvents(clubId: Types.ObjectId): Promise<void> {
   const base = { organizerType: "CLUB", clubId, clubName: DEMO_CLUB_NAME, audienceScope: "PUBLIC", capacity: 120,

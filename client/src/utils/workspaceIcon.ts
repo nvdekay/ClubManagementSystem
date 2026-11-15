@@ -1,6 +1,7 @@
 import type { AppIconName } from "@/components/ui/icon/AppIcon";
 import type { Workspace } from "@/services/auth";
 
+// Chọn icon cho workspace theo loại và vai trò
 /**
  * One icon per workspace, shared by the workspace picker and the sidebar: club boards (leader, founder)
  * get a briefcase, plain club members an ID card, so two club cards never look identical.

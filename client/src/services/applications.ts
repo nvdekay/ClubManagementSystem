@@ -122,6 +122,7 @@ export interface ApplicationDetail {
   founders: FounderProfile[];
 }
 
+// Gọi API /applications và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/applications${path}`, {
     credentials: "same-origin", ...init,
@@ -139,23 +140,28 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
 function mutation(method: string, csrfToken: string, body?: object): RequestInit {
   return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
+// GET /applications/config: cấu hình form hồ sơ thành lập CLB
 export function fetchApplicationConfig(signal: AbortSignal): Promise<ApplicationConfig> {
   return request<ApplicationConfig>("/config", { signal });
 }
 
+// GET /applications/mine: hồ sơ thành lập CLB của tôi
 export function fetchMyApplications(signal: AbortSignal): Promise<ApplicationRecord[]> {
   return request<ApplicationRecord[]>("/mine", { signal });
 }
 
+// GET chi tiết một hồ sơ thành lập CLB
 export function fetchApplication(id: string, signal: AbortSignal): Promise<ApplicationDetail> {
   return request<ApplicationDetail>(`/${encodeURIComponent(id)}`, { signal });
 }
 
+// GET /preview: xem trước hồ sơ trước khi nộp
 export function previewApplication(id: string, signal: AbortSignal): Promise<{
   requirements: FoundingRequirements; issues: FoundingIssue[]; activeNameConflict: boolean;
   similarClubs: SimilarClubHint[];
@@ -163,26 +169,31 @@ export function previewApplication(id: string, signal: AbortSignal): Promise<{
   return request(`/${encodeURIComponent(id)}/preview`, { signal });
 }
 
+// POST tạo bản nháp hồ sơ thành lập CLB
 export function createDraft(input: DraftInput, csrfToken: string): Promise<ApplicationRecord> {
   return request("", mutation("POST", csrfToken, input));
 }
 
+// PATCH /draft: lưu bản nháp hồ sơ theo draftRevision
 export function saveDraft(id: string, input: DraftInput, draftRevision: number,
   csrfToken: string): Promise<ApplicationRecord> {
   return request(`/${encodeURIComponent(id)}/draft`, mutation("PATCH", csrfToken,
     { ...input, draftRevision }));
 }
 
+// POST /submit: nộp hồ sơ để ICPDP xét duyệt
 export function submitDraft(id: string, csrfToken: string): Promise<{
   version: ApplicationVersion; activeNameConflict: boolean; similarClubs: SimilarClubHint[];
 }> {
   return request(`/${encodeURIComponent(id)}/submit`, mutation("POST", csrfToken));
 }
 
+// POST /withdraw: rút hồ sơ đã tạo
 export function withdrawDraft(id: string, csrfToken: string): Promise<ApplicationRecord> {
   return request(`/${encodeURIComponent(id)}/withdraw`, mutation("POST", csrfToken));
 }
 
+// POST /documents: tải tài liệu đính kèm lên hồ sơ
 export function uploadDocument(id: string, documentType: ApplicationDocumentType, file: File,
   csrfToken: string): Promise<ApplicationDocument> {
   return request(`/${encodeURIComponent(id)}/documents`, {
@@ -192,16 +203,19 @@ export function uploadDocument(id: string, documentType: ApplicationDocumentType
   });
 }
 
+// DELETE tài liệu đính kèm khỏi hồ sơ
 export function removeDocument(id: string, documentId: string,
   csrfToken: string): Promise<ApplicationRecord> {
   return request(`/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}`,
     mutation("DELETE", csrfToken));
 }
 
+// GET /founder-lookup: tra cứu thành viên sáng lập theo email
 export function lookupFounder(email: string): Promise<FounderProfile> {
   return request(`/founder-lookup?email=${encodeURIComponent(email)}`);
 }
 
+// GET đường dẫn truy cập tài liệu đính kèm của hồ sơ
 export function documentAccess(id: string, documentId: string): Promise<{ url: string; fileName: string }> {
   return request(`/${encodeURIComponent(id)}/documents/${encodeURIComponent(documentId)}/access`);
 }

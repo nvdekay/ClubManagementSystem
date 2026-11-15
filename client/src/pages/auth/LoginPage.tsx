@@ -8,6 +8,7 @@ import { googleLoginUrl } from "@/services/auth";
 import { CAMPUS_IMAGE_URL } from "@/utils/campusImage";
 import { cn } from "@/utils/cn";
 
+// Chọn trang đích cho khách, chỉ giữ returnTo nếu là trang công khai
 /** UC06: only the discovery pages are open to guests; any other target falls back to the home page. */
 function guestTarget(returnTo: string): string {
   const path = returnTo.split(/[?#]/)[0]!;
@@ -23,6 +24,7 @@ interface LoginPageProps {
   returnTo: string;
 }
 
+// Trang đăng nhập Google, hiện lỗi hoặc lý do bị khóa nếu có
 export function LoginPage({ authError, isPending, lockedReason, returnTo }: LoginPageProps) {
   const { t } = useTranslation();
   const [loginBusy, setLoginBusy] = useState(false);

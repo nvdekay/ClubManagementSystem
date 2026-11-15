@@ -11,6 +11,7 @@ interface PendingConfirm extends ConfirmOptions {
   message: string;
 }
 
+// Provider cung cấp hộp thoại xác nhận cho hook useConfirm
 /** Hosts the single confirm modal behind `useConfirm()`; one question is open at a time. */
 export function AppConfirmProvider({ children }: AppConfirmProviderProps) {
   const { t } = useTranslation();
@@ -23,6 +24,7 @@ export function AppConfirmProvider({ children }: AppConfirmProviderProps) {
     return new Promise<boolean>((resolve) => { resolver.current = resolve; });
   }, []);
 
+  // Trả kết quả xác nhận cho nơi gọi và đóng hộp thoại
   function settle(value: boolean) {
     resolver.current?.(value);
     resolver.current = null;

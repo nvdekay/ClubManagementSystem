@@ -19,11 +19,13 @@ const clubOwningCollection: Readonly<Record<string, string>> = {
   EventInvitation: "eventInvitations", Evaluation: "evaluations",
 };
 
+// Chuẩn hóa id ObjectId hoặc chuỗi hex 24 ký tự thành chuỗi
 function idText(value: unknown): string | undefined {
   if (value instanceof Types.ObjectId) return String(value);
   return typeof value === "string" && /^[0-9a-f]{24}$/i.test(value) ? value : undefined;
 }
 
+// Suy ra club id của từng thông báo từ entity hoặc payload
 /** Club ids for a page of notifications: payload first, then one lookup per entity type. */
 async function clubIdsFor(docs: Doc[]): Promise<Map<string, string>> {
   const result = new Map<string, string>();
@@ -59,11 +61,13 @@ async function clubIdsFor(docs: Doc[]): Promise<Map<string, string>> {
   return result;
 }
 
+// Điều kiện nhận diện thông báo ICPDP kiểu cũ qua khoá payload
 /** Rows written before a code was split whose payload marks them as the ICPDP copy. */
 function legacyIcpdpRows(): Doc[] {
   return Object.entries(LEGACY_ICPDP_PAYLOAD_KEYS).map(([eventCode, key]) => ({ eventCode, [`payload.${key}`]: { $exists: true } }));
 }
 
+// Dựng điều kiện lọc inbox theo audience
 /** DB filter for the codes of one audience; unknown codes fall to the student's own inbox. */
 function audienceFilter(scope: NotificationScope | undefined): Doc {
   if (!scope) return {};
@@ -74,6 +78,7 @@ function audienceFilter(scope: NotificationScope | undefined): Doc {
     ...(legacy.length ? { $nor: legacy } : {}) };
 }
 
+// Ánh xạ document thông báo sang InboxNotification
 function inboxItem(doc: Doc, clubId: string | undefined): InboxNotification {
   return {
     id: String(doc._id), eventCode: String(doc.eventCode), payload: (doc.payload ?? {}) as Record<string, unknown>,
@@ -85,16 +90,19 @@ function inboxItem(doc: Doc, clubId: string | undefined): InboxNotification {
   };
 }
 
+// Repository inbox thông báo của người dùng
 /**
  * Inbox reads go by `readAt` (index `ix_notification_inbox`). Reading also moves a delivered row to
  * `Read`; a row whose email is still queued keeps `Queued` so the mail worker still sends it.
  */
 export function mongoNotificationRepository(): NotificationRepository {
   const notifications = m.notifications!;
+  // Chuyển thông báo đã đọc sang state Read khi đủ điều kiện
   async function settleReadState(filter: Doc): Promise<void> {
     await notifications.updateMany({ ...filter, readAt: { $ne: null }, state: { $in: ["Queued", "Sent"] },
       $or: [{ state: "Sent" }, { channels: { $ne: NOTIFICATION_CHANNEL_EMAIL } }] }, { $set: { state: "Read" } });
   }
+  // Lấy thông báo CLB gửi tới người dùng kèm club id
   /**
    * Club scope narrowed to one club: the club is resolved per row (payload or owning entity), which a
    * query cannot express, so the user's club rows are resolved first. Inbox volumes are small.
@@ -114,6 +122,7 @@ export function mongoNotificationRepository(): NotificationRepository {
     return { docs: docs.filter((doc) => clubs.get(String(doc._id)) === clubId), clubs };
   }
   return {
+    // Liệt kê thông báo của người dùng theo workspace
     async listMine(userId, query) {
       const recipientUserId = new Types.ObjectId(userId);
       if (query.scope?.audience === "club" && query.scope.clubId) {
@@ -137,6 +146,7 @@ export function mongoNotificationRepository(): NotificationRepository {
       return { items: page.map((doc) => inboxItem(doc, clubs.get(String(doc._id)))), unread,
         ...(docs.length > query.limit && last ? { nextBefore: (last.createdAt as Date).toISOString() } : {}) };
     },
+    // Đếm thông báo chưa đọc theo workspace
     async unreadCount(userId, scope) {
       const recipientUserId = new Types.ObjectId(userId);
       if (scope?.audience === "club" && scope.clubId) {
@@ -144,6 +154,7 @@ export function mongoNotificationRepository(): NotificationRepository {
       }
       return notifications.countDocuments({ recipientUserId, readAt: null, ...audienceFilter(scope) });
     },
+    // Đánh dấu một thông báo đã đọc
     async markRead(userId, id, now) {
       const filter = { _id: new Types.ObjectId(id), recipientUserId: new Types.ObjectId(userId) };
       const found = await notifications.findOneAndUpdate({ ...filter, readAt: null }, { $set: { readAt: now } }).lean();
@@ -151,6 +162,7 @@ export function mongoNotificationRepository(): NotificationRepository {
       await settleReadState(filter);
       return true;
     },
+    // Đánh dấu tất cả thông báo trong workspace đã đọc
     async markAllRead(userId, now, scope) {
       const recipientUserId = new Types.ObjectId(userId);
       const filter = scope?.audience === "club" && scope.clubId
@@ -163,6 +175,7 @@ export function mongoNotificationRepository(): NotificationRepository {
   };
 }
 
+// Repository outbox gửi thông báo in-app và email
 /**
  * Outbox for SCH-10. The claim is one atomic `findOneAndUpdate` that moves `dueAt` past a lease and
  * counts the attempt, so two app instances never send the same row at once (NTF-07); a worker that
@@ -172,11 +185,13 @@ export function mongoMailOutboxRepository(): MailOutboxRepository {
   const notifications = m.notifications!;
   const logs = m.emailDeliveryLogs!;
   return {
+    // Chuyển thông báo in-app đến hạn sang Sent
     async drainInApp(now) {
       const changed = await notifications.updateMany({ state: "Queued", dueAt: { $lte: now },
         channels: { $ne: NOTIFICATION_CHANNEL_EMAIL } }, { $set: { state: "Sent" } });
       return changed.modifiedCount;
     },
+    // Nhận (lease) email đến hạn kế tiếp để gửi
     async claimNextEmail(now, leaseMs): Promise<ClaimedEmail | null> {
       const doc = await notifications.findOneAndUpdate(
         { state: "Queued", dueAt: { $lte: now }, channels: NOTIFICATION_CHANNEL_EMAIL },
@@ -190,6 +205,7 @@ export function mongoMailOutboxRepository(): MailOutboxRepository {
         ...(typeof user?.email === "string" && user.email ? { toEmail: user.email } : {}),
         ...(typeof user?.displayName === "string" && user.displayName ? { displayName: user.displayName } : {}) };
     },
+    // Ghi log gửi email thành công
     async recordSent(claim, toEmail, providerResponse, now) {
       await logs.create({ notificationId: new Types.ObjectId(claim.id), toEmail, status: "Sent", attempt: claim.attempt,
         ...(providerResponse ? { providerResponse } : {}), at: now });
@@ -198,6 +214,7 @@ export function mongoMailOutboxRepository(): MailOutboxRepository {
         [{ $set: { state: { $cond: [{ $eq: [{ $ifNull: ["$readAt", null] }, null] }, "Sent", "Read"] } } },
           { $unset: "lastError" }]);
     },
+    // Ghi log gửi email lỗi, đặt lịch thử lại nếu còn lượt
     async recordFailed(claim, toEmail, error, retryAt, now) {
       await logs.create({ notificationId: new Types.ObjectId(claim.id), toEmail: toEmail || "-",
         status: retryAt ? "Retrying" : "Failed", attempt: claim.attempt, providerResponse: error, at: now });

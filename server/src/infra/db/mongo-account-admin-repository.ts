@@ -7,6 +7,7 @@ import type { AuthUser } from "../../domain/auth.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ánh xạ document user thành AuthUser
 function mapUser(doc: Record<string, unknown>): AuthUser {
   return {
     id: String(doc._id), email: String(doc.email), displayName: String(doc.displayName),
@@ -16,10 +17,12 @@ function mapUser(doc: Record<string, unknown>): AuthUser {
   };
 }
 
+// Tạo regex không phân biệt hoa thường từ chuỗi tìm kiếm đã escape
 function escapedRegex(value: string): RegExp {
   return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 }
 
+// Repository quản trị tài khoản: tìm user, cấp/thu hồi role hệ thống, khóa tài khoản
 export function mongoAccountAdminRepository(): AccountAdminRepository {
   const users = ucmsModels.users!;
   const roles = ucmsModels.roles!;
@@ -85,6 +88,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
   }
 
   return {
+    // Liệt kê user phân trang kèm role hệ thống, CLB và case khóa
     async listUsers(search, page, pageSize): Promise<AdminUserPage> {
       const filter = search ? { $or: [
         { email: escapedRegex(search) }, { displayName: escapedRegex(search) },
@@ -113,10 +117,12 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
         total, page, pageSize,
       };
     },
+    // Tìm user theo id
     async findUser(userId) {
       const doc = await users.findById(new Types.ObjectId(userId)).lean();
       return doc ? mapUser(doc) : null;
     },
+    // Lấy mã các role hệ thống đang hiệu lực của user
     async systemRoles(userId) {
       const active = await assignments.find({
         userId: new Types.ObjectId(userId), revokedAt: null,
@@ -126,6 +132,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
       }).lean();
       return found.map((role) => String(role.code));
     },
+    // Cấp hoặc thu hồi role hệ thống và ghi audit trong transaction
     async applyRoleChange(input) {
       const actorId = new Types.ObjectId(input.actorId);
       const targetId = new Types.ObjectId(input.targetId);
@@ -179,6 +186,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
         }], { session });
       });
     },
+    // Khóa hoặc mở khóa tài khoản, liên kết case vi phạm nếu có
     async setLock(input) {
       const actorId = new Types.ObjectId(input.actorId);
       const targetId = new Types.ObjectId(input.targetId);

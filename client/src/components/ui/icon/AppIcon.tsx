@@ -70,6 +70,7 @@ interface AppIconProps {
   className?: string;
 }
 
+// Icon SVG theo tên
 /** Decorative by default (aria-hidden); pair icon-only controls with an aria-label. */
 export function AppIcon({ name, className }: AppIconProps) {
   return (

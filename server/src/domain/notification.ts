@@ -91,6 +91,7 @@ const audienceByCode = new Map<string, NotificationAudience>([
   ...CLUB_NOTIFICATION_CODES.map((code) => [code, "club"] as const),
 ]);
 
+// Xác định đối tượng nhận của một thông báo theo mã sự kiện
 /** Audience of one notification; an unknown code is treated as the student's own. */
 export function notificationAudience(eventCode: string, payload: Record<string, unknown> = {}): NotificationAudience {
   const legacyKey = LEGACY_ICPDP_PAYLOAD_KEYS[eventCode];
@@ -135,6 +136,7 @@ export const EMAIL_EVENT_CODES: ReadonlySet<string> = new Set([
   "VIOLATION_RESPONSE_REQUESTED", "VIOLATION_DECIDED", "VIOLATION_CLOSED_NO_VIOLATION",
 ]);
 
+// Xác định kênh gửi thông báo (in-app, có thể kèm email) theo mã sự kiện
 export function notificationChannels(eventCode: string): string[] {
   return EMAIL_EVENT_CODES.has(eventCode)
     ? [NOTIFICATION_CHANNEL_IN_APP, NOTIFICATION_CHANNEL_EMAIL] : [NOTIFICATION_CHANNEL_IN_APP];
@@ -176,20 +178,24 @@ export interface MailOutboxRepository {
 export const MAIL_MAX_ATTEMPTS = 5;
 export const MAIL_LEASE_MS = 5 * 60_000;
 
+// Tính thời gian chờ trước khi thử gửi lại email sau lần lỗi
 /** Backoff before the next try after a failed attempt: 1, 2, 4, 8 minutes, capped at one hour. */
 export function mailRetryDelayMs(attempt: number): number {
   return Math.min(60_000 * 2 ** Math.max(0, attempt - 1), 3_600_000);
 }
 
+// Biến mã sự kiện thành chuỗi dễ đọc
 function humanize(code: string): string {
   const words = code.toLowerCase().split("_").filter(Boolean).join(" ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+// Ép giá trị payload về chuỗi, undefined nếu rỗng hoặc không phải chuỗi
 function text(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+// Dựng nội dung email song ngữ cho một thông báo
 /** Plain bilingual email for a notification; the inbox in UCMS remains the place to see full details. */
 export function renderNotificationEmail(claim: ClaimedEmail, toEmail: string, appUrl?: string): OutgoingEmail {
   const subject = text(claim.payload.title) ?? text(claim.payload.clubName);

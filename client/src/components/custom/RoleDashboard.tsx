@@ -9,6 +9,7 @@ import { IcpdpDashboard } from "@/components/custom/IcpdpDashboard";
 import { useDashboard } from "@/hooks/useDashboard";
 import type { DashboardContext, DashboardPanelKey } from "@/services/dashboard";
 
+// Chọn trang đích khi bấm vào một panel dashboard
 function panelHref(key: DashboardPanelKey, context: DashboardContext): string | null {
   if (key === "foundingApplications") return "/workspace/applications";
   if (key === "recruitmentApplications") return "/workspace/recruitment";
@@ -45,6 +46,7 @@ function panelHref(key: DashboardPanelKey, context: DashboardContext): string | 
   return null;
 }
 
+// Dashboard theo vai trò: tải số liệu rồi hiển thị bản ICPDP, CLB hoặc chung
 export function RoleDashboard({ context }: { context: DashboardContext }) {
   const { t, i18n } = useTranslation();
   const dashboard = useDashboard(context);

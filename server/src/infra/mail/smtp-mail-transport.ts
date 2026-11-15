@@ -8,6 +8,7 @@ export interface SmtpSender {
     Promise<{ accepted?: unknown[]; rejected?: unknown[]; response?: string; messageId?: string }>;
 }
 
+// Tạo nodemailer transporter theo cấu hình SMTP (bắt buộc TLS)
 export function createSmtpSender(config: SmtpConfig): SmtpSender {
   return nodemailer.createTransport({
     host: config.SMTP_HOST, port: config.SMTP_PORT, secure: config.SMTP_SECURE,
@@ -17,6 +18,7 @@ export function createSmtpSender(config: SmtpConfig): SmtpSender {
   });
 }
 
+// Transport email gửi thật qua SMTP, từ chối thì ném lỗi để outbox thử lại
 /**
  * EXT-02 Google SMTP: resolves only when the server accepted the recipient; any refusal throws so
  * the outbox worker retries with backoff. Nothing is logged here — the worker records the outcome
@@ -25,6 +27,7 @@ export function createSmtpSender(config: SmtpConfig): SmtpSender {
 export function smtpMailTransport(config: Pick<SmtpConfig, "MAIL_FROM">, sender: SmtpSender): MailTransport {
   return {
     name: "smtp",
+    // Gửi email qua SMTP và kiểm người nhận được server chấp nhận
     async send(email) {
       const info = await sender.sendMail({ from: config.MAIL_FROM, to: email.to, subject: email.subject, text: email.text });
       const accepted = (info.accepted ?? []).map(String);

@@ -7,6 +7,7 @@ interface AppMeterProps {
   valueText: string;
 }
 
+// Thanh đo một giá trị so với giới hạn
 /** A single ratio against a limit: the fill on a lighter track of the same hue. */
 export function AppMeter({ label, value, max, valueText }: AppMeterProps) {
   return (

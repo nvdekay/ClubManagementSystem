@@ -57,6 +57,7 @@ export class EventRegistrationError extends ApiError {
   }
 }
 
+// Gọi API /api/v1 và trả về data, ném lỗi kèm status nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -67,25 +68,30 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
 function mutation(csrfToken: string, body?: object): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
+// GET /events/:id/registration: điều kiện đăng ký sự kiện
 export function fetchEventRegistrationContext(eventId: string, signal: AbortSignal) {
   return request<EventRegistrationContext>(`/events/${encodeURIComponent(eventId)}/registration`, { signal });
 }
 
+// GET /event-registrations/mine: đăng ký sự kiện của tôi
 export function fetchMyEventRegistrations(signal: AbortSignal) {
   return request<EventRegistration[]>("/event-registrations/mine", { signal });
 }
 
+// POST /registrations: đăng ký tham gia sự kiện kèm câu trả lời
 export function registerForEvent(eventId: string, answers: Record<string, EventRegistrationAnswer>,
   csrfToken: string) {
   return request<EventRegistration>(`/events/${encodeURIComponent(eventId)}/registrations`,
     mutation(csrfToken, { answers }));
 }
 
+// POST /cancel: huỷ đăng ký sự kiện
 export function cancelEventRegistration(registrationId: string, csrfToken: string) {
   return request<EventRegistration>(`/event-registrations/${encodeURIComponent(registrationId)}/cancel`,
     mutation(csrfToken));

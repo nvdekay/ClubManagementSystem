@@ -36,6 +36,7 @@ interface AppTableProps<T extends RowData> {
   loading?: boolean;
 }
 
+// Bảng dữ liệu hiển thị từ một table instance
 export function AppTable<T extends RowData>({ table, emptyMessage, loading }: AppTableProps<T>) {
   const rows = table.getRowModel().rows;
   return (

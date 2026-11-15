@@ -67,9 +67,11 @@ export class ClubEventError extends ApiError {
     super(message);
   }
 }
+// Chuẩn hoá giá trị không rõ kiểu thành mảng chuỗi
 function strings(value: unknown): string[] | undefined {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : undefined;
 }
+// Gọi API /clubs/:clubId/events hoặc internal-events, ném lỗi chi tiết nếu thất bại
 async function request<T>(clubId: string, path: string, init: RequestInit, resource: "events" | "internal-events" = "events"): Promise<T> {
   const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/${resource}${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
@@ -86,15 +88,21 @@ async function request<T>(clubId: string, path: string, init: RequestInit, resou
   }
   return ((await res.json()) as { data: T }).data;
 }
+// GET danh sách sự kiện của CLB
 export function fetchClubEvents(clubId: string, signal: AbortSignal): Promise<ClubEvent[]> { return request(clubId, "", { signal }); }
+// GET chi tiết một sự kiện của CLB
 export function fetchClubEvent(clubId: string, id: string, signal: AbortSignal): Promise<ClubEventDetail> { return request(clubId, `/${encodeURIComponent(id)}`, { signal }); }
+// GET người tham gia của một sự kiện
 export function fetchEventParticipants(clubId: string, id: string, signal: AbortSignal): Promise<EventParticipant[]> { return request(clubId, `/${encodeURIComponent(id)}/participants`, { signal }); }
+// GET phản hồi của các sự kiện theo danh sách id
 export function fetchClubEventFeedback(clubId: string, ids: string[], signal: AbortSignal): Promise<EventFeedbackSummary[]> {
   return request(clubId, `/feedback?${new URLSearchParams({ eventIds: ids.join(",") })}`, { signal });
 }
+// POST tạo đề xuất sự kiện của CLB
 export function createClubEvent(clubId: string, input: ClubEventInput, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, "", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(input) });
 }
+// POST thao tác (nộp, huỷ...) lên một sự kiện của CLB
 export function actOnClubEvent(clubId: string, id: string, action: string, body: object, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}/${action}`, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
 }
@@ -106,25 +114,31 @@ export interface EventPublishInput {
   notifyMembers?: boolean;
 }
 export type InternalCreateMode = "draft" | "create" | "publish";
+// Dựng RequestInit JSON có CSRF cho phương thức và body cho trước
 function jsonInit(method: string, body: object, csrfToken: string): RequestInit {
   return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) };
 }
+// POST tạo sự kiện nội bộ của CLB
 export function createInternalClubEvent(clubId: string, input: InternalClubEventInput, mode: InternalCreateMode, publishInput: EventPublishInput | undefined, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, "", jsonInit("POST", { ...input, mode, ...(publishInput ? { publishInput } : {}) }, csrfToken), "internal-events");
 }
+// PUT cập nhật sự kiện nội bộ kèm expectedVersion
 export function updateInternalClubEvent(clubId: string, id: string, input: InternalClubEventInput, expectedVersion: number, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}`, jsonInit("PUT", { ...input, expectedVersion }, csrfToken), "internal-events");
 }
+// POST /create: chuyển sự kiện nội bộ từ DRAFT sang CREATED
 /** DRAFT → CREATED; the server enforces the 24-hour notice. */
 export function confirmInternalClubEvent(clubId: string, id: string, expectedVersion: number, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}/create`, jsonInit("POST", { expectedVersion }, csrfToken), "internal-events");
 }
 
 export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; eventId?: string; title: string; startAt: string; endAt: string }[] }
+// GET các lựa chọn (phòng, ngân sách...) khi tạo sự kiện
 export function fetchClubEventOptions(clubId: string, signal: AbortSignal): Promise<ClubEventOptions> { return request(clubId, "/options", { signal }); }
 
 /** Same-origin download: the default template streams as an attachment, an ICPDP upload redirects to a signed URL. */
 export const EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL = "/api/v1/events/proposal-template/download";
+// GET /events/proposal-template: thông tin mẫu đề xuất sự kiện
 export async function fetchEventProposalTemplate(signal: AbortSignal): Promise<EventProposalTemplateInfo> {
   const res = await apiFetch("/api/v1/events/proposal-template", { credentials: "same-origin", signal });
   if (!res.ok) {
@@ -133,11 +147,13 @@ export async function fetchEventProposalTemplate(signal: AbortSignal): Promise<E
   }
   return ((await res.json()) as { data: EventProposalTemplateInfo }).data;
 }
+// POST /proposal-document: tải file đề xuất sự kiện lên
 /** Raw upload; the response's `event.version` is the one to submit with. */
 export function uploadEventProposalDocument(clubId: string, id: string, file: File, mimeType: string, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}/proposal-document`, { method: "POST", body: file,
     headers: { "Content-Type": mimeType, "X-CSRF-Token": csrfToken, "X-Filename": encodeURIComponent(file.name) } });
 }
+// GET /proposal-document/access: lấy link xem file đề xuất
 /** No `revisionNo`: the current draft's file. */
 export function accessEventProposalDocument(clubId: string, id: string, revisionNo?: number, inline = false): Promise<FileAccess> {
   const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });

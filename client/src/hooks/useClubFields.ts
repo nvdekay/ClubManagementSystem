@@ -6,6 +6,7 @@ import {
 
 const clubFieldsKeyRoot = ["clubFields"] as const;
 
+// Query danh mục lĩnh vực CLB
 export function useClubFields(enabled: boolean) {
   return useQuery({
     queryKey: [...clubFieldsKeyRoot, "catalog"],
@@ -15,12 +16,14 @@ export function useClubFields(enabled: boolean) {
   });
 }
 
+// Trả về hàm làm mới cache danh mục lĩnh vực CLB
 /** Renames also rewrite clubs' field names, so every mutation refetches the usage-aware list. */
 function useInvalidateClubFields() {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: clubFieldsKeyRoot });
 }
 
+// Mutation tạo lĩnh vực CLB, rồi làm mới cache
 export function useCreateClubField() {
   const invalidate = useInvalidateClubFields();
   return useMutation({
@@ -30,6 +33,7 @@ export function useCreateClubField() {
   });
 }
 
+// Mutation cập nhật lĩnh vực CLB, rồi làm mới cache
 export function useUpdateClubField() {
   const invalidate = useInvalidateClubFields();
   return useMutation({
@@ -39,6 +43,7 @@ export function useUpdateClubField() {
   });
 }
 
+// Mutation xoá lĩnh vực CLB, rồi làm mới cache
 export function useRemoveClubField() {
   const invalidate = useInvalidateClubFields();
   return useMutation({

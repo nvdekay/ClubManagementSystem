@@ -21,6 +21,7 @@ export interface MemberSpaceRepository {
   find(userId: string, clubId: string, now: Date): Promise<MemberSpace | null>;
 }
 
+// Kiểm tra trạng thái membership có được dùng không gian thành viên không
 export function canUseMemberSpace(state: MembershipState): boolean {
   return state === "Active" || state === "Inactive";
 }

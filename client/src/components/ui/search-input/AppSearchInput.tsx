@@ -8,6 +8,7 @@ interface AppSearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>
   delayMs?: number;
 }
 
+// Ô tìm kiếm gọi onSearch sau khi ngừng gõ một lúc
 export function AppSearchInput({ onSearch, delayMs = 300, defaultValue, ...props }: AppSearchInputProps) {
   const [value, setValue] = useState(defaultValue?.toString() ?? "");
 

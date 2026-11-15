@@ -8,6 +8,7 @@ import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repos
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
+// Hủy sự kiện, hủy đăng ký và booking liên quan trong cùng transaction
 /** Shared transaction for UC28 and UC15; source decision remains in the immutable event audit. */
 export async function cancelEventInSession(session: ClientSession, event: Doc, reason: string, now: Date,
   source: string, noticeHours: number, actorId?: Types.ObjectId, sourceRefId?: Types.ObjectId): Promise<number> {

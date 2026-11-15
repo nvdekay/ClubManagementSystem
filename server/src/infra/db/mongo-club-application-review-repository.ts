@@ -14,6 +14,7 @@ import {
 } from "./mongo-club-application-repository.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ánh xạ approval task thành ApplicationReviewTask
 function taskFrom(doc: Record<string, unknown>): ApplicationReviewTask {
   return {
     id: String(doc._id), applicationId: String(doc.entityId), title: String(doc.title),
@@ -24,6 +25,7 @@ function taskFrom(doc: Record<string, unknown>): ApplicationReviewTask {
   };
 }
 
+// Ánh xạ approval decision thành ApplicationReviewDecision
 function decisionFrom(doc: Record<string, unknown>): ApplicationReviewDecision {
   const comments = doc.comments as { sections?: string[]; policyVersionId?: string } | undefined;
   return {
@@ -37,10 +39,12 @@ function decisionFrom(doc: Record<string, unknown>): ApplicationReviewDecision {
   };
 }
 
+// Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Repository ICPDP duyệt hồ sơ lập CLB (UC08)
 export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRepository {
   const applications = ucmsModels.clubApplications!;
   const versions = ucmsModels.clubApplicationVersions!;
@@ -95,6 +99,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
   }
 
   return {
+    // Liệt kê task duyệt hồ sơ lập CLB đang Open
     async listOpen() {
       const taskDocs = await tasks.find({ entityType: "CLUB_APPLICATION", state: "Open" })
         .sort({ openedAt: 1, _id: 1 }).lean();
@@ -110,10 +115,12 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       });
     },
 
+    // Tìm chi tiết hồ sơ đang duyệt theo id
     async find(applicationId) {
       return detail(new Types.ObjectId(applicationId));
     },
 
+    // Tìm tài liệu đính kèm của hồ sơ theo id
     async findDocument(applicationId, documentId) {
       const found = await detail(new Types.ObjectId(applicationId));
       if (!found) return null;
@@ -122,10 +129,12 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         .find((document) => document.id === documentId) ?? null;
     },
 
+    // Lấy gợi ý CLB/hồ sơ tương tự cho góc nhìn ICPDP
     async similarityCandidates(applicationId) {
       return similarityCandidates(applicationId, false);
     },
 
+    // ICPDP officer nhận (claim) hồ sơ để review
     async claim(applicationId, officerId, now) {
       const id = new Types.ObjectId(applicationId);
       const actorId = new Types.ObjectId(officerId);
@@ -161,6 +170,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       return claimed;
     },
 
+    // ICPDP ghi quyết định hồ sơ, nếu Approve thì tạo CLB, nhiệm kỳ, vị trí và thành viên
     async decide(applicationId, officerId, input, now) {
       const id = new Types.ObjectId(applicationId);
       const actorId = new Types.ObjectId(officerId);

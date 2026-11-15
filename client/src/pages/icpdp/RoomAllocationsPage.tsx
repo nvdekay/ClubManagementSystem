@@ -29,10 +29,12 @@ const column = createColumnHelper<AppTableFeatures, RoomAllocation>();
 const emptyAllocations: RoomAllocation[] = [];
 const emptyForm = { clubId: "", building: "", propertyId: "", weekday: "", slot: "", note: "" };
 
+// Dịch trạng thái phân bổ phòng sang nhãn hiển thị
 function statusLabel(t: TFunction, status: Status): string {
   return status === "active" ? t("roomAllocations.statusActive") : status === "revoked" ? t("roomAllocations.statusRevoked")
     : t("roomAllocations.statusAll");
 }
+// Dịch trạng thái lượt sử dụng phòng sang nhãn hiển thị
 function occurrenceLabel(t: TFunction, state: string): string {
   switch (state) {
     case "Approved": return t("roomAllocations.states.Approved");
@@ -43,11 +45,13 @@ function occurrenceLabel(t: TFunction, state: string): string {
     default: return state;
   }
 }
+// Chọn học kỳ đang diễn ra, hoặc học kỳ đầu tiên nếu không có
 function currentSemester(options: RoomAllocationOptions | undefined): string {
   const now = new Date().toISOString();
   const sorted = [...(options?.semesters ?? [])].sort((a, b) => a.startAt.localeCompare(b.startAt));
   return (sorted.find((item) => item.startAt <= now && now <= item.endAt) ?? sorted[0])?.code ?? "";
 }
+// Kiểm tra dữ liệu lỗi có phải danh sách xung đột phân bổ phòng
 function isConflictList(details: unknown): details is RoomAllocationConflict[] {
   return Array.isArray(details) && details.every((item) => typeof item === "object" && item !== null && "startAt" in item);
 }
@@ -126,9 +130,11 @@ export function RoomAllocationsPage() {
   ]), [t, slotList, date, dateTime, revoke]);
   const table = useTable({ features: appTableFeatures, columns, data: filtered, initialState: { pagination: { pageIndex: 0, pageSize: 20 } } });
 
+  // Mở form tạo phân bổ phòng mới
   function openCreate() {
     setForm({ ...emptyForm, building: building }); field.reset(); allocate.reset(); setCreating(true);
   }
+  // Gửi form tạo phân bổ phòng cho CLB
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!field.touchAll() || !auth.data) return;
@@ -138,9 +144,11 @@ export function RoomAllocationsPage() {
       setCreating(false); appToast.success(t("roomAllocations.saved"));
     } catch { /* The mutation error and clashing dates are shown in the dialog. */ }
   }
+  // Đóng form thu hồi phân bổ phòng
   function closeRevoke() {
     setRevoking(null); revokeField.reset();
   }
+  // Gửi lý do để thu hồi phân bổ phòng
   async function confirmRevoke(event: FormEvent) {
     event.preventDefault();
     if (!revokeField.touchAll() || !revoking || !auth.data) return;

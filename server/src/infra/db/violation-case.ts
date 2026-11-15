@@ -3,6 +3,7 @@ import { Types, type ClientSession } from "mongoose";
 import type { ViolationOrigin, ViolationSeverity } from "../../domain/violation.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Mở vụ vi phạm mới trong session kèm audit log VIOLATION_OPENED
 /**
  * Opens a UC40 case inside the caller's transaction, for flows that raise one themselves
  * (a report finding, a missing report, an overdue refund). The case then follows UC40 as usual.

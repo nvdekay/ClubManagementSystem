@@ -6,10 +6,12 @@ import {
 
 const key = ["notifications"] as const;
 
+// Query key theo workspace của thông báo
 function scopeKey(scope: NotificationScope) {
   return [scope.kind, scope.kind === "club" ? scope.clubId : null] as const;
 }
 
+// Query số thông báo chưa đọc của workspace
 /** Unread badge of one workspace; polls every minute so new notifications show up without a reload. */
 export function useUnreadNotificationCount(userId: string | undefined, scope: NotificationScope) {
   return useQuery({
@@ -20,6 +22,7 @@ export function useUnreadNotificationCount(userId: string | undefined, scope: No
   });
 }
 
+// Query hộp thư thông báo của workspace, tải thêm theo trang
 /** Newest-first inbox of one workspace, loaded one page at a time while the panel is open. */
 export function useNotificationInbox(userId: string | undefined, scope: NotificationScope, open: boolean) {
   return useInfiniteQuery({
@@ -31,6 +34,7 @@ export function useNotificationInbox(userId: string | undefined, scope: Notifica
   });
 }
 
+// Mutation đánh dấu một thông báo đã đọc
 export function useMarkNotificationRead() {
   const client = useQueryClient();
   return useMutation({
@@ -39,6 +43,7 @@ export function useMarkNotificationRead() {
   });
 }
 
+// Mutation đánh dấu đã đọc mọi thông báo của workspace
 export function useMarkAllNotificationsRead() {
   const client = useQueryClient();
   return useMutation({

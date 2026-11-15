@@ -15,33 +15,41 @@ const config = loadConfig();
 const DAY = 86_400_000;
 const now = new Date();
 
+// Sinh ObjectId cố định từ khoá để seed chạy lại không tạo trùng
 function oid(key: string): Types.ObjectId {
   return new Types.ObjectId(createHash("md5").update(`seed-dashboard:${key}`).digest("hex").slice(0, 24));
 }
 // A fixed-seed generator, so a re-run picks the same people, dates and numbers for the same keys.
 let state = 20261017;
+// Bộ sinh số ngẫu nhiên có seed cố định, trả về số trong [0, 1)
 function random(): number {
   state = (state + 0x6d2b79f5) | 0;
   let t = Math.imul(state ^ (state >>> 15), 1 | state);
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
+// Đặt lại seed của bộ sinh số ngẫu nhiên theo khoá
 /** Restarts the generator from a key, so skipping records already in the database never shifts later picks. */
 function reseed(key: string): void {
   state = Number.parseInt(createHash("md5").update(key).digest("hex").slice(0, 8), 16) | 0;
 }
+// Sinh số nguyên ngẫu nhiên trong khoảng [min, max]
 function int(min: number, max: number): number {
   return min + Math.floor(random() * (max - min + 1));
 }
+// Chọn ngẫu nhiên một phần tử
 function pick<T>(items: readonly T[]): T {
   return items[int(0, items.length - 1)]!;
 }
+// Chọn ngẫu nhiên count phần tử không trùng
 function sample<T>(items: readonly T[], count: number): T[] {
   return [...items].map((item) => ({ item, key: random() })).sort((a, b) => a.key - b.key).slice(0, count).map((row) => row.item);
 }
+// Chuyển số thành Decimal128
 function money(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
+// Chèn document nếu chưa có (upsert), trả về true khi thực sự chèn mới
 async function insert(model: mongoose.Model<Doc>, doc: Doc & { _id: Types.ObjectId }): Promise<boolean> {
   const result = await model.updateOne({ _id: doc._id }, { $setOnInsert: doc }, { upsert: true });
   return result.upsertedCount === 1;
@@ -65,6 +73,7 @@ const VENUES = ["Hội trường lớn, tòa Alpha", "Phòng 207, tòa Beta", "S
 const COMMENTS = ["Rất bổ ích, mong có thêm buổi tương tự.", "Tổ chức chuyên nghiệp, đúng giờ.", "Nội dung hay nhưng hơi dài.",
   "Không gian hơi chật so với số người.", "Diễn giả nhiệt tình, dễ hiểu.", "Mình học được nhiều điều mới."];
 
+// Sinh dữ liệu mẫu cho dashboard ICPDP, chỉ chạy trên Mongo local
 async function main() {
   if (!/^mongodb:\/\/(127\.0\.0\.1|localhost)[:/]/.test(config.MONGO_URI)) {
     throw new Error("seed:dashboard only writes to a local database (MONGO_URI must point at localhost)");
@@ -94,6 +103,7 @@ async function main() {
   // ── Clubs to bring to life: the demo clubs first, then active clubs with a field ──
   const policy = await m.policyVersions!.findOne({ effectiveFrom: { $lte: now } }).sort({ effectiveFrom: -1, createdAt: -1 }).lean();
   const calendar = (policy?.academicCalendar ?? []) as AcademicSemester[];
+  // Xác định mã học kỳ của một ngày theo lịch học vụ
   function semesterOf(date: Date): string | undefined {
     return calendar.find((item) => item.startAt <= date && date < item.endAt)?.code;
   }

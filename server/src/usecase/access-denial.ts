@@ -14,12 +14,14 @@ export interface AccessDenialInput {
 
 const METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
 
+// Lấy permission CLB bị thiếu từ chi tiết lỗi bị từ chối
 function requiredPermission(details: unknown): ClubPermission | undefined {
   if (typeof details !== "object" || details === null) return undefined;
   const value = (details as { requiredPermission?: unknown }).requiredPermission;
   return CLUB_PERMISSIONS.find((code) => code === value);
 }
 
+// Ghi audit một lần truy cập bị từ chối của người dùng đã đăng nhập
 /** Records one refused attempt; ignores anything that is not a well-formed authenticated request. */
 export async function recordAccessDenial(repo: AccessDenialAuditRepository, input: AccessDenialInput): Promise<boolean> {
   const method = input.method.toUpperCase();

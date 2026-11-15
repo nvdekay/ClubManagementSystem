@@ -34,15 +34,18 @@ const activeTabClass = "bg-segment-app text-text-app shadow-xs";
 const participantsEmpty: EventParticipant[] = [];
 const eventColumns = createColumnHelper<AppTableFeatures, ClubEvent>();
 const participantColumns = createColumnHelper<AppTableFeatures, EventParticipant>();
+// Khung nhãn kèm dấu bắt buộc và lỗi cho một ô nhập
 function Field({ label, required, error, children }: { label: string; required?: boolean; error?: string | null; children: ReactNode }) {
   return <label className="flex min-w-0 flex-col gap-1.5 text-sm"><span className="flex flex-wrap items-center gap-2 font-medium text-text-app"><span>{label}{required && <AppRequiredMark />}</span></span>{children}<AppFieldError message={error} /></label>;
 }
+// Thanh phân trang cho bảng của trang sự kiện
 function TablePager({ pageIndex, pageCount, onChange }: { pageIndex: number; pageCount: number; onChange: (value: number) => void }) {
   const { t } = useTranslation();
   return <AppPagination pageIndex={pageIndex} pageCount={pageCount} onPageChange={onChange} prevLabel={t("clubEvents.previous")} nextLabel={t("clubEvents.next")}
     pageLabel={(page) => t("clubEvents.page", { page })} navLabel={t("clubEvents.pagination")} />;
 }
 
+// Trang quản lý sự kiện, điểm danh và phản hồi của CLB theo mode
 export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attendance" | "feedback" }) {
   const { clubId = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,6 +66,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     if (id) next.set("event", id); else next.delete("event");
     return next;
   }, { replace: true }), [setSearchParams]);
+  // Cuộn tới khung chi tiết sự kiện đang chọn
   // The detail panel renders under the table, off-screen on most laptops; bring it into view on pick.
   function revealDetail() {
     requestAnimationFrame(() => document.getElementById("club-event-detail")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -135,10 +139,12 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     catch (error) { setFormError(error); }
   }, [auth.data, selected, mutation, setSuccess, setFormError, setOperation]);
   const internal = Boolean(active && isInternalState(active.state));
+  // Mở tài liệu đề xuất sự kiện (tải về hoặc xem) qua URL có chữ ký
   async function downloadDocument(id: string, revisionNo?: number, inline = false) {
     try { window.open((await documentAccess.mutateAsync({ id, revisionNo, inline })).url, "_blank", "noopener,noreferrer"); }
     catch { /* Mutation error is rendered next to the file. */ }
   }
+  // Xác nhận sự kiện nội bộ chuyển từ DRAFT sang CREATED, yêu cầu báo trước 24 giờ
   async function confirmInternal() {
     if (!auth.data || !active) return;
     setSuccess(false); setFormError(null);
@@ -147,6 +153,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     try { await mutation.mutateAsync({ kind: "internal-confirm", id: active.id, expectedVersion: active.version, csrfToken: auth.data.csrfToken }); setSuccess(true); }
     catch (error) { setFormError(error); }
   }
+  // Mở form thao tác (publish, hủy, dời lịch, check-in...) và nạp giá trị mặc định
   const openOperation = useCallback(function openOperation(kind: NonNullable<typeof operation>, participant: EventParticipant | null = null) {
     if (!active) return;
     mutation.reset(); setFormError(null); setSuccess(false); setOperation(kind); setReason(""); setTarget(participant); setCorrected(""); setAbsent(participant?.abnormalFlags.includes("no-show") ?? false);
@@ -172,6 +179,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     </div> }),
   ]), [t, active, mutation.isPending, runAction, openOperation, canCheckIn, published, finished, format]);
   const ptable = useTable({ features: appTableFeatures, columns: pcolumns, data: shownPeople, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
+  // Gửi thao tác đang chọn lên server sau khi kiểm tra form
   async function execute(event: FormEvent) {
     event.preventDefault(); if (!active || !operation || !opField.touchAll()) return;
     opField.reset(); // valid now; a later failure is a server error, shown above the form
@@ -202,6 +210,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     studentId: operation === "check-in" && !studentId ? t("common.chooseRequired") : null,
     reason: ["cancel", "reschedule", "unlock", "correct"].includes(operation ?? "") && !reason.trim() ? required : null,
   });
+  // Đóng form thao tác và xóa trạng thái kiểm tra
   function closeOperation() { setOperation(null); opField.reset(); }
   const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options.data?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
   if (auth.isPending) return <AppSkeleton className="h-40 w-full" />;

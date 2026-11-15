@@ -84,6 +84,7 @@ export class PolicyConflictError extends ApiError {
   }
 }
 
+// GET /admin/policies: các chính sách và phiên bản
 export async function fetchPolicies(signal: AbortSignal): Promise<PolicyList> {
   const response = await apiFetch("/api/v1/admin/policies", { signal, credentials: "same-origin" });
   if (!response.ok) {
@@ -94,6 +95,7 @@ export async function fetchPolicies(signal: AbortSignal): Promise<PolicyList> {
   return body.data;
 }
 
+// POST /admin/policies: tạo phiên bản chính sách mới
 export async function createPolicy(input: CreatePolicyInput, csrfToken: string): Promise<PolicyVersion> {
   const response = await apiFetch("/api/v1/admin/policies", {
     method: "POST", credentials: "same-origin",
