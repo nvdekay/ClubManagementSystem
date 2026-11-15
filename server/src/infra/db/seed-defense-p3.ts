@@ -199,7 +199,11 @@ async function propose(clubId: Types.ObjectId, ids: Ids, draft: ClubEventInput, 
   const club = String(clubId);
   const created = await events.create(club, draft, String(ids.an), at);
   const id = created.event.id;
-  await events.act(club, id, { kind: "submit", expectedVersion: created.event.version }, String(ids.an), new Date(Math.min(at.getTime() + 5 * MINUTE, now.getTime())));
+  // Submission requires a proposal document; a placeholder asset is enough for demo data.
+  const attached = await events.act(club, id, { kind: "attach-document", document: {
+    id: `demo-proposal-${id}`, fileName: `De an ${draft.title}.pdf`, mimeType: "application/pdf", bytes: 48_000,
+    assetId: `ucms/event-proposals/demo/${id}.pdf`, uploadedAt: at, uploadedBy: String(ids.an) } }, String(ids.an), at);
+  await events.act(club, id, { kind: "submit", expectedVersion: attached.event.version }, String(ids.an), new Date(Math.min(at.getTime() + 5 * MINUTE, now.getTime())));
   await reviews.claim(id, String(ids.officer), new Date(Math.min(at.getTime() + 10 * MINUTE, now.getTime())));
   return id;
 }

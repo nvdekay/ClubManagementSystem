@@ -3,6 +3,7 @@
 // Additive and safe to run again: every part is keyed on the cast, the club and fixed titles.
 // The cast can point at real accounts (see seed-defense-cast.ts):
 //   npm run seed:defense:p5 -- --leader=<email> --officer=<email> --member=<email>
+// Add --report-submitted to leave the club's report Submitted (waiting for UC39) instead of Draft.
 // No outside request: invoice images are stored as metadata only (Cloudinary is not used), so the
 // recorder serves their previews itself.
 import { createHash, randomUUID } from "node:crypto";
@@ -236,6 +237,16 @@ async function ensureReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectI
   }, String(leaderId), later(1));
 }
 
+/** UC38 through the real repository, so the report reaches ICPDP exactly as a leader's submission would. */
+async function submitReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectId, periodCode: string): Promise<void> {
+  const draft = await m.periodicReports!.findOneAndUpdate({ clubId, periodCode, state: "Draft" },
+    { $set: { "preloadedFigures.clubData.customAnswers": [{ fieldId: "next_plan", type: "text",
+      textValue: "Tháng 12: workshop Docker nâng cao. Tháng 1: tuyển thành viên kỳ Spring. Phụ trách: Ban chủ nhiệm." }] } },
+    { new: true }).select("__v").lean();
+  if (!draft) return;
+  await mongoClubPeriodicReportRepository().submit(String(clubId), String(draft._id), Number(draft.__v ?? 0), String(leaderId), now);
+}
+
 async function ensureScheme(periodCode: string, officerId: Types.ObjectId) {
   const schemes = mongoEvaluationSchemeRepository();
   const active = (await schemes.list()).find((scheme) => scheme.periodCode === periodCode && scheme.state === "Active");
@@ -244,13 +255,32 @@ async function ensureScheme(periodCode: string, officerId: Types.ObjectId) {
   return schemes.activate(draft.id, String(officerId), new Date(now.getTime() - 7 * DAY));
 }
 
+/**
+ * An Accepted report for every other club, so its Finalized evaluation rests on a reviewed report (UC39 before UC42).
+ * Inserted directly: UC38 would need each club's own leader. A club that already has a report is left alone.
+ */
+async function ensureOtherReports(clubIds: string[], periodCode: string, officerId: Types.ObjectId, dueAt: Date): Promise<void> {
+  const submittedAt = new Date(now.getTime() - 2 * DAY);
+  for (const id of clubIds) {
+    const club = new Types.ObjectId(id);
+    if (await m.periodicReports!.exists({ clubId: club, periodCode })) continue;
+    await m.periodicReports!.create({ clubId: club, periodCode, periodType: "SEMESTER",
+      preloadedFigures: { capturedAt: submittedAt },
+      narrative: `Báo cáo hoạt động ${periodCode} của CLB.`, nextPlan: "Tiếp tục kế hoạch hoạt động kỳ sau.",
+      evidence: [], state: "Accepted", versionNo: 1, lateFlag: false, submittedBy: officerId, submittedAt, dueAt,
+      decisionOutcome: "Accept", decidedBy: officerId, decidedAt: new Date(submittedAt.getTime() + DAY) });
+  }
+}
+
 /** Every other club is already Finalized, so the live demo only generates, finalizes and publishes its own club. */
-async function ensureOtherEvaluations(clubId: Types.ObjectId, officerId: Types.ObjectId) {
+async function ensureOtherEvaluations(clubId: Types.ObjectId, officerId: Types.ObjectId, dueAt: Date) {
   const { period, minRespondents } = await currentPeriod();
   const scheme = await ensureScheme(period.code, officerId);
   const repo = mongoEvaluationRepository();
   const done = new Set((await repo.latest(period.code)).map((item) => item.clubId));
-  const clubs = (await repo.clubsInScope()).filter((club) => club.id !== String(clubId) && !done.has(club.id));
+  const others = (await repo.clubsInScope()).filter((club) => club.id !== String(clubId));
+  await ensureOtherReports(others.map((club) => club.id), period.code, officerId, dueAt);
+  const clubs = others.filter((club) => !done.has(club.id));
   const at = new Date(now.getTime() - 3_600_000);
   for (const club of clubs) {
     const results = scoreDimensions(await repo.collectMetrics(club.id, period, at), scheme, period.code, minRespondents);
@@ -277,7 +307,8 @@ try {
   await ensureFinance(clubId, ids, period.code);
   const dueAt = await ensureCampaign(period.code, ids.officer);
   await ensureReportDraft(clubId, ids.leader, period.code, dueAt);
-  const evaluations = await ensureOtherEvaluations(clubId, ids.officer);
+  if (process.argv.includes("--report-submitted")) await submitReportDraft(clubId, ids.leader, period.code);
+  const evaluations = await ensureOtherEvaluations(clubId, ids.officer, dueAt);
 
   const event = await m.events!.findOne({ clubId, title: EVENT_TITLE }).select("_id").lean();
   const budget = event && await m.eventBudgets!.findOne({ eventId: event._id }).lean();
