@@ -1,10 +1,10 @@
 import { Types, type ClientSession } from "mongoose";
-import { requireClubPermission, type ClubAccessSnapshot, type ClubPermission } from "../../domain/access.js";
+import { requireClubPermission, resolveClubPermissions, type ClubAccessSnapshot, type ClubPermission } from "../../domain/access.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 export async function assertEventWriteAccess(session: ClientSession, clubId: Types.ObjectId, actorId: Types.ObjectId,
-  permission: ClubPermission | "ATTENDANCE_UNLOCK", now: Date): Promise<void> {
+  permission: ClubPermission | "ATTENDANCE_UNLOCK", now: Date): Promise<ClubPermission[]> {
   // These writes serialize against lifecycle, account locking, role edits and membership changes.
   const user = await m.users!.findOneAndUpdate({ _id: actorId, accountState: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
   if (!user) throw new DomainError("account is not active", "locked");
@@ -15,7 +15,7 @@ export async function assertEventWriteAccess(session: ClientSession, clubId: Typ
     const assignment = await m.userRoleAssignments!.findOneAndUpdate({ userId: actorId,
       roleId: { $in: roles.map((r) => r._id) }, revokedAt: null }, { $inc: { __v: 1 } }, { session }).lean();
     if (!assignment) throw new DomainError("attendance unlock role required", "forbidden");
-    return;
+    return [];
   }
   const membership = await m.clubMemberships!.findOneAndUpdate({ clubId, userId: actorId, state: "Active" },
     { $inc: { __v: 1 } }, { session }).lean();
@@ -36,4 +36,5 @@ export async function assertEventWriteAccess(session: ClientSession, clubId: Typ
   await m.clubPositions!.updateMany({ _id: { $in: positions.map((p) => p._id) } }, { $inc: { __v: 1 } }, { session });
   await m.clubPositionAssignments!.updateMany({ _id: { $in: assignments.map((a) => a._id) } }, { $inc: { __v: 1 } }, { session });
   await m.clubTerms!.updateMany({ _id: { $in: terms.map((t) => t._id) } }, { $inc: { __v: 1 } }, { session });
+  return resolveClubPermissions(snapshot, now);
 }

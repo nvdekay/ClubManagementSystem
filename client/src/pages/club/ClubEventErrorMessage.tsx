@@ -82,6 +82,7 @@ const CLUB_EVENT_ERROR_KEYS: Readonly<Record<string, ClubEventErrorKey>> = {
   "only completed events can finalize attendance": "finalizeCompletedOnly",
   "resolve every abnormal attendance and no-show before finalizing": "finalizeUnresolved",
   "event is not open for check-in": "checkInNotOpen",
+  "only club leaders can manually check in outside the check-in window": "manualCheckInOutsideForbidden",
   "manual check-in outside the window requires a reason": "manualCheckInReasonRequired",
   "student not found": "participantNotFound",
   "participant not found": "participantNotFound",

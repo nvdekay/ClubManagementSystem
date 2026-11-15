@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useParams, useSearchParams } from "react-router";
@@ -49,8 +49,11 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
   const auth = useAuth();
-  const permissions = auth.data?.workspaces.find((w) => w.kind === "club" && w.clubId === clubId)?.permissions ?? [];
-  const allowed = permissions.includes(mode === "events" ? "club.event.manage" : mode === "attendance" ? "club.attendance.manage" : "club.feedback.view");
+  const workspace = auth.data?.workspaces.find((w) => w.kind === "club" && w.clubId === clubId);
+  const canManageEvents = Boolean(workspace?.permissions.includes("club.event.manage"));
+  const canManageAttendance = Boolean(workspace?.permissions.includes("club.attendance.manage"));
+  const canViewFeedback = Boolean(workspace?.permissions.includes("club.feedback.view"));
+  const allowed = mode === "events" ? canManageEvents : mode === "attendance" ? canManageAttendance : canViewFeedback;
   const events = useClubEvents(clubId, allowed);
   const mutation = useClubEventMutation(clubId);
   const [search, setSearch] = useState("");
@@ -92,6 +95,12 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [rescheduleReason, setRescheduleReason] = useState("");
   const [renderedAt] = useState(() => Date.now());
+  const [clockMs, setClockMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (mode !== "attendance" || canManageEvents) return;
+    const timer = window.setInterval(() => setClockMs(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [mode, canManageEvents]);
   const detail = useClubEvent(clubId, selected, allowed && mode === "events");
   const defense = useClubEventDefense(clubId, selected || undefined, allowed && mode === "events" && Boolean(selected));
   const defenseAction = useEventDefenseActions();
@@ -121,6 +130,13 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const published = Boolean(active && ["Upcoming", "PUBLIC"].includes(active.state));
   const finished = Boolean(active && ["Completed", "FINISH"].includes(active.state));
   const canCheckIn = Boolean(active && !active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed", "PUBLIC", "ONGOING", "FINISH"].includes(active.state));
+  const checkInStartsAt = active ? Date.parse(active.checkInOpenAt ?? active.startAt) : NaN;
+  const checkInEndsAt = active ? Date.parse(active.checkInCloseAt ?? active.endAt) : NaN;
+  const withinCheckInWindow = Boolean(
+    active && Number.isFinite(checkInStartsAt) && Number.isFinite(checkInEndsAt)
+    && clockMs >= checkInStartsAt && clockMs < checkInEndsAt,
+  );
+  const actorCanCheckIn = canCheckIn && (canManageEvents || withinCheckInWindow);
   const confirmedPeople = people.filter((p) => p.state === "Confirmed" || p.attendanceId);
   const checkedCount = people.filter((p) => p.attendanceId && !p.abnormalFlags.includes("no-show")).length;
   const shownPeople = attendanceFilter === "all" ? people
@@ -166,11 +182,11 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     } }),
     participantColumns.accessor("abnormalFlags", { header: t("clubEvents.flags"), cell: (info) => <div className="flex flex-col gap-1">{info.getValue().map((flag) => <span key={flag}>{t(`clubEvents.${flag}`, { defaultValue: flag })}</span>)}{info.row.original.correctionReason && <p className="text-muted-app">{info.row.original.correctionReason}</p>}</div> }),
     participantColumns.display({ id: "actions", header: t("clubEvents.action"), cell: (info) => <div className="flex flex-wrap gap-2">
-      {canCheckIn && info.row.original.state === "Confirmed" && !info.row.original.attendanceId && <AppButton onClick={() => openOperation("check-in", info.row.original)}>{t("clubEvents.checkInRow")}</AppButton>}
-      {info.row.original.state === "Waitlisted" && published && <AppButton disabled={mutation.isPending} onClick={() => void runAction("promote", { registrationId: info.row.original.registrationId })}>{t("clubEvents.promote")}</AppButton>}
-      {finished && !active?.attendanceFinalized && <AppButton onClick={() => openOperation("correct", info.row.original)}>{t("clubEvents.correct")}</AppButton>}
+      {actorCanCheckIn && info.row.original.state === "Confirmed" && !info.row.original.attendanceId && <AppButton onClick={() => openOperation("check-in", info.row.original)}>{t("clubEvents.checkInRow")}</AppButton>}
+      {canManageEvents && info.row.original.state === "Waitlisted" && published && <AppButton disabled={mutation.isPending} onClick={() => void runAction("promote", { registrationId: info.row.original.registrationId })}>{t("clubEvents.promote")}</AppButton>}
+      {canManageEvents && finished && !active?.attendanceFinalized && <AppButton onClick={() => openOperation("correct", info.row.original)}>{t("clubEvents.correct")}</AppButton>}
     </div> }),
-  ]), [t, active, mutation.isPending, runAction, openOperation, canCheckIn, published, finished, format]);
+  ]), [t, active, mutation.isPending, runAction, openOperation, actorCanCheckIn, canManageEvents, published, finished, format]);
   const ptable = useTable({ features: appTableFeatures, columns: pcolumns, data: shownPeople, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   async function execute(event: FormEvent) {
     event.preventDefault(); if (!active || !operation || !opField.touchAll()) return;
@@ -209,9 +225,9 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   return <>
     <PageHeader title={t(`clubEvents.${mode === "events" ? "title" : mode}`)} description={t("clubEvents.description")} />
     <nav aria-label={t("clubEvents.title")} className="mb-5 inline-flex flex-wrap gap-1 rounded-lg border border-border-app bg-surface-app p-1">
-      {permissions.includes("club.event.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/events${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.title")}</NavLink>}
-      {permissions.includes("club.attendance.manage") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-attendance${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.attendance")}</NavLink>}
-      {permissions.includes("club.feedback.view") && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-feedback${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.feedback")}</NavLink>}
+      {canManageEvents && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/events${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.title")}</NavLink>}
+      {canManageAttendance && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-attendance${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.attendance")}</NavLink>}
+      {canViewFeedback && <NavLink end className={({ isActive }) => cn(tabClass, { [activeTabClass]: isActive })} to={`/club/${clubId}/event-feedback${selected ? `?event=${encodeURIComponent(selected)}` : ""}`}>{t("clubEvents.feedback")}</NavLink>}
     </nav>
     <ClubEventErrorMessage error={events.error ?? formError} />
     {success && <p role="status" className="mb-3 text-success-app">{t("clubEvents.success")}</p>}
@@ -587,13 +603,14 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       {active.checkInOpenAt && active.checkInCloseAt && <p className="text-sm text-muted-app">{t("clubEvents.checkInWindow")}: {format.format(new Date(active.checkInOpenAt))} – {format.format(new Date(active.checkInCloseAt))}</p>}
       {!canCheckIn && !active.attendanceFinalized && <AppNotice tone="warning">{active.state === "Approved" && active.publishedAt
         ? t("clubEvents.checkInRepublish") : t("clubEvents.checkInNotOpen")}</AppNotice>}
+      {canCheckIn && !canManageEvents && !withinCheckInWindow && <AppNotice tone="info">{t("clubEvents.memberCheckInOutsideWindow")}</AppNotice>}
       {active.checkInCode && <p>{t("clubEvents.code")}: <strong>{active.checkInCode}</strong></p>}
       {active.attendanceFinalized && <p>{t("clubEvents.attendanceLocked")}</p>}
       <ClubEventErrorMessage error={participants.error} />
       <div className="flex flex-wrap gap-2">
-        {published && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.maxParticipants")}</AppButton>}
-        {canCheckIn && <AppButton onClick={() => openOperation("check-in")}>{t("clubEvents.checkin")}</AppButton>}
-        {finished && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={async () => { if (await askConfirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
+        {canManageEvents && published && <AppButton onClick={() => openOperation("capacity")}>{t("clubEvents.maxParticipants")}</AppButton>}
+        {actorCanCheckIn && <AppButton onClick={() => openOperation("check-in")}>{t("clubEvents.checkin")}</AppButton>}
+        {canManageEvents && finished && !active.attendanceFinalized && <AppButton disabled={mutation.isPending} onClick={async () => { if (await askConfirm(t("clubEvents.confirmFinalize"))) void runAction("attendance/finalize", {}); }}>{t("clubEvents.finalize")}</AppButton>}
         {active.attendanceFinalized && auth.data?.systemRoles.includes("ATTENDANCE_UNLOCK") && <AppButton onClick={() => openOperation("unlock")}>{t("clubEvents.unlock")}</AppButton>}
       </div>
       <div className="w-full sm:w-64"><AppSelect label={t("clubEvents.attendanceFilter")} value={attendanceFilter}
@@ -637,10 +654,10 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         {operation === "reschedule" && <><Field label={t("clubEvents.startTime")} required error={opField.error("newStart")}><AppInput {...opField.control("newStart")} type="datetime-local" value={newStart} onChange={(e) => setNewStart(e.target.value)} /></Field><Field label={t("clubEvents.endTime")} required error={opField.error("newEnd")}><AppInput {...opField.control("newEnd")} type="datetime-local" value={newEnd} onChange={(e) => setNewEnd(e.target.value)} /></Field>
           <AppSelect label={t("clubEvents.property")} value={property} options={roomOptions} onChange={setProperty} /><Field label={t("clubEvents.venue")}><AppInput value={venue} onChange={(e) => setVenue(e.target.value)} /></Field></>}
         {operation === "capacity" && <Field label={t("clubEvents.maxParticipants")} required error={opField.error("capacity")}><AppInput {...opField.control("capacity")} type="number" min={1} max={100000} value={capacity} onChange={(e) => setCapacity(Number(e.target.value))} /></Field>}
-        {operation === "check-in" && <><Field label={t("clubEvents.studentId")} required error={opField.error("studentId")}><AppSelect required invalid={Boolean(opField.error("studentId"))} label={t("clubEvents.studentId")} value={studentId} onChange={(value) => { setStudentId(value); opField.touch("studentId"); }} options={[{ value: "", label: t("clubEvents.none") }, ...people.filter((p) => p.state === "Confirmed" && !p.attendanceId).map((p) => ({ value: p.studentId, label: `${p.name} · ${p.email}` }))]} /></Field><p className="text-sm text-muted-app">{t("clubEvents.manualReason")}</p></>}
+        {operation === "check-in" && <><Field label={t("clubEvents.studentId")} required error={opField.error("studentId")}><AppSelect required invalid={Boolean(opField.error("studentId"))} label={t("clubEvents.studentId")} value={studentId} onChange={(value) => { setStudentId(value); opField.touch("studentId"); }} options={[{ value: "", label: t("clubEvents.none") }, ...people.filter((p) => p.state === "Confirmed" && !p.attendanceId).map((p) => ({ value: p.studentId, label: `${p.name} · ${p.email}` }))]} /></Field>{canManageEvents && <p className="text-sm text-muted-app">{t("clubEvents.manualReason")}</p>}</>}
         {operation === "correct" && <><p>{target?.name}</p><label className="flex items-center gap-2"><input type="checkbox" checked={absent} disabled={Boolean(target?.attendanceId && !target.abnormalFlags.includes("no-show"))} onChange={(e) => setAbsent(e.target.checked)} />{t("clubEvents.absent")}</label>
           {!absent && <Field label={t("clubEvents.correctedTime")}><AppInput type="datetime-local" value={corrected} onChange={(e) => setCorrected(e.target.value)} /></Field>}</>}
-        {["cancel", "reschedule", "unlock", "correct", "check-in"].includes(operation ?? "") && <Field label={t("clubEvents.reason")} required={operation !== "check-in"} error={opField.error("reason")}><AppTextarea {...opField.control("reason", operation !== "check-in")} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>}
+        {["cancel", "reschedule", "unlock", "correct", ...(canManageEvents ? ["check-in"] : [])].includes(operation ?? "") && <Field label={t("clubEvents.reason")} required={operation !== "check-in"} error={opField.error("reason")}><AppTextarea {...opField.control("reason", operation !== "check-in")} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>}
       </form>
     </AppDialog>
     <AppDialog

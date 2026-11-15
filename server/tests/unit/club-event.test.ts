@@ -40,9 +40,13 @@ describe("club event access and HTTP validation", () => {
     const left = deps("left");
     await expect(clubEventParticipants(left, actor, clubId, id, now)).rejects.toMatchObject({ kind: "forbidden" });
     expect(left.repo.participants).not.toHaveBeenCalled();
-    expect(eventActionPermission({ kind: "finalize" })).toBe("club.attendance.manage");
+    expect(eventActionPermission({ kind: "check-in", studentId: id })).toBe("club.attendance.manage");
+    expect(eventActionPermission({ kind: "capacity", capacity: 10 })).toBe("club.event.manage");
+    expect(eventActionPermission({ kind: "promote", registrationId: id })).toBe("club.event.manage");
+    expect(eventActionPermission({ kind: "correct", studentId: id, reason: "Late", absent: false })).toBe("club.event.manage");
+    expect(eventActionPermission({ kind: "finalize" })).toBe("club.event.manage");
   });
-  it("lets a plain member run waitlist and attendance actions (UC30, UC32) without event management data", async () => {
+  it("lets a plain member run manual check-in without event management data and blocks leader-only attendance actions", async () => {
     const member = deps("member");
     vi.mocked(member.repo.list).mockResolvedValue([{ id, clubId, title: "Event", objective: "Secret goal", plan: "Plan",
       budgetLines: [{ category: "Room", purpose: "Rent", amount: 1 }], bookingIds: [id], registrationForm: [],
@@ -51,15 +55,21 @@ describe("club event access and HTTP validation", () => {
     expect(listed).toMatchObject({ objective: "", plan: "", budgetLines: [], bookingIds: [], checkInCode: "ABC123" });
     vi.mocked(member.repo.act).mockResolvedValue({ event: { id, objective: "Secret goal", plan: "Plan" } as unknown as
       Awaited<ReturnType<ClubEventRepository["act"]>>["event"], versions: [{} as never], decisions: [{} as never], bookings: [] });
-    for (const action of [{ kind: "promote" as const, registrationId: id }, { kind: "finalize" as const }]) {
-      const result = await actOnClubEvent(member, actor, clubId, id, action, now);
-      expect(result.event).toMatchObject({ objective: "", plan: "" });
-      expect(result.versions).toEqual([]);
-      expect(result.decisions).toEqual([]);
+    const checkInResult = await actOnClubEvent(member, actor, clubId, id, { kind: "check-in", studentId: id }, now);
+    expect(checkInResult.event).toMatchObject({ objective: "", plan: "" });
+    expect(checkInResult.versions).toEqual([]);
+    expect(checkInResult.decisions).toEqual([]);
+    for (const action of [
+      { kind: "capacity" as const, capacity: 10 },
+      { kind: "promote" as const, registrationId: id },
+      { kind: "correct" as const, studentId: id, reason: "Verified", absent: false },
+      { kind: "finalize" as const },
+    ]) {
+      await expect(actOnClubEvent(member, actor, clubId, id, action, now)).rejects.toMatchObject({ kind: "forbidden" });
     }
     await expect(createClubEvent(member, actor, clubId, {} as Parameters<typeof createClubEvent>[3], now))
       .rejects.toMatchObject({ kind: "forbidden" });
-    await expect(actOnClubEvent(deps("left"), actor, clubId, id, { kind: "finalize" }, now)).rejects.toMatchObject({ kind: "forbidden" });
+    await expect(actOnClubEvent(deps("left"), actor, clubId, id, { kind: "check-in", studentId: id }, now)).rejects.toMatchObject({ kind: "forbidden" });
   });
   it("rejects missing, locked and invalid actors before accessing private feedback", async () => {
     const d = deps();

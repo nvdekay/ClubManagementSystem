@@ -131,6 +131,6 @@ export interface ClubEventRepository {
   saveProposalTemplate(document: EventProposalDocument, actorId: string, now: Date): Promise<EventProposalTemplateInfo>;
 }
 export function eventActionPermission(action: ClubEventAction): ClubPermission {
-  return ["capacity", "promote", "check-in", "correct", "finalize", "unlock"].includes(action.kind)
+  return action.kind === "check-in" || action.kind === "unlock"
     ? "club.attendance.manage" : "club.event.manage";
 }

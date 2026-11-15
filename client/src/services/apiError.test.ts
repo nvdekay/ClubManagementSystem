@@ -107,9 +107,16 @@ describe("localized API errors", () => {
     expect(i18next.t(`clubEvents.errors.${notice.key}`, notice.params)).toBe(
       "Thời gian bắt đầu sự kiện nội bộ phải cách hiện tại ít nhất 24 giờ.",
     );
+    const outsideCheckIn = resolveClubEventErrorDescriptor(
+      "only club leaders can manually check in outside the check-in window",
+      403,
+    );
+    expect(outsideCheckIn).toEqual({ key: "manualCheckInOutsideForbidden" });
+    expect(i18next.t(`clubEvents.errors.${outsideCheckIn.key}`)).toBe(clubEvents.vi.errors.manualCheckInOutsideForbidden);
     const unknown400 = resolveClubEventErrorDescriptor("some raw backend validation text", 400);
     expect(unknown400.key).toBe("validation");
     await i18next.changeLanguage("en");
+    expect(i18next.t(`clubEvents.errors.${outsideCheckIn.key}`)).toBe(clubEvents.en.errors.manualCheckInOutsideForbidden);
     expect(i18next.t(`clubEvents.errors.${unknown400.key}`)).toBe(clubEvents.en.errors.validation);
   });
 });

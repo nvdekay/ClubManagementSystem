@@ -151,6 +151,7 @@ const messages = {
   cancelRequestNotFound: ["no open event cancellation request found", "Không tìm thấy yêu cầu huỷ sự kiện đang chờ xử lý."],
   rescheduleApprovedOnly: ["only an unstarted approved event can be rescheduled", "Chỉ sự kiện đã duyệt và chưa bắt đầu mới có thể đổi lịch."],
   rescheduleHasCheckIns: ["an event with check-ins cannot be rescheduled", "Không thể đổi lịch sự kiện đã có người điểm danh."],
+  manualCheckInOutsideForbidden: ["only club leaders can manually check in outside the check-in window", "Chỉ Ban Chủ nhiệm mới có quyền điểm danh hộ ngoài khung giờ check-in."],
 } satisfies Record<string, [string, string]>;
 
 export type ApiErrorKey = keyof typeof messages;

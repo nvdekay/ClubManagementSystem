@@ -7,7 +7,7 @@ type Doc = Record<string, unknown>;
 function conflict(message: string): never { throw new DomainError(message, "conflict"); }
 /** All callers hold the event write lock before reading or changing attendance. */
 export async function applyEventAttendanceAction(session: ClientSession, event: Doc, action: ClubEventAction,
-  actorId: Types.ObjectId, now: Date, internalWithoutBudget: boolean): Promise<void> {
+  actorId: Types.ObjectId, now: Date, internalWithoutBudget: boolean, allowOutOfWindowCheckIn = true): Promise<void> {
   const eventId = event._id as Types.ObjectId;
   if (action.kind === "unlock") {
     if (await m.postEventReports!.exists({ eventId, state: { $in: ["Submitted", "Accepted", "Returned for correction"] } }).session(session)) {
@@ -39,8 +39,11 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
   const registration = await m.eventRegistrations!.findOne({ eventId, studentId }).session(session).lean();
   if (action.kind === "check-in") {
     if (!event.publishedAt || !["Upcoming", "Ongoing", "Completed", "PUBLIC", "ONGOING", "FINISH"].includes(String(event.state))) conflict("event is not open for check-in");
-    if (existing) return;
     const outside = now < (event.checkInOpenAt as Date ?? event.startAt as Date) || now >= (event.checkInCloseAt as Date ?? event.endAt as Date);
+    if (outside && !allowOutOfWindowCheckIn) {
+      throw new DomainError("only club leaders can manually check in outside the check-in window", "forbidden", { requiredPermission: "club.event.manage" });
+    }
+    if (existing) return;
     if (outside && !action.reason?.trim()) throw new DomainError("manual check-in outside the window requires a reason", "validation");
     if (!(await m.users!.exists({ _id: studentId, accountState: "Active" }).session(session))) throw new DomainError("student not found", "not_found");
     if (event.audienceScope === "MEMBERS_ONLY" && !(await m.clubMemberships!.exists({ clubId: event.clubId, userId: studentId, state: "Active" }).session(session))) {

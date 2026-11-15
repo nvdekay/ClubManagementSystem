@@ -211,4 +211,33 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     expect((await mongoEventRegistrationRepository().findOwned(registration.id, String(students[0])))?.state).toBe("Cancelled");
     await m.events!.updateOne({ _id: blocker._id }, { $set: { state: "Cancelled" } });
   });
+  it("restricts capacity, waitlist promotion, correction, finalization and out-of-window check-in to Club Leaders", async () => {
+    const d = await published();
+    const registrations = mongoEventRegistrationRepository();
+    const regs = [];
+    for (const s of students) regs.push(await registrations.register({ eventId: d.event.id, studentId: String(s), answers: {}, allowOverbooking: false, now }));
+    expect(regs[2]!.state).toBe("Waitlisted");
+    await setLeader(false);
+    try {
+      await expect(repo.act(String(club), d.event.id, { kind: "capacity", capacity: 3 }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
+      await expect(repo.act(String(club), d.event.id, { kind: "promote", registrationId: regs[2]!.id }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
+      await expect(repo.act(String(club), d.event.id, { kind: "check-in", studentId: String(students[0]), reason: "Early arrival" }, String(actor), now))
+        .rejects.toMatchObject({ kind: "forbidden", message: "only club leaders can manually check in outside the check-in window" });
+      await repo.act(String(club), d.event.id, { kind: "check-in", studentId: String(students[0]) }, String(actor), startAt);
+      expect((await repo.participants(String(club), d.event.id)).find((p) => p.studentId === String(students[0]))?.attendanceId).toBeDefined();
+      const finished = new Date(endAt.getTime() + 1000);
+      await mongoEventProposalReviewRepository().advanceLifecycle(finished);
+      await expect(repo.act(String(club), d.event.id, { kind: "check-in", studentId: String(students[1]), reason: "Forgot device" }, String(actor), finished))
+        .rejects.toMatchObject({ kind: "forbidden", message: "only club leaders can manually check in outside the check-in window" });
+      await expect(repo.act(String(club), d.event.id, { kind: "correct", studentId: String(students[1]), reason: "Verified", absent: true }, String(actor), finished))
+        .rejects.toMatchObject({ kind: "forbidden" });
+      await expect(repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).rejects.toMatchObject({ kind: "forbidden" });
+    } finally {
+      await setLeader(true);
+    }
+    const finished = new Date(endAt.getTime() + 1000);
+    await repo.act(String(club), d.event.id, { kind: "correct", studentId: String(students[0]), reason: "Leader verified manual check-in", absent: false }, String(actor), finished);
+    await repo.act(String(club), d.event.id, { kind: "check-in", studentId: String(students[1]), reason: "Leader late check-in" }, String(actor), finished);
+    expect((await repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).event.attendanceFinalized).toBe(true);
+  });
 });

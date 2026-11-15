@@ -331,7 +331,8 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
     },
     async act(clubId, eventId, action, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
-        await assertEventWriteAccess(session, oid(clubId), oid(actorId), action.kind === "unlock" ? "ATTENDANCE_UNLOCK" : eventActionPermission(action), now);
+        const permissions = await assertEventWriteAccess(session, oid(clubId), oid(actorId),
+          action.kind === "unlock" ? "ATTENDANCE_UNLOCK" : eventActionPermission(action), now);
         const event = await m.events!.findOneAndUpdate({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB",
           ...("expectedVersion" in action ? { __v: action.expectedVersion } : {}) }, { $inc: { __v: 1 } }, { session }).lean();
         if (!event) conflict("event changed or is not available in this club; reload and retry");
@@ -429,7 +430,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
         } else {
           const version = await m.eventProposalVersions!.findOne({ eventId: event._id, revisionNo: event.currentRevisionNo }).session(session).lean();
           const direct = event.audienceScope === "MEMBERS_ONLY" && Number(String(version?.requestedBudgetTotal ?? 0)) === 0 && !(await m.eventBudgets!.exists({ eventId: event._id }).session(session));
-          await applyEventAttendanceAction(session, event, action, oid(actorId), now, direct);
+          await applyEventAttendanceAction(session, event, action, oid(actorId), now, direct, permissions.includes("club.event.manage"));
           await audit(session, oid(eventId), `EVENT_ATTENDANCE_${action.kind.toUpperCase()}`, oid(actorId), action, now, "reason" in action ? action.reason : undefined);
         }
       });

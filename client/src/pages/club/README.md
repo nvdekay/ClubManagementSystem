@@ -64,9 +64,9 @@ sau khi bị trả), `ClubSuspensionRequestsPage` (UC14, dùng `SuspensionReques
 hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộp minh chứng khắc phục) và
 `ClubEvaluationsPage` (UC43: chỉ kết quả `Published`).
 
-Các trang khác (đối chiếu 17/10/2026), đều chỉ dành cho Club Leader:
+Các trang khác (đối chiếu 17/10/2026), chủ yếu dành cho Club Leader:
 `ClubEventsPage` (UC25, UC27, UC28, UC30; cùng component với `mode="attendance"` cho UC32 tại
-`/club/:clubId/event-attendance` và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
+`/club/:clubId/event-attendance` — thành viên `Active` có `club.attendance.manage` xem được danh sách tham dự/mã check-in và điểm danh hộ trong khung giờ check-in, còn đổi sức chứa, đẩy waitlist, sửa/chốt điểm danh và check-in ngoài giờ chỉ Club Leader mới thực hiện được — và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
 `ClubEventProposalPage` (UC25: trang riêng cho tạo và chỉnh sửa đề xuất sự kiện tại `/club/:clubId/events/new`
 và `/club/:clubId/events/:eventId/edit`, dùng chung `ClubEventErrorMessage` và `clubEventFormat.ts` với `ClubEventsPage`),
 `InternalClubEventPage` (sự kiện nội bộ tự túc, `MEMBERS_ONLY` không ngân sách: tạo nháp/tạo/tạo & công bố tại
