@@ -108,7 +108,10 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const [reviewedId, setReviewedId] = useState(selected);
   if (reviewedId !== selected) { setReviewedId(selected); cancelField.reset(); decisionField.reset(); }
   function openForm(current?: Booking) {
-    setEditingId(current?.id ?? null); setForm(current ?? emptyInput);
+    setEditingId(current?.id ?? null);
+    // Only the editable fields: the server's save schema is strict and rejects the booking's own fields.
+    setForm(current ? { propertyId: current.propertyId, purpose: current.purpose, startAt: current.startAt, endAt: current.endAt,
+      headcount: current.headcount, equipment: current.equipment, ...(current.eventId ? { eventId: current.eventId } : {}) } : emptyInput);
     if (!current) setSelected(null);
     setEditing(true); bookingField.reset(); action.reset();
   }
