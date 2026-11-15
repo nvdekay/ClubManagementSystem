@@ -1,11 +1,11 @@
 /**
- * SEC-08 / AC17: an authenticated caller who is refused an action leaves one append-only audit
- * row. Only normalized route data is kept — never a body, cookie, header or token.
+ * SEC-08 / AC17: người gọi đã xác thực mà bị từ chối thao tác sẽ để lại một dòng audit chỉ-thêm
+ * (append-only). Chỉ lưu dữ liệu route đã chuẩn hoá — không bao giờ lưu body, cookie, header hay token.
  */
 export interface AccessDenial {
   actorId: string;
   method: string;
-  /** Route pattern such as `/api/v1/admin/bookings/:id/decision`, never the raw URL. */
+  /** Mẫu route như `/api/v1/admin/bookings/:id/decision`, không bao giờ là URL thô. */
   route: string;
   entityType: string;
   entityId: string;
@@ -29,9 +29,9 @@ export function isObjectId(value: unknown): value is string {
 
 // Xác định thực thể bị truy cập trái phép từ route và tham số để ghi log từ chối
 /**
- * The entity the caller tried to reach: the last ObjectId parameter on the route pattern, typed by
- * the static segment just before it (`/admin/bookings/:id` → `BOOKINGS`). With no such parameter
- * the attempt is recorded against the caller.
+ * Thực thể mà người gọi cố truy cập: tham số ObjectId cuối cùng trên mẫu route, xác định loại bởi
+ * đoạn cố định ngay trước nó (`/admin/bookings/:id` → `BOOKINGS`). Nếu không có tham số như vậy
+ * thì lần truy cập được ghi nhận cho chính người gọi.
  */
 export function accessDenialTarget(route: string, params: Readonly<Record<string, string>>,
   actorId: string): { entityType: string; entityId: string; clubId?: string } {

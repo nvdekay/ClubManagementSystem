@@ -30,7 +30,7 @@ async function windowHours(policy: PolicyRepository, now: Date): Promise<number 
 }
 
 // Cho biết sinh viên có thể gửi feedback sự kiện không và feedback đã gửi
-/** What the event page needs: whether the form may be shown (FR-01, E3) and the student's own record. */
+/** Trang sự kiện cần gì: có được hiển thị biểu mẫu không (FR-01, E3) và bản ghi của chính sinh viên. */
 export async function getEventFeedbackContext(repo: EventFeedbackRepository, policy: PolicyRepository,
   actor: AccessActor | null, id: string, now: Date) {
   const target = await repo.target(eventId(id), student(actor));

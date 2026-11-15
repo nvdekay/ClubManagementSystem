@@ -15,8 +15,8 @@ export function mongoClubViolationRepository(): ClubViolationRepository {
   return {
     // Liệt kê vụ vi phạm CLB đã được thông báo (yêu cầu phản hồi hoặc quyết định)
     async list(clubId, now) {
-      // The club sees every case it was notified about: a response request or a decision, including
-      // a "no violation" closure issued before any response was requested.
+      // CLB thấy mọi vụ việc mà nó đã được thông báo: yêu cầu phản hồi hoặc một quyết định, kể cả
+      // việc đóng "không vi phạm" được ban hành trước khi có yêu cầu phản hồi nào.
       const ids = await m.violations!.find({ clubId: new Types.ObjectId(clubId), state: { $in: visible },
         $or: [{ "clubResponse.requestedAt": { $exists: true } }, { decidedAt: { $exists: true } }] }).sort({ openedAt: -1 }).distinct("_id");
       const reader = mongoViolationRepository();

@@ -6,7 +6,7 @@ export const authKeyRoot = ["auth"] as const;
 const authKey = [...authKeyRoot, "me"] as const;
 
 // Ẩn workspace Student với nhân sự ICPDP trên giao diện
-/** ICPDP staff work from the ICPDP workspace, so the UI hides their Student workspace (server access is unchanged). */
+/** Nhân sự ICPDP làm việc trong workspace ICPDP, nên giao diện ẩn workspace Student của họ (quyền truy cập ở server không đổi). */
 function hideStudentForIcpdp(me: Me | null): Me | null {
   if (!me?.workspaces.some((workspace) => workspace.kind === "icpdp")) return me;
   return { ...me, workspaces: me.workspaces.filter((workspace) => workspace.kind !== "student") };
@@ -23,8 +23,8 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      // Update the live "me" query first: `clear()` would drop it, leaving mounted `useAuth` observers on the old
-      // query, so the UI stayed signed in until a reload.
+      // Cập nhật query "me" đang chạy trước: `clear()` sẽ xoá nó, khiến các observer `useAuth` đang mount còn bám vào
+      // query cũ, làm giao diện vẫn ở trạng thái đã đăng nhập cho đến khi tải lại trang.
       queryClient.setQueryData(authKey, null);
       queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== authKeyRoot[0] });
     },

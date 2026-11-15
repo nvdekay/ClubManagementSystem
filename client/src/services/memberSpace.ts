@@ -37,7 +37,7 @@ export interface Membership {
   pendingWithdrawal?: WithdrawalRequest;
 }
 
-/** UC21 roster row: adds the member's email and the club roles they hold right now. */
+/** Dòng danh sách thành viên UC21: thêm email của thành viên và các vai trò CLB họ đang giữ. */
 export interface ClubRosterMember extends Membership {
   email: string;
   positions: string[];
@@ -59,7 +59,7 @@ export interface MemberSpace {
   otherClubs: Array<{ clubId: string; clubName: string; state: MembershipState }>;
 }
 
-/** Carries the HTTP status so the page can show "not a member" (403) instead of a generic error. */
+/** Mang theo HTTP status để trang hiện "không phải thành viên" (403) thay vì lỗi chung chung. */
 export class MemberSpaceError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);
@@ -89,7 +89,7 @@ export function fetchMyMemberships(signal: AbortSignal) {
 }
 
 // GET yêu cầu rời CLB của tôi
-/** UC22: every leave request the student has sent, newest first, so UC02 can track them. */
+/** UC22: mọi yêu cầu rời CLB sinh viên đã gửi, mới nhất trước, để UC02 theo dõi. */
 export function fetchMyWithdrawals(signal: AbortSignal) {
   return request<WithdrawalRequest[]>("/memberships/withdrawal-requests/mine", { signal });
 }
@@ -117,7 +117,7 @@ export function fetchClubWithdrawals(clubId: string, signal: AbortSignal) {
 }
 
 // POST /state: đổi trạng thái thành viên của CLB
-/** UC21: the effective date is today (the server refuses back- or future-dated changes). */
+/** UC21: ngày hiệu lực là hôm nay (server từ chối thay đổi lùi ngày hoặc hẹn ngày tương lai). */
 export function changeMembershipState(clubId: string, membershipId: string,
   input: { state: ManagedMembershipState; reason?: string }, csrfToken: string) {
   return request<Membership>(
@@ -127,7 +127,7 @@ export function changeMembershipState(clubId: string, membershipId: string,
 }
 
 // POST thêm thành viên vào CLB theo email
-/** UC20 A1: adds a student who has signed in before, with the reason BR13 requires. */
+/** UC20 A1: thêm sinh viên đã từng đăng nhập, kèm lý do theo yêu cầu của BR13. */
 export function onboardMember(clubId: string, input: { email: string; reason: string }, csrfToken: string) {
   return request<Membership>(`/clubs/${encodeURIComponent(clubId)}/memberships`, post(csrfToken, input));
 }

@@ -10,7 +10,7 @@ function date(value: unknown): Date {
   return value;
 }
 
-/** UC24: published events of the club; internal events appear from PUBLIC, never as DRAFT or CREATED. */
+/** UC24: các sự kiện đã đăng của CLB; sự kiện nội bộ xuất hiện từ PUBLIC, không bao giờ ở DRAFT hay CREATED. */
 const shownEventStates = ["Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "PUBLIC", "ONGOING", "FINISH"];
 
 // Repository không gian thành viên của sinh viên trong CLB
@@ -38,8 +38,8 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
       ]);
       if (!club || !mine) return null;
 
-      // Current positions, by the same rule as permissions: in effect inside an Active term; board seats
-      // (and the leader seat) count only once ICPDP confirmed them, UC23 roles need no confirmation.
+      // Chức vụ hiện tại, theo cùng quy tắc với quyền: có hiệu lực trong nhiệm kỳ Active; ghế ban chủ nhiệm
+      // (và ghế leader) chỉ tính khi ICPDP đã xác nhận, role UC23 không cần xác nhận.
       const activeTerms = await terms.find({ clubId: clubObjectId, state: "Active", startAt: { $lte: now },
         endAt: { $gt: now } }).select({ _id: 1 }).lean();
       const [assignmentDocs, positionDocs, memberDocs] = await Promise.all([

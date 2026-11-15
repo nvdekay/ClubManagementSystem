@@ -3,10 +3,10 @@ import { DomainError } from "./errors.js";
 export const PROPERTY_TYPES = ["ROOM", "HALL", "OUTDOOR", "STAGE", "EQUIPMENT"] as const;
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
-/** Codes are generated per type when a property is created, e.g. PH-001. */
+/** Mã được sinh theo từng loại khi tạo property, vd PH-001. */
 export const PROPERTY_CODE_PREFIX: Record<PropertyType, string> = { ROOM: "PH", HALL: "HT", OUTDOOR: "SN", STAGE: "SK", EQUIPMENT: "TB" };
 
-/** One bookable window; `day` 1 = Monday … 7 = Sunday. Days not listed cannot be booked. */
+/** Một khung giờ được phép đặt; `day` 1 = thứ Hai … 7 = Chủ nhật. Ngày không liệt kê thì không đặt được. */
 export interface BookableHours {
   day: number;
   open: string;
@@ -41,7 +41,7 @@ export interface Property extends PropertyInput {
 export interface PropertyRepository {
   list(): Promise<Property[]>;
   find(id: string): Promise<Property | null>;
-  /** Assigns the next free code for the type; retries on a concurrent code clash. */
+  /** Gán mã trống kế tiếp cho loại; thử lại khi đụng mã do chạy đồng thời. */
   create(input: PropertyInput, actorId: string, now: Date): Promise<Property>;
   update(id: string, details: PropertyDetails, actorId: string, now: Date): Promise<Property>;
   setActive(id: string, isActive: boolean, actorId: string, now: Date): Promise<Property>;

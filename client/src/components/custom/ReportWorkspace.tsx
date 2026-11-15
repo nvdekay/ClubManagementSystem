@@ -204,7 +204,7 @@ function ReportEditor({
         token,
       });
     } catch {
-      /* Render mutation error. */
+      /* Lỗi của mutation được hiển thị ở nơi khác. */
     }
   }
   // Mở vi phạm từ phát hiện trong báo cáo
@@ -228,7 +228,7 @@ function ReportEditor({
       });
       setViolationId(created.id);
     } catch {
-      /* Render mutation error. */
+      /* Lỗi của mutation được hiển thị ở nơi khác. */
     }
   }
   return (
@@ -623,7 +623,7 @@ export function ReportWorkspace({
           </AppButton>
         </AppNotice>
       ) : items.length ? (
-        // One box for the picker and its pager, so the page numbers read as paging the event list, not the report.
+        // Gộp bộ chọn và phân trang vào một khung, để số trang được hiểu là phân trang danh sách sự kiện chứ không phải báo cáo.
         <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
           <p className="text-sm font-medium">{t("accountability.select")}</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">

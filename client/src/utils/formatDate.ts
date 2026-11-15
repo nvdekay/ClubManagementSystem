@@ -1,4 +1,4 @@
-// Single source of truth for how the app renders backend timestamps.
+// Nguồn duy nhất quyết định cách app hiển thị mốc thời gian từ backend.
 const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   dateStyle: "medium",
   timeStyle: "short",
@@ -15,7 +15,7 @@ export function formatDate(
 const dayFormatters = new Map<string, Intl.DateTimeFormat>();
 
 // Định dạng chỉ ngày theo giờ Việt Nam
-/** Calendar day only, in Vietnam time — for dates the server compares by day (e.g. leave dates). */
+/** Chỉ ngày theo lịch, giờ Việt Nam — cho các ngày mà server so sánh theo ngày (vd ngày rời CLB). */
 export function formatDay(
   value: string | number | Date | undefined,
   locale: string,
@@ -36,19 +36,19 @@ export function formatDay(
 const inputFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
 
 // Đổi thời điểm thành giá trị YYYY-MM-DD của input ngày theo giờ Việt Nam
-/** The `YYYY-MM-DD` value of a date input for an instant, read in Vietnam time. */
+/** Giá trị `YYYY-MM-DD` của ô nhập ngày cho một thời điểm, tính theo giờ Việt Nam. */
 export function vnDateInput(value: string | number | Date = new Date()): string {
   return inputFormatter.format(new Date(value));
 }
 
 // Trả về mốc đầu hoặc cuối của một ngày theo giờ Việt Nam
-/** The instant a Vietnam calendar day (`YYYY-MM-DD`) starts, or the last millisecond of it. */
+/** Thời điểm bắt đầu của một ngày theo lịch Việt Nam (`YYYY-MM-DD`), hoặc mili-giây cuối cùng của ngày đó. */
 export function vnDayBoundary(day: string, edge: "start" | "end"): string {
   return new Date(`${day}T${edge === "start" ? "00:00:00.000" : "23:59:59.999"}+07:00`).toISOString();
 }
 
 // Giá trị input ngày của ngày mai theo giờ Việt Nam
-/** The date input value of the day after today in Vietnam, for fields that must lie in the future. */
+/** Giá trị ô nhập ngày của ngày mai theo giờ Việt Nam, cho các trường phải nằm trong tương lai. */
 export function vnTomorrowInput(): string {
   return vnDateInput(Date.now() + 86_400_000);
 }
@@ -57,8 +57,8 @@ const VN_TIME_ZONE = "Asia/Ho_Chi_Minh";
 
 // Định dạng thời gian sự kiện theo thứ tự cố định cho cả hai ngôn ngữ
 /**
- * Event time in one fixed order for both languages, in Vietnam time:
- * "Th 6, 13/11 · 22:26" (vi) and "Fri 13 Nov · 22:26" (en). The browser's own vi pattern puts the time first.
+ * Thời gian sự kiện theo một thứ tự cố định cho cả hai ngôn ngữ, giờ Việt Nam:
+ * "Th 6, 13/11 · 22:26" (vi) và "Fri 13 Nov · 22:26" (en). Định dạng vi mặc định của trình duyệt lại đặt giờ lên trước.
  */
 export function formatEventWhen(value: string | number | Date, locale: string): string {
   const date = new Date(value);
@@ -71,7 +71,7 @@ export function formatEventWhen(value: string | number | Date, locale: string): 
 }
 
 // Tách ngày và tháng ngắn cho huy hiệu lịch
-/** A calendar-badge pair, short enough for a narrow tile: { day: "13", month: "T11" } (vi) or "Nov" (en). */
+/** Cặp giá trị cho huy hiệu lịch, đủ ngắn cho ô hẹp: { day: "13", month: "T11" } (vi) hoặc "Nov" (en). */
 export function formatDayBadge(value: string | number | Date, locale: string): { day: string; month: string } {
   const date = new Date(value);
   const day = new Intl.DateTimeFormat(locale, { day: "2-digit", timeZone: VN_TIME_ZONE }).format(date);

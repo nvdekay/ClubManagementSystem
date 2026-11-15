@@ -2,9 +2,9 @@ import type { MailTransport } from "../../domain/notification.js";
 
 // Transport email dev: chỉ ghi log người nhận và tiêu đề thay vì gửi thật
 /**
- * Development transport: writes one JSON line per email instead of delivering it. It logs the
- * recipient and subject only, never the body. A real SMTP transport needs an SMTP client
- * dependency (e.g. nodemailer) and `SMTP_*` settings — see this folder's README.
+ * Transport cho môi trường dev: ghi một dòng JSON cho mỗi email thay vì gửi đi. Chỉ log
+ * người nhận và tiêu đề, không bao giờ log nội dung. Transport SMTP thật cần một dependency
+ * SMTP client (vd nodemailer) và cấu hình `SMTP_*` — xem README của thư mục này.
  */
 export function logMailTransport(write: (line: string) => void = console.log): MailTransport {
   return {

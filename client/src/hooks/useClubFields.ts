@@ -17,7 +17,7 @@ export function useClubFields(enabled: boolean) {
 }
 
 // Trả về hàm làm mới cache danh mục lĩnh vực CLB
-/** Renames also rewrite clubs' field names, so every mutation refetches the usage-aware list. */
+/** Đổi tên cũng ghi đè tên lĩnh vực trong các CLB, nên mọi mutation đều tải lại danh sách có kèm số lượt dùng. */
 function useInvalidateClubFields() {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: clubFieldsKeyRoot });

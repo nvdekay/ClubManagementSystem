@@ -39,7 +39,7 @@ function draftOnly(state: string): void {
 }
 
 // Lấy các kỳ đánh giá từ lịch học vụ của chính sách hiện hành
-/** Evaluation periods are the semesters of the policy in force. */
+/** Kỳ đánh giá là các học kỳ của policy đang hiệu lực. */
 async function periods(policy: PolicyRepository, now: Date) {
   return ((await policy.findEffective(now))?.academicCalendar ?? []).map((semester) => ({
     code: semester.code, startAt: semester.startAt, endAt: semester.endAt,
@@ -57,7 +57,7 @@ export async function listEvaluationSchemes(repo: EvaluationSchemeRepository, po
 }
 
 // ICPDP tạo khung đánh giá nháp cho một kỳ, từ mặc định hoặc khung cũ
-/** A new draft starts from the defaults, or from any earlier scheme (UC41 A1, BR51 revisions). */
+/** Bản nháp mới bắt đầu từ mặc định, hoặc từ bất kỳ scheme trước đó (UC41 A1, BR51 revision). */
 export async function createEvaluationScheme(repo: EvaluationSchemeRepository, policy: PolicyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null,
   input: { periodCode: string; copyFromId?: string }, now: Date) {

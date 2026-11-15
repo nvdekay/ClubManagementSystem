@@ -19,7 +19,7 @@ export async function listPublicClubs(
   repo: PublicDiscoveryRepository, input: ClubSearch, now = new Date(),
 ) {
   const [page, fields] = await Promise.all([repo.listClubs(input, now), repo.fields()]);
-  // UC06 E1: a filtered search with no match suggests the newest Active clubs instead of a dead end.
+  // UC06 E1: tìm kiếm có lọc mà không khớp thì gợi ý các CLB Active mới nhất thay vì bế tắc.
   if (page.total === 0 && (input.search || input.field)) {
     const newest = await repo.listClubs({ search: "", field: "", page: 1, pageSize: 4, newestActive: true }, now);
     return { ...page, fields, suggestions: newest.items };

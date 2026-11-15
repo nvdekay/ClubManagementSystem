@@ -14,7 +14,7 @@ export function useProperties(enabled: boolean) {
 }
 
 // Mutation tạo, sửa, bật/tắt hoặc xoá cơ sở vật chất, rồi làm mới cache
-/** The list is sorted server-side (active first, then code), so every change refetches it. */
+/** Danh sách được sắp xếp ở server (đang bật trước, rồi theo mã), nên mọi thay đổi đều tải lại. */
 export function usePropertyAction() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,4 +1,4 @@
-// Same shapes the server accepts, so a field flagged here is never accepted there (or vice versa).
+// Cùng dạng dữ liệu server chấp nhận, nên trường bị đánh dấu lỗi ở đây sẽ không bao giờ được server chấp nhận (và ngược lại).
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Kiểm tra chuỗi có đúng dạng email hay không

@@ -84,7 +84,7 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
       displayName: typeof doc.displayName === "string" && doc.displayName ? doc.displayName : String(doc.email),
     }]));
     const record = mapApplicationRecord(application);
-    // Once approved, the club created from this application carries the same name by design.
+    // Sau khi duyệt, CLB được tạo từ đơn này mang cùng tên theo thiết kế.
     const proposedName = (mappedVersions.at(-1)?.snapshot.clubName ?? record.draft.clubName).trim();
     const sameName = proposedName && record.state !== "Approved"
       ? await clubs.find({ name: proposedName, state: "Active" }).collation({ locale: "en", strength: 2 })
@@ -190,10 +190,10 @@ export function mongoClubApplicationReviewRepository(): ClubApplicationReviewRep
         founderIds.add(String(application.founderUserId));
 
         if (input.outcome === "Approve") {
-          // Approving the application also confirms the founding board (no separate UC10 round).
+          // Duyệt đơn cũng đồng thời xác nhận ban sáng lập (không có vòng UC10 riêng).
           const leader = snapshot.founders.find((founder) => founder.role === "LEADER")
             ?? { userId: String(application.founderUserId), role: "LEADER" as const };
-          // Touch the leader so a concurrent approval naming the same leader conflicts.
+          // Chạm vào leader để một lần duyệt đồng thời nêu cùng leader đó sẽ bị xung đột.
           await users.updateOne({ _id: new Types.ObjectId(leader.userId) },
             { $currentDate: { updatedAt: true } }, { session });
           const leaderPositionIds = await positions.find({ isLeaderRole: true, isActive: true })

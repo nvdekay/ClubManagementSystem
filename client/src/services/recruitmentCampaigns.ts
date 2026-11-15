@@ -63,7 +63,7 @@ export interface PublicRecruitmentCampaign {
   selectionSteps: RecruitmentSelectionStep[];
   formSchema: RecruitmentFormField[];
   rubric: RecruitmentRubricCriterion[];
-  /** The club is suspended (UC15): the campaign stays visible but takes no applications for now. */
+  /** CLB đang bị tạm ngưng (UC15): chiến dịch vẫn hiển thị nhưng tạm thời không nhận hồ sơ. */
   clubSuspended?: boolean;
 }
 

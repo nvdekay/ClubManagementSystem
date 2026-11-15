@@ -1,6 +1,6 @@
 import { DomainError } from "./errors.js";
 
-/** One entry of the ICPDP-managed club field catalog students pick from when founding a club. */
+/** Một mục trong danh mục lĩnh vực CLB do ICPDP quản lý, để sinh viên chọn khi thành lập CLB. */
 export interface ClubField {
   id: string;
   name: string;
@@ -24,11 +24,11 @@ export interface ClubFieldRepository {
   listActive(): Promise<ClubField[]>;
   listWithUsage(): Promise<ClubFieldUsage[]>;
   find(id: string): Promise<ClubField | null>;
-  /** Re-adding the name of a deactivated field reactivates it instead of failing as a duplicate. */
+  /** Thêm lại tên của lĩnh vực đã tắt sẽ kích hoạt lại nó thay vì báo lỗi trùng. */
   create(input: ClubFieldInput, actorId: string, now: Date): Promise<ClubField>;
-  /** A rename also refreshes the denormalized name on clubs and editable applications. */
+  /** Đổi tên cũng cập nhật lại tên đã denormalize trên CLB và các hồ sơ còn sửa được. */
   update(id: string, input: ClubFieldInput, actorId: string, now: Date): Promise<ClubField>;
-  /** Hard delete when nothing references the field, otherwise hide it from new applications. */
+  /** Xoá hẳn khi không có gì tham chiếu lĩnh vực này, ngược lại thì ẩn khỏi các hồ sơ mới. */
   remove(id: string, actorId: string, now: Date): Promise<ClubFieldRemoval>;
 }
 

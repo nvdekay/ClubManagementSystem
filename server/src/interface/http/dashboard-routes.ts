@@ -54,7 +54,7 @@ export function dashboardRoutes(deps: DashboardRouteDeps): Router {
     ));
   });
   // Liệt kê sự kiện nội bộ trên dashboard
-  // UC02 drill-downs: ICPDP opens a dashboard number into the records behind it (FR-UC02-02/03).
+  // Drill-down UC02: ICPDP mở một con số trên dashboard thành các bản ghi phía sau nó (FR-UC02-02/03).
   router.get("/dashboard/internal-events", authGuard(guard, false), async (req, res) => {
     const query = internalEventQuery.safeParse(req.query);
     if (!query.success) throw new DomainError("invalid internal event filter", "validation", query.error.issues);

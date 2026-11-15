@@ -259,7 +259,7 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
     if (confirmText && !(await askConfirm(confirmText))) return false;
     try {
       const result = await action.mutateAsync({ id, action: next, csrfToken });
-      // A revision of a published result is a new evaluation with its own id.
+      // Bản chỉnh sửa của kết quả đã công bố là một đánh giá mới có id riêng.
       if (result.id !== id) navigate(`/workspace/evaluations/${result.id}`);
       return true;
     } catch { return false; }

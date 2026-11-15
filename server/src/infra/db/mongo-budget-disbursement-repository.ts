@@ -126,7 +126,7 @@ export function mongoBudgetDisbursementRepository(): BudgetDisbursementRepositor
             : { disbursedTotal: decimal(current.disbursedTotal + flow.amount) }),
           ...(due ? { settlementDueAt: due } : {}),
         }, $inc: { __v: 1 } }, { session });
-        // BR26: the reconciliation is settled once the top-up is paid or the refund is complete.
+        // BR26: đối soát được xem là đã tất toán khi khoản bù thêm đã trả hoặc khoản hoàn trả đã xong.
         if (nextState === "Closed") await m.financialReconciliations!.updateOne({ eventBudgetId: budgetObjectId },
           { $set: { closedBy: actorId, closedAt: now } }, { session });
         const action = `BUDGET_${flow.kind.toUpperCase()}_RECORDED`;

@@ -10,7 +10,7 @@ const FINISHED_EVENT_STATES = ["Completed", "Report Submitted", "Closed", "FINIS
 const FIELD_LIMIT = 7;
 
 // Tính thời điểm đầu tháng (giờ Việt Nam) lệch so với hiện tại
-/** First instant of the Vietnam-time month `offset` months away from `now`. */
+/** Thời điểm đầu tiên của tháng (giờ Việt Nam) cách `now` `offset` tháng. */
 function monthStart(now: Date, offset: number): Date {
   const local = new Date(now.getTime() + VN_OFFSET);
   return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + offset, 1) - VN_OFFSET);
@@ -76,7 +76,7 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
 }
 
 // Xác định thời điểm thành viên rời hoặc bị cấm khỏi CLB
-/** When a Left or Banned membership stopped counting; `leftAt` first, else the last history entry into that state. */
+/** Thời điểm membership Left hoặc Banned thôi được tính; ưu tiên `leftAt`, không có thì lấy mục lịch sử cuối cùng chuyển sang trạng thái đó. */
 function endedAt(doc: Doc): Date | undefined {
   if (doc.leftAt instanceof Date) return doc.leftAt;
   if (doc.state !== "Left" && doc.state !== "Banned") return undefined;

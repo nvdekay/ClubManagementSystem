@@ -48,7 +48,7 @@ function validityKey(value: Validity) {
 }
 
 // Trang ICPDP phân loại và xử lý khiếu nại từ CLB
-/** UC51: ICPDP triage queue — open, decide (dismiss / forward / escalate), then close or escalate after the club answered. */
+/** UC51: hàng đợi phân loại của ICPDP — mở, quyết định (bác bỏ / chuyển tiếp / nâng cấp), rồi đóng hoặc nâng cấp sau khi CLB trả lời. */
 export function ComplaintReviewPage() {
   const { t } = useTranslation();
   const auth = useAuth();

@@ -44,8 +44,8 @@ interface SectionHeadProps {
 
 // Trang chủ công khai: tìm kiếm, sự kiện nổi bật, CLB, các bước tham gia
 /**
- * Landing page in an editorial style: a full-bleed campus hero under a transparent header, a sliding strip of
- * club logos, events as a featured story plus a list, then who the system serves and how to start.
+ * Trang chủ phong cách tạp chí: ảnh campus tràn khung dưới header trong suốt, dải logo CLB chạy ngang,
+ * sự kiện gồm một bài nổi bật cùng danh sách, rồi phần hệ thống phục vụ ai và cách bắt đầu.
  */
 export function PublicHome() {
   const { t, i18n } = useTranslation();
@@ -59,7 +59,7 @@ export function PublicHome() {
   const events = useEvents(1, tab);
   const locale = i18n.language === "vi" ? "vi-VN" : "en-GB";
   const clubList = clubs.data?.items ?? [];
-  // Two rows for the strip: the second page when there is one, otherwise the first row reversed.
+  // Hai hàng cho dải logo: hàng thứ hai lấy từ trang kế tiếp nếu có, nếu không thì đảo ngược hàng đầu.
   const secondRow = moreClubs.data?.items.length ? moreClubs.data.items : [...clubList].reverse();
   const eventList = events.data?.items.slice(0, 4) ?? [];
   const [featured, ...rest] = eventList;
@@ -93,7 +93,7 @@ export function PublicHome() {
   }
   // Hàng logo CLB chạy ngang liên tục
   function logoRow(items: PublicClub[], reverse: boolean) {
-    // The list is drawn twice so the -50% loop is seamless; the copy is hidden from assistive tech and focus.
+    // Danh sách được vẽ hai lần để vòng lặp -50% liền mạch; bản sao bị ẩn khỏi công nghệ hỗ trợ và focus.
     return (
       <div className="flex overflow-hidden mask-x-from-90% mask-x-to-100%">
         <ul className={cn("flex w-max shrink-0 animate-marquee gap-4 pr-4 hover:[animation-play-state:paused] motion-reduce:animate-none",
@@ -126,17 +126,17 @@ export function PublicHome() {
 
   return (
     <div className="overflow-x-clip">
-      {/* Hero: full-bleed campus photo, framed by hairlines; the header floats over it (PublicLayout). ---------- */}
+      {/* Hero: ảnh campus tràn khung, viền mảnh; header nổi phía trên (PublicLayout). ---------- */}
       <section className="relative isolate flex min-h-[max(40rem,100dvh)] flex-col overflow-hidden bg-black text-white">
-        {/* The photo (3:1) has a printed campus banner on its left ~40%. A box 173% as wide as the hero, anchored
-            right, keeps that part off-screen at every aspect ratio while the building fills the frame. */}
+        {/* Ảnh (3:1) có băng-rôn campus in sẵn ở khoảng 40% bên trái. Một khung rộng 173% so với hero, neo
+            bên phải, giữ phần đó nằm ngoài màn hình ở mọi tỉ lệ khung hình trong khi toà nhà vẫn lấp đầy khung. */}
         <img src={CAMPUS_IMAGE_URL} alt="" aria-hidden="true" fetchPriority="high"
           className="absolute inset-y-0 right-0 -z-20 h-full w-[173%] max-w-none origin-right animate-hero-settle object-cover object-right motion-reduce:animate-none" />
-        {/* Darken the bottom-left where the copy sits, and the top where the header sits. */}
+        {/* Làm tối góc dưới-trái nơi đặt chữ, và phần trên nơi đặt header. */}
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-t from-black/85 via-black/35 to-black/45" />
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-black/55 via-black/10 to-transparent" />
 
-        {/* Copy sits a little above the vertical middle; the live numbers and next event share a bar at the bottom. */}
+        {/* Chữ nằm hơi cao hơn giữa theo chiều dọc; số liệu trực tiếp và sự kiện kế tiếp chung một thanh ở dưới cùng. */}
         <div className="mx-auto flex w-full max-w-7xl flex-1 items-center px-6 pt-36 pb-10 sm:px-12 md:pt-28 lg:px-16">
           <div className="max-w-3xl lg:-translate-y-[4vh]">
             <p className="inline-flex flex-wrap items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium backdrop-blur-md">
@@ -201,7 +201,7 @@ export function PublicHome() {
         </div>
       </section>
 
-      {/* Sliding club strip: two rows drifting in opposite directions; hover pauses, reduced motion stops. -------- */}
+      {/* Dải CLB chạy ngang: hai hàng trôi ngược chiều nhau; rê chuột thì tạm dừng, bật giảm chuyển động thì dừng hẳn. -------- */}
       <section aria-labelledby="clubs-strip-title" className="border-b border-border-app bg-surface-app py-14 sm:py-16">
         <div className="reveal mx-auto flex max-w-7xl flex-wrap items-end justify-between gap-4 px-4 sm:px-8">
           <div>
@@ -227,7 +227,7 @@ export function PublicHome() {
         ) : <div className="mx-auto mt-8 max-w-7xl px-4 sm:px-8"><AppEmptyState variant="boxed" message={t("discovery.noClubs")} /></div>}
       </section>
 
-      {/* Events: one featured story and a list beside it. ------------------------------------------------------- */}
+      {/* Sự kiện: một bài nổi bật và danh sách bên cạnh. ------------------------------------------------------- */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-8 sm:py-24">
         <div className="reveal">
           {sectionHead({ kicker: t("discovery.eventsKicker"), title: t("discovery.eventsForYou"),
@@ -299,7 +299,7 @@ export function PublicHome() {
         ) : <div role="tabpanel" className="mt-8"><AppEmptyState variant="boxed" icon="ticket" message={t("discovery.noEventsFound")} /></div>}
       </section>
 
-      {/* Who it is for: large numbered columns. --------------------------------------------------------------- */}
+      {/* Dành cho ai: các cột lớn có đánh số. --------------------------------------------------------------- */}
       <section className="border-y border-border-app bg-surface-app">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-8 sm:py-24">
           <div className="reveal">{sectionHead({ kicker: t("discovery.audienceKicker"), title: t("discovery.audienceTitle"), description: t("discovery.audienceText") })}</div>
@@ -320,7 +320,7 @@ export function PublicHome() {
         </div>
       </section>
 
-      {/* How to start: a numbered path joined by a line. ---------------------------------------------------- */}
+      {/* Cách bắt đầu: các bước đánh số nối với nhau bằng một đường kẻ. ---------------------------------------------------- */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-8 sm:py-24">
         <div className="reveal">{sectionHead({ kicker: t("discovery.journeyKicker"), title: t("discovery.journeyTitle") })}</div>
         <ol className="relative mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -338,10 +338,10 @@ export function PublicHome() {
         </ol>
       </section>
 
-      {/* Call to action on the campus photo. ------------------------------------------------------------------- */}
+      {/* Lời kêu gọi hành động trên ảnh campus. ------------------------------------------------------------------- */}
       <section className="px-4 pb-20 sm:px-8 sm:pb-24">
         <div className="reveal relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-black px-6 py-14 text-white sm:px-12 sm:py-20">
-          {/* Anchored right: the photo carries a printed campus banner on its left half that would clash with the copy. */}
+          {/* Neo bên phải: ảnh có băng-rôn campus in sẵn ở nửa trái sẽ chọi với chữ. */}
           <img src={CAMPUS_IMAGE_URL} alt="" aria-hidden="true" className="absolute inset-y-0 right-0 -z-20 h-full w-[173%] max-w-none object-cover object-right" />
           <span aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-r from-black/90 via-black/70 to-black/30" />
           <div className="grid items-end gap-8 lg:grid-cols-[1.4fr_1fr]">

@@ -194,7 +194,7 @@ function obligationLabel(t: TFunction, item: string) {
 }
 
 // Hiển thị thông báo lỗi khi thao tác sự kiện CLB thất bại
-/** Spells out what the server named (UC25 E2 obligations, UC30 E1 affected registrations, booking & schedule rules) via i18n instead of raw messages. */
+/** Diễn giải rõ những gì server nêu (nghĩa vụ UC25 E2, đăng ký bị ảnh hưởng UC30 E1, quy tắc booking và lịch) qua i18n thay vì hiện thông báo thô. */
 export function ClubEventErrorMessage({ error }: ClubEventErrorMessageProps) {
   const { t } = useTranslation();
   if (!error) return null;

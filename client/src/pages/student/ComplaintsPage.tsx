@@ -26,7 +26,7 @@ const MAX_TEXT = 4000;
 const MAX_EVIDENCE = 5;
 
 // Trang sinh viên gửi khiếu nại tới CLB và xem khiếu nại của mình
-/** UC50: send a complaint to ICPDP (BR38) and follow or withdraw it. */
+/** UC50: gửi khiếu nại tới ICPDP (BR38), theo dõi hoặc rút lại. */
 export function ComplaintsPage() {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -72,7 +72,7 @@ export function ComplaintsPage() {
       field.reset();
       setDone(true);
     } catch {
-      // send.isError renders the message below.
+      // send.isError hiển thị thông báo bên dưới.
     } finally {
       inFlight.current = false;
     }

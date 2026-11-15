@@ -176,7 +176,7 @@ const ApplicationReviewQueueItem = z.object({
   task: ApplicationReviewTask, application: ApplicationRecord,
 });
 const FounderProfile = z.object({ id: z.string(), displayName: z.string(), email: z.string() });
-/** Advisory similar-club hints (UC07/UC08): never block submitting or any review outcome. */
+/** Gợi ý CLB tương tự chỉ mang tính tham khảo (UC07/UC08): không bao giờ chặn việc nộp hay bất kỳ kết quả duyệt nào. */
 const SimilarClubHint = z.object({
   kind: z.enum(["CLUB", "APPLICATION"]), id: z.string(), name: z.string(), field: z.string(),
   state: z.string(), score: z.number().int().min(35).max(100), level: z.enum(["HIGH", "MEDIUM"]),
@@ -527,7 +527,7 @@ const Complaint = z.object({ id: z.string(), clubId: z.string().optional(), club
   withdrawnAt: z.string().optional(), closedAt: z.string().optional() });
 const ComplaintForIcpdp = Complaint.extend({ complainant: z.object({ id: z.string(), displayName: z.string(), email: z.string() }),
   linkedComplaintIds: z.array(z.string()) });
-// D5: no complainant field exists in what a club receives.
+// D5: những gì CLB nhận được không có trường người khiếu nại.
 const ComplaintForClub = z.object({ id: z.string(), clubId: z.string(), eventTitle: z.string().optional(), type: z.string(),
   description: z.string(), evidence: z.array(ComplaintEvidence), state: z.enum(["Forwarded", "Club Responded", "Closed", "Escalated"]),
   forwardNote: z.string(), forwardedAt: z.string(), responseDueAt: z.string().optional(), clubResponse: ComplaintResponse.optional() });
@@ -635,7 +635,7 @@ const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Pro
   check: BookingCheck.nullable(), obligations: z.array(z.string()) });
 
 // Bọc schema dữ liệu vào envelope response thành công
-// Success envelope every 2xx response is wrapped in — see interface/http/response.ts.
+// Envelope thành công bao mọi response 2xx — xem interface/http/response.ts.
 function envelope<T extends z.ZodTypeAny>(data: T) {
   return z.object({
     statusCode: z.number(),

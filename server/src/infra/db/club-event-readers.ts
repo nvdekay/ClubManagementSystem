@@ -27,7 +27,7 @@ export function clubEventFrom(doc: Doc, payload: Doc = {}, cancellationRequest?:
     allowWalkIn: doc.allowWalkIn === true, waitlistEnabled: doc.waitlistEnabled === true,
     revisionDeadlineAt: doc.revisionDeadlineAt as Date | undefined };
 }
-/** Audit actions whose `after.payload` holds the latest event input (plan text, bookingIds, budget lines). */
+/** Các audit action có `after.payload` chứa dữ liệu đầu vào mới nhất của sự kiện (nội dung kế hoạch, bookingIds, dòng ngân sách). */
 export const EVENT_PAYLOAD_ACTIONS = ["EVENT_DRAFT_CREATED", "EVENT_DRAFT_SAVED", "EVENT_PROPOSAL_SUBMITTED", "RECORD_INTERNAL",
   "EVENT_RESCHEDULED", "INTERNAL_EVENT_DRAFT_SAVED", "INTERNAL_EVENT_CREATED", "INTERNAL_EVENT_SAVED", "EVENT_PROPOSAL_DOCUMENT_UPLOADED"];
 // Đọc payload bản nháp/đề xuất mới nhất của sự kiện từ audit log
@@ -109,7 +109,7 @@ export async function readClubEvent(clubId: string, eventId: string): Promise<Cl
 export async function readEventParticipants(clubId: string, eventId: string): Promise<EventParticipant[]> {
   const event = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }).select({ endAt: 1 }).lean();
   if (!event) throw new DomainError("event not found", "not_found");
-  // A confirmed registration without a check-in is a no-show only once the event has ended.
+  // Đăng ký đã xác nhận mà không check-in chỉ tính là vắng mặt khi sự kiện đã kết thúc.
   const ended = (event.endAt as Date) <= new Date();
   const [registrations, attendances] = await Promise.all([
     m.eventRegistrations!.find({ eventId: oid(eventId) }).sort({ waitlistPosition: 1, createdAt: 1 }).lean(),

@@ -16,7 +16,7 @@ function mapUser(doc: Record<string, unknown>): AuthUser {
 }
 
 // Repository xác thực: tạo/tìm user Google, role hệ thống, CLB và audit đăng nhập
-/** `allowedDomain` is the server's ALLOWED_DOMAIN: one domain, a comma-separated list, or "*". */
+/** `allowedDomain` là ALLOWED_DOMAIN của server: một domain, danh sách phân cách bằng dấu phẩy, hoặc "*". */
 export function mongoAuthRepository(allowedDomain: string): AuthRepository {
   const domains = allowedDomain.split(",").map((domain) => domain.trim().toLowerCase())
     .filter(Boolean);

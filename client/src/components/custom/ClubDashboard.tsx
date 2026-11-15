@@ -19,7 +19,7 @@ interface ClubDashboardProps {
 }
 
 // Dashboard của CLB: số liệu thành viên, tuyển thành viên và lối tắt quản lý
-/** Club Leader overview: members, events, recruitment and feedback, plus what the club still owes. */
+/** Tổng quan cho Club Leader: thành viên, sự kiện, tuyển thành viên và phản hồi, cùng những việc CLB còn nợ. */
 export function ClubDashboard({ clubId, data, charts }: ClubDashboardProps) {
   const { t, i18n } = useTranslation();
   const base = `/club/${encodeURIComponent(clubId)}`;
@@ -31,7 +31,7 @@ export function ClubDashboard({ clubId, data, charts }: ClubDashboardProps) {
   const number = new Intl.NumberFormat(i18n.language);
   const decimal = new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   // Nhãn tháng ngắn cho trục biểu đồ (T5 hoặc May)
-  // Axis labels stay one short word: "T5" in Vietnamese ("Tháng 5" wraps on a phone), "May" in English.
+  // Nhãn trục chỉ một từ ngắn: "T5" ở tiếng Việt ("Tháng 5" bị xuống dòng trên điện thoại), "May" ở tiếng Anh.
   function monthName(month: string) {
     return i18n.language.startsWith("vi") ? `T${Number(month.slice(5))}`
       : new Intl.DateTimeFormat(i18n.language, { month: "short", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));

@@ -43,7 +43,7 @@ export function RecruitmentReviewPage() {
   const workspace = auth.data?.workspaces.find((item) => item.kind === "club" && item.clubId === clubId);
   const canReview = Boolean(workspace?.permissions.includes("club.application.review"));
   const query = useApplicationsForReview(clubId, campaignId);
-  // Same cached list as the campaign page; used to show question labels instead of field keys.
+  // Dùng cùng danh sách cache với trang chiến dịch; để hiện nhãn câu hỏi thay vì key của trường.
   const campaigns = useRecruitmentCampaigns(clubId, Boolean(auth.data));
   const formSchema = campaigns.data?.find((campaign) => campaign.id === campaignId)?.formSchema;
   const questionLabels = useMemo(() => new Map((formSchema ?? []).map((field) => [field.key, field.label])), [formSchema]);
@@ -167,7 +167,7 @@ export function RecruitmentReviewPage() {
       onPageChange={(index) => table.setPageIndex(index)} prevLabel={t("recruitmentApplications.prevPage")}
       nextLabel={t("recruitmentApplications.nextPage")} navLabel={t("recruitmentApplications.pagination")}
       pageLabel={(page) => t("recruitmentApplications.pageNumber", { page })} />
-    {/* Bulk bar sits after the list and sticks to the viewport bottom, so ticking a row never pushes the table down (in normal flow on phones, where it would cover the list). */}
+    {/* Thanh thao tác hàng loạt nằm sau danh sách và dính ở đáy màn hình, nên tick một dòng không đẩy bảng xuống (trên điện thoại thì nằm trong luồng bình thường vì nếu dính sẽ che danh sách). */}
     {selected.length > 0 && <section aria-label={t("recruitmentApplications.reviewReason")} className="mt-6 space-y-3 rounded-2xl border border-border-app bg-bg-app p-5 shadow-lg sm:sticky sm:bottom-4 sm:z-20">
       <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.reviewReason")}<AppRequiredMark />
         <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}

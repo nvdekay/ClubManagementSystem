@@ -68,7 +68,7 @@ function profileInput(input: ClubProfileInput): ClubProfileInput {
 }
 
 // Lấy các trường hồ sơ CLB mà ICPDP bắt buộc theo chính sách
-/** Fields ICPDP marks as required for club profiles; defaults apply before any policy exists. */
+/** Các trường ICPDP đánh dấu bắt buộc cho hồ sơ CLB; mặc định được áp dụng khi chưa có policy. */
 async function profileRequirements(policy: PolicyRepository,
   now: Date): Promise<Readonly<Record<ClubProfileFormField, boolean>>> {
   return (await policy.findEffective(now))?.formRequirements.clubProfile

@@ -26,7 +26,7 @@ import { insertViolationCase } from "./violation-case.js";
 
 type Doc = Record<string, unknown>;
 const TASK_TYPE = "PERIODIC_REPORT";
-/** Clubs that owe a periodic report (UC38 precondition: Active, or Suspended/Dissolving with duties left). */
+/** Các CLB nợ báo cáo định kỳ (điều kiện UC38: Active, hoặc Suspended/Dissolving còn nghĩa vụ). */
 const owingStates = ["Active", "Suspended", "Dissolving"];
 const submittedStates = ["Submitted", "Accepted", "Returned for correction"];
 const heldEventStates = ["Completed", "Report Submitted", "Closed", "FINISH"];
@@ -335,7 +335,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       .select({ displayName: 1, email: 1 }).lean();
     const nameById = new Map(people.map((user) => [String(user._id), optionalText(user.displayName) ?? String(user.email)]));
     const outcome = optionalText(report.decisionOutcome) as PeriodicOutcome | undefined;
-    // The return comments live on the decision's audit entry; the report row keeps only the outcome (UC39 FR-02).
+    // Nhận xét trả lại nằm ở audit entry của quyết định; dòng báo cáo chỉ giữ kết quả (UC39 FR-02).
     const returned = outcome === "Return" ? audits.find((item) => item.action === "PERIODIC_REPORT_RETURNED") : undefined;
     const returnedAfter = (returned?.after as Doc | undefined) ?? {};
     const sections = ((returnedAfter.sections as string[] | undefined) ?? [])

@@ -15,7 +15,7 @@ const objectId = /^[0-9a-f]{24}$/i;
 type ExportAuth = Pick<AuthRepository, "systemRoleCodes" | "findUserById">;
 
 // Kiểm actor là ICPDP officer được phép xuất dữ liệu
-/** BR61: only ICPDP officers export. */
+/** BR61: chỉ ICPDP officer được xuất. */
 async function officer(auth: ExportAuth, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -29,7 +29,7 @@ async function officer(auth: ExportAuth, actor: AccessActor | null): Promise<str
 }
 
 // Kiểm danh sách loại dữ liệu xuất phải hợp lệ và không trùng
-/** FR-UC55-12: one or more distinct types; a status filter belongs to a single type's lifecycle. */
+/** FR-UC55-12: một hoặc nhiều loại khác nhau; bộ lọc trạng thái thuộc về vòng đời của một loại duy nhất. */
 function exportTypes(values: string[], filter: ExportFilter): ExportType[] {
   const types = values.map((value) => {
     const type = EXPORT_TYPES.find((item) => item === value);
@@ -51,7 +51,7 @@ async function semesters(policy: PolicyRepository, now: Date) {
 }
 
 // Đổi học kỳ trong bộ lọc thành khoảng ngày để truy vấn
-/** A semester becomes its date window; the code is kept for entities that store it. */
+/** Một học kỳ trở thành khoảng ngày của nó; mã được giữ cho các entity có lưu mã. */
 async function resolved(policy: PolicyRepository, type: ExportType, filter: ExportFilter,
   now: Date): Promise<ExportFilter> {
   const valid = validateExportFilter(type, filter);
@@ -76,7 +76,7 @@ export async function exportOptions(repo: ExportRepository, policy: PolicyReposi
 }
 
 // Đếm số dòng sẽ xuất cho từng loại dữ liệu trước khi xuất
-/** FR-02: the row count shown before exporting, per selected type. */
+/** FR-02: số dòng hiển thị trước khi xuất, theo từng loại đã chọn. */
 export async function previewExport(repo: ExportRepository, policy: PolicyRepository, auth: ExportAuth,
   actor: AccessActor | null, input: { types: string[]; filter: ExportFilter }, now: Date) {
   await officer(auth, actor);
@@ -105,7 +105,7 @@ export async function exportData(repo: ExportRepository, writer: ExportFileWrite
   }
   const filter = await resolved(policy, types[0]!, input.filter, now);
   const tables = await Promise.all(types.map((type) => repo.table(type, filter)));
-  // E1: nothing matched, so no empty file is produced.
+  // E1: không có gì khớp, nên không tạo file rỗng.
   if (tables.every((table) => !table.rows.length)) throw new DomainError("no data matches this filter", "not_found");
 
   const [user, clubs] = await Promise.all([auth.findUserById(actorId), filter.clubId ? repo.clubs() : []]);
@@ -125,7 +125,7 @@ export async function exportData(repo: ExportRepository, writer: ExportFileWrite
       tables[0]!)
     : await writer.writeWorkbook("Báo cáo tổng hợp", heading,
       types.map((type, index) => ({ name: EXPORT_SHEET_NAMES[type], title: EXPORT_TITLES[type], table: tables[index]! })));
-  // FR-07: one audit record per exported type.
+  // FR-07: một bản ghi audit cho mỗi loại đã xuất.
   for (const [index, type] of types.entries()) {
     await repo.audit({ actorId, type, format, filter, rowCount: tables[index]!.rows.length, at: now });
   }
@@ -136,7 +136,7 @@ export async function exportData(repo: ExportRepository, writer: ExportFileWrite
 // Dựng báo cáo năm từ các đánh giá đã công bố của năm học
 async function annualReport(repo: ExportRepository, rawYear: unknown) {
   const year = validateAnnualYear(rawYear);
-  // FR-UC55-09: a year without any Published evaluation produces nothing.
+  // FR-UC55-09: năm không có evaluation Published nào thì không tạo gì.
   if (!(await repo.publishedPeriodCodes()).some((code) => parsePeriodCode(code)?.year === year)) {
     throw new DomainError("no published evaluation in this academic year", "not_found");
   }
@@ -144,7 +144,7 @@ async function annualReport(repo: ExportRepository, rawYear: unknown) {
 }
 
 // Xem trước báo cáo năm dưới dạng JSON, không ghi audit
-/** UC55 A2: the whole annual report as JSON, to read before exporting. Not audited. */
+/** UC55 A2: toàn bộ báo cáo năm dạng JSON, để đọc trước khi xuất. Không audit. */
 export async function previewAnnualReport(repo: ExportRepository, auth: ExportAuth, actor: AccessActor | null,
   input: { year: unknown }) {
   await officer(auth, actor);

@@ -53,13 +53,13 @@ function activeScheme(schemes: EvaluationScheme[], periodCode: string): Evaluati
 }
 
 // Chọn khung đánh giá của kỳ, ưu tiên khung đã gắn cho các đánh giá có sẵn
-/** BR51 + BR60: once a period has evaluations, every club of it is scored with the version they used. */
+/** BR51 + BR60: khi một kỳ đã có evaluation, mọi CLB của kỳ đó được chấm theo version mà chúng đã dùng. */
 function periodScheme(schemes: EvaluationScheme[], periodCode: string, pinnedId?: string): EvaluationScheme | undefined {
   return pinnedId ? schemes.find((scheme) => scheme.id === pinnedId) : activeScheme(schemes, periodCode);
 }
 
 // Yêu cầu báo cáo định kỳ của kỳ đã được xét trước khi đánh giá
-/** UC42 precondition: the period's reports have been through UC39, so none is still waiting for a decision. */
+/** Tiền điều kiện UC42: báo cáo của kỳ đã qua UC39, nên không còn báo cáo nào chờ quyết định. */
 async function assertReportsReviewed(repo: EvaluationRepository, periodCode: string, now: Date, clubId?: string): Promise<void> {
   const pending = await repo.unreviewedReports(periodCode, clubId);
   const blocking = (await Promise.all(pending.map(async (club) =>
@@ -78,7 +78,7 @@ function period(calendar: PeriodWindow[], code: string): PeriodWindow {
 }
 
 // Giữ lại điểm nhập tay của officer khi sinh lại dữ liệu đánh giá
-/** Keeps the officer's manual scores when the data is generated again (UC42 A1). */
+/** Giữ điểm nhập tay của officer khi dữ liệu được tạo lại (UC42 A1). */
 function withManual(results: DimensionResult[], previous: EvaluationDetail | undefined, scheme: EvaluationScheme): DimensionResult[] {
   if (hasReportPenalty(results)) return results;
   return results.map((result) => {
@@ -122,7 +122,7 @@ export async function evaluationOverview(deps: EvaluationDeps, actor: AccessActo
 }
 
 // Sinh bản nháp đánh giá cho mọi CLB trong phạm vi chưa có ở kỳ này
-/** UC42: a Data Ready draft for every club in scope that has none yet for the period. */
+/** UC42: một bản nháp Data Ready cho mọi CLB trong phạm vi mà chưa có bản nào của kỳ. */
 export async function generateEvaluations(deps: EvaluationDeps, actor: AccessActor | null, periodCode: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
   const { calendar, minRespondents, schemes } = await context(deps, now);
@@ -140,7 +140,7 @@ export async function generateEvaluations(deps: EvaluationDeps, actor: AccessAct
 }
 
 // Sinh bản nháp đánh giá cho một CLB sau khi báo cáo được chấp nhận
-/** UC42 after UC39 Accept: the club's Data Ready draft for the period; quietly does nothing when it cannot be made yet. */
+/** UC42 sau UC39 Accept: bản nháp Data Ready của CLB cho kỳ; lặng lẽ không làm gì khi chưa tạo được. */
 export async function generateClubEvaluation(deps: EvaluationDeps, actor: AccessActor | null, clubId: string,
   periodCode: string, now: Date): Promise<void> {
   const officerId = await officer(deps.auth, actor);
@@ -161,7 +161,7 @@ export async function getEvaluation(deps: EvaluationDeps, actor: AccessActor | n
 }
 
 // Tính lại đánh giá, tạo bản mới nếu đánh giá đã công bố
-/** UC42 A1 (draft not finalized yet) or UC43 A1 (new revision of a published result). */
+/** UC42 A1 (bản nháp chưa finalize) hoặc UC43 A1 (revision mới của kết quả đã publish). */
 export async function regenerateEvaluation(deps: EvaluationDeps, actor: AccessActor | null, id: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
   const current = await evaluation(deps.repo, id);
@@ -223,7 +223,7 @@ export async function reopenEvaluation(deps: EvaluationDeps, actor: AccessActor 
 }
 
 // ICPDP công bố đánh giá của mọi CLB trong kỳ khi đã chốt hết
-/** UC43 FR-03: one scorecard for every club, so the period is published only when every club is finalized. */
+/** UC43 FR-03: một scorecard cho mọi CLB, nên kỳ chỉ được publish khi mọi CLB đã finalize. */
 export async function publishEvaluations(deps: EvaluationDeps, actor: AccessActor | null, periodCode: string, now: Date) {
   const officerId = await officer(deps.auth, actor);
   const overview = await evaluationOverview(deps, actor, periodCode, now);

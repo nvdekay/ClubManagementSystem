@@ -65,7 +65,7 @@ async function assertOfficer(authRepo: Pick<AuthRepository, "systemRoleCodes">, 
 }
 
 // ICPDP xem danh sách sự kiện nội bộ, lọc theo CLB và học kỳ
-/** FR-UC02-02, BR53: ICPDP's list of recorded internal events, filtered by club and semester. */
+/** FR-UC02-02, BR53: danh sách sự kiện nội bộ đã ghi nhận của ICPDP, lọc theo CLB và học kỳ. */
 export async function listInternalEvents(repo: DashboardRepository, authRepo: Pick<AuthRepository, "systemRoleCodes">,
   actor: AuthUser | null, filter: InternalEventFilter): Promise<InternalEventList> {
   await assertOfficer(authRepo, actor);
@@ -76,7 +76,7 @@ export async function listInternalEvents(repo: DashboardRepository, authRepo: Pi
 }
 
 // ICPDP xem chi tiết một sự kiện nội bộ kèm điểm danh
-/** FR-UC02-02: one internal event with its attendance, read-only. */
+/** FR-UC02-02: một sự kiện nội bộ kèm điểm danh, chỉ đọc. */
 export async function getInternalEvent(repo: DashboardRepository, authRepo: Pick<AuthRepository, "systemRoleCodes">,
   actor: AuthUser | null, eventId: string): Promise<InternalEventDetail> {
   await assertOfficer(authRepo, actor);
@@ -88,8 +88,8 @@ export async function getInternalEvent(repo: DashboardRepository, authRepo: Pick
 
 // Xem lịch sử cơ cấu và ban chủ nhiệm theo nhiệm kỳ của CLB
 /**
- * BR56: the club's structure versions and board by term, for ICPDP on any club (FR-UC02-02) and
- * for the club's own Club Leader (FR-UC02-03), the only role holding club.board.nominate.
+ * BR56: các version cơ cấu và ban của CLB theo nhiệm kỳ, cho ICPDP trên mọi CLB (FR-UC02-02) và
+ * cho Club Leader của chính CLB đó (FR-UC02-03), role duy nhất giữ club.board.nominate.
  */
 export async function getClubBoardHistory(repo: DashboardRepository, authRepo: Pick<AuthRepository, "systemRoleCodes">,
   accessRepo: ClubAccessRepository, actor: AuthUser | null, clubId: string, now: Date = new Date()): Promise<ClubBoardHistory> {

@@ -8,10 +8,10 @@ export interface ClubEventInput {
   riskNote?: string; facilityNeeds?: string; occurrences?: EventOccurrence[];
   budgetLines: EventBudgetLine[]; bookingIds: string[]; registrationForm?: EventFormField[];
 }
-/** Proposal file attached to the current draft or frozen into a submitted revision (`versions[].payload.proposalDocument`). */
+/** File đề xuất đính kèm bản nháp hiện tại hoặc được chốt vào bản chỉnh sửa đã nộp (`versions[].payload.proposalDocument`). */
 export interface EventProposalDocumentInfo { id: string; fileName: string; mimeType: string; bytes: number; uploadedAt: string; uploadedBy: string }
 export interface EventProposalTemplateInfo { fileName: string; mimeType: string; bytes: number; updatedAt: string; isSystemDefault: boolean }
-/** Short-lived signed link to a stored file. */
+/** Link có chữ ký, sống ngắn, tới một file đã lưu. */
 export interface FileAccess { fileName: string; mimeType: string; url: string }
 export interface EventCancellationRequest {
   state: "Pending" | "Approved" | "Rejected";
@@ -61,7 +61,7 @@ export interface ClubEventErrorDetails {
   bookingError?: string;
   noticeHours?: number;
 }
-/** Non-2xx response; keeps what the server names: overdue obligations, affected registrations, schedule conflicts, booking errors. */
+/** Response không phải 2xx; giữ các thông tin server nêu: nghĩa vụ quá hạn, đăng ký bị ảnh hưởng, xung đột lịch, lỗi booking. */
 export class ClubEventError extends ApiError {
   constructor(message: string, readonly details: ClubEventErrorDetails, readonly statusCode?: number) {
     super(message);
@@ -107,7 +107,7 @@ export function actOnClubEvent(clubId: string, id: string, action: string, body:
   return request(clubId, `/${encodeURIComponent(id)}/${action}`, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
 }
 
-/** Self-funded members-only event (DRAFT → CREATED → PUBLIC → ONGOING → FINISH): no audience choice, no budget. */
+/** Sự kiện tự túc chỉ dành cho thành viên (DRAFT → CREATED → PUBLIC → ONGOING → FINISH): không chọn đối tượng, không có ngân sách. */
 export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" | "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
 export interface EventPublishInput {
   registrationOpenAt?: string; registrationCloseAt?: string; checkInOpenAt: string; checkInCloseAt: string; allowWalkIn: boolean; waitlistEnabled: boolean;
@@ -127,7 +127,7 @@ export function updateInternalClubEvent(clubId: string, id: string, input: Inter
   return request(clubId, `/${encodeURIComponent(id)}`, jsonInit("PUT", { ...input, expectedVersion }, csrfToken), "internal-events");
 }
 // POST /create: chuyển sự kiện nội bộ từ DRAFT sang CREATED
-/** DRAFT → CREATED; the server enforces the 24-hour notice. */
+/** DRAFT → CREATED; server áp dụng quy tắc báo trước 24 giờ. */
 export function confirmInternalClubEvent(clubId: string, id: string, expectedVersion: number, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}/create`, jsonInit("POST", { expectedVersion }, csrfToken), "internal-events");
 }
@@ -136,7 +136,7 @@ export interface ClubEventOptions { properties: { id: string; name: string }[]; 
 // GET các lựa chọn (phòng, ngân sách...) khi tạo sự kiện
 export function fetchClubEventOptions(clubId: string, signal: AbortSignal): Promise<ClubEventOptions> { return request(clubId, "/options", { signal }); }
 
-/** Same-origin download: the default template streams as an attachment, an ICPDP upload redirects to a signed URL. */
+/** Tải cùng origin: mẫu mặc định được stream dưới dạng file đính kèm, file ICPDP tải lên thì chuyển hướng tới URL có chữ ký. */
 export const EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL = "/api/v1/events/proposal-template/download";
 // GET /events/proposal-template: thông tin mẫu đề xuất sự kiện
 export async function fetchEventProposalTemplate(signal: AbortSignal): Promise<EventProposalTemplateInfo> {
@@ -148,13 +148,13 @@ export async function fetchEventProposalTemplate(signal: AbortSignal): Promise<E
   return ((await res.json()) as { data: EventProposalTemplateInfo }).data;
 }
 // POST /proposal-document: tải file đề xuất sự kiện lên
-/** Raw upload; the response's `event.version` is the one to submit with. */
+/** Upload thô; `event.version` trong response là phiên bản dùng khi nộp. */
 export function uploadEventProposalDocument(clubId: string, id: string, file: File, mimeType: string, csrfToken: string): Promise<ClubEventDetail> {
   return request(clubId, `/${encodeURIComponent(id)}/proposal-document`, { method: "POST", body: file,
     headers: { "Content-Type": mimeType, "X-CSRF-Token": csrfToken, "X-Filename": encodeURIComponent(file.name) } });
 }
 // GET /proposal-document/access: lấy link xem file đề xuất
-/** No `revisionNo`: the current draft's file. */
+/** Không có `revisionNo`: file của bản nháp hiện tại. */
 export function accessEventProposalDocument(clubId: string, id: string, revisionNo?: number, inline = false): Promise<FileAccess> {
   const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });
   return request(clubId, `/${encodeURIComponent(id)}/proposal-document/access?${query}`, {});

@@ -17,7 +17,7 @@ import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
 import { RoomAllocationsPage } from "./pages/icpdp/RoomAllocationsPage.js";
 import { ClubRoomsPage } from "./pages/club/ClubRoomsPage.js";
 import "./index.css";
-import "./i18n"; // initializes i18next before first render
+import "./i18n"; // khởi tạo i18next trước lần render đầu tiên
 import { applyInitialTheme } from "./hooks/useTheme.js";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
@@ -77,7 +77,7 @@ import { InternalEventDetailPage, InternalEventsPage } from "./pages/icpdp/Inter
 import { ClubBoardHistoryPage } from "./pages/club/ClubBoardHistoryPage.js";
 
 const queryClient = new QueryClient({
-  // Pages stay fresh for 30s — revisiting a page within that window serves cache, no refetch.
+  // Dữ liệu trang được coi là mới trong 30 giây — quay lại trang trong khoảng này sẽ dùng cache, không tải lại.
   defaultOptions: { queries: { staleTime: 30_000 } },
 });
 

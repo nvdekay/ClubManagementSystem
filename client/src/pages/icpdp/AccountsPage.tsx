@@ -21,12 +21,12 @@ const emptyRows: AccountRow[] = [];
 // Trang ICPDP tìm kiếm, phân trang và mở quản lý tài khoản người dùng
 export function AccountsPage() {
   const { t } = useTranslation();
-  // Search term and page move together: a new term always starts again from page 1.
+  // Từ khoá tìm kiếm và trang đi cùng nhau: từ khoá mới luôn bắt đầu lại từ trang 1.
   const [query, setQuery] = useState({ search: "", page: 1 });
   const { search, page } = query;
   const [targetId, setTargetId] = useState("");
   const accounts = useAccounts(search, page, PAGE_SIZE, true);
-  // AppSearchInput calls this again after renders with the same term, so the page only resets on a new term.
+  // AppSearchInput gọi lại hàm này sau các lần render với cùng từ khoá, nên trang chỉ được reset khi từ khoá thay đổi.
   const applySearch = useCallback((value: string) => {
     setQuery((current) => current.search === value ? current : { search: value, page: 1 });
   }, []);
@@ -73,7 +73,7 @@ export function AccountsPage() {
     } }),
     columns.display({ id: "actions", header: t("auth.colActions"), cell: (info) =>
       <AppButton variant="secondary" onClick={() => setTargetId(info.row.original.user.id)}>{t("auth.manage")}</AppButton> }),
-  // The label helpers only read t.
+  // Các hàm lấy nhãn chỉ đọc t.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ]), [t]);
   const table = useTable({ features: appTableFeatures, columns: tableColumns, data: rows,

@@ -20,21 +20,21 @@ const ROLES: SystemRoleCode[] = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLO
 
 // Dialog ICPDP cấp/thu hồi vai trò hệ thống và khoá/mở khoá một tài khoản
 /**
- * UC03 for one account, in two clearly separate parts: the ICPDP system roles it holds (grant at once,
- * revoke with a reason), and locking or unlocking the whole account (always with a reason).
+ * UC03 cho một tài khoản, gồm hai phần tách biệt: các vai trò hệ thống ICPDP của tài khoản (cấp ngay,
+ * thu hồi kèm lý do), và khoá hoặc mở khoá toàn bộ tài khoản (luôn kèm lý do).
  */
 export function AccountManageDialog({ account, onClose }: { account: AccountRow | undefined; onClose: () => void }) {
   const { t } = useTranslation();
   const auth = useAuth();
   const action = useAccountAction();
-  // Which role is waiting for its revocation reason, and that reason.
+  // Vai trò nào đang chờ nhập lý do thu hồi, và lý do đó.
   const [revoking, setRevoking] = useState<SystemRoleCode | null>(null);
   const [revokeReason, setRevokeReason] = useState("");
   const [lockReason, setLockReason] = useState("");
   const [violationId, setViolationId] = useState("");
   const [shown, setShown] = useState<{ revoke: boolean; lock: boolean }>({ revoke: false, lock: false });
   const [done, setDone] = useState<string | null>(null);
-  // UC03 A1: an emergency lock may be recorded under an open UC40 case.
+  // UC03 A1: khoá khẩn cấp có thể được ghi nhận dưới một vụ việc UC40 đang mở.
   const violations = useViolations(Boolean(account) && account?.user.accountState === "Active");
   const caseOptions = [{ value: "", label: t("auth.noLinkedCase") },
     ...(violations.data ?? []).filter((item) => !["Resolved", "Closed"].includes(item.state))
@@ -65,7 +65,7 @@ export function AccountManageDialog({ account, onClose }: { account: AccountRow 
       setRevoking(null); setRevokeReason(""); setLockReason(""); setViolationId("");
       setShown({ revoke: false, lock: false });
     } catch {
-      // The mutation exposes its error below.
+      // Lỗi của mutation được hiển thị bên dưới.
     }
   }
 

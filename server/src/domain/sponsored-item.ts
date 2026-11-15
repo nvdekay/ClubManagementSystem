@@ -55,7 +55,7 @@ export type SponsoredItemAction =
   | { kind: "submit" }
   | { kind: "return"; reason: string }
   | { kind: "review"; validAmount: number; reason: string }
-  /** The club confirms it received the money; the accountant who transfers it is outside the system. */
+  /** CLB xác nhận đã nhận tiền; kế toán chuyển tiền nằm ngoài hệ thống. */
   | { kind: "pay" };
 
 export interface SponsoredItemRepository {
@@ -66,7 +66,7 @@ export interface SponsoredItemRepository {
 
 const CLUB_EDIT_ACTIONS = ["save", "image", "removeImage", "submit"];
 // Kiểm tra thao tác có thuộc về CLB hay thuộc về ICPDP
-/** Actions the club performs; every other action belongs to the ICPDP officer. */
+/** Các thao tác do CLB thực hiện; mọi thao tác còn lại thuộc về cán bộ ICPDP. */
 export function isClubAction(action: SponsoredItemAction): boolean {
   return action.kind === "pay" || CLUB_EDIT_ACTIONS.includes(action.kind);
 }

@@ -41,7 +41,7 @@ export async function listClubMemberships(repo: MembershipRepository, access: Cl
 }
 
 // UC20 A1: Club Leader thêm thủ công một sinh viên vào CLB kèm lý do
-/** UC20 A1: a Club Leader adds a student who has signed in before, giving a reason (BR13). */
+/** UC20 A1: Club Leader thêm một sinh viên từng đăng nhập, kèm lý do (BR13). */
 export async function onboardMemberManually(repo: MembershipRepository, access: ClubAccessRepository,
   actor: AccessActor | null, input: { clubId: string; email: string; reason: string }, now = new Date()) {
   const id = actorId(actor);

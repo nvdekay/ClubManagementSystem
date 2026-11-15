@@ -15,14 +15,14 @@ import { formatDate } from "@/utils/formatDate";
 
 interface EventCheckInFormProps {
   eventId: string;
-  /** Pre-filled from a scanned QR deep link. */
+  /** Điền sẵn từ deep link khi quét QR. */
   initialCode?: string;
   autoFocus?: boolean;
   onCheckedIn?: (result: CheckInResult) => void;
 }
 
 // Form điểm danh sự kiện bằng mã
-/** UC31 self check-in: the student types (or a QR deep link pre-fills) the code shown at the venue. */
+/** UC31 tự điểm danh: sinh viên nhập (hoặc deep link QR điền sẵn) mã hiển thị tại địa điểm. */
 export function EventCheckInForm({ eventId, initialCode = "", autoFocus, onCheckedIn }: EventCheckInFormProps) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
@@ -44,7 +44,7 @@ export function EventCheckInForm({ eventId, initialCode = "", autoFocus, onCheck
       setResult(done);
       onCheckedIn?.(done);
     } catch {
-      // checkIn.isError renders the message below.
+      // checkIn.isError hiển thị thông báo lỗi bên dưới.
     } finally {
       inFlight.current = false;
     }

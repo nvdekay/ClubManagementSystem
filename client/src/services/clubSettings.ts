@@ -51,11 +51,11 @@ export interface ClubDepartmentInput {
 export interface ClubSettings {
   profile: ClubProfile;
   departments: ClubDepartment[];
-  /** Profile fields the effective school policy requires (true) before a save is accepted. */
+  /** Các trường hồ sơ mà chính sách trường đang áp dụng yêu cầu (true) trước khi chấp nhận lưu. */
   requiredProfileFields: Record<ClubProfileFormField, boolean>;
 }
 
-/** 400 listing the profile fields school policy requires but the save left empty. */
+/** Lỗi 400 liệt kê các trường hồ sơ mà chính sách trường yêu cầu nhưng khi lưu còn để trống. */
 export class MissingProfileFieldsError extends ApiError {
   constructor(message: string, readonly missing: ClubProfileFormField[]) {
     super(message);

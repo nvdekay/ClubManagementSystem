@@ -1,7 +1,7 @@
 import i18next from "i18next";
 import { apiErrorKeys, apiErrors, type ApiErrorKey } from "@/i18n/apiErrors";
 
-/** Keep diagnostics intact and resolve display text using the current language. */
+/** Giữ nguyên thông tin chẩn đoán và chọn nội dung hiển thị theo ngôn ngữ hiện tại. */
 export class ApiError extends Error {
   readonly rawMessage: string;
 
@@ -62,7 +62,7 @@ function httpErrorKey(message: string): ApiErrorKey {
 }
 
 // Bọc fetch, đổi lỗi mạng thành ApiError nhưng giữ nguyên lỗi huỷ request
-/** Preserve cancellation while translating browser network errors. */
+/** Giữ nguyên lỗi huỷ request khi dịch các lỗi mạng của trình duyệt. */
 export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   try {
     return await fetch(input, init);

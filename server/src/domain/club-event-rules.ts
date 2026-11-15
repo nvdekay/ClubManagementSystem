@@ -19,7 +19,7 @@ export function assertEventNotice(startAt: Date, now: Date, noticeHours: number)
 export const INTERNAL_EVENT_NOTICE_HOURS = 24;
 export const APPROVED_EVENT_CANCEL_NOTICE_HOURS = 72;
 // Đảm bảo yêu cầu huỷ sự kiện đã duyệt cách giờ bắt đầu tối thiểu số giờ quy định
-/** An approved ICPDP event can only request cancellation at least 72 hours before startAt. */
+/** Sự kiện ICPDP đã duyệt chỉ được yêu cầu huỷ khi còn ít nhất 72 giờ trước startAt. */
 export function assertApprovedEventCancellationNotice(startAt: Date, now: Date, noticeHours = APPROVED_EVENT_CANCEL_NOTICE_HOURS): void {
   if (startAt.getTime() - now.getTime() < noticeHours * 3600000) {
     throw new DomainError(`cancellation request must be submitted at least ${noticeHours} hours before the event starts`, "conflict",
@@ -27,7 +27,7 @@ export function assertApprovedEventCancellationNotice(startAt: Date, now: Date, 
   }
 }
 // Đảm bảo sự kiện nội bộ được công bố trước giờ bắt đầu đủ thời gian báo trước
-/** An internal event becomes official (CREATED/PUBLIC) or moves its CREATED schedule only 24 hours ahead. */
+/** Sự kiện nội bộ chỉ được chính thức hoá (CREATED/PUBLIC) hoặc dời lịch CREATED khi còn ít nhất 24 giờ. */
 export function assertInternalEventNotice(startAt: Date, now: Date): void {
   if (startAt.getTime() - now.getTime() < INTERNAL_EVENT_NOTICE_HOURS * 3600000) {
     throw new DomainError(`internal event must start at least ${INTERNAL_EVENT_NOTICE_HOURS} hours from now`, "validation",
@@ -35,7 +35,7 @@ export function assertInternalEventNotice(startAt: Date, now: Date): void {
   }
 }
 // Chỉ cho sửa sự kiện nội bộ ở trạng thái DRAFT hoặc CREATED
-/** Only DRAFT and CREATED internal events are editable; once published the schedule is locked. */
+/** Chỉ sự kiện nội bộ DRAFT và CREATED mới được sửa; đã công bố thì khoá lịch. */
 export function assertInternalEventEditable(state: string): void {
   if (state === "PUBLIC" || state === "ONGOING") {
     throw new DomainError("published internal event schedule is locked; only cancellation is allowed", "conflict");
@@ -43,7 +43,7 @@ export function assertInternalEventEditable(state: string): void {
   if (state !== "DRAFT" && state !== "CREATED") throw new DomainError("internal event cannot be edited in its current state", "conflict");
 }
 // Kiểm tra đối tượng tham dự của đề xuất ICPDP và dòng ngân sách đi kèm
-/** Plan B: an ICPDP proposal is PUBLIC, or MEMBERS_ONLY with at least one requested budget line. */
+/** Plan B: đề xuất ICPDP là PUBLIC, hoặc MEMBERS_ONLY kèm ít nhất một dòng ngân sách yêu cầu. */
 export function assertProposalAudience(input: Pick<ClubEventInput, "audienceScope" | "budgetLines">): void {
   if (input.audienceScope === "MEMBERS_ONLY" && input.budgetLines.length === 0) {
     throw new DomainError("internal events without university budget must use the internal event flow", "validation");
@@ -112,7 +112,7 @@ function signatureMatches(mimeType: string, bytes: Buffer): boolean {
   return zip && bytes.includes(Buffer.from(mimeType === DOCX ? "word/" : "xl/"));
 }
 // Kiểm tra tên, dung lượng, loại và nội dung file đề xuất sự kiện, trả về tên đã cắt khoảng trắng
-/** Checks name, size, declared type, extension and magic bytes of an uploaded proposal document or template; returns the trimmed name. */
+/** Kiểm tra tên, dung lượng, loại khai báo, phần mở rộng và magic bytes của tài liệu đề xuất hoặc mẫu được tải lên; trả về tên đã cắt khoảng trắng. */
 export function validateEventProposalFile(fileName: string, mimeType: string, bytes: Buffer, allowedMimes: ReadonlySet<string>): string {
   const name = fileName.trim();
   const extension = extensionForMime[mimeType];

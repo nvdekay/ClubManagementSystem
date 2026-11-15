@@ -285,7 +285,7 @@ export function mongoEventFinanceRepository(rules: {
               ],
               { session },
             );
-          // Recompute every category flag so editing an earlier row cannot leave stale exceptions.
+          // Tính lại cờ của mọi hạng mục để sửa một dòng trước đó không để lại ngoại lệ cũ.
           const updated = await m
             .expenses!.find({ eventBudgetId: budgetId })
             .sort({ createdAt: 1, _id: 1 })

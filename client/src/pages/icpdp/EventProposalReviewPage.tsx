@@ -31,7 +31,7 @@ function text(value: unknown): string | undefined {
 }
 
 // Lấy thông tin file đề xuất đã đóng băng trong một phiên bản
-/** Proposal file frozen into a submitted revision; absent on proposals made before the feature. */
+/** File đề xuất được chốt vào bản chỉnh sửa đã nộp; không có ở các đề xuất tạo trước khi có tính năng này. */
 function proposalDocument(version: EventProposalVersion | undefined): EventProposalDocumentInfo | undefined {
   const value = version?.payload.proposalDocument;
   return value && typeof value === "object" ? value as EventProposalDocumentInfo : undefined;
@@ -123,7 +123,7 @@ export function EventProposalReviewPage() {
   const back = { to: "/workspace/event-proposals", label: t("eventReviews.back") };
   const label = "text-xs text-muted-app";
 
-  // A disabled query stays pending forever, so only wait for a proposal the user may load.
+  // Query bị tắt sẽ pending mãi, nên chỉ chờ đề xuất mà người dùng được phép tải.
   if (auth.isPending || (isOfficer && review.isPending)) return <div className="space-y-4">
     <AppSkeleton className="h-10 w-1/2" /><AppSkeleton className="h-[28rem] w-full" />
   </div>;
@@ -143,7 +143,7 @@ export function EventProposalReviewPage() {
   );
 
   const { event, task, club, decisions, versions, bookings, semesterBudgets, budget, activeDefenseSession, defenseHistory, cancellationRequest } = review.data;
-  // The version submitted before the current one, and the revision request that sent it back.
+  // Phiên bản được nộp trước phiên bản hiện tại, và yêu cầu chỉnh sửa đã trả nó về.
   const previous = current && versions.filter((version) => version.revisionNo < current.revisionNo)
     .sort((a, b) => b.revisionNo - a.revisionNo)[0];
   const revisionRequest = current && [...decisions].reverse().find((decision) => decision.outcome === "Request revision"
@@ -221,7 +221,7 @@ export function EventProposalReviewPage() {
       const access = await documentAccess.mutateAsync({ id, revisionNo, inline });
       window.open(access.url, "_blank", "noopener,noreferrer");
     } catch {
-      // Mutation error is rendered in the proposal document section.
+      // Lỗi của mutation được hiển thị trong phần tài liệu đề xuất.
     }
   }
 

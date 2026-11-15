@@ -78,7 +78,7 @@ function publishInput(body: z.infer<typeof publishSettings>): EventPublishInput 
     checkInOpenAt: new Date(body.checkInOpenAt), checkInCloseAt: new Date(body.checkInCloseAt) };
 }
 // Đọc file upload thô từ body và header X-Filename
-/** Raw upload: body bytes, `Content-Type`, and the URI-encoded `X-Filename` header. */
+/** Upload thô: byte của body, `Content-Type` và header `X-Filename` mã hoá URI. */
 function uploadedFile(req: Request): { fileName: string; mimeType: string; bytes: Buffer } {
   if (!Buffer.isBuffer(req.body)) throw new DomainError("file body is required", "validation");
   const header = req.header("X-Filename");
@@ -92,7 +92,7 @@ function documentQuery(raw: unknown): { revisionNo?: number; inline: boolean } {
   return { revisionNo: query.revisionNo ? Number(query.revisionNo) : undefined, inline: query.inline === "true" };
 }
 // Tạo header Content-Disposition attachment hỗ trợ tên file tiếng Việt
-/** `attachment` with an ASCII fallback name and the exact UTF-8 name (RFC 5987) for Vietnamese file names. */
+/** `attachment` với tên dự phòng ASCII và tên UTF-8 chính xác (RFC 5987) cho tên file tiếng Việt. */
 function attachmentHeader(fileName: string): string {
   const ascii = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
     .replace(/[^\x20-\x7e]|["\\]/g, "_");

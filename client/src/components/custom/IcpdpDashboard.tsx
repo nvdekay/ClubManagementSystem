@@ -31,7 +31,7 @@ interface IcpdpDashboardProps {
 }
 
 // Dashboard ICPDP: số liệu chính, hàng đợi duyệt, lịch sự kiện và tình trạng CLB
-/** ICPDP overview: headline numbers, the review queues, the event calendar and where clubs stand. */
+/** Tổng quan cho ICPDP: số liệu chính, hàng đợi duyệt, lịch sự kiện và tình trạng các CLB. */
 export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const { t, i18n } = useTranslation();
   // Lấy số liệu của panel nếu đã tải xong
@@ -42,7 +42,7 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const number = new Intl.NumberFormat(i18n.language);
   const money = new Intl.NumberFormat(i18n.language, { notation: "compact", maximumFractionDigits: 1 });
   // Nhãn tháng ngắn cho trục biểu đồ (T5 hoặc May)
-  // Axis labels stay one short word: "T5" in Vietnamese ("Tháng 5" wraps on a phone), "May" in English.
+  // Nhãn trục chỉ một từ ngắn: "T5" ở tiếng Việt ("Tháng 5" bị xuống dòng trên điện thoại), "May" ở tiếng Anh.
   function monthName(month: string) {
     return i18n.language.startsWith("vi") ? `T${Number(month.slice(5))}`
       : new Intl.DateTimeFormat(i18n.language, { month: "short", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
@@ -60,7 +60,7 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
     return charts.clubsByState.find((item) => item.state === name)?.count ?? 0;
   }
   const queueRows = charts.queues.map((queue) => ({ key: queue.entityType,
-    // Complaint tasks have no dashboard.queue_* key; reuse the ICPDP menu label instead of showing the raw code.
+    // Các việc khiếu nại không có key dashboard.queue_*; dùng lại nhãn menu ICPDP thay vì hiện mã thô.
     label: queue.entityType === "COMPLAINT" ? t("common.icpdpComplaints")
       : t(`dashboard.queue_${queue.entityType}` as "dashboard.queue_EVENT_PROPOSAL", { defaultValue: queue.entityType }),
     values: [queue.onTime, queue.overdue], href: queueHref[queue.entityType] }));
@@ -69,7 +69,7 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const violations = count("openViolations");
 
   const onTime = pending - overdue;
-  // The queues holding late work, worst first, so the SLA card says where to act.
+  // Các hàng đợi đang trễ việc, trễ nặng nhất xếp trước, để thẻ SLA chỉ rõ nơi cần xử lý.
   const lateQueues = queueRows.filter((row) => (row.values[1] ?? 0) > 0).sort((a, b) => b.values[1]! - a.values[1]!).slice(0, 4);
   const stateTone: Record<string, ChartTone> = { Active: "success", Suspended: "warning", Dissolving: "danger" };
   const stateOrder = ["Active", "Suspended", "Dissolving"];

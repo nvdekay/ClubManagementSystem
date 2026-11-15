@@ -1,5 +1,5 @@
-// Demo data for the sponsored item payment flow (UC36 -> UC37 -> UC35): one HEBE event whose
-// budget holds an item in every state worth showing. Additive and safe to run again.
+// Dữ liệu demo cho flow thanh toán hạng mục tài trợ (UC36 -> UC37 -> UC35): một sự kiện HEBE mà
+// ngân sách có hạng mục ở mọi trạng thái đáng trình bày. Chỉ thêm dữ liệu, chạy lại an toàn.
 import mongoose, { Types } from "mongoose";
 import { randomUUID, createHash } from "node:crypto";
 import type { FundingDecision, SponsoredItemAction } from "../../domain/sponsored-item.js";
@@ -17,7 +17,7 @@ const approvedAt = new Date(now.getTime() - 10 * DAY);
 const endAt = new Date(now.getTime() - DAY);
 
 type Target = "Draft" | "Submitted" | "Accepted" | "Paid";
-/** `spent` above the cap shows the payable being limited to the approved amount. */
+/** `spent` vượt mức trần cho thấy khoản phải trả bị giới hạn ở số tiền đã duyệt. */
 const lines: { category: string; decision: FundingDecision; cap: number; spent: number; target: Target }[] = [
   { category: "Thuê địa điểm", decision: "BEFORE_EVENT", cap: 5_000_000, spent: 5_000_000, target: "Paid" },
   { category: "In ấn banner, standee", decision: "BEFORE_EVENT", cap: 2_000_000, spent: 2_400_000, target: "Accepted" },
@@ -70,7 +70,7 @@ try {
       approvedByDecisionId: new Types.ObjectId(), disbursedTotal: decimal(0), refundedTotal: decimal(0),
       isSettlementLate: false, state: "Approved", periodCode: "Fall 2026", createdAt: approvedAt });
 
-    // Drive every item through the real repository so expenses, audit logs and notifications exist.
+    // Đưa mọi hạng mục qua repository thật để có expense, audit log và thông báo.
     const repo = mongoSponsoredItemRepository();
     const files = cloudinaryApplicationFiles(cloudinary);
     const id = String(budget._id);

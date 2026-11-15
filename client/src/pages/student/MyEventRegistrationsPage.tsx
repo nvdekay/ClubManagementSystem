@@ -42,11 +42,11 @@ export function MyEventRegistrationsPage() {
   const [filter, setFilter] = useState<Filter>(() => (searchParams.get("tab") === "attended" ? "attended" : "active"));
   const [cancelledId, setCancelledId] = useState<string | null>(null);
   const [openCheckIn, setOpenCheckIn] = useState<string | null>(null);
-  // The row's inline form unmounts once the list refreshes, so the confirmation lives at page level.
+  // Form nội tuyến của dòng bị unmount khi danh sách làm mới, nên hộp xác nhận đặt ở cấp trang.
   const [lastCheckIn, setLastCheckIn] = useState<CheckInResult | null>(null);
-  // Read once per visit: render must stay pure, and minute-level drift does not matter here.
+  // Chỉ đọc một lần mỗi lượt vào trang: render phải thuần tuý, và lệch vài phút không ảnh hưởng ở đây.
   const [nowTime] = useState(() => Date.now());
-  // A scanned QR opens /workspace/event-registrations?checkin=<eventId>&code=<code>.
+  // Quét QR sẽ mở /workspace/event-registrations?checkin=<eventId>&code=<code>.
   const deepLinkEvent = searchParams.get("checkin");
   const deepLink = deepLinkEvent && objectId.test(deepLinkEvent)
     ? { eventId: deepLinkEvent, code: searchParams.get("code") ?? "" } : null;
@@ -60,7 +60,7 @@ export function MyEventRegistrationsPage() {
       await action.mutateAsync({ kind: "cancel", registrationId: registration.id, csrfToken: auth.data.csrfToken });
       setCancelledId(registration.id);
     } catch {
-      // action.isError renders the message.
+      // action.isError hiển thị thông báo.
     } finally {
       inFlight.current = false;
     }

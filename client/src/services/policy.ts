@@ -23,7 +23,7 @@ export const CLUB_PROFILE_FORM_FIELDS = [
 ] as const;
 export type ClubProfileFormField = (typeof CLUB_PROFILE_FORM_FIELDS)[number];
 
-/** Which inputs of the fixed founding and club-profile forms are required (true) or optional. */
+/** Các ô nhập của form thành lập và form hồ sơ CLB cố định nào là bắt buộc (true) hay tuỳ chọn. */
 export interface FormRequirements {
   clubFounding: Record<FoundingFormField, boolean>;
   clubProfile: Record<ClubProfileFormField, boolean>;

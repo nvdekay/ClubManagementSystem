@@ -211,7 +211,7 @@ function interpolateTemplate(template: string, params?: Record<string, string | 
   ));
 }
 
-/** Non-2xx response from the defense API; displays purely i18n messages while logging raw diagnostics. */
+/** Response không phải 2xx từ API bảo vệ; chỉ hiển thị thông báo i18n và vẫn ghi log chẩn đoán thô. */
 export class EventDefenseError extends ApiError {
   readonly errorKey: DefenseErrorKey;
   readonly errorParams?: Record<string, string | number>;

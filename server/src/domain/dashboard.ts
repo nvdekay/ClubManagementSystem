@@ -34,31 +34,31 @@ export type DashboardPanel = {
   status: "error";
 };
 
-/** Open approval tasks of one queue, split by whether their SLA has passed. */
+/** Các task duyệt đang mở của một hàng đợi, chia theo việc đã quá SLA hay chưa. */
 export interface DashboardQueue { entityType: string; onTime: number; overdue: number }
-/** `month` is a Vietnam-time calendar month, `YYYY-MM`. */
+/** `month` là tháng dương lịch theo giờ Việt Nam, dạng `YYYY-MM`. */
 export interface DashboardMonthCount { month: string; count: number }
-/** `count = publicCount + internalCount`; internal means `MEMBERS_ONLY`. */
+/** `count = publicCount + internalCount`; internal nghĩa là `MEMBERS_ONLY`. */
 export interface DashboardMonthEventCount extends DashboardMonthCount { publicCount: number; internalCount: number }
 
 export interface IcpdpDashboardCharts {
   queues: DashboardQueue[];
-  /** Approved-or-later events per month, five months back to two months ahead. */
+  /** Số sự kiện từ trạng thái Approved trở đi theo từng tháng, từ năm tháng trước đến hai tháng sau. */
   eventsByMonth: DashboardMonthEventCount[];
-  /** Clubs that still operate, by field; the tail past seven folds into `other`. */
+  /** CLB còn hoạt động theo lĩnh vực; phần đuôi sau bảy lĩnh vực được gộp vào `other`. */
   clubsByField: { field: string; count: number }[];
   clubsByState: { state: string; count: number }[];
-  /** Money of the current semester's budgets, in VND. */
+  /** Số tiền ngân sách của học kỳ hiện tại, tính bằng VND. */
   budget: { periodCode?: string; approved: number; disbursed: number };
 }
 
 export interface ClubDashboardCharts {
-  /** Active or Inactive members at the end of each of the last twelve months. */
+  /** Thành viên Active hoặc Inactive vào cuối mỗi tháng trong mười hai tháng gần nhất. */
   membersByMonth: DashboardMonthCount[];
-  /** The latest finished events, oldest first. */
+  /** Các sự kiện đã kết thúc gần nhất, cũ nhất trước. */
   eventTurnout: { eventId: string; title: string; startAt: Date; registered: number; attended: number }[];
   recruitment?: { campaignId: string; title: string; submitted: number; shortlisted: number; accepted: number; onboarded: number };
-  /** `distribution[i]` counts ratings of `i + 1`. */
+  /** `distribution[i]` đếm số đánh giá `i + 1` sao. */
   feedback: { respondents: number; average?: number; distribution: number[] };
 }
 
@@ -67,17 +67,17 @@ export interface DashboardSnapshot {
   clubId?: string;
   generatedAt: Date;
   panels: DashboardPanel[];
-  /** Present when every chart query succeeded; panels still carry the totals otherwise. */
+  /** Có khi mọi query biểu đồ đều thành công; nếu không, các panel vẫn mang số tổng. */
   icpdpCharts?: IcpdpDashboardCharts;
   clubCharts?: ClubDashboardCharts;
 }
 
-/** Event states that mean an event was recorded (BR53): approved proposals and internal events past DRAFT, never cancelled. */
+/** Các trạng thái sự kiện được coi là đã ghi nhận (BR53): đề xuất đã duyệt và sự kiện nội bộ qua DRAFT, không bao giờ gồm sự kiện đã huỷ. */
 export const RECORDED_EVENT_STATES = [
   "Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "CREATED", "PUBLIC", "ONGOING", "FINISH",
 ] as const;
 
-/** UC02 drill-down (FR-UC02-02): a recorded `MEMBERS_ONLY` event of any club, read-only for ICPDP. */
+/** UC02 drill-down (FR-UC02-02): sự kiện `MEMBERS_ONLY` đã ghi nhận của bất kỳ CLB nào, ICPDP chỉ được xem. */
 export interface InternalEventSummary {
   id: string;
   clubId: string;
@@ -97,7 +97,7 @@ export interface InternalEventFilter { clubId?: string; semesterCode?: string }
 
 export interface InternalEventList {
   items: InternalEventSummary[];
-  /** Filter options: every club and semester that has a recorded internal event. */
+  /** Tuỳ chọn bộ lọc: mọi CLB và học kỳ có sự kiện nội bộ đã ghi nhận. */
   clubs: { id: string; name: string }[];
   semesters: string[];
 }
@@ -107,10 +107,10 @@ export interface InternalEventDetail extends InternalEventSummary {
   attendance: { studentName: string; email: string; checkedInAt: Date; method: string; finalized: boolean }[];
 }
 
-/** Which confirmation put a board seat in place: UC08 founding, UC11 nomination or UC13 transition. */
+/** Lần xác nhận nào đặt một ghế ban điều hành: UC08 thành lập, UC11 đề cử hoặc UC13 chuyển giao. */
 export type BoardSeatSource = "APPLICATION" | "NOMINATION" | "TRANSITION";
 
-/** BR56: the role-structure versions and the board of every term, newest first. */
+/** BR56: các phiên bản cơ cấu vai trò và ban điều hành của mọi nhiệm kỳ, mới nhất trước. */
 export interface ClubBoardHistory {
   club: { id: string; code: string; name: string; state: string };
   structures: {

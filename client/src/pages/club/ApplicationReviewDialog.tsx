@@ -25,7 +25,7 @@ interface ApplicationReviewDialogProps {
   campaignId: string;
   application: RecruitmentApplication;
   group?: CandidateEvaluationGroup;
-  /** Undefined while the evaluations query is loading or failed. */
+  /** Là undefined khi query đánh giá đang tải hoặc bị lỗi. */
   rubric?: RecruitmentRubricCriterion[];
   evaluationsLoading: boolean;
   canReview: boolean;
@@ -37,7 +37,7 @@ interface ApplicationReviewDialogProps {
 const DANGER = "bg-danger-app text-bg-app hover:opacity-90";
 
 // Hộp thoại reviewer xem hồ sơ ứng viên, chấm điểm và quyết định
-/** UC18 detail for one application: answers, screening actions and the UC19 evaluations. */
+/** Chi tiết UC18 cho một hồ sơ: câu trả lời, các thao tác sàng lọc và đánh giá UC19. */
 export function ApplicationReviewDialog({ onClose, clubId, campaignId, application, group, rubric,
   evaluationsLoading, canReview, questionLabels, userId, csrfToken }: ApplicationReviewDialogProps) {
   const { t, i18n } = useTranslation();
@@ -54,7 +54,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
   // Thực hiện hành động review (screen, shortlist, quyết định, promote) lên hồ sơ
   async function run(kind: "screen" | "shortlist" | "decide" | "promote", outcome?: "Accepted" | "Rejected" | "Waitlisted") {
     setError("");
-    // Shortlisting and rejecting record a reason; accept, waitlist and promote do not.
+    // Shortlist và từ chối có ghi lý do; chấp nhận, đưa vào danh sách chờ và promote thì không.
     if ((kind === "shortlist" || outcome === "Rejected") && !field.touchAll()) return;
     try {
       await action.mutateAsync({ clubId, campaignId, action: kind, applicationIds: [application.id],
@@ -80,7 +80,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
     setError("");
     try {
       const access = await attachmentAccess.mutateAsync({ clubId, campaignId, applicationId: application.id, attachmentId });
-      // The signed URL is a download (attachment=true), so the reviewer stays on this page.
+      // URL có chữ ký là bản tải về (attachment=true), nên reviewer vẫn ở lại trang này.
       window.location.assign(access.url);
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
@@ -104,7 +104,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
         <h3 id="review-decision" className="font-heading text-sm font-semibold">{t("recruitmentApplications.decisionSection")}</h3>
         {needsReason && <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.actionReason")}
           {state === "Screening" && <AppRequiredMark />}
-          {/* Only Screening needs the reason for every action, so only there is it checked on blur. */}
+          {/* Chỉ bước Screening cần lý do cho mọi thao tác, nên chỉ ở đó mới kiểm tra khi blur. */}
           <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
             {...(state === "Screening" ? field.control("reason") : { "aria-invalid": field.error("reason") ? true : undefined })}
             className="mt-1.5 block min-h-16 w-full font-normal" />

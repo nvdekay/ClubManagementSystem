@@ -17,14 +17,14 @@ export function ClubViolationsPage() {
   const { clubId = "" } = useParams(); const { t, i18n } = useTranslation(); const auth = useAuth();
   const allowed = Boolean(auth.data?.workspaces.some((w) => w.kind === "club" && w.clubId === clubId && w.permissions.includes("club.complaint.respond")));
   const query = useClubViolations(clubId, allowed); const action = useSubmitComplianceResponse(clubId); const [texts, setTexts] = useState<Record<string, string>>({}); const [urls, setUrls] = useState<Record<string, string>>({});
-  // Each explanation / corrective action is its own form, keyed by the case or action id.
+  // Mỗi giải trình / hành động khắc phục là một form riêng, khoá theo id của vụ việc hoặc hành động.
   const errors: Record<string, string | null> = Object.fromEntries((query.data ?? []).flatMap((v) => [v.id, ...v.actions.map((a) => a.id)]).map((key) =>
     ["text:" + key, texts[key]?.trim() ? null : t("common.fieldRequired")]));
   const field = useFieldValidation(errors);
   // Gửi giải trình cho vụ vi phạm hoặc báo cáo hành động khắc phục
   async function submit(id: string, actionId?: string) { if (!auth.data) return; const key = actionId ?? id;
     field.touch("text:" + key); if (errors["text:" + key]) return; try { await action.mutateAsync({ csrfToken: auth.data.csrfToken,
-    action: actionId ? { id, actionId, note: texts[key] ?? "", evidence: (urls[key] ?? "").split("\n").filter((u) => u.trim()).map((url) => ({ note: "", url })) } : { id, text: texts[key] ?? "" } }); } catch { /* The mutation error is displayed below. */ } }
+    action: actionId ? { id, actionId, note: texts[key] ?? "", evidence: (urls[key] ?? "").split("\n").filter((u) => u.trim()).map((url) => ({ note: "", url })) } : { id, text: texts[key] ?? "" } }); } catch { /* Lỗi của mutation được hiển thị bên dưới. */ } }
   const inputClass = "mt-1.5 block w-full font-normal";
   if (auth.isPending) return <AppSkeleton className="h-64 w-full" />;
   if (!allowed) return <AppNotice tone="danger">{t("clubCompliance.denied")}</AppNotice>;

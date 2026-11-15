@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 
 import type { AppBadgeTone } from "@/components/ui/badge/AppBadge";
 
-/** Comments ICPDP stores on a decision (UC26): the parts to revise and any approval conditions. */
+/** Nhận xét ICPDP lưu kèm quyết định (UC26): các phần cần sửa và điều kiện duyệt (nếu có). */
 export type DecisionComments = { sections?: string[]; conditions?: string[] };
 
 export const stateTones: Record<string, AppBadgeTone> = {
@@ -26,7 +26,7 @@ export const stateTones: Record<string, AppBadgeTone> = {
   CANCELLED: "danger",
 };
 
-/** States of the self-funded internal event lifecycle; proposals to ICPDP use the title-case states. */
+/** Các trạng thái trong vòng đời sự kiện nội bộ tự túc; đề xuất gửi ICPDP dùng các trạng thái viết hoa chữ đầu. */
 const internalStates = ["DRAFT", "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"];
 // Kiểm tra trạng thái có thuộc nhóm sự kiện nội bộ không
 export function isInternalState(state: string) {
@@ -34,7 +34,7 @@ export function isInternalState(state: string) {
 }
 
 // Nhãn hiển thị của trạng thái sự kiện
-/** `clubEvents.PUBLIC` is the audience label, so the internal `PUBLIC` state has its own key. */
+/** `clubEvents.PUBLIC` là nhãn đối tượng tham dự, nên trạng thái `PUBLIC` nội bộ có key riêng. */
 export function stateLabel(t: TFunction, state: string) {
   return state === "PUBLIC" ? t("clubEvents.statePUBLIC") : t(`clubEvents.${state}`, { defaultValue: state });
 }
@@ -104,7 +104,7 @@ function mergeConsecutiveIntervals(intervals: readonly { startMs: number; endMs:
 }
 
 // Kiểm tra các booking đã liên kết có phủ kín lịch sự kiện không
-/** Validates attached facility bookings against the selected property and event intervals on the client. */
+/** Kiểm tra ở client các booking cơ sở vật chất đính kèm so với tài sản đã chọn và khoảng thời gian sự kiện. */
 export function bookingsScheduleError(
   t: TFunction,
   bookingIds: readonly string[],

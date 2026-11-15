@@ -6,9 +6,9 @@ export interface AppColumnPoint {
   key: string;
   label: string;
   values: number[];
-  /** Marks the one column the story is about; the others turn de-emphasis gray. */
+  /** Đánh dấu cột là trọng tâm; các cột còn lại chuyển sang màu xám nhạt. */
   emphasized?: boolean;
-  /** Longer name for the tooltip and the screen-reader label. */
+  /** Tên dài hơn cho tooltip và nhãn cho trình đọc màn hình. */
   title?: string;
 }
 
@@ -20,7 +20,7 @@ interface AppColumnChartProps {
 }
 
 // Biểu đồ cột dọc, nhóm cột khi có hai chuỗi
-/** Vertical columns on one baseline, grouped when there are two series; hover or focus a column for its values. */
+/** Các cột dọc trên cùng một đường nền, nhóm lại khi có hai chuỗi; hover hoặc focus vào cột để xem giá trị. */
 export function AppColumnChart({ points, tones, seriesLabels, formatValue = String }: AppColumnChartProps) {
   const max = niceMax(Math.max(0, ...points.flatMap((point) => point.values)));
   const emphasis = points.some((point) => point.emphasized);
@@ -36,7 +36,7 @@ export function AppColumnChart({ points, tones, seriesLabels, formatValue = Stri
           </div>
           <ul className="relative flex h-full items-end">
             {points.map((point, pointIndex) => {
-              // Edge columns anchor their tooltip inward so it never sticks out past the screen edge (phones scrolled sideways).
+              // Các cột ở mép neo tooltip vào phía trong để không bao giờ tràn ra ngoài mép màn hình (điện thoại cuộn ngang).
               const edge = pointIndex < 2 ? "start" : pointIndex >= points.length - 2 ? "end" : "middle";
               const summary = [point.title ?? point.label, ...point.values.map((value, index) => `${seriesLabels[index] ?? ""}: ${formatValue(value)}`)].join(", ");
               const top = Math.max(...point.values);

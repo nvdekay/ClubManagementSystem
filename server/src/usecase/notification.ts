@@ -10,9 +10,9 @@ import type { AccessActor } from "./access.js";
 const mongoId = /^[0-9a-f]{24}$/i;
 
 const scopeFields = {
-  /** Workspace whose notifications to return; absent = all of them. */
+  /** Workspace cần trả thông báo; không có = tất cả. */
   scope: z.enum(NOTIFICATION_AUDIENCES).optional(),
-  /** Only with `scope=club`: keep the notifications about this club. */
+  /** Chỉ với `scope=club`: giữ các thông báo về CLB này. */
   clubId: z.string().regex(mongoId).optional(),
 };
 
@@ -75,7 +75,7 @@ export async function markNotificationRead(repo: NotificationRepository, actor: 
 }
 
 // Đánh dấu đã đọc toàn bộ thông báo trong phạm vi
-/** `unread` in the reply is counted in the same scope that was marked. */
+/** `unread` trong phản hồi được đếm trong cùng scope đã được đánh dấu. */
 export async function markAllNotificationsRead(repo: NotificationRepository, actor: AccessActor | null,
   now: Date, query: unknown = {}): Promise<{ marked: number; unread: number }> {
   const userId = active(actor);
@@ -91,9 +91,9 @@ function message(error: unknown): string {
 
 // Gửi email trong outbox, thử lại khi lỗi và ghi log từng lần gửi
 /**
- * SCH-10: drains the outbox. In-app rows are marked delivered; each due email row is claimed under a
- * lease, sent once, logged to `emailDeliveryLogs`, and retried with backoff until `MAIL_MAX_ATTEMPTS`.
- * A send failure never touches the business change that queued it (CON-09).
+ * SCH-10: xả outbox. Dòng in-app được đánh dấu đã gửi; mỗi dòng email đến hạn được claim bằng một
+ * lease, gửi một lần, ghi vào `emailDeliveryLogs`, và thử lại với backoff tới `MAIL_MAX_ATTEMPTS`.
+ * Lỗi gửi không bao giờ ảnh hưởng thay đổi nghiệp vụ đã xếp hàng nó (CON-09).
  */
 export async function deliverNotifications(repo: MailOutboxRepository, transport: MailTransport, now: Date,
   options: { batchSize?: number; appUrl?: string } = {}): Promise<{ inApp: number; sent: number; retried: number; failed: number }> {
@@ -102,7 +102,7 @@ export async function deliverNotifications(repo: MailOutboxRepository, transport
     const claim = await repo.claimNextEmail(now, MAIL_LEASE_MS);
     if (!claim) break;
     if (!claim.toEmail) {
-      // No address to retry against; give up at once instead of burning attempts.
+      // Không có địa chỉ để thử lại; bỏ ngay thay vì đốt số lần thử.
       await repo.recordFailed(claim, "", "recipient has no email address", null, now);
       result.failed += 1;
       continue;

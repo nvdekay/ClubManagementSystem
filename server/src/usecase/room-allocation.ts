@@ -29,7 +29,7 @@ async function effectivePolicy(deps: RoomAllocationDeps, now: Date) {
 }
 
 // ICPDP xem các lựa chọn phân bổ phòng (CLB, phòng, học kỳ chưa kết thúc)
-/** Semesters that have not ended, clubs that may receive rooms, and the active room catalogue. */
+/** Các học kỳ chưa kết thúc, các CLB có thể nhận phòng, và danh mục phòng đang hoạt động. */
 export async function roomAllocationOptions(deps: RoomAllocationDeps, actor: AccessActor | null,
   now: Date): Promise<RoomAllocationOptions> {
   await officer(deps, actor);
@@ -57,7 +57,7 @@ export async function allocateRoom(deps: RoomAllocationDeps, actor: AccessActor 
 }
 
 // ICPDP xem các ô lịch tuần của phòng đã bị chiếm trong học kỳ
-/** UC58 A3: the cells of a room's weekly grid that approved events or bookings already block this semester. */
+/** UC58 A3: các ô trong lưới tuần của phòng mà sự kiện hoặc booking đã duyệt đã chặn trong học kỳ này. */
 export async function roomAllocationOccupancy(deps: RoomAllocationDeps, actor: AccessActor | null,
   semesterCode: string, propertyId: string, now: Date) {
   await officer(deps, actor);
@@ -78,7 +78,7 @@ export async function revokeRoomAllocation(deps: RoomAllocationDeps, actor: Acce
 }
 
 // Thành viên CLB xem các phân bổ phòng còn hiệu lực của CLB
-/** Read-only club view for every Active member: allocations with their remaining usable dates. */
+/** Góc nhìn chỉ đọc của CLB cho mọi thành viên Active: các phân bổ cùng những ngày còn dùng được. */
 export async function clubRoomAllocations(deps: RoomAllocationDeps, actor: AccessActor | null,
   clubId: string, now: Date): Promise<RoomAllocation[]> {
   await assertClubAccess(deps.access, actor, clubId, "club.room.view", now);

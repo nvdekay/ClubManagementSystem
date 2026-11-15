@@ -14,7 +14,7 @@ function date(value: unknown): Date | undefined {
 }
 
 // Bỏ trường requiredLevel cũ khỏi rule định tuyến
-/** Rule sets saved while two-level approval existed still carry `requiredLevel`; it means nothing now. */
+/** Các bộ rule lưu từ thời còn duyệt hai cấp vẫn mang `requiredLevel`; hiện nay trường này vô nghĩa. */
 function withoutLegacyLevel(rule: Doc): RoutingRule {
   const copy = { ...rule };
   delete copy.requiredLevel;
@@ -80,14 +80,14 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
     // Kích hoạt rule set Draft và chuyển bộ đang Active sang Superseded
     async activate(id, actorId, now) {
       const target = new Types.ObjectId(id);
-      // One attempt, no automatic retry: a concurrent activation must surface as 409, not silently
-      // supersede the set the other head just activated.
+      // Chỉ thử một lần, không tự động retry: kích hoạt đồng thời phải báo 409, không được âm thầm
+      // thay thế bộ rule mà head kia vừa kích hoạt.
       const session = await mongoose.startSession();
       try {
         session.startTransaction();
         const draft = await sets.findOne({ _id: target, state: "Draft" }).session(session).lean();
         if (!draft) throw new DomainError("only a draft rule set can be activated", "conflict");
-        // Supersede first: the partial unique index uq_routing_active allows one Active set at any time.
+        // Thay thế bộ cũ trước: partial unique index uq_routing_active chỉ cho phép một bộ Active tại một thời điểm.
         const previous = await sets.findOneAndUpdate({ state: "Active" }, { $set: { state: "Superseded", supersededAt: now } },
           { session }).lean();
         await sets.updateOne({ _id: target, state: "Draft" },
@@ -125,13 +125,13 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
       const properties = await m.properties!.find({ _id: { $in: bookings.map((row) => row.propertyId) } }).select({ type: 1 }).lean();
       const propertyType = new Map(properties.map((row) => [String(row._id), String(row.type)]));
       const bookingProperty = new Map(bookings.map((row) => [String(row._id), String(row.propertyId)]));
-      /** UC40 cases of the club that were open at `at` — the compliance history the router saw then. */
+      /** Các vụ việc UC40 của CLB đang mở tại thời điểm `at` — lịch sử tuân thủ mà router đã thấy khi đó. */
       function openAt(clubId: unknown, at: Date): number {
         return violations.filter((row) => String(row.clubId) === String(clubId) && (row.openedAt as Date) <= at
           && !(["Resolved", "Closed"].includes(String(row.state))
             && ((row.resolvedAt ?? row.decidedAt) as Date | undefined ?? at) <= at)).length;
       }
-      // Facts are read as the router saw them when the review opened: the revision submitted then and its risk.
+      // Dữ kiện được đọc đúng như router thấy khi review mở ra: revision được nộp lúc đó và mức rủi ro của nó.
       return tasks.map((task): RoutingSample => {
         const type = task.entityType as RoutedRequestType;
         const id = String(task.entityId);

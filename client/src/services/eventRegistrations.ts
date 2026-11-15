@@ -50,7 +50,7 @@ export interface EventRegistrationContext {
   registrationOpen: boolean;
 }
 
-/** Carries the HTTP status so screens can tell "sign in first" (401) from real failures. */
+/** Mang theo HTTP status để màn hình phân biệt "cần đăng nhập" (401) với các lỗi thật. */
 export class EventRegistrationError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);

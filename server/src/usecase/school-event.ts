@@ -50,7 +50,7 @@ export async function getSchoolEvent(repo: SchoolEventRepository, auth: Pick<Aut
 }
 
 // Cảnh báo xung đột lịch khi ICPDP đang nhập form sự kiện trường
-/** FR-UC53-02: the conflict warning shown while the officer fills in the form. */
+/** FR-UC53-02: cảnh báo xung đột hiển thị khi officer điền biểu mẫu. */
 export async function checkSchoolEventConflicts(repo: SchoolEventRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, input: { propertyId?: string; startAt: Date; endAt: Date }) {
   await officer(auth, actor);

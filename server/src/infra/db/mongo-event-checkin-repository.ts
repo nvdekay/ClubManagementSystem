@@ -79,7 +79,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
         await mongoose.connection.transaction(async (session) => {
           created = false;
           if (await attendances.exists({ eventId, studentId }).session(session)) return;
-          // Re-check the event inside the transaction so a concurrent cancellation is not missed.
+          // Kiểm tra lại sự kiện trong transaction để không bỏ sót việc huỷ đồng thời.
           const event = await events.findOne({ _id: eventId,
             attendanceFinalized: { $ne: true }, state: { $in: [...checkInStates] }, publishedAt: { $exists: true, $ne: null } })
             .session(session).lean();
@@ -103,7 +103,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
             if (Number(event.confirmedRegistrationCount) >= Number(event.capacity) && policy?.allowOverbooking !== true) {
               throw new DomainError("event capacity is full", "conflict");
             }
-            // UC31 A2: a walk-in gets a confirmed registration alongside the attendance.
+            // UC31 A2: khách vãng lai được đăng ký xác nhận kèm theo điểm danh.
             if (registration) {
               const changed = await registrations.updateOne({ _id: registration._id, state: registration.state },
                 { $set: { state: "Confirmed", promotedAt: input.now }, $unset: { waitlistPosition: "", cancelledAt: "" } },
@@ -132,7 +132,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
           created = true;
         });
       } catch (error) {
-        // A concurrent check-in won the unique index (BR18): fall through and return its record.
+        // Một check-in đồng thời đã thắng unique index (BR18): bỏ qua và trả về bản ghi của nó.
         if (!(error instanceof mongoose.mongo.MongoServerError && error.code === 11000)) throw error;
         created = false;
       }

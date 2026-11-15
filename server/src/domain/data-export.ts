@@ -1,14 +1,14 @@
 import type { AnnualAchievement, AnnualFormat, AnnualReport, AnnualSource } from "./annual-report.js";
 import { DomainError } from "./errors.js";
 
-/** The fixed export catalogue (UC55 FR-01). */
+/** Danh mục xuất dữ liệu cố định (UC55 FR-01). */
 export const EXPORT_TYPES = ["CLUBS", "MEMBERS", "EVENTS", "FINANCE", "CLUB_BUDGETS", "COMPLIANCE", "EVALUATIONS"] as const;
 export type ExportType = (typeof EXPORT_TYPES)[number];
 
 export const EXPORT_FORMATS = ["xlsx", "csv", "pdf"] as const;
 export type ExportFormat = (typeof EXPORT_FORMATS)[number];
 
-/** File titles and column headers are Vietnamese: the files go to school management as-is. */
+/** Tiêu đề file và tiêu đề cột bằng tiếng Việt: file được gửi nguyên trạng cho ban quản lý nhà trường. */
 export const EXPORT_TITLES: Record<ExportType, string> = {
   CLUBS: "Danh sách CLB và trạng thái",
   MEMBERS: "Thành viên theo CLB",
@@ -19,13 +19,13 @@ export const EXPORT_TITLES: Record<ExportType, string> = {
   EVALUATIONS: "Kết quả đánh giá CLB",
 };
 
-/** Worksheet names of a multi-type workbook: Excel allows at most 31 characters and none of []:*?/\ . */
+/** Tên worksheet của workbook nhiều loại: Excel cho tối đa 31 ký tự và không chấp nhận các ký tự []:*?/\ . */
 export const EXPORT_SHEET_NAMES: Record<ExportType, string> = {
   CLUBS: "CLB", MEMBERS: "Thành viên", EVENTS: "Sự kiện", FINANCE: "Tài chính", CLUB_BUDGETS: "Ngân sách theo CLB",
   COMPLIANCE: "Vi phạm và góp ý", EVALUATIONS: "Đánh giá CLB",
 };
 
-/** Status values each type can be filtered on (the entity's own lifecycle states). */
+/** Các giá trị trạng thái mỗi loại có thể lọc (chính các trạng thái vòng đời của thực thể). */
 export const EXPORT_STATUSES: Record<ExportType, readonly string[]> = {
   CLUBS: ["Pending Setup", "Active", "Suspended", "Dissolving", "Dissolved"],
   MEMBERS: ["Active", "Inactive", "Left", "Banned"],
@@ -33,9 +33,9 @@ export const EXPORT_STATUSES: Record<ExportType, readonly string[]> = {
     "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"],
   FINANCE: ["Approved", "Cancelled", "Disbursed", "Settlement Submitted", "Reconciliation Pending", "Reconciled",
     "Recovery Pending", "Closed"],
-  // One row per club, so there is no lifecycle state to filter on.
+  // Mỗi CLB một dòng nên không có trạng thái vòng đời nào để lọc.
   CLUB_BUDGETS: [],
-  // Violation case states plus the state of student feedback (always "Submitted").
+  // Trạng thái hồ sơ vi phạm cùng trạng thái phản hồi của sinh viên (luôn là "Submitted").
   COMPLIANCE: ["Open", "Under Investigation", "Awaiting Club Response", "Decision Issued", "Corrective Action",
     "Resolved", "Closed", "Submitted"],
   EVALUATIONS: ["Published"],
@@ -49,8 +49,8 @@ export interface ExportTable {
 }
 
 /**
- * Either a semester or an explicit date range. The use case resolves a semester to its dates, so queries
- * always get `from`/`to` and may also match on the semester code itself.
+ * Hoặc là một học kỳ, hoặc là một khoảng ngày tường minh. Usecase quy học kỳ ra ngày, nên query
+ * luôn nhận `from`/`to` và có thể khớp thêm theo chính mã học kỳ.
  */
 export interface ExportFilter {
   periodCode?: string;
@@ -69,17 +69,17 @@ export interface ExportFile {
 export interface ExportRepository {
   table(type: ExportType, filter: ExportFilter): Promise<ExportTable>;
   clubs(): Promise<{ id: string; name: string }[]>;
-  /** Annual reports (A2) audit as type ANNUAL_REPORT, filtered by year, counting clubs. */
+  /** Báo cáo năm (A2) được audit với loại ANNUAL_REPORT, lọc theo năm, đếm theo CLB. */
   audit(input: { actorId: string; type: ExportType | "ANNUAL_REPORT"; format: ExportFormat;
     filter: ExportFilter | { year: number }; rowCount: number; at: Date }): Promise<void>;
-  /** Distinct period codes that have a Published evaluation (UC55 A2 year list). */
+  /** Các mã kỳ khác nhau có đánh giá Published (danh sách năm của UC55 A2). */
   publishedPeriodCodes(): Promise<string[]>;
-  /** For the period codes `inYear` accepts: the latest Published revision per club and period, the Accepted periodic
-   * reports, and every club. */
+  /** Với các mã kỳ mà `inYear` chấp nhận: phiên bản Published mới nhất của mỗi CLB và kỳ, các báo cáo
+   * định kỳ Accepted, và toàn bộ CLB. */
   annualSource(inYear: (periodCode: string) => boolean): Promise<AnnualSource>;
 }
 
-/** What the annual report file prints: the report, the heading lines, the achievements the officer picked, remarks. */
+/** Nội dung file báo cáo năm in ra: báo cáo, các dòng tiêu đề, thành tích do officer chọn, nhận xét. */
 export interface AnnualReportDocument {
   report: AnnualReport;
   heading: string[];
@@ -87,10 +87,10 @@ export interface AnnualReportDocument {
   remarks?: string;
 }
 
-/** Writes a table to a file; `heading` lines go first (when, who, which filter — FR-05). */
+/** Ghi một bảng ra file; các dòng `heading` đứng đầu (khi nào, ai, bộ lọc nào — FR-05). */
 export interface ExportFileWriter {
   write(format: ExportFormat, title: string, heading: string[], table: ExportTable): Promise<ExportFile>;
-  /** Multi-type export: an info sheet (`heading` plus each sheet's row count), then one sheet per table. */
+  /** Xuất nhiều loại: một sheet thông tin (`heading` cùng số dòng của mỗi sheet), sau đó mỗi bảng một sheet. */
   writeWorkbook(title: string, heading: string[], sheets: { name: string; title: string; table: ExportTable }[]): Promise<ExportFile>;
   writeAnnual(format: AnnualFormat, title: string, document: AnnualReportDocument): Promise<ExportFile>;
 }

@@ -5,7 +5,7 @@ export interface RoomAllocationOccurrence { bookingId: string; startAt: string; 
 export interface RoomAllocation {
   id: string; semesterCode: string; clubId: string; clubName: string;
   propertyId: string; propertyName: string; location: string;
-  /** 1 = Monday … 7 = Sunday. */
+  /** 1 = Thứ Hai … 7 = Chủ nhật. */
   weekday: number; slot: number; note?: string;
   allocatedBy: string; allocatedByName?: string; allocatedAt: string;
   revokedAt?: string; revokeReason?: string;
@@ -20,10 +20,10 @@ export interface RoomAllocationInput {
   semesterCode: string; clubId: string; propertyId: string; weekday: number; slot: number; note?: string;
 }
 export interface RoomAllocationConflict { startAt: string; endAt: string; source: "booking" | "event"; title: string; clubName?: string }
-/** A weekly grid cell blocked by approved events or bookings on that room (UC58 A3). */
+/** Ô trong lưới tuần bị chặn bởi sự kiện hoặc booking đã duyệt trên phòng đó (UC58 A3). */
 export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
 
-/** Keeps the server's `details` (e.g. the clashing dates) next to the message. */
+/** Giữ `details` của server (vd các ngày bị trùng) cùng với thông báo. */
 export class RoomAllocationError extends ApiError {
   constructor(message: string, readonly details?: unknown) { super(message); this.name = "RoomAllocationError"; }
 }

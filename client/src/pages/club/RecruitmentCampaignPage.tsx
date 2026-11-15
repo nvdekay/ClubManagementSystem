@@ -29,7 +29,7 @@ interface CampaignForm {
   windowEnd: string;
   capacity: string;
   steps: string;
-  /** Choice options stay as the typed text (commas and spaces intact) and are split only when sent. */
+  /** Các lựa chọn giữ nguyên chữ đã gõ (dấu phẩy và khoảng trắng còn nguyên), chỉ tách khi gửi đi. */
   fields: Array<Omit<RecruitmentFormField, "options"> & { options?: string }>;
   rubric: RecruitmentRubricCriterion[];
 }
@@ -61,7 +61,7 @@ function campaignForm(campaign: RecruitmentCampaign): CampaignForm {
 
 // Tách chuỗi lựa chọn bằng dấu phẩy và loại trùng không phân biệt hoa thường
 function splitOptions(text: string | undefined): string[] {
-  // The server rejects options that repeat case-insensitively, so repeats are dropped here.
+  // Server từ chối các lựa chọn trùng nhau (không phân biệt hoa thường), nên ở đây bỏ các lựa chọn lặp.
   const seen = new Set<string>();
   return (text ?? "").split(",").map((option) => option.trim()).filter((option) => {
     const key = option.toLocaleLowerCase("vi-VN");
@@ -83,7 +83,7 @@ function campaignInput(form: CampaignForm): RecruitmentCampaignInput {
   };
 }
 
-// Same key shape the server accepts for form fields and rubric criteria.
+// Cùng dạng key mà server chấp nhận cho trường form và tiêu chí rubric.
 const keyPattern = /^[a-z][a-z0-9_]{0,49}$/;
 
 // Kiểm tra chuỗi nhiều dòng có ít nhất một dòng không rỗng
@@ -99,7 +99,7 @@ function overlapsFrom(error: unknown): OverlappingCampaign[] {
 }
 
 // Lấy lịch học kỳ từ lỗi khi cửa sổ tuyển nằm ngoài học kỳ
-// The server lists the academic calendar when a window does not fit one semester.
+// Server liệt kê lịch học vụ khi khoảng thời gian không nằm gọn trong một học kỳ.
 function semestersFrom(error: unknown): Array<{ code: string; startAt: string; endAt: string }> {
   if (!(error instanceof CampaignApiError) || !error.details || typeof error.details !== "object") return [];
   const details = error.details as { field?: unknown; academicCalendar?: unknown };

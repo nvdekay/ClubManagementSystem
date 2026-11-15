@@ -25,13 +25,13 @@ export interface PublicCampaign {
   selectionSteps?: Array<{ name: string; description?: string; startsAt?: Date; endsAt?: Date }>;
   formSchema?: Array<{ key: string; label: string; type: string; required: boolean; options?: string[] }>;
   rubric?: Array<{ key: string; label: string; maxScore: number }>;
-  /** The club is suspended: the campaign is shown but applications are paused (UC15). */
+  /** CLB đang bị đình chỉ: đợt tuyển vẫn hiển thị nhưng tạm dừng nhận hồ sơ (UC15). */
   clubSuspended?: boolean;
 }
 
 export interface PublicEvent {
   id: string;
-  /** Absent for a school-wide event organised by ICPDP (UC53). */
+  /** Không có với sự kiện toàn trường do ICPDP tổ chức (UC53). */
   clubId?: string;
   clubName: string;
   title: string;
@@ -46,7 +46,7 @@ export interface PublicEvent {
   publishedAt?: Date;
 }
 
-/** Status shown to visitors, derived from the lifecycle state and the clock. */
+/** Trạng thái hiển thị cho khách, suy ra từ trạng thái vòng đời và đồng hồ. */
 export type PublicEventStatus = "ongoing" | "upcoming" | "ended";
 export type PublicEventFilter = PublicEventStatus | "all";
 
@@ -75,7 +75,7 @@ export interface ClubSearch {
   field: string;
   page: number;
   pageSize: number;
-  /** UC06 E1: only Active clubs, newest first, instead of every listed club by name. */
+  /** UC06 E1: chỉ các CLB Active, mới nhất trước, thay vì mọi CLB đã liệt kê sắp xếp theo tên. */
   newestActive?: boolean;
 }
 
@@ -124,7 +124,7 @@ export function isOngoingPublicEvent(event: PublicEvent, now: Date): boolean {
 }
 
 // Xác định trạng thái hiển thị của sự kiện công khai cho khách
-/** The visitor-facing status of a listed event, or null when the event is not public. */
+/** Trạng thái hiển thị cho khách của một sự kiện đã liệt kê, hoặc null khi sự kiện không công khai. */
 export function publicEventStatus(event: PublicEvent, now: Date): PublicEventStatus | null {
   if (isUpcomingPublicEvent(event, now)) return "upcoming";
   if (isOngoingPublicEvent(event, now)) return "ongoing";

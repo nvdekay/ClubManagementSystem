@@ -11,7 +11,7 @@ import { officer } from "./event-proposal-review.js";
 
 export interface ClubEventDeps {
   repo: ClubEventRepository; access: ClubAccessRepository; auth: Pick<AuthRepository, "systemRoleCodes">;
-  /** Null when file storage is not configured; the bundled default template still downloads. */
+  /** Null khi chưa cấu hình lưu trữ file; template mặc định đi kèm vẫn tải được. */
   files?: EventProposalFileStorage | null;
 }
 // Kiểm định dạng id sự kiện hoặc CLB
@@ -103,7 +103,7 @@ async function documentAccess(deps: ClubEventDeps, document: EventProposalDocume
   return { fileName: document.fileName, mimeType: document.mimeType, url: await fileStorage(deps).accessUrl(document.assetId, { inline }) };
 }
 // Xem thông tin template đề án sự kiện đang áp dụng
-/** Any signed-in user may read and download the active ICPDP proposal template. */
+/** Mọi user đã đăng nhập đều được đọc và tải template đề xuất đang hoạt động của ICPDP. */
 export async function eventProposalTemplateInfo(deps: ClubEventDeps, actor: AccessActor | null): Promise<EventProposalTemplateInfo> {
   signedIn(actor);
   const { fileName, mimeType, bytes, updatedAt, isSystemDefault } = await deps.repo.proposalTemplate();
@@ -117,7 +117,7 @@ export async function downloadEventProposalTemplate(deps: ClubEventDeps, actor: 
   return { kind: "redirect" as const, fileName: template.fileName, url: await fileStorage(deps).accessUrl(template.assetId, { inline: false }) };
 }
 // Tải lên hoặc thay tài liệu đề án của sự kiện đang sửa được
-/** UC25: attach or replace the proposal document of an editable ICPDP proposal; returns the detail with its bumped version. */
+/** UC25: đính kèm hoặc thay tài liệu đề xuất của một đề xuất ICPDP còn sửa được; trả về chi tiết kèm version đã tăng. */
 export async function uploadEventProposalDocument(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, eventId: string,
   fileName: string, mimeType: string, bytes: Buffer, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
@@ -126,7 +126,7 @@ export async function uploadEventProposalDocument(deps: ClubEventDeps, actor: Ac
   const found = await deps.repo.find(clubEventId(clubId), clubEventId(eventId));
   if (!found) throw new DomainError("event not found", "not_found");
   if (isInternalClubEventState(found.event.state)) throw new DomainError("internal club events do not take a proposal document", "validation");
-  // Checked before uploading so a refused request leaves no orphan file; the repository re-checks in its transaction.
+  // Kiểm tra trước khi upload để request bị từ chối không để lại file mồ côi; repository kiểm tra lại trong transaction.
   if (!["Draft", "Revision Requested"].includes(found.event.state)) throw new DomainError("event cannot be edited or submitted", "conflict");
   const document = await storage.uploadProposalDocument({ clubId, eventId, actorId: actor!.id, fileName: name, mimeType, bytes, now });
   return deps.repo.act(clubId, eventId, { kind: "attach-document", document }, actor!.id, now);
@@ -140,7 +140,7 @@ export async function clubEventProposalDocumentAccess(deps: ClubEventDeps, actor
   return documentAccess(deps, found.document, inline);
 }
 // ICPDP đăng tải template đề án mới thay template hiện hành
-/** UC26: an ICPDP officer replaces the active template; templates are never deleted. */
+/** UC26: ICPDP officer thay template đang hoạt động; template không bao giờ bị xoá. */
 export async function uploadEventProposalTemplate(deps: ClubEventDeps, actor: AccessActor | null, fileName: string, mimeType: string,
   bytes: Buffer, now: Date): Promise<EventProposalTemplateInfo> {
   const officerId = await officer(deps.auth, actor);
@@ -150,7 +150,7 @@ export async function uploadEventProposalTemplate(deps: ClubEventDeps, actor: Ac
   return deps.repo.saveProposalTemplate(document, officerId, now);
 }
 // ICPDP xem tài liệu đề án của phiên bản hiện tại hoặc cũ hơn
-/** UC26: the officer opens the document of the current or any earlier revision. */
+/** UC26: officer mở tài liệu của revision hiện tại hoặc bất kỳ revision trước đó. */
 export async function reviewEventProposalDocumentAccess(deps: ClubEventDeps, actor: AccessActor | null, eventId: string,
   revisionNo: number | undefined, inline: boolean) {
   await officer(deps.auth, actor);

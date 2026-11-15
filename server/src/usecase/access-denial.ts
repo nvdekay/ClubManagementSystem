@@ -22,7 +22,7 @@ function requiredPermission(details: unknown): ClubPermission | undefined {
 }
 
 // Ghi audit một lần truy cập bị từ chối của người dùng đã đăng nhập
-/** Records one refused attempt; ignores anything that is not a well-formed authenticated request. */
+/** Ghi một lần truy cập bị từ chối; bỏ qua mọi thứ không phải request đã xác thực đúng dạng. */
 export async function recordAccessDenial(repo: AccessDenialAuditRepository, input: AccessDenialInput): Promise<boolean> {
   const method = input.method.toUpperCase();
   if (!isObjectId(input.actorId) || !METHODS.has(method) || !input.route.startsWith("/")) return false;

@@ -6,7 +6,7 @@ import { ucmsModels as m } from "./ucms-models.js";
 // Kiểm tra quyền ghi sự kiện của actor và khóa các dòng cấp quyền
 export async function assertEventWriteAccess(session: ClientSession, clubId: Types.ObjectId, actorId: Types.ObjectId,
   permission: ClubPermission | "ATTENDANCE_UNLOCK", now: Date): Promise<void> {
-  // These writes serialize against lifecycle, account locking, role edits and membership changes.
+  // Các thao tác ghi này được tuần tự hoá với vòng đời CLB, khoá tài khoản, sửa role và đổi membership.
   const user = await m.users!.findOneAndUpdate({ _id: actorId, accountState: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
   if (!user) throw new DomainError("account is not active", "locked");
   const club = await m.clubs!.findOneAndUpdate({ _id: clubId }, { $inc: { __v: 1 } }, { session }).lean();
@@ -33,7 +33,7 @@ export async function assertEventWriteAccess(session: ClientSession, clubId: Typ
       positionId: String(a.positionId), effectiveFrom: a.effectiveFrom as Date, effectiveTo: a.effectiveTo as Date | undefined,
       confirmedBy: a.confirmedBy ? String(a.confirmedBy) : undefined })), isApprovedFounder: false };
   requireClubPermission(snapshot, permission, now);
-  // Lock the rows used to grant access so a revoke forces a transaction retry.
+  // Khoá các dòng dùng để cấp quyền để việc thu hồi quyền buộc transaction phải thử lại.
   await m.clubPositions!.updateMany({ _id: { $in: positions.map((p) => p._id) } }, { $inc: { __v: 1 } }, { session });
   await m.clubPositionAssignments!.updateMany({ _id: { $in: assignments.map((a) => a._id) } }, { $inc: { __v: 1 } }, { session });
   await m.clubTerms!.updateMany({ _id: { $in: terms.map((t) => t._id) } }, { $inc: { __v: 1 } }, { session });

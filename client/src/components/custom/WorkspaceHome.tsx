@@ -13,14 +13,14 @@ interface WorkspaceAction {
 }
 
 interface WorkspaceHomeProps {
-  /** Workspace name shown under the greeting, e.g. the club name. */
+  /** Tên workspace hiển thị dưới lời chào, ví dụ tên CLB. */
   subtitle: string;
   actions: WorkspaceAction[];
   children?: ReactNode;
 }
 
 // Trang tổng quan workspace: lời chào và danh sách lối tắt
-/** Overview page rendered inside WorkspaceShell: a one-line greeting and a list of shortcuts. */
+/** Trang tổng quan hiển thị trong WorkspaceShell: một dòng chào và danh sách lối tắt. */
 export function WorkspaceHome({ subtitle, actions, children }: WorkspaceHomeProps) {
   const { t } = useTranslation();
   const auth = useAuth();

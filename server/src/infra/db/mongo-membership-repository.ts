@@ -20,7 +20,7 @@ function date(value: unknown): Date {
 // Chuẩn hóa lịch sử đổi trạng thái của thành viên
 function history(value: unknown): MembershipStatusChange[] {
   return objectArray(value).flatMap((entry) => {
-    // actorId is written as an ObjectId; older entries may hold a string — accept both.
+    // actorId được ghi dưới dạng ObjectId; các mục cũ có thể là string — chấp nhận cả hai.
     if (!("fromState" in entry) || typeof entry.toState !== "string" || (!entry.actorId && entry.actorRole !== "SYSTEM")) return [];
     return [{ fromState: String(entry.fromState) as MembershipState,
       toState: entry.toState as MembershipState, effectiveDate: date(entry.effectiveDate),
@@ -177,7 +177,7 @@ export function mongoMembershipRepository(): MembershipRepository {
             { effectiveTo: { $gt: now } }] }).select("membershipId positionId confirmedBy").lean() : [],
       ]);
       const emailById = new Map(userDocs.map((user) => [String(user._id), String(user.email ?? "")]));
-      // Held now = in effect inside an Active term; a Leader seat counts only once confirmed (same rule as access).
+      // Đang giữ = có hiệu lực trong nhiệm kỳ Active; ghế Leader chỉ tính khi đã xác nhận (cùng quy tắc với quyền truy cập).
       const leaderIds = new Set(positionDocs.filter((position) => position.isLeaderRole).map((position) => String(position._id)));
       const held = new Map<string, Set<string>>();
       for (const assignment of assignmentDocs) {
@@ -210,7 +210,7 @@ export function mongoMembershipRepository(): MembershipRepository {
             memberships.exists({ clubId, userId, state: { $in: ["Active", "Inactive"] } }).session(session),
             positions.findOne({ clubId, isDefaultMemberRole: true, isActive: true }).session(session).select("code").lean(),
           ]);
-          // E2 / BR46: a banned student is never taken back, manual onboarding included.
+          // E2 / BR46: sinh viên bị cấm không bao giờ được nhận lại, kể cả onboarding thủ công.
           if (banned) throw new DomainError("banned students cannot be onboarded", "forbidden");
           if (current) throw new DomainError("student already has an active membership", "conflict");
           if (!memberRole) throw new DomainError("default Members role is not configured", "conflict");

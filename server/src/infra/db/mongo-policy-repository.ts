@@ -16,7 +16,7 @@ function flags<K extends string>(raw: unknown, keys: readonly K[],
 }
 
 // Chuẩn hóa yêu cầu trường bắt buộc của các biểu mẫu
-/** Versions written before form requirements existed read as the defaults. */
+/** Các phiên bản ghi trước khi có yêu cầu biểu mẫu được đọc như giá trị mặc định. */
 function formRequirementsFrom(raw: unknown): FormRequirements {
   const record = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
   return {

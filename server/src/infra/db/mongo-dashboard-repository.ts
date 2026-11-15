@@ -63,7 +63,7 @@ function buildSnapshot(
   clubId?: string,
   charts?: Promise<Pick<DashboardSnapshot, "icpdpCharts" | "clubCharts">>,
 ): Promise<DashboardSnapshot> {
-  // A failed chart query drops the charts only; the panels keep their own per-panel errors.
+  // Query biểu đồ lỗi chỉ làm mất biểu đồ; các panel vẫn giữ lỗi riêng của từng panel.
   const chartData = (charts ?? Promise.resolve({})).catch(() => ({}));
   return Promise.all([Promise.all(panels), chartData]).then(([resolved, extra]) => ({
     kind, generatedAt, panels: resolved, ...(clubId ? { clubId } : {}), ...extra,
@@ -88,7 +88,7 @@ export function mongoDashboardRepository(): DashboardRepository {
           complainantId: user, state: { $nin: ["Withdrawn"] },
         }),
         panel("openRecruitment", "recruitmentCampaigns", {
-          // Same visibility rule as the public directory: a published campaign accepts applications in its window.
+          // Cùng quy tắc hiển thị với danh bạ công khai: chiến dịch đã đăng nhận đơn trong khoảng thời gian của nó.
           state: { $in: ["Published", "Accepting Applications"] }, windowStart: { $lte: now }, windowEnd: { $gt: now },
         }),
         panel("upcomingEvents", "events", { state: "Upcoming", startAt: { $gte: now } }),
@@ -135,7 +135,7 @@ export function mongoDashboardRepository(): DashboardRepository {
         ] : []),
         ...(allowed.has("club.transition.plan") ? [transitionFollowUps(club)] : []),
       ];
-      // Charts read member, event and recruitment data, which only a Club Leader manages.
+      // Biểu đồ đọc dữ liệu thành viên, sự kiện và tuyển thành viên, mà chỉ Club Leader được quản lý.
       return buildSnapshot("club", now, panels, clubId, allowed.has("club.member.manage")
         ? clubCharts(clubId, now).then((clubCharts) => ({ clubCharts })) : undefined);
     },

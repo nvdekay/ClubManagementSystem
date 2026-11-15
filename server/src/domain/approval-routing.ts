@@ -2,15 +2,15 @@ import { DomainError } from "./errors.js";
 import { PROPERTY_TYPES, type PropertyType } from "./property.js";
 
 /**
- * UC05 / BR16: versioned approval routing. A rule names the request type and a set of conditions;
- * a request that matches a rule gets that rule's SLA. Every request is decided at one level by an
- * ICPDP Officer (BR31). Rules never overlap, so at most one rule matches.
+ * UC05 / BR16: định tuyến duyệt có phiên bản. Mỗi rule nêu loại yêu cầu và một tập điều kiện;
+ * yêu cầu khớp rule nào thì nhận SLA của rule đó. Mọi yêu cầu được ICPDP Officer quyết định ở
+ * một cấp duy nhất (BR31). Các rule không chồng lấn nên tối đa chỉ một rule khớp.
  */
 export const ROUTED_REQUEST_TYPES = ["CLUB_APPLICATION", "EVENT_PROPOSAL", "PROPERTY_BOOKING"] as const;
 export type RoutedRequestType = (typeof ROUTED_REQUEST_TYPES)[number];
 export const RISK_CATEGORIES = ["LOW", "MEDIUM", "HIGH"] as const;
 export type RiskCategory = (typeof RISK_CATEGORIES)[number];
-/** Facility requests only: classrooms are allocated by UC58, never booked. */
+/** Chỉ áp dụng cho yêu cầu cơ sở vật chất: phòng học do UC58 phân bổ, không đặt qua booking. */
 export const ROUTED_PROPERTY_TYPES: readonly PropertyType[] = PROPERTY_TYPES.filter((type) => type !== "ROOM");
 export const ROUTING_STATES = ["Draft", "Active", "Superseded"] as const;
 export type RoutingState = (typeof ROUTING_STATES)[number];
@@ -19,12 +19,12 @@ export const MAX_ROUTING_RULES = 50;
 export interface RoutingRule {
   id: string;
   requestType: RoutedRequestType;
-  /** Event budget in VND: [minAmount, maxAmount). */
+  /** Ngân sách sự kiện (VND): [minAmount, maxAmount). */
   minAmount?: number;
   maxAmount?: number;
   riskCategories?: RiskCategory[];
   propertyTypes?: PropertyType[];
-  /** Open UC40 cases of the club: [minOpenViolations, maxOpenViolations). */
+  /** Số hồ sơ UC40 đang mở của CLB: [minOpenViolations, maxOpenViolations). */
   minOpenViolations?: number;
   maxOpenViolations?: number;
   slaHours: number;
@@ -43,7 +43,7 @@ export interface RoutingRuleSet {
   supersededAt?: Date;
 }
 
-/** What a request looks like to the router; fields a type does not have stay undefined. */
+/** Dữ kiện của một yêu cầu khi đưa vào bộ định tuyến; trường mà loại yêu cầu không có thì để undefined. */
 export interface RoutingFacts {
   requestType: RoutedRequestType;
   amount?: number;
@@ -58,12 +58,12 @@ export interface ApprovalRoute {
   slaHours?: number;
 }
 
-/** One past decided request, for the UC05 A1 simulation. */
+/** Một yêu cầu đã được quyết định trước đó, dùng cho mô phỏng UC05 A1. */
 export interface RoutingSample { entityType: RoutedRequestType; entityId: string; title: string; decidedAt: Date; facts: RoutingFacts }
 
 export interface RoutingSimulation {
   total: number;
-  /** Samples that match a rule of the draft (and so get its SLA). */
+  /** Các mẫu khớp một rule của bản nháp (và do đó nhận SLA của rule đó). */
   matched: number;
   items: Array<{ entityType: RoutedRequestType; entityId: string; title: string; decidedAt: Date;
     ruleId?: string; slaHours?: number }>;
@@ -73,11 +73,11 @@ export interface ApprovalRoutingRepository {
   list(): Promise<RoutingRuleSet[]>;
   find(id: string): Promise<RoutingRuleSet | null>;
   createDraft(rules: RoutingRule[], actorId: string, now: Date): Promise<RoutingRuleSet>;
-  /** Only a Draft changes; conflict otherwise. */
+  /** Chỉ bản Draft mới được đổi; ngược lại báo conflict. */
   saveDraft(id: string, rules: RoutingRule[], actorId: string, now: Date): Promise<RoutingRuleSet>;
-  /** Draft → Active and the previous Active → Superseded in one transaction, with an audit row. */
+  /** Draft → Active và Active cũ → Superseded trong cùng một transaction, kèm một dòng audit. */
   activate(id: string, actorId: string, now: Date): Promise<RoutingRuleSet>;
-  /** The latest decided requests (read only), newest first. */
+  /** Các yêu cầu đã quyết định gần nhất (chỉ đọc), mới nhất trước. */
   recentDecided(limit: number): Promise<RoutingSample[]>;
 }
 
@@ -95,7 +95,7 @@ function range(min: number | undefined, max: number | undefined, label: string):
 }
 
 // Kiểm tra một rule định tuyến và bỏ các điều kiện không áp dụng cho loại yêu cầu
-/** Checks one rule and drops conditions that do not apply to its request type. */
+/** Kiểm tra một rule và bỏ các điều kiện không áp dụng cho loại yêu cầu của nó. */
 export function normalizeRoutingRule(rule: RoutingRule): RoutingRule {
   if (!/^[A-Za-z0-9_-]{1,40}$/.test(rule.id)) invalid("invalid rule id");
   if (!ROUTED_REQUEST_TYPES.includes(rule.requestType)) invalid("invalid request type");
@@ -130,7 +130,7 @@ function setsMeet<T>(a: readonly T[] | undefined, b: readonly T[] | undefined): 
 }
 
 // Kiểm tra hai rule có thể cùng khớp một yêu cầu hay không
-/** True when some request would match both rules (FR-UC05-02). */
+/** True khi có yêu cầu nào đó khớp cả hai rule (FR-UC05-02). */
 export function routingRulesOverlap(a: RoutingRule, b: RoutingRule): boolean {
   return a.requestType === b.requestType
     && rangesMeet(a.minAmount, a.maxAmount, b.minAmount, b.maxAmount)
@@ -140,7 +140,7 @@ export function routingRulesOverlap(a: RoutingRule, b: RoutingRule): boolean {
 }
 
 // Kiểm tra cả danh sách rule, từ chối khi có hai rule chồng lấn
-/** Validates a whole rule list; E1: overlapping rules are refused with the pairs that overlap. */
+/** Kiểm tra cả danh sách rule; E1: rule chồng lấn bị từ chối, kèm các cặp chồng lấn. */
 export function validateRoutingRules(rules: readonly RoutingRule[]): RoutingRule[] {
   if (rules.length > MAX_ROUTING_RULES) invalid(`at most ${MAX_ROUTING_RULES} rules`);
   const normalized = rules.map(normalizeRoutingRule);
@@ -170,7 +170,7 @@ export function routingRuleMatches(rule: RoutingRule, facts: RoutingFacts): bool
 }
 
 // Chọn rule khớp đầu tiên để lấy SLA duyệt cho yêu cầu
-/** FR-UC05-05: no active rule set or no matching rule → no rule SLA. */
+/** FR-UC05-05: không có bộ rule đang hiệu lực hoặc không rule nào khớp → không có SLA theo rule. */
 export function resolveApprovalRoute(ruleSet: Pick<RoutingRuleSet, "id" | "rules"> | null, facts: RoutingFacts): ApprovalRoute {
   const rule = ruleSet?.rules.find((item) => routingRuleMatches(item, facts));
   return { ...(ruleSet ? { routingRuleSetId: ruleSet.id } : {}),
@@ -178,7 +178,7 @@ export function resolveApprovalRoute(ruleSet: Pick<RoutingRuleSet, "id" | "rules
 }
 
 // Mô phỏng rule nháp nào sẽ khớp từng mẫu yêu cầu và SLA tương ứng
-/** UC05 A1: which rule of the draft each sample would match, and the SLA it would get; reads only. */
+/** UC05 A1: mỗi mẫu sẽ khớp rule nào của bản nháp và nhận SLA nào; chỉ đọc. */
 export function simulateRouting(rules: readonly RoutingRule[], samples: readonly RoutingSample[]): RoutingSimulation {
   const items = samples.map((sample) => {
     const route = resolveApprovalRoute({ id: "draft", rules: [...rules] }, sample.facts);

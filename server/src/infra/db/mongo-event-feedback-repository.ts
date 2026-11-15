@@ -65,7 +65,7 @@ export function mongoEventFeedbackRepository(): EventFeedbackRepository {
             scores: [{ criterionCode: FEEDBACK_CRITERION, score: input.rating }],
             comment: input.comment, isAnonymous: input.isAnonymous, submittedAt: input.now }], { session });
           id = doc!._id as Types.ObjectId;
-          // The audit trail records that feedback exists, never its content (BR37, A1).
+          // Audit trail ghi nhận có feedback, không bao giờ ghi nội dung (BR37, A1).
           await audits.create([{ entityType: "EventFeedback", entityId: id, action: "EVENT_FEEDBACK_SUBMITTED",
             actorId: studentId, actorRole: "STUDENT", after: { eventId: input.eventId, isAnonymous: input.isAnonymous },
             correlationId: randomUUID(), at: input.now }], { session });

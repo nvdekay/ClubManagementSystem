@@ -92,7 +92,7 @@ export function clubApplicationRoutes(deps: ClubApplicationRouteDeps): Router {
     ok(res, await applicationConfiguration(deps.policy, deps.fields, actor(res), new Date()));
   });
   // Tra cứu người sáng lập theo email
-  // Before "/applications/:id" so "founder-lookup" is never parsed as an application id.
+  // Đặt trước "/applications/:id" để "founder-lookup" không bao giờ bị parse thành id của đơn.
   router.get("/applications/founder-lookup", authGuard(guard, false), async (req, res) => {
     ok(res, await lookupFounder(deps.repo, actor(res), parsed(z.string().max(254), req.query.email)));
   });

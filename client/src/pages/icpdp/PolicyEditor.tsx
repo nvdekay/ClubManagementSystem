@@ -147,7 +147,7 @@ function initialForm(latest?: PolicyVersion): PolicyForm {
   };
 }
 
-/** Thrown with the section that holds the bad value, so the editor can switch to it. */
+/** Được ném kèm mục chứa giá trị sai, để trình chỉnh sửa chuyển tới mục đó. */
 class SectionError extends Error {
   constructor(readonly section: PolicySection) {
     super(section);
@@ -170,7 +170,7 @@ function wholeError(t: TFunction, value: string, min: number): string | null {
 }
 
 // Gom lỗi inline của toàn form chính sách
-/** Inline errors keyed by field, plus the tab each key lives on so submit can open it. */
+/** Lỗi hiển thị trực tiếp theo từng trường, kèm tab chứa mỗi key để khi submit có thể mở tab đó. */
 function formErrors(t: TFunction, form: PolicyForm): Record<string, string | null> {
   const errors: Record<string, string | null> = {
     minFoundingMembers: wholeError(t, form.minFoundingMembers, 1),
@@ -187,7 +187,7 @@ function formErrors(t: TFunction, form: PolicyForm): Record<string, string | nul
   form.reportDeadlines.forEach((item, index) => {
     errors[`reportType${index}`] = item.reportType.trim() ? null : t("common.fieldRequired");
     for (const field of deadlineNumberFields) errors[`${field}${index}`] = wholeError(t, item[field], 0);
-    // The server also requires escalation to come after the overdue mark.
+    // Server cũng yêu cầu mốc nâng cấp phải sau mốc quá hạn.
     const overdue = Number(item.overdueAfterDays);
     if (!errors[`escalateAfterDays${index}`] && !errors[`overdueAfterDays${index}`] && Number(item.escalateAfterDays) <= overdue) {
       errors[`escalateAfterDays${index}`] = t("common.numberMin", { min: overdue + 1 });
@@ -269,7 +269,7 @@ interface ToggleRowProps {
 }
 
 // Một dòng bật/tắt cho yêu cầu hoặc quyền của chính sách
-/** One "is this required / is this allowed" row: plain label, switch, and its current meaning. */
+/** Một dòng kiểu "có bắt buộc / có được phép không": nhãn đơn giản, công tắc và ý nghĩa hiện tại của nó. */
 function ToggleRow({ label, checked, locked, hint, onChange }: ToggleRowProps) {
   const { t } = useTranslation();
   return (
@@ -345,7 +345,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
     event.preventDefault();
     setLocalError(null);
     if (!field.touchAll()) {
-      // The first bad field may sit on another tab, so open it and keep the summary line.
+      // Trường sai đầu tiên có thể nằm ở tab khác, nên mở tab đó và giữ dòng tóm tắt.
       const first = Object.keys(errors).find((key) => errors[key]);
       if (first) setSection(errorSection(first));
       setLocalError(t("policy.invalidForm"));
@@ -359,7 +359,7 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
       return;
     }
     try { await create.mutateAsync({ input, csrfToken }); }
-    catch { /* Mutation error is shown below. */ }
+    catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
   let body: ReactNode;

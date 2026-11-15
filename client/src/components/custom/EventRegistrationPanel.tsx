@@ -30,7 +30,7 @@ interface EventRegistrationPanelProps {
 }
 
 // Khu vực đăng ký sự kiện: yêu cầu đăng nhập rồi hiển thị trạng thái đăng ký
-/** UC29 call to action on the public event page: sign in, register (or waitlist), see status, cancel. */
+/** UC29 trên trang sự kiện công khai: đăng nhập, đăng ký (hoặc vào danh sách chờ), xem trạng thái, huỷ. */
 export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -98,7 +98,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
   const active = registration && registration.state !== "Cancelled" ? registration : null;
   const membersOnlyBlocked = event.audienceScope === "MEMBERS_ONLY" && !context.isActiveClubMember;
   const opensLater = event.registrationOpenAt ? new Date(event.registrationOpenAt) > now : false;
-  // Same presence rule the server applies to required answers (any non-blank value).
+  // Cùng quy tắc có mặt mà server áp dụng cho câu trả lời bắt buộc (mọi giá trị không rỗng).
   const validation = useFieldValidation(Object.fromEntries(context.formSchema.map((field) => {
     const answer = answers[field.key];
     const present = (Array.isArray(answer) ? answer : [answer ?? ""]).some((value) => value.trim());
@@ -116,7 +116,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
       setFeedback(done);
       if (done === "registered") { setAnswers({}); validation.reset(); }
     } catch {
-      // action.isError renders the message below.
+      // action.isError hiển thị thông báo lỗi bên dưới.
     } finally {
       inFlight.current = false;
     }

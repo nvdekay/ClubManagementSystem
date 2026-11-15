@@ -7,7 +7,7 @@ import { cn } from "@/utils/cn";
 
 interface SidebarAccountMenuProps {
   user: AuthUser;
-  /** Sidebar collapsed to its icon column: show only the avatar and open the menu to the right. */
+  /** Sidebar thu gọn thành cột icon: chỉ hiện avatar và mở menu sang bên phải. */
   compact: boolean;
   signingOut: boolean;
   onSignOut: () => void;
@@ -16,7 +16,7 @@ interface SidebarAccountMenuProps {
 const itemClass = "flex min-h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring-app";
 
 // Nút tài khoản ở cuối sidebar, mở menu đăng xuất
-/** Sidebar footer account button: the avatar opens a menu with sign-out (theme and language live in the top bar). */
+/** Nút tài khoản ở footer sidebar: avatar mở menu đăng xuất (theme và ngôn ngữ nằm ở thanh trên). */
 export function SidebarAccountMenu({ user, compact, signingOut, onSignOut }: SidebarAccountMenuProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);

@@ -1,7 +1,7 @@
-// Cast of the defense demo seeds (seed-defense-p*.ts). Each role defaults to a data-only demo
-// account and can be pointed at a real Google account so the presenter can log in as that role:
+// Dàn nhân vật của các seed demo bảo vệ (seed-defense-p*.ts). Mỗi vai mặc định là một tài khoản
+// demo chỉ có dữ liệu và có thể trỏ sang tài khoản Google thật để người trình bày đăng nhập đúng vai:
 //   npm run seed:defense:p4 -- --leader=a@x --officer=b@y --member=c@z
-// An overridden account must already exist (it has logged in once); its name is left untouched.
+// Tài khoản bị ghi đè phải tồn tại sẵn (đã đăng nhập một lần); tên của nó được giữ nguyên.
 const defaults = {
   leader: { email: "an.demo@fpt.edu.vn", name: "Nguyễn Minh An" },
   vice: { email: "bao.demo@fpt.edu.vn", name: "Trần Gia Bảo" },

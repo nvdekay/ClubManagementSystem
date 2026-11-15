@@ -25,7 +25,7 @@ export async function runMembershipReconfirmation(repo: MembershipReconfirmation
     const changes = await repo.run(period, new Date(period.startAt.getTime() + RECONFIRMATION_DAYS * 86400000), now);
     result.opened += changes.opened; result.expired += changes.expired; result.exempt += changes.exempt;
   }
-  // A restart after the semester ended must still expire that semester's overdue requests.
+  // Khởi động lại sau khi học kỳ kết thúc vẫn phải làm hết hạn các request quá hạn của học kỳ đó.
   const overdue = await repo.expireOverdue(now);
   result.expired += overdue.expired; result.exempt += overdue.exempt;
   return result;

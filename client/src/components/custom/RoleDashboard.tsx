@@ -72,7 +72,7 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
     time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" })
       .format(new Date(dashboard.data.generatedAt)),
   });
-  // ICPDP and Club Leaders get the chart overview; students and Club Members keep the summary cards.
+  // ICPDP và Club Leader xem tổng quan dạng biểu đồ; sinh viên và Club Member vẫn dùng các thẻ tóm tắt.
   const charts = dashboard.data.icpdpCharts ?? dashboard.data.clubCharts;
   if (charts) {
     return <section aria-labelledby="dashboard-title" className="mt-8">

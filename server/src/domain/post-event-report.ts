@@ -43,7 +43,7 @@ export interface ReportObligation {
   revision: number;
   dueAt: Date;
   overdue: boolean;
-  /** The club can draft the report only after it has finalized the event's attendance. */
+  /** CLB chỉ được soạn báo cáo sau khi đã chốt điểm danh của sự kiện. */
   attendanceFinalized: boolean;
   report?: PostEventReport;
 }

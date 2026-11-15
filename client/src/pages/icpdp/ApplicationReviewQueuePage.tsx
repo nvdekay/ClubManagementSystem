@@ -37,7 +37,7 @@ export function ApplicationReviewQueuePage() {
         csrfToken: auth.data.csrfToken });
       navigate(`/workspace/reviews/${applicationId}`);
     } catch {
-      // Mutation error is rendered in context below.
+      // Lỗi của mutation được hiển thị ngay tại vị trí liên quan bên dưới.
     }
   }
 

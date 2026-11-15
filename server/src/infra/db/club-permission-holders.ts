@@ -3,7 +3,7 @@ import { resolveClubPermissions, type ClubAccessSnapshot, type ClubPermission } 
 import { ucmsModels as m } from "./ucms-models.js";
 
 // Lấy user thành viên Active của CLB đang có permission chỉ định
-/** User ids of the club's Active members who hold `permission` right now — the same rule as every access check. */
+/** Id các thành viên Active của CLB hiện đang giữ `permission` — cùng quy tắc với mọi lần kiểm tra quyền. */
 export async function clubUserIdsWithPermission(clubId: Types.ObjectId, permission: ClubPermission, now: Date,
   session?: ClientSession): Promise<Types.ObjectId[]> {
   const [club, memberships, terms, positions] = await Promise.all([

@@ -146,17 +146,17 @@ export async function ensureUcmsDatabase(): Promise<void> {
     } catch (error) {
       if (!(error instanceof mongoose.mongo.MongoServerError && error.code === 48)) throw error;
     }
-    // Wave 4 replaces the legacy one-report-per-event index with immutable versions.
+    // Wave 4 thay index một-báo-cáo-mỗi-sự-kiện cũ bằng các phiên bản bất biến.
     if (model.collection.name === "postEventReports") {
       const indexes = await model.collection.indexes();
       const legacy = indexes.find((index) => index.unique && Object.keys(index.key).length === 1 && index.key.eventId === 1);
       if (legacy?.name) {
-        // Build the replacement before removing the old constraint; failures leave the old index intact.
+        // Dựng index thay thế trước khi bỏ ràng buộc cũ; nếu lỗi thì index cũ vẫn còn nguyên.
         await model.collection.createIndex({ eventId: 1, versionNo: 1 }, { unique: true, name: "uq_post_event_report_version" });
         await model.collection.dropIndex(legacy.name);
       }
     }
-    // UC05 allows one decision per level, so the old one-decision-per-task constraint is replaced.
+    // UC05 cho phép một quyết định mỗi cấp, nên ràng buộc một-quyết-định-mỗi-task cũ được thay thế.
     if (model.collection.name === "approvalDecisions") {
       const indexes = await model.collection.indexes();
       if (indexes.some((index) => index.name === "uq_decision_task")) {

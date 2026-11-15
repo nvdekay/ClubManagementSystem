@@ -29,9 +29,9 @@ export function BoardNominationDetailPage() {
   const [reasons, setReasons] = useState<Record<string, string>>({});
   const [decisionNote, setDecisionNote] = useState("");
   const [saved, setSaved] = useState(false);
-  // A double click fires twice (two confirms, two requests) before the button re-renders disabled.
+  // Nhấp đúp sẽ chạy hai lần (hai lần xác nhận, hai request) trước khi nút kịp render lại ở trạng thái disabled.
   const inFlight = useRef(false);
-  // The server wants a reason on every returned seat, and a general reason when all of them go back.
+  // Server yêu cầu lý do cho từng ghế bị trả lại, và một lý do chung khi trả lại tất cả.
   const pendingSeats = query.data?.seats.filter((seat) => seat.state === "Pending Confirmation") ?? [];
   const returningAll = pendingSeats.every((seat) => decisions[seat.id] === "return");
   const field = useFieldValidation<string>({
@@ -48,7 +48,7 @@ export function BoardNominationDetailPage() {
     return new Intl.DateTimeFormat(i18n.language,
       { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
   }
-  // A term runs whole days, so its bounds read better without the midnight time.
+  // Nhiệm kỳ tính theo trọn ngày, nên hiển thị mốc đầu/cuối không kèm giờ nửa đêm sẽ dễ đọc hơn.
   function day(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
   }
@@ -57,7 +57,7 @@ export function BoardNominationDetailPage() {
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Error is rendered below. */ }
+    catch { /* Lỗi được hiển thị bên dưới. */ }
   }
 
   // Gửi quyết định xác nhận hoặc trả lại các ghế đang chờ xác nhận
@@ -73,7 +73,7 @@ export function BoardNominationDetailPage() {
       await action.mutateAsync({ kind: "decide", id,
         input: { confirmedSeatIds, returnedSeats, reason: decisionNote }, csrfToken: auth.data.csrfToken });
       setSaved(true);
-    } catch { /* Error is rendered below. */ }
+    } catch { /* Lỗi được hiển thị bên dưới. */ }
     finally { inFlight.current = false; }
   }
 

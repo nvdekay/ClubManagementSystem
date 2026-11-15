@@ -195,7 +195,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
         state: { $in: campaignStates }, windowStart: { $lte: now }, windowEnd: { $gt: now } }).lean();
       if (!doc) return null;
       const club = await clubs.findById(doc.clubId).select("state").lean();
-      // A suspended club's campaign stays visible, flagged, so students learn why they cannot apply.
+      // Chiến dịch của CLB bị đình chỉ vẫn hiển thị, có đánh dấu, để sinh viên biết vì sao không thể ứng tuyển.
       if (club?.state !== "Active" && club?.state !== "Suspended") return null;
       return { ...mapCampaignDetail(doc), clubSuspended: club.state === "Suspended" };
     },
@@ -219,7 +219,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
     // Tìm kiếm và phân trang sự kiện công khai theo trạng thái
     async listEvents({ status, search, page, pageSize }, now): Promise<Page<PublicEvent>> {
       const activeClubs = await clubs.find({ state: "Active" }).select("_id").lean();
-      // Mirrors publicEventStatus(): each branch is one visitor-facing status.
+      // Phản chiếu publicEventStatus(): mỗi nhánh là một trạng thái hiển thị cho khách.
       const byStatus = {
         upcoming: { state: "Upcoming", startAt: { $gt: now } },
         ongoing: { state: { $in: ["Upcoming", "Ongoing"] }, startAt: { $lte: now }, endAt: { $gt: now } },
@@ -234,7 +234,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
           ...(text ? [{ $or: [{ title: text }, { objective: text }, { venueText: text }, { clubName: text }] }] : []),
         ],
       };
-      // Upcoming reads soonest first; every other view shows the newest events first, like PDP.
+      // Sắp tới thì sớm nhất trước; mọi chế độ xem khác hiển thị sự kiện mới nhất trước, như PDP.
       const sort = status === "upcoming" ? { startAt: 1 as const, _id: 1 as const } : { startAt: -1 as const, _id: -1 as const };
       const [docs, total] = await Promise.all([
         events.find(filter).sort(sort).skip((page - 1) * pageSize).limit(pageSize).lean(),

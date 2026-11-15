@@ -56,7 +56,7 @@ function storedInput(input: BookingInput) {
 }
 
 // Giải phóng hàng loạt booking còn hiệu lực trong session, ghi audit và thông báo
-/** Runs inside the caller's transaction, including UC15's club/event cascade. */
+/** Chạy trong transaction của bên gọi, kể cả cascade CLB/sự kiện của UC15. */
 export async function releaseFacilityBookingsInSession(session: ClientSession, filter: Doc,
   source: string, reason: string, now: Date, state: "Released" | "Cancelled" = "Released"): Promise<number> {
   const docs = await m.propertyBookings!.find(filter).session(session).lean();
@@ -128,7 +128,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     const defenseQuery = m.eventDefenseSessions!.find({ propertyId: oid(input.propertyId),
       state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...interval });
     if (session) { bookingQuery.session(session); eventQuery.session(session); defenseQuery.session(session); }
-    // Operations in a Mongo transaction run sequentially.
+    // Các thao tác trong transaction Mongo chạy tuần tự.
     const bookingDocs = await bookingQuery.lean();
     const eventDocs = await eventQuery.lean();
     const defenseDocs = await defenseQuery.lean();
@@ -163,7 +163,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
   }
   // Khoá phạm vi CLB và tài sản để tuần tự hoá các ghi đồng thời
   async function lockScope(propertyId: string, clubId: string, session: ClientSession) {
-    // Serialize writers sharing a slot or a club with lifecycle/catalog transactions.
+    // Tuần tự hoá các bên ghi dùng chung một khung giờ hoặc một CLB với các transaction vòng đời/danh mục.
     await m.clubs!.updateOne({ _id: oid(clubId) }, { $inc: { __v: 1 } }, { session });
     await m.properties!.updateOne({ _id: oid(propertyId) }, { $inc: { __v: 1 } }, { session });
   }
@@ -312,7 +312,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
           semesterCode: check.semesterCode, conflictResult: check.conflictResult },
         $unset: { decisionReason: "", decidedAt: "", decidedBy: "" } }, { session });
         const property = await m.properties!.findById(before.propertyId).select({ type: 1 }).session(session).lean();
-        // UC05: the active routing rules decide, once, the SLA of this review.
+        // UC05: các rule định tuyến đang Active quyết định, một lần duy nhất, SLA của review này.
         await tasks.create([{ entityType: taskType, entityId: before._id, clubId: oid(clubId),
           title: `${before.clubName}: ${input.purpose}`, state: "Open", openedAt: now,
           ...(await routedTaskFields(session, { requestType: "PROPERTY_BOOKING", propertyType: String(property?.type ?? ""),
@@ -431,8 +431,8 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       const property = await m.properties!.findById(oid(propertyId)).lean();
       if (!property) throw new DomainError("property not found", "not_found");
       const blackouts = propertyFrom(property).blackouts;
-      // UC44 A2: pending requests, plus approved bookings and UC58 room sessions that are not over yet —
-      // a blackout never revokes a decision, so ICPDP sees them and handles them by hand.
+      // UC44 A2: yêu cầu đang chờ, cùng các booking đã duyệt và phiên phòng UC58 chưa kết thúc —
+      // blackout không bao giờ thu hồi một quyết định, nên ICPDP thấy chúng và xử lý thủ công.
       const docs = await bookings.find({ propertyId: oid(propertyId), endAt: { $gt: now },
         state: { $in: [...pendingStates, "Approved", "In Use"] } }).sort({ startAt: 1 }).lean();
       return docs.filter((doc) => blackouts.some((item) => slotsConflict(doc.startAt as Date, doc.endAt as Date,

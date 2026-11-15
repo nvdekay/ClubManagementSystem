@@ -229,7 +229,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
         const pendingSeatDocs = pending.length ? await seats.find({
           nominationId: { $in: pending.map((item) => item._id) }, state: "Pending Confirmation",
         }).session(session).lean() : [];
-        // A single-holder seat takes one holder per term; a multi-holder seat stays open.
+        // Ghế một người giữ chỉ nhận một người cho mỗi nhiệm kỳ; ghế nhiều người giữ thì vẫn mở.
         const singleHolderIds = new Set(positionDocs.filter((position) => position.isSingleHolder !== false)
           .map((position) => String(position._id)));
         if ([...occupied, ...pendingSeatDocs].some((item) => singleHolderIds.has(String(item.positionId))

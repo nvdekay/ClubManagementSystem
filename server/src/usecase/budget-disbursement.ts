@@ -71,7 +71,7 @@ export async function recordBudgetFlow(repo: BudgetDisbursementRepository,
   const flow = normalizedBudgetFlow(input, now);
   const detail = await repo.find(budgetId(id));
   if (!detail) throw new DomainError("budget not found", "not_found");
-  // Fails fast with a field-level error; the repository re-checks inside its transaction.
+  // Fail fast với lỗi ở mức trường; repository kiểm tra lại bên trong transaction của nó.
   checkFlow(detail, flow);
   return repo.record(detail.id, officerId, flow, now);
 }

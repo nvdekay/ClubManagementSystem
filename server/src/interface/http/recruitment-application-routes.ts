@@ -27,7 +27,7 @@ export interface RecruitmentApplicationRouteDeps {
 }
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i);
-// Attachments are keyed by the UUID minted at upload, not by a Mongo ObjectId.
+// Tệp đính kèm được khoá theo UUID sinh lúc upload, không phải Mongo ObjectId.
 const attachmentId = z.string().uuid();
 export const createRecruitmentApplicationBody = z.object({ campaignId: id, position: z.string().max(100) }).strict();
 const answer = z.union([z.string().max(10_000), z.array(z.string().max(500)).max(30)]);

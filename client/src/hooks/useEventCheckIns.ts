@@ -17,7 +17,7 @@ export function useEventCheckIn() {
       checkInToEvent(input.eventId, input.code, input.csrfToken),
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: key });
-      // A walk-in check-in also creates a registration, and the dashboard counts attendances.
+      // Điểm danh trực tiếp (walk-in) cũng tạo một đăng ký, và dashboard có đếm lượt tham dự.
       await client.invalidateQueries({ queryKey: ["event-registrations"] });
       await client.invalidateQueries({ queryKey: ["dashboard"] });
     },

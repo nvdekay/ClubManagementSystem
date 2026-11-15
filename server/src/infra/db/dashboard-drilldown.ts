@@ -44,7 +44,7 @@ async function summaries(docs: Doc[]): Promise<InternalEventSummary[]> {
 }
 
 // UC02: ICPDP xem danh sách sự kiện nội bộ của mọi CLB
-/** FR-UC02-02, BR53: recorded internal events of every club, newest first, filtered by club and semester. */
+/** FR-UC02-02, BR53: sự kiện nội bộ đã ghi nhận của mọi CLB, mới nhất trước, lọc theo CLB và học kỳ. */
 export async function internalEvents(filter: InternalEventFilter): Promise<InternalEventList> {
   const base = recordedInternal();
   const query: Doc = { ...base,
@@ -65,7 +65,7 @@ export async function internalEvents(filter: InternalEventFilter): Promise<Inter
 }
 
 // UC02: ICPDP xem chi tiết và điểm danh một sự kiện nội bộ
-/** The event and its attendance, read-only: ICPDP inspects, the club still owns every change. */
+/** Sự kiện và điểm danh của nó, chỉ đọc: ICPDP xem, còn mọi thay đổi vẫn thuộc về CLB. */
 export async function internalEvent(eventId: string): Promise<InternalEventDetail | null> {
   const doc = await m.events!.findOne({ _id: new Types.ObjectId(eventId), ...recordedInternal() }).lean();
   if (!doc) return null;
@@ -87,9 +87,9 @@ export async function internalEvent(eventId: string): Promise<InternalEventDetai
 
 // UC02: đọc lịch sử ban chủ nhiệm và cơ cấu vai trò của CLB
 /**
- * BR56: every role-structure version and the board seats of every term. A seat names the step
- * that confirmed it — a confirmed UC11 nomination seat, a confirmed UC13 plan for that term, or
- * otherwise the founding term approved with the UC08 application.
+ * BR56: mọi phiên bản cơ cấu vai trò và các ghế ban chủ nhiệm của từng nhiệm kỳ. Mỗi ghế nêu rõ bước
+ * đã xác nhận nó — ghế đề cử UC11 đã xác nhận, kế hoạch UC13 đã xác nhận cho nhiệm kỳ đó, hoặc
+ * nếu không thì là nhiệm kỳ sáng lập được duyệt cùng đơn UC08.
  */
 export async function clubBoardHistory(clubId: string): Promise<ClubBoardHistory | null> {
   const id = new Types.ObjectId(clubId);

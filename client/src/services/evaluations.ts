@@ -63,7 +63,7 @@ export interface EvaluationDetail {
   thresholds: { excellent: number; good: number; fair: number };
 }
 
-/** Non-2xx response; `pendingReviewClubs` names the clubs whose periodic report still waits for UC39. */
+/** Response không phải 2xx; `pendingReviewClubs` nêu các CLB có báo cáo định kỳ còn chờ UC39. */
 export class EvaluationRequestError extends ApiError {
   constructor(message: string, readonly pendingReviewClubs: string[] = []) {
     super(message);

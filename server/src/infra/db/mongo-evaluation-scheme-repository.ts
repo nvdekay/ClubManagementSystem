@@ -105,7 +105,7 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
           });
           return (await load([id]))[0]!;
         } catch (error) {
-          if (!duplicate(error)) throw error; // another officer took this version number: retry
+          if (!duplicate(error)) throw error; // cán bộ khác đã lấy số phiên bản này: thử lại
         }
       }
       throw new DomainError("could not allocate a scheme version; retry", "conflict");

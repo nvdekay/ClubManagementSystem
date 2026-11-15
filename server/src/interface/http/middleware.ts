@@ -17,10 +17,10 @@ const DOMAIN_STATUS: Record<DomainErrorKind, number> = {
 };
 
 // Ghi log JSON mỗi request kèm thời gian xử lý
-// Performance/access log: one JSON line per request with duration.
+// Log hiệu năng/truy cập: một dòng JSON cho mỗi request kèm thời lượng.
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = performance.now();
-  const { method, originalUrl } = req; // captured now — express rewrites req.path per router
+  const { method, originalUrl } = req; // lấy ngay bây giờ — express ghi đè req.path theo từng router
   res.on("finish", () => {
     console.log(
       JSON.stringify({
@@ -55,8 +55,8 @@ function accessContext(value: unknown): AccessContext | null {
 
 // Tạo middleware ghi audit mỗi lần người dùng đã đăng nhập bị từ chối 403
 /**
- * SEC-08 / AC17: the single place that audits a 403 for an authenticated caller. It runs before
- * errorHandler and never changes the response; a failed audit write is only logged.
+ * SEC-08 / AC17: nơi duy nhất audit lỗi 403 cho người gọi đã xác thực. Chạy trước
+ * errorHandler và không bao giờ đổi response; nếu ghi audit thất bại thì chỉ log.
  */
 export function accessDenialAuditor(repo: AccessDenialAuditRepository) {
   return async function auditAccessDenial(err: unknown, req: Request, res: Response, next: NextFunction) {
@@ -76,13 +76,13 @@ export function accessDenialAuditor(repo: AccessDenialAuditRepository) {
 
 // Middleware lỗi cuối cùng: đổi DomainError và lỗi khác thành envelope lỗi thống nhất
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction) {
-  if (res.headersSent) return next(err); // too late to write a body — let express close the socket
+  if (res.headersSent) return next(err); // quá muộn để ghi body — để express tự đóng socket
   if (err instanceof DomainError) {
     fail(res, req, DOMAIN_STATUS[err.kind], err.kind, err.message, err.details);
     return;
   }
-  // Framework 4xx (body-parser 400/413/415, http-errors) keep their status, but the client gets
-  // the generic reason phrase — err.message can echo raw request bytes (LOG-01). Log the real cause.
+  // Lỗi 4xx của framework (body-parser 400/413/415, http-errors) giữ nguyên status, nhưng client chỉ nhận
+  // cụm lý do chung — err.message có thể phản chiếu byte thô của request (LOG-01). Log nguyên nhân thật.
   const status = clientErrorStatus(err);
   if (status !== undefined) {
     console.warn(`client error ${status}: ${err instanceof Error ? err.message : String(err)}`);

@@ -64,7 +64,7 @@ export async function setPropertyActive(repo: PropertyRepository,
 }
 
 // ICPDP xóa tài sản chưa từng được đặt
-/** BR41: a property that has ever been booked is only deactivated, never deleted. */
+/** BR41: property từng được booking thì chỉ bị vô hiệu hoá, không bao giờ xoá. */
 export async function deleteProperty(repo: PropertyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string, now: Date) {
   const actorId = await officer(auth, actor);

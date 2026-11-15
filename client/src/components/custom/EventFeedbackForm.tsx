@@ -22,13 +22,13 @@ const ratingWords = ["eventFeedback.ratingWord1", "eventFeedback.ratingWord2", "
   "eventFeedback.ratingWord4", "eventFeedback.ratingWord5"] as const;
 
 // Chọn từ mô tả tương ứng với số sao
-/** i18n key of the word shown next to a 1–5 rating. */
+/** Key i18n của chữ hiển thị cạnh điểm đánh giá 1–5. */
 function ratingWord(rating: number) {
   return ratingWords[Math.min(Math.max(rating, 1), 5) - 1]!;
 }
 
 // Xem lại phản hồi đã gửi của chính mình
-/** Read-only view of the author's own submission (stars, comment, date). */
+/** Chế độ chỉ đọc cho phản hồi đã gửi của chính tác giả (số sao, nhận xét, ngày). */
 export function EventFeedbackSummary({ feedback }: { feedback: MyEventFeedback }) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
@@ -56,7 +56,7 @@ interface EventFeedbackFormProps {
 }
 
 // Form gửi phản hồi sự kiện: số sao, nhận xét và ẩn danh
-/** UC48: one immutable star rating + comment per checked-in attendee, optionally anonymous. */
+/** UC48: mỗi người đã điểm danh gửi một đánh giá sao kèm nhận xét, không sửa được sau khi gửi, có thể ẩn danh. */
 export function EventFeedbackForm({ eventId, closesAt, onSubmitted }: EventFeedbackFormProps) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
@@ -83,7 +83,7 @@ export function EventFeedbackForm({ eventId, closesAt, onSubmitted }: EventFeedb
         csrfToken: auth.data.csrfToken });
       onSubmitted?.(saved);
     } catch {
-      // submit.isError renders the message below.
+      // submit.isError hiển thị thông báo lỗi bên dưới.
     } finally {
       inFlight.current = false;
     }

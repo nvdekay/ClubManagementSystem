@@ -9,7 +9,7 @@ import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
-/** Collection holding each notification entity type, used to find the club it belongs to. */
+/** Collection chứa từng loại entity của thông báo, dùng để tìm CLB mà thông báo thuộc về. */
 const clubOwningCollection: Readonly<Record<string, string>> = {
   Event: "events", PropertyBooking: "propertyBookings", TransitionPlan: "transitionPlans",
   EventRegistration: "eventRegistrations", RecruitmentApplication: "recruitmentApplications",
@@ -26,7 +26,7 @@ function idText(value: unknown): string | undefined {
 }
 
 // Suy ra club id của từng thông báo từ entity hoặc payload
-/** Club ids for a page of notifications: payload first, then one lookup per entity type. */
+/** Id CLB cho một trang thông báo: ưu tiên payload, sau đó tra một lần cho mỗi loại entity. */
 async function clubIdsFor(docs: Doc[]): Promise<Map<string, string>> {
   const result = new Map<string, string>();
   const pending = new Map<string, Types.ObjectId[]>();
@@ -62,13 +62,13 @@ async function clubIdsFor(docs: Doc[]): Promise<Map<string, string>> {
 }
 
 // Điều kiện nhận diện thông báo ICPDP kiểu cũ qua khoá payload
-/** Rows written before a code was split whose payload marks them as the ICPDP copy. */
+/** Các dòng ghi trước khi một mã được tách ra mà payload đánh dấu là bản của ICPDP. */
 function legacyIcpdpRows(): Doc[] {
   return Object.entries(LEGACY_ICPDP_PAYLOAD_KEYS).map(([eventCode, key]) => ({ eventCode, [`payload.${key}`]: { $exists: true } }));
 }
 
 // Dựng điều kiện lọc inbox theo audience
-/** DB filter for the codes of one audience; unknown codes fall to the student's own inbox. */
+/** Bộ lọc DB cho các mã của một audience; mã không xác định rơi vào inbox riêng của sinh viên. */
 function audienceFilter(scope: NotificationScope | undefined): Doc {
   if (!scope) return {};
   const legacy = legacyIcpdpRows();
@@ -92,8 +92,8 @@ function inboxItem(doc: Doc, clubId: string | undefined): InboxNotification {
 
 // Repository inbox thông báo của người dùng
 /**
- * Inbox reads go by `readAt` (index `ix_notification_inbox`). Reading also moves a delivered row to
- * `Read`; a row whose email is still queued keeps `Queued` so the mail worker still sends it.
+ * Inbox đọc theo `readAt` (index `ix_notification_inbox`). Đọc cũng chuyển dòng đã gửi sang
+ * `Read`; dòng có email còn đang xếp hàng giữ `Queued` để mail worker vẫn gửi.
  */
 export function mongoNotificationRepository(): NotificationRepository {
   const notifications = m.notifications!;
@@ -104,14 +104,14 @@ export function mongoNotificationRepository(): NotificationRepository {
   }
   // Lấy thông báo CLB gửi tới người dùng kèm club id
   /**
-   * Club scope narrowed to one club: the club is resolved per row (payload or owning entity), which a
-   * query cannot express, so the user's club rows are resolved first. Inbox volumes are small.
+   * Phạm vi CLB thu hẹp xuống một CLB: CLB được xác định theo từng dòng (payload hoặc entity sở hữu), điều mà
+   * một query không diễn đạt được, nên các dòng CLB của user được xác định trước. Khối lượng inbox nhỏ.
    */
   async function clubRows(recipientUserId: Types.ObjectId, clubId: string, extra: Doc = {}) {
     const docs = await notifications.find({ recipientUserId, eventCode: { $in: CLUB_NOTIFICATION_CODES }, ...extra })
       .sort({ createdAt: -1, _id: -1 }).lean();
     const clubs = await clubIdsFor(docs);
-    // A school event belongs to ICPDP; older invitation rows carry no club, so match them by this club's invitation.
+    // Sự kiện của trường thuộc về ICPDP; các dòng lời mời cũ không có CLB, nên khớp theo lời mời của CLB này.
     const unresolved = docs.filter((doc) => !clubs.has(String(doc._id)) && doc.entityType === "Event" && doc.entityId);
     if (unresolved.length) {
       const invited = new Set((await m.eventInvitations!.find({ clubId: new Types.ObjectId(clubId),
@@ -177,9 +177,9 @@ export function mongoNotificationRepository(): NotificationRepository {
 
 // Repository outbox gửi thông báo in-app và email
 /**
- * Outbox for SCH-10. The claim is one atomic `findOneAndUpdate` that moves `dueAt` past a lease and
- * counts the attempt, so two app instances never send the same row at once (NTF-07); a worker that
- * dies mid-send leaves the row to be retried when the lease runs out.
+ * Outbox cho SCH-10. Việc claim là một `findOneAndUpdate` nguyên tử đẩy `dueAt` qua một lease và
+ * đếm lần thử, nên hai instance app không bao giờ gửi cùng một dòng cùng lúc (NTF-07); worker
+ * chết giữa lúc gửi thì dòng được thử lại khi lease hết hạn.
  */
 export function mongoMailOutboxRepository(): MailOutboxRepository {
   const notifications = m.notifications!;
@@ -210,7 +210,7 @@ export function mongoMailOutboxRepository(): MailOutboxRepository {
       await logs.create({ notificationId: new Types.ObjectId(claim.id), toEmail, status: "Sent", attempt: claim.attempt,
         ...(providerResponse ? { providerResponse } : {}), at: now });
       await notifications.updateOne({ _id: new Types.ObjectId(claim.id), state: "Queued", attempts: claim.attempt },
-        // Already opened in the inbox → straight to Read, like a delivered in-app row.
+        // Đã mở trong inbox → chuyển thẳng sang Read, như dòng in-app đã gửi.
         [{ $set: { state: { $cond: [{ $eq: [{ $ifNull: ["$readAt", null] }, null] }, "Sent", "Read"] } } },
           { $unset: "lastError" }]);
     },

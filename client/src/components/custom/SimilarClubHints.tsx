@@ -6,13 +6,13 @@ import type { SimilarClubHint } from "@/services/applications";
 
 interface SimilarClubHintsProps {
   hints: SimilarClubHint[];
-  /** The applicant sees nothing when there is no hint; ICPDP is told none were found. */
+  /** Người nộp đơn không thấy gì khi không có gợi ý; ICPDP được báo là không tìm thấy. */
   audience: "applicant" | "officer";
   className?: string;
 }
 
 // Gợi ý các CLB tương tự khi xét hồ sơ thành lập CLB
-/** Advisory similar-club hints for a founding application (UC07 applicant, UC08 ICPDP). */
+/** Gợi ý mang tính tham khảo về các CLB tương tự cho hồ sơ thành lập (UC07 người nộp, UC08 ICPDP). */
 export function SimilarClubHints({ hints, audience, className }: SimilarClubHintsProps) {
   const { t } = useTranslation();
   if (!hints.length && audience === "applicant") return null;

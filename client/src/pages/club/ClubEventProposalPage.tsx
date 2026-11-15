@@ -120,10 +120,10 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
   const existing = detail?.event;
   const [draft, setDraft] = useState<ClubEventInput>(() => (existing ? inputFromEvent(existing) : freshEvent()));
   const [editorOpenedAt] = useState(() => Date.now());
-  // Latest server copy of the event once this form has saved it; newer than `existing` until the detail refetches.
+  // Bản mới nhất của sự kiện trên server sau khi form này lưu; mới hơn `existing` cho đến khi chi tiết được tải lại.
   const [createdDraft, setCreatedDraft] = useState<ClubEvent | null>(null);
   const [formError, setFormError] = useState<unknown>(null);
-  // Kept in memory until the event exists, so closing the tab never leaves an orphan upload.
+  // Giữ trong bộ nhớ cho đến khi sự kiện tồn tại, để đóng tab không bao giờ để lại tệp tải lên mồ côi.
   const [pendingFile, setPendingFile] = useState<{ file: File; mimeType: string } | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [documentMissing, setDocumentMissing] = useState(false);
@@ -179,7 +179,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         ? draft.occurrences
         : [{ startAt: draft.startAt, endAt: draft.endAt, propertyId: draft.propertyId }],
     ),
-    // Plan B: a members-only proposal must ask for budget; a self-funded one goes through the internal event flow.
+    // Phương án B: đề xuất chỉ dành cho thành viên phải xin ngân sách; đề xuất tự túc kinh phí đi theo luồng sự kiện nội bộ.
     budget: draft.audienceScope === "MEMBERS_ONLY" && draft.budgetLines.length === 0 ? t("clubEvents.membersOnlyNeedsBudget") : null,
   };
   draft.budgetLines.forEach((line, index) => {
@@ -223,10 +223,10 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     if (!activeId) return;
     try {
       const access = await documentAccess.mutateAsync({ id: activeId, inline });
-      // A new tab keeps this form mounted whether the browser downloads or displays the file.
+      // Mở tab mới giúp form này vẫn được giữ nguyên dù trình duyệt tải xuống hay hiển thị tệp.
       window.open(access.url, "_blank", "noopener,noreferrer");
     } catch {
-      // Mutation error is rendered under the document.
+      // Lỗi của mutation được hiển thị bên dưới tài liệu.
     }
   }
 
@@ -263,7 +263,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
       return;
     }
 
-    // Upload only once the event exists; its response carries the bumped version the submit must send.
+    // Chỉ tải lên khi sự kiện đã tồn tại; response của nó mang version mới mà bước submit phải gửi.
     if (pendingFile) {
       try {
         const uploaded = await mutation.mutateAsync({
@@ -277,7 +277,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         setCreatedDraft(savedEvent);
         setPendingFile(null);
       } catch (error) {
-        // The draft now exists (createdDraft), so a retry saves it instead of creating a duplicate.
+        // Bản nháp đã tồn tại (createdDraft), nên thử lại sẽ lưu vào nó thay vì tạo bản trùng.
         setUploadFailed(true);
         setFormError(error);
         return;
@@ -357,7 +357,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
                 <AppSkeleton className="mt-1 h-4 w-48" />
               )}
             </div>
-            {/* Attachment or redirect to a signed URL; a new tab keeps this form mounted either way. */}
+            {/* Tệp đính kèm hoặc chuyển hướng tới URL có chữ ký; mở tab mới giữ form này nguyên vẹn trong cả hai trường hợp. */}
             <a href={EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className={secondaryLinkClass}>
               <AppIcon name="download" className="size-4" />
               {t("clubEvents.templateDownload")}
@@ -906,7 +906,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
 }
 
 // Trang tạo hoặc sửa đề xuất sự kiện công khai gửi ICPDP duyệt
-/** Dedicated page for creating or editing a club event proposal (UC25). */
+/** Trang riêng để tạo hoặc sửa đề xuất sự kiện của CLB (UC25). */
 export function ClubEventProposalPage() {
   const { clubId = "", eventId } = useParams();
   const { t } = useTranslation();

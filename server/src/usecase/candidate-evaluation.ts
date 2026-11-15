@@ -14,7 +14,7 @@ function assertIds(ids: Record<string, string>): void {
 }
 
 // Liệt kê đánh giá ứng viên theo đơn kèm rubric và thống kê tổng hợp
-/** UC19 A1/UC18 step 4: campaign rubric + evaluations grouped by application, with aggregate and dispersion. */
+/** UC19 A1/UC18 bước 4: rubric của chiến dịch + các đánh giá nhóm theo đơn, kèm tổng hợp và độ phân tán. */
 export async function listCandidateEvaluations(repo: CandidateEvaluationRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, campaignId: string,
   now = new Date()) {
@@ -27,14 +27,14 @@ export async function listCandidateEvaluations(repo: CandidateEvaluationReposito
     byApplication.set(evaluation.applicationId,
       [...byApplication.get(evaluation.applicationId) ?? [], evaluation]);
   }
-  // The rubric travels with the list: reviewers may lack club.recruitment.manage to read the campaign.
+  // Rubric đi kèm danh sách: reviewer có thể không có club.recruitment.manage để đọc chiến dịch.
   return { rubric: found.rubric, applications: [...byApplication].map(([applicationId, evaluations]) => ({
     applicationId, evaluations, summary: summarizeEvaluations(found.rubric, evaluations),
   })) };
 }
 
 // Reviewer tạo hoặc cập nhật đánh giá của mình cho đơn đã Shortlisted
-/** UC19 main flow: create or update the caller's own evaluation of a Shortlisted application. */
+/** UC19 luồng chính: tạo hoặc cập nhật đánh giá của chính người gọi cho một đơn Shortlisted. */
 export async function recordCandidateEvaluation(repo: CandidateEvaluationRepository,
   access: ClubAccessRepository, actor: AccessActor | null,
   input: { clubId: string; campaignId: string; applicationId: string;

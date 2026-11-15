@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // Ảnh bìa thẻ CLB, dùng chữ cái đầu khi chưa có logo hoặc ảnh lỗi
-/** The banner of a club card: its logo blown up and faded, or its initial when there is none. */
+/** Banner của thẻ CLB: logo phóng to và làm mờ, hoặc chữ cái đầu khi chưa có logo. */
 export function ClubCover({ name, logoUrl }: { name: string; logoUrl?: string }) {
   const [failed, setFailed] = useState(false);
   return (

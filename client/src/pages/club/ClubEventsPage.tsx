@@ -67,7 +67,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     return next;
   }, { replace: true }), [setSearchParams]);
   // Cuộn tới khung chi tiết sự kiện đang chọn
-  // The detail panel renders under the table, off-screen on most laptops; bring it into view on pick.
+  // Khung chi tiết nằm dưới bảng, ngoài màn hình trên hầu hết laptop; cuộn nó vào vùng nhìn thấy khi chọn.
   function revealDetail() {
     requestAnimationFrame(() => document.getElementById("club-event-detail")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
@@ -105,7 +105,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const feedback = useClubEventFeedback(clubId, compare, allowed && mode === "feedback");
   const rows = events.data ?? eventsEmpty;
   const active = mode === "events" ? detail.data?.event : rows.find((e) => e.id === selected);
-  // The latest revision request on the open proposal: which parts ICPDP asked the club to fix.
+  // Yêu cầu chỉnh sửa mới nhất trên đề xuất đang mở: những phần ICPDP yêu cầu CLB sửa.
   const revisionRequest = [...(detail.data?.decisions ?? [])].reverse().find((d) => d.outcome === "Request revision");
   const revisionSections = active?.state === "Revision Requested" ? (revisionRequest?.comments as DecisionComments | undefined)?.sections ?? [] : [];
   const format = useMemo(() => new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }), [i18n.language]);
@@ -120,8 +120,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const table = useTable({ features: appTableFeatures, columns, data: filtered, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   const people = participants.data ?? participantsEmpty;
   const [attendanceFilter, setAttendanceFilter] = useState<"all" | "checked" | "missing">("all");
-  // Check-in is open once the event is published and running, until attendance is finalized (UC31, UC32).
-  // Internal events mirror proposals: PUBLIC ↔ Upcoming, ONGOING ↔ Ongoing, FINISH ↔ Completed.
+  // Điểm danh mở khi sự kiện đã công khai và đang diễn ra, cho đến khi chốt danh sách tham dự (UC31, UC32).
+  // Sự kiện nội bộ tương ứng với đề xuất: PUBLIC ↔ Upcoming, ONGOING ↔ Ongoing, FINISH ↔ Completed.
   const published = Boolean(active && ["Upcoming", "PUBLIC"].includes(active.state));
   const finished = Boolean(active && ["Completed", "FINISH"].includes(active.state));
   const canCheckIn = Boolean(active && !active.attendanceFinalized && ["Upcoming", "Ongoing", "Completed", "PUBLIC", "ONGOING", "FINISH"].includes(active.state));
@@ -142,13 +142,13 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   // Mở tài liệu đề xuất sự kiện (tải về hoặc xem) qua URL có chữ ký
   async function downloadDocument(id: string, revisionNo?: number, inline = false) {
     try { window.open((await documentAccess.mutateAsync({ id, revisionNo, inline })).url, "_blank", "noopener,noreferrer"); }
-    catch { /* Mutation error is rendered next to the file. */ }
+    catch { /* Lỗi của mutation được hiển thị cạnh tệp. */ }
   }
   // Xác nhận sự kiện nội bộ chuyển từ DRAFT sang CREATED, yêu cầu báo trước 24 giờ
   async function confirmInternal() {
     if (!auth.data || !active) return;
     setSuccess(false); setFormError(null);
-    // Same 24-hour notice the server enforces on DRAFT → CREATED; saves a round trip.
+    // Cùng quy tắc báo trước 24 giờ mà server áp cho DRAFT → CREATED; giúp tiết kiệm một lượt gọi server.
     if (Date.parse(active.startAt) - Date.now() < 24 * 3600_000) { setFormError(new Error("internal event must start at least 24 hours from now")); return; }
     try { await mutation.mutateAsync({ kind: "internal-confirm", id: active.id, expectedVersion: active.version, csrfToken: auth.data.csrfToken }); setSuccess(true); }
     catch (error) { setFormError(error); }
@@ -182,7 +182,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   // Gửi thao tác đang chọn lên server sau khi kiểm tra form
   async function execute(event: FormEvent) {
     event.preventDefault(); if (!active || !operation || !opField.touchAll()) return;
-    opField.reset(); // valid now; a later failure is a server error, shown above the form
+    opField.reset(); // đã hợp lệ; lỗi về sau là lỗi từ server, hiển thị phía trên form
     try {
       const version = { expectedVersion: active.version };
       if (operation === "publish") await runAction("publish", { ...version, ...(!noRegistration ? { registrationOpenAt: iso(registrationOpen), registrationCloseAt: iso(registrationClose) } : {}),
@@ -384,7 +384,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
                 )}
                 {active.state === "DRAFT" && <AppButton disabled={mutation.isPending} onClick={() => void confirmInternal()}>{t("clubEvents.createInternalAction")}</AppButton>}
                 {!cancellationPending && ["Approved", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("publish")}>{t(internal ? "clubEvents.publishMembers" : "clubEvents.publish")}</AppButton>}
-                {/* A published internal event (PUBLIC, ONGOING) keeps its schedule: cancellation only. */}
+                {/* Sự kiện nội bộ đã công khai (PUBLIC, ONGOING) giữ nguyên lịch: chỉ được huỷ. */}
                 {!cancellationPending && ["Approved", "Upcoming", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("reschedule")}>{t("clubEvents.reschedule")}</AppButton>}
                 {!cancellationPending && ["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(active.state) && !active.attendanceFinalized && (
                   <AppButton variant="ghost" disabled={withinCancelCutoff} onClick={() => openOperation("cancel")}>

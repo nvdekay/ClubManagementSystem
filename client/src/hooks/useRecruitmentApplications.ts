@@ -92,7 +92,7 @@ export function useSaveCandidateEvaluation() {
     scores: Record<string, number>; comment?: string; csrfToken: string }) =>
     saveCandidateEvaluation(input.clubId, input.campaignId, input.applicationId,
       { scores: input.scores, ...(input.comment ? { comment: input.comment } : {}) }, input.csrfToken),
-  // The summary (mean/dispersion) is computed server-side, so refetch instead of patching the cache.
+  // Phần tóm tắt (trung bình/độ phân tán) do server tính, nên tải lại thay vì vá cache.
   onSuccess: async (_saved, input) => queryClient.invalidateQueries({ queryKey: evaluationsKey(input.clubId, input.campaignId) }) });
 }
 

@@ -6,14 +6,14 @@ import type { AnnualReportDocument, ExportCell, ExportFileWriter, ExportTable } 
 import type { Classification } from "../../domain/evaluation.js";
 
 const require = createRequire(import.meta.url);
-// DejaVu covers Vietnamese diacritics; PDFKit's built-in fonts do not.
+// DejaVu hỗ trợ dấu tiếng Việt; font tích hợp sẵn của PDFKit thì không.
 const regularFont = require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans.ttf");
 const boldFont = require.resolve("dejavu-fonts-ttf/ttf/DejaVuSans-Bold.ttf");
 
 // Escape một ô CSV và chặn CSV injection
 function csvCell(value: ExportCell): string {
   const raw = value === null ? "" : String(value);
-  // Quote when needed, and neutralise spreadsheet formulas (CSV injection).
+  // Đặt trong dấu nháy khi cần, và vô hiệu hoá công thức spreadsheet (CSV injection).
   const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
   return /[",\r\n]/.test(safe) ? `"${safe.replaceAll("\"", "\"\"")}"` : safe;
 }
@@ -22,12 +22,12 @@ function csvCell(value: ExportCell): string {
 function csv(heading: string[], table: ExportTable): Buffer {
   const lines = [...heading.map((line) => csvCell(line)), "",
     table.columns.map(csvCell).join(","), ...table.rows.map((row) => row.map(csvCell).join(","))];
-  // BOM so Excel opens UTF-8 Vietnamese text correctly.
+  // BOM để Excel mở đúng văn bản tiếng Việt UTF-8.
   return Buffer.from(`\uFEFF${lines.join("\r\n")}\r\n`, "utf8");
 }
 
 // Ghi tiêu đề và bảng dữ liệu vào một sheet Excel, cố định dòng header
-/** Title, heading lines, then the table with a frozen header; an empty table says so instead of looking broken. */
+/** Tiêu đề, các dòng đầu mục, rồi bảng với header cố định; bảng rỗng thì có thông báo thay vì trông như bị lỗi. */
 function tableSheet(sheet: ExcelJS.Worksheet, title: string, heading: string[], table: ExportTable): void {
   sheet.addRow([title]).font = { bold: true, size: 14 };
   for (const line of heading) sheet.addRow([line]).font = { italic: true };
@@ -46,7 +46,7 @@ function tableSheet(sheet: ExcelJS.Worksheet, title: string, heading: string[], 
 async function xlsx(title: string, heading: string[], table: ExportTable): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "UCMS";
-  // Excel sheet names: at most 31 characters, none of []:*?/\ (the COMPLIANCE title has a "/").
+  // Tên sheet Excel: tối đa 31 ký tự, không chứa []:*?/\ (tiêu đề COMPLIANCE có dấu "/").
   tableSheet(workbook.addWorksheet(title.replace(/[[\]:*?/\\]/g, "-").slice(0, 31)), title, heading, table);
   return Buffer.from(await workbook.xlsx.writeBuffer());
 }
@@ -114,7 +114,7 @@ function drawTable(doc: PDFKit.PDFDocument, table: ExportTable): void {
   doc.x = doc.page.margins.left;
 }
 
-/** Report text is Vietnamese, like every exported file. */
+/** Văn bản báo cáo là tiếng Việt, như mọi file xuất. */
 const CLASSIFICATION_LABEL: Record<Classification, string> = {
   EXCELLENT: "Xuất sắc", GOOD: "Tốt", FAIR: "Khá", NEEDS_IMPROVEMENT: "Cần cải thiện",
 };
@@ -144,12 +144,12 @@ interface Block {
   heading: string;
   lines: string[];
   table?: ExportTable;
-  /** Printed after the table. */
+  /** In sau bảng. */
   closing?: string[];
 }
 
 // Dựng nội dung sáu phần báo cáo năm dùng chung cho PDF và Excel
-/** The six sections (ASM-AR-01) as text blocks and tables, shared by the pdf and the xlsx. */
+/** Sáu phần (ASM-AR-01) dưới dạng khối văn bản và bảng, dùng chung cho pdf và xlsx. */
 function annualContent({ report, achievements, remarks }: AnnualReportDocument) {
   const { overview, evaluation, dimensions, finance, compliance } = report;
   const latest = [...report.terms].reverse().find((term) => term.published);

@@ -2,7 +2,7 @@ import type { AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import type { RecruitmentApplication } from "@/services/recruitmentApplications";
 
 // Định dạng điểm: số nguyên giữ nguyên, số thập phân lấy 1 chữ số
-/** Shared by the review table, the detail dialog and the evaluation panel (UC18/UC19). */
+/** Dùng chung cho bảng xét duyệt, hộp chi tiết và bảng đánh giá (UC18/UC19). */
 export function formatScore(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }

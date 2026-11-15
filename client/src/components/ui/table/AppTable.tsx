@@ -14,10 +14,10 @@ import {
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 
-// One feature set for every App table — v9 only ships APIs for registered features,
-// so the whole ui/table/ kit (pagination, column toggle) types against this.
-// sortFns must list every fn the 'auto' resolver can pick for our columns
-// (string data → "text"/"alphanumeric"), or v9 silently falls back to sortFn_basic.
+// Một bộ tính năng dùng chung cho mọi bảng App — v9 chỉ cung cấp API cho các tính năng đã đăng ký,
+// nên toàn bộ bộ ui/table/ (phân trang, bật/tắt cột) khai báo kiểu dựa trên bộ này.
+// sortFns phải liệt kê mọi hàm mà bộ chọn 'auto' có thể chọn cho các cột của ta
+// (dữ liệu chuỗi → "text"/"alphanumeric"), nếu không v9 sẽ âm thầm quay về sortFn_basic.
 export const appTableFeatures = tableFeatures({
   columnVisibilityFeature,
   rowPaginationFeature,
@@ -30,9 +30,9 @@ export type AppTableFeatures = typeof appTableFeatures;
 
 interface AppTableProps<T extends RowData> {
   table: ReactTable<AppTableFeatures, T>;
-  /** Rendered inside the body when there are no rows — header stays visible. */
+  /** Hiển thị trong phần thân khi không có dòng nào — header vẫn hiện. */
   emptyMessage: string;
-  /** Initial load: renders a page of skeleton rows instead of the empty state. */
+  /** Lần tải đầu: hiển thị một trang các dòng skeleton thay vì trạng thái rỗng. */
   loading?: boolean;
 }
 
@@ -41,7 +41,7 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
   const rows = table.getRowModel().rows;
   return (
     <div aria-busy={loading} className="overflow-x-auto rounded-xl border border-border-app bg-bg-app">
-      {/* min-w: on phones the wrapper scrolls sideways instead of squeezing columns until emails break per letter. */}
+      {/* min-w: trên điện thoại wrapper cuộn ngang thay vì ép cột đến mức email bị ngắt từng chữ. */}
       <table className="w-full min-w-3xl text-sm">
         <thead className="bg-surface-app">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -87,7 +87,7 @@ export function AppTable<T extends RowData>({ table, emptyMessage, loading }: Ap
           ) : rows.length === 0 ? (
             <tr className="border-t border-border-app">
               <td colSpan={table.getVisibleLeafColumns().length} className="px-4 py-10 sm:text-center">
-                {/* Pinned to the visible part of the scroll box so phones never cut the message off. */}
+                {/* Ghim vào phần đang nhìn thấy của khung cuộn để điện thoại không bao giờ bị cắt mất thông báo. */}
                 <div className="sticky left-4 max-w-[calc(100vw-6rem)] sm:max-w-none"><AppEmptyState message={emptyMessage} /></div>
               </td>
             </tr>

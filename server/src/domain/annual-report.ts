@@ -2,7 +2,7 @@ import { DomainError } from "./errors.js";
 import { classify, type Classification } from "./evaluation.js";
 import { EVALUATION_DIMENSIONS, type DimensionCode, type SchemeThresholds } from "./evaluation-scheme.js";
 
-/** UC55 A2: an academic year is SPRING → SUMMER → FALL of one calendar year (FPT University convention). */
+/** UC55 A2: một năm học gồm SPRING → SUMMER → FALL của cùng một năm dương lịch (quy ước của FPT University). */
 export const SEASONS = ["SPRING", "SUMMER", "FALL"] as const;
 export type Season = (typeof SEASONS)[number];
 export type Trend = "UP" | "DOWN" | "STABLE";
@@ -11,12 +11,12 @@ export const ANNUAL_FORMATS = ["pdf", "xlsx"] as const;
 export type AnnualFormat = (typeof ANNUAL_FORMATS)[number];
 export const MAX_REMARKS = 2_000;
 export const MAX_ACHIEVEMENTS = 20;
-/** Points between the first and the last evaluated term that make a trend UP or DOWN. */
+/** Số điểm chênh giữa kỳ đầu và kỳ cuối được đánh giá để coi xu hướng là UP hoặc DOWN. */
 export const TREND_DELTA = 5;
 const CLASSIFICATIONS: Classification[] = ["EXCELLENT", "GOOD", "FAIR", "NEEDS_IMPROVEMENT"];
 
 // Tách mã kỳ (vd `Fall 2026`) thành mùa và năm, trả null nếu không hợp lệ
-/** `Fall 2026`, `FALL 2026`, `fall2026` → FALL of 2026; any other code belongs to no academic year. */
+/** `Fall 2026`, `FALL 2026`, `fall2026` → FALL năm 2026; mã khác không thuộc năm học nào. */
 export function parsePeriodCode(code: string): { season: Season; year: number } | null {
   const match = /^\s*(spring|summer|fall)\s*(\d{4})\s*$/i.exec(code);
   return match ? { season: match[1]!.toUpperCase() as Season, year: Number(match[2]) } : null;
@@ -30,7 +30,7 @@ export function validateAnnualYear(year: unknown): number {
   return year;
 }
 
-/** What the year's Published evaluations, Accepted periodic reports and clubs provide (all confirmed by ICPDP). */
+/** Dữ liệu từ các đánh giá Published, báo cáo định kỳ Accepted và CLB của năm (đều đã được ICPDP xác nhận). */
 export interface AnnualEvaluation {
   clubId: string;
   periodCode: string;
@@ -40,7 +40,7 @@ export interface AnnualEvaluation {
   classification?: Classification;
   thresholds: SchemeThresholds;
   dimensions: { code: string; score?: number; insufficientData: boolean }[];
-  /** Raw figures from the evaluation's evidence (EVL-02), so the report matches the scorecard sent to the club. */
+  /** Số liệu gốc từ bằng chứng của đánh giá (EVL-02), để báo cáo khớp với bảng điểm đã gửi cho CLB. */
   metrics: { activeMembers?: number; completedEvents?: number; attendances?: number; openViolations?: number };
 }
 
@@ -84,12 +84,12 @@ export interface AnnualClubRow {
   field: string | null;
   state: string;
   terms: Record<Season, AnnualTermScore | null>;
-  /** Terms with a Published evaluation, out of 3; 0 means "no evaluation" and the row sits at the bottom. */
+  /** Số kỳ có đánh giá Published (trên 3); 0 nghĩa là "chưa có đánh giá" và dòng đó nằm cuối bảng. */
   evaluatedTerms: number;
   yearScore: number | null;
   yearClassification: Classification | null;
   trend: Trend | null;
-  /** Year average of each dimension, skipping terms where it had insufficient data. */
+  /** Trung bình cả năm của từng tiêu chí, bỏ qua các kỳ không đủ dữ liệu. */
   dimensions: Record<DimensionCode, number | null>;
 }
 
@@ -104,7 +104,7 @@ export interface AnnualAchievement {
 
 export interface AnnualReport {
   year: number;
-  /** Fewer than three terms have Published evaluations: the report is provisional. */
+  /** Có ít hơn ba kỳ có đánh giá Published: báo cáo chỉ mang tính tạm thời. */
   provisional: boolean;
   terms: AnnualYearOption["terms"];
   missingTerms: Season[];
@@ -161,7 +161,7 @@ function bySeason<T>(make: (season: Season) => T): Record<Season, T> {
 }
 
 // Liệt kê các năm có ít nhất một đánh giá Published cùng trạng thái ba kỳ
-/** Years that have at least one Published evaluation, newest first, with the state of their three terms. */
+/** Các năm có ít nhất một đánh giá Published, mới nhất trước, kèm trạng thái ba kỳ của năm đó. */
 export function annualYears(publishedPeriodCodes: string[]): AnnualYearOption[] {
   const years = new Map<number, Record<Season, string[]>>();
   for (const code of publishedPeriodCodes) {
@@ -187,7 +187,7 @@ function sum(values: (number | undefined)[]): number {
 }
 
 // Kiểm tra ngày tạo có thuộc năm đã cho theo giờ Việt Nam
-/** Calendar year in Vietnam time, like the semester windows. */
+/** Năm dương lịch theo giờ Việt Nam, giống các khoảng thời gian của học kỳ. */
 function createdIn(date: Date | undefined, year: number): boolean {
   return date !== undefined && new Date(date.getTime() + 7 * 3_600_000).getUTCFullYear() === year;
 }
@@ -204,14 +204,14 @@ function trendOf(first: number, last: number): Trend {
 }
 
 // Dựng báo cáo năm sáu phần từ các nguồn đã được ICPDP xác nhận
-/** Builds the six sections of the annual report from the confirmed sources of one year. Never recomputes a score. */
+/** Dựng sáu phần của báo cáo năm từ các nguồn đã xác nhận của một năm. Không bao giờ tính lại điểm. */
 export function buildAnnualReport(year: number, source: AnnualSource): AnnualReport {
   const clubs = new Map(source.clubs.map((club) => [club.id, club]));
   function nameOf(clubId: string): string {
     return clubs.get(clubId)?.name ?? "";
   }
 
-  // One evaluation per club and term: two codes of the same term merge, and the later publication wins.
+  // Mỗi CLB mỗi kỳ chỉ có một đánh giá: hai mã của cùng một kỳ được gộp lại, bản công bố sau thắng.
   const evaluations = new Map<string, AnnualEvaluation & { season: Season }>();
   for (const item of source.evaluations) {
     const parsed = parsePeriodCode(item.periodCode);
@@ -230,7 +230,7 @@ export function buildAnnualReport(year: number, source: AnnualSource): AnnualRep
   const terms = SEASONS.map((season) => ({ season, periodCodes: termCodes[season].sort(), published: termCodes[season].length > 0 }));
   const missingTerms = terms.filter((term) => !term.published).map((term) => term.season);
   const latestSeason = [...SEASONS].reverse().find((season) => termCodes[season].length > 0);
-  // One set of thresholds for the whole report: the scheme of the latest term, from its latest publication.
+  // Cả báo cáo dùng một bộ ngưỡng: lấy scheme của kỳ mới nhất, từ lần công bố mới nhất của kỳ đó.
   const thresholds = scored.filter((item) => item.season === latestSeason)
     .sort((left, right) => (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0))[0]?.thresholds
     ?? { excellent: 85, good: 70, fair: 50 };

@@ -139,8 +139,8 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
 
 // Nạp danh mục lĩnh vực mặc định cho database mới
 /**
- * Seed the default catalog on a fresh database. Once ICPDP has edited the catalog (any ClubField
- * audit row) it is never re-seeded, so deleting every field stays deleted across restarts.
+ * Seed danh mục mặc định trên database mới. Khi ICPDP đã sửa danh mục (bất kỳ dòng audit ClubField
+ * nào) thì không seed lại nữa, nên xoá hết các lĩnh vực vẫn giữ nguyên là đã xoá sau các lần khởi động lại.
  */
 export async function ensureDefaultClubFields(now = new Date()): Promise<void> {
   const fields = ucmsModels.clubFields!;

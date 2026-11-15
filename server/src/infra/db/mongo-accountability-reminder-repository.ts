@@ -45,7 +45,7 @@ async function remindOnce(
     { session },
   );
   await queueNotifications(session, await clubBoardUserIds(clubId, session), code, type, id, { dueAt }, now);
-  // Escalations also reach ICPDP, under their own code so they show in the officers' workspace.
+  // Leo thang cũng gửi tới ICPDP, dưới mã riêng để hiện trong workspace của cán bộ.
   const officerCode = OFFICER_CODES[code];
   if (officerCode) {
     const roles = await m

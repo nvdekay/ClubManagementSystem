@@ -1,6 +1,6 @@
 import { DomainError } from "./errors.js";
 
-/** The shared scorecard (BR60, SRS §9): names and measures are defined by the system, not by ICPDP. */
+/** Bảng điểm dùng chung (BR60, SRS §9): tên và cách đo do hệ thống định nghĩa, không phải ICPDP. */
 export const EVALUATION_DIMENSIONS = [
   { code: "D1", name: "Số người tham gia", core: true,
     measures: "Lượt đăng ký, lượt check-in đã chốt, số người tham dự không trùng lặp, tỉ lệ có mặt, số thành viên active" },
@@ -25,13 +25,13 @@ export type SchemeState = "Draft" | "Active" | "Superseded";
 
 export interface SchemeDimension {
   code: DimensionCode;
-  /** Whole percent; the active scheme's weights add up to exactly 100 (BR29). */
+  /** Phần trăm nguyên; trọng số của scheme đang hiệu lực cộng lại đúng bằng 100 (BR29). */
   weight: number;
-  /** Whether ICPDP may score this dimension by hand when reviewing (UC43 FR-02). */
+  /** ICPDP có được chấm tay tiêu chí này khi rà soát hay không (UC43 FR-02). */
   allowsManual: boolean;
 }
 
-/** Minimum total score of each band; anything below `fair` is "needs improvement". */
+/** Tổng điểm tối thiểu của mỗi mức; dưới `fair` là "cần cải thiện". */
 export interface SchemeThresholds {
   excellent: number;
   good: number;
@@ -55,14 +55,14 @@ export interface EvaluationScheme extends SchemeSettings {
 
 export interface EvaluationSchemeRepository {
   list(): Promise<EvaluationScheme[]>;
-  /** Periods that already have an evaluation; their scheme version is pinned for the whole period (BR51, BR60). */
+  /** Các kỳ đã có đánh giá; phiên bản scheme của chúng bị cố định cho cả kỳ (BR51, BR60). */
   evaluatedPeriods(): Promise<string[]>;
   find(id: string): Promise<EvaluationScheme | null>;
-  /** Next version for the period is assigned by the repository. */
+  /** Phiên bản kế tiếp của kỳ do repository gán. */
   createDraft(periodCode: string, settings: SchemeSettings, actorId: string, now: Date): Promise<EvaluationScheme>;
   updateDraft(id: string, settings: SchemeSettings, actorId: string, now: Date): Promise<EvaluationScheme>;
-  /** Activates a draft and supersedes the period's previous active scheme, atomically; refused once the period has an
-   * evaluation, so every club of a period is scored with one version (BR51, BR60). */
+  /** Kích hoạt bản nháp và thay thế scheme đang hiệu lực trước đó của kỳ, nguyên tử; bị từ chối khi kỳ đã có
+   * đánh giá, để mọi CLB trong một kỳ được chấm bằng cùng một phiên bản (BR51, BR60). */
   activate(id: string, actorId: string, now: Date): Promise<EvaluationScheme>;
   deleteDraft(id: string, actorId: string, now: Date): Promise<void>;
 }
@@ -87,7 +87,7 @@ function invalid(field: string): never {
 const order = new Map(EVALUATION_DIMENSIONS.map((dimension, index) => [dimension.code as string, index]));
 
 // Kiểm tra cấu trúc cấu hình thang đánh giá của bản nháp
-/** Shape rules every saved draft must follow; weights may still be unbalanced until activation. */
+/** Quy tắc về cấu trúc mà mọi bản nháp được lưu phải tuân theo; trọng số có thể chưa cân đối cho đến khi kích hoạt. */
 export function validateSchemeSettings(input: SchemeSettings): SchemeSettings {
   if (!Array.isArray(input.dimensions) || !input.dimensions.length) invalid("dimensions");
   const codes = input.dimensions.map((dimension) => dimension.code);
@@ -108,7 +108,7 @@ export function validateSchemeSettings(input: SchemeSettings): SchemeSettings {
 }
 
 // Liệt kê các điều còn chặn việc kích hoạt thang đánh giá
-/** BR29 + BR60: what still blocks activating a draft. */
+/** BR29 + BR60: những gì còn chặn việc kích hoạt bản nháp. */
 export function schemeActivationIssues(settings: SchemeSettings): ActivationIssue[] {
   const issues: ActivationIssue[] = [];
   if (settings.dimensions.reduce((sum, dimension) => sum + dimension.weight, 0) !== 100) issues.push("totalWeight");

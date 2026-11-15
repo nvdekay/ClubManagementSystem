@@ -412,7 +412,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
           action: { kind: "submit", id: report.id, revision: saved.revision ?? (report.revision ?? 0) + 1 },
         });
       }
-    } catch { /* The mutation error is displayed below. */ }
+    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
   const status = report.state as "Draft" | "Submitted" | "Accepted" | "Returned for correction";
@@ -463,7 +463,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         </AppNotice>
       )}
 
-      {/* 1. Active Members */}
+      {/* 1. Thành viên Active */}
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -549,7 +549,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         <AppFieldError message={field.error("members")} />
       </div>
 
-      {/* 2. Organized Events */}
+      {/* 2. Sự kiện đã tổ chức */}
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -636,7 +636,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         <AppFieldError message={field.error("events")} />
       </div>
 
-      {/* 3. Achievements */}
+      {/* 3. Thành tích */}
       <div className="space-y-3 border-t border-border-app pt-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -692,7 +692,7 @@ export function ClubPeriodicReportEditor({ clubId, csrfToken, report }: Props) {
         <AppFieldError message={field.error("achievements")} />
       </div>
 
-      {/* 4. Additional ICPDP Custom Fields */}
+      {/* 4. Các trường tuỳ chỉnh bổ sung của ICPDP */}
       {customFields.length > 0 && (
         <div className="space-y-4 border-t border-border-app pt-5">
           <h3 className="font-heading text-sm font-semibold">{t("clubPeriodicReports.customFieldsTitle")}</h3>

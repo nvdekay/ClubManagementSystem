@@ -13,7 +13,7 @@ export interface ApplicationDocument {
   fileName: string;
   mimeType: string;
   bytes: number;
-  /** Only set for the proposed logo, which is stored publicly so it can be previewed. */
+  /** Chỉ có với logo đề xuất, được lưu công khai để xem trước. */
   publicUrl?: string;
   uploadedAt: string;
 }
@@ -29,12 +29,12 @@ export interface DraftInput {
 }
 
 export interface ApplicationDraft extends DraftInput {
-  /** Catalog name of the chosen field, resolved by the server. */
+  /** Tên trong danh mục của lĩnh vực đã chọn, do server phân giải. */
   field: string;
   documents: ApplicationDocument[];
 }
 
-/** Advisory similar-club hint (UC07/UC08); never blocks submitting or reviewing. */
+/** Gợi ý tham khảo về CLB tương tự (UC07/UC08); không bao giờ chặn việc nộp hay xét duyệt. */
 export interface SimilarClubHint {
   kind: "CLUB" | "APPLICATION";
   id: string;
@@ -43,13 +43,13 @@ export interface SimilarClubHint {
   state: string;
   score: number;
   level: "HIGH" | "MEDIUM";
-  /** Component similarities in 0–1; `content` is null when one side has no description. */
+  /** Độ tương đồng từng thành phần trong khoảng 0–1; `content` là null khi một bên không có mô tả. */
   reasons: { name: number; content: number | null; field: number; sharedWords: string[] };
 }
 
 export type FoundingField = "summary" | "objectives" | "proposal" | "logo" | "fanpageUrl" | "contactEmail";
 
-/** Everything that blocks submission, as reported by the server preview or a rejected submit. */
+/** Mọi thứ chặn việc nộp, theo bản xem trước của server hoặc khi nộp bị từ chối. */
 export type FoundingIssue = "clubName" | "field" | FoundingField | "foundersTooFew" | "applicantNotFounder"
   | "duplicateFounder" | "leaderCount" | "viceLeaderCount" | "fieldUnavailable" | "leaderHoldsAnotherClub";
 
@@ -78,14 +78,14 @@ export interface ApplicationRecord {
   createdAt: string;
 }
 
-/** A founding member shown by name and email instead of a raw account id. */
+/** Thành viên sáng lập hiển thị bằng tên và email thay vì id tài khoản thô. */
 export interface FounderProfile {
   id: string;
   displayName: string;
   email: string;
 }
 
-/** ICPDP decision as shown to the applicant (no internal review note). */
+/** Quyết định của ICPDP hiển thị cho người nộp hồ sơ (không kèm ghi chú xét duyệt nội bộ). */
 export interface ApplicantDecision {
   outcome: "Approve" | "Request revision" | "Reject";
   reason?: string;
@@ -109,7 +109,7 @@ export interface ApplicationConfig {
   maxViceLeaders: number;
 }
 
-/** Thrown for non-2xx responses; keeps the status and the server's `details` (e.g. founding issues). */
+/** Được ném khi response không phải 2xx; giữ status và `details` của server (vd lỗi về thành viên sáng lập). */
 export interface ApplicationRequestError extends Error {
   status: number;
   details?: { issues?: FoundingIssue[]; required?: number };
@@ -130,7 +130,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as
       { message?: string; details?: unknown } | null;
-    // Keep the status so callers can tell "not found" apart from other failures.
+    // Giữ status để nơi gọi phân biệt "không tìm thấy" với các lỗi khác.
     throw Object.assign(new ApiError(body?.message ?? `HTTP ${response.status}`), {
       status: response.status,
       ...(body?.details && typeof body.details === "object" ? { details: body.details } : {}),

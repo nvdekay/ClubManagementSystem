@@ -34,7 +34,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
   const positions = ucmsModels.clubPositions!;
   const violations = ucmsModels.violations!;
 
-  /** UC03 step 2: current (non-Left) memberships with the board seats held in each club. */
+  /** UC03 bước 2: các membership hiện tại (chưa Left) cùng các ghế ban chủ nhiệm đang giữ ở mỗi CLB. */
   async function clubContext(userIds: Types.ObjectId[]): Promise<Map<string, AdminUserClub[]>> {
     const membershipDocs = await memberships.find({ userId: { $in: userIds },
       state: { $nin: ["Left"] } }).lean();
@@ -60,7 +60,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
     return result;
   }
 
-  /** UC03 A1: the case named by each locked user's latest lock audit. */
+  /** UC03 A1: vụ việc được nêu trong audit khoá gần nhất của từng user bị khoá. */
   async function lockCases(lockedIds: Types.ObjectId[]): Promise<Map<string, AdminLockCase>> {
     if (!lockedIds.length) return new Map();
     const lockAudits = await audits.find({ entityType: "User", entityId: { $in: lockedIds },
@@ -163,7 +163,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
           await assignments.updateOne({ _id: existing._id, revokedAt: null }, {
             $set: { revokedAt: input.now, revokedBy: actorId, reason: input.reason },
           }, { session });
-          // D1: ICPDP_HEAD is never held without ICPDP_OFFICER, so it ends with it.
+          // D1: ICPDP_HEAD không bao giờ được giữ khi thiếu ICPDP_OFFICER, nên mất cùng lúc.
           if (input.roleCode === "ICPDP_OFFICER") {
             const head = await roles.findOne({ code: "ICPDP_HEAD", scope: "system" }).session(session).lean();
             const dropped = head ? await assignments.updateOne({ userId: targetId, roleId: head._id, revokedAt: null },
@@ -203,7 +203,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
           await audits.create([{
             entityType: "Violation", entityId: violationId, action: "VIOLATION_ACCOUNT_LOCKED",
             actorId, actorRole: "ICPDP_OFFICER", after: { userId: input.targetId, email: before.email },
-            // The case history shows only the reason, so it names the locked account too.
+            // Lịch sử vụ việc chỉ hiện lý do, nên phải nêu thêm tài khoản bị khoá.
             reason: `${String(before.email)} — ${input.reason}`, correlationId: randomUUID(), at: input.now,
           }], { session });
         }

@@ -78,7 +78,7 @@ export async function reactivateClub(repo: ClubLifecycleRepository,
 }
 
 // ICPDP lên lịch giải thể CLB từ học kỳ kế tiếp
-/** FR-06: dissolution takes effect from the next semester; nothing changes state today. */
+/** FR-06: giải thể có hiệu lực từ học kỳ kế tiếp; hôm nay chưa có gì đổi trạng thái. */
 export async function dissolveClub(repo: ClubLifecycleRepository, policy: PolicyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, clubId: string,
   input: { reason: string }, now: Date) {
@@ -94,14 +94,14 @@ export async function dissolveClub(repo: ClubLifecycleRepository, policy: Policy
   }
   const result = await repo.decideDissolution(current.id, { decidedAt: now, decidedBy: actorId, reason,
     effectiveSemester: semester.code, effectiveFrom: semester.startAt, effectiveTo: semester.endAt }, now);
-  // E1: the officer is warned; these budgets must be reconciled before the Dissolving semester ends.
+  // E1: officer được cảnh báo; các ngân sách này phải được đối soát trước khi học kỳ Dissolving kết thúc.
   return { ...result, effectiveSemester: semester.code, unreconciledBudgets: current.unreconciledBudgets.length };
 }
 
 // Job: nhắc, tự kích hoạt lại và chuyển các bước giải thể CLB
 /**
- * The lifecycle job (FR-09/10, timed suspensions): reminders, automatic reactivation and dissolution
- * steps. Every step is idempotent, so running it again — or after downtime — is safe.
+ * Job vòng đời (FR-09/10, đình chỉ có thời hạn): nhắc nhở, tự động kích hoạt lại và các bước
+ * giải thể. Mọi bước đều idempotent, nên chạy lại — hay chạy sau khi downtime — đều an toàn.
  */
 export async function runClubLifecycleJob(repo: ClubLifecycleRepository, now: Date) {
   const officers = await repo.officerIds();
@@ -113,7 +113,7 @@ export async function runClubLifecycleJob(repo: ClubLifecycleRepository, now: Da
   }
   const dissolving = await repo.startDissolving(now);
   const dissolved = await repo.completeDissolutions(now);
-  // UC15 step 6: a club whose step failed stays where it was, and ICPDP is alerted.
+  // UC15 bước 6: CLB có bước thất bại giữ nguyên trạng thái cũ, và ICPDP được báo.
   const failed = [...dissolving.failed, ...dissolved.failed];
   for (const failure of failed) {
     await repo.alertOfficers({ clubId: failure.clubId, step: failure.step, message: failure.message }, officers, now);
@@ -123,7 +123,7 @@ export async function runClubLifecycleJob(repo: ClubLifecycleRepository, now: Da
 }
 
 // Cảnh báo ICPDP khi cả lần chạy job vòng đời CLB thất bại
-/** The whole run failed (e.g. the database was unreachable): alert ICPDP instead of only logging. */
+/** Cả lần chạy thất bại (vd database không kết nối được): báo ICPDP thay vì chỉ log. */
 export async function alertClubLifecycleJobFailure(repo: ClubLifecycleRepository, message: string, now: Date) {
   return repo.alertOfficers({ clubId: null, step: "job", message }, await repo.officerIds(), now);
 }

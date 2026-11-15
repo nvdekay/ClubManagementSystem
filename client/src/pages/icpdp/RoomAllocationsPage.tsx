@@ -56,7 +56,7 @@ function isConflictList(details: unknown): details is RoomAllocationConflict[] {
   return Array.isArray(details) && details.every((item) => typeof item === "object" && item !== null && "startAt" in item);
 }
 
-/** UC58: ICPDP gives clubs a room for one weekday and slot of every week of a semester. */
+/** UC58: ICPDP cấp cho CLB một phòng vào một thứ và một ca của mọi tuần trong học kỳ. */
 export function RoomAllocationsPage() {
   const { t, i18n } = useTranslation();
   const auth = useAuth();
@@ -97,7 +97,7 @@ export function RoomAllocationsPage() {
   [allocations, status, building, clubFilter]);
   const takenCells = useMemo(() => new Map(allocations.filter((item) => !item.revokedAt && item.propertyId === form.propertyId)
     .map((item) => [`${item.weekday}-${item.slot}`, item.clubName])), [allocations, form.propertyId]);
-  // UC58 A3/E1: a cell an approved event or booking blocks on any remaining date would be rejected.
+  // UC58 A3/E1: ô bị sự kiện hoặc booking đã duyệt chặn ở bất kỳ ngày nào còn lại sẽ bị từ chối.
   const occupancy = useRoomOccupancy(creating ? semester : "", form.propertyId);
   const busyCells = useMemo(() => new Map((occupancy.data ?? []).map((cell) => [`${cell.weekday}-${cell.slot}`, cell.items])),
     [occupancy.data]);
@@ -116,7 +116,7 @@ export function RoomAllocationsPage() {
           : <span>{t("roomAllocations.remainingCount", { remaining, total: item.occurrences.length })}</span>}
         {item.revokeReason && <p className="text-sm break-words text-muted-app">{item.revokeReason}</p>}
         <details className="text-sm"><summary className="text-primary-app">{t("roomAllocations.sessions", { count: item.occurrences.length })}</summary>
-          {/* max-w caps this cell's width when expanded, so the table doesn't squeeze its other columns. */}
+          {/* max-w giới hạn chiều rộng ô này khi mở rộng, để bảng không làm co các cột khác. */}
           <ul className="mt-2 max-w-60 space-y-1 text-xs">{item.occurrences.map((value) => <li key={value.bookingId} className="flex flex-wrap gap-x-1.5">
             <span className="whitespace-nowrap tabular-nums">{dateTime.format(new Date(value.startAt))}</span>
             <span className="text-muted-app">{occurrenceLabel(t, value.state)}</span></li>)}</ul></details>
@@ -142,7 +142,7 @@ export function RoomAllocationsPage() {
       await allocate.mutateAsync({ csrfToken: auth.data.csrfToken, input: { semesterCode: semester, clubId: form.clubId,
         propertyId: form.propertyId, weekday: Number(form.weekday), slot: Number(form.slot), ...(form.note.trim() ? { note: form.note.trim() } : {}) } });
       setCreating(false); appToast.success(t("roomAllocations.saved"));
-    } catch { /* The mutation error and clashing dates are shown in the dialog. */ }
+    } catch { /* Lỗi của mutation và các ngày bị trùng được hiển thị trong hộp thoại. */ }
   }
   // Đóng form thu hồi phân bổ phòng
   function closeRevoke() {
@@ -155,7 +155,7 @@ export function RoomAllocationsPage() {
     try {
       await revoke.mutateAsync({ id: revoking.id, reason: reason.trim(), csrfToken: auth.data.csrfToken });
       closeRevoke(); appToast.success(t("roomAllocations.revokedToast"));
-    } catch { /* Shown in the dialog. */ }
+    } catch { /* Hiển thị trong hộp thoại. */ }
   }
 
   if (auth.isPending) return <AppSkeleton className="h-64 w-full" />;
@@ -193,7 +193,7 @@ export function RoomAllocationsPage() {
       </div>}
     {creating && options.data && <AppDialog open title={t("roomAllocations.allocate")} closeLabel={t("roomAllocations.close")} onClose={() => setCreating(false)}
       footer={<>
-        {/* Outside the <form> so they stay pinned; `form` keeps them submitting it. */}
+        {/* Đặt ngoài <form> để luôn được ghim; thuộc tính `form` vẫn giúp chúng submit form đó. */}
         <AppButton type="submit" form="room-allocation-form" disabled={allocate.isPending}>{t("roomAllocations.save")}</AppButton>
         <AppButton type="button" variant="secondary" onClick={() => setCreating(false)}>{t("roomAllocations.close")}</AppButton>
       </>}>
@@ -270,7 +270,7 @@ export function RoomAllocationsPage() {
     </AppDialog>}
     {revoking && <AppDialog open title={t("roomAllocations.revokeTitle")} closeLabel={t("roomAllocations.close")} onClose={closeRevoke}
       footer={<>
-        {/* Outside the <form> so they stay pinned; `form` keeps them submitting it. */}
+        {/* Đặt ngoài <form> để luôn được ghim; thuộc tính `form` vẫn giúp chúng submit form đó. */}
         <AppButton type="submit" form="room-revoke-form" disabled={revoke.isPending}>{t("roomAllocations.revokeConfirm")}</AppButton>
         <AppButton type="button" variant="secondary" onClick={closeRevoke}>{t("roomAllocations.close")}</AppButton>
       </>}>

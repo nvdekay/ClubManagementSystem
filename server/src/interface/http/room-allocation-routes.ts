@@ -27,7 +27,7 @@ function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
 function actor(res: Response): AccessActor { return res.locals.actor as AccessActor; }
 
 // Mount các route phân bổ phòng cho CLB của ICPDP
-/** UC58: ICPDP allocates rooms per semester; clubs only read what they received. */
+/** UC58: ICPDP phân bổ phòng theo học kỳ; CLB chỉ đọc những gì mình nhận được. */
 export function roomAllocationRoutes(deps: RoomAllocationDeps & { authRepo: AuthRepository; sessions: SessionService }): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };

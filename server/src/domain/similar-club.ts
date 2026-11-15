@@ -1,19 +1,19 @@
 /**
- * Advisory "similar club" hints for founding applications (UC07/UC08). Pure and deterministic:
- * no external service, the same input always gives the same ranking. Never blocks anything.
+ * Gợi ý tham khảo về "CLB tương tự" cho hồ sơ thành lập (UC07/UC08). Thuần và xác định:
+ * không dùng dịch vụ ngoài, cùng đầu vào luôn cho cùng thứ hạng. Không bao giờ chặn việc gì.
  */
 
 export type SimilarClubKind = "CLUB" | "APPLICATION";
 export type SimilarClubLevel = "HIGH" | "MEDIUM";
 
-/** What an application is compared on: its name, field name and `summary + objectives`. */
+/** Những gì của hồ sơ được đem ra so sánh: tên, tên lĩnh vực và `summary + objectives`. */
 export interface SimilaritySubject {
   name: string;
   field: string;
   text: string;
 }
 
-/** An existing club (text = `description`) or another application (text = `summary + objectives`). */
+/** Một CLB đang có (text = `description`) hoặc một hồ sơ khác (text = `summary + objectives`). */
 export interface SimilarityCandidate extends SimilaritySubject {
   kind: SimilarClubKind;
   id: string;
@@ -28,7 +28,7 @@ export interface SimilarClubHint {
   state: string;
   score: number;
   level: SimilarClubLevel;
-  /** Component similarities in 0–1; `content` is null when one side has no descriptive text. */
+  /** Độ tương đồng từng thành phần trong khoảng 0–1; `content` là null khi một bên không có văn bản mô tả. */
   reasons: { name: number; content: number | null; field: number; sharedWords: string[] };
 }
 
@@ -78,7 +78,7 @@ function rounded(value: number): number {
 }
 
 // Tính điểm giống nhau 0-100 giữa hai CLB theo tên, nội dung và lĩnh vực
-/** Score 0–100 = name 40 + content 40 + field 20; content counts as 0 when either side has no text. */
+/** Điểm 0–100 = tên 40 + nội dung 40 + lĩnh vực 20; nội dung tính 0 khi một trong hai bên không có văn bản. */
 export function similarityScore(subject: SimilaritySubject,
   candidate: SimilarityCandidate): Omit<SimilarClubHint, "level"> {
   const subjectWords = new Set(similarityWords(subject.text));
@@ -87,8 +87,8 @@ export function similarityScore(subject: SimilaritySubject,
   const subjectField = fold(subject.field);
   const field = subjectField && subjectField === fold(candidate.field) ? 1 : 0;
   const content = subjectWords.size && candidateWords.size ? dice(subjectWords, candidateWords) : null;
-  // No redistribution when content is missing: with it, a shared field alone scored 33 and any
-  // stray name overlap produced a hint. A text-less candidate tops out at 60 (same name + field).
+  // Không chia lại trọng số khi thiếu nội dung: nếu chia lại, chỉ cùng lĩnh vực đã được 33 điểm và chỉ cần
+  // trùng tên lẻ tẻ là sinh ra gợi ý. Ứng viên không có văn bản tối đa chỉ đạt 60 (cùng tên + lĩnh vực).
   const score = Math.round(name * 40 + (content ?? 0) * 40 + field * 20);
   const sharedWords = [...subjectWords].filter((word) => candidateWords.has(word))
     .sort(collator.compare).slice(0, MAX_SHARED_WORDS);
@@ -98,7 +98,7 @@ export function similarityScore(subject: SimilaritySubject,
 }
 
 // Gợi ý các CLB giống nhất từ mức MEDIUM trở lên, sắp xếp điểm cao trước
-/** Hints at or above MEDIUM, best first (ties by `vi` name order), at most five. */
+/** Các gợi ý từ mức MEDIUM trở lên, tốt nhất trước (đồng điểm xếp theo tên theo `vi`), tối đa năm. */
 export function similarClubHints(subject: SimilaritySubject,
   candidates: readonly SimilarityCandidate[]): SimilarClubHint[] {
   if (!bigrams(subject.name).size && !similarityWords(subject.text).length) return [];

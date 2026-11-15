@@ -60,7 +60,7 @@ function statusTone(status: InvitationStatus): AppBadgeTone {
 }
 
 // Đổi giá trị datetime-local sang ISO, undefined nếu rỗng hoặc sai
-/** `datetime-local` value → ISO string, or undefined when empty or invalid. */
+/** Giá trị `datetime-local` → chuỗi ISO, hoặc undefined khi rỗng hoặc không hợp lệ. */
 function iso(value: string): string | undefined {
   if (!value) return undefined;
   const parsed = new Date(value);
@@ -90,7 +90,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
 }
 
 // Chọn CLB bằng checkbox, có lối tắt chọn tất cả
-/** Active clubs as checkboxes, with a shortcut for all of them. */
+/** Các CLB Active dưới dạng checkbox, có phím tắt chọn tất cả. */
 function ClubPicker({ all, onAll, chosen, onChosen, exclude = [] }: { all: boolean; onAll: (value: boolean) => void;
   chosen: string[]; onChosen: (value: string[]) => void; exclude?: string[] }) {
   const { t } = useTranslation();
@@ -103,7 +103,7 @@ function ClubPicker({ all, onAll, chosen, onChosen, exclude = [] }: { all: boole
         {t("schoolEvents.allActive")}</label>
       {!all && <>
         <p className="mt-1 text-xs text-muted-app">{t("schoolEvents.clubsSelected", { count: chosen.length })}</p>
-        {/* Nothing left to pick (every active club already invited): no empty bordered box. */}
+        {/* Không còn gì để chọn (mọi CLB active đã được mời): không hiện khung viền trống. */}
         {clubs.isPending ? <AppSkeleton className="mt-2 h-24 w-full" /> : active.length > 0 && (
           <div className="mt-2 grid max-h-56 gap-1 overflow-y-auto rounded-xl border border-border-app p-2 sm:grid-cols-2">{active.map((club) =>
             <label key={club.id} className="flex min-h-11 items-center gap-3 rounded-lg px-2 text-sm hover:bg-surface-app">
@@ -160,7 +160,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
 
   // Kiểm tra form rồi tạo sự kiện cấp trường
   async function submit() {
-    // start/end are re-checked only so TypeScript knows they are set.
+    // start/end được kiểm tra lại chỉ để TypeScript biết chúng đã có giá trị.
     if (!field.touchAll() || !start || !end) return;
     try {
       const result = await create.mutateAsync({ csrfToken, input: { title: title.trim(), objective: objective.trim() || undefined,
@@ -168,7 +168,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
         ...(useRoom ? { propertyId } : { venueText: venueText.trim() }), capacity: places,
         invitationDeadline: iso(deadline), ...(all ? { allActiveClubs: true } : { clubIds: chosen }) } });
       navigate(`/workspace/school-events/${result.detail.id}`, { state: { skipped: result.outcome.skipped.length } });
-    } catch { /* Mutation state is rendered below. */ }
+    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
   }
 
   return (
@@ -316,7 +316,7 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
       await action.mutateAsync({ kind: "invite", id, csrfToken, input: { ...(all ? { allActiveClubs: true } : { clubIds: chosen }),
         deadline: iso(deadline) } });
       setChosen([]); setAll(false); field.reset();
-    } catch { /* Mutation state is rendered below. */ }
+    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
   }
 
   return (

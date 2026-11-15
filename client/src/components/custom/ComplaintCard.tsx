@@ -56,7 +56,7 @@ interface ComplaintCardProps {
 }
 
 // Thẻ hiển thị một khiếu nại kèm trạng thái và hạn phản hồi
-/** One complaint (UC50–UC52) for any reader; the caller decides which fields it may show (D5). */
+/** Một khiếu nại (UC50–UC52) cho mọi người đọc; nơi gọi quyết định được hiện những trường nào (D5). */
 export function ComplaintCard(props: ComplaintCardProps) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";

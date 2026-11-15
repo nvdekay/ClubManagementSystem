@@ -11,7 +11,7 @@ export function weekdayLabel(t: TFunction, weekday: number): string {
 }
 
 // Nhãn ca học kèm giờ bắt đầu và kết thúc nếu có
-/** "Slot 4 · 15:20–17:40" when the slot catalogue is known. */
+/** "Slot 4 · 15:20–17:40" khi đã biết danh mục slot. */
 export function slotLabel(t: TFunction, slot: number, slots: readonly BookingSlot[]): string {
   const found = slots.find((item) => item.number === slot);
   return `${t("facilityBookings.slot", { number: slot })}${found ? ` · ${found.start}–${found.end}` : ""}`;

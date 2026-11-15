@@ -20,7 +20,7 @@ interface Row {
 }
 
 // Lỗi nếu không phải số nguyên trong khoảng min–max, null nếu hợp lệ
-/** Whole number in [min, max], or the message saying why not. */
+/** Số nguyên trong [min, max], hoặc thông báo nêu lý do không hợp lệ. */
 function wholeNumberError(t: TFunction, value: string, min: number, max: number): string | null {
   if (!value.trim()) return t("common.fieldRequired");
   const number = Number(value);
@@ -51,7 +51,7 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
     fair: String(scheme.thresholds.fair) });
   const included = catalogue.filter((dimension) => rows[dimension.code]!.included);
   const total = included.reduce((sum, dimension) => sum + (Number(rows[dimension.code]!.weight) || 0), 0);
-  // Server rules: bands with 100 >= excellent > good > fair > 0.
+  // Quy tắc của server: các mức phải thoả 100 >= excellent > good > fair > 0.
   const field = useFieldValidation({
     excellent: wholeNumberError(t, bands.excellent, 3, 100),
     good: wholeNumberError(t, bands.good, 2, (Number(bands.excellent) || 100) - 1),
@@ -64,7 +64,7 @@ export function SchemeEditor({ scheme, catalogue, readOnly, pending, error, onSa
   }
 
   // Chia đều trọng số cho các tiêu chí được chọn
-  /** Whole percents: the remainder goes to the first criteria so the total is exactly 100. */
+  /** Phần trăm nguyên: phần dư chia cho các tiêu chí đầu để tổng đúng bằng 100. */
   function spread() {
     const share = Math.floor(100 / included.length);
     const remainder = 100 - share * included.length;

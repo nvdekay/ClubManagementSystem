@@ -24,7 +24,7 @@ export interface PublicCampaign {
 
 export interface PublicEvent {
   id: string;
-  /** Absent for a school-wide event organised by ICPDP. */
+  /** Không có với sự kiện toàn trường do ICPDP tổ chức. */
   clubId?: string;
   clubName: string;
   title: string;
@@ -49,7 +49,7 @@ export interface Page<T> {
 
 export interface ClubPage extends Page<PublicClub> {
   fields: string[];
-  /** UC06 E1: the newest Active clubs, sent only when a filtered search matched nothing. */
+  /** UC06 E1: các CLB Active mới nhất, chỉ gửi khi tìm kiếm có lọc không khớp kết quả nào. */
   suggestions?: PublicClub[];
 }
 
@@ -103,7 +103,7 @@ export function fetchEvents(
 // GET chi tiết một sự kiện công khai
 export function fetchEvent(id: string, signal: AbortSignal): Promise<{
   event: PublicEvent;
-  /** Null for a school-wide event organised by ICPDP. */
+  /** Null với sự kiện toàn trường do ICPDP tổ chức. */
   club: { id: string; name: string } | null;
 }> {
   return publicGet(`events/${encodeURIComponent(id)}`, signal);

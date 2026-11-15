@@ -9,17 +9,17 @@ interface AppStatTileProps {
   value: ReactNode;
   hint?: ReactNode;
   icon: AppIconName;
-  /** `attention` pairs the danger color with the icon so state never rests on color alone. */
+  /** `attention` ghép màu danger với icon để trạng thái không chỉ dựa vào màu. */
   tone?: "default" | "attention";
   href?: string;
-  /** Change against the previous period, shown as a small pill beside the value. */
+  /** Mức thay đổi so với kỳ trước, hiển thị dưới dạng viên thuốc nhỏ cạnh giá trị. */
   delta?: { text: string; direction: "up" | "down" | "flat" };
-  /** A small visual under the number: a sparkline or a part-to-whole bar. */
+  /** Hình nhỏ bên dưới con số: đường sparkline hoặc thanh thể hiện cơ cấu tổng thể. */
   chart?: ReactNode;
 }
 
 // Ô số liệu chính kèm nhãn, ghi chú và biểu đồ nhỏ
-/** One headline number: label, value and a short line of context. */
+/** Một con số nổi bật: nhãn, giá trị và một dòng ngữ cảnh ngắn. */
 export function AppStatTile({ label, value, hint, icon, tone = "default", href, delta, chart }: AppStatTileProps) {
   const body = (
     <>

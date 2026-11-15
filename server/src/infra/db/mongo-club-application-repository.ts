@@ -24,7 +24,7 @@ function foundersFrom(raw: Record<string, unknown> | undefined, applicantId: str
       role: FOUNDER_ROLES.find((role) => role === founder.role) ?? "MEMBER",
     }));
   }
-  // Drafts and versions written before fixed founding roles: the applicant led, others were members.
+  // Bản nháp và phiên bản viết trước khi có vai trò sáng lập cố định: người nộp đơn làm leader, những người khác là thành viên.
   const legacyIds = Array.isArray(raw?.foundingUserIds) ? raw.foundingUserIds.map(String) : [];
   return legacyIds.map((userId) => ({ userId,
     role: userId.toLowerCase() === applicantId.toLowerCase() ? "LEADER" : "MEMBER" }));
@@ -82,15 +82,15 @@ const pendingApplicationStates = ["Submitted", "Under Review", "Revision Request
 
 // Tìm CLB/hồ sơ tương tự để gợi ý trùng lặp khi lập CLB
 /**
- * Comparison candidates for similar-club hints. Never the application itself nor the club
- * created from it. `publicOnly` (applicant view) keeps public club states and no applications.
+ * Các ứng viên để so sánh cho gợi ý CLB tương tự. Không bao giờ là chính đơn đó hay CLB
+ * được tạo từ đơn đó. `publicOnly` (góc nhìn người nộp đơn) chỉ giữ các trạng thái CLB công khai và không có đơn.
  */
 export async function similarityCandidates(applicationId: string,
   publicOnly: boolean): Promise<SimilarityCandidate[]> {
   const id = new Types.ObjectId(applicationId);
   const self = await ucmsModels.clubApplications!.findById(id).select("createdClubId").lean();
   const createdClubId = self?.createdClubId as Types.ObjectId | undefined;
-  // ponytail: full scan per request; add an index or cache if clubs reach thousands
+  // ponytail: quét toàn bộ mỗi request; thêm index hoặc cache nếu số CLB lên tới hàng nghìn
   const [clubDocs, applicationDocs] = await Promise.all([
     ucmsModels.clubs!.find({
       sourceApplicationId: { $ne: id },
@@ -278,7 +278,7 @@ export function mongoClubApplicationRepository(): ClubApplicationRepository {
         }], { session });
         await tasks.updateMany({ entityType: "CLUB_APPLICATION", entityId: id,
           state: "Open" }, { $set: { state: "Closed", closedAt: input.now } }, { session });
-        // UC05: the active routing rules decide, once, the SLA of this review.
+        // UC05: các rule định tuyến đang Active quyết định, một lần duy nhất, SLA của review này.
         await tasks.create([{
           entityType: "CLUB_APPLICATION", entityId: id,
           title: `Club application: ${input.snapshot.clubName}`,

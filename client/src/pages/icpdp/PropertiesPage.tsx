@@ -25,7 +25,7 @@ export function PropertiesPage() {
   const isOfficer = auth.data?.systemRoles.includes("ICPDP_OFFICER") ?? false;
   const properties = useProperties(isOfficer);
   const action = usePropertyAction();
-  // "new" opens the create form; a property id opens that property's editor.
+  // "new" mở form tạo mới; id của một tài sản thì mở trình chỉnh sửa tài sản đó.
   const [editing, setEditing] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; text: string } | null>(null);

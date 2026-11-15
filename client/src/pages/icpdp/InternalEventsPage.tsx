@@ -20,7 +20,7 @@ const stateTones: Record<string, AppBadgeTone> = {
   "Report Submitted": "neutral", Closed: "neutral", Cancelled: "danger",
   CREATED: "info", PUBLIC: "info", ONGOING: "success", FINISH: "neutral",
 };
-/** UC02 recorded internal events: self-funded lifecycle plus budgeted proposals from approval on. */
+/** UC02 sự kiện nội bộ đã ghi nhận: vòng đời tự túc cùng các đề xuất có ngân sách từ khi được duyệt trở đi. */
 const recordedStates = ["CREATED", "PUBLIC", "ONGOING", "FINISH", "Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"];
 
 // Hook trả hàm dịch trạng thái sự kiện nội bộ sang nhãn
@@ -32,7 +32,7 @@ function useStateLabel() {
 }
 
 // Chặn nội dung trang nếu người dùng không phải officer ICPDP
-/** Wraps a page body in the officer check every ICPDP drill-down needs. */
+/** Bọc nội dung trang trong bước kiểm tra cán bộ mà mọi trang chi tiết của ICPDP đều cần. */
 function OfficerOnly({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -59,7 +59,7 @@ function EventFacts({ event }: { event: InternalEventSummary }) {
 }
 
 // Trang ICPDP danh sách sự kiện nội bộ, lọc theo CLB và học kỳ
-/** FR-UC02-02, BR53: every recorded internal event, filtered by club and semester. */
+/** FR-UC02-02, BR53: mọi sự kiện nội bộ đã ghi nhận, lọc theo CLB và học kỳ. */
 export function InternalEventsPage() {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -126,7 +126,7 @@ export function InternalEventsPage() {
 }
 
 // Trang ICPDP chi tiết sự kiện nội bộ và điểm danh
-/** One internal event and its attendance, read-only (FR-UC02-02). */
+/** Một sự kiện nội bộ cùng danh sách tham dự, chỉ xem (FR-UC02-02). */
 export function InternalEventDetailPage() {
   const { t, i18n } = useTranslation();
   const { id } = useParams();

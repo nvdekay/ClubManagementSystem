@@ -37,7 +37,7 @@ function parsed(draft: FieldDraft): ClubFieldInput | null {
 }
 
 // Lỗi inline cho tên lĩnh vực bắt buộc
-/** Inline error for the required name; the optional order is only checked by `parsed` on submit. */
+/** Lỗi hiển thị ngay cho trường tên bắt buộc; thứ tự (tuỳ chọn) chỉ được `parsed` kiểm tra khi submit. */
 function draftErrors(t: TFunction, draft: FieldDraft | null) {
   if (!draft) return {};
   return { name: draft.name.trim() ? null : t("common.fieldRequired") };

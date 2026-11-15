@@ -74,7 +74,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
       { session });
   }
 
-  /** Names for a page of complaints in three queries. */
+  /** Lấy tên cho một trang khiếu nại bằng ba query. */
   async function base(docs: Doc[]): Promise<Complaint[]> {
     const clubIds = docs.flatMap((doc) => (doc.clubId ? [doc.clubId] : []));
     const eventIds = docs.flatMap((doc) => (doc.eventId ? [doc.eventId] : []));
@@ -120,7 +120,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
       linkedComplaintIds: linked.filter((row) => String(row.linkedComplaintId) === item.id).map((row) => String(row._id)) };
     });
   }
-  /** D5: built only from fields the club may read; the complainant is never loaded. */
+  /** D5: chỉ dựng từ các trường mà CLB được đọc; không bao giờ tải thông tin người khiếu nại. */
   async function forClub(docs: Doc[]): Promise<ComplaintForClub[]> {
     const named = await base(docs);
     return named.map((item) => ({ id: item.id, clubId: item.clubId!, ...(item.eventTitle ? { eventTitle: item.eventTitle } : {}),
@@ -135,12 +135,12 @@ export function mongoComplaintRepository(): ComplaintRepository {
     return (await forIcpdp([doc as Doc]))[0]!;
   }
 
-  /** Duplicates that follow a root complaint and sit in the same state as it. */
+  /** Các khiếu nại trùng đi theo một khiếu nại gốc và cùng trạng thái với nó. */
   async function linkedFollowers(session: ClientSession, rootId: Types.ObjectId, state: ComplaintState) {
     return complaints.find({ linkedComplaintId: rootId, state }).session(session).lean();
   }
 
-  /** Opens a UC40 case linked both ways (BR28, FR-UC51-02) inside the caller's transaction. */
+  /** Mở một vụ việc UC40 liên kết hai chiều (BR28, FR-UC51-02) trong transaction của bên gọi. */
   async function openViolation(session: ClientSession, complaint: Doc, severity: string, reason: string, officerId: string,
     now: Date): Promise<Types.ObjectId> {
     const violationId = new Types.ObjectId();
@@ -174,10 +174,10 @@ export function mongoComplaintRepository(): ComplaintRepository {
           ...(input.eventId ? { eventId: oid(input.eventId) } : {}), type: input.type, description: input.description,
           evidence: input.evidence, isAnonymous: false, state: "Submitted", submittedAt: input.now }], { session });
         const club = await m.clubs!.findById(oid(input.clubId)).select({ name: 1 }).session(session).lean();
-        // UC50 E1: duplicates are linked by ICPDP while reviewing ("link"), never guessed at submission.
+        // UC50 E1: khiếu nại trùng do ICPDP liên kết khi review ("link"), không bao giờ đoán lúc gửi.
         await tasks.create([{ entityType: TASK, entityId: id, clubId: oid(input.clubId),
           title: `Khiếu nại về ${String(club?.name ?? "")}`, state: "Open", openedAt: input.now }], { session });
-        // The audit and ICPDP notification never carry the complaint text.
+        // Audit và thông báo ICPDP không bao giờ chứa nội dung khiếu nại.
         await audit(session, id, "COMPLAINT_SUBMITTED", input.studentId, "STUDENT", null,
           { state: "Submitted", clubId: input.clubId, type: input.type },
           undefined, input.now);
@@ -202,7 +202,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
         if (!withdrawn) return;
         await closeTask(session, [oid(complaintId)], now);
         await audit(session, oid(complaintId), "COMPLAINT_WITHDRAWN", studentId, "STUDENT", null, { state: "Withdrawn" }, undefined, now);
-        // The oldest undecided duplicate takes over as the root, so the incident is still reviewed.
+        // Khiếu nại trùng chưa quyết định cũ nhất lên làm khiếu nại gốc, để sự cố vẫn được review.
         const followers = await complaints.find({ linkedComplaintId: oid(complaintId), state: { $in: [...UNDECIDED_COMPLAINT_STATES] } })
           .sort({ submittedAt: 1, _id: 1 }).session(session).lean();
         const [heir, ...rest] = followers;
@@ -222,7 +222,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
 
     // UC51: hàng đợi khiếu nại cho ICPDP, gom khiếu nại trùng vào bản gốc
     async queue(filter) {
-      // Linked duplicates are shown inside their root (linkedComplaintIds), never as separate work.
+      // Khiếu nại trùng đã liên kết hiển thị bên trong khiếu nại gốc (linkedComplaintIds), không bao giờ là việc riêng.
       const docs = await complaints.find({ linkedComplaintId: null, ...(filter.state ? { state: filter.state } : {}) })
         .sort({ submittedAt: -1, _id: -1 }).limit(300).lean();
       return forIcpdp(docs);
@@ -241,7 +241,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
         if (!current) throw new DomainError("complaint not found", "not_found");
         if (current.linkedComplaintId) conflict("this complaint follows a linked complaint; decide the linked complaint instead");
         const from = String(current.state) as ComplaintState;
-        // Every write below is conditional on the state just read, so two officers cannot both win.
+        // Mọi lệnh ghi bên dưới đều có điều kiện theo trạng thái vừa đọc, nên hai cán bộ không thể cùng thắng.
         async function move(ids: Types.ObjectId[], states: readonly ComplaintState[], set: Doc) {
           const changed = await complaints.updateMany({ _id: { $in: ids }, state: { $in: [...states] }, linkedComplaintId: null },
             { $set: set }, { session });
@@ -250,7 +250,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
         const student = [current.complainantId];
         switch (decision.kind) {
           case "link": {
-            // Same student and club, both undecided roots: the complaint and its own duplicates follow the target.
+            // Cùng sinh viên và CLB, cả hai đều là khiếu nại gốc chưa quyết định: khiếu nại này và các bản trùng của nó đi theo đích.
             const target = await complaints.findOneAndUpdate({ _id: oid(decision.targetId), complainantId: current.complainantId,
               clubId: current.clubId, state: { $in: [...UNDECIDED_COMPLAINT_STATES] }, linkedComplaintId: null },
             { $inc: { __v: 1 } }, { session }).lean();
@@ -272,7 +272,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
             return;
           }
           case "triage": {
-            // UC50 E1: undecided duplicates linked to this complaint share its outcome.
+            // UC50 E1: các khiếu nại trùng chưa quyết định đã liên kết với khiếu nại này dùng chung kết quả của nó.
             const linked = await complaints.find({ linkedComplaintId: id, state: { $in: [...UNDECIDED_COMPLAINT_STATES] } })
               .session(session).lean();
             const group = [id, ...linked.map((row) => row._id as Types.ObjectId)];
@@ -297,7 +297,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
                 violationId, closedAt: now } }, { session });
               await closeTask(session, group, now);
             }
-            // Duplicates follow the root from here on; only the root keeps an open ICPDP task.
+            // Từ đây các bản trùng đi theo khiếu nại gốc; chỉ khiếu nại gốc giữ task ICPDP đang mở.
             if (linked.length) await closeTask(session, group.slice(1), now);
             const previous = [{ id, state: from }, ...linked.map((row) => ({ id: row._id as Types.ObjectId, state: String(row.state) }))];
             for (const target of previous) {
@@ -306,7 +306,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
                   ...(String(target.id) !== String(id) ? { linkedComplaintId: String(id) } : {}) }, decision.reason, now);
             }
             const students = [...student, ...linked.map((row) => row.complainantId)];
-            // The student hears the outcome under its own code; COMPLAINT_FORWARDED belongs to the club inbox.
+            // Sinh viên nhận kết quả dưới mã riêng; COMPLAINT_FORWARDED thuộc inbox của CLB.
             await queueNotifications(session, students, "COMPLAINT_TRIAGED", ENTITY, id, { outcome: decision.outcome }, now);
             return;
           }
@@ -318,7 +318,7 @@ export function mongoComplaintRepository(): ComplaintRepository {
             const state = decision.kind === "close" ? "Closed" : "Escalated";
             const set = { state, closedAt: now, closure, ...(violationId ? { violationId } : {}) };
             await move([id], ["Club Responded"], set);
-            // Linked duplicates share the root's answer and outcome.
+            // Các khiếu nại trùng đã liên kết dùng chung câu trả lời và kết quả của khiếu nại gốc.
             const followers = await linkedFollowers(session, id, "Club Responded");
             if (followers.length) await complaints.updateMany({ _id: { $in: followers.map((row) => row._id) } }, { $set: set }, { session });
             await closeTask(session, [id], now);
@@ -336,8 +336,8 @@ export function mongoComplaintRepository(): ComplaintRepository {
 
     // UC52: hộp thư khiếu nại đã chuyển xuống CLB
     async clubInbox(clubId) {
-      // BR38: Submitted, Under Triage, Dismissed and Withdrawn complaints never reach the club.
-      // Linked duplicates are answered through their root, so the club sees each incident once.
+      // BR38: khiếu nại Submitted, Under Triage, Dismissed và Withdrawn không bao giờ tới CLB.
+      // Khiếu nại trùng đã liên kết được trả lời qua khiếu nại gốc, nên CLB chỉ thấy mỗi sự cố một lần.
       const docs = await complaints.find({ clubId: oid(clubId), forwardedAt: { $exists: true }, linkedComplaintId: null,
         state: { $in: ["Forwarded", "Club Responded", "Closed", "Escalated"] } }).sort({ forwardedAt: -1, _id: -1 }).limit(200).lean();
       return forClub(docs);
@@ -376,8 +376,8 @@ export function mongoComplaintRepository(): ComplaintRepository {
       let flagged = 0;
       for (const row of overdue) {
         await mongoose.connection.transaction(async (session) => {
-          // Writing the complaint first makes two workers on two processes conflict here; the retried one then
-          // finds the audit row and stops, so the signal is raised once per complaint.
+          // Ghi khiếu nại trước khiến hai worker trên hai process xung đột ở đây; worker retry sau đó
+          // thấy dòng audit và dừng, nên tín hiệu chỉ được phát một lần cho mỗi khiếu nại.
           await complaints.updateOne({ _id: row._id }, { $inc: { __v: 1 } }, { session });
           if (await audits.exists({ entityType: ENTITY, entityId: row._id, action: "COMPLAINT_RESPONSE_OVERDUE" }).session(session)) return;
           await audit(session, row._id as Types.ObjectId, "COMPLAINT_RESPONSE_OVERDUE", null, "SYSTEM", null,

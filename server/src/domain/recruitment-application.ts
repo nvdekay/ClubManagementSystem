@@ -46,7 +46,7 @@ export interface RecruitmentReviewRepository {
     actorId: string; joinedAt: Date; departmentId?: string; now: Date }): Promise<RecruitmentApplication>;
   declineAccepted(input: { clubId: string; campaignId: string; applicationId: string;
     actorId: string; reason?: string; now: Date }): Promise<RecruitmentApplication>;
-  /** Attachment of a submitted (non-draft) application in this club's campaign, for reviewers. */
+  /** Tệp đính kèm của hồ sơ đã nộp (không phải nháp) trong đợt tuyển của CLB này, dành cho người duyệt. */
   reviewAttachment(input: { clubId: string; campaignId: string; applicationId: string;
     attachmentId: string }): Promise<RecruitmentAttachment | null>;
 }

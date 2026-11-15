@@ -158,15 +158,15 @@ export function mongoEvaluationRepository(): EvaluationRepository {
         m.violations!.find({ clubId: club, openedAt: inPeriod }).select({ severity: 1, state: 1 }).lean(),
         m.periodicReports!.find({ clubId: club, periodCode: period.code, dueAt: { $lte: now } }).lean(),
         m.clubPositions!.find({ clubId: club, isLeaderRole: true, isActive: true }).distinct("_id"),
-        // A booking the club was granted and that is over: used, or cancelled by the club after approval (UC46, UC47).
-        // A booking ICPDP released (UC58) is not held against the club.
+        // Booking CLB đã được cấp và đã qua: đã dùng, hoặc CLB huỷ sau khi duyệt (UC46, UC47).
+        // Booking do ICPDP thu hồi (UC58) không bị tính bất lợi cho CLB.
         m.propertyBookings!.find({ clubId: club, semesterCode: period.code, endAt: { $lte: now },
           $or: [{ state: { $in: ["In Use", "Completed"] } }, { state: "Cancelled", decidedAt: { $exists: true } }] })
           .select({ state: 1 }).lean(),
         overduePeriodicReports(club, now),
         evaluationReportPenalty(clubId, period.code, now),
       ]);
-      // An event that reached its report (UC33) or was closed by ICPDP (UC34) still took place.
+      // Sự kiện đã tới báo cáo (UC33) hoặc bị ICPDP đóng (UC34) vẫn được tính là đã diễn ra.
       const completed = eventDocs.filter((event) => ["Completed", "Report Submitted", "Closed", "FINISH"].includes(String(event.state)));
       const completedIds = completed.map((event) => event._id);
       const [registrationDocs, attendanceDocs, feedbackDocs, postReportVersions, invitedEvents, leaderSeat, periodicReturns] = await Promise.all([
@@ -187,12 +187,12 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       const outsiders = [...attendees].filter((id) => !memberIds.has(id));
       const ratings = feedbackDocs.flatMap((item) => Array.isArray(item.scores)
         ? (item.scores as { score?: unknown }[]).map((score) => Number(score.score)).filter(Number.isFinite).slice(0, 1) : []);
-      // Only a report ICPDP accepted counts (UC39: a returned or unreviewed report is not an input to UC42).
+      // Chỉ báo cáo ICPDP đã chấp nhận mới được tính (UC39: báo cáo bị trả lại hoặc chưa review không là đầu vào của UC42).
       const onTimePeriodic = periodicDocs.filter((item) => item.state === "Accepted" && item.submittedAt instanceof Date
         && item.lateFlag !== true && item.submittedAt <= (item.dueAt as Date));
       const onTimePost = postReports.filter((item) => item.state === "Accepted" && item.submittedAt instanceof Date
         && item.lateFlag !== true);
-      // BR21: a past-due period the club never opened a report for is still a report due.
+      // BR21: kỳ đã qua hạn mà CLB chưa từng mở báo cáo vẫn là một báo cáo đến hạn.
       const neverOpened = !periodicDocs.length && owedPeriods.includes(period.code) ? 1 : 0;
       const postReturns = postReportVersions.filter((item) => item.state === "Returned for correction");
       const bookingsUsed = bookingDocs.filter((item) => item.state !== "Cancelled");

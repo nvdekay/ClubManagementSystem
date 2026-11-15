@@ -160,7 +160,7 @@ function CampaignPanel({
         },
       });
       setExpanded(false);
-    } catch { /* Rendered below. */ }
+    } catch { /* Được hiển thị bên dưới. */ }
   }
 
   return (
@@ -295,7 +295,7 @@ function Row({ row, periodCode, csrfToken }: { row: PeriodicReportRow; periodCod
     try {
       await record.mutateAsync({ csrfToken, input: { clubId: row.clubId, periodCode, severity, note: note.trim() || undefined } });
       setOpen(false);
-    } catch { /* Mutation state is rendered below. */ }
+    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
   }
 
   return (
@@ -592,7 +592,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
               ...(resubmitDueAt ? { resubmitDueAt: new Date(`${resubmitDueAt}T23:59:59.000Z`).toISOString() } : {}),
             },
       });
-    } catch { /* Mutation state is rendered below. */ }
+    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
   }
 
   return (
@@ -605,7 +605,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
           <AppBadge tone={stateTone(data.state)}>{stateLabel(t, data.state)}</AppBadge></span>} />
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-5">
-          {/* Overview Figures */}
+          {/* Số liệu tổng quan */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("periodicReports.figures")}</h2>
             <div className="mt-4 overflow-x-auto">
@@ -629,7 +629,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             <p className="mt-2 text-xs text-muted-app">{t("periodicReports.activeMembersHint")}</p>
           </section>
 
-          {/* 1. Active Members & System Comparison */}
+          {/* 1. Thành viên Active và đối chiếu với hệ thống */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("periodicReports.membersSection")} ({clubMembers.length})</h2>
             <div className="mt-4 overflow-x-auto">
@@ -685,7 +685,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             )}
           </section>
 
-          {/* 2. Events Organized & System Comparison */}
+          {/* 2. Sự kiện đã tổ chức và đối chiếu với hệ thống */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("periodicReports.eventsSection")} ({clubEvents.length})</h2>
             <div className="mt-4 space-y-4">
@@ -747,7 +747,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             </div>
           </section>
 
-          {/* 3. Achievements */}
+          {/* 3. Thành tích */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("periodicReports.achievementsSection")} ({achievements.length})</h2>
             {achievements.length ? (
@@ -771,7 +771,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             )}
           </section>
 
-          {/* 4. Additional ICPDP Custom Fields */}
+          {/* 4. Các trường tuỳ chỉnh bổ sung của ICPDP */}
           {(customFields.length > 0 || customAnswers.length > 0) && (
             <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
               <h2 className="font-heading text-base font-semibold">{t("periodicReports.customFieldsSection")}</h2>
@@ -806,7 +806,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             </section>
           )}
 
-          {/* Legacy narrative/nextPlan fallback if present */}
+          {/* Dự phòng cho narrative/nextPlan kiểu cũ nếu có */}
           {(data.narrative || data.nextPlan || data.evidence.length > 0) && (
             <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
               <h2 className="font-heading text-base font-semibold">{t("periodicReports.content")}</h2>
@@ -841,7 +841,7 @@ function Review({ id, csrfToken }: { id: string; csrfToken: string }) {
             </section>
           )}
 
-          {/* Version History & Comparison */}
+          {/* Lịch sử phiên bản và so sánh */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-heading text-base font-semibold">{t("periodicReports.versionCompareTitle")}</h2>

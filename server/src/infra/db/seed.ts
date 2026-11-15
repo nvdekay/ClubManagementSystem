@@ -1,4 +1,4 @@
-// Adds or refreshes deterministic demo records without deleting user data: npm run seed.
+// Thêm hoặc làm mới các bản ghi demo xác định mà không xoá dữ liệu của user: npm run seed.
 import mongoose, { Types } from "mongoose";
 import { loadConfig } from "../config/index.js";
 import { pdpClubs, pdpEvents } from "./pdp-demo-data.js";
@@ -12,7 +12,7 @@ function objectId(value: string): Types.ObjectId {
 }
 
 // Tính mã học kỳ của một ngày
-// FPT University semesters: Spring Jan–Apr, Summer May–Aug, Fall Sep–Dec (Vietnam time).
+// Các học kỳ của FPT University: Spring tháng 1–4, Summer tháng 5–8, Fall tháng 9–12 (giờ Việt Nam).
 function semesterCode(date: Date): string {
   const local = new Date(date.getTime() + 7 * 3_600_000);
   const month = local.getUTCMonth();
@@ -37,8 +37,8 @@ async function upsertMany(
 }
 
 // Xoá dữ liệu demo hư cấu cũ do seed tạo
-// The earlier fictional demo (F-Code, F-Japan…) used these fixed ids; only those seed-owned
-// records are removed so the PDP snapshot replaces them.
+// Bản demo giả tưởng trước đó (F-Code, F-Japan…) dùng các id cố định này; chỉ những
+// bản ghi do seed sở hữu đó bị xoá để snapshot PDP thay thế chúng.
 async function removeFictionalDemo(): Promise<void> {
   function ids(prefix: string, count: number): Types.ObjectId[] {
     return Array.from({ length: count }, (_, index) => objectId(`${prefix}${index + 1}`));
@@ -92,7 +92,7 @@ try {
   await ensureUcmsDatabase();
   await removeFictionalDemo();
   await seedPdpSnapshot(new Date());
-  // Never log MONGO_URI — it can carry credentials (SEC-04).
+  // Không bao giờ log MONGO_URI — nó có thể chứa thông tin đăng nhập (SEC-04).
   console.log(`demo data ready: ${pdpClubs.length} clubs and ${pdpEvents.length} events from the PDP snapshot`);
 } catch (error) {
   console.error("demo seed failed:", error instanceof Error ? error.message : error);

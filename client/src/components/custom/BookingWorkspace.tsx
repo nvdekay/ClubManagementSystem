@@ -47,8 +47,8 @@ function slotInterval(day: string, number: string, slots: BookingSlot[]) {
 }
 
 // Chọn màu badge theo trạng thái booking
-/** Shared club and ICPDP workspace for the same booking lifecycle. */
-/** Badge colour per booking state; the label still carries the meaning. */
+/** Workspace dùng chung cho CLB và ICPDP trên cùng một vòng đời booking. */
+/** Màu badge theo trạng thái booking; nhãn chữ vẫn là phần truyền đạt ý nghĩa. */
 function bookingTone(state: string): AppBadgeTone {
   if (state === "Approved" || state === "In Use" || state === "Completed") return "success";
   if (state === "Requested" || state === "Under Review") return "info";
@@ -60,7 +60,7 @@ function bookingTone(state: string): AppBadgeTone {
 // Workspace booking cơ sở vật chất: danh sách, form yêu cầu, huỷ và xét duyệt (CLB hoặc ICPDP)
 export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const { t, i18n } = useTranslation();
-  // The request dialog's buttons sit in its pinned footer, outside the <form>, linked by form={id}.
+  // Các nút của hộp thoại yêu cầu nằm ở footer cố định, ngoài <form>, liên kết với form qua form={id}.
   const bookingFormId = useId();
   const auth = useAuth();
   const can = Boolean(auth.data && (clubId ? auth.data.workspaces.some((item) => item.clubId === clubId
@@ -91,7 +91,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
   const availability = useBookingAvailability(editing ? clubId : null, form.propertyId, form.startAt, form.endAt);
   const booking = detail.data?.booking;
   const property = properties.data?.find((item) => item.id === form.propertyId);
-  // Rooms are allocated by ICPDP each semester (UC58); requests cover every other facility type.
+  // Phòng do ICPDP phân bổ mỗi học kỳ (UC58); yêu cầu booking áp dụng cho mọi loại cơ sở vật chất còn lại.
   const requestProperties = (properties.data ?? []).filter((item) => item.isActive && item.type !== "ROOM");
   const bookingField = useFieldValidation({
     date: form.startAt ? null : t("common.fieldRequired"),
@@ -110,13 +110,13 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
     altDate: alternativeNeeded && !alternative.startAt ? t("common.fieldRequired") : null,
     altSlot: alternativeNeeded && alternative.startAt && !slotNumber(alternative, slots.data ?? []) ? t("common.chooseRequired") : null,
   });
-  // A different booking starts its cancel/decision forms untouched.
+  // Chọn booking khác thì các form huỷ/quyết định bắt đầu lại từ trạng thái trống.
   const [reviewedId, setReviewedId] = useState(selected);
   if (reviewedId !== selected) { setReviewedId(selected); cancelField.reset(); decisionField.reset(); }
   // Mở form tạo hoặc sửa booking, nạp sẵn các trường được phép sửa
   function openForm(current?: Booking) {
     setEditingId(current?.id ?? null);
-    // Only the editable fields: the server's save schema is strict and rejects the booking's own fields.
+    // Chỉ lấy các trường được phép sửa: schema lưu của server là strict và sẽ từ chối các trường vốn có của booking.
     setForm(current ? { propertyId: current.propertyId, purpose: current.purpose, startAt: current.startAt, endAt: current.endAt,
       headcount: current.headcount, equipment: current.equipment, ...(current.eventId ? { eventId: current.eventId } : {}) } : emptyInput);
     if (!current) setSelected(null);
@@ -137,7 +137,7 @@ export function BookingWorkspace({ clubId }: BookingWorkspaceProps) {
       setSelected(result.booking.id); setEditing(false); setReason(""); setOverbookingReason(""); setPermitOverbooking(false);
       cancelField.reset(); decisionField.reset();
       appToast.success(t("facilityBookings.changed"));
-    } catch { /* action.error is displayed below. */ }
+    } catch { /* action.error được hiển thị bên dưới. */ }
   }
   // Kiểm tra hợp lệ và lưu booking của CLB
   function save(event: FormEvent) {

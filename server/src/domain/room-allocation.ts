@@ -3,13 +3,13 @@ import { BOOKING_SLOTS, bookingIntervalsConflict, slotsConflict } from "./facili
 import type { AcademicSemester } from "./policy.js";
 import type { Property } from "./property.js";
 
-/** Purpose stored on every booking generated from an ICPDP room allocation. */
+/** Mục đích được lưu trên mọi booking sinh ra từ một lần phân bổ phòng của ICPDP. */
 export const ROOM_ALLOCATION_PURPOSE = "ICPDP room allocation";
 export const ROOM_ALLOCATION_ENTITY = "RoomAllocation";
 
 export interface RoomAllocationInput {
   semesterCode: string; clubId: string; propertyId: string;
-  /** 1 = Monday … 7 = Sunday, Vietnam time. */
+  /** 1 = thứ Hai … 7 = Chủ nhật, theo giờ Việt Nam. */
   weekday: number; slot: number; note?: string;
 }
 export interface RoomAllocationOccurrence { bookingId: string; startAt: Date; endAt: Date; state: string }
@@ -23,7 +23,7 @@ export interface RoomAllocation {
 }
 export interface RoomAllocationClub { id: string; name: string; state: string; dissolutionSemester?: string }
 export interface RoomAllocationConflict { startAt: Date; endAt: Date; source: "booking" | "event" | "defense"; title: string; clubName?: string }
-/** One weekly grid cell (UC58 A3) and the approved events or bookings that would block it. */
+/** Một ô của lưới tuần (UC58 A3) cùng các sự kiện hoặc booking đã duyệt sẽ chặn ô đó. */
 export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
 export interface RoomAllocationPlan { input: RoomAllocationInput; dates: Array<{ startAt: Date; endAt: Date }>; skipped: Date[] }
 export interface RoomAllocationOptions {
@@ -33,16 +33,16 @@ export interface RoomAllocationOptions {
 }
 
 export interface RoomAllocationRepository {
-  /** Clubs that may receive rooms (Active or Dissolving), sorted by name. */
+  /** CLB có thể được cấp phòng (Active hoặc Dissolving), sắp xếp theo tên. */
   clubs(): Promise<RoomAllocationClub[]>;
   club(id: string): Promise<RoomAllocationClub | null>;
   list(filter: { semesterCode?: string; clubId?: string }): Promise<RoomAllocation[]>;
   find(id: string): Promise<RoomAllocation | null>;
-  /** Re-checks conflicts under a property lock, then writes all occurrences or nothing. */
+  /** Kiểm tra lại xung đột dưới khoá property, rồi ghi tất cả các lượt hoặc không ghi gì cả. */
   allocate(plan: RoomAllocationPlan, clubName: string, thresholdMinutes: number,
     officerId: string, now: Date): Promise<RoomAllocation>;
   revoke(id: string, reason: string, officerId: string, now: Date): Promise<RoomAllocation>;
-  /** Approved events and bookings (not allocation sessions) on the room inside the window. */
+  /** Sự kiện và booking đã duyệt (không tính buổi phân bổ) trên phòng trong khoảng thời gian đó. */
   roomCommitments(propertyId: string, from: Date, to: Date): Promise<RoomAllocationConflict[]>;
 }
 
@@ -75,14 +75,14 @@ export function validateRoomAllocationInput(raw: RoomAllocationInput): RoomAlloc
 }
 
 // Lấy ngày theo lịch Việt Nam và thứ trong tuần của một thời điểm
-/** Vietnam calendar day (YYYY-MM-DD) and ISO weekday of an instant. */
+/** Ngày dương lịch Việt Nam (YYYY-MM-DD) và thứ theo ISO của một thời điểm. */
 function vietnamDay(at: Date): { day: string; weekday: number } {
   const local = new Date(at.getTime() + 7 * 3600000);
   return { day: local.toISOString().slice(0, 10), weekday: local.getUTCDay() || 7 };
 }
 
 // Liệt kê các buổi chưa diễn ra của slot hằng tuần trong học kỳ
-/** Every not-yet-started occurrence of the weekly slot inside the semester. */
+/** Mọi lượt chưa bắt đầu của slot hằng tuần trong học kỳ. */
 export function weeklySlotDates(semester: AcademicSemester, weekday: number, slotNumber: number,
   now: Date): Array<{ startAt: Date; endAt: Date }> {
   const slot = BOOKING_SLOTS.find((item) => item.number === slotNumber);
@@ -102,8 +102,8 @@ export function weeklySlotDates(semester: AcademicSemester, weekday: number, slo
 
 // Tính mức độ sử dụng phòng theo từng ô lịch từ các cam kết hiện có
 /**
- * UC58 A3: places each approved event or booking on the weekday × slot cells it would block, with the
- * same conflict rule the allocation uses, so the grid shows what E1 would reject before submitting.
+ * UC58 A3: đặt từng sự kiện hoặc booking đã duyệt vào các ô thứ × slot mà nó chặn, theo cùng
+ * quy tắc xung đột như khi phân bổ, để lưới cho thấy điều E1 sẽ từ chối trước khi gửi.
  */
 export function roomOccupancy(commitments: readonly RoomAllocationConflict[], thresholdMinutes: number): RoomOccupancyCell[] {
   const cells = new Map<string, RoomOccupancyCell>();
@@ -123,7 +123,7 @@ export function roomOccupancy(commitments: readonly RoomAllocationConflict[], th
 }
 
 // Kiểm tra phân bổ phòng theo danh mục, CLB và lịch học kỳ rồi lập kế hoạch các buổi
-/** Validates the allocation against catalogue, club and calendar rules; blackout dates are skipped. */
+/** Kiểm tra phân bổ theo quy tắc danh mục, CLB và lịch; các ngày blackout bị bỏ qua. */
 export function planRoomAllocation(input: RoomAllocationInput, property: Property | null, club: RoomAllocationClub | null,
   calendar: readonly AcademicSemester[], now: Date): RoomAllocationPlan {
   const semester = calendar.find((item) => item.code === input.semesterCode);

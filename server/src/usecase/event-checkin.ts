@@ -37,7 +37,7 @@ export async function checkInToEvent(repo: EventCheckInRepository, policy: Polic
   if (!objectId.test(eventId)) throw new DomainError("invalid event id", "validation");
   const target = await repo.target(eventId, studentId);
   if (!target) throw new DomainError("event not found", "not_found");
-  // E1: a repeated check-in returns the first record unchanged (BR18), even after the window.
+  // E1: check-in lặp lại trả về bản ghi đầu tiên không đổi (BR18), kể cả sau khung giờ.
   if (target.attendance) {
     return { ...view(target.attendance, await feedbackHours(policy, now)), alreadyCheckedIn: true };
   }
@@ -47,14 +47,14 @@ export async function checkInToEvent(repo: EventCheckInRepository, policy: Polic
   }
   if (!event.checkInCode) throw new DomainError("check-in is not available for this event", "conflict");
   if (!checkInCodesMatch(event.checkInCode, code)) throw new DomainError("invalid check-in code", "validation");
-  // E2: outside the window only a club member's manual check-in (with a reason) remains.
+  // E2: ngoài khung giờ chỉ còn check-in thủ công (kèm lý do) của thành viên CLB.
   if (!isWithinCheckInWindow(event, now)) {
     throw new DomainError("check-in is outside the event's check-in window", "conflict");
   }
   if (event.audienceScope === "MEMBERS_ONLY" && !target.isActiveClubMember) {
     throw new DomainError("event is limited to active club members", "forbidden");
   }
-  // E3 unless the event takes walk-ins (A2), which also creates the registration.
+  // E3 trừ khi sự kiện nhận walk-in (A2), khi đó cũng tạo luôn đăng ký.
   const method = target.registrationState === "Confirmed" ? "self" : event.allowWalkIn ? "walk-in" : null;
   if (!method) throw new DomainError("a confirmed registration is required to check in", "forbidden");
   const result = await repo.checkIn({ eventId, studentId, method, now });

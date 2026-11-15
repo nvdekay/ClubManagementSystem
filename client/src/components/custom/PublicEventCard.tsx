@@ -10,7 +10,7 @@ interface PublicEventCardProps {
 }
 
 // Dựng URL ảnh bìa sự kiện đã thu nhỏ qua Cloudinary
-/** Cloudinary covers are requested at card size (2x for dense screens) in an automatic format. */
+/** Ảnh bìa Cloudinary được yêu cầu đúng kích thước thẻ (gấp đôi cho màn hình mật độ cao) và tự chọn định dạng. */
 function coverUrl(url: string): string {
   const marker = "/image/upload/";
   if (!url.includes("res.cloudinary.com") || !url.includes(marker)) return url;
@@ -18,7 +18,7 @@ function coverUrl(url: string): string {
 }
 
 // Định dạng khoảng ngày của sự kiện dd/MM/yyyy
-/** PDP-style date range: "08/09/2026 - 19/09/2026" (a single date when the event fits in one day). */
+/** Khoảng ngày kiểu PDP: "08/09/2026 - 19/09/2026" (chỉ một ngày khi sự kiện diễn ra trong một ngày). */
 export function eventDateRange(startAt: string, endAt: string): string {
   const format = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
   const start = format.format(new Date(startAt));
@@ -68,7 +68,7 @@ export function PublicEventCard({ event }: PublicEventCardProps) {
         <AppIcon name="mapPin" className="mt-0.5 size-4 text-primary-app" />
         <span className="line-clamp-2">{event.venueText || event.clubName}</span>
       </p>
-      {/* The link covers the whole card (like PDP's stretched link) while its text stays the accessible name. */}
+      {/* Liên kết phủ toàn bộ thẻ (như stretched link của PDP) trong khi chữ của nó vẫn là tên truy cập được. */}
       <Link to={`/events/${event.id}`}
         className="mt-auto inline-flex items-center gap-1 pt-4 text-sm font-semibold text-accent-app after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-ring-app">
         <span>{t("discovery.eventDetails")}</span>

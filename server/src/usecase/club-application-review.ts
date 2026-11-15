@@ -61,7 +61,7 @@ function normalizedDecision(input: ApplicationReviewDecisionInput, now: Date) {
 export type ApplicationReviewView = ApplicationReviewDetail & { similarClubs: SimilarClubHint[] };
 
 // Gắn gợi ý các CLB tương tự vào chi tiết đơn để officer tham khảo
-/** Advisory only (UC08): compares the latest submitted version; never picks an outcome. */
+/** Chỉ mang tính tham khảo (UC08): so sánh với phiên bản nộp mới nhất; không bao giờ chọn kết quả. */
 async function withSimilarClubs(repo: ClubApplicationReviewRepository,
   detail: ApplicationReviewDetail): Promise<ApplicationReviewView> {
   const { clubName, field, summary, objectives } = detail.versions.at(-1)?.snapshot

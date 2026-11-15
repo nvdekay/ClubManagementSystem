@@ -10,7 +10,7 @@ export interface AppNotification {
   readAt?: string;
 }
 
-/** Workspace whose notifications to show; a club workspace sees only its own club's. */
+/** Workspace cần hiện thông báo; workspace CLB chỉ thấy thông báo của chính CLB đó. */
 export type NotificationScope = { kind: "student" } | { kind: "icpdp" } | { kind: "club"; clubId: string };
 
 export interface NotificationPage {
@@ -52,7 +52,7 @@ export function markNotificationRead(id: string, csrfToken: string): Promise<{ u
 }
 
 // POST /read-all: đánh dấu đã đọc mọi thông báo của workspace
-/** Marks read only the notifications of this workspace. */
+/** Chỉ đánh dấu đã đọc các thông báo của workspace này. */
 export function markAllNotificationsRead(scope: NotificationScope, csrfToken: string): Promise<{ marked: number; unread: number }> {
   return request(`/mine/read-all?${new URLSearchParams(scopeParams(scope)).toString()}`,
     { method: "POST", headers: { "X-CSRF-Token": csrfToken } });

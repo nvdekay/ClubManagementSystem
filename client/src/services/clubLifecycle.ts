@@ -14,7 +14,7 @@ export interface ClubDissolution {
   effectiveSemester: string;
   effectiveFrom: string;
   effectiveTo: string;
-  /** Set when the club was archived at the end of its Dissolving semester (UC15 step 6). */
+  /** Được đặt khi CLB được lưu trữ vào cuối học kỳ Dissolving (UC15 bước 6). */
   archivedAt?: string;
   outstanding?: OutstandingObligations;
 }
@@ -58,7 +58,7 @@ export interface CascadeResult {
   cancelledBookings: number;
 }
 
-/** Non-2xx response; keeps the status so 409 (state changed) reads differently from 400. */
+/** Response không phải 2xx; giữ status để phân biệt 409 (trạng thái đã đổi) với 400. */
 export class LifecycleRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string) {
     super(message);

@@ -164,14 +164,14 @@ export function decideEventCancellation(
 }
 
 // POST /template: tải mẫu đề xuất sự kiện mới
-/** Replaces the active template (ICPDP_OFFICER); there is no delete. */
+/** Thay thế mẫu đang dùng (ICPDP_OFFICER); không có thao tác xoá. */
 export function uploadProposalTemplate(file: File, mimeType: string, csrfToken: string): Promise<EventProposalTemplateInfo> {
   return request("/template", { method: "POST", body: file,
     headers: { "Content-Type": mimeType, "X-CSRF-Token": csrfToken, "X-Filename": encodeURIComponent(file.name) } });
 }
 
 // GET /document/access: lấy link xem file đề xuất khi xét duyệt
-/** No `revisionNo`: the latest submitted revision's file. */
+/** Không có `revisionNo`: file của bản chỉnh sửa đã nộp mới nhất. */
 export function accessReviewProposalDocument(id: string, revisionNo?: number, inline = false): Promise<FileAccess> {
   const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });
   return request(`/${encodeURIComponent(id)}/document/access?${query}`);

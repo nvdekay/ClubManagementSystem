@@ -18,7 +18,7 @@ export function useSchoolEvent(id: string | undefined, enabled: boolean) {
 }
 
 // Query xung đột lịch của cơ sở vật chất trong khoảng thời gian
-/** BR15 warning while the form is filled; only asked once a room and a valid time range are chosen. */
+/** Cảnh báo BR15 khi đang điền form; chỉ hỏi server khi đã chọn phòng và khoảng thời gian hợp lệ. */
 export function useScheduleConflicts(input: { propertyId: string; startAt: string; endAt: string } | null) {
   return useQuery({ queryKey: [...schoolEventKey, "conflicts", input], queryFn: ({ signal }) => fetchScheduleConflicts(input!, signal),
     enabled: Boolean(input), retry: false });

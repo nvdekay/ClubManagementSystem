@@ -67,11 +67,11 @@ export function RecruitmentApplicationPage() {
   const [createdApplication, setCreatedApplication] = useState<RecruitmentApplication | null>(null);
   const [notice, setNotice] = useState("");
   const [pageError, setPageError] = useState("");
-  // A double click would run two confirm prompts and two concurrent draft saves (409).
+  // Nhấp đúp sẽ chạy hai hộp xác nhận và hai lần lưu nháp đồng thời (lỗi 409).
   const submitting = useRef(false);
   const campaign = campaignQuery.data;
   const application = applicationQuery.data ?? createdApplication;
-  // UC15: while the club is suspended the form stays readable but nothing can be created or submitted.
+  // UC15: khi CLB bị tạm ngưng, form vẫn xem được nhưng không thể tạo hay nộp gì.
   const paused = campaignQuery.data?.clubSuspended === true;
   const editable = (!application || application.state === "Draft") && !paused;
   const canWithdraw = Boolean(application && ["Submitted", "Screening", "Shortlisted"].includes(application.state));
@@ -88,7 +88,7 @@ export function RecruitmentApplicationPage() {
       return [field.key, field.required ? t(field.type === "select" || field.type === "multiselect"
         ? "common.chooseRequired" : "common.fieldRequired") : null];
     }
-    // Link format is only checked on required questions; optional answers are left to the server.
+    // Định dạng link chỉ được kiểm tra ở câu hỏi bắt buộc; câu trả lời tuỳ chọn để server kiểm tra.
     return [field.key, field.required && field.type === "url" && typeof answer === "string" && !isHttpUrl(answer) ? t("common.invalidUrl") : null];
   })));
 
@@ -158,9 +158,9 @@ export function RecruitmentApplicationPage() {
   // Xác nhận rồi nộp hồ sơ ứng tuyển
   async function submit() {
     if (!auth.data || !campaign || submitting.current) return;
-    // Check answers before asking to confirm, so nothing is created for an incomplete form.
+    // Kiểm tra câu trả lời trước khi hỏi xác nhận, để không tạo gì khi form chưa đầy đủ.
     if (!validation.touchAll()) {
-      // The summary helps on long forms where a flagged question may be off screen.
+      // Phần tóm tắt hữu ích với form dài, khi câu hỏi bị đánh dấu có thể nằm ngoài màn hình.
       const missing = campaign.formSchema.filter((field) => field.required && (field.type === "file"
         ? !attachedKeys.has(field.key)
         : !([answers[field.key] ?? ""].flat().some((value) => value.trim())))).map((field) => field.label);
@@ -221,7 +221,7 @@ export function RecruitmentApplicationPage() {
     <Link className="inline-block font-medium text-primary-app hover:underline" to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
       {t("recruitmentApplications.signInLink")}</Link>
   </AppNotice>;
-  // 404 means the campaign is no longer public (closed or completed): not something a retry fixes.
+  // 404 nghĩa là chiến dịch không còn công khai (đã đóng hoặc hoàn tất): thử lại cũng không khắc phục được.
   const campaignGone = (campaignQuery.error as { status?: number } | null)?.status === 404;
   if (campaignQuery.isError || !campaign) return <AppNotice tone="danger" className="max-w-3xl">
     <p role="alert" className="font-semibold text-danger-app">{campaignGone || !campaignQuery.error
@@ -236,7 +236,7 @@ export function RecruitmentApplicationPage() {
   </AppNotice>;
 
   const appAttachments = application?.attachments ?? [];
-  // Native <select>: it lives in a disabled <fieldset> and spreads the validation control; styled like AppSelect's trigger.
+  // <select> gốc: nằm trong <fieldset> bị disabled và nhận thêm thuộc tính kiểm tra hợp lệ; có style giống nút kích hoạt của AppSelect.
   const selectClass = "mt-1.5 block h-11 w-full rounded-lg border border-border-app bg-bg-app px-3 text-sm font-normal text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:border-ring-app focus-visible:ring-3 focus-visible:ring-ring-app/20 focus-visible:outline-none aria-[invalid=true]:border-danger-app sm:h-9";
   return <>
     <PageHeader title={campaign.title} back={{ to: `/clubs/${campaign.clubId}`, label: t("recruitmentApplications.back") }}

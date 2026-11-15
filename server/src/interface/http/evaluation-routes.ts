@@ -30,7 +30,7 @@ export const evaluationOverviewQuery = z.object({ period: periodCode.optional() 
 export const evaluationPeriodBody = z.object({ periodCode }).strict();
 export const evaluationManualBody = z.object({
   dimensionCode: z.enum(codes),
-  /** `null` clears the manual score and goes back to the computed one. */
+  /** `null` xoá điểm nhập tay và quay về điểm đã tính. */
   manual: z.object({ score: z.number().min(0).max(100), justification: z.string().max(2_000) }).strict().nullable(),
 }).strict();
 

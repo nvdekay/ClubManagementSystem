@@ -6,9 +6,9 @@ import { cn } from "@/utils/cn";
 interface AppStarRatingProps {
   value: number;
   onChange: (value: number) => void;
-  /** Group label, e.g. "Overall rating". */
+  /** Nhãn của nhóm, ví dụ "Overall rating". */
   label: string;
-  /** Accessible name for each star, e.g. (3) => "3 stars". */
+  /** Tên truy cập được cho từng sao, ví dụ (3) => "3 stars". */
   starLabel: (value: number) => string;
   max?: number;
   required?: boolean;
@@ -16,7 +16,7 @@ interface AppStarRatingProps {
 }
 
 // Chọn số sao đánh giá
-/** 1–N star picker built on native radios: arrow keys move, Space selects, screen readers announce "n stars". */
+/** Bộ chọn 1–N sao dựng trên radio gốc: phím mũi tên di chuyển, phím cách để chọn, trình đọc màn hình đọc "n stars". */
 export function AppStarRating({ value, onChange, label, starLabel, max = 5, required, disabled }: AppStarRatingProps) {
   const name = useId();
   const [hovered, setHovered] = useState(0);

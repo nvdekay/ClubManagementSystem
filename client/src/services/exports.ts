@@ -18,11 +18,11 @@ export interface ExportOptions {
   formats: ExportFormat[];
   periods: { code: string; startAt: string; endAt: string }[];
   clubs: { id: string; name: string }[];
-  /** Newest first; only years with at least one Published evaluation. */
+  /** Mới nhất trước; chỉ gồm các năm có ít nhất một đánh giá Published. */
   annualYears: AnnualYearOption[];
 }
 
-// Mirrors server/src/domain/annual-report.ts (UC55 A2).
+// Phản chiếu server/src/domain/annual-report.ts (UC55 A2).
 export type Season = "SPRING" | "SUMMER" | "FALL";
 export type Trend = "UP" | "DOWN" | "STABLE";
 export type AnnualFormat = "pdf" | "xlsx";
@@ -40,7 +40,7 @@ export interface AnnualClubRow {
   field: string | null;
   state: string;
   terms: Record<Season, { score: number; classification: Classification } | null>;
-  /** 0 means "no evaluation yet"; such rows come last. */
+  /** 0 nghĩa là "chưa có đánh giá"; các dòng này xếp cuối. */
   evaluatedTerms: number;
   yearScore: number | null;
   yearClassification: Classification | null;
@@ -87,7 +87,7 @@ export interface AnnualReport {
   achievements: AnnualAchievement[];
 }
 
-/** Non-2xx response; 404 means nothing matched the filter (no file is produced). */
+/** Response không phải 2xx; 404 nghĩa là không có gì khớp bộ lọc (không tạo file). */
 export class ExportRequestError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);
@@ -121,7 +121,7 @@ export interface ExportPreview {
 }
 
 // POST /preview: xem trước dữ liệu sẽ xuất
-/** Several types: one xlsx, a sheet per type; csv/pdf and the status filter need exactly one (FR-UC55-12). */
+/** Nhiều loại: một file xlsx, mỗi loại một sheet; csv/pdf và bộ lọc trạng thái cần đúng một loại (FR-UC55-12). */
 export async function previewExport(types: ExportType[], filter: ExportFilter, csrfToken: string): Promise<ExportPreview> {
   const response = await post("/preview", csrfToken, { types, filter });
   if (!response.ok) return failure(response);
@@ -130,7 +130,7 @@ export async function previewExport(types: ExportType[], filter: ExportFilter, c
 }
 
 // Đọc response thành blob và tên file từ Content-Disposition
-/** The generated file; the name comes from the server's Content-Disposition. */
+/** File được tạo ra; tên lấy từ Content-Disposition của server. */
 async function file(response: Response, fallbackName: string): Promise<{ blob: Blob; fileName: string }> {
   if (!response.ok) return failure(response);
   const disposition = response.headers.get("Content-Disposition") ?? "";
@@ -145,7 +145,7 @@ export async function downloadExport(types: ExportType[], filter: ExportFilter, 
 }
 
 // POST /annual-report/preview: xem trước báo cáo đánh giá năm
-/** 404 when the year has no Published evaluation. */
+/** 404 khi năm đó không có đánh giá Published. */
 export async function previewAnnualReport(year: number, csrfToken: string): Promise<AnnualReport> {
   const response = await post("/annual-report/preview", csrfToken, { year });
   if (!response.ok) return failure(response);

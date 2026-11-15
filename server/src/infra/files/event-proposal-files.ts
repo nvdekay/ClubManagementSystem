@@ -6,7 +6,7 @@ import type { CloudinaryConfig } from "../config/index.js";
 import { cloudinaryApplicationFiles, uploadToCloudinary } from "./cloudinary-application-files.js";
 
 // Tạo kho file đề án sự kiện và template của ICPDP trên Cloudinary
-/** Proposal documents and ICPDP templates are authenticated raw assets, read only through 60-second signed URLs. */
+/** Tài liệu đề xuất và template của ICPDP là raw asset có xác thực, chỉ đọc qua signed URL 60 giây. */
 export function cloudinaryEventProposalFiles(config: CloudinaryConfig): EventProposalFileStorage {
   async function upload(folder: string, input: { actorId: string; fileName: string; mimeType: string; bytes: Buffer; now: Date }):
     Promise<EventProposalDocument> {
@@ -22,12 +22,12 @@ export function cloudinaryEventProposalFiles(config: CloudinaryConfig): EventPro
   };
 }
 
-// Same depth from server/src/infra/files (tsx, vitest) and server/dist/infra/files (build): four levels up is the repo root.
+// Cùng độ sâu từ server/src/infra/files (tsx, vitest) và server/dist/infra/files (build): lên bốn cấp là gốc repo.
 const DEFAULT_TEMPLATE = fileURLToPath(new URL("../../../../docs/Template Đề án sự kiện.docx", import.meta.url));
 let cachedDefault: Promise<{ fileName: string; mimeType: string; content: Buffer; updatedAt: Date }> | undefined;
 
 // Đọc template đề án sự kiện mặc định đi kèm repo (cache trong bộ nhớ)
-/** The bundled template served until ICPDP uploads one; read once, then kept in memory. */
+/** Template đi kèm được phục vụ cho tới khi ICPDP upload template mới; đọc một lần rồi giữ trong bộ nhớ. */
 export function loadDefaultEventProposalTemplate() {
   cachedDefault ??= Promise.all([readFile(DEFAULT_TEMPLATE), stat(DEFAULT_TEMPLATE)]).then(([content, info]) => ({
     fileName: "Template Đề án sự kiện.docx",

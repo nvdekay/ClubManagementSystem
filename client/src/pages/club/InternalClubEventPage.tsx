@@ -65,7 +65,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
   const mutation = useClubEventMutation(clubId);
   const [draft, setDraft] = useState<InternalClubEventInput>(() => (existing ? inputFromEvent(existing) : freshEvent()));
   const [now, setNow] = useState(() => Date.now());
-  // The 24-hour notice applies to create/publish and to schedule edits of a CREATED event, never to a draft save.
+  // Quy tắc báo trước 24 giờ áp dụng khi tạo/công khai và khi sửa lịch của sự kiện CREATED, không áp dụng khi lưu nháp.
   const [strict, setStrict] = useState(false);
   const [formError, setFormError] = useState<unknown>(null);
   const [publishOpen, setPublishOpen] = useState(false);
@@ -119,7 +119,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
   const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
 
   // Kiểm tra form, tùy chọn kiểm tra thêm thời hạn báo trước
-  /** Validates the form; `notice` adds the 24-hour rule. Returns false and reveals errors when invalid. */
+  /** Kiểm tra form; `notice` thêm quy tắc 24 giờ. Trả về false và hiện lỗi khi không hợp lệ. */
   function validate(notice: boolean) {
     const at = Date.now();
     setNow(at);
@@ -286,7 +286,7 @@ function InternalEventForm({ clubId, csrfToken, permissions, existing, options, 
 }
 
 // Trang tạo hoặc sửa sự kiện nội bộ của CLB
-/** Self-funded members-only event: create (DRAFT / CREATED / PUBLIC) or edit while DRAFT or CREATED. */
+/** Sự kiện nội bộ tự túc chỉ dành cho thành viên: tạo (DRAFT / CREATED / PUBLIC) hoặc sửa khi đang DRAFT hoặc CREATED. */
 export function InternalClubEventPage() {
   const { clubId = "", eventId } = useParams();
   const { t } = useTranslation();

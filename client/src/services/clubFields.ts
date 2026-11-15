@@ -15,7 +15,7 @@ export interface ClubFieldInput {
 
 export type ClubFieldRemoval = "deleted" | "deactivated";
 
-/** 409 from the server: another field already uses this name. */
+/** Server trả 409: đã có lĩnh vực khác dùng tên này. */
 export class DuplicateClubFieldError extends ApiError {
   constructor(message: string) {
     super(message);

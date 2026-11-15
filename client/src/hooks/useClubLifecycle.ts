@@ -19,7 +19,7 @@ export function useClubLifecycle(id: string | null) {
 }
 
 // Mutation tạm ngưng, kích hoạt lại hoặc giải thể CLB, rồi làm mới cache
-/** A decision changes the club, its events and the list, so every lifecycle query refetches. */
+/** Một quyết định làm thay đổi CLB, các sự kiện của nó và cả danh sách, nên mọi query vòng đời đều được tải lại. */
 export function useClubLifecycleAction() {
   const queryClient = useQueryClient();
   return useMutation({

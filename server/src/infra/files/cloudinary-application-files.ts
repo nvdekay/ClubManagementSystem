@@ -22,7 +22,7 @@ function cloudinaryBase(config: CloudinaryConfig): string {
 }
 
 // Upload một file lên Cloudinary (ảnh công khai hoặc raw có xác thực)
-/** Uploads one file: a public image at a random path, or an authenticated raw asset under `folder`. */
+/** Upload một file: ảnh public ở đường dẫn ngẫu nhiên, hoặc raw asset có xác thực dưới `folder`. */
 export async function uploadToCloudinary(config: CloudinaryConfig, input: { folder: string; fileName: string;
   mimeType: string; bytes: Buffer; isPublic: boolean }): Promise<{ assetId: string; secureUrl?: string }> {
   const extension = extensionForMime[input.mimeType];
@@ -57,8 +57,8 @@ export function cloudinaryApplicationFiles(config: CloudinaryConfig): Applicatio
   return {
     // Upload tài liệu hồ sơ và trả metadata tài liệu để lưu
     async upload(input): Promise<ApplicationDocument> {
-      // Proposed logos are public images (random path) so they can be previewed and reused as the
-      // club logo on approval; every other document stays an authenticated raw asset.
+      // Logo đề xuất là ảnh public (đường dẫn ngẫu nhiên) để có thể xem trước và dùng lại làm
+      // logo CLB khi được duyệt; mọi tài liệu khác vẫn là raw asset có xác thực.
       const isPublic = input.visibility === "public";
       const stored = await uploadToCloudinary(config, { folder: isPublic ? "ucms/club-logo-proposals"
         : `ucms/applications/${input.ownerId}/${input.applicationId}`, fileName: input.fileName,

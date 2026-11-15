@@ -30,7 +30,7 @@ export function useClubComplaints(clubId: string, enabled: boolean) {
 function useComplaintMutation<T>(run: (input: T) => Promise<unknown>) {
   const client = useQueryClient();
   return useMutation({ mutationFn: run, onSuccess: async () => {
-    // Lists are filtered on the server, so every complaint list is refetched.
+    // Danh sách được lọc ở server, nên mọi danh sách khiếu nại đều được tải lại.
     await client.invalidateQueries({ queryKey: complaintsKeyRoot });
     await client.invalidateQueries({ queryKey: ["dashboard"] });
   } });

@@ -17,7 +17,7 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
   // Kiểm tra thành viên đang giữ ghế Chủ nhiệm/Phó chủ nhiệm trong nhiệm kỳ Active
   async function isLeader(session: ClientSession, member: Doc, now: Date) {
     const terms = await m.clubTerms!.find({ clubId: member.clubId, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } }).session(session).lean();
-    // Only Club Leader seats (Chủ nhiệm, Phó chủ nhiệm) are exempt, not every board seat (BR47 a).
+    // Chỉ ghế Club Leader (Chủ nhiệm, Phó chủ nhiệm) được miễn, không phải mọi ghế ban chủ nhiệm (BR47 a).
     const positions = await m.clubPositions!.find({ clubId: member.clubId, isActive: true,
       $or: [{ isLeaderRole: true }, { isBoardSeat: true, code: { $in: [...VICE_LEADER_SEAT_CODES] } }] }).session(session).lean();
     const assignment = await m.clubPositionAssignments!.findOne({ membershipId: member._id, clubId: member.clubId, termId: { $in: terms.map((t) => t._id) },
@@ -35,7 +35,7 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
       ...(actorId ? { actorId: new Types.ObjectId(actorId), actorRole: "Student" } : { actorRole: "SYSTEM" }), after, correlationId: randomUUID(), at: now }], { session });
   }
   // Đóng yêu cầu quá hạn: miễn cho Leader, ngược lại hết hạn và chuyển thành viên Inactive
-  /** Exempts a current Leader, otherwise expires the request and makes the membership Inactive. */
+  /** Miễn cho Leader hiện tại, nếu không thì yêu cầu hết hạn và membership chuyển sang Inactive. */
   async function close(session: ClientSession, member: Doc, request: Doc, now: Date, changes: { expired: number; exempt: number }) {
     const periodCode = String(request.periodCode);
     if (await isLeader(session, member, now)) {
@@ -82,7 +82,7 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
         const outcome = await mongoose.connection.transaction(async (session) => {
           const member = await m.clubMemberships!.findOneAndUpdate({ _id: candidate._id, state: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
           if (!member) return { opened: 0, expired: 0, exempt: 0 };
-          // The club write serializes a concurrent nomination/transition with the exemption check.
+          // Lệnh ghi lên CLB tuần tự hoá một đề cử/chuyển nhiệm kỳ đồng thời với việc kiểm tra miễn trừ.
           await m.clubs!.updateOne({ _id: member.clubId }, { $inc: { __v: 1 } }, { session });
           let request: Doc | null = await m.membershipReconfirmations!.findOne({ membershipId: member._id, periodCode: period.code }).session(session).lean();
           const changes = { opened: 0, expired: 0, exempt: 0 };
@@ -118,7 +118,7 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
           if (!request) return changes;
           const member = await m.clubMemberships!.findOneAndUpdate({ _id: request.membershipId, state: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
           if (!member) {
-            // The membership already left Active by another path; the request just closes.
+            // Membership đã rời Active bằng đường khác; yêu cầu chỉ việc đóng lại.
             await m.membershipReconfirmations!.updateOne({ _id, state: "Pending" }, { $set: { state: "Expired" } }, { session });
             return changes;
           }

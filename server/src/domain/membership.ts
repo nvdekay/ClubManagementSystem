@@ -28,7 +28,7 @@ export interface ClubMembershipRecord {
   pendingWithdrawal?: MembershipWithdrawalRequest;
 }
 
-/** UC21 roster row: the membership plus the member's email and the club roles held right now. */
+/** Dòng danh sách thành viên UC21: membership cùng email của thành viên và các role CLB đang giữ. */
 export interface ClubRosterMember extends ClubMembershipRecord {
   email: string;
   positions: string[];
@@ -52,7 +52,7 @@ export interface MembershipWithdrawalRequest {
 export interface MembershipRepository {
   listMine(userId: string): Promise<ClubMembershipRecord[]>;
   listClub(clubId: string, now: Date): Promise<ClubRosterMember[]>;
-  /** UC20 A1 / BR13: creates an Active membership without an application, with a recorded reason. */
+  /** UC20 A1 / BR13: tạo membership Active mà không cần đơn, kèm lý do được ghi lại. */
   onboardManually(input: { clubId: string; email: string; reason: string; actorId: string;
     now: Date }): Promise<ClubMembershipRecord>;
   changeState(input: { clubId: string; membershipId: string; actorId: string;

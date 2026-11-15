@@ -101,7 +101,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
     const doc = await query.lean();
     if (!doc) return null;
     const club = await clubs.findById(doc.clubId).select("state").session(session ?? null).lean();
-    // UC15 (2026-10-10): a suspended club keeps its campaign open but accepts no applications for now.
+    // UC15 (2026-10-10): CLB bị đình chỉ vẫn giữ chiến dịch mở nhưng tạm thời không nhận đơn.
     if (club?.state === "Suspended") {
       throw new DomainError("club is suspended; applications are paused", "conflict", { reason: "clubSuspended" });
     }
@@ -120,7 +120,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
   }
 
   // Lấy id người có quyền duyệt đơn ứng tuyển của CLB
-  /** Every Club Leader of the club (President and Vice-Presidents of the active term), by the shared access rule. */
+  /** Mọi Club Leader của CLB (President và Vice-President của nhiệm kỳ Active), theo quy tắc truy cập dùng chung. */
   async function reviewerIds(clubId: Types.ObjectId, now: Date, session: ClientSession) {
     return clubUserIdsWithPermission(clubId, "club.application.review", now, session);
   }
@@ -227,8 +227,8 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
         }
         const all = await applications.find({ campaignId }).select("state").session(session).lean();
         const terminal = new Set(["Accepted", "Rejected", "Waitlisted", "Withdrawn", "Onboarded", "Declined"]);
-        // Complete only when no more applications can arrive: the window has closed or every
-        // place is taken. Deciding the current applications early must not close an open campaign.
+        // Chỉ hoàn tất khi không còn đơn nào có thể đến nữa: cửa sổ đã đóng hoặc mọi
+        // chỉ tiêu đã đủ. Quyết định sớm các đơn hiện có không được đóng một chiến dịch đang mở.
         const filled = all.filter((app) => ["Accepted", "Onboarded"].includes(String(app.state))).length;
         const closed = (campaign.windowEnd as Date) <= input.now || filled >= Number(campaign.capacity);
         if (closed && all.length > 0 && all.every((app) => terminal.has(String(app.state)))) {

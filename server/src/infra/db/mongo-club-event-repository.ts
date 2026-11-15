@@ -22,7 +22,7 @@ import { ucmsModels as m } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 
 type Doc = Record<string, unknown>;
-/** Fixed audit entity for the single, replace-only ICPDP event proposal template. */
+/** Entity audit cố định cho mẫu đề xuất sự kiện của ICPDP: chỉ có một mẫu và chỉ được thay thế. */
 const PROPOSAL_TEMPLATE_ENTITY = new Types.ObjectId("000000000000000000000e01");
 export interface ClubEventRules { proposalNoticeHours: number; cancellationNoticeHours: number }
 // Chuyển chuỗi id thành ObjectId
@@ -95,7 +95,7 @@ async function assess(session: ClientSession, clubId: Types.ObjectId, input: Clu
       state: { $in: ["Approved", "Upcoming", "Ongoing", "CREATED", "PUBLIC", "ONGOING"] }, ...overlap }).session(session).lean());
     const bookings = await m.propertyBookings!.find({ propertyId: property._id, state: { $in: ["Approved", "In Use"] },
       _id: { $nin: input.bookingIds.map(oid) }, ...(eventId ? { eventId: { $ne: eventId } } : {}), ...overlap }).session(session).lean();
-    // UC58: the club's own room allocation covering the whole slot (or consecutive slots) is its right to use the room, not a conflict.
+    // UC58: phân phòng của chính CLB phủ trọn khung giờ (hoặc các khung liên tiếp) là quyền sử dụng phòng của CLB, không phải xung đột.
     const ownRoomWindows = property.type === "ROOM"
       ? mergeConsecutiveBookingIntervals(
           bookings
@@ -168,7 +168,7 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
     conflictResult: assessment.conflictResult, submittedBy: actorId, submittedAt: now }], { session });
   await m.events!.updateOne({ _id: event._id }, { $set: { ...fields(input, assessment.semesterCode), state, currentRevisionNo: revisionNo,
     conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail }, $unset: { revisionDeadlineAt: "" } }, { session });
-  // UC05: budget, risk and the club's open cases decide, once, the SLA of its review.
+  // UC05: ngân sách, rủi ro và các vụ việc đang mở của CLB quyết định, một lần duy nhất, SLA của review này.
   await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
     title: input.title, state: "Open", openedAt: now,
     ...(activeDefense ? { assigneeId: activeDefense.leadOfficerId } : {}),
@@ -236,14 +236,14 @@ async function publishInSession(session: ClientSession, id: Types.ObjectId, club
   }
 }
 // Chuyển input sự kiện nội bộ thành input sự kiện chuẩn (chỉ thành viên)
-/** Internal events reuse the proposal input shape: always members-only and never with a university budget. */
+/** Sự kiện nội bộ dùng lại cấu trúc đầu vào của đề xuất: luôn chỉ dành cho thành viên và không bao giờ có ngân sách của trường. */
 function internalInput(source: InternalClubEventInput): ClubEventInput {
   return { title: source.title, objective: source.objective, plan: source.plan, startAt: source.startAt, endAt: source.endAt,
     venueText: source.venueText, propertyId: source.propertyId, capacity: source.capacity, riskCategory: source.riskCategory,
     bookingIds: source.bookingIds, audienceScope: "MEMBERS_ONLY", budgetLines: [] };
 }
 // Ghi sự kiện nội bộ (nháp hoặc tạo) kèm audit và booking
-/** One write path for internal create, edit and CREATED reschedule; the 24-hour notice applies when the schedule becomes official or moves. */
+/** Một đường ghi chung cho tạo, sửa sự kiện nội bộ và dời lịch CREATED; quy tắc báo trước 24 giờ áp dụng khi lịch trở thành chính thức hoặc bị dời. */
 async function writeInternal(session: ClientSession, clubId: Types.ObjectId, event: Doc | null, next: ClubEventInput,
   state: "DRAFT" | "CREATED", actorId: Types.ObjectId, now: Date, rules: ClubEventRules, action: string,
   requireBookingPermission: boolean, reason?: string): Promise<Types.ObjectId> {
@@ -300,7 +300,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
       const versions = m.eventProposalVersions!.findOne({ eventId: event._id, ...(typeof revision === "number" ? { revisionNo: revision } : {}) })
         .sort({ revisionNo: -1 }).select({ payload: 1 });
       let payload = revision === "draft" ? await eventDraftPayload(event._id as Types.ObjectId) : {};
-      // Events created before draft audits fall back to their latest revision, as readClubEvent does.
+      // Sự kiện tạo trước khi có audit bản nháp thì dùng revision mới nhất, giống readClubEvent.
       if (!Object.keys(payload).length) payload = ((await versions.lean())?.payload ?? {}) as Doc;
       return { clubId: String(event.clubId), document: (payload.proposalDocument as EventProposalDocument | undefined) ?? null };
     },
@@ -318,7 +318,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
     },
     // ICPDP lưu mẫu tài liệu đề xuất mới (append-only)
     async saveProposalTemplate(document, actorId, now) {
-      // Append-only: the newest record is the active template; earlier ones stay as history.
+      // Chỉ thêm, không sửa: bản ghi mới nhất là mẫu đang dùng; các bản cũ giữ làm lịch sử.
       await m.auditLogs!.create({ entityType: "SystemTemplate", entityId: PROPOSAL_TEMPLATE_ENTITY, action: "EVENT_PROPOSAL_TEMPLATE_UPDATED",
         actorId: oid(actorId), actorRole: "ICPDP Officer", after: document, correlationId: randomUUID(), at: now });
       return { fileName: document.fileName, mimeType: document.mimeType, bytes: document.bytes, updatedAt: document.uploadedAt, isSystemDefault: false };
@@ -360,7 +360,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           ...("expectedVersion" in action ? { __v: action.expectedVersion } : {}) }, { $inc: { __v: 1 } }, { session }).lean();
         if (!event) conflict("event changed or is not available in this club; reload and retry");
         const payload = await payloadInSession(session, event._id as Types.ObjectId);
-        // The stored document keeps its asset id, so submit and reschedule freeze the full metadata in the revision.
+        // Document đã lưu giữ asset id của nó, nên nộp và dời lịch sẽ đóng băng đầy đủ metadata vào revision.
         const proposalDocument = payload.proposalDocument as EventProposalDocument | undefined;
         const input = { ...clubEventFrom(event, payload), budgetLines: (payload.budgetLines ?? []) as ClubEventInput["budgetLines"],
           ...(proposalDocument ? { proposalDocument } : {}) };
@@ -371,7 +371,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
             await audit(session, oid(eventId), "EVENT_PROPOSAL_DOCUMENT_UPLOADED", oid(actorId), { payload: { ...payload, proposalDocument: action.document } }, now);
             return;
           }
-          // Saving the text fields keeps the document attached earlier.
+          // Lưu các trường văn bản vẫn giữ document đã đính kèm trước đó.
           const next = action.kind === "save" ? { ...action.input, ...(proposalDocument ? { proposalDocument } : {}) } : input;
           assertProposalAudience(next);
           if (action.kind === "submit") assertProposalDocumentPresent(proposalDocument);

@@ -14,7 +14,7 @@ const clubQuery = z.object({
 }).strict();
 const eventQuery = z.object({
   page: z.coerce.number().int().min(1).max(100_000).default(1),
-  // Defaults to upcoming so existing "upcoming events" consumers keep their behaviour.
+  // Mặc định là upcoming để các consumer "sự kiện sắp diễn ra" hiện có giữ nguyên hành vi.
   status: z.enum(["all", "ongoing", "upcoming", "ended"]).default("upcoming"),
   search: z.string().trim().max(100).default(""),
 }).strict();

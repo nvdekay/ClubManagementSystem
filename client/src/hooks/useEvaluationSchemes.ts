@@ -13,7 +13,7 @@ export function useEvaluationSchemes(enabled: boolean) {
 }
 
 // Mutation tạo, sửa, kích hoạt hoặc xoá thang đánh giá, rồi làm mới cache
-/** Activation also supersedes another scheme, so every change refetches the whole list. */
+/** Kích hoạt một thang cũng thay thế thang khác, nên mọi thay đổi đều tải lại toàn bộ danh sách. */
 export function useEvaluationSchemeAction() {
   const queryClient = useQueryClient();
   return useMutation({

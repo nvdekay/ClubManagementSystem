@@ -39,7 +39,7 @@ export function EventProposalQueuePage() {
       await replaceTemplate.mutateAsync({ file, mimeType, csrfToken: auth.data.csrfToken });
       appToast.success(t("eventReviews.templateReplaced"));
     } catch {
-      // Mutation error is rendered in the template card.
+      // Lỗi của mutation được hiển thị trong thẻ mẫu.
     }
   }
 
@@ -63,7 +63,7 @@ export function EventProposalQueuePage() {
       try {
         await action.mutateAsync({ kind: "claim", id: eventId, csrfToken: auth.data.csrfToken });
       } catch {
-        return; // The error is shown under the list.
+        return; // Lỗi được hiển thị bên dưới danh sách.
       }
     }
     navigate(`/workspace/event-proposals/${eventId}`);

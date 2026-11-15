@@ -8,7 +8,7 @@ interface AppMeterProps {
 }
 
 // Thanh đo một giá trị so với giới hạn
-/** A single ratio against a limit: the fill on a lighter track of the same hue. */
+/** Một tỉ lệ so với giới hạn: phần tô trên nền thanh nhạt hơn cùng tông màu. */
 export function AppMeter({ label, value, max, valueText }: AppMeterProps) {
   return (
     <div>

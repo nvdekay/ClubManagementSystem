@@ -117,7 +117,7 @@ function historyLabel(t: TFunction, action: string): string {
 }
 
 // Tách ô nhập thành từng minh chứng mỗi dòng
-/** One evidence item per non-empty line; a line that is a link is kept as the link. */
+/** Mỗi dòng không rỗng là một minh chứng; dòng là đường link thì giữ nguyên là link. */
 function evidenceLines(value: string): EvidenceInput[] {
   return value.split("\n").map((line) => line.trim()).filter(Boolean)
     .map((line) => /^https?:\/\//i.test(line) ? { note: line, url: line } : { note: line });
@@ -191,7 +191,7 @@ function OpenCaseForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: ()
       const created = await open.mutateAsync({ csrfToken, input: { clubId, originType, severity, title: title.trim(),
         description: description.trim() || undefined, originRefId: related || undefined, evidence: evidenceLines(evidence) } });
       navigate(`/workspace/violations/${created.id}`);
-    } catch { /* Mutation state is rendered below. */ }
+    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
   }
 
   return (
@@ -300,7 +300,7 @@ export function ViolationsPage() {
 }
 
 // Một khối đánh số trong panel bước tiếp theo, nổi bật khi là bước hiện tại
-/** One block of the "next step" panel: a numbered marker, highlighted while it is the step the case is at. */
+/** Một khối của bảng "bước tiếp theo": có số thứ tự, được làm nổi bật khi vụ việc đang ở bước đó. */
 function Step({ number, current, children }: { number: number; current: boolean; children: ReactNode }) {
   return <div className="flex gap-3" aria-current={current ? "step" : undefined}>
     <span aria-hidden="true" className={cn("flex size-6 shrink-0 items-center justify-center rounded-full border border-border-app text-xs font-semibold text-muted-app",
@@ -345,7 +345,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
     reason: reason.trim() ? null : t("violations.decisionReasonRequired"),
     evidence: finding === "VIOLATION" && !evidenceLines(decisionEvidence).length ? t("violations.decisionEvidenceRequired") : null,
   });
-  // Blank rows are skipped on save, so only the first description is required, and only while every row is blank.
+  // Các dòng trống bị bỏ qua khi lưu, nên chỉ mô tả đầu tiên là bắt buộc, và chỉ khi mọi dòng đều trống.
   const anyAction = rows.some((row) => row.description.trim());
   const actionsField = useFieldValidation(Object.fromEntries(rows.flatMap((row, index) => [
     [`description${index}`, index === 0 && !anyAction ? t("common.fieldRequired") : null],
@@ -370,7 +370,7 @@ function ViolationDetailView({ id, csrfToken }: { id: string; csrfToken: string 
   const decided = item.state === "Decision Issued" || item.state === "Corrective Action";
   const canDecideViolation = item.state === "Awaiting Club Response" && Boolean(response?.source);
   const label = "text-xs text-muted-app";
-  // The panel's blocks read as numbered steps; the record's state decides which one is current.
+  // Các khối của bảng đọc như các bước đánh số; trạng thái của hồ sơ quyết định bước nào là hiện tại.
   const steps = [item.state === "Open" && "investigate", (item.state === "Open" || item.state === "Under Investigation") && "request",
     item.state === "Awaiting Club Response" && response && !response.source && "record", !decided && "decide", decided && "actions"]
     .filter((key): key is string => Boolean(key));

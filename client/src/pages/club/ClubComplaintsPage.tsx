@@ -17,7 +17,7 @@ import { useClubComplaints, useRespondToComplaint } from "@/hooks/useComplaints"
 import type { ComplaintEvidence, ComplaintForClub } from "@/services/complaints";
 
 // Trang Club Leader xem và phản hồi khiếu nại nhắm vào CLB
-/** UC52: complaints ICPDP forwarded to this club (never with the complainant, D5), answered once each. */
+/** UC52: các khiếu nại ICPDP chuyển cho CLB này (không bao giờ kèm người khiếu nại, D5), mỗi khiếu nại chỉ được phản hồi một lần. */
 export function ClubComplaintsPage() {
   const { clubId = "" } = useParams();
   const { t } = useTranslation();

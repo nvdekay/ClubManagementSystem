@@ -26,7 +26,7 @@ export interface FailedDashboardPanel {
 }
 
 export interface DashboardMonthCount { month: string; count: number }
-/** UC02: `count = publicCount + internalCount` (internal = members-only, budgeted or self-funded). */
+/** UC02: `count = publicCount + internalCount` (nội bộ = chỉ dành cho thành viên, có ngân sách hoặc tự túc). */
 export interface DashboardMonthEventCount extends DashboardMonthCount { publicCount: number; internalCount: number }
 
 export interface IcpdpDashboardCharts {
@@ -58,7 +58,7 @@ export type DashboardContext =
   | { workspace: "icpdp" }
   | { workspace: "club"; clubId: string };
 
-/** UC02 drill-down: a recorded internal event of any club (BR53). */
+/** UC02 xem chi tiết: một sự kiện nội bộ đã ghi nhận của bất kỳ CLB nào (BR53). */
 export interface InternalEventSummary {
   id: string;
   clubId: string;
@@ -87,7 +87,7 @@ export interface InternalEventDetail extends InternalEventSummary {
 
 export type BoardSeatSource = "APPLICATION" | "NOMINATION" | "TRANSITION";
 
-/** BR56: structure versions and the board of every term, newest first. */
+/** BR56: các phiên bản cơ cấu và ban chủ nhiệm của mọi nhiệm kỳ, mới nhất trước. */
 export interface ClubBoardHistory {
   club: { id: string; code: string; name: string; state: string };
   structures: {
@@ -115,7 +115,7 @@ export interface ClubBoardHistory {
   }[];
 }
 
-/** Non-2xx response; keeps the status so a 404 reads differently from a failed request. */
+/** Response không phải 2xx; giữ status để phân biệt 404 với request thất bại. */
 export class DashboardRequestError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);

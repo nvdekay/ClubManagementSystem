@@ -1,7 +1,7 @@
 import { ApiError, apiFetch } from "@/services/apiError";
 export type PropertyType = "ROOM" | "HALL" | "OUTDOOR" | "STAGE" | "EQUIPMENT";
 
-/** `day` 1 = Monday … 7 = Sunday; days not listed cannot be booked. */
+/** `day` 1 = Thứ Hai … 7 = Chủ nhật; ngày không liệt kê thì không thể đặt. */
 export interface BookableHours {
   day: number;
   open: string;
@@ -30,7 +30,7 @@ export interface Property extends PropertyDetails {
   isActive: boolean;
 }
 
-/** Non-2xx response; `field` names the invalid input when the server reports one. */
+/** Response không phải 2xx; `field` nêu ô nhập không hợp lệ khi server báo. */
 export class PropertyRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string) {
     super(message);

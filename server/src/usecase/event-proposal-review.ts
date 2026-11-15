@@ -108,7 +108,7 @@ export async function decideEventProposalReview(repo: EventProposalReviewReposit
   if (decision.outcome === "Approve") {
     const current = detail.versions.find((version) => version.revisionNo === detail.event.currentRevisionNo)
       ?? detail.versions.at(-1);
-    // Fails fast with a field-level error; the repository re-checks inside its transaction.
+    // Fail fast với lỗi ở mức trường; repository kiểm tra lại bên trong transaction của nó.
     approvedBudget(current?.budgetLines ?? [], decision.budgetLines);
   }
   return repo.decide(detail.event.id, officerId, decision, now);

@@ -39,7 +39,7 @@ export interface ComplaintForIcpdp extends Complaint {
   linkedComplaintIds: string[];
 }
 
-/** What a club receives: never the complainant (D5). */
+/** Nội dung CLB nhận được: không bao giờ kèm người khiếu nại (D5). */
 export interface ComplaintForClub {
   id: string;
   clubId: string;

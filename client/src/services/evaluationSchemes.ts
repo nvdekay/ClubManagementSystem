@@ -39,12 +39,12 @@ export interface DimensionInfo {
 
 export interface SchemeCatalogue {
   schemes: EvaluationScheme[];
-  /** `evaluated`: the period already has evaluations, so its scheme version is pinned (BR51, BR60). */
+  /** `evaluated`: kỳ đã có đánh giá, nên phiên bản thang điểm bị cố định (BR51, BR60). */
   periods: { code: string; startAt: string; endAt: string; evaluated: boolean }[];
   dimensions: DimensionInfo[];
 }
 
-/** Non-2xx response; keeps `field` / `issues` from the server's details. */
+/** Response không phải 2xx; giữ `field` / `issues` từ details của server. */
 export class SchemeRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string,
     readonly issues: ActivationIssue[] = []) {

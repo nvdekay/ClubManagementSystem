@@ -110,7 +110,7 @@ interface AnnualReportSectionProps {
 }
 
 // UC55: phần xem trước và tải báo cáo tổng kết theo năm học
-/** UC55 A2: pick an academic year, preview the six report parts, choose achievements and download. */
+/** UC55 A2: chọn năm học, xem trước sáu phần của báo cáo, chọn thành tích rồi tải xuống. */
 export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionProps) {
   const { t, i18n } = useTranslation();
   const preview = useAnnualReportPreview();
@@ -120,7 +120,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
   const [remarks, setRemarks] = useState("");
   const [format, setFormat] = useState<AnnualFormat>("pdf");
   const option = years.find((item) => item.year === year);
-  // Guard against a preview that resolved after the year changed.
+  // Chặn kết quả xem trước trả về muộn sau khi đã đổi năm.
   const report = preview.data?.year === year ? preview.data : undefined;
   const failure = preview.error ?? download.error;
 
@@ -146,7 +146,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
         ...(text ? { remarks: text } : {}), ...(selected.length ? { achievementKeys: selected } : {}) }));
       appToast.success(t("exports.downloaded"));
     } catch {
-      // Shown inline from download.error.
+      // Hiển thị trực tiếp từ download.error.
     }
   }
 

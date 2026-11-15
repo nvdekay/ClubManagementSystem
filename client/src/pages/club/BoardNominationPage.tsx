@@ -22,7 +22,7 @@ function nominationTone(state: string) {
 }
 
 // Danh sách lịch sử các lần đề cử ban chủ nhiệm
-/** UC10: the club follows each submitted nomination and reads why ICPDP returned a seat. */
+/** UC10: CLB theo dõi từng đề cử đã gửi và đọc lý do ICPDP trả lại một ghế. */
 function NominationHistory({ clubId }: { clubId: string }) {
   const { t, i18n } = useTranslation();
   const history = useClubBoardNominations(clubId, true);
@@ -81,7 +81,7 @@ export function BoardNominationPage() {
   const action = useBoardNominationAction();
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
-  // A double click fires twice before React re-renders the disabled button.
+  // Bấm đúp kích hoạt hai lần trước khi React render lại nút đã bị vô hiệu.
   const inFlight = useRef(false);
   // Định dạng ngày theo ngôn ngữ hiện tại
   function date(value: string) {
@@ -98,7 +98,7 @@ export function BoardNominationPage() {
       await action.mutateAsync({ kind: "submit", clubId, seats, csrfToken: auth.data.csrfToken });
       setSubmitted(true);
       setSelection({});
-    } catch { /* Mutation error is displayed below. */ }
+    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
     finally { inFlight.current = false; }
   }
 
@@ -114,7 +114,7 @@ export function BoardNominationPage() {
     <AppButton variant="secondary" onClick={() => void context.refetch()}>{t("boardNominations.retry")}</AppButton>
   </AppNotice>;
 
-  // A multi-holder seat (Phó chủ nhiệm) stays open after one holder is confirmed or pending.
+  // Ghế nhiều người giữ (Phó chủ nhiệm) vẫn mở sau khi một người đã được xác nhận hoặc đang chờ.
   const available = context.data.positions.filter((position) => !position.isSingleHolder
     || (!context.data.occupiedPositionIds.includes(position.id)
       && !context.data.pendingPositionIds.includes(position.id)));
@@ -140,7 +140,7 @@ export function BoardNominationPage() {
           : <div className="mt-4 divide-y divide-border-app border-t border-border-app">
             {available.map((position) => {
               const conflictIds = position.isLeaderRole ? context.data!.presidentConflictMembershipIds : [];
-              // One person holds at most one seat, so a member picked elsewhere is not offered here.
+              // Mỗi người chỉ giữ tối đa một ghế, nên thành viên đã được chọn ở ghế khác sẽ không hiện ở đây.
               const takenIds = Object.entries(selection).filter(([id, value]) => id !== position.id && value)
                 .map(([, value]) => value);
               const candidates = context.data!.candidates.filter((candidate) =>

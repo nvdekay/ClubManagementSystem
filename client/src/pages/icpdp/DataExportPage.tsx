@@ -44,7 +44,7 @@ export function DataExportPage() {
   const csrfToken = auth.data?.csrfToken ?? "";
   const data = options.data;
   const semesterCode = semester || data?.periods.at(-1)?.code || "";
-  // FR-UC55-12: several types go in one xlsx, and a status filter belongs to exactly one type.
+  // FR-UC55-12: nhiều loại dữ liệu gộp trong một file xlsx, và bộ lọc trạng thái chỉ thuộc về đúng một loại.
   const single = types.length === 1 ? types[0] : null;
   const fileFormat: ExportFormat = single ? format : "xlsx";
   const rowCount = result?.rowCount ?? null;
@@ -57,7 +57,7 @@ export function DataExportPage() {
 
   // Chọn loại dữ liệu xuất, giữ đúng thứ tự danh mục
   function choose(next: ExportType[]) {
-    // Keep the catalogue order, so the sheets follow the order of the cards.
+    // Giữ thứ tự trong danh mục, để các sheet theo đúng thứ tự của các thẻ.
     setTypes(data ? data.types.map((item) => item.type).filter((value) => next.includes(value)) : next);
     setStatus("");
     reset();
@@ -67,7 +67,7 @@ export function DataExportPage() {
   function filter(): ExportFilter {
     return {
       ...(mode === "semester" && semesterCode ? { periodCode: semesterCode } : {}),
-      // Whole days in local time: from the start of `from` to the end of `to`.
+      // Tính theo trọn ngày giờ địa phương: từ đầu ngày `from` đến cuối ngày `to`.
       ...(mode === "range" && from ? { from: new Date(`${from}T00:00:00`).toISOString() } : {}),
       ...(mode === "range" && to ? { to: new Date(`${to}T23:59:59`).toISOString() } : {}),
       ...(clubId ? { clubId } : {}), ...(single && status ? { status } : {}),

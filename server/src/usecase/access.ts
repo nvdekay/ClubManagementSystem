@@ -38,7 +38,7 @@ export async function assertClubAccess(
 }
 
 // Cho thành viên hiện tại hoặc founder đã duyệt xem cấu hình CLB
-/** Current members may inspect settings; approved founders retain setup access. */
+/** Thành viên hiện tại được xem cài đặt; founder đã được duyệt giữ quyền thiết lập. */
 export async function assertClubSettingsRead(repo: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, now = new Date()) {
   if (!actor) throw new DomainError("authentication required", "unauthorized");

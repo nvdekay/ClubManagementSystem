@@ -44,7 +44,7 @@ export function useClubEventOptions(clubId: string, enabled: boolean) {
   return useQuery({ queryKey: [...clubEventsKeyRoot, clubId, "options"], queryFn: ({ signal }) => fetchClubEventOptions(clubId, signal), enabled, retry: false });
 }
 
-/** Shared with the ICPDP template card, which writes the new template into this entry. */
+/** Dùng chung với thẻ mẫu của ICPDP, nơi ghi mẫu mới vào mục này. */
 export const eventProposalTemplateKey = ["event-proposal-template"] as const;
 // Query thông tin mẫu đề xuất sự kiện
 export function useEventProposalTemplate(enabled: boolean) {

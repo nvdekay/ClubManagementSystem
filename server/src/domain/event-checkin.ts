@@ -6,7 +6,7 @@ export interface Attendance {
   id: string;
   eventId: string;
   eventTitle: string;
-  /** Absent for a school-wide event organised by ICPDP (UC53). */
+  /** Không có với sự kiện toàn trường do ICPDP tổ chức (UC53). */
   clubId?: string;
   clubName: string;
   eventStartAt: Date;
@@ -38,17 +38,17 @@ export interface CheckInTarget {
 
 export interface EventCheckInRepository {
   target(eventId: string, studentId: string): Promise<CheckInTarget | null>;
-  /** Creates the single attendance (BR18); `created: false` when one already existed. */
+  /** Tạo bản điểm danh duy nhất (BR18); `created: false` khi đã có sẵn một bản. */
   checkIn(input: { eventId: string; studentId: string; method: "self" | "walk-in"; now: Date }):
     Promise<{ attendance: Attendance; created: boolean }>;
   listMine(studentId: string): Promise<Attendance[]>;
 }
 
-/** States in which a published event accepts check-in (the scheduler may not have flipped it to Ongoing yet). */
+/** Các trạng thái mà sự kiện đã công bố nhận check-in (scheduler có thể chưa chuyển nó sang Ongoing). */
 export const checkInStates = ["Upcoming", "Ongoing", "PUBLIC", "ONGOING"] as const;
 
 // UC31: lấy khung giờ check-in của sự kiện, mặc định là thời gian diễn ra sự kiện
-/** UC31 window: the event's configured check-in window, defaulting to the event's own start/end. */
+/** Khoảng thời gian UC31: cửa sổ check-in đã cấu hình của sự kiện, mặc định là giờ bắt đầu/kết thúc của chính sự kiện. */
 export function checkInWindow(event: CheckInTarget["event"]): { opensAt: Date; closesAt: Date } {
   return { opensAt: event.checkInOpenAt ?? event.startAt, closesAt: event.checkInCloseAt ?? event.endAt };
 }
@@ -60,13 +60,13 @@ export function isWithinCheckInWindow(event: CheckInTarget["event"], now: Date):
 }
 
 // So khớp mã check-in không phân biệt hoa thường và khoảng trắng
-/** Codes are shown or scanned at the venue, so case and surrounding spaces must not matter. */
+/** Mã được hiển thị hoặc quét tại địa điểm, nên không được phân biệt hoa thường và khoảng trắng hai đầu. */
 export function checkInCodesMatch(expected: string, given: string): boolean {
   return expected.trim().toUpperCase() === given.trim().toUpperCase();
 }
 
 // BR36: tính khung giờ được gửi phản hồi từ lúc check-in của người tham dự
-/** BR36: feedback opens at the attendee's own check-in and closes `feedbackWindowHours` after the event ends. */
+/** BR36: phản hồi mở từ lúc người tham dự check-in và đóng sau khi sự kiện kết thúc `feedbackWindowHours` giờ. */
 export function feedbackWindow(attendance: Attendance, feedbackWindowHours: number | null) {
   return {
     feedbackOpensAt: attendance.checkedInAt,

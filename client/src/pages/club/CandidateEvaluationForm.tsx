@@ -24,7 +24,7 @@ interface CandidateEvaluationFormProps {
 }
 
 // Form chấm điểm ứng viên theo từng tiêu chí rubric kèm nhận xét
-/** UC19 create/edit of the caller's own evaluation; E1 (no rubric) makes the comment the evaluation. */
+/** UC19 tạo/sửa đánh giá của chính người gọi; E1 (không có rubric) thì nhận xét chính là đánh giá. */
 export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rubric, mine, csrfToken,
   onDone }: CandidateEvaluationFormProps) {
   const { t } = useTranslation();
@@ -70,7 +70,7 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
     {!rubric.length && <p className="text-sm text-muted-app">{t("recruitmentApplications.evaluationNoRubric")}</p>}
     {rubric.map((criterion) => {
       const value = scores[criterion.key] ?? "";
-      // An out-of-range score is flagged while typing; a missing one once the field is left.
+      // Điểm ngoài khoảng được báo lỗi ngay khi gõ; điểm còn thiếu được báo khi rời khỏi trường.
       const fieldError = field.error("score:" + criterion.key) ?? (value === "" ? null : scoreError(criterion));
       const quickPicks = criterion.maxScore <= 10 && Number.isInteger(criterion.maxScore);
       return <div key={criterion.key} className="space-y-2 border-b border-border-app pb-4 last:border-b-0">

@@ -46,7 +46,7 @@ export function LeadershipTransitionDetailPage() {
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Rendered below. */ }
+    catch { /* Được hiển thị bên dưới. */ }
   }
   // Xác nhận rồi gửi quyết định về bàn giao lãnh đạo
   async function decide() {
@@ -56,7 +56,7 @@ export function LeadershipTransitionDetailPage() {
       await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken,
         input: { outcome, reason, followUpObligationIds: outcome === "Approve" ? followUps : [] } });
       setSaved(true);
-    } catch { /* Rendered below. */ }
+    } catch { /* Được hiển thị bên dưới. */ }
     finally { inFlight.current = false; }
   }
 
@@ -75,7 +75,7 @@ export function LeadershipTransitionDetailPage() {
     && plan.task.assigneeId !== auth.data.user.id;
   const stateLabel = plan.state === "Confirmed" ? t("leadershipTransitions.confirmed")
     : plan.state === "Returned" ? t("leadershipTransitions.returned") : t("leadershipTransitions.pending");
-  // Obligation types are server codes; unknown future codes still show as-is rather than disappearing.
+  // Loại nghĩa vụ là mã do server trả về; mã mới chưa biết vẫn hiển thị nguyên văn thay vì biến mất.
   function obligationLabel(type: string) {
     switch (type) {
       case "BUDGET": return t("leadershipTransitions.obligationBudget");

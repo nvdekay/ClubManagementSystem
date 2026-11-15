@@ -65,8 +65,8 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
       const applicationId = new Types.ObjectId(input.applicationId);
       const reviewerId = new Types.ObjectId(input.reviewerId);
       return mongoose.connection.transaction(async (session) => {
-        // Real writes on the existing version keys make decisions/cancellations conflict
-        // with this transaction. A retry must re-check both workflow states.
+        // Các lệnh ghi thật lên khoá phiên bản hiện có khiến các quyết định/lần huỷ xung đột
+        // với transaction này. Retry phải kiểm tra lại cả hai trạng thái workflow.
         const application = await applications.findOneAndUpdate({ _id: applicationId, state: "Shortlisted" },
           { $inc: { __v: 1 } }, { new: true, session }).lean();
         if (!application) {

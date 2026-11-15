@@ -26,7 +26,7 @@ export interface Me {
 // GET /auth/me: lấy phiên đăng nhập, workspace và quyền; null nếu chưa đăng nhập
 export async function fetchMe(signal: AbortSignal): Promise<Me | null> {
   const response = await apiFetch("/api/v1/auth/me", { signal, credentials: "same-origin" });
-  // Auth routes are intentionally absent until OAuth credentials are configured.
+  // Các route Auth cố ý không có cho đến khi cấu hình xong thông tin OAuth.
   if (response.status === 401 || response.status === 404) return null;
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;

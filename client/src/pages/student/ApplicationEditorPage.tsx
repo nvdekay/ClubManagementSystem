@@ -44,7 +44,7 @@ const fileRules: Record<ApplicationDocumentType, { accept: string; types: string
   LOGO: { accept: ".png,.jpg,.jpeg", maxBytes: 2 * 1024 * 1024, size: "2 MB",
     types: ["image/png", "image/jpeg"] },
 };
-/** Which step fixes each submission issue, so the review step can jump straight there. */
+/** Bước nào sửa được từng lỗi khi nộp, để bước xem lại có thể nhảy thẳng tới đó. */
 const issueStep: Record<FoundingIssue, number> = {
   clubName: 0, field: 0, fieldUnavailable: 0, summary: 0, objectives: 0, fanpageUrl: 0, contactEmail: 0,
   foundersTooFew: 1, applicantNotFounder: 1, duplicateFounder: 1, leaderCount: 1, viceLeaderCount: 1,
@@ -85,7 +85,7 @@ export function ApplicationEditorPage() {
   const state = application?.state;
   const editable = !id || state === "Draft" || state === "Revision Requested";
   const canWithdraw = state === "Submitted" || state === "Under Review" || state === "Revision Requested";
-  // The server preview lists what still blocks submission; only fetched on the review step.
+  // Bản xem trước từ server liệt kê những gì còn chặn việc nộp; chỉ tải ở bước xem lại.
   const preview = useApplicationPreview(id, editable && step === 3 && !action.isPending);
   const latestDecision = detail.data?.decisions.at(-1);
   const me = auth.data?.user;
@@ -99,7 +99,7 @@ export function ApplicationEditorPage() {
     fieldId: currentDraft.fieldId ? null : t("common.chooseRequired"),
     summary: requiredFields?.summary && !currentDraft.summary.trim() ? t("common.fieldRequired") : null,
     objectives: requiredFields?.objectives && !currentDraft.objectives.trim() ? t("common.fieldRequired") : null,
-    // Fanpage and contact email are only checked when the policy requires them.
+    // Fanpage và email liên hệ chỉ được kiểm tra khi chính sách yêu cầu.
     fanpageUrl: !requiredFields?.fanpageUrl ? null : !currentDraft.fanpageUrl.trim() ? t("common.fieldRequired")
       : isHttpUrl(currentDraft.fanpageUrl) ? null : t("common.invalidUrl"),
     contactEmail: !requiredFields?.contactEmail ? null : !currentDraft.contactEmail.trim() ? t("common.fieldRequired")
@@ -107,7 +107,7 @@ export function ApplicationEditorPage() {
   } : {});
   const steps = [t("applications.stepClub"), t("applications.stepFounders"),
     t("applications.stepFiles"), t("applications.stepReview")];
-  // Which step holds each part ICPDP can flag, so a revision request points at the steps to fix.
+  // Bước nào chứa từng phần ICPDP có thể đánh dấu, để yêu cầu chỉnh sửa chỉ ra đúng các bước cần sửa.
   const flaggedSteps = state === "Revision Requested" && latestDecision?.outcome === "Request revision"
     ? new Set(latestDecision.sections.flatMap((section) => section === "club-information" ? [0]
       : section === "founders" ? [1] : section === "documents" ? [2] : [])) : new Set<number>();
@@ -152,7 +152,7 @@ export function ApplicationEditorPage() {
   }
 
   // Lưu đơn nháp, tạo mới nếu chưa có, trả mã đơn
-  /** Persist local edits (creating the draft on first save); resolves to the application id. */
+  /** Lưu các chỉnh sửa cục bộ (tạo bản nháp ở lần lưu đầu); trả về id của hồ sơ. */
   async function persist(): Promise<string | null> {
     if (!currentDraft || !auth.data) return null;
     if (id && !draft) return id;
@@ -174,9 +174,9 @@ export function ApplicationEditorPage() {
 
   // Chuyển sang bước khác, lưu nháp trước khi rời bước
   async function goTo(target: number) {
-    // Leaving step 1 reveals every club-information error; only name and field block a draft save.
+    // Rời bước 1 sẽ hiện mọi lỗi thông tin CLB; chỉ tên và lĩnh vực mới chặn việc lưu nháp.
     if (editable && step === 0 && target > 0) {
-      // Only flags the step-1 errors; the page may still move on, so it must not scroll back to them.
+      // Chỉ đánh dấu lỗi của bước 1; trang vẫn có thể đi tiếp nên không được cuộn ngược về các lỗi đó.
       field.touchAll(false);
       if (!currentDraft?.clubName.trim() || !currentDraft.fieldId) return;
     }
@@ -218,7 +218,7 @@ export function ApplicationEditorPage() {
   }
 
   // Đổi vai trò của sáng lập viên
-  /** Only one president: choosing a new one hands the previous president the chosen person's old role. */
+  /** Chỉ có một chủ nhiệm: chọn người mới thì chủ nhiệm cũ nhận vai trò cũ của người được chọn. */
   function setRole(userId: string, role: FounderRole) {
     if (!currentDraft) return;
     const previous = currentDraft.founders.find((founder) => founder.userId === userId)?.role ?? "MEMBER";
@@ -319,7 +319,7 @@ export function ApplicationEditorPage() {
   const { requirements, maxViceLeaders } = config.data;
   const required = requirements.required;
   const fieldOptions = config.data.fields.map((field) => ({ value: field.id, label: field.name }));
-  // A field ICPDP hid after it was saved stays visible (flagged) until the student re-picks.
+  // Trường mà ICPDP ẩn sau khi đã lưu vẫn hiển thị (có đánh dấu) cho đến khi sinh viên chọn lại.
   if (currentDraft.fieldId && !fieldOptions.some((option) => option.value === currentDraft.fieldId)) {
     fieldOptions.push({ value: currentDraft.fieldId,
       label: t("applications.fieldHidden", { name: application?.draft.field || currentDraft.fieldId }) });
@@ -399,7 +399,7 @@ export function ApplicationEditorPage() {
   }
 
   // Bảng tóm tắt thông tin đơn ở bước xem lại
-  /** What was entered, shown on the review step and as the read-only view after submission. */
+  /** Nội dung đã nhập, hiển thị ở bước xem lại và làm bản chỉ xem sau khi nộp. */
   function summary(value: DraftInput & { field?: string }) {
     const fieldName = config.data!.fields.find((field) => field.id === value.fieldId)?.name ?? value.field ?? "";
     const rows: [string, string][] = [[t("applications.clubName"), value.clubName], [t("applications.field"), fieldName],

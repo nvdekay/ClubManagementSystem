@@ -116,7 +116,7 @@ export function mongoSchoolEventRepository(): SchoolEventRepository {
   }
 
   // Gửi lời mời tới các CLB và tạo thông báo
-  /** Creates or re-opens invitations for Active clubs and tells each club board, inside the caller's transaction. */
+  /** Tạo hoặc mở lại lời mời cho các CLB Active và thông báo cho ban chủ nhiệm từng CLB, trong transaction của bên gọi. */
   async function sendInvitations(session: ClientSession, event: Doc, invitation: NormalizedInvitation, officerId: string,
     now: Date): Promise<InvitationOutcome> {
     const requested = invitation.clubIds.map((id) => new Types.ObjectId(id));

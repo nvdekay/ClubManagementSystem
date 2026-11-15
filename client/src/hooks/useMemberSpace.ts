@@ -17,7 +17,7 @@ import { onboardMember,
 const key = ["member-space"] as const;
 
 // Kiểm tra lỗi có phải do người dùng không phải thành viên CLB
-/** True when the caller is not (or no longer) a member, so the page should point to the public club page. */
+/** True khi người gọi không (hoặc không còn) là thành viên, nên trang cần dẫn tới trang CLB công khai. */
 export function isNotAMember(error: unknown): boolean {
   return error instanceof MemberSpaceError && error.status === 403;
 }

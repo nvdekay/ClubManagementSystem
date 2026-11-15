@@ -18,12 +18,12 @@ import { notificationFamily, notificationLink, notificationSubject } from "@/uti
 interface NotificationBellProps {
   userId: string;
   csrfToken: string;
-  /** The current workspace; only its notifications are counted and listed. */
+  /** Workspace hiện tại; chỉ thông báo của workspace này được đếm và liệt kê. */
   scope: NotificationScope;
 }
 
 // Chuông thông báo: số chưa đọc và hộp thư của workspace hiện tại
-/** Bell with the unread count; opens the user's in-app inbox (NTF-04) for the current workspace. */
+/** Chuông kèm số chưa đọc; mở hộp thư trong ứng dụng (NTF-04) của người dùng cho workspace hiện tại. */
 export function NotificationBell({ userId, csrfToken, scope }: NotificationBellProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();

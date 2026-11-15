@@ -142,7 +142,7 @@ export function LiveDefenseRoomPage() {
   const noteDraft = localDraft ?? serverContent;
   const displayedSavedAt = lastSavedAt ?? serverNote?.updatedAt ?? null;
 
-  // Debounced auto-save (2s) while the session is IN_PROGRESS.
+  // Tự động lưu có debounce (2 giây) khi phiên đang IN_PROGRESS.
   useEffect(() => {
     if (!id || !csrfToken || session?.state !== "IN_PROGRESS") return;
     if (localDraft === null || localDraft === serverContent) return;
@@ -241,7 +241,7 @@ export function LiveDefenseRoomPage() {
     if (!(await askConfirm(t("eventDefense.confirmEndDefense")))) return;
     resetDefenseMutation();
     try {
-      // Flush unsaved draft before ending if needed.
+      // Lưu nốt bản nháp chưa lưu trước khi kết thúc nếu cần.
       if (localDraft !== null && localDraft !== serverContent) {
         await mutateDefense({ kind: "saveNote", eventId: id, content: localDraft, csrfToken });
       }
@@ -273,7 +273,7 @@ export function LiveDefenseRoomPage() {
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        {/* Column 1: Proposal Details */}
+        {/* Cột 1: Chi tiết đề xuất */}
         <div className="min-w-0 space-y-6">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventDefense.proposalColumn")}</h2>
@@ -358,7 +358,7 @@ export function LiveDefenseRoomPage() {
           </section>
         </div>
 
-        {/* Column 2: Live Defense Controls, Notes & Decision */}
+        {/* Cột 2: Điều khiển phiên bảo vệ trực tiếp, ghi chú và quyết định */}
         <div className="min-w-0 space-y-6">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

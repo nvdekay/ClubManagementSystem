@@ -73,7 +73,7 @@ export function mongoPropertyRepository(): PropertyRepository {
             return propertyFrom(created!.toObject());
           });
         } catch (error) {
-          // Another officer took this code at the same moment: recompute and retry.
+          // Cán bộ khác lấy mã này cùng lúc: tính lại và thử lại.
           if (!duplicateCode(error)) throw error;
         }
       }
@@ -111,7 +111,7 @@ export function mongoPropertyRepository(): PropertyRepository {
     async remove(id, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const before = await current(id, session);
-        // Re-checked inside the transaction so a booking created meanwhile still blocks deletion.
+        // Kiểm tra lại trong transaction để booking tạo trong lúc đó vẫn chặn việc xoá.
         if (await bookings.exists({ propertyId: before._id }).session(session)) {
           throw new DomainError("property has bookings; deactivate it instead", "conflict");
         }

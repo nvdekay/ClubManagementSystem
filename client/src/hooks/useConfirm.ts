@@ -10,7 +10,7 @@ export type ConfirmFn = (message: string, options?: ConfirmOptions) => Promise<b
 export const ConfirmContext = createContext<ConfirmFn | null>(null);
 
 // Hook mở hộp thoại xác nhận trả về Promise thay cho window.confirm
-/** Promise-based replacement for `window.confirm`, rendered as the app's modal by AppConfirmProvider. */
+/** Thay thế `window.confirm` theo kiểu Promise, được AppConfirmProvider hiển thị bằng modal của ứng dụng. */
 export function useConfirm(): ConfirmFn {
   const confirm = useContext(ConfirmContext);
   if (!confirm) throw new Error("useConfirm must be used inside AppConfirmProvider");

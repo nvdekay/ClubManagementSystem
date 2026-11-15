@@ -94,8 +94,8 @@ function httpUrl(value: string): string {
 
 // Đối chiếu lĩnh vực đã chọn với danh mục lĩnh vực CLB
 /**
- * Resolve the chosen field against the catalog. A field hidden after it was saved stays on the
- * draft (so editing other parts still works) but blocks submission until the student re-picks.
+ * Resolve lĩnh vực đã chọn theo catalog. Lĩnh vực bị ẩn sau khi đã lưu vẫn nằm trong
+ * bản nháp (để sửa các phần khác vẫn được) nhưng chặn việc nộp cho tới khi sinh viên chọn lại.
  */
 async function resolvedField(fields: ClubFieldRepository, fieldId: string,
   current?: ClubApplicationDraft): Promise<{ fieldId: string; field: string }> {
@@ -177,7 +177,7 @@ export async function getMyApplication(repo: ClubApplicationRepository,
 }
 
 // Tìm thành viên sáng lập theo email chính xác
-/** Resolve a founding member by exact email so students never type raw account ids. */
+/** Resolve thành viên sáng lập theo email chính xác để sinh viên không phải gõ id tài khoản thô. */
 export async function lookupFounder(repo: ClubApplicationRepository, actor: AccessActor | null,
   email: string): Promise<FounderProfile> {
   owner(actor);
@@ -206,7 +206,7 @@ type ExtendedIssue = FoundingIssue
   | "fieldUnavailable" | "leaderHoldsAnotherClub";
 
 // Gom các vấn đề chặn việc nộp đơn, gồm lĩnh vực và leader đã giữ CLB khác
-/** Domain issues plus the checks that need the catalog or other clubs. */
+/** Các vấn đề của domain cộng với những kiểm tra cần catalog hoặc các CLB khác. */
 async function submissionIssues(repo: ClubApplicationRepository, fields: ClubFieldRepository,
   draft: ClubApplicationDraft, applicantId: string, requirements: FoundingRequirements,
   now: Date): Promise<ExtendedIssue[]> {
@@ -222,7 +222,7 @@ async function submissionIssues(repo: ClubApplicationRepository, fields: ClubFie
 }
 
 // Gợi ý các CLB công khai giống bản nháp, chỉ mang tính tham khảo
-/** Advisory only (UC07): public clubs that look like this draft; never blocks saving or submitting. */
+/** Chỉ mang tính tham khảo (UC07): các CLB public giống bản nháp này; không bao giờ chặn việc lưu hay nộp. */
 async function publicSimilarClubs(repo: ClubApplicationRepository,
   record: ClubApplicationRecord): Promise<SimilarClubHint[]> {
   const { clubName, field, summary, objectives } = record.draft;
@@ -301,7 +301,7 @@ export async function uploadApplicationDocument(repo: ClubApplicationRepository,
   const document = await storage.upload({ ownerId, applicationId: record.id,
     documentType: type, fileName: fileName.trim(), mimeType, bytes,
     visibility: rule.visibility, now });
-  // One file per type: the new upload replaces the previous one.
+  // Mỗi loại một file: bản upload mới thay thế bản trước.
   const replaced = record.draft.documents.filter((item) => item.documentType === type);
   await repo.addDocument(record.id, ownerId, document);
   for (const previous of replaced) await repo.removeDocument(record.id, ownerId, previous.id);

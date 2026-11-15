@@ -53,7 +53,7 @@ export function ClubDirectory() {
         </p>
       </div>
       <div className="mt-7 rounded-xl bg-surface-app p-3">
-        {/* Remounted via key so clearFilters also empties the input's own state. */}
+        {/* Remount qua key để clearFilters cũng xoá luôn state riêng của ô nhập. */}
         <AppSearchInput key={searchKey} defaultValue={search} onSearch={changeSearch} maxLength={100}
           aria-label={t("discovery.searchPlaceholder")} placeholder={t("discovery.searchPlaceholder")}
           className="w-full focus-visible:border-recruitment-app focus-visible:ring-recruitment-soft-app" />
@@ -118,7 +118,7 @@ export function ClubDirectory() {
 }
 
 // Thẻ một CLB trong danh sách
-/** One directory card; also used for the UC06 E1 suggestions under an empty search. */
+/** Một thẻ trong danh bạ; cũng dùng cho gợi ý UC06 E1 khi tìm kiếm không có kết quả. */
 function ClubCard({ club }: { club: PublicClub }) {
   const { t } = useTranslation();
   return (

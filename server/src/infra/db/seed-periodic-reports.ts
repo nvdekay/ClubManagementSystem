@@ -1,9 +1,9 @@
-// Summer 2026 periodic reports (UC38/UC39) for every Active club that has none yet, added on top of an
-// existing demo database. Usage: npm run seed:periodic-reports -- --officer=<email> [--reserve=<email,email>]
-// Only adds data and is safe to re-run: a club that already has a Summer 2026 report is left alone.
-// The club side is written with the same operations as mongo-club-periodic-report-repository (create, save,
-// submit) because these clubs have no leader who could pass its access check; the officer decision goes
-// through the real UC39 use case. Both run on a past clock. No notification is queued for the submissions.
+// Báo cáo định kỳ Summer 2026 (UC38/UC39) cho mọi CLB Active chưa có báo cáo, thêm lên trên một
+// database demo có sẵn. Cách dùng: npm run seed:periodic-reports -- --officer=<email> [--reserve=<email,email>]
+// Chỉ thêm dữ liệu và chạy lại an toàn: CLB đã có báo cáo Summer 2026 thì để nguyên.
+// Phía CLB được ghi bằng cùng các thao tác như mongo-club-periodic-report-repository (create, save,
+// submit) vì các CLB này không có leader nào qua được kiểm tra quyền của nó; quyết định của officer đi
+// qua usecase UC39 thật. Cả hai chạy theo đồng hồ quá khứ. Không có thông báo nào được xếp hàng cho các lần nộp.
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { normalizePeriodicDraft, type PeriodicDraftInput } from "../../domain/club-periodic-report.js";
@@ -31,9 +31,9 @@ if (!OFFICER_EMAIL.includes("@")) {
   console.error("usage: npm run seed:periodic-reports -- --officer=<ICPDP officer email> [--reserve=<email,email>]");
   process.exit(1);
 }
-/** Accounts of real people: never recorded as the submitter of a seeded report. */
+/** Tài khoản của người thật: không bao giờ được ghi là người nộp của một báo cáo seed. */
 const REAL_ACCOUNTS = [OFFICER_EMAIL, ...(args.reserve ?? "").split(",").filter(Boolean)];
-/** Left without a report so UC39 A1/E1 (overdue, record missing) stays demoable. */
+/** Để không có báo cáo nhằm demo được UC39 A1/E1 (quá hạn, thiếu bản ghi). */
 const LEFT_OUT = ["FTTC", "FUSW"];
 const DAY = 24 * 3_600_000;
 
@@ -70,7 +70,7 @@ const observations = [
   "Số lượt tham gia tốt so với quy mô CLB; ghi nhận cho kỳ đánh giá.",
 ];
 
-// ── Content: real club names and fields from the database, varied per club ──
+// ── Nội dung: tên và lĩnh vực CLB thật từ database, thay đổi theo từng CLB ──
 interface Activity { title: string; description: string }
 const fieldActivities: Record<string, Activity[]> = {
   "Công nghệ": [
@@ -105,7 +105,7 @@ const fieldActivities: Record<string, Activity[]> = {
     { title: "Hiến máu nhân đạo mùa hè", description: "Phối hợp Viện Huyết học tổ chức điểm hiến máu tại sảnh tòa Alpha." },
   ],
 };
-/** Club-specific activities for the clubs whose PDP name says what they do. */
+/** Hoạt động riêng cho các CLB mà tên PDP cho biết họ làm gì. */
 const clubActivities: Record<string, Activity[]> = {
   Blazie: [
     { title: "Workshop Hip-hop cơ bản", description: "4 buổi workshop vũ đạo Hip-hop cho sinh viên chưa từng nhảy, mỗi buổi 2 giờ." },
@@ -211,7 +211,7 @@ const givens = ["An", "Bình", "Châu", "Dũng", "Giang", "Hà", "Hiếu", "Hùn
   "Phúc", "Quân", "Sơn", "Tâm", "Thảo", "Trang", "Tú", "Vy", "Yến", "Huyền", "Đạt", "Nhung"];
 
 // Bộ sinh số ngẫu nhiên có seed cố định theo chuỗi
-/** Deterministic per-club randomness, so a re-run would produce the same content. */
+/** Ngẫu nhiên xác định theo từng CLB, để chạy lại cho ra cùng nội dung. */
 function rng(seed: string): () => number {
   let h = 2166136261;
   for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
@@ -263,7 +263,7 @@ function manualMembers(club: ClubInfo, r: () => number, index: number): Periodic
     const fullName = `${pick(r, surnames)} ${pick(r, middles)} ${pick(r, givens)}`;
     if (used.has(fullName)) continue;
     used.add(fullName);
-    // 19xxxx: K19 student numbers, a range no seeded account uses.
+    // 19xxxx: mã sinh viên K19, dải mà không tài khoản seed nào dùng.
     const studentNo = 190_000 + index * 100 + members.length + 1;
     members.push({ fullName, studentCode: `HE${studentNo}`, email: studentEmail(fullName, studentNo),
       activityScore: Math.round((6 + r() * 4) * 10) / 10, source: "MANUAL" });
@@ -318,7 +318,7 @@ function content(club: ClubInfo, r: () => number, members: PeriodicMemberEntry[]
 }
 
 // Ghi audit log cho báo cáo định kỳ
-// ── Writes: the same operations as mongo-club-periodic-report-repository ──
+// ── Ghi: cùng các thao tác như mongo-club-periodic-report-repository ──
 async function audit(session: ClientSession, id: Types.ObjectId, action: string, userId: Types.ObjectId | undefined,
   after: unknown, now: Date) {
   await m.auditLogs!.create([{ entityType: "PeriodicReport", entityId: id, action, ...(userId ? { actorId: userId } : {}),
@@ -360,7 +360,7 @@ async function submit(session: ClientSession, id: Types.ObjectId, club: ClubInfo
     events: clubData.events ?? [], achievements: clubData.achievements ?? [], customAnswers: clubData.customAnswers ?? [] }, true);
   const [liveFigures, systemData] = await Promise.all([
     periodicLiveFigures(club.id, PERIOD, session), periodicSystemData(club.id, PERIOD, session)]);
-  // ponytail: finance is the club's declared figure, not computed from eventBudgets (no Summer 2026 budgets exist).
+  // ponytail: tài chính là con số CLB tự khai, không tính từ eventBudgets (chưa có ngân sách Summer 2026).
   const preloadedFigures = { ...liveFigures, finance, capturedAt: now, systemData,
     clubData: { members: input.members, events: input.events, achievements: input.achievements, customAnswers: input.customAnswers } };
   const versionNo = Number(report.versionNo ?? 1) + (report.submittedAt ? 1 : 0);
@@ -403,7 +403,7 @@ try {
     const r = rng(`${PERIOD}:${club.code}`);
     const special = specials[club.code] ?? { outcome: "Accept" };
 
-    // Members and events: the system's own lists when the club has them (as the editor pre-fills), typed in otherwise.
+    // Thành viên và sự kiện: danh sách của chính hệ thống khi CLB có (như editor điền sẵn), không thì nhập tay.
     const system = await periodicSystemData(club.id, PERIOD);
     const submitter = system.members.find((member) => member.userId && !reserved.has(member.userId));
     const user = submitter?.userId ? new Types.ObjectId(submitter.userId) : undefined;
@@ -420,7 +420,7 @@ try {
     const finance = { budgets, approvedTotal, disbursedTotal: Math.round(approvedTotal * (0.75 + r() * 0.25) / 100_000) * 100_000 };
     const input = content(club, r, members, events, finance);
 
-    // Clock: drafted in late August, submitted before the due date (or a few days after it when late).
+    // Đồng hồ: soạn cuối tháng 8, nộp trước hạn (hoặc vài ngày sau hạn khi nộp trễ).
     const twice = special.outcome === "ReturnThenAccept";
     const submittedAt = twice ? at("2026-08-27", r)
       : special.late ? at(`2026-09-${String(between(r, 9, 14)).padStart(2, "0")}`, r)

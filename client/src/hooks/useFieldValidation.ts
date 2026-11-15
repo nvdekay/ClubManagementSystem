@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
 
-/** Field name → message, or null when the value is fine. Computed fresh from form state each render. */
+/** Tên trường → thông báo, hoặc null khi giá trị hợp lệ. Được tính lại từ state của form mỗi lần render. */
 export type FieldErrors<K extends string> = Partial<Record<K, string | null>>;
 
 // Quản lý hiển thị lỗi từng trường: chỉ hiện sau khi rời trường hoặc khi submit
 /**
- * Shows a field's error once the user has left it (`touch`) or tried to submit (`touchAll`),
- * so required fields are flagged as they are filled in rather than only after submit.
+ * Hiện lỗi của một trường khi người dùng đã rời khỏi trường (`touch`) hoặc thử submit (`touchAll`),
+ * để trường bắt buộc được báo lỗi ngay khi đang điền thay vì chỉ sau khi submit.
  */
 export function useFieldValidation<K extends string>(errors: FieldErrors<K>) {
   const [touched, setTouched] = useState<ReadonlySet<K>>(() => new Set());
@@ -16,12 +16,12 @@ export function useFieldValidation<K extends string>(errors: FieldErrors<K>) {
     setTouched((current) => (current.has(name) ? current : new Set(current).add(name)));
   }, []);
 
-  /** Reveals every error; returns true when the form may be sent. `reveal: false` skips scrolling to the first error. */
+  /** Hiện mọi lỗi; trả true khi form được phép gửi. `reveal: false` bỏ qua việc cuộn tới lỗi đầu tiên. */
   function touchAll(reveal = true): boolean {
     setSubmitted(true);
     const valid = !Object.values(errors).some(Boolean);
-    // Long forms keep the submit button far below the first problem: bring that field into view
-    // once the errors have rendered, so a click never looks like it did nothing.
+    // Form dài có nút submit nằm rất xa lỗi đầu tiên: đưa trường đó vào vùng nhìn thấy
+    // sau khi các lỗi đã render, để một lần bấm không bao giờ trông như không có tác dụng.
     if (!valid && reveal) requestAnimationFrame(() => {
       const field = document.querySelector<HTMLElement>('[aria-invalid="true"]');
       field?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -39,7 +39,7 @@ export function useFieldValidation<K extends string>(errors: FieldErrors<K>) {
     return submitted || touched.has(name) ? errors[name] ?? null : null;
   }
 
-  /** Spread onto AppInput/AppTextarea: required flag, blur tracking and aria-invalid. */
+  /** Spread vào AppInput/AppTextarea: cờ required, theo dõi blur và aria-invalid. */
   function control(name: K, required = true) {
     return { required, onBlur: () => touch(name), "aria-invalid": error(name) ? true : undefined };
   }

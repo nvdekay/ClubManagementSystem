@@ -15,7 +15,7 @@ const tones: Record<WithdrawalState, AppBadgeTone> = {
 };
 
 // Danh sách yêu cầu rút khỏi CLB của sinh viên
-/** UC22 FR-UC22-03: the student tracks every leave request they sent. Hidden until there is one. */
+/** UC22 FR-UC22-03: sinh viên theo dõi mọi yêu cầu rời CLB đã gửi. Ẩn cho đến khi có ít nhất một yêu cầu. */
 export function MyWithdrawalRequests() {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";

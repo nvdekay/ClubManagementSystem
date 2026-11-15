@@ -82,7 +82,7 @@ function FinanceEditor({
 }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
-  // The dialogs' submit buttons live in the pinned footer, outside their <form>, and point back with form={id}.
+  // Nút gửi của các hộp thoại nằm ở footer cố định, ngoài <form>, và trỏ về form qua form={id}.
   const expenseFormId = useId();
   const evidenceFormId = useId();
   const admin = context.kind === "admin";
@@ -122,7 +122,7 @@ function FinanceEditor({
         ? t("accountability.dateNotFuture")
         : null,
   });
-  // The server accepts HTTPS evidence links only.
+  // Server chỉ chấp nhận link minh chứng HTTPS.
   const evidenceField = useFieldValidation({
     link: !link.trim()
       ? t("common.fieldRequired")
@@ -180,7 +180,7 @@ function FinanceEditor({
       expenseField.reset();
       evidenceField.reset();
     } catch {
-      /* Render mutation error. */
+      /* Lỗi của mutation được hiển thị ở nơi khác. */
     }
   }
   // Mở form thêm hoặc sửa một khoản chi

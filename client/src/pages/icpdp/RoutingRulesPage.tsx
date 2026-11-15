@@ -55,7 +55,7 @@ function toggle<T>(list: T[] | undefined, value: T): T[] | undefined {
   return next.length ? next : undefined;
 }
 
-/** UC05: ICPDP officers read the routing rules; only the ICPDP head edits, simulates and activates them. */
+/** UC05: cán bộ ICPDP xem các quy tắc điều phối; chỉ trưởng ICPDP được sửa, mô phỏng và kích hoạt. */
 export function RoutingRulesPage() {
   const { t } = useTranslation();
   const auth = useAuth();

@@ -12,7 +12,7 @@ function scopeKey(scope: NotificationScope) {
 }
 
 // Query số thông báo chưa đọc của workspace
-/** Unread badge of one workspace; polls every minute so new notifications show up without a reload. */
+/** Badge chưa đọc của một workspace; poll mỗi phút để thông báo mới hiện ra mà không cần tải lại trang. */
 export function useUnreadNotificationCount(userId: string | undefined, scope: NotificationScope) {
   return useQuery({
     queryKey: [...key, "unread", userId, ...scopeKey(scope)],
@@ -23,7 +23,7 @@ export function useUnreadNotificationCount(userId: string | undefined, scope: No
 }
 
 // Query hộp thư thông báo của workspace, tải thêm theo trang
-/** Newest-first inbox of one workspace, loaded one page at a time while the panel is open. */
+/** Hộp thư của một workspace, mới nhất trước, tải từng trang một khi panel đang mở. */
 export function useNotificationInbox(userId: string | undefined, scope: NotificationScope, open: boolean) {
   return useInfiniteQuery({
     queryKey: [...key, "inbox", userId, ...scopeKey(scope)],

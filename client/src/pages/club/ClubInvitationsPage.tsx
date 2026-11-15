@@ -27,7 +27,7 @@ export function ClubInvitationsPage() {
   function edit(id: string, field: "note" | "representative" | "members", value: string) {
     setDrafts((current) => ({ ...current, [id]: { ...(current[id] ?? { note: "", representative: "", members: "" }), [field]: value } }));
   }
-  // One response form per invitation. The note is only required to decline, so it is checked on that click.
+  // Mỗi lời mời có một form phản hồi. Ghi chú chỉ bắt buộc khi từ chối, nên chỉ kiểm tra ở lần bấm từ chối.
   const errors: Record<string, string | null> = Object.fromEntries((list.data ?? []).map(({ id }) =>
     ["note:" + id, drafts[id]?.note.trim() ? null : t("clubInvitations.declineReasonRequired")]));
   const field = useFieldValidation(errors);
@@ -43,7 +43,7 @@ export function ClubInvitationsPage() {
       await action.mutateAsync({ id, csrfToken: auth.data.csrfToken, input: { outcome, responseNote: draft?.note,
         ...(outcome === "Accepted" ? { responseDetails: { representative: draft?.representative ?? "",
           members: Number(draft?.members || 0) } } : {}) } });
-    } catch { /* The mutation error is displayed below. */ }
+    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
   if (auth.isPending) return <AppSkeleton className="h-64 w-full" />;
   if (!allowed) return <AppNotice tone="danger">{t("clubInvitations.denied")}</AppNotice>;

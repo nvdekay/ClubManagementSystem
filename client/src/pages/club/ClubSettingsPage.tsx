@@ -75,7 +75,7 @@ export function ClubSettingsPage() {
   const profileErrors: Record<string, string | null> = {
     description: requiredFields?.description && !profile.description?.trim() ? fieldRequired : null,
     operatingScope: requiredFields?.operatingScope && !profile.operatingScope?.trim() ? fieldRequired : null,
-    // Contact email and charter link are only checked when the policy requires them.
+    // Email liên hệ và link điều lệ chỉ được kiểm tra khi chính sách yêu cầu.
     contactEmail: !requiredFields?.contactEmail ? null : !contactEmail ? fieldRequired
       : isEmail(contactEmail) ? null : t("common.invalidEmail"),
     contactPhone: requiredFields?.contactPhone && !profile.contactPhone?.trim() ? fieldRequired : null,
@@ -114,7 +114,7 @@ export function ClubSettingsPage() {
         csrfToken: auth.data.csrfToken });
       setProfileDraft(null);
       profileCheck.reset();
-    } catch { /* Mutation error is rendered below. */ }
+    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
   // Áp dụng mẫu cơ cấu ban mặc định cho CLB
@@ -122,7 +122,7 @@ export function ClubSettingsPage() {
     if (!auth.data || !clubId) return;
     try { await action.mutateAsync({ kind: "template", clubId,
       csrfToken: auth.data.csrfToken }); }
-    catch { /* Mutation error is rendered below. */ }
+    catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
   // Nạp ban đã chọn vào form để chỉnh sửa
@@ -150,7 +150,7 @@ export function ClubSettingsPage() {
         : { kind: "createDepartment", clubId, input: department,
           csrfToken: auth.data.csrfToken });
       resetDepartment();
-    } catch { /* Mutation error is rendered below. */ }
+    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
   // Xác nhận rồi ngưng hoạt động một ban
@@ -158,10 +158,10 @@ export function ClubSettingsPage() {
     if (!auth.data || !clubId || !(await askConfirm(t("clubSettings.deactivateConfirm")))) return;
     try { await action.mutateAsync({ kind: "deactivateDepartment", clubId,
       departmentId: value.id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Mutation error is rendered below. */ }
+    catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
-  // A disabled query stays pending forever, so only wait for settings the user may load.
+  // Query bị tắt sẽ pending mãi, nên chỉ chờ phần cài đặt mà người dùng được phép tải.
   if (auth.isPending || (canManage && settings.isPending)) {
     return <div className="space-y-6">
       <AppSkeleton className="h-24 w-full" />
