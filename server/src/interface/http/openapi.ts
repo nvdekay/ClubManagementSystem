@@ -12,7 +12,7 @@ import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
-import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
+import { eventCancellationDecisionBody, eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { sponsoredItemOpenApiPaths } from "./openapi-sponsored-items.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { periodicCampaignBody, periodicDecisionBody, periodicMissingBody, periodicOverviewQuery } from "./periodic-report-routes.js";
@@ -1619,6 +1619,18 @@ export const openApiDocument = createDocument({
           "200": { description: "Decided proposal", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
           "400": { description: "Missing reason, sections, deadline or approved amounts", content: { "application/json": { schema: ApiError } } },
           "409": { description: "Proposal already decided or not claimed by this officer", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/admin/event-proposals/{id}/cancellation-decision": {
+      post: {
+        summary: "Approve or reject a club's request to cancel an approved event (requires CSRF token)",
+        requestParams: { path: IdPath },
+        requestBody: { content: { "application/json": { schema: eventCancellationDecisionBody } } },
+        responses: {
+          "200": { description: "Decided cancellation request", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
+          "400": { description: "Invalid decision body", content: { "application/json": { schema: ApiError } } },
+          "409": { description: "No pending cancellation request for this event", content: { "application/json": { schema: ApiError } } },
         },
       },
     },
