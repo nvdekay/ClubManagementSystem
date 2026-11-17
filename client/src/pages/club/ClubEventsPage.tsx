@@ -228,22 +228,15 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       <div className="mb-4 flex flex-wrap items-center gap-3"><AppInput aria-label={t("clubEvents.search")} placeholder={t("clubEvents.search")} value={search} onChange={(e) => { setSearch(e.target.value); table.setPageIndex(0); }} />
         <AppSelect label={t("clubEvents.eventTypeColumn")} value={typeFilter} onChange={(v) => { setTypeFilter(v as typeof typeFilter); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.eventTypeAll") }, { value: "MEMBERS_ONLY", label: t("clubEvents.eventTypeInternal") }, { value: "PUBLIC", label: t("clubEvents.eventTypePublic") }]} />
         <AppSelect label={t("clubEvents.state")} value={filter} onChange={(v) => { setFilter(v); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.all") }, ...[...new Set(rows.map((e) => e.state))].map((s) => ({ value: s, label: stateLabel(t, s) }))]} />
-        {mode === "events" && <>
+        {mode === "events" &&
           <Link
-            to={`/club/${encodeURIComponent(clubId)}/events/internal/new`}
+            to={`/club/${encodeURIComponent(clubId)}/events/new`}
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
           >
             <AppIcon name="plus" className="size-4" />
-            {t("clubEvents.createInternal")}
-          </Link>
-          <Link
-            to={`/club/${encodeURIComponent(clubId)}/events/new`}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 font-heading text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
-          >
-            <AppIcon name="send" className="size-4" />
             {t("clubEvents.proposeIcpdp")}
           </Link>
-        </>}
+        }
       </div>
       <AppTable table={table} emptyMessage={t("clubEvents.empty")} loading={events.isPending} />
       <TablePager pageIndex={table.state.pagination.pageIndex} pageCount={table.getPageCount()} onChange={(v) => table.setPageIndex(v)} />

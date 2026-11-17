@@ -69,8 +69,18 @@ Các trang khác (đối chiếu 17/10/2026), đều chỉ dành cho Club Leader
 `/club/:clubId/event-attendance` và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
 `ClubEventProposalPage` (UC25: trang riêng cho tạo và chỉnh sửa đề xuất sự kiện tại `/club/:clubId/events/new`
 và `/club/:clubId/events/:eventId/edit`, dùng chung `ClubEventErrorMessage` và `clubEventFormat.ts` với `ClubEventsPage`),
-`InternalClubEventPage` (sự kiện nội bộ tự túc, `MEMBERS_ONLY` không ngân sách: tạo nháp/tạo/tạo & công bố tại
-`/club/:clubId/events/internal/new`, sửa ở `DRAFT`/`CREATED` tại `/club/:clubId/events/:eventId/internal-edit`; báo trước 24 giờ),
+Tạo/sửa đề xuất qua import DOCX (tối đa 10 MB). `EventProposalDocument` hiển thị toàn bộ tài liệu
+theo trang giấy trong frame riêng (chuyển trang, thu/phóng, vừa chiều rộng, in/lưu PDF);
+`EventProposalPreview` hiển thị hồ sơ trích xuất chỉ đọc bên dưới bản xem toàn văn: tổng quan,
+trạng thái thiếu, lịch trình, ngân sách và điều hướng từng mục hoặc toàn bộ. `EventProposalContent`
+hiển thị đầy đủ đoạn văn và bảng theo thứ tự nguồn, giữ ô gộp, không giới hạn số dòng;
+Link trong Word hoặc URL viết trực tiếp đều bấm được ở bản xem và phần trích xuất, mở tab mới.
+Hyperlink có tên hiển thị được giữ đúng đích từng lần xuất hiện; dùng primitive `AppLinkedText`.
+sửa Word rồi import lại để đổi thông tin. Thiếu field hoặc dữ liệu không hợp lệ thì chặn lưu/nộp;
+không hỗ trợ trích xuất PDF/scan. Xem `docs/05-implementation/EVENT_PROPOSAL_IMPORT.md`.
+Giao diện tạo mới chỉ có nút "Tạo đề xuất sự kiện"; không còn nút, liên kết hay route `/club/:clubId/events/internal/new`.
+`InternalClubEventPage` chỉ còn route sửa sự kiện nội bộ đã có ở `DRAFT`/`CREATED`
+tại `/club/:clubId/events/:eventId/internal-edit`; báo trước 24 giờ,
 `ClubBookingsPage` (UC45–47, xem trên), `ClubReportsPage` (UC33, dùng `ReportWorkspace`, route
 `/club/:clubId/event-reports`) và `ClubBudgetsPage` (UC36, dùng `FinanceWorkspace`, route `/club/:clubId/budgets`).
 

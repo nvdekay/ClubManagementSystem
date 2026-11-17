@@ -1,4 +1,9 @@
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+/**
+ * Trang tạo và nộp lại đề xuất sự kiện của CLB.
+ * Luồng xử lý: nhập DOCX -> xem dữ liệu trích xuất -> lưu nháp -> đính kèm file -> nộp duyệt.
+ * eventProposalImport đọc dữ liệu từ tài liệu; useClubEvents thực hiện các thao tác ghi qua API.
+ */
+import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 
@@ -8,37 +13,33 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
-import { AppInput } from "@/components/ui/input/AppInput";
-import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
 import { AppNotice } from "@/components/ui/notice/AppNotice";
-import { AppSelect } from "@/components/ui/select/AppSelect";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { appToast } from "@/components/ui/toast/AppToast";
 import { useAuth } from "@/hooks/useAuth";
-import { useClubEvent, useClubEventMutation, useClubEventOptions, useEventProposalDocumentAccess, useEventProposalTemplate } from "@/hooks/useClubEvents";
-import { useFieldValidation } from "@/hooks/useFieldValidation";
+import { useClubEvent, useClubEventMutation, useClubEventOptions, useEventProposalDocumentAccess, useEventProposalTemplate, useEventProposalPreview } from "@/hooks/useClubEvents";
 import { ClubEventErrorMessage } from "@/pages/club/ClubEventErrorMessage";
-import { bookingsScheduleError, iso, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
+import { EventProposalPreview } from "@/pages/club/EventProposalPreview";
+import { EventProposalDocument } from "@/pages/club/EventProposalDocument";
+import { bookingsScheduleError, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
 import { EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL, type ClubEvent, type ClubEventDetail, type ClubEventInput, type ClubEventOptions } from "@/services/clubEvents";
 import { formatBytes, proposalFileType } from "@/utils/proposalFile";
+import { importEventProposal, type ProposalImport } from "@/utils/eventProposalImport";
 
 const sectionCardClass = "space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs sm:p-6";
 const secondaryLinkClass = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border-app bg-bg-app px-3.5 font-heading text-sm font-medium text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9";
 
-// Giá trị mặc định cho đề xuất sự kiện mới
+/** Khởi tạo bản nháp rỗng; các giá trị mặc định vẫn phải qua kiểm tra dữ liệu nhập. */
 function freshEvent(): ClubEventInput {
-  const start = new Date(Date.now() + 10 * 86400000);
-  start.setUTCMinutes(0, 0, 0);
   return {
     title: "",
     objective: "",
     plan: "",
-    startAt: start.toISOString(),
-    endAt: new Date(start.getTime() + 2 * 3600000).toISOString(),
+    startAt: "",
+    endAt: "",
     venueText: "",
     audienceScope: "PUBLIC",
-    capacity: 40,
+    capacity: 0,
     riskCategory: "LOW",
     budgetLines: [],
     bookingIds: [],
@@ -47,7 +48,7 @@ function freshEvent(): ClubEventInput {
   };
 }
 
-// Chuyển sự kiện đã lưu thành dữ liệu form để sửa
+/** Khôi phục dữ liệu đầu vào từ bản nháp đã lưu hoặc đề xuất được trả về để chỉnh sửa. */
 function inputFromEvent(event: ClubEvent): ClubEventInput {
   return {
     title: event.title,
@@ -74,78 +75,58 @@ function inputFromEvent(event: ClubEvent): ClubEventInput {
   };
 }
 
-// Khung nhãn cho một ô nhập, có dấu bắt buộc, lỗi và cờ cần sửa theo review
-function Field({
-  label,
-  required,
-  error,
-  flagged,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  error?: string | null;
-  flagged?: string;
-  children: ReactNode;
-}) {
-  return (
-    <label className="flex min-w-0 flex-col gap-1.5 text-sm">
-      <span className="flex flex-wrap items-center gap-2 font-medium text-text-app">
-        <span>
-          {label}
-          {required && <AppRequiredMark />}
-        </span>
-        {flagged && <AppBadge tone="warning">{flagged}</AppBadge>}
-      </span>
-      {children}
-      <AppFieldError message={error} />
-    </label>
-  );
-}
-
 interface ProposalFormProps {
   clubId: string;
   csrfToken: string;
-  permissions: string[];
   detail?: ClubEventDetail;
   options?: ClubEventOptions;
   optionsError?: unknown;
 }
 
-// Form soạn, lưu nháp và nộp đề xuất sự kiện kèm tài liệu đề xuất
-function ProposalForm({ clubId, csrfToken, permissions, detail, options, optionsError }: ProposalFormProps) {
+/** Quản lý bản nháp đã nhập, bản xem trước tài liệu và thứ tự lưu nháp, tải file, nộp duyệt. */
+function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: ProposalFormProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const mutation = useClubEventMutation(clubId);
   const existing = detail?.event;
+  // Trạng thái bản nháp: dữ liệu sự kiện đã trích xuất và mốc thời gian cố định để kiểm tra lịch.
   const [draft, setDraft] = useState<ClubEventInput>(() => (existing ? inputFromEvent(existing) : freshEvent()));
   const [editorOpenedAt] = useState(() => Date.now());
-  // Bản mới nhất của sự kiện trên server sau khi form này lưu; mới hơn `existing` cho đến khi chi tiết được tải lại.
+  // Giữ phiên bản mới nhất từ server cho lần ghi tiếp theo trong lúc chưa tải lại chi tiết.
   const [createdDraft, setCreatedDraft] = useState<ClubEvent | null>(null);
   const [formError, setFormError] = useState<unknown>(null);
-  // Giữ trong bộ nhớ cho đến khi sự kiện tồn tại, để đóng tab không bao giờ để lại tệp tải lên mồ côi.
+  // Giữ file ở trình duyệt đến khi có bản nháp và mã sự kiện để tải file lên.
   const [pendingFile, setPendingFile] = useState<{ file: File; mimeType: string } | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  // Tách trạng thái đọc/tải file khỏi lỗi API để từng khu vực hiển thị đúng nguyên nhân lỗi.
   const [documentMissing, setDocumentMissing] = useState(false);
   const [uploadFailed, setUploadFailed] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [imported, setImported] = useState<ProposalImport | null>(null);
+  const importSequence = useRef(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const template = useEventProposalTemplate(true);
   const documentAccess = useEventProposalDocumentAccess(clubId);
 
   const eventsListUrl = `/club/${encodeURIComponent(clubId)}/events`;
+  // Xác định mã, phiên bản hiện tại và chọn xem file vừa nhập hoặc file đã lưu.
   const isNew = !existing && !createdDraft;
   const activeId = existing?.id ?? createdDraft?.id;
   const activeVersion = createdDraft?.version ?? existing?.version ?? 0;
   const savedDocument = createdDraft ? createdDraft.proposalDocument : existing?.proposalDocument;
+  const savedPreview = useEventProposalPreview(clubId, activeId ?? "", savedDocument?.id ?? "",
+    Boolean(activeId && savedDocument && !pendingFile && !fileError && !reading));
+  const previewFile = pendingFile?.file ?? savedPreview.data;
   const documentError = fileError ?? (documentMissing && !savedDocument && !pendingFile ? t("common.fieldRequired") : null);
 
+  // Đề xuất mở lại giữ yêu cầu chỉnh sửa gần nhất của ICPDP để đánh dấu các mục cần sửa.
   const revisionRequest = [...(detail?.decisions ?? [])].reverse().find((d) => d.outcome === "Request revision");
   const revisionSections =
     existing?.state === "Revision Requested"
       ? (revisionRequest?.comments as DecisionComments | undefined)?.sections ?? []
       : [];
 
-  // Trả nhãn nếu mục này bị ICPDP yêu cầu chỉnh sửa trong lần review
+  // Trả về nhãn đánh dấu nếu mục này nằm trong yêu cầu chỉnh sửa gần nhất.
   function flag(...parts: string[]) {
     return existing && parts.some((part) => revisionSections.includes(part)) ? t("common.revisionFlagged") : undefined;
   }
@@ -156,6 +137,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     timeZone: "Asia/Ho_Chi_Minh",
   });
 
+  // Kiểm tra dữ liệu trích xuất trước khi lưu; server vẫn kiểm tra lại theo quy tắc riêng.
   const required = t("common.fieldRequired");
   const eventErrors: Record<string, string | null> = {
     title: draft.title.trim() ? null : required,
@@ -179,14 +161,16 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         ? draft.occurrences
         : [{ startAt: draft.startAt, endAt: draft.endAt, propertyId: draft.propertyId }],
     ),
-    // Phương án B: đề xuất chỉ dành cho thành viên phải xin ngân sách; đề xuất tự túc kinh phí đi theo luồng sự kiện nội bộ.
+    // Đề xuất chỉ dành cho thành viên cần ít nhất một dòng kinh phí đề nghị.
     budget: draft.audienceScope === "MEMBERS_ONLY" && draft.budgetLines.length === 0 ? t("clubEvents.membersOnlyNeedsBudget") : null,
   };
+  // Kiểm tra từng dòng kinh phí, giữ chỉ số dòng trong khóa lỗi để xác định đúng vị trí.
   draft.budgetLines.forEach((line, index) => {
     eventErrors[`budget.${index}.category`] = line.category.trim() ? null : required;
     eventErrors[`budget.${index}.purpose`] = line.purpose.trim() ? null : required;
     eventErrors[`budget.${index}.amount`] = numberError(t, line.amount, 1, 1000000000000);
   });
+  // Câu hỏi đăng ký dạng lựa chọn phải có nhãn và ít nhất một phương án.
   draft.registrationForm?.forEach((field, index) => {
     eventErrors[`form.${index}.label`] = field.label.trim() ? null : required;
     eventErrors[`form.${index}.options`] =
@@ -194,51 +178,65 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         ? required
         : null;
   });
+  // Mỗi buổi bổ sung phải có khoảng thời gian và địa điểm hợp lệ.
   draft.occurrences?.forEach((occurrence, index) => {
     eventErrors[`occurrence.${index}.endAt`] =
       Date.parse(occurrence.endAt) > Date.parse(occurrence.startAt) ? null : t("common.endAfterStart");
     eventErrors[`occurrence.${index}.venue`] =
       occurrence.venueText?.trim() || occurrence.propertyId ? null : t("clubEvents.venueRequired");
   });
-  const eventField = useFieldValidation(eventErrors);
+  // Loại thông báo trùng và xác định điều kiện cho phép lưu nháp hoặc nộp duyệt.
+  const invalidValues = [...new Set(Object.values(eventErrors).filter((error): error is string => Boolean(error)))];
+  const canPersist = !reading && !fileError && (Boolean(pendingFile) || Boolean(savedDocument))
+    && !imported?.missing.length && invalidValues.length === 0;
 
-  const selectedPropertyIds = new Set(
-    [draft.propertyId, ...(draft.occurrences ?? []).map((o) => o.propertyId)].filter((id): id is string => Boolean(id)),
-  );
-  const linkableBookings = (options?.bookings ?? []).filter(
-    (b) => (!b.eventId || b.eventId === activeId) && (selectedPropertyIds.has(b.propertyId) || b.propertyType === "EQUIPMENT"),
-  );
-  const roomOptions = [{ value: "", label: t("clubEvents.none") }, ...(options?.properties ?? []).map((p) => ({ value: p.id, label: p.name }))];
-
-  // Kiểm tra loại tệp (docx/pdf) rồi giữ lại để tải lên khi lưu
-  function pickFile(file: File | undefined) {
+  // Đọc tài liệu được chọn rồi thay toàn bộ dữ liệu bản nháp bằng kết quả đọc.
+  async function pickFile(file: File | undefined) {
     if (!file) return;
-    const mimeType = proposalFileType(file, ["docx", "pdf"]);
-    setFileError(mimeType ? null : t("clubEvents.proposalDocumentInvalid"));
-    if (mimeType) setPendingFile({ file, mimeType });
+    const sequence = ++importSequence.current;
+    setDraft(freshEvent());
+    setImported(null);
+    setPendingFile(null);
+    setFileError(null);
+    setFormError(null);
+    setUploadFailed(false);
+    setReading(false);
+    const mimeType = proposalFileType(file, ["docx"]);
+    if (!mimeType) { setFileError(t("clubEvents.importDocxOnly")); return; }
+    setReading(true);
+    try {
+      const result = await importEventProposal(file);
+      // Bỏ qua kết quả đọc file cũ nếu người dùng đã chọn file mới trong lúc chờ.
+      if (sequence !== importSequence.current) return;
+      setImported(result);
+      setDraft(result.input);
+      setPendingFile({ file, mimeType });
+    } catch {
+      if (sequence === importSequence.current) setFileError(t("clubEvents.importFailed"));
+    } finally {
+      if (sequence === importSequence.current) setReading(false);
+    }
   }
 
-  // Mở tài liệu đề xuất đã lưu trong tab mới
+  /** Xin đường dẫn truy cập tạm thời cho tài liệu đã lưu rồi mở trong tab riêng. */
   async function openDocument(inline: boolean) {
     if (!activeId) return;
     try {
       const access = await documentAccess.mutateAsync({ id: activeId, inline });
-      // Mở tab mới giúp form này vẫn được giữ nguyên dù trình duyệt tải xuống hay hiển thị tệp.
+      // Giữ nguyên bản nháp khi trình duyệt hiển thị hoặc tải tài liệu xuống.
       window.open(access.url, "_blank", "noopener,noreferrer");
     } catch {
-      // Lỗi của mutation được hiển thị bên dưới tài liệu.
+      // Lỗi thao tác được hiển thị tại khu vực tài liệu.
     }
   }
 
-  // Lưu bản nháp hoặc nộp đề xuất sự kiện, kèm tải tài liệu lên
+  /** Lưu nháp trước, đính kèm file đang chờ, sau đó nộp phiên bản mới nhất nếu được yêu cầu. */
   async function persist(shouldSubmit: boolean) {
-    const fieldsValid = eventField.touchAll();
-    if (shouldSubmit && !savedDocument && !pendingFile) {
+    if (!savedDocument && !pendingFile) {
       setDocumentMissing(true);
-      if (fieldsValid) requestAnimationFrame(() => document.getElementById("proposal-document")?.scrollIntoView({ block: "center", behavior: "smooth" }));
       return;
     }
-    if (!fieldsValid) return;
+    if (!canPersist) return;
     setFormError(null);
     setUploadFailed(false);
     let savedEvent: ClubEvent;
@@ -263,7 +261,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
       return;
     }
 
-    // Chỉ tải lên khi sự kiện đã tồn tại; response của nó mang version mới mà bước submit phải gửi.
+    // Đính kèm file làm tăng phiên bản; bước nộp phải dùng phiên bản vừa được server trả về.
     if (pendingFile) {
       try {
         const uploaded = await mutation.mutateAsync({
@@ -277,7 +275,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
         setCreatedDraft(savedEvent);
         setPendingFile(null);
       } catch (error) {
-        // Bản nháp đã tồn tại (createdDraft), nên thử lại sẽ lưu vào nó thay vì tạo bản trùng.
+        // Giữ mã bản nháp và file đang chờ để lần thử lại cập nhật đúng bản nháp, tránh tạo trùng.
         setUploadFailed(true);
         setFormError(error);
         return;
@@ -305,14 +303,15 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
     }
   }
 
-  // Submit form chỉ lưu nháp, việc nộp được bấm riêng
+  /** Gửi form mặc định chỉ lưu nháp; nút riêng thực hiện nộp đề xuất để duyệt. */
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     void persist(false);
   }
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-7xl">
+      {/* Tiêu đề trang, liên kết quay lại và trạng thái hồ sơ đã lưu. */}
       <PageHeader
         title={t(existing ? "clubEvents.edit" : "clubEvents.create")}
         description={t("clubEvents.notice")}
@@ -327,6 +326,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
       />
 
       <form noValidate onSubmit={handleSubmit} className="space-y-6">
+        {/* Hiển thị yêu cầu chỉnh sửa của ICPDP khi đề xuất được trả về. */}
         {!isNew && revisionSections.length > 0 && (
           <div role="status" className="rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
             <p className="font-semibold">
@@ -336,10 +336,16 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
           </div>
         )}
 
+        <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
+        {/* Khu vực tài liệu: hướng dẫn nhập, file mẫu và tài liệu vừa chọn hoặc đã lưu. */}
         <section id="proposal-document" className={sectionCardClass}>
           <div>
             <h2 className="font-heading text-base font-semibold">{t("clubEvents.proposalDocumentSection")}</h2>
             <p className="mt-1 text-sm text-muted-app">{t("clubEvents.proposalDocumentHint")}</p>
+            <details className="mt-2 text-sm text-muted-app">
+              <summary className="font-medium">{t("clubEvents.importGuideTitle")}</summary>
+              <p className="mt-2">{t("clubEvents.importGuide")}</p>
+            </details>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border-app bg-surface-app p-4 text-sm">
             <div className="min-w-0">
@@ -357,7 +363,7 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
                 <AppSkeleton className="mt-1 h-4 w-48" />
               )}
             </div>
-            {/* Tệp đính kèm hoặc chuyển hướng tới URL có chữ ký; mở tab mới giữ form này nguyên vẹn trong cả hai trường hợp. */}
+            {/* Mở tab riêng để giữ nguyên bản nháp dù server trả file trực tiếp hay chuyển hướng. */}
             <a href={EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className={secondaryLinkClass}>
               <AppIcon name="download" className="size-4" />
               {t("clubEvents.templateDownload")}
@@ -371,18 +377,20 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
               </span>
               {flag("content") && <AppBadge tone="warning">{flag("content")}</AppBadge>}
             </p>
+            {/* Xóa giá trị ô chọn file ẩn sau khi chọn để có thể chọn lại cùng một file. */}
             <input
               ref={fileInput}
               type="file"
-              accept=".docx,.pdf"
+              accept=".docx"
               className="sr-only"
               tabIndex={-1}
               aria-hidden="true"
               onChange={(e) => {
-                pickFile(e.target.files?.[0]);
+                void pickFile(e.target.files?.[0]);
                 e.target.value = "";
               }}
             />
+            {/* File vừa chọn chờ tải lên; file đã lưu có thao tác tải xuống hoặc xem. */}
             {pendingFile ? (
               <div className="rounded-xl border border-border-app bg-surface-app p-3">
                 <p className="break-words font-medium">{pendingFile.file.name} · {formatBytes(pendingFile.file.size)}</p>
@@ -409,478 +417,49 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
               <AppButton
                 type="button"
                 variant="secondary"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || reading}
                 aria-invalid={documentError ? true : undefined}
                 onClick={() => fileInput.current?.click()}
               >
                 <AppIcon name="file" className="size-4" />
                 {t(pendingFile ? "clubEvents.proposalDocumentRechoose" : savedDocument ? "clubEvents.proposalDocumentReplace" : "clubEvents.proposalDocumentChoose")}
               </AppButton>
-              <span className="text-muted-app">{t("clubEvents.proposalDocumentAccept")}</span>
+              <span className="text-muted-app">{t("clubEvents.importDocxOnly")}</span>
             </div>
+            {/* Hiển thị lỗi file, tiến trình trích xuất, kết quả kiểm tra và lỗi truy cập tài liệu. */}
             <AppFieldError message={documentError} />
+            {reading && <p role="status" className="text-muted-app">{t("clubEvents.importReading")}</p>}
+            {imported && !reading && <p role="status" className="text-success-app">{t("clubEvents.importRead")}</p>}
+            {imported && imported.missing.length > 0 && <AppNotice tone="warning" role="alert">
+              <p>{t("clubEvents.importMissing")}</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                {imported.missing.map((key) => <li key={key}>{t(`clubEvents.${key}`, { defaultValue: key })}</li>)}
+              </ul>
+            </AppNotice>}
+            {(imported || existing) && invalidValues.length > 0 && <AppNotice tone="warning" role="alert">
+              <p>{t("clubEvents.importInvalid")}</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">{invalidValues.map((error) => <li key={error}>{error}</li>)}</ul>
+            </AppNotice>}
             {documentAccess.isError && <ClubEventErrorMessage error={documentAccess.error} />}
           </div>
         </section>
 
-        <section className={sectionCardClass}>
-          <h2 className="font-heading text-base font-semibold">{t("clubEvents.basicInfo")}</h2>
-          <Field flagged={flag("content")} label={t("clubEvents.titleField")} required error={eventField.error("title")}>
-            <AppInput
-              {...eventField.control("title")}
-              maxLength={200}
-              value={draft.title}
-              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-            />
-          </Field>
-          <Field flagged={flag("content")} label={t("clubEvents.objective")} required error={eventField.error("objective")}>
-            <AppTextarea
-              {...eventField.control("objective")}
-              maxLength={5000}
-              value={draft.objective}
-              onChange={(e) => setDraft({ ...draft, objective: e.target.value })}
-            />
-          </Field>
-          <Field flagged={flag("content")} label={t("clubEvents.plan")} required error={eventField.error("plan")}>
-            <AppTextarea
-              {...eventField.control("plan")}
-              maxLength={20000}
-              rows={5}
-              value={draft.plan}
-              onChange={(e) => setDraft({ ...draft, plan: e.target.value })}
-            />
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field flagged={flag("content")} label={t("clubEvents.scope")}>
-              <AppSelect
-                label={t("clubEvents.scope")}
-                value={draft.audienceScope}
-                options={(["PUBLIC", "MEMBERS_ONLY"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))}
-                onChange={(value) => setDraft({ ...draft, audienceScope: value })}
-              />
-            </Field>
-            <Field flagged={flag("content")} label={t("clubEvents.capacity")} required error={eventField.error("capacity")}>
-              <AppInput
-                {...eventField.control("capacity")}
-                type="number"
-                min={1}
-                max={100000}
-                value={draft.capacity}
-                onChange={(e) => setDraft({ ...draft, capacity: Number(e.target.value) })}
-              />
-            </Field>
-          </div>
-          {draft.audienceScope === "MEMBERS_ONLY" && (
-            <AppNotice tone="info">
-              <p>{t("clubEvents.membersOnlyBudgetHint")}</p>
-              <Link to={`/club/${encodeURIComponent(clubId)}/events/internal/new`} className="mt-1 inline-flex font-medium text-primary-app hover:underline">
-                {t("clubEvents.createInternal")}
-              </Link>
-            </AppNotice>
-          )}
-        </section>
+        {/* Khung xem toàn bộ tài liệu, kèm trạng thái đang tải, chưa có file hoặc tải file đã lưu bị lỗi. */}
+        <div className="min-w-0">
+          {!fileError && !reading && previewFile ? <EventProposalDocument file={previewFile} />
+            : reading || (!pendingFile && savedDocument && !fileError && savedPreview.isPending) ? <AppSkeleton className="h-[76vh] min-h-[420px] w-full" />
+              : <div className="flex min-h-[420px] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border-app bg-surface-app p-8 text-center">
+                <AppIcon name="file" className="size-12 text-muted-app" />
+                <h2 className="font-heading text-xl font-semibold">{t("clubEvents.documentViewer")}</h2>
+                <p className="max-w-sm text-sm leading-relaxed text-muted-app">{t("clubEvents.documentEmpty")}</p>
+              </div>}
+          {!pendingFile && savedPreview.isError && <div className="mt-3"><AppNotice tone="warning" role="alert">{t("clubEvents.documentLoadError")}</AppNotice></div>}
+        </div>
+        </div>
+        {/* Các trường trích xuất chỉ đọc để hệ thống kiểm tra thông tin đề xuất. */}
+        {(imported || (existing && !fileError && !reading)) && <EventProposalPreview input={draft} extracted={imported ?? undefined} file={previewFile} missing={imported?.missing ?? []} />}
 
-        <section className={sectionCardClass}>
-          <h2 className="font-heading text-base font-semibold">{t("clubEvents.scheduleVenue")}</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field flagged={flag("schedule")} label={t("clubEvents.start")} required error={eventField.error("startAt")}>
-              <AppInput
-                {...eventField.control("startAt")}
-                type="datetime-local"
-                value={localTime(draft.startAt)}
-                onChange={(e) => {
-                  if (e.target.value) setDraft({ ...draft, startAt: iso(e.target.value) });
-                }}
-              />
-            </Field>
-            <Field flagged={flag("schedule")} label={t("clubEvents.end")} required error={eventField.error("endAt")}>
-              <AppInput
-                {...eventField.control("endAt")}
-                type="datetime-local"
-                value={localTime(draft.endAt)}
-                onChange={(e) => {
-                  if (e.target.value) setDraft({ ...draft, endAt: iso(e.target.value) });
-                }}
-              />
-            </Field>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field flagged={flag("venue")} label={t("clubEvents.property")}>
-              <AppSelect
-                label={t("clubEvents.property")}
-                value={draft.propertyId ?? ""}
-                options={roomOptions}
-                onChange={(value) => setDraft({ ...draft, propertyId: value || undefined, bookingIds: [] })}
-              />
-            </Field>
-            <Field flagged={flag("venue")} label={t("clubEvents.venue")} required={!draft.propertyId} error={eventField.error("venue")}>
-              <AppInput
-                {...eventField.control("venue", !draft.propertyId)}
-                value={draft.venueText ?? ""}
-                onChange={(e) => setDraft({ ...draft, venueText: e.target.value })}
-              />
-            </Field>
-          </div>
-          <Field flagged={flag("venue")} label={t("clubEvents.facilityNeeds")}>
-            <AppTextarea value={draft.facilityNeeds ?? ""} onChange={(e) => setDraft({ ...draft, facilityNeeds: e.target.value })} />
-          </Field>
-
-          <div className="space-y-3 border-t border-border-app pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="min-w-0">
-                <h3 className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                  <span>{t("clubEvents.occurrences")}</span>
-                  {flag("schedule") && <AppBadge tone="warning">{flag("schedule")}</AppBadge>}
-                </h3>
-                <p className="mt-1 text-sm text-muted-app">{t("clubEvents.occurrencesHint")}</p>
-              </div>
-              <AppButton
-                type="button"
-                variant="secondary"
-                onClick={() =>
-                  setDraft({
-                    ...draft,
-                    occurrences: [
-                      ...(draft.occurrences ?? []),
-                      {
-                        startAt: draft.startAt,
-                        endAt: draft.endAt,
-                        propertyId: draft.propertyId,
-                        venueText: draft.venueText ?? "",
-                      },
-                    ],
-                  })
-                }
-              >
-                <AppIcon name="plus" className="size-4" />
-                {t("clubEvents.addOccurrence")}
-              </AppButton>
-            </div>
-            {(draft.occurrences ?? []).map((o, index) => (
-              <div key={index} className="space-y-3 rounded-xl border border-border-app bg-surface-app p-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {(["startAt", "endAt"] as const).map((key) => (
-                    <Field
-                      key={key}
-                      label={t(`clubEvents.${key === "startAt" ? "start" : "end"}`)}
-                      required
-                      error={eventField.error(`occurrence.${index}.${key}`)}
-                    >
-                      <AppInput
-                        {...eventField.control(`occurrence.${index}.${key}`)}
-                        type="datetime-local"
-                        value={localTime(o[key])}
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            const nextIso = iso(e.target.value);
-                            const nextStart =
-                              key === "startAt" && Date.parse(nextIso) < Date.parse(draft.startAt)
-                                ? nextIso
-                                : draft.startAt;
-                            const nextEnd =
-                              key === "endAt" && Date.parse(nextIso) > Date.parse(draft.endAt)
-                                ? nextIso
-                                : draft.endAt;
-                            setDraft({
-                              ...draft,
-                              startAt: nextStart,
-                              endAt: nextEnd,
-                              occurrences: draft.occurrences?.map((item, i) =>
-                                i === index ? { ...item, [key]: nextIso } : item,
-                              ),
-                            });
-                          }
-                        }}
-                      />
-                    </Field>
-                  ))}
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field flagged={flag("venue")} label={t("clubEvents.property")}>
-                    <AppSelect
-                      label={t("clubEvents.property")}
-                      value={o.propertyId ?? ""}
-                      options={roomOptions}
-                      onChange={(value) =>
-                        setDraft({
-                          ...draft,
-                          occurrences: draft.occurrences?.map((item, i) =>
-                            i === index ? { ...item, propertyId: value || undefined } : item,
-                          ),
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field
-                    flagged={flag("venue")}
-                    label={t("clubEvents.venue")}
-                    required={!o.propertyId}
-                    error={eventField.error(`occurrence.${index}.venue`)}
-                  >
-                    <AppInput
-                      {...eventField.control(`occurrence.${index}.venue`, !o.propertyId)}
-                      value={o.venueText ?? ""}
-                      onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          occurrences: draft.occurrences?.map((item, i) =>
-                            i === index ? { ...item, venueText: e.target.value } : item,
-                          ),
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setDraft({ ...draft, occurrences: draft.occurrences?.filter((_, i) => i !== index) })}
-                >
-                  {t("clubEvents.remove")}
-                </AppButton>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className={sectionCardClass}>
-          <h2 className="font-heading text-base font-semibold">{t("clubEvents.riskSection")}</h2>
-          <Field flagged={flag("risk")} label={t("clubEvents.risk")}>
-            <AppSelect
-              label={t("clubEvents.risk")}
-              value={draft.riskCategory}
-              options={(["LOW", "MEDIUM", "HIGH"] as const).map((v) => ({ value: v, label: t(`clubEvents.${v}`) }))}
-              onChange={(value) => setDraft({ ...draft, riskCategory: value })}
-            />
-          </Field>
-          <Field flagged={flag("risk")} label={t("clubEvents.riskNote")}>
-            <AppTextarea value={draft.riskNote ?? ""} onChange={(e) => setDraft({ ...draft, riskNote: e.target.value })} />
-          </Field>
-        </section>
-
-        <section className={sectionCardClass}>
-          <div>
-            <h2 className="flex flex-wrap items-center gap-2 font-heading text-base font-semibold">
-              <span>{t("clubEvents.bookings")}</span>
-              {flag("venue") && <AppBadge tone="warning">{flag("venue")}</AppBadge>}
-            </h2>
-            <p className="mt-1 text-sm text-muted-app">{t("clubEvents.bookingsHint")}</p>
-            {!permissions.includes("club.booking.manage") && (
-              <p className="mt-1 text-sm text-muted-app">{t("clubEvents.bookingPermissionHint")}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            {!linkableBookings.length && <p className="text-sm text-muted-app">{t("clubEvents.bookingsEmpty")}</p>}
-            {linkableBookings.map((b) => (
-              <label key={b.id} className="flex items-start gap-2.5 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1 accent-primary-app"
-                  checked={draft.bookingIds.includes(b.id)}
-                  disabled={!permissions.includes("club.booking.manage")}
-                  onChange={(e) => {
-                    eventField.touch("bookings");
-                    setDraft({
-                      ...draft,
-                      bookingIds: e.target.checked ? [...draft.bookingIds, b.id] : draft.bookingIds.filter((id) => id !== b.id),
-                    });
-                  }}
-                />
-                <span>
-                  {b.title} · {format.format(new Date(b.startAt))} – {format.format(new Date(b.endAt))}
-                </span>
-              </label>
-            ))}
-            <AppFieldError message={eventField.error("bookings")} />
-          </div>
-        </section>
-
-        <section className={sectionCardClass}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0">
-              <h2 className="flex flex-wrap items-center gap-2 font-heading text-base font-semibold">
-                <span>{t("clubEvents.budget")}</span>
-                {flag("budget") && <AppBadge tone="warning">{flag("budget")}</AppBadge>}
-              </h2>
-              <p className="mt-1 text-sm text-muted-app">{t("clubEvents.budgetHint")}</p>
-              <AppFieldError message={eventField.error("budget")} />
-            </div>
-            <AppButton
-              type="button"
-              variant="secondary"
-              onClick={() => setDraft({ ...draft, budgetLines: [...draft.budgetLines, { category: "", purpose: "", amount: 0 }] })}
-            >
-              <AppIcon name="plus" className="size-4" />
-              {t("clubEvents.addLine")}
-            </AppButton>
-          </div>
-          <div className="space-y-4">
-            {draft.budgetLines.map((line, index) => (
-              <div key={index} className="space-y-3 rounded-xl border border-border-app bg-surface-app p-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {(["category", "purpose"] as const).map((key) => (
-                    <Field
-                      key={key}
-                      label={t(`clubEvents.${key}`)}
-                      required
-                      error={eventField.error(`budget.${index}.${key}`)}
-                    >
-                      <AppInput
-                        {...eventField.control(`budget.${index}.${key}`)}
-                        value={line[key]}
-                        onChange={(e) =>
-                          setDraft({
-                            ...draft,
-                            budgetLines: draft.budgetLines.map((l, i) => (i === index ? { ...l, [key]: e.target.value } : l)),
-                          })
-                        }
-                      />
-                    </Field>
-                  ))}
-                </div>
-                <Field label={t("clubEvents.planItems")}>
-                  <AppTextarea
-                    value={line.plannedItems ?? ""}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        budgetLines: draft.budgetLines.map((l, i) => (i === index ? { ...l, plannedItems: e.target.value } : l)),
-                      })
-                    }
-                  />
-                </Field>
-                <Field label={t("clubEvents.amount")} required error={eventField.error(`budget.${index}.amount`)}>
-                  <AppMoneyInput
-                    {...eventField.control(`budget.${index}.amount`)}
-                    value={line.amount ? line.amount : ""}
-                    onValueChange={(digits) =>
-                      setDraft({
-                        ...draft,
-                        budgetLines: draft.budgetLines.map((l, i) => (i === index ? { ...l, amount: Number(digits) } : l)),
-                      })
-                    }
-                  />
-                </Field>
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setDraft({ ...draft, budgetLines: draft.budgetLines.filter((_, i) => i !== index) })}
-                >
-                  {t("clubEvents.remove")}
-                </AppButton>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className={sectionCardClass}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0">
-              <h2 className="font-heading text-base font-semibold">{t("clubEvents.form")}</h2>
-              <p className="mt-1 text-sm text-muted-app">{t("clubEvents.formHint")}</p>
-            </div>
-            <AppButton
-              type="button"
-              variant="secondary"
-              onClick={() =>
-                setDraft({
-                  ...draft,
-                  registrationForm: [
-                    ...(draft.registrationForm ?? []),
-                    { key: `field_${crypto.randomUUID().replaceAll("-", "")}`, label: "", type: "text", required: true },
-                  ],
-                })
-              }
-            >
-              <AppIcon name="plus" className="size-4" />
-              {t("clubEvents.addField")}
-            </AppButton>
-          </div>
-          <div className="space-y-4">
-            {draft.registrationForm?.map((field, index) => (
-              <div key={field.key} className="space-y-3 rounded-xl border border-border-app bg-surface-app p-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field
-                    label={t("clubEvents.question")}
-                    required
-                    error={eventField.error(`form.${index}.label`)}
-                  >
-                    <AppInput
-                      {...eventField.control(`form.${index}.label`)}
-                      value={field.label}
-                      onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          registrationForm: draft.registrationForm?.map((f, i) =>
-                            i === index ? { ...f, label: e.target.value } : f,
-                          ),
-                        })
-                      }
-                    />
-                  </Field>
-                  <Field label={t("clubEvents.type")}>
-                    <AppSelect
-                      label={t("clubEvents.type")}
-                      value={field.type}
-                      options={(["text", "textarea", "select", "radio", "checkbox"] as const).map((v) => ({
-                        value: v,
-                        label: t(`clubEvents.${v}`),
-                      }))}
-                      onChange={(value) =>
-                        setDraft({
-                          ...draft,
-                          registrationForm: draft.registrationForm?.map((f, i) => (i === index ? { ...f, type: value } : f)),
-                        })
-                      }
-                    />
-                  </Field>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="accent-primary-app"
-                    checked={field.required}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        registrationForm: draft.registrationForm?.map((f, i) =>
-                          i === index ? { ...f, required: e.target.checked } : f,
-                        ),
-                      })
-                    }
-                  />
-                  {t("clubEvents.required")}
-                </label>
-                {["select", "radio", "checkbox"].includes(field.type) && (
-                  <Field label={t("clubEvents.options")} required error={eventField.error(`form.${index}.options`)}>
-                    <AppTextarea
-                      {...eventField.control(`form.${index}.options`)}
-                      value={field.options?.join("\n") ?? ""}
-                      onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          registrationForm: draft.registrationForm?.map((f, i) =>
-                            i === index ? { ...f, options: e.target.value.split("\n") } : f,
-                          ),
-                        })
-                      }
-                    />
-                  </Field>
-                )}
-                <AppButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() =>
-                    setDraft({ ...draft, registrationForm: draft.registrationForm?.filter((_, i) => i !== index) })
-                  }
-                >
-                  {t("clubEvents.remove")}
-                </AppButton>
-              </div>
-            ))}
-          </div>
-        </section>
-
+        {/* Hiển thị lỗi lưu hồ sơ hoặc tải dữ liệu lựa chọn và giữ lại bản nháp hiện tại. */}
         {(Boolean(formError) || Boolean(optionsError)) && (
           <AppNotice tone="danger">
             {uploadFailed && <p className="mb-1 text-sm font-semibold">{t("clubEvents.proposalDocumentUploadFailed")}</p>}
@@ -888,14 +467,15 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
           </AppNotice>
         )}
 
+        {/* Nhóm nút quay lại, lưu nháp và lưu rồi nộp; hai nút ghi dữ liệu dùng chung điều kiện kiểm tra. */}
         <div className="flex flex-wrap items-center gap-3">
           <Link to={eventsListUrl} className={secondaryLinkClass}>
             {t("clubEvents.cancelForm")}
           </Link>
-          <AppButton type="submit" variant="secondary" disabled={mutation.isPending}>
+          <AppButton type="submit" variant="secondary" disabled={mutation.isPending || !canPersist}>
             {t("clubEvents.save")}
           </AppButton>
-          <AppButton type="button" disabled={mutation.isPending} onClick={() => void persist(true)}>
+          <AppButton type="button" disabled={mutation.isPending || !canPersist} onClick={() => void persist(true)}>
             <AppIcon name="send" className="size-4" />
             {t("clubEvents.saveAndSubmit")}
           </AppButton>
@@ -905,18 +485,19 @@ function ProposalForm({ clubId, csrfToken, permissions, detail, options, options
   );
 }
 
-// Trang tạo hoặc sửa đề xuất sự kiện công khai gửi ICPDP duyệt
-/** Trang riêng để tạo hoặc sửa đề xuất sự kiện của CLB (UC25). */
+/** Trang UC25: kiểm tra quyền trong CLB và tải đề xuất còn được phép chỉnh sửa. */
 export function ClubEventProposalPage() {
   const { clubId = "", eventId } = useParams();
   const { t } = useTranslation();
   const auth = useAuth();
+  // Xác định quyền trong đúng CLB trước khi cho phép tải dữ liệu được bảo vệ.
   const permissions = auth.data?.workspaces.find((w) => w.kind === "club" && w.clubId === clubId)?.permissions ?? [];
   const allowed = permissions.includes("club.event.manage");
   const detail = useClubEvent(clubId, eventId ?? "", allowed && Boolean(eventId));
   const options = useClubEventOptions(clubId, allowed);
   const eventsListUrl = `/club/${encodeURIComponent(clubId)}/events`;
 
+  // Chỉ chờ truy vấn đã bật, sau đó phân biệt lỗi thiếu quyền và hồ sơ không tồn tại.
   if (auth.isPending || (eventId && allowed && detail.isPending)) {
     return (
       <div className="max-w-4xl space-y-4">
@@ -938,6 +519,7 @@ export function ClubEventProposalPage() {
       </div>
     );
   }
+  // Không cho chỉnh sửa qua form tạo nếu đề xuất đã nộp hoặc đã chốt trạng thái.
   if (eventId && detail.data && !["Draft", "Revision Requested"].includes(detail.data.event.state)) {
     return (
       <div className="max-w-4xl">
@@ -956,11 +538,11 @@ export function ClubEventProposalPage() {
   }
 
   return (
+    // Khởi tạo lại trạng thái form khi chuyển giữa bản nháp mới và một đề xuất khác.
     <ProposalForm
       key={eventId ?? "new"}
       clubId={clubId}
       csrfToken={auth.data.csrfToken}
-      permissions={permissions}
       detail={eventId ? detail.data : undefined}
       options={options.data}
       optionsError={options.error}

@@ -1,3 +1,7 @@
+/**
+ * Trang xét duyệt ICPDP: tài liệu đã nộp, khác biệt giữa các phiên bản và người phụ trách.
+ * ProposalDecisionPanel soạn quyết định; useEventProposalReviews gọi API và cập nhật bộ nhớ đệm.
+ */
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -25,19 +29,18 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 
-// Trả về chuỗi nếu giá trị là chuỗi không rỗng
+// Đọc an toàn trường văn bản không bắt buộc trong dữ liệu phiên bản đã lưu.
 function text(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
-// Lấy thông tin file đề xuất đã đóng băng trong một phiên bản
-/** File đề xuất được chốt vào bản chỉnh sửa đã nộp; không có ở các đề xuất tạo trước khi có tính năng này. */
+/** Lấy tài liệu đã chốt trong phiên bản được nộp; hồ sơ cũ có thể chưa có tài liệu này. */
 function proposalDocument(version: EventProposalVersion | undefined): EventProposalDocumentInfo | undefined {
   const value = version?.payload.proposalDocument;
   return value && typeof value === "object" ? value as EventProposalDocumentInfo : undefined;
 }
 
-// Chọn thông báo lỗi dịch được, dùng dự phòng nếu lỗi chung
+// Thay lỗi API chung bằng thông báo phù hợp với màn hình xét duyệt.
 function resolveI18nError(error: Error | null | undefined, fallback: string): string {
   if (!error) return fallback;
   if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
@@ -46,7 +49,7 @@ function resolveI18nError(error: Error | null | undefined, fallback: string): st
   return error.message || fallback;
 }
 
-// Trang ICPDP xem chi tiết đề xuất sự kiện, nhận xử lý và quyết định
+/** Kết hợp hồ sơ đề xuất và các thao tác xét duyệt cho tài khoản ICPDP đã đăng nhập. */
 export function EventProposalReviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -59,6 +62,7 @@ export function EventProposalReviewPage() {
   const defenseAction = useEventDefenseActions();
   const documentAccess = useReviewProposalDocumentAccess();
 
+  // Trạng thái hộp thoại xác định thao tác bảo vệ; duyệt hủy sự kiện có lý do và lỗi riêng.
   const [scheduleDialogMode, setScheduleDialogMode] = useState<"schedule" | "reschedule" | null>(null);
   const [reasonModalKind, setReasonModalKind] = useState<"cancel" | "rejectReschedule" | "noShow" | null>(null);
   const [modalReason, setModalReason] = useState("");
@@ -66,23 +70,28 @@ export function EventProposalReviewPage() {
   const [cancelReviewReason, setCancelReviewReason] = useState("");
   const [cancelReviewError, setCancelReviewError] = useState<string | null>(null);
   const [renderedAt] = useState(() => Date.now());
+  // Dùng dữ liệu đã chốt khi nộp cho tài liệu và ngân sách, có phương án dự phòng cho hồ sơ cũ.
   const current = review.data?.versions.find((version) => version.revisionNo === review.data?.event.currentRevisionNo)
     ?? review.data?.versions.at(-1);
   const lines = current?.budgetLines ?? [];
 
+  /** Định dạng thời gian nộp, lịch bảo vệ và thời điểm quyết định theo ngôn ngữ giao diện. */
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
   }
 
+  /** Hiển thị kinh phí theo tiền Việt Nam, không có phần thập phân. */
   function money(value: number) {
     return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
   }
 
+  /** Dịch mã rủi ro đã biết và giữ nguyên giá trị chưa nhận diện để vẫn hiển thị được. */
   function riskLabel(value: string) {
     return value === "HIGH" ? t("eventReviews.riskHIGH") : value === "MEDIUM" ? t("eventReviews.riskMEDIUM")
       : value === "LOW" ? t("eventReviews.riskLOW") : value;
   }
 
+  /** Dịch trạng thái vòng đời sự kiện để hiển thị trên nhãn trạng thái của trang. */
   function stateLabel(value: string) {
     switch (value) {
       case "Pending Approval": return t("eventReviews.statePendingApproval");
@@ -99,6 +108,7 @@ export function EventProposalReviewPage() {
     }
   }
 
+  /** Dịch mã các mục cần chỉnh sửa trong yêu cầu sửa và lịch sử xét duyệt. */
   function sectionLabel(value: string) {
     switch (value) {
       case "schedule": return t("eventReviews.sectionschedule");
@@ -110,11 +120,13 @@ export function EventProposalReviewPage() {
     }
   }
 
+  /** Hiển thị tên nghĩa vụ quyết toán, hoàn tiền hoặc báo cáo còn tồn đọng của CLB. */
   function obligationLabel(value: ClubObligation) {
     return value === "overdueSettlement" ? t("eventReviews.overdueSettlement")
       : value === "overdueRefund" ? t("eventReviews.overdueRefund") : t("eventReviews.overdueReport");
   }
 
+  /** Dịch quyết định trong lịch sử, bao gồm yêu cầu bảo vệ lại. */
   function outcomeLabel(value: EventReviewOutcome) {
     return value === "Approve" ? t("eventReviews.approve") : value === "Reject" ? t("eventReviews.reject")
       : value === "Re-defense" ? t("eventDefense.outcomeReDefense") : t("eventReviews.requestRevision");
@@ -123,7 +135,7 @@ export function EventProposalReviewPage() {
   const back = { to: "/workspace/event-proposals", label: t("eventReviews.back") };
   const label = "text-xs text-muted-app";
 
-  // Query bị tắt sẽ pending mãi, nên chỉ chờ đề xuất mà người dùng được phép tải.
+  // Truy vấn bị tắt vẫn ở trạng thái chờ; chỉ chờ dữ liệu xét duyệt khi có quyền tải.
   if (auth.isPending || (isOfficer && review.isPending)) return <div className="space-y-4">
     <AppSkeleton className="h-10 w-1/2" /><AppSkeleton className="h-[28rem] w-full" />
   </div>;
@@ -143,14 +155,16 @@ export function EventProposalReviewPage() {
   );
 
   const { event, task, club, decisions, versions, bookings, semesterBudgets, budget, activeDefenseSession, defenseHistory, cancellationRequest } = review.data;
-  // Phiên bản được nộp trước phiên bản hiện tại, và yêu cầu chỉnh sửa đã trả nó về.
+  // Ghép lần nộp trước với yêu cầu chỉnh sửa có trước lần nộp hiện tại.
   const previous = current && versions.filter((version) => version.revisionNo < current.revisionNo)
     .sort((a, b) => b.revisionNo - a.revisionNo)[0];
   const revisionRequest = current && [...decisions].reverse().find((decision) => decision.outcome === "Request revision"
     && new Date(decision.at) <= new Date(current.submittedAt));
+  /** Chỉ định dạng khoảng thời gian của phiên bản khi cả hai giá trị lưu trữ đều là chuỗi. */
   function range(start: unknown, end: unknown) {
     return typeof start === "string" && typeof end === "string" ? `${date(start)} – ${date(end)}` : "";
   }
+  /** Tra tên địa điểm từ thông tin sự kiện hoặc booking thay vì hiển thị mã thô. */
   function propertyLabel(propertyId: string | undefined) {
     if (!propertyId) return undefined;
     if (event.property?.id === propertyId) return `${event.property.code} · ${event.property.name}`;
@@ -158,11 +172,13 @@ export function EventProposalReviewPage() {
     if (booking) return [booking.propertyCode, booking.propertyName].filter(Boolean).join(" · ") || undefined;
     return t("eventReviews.otherProperty");
   }
+  /** Ghép thời gian và địa điểm từng buổi để dùng trong tổng quan và so sánh phiên bản. */
   function occurrenceSummary(item: { startAt?: unknown; endAt?: unknown; propertyId?: unknown; venueText?: unknown }) {
     const timeRange = range(item.startAt, item.endAt);
     const location = [propertyLabel(text(item.propertyId)), text(item.venueText)].filter(Boolean).join(" · ");
     return location ? `${timeRange} (${location})` : timeRange;
   }
+  // Khai báo các trường so sánh tập trung để phần khác biệt dùng thống nhất cách định dạng.
   const versionFields: DiffField<EventProposalVersion>[] = [
     { key: "title", label: t("eventReviews.fieldTitle"), read: (v) => text(v.payload.title) ?? "" },
     { key: "when", label: t("eventReviews.when"), read: (v) => range(v.payload.startAt, v.payload.endAt) },
@@ -192,6 +208,7 @@ export function EventProposalReviewPage() {
       return file ? `${file.fileName} · ${formatBytes(file.bytes)} · ${date(file.uploadedAt)}` : "";
     } },
   ];
+  // Lấy dữ liệu chỉ đọc từ lần nộp được chọn, chấp nhận trường không có trong hồ sơ cũ.
   const currentDocument = proposalDocument(current);
   const payload = current?.payload ?? {};
   const occurrences = Array.isArray(payload.occurrences)
@@ -199,9 +216,11 @@ export function EventProposalReviewPage() {
     : [];
   const conflictMessage = event.conflictDetail && typeof event.conflictDetail === "object"
     ? text((event.conflictDetail as Record<string, unknown>).message) : undefined;
+  // Người phụ trách và trạng thái hồ sơ quyết định việc mở khung thao tác; server kiểm tra lại cả hai.
   const mine = task.assigneeId === auth.data.user.id;
   const isOpen = task.state === "Open" && ["Pending Approval", "Under Review", "Re-defense Pending"].includes(event.state);
   const isPendingCancellation = task.state === "Open" && cancellationRequest?.state === "Pending";
+  // Màu nhãn thể hiện riêng trạng thái hồ sơ, mức rủi ro và xung đột lịch.
   const stateTone: AppBadgeTone = ["Approved", "Upcoming", "Ongoing"].includes(event.state) ? "success"
     : ["Rejected", "Expired", "Cancelled"].includes(event.state) ? "danger"
       : event.state === "Revision Requested" ? "warning" : "info";
@@ -209,30 +228,31 @@ export function EventProposalReviewPage() {
   const conflictTone: AppBadgeTone = event.conflictResult === "Blocking Conflict" ? "danger"
     : event.conflictResult === "Warning" ? "warning" : "success";
   const semesterTotal = semesterBudgets.reduce((sum, item) => sum + item.approvedTotal, 0);
+  // Đánh dấu buổi bảo vệ đã lên lịch khi còn dưới 24 giờ trước giờ bắt đầu.
   const confirmOverdue = Boolean(
     activeDefenseSession && activeDefenseSession.state === "SCHEDULED"
     && new Date(activeDefenseSession.startAt).getTime() - renderedAt < 24 * 3600_000,
   );
 
-  // Mở file đề xuất của một phiên bản bằng link truy cập tạm thời
+  /** Mở tài liệu của phiên bản đã nộp được chọn bằng đường dẫn truy cập tạm thời. */
   async function openDocument(revisionNo: number, inline: boolean) {
     if (!id) return;
     try {
       const access = await documentAccess.mutateAsync({ id, revisionNo, inline });
       window.open(access.url, "_blank", "noopener,noreferrer");
     } catch {
-      // Lỗi của mutation được hiển thị trong phần tài liệu đề xuất.
+      // Lỗi thao tác được hiển thị tại khu vực tài liệu đề xuất.
     }
   }
 
-  // Officer nhận (claim) đề xuất sự kiện để xử lý
+  /** Nhận đề xuất cho ICPDP hiện tại; thao tác thành công cập nhật lại chi tiết xét duyệt. */
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
     catch (error) { console.error("[EventProposalReviewPage] claim failed:", error); }
   }
 
-  // Gửi quyết định xác nhận hoặc từ chối yêu cầu huỷ sự kiện
+  /** Kiểm tra lý do khi từ chối hủy, yêu cầu xác nhận rồi gửi quyết định duyệt hủy sự kiện. */
   async function submitCancellationDecision(e: FormEvent) {
     e.preventDefault();
     if (!auth.data || !id) return;
@@ -257,7 +277,7 @@ export function EventProposalReviewPage() {
     }
   }
 
-  // Bắt đầu buổi bảo vệ đề xuất sự kiện
+  /** Gọi API bắt đầu buổi bảo vệ trước khi chuyển sang màn hình bảo vệ trực tiếp. */
   async function handleStartDefense() {
     if (!auth.data || !id) return;
     defenseAction.reset();
@@ -269,7 +289,7 @@ export function EventProposalReviewPage() {
     }
   }
 
-  // Gửi hành động cần lý do trong modal
+  /** Gửi thao tác hủy buổi bảo vệ, từ chối đổi lịch hoặc ghi nhận vắng mặt kèm lý do bắt buộc. */
   async function submitReasonModal(e: FormEvent) {
     e.preventDefault();
     if (!auth.data || !id || !reasonModalKind) return;
@@ -298,15 +318,18 @@ export function EventProposalReviewPage() {
 
   return (
     <>
+      {/* Tiêu đề và trạng thái mới nhất của đề xuất; hồ sơ nằm cạnh các thao tác xét duyệt. */}
       <PageHeader title={event.title} back={back}
         description={`${event.clubName} · ${t("eventReviews.revision", { number: event.currentRevisionNo })}`}
         actions={<AppBadge tone={stateTone}>{t("eventReviews.status")}: {stateLabel(event.state)}</AppBadge>} />
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-6">
+          {/* So sánh hai lần nộp liên tiếp và hiển thị các yêu cầu chỉnh sửa của ICPDP. */}
           {previous && current && <RevisionChanges previousNumber={previous.revisionNo}
             changes={diffFields(previous, current, versionFields)}
             requestedSections={revisionRequest?.sections.map(sectionLabel)} reason={revisionRequest?.reason} />}
+          {/* Tài liệu đã nộp và các thao tác mở tài liệu của những phiên bản trước. */}
           <section className="rounded-2xl border border-l-4 border-border-app border-l-brand-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.documentTitle")}</h2>
             {currentDocument && current ? (
@@ -339,6 +362,7 @@ export function EventProposalReviewPage() {
           </section>
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            {/* Tổng quan lịch, địa điểm, đối tượng, rủi ro, xung đột và nội dung thuyết minh đề xuất. */}
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.overview")}</h2>
             <dl className="mt-4 grid gap-5 sm:grid-cols-2">
               <div><dt className={label}>{t("eventReviews.when")}</dt><dd className="mt-1 font-medium">{date(event.startAt)} – {date(event.endAt)}</dd></div>
@@ -366,6 +390,7 @@ export function EventProposalReviewPage() {
           </section>
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            {/* Đối chiếu từng khoản đề nghị với khoản đã duyệt và hiển thị kinh phí trong học kỳ. */}
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.budget")}</h2>
             {budget && <Link className="mt-4 inline-flex rounded-lg border border-border-app px-4 py-2 text-sm font-medium text-primary-app hover:bg-surface-app"
               to={`/workspace/budgets/${budget.id}`}>{t("budgets.title")}</Link>}
@@ -411,6 +436,7 @@ export function EventProposalReviewPage() {
             </div>
           </section>
 
+          {/* Tình trạng CLB và các booking cơ sở vật chất cung cấp thông tin để xét duyệt. */}
           <div className="grid gap-6 md:grid-cols-2">
             <section className="min-w-0 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
               <h2 className="font-heading text-base font-semibold">{t("eventReviews.clubSection")}</h2>
@@ -434,6 +460,7 @@ export function EventProposalReviewPage() {
             </section>
           </div>
 
+          {/* Quản lý bảo vệ: đặt lịch, xác nhận, bắt đầu, các thao tác liên quan và lịch sử buổi bảo vệ. */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-heading text-base font-semibold">{t("eventDefense.sectionTitle")}</h2>
@@ -540,6 +567,7 @@ export function EventProposalReviewPage() {
           </section>
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            {/* Lịch sử nộp ghi số phiên bản, người nộp, thời gian và tổng kinh phí đề nghị. */}
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.history")}</h2>
             <ol className="mt-4 ml-1 space-y-4 border-l-2 border-border-app pl-5">{versions.map((version) =>
               <li key={version.id} className="relative">
@@ -553,6 +581,7 @@ export function EventProposalReviewPage() {
         </div>
 
         <aside className="min-w-0 space-y-6 xl:sticky xl:top-24">
+          {/* Yêu cầu hủy sự kiện có form xét duyệt riêng dành cho ICPDP được phân công. */}
           {cancellationRequest && (
             <section className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -623,6 +652,7 @@ export function EventProposalReviewPage() {
               )}
             </section>
           )}
+          {/* Chỉ mở khung quyết định cho người phụ trách; trường hợp khác hiển thị nút nhận hoặc trạng thái phân công. */}
           {(isOpen || isPendingCancellation) && !mine ? (
             <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
               <p className="text-sm text-muted-app">{task.assigneeId ? t("eventReviews.claimedByOther") : t("eventReviews.claimHint")}</p>
@@ -637,12 +667,14 @@ export function EventProposalReviewPage() {
             />
           ) : null}
 
+          {/* Hiển thị các điều kiện đã được phê duyệt bên cạnh lịch sử quyết định. */}
           {event.approvalConditions.length > 0 && <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.conditions")}</h2>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">{event.approvalConditions.map((item, index) => <li key={index} className="break-words">{item}</li>)}</ul>
           </section>}
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            {/* Quyết định mới nhất hiển thị trước, kèm các mục yêu cầu sửa và lý do đã ghi nhận. */}
             <h2 className="font-heading text-base font-semibold">{t("eventReviews.decisions")}</h2>
             {decisions.length ? <ol className="mt-4 space-y-4">{[...decisions].reverse().map((decision) =>
               <li key={decision.id} className="border-l-2 border-brand-app pl-3">
@@ -657,6 +689,7 @@ export function EventProposalReviewPage() {
         </aside>
       </div>
 
+      {/* Chỉ tạo hộp thoại lịch khi mở; đổi lịch loại buổi hiện tại khỏi phép kiểm tra trùng lịch. */}
       {scheduleDialogMode !== null && (
         <ScheduleDefenseDialog
           open
@@ -669,6 +702,7 @@ export function EventProposalReviewPage() {
         />
       )}
 
+      {/* Dùng chung hộp thoại nhập lý do cho hủy bảo vệ, từ chối đổi lịch và ghi nhận vắng mặt. */}
       <AppDialog
         open={reasonModalKind !== null}
         title={reasonModalKind === "cancel"

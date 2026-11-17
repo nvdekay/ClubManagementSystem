@@ -1,3 +1,7 @@
+/**
+ * Review application boundary: officer authorization and decision validation.
+ * HTTP parsing lives in event-proposal-review-routes; repositories commit state changes.
+ */
 import type { AuthRepository } from "../domain/auth.js";
 import { DomainError } from "../domain/errors.js";
 import {
@@ -10,7 +14,7 @@ import type { AccessActor } from "./access.js";
 const objectId = /^[0-9a-f]{24}$/i;
 const sections = new Set<string>(EVENT_REVIEW_SECTIONS);
 
-// Kiểm actor là ICPDP officer và trả id
+/** Require an authenticated, unlocked ICPDP officer and return the acting account ID. */
 export async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -23,18 +27,18 @@ export async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, act
   return actor.id;
 }
 
-// Kiểm định dạng id sự kiện
+// Reject malformed proposal IDs before repository access.
 function eventId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid event id", "validation");
   return value;
 }
 
-// Cắt khoảng trắng, chuỗi rỗng trả undefined
+// Treat whitespace-only optional comments as absent.
 function trimmed(value: string | undefined): string | undefined {
   return value?.trim() || undefined;
 }
 
-// Chuẩn hóa và kiểm quyết định xét duyệt đề án (lý do, mục cần sửa, điều kiện, ngân sách)
+/** Normalize review text and enforce which fields are valid for each decision outcome. */
 export function normalizedEventDecision(input: EventReviewDecisionInput, now: Date): NormalizedEventDecision {
   const reason = trimmed(input.reason);
   const reviewNote = trimmed(input.reviewNote);
@@ -55,6 +59,7 @@ export function normalizedEventDecision(input: EventReviewDecisionInput, now: Da
   if (chosen.some((section) => !sections.has(section))) {
     throw new DomainError("invalid review section", "validation", { field: "sections" });
   }
+  // A revision request must tell the club both what to fix and when to resubmit.
   if (input.outcome === "Request revision") {
     if (!chosen.length) throw new DomainError("revision sections are required", "validation", { field: "sections" });
     if (!input.revisionDeadlineAt || input.revisionDeadlineAt <= now) {
@@ -75,14 +80,14 @@ export function normalizedEventDecision(input: EventReviewDecisionInput, now: Da
   };
 }
 
-// ICPDP xem các đề án sự kiện đang chờ xét duyệt
+/** Authorize officer access before listing open proposal reviews. */
 export async function listEventProposalReviews(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.listOpen();
 }
 
-// ICPDP xem chi tiết một đề án sự kiện
+/** Return the review dossier, including submitted versions and decision history. */
 export async function getEventProposalReview(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string, now: Date) {
   await officer(auth, actor);
@@ -91,13 +96,13 @@ export async function getEventProposalReview(repo: EventProposalReviewRepository
   return detail;
 }
 
-// ICPDP officer nhận xử lý một đề án sự kiện
+/** Delegate assignment to the repository so competing claims are resolved atomically. */
 export async function claimEventProposalReview(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string, now: Date) {
   return repo.claim(eventId(id), await officer(auth, actor), now);
 }
 
-// ICPDP ghi quyết định duyệt, yêu cầu sửa hoặc từ chối đề án sự kiện
+/** Validate the decision against submitted evidence before the repository commits it. */
 export async function decideEventProposalReview(repo: EventProposalReviewRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
   input: EventReviewDecisionInput, now: Date) {
@@ -108,7 +113,7 @@ export async function decideEventProposalReview(repo: EventProposalReviewReposit
   if (decision.outcome === "Approve") {
     const current = detail.versions.find((version) => version.revisionNo === detail.event.currentRevisionNo)
       ?? detail.versions.at(-1);
-    // Fail fast với lỗi ở mức trường; repository kiểm tra lại bên trong transaction của nó.
+    // Return field-level budget errors early; the repository rechecks inside its transaction.
     approvedBudget(current?.budgetLines ?? [], decision.budgetLines);
   }
   return repo.decide(detail.event.id, officerId, decision, now);

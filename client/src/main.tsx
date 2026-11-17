@@ -119,7 +119,6 @@ createRoot(document.getElementById("root")!).render(
               <Route path="club/:clubId/events" element={<ClubEventsPage />} />
               <Route path="club/:clubId/events/new" element={<ClubEventProposalPage />} />
               <Route path="club/:clubId/events/:eventId/edit" element={<ClubEventProposalPage />} />
-              <Route path="club/:clubId/events/internal/new" element={<InternalClubEventPage />} />
               <Route path="club/:clubId/events/:eventId/internal-edit" element={<InternalClubEventPage />} />
               <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
               <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />

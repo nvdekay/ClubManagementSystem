@@ -159,3 +159,14 @@ export function accessEventProposalDocument(clubId: string, id: string, revision
   const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });
   return request(clubId, `/${encodeURIComponent(id)}/proposal-document/access?${query}`, {});
 }
+
+// Retrieve the original saved document for the isolated full-document viewer.
+export async function fetchEventProposalPreviewFile(clubId: string, id: string, signal: AbortSignal): Promise<File> {
+  const access = await accessEventProposalDocument(clubId, id);
+  const response = await fetch(access.url, { signal, credentials: "omit" });
+  if (!response.ok) throw new ApiError(`HTTP ${response.status}`);
+  if (Number(response.headers.get("content-length")) > 10 * 1024 * 1024) throw new ApiError("Document too large");
+  const blob = await response.blob();
+  if (blob.size > 10 * 1024 * 1024) throw new ApiError("Document too large");
+  return new File([blob], access.fileName, { type: access.mimeType });
+}

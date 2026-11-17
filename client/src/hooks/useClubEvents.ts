@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchEventProposalPreviewFile } from "@/services/clubEvents";
 import { accessEventProposalDocument, actOnClubEvent, confirmInternalClubEvent, fetchEventProposalTemplate, uploadEventProposalDocument, createInternalClubEvent, fetchClubEventOptions, createClubEvent, fetchClubEvent, fetchClubEventFeedback, fetchClubEvents, fetchEventParticipants, updateInternalClubEvent,
   type ClubEventInput, type EventPublishInput, type InternalClubEventInput, type InternalCreateMode } from "@/services/clubEvents";
 export const clubEventsKeyRoot = ["club-events"] as const;
@@ -54,4 +55,10 @@ export function useEventProposalTemplate(enabled: boolean) {
 export function useEventProposalDocumentAccess(clubId: string) {
   return useMutation({ mutationFn: (input: { id: string; revisionNo?: number; inline?: boolean }) =>
     accessEventProposalDocument(clubId, input.id, input.revisionNo, input.inline) });
+}
+
+export function useEventProposalPreview(clubId: string, id: string, documentId: string, enabled: boolean) {
+  return useQuery({ queryKey: [...clubEventsKeyRoot, clubId, "document-preview", id, documentId],
+    queryFn: ({ signal }) => fetchEventProposalPreviewFile(clubId, id, signal), enabled,
+    retry: false, staleTime: 5 * 60_000 });
 }

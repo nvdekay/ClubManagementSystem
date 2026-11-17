@@ -56,6 +56,12 @@ body {
 /* Design tokens — the ONLY place color values (hex/named) are allowed.
    Naming: --color-<name>-app generates the `<name>-app` Tailwind color
    (e.g. bg-danger-app, text-danger-app, border-danger-app). */
+@theme static {
+  --color-document-paper-app: #ffffff;
+  --color-document-ink-app: #111111;
+  --color-document-shadow-app: #00000024;
+}
+
 @theme {
   /* Be Vietnam Pro: designed for Vietnamese diacritics, friendly and modern for a young audience. */
   --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

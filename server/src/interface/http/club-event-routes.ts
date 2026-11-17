@@ -130,10 +130,11 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   router.get(`${base}/:id/participants`, authGuard(guard, false), async (req, res) => {
     ok(res, await clubEventParticipants(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id), new Date()));
   });
-  // Tạo sự kiện của CLB
+  // Proposal creation: validate HTTP input and create a draft; submit is a separate action.
   router.post(base, authGuard(guard), async (req, res) => {
     ok(res, await createClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), input(parse(clubEventBody, req.body)), new Date()), 201);
   });
+  // Save/submit carry expectedVersion so the repository can reject stale draft writes.
   const actions: { path: string; parse: (raw: unknown) => ClubEventAction }[] = [
     { path: "save", parse: (raw) => { const { expectedVersion, ...body } = parse(clubEventSaveBody, raw); return { kind: "save", input: input(body), expectedVersion }; } },
     { path: "submit", parse: (raw) => ({ kind: "submit", ...parse(clubEventVersionBody, raw) }) },
@@ -169,35 +170,35 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
     ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       { kind: "create-internal", ...parse(clubEventVersionBody, req.body) }, new Date()));
   });
-  // Lấy thông tin mẫu hồ sơ đề xuất sự kiện
+  // Proposal document endpoints: template metadata/download, evidence upload, and access URLs.
   router.get("/events/proposal-template", authGuard(guard, false), async (_req, res) => {
     ok(res, await eventProposalTemplateInfo(usecases, actor(res)));
   });
-  // Tải về mẫu hồ sơ đề xuất sự kiện
+  // The use case chooses between bundled template content and an uploaded template redirect.
   router.get("/events/proposal-template/download", authGuard(guard, false), async (_req, res) => {
     const result = await downloadEventProposalTemplate(usecases, actor(res));
     if (result.kind === "redirect") return res.redirect(302, result.url);
     res.setHeader("Content-Disposition", attachmentHeader(result.fileName));
     res.type(result.mimeType).send(result.content);
   });
-  // Tải lên tài liệu đề xuất của sự kiện
+  // Parse a raw file body under the upload size limit; the use case validates the file/state.
   router.post(`${base}/:id/proposal-document`, authGuard(guard), upload, async (req, res) => {
     const file = uploadedFile(req);
     ok(res, await uploadEventProposalDocument(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       file.fileName, file.mimeType, file.bytes, new Date()));
   });
-  // Lấy quyền truy cập tạm thời để mở tài liệu đề xuất của sự kiện
+  // Club access defaults to the editable draft unless a submitted revision is requested.
   router.get(`${base}/:id/proposal-document/access`, authGuard(guard, false), async (req, res) => {
     const query = documentQuery(req.query);
     ok(res, await clubEventProposalDocumentAccess(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       query.revisionNo, query.inline, new Date()));
   });
-  // ICPDP tải lên mẫu hồ sơ đề xuất sự kiện mới
+  // Template replacement is CSRF-protected and restricted to officers by the use case.
   router.post("/admin/event-proposals/template", authGuard(guard), upload, async (req, res) => {
     const file = uploadedFile(req);
     ok(res, await uploadEventProposalTemplate(usecases, actor(res), file.fileName, file.mimeType, file.bytes, new Date()), 201);
   });
-  // ICPDP lấy quyền truy cập tài liệu đề xuất để duyệt
+  // Officer access defaults to the latest submitted revision, preserving review evidence.
   router.get("/admin/event-proposals/:id/document/access", authGuard(guard, false), async (req, res) => {
     const query = documentQuery(req.query);
     ok(res, await reviewEventProposalDocumentAccess(usecases, actor(res), parse(eventObjectId, req.params.id), query.revisionNo, query.inline));
