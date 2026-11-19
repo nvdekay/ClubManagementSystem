@@ -6,7 +6,7 @@ import type { DashboardRepository } from "../../domain/dashboard.js";
 import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import {
-  getClubBoardHistory, getDashboard, getInternalEvent, listInternalEvents, type DashboardContext,
+  getClubBoardHistory, getDashboard, type DashboardContext,
 } from "../../usecase/dashboard.js";
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
@@ -27,10 +27,7 @@ export const dashboardQuery = z.discriminatedUnion("workspace", [
   }).strict(),
 ]);
 
-export const internalEventQuery = z.object({
-  clubId: z.string().regex(/^[0-9a-f]{24}$/i).optional(),
-  semesterCode: z.string().trim().min(1).max(40).optional(),
-}).strict();
+
 
 // Lấy người dùng đã xác thực từ res.locals
 function actor(res: Response): AuthUser {
@@ -55,18 +52,6 @@ export function dashboardRoutes(deps: DashboardRouteDeps): Router {
   });
   // Liệt kê sự kiện nội bộ trên dashboard
   // Drill-down UC02: ICPDP mở một con số trên dashboard thành các bản ghi phía sau nó (FR-UC02-02/03).
-  router.get("/dashboard/internal-events", authGuard(guard, false), async (req, res) => {
-    const query = internalEventQuery.safeParse(req.query);
-    if (!query.success) throw new DomainError("invalid internal event filter", "validation", query.error.issues);
-    ok(res, await listInternalEvents(deps.repo, deps.authRepo, actor(res), {
-      ...(query.data.clubId ? { clubId: query.data.clubId } : {}),
-      ...(query.data.semesterCode ? { semesterCode: query.data.semesterCode } : {}),
-    }));
-  });
-  // Xem chi tiết một sự kiện nội bộ
-  router.get("/dashboard/internal-events/:id", authGuard(guard, false), async (req, res) => {
-    ok(res, await getInternalEvent(deps.repo, deps.authRepo, actor(res), String(req.params.id)));
-  });
   // Xem lịch sử ban chủ nhiệm của một CLB
   router.get("/dashboard/clubs/:clubId/board-history", authGuard(guard, false), async (req, res) => {
     ok(res, await getClubBoardHistory(deps.repo, deps.authRepo, deps.accessRepo, actor(res), String(req.params.clubId)));

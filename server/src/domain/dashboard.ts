@@ -16,7 +16,7 @@ export const ICPDP_DASHBOARD_PANELS = [
   "pendingClubApplications", "pendingEventProposals", "pendingReports", "approvalTasks",
   "overdueApprovals", "activeClubs", "suspendedClubs", "overdueReports",
   "unreconciledBudgets", "overdueSettlements", "overdueRefunds", "openViolations",
-  "upcomingBookings", "internalEvents", "roleStructures", "boardHistory",
+  "upcomingBookings", "roleStructures", "boardHistory",
 ] as const;
 
 export type DashboardKind = "student" | "club" | "icpdp";
@@ -39,7 +39,7 @@ export interface DashboardQueue { entityType: string; onTime: number; overdue: n
 /** `month` là tháng dương lịch theo giờ Việt Nam, dạng `YYYY-MM`. */
 export interface DashboardMonthCount { month: string; count: number }
 /** `count = publicCount + internalCount`; internal nghĩa là `MEMBERS_ONLY`. */
-export interface DashboardMonthEventCount extends DashboardMonthCount { publicCount: number; internalCount: number }
+export type DashboardMonthEventCount = DashboardMonthCount;
 
 export interface IcpdpDashboardCharts {
   queues: DashboardQueue[];
@@ -78,36 +78,6 @@ export const RECORDED_EVENT_STATES = [
 ] as const;
 
 /** UC02 drill-down (FR-UC02-02): sự kiện `MEMBERS_ONLY` đã ghi nhận của bất kỳ CLB nào, ICPDP chỉ được xem. */
-export interface InternalEventSummary {
-  id: string;
-  clubId: string;
-  clubName: string;
-  title: string;
-  startAt: Date;
-  endAt: Date;
-  semesterCode: string;
-  state: string;
-  venueText?: string;
-  capacity: number;
-  registrations: number;
-  attendances: number;
-}
-
-export interface InternalEventFilter { clubId?: string; semesterCode?: string }
-
-export interface InternalEventList {
-  items: InternalEventSummary[];
-  /** Tuỳ chọn bộ lọc: mọi CLB và học kỳ có sự kiện nội bộ đã ghi nhận. */
-  clubs: { id: string; name: string }[];
-  semesters: string[];
-}
-
-export interface InternalEventDetail extends InternalEventSummary {
-  objective?: string;
-  attendance: { studentName: string; email: string; checkedInAt: Date; method: string; finalized: boolean }[];
-}
-
-/** Lần xác nhận nào đặt một ghế ban điều hành: UC08 thành lập, UC11 đề cử hoặc UC13 chuyển giao. */
 export type BoardSeatSource = "APPLICATION" | "NOMINATION" | "TRANSITION";
 
 /** BR56: các phiên bản cơ cấu vai trò và ban điều hành của mọi nhiệm kỳ, mới nhất trước. */
@@ -142,7 +112,5 @@ export interface DashboardRepository {
   student(userId: string, now: Date): Promise<DashboardSnapshot>;
   club(clubId: string, permissions: readonly ClubPermission[], now: Date): Promise<DashboardSnapshot>;
   icpdp(now: Date): Promise<DashboardSnapshot>;
-  internalEvents(filter: InternalEventFilter): Promise<InternalEventList>;
-  internalEvent(eventId: string): Promise<InternalEventDetail | null>;
   boardHistory(clubId: string): Promise<ClubBoardHistory | null>;
 }

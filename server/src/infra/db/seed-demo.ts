@@ -859,17 +859,10 @@ try {
     const examples = [
       { title: "Wave 3 demo: Workshop proposal", scope: "PUBLIC" as const, submit: false },
       { title: "Wave 3 demo: Public workshop", scope: "PUBLIC" as const, submit: true },
-      { title: "Wave 3 demo: Internal practice", scope: "MEMBERS_ONLY" as const, submit: true },
     ];
     for (const example of examples) {
       if (await ucmsModels.events!.exists({ clubId: club("HEBE").id, title: example.title })) continue;
-      if (example.scope === "MEMBERS_ONLY") {
-        // Sự kiện tự tài trợ chỉ dành cho thành viên dùng flow nội bộ: tạo và publish trong một bước.
-        await wave3.createInternal(hebe, { title: example.title, objective: "Practice event management", plan: "Welcome participants, run the activity, and collect feedback.",
-          startAt: demoStart, endAt: demoEnd, venueText: "Campus activity space", capacity: 30, riskCategory: "LOW", bookingIds: [] }, "publish",
-        { registrationOpenAt: now, registrationCloseAt: demoStart, checkInOpenAt: demoStart, checkInCloseAt: demoEnd, allowWalkIn: true, waitlistEnabled: true }, String(owner), now);
-        continue;
-      }
+
       const input: ClubEventInput = { title: example.title, objective: "Practice event management", plan: "Welcome participants, run the activity, and collect feedback.",
         startAt: demoStart, endAt: demoEnd, venueText: "Campus activity space", audienceScope: example.scope, capacity: 30, riskCategory: "LOW", bookingIds: [],
         registrationForm: [{ key: "expectations", label: "What do you expect from this event?", type: "textarea", required: false }],

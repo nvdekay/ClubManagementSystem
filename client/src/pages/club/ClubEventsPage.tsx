@@ -26,7 +26,7 @@ import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { cn } from "@/utils/cn";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { ClubEventErrorMessage } from "@/pages/club/ClubEventErrorMessage";
-import { iso, isInternalState, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
+import { iso, localTime, numberError, sectionLabel, stateLabel, stateTones, type DecisionComments } from "@/pages/club/clubEventFormat";
 
 const eventsEmpty: ClubEvent[] = [];
 const tabClass = "inline-flex min-h-9 items-center rounded-md px-3 text-sm font-medium text-muted-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
@@ -58,7 +58,6 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const mutation = useClubEventMutation(clubId);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"" | "MEMBERS_ONLY" | "PUBLIC">("");
   const selected = searchParams.get("event") ?? searchParams.get("selected") ?? "";
   const setSelected = useCallback((id: string) => setSearchParams((previous) => {
     const next = new URLSearchParams(previous);
@@ -84,7 +83,6 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const [noRegistration, setNoRegistration] = useState(false);
   const [walkIn, setWalkIn] = useState(false);
   const [waitlist, setWaitlist] = useState(true);
-  const [notifyMembers, setNotifyMembers] = useState(true);
   const [registrationOpen, setRegistrationOpen] = useState("");
   const [registrationClose, setRegistrationClose] = useState("");
   const [checkOpen, setCheckOpen] = useState("");
@@ -109,10 +107,9 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
   const revisionRequest = [...(detail.data?.decisions ?? [])].reverse().find((d) => d.outcome === "Request revision");
   const revisionSections = active?.state === "Revision Requested" ? (revisionRequest?.comments as DecisionComments | undefined)?.sections ?? [] : [];
   const format = useMemo(() => new Intl.DateTimeFormat(i18n.language === "vi" ? "vi-VN" : "en-GB", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }), [i18n.language]);
-  const filtered = useMemo(() => rows.filter((e) => (!filter || e.state === filter) && (!typeFilter || e.audienceScope === typeFilter) && e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())), [rows, filter, typeFilter, search]);
+  const filtered = useMemo(() => rows.filter((e) => (!filter || e.state === filter) && e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase())), [rows, filter, search]);
   const columns = useMemo(() => eventColumns.columns([
     eventColumns.accessor("title", { header: t("clubEvents.titleField"), cell: (info) => <button type="button" className="text-left font-medium text-text-app hover:text-primary-app" onClick={() => { setSelected(info.row.original.id); mutation.reset(); setSuccess(false); revealDetail(); }}>{info.getValue()}</button> }),
-    eventColumns.accessor("audienceScope", { header: t("clubEvents.eventTypeColumn"), cell: (info) => <AppBadge tone={info.getValue() === "MEMBERS_ONLY" ? "info" : "neutral"}>{t(info.getValue() === "MEMBERS_ONLY" ? "clubEvents.eventTypeInternal" : "clubEvents.eventTypePublic")}</AppBadge> }),
     eventColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <span className="inline-flex flex-wrap items-center gap-1.5"><AppBadge tone={stateTones[info.getValue()] ?? "neutral"}>{stateLabel(t, info.getValue())}</AppBadge>{info.row.original.cancellationRequest?.state === "Pending" && <AppBadge tone="warning">{t("clubEvents.requestCancel")}</AppBadge>}</span> }),
     eventColumns.accessor("startAt", { header: t("clubEvents.startTime"), cell: (info) => format.format(new Date(info.getValue())) }),
     eventColumns.accessor("capacity", { header: t("clubEvents.maxParticipants"), cell: (info) => `${info.row.original.confirmedRegistrationCount} / ${info.getValue()}` }),
@@ -138,29 +135,21 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     try { await mutation.mutateAsync({ kind: "action", id: selected, action, body, csrfToken: auth.data.csrfToken }); setSuccess(true); setOperation(null); }
     catch (error) { setFormError(error); }
   }, [auth.data, selected, mutation, setSuccess, setFormError, setOperation]);
-  const internal = Boolean(active && isInternalState(active.state));
   // Mở tài liệu đề xuất sự kiện (tải về hoặc xem) qua URL có chữ ký
   async function downloadDocument(id: string, revisionNo?: number, inline = false) {
     try { window.open((await documentAccess.mutateAsync({ id, revisionNo, inline })).url, "_blank", "noopener,noreferrer"); }
     catch { /* Lỗi của mutation được hiển thị cạnh tệp. */ }
   }
   // Xác nhận sự kiện nội bộ chuyển từ DRAFT sang CREATED, yêu cầu báo trước 24 giờ
-  async function confirmInternal() {
-    if (!auth.data || !active) return;
-    setSuccess(false); setFormError(null);
-    // Cùng quy tắc báo trước 24 giờ mà server áp cho DRAFT → CREATED; giúp tiết kiệm một lượt gọi server.
-    if (Date.parse(active.startAt) - Date.now() < 24 * 3600_000) { setFormError(new Error("internal event must start at least 24 hours from now")); return; }
-    try { await mutation.mutateAsync({ kind: "internal-confirm", id: active.id, expectedVersion: active.version, csrfToken: auth.data.csrfToken }); setSuccess(true); }
-    catch (error) { setFormError(error); }
-  }
+
   // Mở form thao tác (publish, hủy, dời lịch, check-in...) và nạp giá trị mặc định
   const openOperation = useCallback(function openOperation(kind: NonNullable<typeof operation>, participant: EventParticipant | null = null) {
     if (!active) return;
     mutation.reset(); setFormError(null); setSuccess(false); setOperation(kind); setReason(""); setTarget(participant); setCorrected(""); setAbsent(participant?.abnormalFlags.includes("no-show") ?? false);
     setCapacity(active.capacity); setNewStart(localTime(active.startAt)); setNewEnd(localTime(active.endAt)); setVenue(active.venueText ?? ""); setProperty(active.propertyId ?? "");
     setRegistrationOpen(localTime(new Date().toISOString())); setRegistrationClose(localTime(active.startAt)); setCheckOpen(localTime(active.checkInOpenAt ?? active.startAt)); setCheckClose(localTime(active.checkInCloseAt ?? active.endAt));
-    setWalkIn(active.allowWalkIn); setWaitlist(active.waitlistEnabled); setNoRegistration(false); setNotifyMembers(true); setStudentId(participant?.studentId ?? "");
-  }, [active, mutation, setOperation, setFormError, setSuccess, setReason, setTarget, setCorrected, setAbsent, setCapacity, setNewStart, setNewEnd, setVenue, setProperty, setRegistrationOpen, setRegistrationClose, setCheckOpen, setCheckClose, setWalkIn, setWaitlist, setNoRegistration, setNotifyMembers, setStudentId]);
+    setWalkIn(active.allowWalkIn); setWaitlist(active.waitlistEnabled); setNoRegistration(false); setStudentId(participant?.studentId ?? "");
+  }, [active, mutation, setOperation, setFormError, setSuccess, setReason, setTarget, setCorrected, setAbsent, setCapacity, setNewStart, setNewEnd, setVenue, setProperty, setRegistrationOpen, setRegistrationClose, setCheckOpen, setCheckClose, setWalkIn, setWaitlist, setNoRegistration, setStudentId]);
   const pcolumns = useMemo(() => participantColumns.columns([
     participantColumns.accessor("name", { header: t("clubEvents.name"), cell: (info) => <span className="block min-w-40 font-medium break-words">{info.getValue()}<span className="block text-xs font-normal whitespace-nowrap text-muted-app">{info.row.original.email}</span></span> }),
     participantColumns.accessor("state", { header: t("clubEvents.state"), cell: (info) => <span>{info.getValue() ? t(`clubEvents.${info.getValue()}`, { defaultValue: info.getValue() ?? "" }) : "—"}{info.row.original.waitlistPosition ? ` #${info.row.original.waitlistPosition}` : ""}</span> }),
@@ -187,7 +176,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       const version = { expectedVersion: active.version };
       if (operation === "publish") await runAction("publish", { ...version, ...(!noRegistration ? { registrationOpenAt: iso(registrationOpen), registrationCloseAt: iso(registrationClose) } : {}),
         checkInOpenAt: iso(checkOpen), checkInCloseAt: iso(checkClose), allowWalkIn: noRegistration || walkIn, waitlistEnabled: !noRegistration && waitlist,
-        ...(internal ? { notifyMembers } : {}) });
+        });
       else if (operation === "reschedule") await runAction("reschedule", { ...version, reason, startAt: iso(newStart), endAt: iso(newEnd), venueText: venue, ...(property ? { propertyId: property } : {}) });
       else if (operation === "cancel") await runAction("cancel", { ...version, reason });
       else if (operation === "capacity") await runAction("capacity", { capacity });
@@ -226,7 +215,6 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
     {success && <p role="status" className="mb-3 text-success-app">{t("clubEvents.success")}</p>}
     {mode !== "feedback" && <>
       <div className="mb-4 flex flex-wrap items-center gap-3"><AppInput aria-label={t("clubEvents.search")} placeholder={t("clubEvents.search")} value={search} onChange={(e) => { setSearch(e.target.value); table.setPageIndex(0); }} />
-        <AppSelect label={t("clubEvents.eventTypeColumn")} value={typeFilter} onChange={(v) => { setTypeFilter(v as typeof typeFilter); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.eventTypeAll") }, { value: "MEMBERS_ONLY", label: t("clubEvents.eventTypeInternal") }, { value: "PUBLIC", label: t("clubEvents.eventTypePublic") }]} />
         <AppSelect label={t("clubEvents.state")} value={filter} onChange={(v) => { setFilter(v); table.setPageIndex(0); }} options={[{ value: "", label: t("clubEvents.all") }, ...[...new Set(rows.map((e) => e.state))].map((s) => ({ value: s, label: stateLabel(t, s) }))]} />
         {mode === "events" &&
           <Link
@@ -246,8 +234,8 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
       {detail.isPending ? <AppSkeleton className="h-48" /> : detail.data && active && <>
         <h2 className="mb-2 font-heading text-base font-semibold break-words">{active.title}</h2><p className="flex flex-wrap items-center gap-2 text-sm text-muted-app"><AppBadge tone={stateTones[active.state] ?? "neutral"}>{stateLabel(t, active.state)}</AppBadge> {format.format(new Date(active.startAt))} – {format.format(new Date(active.endAt))}</p>
         <p className="mt-2 break-words">{active.objective}</p><p className="mt-2 whitespace-pre-wrap break-words">{active.plan}</p>
-        <p className="mt-2">{t("clubEvents.venue")}: {active.venueText || (options.data?.properties.find((p) => p.id === active.propertyId)?.name ?? "—")} · {internal ? t("clubEvents.internalBadge") : t(`clubEvents.${active.audienceScope}`)}</p>
-        {!internal && <div className="mt-3 flex flex-wrap items-center gap-2">
+        <p className="mt-2">{t("clubEvents.venue")}: {active.venueText || (options.data?.properties.find((p) => p.id === active.propertyId)?.name ?? "—")} · {t("clubEvents.PUBLIC")}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="font-medium">{t("clubEvents.proposalDocumentSection")}:</span>
           {active.proposalDocument ? <>
             <span className="min-w-0 break-words">{active.proposalDocument.fileName} · {formatBytes(active.proposalDocument.bytes)}</span>
@@ -255,7 +243,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
               <AppIcon name="download" className="size-4" />{t("clubEvents.proposalDocumentDownload")}</AppButton>
           </> : <span className="text-muted-app">{t("clubEvents.proposalDocumentNone")}</span>}
           {documentAccess.isError && <ClubEventErrorMessage error={documentAccess.error} />}
-        </div>}
+        </div>
         {active.state === "Revision Requested" && revisionRequest ? <div role="status" className="mt-4 rounded-xl border-l-4 border-warning-app bg-warning-app/10 px-4 py-3 text-sm">
           <p className="font-semibold">{t("clubEvents.revisionTitle")}</p>
           {revisionSections.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-2"><span>{t("clubEvents.revisionSections")}:</span>
@@ -367,16 +355,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
                     <AppButton disabled={mutation.isPending} onClick={() => void runAction("submit", { expectedVersion: active.version })}>{t("clubEvents.submit")}</AppButton>
                   </>
                 )}
-                {["DRAFT", "CREATED"].includes(active.state) && (
-                  <Link
-                    to={`/club/${encodeURIComponent(clubId)}/events/${encodeURIComponent(active.id)}/internal-edit`}
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg bg-primary-app px-3.5 font-heading text-sm font-medium text-on-primary-app shadow-xs transition-[opacity,scale] duration-200 hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring-app focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app focus-visible:outline-none sm:min-h-9"
-                  >
-                    {t("clubEvents.editInternal")}
-                  </Link>
-                )}
-                {active.state === "DRAFT" && <AppButton disabled={mutation.isPending} onClick={() => void confirmInternal()}>{t("clubEvents.createInternalAction")}</AppButton>}
-                {!cancellationPending && ["Approved", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("publish")}>{t(internal ? "clubEvents.publishMembers" : "clubEvents.publish")}</AppButton>}
+                {!cancellationPending && ["Approved"].includes(active.state) && <AppButton onClick={() => openOperation("publish")}>{t("clubEvents.publish")}</AppButton>}
                 {/* Sự kiện nội bộ đã công khai (PUBLIC, ONGOING) giữ nguyên lịch: chỉ được huỷ. */}
                 {!cancellationPending && ["Approved", "Upcoming", "CREATED"].includes(active.state) && <AppButton onClick={() => openOperation("reschedule")}>{t("clubEvents.reschedule")}</AppButton>}
                 {!cancellationPending && ["Approved", "Upcoming", "Ongoing", "DRAFT", "CREATED", "PUBLIC", "ONGOING"].includes(active.state) && !active.attendanceFinalized && (
@@ -392,7 +371,6 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           );
         })()}
         {active.checkInCode && <p>{t("clubEvents.code")}: <strong>{active.checkInCode}</strong></p>}
-        {!internal && <>
         <h3 className="mt-5 text-sm font-semibold">{t("clubEvents.versions")}</h3>
         {detail.data.versions.map((v) => {
           const vp = v.payload ?? {};
@@ -407,14 +385,12 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           const vEnd = vp.endAt ?? active.endAt;
           const vVenue = [resolveRoomName(vp.propertyId), vp.venueText].filter(Boolean).join(" · ") || "—";
           const vScope = vp.audienceScope ?? active.audienceScope;
-          const vRisk = vp.riskCategory ?? active.riskCategory;
           const vOccurrences = Array.isArray(vp.occurrences) ? vp.occurrences : [];
           const vForm = Array.isArray(vp.registrationForm) ? vp.registrationForm : [];
           const vDoc = vp.proposalDocument;
           const vBudgetTotal = v.requestedBudgetTotal ?? v.budgetLines.reduce((sum, line) => sum + line.amount, 0);
           const vSubmitter = v.submittedByName ?? v.submittedBy;
           const vConflictTone = v.conflictResult === "Blocking Conflict" ? "danger" : v.conflictResult === "Warning" ? "warning" : "success";
-          const vRiskTone = vRisk === "HIGH" ? "danger" : vRisk === "MEDIUM" ? "warning" : "success";
           return (
             <details key={v.revisionNo} className="mt-2 rounded-xl border border-border-app bg-surface-app/40 p-4">
               <summary className="font-medium">
@@ -451,10 +427,7 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
                     <dt className="text-xs text-muted-app">{t("clubEvents.maxParticipants")}</dt>
                     <dd className="mt-0.5 font-medium">{vp.capacity ?? active.capacity}</dd>
                   </div>
-                  <div>
-                    <dt className="text-xs text-muted-app">{t("clubEvents.risk")}</dt>
-                    <dd className="mt-0.5"><AppBadge tone={vRiskTone}>{t(`clubEvents.${vRisk}`)}</AppBadge></dd>
-                  </div>
+
                 </dl>
 
                 {(vp.objective ?? active.objective) && (
@@ -579,7 +552,6 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
         {detail.data.decisions.map((d, index) => <div key={index} className="mt-2"><p>{d.outcome === "Re-defense" ? t("eventDefense.outcomeReDefense") : t(`eventReviews.${d.outcome === "Approve" ? "approve" : d.outcome === "Reject" ? "reject" : "requestRevision"}`)} · {format.format(new Date(d.at))}{d.reason ? ` · ${d.reason}` : ""}</p>
           {((d.comments as DecisionComments | undefined)?.sections ?? []).length > 0 && <div className="mt-1 flex flex-wrap gap-2">{(d.comments as DecisionComments).sections!.map((section) =>
             <AppBadge key={section} tone="warning">{sectionLabel(t, section)}</AppBadge>)}</div>}</div>)}
-        </>}
       </>}
     </section>}
     {mode === "attendance" && active && <section id="club-event-detail" className="mt-6 scroll-mt-24 space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs">
@@ -630,9 +602,6 @@ export function ClubEventsPage({ mode = "events" }: { mode?: "events" | "attenda
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration} onChange={(e) => setNoRegistration(e.target.checked)} />{t("clubEvents.noRegistration")}</label>
           {!noRegistration && <><Field label={t("clubEvents.registrationOpen")} required error={opField.error("registrationOpen")}><AppInput {...opField.control("registrationOpen")} type="datetime-local" value={registrationOpen} onChange={(e) => setRegistrationOpen(e.target.value)} /></Field><Field label={t("clubEvents.registrationClose")} required error={opField.error("registrationClose")}><AppInput {...opField.control("registrationClose")} type="datetime-local" value={registrationClose} onChange={(e) => setRegistrationClose(e.target.value)} /></Field></>}
           <Field label={t("clubEvents.checkInOpen")} required error={opField.error("checkOpen")}><AppInput {...opField.control("checkOpen")} type="datetime-local" value={checkOpen} onChange={(e) => setCheckOpen(e.target.value)} /></Field><Field label={t("clubEvents.checkInClose")} required error={opField.error("checkClose")}><AppInput {...opField.control("checkClose")} type="datetime-local" value={checkClose} onChange={(e) => setCheckClose(e.target.value)} /></Field>
-          {internal && <AppSelect label={t("clubEvents.notifyMembersLabel")} value={notifyMembers ? "yes" : "no"}
-            onChange={(value) => setNotifyMembers(value === "yes")}
-            options={[{ value: "yes", label: t("clubEvents.notifyMembersYes") }, { value: "no", label: t("clubEvents.notifyMembersNo") }]} />}
           <label className="flex items-center gap-2"><input type="checkbox" checked={noRegistration || walkIn} disabled={noRegistration} onChange={(e) => setWalkIn(e.target.checked)} />{t("clubEvents.walkIn")}</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={waitlist} onChange={(e) => setWaitlist(e.target.checked)} />{t("clubEvents.waitlist")}</label>
         </>}

@@ -47,7 +47,6 @@ export function EventProposalPreview({ input, extracted, file, missing }: EventP
     { key: "venue", value: input.venueText || empty, links: links(input.venueText || "", "địa điểm") },
     { key: "audience", value: raw("đối tượng") || (absent.includes("audience") ? empty : t(`clubEvents.${input.audienceScope}`)), links: links(raw("đối tượng"), "đối tượng") },
     { key: "capacity", value: input.capacity > 0 ? String(input.capacity) : raw("số lượng") || empty, links: input.capacity > 0 ? undefined : links(raw("số lượng"), "số lượng") },
-    { key: "risk", value: absent.includes("risk") ? empty : t(`clubEvents.${input.riskCategory}`) },
   ] as const;
   const narrative = fields.filter((field) => !["tên sự kiện", "địa điểm", "đối tượng", "số lượng", "mức độ rủi ro", "mức rủi ro"]
     .some((label) => field.label.toLocaleLowerCase("vi").startsWith(label)));

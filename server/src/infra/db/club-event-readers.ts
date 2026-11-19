@@ -16,7 +16,6 @@ export function clubEventFrom(doc: Doc, payload: Doc = {}, cancellationRequest?:
     startAt: doc.startAt as Date, endAt: doc.endAt as Date, semesterCode: String(doc.semesterCode),
     venueText: doc.venueText as string | undefined, propertyId: doc.propertyId ? String(doc.propertyId) : undefined,
     audienceScope: doc.audienceScope as ClubEvent["audienceScope"], capacity: Number(doc.capacity),
-    riskCategory: (doc.riskCategory ?? "LOW") as ClubEvent["riskCategory"],
     budgetLines: (payload.budgetLines ?? []) as ClubEvent["budgetLines"], bookingIds: (payload.bookingIds ?? []) as string[],
     state: doc.state as ClubEvent["state"], version: Number(doc.__v ?? 0), currentRevisionNo: Number(doc.currentRevisionNo ?? 0),
     confirmedRegistrationCount: Number(doc.confirmedRegistrationCount ?? 0), approvalConditions: (doc.approvalConditions ?? []) as string[], attendanceFinalized: doc.attendanceFinalized === true,
@@ -65,7 +64,7 @@ export async function eventCancellationRequest(eventId: Types.ObjectId): Promise
 }
 // Đọc chi tiết sự kiện CLB gồm phiên bản, quyết định, booking, ngân sách
 export async function readClubEvent(clubId: string, eventId: string): Promise<ClubEventDetail | null> {
-  const doc = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB" }).lean();
+  const doc = await m.events!.findOne({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB", audienceScope: "PUBLIC" }).lean();
   if (!doc) return null;
   const [payload, cancellation, versions, tasks, bookings, budget] = await Promise.all([
     eventDraftPayload(doc._id as Types.ObjectId),
@@ -131,7 +130,7 @@ export async function readEventParticipants(clubId: string, eventId: string): Pr
 }
 // Tổng hợp feedback sự kiện cho CLB, ẩn khi chưa đủ số người phản hồi tối thiểu
 export async function readClubFeedback(clubId: string, eventIds: string[], now: Date): Promise<ClubFeedbackSummary[]> {
-  const events = await m.events!.find({ _id: { $in: eventIds.map(oid) }, clubId: oid(clubId), organizerType: "CLUB" }).lean();
+  const events = await m.events!.find({ _id: { $in: eventIds.map(oid) }, clubId: oid(clubId), organizerType: "CLUB", audienceScope: "PUBLIC" }).lean();
   if (events.length !== eventIds.length) throw new DomainError("event not found", "not_found");
   const policy = await m.policyVersions!.findOne({ effectiveFrom: { $lte: now } }).sort({ effectiveFrom: -1, createdAt: -1, _id: -1 }).lean();
   if (!policy) throw new DomainError("policy is not configured", "unavailable");

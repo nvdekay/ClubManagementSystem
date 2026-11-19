@@ -61,7 +61,7 @@ function eventFrom(doc: Doc, requestedBudgetTotal: number, property?: EventPropo
     startAt: doc.startAt as Date, endAt: doc.endAt as Date, semesterCode: String(doc.semesterCode ?? ""),
     venueText: optionalText(doc.venueText), ...(property ? { property } : {}),
     audienceScope: String(doc.audienceScope ?? "PUBLIC"), capacity: Number(doc.capacity ?? 0),
-    riskCategory: optionalText(doc.riskCategory), state: String(doc.state),
+    state: String(doc.state),
     conflictResult: optionalText(doc.conflictResult), conflictDetail: doc.conflictDetail ?? undefined,
     approvalConditions: Array.isArray(doc.approvalConditions) ? doc.approvalConditions.map(String) : [],
     currentRevisionNo: Number(doc.currentRevisionNo ?? 1),
@@ -341,14 +341,10 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       }
       const completed = await events.updateMany({ state: { $in: ["Upcoming", "Ongoing"] }, endAt: { $lte: now } },
         { $set: { state: "Completed" } });
-      const finished = await events.updateMany({ state: { $in: ["PUBLIC", "ONGOING"] }, endAt: { $lte: now } },
-        { $set: { state: "FINISH" } });
       const started = await events.updateMany({ state: "Upcoming", startAt: { $lte: now }, endAt: { $gt: now } },
         { $set: { state: "Ongoing" } });
-      const startedInternal = await events.updateMany({ state: "PUBLIC", startAt: { $lte: now }, endAt: { $gt: now } },
-        { $set: { state: "ONGOING" } });
-      return { expired, started: started.modifiedCount + startedInternal.modifiedCount,
-        completed: completed.modifiedCount + finished.modifiedCount };
+      return { expired, started: started.modifiedCount,
+        completed: completed.modifiedCount };
     },
   };
 }

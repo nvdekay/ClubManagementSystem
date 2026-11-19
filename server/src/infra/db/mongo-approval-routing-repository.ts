@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import type {
-  ApprovalRoutingRepository, RoutedRequestType, RoutingRule, RoutingRuleSet, RoutingSample, RiskCategory,
+  ApprovalRoutingRepository, RoutedRequestType, RoutingRule, RoutingRuleSet, RoutingSample,
 } from "../../domain/approval-routing.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
@@ -138,11 +138,10 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
         const opened = task.openedAt as Date;
         const version = versions.filter((row) => String(row.eventId) === id && (row.submittedAt as Date) <= opened)
           .sort((a, b) => Number(b.revisionNo) - Number(a.revisionNo))[0];
-        const risk = (version?.payload as Doc | undefined)?.riskCategory;
         return { entityType: type, entityId: id, title: String(task.title ?? ""), decidedAt: (task.closedAt ?? opened) as Date,
           facts: { requestType: type, openViolations: openAt(task.clubId, opened),
             ...(type === "EVENT_PROPOSAL" ? { amount: money(version?.requestedBudgetTotal),
-              ...(typeof risk === "string" ? { riskCategory: risk as RiskCategory } : {}) } : {}),
+               } : {}),
             ...(type === "PROPERTY_BOOKING" ? { propertyType: propertyType.get(bookingProperty.get(id) ?? "") } : {}) } };
       });
     },

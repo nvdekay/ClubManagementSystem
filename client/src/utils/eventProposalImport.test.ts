@@ -66,7 +66,7 @@ describe("proposal document import", () => {
   it("extracts explicit fields with Vietnam times and no guessed defaults", () => {
     const result = mapProposalDocument(document());
     expect(result.missing).toEqual([]);
-    expect(result.input).toMatchObject({ title: "Test event", startAt: "2026-12-20T01:00:00.000Z", endAt: "2026-12-20T03:30:00.000Z", capacity: 120, riskCategory: "LOW", budgetLines: [] });
+    expect(result.input).toMatchObject({ title: "Test event", startAt: "2026-12-20T01:00:00.000Z", endAt: "2026-12-20T03:30:00.000Z", capacity: 120, budgetLines: [] });
   });
   it("does not turn team counts, goals or placeholders into capacity", () => {
     for (const value of ["30 đội (3 - 5 người/đội)", "[SỐ LƯỢNG]", "…", "0"]) {
@@ -100,7 +100,7 @@ describe("proposal document import", () => {
   it("reports missing required values in an empty template", () => {
     const source = document();
     source.tables[0] = source.tables[0]!.map((row, i) => i < 2 ? row : [row[0]!, row[1]!, ""]);
-    expect(mapProposalDocument(source).missing).toEqual(expect.arrayContaining(["titleField", "objective", "plan", "start", "end", "venue", "capacity", "audience", "risk"]));
+    expect(mapProposalDocument(source).missing).toEqual(expect.arrayContaining(["titleField", "objective", "plan", "start", "end", "venue", "capacity", "audience"]));
   });
   it("does not guess dates for an overnight or nonchronological agenda", () => {
     const source = document({ "Thời gian bắt đầu": "", "Thời gian kết thúc": "" });
@@ -111,7 +111,7 @@ describe("proposal document import", () => {
     const source = document({ "Mức độ rủi ro": "TBD", "Đối tượng": "TBD" });
     source.tables[0]!.push(["", "", "Continuation"]);
     const result = mapProposalDocument(source);
-    expect(result.missing).toEqual(expect.arrayContaining(["risk", "audience"]));
+    expect(result.missing).toEqual(expect.arrayContaining(["audience"]));
     expect(result.fields.at(-1)?.value).toContain("Continuation");
   });
   it("rejects unknown layouts and invalid calendar dates", () => {

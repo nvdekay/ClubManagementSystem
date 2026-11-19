@@ -1,9 +1,9 @@
 import { overduePostEventReports } from "./post-event-report-deadlines.js";
 import { randomInt, randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
-import type { ClubEventInput, ClubEventRepository, EventProposalDocument, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
-import { eventActionPermission, isInternalClubEventState } from "../../domain/club-event.js";
-import { assertApprovedEventCancellationNotice, assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent, eventConflictResult,
+import type { ClubEventInput, ClubEventRepository, EventProposalDocument, EventPublishInput } from "../../domain/club-event.js";
+import { eventActionPermission } from "../../domain/club-event.js";
+import { assertApprovedEventCancellationNotice, assertEventNotice, assertProposalAudience, assertProposalDocumentPresent, eventConflictResult,
   validateClubEventInput, validateEventPublication } from "../../domain/club-event-rules.js";
 import { DomainError } from "../../domain/errors.js";
 import { bookingCoversEventSchedule, mergeConsecutiveBookingIntervals, type BookingTimeInterval } from "../../domain/facility-booking.js";
@@ -36,7 +36,7 @@ function fields(input: ClubEventInput, semesterCode: string) {
   const propertyId = input.propertyId ?? first?.propertyId;
   return { title: input.title.trim(), objective: input.objective.trim(), startAt: input.startAt, endAt: input.endAt,
     venueText, propertyId: propertyId ? oid(propertyId) : null,
-    audienceScope: input.audienceScope, capacity: input.capacity, riskCategory: input.riskCategory, semesterCode };
+    audienceScope: input.audienceScope, capacity: input.capacity, semesterCode };
 }
 // Ghi audit log của sự kiện kèm phiên bản hiện tại
 async function audit(session: ClientSession, id: Types.ObjectId, action: string, actorId: Types.ObjectId, after: unknown, now: Date, reason?: string) {
@@ -172,7 +172,7 @@ async function submitVersion(session: ClientSession, event: Doc, input: ClubEven
   await m.approvalTasks!.create([{ entityType: "EVENT_PROPOSAL", entityId: event._id, clubId: event.clubId,
     title: input.title, state: "Open", openedAt: now,
     ...(activeDefense ? { assigneeId: activeDefense.leadOfficerId } : {}),
-    ...(await routedTaskFields(session, { requestType: "EVENT_PROPOSAL", riskCategory: input.riskCategory,
+    ...(await routedTaskFields(session, { requestType: "EVENT_PROPOSAL",
       amount: input.budgetLines.reduce((sum, line) => sum + line.amount, 0),
       openViolations: await openViolationCount(event.clubId, session) }, now)) }], { session });
   await linkEventBookings(session, event._id as Types.ObjectId, event.clubId as Types.ObjectId, input.bookingIds, actorId, now, requireBookingPermission);
@@ -237,33 +237,6 @@ async function publishInSession(session: ClientSession, id: Types.ObjectId, club
 }
 // Chuyển input sự kiện nội bộ thành input sự kiện chuẩn (chỉ thành viên)
 /** Sự kiện nội bộ dùng lại cấu trúc đầu vào của đề xuất: luôn chỉ dành cho thành viên và không bao giờ có ngân sách của trường. */
-function internalInput(source: InternalClubEventInput): ClubEventInput {
-  return { title: source.title, objective: source.objective, plan: source.plan, startAt: source.startAt, endAt: source.endAt,
-    venueText: source.venueText, propertyId: source.propertyId, capacity: source.capacity, riskCategory: source.riskCategory,
-    bookingIds: source.bookingIds, audienceScope: "MEMBERS_ONLY", budgetLines: [] };
-}
-// Ghi sự kiện nội bộ (nháp hoặc tạo) kèm audit và booking
-/** Một đường ghi chung cho tạo, sửa sự kiện nội bộ và dời lịch CREATED; quy tắc báo trước 24 giờ áp dụng khi lịch trở thành chính thức hoặc bị dời. */
-async function writeInternal(session: ClientSession, clubId: Types.ObjectId, event: Doc | null, next: ClubEventInput,
-  state: "DRAFT" | "CREATED", actorId: Types.ObjectId, now: Date, rules: ClubEventRules, action: string,
-  requireBookingPermission: boolean, reason?: string): Promise<Types.ObjectId> {
-  const id = (event?._id ?? new Types.ObjectId()) as Types.ObjectId;
-  const assessment = await assess(session, clubId, next, event ? id : undefined, now, false, rules);
-  if (state === "CREATED") {
-    if (!event || event.state !== "CREATED" || (event.startAt as Date).getTime() !== next.startAt.getTime() ||
-      (event.endAt as Date).getTime() !== next.endAt.getTime()) assertInternalEventNotice(next.startAt, now);
-    if (assessment.conflictResult === "Blocking Conflict") {
-      throw new DomainError("event schedule has blocking conflicts", "conflict", { conflicts: assessment.conflictDetail.map((d) => d.id) });
-    }
-  }
-  const set = { ...fields(next, assessment.semesterCode), state, conflictResult: assessment.conflictResult, conflictDetail: assessment.conflictDetail };
-  if (event) await m.events!.updateOne({ _id: id }, { $set: set }, { session });
-  else await m.events!.create([{ _id: id, organizerType: "CLUB", clubId, clubName: assessment.club.name, currentRevisionNo: 0, createdAt: now, ...set }], { session });
-  if (state === "CREATED") await linkEventBookings(session, id, clubId, next.bookingIds, actorId, now, requireBookingPermission);
-  await audit(session, id, action, actorId, { payload: next, state }, now, reason);
-  return id;
-}
-// Repository sự kiện CLB: đề xuất, sự kiện nội bộ, hành động vòng đời
 export function mongoClubEventRepository(rules: ClubEventRules): ClubEventRepository {
   async function required(clubId: string, eventId: string) {
     const detail = await readClubEvent(clubId, eventId);
@@ -284,7 +257,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
     },
     // Liệt kê sự kiện do CLB tổ chức, mới nhất trước
     async list(clubId) {
-      const docs = await m.events!.find({ clubId: oid(clubId), organizerType: "CLUB" }).sort({ startAt: -1, _id: -1 }).lean();
+      const docs = await m.events!.find({ clubId: oid(clubId), organizerType: "CLUB", audienceScope: "PUBLIC" }).sort({ startAt: -1, _id: -1 }).lean();
       return Promise.all(docs.map(async (doc) => clubEventFrom(
         doc,
         await eventDraftPayload(doc._id as Types.ObjectId),
@@ -340,23 +313,11 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
       return required(clubId, String(id));
     },
     // Tạo hoặc nháp sự kiện nội bộ của CLB, có thể công bố ngay
-    async createInternal(clubId, input, mode, publishInput, actorId, now) {
-      let id = new Types.ObjectId();
-      await mongoose.connection.transaction(async (session) => {
-        await assertEventWriteAccess(session, oid(clubId), oid(actorId), "club.event.manage", now);
-        id = await writeInternal(session, oid(clubId), null, internalInput(input), mode === "draft" ? "DRAFT" : "CREATED", oid(actorId), now, rules,
-          mode === "draft" ? "INTERNAL_EVENT_DRAFT_SAVED" : "INTERNAL_EVENT_CREATED", true);
-        if (mode === "publish") {
-          await publishInSession(session, id, oid(clubId), input.title.trim(), input.startAt, input.endAt, publishInput!, "PUBLIC", oid(actorId), now);
-        }
-      });
-      return required(clubId, String(id));
-    },
     // Thực hiện hành động trên sự kiện: lưu, nộp, hủy, dời lịch, công bố, điểm danh
     async act(clubId, eventId, action, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         await assertEventWriteAccess(session, oid(clubId), oid(actorId), action.kind === "unlock" ? "ATTENDANCE_UNLOCK" : eventActionPermission(action), now);
-        const event = await m.events!.findOneAndUpdate({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB",
+        const event = await m.events!.findOneAndUpdate({ _id: oid(eventId), clubId: oid(clubId), organizerType: "CLUB", audienceScope: "PUBLIC",
           ...("expectedVersion" in action ? { __v: action.expectedVersion } : {}) }, { $inc: { __v: 1 } }, { session }).lean();
         if (!event) conflict("event changed or is not available in this club; reload and retry");
         const payload = await payloadInSession(session, event._id as Types.ObjectId);
@@ -383,19 +344,13 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
             await syncProposalSessionBookings(session, oid(eventId), oid(clubId), String(assessment.club.name), next, assessment.semesterCode, assessment.conflictResult, "Draft", now);
             await audit(session, oid(eventId), "EVENT_DRAFT_SAVED", oid(actorId), { payload: next }, now);
           } else await submitVersion(session, event, next, oid(actorId), now, assessment);
-        } else if (action.kind === "save-internal" || action.kind === "create-internal") {
-          if (action.kind === "save-internal") assertInternalEventEditable(String(event.state));
-          else if (event.state !== "DRAFT") conflict("only an internal draft can be created");
-          const state = action.kind === "create-internal" ? "CREATED" : event.state as "DRAFT" | "CREATED";
-          await writeInternal(session, oid(clubId), event, internalInput(action.kind === "save-internal" ? action.input : input), state, oid(actorId), now, rules,
-            action.kind === "create-internal" ? "INTERNAL_EVENT_CREATED" : state === "DRAFT" ? "INTERNAL_EVENT_DRAFT_SAVED" : "INTERNAL_EVENT_SAVED", true);
         } else if (action.kind === "publish") {
-          if (event.state !== "Approved" && event.state !== "CREATED") conflict("only approved events can be published");
+          if (event.state !== "Approved") conflict("only approved events can be published");
           if (await m.approvalTasks!.exists({ entityType: "EVENT_CANCELLATION", entityId: event._id, state: "Open" }).session(session)) {
             conflict("event has a pending cancellation request");
           }
           await publishInSession(session, event._id as Types.ObjectId, oid(clubId), String(event.title), event.startAt as Date, event.endAt as Date,
-            action.input, event.state === "CREATED" ? "PUBLIC" : "Upcoming", oid(actorId), now);
+            action.input, "Upcoming", oid(actorId), now);
         } else if (action.kind === "cancel") {
           if (["Approved", "Upcoming", "Ongoing"].includes(String(event.state))) {
             if (event.attendanceFinalized === true) conflict("finalized attendance prevents cancellation");
@@ -416,11 +371,6 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           } else {
             conflict("event cannot be cancelled in its current state");
           }
-        } else if (action.kind === "reschedule" && isInternalClubEventState(String(event.state))) {
-          assertInternalEventEditable(String(event.state));
-          if (event.state !== "CREATED") conflict("only a created internal event can be rescheduled");
-          await writeInternal(session, oid(clubId), event, { ...internalInput(input), startAt: action.startAt, endAt: action.endAt,
-            venueText: action.venueText, propertyId: action.propertyId, bookingIds: [] }, "CREATED", oid(actorId), now, rules, "EVENT_RESCHEDULED", false, action.reason);
         } else if (action.kind === "reschedule") {
           if (!["Approved", "Upcoming"].includes(String(event.state)) || event.attendanceFinalized === true) conflict("only an unstarted approved event can be rescheduled");
           if (await m.approvalTasks!.exists({ entityType: "EVENT_CANCELLATION", entityId: event._id, state: "Open" }).session(session)) {
@@ -451,9 +401,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
           } else await promoteEventWaitlist(session, oid(eventId), now, oid(actorId), oid(action.registrationId));
           await audit(session, oid(eventId), `EVENT_${action.kind.toUpperCase()}`, oid(actorId), action, now);
         } else {
-          const version = await m.eventProposalVersions!.findOne({ eventId: event._id, revisionNo: event.currentRevisionNo }).session(session).lean();
-          const direct = event.audienceScope === "MEMBERS_ONLY" && Number(String(version?.requestedBudgetTotal ?? 0)) === 0 && !(await m.eventBudgets!.exists({ eventId: event._id }).session(session));
-          await applyEventAttendanceAction(session, event, action, oid(actorId), now, direct);
+          await applyEventAttendanceAction(session, event, action, oid(actorId), now, false);
           await audit(session, oid(eventId), `EVENT_ATTENDANCE_${action.kind.toUpperCase()}`, oid(actorId), action, now, "reason" in action ? action.reason : undefined);
         }
       });

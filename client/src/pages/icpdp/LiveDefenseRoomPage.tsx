@@ -292,10 +292,7 @@ export function LiveDefenseRoomPage() {
                 <dt className="text-xs text-muted-app">{t("eventReviews.capacity")}</dt>
                 <dd className="mt-1 font-medium">{t("eventReviews.capacityValue", { count: event.capacity })}</dd>
               </div>
-              <div>
-                <dt className="text-xs text-muted-app">{t("eventReviews.risk")}</dt>
-                <dd className="mt-1 font-medium">{event.riskCategory ?? "—"}</dd>
-              </div>
+
               {([
                 ["objective", optionalText(payload.objective) ?? event.objective],
                 ["plan", optionalText(payload.plan)],

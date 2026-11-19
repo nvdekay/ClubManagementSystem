@@ -111,9 +111,6 @@ export function mapProposalDocument(document: WordDocument): ProposalImport {
   const audience = normalized(get("doi tuong", "doi tuong tham gia"));
   const memberOnly = /(?:thanh vien|noi bo).*clb|clb.*(?:thanh vien|noi bo)/.test(audience);
   const publicAudience = /sinh vien|cong khai|public|moi nguoi/.test(audience);
-  const risk = normalized(get("muc do rui ro", "muc rui ro", "phan loai rui ro"));
-  const risks: Record<string, ClubEventInput["riskCategory"] | undefined> = { low: "LOW", thap: "LOW", medium: "MEDIUM", "trung binh": "MEDIUM", high: "HIGH", cao: "HIGH" };
-  const riskCategory = risks[risk];
   const support = document.tables.find((table) => normalized(table[0]?.join(" ") ?? "").includes("de xuat ho tro tu phong pdp"));
   const budgetLines: EventBudgetLine[] = [];
   let invalidBudget = false;
@@ -130,14 +127,14 @@ export function mapProposalDocument(document: WordDocument): ProposalImport {
   const missing = [
     !title && "titleField", !objective && "objective", !plan && "plan", !startAt && "start", !endAt && "end",
     !venueText && "venue", (!capacity || capacity > 100000) && "capacity",
-    !memberOnly && !publicAudience && "audience", !riskCategory && "risk",
-    invalidBudget && "budget", memberOnly && !budgetLines.length && "budget",
+    !memberOnly && !publicAudience && "audience",
+    invalidBudget && "budget",
   ].filter((key): key is string => Boolean(key));
   return {
     sections: proposalSections(document),
     fields, missing: [...new Set(missing)],
-    input: { title, objective, plan, startAt, endAt, venueText, capacity, audienceScope: memberOnly ? "MEMBERS_ONLY" : "PUBLIC",
-      riskCategory: riskCategory ?? "LOW", riskNote: get("ghi chu rui ro"), facilityNeeds,
+    input: { title, objective, plan, startAt, endAt, venueText, capacity, audienceScope: "PUBLIC",
+      riskNote: get("ghi chu rui ro"), facilityNeeds,
       budgetLines, bookingIds: [], registrationForm: [], occurrences: [] },
   };
 }

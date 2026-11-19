@@ -80,6 +80,6 @@ describe.skipIf(!uri)("Mongo approval routing repository (UC05)", () => {
     await m.approvalTasks!.create({ entityType: "EVENT_PROPOSAL", entityId: eventId, clubId, title: "Gala", state: "Decided",
       openedAt: opened, closedAt: new Date("2026-10-02T00:00:00Z") });
     expect((await repo.recentDecided(5))[0]?.facts).toEqual({ requestType: "EVENT_PROPOSAL", amount: 30_000_000,
-      riskCategory: "HIGH", openViolations: 1 });
+      openViolations: 1 });
   });
 });

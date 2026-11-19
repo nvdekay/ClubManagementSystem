@@ -7,8 +7,8 @@ import { resolveClubPermissions } from "../domain/access.js";
 import type { ClubAccessRepository } from "../domain/access.js";
 import type { AuthRepository } from "../domain/auth.js";
 import { eventActionPermission, isInternalClubEventState, type ClubEventAction, type ClubEventInput, type ClubEventRepository,
-  type EventProposalDocument, type EventProposalFileStorage, type EventProposalTemplateInfo, type EventPublishInput,
-  type InternalClubEventInput, type InternalClubEventMode } from "../domain/club-event.js";
+  type EventProposalDocument, type EventProposalFileStorage, type EventProposalTemplateInfo,
+   } from "../domain/club-event.js";
 import { PROPOSAL_DOCUMENT_MIME_TYPES, PROPOSAL_TEMPLATE_MIME_TYPES, validateEventProposalFile } from "../domain/club-event-rules.js";
 import { DomainError } from "../domain/errors.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
@@ -51,12 +51,7 @@ export async function createClubEvent(deps: ClubEventDeps, actor: AccessActor | 
   return deps.repo.create(clubEventId(clubId), input, actor!.id, now);
 }
 // Tạo sự kiện nội bộ CLB, lưu nháp hoặc công bố ngay
-export async function createInternalClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, input: InternalClubEventInput,
-  mode: InternalClubEventMode, publishInput: EventPublishInput | undefined, now: Date) {
-  if ((mode === "publish") !== Boolean(publishInput)) throw new DomainError("publish settings are required only when publishing", "validation");
-  await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
-  return deps.repo.createInternal(clubEventId(clubId), input, mode, publishInput, actor!.id, now);
-}
+
 /** Authorize each action before persistence; proposal save/submit require club.event.manage. */
 export async function actOnClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string,
   id: string, action: ClubEventAction, now: Date) {

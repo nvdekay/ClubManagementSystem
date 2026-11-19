@@ -11,7 +11,6 @@ import { EventReportsPage } from "./pages/icpdp/EventReportsPage.js";
 import { ReconciliationPage } from "./pages/icpdp/ReconciliationPage.js";
 import { ClubEventsPage } from "./pages/club/ClubEventsPage.js";
 import { ClubEventProposalPage } from "./pages/club/ClubEventProposalPage.js";
-import { InternalClubEventPage } from "./pages/club/InternalClubEventPage.js";
 import { ClubBookingsPage } from "./pages/club/ClubBookingsPage.js";
 import { BookingReviewPage } from "./pages/icpdp/BookingReviewPage.js";
 import { RoomAllocationsPage } from "./pages/icpdp/RoomAllocationsPage.js";
@@ -73,7 +72,6 @@ import { ClubMembersPage } from "./pages/club/ClubMembersPage.js";
 import { ClubComplaintsPage } from "./pages/club/ClubComplaintsPage.js";
 import { ComplaintReviewPage } from "./pages/icpdp/ComplaintReviewPage.js";
 import { RoutingRulesPage } from "./pages/icpdp/RoutingRulesPage.js";
-import { InternalEventDetailPage, InternalEventsPage } from "./pages/icpdp/InternalEventsPage.js";
 import { ClubBoardHistoryPage } from "./pages/club/ClubBoardHistoryPage.js";
 
 const queryClient = new QueryClient({
@@ -119,7 +117,6 @@ createRoot(document.getElementById("root")!).render(
               <Route path="club/:clubId/events" element={<ClubEventsPage />} />
               <Route path="club/:clubId/events/new" element={<ClubEventProposalPage />} />
               <Route path="club/:clubId/events/:eventId/edit" element={<ClubEventProposalPage />} />
-              <Route path="club/:clubId/events/:eventId/internal-edit" element={<InternalClubEventPage />} />
               <Route path="club/:clubId/event-attendance" element={<ClubEventsPage mode="attendance" />} />
               <Route path="club/:clubId/event-feedback" element={<ClubEventsPage mode="feedback" />} />
               <Route path="club/:clubId/bookings" element={<ClubBookingsPage />} />
@@ -145,8 +142,6 @@ createRoot(document.getElementById("root")!).render(
               <Route path="workspace/reviews" element={<ApplicationReviewQueuePage />} />
               <Route path="workspace/reviews/:id" element={<ApplicationReviewDetailPage />} />
               <Route path="workspace/event-proposals" element={<EventProposalQueuePage />} />
-              <Route path="workspace/internal-events" element={<InternalEventsPage />} />
-              <Route path="workspace/internal-events/:id" element={<InternalEventDetailPage />} />
               <Route path="club/:clubId/board-history" element={<ClubBoardHistoryPage />} />
               <Route path="workspace/event-proposals/:id" element={<EventProposalReviewPage />} />
               <Route path="workspace/event-proposals/:id/defense" element={<LiveDefenseRoomPage />} />

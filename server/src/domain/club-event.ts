@@ -22,13 +22,10 @@ export interface EventOccurrence {
 export interface ClubEventInput {
   title: string; objective: string; plan: string; startAt: Date; endAt: Date;
   venueText?: string; propertyId?: string; audienceScope: "PUBLIC" | "MEMBERS_ONLY";
-  capacity: number; riskCategory: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string; facilityNeeds?: string;
+  capacity: number; riskCategory?: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string; facilityNeeds?: string;
   occurrences?: EventOccurrence[]; budgetLines: RequestedBudgetLine[];
   bookingIds: string[]; registrationForm?: EventRegistrationFormField[];
 }
-export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" |
-  "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
-export type InternalClubEventMode = "draft" | "create" | "publish";
 /** Tài liệu đề xuất (UC25) mà CLB đính kèm đề xuất ICPDP; được đóng băng trong mỗi phiên bản đã nộp. */
 export interface EventProposalDocument {
   id: string; fileName: string; mimeType: string; bytes: number; assetId: string; uploadedAt: Date; uploadedBy: string;
@@ -107,8 +104,6 @@ export type ClubEventAction =
   | { kind: "save"; input: ClubEventInput; expectedVersion: number }
   | { kind: "submit"; expectedVersion: number }
   | { kind: "attach-document"; document: EventProposalDocument }
-  | { kind: "save-internal"; input: InternalClubEventInput; expectedVersion: number }
-  | { kind: "create-internal"; expectedVersion: number }
   | { kind: "publish"; input: EventPublishInput; expectedVersion: number }
   | { kind: "cancel"; reason: string; expectedVersion: number }
   | { kind: "reschedule"; startAt: Date; endAt: Date; venueText?: string; propertyId?: string; reason: string; expectedVersion: number }
@@ -123,8 +118,6 @@ export interface ClubEventRepository {
   list(clubId: string): Promise<ClubEvent[]>;
   find(clubId: string, eventId: string): Promise<ClubEventDetail | null>;
   create(clubId: string, input: ClubEventInput, actorId: string, now: Date): Promise<ClubEventDetail>;
-  createInternal(clubId: string, input: InternalClubEventInput, mode: InternalClubEventMode,
-    publishInput: EventPublishInput | undefined, actorId: string, now: Date): Promise<ClubEventDetail>;
   act(clubId: string, eventId: string, action: ClubEventAction, actorId: string, now: Date): Promise<ClubEventDetail>;
   participants(clubId: string, eventId: string): Promise<EventParticipant[]>;
   feedback(clubId: string, eventIds: string[], now: Date): Promise<ClubFeedbackSummary[]>;

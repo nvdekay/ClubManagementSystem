@@ -15,7 +15,6 @@ function panelHref(key: DashboardPanelKey, context: DashboardContext): string | 
   if (key === "recruitmentApplications") return "/workspace/recruitment";
   if (key === "openRecruitment") return "/clubs";
   if (key === "activeClubs" || key === "suspendedClubs" || key === "roleStructures" || key === "boardHistory") return "/icpdp/clubs";
-  if (key === "internalEvents") return "/workspace/internal-events";
   if (key === "upcomingEvents") return "/events";
   if (context.workspace === "student" && key === "registrations") return "/workspace/event-registrations";
   if (context.workspace === "student" && key === "complaints") return "/workspace/complaints";

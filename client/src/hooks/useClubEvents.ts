@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchEventProposalPreviewFile } from "@/services/clubEvents";
-import { accessEventProposalDocument, actOnClubEvent, confirmInternalClubEvent, fetchEventProposalTemplate, uploadEventProposalDocument, createInternalClubEvent, fetchClubEventOptions, createClubEvent, fetchClubEvent, fetchClubEventFeedback, fetchClubEvents, fetchEventParticipants, updateInternalClubEvent,
-  type ClubEventInput, type EventPublishInput, type InternalClubEventInput, type InternalCreateMode } from "@/services/clubEvents";
+import { accessEventProposalDocument, actOnClubEvent, fetchEventProposalTemplate, uploadEventProposalDocument, fetchClubEventOptions, createClubEvent, fetchClubEvent, fetchClubEventFeedback, fetchClubEvents, fetchEventParticipants,
+  type ClubEventInput } from "@/services/clubEvents";
 export const clubEventsKeyRoot = ["club-events"] as const;
 // Query danh sách sự kiện của CLB
 export function useClubEvents(clubId: string, enabled: boolean) {
@@ -24,15 +24,9 @@ export function useClubEventMutation(clubId: string) {
   const cache = useQueryClient();
   return useMutation({ mutationFn: (input: { csrfToken: string } & (
     { kind: "create"; input: ClubEventInput } | { kind: "action"; id: string; action: string; body: object }
-    | { kind: "internal-create"; input: InternalClubEventInput; mode: InternalCreateMode; publishInput?: EventPublishInput }
-    | { kind: "internal-save"; id: string; input: InternalClubEventInput; expectedVersion: number }
-    | { kind: "internal-confirm"; id: string; expectedVersion: number }
     | { kind: "upload-document"; id: string; file: File; mimeType: string })) => {
     switch (input.kind) {
       case "create": return createClubEvent(clubId, input.input, input.csrfToken);
-      case "internal-create": return createInternalClubEvent(clubId, input.input, input.mode, input.publishInput, input.csrfToken);
-      case "internal-save": return updateInternalClubEvent(clubId, input.id, input.input, input.expectedVersion, input.csrfToken);
-      case "internal-confirm": return confirmInternalClubEvent(clubId, input.id, input.expectedVersion, input.csrfToken);
       case "upload-document": return uploadEventProposalDocument(clubId, input.id, input.file, input.mimeType, input.csrfToken);
       default: return actOnClubEvent(clubId, input.id, input.action, input.body, input.csrfToken);
     }

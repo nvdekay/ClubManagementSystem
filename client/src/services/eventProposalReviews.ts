@@ -28,7 +28,6 @@ export interface EventProposalSummary {
   property?: { id: string; code: string; name: string };
   audienceScope: string;
   capacity: number;
-  riskCategory?: string;
   state: string;
   conflictResult?: string;
   conflictDetail?: unknown;

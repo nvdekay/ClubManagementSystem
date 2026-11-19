@@ -51,10 +51,7 @@ export function EventProposalQueuePage() {
   }
 
   /** Dịch mức rủi ro đã biết; giữ nguyên giá trị khác do server trả về. */
-  function risk(value: string) {
-    return value === "HIGH" ? t("eventReviews.riskHIGH") : value === "MEDIUM" ? t("eventReviews.riskMEDIUM")
-      : value === "LOW" ? t("eventReviews.riskLOW") : value;
-  }
+
 
   /** Hiển thị kinh phí đề nghị theo tiền Việt Nam, không có phần thập phân. */
   function money(value: number) {
@@ -153,7 +150,6 @@ export function EventProposalQueuePage() {
                     {event.clubName} · {date(event.startAt)} · {t("eventReviews.revision", { number: event.currentRevisionNo })}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {event.riskCategory && <AppBadge tone={event.riskCategory === "HIGH" ? "danger" : event.riskCategory === "MEDIUM" ? "warning" : "success"}>{t("eventReviews.risk")}: {risk(event.riskCategory)}</AppBadge>}
                     <AppBadge tone={event.requestedBudgetTotal ? "info" : "neutral"}>
                       {event.requestedBudgetTotal ? t("eventReviews.requested", { amount: money(event.requestedBudgetTotal) }) : t("eventReviews.noBudget")}
                     </AppBadge>

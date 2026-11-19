@@ -4,7 +4,7 @@ export interface EventFormField { key: string; label: string; type: "text" | "te
 export interface EventOccurrence { startAt: string; endAt: string; propertyId?: string; venueText?: string }
 export interface ClubEventInput {
   title: string; objective: string; plan: string; startAt: string; endAt: string; venueText?: string; propertyId?: string;
-  audienceScope: "PUBLIC" | "MEMBERS_ONLY"; capacity: number; riskCategory: "LOW" | "MEDIUM" | "HIGH";
+  audienceScope: "PUBLIC" | "MEMBERS_ONLY"; capacity: number;
   riskNote?: string; facilityNeeds?: string; occurrences?: EventOccurrence[];
   budgetLines: EventBudgetLine[]; bookingIds: string[]; registrationForm?: EventFormField[];
 }
@@ -72,8 +72,8 @@ function strings(value: unknown): string[] | undefined {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : undefined;
 }
 // Gọi API /clubs/:clubId/events hoặc internal-events, ném lỗi chi tiết nếu thất bại
-async function request<T>(clubId: string, path: string, init: RequestInit, resource: "events" | "internal-events" = "events"): Promise<T> {
-  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/${resource}${path}`, { credentials: "same-origin", ...init });
+async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
+  const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/events${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { message?: string; details?: Record<string, unknown> } | null;
     const d = body?.details;
@@ -108,29 +108,19 @@ export function actOnClubEvent(clubId: string, id: string, action: string, body:
 }
 
 /** Sự kiện tự túc chỉ dành cho thành viên (DRAFT → CREATED → PUBLIC → ONGOING → FINISH): không chọn đối tượng, không có ngân sách. */
-export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" | "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
 export interface EventPublishInput {
   registrationOpenAt?: string; registrationCloseAt?: string; checkInOpenAt: string; checkInCloseAt: string; allowWalkIn: boolean; waitlistEnabled: boolean;
   notifyMembers?: boolean;
 }
-export type InternalCreateMode = "draft" | "create" | "publish";
 // Dựng RequestInit JSON có CSRF cho phương thức và body cho trước
-function jsonInit(method: string, body: object, csrfToken: string): RequestInit {
-  return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) };
-}
+
 // POST tạo sự kiện nội bộ của CLB
-export function createInternalClubEvent(clubId: string, input: InternalClubEventInput, mode: InternalCreateMode, publishInput: EventPublishInput | undefined, csrfToken: string): Promise<ClubEventDetail> {
-  return request(clubId, "", jsonInit("POST", { ...input, mode, ...(publishInput ? { publishInput } : {}) }, csrfToken), "internal-events");
-}
+
 // PUT cập nhật sự kiện nội bộ kèm expectedVersion
-export function updateInternalClubEvent(clubId: string, id: string, input: InternalClubEventInput, expectedVersion: number, csrfToken: string): Promise<ClubEventDetail> {
-  return request(clubId, `/${encodeURIComponent(id)}`, jsonInit("PUT", { ...input, expectedVersion }, csrfToken), "internal-events");
-}
+
 // POST /create: chuyển sự kiện nội bộ từ DRAFT sang CREATED
 /** DRAFT → CREATED; server áp dụng quy tắc báo trước 24 giờ. */
-export function confirmInternalClubEvent(clubId: string, id: string, expectedVersion: number, csrfToken: string): Promise<ClubEventDetail> {
-  return request(clubId, `/${encodeURIComponent(id)}/create`, jsonInit("POST", { expectedVersion }, csrfToken), "internal-events");
-}
+
 
 export interface ClubEventOptions { properties: { id: string; name: string }[]; bookings: { id: string; propertyId: string; propertyType?: string; eventId?: string; title: string; startAt: string; endAt: string }[] }
 // GET các lựa chọn (phòng, ngân sách...) khi tạo sự kiện

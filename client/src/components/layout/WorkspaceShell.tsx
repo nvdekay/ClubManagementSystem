@@ -395,7 +395,6 @@ function navigation(context: Context, workspace: Workspace | undefined,
       ] },
       { group: "events", label: t("common.groupEvents"), icon: "ticket", children: [
         { to: "/workspace/event-proposals", label: t("common.icpdpEventProposals"), icon: "inbox" },
-        { to: "/workspace/internal-events", label: t("common.icpdpInternalEvents"), icon: "users" },
         { to: "/workspace/event-reports", label: t("common.navEventReports"), icon: "file" },
         { to: "/workspace/budgets", label: t("common.icpdpBudgets"), icon: "coins" },
         { to: "/workspace/school-events", label: t("common.icpdpSchoolEvents"), icon: "flag" },

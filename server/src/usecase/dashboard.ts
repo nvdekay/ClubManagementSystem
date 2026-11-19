@@ -2,7 +2,7 @@ import { z } from "zod";
 import { requireClubPermission, resolveClubPermissions, type ClubAccessRepository } from "../domain/access.js";
 import type { AuthRepository, AuthUser } from "../domain/auth.js";
 import type {
-  ClubBoardHistory, DashboardRepository, DashboardSnapshot, InternalEventDetail, InternalEventFilter, InternalEventList,
+  ClubBoardHistory, DashboardRepository, DashboardSnapshot,
 } from "../domain/dashboard.js";
 import { DomainError } from "../domain/errors.js";
 
@@ -59,38 +59,6 @@ async function isOfficer(authRepo: Pick<AuthRepository, "systemRoleCodes">, acto
 }
 
 // Yêu cầu người dùng đã đăng nhập và là ICPDP officer
-async function assertOfficer(authRepo: Pick<AuthRepository, "systemRoleCodes">, actor: AuthUser | null): Promise<void> {
-  assertActor(actor);
-  if (!(await isOfficer(authRepo, actor))) throw new DomainError("ICPDP role required", "forbidden");
-}
-
-// ICPDP xem danh sách sự kiện nội bộ, lọc theo CLB và học kỳ
-/** FR-UC02-02, BR53: danh sách sự kiện nội bộ đã ghi nhận của ICPDP, lọc theo CLB và học kỳ. */
-export async function listInternalEvents(repo: DashboardRepository, authRepo: Pick<AuthRepository, "systemRoleCodes">,
-  actor: AuthUser | null, filter: InternalEventFilter): Promise<InternalEventList> {
-  await assertOfficer(authRepo, actor);
-  if (filter.clubId && !mongoId.safeParse(filter.clubId).success) {
-    throw new DomainError("invalid club identifier", "validation", { field: "clubId" });
-  }
-  return repo.internalEvents(filter);
-}
-
-// ICPDP xem chi tiết một sự kiện nội bộ kèm điểm danh
-/** FR-UC02-02: một sự kiện nội bộ kèm điểm danh, chỉ đọc. */
-export async function getInternalEvent(repo: DashboardRepository, authRepo: Pick<AuthRepository, "systemRoleCodes">,
-  actor: AuthUser | null, eventId: string): Promise<InternalEventDetail> {
-  await assertOfficer(authRepo, actor);
-  if (!mongoId.safeParse(eventId).success) throw new DomainError("invalid event identifier", "validation");
-  const event = await repo.internalEvent(eventId);
-  if (!event) throw new DomainError("internal event not found", "not_found");
-  return event;
-}
-
-// Xem lịch sử cơ cấu và ban chủ nhiệm theo nhiệm kỳ của CLB
-/**
- * BR56: các version cơ cấu và ban của CLB theo nhiệm kỳ, cho ICPDP trên mọi CLB (FR-UC02-02) và
- * cho Club Leader của chính CLB đó (FR-UC02-03), role duy nhất giữ club.board.nominate.
- */
 export async function getClubBoardHistory(repo: DashboardRepository, authRepo: Pick<AuthRepository, "systemRoleCodes">,
   accessRepo: ClubAccessRepository, actor: AuthUser | null, clubId: string, now: Date = new Date()): Promise<ClubBoardHistory> {
   assertActor(actor);

@@ -6,7 +6,7 @@ import type {
 import { ucmsModels } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 import { clubCharts, icpdpCharts } from "./dashboard-charts.js";
-import { clubBoardHistory, internalEvent, internalEvents, recordedInternal } from "./dashboard-drilldown.js";
+import { clubBoardHistory } from "./dashboard-drilldown.js";
 
 type UcmsDocument = Record<string, unknown>;
 
@@ -172,14 +172,11 @@ export function mongoDashboardRepository(): DashboardRepository {
         panel("upcomingBookings", "propertyBookings", {
           state: { $in: ["Requested", "Under Review"] }, startAt: { $gte: now },
         }),
-        panel("internalEvents", "events", recordedInternal()),
         panel("roleStructures", "clubRoleStructureVersions", {}),
         panel("boardHistory", "clubPositionAssignments", { confirmedBy: { $exists: true } }),
       ], undefined, icpdpCharts(now).then((icpdpCharts) => ({ icpdpCharts })));
     },
 
-    internalEvents,
-    internalEvent,
     boardHistory: clubBoardHistory,
   };
 }

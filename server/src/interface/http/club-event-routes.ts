@@ -2,12 +2,12 @@ import { raw, Router, type Request, type Response } from "express";
 import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
 import type { ClubAccessRepository } from "../../domain/access.js";
-import type { ClubEventAction, ClubEventInput, ClubEventRepository, EventProposalFileStorage, EventPublishInput, InternalClubEventInput } from "../../domain/club-event.js";
+import type { ClubEventAction, ClubEventInput, ClubEventRepository, EventProposalFileStorage, EventPublishInput } from "../../domain/club-event.js";
 import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
 import { actOnClubEvent, clubEventOptions, clubEventFeedback, clubEventParticipants, clubEventProposalDocumentAccess, createClubEvent,
-  createInternalClubEvent, downloadEventProposalTemplate, eventProposalTemplateInfo, getClubEvent, listClubEvents,
+  downloadEventProposalTemplate, eventProposalTemplateInfo, getClubEvent, listClubEvents,
   reviewEventProposalDocumentAccess, uploadEventProposalDocument, uploadEventProposalTemplate } from "../../usecase/club-event.js";
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
@@ -22,12 +22,12 @@ const formField = z.object({ key: z.string().min(1).max(80), label: z.string().m
 export const clubEventBody = z.object({
   title: z.string().trim().min(1).max(200), objective: z.string().trim().min(1).max(5000), plan: z.string().trim().min(1).max(20000),
   startAt: date, endAt: date, venueText: z.string().trim().max(300).optional(), propertyId: eventObjectId.optional(),
-  audienceScope: z.enum(["PUBLIC", "MEMBERS_ONLY"]), capacity: z.number().int().min(1).max(100000),
-  riskCategory: z.enum(["LOW", "MEDIUM", "HIGH"]), riskNote: z.string().max(5000).optional(), facilityNeeds: z.string().max(5000).optional(),
+  audienceScope: z.literal("PUBLIC"), capacity: z.number().int().min(1).max(100000),
+  riskNote: z.string().max(5000).optional(), facilityNeeds: z.string().max(5000).optional(),
   occurrences: z.array(z.object({ startAt: date, endAt: date, venueText: z.string().trim().max(300).optional(),
     propertyId: eventObjectId.optional() }).strict()).max(50).optional(),
   budgetLines: z.array(z.object({ category: z.string().trim().min(1).max(200), amount: z.number().int().positive().max(1000000000000),
-    purpose: z.string().trim().min(1).max(2000), plannedItems: z.string().max(5000).optional() }).strict()).max(50),
+    purpose: z.string().trim().min(1).max(2000), plannedItems: z.string().max(5000).optional() }).strict()).max(50).default([]),
   bookingIds: z.array(eventObjectId).max(50), registrationForm: z.array(formField).max(30).optional(),
 }).strict();
 export const clubEventSaveBody = clubEventBody.extend({ expectedVersion }).strict();
@@ -36,11 +36,6 @@ const publishSettings = z.object({ registrationOpenAt: date.optional(), registra
   checkInOpenAt: date, checkInCloseAt: date, allowWalkIn: z.boolean(), waitlistEnabled: z.boolean(),
   notifyMembers: z.boolean().optional() }).strict();
 export const clubEventPublishBody = publishSettings.extend({ expectedVersion }).strict();
-export const internalClubEventBody = clubEventBody.pick({ title: true, objective: true, plan: true, startAt: true, endAt: true,
-  venueText: true, propertyId: true, capacity: true, riskCategory: true, bookingIds: true }).strict();
-export const internalClubEventCreateBody = internalClubEventBody.extend({ mode: z.enum(["draft", "create", "publish"]).optional(),
-  publishInput: publishSettings.optional() }).strict();
-export const internalClubEventSaveBody = internalClubEventBody.extend({ expectedVersion }).strict();
 export const clubEventCancelBody = z.object({ expectedVersion, reason }).strict();
 export const clubEventRescheduleBody = z.object({ expectedVersion, reason, startAt: date, endAt: date,
   venueText: z.string().max(300).optional(), propertyId: eventObjectId.optional() }).strict();
@@ -62,15 +57,13 @@ function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
 // Lấy actor đã xác thực từ res.locals
 function actor(res: Response): AccessActor { return res.locals.actor as AccessActor; }
 // Chuyển body sự kiện sang input với các trường ngày dạng Date
-function input(body: z.infer<typeof clubEventBody>): ClubEventInput {
-  return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt),
+function input(body: z.input<typeof clubEventBody>): ClubEventInput {
+  return { ...body, budgetLines: body.budgetLines ?? [], startAt: new Date(body.startAt), endAt: new Date(body.endAt),
     occurrences: body.occurrences?.map((o) => ({ startAt: new Date(o.startAt), endAt: new Date(o.endAt),
       ...(o.venueText ? { venueText: o.venueText } : {}), ...(o.propertyId ? { propertyId: o.propertyId } : {}) })) };
 }
 // Chuyển body sự kiện nội bộ sang input với ngày dạng Date
-function internalInput(body: z.infer<typeof internalClubEventBody>): InternalClubEventInput {
-  return { ...body, startAt: new Date(body.startAt), endAt: new Date(body.endAt) };
-}
+
 // Chuyển cài đặt xuất bản sự kiện sang input với ngày dạng Date
 function publishInput(body: z.infer<typeof publishSettings>): EventPublishInput {
   return { ...body, registrationOpenAt: body.registrationOpenAt ? new Date(body.registrationOpenAt) : undefined,
@@ -151,24 +144,6 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   // Đăng ký các hành động trên sự kiện (lưu, nộp, công bố, huỷ, dời lịch, điểm danh...)
   for (const action of actions) router.post(`${base}/:id/${action.path}`, authGuard(guard), async (req, res) => {
     ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id), action.parse(req.body), new Date()));
-  });
-  const internalBase = "/clubs/:clubId/internal-events";
-  // Tạo sự kiện nội bộ của CLB (bản nháp hoặc tạo ngay)
-  router.post(internalBase, authGuard(guard), async (req, res) => {
-    const { mode, publishInput: settings, ...body } = parse(internalClubEventCreateBody, req.body);
-    ok(res, await createInternalClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), internalInput(body), mode ?? "draft",
-      settings ? publishInput(settings) : undefined, new Date()), 201);
-  });
-  // Lưu chỉnh sửa sự kiện nội bộ
-  router.put(`${internalBase}/:id`, authGuard(guard), async (req, res) => {
-    const { expectedVersion, ...body } = parse(internalClubEventSaveBody, req.body);
-    ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
-      { kind: "save-internal", input: internalInput(body), expectedVersion }, new Date()));
-  });
-  // Xác nhận tạo sự kiện nội bộ từ bản nháp
-  router.post(`${internalBase}/:id/create`, authGuard(guard), async (req, res) => {
-    ok(res, await actOnClubEvent(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
-      { kind: "create-internal", ...parse(clubEventVersionBody, req.body) }, new Date()));
   });
   // Proposal document endpoints: template metadata/download, evidence upload, and access URLs.
   router.get("/events/proposal-template", authGuard(guard, false), async (_req, res) => {

@@ -65,7 +65,6 @@ const stubAuth: AuthRouteDeps = {
 const stubClubEvents: ClubEventRepository = {
   list: async () => [], options: async () => ({ properties: [], bookings: [] }), find: async () => null,
   participants: async () => [], feedback: async () => [], create: async () => { throw new Error("unused"); }, act: async () => { throw new Error("unused"); },
-  createInternal: async () => { throw new Error("unused"); },
   proposalDocument: async () => null, proposalTemplate: async () => { throw new Error("unused"); },
   saveProposalTemplate: async () => { throw new Error("unused"); },
 };
@@ -259,8 +258,6 @@ const stubDashboard: DashboardRepository = {
   student: async (_userId, now) => ({ kind: "student", generatedAt: now, panels: [] }),
   club: async (clubId, _permissions, now) => ({ kind: "club", clubId, generatedAt: now, panels: [] }),
   icpdp: async (now) => ({ kind: "icpdp", generatedAt: now, panels: [] }),
-  internalEvents: async () => ({ items: [], clubs: [], semesters: [] }),
-  internalEvent: async () => null,
   boardHistory: async () => null,
 };
 const stubLeadershipTransitions: LeadershipTransitionRepository = {
@@ -368,6 +365,8 @@ describe("openapi document", () => {
     }
 
     expect([...served].sort()).toEqual([...documented].sort());
+    expect([...served].some((path) => path.includes("internal-events"))).toBe(false);
+    expect([...documented].some((path) => path.includes("internal-events"))).toBe(false);
   });
 
   it("guards every mutation or explicitly lists it as public", () => {

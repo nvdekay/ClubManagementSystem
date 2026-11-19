@@ -16,7 +16,6 @@ export function assertEventNotice(startAt: Date, now: Date, noticeHours: number)
     throw new DomainError(`submit at least ${noticeHours} hours before the event starts`, "validation", { noticeHours });
   }
 }
-export const INTERNAL_EVENT_NOTICE_HOURS = 24;
 export const APPROVED_EVENT_CANCEL_NOTICE_HOURS = 72;
 // Đảm bảo yêu cầu huỷ sự kiện đã duyệt cách giờ bắt đầu tối thiểu số giờ quy định
 /** Sự kiện ICPDP đã duyệt chỉ được yêu cầu huỷ khi còn ít nhất 72 giờ trước startAt. */
@@ -28,25 +27,9 @@ export function assertApprovedEventCancellationNotice(startAt: Date, now: Date, 
 }
 // Đảm bảo sự kiện nội bộ được công bố trước giờ bắt đầu đủ thời gian báo trước
 /** Sự kiện nội bộ chỉ được chính thức hoá (CREATED/PUBLIC) hoặc dời lịch CREATED khi còn ít nhất 24 giờ. */
-export function assertInternalEventNotice(startAt: Date, now: Date): void {
-  if (startAt.getTime() - now.getTime() < INTERNAL_EVENT_NOTICE_HOURS * 3600000) {
-    throw new DomainError(`internal event must start at least ${INTERNAL_EVENT_NOTICE_HOURS} hours from now`, "validation",
-      { noticeHours: INTERNAL_EVENT_NOTICE_HOURS });
-  }
-}
-// Chỉ cho sửa sự kiện nội bộ ở trạng thái DRAFT hoặc CREATED
-/** Chỉ sự kiện nội bộ DRAFT và CREATED mới được sửa; đã công bố thì khoá lịch. */
-export function assertInternalEventEditable(state: string): void {
-  if (state === "PUBLIC" || state === "ONGOING") {
-    throw new DomainError("published internal event schedule is locked; only cancellation is allowed", "conflict");
-  }
-  if (state !== "DRAFT" && state !== "CREATED") throw new DomainError("internal event cannot be edited in its current state", "conflict");
-}
-// Kiểm tra đối tượng tham dự của đề xuất ICPDP và dòng ngân sách đi kèm
-/** Plan B: đề xuất ICPDP là PUBLIC, hoặc MEMBERS_ONLY kèm ít nhất một dòng ngân sách yêu cầu. */
 export function assertProposalAudience(input: Pick<ClubEventInput, "audienceScope" | "budgetLines">): void {
-  if (input.audienceScope === "MEMBERS_ONLY" && input.budgetLines.length === 0) {
-    throw new DomainError("internal events without university budget must use the internal event flow", "validation");
+  if (input.audienceScope !== "PUBLIC") {
+    throw new DomainError("only public event proposals are supported", "validation");
   }
 }
 // Kiểm tra dữ liệu sự kiện CLB và trả về học kỳ chứa sự kiện

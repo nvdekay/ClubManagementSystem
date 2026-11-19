@@ -1,12 +1,10 @@
 import { Types } from "mongoose";
 import {
-  RECORDED_EVENT_STATES, type BoardSeatSource, type ClubBoardHistory, type InternalEventDetail,
-  type InternalEventFilter, type InternalEventList, type InternalEventSummary,
+  type BoardSeatSource, type ClubBoardHistory,
 } from "../../domain/dashboard.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
-const LIST_LIMIT = 200;
 
 // Trả chuỗi không rỗng hoặc undefined
 function optionalText(value: unknown): string | undefined {
@@ -14,83 +12,6 @@ function optionalText(value: unknown): string | undefined {
 }
 
 // Bộ lọc sự kiện nội bộ đã được ghi nhận
-export function recordedInternal(): Doc {
-  return { organizerType: { $ne: "ICPDP" }, audienceScope: "MEMBERS_ONLY", state: { $in: [...RECORDED_EVENT_STATES] } };
-}
-
-// Tổng hợp số đăng ký và điểm danh cho danh sách sự kiện nội bộ
-async function summaries(docs: Doc[]): Promise<InternalEventSummary[]> {
-  const ids = docs.map((doc) => doc._id as Types.ObjectId);
-  const clubIds = [...new Set(docs.map((doc) => String(doc.clubId)))].map((id) => new Types.ObjectId(id));
-  const [registrations, attendances, clubs] = await Promise.all([
-    m.eventRegistrations!.aggregate<{ _id: Types.ObjectId; count: number }>([
-      { $match: { eventId: { $in: ids }, state: "Confirmed" } }, { $group: { _id: "$eventId", count: { $sum: 1 } } }]),
-    m.attendances!.aggregate<{ _id: Types.ObjectId; count: number }>([
-      { $match: { eventId: { $in: ids } } }, { $group: { _id: "$eventId", count: { $sum: 1 } } }]),
-    m.clubs!.find({ _id: { $in: clubIds } }).select({ name: 1 }).lean(),
-  ]);
-  const registered = new Map(registrations.map((row) => [String(row._id), row.count]));
-  const attended = new Map(attendances.map((row) => [String(row._id), row.count]));
-  const names = new Map(clubs.map((club) => [String(club._id), String(club.name)]));
-  return docs.map((doc) => ({
-    id: String(doc._id), clubId: String(doc.clubId),
-    clubName: names.get(String(doc.clubId)) ?? optionalText(doc.clubName) ?? "",
-    title: String(doc.title), startAt: doc.startAt as Date, endAt: doc.endAt as Date,
-    semesterCode: String(doc.semesterCode), state: String(doc.state),
-    ...(optionalText(doc.venueText) ? { venueText: String(doc.venueText) } : {}),
-    capacity: Number(doc.capacity ?? 0),
-    registrations: registered.get(String(doc._id)) ?? 0, attendances: attended.get(String(doc._id)) ?? 0,
-  }));
-}
-
-// UC02: ICPDP xem danh sách sự kiện nội bộ của mọi CLB
-/** FR-UC02-02, BR53: sự kiện nội bộ đã ghi nhận của mọi CLB, mới nhất trước, lọc theo CLB và học kỳ. */
-export async function internalEvents(filter: InternalEventFilter): Promise<InternalEventList> {
-  const base = recordedInternal();
-  const query: Doc = { ...base,
-    ...(filter.clubId ? { clubId: new Types.ObjectId(filter.clubId) } : {}),
-    ...(filter.semesterCode ? { semesterCode: filter.semesterCode } : {}) };
-  const [docs, clubIds, semesters] = await Promise.all([
-    m.events!.find(query).sort({ startAt: -1, _id: -1 }).limit(LIST_LIMIT).lean(),
-    m.events!.distinct("clubId", base),
-    m.events!.distinct("semesterCode", base),
-  ]);
-  const clubs = await m.clubs!.find({ _id: { $in: clubIds } }).select({ name: 1 }).lean();
-  return {
-    items: await summaries(docs),
-    clubs: clubs.map((club) => ({ id: String(club._id), name: String(club.name) }))
-      .sort((left, right) => left.name.localeCompare(right.name, "vi")),
-    semesters: (semesters as unknown[]).map(String).sort().reverse(),
-  };
-}
-
-// UC02: ICPDP xem chi tiết và điểm danh một sự kiện nội bộ
-/** Sự kiện và điểm danh của nó, chỉ đọc: ICPDP xem, còn mọi thay đổi vẫn thuộc về CLB. */
-export async function internalEvent(eventId: string): Promise<InternalEventDetail | null> {
-  const doc = await m.events!.findOne({ _id: new Types.ObjectId(eventId), ...recordedInternal() }).lean();
-  if (!doc) return null;
-  const [summary] = await summaries([doc]);
-  const rows = await m.attendances!.find({ eventId: doc._id }).sort({ checkedInAt: 1 }).lean();
-  const users = await m.users!.find({ _id: { $in: rows.map((row) => row.studentId) } })
-    .select({ displayName: 1, email: 1 }).lean();
-  const byId = new Map(users.map((user) => [String(user._id), user]));
-  return {
-    ...summary!,
-    ...(optionalText(doc.objective) ? { objective: String(doc.objective) } : {}),
-    attendance: rows.map((row) => {
-      const user = byId.get(String(row.studentId));
-      return { studentName: String(user?.displayName ?? ""), email: String(user?.email ?? ""),
-        checkedInAt: row.checkedInAt as Date, method: String(row.method), finalized: Boolean(row.finalized) };
-    }),
-  };
-}
-
-// UC02: đọc lịch sử ban chủ nhiệm và cơ cấu vai trò của CLB
-/**
- * BR56: mọi phiên bản cơ cấu vai trò và các ghế ban chủ nhiệm của từng nhiệm kỳ. Mỗi ghế nêu rõ bước
- * đã xác nhận nó — ghế đề cử UC11 đã xác nhận, kế hoạch UC13 đã xác nhận cho nhiệm kỳ đó, hoặc
- * nếu không thì là nhiệm kỳ sáng lập được duyệt cùng đơn UC08.
- */
 export async function clubBoardHistory(clubId: string): Promise<ClubBoardHistory | null> {
   const id = new Types.ObjectId(clubId);
   const club = await m.clubs!.findById(id).select({ code: 1, name: 1, state: 1, sourceApplicationId: 1 }).lean();

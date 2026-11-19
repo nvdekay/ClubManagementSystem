@@ -8,7 +8,7 @@ export const dashboardPanelKeys = [
   "missingEvidence", "overdueReports", "upcomingBookings", "feedback", "openViolations",
   "currentTerms", "structureHistory", "pendingClubApplications", "pendingReports",
   "approvalTasks", "overdueApprovals", "activeClubs", "suspendedClubs",
-  "unreconciledBudgets", "overdueSettlements", "overdueRefunds", "internalEvents",
+  "unreconciledBudgets", "overdueSettlements", "overdueRefunds",
   "roleStructures", "boardHistory", "transitionFollowUps", "withdrawalRequests",
 ] as const;
 
@@ -27,7 +27,7 @@ export interface FailedDashboardPanel {
 
 export interface DashboardMonthCount { month: string; count: number }
 /** UC02: `count = publicCount + internalCount` (nội bộ = chỉ dành cho thành viên, có ngân sách hoặc tự túc). */
-export interface DashboardMonthEventCount extends DashboardMonthCount { publicCount: number; internalCount: number }
+export type DashboardMonthEventCount = DashboardMonthCount;
 
 export interface IcpdpDashboardCharts {
   queues: { entityType: string; onTime: number; overdue: number }[];
@@ -59,32 +59,6 @@ export type DashboardContext =
   | { workspace: "club"; clubId: string };
 
 /** UC02 xem chi tiết: một sự kiện nội bộ đã ghi nhận của bất kỳ CLB nào (BR53). */
-export interface InternalEventSummary {
-  id: string;
-  clubId: string;
-  clubName: string;
-  title: string;
-  startAt: string;
-  endAt: string;
-  semesterCode: string;
-  state: string;
-  venueText?: string;
-  capacity: number;
-  registrations: number;
-  attendances: number;
-}
-
-export interface InternalEventList {
-  items: InternalEventSummary[];
-  clubs: { id: string; name: string }[];
-  semesters: string[];
-}
-
-export interface InternalEventDetail extends InternalEventSummary {
-  objective?: string;
-  attendance: { studentName: string; email: string; checkedInAt: string; method: string; finalized: boolean }[];
-}
-
 export type BoardSeatSource = "APPLICATION" | "NOMINATION" | "TRANSITION";
 
 /** BR56: các phiên bản cơ cấu và ban chủ nhiệm của mọi nhiệm kỳ, mới nhất trước. */
@@ -140,20 +114,6 @@ export function fetchDashboard(context: DashboardContext, signal: AbortSignal): 
 }
 
 // GET /dashboard/internal-events: sự kiện nội bộ lọc theo CLB và học kỳ
-export function fetchInternalEvents(filter: { clubId: string; semesterCode: string }, signal: AbortSignal): Promise<InternalEventList> {
-  const params = new URLSearchParams();
-  if (filter.clubId) params.set("clubId", filter.clubId);
-  if (filter.semesterCode) params.set("semesterCode", filter.semesterCode);
-  const query = params.toString();
-  return get(`/internal-events${query ? `?${query}` : ""}`, signal);
-}
-
-// GET chi tiết một sự kiện nội bộ
-export function fetchInternalEvent(id: string, signal: AbortSignal): Promise<InternalEventDetail> {
-  return get(`/internal-events/${encodeURIComponent(id)}`, signal);
-}
-
-// GET lịch sử ban chủ nhiệm của CLB
 export function fetchClubBoardHistory(clubId: string, signal: AbortSignal): Promise<ClubBoardHistory> {
   return get(`/clubs/${encodeURIComponent(clubId)}/board-history`, signal);
 }

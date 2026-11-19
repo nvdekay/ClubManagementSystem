@@ -38,7 +38,7 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
   const window = months(now, -5, 2);
   const [tasks, events, fields, states, policy] = await Promise.all([
     m.approvalTasks!.find({ state: { $in: ["Open", "Escalated"] } }).select({ entityType: 1, slaDueAt: 1 }).lean(),
-    m.events!.find({ state: { $in: [...RECORDED_EVENT_STATES] }, startAt: { $gte: window[0]!.start, $lt: window.at(-1)!.end } })
+    m.events!.find({ audienceScope: "PUBLIC", state: { $in: [...RECORDED_EVENT_STATES] }, startAt: { $gte: window[0]!.start, $lt: window.at(-1)!.end } })
       .select({ startAt: 1, audienceScope: 1 }).lean(),
     m.clubs!.aggregate<{ _id: string | null; count: number }>([
       { $match: { state: { $in: ["Active", "Suspended", "Dissolving"] } } },
@@ -66,8 +66,7 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
       .sort((a, b) => b.onTime + b.overdue - (a.onTime + a.overdue) || a.entityType.localeCompare(b.entityType)),
     eventsByMonth: window.map((month) => {
       const inMonth = events.filter((event) => (event.startAt as Date) >= month.start && (event.startAt as Date) < month.end);
-      const internalCount = inMonth.filter((event) => event.audienceScope === "MEMBERS_ONLY").length;
-      return { month: month.key, count: inMonth.length, publicCount: inMonth.length - internalCount, internalCount };
+      return { month: month.key, count: inMonth.length };
     }),
     clubsByField: tail ? [...head, { field: "other", count: tail }] : head,
     clubsByState: states.map((item) => ({ state: item._id, count: item.count })),

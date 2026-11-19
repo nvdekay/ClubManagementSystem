@@ -86,10 +86,7 @@ export function EventProposalReviewPage() {
   }
 
   /** Dịch mã rủi ro đã biết và giữ nguyên giá trị chưa nhận diện để vẫn hiển thị được. */
-  function riskLabel(value: string) {
-    return value === "HIGH" ? t("eventReviews.riskHIGH") : value === "MEDIUM" ? t("eventReviews.riskMEDIUM")
-      : value === "LOW" ? t("eventReviews.riskLOW") : value;
-  }
+
 
   /** Dịch trạng thái vòng đời sự kiện để hiển thị trên nhãn trạng thái của trang. */
   function stateLabel(value: string) {
@@ -192,7 +189,6 @@ export function EventProposalReviewPage() {
     { key: "capacity", label: t("eventReviews.capacity"), read: (v) => String(v.payload.capacity ?? "") },
     { key: "objective", label: t("eventReviews.objective"), read: (v) => text(v.payload.objective) ?? "" },
     { key: "plan", label: t("eventReviews.plan"), read: (v) => text(v.payload.plan) ?? "" },
-    { key: "risk", label: t("eventReviews.risk"), read: (v) => riskLabel(text(v.payload.riskCategory) ?? "") },
     { key: "riskNote", label: t("eventReviews.riskNote"), read: (v) => text(v.payload.riskNote) ?? "" },
     { key: "facilityNeeds", label: t("eventReviews.facilityNeeds"), read: (v) => text(v.payload.facilityNeeds) ?? "" },
     { key: "occurrences", label: t("eventReviews.occurrences"), read: (v) => (Array.isArray(v.payload.occurrences)
@@ -224,7 +220,6 @@ export function EventProposalReviewPage() {
   const stateTone: AppBadgeTone = ["Approved", "Upcoming", "Ongoing"].includes(event.state) ? "success"
     : ["Rejected", "Expired", "Cancelled"].includes(event.state) ? "danger"
       : event.state === "Revision Requested" ? "warning" : "info";
-  const riskTone: AppBadgeTone = event.riskCategory === "HIGH" ? "danger" : event.riskCategory === "MEDIUM" ? "warning" : "success";
   const conflictTone: AppBadgeTone = event.conflictResult === "Blocking Conflict" ? "danger"
     : event.conflictResult === "Warning" ? "warning" : "success";
   const semesterTotal = semesterBudgets.reduce((sum, item) => sum + item.approvedTotal, 0);
@@ -371,8 +366,7 @@ export function EventProposalReviewPage() {
               <div><dt className={label}>{t("eventReviews.audience")}</dt><dd className="mt-1 font-medium">
                 {event.audienceScope === "MEMBERS_ONLY" ? t("eventReviews.audienceMembers") : t("eventReviews.audiencePublic")}</dd></div>
               <div><dt className={label}>{t("eventReviews.capacity")}</dt><dd className="mt-1 font-medium">{t("eventReviews.capacityValue", { count: event.capacity })}</dd></div>
-              <div><dt className={label}>{t("eventReviews.risk")}</dt><dd className="mt-1">
-                {event.riskCategory ? <AppBadge tone={riskTone}>{riskLabel(event.riskCategory)}</AppBadge> : "—"}</dd></div>
+
               <div><dt className={label}>{t("eventReviews.conflict")}</dt><dd className="mt-1 space-y-1">
                 <AppBadge tone={conflictTone}>{event.conflictResult === "Blocking Conflict" ? t("eventReviews.conflictBlocking")
                   : event.conflictResult === "Warning" ? t("eventReviews.conflictWarning") : t("eventReviews.conflictNone")}</AppBadge>

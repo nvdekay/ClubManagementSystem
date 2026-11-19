@@ -116,21 +116,17 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     expect((await repo.find(String(club), d.event.id))?.event.confirmedRegistrationCount).toBe(2);
     await expect(repo.act(String(club), d.event.id, { kind: "capacity", capacity: 1 }, String(actor), now)).rejects.toMatchObject({ kind: "conflict" });
   });
-  it("sends unbudgeted members-only proposals to the internal flow and accepts budgeted ones (Plan B)", async () => {
-    await expect(repo.create(String(club), input("MEMBERS_ONLY"), String(actor), now)).rejects.toMatchObject({ kind: "validation" });
-    const d = await draft(input());
-    await expect(repo.act(String(club), d.event.id, { kind: "save", input: input("MEMBERS_ONLY"), expectedVersion: d.event.version }, String(actor), now))
-      .rejects.toMatchObject({ kind: "validation", message: "internal events without university budget must use the internal event flow" });
-    // A draft saved before Plan B may still be members-only without budget; submitting it is refused too.
-    await m.events!.updateOne({ _id: new Types.ObjectId(d.event.id) }, { $set: { audienceScope: "MEMBERS_ONLY" } });
-    await expect(repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "validation" });
-    const funded = await submitted("MEMBERS_ONLY", true);
-    expect(funded.event).toMatchObject({ state: "Approved", audienceScope: "MEMBERS_ONLY" });
+  it("rejects members-only proposals with or without a budget", async () => {
+    for (const funded of [false, true]) {
+      await expect(repo.create(String(club), input("MEMBERS_ONLY", funded), String(actor), now)).rejects.toMatchObject({ kind: "validation" });
+    }
+    const event = await draft(input());
+    await expect(repo.act(String(club), event.event.id, { kind: "save", input: input("MEMBERS_ONLY"), expectedVersion: event.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "validation" });
   });
-  it("closes legacy direct internal attendance, excludes no-shows from feedback, and unlocks with audit", async () => {
+  it("finalizes public attendance, excludes no-shows from feedback, and unlocks with audit", async () => {
     // Events recorded through the removed direct branch (MEMBERS_ONLY, no budget, published as Upcoming) keep closing on finalize.
     const legacy = await m.events!.create({ organizerType: "CLUB", clubId: club, clubName: "Wave 3", title: "Legacy", objective: "Goal", startAt, endAt,
-      venueText: "Campus", audienceScope: "MEMBERS_ONLY", capacity: 2, riskCategory: "LOW", semesterCode: "Fall", state: "Upcoming", currentRevisionNo: 1,
+      venueText: "Campus", audienceScope: "PUBLIC", capacity: 2, semesterCode: "Fall", state: "Upcoming", currentRevisionNo: 1,
       publishedAt: now, registrationOpenAt: now, registrationCloseAt: startAt, checkInOpenAt: startAt, checkInCloseAt: endAt, checkInCode: "LEGACY1",
       allowWalkIn: true, waitlistEnabled: true, createdAt: now });
     const d = (await repo.find(String(club), String(legacy._id)))!;
@@ -141,7 +137,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     await expect(repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).rejects.toMatchObject({ kind: "conflict" });
     for (const [index, s] of students.slice(0, 2).entries()) await repo.act(String(club), d.event.id, { kind: "correct", studentId: String(s), reason: "Verified", absent: index === 1 }, String(actor), finished);
     expect((await mongoEventFeedbackRepository().target(d.event.id, String(students[1])))?.attendance).toBeNull();
-    expect((await repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).event).toMatchObject({ state: "Closed", attendanceFinalized: true });
+    expect((await repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).event).toMatchObject({ state: "Completed", attendanceFinalized: true });
     await expect(mongoEventCheckInRepository().checkIn({ eventId: d.event.id, studentId: String(students[2]), method: "walk-in", now: finished })).rejects.toMatchObject({ kind: "conflict" });
     expect((await repo.act(String(club), d.event.id, { kind: "unlock", reason: "Review" }, String(actor), finished)).event).toMatchObject({ state: "Completed", attendanceFinalized: false });
   });

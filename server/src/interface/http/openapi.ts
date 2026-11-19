@@ -88,7 +88,7 @@ const Dashboard = z.object({
   ])),
   icpdpCharts: z.object({
     queues: z.array(z.object({ entityType: z.string(), onTime: z.number().int(), overdue: z.number().int() })),
-    eventsByMonth: z.array(z.object({ month: z.string(), count: z.number().int(), publicCount: z.number().int(), internalCount: z.number().int() })),
+    eventsByMonth: z.array(z.object({ month: z.string(), count: z.number().int() })),
     clubsByField: z.array(z.object({ field: z.string(), count: z.number().int() })),
     clubsByState: z.array(z.object({ state: z.string(), count: z.number().int() })),
     budget: z.object({ periodCode: z.string().optional(), approved: z.number(), disbursed: z.number() }),
@@ -202,7 +202,7 @@ const EventProposalSummary = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(), objective: z.string().optional(),
   startAt: z.string(), endAt: z.string(), semesterCode: z.string(), venueText: z.string().optional(),
   property: z.object({ id: z.string(), code: z.string(), name: z.string() }).optional(),
-  audienceScope: z.string(), capacity: z.number(), riskCategory: z.string().optional(), state: z.string(),
+  audienceScope: z.string(), capacity: z.number(), state: z.string(),
   conflictResult: z.string().optional(), conflictDetail: z.unknown().optional(),
   approvalConditions: z.array(z.string()), currentRevisionNo: z.number(),
   revisionDeadlineAt: z.string().optional(), requestedBudgetTotal: z.number(),
@@ -1018,28 +1018,6 @@ export const openApiDocument = createDocument({
             content: { "application/json": { schema: ApiError } } },
           "403": { description: "Workspace access denied",
             content: { "application/json": { schema: ApiError } } },
-        },
-      },
-    },
-    "/dashboard/internal-events": {
-      get: {
-        summary: "UC02 ICPDP list of recorded internal (MEMBERS_ONLY) events, by club and semester (BR53)",
-        requestParams: { query: z.object({ clubId: z.string().optional(), semesterCode: z.string().optional() }) },
-        responses: {
-          "200": { description: "Events with registration and check-in totals, plus the filter options" },
-          "400": { description: "Invalid filter", content: { "application/json": { schema: ApiError } } },
-          "403": { description: "ICPDP role required", content: { "application/json": { schema: ApiError } } },
-        },
-      },
-    },
-    "/dashboard/internal-events/{id}": {
-      get: {
-        summary: "UC02 one internal event with its attendance, read-only",
-        requestParams: { path: IdPath },
-        responses: {
-          "200": { description: "Event detail and attendance rows" },
-          "403": { description: "ICPDP role required", content: { "application/json": { schema: ApiError } } },
-          "404": { description: "No recorded internal event with this id", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

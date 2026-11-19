@@ -11,7 +11,7 @@ function date(value: unknown): Date {
 }
 
 /** UC24: các sự kiện đã đăng của CLB; sự kiện nội bộ xuất hiện từ PUBLIC, không bao giờ ở DRAFT hay CREATED. */
-const shownEventStates = ["Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "PUBLIC", "ONGOING", "FINISH"];
+const shownEventStates = ["Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"];
 
 // Repository không gian thành viên của sinh viên trong CLB
 export function mongoMemberSpaceRepository(): MemberSpaceRepository {
@@ -76,7 +76,7 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
 
       const [pending, eventDocs, attendanceDocs, myMemberships] = await Promise.all([
         requests.findOne({ membershipId: mine._id, state: { $in: ["Pending", "Held"] } }).sort({ createdAt: -1 }).lean(),
-        events.find({ clubId: clubObjectId, state: { $in: shownEventStates }, publishedAt: { $exists: true, $ne: null },
+        events.find({ clubId: clubObjectId, audienceScope: "PUBLIC", state: { $in: shownEventStates }, publishedAt: { $exists: true, $ne: null },
           endAt: { $gt: now } }).sort({ startAt: 1 }).limit(20).lean(),
         attendances.find({ clubId: clubObjectId, studentId: userObjectId }).sort({ checkedInAt: -1 }).limit(50).lean(),
         memberships.find({ userId: userObjectId, state: { $in: ["Active", "Inactive"] }, clubId: { $ne: clubObjectId } }).lean(),

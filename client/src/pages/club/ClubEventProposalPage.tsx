@@ -40,7 +40,6 @@ function freshEvent(): ClubEventInput {
     venueText: "",
     audienceScope: "PUBLIC",
     capacity: 0,
-    riskCategory: "LOW",
     budgetLines: [],
     bookingIds: [],
     registrationForm: [],
@@ -60,7 +59,6 @@ function inputFromEvent(event: ClubEvent): ClubEventInput {
     propertyId: event.propertyId,
     audienceScope: event.audienceScope,
     capacity: event.capacity,
-    riskCategory: event.riskCategory,
     riskNote: event.riskNote,
     facilityNeeds: event.facilityNeeds,
     occurrences: (event.occurrences ?? []).map((o) => ({
@@ -162,7 +160,6 @@ function ProposalForm({ clubId, csrfToken, detail, options, optionsError }: Prop
         : [{ startAt: draft.startAt, endAt: draft.endAt, propertyId: draft.propertyId }],
     ),
     // Đề xuất chỉ dành cho thành viên cần ít nhất một dòng kinh phí đề nghị.
-    budget: draft.audienceScope === "MEMBERS_ONLY" && draft.budgetLines.length === 0 ? t("clubEvents.membersOnlyNeedsBudget") : null,
   };
   // Kiểm tra từng dòng kinh phí, giữ chỉ số dòng trong khóa lỗi để xác định đúng vị trí.
   draft.budgetLines.forEach((line, index) => {
