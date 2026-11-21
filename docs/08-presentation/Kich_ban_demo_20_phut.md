@@ -217,3 +217,26 @@ Dùng hạng mục tài trợ do `seed:defense:p5` tạo sẵn.
 như chuyển giao ban chủ nhiệm, tạm ngừng CLB, đặt cơ sở vật chất, khiếu nại và hồ sơ vi phạm đều chạy cùng
 mô hình này; chúng em có video và sẵn sàng demo thêm nếu thầy muốn."*
 
+## 4. Rủi ro và phương án dự phòng
+
+| Rủi ro | Dấu hiệu | Xử lý |
+|---|---|---|
+| Google login chậm/lỗi | Kẹt ở trang Google | Dùng profile đã đăng nhập sẵn; nếu hỏng hẳn, chuyển sang video trong `docs/07-demo-videos/` |
+| Import đề án lỗi | Báo thiếu mục | Đã import thử trước; giữ sẵn một đề xuất ở trạng thái nháp để nộp thay |
+| "Không đủ thời gian báo trước" khi nộp sự kiện | Lỗi 7 ngày | Sửa ngày trong file `.docx` ≥ 7 ngày sau hôm demo |
+| Check-in báo hết khung giờ | Lỗi khung check-in | Chạy lại `seed:defense:p3` trong vòng 2 giờ trước demo (khôi phục DB trước) |
+| Nút "Chốt điểm danh" chưa hiện | Sự kiện chưa Completed | Khởi động lại server để job cập nhật trạng thái |
+| Tải file lỗi | "file storage is not configured" | Kiểm tra `CLOUDINARY_*` trước giờ demo |
+| Hỏng dữ liệu giữa chừng | — | `mongorestore --uri "mongodb://127.0.0.1:27017/ucms" --archive=ucms-truoc-demo.archive --drop` |
+
+## 5. Câu hỏi thầy dễ hỏi khi xem demo
+
+- **Ai cấp quyền Chủ nhiệm?** Không ai cấp tay. Quyền Club Leader đến từ ghế Chủ nhiệm/Phó chủ nhiệm được
+  duyệt ở UC08 hoặc ICPDP xác nhận ở UC11/UC13; quyền được tính lại ở mỗi request.
+- **Vì sao phải "Nhận" trước khi duyệt?** Để mỗi hồ sơ có đúng một người chịu trách nhiệm và hai cán bộ không
+  quyết định chồng nhau.
+- **Sao không check-in bằng QR?** Bản hiện tại dùng mã check-in dạng chữ và deep link điền sẵn mã; quét QR bằng
+  camera chưa làm.
+- **Kinh phí sai thì sao?** ICPDP ghi giá trị hợp lệ thấp hơn kèm lý do, hoặc trả về để sửa trong hạn gốc.
+- **Dữ liệu đánh giá lấy từ đâu?** Từ chính các bản ghi vừa demo (điểm danh, phản hồi, chứng từ, báo cáo),
+  không nhập tay điểm, trừ tiêu chí ICPDP đặt là chấm tay.
