@@ -404,8 +404,8 @@ function ItemCard({
         </div>
       )}
 
-      {/* Lựa chọn hình thức giải ngân cho khoản trả sau dưới 5 triệu */}
-      {isAfterEvent && !requiresDirectVendor && (
+      {/* Lựa chọn hình thức giải ngân cho khoản trả sau dưới 5 triệu (chỉ phía CLB chọn khi còn chỉnh sửa) */}
+      {isClub && isAfterEvent && !requiresDirectVendor && (
         <fieldset className="mt-4 rounded-xl border border-border-app bg-surface-app/60 p-3.5">
           <legend className="px-1 text-xs font-semibold text-text-app">{t("sponsoredItems.channelSelectLabel")}</legend>
           <div className="mt-2 space-y-2 text-sm">
@@ -438,124 +438,196 @@ function ItemCard({
       {/* Khu vực chi phí, thông tin chuyển khoản nhà cung cấp và tệp chứng từ */}
       {showInvoiceSection && (
         <>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-text-app">
-              {t("sponsoredItems.amount")}
-              <AppMoneyInput
-                value={amount}
-                onValueChange={setAmount}
-                disabled={!editable || mutation.isPending}
-                className="mt-1 w-full font-normal"
-              />
-            </label>
-            <label className="text-sm font-medium text-text-app">
-              {t("sponsoredItems.description")}
-              <AppTextarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                disabled={!editable || mutation.isPending}
-                maxLength={2000}
-                className="mt-1 w-full font-normal"
-              />
-            </label>
-          </div>
-
-          {usesDirectVendor && (
-            <section className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app/50 p-4">
-              <div>
-                <h5 className="text-sm font-semibold text-text-app">{t("sponsoredItems.vendorSectionTitle")}</h5>
-                <p className="mt-0.5 text-xs text-muted-app">{t("sponsoredItems.vendorSectionHint")}</p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-sm text-text-app">
-                  {t("sponsoredItems.vendorName")}
-                  <AppInput
-                    value={vendor.vendorName}
-                    maxLength={200}
+          {isClub ? (
+            <>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="text-sm font-medium text-text-app">
+                  {t("sponsoredItems.amount")}
+                  <AppMoneyInput
+                    value={amount}
+                    onValueChange={setAmount}
                     disabled={!editable || mutation.isPending}
-                    onChange={(event) => setVendor((prev) => ({ ...prev, vendorName: event.target.value }))}
-                    className="mt-1 w-full"
+                    className="mt-1 w-full font-normal"
                   />
                 </label>
-                <label className="text-sm text-text-app">
-                  {t("sponsoredItems.accountHolder")}
-                  <AppInput
-                    value={vendor.accountHolder}
-                    maxLength={200}
+                <label className="text-sm font-medium text-text-app">
+                  {t("sponsoredItems.description")}
+                  <AppTextarea
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
                     disabled={!editable || mutation.isPending}
-                    onChange={(event) => setVendor((prev) => ({ ...prev, accountHolder: event.target.value }))}
-                    className="mt-1 w-full"
-                  />
-                </label>
-                <label className="text-sm text-text-app">
-                  {t("sponsoredItems.accountNumber")}
-                  <AppInput
-                    value={vendor.accountNumber}
-                    maxLength={50}
-                    disabled={!editable || mutation.isPending}
-                    onChange={(event) => setVendor((prev) => ({ ...prev, accountNumber: event.target.value }))}
-                    className="mt-1 w-full tabular-nums"
-                  />
-                </label>
-                <label className="text-sm text-text-app">
-                  {t("sponsoredItems.bankName")}
-                  <AppInput
-                    value={vendor.bankName}
-                    maxLength={200}
-                    disabled={!editable || mutation.isPending}
-                    onChange={(event) => setVendor((prev) => ({ ...prev, bankName: event.target.value }))}
-                    className="mt-1 w-full"
-                  />
-                </label>
-                <label className="text-sm text-text-app">
-                  {t("sponsoredItems.bankBranch")}
-                  <AppInput
-                    value={vendor.bankBranch ?? ""}
-                    maxLength={200}
-                    disabled={!editable || mutation.isPending}
-                    onChange={(event) => setVendor((prev) => ({ ...prev, bankBranch: event.target.value }))}
-                    className="mt-1 w-full"
-                  />
-                </label>
-                <label className="text-sm text-text-app">
-                  {t("sponsoredItems.transferNote")}
-                  <AppInput
-                    value={vendor.transferNote ?? ""}
-                    maxLength={500}
-                    disabled={!editable || mutation.isPending}
-                    onChange={(event) => setVendor((prev) => ({ ...prev, transferNote: event.target.value }))}
-                    className="mt-1 w-full"
+                    maxLength={2000}
+                    className="mt-1 w-full font-normal"
                   />
                 </label>
               </div>
-            </section>
+
+              {usesDirectVendor && (
+                <section className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app/50 p-4">
+                  <div>
+                    <h5 className="text-sm font-semibold text-text-app">{t("sponsoredItems.vendorSectionTitle")}</h5>
+                    <p className="mt-0.5 text-xs text-muted-app">{t("sponsoredItems.vendorSectionHint")}</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="text-sm text-text-app">
+                      {t("sponsoredItems.vendorName")}
+                      <AppInput
+                        value={vendor.vendorName}
+                        maxLength={200}
+                        disabled={!editable || mutation.isPending}
+                        onChange={(event) => setVendor((prev) => ({ ...prev, vendorName: event.target.value }))}
+                        className="mt-1 w-full"
+                      />
+                    </label>
+                    <label className="text-sm text-text-app">
+                      {t("sponsoredItems.accountHolder")}
+                      <AppInput
+                        value={vendor.accountHolder}
+                        maxLength={200}
+                        disabled={!editable || mutation.isPending}
+                        onChange={(event) => setVendor((prev) => ({ ...prev, accountHolder: event.target.value }))}
+                        className="mt-1 w-full"
+                      />
+                    </label>
+                    <label className="text-sm text-text-app">
+                      {t("sponsoredItems.accountNumber")}
+                      <AppInput
+                        value={vendor.accountNumber}
+                        maxLength={50}
+                        disabled={!editable || mutation.isPending}
+                        onChange={(event) => setVendor((prev) => ({ ...prev, accountNumber: event.target.value }))}
+                        className="mt-1 w-full tabular-nums"
+                      />
+                    </label>
+                    <label className="text-sm text-text-app">
+                      {t("sponsoredItems.bankName")}
+                      <AppInput
+                        value={vendor.bankName}
+                        maxLength={200}
+                        disabled={!editable || mutation.isPending}
+                        onChange={(event) => setVendor((prev) => ({ ...prev, bankName: event.target.value }))}
+                        className="mt-1 w-full"
+                      />
+                    </label>
+                    <label className="text-sm text-text-app">
+                      {t("sponsoredItems.bankBranch")}
+                      <AppInput
+                        value={vendor.bankBranch ?? ""}
+                        maxLength={200}
+                        disabled={!editable || mutation.isPending}
+                        onChange={(event) => setVendor((prev) => ({ ...prev, bankBranch: event.target.value }))}
+                        className="mt-1 w-full"
+                      />
+                    </label>
+                    <label className="text-sm text-text-app">
+                      {t("sponsoredItems.transferNote")}
+                      <AppInput
+                        value={vendor.transferNote ?? ""}
+                        maxLength={500}
+                        disabled={!editable || mutation.isPending}
+                        onChange={(event) => setVendor((prev) => ({ ...prev, transferNote: event.target.value }))}
+                        className="mt-1 w-full"
+                      />
+                    </label>
+                  </div>
+                </section>
+              )}
+
+              {editable && (
+                <AppButton
+                  type="button"
+                  className="mt-3"
+                  disabled={mutation.isPending || !dirty || Number(amount) <= 0}
+                  onClick={() => void saveDraft()}
+                >
+                  {t("sponsoredItems.save")}
+                </AppButton>
+              )}
+            </>
+          ) : (
+            <>
+              <dl className="mt-4 grid gap-3 rounded-xl border border-border-app bg-surface-app/40 p-4 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs text-muted-app">{t("sponsoredItems.amount")}</dt>
+                  <dd className="mt-1 font-semibold tabular-nums text-text-app">
+                    {item.amount > 0 ? money(item.amount) : t("sponsoredItems.notEntered")}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-app">{t("sponsoredItems.description")}</dt>
+                  <dd className="mt-1 whitespace-pre-wrap break-words text-text-app">
+                    {item.description || t("sponsoredItems.notEntered")}
+                  </dd>
+                </div>
+              </dl>
+
+              {usesDirectVendor && (
+                <section className="mt-4 space-y-2 rounded-xl border border-border-app bg-surface-app/50 p-4">
+                  <div>
+                    <h5 className="text-sm font-semibold text-text-app">{t("sponsoredItems.vendorSectionTitle")}</h5>
+                    <p className="mt-0.5 text-xs text-muted-app">{t("sponsoredItems.vendorSectionHint")}</p>
+                  </div>
+                  {item.vendorBankInfo ? (
+                    <dl className="grid gap-3 pt-1 text-sm sm:grid-cols-2">
+                      <div>
+                        <dt className="text-xs text-muted-app">{t("sponsoredItems.vendorName")}</dt>
+                        <dd className="mt-0.5 font-medium break-words text-text-app">{item.vendorBankInfo.vendorName}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-muted-app">{t("sponsoredItems.accountHolder")}</dt>
+                        <dd className="mt-0.5 font-medium break-words text-text-app">{item.vendorBankInfo.accountHolder}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-muted-app">{t("sponsoredItems.accountNumber")}</dt>
+                        <dd className="mt-0.5 font-semibold tabular-nums text-text-app">{item.vendorBankInfo.accountNumber}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-muted-app">{t("sponsoredItems.bankName")}</dt>
+                        <dd className="mt-0.5 font-medium break-words text-text-app">{item.vendorBankInfo.bankName}</dd>
+                      </div>
+                      {item.vendorBankInfo.bankBranch && (
+                        <div>
+                          <dt className="text-xs text-muted-app">{t("sponsoredItems.bankBranch")}</dt>
+                          <dd className="mt-0.5 break-words text-text-app">{item.vendorBankInfo.bankBranch}</dd>
+                        </div>
+                      )}
+                      {item.vendorBankInfo.transferNote && (
+                        <div>
+                          <dt className="text-xs text-muted-app">{t("sponsoredItems.transferNote")}</dt>
+                          <dd className="mt-0.5 break-words text-text-app">{item.vendorBankInfo.transferNote}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  ) : (
+                    <p className="text-sm text-muted-app">{t("sponsoredItems.notEntered")}</p>
+                  )}
+                </section>
+              )}
+            </>
           )}
 
-          {editable && (
-            <AppButton
-              type="button"
-              className="mt-3"
-              disabled={mutation.isPending || !dirty || Number(amount) <= 0}
-              onClick={() => void saveDraft()}
-            >
-              {t("sponsoredItems.save")}
-            </AppButton>
-          )}
-
+          {/* Chứng từ: CLB được tải lên khi editable; ICPDP chỉ xem và lưu về máy */}
           <div
-            className="mt-5 rounded-xl border border-dashed border-border-app p-4"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              void upload(Array.from(event.dataTransfer.files));
-            }}
+            className={cn("mt-5 rounded-xl border border-border-app p-4", {
+              "border-dashed": editable,
+              "bg-surface-app/30": !editable,
+            })}
+            onDragOver={editable ? (event) => event.preventDefault() : undefined}
+            onDrop={
+              editable
+                ? (event) => {
+                    event.preventDefault();
+                    void upload(Array.from(event.dataTransfer.files));
+                  }
+                : undefined
+            }
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-sm font-medium text-text-app">
-                  {t("sponsoredItems.images")} · {item.images.length}/5
+                  {t(isOfficer ? "sponsoredItems.officerImages" : "sponsoredItems.images")} · {item.images.length}/5
                 </p>
-                <p className="mt-1 text-xs text-muted-app">{t("sponsoredItems.imageHint")}</p>
+                {editable && <p className="mt-1 text-xs text-muted-app">{t("sponsoredItems.imageHint")}</p>}
               </div>
               {isOfficer && item.images.length > 0 && (
                 <AppButton
@@ -569,20 +641,24 @@ function ItemCard({
                 </AppButton>
               )}
             </div>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-              {item.images.map((file) => (
-                <AttachmentCard
-                  key={file.id}
-                  budgetId={budget.id}
-                  clubId={clubId}
-                  itemId={item.id}
-                  file={file}
-                  editable={editable}
-                  busy={mutation.isPending}
-                  onRemove={() => void act({ kind: "removeImage", imageId: file.id })}
-                />
-              ))}
-            </div>
+            {item.images.length > 0 ? (
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                {item.images.map((file) => (
+                  <AttachmentCard
+                    key={file.id}
+                    budgetId={budget.id}
+                    clubId={clubId}
+                    itemId={item.id}
+                    file={file}
+                    editable={editable}
+                    busy={mutation.isPending}
+                    onRemove={() => void act({ kind: "removeImage", imageId: file.id })}
+                  />
+                ))}
+              </div>
+            ) : !editable ? (
+              <p className="mt-2 text-sm text-muted-app">{t("sponsoredItems.noAttachmentsYet")}</p>
+            ) : null}
             {editable && item.images.length < 5 && (
               <label className="relative mt-3 inline-flex min-h-10 items-center rounded-lg border border-border-app bg-surface-app px-4 text-sm font-medium text-primary-app hover:bg-surface-strong-app focus-within:outline-2 focus-within:outline-ring-app">
                 {t("sponsoredItems.upload")}
@@ -599,7 +675,7 @@ function ItemCard({
                 />
               </label>
             )}
-            {progress.total > 0 && (
+            {editable && progress.total > 0 && (
               <p role="status" className="mt-2 text-sm text-muted-app">
                 {t("sponsoredItems.progress", progress)}
               </p>

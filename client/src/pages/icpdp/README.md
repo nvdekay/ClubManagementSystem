@@ -57,13 +57,7 @@ tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa đi�
 kèm (chỉ xem), kinh phí xin theo hạng mục và kinh phí CLB đã được duyệt trong kỳ; quyết định Yêu cầu sửa / Phê
 duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối.
 
-`BudgetsPage` (UC35) gồm `BudgetsPage` (danh sách kinh phí sự kiện đã duyệt, lọc theo trạng thái) và
-`BudgetDetailPage`: số duyệt, đã chuyển, còn được tạm ứng, hạn quyết toán, hạng mục duyệt, các lần chuyển
-tiền và form ghi đúng một loại dòng tiền mà kinh phí đang nhận (tạm ứng / cấp bù / CLB hoàn trả).
-
-Với ngân sách tài trợ theo hạng mục, `BudgetDetailPage` tại `/workspace/budgets/:id` dùng
-`SponsoredItems` để xem ảnh, trả sửa và duyệt đối soát (hạng mục thành `Accepted`). ICPDP không ghi nhận thanh toán: CLB tự xác nhận đã nhận tiền. Không hiển thị
-form tạm ứng cũ cho hồ sơ này. `EventProposalReviewPage` chỉ quyết định tài trợ và dẫn sang trang tài chính.
+`BudgetsPage` (UC35) gồm `BudgetsPage` (danh sách kinh phí sự kiện đã duyệt, lọc theo trạng thái xử lý và câu lạc bộ) và `BudgetDetailPage` (`/workspace/budgets/:id`, dùng `SponsoredItems`): quản lý giải ngân theo 3 kênh (tạm ứng trước sự kiện qua cán bộ ICPDP, hoàn sau sự kiện dưới 5 triệu, hợp đồng nhà cung cấp từ 5 triệu trở lên), đối soát chứng từ và tải lưu tệp đính kèm. `EventProposalReviewPage` quyết định tài trợ theo từng hạng mục và dẫn sang trang tài chính.
 
 `ViolationsPage` (UC40) gồm `ViolationsPage` (danh sách hồ sơ vi phạm theo nhóm trạng thái, form mở hồ sơ:
 CLB, nguồn phát hiện, mức độ, sự việc, sự kiện/kinh phí liên quan, chứng cứ) và `ViolationDetailPage`: chứng

@@ -18,6 +18,14 @@ export interface BudgetFlow {
   recordedByName?: string;
 }
 
+export interface BudgetItemCounts {
+  total: number;
+  awaitingAdvance: number;
+  awaitingReview: number;
+  awaitingVendorPay: number;
+  awaitingClubConfirm: number;
+}
+
 export interface BudgetSummary {
   id: string;
   eventId: string;
@@ -38,6 +46,7 @@ export interface BudgetSummary {
   settlementBalance?: number;
   recoveryAmount?: number;
   recoveryDueAt?: Date;
+  itemCounts?: BudgetItemCounts;
   createdAt: Date;
 }
 

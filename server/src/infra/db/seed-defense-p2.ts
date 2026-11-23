@@ -131,12 +131,58 @@ async function ensureEvents(clubId: Types.ObjectId): Promise<void> {
       endAt: new Date(startAt.getTime() + 3 * 3_600_000), publishedAt: new Date(now.getTime() - 20 * DAY),
       attendanceFinalized: true, objective: "Hướng dẫn Git cho thành viên mới", createdAt: new Date(now.getTime() - 20 * DAY) }]);
     const total = Types.Decimal128.fromString("1500000");
-    await m.eventBudgets!.create({ eventId: event!._id, clubId, periodCode: "Fall 2026", state: "Disbursed",
-      lines: [{ category: "In tài liệu", requestedAmount: 800_000, approvedAmount: 800_000 },
-        { category: "Nước uống", requestedAmount: 700_000, approvedAmount: 700_000 }],
-      requestedTotal: total, approvedTotal: total, disbursedTotal: total,
-      refundedTotal: Types.Decimal128.fromString("0"), approvedByDecisionId: new Types.ObjectId(), isSettlementLate: false,
-      settlementDueAt: vnDayStart(8), createdAt: new Date(now.getTime() - 15 * DAY) });
+    const approvedAt = new Date(now.getTime() - 15 * DAY);
+    const endAt = new Date(startAt.getTime() + 3 * 3_600_000);
+    await m.eventBudgets!.create({
+      eventId: event!._id,
+      clubId,
+      periodCode: "Fall 2026",
+      state: "Approved",
+      lines: [
+        { category: "In tài liệu", requestedAmount: 800_000, approvedAmount: 800_000, fundingDecision: "BEFORE_EVENT" },
+        { category: "Nước uống", requestedAmount: 700_000, approvedAmount: 700_000, fundingDecision: "AFTER_EVENT" },
+      ],
+      sponsoredItems: [
+        {
+          id: `${String(event!._id)}-1`,
+          category: "In tài liệu",
+          requestedAmount: 800_000,
+          approvedAmount: 800_000,
+          fundingDecision: "BEFORE_EVENT",
+          paymentChannel: "VIA_OFFICER_ADVANCE",
+          approvedAt: approvedAt.toISOString(),
+          eventEndAt: endAt.toISOString(),
+          status: "Draft",
+          amount: 0,
+          description: "",
+          images: [],
+          advanceAmount: 800_000,
+          advancedAt: new Date(now.getTime() - 10 * DAY).toISOString(),
+          advanceReceivedAt: new Date(now.getTime() - 9 * DAY).toISOString(),
+        },
+        {
+          id: `${String(event!._id)}-2`,
+          category: "Nước uống",
+          requestedAmount: 700_000,
+          approvedAmount: 700_000,
+          fundingDecision: "AFTER_EVENT",
+          paymentChannel: "VIA_OFFICER_REIMBURSE",
+          approvedAt: approvedAt.toISOString(),
+          eventEndAt: endAt.toISOString(),
+          status: "Draft",
+          amount: 0,
+          description: "",
+          images: [],
+        },
+      ],
+      requestedTotal: total,
+      approvedTotal: total,
+      disbursedTotal: Types.Decimal128.fromString("800000"),
+      refundedTotal: Types.Decimal128.fromString("0"),
+      approvedByDecisionId: new Types.ObjectId(),
+      isSettlementLate: false,
+      createdAt: approvedAt,
+    });
   }
 }
 

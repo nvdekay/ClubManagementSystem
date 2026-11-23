@@ -199,18 +199,75 @@ async function main() {
           attendanceId, studentId, clubId, scores: [{ criterionCode: "overall", score }], isAnonymous: random() < 0.3,
           ...(random() < 0.5 ? { comment: pick(COMMENTS) } : {}), submittedAt: new Date(endAt.getTime() + int(1, 48) * 3600_000) }));
       }
-      // Ngân sách cho sự kiện học kỳ này: tạm ứng đủ, quyết toán khi sự kiện đã qua một thời gian.
+      // Ngân sách cho sự kiện học kỳ này theo mô hình sponsoredItems mới.
       if (semesterCode === semesterOf(now) && random() < 0.6) {
         const approved = int(2, 9) * 1_000_000;
         const settled = finished && !recent;
-        added("budgets", await insert(m.eventBudgets!, { _id: oid(`budget:${String(eventId)}`), eventId, clubId,
-          lines: [{ category: "Chi phí tổ chức", requestedAmount: approved + 500_000, approvedAmount: approved }],
-          requestedTotal: money(approved + 500_000), approvedTotal: money(approved), approvedByDecisionId: oid(`decision:${String(eventId)}`),
-          disbursedTotal: money(finished ? approved : 0), refundedTotal: money(0), isSettlementLate: false,
-          state: settled ? "Closed" : finished ? "Disbursed" : "Approved", periodCode: semesterCode,
-          ...(finished ? { settlementDueAt: new Date(endAt.getTime() + 14 * DAY) } : {}),
-          ...(settled ? { settlementSubmittedAt: new Date(endAt.getTime() + 7 * DAY), acceptedTotal: money(approved) } : {}),
-          createdAt: new Date(startAt.getTime() - 25 * DAY) }));
+        const createdAt = new Date(startAt.getTime() - 25 * DAY);
+        const isAfterDirect = approved >= 5_000_000;
+        const decision = !isAfterDirect && random() < 0.4 ? "BEFORE_EVENT" : "AFTER_EVENT";
+        const channel = decision === "BEFORE_EVENT"
+          ? "VIA_OFFICER_ADVANCE"
+          : isAfterDirect
+            ? "DIRECT_VENDOR"
+            : "VIA_OFFICER_REIMBURSE";
+        const itemStatus = settled
+          ? (decision === "BEFORE_EVENT" ? "Reconciled" : "Paid")
+          : decision === "BEFORE_EVENT"
+            ? (finished ? "Draft" : "AwaitingAdvance")
+            : "Draft";
+        const disbursed = settled || (decision === "BEFORE_EVENT" && finished) ? approved : 0;
+        const itemId = String(oid(`budget-item:${String(eventId)}:0`));
+        added("budgets", await insert(m.eventBudgets!, {
+          _id: oid(`budget:${String(eventId)}`),
+          eventId,
+          clubId,
+          lines: [{ category: "Chi phí tổ chức", requestedAmount: approved, approvedAmount: approved, fundingDecision: decision }],
+          sponsoredItems: [{
+            id: itemId,
+            category: "Chi phí tổ chức",
+            requestedAmount: approved,
+            approvedAmount: approved,
+            fundingDecision: decision,
+            paymentChannel: channel,
+            approvedAt: createdAt.toISOString(),
+            eventEndAt: endAt.toISOString(),
+            status: itemStatus,
+            amount: settled ? approved : 0,
+            description: settled ? "Chi phí tổ chức sự kiện" : "",
+            images: [],
+            ...(decision === "BEFORE_EVENT" && disbursed > 0 ? {
+              advanceAmount: approved,
+              advancedAt: new Date(startAt.getTime() - 10 * DAY).toISOString(),
+              advanceReceivedAt: new Date(startAt.getTime() - 9 * DAY).toISOString(),
+            } : {}),
+            ...(channel === "DIRECT_VENDOR" && settled ? {
+              vendorBankInfo: {
+                vendorName: "Công ty TNHH Tổ chức Sự kiện FPT",
+                accountHolder: "CONG TY TNHH TO CHUC SU KIEN FPT",
+                accountNumber: "19036888999001",
+                bankName: "Techcombank",
+              },
+            } : {}),
+            ...(settled ? {
+              submittedAt: new Date(endAt.getTime() + 5 * DAY).toISOString(),
+              validAmount: approved,
+              payable: approved,
+              reviewReason: "Chứng từ đầy đủ, hợp lệ.",
+              ...(decision === "BEFORE_EVENT" ? { reconciliationDelta: 0 } : { paidAt: new Date(endAt.getTime() + 7 * DAY).toISOString() }),
+            } : {}),
+          }],
+          requestedTotal: money(approved),
+          approvedTotal: money(approved),
+          approvedByDecisionId: oid(`decision:${String(eventId)}`),
+          disbursedTotal: money(disbursed),
+          refundedTotal: money(0),
+          isSettlementLate: false,
+          state: settled ? "Closed" : "Approved",
+          periodCode: semesterCode,
+          ...(settled ? { acceptedTotal: money(approved) } : {}),
+          createdAt,
+        }));
       }
     }
 

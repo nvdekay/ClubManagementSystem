@@ -3,9 +3,11 @@ import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import {
   allowedFlow, checkFlow, settlementDueAt, stateAfterFlow,
-  type BudgetDetail, type BudgetDisbursementRepository, type BudgetFlow, type BudgetFlowKind, type BudgetSummary,
+  type BudgetDetail, type BudgetDisbursementRepository, type BudgetFlow, type BudgetFlowKind,
+  type BudgetItemCounts, type BudgetSummary,
 } from "../../domain/budget-disbursement.js";
 import { DomainError } from "../../domain/errors.js";
+import { resolvePaymentChannel, type SponsoredItem } from "../../domain/sponsored-item.js";
 import { clubBoardUserIds, queueNotifications } from "./club-board.js";
 import { ucmsModels } from "./ucms-models.js";
 
@@ -33,8 +35,34 @@ function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// Đếm số lượng hạng mục cần xử lý theo trạng thái cho ngân sách tài trợ mới
+function summarizeItems(raw: unknown): BudgetItemCounts | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const items = raw as SponsoredItem[];
+  const counts: BudgetItemCounts = {
+    total: 0,
+    awaitingAdvance: 0,
+    awaitingReview: 0,
+    awaitingVendorPay: 0,
+    awaitingClubConfirm: 0,
+  };
+  for (const item of items) {
+    if (item.fundingDecision === "NOT_SPONSORED") continue;
+    counts.total += 1;
+    const channel = resolvePaymentChannel(item);
+    if (item.status === "AwaitingAdvance") counts.awaitingAdvance += 1;
+    else if (item.status === "Submitted") counts.awaitingReview += 1;
+    else if (item.status === "Accepted" && channel === "DIRECT_VENDOR") counts.awaitingVendorPay += 1;
+    else if (item.status === "AdvanceSent" || (item.status === "Accepted" && channel === "VIA_OFFICER_REIMBURSE")) {
+      counts.awaitingClubConfirm += 1;
+    }
+  }
+  return counts;
+}
+
 // Ánh xạ ngân sách sự kiện thành BudgetSummary
 function summaryFrom(doc: Doc, event: Doc | undefined, clubName: string | undefined): BudgetSummary {
+  const itemCounts = summarizeItems(doc.sponsoredItems);
   return {
     id: String(doc._id), eventId: String(doc.eventId), eventTitle: String(event?.title ?? ""),
     eventState: String(event?.state ?? ""), eventStartAt: event?.startAt as Date, eventEndAt: event?.endAt as Date,
@@ -46,6 +74,7 @@ function summaryFrom(doc: Doc, event: Doc | undefined, clubName: string | undefi
     ...(optionalMoney(doc.settlementBalance) !== undefined ? { settlementBalance: money(doc.settlementBalance) } : {}),
     ...(optionalMoney(doc.recoveryAmount) !== undefined ? { recoveryAmount: money(doc.recoveryAmount) } : {}),
     ...(doc.recoveryDueAt instanceof Date ? { recoveryDueAt: doc.recoveryDueAt } : {}),
+    ...(itemCounts ? { itemCounts } : {}),
     createdAt: doc.createdAt as Date,
   };
 }

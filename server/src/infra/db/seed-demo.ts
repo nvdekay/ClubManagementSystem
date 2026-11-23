@@ -4,6 +4,7 @@ import type { ClubEventInput, EventProposalDocument } from "../../domain/club-ev
 // Cách dùng: npm run seed:demo -- --owner=<email Google của bạn> [--owner-name="Tên của bạn"]
 // Chạy lại an toàn: mỗi phần bỏ qua những gì đã có. Ở đâu có flow thì ghi qua usecase và
 // repository của app, nên dữ liệu tuân theo cùng quy tắc như UI.
+import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import type { FounderRole } from "../../domain/club-application.js";
@@ -33,7 +34,6 @@ import { mongoAuthRepository } from "./mongo-auth-repository.js";
 import { mongoClubApplicationRepository } from "./mongo-club-application-repository.js";
 import { mongoClubApplicationReviewRepository } from "./mongo-club-application-review-repository.js";
 import { mongoEventFeedbackRepository } from "./mongo-event-feedback-repository.js";
-import { mongoBudgetDisbursementRepository } from "./mongo-budget-disbursement-repository.js";
 import { mongoViolationRepository } from "./mongo-violation-repository.js";
 import { mongoSchoolEventRepository } from "./mongo-school-event-repository.js";
 import { mongoEvaluationSchemeRepository } from "./mongo-evaluation-scheme-repository.js";
@@ -556,26 +556,94 @@ try {
       { category: "Vật liệu", amount: 800_000, purpose: "Giấy, màu và dụng cụ thủ công" },
     ] }],
   });
-  // Ngân sách mà workshop HEBE đã có trong học kỳ này, để reviewer thấy tổng đang chạy của CLB.
+  // Ngân sách mà workshop HEBE đã có trong học kỳ này (mô hình sponsoredItems mới).
   if (!(await ucmsModels.eventBudgets!.exists({ eventId: workshop }))) {
-    await ucmsModels.eventBudgets!.create({ eventId: workshop, clubId: club("HEBE").id,
-      lines: [{ category: "Hậu cần", requestedAmount: 2_000_000, approvedAmount: 1_500_000, reason: "Phòng đã có sẵn loa" }],
-      requestedTotal: Types.Decimal128.fromString("2000000"), approvedTotal: Types.Decimal128.fromString("1500000"),
-      approvedByDecisionId: new Types.ObjectId(), disbursedTotal: Types.Decimal128.fromString("0"),
-      refundedTotal: Types.Decimal128.fromString("0"), isSettlementLate: false, state: "Approved",
-      periodCode: "Fall 2026", createdAt: at(-14 * DAY) });
+    const workshopDoc = await ucmsModels.events!.findById(workshop).select({ endAt: 1 }).lean();
+    const workshopEndAt = (workshopDoc?.endAt as Date | undefined) ?? at(14 * DAY);
+    await ucmsModels.eventBudgets!.create({
+      eventId: workshop,
+      clubId: club("HEBE").id,
+      lines: [{ category: "Hậu cần", requestedAmount: 2_000_000, approvedAmount: 2_000_000, fundingDecision: "AFTER_EVENT" }],
+      sponsoredItems: [{
+        id: randomUUID(),
+        category: "Hậu cần",
+        requestedAmount: 2_000_000,
+        approvedAmount: 2_000_000,
+        fundingDecision: "AFTER_EVENT",
+        paymentChannel: "VIA_OFFICER_REIMBURSE",
+        approvedAt: at(-14 * DAY).toISOString(),
+        eventEndAt: workshopEndAt.toISOString(),
+        status: "Draft",
+        amount: 0,
+        description: "",
+        images: [],
+      }],
+      requestedTotal: Types.Decimal128.fromString("2000000"),
+      approvedTotal: Types.Decimal128.fromString("2000000"),
+      approvedByDecisionId: new Types.ObjectId(),
+      disbursedTotal: Types.Decimal128.fromString("0"),
+      refundedTotal: Types.Decimal128.fromString("0"),
+      isSettlementLate: false,
+      state: "Approved",
+      periodCode: "Fall 2026",
+      createdAt: at(-14 * DAY),
+    });
   }
-  // UC35: đêm chào tân sinh viên K21 được duyệt 4M và ICPDP đã ứng trước một phần.
+  // Đêm chào tân sinh viên K21: 1 hạng mục trả trước qua cán bộ ICPDP (đã nhận ứng) + 1 hạng mục trả sau >= 5 triệu (hợp đồng NCC).
   if (!(await ucmsModels.eventBudgets!.exists({ eventId: welcome }))) {
-    const welcomeBudget = await ucmsModels.eventBudgets!.create({ eventId: welcome, clubId: club("HEBE").id,
-      lines: [{ category: "Âm thanh ánh sáng", requestedAmount: 3_000_000, approvedAmount: 3_000_000 },
-        { category: "Truyền thông", requestedAmount: 1_500_000, approvedAmount: 1_000_000, reason: "Chỉ in poster A3" }],
-      requestedTotal: Types.Decimal128.fromString("4500000"), approvedTotal: Types.Decimal128.fromString("4000000"),
-      approvedByDecisionId: new Types.ObjectId(), disbursedTotal: Types.Decimal128.fromString("0"),
-      refundedTotal: Types.Decimal128.fromString("0"), isSettlementLate: false, state: "Approved",
-      periodCode: "Fall 2026", createdAt: at(-24 * DAY) });
-    await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
-      amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
+    const welcomeDoc = await ucmsModels.events!.findById(welcome).select({ endAt: 1 }).lean();
+    const welcomeEndAt = (welcomeDoc?.endAt as Date | undefined) ?? at(-1 * DAY);
+    await ucmsModels.eventBudgets!.create({
+      eventId: welcome,
+      clubId: club("HEBE").id,
+      lines: [
+        { category: "Âm thanh ánh sáng", requestedAmount: 6_000_000, approvedAmount: 6_000_000, fundingDecision: "AFTER_EVENT" },
+        { category: "Truyền thông", requestedAmount: 2_000_000, approvedAmount: 2_000_000, fundingDecision: "BEFORE_EVENT" },
+      ],
+      sponsoredItems: [
+        {
+          id: randomUUID(),
+          category: "Âm thanh ánh sáng",
+          requestedAmount: 6_000_000,
+          approvedAmount: 6_000_000,
+          fundingDecision: "AFTER_EVENT",
+          paymentChannel: "DIRECT_VENDOR",
+          approvedAt: at(-24 * DAY).toISOString(),
+          eventEndAt: welcomeEndAt.toISOString(),
+          status: "Draft",
+          amount: 0,
+          description: "",
+          images: [],
+        },
+        {
+          id: randomUUID(),
+          category: "Truyền thông",
+          requestedAmount: 2_000_000,
+          approvedAmount: 2_000_000,
+          fundingDecision: "BEFORE_EVENT",
+          paymentChannel: "VIA_OFFICER_ADVANCE",
+          approvedAt: at(-24 * DAY).toISOString(),
+          eventEndAt: welcomeEndAt.toISOString(),
+          status: "Draft",
+          amount: 0,
+          description: "",
+          images: [],
+          advanceAmount: 2_000_000,
+          advancedAt: at(-12 * DAY).toISOString(),
+          advancedBy: String(owner),
+          advanceReceivedAt: at(-11 * DAY).toISOString(),
+        },
+      ],
+      requestedTotal: Types.Decimal128.fromString("8000000"),
+      approvedTotal: Types.Decimal128.fromString("8000000"),
+      approvedByDecisionId: new Types.ObjectId(),
+      disbursedTotal: Types.Decimal128.fromString("2000000"),
+      refundedTotal: Types.Decimal128.fromString("0"),
+      isSettlementLate: false,
+      state: "Approved",
+      periodCode: "Fall 2026",
+      createdAt: at(-24 * DAY),
+    });
   }
   // ── Báo cáo định kỳ Summer 2026 (UC39; UC38 là phía CLB nên các báo cáo được chèn trực tiếp) ──
   // Cấu trúc theo hợp đồng dữ liệu UC38 trong .sdd/specs/feat-periodic-reports/SPEC.md. CLB không có dòng nào là quá hạn.

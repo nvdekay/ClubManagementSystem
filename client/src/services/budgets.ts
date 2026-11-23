@@ -1,5 +1,12 @@
 import { ApiError, apiFetch } from "@/services/apiError";
-export type BudgetFlowKind = "Advance" | "TopUp" | "Refund";
+
+export interface BudgetItemCounts {
+  total: number;
+  awaitingAdvance: number;
+  awaitingReview: number;
+  awaitingVendorPay: number;
+  awaitingClubConfirm: number;
+}
 
 export interface BudgetSummary {
   id: string;
@@ -16,36 +23,12 @@ export interface BudgetSummary {
   approvedTotal: number;
   disbursedTotal: number;
   refundedTotal: number;
-  settlementDueAt?: string;
-  settlementBalance?: number;
-  recoveryAmount?: number;
-  recoveryDueAt?: string;
+  itemCounts?: BudgetItemCounts;
   createdAt: string;
-}
-
-export interface BudgetFlow {
-  id: string;
-  kind: BudgetFlowKind;
-  amount: number;
-  disbursedAt: string;
-  paymentReference?: string;
-  note?: string;
-  recordedBy: string;
-  recordedByName?: string;
 }
 
 export interface BudgetDetail extends BudgetSummary {
   lines: { category: string; requestedAmount: number; approvedAmount: number; reason?: string }[];
-  flows: BudgetFlow[];
-  allowed?: { kind: BudgetFlowKind; max: number; exact?: number };
-}
-
-export interface BudgetFlowInput {
-  kind: BudgetFlowKind;
-  amount: number;
-  disbursedAt?: string;
-  paymentReference?: string;
-  note?: string;
 }
 
 // Gọi API /admin/budgets và trả về data, ném ApiError nếu lỗi
@@ -67,10 +50,4 @@ export function fetchBudgets(signal: AbortSignal): Promise<BudgetSummary[]> {
 // GET chi tiết một ngân sách
 export function fetchBudget(id: string, signal: AbortSignal): Promise<BudgetDetail> {
   return request(`/${encodeURIComponent(id)}`, { signal });
-}
-
-// POST /flows: ghi nhận dòng tiền vào ngân sách
-export function recordBudgetFlow(id: string, input: BudgetFlowInput, csrfToken: string): Promise<BudgetDetail> {
-  return request(`/${encodeURIComponent(id)}/flows`, { method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(input) });
 }

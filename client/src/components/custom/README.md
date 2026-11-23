@@ -11,8 +11,8 @@ hưởng) và UC15 phía ICPDP (không có `clubId`: hàng đợi duyệt).
 
 Các component còn lại (đối chiếu 17/10/2026):
 
-- `FinanceWorkspace` — UC36 phía CLB (`ClubBudgetsPage`) và UC37 phía ICPDP (`ReconciliationPage`).
-- `SponsoredItems` — giải ngân theo hạng mục (trả trước qua cán bộ ICPDP, trả sau dưới 5 triệu tự chi hoặc hợp đồng, trả sau từ 5 triệu trở lên bắt buộc hợp đồng & thông tin chuyển khoản nhà cung cấp), tối đa 5 tệp JPG/PNG/PDF mỗi hạng mục và hỗ trợ cán bộ tải xuống chứng từ; hiển thị tại `FinanceWorkspace` của CLB và `BudgetDetailPage` của ICPDP. Chỉ dùng form legacy khi ngân sách không có dữ liệu tài trợ theo hạng mục.
+- `FinanceWorkspace` — chọn ngân sách sự kiện của CLB (`ClubBudgetsPage`) hoặc ICPDP (`ReconciliationPage`) và hiển thị `SponsoredItems`.
+- `SponsoredItems` — giải ngân theo hạng mục (trả trước qua cán bộ ICPDP, trả sau dưới 5 triệu tự chi hoặc hợp đồng, trả sau từ 5 triệu trở lên bắt buộc hợp đồng & thông tin chuyển khoản nhà cung cấp), tối đa 5 tệp JPG/PNG/PDF mỗi hạng mục và hỗ trợ cán bộ tải xuống chứng từ; hiển thị tại `FinanceWorkspace` và `BudgetDetailPage`.
 - `ReportWorkspace` — UC33 phía CLB (`ClubReportsPage`) và UC34 phía ICPDP (`EventReportsPage`).
 - `RoleDashboard`, `WorkspaceHome` — dashboard UC02 của ba trang chủ Student / CLB / ICPDP. Khi server
   trả `icpdpCharts`/`clubCharts`, `RoleDashboard` hiển thị `IcpdpDashboard` hoặc `ClubDashboard`
