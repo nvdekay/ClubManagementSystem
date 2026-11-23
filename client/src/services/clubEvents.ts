@@ -1,3 +1,4 @@
+import { proposalDocumentMaxBytes } from "@/utils/proposalFile";
 import { ApiError, apiFetch } from "@/services/apiError";
 export interface EventBudgetLine { category: string; amount: number; purpose: string; plannedItems?: string }
 export interface EventFormField { key: string; label: string; type: "text" | "textarea" | "select" | "radio" | "checkbox"; required: boolean; options?: string[] }
@@ -155,8 +156,8 @@ export async function fetchEventProposalPreviewFile(clubId: string, id: string, 
   const access = await accessEventProposalDocument(clubId, id);
   const response = await fetch(access.url, { signal, credentials: "omit" });
   if (!response.ok) throw new ApiError(`HTTP ${response.status}`);
-  if (Number(response.headers.get("content-length")) > 10 * 1024 * 1024) throw new ApiError("Document too large");
+  if (Number(response.headers.get("content-length")) > proposalDocumentMaxBytes) throw new ApiError("Document too large");
   const blob = await response.blob();
-  if (blob.size > 10 * 1024 * 1024) throw new ApiError("Document too large");
+  if (blob.size > proposalDocumentMaxBytes) throw new ApiError("Document too large");
   return new File([blob], access.fileName, { type: access.mimeType });
 }

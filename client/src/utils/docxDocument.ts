@@ -1,3 +1,4 @@
+import { proposalDocumentMaxBytes } from "@/utils/proposalFile";
 import { documentHref, type DocumentLink } from "@/utils/documentLinks";
 
 const WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -45,7 +46,7 @@ async function readDocxPart(buffer: ArrayBuffer, part: string, optional = false)
       if (view.getUint16(offset + 8, true) & 1 || size > MAX_XML_BYTES || !size || local + 30 > offset) throw new Error("invalid_docx");
       if (view.getUint32(local, true) !== 0x04034b50 || view.getUint16(local + 8, true) !== method) throw new Error("invalid_docx");
       const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
-      if (start + compressedSize > offset || compressedSize > 10 * 1024 * 1024) throw new Error("invalid_docx");
+      if (start + compressedSize > offset || compressedSize > proposalDocumentMaxBytes) throw new Error("invalid_docx");
       const compressed = bytes.slice(start, start + compressedSize);
       let xml: Uint8Array;
       if (method === 0) xml = compressed;
