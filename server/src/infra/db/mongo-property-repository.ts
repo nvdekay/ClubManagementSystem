@@ -115,6 +115,11 @@ export function mongoPropertyRepository(): PropertyRepository {
         if (await bookings.exists({ propertyId: before._id }).session(session)) {
           throw new DomainError("property has bookings; deactivate it instead", "conflict");
         }
+        // Sự kiện cấp trường và buổi bảo vệ giữ propertyId mà không sinh booking.
+        if (await ucmsModels.events!.exists({ propertyId: before._id }).session(session)
+          || await ucmsModels.eventDefenseSessions!.exists({ propertyId: before._id }).session(session)) {
+          throw new DomainError("property is used by events or defense sessions; deactivate it instead", "conflict");
+        }
         await properties.deleteOne({ _id: before._id }, { session });
         await audit(session, before._id, "PROPERTY_DELETED", actorId, propertyFrom(before), null, now);
       });

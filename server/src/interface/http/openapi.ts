@@ -591,7 +591,7 @@ const roomAllocationPaths = {
     get: { summary: "UC58 form options: semesters not yet ended, clubs that may receive rooms, active rooms",
       responses: { "200": { description: "Options", content: { "application/json": { schema: envelope(z.object({
         semesters: z.array(z.object({ code: z.string(), startAt: z.string(), endAt: z.string() })),
-        clubs: z.array(z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() })),
+        clubs: z.array(z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional(), dissolutionEffectiveTo: z.string().optional() })),
         rooms: z.array(Property) })) } } }, "403": { description: "ICPDP officer required" } } },
   },
   "/admin/room-allocations/occupancy": {
@@ -628,7 +628,7 @@ const roomAllocationPaths = {
   },
 } as const;
 const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Property.nullable(),
-  club: z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional() }).nullable(),
+  club: z.object({ id: z.string(), name: z.string(), state: z.string(), dissolutionSemester: z.string().optional(), dissolutionEffectiveTo: z.string().optional() }).nullable(),
   task: z.object({ id: z.string(), state: z.string(), assigneeId: z.string().optional(), openedAt: z.string() }).nullable(),
   versions: z.array(z.object({ versionNo: z.number().int(), payload: bookingBody, submittedBy: z.string(), submittedAt: z.string() })),
   decisions: z.array(bookingDecisionBody.extend({ id: z.string(), taskId: z.string(), actorId: z.string(), at: z.string() })),

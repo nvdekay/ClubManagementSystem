@@ -97,6 +97,8 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
           .select({ _id: 1 }).lean() : null,
         registrations.findOne({ eventId: eventObjectId, studentId: studentObjectId }).lean(),
       ]);
+      // Sự kiện chưa công bố coi như không tồn tại, trừ với sinh viên đã có bản đăng ký
+      if (!(event.publishedAt instanceof Date) && !registration) return null;
       const payload = proposal?.payload && typeof proposal.payload === "object"
         ? proposal.payload as Doc : {};
       return { event: { id: String(event._id), ...(event.clubId ? { clubId: String(event.clubId) } : {}),

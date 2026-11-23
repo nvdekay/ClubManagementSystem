@@ -183,6 +183,10 @@ export async function uploadRecruitmentAttachment(
     || !fileSignatureMatches(mimeType, bytes)) {
     throw new DomainError("invalid recruitment attachment", "validation");
   }
+  // Kiểm trùng trước khi upload để không để lại asset mồ côi trên storage.
+  if (application.attachments.some((item) => item.fieldKey === fieldKey)) {
+    throw new DomainError("an attachment already exists for this field", "conflict");
+  }
   const attachment = await storage.upload({ ownerId: userId, applicationId: application.id,
     fieldKey, fileName: normalizedName, mimeType, bytes, now });
   return repo.addAttachment({ applicationId: application.id, userId, attachment });

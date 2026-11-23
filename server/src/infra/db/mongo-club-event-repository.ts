@@ -1033,6 +1033,7 @@ export function mongoClubEventRepository(rules: ClubEventRules): ClubEventReposi
 						venueText: action.venueText,
 						bookingIds: [],
 						occurrences: input.occurrences?.map((occurrence) => ({
+							...occurrence,
 							startAt: new Date(occurrence.startAt.getTime() + offset),
 							endAt: new Date(occurrence.endAt.getTime() + offset),
 						})),

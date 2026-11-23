@@ -97,9 +97,11 @@ function message(error: unknown): string {
  */
 export async function deliverNotifications(repo: MailOutboxRepository, transport: MailTransport, now: Date,
   options: { batchSize?: number; appUrl?: string } = {}): Promise<{ inApp: number; sent: number; retried: number; failed: number }> {
+  const startedAt = Date.now();
   const result = { inApp: await repo.drainInApp(now), sent: 0, retried: 0, failed: 0 };
   for (let index = 0; index < (options.batchSize ?? 20); index += 1) {
-    const claim = await repo.claimNextEmail(now, MAIL_LEASE_MS);
+    // Lease tính từ lúc claim thật (`now` + thời gian batch đã chạy), không phải từ đầu batch, để không hết hạn khi đang gửi.
+    const claim = await repo.claimNextEmail(new Date(now.getTime() + Date.now() - startedAt), MAIL_LEASE_MS);
     if (!claim) break;
     if (!claim.toEmail) {
       // Không có địa chỉ để thử lại; bỏ ngay thay vì đốt số lần thử.

@@ -4,6 +4,7 @@ import { DomainError } from "../../domain/errors.js";
 import type { ClubMembershipRecord, ClubRosterMember, MembershipRepository, MembershipStatusChange,
   MembershipState, MembershipWithdrawalRequest } from "../../domain/membership.js";
 import { isBeforeToday } from "../../domain/membership.js";
+import { clubUserIdsWithPermission } from "./club-permission-holders.js";
 import { ucmsModels } from "./ucms-models.js";
 
 // Lọc mảng, chỉ giữ phần tử là object
@@ -111,31 +112,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       ...(user ? { displayName: String(user.displayName) } : {}),
       ...(pending ? { pendingWithdrawal: mapRequest(pending) } : {}),
       ...(includeHistory ? {} : { statusHistory: [] }) };
-  }
-
-  // Lấy id người quản lý CLB trong nhiệm kỳ Active để gửi thông báo
-  async function managerIds(clubId: Types.ObjectId, now: Date,
-    session: mongoose.ClientSession): Promise<Types.ObjectId[]> {
-    const activeTerms = await terms.find({ clubId, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } })
-      .select("_id").session(session).lean();
-    if (!activeTerms.length) return [];
-    const managePositions = await positions.find({ clubId, isActive: true,
-      $or: [{ permissionCodes: "club.member.manage" }, { isLeaderRole: true }] })
-      .select("_id isLeaderRole").session(session).lean();
-    if (!managePositions.length) return [];
-    const managerPositionIds = managePositions.map((item) => item._id);
-    const assignees = await assignments.find({ clubId, termId: { $in: activeTerms.map((item) => item._id) },
-      positionId: { $in: managerPositionIds }, effectiveFrom: { $lte: now },
-      $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null }, { effectiveTo: { $gt: now } }] })
-      .select("membershipId positionId confirmedBy").session(session).lean();
-    const leaderPositionIds = new Set(managePositions.filter((item) => item.isLeaderRole)
-      .map((item) => String(item._id)));
-    const managerMembershipIds = assignees.filter((item) =>
-      !leaderPositionIds.has(String(item.positionId)) || Boolean(item.confirmedBy))
-      .map((item) => item.membershipId);
-    const people = await memberships.find({ _id: { $in: managerMembershipIds }, clubId, state: "Active" })
-      .select("userId").session(session).lean();
-    return [...new Set(people.map((item) => String(item.userId)))].map((id) => new Types.ObjectId(id));
   }
 
   // Tạo thông báo liên quan đến thành viên
@@ -308,7 +284,8 @@ export function mongoMembershipRepository(): MembershipRepository {
           after: { membershipId, requestedEffectiveDate: input.requestedEffectiveDate,
             state: held ? "Held" : "Pending" }, correlationId: randomUUID(), at: input.now,
         }], { session, ordered: true });
-        const recipients = await managerIds(new Types.ObjectId(String(membership.clubId)), input.now, session);
+        const recipients = await clubUserIdsWithPermission(new Types.ObjectId(String(membership.clubId)),
+          "club.member.manage", input.now, session);
         for (const recipient of recipients) {
           await notify({ recipient, entityId: requestId, eventCode: "MEMBERSHIP_WITHDRAWAL_REQUESTED",
             clubId: new Types.ObjectId(String(membership.clubId)), now: input.now,

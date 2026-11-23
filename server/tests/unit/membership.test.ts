@@ -60,6 +60,16 @@ describe("UC21/UC22 membership lifecycle", () => {
     expect(captured.state).toBeUndefined();
   });
 
+  it("accepts a same-day effective date from a fast client clock, never a later day", async () => {
+    const { repo, captured } = repository();
+    await changeMembershipState(repo, access, actor, { clubId, membershipId,
+      state: "Inactive", effectiveDate: new Date(now.getTime() + 5_000) }, now);
+    expect(captured).toMatchObject({ state: "Inactive", date: now });
+    await expect(changeMembershipState(repo, access, actor, { clubId, membershipId,
+      state: "Inactive", effectiveDate: new Date("2026-10-09T17:00:00.000Z") }, now))
+      .rejects.toMatchObject({ kind: "validation" });
+  });
+
   it("requires a reason and a valid email for manual onboarding (UC20 A1, BR13)", async () => {
     const { repo, captured } = repository();
     await expect(onboardMemberManually(repo, access, actor, { clubId, email: "student@fpt.edu.vn", reason: "  " }, now))

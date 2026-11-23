@@ -22,9 +22,10 @@ function oid(id: string) { return new Types.ObjectId(id); }
 function conflict(message: string, details?: unknown): never { throw new DomainError(message, "conflict", details); }
 // Ánh xạ document CLB sang RoomAllocationClub
 function clubFrom(doc: Doc): RoomAllocationClub {
-  const dissolution = doc.dissolution as { effectiveSemester?: string } | undefined;
+  const dissolution = doc.dissolution as { effectiveSemester?: string; effectiveTo?: Date } | undefined;
   return { id: String(doc._id), name: String(doc.name), state: String(doc.state),
-    ...(dissolution?.effectiveSemester ? { dissolutionSemester: dissolution.effectiveSemester } : {}) };
+    ...(dissolution?.effectiveSemester ? { dissolutionSemester: dissolution.effectiveSemester } : {}),
+    ...(dissolution?.effectiveTo instanceof Date ? { dissolutionEffectiveTo: dissolution.effectiveTo } : {}) };
 }
 
 // Ghép bản ghi phân bổ phòng với thông tin thu hồi từ audit log

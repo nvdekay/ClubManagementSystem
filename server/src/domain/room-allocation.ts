@@ -21,7 +21,7 @@ export interface RoomAllocation {
   revokedAt?: Date; revokeReason?: string;
   occurrences: RoomAllocationOccurrence[];
 }
-export interface RoomAllocationClub { id: string; name: string; state: string; dissolutionSemester?: string }
+export interface RoomAllocationClub { id: string; name: string; state: string; dissolutionSemester?: string; dissolutionEffectiveTo?: Date }
 export interface RoomAllocationConflict { startAt: Date; endAt: Date; source: "booking" | "event" | "defense"; title: string; clubName?: string }
 /** Một ô của lưới tuần (UC58 A3) cùng các sự kiện hoặc booking đã duyệt sẽ chặn ô đó. */
 export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
@@ -132,8 +132,9 @@ export function planRoomAllocation(input: RoomAllocationInput, property: Propert
   if (!club) throw new DomainError("club not found", "not_found");
   if (!["Active", "Dissolving"].includes(club.state)) throw new DomainError("club cannot receive room allocations", "conflict");
   if (club.dissolutionSemester || club.state === "Dissolving") {
-    const cutoff = calendar.find((item) => item.code === club.dissolutionSemester);
-    if (!cutoff || semester.startAt > cutoff.endAt) throw new DomainError("allocation exceeds dissolution semester", "conflict");
+    // The decision's stored cutoff wins over the live calendar, which ICPDP may have edited since (BR45).
+    const cutoffEnd = club.dissolutionEffectiveTo ?? calendar.find((item) => item.code === club.dissolutionSemester)?.endAt;
+    if (!cutoffEnd || semester.startAt > cutoffEnd) throw new DomainError("allocation exceeds dissolution semester", "conflict");
   }
   if (!property || property.type !== "ROOM") throw new DomainError("room not found", "not_found");
   if (!property.isActive) throw new DomainError("property is inactive", "conflict");

@@ -302,6 +302,12 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
         const leaderCodes = new Set((proposed ?? currentPositions).filter((p) => p.isLeaderRole === true).map((p) => String(p.code)));
         const leaderMemberIds = candidateDocs.filter((c) => leaderCodes.has(String(c.positionCode)))
           .map((c) => new Types.ObjectId(String(c.membershipId)));
+        // Chạm vào user của ứng viên Chủ nhiệm để UC08/UC11 đồng thời nêu cùng người đó bị xung đột (BR06).
+        const leaderUserIds = activeMembers.filter((member) => leaderMemberIds.some((memberId) => memberId.equals(String(member._id))))
+          .map((member) => String(member.userId)).sort();
+        for (const userId of leaderUserIds) {
+          await users.updateOne({ _id: new Types.ObjectId(userId) }, { $currentDate: { updatedAt: true } }, { session });
+        }
         if ((await otherClubLeaderUserIds(session, plan.clubId as Types.ObjectId, leaderMemberIds, now, toTerm.endAt as Date)).size) {
           return conflict("a leader candidate already leads another club in an overlapping term (BR06)");
         }

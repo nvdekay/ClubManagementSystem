@@ -10,6 +10,8 @@ import type {
   BoardPosition,
   BoardTerm,
 } from "../../domain/board-nomination.js";
+import { VICE_LEADER_SEAT_CODES } from "../../domain/access.js";
+import { MAX_VICE_LEADERS } from "../../domain/club-application.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels } from "./ucms-models.js";
 
@@ -129,6 +131,13 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
     return current.map((item) => item.userId as Types.ObjectId);
   }
 
+  // Id các ghế Phó chủ nhiệm của CLB, cùng cách nhận diện với quyền Club Leader (BR47)
+  async function vicePositionIds(clubId: Types.ObjectId, session: ClientSession): Promise<Set<string>> {
+    const docs = await positions.find({ clubId, isActive: true, isBoardSeat: true,
+      code: { $in: VICE_LEADER_SEAT_CODES } }).select({ _id: 1 }).session(session).lean();
+    return new Set(docs.map((doc) => String(doc._id)));
+  }
+
   return {
     // Lấy ngữ cảnh đề cử: nhiệm kỳ Active, vị trí ban chủ nhiệm, thành viên Active
     async getContext(clubId) {
@@ -235,6 +244,12 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
         if ([...occupied, ...pendingSeatDocs].some((item) => singleHolderIds.has(String(item.positionId))
           && positionIds.some((positionId) => String(positionId) === String(item.positionId)))) {
           return conflict("a board seat is already occupied or pending");
+        }
+        const vice = await vicePositionIds(clubObjectId, session);
+        if (nominationSeats.some((seat) => vice.has(seat.positionId))
+          && [...occupied, ...pendingSeatDocs, ...nominationSeats]
+            .filter((item) => vice.has(String(item.positionId))).length > MAX_VICE_LEADERS) {
+          return conflict("a club can have at most two vice leaders");
         }
         const seated = new Set([...occupied, ...pendingSeatDocs].map((item) => String(item.membershipId)));
         if (memberIds.some((membershipId) => seated.has(String(membershipId)))) {
@@ -439,6 +454,16 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
           }
         }
         const finalConfirmed = pendingSeats.filter((seat) => confirmedIds.has(String(seat._id)));
+        const vice = await vicePositionIds(nomination.clubId as Types.ObjectId, session);
+        const confirmingVice = finalConfirmed.filter((seat) => vice.has(String(seat.positionId))).length;
+        if (confirmingVice) {
+          const viceHolders = await assignments.countDocuments({ clubId: nomination.clubId,
+            termId: nomination.termId, positionId: { $in: [...vice].map((item) => new Types.ObjectId(item)) },
+            effectiveTo: { $in: [null] } }).session(session);
+          if (viceHolders + confirmingVice > MAX_VICE_LEADERS) {
+            return conflict("a club can have at most two vice leaders");
+          }
+        }
         const finalReturned = pendingSeats.filter((seat) => returned.has(String(seat._id)));
         const decisionReason = input.reason?.trim() || (!finalConfirmed.length
           ? finalReturned.map((seat) => returned.get(String(seat._id))).filter(Boolean).join("; ")

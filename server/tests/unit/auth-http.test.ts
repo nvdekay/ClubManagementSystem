@@ -143,19 +143,20 @@ describe("auth HTTP boundary", () => {
     expect(res.redirect).toHaveBeenCalledWith(302, "http://localhost:5173/login?error=oauth");
   });
 
-  it("discards an external return URL before sealing the OAuth flow", async () => {
-    const { deps } = fixture();
-    const seal = vi.fn(deps.oauthFlow.seal);
-    deps.oauthFlow.seal = seal;
-    const { res } = response();
-    await routeHandler(deps, "/auth/login")(
-      { ...request(undefined, undefined), query: { returnTo: "//evil.test/path" } } as unknown as Request,
-      res,
-      vi.fn(),
-    );
-    expect(seal).toHaveBeenCalledWith(expect.objectContaining({ returnTo: "/" }), expect.any(Date));
-    expect(res.redirect).toHaveBeenCalledWith(302, "https://accounts.google.com/");
-  });
+  it.each(["//evil.test/path", "/\t/evil.test", "/\n/evil.test", "/\r/evil.test"])(
+    "discards the external return URL %j before sealing the OAuth flow", async (returnTo) => {
+      const { deps } = fixture();
+      const seal = vi.fn(deps.oauthFlow.seal);
+      deps.oauthFlow.seal = seal;
+      const { res } = response();
+      await routeHandler(deps, "/auth/login")(
+        { ...request(undefined, undefined), query: { returnTo } } as unknown as Request,
+        res,
+        vi.fn(),
+      );
+      expect(seal).toHaveBeenCalledWith(expect.objectContaining({ returnTo: "/" }), expect.any(Date));
+      expect(res.redirect).toHaveBeenCalledWith(302, "https://accounts.google.com/");
+    });
 
   it("returns 401 without a session and 423 for a locked account", async () => {
     const { deps, resolve } = fixture();

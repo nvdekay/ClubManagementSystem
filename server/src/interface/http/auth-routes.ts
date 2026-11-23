@@ -35,8 +35,10 @@ function cookie(req: Request, name: string): string | undefined {
 
 // Chỉ cho phép returnTo là đường dẫn nội bộ an toàn, tránh open redirect
 function safeReturnTo(value: unknown): string {
+  // new URL xoá tab/xuống dòng ở mọi vị trí, nên "/\t/evil.com" thành "//evil.com": từ chối mọi ký tự <= space.
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")
-    || value.includes("\\") || value.length > 2000) return "/";
+    // eslint-disable-next-line no-control-regex
+    || value.includes("\\") || /[\u0000-\u0020]/.test(value) || value.length > 2000) return "/";
   return value;
 }
 
