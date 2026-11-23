@@ -1,8 +1,8 @@
-// Dashboard history on top of `npm run seed` + `npm run seed:demo`: about 150 demo student accounts and a
-// year of club life (members joining and leaving, events with registrations, check-ins and feedback,
-// budgets, pending proposals, recruitment applications), so the ICPDP and Club Leader charts have shape.
-// Usage: npm run seed:dashboard   (local databases only; safe to re-run: every record has a fixed id
-// derived from its key and is only inserted when missing).
+// Lịch sử dashboard dựng trên `npm run seed` + `npm run seed:demo`: khoảng 150 tài khoản sinh viên demo và
+// một năm sinh hoạt CLB (thành viên vào/rời, sự kiện có đăng ký, check-in và feedback,
+// ngân sách, đề xuất đang chờ, đơn tuyển thành viên), để biểu đồ ICPDP và Club Leader có dữ liệu để hiển thị.
+// Cách dùng: npm run seed:dashboard   (chỉ database local; chạy lại an toàn: mỗi bản ghi có id cố định
+// suy ra từ khoá của nó và chỉ được chèn khi chưa có).
 import { createHash } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import type { AcademicSemester } from "../../domain/policy.js";
@@ -15,33 +15,41 @@ const config = loadConfig();
 const DAY = 86_400_000;
 const now = new Date();
 
+// Sinh ObjectId cố định từ khoá để seed chạy lại không tạo trùng
 function oid(key: string): Types.ObjectId {
   return new Types.ObjectId(createHash("md5").update(`seed-dashboard:${key}`).digest("hex").slice(0, 24));
 }
-// A fixed-seed generator, so a re-run picks the same people, dates and numbers for the same keys.
+// Bộ sinh số với seed cố định, nên chạy lại vẫn chọn cùng người, ngày và số cho cùng khoá.
 let state = 20261017;
+// Bộ sinh số ngẫu nhiên có seed cố định, trả về số trong [0, 1)
 function random(): number {
   state = (state + 0x6d2b79f5) | 0;
   let t = Math.imul(state ^ (state >>> 15), 1 | state);
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
-/** Restarts the generator from a key, so skipping records already in the database never shifts later picks. */
+// Đặt lại seed của bộ sinh số ngẫu nhiên theo khoá
+/** Khởi động lại bộ sinh từ một khoá, để bỏ qua các bản ghi đã có trong database không làm lệch các lần chọn sau. */
 function reseed(key: string): void {
   state = Number.parseInt(createHash("md5").update(key).digest("hex").slice(0, 8), 16) | 0;
 }
+// Sinh số nguyên ngẫu nhiên trong khoảng [min, max]
 function int(min: number, max: number): number {
   return min + Math.floor(random() * (max - min + 1));
 }
+// Chọn ngẫu nhiên một phần tử
 function pick<T>(items: readonly T[]): T {
   return items[int(0, items.length - 1)]!;
 }
+// Chọn ngẫu nhiên count phần tử không trùng
 function sample<T>(items: readonly T[], count: number): T[] {
   return [...items].map((item) => ({ item, key: random() })).sort((a, b) => a.key - b.key).slice(0, count).map((row) => row.item);
 }
+// Chuyển số thành Decimal128
 function money(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
+// Chèn document nếu chưa có (upsert), trả về true khi thực sự chèn mới
 async function insert(model: mongoose.Model<Doc>, doc: Doc & { _id: Types.ObjectId }): Promise<boolean> {
   const result = await model.updateOne({ _id: doc._id }, { $setOnInsert: doc }, { upsert: true });
   return result.upsertedCount === 1;
@@ -52,7 +60,7 @@ const MIDDLE = ["Văn", "Thị", "Minh", "Đức", "Thu", "Ngọc", "Hoàng", "G
 const GIVEN = ["An", "Anh", "Bình", "Chi", "Dũng", "Duy", "Giang", "Hà", "Hân", "Hiếu", "Hoa", "Huy", "Khang", "Khoa", "Lan", "Linh",
   "Long", "Mai", "My", "Nam", "Ngân", "Nhi", "Phong", "Phúc", "Quân", "Quyên", "Sơn", "Tâm", "Thảo", "Trang", "Trí", "Tú", "Uyên", "Vy", "Yến"];
 
-// The PDP snapshot leaves most clubs unclassified; these fields are a demo guess from each club's name.
+// Bản chụp PDP để hầu hết CLB chưa phân loại; các lĩnh vực này là phỏng đoán demo dựa trên tên từng CLB.
 const DEMO_FIELDS: Record<string, string> = {
   "HEBE Club": "Nghệ thuật", "Mây Mưa Club": "Nghệ thuật", "Peace Club": "Cộng đồng", BoardGame: "Cộng đồng", BUK: "Kỹ năng", Business: "Kỹ năng",
   Chess: "Thể thao", "Color Team": "Nghệ thuật", Dango: "Ngôn ngữ", ESC: "Ngôn ngữ", "F-Logi": "Kỹ năng", FAIC: "Công nghệ",
@@ -65,6 +73,7 @@ const VENUES = ["Hội trường lớn, tòa Alpha", "Phòng 207, tòa Beta", "S
 const COMMENTS = ["Rất bổ ích, mong có thêm buổi tương tự.", "Tổ chức chuyên nghiệp, đúng giờ.", "Nội dung hay nhưng hơi dài.",
   "Không gian hơi chật so với số người.", "Diễn giả nhiệt tình, dễ hiểu.", "Mình học được nhiều điều mới."];
 
+// Sinh dữ liệu mẫu cho dashboard ICPDP, chỉ chạy trên Mongo local
 async function main() {
   if (!/^mongodb:\/\/(127\.0\.0\.1|localhost)[:/]/.test(config.MONGO_URI)) {
     throw new Error("seed:dashboard only writes to a local database (MONGO_URI must point at localhost)");
@@ -74,13 +83,13 @@ async function main() {
   const counts: Record<string, number> = {};
   function added(key: string, inserted: boolean) { if (inserted) counts[key] = (counts[key] ?? 0) + 1; }
 
-  // ── Club fields ─────────────────────────────────────────────────────────────
+  // ── Lĩnh vực CLB ─────────────────────────────────────────────────────────────
   for (const [name, field] of Object.entries(DEMO_FIELDS)) {
     const changed = await m.clubs!.updateOne({ name, field: "Chưa phân loại" }, { $set: { field } });
     if (changed.modifiedCount) counts.clubFields = (counts.clubFields ?? 0) + 1;
   }
 
-  // ── Student accounts ────────────────────────────────────────────────────────
+  // ── Tài khoản sinh viên ────────────────────────────────────────────────────
   const students: Types.ObjectId[] = [];
   for (let index = 1; index <= 150; index += 1) {
     const name = `${pick(FAMILY)} ${pick(MIDDLE)} ${pick(GIVEN)}`;
@@ -91,9 +100,10 @@ async function main() {
       createdAt: new Date(now.getTime() - int(20, 360) * DAY) }));
   }
 
-  // ── Clubs to bring to life: the demo clubs first, then active clubs with a field ──
+  // ── CLB cần làm cho có sức sống: các CLB demo trước, rồi các CLB active có lĩnh vực ──
   const policy = await m.policyVersions!.findOne({ effectiveFrom: { $lte: now } }).sort({ effectiveFrom: -1, createdAt: -1 }).lean();
   const calendar = (policy?.academicCalendar ?? []) as AcademicSemester[];
+  // Xác định mã học kỳ của một ngày theo lịch học vụ
   function semesterOf(date: Date): string | undefined {
     return calendar.find((item) => item.startAt <= date && date < item.endAt)?.code;
   }
@@ -111,7 +121,7 @@ async function main() {
     const isHebe = clubName === "HEBE Club";
     const memberRole = await m.clubPositions!.findOne({ clubId, isDefaultMemberRole: true }).select({ code: 1 }).lean();
 
-    // Members joining over the last twelve months, mostly at the start of a semester; some leave.
+    // Thành viên vào trong mười hai tháng qua, chủ yếu đầu học kỳ; một số rời đi.
     const roster = sample(students, isHebe ? 45 : int(14, 30));
     const members: Types.ObjectId[] = [];
     for (const studentId of roster) {
@@ -125,12 +135,12 @@ async function main() {
       added("memberships", await insert(m.clubMemberships!, { _id: id, clubId, userId: studentId, state: left ? "Left" : "Active", joinedAt,
         ...(left ? { leftAt } : {}), ...(memberRole ? { defaultRole: String(memberRole.code) } : {}),
         statusHistory: [{ state: "Active", at: joinedAt, reason: "Seed dashboard" }] }));
-      // The stored record decides from here on: an earlier run may have drawn different dates for it.
+      // Từ đây bản ghi đã lưu quyết định: một lần chạy trước có thể đã bốc ngày khác cho nó.
       const stored = await m.clubMemberships!.findById(id).select({ state: 1, joinedAt: 1 }).lean();
       if (!stored || stored.state === "Left") continue;
       members.push(studentId);
-      // UC21 A2: an active demo member has reconfirmed for the current semester, so the reconfirmation job
-      // leaves them Active. A member the job already turned Inactive before this fix is restored.
+      // UC21 A2: một thành viên demo active đã xác nhận lại cho học kỳ hiện tại, nên job xác nhận lại
+      // để họ ở Active. Thành viên mà job đã chuyển sang Inactive trước bản sửa này được khôi phục.
       const semester = calendar.find((item) => item.startAt <= now && now < item.endAt);
       if (semester && (stored.joinedAt as Date) <= semester.startAt) {
         const confirmedAt = new Date(semester.startAt.getTime() + int(1, 10) * DAY);
@@ -144,7 +154,7 @@ async function main() {
       }
     }
 
-    // Events: finished ones over the last five months, upcoming ones over the next two.
+    // Sự kiện: các sự kiện đã xong trong năm tháng qua, các sự kiện sắp tới trong hai tháng tới.
     reseed(`events:${String(clubId)}`);
     const eventCount = isHebe ? 9 : int(3, 6);
     for (let index = 0; index < eventCount; index += 1) {
@@ -189,7 +199,7 @@ async function main() {
           attendanceId, studentId, clubId, scores: [{ criterionCode: "overall", score }], isAnonymous: random() < 0.3,
           ...(random() < 0.5 ? { comment: pick(COMMENTS) } : {}), submittedAt: new Date(endAt.getTime() + int(1, 48) * 3600_000) }));
       }
-      // Budgets for this semester's events: advanced in full, settled once the event is well past.
+      // Ngân sách cho sự kiện học kỳ này: tạm ứng đủ, quyết toán khi sự kiện đã qua một thời gian.
       if (semesterCode === semesterOf(now) && random() < 0.6) {
         const approved = int(2, 9) * 1_000_000;
         const settled = finished && !recent;
@@ -204,7 +214,7 @@ async function main() {
       }
     }
 
-    // Backfill feedback on existing past events of Peace Club that were created outside seed:dashboard.
+    // Bổ sung feedback cho các sự kiện đã qua của Peace Club được tạo ngoài seed:dashboard.
     if (clubName === "Peace Club") {
       const existingEvents = await m.events!.find({
         clubId,
@@ -282,7 +292,7 @@ async function main() {
       }
     }
 
-    // A proposal waiting for ICPDP in every other club; a few have run past their review SLA.
+    // Mỗi CLB còn lại có một đề xuất đang chờ ICPDP; một vài cái đã quá SLA review.
     reseed(`proposal:${String(clubId)}`);
     if (clubIndex % 2 === 0 && officer) {
       const startAt = new Date(now.getTime() + int(20, 50) * DAY);
@@ -304,7 +314,7 @@ async function main() {
       }
     }
 
-    // HEBE's open campaign fills up with applications at every stage of the funnel.
+    // Chiến dịch đang mở của HEBE đầy dần đơn ở mọi giai đoạn của phễu.
     if (isHebe) {
       const campaign = await m.recruitmentCampaigns!.findOne({ clubId, state: { $ne: "Draft" } }).sort({ windowStart: -1 }).lean();
       reseed(`campaign:${String(clubId)}`);

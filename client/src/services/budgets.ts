@@ -48,6 +48,7 @@ export interface BudgetFlowInput {
   note?: string;
 }
 
+// Gọi API /admin/budgets và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/budgets${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -58,14 +59,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// GET danh sách ngân sách của các CLB cho ICPDP
 export function fetchBudgets(signal: AbortSignal): Promise<BudgetSummary[]> {
   return request("", { signal });
 }
 
+// GET chi tiết một ngân sách
 export function fetchBudget(id: string, signal: AbortSignal): Promise<BudgetDetail> {
   return request(`/${encodeURIComponent(id)}`, { signal });
 }
 
+// POST /flows: ghi nhận dòng tiền vào ngân sách
 export function recordBudgetFlow(id: string, input: BudgetFlowInput, csrfToken: string): Promise<BudgetDetail> {
   return request(`/${encodeURIComponent(id)}/flows`, { method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(input) });

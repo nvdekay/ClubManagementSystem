@@ -1,7 +1,7 @@
 import { ApiError, apiFetch } from "@/services/apiError";
 export type PropertyType = "ROOM" | "HALL" | "OUTDOOR" | "STAGE" | "EQUIPMENT";
 
-/** `day` 1 = Monday … 7 = Sunday; days not listed cannot be booked. */
+/** `day` 1 = Thứ Hai … 7 = Chủ nhật; ngày không liệt kê thì không thể đặt. */
 export interface BookableHours {
   day: number;
   open: string;
@@ -30,7 +30,7 @@ export interface Property extends PropertyDetails {
   isActive: boolean;
 }
 
-/** Non-2xx response; `field` names the invalid input when the server reports one. */
+/** Response không phải 2xx; `field` nêu ô nhập không hợp lệ khi server báo. */
 export class PropertyRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string) {
     super(message);
@@ -38,6 +38,7 @@ export class PropertyRequestError extends ApiError {
   }
 }
 
+// Gọi API /admin/properties và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/properties${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -50,27 +51,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
 function mutation(method: string, csrfToken: string, body?: object): RequestInit {
   return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
+// GET danh sách cơ sở vật chất
 export function fetchProperties(signal: AbortSignal): Promise<Property[]> {
   return request("", { signal });
 }
 
+// POST tạo cơ sở vật chất
 export function createProperty(input: PropertyDetails & { type: PropertyType }, csrfToken: string): Promise<Property> {
   return request("", mutation("POST", csrfToken, input));
 }
 
+// PATCH cập nhật thông tin cơ sở vật chất
 export function updateProperty(id: string, details: PropertyDetails, csrfToken: string): Promise<Property> {
   return request(`/${encodeURIComponent(id)}`, mutation("PATCH", csrfToken, details));
 }
 
+// POST /activation: bật hoặc tắt cơ sở vật chất
 export function setPropertyActive(id: string, isActive: boolean, csrfToken: string): Promise<Property> {
   return request(`/${encodeURIComponent(id)}/activation`, mutation("POST", csrfToken, { isActive }));
 }
 
+// DELETE cơ sở vật chất
 export function deleteProperty(id: string, csrfToken: string): Promise<{ deleted: true }> {
   return request(`/${encodeURIComponent(id)}`, mutation("DELETE", csrfToken));
 }

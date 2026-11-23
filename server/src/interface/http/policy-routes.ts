@@ -53,20 +53,24 @@ export const policyCreateBody = policySettingsBody.extend({
   reason: z.string().max(1000).optional(),
 }).strict();
 
+// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
+// Mount các route chính sách hệ thống của ICPDP
 export function policyRoutes(deps: PolicyRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
+  // Liệt kê các phiên bản chính sách
   router.get("/admin/policies", authGuard(guard, false), async (_req, res) => {
     ok(res, await listPolicyVersions(deps.repo, deps.authRepo, actor(res), new Date()));
   });
 
+  // Tạo phiên bản chính sách mới
   router.post("/admin/policies", authGuard(guard), async (req, res) => {
     const parsed = policyCreateBody.safeParse(req.body);
     if (!parsed.success) {

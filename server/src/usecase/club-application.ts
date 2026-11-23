@@ -23,6 +23,7 @@ const documentRules: Record<ApplicationDocumentType, { mimeTypes: ReadonlySet<st
     visibility: "public" },
 };
 
+// Kiểm nội dung file khớp magic bytes của loại MIME khai báo
 function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
   if (mimeType === "application/pdf") return bytes.subarray(0, 5).toString() === "%PDF-";
   if (mimeType === "image/png") return bytes.subarray(0, 8).equals(
@@ -46,6 +47,7 @@ export interface DraftInput {
   founders: { userId: string; role: string }[];
 }
 
+// Kiểm actor đăng nhập, chưa bị khóa và trả id chủ đơn
 function owner(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -55,11 +57,13 @@ function owner(actor: AccessActor | null): string {
   return actor.id;
 }
 
+// Kiểm định dạng id đơn lập CLB
 function applicationId(id: string): string {
   if (!objectId.test(id)) throw new DomainError("invalid application id", "validation");
   return id;
 }
 
+// Chỉ cho sửa đơn ở trạng thái Draft hoặc Revision Requested
 function editable(record: ClubApplicationRecord): void {
   if (record.state !== "Draft" && record.state !== "Revision Requested") {
     throw new DomainError("application cannot be edited in this state", "conflict");
@@ -68,12 +72,14 @@ function editable(record: ClubApplicationRecord): void {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Cắt khoảng trắng và kiểm độ dài tối đa của văn bản
 function text(value: string, max: number): string {
   const normalized = value.trim();
   if (normalized.length > max) throw new DomainError("application text is too long", "validation");
   return normalized;
 }
 
+// Kiểm và chuẩn hóa URL fanpage http(s)
 function httpUrl(value: string): string {
   const normalized = text(value, 2_000);
   if (!normalized) return "";
@@ -86,9 +92,10 @@ function httpUrl(value: string): string {
   }
 }
 
+// Đối chiếu lĩnh vực đã chọn với danh mục lĩnh vực CLB
 /**
- * Resolve the chosen field against the catalog. A field hidden after it was saved stays on the
- * draft (so editing other parts still works) but blocks submission until the student re-picks.
+ * Resolve lĩnh vực đã chọn theo catalog. Lĩnh vực bị ẩn sau khi đã lưu vẫn nằm trong
+ * bản nháp (để sửa các phần khác vẫn được) nhưng chặn việc nộp cho tới khi sinh viên chọn lại.
  */
 async function resolvedField(fields: ClubFieldRepository, fieldId: string,
   current?: ClubApplicationDraft): Promise<{ fieldId: string; field: string }> {
@@ -100,6 +107,7 @@ async function resolvedField(fields: ClubFieldRepository, fieldId: string,
   return { fieldId, field: found.name };
 }
 
+// Kiểm và dựng bản nháp đơn lập CLB từ dữ liệu nhập
 async function draftFrom(fields: ClubFieldRepository, input: DraftInput,
   documents: ApplicationDocument[], current?: ClubApplicationDraft): Promise<ClubApplicationDraft> {
   const clubName = text(input.clubName, 200);
@@ -120,6 +128,7 @@ async function draftFrom(fields: ClubFieldRepository, input: DraftInput,
     documents: [...documents] };
 }
 
+// Lấy đơn thuộc về chủ đơn, không có thì báo not_found
 async function owned(repo: ClubApplicationRepository, id: string,
   ownerId: string): Promise<ClubApplicationRecord> {
   const record = await repo.findOwned(applicationId(id), ownerId);
@@ -127,12 +136,14 @@ async function owned(repo: ClubApplicationRepository, id: string,
   return record;
 }
 
+// Sinh viên tạo bản nháp đơn lập CLB
 export async function createApplicationDraft(repo: ClubApplicationRepository,
   fields: ClubFieldRepository, actor: AccessActor | null, input: DraftInput,
   now: Date): Promise<ClubApplicationRecord> {
   return repo.createDraft(owner(actor), await draftFrom(fields, input, []), now);
 }
 
+// Sinh viên lưu bản nháp đơn, kiểm xung đột phiên bản
 export async function saveApplicationDraft(repo: ClubApplicationRepository,
   fields: ClubFieldRepository, actor: AccessActor | null, id: string, input: DraftInput,
   expectedDraftRevision: number): Promise<ClubApplicationRecord> {
@@ -146,11 +157,13 @@ export async function saveApplicationDraft(repo: ClubApplicationRepository,
     await draftFrom(fields, input, record.draft.documents, record.draft), expectedDraftRevision);
 }
 
+// Liệt kê các đơn lập CLB của chính mình
 export async function listMyApplications(repo: ClubApplicationRepository,
   actor: AccessActor | null): Promise<ClubApplicationRecord[]> {
   return repo.listMine(owner(actor));
 }
 
+// Xem chi tiết đơn của mình kèm các phiên bản, quyết định và hồ sơ founder
 export async function getMyApplication(repo: ClubApplicationRepository,
   actor: AccessActor | null, id: string): Promise<{
   application: ClubApplicationRecord; versions: ClubApplicationVersion[];
@@ -163,7 +176,8 @@ export async function getMyApplication(repo: ClubApplicationRepository,
   return { application: record, versions, decisions, founders: await repo.founderProfiles(founderIds) };
 }
 
-/** Resolve a founding member by exact email so students never type raw account ids. */
+// Tìm thành viên sáng lập theo email chính xác
+/** Resolve thành viên sáng lập theo email chính xác để sinh viên không phải gõ id tài khoản thô. */
 export async function lookupFounder(repo: ClubApplicationRepository, actor: AccessActor | null,
   email: string): Promise<FounderProfile> {
   owner(actor);
@@ -176,6 +190,7 @@ export async function lookupFounder(repo: ClubApplicationRepository, actor: Acce
   return profile;
 }
 
+// Trả yêu cầu thành lập, danh sách lĩnh vực và vị trí sáng lập cho form đơn
 export async function applicationConfiguration(policy: PolicyRepository,
   fields: ClubFieldRepository, actor: AccessActor | null, now: Date) {
   owner(actor);
@@ -190,7 +205,8 @@ export async function applicationConfiguration(policy: PolicyRepository,
 type ExtendedIssue = FoundingIssue
   | "fieldUnavailable" | "leaderHoldsAnotherClub";
 
-/** Domain issues plus the checks that need the catalog or other clubs. */
+// Gom các vấn đề chặn việc nộp đơn, gồm lĩnh vực và leader đã giữ CLB khác
+/** Các vấn đề của domain cộng với những kiểm tra cần catalog hoặc các CLB khác. */
 async function submissionIssues(repo: ClubApplicationRepository, fields: ClubFieldRepository,
   draft: ClubApplicationDraft, applicantId: string, requirements: FoundingRequirements,
   now: Date): Promise<ExtendedIssue[]> {
@@ -205,7 +221,8 @@ async function submissionIssues(repo: ClubApplicationRepository, fields: ClubFie
   return issues;
 }
 
-/** Advisory only (UC07): public clubs that look like this draft; never blocks saving or submitting. */
+// Gợi ý các CLB công khai giống bản nháp, chỉ mang tính tham khảo
+/** Chỉ mang tính tham khảo (UC07): các CLB public giống bản nháp này; không bao giờ chặn việc lưu hay nộp. */
 async function publicSimilarClubs(repo: ClubApplicationRepository,
   record: ClubApplicationRecord): Promise<SimilarClubHint[]> {
   const { clubName, field, summary, objectives } = record.draft;
@@ -213,6 +230,7 @@ async function publicSimilarClubs(repo: ClubApplicationRepository,
     await repo.publicSimilarityCandidates(record.id));
 }
 
+// Xem trước các vấn đề, trùng tên và CLB tương tự trước khi nộp đơn
 export async function previewApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
   fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date) {
   const ownerId = owner(actor);
@@ -225,6 +243,7 @@ export async function previewApplication(repo: ClubApplicationRepository, policy
     similarClubs: await publicSimilarClubs(repo, record) };
 }
 
+// Nộp đơn lập CLB sau khi kiểm đủ điều kiện và tạo phiên bản đã nộp
 export async function submitApplication(repo: ClubApplicationRepository, policy: PolicyRepository,
   fields: ClubFieldRepository, actor: AccessActor | null, id: string, now: Date): Promise<{
   version: ClubApplicationVersion; activeNameConflict: boolean; similarClubs: SimilarClubHint[];
@@ -250,6 +269,7 @@ export async function submitApplication(repo: ClubApplicationRepository, policy:
   return { version, activeNameConflict, similarClubs };
 }
 
+// Sinh viên rút đơn lập CLB đang chờ hoặc cần sửa
 export async function withdrawApplication(repo: ClubApplicationRepository,
   actor: AccessActor | null, id: string, now: Date): Promise<ClubApplicationRecord> {
   const ownerId = owner(actor);
@@ -260,6 +280,7 @@ export async function withdrawApplication(repo: ClubApplicationRepository,
   return repo.withdraw(record.id, ownerId, now);
 }
 
+// Tải tài liệu (đề án, logo) lên đơn sau khi kiểm loại, dung lượng và nội dung
 export async function uploadApplicationDocument(repo: ClubApplicationRepository,
   storage: ApplicationFileStorage | null, actor: AccessActor | null, id: string,
   documentType: string, fileName: string, mimeType: string, bytes: Buffer,
@@ -280,13 +301,14 @@ export async function uploadApplicationDocument(repo: ClubApplicationRepository,
   const document = await storage.upload({ ownerId, applicationId: record.id,
     documentType: type, fileName: fileName.trim(), mimeType, bytes,
     visibility: rule.visibility, now });
-  // One file per type: the new upload replaces the previous one.
+  // Mỗi loại một file: bản upload mới thay thế bản trước.
   const replaced = record.draft.documents.filter((item) => item.documentType === type);
   await repo.addDocument(record.id, ownerId, document);
   for (const previous of replaced) await repo.removeDocument(record.id, ownerId, previous.id);
   return document;
 }
 
+// Xóa một tài liệu khỏi bản nháp đơn
 export async function removeApplicationDocument(repo: ClubApplicationRepository,
   actor: AccessActor | null, id: string, documentId: string): Promise<ClubApplicationRecord> {
   const ownerId = owner(actor);
@@ -298,6 +320,7 @@ export async function removeApplicationDocument(repo: ClubApplicationRepository,
   return repo.removeDocument(record.id, ownerId, documentId);
 }
 
+// Cấp URL tạm để chủ đơn xem tài liệu của đơn
 export async function applicationDocumentAccess(repo: ClubApplicationRepository,
   storage: ApplicationFileStorage | null, actor: AccessActor | null, id: string,
   documentId: string): Promise<{ fileName: string; url: string }> {

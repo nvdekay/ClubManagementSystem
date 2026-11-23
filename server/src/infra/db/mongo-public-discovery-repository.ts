@@ -9,20 +9,26 @@ const clubStates = ["Active", "Suspended"];
 const campaignStates = ["Published", "Accepting Applications"];
 const historyStates = ["Completed", "Report Submitted", "Closed"];
 
+// Chuyển id thành chuỗi
 function id(value: unknown): string { return String(value); }
+// Ép giá trị đọc từ DB về Date, lỗi nếu không phải ngày hợp lệ
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid public date in database");
   return value;
 }
+// Lấy giá trị nếu là chuỗi, ngược lại undefined
 function optionalString(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
+// Lấy giá trị nếu là Date, ngược lại undefined
 function optionalDate(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined;
 }
+// Escape ký tự đặc biệt của regex trong từ khoá tìm kiếm
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^$()|[\]\\{}]/g, "\\$&");
 }
+// Ánh xạ document CLB sang PublicClub
 function mapClub(doc: Record<string, unknown>): PublicClub {
   return {
     id: id(doc._id), code: String(doc.code), name: String(doc.name),
@@ -34,6 +40,7 @@ function mapClub(doc: Record<string, unknown>): PublicClub {
     logoUrl: optionalString(doc.logoUrl),
   };
 }
+// Ánh xạ document sự kiện sang PublicEvent
 function mapEvent(doc: Record<string, unknown>): PublicEvent {
   return {
     id: id(doc._id), ...(doc.clubId ? { clubId: id(doc.clubId) } : {}), clubName: String(doc.clubName ?? ""),
@@ -44,6 +51,7 @@ function mapEvent(doc: Record<string, unknown>): PublicEvent {
     publishedAt: optionalDate(doc.publishedAt),
   };
 }
+// Ánh xạ document đợt tuyển sang PublicCampaign
 function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
   return {
     id: id(doc._id), title: String(doc.title), state: String(doc.state),
@@ -51,6 +59,7 @@ function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
     capacity: Number(doc.capacity),
   };
 }
+// Ánh xạ đợt tuyển kèm các bước tuyển chọn và form ứng tuyển
 function mapCampaignDetail(doc: Record<string, unknown>): PublicCampaign {
   const item = mapCampaign(doc);
   const steps = Array.isArray(doc.selectionSteps) ? doc.selectionSteps : [];
@@ -81,6 +90,7 @@ function mapCampaignDetail(doc: Record<string, unknown>): PublicCampaign {
   };
 }
 
+// Repository khu công khai: CLB, sự kiện, đợt tuyển cho khách
 export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
   const clubs = ucmsModels.clubs!;
   const events = ucmsModels.events!;
@@ -91,6 +101,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
   const memberships = ucmsModels.clubMemberships!;
   const users = ucmsModels.users!;
   return {
+    // Tìm kiếm và phân trang danh sách CLB công khai
     async listClubs(input: ClubSearch, now: Date): Promise<Page<PublicClub>> {
       const filter: Record<string, unknown> = { state: input.newestActive ? "Active" : { $in: clubStates } };
       if (input.field) filter.field = input.field;
@@ -122,14 +133,17 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
         total, page: input.page, pageSize: input.pageSize,
       };
     },
+    // Danh sách lĩnh vực của các CLB công khai
     async fields(): Promise<string[]> {
       const values = await clubs.distinct("field", { state: { $in: clubStates } });
       return values.filter((value): value is string => typeof value === "string").sort();
     },
+    // Lấy thông tin công khai của một CLB
     async getClub(clubId): Promise<PublicClub | null> {
       const doc = await clubs.findById(new Types.ObjectId(clubId)).lean();
       return doc ? mapClub(doc) : null;
     },
+    // Lấy các ghế ban chủ nhiệm hiện tại của CLB
     async board(clubId, now): Promise<PublicBoardSeat[]> {
       const clubObjectId = new Types.ObjectId(clubId);
       const [termDocs, positionDocs] = await Promise.all([
@@ -167,6 +181,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
           ? [{ memberName, positionName, termName }] : [];
       });
     },
+    // Liệt kê đợt tuyển đang mở của CLB
     async campaigns(clubId, now): Promise<PublicCampaign[]> {
       const docs = await campaigns.find({
         clubId: new Types.ObjectId(clubId), state: { $in: campaignStates },
@@ -174,15 +189,17 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
       }).sort({ windowStart: 1, _id: 1 }).limit(20).lean();
       return docs.map(mapCampaign);
     },
+    // Lấy chi tiết đợt tuyển đang mở
     async getCampaign(campaignId, now): Promise<PublicCampaign | null> {
       const doc = await campaigns.findOne({ _id: new Types.ObjectId(campaignId),
         state: { $in: campaignStates }, windowStart: { $lte: now }, windowEnd: { $gt: now } }).lean();
       if (!doc) return null;
       const club = await clubs.findById(doc.clubId).select("state").lean();
-      // A suspended club's campaign stays visible, flagged, so students learn why they cannot apply.
+      // Chiến dịch của CLB bị đình chỉ vẫn hiển thị, có đánh dấu, để sinh viên biết vì sao không thể ứng tuyển.
       if (club?.state !== "Active" && club?.state !== "Suspended") return null;
       return { ...mapCampaignDetail(doc), clubSuspended: club.state === "Suspended" };
     },
+    // Liệt kê sự kiện công khai sắp diễn ra của CLB
     async clubUpcomingEvents(clubId, now): Promise<PublicEvent[]> {
       const docs = await events.find({
         clubId: new Types.ObjectId(clubId), state: "Upcoming", audienceScope: "PUBLIC",
@@ -190,6 +207,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
       }).sort({ startAt: 1, _id: 1 }).limit(20).lean();
       return docs.map(mapEvent);
     },
+    // Liệt kê lịch sử sự kiện công khai của CLB
     async clubHistory(clubId, now): Promise<PublicEvent[]> {
       const docs = await events.find({
         clubId: new Types.ObjectId(clubId), state: { $in: historyStates },
@@ -198,9 +216,10 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
       }).sort({ endAt: -1, _id: -1 }).limit(20).lean();
       return docs.map(mapEvent);
     },
+    // Tìm kiếm và phân trang sự kiện công khai theo trạng thái
     async listEvents({ status, search, page, pageSize }, now): Promise<Page<PublicEvent>> {
       const activeClubs = await clubs.find({ state: "Active" }).select("_id").lean();
-      // Mirrors publicEventStatus(): each branch is one visitor-facing status.
+      // Phản chiếu publicEventStatus(): mỗi nhánh là một trạng thái hiển thị cho khách.
       const byStatus = {
         upcoming: { state: "Upcoming", startAt: { $gt: now } },
         ongoing: { state: { $in: ["Upcoming", "Ongoing"] }, startAt: { $lte: now }, endAt: { $gt: now } },
@@ -215,7 +234,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
           ...(text ? [{ $or: [{ title: text }, { objective: text }, { venueText: text }, { clubName: text }] }] : []),
         ],
       };
-      // Upcoming reads soonest first; every other view shows the newest events first, like PDP.
+      // Sắp tới thì sớm nhất trước; mọi chế độ xem khác hiển thị sự kiện mới nhất trước, như PDP.
       const sort = status === "upcoming" ? { startAt: 1 as const, _id: 1 as const } : { startAt: -1 as const, _id: -1 as const };
       const [docs, total] = await Promise.all([
         events.find(filter).sort(sort).skip((page - 1) * pageSize).limit(pageSize).lean(),
@@ -223,6 +242,7 @@ export function mongoPublicDiscoveryRepository(): PublicDiscoveryRepository {
       ]);
       return { items: docs.map(mapEvent), total, page, pageSize };
     },
+    // Lấy thông tin công khai của một sự kiện
     async getEvent(eventId): Promise<PublicEvent | null> {
       const doc = await events.findById(new Types.ObjectId(eventId)).lean();
       return doc ? mapEvent(doc) : null;

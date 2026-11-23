@@ -10,11 +10,13 @@ import { assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm định dạng ObjectId
 function validId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid identifier", "validation");
   return value;
 }
 
+// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: AuthRepository, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -27,6 +29,7 @@ async function officer(auth: AuthRepository, actor: AccessActor | null): Promise
   return id;
 }
 
+// Lấy ngữ cảnh đề cử ban chủ nhiệm (vị trí, ứng viên) của CLB
 export async function getBoardNominationContext(repo: BoardNominationRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.board.nominate", now);
@@ -35,6 +38,7 @@ export async function getBoardNominationContext(repo: BoardNominationRepository,
   return context;
 }
 
+// CLB gửi đề cử các ghế ban chủ nhiệm sau khi kiểm ràng buộc
 export async function submitBoardNomination(repo: BoardNominationRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string,
   seats: readonly BoardNominationSeatInput[], now: Date) {
@@ -83,18 +87,21 @@ export async function submitBoardNomination(repo: BoardNominationRepository,
     seats.map((seat) => ({ positionId: seat.positionId, membershipId: seat.membershipId })), now);
 }
 
+// Liệt kê các đề cử ban chủ nhiệm của một CLB
 export async function listClubBoardNominations(repo: BoardNominationRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.board.nominate", now);
   return repo.listForClub(validId(clubId));
 }
 
+// ICPDP xem các đề cử ban chủ nhiệm đang mở
 export async function listBoardNominations(repo: BoardNominationRepository,
   auth: AuthRepository, actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.listOpen();
 }
 
+// ICPDP xem chi tiết một đề cử ban chủ nhiệm
 export async function getBoardNomination(repo: BoardNominationRepository,
   auth: AuthRepository, actor: AccessActor | null, nominationId: string) {
   await officer(auth, actor);
@@ -103,11 +110,13 @@ export async function getBoardNomination(repo: BoardNominationRepository,
   return detail;
 }
 
+// ICPDP officer nhận xử lý một đề cử
 export async function claimBoardNomination(repo: BoardNominationRepository,
   auth: AuthRepository, actor: AccessActor | null, nominationId: string, now: Date) {
   return repo.claim(validId(nominationId), await officer(auth, actor), now);
 }
 
+// Chuẩn hóa và kiểm quyết định xác nhận hoặc trả lại từng ghế
 function normalizeDecision(input: BoardNominationDecisionInput,
   detailSeatIds: readonly string[]) {
   const confirmedSeatIds = [...new Set(input.confirmedSeatIds.map(validId))];
@@ -137,6 +146,7 @@ function normalizeDecision(input: BoardNominationDecisionInput,
   return { confirmedSeatIds, returnedSeats, reason };
 }
 
+// ICPDP ghi quyết định xác nhận hoặc trả lại từng ghế ban chủ nhiệm
 export async function decideBoardNomination(repo: BoardNominationRepository,
   auth: AuthRepository, actor: AccessActor | null, nominationId: string,
   input: BoardNominationDecisionInput, now: Date) {

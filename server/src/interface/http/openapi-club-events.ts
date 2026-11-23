@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { createDocument } from "zod-openapi";
 import { clubEventBody, clubEventCancelBody, clubEventCapacityBody, clubEventCheckInBody, clubEventCorrectBody,
   clubEventFeedbackQuery, clubEventPromoteBody, clubEventPublishBody, clubEventReasonBody, clubEventRescheduleBody,
-  clubEventSaveBody, clubEventVersionBody, eventObjectId, internalClubEventCreateBody, internalClubEventSaveBody,
+  clubEventSaveBody, clubEventVersionBody, eventObjectId,
   proposalDocumentAccessQuery } from "./club-event-routes.js";
 const date = z.string().datetime();
 const ProposalDocument = z.object({ id: z.string(), fileName: z.string(), mimeType: z.string(), bytes: z.number(), uploadedAt: date, uploadedBy: eventObjectId });
@@ -21,6 +21,7 @@ const Detail = z.object({ event: Event, versions: z.array(z.object({ revisionNo:
   budget: z.object({ state: z.string(), approvedTotal: z.number(), disbursedTotal: z.number() }).optional() });
 const Participant = z.object({ studentId: eventObjectId, name: z.string(), email: z.string(), registrationId: eventObjectId.optional(), state: z.string().optional(),
   waitlistPosition: z.number().optional(), attendanceId: eventObjectId.optional(), checkedInAt: date.optional(), method: z.string().optional(), abnormalFlags: z.array(z.string()), correctionReason: z.string().optional(), finalized: z.boolean() });
+// Tạo bộ response mẫu (200 kèm lỗi 400/401/403/409) cho endpoint sự kiện CLB
 function response(schema: z.ZodType, status = "200") {
   return { [status]: { description: "Success", content: { "application/json": { schema: z.object({ statusCode: z.number(), message: z.string(), data: schema, timestamp: date }) } } },
     "400": { description: "Invalid request" }, "401": { description: "Authentication required" }, "403": { description: "Permission required" }, "409": { description: "State or version conflict" } };
@@ -38,12 +39,6 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
   [`${base}/feedback`]: { get: { summary: "Compare anonymized event feedback; hide content below policy threshold", requestParams: { path: clubPath, query: clubEventFeedbackQuery },
     responses: response(z.array(z.object({ eventId: eventObjectId, title: z.string(), respondents: z.number(), visible: z.boolean(), averageRating: z.number().optional(), distribution: z.record(z.number()).optional(), comments: z.array(z.string()).optional() }))) } },
   [`${base}/{id}`]: { get: { summary: "Read club event proposal and history", requestParams: { path: eventPath }, responses: response(Detail) } },
-  "/clubs/{clubId}/internal-events": { post: { summary: "Create a self-funded internal event as DRAFT, CREATED or PUBLIC (24-hour notice outside DRAFT)",
-    requestParams: { path: clubPath }, requestBody: { content: { "application/json": { schema: internalClubEventCreateBody } } }, responses: response(Detail, "201") } },
-  "/clubs/{clubId}/internal-events/{id}": { put: { summary: "Edit an internal event in DRAFT or CREATED; a published schedule is locked",
-    requestParams: { path: eventPath }, requestBody: { content: { "application/json": { schema: internalClubEventSaveBody } } }, responses: response(Detail) } },
-  "/clubs/{clubId}/internal-events/{id}/create": { post: { summary: "Turn an internal draft into a CREATED event (24-hour notice)",
-    requestParams: { path: eventPath }, requestBody: { content: { "application/json": { schema: clubEventVersionBody } } }, responses: response(Detail) } },
   "/events/proposal-template": { get: { summary: "Read the active ICPDP event proposal template (system default until ICPDP uploads one)", responses: response(TemplateInfo) } },
   "/events/proposal-template/download": { get: { summary: "Download the active template: the system default as an attachment, or a redirect to a 60-second signed URL",
     responses: { "200": { description: "Template file", content: { "application/octet-stream": { schema: z.string() } } }, "302": { description: "Redirect to a signed URL" },
@@ -61,9 +56,9 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
 const operations: [string, z.ZodType, string][] = [
   ["save", clubEventSaveBody, "Save an editable draft using its expected version"],
   ["submit", clubEventVersionBody, "Submit a new immutable proposal revision"],
-  ["publish", clubEventPublishBody, "Publish an approved event (Upcoming) or a created internal event (PUBLIC) and configure admission"],
+  ["publish", clubEventPublishBody, "Publish an approved event (Upcoming) and configure admission"],
   ["cancel", clubEventCancelBody, "Cancel event, registrations, bookings and financial obligations"],
-  ["reschedule", clubEventRescheduleBody, "Reschedule a proposal and request a new approval, or move a CREATED internal event directly"],
+  ["reschedule", clubEventRescheduleBody, "Reschedule a proposal and request a new approval"],
   ["capacity", clubEventCapacityBody, "Change capacity and promote FIFO waitlist"],
   ["promote", clubEventPromoteBody, "Promote the first waitlisted registration"],
   ["check-ins", clubEventCheckInBody, "Check in a participant manually"],

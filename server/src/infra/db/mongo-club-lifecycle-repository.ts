@@ -14,7 +14,7 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 const scheduledEventStates = ["Approved", "Upcoming", "CREATED", "PUBLIC"];
-/** Proposals and events that may still run; BR45 cancels those ending after the dissolution semester. */
+/** Các đề xuất và sự kiện còn có thể diễn ra; BR45 huỷ những cái kết thúc sau học kỳ giải thể. */
 const liveEventStates = ["Draft", "Pending Approval", "Under Review", "Revision Requested", "Re-defense Pending", "Approved", "Upcoming",
   "DRAFT", "CREATED", "PUBLIC"];
 const undecidedProposalStates = ["Pending Approval", "Under Review", "Revision Requested", "Re-defense Pending"];
@@ -23,6 +23,7 @@ const openCampaignStates = ["Published", "Accepting Applications"];
 const settledBudgetStates = ["Reconciled", "Closed", "Cancelled"];
 const ALERT_REPEAT_MS = 24 * 60 * 60 * 1000;
 
+// Ánh xạ dữ liệu đình chỉ CLB thành ClubSuspension
 function suspensionFrom(raw: unknown): ClubSuspension | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const value = raw as Doc;
@@ -31,6 +32,7 @@ function suspensionFrom(raw: unknown): ClubSuspension | undefined {
     ...(value.reminderSentAt instanceof Date ? { reminderSentAt: value.reminderSentAt } : {}) };
 }
 
+// Ánh xạ dữ liệu giải thể CLB thành ClubDissolution
 function dissolutionFrom(raw: unknown): ClubDissolution | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const value = raw as Doc;
@@ -43,7 +45,8 @@ function dissolutionFrom(raw: unknown): ClubDissolution | undefined {
       ? { outstanding: value.outstanding as OutstandingObligations } : {}) };
 }
 
-/** UC15 E1: every budget of the club that has not reached reconciliation yet. */
+// Liệt kê ngân sách sự kiện của CLB chưa quyết toán xong
+/** UC15 E1: mọi ngân sách của CLB chưa tới bước đối soát. */
 async function unreconciledBudgets(clubId: Types.ObjectId, session: ClientSession | null = null): Promise<UnreconciledBudget[]> {
   const budgets = await ucmsModels.eventBudgets!.find({ clubId, state: { $nin: settledBudgetStates } })
     .select("eventId state").session(session).lean();
@@ -54,7 +57,8 @@ async function unreconciledBudgets(clubId: Types.ObjectId, session: ClientSessio
     state: String(item.state) }));
 }
 
-/** UC15 step 6: what the club still owes when it is archived — open reports and unreconciled budgets. */
+// Tổng hợp nghĩa vụ CLB còn dang dở (báo cáo quá hạn, nháp, sự kiện, ngân sách)
+/** UC15 bước 6: những gì CLB còn nợ khi bị lưu trữ — báo cáo chưa nộp và ngân sách chưa đối soát. */
 async function outstandingObligations(clubId: Types.ObjectId, now: Date, session: ClientSession): Promise<OutstandingObligations> {
   const [overdue, drafts, completed, budgets] = await Promise.all([
     overduePeriodicReports(clubId, now, session),
@@ -66,7 +70,7 @@ async function outstandingObligations(clubId: Types.ObjectId, now: Date, session
   ]);
   const postEventReports: OutstandingObligations["postEventReports"] = [];
   for (const event of completed) {
-    // A members-only event owes a report only when it had a budget (same rule as the overdue check).
+    // Sự kiện chỉ dành cho thành viên chỉ nợ báo cáo khi có ngân sách (cùng quy tắc với kiểm tra quá hạn).
     if (event.audienceScope === "MEMBERS_ONLY" && !(await ucmsModels.eventBudgets!.exists({ eventId: event._id }).session(session))) continue;
     const latest = await ucmsModels.postEventReports!.findOne({ eventId: event._id }).sort({ versionNo: -1 })
       .select("state").session(session).lean();
@@ -78,14 +82,17 @@ async function outstandingObligations(clubId: Types.ObjectId, now: Date, session
     postEventReports, budgets };
 }
 
+// Lấy thông báo lỗi dạng chuỗi
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+// Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Repository vòng đời CLB: đình chỉ, kích hoạt lại, giải thể
 export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
   const m = ucmsModels;
 
@@ -135,7 +142,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
     return m.clubMemberships!.find({ clubId, state: "Active" }).session(session).distinct("userId");
   }
 
-  /** System cascade (UC28 A1 / UC47 A1): cancels events and bookings, frees registrations, notifies. */
+  /** Cascade của hệ thống (UC28 A1 / UC47 A1): huỷ sự kiện và booking, giải phóng đăng ký, gửi thông báo. */
   async function cascade(session: ClientSession, clubId: Types.ObjectId, eventFilter: Doc, bookingFilter: Doc,
     source: "SUSPENSION" | "DISSOLUTION", reason: string, now: Date, decisionId: Types.ObjectId): Promise<CascadeResult> {
     const events = await m.events!.find({ clubId, ...eventFilter }).session(session).lean();
@@ -149,9 +156,11 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
   }
 
   return {
+    // Liệt kê tóm tắt mọi CLB
     list() {
       return summaries({});
     },
+    // Lấy chi tiết CLB kèm đợt tuyển, sự kiện, nhiệm kỳ và ngân sách chưa quyết toán
     async detail(clubId, now) {
       const id = new Types.ObjectId(clubId);
       const [summary] = await summaries({ _id: id });
@@ -180,6 +189,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           ...(item.actorId ? { actorName: actorName.get(String(item.actorId)) ?? String(item.actorId) } : {}),
           at: item.at as Date })) };
     },
+    // ICPDP đình chỉ CLB (có thể theo yêu cầu đình chỉ của CLB), ghi audit và thông báo
     async suspend(clubId, input, actorId, now) {
       return mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
@@ -195,8 +205,8 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           { $set: { state: "Suspended", suspension, updatedAt: now } }, { session });
         if (changed.modifiedCount !== 1) return conflict("only an active club can be suspended");
         const decisionId = new Types.ObjectId();
-        // Open recruitment stays open (decision 2026-10-10): applying is blocked while suspended instead.
-        // FR-UC15-04: future approved events and every proposal still awaiting a decision are cancelled.
+        // Tuyển thành viên vẫn mở (quyết định 2026-10-10): thay vào đó chặn việc ứng tuyển trong lúc bị đình chỉ.
+        // FR-UC15-04: các sự kiện đã duyệt trong tương lai và mọi đề xuất còn chờ quyết định đều bị huỷ.
         const result = await cascade(session, id, { $or: [{ state: { $in: scheduledEventStates }, startAt: { $gt: now } },
           { state: { $in: undecidedProposalStates } }] },
           { state: "Approved", startAt: { $gt: now } }, "SUSPENSION", input.reason, now, decisionId);
@@ -217,6 +227,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         return result;
       });
     },
+    // ICPDP kích hoạt lại CLB đang Suspended
     async reactivate(clubId, reason, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
@@ -229,6 +240,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           { reason, automatic: actorId === null }, now);
       });
     },
+    // ICPDP quyết định giải thể CLB và lưu học kỳ có hiệu lực
     async decideDissolution(clubId, decision, now) {
       return mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
@@ -237,7 +249,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
           decidedBy: new Types.ObjectId(decision.decidedBy) } } }, { session });
         if (changed.modifiedCount !== 1) return conflict("this club cannot be scheduled for dissolution");
         const decisionId = new Types.ObjectId();
-        // BR45: nothing of this club may end after its Dissolving semester.
+        // BR45: không có gì của CLB này được kết thúc sau học kỳ Dissolving của nó.
         const result = await cascade(session, id, { state: { $in: liveEventStates }, endAt: { $gt: decision.effectiveTo } },
           { state: { $in: [...undecidedBookingStates, "Approved"] }, endAt: { $gt: decision.effectiveTo } },
           "DISSOLUTION", decision.reason, now, decisionId);
@@ -249,24 +261,28 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
         return result;
       });
     },
+    // Lấy CLB Suspended sắp hết hạn đình chỉ chưa được nhắc
     suspensionsDueForReminder(now) {
       return summaries({ state: "Suspended", "suspension.until": { $ne: null, $lte: new Date(now.getTime() + SUSPENSION_REMINDER_MS), $gt: now },
         "suspension.reminderSentAt": { $exists: false } });
     },
+    // Đánh dấu đã nhắc hết hạn đình chỉ và thông báo officer
     async markReminded(clubId, officerIds, now) {
       await mongoose.connection.transaction(async (session) => {
         const id = new Types.ObjectId(clubId);
         const club = await m.clubs!.findOneAndUpdate({ _id: id, state: "Suspended",
           "suspension.reminderSentAt": { $exists: false } }, { $set: { "suspension.reminderSentAt": now } },
         { session }).lean();
-        if (!club) return; // another run already reminded
+        if (!club) return; // một lần chạy khác đã nhắc rồi
         await notify(session, officerIds, "CLUB_SUSPENSION_ENDING", "Club", id,
           { clubName: club.name, until: (club.suspension as Doc | undefined)?.until }, now);
       });
     },
+    // Lấy CLB Suspended đã quá hạn đình chỉ
     expiredSuspensions(now) {
       return summaries({ state: "Suspended", "suspension.until": { $ne: null, $lte: now } });
     },
+    // Chuyển CLB đến hạn giải thể sang Dissolving
     async startDissolving(now) {
       const due = await m.clubs!.find({ state: { $in: ["Active", "Suspended"] },
         "dissolution.effectiveFrom": { $lte: now } }).select("_id state").lean();
@@ -289,6 +305,7 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
       }
       return result;
     },
+    // Hoàn tất giải thể CLB đến hạn và thông báo officer
     async completeDissolutions(now) {
       const due = await m.clubs!.find({ state: "Dissolving", "dissolution.effectiveTo": { $lte: now } })
         .select("_id name").lean();
@@ -297,14 +314,14 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
       for (const club of due) {
         const id = club._id as Types.ObjectId;
         try {
-          // UC15 step 6 is one step: if any part fails the transaction rolls back and the club stays Dissolving.
+          // UC15 bước 6 là một bước duy nhất: nếu bất kỳ phần nào lỗi thì transaction rollback và CLB vẫn ở Dissolving.
           await mongoose.connection.transaction(async (session) => {
             const changed = await m.clubs!.updateOne({ _id: id, state: "Dissolving" },
               { $set: { state: "Dissolved", updatedAt: now } }, { session });
             if (changed.modifiedCount !== 1) return;
             const members = await memberIds(id, session);
             const decisionId = new Types.ObjectId();
-            // Proposals and booking requests still awaiting a decision are cancelled.
+            // Các đề xuất và yêu cầu booking còn chờ quyết định bị huỷ.
             const proposals = await m.events!.find({ clubId: id, state: { $in: ["Draft", "DRAFT", ...undecidedProposalStates] } })
               .session(session).lean();
             for (const proposal of proposals) {
@@ -314,12 +331,12 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
               { clubId: id, state: { $in: undecidedBookingStates } }, "DISSOLUTION", "Club dissolved", now, "Cancelled");
             const campaigns = await m.recruitmentCampaigns!.updateMany({ clubId: id, state: { $in: [...openCampaignStates, "Draft"] } },
               { $set: { state: "Cancelled" } }, { session });
-            // Management rights are revoked.
+            // Quyền quản lý bị thu hồi.
             const terms = await m.clubTerms!.updateMany({ clubId: id, state: { $in: ["Active", "Planned"] } },
               { $set: { state: "Closed" } }, { session });
             const assignments = await m.clubPositionAssignments!.updateMany({ clubId: id, effectiveTo: null },
               { $set: { effectiveTo: now } }, { session });
-            // Unfinished obligations are recorded as outstanding on the archived club.
+            // Các nghĩa vụ chưa hoàn thành được ghi là còn tồn đọng trên CLB đã lưu trữ.
             const outstanding = await outstandingObligations(id, now, session);
             await m.clubs!.updateOne({ _id: id }, { $set: { "dissolution.archivedAt": now, "dissolution.outstanding": outstanding } },
               { session });
@@ -341,10 +358,11 @@ export function mongoClubLifecycleRepository(): ClubLifecycleRepository {
       return result;
     },
     officerIds,
+    // Cảnh báo ICPDP officer khi bước vòng đời CLB thất bại (chống lặp)
     async alertOfficers(alert, officers, now) {
       const clubId = alert.clubId ? new Types.ObjectId(alert.clubId) : null;
       const since = new Date(now.getTime() - ALERT_REPEAT_MS);
-      // A club failure is also kept in its history, so it is deduplicated even when no officer exists.
+      // Lỗi của một CLB cũng được lưu trong lịch sử của nó, nên được khử trùng lặp kể cả khi không có cán bộ nào.
       const repeated = clubId
         ? await m.auditLogs!.exists({ entityType: "Club", entityId: clubId, action: "CLUB_LIFECYCLE_FAILED",
           "after.step": alert.step, at: { $gt: since } })

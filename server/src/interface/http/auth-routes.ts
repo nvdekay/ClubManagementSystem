@@ -24,6 +24,7 @@ const callbackQuery = z.object({
   code: z.string().min(1), state: z.string().min(1),
 });
 
+// Đọc giá trị cookie theo tên từ header Cookie
 function cookie(req: Request, name: string): string | undefined {
   const raw = req.headers.cookie?.split(";").map((part) => part.trim())
     .find((part) => part.startsWith(`${name}=`));
@@ -32,12 +33,14 @@ function cookie(req: Request, name: string): string | undefined {
   catch { return undefined; }
 }
 
+// Chỉ cho phép returnTo là đường dẫn nội bộ an toàn, tránh open redirect
 function safeReturnTo(value: unknown): string {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")
     || value.includes("\\") || value.length > 2000) return "/";
   return value;
 }
 
+// So sánh CSRF token theo thời gian hằng số
 function sameToken(left: string | undefined, right: string): boolean {
   if (!left) return false;
   const a = Buffer.from(left);
@@ -45,6 +48,7 @@ function sameToken(left: string | undefined, right: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+// Middleware xác thực phiên cookie, kiểm tra tài khoản bị khoá và CSRF cho mutation
 export function authGuard(deps: Pick<AuthRouteDeps, "repo" | "sessions">, csrfRequired = true) {
   return async function requireAuth(req: Request, _res: Response, next: NextFunction) {
     try {
@@ -59,7 +63,7 @@ export function authGuard(deps: Pick<AuthRouteDeps, "repo" | "sessions">, csrfRe
         throw new DomainError("invalid CSRF token", "forbidden");
       }
       _res.locals.actor = user;
-      // Normalized route context for SEC-08 denial audits; the raw body is never kept.
+      // Context route đã chuẩn hoá cho audit từ chối SEC-08; body thô không bao giờ được giữ lại.
       _res.locals.accessContext = { method: req.method, route: `${req.baseUrl ?? ""}${typeof req.route?.path === "string" ? req.route.path : ""}`,
         params: Object.fromEntries(Object.entries(req.params ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string")) };
       next();
@@ -67,6 +71,7 @@ export function authGuard(deps: Pick<AuthRouteDeps, "repo" | "sessions">, csrfRe
   };
 }
 
+// Mount các route đăng nhập Google OAuth, phiên và đăng xuất
 export function authRoutes(deps: AuthRouteDeps): Router {
   const router = Router();
   const sessionCookie = {
@@ -81,6 +86,7 @@ export function authRoutes(deps: AuthRouteDeps): Router {
     path: "/api/v1/auth/error",
   };
 
+  // Bắt đầu luồng đăng nhập Google OAuth và chuyển hướng sang Google
   router.get("/auth/login", async (req, res) => {
     try {
       const request = await deps.google.begin();
@@ -98,6 +104,7 @@ export function authRoutes(deps: AuthRouteDeps): Router {
     }
   });
 
+  // Callback OAuth: xác minh state, tạo phiên và đặt cookie ucms_session
   router.get("/auth/callback", async (req, res) => {
     const flow = deps.oauthFlow.unseal(cookie(req, "ucms_oauth"), new Date());
     res.clearCookie("ucms_oauth", oauthCookie);
@@ -130,17 +137,20 @@ export function authRoutes(deps: AuthRouteDeps): Router {
     }
   });
 
+  // Trả lý do lỗi đăng nhập đã lưu trong cookie tạm
   router.get("/auth/error", (req, res) => {
     const reason = deps.oauthFlow.unsealError(cookie(req, "ucms_auth_error"), new Date());
     res.clearCookie("ucms_auth_error", errorCookie);
     ok(res, { reason });
   });
 
+  // Trả người dùng hiện tại cùng workspaces và permissions
   router.get("/auth/me", async (req, res) => {
     ok(res, await currentUser(deps.repo, deps.accessRepo, deps.sessions,
       cookie(req, "ucms_session"), new Date()));
   });
 
+  // Đăng xuất: thu hồi phiên và xoá cookie
   router.post("/auth/logout", authGuard(deps), async (req, res) => {
     const value = cookie(req, "ucms_session");
     await deps.sessions.revoke(value, new Date());

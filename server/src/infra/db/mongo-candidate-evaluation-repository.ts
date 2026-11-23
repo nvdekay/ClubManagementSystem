@@ -5,12 +5,14 @@ import type { RecruitmentApplicationState } from "../../domain/recruitment-appli
 import type { CampaignState, RecruitmentRubricCriterion } from "../../domain/recruitment-campaign.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Chuẩn hóa tiêu chí rubric của đợt tuyển
 function rubricOf(value: unknown): RecruitmentRubricCriterion[] {
   return Array.isArray(value) ? value.flatMap((item: Record<string, unknown>) =>
     item && typeof item.key === "string" && typeof item.label === "string" && typeof item.maxScore === "number"
       ? [{ key: item.key, label: item.label, maxScore: item.maxScore }] : []) : [];
 }
 
+// Ánh xạ document thành CandidateEvaluation
 function mapEvaluation(doc: Record<string, unknown>, reviewerName?: string): CandidateEvaluation {
   const scores = doc.scores && typeof doc.scores === "object" ? doc.scores as Record<string, number> : {};
   return {
@@ -22,6 +24,7 @@ function mapEvaluation(doc: Record<string, unknown>, reviewerName?: string): Can
   };
 }
 
+// Repository chấm điểm ứng viên theo rubric của đợt tuyển
 export function mongoCandidateEvaluationRepository(): CandidateEvaluationRepository {
   const evaluations = ucmsModels.candidateEvaluations!;
   const applications = ucmsModels.recruitmentApplications!;
@@ -29,6 +32,7 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
   const users = ucmsModels.users!;
 
   return {
+    // Lấy trạng thái đợt tuyển, hồ sơ và rubric để chấm điểm
     async target(clubId, campaignId, applicationId) {
       const [campaign, application] = await Promise.all([
         campaigns.findOne({ _id: new Types.ObjectId(campaignId), clubId: new Types.ObjectId(clubId) })
@@ -41,6 +45,7 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
         applicationState: String(application.state) as RecruitmentApplicationState, rubric: rubricOf(campaign.rubric) };
     },
 
+    // Liệt kê các bản chấm điểm của đợt tuyển kèm tên người chấm
     async listForCampaign(clubId, campaignId) {
       const campaign = await campaigns.findOne({ _id: new Types.ObjectId(campaignId),
         clubId: new Types.ObjectId(clubId) }).select("rubric").lean();
@@ -55,12 +60,13 @@ export function mongoCandidateEvaluationRepository(): CandidateEvaluationReposit
         evaluations: docs.map((doc) => mapEvaluation(doc, names.get(String(doc.reviewerId)))) };
     },
 
+    // Lưu hoặc cập nhật điểm của reviewer cho hồ sơ Shortlisted
     async save(input) {
       const applicationId = new Types.ObjectId(input.applicationId);
       const reviewerId = new Types.ObjectId(input.reviewerId);
       return mongoose.connection.transaction(async (session) => {
-        // Real writes on the existing version keys make decisions/cancellations conflict
-        // with this transaction. A retry must re-check both workflow states.
+        // Các lệnh ghi thật lên khoá phiên bản hiện có khiến các quyết định/lần huỷ xung đột
+        // với transaction này. Retry phải kiểm tra lại cả hai trạng thái workflow.
         const application = await applications.findOneAndUpdate({ _id: applicationId, state: "Shortlisted" },
           { $inc: { __v: 1 } }, { new: true, session }).lean();
         if (!application) {

@@ -1,11 +1,11 @@
 import { DomainError } from "./errors.js";
 
-/** Where a case came from (UC40 FR-01). `OTHER` covers what an officer notices directly. */
+/** Nguồn gốc của vụ việc (UC40 FR-01). `OTHER` là các trường hợp cán bộ tự phát hiện. */
 export const VIOLATION_ORIGINS = ["COMPLAINT", "REPORT_FINDING", "OVERDUE_REPORT", "FINANCIAL_EXCEPTION",
   "UNAUTHORIZED_EVENT", "LATE_BOOKING_CANCELLATION", "OTHER"] as const;
 export type ViolationOrigin = (typeof VIOLATION_ORIGINS)[number];
 
-/** BR27: the severity scale is a constant of the policy document (BR42). */
+/** BR27: thang mức độ nghiêm trọng là hằng số của văn bản chính sách (BR42). */
 export const VIOLATION_SEVERITIES = ["MINOR", "MODERATE", "SERIOUS"] as const;
 export type ViolationSeverity = (typeof VIOLATION_SEVERITIES)[number];
 
@@ -14,7 +14,7 @@ export type ViolationState = "Open" | "Under Investigation" | "Awaiting Club Res
 export const LIFECYCLE_LINKS = ["SUSPEND", "DISSOLVE"] as const;
 export type LifecycleLink = (typeof LIFECYCLE_LINKS)[number];
 
-/** Default time a club gets to explain itself (constant of the policy document). */
+/** Thời gian mặc định để CLB giải trình (hằng số của văn bản chính sách). */
 export const RESPONSE_DUE_DAYS = 7;
 export const MAX_CORRECTIVE_ACTIONS = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -31,7 +31,7 @@ export interface ClubResponse {
   requestedBy: string;
   requestedAt: Date;
   dueAt: Date;
-  /** `CLUB` is written by the club side (contract in the SPEC); the others by ICPDP. */
+  /** `CLUB` do phía CLB ghi (hợp đồng nằm trong SPEC); các giá trị còn lại do ICPDP ghi. */
   source?: "CLUB" | "RECORDED_BY_ICPDP" | "NO_RESPONSE";
   text?: string;
   respondedBy?: string;
@@ -83,7 +83,7 @@ export interface ViolationSummary {
   state: ViolationState;
   openedAt: Date;
   responseDueAt?: Date;
-  /** The club has not answered and the response deadline has passed. */
+  /** CLB chưa phản hồi và đã quá hạn phản hồi. */
   responseOverdue: boolean;
   pendingActions: number;
 }
@@ -134,10 +134,10 @@ export type ViolationStep =
 
 export interface StepResult {
   next: ViolationCase;
-  /** Audit action code. */
+  /** Mã hành động trong audit. */
   action: string;
   reason?: string;
-  /** Whether the club board is told about this step. */
+  /** Bước này có thông báo cho ban chủ nhiệm CLB hay không. */
   notifyClub: boolean;
 }
 
@@ -146,26 +146,30 @@ export interface ViolationRepository {
   find(id: string, now: Date): Promise<ViolationDetail | null>;
   sources(clubId: string): Promise<ViolationSources | null>;
   open(input: OpenViolationInput, officerId: string, now: Date): Promise<ViolationDetail>;
-  /** Applies `applyViolationStep` to the stored case inside a transaction and persists the result. */
+  /** Áp dụng `applyViolationStep` lên vụ việc đã lưu trong một transaction rồi ghi kết quả. */
   apply(id: string, officerId: string, step: ViolationStep, now: Date): Promise<ViolationDetail>;
 }
 
 const finalStates = new Set<ViolationState>(["Resolved", "Closed"]);
 
+// Ném lỗi validation cho dữ liệu vi phạm không hợp lệ
 function invalid(message: string, field?: string): never {
   throw new DomainError(message, "validation", field ? { field } : undefined);
 }
 
+// Ném lỗi conflict cho thao tác không hợp lệ với vụ việc
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của vụ việc
 function text(value: string | undefined, max: number, field: string): string | undefined {
   const trimmed = value?.trim();
   if (trimmed && trimmed.length > max) invalid(`${field} is too long`, field);
   return trimmed || undefined;
 }
 
+// Chuẩn hoá danh sách minh chứng của vụ việc vi phạm
 export function normalizedEvidence(items: readonly EvidenceInput[] | undefined, actorId: string, now: Date): ViolationEvidence[] {
   if ((items?.length ?? 0) > 20) invalid("too many evidence items", "evidence");
   return (items ?? []).flatMap((item) => {
@@ -177,6 +181,7 @@ export function normalizedEvidence(items: readonly EvidenceInput[] | undefined, 
   });
 }
 
+// Kiểm tra và chuẩn hoá dữ liệu mở vụ việc vi phạm
 export function normalizedOpenInput(input: OpenViolationInput): OpenViolationInput {
   if (!VIOLATION_ORIGINS.includes(input.originType)) invalid("invalid violation origin", "originType");
   if (!VIOLATION_SEVERITIES.includes(input.severity)) invalid("invalid violation severity", "severity");
@@ -185,7 +190,8 @@ export function normalizedOpenInput(input: OpenViolationInput): OpenViolationInp
   return { ...input, title, description: text(input.description, 5_000, "description") };
 }
 
-/** UC40 state machine: what a step does to a case, or why it is not allowed now. */
+// UC40: áp dụng một bước của máy trạng thái vụ việc hoặc từ chối nếu không hợp lệ
+/** Máy trạng thái UC40: một bước tác động gì lên vụ việc, hoặc vì sao hiện chưa được phép. */
 export function applyViolationStep(current: ViolationCase, step: ViolationStep, actorId: string, now: Date): StepResult {
   if (finalStates.has(current.state)) conflict("this case is already closed");
   const next: ViolationCase = { ...current, evidence: [...current.evidence], actions: current.actions.map((item) => ({ ...item })) };
@@ -265,7 +271,7 @@ export function applyViolationStep(current: ViolationCase, step: ViolationStep, 
       const item = next.actions.find((action) => action.id === step.actionId);
       if (!item) throw new DomainError("corrective action not found", "not_found");
       if (item.state !== "Pending") conflict("this corrective action is already checked");
-      // Done needs the club's evidence; not done needs that evidence or a passed deadline.
+      // "Đã khắc phục" cần minh chứng của CLB; "chưa khắc phục" cần minh chứng đó hoặc đã quá hạn.
       if (step.outcome === "Verified" && !item.submission) conflict("the club has not submitted evidence for this action yet");
       if (step.outcome === "Failed" && !item.submission && item.dueAt > now) {
         conflict("wait for the club's evidence or the action deadline before marking it not done");

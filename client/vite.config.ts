@@ -10,6 +10,11 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: { "@": path.resolve(__dirname, "src") },
   },
+  build: {
+    rollupOptions: {
+      input: { app: path.resolve(__dirname, "index.html"), proposalPreview: path.resolve(__dirname, "proposal-preview.html") },
+    },
+  },
   server: {
     proxy: { "/api": `http://localhost:${loadEnv(mode, "..", "").PORT || 3000}` },
   },

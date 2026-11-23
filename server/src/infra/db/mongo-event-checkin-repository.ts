@@ -8,15 +8,18 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Kiểm tra giá trị là Date hợp lệ, nếu không thì báo lỗi dữ liệu
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid attendance date in database");
   return value;
 }
 
+// Trả Date nếu giá trị là Date, ngược lại undefined
 function optionalDate(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined;
 }
 
+// Repository check-in sự kiện của sinh viên (UC31)
 export function mongoEventCheckInRepository(): EventCheckInRepository {
   const events = ucmsModels.events!;
   const registrations = ucmsModels.eventRegistrations!;
@@ -44,6 +47,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
   }
 
   return {
+    // Lấy sự kiện, đăng ký, membership và điểm danh để xét điều kiện check-in
     async target(eventId, studentId) {
       const eventObjectId = new Types.ObjectId(eventId);
       const studentObjectId = new Types.ObjectId(studentId);
@@ -66,6 +70,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
       isActiveClubMember: Boolean(membership), attendance };
     },
 
+    // Ghi điểm danh sinh viên trong transaction, gắn cờ bất thường nếu có
     async checkIn(input) {
       const eventId = new Types.ObjectId(input.eventId);
       const studentId = new Types.ObjectId(input.studentId);
@@ -74,7 +79,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
         await mongoose.connection.transaction(async (session) => {
           created = false;
           if (await attendances.exists({ eventId, studentId }).session(session)) return;
-          // Re-check the event inside the transaction so a concurrent cancellation is not missed.
+          // Kiểm tra lại sự kiện trong transaction để không bỏ sót việc huỷ đồng thời.
           const event = await events.findOne({ _id: eventId,
             attendanceFinalized: { $ne: true }, state: { $in: [...checkInStates] }, publishedAt: { $exists: true, $ne: null } })
             .session(session).lean();
@@ -98,7 +103,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
             if (Number(event.confirmedRegistrationCount) >= Number(event.capacity) && policy?.allowOverbooking !== true) {
               throw new DomainError("event capacity is full", "conflict");
             }
-            // UC31 A2: a walk-in gets a confirmed registration alongside the attendance.
+            // UC31 A2: khách vãng lai được đăng ký xác nhận kèm theo điểm danh.
             if (registration) {
               const changed = await registrations.updateOne({ _id: registration._id, state: registration.state },
                 { $set: { state: "Confirmed", promotedAt: input.now }, $unset: { waitlistPosition: "", cancelledAt: "" } },
@@ -127,7 +132,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
           created = true;
         });
       } catch (error) {
-        // A concurrent check-in won the unique index (BR18): fall through and return its record.
+        // Một check-in đồng thời đã thắng unique index (BR18): bỏ qua và trả về bản ghi của nó.
         if (!(error instanceof mongoose.mongo.MongoServerError && error.code === 11000)) throw error;
         created = false;
       }
@@ -136,6 +141,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
       return { attendance, created };
     },
 
+    // Liệt kê các lần check-in của sinh viên (bỏ no-show)
     async listMine(studentId) {
       const docs = await attendances.find({ studentId: new Types.ObjectId(studentId), abnormalFlags: { $ne: "no-show" } })
         .sort({ checkedInAt: -1, _id: -1 }).lean();

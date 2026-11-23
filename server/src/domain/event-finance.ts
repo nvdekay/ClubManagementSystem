@@ -96,6 +96,7 @@ export interface EventFinanceRepository {
     now: Date,
   ): Promise<FinanceDetail>;
 }
+// Kiểm tra khoản chi của sự kiện
 export function validateExpense(input: ExpenseInput, now: Date): ExpenseInput {
   const category = input.category.trim();
   if (
@@ -111,6 +112,7 @@ export function validateExpense(input: ExpenseInput, now: Date): ExpenseInput {
   }
   return { ...input, category, description: input.description?.trim() };
 }
+// Kiểm tra link minh chứng tài chính
 export function validateFinancialEvidence(input: EvidenceInput): EvidenceInput {
   let url: URL;
   try {
@@ -132,6 +134,7 @@ export function validateFinancialEvidence(input: EvidenceInput): EvidenceInput {
   }
   return { ...input, externalLink: url.href };
 }
+// Tính tổng ngân sách duyệt, tạm ứng, chi đã ghi nhận, có minh chứng và số còn lại
 export function financeTotals(
   approvedTotal: number,
   advanceTotal: number,
@@ -160,6 +163,7 @@ export function financeTotals(
     remaining: advanceTotal - recordedTotal,
   };
 }
+// Đối soát các khoản chi khi chốt quyết toán và tính số dư
 export function reconcileExpenses(
   totals: FinanceTotals,
   expenses: Expense[],
@@ -209,10 +213,12 @@ export function reconcileExpenses(
           : "Closed",
   };
 }
+// Chỉ cho sửa chi phí khi ngân sách còn ở trạng thái mở
 export function assertFinanceEditable(state: string): void {
   if (!["Disbursed", "Reconciliation Pending"].includes(state))
     throw new DomainError("expenses are locked for this budget", "conflict");
 }
+// Chỉ cho quyết toán khi sự kiện đã kết thúc hoặc bị huỷ
 export function assertSettlementEvent(
   state: string,
   endAt: Date,

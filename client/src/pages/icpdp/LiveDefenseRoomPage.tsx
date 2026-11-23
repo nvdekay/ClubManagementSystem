@@ -17,6 +17,7 @@ import { ProposalDecisionPanel } from "@/pages/icpdp/ProposalDecisionPanel";
 import type { EventDefenseState } from "@/services/eventDefense";
 import { cn } from "@/utils/cn";
 
+// Chuyển markdown inline (đậm, nghiêng, code) thành phần tử React
 function renderInlineMarkdown(text: string): ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
   return parts.map((part, idx) => {
@@ -37,6 +38,7 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   });
 }
 
+// Xem trước nội dung markdown của biên bản
 function MarkdownPreview({ source, emptyText }: { source: string; emptyText: string }) {
   if (!source.trim()) {
     return <p className="text-sm text-muted-app">{emptyText}</p>;
@@ -82,6 +84,7 @@ function MarkdownPreview({ source, emptyText }: { source: string; emptyText: str
   );
 }
 
+// Chọn màu badge theo trạng thái buổi bảo vệ
 function defenseTone(state: EventDefenseState): AppBadgeTone {
   switch (state) {
     case "IN_PROGRESS":
@@ -99,10 +102,12 @@ function defenseTone(state: EventDefenseState): AppBadgeTone {
   }
 }
 
+// Trả về chuỗi nếu giá trị là chuỗi không rỗng
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
+// Chọn thông báo lỗi dịch được, dùng dự phòng nếu lỗi chung
 function resolveProposalError(error: Error | null | undefined, fallback: string): string {
   if (!error) return fallback;
   if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
@@ -111,6 +116,7 @@ function resolveProposalError(error: Error | null | undefined, fallback: string)
   return error.message || fallback;
 }
 
+// Trang phòng bảo vệ trực tiếp: bắt đầu, ghi biên bản, kết thúc hoặc no-show
 export function LiveDefenseRoomPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
@@ -136,7 +142,7 @@ export function LiveDefenseRoomPage() {
   const noteDraft = localDraft ?? serverContent;
   const displayedSavedAt = lastSavedAt ?? serverNote?.updatedAt ?? null;
 
-  // Debounced auto-save (2s) while the session is IN_PROGRESS.
+  // Tự động lưu có debounce (2 giây) khi phiên đang IN_PROGRESS.
   useEffect(() => {
     if (!id || !csrfToken || session?.state !== "IN_PROGRESS") return;
     if (localDraft === null || localDraft === serverContent) return;
@@ -218,6 +224,7 @@ export function LiveDefenseRoomPage() {
   const isInProgress = session.state === "IN_PROGRESS";
   const isEnded = session.state === "DEFENDED" || session.state === "NO_SHOW" || session.state === "CANCELLED";
 
+  // Bắt đầu buổi bảo vệ
   async function handleStart() {
     if (!id) return;
     resetDefenseMutation();
@@ -228,12 +235,13 @@ export function LiveDefenseRoomPage() {
     }
   }
 
+  // Xác nhận rồi kết thúc buổi bảo vệ
   async function handleEnd() {
     if (!id) return;
     if (!(await askConfirm(t("eventDefense.confirmEndDefense")))) return;
     resetDefenseMutation();
     try {
-      // Flush unsaved draft before ending if needed.
+      // Lưu nốt bản nháp chưa lưu trước khi kết thúc nếu cần.
       if (localDraft !== null && localDraft !== serverContent) {
         await mutateDefense({ kind: "saveNote", eventId: id, content: localDraft, csrfToken });
       }
@@ -243,6 +251,7 @@ export function LiveDefenseRoomPage() {
     }
   }
 
+  // Xác nhận rồi ghi nhận CLB vắng mặt (no-show) buổi bảo vệ
   async function handleNoShow() {
     if (!id) return;
     if (!(await askConfirm(t("eventDefense.noShowWarning")))) return;
@@ -264,7 +273,7 @@ export function LiveDefenseRoomPage() {
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
-        {/* Column 1: Proposal Details */}
+        {/* Cột 1: Chi tiết đề xuất */}
         <div className="min-w-0 space-y-6">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventDefense.proposalColumn")}</h2>
@@ -283,10 +292,7 @@ export function LiveDefenseRoomPage() {
                 <dt className="text-xs text-muted-app">{t("eventReviews.capacity")}</dt>
                 <dd className="mt-1 font-medium">{t("eventReviews.capacityValue", { count: event.capacity })}</dd>
               </div>
-              <div>
-                <dt className="text-xs text-muted-app">{t("eventReviews.risk")}</dt>
-                <dd className="mt-1 font-medium">{event.riskCategory ?? "—"}</dd>
-              </div>
+
               {([
                 ["objective", optionalText(payload.objective) ?? event.objective],
                 ["plan", optionalText(payload.plan)],
@@ -349,7 +355,7 @@ export function LiveDefenseRoomPage() {
           </section>
         </div>
 
-        {/* Column 2: Live Defense Controls, Notes & Decision */}
+        {/* Cột 2: Điều khiển phiên bảo vệ trực tiếp, ghi chú và quyết định */}
         <div className="min-w-0 space-y-6">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

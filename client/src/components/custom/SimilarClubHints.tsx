@@ -6,16 +6,18 @@ import type { SimilarClubHint } from "@/services/applications";
 
 interface SimilarClubHintsProps {
   hints: SimilarClubHint[];
-  /** The applicant sees nothing when there is no hint; ICPDP is told none were found. */
+  /** Người nộp đơn không thấy gì khi không có gợi ý; ICPDP được báo là không tìm thấy. */
   audience: "applicant" | "officer";
   className?: string;
 }
 
-/** Advisory similar-club hints for a founding application (UC07 applicant, UC08 ICPDP). */
+// Gợi ý các CLB tương tự khi xét hồ sơ thành lập CLB
+/** Gợi ý mang tính tham khảo về các CLB tương tự cho hồ sơ thành lập (UC07 người nộp, UC08 ICPDP). */
 export function SimilarClubHints({ hints, audience, className }: SimilarClubHintsProps) {
   const { t } = useTranslation();
   if (!hints.length && audience === "applicant") return null;
 
+  // Dịch trạng thái CLB hoặc hồ sơ sang nhãn hiển thị
   function stateLabel(state: string): string {
     switch (state) {
       case "Pending Setup": return t("clubLifecycle.state_Pending Setup");
@@ -30,6 +32,7 @@ export function SimilarClubHints({ hints, audience, className }: SimilarClubHint
     }
   }
 
+  // Đổi tỉ lệ 0-1 sang phần trăm làm tròn
   function percent(value: number): number {
     return Math.round(value * 100);
   }

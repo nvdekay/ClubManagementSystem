@@ -9,17 +9,20 @@ const extensionForMime: Record<string, string> = {
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
 };
 
+// Tạo chữ ký SHA-1 cho tham số gọi API Cloudinary
 function signature(params: Record<string, string>, secret: string): string {
   const serialized = Object.entries(params).sort(([a], [b]) => a.localeCompare(b))
     .map(([key, value]) => `${key}=${value}`).join("&");
   return createHash("sha1").update(serialized + secret).digest("hex");
 }
 
+// Trả URL gốc của API Cloudinary theo cloud name
 function cloudinaryBase(config: CloudinaryConfig): string {
   return `https://api.cloudinary.com/v1_1/${config.CLOUDINARY_CLOUD_NAME}`;
 }
 
-/** Uploads one file: a public image at a random path, or an authenticated raw asset under `folder`. */
+// Upload một file lên Cloudinary (ảnh công khai hoặc raw có xác thực)
+/** Upload một file: ảnh public ở đường dẫn ngẫu nhiên, hoặc raw asset có xác thực dưới `folder`. */
 export async function uploadToCloudinary(config: CloudinaryConfig, input: { folder: string; fileName: string;
   mimeType: string; bytes: Buffer; isPublic: boolean }): Promise<{ assetId: string; secureUrl?: string }> {
   const extension = extensionForMime[input.mimeType];
@@ -48,12 +51,14 @@ export async function uploadToCloudinary(config: CloudinaryConfig, input: { fold
   return { assetId: body.asset_id, ...(input.isPublic ? { secureUrl: String(body.secure_url) } : {}) };
 }
 
+// Tạo kho file hồ sơ đơn lập CLB trên Cloudinary
 export function cloudinaryApplicationFiles(config: CloudinaryConfig): ApplicationFileStorage {
   const base = cloudinaryBase(config);
   return {
+    // Upload tài liệu hồ sơ và trả metadata tài liệu để lưu
     async upload(input): Promise<ApplicationDocument> {
-      // Proposed logos are public images (random path) so they can be previewed and reused as the
-      // club logo on approval; every other document stays an authenticated raw asset.
+      // Logo đề xuất là ảnh public (đường dẫn ngẫu nhiên) để có thể xem trước và dùng lại làm
+      // logo CLB khi được duyệt; mọi tài liệu khác vẫn là raw asset có xác thực.
       const isPublic = input.visibility === "public";
       const stored = await uploadToCloudinary(config, { folder: isPublic ? "ucms/club-logo-proposals"
         : `ucms/applications/${input.ownerId}/${input.applicationId}`, fileName: input.fileName,
@@ -63,6 +68,7 @@ export function cloudinaryApplicationFiles(config: CloudinaryConfig): Applicatio
         bytes: input.bytes.length, assetId: stored.assetId,
         ...(stored.secureUrl ? { publicUrl: stored.secureUrl } : {}), uploadedAt: input.now };
     },
+    // Tạo URL tải file có chữ ký, hiệu lực 60 giây
     async accessUrl(assetId, options): Promise<string> {
       const now = Math.floor(Date.now() / 1000);
       const params = { asset_id: assetId, attachment: options?.inline ? "false" : "true",

@@ -15,19 +15,23 @@ export const invitationResponseBody = z.object({
   responseDetails: z.record(z.string().min(1).max(100), z.union([z.string().max(2_000), z.number().finite()])).optional(),
 }).strict();
 const path = z.object({ clubId: z.string().regex(/^[0-9a-f]{24}$/i), id: z.string().regex(/^[0-9a-f]{24}$/i).optional() });
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const parsed = schema.safeParse(value);
   if (!parsed.success) throw new DomainError("invalid invitation request", "validation", parsed.error.issues);
   return parsed.data;
 }
+// Mount các route lời mời tham gia sự kiện của CLB
 export function clubInvitationRoutes(deps: { repo: ClubInvitationRepository; access: ClubAccessRepository;
   authRepo: AuthRepository; sessions: SessionService }): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
+  // Liệt kê lời mời mà CLB nhận được
   router.get("/clubs/:clubId/invitations", authGuard(guard, false), async (req, res) => {
     const { clubId } = parse(path, req.params);
     ok(res, await listClubInvitations(deps.repo, deps.access, res.locals.actor as AccessActor, clubId, new Date()));
   });
+  // CLB phản hồi (nhận hoặc từ chối) một lời mời
   router.post("/clubs/:clubId/invitations/:id/response", authGuard(guard), async (req, res) => {
     const { clubId, id } = parse(path, req.params);
     ok(res, await respondToClubInvitation(deps.repo, deps.access, res.locals.actor as AccessActor, clubId, id!,

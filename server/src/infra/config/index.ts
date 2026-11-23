@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// The ONLY place allowed to read process.env (enforced by scripts/check-constitution.sh).
+// Nơi DUY NHẤT được đọc process.env (được scripts/check-constitution.sh kiểm tra).
 const schema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
@@ -44,6 +44,7 @@ const cloudinarySchema = z.object({
 });
 export type CloudinaryConfig = z.infer<typeof cloudinarySchema>;
 
+// Đọc cấu hình Cloudinary, trả null nếu chưa cấu hình, lỗi nếu cấu hình thiếu
 export function optionalCloudinaryConfig(config: Config): CloudinaryConfig | null {
   const values = [config.CLOUDINARY_CLOUD_NAME, config.CLOUDINARY_API_KEY,
     config.CLOUDINARY_API_SECRET];
@@ -55,7 +56,7 @@ export function optionalCloudinaryConfig(config: Config): CloudinaryConfig | nul
   return parsed.data;
 }
 
-// "Name <address>" or a bare address; the address part is what has to be valid.
+// Dạng "Name <address>" hoặc chỉ địa chỉ; phần địa chỉ mới là phần phải hợp lệ.
 const mailFrom = z.string().trim().refine((value) => {
   const address = /<([^<>]+)>$/.exec(value)?.[1] ?? value;
   return z.string().email().safeParse(address).success && !/[\r\n]/.test(value);
@@ -64,7 +65,7 @@ const mailFrom = z.string().trim().refine((value) => {
 const smtpSchema = z.object({
   SMTP_HOST: z.string().trim().min(1),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535),
-  // true = TLS from the first byte (port 465); false = STARTTLS upgrade (port 587), which Google requires.
+  // true = TLS ngay từ byte đầu (cổng 465); false = nâng cấp STARTTLS (cổng 587), Google yêu cầu kiểu này.
   SMTP_SECURE: z.enum(["true", "false"]).transform((value) => value === "true"),
   SMTP_USER: z.string().trim().min(1),
   SMTP_PASSWORD: z.string().min(1),
@@ -73,9 +74,10 @@ const smtpSchema = z.object({
 export type SmtpConfig = z.infer<typeof smtpSchema>;
 export type MailConfig = { transport: "log" } | ({ transport: "smtp" } & SmtpConfig);
 
+// Chọn transport email (log hoặc SMTP) và kiểm cấu hình hợp lệ
 /**
- * EXT-02: picks the mail transport and fails fast. Production must send through SMTP; a partial
- * SMTP setup never falls back to the log transport silently. Error messages name keys, never values.
+ * EXT-02: chọn transport email và báo lỗi sớm. Production bắt buộc gửi qua SMTP; cấu hình SMTP
+ * thiếu thì không bao giờ âm thầm chuyển sang log transport. Thông báo lỗi chỉ nêu tên key, không nêu giá trị.
  */
 export function mailConfig(config: Config): MailConfig {
   const smtpKeys = ["SMTP_HOST", "SMTP_PORT", "SMTP_SECURE", "SMTP_USER", "SMTP_PASSWORD", "MAIL_FROM"] as const;
@@ -93,6 +95,7 @@ export function mailConfig(config: Config): MailConfig {
   return { transport: "smtp", ...parsed.data };
 }
 
+// Bắt buộc có đủ cấu hình đăng nhập Google và phiên, thiếu thì báo lỗi
 export function requireAuthConfig(config: Config): AuthConfig {
   const parsed = authSchema.safeParse(config);
   if (!parsed.success) {
@@ -101,6 +104,7 @@ export function requireAuthConfig(config: Config): AuthConfig {
   return parsed.data;
 }
 
+// Trả cấu hình Auth nếu có khai báo, chưa khai báo thì trả null
 export function optionalAuthConfig(config: Config): AuthConfig | null {
   const hasAuthSetting = [
     config.GOOGLE_CLIENT_ID, config.GOOGLE_CLIENT_SECRET, config.SESSION_SECRET,
@@ -109,11 +113,12 @@ export function optionalAuthConfig(config: Config): AuthConfig | null {
   return hasAuthSetting ? requireAuthConfig(config) : null;
 }
 
+// Đọc và kiểm tra biến môi trường, sai thì dừng tiến trình ngay
 export function loadConfig(): Config {
   const parsed = schema.safeParse(process.env);
   if (!parsed.success) {
     console.error("❌ Invalid environment:", parsed.error.flatten().fieldErrors);
-    process.exit(1); // fail fast — never boot with broken config
+    process.exit(1); // dừng ngay — không bao giờ khởi động với cấu hình hỏng
   }
   return parsed.data;
 }

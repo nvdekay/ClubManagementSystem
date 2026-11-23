@@ -13,11 +13,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useClubRoomAllocations } from "@/hooks/useRoomAllocations";
 import { slotLabel, weekdayLabel } from "@/utils/roomSchedule";
 
+// Định dạng ngày theo múi giờ Việt Nam
 function vietnamDay(value: string | Date): string {
   return new Date(new Date(value).getTime() + 7 * 3600000).toISOString().slice(0, 10);
 }
 
-/** Read-only view of the rooms ICPDP allocated to the club for every Active member (UC58, club.room.view). */
+/** Màn hình chỉ xem các phòng ICPDP đã phân bổ cho CLB, dành cho mọi thành viên Active (UC58, club.room.view). */
 export function ClubRoomsPage() {
   const { clubId = "" } = useParams();
   const { t, i18n } = useTranslation();

@@ -8,11 +8,13 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm định dạng ObjectId
 function validId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid identifier", "validation");
   return value;
 }
 
+// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: AuthRepository, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -25,12 +27,14 @@ async function officer(auth: AuthRepository, actor: AccessActor | null): Promise
   return actorId;
 }
 
+// ICPDP xem các kế hoạch bàn giao lãnh đạo đang chờ xử lý
 export async function listLeadershipTransitions(repo: LeadershipTransitionRepository,
   auth: AuthRepository, actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.listOpen();
 }
 
+// ICPDP xem chi tiết một kế hoạch bàn giao lãnh đạo
 export async function getLeadershipTransition(repo: LeadershipTransitionRepository,
   auth: AuthRepository, actor: AccessActor | null, planId: string) {
   await officer(auth, actor);
@@ -39,11 +43,13 @@ export async function getLeadershipTransition(repo: LeadershipTransitionReposito
   return result;
 }
 
+// ICPDP officer nhận xử lý một kế hoạch bàn giao
 export async function claimLeadershipTransition(repo: LeadershipTransitionRepository,
   auth: AuthRepository, actor: AccessActor | null, planId: string, now: Date) {
   return repo.claim(validId(planId), await officer(auth, actor), now);
 }
 
+// ICPDP duyệt hoặc trả lại kế hoạch bàn giao kèm nghĩa vụ theo dõi
 export async function decideLeadershipTransition(repo: LeadershipTransitionRepository,
   auth: AuthRepository, actor: AccessActor | null, planId: string,
   input: TransitionDecisionInput, now: Date) {

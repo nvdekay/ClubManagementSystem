@@ -1,6 +1,6 @@
 import { cn } from "@/utils/cn";
 
-// Stroke icons on a 24px grid; path data adapted from Lucide (ISC licence, lucide.dev).
+// Icon nét trên lưới 24px; dữ liệu path chỉnh sửa từ Lucide (ISC licence, lucide.dev).
 const paths = {
   home: ["M3 10.5 12 3l9 7.5", "M5 9.5V21h14V9.5", "M10 21v-6h4v6"],
   compass: ["M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z", "m15.5 8.5-2 5-5 2 2-5 5-2Z"],
@@ -70,7 +70,8 @@ interface AppIconProps {
   className?: string;
 }
 
-/** Decorative by default (aria-hidden); pair icon-only controls with an aria-label. */
+// Icon SVG theo tên
+/** Mặc định chỉ trang trí (aria-hidden); control chỉ có icon cần kèm aria-label. */
 export function AppIcon({ name, className }: AppIconProps) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}

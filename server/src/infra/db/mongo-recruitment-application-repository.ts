@@ -10,15 +10,18 @@ import { validateRecruitmentAnswers } from "../../domain/recruitment-application
 import { clubUserIdsWithPermission } from "./club-permission-holders.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Lọc mảng, chỉ giữ phần tử là object
 function records(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? value.filter((item): item is Record<string, unknown> =>
     Boolean(item) && typeof item === "object" && !Array.isArray(item)) : [];
 }
 
+// Lọc mảng, chỉ giữ phần tử là chuỗi
 function strings(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
+// Chuẩn hóa danh sách tệp đính kèm của đơn ứng tuyển
 function attachmentList(value: unknown): RecruitmentAttachment[] {
   return records(value).flatMap((item) => typeof item.id === "string"
     && typeof item.fieldKey === "string" && typeof item.fileName === "string"
@@ -30,6 +33,7 @@ function attachmentList(value: unknown): RecruitmentAttachment[] {
     }] : []);
 }
 
+// Ánh xạ document đơn sang RecruitmentApplication
 function mapApplication(doc: Record<string, unknown>): RecruitmentApplication {
   const answers = doc.answers && typeof doc.answers === "object"
     ? doc.answers as Record<string, RecruitmentAnswer> : {};
@@ -45,6 +49,7 @@ function mapApplication(doc: Record<string, unknown>): RecruitmentApplication {
   };
 }
 
+// Ánh xạ document đợt tuyển sang PublicCampaign
 function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
   const steps = records(doc.selectionSteps);
   const fields = records(doc.formSchema);
@@ -68,6 +73,7 @@ function mapCampaign(doc: Record<string, unknown>): PublicCampaign {
   };
 }
 
+// Đổi lỗi trùng khoá (đã có đơn cho đợt tuyển) thành DomainError conflict
 function duplicate(error: unknown): never {
   if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
     throw new DomainError("an application already exists for this campaign", "conflict");
@@ -75,6 +81,7 @@ function duplicate(error: unknown): never {
   throw error;
 }
 
+// Repository đơn ứng tuyển của sinh viên và duyệt đơn của CLB
 export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationRepository {
   const applications = ucmsModels.recruitmentApplications!;
   const campaigns = ucmsModels.recruitmentCampaigns!;
@@ -85,6 +92,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
 
+  // Tìm đợt tuyển đang mở nhận đơn tại thời điểm now
   async function openCampaign(campaignId: Types.ObjectId, now: Date, session?: ClientSession) {
     let query = campaigns.findOne({ _id: campaignId,
       state: { $in: ["Published", "Accepting Applications"] },
@@ -93,13 +101,14 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
     const doc = await query.lean();
     if (!doc) return null;
     const club = await clubs.findById(doc.clubId).select("state").session(session ?? null).lean();
-    // UC15 (2026-10-10): a suspended club keeps its campaign open but accepts no applications for now.
+    // UC15 (2026-10-10): CLB bị đình chỉ vẫn giữ chiến dịch mở nhưng tạm thời không nhận đơn.
     if (club?.state === "Suspended") {
       throw new DomainError("club is suspended; applications are paused", "conflict", { reason: "clubSuspended" });
     }
     return club?.state === "Active" ? mapCampaign(doc) : null;
   }
 
+  // Kiểm tra sinh viên đủ điều kiện ứng tuyển vào CLB
   async function eligibility(userId: Types.ObjectId, clubId: Types.ObjectId,
     session?: ClientSession): Promise<RecruitmentEligibility> {
     const [user, active, banned] = await Promise.all([
@@ -110,11 +119,13 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
     return { userActive: Boolean(user), activeMembership: Boolean(active), bannedMembership: Boolean(banned) };
   }
 
-  /** Every Club Leader of the club (President and Vice-Presidents of the active term), by the shared access rule. */
+  // Lấy id người có quyền duyệt đơn ứng tuyển của CLB
+  /** Mọi Club Leader của CLB (President và Vice-President của nhiệm kỳ Active), theo quy tắc truy cập dùng chung. */
   async function reviewerIds(clubId: Types.ObjectId, now: Date, session: ClientSession) {
     return clubUserIdsWithPermission(clubId, "club.application.review", now, session);
   }
 
+  // Gửi thông báo cho người duyệt đơn của CLB
   async function notifyReviewers(input: { clubId: Types.ObjectId; applicationId: Types.ObjectId;
     campaignId: Types.ObjectId; position: string; eventCode: string; now: Date;
     session: ClientSession }) {
@@ -130,6 +141,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
   }
 
   return {
+    // Liệt kê đơn đã nộp của một đợt tuyển để duyệt
     async listForReview(clubId, campaignId, state) {
       const filter: Record<string, unknown> = { clubId: new Types.ObjectId(clubId),
         campaignId: new Types.ObjectId(campaignId), state: { $ne: "Draft" } };
@@ -142,6 +154,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       return docs.map((doc) => ({ ...mapApplication(doc), applicantName: names.get(String(doc.userId)) }));
     },
 
+    // Chuyển trạng thái hàng loạt đơn ứng tuyển theo bước duyệt (sàng lọc, shortlist, quyết định...)
     async transition(input) {
       const clubId = new Types.ObjectId(input.clubId);
       const campaignId = new Types.ObjectId(input.campaignId);
@@ -214,8 +227,8 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
         }
         const all = await applications.find({ campaignId }).select("state").session(session).lean();
         const terminal = new Set(["Accepted", "Rejected", "Waitlisted", "Withdrawn", "Onboarded", "Declined"]);
-        // Complete only when no more applications can arrive: the window has closed or every
-        // place is taken. Deciding the current applications early must not close an open campaign.
+        // Chỉ hoàn tất khi không còn đơn nào có thể đến nữa: cửa sổ đã đóng hoặc mọi
+        // chỉ tiêu đã đủ. Quyết định sớm các đơn hiện có không được đóng một chiến dịch đang mở.
         const filled = all.filter((app) => ["Accepted", "Onboarded"].includes(String(app.state))).length;
         const closed = (campaign.windowEnd as Date) <= input.now || filled >= Number(campaign.capacity);
         if (closed && all.length > 0 && all.every((app) => terminal.has(String(app.state)))) {
@@ -227,6 +240,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       });
     },
 
+    // Đưa ứng viên được nhận vào CLB thành thành viên
     async onboard(input) {
       const clubId = new Types.ObjectId(input.clubId);
       const campaignId = new Types.ObjectId(input.campaignId);
@@ -291,6 +305,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       return mapApplication(updated);
     },
 
+    // Đánh dấu ứng viên Accepted từ chối gia nhập
     async declineAccepted(input) {
       const applicationId = new Types.ObjectId(input.applicationId);
       const clubId = new Types.ObjectId(input.clubId);
@@ -324,15 +339,18 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       return mapApplication(updated);
     },
 
+    // Lấy đợt tuyển đang mở theo id
     async campaign(campaignId, now) {
       if (!Types.ObjectId.isValid(campaignId)) return null;
       return openCampaign(new Types.ObjectId(campaignId), now);
     },
 
+    // Kiểm tra sinh viên đủ điều kiện ứng tuyển vào CLB
     async eligibility(userId, clubId) {
       return eligibility(new Types.ObjectId(userId), new Types.ObjectId(clubId));
     },
 
+    // Tạo đơn ứng tuyển Draft cho đợt tuyển
     async createDraft(input) {
       const campaignId = new Types.ObjectId(input.campaign.id);
       const clubId = new Types.ObjectId(input.campaign.clubId!);
@@ -369,18 +387,21 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       } catch (error) { duplicate(error); }
     },
 
+    // Lấy đơn ứng tuyển của chính sinh viên theo id
     async findOwned(applicationId, userId) {
       const doc = await applications.findOne({ _id: new Types.ObjectId(applicationId),
         userId: new Types.ObjectId(userId) }).lean();
       return doc ? mapApplication(doc) : null;
     },
 
+    // Lấy đơn của sinh viên trong một đợt tuyển
     async findMineForCampaign(campaignId, userId) {
       const doc = await applications.findOne({ campaignId: new Types.ObjectId(campaignId),
         userId: new Types.ObjectId(userId) }).lean();
       return doc ? mapApplication(doc) : null;
     },
 
+    // Liệt kê đơn ứng tuyển của sinh viên kèm thông tin đợt tuyển
     async listMine(userId) {
       const docs = await applications.find({ userId: new Types.ObjectId(userId) })
         .sort({ submittedAt: -1, _id: -1 }).lean();
@@ -396,6 +417,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       }));
     },
 
+    // Cập nhật nội dung đơn ứng tuyển Draft
     async updateDraft(input) {
       const id = new Types.ObjectId(input.applicationId);
       const userId = new Types.ObjectId(input.userId);
@@ -425,6 +447,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       return mapApplication(updated);
     },
 
+    // Thêm tệp đính kèm vào đơn ứng tuyển
     async addAttachment(input) {
       const id = new Types.ObjectId(input.applicationId);
       const userId = new Types.ObjectId(input.userId);
@@ -455,6 +478,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       return mapApplication(updated);
     },
 
+    // Tìm tệp đính kèm của đơn để người duyệt CLB xem
     async reviewAttachment(input) {
       const doc = await applications.findOne({ _id: new Types.ObjectId(input.applicationId),
         clubId: new Types.ObjectId(input.clubId), campaignId: new Types.ObjectId(input.campaignId),
@@ -462,12 +486,14 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       return doc ? attachmentList(doc.attachments)
         .find((attachment) => attachment.id === input.attachmentId) ?? null : null;
     },
+    // Tìm tệp đính kèm của đơn thuộc chính ứng viên
     async attachmentAccess(applicationId, userId, attachmentId) {
       const doc = await applications.findOne({ _id: new Types.ObjectId(applicationId),
         userId: new Types.ObjectId(userId) }).select("attachments").lean();
       return doc ? attachmentList(doc.attachments).find((attachment) => attachment.id === attachmentId) ?? null : null;
     },
 
+    // Sinh viên nộp đơn ứng tuyển
     async submit(applicationId, userId, now) {
       const id = new Types.ObjectId(applicationId);
       const actorId = new Types.ObjectId(userId);
@@ -505,6 +531,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
       });
     },
 
+    // Sinh viên rút đơn ứng tuyển
     async withdraw(applicationId, userId, now) {
       const id = new Types.ObjectId(applicationId);
       const actorId = new Types.ObjectId(userId);

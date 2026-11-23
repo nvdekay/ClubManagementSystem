@@ -1,6 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { clubBoardHistory, internalEvent, internalEvents } from "../../src/infra/db/dashboard-drilldown.js";
+import { clubBoardHistory } from "../../src/infra/db/dashboard-drilldown.js";
 import { ensureUcmsDatabase, ucmsModels as m } from "../../src/infra/db/ucms-models.js";
 
 const uri = process.env.MONGO_URI;
@@ -76,21 +76,9 @@ describe.skipIf(!uri)("UC02 dashboard drill-downs", () => {
   }, 30000);
   afterAll(async () => { if (mongoose.connection.readyState === 1) await mongoose.connection.dropDatabase(); await mongoose.disconnect(); });
 
-  it("lists recorded internal events only, with totals and filter options", async () => {
-    const all = await internalEvents({});
-    expect(all.items.map((item) => item.title).sort()).toEqual(["Art jam", "Members night"]);
-    expect(all.items.find((item) => item.title === "Members night")).toMatchObject({ clubName: "Chess Club", registrations: 1, attendances: 1 });
-    expect(all.clubs.map((item) => item.name)).toEqual(["Art Club", "Chess Club"]);
-    expect(all.semesters).toEqual(["Summer 2026", "Fall 2026"].sort().reverse());
-    expect((await internalEvents({ clubId: String(club) })).items.map((item) => item.title)).toEqual(["Members night"]);
-    expect((await internalEvents({ semesterCode: "Summer 2026" })).items.map((item) => item.title)).toEqual(["Art jam"]);
-  });
 
-  it("opens an internal event's attendance but never a public or draft event", async () => {
-    expect(await internalEvent(String(recorded))).toMatchObject({ attendance: [{ studentName: "Student", email: "student@fpt.edu.vn", finalized: true }] });
-    expect(await internalEvent(String(publicEvent))).toBeNull();
-    expect(await internalEvent(String(draft))).toBeNull();
-  });
+
+
 
   it("lists structure versions and each term's board with the step that confirmed it (BR56)", async () => {
     const history = await clubBoardHistory(String(club));

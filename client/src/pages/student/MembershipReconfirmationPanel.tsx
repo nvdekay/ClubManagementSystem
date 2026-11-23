@@ -4,8 +4,10 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirmMembership, useMembershipReconfirmations } from "@/hooks/useMembershipReconfirmations";
+// Panel nhắc sinh viên xác nhận lại tư cách thành viên CLB
 export function MembershipReconfirmationPanel() {
   const { t, i18n } = useTranslation(); const auth = useAuth(); const query = useMembershipReconfirmations(auth.data?.user.id); const mutation = useConfirmMembership();
+  // Xác nhận lại tư cách thành viên
   async function confirm(id: string) { if (!auth.data) return; try { await mutation.mutateAsync({ id, csrfToken: auth.data.csrfToken }); } catch { /* The mutation error is displayed below. */ } }
   if (!auth.data) return null;
   if (query.isPending) return <AppSkeleton className="mb-6 h-24 w-full" />;

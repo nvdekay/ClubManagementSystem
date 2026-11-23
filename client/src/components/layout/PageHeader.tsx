@@ -6,12 +6,13 @@ import { AppIcon } from "@/components/ui/icon/AppIcon";
 interface PageHeaderProps {
   title: string;
   description?: string;
-  /** Optional "back" link shown above the title on detail pages. */
+  /** Liên kết "quay lại" tuỳ chọn hiển thị phía trên tiêu đề ở trang chi tiết. */
   back?: { to: string; label: string };
   actions?: ReactNode;
 }
 
-/** Title block at the top of every workspace page: no card, just type and whitespace. */
+// Tiêu đề đầu mỗi trang workspace, kèm liên kết quay lại và nút thao tác
+/** Khối tiêu đề đầu mỗi trang workspace: không dùng thẻ, chỉ chữ và khoảng trắng. */
 export function PageHeader({ title, description, back, actions }: PageHeaderProps) {
   return (
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4">

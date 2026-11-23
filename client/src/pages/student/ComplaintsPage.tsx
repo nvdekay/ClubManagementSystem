@@ -25,7 +25,8 @@ import { COMPLAINT_TYPES, type ComplaintEvidence, type ComplaintType } from "@/s
 const MAX_TEXT = 4000;
 const MAX_EVIDENCE = 5;
 
-/** UC50: send a complaint to ICPDP (BR38) and follow or withdraw it. */
+// Trang sinh viên gửi khiếu nại tới CLB và xem khiếu nại của mình
+/** UC50: gửi khiếu nại tới ICPDP (BR38), theo dõi hoặc rút lại. */
 export function ComplaintsPage() {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -50,12 +51,14 @@ export function ComplaintsPage() {
     description: description.trim() ? null : t("common.fieldRequired"),
   });
 
+  // Chọn CLB bị khiếu nại và xóa sự kiện đã chọn
   function chooseClub(next: { id: string; name: string } | null) {
     setClub(next);
     setEventId("");
     if (next) field.touch("club");
   }
 
+  // Gửi khiếu nại sau khi kiểm tra form
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || !auth.data || !club || inFlight.current) return;
@@ -69,12 +72,13 @@ export function ComplaintsPage() {
       field.reset();
       setDone(true);
     } catch {
-      // send.isError renders the message below.
+      // send.isError hiển thị thông báo bên dưới.
     } finally {
       inFlight.current = false;
     }
   }
 
+  // Xác nhận rồi rút một khiếu nại
   async function withdrawOne(id: string) {
     if (!auth.data || !(await confirm(t("complaints.withdrawConfirm")))) return;
     try {

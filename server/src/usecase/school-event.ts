@@ -9,6 +9,7 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -21,30 +22,35 @@ async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: Acc
   return actor.id;
 }
 
+// Kiểm định dạng ObjectId của một định danh
 function checkedId(value: string, what: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${what} id`, "validation");
   return value;
 }
 
+// Lấy sự kiện trường theo id, không có thì báo not_found
 async function existing(repo: SchoolEventRepository, id: string) {
   const found = await repo.find(checkedId(id, "event"));
   if (!found) throw new DomainError("school event not found", "not_found");
   return found;
 }
 
+// ICPDP xem danh sách sự kiện do trường tổ chức
 export async function listSchoolEvents(repo: SchoolEventRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.list();
 }
 
+// ICPDP xem chi tiết một sự kiện trường
 export async function getSchoolEvent(repo: SchoolEventRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, id: string) {
   await officer(auth, actor);
   return existing(repo, id);
 }
 
-/** FR-UC53-02: the conflict warning shown while the officer fills in the form. */
+// Cảnh báo xung đột lịch khi ICPDP đang nhập form sự kiện trường
+/** FR-UC53-02: cảnh báo xung đột hiển thị khi officer điền biểu mẫu. */
 export async function checkSchoolEventConflicts(repo: SchoolEventRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, input: { propertyId?: string; startAt: Date; endAt: Date }) {
   await officer(auth, actor);
@@ -55,6 +61,7 @@ export async function checkSchoolEventConflicts(repo: SchoolEventRepository, aut
   return repo.conflicts(input.propertyId, input.startAt, input.endAt);
 }
 
+// ICPDP tạo sự kiện trường, có thể mời sẵn các CLB
 export async function createSchoolEvent(repo: SchoolEventRepository, policy: PolicyRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, input: SchoolEventInput, now: Date) {
   const officerId = await officer(auth, actor);
@@ -64,6 +71,7 @@ export async function createSchoolEvent(repo: SchoolEventRepository, policy: Pol
   return repo.create(normalizedSchoolEvent(input, calendar, now), officerId, now);
 }
 
+// ICPDP mời CLB tham gia sự kiện trường trước khi diễn ra
 export async function inviteClubs(repo: SchoolEventRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, id: string, input: { clubIds?: string[]; allActiveClubs?: boolean; deadline?: Date }, now: Date) {
   const officerId = await officer(auth, actor);
@@ -75,12 +83,14 @@ export async function inviteClubs(repo: SchoolEventRepository, auth: Pick<AuthRe
   return repo.invite(event.id, normalizedInvitation(input, event.startAt, now, true), officerId, now);
 }
 
+// ICPDP thu hồi lời mời CLB tham gia sự kiện trường
 export async function withdrawInvitation(repo: SchoolEventRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, id: string, invitationId: string, now: Date) {
   const officerId = await officer(auth, actor);
   return repo.withdraw(checkedId(id, "event"), checkedId(invitationId, "invitation"), officerId, now);
 }
 
+// ICPDP công bố sự kiện trường đã duyệt
 export async function publishSchoolEvent(repo: SchoolEventRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, id: string, now: Date) {
   const officerId = await officer(auth, actor);
@@ -90,6 +100,7 @@ export async function publishSchoolEvent(repo: SchoolEventRepository, auth: Pick
   return repo.publish(event.id, officerId, now);
 }
 
+// Job: cho hết hạn các lời mời CLB quá thời hạn trả lời
 export async function runInvitationExpiryJob(repo: SchoolEventRepository, now: Date) {
   return repo.expireInvitations(now);
 }

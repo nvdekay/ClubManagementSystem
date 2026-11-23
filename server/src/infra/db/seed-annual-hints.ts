@@ -1,7 +1,7 @@
-// Acceptance data for the annual evaluation report (UC55 A2) and similar-club hints (UC07/UC08),
-// added on top of an existing demo database. Usage: npm run seed:annual-hints -- --officer=<email> --applicant=<email>
-// Only adds data and is safe to re-run: every row is keyed and skipped when it already exists.
-// Never creates an evaluation for the live semester (Fall 2026): its generate/publish flow is demoed by hand.
+// Dữ liệu nghiệm thu cho báo cáo đánh giá thường niên (UC55 A2) và gợi ý CLB tương tự (UC07/UC08),
+// thêm lên một database demo có sẵn. Cách dùng: npm run seed:annual-hints -- --officer=<email> --applicant=<email>
+// Chỉ thêm dữ liệu và chạy lại an toàn: mỗi dòng đều có khoá và bị bỏ qua nếu đã tồn tại.
+// Không bao giờ tạo đánh giá cho học kỳ đang chạy (Fall 2026): luồng generate/publish của nó được demo thủ công.
 import mongoose, { Types } from "mongoose";
 import { DEFAULT_SCHEME_SETTINGS, EVALUATION_DIMENSIONS, type SchemeThresholds } from "../../domain/evaluation-scheme.js";
 import { classify } from "../../domain/evaluation.js";
@@ -32,11 +32,11 @@ if (!OFFICER_EMAIL.includes("@") || !APPLICANT_EMAIL.includes("@")) {
 }
 const LIVE_PERIOD = "Fall 2026";
 
-// Rows inserted by hand before this seed existed; this seed replaces them.
+// Các dòng chèn tay trước khi có seed này; seed này thay thế chúng.
 const LEGACY_EVALUATIONS = [1, 2, 3, 4, 5, 6].map((n) => new Types.ObjectId(`dea0000000000000000000${String(n).padStart(2, "0")}`));
 const LEGACY_REPORTS = [1, 2, 3].map((n) => new Types.ObjectId(`deb0000000000000000000${String(n).padStart(2, "0")}`));
 
-// Fall 2025 uses stricter thresholds, so the year classification visibly follows the latest term's scheme.
+// Fall 2025 dùng ngưỡng chặt hơn, nên việc xếp loại năm thấy rõ là theo thang điểm của kỳ mới nhất.
 const STRICT: SchemeThresholds = { excellent: 88, good: 75, fair: 55 };
 const periods: Record<string, { thresholds: SchemeThresholds; publishedAt: Date }> = {
   "Spring 2025": { thresholds: DEFAULT_SCHEME_SETTINGS.thresholds, publishedAt: new Date("2025-05-10T03:00:00Z") },
@@ -51,12 +51,13 @@ interface PlannedEvaluation {
   club: string; period: string; total: number; figures: Figures;
   revisionNo?: number; state?: "Published" | "Finalized"; insufficient?: string;
 }
+// Dựng bộ số liệu (thành viên, sự kiện, lượt tham dự, vụ mở) cho dữ liệu mẫu
 function f(members: number, events: number, attendances: number, openCases = 0): Figures {
   return { members, events, attendances, openCases };
 }
 
 const evaluationPlan: PlannedEvaluation[] = [
-  // 2025: complete year (Spring, Summer, Fall).
+  // 2025: năm đầy đủ (Spring, Summer, Fall).
   { club: "HEBE", period: "Spring 2025", total: 80, figures: f(16, 2, 85) },
   { club: "HEBE", period: "Summer 2025", total: 86, figures: f(18, 3, 120) },
   { club: "HEBE", period: "Fall 2025", total: 92, figures: f(22, 4, 210) },
@@ -66,7 +67,7 @@ const evaluationPlan: PlannedEvaluation[] = [
   { club: "FDS", period: "Spring 2025", total: 84, figures: f(17, 3, 140) },
   { club: "FDS", period: "Summer 2025", total: 78, figures: f(15, 2, 80) },
   { club: "FDS", period: "Fall 2025", total: 70, figures: f(13, 1, 45, 1) },
-  // A later revision still being reviewed: never counts.
+  // Một revision sau còn đang được review: không bao giờ được tính.
   { club: "FDS", period: "Fall 2025", total: 95, figures: f(13, 1, 45, 1), revisionNo: 2, state: "Finalized" },
   { club: "EHC", period: "Spring 2025", total: 70, figures: f(9, 2, 55) },
   { club: "EHC", period: "Summer 2025", total: 72, figures: f(10, 2, 60) },
@@ -82,10 +83,10 @@ const evaluationPlan: PlannedEvaluation[] = [
   { club: "FEC", period: "Fall 2025", total: 79, figures: f(20, 2, 110) },
   { club: "Blazie", period: "Spring 2025", total: 72, figures: f(24, 2, 130) },
   { club: "Blazie", period: "Summer 2025", total: 55, figures: f(20, 1, 40) },
-  // Post-publication revision: both revisions are Published, the higher revisionNo wins.
+  // Revision sau khi công bố: cả hai revision đều Published, revisionNo cao hơn thắng.
   { club: "Blazie", period: "Summer 2025", total: 80, figures: f(20, 2, 140), revisionNo: 2 },
   { club: "Blazie", period: "Fall 2025", total: 76, figures: f(26, 3, 160) },
-  // 2026: provisional year (Fall 2026 is live and stays untouched).
+  // 2026: năm tạm thời (Fall 2026 đang chạy và không bị đụng tới).
   { club: "HEBE", period: "Spring 2026", total: 72, figures: f(18, 2, 90) },
   { club: "HEBE", period: "Summer 2026", total: 78, figures: f(20, 2, 110) },
   { club: "FDS", period: "Spring 2026", total: 81, figures: f(15, 3, 120) },
@@ -128,7 +129,7 @@ const reportPlan: PlannedReport[] = [
     { title: "Cuộc thi hùng biện tiếng Anh \"Speak Up\"", description: "Thu hút 64 thí sinh, chung kết có sự tham gia của giám khảo bản ngữ." }] },
   { club: "Mây Mưa Club", period: "Fall 2025", approved: 1_500_000, disbursed: 1_200_000, achievements: [
     { title: "Triển lãm tranh màu nước \"Hà Nội mùa thu\"", description: "Trưng bày 45 tác phẩm của thành viên tại sảnh tòa Beta trong một tuần." }] },
-  // Not accepted yet: its finance and achievement must not appear in the annual report.
+  // Chưa được chấp nhận: tài chính và thành tích của nó không được xuất hiện trong báo cáo năm.
   { club: "FRC", period: "Fall 2025", approved: 9_000_000, disbursed: 8_500_000, state: "Submitted", achievements: [
     { title: "Robot tự hành vào chung kết Robocon", description: "Thành tích chưa được ICPDP xác nhận nên không được đưa vào báo cáo năm." }] },
   { club: "HEBE", period: "Spring 2026", approved: 6_000_000, disbursed: 5_200_000, achievements: [
@@ -144,7 +145,7 @@ const reportPlan: PlannedReport[] = [
     { title: "Triển lãm đồ thủ công tái chế", description: "Trưng bày 60 sản phẩm tại sảnh tòa Alpha trong 3 ngày." }] },
 ];
 
-// Founding applications: four in the ICPDP queue, one Draft owned by the applicant account.
+// Đơn thành lập: bốn đơn trong hàng đợi ICPDP, một bản nháp thuộc tài khoản người nộp đơn.
 interface PlannedApplication {
   key: string; founders: string[]; clubName: string; field: string; summary: string; objectives: string;
   logo: [number, number, number]; submit: boolean;
@@ -176,10 +177,12 @@ const applicationPlan: PlannedApplication[] = [
     objectives: "Tổ chức hoạt động tình nguyện vì cộng đồng tại Hà Nội, lan tỏa giá trị tích cực." },
 ];
 
+// Dựng actor Active từ id người dùng
 function actor(id: string): AccessActor {
   return { id, accountState: "Active" };
 }
 
+// Tìm id người dùng theo email, lỗi nếu chưa có trong DB
 async function userId(email: string): Promise<string> {
   const user = await m.users!.findOne({ email }).select("_id").lean();
   if (!user) throw new Error(`user ${email} not found in this database`);
@@ -187,6 +190,7 @@ async function userId(email: string): Promise<string> {
 }
 
 const clubIds = new Map<string, Types.ObjectId>();
+// Tìm id CLB theo mã (có cache), lỗi nếu chưa có trong DB
 async function clubId(code: string): Promise<Types.ObjectId> {
   if (!clubIds.has(code)) {
     const club = await m.clubs!.findOne({ code }).select("_id").lean();
@@ -201,12 +205,12 @@ try {
   const officer = await userId(OFFICER_EMAIL);
   const officerId = new Types.ObjectId(officer);
 
-  // ── Replace the hand-inserted rows ──
+  // ── Thay các dòng chèn tay ──
   await m.evaluationDimensionResults!.deleteMany({ evaluationId: { $in: LEGACY_EVALUATIONS } });
   await m.evaluations!.deleteMany({ _id: { $in: LEGACY_EVALUATIONS } });
   await m.periodicReports!.deleteMany({ _id: { $in: LEGACY_REPORTS } });
 
-  // ── Annual report: one Active scheme per period, created through the scheme repository ──
+  // ── Báo cáo năm: mỗi kỳ một scheme Active, tạo qua scheme repository ──
   const schemes = mongoEvaluationSchemeRepository();
   const schemeIds = new Map<string, Types.ObjectId>();
   for (const [periodCode, period] of Object.entries(periods)) {
@@ -221,8 +225,8 @@ try {
     schemeIds.set(periodCode, id);
   }
 
-  // Published evaluations are inserted directly: UC42 would need the live activity of past semesters.
-  // The weighted sum of these offsets is 0 under the default weights, so dimension scores add up to the total.
+  // Các đánh giá đã công bố được chèn trực tiếp: UC42 sẽ cần hoạt động thực của các học kỳ đã qua.
+  // Tổng có trọng số của các độ lệch này bằng 0 với trọng số mặc định, nên điểm các chiều cộng lại bằng tổng.
   const offsets = [5, -4, 2, -3, 4, -6, 1, -3];
   let evaluationsAdded = 0;
   for (const plan of evaluationPlan) {
@@ -257,7 +261,7 @@ try {
     }));
   }
 
-  // Periodic reports: unique per (club, period), so a period the club already reported is left alone.
+  // Báo cáo định kỳ: duy nhất theo (CLB, kỳ), nên kỳ CLB đã báo cáo thì để nguyên.
   let reportsAdded = 0;
   for (const plan of reportPlan) {
     const club = await clubId(plan.club);
@@ -274,7 +278,7 @@ try {
     reportsAdded += 1;
   }
 
-  // ── Similar-club hints: founding applications through the UC07 use cases ──
+  // ── Gợi ý CLB tương tự: đơn thành lập qua các usecase UC07 ──
   const applications = mongoClubApplicationRepository();
   const clubFields = mongoClubFieldRepository();
   const policy = mongoPolicyRepository();

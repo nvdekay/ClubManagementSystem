@@ -3,9 +3,11 @@ import type { ClubViolationRepository } from "../domain/club-violation.js";
 import { DomainError } from "../domain/errors.js";
 import { normalizedEvidence, type EvidenceInput } from "../domain/violation.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
+// CLB xem các vụ vi phạm liên quan tới mình
 export async function listClubViolations(repo: ClubViolationRepository, access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.complaint.respond", now); return repo.list(clubId, now);
 }
+// CLB phản hồi vụ vi phạm hoặc nộp hành động khắc phục kèm bằng chứng
 export async function respondClubViolation(repo: ClubViolationRepository, access: ClubAccessRepository, actor: AccessActor | null, clubId: string, id: string, input: { text: string } | { actionId: string; note: string; evidence: EvidenceInput[] }, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.complaint.respond", now);
   if (!/^[0-9a-f]{24}$/i.test(id)) throw new DomainError("invalid case id", "validation");

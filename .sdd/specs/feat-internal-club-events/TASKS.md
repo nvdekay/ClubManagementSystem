@@ -1,5 +1,10 @@
 # TASKS: feat-internal-club-events
 
+Điều chỉnh giao diện ngày 2026-11-17:
+- [x] Chỉ giữ nút tạo đề xuất sự kiện; gỡ liên kết và route tạo sự kiện nội bộ, sửa hướng dẫn en/vi.
+- [x] Cập nhật SPEC và tài liệu trang CLB; giữ quản lý sự kiện nội bộ hiện có.
+- [x] `npm run check` xanh: constitution, lint, typecheck; server 424 test và client 33 test qua. 199 integration test bỏ qua do thiếu `MONGO_URI`; chưa nghiệm thu trên trình duyệt.
+
 - [x] Đối chiếu plan với code, tạo SPEC (ghi các điều chỉnh so với plan).
 - [x] Diagram `.drawio` và tài liệu đặc tả (Phần 1 của plan).
 - [x] DBML `eventState` + sinh lại `ucms-schema.generated.ts`.

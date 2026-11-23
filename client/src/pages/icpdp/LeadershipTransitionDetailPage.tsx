@@ -16,6 +16,7 @@ import { useLeadershipTransition, useLeadershipTransitionAction } from "@/hooks/
 import { useConfirm } from "@/hooks/useConfirm";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 
+// Trang ICPDP xem chi tiết bàn giao lãnh đạo CLB và ra quyết định
 export function LeadershipTransitionDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
@@ -41,11 +42,13 @@ export function LeadershipTransitionDetailPage() {
   const loading = <div className="space-y-4"><AppSkeleton className="h-10 w-1/2" />
     <AppSkeleton className="h-96 w-full" /></div>;
 
+  // Officer nhận (claim) hồ sơ bàn giao lãnh đạo
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Rendered below. */ }
+    catch { /* Được hiển thị bên dưới. */ }
   }
+  // Xác nhận rồi gửi quyết định về bàn giao lãnh đạo
   async function decide() {
     if (!auth.data || !id || inFlight.current || !field.touchAll() || !(await askConfirm(t("leadershipTransitions.confirmPrompt")))) return;
     inFlight.current = true;
@@ -53,7 +56,7 @@ export function LeadershipTransitionDetailPage() {
       await action.mutateAsync({ kind: "decide", id, csrfToken: auth.data.csrfToken,
         input: { outcome, reason, followUpObligationIds: outcome === "Approve" ? followUps : [] } });
       setSaved(true);
-    } catch { /* Rendered below. */ }
+    } catch { /* Được hiển thị bên dưới. */ }
     finally { inFlight.current = false; }
   }
 
@@ -72,7 +75,7 @@ export function LeadershipTransitionDetailPage() {
     && plan.task.assigneeId !== auth.data.user.id;
   const stateLabel = plan.state === "Confirmed" ? t("leadershipTransitions.confirmed")
     : plan.state === "Returned" ? t("leadershipTransitions.returned") : t("leadershipTransitions.pending");
-  // Obligation types are server codes; unknown future codes still show as-is rather than disappearing.
+  // Loại nghĩa vụ là mã do server trả về; mã mới chưa biết vẫn hiển thị nguyên văn thay vì biến mất.
   function obligationLabel(type: string) {
     switch (type) {
       case "BUDGET": return t("leadershipTransitions.obligationBudget");

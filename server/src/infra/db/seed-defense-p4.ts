@@ -1,6 +1,6 @@
-// Defense demo, presenter 4: flow 6 (facilities, UC44-UC47, UC58) and flow 11 (school events, UC53-UC54).
-// Creates the facility catalogue and the booking/allocation states the recording starts from; flow 11 needs
-// only the cast, because the school event is created live. Additive and safe to run again.
+// Demo bảo vệ, người trình bày 4: flow 6 (cơ sở vật chất, UC44-UC47, UC58) và flow 11 (sự kiện toàn trường, UC53-UC54).
+// Tạo danh mục cơ sở vật chất và các trạng thái booking/phân bổ mà bản ghi hình bắt đầu từ đó; flow 11 chỉ cần
+// dàn nhân vật vì sự kiện toàn trường được tạo trực tiếp khi demo. Chỉ thêm dữ liệu, chạy lại an toàn.
 import mongoose, { Types } from "mongoose";
 import { BOOKING_SLOTS } from "../../domain/facility-booking.js";
 import type { PropertyInput } from "../../domain/property.js";
@@ -18,25 +18,30 @@ const NEIGHBOUR_CLUB = "FPTU Robotics Club";
 const DAY = 86_400_000;
 const now = new Date();
 
-/** Vietnam calendar day (YYYY-MM-DD) of the first given ISO weekday at least `minDays` from now. */
+// Tìm ngày gần nhất rơi vào thứ weekday, cách hôm nay ít nhất minDays ngày
+/** Ngày lịch Việt Nam (YYYY-MM-DD) của ngày trong tuần ISO đã cho đầu tiên cách hiện tại ít nhất `minDays` ngày. */
 function dayAhead(weekday: number, minDays: number): string {
   for (let offset = minDays; ; offset += 1) {
     const local = new Date(now.getTime() + offset * DAY + 7 * 3_600_000);
     if ((local.getUTCDay() || 7) === weekday) return local.toISOString().slice(0, 10);
   }
 }
+// Khung giờ (startAt, endAt) của ca học số number trong ngày
 function slotOn(day: string, number: number) {
   const slot = BOOKING_SLOTS.find((item) => item.number === number)!;
   return { startAt: new Date(`${day}T${slot.start}:00+07:00`), endAt: new Date(`${day}T${slot.end}:00+07:00`) };
 }
+// Khung giờ cả ngày theo giờ Việt Nam
 function wholeDay(day: string) {
   return { startAt: new Date(`${day}T00:00:00+07:00`), endAt: new Date(`${day}T23:59:00+07:00`) };
 }
+// Dựng giờ mở/đóng cửa cho các ngày trong tuần
 function weekdays(days: number[], open = "07:00", close = "18:00") {
   return days.map((day) => ({ day, open, close }));
 }
 
-/** Overridden accounts must exist already and are never modified; demo accounts are created when missing. */
+// Lấy hoặc tạo tài khoản cho một vai trong cast
+/** Tài khoản bị ghi đè phải tồn tại sẵn và không bao giờ bị sửa; tài khoản demo được tạo khi chưa có. */
 async function castUser(role: CastRole, person: CastMember): Promise<Types.ObjectId> {
   const found = await m.users!.findOne({ email: person.email }).lean();
   if (found) return found._id as Types.ObjectId;
@@ -45,17 +50,19 @@ async function castUser(role: CastRole, person: CastMember): Promise<Types.Objec
   return created!._id as Types.ObjectId;
 }
 
+// Đảm bảo người dùng có vai trò ICPDP_OFFICER
 async function ensureOfficer(userId: Types.ObjectId, person: CastMember): Promise<void> {
   const role = await m.roles!.findOne({ code: "ICPDP_OFFICER", scope: "system" }).lean();
   if (!role) throw new Error("ICPDP_OFFICER role is missing; start the server once so auth bootstrap creates it");
   if (await m.userRoleAssignments!.exists({ userId, roleId: role._id, revokedAt: null })) return;
-  // Roles of a real account are left as they are: the flows need ICPDP_OFFICER, so it must already be there.
+  // Role của tài khoản thật được giữ nguyên: các flow cần ICPDP_OFFICER nên tài khoản đó phải có sẵn.
   if (person.overridden) throw new Error(`--officer=${person.email} does not hold ICPDP_OFFICER; grant it in the app first`);
   await m.userRoleAssignments!.create({ userId, roleId: role._id, grantedBy: userId, grantedAt: now,
     reason: "defense demo presenter 4" });
 }
 
-/** Active membership in this club only; other clubs of the user are never read or changed here. */
+// Đảm bảo người dùng là thành viên Active của CLB
+/** Chỉ xét membership Active trong CLB này; các CLB khác của user không bao giờ bị đọc hay sửa ở đây. */
 async function ensureMembership(clubId: Types.ObjectId, userId: Types.ObjectId, actorId: Types.ObjectId) {
   const found = await m.clubMemberships!.findOne({ clubId, userId }).lean();
   if (found) {
@@ -67,7 +74,8 @@ async function ensureMembership(clubId: Types.ObjectId, userId: Types.ObjectId, 
   return created!._id as Types.ObjectId;
 }
 
-/** Finds the club by name or creates it Active with an Active term and the standard seats. */
+// Đảm bảo CLB demo tồn tại, tạo mới nếu chưa có
+/** Tìm CLB theo tên hoặc tạo mới ở trạng thái Active với một nhiệm kỳ Active và các ghế chuẩn. */
 async function ensureClub(name: string, contactEmail: string, officerId: Types.ObjectId): Promise<Types.ObjectId> {
   const found = await m.clubs!.findOne({ name }).lean();
   if (found) {
@@ -88,7 +96,8 @@ async function ensureClub(name: string, contactEmail: string, officerId: Types.O
   return clubId;
 }
 
-/** Puts the leader in the club's leader seat unless already there; refuses what BR06 or the seat forbids. */
+// Đảm bảo người dùng giữ ghế Leader của CLB trong nhiệm kỳ Active
+/** Đặt leader vào ghế leader của CLB nếu chưa có; từ chối những gì BR06 hoặc ghế đó cấm. */
 async function ensureLeader(clubId: Types.ObjectId, userId: Types.ObjectId, person: CastMember, officerId: Types.ObjectId) {
   const membershipId = await ensureMembership(clubId, userId, officerId);
   const term = await m.clubTerms!.findOne({ clubId, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } }).lean();
@@ -130,7 +139,7 @@ try {
   const config = loadConfig();
   await mongoose.connect(config.MONGO_URI, { serverSelectionTimeoutMS: 5_000 });
 
-  // Cast: the officer, the leader and an Active member of the demo club (flags may point at real accounts).
+  // Dàn nhân vật: officer, leader và một thành viên Active của CLB demo (các cờ có thể trỏ tới tài khoản thật).
   const cast = defenseCast();
   const officer = await castUser("officer", cast.officer);
   await ensureOfficer(officer, cast.officer);
@@ -147,7 +156,7 @@ try {
     throw new Error("the effective policy needs a semester that runs at least three more weeks");
   }
 
-  // UC44: the catalogue, keyed on the property name.
+  // UC44: danh mục, khoá theo tên property.
   const propertyRepo = mongoPropertyRepository();
   const ids: Record<string, string> = {};
   for (const input of catalogue) {
@@ -155,8 +164,9 @@ try {
     ids[input.name] = found ? String(found._id) : (await propertyRepo.create(input, String(officer), now)).id;
   }
 
-  // UC45-UC47: a draft the leader submits live, and an approved booking the leader cancels live.
+  // UC45-UC47: một bản nháp mà leader nộp trực tiếp, và một booking đã duyệt mà leader huỷ trực tiếp.
   const bookings = mongoFacilityBookingRepository();
+  // Tạo booking demo, tuỳ chọn gửi và duyệt ngay
   async function booking(purpose: string, input: Omit<Parameters<typeof bookings.create>[1], "purpose">, approve: boolean) {
     const found = await m.propertyBookings!.findOne({ clubId: club.id, purpose }).lean();
     if (found) return `${purpose}: ${String(found.state)} (kept)`;
@@ -177,7 +187,7 @@ try {
       ...slotOn(dayAhead(5, 6), 4), headcount: 60, equipment: [] }, true),
   ];
 
-  // UC58: another club already holds Tuesday slot 3 of BE-201, so the grid shows a taken cell.
+  // UC58: một CLB khác đã giữ slot 3 thứ Ba của BE-201, nên lưới hiển thị một ô đã bị chiếm.
   const rooms = mongoRoomAllocationRepository();
   const roomId = ids["Phòng BE-201"]!;
   if (!(await m.auditLogs!.exists({ entityType: "RoomAllocation", action: "ROOM_ALLOCATED",

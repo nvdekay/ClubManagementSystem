@@ -14,12 +14,15 @@ export interface TransitionContext {
   members: { id: string; displayName: string }[];
   obligations: { id: string; description: string }[]; plans: TransitionPlan[];
 }
+// Gọi API /clubs/:clubId/transition-plans và trả về data, ném ApiError nếu lỗi
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
   const r = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/transition-plans${path}`, { credentials: "same-origin", ...init });
   if (!r.ok) { const b = await r.json().catch(() => null) as { message?: string } | null; throw new ApiError(b?.message ?? `HTTP ${r.status}`); }
   return (await r.json() as { data: T }).data;
 }
+// GET ngữ cảnh và kế hoạch chuyển giao nhiệm kỳ của CLB
 export function fetchTransitionContext(clubId: string, signal: AbortSignal): Promise<TransitionContext> { return request(clubId, "", { signal }); }
+// POST/PUT tạo, lưu hoặc nộp kế hoạch chuyển giao nhiệm kỳ
 export function writeTransitionPlan(clubId: string, action: { id?: string; revision?: number; input?: TransitionInput }, csrfToken: string): Promise<TransitionPlan> {
   const path = action.id ? `/${encodeURIComponent(action.id)}${action.input ? "" : "/submit"}` : "";
   return request(clubId, path, { method: action.id && action.input ? "PUT" : "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },

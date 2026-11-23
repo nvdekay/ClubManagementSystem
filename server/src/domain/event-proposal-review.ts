@@ -17,7 +17,7 @@ export interface EventProposalTask {
   slaDueAt?: Date;
 }
 
-/** One requested budget line as the club submitted it (UC25 FR-18). */
+/** Một dòng ngân sách yêu cầu đúng như CLB đã nộp (UC25 FR-18). */
 export interface RequestedBudgetLine {
   category: string;
   amount: number;
@@ -28,7 +28,7 @@ export interface RequestedBudgetLine {
 export interface EventProposalVersion {
   id: string;
   revisionNo: number;
-  /** Immutable snapshot of what the club submitted; shape is the UC25 contract in the SPEC. */
+  /** Ảnh chụp bất biến của những gì CLB đã nộp; cấu trúc là hợp đồng UC25 trong SPEC. */
   payload: Record<string, unknown>;
   budgetLines: RequestedBudgetLine[];
   requestedBudgetTotal: number;
@@ -51,7 +51,6 @@ export interface EventProposalSummary {
   property?: { id: string; code: string; name: string };
   audienceScope: string;
   capacity: number;
-  riskCategory?: string;
   state: string;
   conflictResult?: string;
   conflictDetail?: unknown;
@@ -124,7 +123,7 @@ export interface EventProposalDetail extends EventProposalQueueItem {
   decisions: EventReviewDecision[];
   club: { id: string; name: string; state: string; obligations: ClubObligation[] };
   bookings: AttachedBooking[];
-  /** Other budgets the club already holds in the same semester (FR-UC26-13). */
+  /** Các ngân sách khác CLB đã có trong cùng học kỳ (FR-UC26-13). */
   semesterBudgets: EventBudgetSummary[];
   budget?: EventBudgetSummary;
   activeDefenseSession?: EventDefenseSession;
@@ -139,7 +138,7 @@ export interface EventReviewDecisionInput {
   reviewNote?: string;
   revisionDeadlineAt?: Date;
   conditions?: string[];
-  /** Same order as the requested lines of the current revision. */
+  /** Cùng thứ tự với các dòng yêu cầu của phiên bản hiện tại. */
   budgetLines?: { approvedAmount: number; reason?: string; fundingDecision?: FundingDecision }[];
 }
 
@@ -167,11 +166,12 @@ export interface EventProposalReviewRepository {
     now: Date): Promise<EventProposalDetail>;
   decideCancellation?(eventId: string, officerId: string, input: { approve: boolean; reason?: string },
     now: Date): Promise<EventProposalDetail>;
-  /** Scheduler: expire overdue revisions and move published events along their own times. */
+  /** Scheduler: cho hết hạn các phiên bản quá hạn và chuyển trạng thái sự kiện đã công bố theo giờ của chúng. */
   advanceLifecycle(now: Date): Promise<EventLifecycleResult>;
 }
 
-/** Checks the per-line approved amounts against the requested lines of the revision being decided. */
+// Kiểm tra số tiền duyệt cho từng dòng so với dòng ngân sách đề xuất
+/** Kiểm tra số tiền duyệt của từng dòng so với các dòng yêu cầu của phiên bản đang được quyết định. */
 export function approvedBudget(requested: RequestedBudgetLine[],
   decided: { approvedAmount: number; reason?: string; fundingDecision?: FundingDecision }[]): ApprovedBudgetLine[] {
   if (decided.length !== requested.length) {

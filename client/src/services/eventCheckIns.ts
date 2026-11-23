@@ -22,6 +22,7 @@ export interface CheckInResult extends Attendance {
   alreadyCheckedIn: boolean;
 }
 
+// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -32,10 +33,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// GET /attendances/mine: lịch sử điểm danh của tôi
 export function fetchMyAttendances(signal: AbortSignal) {
   return request<Attendance[]>("/attendances/mine", { signal });
 }
 
+// POST /check-in: điểm danh sự kiện bằng mã
 export function checkInToEvent(eventId: string, code: string, csrfToken: string) {
   return request<CheckInResult>(`/events/${encodeURIComponent(eventId)}/check-in`, {
     method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },

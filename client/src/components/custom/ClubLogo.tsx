@@ -5,26 +5,28 @@ import { cn } from "@/utils/cn";
 interface ClubLogoProps {
   name: string;
   logoUrl?: string;
-  /** Rendered size in CSS pixels. */
+  /** Kích thước hiển thị tính bằng pixel CSS. */
   size?: number;
   className?: string;
 }
 
-/** Ask Cloudinary for a cropped, auto-format thumbnail instead of the full-size upload. */
+// Dựng URL ảnh thu nhỏ Cloudinary, giữ nguyên URL khác
+/** Yêu cầu Cloudinary trả ảnh thu nhỏ đã cắt, tự chọn định dạng, thay vì ảnh gốc kích thước đầy đủ. */
 export function thumbnail(url: string, width: number, height = width): string {
   const marker = "/image/upload/";
   if (!url.includes("res.cloudinary.com") || !url.includes(marker)) return url;
-  // Doubled so the image stays sharp on high-density screens.
+  // Nhân đôi để ảnh vẫn nét trên màn hình mật độ điểm ảnh cao.
   return url.replace(marker, `${marker}c_fill,w_${width * 2},h_${height * 2},f_auto,q_auto/`);
 }
 
 /**
- * Every logo requests the same thumbnail regardless of `size`, so the browser cache is shared
- * across pages and Cloudinary derives one variant per logo. Covers the largest size in use (96).
+ * Mọi logo đều xin cùng một ảnh thu nhỏ bất kể `size`, nên cache của trình duyệt được dùng chung
+ * giữa các trang và Cloudinary chỉ tạo một biến thể cho mỗi logo. Đủ cho kích thước lớn nhất đang dùng (96).
  */
 const LOGO_THUMBNAIL_SIZE = 96;
 
-/** Club logo with an initial-letter fallback when there is no logo or it fails to load. */
+// Logo CLB, dùng chữ cái đầu khi chưa có logo hoặc ảnh lỗi
+/** Logo CLB, dùng chữ cái đầu khi không có logo hoặc ảnh tải lỗi. */
 export function ClubLogo({ name, logoUrl, size = 56, className }: ClubLogoProps) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const showImage = Boolean(logoUrl) && failedUrl !== logoUrl;

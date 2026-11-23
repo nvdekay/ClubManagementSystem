@@ -3,7 +3,8 @@ import { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
-/** UC30 A1: only the head may take a released seat; all writers hold the event document. */
+// Chuyển người đầu danh sách chờ thành đăng ký Confirmed khi có chỗ trống
+/** UC30 A1: chỉ người đứng đầu mới được nhận chỗ vừa nhả; mọi bên ghi đều giữ document sự kiện. */
 export async function promoteEventWaitlist(session: ClientSession, eventId: Types.ObjectId, now: Date,
   actorId?: Types.ObjectId, requestedRegistrationId?: Types.ObjectId): Promise<number> {
   let promoted = 0;

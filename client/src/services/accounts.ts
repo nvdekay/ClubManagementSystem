@@ -23,6 +23,7 @@ export type AccountAction =
   | { kind: "lock"; userId: string; reason: string; violationId?: string }
   | { kind: "unlock"; userId: string; reason: string };
 
+// Gửi POST/DELETE có CSRF tới endpoint quản trị tài khoản, ném ApiError nếu lỗi
 async function accountRequest(path: string, method: "POST" | "DELETE", csrfToken: string,
   body: object): Promise<void> {
   const response = await apiFetch(path, {
@@ -36,6 +37,7 @@ async function accountRequest(path: string, method: "POST" | "DELETE", csrfToken
   }
 }
 
+// GET /admin/users: tìm và phân trang người dùng cho ICPDP quản trị tài khoản
 export async function fetchAdminUsers(search: string, page: number, pageSize: number,
   signal: AbortSignal): Promise<AdminUserPage> {
   const params = new URLSearchParams({ search, page: String(page), pageSize: String(pageSize) });
@@ -48,6 +50,7 @@ export async function fetchAdminUsers(search: string, page: number, pageSize: nu
   return body.data;
 }
 
+// Gọi /admin/users/:id để cấp/thu hồi role hệ thống hoặc khoá/mở khoá tài khoản
 export async function applyAccountAction(action: AccountAction, csrfToken: string): Promise<void> {
   const base = `/api/v1/admin/users/${encodeURIComponent(action.userId)}`;
   if (action.kind === "grant") {

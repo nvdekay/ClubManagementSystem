@@ -16,22 +16,28 @@ export const transitionPlanBody = z.object({ toTerm: z.object({ name: z.string()
   assignees: z.record(z.string().max(100), id), earlyReason: z.string().max(2000).optional() }).strict();
 export const transitionRevisionBody = z.object({ revision: z.number().int().nonnegative() }).strict();
 export const transitionPlanSaveBody = transitionPlanBody.extend({ revision: z.number().int().nonnegative() }).strict();
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parse<T>(schema: z.ZodType<T>, value: unknown): T { const r = schema.safeParse(value); if (!r.success) throw new DomainError("invalid transition plan request", "validation", r.error.issues); return r.data; }
+// Mount các route kế hoạch chuyển giao của CLB
 export function clubTransitionPlanRoutes(deps: { repo: ClubTransitionPlanRepository; access: ClubAccessRepository; authRepo: AuthRepository; sessions: SessionService }): Router {
   const r = Router(); const guard = { repo: deps.authRepo, sessions: deps.sessions };
+  // Lấy ngữ cảnh và các kế hoạch chuyển giao của CLB
   r.get("/clubs/:clubId/transition-plans", authGuard(guard, false), async (req, res) => {
     ok(res, await clubTransitionContext(deps.repo, deps.access, res.locals.actor as AccessActor, parse(id, req.params.clubId), new Date()));
   });
+  // Tạo kế hoạch chuyển giao mới
   r.post("/clubs/:clubId/transition-plans", authGuard(guard), async (req, res) => {
     const b = parse(transitionPlanBody, req.body);
     ok(res, await writeClubTransition(deps.repo, deps.access, res.locals.actor as AccessActor, parse(id, req.params.clubId),
       { input: { ...b, toTerm: { ...b.toTerm, startAt: new Date(b.toTerm.startAt), endAt: new Date(b.toTerm.endAt) } } }, new Date()), 201);
   });
+  // Cập nhật kế hoạch chuyển giao
   r.put("/clubs/:clubId/transition-plans/:id", authGuard(guard), async (req, res) => {
     const { revision, ...b } = parse(transitionPlanSaveBody, req.body);
     ok(res, await writeClubTransition(deps.repo, deps.access, res.locals.actor as AccessActor, parse(id, req.params.clubId),
       { id: parse(id, req.params.id), revision, input: { ...b, toTerm: { ...b.toTerm, startAt: new Date(b.toTerm.startAt), endAt: new Date(b.toTerm.endAt) } } }, new Date()));
   });
+  // Nộp kế hoạch chuyển giao
   r.post("/clubs/:clubId/transition-plans/:id/submit", authGuard(guard), async (req, res) => {
     ok(res, await writeClubTransition(deps.repo, deps.access, res.locals.actor as AccessActor, parse(id, req.params.clubId),
       { id: parse(id, req.params.id), revision: parse(transitionRevisionBody, req.body).revision }, new Date()));

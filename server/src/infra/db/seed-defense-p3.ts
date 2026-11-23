@@ -1,14 +1,14 @@
-// Defense demo data for presenter 3: flow 5 (UC25-UC34, UC48-UC49, club events) on
-// "CLB Sáng tạo Công nghệ FPTU". One event is parked at each state the live demo starts from:
-//   1. a proposal sent back for revision and already corrected (Leader resubmits, ICPDP approves, Leader publishes)
-//   2. a small published event that is full, with two students on the waitlist
-//   3. a talk running right now with its check-in window open (the student checks in and gives feedback)
-//   4. a workshop that ended two days ago: one no-show to confirm, attendance not finalized, enough feedback
-// Every write goes through the real repositories and usecases. Events 3 and 4 cannot be proposed in the
-// past (the Leader seat only exists from today), so they are proposed with future dates and the whole
-// record is then moved back in time before anyone registers. Additive and safe to run again.
-// Cast: seed-defense-cast.ts; e.g. `npm run seed:defense:p3 -- --leader=a@x --officer=b@y --member=c@z`.
-// An overridden member also gets a seat at the running talk so it can check in and give feedback live.
+// Dữ liệu demo bảo vệ cho người trình bày 3: luồng 5 (UC25-UC34, UC48-UC49, sự kiện CLB) trên
+// "CLB Sáng tạo Công nghệ FPTU". Mỗi trạng thái mà buổi demo trực tiếp bắt đầu từ đều có một sự kiện đang chờ sẵn:
+//   1. một đề xuất bị trả lại sửa và đã được sửa xong (Leader nộp lại, ICPDP duyệt, Leader đăng)
+//   2. một sự kiện nhỏ đã đăng và đã đầy, có hai sinh viên trong danh sách chờ
+//   3. một buổi talk đang diễn ra với cửa sổ check-in đang mở (sinh viên check-in và gửi feedback)
+//   4. một workshop kết thúc hai ngày trước: một người vắng mặt cần xác nhận, điểm danh chưa chốt, đủ feedback
+// Mọi lệnh ghi đều đi qua repository và usecase thật. Sự kiện 3 và 4 không thể được đề xuất trong
+// quá khứ (ghế Leader chỉ tồn tại từ hôm nay), nên chúng được đề xuất với ngày tương lai rồi toàn bộ
+// bản ghi được dời ngược thời gian trước khi có ai đăng ký. Chỉ thêm và chạy lại an toàn.
+// Dàn nhân vật: seed-defense-cast.ts; ví dụ `npm run seed:defense:p3 -- --leader=a@x --officer=b@y --member=c@z`.
+// Một thành viên bị ghi đè cũng có ghế ở buổi talk đang diễn ra để có thể check-in và gửi feedback trực tiếp.
 import mongoose, { Types, type Model } from "mongoose";
 import type { ClubEventInput, EventPublishInput } from "../../domain/club-event.js";
 import type { EventReviewDecisionInput } from "../../domain/event-proposal-review.js";
@@ -28,9 +28,9 @@ import { ucmsModels as m } from "./ucms-models.js";
 
 const castRoles = defenseCast();
 const DOMAIN = "fpt.edu.vn";
-/** Cast roles of the defense demo, keyed by the names this flow's story uses. */
+/** Các vai trong dàn nhân vật demo bảo vệ, khoá theo tên mà câu chuyện của luồng này dùng. */
 const roleOf = { an: "leader", bao: "vice", chi: "member", duy: "member2", officer: "officer" } as const;
-/** Extra data-only students who fill registrations, the waitlist and feedback. */
+/** Thêm các sinh viên chỉ có dữ liệu để lấp đăng ký, danh sách chờ và feedback. */
 const students = {
   giang: "Hoàng Thu Giang", hai: "Đặng Minh Hải", khanh: "Vũ Ngọc Khánh", linh: "Bùi Thảo Linh",
   minh: "Ngô Quang Minh", nhi: "Trịnh Yến Nhi", phuc: "Lý Hoàng Phúc",
@@ -48,24 +48,29 @@ const HOUR = 3_600_000;
 const DAY = 86_400_000;
 const VN_OFFSET = 7 * HOUR;
 const now = new Date();
-// Clubs repository with the same rules main.ts wires (7-day proposal notice, 24-hour late cancellation).
+// Repository CLB với đúng các quy tắc main.ts nối (báo trước đề xuất 7 ngày, huỷ muộn 24 giờ).
 const events = mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 });
 const reviews = mongoEventProposalReviewRepository();
 const policies = mongoPolicyRepository();
 
+// Thời điểm cách hiện tại ms mili giây về trước
 function ago(ms: number): Date { return new Date(now.getTime() - ms); }
-/** `hour`:00 Vietnam time on the calendar day `days` after today. */
+// Giờ hour:00 theo giờ Việt Nam của ngày cách hôm nay days ngày
+/** `hour`:00 giờ Việt Nam của ngày lịch `days` ngày sau hôm nay. */
 function vnAt(days: number, hour: number): Date {
   return new Date(Math.floor((now.getTime() + VN_OFFSET) / DAY) * DAY + days * DAY + hour * HOUR - VN_OFFSET);
 }
+// Dựng actor sinh viên Active từ id
 function student(id: Types.ObjectId) { return { id: String(id), accountState: "Active" as const }; }
 
-/** Leader-only actions are dated no earlier than the leader's seat, so a club created moments ago still works. */
+/** Các thao tác chỉ Leader làm được được ghi ngày không sớm hơn ghế của leader, để CLB vừa tạo vẫn chạy được. */
 let leaderSince = 0;
-/** `minutes` before now, but never before the leader holds the seat. */
+// Thời điểm leader thao tác, không sớm hơn lúc leader nhận ghế
+/** `minutes` phút trước bây giờ, nhưng không bao giờ trước lúc leader giữ ghế. */
 function led(minutes: number): Date { return new Date(Math.max(now.getTime() - minutes * MINUTE, leaderSince)); }
 
-/** A cast role: an overridden (real) account must already exist and is never renamed. */
+// Lấy hoặc tạo tài khoản cho một vai trong cast
+/** Một vai trong dàn nhân vật: tài khoản bị ghi đè (thật) phải tồn tại sẵn và không bao giờ bị đổi tên. */
 async function castUser(role: CastRole): Promise<Types.ObjectId> {
   const person = castRoles[role];
   const found = await m.users!.findOne({ email: person.email }).select("_id").lean();
@@ -74,6 +79,7 @@ async function castUser(role: CastRole): Promise<Types.ObjectId> {
   const [created] = await m.users!.create([{ email: person.email, displayName: person.name, accountState: "Active", createdAt: now }]);
   return created!._id as Types.ObjectId;
 }
+// Lấy hoặc tạo sinh viên demo theo khoá
 async function demoStudent(key: keyof typeof students): Promise<Types.ObjectId> {
   const email = `${key}.demo@${DOMAIN}`;
   const found = await m.users!.findOne({ email }).select("_id").lean();
@@ -82,7 +88,8 @@ async function demoStudent(key: keyof typeof students): Promise<Types.ObjectId> 
   return created!._id as Types.ObjectId;
 }
 
-/** A real officer account must already hold ICPDP_OFFICER; only the demo officer is granted it here. */
+// Đảm bảo người dùng có vai trò ICPDP_OFFICER
+/** Cán bộ thật phải đã giữ ICPDP_OFFICER; chỉ cán bộ demo mới được cấp ở đây. */
 async function ensureOfficerRole(officerId: Types.ObjectId): Promise<void> {
   const role = castRoles.officer.overridden ? await m.roles!.findOne({ code: "ICPDP_OFFICER", scope: "system" }).lean()
     : await m.roles!.findOneAndUpdate({ code: "ICPDP_OFFICER", scope: "system" },
@@ -94,8 +101,8 @@ async function ensureOfficerRole(officerId: Types.ObjectId): Promise<void> {
 }
 
 /**
- * BR06: one user leads at most one club per running term. The seed refuses a leader who already holds
- * the Chủ nhiệm seat of another club instead of creating a second, rule-breaking leadership.
+ * BR06: một user chỉ lãnh đạo tối đa một CLB mỗi nhiệm kỳ đang chạy. Seed từ chối leader đã giữ
+ * ghế Chủ nhiệm của CLB khác thay vì tạo ra một ban lãnh đạo thứ hai vi phạm quy tắc.
  */
 async function assertLeadsNoOtherClub(clubId: Types.ObjectId | undefined, leaderId: Types.ObjectId): Promise<void> {
   const memberships = await m.clubMemberships!.find({ userId: leaderId, ...(clubId ? { clubId: { $ne: clubId } } : {}) }).lean();
@@ -111,6 +118,7 @@ async function assertLeadsNoOtherClub(clubId: Types.ObjectId | undefined, leader
     `so it cannot also be Chủ nhiệm of "${DEMO_CLUB_NAME}". Use an account that leads no club (or the vice seat).`);
 }
 
+// Đảm bảo người dùng là thành viên Active của CLB demo
 async function ensureMembership(clubId: Types.ObjectId, userId: Types.ObjectId, officerId: Types.ObjectId) {
   const found = await m.clubMemberships!.findOne({ clubId, userId }).lean();
   if (found) {
@@ -123,8 +131,8 @@ async function ensureMembership(clubId: Types.ObjectId, userId: Types.ObjectId, 
 }
 
 /**
- * The demo club with the cast's leader as Chủ nhiệm, the vice as Phó chủ nhiệm and both members Active.
- * Reuses whatever another presenter's seed (or the flow 1-3 run) already created and adds only what is missing.
+ * CLB demo với leader của dàn nhân vật làm Chủ nhiệm, vice làm Phó chủ nhiệm và cả hai thành viên đều Active.
+ * Dùng lại những gì seed của người trình bày khác (hoặc lần chạy luồng 1-3) đã tạo và chỉ thêm phần còn thiếu.
  */
 async function ensureClub(ids: Ids): Promise<Types.ObjectId> {
   const existing = await m.clubs!.findOne({ name: DEMO_CLUB_NAME }).select("_id").lean();
@@ -169,12 +177,13 @@ async function ensureClub(ids: Ids): Promise<Types.ObjectId> {
   return clubId;
 }
 
+// Đảm bảo policy có hạn nộp báo cáo POST_EVENT
 /**
- * A post-event report is due a number of days after the event ends, read from the policy in force at
- * that end time; the demo events registered and ended within the last month. When the policy in force a
- * month ago has no POST_EVENT deadline, a copy of the current policy with one is added (as seed-guide.ts
- * does): from 2000 when no policy existed then, so older club events get a deadline instead of a
- * "not configured" warning, otherwise from a month ago. A database that already has it is left alone.
+ * Báo cáo sau sự kiện đến hạn sau một số ngày kể từ khi sự kiện kết thúc, đọc từ chính sách có hiệu lực tại
+ * thời điểm kết thúc đó; các sự kiện demo đăng ký và kết thúc trong vòng một tháng qua. Khi chính sách có hiệu lực
+ * một tháng trước không có hạn POST_EVENT, một bản sao của chính sách hiện tại kèm hạn đó được thêm vào (như seed-guide.ts
+ * làm): từ năm 2000 nếu lúc đó chưa có chính sách nào, để các sự kiện CLB cũ có hạn thay vì cảnh báo
+ * "chưa cấu hình", còn không thì từ một tháng trước. Database đã có sẵn thì để nguyên.
  */
 async function ensureReportDeadline(): Promise<void> {
   const monthAgo = ago(30 * DAY);
@@ -189,17 +198,19 @@ async function ensureReportDeadline(): Promise<void> {
     reportDeadlines: [...deadlines, { reportType: "POST_EVENT", dueDaysAfterPeriodEnd: 7, remindBeforeDays: 2, overdueAfterDays: 1, escalateAfterDays: 3 }] });
 }
 
+// Dựng input sự kiện CLB mẫu với giá trị mặc định
 function input(title: string, startAt: Date, hours: number, extra: Partial<ClubEventInput>): ClubEventInput {
   return { title, startAt, endAt: new Date(startAt.getTime() + hours * HOUR), audienceScope: "PUBLIC", capacity: 40,
     riskCategory: "LOW", budgetLines: [], bookingIds: [], registrationForm: [], occurrences: [], objective: "", plan: "", ...extra };
 }
 
-/** Leader creates and submits, the officer claims and decides; returns the event id. */
+// Gửi proposal sự kiện của CLB, trả về id sự kiện
+/** Leader tạo và nộp, cán bộ nhận xử lý và quyết định; trả về id sự kiện. */
 async function propose(clubId: Types.ObjectId, ids: Ids, draft: ClubEventInput, at: Date): Promise<string> {
   const club = String(clubId);
   const created = await events.create(club, draft, String(ids.an), at);
   const id = created.event.id;
-  // Submission requires a proposal document; a placeholder asset is enough for demo data.
+  // Nộp cần tài liệu đề xuất; một asset giữ chỗ là đủ cho dữ liệu demo.
   const attached = await events.act(club, id, { kind: "attach-document", document: {
     id: `demo-proposal-${id}`, fileName: `De an ${draft.title}.pdf`, mimeType: "application/pdf", bytes: 48_000,
     assetId: `ucms/event-proposals/demo/${id}.pdf`, uploadedAt: at, uploadedBy: String(ids.an) } }, String(ids.an), at);
@@ -207,15 +218,18 @@ async function propose(clubId: Types.ObjectId, ids: Ids, draft: ClubEventInput, 
   await reviews.claim(id, String(ids.officer), new Date(Math.min(at.getTime() + 10 * MINUTE, now.getTime())));
   return id;
 }
+// ICPDP ghi quyết định cho proposal sự kiện
 async function decide(id: string, ids: Ids, decision: EventReviewDecisionInput, at: Date): Promise<void> {
   await reviews.decide(id, String(ids.officer), normalizedEventDecision(decision, at), at);
 }
+// Publish sự kiện đã duyệt để mở đăng ký
 async function publish(clubId: Types.ObjectId, ids: Ids, id: string, windows: EventPublishInput, at: Date): Promise<void> {
   const detail = await events.find(String(clubId), id);
   await events.act(String(clubId), id, { kind: "publish", input: windows, expectedVersion: detail!.event.version }, String(ids.an), at);
 }
 
-/** Adds `delta` to every top-level date of the given documents. */
+// Dịch các trường ngày của bản ghi đi delta mili giây
+/** Cộng `delta` vào mọi trường ngày ở cấp cao nhất của các document đã cho. */
 async function shiftDates(model: Model<Record<string, unknown>>, filter: Record<string, unknown>, delta: number): Promise<void> {
   for (const doc of await model.find(filter).lean()) {
     const set: Record<string, Date> = {};
@@ -223,7 +237,8 @@ async function shiftDates(model: Model<Record<string, unknown>>, filter: Record<
     if (Object.keys(set).length) await model.updateOne({ _id: doc._id }, { $set: set });
   }
 }
-/** Moves a freshly published event and its whole proposal history `delta` ms in time (negative: into the past). */
+// Dịch lịch sự kiện cùng task duyệt đi delta mili giây
+/** Dời một sự kiện vừa đăng và toàn bộ lịch sử đề xuất của nó `delta` ms theo thời gian (âm: về quá khứ). */
 async function moveEvent(id: string, delta: number): Promise<void> {
   const eventId = new Types.ObjectId(id);
   const tasks = await m.approvalTasks!.find({ entityType: "EVENT_PROPOSAL", entityId: eventId }).select("_id").lean();
@@ -233,7 +248,7 @@ async function moveEvent(id: string, delta: number): Promise<void> {
   await shiftDates(m.approvalDecisions!, { approvalTaskId: { $in: tasks.map((t) => t._id) } }, delta);
   await shiftDates(m.auditLogs!, { entityType: "Event", entityId: eventId }, delta);
   await shiftDates(m.notifications!, { entityId: eventId }, delta);
-  // The submitted payloads carry the schedule too; keep them equal to the event.
+  // Các payload đã nộp cũng mang lịch; giữ cho khớp với sự kiện.
   const event = await m.events!.findById(eventId).select({ startAt: 1, endAt: 1 }).lean();
   const schedule = { startAt: event!.startAt, endAt: event!.endAt };
   await m.eventProposalVersions!.updateMany({ eventId }, { $set: { "payload.startAt": schedule.startAt, "payload.endAt": schedule.endAt } });
@@ -241,7 +256,8 @@ async function moveEvent(id: string, delta: number): Promise<void> {
     { $set: { "after.payload.startAt": schedule.startAt, "after.payload.endAt": schedule.endAt } });
 }
 
-/** Proposed, approved and published with a future schedule, then moved so it starts at `startAt`. */
+// Tạo sự kiện đã duyệt rồi dời về quá khứ
+/** Được đề xuất, duyệt và đăng với lịch tương lai, rồi dời để bắt đầu lúc `startAt`. */
 async function pastEvent(clubId: Types.ObjectId, ids: Ids, draft: ClubEventInput, startAt: Date): Promise<string> {
   const hours = (draft.endAt.getTime() - draft.startAt.getTime()) / HOUR;
   const tempStart = vnAt(9, draft.startAt.getUTCHours() + 7);
@@ -253,12 +269,14 @@ async function pastEvent(clubId: Types.ObjectId, ids: Ids, draft: ClubEventInput
   return id;
 }
 
+// Đăng ký sinh viên vào sự kiện, cách nhau theo thời gian
 async function register(id: string, who: Types.ObjectId[], firstAt: Date): Promise<void> {
   const repo = mongoEventRegistrationRepository();
   for (const [index, studentId] of who.entries()) {
     await registerForEvent(repo, policies, student(studentId), id, {}, new Date(firstAt.getTime() + index * 47 * MINUTE));
   }
 }
+// Check-in sinh viên vào sự kiện bằng mã check-in
 async function checkIn(id: string, who: Types.ObjectId[], firstAt: Date): Promise<void> {
   const event = await m.events!.findById(id).select({ checkInCode: 1 }).lean();
   const repo = mongoEventCheckInRepository();
@@ -267,6 +285,7 @@ async function checkIn(id: string, who: Types.ObjectId[], firstAt: Date): Promis
   }
 }
 
+// Seed sự kiện ở trạng thái yêu cầu chỉnh sửa
 async function seedRevisionRequested(clubId: Types.ObjectId, ids: Ids): Promise<void> {
   const startAt = vnAt(10, 18);
   const draft = input(P3_EVENTS.revision, startAt, 2.5, {
@@ -287,6 +306,7 @@ async function seedRevisionRequested(clubId: Types.ObjectId, ids: Ids): Promise<
   } }, String(ids.an), led(15));
 }
 
+// Seed sự kiện có danh sách chờ
 async function seedWaitlist(clubId: Types.ObjectId, ids: Ids): Promise<void> {
   const startAt = vnAt(8, 14);
   const id = await propose(clubId, ids, input(P3_EVENTS.waitlist, startAt, 3, {
@@ -303,6 +323,7 @@ async function seedWaitlist(clubId: Types.ObjectId, ids: Ids): Promise<void> {
   }
 }
 
+// Seed sự kiện đang diễn ra
 async function seedOngoing(clubId: Types.ObjectId, ids: Ids): Promise<void> {
   const startAt = new Date(Math.floor(now.getTime() / (15 * MINUTE)) * 15 * MINUTE - 30 * MINUTE);
   const id = await pastEvent(clubId, ids, input(P3_EVENTS.ongoing, vnAt(0, 19), 2.5, {
@@ -310,12 +331,13 @@ async function seedOngoing(clubId: Types.ObjectId, ids: Ids): Promise<void> {
     objective: "Chia sẻ cách dùng công cụ AI có trách nhiệm trong học tập, làm đồ án và nghiên cứu khoa học.",
     plan: "Phần 1: AI hỗ trợ học tập\nPhần 2: Liêm chính học thuật khi dùng AI\nPhần 3: Hỏi đáp cùng diễn giả",
   }), startAt);
-  // A real member account also gets a seat, so it can check in and give feedback during the live demo.
+  // Một tài khoản thành viên thật cũng có ghế, để có thể check-in và gửi feedback trong buổi demo trực tiếp.
   await register(id, [ids.duy, ...(castRoles.member.overridden ? [ids.chi] : []), ids.giang, ids.hai, ids.khanh, ids.phuc],
     new Date(startAt.getTime() - 5 * DAY));
   await checkIn(id, [ids.giang, ids.hai, ids.khanh], new Date(startAt.getTime() + 4 * MINUTE));
 }
 
+// Seed sự kiện đã hoàn thành
 async function seedCompleted(clubId: Types.ObjectId, ids: Ids): Promise<void> {
   const startAt = vnAt(-2, 18);
   const id = await pastEvent(clubId, ids, input(P3_EVENTS.completed, startAt, 2.5, {
@@ -325,7 +347,7 @@ async function seedCompleted(clubId: Types.ObjectId, ids: Ids): Promise<void> {
   }), startAt);
   const attendees = [ids.giang, ids.hai, ids.khanh, ids.linh, ids.minh];
   await register(id, [...attendees, ids.nhi], new Date(startAt.getTime() - 6 * DAY));
-  // Trịnh Yến Nhi registered but never checked in: the no-show the club confirms before finalizing.
+  // Trịnh Yến Nhi đã đăng ký nhưng không check-in: người vắng mặt mà CLB xác nhận trước khi chốt.
   await checkIn(id, attendees, new Date(startAt.getTime() + 2 * MINUTE));
   await runEventLifecycleJob(reviews, now);
   const repo = mongoEventFeedbackRepository();

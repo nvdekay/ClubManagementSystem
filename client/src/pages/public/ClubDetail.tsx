@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PublicApiError } from "@/services/discovery";
 import { formatDate } from "@/utils/formatDate";
 
+// Trang chi tiết CLB công khai
 export function ClubDetail() {
   const { t, i18n } = useTranslation();
   const { id = "" } = useParams();

@@ -15,6 +15,7 @@ export interface AccessActor {
   lockReason?: string | null;
 }
 
+// Kiểm actor đăng nhập, chưa bị khóa và có permission yêu cầu trong CLB
 export async function assertClubAccess(
   repo: ClubAccessRepository,
   actor: AccessActor | null,
@@ -36,7 +37,8 @@ export async function assertClubAccess(
   requireClubPermission(snapshot, permission, now);
 }
 
-/** Current members may inspect settings; approved founders retain setup access. */
+// Cho thành viên hiện tại hoặc founder đã duyệt xem cấu hình CLB
+/** Thành viên hiện tại được xem cài đặt; founder đã được duyệt giữ quyền thiết lập. */
 export async function assertClubSettingsRead(repo: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, now = new Date()) {
   if (!actor) throw new DomainError("authentication required", "unauthorized");

@@ -30,7 +30,8 @@ interface ClubMemberStateDialogProps {
   onSaved: (message: string) => void;
 }
 
-/** UC21: change one member's status (effective today); a ban needs a reason. Mount it only while open. */
+// Hộp thoại đổi trạng thái thành viên CLB (Active, Inactive, ban...)
+/** UC21: đổi trạng thái của một thành viên (có hiệu lực từ hôm nay); ban cần có lý do. Chỉ mount khi đang mở. */
 export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: ClubMemberStateDialogProps) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -38,13 +39,14 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
   const inFlight = useRef(false);
   const reasonId = useId();
   const options = member.state === "Active" || member.state === "Inactive" ? nextStates[member.state] : [];
-  // Default to the reversible change; a ban is always a deliberate pick.
+  // Mặc định chọn thay đổi có thể đảo ngược; ban luôn phải là lựa chọn có chủ ý.
   const [target, setTarget] = useState<ManagedMembershipState | undefined>(options[0]);
   const [reason, setReason] = useState("");
   const banned = target === "Banned";
   const field = useFieldValidation({ reason: banned && !reason.trim() ? t("common.fieldRequired") : null });
   const name = member.displayName ?? "";
 
+  // Gửi yêu cầu đổi trạng thái thành viên kèm lý do
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || !auth.data || !target || inFlight.current || !event.currentTarget.reportValidity()) return;
@@ -55,7 +57,7 @@ export function ClubMemberStateDialog({ member, clubId, onClose, onSaved }: Club
       onSaved(t("memberSpace.stateSaved", { name, state: t(membershipStateLabels[target]) }));
       onClose();
     } catch {
-      // action.isError renders below.
+      // action.isError hiển thị bên dưới.
     } finally {
       inFlight.current = false;
     }

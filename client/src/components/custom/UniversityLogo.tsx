@@ -6,9 +6,10 @@ interface UniversityLogoProps {
   priority?: boolean;
 }
 
-// Official logo served by the FPT University website.
+// Logo chính thức do website Trường Đại học FPT cung cấp.
 const universityLogoUrl = "https://daihoc.fpt.edu.vn/wp-content/themes/fpt-university/assets/images/logo.png";
 
+// Logo Trường Đại học FPT
 export function UniversityLogo({ alt, className, priority = false }: UniversityLogoProps) {
   return (
     <img

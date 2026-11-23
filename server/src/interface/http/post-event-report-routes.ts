@@ -64,6 +64,7 @@ export const reportActionBody = z.discriminatedUnion("kind", [
     })
     .strict(),
 ]);
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success)
@@ -74,9 +75,11 @@ function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
     );
   return result.data;
 }
+// Lấy actor đã xác thực từ res.locals
 function actor(res: Response) {
   return res.locals.actor as AccessActor;
 }
+// Mount các route báo cáo sau sự kiện của CLB và ICPDP
 export function postEventReportRoutes(deps: {
   repo: PostEventReportRepository;
   access: ClubAccessRepository;
@@ -91,6 +94,7 @@ export function postEventReportRoutes(deps: {
     auth: deps.authRepo,
   };
   for (const base of ["/clubs/:clubId/event-reports", "/admin/event-reports"]) {
+    // Liệt kê báo cáo sau sự kiện
     router.get(base, authGuard(guard, false), async (req, res) => {
       ok(
         res,
@@ -104,6 +108,7 @@ export function postEventReportRoutes(deps: {
         ),
       );
     });
+    // Xem chi tiết một báo cáo sau sự kiện
     router.get(`${base}/:id`, authGuard(guard, false), async (req, res) => {
       ok(
         res,
@@ -118,6 +123,7 @@ export function postEventReportRoutes(deps: {
         ),
       );
     });
+    // Thực hiện hành động trên báo cáo sau sự kiện (lưu, nộp, duyệt...)
     router.post(`${base}/:id/actions`, authGuard(guard), async (req, res) => {
       ok(
         res,

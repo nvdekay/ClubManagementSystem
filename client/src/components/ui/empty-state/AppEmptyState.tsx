@@ -5,18 +5,19 @@ import { AppIcon, type AppIconName } from "@/components/ui/icon/AppIcon";
 interface AppEmptyStateProps {
   message: string;
   /**
-   * "inline" (default): a muted line, for empty cells or inside a card that already frames it.
-   * "boxed": a dashed box with an icon, for a whole section or list that has nothing to show.
+   * "inline" (mặc định): một dòng chữ mờ, dùng cho ô trống hoặc bên trong thẻ đã có khung.
+   * "boxed": khung nét đứt kèm icon, dùng cho cả mục hoặc danh sách không có gì để hiển thị.
    */
   variant?: "inline" | "boxed";
-  /** Boxed only: a heading above the message (rendered as h2), for page-level empty queues. */
+  /** Chỉ cho boxed: tiêu đề phía trên thông báo (render thành h2), dùng cho hàng đợi rỗng ở cấp trang. */
   title?: string;
-  /** Boxed only: the icon in the tile; defaults to an inbox. */
+  /** Chỉ cho boxed: icon trong ô; mặc định là hộp thư. */
   icon?: AppIconName;
-  /** Boxed only: a call to action under the message, e.g. a link to browse clubs. */
+  /** Chỉ cho boxed: nút kêu gọi hành động dưới thông báo, ví dụ liên kết xem danh sách CLB. */
   action?: ReactNode;
 }
 
+// Trạng thái rỗng khi chưa có dữ liệu
 export function AppEmptyState({ message, variant = "inline", title, icon = "inbox", action }: AppEmptyStateProps) {
   if (variant === "inline") return <p className="text-sm text-muted-app">{message}</p>;
   return (

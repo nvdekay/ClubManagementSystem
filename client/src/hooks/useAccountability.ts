@@ -14,6 +14,7 @@ import {
   type AccountabilityContext,
 } from "@/services/accountability";
 export const accountabilityKeyRoot = ["accountability"] as const;
+// Query nghĩa vụ báo cáo sau sự kiện
 export function useReportObligations(
   context: AccountabilityContext,
   enabled: boolean,
@@ -25,6 +26,7 @@ export function useReportObligations(
     retry: false,
   });
 }
+// Query chi tiết một báo cáo sau sự kiện
 export function useReportDetail(
   context: AccountabilityContext,
   id: string,
@@ -37,6 +39,7 @@ export function useReportDetail(
     retry: false,
   });
 }
+// Query ngân sách của CLB
 export function useClubFinances(clubId: string, enabled: boolean) {
   return useQuery({
     queryKey: [...accountabilityKeyRoot, "finances", clubId],
@@ -45,6 +48,7 @@ export function useClubFinances(clubId: string, enabled: boolean) {
     retry: false,
   });
 }
+// Query chi tiết ngân sách hoặc đối soát
 export function useFinanceDetail(
   context: AccountabilityContext,
   id: string,
@@ -57,6 +61,7 @@ export function useFinanceDetail(
     retry: false,
   });
 }
+// Mutation thao tác trên báo cáo hoặc tài chính, rồi làm mới cache
 export function useAccountabilityAction(
   context: AccountabilityContext,
   resource: "report" | "finance",

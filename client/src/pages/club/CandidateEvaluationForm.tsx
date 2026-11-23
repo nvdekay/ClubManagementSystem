@@ -23,7 +23,8 @@ interface CandidateEvaluationFormProps {
   onDone: () => void;
 }
 
-/** UC19 create/edit of the caller's own evaluation; E1 (no rubric) makes the comment the evaluation. */
+// Form chấm điểm ứng viên theo từng tiêu chí rubric kèm nhận xét
+/** UC19 tạo/sửa đánh giá của chính người gọi; E1 (không có rubric) thì nhận xét chính là đánh giá. */
 export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rubric, mine, csrfToken,
   onDone }: CandidateEvaluationFormProps) {
   const { t } = useTranslation();
@@ -34,6 +35,7 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
   const [comment, setComment] = useState(mine?.comment ?? "");
   const [error, setError] = useState("");
 
+  // Kiểm tra điểm tiêu chí có nhập và nằm trong thang điểm tối đa
   function scoreError(criterion: RecruitmentRubricCriterion) {
     const raw = scores[criterion.key] ?? "";
     if (raw === "") return t("recruitmentApplications.evaluationScoreRequired");
@@ -50,6 +52,7 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
   const total = rubric.reduce((sum, criterion) => sum + (scoreError(criterion) ? 0 : Number(scores[criterion.key])), 0);
   const maxTotal = rubric.reduce((sum, criterion) => sum + criterion.maxScore, 0);
 
+  // Lưu đánh giá ứng viên sau khi kiểm tra điểm
   async function submit() {
     setError("");
     if (!field.touchAll()) return;
@@ -67,7 +70,7 @@ export function CandidateEvaluationForm({ clubId, campaignId, applicationId, rub
     {!rubric.length && <p className="text-sm text-muted-app">{t("recruitmentApplications.evaluationNoRubric")}</p>}
     {rubric.map((criterion) => {
       const value = scores[criterion.key] ?? "";
-      // An out-of-range score is flagged while typing; a missing one once the field is left.
+      // Điểm ngoài khoảng được báo lỗi ngay khi gõ; điểm còn thiếu được báo khi rời khỏi trường.
       const fieldError = field.error("score:" + criterion.key) ?? (value === "" ? null : scoreError(criterion));
       const quickPicks = criterion.maxScore <= 10 && Number.isInteger(criterion.maxScore);
       return <div key={criterion.key} className="space-y-2 border-b border-border-app pb-4 last:border-b-0">

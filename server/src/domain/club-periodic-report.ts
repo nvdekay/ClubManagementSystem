@@ -28,6 +28,7 @@ export interface ClubPeriodicReportRepository {
   submit(clubId: string, id: string, revision: number, userId: string, now: Date): Promise<PeriodicReportDetail>;
 }
 
+// Chuẩn hoá danh sách thành viên trong báo cáo định kỳ CLB
 function normalizeMembers(raw: PeriodicMemberEntry[] | undefined, submitting: boolean): PeriodicMemberEntry[] | undefined {
   if (raw === undefined) return undefined;
   if (raw.length > 500) throw new DomainError("too many members in report", "validation", { field: "members" });
@@ -60,6 +61,7 @@ function normalizeMembers(raw: PeriodicMemberEntry[] | undefined, submitting: bo
   return members;
 }
 
+// Chuẩn hoá danh sách sự kiện trong báo cáo định kỳ CLB
 function normalizeEvents(raw: PeriodicEventEntry[] | undefined, submitting: boolean): PeriodicEventEntry[] | undefined {
   if (raw === undefined) return undefined;
   if (raw.length > 200) throw new DomainError("too many events in report", "validation", { field: "events" });
@@ -95,6 +97,7 @@ function normalizeEvents(raw: PeriodicEventEntry[] | undefined, submitting: bool
   });
 }
 
+// Chuẩn hoá danh sách thành tích trong báo cáo định kỳ CLB
 function normalizeAchievements(raw: PeriodicAchievementEntry[] | undefined, submitting: boolean): PeriodicAchievementEntry[] | undefined {
   if (raw === undefined) return undefined;
   if (raw.length > 100) throw new DomainError("too many achievements in report", "validation", { field: "achievements" });
@@ -121,6 +124,7 @@ function normalizeAchievements(raw: PeriodicAchievementEntry[] | undefined, subm
   });
 }
 
+// Chuẩn hoá câu trả lời cho các trường tuỳ chỉnh của đợt báo cáo
 function normalizeCustomAnswers(
   raw: PeriodicCustomAnswer[] | undefined,
   customFields: readonly PeriodicCustomField[] | undefined,
@@ -170,6 +174,7 @@ function normalizeCustomAnswers(
   return normalized;
 }
 
+// Chuẩn hoá bản nháp báo cáo định kỳ, siết điều kiện hơn khi nộp
 export function normalizePeriodicDraft(
   input: PeriodicDraftInput,
   submitting = false,

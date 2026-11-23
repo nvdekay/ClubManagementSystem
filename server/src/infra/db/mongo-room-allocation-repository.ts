@@ -10,21 +10,25 @@ import { ucmsModels as m } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
 const ALLOCATED = "ROOM_ALLOCATED";
 const REVOKED = "ROOM_ALLOCATION_REVOKED";
-/** The allocation itself lives in the audit trail; no dedicated collection (no schema change). */
+/** Bản phân phòng nằm trong audit trail; không có collection riêng (không đổi schema). */
 interface AllocationRecord {
   semesterCode: string; clubId: string; clubName: string; propertyId: string;
   weekday: number; slot: number; note?: string; bookingIds: string[];
 }
 
+// Chuyển chuỗi id thành ObjectId
 function oid(id: string) { return new Types.ObjectId(id); }
+// Ném DomainError loại conflict kèm chi tiết xung đột
 function conflict(message: string, details?: unknown): never { throw new DomainError(message, "conflict", details); }
+// Ánh xạ document CLB sang RoomAllocationClub
 function clubFrom(doc: Doc): RoomAllocationClub {
   const dissolution = doc.dissolution as { effectiveSemester?: string } | undefined;
   return { id: String(doc._id), name: String(doc.name), state: String(doc.state),
     ...(dissolution?.effectiveSemester ? { dissolutionSemester: dissolution.effectiveSemester } : {}) };
 }
 
-/** Joins allocation records with their revocation, occurrences, room and officer. */
+// Ghép bản ghi phân bổ phòng với thông tin thu hồi từ audit log
+/** Ghép các bản ghi phân phòng với phần thu hồi, các buổi, phòng và cán bộ của chúng. */
 async function hydrate(records: Doc[]): Promise<RoomAllocation[]> {
   if (!records.length) return [];
   const revocations = await m.auditLogs!.find({ entityType: ROOM_ALLOCATION_ENTITY, action: REVOKED,
@@ -58,31 +62,38 @@ async function hydrate(records: Doc[]): Promise<RoomAllocation[]> {
   });
 }
 
+// Repository phân bổ phòng cố định cho CLB của ICPDP
 export function mongoRoomAllocationRepository(): RoomAllocationRepository {
+  // Khoá CLB và phòng để tuần tự hoá các ghi đồng thời
   async function lock(propertyId: Types.ObjectId, clubId: Types.ObjectId, session: ClientSession) {
-    // Same write locks as facility bookings, so allocations, requests and club cascades serialize per room.
+    // Cùng khoá ghi như booking cơ sở vật chất, nên phân phòng, yêu cầu và cascade CLB được tuần tự hoá theo từng phòng.
     await m.clubs!.updateOne({ _id: clubId }, { $inc: { __v: 1 } }, { session });
     await m.properties!.updateOne({ _id: propertyId }, { $inc: { __v: 1 } }, { session });
   }
+  // Ghi audit log cho phân bổ phòng
   async function audit(id: Types.ObjectId, action: string, actorId: string, after: unknown, now: Date,
     session: ClientSession, reason?: string) {
     await m.auditLogs!.create([{ entityType: ROOM_ALLOCATION_ENTITY, entityId: id, action, actorId: oid(actorId),
       after, ...(reason ? { reason } : {}), correlationId: randomUUID(), at: now }], { session });
   }
+  // Lấy một phân bổ phòng theo id
   async function find(id: string): Promise<RoomAllocation | null> {
     const record = await m.auditLogs!.findOne({ entityType: ROOM_ALLOCATION_ENTITY, entityId: oid(id), action: ALLOCATED }).lean();
     return record ? (await hydrate([record]))[0]! : null;
   }
   return {
+    // Liệt kê CLB Active/Dissolving để phân bổ phòng
     async clubs() {
       const docs = await m.clubs!.find({ state: { $in: ["Active", "Dissolving"] } }).select({ name: 1, state: 1, dissolution: 1 })
         .collation({ locale: "vi" }).sort({ name: 1 }).lean();
       return docs.map(clubFrom);
     },
+    // Lấy thông tin CLB phục vụ phân bổ phòng
     async club(id) {
       const doc = await m.clubs!.findById(oid(id)).lean();
       return doc ? clubFrom(doc) : null;
     },
+    // Liệt kê phân bổ phòng theo học kỳ hoặc CLB
     async list(filter) {
       const records = await m.auditLogs!.find({ entityType: ROOM_ALLOCATION_ENTITY, action: ALLOCATED,
         ...(filter.semesterCode ? { "after.semesterCode": filter.semesterCode } : {}),
@@ -90,6 +101,7 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
       return hydrate(records);
     },
     find,
+    // Liệt kê booking, sự kiện, buổi bảo vệ đang chiếm phòng trong khoảng thời gian
     async roomCommitments(propertyId, from, to) {
       const property = oid(propertyId);
       const window = { startAt: { $lt: to }, endAt: { $gt: from } };
@@ -108,6 +120,7 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
         .map(({ source, title, doc }) => ({ startAt: doc.startAt as Date, endAt: doc.endAt as Date, source, title,
           ...(doc.clubName ? { clubName: String(doc.clubName) } : {}) }));
     },
+    // ICPDP phân bổ phòng cho CLB theo kế hoạch đã kiểm tra xung đột
     async allocate(plan, clubName, thresholdMinutes, officerId, now) {
       const id = new Types.ObjectId();
       const { input, dates } = plan;
@@ -151,6 +164,7 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
       });
       return (await find(String(id)))!;
     },
+    // ICPDP thu hồi phân bổ phòng kèm lý do
     async revoke(id, reason, officerId, now) {
       await mongoose.connection.transaction(async (session) => {
         const record = await m.auditLogs!.findOne({ entityType: ROOM_ALLOCATION_ENTITY, entityId: oid(id), action: ALLOCATED })
@@ -161,7 +175,7 @@ export function mongoRoomAllocationRepository(): RoomAllocationRepository {
         if (await m.auditLogs!.exists({ entityType: ROOM_ALLOCATION_ENTITY, entityId: oid(id), action: REVOKED }).session(session)) {
           conflict("room allocation is already revoked");
         }
-        // Started or finished occurrences stay as history; only future ones free the room.
+        // Các buổi đã bắt đầu hoặc đã kết thúc giữ làm lịch sử; chỉ các buổi tương lai mới giải phóng phòng.
         const released = await m.propertyBookings!.updateMany({ _id: { $in: item.bookingIds.map(oid) }, state: "Approved",
           startAt: { $gt: now } }, { $set: { state: "Released", cancelReason: reason, cancelledAt: now,
           releasedBy: REVOKED, isLateCancellation: false } }, { session });

@@ -3,6 +3,7 @@ import type { ReportDeadline } from "../../domain/policy.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
+// Xác định hạn nộp, nhắc và leo thang của báo cáo sau sự kiện theo policy đã đóng băng
 export async function postEventDeadline(
   event: Doc,
   session?: ClientSession,
@@ -54,6 +55,7 @@ export async function postEventDeadline(
     ),
   };
 }
+// Liệt kê sự kiện CLB có báo cáo sau sự kiện quá hạn chưa nộp
 export async function overduePostEventReports(
   clubId: Types.ObjectId | undefined,
   now: Date,

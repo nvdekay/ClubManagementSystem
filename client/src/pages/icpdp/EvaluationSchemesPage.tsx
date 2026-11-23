@@ -19,6 +19,7 @@ import { SchemeRequestError, type EvaluationScheme, type SchemeSettings } from "
 import { SchemeEditor } from "./SchemeEditor";
 import { useConfirm } from "@/hooks/useConfirm";
 
+// Trang ICPDP quản lý bộ tiêu chí đánh giá CLB theo kỳ
 export function EvaluationSchemesPage() {
   const { t } = useTranslation();
   const askConfirm = useConfirm();
@@ -40,6 +41,7 @@ export function EvaluationSchemesPage() {
     return `${t("evaluationSchemes.failed")} ${(failure as Error).message}`;
   }
 
+  // Tạo bộ tiêu chí cho một kỳ, có thể sao chép từ bộ cũ
   async function create(periodCode: string, copyFromId?: string) {
     setError(null);
     try {
@@ -51,6 +53,7 @@ export function EvaluationSchemesPage() {
     }
   }
 
+  // Kích hoạt hoặc xoá bộ tiêu chí sau khi xác nhận
   async function run(scheme: EvaluationScheme, kind: "activate" | "delete") {
     setError(null);
     if (kind === "activate" && !(await askConfirm(t("evaluationSchemes.confirmActivate", { period: scheme.periodCode })))) return;
@@ -64,6 +67,7 @@ export function EvaluationSchemesPage() {
     }
   }
 
+  // Lưu thay đổi cấu hình của bộ tiêu chí
   async function save(scheme: EvaluationScheme, settings: SchemeSettings) {
     setError(null);
     try {

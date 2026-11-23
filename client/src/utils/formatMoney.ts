@@ -1,6 +1,7 @@
-// Every amount the API returns is a whole number of VND.
+// Mọi số tiền API trả về đều là số nguyên VND.
 const moneyFormatters = new Map<string, Intl.NumberFormat>();
 
+// Định dạng số tiền VND theo locale
 export function formatMoney(value: number, locale: string): string {
   let formatter = moneyFormatters.get(locale);
   if (!formatter) {

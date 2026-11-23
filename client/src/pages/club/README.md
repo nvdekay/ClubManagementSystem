@@ -47,7 +47,7 @@ membership hiện hành có đúng permission tương ứng, còn Leader nhận 
 `ClubMembersPage` mở cho workspace CLB; `ClubRosterReadOnly` dùng member space để hiển thị
 danh sách tên/trạng thái/vị trí cho Club Member, không chia sẻ email. Chỉ người có
 `club.member.manage` thấy bảng quản trị:
-các yêu cầu rời CLB (UC22) đang chờ nằm
+ các yêu cầu rời CLB (UC22) đang chờ nằm
 ở đầu trang (chỉ hiện khi có), bên dưới là bảng thành viên (AppTable) có tìm kiếm, lọc theo trạng
 thái/chức vụ, sắp xếp, phân trang và xuất Excel. Đổi Active ⇄ Inactive/cấm (có lý do) nằm trong
 `ClubMemberStateDialog`; nút "Thêm thành viên" mở `ClubMemberOnboardDialog` (UC20 A1: email + lý do,
@@ -60,10 +60,9 @@ yêu cầu `club.profile.manage` (Club Leader). API xem phòng UC58 cũng chỉ 
 Các trang thêm ngày 15/10/2026, đều chỉ dành cho Club Leader:
 `ClubTransitionPlansPage` + `ClubTransitionPlanEditor` (UC12: ban mới, người nhận từng nghĩa vụ còn mở, nộp lại
 sau khi bị trả), `ClubSuspensionRequestsPage` (UC14, dùng `SuspensionRequestWorkspace`), `ClubPeriodicReportsPage`
-
-- `ClubPeriodicReportEditor` (UC38: nháp, nộp, nộp lại, lịch sử các lần nộp), `ClubInvitationsPage` (UC54: nhận
-  hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộp minh chứng khắc phục) và
-  `ClubEvaluationsPage` (UC43: chỉ kết quả `Published`).
++ `ClubPeriodicReportEditor` (UC38: nháp, nộp, nộp lại, lịch sử các lần nộp), `ClubInvitationsPage` (UC54: nhận
+hoặc từ chối kèm lý do), `ClubViolationsPage` (UC40: giải trình, nộp minh chứng khắc phục) và
+`ClubEvaluationsPage` (UC43: chỉ kết quả `Published`).
 
 Các trang khác (đối chiếu 17/10/2026), chủ yếu dành cho Club Leader:
 `ClubEventsPage` (UC25, UC27, UC28, UC30; cùng component với `mode="attendance"` cho UC32 tại

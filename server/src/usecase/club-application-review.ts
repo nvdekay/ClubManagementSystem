@@ -13,6 +13,7 @@ const allowedSections = new Set([
   "club-information", "founders", "documents", "role-structure", "other",
 ]);
 
+// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: AuthRepository, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -25,11 +26,13 @@ async function officer(auth: AuthRepository, actor: AccessActor | null): Promise
   return actor.id;
 }
 
+// Kiểm định dạng id đơn lập CLB
 function applicationId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid application id", "validation");
   return value;
 }
 
+// Chuẩn hóa và kiểm quyết định xét duyệt (lý do, mục cần sửa, hạn sửa)
 function normalizedDecision(input: ApplicationReviewDecisionInput, now: Date) {
   const reason = input.reason?.trim();
   const reviewNote = input.reviewNote?.trim();
@@ -57,7 +60,8 @@ function normalizedDecision(input: ApplicationReviewDecisionInput, now: Date) {
 
 export type ApplicationReviewView = ApplicationReviewDetail & { similarClubs: SimilarClubHint[] };
 
-/** Advisory only (UC08): compares the latest submitted version; never picks an outcome. */
+// Gắn gợi ý các CLB tương tự vào chi tiết đơn để officer tham khảo
+/** Chỉ mang tính tham khảo (UC08): so sánh với phiên bản nộp mới nhất; không bao giờ chọn kết quả. */
 async function withSimilarClubs(repo: ClubApplicationReviewRepository,
   detail: ApplicationReviewDetail): Promise<ApplicationReviewView> {
   const { clubName, field, summary, objectives } = detail.versions.at(-1)?.snapshot
@@ -67,12 +71,14 @@ async function withSimilarClubs(repo: ClubApplicationReviewRepository,
     await repo.similarityCandidates(detail.application.id)) };
 }
 
+// ICPDP xem các đơn lập CLB đang chờ xét duyệt
 export async function listApplicationReviews(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.listOpen();
 }
 
+// ICPDP xem chi tiết một đơn lập CLB kèm gợi ý CLB tương tự
 export async function getApplicationReview(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, actor: AccessActor | null, id: string) {
   await officer(auth, actor);
@@ -81,11 +87,13 @@ export async function getApplicationReview(repo: ClubApplicationReviewRepository
   return withSimilarClubs(repo, detail);
 }
 
+// ICPDP officer nhận xử lý một đơn lập CLB
 export async function claimApplicationReview(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, actor: AccessActor | null, id: string, now: Date) {
   return withSimilarClubs(repo, await repo.claim(applicationId(id), await officer(auth, actor), now));
 }
 
+// ICPDP ghi quyết định duyệt, yêu cầu sửa hoặc từ chối đơn lập CLB
 export async function decideApplicationReview(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, actor: AccessActor | null, id: string,
   input: ApplicationReviewDecisionInput, now: Date) {
@@ -94,6 +102,7 @@ export async function decideApplicationReview(repo: ClubApplicationReviewReposit
     await repo.decide(applicationId(id), officerId, normalizedDecision(input, now), now));
 }
 
+// Cấp URL tạm để ICPDP xem tài liệu đính kèm của đơn
 export async function applicationReviewDocumentAccess(repo: ClubApplicationReviewRepository,
   auth: AuthRepository, storage: ApplicationFileStorage | null, actor: AccessActor | null,
   id: string, documentId: string) {

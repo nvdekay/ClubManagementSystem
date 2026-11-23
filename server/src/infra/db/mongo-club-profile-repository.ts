@@ -8,6 +8,7 @@ import type {
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ánh xạ document CLB thành ClubProfile
 function profileFrom(doc: Record<string, unknown>): ClubProfile {
   const channels = Array.isArray(doc.channels) ? doc.channels.filter((channel): channel is {
     label: string; url: string;
@@ -27,6 +28,7 @@ function profileFrom(doc: Record<string, unknown>): ClubProfile {
   };
 }
 
+// Ánh xạ document thành ClubDepartment
 function departmentFrom(doc: Record<string, unknown>): ClubDepartment {
   return {
     id: String(doc._id), clubId: String(doc.clubId), name: String(doc.name),
@@ -36,10 +38,12 @@ function departmentFrom(doc: Record<string, unknown>): ClubDepartment {
   };
 }
 
+// Chuẩn hóa tên phòng ban để so sánh trùng
 function normalizedName(name: string): string {
   return name.trim().toLocaleLowerCase("vi-VN");
 }
 
+// Đổi lỗi trùng khóa thành lỗi conflict về tên phòng ban
 function duplicate(error: unknown): never {
   if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
     throw new DomainError("department name already exists", "conflict");
@@ -47,6 +51,7 @@ function duplicate(error: unknown): never {
   throw error;
 }
 
+// Repository hồ sơ CLB và phòng ban/ban (UC09)
 export function mongoClubProfileRepository(): ClubProfileRepository {
   const clubs = ucmsModels.clubs!;
   const departments = ucmsModels.clubDepartments!;
@@ -81,13 +86,16 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
   }
 
   return {
+    // Tìm hồ sơ công khai của CLB
     async findProfile(clubId) {
       const club = await clubs.findById(new Types.ObjectId(clubId)).lean();
       return club ? profileFrom(club) : null;
     },
 
+    // Liệt kê phòng ban của CLB
     listDepartments: list,
 
+    // Cập nhật hồ sơ CLB và ghi audit
     async updateProfile(clubId, actorId, input, now) {
       const id = new Types.ObjectId(clubId);
       await mongoose.connection.transaction(async (session) => {
@@ -113,6 +121,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
       return profileFrom(updated);
     },
 
+    // Áp mẫu phòng ban mặc định nếu CLB chưa có phòng ban
     async applyDepartmentTemplate(clubId, actorId, template, now) {
       const id = new Types.ObjectId(clubId);
       await mongoose.connection.transaction(async (session) => {
@@ -132,6 +141,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
       return list(clubId);
     },
 
+    // Tạo phòng ban mới, chặn trùng tên
     async createDepartment(clubId, actorId, input, now) {
       const id = new Types.ObjectId(clubId);
       let createdId: Types.ObjectId | undefined;
@@ -158,6 +168,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
       return departmentFrom(created);
     },
 
+    // Cập nhật phòng ban, đổi tên chỉ khi chưa được dùng
     async updateDepartment(clubId, departmentId, actorId, input, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const departmentObjectId = new Types.ObjectId(departmentId);
@@ -186,6 +197,7 @@ export function mongoClubProfileRepository(): ClubProfileRepository {
       return departmentFrom(updated);
     },
 
+    // Tắt phòng ban chưa được dùng
     async deactivateDepartment(clubId, departmentId, actorId, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const departmentObjectId = new Types.ObjectId(departmentId);

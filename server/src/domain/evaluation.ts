@@ -4,7 +4,7 @@ import { EVALUATION_DIMENSIONS, type DimensionCode, type EvaluationScheme, type 
 export type EvaluationState = "Draft" | "Data Ready" | "Under Review" | "Finalized" | "Published";
 export type Classification = "EXCELLENT" | "GOOD" | "FAIR" | "NEEDS_IMPROVEMENT";
 
-/** One raw figure behind a score, and where it came from (EVL-02 data lineage). */
+/** Một số liệu gốc đứng sau điểm số, và nguồn của nó (truy vết dữ liệu EVL-02). */
 export interface MetricValue {
   value: number;
   sourceEntity: string;
@@ -28,7 +28,7 @@ export interface Lineage {
 
 export interface DimensionResult {
   code: DimensionCode;
-  /** Final score used in the total: the manual score when there is one, else the computed score. */
+  /** Điểm cuối cùng dùng để tính tổng: điểm chấm tay nếu có, nếu không thì điểm hệ thống tính. */
   score?: number;
   computedScore?: number;
   insufficientData: boolean;
@@ -61,9 +61,9 @@ export interface EvaluationRecord {
 }
 
 export interface EvaluationDetail extends EvaluationRecord {
-  /** Every revision of this club and period, newest first (BR30: published ones stay readable). */
+  /** Mọi phiên bản của CLB và kỳ này, mới nhất trước (BR30: bản đã công bố vẫn đọc được). */
   revisions: { id: string; revisionNo: number; state: EvaluationState; totalScore?: number; publishedAt?: Date }[];
-  /** Published results of the same club in earlier periods (FR-UC43-07 trend). */
+  /** Kết quả đã công bố của cùng CLB ở các kỳ trước (xu hướng FR-UC43-07). */
   trend: { periodCode: string; totalScore?: number; classification?: Classification }[];
   thresholds: SchemeThresholds;
 }
@@ -86,7 +86,7 @@ export interface EvaluationOverview {
   periodCode?: string;
   scheme?: { id: string; version: number };
   rows: EvaluationRow[];
-  /** Every club in scope has a latest revision and all of them are Finalized (BR60: one scorecard for all). */
+  /** Mọi CLB trong phạm vi đều có phiên bản mới nhất và tất cả đều Finalized (BR60: một bảng điểm cho tất cả). */
   canPublish: boolean;
 }
 
@@ -102,14 +102,14 @@ export type DraftTarget =
   | { kind: "revision"; fromEvaluationId: string };
 
 export interface EvaluationRepository {
-  /** Clubs evaluated in a period: those Active, Suspended or Dissolving. */
+  /** CLB được đánh giá trong một kỳ: những CLB Active, Suspended hoặc Dissolving. */
   clubsInScope(): Promise<{ id: string; name: string; state: string }[]>;
-  /** Latest revision per club for the period. */
+  /** Phiên bản mới nhất của mỗi CLB trong kỳ. */
   latest(periodCode: string): Promise<EvaluationRecord[]>;
   find(id: string): Promise<EvaluationDetail | null>;
   collectMetrics(clubId: string, period: PeriodWindow, now: Date): Promise<ClubMetrics>;
   reportPenalty(clubId: string, periodCode: string, now: Date): Promise<MetricValue>;
-  /** Clubs whose periodic report of the period still waits for the UC39 review (UC42 precondition). */
+  /** CLB có báo cáo định kỳ của kỳ còn chờ UC39 rà soát (điều kiện tiên quyết của UC42). */
   unreviewedReports(periodCode: string, clubId?: string): Promise<{ clubId: string; clubName: string }[]>;
   writeDraft(input: { clubId: string; periodCode: string; scheme: EvaluationScheme; results: DimensionResult[];
     target: DraftTarget }, officerId: string, now: Date): Promise<string>;
@@ -117,7 +117,7 @@ export interface EvaluationRepository {
     officerId: string, now: Date): Promise<void>;
   finalize(id: string, total: { totalScore?: number; classification?: Classification }, officerId: string, now: Date): Promise<void>;
   reopen(id: string, officerId: string, now: Date): Promise<void>;
-  /** Publishes every Finalized latest revision of the period and notifies each club board. */
+  /** Công bố mọi phiên bản mới nhất đã Finalized của kỳ và thông báo cho ban điều hành từng CLB. */
   publish(periodCode: string, officerId: string, now: Date): Promise<number>;
 }
 
@@ -126,19 +126,22 @@ export const OPEN_CASE_PENALTY = 5;
 /** Points D5 loses for each time ICPDP returned a report of the period for correction (SRS §9 "số lần phải sửa"). */
 export const RETURN_PENALTY = 10;
 
+// Lấy điểm trừ tương ứng với mức độ nghiêm trọng của vi phạm
 export function severityPenalty(severity: string): number {
   return SEVERITY_PENALTY[severity as keyof typeof SEVERITY_PENALTY] ?? 0;
 }
 
+// Làm tròn số tới một chữ số thập phân
 function round(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+// Tính tỷ lệ phần trên tổng, giới hạn tối đa 1
 function ratio(part: number, whole: number): number {
   return whole > 0 ? Math.min(1, part / whole) : 0;
 }
 
-/** The system-defined rule of each dimension (BR60): which figures it reads and how they become 0–100. */
+/** Quy tắc do hệ thống định nghĩa cho từng tiêu chí (BR60): đọc những số liệu nào và quy ra thang 0–100 ra sao. */
 const RULES: Record<DimensionCode, { metrics: MetricKey[]; score: (m: ClubMetrics, minRespondents: number) => number | undefined }> = {
   D1: { metrics: ["registrations", "attendances", "uniqueAttendees", "activeMembers", "completedEvents"],
     score: (m) => m.registrations.value > 0
@@ -152,8 +155,8 @@ const RULES: Record<DimensionCode, { metrics: MetricKey[]; score: (m: ClubMetric
   D3: { metrics: ["feedbackCount", "feedbackAverage"],
     score: (m, minRespondents) => m.feedbackCount.value > 0 && m.feedbackCount.value >= minRespondents
       ? (m.feedbackAverage.value - 1) / 4 * 100 : undefined },
-  // Events held against events cancelled, and facilities used against facilities granted (UC46, UC47), averaged over
-  // whichever of the two the club has data for.
+  // Sự kiện đã tổ chức so với sự kiện bị huỷ, và cơ sở vật chất đã dùng so với đã được cấp (UC46, UC47), lấy trung bình
+  // trên phần nào trong hai phần đó mà CLB có dữ liệu.
   D4: { metrics: ["completedEvents", "cancelledEvents", "bookingsGranted", "bookingsUsed"],
     score: (m) => {
       const parts = [
@@ -175,7 +178,8 @@ const RULES: Record<DimensionCode, { metrics: MetricKey[]; score: (m: ClubMetric
     score: (m) => Math.max(0, 100 - m.violationPenalty.value - OPEN_CASE_PENALTY * m.openViolations.value) },
 };
 
-/** UC42: scores every dimension of the scheme; a dimension without data is marked, never scored 0 (E1). */
+// UC42: chấm điểm từng tiêu chí của thang đánh giá từ số liệu CLB
+/** UC42: chấm mọi tiêu chí của scheme; tiêu chí không có dữ liệu thì được đánh dấu, không bao giờ chấm 0 (E1). */
 export function scoreDimensions(metrics: ClubMetrics, scheme: Pick<EvaluationScheme, "dimensions">, periodCode: string,
   minRespondents: number): DimensionResult[] {
   return scheme.dimensions.map(({ code }) => {
@@ -193,16 +197,19 @@ export function scoreDimensions(metrics: ClubMetrics, scheme: Pick<EvaluationSch
   });
 }
 
+// Kiểm tra CLB có bị trừ điểm do nộp báo cáo định kỳ quá hạn không
 export function hasReportPenalty(dimensions: Pick<DimensionResult, "evidence">[]): boolean {
   return dimensions.some((dimension) => dimension.evidence.some((item) => item.metric === "periodicReportOverdue" && item.value > 0));
 }
 
+// Xếp loại CLB theo tổng điểm và các ngưỡng của thang
 export function classify(total: number, thresholds: SchemeThresholds): Classification {
   return total >= thresholds.excellent ? "EXCELLENT" : total >= thresholds.good ? "GOOD"
     : total >= thresholds.fair ? "FAIR" : "NEEDS_IMPROVEMENT";
 }
 
-/** Weighted total over the dimensions that have a score; weights are re-spread over them (decision 14). */
+// Tính tổng điểm có trọng số và xếp loại, chia lại trọng số cho các tiêu chí có điểm
+/** Tổng có trọng số trên các tiêu chí đã có điểm; trọng số được chia lại cho các tiêu chí đó (quyết định 14). */
 export function totalOf(dimensions: Pick<DimensionView, "score" | "weight">[], thresholds: SchemeThresholds):
   { totalScore?: number; classification?: Classification } {
   const scored = dimensions.filter((item) => item.score !== undefined && item.weight > 0);
@@ -212,7 +219,8 @@ export function totalOf(dimensions: Pick<DimensionView, "score" | "weight">[], t
   return { totalScore, classification: classify(totalScore, thresholds) };
 }
 
-/** UC43 FR-02: only a dimension the scheme marks as manual can be scored by hand, with a justification. */
+// UC43: chỉ cho chấm tay các tiêu chí mà thang cho phép
+/** UC43 FR-02: chỉ tiêu chí mà scheme đánh dấu là chấm tay mới được chấm tay, kèm lý do. */
 export function checkManualScore(dimension: Pick<DimensionView, "allowsManual"> | undefined,
   manual: { score: number; justification: string } | null): { score: number; justification: string } | null {
   if (!dimension) throw new DomainError("this dimension is not part of the evaluation", "validation", { field: "dimensionCode" });

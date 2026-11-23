@@ -6,11 +6,13 @@ import {
 
 const key = ["notifications"] as const;
 
+// Query key theo workspace của thông báo
 function scopeKey(scope: NotificationScope) {
   return [scope.kind, scope.kind === "club" ? scope.clubId : null] as const;
 }
 
-/** Unread badge of one workspace; polls every minute so new notifications show up without a reload. */
+// Query số thông báo chưa đọc của workspace
+/** Badge chưa đọc của một workspace; poll mỗi phút để thông báo mới hiện ra mà không cần tải lại trang. */
 export function useUnreadNotificationCount(userId: string | undefined, scope: NotificationScope) {
   return useQuery({
     queryKey: [...key, "unread", userId, ...scopeKey(scope)],
@@ -20,7 +22,8 @@ export function useUnreadNotificationCount(userId: string | undefined, scope: No
   });
 }
 
-/** Newest-first inbox of one workspace, loaded one page at a time while the panel is open. */
+// Query hộp thư thông báo của workspace, tải thêm theo trang
+/** Hộp thư của một workspace, mới nhất trước, tải từng trang một khi panel đang mở. */
 export function useNotificationInbox(userId: string | undefined, scope: NotificationScope, open: boolean) {
   return useInfiniteQuery({
     queryKey: [...key, "inbox", userId, ...scopeKey(scope)],
@@ -31,6 +34,7 @@ export function useNotificationInbox(userId: string | undefined, scope: Notifica
   });
 }
 
+// Mutation đánh dấu một thông báo đã đọc
 export function useMarkNotificationRead() {
   const client = useQueryClient();
   return useMutation({
@@ -39,6 +43,7 @@ export function useMarkNotificationRead() {
   });
 }
 
+// Mutation đánh dấu đã đọc mọi thông báo của workspace
 export function useMarkAllNotificationsRead() {
   const client = useQueryClient();
   return useMutation({

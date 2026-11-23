@@ -2,7 +2,7 @@ import { DomainError } from "./errors.js";
 import type { AcademicSemester, ReportDeadline } from "./policy.js";
 import type { ViolationSeverity } from "./violation.js";
 
-/** Policy `reportDeadlines[].reportType` that sets the periodic report deadline (BR20). */
+/** `reportType` trong `reportDeadlines[]` của policy dùng để đặt hạn nộp báo cáo định kỳ (BR20). */
 export const PERIODIC_REPORT_TYPE = "PERIODIC";
 export const DEFAULT_PERIODIC_DUE_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -83,7 +83,7 @@ export interface PeriodicSystemSnapshot {
   events: PeriodicEventEntry[];
 }
 
-/** The system's own numbers for a club and a semester (FR-UC39-01). The club freezes the same shape. */
+/** Số liệu do chính hệ thống tính cho một CLB và một học kỳ (FR-UC39-01). CLB đóng băng đúng cấu trúc này. */
 export interface PeriodFigures {
   events?: { completed?: number; cancelled?: number };
   members?: { active?: number };
@@ -103,9 +103,9 @@ export interface PeriodicReportRow {
   versionNo?: number;
   lateFlag?: boolean;
   submittedAt?: Date;
-  /** Due date passed and nothing was submitted. */
+  /** Đã quá hạn mà chưa nộp gì. */
   overdue: boolean;
-  /** The OVERDUE_REPORT case ICPDP already opened for this club and period (E1). */
+  /** Hồ sơ OVERDUE_REPORT mà ICPDP đã mở cho CLB và kỳ này (E1). */
   violationId?: string;
 }
 
@@ -177,12 +177,12 @@ export interface PeriodicReportDetail {
 
 export interface PeriodicDecisionInput {
   outcome: PeriodicOutcome;
-  /** Accept only: a note kept for the evaluation period (A1). */
+  /** Chỉ khi Accept: ghi chú được giữ lại cho kỳ đánh giá (A1). */
   observation?: string;
-  /** Return only: required, with the sections the club must fix. */
+  /** Chỉ khi Return: bắt buộc, kèm các phần CLB phải sửa. */
   reason?: string;
   sections?: ReturnSection[];
-  /** Return only: optional new deadline for the club to resubmit. */
+  /** Chỉ khi Return: hạn mới (tuỳ chọn) để CLB nộp lại. */
   resubmitDueAt?: Date;
 }
 
@@ -192,24 +192,28 @@ export interface PeriodicReportRepository {
   saveCampaign?(officerId: string, input: PeriodicCampaign, now: Date): Promise<PeriodicCampaign>;
   find(id: string): Promise<PeriodicReportDetail | null>;
   decide(id: string, officerId: string, input: PeriodicDecisionInput, now: Date): Promise<PeriodicReportDetail>;
-  /** E1: opens an OVERDUE_REPORT case for a club that did not submit on time. */
+  /** E1: mở hồ sơ OVERDUE_REPORT cho CLB không nộp đúng hạn. */
   recordMissing(clubId: string, periodCode: string, dueAt: Date, officerId: string,
     input: { severity: ViolationSeverity; note?: string }, now: Date): Promise<{ violationId: string }>;
 }
 
+// Lấy số ngày hạn nộp báo cáo định kỳ sau khi kỳ kết thúc từ chính sách
 export function periodicDueDays(deadlines: readonly ReportDeadline[] | undefined): number {
   const entry = deadlines?.find((item) => item.reportType.trim().toUpperCase() === PERIODIC_REPORT_TYPE);
   return entry ? entry.dueDaysAfterPeriodEnd : DEFAULT_PERIODIC_DUE_DAYS;
 }
 
+// Tính hạn nộp báo cáo định kỳ từ ngày kết thúc kỳ
 export function periodicDueAt(period: Pick<AcademicSemester, "endAt">, dueDays: number): Date {
   return new Date(period.endAt.getTime() + dueDays * DAY_MS);
 }
 
+// Cắt khoảng trắng chuỗi, giữ undefined nếu không có
 function trimmed(value: string | undefined): string | undefined {
   return value?.trim() || undefined;
 }
 
+// Kiểm tra link minh chứng hợp lệ
 export function isValidEvidenceLink(url: string): boolean {
   if (!url || url.length > 5_000_000) return false;
   if (/^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/i.test(url)) return true;
@@ -222,6 +226,7 @@ export function isValidEvidenceLink(url: string): boolean {
   }
 }
 
+// Kiểm tra và chuẩn hoá đợt báo cáo định kỳ do ICPDP mở
 export function normalizedPeriodicCampaign(input: PeriodicCampaignInput): PeriodicCampaign {
   const periodCode = input.periodCode.trim();
   if (!periodCode || periodCode.length > 100) {
@@ -273,6 +278,7 @@ export function normalizedPeriodicCampaign(input: PeriodicCampaignInput): Period
   };
 }
 
+// Kiểm tra và chuẩn hoá quyết định duyệt báo cáo định kỳ
 export function normalizedPeriodicDecision(input: PeriodicDecisionInput): PeriodicDecisionInput {
   const observation = trimmed(input.observation);
   const reason = trimmed(input.reason);

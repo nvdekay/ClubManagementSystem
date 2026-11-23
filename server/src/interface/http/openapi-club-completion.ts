@@ -7,6 +7,7 @@ const clubPath = z.object({ clubId: z.string() });
 const planPath = clubPath.extend({ id: z.string() });
 const itemPath = z.object({ id: z.string() });
 const responses = { "200": { description: "Operation completed" }, "400": { description: "Invalid request" }, "403": { description: "Permission required" }, "409": { description: "State or revision conflict" } };
+// Tạo request body JSON bắt buộc từ schema
 function body(schema: z.ZodType) { return { required: true, content: { "application/json": { schema } } }; }
 export const clubCompletionOpenApiPaths = {
   "/clubs/{clubId}/violations": { get: { summary: "UC40 cases already disclosed to this club", requestParams: { path: clubPath }, responses } },

@@ -9,13 +9,16 @@ const routingKey = {
   simulation: (id: string, limit: number) => [...routingKeyRoot, "simulation", id, limit] as const,
 };
 
+// Query các bộ luật định tuyến phê duyệt
 export function useRoutingRuleSets(enabled: boolean) {
   return useQuery({ queryKey: routingKey.list(), queryFn: ({ signal }) => fetchRoutingRuleSets(signal), enabled, retry: false });
 }
+// Query mô phỏng một bộ luật định tuyến
 export function useRoutingSimulation(id: string, limit: number, enabled: boolean) {
   return useQuery({ queryKey: routingKey.simulation(id, limit), queryFn: ({ signal }) => fetchRoutingSimulation(id, limit, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
+// Mutation tạo, lưu hoặc kích hoạt bộ luật định tuyến, rồi làm mới cache
 export function useRoutingAction() {
   const client = useQueryClient();
   return useMutation({

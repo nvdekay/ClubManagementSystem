@@ -11,25 +11,30 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Lấy chuỗi không rỗng, ngược lại undefined
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// Chuyển id thành chuỗi nếu có
 function optionalId(value: unknown): string | undefined {
   return value ? String(value) : undefined;
 }
 
+// Ánh xạ danh sách bằng chứng từ DB
 function evidenceFrom(raw: unknown): ViolationEvidence[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((item: Doc) => ({ note: String(item.note ?? ""), ...(optionalText(item.url) ? { url: String(item.url) } : {}),
     addedBy: String(item.addedBy ?? ""), addedAt: item.addedAt as Date }));
 }
 
+// Chuyển bằng chứng sang dạng lưu DB
 function evidenceDoc(items: ViolationEvidence[]) {
   return items.map((item) => ({ note: item.note, ...(item.url ? { url: item.url } : {}),
     addedBy: new Types.ObjectId(item.addedBy), addedAt: item.addedAt }));
 }
 
+// Ánh xạ phản hồi của CLB từ DB
 function responseFrom(raw: unknown): ClubResponse | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const doc = raw as Doc;
@@ -42,6 +47,7 @@ function responseFrom(raw: unknown): ClubResponse | undefined {
     ...(optionalId(doc.recordedBy) ? { recordedBy: String(doc.recordedBy) } : {}) };
 }
 
+// Chuyển phản hồi của CLB sang dạng lưu DB
 function responseDoc(response: ClubResponse) {
   return { requestMessage: response.requestMessage, requestedBy: new Types.ObjectId(response.requestedBy),
     requestedAt: response.requestedAt, dueAt: response.dueAt,
@@ -51,6 +57,7 @@ function responseDoc(response: ClubResponse) {
     ...(response.recordedBy ? { recordedBy: new Types.ObjectId(response.recordedBy) } : {}) };
 }
 
+// Ánh xạ document hành động khắc phục sang CorrectiveAction
 function actionFrom(doc: Doc): CorrectiveAction {
   return { ...(doc.submission ? { submission: doc.submission as CorrectiveAction["submission"] } : {}), id: String(doc._id), description: String(doc.description), dueAt: doc.dueAt as Date,
     state: doc.state as CorrectiveAction["state"],
@@ -59,6 +66,7 @@ function actionFrom(doc: Doc): CorrectiveAction {
     ...(doc.verifiedAt instanceof Date ? { verifiedAt: doc.verifiedAt } : {}) };
 }
 
+// Ánh xạ document vụ vi phạm sang ViolationCase
 function caseFrom(doc: Doc, clubName: string, actions: CorrectiveAction[]): ViolationCase {
   const response = responseFrom(doc.clubResponse);
   return {
@@ -79,11 +87,13 @@ function caseFrom(doc: Doc, clubName: string, actions: CorrectiveAction[]): Viol
   };
 }
 
+// Repository vụ vi phạm của CLB do ICPDP xử lý
 export function mongoViolationRepository(): ViolationRepository {
   const m = ucmsModels;
   const violations = m.violations!;
   const actions = m.correctiveActions!;
 
+  // Ghi audit log cho vụ vi phạm
   async function audit(session: ClientSession, id: Types.ObjectId, action: string, actorId: string,
     before: unknown, after: unknown, reason: string | undefined, now: Date): Promise<void> {
     await m.auditLogs!.create([{ entityType: "Violation", entityId: id, action, actorId: new Types.ObjectId(actorId),
@@ -91,6 +101,7 @@ export function mongoViolationRepository(): ViolationRepository {
     { session });
   }
 
+  // Nạp vụ vi phạm kèm CLB và các hành động khắc phục
   async function loadCase(id: Types.ObjectId, session?: ClientSession): Promise<{ doc: Doc; current: ViolationCase } | null> {
     const doc = await violations.findById(id).session(session ?? null).lean();
     if (!doc) return null;
@@ -101,6 +112,7 @@ export function mongoViolationRepository(): ViolationRepository {
     return { doc, current: caseFrom(doc, String(club?.name ?? ""), actionDocs.map(actionFrom)) };
   }
 
+  // Dựng chi tiết vụ vi phạm
   async function detail(id: Types.ObjectId): Promise<ViolationDetail | null> {
     const loaded = await loadCase(id);
     if (!loaded) return null;
@@ -134,6 +146,7 @@ export function mongoViolationRepository(): ViolationRepository {
   }
 
   return {
+    // Liệt kê các vụ vi phạm, mới nhất trước
     async list() {
       const docs = await violations.find().sort({ openedAt: -1, _id: -1 }).lean();
       const [clubs, pending] = await Promise.all([
@@ -157,10 +170,12 @@ export function mongoViolationRepository(): ViolationRepository {
       });
     },
 
+    // Lấy chi tiết một vụ vi phạm
     async find(id) {
       return detail(new Types.ObjectId(id));
     },
 
+    // Lấy nguồn (sự kiện, ngân sách) có thể liên kết với vụ vi phạm của CLB
     async sources(clubId) {
       const id = new Types.ObjectId(clubId);
       if (!(await m.clubs!.exists({ _id: id }))) return null;
@@ -179,6 +194,7 @@ export function mongoViolationRepository(): ViolationRepository {
       };
     },
 
+    // ICPDP mở vụ vi phạm mới cho CLB
     async open(input, officerId, now) {
       const clubId = new Types.ObjectId(input.clubId);
       const id = new Types.ObjectId();
@@ -201,6 +217,7 @@ export function mongoViolationRepository(): ViolationRepository {
       return (await detail(id))!;
     },
 
+    // Áp dụng một bước xử lý vào vụ vi phạm và ghi audit
     async apply(id, officerId, step, now) {
       const caseId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {

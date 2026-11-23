@@ -8,6 +8,6 @@ export interface MembershipReconfirmationRepository {
   listMine(userId: string): Promise<MembershipReconfirmation[]>;
   confirm(id: string, userId: string, now: Date): Promise<MembershipReconfirmation>;
   run(period: AcademicSemester, dueAt: Date, now: Date): Promise<{ opened: number; expired: number; exempt: number }>;
-  /** Closes every Pending request past its deadline, including those of a semester that has ended. */
+  /** Đóng mọi yêu cầu Pending quá hạn, kể cả của học kỳ đã kết thúc. */
   expireOverdue(now: Date): Promise<{ expired: number; exempt: number }>;
 }

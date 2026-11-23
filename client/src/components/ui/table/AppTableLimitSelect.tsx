@@ -4,15 +4,16 @@ import { cn } from "@/utils/cn";
 interface AppTableLimitSelectProps {
   value: number;
   onChange: (limit: number) => void;
-  /** Localized label rendered before the control. */
+  /** Nhãn đã dịch hiển thị trước control. */
   label: string;
-  /** Custom option list — defaults match the API's limit cap (max 100). */
+  /** Danh sách tuỳ chọn tuỳ biến — mặc định khớp giới hạn của API (tối đa 100). */
   options?: number[];
   className?: string;
 }
 
 const DEFAULT_OPTIONS = [5, 10, 20, 50, 100];
 
+// Ô chọn số dòng mỗi trang của bảng
 export function AppTableLimitSelect({
   value,
   onChange,
@@ -25,7 +26,7 @@ export function AppTableLimitSelect({
       {label}
       <AppSelect
         value={value}
-        // min-w keeps the trigger from resizing between "5" and "100".
+        // min-w giữ cho nút mở không đổi kích thước giữa "5" và "100".
         className="min-w-20"
         options={options.map((n) => ({ value: n, label: String(n) }))}
         onChange={onChange}

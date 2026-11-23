@@ -26,6 +26,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 type Filter = "active" | "attended" | "cancelled";
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Trang đăng ký sự kiện, điểm danh và phản hồi của sinh viên
 export function MyEventRegistrationsPage() {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -41,15 +42,16 @@ export function MyEventRegistrationsPage() {
   const [filter, setFilter] = useState<Filter>(() => (searchParams.get("tab") === "attended" ? "attended" : "active"));
   const [cancelledId, setCancelledId] = useState<string | null>(null);
   const [openCheckIn, setOpenCheckIn] = useState<string | null>(null);
-  // The row's inline form unmounts once the list refreshes, so the confirmation lives at page level.
+  // Form nội tuyến của dòng bị unmount khi danh sách làm mới, nên hộp xác nhận đặt ở cấp trang.
   const [lastCheckIn, setLastCheckIn] = useState<CheckInResult | null>(null);
-  // Read once per visit: render must stay pure, and minute-level drift does not matter here.
+  // Chỉ đọc một lần mỗi lượt vào trang: render phải thuần tuý, và lệch vài phút không ảnh hưởng ở đây.
   const [nowTime] = useState(() => Date.now());
-  // A scanned QR opens /workspace/event-registrations?checkin=<eventId>&code=<code>.
+  // Quét QR sẽ mở /workspace/event-registrations?checkin=<eventId>&code=<code>.
   const deepLinkEvent = searchParams.get("checkin");
   const deepLink = deepLinkEvent && objectId.test(deepLinkEvent)
     ? { eventId: deepLinkEvent, code: searchParams.get("code") ?? "" } : null;
 
+  // Xác nhận rồi hủy đăng ký sự kiện
   async function cancel(registration: EventRegistration) {
     if (!auth.data || inFlight.current || !(await askConfirm(t("eventRegistrations.cancelConfirm")))) return;
     inFlight.current = true;
@@ -58,12 +60,13 @@ export function MyEventRegistrationsPage() {
       await action.mutateAsync({ kind: "cancel", registrationId: registration.id, csrfToken: auth.data.csrfToken });
       setCancelledId(registration.id);
     } catch {
-      // action.isError renders the message.
+      // action.isError hiển thị thông báo.
     } finally {
       inFlight.current = false;
     }
   }
 
+  // Đóng hộp thoại check-in mở từ liên kết và xóa tham số URL
   function closeDeepLink() {
     setSearchParams((params) => {
       params.delete("checkin");
@@ -218,6 +221,7 @@ interface AttendanceRowProps {
   feedback: MyEventFeedback | undefined;
 }
 
+// Dòng một lần tham dự kèm form gửi phản hồi sự kiện
 function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -266,6 +270,7 @@ function AttendanceRow({ attendance, locale, nowTime, feedback }: AttendanceRowP
   );
 }
 
+// Trạng thái trống có liên kết tới danh sách sự kiện
 function EmptyState({ message }: { message: string }) {
   const { t } = useTranslation();
   return (

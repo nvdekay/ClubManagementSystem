@@ -19,11 +19,13 @@ const defaultDepartments: readonly ClubDepartmentInput[] = [
   { name: "Ban Sự kiện", description: "Phụ trách tổ chức hoạt động", sortOrder: 40 },
 ];
 
+// Kiểm định dạng ObjectId của một định danh
 function id(value: string, label: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${label}`, "validation");
   return value;
 }
 
+// Cắt khoảng trắng chuỗi tùy chọn và kiểm độ dài tối đa
 function optional(value: string | undefined, max: number): string | undefined {
   const normalized = value?.trim();
   if (!normalized) return undefined;
@@ -31,6 +33,7 @@ function optional(value: string | undefined, max: number): string | undefined {
   return normalized;
 }
 
+// Kiểm và chuẩn hóa URL http(s) tùy chọn
 function url(value: string | undefined): string | undefined {
   const normalized = optional(value, 2_000);
   if (!normalized) return undefined;
@@ -43,6 +46,7 @@ function url(value: string | undefined): string | undefined {
   }
 }
 
+// Chuẩn hóa và kiểm dữ liệu hồ sơ CLB (email, kênh liên lạc, URL)
 function profileInput(input: ClubProfileInput): ClubProfileInput {
   const contactEmail = optional(input.contactEmail, 320)?.toLowerCase();
   if (contactEmail && !email.test(contactEmail)) {
@@ -63,13 +67,15 @@ function profileInput(input: ClubProfileInput): ClubProfileInput {
   };
 }
 
-/** Fields ICPDP marks as required for club profiles; defaults apply before any policy exists. */
+// Lấy các trường hồ sơ CLB mà ICPDP bắt buộc theo chính sách
+/** Các trường ICPDP đánh dấu bắt buộc cho hồ sơ CLB; mặc định được áp dụng khi chưa có policy. */
 async function profileRequirements(policy: PolicyRepository,
   now: Date): Promise<Readonly<Record<ClubProfileFormField, boolean>>> {
   return (await policy.findEffective(now))?.formRequirements.clubProfile
     ?? DEFAULT_FORM_REQUIREMENTS.clubProfile;
 }
 
+// Báo lỗi nếu thiếu trường hồ sơ CLB bắt buộc
 function assertRequiredProfileFields(input: ClubProfileInput,
   required: Readonly<Record<ClubProfileFormField, boolean>>): void {
   const missing = CLUB_PROFILE_FORM_FIELDS.filter((field) => required[field] &&
@@ -79,6 +85,7 @@ function assertRequiredProfileFields(input: ClubProfileInput,
   }
 }
 
+// Chuẩn hóa và kiểm dữ liệu ban của CLB
 function departmentInput(input: ClubDepartmentInput): ClubDepartmentInput {
   const name = input.name.trim();
   const description = optional(input.description, 2_000);
@@ -89,6 +96,7 @@ function departmentInput(input: ClubDepartmentInput): ClubDepartmentInput {
   return { name, description, sortOrder: input.sortOrder };
 }
 
+// Kiểm quyền quản lý hồ sơ CLB và trả id CLB cùng id actor
 async function allowed(access: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, now: Date) {
   const parsed = id(clubId, "club id");
@@ -97,6 +105,7 @@ async function allowed(access: ClubAccessRepository, actor: AccessActor | null,
   return { clubId: parsed, actorId: actor.id };
 }
 
+// Xem cấu hình CLB gồm hồ sơ, các ban và trường bắt buộc
 export async function getClubSettings(repo: ClubProfileRepository, access: ClubAccessRepository,
   policy: PolicyRepository, actor: AccessActor | null, clubId: string, now = new Date()) {
   await assertClubAccess(access, actor, id(clubId, "club id"), "club.profile.manage", now);
@@ -108,6 +117,7 @@ export async function getClubSettings(repo: ClubProfileRepository, access: ClubA
   return { profile, departments, requiredProfileFields };
 }
 
+// Cập nhật hồ sơ CLB sau khi kiểm các trường bắt buộc
 export async function updateClubProfile(repo: ClubProfileRepository, access: ClubAccessRepository,
   policy: PolicyRepository, actor: AccessActor | null, clubId: string, input: ClubProfileInput,
   now: Date) {
@@ -117,12 +127,14 @@ export async function updateClubProfile(repo: ClubProfileRepository, access: Clu
   return repo.updateProfile(ids.clubId, ids.actorId, normalized, now);
 }
 
+// Áp dụng bộ ban mặc định cho CLB
 export async function applyClubDepartmentTemplate(repo: ClubProfileRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now: Date) {
   const ids = await allowed(access, actor, clubId, now);
   return repo.applyDepartmentTemplate(ids.clubId, ids.actorId, defaultDepartments, now);
 }
 
+// Tạo một ban mới cho CLB
 export async function createClubDepartment(repo: ClubProfileRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string,
   input: ClubDepartmentInput, now: Date) {
@@ -130,6 +142,7 @@ export async function createClubDepartment(repo: ClubProfileRepository,
   return repo.createDepartment(ids.clubId, ids.actorId, departmentInput(input), now);
 }
 
+// Cập nhật thông tin một ban của CLB
 export async function updateClubDepartment(repo: ClubProfileRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, departmentId: string,
   input: ClubDepartmentInput, now: Date) {
@@ -138,6 +151,7 @@ export async function updateClubDepartment(repo: ClubProfileRepository,
     departmentInput(input), now);
 }
 
+// Ngừng hoạt động một ban của CLB
 export async function deactivateClubDepartment(repo: ClubProfileRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, departmentId: string,
   now: Date) {

@@ -7,7 +7,8 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useEventFeedbackContext } from "@/hooks/useEventFeedback";
 
-/** Event page section for UC48; renders nothing unless the signed-in student checked in (E3). */
+// Khu vực phản hồi sự kiện: ẩn nếu chưa tham dự, hiện form hoặc phản hồi đã gửi
+/** Mục trên trang sự kiện cho UC48; không hiển thị gì trừ khi sinh viên đang đăng nhập đã điểm danh (E3). */
 export function EventFeedbackPanel({ eventId }: { eventId: string }) {
   const { t } = useTranslation();
   const auth = useAuth();

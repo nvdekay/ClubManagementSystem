@@ -6,6 +6,21 @@
 
 ## 1. Mô hình truy cập phía CLB
 
+Điều chỉnh giao diện ngày 17/11/2026: phía CLB chỉ có "Tạo đề xuất sự kiện" tại
+`/club/:clubId/events/new`. Nút, liên kết và route tạo sự kiện nội bộ đã gỡ khỏi giao diện;
+vẫn quản lý được sự kiện nội bộ đã có, API và dữ liệu hiện tại được giữ nguyên.
+
+Ngày 17/11/2026, form đề xuất UC25 chuyển sang import DOCX và hiển thị field chỉ đọc.
+Muốn chỉnh sửa phải sửa Word rồi import lại; thiếu hoặc chưa rõ field bắt buộc thì chặn lưu/nộp.
+Trích xuất văn bản/bảng, không OCR PDF/ảnh. Chi tiết mapping và giới hạn:
+[`EVENT_PROPOSAL_IMPORT.md`](05-implementation/EVENT_PROPOSAL_IMPORT.md).
+Theo yêu cầu chỉnh UI cùng ngày, bản xem chính nay hiển thị toàn bộ tài liệu theo trang giấy với
+font/bảng/ảnh gốc và toolbar chuyển trang/thu phóng/in. Hồ sơ trích xuất được trình bày riêng bên dưới,
+có tổng quan và điều hướng đầy đủ các mục nguồn hoặc xem tất cả; giữ thứ tự văn bản, bảng và ô gộp.
+Không dùng bản liệt kê field thay cho toàn văn. Bản sửa tải được file gốc đã lưu.
+Link Word và URL thường đã bấm được ở bản xem và hồ sơ trích xuất, mở tab mới; giữ đúng nhãn/đích
+của 110 hyperlink trong đề án mẫu, không kích hoạt URL thực thi mã.
+
 Code theo đúng BR47, BR54, BR55 của SRS hiện hành — hai role cố định (`server/src/domain/access.ts`):
 
 - **Club Leader**: membership `Active`, giữ ghế Chủ nhiệm (`isLeaderRole`) hoặc Phó chủ nhiệm

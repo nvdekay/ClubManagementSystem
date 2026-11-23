@@ -7,6 +7,7 @@ import type { AuthUser } from "../../domain/auth.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ánh xạ document user thành AuthUser
 function mapUser(doc: Record<string, unknown>): AuthUser {
   return {
     id: String(doc._id), email: String(doc.email), displayName: String(doc.displayName),
@@ -16,10 +17,12 @@ function mapUser(doc: Record<string, unknown>): AuthUser {
   };
 }
 
+// Tạo regex không phân biệt hoa thường từ chuỗi tìm kiếm đã escape
 function escapedRegex(value: string): RegExp {
   return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 }
 
+// Repository quản trị tài khoản: tìm user, cấp/thu hồi role hệ thống, khóa tài khoản
 export function mongoAccountAdminRepository(): AccountAdminRepository {
   const users = ucmsModels.users!;
   const roles = ucmsModels.roles!;
@@ -31,7 +34,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
   const positions = ucmsModels.clubPositions!;
   const violations = ucmsModels.violations!;
 
-  /** UC03 step 2: current (non-Left) memberships with the board seats held in each club. */
+  /** UC03 bước 2: các membership hiện tại (chưa Left) cùng các ghế ban chủ nhiệm đang giữ ở mỗi CLB. */
   async function clubContext(userIds: Types.ObjectId[]): Promise<Map<string, AdminUserClub[]>> {
     const membershipDocs = await memberships.find({ userId: { $in: userIds },
       state: { $nin: ["Left"] } }).lean();
@@ -57,7 +60,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
     return result;
   }
 
-  /** UC03 A1: the case named by each locked user's latest lock audit. */
+  /** UC03 A1: vụ việc được nêu trong audit khoá gần nhất của từng user bị khoá. */
   async function lockCases(lockedIds: Types.ObjectId[]): Promise<Map<string, AdminLockCase>> {
     if (!lockedIds.length) return new Map();
     const lockAudits = await audits.find({ entityType: "User", entityId: { $in: lockedIds },
@@ -85,6 +88,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
   }
 
   return {
+    // Liệt kê user phân trang kèm role hệ thống, CLB và case khóa
     async listUsers(search, page, pageSize): Promise<AdminUserPage> {
       const filter = search ? { $or: [
         { email: escapedRegex(search) }, { displayName: escapedRegex(search) },
@@ -113,10 +117,12 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
         total, page, pageSize,
       };
     },
+    // Tìm user theo id
     async findUser(userId) {
       const doc = await users.findById(new Types.ObjectId(userId)).lean();
       return doc ? mapUser(doc) : null;
     },
+    // Lấy mã các role hệ thống đang hiệu lực của user
     async systemRoles(userId) {
       const active = await assignments.find({
         userId: new Types.ObjectId(userId), revokedAt: null,
@@ -126,6 +132,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
       }).lean();
       return found.map((role) => String(role.code));
     },
+    // Cấp hoặc thu hồi role hệ thống và ghi audit trong transaction
     async applyRoleChange(input) {
       const actorId = new Types.ObjectId(input.actorId);
       const targetId = new Types.ObjectId(input.targetId);
@@ -156,7 +163,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
           await assignments.updateOne({ _id: existing._id, revokedAt: null }, {
             $set: { revokedAt: input.now, revokedBy: actorId, reason: input.reason },
           }, { session });
-          // D1: ICPDP_HEAD is never held without ICPDP_OFFICER, so it ends with it.
+          // D1: ICPDP_HEAD không bao giờ được giữ khi thiếu ICPDP_OFFICER, nên mất cùng lúc.
           if (input.roleCode === "ICPDP_OFFICER") {
             const head = await roles.findOne({ code: "ICPDP_HEAD", scope: "system" }).session(session).lean();
             const dropped = head ? await assignments.updateOne({ userId: targetId, roleId: head._id, revokedAt: null },
@@ -179,6 +186,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
         }], { session });
       });
     },
+    // Khóa hoặc mở khóa tài khoản, liên kết case vi phạm nếu có
     async setLock(input) {
       const actorId = new Types.ObjectId(input.actorId);
       const targetId = new Types.ObjectId(input.targetId);
@@ -195,7 +203,7 @@ export function mongoAccountAdminRepository(): AccountAdminRepository {
           await audits.create([{
             entityType: "Violation", entityId: violationId, action: "VIOLATION_ACCOUNT_LOCKED",
             actorId, actorRole: "ICPDP_OFFICER", after: { userId: input.targetId, email: before.email },
-            // The case history shows only the reason, so it names the locked account too.
+            // Lịch sử vụ việc chỉ hiện lý do, nên phải nêu thêm tài khoản bị khoá.
             reason: `${String(before.email)} — ${input.reason}`, correlationId: randomUUID(), at: input.now,
           }], { session });
         }

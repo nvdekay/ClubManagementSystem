@@ -5,10 +5,11 @@ import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// BR21: liệt kê kỳ báo cáo định kỳ CLB còn nợ (quá hạn chưa nộp hoặc chưa mở)
 /**
- * Periodic report periods the club owes and has not finished (BR21, UC38 E1): a report past its due
- * date still in Draft or Returned, or a past-due period the club never opened a report for. A club
- * only owes a period it already existed at the start of, so a newly founded club is not blocked.
+ * Các kỳ báo cáo định kỳ CLB nợ và chưa xong (BR21, UC38 E1): báo cáo quá hạn mà còn ở Draft
+ * hoặc Returned, hoặc kỳ đã qua hạn mà CLB chưa từng mở báo cáo. CLB chỉ nợ một kỳ khi nó đã tồn
+ * tại vào đầu kỳ đó, nên CLB mới thành lập không bị chặn.
  */
 export async function overduePeriodicReports(clubId: Types.ObjectId, now: Date, session?: ClientSession): Promise<string[]> {
   const s = session ?? null;

@@ -26,11 +26,12 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 const filters = ["all", "toAdvance", "disbursed", "reconcile", "topUp", "refund", "closed"] as const;
 type Filter = typeof filters[number];
 
+// Kiểm tra ngân sách có thuộc bộ lọc đang chọn không
 function matches(filter: Filter, budget: BudgetSummary): boolean {
   switch (filter) {
     case "toAdvance": return budget.state === "Approved";
     case "disbursed": return ["Disbursed", "Settlement Submitted", "Reconciliation Pending"].includes(budget.state);
-    // UC37: a submitted settlement, or an advance whose settlement deadline has passed (A2).
+    // UC37: quyết toán đã nộp, hoặc khoản tạm ứng đã quá hạn quyết toán (A2).
     case "reconcile": return budget.state === "Settlement Submitted" || (["Disbursed", "Reconciliation Pending"].includes(budget.state)
       && Boolean(budget.settlementDueAt && new Date(budget.settlementDueAt) < new Date()));
     case "topUp": return budget.state === "Reconciled";
@@ -40,6 +41,7 @@ function matches(filter: Filter, budget: BudgetSummary): boolean {
   }
 }
 
+// Dịch trạng thái ngân sách sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
   switch (state) {
     case "Approved": return t("budgets.stateApproved");
@@ -54,15 +56,18 @@ function stateLabel(t: TFunction, state: string): string {
   }
 }
 
+// Chọn màu badge theo trạng thái ngân sách
 function stateTone(state: string): AppBadgeTone {
   return state === "Approved" ? "info" : state === "Recovery Pending" || state === "Reconciled" ? "warning"
     : state === "Closed" ? "success" : state === "Cancelled" ? "danger" : "neutral";
 }
 
+// Dịch loại luồng tiền (tạm ứng, bổ sung, hoàn) sang nhãn
 function kindLabel(t: TFunction, kind: BudgetFlowKind): string {
   return kind === "Advance" ? t("budgets.kindAdvance") : kind === "TopUp" ? t("budgets.kindTopUp") : t("budgets.kindRefund");
 }
 
+// Dịch bộ lọc danh sách ngân sách sang nhãn hiển thị
 function filterLabel(t: TFunction, filter: Filter): string {
   switch (filter) {
     case "toAdvance": return t("budgets.filterToAdvance");
@@ -75,7 +80,8 @@ function filterLabel(t: TFunction, filter: Filter): string {
   }
 }
 
-/** Sign-in and role gate shared by both budget pages. */
+// Cổng kiểm tra đăng nhập và quyền cho hai trang ngân sách
+/** Kiểm tra đăng nhập và vai trò dùng chung cho cả hai trang ngân sách. */
 function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -91,6 +97,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   return <>{children(auth.data.csrfToken)}</>;
 }
 
+// Danh sách ngân sách sự kiện kèm bộ lọc theo trạng thái
 function BudgetList() {
   const { t, i18n } = useTranslation();
   const list = useBudgets(true);
@@ -135,7 +142,7 @@ function BudgetList() {
                   {budget.settlementDueAt && ` · ${t("budgets.settlementDueValue", { date: day(budget.settlementDueAt) })}`}
                 </span>
               </span>
-              {/* Same minimum width on every row so the amount columns line up down the list. */}
+              {/* Mỗi dòng có cùng chiều rộng tối thiểu để các cột số tiền thẳng hàng theo danh sách. */}
               <span className="grid w-full grid-cols-[1fr_auto] gap-x-6 text-sm tabular-nums sm:w-auto sm:min-w-72">
                 <span className="text-muted-app">{t("budgets.approved")}</span><span className="text-right font-semibold">{money(budget.approvedTotal)}</span>
                 <span className="text-muted-app">{t("budgets.transferred")}</span><span className="text-right">{money(budget.disbursedTotal)}</span>
@@ -152,6 +159,7 @@ function BudgetList() {
   );
 }
 
+// Trang ICPDP danh sách ngân sách sự kiện
 export function BudgetsPage() {
   const { t } = useTranslation();
   return (
@@ -162,11 +170,13 @@ export function BudgetsPage() {
   );
 }
 
+// Ngày hôm nay theo giờ địa phương, dạng giá trị input date
 function todayInput(): string {
   const now = new Date();
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
 
+// Chi tiết một ngân sách và form ghi nhận giải ngân/hoàn tiền
 function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -217,11 +227,12 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
     <SponsoredItems budgetId={id} csrfToken={csrfToken} />
   </>;
 
+  // Xác nhận và ghi nhận một luồng tiền của ngân sách
   async function submit() {
     if (!allowed || !field.touchAll()) return;
     const value = amountNumber;
     if (!(await askConfirm(t("budgets.confirm", { kind: kindLabel(t, allowed.kind).toLowerCase(), amount: money(value) })))) return;
-    // Noon local time keeps the chosen calendar day whatever the time zone.
+    // Lấy 12 giờ trưa giờ địa phương để giữ đúng ngày đã chọn dù ở múi giờ nào.
     const disbursedAt = date === todayInput() ? new Date() : new Date(`${date}T12:00:00`);
     try {
       await record.mutateAsync({ id, csrfToken, input: { kind: allowed.kind, amount: value,
@@ -229,7 +240,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
         note: note.trim() || undefined } });
       setAmount(null); setPaymentReference(""); setNote("");
       field.reset();
-    } catch { /* Mutation state is rendered below. */ }
+    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
   }
 
   const heading = allowed?.kind === "TopUp" ? t("budgets.recordTopUp") : allowed?.kind === "Refund"
@@ -331,6 +342,7 @@ function BudgetDetailView({ id, csrfToken }: { id: string; csrfToken: string }) 
   );
 }
 
+// Trang ICPDP chi tiết một ngân sách sự kiện
 export function BudgetDetailPage() {
   const { id } = useParams();
   return <Gate>{(csrfToken) => id ? <BudgetDetailView id={id} csrfToken={csrfToken} /> : null}</Gate>;
