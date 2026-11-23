@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import {
-  DIMENSION_NAMES, severityPenalty,
+  DIMENSION_NAMES, severityPenalty, totalOf,
   type Classification, type ClubMetrics, type DimensionView, type EvaluationDetail, type EvaluationRecord,
   type EvaluationRepository, type EvaluationState, type Lineage, type MetricValue,
 } from "../../domain/evaluation.js";
@@ -277,8 +277,9 @@ export function mongoEvaluationRepository(): EvaluationRepository {
     async setManual(id, code, manual, officerId, now) {
       const evaluationId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
+        // Tăng __v: khi đã Under Review thì $set là ghi rỗng, lệnh chốt đồng thời sẽ không xung đột với lệnh này.
         const evaluation = await evaluations.findOneAndUpdate({ _id: evaluationId, state: { $in: ["Draft", "Data Ready", "Under Review"] } },
-          { $set: { state: "Under Review" } }, { session }).lean();
+          { $set: { state: "Under Review" }, $inc: { __v: 1 } }, { session }).lean();
         if (!evaluation) throw new DomainError("only an evaluation under review can change", "conflict");
         const result = await results.findOne({ evaluationId, dimensionCode: code }).session(session).lean();
         const evidence = Array.isArray(result?.evidence) ? result.evidence as { metric: string; value: number }[] : [];
@@ -298,6 +299,19 @@ export function mongoEvaluationRepository(): EvaluationRepository {
       if (!Number.isFinite(total.totalScore)) throw new DomainError("an evaluation needs a total score before finalizing", "conflict");
       const evaluationId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
+        // Tổng được tính ngoài transaction: tính lại từ điểm đọc trong transaction và từ chối nếu đã khác. Chấm tay đồng
+        // thời cũng ghi document đánh giá, nên lệnh chốt xung đột và transaction chạy lại thay vì lưu tổng điểm cũ.
+        const doc = await evaluations.findById(evaluationId).session(session).lean();
+        if (!doc) throw new DomainError("this evaluation cannot be finalized now", "conflict");
+        const dimensions = await m.evaluationDimensions!.find({ schemeId: doc.schemeId }).session(session).lean();
+        const scores = await results.find({ evaluationId }).session(session).lean();
+        const scheme = await m.evaluationSchemes!.findById(doc.schemeId).select({ thresholds: 1 }).session(session).lean();
+        const current = totalOf(dimensions.map((dimension) => ({ weight: Number(String(dimension.weight)),
+          score: optionalNumber(scores.find((item) => item.dimensionCode === dimension.code)?.score) })),
+        (scheme?.thresholds ?? { excellent: 85, good: 70, fair: 50 }) as SchemeThresholds);
+        if (current.totalScore !== total.totalScore || current.classification !== total.classification) {
+          throw new DomainError("the evaluation changed; reload it", "conflict");
+        }
         const changed = await evaluations.updateOne({ _id: evaluationId, state: { $in: ["Draft", "Data Ready", "Under Review"] } }, {
           $set: { state: "Finalized", finalizedBy: new Types.ObjectId(officerId), finalizedAt: now,
             ...(total.totalScore !== undefined ? { totalScore: decimal(total.totalScore) } : {}),

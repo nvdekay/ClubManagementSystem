@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, type ComponentProps } from "react";
 
 import { AppInput } from "@/components/ui/input/AppInput";
 
-type Props = Omit<ComponentProps<"input">, "value" | "onChange" | "type" | "ref"> & {
+type Props = Omit<ComponentProps<"input">, "value" | "onChange" | "onPaste" | "type" | "ref"> & {
   /** Số tiền nguyên dưới dạng chuỗi chữ số ("" khi rỗng); cũng chấp nhận kiểu number. */
   value: string | number;
   /** Được gọi với chuỗi chữ số thuần, không dấu phân cách và không số 0 đầu ("" khi xoá hết). */
@@ -14,6 +14,12 @@ type Props = Omit<ComponentProps<"input">, "value" | "onChange" | "type" | "ref"
 export function moneyDigits(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   return digits === "" ? "" : digits.replace(/^0+(?=\d)/, "");
+}
+
+// Bỏ phần thập phân 1–2 chữ số ở cuối số tiền được dán
+/** Số tiền dán từ bảng tính/văn bản: "1.500.000,00" -> "1.500.000", "1,500,000.5" -> "1,500,000". */
+export function dropPastedCents(text: string): string {
+  return text.trim().replace(/[.,]\d{1,2}$/, "");
 }
 
 // Nhóm hàng nghìn bằng dấu chấm
@@ -29,6 +35,16 @@ export function AppMoneyInput({ value, onValueChange, ...props }: Props) {
   // Số chữ số bên trái con trỏ, để con trỏ giữ nguyên vị trí khi dấu phân cách được thêm hoặc bớt.
   const caretDigits = useRef<number | null>(null);
   const shown = groupThousands(moneyDigits(String(value)));
+
+  // Nhận chuỗi thô mới, nhớ số chữ số bên trái con trỏ rồi trả chuỗi chữ số ra ngoài
+  function update(raw: string, caret: number) {
+    const digits = moneyDigits(raw);
+    const before = raw.slice(0, caret).replace(/\D/g, "").length;
+    // Các số 0 đầu bị bỏ cũng được trừ khỏi phía bên trái con trỏ.
+    const dropped = raw.replace(/\D/g, "").length - digits.length;
+    caretDigits.current = Math.max(0, before - dropped);
+    onValueChange(digits);
+  }
 
   useLayoutEffect(() => {
     const input = ref.current;
@@ -46,11 +62,16 @@ export function AppMoneyInput({ value, onValueChange, ...props }: Props) {
   return <AppInput ref={ref} type="text" inputMode="numeric" autoComplete="off" {...props} value={shown}
     onChange={(event) => {
       const { value: raw, selectionStart } = event.target;
-      const digits = moneyDigits(raw);
-      const before = raw.slice(0, selectionStart ?? raw.length).replace(/\D/g, "").length;
-      // Các số 0 đầu bị bỏ cũng được trừ khỏi phía bên trái con trỏ.
-      const dropped = raw.replace(/\D/g, "").length - digits.length;
-      caretDigits.current = Math.max(0, before - dropped);
-      onValueChange(digits);
+      update(raw, selectionStart ?? raw.length);
+    }}
+    onPaste={(event) => {
+      // Chỉ bỏ phần thập phân lúc dán: khi gõ, xoá lùi "12.345" thành "12.34" không phải số lẻ.
+      const text = event.clipboardData.getData("text");
+      const kept = dropPastedCents(text);
+      if (kept === text.trim()) return;
+      event.preventDefault();
+      const { value: current, selectionStart, selectionEnd } = event.currentTarget;
+      const head = current.slice(0, selectionStart ?? current.length) + kept;
+      update(head + current.slice(selectionEnd ?? current.length), head.length);
     }} />;
 }

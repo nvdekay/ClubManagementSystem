@@ -182,11 +182,14 @@ const RULES: Record<DimensionCode, { metrics: MetricKey[]; score: (m: ClubMetric
 /** UC42: chấm mọi tiêu chí của scheme; tiêu chí không có dữ liệu thì được đánh dấu, không bao giờ chấm 0 (E1). */
 export function scoreDimensions(metrics: ClubMetrics, scheme: Pick<EvaluationScheme, "dimensions">, periodCode: string,
   minRespondents: number): DimensionResult[] {
+  // BR40: dưới ngưỡng người phản hồi, nguồn dữ liệu không mang điểm trung bình thật (0 như khi chưa có phản hồi).
+  const shown: ClubMetrics = metrics.feedbackCount.value >= minRespondents ? metrics
+    : { ...metrics, feedbackAverage: { ...metrics.feedbackAverage, value: 0, sourceIds: [] } };
   return scheme.dimensions.map(({ code }) => {
     const rule = RULES[code];
     const computed = rule.score(metrics, minRespondents);
-    const evidence = rule.metrics.map((metric) => ({ metric, sourceEntity: metrics[metric].sourceEntity,
-      sourceIds: metrics[metric].sourceIds.slice(0, 50), sourcePeriod: periodCode, value: round(metrics[metric].value) }));
+    const evidence = rule.metrics.map((metric) => ({ metric, sourceEntity: shown[metric].sourceEntity,
+      sourceIds: shown[metric].sourceIds.slice(0, 50), sourcePeriod: periodCode, value: round(shown[metric].value) }));
     if (metrics.periodicReportOverdue.value > 0) {
       return { code, score: 0, computedScore: 0, insufficientData: false, isManual: false,
         justification: "Periodic report submitted late or not submitted by the deadline",

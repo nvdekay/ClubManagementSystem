@@ -99,7 +99,7 @@ function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget
     {!clubId && active && item.status === "Submitted" && <div className="mt-4 space-y-3">
       <label className="block text-sm">{t("sponsoredItems.valid")}<AppMoneyInput value={valid} onValueChange={setValid} className="mt-1 w-full" /></label>
       <label className="block text-sm">{t("sponsoredItems.reason")}<AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000} className="mt-1 w-full" /></label>
-      <div className="flex flex-wrap gap-2"><AppButton disabled={mutation.isPending || !reason.trim()} onClick={() => void act({ kind: "review", validAmount: Number(valid), reason })}>{t("sponsoredItems.review")}</AppButton>
+      <div className="flex flex-wrap gap-2"><AppButton disabled={mutation.isPending || !reason.trim() || valid === ""} onClick={() => void act({ kind: "review", validAmount: Number(valid), reason })}>{t("sponsoredItems.review")}</AppButton>
         <AppButton variant="ghost" disabled={mutation.isPending || !reason.trim() || now >= deadline} onClick={() => void act({ kind: "return", reason })}>{t("sponsoredItems.return")}</AppButton></div>
     </div>}
     {clubId && active && item.status === "Accepted" && <AppButton className="mt-4" disabled={mutation.isPending}
@@ -126,6 +126,7 @@ export function SponsoredItems({ budgetId, clubId, csrfToken, fallback = null }:
     <dl className="grid gap-3 sm:grid-cols-3">{totals.map((total) => <div key={total.label} className="rounded-xl border border-border-app bg-bg-app p-4">
       <dt className="text-sm text-muted-app">{total.label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(total.amount)}</dd>
     </div>)}</dl>
-    {query.data.items.map((item) => <ItemCard key={item.id} budget={query.data!} item={item} clubId={clubId} csrfToken={csrfToken} />)}
+    {/* Khoá theo trạng thái và số tiền: CLB nộp lại thì ô số tiền hợp lệ của cán bộ điền lại theo số mới. */}
+    {query.data.items.map((item) => <ItemCard key={`${item.id}-${item.status}-${item.amount}`} budget={query.data!} item={item} clubId={clubId} csrfToken={csrfToken} />)}
   </section>;
 }
