@@ -75,6 +75,9 @@ describe("facility booking rules", () => {
     expect(assessBooking(input, property, dissolving, policy, [], now).semesterCode).toBe("FA26");
     expect(() => assessBooking(input, property, { ...club, dissolutionSemester: "SU26" }, policy, [], now)).toThrow("dissolution");
     expect(() => assessBooking(input, property, { ...dissolving, dissolutionSemester: "SU26" }, policy, [], now)).toThrow("dissolution");
+    // The cutoff stored on the decision wins even if the calendar was edited afterwards.
+    expect(() => assessBooking(input, property, { ...dissolving, dissolutionEffectiveTo: new Date(input.endAt.getTime() - 1) },
+      policy, [], now)).toThrow("dissolution");
   });
   it("validates identifiers, equipment, headcount and time", () => {
     expect(validateBookingInput({ ...input, purpose: "  Meeting  " }).purpose).toBe("Meeting");

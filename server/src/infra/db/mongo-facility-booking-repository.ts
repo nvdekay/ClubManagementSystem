@@ -31,9 +31,10 @@ function propertyFrom(doc: Doc): Property {
 }
 // Ánh xạ document CLB sang BookingClub kèm học kỳ giải thể
 function clubFrom(doc: Doc): BookingClub {
-  const dissolution = doc.dissolution as { effectiveSemester?: string } | undefined;
+  const dissolution = doc.dissolution as { effectiveSemester?: string; effectiveTo?: Date } | undefined;
   return { id: String(doc._id), name: String(doc.name), state: String(doc.state),
-    dissolutionSemester: dissolution?.effectiveSemester };
+    dissolutionSemester: dissolution?.effectiveSemester,
+    ...(dissolution?.effectiveTo instanceof Date ? { dissolutionEffectiveTo: dissolution.effectiveTo } : {}) };
 }
 // Ánh xạ document booking sang BookingInput
 function inputFrom(doc: Doc, equipment: string[] = []): BookingInput {

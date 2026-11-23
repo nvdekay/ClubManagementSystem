@@ -89,7 +89,8 @@ const dynamicCodes = [
 // Legacy codes from the withdrawn UC23; no server code sends them any more.
 const legacyCodes = ["CLUB_ROLE_ASSIGNED", "CLUB_ROLE_REVOKED", "CLUB_ROLE_UPDATED"];
 
-const code = /"([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)"/g;
+// Either quote style: some infra files are formatted with single quotes.
+const code = /["']([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)["']/g;
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => entry.isDirectory()

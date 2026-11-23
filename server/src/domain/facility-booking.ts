@@ -135,7 +135,7 @@ export interface BookingCheck {
   conflicts: BookingConflict[]; capacityWarning: boolean; conflictResult: string;
 }
 export interface BookingClub {
-  id: string; name: string; state: string; dissolutionSemester?: string;
+  id: string; name: string; state: string; dissolutionSemester?: string; dissolutionEffectiveTo?: Date;
 }
 export interface BookingDetail {
   booking: Booking; property: Property | null; club: BookingClub | null;
@@ -225,8 +225,10 @@ export function assessBooking(input: BookingInput, property: Property, club: Boo
   const semester = policy.academicCalendar.find((item) => input.startAt >= item.startAt && input.endAt <= item.endAt);
   if (!semester) throw new DomainError("booking must fit within one academic semester", "validation");
   if (club.dissolutionSemester || club.state === "Dissolving") {
-    const cutoff = policy.academicCalendar.find((item) => item.code === club.dissolutionSemester);
-    if (!cutoff || input.endAt > cutoff.endAt) throw new DomainError("booking exceeds dissolution semester", "conflict");
+    // The decision's stored cutoff wins over the live calendar, which ICPDP may have edited since (BR45).
+    const cutoffEnd = club.dissolutionEffectiveTo
+      ?? policy.academicCalendar.find((item) => item.code === club.dissolutionSemester)?.endAt;
+    if (!cutoffEnd || input.endAt > cutoffEnd) throw new DomainError("booking exceeds dissolution semester", "conflict");
   }
   // Giờ được phép đặt của trường tính theo giờ địa phương Việt Nam, không phụ thuộc múi giờ của server.
   const start = new Date(input.startAt.getTime() + 7 * 3600000);
