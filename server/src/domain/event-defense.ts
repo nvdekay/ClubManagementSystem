@@ -223,6 +223,16 @@ export function assertCanStartDefense(session: Pick<EventDefenseSession, "state"
   }
 }
 
+// Kiểm tra được phép ghi nhận CLB vắng mặt: buổi còn hiệu lực (§6.6a) và đã tới giờ bắt đầu
+export function assertCanMarkNoShow(session: Pick<EventDefenseSession, "state" | "startAt">, now: Date): void {
+  if (!hasActiveDefense(session)) {
+    throw new DomainError("defense session cannot be marked as no-show in its current state", "conflict");
+  }
+  if (now.getTime() < session.startAt.getTime()) {
+    throw new DomainError("no-show can only be recorded after the scheduled start time", "conflict");
+  }
+}
+
 // Quy đổi kết quả ICPDP chọn thành kết quả buổi bảo vệ
 export function normalizeDefenseOutcome(outcome: string): DefenseOutcome {
   switch (outcome) {

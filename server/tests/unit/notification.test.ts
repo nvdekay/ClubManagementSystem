@@ -42,6 +42,8 @@ describe("notification channels and email rendering", () => {
   it("sends email only for the SRS §8.2 email events", () => {
     expect(notificationChannels("EVENT_PROPOSAL_APPROVED")).toEqual(["IN_APP", "EMAIL"]);
     expect(notificationChannels("CLUB_APPLICATION_REVISION_REQUESTED")).toEqual(["IN_APP", "EMAIL"]);
+    expect(notificationChannels("COMPLAINT_SUBMITTED")).toEqual(["IN_APP", "EMAIL"]);
+    expect(notificationChannels("COMPLAINT_FORWARDED")).toEqual(["IN_APP", "EMAIL"]);
     expect(notificationChannels("EVENT_REGISTRATION_CONFIRMED")).toEqual(["IN_APP"]);
   });
 
@@ -80,6 +82,18 @@ describe("deliverNotifications (SCH-10)", () => {
     expect(await deliverNotifications(repo, { name: "test", send }, now)).toMatchObject({ failed: 1 });
     expect(send).not.toHaveBeenCalled();
     expect(failed[0]?.retryAt).toBeNull();
+  });
+
+  it("leases each claim from when it is claimed, not from the start of the batch", async () => {
+    vi.useFakeTimers();
+    try {
+      const { repo } = outbox([claim("n1"), claim("n2")]);
+      const claimedAt: Date[] = [];
+      const next = repo.claimNextEmail;
+      repo.claimNextEmail = async (at, leaseMs) => { claimedAt.push(at); return next(at, leaseMs); };
+      await deliverNotifications(repo, { name: "test", send: async () => { vi.advanceTimersByTime(4 * 60_000); return {}; } }, now);
+      expect(claimedAt.slice(0, 2)).toEqual([now, new Date(now.getTime() + 4 * 60_000)]);
+    } finally { vi.useRealTimers(); }
   });
 
   it("stops at the batch size", async () => {

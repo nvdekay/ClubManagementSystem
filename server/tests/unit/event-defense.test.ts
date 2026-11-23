@@ -3,6 +3,7 @@ import type { ClubAccessRepository, ClubAccessSnapshot } from "../../src/domain/
 import type { AuthRepository } from "../../src/domain/auth.js";
 import {
   assertCanConfirmDefense,
+  assertCanMarkNoShow,
   assertCanRequestReschedule,
   assertCanStartDefense,
   assertRevisionDeadlineBeforeDefense,
@@ -187,6 +188,16 @@ describe("Event defense domain & use cases", () => {
       .toThrow("at most 30 minutes");
     expect(() => assertCanStartDefense({ state: "CONFIRMED", startAt: new Date(now.getTime() + 30 * 60_000) }, now))
       .not.toThrow();
+  });
+
+  it("allows no-show only from the scheduled start time of an active session", () => {
+    expect(() => assertCanMarkNoShow({ state: "CONFIRMED", startAt: new Date(now.getTime() + 60_000) }, now))
+      .toThrow("after the scheduled start time");
+    expect(() => assertCanMarkNoShow({ state: "SCHEDULED", startAt: now }, now)).not.toThrow();
+    expect(() => assertCanMarkNoShow({ state: "IN_PROGRESS", startAt: new Date(now.getTime() - 60_000) }, now))
+      .not.toThrow();
+    expect(() => assertCanMarkNoShow({ state: "DEFENDED", startAt: new Date(now.getTime() - 60_000) }, now))
+      .toThrow("current state");
   });
 
   it("requires ICPDP_OFFICER role to schedule, start, save notes, and decide after defense", async () => {

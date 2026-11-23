@@ -109,6 +109,9 @@ describe("room allocation rules", () => {
     expect(planRoomAllocation(input, room, { ...club, state: "Dissolving", dissolutionSemester: "FA26" }, policy.academicCalendar, now).dates).toHaveLength(8);
     expect(() => planRoomAllocation(input, room, { ...club, state: "Dissolving", dissolutionSemester: "SU26" },
       policy.academicCalendar, now)).toThrow("dissolution");
+    const fa26 = policy.academicCalendar.find((item) => item.code === "FA26")!;
+    expect(() => planRoomAllocation(input, room, { ...club, state: "Dissolving", dissolutionSemester: "FA26",
+      dissolutionEffectiveTo: new Date(fa26.startAt.getTime() - 1) }, policy.academicCalendar, now)).toThrow("dissolution");
   });
   it("validates identifiers, weekday, slot and note; route bodies are strict", () => {
     expect(validateRoomAllocationInput({ ...input, note: "  Weekly meeting " }).note).toBe("Weekly meeting");

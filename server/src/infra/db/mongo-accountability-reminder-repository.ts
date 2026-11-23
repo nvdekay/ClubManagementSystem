@@ -18,6 +18,7 @@ async function remindOnce(
   code: string,
   dueAt: Date,
   now: Date,
+  lock: () => PromiseLike<unknown>,
 ): Promise<number> {
   if (
     await m
@@ -30,6 +31,9 @@ async function remindOnce(
       .session(session)
   )
     return 0;
+  // Chỉ khoá (tăng __v) khi thật sự gửi: nếu thực thể đổi sau khi transaction đọc, lệnh ghi này
+  // xung đột và transaction chạy lại; tăng __v mỗi lượt quét làm editor đang mở bị 409.
+  await lock();
   await m.auditLogs!.create(
     [
       {
@@ -78,13 +82,17 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
         await mongoose.connection.transaction(async (session) => {
           changed = 0;
           const event = await m
-            .events!.findOneAndUpdate(
+            .events!.findOne({ _id: eventRef._id, state: "Completed" })
+            .session(session)
+            .lean();
+          if (!event) return;
+          function lock() {
+            return m.events!.updateOne(
               { _id: eventRef._id, state: "Completed" },
               { $inc: { __v: 1 } },
               { session },
-            )
-            .lean();
-          if (!event) return;
+            );
+          }
           if (
             event.audienceScope === "MEMBERS_ONLY" &&
             !(await m
@@ -119,6 +127,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
               "REPORT_DUE_SOON",
               deadline.dueAt,
               now,
+              lock,
             );
           if (now > deadline.dueAt)
             changed += await remindOnce(
@@ -129,6 +138,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
               "REPORT_DEADLINE_PASSED",
               deadline.dueAt,
               now,
+              lock,
             );
           if (now > deadline.escalationAt)
             changed += await remindOnce(
@@ -139,6 +149,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
               "REPORT_ESCALATED",
               deadline.dueAt,
               now,
+              lock,
             );
         });
         count += changed;
@@ -155,23 +166,24 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
         let changed = 0;
         await mongoose.connection.transaction(async (session) => {
           changed = 0;
+          const open = {
+            _id: budgetRef._id,
+            state: {
+              $in: ["Disbursed", "Reconciliation Pending", "Recovery Pending"],
+            },
+          };
           const budget = await m
-            .eventBudgets!.findOneAndUpdate(
-              {
-                _id: budgetRef._id,
-                state: {
-                  $in: [
-                    "Disbursed",
-                    "Reconciliation Pending",
-                    "Recovery Pending",
-                  ],
-                },
-              },
-              { $inc: { __v: 1 } },
-              { session },
-            )
+            .eventBudgets!.findOne(open)
+            .session(session)
             .lean();
           if (!budget) return;
+          function lock() {
+            return m.eventBudgets!.updateOne(
+              open,
+              { $inc: { __v: 1 } },
+              { session },
+            );
+          }
           const refund = budget.state === "Recovery Pending";
           const dueAt = (
             refund ? budget.recoveryDueAt : budget.settlementDueAt
@@ -188,6 +200,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
               refund ? "REFUND_DUE_SOON" : "SETTLEMENT_DUE_SOON",
               dueAt,
               now,
+              lock,
             );
           if (now > dueAt)
             changed += await remindOnce(
@@ -198,6 +211,7 @@ export function mongoAccountabilityReminderRepository(): AccountabilityReminderR
               refund ? "REFUND_OVERDUE" : "SETTLEMENT_OVERDUE",
               dueAt,
               now,
+              lock,
             );
         });
         count += changed;

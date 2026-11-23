@@ -49,6 +49,18 @@ describe("evaluation scoring", () => {
     expect(d3!.score).toBeUndefined();
   });
 
+  it("does not keep the real feedback average in the lineage below the minimum respondents (BR40)", () => {
+    const scheme = { dimensions: [{ code: "D3" as const, weight: 100, allowsManual: false }] };
+    const feedback = { ...metrics({ feedbackCount: 3, feedbackAverage: 4.7 }),
+      feedbackAverage: { value: 4.7, sourceEntity: "eventFeedbacks", sourceIds: ["f1", "f2", "f3"] } };
+    const [hidden] = scoreDimensions(feedback, scheme, "Fall 2026", 5);
+    expect(hidden!.evidence.find((item) => item.metric === "feedbackAverage")).toMatchObject({ value: 0, sourceIds: [] });
+    expect(hidden!.evidence.find((item) => item.metric === "feedbackCount")).toMatchObject({ value: 3 });
+    const [shown] = scoreDimensions(feedback, scheme, "Fall 2026", 3);
+    expect(shown!.evidence.find((item) => item.metric === "feedbackAverage")).toMatchObject({ value: 4.7, sourceIds: ["f1", "f2", "f3"] });
+    expect(shown!.score).toBe(92.5);
+  });
+
   it("re-spreads weights over scored dimensions and classifies the total", () => {
     expect(totalOf([{ score: 80, weight: 20 }, { score: undefined, weight: 30 }, { score: 60, weight: 20 }], thresholds))
       .toEqual({ totalScore: 70, classification: "GOOD" });

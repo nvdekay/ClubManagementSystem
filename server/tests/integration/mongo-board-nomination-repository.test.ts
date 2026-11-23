@@ -101,8 +101,8 @@ describe.skipIf(!uri)("Mongo board nomination repository", () => {
   it("keeps a multi-holder seat open for a second holder but not for a seated member", async () => {
     const now = new Date("2026-10-08T15:00:00Z");
     const [clubId, termId, viceId, officerId] = Array.from({ length: 4 }, () => new Types.ObjectId());
-    const userIds = [new Types.ObjectId(), new Types.ObjectId()];
-    const membershipIds = [new Types.ObjectId(), new Types.ObjectId()];
+    const userIds = [new Types.ObjectId(), new Types.ObjectId(), new Types.ObjectId()];
+    const membershipIds = [new Types.ObjectId(), new Types.ObjectId(), new Types.ObjectId()];
     await ucmsModels.clubs!.create({ _id: clubId, code: "CLB-MULTI", name: "Multi Club",
       field: "Technology", state: "Active", createdAt: now });
     await ucmsModels.clubTerms!.create({ _id: termId, clubId, name: "Term", startAt: now,
@@ -129,6 +129,10 @@ describe.skipIf(!uri)("Mongo board nomination repository", () => {
     await repo.submit(clubId.toString(), userIds[0]!.toString(), termId.toString(),
       [{ positionId: viceId.toString(), membershipId: membershipIds[1]!.toString() }], now);
     expect(await repo.listForClub(clubId.toString())).toHaveLength(2);
+    // One confirmed and one pending Vice Leader already reach MAX_VICE_LEADERS.
+    await expect(repo.submit(clubId.toString(), userIds[0]!.toString(), termId.toString(),
+      [{ positionId: viceId.toString(), membershipId: membershipIds[2]!.toString() }], now))
+      .rejects.toMatchObject({ kind: "conflict", message: "a club can have at most two vice leaders" });
   }, 60_000);
 
   it("returns a nominee whose membership became inactive before confirmation", async () => {

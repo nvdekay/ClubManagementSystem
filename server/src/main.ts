@@ -165,7 +165,8 @@ const app = authConfig ? buildApp({
     }),
     oauthFlow: createOAuthFlowService(authConfig.SESSION_SECRET),
     clientBaseUrl: authConfig.CLIENT_BASE_URL,
-    secureCookies: config.NODE_ENV === "production",
+    // Deploy qua HTTPS mà quên NODE_ENV=production vẫn phải có cookie Secure.
+    secureCookies: config.NODE_ENV === "production" || new URL(authConfig.APP_BASE_URL).protocol === "https:",
   },
 }) : buildApp(commonDeps);
 const stopApplicationExpiryJob = startApplicationExpiryJob(mongoApplicationExpiryRepository());

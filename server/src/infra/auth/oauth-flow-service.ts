@@ -46,7 +46,8 @@ export function createOAuthFlowService(secret: string): OAuthFlowService {
     unseal(cookieValue, now): OAuthFlow | null {
       const parsed = flowSchema.safeParse(decode(cookieValue, now, "oauth"));
       if (!parsed.success || parsed.data.returnTo.startsWith("//")
-        || parsed.data.returnTo.includes("\\")) return null;
+        // eslint-disable-next-line no-control-regex
+        || parsed.data.returnTo.includes("\\") || /[\u0000-\u0020]/.test(parsed.data.returnTo)) return null;
       const { state, nonce, codeVerifier, returnTo } = parsed.data;
       return { state, nonce, codeVerifier, returnTo };
     },

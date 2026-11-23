@@ -143,14 +143,20 @@ describe("UC17 recruitment applications", () => {
   });
 
   it("validates and attaches signed PDF files only to configured file questions", async () => {
-    const ready = repository();
+    const ready = repository({ application: application({ attachments: [] }) });
+    let uploads = 0;
     const storage = {
-      upload: async () => attachment,
+      upload: async () => { uploads += 1; return attachment; },
       accessUrl: async () => "https://storage.example/signed",
     };
     await expect(uploadRecruitmentAttachment(ready.repo, storage, actor, applicationId,
       "resume", "resume.pdf", "application/pdf", Buffer.from("%PDF-1.7\nbody"), now))
-      .resolves.toMatchObject({ attachments: [attachment, attachment] });
+      .resolves.toMatchObject({ attachments: [attachment] });
+    // A second file for the same field is refused before it reaches storage.
+    await expect(uploadRecruitmentAttachment(ready.repo, storage, actor, applicationId,
+      "resume", "resume.pdf", "application/pdf", Buffer.from("%PDF-1.7\nbody"), now))
+      .rejects.toMatchObject({ kind: "conflict" });
+    expect(uploads).toBe(1);
     await expect(uploadRecruitmentAttachment(ready.repo, storage, actor, applicationId,
       "motivation", "resume.pdf", "application/pdf", Buffer.from("%PDF-1.7\nbody"), now))
       .rejects.toMatchObject({ kind: "validation" });

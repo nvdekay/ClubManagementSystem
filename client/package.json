@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "vitest run src/services/apiError.test.ts src/services/eventDefense.test.ts src/services/clubEvents.test.ts src/utils/eventProposalImport.test.ts src/utils/documentLinks.test.ts",
+    "test": "vitest run src/services/apiError.test.ts src/services/eventDefense.test.ts src/services/clubEvents.test.ts src/utils/eventProposalImport.test.ts src/utils/documentLinks.test.ts src/components/ui/money-input/AppMoneyInput.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint ."
   },

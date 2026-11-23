@@ -54,7 +54,7 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
     let registrationId = registration?._id;
     if (registration?.state !== "Confirmed") {
       if (!event.allowWalkIn) conflict("confirmed registration is required");
-      const policy = await m.policyVersions!.findOne({ effectiveFrom: { $lte: now } }).sort({ effectiveFrom: -1 }).session(session).lean();
+      const policy = await m.policyVersions!.findOne({ effectiveFrom: { $lte: now } }).sort({ effectiveFrom: -1, createdAt: -1, _id: -1 }).session(session).lean();
       if (!policy) throw new DomainError("policy is not configured", "unavailable");
       if (Number(event.confirmedRegistrationCount) >= Number(event.capacity) && !policy.allowOverbooking) conflict("event capacity is full");
       if (registration) await m.eventRegistrations!.updateOne({ _id: registration._id }, { $set: { state: "Confirmed", promotedAt: now }, $unset: { cancelledAt: "", waitlistPosition: "" } }, { session });

@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer";
-import type { MailTransport } from "../../domain/notification.js";
+import { MAIL_LEASE_MS, type MailTransport } from "../../domain/notification.js";
 import type { SmtpConfig } from "../config/index.js";
+
+// Mặc định của nodemailer (socketTimeout 10 phút) dài hơn lease outbox; gửi treo phải lỗi trước khi lease hết hạn.
+const SMTP_TIMEOUT_MS = MAIL_LEASE_MS / 10;
 
 /** Phần của nodemailer transporter mà adapter này dùng; test truyền vào bản giả. */
 export interface SmtpSender {
@@ -15,6 +18,7 @@ export function createSmtpSender(config: SmtpConfig): SmtpSender {
     // Port 587 phải nâng cấp lên TLS; không bao giờ gửi thông tin đăng nhập dạng văn bản thuần.
     requireTLS: !config.SMTP_SECURE,
     auth: { user: config.SMTP_USER, pass: config.SMTP_PASSWORD },
+    connectionTimeout: SMTP_TIMEOUT_MS, greetingTimeout: SMTP_TIMEOUT_MS, socketTimeout: SMTP_TIMEOUT_MS,
   });
 }
 
