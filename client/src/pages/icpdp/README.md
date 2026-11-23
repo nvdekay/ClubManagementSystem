@@ -59,6 +59,9 @@ duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối
 
 Trang chi tiết dùng cùng trình xem toàn văn và hồ sơ trích xuất với CLB, tải tài liệu của phiên bản đã nộp
 qua API ICPDP; có trạng thái tải, lỗi và thử lại, vẫn giữ tải file và lịch sử các lần nộp.
+Lịch, thao tác và lịch sử bảo vệ nằm trong một mục ở cột xét duyệt bên phải.
+Cột thao tác cố định theo khung nhìn và cuộn riêng trên desktop; màn nhỏ giữ cuộn trang thông thường.
+`LiveDefenseRoomPage` dùng cùng bản xem tài liệu và trích xuất, chọn đúng `revisionNo` của phiên bảo vệ.
 
 `BudgetsPage` (UC35) gồm `BudgetsPage` (danh sách kinh phí sự kiện đã duyệt, lọc theo trạng thái xử lý và câu lạc bộ) và `BudgetDetailPage` (`/workspace/budgets/:id`, dùng `SponsoredItems`): quản lý giải ngân theo 3 kênh (tạm ứng trước sự kiện qua cán bộ ICPDP, hoàn sau sự kiện dưới 5 triệu, hợp đồng nhà cung cấp từ 5 triệu trở lên), đối soát chứng từ và tải lưu tệp đính kèm. `EventProposalReviewPage` quyết định tài trợ theo từng hạng mục và dẫn sang trang tài chính.
 

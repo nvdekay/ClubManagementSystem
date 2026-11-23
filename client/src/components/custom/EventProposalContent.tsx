@@ -1,20 +1,22 @@
 import { useTranslation } from "react-i18next";
+import type { ReactNode } from "react";
 
 import { AppLinkedText } from "@/components/ui/linked-text/AppLinkedText";
 import type { ProposalSection } from "@/utils/eventProposalImport";
 
-interface EventProposalContentProps { sections: ProposalSection[] }
+interface EventProposalContentProps { sections: ProposalSection[]; renderSectionComments?: (section: ProposalSection) => ReactNode }
 
 // Source text is rendered as text nodes; tables retain every row and merged cell.
-export function EventProposalContent({ sections }: EventProposalContentProps) {
+export function EventProposalContent({ sections, renderSectionComments }: EventProposalContentProps) {
   const { t } = useTranslation();
   return <div className="space-y-8">
     {sections.map((section) => <section key={section.id} className="min-w-0 space-y-5" aria-label={section.title || t("clubEvents.extractedIntroduction")}>
       <div className="flex flex-wrap items-center gap-3 border-b border-border-app pb-3">
         <span className="h-5 w-1 rounded-full bg-primary-app" aria-hidden="true" />
         <h3 className="min-w-0 font-heading text-lg font-semibold"><AppLinkedText text={section.title || t("clubEvents.extractedIntroduction")} links={section.titleLinks} /></h3>
+        {renderSectionComments && <div className="relative ml-auto shrink-0">{renderSectionComments(section)}</div>}
       </div>
-      {section.blocks.map((block, index) => {
+      <div className="min-w-0 space-y-5">{section.blocks.map((block, index) => {
         if (block.kind === "paragraph") {
           if (index === 0 && block.text === section.title) return null;
           return block.heading || /^(?:[IVX]+[.)]|\d+[.)])\s/u.test(block.text)
@@ -40,7 +42,7 @@ export function EventProposalContent({ sections }: EventProposalContentProps) {
             </tbody>
           </table>
         </div>;
-      })}
+      })}</div>
     </section>)}
   </div>;
 }

@@ -4,6 +4,61 @@ import { describe, expect, it } from "vitest";
 import { readDocxXml } from "@/utils/docxDocument";
 import { mapProposalDocument, proposalDateTime, proposalSections } from "@/utils/eventProposalImport";
 import type { WordBlock } from "@/utils/docxDocument";
+import { appendProposalReason, changeProposalComment, reconcileProposalComments, recoverProposalComments } from "@/utils/proposalReason";
+
+describe("section comments merged into the decision reason", () => {
+  it("edits and deletes the selected duplicate comment without touching another occurrence", () => {
+    const reason = "General reason\n\n[B. NỘI DUNG]\nsame\n\n[B. NỘI DUNG]\nsame";
+    const comments = recoverProposalComments(reason, "Officer");
+    expect(comments).toHaveLength(2);
+    const edited = changeProposalComment(reason, comments, comments[1]!.id, "Revised details.")!;
+    expect(edited.reason).toBe("General reason\n\n[B. NỘI DUNG]\nsame\n\n[B. NỘI DUNG]\nRevised details.");
+    const deleted = changeProposalComment(edited.reason, edited.comments, comments[0]!.id)!;
+    expect(deleted.reason).toBe("General reason\n\n[B. NỘI DUNG]\nRevised details.");
+    expect(deleted.comments).toHaveLength(1);
+    const last = deleted.comments[0]!;
+    expect(deleted.reason.slice(last.start, last.end)).toBe("[B. NỘI DUNG]\nRevised details.");
+  });
+  it("removes first and last comment blocks without leaving extra separators", () => {
+    const reason = "[A]\nfirst\n\n[B]\nsecond";
+    const comments = recoverProposalComments(reason, "Officer");
+    const firstRemoved = changeProposalComment(reason, comments, comments[0]!.id)!;
+    expect(firstRemoved.reason).toBe("[B]\nsecond");
+    expect(changeProposalComment(firstRemoved.reason, firstRemoved.comments, comments[1]!.id)).toEqual({ reason: "", comments: [] });
+  });
+  it("shifts anchors after a manual prefix edit and leaves manually changed blocks alone", () => {
+    const reason = "[A]\nfirst\n\n[B]\nsecond";
+    const comments = recoverProposalComments(reason, "Officer");
+    const next = "General\n\n" + reason;
+    const shifted = reconcileProposalComments(reason, next, comments);
+    expect(shifted).toHaveLength(2);
+    expect(changeProposalComment(next, shifted, comments[1]!.id)!.reason).toBe("General\n\n[A]\nfirst");
+    expect(reconcileProposalComments(reason, reason.replace("first", "changed"), comments).map((comment) => comment.id))
+      .toEqual([comments[1]!.id]);
+    expect(changeProposalComment(reason.replace("first", "changed"), comments, comments[0]!.id)).toBeNull();
+  });
+  it("rejects an edit that would exceed the total reason length", () => {
+    const reason = "x".repeat(4990) + "\n\n[A]\ntext";
+    const comments = recoverProposalComments(reason, "Officer");
+    expect(changeProposalComment(reason, comments, comments[0]!.id, "more than four characters")).toBeNull();
+  });
+  it("keeps an existing reason and labels each section comment", () => {
+    const first = appendProposalReason("  General reason  ", " B. NỘI DUNG ", "  Add the agenda.  ");
+    expect(first).toBe("General reason\n\n[B. NỘI DUNG]\nAdd the agenda.");
+    expect(appendProposalReason(first!, "C. TRUYỀN THÔNG", "Add the communication dates."))
+      .toBe("General reason\n\n[B. NỘI DUNG]\nAdd the agenda.\n\n[C. TRUYỀN THÔNG]\nAdd the communication dates.");
+  });
+  it("rejects an oversized combined reason without truncating the previous reason", () => {
+    expect(appendProposalReason("x".repeat(4990), "Content", "Please revise this section.")).toBeNull();
+    expect(appendProposalReason("", "A", "x".repeat(2001))).toBeNull();
+  });
+  it("accepts exactly the server limit and rejects empty comments", () => {
+    const reason = appendProposalReason("x".repeat(4990), "A", "text");
+    expect(reason?.length).toBe(5000);
+    expect(appendProposalReason("Previous", "A", "  ")).toBeNull();
+    expect(appendProposalReason("Previous", " ", "Comment")).toBeNull();
+  });
+});
 
 function document(overrides: Record<string, string> = {}) {
   const fields = {

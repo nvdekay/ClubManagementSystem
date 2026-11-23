@@ -4,6 +4,12 @@ Các React hook tái sử dụng được, mỗi hook một file `use<Name>.ts` 
 dùng chung. Chỉ dùng state gốc của React (không thư viện state); gọi `services/` để truy cập
 API, không bao giờ gọi `fetch` trực tiếp trong component.
 
+`useProposalReasonDraft` gộp nhận xét theo mục vào Lý do quyết định, dùng chung giữa xét duyệt và phòng bảo vệ.
+Bản nháp được giữ trong sessionStorage theo tài khoản, sự kiện và bản nộp; chỉ lưu chính thức bằng API
+quyết định hiện có và xóa bản nháp sau khi gửi thành công. Không tạo kho nhận xét độc lập.
+Thẻ nháp và vị trí đoạn lý do cũng được giữ lại để sửa/xóa. Sửa trực tiếp Lý do sẽ dịch vị trí
+các thẻ không bị ảnh hưởng và bỏ thẻ đã bị thay đổi nội dung, tránh xóa nhầm văn bản người dùng.
+
 `useEventProposalPreview` trong `useClubEvents.ts` lấy tài liệu đã lưu qua service, cache theo CLB,
 sự kiện và ID tài liệu. Khi có file vừa import thì dùng file local thay vì tải bản cũ.
 `useReviewProposalPreview` trong `useEventProposalReviews.ts` cache riêng theo sự kiện, số phiên bản

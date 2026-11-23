@@ -14,6 +14,9 @@ import { useEventDefenseActions, useLiveDefenseSession } from "@/hooks/useEventD
 import { useEventProposal } from "@/hooks/useEventProposalReviews";
 import { apiErrors } from "@/i18n/apiErrors";
 import { ProposalDecisionPanel } from "@/pages/icpdp/ProposalDecisionPanel";
+import { SubmittedEventProposal } from "@/components/custom/SubmittedEventProposal";
+import { ProposalSectionComments } from "@/components/custom/ProposalSectionComments";
+import { useProposalReasonDraft } from "@/hooks/useProposalReasonDraft";
 import type { EventDefenseState } from "@/services/eventDefense";
 import { cn } from "@/utils/cn";
 
@@ -141,6 +144,7 @@ export function LiveDefenseRoomPage() {
   const serverContent = serverNote?.content ?? "";
   const noteDraft = localDraft ?? serverContent;
   const displayedSavedAt = lastSavedAt ?? serverNote?.updatedAt ?? null;
+  const reasonDraft = useProposalReasonDraft(userId, id ?? "", session?.revisionNo ?? 0, auth.data?.user.displayName ?? "");
 
   // Tự động lưu có debounce (2 giây) khi phiên đang IN_PROGRESS.
   useEffect(() => {
@@ -217,12 +221,13 @@ export function LiveDefenseRoomPage() {
 
   const detail = proposal.data;
   const { event, versions, budget } = detail;
-  const current = versions.find((version) => version.revisionNo === event.currentRevisionNo) ?? versions.at(-1);
+  const current = versions.find((version) => version.revisionNo === session.revisionNo);
   const payload = current?.payload ?? {};
   const lines = current?.budgetLines ?? [];
   const isAssignee = session.leadOfficerId === userId;
   const isInProgress = session.state === "IN_PROGRESS";
   const isEnded = session.state === "DEFENDED" || session.state === "NO_SHOW" || session.state === "CANCELLED";
+  const canComment = isAssignee && (isInProgress || session.state === "DEFENDED" && !session.outcome);
 
   // Bắt đầu buổi bảo vệ
   async function handleStart() {
@@ -272,9 +277,15 @@ export function LiveDefenseRoomPage() {
         actions={<AppBadge tone={defenseTone(session.state)}>{t(`eventDefense.state_${session.state}`)}</AppBadge>}
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-2">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         {/* Cột 1: Chi tiết đề xuất */}
         <div className="min-w-0 space-y-6">
+          {current && <SubmittedEventProposal eventId={event.id} version={current} renderSectionComments={(section) =>
+            <ProposalSectionComments key={section.id} title={section.title || t("clubEvents.extractedIntroduction")}
+              authorName={auth.data?.user.displayName} comments={reasonDraft.comments.filter((comment) => comment.sectionId === section.id || !comment.sectionId && comment.sectionTitle === section.title)}
+              onEdit={canComment ? reasonDraft.editComment : undefined} onDelete={canComment ? reasonDraft.deleteComment : undefined}
+              onAdd={canComment ? (content) => reasonDraft.addComment(section, content) : undefined} />
+          } />}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("eventDefense.proposalColumn")}</h2>
             <dl className="mt-4 grid gap-4 sm:grid-cols-2 text-sm">
@@ -356,7 +367,8 @@ export function LiveDefenseRoomPage() {
         </div>
 
         {/* Cột 2: Điều khiển phiên bảo vệ trực tiếp, ghi chú và quyết định */}
-        <div className="min-w-0 space-y-6">
+        <div role="region" aria-label={t("eventDefense.postDecisionTitle")} tabIndex={0}
+          className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:max-h-[calc(100dvh-7rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-2 xl:pb-2">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -488,8 +500,16 @@ export function LiveDefenseRoomPage() {
             )}
           </section>
 
+          {isInProgress && isAssignee && <section className="space-y-3 rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            <label className="block text-sm font-semibold">{t("eventReviews.reason")}
+              <AppTextarea className="mt-2 min-h-32 w-full font-normal" value={reasonDraft.reason} maxLength={5000}
+                onChange={(event) => reasonDraft.setReason(event.target.value)} />
+            </label>
+            <p className="text-xs text-muted-app">{t("proposalComments.reasonHint")}</p>
+          </section>}
           {session.state === "DEFENDED" && !session.outcome && isAssignee && (
-            <ProposalDecisionPanel detail={detail} csrfToken={csrfToken} postDefense />
+            <ProposalDecisionPanel detail={detail} csrfToken={csrfToken} postDefense
+              reasonDraft={{ value: reasonDraft.reason, onChange: reasonDraft.setReason }} onSuccess={reasonDraft.clear} />
           )}
         </div>
       </div>

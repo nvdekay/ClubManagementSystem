@@ -35,12 +35,13 @@ interface ProposalDecisionPanelProps {
   csrfToken: string;
   postDefense?: boolean;
   onSuccess?: () => void;
+  reasonDraft?: { value: string; onChange: (value: string) => void };
 }
 
 const ACTIVE_DEFENSE_STATES = new Set(["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"]);
 
 /** Kiểm tra nhận xét, hạn chỉnh sửa và tài trợ trước khi xác nhận quyết định. */
-export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, onSuccess }: ProposalDecisionPanelProps) {
+export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, onSuccess, reasonDraft }: ProposalDecisionPanelProps) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
   const reviewAction = useEventProposalAction();
@@ -55,7 +56,9 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
 
   // Dữ liệu quyết định đang nhập được giữ riêng với hồ sơ đã nộp cho đến khi xác nhận.
   const [outcome, setOutcome] = useState<EventReviewOutcome>(hasBlockingDefense ? "Request revision" : "Approve");
-  const [reason, setReason] = useState("");
+  const [localReason, setLocalReason] = useState("");
+  const reason = reasonDraft?.value ?? localReason;
+  const setReason = reasonDraft?.onChange ?? setLocalReason;
   const [reviewNote, setReviewNote] = useState("");
   const [deadline, setDeadline] = useState("");
   const [sections, setSections] = useState<EventReviewSection[]>([]);

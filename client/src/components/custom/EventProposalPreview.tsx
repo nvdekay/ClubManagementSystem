@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AppBadge } from "@/components/ui/badge/AppBadge";
@@ -6,7 +6,7 @@ import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppLinkedText } from "@/components/ui/linked-text/AppLinkedText";
 import { EventProposalContent } from "@/components/custom/EventProposalContent";
 import type { ClubEventInput } from "@/services/clubEvents";
-import { importEventProposal, type ProposalImport } from "@/utils/eventProposalImport";
+import { importEventProposal, type ProposalImport, type ProposalSection } from "@/utils/eventProposalImport";
 import { cn } from "@/utils/cn";
 
 interface EventProposalPreviewProps {
@@ -14,10 +14,11 @@ interface EventProposalPreviewProps {
   extracted?: ProposalImport;
   file?: File;
   missing: string[];
+  renderSectionComments?: (section: ProposalSection) => ReactNode;
 }
 
 // The dossier separates mapped system values from complete, ordered source content.
-export function EventProposalPreview({ input, extracted, file, missing }: EventProposalPreviewProps) {
+export function EventProposalPreview({ input, extracted, file, missing, renderSectionComments }: EventProposalPreviewProps) {
   const { t, i18n } = useTranslation();
   const [active, setActive] = useState("overview");
   const [loaded, setLoaded] = useState<{ file: File; value: ProposalImport | null } | null>(null);
@@ -52,8 +53,8 @@ export function EventProposalPreview({ input, extracted, file, missing }: EventP
     .some((label) => field.label.toLocaleLowerCase("vi").startsWith(label)));
   const sourceLoading = Boolean(file && !extracted && file.name.toLowerCase().endsWith(".docx") && loaded?.file !== file);
 
-  return <section aria-label={t("clubEvents.documentExtractedFields")} className="min-w-0 overflow-hidden rounded-2xl border border-border-app bg-bg-app shadow-xs">
-    <header className="space-y-5 border-b border-border-app bg-primary-app/5 p-5 sm:p-7">
+  return <section aria-label={t("clubEvents.documentExtractedFields")} className="min-w-0 rounded-2xl border border-border-app bg-bg-app shadow-xs">
+    <header className="space-y-5 rounded-t-2xl border-b border-border-app bg-primary-app/5 p-5 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1 basis-64 space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold tracking-wide text-primary-app">
@@ -100,6 +101,7 @@ export function EventProposalPreview({ input, extracted, file, missing }: EventP
       {sourceLoading && <p role="status" className="mb-5 text-sm text-muted-app">{t("clubEvents.extractedLoading")}</p>}
       {!sourceLoading && !source && <p className="mb-5 rounded-lg bg-surface-app p-4 text-sm text-muted-app">{t("clubEvents.extractedSourceUnavailable")}</p>}
       {selected === "overview" ? <div className="space-y-7">
+        {renderSectionComments && <div className="ml-auto max-w-sm">{renderSectionComments({ id: "overview", title: t("clubEvents.extractedOverview"), blocks: [] })}</div>}
         <div>
           <h3 className="mb-4 font-heading text-base font-semibold">{t("clubEvents.extractedKeyFacts")}</h3>
           <dl className="grid gap-px overflow-hidden rounded-xl border border-border-app bg-border-app sm:grid-cols-2 lg:grid-cols-3">
@@ -132,7 +134,7 @@ export function EventProposalPreview({ input, extracted, file, missing }: EventP
           </table></div> : <p className="p-5 text-sm text-muted-app">{t("clubEvents.noBudgetRequested")}</p>}
         </section>
         {input.facilityNeeds && <section className="rounded-xl border border-border-app p-5"><h3 className="mb-3 font-heading text-sm font-semibold">{t("clubEvents.facilityNeeds")}</h3><p className="whitespace-pre-wrap break-words text-sm leading-7"><AppLinkedText text={input.facilityNeeds} /></p></section>}
-      </div> : <EventProposalContent sections={selected === "all" ? sections : sections.filter((section) => section.id === selected)} />}
+      </div> : <EventProposalContent renderSectionComments={renderSectionComments} sections={selected === "all" ? sections : sections.filter((section) => section.id === selected)} />}
     </div>
   </section>;
 }

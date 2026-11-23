@@ -6,8 +6,9 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { RevisionChanges } from "@/components/custom/RevisionChanges";
-import { EventProposalDocument } from "@/components/custom/EventProposalDocument";
-import { EventProposalPreview } from "@/components/custom/EventProposalPreview";
+import { SubmittedEventProposal } from "@/components/custom/SubmittedEventProposal";
+import { ProposalSectionComments } from "@/components/custom/ProposalSectionComments";
+import { useProposalReasonDraft } from "@/hooks/useProposalReasonDraft";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -17,7 +18,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useEventDefenseActions } from "@/hooks/useEventDefense";
-import { useEventProposal, useEventProposalAction, useReviewProposalDocumentAccess, useReviewProposalPreview } from "@/hooks/useEventProposalReviews";
+import { useEventProposal, useEventProposalAction, useReviewProposalDocumentAccess } from "@/hooks/useEventProposalReviews";
 import { apiErrors } from "@/i18n/apiErrors";
 import { ProposalDecisionPanel } from "@/pages/icpdp/ProposalDecisionPanel";
 import { ScheduleDefenseDialog } from "@/pages/icpdp/ScheduleDefenseDialog";
@@ -77,7 +78,7 @@ export function EventProposalReviewPage() {
     ?? review.data?.versions.at(-1);
   const lines = current?.budgetLines ?? [];
   const currentDocument = proposalDocument(current);
-  const documentPreview = useReviewProposalPreview(id ?? "", current?.revisionNo ?? 0, currentDocument?.id ?? "", isOfficer);
+  const reasonDraft = useProposalReasonDraft(auth.data?.user.id ?? "", id ?? "", current?.revisionNo ?? 0, auth.data?.user.displayName ?? "");
 
   /** Định dạng thời gian nộp, lịch bảo vệ và thời điểm quyết định theo ngôn ngữ giao diện. */
   function date(value: string) {
@@ -359,25 +360,12 @@ export function EventProposalReviewPage() {
             {documentAccess.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{documentAccess.error.message}</p>}
           </section>
 
-          {currentDocument && <>
-            {documentPreview.data ? <EventProposalDocument file={documentPreview.data} />
-              : documentPreview.isError ? <AppNotice tone="warning" role="alert">
-                <p>{t("clubEvents.documentLoadError")}</p>
-                <AppButton variant="secondary" onClick={() => void documentPreview.refetch()}>{t("eventReviews.retry")}</AppButton>
-              </AppNotice> : <AppSkeleton className="h-[76vh] min-h-[420px] w-full" />}
-            <EventProposalPreview key={`${current?.revisionNo}-${currentDocument.id}`} file={documentPreview.data} missing={[]} input={{
-              title: text(payload.title) ?? event.title,
-              objective: text(payload.objective) ?? "",
-              plan: text(payload.plan) ?? "",
-              startAt: text(payload.startAt) ?? "",
-              endAt: text(payload.endAt) ?? "",
-              venueText: text(payload.venueText),
-              capacity: typeof payload.capacity === "number" ? payload.capacity : 0,
-              audienceScope: payload.audienceScope === "MEMBERS_ONLY" ? "MEMBERS_ONLY" : "PUBLIC",
-              riskNote: text(payload.riskNote), facilityNeeds: text(payload.facilityNeeds),
-              budgetLines: lines, bookingIds: [],
-            }} />
-          </>}
+          {current && <SubmittedEventProposal eventId={event.id} version={current} renderSectionComments={(section) =>
+            <ProposalSectionComments key={section.id} title={section.title || t("clubEvents.extractedIntroduction")}
+              authorName={auth.data?.user.displayName} comments={reasonDraft.comments.filter((comment) => comment.sectionId === section.id || !comment.sectionId && comment.sectionTitle === section.title)}
+              onEdit={isOpen && mine ? reasonDraft.editComment : undefined} onDelete={isOpen && mine ? reasonDraft.deleteComment : undefined}
+              onAdd={isOpen && mine ? (content) => reasonDraft.addComment(section, content) : undefined} />
+          } />}
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             {/* Tổng quan lịch, địa điểm, đối tượng, rủi ro, xung đột và nội dung thuyết minh đề xuất. */}
@@ -477,6 +465,22 @@ export function EventProposalReviewPage() {
             </section>
           </div>
 
+          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
+            {/* Lịch sử nộp ghi số phiên bản, người nộp, thời gian và tổng kinh phí đề nghị. */}
+            <h2 className="font-heading text-base font-semibold">{t("eventReviews.history")}</h2>
+            <ol className="mt-4 ml-1 space-y-4 border-l-2 border-border-app pl-5">{versions.map((version) =>
+              <li key={version.id} className="relative">
+                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-brand-app" />
+                <p className="font-medium">{t("eventReviews.revision", { number: version.revisionNo })}
+                  {version.requestedBudgetTotal > 0 && <span className="font-normal text-muted-app"> · {money(version.requestedBudgetTotal)}</span>}</p>
+                <p className="text-sm text-muted-app">{t("eventReviews.submittedBy", {
+                  name: version.submittedByName ?? version.submittedBy, date: date(version.submittedAt) })}</p>
+              </li>)}</ol>
+          </section>
+        </div>
+
+        <aside aria-label={t("eventReviews.decisionPanel")} tabIndex={0}
+          className="min-w-0 space-y-6 xl:sticky xl:top-24 xl:max-h-[calc(100dvh-7rem)] xl:overflow-y-auto xl:overscroll-contain xl:pr-2 xl:pb-2">
           {/* Quản lý bảo vệ: đặt lịch, xác nhận, bắt đầu, các thao tác liên quan và lịch sử buổi bảo vệ. */}
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -583,21 +587,7 @@ export function EventProposalReviewPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
-            {/* Lịch sử nộp ghi số phiên bản, người nộp, thời gian và tổng kinh phí đề nghị. */}
-            <h2 className="font-heading text-base font-semibold">{t("eventReviews.history")}</h2>
-            <ol className="mt-4 ml-1 space-y-4 border-l-2 border-border-app pl-5">{versions.map((version) =>
-              <li key={version.id} className="relative">
-                <span aria-hidden="true" className="absolute top-1.5 -left-[1.6rem] size-2.5 rounded-full bg-brand-app" />
-                <p className="font-medium">{t("eventReviews.revision", { number: version.revisionNo })}
-                  {version.requestedBudgetTotal > 0 && <span className="font-normal text-muted-app"> · {money(version.requestedBudgetTotal)}</span>}</p>
-                <p className="text-sm text-muted-app">{t("eventReviews.submittedBy", {
-                  name: version.submittedByName ?? version.submittedBy, date: date(version.submittedAt) })}</p>
-              </li>)}</ol>
-          </section>
-        </div>
 
-        <aside className="min-w-0 space-y-6 xl:sticky xl:top-24">
           {/* Yêu cầu hủy sự kiện có form xét duyệt riêng dành cho ICPDP được phân công. */}
           {cancellationRequest && (
             <section className="rounded-2xl border border-l-4 border-border-app border-l-warning-app bg-bg-app p-5 shadow-xs space-y-3">
@@ -678,6 +668,8 @@ export function EventProposalReviewPage() {
             </div>
           ) : isOpen ? (
             <ProposalDecisionPanel
+              reasonDraft={{ value: reasonDraft.reason, onChange: reasonDraft.setReason }}
+              onSuccess={reasonDraft.clear}
               detail={review.data}
               csrfToken={auth.data.csrfToken}
               postDefense={Boolean(activeDefenseSession?.state === "DEFENDED" && !activeDefenseSession.outcome)}

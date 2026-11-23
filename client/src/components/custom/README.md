@@ -10,6 +10,13 @@ Chỉ chuyển một component vào đây khi nó đã được render bởi t�
 đề án của CLB và trang xét duyệt ICPDP: bản xem tài liệu đầy đủ cùng hồ sơ trích xuất chỉ đọc.
 ICPDP tải file của đúng phiên bản đã nộp, không đọc file bản nháp đang chỉnh sửa.
 
+`SubmittedEventProposal` dùng chung cho xét duyệt và phòng bảo vệ, nhận phiên bản cụ thể rồi tải tài liệu
+và hiển thị hai bản xem. `ProposalSectionComments` là ô nhận xét theo mục: bản nháp, hủy, trạng thái gửi
+và lỗi giữ nguyên nội dung; nơi gọi cung cấp dữ liệu và thao tác lưu theo quyền đã được chốt.
+Nút nhận xét nằm trên dòng tiêu đề mục; ô nhập là khung nổi, không dành sẵn cột làm hẹp bảng.
+Mỗi thẻ nháp có Sửa/Xóa. Hook giữ vị trí đoạn nhận xét trong Lý do để cập nhật đúng thẻ,
+kể cả khi nhiều nhận xét có cùng nội dung; chỉ lưu chính thức khi gửi quyết định.
+
 `SuspensionRequestWorkspace` dùng chung cho UC14 phía CLB (có `clubId`: form gửi yêu cầu kèm xác nhận ảnh
 hưởng) và UC15 phía ICPDP (không có `clubId`: hàng đợi duyệt).
 
