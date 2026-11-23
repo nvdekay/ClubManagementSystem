@@ -1,3 +1,4 @@
+import { proposalDocumentMaxBytes } from "@/utils/proposalFile";
 import type { ClubEventInput, EventBudgetLine } from "@/services/clubEvents";
 import { parseWordXml, readDocxXml, readDocxRelationships, type WordDocument, type WordBlock } from "@/utils/docxDocument";
 import type { DocumentLink } from "@/utils/documentLinks";
@@ -140,7 +141,7 @@ export function mapProposalDocument(document: WordDocument): ProposalImport {
 }
 
 export async function importEventProposal(file: File): Promise<ProposalImport> {
-  if (!file.name.toLowerCase().endsWith(".docx") || file.size > 10 * 1024 * 1024 || !file.size) throw new Error("invalid_docx");
+  if (!file.name.toLowerCase().endsWith(".docx") || file.size > proposalDocumentMaxBytes || !file.size) throw new Error("invalid_docx");
   const buffer = await file.arrayBuffer();
   const [xml, rels] = await Promise.all([readDocxXml(buffer), readDocxRelationships(buffer)]);
   return mapProposalDocument(parseWordXml(xml, rels));

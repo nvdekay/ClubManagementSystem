@@ -81,7 +81,7 @@ export function eventCancellationIsLate(startAt: Date, now: Date, noticeHours: n
   return startAt.getTime() - now.getTime() < noticeHours * 3600000;
 }
 
-export const PROPOSAL_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
+export const PROPOSAL_DOCUMENT_MAX_BYTES = 20 * 1024 * 1024;
 const PDF = "application/pdf";
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -96,14 +96,14 @@ function signatureMatches(mimeType: string, bytes: Buffer): boolean {
 }
 // Kiểm tra tên, dung lượng, loại và nội dung file đề xuất sự kiện, trả về tên đã cắt khoảng trắng
 /** Kiểm tra tên, dung lượng, loại khai báo, phần mở rộng và magic bytes của tài liệu đề xuất hoặc mẫu được tải lên; trả về tên đã cắt khoảng trắng. */
-export function validateEventProposalFile(fileName: string, mimeType: string, bytes: Buffer, allowedMimes: ReadonlySet<string>): string {
+export function validateEventProposalFile(fileName: string, mimeType: string, bytes: Buffer, allowedMimes: ReadonlySet<string>, maxBytes = PROPOSAL_DOCUMENT_MAX_BYTES): string {
   const name = fileName.trim();
   const extension = extensionForMime[mimeType];
   // eslint-disable-next-line no-control-regex
   if (!name || name.length > 255 || /[\u0000-\u001f\u007f/\\]/.test(name) || !allowedMimes.has(mimeType) || !extension ||
-    !name.toLowerCase().endsWith(`.${extension}`) || bytes.length === 0 || bytes.length > PROPOSAL_DOCUMENT_MAX_BYTES ||
+    !name.toLowerCase().endsWith(`.${extension}`) || bytes.length === 0 || bytes.length > maxBytes ||
     !signatureMatches(mimeType, bytes)) {
-    throw new DomainError("invalid event proposal file", "validation", { maxBytes: PROPOSAL_DOCUMENT_MAX_BYTES, mimeTypes: [...allowedMimes] });
+    throw new DomainError("invalid event proposal file", "validation", { maxBytes, mimeTypes: [...allowedMimes] });
   }
   return name;
 }

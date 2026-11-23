@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
 import type { ClubAccessRepository } from "../../domain/access.js";
 import type { ClubEventAction, ClubEventInput, ClubEventRepository, EventProposalFileStorage, EventPublishInput } from "../../domain/club-event.js";
+import { PROPOSAL_DOCUMENT_MAX_BYTES } from "../../domain/club-event-rules.js";
 import { DomainError } from "../../domain/errors.js";
 import type { SessionService } from "../../domain/session.js";
 import type { AccessActor } from "../../usecase/access.js";
@@ -100,7 +101,7 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
   const usecases = { repo: deps.repo, access: deps.access, auth: deps.authRepo, files: deps.files ?? null };
-  const upload = raw({ type: () => true, limit: "10mb" });
+  const uploadTemplate = raw({ type: () => true, limit: "10mb" });
   const base = "/clubs/:clubId/events";
   // Liệt kê sự kiện của CLB
   router.get(base, authGuard(guard, false), async (req, res) => {
@@ -157,7 +158,7 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
     res.type(result.mimeType).send(result.content);
   });
   // Parse a raw file body under the upload size limit; the use case validates the file/state.
-  router.post(`${base}/:id/proposal-document`, authGuard(guard), upload, async (req, res) => {
+  router.post(`${base}/:id/proposal-document`, authGuard(guard), raw({ type: () => true, limit: PROPOSAL_DOCUMENT_MAX_BYTES }), async (req, res) => {
     const file = uploadedFile(req);
     ok(res, await uploadEventProposalDocument(usecases, actor(res), parse(eventObjectId, req.params.clubId), parse(eventObjectId, req.params.id),
       file.fileName, file.mimeType, file.bytes, new Date()));
@@ -169,7 +170,7 @@ export function clubEventRoutes(deps: ClubEventRouteDeps): Router {
       query.revisionNo, query.inline, new Date()));
   });
   // Template replacement is CSRF-protected and restricted to officers by the use case.
-  router.post("/admin/event-proposals/template", authGuard(guard), upload, async (req, res) => {
+  router.post("/admin/event-proposals/template", authGuard(guard), uploadTemplate, async (req, res) => {
     const file = uploadedFile(req);
     ok(res, await uploadEventProposalTemplate(usecases, actor(res), file.fileName, file.mimeType, file.bytes, new Date()), 201);
   });
