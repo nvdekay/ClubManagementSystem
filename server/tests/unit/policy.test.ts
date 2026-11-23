@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_FORM_REQUIREMENTS, type PolicyRepository, type PolicyVersion,
 } from "../../src/domain/policy.js";
-import { foundingRequirementsAt, resolvePolicyAt } from "../../src/usecase/policy.js";
+import { foundingRequirementsAt, normalizePolicySettings, resolvePolicyAt } from "../../src/usecase/policy.js";
 
 const at = new Date("2026-10-03T12:00:00Z");
 const policy: PolicyVersion = {
@@ -57,5 +57,34 @@ describe("effective policy use case", () => {
     };
     await expect(resolvePolicyAt(repo, new Date(Number.NaN)))
       .rejects.toMatchObject({ kind: "validation" });
+  });
+
+  it("normalizes and validates optional schoolRefundAccount settings", () => {
+    const normalized = normalizePolicySettings({
+      ...policy,
+      schoolRefundAccount: {
+        accountHolder: "  TRUONG DAI HOC FPT  ",
+        accountNumber: " 0001122334455 ",
+        bankName: " TPBank ",
+        bankBranch: " Ha Noi ",
+        transferNote: " Hoan tra tam ung ",
+      },
+    });
+    expect(normalized.schoolRefundAccount).toEqual({
+      accountHolder: "TRUONG DAI HOC FPT",
+      accountNumber: "0001122334455",
+      bankName: "TPBank",
+      bankBranch: "Ha Noi",
+      transferNote: "Hoan tra tam ung",
+    });
+
+    expect(() => normalizePolicySettings({
+      ...policy,
+      schoolRefundAccount: {
+        accountHolder: "TRUONG DAI HOC FPT",
+        accountNumber: "invalid@account!",
+        bankName: "TPBank",
+      },
+    })).toThrow();
   });
 });

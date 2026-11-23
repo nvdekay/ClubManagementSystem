@@ -4,6 +4,7 @@ import {
   CLUB_PROFILE_FORM_FIELDS, DEFAULT_FORM_REQUIREMENTS, FOUNDING_FORM_FIELDS,
   type AcademicSemester, type FormRequirements, type PolicyDecisionImpact, type PolicyImpactReason,
   type PolicyManagementRepository, type PolicySettings, type PolicyVersion, type ReportDeadline,
+  type SchoolRefundAccount,
 } from "../../domain/policy.js";
 import { ucmsModels } from "./ucms-models.js";
 
@@ -27,9 +28,29 @@ function formRequirementsFrom(raw: unknown): FormRequirements {
   };
 }
 
+// Chuẩn hóa tài khoản hoàn trả nhà trường từ document DB
+function refundAccountFrom(raw: unknown): SchoolRefundAccount | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const record = raw as Record<string, unknown>;
+  const accountHolder = typeof record.accountHolder === "string" ? record.accountHolder.trim() : "";
+  const accountNumber = typeof record.accountNumber === "string" ? record.accountNumber.trim() : "";
+  const bankName = typeof record.bankName === "string" ? record.bankName.trim() : "";
+  if (!accountHolder || !accountNumber || !bankName) return undefined;
+  const bankBranch = typeof record.bankBranch === "string" && record.bankBranch.trim() ? record.bankBranch.trim() : undefined;
+  const transferNote = typeof record.transferNote === "string" && record.transferNote.trim() ? record.transferNote.trim() : undefined;
+  return {
+    accountHolder,
+    accountNumber,
+    bankName,
+    ...(bankBranch ? { bankBranch } : {}),
+    ...(transferNote ? { transferNote } : {}),
+  };
+}
+
 // Ánh xạ document sang PolicyVersion
 function mapPolicy(doc: Record<string, unknown>): PolicyVersion {
   const rawCalendar = doc.academicCalendar as AcademicSemester[];
+  const schoolRefundAccount = refundAccountFrom(doc.schoolRefundAccount);
   return {
     id: String(doc._id),
     minFoundingMembers: Number(doc.minFoundingMembers),
@@ -43,6 +64,7 @@ function mapPolicy(doc: Record<string, unknown>): PolicyVersion {
     academicCalendar: rawCalendar.map((semester) => ({
       ...semester, startAt: new Date(semester.startAt), endAt: new Date(semester.endAt),
     })),
+    ...(schoolRefundAccount ? { schoolRefundAccount } : {}),
     effectiveFrom: doc.effectiveFrom as Date,
     createdBy: String(doc.createdBy),
     createdAt: doc.createdAt as Date,

@@ -18,9 +18,17 @@ for (const base of ["/clubs/{clubId}/budgets/{id}/items", "/admin/budgets/{id}/i
     responses: response,
   } };
 }
+sponsoredItemOpenApiPaths["/clubs/{clubId}/budgets/{id}/items/{itemId}/refund-account"] = { get: {
+  summary: "Fetch school refund bank account details when a BEFORE_EVENT item requires refunding surplus advance",
+  responses: response,
+} };
 sponsoredItemOpenApiPaths["/clubs/{clubId}/budgets/{id}/items/{itemId}/images"] = { post: {
-  summary: "Upload a JPG/PNG (max 5 MiB) or PDF (max 10 MiB) attachment, at most five files per item",
-  requestParams: { query: z.object({ revision: z.coerce.number().int().nonnegative(), fileName: z.string().min(1).max(200) }) },
+  summary: "Upload a JPG/PNG (max 5 MiB) or PDF (max 10 MiB) invoice or refund receipt attachment, at most five files per target",
+  requestParams: { query: z.object({
+    revision: z.coerce.number().int().nonnegative(),
+    fileName: z.string().min(1).max(200),
+    target: z.enum(["invoice", "refund"]).optional(),
+  }) },
   requestBody: { content: {
     "image/jpeg": { schema: z.string() },
     "image/png": { schema: z.string() },

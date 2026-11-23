@@ -104,6 +104,29 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
         <p className="mt-3"><span className="text-muted-app">{t("policy.overdueBlock")}: </span>
           {booleanLabel(version.enforceOverdueReportBlock)}</p>
       </div>
+      <div>
+        <h3 className="font-heading font-semibold">{t(sectionTitleKey("finance"))}</h3>
+        {version.schoolRefundAccount ? (
+          <dl className="mt-2 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+            <div><dt className="text-muted-app">{t("policy.refundAccountHolder")}</dt>
+              <dd className="mt-1 font-medium">{version.schoolRefundAccount.accountHolder}</dd></div>
+            <div><dt className="text-muted-app">{t("policy.refundAccountNumber")}</dt>
+              <dd className="mt-1 font-medium">{version.schoolRefundAccount.accountNumber}</dd></div>
+            <div><dt className="text-muted-app">{t("policy.refundBankName")}</dt>
+              <dd className="mt-1">{version.schoolRefundAccount.bankName}</dd></div>
+            {version.schoolRefundAccount.bankBranch && (
+              <div><dt className="text-muted-app">{t("policy.refundBankBranch")}</dt>
+                <dd className="mt-1">{version.schoolRefundAccount.bankBranch}</dd></div>
+            )}
+            {version.schoolRefundAccount.transferNote && (
+              <div className="sm:col-span-2"><dt className="text-muted-app">{t("policy.refundTransferNote")}</dt>
+                <dd className="mt-1">{version.schoolRefundAccount.transferNote}</dd></div>
+            )}
+          </dl>
+        ) : (
+          <p className="mt-2 text-muted-app">{t("policy.refundAccountNotConfigured")}</p>
+        )}
+      </div>
     </div>
   );
 }

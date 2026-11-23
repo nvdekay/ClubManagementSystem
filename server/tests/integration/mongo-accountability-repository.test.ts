@@ -223,7 +223,12 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
       validAmount: 1_800_000,
       reason: "Valid 1.8M",
     }, now);
-    expect(detail.items[0]).toMatchObject({ status: "Reconciled", payable: 1_800_000, reconciliationDelta: -200_000 });
+    expect(detail.items[0]).toMatchObject({
+      status: "RefundPending",
+      payable: 1_800_000,
+      reconciliationDelta: -200_000,
+      refundAmount: 200_000,
+    });
 
     // 2. AFTER_EVENT >= 5M: requires vendorBankInfo, only ICPDP confirms vendor paid
     detail = await repo.act(budgetId, "vendor-line", detail.revision, String(actor), String(club), {
@@ -263,12 +268,49 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
     await expect(repo.act(budgetId, "vendor-line", detail.revision, String(actor), String(club), { kind: "pay" }, now))
       .rejects.toMatchObject({ kind: "conflict" });
 
-    // ICPDP confirms school paid vendor -> budget closes with disbursedTotal = 2M + 5.5M = 7.5M
+    // ICPDP confirms school paid vendor -> budget stays Approved while before-line refund is pending
     detail = await repo.act(budgetId, "vendor-line", detail.revision, String(actor), undefined, { kind: "confirmVendorPaid" }, now);
     expect(detail.items[1]).toMatchObject({ status: "Paid", paidBy: String(actor) });
+    expect((await m.eventBudgets!.findById(budgetId).lean())?.state).toBe("Approved");
+
+    // 3. Club uploads refund receipt, submits refund, officer returns once, club resubmits, officer confirms -> Closed
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), String(club), {
+      kind: "refundImage",
+      image: {
+        id: "refund-pdf-1",
+        assetId: "private-refund-1",
+        digest: "digest-refund-1",
+        fileName: "refund-receipt.pdf",
+        mimeType: "application/pdf",
+        bytes: 1024,
+        uploadedAt: now.toISOString(),
+        uploadedBy: String(actor),
+      },
+    }, now);
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), String(club), {
+      kind: "submitRefund",
+      note: "Transferred 200k to school account",
+    }, now);
+    expect(detail.items[0]).toMatchObject({ status: "RefundSubmitted", refundNote: "Transferred 200k to school account" });
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), undefined, {
+      kind: "returnRefund",
+      reason: "Please confirm transaction code",
+    }, now);
+    expect(detail.items[0]).toMatchObject({ status: "RefundPending", refundReviewReason: "Please confirm transaction code" });
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), String(club), {
+      kind: "submitRefund",
+      note: "Ref FT26001",
+    }, now);
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), undefined, {
+      kind: "confirmRefund",
+      reason: "Verified 200k in school bank statement",
+    }, now);
+    expect(detail.items[0]).toMatchObject({ status: "Reconciled", refundConfirmedBy: String(actor) });
+
     const closed = await m.eventBudgets!.findById(budgetId).lean();
     expect(closed?.state).toBe("Closed");
     expect(Number(String(closed?.disbursedTotal))).toBe(7_500_000);
+    expect(Number(String(closed?.refundedTotal))).toBe(200_000);
     expect(Number(String(closed?.acceptedTotal))).toBe(7_300_000);
   });
   beforeAll(async () => {

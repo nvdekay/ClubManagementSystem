@@ -35,6 +35,14 @@ export const DEFAULT_FORM_REQUIREMENTS: FormRequirements = {
     charterUrl: false, channels: false, operatingScope: false },
 };
 
+export interface SchoolRefundAccount {
+  accountHolder: string;
+  accountNumber: string;
+  bankName: string;
+  bankBranch?: string;
+  transferNote?: string;
+}
+
 export interface PolicySettings {
   minFoundingMembers: number;
   formRequirements: FormRequirements;
@@ -45,6 +53,7 @@ export interface PolicySettings {
   allowOverbooking: boolean;
   enforceOverdueReportBlock: boolean;
   academicCalendar: readonly AcademicSemester[];
+  schoolRefundAccount?: SchoolRefundAccount;
 }
 
 export interface PolicyVersion extends PolicySettings {

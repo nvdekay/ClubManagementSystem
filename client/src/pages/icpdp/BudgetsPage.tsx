@@ -23,6 +23,7 @@ const filters = [
   "awaitingAdvance",
   "awaitingReview",
   "awaitingVendorPay",
+  "awaitingRefundConfirm",
   "inProgress",
   "closed",
 ] as const;
@@ -38,6 +39,8 @@ function matches(filter: Filter, budget: BudgetSummary): boolean {
       return (counts?.awaitingReview ?? 0) > 0;
     case "awaitingVendorPay":
       return (counts?.awaitingVendorPay ?? 0) > 0;
+    case "awaitingRefundConfirm":
+      return (counts?.awaitingRefundConfirm ?? 0) > 0;
     case "inProgress":
       return budget.state !== "Closed" && budget.state !== "Cancelled";
     case "closed":
@@ -68,6 +71,7 @@ function filterLabel(t: TFunction, filter: Filter): string {
     case "awaitingAdvance": return t("budgets.filterAwaitingAdvance");
     case "awaitingReview": return t("budgets.filterAwaitingReview");
     case "awaitingVendorPay": return t("budgets.filterAwaitingVendorPay");
+    case "awaitingRefundConfirm": return t("budgets.filterAwaitingRefundConfirm");
     case "inProgress": return t("budgets.filterInProgress");
     case "closed": return t("budgets.filterClosed");
     default: return t("budgets.filterAll");
@@ -157,6 +161,8 @@ function BudgetList() {
               counts?.awaitingAdvance ? { tone: "warning" as const, text: t("budgets.countAdvance", { count: counts.awaitingAdvance }) } : null,
               counts?.awaitingReview ? { tone: "warning" as const, text: t("budgets.countReview", { count: counts.awaitingReview }) } : null,
               counts?.awaitingVendorPay ? { tone: "warning" as const, text: t("budgets.countVendorPay", { count: counts.awaitingVendorPay }) } : null,
+              counts?.awaitingRefundConfirm ? { tone: "warning" as const, text: t("budgets.countRefundConfirm", { count: counts.awaitingRefundConfirm }) } : null,
+              counts?.awaitingClubRefund ? { tone: "neutral" as const, text: t("budgets.countClubRefund", { count: counts.awaitingClubRefund }) } : null,
               counts?.awaitingClubConfirm ? { tone: "neutral" as const, text: t("budgets.countClubConfirm", { count: counts.awaitingClubConfirm }) } : null,
             ].filter((badge): badge is NonNullable<typeof badge> => badge !== null);
 

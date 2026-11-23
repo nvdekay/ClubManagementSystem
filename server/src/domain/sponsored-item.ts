@@ -17,6 +17,8 @@ export type InvoiceStatus =
   | "Submitted"
   | "Returned"
   | "Accepted"
+  | "RefundPending"
+  | "RefundSubmitted"
   | "Reconciled"
   | "Rejected"
   | "Expired"
@@ -68,6 +70,13 @@ export interface SponsoredItem {
   payable?: number;
   reconciliationDelta?: number;
   reviewReason?: string;
+  refundAmount?: number;
+  refundProofs?: InvoiceImage[];
+  refundNote?: string;
+  refundSubmittedAt?: string;
+  refundReviewReason?: string;
+  refundConfirmedAt?: string;
+  refundConfirmedBy?: string;
   paidAt?: string;
   paidBy?: string;
   paymentReference?: string;
@@ -102,7 +111,17 @@ export type SponsoredItemAction =
   /** Club confirms receipt of officer reimbursement (AFTER_EVENT < 5M self-paid). */
   | { kind: "pay" }
   /** ICPDP confirms school has directly paid the vendor after reviewing contract and bank details. */
-  | { kind: "confirmVendorPaid" };
+  | { kind: "confirmVendorPaid" }
+  /** Club uploads a refund transfer receipt for a BEFORE_EVENT item in RefundPending. */
+  | { kind: "refundImage"; image: InvoiceImage }
+  /** Club removes a refund transfer receipt while in RefundPending. */
+  | { kind: "removeRefundImage"; imageId: string }
+  /** Club submits refund transfer receipts for ICPDP verification. */
+  | { kind: "submitRefund"; note?: string }
+  /** ICPDP returns a refund submission for re-uploading receipts. */
+  | { kind: "returnRefund"; reason: string }
+  /** ICPDP confirms school has received the club's refund transfer. */
+  | { kind: "confirmRefund"; reason?: string };
 
 export interface SponsoredItemRepository {
   find(budgetId: string, clubId?: string): Promise<SponsoredBudget | null>;
@@ -172,12 +191,24 @@ export function normalizeVendorBankInfo(input: VendorBankInfo): VendorBankInfo {
   };
 }
 
+const CLUB_REFUND_ACTIONS = ["refundImage", "removeRefundImage", "submitRefund"];
+
+// Kiểm tra hạng mục có được phép truy cập thông tin tài khoản hoàn trả của nhà trường hay không
+export function canAccessRefundAccount(
+  item: Pick<SponsoredItem, "fundingDecision" | "status" | "refundAmount">,
+): boolean {
+  return item.fundingDecision === "BEFORE_EVENT"
+    && (item.status === "RefundPending" || item.status === "RefundSubmitted")
+    && (item.refundAmount ?? 0) > 0;
+}
+
 // Kiểm tra thao tác có thuộc về CLB hay thuộc về ICPDP
 /** Các thao tác do CLB thực hiện; mọi thao tác còn lại thuộc về cán bộ ICPDP. */
 export function isClubAction(action: SponsoredItemAction): boolean {
   return action.kind === "pay"
     || action.kind === "confirmAdvanceReceived"
-    || CLUB_EDIT_ACTIONS.includes(action.kind);
+    || CLUB_EDIT_ACTIONS.includes(action.kind)
+    || CLUB_REFUND_ACTIONS.includes(action.kind);
 }
 
 // Áp dụng một thao tác lên khoản chi tài trợ và trả về trạng thái mới
@@ -187,7 +218,11 @@ export function changeSponsoredItem(
   now: Date,
   actorId?: string,
 ): SponsoredItem {
-  const next: SponsoredItem = { ...item, images: [...item.images] };
+  const next: SponsoredItem = {
+    ...item,
+    images: [...item.images],
+    ...(item.refundProofs ? { refundProofs: [...item.refundProofs] } : {}),
+  };
   if (CLUB_EDIT_ACTIONS.includes(action.kind)) assertInvoiceEditable(item, now);
   switch (action.kind) {
     case "recordAdvance":
@@ -265,11 +300,84 @@ export function changeSponsoredItem(
       if (item.fundingDecision === "BEFORE_EVENT") {
         const advanced = item.advanceAmount ?? item.approvedAmount;
         next.reconciliationDelta = next.payable - advanced;
-        next.status = next.payable > 0 ? "Reconciled" : "Rejected";
+        if (next.reconciliationDelta < 0) {
+          next.refundAmount = advanced - next.payable;
+          next.refundProofs = next.refundProofs ?? [];
+          next.status = "RefundPending";
+        } else {
+          delete next.refundAmount;
+          next.status = "Reconciled";
+        }
       } else {
         next.status = next.payable > 0 ? "Accepted" : "Rejected";
       }
       break;
+    case "refundImage": {
+      if (item.fundingDecision !== "BEFORE_EVENT" || item.status !== "RefundPending" || !(item.refundAmount && item.refundAmount > 0)) {
+        throw new DomainError("this item is not awaiting a refund transfer", "conflict");
+      }
+      const proofs = next.refundProofs ?? [];
+      if (proofs.length >= MAX_INVOICE_IMAGES) throw new DomainError("at most five refund attachments per item", "conflict");
+      if (item.images.some((image) => image.digest === action.image.digest)
+        || proofs.some((image) => image.digest === action.image.digest)) {
+        throw new DomainError("duplicate refund attachment", "conflict");
+      }
+      next.refundProofs = [...proofs, action.image];
+      break;
+    }
+    case "removeRefundImage": {
+      if (item.fundingDecision !== "BEFORE_EVENT" || item.status !== "RefundPending") {
+        throw new DomainError("refund attachments cannot be modified in the current state", "conflict");
+      }
+      const proofs = item.refundProofs ?? [];
+      if (!proofs.some((image) => image.id === action.imageId)) throw new DomainError("refund attachment not found", "not_found");
+      next.refundProofs = proofs.filter((image) => image.id !== action.imageId);
+      break;
+    }
+    case "submitRefund": {
+      if (item.fundingDecision !== "BEFORE_EVENT" || item.status !== "RefundPending" || !(item.refundAmount && item.refundAmount > 0)) {
+        throw new DomainError("this item is not awaiting a refund submission", "conflict");
+      }
+      const proofs = item.refundProofs ?? [];
+      if (!proofs.length || proofs.length > MAX_INVOICE_IMAGES) {
+        throw new DomainError("one to five refund transfer receipts are required", "validation");
+      }
+      if (action.note !== undefined && action.note.length > 2000) {
+        throw new DomainError("refund note must be at most 2000 characters", "validation");
+      }
+      next.status = "RefundSubmitted";
+      next.refundSubmittedAt = now.toISOString();
+      const trimmedNote = action.note?.trim();
+      if (trimmedNote) next.refundNote = trimmedNote;
+      else delete next.refundNote;
+      delete next.refundReviewReason;
+      break;
+    }
+    case "returnRefund":
+      if (item.fundingDecision !== "BEFORE_EVENT" || item.status !== "RefundSubmitted") {
+        throw new DomainError("this item does not have a submitted refund to return", "conflict");
+      }
+      if (!action.reason.trim() || action.reason.length > 2000) {
+        throw new DomainError("a refund return reason is required", "validation");
+      }
+      next.status = "RefundPending";
+      next.refundReviewReason = action.reason.trim();
+      break;
+    case "confirmRefund": {
+      if (item.fundingDecision !== "BEFORE_EVENT" || item.status !== "RefundSubmitted" || item.refundConfirmedAt) {
+        throw new DomainError("this item is not awaiting refund confirmation", "conflict");
+      }
+      if (action.reason !== undefined && action.reason.length > 2000) {
+        throw new DomainError("refund confirmation note must be at most 2000 characters", "validation");
+      }
+      next.status = "Reconciled";
+      next.refundConfirmedAt = now.toISOString();
+      if (actorId) next.refundConfirmedBy = actorId;
+      const trimmedReason = action.reason?.trim();
+      if (trimmedReason) next.refundReviewReason = trimmedReason;
+      else delete next.refundReviewReason;
+      break;
+    }
     case "pay":
       if (resolvePaymentChannel(item) !== "VIA_OFFICER_REIMBURSE") {
         throw new DomainError("this item is not reimbursed through the ICPDP officer", "conflict");

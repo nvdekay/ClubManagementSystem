@@ -4,7 +4,7 @@ import {
   CLUB_PROFILE_FORM_FIELDS, FOUNDING_FORM_FIELDS,
   type AcademicSemester, type ClubProfileFormField, type FormRequirements, type FoundingRequirements,
   type PolicyManagementRepository, type PolicyRepository, type PolicySettings, type PolicyVersion,
-  type ReportDeadline,
+  type ReportDeadline, type SchoolRefundAccount,
 } from "../domain/policy.js";
 import type { AccessActor } from "./access.js";
 
@@ -69,6 +69,33 @@ function normalizeCalendar(values: readonly AcademicSemester[]): AcademicSemeste
   return semesters;
 }
 
+// Chuẩn hóa thông tin tài khoản hoàn trả của nhà trường (tùy chọn)
+function normalizeSchoolRefundAccount(value: SchoolRefundAccount | undefined): SchoolRefundAccount | undefined {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object") invalid("schoolRefundAccount");
+  const accountHolder = typeof value.accountHolder === "string" ? value.accountHolder.trim() : "";
+  const accountNumber = typeof value.accountNumber === "string" ? value.accountNumber.trim() : "";
+  const bankName = typeof value.bankName === "string" ? value.bankName.trim() : "";
+  const bankBranch = typeof value.bankBranch === "string" ? value.bankBranch.trim() || undefined : undefined;
+  const transferNote = typeof value.transferNote === "string" ? value.transferNote.trim() || undefined : undefined;
+  if (
+    !accountHolder || accountHolder.length > 200
+    || !accountNumber || accountNumber.length > 50 || !/^[0-9A-Za-z -]+$/.test(accountNumber)
+    || !bankName || bankName.length > 200
+    || (bankBranch && bankBranch.length > 200)
+    || (transferNote && transferNote.length > 500)
+  ) {
+    invalid("schoolRefundAccount");
+  }
+  return {
+    accountHolder,
+    accountNumber,
+    bankName,
+    ...(bankBranch ? { bankBranch } : {}),
+    ...(transferNote ? { transferNote } : {}),
+  };
+}
+
 // Kiểm và chuẩn hóa toàn bộ thiết lập chính sách
 export function normalizePolicySettings(input: PolicySettings): PolicySettings {
   if (!Number.isInteger(input.minFoundingMembers) || input.minFoundingMembers < 1) {
@@ -85,10 +112,12 @@ export function normalizePolicySettings(input: PolicySettings): PolicySettings {
   }
   if (typeof input.allowOverbooking !== "boolean" ||
     typeof input.enforceOverdueReportBlock !== "boolean") invalid("switches");
+  const schoolRefundAccount = normalizeSchoolRefundAccount(input.schoolRefundAccount);
   return {
     ...input, formRequirements: normalizeFormRequirements(input.formRequirements),
     reportDeadlines: normalizeDeadlines(input.reportDeadlines),
     academicCalendar: normalizeCalendar(input.academicCalendar),
+    ...(schoolRefundAccount ? { schoolRefundAccount } : { schoolRefundAccount: undefined }),
   };
 }
 

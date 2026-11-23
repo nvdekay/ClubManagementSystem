@@ -35,6 +35,13 @@ const profileRequirementsBody = z.object({
   description: z.boolean(), contactEmail: z.boolean(), contactPhone: z.boolean(),
   charterUrl: z.boolean(), channels: z.boolean(), operatingScope: z.boolean(),
 }).strict();
+const schoolRefundAccountBody = z.object({
+  accountHolder: z.string().min(1).max(200),
+  accountNumber: z.string().min(1).max(50),
+  bankName: z.string().min(1).max(200),
+  bankBranch: z.string().max(200).optional(),
+  transferNote: z.string().max(500).optional(),
+}).strict();
 export const policySettingsBody = z.object({
   minFoundingMembers: z.number().int().positive(),
   formRequirements: z.object({
@@ -47,6 +54,7 @@ export const policySettingsBody = z.object({
   allowOverbooking: z.boolean(),
   enforceOverdueReportBlock: z.boolean(),
   academicCalendar: z.array(semesterBody).min(1),
+  schoolRefundAccount: schoolRefundAccountBody.optional(),
 }).strict();
 export const policyCreateBody = policySettingsBody.extend({
   effectiveFrom: z.string().datetime({ offset: true }).optional(),

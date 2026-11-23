@@ -45,6 +45,8 @@ function summarizeItems(raw: unknown): BudgetItemCounts | undefined {
     awaitingReview: 0,
     awaitingVendorPay: 0,
     awaitingClubConfirm: 0,
+    awaitingRefundConfirm: 0,
+    awaitingClubRefund: 0,
   };
   for (const item of items) {
     if (item.fundingDecision === "NOT_SPONSORED") continue;
@@ -55,7 +57,8 @@ function summarizeItems(raw: unknown): BudgetItemCounts | undefined {
     else if (item.status === "Accepted" && channel === "DIRECT_VENDOR") counts.awaitingVendorPay += 1;
     else if (item.status === "AdvanceSent" || (item.status === "Accepted" && channel === "VIA_OFFICER_REIMBURSE")) {
       counts.awaitingClubConfirm += 1;
-    }
+    } else if (item.status === "RefundSubmitted") counts.awaitingRefundConfirm += 1;
+    else if (item.status === "RefundPending") counts.awaitingClubRefund += 1;
   }
   return counts;
 }
