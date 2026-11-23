@@ -8,7 +8,7 @@ Các helper thuần, nhỏ: `cn()` (gộp className theo mẫu ghi đè CSS), `f
 `revisionDiff` — `diffFields`: so hai phiên bản hồ sơ theo danh sách trường có nhãn, trả các trường có nội dung khác nhau.
 `campusImage` — `CAMPUS_IMAGE_URL`: ảnh khuôn viên trường dùng chung cho trang đăng nhập và hero trang chủ.
 `saveFile` — đưa file tải từ API (blob + tên file) cho trình duyệt lưu xuống.
-`proposalFile` — `proposalFileType` (kiểm tra nhanh đuôi file + giới hạn 20 MB cho đề án và 10 MB cho template sự kiện, trả MIME để upload) và `formatBytes` (dung lượng KB/MB).
+`proposalFile` — `proposalFileType` (kiểm tra nhanh đuôi file + giới hạn 10 MB cho đề án và 10 MB cho template sự kiện, trả MIME để upload) và `formatBytes` (dung lượng KB/MB).
 
 `docxDocument` — đọc riêng `word/document.xml` trong DOCX, giới hạn giải nén 12 MB, giữ bảng/đoạn văn.
 `blocks` giữ thứ tự các đoạn văn/bảng trong body, heading, xuống dòng/tab và `columnSpan`/`rowSpan`

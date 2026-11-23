@@ -69,7 +69,7 @@ Các trang khác (đối chiếu 17/10/2026), chủ yếu dành cho Club Leader:
 `/club/:clubId/event-attendance` — thành viên `Active` có `club.attendance.manage` xem được danh sách tham dự/mã check-in và điểm danh hộ trong khung giờ check-in, còn đổi sức chứa, đẩy waitlist, sửa/chốt điểm danh và check-in ngoài giờ chỉ Club Leader mới thực hiện được — và `mode="feedback"` cho UC49 tại `/club/:clubId/event-feedback`),
 `ClubEventProposalPage` (UC25: trang riêng cho tạo và chỉnh sửa đề xuất sự kiện tại `/club/:clubId/events/new`
 và `/club/:clubId/events/:eventId/edit`, dùng chung `ClubEventErrorMessage` và `clubEventFormat.ts` với `ClubEventsPage`),
-Tạo/sửa đề xuất qua import DOCX (tối đa 20 MB). `EventProposalDocument` hiển thị toàn bộ tài liệu
+Tạo/sửa đề xuất qua import DOCX (tối đa 10 MB). `EventProposalDocument` hiển thị toàn bộ tài liệu
 theo trang giấy trong frame riêng (chuyển trang, thu/phóng, vừa chiều rộng, in/lưu PDF);
 `EventProposalPreview` hiển thị hồ sơ trích xuất chỉ đọc bên dưới bản xem toàn văn: tổng quan,
 trạng thái thiếu, lịch trình, ngân sách và điều hướng từng mục hoặc toàn bộ. `EventProposalContent`

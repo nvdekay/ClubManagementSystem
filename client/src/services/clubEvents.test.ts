@@ -25,7 +25,7 @@ describe("saved proposal document preview", () => {
   });
   it("rejects an oversized saved file before reading its body", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ data: access })))
-      .mockResolvedValueOnce(new Response("", { headers: { "content-length": String(20 * 1024 * 1024 + 1) } })));
+      .mockResolvedValueOnce(new Response("", { headers: { "content-length": String(10 * 1024 * 1024 + 1) } })));
     await expect(fetchEventProposalPreviewFile("club", "event", new AbortController().signal)).rejects.toThrow("Document too large");
   });
 });
