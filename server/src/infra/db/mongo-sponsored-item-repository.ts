@@ -22,9 +22,12 @@ const NOTIFY_ACTIONS = new Set([
   "confirmAdvanceReceived",
   "pay",
   "confirmVendorPaid",
+  "submitRefund",
+  "returnRefund",
+  "confirmRefund",
 ]);
 
-const CLUB_TO_OFFICER_NOTIFY_ACTIONS = new Set(["submit", "confirmAdvanceReceived"]);
+const CLUB_TO_OFFICER_NOTIFY_ACTIONS = new Set(["submit", "confirmAdvanceReceived", "submitRefund"]);
 
 // Repository hạng mục tài trợ trong ngân sách sự kiện
 export function mongoSponsoredItemRepository(): SponsoredItemRepository {
@@ -72,7 +75,10 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
         const items = budget.sponsoredItems as SponsoredItem[];
         const index = items.findIndex((item) => item.id === itemId);
         if (index < 0) throw new DomainError("budget item not found", "not_found");
-        if (action.kind === "image" && items.some((item) => item.images.some((image) => image.digest === action.image.digest))) {
+        if ((action.kind === "image" || action.kind === "refundImage") && items.some((item) =>
+          item.images.some((image) => image.digest === action.image.digest)
+          || (item.refundProofs ?? []).some((image) => image.digest === action.image.digest),
+        )) {
           throw new DomainError("duplicate invoice attachment in this budget", "conflict");
         }
         const before = items[index]!;
@@ -112,6 +118,9 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
           }
           return sum + (item.status === "Paid" ? item.payable ?? 0 : 0);
         }, 0);
+        const refundedTotal = next.reduce((sum, item) => (
+          sum + (item.fundingDecision === "BEFORE_EVENT" && item.refundConfirmedAt ? (item.refundAmount ?? 0) : 0)
+        ), 0);
         const hasReviewed = next.some((item) => item.validAmount !== undefined);
         const acceptedTotal = next.reduce((sum, item) => sum + (item.payable ?? 0), 0);
         const changed = await m.eventBudgets!.updateOne({ _id: budgetId, __v: revision }, {
@@ -119,6 +128,7 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
             sponsoredItems: next,
             state: terminal ? "Closed" : "Approved",
             disbursedTotal: Types.Decimal128.fromString(String(disbursedTotal)),
+            refundedTotal: Types.Decimal128.fromString(String(refundedTotal)),
             ...(hasReviewed ? { acceptedTotal: Types.Decimal128.fromString(String(acceptedTotal)) } : {}),
           },
           $inc: { __v: 1 },
@@ -154,7 +164,8 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
               status: updated.status,
               action: action.kind,
               payable: updated.payable,
-              reason: updated.reviewReason,
+              refundAmount: updated.refundAmount,
+              reason: updated.refundReviewReason ?? updated.reviewReason,
               clubId: String(budget.clubId),
               budgetId: id,
             },

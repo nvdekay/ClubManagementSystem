@@ -6,6 +6,8 @@ export interface BudgetItemCounts {
   awaitingReview: number;
   awaitingVendorPay: number;
   awaitingClubConfirm: number;
+  awaitingRefundConfirm: number;
+  awaitingClubRefund: number;
 }
 
 export interface BudgetSummary {

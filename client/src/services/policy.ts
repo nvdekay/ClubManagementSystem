@@ -13,6 +13,14 @@ export interface AcademicSemester {
   endAt: string;
 }
 
+export interface SchoolRefundAccount {
+  accountHolder: string;
+  accountNumber: string;
+  bankName: string;
+  bankBranch?: string;
+  transferNote?: string;
+}
+
 export const FOUNDING_FORM_FIELDS = [
   "summary", "objectives", "proposal", "logo", "fanpageUrl", "contactEmail",
 ] as const;
@@ -46,6 +54,7 @@ export interface PolicySettings {
   allowOverbooking: boolean;
   enforceOverdueReportBlock: boolean;
   academicCalendar: AcademicSemester[];
+  schoolRefundAccount?: SchoolRefundAccount;
 }
 
 export interface PolicyVersion extends PolicySettings {

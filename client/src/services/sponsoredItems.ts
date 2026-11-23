@@ -15,6 +15,19 @@ export interface VendorBankInfo {
   transferNote?: string;
 }
 
+export interface SchoolRefundAccount {
+  accountHolder: string;
+  accountNumber: string;
+  bankName: string;
+  bankBranch?: string;
+  transferNote?: string;
+}
+
+export interface RefundAccountInfo {
+  refundAmount: number;
+  account: SchoolRefundAccount;
+}
+
 export interface InvoiceImage {
   id: string;
   fileName: string;
@@ -29,6 +42,8 @@ export type SponsoredItemStatus =
   | "Submitted"
   | "Returned"
   | "Accepted"
+  | "RefundPending"
+  | "RefundSubmitted"
   | "Reconciled"
   | "Rejected"
   | "Expired"
@@ -57,6 +72,13 @@ export interface SponsoredItem {
   validAmount?: number;
   reconciliationDelta?: number;
   reviewReason?: string;
+  refundAmount?: number;
+  refundProofs?: InvoiceImage[];
+  refundNote?: string;
+  refundSubmittedAt?: string;
+  refundReviewReason?: string;
+  refundConfirmedAt?: string;
+  refundConfirmedBy?: string;
   paidAt?: string;
   paidBy?: string;
   reason?: string;
@@ -86,7 +108,11 @@ export type ItemAction =
   | { kind: "recordAdvance" }
   | { kind: "confirmAdvanceReceived" }
   | { kind: "pay" }
-  | { kind: "confirmVendorPaid" };
+  | { kind: "confirmVendorPaid" }
+  | { kind: "removeRefundImage"; imageId: string }
+  | { kind: "submitRefund"; note?: string }
+  | { kind: "returnRefund"; reason: string }
+  | { kind: "confirmRefund"; reason?: string };
 
 // Suy ra kênh giải ngân hiện hành của hạng mục
 export function resolvePaymentChannel(
@@ -134,7 +160,7 @@ export async function changeSponsoredItem(
   }));
 }
 
-// POST /images: tải tệp chứng từ (JPG/PNG/PDF) của một mục
+// POST /images: tải tệp chứng từ (JPG/PNG/PDF) của một mục (hóa đơn hoặc biên lai hoàn trả)
 export async function uploadInvoiceImage(
   id: string,
   clubId: string,
@@ -142,14 +168,31 @@ export async function uploadInvoiceImage(
   revision: number,
   file: File,
   csrfToken: string,
+  target: "invoice" | "refund" = "invoice",
 ): Promise<SponsoredBudget> {
-  const query = new URLSearchParams({ revision: String(revision), fileName: file.name });
+  const query = new URLSearchParams({
+    revision: String(revision),
+    fileName: file.name,
+    ...(target === "refund" ? { target: "refund" } : {}),
+  });
   return data(await apiFetch(`${base(id, clubId)}/${itemId}/images?${query}`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": file.type, "X-CSRF-Token": csrfToken },
     body: file,
   }));
+}
+
+// GET /refund-account: lấy thông tin tài khoản hoàn trả của nhà trường (chỉ cấp khi CLB thực hiện hoàn trả)
+export async function fetchRefundAccount(
+  id: string,
+  clubId: string,
+  itemId: string,
+  signal?: AbortSignal,
+): Promise<RefundAccountInfo> {
+  return data<RefundAccountInfo>(
+    await apiFetch(`${base(id, clubId)}/${itemId}/refund-account`, { credentials: "include", signal }),
+  );
 }
 
 // GET link xem hoặc tải xuống tệp chứng từ

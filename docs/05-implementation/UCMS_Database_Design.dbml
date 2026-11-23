@@ -353,6 +353,7 @@ Table policyVersions {
   allowOverbooking bool [not null, note: 'BR33.']
   enforceOverdueReportBlock bool [not null, note: 'BR21.']
   academicCalendar json [not null, note: 'Mã học kỳ kèm ngày bắt đầu và kết thúc. Chi phối BR44, BR45, lịch giải thể (UC15) và đợt quét đăng ký lại thành viên (UC21 A2).']
+  schoolRefundAccount json [note: 'Thông tin tài khoản ngân hàng của nhà trường dùng cho CLB chuyển khoản hoàn trả tiền dư tạm ứng (accountHolder, accountNumber, bankName, bankBranch, transferNote). Chỉ hiển thị cho CLB khi thực hiện hoàn trả.']
   effectiveFrom datetime [not null]
   createdBy objectId [not null]
   createdAt datetime [not null]

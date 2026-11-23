@@ -6,6 +6,7 @@ import { DomainError } from "../../domain/errors.js";
 import type { AccessActor } from "../../usecase/access.js";
 import {
   actOnSponsoredItem,
+  getRefundAccount,
   getSponsoredBudget,
   invoiceImageUrl,
   uploadInvoiceImage,
@@ -41,6 +42,10 @@ export const sponsoredActionBody = z.object({
     z.object({ kind: z.literal("confirmAdvanceReceived") }).strict(),
     z.object({ kind: z.literal("pay") }).strict(),
     z.object({ kind: z.literal("confirmVendorPaid") }).strict(),
+    z.object({ kind: z.literal("removeRefundImage"), imageId: z.string().uuid() }).strict(),
+    z.object({ kind: z.literal("submitRefund"), note: z.string().max(2000).optional() }).strict(),
+    z.object({ kind: z.literal("returnRefund"), reason: z.string().min(1).max(2000) }).strict(),
+    z.object({ kind: z.literal("confirmRefund"), reason: z.string().max(2000).optional() }).strict(),
   ]),
 }).strict();
 
@@ -67,14 +72,24 @@ export function sponsoredItemRoutes(deps: SponsoredItemDeps & { authRepo: AuthRe
         req.params.clubId as string | undefined, String(req.params.itemId), String(req.params.imageId), new Date(), !download));
     });
   }
-  // Tải ảnh/PDF chứng từ lên hạng mục tài trợ (ảnh JPG/PNG <= 5 MiB, PDF <= 10 MiB)
+  // Lấy thông tin tài khoản hoàn trả của nhà trường (chỉ cấp khi CLB có hạng mục đang chờ hoàn trả)
+  router.get("/clubs/:clubId/budgets/:id/items/:itemId/refund-account", authGuard(guard, false), async (req, res) => {
+    ok(res, await getRefundAccount(deps, res.locals.actor as AccessActor, String(req.params.id),
+      String(req.params.clubId), String(req.params.itemId), new Date()));
+  });
+  // Tải ảnh/PDF chứng từ hóa đơn hoặc biên lai hoàn trả lên hạng mục tài trợ (ảnh JPG/PNG <= 5 MiB, PDF <= 10 MiB)
   router.post("/clubs/:clubId/budgets/:id/items/:itemId/images", authGuard(guard),
     raw({ type: () => true, limit: "10mb" }), async (req, res) => {
       const revision = Number(req.query.revision);
+      const rawTarget = req.query.target === undefined ? "invoice" : String(req.query.target);
+      if (rawTarget !== "invoice" && rawTarget !== "refund") {
+        throw new DomainError("invalid upload target", "validation");
+      }
       if (!Number.isInteger(revision) || revision < 0 || !Buffer.isBuffer(req.body)) throw new DomainError("invalid image upload", "validation");
       ok(res, await uploadInvoiceImage(deps, res.locals.actor as AccessActor, String(req.params.id),
         String(req.params.clubId), String(req.params.itemId), revision,
-        { fileName: String(req.query.fileName ?? ""), mimeType: req.header("content-type") ?? "", bytes: req.body }, new Date()));
+        { fileName: String(req.query.fileName ?? ""), mimeType: req.header("content-type") ?? "", bytes: req.body },
+        new Date(), rawTarget));
     });
   return router;
 }

@@ -36,6 +36,14 @@ interface SemesterForm {
   endAt: string;
 }
 
+interface RefundAccountForm {
+  accountHolder: string;
+  accountNumber: string;
+  bankName: string;
+  bankBranch: string;
+  transferNote: string;
+}
+
 interface PolicyForm {
   minFoundingMembers: string;
   formRequirements: FormRequirements;
@@ -46,12 +54,13 @@ interface PolicyForm {
   allowOverbooking: boolean;
   enforceOverdueReportBlock: boolean;
   academicCalendar: SemesterForm[];
+  schoolRefundAccount: RefundAccountForm;
   effectiveFrom: string;
   reason: string;
 }
 
-export type PolicySection = "founding" | "profile" | "events" | "calendar" | "reports";
-const sections: readonly PolicySection[] = ["founding", "profile", "events", "calendar", "reports"];
+export type PolicySection = "founding" | "profile" | "events" | "calendar" | "reports" | "finance";
+const sections: readonly PolicySection[] = ["founding", "profile", "events", "calendar", "reports", "finance"];
 
 type DeadlineNumberField = Exclude<keyof DeadlineForm, "reportType">;
 const deadlineNumberFields: readonly DeadlineNumberField[] = [
@@ -66,6 +75,7 @@ export function sectionTitleKey(section: PolicySection) {
     case "events": return "policy.sectionEvents" as const;
     case "calendar": return "policy.sectionCalendar" as const;
     case "reports": return "policy.sectionReports" as const;
+    case "finance": return "policy.sectionFinance" as const;
   }
 }
 
@@ -77,6 +87,7 @@ export function sectionAppliesKey(section: PolicySection) {
     case "events": return "policy.appliesEvents" as const;
     case "calendar": return "policy.appliesCalendar" as const;
     case "reports": return "policy.appliesReports" as const;
+    case "finance": return "policy.appliesFinance" as const;
   }
 }
 
@@ -143,6 +154,13 @@ function initialForm(latest?: PolicyVersion): PolicyForm {
     academicCalendar: latest?.academicCalendar.map((item) => ({
       code: item.code, startAt: localDateTime(item.startAt), endAt: localDateTime(item.endAt),
     })) ?? [{ code: "", startAt: "", endAt: "" }],
+    schoolRefundAccount: {
+      accountHolder: latest?.schoolRefundAccount?.accountHolder ?? "",
+      accountNumber: latest?.schoolRefundAccount?.accountNumber ?? "",
+      bankName: latest?.schoolRefundAccount?.bankName ?? "",
+      bankBranch: latest?.schoolRefundAccount?.bankBranch ?? "",
+      transferNote: latest?.schoolRefundAccount?.transferNote ?? "",
+    },
     effectiveFrom: "", reason: "",
   };
 }
@@ -193,6 +211,24 @@ function formErrors(t: TFunction, form: PolicyForm): Record<string, string | nul
       errors[`escalateAfterDays${index}`] = t("common.numberMin", { min: overdue + 1 });
     }
   });
+  const refund = form.schoolRefundAccount;
+  const hasAnyRefundField = Boolean(
+    refund.accountHolder.trim() || refund.accountNumber.trim() || refund.bankName.trim()
+    || refund.bankBranch.trim() || refund.transferNote.trim(),
+  );
+  if (hasAnyRefundField) {
+    errors.refundAccountHolder = refund.accountHolder.trim() ? null : t("common.fieldRequired");
+    errors.refundAccountNumber = !refund.accountNumber.trim()
+      ? t("common.fieldRequired")
+      : !/^[0-9A-Za-z -]+$/.test(refund.accountNumber.trim())
+        ? t("policy.refundAccountNumberInvalid")
+        : null;
+    errors.refundBankName = refund.bankName.trim() ? null : t("common.fieldRequired");
+  } else {
+    errors.refundAccountHolder = null;
+    errors.refundAccountNumber = null;
+    errors.refundBankName = null;
+  }
   return errors;
 }
 
@@ -201,6 +237,7 @@ function errorSection(key: string): PolicySection {
   if (key === "minFoundingMembers") return "founding";
   if (["feedbackWindowHours", "feedbackMinRespondents", "conflictThresholdMinutes"].includes(key)) return "events";
   if (key.startsWith("semester")) return "calendar";
+  if (key.startsWith("refund")) return "finance";
   return "reports";
 }
 
@@ -213,6 +250,26 @@ function isoDate(value: string, section: PolicySection): string {
 
 // Dựng dữ liệu gửi lên tạo phiên bản chính sách từ form
 function payload(form: PolicyForm): CreatePolicyInput {
+  const refund = form.schoolRefundAccount;
+  const accountHolder = refund.accountHolder.trim();
+  const accountNumber = refund.accountNumber.trim();
+  const bankName = refund.bankName.trim();
+  const bankBranch = refund.bankBranch.trim();
+  const transferNote = refund.transferNote.trim();
+  const hasRefund = Boolean(accountHolder || accountNumber || bankName || bankBranch || transferNote);
+  let schoolRefundAccount: CreatePolicyInput["schoolRefundAccount"];
+  if (hasRefund) {
+    if (!accountHolder || !accountNumber || !/^[0-9A-Za-z -]+$/.test(accountNumber) || !bankName) {
+      throw new SectionError("finance");
+    }
+    schoolRefundAccount = {
+      accountHolder,
+      accountNumber,
+      bankName,
+      ...(bankBranch ? { bankBranch } : {}),
+      ...(transferNote ? { transferNote } : {}),
+    };
+  }
   return {
     minFoundingMembers: whole(form.minFoundingMembers, 1, "founding"),
     formRequirements: form.formRequirements,
@@ -236,6 +293,7 @@ function payload(form: PolicyForm): CreatePolicyInput {
       return { code: item.code.trim(), startAt: isoDate(item.startAt, "calendar"),
         endAt: isoDate(item.endAt, "calendar") };
     }),
+    ...(schoolRefundAccount ? { schoolRefundAccount } : {}),
     ...(form.effectiveFrom ? { effectiveFrom: new Date(form.effectiveFrom).toISOString() } : {}),
     ...(form.reason.trim() ? { reason: form.reason.trim() } : {}),
   };
@@ -450,6 +508,53 @@ export function PolicyEditor({ latest, csrfToken }: PolicyEditorProps) {
           academicCalendar: [...form.academicCalendar, { code: "", startAt: "", endAt: "" }] })}>
           <AppIcon name="plus" className="size-4" />{t("policy.addSemester")}
         </AppButton>
+      </div>
+    );
+  } else if (section === "finance") {
+    const refund = form.schoolRefundAccount;
+    const anyFilled = Boolean(
+      refund.accountHolder.trim() || refund.accountNumber.trim() || refund.bankName.trim()
+      || refund.bankBranch.trim() || refund.transferNote.trim(),
+    );
+    body = (
+      <div className="space-y-4">
+        <div>
+          <h4 className="font-heading font-semibold">{t("policy.refundAccountTitle")}</h4>
+          <p className="mt-1 text-xs text-muted-app">{t("policy.refundAccountHint")}</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-medium text-text-app">
+            {t("policy.refundAccountHolder")}{anyFilled ? <AppRequiredMark /> : null}
+            <AppInput className="mt-1.5 block w-full" maxLength={200} value={refund.accountHolder}
+              {...field.control("refundAccountHolder")}
+              onChange={(event) => setForm({ ...form, schoolRefundAccount: { ...refund, accountHolder: event.target.value } })} />
+            <AppFieldError message={field.error("refundAccountHolder")} />
+          </label>
+          <label className="block text-sm font-medium text-text-app">
+            {t("policy.refundAccountNumber")}{anyFilled ? <AppRequiredMark /> : null}
+            <AppInput className="mt-1.5 block w-full" maxLength={50} value={refund.accountNumber}
+              {...field.control("refundAccountNumber")}
+              onChange={(event) => setForm({ ...form, schoolRefundAccount: { ...refund, accountNumber: event.target.value } })} />
+            <AppFieldError message={field.error("refundAccountNumber")} />
+          </label>
+          <label className="block text-sm font-medium text-text-app">
+            {t("policy.refundBankName")}{anyFilled ? <AppRequiredMark /> : null}
+            <AppInput className="mt-1.5 block w-full" maxLength={200} value={refund.bankName}
+              {...field.control("refundBankName")}
+              onChange={(event) => setForm({ ...form, schoolRefundAccount: { ...refund, bankName: event.target.value } })} />
+            <AppFieldError message={field.error("refundBankName")} />
+          </label>
+          <label className="block text-sm font-medium text-text-app">
+            {t("policy.refundBankBranch")}
+            <AppInput className="mt-1.5 block w-full" maxLength={200} value={refund.bankBranch}
+              onChange={(event) => setForm({ ...form, schoolRefundAccount: { ...refund, bankBranch: event.target.value } })} />
+          </label>
+          <label className="block text-sm font-medium text-text-app sm:col-span-2">
+            {t("policy.refundTransferNote")}
+            <AppInput className="mt-1.5 block w-full" maxLength={500} value={refund.transferNote}
+              onChange={(event) => setForm({ ...form, schoolRefundAccount: { ...refund, transferNote: event.target.value } })} />
+          </label>
+        </div>
       </div>
     );
   } else {

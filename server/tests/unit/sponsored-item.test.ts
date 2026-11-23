@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assertInvoiceSubmission,
+  canAccessRefundAccount,
   changeSponsoredItem,
   DIRECT_VENDOR_THRESHOLD_VND,
   initialPaymentChannel,
@@ -102,19 +103,112 @@ describe("sponsored item disbursement and document lifecycle", () => {
     current = changeSponsoredItem(current, { kind: "submit" }, afterEnd);
     expect(current.status).toBe("Submitted");
 
-    // ICPDP reconciles and records variance without opening a refund workflow
-    const reconciled = changeSponsoredItem(
+    // ICPDP reconciles with payable < advance -> enters RefundPending for the surplus
+    const refundPending = changeSponsoredItem(
       current,
       { kind: "review", validAmount: 3_000_000, reason: "Valid 3M, 200k missing receipt" },
       afterEnd,
     );
-    expect(reconciled).toMatchObject({
-      status: "Reconciled",
+    expect(refundPending).toMatchObject({
+      status: "RefundPending",
       validAmount: 3_000_000,
       payable: 3_000_000,
       reconciliationDelta: -1_000_000,
+      refundAmount: 1_000_000,
     });
-    expect(() => changeSponsoredItem(reconciled, { kind: "pay" }, afterEnd)).toThrow();
+    expect(canAccessRefundAccount(refundPending)).toBe(true);
+    expect(() => changeSponsoredItem(refundPending, { kind: "pay" }, afterEnd)).toThrow();
+    expect(() => changeSponsoredItem(refundPending, { kind: "submitRefund" }, afterEnd)).toThrow();
+
+    // Club attaches refund receipt (blocks duplicate of invoice receipt), submits refund
+    expect(() => changeSponsoredItem(refundPending, { kind: "refundImage", image }, afterEnd)).toThrow();
+    const refundReceipt: InvoiceImage = {
+      ...image,
+      id: "refund-img-1",
+      assetId: "private-refund-1",
+      fileName: "refund.png",
+      digest: "refund-digest-1",
+    };
+    let refunding = changeSponsoredItem(refundPending, { kind: "refundImage", image: refundReceipt }, afterEnd);
+    expect(refunding.refundProofs).toHaveLength(1);
+    refunding = changeSponsoredItem(refunding, { kind: "removeRefundImage", imageId: refundReceipt.id }, afterEnd);
+    expect(refunding.refundProofs).toHaveLength(0);
+    refunding = changeSponsoredItem(refunding, { kind: "refundImage", image: refundReceipt }, afterEnd);
+    const refundSubmitted = changeSponsoredItem(
+      refunding,
+      { kind: "submitRefund", note: "Transferred 1M back to school" },
+      afterEnd,
+    );
+    expect(refundSubmitted).toMatchObject({
+      status: "RefundSubmitted",
+      refundNote: "Transferred 1M back to school",
+    });
+    expect(canAccessRefundAccount(refundSubmitted)).toBe(true);
+
+    // Officer can return refund receipts with a reason -> back to RefundPending
+    const returnedRefund = changeSponsoredItem(
+      refundSubmitted,
+      { kind: "returnRefund", reason: "Receipt blurry" },
+      afterEnd,
+    );
+    expect(returnedRefund).toMatchObject({
+      status: "RefundPending",
+      refundReviewReason: "Receipt blurry",
+    });
+
+    // Club resubmits and officer confirms -> Reconciled
+    const resubmitted = changeSponsoredItem(returnedRefund, { kind: "submitRefund", note: "Re-uploaded clear receipt" }, afterEnd);
+    const reconciled = changeSponsoredItem(resubmitted, { kind: "confirmRefund", reason: "Received 1M" }, afterEnd, "officer-1");
+    expect(reconciled).toMatchObject({
+      status: "Reconciled",
+      refundConfirmedBy: "officer-1",
+      refundConfirmedAt: afterEnd.toISOString(),
+      refundReviewReason: "Received 1M",
+    });
+    expect(canAccessRefundAccount(reconciled)).toBe(false);
+    expect(() => changeSponsoredItem(reconciled, { kind: "confirmRefund" }, afterEnd, "officer-1")).toThrow();
+  });
+
+  it("opens a 100% refund flow when BEFORE_EVENT validAmount is zero, and reconciles directly when full advance is matched", () => {
+    const afterEnd = new Date("2026-11-12T00:00:00Z");
+    const submittedBefore = item({
+      fundingDecision: "BEFORE_EVENT",
+      paymentChannel: "VIA_OFFICER_ADVANCE",
+      approvedAmount: 2_500_000,
+      advanceAmount: 2_500_000,
+      advanceReceivedAt: "2026-11-05T00:00:00Z",
+      status: "Submitted",
+      amount: 2_500_000,
+    });
+
+    // validAmount = 0 -> must refund full 2,500,000
+    const fullRefund = changeSponsoredItem(
+      submittedBefore,
+      { kind: "review", validAmount: 0, reason: "Invalid invoices, refund full advance" },
+      afterEnd,
+    );
+    expect(fullRefund).toMatchObject({
+      status: "RefundPending",
+      validAmount: 0,
+      payable: 0,
+      reconciliationDelta: -2_500_000,
+      refundAmount: 2_500_000,
+    });
+    expect(canAccessRefundAccount(fullRefund)).toBe(true);
+
+    // validAmount === advanceAmount -> Reconciled immediately, no refund needed
+    const matched = changeSponsoredItem(
+      submittedBefore,
+      { kind: "review", validAmount: 2_500_000, reason: "All receipts valid" },
+      afterEnd,
+    );
+    expect(matched).toMatchObject({
+      status: "Reconciled",
+      payable: 2_500_000,
+      reconciliationDelta: 0,
+    });
+    expect(matched.refundAmount).toBeUndefined();
+    expect(canAccessRefundAccount(matched)).toBe(false);
   });
 
   it("handles AFTER_EVENT under 5M self-paid (reimbursed via officer) and optional direct vendor contract", () => {
@@ -184,10 +278,15 @@ describe("sponsored item disbursement and document lifecycle", () => {
     expect(isClubAction({ kind: "pay" })).toBe(true);
     expect(isClubAction({ kind: "confirmAdvanceReceived" })).toBe(true);
     expect(isClubAction({ kind: "submit" })).toBe(true);
+    expect(isClubAction({ kind: "refundImage", image })).toBe(true);
+    expect(isClubAction({ kind: "removeRefundImage", imageId: "refund-1" })).toBe(true);
+    expect(isClubAction({ kind: "submitRefund", note: "done" })).toBe(true);
     expect(isClubAction({ kind: "recordAdvance" })).toBe(false);
     expect(isClubAction({ kind: "review", validAmount: 1, reason: "ok" })).toBe(false);
     expect(isClubAction({ kind: "return", reason: "fix" })).toBe(false);
     expect(isClubAction({ kind: "confirmVendorPaid" })).toBe(false);
+    expect(isClubAction({ kind: "returnRefund", reason: "blurry" })).toBe(false);
+    expect(isClubAction({ kind: "confirmRefund", reason: "ok" })).toBe(false);
   });
 
   it("caps payable at approvedAmount and forbids claims for non-sponsored items", () => {

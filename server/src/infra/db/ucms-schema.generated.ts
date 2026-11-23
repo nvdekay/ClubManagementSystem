@@ -431,6 +431,9 @@ export const ucmsTables = {
         "type": "json",
         "required": true
       },
+      "schoolRefundAccount": {
+        "type": "json"
+      },
       "effectiveFrom": {
         "type": "datetime",
         "required": true

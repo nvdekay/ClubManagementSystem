@@ -308,7 +308,7 @@ export function buildApp(deps: {
         access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       if (deps.sponsoredItemRepo) app.use("/api/v1", sponsoredItemRoutes({ repo: deps.sponsoredItemRepo,
         access: deps.auth.accessRepo, auth: deps.auth.repo, authRepo: deps.auth.repo,
-        sessions: deps.auth.sessions, files: deps.applicationFiles ?? null }));
+        sessions: deps.auth.sessions, files: deps.applicationFiles ?? null, policy: deps.policyRepo }));
       if (deps.postEventReportRepo) app.use("/api/v1", postEventReportRoutes({ repo: deps.postEventReportRepo,
         access: deps.auth.accessRepo, authRepo: deps.auth.repo, sessions: deps.auth.sessions }));
       if (deps.budgetDisbursementRepo) {

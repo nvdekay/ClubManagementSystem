@@ -11,6 +11,7 @@ import { useConfirm } from '@/hooks/useConfirm'
 import {
 	useDownloadInvoiceFile,
 	useInvoiceImage,
+	useRefundAccount,
 	useSponsoredItemAction,
 	useSponsoredItems,
 } from '@/hooks/useSponsoredItems'
@@ -215,11 +216,29 @@ function ItemCard({
 	const [valid, setValid] = useState(String(item.amount))
 	const [reason, setReason] = useState('')
 	const [progress, setProgress] = useState({ done: 0, total: 0 })
+	const [refundProgress, setRefundProgress] = useState({ done: 0, total: 0 })
+	const [showRefundPanel, setShowRefundPanel] = useState(false)
+	const [refundNote, setRefundNote] = useState(item.refundNote ?? '')
+	const [refundReason, setRefundReason] = useState('')
+	const [copiedAccount, setCopiedAccount] = useState(false)
 	const [downloadingAll, setDownloadingAll] = useState(false)
+	const [downloadingRefundAll, setDownloadingRefundAll] = useState(false)
 	const [error, setError] = useState('')
 
 	const isClub = Boolean(clubId)
 	const isOfficer = !isClub
+	const refundProofs = item.refundProofs ?? []
+	const canFetchRefundAccount =
+		isClub &&
+		item.fundingDecision === 'BEFORE_EVENT' &&
+		(item.status === 'RefundPending' || item.status === 'RefundSubmitted') &&
+		(item.refundAmount ?? 0) > 0
+	const refundAccountQuery = useRefundAccount(
+		budget.id,
+		clubId,
+		item.id,
+		canFetchRefundAccount && showRefundPanel,
+	)
 	const deadline = new Date(new Date(item.eventEndAt).getTime() + 14 * 86_400_000)
 	const now = new Date()
 	const active = [
@@ -359,6 +378,59 @@ function ItemCard({
 			setError(t('sponsoredItems.downloadError'))
 		} finally {
 			setDownloadingAll(false)
+		}
+	}
+
+	async function uploadRefundProofs(files: File[]) {
+		if (!isClub || !active || item.status !== 'RefundPending' || mutation.isPending) return
+		setError('')
+		if (
+			!files.length ||
+			refundProofs.length + files.length > 5 ||
+			files.some((file) => !isAllowedAttachment(file))
+		) {
+			setError(t('sponsoredItems.invalidImages'))
+			return
+		}
+		setRefundProgress({ done: 0, total: files.length })
+		try {
+			await mutation.mutateAsync({
+				itemId: item.id,
+				revision: budget.revision,
+				files,
+				target: 'refund',
+				onProgress: (done) => setRefundProgress({ done, total: files.length }),
+			})
+		} catch (err) {
+			setError(err instanceof Error && err.message ? err.message : t('sponsoredItems.error'))
+		} finally {
+			setRefundProgress({ done: 0, total: 0 })
+		}
+	}
+
+	async function downloadAllRefundProofs() {
+		if (downloadingRefundAll || !refundProofs.length) return
+		setError('')
+		setDownloadingRefundAll(true)
+		try {
+			for (const file of refundProofs) {
+				const result = await downloadFile.mutateAsync({ itemId: item.id, imageId: file.id })
+				triggerUrlDownload(result.url, result.fileName ?? file.fileName)
+			}
+		} catch {
+			setError(t('sponsoredItems.downloadError'))
+		} finally {
+			setDownloadingRefundAll(false)
+		}
+	}
+
+	async function copyAccountNumber(accountNumber: string) {
+		try {
+			await navigator.clipboard.writeText(accountNumber)
+			setCopiedAccount(true)
+			window.setTimeout(() => setCopiedAccount(false), 2000)
+		} catch {
+			/* Trình duyệt không cấp quyền clipboard; người dùng có thể tự bôi đen sao chép. */
 		}
 	}
 
@@ -876,6 +948,425 @@ function ItemCard({
 				</div>
 			)}
 
+			{/* Hoàn trả tiền dư tạm ứng về tài khoản nhà trường (BEFORE_EVENT có payable < advanceAmount) */}
+			{isBeforeEvent && item.status === 'RefundPending' && (item.refundAmount ?? 0) > 0 && (
+				<section className='mt-4 space-y-4 rounded-xl border border-warning-app/40 bg-surface-app/60 p-4'>
+					<AppNotice tone='warning'>
+						{t(
+							isClub ? 'sponsoredItems.refundRequiredBanner' : 'sponsoredItems.refundWaitingClubOfficer',
+							{ amount: money(item.refundAmount!) },
+						)}
+					</AppNotice>
+					{item.refundReviewReason && (
+						<AppNotice tone='danger'>
+							<strong>{t('sponsoredItems.refundReturnedReason')}:</strong>{' '}
+							<span className='whitespace-pre-wrap'>{item.refundReviewReason}</span>
+						</AppNotice>
+					)}
+					{isClub && active && (
+						<>
+							<div className='flex flex-wrap items-center gap-2'>
+								<AppButton
+									type='button'
+									variant={showRefundPanel ? 'secondary' : 'primary'}
+									onClick={() => setShowRefundPanel((open) => !open)}>
+									{t(showRefundPanel ? 'sponsoredItems.refundHideAccount' : 'sponsoredItems.refundStartButton')}
+								</AppButton>
+							</div>
+							{showRefundPanel && (
+								<div className='space-y-4 rounded-xl border border-border-app bg-bg-app p-4'>
+									<div>
+										<h5 className='text-sm font-semibold text-text-app'>
+											{t('sponsoredItems.refundAccountTitle')}
+										</h5>
+										<p className='mt-0.5 text-xs text-muted-app'>
+											{t('sponsoredItems.refundAccountHint')}
+										</p>
+									</div>
+
+									{refundAccountQuery.isPending ? (
+										<AppSkeleton className='h-24 w-full' />
+									) : refundAccountQuery.isError ? (
+										<AppNotice tone='danger' role='alert'>
+											{t('sponsoredItems.refundAccountNotConfigured')}
+										</AppNotice>
+									) : refundAccountQuery.data ? (
+										<dl className='grid gap-3 rounded-lg border border-border-app bg-surface-app/50 p-3.5 text-sm sm:grid-cols-2'>
+											<div>
+												<dt className='text-xs text-muted-app'>{t('sponsoredItems.refundAmountDue')}</dt>
+												<dd className='mt-0.5 font-semibold tabular-nums text-warning-app'>
+													{money(refundAccountQuery.data.refundAmount)}
+												</dd>
+											</div>
+											<div>
+												<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountHolder')}</dt>
+												<dd className='mt-0.5 font-medium break-words text-text-app'>
+													{refundAccountQuery.data.account.accountHolder}
+												</dd>
+											</div>
+											<div>
+												<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountNumber')}</dt>
+												<dd className='mt-0.5 flex flex-wrap items-center gap-2'>
+													<span className='font-semibold tabular-nums text-text-app'>
+														{refundAccountQuery.data.account.accountNumber}
+													</span>
+													<AppButton
+														type='button'
+														variant='secondary'
+														className='min-h-7 px-2 text-xs'
+														onClick={() =>
+															void copyAccountNumber(refundAccountQuery.data.account.accountNumber)
+														}>
+														<AppIcon name={copiedAccount ? 'check' : 'clipboard'} className='size-3.5' />
+														{t(copiedAccount ? 'sponsoredItems.refundCopied' : 'sponsoredItems.refundCopyAccount')}
+													</AppButton>
+												</dd>
+											</div>
+											<div>
+												<dt className='text-xs text-muted-app'>{t('sponsoredItems.bankName')}</dt>
+												<dd className='mt-0.5 font-medium break-words text-text-app'>
+													{refundAccountQuery.data.account.bankName}
+												</dd>
+											</div>
+											{refundAccountQuery.data.account.bankBranch && (
+												<div>
+													<dt className='text-xs text-muted-app'>{t('sponsoredItems.bankBranch')}</dt>
+													<dd className='mt-0.5 break-words text-text-app'>
+														{refundAccountQuery.data.account.bankBranch}
+													</dd>
+												</div>
+											)}
+											{refundAccountQuery.data.account.transferNote && (
+												<div className='sm:col-span-2'>
+													<dt className='text-xs text-muted-app'>{t('sponsoredItems.transferNote')}</dt>
+													<dd className='mt-0.5 break-words text-text-app'>
+														{refundAccountQuery.data.account.transferNote}
+													</dd>
+												</div>
+											)}
+										</dl>
+									) : null}
+
+									<div
+										className='rounded-xl border border-dashed border-border-app p-4'
+										onDragOver={(event) => event.preventDefault()}
+										onDrop={(event) => {
+											event.preventDefault()
+											void uploadRefundProofs(Array.from(event.dataTransfer.files))
+										}}>
+										<p className='text-sm font-medium text-text-app'>
+											{t('sponsoredItems.refundProofsLabel')} · {refundProofs.length}/5
+										</p>
+										<p className='mt-1 text-xs text-muted-app'>
+											{t('sponsoredItems.refundProofsHint')}
+										</p>
+										{refundProofs.length > 0 && (
+											<div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5'>
+												{refundProofs.map((file) => (
+													<AttachmentCard
+														key={file.id}
+														budgetId={budget.id}
+														clubId={clubId}
+														itemId={item.id}
+														file={file}
+														editable={active}
+														busy={mutation.isPending}
+														onRemove={() => void act({ kind: 'removeRefundImage', imageId: file.id })}
+													/>
+												))}
+											</div>
+										)}
+										{refundProofs.length < 5 && (
+											<label className='relative mt-3 inline-flex min-h-10 items-center rounded-lg border border-border-app bg-surface-app px-4 text-sm font-medium text-primary-app hover:bg-surface-strong-app focus-within:outline-2 focus-within:outline-ring-app'>
+												{t('sponsoredItems.refundProofsUpload')}
+												<input
+													type='file'
+													accept='image/jpeg,image/png,application/pdf'
+													multiple
+													disabled={mutation.isPending}
+													className='sr-only'
+													onChange={(event) => {
+														void uploadRefundProofs(Array.from(event.target.files ?? []))
+														event.target.value = ''
+													}}
+												/>
+											</label>
+										)}
+										{refundProgress.total > 0 && (
+											<p role='status' className='mt-2 text-sm text-muted-app'>
+												{t('sponsoredItems.progress', refundProgress)}
+											</p>
+										)}
+									</div>
+
+									<label className='block text-sm font-medium text-text-app'>
+										{t('sponsoredItems.refundNoteLabel')}
+										<AppTextarea
+											value={refundNote}
+											onChange={(event) => setRefundNote(event.target.value)}
+											placeholder={t('sponsoredItems.refundNotePlaceholder')}
+											maxLength={2000}
+											disabled={mutation.isPending}
+											className='mt-1 w-full font-normal'
+										/>
+									</label>
+
+									<AppButton
+										type='button'
+										disabled={mutation.isPending || refundProofs.length === 0}
+										onClick={async () => {
+											if (
+												await confirm(
+													t('sponsoredItems.submitRefundConfirm', {
+														amount: money(item.refundAmount!),
+													}),
+												)
+											) {
+												await act({
+													kind: 'submitRefund',
+													...(refundNote.trim() ? { note: refundNote.trim() } : {}),
+												})
+											}
+										}}>
+										{t('sponsoredItems.submitRefund')}
+									</AppButton>
+								</div>
+							)}
+						</>
+					)}
+				</section>
+			)}
+
+			{isBeforeEvent && item.status === 'RefundSubmitted' && (item.refundAmount ?? 0) > 0 && (
+				<section className='mt-4 space-y-4 rounded-xl border border-primary-app/30 bg-surface-app/60 p-4'>
+					{isClub ? (
+						<>
+							<AppNotice>
+								{t('sponsoredItems.refundSubmittedClubNotice', {
+									amount: money(item.refundAmount!),
+									date: item.refundSubmittedAt ? formatDateTime(item.refundSubmittedAt) : '',
+								})}
+							</AppNotice>
+							{item.refundNote && (
+								<p className='text-sm text-text-app'>
+									<span className='text-muted-app'>{t('sponsoredItems.refundClubNote')}: </span>
+									<span className='whitespace-pre-wrap'>{item.refundNote}</span>
+								</p>
+							)}
+							{refundProofs.length > 0 && (
+								<div>
+									<p className='text-sm font-medium text-text-app'>
+										{t('sponsoredItems.refundProofsLabel')} · {refundProofs.length}/5
+									</p>
+									<div className='mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5'>
+										{refundProofs.map((file) => (
+											<AttachmentCard
+												key={file.id}
+												budgetId={budget.id}
+												clubId={clubId}
+												itemId={item.id}
+												file={file}
+												editable={false}
+												busy={mutation.isPending}
+												onRemove={() => {}}
+											/>
+										))}
+									</div>
+								</div>
+							)}
+							<div>
+								<AppButton
+									type='button'
+									variant='secondary'
+									onClick={() => setShowRefundPanel((open) => !open)}>
+									{t(showRefundPanel ? 'sponsoredItems.refundHideAccount' : 'sponsoredItems.refundShowAccountAgain')}
+								</AppButton>
+								{showRefundPanel && (
+									<div className='mt-3'>
+										{refundAccountQuery.isPending ? (
+											<AppSkeleton className='h-20 w-full' />
+										) : refundAccountQuery.isError ? (
+											<AppNotice tone='danger' role='alert'>
+												{t('sponsoredItems.refundAccountNotConfigured')}
+											</AppNotice>
+										) : refundAccountQuery.data ? (
+											<dl className='grid gap-3 rounded-lg border border-border-app bg-bg-app p-3.5 text-sm sm:grid-cols-2'>
+												<div>
+													<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountHolder')}</dt>
+													<dd className='mt-0.5 font-medium break-words text-text-app'>
+														{refundAccountQuery.data.account.accountHolder}
+													</dd>
+												</div>
+												<div>
+													<dt className='text-xs text-muted-app'>{t('sponsoredItems.accountNumber')}</dt>
+													<dd className='mt-0.5 font-semibold tabular-nums text-text-app'>
+														{refundAccountQuery.data.account.accountNumber}
+													</dd>
+												</div>
+												<div>
+													<dt className='text-xs text-muted-app'>{t('sponsoredItems.bankName')}</dt>
+													<dd className='mt-0.5 break-words text-text-app'>
+														{refundAccountQuery.data.account.bankName}
+													</dd>
+												</div>
+												{refundAccountQuery.data.account.bankBranch && (
+													<div>
+														<dt className='text-xs text-muted-app'>{t('sponsoredItems.bankBranch')}</dt>
+														<dd className='mt-0.5 break-words text-text-app'>
+															{refundAccountQuery.data.account.bankBranch}
+														</dd>
+													</div>
+												)}
+											</dl>
+										) : null}
+									</div>
+								)}
+							</div>
+						</>
+					) : (
+						<>
+							<div className='flex flex-wrap items-center justify-between gap-2'>
+								<div>
+									<h5 className='text-sm font-semibold text-text-app'>
+										{t('sponsoredItems.refundSubmittedOfficerTitle')}
+									</h5>
+									<p className='mt-0.5 text-sm tabular-nums text-muted-app'>
+										{t('sponsoredItems.refundAmountDue')}:{' '}
+										<strong className='text-text-app'>{money(item.refundAmount!)}</strong>
+										{item.refundSubmittedAt ? ` · ${formatDateTime(item.refundSubmittedAt)}` : ''}
+									</p>
+								</div>
+								{refundProofs.length > 0 && (
+									<AppButton
+										type='button'
+										variant='secondary'
+										disabled={downloadingRefundAll}
+										onClick={() => void downloadAllRefundProofs()}>
+										<AppIcon name='download' className='size-4' />
+										{downloadingRefundAll
+											? t('sponsoredItems.downloading')
+											: t('sponsoredItems.refundProofsDownloadAll')}
+									</AppButton>
+								)}
+							</div>
+							{item.refundNote && (
+								<p className='text-sm text-text-app'>
+									<span className='text-muted-app'>{t('sponsoredItems.refundClubNote')}: </span>
+									<span className='whitespace-pre-wrap'>{item.refundNote}</span>
+								</p>
+							)}
+							{refundProofs.length > 0 && (
+								<div>
+									<p className='text-sm font-medium text-text-app'>
+										{t('sponsoredItems.refundProofsOfficerLabel')} · {refundProofs.length}/5
+									</p>
+									<div className='mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5'>
+										{refundProofs.map((file) => (
+											<AttachmentCard
+												key={file.id}
+												budgetId={budget.id}
+												clubId={clubId}
+												itemId={item.id}
+												file={file}
+												editable={false}
+												busy={mutation.isPending}
+												onRemove={() => {}}
+											/>
+										))}
+									</div>
+								</div>
+							)}
+							{active && (
+								<div className='space-y-3 border-t border-border-app pt-3'>
+									<label className='block text-sm font-medium text-text-app'>
+										{t('sponsoredItems.refundReviewReasonLabel')}
+										<AppTextarea
+											value={refundReason}
+											onChange={(event) => setRefundReason(event.target.value)}
+											maxLength={2000}
+											disabled={mutation.isPending}
+											className='mt-1 w-full font-normal'
+										/>
+									</label>
+									<div className='flex flex-wrap gap-2'>
+										<AppButton
+											type='button'
+											disabled={mutation.isPending}
+											onClick={async () => {
+												if (
+													await confirm(
+														t('sponsoredItems.confirmRefundConfirm', {
+															amount: money(item.refundAmount!),
+														}),
+													)
+												) {
+													await act({
+														kind: 'confirmRefund',
+														...(refundReason.trim() ? { reason: refundReason.trim() } : {}),
+													})
+												}
+											}}>
+											{t('sponsoredItems.confirmRefund')}
+										</AppButton>
+										<AppButton
+											type='button'
+											variant='ghost'
+											disabled={mutation.isPending || !refundReason.trim()}
+											onClick={() => void act({ kind: 'returnRefund', reason: refundReason.trim() })}>
+											{t('sponsoredItems.returnRefund')}
+										</AppButton>
+									</div>
+								</div>
+							)}
+						</>
+					)}
+				</section>
+			)}
+
+			{isBeforeEvent && item.refundConfirmedAt && (item.refundAmount ?? 0) > 0 && (
+				<section className='mt-4 space-y-3 rounded-xl border border-success-app/30 bg-surface-app/40 p-4'>
+					<div className='flex flex-wrap items-center justify-between gap-2'>
+						<p className='text-sm font-medium text-success-app'>
+							{t('sponsoredItems.refundConfirmedDone', {
+								amount: money(item.refundAmount!),
+								date: formatDateTime(item.refundConfirmedAt),
+							})}
+						</p>
+						{isOfficer && refundProofs.length > 0 && (
+							<AppButton
+								type='button'
+								variant='secondary'
+								disabled={downloadingRefundAll}
+								onClick={() => void downloadAllRefundProofs()}>
+								<AppIcon name='download' className='size-4' />
+								{downloadingRefundAll
+									? t('sponsoredItems.downloading')
+									: t('sponsoredItems.refundProofsDownloadAll')}
+							</AppButton>
+						)}
+					</div>
+					{item.refundReviewReason && (
+						<p className='whitespace-pre-wrap text-sm text-text-app'>{item.refundReviewReason}</p>
+					)}
+					{refundProofs.length > 0 && (
+						<div className='grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5'>
+							{refundProofs.map((file) => (
+								<AttachmentCard
+									key={file.id}
+									budgetId={budget.id}
+									clubId={clubId}
+									itemId={item.id}
+									file={file}
+									editable={false}
+									busy={mutation.isPending}
+									onRemove={() => {}}
+								/>
+							))}
+						</div>
+					)}
+				</section>
+			)}
+
 			{/* Bước hoàn tất thanh toán sau đối soát (tách riêng theo kênh) */}
 			{active &&
 				item.status === 'Accepted' &&
@@ -979,6 +1470,15 @@ export function SponsoredItems({
 		return sum + (item.status === 'Paid' ? (item.payable ?? 0) : 0)
 	}, 0)
 
+	const refunded = query.data.items.reduce(
+		(sum, item) =>
+			sum +
+			(item.fundingDecision === 'BEFORE_EVENT' && item.refundConfirmedAt
+				? (item.refundAmount ?? 0)
+				: 0),
+		0,
+	)
+
 	const totals = [
 		{
 			label: t('budgets.approved'),
@@ -989,13 +1489,14 @@ export function SponsoredItems({
 			amount: query.data.items.reduce((sum, item) => sum + item.amount, 0),
 		},
 		{ label: t('budgets.transferred'), amount: disbursed },
+		...(refunded > 0 ? [{ label: t('budgets.refunded'), amount: refunded }] : []),
 	]
 
 	return (
 		<section className='mt-6 space-y-4'>
 			<h3 className='font-heading text-lg font-semibold'>{t('sponsoredItems.title')}</h3>
 			<p className='text-sm text-muted-app'>{t('sponsoredItems.hint')}</p>
-			<dl className='grid gap-3 sm:grid-cols-3'>
+			<dl className={cn('grid gap-3', totals.length > 3 ? 'sm:grid-cols-4' : 'sm:grid-cols-3')}>
 				{totals.map((total) => (
 					<div key={total.label} className='rounded-xl border border-border-app bg-bg-app p-4'>
 						<dt className='text-sm text-muted-app'>{total.label}</dt>
