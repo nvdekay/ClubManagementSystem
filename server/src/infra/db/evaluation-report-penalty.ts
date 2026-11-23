@@ -5,8 +5,7 @@ import { periodicDueAt, periodicDueDays } from "../../domain/periodic-report.js"
 import { findPeriodicCampaign } from "./mongo-periodic-report-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
-// Tính điểm trừ nộp báo cáo định kỳ trễ hạn cho đánh giá CLB
-/** Hạn nộp báo cáo vẫn áp dụng sau khi ICPDP đóng nộp cho kỳ đó. */
+/** Report deadlines still apply after ICPDP closes submission for the period. */
 export async function evaluationReportPenalty(clubId: string, periodCode: string, now: Date): Promise<MetricValue> {
   const club = new Types.ObjectId(clubId);
   const [report, campaign, policy, clubDoc] = await Promise.all([

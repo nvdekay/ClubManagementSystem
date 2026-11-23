@@ -25,13 +25,11 @@ schema.index({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl_auth_sessions
 const SessionModel: Model<SessionDocument> = (mongoose.models.AuthSession as Model<SessionDocument> | undefined)
   ?? mongoose.model<SessionDocument>("AuthSession", schema, "authSessions");
 
-// Tạo collection và index cho phiên đăng nhập
 export async function ensureAuthSessionIndexes(): Promise<void> {
   await SessionModel.createCollection();
   await SessionModel.createIndexes();
 }
 
-// Ánh xạ document thành AuthSession
 function mapSession(doc: SessionDocument & { _id: Types.ObjectId }): AuthSession {
   return {
     id: String(doc._id), userId: String(doc.userId), tokenHash: doc.tokenHash,
@@ -39,28 +37,23 @@ function mapSession(doc: SessionDocument & { _id: Types.ObjectId }): AuthSession
   };
 }
 
-// Repository phiên đăng nhập (cookie session)
 export function mongoSessionRepository(): SessionRepository {
   return {
-    // Tạo phiên đăng nhập mới
     async create(session) {
       await SessionModel.create({
         userId: new Types.ObjectId(session.userId), tokenHash: session.tokenHash,
         csrfHash: session.csrfHash, createdAt: new Date(), expiresAt: session.expiresAt,
       });
     },
-    // Tìm phiên còn hiệu lực theo token hash
     async findActive(tokenHash, now) {
       const doc = await SessionModel.findOne({
         tokenHash, revokedAt: null, expiresAt: { $gt: now },
       }).lean();
       return doc ? mapSession(doc) : null;
     },
-    // Thu hồi một phiên theo token hash
     async revoke(tokenHash, now) {
       await SessionModel.updateOne({ tokenHash, revokedAt: null }, { $set: { revokedAt: now } });
     },
-    // Thu hồi mọi phiên đang hoạt động của user
     async revokeUser(userId, now) {
       await SessionModel.updateMany(
         { userId: new Types.ObjectId(userId), revokedAt: null },

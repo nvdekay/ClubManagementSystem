@@ -14,13 +14,11 @@ export interface EventFinanceDeps {
   access: ClubAccessRepository;
   auth: Pick<AuthRepository, "systemRoleCodes">;
 }
-// Kiểm định dạng id tài chính sự kiện
 export function financeId(value: string): string {
   if (!/^[0-9a-f]{24}$/i.test(value))
     throw new DomainError("invalid finance identifier", "validation");
   return value;
 }
-// Kiểm actor là ICPDP officer phụ trách tài chính sự kiện
 export async function assertFinanceOfficer(
   auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null,
@@ -34,7 +32,6 @@ export async function assertFinanceOfficer(
     throw new DomainError("ICPDP officer role required", "forbidden");
   return actor.id;
 }
-// Liệt kê ngân sách sự kiện, theo CLB hoặc cho ICPDP
 export async function listEventFinances(
   deps: EventFinanceDeps,
   actor: AccessActor | null,
@@ -52,7 +49,6 @@ export async function listEventFinances(
   else await assertFinanceOfficer(deps.auth, actor);
   return deps.repo.list(clubId);
 }
-// Xem chi tiết ngân sách và chi tiêu của một sự kiện
 export async function getEventFinance(
   deps: EventFinanceDeps,
   actor: AccessActor | null,
@@ -73,7 +69,6 @@ export async function getEventFinance(
   if (!result) throw new DomainError("budget not found", "not_found");
   return result;
 }
-// Thực hiện thao tác tài chính sự kiện (chi tiêu, minh chứng, nộp, nhận, trả, chốt)
 export async function actOnEventFinance(
   deps: EventFinanceDeps,
   actor: AccessActor | null,

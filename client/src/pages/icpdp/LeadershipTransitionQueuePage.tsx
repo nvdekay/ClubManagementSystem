@@ -10,7 +10,6 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useLeadershipTransitionQueue } from "@/hooks/useLeadershipTransitions";
 
-// Hàng đợi ICPDP các yêu cầu bàn giao lãnh đạo CLB
 export function LeadershipTransitionQueuePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();

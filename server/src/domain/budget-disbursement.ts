@@ -1,6 +1,6 @@
 import { DomainError } from "./errors.js";
 
-/** BR57: hằng số của tài liệu chính sách, không phải giá trị chính sách có thể chỉnh sửa (BR42). */
+/** BR57: a constant of the policy document, not an editable policy value (BR42). */
 export const SETTLEMENT_DUE_DAYS = 14;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -31,7 +31,7 @@ export interface BudgetSummary {
   periodCode?: string;
   requestedTotal: number;
   approvedTotal: number;
-  /** Advance + TopUp, số tiền mà BR23 đem so với tổng đã duyệt. */
+  /** Advance + TopUp, the amount BR23 compares with the approved total. */
   disbursedTotal: number;
   refundedTotal: number;
   settlementDueAt?: Date;
@@ -41,11 +41,11 @@ export interface BudgetSummary {
   createdAt: Date;
 }
 
-/** Dòng tiền duy nhất mà ngân sách chấp nhận lúc này, cùng mức tối đa của nó. */
+/** The one money flow the budget accepts right now, and its limit. */
 export interface AllowedFlow {
   kind: BudgetFlowKind;
   max: number;
-  /** Top-up phải đúng bằng số dư quyết toán (UC35 E2). */
+  /** A top-up must equal the settlement balance exactly (UC35 E2). */
   exact?: number;
 }
 
@@ -74,18 +74,16 @@ export interface NormalizedBudgetFlow {
 export interface BudgetDisbursementRepository {
   list(): Promise<BudgetSummary[]>;
   find(id: string): Promise<BudgetDetail | null>;
-  /** Kiểm tra lại `allowedFlow` trong transaction, rồi ghi dòng tiền, audit và thông báo. */
+  /** Re-checks `allowedFlow` inside its transaction, writes the flow, audit and notifications. */
   record(id: string, officerId: string, input: NormalizedBudgetFlow, now: Date): Promise<BudgetDetail>;
 }
 
 const closedEventStates = new Set(["Cancelled", "Rejected", "Expired"]);
 
-// Tính hạn quyết toán kể từ lúc sự kiện kết thúc
 export function settlementDueAt(eventEndAt: Date): Date {
   return new Date(eventEndAt.getTime() + SETTLEMENT_DUE_DAYS * DAY_MS);
 }
 
-// Xác định loại dòng tiền (tạm ứng, hoàn trả...) và mức tối đa ngân sách đang cho phép
 export function allowedFlow(budget: Pick<BudgetSummary, "state" | "approvedTotal" | "disbursedTotal"
   | "refundedTotal" | "settlementBalance" | "recoveryAmount" | "eventState">): AllowedFlow | undefined {
   if (budget.state === "Approved" || budget.state === "Disbursed") {
@@ -103,15 +101,14 @@ export function allowedFlow(budget: Pick<BudgetSummary, "state" | "approvedTotal
   return undefined;
 }
 
-// Từ chối dòng tiền mà ngân sách không thể nhận ở trạng thái hiện tại
-/** BR23 / BR26 / BR58: từ chối dòng tiền mà ngân sách không thể nhận ở trạng thái hiện tại. */
+/** BR23 / BR26 / BR58: rejects a flow the budget cannot take in its current state. */
 export function checkFlow(budget: Parameters<typeof allowedFlow>[0] & Partial<Pick<BudgetSummary, "eventEndAt">>,
   flow: NormalizedBudgetFlow): void {
   const allowed = allowedFlow(budget);
   if (!allowed || allowed.kind !== flow.kind) {
     throw new DomainError(`a ${flow.kind} cannot be recorded for this budget now`, "conflict");
   }
-  // UC35: tạm ứng là để cấp vốn cho sự kiện nên không thể ghi ngày sau khi sự kiện kết thúc.
+  // UC35: an advance funds the event, so it cannot be dated after the event has ended.
   if (flow.kind === "Advance" && budget.eventEndAt instanceof Date && flow.disbursedAt > budget.eventEndAt) {
     throw new DomainError("an advance must be paid before the event ends", "validation", { field: "disbursedAt" });
   }
@@ -123,8 +120,7 @@ export function checkFlow(budget: Parameters<typeof allowedFlow>[0] & Partial<Pi
   }
 }
 
-// Tính trạng thái ngân sách sau khi ghi nhận dòng tiền
-/** Trạng thái ngân sách sau khi ghi nhận dòng tiền. */
+/** What the budget becomes after the flow is recorded. */
 export function stateAfterFlow(budget: Pick<BudgetSummary, "state" | "refundedTotal" | "recoveryAmount">,
   flow: Pick<NormalizedBudgetFlow, "kind" | "amount">): string {
   if (flow.kind === "Advance") return "Disbursed";

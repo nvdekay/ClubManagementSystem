@@ -7,17 +7,16 @@ import { chartToneFill, type ChartTone } from "./chartScale";
 interface AppChartFrameProps {
   title: string;
   description?: string;
-  /** Hiển thị khi có từ hai chuỗi; chỉ một chuỗi thì tiêu đề đã là tên của nó. */
+  /** Shown for two or more series; a single series is named by the title. */
   legend?: { label: string; tone: ChartTone }[];
   action?: ReactNode;
-  /** Cùng các số liệu dưới dạng bảng, để không giá trị nào phụ thuộc vào hover. */
+  /** The same numbers as a table, so no value depends on hovering. */
   table?: { label: string; columns: string[]; rows: (string | number)[][] };
   className?: string;
   children: ReactNode;
 }
 
-// Khung thẻ bao quanh biểu đồ, kèm chú thích và bảng số liệu
-/** Thẻ bao quanh một biểu đồ: tiêu đề, chú thích, biểu đồ và chế độ xem bảng có thể thu gọn. */
+/** Card around one chart: heading, legend, the chart, and a collapsible table view. */
 export function AppChartFrame({ title, description, legend, action, table, className, children }: AppChartFrameProps) {
   return (
     <section className={cn("flex min-w-0 flex-col rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs", className)}>

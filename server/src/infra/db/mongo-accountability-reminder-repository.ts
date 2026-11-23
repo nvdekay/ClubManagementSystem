@@ -9,7 +9,6 @@ const OFFICER_CODES: Readonly<Record<string, string>> = {
   REPORT_ESCALATED: "REPORT_ESCALATED_TO_ICPDP",
   REFUND_OVERDUE: "REFUND_OVERDUE_TO_ICPDP",
 };
-// Gửi nhắc hạn/leo thang một lần cho báo cáo hoặc quyết toán và ghi audit
 async function remindOnce(
   session: ClientSession,
   type: string,
@@ -45,7 +44,7 @@ async function remindOnce(
     { session },
   );
   await queueNotifications(session, await clubBoardUserIds(clubId, session), code, type, id, { dueAt }, now);
-  // Leo thang cũng gửi tới ICPDP, dưới mã riêng để hiện trong workspace của cán bộ.
+  // Escalations also reach ICPDP, under their own code so they show in the officers' workspace.
   const officerCode = OFFICER_CODES[code];
   if (officerCode) {
     const roles = await m
@@ -63,10 +62,8 @@ async function remindOnce(
   }
   return 1;
 }
-// Repository nhắc hạn nộp báo cáo sau sự kiện và quyết toán ngân sách
 export function mongoAccountabilityReminderRepository(): AccountabilityReminderRepository {
   return {
-    // Quét sự kiện và ngân sách để gửi nhắc, cảnh báo quá hạn
     async remind(now) {
       let count = 0;
       const events = await m

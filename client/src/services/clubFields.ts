@@ -15,7 +15,7 @@ export interface ClubFieldInput {
 
 export type ClubFieldRemoval = "deleted" | "deactivated";
 
-/** Server trả 409: đã có lĩnh vực khác dùng tên này. */
+/** 409 from the server: another field already uses this name. */
 export class DuplicateClubFieldError extends ApiError {
   constructor(message: string) {
     super(message);
@@ -23,7 +23,6 @@ export class DuplicateClubFieldError extends ApiError {
   }
 }
 
-// Đổi response lỗi thành ApiError (409 thành lỗi trùng lĩnh vực)
 async function failure(response: Response): Promise<never> {
   const body = (await response.json().catch(() => null)) as { message?: string } | null;
   const message = body?.message ?? `HTTP ${response.status}`;
@@ -31,7 +30,6 @@ async function failure(response: Response): Promise<never> {
   throw new ApiError(message);
 }
 
-// Gửi POST/PATCH/DELETE có CSRF và trả về data
 async function mutate<T>(path: string, method: "POST" | "PATCH" | "DELETE", csrfToken: string,
   body?: ClubFieldInput): Promise<T> {
   const response = await apiFetch(path, {
@@ -44,7 +42,6 @@ async function mutate<T>(path: string, method: "POST" | "PATCH" | "DELETE", csrf
   return result.data;
 }
 
-// GET /admin/club-fields: danh mục lĩnh vực CLB kèm mức sử dụng
 export async function fetchClubFields(signal: AbortSignal): Promise<ClubFieldUsage[]> {
   const response = await apiFetch("/api/v1/admin/club-fields", { signal, credentials: "same-origin" });
   if (!response.ok) return failure(response);
@@ -52,18 +49,15 @@ export async function fetchClubFields(signal: AbortSignal): Promise<ClubFieldUsa
   return body.data;
 }
 
-// POST tạo lĩnh vực CLB mới
 export function createClubField(input: ClubFieldInput, csrfToken: string) {
   return mutate<ClubFieldUsage>("/api/v1/admin/club-fields", "POST", csrfToken, input);
 }
 
-// PATCH cập nhật lĩnh vực CLB
 export function updateClubField(id: string, input: ClubFieldInput, csrfToken: string) {
   return mutate<ClubFieldUsage>(`/api/v1/admin/club-fields/${encodeURIComponent(id)}`, "PATCH",
     csrfToken, input);
 }
 
-// DELETE xoá lĩnh vực CLB
 export async function removeClubField(id: string, csrfToken: string): Promise<ClubFieldRemoval> {
   const result = await mutate<{ result: ClubFieldRemoval }>(
     `/api/v1/admin/club-fields/${encodeURIComponent(id)}`, "DELETE", csrfToken);

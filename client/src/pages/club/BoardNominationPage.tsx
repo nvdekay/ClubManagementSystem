@@ -14,25 +14,21 @@ import { useBoardNominationAction, useBoardNominationContext,
   useClubBoardNominations } from "@/hooks/useBoardNominations";
 import type { BoardNomination } from "@/services/boardNominations";
 
-// Màu badge theo trạng thái đề cử
 function nominationTone(state: string) {
   if (state === "Confirmed") return "success" as const;
   if (state === "Returned") return "warning" as const;
   return "info" as const;
 }
 
-// Danh sách lịch sử các lần đề cử ban chủ nhiệm
-/** UC10: CLB theo dõi từng đề cử đã gửi và đọc lý do ICPDP trả lại một ghế. */
+/** UC10: the club follows each submitted nomination and reads why ICPDP returned a seat. */
 function NominationHistory({ clubId }: { clubId: string }) {
   const { t, i18n } = useTranslation();
   const history = useClubBoardNominations(clubId, true);
-  // Nhãn trạng thái của một lần đề cử
   function stateLabel(state: string) {
     if (state === "Confirmed") return t("boardNominations.nominationConfirmed");
     if (state === "Returned") return t("boardNominations.nominationReturned");
     return t("boardNominations.nominationPending");
   }
-  // Nhãn trạng thái của từng ghế trong đề cử
   function seatLabel(state: BoardNomination["seats"][number]["state"]) {
     if (state === "Confirmed") return t("boardNominations.confirmed");
     if (state === "Returned") return t("boardNominations.returned");
@@ -70,7 +66,6 @@ function NominationHistory({ clubId }: { clubId: string }) {
   </section>;
 }
 
-// Trang Club Leader đề cử thành viên vào các ghế ban chủ nhiệm
 export function BoardNominationPage() {
   const { clubId } = useParams();
   const { t, i18n } = useTranslation();
@@ -81,14 +76,12 @@ export function BoardNominationPage() {
   const action = useBoardNominationAction();
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
-  // Bấm đúp kích hoạt hai lần trước khi React render lại nút đã bị vô hiệu.
+  // A double click fires twice before React re-renders the disabled button.
   const inFlight = useRef(false);
-  // Định dạng ngày theo ngôn ngữ hiện tại
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
   }
 
-  // Gửi đề cử các ghế đã chọn lên ICPDP
   async function submit() {
     if (!auth.data || !clubId || inFlight.current) return;
     inFlight.current = true;
@@ -98,7 +91,7 @@ export function BoardNominationPage() {
       await action.mutateAsync({ kind: "submit", clubId, seats, csrfToken: auth.data.csrfToken });
       setSubmitted(true);
       setSelection({});
-    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
+    } catch { /* Mutation error is displayed below. */ }
     finally { inFlight.current = false; }
   }
 
@@ -114,7 +107,7 @@ export function BoardNominationPage() {
     <AppButton variant="secondary" onClick={() => void context.refetch()}>{t("boardNominations.retry")}</AppButton>
   </AppNotice>;
 
-  // Ghế nhiều người giữ (Phó chủ nhiệm) vẫn mở sau khi một người đã được xác nhận hoặc đang chờ.
+  // A multi-holder seat (Phó chủ nhiệm) stays open after one holder is confirmed or pending.
   const available = context.data.positions.filter((position) => !position.isSingleHolder
     || (!context.data.occupiedPositionIds.includes(position.id)
       && !context.data.pendingPositionIds.includes(position.id)));
@@ -140,7 +133,7 @@ export function BoardNominationPage() {
           : <div className="mt-4 divide-y divide-border-app border-t border-border-app">
             {available.map((position) => {
               const conflictIds = position.isLeaderRole ? context.data!.presidentConflictMembershipIds : [];
-              // Mỗi người chỉ giữ tối đa một ghế, nên thành viên đã được chọn ở ghế khác sẽ không hiện ở đây.
+              // One person holds at most one seat, so a member picked elsewhere is not offered here.
               const takenIds = Object.entries(selection).filter(([id, value]) => id !== position.id && value)
                 .map(([, value]) => value);
               const candidates = context.data!.candidates.filter((candidate) =>

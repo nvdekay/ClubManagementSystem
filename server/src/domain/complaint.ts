@@ -2,9 +2,9 @@ import { DomainError } from "./errors.js";
 import { VIOLATION_SEVERITIES, type ViolationSeverity } from "./violation.js";
 
 /**
- * UC50–UC52 khiếu nại chính thức (BR38, BR39). Sinh viên khiếu nại một CLB thẳng lên ICPDP;
- * ICPDP phân loại (Dismissed / Forwarded / Escalated); chỉ khiếu nại Forwarded mới đến CLB,
- * CLB phản hồi một lần; sau đó ICPDP đóng lại hoặc nâng thành hồ sơ vi phạm UC40.
+ * UC50–UC52 formal complaint (BR38, BR39). A student complains about a club straight to ICPDP;
+ * ICPDP triages it (Dismissed / Forwarded / Escalated); only a Forwarded complaint reaches the club,
+ * which answers once; ICPDP then closes it or escalates it into a UC40 violation case.
  */
 export const COMPLAINT_TYPES = ["CONDUCT", "EVENT", "FINANCE", "SAFETY", "OTHER"] as const;
 export type ComplaintType = (typeof COMPLAINT_TYPES)[number];
@@ -15,7 +15,7 @@ export const TRIAGE_OUTCOMES = ["Dismissed", "Forwarded", "Escalated"] as const;
 export type TriageOutcome = (typeof TRIAGE_OUTCOMES)[number];
 export const TRIAGE_VALIDITIES = ["VALID", "PARTLY_VALID", "UNFOUNDED"] as const;
 export type TriageValidity = (typeof TRIAGE_VALIDITIES)[number];
-/** Các trạng thái sinh viên còn được rút khiếu nại (UC50 A1) và ICPDP được liên kết thành một sự việc (UC50 E1). */
+/** States a student may still withdraw from (UC50 A1) and that ICPDP may link as one incident (UC50 E1). */
 export const UNDECIDED_COMPLAINT_STATES: readonly ComplaintState[] = ["Submitted", "Under Triage"];
 export const OPEN_COMPLAINT_STATES: readonly ComplaintState[] = ["Submitted", "Under Triage", "Forwarded", "Club Responded"];
 export const MAX_COMPLAINT_TEXT = 4_000;
@@ -43,7 +43,7 @@ export interface ComplaintTriage {
 
 export interface ComplaintClubResponse { text: string; action: string; evidence: ComplaintEvidence[]; at: Date }
 
-/** Toàn bộ nội dung ICPDP và tác giả được đọc. CLB không bao giờ nhận dạng dữ liệu này (D5). */
+/** Everything ICPDP and the author may read. The club never receives this shape (D5). */
 export interface Complaint {
   id: string;
   clubId?: string;
@@ -68,13 +68,13 @@ export interface Complaint {
   closedAt?: Date;
 }
 
-/** Góc nhìn của ICPDP có thêm người khiếu nại; chỉ ICPDP mới nhận được. */
+/** ICPDP's view adds who complained; only ICPDP ever gets it. */
 export interface ComplaintForIcpdp extends Complaint {
   complainant: { id: string; displayName: string; email: string };
   linkedComplaintIds: string[];
 }
 
-/** D5: CLB thấy nội dung được chuyển và ghi chú của ICPDP, không bao giờ thấy người khiếu nại. */
+/** D5: the club sees the forwarded matter and ICPDP's note, never the complainant. */
 export interface ComplaintForClub {
   id: string;
   clubId: string;
@@ -95,34 +95,32 @@ export type ComplaintDecision =
     responseDueAt?: Date }
   | { kind: "close"; reason: string }
   | { kind: "escalate"; severity: ViolationSeverity; reason: string }
-  /** UC50 E1: ICPDP xác định hai khiếu nại của một sinh viên về cùng một CLB là cùng một sự việc. */
+  /** UC50 E1: ICPDP judges two complaints of one student about one club to be the same incident. */
   | { kind: "link"; targetId: string; reason: string };
 
 export interface ComplaintRepository {
   club(clubId: string): Promise<{ id: string; name: string; state: string } | null>;
   eventBelongsToClub(eventId: string, clubId: string): Promise<boolean>;
-  /** Tạo khiếu nại, task ICPDP, audit và thông báo ICPDP trong cùng một transaction. */
+  /** Creates the complaint, its ICPDP task, audit and ICPDP notification in one transaction. */
   submit(input: ComplaintInput & { studentId: string; now: Date }): Promise<Complaint>;
   listMine(studentId: string): Promise<Complaint[]>;
-  /** Chỉ khi khiếu nại thuộc về sinh viên và còn Submitted / Under Triage; ngược lại trả null. */
+  /** Only when it belongs to the student and is still Submitted / Under Triage; null otherwise. */
   withdraw(studentId: string, complaintId: string, now: Date): Promise<Complaint | null>;
   queue(filter: { state?: ComplaintState }): Promise<ComplaintForIcpdp[]>;
   findForIcpdp(complaintId: string): Promise<ComplaintForIcpdp | null>;
-  /** Áp dụng một bước của ICPDP với điều kiện trạng thái; báo conflict nếu khiếu nại đã đổi trạng thái trong lúc đó. */
+  /** Applies one ICPDP step with a state precondition; conflict when the complaint moved meanwhile. */
   decide(complaintId: string, officerId: string, decision: ComplaintDecision, now: Date): Promise<ComplaintForIcpdp>;
   clubInbox(clubId: string): Promise<ComplaintForClub[]>;
   respond(clubId: string, complaintId: string, actorId: string, response: Omit<ComplaintClubResponse, "at">,
     now: Date): Promise<ComplaintForClub>;
-  /** UC52 E1: đánh dấu mỗi khiếu nại Forwarded quá hạn một lần (audit + thông báo ICPDP); trả về số lượng. */
+  /** UC52 E1: flags each overdue Forwarded complaint once (audit + ICPDP notification); returns how many. */
   flagOverdueResponses(now: Date): Promise<number>;
 }
 
-// Ném lỗi validation cho trường khiếu nại không hợp lệ
 function invalid(message: string, field: string): never {
   throw new DomainError(message, "validation", { field });
 }
 
-// Cắt khoảng trắng và kiểm tra độ dài nội dung khiếu nại
 export function complaintText(value: string, field: string, max = MAX_COMPLAINT_TEXT): string {
   const trimmed = value.trim();
   if (!trimmed) invalid(`${field} is required`, field);
@@ -130,7 +128,6 @@ export function complaintText(value: string, field: string, max = MAX_COMPLAINT_
   return trimmed;
 }
 
-// Kiểm tra và chuẩn hoá các link minh chứng đính kèm khiếu nại
 export function normalizeEvidence(items: readonly ComplaintEvidence[]): ComplaintEvidence[] {
   if (items.length > MAX_COMPLAINT_EVIDENCE) invalid(`attach at most ${MAX_COMPLAINT_EVIDENCE} evidence links`, "evidence");
   return items.map((item) => {
@@ -142,8 +139,7 @@ export function normalizeEvidence(items: readonly ComplaintEvidence[]): Complain
   });
 }
 
-// Kiểm tra bước quyết định của ICPDP hợp lệ với trạng thái khiếu nại hiện tại
-/** Kiểm tra một bước của ICPDP với trạng thái hiện tại (BR39: mọi kết quả đều phải có lý do). */
+/** Checks one ICPDP step against the current state (BR39: a reason for every outcome). */
 export function assertComplaintDecision(current: Pick<Complaint, "state" | "clubState">, decision: ComplaintDecision,
   now: Date): ComplaintDecision {
   switch (decision.kind) {
@@ -156,7 +152,7 @@ export function assertComplaintDecision(current: Pick<Complaint, "state" | "club
       if (!TRIAGE_VALIDITIES.includes(decision.validity)) invalid("invalid validity", "validity");
       if (!VIOLATION_SEVERITIES.includes(decision.severity)) invalid("invalid severity", "severity");
       const reason = complaintText(decision.reason, "reason", 2_000);
-      // UC51 E1: CLB đã giải thể không còn phản hồi hay bị xử lý được nữa; khiếu nại được đóng kèm lịch sử.
+      // UC51 E1: a dissolved club can no longer answer or be sanctioned; the complaint is closed with its history.
       if (current.clubState === "Dissolved" && decision.outcome !== "Dismissed") {
         throw new DomainError("the club is dissolved; record and dismiss the complaint", "conflict");
       }

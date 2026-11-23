@@ -1,8 +1,8 @@
-// Dữ liệu demo bảo vệ cho người trình bày 2: luồng 4 (UC10-UC13, ban chủ nhiệm và chuyển giao lãnh đạo) và
-// luồng 10 (UC14-UC15, đình chỉ, kích hoạt lại, giải thể) trên CLB demo dùng chung.
-// Dàn nhân vật lấy từ seed-defense-cast.ts (tài khoản demo, hoặc tài khoản thật qua --leader= v.v.).
-// Chỉ thêm và chạy lại an toàn, kể cả sau seed của các người trình bày khác: mỗi phần đều khoá theo
-// dàn nhân vật, tên CLB và các tiêu đề cố định, và dùng lại những gì đã có.
+// Defense demo data for presenter 2: flow 4 (UC10-UC13, board and leadership transition) and
+// flow 10 (UC14-UC15, suspension, reactivation, dissolution) on the shared demo club.
+// The cast comes from seed-defense-cast.ts (demo accounts, or real accounts via --leader= etc.).
+// Additive and safe to run again, also after the other presenters' seeds: every part is keyed on
+// the cast, the club name and fixed titles, and reuses what already exists.
 import mongoose, { Types } from "mongoose";
 import { createPolicyVersion } from "../../usecase/policy.js";
 import { writeClubTransition } from "../../usecase/club-transition-plan.js";
@@ -22,14 +22,12 @@ const NEW_TERM = "Nhiệm kỳ 2026–2027";
 const DAY = 86_400_000;
 const VN_OFFSET = 7 * 3_600_000;
 const now = new Date();
-// Đầu ngày (giờ Việt Nam) cách hôm nay days ngày
-/** Nửa đêm của một ngày lịch Việt Nam, `days` ngày sau hôm nay. */
+/** Midnight of a Vietnam calendar day, `days` after today. */
 function vnDayStart(days: number): Date {
   return new Date(Math.floor((now.getTime() + VN_OFFSET) / DAY) * DAY + days * DAY - VN_OFFSET);
 }
 
-// Lấy hoặc tạo tài khoản người dùng cho một vai demo
-/** Tài khoản thật (bị ghi đè) phải đã đăng nhập một lần; tài khoản demo được tạo nếu còn thiếu. */
+/** A real (overridden) account must have signed in once; a demo account is created when missing. */
 async function user(person: CastMember): Promise<Types.ObjectId> {
   const found = await m.users!.findOne({ email: person.email }).select("_id").lean();
   if (found) return found._id as Types.ObjectId;
@@ -39,8 +37,7 @@ async function user(person: CastMember): Promise<Types.ObjectId> {
   return created!._id as Types.ObjectId;
 }
 
-// Đảm bảo người dùng có vai trò ICPDP_OFFICER
-/** Chỉ cấp ICPDP_OFFICER cho cán bộ demo; cán bộ thật phải đã giữ quyền này. */
+/** Grants ICPDP_OFFICER to the demo officer only; a real officer account must already hold it. */
 async function officerRole(officerId: Types.ObjectId): Promise<void> {
   const role = cast.officer.overridden ? await m.roles!.findOne({ code: "ICPDP_OFFICER", scope: "system" }).lean()
     : await m.roles!.findOneAndUpdate({ code: "ICPDP_OFFICER", scope: "system" },
@@ -54,9 +51,9 @@ async function officerRole(officerId: Types.ObjectId): Promise<void> {
 }
 
 /**
- * CLB demo dùng chung (cùng dạng với seed của các người trình bày khác): leader ở ghế Chủ nhiệm,
- * vice ở ghế Phó chủ nhiệm, member và member2 là thành viên thường. CLB đã có thì dùng lại;
- * chỉ thêm các membership còn thiếu của dàn nhân vật.
+ * The shared demo club (same shape as the other presenters' seeds): leader in the Chủ nhiệm seat,
+ * vice in a Phó chủ nhiệm seat, member and member2 as plain members. An existing club is reused;
+ * only missing memberships of the cast are added.
  */
 async function ensureClub(ids: Ids): Promise<Types.ObjectId> {
   const statusHistory = [{ toState: "Active", reason: "defense demo (presenter 2)", actorId: ids.officer, at: now }];
@@ -92,8 +89,7 @@ async function ensureClub(ids: Ids): Promise<Types.ObjectId> {
   return clubId;
 }
 
-// Đảm bảo có học kỳ kế tiếp trong policy, trả về mã học kỳ
-/** UC15 cần một học kỳ sau hôm nay để lên lịch giải thể; được thêm qua usecase UC04. */
+/** UC15 needs a semester after today to schedule a dissolution; appended through the UC04 usecase. */
 async function ensureNextSemester(officerId: Types.ObjectId, config: { ALLOWED_DOMAIN?: string }): Promise<string> {
   const policies = mongoPolicyRepository();
   const current = await policies.findEffective(now);
@@ -113,8 +109,7 @@ async function ensureNextSemester(officerId: Types.ObjectId, config: { ALLOWED_D
   return code;
 }
 
-// Đảm bảo có các sự kiện demo của CLB
-/** Một sự kiện đã duyệt sắp tới (bị huỷ do đình chỉ) và một sự kiện đã qua có ngân sách chưa đối soát. */
+/** One approved event ahead (cancelled by a suspension) and one past event whose budget is not reconciled. */
 async function ensureEvents(clubId: Types.ObjectId): Promise<void> {
   const base = { organizerType: "CLUB", clubId, clubName: DEMO_CLUB_NAME, audienceScope: "PUBLIC", capacity: 120,
     confirmedRegistrationCount: 0, nextWaitlistPosition: 1, waitlistEnabled: false, allowWalkIn: false,
@@ -141,9 +136,9 @@ async function ensureEvents(clubId: Types.ObjectId): Promise<void> {
 }
 
 /**
- * Bản nháp UC12 do Chủ nhiệm hiện tại lưu qua usecase thật: vice nhận ghế Chủ nhiệm
- * ghế của nhiệm kỳ kế tiếp, thành viên và leader sắp mãn nhiệm thành vice leader, nên leader giữ
- * quyền Club Leader cho luồng 10. Một nghĩa vụ (sự kiện sắp tới) được để lại cho buổi demo trực tiếp.
+ * UC12 draft saved by the current Chủ nhiệm through the real usecase: the vice takes the Chủ nhiệm
+ * seat of the next term, the member and the outgoing leader become vice leaders, so the leader keeps
+ * Club Leader rights for flow 10. One obligation (the upcoming event) is left for the live demo.
  */
 async function ensureTransitionDraft(clubId: Types.ObjectId, ids: Ids): Promise<void> {
   if (await m.transitionPlans!.exists({ clubId })) return;

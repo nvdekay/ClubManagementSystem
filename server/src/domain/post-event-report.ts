@@ -43,7 +43,7 @@ export interface ReportObligation {
   revision: number;
   dueAt: Date;
   overdue: boolean;
-  /** CLB chỉ được soạn báo cáo sau khi đã chốt điểm danh của sự kiện. */
+  /** The club can draft the report only after it has finalized the event's attendance. */
   attendanceFinalized: boolean;
   report?: PostEventReport;
 }
@@ -80,7 +80,6 @@ export interface PostEventReportRepository {
     now: Date,
   ): Promise<ReportDetail>;
 }
-// Kiểm tra và chuẩn hoá nội dung báo cáo sau sự kiện
 export function normalizeReport(input: ReportInput): ReportInput {
   if (
     !input.actualResult.trim() ||
@@ -117,7 +116,6 @@ export function normalizeReport(input: ReportInput): ReportInput {
     lessonsLearned: input.lessonsLearned?.trim(),
   };
 }
-// Đảm bảo sự kiện đã hoàn thành và chốt điểm danh trước khi nộp báo cáo
 export function assertReportSubmission(
   state: string,
   finalized: boolean,

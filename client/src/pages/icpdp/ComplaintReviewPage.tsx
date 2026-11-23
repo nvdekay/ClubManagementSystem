@@ -22,7 +22,6 @@ const OUTCOMES: TriageOutcome[] = ["Dismissed", "Forwarded", "Escalated"];
 const SEVERITIES: Severity[] = ["MINOR", "MODERATE", "SERIOUS"];
 const VALIDITIES: Validity[] = ["VALID", "PARTLY_VALID", "UNFOUNDED"];
 
-// Ánh xạ kết quả phân loại khiếu nại sang key i18n
 function outcomeKey(value: TriageOutcome) {
   switch (value) {
     case "Dismissed": return "complaints.outcome_Dismissed" as const;
@@ -30,7 +29,6 @@ function outcomeKey(value: TriageOutcome) {
     case "Escalated": return "complaints.outcome_Escalated" as const;
   }
 }
-// Ánh xạ mức nghiêm trọng sang key i18n
 function severityKey(value: Severity) {
   switch (value) {
     case "MINOR": return "complaints.severity_MINOR" as const;
@@ -38,7 +36,6 @@ function severityKey(value: Severity) {
     case "SERIOUS": return "complaints.severity_SERIOUS" as const;
   }
 }
-// Ánh xạ kết luận hợp lệ sang key i18n
 function validityKey(value: Validity) {
   switch (value) {
     case "VALID": return "complaints.validity_VALID" as const;
@@ -47,8 +44,7 @@ function validityKey(value: Validity) {
   }
 }
 
-// Trang ICPDP phân loại và xử lý khiếu nại từ CLB
-/** UC51: hàng đợi phân loại của ICPDP — mở, quyết định (bác bỏ / chuyển tiếp / nâng cấp), rồi đóng hoặc nâng cấp sau khi CLB trả lời. */
+/** UC51: ICPDP triage queue — open, decide (dismiss / forward / escalate), then close or escalate after the club answered. */
 export function ComplaintReviewPage() {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -73,7 +69,6 @@ export function ComplaintReviewPage() {
   );
 }
 
-// Một khiếu nại trong hàng đợi kèm các thao tác quyết định
 function ReviewItem({ item, candidates }: { item: ComplaintForIcpdp; candidates: ComplaintForIcpdp[] }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -86,7 +81,6 @@ function ReviewItem({ item, candidates }: { item: ComplaintForIcpdp; candidates:
   const [due, setDue] = useState("");
   const [linkTarget, setLinkTarget] = useState("");
 
-  // Gửi quyết định xử lý khiếu nại
   async function run(decision: ComplaintDecisionInput) {
     if (!auth.data) return;
     try {

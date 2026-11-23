@@ -1,10 +1,10 @@
-/** Một dòng trong inbox thông báo trong ứng dụng của người dùng (NTF-04). */
+/** One row of a user's in-app notification inbox (NTF-04). */
 export interface InboxNotification {
   id: string;
   eventCode: string;
   entityType?: string;
   entityId?: string;
-  /** CLB mà thông báo nói đến, suy ra từ payload hoặc entity, để client tạo liên kết tới đó. */
+  /** Club the notification is about, resolved from the payload or the entity, so the client can link to it. */
   clubId?: string;
   payload: Record<string, unknown>;
   createdAt: Date;
@@ -14,18 +14,18 @@ export interface InboxNotification {
 export interface NotificationInbox {
   items: InboxNotification[];
   unread: number;
-  /** Truyền vào `before` để đọc trang kế tiếp (cũ hơn); không có ở trang cuối. */
+  /** Pass as `before` to read the next (older) page; absent on the last page. */
   nextBefore?: string;
 }
 
 /**
- * Thông báo thuộc workspace nào: cá nhân sinh viên (người nộp đơn, người đăng ký, thành viên,
- * người sáng lập, ứng viên tuyển thành viên), ICPDP officer, hoặc ban quản lý CLB hành động cho CLB đó.
+ * Which workspace a notification belongs to: the student personally (applicant, registrant, member,
+ * founder, recruitment candidate), ICPDP officers, or a club's management acting for that club.
  */
 export type NotificationAudience = "student" | "icpdp" | "club";
 export const NOTIFICATION_AUDIENCES = ["student", "icpdp", "club"] as const satisfies readonly NotificationAudience[];
 
-/** Các mã gửi cho sinh viên về đơn, đăng ký, membership hoặc CLB của chính họ. */
+/** Codes sent to a student about their own application, registration, membership or club. */
 export const STUDENT_NOTIFICATION_CODES: readonly string[] = [
   "CLUB_APPLICATION_SUBMITTED", "CLUB_APPLICATION_WITHDRAWN", "CLUB_APPLICATION_APPROVED",
   "CLUB_APPLICATION_REJECTED", "CLUB_APPLICATION_REVISION_REQUESTED", "CLUB_APPLICATION_EXPIRED",
@@ -36,13 +36,13 @@ export const STUDENT_NOTIFICATION_CODES: readonly string[] = [
   "CLUB_MEMBERSHIP_ONBOARDED", "CLUB_MEMBERSHIP_ACTIVE", "CLUB_MEMBERSHIP_INACTIVE", "CLUB_MEMBERSHIP_BANNED",
   "CLUB_MEMBERSHIP_LEFT", "MEMBERSHIP_RECONFIRMATION_REQUIRED", "MEMBERSHIP_RECONFIRMATION_EXPIRED",
   "CLUB_SUSPENDED", "CLUB_REACTIVATED", "CLUB_DISSOLUTION_DECIDED", "CLUB_DISSOLVING", "CLUB_DISSOLVED",
-  // Không còn gửi nữa (UC23 đã rút); giữ lại để các dòng cũ vẫn nằm trong inbox của thành viên.
+  // No longer sent (UC23 withdrawn); kept so old rows stay in the member's own inbox.
   "CLUB_ROLE_ASSIGNED", "CLUB_ROLE_REVOKED", "CLUB_ROLE_UPDATED",
-  // UC50/UC51: người khiếu nại được báo kết quả phân loại và việc đóng hoặc nâng cấp cuối cùng.
+  // UC50/UC51: the complainant hears the triage outcome and the final close or escalation.
   "COMPLAINT_TRIAGED", "COMPLAINT_CLOSED", "COMPLAINT_ESCALATED",
 ];
 
-/** Các mã gửi cho ICPDP officer: việc đang chờ trong hàng đợi duyệt hoặc cảnh báo về một CLB. */
+/** Codes sent to ICPDP officers: work waiting in a review queue or an alert about a club. */
 export const ICPDP_NOTIFICATION_CODES: readonly string[] = [
   "SPONSORED_ITEM_SUBMITTED",
   "BOOKING_SUBMITTED", "BOOKING_CANCELLED", "BOOKING_RELEASED", "BOARD_NOMINATION_SUBMITTED",
@@ -55,7 +55,7 @@ export const ICPDP_NOTIFICATION_CODES: readonly string[] = [
   "EVENT_CANCELLATION_REQUESTED",
 ];
 
-/** Các mã gửi cho những người điều hành CLB (leader, ban điều hành, người duyệt, thành viên gửi yêu cầu). */
+/** Codes sent to the people running a club (leader, board, reviewers, the member who filed the request). */
 export const CLUB_NOTIFICATION_CODES: readonly string[] = [
   "SPONSORED_ITEM_UPDATED",
   "EVENT_PROPOSAL_APPROVED", "EVENT_PROPOSAL_REJECTED", "EVENT_PROPOSAL_REVISION_REQUESTED", "EVENT_PROPOSAL_EXPIRED",
@@ -78,8 +78,8 @@ export const CLUB_NOTIFICATION_CODES: readonly string[] = [
 ];
 
 /**
- * Các mã từng gửi cho hai nhóm đối tượng trước khi được tách ra. Dòng ghi trước khi tách
- * là bản của ICPDP khi payload của nó mang khoá này (CLUB_DISSOLVED → CLUB_DISSOLUTION_COMPLETED).
+ * Codes that used to go to two audiences before they were split. A row written before the split is
+ * the ICPDP copy when its payload carries this key (CLUB_DISSOLVED → CLUB_DISSOLUTION_COMPLETED).
  */
 export const LEGACY_ICPDP_PAYLOAD_KEYS: Readonly<Record<string, string>> = {
   CLUB_DISSOLVED: "outstandingPeriodicReports",
@@ -91,15 +91,14 @@ const audienceByCode = new Map<string, NotificationAudience>([
   ...CLUB_NOTIFICATION_CODES.map((code) => [code, "club"] as const),
 ]);
 
-// Xác định đối tượng nhận của một thông báo theo mã sự kiện
-/** Nhóm đối tượng của một thông báo; mã không nhận ra được coi là của sinh viên. */
+/** Audience of one notification; an unknown code is treated as the student's own. */
 export function notificationAudience(eventCode: string, payload: Record<string, unknown> = {}): NotificationAudience {
   const legacyKey = LEGACY_ICPDP_PAYLOAD_KEYS[eventCode];
   if (legacyKey && payload[legacyKey] !== undefined) return "icpdp";
   return audienceByCode.get(eventCode) ?? "student";
 }
 
-/** Bộ lọc inbox cho một workspace; `clubId` thu hẹp phạm vi CLB về đúng một CLB. */
+/** Inbox filter for one workspace; `clubId` narrows the club scope to a single club. */
 export interface NotificationScope {
   audience: NotificationAudience;
   clubId?: string;
@@ -109,14 +108,14 @@ export interface NotificationInboxQuery {
   limit: number;
   before?: Date;
   unreadOnly: boolean;
-  /** Không có: lấy mọi thông báo của người dùng. */
+  /** Absent: every notification of the user. */
   scope?: NotificationScope;
 }
 
 export interface NotificationRepository {
   listMine(userId: string, query: NotificationInboxQuery): Promise<NotificationInbox>;
   unreadCount(userId: string, scope?: NotificationScope): Promise<number>;
-  /** False khi thông báo không tồn tại hoặc thuộc về người khác. */
+  /** False when the notification does not exist or belongs to someone else. */
   markRead(userId: string, id: string, now: Date): Promise<boolean>;
   markAllRead(userId: string, now: Date, scope?: NotificationScope): Promise<number>;
 }
@@ -125,8 +124,8 @@ export const NOTIFICATION_CHANNEL_IN_APP = "IN_APP";
 export const NOTIFICATION_CHANNEL_EMAIL = "EMAIL";
 
 /**
- * Các sự kiện được gửi thêm qua email, theo ma trận thông báo ở SRS §8.2: yêu cầu chỉnh sửa/quyết định
- * hồ sơ thành lập, quyết định đề xuất sự kiện, quyết định booking và hồ sơ vi phạm được mở/quyết định.
+ * Events that also go out by email, per the notification matrix in SRS §8.2: founding application
+ * revision/decision, event proposal decision, booking decision and violation case opened/decided.
  */
 export const EMAIL_EVENT_CODES: ReadonlySet<string> = new Set([
   "CLUB_APPLICATION_REVISION_REQUESTED", "CLUB_APPLICATION_APPROVED", "CLUB_APPLICATION_REJECTED",
@@ -136,16 +135,15 @@ export const EMAIL_EVENT_CODES: ReadonlySet<string> = new Set([
   "VIOLATION_RESPONSE_REQUESTED", "VIOLATION_DECIDED", "VIOLATION_CLOSED_NO_VIOLATION",
 ]);
 
-// Xác định kênh gửi thông báo (in-app, có thể kèm email) theo mã sự kiện
 export function notificationChannels(eventCode: string): string[] {
   return EMAIL_EVENT_CODES.has(eventCode)
     ? [NOTIFICATION_CHANNEL_IN_APP, NOTIFICATION_CHANNEL_EMAIL] : [NOTIFICATION_CHANNEL_IN_APP];
 }
 
-/** Một thông báo email trong hàng đợi, được một worker nhận xử lý trong `MAIL_LEASE_MS` (NTF-07). */
+/** A queued email notification claimed by one worker for `MAIL_LEASE_MS` (NTF-07). */
 export interface ClaimedEmail {
   id: string;
-  /** Số thứ tự lần gửi này, bắt đầu từ 1. */
+  /** Attempt number of this send, starting at 1. */
   attempt: number;
   eventCode: string;
   payload: Record<string, unknown>;
@@ -159,44 +157,40 @@ export interface OutgoingEmail {
   text: string;
 }
 
-/** Adapter gửi (SMTP, API của nhà cung cấp, log). Ném lỗi khi thư không được chấp nhận. */
+/** Delivery adapter (SMTP, provider API, log). Throws when the message was not accepted. */
 export interface MailTransport {
   readonly name: string;
   send(email: OutgoingEmail): Promise<{ providerResponse?: string }>;
 }
 
 export interface MailOutboxRepository {
-  /** Đánh dấu các thông báo chỉ trong ứng dụng đã đến hạn là đã gửi; chúng đã đọc được trong inbox. */
+  /** Marks due in-app-only notifications as delivered; they are already readable in the inbox. */
   drainInApp(now: Date): Promise<number>;
-  /** Nhận xử lý nguyên tử thông báo email đến hạn cũ nhất, đẩy `dueAt` của nó qua hết thời gian lease. */
+  /** Atomically claims the oldest due email notification, pushing its `dueAt` past the lease. */
   claimNextEmail(now: Date, leaseMs: number): Promise<ClaimedEmail | null>;
   recordSent(claim: ClaimedEmail, toEmail: string, providerResponse: string | undefined, now: Date): Promise<void>;
-  /** `retryAt` null nghĩa là bỏ cuộc và đánh dấu thông báo là `Failed`. */
+  /** `retryAt` null means the notification is given up as `Failed`. */
   recordFailed(claim: ClaimedEmail, toEmail: string, error: string, retryAt: Date | null, now: Date): Promise<void>;
 }
 
 export const MAIL_MAX_ATTEMPTS = 5;
 export const MAIL_LEASE_MS = 5 * 60_000;
 
-// Tính thời gian chờ trước khi thử gửi lại email sau lần lỗi
-/** Thời gian chờ trước lần thử kế tiếp sau khi thất bại: 1, 2, 4, 8 phút, tối đa một giờ. */
+/** Backoff before the next try after a failed attempt: 1, 2, 4, 8 minutes, capped at one hour. */
 export function mailRetryDelayMs(attempt: number): number {
   return Math.min(60_000 * 2 ** Math.max(0, attempt - 1), 3_600_000);
 }
 
-// Biến mã sự kiện thành chuỗi dễ đọc
 function humanize(code: string): string {
   const words = code.toLowerCase().split("_").filter(Boolean).join(" ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-// Ép giá trị payload về chuỗi, undefined nếu rỗng hoặc không phải chuỗi
 function text(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
-// Dựng nội dung email song ngữ cho một thông báo
-/** Email song ngữ đơn giản cho một thông báo; inbox trong UCMS vẫn là nơi xem đầy đủ chi tiết. */
+/** Plain bilingual email for a notification; the inbox in UCMS remains the place to see full details. */
 export function renderNotificationEmail(claim: ClaimedEmail, toEmail: string, appUrl?: string): OutgoingEmail {
   const subject = text(claim.payload.title) ?? text(claim.payload.clubName);
   const lines = [

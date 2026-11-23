@@ -8,9 +8,7 @@ import { assertAccountabilityOfficer } from "./accountability-workflow.js";
 import { ucmsModels as m } from "./ucms-models.js";
 import { clubBoardUserIds, queueNotifications } from "./club-board.js";
 
-// Repository hạng mục tài trợ trong ngân sách sự kiện
 export function mongoSponsoredItemRepository(): SponsoredItemRepository {
-  // Tìm ngân sách sự kiện kèm các hạng mục tài trợ
   async function find(id: string, clubId?: string): Promise<SponsoredBudget | null> {
     const budget = await m.eventBudgets!.findOne({ _id: new Types.ObjectId(id),
       ...(clubId ? { clubId: new Types.ObjectId(clubId) } : {}) }).lean();
@@ -20,7 +18,6 @@ export function mongoSponsoredItemRepository(): SponsoredItemRepository {
       eventState: String(event?.state), revision: Number(budget.__v ?? 0), items: budget.sponsoredItems as SponsoredItem[] };
   }
   return { find,
-    // Xử lý hành động trên hạng mục tài trợ (nộp, trả lại, duyệt, thanh toán, ảnh...)
     async act(id, itemId, revision, actor, clubId, action, now) {
       const budgetId = new Types.ObjectId(id);
       const actorId = new Types.ObjectId(actor);

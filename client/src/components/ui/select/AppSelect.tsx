@@ -12,19 +12,18 @@ interface AppSelectProps<T> {
   value: T;
   options: AppSelectOption<T>[];
   onChange: (value: T) => void;
-  /** Tên truy cập được cho nút mở — nút này chỉ hiển thị nhãn đang chọn. */
+  /** Accessible name for the trigger — it only displays the selected label. */
   label: string;
   disabled?: boolean;
-  /** Đánh dấu nút mở là bắt buộc / đang lỗi (viền đỏ), giống `aria-invalid` trên AppInput. */
+  /** Marks the trigger as required / in error (red border), like `aria-invalid` on AppInput. */
   required?: boolean;
   invalid?: boolean;
-  /** Gắn lên wrapper định vị, để class chiều rộng được áp đúng chỗ có hiệu lực. */
+  /** Sits on the positioning wrapper, so a width utility lands where it can take effect. */
   className?: string;
-  /** Giữ danh sách tuỳ chọn rộng đúng bằng nút mở và cho nhãn dài xuống dòng (trong hộp thoại). */
+  /** Keep the option list exactly as wide as the trigger and wrap long labels (inside dialogs). */
   fitWidth?: boolean;
 }
 
-// Mũi tên xuống của ô chọn
 function ChevronDownIcon() {
   return (
     <svg
@@ -42,7 +41,6 @@ function ChevronDownIcon() {
   );
 }
 
-// Dấu tick cho tuỳ chọn đang chọn
 function CheckIcon() {
   return (
     <svg
@@ -60,11 +58,10 @@ function CheckIcon() {
   );
 }
 
-// Ô chọn tuỳ biến, hỗ trợ bàn phím và gõ để tìm
 /**
- * Combobox chỉ để chọn (WAI-ARIA APG). Focus DOM giữ trên danh sách khi đang mở và
- * tuỳ chọn đang nổi bật được báo qua aria-activedescendant — cách còn lại là
- * chuyển focus vào từng <li>, sẽ xung đột với cơ chế tự khôi phục focus của trình duyệt khi đóng.
+ * Select-only combobox (WAI-ARIA APG). DOM focus stays on the list while it is open and
+ * the highlighted option is reported through aria-activedescendant — the alternative,
+ * moving focus onto each <li>, fights the browser's own focus restoration on close.
  */
 export function AppSelect<T extends string | number>({
   value,
@@ -78,7 +75,7 @@ export function AppSelect<T extends string | number>({
   fitWidth,
 }: AppSelectProps<T>) {
   const [open, setOpen] = useState(false);
-  // Vị trí vừa với danh sách: mặc định bên dưới nút mở, chuyển lên trên khi chỗ trống bên dưới quá ít.
+  // Where the list fits: below the trigger by default, above it when the space under it is too short.
   const [placement, setPlacement] = useState({ up: false, right: false, maxHeight: 240, maxWidth: 480 });
   const selectedIndex = options.findIndex((option) => option.value === value);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -86,14 +83,14 @@ export function AppSelect<T extends string | number>({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const listId = useId();
-  // Gõ để nhảy như <select> gốc: các chữ gõ liên tiếp trong khoảng nghỉ ngắn tạo thành một chuỗi tìm.
+  // Type-to-jump like a native <select>: letters typed within a short pause form one search string.
   const typed = useRef({ text: "", at: 0 });
 
   useEffect(() => {
     if (!open) return;
     listRef.current?.focus();
-    // Dùng pointerdown thay vì click: một lượt bấm bắt đầu từ bên ngoài phải đóng danh sách kể cả khi
-    // con trỏ được thả ở chỗ khác (kéo, bôi đen chữ).
+    // pointerdown, not click: a click that started outside must close the list even if
+    // the pointer is released somewhere else (drag, text selection).
     function onPointerDown(event: PointerEvent) {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
     }
@@ -101,55 +98,50 @@ export function AppSelect<T extends string | number>({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
-  // Giữ tuỳ chọn đang nổi bật luôn nhìn thấy khi danh sách đủ dài để phải cuộn.
+  // Keeps the highlighted option visible once the list is long enough to scroll.
   useEffect(() => {
     listRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, open]);
 
-  // Tính hướng mở và kích thước danh sách theo chỗ trống quanh nút
-  /** Đo khoảng trống quanh nút mở để danh sách không bao giờ tràn khỏi đáy màn hình. */
+  /** Measures the room around the trigger so the list never runs off the bottom of the screen. */
   function place() {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const below = window.innerHeight - rect.bottom - 12;
     const above = rect.top - 12;
     const up = below < 200 && above > below;
-    // Nút mở nằm nửa bên phải thì danh sách mở rộng sang trái, để danh sách rộng không tràn khỏi màn hình.
+    // A trigger in the right half grows its list leftwards, so a wide list never leaves the screen.
     const right = rect.left > window.innerWidth / 2;
     setPlacement({ up, right, maxHeight: Math.max(120, Math.min(240, up ? above : below)),
       maxWidth: Math.max(rect.width, (right ? rect.right : window.innerWidth - rect.left) - 12) });
   }
 
-  // Mở danh sách và làm nổi bật tuỳ chọn đang chọn
   function openList() {
     place();
     setActiveIndex(selectedIndex < 0 ? 0 : selectedIndex);
     setOpen(true);
   }
 
-  // Đóng danh sách và trả focus về nút
   function close() {
     setOpen(false);
     triggerRef.current?.focus();
   }
 
-  // Chọn một tuỳ chọn rồi đóng danh sách
   function select(index: number) {
     if (!options[index] || options[index].disabled) return;
     onChange(options[index].value);
     close();
   }
 
-  // Gõ chữ để nhảy tới tuỳ chọn bắt đầu bằng chữ đó
-  /** Làm nổi bật tuỳ chọn kế tiếp có nhãn bắt đầu bằng chữ đã gõ; trả true khi phím đã được xử lý. */
+  /** Highlights the next option whose label starts with the typed text; true when the key was consumed. */
   function typeahead(event: KeyboardEvent, from: number): boolean {
     if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return false;
-    const now = event.timeStamp; // tính bằng ms từ lúc tải trang; chỉ khoảng chênh giữa các lần bấm phím là quan trọng
-    // Phím cách chỉ dùng để tìm khi đang gõ dở một từ; đứng riêng thì vẫn là chọn tuỳ chọn.
+    const now = event.timeStamp; // ms since page load; only differences between keys matter
+    // A space only searches while a word is being typed; on its own it keeps selecting the option.
     if (event.key === " " && now - typed.current.at > 700) return false;
     const text = (now - typed.current.at > 700 ? "" : typed.current.text) + fold(event.key);
     typed.current = { text, at: now };
-    // Một chữ cái mới gõ đơn lẻ sẽ nhảy qua tuỳ chọn hiện tại, nên gõ lặp lại chữ đó sẽ lần lượt đi qua các kết quả khớp.
+    // A fresh single letter steps past the current option, so repeating it cycles through matches.
     const start = text.length === 1 ? from + 1 : from;
     for (let step = 0; step < options.length; step++) {
       const index = (start + step) % options.length;
@@ -163,7 +155,6 @@ export function AppSelect<T extends string | number>({
     return true;
   }
 
-  // Xử lý phím trên nút mở danh sách
   function onTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
     if (event.key.length === 1 && event.key !== " " && !event.ctrlKey && !event.metaKey && !event.altKey) {
       place();
@@ -172,11 +163,10 @@ export function AppSelect<T extends string | number>({
       return;
     }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    event.preventDefault(); // nếu không cả hai phím sẽ cuộn trang
+    event.preventDefault(); // both would scroll the page instead
     openList();
   }
 
-  // Xử lý phím điều hướng và chọn trong danh sách
   function onListKeyDown(event: KeyboardEvent<HTMLUListElement>) {
     if (typeahead(event, activeIndex)) return;
     switch (event.key) {
@@ -206,7 +196,7 @@ export function AppSelect<T extends string | number>({
         close();
         break;
       case "Tab":
-        setOpen(false); // để focus đi tiếp, đừng kéo ngược về nút mở
+        setOpen(false); // let focus move on; don't yank it back to the trigger
         break;
     }
   }
@@ -270,8 +260,7 @@ export function AppSelect<T extends string | number>({
   );
 }
 
-// Chuẩn hoá chữ thường không dấu để so khớp khi gõ tìm
-/** Chuyển về chữ thường và bỏ dấu tiếng Việt, để gõ "nguy" tìm được "Nguyễn". */
+/** Lower-cased and without Vietnamese diacritics, so typing "nguy" finds "Nguyễn". */
 function fold(text: string): string {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();
 }

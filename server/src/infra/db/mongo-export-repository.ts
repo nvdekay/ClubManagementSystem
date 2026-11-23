@@ -10,50 +10,41 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
-// Định dạng ngày giờ theo múi giờ Việt Nam cho ô export
 function date(value: unknown): ExportCell {
   return value instanceof Date ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short",
     timeZone: "Asia/Ho_Chi_Minh" }).format(value) : null;
 }
 
-// Chuyển giá trị tiền thành số cho ô export
 function money(value: unknown): ExportCell {
   return value === undefined || value === null ? null : Number(String(value));
 }
 
-// Lấy chuỗi không rỗng, ngược lại null
 function text(value: unknown): ExportCell {
   return typeof value === "string" && value ? value : null;
 }
 
-// Chuyển sang số hữu hạn, không hợp lệ thì undefined
 function optionalNumber(value: unknown): number | undefined {
   if (value === undefined || value === null) return undefined;
   const parsed = Number(String(value));
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-// Ép giá trị về object thường, ngược lại object rỗng
 function object(value: unknown): Doc {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Doc : {};
 }
 
-// Dựng điều kiện khoảng thời gian from/to của bộ lọc export
 function range(filter: ExportFilter): Record<string, Date> | null {
   if (!filter.from && !filter.to) return null;
   return { ...(filter.from ? { $gte: filter.from } : {}), ...(filter.to ? { $lte: filter.to } : {}) };
 }
 
-// Dựng điều kiện lọc theo CLB của bộ lọc export
 function club(filter: ExportFilter): Doc {
   return filter.clubId ? { clubId: new Types.ObjectId(filter.clubId) } : {};
 }
 
-// Repository xuất dữ liệu báo cáo của ICPDP từ MongoDB
 export function mongoExportRepository(): ExportRepository {
   const models = ucmsModels;
 
-  // Tra tên theo danh sách id trong collection clubs, users hoặc events
   async function names(ids: unknown[], model: "clubs" | "users" | "events") {
     const valid = [...new Set(ids.filter(Boolean).map(String))].map((value) => new Types.ObjectId(value));
     const docs = valid.length ? await models[model]!.find({ _id: { $in: valid } })
@@ -61,7 +52,6 @@ export function mongoExportRepository(): ExportRepository {
     return new Map(docs.map((doc) => [String(doc._id), doc as Doc]));
   }
 
-  // Bảng export danh sách CLB kèm số thành viên
   async function clubsTable(filter: ExportFilter): Promise<ExportTable> {
     const docs = await models.clubs!.find({
       ...(filter.clubId ? { _id: new Types.ObjectId(filter.clubId) } : {}),
@@ -78,9 +68,8 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
-  // Bảng export thành viên theo CLB và kỳ lọc
   async function membersTable(filter: ExportFilter): Promise<ExportTable> {
-    // Trong một kỳ: thành viên vào trước khi kỳ kết thúc và chưa rời trước khi kỳ bắt đầu.
+    // In a period: members who joined before it ended and had not left before it started.
     const docs = await models.clubMemberships!.find({
       ...club(filter), ...(filter.status ? { state: filter.status } : {}),
       ...(filter.to ? { joinedAt: { $lte: filter.to } } : {}),
@@ -97,7 +86,6 @@ export function mongoExportRepository(): ExportRepository {
     return { columns: ["CLB", "Họ tên", "Email", "Trạng thái", "Vai trò", "Ngày tham gia", "Ngày rời"], rows };
   }
 
-  // Bảng export sự kiện kèm số lượng đăng ký
   async function eventsTable(filter: ExportFilter): Promise<ExportTable> {
     const window = range(filter);
     const docs = await models.events!.find({
@@ -118,7 +106,7 @@ export function mongoExportRepository(): ExportRepository {
     return {
       columns: ["Đơn vị tổ chức", "Sự kiện", "Học kỳ", "Bắt đầu", "Kết thúc", "Trạng thái", "Sức chứa",
         "Đăng ký xác nhận", "Danh sách chờ", "Đã huỷ đăng ký", "Điểm danh đã chốt", "Số người có mặt"],
-      // FR-04: điểm danh chỉ được báo cáo khi đã chốt (UC32).
+      // FR-04: attendance is only reported once it has been finalized (UC32).
       rows: docs.map((doc) => [text(doc.clubName) ?? "ICPDP", text(doc.title), text(doc.semesterCode),
         date(doc.startAt), date(doc.endAt), text(doc.state), Number(doc.capacity ?? 0),
         registered(doc._id, "Confirmed"), registered(doc._id, "Waitlisted"), registered(doc._id, "Cancelled"),
@@ -127,8 +115,7 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
-  // Truy vấn ngân sách sự kiện theo bộ lọc export
-  /** FINANCE và CLUB_BUDGETS đọc cùng các ngân sách, nên tổng của chúng luôn khớp nhau. */
+  /** FINANCE and CLUB_BUDGETS read the same budgets, so their totals always agree. */
   function budgets(filter: ExportFilter) {
     const window = range(filter);
     return models.eventBudgets!.find({
@@ -137,7 +124,6 @@ export function mongoExportRepository(): ExportRepository {
     }).sort({ createdAt: 1 }).lean();
   }
 
-  // Bảng export tài chính sự kiện kèm đối soát
   async function financeTable(filter: ExportFilter): Promise<ExportTable> {
     const docs = await budgets(filter);
     const [clubs, events, reconciliations] = await Promise.all([
@@ -155,12 +141,11 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
-  // Bảng export tổng hợp ngân sách theo từng CLB
   async function clubBudgetsTable(filter: ExportFilter): Promise<ExportTable> {
     const docs = await budgets(filter);
     const columns = ["CLB", "Số ngân sách", "Tổng được duyệt", "Tổng đã giải ngân", "Chi thực tế đã quyết toán",
       "Phải hoàn", "Đã hoàn", "Chưa đối soát"];
-    // Hoàn toàn không có ngân sách trong phạm vi: loại này rỗng (E1), không phải một sheet toàn số 0.
+    // No budget in scope at all: the type is empty (E1), not a sheet of zeros.
     if (!docs.length) return { columns, rows: [] };
     const clubs = await models.clubs!.find(filter.clubId ? { _id: new Types.ObjectId(filter.clubId) } : {})
       .select("name").sort({ name: 1 }).collation({ locale: "vi" }).lean();
@@ -171,7 +156,7 @@ export function mongoExportRepository(): ExportRepository {
       columns,
       rows: clubs.map((item) => {
         const own = docs.filter((doc) => String(doc.clubId) === String(item._id));
-        // Chưa đối soát: vẫn trước khi ICPDP quyết định quyết toán (UC37).
+        // Not reconciled yet: still before ICPDP decided the settlement (UC37).
         const open = own.filter((doc) => ["Approved", "Disbursed", "Settlement Submitted", "Reconciliation Pending"]
           .includes(String(doc.state))).length;
         return [text(item.name), own.length, sum(own, "approvedTotal"), sum(own, "disbursedTotal"), sum(own, "acceptedTotal"),
@@ -180,7 +165,6 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
-  // Bảng export vi phạm và phản hồi/khiếu nại
   async function complianceTable(filter: ExportFilter): Promise<ExportTable> {
     const window = range(filter);
     const feedbackOnly = filter.status === "Submitted";
@@ -192,7 +176,7 @@ export function mongoExportRepository(): ExportRepository {
     ]);
     const [clubs, users] = await Promise.all([
       names([...violations, ...complaints].map((doc) => doc.clubId), "clubs"),
-      // BR61: người gửi ẩn danh không bao giờ được tra cứu, nên danh tính không thể lọt vào file.
+      // BR61: anonymous senders are never looked up, so their identity cannot reach the file.
       names(complaints.filter((doc) => doc.isAnonymous !== true).map((doc) => doc.complainantId), "users"),
     ]);
     const rows: { at: number; row: ExportCell[] }[] = [
@@ -202,7 +186,7 @@ export function mongoExportRepository(): ExportRepository {
       ...complaints.map((doc) => {
         const sender = doc.isAnonymous === true ? "Ẩn danh" : users.get(String(doc.complainantId));
         return { at: (doc.submittedAt as Date).getTime(), row: [
-          // Các dòng ghi trước 07/11/2026 là feedback một chiều có người nhận; các dòng sau là khiếu nại UC50.
+          // Rows written before 07/11/2026 were one-way feedback with a recipient; later rows are UC50 complaints.
           doc.recipient === "ICPDP" ? "Góp ý gửi ICPDP" : doc.recipient === "CLUB" ? "Góp ý gửi CLB" : "Khiếu nại",
           text(clubs.get(String(doc.clubId))?.name),
           text(doc.type), text(doc.description), null, text(doc.state),
@@ -216,19 +200,18 @@ export function mongoExportRepository(): ExportRepository {
     };
   }
 
-  // BR30/BR61: bảng export kết quả đánh giá đã Published
   async function evaluationsTable(filter: ExportFilter): Promise<ExportTable> {
     const window = range(filter);
-    // BR30/BR61: chỉ kết quả đã công bố; lấy revision đã công bố mới nhất cho mỗi CLB và kỳ.
+    // BR30/BR61: only published results; the latest published revision per club and period.
     const docs = await models.evaluations!.find({ ...club(filter), state: "Published",
       ...(filter.periodCode ? { periodCode: filter.periodCode } : window ? { publishedAt: window } : {}),
     }).sort({ revisionNo: -1 }).lean();
     const byClubPeriod = new Map<string, Doc>();
     for (const doc of docs) {
       const key = `${String(doc.clubId)}:${String(doc.periodCode)}`;
-      if (!byClubPeriod.has(key)) byClubPeriod.set(key, doc); // đã sắp theo revision, nên bản đầu là mới nhất
+      if (!byClubPeriod.has(key)) byClubPeriod.set(key, doc); // sorted by revision, so the first is the latest
     }
-    // Bảng so sánh (A1): nhóm theo kỳ, tổng điểm cao nhất trước.
+    // Comparison table (A1): grouped by period, best total first.
     const unique = [...byClubPeriod.values()].sort((left, right) =>
       String(left.periodCode).localeCompare(String(right.periodCode))
       || Number(String(right.totalScore ?? 0)) - Number(String(left.totalScore ?? 0)));
@@ -254,25 +237,21 @@ export function mongoExportRepository(): ExportRepository {
   };
 
   return {
-    // Dựng bảng export theo loại dữ liệu
     table(type, filter) {
       return tables[type](filter);
     },
-    // Danh sách CLB (id, tên) cho bộ lọc export
     async clubs() {
       const docs = await models.clubs!.find().select("name").sort({ name: 1 }).collation({ locale: "vi" }).lean();
       return docs.map((doc) => ({ id: String(doc._id), name: String(doc.name) }));
     },
-    // Mã các kỳ đã có kết quả đánh giá Published
     async publishedPeriodCodes() {
       return (await models.evaluations!.distinct("periodCode", { state: "Published" })).map(String);
     },
-    // Nguồn dữ liệu tổng hợp theo năm từ đánh giá Published và báo cáo Accepted
     async annualSource(inYear) {
       const [evaluationCodes, reportCodes] = await Promise.all([
         models.evaluations!.distinct("periodCode", { state: "Published" }),
         models.periodicReports!.distinct("periodCode", { state: "Accepted" })]);
-      // BR30: revision Published mới nhất của mỗi CLB và kỳ; bản nháp và các revision sau đó bị huỷ công bố không bao giờ được tính.
+      // BR30: the latest Published revision of each club and period; drafts and later unpublished revisions never count.
       const latest = await models.evaluations!.aggregate<{ doc: Doc }>([
         { $match: { state: "Published", periodCode: { $in: evaluationCodes.map(String).filter(inYear) } } },
         { $sort: { revisionNo: -1 } },
@@ -281,7 +260,7 @@ export function mongoExportRepository(): ExportRepository {
       const [results, schemes, reports, clubs] = await Promise.all([
         models.evaluationDimensionResults!.find({ evaluationId: { $in: docs.map((doc) => doc._id) } }).lean(),
         models.evaluationSchemes!.find({ _id: { $in: docs.map((doc) => doc.schemeId) } }).select({ thresholds: 1 }).lean(),
-        // UC39: chỉ báo cáo ICPDP đã chấp nhận; dòng báo cáo giữ phiên bản đã chấp nhận.
+        // UC39: only reports ICPDP accepted; the report row holds the accepted version.
         models.periodicReports!.find({ state: "Accepted", periodCode: { $in: reportCodes.map(String).filter(inYear) } })
           .select({ clubId: 1, periodCode: 1, versionNo: 1, preloadedFigures: 1 }).lean(),
         models.clubs!.find().select({ name: 1, field: 1, state: 1, createdAt: 1 }).lean(),
@@ -329,7 +308,6 @@ export function mongoExportRepository(): ExportRepository {
           ...(doc.createdAt instanceof Date ? { createdAt: doc.createdAt } : {}) })),
       };
     },
-    // Ghi audit log DATA_EXPORTED cho mỗi lần export
     async audit(input) {
       await models.auditLogs!.create({ entityType: "DataExport", entityId: new Types.ObjectId(),
         action: "DATA_EXPORTED", actorId: new Types.ObjectId(input.actorId), actorRole: "ICPDP_OFFICER",

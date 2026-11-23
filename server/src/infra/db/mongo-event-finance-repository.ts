@@ -21,19 +21,15 @@ import {
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
-// Chuyển chuỗi id thành ObjectId
 function oid(value: string) {
   return new Types.ObjectId(value);
 }
-// Chuyển giá trị tiền sang number
 function money(value: unknown) {
   return Number(String(value ?? 0));
 }
-// Chuyển number thành Decimal128
 function decimal(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
-// Repository quyết toán ngân sách sự kiện: CLB ghi chi, nộp minh chứng, ICPDP duyệt
 export function mongoEventFinanceRepository(rules: {
   recoveryDueDays: number;
   evidenceTypes: readonly string[];
@@ -173,7 +169,6 @@ export function mongoEventFinanceRepository(rules: {
     };
   }
   return {
-    // Liệt kê ngân sách và quyết toán (toàn bộ hoặc của một CLB)
     async list(clubId) {
       const docs = await m
         .eventBudgets!.find(clubId ? { clubId: oid(clubId) } : {})
@@ -184,9 +179,7 @@ export function mongoEventFinanceRepository(rules: {
         await Promise.all(docs.map((d) => detail(String(d._id), clubId)))
       ).filter((d): d is FinanceDetail => d !== null);
     },
-    // Lấy chi tiết ngân sách và quyết toán theo id
     find: detail,
-    // Thực hiện hành động quyết toán: ghi chi, minh chứng, nộp, nhận duyệt, trả lại
     async act(id, clubId, actor, action, now) {
       await mongoose.connection.transaction(async (session) => {
         const actorId = oid(actor);
@@ -285,7 +278,7 @@ export function mongoEventFinanceRepository(rules: {
               ],
               { session },
             );
-          // Tính lại cờ của mọi hạng mục để sửa một dòng trước đó không để lại ngoại lệ cũ.
+          // Recompute every category flag so editing an earlier row cannot leave stale exceptions.
           const updated = await m
             .expenses!.find({ eventBudgetId: budgetId })
             .sort({ createdAt: 1, _id: 1 })

@@ -12,8 +12,7 @@ interface AppConfirmDialogProps {
   onCancel: () => void;
 }
 
-// Hộp thoại xác nhận có/không thay cho window.confirm
-/** Thay thế `window.confirm`: vẫn là câu hỏi có/không, nhưng theo theme và ngôn ngữ của ứng dụng. */
+/** Replaces `window.confirm`: same yes/no question, in the app's theme and language. */
 export function AppConfirmDialog({ open, title, message, confirmLabel, cancelLabel, pending = false,
   onConfirm, onCancel }: AppConfirmDialogProps) {
   return (

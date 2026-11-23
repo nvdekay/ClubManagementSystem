@@ -2,32 +2,29 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 
 import { createUser, fetchUsers } from "@/services/users";
 
-// Key gốc cho các thao tác cache xuyên suốt (invalidate/cancel khớp theo tiền tố);
-// usersKey(...) xác định một trang từ server — mọi đầu vào của queryFn đều là một phần của key.
+// Root key for cross-cutting cache ops (invalidate/cancel match by prefix);
+// usersKey(...) identifies one server page — every queryFn input is part of the key.
 const usersKeyRoot = ["users"] as const;
-// Query key của một trang danh sách người dùng
 function usersKey(search: string, limit: number, offset: number) {
   return [...usersKeyRoot, search, limit, offset] as const;
 }
 
-// Query danh sách người dùng có tìm kiếm và phân trang
 export function useUsers(search = "", limit = 20, offset = 0) {
   return useQuery({
     queryKey: usersKey(search, limit, offset),
     queryFn: ({ signal }) => fetchUsers({ search, limit, offset, signal }),
-    // Hiện các dòng của trang trước trong khi trang mới đang tải — không bị chớp trống.
+    // Show the previous page's rows while the new one loads — no flash to empty.
     placeholderData: keepPreviousData,
   });
 }
 
-// Mutation tạo người dùng, rồi làm mới danh sách
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createUser,
     onSuccess: async () => {
-      // Danh sách giờ được lọc ở server — chỉ riêng response không cho biết người dùng mới
-      // có khớp với tìm kiếm đang dùng hay không, nên tải lại thay vì setQueryData.
+      // The list is server-filtered now — the response alone can't tell whether the new
+      // user matches the active search, so refetch instead of setQueryData.
       await queryClient.invalidateQueries({ queryKey: usersKeyRoot });
     },
   });

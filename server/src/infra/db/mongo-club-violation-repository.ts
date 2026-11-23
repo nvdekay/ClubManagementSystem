@@ -7,22 +7,19 @@ import { queueNotifications } from "./club-board.js";
 import { mongoViolationRepository } from "./mongo-violation-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
 const visible = ["Awaiting Club Response", "Decision Issued", "Corrective Action", "Resolved", "Closed"];
-// Repository để CLB phản hồi và nộp hành động khắc phục cho vụ vi phạm
 export function mongoClubViolationRepository(): ClubViolationRepository {
   async function audit(session: ClientSession, id: Types.ObjectId, userId: string, action: string, after: unknown, now: Date) {
     await m.auditLogs!.create([{ entityType: "Violation", entityId: id, action, actorId: new Types.ObjectId(userId), actorRole: "Club Leader", after, correlationId: randomUUID(), at: now }], { session });
   }
   return {
-    // Liệt kê vụ vi phạm CLB đã được thông báo (yêu cầu phản hồi hoặc quyết định)
     async list(clubId, now) {
-      // CLB thấy mọi vụ việc mà nó đã được thông báo: yêu cầu phản hồi hoặc một quyết định, kể cả
-      // việc đóng "không vi phạm" được ban hành trước khi có yêu cầu phản hồi nào.
+      // The club sees every case it was notified about: a response request or a decision, including
+      // a "no violation" closure issued before any response was requested.
       const ids = await m.violations!.find({ clubId: new Types.ObjectId(clubId), state: { $in: visible },
         $or: [{ "clubResponse.requestedAt": { $exists: true } }, { decidedAt: { $exists: true } }] }).sort({ openedAt: -1 }).distinct("_id");
       const reader = mongoViolationRepository();
       return (await Promise.all(ids.map((id) => reader.find(String(id), now)))).filter((d): d is NonNullable<typeof d> => Boolean(d));
     },
-    // CLB gửi phản hồi cho vụ vi phạm đang chờ phản hồi
     async respond(clubId, id, text, userId, now) {
       const caseId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
@@ -34,7 +31,6 @@ export function mongoClubViolationRepository(): ClubViolationRepository {
         await queueNotifications(session, [(doc.clubResponse as { requestedBy: unknown }).requestedBy], "VIOLATION_RESPONSE_SUBMITTED", "Violation", caseId, { clubId }, now);
       });
     },
-    // CLB nộp minh chứng hành động khắc phục
     async submitAction(clubId, id, actionId, input, userId, now) {
       const caseId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {

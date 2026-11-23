@@ -2,34 +2,30 @@ import type { AppNotification } from "@/services/notifications";
 
 type Rule = [RegExp, (item: AppNotification) => string | undefined];
 
-// Tạo hàm sinh link tới trang của CLB trong thông báo
 function club(path: string) {
   return function link(item: AppNotification): string | undefined {
     return item.clubId ? `/club/${encodeURIComponent(item.clubId)}${path}` : undefined;
   };
 }
 
-// Tạo hàm trả về link cố định
 function fixed(path: string) {
   return function link(): string { return path; };
 }
 
-// Link tới trang sự kiện của CLB, kèm id sự kiện nếu có
 function clubEvent(item: AppNotification): string | undefined {
   const path = club("/events")(item);
   return path && item.entityId ? `${path}?event=${encodeURIComponent(item.entityId)}` : path;
 }
 
-// Tạo hàm sinh link trang chi tiết theo entityId
-/** Trang chi tiết `base/<entityId>`, hoặc trang danh sách khi dòng không có entity. */
+/** Detail page `base/<entityId>`, or the list when the row has no entity. */
 function detail(base: string) {
   return function link(item: AppNotification): string {
     return item.entityId ? `${base}/${encodeURIComponent(item.entityId)}` : base;
   };
 }
 
-// Khớp đầu tiên thắng, nên các mã cụ thể đặt phía trên tiền tố nhóm của chúng. Mỗi mã dẫn tới
-// workspace của những người nhận (server: danh sách audience ở domain/notification.ts).
+// First match wins, so the specific codes sit above the family prefixes they belong to. Each code leads to
+// the workspace of the people who receive it (server: domain/notification.ts audience lists).
 const rules: Rule[] = [
   [/^SPONSORED_ITEM_SUBMITTED$/, (item) => typeof item.payload.budgetId === "string"
     ? `/workspace/budgets/${encodeURIComponent(item.payload.budgetId)}` : detail("/workspace/event-proposals")(item)],
@@ -43,7 +39,7 @@ const rules: Rule[] = [
   [/^(EVENT_REGISTRATION_|EVENT_CANCELLED$|EVENT_RESCHEDULED$|EVENT_CHECKED_IN$)/, fixed("/workspace/event-registrations")],
   [/^EVENT_CANCELLATION_REQUESTED$/, detail("/workspace/event-proposals")],
   [/^(EVENT_PROPOSAL_|EVENT_CANCELLATION_DECIDED$)/, clubEvent],
-  // Hồ sơ của chính người sáng lập (cả biên nhận lẫn quyết định).
+  // The founder's own application (receipts and decisions alike).
   [/^CLUB_APPLICATION_APPROVED$/, (item) => club("")(item) ?? detail("/workspace/applications")(item)],
   [/^CLUB_APPLICATION_/, detail("/workspace/applications")],
   [/^BOARD_NOMINATION_SUBMITTED$/, detail("/workspace/board-nominations")],
@@ -75,8 +71,7 @@ const rules: Rule[] = [
   [/^(BUDGET_|SETTLEMENT_|REFUND_)/, club("/budgets")],
 ];
 
-// Tìm trang mà một thông báo dẫn tới theo mã sự kiện
-/** Trang trong app mà thông báo dẫn tới, hoặc undefined khi không có trang tương ứng. */
+/** Where a notification leads in the app, or undefined when there is no page for it. */
 export function notificationLink(item: AppNotification): string | undefined {
   const rule = rules.find(([pattern]) => pattern.test(item.eventCode));
   return rule?.[1](item);
@@ -89,14 +84,12 @@ const families = ["EVENT_REGISTRATION", "EVENT_PROPOSAL", "CLUB_APPLICATION", "B
 
 export type NotificationFamily = (typeof families)[number] | "OTHER";
 
-// Xác định nhóm chủ đề của mã thông báo
-/** Chủ đề dùng làm tiêu đề dự phòng cho mã chưa có tiêu đề riêng. */
+/** Topic used for the fallback title of a code that has no title of its own. */
 export function notificationFamily(eventCode: string): NotificationFamily {
   return families.find((family) => eventCode === family || eventCode.startsWith(`${family}_`)) ?? "OTHER";
 }
 
-// Lấy chủ thể dễ đọc nhất trong payload thông báo
-/** Chủ thể dễ đọc và cụ thể nhất trong payload (tên sự kiện, CLB, kỳ, phòng). */
+/** The most specific human-readable subject in the payload (event title, club, period, room). */
 export function notificationSubject(item: AppNotification): string | undefined {
   for (const field of ["title", "eventTitle", "clubName", "periodCode", "propertyName", "semesterCode"]) {
     const value = item.payload[field];

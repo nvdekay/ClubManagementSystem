@@ -29,7 +29,6 @@ const jwksSchema = z.object({ keys: z.array(z.object({
   kty: z.literal("RSA"), kid: z.string(), n: z.string(), e: z.string(),
 })) });
 
-// Gọi GET/POST tới Google với timeout 10 giây và trả JSON, lỗi mạng thành "unavailable"
 async function getJson(url: string, init?: RequestInit): Promise<unknown> {
   try {
     const response = await fetch(url, { ...init, signal: AbortSignal.timeout(10_000) });
@@ -40,7 +39,6 @@ async function getJson(url: string, init?: RequestInit): Promise<unknown> {
   }
 }
 
-// Giải mã một phần base64url của JWT thành JSON, sai định dạng thì từ chối
 function parseJwtPart(part: string): unknown {
   try {
     return JSON.parse(Buffer.from(part, "base64url").toString("utf8"));
@@ -49,7 +47,6 @@ function parseJwtPart(part: string): unknown {
   }
 }
 
-// Tạo provider đăng nhập Google OIDC (Authorization Code + PKCE, xác minh id_token)
 export function googleIdentityProvider(input: {
   clientId: string;
   clientSecret: string;
@@ -66,7 +63,6 @@ export function googleIdentityProvider(input: {
   }
 
   return {
-    // Sinh state, nonce, PKCE và URL chuyển hướng sang Google
     async begin(): Promise<GoogleAuthRequest> {
       const server = await discover();
       const state = randomBytes(32).toString("base64url");
@@ -86,7 +82,6 @@ export function googleIdentityProvider(input: {
       }).toString();
       return { url: url.toString(), state, nonce, codeVerifier };
     },
-    // Đổi code lấy id_token, kiểm chữ ký, audience, nonce, hạn dùng rồi trả danh tính Google
     async complete(code, codeVerifier, nonce): Promise<GoogleIdentity> {
       const server = await discover();
       const tokenResult = tokenSchema.safeParse(await getJson(server.token_endpoint, {

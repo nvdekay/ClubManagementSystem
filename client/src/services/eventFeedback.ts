@@ -26,7 +26,6 @@ export interface EventFeedbackInput {
   isAnonymous: boolean;
 }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -37,17 +36,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
-// GET /events/:id/feedback: điều kiện và form phản hồi sự kiện
 export function fetchEventFeedbackContext(eventId: string, signal: AbortSignal) {
   return request<EventFeedbackContext>(`/events/${encodeURIComponent(eventId)}/feedback`, { signal });
 }
 
-// GET /event-feedbacks/mine: phản hồi sự kiện của tôi
 export function fetchMyEventFeedback(signal: AbortSignal) {
   return request<MyEventFeedback[]>("/event-feedbacks/mine", { signal });
 }
 
-// POST gửi phản hồi sự kiện
 export function submitEventFeedback(eventId: string, input: EventFeedbackInput, csrfToken: string) {
   return request<MyEventFeedback>(`/events/${encodeURIComponent(eventId)}/feedback`, {
     method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },

@@ -10,31 +10,29 @@ import { usePageTransition } from "@/hooks/usePageTransition";
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/utils/cn";
 
-/** Thông tin liên hệ đăng ở footer trang PDP của FPT Education. */
+/** Contact details published on the FPT Education PDP site footer. */
 const FPT_EDUCATION = { name: "FPT Education", address: "Hoa Lac High Tech Park, Hanoi, Vietnam", email: "fpteducation@fe.edu.vn" };
 
-// Class cho liên kết điều hướng, đổi màu khi nằm trên ảnh hero
 function navClass(overlay: boolean) {
   return ({ isActive }: { isActive: boolean }) => cn(
     "relative inline-flex min-h-11 items-center px-3 text-sm font-semibold text-text-app no-underline transition-colors hover:text-primary-app focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app",
     { "text-primary-app after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-primary-app": isActive },
-    // Nằm trên ảnh landing: chữ trắng, dấu đánh dấu mục đang chọn cũng chuyển sang trắng.
+    // Over the landing photo: white text, and the active marker turns white too.
     { "text-white/80 hover:text-white": overlay, "text-white after:bg-white": overlay && isActive },
   );
 }
 
 const iconButton = "flex size-10 items-center justify-center rounded-full text-muted-app transition-colors hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
 
-// Khung trang công khai: header, điều hướng, đăng nhập và footer
 export function PublicLayout() {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const pageRef = usePageTransition<HTMLElement>();
   const auth = useAuth();
-  // Đưa khách quay lại trang đang đọc sau khi đăng nhập.
+  // Bring the visitor back to the page they were reading after signing in.
   const loginTarget = `/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`;
-  // Ở trang landing, header trong suốt nổi trên ảnh hero cho đến khi trang được cuộn.
+  // On the landing page the header floats transparently over the hero photo until the page scrolls.
   const onHome = location.pathname === "/";
   const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -52,7 +50,7 @@ export function PublicLayout() {
     return () => scroller.removeEventListener("scroll", update);
   }, [onHome]);
 
-  // Hero được đẩy lên dưới header sticky đúng bằng chiều cao của header (trên điện thoại header xuống hai dòng).
+  // The hero slides up under the sticky header by exactly its height (it wraps to two rows on phones).
   useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
@@ -83,7 +81,7 @@ export function PublicLayout() {
               className={cn(iconButton, "text-xs font-bold", { "text-white/85 hover:bg-white/10 hover:text-white": overlay })}>
               {i18n.language === "vi" ? "EN" : "VI"}
             </button>
-            {/* UC06: khách chỉ xem; khi ứng tuyển hoặc đăng ký sẽ được chuyển qua UC01 rồi quay lại. */}
+            {/* UC06: guests browse read-only; applying or registering sends them through UC01 and back. */}
             {auth.data ? <UserMenu user={auth.data.user} csrfToken={auth.data.csrfToken} />
               : !auth.isPending && <Link to={loginTarget}
                 className="inline-flex min-h-10 items-center rounded-full bg-primary-app px-4 text-sm font-semibold text-on-primary-app no-underline transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-app">
@@ -91,7 +89,7 @@ export function PublicLayout() {
           </nav>
         </div>
       </header>
-      {/* Trang landing vẽ các dải full-width nên tự quản lý chiều rộng. */}
+      {/* The landing page draws full-width bands, so it manages its own width. */}
       <main ref={pageRef} style={onHome ? { marginTop: -headerHeight } : undefined}
         className={cn("mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-8 sm:py-12", { "max-w-none p-0 sm:p-0": onHome })}>
         <Outlet />

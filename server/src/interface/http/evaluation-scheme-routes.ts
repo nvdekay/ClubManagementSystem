@@ -32,45 +32,37 @@ export const evaluationSchemeSettingsBody = z.object({
   thresholds: z.object({ excellent: z.number(), good: z.number(), fair: z.number() }).strict(),
 }).strict();
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid evaluation scheme request", "validation", result.error.issues);
   return result.data;
 }
 
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
-// Mount các route bộ tiêu chí đánh giá CLB của ICPDP
 export function evaluationSchemeRoutes(deps: EvaluationSchemeRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
-  // Liệt kê các bộ tiêu chí đánh giá
   router.get("/admin/evaluation-schemes", authGuard(guard, false), async (_req, res) => {
     ok(res, await listEvaluationSchemes(deps.repo, deps.policy, deps.authRepo, actor(res), new Date()));
   });
-  // Tạo bộ tiêu chí đánh giá
   router.post("/admin/evaluation-schemes", authGuard(guard), async (req, res) => {
     ok(res, await createEvaluationScheme(deps.repo, deps.policy, deps.authRepo, actor(res),
       parsed(evaluationSchemeCreateBody, req.body), new Date()), 201);
   });
-  // Cập nhật bộ tiêu chí đánh giá
   router.patch("/admin/evaluation-schemes/:id", authGuard(guard), async (req, res) => {
     ok(res, await updateEvaluationScheme(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id),
       parsed(evaluationSchemeSettingsBody, req.body), new Date()));
   });
-  // Kích hoạt bộ tiêu chí đánh giá
   router.post("/admin/evaluation-schemes/:id/activate", authGuard(guard), async (req, res) => {
     ok(res, await activateEvaluationScheme(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id),
       new Date()));
   });
-  // Xoá bộ tiêu chí đánh giá
   router.delete("/admin/evaluation-schemes/:id", authGuard(guard), async (req, res) => {
     ok(res, await deleteEvaluationScheme(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id),
       new Date()));

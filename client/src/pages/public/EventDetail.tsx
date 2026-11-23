@@ -15,11 +15,10 @@ import type { EventRegistrationContext } from "@/services/eventRegistrations";
 import { PublicApiError } from "@/services/discovery";
 import { formatDate } from "@/utils/formatDate";
 
-// Chi tiết sự kiện cho người đã đăng ký: mã check-in và hủy đăng ký
 /**
- * Sinh viên đã đăng ký vẫn xem được sự kiện mà trang công khai ẩn: sự kiện bị chuyển về chờ duyệt
- * sau khi đổi lịch (UC28), sự kiện đã huỷ, hoặc sự kiện chỉ dành cho thành viên CLB. Màn hình đọc
- * ngữ cảnh đăng ký của chính sinh viên, mà API trả về ở mọi trạng thái sự kiện.
+ * A student who registered keeps access to an event the public page hides: one moved back to approval
+ * after a reschedule (UC28), a cancelled one, or one limited to club members. It reads the student's
+ * own registration context, which the API returns in any event state.
  */
 function RegisteredEventView({ context }: { context: EventRegistrationContext }) {
   const { t, i18n } = useTranslation();
@@ -44,7 +43,6 @@ function RegisteredEventView({ context }: { context: EventRegistrationContext })
   </div>;
 }
 
-// Trang chi tiết sự kiện công khai kèm đăng ký tham dự
 export function EventDetail() {
   const { t, i18n } = useTranslation();
   const { id = "" } = useParams();

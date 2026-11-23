@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 
-// Trả envelope thành công cho mọi response 2xx
-// Envelope thành công — dạng duy nhất mà mọi response 2xx đi qua.
+// Success envelope — the one shape every 2xx response goes through.
 export function ok(res: Response, data: unknown, status = 200) {
   res.status(status).json({
     statusCode: status,
@@ -11,8 +10,7 @@ export function ok(res: Response, data: unknown, status = 200) {
   });
 }
 
-// Trả envelope lỗi cho mọi response không phải 2xx
-// Envelope lỗi — dạng duy nhất mà mọi response không phải 2xx đi qua.
+// Error envelope — the one shape every non-2xx response goes through.
 export function fail(
   res: Response,
   req: Request,
@@ -31,8 +29,7 @@ export function fail(
   });
 }
 
-// Trả file sinh ra dưới dạng attachment tải về
-// Tải file — response 2xx duy nhất không phải JSON: file được tạo ra và gửi dưới dạng attachment (UC55).
+// File download — the one non-JSON 2xx: a generated file sent as an attachment (UC55).
 export function download(res: Response, file: { bytes: Buffer; mimeType: string }, fileName: string) {
   res.status(200).type(file.mimeType).attachment(fileName).send(file.bytes);
 }

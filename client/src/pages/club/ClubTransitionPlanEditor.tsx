@@ -13,7 +13,6 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { cn } from "@/utils/cn";
 import type { TransitionContext, TransitionInput, TransitionPlan } from "@/services/clubTransitionPlans";
 interface Props { clubId: string; csrfToken: string; context: TransitionContext; plan?: TransitionPlan }
-// Form soạn kế hoạch chuyển giao nhiệm kỳ: nhiệm kỳ mới, bàn giao, ứng viên ghế
 export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: Props) {
   const { t, i18n } = useTranslation();
   const action = useWriteTransitionPlan(clubId);
@@ -28,9 +27,9 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
   const editable = !plan || ["Draft", "Returned"].includes(plan.state);
   const inputClass = "mt-1.5 block w-full font-normal";
   const labelClass = "block text-sm font-medium text-text-app";
-  // Bàn giao trước khi nhiệm kỳ hiện tại kết thúc cần có lý do (kiểm tra khi nộp kế hoạch).
+  // Handing over before the current term ends needs a reason (checked when the plan is submitted).
   const early = Boolean(start && context.term && new Date(vnDayBoundary(start, "start")) < new Date(context.term.endAt));
-  // Nhiệm kỳ cần có để lưu bản nháp; ghế ban chủ nhiệm, người được giao và lý do bàn giao sớm chỉ cần khi nộp.
+  // The term is needed to save a draft; board seats, assignees and the early reason only to submit it.
   const termErrors = {
     name: name.trim() ? null : t("common.fieldRequired"),
     start: !start ? t("common.fieldRequired") : start < vnTomorrowInput() ? t("common.dateNotPast") : null,
@@ -41,9 +40,7 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
     ...Object.fromEntries(context.positions.map((p) => ["seat:" + p.code,
       Object.entries(candidates).some(([key, id]) => id && key.split(":")[0] === p.code) ? null : t("common.chooseRequired")])),
     ...Object.fromEntries(context.obligations.map((o) => ["obligation:" + o.id, assignees[o.id] ? null : t("common.chooseRequired")])) });
-  // Chạy thay đổi form và đánh dấu kế hoạch đã chỉnh sửa
   function edited(update: () => void) { update(); setDirty(true); }
-  // Lưu nháp hoặc nộp kế hoạch chuyển giao
   async function save(submit = false) {
     if (!submit && Object.values(termErrors).some(Boolean)) { Object.keys(termErrors).forEach(field.touch); return; }
     if (submit && !field.touchAll()) return;
@@ -52,7 +49,7 @@ export function ClubTransitionPlanEditor({ clubId, csrfToken, context, plan }: P
       candidates: Object.entries(candidates).filter(([, id]) => id).map(([key, membershipId]) => ({ positionCode: key.split(":")[0]!, membershipId })),
       assignees: Object.fromEntries(Object.entries(assignees).filter(([, id]) => id)) };
     try { await action.mutateAsync({ csrfToken, action: { ...(plan ? { id: plan.id, revision: plan.revision } : {}), ...(!submit ? { input } : {}) } }); }
-    catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
+    catch { /* The mutation error is displayed below. */ }
   }
   const labels = { Draft: "clubTransitionPlans.draft", Returned: "clubTransitionPlans.returned", Confirmed: "clubTransitionPlans.confirmed", "Pending Confirmation": "clubTransitionPlans.pending" } as const;
   return <section className="space-y-4 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs">

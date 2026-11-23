@@ -8,8 +8,7 @@ import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repos
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
-// Hủy sự kiện, hủy đăng ký và booking liên quan trong cùng transaction
-/** Transaction dùng chung cho UC28 và UC15; quyết định gốc vẫn nằm trong audit bất biến của sự kiện. */
+/** Shared transaction for UC28 and UC15; source decision remains in the immutable event audit. */
 export async function cancelEventInSession(session: ClientSession, event: Doc, reason: string, now: Date,
   source: string, noticeHours: number, actorId?: Types.ObjectId, sourceRefId?: Types.ObjectId): Promise<number> {
   if (event.attendanceFinalized === true) throw new DomainError("finalized attendance prevents cancellation", "conflict");
@@ -34,7 +33,7 @@ export async function cancelEventInSession(session: ClientSession, event: Doc, r
   if (budget && !budget.sponsoredItems && !["Closed", "Cancelled"].includes(String(budget.state))) {
     const disbursed = Number(String(budget.disbursedTotal ?? 0));
     if (disbursed === 0) await m.eventBudgets!.updateOne({ _id: budget._id }, { $set: { state: "Cancelled" } }, { session });
-    // Số tiền phải thu hồi phải được quyết định từ chi phí thực tế ở UC37; đừng giả định mọi khoản tạm ứng đều chưa dùng.
+    // Amount to recover must be decided from real expenses in UC37; do not assume all advances are unspent.
     else await m.eventBudgets!.updateOne({ _id: budget._id }, { $set: { settlementDueAt: settlementDueAt(now) }, $inc: { __v: 1 } }, { session });
   }
   const correlationId = randomUUID();

@@ -5,15 +5,13 @@ import { ucmsModels as m } from "./ucms-models.js";
 const HOUR_MS = 3_600_000;
 const OPEN_VIOLATION_STATES = ["Open", "Under Investigation", "Awaiting Club Response", "Decision Issued", "Corrective Action"];
 
-// Đếm vi phạm chưa đóng của CLB làm dữ kiện định tuyến duyệt
-/** Dữ kiện lịch sử tuân thủ (UC05): các vụ việc UC40 của CLB chưa được giải quyết hoặc đóng. */
+/** Compliance history fact (UC05): the club's UC40 cases that are not resolved or closed. */
 export async function openViolationCount(clubId: unknown, session?: ClientSession): Promise<number> {
   if (!clubId) return 0;
   return m.violations!.countDocuments({ clubId, state: { $in: OPEN_VIOLATION_STATES } }).session(session ?? null);
 }
 
-// Tính trường routing và hạn SLA từ rule set Active khi mở task review
-/** Các trường của task được đóng băng khi review UC08 / UC26 / UC46 mở ra: rule khớp của bộ rule đang Active quyết định SLA (BR16). */
+/** Task fields frozen when a UC08 / UC26 / UC46 review opens: the matching rule of the active set sets the SLA (BR16). */
 export async function routedTaskFields(session: ClientSession, facts: RoutingFacts, now: Date) {
   const active = await m.routingRuleSets!.findOne({ state: "Active" }).session(session).lean();
   const route = resolveApprovalRoute(active ? { id: String(active._id), rules: (active.rules ?? []) as RoutingRule[] } : null, facts);

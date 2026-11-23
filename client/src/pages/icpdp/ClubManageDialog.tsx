@@ -19,14 +19,13 @@ interface ClubManageDialogProps {
   onClose: () => void;
 }
 
-// Dialog ICPDP xem và quản lý vòng đời của một CLB
-/** Hộp thoại modal gốc: giữ focus, phím Esc để đóng và lớp nền đều do trình duyệt cung cấp. */
+/** Native modal dialog: focus trapping, Esc to close and the backdrop come from the browser. */
 export function ClubManageDialog({ club, stateLabel, stateTone, csrfToken, onClose }: ClubManageDialogProps) {
   const { t } = useTranslation();
   const dialog = useRef<HTMLDialogElement>(null);
 
-  // Không gọi close() khi cleanup: dưới StrictMode nó sẽ kích hoạt onClose và đóng hộp thoại ngay sau
-  // khi mở. Gỡ phần tử khỏi DOM thì hộp thoại cũng tự đóng.
+  // No close() on cleanup: under StrictMode it would fire onClose and dismiss the dialog right after
+  // opening it. Removing the element from the DOM closes it anyway.
   useEffect(() => {
     const element = dialog.current;
     if (element && !element.open) element.showModal();
@@ -35,7 +34,7 @@ export function ClubManageDialog({ club, stateLabel, stateTone, csrfToken, onClo
   return (
     <dialog ref={dialog} aria-labelledby="club-manage-title" onClose={onClose}
       className="m-auto max-h-[90vh] w-[min(56rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-border-app bg-bg-app p-0 text-text-app shadow-xl backdrop:bg-backdrop-app transition-[opacity,scale] duration-200 ease-out starting:open:scale-[0.97] starting:open:opacity-0 backdrop:transition-opacity backdrop:duration-200 starting:open:backdrop:opacity-0">
-      {/* Cùng khung với AppDialog: phần đầu ghim ở trên, nút đóng ghim ở dưới. */}
+      {/* Same frame as AppDialog: header pinned on top, close action pinned at the bottom. */}
       <header className="sticky top-0 z-10 flex items-start gap-4 border-b border-border-app bg-bg-app px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
           <ClubLogo name={club.name} logoUrl={club.logoUrl} size={56} className="shrink-0 rounded-full border border-border-app" />
           <div className="min-w-0 flex-1">

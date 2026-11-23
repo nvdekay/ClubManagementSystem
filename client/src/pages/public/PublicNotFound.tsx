@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
-// Trang 404 cho khu công khai
 export function PublicNotFound() {
   const { t } = useTranslation();
   return (

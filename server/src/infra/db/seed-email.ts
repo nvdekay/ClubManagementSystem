@@ -1,6 +1,5 @@
-// Sinh email sinh viên từ tên hiển thị và số thứ tự
-// Sinh viên được seed có địa chỉ kiểu FPT (<given><initials>he<studentNo>@fpt.edu.vn) để founder có thể
-// gán họ bằng email trông như thật; studentNo giữ cho mọi địa chỉ là duy nhất.
+// Seeded students get FPT-style addresses (<given><initials>he<studentNo>@fpt.edu.vn) so a founder can
+// assign them by an email that looks like the real thing; studentNo keeps every address unique.
 export function studentEmail(displayName: string, studentNo: number): string {
   const parts = displayName.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
     .toLowerCase().split(/\s+/).filter(Boolean);

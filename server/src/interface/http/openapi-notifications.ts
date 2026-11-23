@@ -6,8 +6,8 @@ const responses = { "200": { description: "Operation completed" }, "400": { desc
   "401": { description: "Authentication required" }, "404": { description: "Notification not found" } };
 
 /**
- * NTF-04 inbox trong app của user đang đăng nhập. `scope` (student | icpdp | club) giữ thông báo của
- * một workspace, và `clubId` (chỉ với scope=club) thu hẹp về một CLB; không có `scope` thì trả tất cả.
+ * NTF-04 in-app inbox of the signed-in user. `scope` (student | icpdp | club) keeps the notifications of
+ * one workspace, and `clubId` (only with scope=club) narrows it to one club; without `scope`, all of them.
  */
 export const notificationOpenApiPaths = {
   "/notifications/mine": { get: { summary: "NTF-04 current user's notifications, newest first (cursor `before` = nextBefore; optional scope/clubId)",

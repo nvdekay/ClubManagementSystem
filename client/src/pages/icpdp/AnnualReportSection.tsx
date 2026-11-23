@@ -25,7 +25,6 @@ const FORMATS: AnnualFormat[] = ["pdf", "xlsx"];
 const choiceClass = "inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-app uppercase transition-colors hover:text-text-app sm:min-h-9";
 const activeChoiceClass = "bg-segment-app text-text-app shadow-xs";
 
-// Dịch mùa học kỳ sang nhãn hiển thị
 function seasonLabel(t: TFunction, season: Season): string {
   switch (season) {
     case "SPRING": return t("exports.season_SPRING");
@@ -34,7 +33,6 @@ function seasonLabel(t: TFunction, season: Season): string {
   }
 }
 
-// Dịch xu hướng tăng/giảm/ổn định sang nhãn hiển thị
 function trendLabel(t: TFunction, trend: Trend): string {
   switch (trend) {
     case "UP": return t("exports.trend_UP");
@@ -43,7 +41,6 @@ function trendLabel(t: TFunction, trend: Trend): string {
   }
 }
 
-// Dịch xếp loại đánh giá sang nhãn hiển thị
 function ratingLabel(t: TFunction, value: Classification): string {
   switch (value) {
     case "EXCELLENT": return t("evaluations.ratingEXCELLENT");
@@ -53,12 +50,10 @@ function ratingLabel(t: TFunction, value: Classification): string {
   }
 }
 
-// Chọn màu badge theo xếp loại đánh giá
 function ratingTone(value: Classification): AppBadgeTone {
   return value === "EXCELLENT" ? "success" : value === "GOOD" ? "info" : value === "FAIR" ? "warning" : "danger";
 }
 
-// Dịch trạng thái vòng đời CLB sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
   switch (state) {
     case "Active": return t("clubLifecycle.state_Active");
@@ -70,17 +65,14 @@ function stateLabel(t: TFunction, state: string): string {
   }
 }
 
-// Dịch mã tiêu chí đánh giá sang tên hiển thị
 function dimensionLabel(t: TFunction, code: DimensionCode): string {
   return t(`evaluationSchemes.dim_${code}`);
 }
 
-// Định dạng điểm, hiện dấu gạch khi chưa có điểm
 function score(value: number | null): string {
   return value === null ? "—" : String(value);
 }
 
-// Khối tiêu đề và nội dung của một phần trong báo cáo năm
 function Part({ title, children }: { title: string; children: ReactNode }) {
   return <section className="space-y-3 border-t border-border-app pt-5">
     <h3 className="font-heading text-base font-semibold">{title}</h3>
@@ -88,7 +80,6 @@ function Part({ title, children }: { title: string; children: ReactNode }) {
   </section>;
 }
 
-// Lưới các số liệu nhãn/giá trị của báo cáo năm
 function Figures({ items }: { items: [string, ReactNode][] }) {
   return <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map(([label, value]) =>
     <div key={label} className="rounded-xl border border-border-app bg-surface-app px-4 py-3">
@@ -97,7 +88,6 @@ function Figures({ items }: { items: [string, ReactNode][] }) {
     </div>)}</dl>;
 }
 
-// Hiển thị danh sách tên CLB kèm nhãn, hoặc chữ "không có"
 function ClubList({ label, clubs }: { label: string; clubs: string[] }) {
   const { t } = useTranslation();
   return <div><p className="text-sm font-medium">{label}</p>
@@ -109,8 +99,7 @@ interface AnnualReportSectionProps {
   csrfToken: string;
 }
 
-// UC55: phần xem trước và tải báo cáo tổng kết theo năm học
-/** UC55 A2: chọn năm học, xem trước sáu phần của báo cáo, chọn thành tích rồi tải xuống. */
+/** UC55 A2: pick an academic year, preview the six report parts, choose achievements and download. */
 export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionProps) {
   const { t, i18n } = useTranslation();
   const preview = useAnnualReportPreview();
@@ -120,11 +109,10 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
   const [remarks, setRemarks] = useState("");
   const [format, setFormat] = useState<AnnualFormat>("pdf");
   const option = years.find((item) => item.year === year);
-  // Chặn kết quả xem trước trả về muộn sau khi đã đổi năm.
+  // Guard against a preview that resolved after the year changed.
   const report = preview.data?.year === year ? preview.data : undefined;
   const failure = preview.error ?? download.error;
 
-  // Đổi năm học và xoá lựa chọn, bản xem trước cũ
   function changeYear(value: number) {
     setYear(value);
     setSelected([]);
@@ -132,13 +120,11 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
     download.reset();
   }
 
-  // Bật/tắt chọn một thành tích nổi bật, giới hạn số lượng tối đa
   function toggle(key: string) {
     setSelected((current) => current.includes(key) ? current.filter((item) => item !== key)
       : current.length < MAX_ACHIEVEMENTS ? [...current, key] : current);
   }
 
-  // Tải file báo cáo năm kèm nhận xét và thành tích đã chọn
   async function save() {
     try {
       const text = remarks.trim();
@@ -146,7 +132,7 @@ export function AnnualReportSection({ years, csrfToken }: AnnualReportSectionPro
         ...(text ? { remarks: text } : {}), ...(selected.length ? { achievementKeys: selected } : {}) }));
       appToast.success(t("exports.downloaded"));
     } catch {
-      // Hiển thị trực tiếp từ download.error.
+      // Shown inline from download.error.
     }
   }
 

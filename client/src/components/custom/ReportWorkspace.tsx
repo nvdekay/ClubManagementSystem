@@ -32,7 +32,6 @@ import type {
 } from "@/services/accountability";
 import { useConfirm } from "@/hooks/useConfirm";
 
-// Ánh xạ trạng thái báo cáo sự kiện sang key i18n
 function reportState(state: string): keyof typeof accountability.en {
   return (
     (
@@ -48,7 +47,6 @@ function reportState(state: string): keyof typeof accountability.en {
     )[state] ?? "state"
   );
 }
-// Hiển thị số liệu ngân sách và đề xuất chụp trong báo cáo
 function Figures({ figures }: { figures: ReportSnapshot }) {
   const { t, i18n } = useTranslation();
   const budget = figures.budget as {
@@ -136,7 +134,6 @@ function Figures({ figures }: { figures: ReportSnapshot }) {
     </div>
   );
 }
-// Chi tiết một báo cáo sau sự kiện: soạn, nộp, quyết định và lịch sử
 function ReportEditor({
   data,
   context,
@@ -185,7 +182,6 @@ function ReportEditor({
     latest?.state === "Submitted" &&
     (!latest.task?.assigneeId || latest.task.assigneeId === actorId);
   const claimed = latest?.task?.assigneeId === actorId;
-  // Gửi thao tác báo cáo (có xác nhận nếu cần) kèm revision hiện tại
   async function act(body: object, confirm = false) {
     if (
       confirm &&
@@ -204,10 +200,9 @@ function ReportEditor({
         token,
       });
     } catch {
-      /* Lỗi của mutation được hiển thị ở nơi khác. */
+      /* Render mutation error. */
     }
   }
-  // Mở vi phạm từ phát hiện trong báo cáo
   async function finding() {
     if (!reasonField.touchAll() || !latest) return;
     try {
@@ -228,7 +223,7 @@ function ReportEditor({
       });
       setViolationId(created.id);
     } catch {
-      /* Lỗi của mutation được hiển thị ở nơi khác. */
+      /* Render mutation error. */
     }
   }
   return (
@@ -579,7 +574,6 @@ function ReportEditor({
     </div>
   );
 }
-// Workspace báo cáo sau sự kiện: danh sách nghĩa vụ và chi tiết (CLB hoặc ICPDP)
 export function ReportWorkspace({
   context,
 }: {
@@ -623,7 +617,7 @@ export function ReportWorkspace({
           </AppButton>
         </AppNotice>
       ) : items.length ? (
-        // Gộp bộ chọn và phân trang vào một khung, để số trang được hiểu là phân trang danh sách sự kiện chứ không phải báo cáo.
+        // One box for the picker and its pager, so the page numbers read as paging the event list, not the report.
         <div className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
           <p className="text-sm font-medium">{t("accountability.select")}</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">

@@ -2,7 +2,6 @@ import { Types, type ClientSession } from "mongoose";
 import type { TransitionObligation } from "../../domain/leadership-transition.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
-// Liệt kê nghĩa vụ CLB còn dang dở (sự kiện, ngân sách, báo cáo, vi phạm)
 export async function clubOutstandingObligations(clubId: Types.ObjectId, session?: ClientSession): Promise<Omit<TransitionObligation, "assigneeMembershipId">[]> {
   const [events, budgets, reports, cases] = await Promise.all([
     m.events!.find({ clubId, state: { $nin: ["Draft", "Cancelled", "Closed", "Expired", "Rejected", "DRAFT", "CANCELLED", "FINISH"] } }).session(session ?? null).lean(),

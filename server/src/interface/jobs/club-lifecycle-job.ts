@@ -3,12 +3,11 @@ import { alertClubLifecycleJobFailure, runClubLifecycleJob } from "../../usecase
 
 const HOUR_MS = 60 * 60 * 1000;
 
-// Hẹn giờ chạy job vòng đời CLB (tạm ngừng, giải thể) mỗi giờ
-/** Chạy một lần ngay, rồi mỗi giờ; trả về hàm dừng. Lần chạy lỗi sẽ báo ICPDP và thử lại giờ sau. */
+/** Runs once now, then hourly; returns a stop function. A failed run alerts ICPDP and is retried next hour. */
 export function startClubLifecycleJob(repo: ClubLifecycleRepository, intervalMs = HOUR_MS): () => void {
   let running = false;
   async function tick(): Promise<void> {
-    if (running) return; // lần chạy chậm không bao giờ chồng lên lần kế tiếp
+    if (running) return; // a slow run never overlaps the next one
     running = true;
     try {
       const result = await runClubLifecycleJob(repo, new Date());

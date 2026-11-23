@@ -1,8 +1,7 @@
 import type { ComplaintRepository } from "../../domain/complaint.js";
 import { flagOverdueComplaintResponses } from "../../usecase/complaint.js";
 
-// Hẹn giờ quét khiếu nại quá hạn phản hồi mỗi giờ
-/** UC52 E1: mỗi giờ, phát tín hiệu compliance một lần cho mỗi khiếu nại đã chuyển tiếp quá hạn. */
+/** UC52 E1: hourly, raises the compliance signal once for every forwarded complaint past its deadline. */
 export function startComplaintResponseJob(repo: ComplaintRepository, intervalMs = 3600000): () => void {
   let running = false;
   async function tick() {

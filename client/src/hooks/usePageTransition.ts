@@ -1,11 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 
-// Hiệu ứng chuyển trang: cuộn lên đầu và làm mờ dần khi đổi đường dẫn
 /**
- * Làm mượt việc chuyển trang phía client: khi đường dẫn đổi, vùng trang cuộn về đầu và
- * mờ dần/trượt vào. Hiệu ứng chạy trên phần tử hiện có thay vì mount lại, nên state của trang
- * (bộ lọc, bản nháp) được giữ nguyên, và không làm gì ở lần render đầu hoặc khi người dùng bật giảm chuyển động.
+ * Softens client-side navigation: when the path changes, the page area scrolls back to the top and
+ * fades/slides in. It animates the existing element instead of remounting it, so page state
+ * (filters, drafts) survives, and it does nothing on the first render or under reduced motion.
  */
 export function usePageTransition<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -17,7 +16,7 @@ export function usePageTransition<T extends HTMLElement>() {
       firstRender.current = false;
       return;
     }
-    // #root đảm nhiệm việc cuộn (xem index.css), nên nếu không có đoạn này trang mới sẽ mở ở giữa chừng.
+    // #root owns scrolling (see index.css), so a new page would otherwise open mid-way down.
     document.getElementById("root")?.scrollTo({ top: 0 });
     const node = ref.current;
     if (!node || typeof node.animate !== "function"

@@ -6,18 +6,15 @@ import type { MembershipReconfirmation, MembershipReconfirmationRepository } fro
 import { queueNotifications } from "./club-board.js";
 import { ucmsModels as m } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
-// Repository xác nhận lại tư cách thành viên theo kỳ
 export function mongoMembershipReconfirmationRepository(): MembershipReconfirmationRepository {
-  // Ánh xạ yêu cầu xác nhận lại sang MembershipReconfirmation kèm tên CLB
   async function mapped(d: Doc): Promise<MembershipReconfirmation> {
     const club = await m.clubs!.findById(d.clubId).select({ name: 1 }).lean();
     return { id: String(d._id), membershipId: String(d.membershipId), clubName: String(club?.name ?? ""), periodCode: String(d.periodCode),
       dueAt: d.dueAt as Date, state: d.state as MembershipReconfirmation["state"], ...(d.confirmedAt ? { confirmedAt: d.confirmedAt as Date } : {}) };
   }
-  // Kiểm tra thành viên đang giữ ghế Chủ nhiệm/Phó chủ nhiệm trong nhiệm kỳ Active
   async function isLeader(session: ClientSession, member: Doc, now: Date) {
     const terms = await m.clubTerms!.find({ clubId: member.clubId, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } }).session(session).lean();
-    // Chỉ ghế Club Leader (Chủ nhiệm, Phó chủ nhiệm) được miễn, không phải mọi ghế ban chủ nhiệm (BR47 a).
+    // Only Club Leader seats (Chủ nhiệm, Phó chủ nhiệm) are exempt, not every board seat (BR47 a).
     const positions = await m.clubPositions!.find({ clubId: member.clubId, isActive: true,
       $or: [{ isLeaderRole: true }, { isBoardSeat: true, code: { $in: [...VICE_LEADER_SEAT_CODES] } }] }).session(session).lean();
     const assignment = await m.clubPositionAssignments!.findOne({ membershipId: member._id, clubId: member.clubId, termId: { $in: terms.map((t) => t._id) },
@@ -29,13 +26,11 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
     }
     return Boolean(assignment);
   }
-  // Ghi audit log cho membership
   async function audit(session: ClientSession, member: Doc, action: string, after: unknown, now: Date, actorId?: string) {
     await m.auditLogs!.create([{ entityType: "ClubMembership", entityId: member._id, action,
       ...(actorId ? { actorId: new Types.ObjectId(actorId), actorRole: "Student" } : { actorRole: "SYSTEM" }), after, correlationId: randomUUID(), at: now }], { session });
   }
-  // Đóng yêu cầu quá hạn: miễn cho Leader, ngược lại hết hạn và chuyển thành viên Inactive
-  /** Miễn cho Leader hiện tại, nếu không thì yêu cầu hết hạn và membership chuyển sang Inactive. */
+  /** Exempts a current Leader, otherwise expires the request and makes the membership Inactive. */
   async function close(session: ClientSession, member: Doc, request: Doc, now: Date, changes: { expired: number; exempt: number }) {
     const periodCode = String(request.periodCode);
     if (await isLeader(session, member, now)) {
@@ -52,12 +47,10 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
     changes.expired = 1;
   }
   return {
-    // Liệt kê yêu cầu xác nhận lại tư cách của sinh viên
     async listMine(userId) {
       const ids = await m.clubMemberships!.find({ userId: new Types.ObjectId(userId) }).distinct("_id");
       return Promise.all((await m.membershipReconfirmations!.find({ membershipId: { $in: ids } }).sort({ openedAt: -1 }).lean()).map(mapped));
     },
-    // Sinh viên xác nhận lại tư cách thành viên
     async confirm(id, userId, now) {
       const requestId = new Types.ObjectId(id);
       await mongoose.connection.transaction(async (session) => {
@@ -74,7 +67,6 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
       });
       return mapped((await m.membershipReconfirmations!.findById(requestId).lean())!);
     },
-    // Mở yêu cầu xác nhận lại cho thành viên Active theo kỳ
     async run(period, dueAt, now) {
       const result = { opened: 0, expired: 0, exempt: 0 };
       const candidates = await m.clubMemberships!.find({ state: "Active", joinedAt: { $lte: period.startAt } }).lean();
@@ -82,7 +74,7 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
         const outcome = await mongoose.connection.transaction(async (session) => {
           const member = await m.clubMemberships!.findOneAndUpdate({ _id: candidate._id, state: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
           if (!member) return { opened: 0, expired: 0, exempt: 0 };
-          // Lệnh ghi lên CLB tuần tự hoá một đề cử/chuyển nhiệm kỳ đồng thời với việc kiểm tra miễn trừ.
+          // The club write serializes a concurrent nomination/transition with the exemption check.
           await m.clubs!.updateOne({ _id: member.clubId }, { $inc: { __v: 1 } }, { session });
           let request: Doc | null = await m.membershipReconfirmations!.findOne({ membershipId: member._id, periodCode: period.code }).session(session).lean();
           const changes = { opened: 0, expired: 0, exempt: 0 };
@@ -107,7 +99,6 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
       }
       return result;
     },
-    // Xử lý các yêu cầu xác nhận lại quá hạn
     async expireOverdue(now) {
       const result = { expired: 0, exempt: 0 };
       const overdue = await m.membershipReconfirmations!.find({ state: "Pending", dueAt: { $lte: now } }).select({ _id: 1 }).lean();
@@ -118,7 +109,7 @@ export function mongoMembershipReconfirmationRepository(): MembershipReconfirmat
           if (!request) return changes;
           const member = await m.clubMemberships!.findOneAndUpdate({ _id: request.membershipId, state: "Active" }, { $inc: { __v: 1 } }, { session }).lean();
           if (!member) {
-            // Membership đã rời Active bằng đường khác; yêu cầu chỉ việc đóng lại.
+            // The membership already left Active by another path; the request just closes.
             await m.membershipReconfirmations!.updateOne({ _id, state: "Pending" }, { $set: { state: "Expired" } }, { session });
             return changes;
           }

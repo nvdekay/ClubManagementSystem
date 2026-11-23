@@ -24,7 +24,6 @@ const CANCELLATION_TASK_TYPE = "EVENT_CANCELLATION";
 const reviewableStates = ["Pending Approval", "Under Review", "Re-defense Pending"];
 const cancellableStates = ["Approved", "Upcoming", "Ongoing"];
 
-// Ánh xạ approval task thành EventProposalTask
 function taskFrom(doc: Doc): EventProposalTask {
   return {
     id: String(doc._id), eventId: String(doc.entityId), title: String(doc.title),
@@ -34,7 +33,6 @@ function taskFrom(doc: Doc): EventProposalTask {
   };
 }
 
-// Ánh xạ approval decision thành EventReviewDecision
 function decisionFrom(doc: Doc): EventReviewDecision {
   const comments = doc.comments as { sections?: string[]; conditions?: string[] } | undefined;
   return {
@@ -45,14 +43,12 @@ function decisionFrom(doc: Doc): EventReviewDecision {
   };
 }
 
-// Ánh xạ ngân sách sự kiện thành EventBudgetSummary
 function budgetFrom(doc: Doc, eventTitle?: string): EventBudgetSummary {
   return { id: String(doc._id), eventId: String(doc.eventId), ...(eventTitle ? { eventTitle } : {}),
     state: String(doc.state), requestedTotal: money(doc.requestedTotal), approvedTotal: money(doc.approvedTotal),
     lines: approvedLines(doc.lines) };
 }
 
-// Ánh xạ document sự kiện thành EventProposalSummary
 function eventFrom(doc: Doc, requestedBudgetTotal: number, property?: EventProposalSummary["property"],
   hasPendingCancellation?: boolean): EventProposalSummary {
   return {
@@ -61,7 +57,7 @@ function eventFrom(doc: Doc, requestedBudgetTotal: number, property?: EventPropo
     startAt: doc.startAt as Date, endAt: doc.endAt as Date, semesterCode: String(doc.semesterCode ?? ""),
     venueText: optionalText(doc.venueText), ...(property ? { property } : {}),
     audienceScope: String(doc.audienceScope ?? "PUBLIC"), capacity: Number(doc.capacity ?? 0),
-    state: String(doc.state),
+    riskCategory: optionalText(doc.riskCategory), state: String(doc.state),
     conflictResult: optionalText(doc.conflictResult), conflictDetail: doc.conflictDetail ?? undefined,
     approvalConditions: Array.isArray(doc.approvalConditions) ? doc.approvalConditions.map(String) : [],
     currentRevisionNo: Number(doc.currentRevisionNo ?? 1),
@@ -70,7 +66,6 @@ function eventFrom(doc: Doc, requestedBudgetTotal: number, property?: EventPropo
   };
 }
 
-// Repository ICPDP thẩm định đề xuất sự kiện và yêu cầu hủy (UC26)
 export function mongoEventProposalReviewRepository(): EventProposalReviewRepository {
   const m = ucmsModels;
   const events = m.events!;
@@ -176,7 +171,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
   }
 
   return {
-    // Liệt kê task thẩm định đề xuất và yêu cầu hủy đang Open
     async listOpen() {
       const taskDocs = await tasks.find({ entityType: { $in: [TASK_TYPE, CANCELLATION_TASK_TYPE] }, state: "Open" })
         .sort({ openedAt: 1, _id: 1 }).lean();
@@ -200,12 +194,10 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       });
     },
 
-    // Lấy chi tiết đề xuất sự kiện đang thẩm định
     async find(eventId, now) {
       return detail(new Types.ObjectId(eventId), now);
     },
 
-    // ICPDP officer nhận (claim) task thẩm định đề xuất hoặc yêu cầu hủy
     async claim(eventId, officerId, now) {
       const id = new Types.ObjectId(eventId);
       const actorId = new Types.ObjectId(officerId);
@@ -247,7 +239,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       return required(id, now);
     },
 
-    // ICPDP ghi quyết định cho đề xuất sự kiện
     async decide(eventId, officerId, input, now) {
       const id = new Types.ObjectId(eventId);
       await mongoose.connection.transaction(async (session) => {
@@ -256,7 +247,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       return required(id, now);
     },
 
-    // ICPDP duyệt hoặc từ chối yêu cầu hủy sự kiện đã được duyệt
     async decideCancellation(eventId, officerId, input, now) {
       const id = new Types.ObjectId(eventId);
       const actorId = new Types.ObjectId(officerId);
@@ -304,7 +294,6 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       return required(id, now);
     },
 
-    // Chuyển đề xuất quá hạn chỉnh sửa sang Expired và ghi audit
     async advanceLifecycle(now) {
       const overdue = await events.find({ state: "Revision Requested", revisionDeadlineAt: { $lt: now } })
         .select({ _id: 1, title: 1, currentRevisionNo: 1 }).lean();
@@ -341,10 +330,14 @@ export function mongoEventProposalReviewRepository(): EventProposalReviewReposit
       }
       const completed = await events.updateMany({ state: { $in: ["Upcoming", "Ongoing"] }, endAt: { $lte: now } },
         { $set: { state: "Completed" } });
+      const finished = await events.updateMany({ state: { $in: ["PUBLIC", "ONGOING"] }, endAt: { $lte: now } },
+        { $set: { state: "FINISH" } });
       const started = await events.updateMany({ state: "Upcoming", startAt: { $lte: now }, endAt: { $gt: now } },
         { $set: { state: "Ongoing" } });
-      return { expired, started: started.modifiedCount,
-        completed: completed.modifiedCount };
+      const startedInternal = await events.updateMany({ state: "PUBLIC", startAt: { $lte: now }, endAt: { $gt: now } },
+        { $set: { state: "ONGOING" } });
+      return { expired, started: started.modifiedCount + startedInternal.modifiedCount,
+        completed: completed.modifiedCount + finished.modifiedCount };
     },
   };
 }

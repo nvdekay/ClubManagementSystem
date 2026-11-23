@@ -7,8 +7,7 @@ import { runInvitationExpiryJob } from "../../usecase/school-event.js";
 
 const HOUR_MS = 60 * 60 * 1000;
 
-// Hẹn giờ chạy job vòng đời sự kiện, lời mời và cảnh báo bảo vệ đề án mỗi giờ
-/** Chạy một lần ngay, rồi mỗi giờ; trả về hàm dừng. Lần chạy lỗi được log và thử lại giờ sau. */
+/** Runs once now, then hourly; returns a stop function. A failed run is logged and retried next hour. */
 export function startEventLifecycleJob(
   repo: EventProposalReviewRepository,
   schoolEvents?: SchoolEventRepository,
@@ -17,7 +16,7 @@ export function startEventLifecycleJob(
 ): () => void {
   let running = false;
   async function tick(): Promise<void> {
-    if (running) return; // lần chạy chậm không bao giờ chồng lên lần kế tiếp
+    if (running) return; // a slow run never overlaps the next one
     running = true;
     try {
       const now = new Date();

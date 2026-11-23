@@ -3,10 +3,9 @@ import type { RequestedBudgetLine } from "./event-proposal-review.js";
 import type { EventRegistrationFormField } from "./event-registration.js";
 import type { FeedbackSummary } from "./event-feedback.js";
 
-/** Vòng đời của sự kiện nội bộ tự túc kinh phí, chỉ dành cho thành viên, không qua ICPDP duyệt. */
+/** Lifecycle of a self-funded members-only event that never goes through ICPDP review. */
 export const INTERNAL_CLUB_EVENT_STATES = ["DRAFT", "CREATED", "PUBLIC", "ONGOING", "FINISH", "CANCELLED"] as const;
 export type InternalClubEventState = typeof INTERNAL_CLUB_EVENT_STATES[number];
-// Kiểm tra trạng thái có thuộc nhóm sự kiện nội bộ hay không
 export function isInternalClubEventState(state: string): state is InternalClubEventState {
   return (INTERNAL_CLUB_EVENT_STATES as readonly string[]).includes(state);
 }
@@ -22,23 +21,24 @@ export interface EventOccurrence {
 export interface ClubEventInput {
   title: string; objective: string; plan: string; startAt: Date; endAt: Date;
   venueText?: string; propertyId?: string; audienceScope: "PUBLIC" | "MEMBERS_ONLY";
-  capacity: number; riskCategory?: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string; facilityNeeds?: string;
+  capacity: number; riskCategory: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string; facilityNeeds?: string;
   occurrences?: EventOccurrence[]; budgetLines: RequestedBudgetLine[];
   bookingIds: string[]; registrationForm?: EventRegistrationFormField[];
 }
-/** Tài liệu đề xuất (UC25) mà CLB đính kèm đề xuất ICPDP; được đóng băng trong mỗi phiên bản đã nộp. */
+export type InternalClubEventInput = Pick<ClubEventInput, "title" | "objective" | "plan" | "startAt" | "endAt" |
+  "venueText" | "propertyId" | "capacity" | "riskCategory" | "bookingIds">;
+export type InternalClubEventMode = "draft" | "create" | "publish";
+/** The proposal document (UC25) a club attaches to an ICPDP proposal; frozen in every submitted revision. */
 export interface EventProposalDocument {
   id: string; fileName: string; mimeType: string; bytes: number; assetId: string; uploadedAt: Date; uploadedBy: string;
 }
-/** Phần client được thấy: id asset lưu trữ không bao giờ rời khỏi server. */
+/** What clients see: the storage asset id never leaves the server. */
 export type PublicEventProposalDocument = Omit<EventProposalDocument, "assetId">;
-// Bỏ assetId khỏi tài liệu đề xuất trước khi trả ra ngoài
 export function publicProposalDocument(document: EventProposalDocument): PublicEventProposalDocument {
   const { assetId: _assetId, ...rest } = document;
   return rest;
 }
-// Bỏ assetId của tài liệu đề xuất trong payload sự kiện đã lưu
-/** Bỏ asset id khỏi `proposalDocument` trong payload sự kiện đã lưu, các phần khác giữ nguyên. */
+/** Drops the asset id from the `proposalDocument` inside a stored event payload, leaving everything else as is. */
 export function publicEventPayload<T>(payload: T): T {
   if (!payload || typeof payload !== "object" || !("proposalDocument" in payload)) return payload;
   const { proposalDocument, ...rest } = payload as Record<string, unknown>;
@@ -46,14 +46,14 @@ export function publicEventPayload<T>(payload: T): T {
     ? { ...rest, proposalDocument: publicProposalDocument(proposalDocument as EventProposalDocument) } : rest) as T;
 }
 export interface EventProposalTemplateInfo { fileName: string; mimeType: string; bytes: number; updatedAt: Date; isSystemDefault: boolean }
-/** Mẫu đang dùng: mẫu mặc định đi kèm hệ thống (phục vụ từ bytes có sẵn) hoặc bản ICPDP tải lên mới nhất (phục vụ từ kho lưu trữ). */
+/** The active template: the bundled system default (served from its bytes) or the latest ICPDP upload (served from storage). */
 export type EventProposalTemplate = EventProposalTemplateInfo &
   ({ isSystemDefault: true; content: Buffer } | { isSystemDefault: false; assetId: string });
 export interface EventProposalFileStorage {
   uploadProposalDocument(input: { clubId: string; eventId: string; actorId: string; fileName: string; mimeType: string;
     bytes: Buffer; now: Date }): Promise<EventProposalDocument>;
   uploadTemplateDocument(input: { actorId: string; fileName: string; mimeType: string; bytes: Buffer; now: Date }): Promise<EventProposalDocument>;
-  /** URL có chữ ký, sống ngắn. */
+  /** Short-lived signed URL. */
   accessUrl(assetId: string, options?: { inline: boolean }): Promise<string>;
 }
 export interface EventCancellationRequest {
@@ -104,6 +104,8 @@ export type ClubEventAction =
   | { kind: "save"; input: ClubEventInput; expectedVersion: number }
   | { kind: "submit"; expectedVersion: number }
   | { kind: "attach-document"; document: EventProposalDocument }
+  | { kind: "save-internal"; input: InternalClubEventInput; expectedVersion: number }
+  | { kind: "create-internal"; expectedVersion: number }
   | { kind: "publish"; input: EventPublishInput; expectedVersion: number }
   | { kind: "cancel"; reason: string; expectedVersion: number }
   | { kind: "reschedule"; startAt: Date; endAt: Date; venueText?: string; propertyId?: string; reason: string; expectedVersion: number }
@@ -118,15 +120,16 @@ export interface ClubEventRepository {
   list(clubId: string): Promise<ClubEvent[]>;
   find(clubId: string, eventId: string): Promise<ClubEventDetail | null>;
   create(clubId: string, input: ClubEventInput, actorId: string, now: Date): Promise<ClubEventDetail>;
+  createInternal(clubId: string, input: InternalClubEventInput, mode: InternalClubEventMode,
+    publishInput: EventPublishInput | undefined, actorId: string, now: Date): Promise<ClubEventDetail>;
   act(clubId: string, eventId: string, action: ClubEventAction, actorId: string, now: Date): Promise<ClubEventDetail>;
   participants(clubId: string, eventId: string): Promise<EventParticipant[]>;
   feedback(clubId: string, eventIds: string[], now: Date): Promise<ClubFeedbackSummary[]>;
-  /** "draft" là bản đang soạn của CLB, "latest" là phiên bản đã nộp cao nhất; null khi sự kiện không tồn tại. */
+  /** "draft" is the club's working copy, "latest" the highest submitted revision; null when the event does not exist. */
   proposalDocument(eventId: string, revision: number | "draft" | "latest"): Promise<{ clubId: string; document: EventProposalDocument | null } | null>;
   proposalTemplate(): Promise<EventProposalTemplate>;
   saveProposalTemplate(document: EventProposalDocument, actorId: string, now: Date): Promise<EventProposalTemplateInfo>;
 }
-// Xác định permission CLB cần có cho một thao tác trên sự kiện
 export function eventActionPermission(action: ClubEventAction): ClubPermission {
   return action.kind === "check-in" || action.kind === "unlock"
     ? "club.attendance.manage" : "club.event.manage";

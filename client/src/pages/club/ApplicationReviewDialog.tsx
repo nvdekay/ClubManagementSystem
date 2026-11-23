@@ -25,7 +25,7 @@ interface ApplicationReviewDialogProps {
   campaignId: string;
   application: RecruitmentApplication;
   group?: CandidateEvaluationGroup;
-  /** Là undefined khi query đánh giá đang tải hoặc bị lỗi. */
+  /** Undefined while the evaluations query is loading or failed. */
   rubric?: RecruitmentRubricCriterion[];
   evaluationsLoading: boolean;
   canReview: boolean;
@@ -36,8 +36,7 @@ interface ApplicationReviewDialogProps {
 
 const DANGER = "bg-danger-app text-bg-app hover:opacity-90";
 
-// Hộp thoại reviewer xem hồ sơ ứng viên, chấm điểm và quyết định
-/** Chi tiết UC18 cho một hồ sơ: câu trả lời, các thao tác sàng lọc và đánh giá UC19. */
+/** UC18 detail for one application: answers, screening actions and the UC19 evaluations. */
 export function ApplicationReviewDialog({ onClose, clubId, campaignId, application, group, rubric,
   evaluationsLoading, canReview, questionLabels, userId, csrfToken }: ApplicationReviewDialogProps) {
   const { t, i18n } = useTranslation();
@@ -51,10 +50,9 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
   const state = application.state;
   const field = useFieldValidation({ reason: reason.trim() ? null : t("common.fieldRequired") });
 
-  // Thực hiện hành động review (screen, shortlist, quyết định, promote) lên hồ sơ
   async function run(kind: "screen" | "shortlist" | "decide" | "promote", outcome?: "Accepted" | "Rejected" | "Waitlisted") {
     setError("");
-    // Shortlist và từ chối có ghi lý do; chấp nhận, đưa vào danh sách chờ và promote thì không.
+    // Shortlisting and rejecting record a reason; accept, waitlist and promote do not.
     if ((kind === "shortlist" || outcome === "Rejected") && !field.touchAll()) return;
     try {
       await action.mutateAsync({ clubId, campaignId, action: kind, applicationIds: [application.id],
@@ -65,7 +63,6 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
 
-  // Xác nhận rồi onboard hoặc từ chối onboard ứng viên đã được nhận
   async function onboard(kind: "onboard" | "decline") {
     if (!(await askConfirm(t(kind === "onboard" ? "recruitmentApplications.onboardConfirm" : "recruitmentApplications.declineConfirm")))) return;
     setError("");
@@ -75,12 +72,11 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
 
-  // Tải tệp đính kèm của hồ sơ qua URL có chữ ký
   async function openAttachment(attachmentId: string) {
     setError("");
     try {
       const access = await attachmentAccess.mutateAsync({ clubId, campaignId, applicationId: application.id, attachmentId });
-      // URL có chữ ký là bản tải về (attachment=true), nên reviewer vẫn ở lại trang này.
+      // The signed URL is a download (attachment=true), so the reviewer stays on this page.
       window.location.assign(access.url);
     } catch (caught) { setError(caught instanceof Error ? caught.message : t("recruitmentApplications.reviewError")); }
   }
@@ -104,7 +100,7 @@ export function ApplicationReviewDialog({ onClose, clubId, campaignId, applicati
         <h3 id="review-decision" className="font-heading text-sm font-semibold">{t("recruitmentApplications.decisionSection")}</h3>
         {needsReason && <label className="block text-sm font-medium text-text-app">{t("recruitmentApplications.actionReason")}
           {state === "Screening" && <AppRequiredMark />}
-          {/* Chỉ bước Screening cần lý do cho mọi thao tác, nên chỉ ở đó mới kiểm tra khi blur. */}
+          {/* Only Screening needs the reason for every action, so only there is it checked on blur. */}
           <AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000}
             {...(state === "Screening" ? field.control("reason") : { "aria-invalid": field.error("reason") ? true : undefined })}
             className="mt-1.5 block min-h-16 w-full font-normal" />

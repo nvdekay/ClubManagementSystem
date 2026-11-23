@@ -17,7 +17,6 @@ import { assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
-// Kiểm người dùng đã đăng nhập, chưa bị khóa và trả id
 function signedIn(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError(actor.lockReason || "account locked", "locked");
@@ -25,13 +24,11 @@ function signedIn(actor: AccessActor | null): string {
   return actor.id;
 }
 
-// Kiểm định dạng ObjectId của một định danh
 function id(value: string, label: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${label}`, "validation");
   return value;
 }
 
-// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   const actorId = signedIn(actor);
   if (!(await auth.systemRoleCodes(actorId)).includes("ICPDP_OFFICER")) {
@@ -40,8 +37,7 @@ async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: Acc
   return actorId;
 }
 
-// Sinh viên gửi khiếu nại về một CLB hoặc sự kiện
-/** UC50: khiếu nại luôn đến ICPDP trước (BR38); CLB được chọn, sự kiện là tuỳ chọn. */
+/** UC50: a complaint always goes to ICPDP first (BR38); the club is chosen, the event is optional. */
 export async function submitComplaint(repo: ComplaintRepository, actor: AccessActor | null, input: ComplaintInput, now: Date) {
   const studentId = signedIn(actor);
   if (!COMPLAINT_TYPES.includes(input.type)) throw new DomainError("invalid complaint type", "validation", { field: "type" });
@@ -55,20 +51,17 @@ export async function submitComplaint(repo: ComplaintRepository, actor: AccessAc
   return repo.submit({ ...input, description, evidence, studentId, now });
 }
 
-// Sinh viên xem các khiếu nại của mình
 export async function listMyComplaints(repo: ComplaintRepository, actor: AccessActor | null) {
   return repo.listMine(signedIn(actor));
 }
 
-// Sinh viên rút khiếu nại chưa được ICPDP quyết định
-/** UC50 A1: tác giả rút khiếu nại mà ICPDP chưa quyết định. */
+/** UC50 A1: the author withdraws a complaint ICPDP has not decided yet. */
 export async function withdrawComplaint(repo: ComplaintRepository, actor: AccessActor | null, complaintId: string, now: Date) {
   const withdrawn = await repo.withdraw(signedIn(actor), id(complaintId, "complaint id"), now);
   if (!withdrawn) throw new DomainError("only your own complaint that ICPDP has not decided can be withdrawn", "conflict");
   return withdrawn;
 }
 
-// ICPDP xem hàng đợi khiếu nại, lọc theo trạng thái
 export async function listComplaintQueue(repo: ComplaintRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, state?: string) {
   await officer(auth, actor);
@@ -76,7 +69,6 @@ export async function listComplaintQueue(repo: ComplaintRepository, auth: Pick<A
   return repo.queue(state ? { state: state as ComplaintState } : {});
 }
 
-// ICPDP xem chi tiết một khiếu nại
 export async function getComplaintForIcpdp(repo: ComplaintRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, complaintId: string) {
   await officer(auth, actor);
@@ -85,8 +77,7 @@ export async function getComplaintForIcpdp(repo: ComplaintRepository, auth: Pick
   return found;
 }
 
-// ICPDP quyết định khiếu nại (bác bỏ, chuyển CLB, leo thang, đóng)
-/** UC51: mở, phân loại (Dismissed / Forwarded / Escalated), rồi đóng hoặc leo thang sau khi CLB trả lời. */
+/** UC51: open, triage (Dismissed / Forwarded / Escalated), then close or escalate after the club answered. */
 export async function decideComplaint(repo: ComplaintRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, complaintId: string, decision: ComplaintDecision, now: Date) {
   const officerId = await officer(auth, actor);
@@ -98,15 +89,13 @@ export async function decideComplaint(repo: ComplaintRepository, auth: Pick<Auth
   return repo.decide(current.id, officerId, assertComplaintDecision(current, decision, now), now);
 }
 
-// CLB xem các khiếu nại đã được chuyển tới mình, không lộ người gửi
-/** UC52: chỉ các khiếu nại đã chuyển tiếp của CLB này, cho club.complaint.respond, không kèm người khiếu nại (D5). */
+/** UC52: only forwarded complaints of this club, for club.complaint.respond, without the complainant (D5). */
 export async function listClubComplaints(repo: ComplaintRepository, access: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, now: Date) {
   await assertClubAccess(access, actor, id(clubId, "club id"), "club.complaint.respond", now);
   return repo.clubInbox(clubId);
 }
 
-// CLB phản hồi khiếu nại kèm hành động và bằng chứng
 export async function respondToComplaint(repo: ComplaintRepository, access: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, complaintId: string, input: Omit<ComplaintClubResponse, "at">, now: Date) {
   await assertClubAccess(access, actor, id(clubId, "club id"), "club.complaint.respond", now);
@@ -115,8 +104,7 @@ export async function respondToComplaint(repo: ComplaintRepository, access: Club
   return repo.respond(clubId, id(complaintId, "complaint id"), actor!.id, response, now);
 }
 
-// Đánh dấu các khiếu nại đã chuyển CLB nhưng quá hạn phản hồi
-/** Job UC52 E1: idempotent, đánh dấu mỗi khiếu nại chuyển tiếp quá hạn đúng một lần. */
+/** UC52 E1 job: idempotent, flags each overdue forwarded complaint once. */
 export async function flagOverdueComplaintResponses(repo: ComplaintRepository, now: Date): Promise<number> {
   return repo.flagOverdueResponses(now);
 }

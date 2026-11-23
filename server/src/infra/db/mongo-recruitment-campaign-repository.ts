@@ -8,18 +8,15 @@ import type {
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels } from "./ucms-models.js";
 
-// Lọc mảng, chỉ giữ phần tử là object
 function records(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? value.filter((item): item is Record<string, unknown> =>
     Boolean(item) && typeof item === "object" && !Array.isArray(item)) : [];
 }
 
-// Lọc mảng, chỉ giữ phần tử là chuỗi
 function strings(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
-// Chuẩn hóa các bước tuyển chọn của đợt tuyển
 function selectionSteps(value: unknown): RecruitmentSelectionStep[] {
   return records(value).flatMap((step) => typeof step.name === "string" ? [{
     name: step.name,
@@ -29,7 +26,6 @@ function selectionSteps(value: unknown): RecruitmentSelectionStep[] {
   }] : []);
 }
 
-// Chuẩn hóa các trường form ứng tuyển
 function formFields(value: unknown): RecruitmentFormField[] {
   return records(value).flatMap((field) => typeof field.key === "string"
     && typeof field.label === "string"
@@ -39,14 +35,12 @@ function formFields(value: unknown): RecruitmentFormField[] {
       ...(Array.isArray(field.options) ? { options: strings(field.options) } : {}) }] : []);
 }
 
-// Chuẩn hóa tiêu chí chấm điểm (rubric) của đợt tuyển
 function rubricCriteria(value: unknown): RecruitmentRubricCriterion[] {
   return records(value).flatMap((criterion) => typeof criterion.key === "string"
     && typeof criterion.label === "string" && typeof criterion.maxScore === "number"
     ? [{ key: criterion.key, label: criterion.label, maxScore: criterion.maxScore }] : []);
 }
 
-// Ánh xạ document đợt tuyển sang RecruitmentCampaign
 function mapCampaign(doc: Record<string, unknown>): RecruitmentCampaign {
   return {
     id: String(doc._id), clubId: String(doc.clubId), title: String(doc.title),
@@ -61,7 +55,6 @@ function mapCampaign(doc: Record<string, unknown>): RecruitmentCampaign {
   };
 }
 
-// Ánh xạ document đợt tuyển sang OverlappingCampaign
 function mapOverlap(doc: Record<string, unknown>): OverlappingCampaign {
   return {
     id: String(doc._id), title: String(doc.title), positions: strings(doc.positions),
@@ -70,13 +63,11 @@ function mapOverlap(doc: Record<string, unknown>): OverlappingCampaign {
   };
 }
 
-// Kiểm tra hai danh sách vị trí có trùng nhau, không phân biệt hoa thường
 function positionOverlap(left: readonly string[], right: readonly string[]): boolean {
   const normalized = new Set(left.map((position) => position.toLocaleLowerCase("vi-VN")));
   return right.some((position) => normalized.has(position.toLocaleLowerCase("vi-VN")));
 }
 
-// Dựng dữ liệu lưu của đợt tuyển từ input
 function campaignData(input: RecruitmentCampaignInput) {
   return {
     title: input.title, positions: [...input.positions], criteria: input.criteria,
@@ -85,7 +76,6 @@ function campaignData(input: RecruitmentCampaignInput) {
   };
 }
 
-// Repository đợt tuyển thành viên của CLB
 export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignRepository {
   const campaigns = ucmsModels.recruitmentCampaigns!;
   const applications = ucmsModels.recruitmentApplications!;
@@ -94,21 +84,18 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
   const notifications = ucmsModels.notifications!;
 
   return {
-    // Liệt kê đợt tuyển của CLB, mới nhất trước
     async list(clubId) {
       const docs = await campaigns.find({ clubId: new Types.ObjectId(clubId) })
         .sort({ createdAt: -1, _id: -1 }).lean();
       return docs.map((doc) => mapCampaign(doc));
     },
 
-    // Lấy một đợt tuyển của CLB
     async find(clubId, campaignId) {
       const doc = await campaigns.findOne({ _id: new Types.ObjectId(campaignId),
         clubId: new Types.ObjectId(clubId) }).lean();
       return doc ? mapCampaign(doc) : null;
     },
 
-    // Tìm đợt tuyển khác có vị trí và thời gian trùng nhau
     async overlaps(clubId, campaignId, positions, windowStart, windowEnd) {
       const docs = await campaigns.find({
         clubId: new Types.ObjectId(clubId),
@@ -120,7 +107,6 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
         positionOverlap(positions, campaign.positions));
     },
 
-    // Tạo đợt tuyển Draft của CLB
     async createDraft(clubId, actorId, input, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const actorObjectId = new Types.ObjectId(actorId);
@@ -146,7 +132,6 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
       return mapCampaign(created);
     },
 
-    // Cập nhật đợt tuyển Draft
     async updateDraft(clubId, campaignId, actorId, input, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const campaignObjectId = new Types.ObjectId(campaignId);
@@ -173,7 +158,6 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
       return mapCampaign(updated);
     },
 
-    // Publish đợt tuyển để mở nhận đơn
     async publish(clubId, campaignId, actorId, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const campaignObjectId = new Types.ObjectId(campaignId);
@@ -202,7 +186,6 @@ export function mongoRecruitmentCampaignRepository(): RecruitmentCampaignReposit
       return mapCampaign(published);
     },
 
-    // Huỷ đợt tuyển
     async cancel(clubId, campaignId, actorId, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const campaignObjectId = new Types.ObjectId(campaignId);

@@ -33,7 +33,6 @@ export interface PeriodicDraft {
   customAnswers?: PeriodicCustomAnswer[];
 }
 
-// Gọi API /clubs/:clubId/periodic-reports và trả về data, ném ApiError nếu lỗi
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
   const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/periodic-reports${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
@@ -43,12 +42,10 @@ async function request<T>(clubId: string, path: string, init: RequestInit): Prom
   return (await res.json() as { data: T }).data;
 }
 
-// GET báo cáo định kỳ của CLB
 export function fetchClubPeriodicReports(clubId: string, signal: AbortSignal): Promise<ClubPeriodicOverview> {
   return request(clubId, "", { signal });
 }
 
-// POST/PUT tạo, lưu nháp hoặc nộp báo cáo định kỳ
 export function changePeriodicReport(clubId: string, action:
   | { kind: "create"; periodCode: string }
   | { kind: "save"; id: string; revision: number; input: PeriodicDraft }

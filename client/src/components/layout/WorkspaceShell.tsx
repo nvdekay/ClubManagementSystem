@@ -24,7 +24,7 @@ interface NavItem {
   end?: boolean;
 }
 
-/** Mục cha chứa các mục con có thể thu gọn; tự mở khi một mục con là trang hiện tại. */
+/** A parent entry that folds its children; it opens by itself while one of them is the current page. */
 interface NavGroup {
   group: string;
   label: string;
@@ -34,8 +34,7 @@ interface NavGroup {
 
 type NavEntry = NavItem | NavGroup;
 
-// Gộp mục menu thành nhóm khi có từ hai mục trở lên
-/** Chỉ thành mục cha thu gọn khi có từ hai mục con hiển thị trở lên; một mục con thì giữ là liên kết thường, không có mục con thì ẩn. */
+/** A folding parent only when it has two or more visible children; one child stays a plain link, none hides it. */
 function group(key: string, label: string, icon: AppIconName, children: NavItem[]): NavEntry[] {
   if (children.length > 1) return [{ group: key, label, icon, children }];
   return children;
@@ -43,20 +42,18 @@ function group(key: string, label: string, icon: AppIconName, children: NavItem[
 
 const linkClass = "relative flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted-app transition-colors hover:bg-surface-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
 const activeLinkClass = "bg-surface-app text-text-app hover:bg-surface-app";
-/** Dấu màu cam ở mép sidebar, cạnh mục cấp cao nhất đang được chọn. */
+/** Orange marker on the sidebar edge beside the active top-level entry. */
 const markerClass = "before:absolute before:top-2 before:bottom-2 before:-left-3 before:w-1 before:rounded-r-full before:bg-brand-app";
 
-/** Các nút icon trên thanh trên (theme, ngôn ngữ) dùng chung hình dạng với chuông thông báo. */
+/** Top-bar icon buttons (theme, language) share the notification bell's shape. */
 const topbarButton = "flex size-10 items-center justify-center rounded-full text-muted-app transition-colors hover:bg-surface-strong-app hover:text-text-app focus-visible:outline-2 focus-visible:outline-ring-app";
 
 const collapsedKey = "sidebarCollapsed";
 
-// Đọc trạng thái thu gọn sidebar đã lưu
 function readCollapsed(): boolean {
   try { return localStorage.getItem(collapsedKey) === "1"; } catch { return false; }
 }
 
-// Kiểm tra mục menu có đang là trang hiện tại không
 function isCurrent(item: NavItem, pathname: string): boolean {
   return pathname === item.to || (!item.end && pathname.startsWith(`${item.to}/`));
 }
@@ -64,8 +61,7 @@ function isCurrent(item: NavItem, pathname: string): boolean {
 const studentPrefixes = ["/student", "/workspace/applications", "/workspace/recruitment",
   "/workspace/event-registrations", "/workspace/complaints", "/workspace/clubs"];
 
-// Suy ra workspace (student, ICPDP hay CLB) từ đường dẫn
-/** Workspace mà một URL quản lý thuộc về; sidebar và việc kiểm tra quyền truy cập dựa theo nó. */
+/** The workspace a management URL belongs to; the sidebar and access check follow it. */
 function contextFor(pathname: string): Context {
   const club = /^\/club\/([^/]+)/.exec(pathname);
   if (club) return { kind: "club", clubId: decodeURIComponent(club[1]!) };
@@ -73,29 +69,27 @@ function contextFor(pathname: string): Context {
   return { kind: "icpdp" };
 }
 
-// Kiểm tra workspace của người dùng có khớp ngữ cảnh hiện tại không
 function matches(workspace: Workspace, context: Context): boolean {
   return workspace.kind === context.kind
     && (context.kind !== "club" || workspace.clubId === context.clubId);
 }
 
-// Khung chung có sidebar cho mọi trang workspace Student, ICPDP và CLB
-/** Khung sidebar bên trái cho mọi màn hình Student, ICPDP và quản lý CLB. */
+/** Left-sidebar frame for every Student, ICPDP and club management screen. */
 export function WorkspaceShell() {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const auth = useAuth();
   const logout = useLogout();
-  // Drawer nhớ đường dẫn lúc mở, nên khi chuyển trang nó tự đóng mà không cần effect.
+  // The drawer remembers the path it was opened on, so navigating closes it without an effect.
   const [menuPath, setMenuPath] = useState<string | null>(null);
   const menuOpen = menuPath === location.pathname;
   const menuButton = useRef<HTMLButtonElement>(null);
-  // Lựa chọn mở/đóng rõ ràng theo từng nhóm; nhóm chưa có lựa chọn thì theo trang hiện tại.
+  // Explicit open/closed choices per group; a group without one follows the current page.
   const [folded, setFolded] = useState<Record<string, boolean>>({});
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const pageRef = usePageTransition<HTMLDivElement>();
-  // Sidebar thu gọn: mục đang hiện panel nổi khi hover/focus, neo vào dòng của icon đó.
+  // Collapsed sidebar: the entry whose hover/focus flyout is showing, anchored to that icon's row.
   const [flyout, setFlyout] = useState<{ key: string; top?: number; bottom?: number } | null>(null);
   const context = contextFor(location.pathname);
   const workspace = auth.data?.workspaces.find((item) => matches(item, context));
@@ -134,14 +128,12 @@ export function WorkspaceShell() {
   const roleName = workspace?.kind === "club" && workspace.role ? t(`auth.${workspace.role}`)
     : context.kind === "icpdp" ? t("auth.officerRole") : t("auth.student");
 
-  // Thu gọn hoặc mở rộng sidebar và lưu lựa chọn
   function setSidebarCollapsed(next: boolean) {
     setCollapsed(next);
-    try { localStorage.setItem(collapsedKey, next ? "1" : "0"); } catch { /* Lựa chọn chỉ có tác dụng trong lần truy cập này. */ }
+    try { localStorage.setItem(collapsedKey, next ? "1" : "0"); } catch { /* The choice just lasts this visit. */ }
   }
 
-  // Mở panel nổi cạnh dòng đang hover của sidebar thu gọn
-  /** Neo panel nổi vào dòng đang hover, mở hướng lên khi dòng nằm thấp trên màn hình. */
+  /** Anchors the flyout to the hovered row, opening upwards when the row sits low on the screen. */
   function openFlyout(key: string, row: HTMLElement) {
     const rect = row.getBoundingClientRect();
     setFlyout(rect.top > window.innerHeight * 0.6
@@ -149,8 +141,7 @@ export function WorkspaceShell() {
       : { key, top: rect.top });
   }
 
-  // Dòng của sidebar thu gọn kèm panel nổi
-  /** Dòng của sidebar thu gọn: icon, và khi hover hoặc focus bàn phím thì hiện panel chứa nhãn hoặc các tab. */
+  /** Collapsed-sidebar row: the icon plus, on hover or keyboard focus, a panel with its label or its tabs. */
   function compactEntry(key: string, icon: ReactNode, title: string, children?: NavItem[]) {
     const shown = flyout?.key === key;
     return <li key={key} className="relative"
@@ -160,7 +151,7 @@ export function WorkspaceShell() {
       onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFlyout(null); }}
       onKeyDown={(event) => { if (event.key === "Escape") setFlyout(null); }}>
       {icon}
-      {/* Dùng fixed để khung cuộn của nav không cắt mất panel; padding trái trong suốt nối liền khoảng hở
+      {/* Fixed so the nav's scroll box can't clip it; the transparent left padding bridges the gap
           between icon and panel, so moving the pointer across it keeps the flyout open. */}
       {shown && <div className="fixed left-15 z-50 pl-4" style={{ top: flyout.top, bottom: flyout.bottom }}>
         <div className="min-w-52 rounded-xl border border-border-app bg-bg-app p-1.5 shadow-lg transition-[opacity,translate] duration-150 ease-out starting:-translate-x-1 starting:opacity-0">
@@ -173,7 +164,6 @@ export function WorkspaceShell() {
     </li>;
   }
 
-  // Liên kết điều hướng trong sidebar
   function navLink(item: NavItem, compact: boolean, nested = false, onNavigate?: () => void) {
     return <NavLink to={item.to} end={item.end} aria-label={compact ? item.label : undefined} onClick={onNavigate}
       className={({ isActive }) => cn(linkClass, { [activeLinkClass]: isActive, [markerClass]: isActive && !nested, "justify-center px-0": compact })}>
@@ -184,17 +174,15 @@ export function WorkspaceShell() {
     </NavLink>;
   }
 
-  // Đăng xuất và xoá workspace đã chọn
   async function signOut() {
     try {
       await logout.mutateAsync(me.csrfToken);
       sessionStorage.removeItem("workspace");
     } catch {
-      // logout.isError được hiển thị ở footer sidebar.
+      // logout.isError is shown in the sidebar footer.
     }
   }
 
-  // Nút đổi workspace ở đầu sidebar
   function switcher(compact: boolean) {
     return (
         <Link to="/workspace" title={compact ? undefined : t("auth.switchWorkspace")} aria-label={compact ? `${workspaceName} · ${t("auth.switchWorkspace")}` : undefined}
@@ -213,7 +201,6 @@ export function WorkspaceShell() {
     );
   }
 
-  // Dựng sidebar đầy đủ hoặc thu gọn
   function sidebar(compact: boolean) {
     const toggleLabel = compact ? t("common.expandSidebar") : t("common.collapseSidebar");
     return <div className="flex h-full flex-col">
@@ -231,7 +218,7 @@ export function WorkspaceShell() {
         </button>
       </div>
 
-      {/* Thu gọn: nút đổi workspace hiện workspace + vai trò trong cùng panel nổi với các icon menu, không dùng tooltip của trình duyệt. */}
+      {/* Collapsed: the switcher shows workspace + role in the same flyout as the menu icons, not a browser tooltip. */}
       {compact ? <ul className="mt-5 px-3">{compactEntry("workspace-switcher", switcher(true), `${workspaceName} · ${roleName}`)}</ul>
         : <div className="mx-3 mt-5">{switcher(false)}</div>}
 
@@ -245,7 +232,7 @@ export function WorkspaceShell() {
                 ? compactEntry(entry.to, navLink(entry, true), entry.label)
                 : <li key={entry.to}>{navLink(entry, false)}</li>;
               const containsCurrent = entry.children.some((child) => isCurrent(child, location.pathname));
-              // Thu gọn: hover hiện các tab của nhóm trong panel nổi; bấm vào vẫn mở lại sidebar tại nhóm đó.
+              // Collapsed: hovering shows the group's tabs in a flyout; clicking still reopens the sidebar on it.
               if (compact) return compactEntry(entry.group,
                 <button type="button" aria-label={entry.label} aria-haspopup="true" aria-expanded={flyout?.key === entry.group}
                   onClick={() => { setFolded({ ...folded, [entry.group]: false }); setSidebarCollapsed(false); setFlyout(null); }}
@@ -263,7 +250,7 @@ export function WorkspaceShell() {
                   <span className="min-w-0 flex-1">{entry.label}</span>
                   <AppIcon name="chevronRight" className={cn("size-4 transition-transform", { "rotate-90": open })} />
                 </button>
-                {/* Luôn được render để việc mở/đóng trượt mượt (hàng 0fr → 1fr) thay vì làm menu giật; vô hiệu (inert) khi đang đóng. */}
+                {/* Always rendered so opening/closing slides (0fr → 1fr rows) instead of making the menu jump; inert while closed. */}
                 <div inert={!open} className={cn("grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out", { "grid-rows-[1fr]": open })}>
                   <div className="min-h-0 overflow-hidden">
                     <ul id={listId} className="mt-1 ml-5 space-y-0.5 border-l border-border-app pl-2">
@@ -286,7 +273,7 @@ export function WorkspaceShell() {
 
   return (
     <div className="flex min-h-full">
-      {/* z-40: sticky biến aside thành một lớp xếp chồng riêng, và các panel nổi của sidebar thu gọn bên trong phải nằm trên nội dung trang. */}
+      {/* z-40: sticky makes the aside its own stacking layer, and the collapsed flyouts inside it must sit above page content. */}
       <aside className={cn("sticky top-0 z-40 hidden h-dvh w-72 shrink-0 border-r border-border-app bg-sidebar-app transition-[width] duration-200 lg:block", { "w-18": collapsed })}>{sidebar(collapsed)}</aside>
 
       {menuOpen && <div className="fixed inset-0 z-40 lg:hidden">
@@ -339,15 +326,13 @@ export function WorkspaceShell() {
   );
 }
 
-// Tên workspace hiển thị theo ngữ cảnh hiện tại
 function workspaceNameFor(context: Context, workspace: Workspace | undefined,
   t: (key: "auth.student" | "auth.icpdp" | "auth.club") => string): string {
   return context.kind === "student" ? t("auth.student")
     : context.kind === "icpdp" ? t("auth.icpdp") : workspace?.clubName ?? t("auth.club");
 }
 
-// Dựng đường dẫn breadcrumb từ các mục menu
-/** Breadcrumb ở thanh trên: workspace › nhóm menu › trang hiện tại, lấy từ cùng các mục mà sidebar hiển thị. */
+/** Top-bar trail: workspace › menu group › current page, read from the same entries the sidebar shows. */
 function breadcrumb(nav: Array<{ items: NavEntry[] }>, pathname: string, workspaceName: string): string[] {
   for (const section of nav) for (const entry of section.items) {
     if (!("group" in entry)) {
@@ -360,7 +345,6 @@ function breadcrumb(nav: Array<{ items: NavEntry[] }>, pathname: string, workspa
   return [workspaceName];
 }
 
-// Dựng menu sidebar theo workspace và quyền của người dùng
 function navigation(context: Context, workspace: Workspace | undefined,
   t: (key: `common.${keyof typeof common.en}`) => string): Array<{ title: string; items: NavEntry[] }> {
   const explore = { title: t("common.sectionExplore"), items: [
@@ -382,7 +366,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
     ] }, explore];
   }
   if (context.kind === "icpdp") {
-    // Gom nhóm theo công việc để menu ICPDP dài đọc thành vài khu vực thay vì một danh sách phẳng.
+    // Grouped by job so the long ICPDP menu reads as a few areas instead of one flat list.
     return [{ title: t("common.sectionWork"), items: [
       { to: "/icpdp", label: t("common.navOverview"), icon: "home", end: true },
       { group: "clubs", label: t("common.groupClubs"), icon: "building", children: [
@@ -395,6 +379,7 @@ function navigation(context: Context, workspace: Workspace | undefined,
       ] },
       { group: "events", label: t("common.groupEvents"), icon: "ticket", children: [
         { to: "/workspace/event-proposals", label: t("common.icpdpEventProposals"), icon: "inbox" },
+        { to: "/workspace/internal-events", label: t("common.icpdpInternalEvents"), icon: "users" },
         { to: "/workspace/event-reports", label: t("common.navEventReports"), icon: "file" },
         { to: "/workspace/budgets", label: t("common.icpdpBudgets"), icon: "coins" },
         { to: "/workspace/school-events", label: t("common.icpdpSchoolEvents"), icon: "flag" },
@@ -419,12 +404,11 @@ function navigation(context: Context, workspace: Workspace | undefined,
     ] }];
   }
   const base = `/club/${encodeURIComponent(context.clubId)}`;
-  // Kiểm tra workspace có quyền cụ thể không
   function can(permission: string) {
     return Boolean(workspace?.permissions.includes(permission));
   }
   const member = workspace?.role !== "founder";
-  // Các trang CLB được gom nhóm giống menu ICPDP; mỗi mục con vẫn theo permission của vai trò.
+  // Club pages are grouped like the ICPDP menu; each child still follows the role's permissions.
   return [{ title: t("common.sectionWork"), items: [
     { to: base, label: t("common.navOverview"), icon: "home", end: true },
     ...group("club-people", t("common.groupPeople"), "building", [

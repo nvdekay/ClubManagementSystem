@@ -17,34 +17,28 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
-// Ném DomainError loại conflict với thông điệp cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
-// Ném DomainError loại not_found với thông điệp cho trước
 function notFound(message: string): never {
   throw new DomainError(message, "not_found");
 }
 
-// Ánh xạ document nhiệm kỳ sang TransitionTerm
 function term(doc: Doc): TransitionTerm {
   return { id: String(doc._id), name: String(doc.name), startAt: doc.startAt as Date,
     endAt: doc.endAt as Date, state: String(doc.state) };
 }
 
-// Lọc mảng, chỉ giữ phần tử là chuỗi
 function stringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
-// Lọc mảng, chỉ giữ phần tử là object
 function rawObjects(value: unknown): Doc[] {
   return Array.isArray(value) ? value.filter((item): item is Doc => Boolean(item)
     && typeof item === "object" && !Array.isArray(item)) : [];
 }
 
-// Chuẩn hóa danh sách nghĩa vụ bàn giao của kế hoạch
 function obligations(value: unknown): TransitionObligation[] {
   return rawObjects(value).flatMap((item) => {
     if (typeof item.id !== "string" || typeof item.type !== "string"
@@ -55,7 +49,6 @@ function obligations(value: unknown): TransitionObligation[] {
   });
 }
 
-// Chuẩn hóa danh sách ghế ban chủ nhiệm đề xuất
 function boardRoles(value: unknown): TransitionBoardRole[] | undefined {
   if (!Array.isArray(value)) return undefined;
   return rawObjects(value).flatMap((item) => {
@@ -67,7 +60,6 @@ function boardRoles(value: unknown): TransitionBoardRole[] | undefined {
   });
 }
 
-// Chuẩn hóa nội dung bàn giao của kế hoạch
 function handover(value: unknown): TransitionHandover {
   if (!value || typeof value !== "object" || Array.isArray(value)) return { items: [] };
   const source = value as Doc;
@@ -77,7 +69,6 @@ function handover(value: unknown): TransitionHandover {
   return { items, ...(proposedBoardRoles ? { proposedBoardRoles } : {}) };
 }
 
-// Chụp snapshot thông tin vị trí (position) của CLB
 export function roleSnapshot(doc: Doc) {
   return { positionId: String(doc._id), code: String(doc.code), name: String(doc.name),
     ...(typeof doc.unit === "string" ? { unit: doc.unit } : {}),
@@ -86,7 +77,6 @@ export function roleSnapshot(doc: Doc) {
     isSingleHolder: doc.isSingleHolder !== false, permissionCodes: stringArray(doc.permissionCodes) };
 }
 
-// Repository kế hoạch chuyển giao nhiệm kỳ ban chủ nhiệm cho ICPDP
 export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepository {
   const plans = ucmsModels.transitionPlans!;
   const clubs = ucmsModels.clubs!;
@@ -101,7 +91,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
 
-  // Dựng chi tiết kế hoạch chuyển giao kèm approval task
   async function detail(planId: Types.ObjectId,
     session?: ClientSession): Promise<LeadershipTransition | null> {
     const [plan, taskDoc] = await Promise.all([
@@ -158,7 +147,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
         openedAt: taskDoc.openedAt as Date }, decisions: mappedDecisions };
   }
 
-  // Xác định người nhận thông báo: người gửi, ban cũ và ứng viên
   async function recipients(plan: Doc, session: ClientSession): Promise<Types.ObjectId[]> {
     const boardPositions = await positions.find({ clubId: plan.clubId, isBoardSeat: true })
       .select({ _id: 1 }).session(session).lean();
@@ -173,7 +161,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
       .map((id) => new Types.ObjectId(id));
   }
 
-  // Kiểm tra ghế ban đề xuất hợp lệ và giữ nguyên vai trò President
   function validateProposal(proposed: TransitionBoardRole[], current: Doc[]): void {
     if (!proposed.length || new Set(proposed.map((item) => item.code)).size !== proposed.length) {
       conflict("proposed board roles are invalid");
@@ -186,7 +173,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
   }
 
   return {
-    // Liệt kê kế hoạch chuyển giao đang chờ ICPDP xử lý
     async listOpen() {
       const open = await tasks.find({ entityType: "TRANSITION_PLAN", state: { $in: ["Open", "Escalated"] } })
         .sort({ openedAt: 1 }).lean();
@@ -194,12 +180,10 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
         .filter((item): item is LeadershipTransition => Boolean(item));
     },
 
-    // Lấy chi tiết một kế hoạch chuyển giao
     async find(planId) {
       return detail(new Types.ObjectId(planId));
     },
 
-    // ICPDP officer nhận xử lý (claim) kế hoạch chuyển giao
     async claim(planId, officerId, now) {
       const id = new Types.ObjectId(planId);
       const officer = new Types.ObjectId(officerId);
@@ -228,7 +212,6 @@ export function mongoLeadershipTransitionRepository(): LeadershipTransitionRepos
       return result;
     },
 
-    // ICPDP xác nhận hoặc trả lại kế hoạch; xác nhận thì đóng nhiệm kỳ cũ, kích hoạt nhiệm kỳ mới
     async decide(planId, officerId, input: TransitionDecisionInput, now) {
       const id = new Types.ObjectId(planId);
       const officer = new Types.ObjectId(officerId);

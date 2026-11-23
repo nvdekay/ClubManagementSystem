@@ -9,17 +9,14 @@ const VN_OFFSET = 7 * 3600_000;
 const FINISHED_EVENT_STATES = ["Completed", "Report Submitted", "Closed", "FINISH"];
 const FIELD_LIMIT = 7;
 
-// Tính thời điểm đầu tháng (giờ Việt Nam) lệch so với hiện tại
-/** Thời điểm đầu tiên của tháng (giờ Việt Nam) cách `now` `offset` tháng. */
+/** First instant of the Vietnam-time month `offset` months away from `now`. */
 function monthStart(now: Date, offset: number): Date {
   const local = new Date(now.getTime() + VN_OFFSET);
   return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth() + offset, 1) - VN_OFFSET);
 }
-// Đổi mốc đầu tháng thành khóa YYYY-MM
 function monthKey(start: Date): string {
   return new Date(start.getTime() + VN_OFFSET).toISOString().slice(0, 7);
 }
-// Sinh danh sách các tháng liên tiếp với khóa, đầu và cuối tháng
 function months(now: Date, from: number, to: number): { key: string; start: Date; end: Date }[] {
   const out = [];
   for (let offset = from; offset <= to; offset += 1) {
@@ -28,17 +25,15 @@ function months(now: Date, from: number, to: number): { key: string; start: Date
   }
   return out;
 }
-// Chuyển giá trị tiền (Decimal/chuỗi) sang number
 function money(value: unknown): number {
   return value === null || value === undefined ? 0 : Number(String(value));
 }
 
-// Dựng dữ liệu biểu đồ dashboard ICPDP (task, sự kiện, lĩnh vực CLB)
 export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
   const window = months(now, -5, 2);
   const [tasks, events, fields, states, policy] = await Promise.all([
     m.approvalTasks!.find({ state: { $in: ["Open", "Escalated"] } }).select({ entityType: 1, slaDueAt: 1 }).lean(),
-    m.events!.find({ audienceScope: "PUBLIC", state: { $in: [...RECORDED_EVENT_STATES] }, startAt: { $gte: window[0]!.start, $lt: window.at(-1)!.end } })
+    m.events!.find({ state: { $in: [...RECORDED_EVENT_STATES] }, startAt: { $gte: window[0]!.start, $lt: window.at(-1)!.end } })
       .select({ startAt: 1, audienceScope: 1 }).lean(),
     m.clubs!.aggregate<{ _id: string | null; count: number }>([
       { $match: { state: { $in: ["Active", "Suspended", "Dissolving"] } } },
@@ -66,7 +61,8 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
       .sort((a, b) => b.onTime + b.overdue - (a.onTime + a.overdue) || a.entityType.localeCompare(b.entityType)),
     eventsByMonth: window.map((month) => {
       const inMonth = events.filter((event) => (event.startAt as Date) >= month.start && (event.startAt as Date) < month.end);
-      return { month: month.key, count: inMonth.length };
+      const internalCount = inMonth.filter((event) => event.audienceScope === "MEMBERS_ONLY").length;
+      return { month: month.key, count: inMonth.length, publicCount: inMonth.length - internalCount, internalCount };
     }),
     clubsByField: tail ? [...head, { field: "other", count: tail }] : head,
     clubsByState: states.map((item) => ({ state: item._id, count: item.count })),
@@ -74,8 +70,7 @@ export async function icpdpCharts(now: Date): Promise<IcpdpDashboardCharts> {
   };
 }
 
-// Xác định thời điểm thành viên rời hoặc bị cấm khỏi CLB
-/** Thời điểm membership Left hoặc Banned thôi được tính; ưu tiên `leftAt`, không có thì lấy mục lịch sử cuối cùng chuyển sang trạng thái đó. */
+/** When a Left or Banned membership stopped counting; `leftAt` first, else the last history entry into that state. */
 function endedAt(doc: Doc): Date | undefined {
   if (doc.leftAt instanceof Date) return doc.leftAt;
   if (doc.state !== "Left" && doc.state !== "Banned") return undefined;
@@ -85,7 +80,6 @@ function endedAt(doc: Doc): Date | undefined {
   return at instanceof Date ? at : new Date(0);
 }
 
-// Dựng dữ liệu biểu đồ dashboard CLB (thành viên, sự kiện, feedback)
 export async function clubCharts(clubId: string, now: Date): Promise<ClubDashboardCharts> {
   const club = new Types.ObjectId(clubId);
   const [memberships, finished, campaign, feedbacks] = await Promise.all([

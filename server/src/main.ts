@@ -72,9 +72,9 @@ import { mongoSponsoredItemRepository } from "./infra/db/mongo-sponsored-item-re
 import { cloudinaryRecruitmentFiles } from "./infra/files/cloudinary-recruitment-files.js";
 import { cloudinaryEventProposalFiles } from "./infra/files/event-proposal-files.js";
 
-const config = loadConfig(); // việc đầu tiên — thoát nếu env không hợp lệ
+const config = loadConfig(); // first thing — exits if env is invalid
 const authConfig = optionalAuthConfig(config);
-// EXT-02: dùng SMTP khi đã cấu hình (bắt buộc ở production); log transport chỉ dành cho môi trường dev.
+// EXT-02: SMTP when configured (required in production); the log transport is a development-only choice.
 const mail = mailConfig(config);
 const mailTransport = mail.transport === "smtp" ? smtpMailTransport(mail, createSmtpSender(mail)) : logMailTransport();
 const cloudinaryConfig = optionalCloudinaryConfig(config);
@@ -89,7 +89,7 @@ try {
   }
 } catch (err) {
   console.error("❌ mongo connection failed:", err instanceof Error ? err.message : err);
-  process.exit(1); // fail fast — không bao giờ phục vụ khi không có database
+  process.exit(1); // fail fast — never serve without a database
 }
 console.log("mongo connected");
 
@@ -175,7 +175,7 @@ const stopAccountabilityJob = startAccountabilityReminderJob(mongoAccountability
 const stopBookingJob = startFacilityBookingJob(facilityBookingRepo);
 const stopLifecycleJob = startClubLifecycleJob(clubLifecycleRepo);
 const stopEventLifecycleJob = startEventLifecycleJob(eventProposalReviewRepo, schoolEventRepo, eventDefenseRepo);
-// ponytail: dùng log transport cho tới khi SMTP client dependency được duyệt (xem infra/mail/README.md).
+// ponytail: log transport until an SMTP client dependency is approved (see infra/mail/README.md).
 const stopNotificationJob = startNotificationDeliveryJob(mongoMailOutboxRepository(), mailTransport,
   authConfig ? { appUrl: authConfig.CLIENT_BASE_URL } : {});
 const server = app.listen(config.PORT, () => {
@@ -185,7 +185,7 @@ const server = app.listen(config.PORT, () => {
 let shuttingDown = false;
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.on(signal, () => {
-    if (shuttingDown) process.exit(1); // tín hiệu thứ hai = ngừng chờ, thoát ngay
+    if (shuttingDown) process.exit(1); // second signal = stop waiting, exit now
     shuttingDown = true;
     stopApplicationExpiryJob();
     stopComplaintResponseJob();
@@ -195,7 +195,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     stopAccountabilityJob();
     stopEventLifecycleJob();
     stopNotificationJob();
-    // Hạn xả — một request đang xử lý bị treo không được chặn SIGTERM cho tới khi nền tảng SIGKILL.
+    // Drain deadline — a hung in-flight request must not block SIGTERM until the platform SIGKILLs.
     setTimeout(() => {
       console.error("shutdown deadline hit — forcing exit");
       process.exit(1);

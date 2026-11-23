@@ -11,12 +11,10 @@ import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications } from "@/hooks/useApplications";
 
-// Trang danh sách đơn thành lập CLB của sinh viên
 export function ApplicationsPage() {
   const { t } = useTranslation();
   const auth = useAuth();
   const applications = useMyApplications(Boolean(auth.data));
-  // Nhãn đã dịch của trạng thái đơn
   function stateLabel(state: string): string {
     switch (state) {
       case "Draft": return t("applications.statusDraft");
@@ -31,7 +29,6 @@ export function ApplicationsPage() {
     }
   }
 
-  // Màu badge theo trạng thái đơn
   function stateTone(state: string): AppBadgeTone {
     if (state === "Approved") return "success";
     if (state === "Rejected" || state === "Expired") return "danger";

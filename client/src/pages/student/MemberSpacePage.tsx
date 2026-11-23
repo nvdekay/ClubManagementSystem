@@ -25,14 +25,12 @@ import { formatDate, formatDay } from "@/utils/formatDate";
 const registrationLabels = { Confirmed: "memberSpace.regConfirmed", Waitlisted: "memberSpace.regWaitlisted",
   Cancelled: "memberSpace.regCancelled" } as const;
 
-// Ngày hôm nay (YYYY-MM-DD) theo múi giờ Việt Nam
-/** Hôm nay theo giờ Việt Nam (server so sánh ngày rời CLB theo lịch Asia/Ho_Chi_Minh). */
+/** Today in Vietnam (the server compares leave dates by Asia/Ho_Chi_Minh calendar day). */
 function todayInVietnam(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit",
     day: "2-digit" }).format(new Date());
 }
 
-// Khối nội dung có tiêu đề trong không gian thành viên
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
@@ -42,8 +40,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-// Trang không gian thành viên của một CLB
-/** Không gian thành viên UC24 (chỉ xem) kèm yêu cầu rời CLB UC22; các link tới UC29/UC31/UC48 chỉ để điều hướng. */
+/** UC24 member space (read-only) with UC22 leave request; links to UC29/UC31/UC48 are navigation only. */
 export function MemberSpacePage() {
   const { t } = useTranslation();
   const { clubId } = useParams();
@@ -71,7 +68,6 @@ export function MemberSpacePage() {
   return <MemberSpaceView space={space.data} csrfToken={auth.data!.csrfToken} />;
 }
 
-// Nội dung không gian thành viên: thông tin CLB, tư cách, ban chủ nhiệm, rút CLB
 function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
@@ -182,7 +178,7 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
           </Section>
         </div>
 
-        {/* Điện thoại: phần thành viên, ban chủ nhiệm và thao tác rời CLB đứng trước danh sách thành viên dài. */}
+        {/* Phones: membership, board and leave actions come before the long member list. */}
         <aside className="order-first space-y-5 lg:sticky lg:top-22 lg:order-none">
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             <h2 className="font-heading text-base font-semibold">{t("memberSpace.yourMembership")}</h2>
@@ -211,8 +207,7 @@ function MemberSpaceView({ space, csrfToken }: { space: MemberSpace; csrfToken: 
   );
 }
 
-// Nút và hộp thoại gửi yêu cầu rút khỏi CLB
-/** UC22: thành viên xin rời CLB; CLB thực hiện ở UC21, nên trạng thái thành viên không đổi ở đây. */
+/** UC22: the member asks to leave; the club executes it in UC21, so membership state does not change here. */
 function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToken: string }) {
   const { t } = useTranslation();
   const action = useMembershipAction();
@@ -227,24 +222,22 @@ function LeaveClub({ membershipId, csrfToken }: { membershipId: string; csrfToke
     date: !date ? t("common.fieldRequired") : date < todayInVietnam() ? t("common.dateNotPast") : null,
   });
 
-  // Đóng hộp thoại rút CLB và xóa trạng thái kiểm tra
   function close() {
     setOpen(false);
     field.reset();
   }
 
-  // Gửi yêu cầu rút khỏi CLB kèm lý do
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll() || inFlight.current) return;
     inFlight.current = true;
     try {
-      // Lấy 12 giờ trưa giờ Việt Nam để giữ đúng ngày đã chọn dù trình duyệt ở múi giờ nào.
+      // Noon in Vietnam keeps the chosen calendar day whatever the browser's timezone.
       await action.mutateAsync({ kind: "request", membershipId, reason: reason.trim(),
         requestedEffectiveDate: new Date(`${date}T12:00:00+07:00`).toISOString(), csrfToken });
       close();
     } catch {
-      // action.isError được hiển thị bên dưới.
+      // action.isError renders below.
     } finally {
       inFlight.current = false;
     }

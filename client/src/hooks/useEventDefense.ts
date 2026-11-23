@@ -21,7 +21,6 @@ import type { EventReviewDecisionInput } from "@/services/eventProposalReviews";
 const defenseKey = ["event-defense"] as const;
 const proposalKey = ["event-proposal-reviews"] as const;
 
-// Query các phòng còn trống cho buổi bảo vệ sự kiện
 export function useAvailableDefenseRooms(
   startAt: string | undefined,
   durationMinutes: number,
@@ -36,7 +35,6 @@ export function useAvailableDefenseRooms(
   });
 }
 
-// Query phiên bảo vệ đang diễn ra của sự kiện
 export function useLiveDefenseSession(eventId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: [...defenseKey, "live", eventId],
@@ -47,7 +45,6 @@ export function useLiveDefenseSession(eventId: string | undefined, enabled: bool
   });
 }
 
-// Query thông tin buổi bảo vệ sự kiện phía CLB
 export function useClubEventDefense(clubId: string, eventId: string | undefined, enabled: boolean) {
   return useQuery({
     queryKey: [...defenseKey, "club", clubId, eventId],
@@ -69,7 +66,6 @@ export type EventDefenseMutationAction =
   | { kind: "confirmClub"; clubId: string; eventId: string; csrfToken: string }
   | { kind: "requestReschedule"; clubId: string; eventId: string; reason: string; csrfToken: string };
 
-// Mutation các thao tác bảo vệ sự kiện (xếp lịch, bắt đầu, kết thúc, quyết định...), rồi làm mới cache
 export function useEventDefenseActions() {
   const queryClient = useQueryClient();
   return useMutation({

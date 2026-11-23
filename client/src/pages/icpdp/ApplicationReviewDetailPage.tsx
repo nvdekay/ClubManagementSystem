@@ -27,7 +27,6 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 const sectionKeys = ["club-information", "founders", "documents", "other"];
 const roleOrder = { LEADER: 0, VICE_LEADER: 1, MEMBER: 2 } as const;
 
-// Trang ICPDP xem chi tiết hồ sơ lập CLB, nhận xử lý và ra quyết định
 export function ApplicationReviewDetailPage() {
   const { id } = useParams();
   const { t, i18n } = useTranslation();
@@ -42,7 +41,7 @@ export function ApplicationReviewDetailPage() {
   const [reviewNote, setReviewNote] = useState("");
   const [deadline, setDeadline] = useState("");
   const [sections, setSections] = useState<string[]>([]);
-  // Cùng quy tắc server áp dụng: phải có lý do trừ khi duyệt; yêu cầu chỉnh sửa cần các mục cần sửa và hạn chót trong tương lai.
+  // Same rules the server enforces: a reason unless approving; sections and a future deadline for a revision.
   const revision = outcome === "Request revision";
   const field = useFieldValidation({
     reason: outcome !== "Approve" && !reason.trim() ? t("reviews.reasonRequired") : null,
@@ -67,24 +66,21 @@ export function ApplicationReviewDetailPage() {
     return labels[section];
   }
 
-  // Bật/tắt mục hồ sơ cần chỉnh sửa khi yêu cầu bổ sung
   function toggleSection(section: string) {
     setSections((current) => current.includes(section)
       ? current.filter((item) => item !== section) : [...current, section]);
     field.touch("sections");
   }
 
-  // Officer nhận (claim) hồ sơ để tự xử lý
   async function claim() {
     if (!auth.data || !id) return;
     try { await action.mutateAsync({ kind: "claim", id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
+    catch { /* Mutation state is rendered below. */ }
   }
 
-  // Xác nhận rồi gửi quyết định duyệt, từ chối hoặc yêu cầu chỉnh sửa hồ sơ
   async function decide() {
     if (!auth.data || !id) return;
-    // Kiểm tra trước khi hỏi xác nhận.
+    // Checked before asking for confirmation.
     if (!field.touchAll()) return;
     const prompt = outcome === "Approve" ? t("reviews.confirmApprove")
       : outcome === "Reject" ? t("reviews.confirmReject") : t("reviews.confirmRevision");
@@ -95,24 +91,23 @@ export function ApplicationReviewDetailPage() {
           sections: outcome === "Request revision" ? sections : [],
           revisionDeadlineAt: outcome === "Request revision" && deadline
             ? new Date(deadline).toISOString() : undefined } });
-    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
+    } catch { /* Mutation state is rendered below. */ }
   }
 
-  // Mở tài liệu đính kèm của hồ sơ bằng link truy cập tạm thời
   async function openDocument(documentId: string) {
     if (!id) return;
     try {
       const result = await documentAccess.mutateAsync({ id, documentId });
       window.open(result.url, "_blank", "noopener,noreferrer");
     } catch {
-      // Lỗi của mutation được hiển thị cạnh danh sách tài liệu.
+      // Mutation error is rendered next to the document list.
     }
   }
 
   const back = { to: "/workspace/reviews", label: t("reviews.detailBack") };
   const label = "text-xs text-muted-app";
 
-  // Query bị tắt sẽ pending mãi, nên chỉ chờ phần hồ sơ mà người dùng được phép tải.
+  // A disabled query stays pending forever, so only wait for a review the user may load.
   if (auth.isPending || (isOfficer && review.isPending)) return <div className="space-y-4">
     <AppSkeleton className="h-10 w-1/2" /><AppSkeleton className="h-[28rem] w-full" />
   </div>;
@@ -135,7 +130,7 @@ export function ApplicationReviewDetailPage() {
   const { application, task, decisions } = review.data;
   const founders = [...currentVersion.snapshot.founders].sort((left, right) => roleOrder[left.role] - roleOrder[right.role]);
   const logo = currentVersion.snapshot.documents.find((document) => document.documentType === "LOGO");
-  // Phiên bản được nộp trước phiên bản hiện tại, và yêu cầu chỉnh sửa đã trả nó về.
+  // The version submitted before the current one, and the revision request that sent it back.
   const previous = review.data.versions.filter((version) => version.versionNo < currentVersion.versionNo)
     .sort((a, b) => b.versionNo - a.versionNo)[0];
   const revisionRequest = [...decisions].reverse().find((decision) => decision.outcome === "Request revision"

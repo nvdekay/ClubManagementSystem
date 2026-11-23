@@ -1,4 +1,4 @@
-// Dựng một database riêng để chụp ảnh màn hình mà không đổi policy của database nguồn.
+// Builds a separate database for screenshots without changing the source database's policy.
 import mongoose, { Types } from "mongoose";
 import { DEFAULT_FORM_REQUIREMENTS } from "../../domain/policy.js";
 import { loadConfig } from "../config/index.js";
@@ -17,7 +17,7 @@ try {
   const source = mongoose.connection.db!;
   if (source.databaseName === DATABASE) throw new Error("Source must differ from the guide database");
   const target = source.client.db(DATABASE);
-  // Chỉ copy một lần. Các lần chạy sau giữ nguyên mọi thao tác đã làm trong database guide.
+  // Copy once. Subsequent runs preserve all actions already performed in the guide database.
   for (const model of Object.values(m)) {
     const name = model.collection.name;
     if (await target.collection(name).countDocuments() > 0) continue;
@@ -40,12 +40,12 @@ try {
     const { _id: policyId, __v: revision, ...settings } = policy;
     void policyId;
     void revision;
-    // Các phiên bản ghi trước khi có yêu cầu biểu mẫu thì không mang yêu cầu nào; bản copy cần giá trị mặc định.
+    // Versions written before form requirements existed carry none; copies need the defaults.
     await m.policyVersions!.create({ formRequirements: DEFAULT_FORM_REQUIREMENTS, ...settings, effectiveFrom: now, createdAt: now, createdBy: owner,
       reportDeadlines: [...(policy.reportDeadlines as unknown[]), { reportType: "POST_EVENT", dueDaysAfterPeriodEnd: 7,
         remindBeforeDays: 2, overdueAfterDays: 1, escalateAfterDays: 3 }] });
   }
-  // Các sự kiện lịch sử đã seed cũng cần policy tại thời điểm kết thúc. Chỉ bản copy cô lập bị sửa.
+  // Historical seeded events also need a policy at their end time. Only the isolated copy is amended.
   await m.policyVersions!.updateMany({ "reportDeadlines.reportType": { $ne: "POST_EVENT" } },
     { $push: { reportDeadlines: reportDeadline } });
   if (!(await m.policyVersions!.exists({ effectiveFrom: { $lte: new Date("2000-01-01") } }))) {
@@ -56,7 +56,7 @@ try {
       reportDeadlines: [...((settings.reportDeadlines ?? []) as { reportType: string }[])
         .filter((deadline) => deadline.reportType !== "POST_EVENT"), reportDeadline] });
   }
-  // Các giá trị này chỉ là fixture demo, không phải policy production BR25/BR58 đã duyệt.
+  // These values are demo fixtures only, not approved BR25/BR58 production policy.
   const finance = mongoEventFinanceRepository({ recoveryDueDays: 7, evidenceTypes: ["INVOICE", "RECEIPT", "PROOF_OF_PAYMENT"] });
   await seedWave4(owner, clubId, now, finance);
   const events = await m.events!.find({ clubId, title: /^Wave 4 demo:/ }).lean();

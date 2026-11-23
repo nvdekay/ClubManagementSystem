@@ -12,26 +12,22 @@ import {
 const campaignKeyRoot = ["recruitment-campaigns"] as const;
 const publicCampaignKeyRoot = ["public-recruitment-campaigns"] as const;
 
-// Query key của danh sách đợt tuyển của CLB
 function campaignListKey(clubId: string | undefined) {
   return [...campaignKeyRoot, clubId] as const;
 }
 
-// Query các đợt tuyển của CLB
 export function useRecruitmentCampaigns(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: campaignListKey(clubId),
     queryFn: ({ signal }) => fetchRecruitmentCampaigns(clubId!, signal),
     enabled: enabled && Boolean(clubId), retry: false });
 }
 
-// Query đợt tuyển công khai theo id
 export function usePublicRecruitmentCampaign(campaignId: string | undefined) {
   return useQuery({ queryKey: [...publicCampaignKeyRoot, campaignId],
     queryFn: ({ signal }) => fetchPublicRecruitmentCampaign(campaignId!, signal),
     enabled: Boolean(campaignId), retry: false });
 }
 
-// Mutation tạo, sửa, công khai hoặc huỷ đợt tuyển, rồi làm mới danh sách
 export function useRecruitmentCampaignAction() {
   const queryClient = useQueryClient();
   return useMutation({

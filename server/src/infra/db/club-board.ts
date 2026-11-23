@@ -2,8 +2,7 @@ import { Types, type ClientSession } from "mongoose";
 import { notificationChannels } from "../../domain/notification.js";
 import { ucmsModels } from "./ucms-models.js";
 
-// Lấy user giữ chức Club Leader hoặc ghế ban chủ nhiệm đang hiệu lực
-/** Id các user hiện giữ vai trò leader hoặc một ghế ban chủ nhiệm của CLB — những người ICPDP cần thông báo. */
+/** User ids currently holding the leader role or a board seat of the club — who ICPDP notifies. */
 export async function clubBoardUserIds(clubId: Types.ObjectId, session?: ClientSession): Promise<Types.ObjectId[]> {
   const m = ucmsModels;
   const positionIds = await m.clubPositions!.find({ clubId, isActive: true,
@@ -17,8 +16,7 @@ export async function clubBoardUserIds(clubId: Types.ObjectId, session?: ClientS
   return userIds.map((userId) => new Types.ObjectId(String(userId)));
 }
 
-// Xếp hàng thông báo cho người nhận (không trùng) trong transaction
-/** Xếp hàng một thông báo cho mỗi người nhận (không trùng) trong transaction của bên gọi (kèm email cho các sự kiện SRS §8.2). */
+/** Queues one notification per distinct recipient inside the caller's transaction (email too for SRS §8.2 events). */
 export async function queueNotifications(session: ClientSession, recipients: readonly unknown[], eventCode: string,
   entityType: string, entityId: Types.ObjectId, payload: Record<string, unknown>, now: Date): Promise<void> {
   const unique = [...new Set(recipients.filter(Boolean).map(String))];
@@ -28,11 +26,10 @@ export async function queueNotifications(session: ClientSession, recipients: rea
     createdAt: now })), { session });
 }
 
-// BR06: tìm user đã là Club Leader CLB khác trong nhiệm kỳ chồng lấn
 /**
- * BR06: các user thuộc những membership này mà đã giữ vai trò leader của CLB khác trong một
- * nhiệm kỳ chồng lấn [startAt, endAt). Nhiệm kỳ sắp kết thúc của chính CLB được bỏ qua, nên
- * leader được bầu lại vẫn đủ điều kiện.
+ * BR06: the users behind these memberships who already hold the leader role of another club in a
+ * term overlapping [startAt, endAt). The club's own outgoing term is ignored, so a re-elected
+ * leader stays eligible.
  */
 export async function otherClubLeaderUserIds(session: ClientSession, clubId: Types.ObjectId,
   membershipIds: readonly Types.ObjectId[], startAt: Date, endAt: Date): Promise<Set<string>> {

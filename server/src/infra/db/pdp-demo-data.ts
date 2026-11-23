@@ -1,8 +1,8 @@
-// Bản chụp các trang công khai của pdp.fpt.edu.vn (cơ sở Hà Nội) vào ngày 2026-10-04.
-// Tên CLB chỉ lấy từ văn bản PDP công khai; CLB liệt kê mà không có tên công khai thì giữ mã PDP.
-// Logo được sao chép từ thư viện CLB của PDP lên Cloudinary (ucms/club-logos/) ngày 2026-10-09.
-// Ảnh bìa sự kiện lấy từ bản lưu của PDP Event/Index (trang 1) và nằm trên Cloudinary (ucms/event-covers/).
-// Các sự kiện do IC-PDP tổ chức chứ không phải CLB thì bị bỏ qua vì events.clubId là bắt buộc.
+// Snapshot of the public pages of pdp.fpt.edu.vn (Hà Nội campus) taken on 2026-10-04.
+// Club names come only from public PDP text; clubs listed without a public name keep their PDP code.
+// Logos were copied from the PDP club gallery to Cloudinary (ucms/club-logos/) on 2026-10-09.
+// Event covers come from a saved copy of PDP Event/Index (page 1) and live on Cloudinary (ucms/event-covers/).
+// Events organised by IC-PDP rather than a club are left out because events.clubId is required.
 
 export const pdpClubs = [
   {

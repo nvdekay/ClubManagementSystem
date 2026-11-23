@@ -70,8 +70,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     await setLeader(false);
     await expect(repo.act(String(club), created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
     expect(await m.eventProposalVersions!.countDocuments({ eventId: created.event.id })).toBe(0);
-    // Booking được gắn vào bản nháp ngay khi tạo; lần nộp bị từ chối không gỡ liên kết đó.
-    expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(created.event.id);
+    expect((await m.propertyBookings!.findById(booking._id).lean())?.eventId).toBeUndefined();
     await setLeader(true);
     const sent = await repo.act(String(club), created.event.id, { kind: "submit", expectedVersion: created.event.version }, String(actor), now);
     expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
@@ -80,8 +79,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     await setLeader(false);
     await expect(repo.act(String(club), sent.event.id, { kind: "submit", expectedVersion: revised.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "forbidden" });
     await setLeader(true);
-    // Lưu bản sửa với bookingIds rỗng đã gỡ booking khỏi sự kiện ngay lúc lưu.
-    expect((await m.propertyBookings!.findById(booking._id).lean())?.eventId).toBeUndefined();
+    expect(String((await m.propertyBookings!.findById(booking._id).lean())?.eventId)).toBe(sent.event.id);
     await m.properties!.updateOne({ _id: property._id }, { $set: { type: "ROOM" } });
     await m.propertyBookings!.updateOne({ _id: booking._id }, { $unset: { eventId: "" }, $set: { currentVersionNo: 0, state: "Approved" } });
     expect((await repo.options(String(club))).bookings.map((item) => item.id)).not.toContain(String(booking._id));
@@ -116,17 +114,21 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     expect((await repo.find(String(club), d.event.id))?.event.confirmedRegistrationCount).toBe(2);
     await expect(repo.act(String(club), d.event.id, { kind: "capacity", capacity: 1 }, String(actor), now)).rejects.toMatchObject({ kind: "conflict" });
   });
-  it("rejects members-only proposals with or without a budget", async () => {
-    for (const funded of [false, true]) {
-      await expect(repo.create(String(club), input("MEMBERS_ONLY", funded), String(actor), now)).rejects.toMatchObject({ kind: "validation" });
-    }
-    const event = await draft(input());
-    await expect(repo.act(String(club), event.event.id, { kind: "save", input: input("MEMBERS_ONLY"), expectedVersion: event.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "validation" });
+  it("sends unbudgeted members-only proposals to the internal flow and accepts budgeted ones (Plan B)", async () => {
+    await expect(repo.create(String(club), input("MEMBERS_ONLY"), String(actor), now)).rejects.toMatchObject({ kind: "validation" });
+    const d = await draft(input());
+    await expect(repo.act(String(club), d.event.id, { kind: "save", input: input("MEMBERS_ONLY"), expectedVersion: d.event.version }, String(actor), now))
+      .rejects.toMatchObject({ kind: "validation", message: "internal events without university budget must use the internal event flow" });
+    // A draft saved before Plan B may still be members-only without budget; submitting it is refused too.
+    await m.events!.updateOne({ _id: new Types.ObjectId(d.event.id) }, { $set: { audienceScope: "MEMBERS_ONLY" } });
+    await expect(repo.act(String(club), d.event.id, { kind: "submit", expectedVersion: d.event.version }, String(actor), now)).rejects.toMatchObject({ kind: "validation" });
+    const funded = await submitted("MEMBERS_ONLY", true);
+    expect(funded.event).toMatchObject({ state: "Approved", audienceScope: "MEMBERS_ONLY" });
   });
-  it("finalizes public attendance, excludes no-shows from feedback, and unlocks with audit", async () => {
+  it("closes legacy direct internal attendance, excludes no-shows from feedback, and unlocks with audit", async () => {
     // Events recorded through the removed direct branch (MEMBERS_ONLY, no budget, published as Upcoming) keep closing on finalize.
     const legacy = await m.events!.create({ organizerType: "CLUB", clubId: club, clubName: "Wave 3", title: "Legacy", objective: "Goal", startAt, endAt,
-      venueText: "Campus", audienceScope: "PUBLIC", capacity: 2, semesterCode: "Fall", state: "Upcoming", currentRevisionNo: 1,
+      venueText: "Campus", audienceScope: "MEMBERS_ONLY", capacity: 2, riskCategory: "LOW", semesterCode: "Fall", state: "Upcoming", currentRevisionNo: 1,
       publishedAt: now, registrationOpenAt: now, registrationCloseAt: startAt, checkInOpenAt: startAt, checkInCloseAt: endAt, checkInCode: "LEGACY1",
       allowWalkIn: true, waitlistEnabled: true, createdAt: now });
     const d = (await repo.find(String(club), String(legacy._id)))!;
@@ -137,7 +139,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     await expect(repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).rejects.toMatchObject({ kind: "conflict" });
     for (const [index, s] of students.slice(0, 2).entries()) await repo.act(String(club), d.event.id, { kind: "correct", studentId: String(s), reason: "Verified", absent: index === 1 }, String(actor), finished);
     expect((await mongoEventFeedbackRepository().target(d.event.id, String(students[1])))?.attendance).toBeNull();
-    expect((await repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).event).toMatchObject({ state: "Completed", attendanceFinalized: true });
+    expect((await repo.act(String(club), d.event.id, { kind: "finalize" }, String(actor), finished)).event).toMatchObject({ state: "Closed", attendanceFinalized: true });
     await expect(mongoEventCheckInRepository().checkIn({ eventId: d.event.id, studentId: String(students[2]), method: "walk-in", now: finished })).rejects.toMatchObject({ kind: "conflict" });
     expect((await repo.act(String(club), d.event.id, { kind: "unlock", reason: "Review" }, String(actor), finished)).event).toMatchObject({ state: "Completed", attendanceFinalized: false });
   });
@@ -155,11 +157,7 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     const d = await submitted("PUBLIC", true);
     expect((await repo.act(String(club), d.event.id, { kind: "reschedule", expectedVersion: d.event.version, startAt: new Date(startAt.getTime() + 86400000), endAt: new Date(endAt.getTime() + 86400000), venueText: "New venue", reason: "Change" }, String(actor), now)).event.state).toBe("Pending Approval");
     const a = await approve(d.event.id, true); expect(await m.eventBudgets!.countDocuments({ eventId: d.event.id })).toBe(1);
-    // Huỷ sự kiện đã duyệt chỉ tạo yêu cầu; ICPDP xác nhận thì sự kiện và ngân sách chưa giải ngân mới bị huỷ.
-    await repo.act(String(club), d.event.id, { kind: "cancel", expectedVersion: a.event.version, reason: "Cancelled" }, String(actor), now);
-    expect((await m.eventBudgets!.findOne({ eventId: d.event.id }).lean())?.state).toBe("Approved");
-    await mongoEventProposalReviewRepository().decideCancellation!(d.event.id, String(actor), { approve: true }, now);
-    expect((await m.eventBudgets!.findOne({ eventId: d.event.id }).lean())?.state).toBe("Cancelled");
+    expect((await repo.act(String(club), d.event.id, { kind: "cancel", expectedVersion: a.event.version, reason: "Cancelled" }, String(actor), now)).budget?.state).toBe("Cancelled");
   });
   it("re-checks permission inside the write transaction", async () => {
     const d = await draft(input());
@@ -180,9 +178,8 @@ describe.skipIf(!uri)("Mongo club event lifecycle", () => {
     const blocked = await draft(input());
     await expect(repo.act(String(club), blocked.event.id, { kind: "submit", expectedVersion: blocked.event.version }, String(actor), now)).rejects.toMatchObject({ details: { obligations: ["overdueSettlement"] } });
     await m.eventBudgets!.updateOne({ eventId: funded.event.id }, { $set: { settlementDueAt: new Date(now.getTime() + 86400000) } });
-    await repo.act(String(club), funded.event.id, { kind: "cancel", expectedVersion: funded.event.version, reason: "Funding obligation retained" }, String(actor), now);
-    await mongoEventProposalReviewRepository().decideCancellation!(funded.event.id, String(actor), { approve: true }, now);
-    expect((await m.eventBudgets!.findOne({ eventId: funded.event.id }).lean())?.state).toBe("Disbursed");
+    const cancelled = await repo.act(String(club), funded.event.id, { kind: "cancel", expectedVersion: funded.event.version, reason: "Funding obligation retained" }, String(actor), now);
+    expect(cancelled.budget).toMatchObject({ state: "Disbursed", disbursedTotal: 50000 });
     expect((await m.eventBudgets!.findOne({ eventId: funded.event.id }).lean())?.settlementDueAt).toEqual(new Date(now.getTime() + 14 * 86400000));
     expect((await m.auditLogs!.findOne({ entityId: funded.event.id, action: "EVENT_CANCELLED" }).lean())?.after).toMatchObject({ settlementRequired: true });
   });

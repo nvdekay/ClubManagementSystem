@@ -23,10 +23,9 @@ export interface Me {
   workspaces: Workspace[];
 }
 
-// GET /auth/me: lấy phiên đăng nhập, workspace và quyền; null nếu chưa đăng nhập
 export async function fetchMe(signal: AbortSignal): Promise<Me | null> {
   const response = await apiFetch("/api/v1/auth/me", { signal, credentials: "same-origin" });
-  // Các route Auth cố ý không có cho đến khi cấu hình xong thông tin OAuth.
+  // Auth routes are intentionally absent until OAuth credentials are configured.
   if (response.status === 401 || response.status === 404) return null;
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
@@ -36,7 +35,6 @@ export async function fetchMe(signal: AbortSignal): Promise<Me | null> {
   return body.data;
 }
 
-// POST /auth/logout: đăng xuất và huỷ phiên
 export async function logout(csrfToken: string): Promise<void> {
   const response = await apiFetch("/api/v1/auth/logout", {
     method: "POST",
@@ -49,13 +47,11 @@ export async function logout(csrfToken: string): Promise<void> {
   }
 }
 
-// Dựng URL bắt đầu đăng nhập Google OAuth kèm returnTo
 export function googleLoginUrl(returnTo: string): string {
   const params = new URLSearchParams({ returnTo });
   return `/api/v1/auth/login?${params.toString()}`;
 }
 
-// GET /auth/error: lấy lý do đăng nhập thất bại gần nhất
 export async function fetchLoginError(signal: AbortSignal): Promise<string | null> {
   const response = await apiFetch("/api/v1/auth/error", { signal, credentials: "same-origin" });
   if (!response.ok) return null;

@@ -6,14 +6,12 @@ import { assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
-// Kiểm người xét duyệt đăng nhập và tài khoản Active
 function reviewerId(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState !== "Active") throw new DomainError("account is not active", "locked");
   return actor.id;
 }
 
-// Kiểm quyền xét duyệt đơn ứng tuyển của CLB và trả id actor
 async function authorize(access: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, now: Date) {
   if (!objectId.test(clubId)) throw new DomainError("invalid club id", "validation");
@@ -22,7 +20,6 @@ async function authorize(access: ClubAccessRepository, actor: AccessActor | null
   return userId;
 }
 
-// CLB xem các đơn ứng tuyển của một đợt tuyển để xét duyệt
 export async function listRecruitmentApplicationsForReview(
   repo: RecruitmentReviewRepository, access: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, campaignId: string, state: RecruitmentApplicationState | undefined, now = new Date(),
@@ -32,7 +29,6 @@ export async function listRecruitmentApplicationsForReview(
   return repo.listForReview(clubId, campaignId, state);
 }
 
-// Cấp URL tạm để người xét duyệt xem file đính kèm của đơn
 export async function reviewerAttachmentAccess(
   repo: RecruitmentReviewRepository, storage: RecruitmentAttachmentStorage | null,
   access: ClubAccessRepository, actor: AccessActor | null,
@@ -52,7 +48,6 @@ export async function reviewerAttachmentAccess(
   return { url: await storage.accessUrl(attachment.assetId), fileName: attachment.fileName };
 }
 
-// CLB chuyển trạng thái hàng loạt đơn ứng tuyển (sàng lọc, shortlist, quyết định...)
 export async function reviewRecruitmentApplications(
   repo: RecruitmentReviewRepository, access: ClubAccessRepository, actor: AccessActor | null,
   input: { clubId: string; campaignId: string; applicationIds: string[];
@@ -79,7 +74,6 @@ export async function reviewRecruitmentApplications(
   return repo.transition({ ...input, ...(reason ? { reason } : {}), actorId, now });
 }
 
-// CLB kết nạp ứng viên đã được nhận thành thành viên
 export async function onboardAcceptedRecruitmentApplication(
   repo: RecruitmentReviewRepository, access: ClubAccessRepository, actor: AccessActor | null,
   input: { clubId: string; campaignId: string; applicationId: string; joinedAt: Date; departmentId?: string },
@@ -94,7 +88,6 @@ export async function onboardAcceptedRecruitmentApplication(
   return repo.onboard({ ...input, actorId, now });
 }
 
-// CLB ghi nhận ứng viên được nhận nhưng từ chối gia nhập
 export async function declineAcceptedRecruitmentApplication(
   repo: RecruitmentReviewRepository, access: ClubAccessRepository, actor: AccessActor | null,
   input: { clubId: string; campaignId: string; applicationId: string; reason?: string }, now = new Date(),

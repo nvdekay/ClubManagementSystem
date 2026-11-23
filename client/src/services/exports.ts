@@ -18,11 +18,11 @@ export interface ExportOptions {
   formats: ExportFormat[];
   periods: { code: string; startAt: string; endAt: string }[];
   clubs: { id: string; name: string }[];
-  /** Mới nhất trước; chỉ gồm các năm có ít nhất một đánh giá Published. */
+  /** Newest first; only years with at least one Published evaluation. */
   annualYears: AnnualYearOption[];
 }
 
-// Phản chiếu server/src/domain/annual-report.ts (UC55 A2).
+// Mirrors server/src/domain/annual-report.ts (UC55 A2).
 export type Season = "SPRING" | "SUMMER" | "FALL";
 export type Trend = "UP" | "DOWN" | "STABLE";
 export type AnnualFormat = "pdf" | "xlsx";
@@ -40,7 +40,7 @@ export interface AnnualClubRow {
   field: string | null;
   state: string;
   terms: Record<Season, { score: number; classification: Classification } | null>;
-  /** 0 nghĩa là "chưa có đánh giá"; các dòng này xếp cuối. */
+  /** 0 means "no evaluation yet"; such rows come last. */
   evaluatedTerms: number;
   yearScore: number | null;
   yearClassification: Classification | null;
@@ -87,7 +87,7 @@ export interface AnnualReport {
   achievements: AnnualAchievement[];
 }
 
-/** Response không phải 2xx; 404 nghĩa là không có gì khớp bộ lọc (không tạo file). */
+/** Non-2xx response; 404 means nothing matched the filter (no file is produced). */
 export class ExportRequestError extends ApiError {
   constructor(message: string, readonly status: number) {
     super(message);
@@ -95,19 +95,16 @@ export class ExportRequestError extends ApiError {
   }
 }
 
-// Đổi response lỗi thành ExportRequestError
 async function failure(response: Response): Promise<never> {
   const body = (await response.json().catch(() => null)) as { message?: string } | null;
   throw new ExportRequestError(body?.message ?? `HTTP ${response.status}`, response.status);
 }
 
-// POST có CSRF tới /admin/exports và trả về response thô
 function post(path: string, csrfToken: string, body: object): Promise<Response> {
   return apiFetch(`/api/v1/admin/exports${path}`, { method: "POST", credentials: "same-origin",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) });
 }
 
-// GET /admin/exports/options: các loại dữ liệu và bộ lọc có thể xuất
 export async function fetchExportOptions(signal: AbortSignal): Promise<ExportOptions> {
   const response = await apiFetch("/api/v1/admin/exports/options", { signal, credentials: "same-origin" });
   if (!response.ok) return failure(response);
@@ -120,8 +117,7 @@ export interface ExportPreview {
   types: { type: ExportType; rowCount: number }[];
 }
 
-// POST /preview: xem trước dữ liệu sẽ xuất
-/** Nhiều loại: một file xlsx, mỗi loại một sheet; csv/pdf và bộ lọc trạng thái cần đúng một loại (FR-UC55-12). */
+/** Several types: one xlsx, a sheet per type; csv/pdf and the status filter need exactly one (FR-UC55-12). */
 export async function previewExport(types: ExportType[], filter: ExportFilter, csrfToken: string): Promise<ExportPreview> {
   const response = await post("/preview", csrfToken, { types, filter });
   if (!response.ok) return failure(response);
@@ -129,8 +125,7 @@ export async function previewExport(types: ExportType[], filter: ExportFilter, c
   return body.data;
 }
 
-// Đọc response thành blob và tên file từ Content-Disposition
-/** File được tạo ra; tên lấy từ Content-Disposition của server. */
+/** The generated file; the name comes from the server's Content-Disposition. */
 async function file(response: Response, fallbackName: string): Promise<{ blob: Blob; fileName: string }> {
   if (!response.ok) return failure(response);
   const disposition = response.headers.get("Content-Disposition") ?? "";
@@ -138,14 +133,12 @@ async function file(response: Response, fallbackName: string): Promise<{ blob: B
   return { blob: await response.blob(), fileName };
 }
 
-// POST /admin/exports: tải file dữ liệu xuất
 export async function downloadExport(types: ExportType[], filter: ExportFilter, format: ExportFormat,
   csrfToken: string): Promise<{ blob: Blob; fileName: string }> {
   return file(await post("", csrfToken, { types, filter, format }), `ucms-export.${format}`);
 }
 
-// POST /annual-report/preview: xem trước báo cáo đánh giá năm
-/** 404 khi năm đó không có đánh giá Published. */
+/** 404 when the year has no Published evaluation. */
 export async function previewAnnualReport(year: number, csrfToken: string): Promise<AnnualReport> {
   const response = await post("/annual-report/preview", csrfToken, { year });
   if (!response.ok) return failure(response);
@@ -153,7 +146,6 @@ export async function previewAnnualReport(year: number, csrfToken: string): Prom
   return body.data;
 }
 
-// POST /annual-report: tải báo cáo đánh giá năm
 export async function downloadAnnualReport(input: { year: number; format: AnnualFormat; remarks?: string;
   achievementKeys?: string[] }, csrfToken: string): Promise<{ blob: Blob; fileName: string }> {
   return file(await post("/annual-report", csrfToken, input), `bao-cao-danh-gia-clb-${input.year}.${input.format}`);

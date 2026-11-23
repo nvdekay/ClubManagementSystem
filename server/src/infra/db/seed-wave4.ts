@@ -2,12 +2,10 @@ import { Types } from "mongoose";
 import type { EventFinanceRepository } from "../../domain/event-finance.js";
 import { mongoPostEventReportRepository } from "./mongo-post-event-report-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
-// Chuyển số thành Decimal128
 function decimal(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
-// Seed sự kiện demo Wave 4 (cân bằng, bổ sung, hoàn trả, huỷ) cho báo cáo sau sự kiện
-/** Chỉ tạo các fixture demo thuộc quyền sở hữu; fixture đã có thì không bao giờ bị reset sau thao tác của user. */
+/** Creates only owned demo fixtures; an existing fixture is never reset after a user action. */
 export async function seedWave4(
   owner: Types.ObjectId,
   clubId: Types.ObjectId,
@@ -37,7 +35,7 @@ export async function seedWave4(
   ] as const) {
     const title = `Wave 4 demo: ${suffix}`;
     if (await m.events!.exists({ clubId, title })) continue;
-    // Hoàn tất tại thời điểm seed dùng policy đang cấu hình, không lùi ngày.
+    // Completion at the seed time uses the currently configured policy, without backdating it.
     const event = await m.events!.create({
       organizerType: "CLUB",
       clubId,

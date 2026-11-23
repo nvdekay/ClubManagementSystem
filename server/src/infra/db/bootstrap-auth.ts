@@ -24,7 +24,6 @@ const PERMISSION_MODULES: Record<string, string> = {
   "club.suspension.request": "M02",
 };
 
-// Khởi tạo permission, role hệ thống và tài khoản ICPDP officer đầu tiên
 export async function ensureAuthBootstrap(config: AuthConfig): Promise<void> {
   const email = normalizeAllowedGoogleEmail(
     config.BOOTSTRAP_ICPDP_EMAIL, true, [config.ALLOWED_DOMAIN],
@@ -39,14 +38,14 @@ export async function ensureAuthBootstrap(config: AuthConfig): Promise<void> {
     { unique: true, name: "uq_ura_active", partialFilterExpression: { revokedAt: null } },
   );
 
-  // Danh mục quyền CLB cố định (SRS §2.3): mọi mã, trừ hai quyền mặc định của thành viên, chỉ dành cho Club Leader.
+  // The fixed club catalogue (SRS §2.3): every code except the two member defaults is Club Leader only.
   for (const code of CLUB_PERMISSIONS) {
     await permissions.updateOne({ code }, {
       $setOnInsert: { code, name: code, module: PERMISSION_MODULES[code], scope: "club" },
       $set: { isLeaderReserved: !DEFAULT_MEMBER_PERMISSIONS.includes(code) },
     }, { upsert: true });
   }
-  // Mã ngoài danh mục (club.role.manage của UC23 đã rút) thì không giữ lại.
+  // Codes outside the catalogue (club.role.manage from the withdrawn UC23) are not kept.
   await permissions.deleteMany({ scope: "club", code: { $nin: [...CLUB_PERMISSIONS] } });
 
   for (const code of SYSTEM_ROLE_CODES) {

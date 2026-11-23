@@ -12,7 +12,6 @@ export interface RoomAllocationDeps {
   auth: Pick<AuthRepository, "systemRoleCodes">; access: ClubAccessRepository;
 }
 
-// Kiểm actor là ICPDP officer và trả id
 async function officer(deps: RoomAllocationDeps, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError("account locked", "locked");
@@ -21,15 +20,13 @@ async function officer(deps: RoomAllocationDeps, actor: AccessActor | null): Pro
   }
   return actor.id;
 }
-// Lấy chính sách đang hiệu lực, chưa cấu hình thì báo lỗi
 async function effectivePolicy(deps: RoomAllocationDeps, now: Date) {
   const policy = await deps.policy.findEffective(now);
   if (!policy) throw new DomainError("policy is not configured", "unavailable");
   return policy;
 }
 
-// ICPDP xem các lựa chọn phân bổ phòng (CLB, phòng, học kỳ chưa kết thúc)
-/** Các học kỳ chưa kết thúc, các CLB có thể nhận phòng, và danh mục phòng đang hoạt động. */
+/** Semesters that have not ended, clubs that may receive rooms, and the active room catalogue. */
 export async function roomAllocationOptions(deps: RoomAllocationDeps, actor: AccessActor | null,
   now: Date): Promise<RoomAllocationOptions> {
   await officer(deps, actor);
@@ -39,13 +36,11 @@ export async function roomAllocationOptions(deps: RoomAllocationDeps, actor: Acc
     semesters: policy.academicCalendar.filter((item) => item.endAt > now) };
 }
 
-// ICPDP xem các phân bổ phòng, lọc theo học kỳ
 export async function listRoomAllocations(deps: RoomAllocationDeps, actor: AccessActor | null, semesterCode?: string) {
   await officer(deps, actor);
   return deps.repo.list(semesterCode ? { semesterCode } : {});
 }
 
-// ICPDP phân bổ phòng cố định cho CLB sau khi kiểm xung đột
 export async function allocateRoom(deps: RoomAllocationDeps, actor: AccessActor | null,
   raw: RoomAllocationInput, now: Date): Promise<RoomAllocation> {
   const officerId = await officer(deps, actor);
@@ -56,8 +51,7 @@ export async function allocateRoom(deps: RoomAllocationDeps, actor: AccessActor 
   return deps.repo.allocate(plan, club!.name, policy.conflictThresholdMinutes, officerId, now);
 }
 
-// ICPDP xem các ô lịch tuần của phòng đã bị chiếm trong học kỳ
-/** UC58 A3: các ô trong lưới tuần của phòng mà sự kiện hoặc booking đã duyệt đã chặn trong học kỳ này. */
+/** UC58 A3: the cells of a room's weekly grid that approved events or bookings already block this semester. */
 export async function roomAllocationOccupancy(deps: RoomAllocationDeps, actor: AccessActor | null,
   semesterCode: string, propertyId: string, now: Date) {
   await officer(deps, actor);
@@ -70,15 +64,13 @@ export async function roomAllocationOccupancy(deps: RoomAllocationDeps, actor: A
   return roomOccupancy(commitments, policy.conflictThresholdMinutes);
 }
 
-// ICPDP thu hồi một phân bổ phòng kèm lý do
 export async function revokeRoomAllocation(deps: RoomAllocationDeps, actor: AccessActor | null,
   id: string, reason: string, now: Date): Promise<RoomAllocation> {
   const officerId = await officer(deps, actor);
   return deps.repo.revoke(allocationId(id), allocationReason(reason), officerId, now);
 }
 
-// Thành viên CLB xem các phân bổ phòng còn hiệu lực của CLB
-/** Góc nhìn chỉ đọc của CLB cho mọi thành viên Active: các phân bổ cùng những ngày còn dùng được. */
+/** Read-only club view for every Active member: allocations with their remaining usable dates. */
 export async function clubRoomAllocations(deps: RoomAllocationDeps, actor: AccessActor | null,
   clubId: string, now: Date): Promise<RoomAllocation[]> {
   await assertClubAccess(deps.access, actor, clubId, "club.room.view", now);

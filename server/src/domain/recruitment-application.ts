@@ -46,7 +46,7 @@ export interface RecruitmentReviewRepository {
     actorId: string; joinedAt: Date; departmentId?: string; now: Date }): Promise<RecruitmentApplication>;
   declineAccepted(input: { clubId: string; campaignId: string; applicationId: string;
     actorId: string; reason?: string; now: Date }): Promise<RecruitmentApplication>;
-  /** Tệp đính kèm của hồ sơ đã nộp (không phải nháp) trong đợt tuyển của CLB này, dành cho người duyệt. */
+  /** Attachment of a submitted (non-draft) application in this club's campaign, for reviewers. */
   reviewAttachment(input: { clubId: string; campaignId: string; applicationId: string;
     attachmentId: string }): Promise<RecruitmentAttachment | null>;
 }
@@ -83,7 +83,6 @@ export interface RecruitmentAttachmentStorage {
 
 const objectId = /^[0-9a-f]{24}$/i;
 
-// Kiểm tra vị trí, câu trả lời và file đính kèm của hồ sơ ứng tuyển theo đợt tuyển
 export function validateRecruitmentAnswers(input: {
   campaign: PublicCampaign;
   position: string;

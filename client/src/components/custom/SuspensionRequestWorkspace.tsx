@@ -15,7 +15,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { useSuspensionRequests, useSuspensionRequestAction } from "@/hooks/useSuspensionRequests";
 interface Props { clubId?: string }
-// Workspace yêu cầu tạm ngưng CLB: CLB gửi yêu cầu, ICPDP duyệt
 export function SuspensionRequestWorkspace({ clubId }: Props) {
   const { t, i18n } = useTranslation(); const auth = useAuth();
   const allowed = Boolean(clubId ? auth.data?.workspaces.some((w) => w.kind === "club" && w.clubId === clubId && w.permissions.includes("club.suspension.request")) : auth.data?.systemRoles.includes("ICPDP_OFFICER"));
@@ -31,10 +30,8 @@ export function SuspensionRequestWorkspace({ clubId }: Props) {
     .map((r) => [r.id, decisions[r.id]?.trim() ? null : t("common.fieldRequired")])));
   const inputClass = "mt-1.5 block w-full";
   const labelText = "text-sm font-medium text-text-app";
-  // Kiểm tra hợp lệ rồi gửi yêu cầu tạm ngưng CLB
   async function submit() { if (!field.touchAll() || !auth.data || !query.data) return; try { await action.mutateAsync({ kind: "submit", csrfToken: auth.data.csrfToken,
     input: { reason, until: vnDayBoundary(until, "end"), obligationsPlan, recoveryPlan, acknowledgedImpactIds: query.data.impacts.map((i) => i.id) } }); field.reset(); } catch { /* The mutation error is displayed below. */ } }
-  // ICPDP duyệt hoặc từ chối một yêu cầu tạm ngưng kèm lý do
   async function decide(id: string, outcome: "Approve" | "Reject") { decision.touch(id); if (!auth.data || !decisions[id]?.trim()) return; try { await action.mutateAsync({ kind: "decide", csrfToken: auth.data.csrfToken, id, outcome, reason: decisions[id] ?? "" }); } catch { /* The mutation error is displayed below. */ } }
   if (auth.isPending) return <AppSkeleton className="h-64 w-full" />;
   if (!allowed) return <AppNotice tone="danger">{t("suspensionRequests.denied")}</AppNotice>;

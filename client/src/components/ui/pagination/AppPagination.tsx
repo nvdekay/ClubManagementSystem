@@ -2,26 +2,25 @@ import { AppButton } from "@/components/ui/button/AppButton";
 import { cn } from "@/utils/cn";
 
 interface AppPaginationProps {
-  /** Trang hiện tại, đánh số từ 0. */
+  /** Zero-based current page. */
   pageIndex: number;
   pageCount: number;
   onPageChange: (pageIndex: number) => void;
-  /** aria-label đã dịch theo ngôn ngữ — bản thân các mũi tên chỉ là icon. */
+  /** Localized aria-labels — the arrows themselves are icons. */
   prevLabel: string;
   nextLabel: string;
-  /** aria-label cho nút số trang, nhận số trang tính từ 1. */
+  /** aria-label for a numbered button, given the one-based page number. */
   pageLabel: (page: number) => string;
-  /** aria-label cho landmark <nav>, ví dụ "Pagination". */
+  /** aria-label for the <nav> landmark, e.g. "Pagination". */
   navLabel: string;
   className?: string;
 }
 
 const GAP = "gap";
 
-// Chọn các số trang cần hiển thị, chèn dấu ... khi bỏ qua
 /**
- * Trang đầu, trang cuối và trang hiện tại ±1 — chèn dấu ngắt ở chỗ các số bị bỏ qua.
- * Giới hạn tối đa 7 số trên một hàng, để trang 1 trên 500 vẫn nằm trong một dòng ở điện thoại.
+ * First, last and current ±1 — a gap marker wherever numbers were skipped.
+ * Caps the row at 7 numbers, so page 1 of 500 stays one line on mobile.
  */
 function pageItems(pageIndex: number, pageCount: number): (number | typeof GAP)[] {
   const wanted = [0, pageIndex - 1, pageIndex, pageIndex + 1, pageCount - 1];
@@ -29,7 +28,6 @@ function pageItems(pageIndex: number, pageCount: number): (number | typeof GAP)[
   return shown.flatMap((p, i) => (i > 0 && p - shown[i - 1] > 1 ? [GAP, p] : [p]));
 }
 
-// Mũi tên chuyển trang trái hoặc phải
 function ChevronIcon({ left }: { left?: boolean }) {
   return (
     <svg
@@ -47,10 +45,9 @@ function ChevronIcon({ left }: { left?: boolean }) {
   );
 }
 
-// AppButton đã đặt chiều cao 44px cho thiết bị cảm ứng; ở đây chỉ cố định chiều rộng và chữ số.
+// AppButton already sets the 44px-on-touch height; this only pins the width and digits.
 const CONTROL = "min-w-11 px-2 text-sm tabular-nums sm:min-w-9";
 
-// Thanh phân trang
 export function AppPagination({
   pageIndex,
   pageCount,
@@ -61,7 +58,7 @@ export function AppPagination({
   navLabel,
   className,
 }: AppPaginationProps) {
-  // Không có gì để chuyển trang — một nút "1 / 1" bị vô hiệu đứng một mình chỉ gây nhiễu, không phải control.
+  // Nothing to navigate — a lone disabled "1 / 1" is noise, not a control.
   if (pageCount <= 1) return null;
 
   return (

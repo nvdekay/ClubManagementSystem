@@ -8,7 +8,6 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
-// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -21,20 +20,17 @@ async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: Acc
   return actor.id;
 }
 
-// Kiểm định dạng ObjectId của một định danh
 function checkedId(value: string, what: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${what} id`, "validation");
   return value;
 }
 
-// ICPDP xem danh sách các vụ vi phạm
 export async function listViolations(repo: ViolationRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.list();
 }
 
-// ICPDP xem chi tiết một vụ vi phạm
 export async function getViolation(repo: ViolationRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, id: string, now: Date) {
   await officer(auth, actor);
@@ -43,7 +39,6 @@ export async function getViolation(repo: ViolationRepository, auth: Pick<AuthRep
   return found;
 }
 
-// ICPDP xem các nguồn có thể dẫn tới vụ vi phạm của một CLB
 export async function getViolationSources(repo: ViolationRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, clubId: string) {
   await officer(auth, actor);
@@ -52,7 +47,6 @@ export async function getViolationSources(repo: ViolationRepository, auth: Pick<
   return found;
 }
 
-// ICPDP mở vụ vi phạm mới cho một CLB
 export async function openViolation(repo: ViolationRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, input: OpenViolationInput, now: Date) {
   const officerId = await officer(auth, actor);
@@ -61,7 +55,6 @@ export async function openViolation(repo: ViolationRepository, auth: Pick<AuthRe
   return repo.open(normalizedOpenInput(input), officerId, now);
 }
 
-// ICPDP thực hiện một bước xử lý trong vụ vi phạm
 export async function applyViolationCaseStep(repo: ViolationRepository, auth: Pick<AuthRepository, "systemRoleCodes">,
   actor: AccessActor | null, id: string, step: ViolationStep, now: Date) {
   const officerId = await officer(auth, actor);

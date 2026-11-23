@@ -3,10 +3,10 @@ import { DomainError } from "./errors.js";
 export const PROPERTY_TYPES = ["ROOM", "HALL", "OUTDOOR", "STAGE", "EQUIPMENT"] as const;
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
-/** Mã được sinh theo từng loại khi tạo property, vd PH-001. */
+/** Codes are generated per type when a property is created, e.g. PH-001. */
 export const PROPERTY_CODE_PREFIX: Record<PropertyType, string> = { ROOM: "PH", HALL: "HT", OUTDOOR: "SN", STAGE: "SK", EQUIPMENT: "TB" };
 
-/** Một khung giờ được phép đặt; `day` 1 = thứ Hai … 7 = Chủ nhật. Ngày không liệt kê thì không đặt được. */
+/** One bookable window; `day` 1 = Monday … 7 = Sunday. Days not listed cannot be booked. */
 export interface BookableHours {
   day: number;
   open: string;
@@ -41,7 +41,7 @@ export interface Property extends PropertyInput {
 export interface PropertyRepository {
   list(): Promise<Property[]>;
   find(id: string): Promise<Property | null>;
-  /** Gán mã trống kế tiếp cho loại; thử lại khi đụng mã do chạy đồng thời. */
+  /** Assigns the next free code for the type; retries on a concurrent code clash. */
   create(input: PropertyInput, actorId: string, now: Date): Promise<Property>;
   update(id: string, details: PropertyDetails, actorId: string, now: Date): Promise<Property>;
   setActive(id: string, isActive: boolean, actorId: string, now: Date): Promise<Property>;
@@ -51,19 +51,16 @@ export interface PropertyRepository {
 
 const time = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-// Ném lỗi validation cho trường tài sản không hợp lệ
 function invalid(field: string): never {
   throw new DomainError(`invalid property ${field}`, "validation", { field });
 }
 
-// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của tài sản
 function text(value: string, max: number, field: string, required = true): string {
   const normalized = typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
   if ((required && !normalized) || normalized.length > max) invalid(field);
   return normalized;
 }
 
-// Kiểm tra thông tin chi tiết của tài sản theo loại
 export function validatePropertyDetails(type: PropertyType, input: PropertyDetails): PropertyDetails {
   const name = text(input.name, 120, "name");
   const location = text(input.location, 200, "location");
@@ -103,7 +100,6 @@ export function validatePropertyDetails(type: PropertyType, input: PropertyDetai
   };
 }
 
-// Sinh mã tài sản kế tiếp theo tiền tố của loại tài sản
 export function nextPropertyCode(type: PropertyType, existingCodes: readonly string[]): string {
   const prefix = PROPERTY_CODE_PREFIX[type];
   const numbers = existingCodes.map((code) => new RegExp(`^${prefix}-(\\d+)$`).exec(code)?.[1])

@@ -139,7 +139,7 @@ describe.skipIf(!uri)("Event proposal template and document", () => {
 
   it("3. saves a draft without a document but refuses to submit it", async () => {
     const created = await call(leader, "POST", events, { title: "Workshop", objective: "Goal", plan: "Plan", startAt: startAt.toISOString(),
-      endAt: endAt.toISOString(), venueText: "Hall", audienceScope: "PUBLIC", capacity: 50, budgetLines: [], bookingIds: [] });
+      endAt: endAt.toISOString(), venueText: "Hall", audienceScope: "PUBLIC", capacity: 50, riskCategory: "LOW", budgetLines: [], bookingIds: [] });
     expect(created.status).toBe(201);
     eventId = created.body.data.event.id;
     expect(created.body.data.event.proposalDocument).toBeUndefined();
@@ -157,7 +157,7 @@ describe.skipIf(!uri)("Event proposal template and document", () => {
     expect(uploaded.body.data.event.proposalDocument).toMatchObject({ fileName: "Đề án v1.pdf", mimeType: "application/pdf", bytes: pdf.length, uploadedBy: leader.id });
     expect(uploaded.text).not.toContain("assetId");
     const saved = await call(leader, "POST", `${events}/${eventId}/save`, { title: "Workshop", objective: "Goal", plan: "Edited plan",
-      startAt: startAt.toISOString(), endAt: endAt.toISOString(), venueText: "Hall", audienceScope: "PUBLIC", capacity: 50,
+      startAt: startAt.toISOString(), endAt: endAt.toISOString(), venueText: "Hall", audienceScope: "PUBLIC", capacity: 50, riskCategory: "LOW",
       budgetLines: [], bookingIds: [], expectedVersion: uploaded.body.data.event.version });
     expect(saved.status).toBe(200);
     expect(saved.body.data.event.proposalDocument.fileName).toBe("Đề án v1.pdf");

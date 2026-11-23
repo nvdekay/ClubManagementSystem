@@ -25,7 +25,6 @@ export interface ClubTransitionPlanRepository {
   save(clubId: string, id: string, revision: number, input: TransitionPlanInput, userId: string, now: Date): Promise<ClubTransitionPlan>;
   submit(clubId: string, id: string, revision: number, userId: string, now: Date): Promise<ClubTransitionPlan>;
 }
-// Kiểm tra và chuẩn hoá kế hoạch chuyển giao nhiệm kỳ ban chủ nhiệm
 export function normalizeTransitionPlan(input: TransitionPlanInput): TransitionPlanInput {
   const name = input.toTerm.name.trim();
   if (!name || name.length > 200 || !Number.isFinite(input.toTerm.startAt.getTime())

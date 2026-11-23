@@ -6,21 +6,18 @@ import type { ClubMembershipRecord, ClubRosterMember, MembershipRepository, Memb
 import { isBeforeToday } from "../../domain/membership.js";
 import { ucmsModels } from "./ucms-models.js";
 
-// Lọc mảng, chỉ giữ phần tử là object
 function objectArray(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? value.filter((item): item is Record<string, unknown> =>
     Boolean(item) && typeof item === "object" && !Array.isArray(item)) : [];
 }
 
-// Ép giá trị về Date
 function date(value: unknown): Date {
   return value instanceof Date ? value : new Date(String(value));
 }
 
-// Chuẩn hóa lịch sử đổi trạng thái của thành viên
 function history(value: unknown): MembershipStatusChange[] {
   return objectArray(value).flatMap((entry) => {
-    // actorId được ghi dưới dạng ObjectId; các mục cũ có thể là string — chấp nhận cả hai.
+    // actorId is written as an ObjectId; older entries may hold a string — accept both.
     if (!("fromState" in entry) || typeof entry.toState !== "string" || (!entry.actorId && entry.actorRole !== "SYSTEM")) return [];
     return [{ fromState: String(entry.fromState) as MembershipState,
       toState: entry.toState as MembershipState, effectiveDate: date(entry.effectiveDate),
@@ -29,7 +26,6 @@ function history(value: unknown): MembershipStatusChange[] {
   });
 }
 
-// Ánh xạ document thành viên sang ClubMembershipRecord
 function mapMembership(doc: Record<string, unknown>): ClubMembershipRecord {
   return { id: String(doc._id), clubId: String(doc.clubId), userId: String(doc.userId),
     state: String(doc.state) as MembershipState, joinedAt: date(doc.joinedAt),
@@ -41,7 +37,6 @@ function mapMembership(doc: Record<string, unknown>): ClubMembershipRecord {
     statusHistory: history(doc.statusHistory) };
 }
 
-// Ánh xạ document đơn xin rút sang MembershipWithdrawalRequest
 function mapRequest(doc: Record<string, unknown>): MembershipWithdrawalRequest {
   return { id: String(doc._id), membershipId: String(doc.membershipId),
     clubId: String(doc.clubId), userId: String(doc.userId), reason: String(doc.reason),
@@ -51,7 +46,6 @@ function mapRequest(doc: Record<string, unknown>): MembershipWithdrawalRequest {
     ...(doc.executedAt ? { executedAt: date(doc.executedAt) } : {}) };
 }
 
-// Đổi lỗi trùng khoá Mongo (11000) thành DomainError conflict
 function duplicate(error: unknown): never {
   if (error instanceof mongoose.mongo.MongoServerError && error.code === 11000) {
     throw new DomainError("membership conflicts with an existing record", "conflict");
@@ -59,7 +53,6 @@ function duplicate(error: unknown): never {
   throw error;
 }
 
-// Repository thành viên CLB và đơn xin rút khỏi CLB
 export function mongoMembershipRepository(): MembershipRepository {
   const memberships = ucmsModels.clubMemberships!;
   const requests = ucmsModels.membershipWithdrawalRequests!;
@@ -71,7 +64,6 @@ export function mongoMembershipRepository(): MembershipRepository {
   const audits = ucmsModels.auditLogs!;
   const notifications = ucmsModels.notifications!;
 
-  // Kiểm tra thành viên đang giữ ghế ban đã được xác nhận tại thời điểm cho trước
   async function hasConfirmedBoardSeat(membershipId: Types.ObjectId, clubId: Types.ObjectId,
     at: Date, session?: mongoose.ClientSession): Promise<boolean> {
     const docs = await assignments.find({ membershipId, clubId, confirmedBy: { $exists: true, $ne: null },
@@ -83,7 +75,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       clubId, isActive: true, $or: [{ isBoardSeat: true }, { isLeaderRole: true }] }).session(session ?? null));
   }
 
-  // Kết thúc các phân công vị trí của thành viên từ ngày hiệu lực
   async function closeAssignments(membershipId: Types.ObjectId, clubId: Types.ObjectId,
     effectiveDate: Date, session: mongoose.ClientSession): Promise<void> {
     const activeRange = { $or: [{ effectiveTo: { $exists: false } }, { effectiveTo: null },
@@ -98,7 +89,6 @@ export function mongoMembershipRepository(): MembershipRepository {
     }
   }
 
-  // Dựng view thành viên kèm tên CLB, tên người dùng và đơn rút đang chờ
   async function membershipView(doc: Record<string, unknown>, includeHistory = true) {
     const [club, user, pending] = await Promise.all([
       clubs.findById(doc.clubId).select("name").lean(),
@@ -113,7 +103,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       ...(includeHistory ? {} : { statusHistory: [] }) };
   }
 
-  // Lấy id người quản lý CLB trong nhiệm kỳ Active để gửi thông báo
   async function managerIds(clubId: Types.ObjectId, now: Date,
     session: mongoose.ClientSession): Promise<Types.ObjectId[]> {
     const activeTerms = await terms.find({ clubId, state: "Active", startAt: { $lte: now }, endAt: { $gt: now } })
@@ -138,7 +127,6 @@ export function mongoMembershipRepository(): MembershipRepository {
     return [...new Set(people.map((item) => String(item.userId)))].map((id) => new Types.ObjectId(id));
   }
 
-  // Tạo thông báo liên quan đến thành viên
   async function notify(input: { recipient: Types.ObjectId; entityId: Types.ObjectId;
     eventCode: string; clubId: Types.ObjectId; now: Date; payload?: Record<string, unknown>;
     entityType?: string; session: mongoose.ClientSession }) {
@@ -152,14 +140,12 @@ export function mongoMembershipRepository(): MembershipRepository {
   }
 
   return {
-    // Liệt kê tư cách thành viên Active/Inactive của sinh viên
     async listMine(userId) {
       const docs = await memberships.find({ userId: new Types.ObjectId(userId), state: { $in: ["Active", "Inactive"] } })
         .sort({ joinedAt: -1, _id: -1 }).lean();
       return Promise.all(docs.map((doc) => membershipView(doc)));
     },
 
-    // Liệt kê roster thành viên của CLB kèm vị trí hiện tại
     async listClub(clubId, now): Promise<ClubRosterMember[]> {
       const club = new Types.ObjectId(clubId);
       const [docs, activeTerms, positionDocs] = await Promise.all([
@@ -177,7 +163,7 @@ export function mongoMembershipRepository(): MembershipRepository {
             { effectiveTo: { $gt: now } }] }).select("membershipId positionId confirmedBy").lean() : [],
       ]);
       const emailById = new Map(userDocs.map((user) => [String(user._id), String(user.email ?? "")]));
-      // Đang giữ = có hiệu lực trong nhiệm kỳ Active; ghế Leader chỉ tính khi đã xác nhận (cùng quy tắc với quyền truy cập).
+      // Held now = in effect inside an Active term; a Leader seat counts only once confirmed (same rule as access).
       const leaderIds = new Set(positionDocs.filter((position) => position.isLeaderRole).map((position) => String(position._id)));
       const held = new Map<string, Set<string>>();
       for (const assignment of assignmentDocs) {
@@ -191,7 +177,6 @@ export function mongoMembershipRepository(): MembershipRepository {
           .map((position) => String(position.name)) }));
     },
 
-    // Thêm thành viên thủ công vào CLB
     async onboardManually(input) {
       const clubId = new Types.ObjectId(input.clubId);
       const actorId = new Types.ObjectId(input.actorId);
@@ -210,7 +195,7 @@ export function mongoMembershipRepository(): MembershipRepository {
             memberships.exists({ clubId, userId, state: { $in: ["Active", "Inactive"] } }).session(session),
             positions.findOne({ clubId, isDefaultMemberRole: true, isActive: true }).session(session).select("code").lean(),
           ]);
-          // E2 / BR46: sinh viên bị cấm không bao giờ được nhận lại, kể cả onboarding thủ công.
+          // E2 / BR46: a banned student is never taken back, manual onboarding included.
           if (banned) throw new DomainError("banned students cannot be onboarded", "forbidden");
           if (current) throw new DomainError("student already has an active membership", "conflict");
           if (!memberRole) throw new DomainError("default Members role is not configured", "conflict");
@@ -233,7 +218,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       return membershipView(created);
     },
 
-    // Đổi trạng thái thành viên và ghi lại lịch sử
     async changeState(input) {
       const clubId = new Types.ObjectId(input.clubId);
       const membershipId = new Types.ObjectId(input.membershipId);
@@ -283,7 +267,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       return membershipView(updated);
     },
 
-    // Thành viên gửi đơn xin rút khỏi CLB
     async requestWithdrawal(input) {
       const membershipId = new Types.ObjectId(input.membershipId);
       const userId = new Types.ObjectId(input.userId);
@@ -321,7 +304,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       return mapRequest(created);
     },
 
-    // Liệt kê đơn xin rút của sinh viên
     async listMyWithdrawalRequests(userId) {
       const docs = await requests.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 }).lean();
       const clubDocs = await clubs.find({ _id: { $in: docs.map((doc) => doc.clubId) } }).select("_id name").lean();
@@ -329,7 +311,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       return docs.map((doc) => ({ ...mapRequest(doc), clubName: names.get(String(doc.clubId)) }));
     },
 
-    // Liệt kê đơn xin rút của một CLB kèm tên thành viên
     async listClubWithdrawalRequests(clubId) {
       const docs = await requests.find({ clubId: new Types.ObjectId(clubId) }).sort({ createdAt: -1 }).lean();
       const usersForRequests = await users.find({ _id: { $in: docs.map((doc) => doc.userId) } })
@@ -338,7 +319,6 @@ export function mongoMembershipRepository(): MembershipRepository {
       return docs.map((doc) => ({ ...mapRequest(doc), memberName: names.get(String(doc.userId)) }));
     },
 
-    // Thực thi đơn xin rút: kết thúc tư cách thành viên và các phân công vị trí
     async executeWithdrawal(input) {
       const clubId = new Types.ObjectId(input.clubId);
       const requestId = new Types.ObjectId(input.requestId);

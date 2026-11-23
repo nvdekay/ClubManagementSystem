@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { WorkspaceHome } from "@/components/custom/WorkspaceHome";
 import { RoleDashboard } from "@/components/custom/RoleDashboard";
 
-// Trang chủ workspace sinh viên với các lối tắt chức năng
 export function StudentHomePage() {
   const { t } = useTranslation();
   return <WorkspaceHome subtitle={t("auth.student")} actions={[

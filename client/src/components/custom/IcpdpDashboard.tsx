@@ -30,24 +30,20 @@ interface IcpdpDashboardProps {
   charts: IcpdpDashboardCharts;
 }
 
-// Dashboard ICPDP: số liệu chính, hàng đợi duyệt, lịch sự kiện và tình trạng CLB
-/** Tổng quan cho ICPDP: số liệu chính, hàng đợi duyệt, lịch sự kiện và tình trạng các CLB. */
+/** ICPDP overview: headline numbers, the review queues, the event calendar and where clubs stand. */
 export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const { t, i18n } = useTranslation();
-  // Lấy số liệu của panel nếu đã tải xong
   function count(key: string) {
     const panel = data.panels.find((item) => item.key === key);
     return panel?.status === "ready" ? panel.count : undefined;
   }
   const number = new Intl.NumberFormat(i18n.language);
   const money = new Intl.NumberFormat(i18n.language, { notation: "compact", maximumFractionDigits: 1 });
-  // Nhãn tháng ngắn cho trục biểu đồ (T5 hoặc May)
-  // Nhãn trục chỉ một từ ngắn: "T5" ở tiếng Việt ("Tháng 5" bị xuống dòng trên điện thoại), "May" ở tiếng Anh.
+  // Axis labels stay one short word: "T5" in Vietnamese ("Tháng 5" wraps on a phone), "May" in English.
   function monthName(month: string) {
     return i18n.language.startsWith("vi") ? `T${Number(month.slice(5))}`
       : new Intl.DateTimeFormat(i18n.language, { month: "short", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
   }
-  // Nhãn tháng đầy đủ kèm năm theo ngôn ngữ hiện tại
   function monthLong(month: string) {
     return new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
   }
@@ -55,12 +51,11 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const next = charts.eventsByMonth.at(-2);
   const overdue = charts.queues.reduce((sum, queue) => sum + queue.overdue, 0);
   const pending = charts.queues.reduce((sum, queue) => sum + queue.onTime + queue.overdue, 0);
-  // Đếm số CLB ở một trạng thái vòng đời
   function state(name: string) {
     return charts.clubsByState.find((item) => item.state === name)?.count ?? 0;
   }
   const queueRows = charts.queues.map((queue) => ({ key: queue.entityType,
-    // Các việc khiếu nại không có key dashboard.queue_*; dùng lại nhãn menu ICPDP thay vì hiện mã thô.
+    // Complaint tasks have no dashboard.queue_* key; reuse the ICPDP menu label instead of showing the raw code.
     label: queue.entityType === "COMPLAINT" ? t("common.icpdpComplaints")
       : t(`dashboard.queue_${queue.entityType}` as "dashboard.queue_EVENT_PROPOSAL", { defaultValue: queue.entityType }),
     values: [queue.onTime, queue.overdue], href: queueHref[queue.entityType] }));
@@ -69,11 +64,10 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const violations = count("openViolations");
 
   const onTime = pending - overdue;
-  // Các hàng đợi đang trễ việc, trễ nặng nhất xếp trước, để thẻ SLA chỉ rõ nơi cần xử lý.
+  // The queues holding late work, worst first, so the SLA card says where to act.
   const lateQueues = queueRows.filter((row) => (row.values[1] ?? 0) > 0).sort((a, b) => b.values[1]! - a.values[1]!).slice(0, 4);
   const stateTone: Record<string, ChartTone> = { Active: "success", Suspended: "warning", Dissolving: "danger" };
   const stateOrder = ["Active", "Suspended", "Dissolving"];
-  // Thứ tự hiển thị của một trạng thái CLB
   function rank(state: string) { return stateOrder.includes(state) ? stateOrder.indexOf(state) : stateOrder.length; }
   const stateSegments = [...charts.clubsByState].sort((a, b) => rank(a.state) - rank(b.state)).map((item) => ({ key: item.state,
     label: t(`clubLifecycle.state_${item.state}` as "clubLifecycle.state_Active", { defaultValue: item.state }),
@@ -83,6 +77,7 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
   const disbursedShare = charts.budget.approved ? Math.round((charts.budget.disbursed / charts.budget.approved) * 100) : 0;
   const currentIndex = charts.eventsByMonth.length - 3;
   const oversight = [
+    { key: "internalEvents", icon: "users" as const, label: t("dashboard.internalEvents"), href: "/workspace/internal-events" },
     { key: "pendingReports", icon: "clipboard" as const, label: t("dashboard.pendingReports"), href: "/workspace/periodic-reports" },
     { key: "upcomingBookings", icon: "mapPin" as const, label: t("dashboard.upcomingBookings"), href: "/workspace/bookings" },
     { key: "boardHistory", icon: "crown" as const, label: t("dashboard.boardHistory"), href: "/icpdp/clubs" },
@@ -137,12 +132,12 @@ export function IcpdpDashboard({ data, charts }: IcpdpDashboardProps) {
 
       <div className="grid gap-5 lg:grid-cols-3">
         <AppChartFrame className="lg:col-span-2" title={t("dashboard.eventsTitle")} description={t("dashboard.eventsDescription")}
-          legend={[{ label: t("dashboard.publicEvents"), tone: "chart-1" }]}
-          table={{ label: t("dashboard.tableView"), columns: [t("dashboard.month"), t("dashboard.publicEvents")],
-            rows: charts.eventsByMonth.map((item) => [monthLong(item.month), item.count]) }}>
-          <AppColumnChart tones={["chart-1"]} seriesLabels={[t("dashboard.publicEvents")]}
+          legend={[{ label: t("dashboard.publicEvents"), tone: "chart-1" }, { label: t("dashboard.internalEventsSeries"), tone: "chart-2" }]}
+          table={{ label: t("dashboard.tableView"), columns: [t("dashboard.month"), t("dashboard.publicEvents"), t("dashboard.internalEventsSeries")],
+            rows: charts.eventsByMonth.map((item) => [monthLong(item.month), item.publicCount, item.internalCount]) }}>
+          <AppColumnChart tones={["chart-1", "chart-2"]} seriesLabels={[t("dashboard.publicEvents"), t("dashboard.internalEventsSeries")]}
             points={charts.eventsByMonth.map((item) => ({ key: item.month, label: monthName(item.month), title: monthLong(item.month),
-              values: [item.count], emphasized: item.month === current?.month }))} />
+              values: [item.publicCount, item.internalCount], emphasized: item.month === current?.month }))} />
         </AppChartFrame>
         <AppChartFrame title={t("dashboard.statesTitle")} description={t("dashboard.statesDescription")}
           table={{ label: t("dashboard.tableView"), columns: [t("dashboard.statesTitle"), t("dashboard.clubs")],

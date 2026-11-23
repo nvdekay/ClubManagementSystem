@@ -16,11 +16,8 @@ type Doc = Record<string, unknown>;
 const taskType = "PROPERTY_BOOKING";
 const editableStates = ["Draft", "Revision Requested"];
 const pendingStates = ["Requested", "Under Review", "Revision Requested"];
-// Chuyển chuỗi id thành ObjectId
 function oid(id: string) { return new Types.ObjectId(id); }
-// Ném DomainError loại conflict với thông điệp cho trước
 function conflict(message: string): never { throw new DomainError(message, "conflict"); }
-// Ánh xạ document tài sản sang Property
 function propertyFrom(doc: Doc): Property {
   return { id: String(doc._id), code: String(doc.code), name: String(doc.name),
     type: doc.type as Property["type"], location: String(doc.location ?? ""), isActive: doc.isActive !== false,
@@ -29,19 +26,16 @@ function propertyFrom(doc: Doc): Property {
     blackouts: ((doc.blackouts ?? []) as Property["blackouts"]).map((item) => ({ ...item,
       startAt: new Date(item.startAt), endAt: new Date(item.endAt) })) };
 }
-// Ánh xạ document CLB sang BookingClub kèm học kỳ giải thể
 function clubFrom(doc: Doc): BookingClub {
   const dissolution = doc.dissolution as { effectiveSemester?: string } | undefined;
   return { id: String(doc._id), name: String(doc.name), state: String(doc.state),
     dissolutionSemester: dissolution?.effectiveSemester };
 }
-// Ánh xạ document booking sang BookingInput
 function inputFrom(doc: Doc, equipment: string[] = []): BookingInput {
   return { propertyId: String(doc.propertyId), purpose: String(doc.purpose), startAt: new Date(doc.startAt as Date),
     endAt: new Date(doc.endAt as Date), headcount: Number(doc.headcount ?? 1), equipment,
     ...(doc.eventId ? { eventId: String(doc.eventId) } : {}) };
 }
-// Ánh xạ document booking sang Booking đầy đủ
 function bookingFrom(doc: Doc, equipment: string[] = []): Booking {
   return { ...inputFrom(doc, equipment), id: String(doc._id), clubId: String(doc.clubId), clubName: String(doc.clubName),
     semesterCode: String(doc.semesterCode), state: doc.state as Booking["state"],
@@ -49,14 +43,12 @@ function bookingFrom(doc: Doc, equipment: string[] = []): Booking {
     conflictResult: doc.conflictResult as string | undefined, decisionReason: doc.decisionReason as string | undefined,
     cancelReason: doc.cancelReason as string | undefined };
 }
-// Chuyển BookingInput sang dạng lưu trong DB
 function storedInput(input: BookingInput) {
   return { propertyId: oid(input.propertyId), purpose: input.purpose, startAt: input.startAt, endAt: input.endAt,
     headcount: input.headcount, ...(input.eventId ? { eventId: oid(input.eventId) } : {}) };
 }
 
-// Giải phóng hàng loạt booking còn hiệu lực trong session, ghi audit và thông báo
-/** Chạy trong transaction của bên gọi, kể cả cascade CLB/sự kiện của UC15. */
+/** Runs inside the caller's transaction, including UC15's club/event cascade. */
 export async function releaseFacilityBookingsInSession(session: ClientSession, filter: Doc,
   source: string, reason: string, now: Date, state: "Released" | "Cancelled" = "Released"): Promise<number> {
   const docs = await m.propertyBookings!.find(filter).session(session).lean();
@@ -77,26 +69,22 @@ export async function releaseFacilityBookingsInSession(session: ClientSession, f
   return docs.length;
 }
 
-// Repository booking tài sản của CLB và duyệt của ICPDP trên MongoDB
 export function mongoFacilityBookingRepository(): FacilityBookingRepository {
   const bookings = m.propertyBookings!;
   const audits = m.auditLogs!;
   const tasks = m.approvalTasks!;
   const decisions = m.approvalDecisions!;
-  // Ghi audit log cho booking
   async function audit(id: Types.ObjectId, action: string, actorId: string | null,
     before: unknown, after: unknown, now: Date, session: ClientSession, reason?: string) {
     await audits.create([{ entityType: "PropertyBooking", entityId: id, action,
       ...(actorId ? { actorId: oid(actorId) } : { actorRole: "SYSTEM" }), before, after, reason,
       correlationId: randomUUID(), at: now }], { session });
   }
-  // Lấy document booking hiện tại, không có thì báo not_found
   async function current(id: string, session: ClientSession) {
     const doc = await bookings.findById(oid(id)).session(session).lean();
     if (!doc) throw new DomainError("booking not found", "not_found");
     return doc;
   }
-  // Lấy danh sách thiết bị từ audit snapshot mới nhất của booking
   async function equipmentFor(id: Types.ObjectId, session?: ClientSession): Promise<string[]> {
     const query = audits.findOne({ entityType: "PropertyBooking", entityId: id,
       action: { $in: ["BOOKING_DRAFT_CREATED", "BOOKING_DRAFT_SAVED", "BOOKING_SUBMITTED"] } })
@@ -105,7 +93,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     const doc = await query.lean();
     return (doc?.after as { payload?: { equipment?: string[] } } | undefined)?.payload?.equipment ?? [];
   }
-  // Lấy policy version đang hiệu lực tại thời điểm now
   async function policyAt(now: Date, session?: ClientSession): Promise<PolicyVersion | null> {
     const query = m.policyVersions!.findOne({ effectiveFrom: { $lte: now } })
       .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 });
@@ -115,7 +102,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       academicCalendar: ((doc.academicCalendar ?? []) as PolicyVersion["academicCalendar"])
         .map((item) => ({ ...item, startAt: new Date(item.startAt), endAt: new Date(item.endAt) })) } as unknown as PolicyVersion : null;
   }
-  // Tìm các booking xung đột khung giờ, tính cả khoảng đệm theo ngưỡng policy
   async function conflicts(input: BookingInput, thresholdMinutes: number, excludeId?: string,
     session?: ClientSession): Promise<BookingConflict[]> {
     const buffer = thresholdMinutes * 60000;
@@ -128,7 +114,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     const defenseQuery = m.eventDefenseSessions!.find({ propertyId: oid(input.propertyId),
       state: { $in: ["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"] }, ...interval });
     if (session) { bookingQuery.session(session); eventQuery.session(session); defenseQuery.session(session); }
-    // Các thao tác trong transaction Mongo chạy tuần tự.
+    // Operations in a Mongo transaction run sequentially.
     const bookingDocs = await bookingQuery.lean();
     const eventDocs = await eventQuery.lean();
     const defenseDocs = await defenseQuery.lean();
@@ -138,7 +124,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       id: String(doc._id), startAt: doc.startAt as Date, endAt: doc.endAt as Date, source: "defense" as const }))]
       .filter((item) => bookingIntervalsConflict(input.startAt, input.endAt, item.startAt, item.endAt, thresholdMinutes));
   }
-  // Đánh giá booking: học kỳ, quy tắc tài sản, CLB và xung đột
   async function assess(input: BookingInput, clubId: string, now: Date, excludeId?: string, session?: ClientSession) {
     const propertyQuery = m.properties!.findById(oid(input.propertyId));
     const clubQuery = m.clubs!.findById(oid(clubId));
@@ -157,17 +142,14 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
     return { ...assessBooking(input, propertyFrom(property), clubFrom(club), policy,
       await conflicts(input, policy.conflictThresholdMinutes, excludeId, session), now), club: clubFrom(club) };
   }
-  // Kiểm tra tài sản cho phép CLB gửi yêu cầu booking
   async function assertRequestProperty(propertyId: unknown, session: ClientSession) {
     assertRequestableProperty(await m.properties!.findById(propertyId).select({ type: 1 }).session(session).lean() as { type: Property["type"] } | null);
   }
-  // Khoá phạm vi CLB và tài sản để tuần tự hoá các ghi đồng thời
   async function lockScope(propertyId: string, clubId: string, session: ClientSession) {
-    // Tuần tự hoá các bên ghi dùng chung một khung giờ hoặc một CLB với các transaction vòng đời/danh mục.
+    // Serialize writers sharing a slot or a club with lifecycle/catalog transactions.
     await m.clubs!.updateOne({ _id: oid(clubId) }, { $inc: { __v: 1 } }, { session });
     await m.properties!.updateOne({ _id: oid(propertyId) }, { $inc: { __v: 1 } }, { session });
   }
-  // Tạo thông báo booking cho danh sách người nhận
   async function notify(id: Types.ObjectId, eventCode: string, recipientIds: string[],
     payload: unknown, now: Date, session: ClientSession) {
     if (!recipientIds.length) return;
@@ -175,18 +157,15 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       eventCode, entityType: "PropertyBooking", entityId: id, channels: notificationChannels(eventCode), payload,
       state: "Queued", dueAt: now, attempts: 0, createdAt: now })), { session, ordered: true });
   }
-  // Lấy id các ICPDP officer
   async function officers(session: ClientSession): Promise<string[]> {
     const roles = await m.roles!.find({ code: "ICPDP_OFFICER", scope: "system" }).session(session).lean();
     const ids = await m.userRoleAssignments!.distinct("userId", { roleId: { $in: roles.map((role) => role._id) }, revokedAt: null }).session(session);
     return ids.map(String);
   }
-  // Đóng các approval task đang mở của booking
   async function closeTasks(id: Types.ObjectId, now: Date, session: ClientSession) {
     await tasks.updateMany({ entityType: taskType, entityId: id, state: "Open" },
       { $set: { state: "Closed", closedAt: now } }, { session });
   }
-  // Dựng chi tiết booking kèm lịch sử và xung đột
   async function detail(id: string, now: Date): Promise<BookingDetail | null> {
     const doc = await bookings.findById(oid(id)).lean();
     if (!doc) return null;
@@ -230,14 +209,12 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
           overbookingReason: (item.comments as { overbookingReason?: string } | undefined)?.overbookingReason };
       }), check, obligations };
   }
-  // Lấy chi tiết booking, không có thì báo not_found
   async function required(id: string, now: Date): Promise<BookingDetail> {
     const found = await detail(id, now);
     if (!found) throw new DomainError("booking not found", "not_found");
     return found;
   }
   return {
-    // Liệt kê booking tài sản (không gồm phòng) của một CLB hoặc toàn bộ
     async list(clubId) {
       const rooms = await m.properties!.distinct("_id", { type: "ROOM" });
       const docs = await bookings.find({ ...(clubId ? { clubId: oid(clubId) } : {}), propertyId: { $nin: rooms } })
@@ -251,20 +228,16 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       const equipmentById = new Map(snapshots.map((item) => [String(item._id), item.equipment ?? []]));
       return docs.map((doc) => bookingFrom(doc, equipmentById.get(String(doc._id)) ?? []));
     }, find: detail,
-    // Lấy thông tin CLB phục vụ booking
     async club(id) { const doc = await m.clubs!.findById(oid(id)).lean(); return doc ? clubFrom(doc) : null; },
-    // Liệt kê sự kiện còn hiệu lực của CLB để gắn vào booking
     async events(clubId) {
       const docs = await m.events!.find({ clubId: oid(clubId), state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired", "CANCELLED", "FINISH"] } })
         .select({ title: 1, startAt: 1 }).sort({ startAt: 1 }).lean();
       return docs.map((doc) => ({ id: String(doc._id), title: String(doc.title), startAt: doc.startAt as Date }));
     },
-    // Kiểm tra sự kiện còn hiệu lực thuộc CLB
     async eventBelongsToClub(eventId, clubId) {
       return Boolean(await m.events!.exists({ _id: oid(eventId), clubId: oid(clubId),
         state: { $nin: ["Cancelled", "Completed", "Rejected", "Expired", "CANCELLED", "FINISH"] } }));
     }, conflicts,
-    // Tạo booking Draft sau khi kiểm tra thời hạn báo trước và xung đột
     async create(clubId, input, actorId, now) {
       const id = new Types.ObjectId();
       await mongoose.connection.transaction(async (session) => {
@@ -279,7 +252,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return required(String(id), now);
     },
-    // Cập nhật booking Draft hoặc yêu cầu chỉnh sửa, kiểm tra version
     async save(id, clubId, input, expectedVersion, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         await lockScope(input.propertyId, clubId, session);
@@ -295,7 +267,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return required(id, now);
     },
-    // Club Leader gửi booking để ICPDP duyệt
     async submit(id, clubId, expectedVersion, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const before = await current(id, session);
@@ -312,7 +283,7 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
           semesterCode: check.semesterCode, conflictResult: check.conflictResult },
         $unset: { decisionReason: "", decidedAt: "", decidedBy: "" } }, { session });
         const property = await m.properties!.findById(before.propertyId).select({ type: 1 }).session(session).lean();
-        // UC05: các rule định tuyến đang Active quyết định, một lần duy nhất, SLA của review này.
+        // UC05: the active routing rules decide, once, the SLA of this review.
         await tasks.create([{ entityType: taskType, entityId: before._id, clubId: oid(clubId),
           title: `${before.clubName}: ${input.purpose}`, state: "Open", openedAt: now,
           ...(await routedTaskFields(session, { requestType: "PROPERTY_BOOKING", propertyType: String(property?.type ?? ""),
@@ -324,7 +295,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return required(id, now);
     },
-    // ICPDP officer nhận xử lý (claim) yêu cầu booking
     async claim(id, officerId, now) {
       await mongoose.connection.transaction(async (session) => {
         const before = await current(id, session);
@@ -338,7 +308,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return required(id, now);
     },
-    // ICPDP ghi quyết định duyệt, từ chối hoặc yêu cầu chỉnh sửa booking
     async decide(id, officerId, input, now) {
       await mongoose.connection.transaction(async (session) => {
         const decisionReason = bookingReason(input.reason);
@@ -384,7 +353,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return required(id, now);
     },
-    // CLB huỷ booking Requested/Approved, đánh dấu huỷ muộn nếu có
     async cancel(id, clubId, reason, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const before = await current(id, session);
@@ -401,7 +369,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return required(id, now);
     },
-    // Giải phóng booking của CLB hoặc sự kiện theo nguồn yêu cầu
     async release(input) {
       const states = ["Requested", "Under Review", "Revision Requested", "Approved", ...(input.source === "club" ? ["In Use"] : [])];
       return mongoose.connection.transaction(async (session) => releaseFacilityBookingsInSession(session,
@@ -409,7 +376,6 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
           ...(input.eventId ? { eventId: oid(input.eventId) } : {}), state: { $in: states } },
         input.source.toUpperCase(), input.reason, input.now));
     },
-    // Chuyển booking Approved sang In Use rồi Completed theo thời gian
     async advanceLifecycle(now) {
       let started = 0; let completed = 0;
       await mongoose.connection.transaction(async (session) => {
@@ -426,13 +392,12 @@ export function mongoFacilityBookingRepository(): FacilityBookingRepository {
       });
       return { started, completed };
     },
-    // UC44: tìm booking bị ảnh hưởng bởi khung blackout của tài sản
     async blackoutConflicts(propertyId, now) {
       const property = await m.properties!.findById(oid(propertyId)).lean();
       if (!property) throw new DomainError("property not found", "not_found");
       const blackouts = propertyFrom(property).blackouts;
-      // UC44 A2: yêu cầu đang chờ, cùng các booking đã duyệt và phiên phòng UC58 chưa kết thúc —
-      // blackout không bao giờ thu hồi một quyết định, nên ICPDP thấy chúng và xử lý thủ công.
+      // UC44 A2: pending requests, plus approved bookings and UC58 room sessions that are not over yet —
+      // a blackout never revokes a decision, so ICPDP sees them and handles them by hand.
       const docs = await bookings.find({ propertyId: oid(propertyId), endAt: { $gt: now },
         state: { $in: [...pendingStates, "Approved", "In Use"] } }).sort({ startAt: 1 }).lean();
       return docs.filter((doc) => blackouts.some((item) => slotsConflict(doc.startAt as Date, doc.endAt as Date,

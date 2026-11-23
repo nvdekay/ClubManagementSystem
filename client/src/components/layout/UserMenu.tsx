@@ -12,8 +12,7 @@ interface UserMenuProps {
   csrfToken: string;
 }
 
-// Avatar trên header mở menu tài khoản
-/** Avatar trên header mở menu tài khoản: vào workspace hoặc đăng xuất. */
+/** Header avatar that opens the account menu: go to the workspace, or sign out. */
 export function UserMenu({ user, csrfToken }: UserMenuProps) {
   const { t } = useTranslation();
   const logout = useLogout();
@@ -24,8 +23,7 @@ export function UserMenu({ user, csrfToken }: UserMenuProps) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const showImage = Boolean(user.avatarUrl) && failedUrl !== user.avatarUrl;
 
-  // Vẽ avatar Google hoặc chữ cái đầu của tên
-  /** Ảnh hồ sơ Google, hoặc chữ cái đầu của tên khi không có ảnh hoặc ảnh tải lỗi. */
+  /** Google profile photo, or the first letter of the name when there is none or it fails to load. */
   function avatar(className?: string) {
     return (
       <span aria-hidden="true" className={cn("flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-soft-app text-sm font-semibold text-primary-app", className)}>
@@ -52,13 +50,12 @@ export function UserMenu({ user, csrfToken }: UserMenuProps) {
     };
   }, [open]);
 
-  // Đăng xuất và xoá workspace đã chọn
   async function signOut() {
     try {
       await logout.mutateAsync(csrfToken);
       sessionStorage.removeItem("workspace");
     } catch {
-      // logout.isError được hiển thị trong menu.
+      // logout.isError is shown inside the menu.
     }
   }
 

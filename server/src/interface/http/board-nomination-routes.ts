@@ -35,7 +35,6 @@ export const boardNominationDecisionBody = z.object({
   reason: z.string().trim().max(5_000).optional(),
 }).strict();
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid board nomination request", "validation",
@@ -43,47 +42,38 @@ function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   return result.data;
 }
 
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
-// Mount các route đề cử ban chủ nhiệm của CLB và ICPDP
 export function boardNominationRoutes(deps: BoardNominationRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
-  // Lấy ngữ cảnh đề cử ban chủ nhiệm của CLB
   router.get("/clubs/:clubId/board-nomination-context", authGuard(guard, false), async (req, res) => {
     ok(res, await getBoardNominationContext(deps.repo, deps.accessRepo, actor(res),
       parsed(id, req.params.clubId), new Date()));
   });
-  // Liệt kê các lần đề cử ban chủ nhiệm của CLB
   router.get("/clubs/:clubId/board-nominations", authGuard(guard, false), async (req, res) => {
     ok(res, await listClubBoardNominations(deps.repo, deps.accessRepo, actor(res),
       parsed(id, req.params.clubId), new Date()));
   });
-  // Club Leader gửi đề cử các ghế ban chủ nhiệm
   router.post("/clubs/:clubId/board-nominations", authGuard(guard), async (req, res) => {
     const body = parsed(boardNominationBody, req.body);
     ok(res, await submitBoardNomination(deps.repo, deps.accessRepo, actor(res),
       parsed(id, req.params.clubId), body.seats, new Date()), 201);
   });
-  // ICPDP liệt kê hàng đợi đề cử ban chủ nhiệm
   router.get("/admin/board-nominations", authGuard(guard, false), async (_req, res) => {
     ok(res, await listBoardNominations(deps.repo, deps.authRepo, actor(res)));
   });
-  // ICPDP xem chi tiết một đề cử ban chủ nhiệm
   router.get("/admin/board-nominations/:id", authGuard(guard, false), async (req, res) => {
     ok(res, await getBoardNomination(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id)));
   });
-  // ICPDP nhận xử lý (claim) một đề cử
   router.post("/admin/board-nominations/:id/claim", authGuard(guard), async (req, res) => {
     ok(res, await claimBoardNomination(deps.repo, deps.authRepo, actor(res),
       parsed(id, req.params.id), new Date()));
   });
-  // ICPDP ghi quyết định xác nhận từng ghế ban chủ nhiệm
   router.post("/admin/board-nominations/:id/decision", authGuard(guard), async (req, res) => {
     ok(res, await decideBoardNomination(deps.repo, deps.authRepo, actor(res),
       parsed(id, req.params.id), parsed(boardNominationDecisionBody, req.body), new Date()));

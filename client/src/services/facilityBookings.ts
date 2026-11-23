@@ -27,7 +27,6 @@ export interface BookingDetail {
   versions: Array<{ versionNo: number; payload: BookingInput; submittedBy: string; submittedAt: string }>;
   decisions: Array<BookingDecisionInput & { id: string; taskId: string; actorId: string; at: string }>;
 }
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
@@ -36,33 +35,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return ((await res.json()) as { data: T }).data;
 }
-// Chọn đường dẫn booking của CLB hoặc của admin
 function base(clubId: string | null) {
   return clubId ? `/clubs/${encodeURIComponent(clubId)}/bookings` : "/admin/bookings";
 }
-// GET danh sách booking của CLB hoặc admin
 export function fetchBookings(clubId: string | null, signal: AbortSignal): Promise<Booking[]> {
   return request(base(clubId), { signal });
 }
-// GET chi tiết một booking
 export function fetchBooking(clubId: string | null, id: string, signal: AbortSignal): Promise<BookingDetail> {
   return request(`${base(clubId)}/${encodeURIComponent(id)}`, { signal });
 }
-// GET danh sách cơ sở vật chất có thể đặt
 export function fetchBookingProperties(clubId: string | null, signal: AbortSignal): Promise<Property[]> {
   return request(clubId ? `/clubs/${encodeURIComponent(clubId)}/booking-properties` : "/admin/properties", { signal });
 }
-// GET sự kiện của CLB có thể gắn vào booking
 export function fetchBookingEvents(clubId: string, signal: AbortSignal): Promise<Array<{ id: string; title: string; startAt: string }>> {
   return request(`/clubs/${encodeURIComponent(clubId)}/booking-events`, { signal });
 }
-// GET /availability: lịch bận của một cơ sở vật chất trong khoảng thời gian
 export function fetchBookingAvailability(clubId: string, propertyId: string, startAt: string, endAt: string,
   signal: AbortSignal): Promise<BookingCheck> {
   const query = new URLSearchParams({ startAt, endAt });
   return request(`/clubs/${encodeURIComponent(clubId)}/booking-properties/${encodeURIComponent(propertyId)}/availability?${query}`, { signal });
 }
-// GET /booking-conflicts: booking xung đột với lịch khoá của cơ sở vật chất
 export function fetchBlackoutBookings(propertyId: string, signal: AbortSignal): Promise<Booking[]> {
   return request(`/admin/properties/${encodeURIComponent(propertyId)}/booking-conflicts`, { signal });
 }
@@ -72,7 +64,6 @@ export type BookingAction =
   | { kind: "cancel"; clubId: string; id: string; reason: string }
   | { kind: "claim"; id: string }
   | { kind: "decision"; id: string; input: BookingDecisionInput };
-// Gửi lưu, nộp, huỷ, nhận xử lý hoặc quyết định booking
 export function changeBooking(action: BookingAction, csrfToken: string): Promise<BookingDetail> {
   const clubId = "clubId" in action ? action.clubId : null;
   const path = `${base(clubId)}${action.id ? `/${encodeURIComponent(action.id)}` : ""}`;
@@ -85,7 +76,6 @@ export function changeBooking(action: BookingAction, csrfToken: string): Promise
 }
 
 export interface BookingSlot { number: number; start: string; end: string }
-// GET /booking-slots: các ca đặt phòng
 export function fetchBookingSlots(signal: AbortSignal): Promise<BookingSlot[]> {
   return request("/booking-slots", { signal });
 }

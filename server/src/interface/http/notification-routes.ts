@@ -9,22 +9,17 @@ import {
 import { authGuard } from "./auth-routes.js";
 import { ok } from "./response.js";
 
-// Mount các route hộp thư thông báo của người dùng
 export function notificationRoutes(deps: { repo: NotificationRepository; authRepo: AuthRepository; sessions: SessionService }): Router {
   const r = Router(); const guard = { repo: deps.authRepo, sessions: deps.sessions };
-  // Liệt kê thông báo của tôi
   r.get("/notifications/mine", authGuard(guard, false), async (req, res) => {
     ok(res, await myNotifications(deps.repo, res.locals.actor as AccessActor, req.query));
   });
-  // Lấy số thông báo chưa đọc
   r.get("/notifications/mine/unread-count", authGuard(guard, false), async (req, res) => {
     ok(res, await myUnreadNotificationCount(deps.repo, res.locals.actor as AccessActor, req.query));
   });
-  // Đánh dấu tất cả thông báo là đã đọc
   r.post("/notifications/mine/read-all", authGuard(guard), async (req, res) => {
     ok(res, await markAllNotificationsRead(deps.repo, res.locals.actor as AccessActor, new Date(), req.query));
   });
-  // Đánh dấu một thông báo là đã đọc
   r.post("/notifications/:id/read", authGuard(guard), async (req, res) => {
     ok(res, await markNotificationRead(deps.repo, res.locals.actor as AccessActor, String(req.params.id), new Date()));
   });

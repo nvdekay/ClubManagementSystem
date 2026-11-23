@@ -8,18 +8,16 @@ import {
 
 const objectId = z.string().regex(/^[0-9a-f]{24}$/i);
 
-// Kiểm định dạng ObjectId
 function validId(id: string): string {
   if (!objectId.safeParse(id).success) throw new DomainError("invalid identifier", "validation");
   return id;
 }
 
-// Khách tìm kiếm CLB công khai, gợi ý CLB mới khi không có kết quả
 export async function listPublicClubs(
   repo: PublicDiscoveryRepository, input: ClubSearch, now = new Date(),
 ) {
   const [page, fields] = await Promise.all([repo.listClubs(input, now), repo.fields()]);
-  // UC06 E1: tìm kiếm có lọc mà không khớp thì gợi ý các CLB Active mới nhất thay vì bế tắc.
+  // UC06 E1: a filtered search with no match suggests the newest Active clubs instead of a dead end.
   if (page.total === 0 && (input.search || input.field)) {
     const newest = await repo.listClubs({ search: "", field: "", page: 1, pageSize: 4, newestActive: true }, now);
     return { ...page, fields, suggestions: newest.items };
@@ -27,7 +25,6 @@ export async function listPublicClubs(
   return { ...page, fields };
 }
 
-// Xem trang công khai của CLB gồm ban chủ nhiệm, đợt tuyển và sự kiện
 export async function publicClubDetail(
   repo: PublicDiscoveryRepository, id: string, now: Date,
 ) {
@@ -51,7 +48,6 @@ export async function publicClubDetail(
   };
 }
 
-// Xem công khai chi tiết đợt tuyển thành viên đang hiển thị
 export async function publicCampaignDetail(
   repo: PublicDiscoveryRepository, id: string, now: Date,
 ) {
@@ -62,13 +58,11 @@ export async function publicCampaignDetail(
   return campaign;
 }
 
-// Gắn trạng thái công khai (sắp diễn ra, đã kết thúc) vào sự kiện
 function withStatus(event: PublicEvent, now: Date) {
   const status = publicEventStatus(event, now);
   return status ? { ...event, status } : null;
 }
 
-// Khách xem danh sách sự kiện công khai kèm trạng thái
 export async function listPublicEvents(
   repo: PublicDiscoveryRepository, input: EventSearch, now: Date,
 ) {
@@ -76,7 +70,6 @@ export async function listPublicEvents(
   return { ...page, items: page.items.flatMap((event) => withStatus(event, now) ?? []) };
 }
 
-// Xem công khai chi tiết sự kiện và CLB tổ chức
 export async function publicEventDetail(
   repo: PublicDiscoveryRepository, id: string, now: Date,
 ) {

@@ -26,7 +26,6 @@ const metricKeys = ["registrations", "attendances", "uniqueAttendees", "outsider
 type MetricKey = typeof metricKeys[number];
 type DimensionCode = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "D7" | "D8";
 
-// Dịch trạng thái đánh giá CLB sang nhãn hiển thị
 function stateLabel(t: TFunction, state: EvaluationState | undefined): string {
   switch (state) {
     case "Draft": return t("evaluations.stateDraft");
@@ -38,12 +37,10 @@ function stateLabel(t: TFunction, state: EvaluationState | undefined): string {
   }
 }
 
-// Chọn màu badge theo trạng thái đánh giá
 function stateTone(state: EvaluationState | undefined): AppBadgeTone {
   return state === "Published" ? "success" : state === "Finalized" ? "info" : state === "Under Review" ? "warning" : "neutral";
 }
 
-// Dịch xếp loại đánh giá sang nhãn hiển thị
 function ratingLabel(t: TFunction, value: Classification): string {
   switch (value) {
     case "EXCELLENT": return t("evaluations.ratingEXCELLENT");
@@ -53,22 +50,18 @@ function ratingLabel(t: TFunction, value: Classification): string {
   }
 }
 
-// Chọn màu badge theo xếp loại đánh giá
 function ratingTone(value: Classification): AppBadgeTone {
   return value === "EXCELLENT" ? "success" : value === "GOOD" ? "info" : value === "FAIR" ? "warning" : "danger";
 }
 
-// Dịch mã chỉ số dữ liệu sang nhãn hiển thị
 function metricLabel(t: TFunction, metric: string): string {
   return metricKeys.includes(metric as MetricKey) ? t(`evaluations.metric_${metric as MetricKey}`) : metric;
 }
 
-// Lấy tên tiêu chí đánh giá, dịch nếu là tiêu chí chuẩn
 function dimensionName(t: TFunction, dimension: DimensionView): string {
   return /^D[1-8]$/.test(dimension.code) ? t(`evaluationSchemes.dim_${dimension.code as DimensionCode}`) : dimension.name;
 }
 
-// Cổng kiểm tra đăng nhập và quyền officer cho các trang đánh giá
 function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -84,7 +77,6 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   return <>{children(auth.data.csrfToken)}</>;
 }
 
-// Tổng quan đánh giá các CLB theo kỳ và thao tác chốt/công bố hàng loạt
 function Overview({ csrfToken }: { csrfToken: string }) {
   const { t } = useTranslation();
   const askConfirm = useConfirm();
@@ -152,7 +144,6 @@ function Overview({ csrfToken }: { csrfToken: string }) {
   );
 }
 
-// Trang ICPDP danh sách đánh giá hoạt động CLB
 export function EvaluationsPage() {
   const { t } = useTranslation();
   return (
@@ -163,7 +154,6 @@ export function EvaluationsPage() {
   );
 }
 
-// Một dòng tiêu chí: xem dữ liệu và chấm điểm thủ công
 function DimensionRow({ dimension, editable, busy, onSave }: { dimension: DimensionView; editable: boolean; busy: boolean;
   onSave: (manual: { score: number; justification: string } | null) => Promise<boolean> }) {
   const { t } = useTranslation();
@@ -179,7 +169,6 @@ function DimensionRow({ dimension, editable, busy, onSave }: { dimension: Dimens
     justification: justification.trim() ? null : t("common.fieldRequired"),
   });
 
-  // Lưu điểm thủ công kèm lý do của tiêu chí
   async function save() {
     if (!field.touchAll()) return;
     if (await onSave({ score: value, justification: justification.trim() })) { setEditing(false); field.reset(); }
@@ -232,7 +221,6 @@ function DimensionRow({ dimension, editable, busy, onSave }: { dimension: Dimens
   );
 }
 
-// Chi tiết một đánh giá CLB và các bước chốt, công bố
 function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -254,12 +242,11 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
   }
 
-  // Chạy một bước của đánh giá sau khi xác nhận nếu cần
   async function run(next: Parameters<typeof action.mutateAsync>[0]["action"], confirmText?: string): Promise<boolean> {
     if (confirmText && !(await askConfirm(confirmText))) return false;
     try {
       const result = await action.mutateAsync({ id, action: next, csrfToken });
-      // Bản chỉnh sửa của kết quả đã công bố là một đánh giá mới có id riêng.
+      // A revision of a published result is a new evaluation with its own id.
       if (result.id !== id) navigate(`/workspace/evaluations/${result.id}`);
       return true;
     } catch { return false; }
@@ -326,7 +313,6 @@ function EvaluationDetailView({ id, csrfToken }: { id: string; csrfToken: string
   );
 }
 
-// Trang ICPDP chi tiết đánh giá một CLB
 export function EvaluationDetailPage() {
   const { id } = useParams();
   return <Gate>{(csrfToken) => id ? <EvaluationDetailView id={id} csrfToken={csrfToken} /> : null}</Gate>;

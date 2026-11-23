@@ -7,7 +7,7 @@ import { chartToneFill, niceMax, percent, type ChartTone } from "./chartScale";
 export interface AppBarListRow {
   key: string;
   label: string;
-  /** Một giá trị cho mỗi chuỗi; từ hai chuỗi trở lên sẽ vẽ thanh xếp chồng. */
+  /** One value per series; two or more draw a stacked bar. */
   values: number[];
   href?: string;
 }
@@ -20,8 +20,7 @@ interface AppBarListProps {
   formatValue?: (value: number) => string;
 }
 
-// Danh sách thanh ngang theo danh mục
-/** Thanh ngang, mỗi danh mục một dòng, giá trị ở đầu thanh; dòng có `href` thì bấm vào để mở. */
+/** Horizontal bars, one row per category, value at the bar tip; a row with `href` opens it. */
 export function AppBarList({ rows, tones, seriesLabels, emptyLabel, formatValue = String }: AppBarListProps) {
   const max = niceMax(Math.max(0, ...rows.map((row) => row.values.reduce((sum, value) => sum + value, 0))));
   if (!rows.length) return <p className="py-6 text-center text-sm text-muted-app">{emptyLabel}</p>;

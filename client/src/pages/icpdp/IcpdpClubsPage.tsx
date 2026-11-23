@@ -23,10 +23,9 @@ const tones: Record<string, AppBadgeTone> = {
   Active: "success", Suspended: "warning", Dissolving: "danger", Dissolved: "neutral", "Pending Setup": "info",
 };
 
-// Trang ICPDP danh sách CLB với tìm kiếm, lọc theo trạng thái và phân trang
 /**
- * Màn hình CLB của ICPDP: giao diện giống danh bạ công khai, hiển thị mọi CLB ở mọi trạng thái, với các thao tác
- * vòng đời UC15 chỉ cách một cú nhấp.
+ * ICPDP's club screen: the public directory's look, over every club in any state, with the UC15
+ * lifecycle actions one click away.
  */
 export function IcpdpClubsPage() {
   const { t, i18n } = useTranslation();
@@ -55,7 +54,6 @@ export function IcpdpClubsPage() {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium" }).format(new Date(value));
   }
 
-  // Áp dụng thay đổi bộ lọc rồi quay về trang đầu
   function filter(update: () => void) {
     update();
     setPage(1);

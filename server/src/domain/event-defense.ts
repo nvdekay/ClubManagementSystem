@@ -124,17 +124,14 @@ export interface EventDefenseRepository {
   alertOverdueConfirmations(now: Date): Promise<number>;
 }
 
-// Kiểm tra buổi bảo vệ có đang ở trạng thái còn hiệu lực không
 export function hasActiveDefense(session?: Pick<EventDefenseSession, "state"> | null): boolean {
   return Boolean(session && ACTIVE_DEFENSE_STATES.has(session.state));
 }
 
-// Kiểm tra buổi bảo vệ đã quá hạn xác nhận chưa
 export function isDefenseConfirmationOverdue(session: Pick<EventDefenseSession, "state" | "startAt">, now: Date): boolean {
   return session.state === "SCHEDULED" && session.startAt.getTime() - now.getTime() < DEFENSE_CONFIRM_NOTICE_HOURS * HOUR_MS;
 }
 
-// Kiểm tra giờ bắt đầu và thời lượng buổi bảo vệ, trả về khung giờ đã tính
 export function validateDefenseScheduleSlot(
   startAt: Date,
   durationMinutes: number,
@@ -164,7 +161,6 @@ export function validateDefenseScheduleSlot(
   };
 }
 
-// Đảm bảo hạn chỉnh sửa đủ sớm trước buổi bảo vệ
 export function assertRevisionDeadlineBeforeDefense(revisionDeadlineAt: Date, defenseStartAt: Date): void {
   if (defenseStartAt.getTime() - revisionDeadlineAt.getTime() < DEFENSE_REVISION_GAP_HOURS * HOUR_MS) {
     throw new DomainError(
@@ -175,7 +171,6 @@ export function assertRevisionDeadlineBeforeDefense(revisionDeadlineAt: Date, de
   }
 }
 
-// Kiểm tra buổi bảo vệ còn được phép xác nhận
 export function assertCanConfirmDefense(session: Pick<EventDefenseSession, "state" | "startAt">, now: Date): void {
   if (session.state !== "SCHEDULED") {
     throw new DomainError("only a scheduled defense session can be confirmed", "conflict");
@@ -188,7 +183,6 @@ export function assertCanConfirmDefense(session: Pick<EventDefenseSession, "stat
   }
 }
 
-// Kiểm tra được phép xin dời lịch bảo vệ và trả về lý do đã chuẩn hoá
 export function assertCanRequestReschedule(
   session: Pick<EventDefenseSession, "state" | "startAt">,
   reason: string,
@@ -210,7 +204,6 @@ export function assertCanRequestReschedule(
   return trimmed;
 }
 
-// Kiểm tra buổi bảo vệ được phép bắt đầu ở thời điểm hiện tại
 export function assertCanStartDefense(session: Pick<EventDefenseSession, "state" | "startAt">, now: Date): void {
   if (session.state !== "SCHEDULED" && session.state !== "CONFIRMED") {
     throw new DomainError("defense session cannot be started in its current state", "conflict");
@@ -223,7 +216,6 @@ export function assertCanStartDefense(session: Pick<EventDefenseSession, "state"
   }
 }
 
-// Quy đổi kết quả ICPDP chọn thành kết quả buổi bảo vệ
 export function normalizeDefenseOutcome(outcome: string): DefenseOutcome {
   switch (outcome) {
     case "Approve":

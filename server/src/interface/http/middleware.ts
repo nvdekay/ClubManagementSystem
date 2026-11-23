@@ -16,11 +16,10 @@ const DOMAIN_STATUS: Record<DomainErrorKind, number> = {
   unavailable: 503,
 };
 
-// Ghi log JSON mỗi request kèm thời gian xử lý
-// Log hiệu năng/truy cập: một dòng JSON cho mỗi request kèm thời lượng.
+// Performance/access log: one JSON line per request with duration.
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = performance.now();
-  const { method, originalUrl } = req; // lấy ngay bây giờ — express ghi đè req.path theo từng router
+  const { method, originalUrl } = req; // captured now — express rewrites req.path per router
   res.on("finish", () => {
     console.log(
       JSON.stringify({
@@ -35,7 +34,6 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// Lấy mã lỗi 4xx từ lỗi của framework, không phải 4xx thì trả undefined
 function clientErrorStatus(err: unknown): number | undefined {
   if (typeof err !== "object" || err === null) return undefined;
   const { status, statusCode } = err as { status?: unknown; statusCode?: unknown };
@@ -45,7 +43,6 @@ function clientErrorStatus(err: unknown): number | undefined {
 
 interface AccessContext { method: string; route: string; params: Record<string, string> }
 
-// Đọc accessContext từ res.locals, sai dạng thì trả null
 function accessContext(value: unknown): AccessContext | null {
   if (typeof value !== "object" || value === null) return null;
   const { method, route, params } = value as Partial<AccessContext>;
@@ -53,10 +50,9 @@ function accessContext(value: unknown): AccessContext | null {
     ? { method, route, params } : null;
 }
 
-// Tạo middleware ghi audit mỗi lần người dùng đã đăng nhập bị từ chối 403
 /**
- * SEC-08 / AC17: nơi duy nhất audit lỗi 403 cho người gọi đã xác thực. Chạy trước
- * errorHandler và không bao giờ đổi response; nếu ghi audit thất bại thì chỉ log.
+ * SEC-08 / AC17: the single place that audits a 403 for an authenticated caller. It runs before
+ * errorHandler and never changes the response; a failed audit write is only logged.
  */
 export function accessDenialAuditor(repo: AccessDenialAuditRepository) {
   return async function auditAccessDenial(err: unknown, req: Request, res: Response, next: NextFunction) {
@@ -74,15 +70,14 @@ export function accessDenialAuditor(repo: AccessDenialAuditRepository) {
   };
 }
 
-// Middleware lỗi cuối cùng: đổi DomainError và lỗi khác thành envelope lỗi thống nhất
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction) {
-  if (res.headersSent) return next(err); // quá muộn để ghi body — để express tự đóng socket
+  if (res.headersSent) return next(err); // too late to write a body — let express close the socket
   if (err instanceof DomainError) {
     fail(res, req, DOMAIN_STATUS[err.kind], err.kind, err.message, err.details);
     return;
   }
-  // Lỗi 4xx của framework (body-parser 400/413/415, http-errors) giữ nguyên status, nhưng client chỉ nhận
-  // cụm lý do chung — err.message có thể phản chiếu byte thô của request (LOG-01). Log nguyên nhân thật.
+  // Framework 4xx (body-parser 400/413/415, http-errors) keep their status, but the client gets
+  // the generic reason phrase — err.message can echo raw request bytes (LOG-01). Log the real cause.
   const status = clientErrorStatus(err);
   if (status !== undefined) {
     console.warn(`client error ${status}: ${err instanceof Error ? err.message : String(err)}`);

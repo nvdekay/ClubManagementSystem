@@ -5,7 +5,7 @@ export interface RoomAllocationOccurrence { bookingId: string; startAt: string; 
 export interface RoomAllocation {
   id: string; semesterCode: string; clubId: string; clubName: string;
   propertyId: string; propertyName: string; location: string;
-  /** 1 = Thứ Hai … 7 = Chủ nhật. */
+  /** 1 = Monday … 7 = Sunday. */
   weekday: number; slot: number; note?: string;
   allocatedBy: string; allocatedByName?: string; allocatedAt: string;
   revokedAt?: string; revokeReason?: string;
@@ -20,15 +20,14 @@ export interface RoomAllocationInput {
   semesterCode: string; clubId: string; propertyId: string; weekday: number; slot: number; note?: string;
 }
 export interface RoomAllocationConflict { startAt: string; endAt: string; source: "booking" | "event"; title: string; clubName?: string }
-/** Ô trong lưới tuần bị chặn bởi sự kiện hoặc booking đã duyệt trên phòng đó (UC58 A3). */
+/** A weekly grid cell blocked by approved events or bookings on that room (UC58 A3). */
 export interface RoomOccupancyCell { weekday: number; slot: number; items: RoomAllocationConflict[] }
 
-/** Giữ `details` của server (vd các ngày bị trùng) cùng với thông báo. */
+/** Keeps the server's `details` (e.g. the clashing dates) next to the message. */
 export class RoomAllocationError extends ApiError {
   constructor(message: string, readonly details?: unknown) { super(message); this.name = "RoomAllocationError"; }
 }
 
-// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
@@ -37,33 +36,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return ((await res.json()) as { data: T }).data;
 }
-// POST có CSRF và body JSON
 function post<T>(path: string, body: unknown, csrfToken: string): Promise<T> {
   return request(path, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     body: JSON.stringify(body) });
 }
 
-// GET /options: CLB, phòng và học kỳ có thể phân bổ
 export function fetchRoomAllocationOptions(signal: AbortSignal): Promise<RoomAllocationOptions> {
   return request("/admin/room-allocations/options", { signal });
 }
-// GET phân bổ phòng của một học kỳ
 export function fetchRoomAllocations(semesterCode: string, signal: AbortSignal): Promise<RoomAllocation[]> {
   return request(`/admin/room-allocations?${new URLSearchParams({ semesterCode })}`, { signal });
 }
-// GET /occupancy: tình trạng sử dụng của một phòng trong học kỳ
 export function fetchRoomOccupancy(semesterCode: string, propertyId: string, signal: AbortSignal): Promise<RoomOccupancyCell[]> {
   return request(`/admin/room-allocations/occupancy?${new URLSearchParams({ semesterCode, propertyId })}`, { signal });
 }
-// GET phòng được phân bổ cho CLB
 export function fetchClubRoomAllocations(clubId: string, signal: AbortSignal): Promise<RoomAllocation[]> {
   return request(`/clubs/${encodeURIComponent(clubId)}/room-allocations`, { signal });
 }
-// POST tạo phân bổ phòng cho CLB
 export function createRoomAllocation(input: RoomAllocationInput, csrfToken: string): Promise<RoomAllocation> {
   return post("/admin/room-allocations", input, csrfToken);
 }
-// POST /revoke: thu hồi phân bổ phòng
 export function revokeRoomAllocation(id: string, reason: string, csrfToken: string): Promise<RoomAllocation> {
   return post(`/admin/room-allocations/${encodeURIComponent(id)}/revoke`, { reason }, csrfToken);
 }

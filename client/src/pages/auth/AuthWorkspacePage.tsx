@@ -12,19 +12,16 @@ import type { Workspace } from "@/services/auth";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { workspaceIcon } from "@/utils/workspaceIcon";
 
-// Khóa định danh workspace để ghi nhớ lựa chọn
 function workspaceKey(workspace: Workspace): string {
   return `${workspace.kind}:${workspace.clubId ?? ""}`;
 }
 
-// Đường dẫn URL của workspace
 function workspacePath(workspace: Workspace): string {
   if (workspace.kind === "student") return "/student";
   if (workspace.kind === "icpdp") return "/icpdp";
   return `/club/${encodeURIComponent(workspace.clubId ?? "")}`;
 }
 
-// Trang đăng nhập và chọn workspace (student, ICPDP, CLB)
 export function AuthWorkspacePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -44,13 +41,11 @@ export function AuthWorkspacePage() {
     }
   }, [auth.data, navigate]);
 
-  // Ghi nhớ workspace đã chọn rồi chuyển tới trang của nó
   function selectWorkspace(workspace: Workspace) {
     sessionStorage.setItem("workspace", workspaceKey(workspace));
     navigate(workspacePath(workspace));
   }
 
-  // Tiêu đề hiển thị của workspace theo vai trò
   function workspaceTitle(workspace: Workspace): string {
     if (workspace.kind === "student") return t("auth.student");
     if (workspace.kind === "icpdp") return t("auth.icpdp");
@@ -60,7 +55,6 @@ export function AuthWorkspacePage() {
     return workspace.clubName ?? t("auth.club");
   }
 
-  // Mô tả ngắn của workspace theo vai trò
   function workspaceSubtitle(workspace: Workspace): string {
     if (workspace.kind === "student") return t("auth.studentWorkspaceHint");
     if (workspace.kind === "icpdp") return t("auth.icpdpWorkspaceHint");

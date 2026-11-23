@@ -65,7 +65,7 @@ describe("Mongo dashboard read model", () => {
       .toEqual({ key: "transitionFollowUps", status: "ready", count: 3 });
   });
 
-  it("does not expose an internal events panel", async () => {
+  it("counts members-only club events as ICPDP internal events", async () => {
     for (const item of Object.values(ucmsModels)) {
       vi.spyOn(item!, "countDocuments").mockResolvedValue(0 as never);
       vi.spyOn(item!, "find").mockReturnValue({ lean: async () => [] } as never);
@@ -75,6 +75,6 @@ describe("Mongo dashboard read model", () => {
 
     await mongoDashboardRepository().icpdp(new Date("2026-10-09T08:00:00Z"));
 
-    expect(events).not.toHaveBeenCalledWith(expect.objectContaining({ audienceScope: "MEMBERS_ONLY" }));
+    expect(events).toHaveBeenCalledWith(expect.objectContaining({ audienceScope: "MEMBERS_ONLY" }));
   });
 });

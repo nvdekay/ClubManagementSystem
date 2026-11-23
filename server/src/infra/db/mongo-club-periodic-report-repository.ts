@@ -20,7 +20,6 @@ import { ucmsModels as m } from "./ucms-models.js";
 type Doc = Record<string, unknown>;
 const editable = ["Draft", "Returned for correction"];
 
-// Repository báo cáo định kỳ của CLB gửi ICPDP
 export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepository {
   const reader = mongoPeriodicReportRepository();
 
@@ -60,18 +59,15 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
   }
 
   return {
-    // Lấy đợt thu báo cáo định kỳ theo kỳ
     async getCampaign(periodCode) {
       return findPeriodicCampaign(periodCode);
     },
 
-    // Liệt kê báo cáo định kỳ của CLB, hạn mới nhất trước
     async list(clubId) {
       const docs = await m.periodicReports!.find({ clubId: new Types.ObjectId(clubId) }).sort({ dueAt: -1, _id: -1 }).lean();
       return Promise.all(docs.map((d) => required(String(d._id), clubId)));
     },
 
-    // Tạo báo cáo định kỳ cho một kỳ, chặn trùng kỳ
     async create(clubId, periodCode, dueAt, userId, now) {
       const id = new Types.ObjectId();
       const clubObjectId = new Types.ObjectId(clubId);
@@ -101,7 +97,6 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
       return required(String(id), clubId);
     },
 
-    // Lưu bản nháp báo cáo định kỳ, kiểm tra revision
     async save(clubId, id, revision, raw, userId, now) {
       const input = normalizePeriodicDraft(raw);
       await mongoose.connection.transaction(async (session) => {
@@ -137,7 +132,6 @@ export function mongoClubPeriodicReportRepository(): ClubPeriodicReportRepositor
       return required(id, clubId);
     },
 
-    // Nộp báo cáo định kỳ và mở task review ICPDP
     async submit(clubId, id, revision, userId, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       await mongoose.connection.transaction(async (session) => {

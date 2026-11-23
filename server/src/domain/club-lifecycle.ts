@@ -1,13 +1,13 @@
 import { DomainError } from "./errors.js";
 
-/** Thời gian nhắc trước khi một đợt đình chỉ có thời hạn tự hết. */
+/** Reminder lead time before a timed suspension ends on its own. */
 export const SUSPENSION_REMINDER_MS = 3 * 24 * 60 * 60 * 1000;
 
 export interface ClubSuspension {
   reason: string;
   suspendedAt: Date;
   suspendedBy: string;
-  /** null: đình chỉ cho đến khi ICPDP kích hoạt lại CLB. */
+  /** null: suspended until ICPDP reactivates the club. */
   until: Date | null;
   reminderSentAt?: Date;
 }
@@ -17,16 +17,16 @@ export interface ClubDissolution {
   decidedBy: string;
   reason: string;
   effectiveSemester: string;
-  /** Giai đoạn Dissolving bắt đầu từ đây (khi học kỳ kế tiếp bắt đầu)… */
+  /** Dissolving starts here (the next semester begins)… */
   effectiveFrom: Date;
-  /** …và CLB chuyển thành Dissolved tại đây (khi học kỳ đó kết thúc). */
+  /** …and the club is Dissolved here (that semester ends). */
   effectiveTo: Date;
-  /** Do bước cuối đặt (UC15 bước 6): thời điểm CLB được lưu trữ và những nghĩa vụ còn nợ. */
+  /** Set by the final step (UC15 step 6): when the club was archived and what it still owed. */
   archivedAt?: Date;
   outstanding?: OutstandingObligations;
 }
 
-/** Nghĩa vụ CLB chưa hoàn thành — báo cáo còn mở và ngân sách chưa quyết toán (UC15 bước 6, E1). */
+/** Obligations a club had not finished — open reports and unreconciled budgets (UC15 step 6, E1). */
 export interface OutstandingObligations {
   periodicReports: string[];
   postEventReports: { eventId: string; title: string }[];
@@ -39,7 +39,7 @@ export interface UnreconciledBudget {
   state: string;
 }
 
-/** Bước vòng đời bị lỗi với một CLB; CLB giữ nguyên trạng thái cũ và ICPDP được cảnh báo. */
+/** A lifecycle step that failed for one club; the club stays where it was and ICPDP is alerted. */
 export interface ClubLifecycleStepFailure {
   clubId: string;
   step: "dissolving" | "dissolved";
@@ -52,7 +52,7 @@ export interface ClubLifecycleStepResult {
 }
 
 export interface ClubLifecycleAlert {
-  /** null: bản thân job bị lỗi, không phải do một CLB cụ thể. */
+  /** null: the job itself failed, not one club. */
   clubId: string | null;
   step: string;
   message: string;
@@ -82,12 +82,12 @@ export interface ClubLifecycleDetail extends ClubLifecycleSummary {
   openCampaigns: { id: string; title: string; windowEnd: Date }[];
   upcomingEvents: { id: string; title: string; startAt: Date; endAt: Date; registrations: number }[];
   activeTerm?: { name: string; startAt: Date; endAt: Date };
-  /** E1: ngân sách còn phải quyết toán; giải thể sẽ cảnh báo và bước 6 ghi nhận phần còn lại. */
+  /** E1: budgets still to reconcile; dissolution warns about them and step 6 records the rest. */
   unreconciledBudgets: UnreconciledBudget[];
   history: ClubLifecycleHistoryEntry[];
 }
 
-/** Những gì bị huỷ theo dây chuyền, để ICPDP thấy hệ quả của quyết định. */
+/** What a cascade cancelled, so ICPDP sees the consequence of the decision. */
 export interface CascadeResult {
   cancelledEvents: number;
   cancelledRegistrations: number;
@@ -98,22 +98,21 @@ export interface ClubLifecycleRepository {
   list(): Promise<ClubLifecycleSummary[]>;
   detail(clubId: string, now: Date): Promise<ClubLifecycleDetail | null>;
   suspend(clubId: string, input: { reason: string; until: Date | null; requestId?: string; decisionReason?: string }, actorId: string, now: Date): Promise<CascadeResult>;
-  /** `actorId` null: do job vòng đời kích hoạt lại khi hết thời hạn đình chỉ. */
+  /** `actorId` null: reactivated by the lifecycle job when the suspension ran out. */
   reactivate(clubId: string, reason: string, actorId: string | null, now: Date): Promise<void>;
   decideDissolution(clubId: string, decision: ClubDissolution, now: Date): Promise<CascadeResult>;
-  /** Các đợt đình chỉ có thời hạn sắp hết trong khoảng nhắc mà chưa được nhắc. */
+  /** Timed suspensions ending within the reminder window that were not reminded yet. */
   suspensionsDueForReminder(now: Date): Promise<ClubLifecycleSummary[]>;
   markReminded(clubId: string, officerIds: string[], now: Date): Promise<void>;
   expiredSuspensions(now: Date): Promise<ClubLifecycleSummary[]>;
   startDissolving(now: Date): Promise<ClubLifecycleStepResult>;
-  /** Chạy bước 6 cho từng CLB đến hạn trong transaction riêng; CLB bị lỗi vẫn ở Dissolving. */
+  /** Step 6 for each due club in its own transaction; a failed club stays Dissolving. */
   completeDissolutions(now: Date): Promise<ClubLifecycleStepResult>;
   officerIds(): Promise<string[]>;
-  /** Cảnh báo ICPDP officer về một lỗi, tối đa một lần mỗi ngày cho cùng CLB và cùng bước. */
+  /** Alerts ICPDP officers about a failure, at most once a day for the same club and step. */
   alertOfficers(alert: ClubLifecycleAlert, officerIds: string[], now: Date): Promise<boolean>;
 }
 
-// Kiểm tra lý do thay đổi vòng đời CLB là bắt buộc và không quá dài
 export function validateLifecycleReason(reason: string): string {
   const normalized = typeof reason === "string" ? reason.trim() : "";
   if (!normalized || normalized.length > 2_000) {
@@ -122,8 +121,7 @@ export function validateLifecycleReason(reason: string): string {
   return normalized;
 }
 
-// Tìm học kỳ kế tiếp sau học kỳ đang diễn ra
-/** Học kỳ sau học kỳ đang chạy tại `now` (hoặc học kỳ đầu tiên chưa bắt đầu). */
+/** The semester after the one running at `now` (or the first one that has not started yet). */
 export function nextSemester<T extends { code: string; startAt: Date; endAt: Date }>(
   calendar: readonly T[], now: Date): T | null {
   return [...calendar].sort((left, right) => left.startAt.getTime() - right.startAt.getTime())

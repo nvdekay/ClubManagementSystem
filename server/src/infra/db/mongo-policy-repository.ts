@@ -7,7 +7,6 @@ import {
 } from "../../domain/policy.js";
 import { ucmsModels } from "./ucms-models.js";
 
-// Đọc các cờ boolean theo danh sách khoá, thiếu thì dùng giá trị mặc định
 function flags<K extends string>(raw: unknown, keys: readonly K[],
   fallback: Readonly<Record<K, boolean>>): Record<K, boolean> {
   const record = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
@@ -15,8 +14,7 @@ function flags<K extends string>(raw: unknown, keys: readonly K[],
     typeof record[key] === "boolean" ? record[key] : fallback[key]])) as Record<K, boolean>;
 }
 
-// Chuẩn hóa yêu cầu trường bắt buộc của các biểu mẫu
-/** Các phiên bản ghi trước khi có yêu cầu biểu mẫu được đọc như giá trị mặc định. */
+/** Versions written before form requirements existed read as the defaults. */
 function formRequirementsFrom(raw: unknown): FormRequirements {
   const record = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
   return {
@@ -27,7 +25,6 @@ function formRequirementsFrom(raw: unknown): FormRequirements {
   };
 }
 
-// Ánh xạ document sang PolicyVersion
 function mapPolicy(doc: Record<string, unknown>): PolicyVersion {
   const rawCalendar = doc.academicCalendar as AcademicSemester[];
   return {
@@ -49,7 +46,6 @@ function mapPolicy(doc: Record<string, unknown>): PolicyVersion {
   };
 }
 
-// Repository quản lý các phiên bản policy của ICPDP
 export function mongoPolicyRepository(): PolicyManagementRepository {
   const policies = ucmsModels.policyVersions!;
   const audits = ucmsModels.auditLogs!;
@@ -58,7 +54,6 @@ export function mongoPolicyRepository(): PolicyManagementRepository {
   const bookings = ucmsModels.propertyBookings!;
   const properties = ucmsModels.properties!;
 
-  // Tìm sự kiện, booking, CLB bị ảnh hưởng khi policy mới có hiệu lực
   async function decisionImpacts(
     settings: PolicySettings, effectiveFrom: Date,
   ): Promise<PolicyDecisionImpact[]> {
@@ -139,19 +134,16 @@ export function mongoPolicyRepository(): PolicyManagementRepository {
   }
 
   return {
-    // Lấy policy đang hiệu lực tại thời điểm cho trước
     async findEffective(at) {
       const doc = await policies.findOne({ effectiveFrom: { $lte: at } })
         .sort({ effectiveFrom: -1, createdAt: -1, _id: -1 }).lean();
       return doc ? mapPolicy(doc) : null;
     },
-    // Liệt kê các phiên bản policy gần nhất
     async listRecent(limit) {
       const docs = await policies.find().sort({ createdAt: -1, _id: -1 }).limit(limit).lean();
       return docs.map(mapPolicy);
     },
     findDecisionImpacts: decisionImpacts,
-    // Thêm phiên bản policy mới, không sửa phiên bản cũ
     async append(input) {
       return mongoose.connection.transaction(async (session) => {
         const previous = await policies.findOne({ effectiveFrom: { $lte: input.effectiveFrom } })

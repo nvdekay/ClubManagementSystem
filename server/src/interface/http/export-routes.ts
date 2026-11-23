@@ -40,54 +40,45 @@ export const annualExportBody = annualPreviewBody.extend({
   achievementKeys: z.array(z.string().max(100)).max(20).optional(),
 }).strict();
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid export request", "validation", result.error.issues);
   return result.data;
 }
 
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
-// Chuyển body bộ lọc xuất dữ liệu sang ExportFilter
 function filter(body: z.infer<typeof filterBody>): ExportFilter {
   const { from, to, ...rest } = body;
   return { ...rest, ...(from ? { from: new Date(from) } : {}), ...(to ? { to: new Date(to) } : {}) };
 }
 
-// Mount các route xuất dữ liệu và báo cáo năm của ICPDP
 export function exportRoutes(deps: ExportRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
-  // Lấy các tuỳ chọn xuất dữ liệu
   router.get("/admin/exports/options", authGuard(guard, false), async (_req, res) => {
     ok(res, await exportOptions(deps.repo, deps.policy, deps.authRepo, actor(res), new Date()));
   });
-  // Xem trước dữ liệu sẽ xuất
   router.post("/admin/exports/preview", authGuard(guard), async (req, res) => {
     const body = parsed(exportPreviewBody, req.body);
     ok(res, await previewExport(deps.repo, deps.policy, deps.authRepo, actor(res),
       { types: body.types, filter: filter(body.filter) }, new Date()));
   });
-  // Xuất dữ liệu ra file tải về
   router.post("/admin/exports", authGuard(guard), async (req, res) => {
     const body = parsed(exportBody, req.body);
     const result = await exportData(deps.repo, deps.writer, deps.policy, deps.authRepo, actor(res),
       { types: body.types, format: body.format, filter: filter(body.filter) }, new Date());
     download(res, result.file, result.fileName);
   });
-  // Xem trước báo cáo năm
   router.post("/admin/exports/annual-report/preview", authGuard(guard), async (req, res) => {
     const body = parsed(annualPreviewBody, req.body);
     ok(res, await previewAnnualReport(deps.repo, deps.authRepo, actor(res), body));
   });
-  // Xuất báo cáo năm ra file tải về
   router.post("/admin/exports/annual-report", authGuard(guard), async (req, res) => {
     const body = parsed(annualExportBody, req.body);
     const result = await exportAnnualReport(deps.repo, deps.writer, deps.authRepo, actor(res), body, new Date());

@@ -5,7 +5,6 @@ import type { AuthRepository, AuthUser } from "../../domain/auth.js";
 import type { GoogleIdentity } from "../../domain/google-identity.js";
 import { ucmsModels } from "./ucms-models.js";
 
-// Ánh xạ document user thành AuthUser
 function mapUser(doc: Record<string, unknown>): AuthUser {
   return {
     id: String(doc._id), email: String(doc.email), displayName: String(doc.displayName),
@@ -15,8 +14,7 @@ function mapUser(doc: Record<string, unknown>): AuthUser {
   };
 }
 
-// Repository xác thực: tạo/tìm user Google, role hệ thống, CLB và audit đăng nhập
-/** `allowedDomain` là ALLOWED_DOMAIN của server: một domain, danh sách phân cách bằng dấu phẩy, hoặc "*". */
+/** `allowedDomain` is the server's ALLOWED_DOMAIN: one domain, a comma-separated list, or "*". */
 export function mongoAuthRepository(allowedDomain: string): AuthRepository {
   const domains = allowedDomain.split(",").map((domain) => domain.trim().toLowerCase())
     .filter(Boolean);
@@ -30,11 +28,9 @@ export function mongoAuthRepository(allowedDomain: string): AuthRepository {
   const audits = ucmsModels.auditLogs!;
 
   return {
-    // Trả danh sách domain email được phép đăng nhập
     async allowedDomains() {
       return domains;
     },
-    // Tạo hoặc cập nhật user từ danh tính Google, từ chối nếu sai subject
     async findOrCreateGoogleUser(identity: GoogleIdentity, email, now) {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
@@ -76,12 +72,10 @@ export function mongoAuthRepository(allowedDomain: string): AuthRepository {
       }
       throw new DomainError("unable to create Google account", "conflict");
     },
-    // Tìm user theo id
     async findUserById(userId) {
       const user = await users.findById(new Types.ObjectId(userId)).lean();
       return user ? mapUser(user) : null;
     },
-    // Lấy mã role hệ thống đang hiệu lực của user
     async systemRoleCodes(userId) {
       const current = await assignments.find({
         userId: new Types.ObjectId(userId), revokedAt: null,
@@ -90,7 +84,6 @@ export function mongoAuthRepository(allowedDomain: string): AuthRepository {
       const found = await roles.find({ _id: { $in: roleIds }, scope: "system", isSystem: true }).lean();
       return found.map((role) => String(role.code));
     },
-    // Lấy id các CLB user là thành viên Active hoặc founder đang Pending Setup
     async clubIds(userId) {
       const userObjectId = new Types.ObjectId(userId);
       const memberDocs = await memberships.find({ userId: userObjectId, state: "Active" }).lean();
@@ -106,7 +99,6 @@ export function mongoAuthRepository(allowedDomain: string): AuthRepository {
         ...pending.map((club) => String(club._id)),
       ])];
     },
-    // Ghi audit log lần thử đăng nhập
     async auditLogin(attempt, now) {
       await audits.create({
         entityType: "LoginAttempt",

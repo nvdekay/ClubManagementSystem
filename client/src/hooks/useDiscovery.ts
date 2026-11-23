@@ -5,7 +5,6 @@ import {
 
 export const discoveryKeyRoot = ["public-discovery"] as const;
 
-// Query danh sách CLB công khai theo từ khoá, lĩnh vực và trang
 export function useClubs(search: string, field: string, page: number) {
   return useQuery({
     queryKey: [...discoveryKeyRoot, "clubs", search, field, page],
@@ -14,7 +13,6 @@ export function useClubs(search: string, field: string, page: number) {
   });
 }
 
-// Query chi tiết một CLB công khai
 export function useClub(id: string) {
   return useQuery({
     queryKey: [...discoveryKeyRoot, "club", id],
@@ -23,7 +21,6 @@ export function useClub(id: string) {
   });
 }
 
-// Query danh sách sự kiện công khai theo trang, trạng thái và từ khoá
 export function useEvents(page: number, status: PublicEventFilter = "upcoming", search = "") {
   return useQuery({
     queryKey: [...discoveryKeyRoot, "events", page, status, search],
@@ -32,7 +29,6 @@ export function useEvents(page: number, status: PublicEventFilter = "upcoming", 
   });
 }
 
-// Query chi tiết một sự kiện công khai
 export function useEvent(id: string) {
   return useQuery({
     queryKey: [...discoveryKeyRoot, "event", id],

@@ -16,11 +16,10 @@ export interface PeriodicReportDeps {
   repo: PeriodicReportRepository;
   policy: PolicyRepository;
   auth: Pick<AuthRepository, "systemRoleCodes">;
-  /** Khi có, việc accept báo cáo cũng tạo bản nháp evaluation của CLB cho kỳ (UC42). */
+  /** When present, accepting a report also creates the club's evaluation draft for the period (UC42). */
   evaluation?: EvaluationDeps;
 }
 
-// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -33,20 +32,17 @@ async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: Acc
   return actor.id;
 }
 
-// Kiểm định dạng ObjectId của một định danh
 function checkedId(value: string, what: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${what} id`, "validation");
   return value;
 }
 
-// Lấy lịch học vụ và số ngày hạn nộp báo cáo của chính sách hiện hành
 async function calendar(policy: PolicyRepository, now: Date) {
   const effective = await policy.findEffective(now);
   return { periods: [...(effective?.academicCalendar ?? [])], dueDays: periodicDueDays(effective?.reportDeadlines) };
 }
 
-// ICPDP xem tổng quan nộp báo cáo định kỳ của các CLB trong một kỳ
-/** Mặc định là học kỳ gần nhất đã kết thúc — học kỳ có báo cáo đến hạn — hoặc học kỳ đầu tiên. */
+/** Defaults to the latest semester that has ended — the one whose report is due — or the first one. */
 export async function periodicReportOverview(deps: PeriodicReportDeps, actor: AccessActor | null,
   periodCode: string | undefined, now: Date): Promise<PeriodicOverview> {
   await officer(deps.auth, actor);
@@ -69,7 +65,6 @@ export async function periodicReportOverview(deps: PeriodicReportDeps, actor: Ac
   };
 }
 
-// ICPDP mở hoặc cấu hình đợt nộp báo cáo định kỳ cho một kỳ
 export async function savePeriodicCampaign(deps: PeriodicReportDeps, actor: AccessActor | null,
   input: PeriodicCampaignInput, now: Date): Promise<PeriodicCampaign> {
   const officerId = await officer(deps.auth, actor);
@@ -84,7 +79,6 @@ export async function savePeriodicCampaign(deps: PeriodicReportDeps, actor: Acce
   return deps.repo.saveCampaign(officerId, normalized, now);
 }
 
-// ICPDP xem chi tiết một báo cáo định kỳ
 export async function getPeriodicReport(deps: PeriodicReportDeps, actor: AccessActor | null, id: string) {
   await officer(deps.auth, actor);
   const found = await deps.repo.find(checkedId(id, "report"));
@@ -92,14 +86,13 @@ export async function getPeriodicReport(deps: PeriodicReportDeps, actor: AccessA
   return found;
 }
 
-// ICPDP chấp nhận hoặc trả lại báo cáo định kỳ, chấp nhận thì tạo bản nháp đánh giá
 export async function decidePeriodicReport(deps: PeriodicReportDeps, actor: AccessActor | null, id: string,
   input: PeriodicDecisionInput, now: Date) {
   const officerId = await officer(deps.auth, actor);
   const decision = normalizedPeriodicDecision(input);
   const report = await deps.repo.decide(checkedId(id, "report"), officerId, decision, now);
   if (decision.outcome === "Accept" && deps.evaluation) {
-    // Việc accept vẫn có hiệu lực; bản nháp chưa tạo được thì để officer xử lý sau.
+    // The acceptance already stands; a draft that cannot be made yet stays for the officer to handle later.
     await generateClubEvaluation(deps.evaluation, actor, report.clubId, report.periodCode, now).catch((error: unknown) => {
       if (!(error instanceof DomainError)) throw error;
     });
@@ -107,8 +100,7 @@ export async function decidePeriodicReport(deps: PeriodicReportDeps, actor: Acce
   return report;
 }
 
-// UC39 E1: ghi nhận CLB không nộp báo cáo định kỳ đúng hạn
-/** UC39 E1: CLB không nộp đúng hạn — ghi nhận thành ca báo cáo quá hạn cho BR21 và evaluation. */
+/** UC39 E1: the club did not submit on time — recorded as an overdue-report case for BR21 and the evaluation. */
 export async function recordMissingPeriodicReport(deps: PeriodicReportDeps, actor: AccessActor | null,
   input: { clubId: string; periodCode: string; severity: ViolationSeverity; note?: string }, now: Date) {
   const officerId = await officer(deps.auth, actor);

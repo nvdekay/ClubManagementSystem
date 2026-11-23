@@ -12,34 +12,29 @@ import {
 
 const boardNominationKey = ["board-nominations"] as const;
 
-// Query ngữ cảnh đề cử ban chủ nhiệm của CLB
 export function useBoardNominationContext(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...boardNominationKey, "context", clubId],
     queryFn: ({ signal }) => fetchBoardNominationContext(clubId!, signal),
     enabled: enabled && Boolean(clubId), retry: false });
 }
 
-// Query các đề cử ban chủ nhiệm của CLB
 export function useClubBoardNominations(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...boardNominationKey, "club", clubId],
     queryFn: ({ signal }) => fetchClubBoardNominations(clubId!, signal),
     enabled: enabled && Boolean(clubId), retry: false });
 }
 
-// Query hàng đợi đề cử ban chủ nhiệm cho ICPDP
 export function useBoardNominationQueue(enabled: boolean) {
   return useQuery({ queryKey: [...boardNominationKey, "queue"],
     queryFn: ({ signal }) => fetchBoardNominationQueue(signal), enabled, retry: false });
 }
 
-// Query chi tiết một đề cử ban chủ nhiệm
 export function useBoardNomination(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...boardNominationKey, "detail", id],
     queryFn: ({ signal }) => fetchBoardNomination(id!, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
 
-// Mutation nộp, nhận xử lý hoặc quyết định đề cử, rồi làm mới cache
 export function useBoardNominationAction() {
   const queryClient = useQueryClient();
   return useMutation({

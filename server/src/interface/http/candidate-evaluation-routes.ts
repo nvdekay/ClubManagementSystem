@@ -23,31 +23,26 @@ export const candidateEvaluationBody = z.object({
   comment: z.string().max(2000).optional(),
 }).strict();
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid candidate evaluation request", "validation", result.error.issues);
   return result.data;
 }
 
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
-// Mount các route đánh giá ứng viên của chiến dịch tuyển thành viên
 export function candidateEvaluationRoutes(deps: CandidateEvaluationRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
-  // Liệt kê đánh giá ứng viên của một chiến dịch tuyển thành viên
   router.get("/clubs/:clubId/recruitment/campaigns/:campaignId/evaluations", authGuard(guard, false),
     async (req, res) => {
       ok(res, await listCandidateEvaluations(deps.repo, deps.accessRepo, actor(res),
         parsed(id, req.params.clubId), parsed(id, req.params.campaignId)));
     });
-  // Ghi hoặc cập nhật đánh giá cho một đơn ứng tuyển
   router.put("/clubs/:clubId/recruitment/campaigns/:campaignId/applications/:applicationId/evaluation",
     authGuard(guard), async (req, res) => {
       const body = parsed(candidateEvaluationBody, req.body);

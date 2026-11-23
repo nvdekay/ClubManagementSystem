@@ -10,27 +10,26 @@ export interface AppDonutSegment {
 
 interface AppDonutProps {
   segments: AppDonutSegment[];
-  /** Số nổi bật ở giữa vòng, ví dụ "82%". */
+  /** Headline inside the ring, e.g. "82%". */
   centerValue: string;
   centerLabel: string;
   formatValue?: (value: number) => string;
-  /** Tóm tắt truy cập được cho cả vòng; chú thích bên dưới lặp lại mọi giá trị dưới dạng chữ. */
+  /** Accessible summary of the whole ring; the legend below repeats every value as text. */
   label: string;
 }
 
 const RADIUS = 40;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-/** Khoảng hở giữa các cung liền kề, cùng đơn vị với chu vi. */
+/** Surface gap between neighbouring segments, in the same units as the circumference. */
 const GAP = 2.2;
 
-// Biểu đồ vành khuyên thể hiện cơ cấu tổng thể
-/** Vòng thể hiện cơ cấu tổng thể, có số nổi bật ở giữa và chú thích ghi mọi giá trị bằng chữ. */
+/** Part-to-whole ring with a headline in the middle and a legend that carries every value as text. */
 export function AppDonut({ segments, centerValue, centerLabel, formatValue = String, label }: AppDonutProps) {
   const total = segments.reduce((sum, item) => sum + item.value, 0);
   const visible = segments.filter((item) => item.value > 0);
   let offset = 0;
   return (
-    // Container query: chú thích nằm cạnh vòng khi thẻ đủ rộng, nằm dưới vòng khi thẻ hẹp.
+    // Container query: beside the ring when the card is wide enough, under it in narrow cards.
     <div className="@container">
     <div className="flex flex-col items-center gap-x-6 gap-y-4 @sm:flex-row">
       <div role="img" aria-label={label} className="relative size-36 shrink-0">

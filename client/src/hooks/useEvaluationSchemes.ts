@@ -6,14 +6,12 @@ import {
 
 const schemesKeyRoot = ["evaluationSchemes"] as const;
 
-// Query danh mục thang đánh giá CLB
 export function useEvaluationSchemes(enabled: boolean) {
   return useQuery({ queryKey: [...schemesKeyRoot, "catalogue"],
     queryFn: ({ signal }) => fetchSchemes(signal), enabled, retry: false });
 }
 
-// Mutation tạo, sửa, kích hoạt hoặc xoá thang đánh giá, rồi làm mới cache
-/** Kích hoạt một thang cũng thay thế thang khác, nên mọi thay đổi đều tải lại toàn bộ danh sách. */
+/** Activation also supersedes another scheme, so every change refetches the whole list. */
 export function useEvaluationSchemeAction() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -24,7 +24,7 @@ export interface PublicCampaign {
 
 export interface PublicEvent {
   id: string;
-  /** Không có với sự kiện toàn trường do ICPDP tổ chức. */
+  /** Absent for a school-wide event organised by ICPDP. */
   clubId?: string;
   clubName: string;
   title: string;
@@ -49,7 +49,7 @@ export interface Page<T> {
 
 export interface ClubPage extends Page<PublicClub> {
   fields: string[];
-  /** UC06 E1: các CLB Active mới nhất, chỉ gửi khi tìm kiếm có lọc không khớp kết quả nào. */
+  /** UC06 E1: the newest Active clubs, sent only when a filtered search matched nothing. */
   suggestions?: PublicClub[];
 }
 
@@ -67,7 +67,6 @@ export class PublicApiError extends ApiError {
   }
 }
 
-// GET /public/... không cần đăng nhập và trả về data
 async function publicGet<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await apiFetch(`/api/v1/public/${path}`, { signal });
   if (!response.ok) {
@@ -78,7 +77,6 @@ async function publicGet<T>(path: string, signal: AbortSignal): Promise<T> {
   return body.data;
 }
 
-// GET danh sách CLB công khai, tìm theo từ khoá và lĩnh vực
 export function fetchClubs(
   search: string, field: string, page: number, signal: AbortSignal,
 ): Promise<ClubPage> {
@@ -86,12 +84,10 @@ export function fetchClubs(
   return publicGet(`clubs?${params}`, signal);
 }
 
-// GET chi tiết một CLB công khai
 export function fetchClub(id: string, signal: AbortSignal): Promise<ClubDetail> {
   return publicGet(`clubs/${encodeURIComponent(id)}`, signal);
 }
 
-// GET danh sách sự kiện công khai theo trạng thái và từ khoá
 export function fetchEvents(
   page: number, signal: AbortSignal, status: PublicEventFilter = "upcoming", search = "",
 ): Promise<Page<PublicEvent>> {
@@ -100,10 +96,9 @@ export function fetchEvents(
   return publicGet(`events?${params.toString()}`, signal);
 }
 
-// GET chi tiết một sự kiện công khai
 export function fetchEvent(id: string, signal: AbortSignal): Promise<{
   event: PublicEvent;
-  /** Null với sự kiện toàn trường do ICPDP tổ chức. */
+  /** Null for a school-wide event organised by ICPDP. */
   club: { id: string; name: string } | null;
 }> {
   return publicGet(`events/${encodeURIComponent(id)}`, signal);

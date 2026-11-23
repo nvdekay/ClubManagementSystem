@@ -20,8 +20,7 @@ interface CandidateEvaluationPanelProps {
   csrfToken: string;
 }
 
-// Panel hiển thị đánh giá của các reviewer cho ứng viên và mở form chấm điểm
-/** UC19: tóm tắt điểm, đánh giá của từng reviewer và form đánh giá của chính người gọi. */
+/** UC19: score summary, every reviewer's evaluation, and the caller's own evaluation form. */
 export function CandidateEvaluationPanel({ clubId, campaignId, applicationId, state, canReview, rubric, group,
   userId, csrfToken }: CandidateEvaluationPanelProps) {
   const { t, i18n } = useTranslation();
@@ -30,7 +29,7 @@ export function CandidateEvaluationPanel({ clubId, campaignId, applicationId, st
   const mine = evaluations.find((evaluation) => evaluation.reviewerId === userId);
   const summary = group?.summary;
   const labels = new Map(rubric.map((criterion) => [criterion.key, criterion]));
-  // Đánh giá bị khoá ngay khi có quyết định: chỉ hồ sơ Shortlisted mới cho ghi.
+  // Evaluations lock as soon as a decision is made: only Shortlisted applications accept writes.
   const lockedReason = !canReview ? t("recruitmentApplications.evaluationNoPermission")
     : state === "Submitted" || state === "Screening" ? t("recruitmentApplications.evaluationNotYet")
       : state !== "Shortlisted" ? t("recruitmentApplications.evaluationLocked") : "";

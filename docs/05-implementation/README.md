@@ -9,7 +9,6 @@ Cách biến baseline yêu cầu thành code: phân rã công việc và thiết
 | [`UC_CODE_MAPPING.md`](UC_CODE_MAPPING.md) | Ma trận 56 mã UC (55 trong phạm vi, UC23 đã rút) → route server, UI client, mount và khoảng trống triển khai (đối chiếu `main`, 14/11/2026) |
 | [`CODE_DIAGRAM_GAPS.md`](CODE_DIAGRAM_GAPS.md) | Những chỗ code từng lệch so với use case / context diagram đã duyệt và SRS, cách đã khớp lại (G1–G5, S3 xong 07/11/2026) và trạng thái các diagram phụ (14/11/2026) |
 | [`AUTH_SETUP.md`](AUTH_SETUP.md) | Cấu hình Google OAuth, cookie phiên, MongoDB local cho Auth và Google SMTP gửi email |
-| [`EVENT_PROPOSAL_IMPORT.md`](EVENT_PROPOSAL_IMPORT.md) | Cách điền Word và import đề án UC25, mapping field và thông tin thiếu |
 | [`UCMS_Database_Design.dbml`](UCMS_Database_Design.dbml) | Thiết kế cơ sở dữ liệu dạng DBML: 54 bảng (collection MongoDB), 28 enum, nhóm theo module; code có thêm `authSessions` (tổng 55 collection). Import vào [dbdiagram.io](https://dbdiagram.io) để render ERD |
 
 ## Dùng file DBML

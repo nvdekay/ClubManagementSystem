@@ -6,8 +6,7 @@ interface AppStackBarProps {
   formatValue?: (value: number) => string;
 }
 
-// Thanh xếp chồng thể hiện cơ cấu tổng thể
-/** Một thanh mỏng thể hiện cơ cấu tổng thể cho ô số liệu, kèm chú thích chữ để không phần nào chỉ dựa vào màu. */
+/** One thin part-to-whole bar for a stat tile, with a text legend so no part rests on color alone. */
 export function AppStackBar({ segments, formatValue = String }: AppStackBarProps) {
   const total = segments.reduce((sum, item) => sum + item.value, 0);
   return (

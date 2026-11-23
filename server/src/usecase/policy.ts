@@ -10,12 +10,10 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
-// Ném lỗi validation cho một trường cấu hình chính sách không hợp lệ
 function invalid(field: string): never {
   throw new DomainError(`invalid policy ${field}`, "validation", { field });
 }
 
-// Kiểm đối tượng cờ bắt buộc có đủ khóa và đều là boolean
 function requiredFlags<K extends string>(value: unknown, keys: readonly K[]): Record<K, boolean> {
   if (!value || typeof value !== "object" || Array.isArray(value)) invalid("formRequirements");
   const record = value as Record<string, unknown>;
@@ -24,7 +22,6 @@ function requiredFlags<K extends string>(value: unknown, keys: readonly K[]): Re
   return Object.fromEntries(keys.map((key) => [key, record[key]])) as Record<K, boolean>;
 }
 
-// Chuẩn hóa cấu hình trường bắt buộc của form lập CLB và hồ sơ CLB
 function normalizeFormRequirements(value: FormRequirements): FormRequirements {
   if (!value || typeof value !== "object") invalid("formRequirements");
   return {
@@ -33,7 +30,6 @@ function normalizeFormRequirements(value: FormRequirements): FormRequirements {
   };
 }
 
-// Chuẩn hóa và kiểm hạn nộp, nhắc nhở, quá hạn, leo thang của báo cáo
 function normalizeDeadlines(values: readonly ReportDeadline[]): ReportDeadline[] {
   if (!Array.isArray(values) || values.length === 0) invalid("reportDeadlines");
   const names = new Set<string>();
@@ -50,7 +46,6 @@ function normalizeDeadlines(values: readonly ReportDeadline[]): ReportDeadline[]
   });
 }
 
-// Chuẩn hóa lịch học vụ: mã học kỳ duy nhất, ngày hợp lệ, không chồng lấn
 function normalizeCalendar(values: readonly AcademicSemester[]): AcademicSemester[] {
   if (!Array.isArray(values) || values.length === 0) invalid("academicCalendar");
   const names = new Set<string>();
@@ -69,7 +64,6 @@ function normalizeCalendar(values: readonly AcademicSemester[]): AcademicSemeste
   return semesters;
 }
 
-// Kiểm và chuẩn hóa toàn bộ thiết lập chính sách
 export function normalizePolicySettings(input: PolicySettings): PolicySettings {
   if (!Number.isInteger(input.minFoundingMembers) || input.minFoundingMembers < 1) {
     invalid("minFoundingMembers");
@@ -92,7 +86,6 @@ export function normalizePolicySettings(input: PolicySettings): PolicySettings {
   };
 }
 
-// Kiểm actor là ICPDP officer được quản trị chính sách
 async function requirePolicyOfficer(
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null,
 ): Promise<string> {
@@ -108,7 +101,6 @@ async function requirePolicyOfficer(
   return actor.id;
 }
 
-// Lấy phiên bản chính sách có hiệu lực tại một thời điểm
 export async function resolvePolicyAt(repo: PolicyRepository, at: Date): Promise<PolicyVersion> {
   if (Number.isNaN(at.getTime())) throw new DomainError("invalid policy date", "validation");
   const policy = await repo.findEffective(at);
@@ -116,7 +108,6 @@ export async function resolvePolicyAt(repo: PolicyRepository, at: Date): Promise
   return policy;
 }
 
-// Lấy yêu cầu thành lập CLB theo chính sách tại một thời điểm
 export async function foundingRequirementsAt(
   repo: PolicyRepository, at: Date,
 ): Promise<FoundingRequirements> {
@@ -131,14 +122,12 @@ export async function foundingRequirementsAt(
   };
 }
 
-// Lấy các trường hồ sơ CLB bắt buộc theo chính sách tại một thời điểm
 export async function clubProfileRequirementsAt(
   repo: PolicyRepository, at: Date,
 ): Promise<Readonly<Record<ClubProfileFormField, boolean>>> {
   return (await resolvePolicyAt(repo, at)).formRequirements.clubProfile;
 }
 
-// ICPDP xem chính sách hiện hành và các phiên bản gần đây
 export async function listPolicyVersions(
   repo: PolicyManagementRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,
@@ -150,7 +139,6 @@ export async function listPolicyVersions(
   return { current, versions };
 }
 
-// ICPDP tạo phiên bản chính sách mới, chặn nếu làm vô hiệu quyết định đã có
 export async function createPolicyVersion(
   repo: PolicyManagementRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">,

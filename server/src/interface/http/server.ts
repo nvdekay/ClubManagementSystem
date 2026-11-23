@@ -95,8 +95,8 @@ import { memberSpaceRoutes } from "./member-space-routes.js";
 import type { NotificationRepository } from "../../domain/notification.js";
 import { notificationRoutes } from "./notification-routes.js";
 
-// ponytail: Swagger UI từ CDN (ghim version + hash SRI, nên response CDN bị giả mạo sẽ không
-// được thực thi) — nếu cần dev offline thì vendor swagger-ui-dist cục bộ.
+// ponytail: Swagger UI from CDN (version + SRI hash pinned, so a tampered CDN response won't
+// execute) — vendor swagger-ui-dist locally if offline dev matters.
 const docsHtml = `<!doctype html>
 <html>
 <head>
@@ -115,7 +115,6 @@ const docsHtml = `<!doctype html>
 </body>
 </html>`;
 
-// Dựng ứng dụng Express, chỉ mount route khi đủ dependency và lọc OpenAPI theo route đã mount
 export function buildApp(deps: {
   auth?: AuthRouteDeps;
   accessDenialAudit?: AccessDenialAuditRepository;
@@ -173,17 +172,16 @@ export function buildApp(deps: {
   const app = express();
   app.disable("x-powered-by");
   app.use((_req, res, next) => {
-    // ponytail: baseline security header không cần dependency helmet — thêm CSP khi app có trang thật
+    // ponytail: security-header baseline without a helmet dep — add CSP when the app grows real pages
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("Referrer-Policy", "no-referrer");
     next();
   });
-  app.use(requestLogger); // đặt trước body parsing, để request bị parser từ chối vẫn có dòng log
+  app.use(requestLogger); // before body parsing, so requests the parser rejects still get a log line
   app.use(express.json({ limit: "15mb" }));
-  // Endpoint health check, trả 503 khi database chưa sẵn sàng
   app.get("/api/v1/health", (_req, res) => {
-    const ok = deps.dbReady(); // 503 khi DB sập, để orchestrator ngừng định tuyến tới đây
+    const ok = deps.dbReady(); // 503 when the DB is down, so orchestrators stop routing here
     res.status(ok ? 200 : 503).json({ ok });
   });
   app.use("/api/v1", publicDiscoveryRoutes(deps.publicRepo));
@@ -463,16 +461,14 @@ export function buildApp(deps: {
       return true;
     }));
   const availableDocumentJson = JSON.stringify({ ...openApiDocument, paths: availablePaths });
-  // Phục vụ tài liệu OpenAPI JSON của các route đang mount
   app.get("/docs/openapi.json", (_req, res) => {
     res.type("json").send(availableDocumentJson);
   });
-  // Phục vụ trang tài liệu API /docs
   app.get("/docs", (_req, res) => {
     res.type("html").send(docsHtml);
   });
   app.use((req, res) => {
-    fail(res, req, 404, "not_found", "not found"); // giữ đúng hợp đồng error envelope cho đường dẫn không tồn tại
+    fail(res, req, 404, "not_found", "not found"); // keep the error envelope contract on unknown paths
   });
   if (deps.accessDenialAudit) app.use(accessDenialAuditor(deps.accessDenialAudit));
   app.use(errorHandler);

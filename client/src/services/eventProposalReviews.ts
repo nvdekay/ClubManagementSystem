@@ -28,6 +28,7 @@ export interface EventProposalSummary {
   property?: { id: string; code: string; name: string };
   audienceScope: string;
   capacity: number;
+  riskCategory?: string;
   state: string;
   conflictResult?: string;
   conflictDetail?: unknown;
@@ -115,7 +116,6 @@ export interface EventReviewDecisionInput {
   budgetLines?: { approvedAmount: number; fundingDecision?: "NOT_SPONSORED" | "BEFORE_EVENT" | "AFTER_EVENT"; reason?: string }[];
 }
 
-// Gọi API /admin/event-proposals và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/event-proposals${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -126,34 +126,28 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
-// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
 function mutation(csrfToken: string, body?: object): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
-// GET hàng đợi đề xuất sự kiện chờ ICPDP
 export function fetchEventProposalQueue(signal: AbortSignal): Promise<EventProposalQueueItem[]> {
   return request("", { signal });
 }
 
-// GET chi tiết một đề xuất sự kiện
 export function fetchEventProposal(id: string, signal: AbortSignal): Promise<EventProposalDetail> {
   return request(`/${encodeURIComponent(id)}`, { signal });
 }
 
-// POST /claim: ICPDP nhận xử lý đề xuất
 export function claimEventProposal(id: string, csrfToken: string): Promise<EventProposalDetail> {
   return request(`/${encodeURIComponent(id)}/claim`, mutation(csrfToken));
 }
 
-// POST /decision: ICPDP ghi quyết định đề xuất
 export function decideEventProposal(id: string, input: EventReviewDecisionInput,
   csrfToken: string): Promise<EventProposalDetail> {
   return request(`/${encodeURIComponent(id)}/decision`, mutation(csrfToken, input));
 }
 
-// POST /cancellation-decision: duyệt hoặc từ chối yêu cầu huỷ sự kiện
 export function decideEventCancellation(
   id: string,
   input: { approve: boolean; reason?: string },
@@ -162,15 +156,13 @@ export function decideEventCancellation(
   return request(`/${encodeURIComponent(id)}/cancellation-decision`, mutation(csrfToken, input));
 }
 
-// POST /template: tải mẫu đề xuất sự kiện mới
-/** Thay thế mẫu đang dùng (ICPDP_OFFICER); không có thao tác xoá. */
+/** Replaces the active template (ICPDP_OFFICER); there is no delete. */
 export function uploadProposalTemplate(file: File, mimeType: string, csrfToken: string): Promise<EventProposalTemplateInfo> {
   return request("/template", { method: "POST", body: file,
     headers: { "Content-Type": mimeType, "X-CSRF-Token": csrfToken, "X-Filename": encodeURIComponent(file.name) } });
 }
 
-// GET /document/access: lấy link xem file đề xuất khi xét duyệt
-/** Không có `revisionNo`: file của bản chỉnh sửa đã nộp mới nhất. */
+/** No `revisionNo`: the latest submitted revision's file. */
 export function accessReviewProposalDocument(id: string, revisionNo?: number, inline = false): Promise<FileAccess> {
   const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });
   return request(`/${encodeURIComponent(id)}/document/access?${query}`);

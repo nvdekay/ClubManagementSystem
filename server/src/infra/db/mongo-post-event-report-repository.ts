@@ -24,17 +24,13 @@ import {
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
-// Chuyển chuỗi id thành ObjectId
 function oid(value: string) {
   return new Types.ObjectId(value);
 }
-// Chuyển giá trị tiền thành số, mặc định 0
 function money(value: unknown) {
   return Number(String(value ?? 0));
 }
-// Repository báo cáo sau sự kiện của CLB và duyệt của ICPDP
 export function mongoPostEventReportRepository(): PostEventReportRepository {
-  // Dựng snapshot số liệu của sự kiện để lập báo cáo
   async function snapshot(
     event: Doc,
     now: Date,
@@ -136,7 +132,6 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
       dueAt: deadline.dueAt,
     };
   }
-  // Dựng chi tiết báo cáo sau sự kiện của một sự kiện
   async function detail(
     eventId: string,
     clubId: string | undefined,
@@ -226,7 +221,6 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
     };
   }
   return {
-    // Liệt kê báo cáo sau sự kiện của các sự kiện CLB đã kết thúc
     async list(clubId, now) {
       const events = await m
         .events!.find({
@@ -248,7 +242,6 @@ export function mongoPostEventReportRepository(): PostEventReportRepository {
       return details.filter((d): d is NonNullable<typeof d> => Boolean(d));
     },
     find: detail,
-    // Xử lý hành động trên báo cáo sau sự kiện: lưu, nộp, claim, quyết định, quá hạn
     async act(eventId, clubId, actor, action, now) {
       await mongoose.connection.transaction(async (session) => {
         const actorId = oid(actor);

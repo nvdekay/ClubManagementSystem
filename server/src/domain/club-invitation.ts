@@ -18,7 +18,6 @@ export interface ClubInvitationRepository {
     now: Date): Promise<ClubInvitation>;
 }
 
-// Kiểm tra và chuẩn hoá phản hồi lời mời tham gia sự kiện (chấp nhận hoặc từ chối kèm lý do)
 export function normalizeInvitationResponse(input: InvitationResponse): InvitationResponse {
   const responseNote = input.responseNote?.trim();
   if (!["Accepted", "Declined"].includes(input.outcome)) throw new DomainError("invalid response outcome", "validation");

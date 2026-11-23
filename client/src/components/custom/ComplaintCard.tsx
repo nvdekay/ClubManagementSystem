@@ -11,7 +11,6 @@ const stateTone: Record<ComplaintState, AppBadgeTone> = {
   Escalated: "danger", Closed: "success", Withdrawn: "neutral",
 };
 
-// Ánh xạ trạng thái khiếu nại sang key i18n
 export function complaintStateKey(state: ComplaintState) {
   switch (state) {
     case "Submitted": return "complaints.state_Submitted" as const;
@@ -25,7 +24,6 @@ export function complaintStateKey(state: ComplaintState) {
   }
 }
 
-// Ánh xạ loại khiếu nại sang key i18n
 export function complaintTypeKey(type: string) {
   switch (type) {
     case "CONDUCT": return "complaints.type_CONDUCT" as const;
@@ -55,8 +53,7 @@ interface ComplaintCardProps {
   actions?: ReactNode;
 }
 
-// Thẻ hiển thị một khiếu nại kèm trạng thái và hạn phản hồi
-/** Một khiếu nại (UC50–UC52) cho mọi người đọc; nơi gọi quyết định được hiện những trường nào (D5). */
+/** One complaint (UC50–UC52) for any reader; the caller decides which fields it may show (D5). */
 export function ComplaintCard(props: ComplaintCardProps) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";

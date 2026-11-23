@@ -4,7 +4,6 @@ import { DomainError } from "../../domain/errors.js";
 import { clubBoardUserIds, queueNotifications } from "./club-board.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
-// Khóa tài khoản và xác nhận actor là ICPDP officer đang Active
 export async function assertAccountabilityOfficer(
   session: ClientSession,
   actorId: Types.ObjectId,
@@ -35,7 +34,6 @@ export async function assertAccountabilityOfficer(
   )
     throw new DomainError("ICPDP officer role required", "forbidden");
 }
-// Ghi audit log báo cáo/quyết toán và queue thông báo cho ban chủ nhiệm
 export async function accountabilityAudit(
   session: ClientSession,
   entityType: string,
@@ -83,7 +81,6 @@ export async function accountabilityAudit(
     now,
   );
 }
-// Tìm task review đang Open mới nhất của một đối tượng
 export async function accountabilityTask(
   session: ClientSession,
   entityType: string,
@@ -95,7 +92,6 @@ export async function accountabilityTask(
     .session(session)
     .lean();
 }
-// Mở task review mới, từ chối nếu đã có task Open
 export async function openAccountabilityTask(
   session: ClientSession,
   entityType: string,
@@ -111,7 +107,6 @@ export async function openAccountabilityTask(
     { session },
   );
 }
-// ICPDP nhận (claim) task review chưa có người xử lý
 export async function claimAccountabilityTask(
   session: ClientSession,
   entityType: string,
@@ -127,7 +122,6 @@ export async function claimAccountabilityTask(
     { session },
   );
 }
-// Ghi quyết định Approve/Request revision và đóng task review
 export async function decideAccountabilityTask(
   session: ClientSession,
   entityType: string,

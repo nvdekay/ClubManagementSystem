@@ -2,8 +2,7 @@ import { Types, type ClientSession } from "mongoose";
 import { resolveClubPermissions, type ClubAccessSnapshot, type ClubPermission } from "../../domain/access.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
-// Lấy user thành viên Active của CLB đang có permission chỉ định
-/** Id các thành viên Active của CLB hiện đang giữ `permission` — cùng quy tắc với mọi lần kiểm tra quyền. */
+/** User ids of the club's Active members who hold `permission` right now — the same rule as every access check. */
 export async function clubUserIdsWithPermission(clubId: Types.ObjectId, permission: ClubPermission, now: Date,
   session?: ClientSession): Promise<Types.ObjectId[]> {
   const [club, memberships, terms, positions] = await Promise.all([

@@ -21,14 +21,14 @@ export interface ApplicationDocument {
   mimeType: string;
   bytes: number;
   assetId: string;
-  /** Chỉ logo được lưu công khai, để xem trước được và trở thành logo của CLB. */
+  /** Only the logo is stored publicly, so it can be previewed and become the club logo. */
   publicUrl?: string;
   uploadedAt: Date;
 }
 
 export interface ClubApplicationDraft {
   clubName: string;
-  /** Id trong danh mục của lĩnh vực CLB đã chọn; `field` giữ tên của nó cho danh sách và CLB được tạo. */
+  /** Catalog id of the chosen club field; `field` keeps its name for lists and the created club. */
   fieldId: string;
   field: string;
   summary: string;
@@ -39,7 +39,7 @@ export interface ClubApplicationDraft {
   documents: ApplicationDocument[];
 }
 
-/** Một vị trí trong cơ cấu sáng lập cố định; sinh viên chỉ chọn ai giữ vị trí nào. */
+/** A position of the fixed founding structure; students only pick who holds what. */
 export interface FoundingPosition {
   code: string;
   name: string;
@@ -71,19 +71,19 @@ export interface ClubApplicationRecord {
   draftRevision: number;
   draft: ClubApplicationDraft;
   submittedAt?: Date;
-  /** Do yêu cầu chỉnh sửa của ICPDP đặt ra (UC08); người nộp phải nộp lại trước thời hạn này. */
+  /** Set by the ICPDP revision request (UC08); the applicant must resubmit before it. */
   revisionDeadlineAt?: Date;
   createdAt: Date;
 }
 
-/** Thông tin hiển thị cho thành viên sáng lập thay cho user id thô. */
+/** Identity shown for a founding member instead of a raw user id. */
 export interface FounderProfile {
   id: string;
   displayName: string;
   email: string;
 }
 
-/** Phần quyết định của ICPDP mà người nộp được xem: không bao giờ gồm ghi chú duyệt nội bộ hay người duyệt. */
+/** What the applicant may see of an ICPDP decision: never the internal review note or reviewer. */
 export interface ApplicantDecisionFeedback {
   outcome: "Approve" | "Request revision" | "Reject";
   reason?: string;
@@ -106,7 +106,7 @@ export interface ClubApplicationRepository {
   findOwned(id: string, ownerId: string): Promise<ClubApplicationRecord | null>;
   versions(id: string): Promise<ClubApplicationVersion[]>;
   decisionFeedback(id: string): Promise<ApplicantDecisionFeedback[]>;
-  /** Khớp chính xác email (không phân biệt hoa thường) trong các tài khoản Active (không tìm một phần). */
+  /** Exact, case-insensitive email match among Active accounts (no partial search). */
   findActiveUserByEmail(email: string): Promise<FounderProfile | null>;
   founderProfiles(ids: string[]): Promise<FounderProfile[]>;
   saveDraft(id: string, ownerId: string, draft: ClubApplicationDraft,
@@ -115,9 +115,9 @@ export interface ClubApplicationRepository {
   removeDocument(id: string, ownerId: string, documentId: string): Promise<ClubApplicationRecord>;
   usersExist(ids: readonly string[]): Promise<boolean>;
   activeClubNameExists(name: string): Promise<boolean>;
-  /** CLB có thể đem ra so sánh với người nộp: chỉ các trạng thái công khai, không bao giờ gồm hồ sơ hay `Pending Setup`. */
+  /** Clubs an applicant may be compared with: public states only, never applications or `Pending Setup`. */
   publicSimilarityCandidates(applicationId: string): Promise<SimilarityCandidate[]>;
-  /** Những user trong `userIds` đang giữ ghế club leader đã xác nhận trong nhiệm kỳ còn hiệu lực tại thời điểm `at`. */
+  /** Users among `userIds` holding a confirmed club-leader seat in a term still running at `at`. */
   activeLeaderUserIds(userIds: readonly string[], at: Date): Promise<string[]>;
   submit(input: { id: string; ownerId: string; snapshot: ClubApplicationDraft;
     expectedDraftRevision: number; policyVersionId: string; now: Date }): Promise<ClubApplicationVersion>;
@@ -125,7 +125,7 @@ export interface ClubApplicationRepository {
 }
 
 export interface ApplicationFileStorage {
-  /** `visibility: "public"` trả về `publicUrl` (chỉ dùng cho logo đề xuất). */
+  /** `visibility: "public"` returns a `publicUrl` (used for the proposed logo only). */
   upload(input: { ownerId: string; applicationId: string; documentType: string;
     fileName: string; mimeType: string; bytes: Buffer; visibility: "private" | "public";
     now: Date }): Promise<ApplicationDocument>;
@@ -139,10 +139,9 @@ export type FoundingIssue =
   | "proposal" | "logo" | "foundersTooFew" | "applicantNotFounder" | "duplicateFounder"
   | "leaderCount" | "viceLeaderCount";
 
-// Liệt kê các điểm còn thiếu của hồ sơ thành lập CLB trước khi nộp
 /**
- * Mọi điều đang chặn việc nộp hồ sơ thành lập, để bước rà soát chỉ ra từng thiếu sót
- * thay vì báo lỗi ngay ở lỗi đầu tiên. Các kiểm tra danh mục và giữa nhiều CLB nằm ở usecase.
+ * Everything that blocks submitting a founding application, so the review step can point at each
+ * gap instead of failing on the first one. Catalog and cross-club checks live in the use case.
  */
 export function foundingSubmissionIssues(draft: ClubApplicationDraft, applicantId: string,
   requirements: FoundingRequirements): FoundingIssue[] {
@@ -167,7 +166,6 @@ export function foundingSubmissionIssues(draft: ClubApplicationDraft, applicantI
   return issues;
 }
 
-// Ném lỗi validation nếu hồ sơ thành lập CLB chưa đủ điều kiện nộp
 export function validateClubApplicationSubmission(draft: ClubApplicationDraft, applicantId: string,
   requirements: FoundingRequirements): void {
   const issues = foundingSubmissionIssues(draft, applicantId, requirements);

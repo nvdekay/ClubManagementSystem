@@ -7,7 +7,6 @@ import { queueNotifications } from "./club-board.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
-// Repository lời mời CLB tham gia sự kiện của ICPDP
 export function mongoClubInvitationRepository(): ClubInvitationRepository {
   async function mapped(doc: Doc): Promise<ClubInvitation> {
     const event = await m.events!.findOne({ _id: doc.eventId, organizerType: "ICPDP" }).lean();
@@ -24,12 +23,10 @@ export function mongoClubInvitationRepository(): ClubInvitationRepository {
         objective: String(event.objective ?? payload.objective ?? ""), coordination: String(payload.plan ?? "") } };
   }
   return {
-    // Liệt kê lời mời sự kiện gửi tới CLB
     async list(clubId) {
       const docs = await m.eventInvitations!.find({ clubId: new Types.ObjectId(clubId) }).sort({ invitedAt: -1, _id: -1 }).lean();
       return Promise.all(docs.map(mapped));
     },
-    // Club Leader chấp nhận hoặc từ chối lời mời sự kiện trước hạn
     async respond(clubId, invitationId, raw, userId, now) {
       const input = normalizeInvitationResponse(raw);
       const club = new Types.ObjectId(clubId);

@@ -6,13 +6,11 @@ import {
 
 const periodicKey = ["periodic-reports"] as const;
 
-// Query tổng quan báo cáo định kỳ theo kỳ
 export function usePeriodicOverview(period: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...periodicKey, "overview", period ?? ""], queryFn: ({ signal }) => fetchPeriodicOverview(period, signal),
     enabled, retry: false });
 }
 
-// Mutation lưu đợt thu báo cáo định kỳ, rồi làm mới cache
 export function useSavePeriodicCampaign() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -24,13 +22,11 @@ export function useSavePeriodicCampaign() {
   });
 }
 
-// Query chi tiết một báo cáo định kỳ
 export function usePeriodicReport(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...periodicKey, "detail", id], queryFn: ({ signal }) => fetchPeriodicReport(id!, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
 
-// Mutation ICPDP quyết định báo cáo định kỳ, rồi làm mới tổng quan
 export function useDecidePeriodicReport() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -43,7 +39,6 @@ export function useDecidePeriodicReport() {
   });
 }
 
-// Mutation ghi nhận CLB không nộp báo cáo, rồi làm mới tổng quan
 export function useRecordMissingPeriodicReport() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -12,7 +12,7 @@ export interface BoardPosition {
   name: string;
   unit?: string;
   isLeaderRole: boolean;
-  /** Ghế nhiều người giữ (vd Phó chủ nhiệm) vẫn còn mở sau khi một người đã được xác nhận hoặc đang chờ. */
+  /** A multi-holder seat (e.g. Phó chủ nhiệm) stays open after one holder is confirmed or pending. */
   isSingleHolder: boolean;
 }
 
@@ -32,7 +32,7 @@ export interface BoardNominationContext {
   candidates: BoardCandidate[];
   occupiedPositionIds: string[];
   pendingPositionIds: string[];
-  /** Thành viên đã giữ hoặc đang chờ một ghế ban điều hành trong nhiệm kỳ: mỗi người chỉ giữ một ghế. */
+  /** Members already holding, or pending for, a board seat in the term: one person holds one seat. */
   seatedMembershipIds: string[];
   presidentConflictMembershipIds: string[];
 }
@@ -101,7 +101,7 @@ export interface BoardNominationRepository {
   submit(clubId: string, actorId: string, termId: string,
     seats: readonly BoardNominationSeatInput[], now: Date): Promise<BoardNominationDetail>;
   listOpen(): Promise<BoardNominationSummary[]>;
-  /** Các đề cử gần nhất của một CLB, mới nhất trước, để CLB xem trạng thái và lý do trả lại. */
+  /** Most recent nominations of one club, newest first, so the club sees status and return reasons. */
   listForClub(clubId: string): Promise<BoardNominationDetail[]>;
   find(nominationId: string): Promise<BoardNominationDetail | null>;
   claim(nominationId: string, officerId: string, now: Date): Promise<BoardNominationDetail>;

@@ -10,9 +10,9 @@ import type { AccessActor } from "./access.js";
 const mongoId = /^[0-9a-f]{24}$/i;
 
 const scopeFields = {
-  /** Workspace cần trả thông báo; không có = tất cả. */
+  /** Workspace whose notifications to return; absent = all of them. */
   scope: z.enum(NOTIFICATION_AUDIENCES).optional(),
-  /** Chỉ với `scope=club`: giữ các thông báo về CLB này. */
+  /** Only with `scope=club`: keep the notifications about this club. */
   clubId: z.string().regex(mongoId).optional(),
 };
 
@@ -25,21 +25,18 @@ export const notificationInboxQuery = z.object({
   ...scopeFields,
 }).strict();
 
-// Đổi tham số scope và clubId thành phạm vi thông báo, clubId cần scope=club
 function scopeOf(data: { scope?: NotificationScope["audience"]; clubId?: string }): NotificationScope | undefined {
   if (data.clubId && data.scope !== "club") throw new DomainError("clubId requires scope=club", "validation");
   if (!data.scope) return undefined;
   return { audience: data.scope, ...(data.clubId ? { clubId: data.clubId } : {}) };
 }
 
-// Đọc và kiểm phạm vi thông báo từ query
 function parseScope(query: unknown): NotificationScope | undefined {
   const parsed = notificationScopeQuery.safeParse(query ?? {});
   if (!parsed.success) throw new DomainError("invalid notification scope", "validation", parsed.error.issues);
   return scopeOf(parsed.data);
 }
 
-// Kiểm người dùng đăng nhập, tài khoản Active và trả id
 function active(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState !== "Active") throw new DomainError(actor.lockReason || "account locked", "locked");
@@ -47,7 +44,6 @@ function active(actor: AccessActor | null): string {
   return actor.id;
 }
 
-// Người dùng xem hộp thư thông báo của mình, có phân trang và lọc phạm vi
 export async function myNotifications(repo: NotificationRepository, actor: AccessActor | null,
   query: unknown): Promise<NotificationInbox> {
   const userId = active(actor);
@@ -58,14 +54,12 @@ export async function myNotifications(repo: NotificationRepository, actor: Acces
     ...(parsed.data.before ? { before: new Date(parsed.data.before) } : {}), ...(scope ? { scope } : {}) });
 }
 
-// Đếm số thông báo chưa đọc của người dùng theo phạm vi
 export async function myUnreadNotificationCount(repo: NotificationRepository, actor: AccessActor | null,
   query: unknown = {}): Promise<{ unread: number }> {
   const userId = active(actor);
   return { unread: await repo.unreadCount(userId, parseScope(query)) };
 }
 
-// Đánh dấu một thông báo đã đọc và trả số chưa đọc còn lại
 export async function markNotificationRead(repo: NotificationRepository, actor: AccessActor | null, id: string,
   now: Date): Promise<{ unread: number }> {
   const userId = active(actor);
@@ -74,8 +68,7 @@ export async function markNotificationRead(repo: NotificationRepository, actor: 
   return { unread: await repo.unreadCount(userId) };
 }
 
-// Đánh dấu đã đọc toàn bộ thông báo trong phạm vi
-/** `unread` trong phản hồi được đếm trong cùng scope đã được đánh dấu. */
+/** `unread` in the reply is counted in the same scope that was marked. */
 export async function markAllNotificationsRead(repo: NotificationRepository, actor: AccessActor | null,
   now: Date, query: unknown = {}): Promise<{ marked: number; unread: number }> {
   const userId = active(actor);
@@ -84,16 +77,14 @@ export async function markAllNotificationsRead(repo: NotificationRepository, act
   return { marked, unread: await repo.unreadCount(userId, scope) };
 }
 
-// Rút gọn nội dung lỗi để ghi log gửi email
 function message(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).slice(0, 500);
 }
 
-// Gửi email trong outbox, thử lại khi lỗi và ghi log từng lần gửi
 /**
- * SCH-10: xả outbox. Dòng in-app được đánh dấu đã gửi; mỗi dòng email đến hạn được claim bằng một
- * lease, gửi một lần, ghi vào `emailDeliveryLogs`, và thử lại với backoff tới `MAIL_MAX_ATTEMPTS`.
- * Lỗi gửi không bao giờ ảnh hưởng thay đổi nghiệp vụ đã xếp hàng nó (CON-09).
+ * SCH-10: drains the outbox. In-app rows are marked delivered; each due email row is claimed under a
+ * lease, sent once, logged to `emailDeliveryLogs`, and retried with backoff until `MAIL_MAX_ATTEMPTS`.
+ * A send failure never touches the business change that queued it (CON-09).
  */
 export async function deliverNotifications(repo: MailOutboxRepository, transport: MailTransport, now: Date,
   options: { batchSize?: number; appUrl?: string } = {}): Promise<{ inApp: number; sent: number; retried: number; failed: number }> {
@@ -102,7 +93,7 @@ export async function deliverNotifications(repo: MailOutboxRepository, transport
     const claim = await repo.claimNextEmail(now, MAIL_LEASE_MS);
     if (!claim) break;
     if (!claim.toEmail) {
-      // Không có địa chỉ để thử lại; bỏ ngay thay vì đốt số lần thử.
+      // No address to retry against; give up at once instead of burning attempts.
       await repo.recordFailed(claim, "", "recipient has no email address", null, now);
       result.failed += 1;
       continue;

@@ -7,25 +7,21 @@ import {
 
 const reviewKey = ["application-reviews"] as const;
 
-// Query hàng đợi hồ sơ thành lập CLB chờ ICPDP
 export function useApplicationReviewQueue(enabled: boolean) {
   return useQuery({ queryKey: [...reviewKey, "queue"],
     queryFn: ({ signal }) => fetchReviewQueue(signal), enabled, retry: false });
 }
 
-// Mutation lấy link tài liệu của hồ sơ khi xét duyệt
 export function useReviewDocumentAccess() {
   return useMutation({ mutationFn: ({ id, documentId }: { id: string; documentId: string }) =>
     reviewDocumentAccess(id, documentId) });
 }
 
-// Query chi tiết một hồ sơ đang xét duyệt
 export function useApplicationReview(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...reviewKey, "detail", id],
     queryFn: ({ signal }) => fetchReview(id!, signal), enabled: enabled && Boolean(id), retry: false });
 }
 
-// Mutation nhận xử lý hoặc quyết định hồ sơ, rồi làm mới cache
 export function useApplicationReviewAction() {
   const queryClient = useQueryClient();
   return useMutation({

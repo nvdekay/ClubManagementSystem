@@ -25,7 +25,6 @@ import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 
-// Dịch trạng thái sự kiện cấp trường sang nhãn hiển thị
 function stateLabel(t: TFunction, state: string): string {
   switch (state) {
     case "Approved": return t("schoolEvents.stateApproved");
@@ -37,13 +36,11 @@ function stateLabel(t: TFunction, state: string): string {
   }
 }
 
-// Chọn màu badge theo trạng thái sự kiện cấp trường
 function stateTone(state: string): AppBadgeTone {
   return state === "Approved" ? "warning" : state === "Upcoming" || state === "Ongoing" ? "success"
     : state === "Cancelled" ? "danger" : "neutral";
 }
 
-// Dịch trạng thái lời mời CLB sang nhãn hiển thị
 function statusLabel(t: TFunction, status: InvitationStatus): string {
   switch (status) {
     case "Accepted": return t("schoolEvents.statusAccepted");
@@ -54,26 +51,22 @@ function statusLabel(t: TFunction, status: InvitationStatus): string {
   }
 }
 
-// Chọn màu badge theo trạng thái lời mời
 function statusTone(status: InvitationStatus): AppBadgeTone {
   return status === "Accepted" ? "success" : status === "Declined" ? "danger" : status === "Pending" ? "info" : "neutral";
 }
 
-// Đổi giá trị datetime-local sang ISO, undefined nếu rỗng hoặc sai
-/** Giá trị `datetime-local` → chuỗi ISO, hoặc undefined khi rỗng hoặc không hợp lệ. */
+/** `datetime-local` value → ISO string, or undefined when empty or invalid. */
 function iso(value: string): string | undefined {
   if (!value) return undefined;
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
-// Lấy các giá trị chuỗi/số trong dữ liệu chi tiết lỗi
 function details(value: unknown): string[] {
   if (!value || typeof value !== "object") return [];
   return Object.values(value as Record<string, unknown>).filter((item) => ["string", "number"].includes(typeof item)).map(String);
 }
 
-// Cổng kiểm tra đăng nhập và quyền cho các trang sự kiện cấp trường
 function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -89,8 +82,7 @@ function Gate({ children }: { children: (csrfToken: string) => ReactNode }) {
   return <>{children(auth.data.csrfToken)}</>;
 }
 
-// Chọn CLB bằng checkbox, có lối tắt chọn tất cả
-/** Các CLB Active dưới dạng checkbox, có phím tắt chọn tất cả. */
+/** Active clubs as checkboxes, with a shortcut for all of them. */
 function ClubPicker({ all, onAll, chosen, onChosen, exclude = [] }: { all: boolean; onAll: (value: boolean) => void;
   chosen: string[]; onChosen: (value: string[]) => void; exclude?: string[] }) {
   const { t } = useTranslation();
@@ -103,7 +95,7 @@ function ClubPicker({ all, onAll, chosen, onChosen, exclude = [] }: { all: boole
         {t("schoolEvents.allActive")}</label>
       {!all && <>
         <p className="mt-1 text-xs text-muted-app">{t("schoolEvents.clubsSelected", { count: chosen.length })}</p>
-        {/* Không còn gì để chọn (mọi CLB active đã được mời): không hiện khung viền trống. */}
+        {/* Nothing left to pick (every active club already invited): no empty bordered box. */}
         {clubs.isPending ? <AppSkeleton className="mt-2 h-24 w-full" /> : active.length > 0 && (
           <div className="mt-2 grid max-h-56 gap-1 overflow-y-auto rounded-xl border border-border-app p-2 sm:grid-cols-2">{active.map((club) =>
             <label key={club.id} className="flex min-h-11 items-center gap-3 rounded-lg px-2 text-sm hover:bg-surface-app">
@@ -116,7 +108,6 @@ function ClubPicker({ all, onAll, chosen, onChosen, exclude = [] }: { all: boole
   );
 }
 
-// Danh sách các xung đột lịch của sự kiện
 function ConflictList({ items }: { items: ScheduleConflict[] }) {
   const { t, i18n } = useTranslation();
   const format = new Intl.DateTimeFormat(i18n.language, { dateStyle: "short", timeStyle: "short" });
@@ -125,7 +116,6 @@ function ConflictList({ items }: { items: ScheduleConflict[] }) {
       {" "}<span className="font-medium">{item.title}</span> · {format.format(new Date(item.startAt))} – {format.format(new Date(item.endAt))}</li>)}</ul>;
 }
 
-// Form ICPDP tạo sự kiện cấp trường
 function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -158,9 +148,8 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
       : places < 1 ? t("common.numberMin", { min: 1 }) : places > 100_000 ? t("common.numberMax", { max: 100_000 }) : null,
   });
 
-  // Kiểm tra form rồi tạo sự kiện cấp trường
   async function submit() {
-    // start/end được kiểm tra lại chỉ để TypeScript biết chúng đã có giá trị.
+    // start/end are re-checked only so TypeScript knows they are set.
     if (!field.touchAll() || !start || !end) return;
     try {
       const result = await create.mutateAsync({ csrfToken, input: { title: title.trim(), objective: objective.trim() || undefined,
@@ -168,7 +157,7 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
         ...(useRoom ? { propertyId } : { venueText: venueText.trim() }), capacity: places,
         invitationDeadline: iso(deadline), ...(all ? { allActiveClubs: true } : { clubIds: chosen }) } });
       navigate(`/workspace/school-events/${result.detail.id}`, { state: { skipped: result.outcome.skipped.length } });
-    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
+    } catch { /* Mutation state is rendered below. */ }
   }
 
   return (
@@ -228,7 +217,6 @@ function CreateForm({ csrfToken, onCancel }: { csrfToken: string; onCancel: () =
   );
 }
 
-// Danh sách sự kiện cấp trường và nút tạo mới
 function SchoolEventList({ csrfToken }: { csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const list = useSchoolEvents(true);
@@ -270,7 +258,6 @@ function SchoolEventList({ csrfToken }: { csrfToken: string }) {
   );
 }
 
-// Trang ICPDP danh sách sự kiện cấp trường
 export function SchoolEventsPage() {
   const { t } = useTranslation();
   return (
@@ -281,7 +268,6 @@ export function SchoolEventsPage() {
   );
 }
 
-// Chi tiết sự kiện cấp trường và danh sách lời mời CLB
 function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -309,14 +295,13 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
   const label = "text-xs text-muted-app";
   const blocking = event.invitations.filter((item) => !["Withdrawn", "Expired"].includes(item.status)).map((item) => item.clubId);
 
-  // Gửi lời mời tham gia sự kiện tới các CLB đã chọn
   async function invite() {
     if (!field.touchAll()) return;
     try {
       await action.mutateAsync({ kind: "invite", id, csrfToken, input: { ...(all ? { allActiveClubs: true } : { clubIds: chosen }),
         deadline: iso(deadline) } });
       setChosen([]); setAll(false); field.reset();
-    } catch { /* Trạng thái mutation được hiển thị bên dưới. */ }
+    } catch { /* Mutation state is rendered below. */ }
   }
 
   return (
@@ -397,7 +382,6 @@ function SchoolEventDetailView({ id, csrfToken }: { id: string; csrfToken: strin
   );
 }
 
-// Trang ICPDP chi tiết một sự kiện cấp trường
 export function SchoolEventDetailPage() {
   const { id } = useParams();
   return <Gate>{(csrfToken) => id ? <SchoolEventDetailView id={id} csrfToken={csrfToken} /> : null}</Gate>;

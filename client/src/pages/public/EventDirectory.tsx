@@ -11,7 +11,6 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useEvents } from "@/hooks/useDiscovery";
 import type { PublicEventFilter } from "@/services/discovery";
 
-// Trang danh sách sự kiện công khai có lọc trạng thái, tìm kiếm, phân trang
 export function EventDirectory() {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
@@ -25,7 +24,6 @@ export function EventDirectory() {
     { value: "ended", label: t("discovery.statusEnded") },
   ];
 
-  // Đổi bộ lọc trạng thái và về trang đầu
   function changeStatus(value: PublicEventFilter) {
     setStatus(value);
     setPage(1);

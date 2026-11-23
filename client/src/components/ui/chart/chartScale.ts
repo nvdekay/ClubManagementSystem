@@ -1,6 +1,6 @@
 /**
- * Các màu chuỗi mà một thành phần biểu đồ được dùng. chart-1/chart-2 là cặp màu phân loại đã được kiểm chứng; các tone trạng thái
- * (success, warning, danger) chỉ dùng để đánh dấu trạng thái như "quá hạn" hoặc vòng đời CLB, và luôn kèm nhãn chữ.
+ * Series colors a chart mark may wear. chart-1/chart-2 are the validated categorical pair; the status tones
+ * (success, warning, danger) only mark a state such as "past due" or a club's lifecycle, always with a label.
  */
 export type ChartTone = "chart-1" | "chart-2" | "muted" | "success" | "warning" | "danger";
 
@@ -22,8 +22,7 @@ export const chartToneStroke: Record<ChartTone, string> = {
   danger: "stroke-danger-app",
 };
 
-// Làm tròn giá trị lớn nhất của trục lên số đẹp
-/** Làm tròn lên giá trị lớn nhất của trục thành 1, 2 hoặc 5 lần một luỹ thừa của 10 để các vạch chia là số đẹp. */
+/** Rounds an axis maximum up to 1, 2 or 5 times a power of ten so ticks land on clean numbers. */
 export function niceMax(value: number): number {
   if (value <= 0) return 1;
   const power = 10 ** Math.floor(Math.log10(value));
@@ -31,7 +30,6 @@ export function niceMax(value: number): number {
   return step * power;
 }
 
-// Đổi giá trị so với max thành chuỗi phần trăm trong khoảng 0-100
 export function percent(value: number, max: number): string {
   return `${Math.max(0, Math.min(100, (value / max) * 100))}%`;
 }

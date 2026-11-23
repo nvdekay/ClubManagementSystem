@@ -7,8 +7,7 @@ import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 
-// Trang lịch sử đề cử ban chủ nhiệm của CLB
-/** FR-UC02-03, BR56: góc nhìn của Club Leader về các phiên bản cơ cấu và ban chủ nhiệm theo nhiệm kỳ của CLB. */
+/** FR-UC02-03, BR56: the Club Leader's view of their club's structure versions and board by term. */
 export function ClubBoardHistoryPage() {
   const { clubId = "" } = useParams();
   const { t } = useTranslation();

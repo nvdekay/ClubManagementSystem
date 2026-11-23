@@ -25,13 +25,13 @@ export interface PublicCampaign {
   selectionSteps?: Array<{ name: string; description?: string; startsAt?: Date; endsAt?: Date }>;
   formSchema?: Array<{ key: string; label: string; type: string; required: boolean; options?: string[] }>;
   rubric?: Array<{ key: string; label: string; maxScore: number }>;
-  /** CLB đang bị đình chỉ: đợt tuyển vẫn hiển thị nhưng tạm dừng nhận hồ sơ (UC15). */
+  /** The club is suspended: the campaign is shown but applications are paused (UC15). */
   clubSuspended?: boolean;
 }
 
 export interface PublicEvent {
   id: string;
-  /** Không có với sự kiện toàn trường do ICPDP tổ chức (UC53). */
+  /** Absent for a school-wide event organised by ICPDP (UC53). */
   clubId?: string;
   clubName: string;
   title: string;
@@ -46,7 +46,7 @@ export interface PublicEvent {
   publishedAt?: Date;
 }
 
-/** Trạng thái hiển thị cho khách, suy ra từ trạng thái vòng đời và đồng hồ. */
+/** Status shown to visitors, derived from the lifecycle state and the clock. */
 export type PublicEventStatus = "ongoing" | "upcoming" | "ended";
 export type PublicEventFilter = PublicEventStatus | "all";
 
@@ -75,7 +75,7 @@ export interface ClubSearch {
   field: string;
   page: number;
   pageSize: number;
-  /** UC06 E1: chỉ các CLB Active, mới nhất trước, thay vì mọi CLB đã liệt kê sắp xếp theo tên. */
+  /** UC06 E1: only Active clubs, newest first, instead of every listed club by name. */
   newestActive?: boolean;
 }
 
@@ -92,39 +92,33 @@ export interface PublicDiscoveryRepository {
   getEvent(id: string): Promise<PublicEvent | null>;
 }
 
-// Kiểm tra CLB có hiển thị trên trang khám phá công khai không
 export function isDiscoverableClub(club: PublicClub): boolean {
   return club.state === "Active" || club.state === "Suspended";
 }
 
-// Kiểm tra đợt tuyển có đang hiển thị công khai tại thời điểm hiện tại
 export function isVisibleCampaign(campaign: PublicCampaign, now: Date): boolean {
   return (campaign.state === "Published" || campaign.state === "Accepting Applications")
     && campaign.windowStart <= now && campaign.windowEnd > now;
 }
 
-// Kiểm tra sự kiện công khai sắp diễn ra
 export function isUpcomingPublicEvent(event: PublicEvent, now: Date): boolean {
   return event.state === "Upcoming" && event.audienceScope === "PUBLIC"
     && event.publishedAt !== undefined && event.startAt > now;
 }
 
-// Kiểm tra sự kiện công khai đã kết thúc
 export function isHistoricalPublicEvent(event: PublicEvent, now: Date): boolean {
   return ["Completed", "Report Submitted", "Closed"].includes(event.state)
     && event.audienceScope === "PUBLIC" && event.publishedAt !== undefined
     && event.endAt <= now;
 }
 
-// Kiểm tra sự kiện công khai đang diễn ra
 export function isOngoingPublicEvent(event: PublicEvent, now: Date): boolean {
   return (event.state === "Upcoming" || event.state === "Ongoing")
     && event.audienceScope === "PUBLIC" && event.publishedAt !== undefined
     && event.startAt <= now && event.endAt > now;
 }
 
-// Xác định trạng thái hiển thị của sự kiện công khai cho khách
-/** Trạng thái hiển thị cho khách của một sự kiện đã liệt kê, hoặc null khi sự kiện không công khai. */
+/** The visitor-facing status of a listed event, or null when the event is not public. */
 export function publicEventStatus(event: PublicEvent, now: Date): PublicEventStatus | null {
   if (isUpcomingPublicEvent(event, now)) return "upcoming";
   if (isOngoingPublicEvent(event, now)) return "ongoing";

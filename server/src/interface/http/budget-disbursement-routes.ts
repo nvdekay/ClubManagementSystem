@@ -24,34 +24,28 @@ export const budgetFlowBody = z.object({
   note: z.string().max(500).optional(),
 }).strict();
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid budget request", "validation", result.error.issues);
   return result.data;
 }
 
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
-// Mount các route ngân sách và giải ngân của ICPDP
 export function budgetDisbursementRoutes(deps: BudgetDisbursementRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
-  // Liệt kê ngân sách
   router.get("/admin/budgets", authGuard(guard, false), async (_req, res) => {
     ok(res, await listBudgets(deps.repo, deps.authRepo, actor(res)));
   });
-  // Xem chi tiết một ngân sách
   router.get("/admin/budgets/:id", authGuard(guard, false), async (req, res) => {
     ok(res, await getBudget(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id)));
   });
-  // Ghi nhận một dòng thu/chi (flow) vào ngân sách
   router.post("/admin/budgets/:id/flows", authGuard(guard), async (req, res) => {
     const body = parsed(budgetFlowBody, req.body);
     ok(res, await recordBudgetFlow(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), {

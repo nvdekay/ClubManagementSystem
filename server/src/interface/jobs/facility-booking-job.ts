@@ -1,7 +1,6 @@
 import type { FacilityBookingRepository } from "../../domain/facility-booking.js";
 import { runBookingLifecycleJob } from "../../usecase/facility-booking.js";
 
-// Hẹn giờ chạy job vòng đời booking cơ sở vật chất mỗi phút
 export function startFacilityBookingJob(repo: FacilityBookingRepository, intervalMs = 60000): () => void {
   let running = false;
   async function tick(): Promise<void> {

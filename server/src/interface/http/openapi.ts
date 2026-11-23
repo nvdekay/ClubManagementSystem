@@ -12,7 +12,7 @@ import { createDocument } from "zod-openapi";
 import { policyCreateBody, policySettingsBody } from "./policy-routes.js";
 import { applicationDraftBody } from "./club-application-routes.js";
 import { applicationReviewDecisionBody } from "./club-application-review-routes.js";
-import { eventCancellationDecisionBody, eventReviewDecisionBody } from "./event-proposal-review-routes.js";
+import { eventReviewDecisionBody } from "./event-proposal-review-routes.js";
 import { sponsoredItemOpenApiPaths } from "./openapi-sponsored-items.js";
 import { budgetFlowBody } from "./budget-disbursement-routes.js";
 import { periodicCampaignBody, periodicDecisionBody, periodicMissingBody, periodicOverviewQuery } from "./periodic-report-routes.js";
@@ -88,7 +88,7 @@ const Dashboard = z.object({
   ])),
   icpdpCharts: z.object({
     queues: z.array(z.object({ entityType: z.string(), onTime: z.number().int(), overdue: z.number().int() })),
-    eventsByMonth: z.array(z.object({ month: z.string(), count: z.number().int() })),
+    eventsByMonth: z.array(z.object({ month: z.string(), count: z.number().int(), publicCount: z.number().int(), internalCount: z.number().int() })),
     clubsByField: z.array(z.object({ field: z.string(), count: z.number().int() })),
     clubsByState: z.array(z.object({ state: z.string(), count: z.number().int() })),
     budget: z.object({ periodCode: z.string().optional(), approved: z.number(), disbursed: z.number() }),
@@ -176,7 +176,7 @@ const ApplicationReviewQueueItem = z.object({
   task: ApplicationReviewTask, application: ApplicationRecord,
 });
 const FounderProfile = z.object({ id: z.string(), displayName: z.string(), email: z.string() });
-/** Gợi ý CLB tương tự chỉ mang tính tham khảo (UC07/UC08): không bao giờ chặn việc nộp hay bất kỳ kết quả duyệt nào. */
+/** Advisory similar-club hints (UC07/UC08): never block submitting or any review outcome. */
 const SimilarClubHint = z.object({
   kind: z.enum(["CLUB", "APPLICATION"]), id: z.string(), name: z.string(), field: z.string(),
   state: z.string(), score: z.number().int().min(35).max(100), level: z.enum(["HIGH", "MEDIUM"]),
@@ -202,7 +202,7 @@ const EventProposalSummary = z.object({
   id: z.string(), clubId: z.string(), clubName: z.string(), title: z.string(), objective: z.string().optional(),
   startAt: z.string(), endAt: z.string(), semesterCode: z.string(), venueText: z.string().optional(),
   property: z.object({ id: z.string(), code: z.string(), name: z.string() }).optional(),
-  audienceScope: z.string(), capacity: z.number(), state: z.string(),
+  audienceScope: z.string(), capacity: z.number(), riskCategory: z.string().optional(), state: z.string(),
   conflictResult: z.string().optional(), conflictDetail: z.unknown().optional(),
   approvalConditions: z.array(z.string()), currentRevisionNo: z.number(),
   revisionDeadlineAt: z.string().optional(), requestedBudgetTotal: z.number(),
@@ -308,7 +308,6 @@ const Season = z.enum(["SPRING", "SUMMER", "FALL"]);
 const AnnualTerms = z.array(z.object({ season: Season, periodCodes: z.array(z.string())
   .describe("Period codes parsed into this term; two spellings of one term are merged"), published: z.boolean() }));
 const ClubRef = z.object({ clubId: z.string(), clubName: z.string() });
-// Tạo schema gồm ba mùa SPRING, SUMMER, FALL cùng kiểu phần tử
 function BySeason<T extends z.ZodTypeAny>(item: T) {
   return z.object({ SPRING: item, SUMMER: item, FALL: item });
 }
@@ -527,7 +526,7 @@ const Complaint = z.object({ id: z.string(), clubId: z.string().optional(), club
   withdrawnAt: z.string().optional(), closedAt: z.string().optional() });
 const ComplaintForIcpdp = Complaint.extend({ complainant: z.object({ id: z.string(), displayName: z.string(), email: z.string() }),
   linkedComplaintIds: z.array(z.string()) });
-// D5: những gì CLB nhận được không có trường người khiếu nại.
+// D5: no complainant field exists in what a club receives.
 const ComplaintForClub = z.object({ id: z.string(), clubId: z.string(), eventTitle: z.string().optional(), type: z.string(),
   description: z.string(), evidence: z.array(ComplaintEvidence), state: z.enum(["Forwarded", "Club Responded", "Closed", "Escalated"]),
   forwardNote: z.string(), forwardedAt: z.string(), responseDueAt: z.string().optional(), clubResponse: ComplaintResponse.optional() });
@@ -634,8 +633,7 @@ const FacilityBookingDetail = z.object({ booking: FacilityBooking, property: Pro
   decisions: z.array(bookingDecisionBody.extend({ id: z.string(), taskId: z.string(), actorId: z.string(), at: z.string() })),
   check: BookingCheck.nullable(), obligations: z.array(z.string()) });
 
-// Bọc schema dữ liệu vào envelope response thành công
-// Envelope thành công bao mọi response 2xx — xem interface/http/response.ts.
+// Success envelope every 2xx response is wrapped in — see interface/http/response.ts.
 function envelope<T extends z.ZodTypeAny>(data: T) {
   return z.object({
     statusCode: z.number(),
@@ -1018,6 +1016,28 @@ export const openApiDocument = createDocument({
             content: { "application/json": { schema: ApiError } } },
           "403": { description: "Workspace access denied",
             content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/dashboard/internal-events": {
+      get: {
+        summary: "UC02 ICPDP list of recorded internal (MEMBERS_ONLY) events, by club and semester (BR53)",
+        requestParams: { query: z.object({ clubId: z.string().optional(), semesterCode: z.string().optional() }) },
+        responses: {
+          "200": { description: "Events with registration and check-in totals, plus the filter options" },
+          "400": { description: "Invalid filter", content: { "application/json": { schema: ApiError } } },
+          "403": { description: "ICPDP role required", content: { "application/json": { schema: ApiError } } },
+        },
+      },
+    },
+    "/dashboard/internal-events/{id}": {
+      get: {
+        summary: "UC02 one internal event with its attendance, read-only",
+        requestParams: { path: IdPath },
+        responses: {
+          "200": { description: "Event detail and attendance rows" },
+          "403": { description: "ICPDP role required", content: { "application/json": { schema: ApiError } } },
+          "404": { description: "No recorded internal event with this id", content: { "application/json": { schema: ApiError } } },
         },
       },
     },
@@ -1597,18 +1617,6 @@ export const openApiDocument = createDocument({
           "200": { description: "Decided proposal", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
           "400": { description: "Missing reason, sections, deadline or approved amounts", content: { "application/json": { schema: ApiError } } },
           "409": { description: "Proposal already decided or not claimed by this officer", content: { "application/json": { schema: ApiError } } },
-        },
-      },
-    },
-    "/admin/event-proposals/{id}/cancellation-decision": {
-      post: {
-        summary: "Approve or reject a club's request to cancel an approved event (requires CSRF token)",
-        requestParams: { path: IdPath },
-        requestBody: { content: { "application/json": { schema: eventCancellationDecisionBody } } },
-        responses: {
-          "200": { description: "Decided cancellation request", content: { "application/json": { schema: envelope(EventProposalDetail) } } },
-          "400": { description: "Invalid decision body", content: { "application/json": { schema: ApiError } } },
-          "409": { description: "No pending cancellation request for this event", content: { "application/json": { schema: ApiError } } },
         },
       },
     },

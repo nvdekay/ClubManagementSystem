@@ -15,7 +15,6 @@ import { useClubPeriodicReports, useChangePeriodicReport } from "@/hooks/useClub
 import { useFieldValidation } from "@/hooks/useFieldValidation";
 import { ClubPeriodicReportEditor } from "./ClubPeriodicReportEditor";
 
-// Trang danh sách và tạo báo cáo định kỳ của CLB theo kỳ
 export function ClubPeriodicReportsPage() {
   const { clubId = "" } = useParams();
   const { t, i18n } = useTranslation();
@@ -26,7 +25,6 @@ export function ClubPeriodicReportsPage() {
   const [period, setPeriod] = useState("");
   const field = useFieldValidation({ period: period ? null : t("common.chooseRequired") });
 
-  // Tạo báo cáo định kỳ mới cho kỳ đã chọn
   async function create() {
     if (!field.touchAll() || !auth.data) return;
     try {

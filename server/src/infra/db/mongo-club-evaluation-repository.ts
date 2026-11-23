@@ -2,9 +2,7 @@ import { Types } from "mongoose";
 import type { ClubEvaluationRepository } from "../../domain/club-evaluation.js";
 import { mongoEvaluationRepository } from "./mongo-evaluation-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
-// Repository cho CLB xem kết quả đánh giá đã công bố
 export function mongoClubEvaluationRepository(): ClubEvaluationRepository {
-  // Liệt kê các đánh giá Published của CLB
   return { async listPublished(clubId) {
     const docs = await m.evaluations!.find({ clubId: new Types.ObjectId(clubId), state: "Published" }).sort({ publishedAt: -1, revisionNo: -1 }).lean();
     const reader = mongoEvaluationRepository();

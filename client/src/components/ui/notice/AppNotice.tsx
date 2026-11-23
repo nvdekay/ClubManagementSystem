@@ -4,14 +4,13 @@ import { cn } from "@/utils/cn";
 interface AppNoticeProps {
   tone?: "info" | "success" | "warning" | "danger" | "neutral";
   title?: string;
-  /** "alert" cho lỗi người dùng cần thấy ngay, "status" cho cập nhật nhẹ nhàng. */
+  /** "alert" for errors the user must notice now, "status" for polite updates. */
   role?: "alert" | "status";
   className?: string;
   children?: ReactNode;
 }
 
-// Khung thông báo theo tone
-/** Thông báo phẳng nằm trong dòng (lỗi, trạng thái rỗng, gợi ý), có vạch màu bên trái thay vì dùng thẻ. */
+/** Flat inline message (error, empty state, hint) with a coloured left rule instead of a card. */
 export function AppNotice({ tone = "neutral", title, role, className, children }: AppNoticeProps) {
   return (
     <div role={role} className={cn("rounded-xl border-l-4 px-4 py-3 text-sm", {

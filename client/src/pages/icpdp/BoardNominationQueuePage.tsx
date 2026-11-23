@@ -10,7 +10,6 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useBoardNominationQueue } from "@/hooks/useBoardNominations";
 
-// Hàng đợi ICPDP các đề cử ban chủ nhiệm cần xác nhận
 export function BoardNominationQueuePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();

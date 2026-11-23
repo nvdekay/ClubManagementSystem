@@ -12,17 +12,14 @@ const catalogue = new Map<string, (typeof EVALUATION_DIMENSIONS)[number]>(
   EVALUATION_DIMENSIONS.map((dimension) => [dimension.code, dimension]));
 const order = new Map(EVALUATION_DIMENSIONS.map((dimension, index) => [dimension.code as string, index]));
 
-// Tính tổng trọng số các chiều đánh giá
 function total(settings: SchemeSettings): number {
   return settings.dimensions.reduce((sum, dimension) => sum + dimension.weight, 0);
 }
 
-// Kiểm tra lỗi trùng khóa duy nhất (mã 11000)
 function duplicate(error: unknown): boolean {
   return error instanceof mongoose.mongo.MongoServerError && error.code === 11000;
 }
 
-// Repository scheme đánh giá CLB theo kỳ (UC41)
 export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
   const schemes = ucmsModels.evaluationSchemes!;
   const dimensions = ucmsModels.evaluationDimensions!;
@@ -73,22 +70,18 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
   }
 
   return {
-    // Liệt kê các scheme theo kỳ và phiên bản mới nhất
     async list() {
       const docs = await schemes.find().sort({ periodCode: -1, version: -1 }).select("_id").lean();
       const loaded = await load(docs.map((doc) => doc._id as Types.ObjectId));
       const byId = new Map(loaded.map((scheme) => [scheme.id, scheme]));
       return docs.map((doc) => byId.get(String(doc._id))!);
     },
-    // Lấy các kỳ đã có bản đánh giá
     async evaluatedPeriods() {
       return (await ucmsModels.evaluations!.distinct("periodCode")).map(String);
     },
-    // Tìm scheme theo id
     async find(id) {
       return (await load([new Types.ObjectId(id)]))[0] ?? null;
     },
-    // Tạo scheme Draft với số phiên bản kế tiếp của kỳ
     async createDraft(periodCode, settings, actorId, now) {
       for (let attempt = 0; attempt < 5; attempt += 1) {
         const latest = await schemes.findOne({ periodCode }).sort({ version: -1 }).select("version").lean();
@@ -105,12 +98,11 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
           });
           return (await load([id]))[0]!;
         } catch (error) {
-          if (!duplicate(error)) throw error; // cán bộ khác đã lấy số phiên bản này: thử lại
+          if (!duplicate(error)) throw error; // another officer took this version number: retry
         }
       }
       throw new DomainError("could not allocate a scheme version; retry", "conflict");
     },
-    // Cập nhật scheme đang Draft
     async updateDraft(id, settings, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const doc = await draft(id, session);
@@ -122,7 +114,6 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
       });
       return (await load([new Types.ObjectId(id)]))[0]!;
     },
-    // Kích hoạt scheme Draft, chặn nếu kỳ đã có đánh giá
     async activate(id, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const doc = await draft(id, session);
@@ -140,7 +131,6 @@ export function mongoEvaluationSchemeRepository(): EvaluationSchemeRepository {
       });
       return (await load([new Types.ObjectId(id)]))[0]!;
     },
-    // Xóa scheme đang Draft
     async deleteDraft(id, actorId, now) {
       await mongoose.connection.transaction(async (session) => {
         const doc = await draft(id, session);

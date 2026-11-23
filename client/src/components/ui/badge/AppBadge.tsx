@@ -9,8 +9,7 @@ interface AppBadgeProps {
   children: ReactNode;
 }
 
-// Badge nhỏ có màu theo tone
-/** Viên thuốc trạng thái nhỏ; chữ truyền đạt ý nghĩa, tone chỉ làm rõ thêm. */
+/** Small status pill; the text carries the meaning, tone only reinforces it. */
 export function AppBadge({ tone = "neutral", className, children }: AppBadgeProps) {
   return (
     <span className={cn("inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap", {

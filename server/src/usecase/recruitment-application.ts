@@ -13,7 +13,6 @@ const allowedMimeTypes = new Set([
 ]);
 const maxFileBytes = 10 * 1024 * 1024;
 
-// Kiểm actor đăng nhập, chưa bị khóa và trả id chủ đơn
 function owner(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -25,19 +24,16 @@ function owner(actor: AccessActor | null): string {
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Kiểm định dạng ObjectId của một định danh
 function validId(value: string, field: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${field}`, "validation");
   return value;
 }
 
-// Kiểm định dạng UUID của file đính kèm
 function validAttachmentId(value: string): string {
   if (!uuid.test(value)) throw new DomainError("invalid attachment id", "validation");
   return value;
 }
 
-// Kiểm nội dung file khớp magic bytes của loại MIME khai báo
 function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
   if (mimeType === "application/pdf") return bytes.subarray(0, 5).toString() === "%PDF-";
   if (mimeType === "image/png") return bytes.subarray(0, 8).equals(
@@ -51,20 +47,17 @@ function fileSignatureMatches(mimeType: string, bytes: Buffer): boolean {
   return false;
 }
 
-// Đảm bảo đơn ứng tuyển tồn tại, không có thì báo not_found
 function ownedApplication(application: RecruitmentApplication | null): RecruitmentApplication {
   if (!application) throw new DomainError("recruitment application not found", "not_found");
   return application;
 }
 
-// Chỉ cho sửa đơn ứng tuyển ở trạng thái Draft
 function editable(application: RecruitmentApplication): void {
   if (application.state !== "Draft") {
     throw new DomainError("recruitment application is no longer editable", "conflict");
   }
 }
 
-// Lấy đợt tuyển đang mở, không có hoặc đã đóng thì báo not_found
 async function openCampaign(repo: RecruitmentApplicationRepository, campaignId: string, now: Date) {
   const id = validId(campaignId, "campaign id");
   const campaign = await repo.campaign(id, now);
@@ -74,7 +67,6 @@ async function openCampaign(repo: RecruitmentApplicationRepository, campaignId: 
   return campaign;
 }
 
-// Kiểm sinh viên đủ điều kiện ứng tuyển vào CLB
 async function eligible(repo: RecruitmentApplicationRepository, userId: string, clubId: string) {
   const result = await repo.eligibility(userId, clubId);
   if (!result.userActive) throw new DomainError("student account is not active", "forbidden");
@@ -82,7 +74,6 @@ async function eligible(repo: RecruitmentApplicationRepository, userId: string, 
   if (result.activeMembership) throw new DomainError("current club members, Active or Inactive, cannot apply to recruitment", "conflict");
 }
 
-// Kiểm và chuẩn hóa các câu trả lời trong đơn ứng tuyển
 function normalizedAnswers(answers: Record<string, RecruitmentAnswer>): Record<string, RecruitmentAnswer> {
   const entries = Object.entries(answers);
   if (entries.length > 30) throw new DomainError("too many application answers", "validation");
@@ -99,28 +90,24 @@ function normalizedAnswers(answers: Record<string, RecruitmentAnswer>): Record<s
   return result;
 }
 
-// Lấy form ứng tuyển của đợt tuyển đang mở
 export async function publicRecruitmentApplicationForm(
   repo: RecruitmentApplicationRepository, campaignId: string, now: Date,
 ) {
   return openCampaign(repo, campaignId, now);
 }
 
-// Sinh viên xem các đơn ứng tuyển của mình
 export async function listMyRecruitmentApplications(
   repo: RecruitmentApplicationRepository, actor: AccessActor | null,
 ) {
   return repo.listMine(owner(actor));
 }
 
-// Sinh viên xem chi tiết một đơn ứng tuyển của mình
 export async function getMyRecruitmentApplication(
   repo: RecruitmentApplicationRepository, actor: AccessActor | null, applicationId: string,
 ) {
   return ownedApplication(await repo.findOwned(validId(applicationId, "application id"), owner(actor)));
 }
 
-// Sinh viên xem đơn của mình trong một đợt tuyển
 export async function getMyCampaignApplication(
   repo: RecruitmentApplicationRepository, actor: AccessActor | null, campaignId: string,
 ) {
@@ -128,7 +115,6 @@ export async function getMyCampaignApplication(
   return repo.findMineForCampaign(campaign, owner(actor));
 }
 
-// Sinh viên tạo bản nháp đơn ứng tuyển cho một vị trí của đợt tuyển
 export async function createRecruitmentApplicationDraft(
   repo: RecruitmentApplicationRepository, actor: AccessActor | null,
   campaignId: string, position: string, now: Date,
@@ -144,7 +130,6 @@ export async function createRecruitmentApplicationDraft(
   return repo.createDraft({ campaign, userId, position: normalizedPosition, now });
 }
 
-// Sinh viên lưu vị trí và câu trả lời của bản nháp đơn ứng tuyển
 export async function saveRecruitmentApplicationDraft(
   repo: RecruitmentApplicationRepository, actor: AccessActor | null, applicationId: string,
   input: { position: string; answers: Record<string, RecruitmentAnswer> }, now: Date,
@@ -163,7 +148,6 @@ export async function saveRecruitmentApplicationDraft(
     answers: normalizedAnswers(input.answers), now });
 }
 
-// Sinh viên tải file đính kèm cho đơn ứng tuyển sau khi kiểm loại và nội dung
 export async function uploadRecruitmentAttachment(
   repo: RecruitmentApplicationRepository, storage: RecruitmentAttachmentStorage | null,
   actor: AccessActor | null, applicationId: string, fieldKey: string, fileName: string,
@@ -188,7 +172,6 @@ export async function uploadRecruitmentAttachment(
   return repo.addAttachment({ applicationId: application.id, userId, attachment });
 }
 
-// Cấp URL tạm để sinh viên xem file đính kèm của đơn
 export async function recruitmentAttachmentAccess(
   repo: RecruitmentApplicationRepository, storage: RecruitmentAttachmentStorage | null,
   actor: AccessActor | null, applicationId: string, attachmentId: string,
@@ -200,7 +183,6 @@ export async function recruitmentAttachmentAccess(
   return { url: await storage.accessUrl(attachment.assetId), fileName: attachment.fileName };
 }
 
-// Sinh viên nộp đơn ứng tuyển sau khi kiểm đủ câu trả lời
 export async function submitRecruitmentApplication(
   repo: RecruitmentApplicationRepository, actor: AccessActor | null, applicationId: string,
   now: Date,
@@ -215,7 +197,6 @@ export async function submitRecruitmentApplication(
   return repo.submit(application.id, userId, now);
 }
 
-// Sinh viên rút đơn ứng tuyển chưa có quyết định
 export async function withdrawRecruitmentApplication(
   repo: RecruitmentApplicationRepository, actor: AccessActor | null, applicationId: string,
   now: Date,

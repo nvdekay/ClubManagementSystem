@@ -8,14 +8,13 @@ import { googleLoginUrl } from "@/services/auth";
 import { CAMPUS_IMAGE_URL } from "@/utils/campusImage";
 import { cn } from "@/utils/cn";
 
-// Chọn trang đích cho khách, chỉ giữ returnTo nếu là trang công khai
-/** UC06: khách chỉ được vào các trang khám phá; đích nào khác sẽ quay về trang chủ. */
+/** UC06: only the discovery pages are open to guests; any other target falls back to the home page. */
 function guestTarget(returnTo: string): string {
   const path = returnTo.split(/[?#]/)[0]!;
   return path === "/" || /^\/(clubs|events)(\/|$)/.test(path) ? returnTo : "/";
 }
 
-// Ảnh cơ sở Hoà Lạc của Trường Đại học FPT, do website của trường cung cấp.
+// FPT University Hoa Lac campus, served by the university website.
 
 interface LoginPageProps {
   authError: string | null;
@@ -24,14 +23,13 @@ interface LoginPageProps {
   returnTo: string;
 }
 
-// Trang đăng nhập Google, hiện lỗi hoặc lý do bị khóa nếu có
 export function LoginPage({ authError, isPending, lockedReason, returnTo }: LoginPageProps) {
   const { t } = useTranslation();
   const [loginBusy, setLoginBusy] = useState(false);
 
   return (
     <main className="flex min-h-full flex-wrap content-start bg-auth-page-bg-app min-[840px]:content-stretch font-auth-body text-auth-page-text-app">
-      {/* Ảnh cơ sở phủ kín nửa trái, sát mép. */}
+      {/* The campus photo fills the whole left half, edge to edge. */}
       <section className="relative flex min-h-70 flex-[1_1_420px] flex-col justify-between gap-12 overflow-hidden bg-primary-soft-app p-[clamp(24px,5vw,64px)]">
         <img
           src={CAMPUS_IMAGE_URL}
@@ -41,7 +39,7 @@ export function LoginPage({ authError, isPending, lockedReason, returnTo }: Logi
           draggable={false}
           className="pointer-events-none absolute inset-0 size-full object-cover object-[78%_center]"
         />
-        {/* Làm tối phần dưới ảnh để chữ thương hiệu màu trắng vẫn đọc rõ ở cả hai theme. */}
+        {/* Darkens the bottom of the photo so the white brand text stays readable in both themes. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-black/75 via-black/35 to-transparent" />
         <div className="relative self-start">
           <UniversityLogo alt={t("auth.schoolLogo")} priority className="w-66 sm:w-76" />

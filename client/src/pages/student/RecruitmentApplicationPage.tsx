@@ -23,7 +23,6 @@ import { cn } from "@/utils/cn";
 import { useConfirm } from "@/hooks/useConfirm";
 import { isHttpUrl } from "@/utils/validation";
 
-// Nhãn đã dịch của trạng thái hồ sơ ứng tuyển
 function stateLabel(state: RecruitmentApplication["state"], t: TFunction): string {
   switch (state) {
     case "Draft": return t("recruitmentApplications.stateDraft");
@@ -39,7 +38,6 @@ function stateLabel(state: RecruitmentApplication["state"], t: TFunction): strin
   }
 }
 
-// Màu badge theo trạng thái hồ sơ ứng tuyển
 function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
   if (state === "Accepted" || state === "Onboarded") return "success";
   if (state === "Rejected" || state === "Declined") return "danger";
@@ -48,12 +46,10 @@ function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
   return "info";
 }
 
-// Kiểm tra giá trị có phải hồ sơ ứng tuyển hay không
 function isApplication(value: unknown): value is RecruitmentApplication {
   return Boolean(value && typeof value === "object" && "id" in value && "attachments" in value);
 }
 
-// Trang sinh viên điền, lưu nháp, nộp và rút hồ sơ ứng tuyển vào CLB
 export function RecruitmentApplicationPage() {
   const { campaignId } = useParams();
   const { t, i18n } = useTranslation();
@@ -67,11 +63,11 @@ export function RecruitmentApplicationPage() {
   const [createdApplication, setCreatedApplication] = useState<RecruitmentApplication | null>(null);
   const [notice, setNotice] = useState("");
   const [pageError, setPageError] = useState("");
-  // Nhấp đúp sẽ chạy hai hộp xác nhận và hai lần lưu nháp đồng thời (lỗi 409).
+  // A double click would run two confirm prompts and two concurrent draft saves (409).
   const submitting = useRef(false);
   const campaign = campaignQuery.data;
   const application = applicationQuery.data ?? createdApplication;
-  // UC15: khi CLB bị tạm ngưng, form vẫn xem được nhưng không thể tạo hay nộp gì.
+  // UC15: while the club is suspended the form stays readable but nothing can be created or submitted.
   const paused = campaignQuery.data?.clubSuspended === true;
   const editable = (!application || application.state === "Draft") && !paused;
   const canWithdraw = Boolean(application && ["Submitted", "Screening", "Shortlisted"].includes(application.state));
@@ -88,11 +84,10 @@ export function RecruitmentApplicationPage() {
       return [field.key, field.required ? t(field.type === "select" || field.type === "multiselect"
         ? "common.chooseRequired" : "common.fieldRequired") : null];
     }
-    // Định dạng link chỉ được kiểm tra ở câu hỏi bắt buộc; câu trả lời tuỳ chọn để server kiểm tra.
+    // Link format is only checked on required questions; optional answers are left to the server.
     return [field.key, field.required && field.type === "url" && typeof answer === "string" && !isHttpUrl(answer) ? t("common.invalidUrl") : null];
   })));
 
-  // Cập nhật câu trả lời của một câu hỏi trong form
   function changeAnswer(key: string, value: RecruitmentAnswer) {
     if (!campaign) return;
     setFormState((current) => ({ campaignId: campaign.id,
@@ -101,7 +96,6 @@ export function RecruitmentApplicationPage() {
     setNotice("");
   }
 
-  // Tạo hồ sơ nháp nếu chưa có và trả mã hồ sơ
   async function ensureApplication(): Promise<string | null> {
     if (!auth.data || !campaign) return null;
     if (application) return application.id;
@@ -117,7 +111,6 @@ export function RecruitmentApplicationPage() {
     }
   }
 
-  // Lưu bản nháp hồ sơ ứng tuyển
   async function saveDraft(): Promise<string | null> {
     if (!auth.data || !campaign) return null;
     setPageError("");
@@ -136,7 +129,6 @@ export function RecruitmentApplicationPage() {
     }
   }
 
-  // Tải tệp đính kèm lên cho một câu hỏi của form
   async function upload(fieldKey: string, file: File | undefined) {
     if (!auth.data || !campaign || !file) return;
     const field = campaign.formSchema.find((item) => item.key === fieldKey);
@@ -155,12 +147,11 @@ export function RecruitmentApplicationPage() {
     }
   }
 
-  // Xác nhận rồi nộp hồ sơ ứng tuyển
   async function submit() {
     if (!auth.data || !campaign || submitting.current) return;
-    // Kiểm tra câu trả lời trước khi hỏi xác nhận, để không tạo gì khi form chưa đầy đủ.
+    // Check answers before asking to confirm, so nothing is created for an incomplete form.
     if (!validation.touchAll()) {
-      // Phần tóm tắt hữu ích với form dài, khi câu hỏi bị đánh dấu có thể nằm ngoài màn hình.
+      // The summary helps on long forms where a flagged question may be off screen.
       const missing = campaign.formSchema.filter((field) => field.required && (field.type === "file"
         ? !attachedKeys.has(field.key)
         : !([answers[field.key] ?? ""].flat().some((value) => value.trim())))).map((field) => field.label);
@@ -185,7 +176,6 @@ export function RecruitmentApplicationPage() {
     }
   }
 
-  // Xác nhận rồi rút hồ sơ ứng tuyển
   async function withdraw() {
     if (!auth.data || !application || !(await askConfirm(t("recruitmentApplications.withdrawConfirm")))) return;
     setPageError("");
@@ -199,7 +189,6 @@ export function RecruitmentApplicationPage() {
     }
   }
 
-  // Tải tệp đính kèm của hồ sơ qua URL có chữ ký
   async function download(attachmentId: string) {
     if (!application) return;
     try {
@@ -221,7 +210,7 @@ export function RecruitmentApplicationPage() {
     <Link className="inline-block font-medium text-primary-app hover:underline" to={`/login?returnTo=${encodeURIComponent(location.pathname)}`}>
       {t("recruitmentApplications.signInLink")}</Link>
   </AppNotice>;
-  // 404 nghĩa là chiến dịch không còn công khai (đã đóng hoặc hoàn tất): thử lại cũng không khắc phục được.
+  // 404 means the campaign is no longer public (closed or completed): not something a retry fixes.
   const campaignGone = (campaignQuery.error as { status?: number } | null)?.status === 404;
   if (campaignQuery.isError || !campaign) return <AppNotice tone="danger" className="max-w-3xl">
     <p role="alert" className="font-semibold text-danger-app">{campaignGone || !campaignQuery.error
@@ -236,7 +225,7 @@ export function RecruitmentApplicationPage() {
   </AppNotice>;
 
   const appAttachments = application?.attachments ?? [];
-  // <select> gốc: nằm trong <fieldset> bị disabled và nhận thêm thuộc tính kiểm tra hợp lệ; có style giống nút kích hoạt của AppSelect.
+  // Native <select>: it lives in a disabled <fieldset> and spreads the validation control; styled like AppSelect's trigger.
   const selectClass = "mt-1.5 block h-11 w-full rounded-lg border border-border-app bg-bg-app px-3 text-sm font-normal text-text-app shadow-xs transition-colors hover:bg-surface-app focus-visible:border-ring-app focus-visible:ring-3 focus-visible:ring-ring-app/20 focus-visible:outline-none aria-[invalid=true]:border-danger-app sm:h-9";
   return <>
     <PageHeader title={campaign.title} back={{ to: `/clubs/${campaign.clubId}`, label: t("recruitmentApplications.back") }}

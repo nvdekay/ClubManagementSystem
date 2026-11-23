@@ -50,21 +50,18 @@ export const violationStepBody = z.discriminatedUnion("type", [
   z.object({ type: z.literal("resolve"), note: z.string().max(1_000).optional() }).strict(),
 ]);
 
-// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid violation request", "validation", result.error.issues);
   return result.data;
 }
 
-// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
-// Chuyển body bước xử lý vi phạm sang ViolationStep
 function step(body: z.infer<typeof violationStepBody>): ViolationStep {
   switch (body.type) {
     case "requestResponse": return { ...body, dueAt: body.dueAt ? new Date(body.dueAt) : undefined };
@@ -73,28 +70,22 @@ function step(body: z.infer<typeof violationStepBody>): ViolationStep {
   }
 }
 
-// Mount các route ICPDP quản lý vi phạm của CLB
 export function violationRoutes(deps: ViolationRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
-  // ICPDP liệt kê các vi phạm
   router.get("/admin/violations", authGuard(guard, false), async (_req, res) => {
     ok(res, await listViolations(deps.repo, deps.authRepo, actor(res)));
   });
-  // Lấy các nguồn dữ liệu có thể dẫn tới vi phạm của CLB
   router.get("/admin/violations/sources/:clubId", authGuard(guard, false), async (req, res) => {
     ok(res, await getViolationSources(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.clubId)));
   });
-  // Xem chi tiết một vi phạm
   router.get("/admin/violations/:id", authGuard(guard, false), async (req, res) => {
     ok(res, await getViolation(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), new Date()));
   });
-  // Mở hồ sơ vi phạm mới
   router.post("/admin/violations", authGuard(guard), async (req, res) => {
     ok(res, await openViolation(deps.repo, deps.authRepo, actor(res), parsed(violationOpenBody, req.body), new Date()), 201);
   });
-  // Áp dụng một bước xử lý cho hồ sơ vi phạm
   router.post("/admin/violations/:id/steps", authGuard(guard), async (req, res) => {
     ok(res, await applyViolationCaseStep(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id),
       step(parsed(violationStepBody, req.body)), new Date()));

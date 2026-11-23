@@ -1,9 +1,9 @@
-// Báo cáo định kỳ Summer 2026 (UC38/UC39) cho mọi CLB Active chưa có báo cáo, thêm lên trên một
-// database demo có sẵn. Cách dùng: npm run seed:periodic-reports -- --officer=<email> [--reserve=<email,email>]
-// Chỉ thêm dữ liệu và chạy lại an toàn: CLB đã có báo cáo Summer 2026 thì để nguyên.
-// Phía CLB được ghi bằng cùng các thao tác như mongo-club-periodic-report-repository (create, save,
-// submit) vì các CLB này không có leader nào qua được kiểm tra quyền của nó; quyết định của officer đi
-// qua usecase UC39 thật. Cả hai chạy theo đồng hồ quá khứ. Không có thông báo nào được xếp hàng cho các lần nộp.
+// Summer 2026 periodic reports (UC38/UC39) for every Active club that has none yet, added on top of an
+// existing demo database. Usage: npm run seed:periodic-reports -- --officer=<email> [--reserve=<email,email>]
+// Only adds data and is safe to re-run: a club that already has a Summer 2026 report is left alone.
+// The club side is written with the same operations as mongo-club-periodic-report-repository (create, save,
+// submit) because these clubs have no leader who could pass its access check; the officer decision goes
+// through the real UC39 use case. Both run on a past clock. No notification is queued for the submissions.
 import { randomUUID } from "node:crypto";
 import mongoose, { Types, type ClientSession } from "mongoose";
 import { normalizePeriodicDraft, type PeriodicDraftInput } from "../../domain/club-periodic-report.js";
@@ -31,9 +31,9 @@ if (!OFFICER_EMAIL.includes("@")) {
   console.error("usage: npm run seed:periodic-reports -- --officer=<ICPDP officer email> [--reserve=<email,email>]");
   process.exit(1);
 }
-/** Tài khoản của người thật: không bao giờ được ghi là người nộp của một báo cáo seed. */
+/** Accounts of real people: never recorded as the submitter of a seeded report. */
 const REAL_ACCOUNTS = [OFFICER_EMAIL, ...(args.reserve ?? "").split(",").filter(Boolean)];
-/** Để không có báo cáo nhằm demo được UC39 A1/E1 (quá hạn, thiếu bản ghi). */
+/** Left without a report so UC39 A1/E1 (overdue, record missing) stays demoable. */
 const LEFT_OUT = ["FTTC", "FUSW"];
 const DAY = 24 * 3_600_000;
 
@@ -70,7 +70,7 @@ const observations = [
   "Số lượt tham gia tốt so với quy mô CLB; ghi nhận cho kỳ đánh giá.",
 ];
 
-// ── Nội dung: tên và lĩnh vực CLB thật từ database, thay đổi theo từng CLB ──
+// ── Content: real club names and fields from the database, varied per club ──
 interface Activity { title: string; description: string }
 const fieldActivities: Record<string, Activity[]> = {
   "Công nghệ": [
@@ -105,7 +105,7 @@ const fieldActivities: Record<string, Activity[]> = {
     { title: "Hiến máu nhân đạo mùa hè", description: "Phối hợp Viện Huyết học tổ chức điểm hiến máu tại sảnh tòa Alpha." },
   ],
 };
-/** Hoạt động riêng cho các CLB mà tên PDP cho biết họ làm gì. */
+/** Club-specific activities for the clubs whose PDP name says what they do. */
 const clubActivities: Record<string, Activity[]> = {
   Blazie: [
     { title: "Workshop Hip-hop cơ bản", description: "4 buổi workshop vũ đạo Hip-hop cho sinh viên chưa từng nhảy, mỗi buổi 2 giờ." },
@@ -210,8 +210,7 @@ const middles = ["Văn", "Thị", "Minh", "Đức", "Thu", "Ngọc", "Quang", "T
 const givens = ["An", "Bình", "Châu", "Dũng", "Giang", "Hà", "Hiếu", "Hùng", "Khoa", "Linh", "Long", "Mai", "Nam", "Ngân",
   "Phúc", "Quân", "Sơn", "Tâm", "Thảo", "Trang", "Tú", "Vy", "Yến", "Huyền", "Đạt", "Nhung"];
 
-// Bộ sinh số ngẫu nhiên có seed cố định theo chuỗi
-/** Ngẫu nhiên xác định theo từng CLB, để chạy lại cho ra cùng nội dung. */
+/** Deterministic per-club randomness, so a re-run would produce the same content. */
 function rng(seed: string): () => number {
   let h = 2166136261;
   for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
@@ -221,40 +220,32 @@ function rng(seed: string): () => number {
     return ((h ^= h >>> 16) >>> 0) / 4294967296;
   };
 }
-// Chọn ngẫu nhiên một phần tử trong danh sách
 function pick<T>(r: () => number, list: readonly T[]): T {
   return list[Math.floor(r() * list.length)]!;
 }
-// Sinh số nguyên ngẫu nhiên trong khoảng [min, max]
 function between(r: () => number, min: number, max: number): number {
   return min + Math.floor(r() * (max - min + 1));
 }
-// Sinh id giả của tệp Google Drive
 function driveId(r: () => number): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
   return `1${Array.from({ length: 32 }, () => pick(r, [...chars])).join("")}`;
 }
-// Định dạng số tiền VNĐ
 function vnd(amount: number): string {
   return `${amount.toLocaleString("vi-VN")} đồng`;
 }
-// Sinh thời điểm ngẫu nhiên trong ngày cho trước
 function at(day: string, r: () => number): Date {
   return new Date(`${day}T${String(between(r, 1, 11)).padStart(2, "0")}:${String(between(r, 0, 59)).padStart(2, "0")}:00Z`);
 }
-// Cộng thêm số ngày và vài giờ ngẫu nhiên vào ngày
 function addDays(date: Date, days: number, r: () => number): Date {
   return new Date(date.getTime() + days * DAY + between(r, 0, 5) * 3_600_000);
 }
 
 interface ClubInfo { id: Types.ObjectId; code: string; name: string; field: string; pdpUrl?: string }
 
-// Tên hiển thị của CLB
 function label(club: ClubInfo): string {
   return club.name === club.code ? `CLB ${club.name}` : club.name;
 }
 
-// Sinh danh sách thành viên nhập tay cho báo cáo
 function manualMembers(club: ClubInfo, r: () => number, index: number): PeriodicMemberEntry[] {
   const count = between(r, 8, 14);
   const used = new Set<string>();
@@ -263,7 +254,7 @@ function manualMembers(club: ClubInfo, r: () => number, index: number): Periodic
     const fullName = `${pick(r, surnames)} ${pick(r, middles)} ${pick(r, givens)}`;
     if (used.has(fullName)) continue;
     used.add(fullName);
-    // 19xxxx: mã sinh viên K19, dải mà không tài khoản seed nào dùng.
+    // 19xxxx: K19 student numbers, a range no seeded account uses.
     const studentNo = 190_000 + index * 100 + members.length + 1;
     members.push({ fullName, studentCode: `HE${studentNo}`, email: studentEmail(fullName, studentNo),
       activityScore: Math.round((6 + r() * 4) * 10) / 10, source: "MANUAL" });
@@ -271,7 +262,6 @@ function manualMembers(club: ClubInfo, r: () => number, index: number): Periodic
   return members.sort((a, b) => a.fullName.localeCompare(b.fullName, "vi"));
 }
 
-// Sinh danh sách sự kiện nhập tay cho báo cáo
 function manualEvents(club: ClubInfo, r: () => number): PeriodicEventEntry[] {
   const pool = [...(clubActivities[club.code] ?? []), ...(fieldActivities[club.field] ?? fieldActivities["Kỹ năng"]!)];
   const count = between(r, 2, 3);
@@ -284,7 +274,6 @@ function manualEvents(club: ClubInfo, r: () => number): PeriodicEventEntry[] {
   }));
 }
 
-// Dựng nội dung nháp báo cáo định kỳ của CLB
 function content(club: ClubInfo, r: () => number, members: PeriodicMemberEntry[], events: PeriodicEventEntry[],
   finance: { approvedTotal: number; disbursedTotal: number }): PeriodicDraftInput {
   const total = events.reduce((sum, event) => sum + event.participantCount, 0);
@@ -317,15 +306,13 @@ function content(club: ClubInfo, r: () => number, members: PeriodicMemberEntry[]
   };
 }
 
-// Ghi audit log cho báo cáo định kỳ
-// ── Ghi: cùng các thao tác như mongo-club-periodic-report-repository ──
+// ── Writes: the same operations as mongo-club-periodic-report-repository ──
 async function audit(session: ClientSession, id: Types.ObjectId, action: string, userId: Types.ObjectId | undefined,
   after: unknown, now: Date) {
   await m.auditLogs!.create([{ entityType: "PeriodicReport", entityId: id, action, ...(userId ? { actorId: userId } : {}),
     actorRole: "Club Leader", after, correlationId: randomUUID(), at: now }], { session });
 }
 
-// Tạo báo cáo định kỳ Draft kèm dữ liệu hệ thống
 async function createDraft(session: ClientSession, club: ClubInfo, dueAt: Date, user: Types.ObjectId | undefined, now: Date) {
   const id = new Types.ObjectId();
   const systemData = await periodicSystemData(club.id, PERIOD, session);
@@ -335,7 +322,6 @@ async function createDraft(session: ClientSession, club: ClubInfo, dueAt: Date, 
   return id;
 }
 
-// Lưu nội dung nháp của báo cáo
 async function saveDraft(session: ClientSession, id: Types.ObjectId, raw: PeriodicDraftInput, user: Types.ObjectId | undefined, now: Date) {
   const input = normalizePeriodicDraft(raw);
   const report = await m.periodicReports!.findById(id).session(session).lean();
@@ -350,7 +336,6 @@ async function saveDraft(session: ClientSession, id: Types.ObjectId, raw: Period
   await audit(session, id, "PERIODIC_REPORT_DRAFT_SAVED", user, { revision: revision + 1 }, now);
 }
 
-// Nộp báo cáo định kỳ kèm số liệu tài chính
 async function submit(session: ClientSession, id: Types.ObjectId, club: ClubInfo, user: Types.ObjectId | undefined,
   finance: { budgets: number; approvedTotal: number; disbursedTotal: number }, now: Date) {
   const report = (await m.periodicReports!.findById(id).session(session).lean())!;
@@ -360,7 +345,7 @@ async function submit(session: ClientSession, id: Types.ObjectId, club: ClubInfo
     events: clubData.events ?? [], achievements: clubData.achievements ?? [], customAnswers: clubData.customAnswers ?? [] }, true);
   const [liveFigures, systemData] = await Promise.all([
     periodicLiveFigures(club.id, PERIOD, session), periodicSystemData(club.id, PERIOD, session)]);
-  // ponytail: tài chính là con số CLB tự khai, không tính từ eventBudgets (chưa có ngân sách Summer 2026).
+  // ponytail: finance is the club's declared figure, not computed from eventBudgets (no Summer 2026 budgets exist).
   const preloadedFigures = { ...liveFigures, finance, capturedAt: now, systemData,
     clubData: { members: input.members, events: input.events, achievements: input.achievements, customAnswers: input.customAnswers } };
   const versionNo = Number(report.versionNo ?? 1) + (report.submittedAt ? 1 : 0);
@@ -403,7 +388,7 @@ try {
     const r = rng(`${PERIOD}:${club.code}`);
     const special = specials[club.code] ?? { outcome: "Accept" };
 
-    // Thành viên và sự kiện: danh sách của chính hệ thống khi CLB có (như editor điền sẵn), không thì nhập tay.
+    // Members and events: the system's own lists when the club has them (as the editor pre-fills), typed in otherwise.
     const system = await periodicSystemData(club.id, PERIOD);
     const submitter = system.members.find((member) => member.userId && !reserved.has(member.userId));
     const user = submitter?.userId ? new Types.ObjectId(submitter.userId) : undefined;
@@ -420,7 +405,7 @@ try {
     const finance = { budgets, approvedTotal, disbursedTotal: Math.round(approvedTotal * (0.75 + r() * 0.25) / 100_000) * 100_000 };
     const input = content(club, r, members, events, finance);
 
-    // Đồng hồ: soạn cuối tháng 8, nộp trước hạn (hoặc vài ngày sau hạn khi nộp trễ).
+    // Clock: drafted in late August, submitted before the due date (or a few days after it when late).
     const twice = special.outcome === "ReturnThenAccept";
     const submittedAt = twice ? at("2026-08-27", r)
       : special.late ? at(`2026-09-${String(between(r, 9, 14)).padStart(2, "0")}`, r)

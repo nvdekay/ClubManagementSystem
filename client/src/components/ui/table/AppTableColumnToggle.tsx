@@ -7,7 +7,6 @@ interface AppTableColumnToggleProps<T extends RowData> {
   label: string;
 }
 
-// Menu bật/tắt cột của bảng
 export function AppTableColumnToggle<T extends RowData>({ table, label }: AppTableColumnToggleProps<T>) {
   return (
     <details className="relative self-start">

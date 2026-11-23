@@ -39,12 +39,12 @@ export interface DimensionInfo {
 
 export interface SchemeCatalogue {
   schemes: EvaluationScheme[];
-  /** `evaluated`: kỳ đã có đánh giá, nên phiên bản thang điểm bị cố định (BR51, BR60). */
+  /** `evaluated`: the period already has evaluations, so its scheme version is pinned (BR51, BR60). */
   periods: { code: string; startAt: string; endAt: string; evaluated: boolean }[];
   dimensions: DimensionInfo[];
 }
 
-/** Response không phải 2xx; giữ `field` / `issues` từ details của server. */
+/** Non-2xx response; keeps `field` / `issues` from the server's details. */
 export class SchemeRequestError extends ApiError {
   constructor(message: string, readonly status: number, readonly field?: string,
     readonly issues: ActivationIssue[] = []) {
@@ -53,7 +53,6 @@ export class SchemeRequestError extends ApiError {
   }
 }
 
-// Gọi API /admin/evaluation-schemes và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/evaluation-schemes${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -67,34 +66,28 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
-// Dựng RequestInit có phương thức, CSRF và body JSON tuỳ chọn
 function mutation(method: string, csrfToken: string, body?: object): RequestInit {
   return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
-// GET danh mục thang đánh giá CLB
 export function fetchSchemes(signal: AbortSignal): Promise<SchemeCatalogue> {
   return request("", { signal });
 }
 
-// POST tạo thang đánh giá cho kỳ, có thể sao chép từ thang cũ
 export function createScheme(input: { periodCode: string; copyFromId?: string },
   csrfToken: string): Promise<EvaluationScheme> {
   return request("", mutation("POST", csrfToken, input));
 }
 
-// PATCH cập nhật thiết lập thang đánh giá
 export function updateScheme(id: string, settings: SchemeSettings, csrfToken: string): Promise<EvaluationScheme> {
   return request(`/${encodeURIComponent(id)}`, mutation("PATCH", csrfToken, settings));
 }
 
-// POST /activate: kích hoạt thang đánh giá
 export function activateScheme(id: string, csrfToken: string): Promise<EvaluationScheme> {
   return request(`/${encodeURIComponent(id)}/activate`, mutation("POST", csrfToken));
 }
 
-// DELETE thang đánh giá
 export function deleteScheme(id: string, csrfToken: string): Promise<{ deleted: true }> {
   return request(`/${encodeURIComponent(id)}`, mutation("DELETE", csrfToken));
 }

@@ -13,30 +13,25 @@ import type {
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels } from "./ucms-models.js";
 
-// Ném lỗi not_found với thông báo cho trước
 function notFound(message: string): never {
   throw new DomainError(message, "not_found");
 }
 
-// Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
-// Ánh xạ document thành BoardTerm
 function mapTerm(doc: Record<string, unknown>): BoardTerm {
   return { id: String(doc._id), name: String(doc.name), startAt: doc.startAt as Date,
     endAt: doc.endAt as Date, state: String(doc.state) };
 }
 
-// Ánh xạ document thành BoardPosition
 function mapPosition(doc: Record<string, unknown>): BoardPosition {
   return { id: String(doc._id), code: String(doc.code), name: String(doc.name),
     unit: typeof doc.unit === "string" ? doc.unit : undefined,
     isLeaderRole: doc.isLeaderRole === true, isSingleHolder: doc.isSingleHolder !== false };
 }
 
-// Ánh xạ ghế đề cử kèm vị trí, membership và user
 function mapSeat(doc: Record<string, unknown>, position: Record<string, unknown>,
   membership: Record<string, unknown>, user: Record<string, unknown>): BoardNominationSeat {
   return { id: String(doc._id), positionId: String(doc.positionId),
@@ -47,7 +42,6 @@ function mapSeat(doc: Record<string, unknown>, position: Record<string, unknown>
     reason: typeof doc.reason === "string" ? doc.reason : undefined };
 }
 
-// Repository đề cử ban chủ nhiệm và ICPDP xác nhận từng ghế (UC10, UC11)
 export function mongoBoardNominationRepository(): BoardNominationRepository {
   const clubs = ucmsModels.clubs!;
   const terms = ucmsModels.clubTerms!;
@@ -130,7 +124,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
   }
 
   return {
-    // Lấy ngữ cảnh đề cử: nhiệm kỳ Active, vị trí ban chủ nhiệm, thành viên Active
     async getContext(clubId) {
       const clubObjectId = new Types.ObjectId(clubId);
       const club = await clubs.findById(clubObjectId).lean();
@@ -189,7 +182,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       };
     },
 
-    // Club Leader nộp đề cử ban chủ nhiệm và mở task review cho ICPDP
     async submit(clubId, actorId, termId, nominationSeats, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const termObjectId = new Types.ObjectId(termId);
@@ -229,7 +221,7 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
         const pendingSeatDocs = pending.length ? await seats.find({
           nominationId: { $in: pending.map((item) => item._id) }, state: "Pending Confirmation",
         }).session(session).lean() : [];
-        // Ghế một người giữ chỉ nhận một người cho mỗi nhiệm kỳ; ghế nhiều người giữ thì vẫn mở.
+        // A single-holder seat takes one holder per term; a multi-holder seat stays open.
         const singleHolderIds = new Set(positionDocs.filter((position) => position.isSingleHolder !== false)
           .map((position) => String(position._id)));
         if ([...occupied, ...pendingSeatDocs].some((item) => singleHolderIds.has(String(item.positionId))
@@ -304,7 +296,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       return result;
     },
 
-    // Liệt kê các đề cử ban chủ nhiệm đang chờ ICPDP xử lý
     async listOpen() {
       const taskDocs = await tasks.find({ entityType: "BOARD_NOMINATION", state: "Open" })
         .sort({ openedAt: 1, _id: 1 }).lean();
@@ -312,7 +303,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       return results.filter((item): item is BoardNominationDetail => item !== null);
     },
 
-    // Liệt kê các đề cử gần đây của một CLB
     async listForClub(clubId) {
       const recent = await nominations.find({ clubId: new Types.ObjectId(clubId) })
         .sort({ submittedAt: -1, _id: -1 }).limit(20).select({ _id: 1 }).lean();
@@ -320,12 +310,10 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       return results.filter((item): item is BoardNominationDetail => item !== null);
     },
 
-    // Tìm chi tiết đề cử theo id
     async find(nominationId) {
       return detail(new Types.ObjectId(nominationId));
     },
 
-    // ICPDP officer nhận (claim) task đề cử đang Open
     async claim(nominationId, officerId, now) {
       const id = new Types.ObjectId(nominationId);
       const officerObjectId = new Types.ObjectId(officerId);
@@ -351,7 +339,6 @@ export function mongoBoardNominationRepository(): BoardNominationRepository {
       return result;
     },
 
-    // ICPDP ghi quyết định xác nhận từng ghế đề cử
     async decide(nominationId, officerId, input: BoardNominationDecisionInput, now) {
       const id = new Types.ObjectId(nominationId);
       const officerObjectId = new Types.ObjectId(officerId);

@@ -6,18 +6,16 @@ import type {
 import { ucmsModels } from "./ucms-models.js";
 import { overduePeriodicReports } from "./periodic-report-obligations.js";
 import { clubCharts, icpdpCharts } from "./dashboard-charts.js";
-import { clubBoardHistory } from "./dashboard-drilldown.js";
+import { clubBoardHistory, internalEvent, internalEvents, recordedInternal } from "./dashboard-drilldown.js";
 
 type UcmsDocument = Record<string, unknown>;
 
-// Lấy model UCMS theo tên, báo lỗi nếu chưa có
 function model(name: string): Model<UcmsDocument> {
   const value = ucmsModels[name];
   if (!value) throw new Error(`UCMS model is unavailable: ${name}`);
   return value;
 }
 
-// Đếm số bản ghi cho một panel dashboard, lỗi thì trả trạng thái lỗi
 async function panel(
   key: DashboardPanelKey,
   collection: string,
@@ -31,7 +29,6 @@ async function panel(
   }
 }
 
-// Đếm điều kiện theo dõi sau chuyển giao nhiệm kỳ của CLB
 async function transitionFollowUps(clubId: Types.ObjectId): Promise<DashboardPanel> {
   try {
     const totals = await model("transitionPlans").aggregate<{ count: number }>([
@@ -45,7 +42,6 @@ async function transitionFollowUps(clubId: Types.ObjectId): Promise<DashboardPan
   }
 }
 
-// Đếm báo cáo quá hạn (sau sự kiện và định kỳ)
 async function overdueReportsPanel(now: Date, clubId?: Types.ObjectId): Promise<DashboardPanel> {
   try {
     const [postEvents, periodic] = await Promise.all([overduePostEventReports(clubId, now), clubId
@@ -55,7 +51,6 @@ async function overdueReportsPanel(now: Date, clubId?: Types.ObjectId): Promise<
   } catch { return { key: "overdueReports", status: "error" }; }
 }
 
-// Gom các panel và biểu đồ thành snapshot dashboard
 function buildSnapshot(
   kind: DashboardSnapshot["kind"],
   generatedAt: Date,
@@ -63,17 +58,15 @@ function buildSnapshot(
   clubId?: string,
   charts?: Promise<Pick<DashboardSnapshot, "icpdpCharts" | "clubCharts">>,
 ): Promise<DashboardSnapshot> {
-  // Query biểu đồ lỗi chỉ làm mất biểu đồ; các panel vẫn giữ lỗi riêng của từng panel.
+  // A failed chart query drops the charts only; the panels keep their own per-panel errors.
   const chartData = (charts ?? Promise.resolve({})).catch(() => ({}));
   return Promise.all([Promise.all(panels), chartData]).then(([resolved, extra]) => ({
     kind, generatedAt, panels: resolved, ...(clubId ? { clubId } : {}), ...extra,
   }));
 }
 
-// Repository dashboard cho sinh viên, CLB và ICPDP
 export function mongoDashboardRepository(): DashboardRepository {
   return {
-    // Dashboard sinh viên: hồ sơ lập CLB, đơn tuyển, thành viên...
     student(userId, now) {
       const user = new Types.ObjectId(userId);
       return buildSnapshot("student", now, [
@@ -88,7 +81,7 @@ export function mongoDashboardRepository(): DashboardRepository {
           complainantId: user, state: { $nin: ["Withdrawn"] },
         }),
         panel("openRecruitment", "recruitmentCampaigns", {
-          // Cùng quy tắc hiển thị với danh bạ công khai: chiến dịch đã đăng nhận đơn trong khoảng thời gian của nó.
+          // Same visibility rule as the public directory: a published campaign accepts applications in its window.
           state: { $in: ["Published", "Accepting Applications"] }, windowStart: { $lte: now }, windowEnd: { $gt: now },
         }),
         panel("upcomingEvents", "events", { state: "Upcoming", startAt: { $gte: now } }),
@@ -98,7 +91,6 @@ export function mongoDashboardRepository(): DashboardRepository {
       ]);
     },
 
-    // Dashboard CLB: các panel theo permission của người xem
     club(clubId, permissions, now) {
       const club = new Types.ObjectId(clubId);
       const allowed = new Set(permissions);
@@ -135,12 +127,11 @@ export function mongoDashboardRepository(): DashboardRepository {
         ] : []),
         ...(allowed.has("club.transition.plan") ? [transitionFollowUps(club)] : []),
       ];
-      // Biểu đồ đọc dữ liệu thành viên, sự kiện và tuyển thành viên, mà chỉ Club Leader được quản lý.
+      // Charts read member, event and recruitment data, which only a Club Leader manages.
       return buildSnapshot("club", now, panels, clubId, allowed.has("club.member.manage")
         ? clubCharts(clubId, now).then((clubCharts) => ({ clubCharts })) : undefined);
     },
 
-    // Dashboard ICPDP: các hàng đợi việc đang mở và biểu đồ
     icpdp(now) {
       const openTasks = ["Open", "Escalated"];
       return buildSnapshot("icpdp", now, [
@@ -172,11 +163,14 @@ export function mongoDashboardRepository(): DashboardRepository {
         panel("upcomingBookings", "propertyBookings", {
           state: { $in: ["Requested", "Under Review"] }, startAt: { $gte: now },
         }),
+        panel("internalEvents", "events", recordedInternal()),
         panel("roleStructures", "clubRoleStructureVersions", {}),
         panel("boardHistory", "clubPositionAssignments", { confirmedBy: { $exists: true } }),
       ], undefined, icpdpCharts(now).then((icpdpCharts) => ({ icpdpCharts })));
     },
 
+    internalEvents,
+    internalEvent,
     boardHistory: clubBoardHistory,
   };
 }

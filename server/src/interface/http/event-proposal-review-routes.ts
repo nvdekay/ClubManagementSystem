@@ -1,4 +1,3 @@
-/** HTTP adapter for ICPDP reviews; business authorization/validation lives in the use case. */
 import { Router, type Response } from "express";
 import { z } from "zod";
 import type { AuthRepository } from "../../domain/auth.js";
@@ -21,7 +20,6 @@ export interface EventProposalReviewRouteDeps {
 }
 
 const id = z.string().regex(/^[0-9a-f]{24}$/i);
-// Validate transport types and limits here; outcome-specific rules belong to the use case.
 export const eventReviewDecisionBody = z.object({
   outcome: z.enum(["Request revision", "Approve", "Reject", "Re-defense"]),
   reason: z.string().max(5_000).optional(),
@@ -41,7 +39,6 @@ export const eventCancellationDecisionBody = z.object({
   reason: z.string().max(5_000).optional(),
 }).strict();
 
-// Convert schema failures to the application's standard validation error response.
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) {
@@ -50,38 +47,31 @@ function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   return result.data;
 }
 
-// authGuard supplies the authenticated actor; never accept actor identity from the body.
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
-/** Register authenticated reads and CSRF-protected review writes. */
 export function eventProposalReviewRoutes(deps: EventProposalReviewRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
-  // Read-only requests authenticate the session without requiring a CSRF token.
   router.get("/admin/event-proposals", authGuard(guard, false), async (_req, res) => {
     ok(res, await listEventProposalReviews(deps.repo, deps.authRepo, actor(res)));
   });
-  // Load the complete review dossier for one proposal.
   router.get("/admin/event-proposals/:id", authGuard(guard, false), async (req, res) => {
     ok(res, await getEventProposalReview(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), new Date()));
   });
-  // Claim requires CSRF protection; the repository resolves concurrent assignments.
   router.post("/admin/event-proposals/:id/claim", authGuard(guard), async (req, res) => {
     ok(res, await claimEventProposalReview(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), new Date()));
   });
-  // Convert the validated ISO deadline into a Date before calling the review use case.
   router.post("/admin/event-proposals/:id/decision", authGuard(guard), async (req, res) => {
     const body = parsed(eventReviewDecisionBody, req.body);
     ok(res, await decideEventProposalReview(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), {
       ...body, revisionDeadlineAt: body.revisionDeadlineAt ? new Date(body.revisionDeadlineAt) : undefined,
     }, new Date()));
   });
-  // ICPDP quyết định yêu cầu huỷ sự kiện đã được duyệt
   router.post("/admin/event-proposals/:id/cancellation-decision", authGuard(guard), async (req, res) => {
     const body = parsed(eventCancellationDecisionBody, req.body);
     ok(res, await decideEventCancellationReview(deps.repo, deps.authRepo, actor(res), parsed(id, req.params.id), body, new Date()));

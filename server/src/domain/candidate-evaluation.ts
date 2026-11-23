@@ -8,7 +8,7 @@ export interface CandidateEvaluation {
   reviewerId: string;
   reviewerName?: string;
   scores: Record<string, number>;
-  /** Tổng điểm rubric; không có với đánh giá dạng văn bản tự do (đợt tuyển không có rubric). */
+  /** Sum of rubric scores; absent for a free-text evaluation (campaign without rubric). */
   totalScore?: number;
   comment?: string;
   createdAt: Date;
@@ -31,16 +31,15 @@ export interface EvaluationTarget {
 }
 
 export interface CandidateEvaluationRepository {
-  /** Hồ sơ ứng tuyển thuộc đợt tuyển của CLB này, kèm rubric của đợt; null khi không tìm thấy. */
+  /** Application within this club's campaign, with the campaign rubric; null when not found. */
   target(clubId: string, campaignId: string, applicationId: string): Promise<EvaluationTarget | null>;
   listForCampaign(clubId: string, campaignId: string): Promise<{
     rubric: RecruitmentRubricCriterion[]; evaluations: CandidateEvaluation[] } | null>;
-  /** Upsert bản đánh giá của chính người chấm; phải kiểm tra lại hồ sơ vẫn đang Shortlisted. */
+  /** Upserts the reviewer's own evaluation; must re-check the application is still Shortlisted. */
   save(input: { applicationId: string; reviewerId: string; scores: Record<string, number>;
     totalScore?: number; comment?: string; now: Date }): Promise<CandidateEvaluation>;
 }
 
-// Đảm bảo hồ sơ ứng tuyển đang ở trạng thái Shortlisted và đợt tuyển chưa bị huỷ để được chấm
 export function assertEvaluable(target: EvaluationTarget): void {
   if (target.campaignState === "Cancelled") {
     throw new DomainError("campaign is cancelled", "conflict");
@@ -50,7 +49,6 @@ export function assertEvaluable(target: EvaluationTarget): void {
   }
 }
 
-// Kiểm tra điểm theo rubric và dựng bản đánh giá ứng viên
 export function buildCandidateEvaluation(rubric: readonly RecruitmentRubricCriterion[],
   input: { scores: Record<string, number>; comment?: string }) {
   const comment = input.comment?.trim();
@@ -74,8 +72,7 @@ export function buildCandidateEvaluation(rubric: readonly RecruitmentRubricCrite
   return { scores, totalScore, ...(comment ? { comment } : {}) };
 }
 
-// Tổng hợp điểm trung bình và độ phân tán từ các bản đánh giá của ứng viên
-/** Tổng hợp (trung bình) và độ phân tán (min/max/độ lệch chuẩn tổng thể) của các tổng điểm. */
+/** Aggregate (mean) and dispersion (min/max/population standard deviation) of total scores. */
 export function summarizeEvaluations(rubric: readonly RecruitmentRubricCriterion[],
   evaluations: readonly CandidateEvaluation[]): CandidateEvaluationSummary {
   const totals = evaluations.flatMap((evaluation) =>

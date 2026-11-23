@@ -1,4 +1,4 @@
-import { APPROVED_EVENT_CANCEL_NOTICE_HOURS, assertApprovedEventCancellationNotice, assertEventNotice, assertProposalDocumentPresent,
+import { APPROVED_EVENT_CANCEL_NOTICE_HOURS, assertApprovedEventCancellationNotice, assertEventNotice, assertInternalEventEditable, assertInternalEventNotice, assertProposalAudience, assertProposalDocumentPresent,
   eventCancellationIsLate, eventConflictResult, PROPOSAL_DOCUMENT_MAX_BYTES, PROPOSAL_DOCUMENT_MIME_TYPES, PROPOSAL_TEMPLATE_MIME_TYPES,
   validateClubEventInput, validateEventProposalFile, validateEventPublication } from "../../src/domain/club-event-rules.js";
 import { loadDefaultEventProposalTemplate } from "../../src/infra/files/event-proposal-files.js";
@@ -6,9 +6,9 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClubAccessSnapshot } from "../../src/domain/access.js";
 import type { ClubEventRepository } from "../../src/domain/club-event.js";
 import { eventActionPermission, publicEventPayload, type EventProposalDocument } from "../../src/domain/club-event.js";
-import { actOnClubEvent, clubEventFeedback, clubEventParticipants, createClubEvent, listClubEvents,
+import { actOnClubEvent, clubEventFeedback, clubEventParticipants, createClubEvent, createInternalClubEvent, listClubEvents,
   type ClubEventDeps, uploadEventProposalDocument, uploadEventProposalTemplate } from "../../src/usecase/club-event.js";
-import { clubEventBody, clubEventPublishBody } from "../../src/interface/http/club-event-routes.js";
+import { clubEventBody, clubEventPublishBody, internalClubEventCreateBody } from "../../src/interface/http/club-event-routes.js";
 
 const clubId = "111111111111111111111111";
 const id = "222222222222222222222222";
@@ -23,7 +23,7 @@ function deps(role: "leader" | "member" | "left" = "leader"): ClubEventDeps {
       effectiveFrom: new Date("2026-01-01"), confirmedBy: actor.id }] : [],
     positions: [{ id, clubId, isActive: true, isLeaderRole: false, isBoardSeat: true, code: "VICE_LEADER" }] };
   return { access: { findSnapshot: async () => snapshot }, auth: { systemRoleCodes: async () => [] },
-    repo: { options: vi.fn(), list: vi.fn(), find: vi.fn(), create: vi.fn(), act: vi.fn(), participants: vi.fn(), feedback: vi.fn(),
+    repo: { options: vi.fn(), list: vi.fn(), find: vi.fn(), create: vi.fn(), createInternal: vi.fn(), act: vi.fn(), participants: vi.fn(), feedback: vi.fn(),
       proposalDocument: vi.fn(), proposalTemplate: vi.fn(), saveProposalTemplate: vi.fn() } as ClubEventRepository };
 }
 describe("club event access and HTTP validation", () => {
@@ -88,11 +88,8 @@ describe("club event access and HTTP validation", () => {
   });
   it("validates proposal fields and forbids Mongo operators and undeclared fields", () => {
     const body = { title: "Event", objective: "Goal", plan: "Plan", startAt: "2026-10-30T00:00:00Z", endAt: "2026-10-30T02:00:00Z",
-      venueText: "Campus", audienceScope: "PUBLIC", capacity: 20, budgetLines: [], bookingIds: [] };
+      venueText: "Campus", audienceScope: "PUBLIC", capacity: 20, riskCategory: "LOW", budgetLines: [], bookingIds: [] };
     expect(clubEventBody.safeParse(body).success).toBe(true);
-    expect(clubEventBody.safeParse({ ...body, budgetLines: undefined }).data?.budgetLines).toEqual([]);
-    expect(clubEventBody.safeParse({ ...body, riskCategory: "LOW" }).success).toBe(false);
-    expect(clubEventBody.safeParse({ ...body, audienceScope: "MEMBERS_ONLY" }).success).toBe(false);
     expect(clubEventBody.safeParse({
       ...body,
       occurrences: [{ startAt: body.startAt, endAt: body.endAt, propertyId: id, venueText: "Hall B" }],
@@ -106,7 +103,7 @@ describe("club event access and HTTP validation", () => {
     expect(validateClubEventInput({
       title: "Event", objective: "Goal", plan: "Plan",
       startAt: new Date("2026-10-30T00:00:00Z"), endAt: new Date("2026-10-31T02:00:00Z"),
-      audienceScope: "PUBLIC", capacity: 20, budgetLines: [], bookingIds: [],
+      audienceScope: "PUBLIC", capacity: 20, riskCategory: "LOW", budgetLines: [], bookingIds: [],
       occurrences: [
         { startAt: new Date("2026-10-30T00:00:00Z"), endAt: new Date("2026-10-30T02:00:00Z"), propertyId: id },
         { startAt: new Date("2026-10-31T00:00:00Z"), endAt: new Date("2026-10-31T02:00:00Z"), venueText: "Outdoor yard" },
@@ -143,6 +140,47 @@ describe("event rules at exact policy boundaries", () => {
     expect(() => validateEventPublication(base, startAt, endAt, now)).not.toThrow();
     expect(() => validateEventPublication({ ...base, allowWalkIn: false }, startAt, endAt, now)).toThrow();
     expect(() => validateEventPublication({ ...base, registrationOpenAt: now, registrationCloseAt: endAt }, startAt, endAt, now)).toThrow();
+  });
+});
+
+describe("internal club events", () => {
+  const input = { title: "Club night", objective: "Bond", plan: "Games", startAt: new Date(now.getTime() + 25 * 3600000),
+    endAt: new Date(now.getTime() + 27 * 3600000), venueText: "Room A", capacity: 30, riskCategory: "LOW" as const, bookingIds: [] };
+  const settings = { checkInOpenAt: input.startAt, checkInCloseAt: input.endAt, allowWalkIn: true, waitlistEnabled: false };
+  it("requires exactly 24 hours of notice to become CREATED or move a CREATED schedule", () => {
+    expect(() => assertInternalEventNotice(new Date(now.getTime() + 24 * 3600000), now)).not.toThrow();
+    expect(() => assertInternalEventNotice(new Date(now.getTime() + 24 * 3600000 - 1), now)).toThrow(expect.objectContaining({ kind: "validation" }));
+  });
+  it("locks the schedule once published and allows edits only in DRAFT or CREATED", () => {
+    expect(() => assertInternalEventEditable("DRAFT")).not.toThrow();
+    expect(() => assertInternalEventEditable("CREATED")).not.toThrow();
+    for (const state of ["PUBLIC", "ONGOING"]) {
+      expect(() => assertInternalEventEditable(state)).toThrow(expect.objectContaining({ kind: "conflict",
+        message: "published internal event schedule is locked; only cancellation is allowed" }));
+    }
+    for (const state of ["FINISH", "CANCELLED", "Draft"]) expect(() => assertInternalEventEditable(state)).toThrow(expect.objectContaining({ kind: "conflict" }));
+  });
+  it("sends unbudgeted members-only proposals to the internal flow (Plan B)", () => {
+    expect(() => assertProposalAudience({ audienceScope: "MEMBERS_ONLY", budgetLines: [] })).toThrow(expect.objectContaining({ kind: "validation",
+      message: "internal events without university budget must use the internal event flow" }));
+    expect(() => assertProposalAudience({ audienceScope: "MEMBERS_ONLY", budgetLines: [{ category: "Food", purpose: "Snacks", amount: 1 }] })).not.toThrow();
+    expect(() => assertProposalAudience({ audienceScope: "PUBLIC", budgetLines: [] })).not.toThrow();
+  });
+  it("requires publish settings exactly when the mode is publish", async () => {
+    const d = deps();
+    await expect(createInternalClubEvent(d, actor, clubId, input, "publish", undefined, now)).rejects.toMatchObject({ kind: "validation" });
+    await expect(createInternalClubEvent(d, actor, clubId, input, "create", settings, now)).rejects.toMatchObject({ kind: "validation" });
+    expect(d.repo.createInternal).not.toHaveBeenCalled();
+    await createInternalClubEvent(d, actor, clubId, input, "publish", settings, now);
+    expect(d.repo.createInternal).toHaveBeenCalledWith(clubId, input, "publish", settings, actor.id, now);
+    await expect(createInternalClubEvent(deps("member"), actor, clubId, input, "draft", undefined, now)).rejects.toMatchObject({ kind: "forbidden" });
+  });
+  it("rejects audience and budget fields on the internal form", () => {
+    const body = { ...input, startAt: input.startAt.toISOString(), endAt: input.endAt.toISOString(), mode: "create" };
+    expect(internalClubEventCreateBody.safeParse(body).success).toBe(true);
+    expect(internalClubEventCreateBody.safeParse({ ...body, audienceScope: "MEMBERS_ONLY" }).success).toBe(false);
+    expect(internalClubEventCreateBody.safeParse({ ...body, budgetLines: [] }).success).toBe(false);
+    expect(internalClubEventCreateBody.safeParse({ ...body, mode: "approve" }).success).toBe(false);
   });
 });
 

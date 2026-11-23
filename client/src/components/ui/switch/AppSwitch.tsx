@@ -7,7 +7,6 @@ interface AppSwitchProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "
   onChange: (checked: boolean) => void;
 }
 
-// Công tắc bật/tắt
 export function AppSwitch({ checked, onChange, className, ...props }: AppSwitchProps) {
   return (
     <button

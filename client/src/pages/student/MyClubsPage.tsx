@@ -16,8 +16,7 @@ import { useMyMemberships } from "@/hooks/useMemberSpace";
 import type { Locale } from "@/i18n";
 import { formatDay } from "@/utils/formatDate";
 
-// Trang danh sách CLB mà sinh viên đang là thành viên
-/** Điểm vào UC24: các CLB sinh viên đang tham gia (Active hoặc Inactive). */
+/** Entry to UC24: the clubs the student belongs to (Active or Inactive). */
 export function MyClubsPage() {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
