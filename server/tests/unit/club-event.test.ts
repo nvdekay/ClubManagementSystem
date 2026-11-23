@@ -151,7 +151,7 @@ const docx = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from("
 const xlsx = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from("[Content_Types].xml xl/workbook.xml")]);
 const pdf = Buffer.from("%PDF-1.7\n%%EOF\n", "latin1");
 describe("event proposal document (UC25/UC26)", () => {
-  it("accepts DOCX and PDF up to 20MB with matching extension and magic bytes", () => {
+  it("accepts DOCX and PDF up to 10MB with matching extension and magic bytes", () => {
     expect(validateEventProposalFile("  Đề án sự kiện.docx ", DOCX, docx, PROPOSAL_DOCUMENT_MIME_TYPES)).toBe("Đề án sự kiện.docx");
     expect(validateEventProposalFile("plan.PDF", "application/pdf", pdf, PROPOSAL_DOCUMENT_MIME_TYPES)).toBe("plan.PDF");
     const max = Buffer.concat([pdf, Buffer.alloc(PROPOSAL_DOCUMENT_MAX_BYTES - pdf.length)]);

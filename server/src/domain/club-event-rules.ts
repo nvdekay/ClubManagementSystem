@@ -81,7 +81,7 @@ export function eventCancellationIsLate(startAt: Date, now: Date, noticeHours: n
   return startAt.getTime() - now.getTime() < noticeHours * 3600000;
 }
 
-export const PROPOSAL_DOCUMENT_MAX_BYTES = 20 * 1024 * 1024;
+export const PROPOSAL_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
 const PDF = "application/pdf";
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

@@ -4,7 +4,7 @@ const mimeTypes = {
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 } as const;
 export type ProposalFileExtension = keyof typeof mimeTypes;
-export const proposalDocumentMaxBytes = 20 * 1024 * 1024;
+export const proposalDocumentMaxBytes = 10 * 1024 * 1024;
 
 // Trả về MIME type nếu file hợp lệ về đuôi và dung lượng, ngược lại null
 /**
