@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventProposalTemplateKey } from "@/hooks/useClubEvents";
 import {
   accessReviewProposalDocument, claimEventProposal, decideEventCancellation, decideEventProposal, fetchEventProposal, fetchEventProposalQueue,
-  uploadProposalTemplate, type EventReviewDecisionInput,
+  uploadProposalTemplate, fetchReviewProposalPreviewFile, type EventReviewDecisionInput,
 } from "@/services/eventProposalReviews";
 
 // Tách dữ liệu đệm danh sách và chi tiết dưới cùng nhóm khóa xét duyệt.
@@ -57,4 +57,11 @@ export function useUploadProposalTemplate() {
 export function useReviewProposalDocumentAccess() {
   return useMutation({ mutationFn: (input: { id: string; revisionNo?: number; inline?: boolean }) =>
     accessReviewProposalDocument(input.id, input.revisionNo, input.inline) });
+}
+
+/** Cache files by submitted revision and document identity, never the editable draft. */
+export function useReviewProposalPreview(id: string, revisionNo: number, documentId: string, enabled: boolean) {
+  return useQuery({ queryKey: [...eventProposalKey, "document-preview", id, revisionNo, documentId],
+    queryFn: ({ signal }) => fetchReviewProposalPreviewFile(id, revisionNo, signal),
+    enabled: enabled && Boolean(id && revisionNo && documentId), retry: false, staleTime: 5 * 60_000 });
 }

@@ -6,6 +6,10 @@ cùng API booking, lịch sử version và quyết định.
 Component dùng ở nhiều trang, có hiểu biết nghiệp vụ (không nguyên tử). Không có tiền tố `App`.
 Chỉ chuyển một component vào đây khi nó đã được render bởi từ 2 trang trở lên.
 
+`EventProposalDocument`, `EventProposalPreview`, `EventProposalContent` dùng chung cho trang import
+đề án của CLB và trang xét duyệt ICPDP: bản xem tài liệu đầy đủ cùng hồ sơ trích xuất chỉ đọc.
+ICPDP tải file của đúng phiên bản đã nộp, không đọc file bản nháp đang chỉnh sửa.
+
 `SuspensionRequestWorkspace` dùng chung cho UC14 phía CLB (có `clubId`: form gửi yêu cầu kèm xác nhận ảnh
 hưởng) và UC15 phía ICPDP (không có `clubId`: hàng đợi duyệt).
 

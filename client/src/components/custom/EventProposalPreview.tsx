@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AppBadge } from "@/components/ui/badge/AppBadge";
 import { AppIcon } from "@/components/ui/icon/AppIcon";
 import { AppLinkedText } from "@/components/ui/linked-text/AppLinkedText";
-import { EventProposalContent } from "@/pages/club/EventProposalContent";
+import { EventProposalContent } from "@/components/custom/EventProposalContent";
 import type { ClubEventInput } from "@/services/clubEvents";
 import { importEventProposal, type ProposalImport } from "@/utils/eventProposalImport";
 import { cn } from "@/utils/cn";

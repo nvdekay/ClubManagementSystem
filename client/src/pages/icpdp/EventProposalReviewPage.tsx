@@ -6,6 +6,8 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { RevisionChanges } from "@/components/custom/RevisionChanges";
+import { EventProposalDocument } from "@/components/custom/EventProposalDocument";
+import { EventProposalPreview } from "@/components/custom/EventProposalPreview";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AppBadge, type AppBadgeTone } from "@/components/ui/badge/AppBadge";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -15,7 +17,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useEventDefenseActions } from "@/hooks/useEventDefense";
-import { useEventProposal, useEventProposalAction, useReviewProposalDocumentAccess } from "@/hooks/useEventProposalReviews";
+import { useEventProposal, useEventProposalAction, useReviewProposalDocumentAccess, useReviewProposalPreview } from "@/hooks/useEventProposalReviews";
 import { apiErrors } from "@/i18n/apiErrors";
 import { ProposalDecisionPanel } from "@/pages/icpdp/ProposalDecisionPanel";
 import { ScheduleDefenseDialog } from "@/pages/icpdp/ScheduleDefenseDialog";
@@ -74,6 +76,8 @@ export function EventProposalReviewPage() {
   const current = review.data?.versions.find((version) => version.revisionNo === review.data?.event.currentRevisionNo)
     ?? review.data?.versions.at(-1);
   const lines = current?.budgetLines ?? [];
+  const currentDocument = proposalDocument(current);
+  const documentPreview = useReviewProposalPreview(id ?? "", current?.revisionNo ?? 0, currentDocument?.id ?? "", isOfficer);
 
   /** Định dạng thời gian nộp, lịch bảo vệ và thời điểm quyết định theo ngôn ngữ giao diện. */
   function date(value: string) {
@@ -205,7 +209,6 @@ export function EventProposalReviewPage() {
     } },
   ];
   // Lấy dữ liệu chỉ đọc từ lần nộp được chọn, chấp nhận trường không có trong hồ sơ cũ.
-  const currentDocument = proposalDocument(current);
   const payload = current?.payload ?? {};
   const occurrences = Array.isArray(payload.occurrences)
     ? payload.occurrences as { startAt?: string; endAt?: string; propertyId?: string; venueText?: string }[]
@@ -355,6 +358,26 @@ export function EventProposalReviewPage() {
             </div>}
             {documentAccess.isError && <p role="alert" className="mt-3 text-sm text-danger-app">{documentAccess.error.message}</p>}
           </section>
+
+          {currentDocument && <>
+            {documentPreview.data ? <EventProposalDocument file={documentPreview.data} />
+              : documentPreview.isError ? <AppNotice tone="warning" role="alert">
+                <p>{t("clubEvents.documentLoadError")}</p>
+                <AppButton variant="secondary" onClick={() => void documentPreview.refetch()}>{t("eventReviews.retry")}</AppButton>
+              </AppNotice> : <AppSkeleton className="h-[76vh] min-h-[420px] w-full" />}
+            <EventProposalPreview key={`${current?.revisionNo}-${currentDocument.id}`} file={documentPreview.data} missing={[]} input={{
+              title: text(payload.title) ?? event.title,
+              objective: text(payload.objective) ?? "",
+              plan: text(payload.plan) ?? "",
+              startAt: text(payload.startAt) ?? "",
+              endAt: text(payload.endAt) ?? "",
+              venueText: text(payload.venueText),
+              capacity: typeof payload.capacity === "number" ? payload.capacity : 0,
+              audienceScope: payload.audienceScope === "MEMBERS_ONLY" ? "MEMBERS_ONLY" : "PUBLIC",
+              riskNote: text(payload.riskNote), facilityNeeds: text(payload.facilityNeeds),
+              budgetLines: lines, bookingIds: [],
+            }} />
+          </>}
 
           <section className="rounded-2xl border border-border-app bg-bg-app p-5 shadow-xs">
             {/* Tổng quan lịch, địa điểm, đối tượng, rủi ro, xung đột và nội dung thuyết minh đề xuất. */}

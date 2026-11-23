@@ -6,6 +6,8 @@ API, không bao giờ gọi `fetch` trực tiếp trong component.
 
 `useEventProposalPreview` trong `useClubEvents.ts` lấy tài liệu đã lưu qua service, cache theo CLB,
 sự kiện và ID tài liệu. Khi có file vừa import thì dùng file local thay vì tải bản cũ.
+`useReviewProposalPreview` trong `useEventProposalReviews.ts` cache riêng theo sự kiện, số phiên bản
+đã nộp và ID tài liệu cho ICPDP, chỉ tải khi có quyền ICPDP và đủ định danh tài liệu.
 
 `usePageTransition` là hook giao diện thuần (không gọi API): `WorkspaceShell` và `PublicLayout` gắn ref
 của nó vào vùng nội dung để khi đổi đường dẫn thì cuộn về đầu trang và chạy hiệu ứng mờ-trượt nhẹ

@@ -1,4 +1,5 @@
 import { ApiError, apiFetch } from "@/services/apiError";
+import { proposalDocumentMaxBytes } from "@/utils/proposalFile";
 import type { EventProposalTemplateInfo, FileAccess } from "@/services/clubEvents";
 import type { EventDefenseSession } from "@/services/eventDefense";
 
@@ -174,4 +175,15 @@ export function uploadProposalTemplate(file: File, mimeType: string, csrfToken: 
 export function accessReviewProposalDocument(id: string, revisionNo?: number, inline = false): Promise<FileAccess> {
   const query = new URLSearchParams({ inline: String(inline), ...(revisionNo ? { revisionNo: String(revisionNo) } : {}) });
   return request(`/${encodeURIComponent(id)}/document/access?${query}`);
+}
+
+/** Load the original file frozen in the submitted revision for the shared viewer. */
+export async function fetchReviewProposalPreviewFile(id: string, revisionNo: number, signal: AbortSignal): Promise<File> {
+  const access = await accessReviewProposalDocument(id, revisionNo);
+  const response = await fetch(access.url, { signal, credentials: "omit" });
+  if (!response.ok) throw new ApiError(`HTTP ${response.status}`);
+  if (Number(response.headers.get("content-length")) > proposalDocumentMaxBytes) throw new ApiError("Document too large");
+  const blob = await response.blob();
+  if (blob.size > proposalDocumentMaxBytes) throw new ApiError("Document too large");
+  return new File([blob], access.fileName, { type: access.mimeType });
 }

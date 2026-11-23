@@ -57,6 +57,9 @@ tổng tiền xin và mức rủi ro; chi tiết gồm thời gian, địa đi�
 kèm (chỉ xem), kinh phí xin theo hạng mục và kinh phí CLB đã được duyệt trong kỳ; quyết định Yêu cầu sửa / Phê
 duyệt (kèm điều kiện và số duyệt từng hạng mục) / Từ chối.
 
+Trang chi tiết dùng cùng trình xem toàn văn và hồ sơ trích xuất với CLB, tải tài liệu của phiên bản đã nộp
+qua API ICPDP; có trạng thái tải, lỗi và thử lại, vẫn giữ tải file và lịch sử các lần nộp.
+
 `BudgetsPage` (UC35) gồm `BudgetsPage` (danh sách kinh phí sự kiện đã duyệt, lọc theo trạng thái xử lý và câu lạc bộ) và `BudgetDetailPage` (`/workspace/budgets/:id`, dùng `SponsoredItems`): quản lý giải ngân theo 3 kênh (tạm ứng trước sự kiện qua cán bộ ICPDP, hoàn sau sự kiện dưới 5 triệu, hợp đồng nhà cung cấp từ 5 triệu trở lên), đối soát chứng từ và tải lưu tệp đính kèm. `EventProposalReviewPage` quyết định tài trợ theo từng hạng mục và dẫn sang trang tài chính.
 
 `ViolationsPage` (UC40) gồm `ViolationsPage` (danh sách hồ sơ vi phạm theo nhóm trạng thái, form mở hồ sơ:
