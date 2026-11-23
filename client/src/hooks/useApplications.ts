@@ -8,27 +8,32 @@ import {
 
 const applicationsKey = ["applications"] as const;
 
+// Query cấu hình form hồ sơ thành lập CLB
 export function useApplicationConfig(enabled: boolean) {
   return useQuery({ queryKey: [...applicationsKey, "config"],
     queryFn: ({ signal }) => fetchApplicationConfig(signal), enabled, retry: false });
 }
 
+// Query hồ sơ thành lập CLB của tôi
 export function useMyApplications(enabled: boolean) {
   return useQuery({ queryKey: [...applicationsKey, "mine"],
     queryFn: ({ signal }) => fetchMyApplications(signal), enabled, retry: false });
 }
 
+// Query chi tiết một hồ sơ thành lập CLB
 export function useApplication(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...applicationsKey, "detail", id],
     queryFn: ({ signal }) => fetchApplication(id!, signal), enabled: enabled && Boolean(id), retry: false });
 }
 
+// Query xem trước hồ sơ trước khi nộp
 export function useApplicationPreview(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...applicationsKey, "preview", id],
     queryFn: ({ signal }) => previewApplication(id!, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
 
+// Mutation tạo, lưu, nộp, rút hồ sơ và quản lý tài liệu, rồi làm mới cache
 export function useApplicationAction() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -53,10 +58,12 @@ export function useApplicationAction() {
   });
 }
 
+// Mutation tra cứu thành viên sáng lập theo email
 export function useFounderLookup() {
   return useMutation({ mutationFn: (email: string) => lookupFounder(email) });
 }
 
+// Mutation lấy link truy cập tài liệu của hồ sơ
 export function useDocumentAccess() {
   return useMutation({ mutationFn: ({ id, documentId }: { id: string; documentId: string }) =>
     documentAccess(id, documentId) });

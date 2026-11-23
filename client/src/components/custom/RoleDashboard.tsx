@@ -9,12 +9,12 @@ import { IcpdpDashboard } from "@/components/custom/IcpdpDashboard";
 import { useDashboard } from "@/hooks/useDashboard";
 import type { DashboardContext, DashboardPanelKey } from "@/services/dashboard";
 
+// Chọn trang đích khi bấm vào một panel dashboard
 function panelHref(key: DashboardPanelKey, context: DashboardContext): string | null {
   if (key === "foundingApplications") return "/workspace/applications";
   if (key === "recruitmentApplications") return "/workspace/recruitment";
   if (key === "openRecruitment") return "/clubs";
   if (key === "activeClubs" || key === "suspendedClubs" || key === "roleStructures" || key === "boardHistory") return "/icpdp/clubs";
-  if (key === "internalEvents") return "/workspace/internal-events";
   if (key === "upcomingEvents") return "/events";
   if (context.workspace === "student" && key === "registrations") return "/workspace/event-registrations";
   if (context.workspace === "student" && key === "complaints") return "/workspace/complaints";
@@ -45,6 +45,7 @@ function panelHref(key: DashboardPanelKey, context: DashboardContext): string | 
   return null;
 }
 
+// Dashboard theo vai trò: tải số liệu rồi hiển thị bản ICPDP, CLB hoặc chung
 export function RoleDashboard({ context }: { context: DashboardContext }) {
   const { t, i18n } = useTranslation();
   const dashboard = useDashboard(context);
@@ -70,7 +71,7 @@ export function RoleDashboard({ context }: { context: DashboardContext }) {
     time: new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" })
       .format(new Date(dashboard.data.generatedAt)),
   });
-  // ICPDP and Club Leaders get the chart overview; students and Club Members keep the summary cards.
+  // ICPDP và Club Leader xem tổng quan dạng biểu đồ; sinh viên và Club Member vẫn dùng các thẻ tóm tắt.
   const charts = dashboard.data.icpdpCharts ?? dashboard.data.clubCharts;
   if (charts) {
     return <section aria-labelledby="dashboard-title" className="mt-8">

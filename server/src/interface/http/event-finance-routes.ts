@@ -80,6 +80,7 @@ export const financeActionBody = z.discriminatedUnion("kind", [
     })
     .strict(),
 ]);
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success)
@@ -90,9 +91,11 @@ function parsed<T>(schema: z.ZodType<T>, value: unknown): T {
     );
   return result.data;
 }
+// Lấy actor đã xác thực từ res.locals
 function actor(res: Response) {
   return res.locals.actor as AccessActor;
 }
+// Mount các route tài chính sự kiện của CLB và ICPDP
 export function eventFinanceRoutes(deps: {
   repo: EventFinanceRepository;
   access: ClubAccessRepository;
@@ -106,6 +109,7 @@ export function eventFinanceRoutes(deps: {
     access: deps.access,
     auth: deps.authRepo,
   };
+  // Liệt kê tài chính các sự kiện của CLB
   router.get(
     "/clubs/:clubId/budgets",
     authGuard(guard, false),
@@ -125,6 +129,7 @@ export function eventFinanceRoutes(deps: {
     "/clubs/:clubId/budgets/:id",
     "/admin/budgets/:id/reconciliation",
   ]) {
+    // Xem chi tiết tài chính một sự kiện
     router.get(base, authGuard(guard, false), async (req, res) => {
       ok(
         res,
@@ -139,6 +144,7 @@ export function eventFinanceRoutes(deps: {
         ),
       );
     });
+    // Thực hiện hành động trên tài chính sự kiện (vd ghi chi tiêu)
     router.post(`${base}/actions`, authGuard(guard), async (req, res) => {
       const body = parsed(financeActionBody, req.body);
       const action: FinanceAction =

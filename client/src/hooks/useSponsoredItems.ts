@@ -6,13 +6,16 @@ import { changeSponsoredItem, fetchInvoiceImageUrl, fetchSponsoredBudget, upload
   type ItemAction, type SponsoredBudget } from "@/services/sponsoredItems";
 
 const sponsoredKey = ["sponsored-items"] as const;
+// Query các mục hoá đơn tài trợ của ngân sách
 export function useSponsoredItems(id: string, clubId?: string) {
   return useQuery({ queryKey: [...sponsoredKey, id, clubId], queryFn: ({ signal }) => fetchSponsoredBudget(id, clubId, signal), retry: false });
 }
+// Query link ảnh hoá đơn, tự làm mới trước khi hết hạn
 export function useInvoiceImage(id: string, clubId: string | undefined, itemId: string, imageId: string) {
   return useQuery({ queryKey: [...sponsoredKey, id, clubId, itemId, imageId],
     queryFn: ({ signal }) => fetchInvoiceImageUrl(id, clubId, itemId, imageId, signal), staleTime: 30_000, refetchInterval: 45_000, retry: false });
 }
+// Mutation thao tác trên mục hoá đơn tài trợ, rồi làm mới cache
 export function useSponsoredItemAction(id: string, clubId: string | undefined, csrfToken: string) {
   const client = useQueryClient();
   return useMutation({ mutationFn: async (input: { itemId: string; revision: number; action: ItemAction }

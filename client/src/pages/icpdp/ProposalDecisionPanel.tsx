@@ -1,3 +1,4 @@
+/** Khung soạn quyết định dùng chung cho xét duyệt đề xuất và xét duyệt sau bảo vệ. */
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
@@ -20,6 +21,7 @@ import {
 import { cn } from "@/utils/cn";
 import type { FundingDecision } from "@/services/sponsoredItems";
 
+// Dùng thông báo phù hợp với thao tác nếu API chỉ trả về lỗi chung.
 function resolveDecisionError(error: Error | null | undefined, fallback: string): string {
   if (!error) return fallback;
   if (error.message === apiErrors.vi.unknown || error.message === apiErrors.en.unknown) {
@@ -37,18 +39,21 @@ interface ProposalDecisionPanelProps {
 
 const ACTIVE_DEFENSE_STATES = new Set(["SCHEDULED", "CONFIRMED", "RESCHEDULE_REQUESTED", "IN_PROGRESS"]);
 
+/** Kiểm tra nhận xét, hạn chỉnh sửa và tài trợ trước khi xác nhận quyết định. */
 export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, onSuccess }: ProposalDecisionPanelProps) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
   const reviewAction = useEventProposalAction();
   const defenseAction = useEventDefenseActions();
 
+  // Xác định các quyết định được phép theo trạng thái bảo vệ trước khi khởi tạo form.
   const { event, budget, versions, activeDefenseSession } = detail;
   const hasBlockingDefense = Boolean(activeDefenseSession && ACTIVE_DEFENSE_STATES.has(activeDefenseSession.state));
   const outcomes: EventReviewOutcome[] = postDefense
     ? ["Reject", "Approve", "Request revision", "Re-defense"]
     : ["Request revision", "Approve", "Reject"];
 
+  // Dữ liệu quyết định đang nhập được giữ riêng với hồ sơ đã nộp cho đến khi xác nhận.
   const [outcome, setOutcome] = useState<EventReviewOutcome>(hasBlockingDefense ? "Request revision" : "Approve");
   const [reason, setReason] = useState("");
   const [reviewNote, setReviewNote] = useState("");
@@ -58,10 +63,13 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
   const [amounts, setAmounts] = useState<Record<number, { reason?: string }>>({});
   const [funding, setFunding] = useState<Record<number, FundingDecision>>({});
 
+  // Quyết định tài trợ căn cứ ngân sách đã nộp, không lấy bản nháp được sửa về sau.
   const current = versions.find((version) => version.revisionNo === event.currentRevisionNo) ?? versions.at(-1);
   const lines = current?.budgetLines ?? [];
+  // Giao diện duyệt toàn bộ số tiền đề nghị của từng dòng, hoặc bằng 0 nếu không tài trợ.
   const approvedAmounts = lines.map((line, index) => funding[index] === "NOT_SPONSORED" ? 0 : line.amount);
 
+  // Hạn chỉnh sửa phải ở tương lai và cách giờ bảo vệ đang có lịch ít nhất 12 giờ.
   const defenseCutoffMessage = (() => {
     if (outcome !== "Request revision" || !deadline) return null;
     const deadlineDate = new Date(deadline);
@@ -75,6 +83,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
     return null;
   })();
 
+  // Chỉ kiểm tra các trường cần cho quyết định đang chọn, gồm lý do tài trợ theo từng dòng.
   const field = useFieldValidation<string>({
     reason: outcome !== "Approve" && !reason.trim() ? t("eventReviews.reasonRequired") : null,
     sections: outcome === "Request revision" && !sections.length ? t("eventReviews.sectionsRequired") : null,
@@ -94,10 +103,12 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
     })),
   });
 
+  /** Định dạng số tiền đề nghị, số duyệt và tổng tiền theo đồng Việt Nam, không có phần thập phân. */
   function money(value: number) {
     return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
   }
 
+  /** Dịch tên từng quyết định có thể chọn, bao gồm quyết định sau bảo vệ. */
   function outcomeLabel(value: EventReviewOutcome) {
     switch (value) {
       case "Approve": return t("eventReviews.approve");
@@ -107,6 +118,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
     }
   }
 
+  /** Dịch mã mục cần sửa thành nhãn hiển thị cạnh ô chọn. */
   function sectionLabel(value: string) {
     switch (value) {
       case "schedule": return t("eventReviews.sectionschedule");
@@ -118,14 +130,17 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
     }
   }
 
+  // Chọn hoặc bỏ chọn các mục CLB phải chỉnh sửa khi nộp lại.
   function toggleSection(section: EventReviewSection) {
     setSections((prev) => (prev.includes(section) ? prev.filter((item) => item !== section) : [...prev, section]));
   }
 
+  // Lưu giải thích của ICPDP cho dòng kinh phí không được tài trợ.
   function editLine(index: number, change: { reason?: string }) {
     setAmounts((prev) => ({ ...prev, [index]: { ...prev[index], ...change } }));
   }
 
+  // Lấy trạng thái phản hồi từ API tương ứng với chế độ xét duyệt hiện tại của khung.
   const isPending = reviewAction.isPending || defenseAction.isPending;
   const mutationError = postDefense ? defenseAction.error : reviewAction.error;
   const isSuccess = postDefense
@@ -134,6 +149,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
 
   const approvedTotal = approvedAmounts.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
 
+  /** Kiểm tra dữ liệu, yêu cầu xác nhận rồi chỉ gửi các trường phù hợp với quyết định đã chọn. */
   async function submitDecision() {
     if (!field.touchAll()) return;
     const prompt = outcome === "Approve"
@@ -163,6 +179,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
     };
 
     try {
+      // Quyết định sau bảo vệ dùng API bảo vệ với các kiểm tra trạng thái riêng.
       if (postDefense) {
         defenseAction.reset();
         await defenseAction.mutateAsync({ kind: "decideAfter", eventId: event.id, input, csrfToken });
@@ -185,12 +202,14 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
         {postDefense ? t("eventDefense.postDecisionHint") : t("eventReviews.decisionHint")}
       </p>
 
+      {/* Khi đang có buổi bảo vệ, chỉ cho yêu cầu sửa và khóa lựa chọn duyệt hoặc từ chối thông thường. */}
       {hasBlockingDefense && !postDefense && (
         <div className="mt-4">
           <AppNotice tone="warning">{t("eventDefense.confirmDecisionLockedNotice")}</AppNotice>
         </div>
       )}
 
+      {/* Bộ chọn quyết định xóa phản hồi thao tác cũ khi chuyển sang quyết định khác. */}
       <div className={cn("mt-5 grid gap-1 rounded-lg border border-border-app bg-surface-app p-1", {
         "grid-cols-2 sm:grid-cols-4": outcomes.length === 4,
         "grid-cols-3": outcomes.length === 3,
@@ -215,6 +234,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
         })}
       </div>
 
+      {/* Yêu cầu chỉnh sửa phải xác định các mục cần sửa và hạn nộp lại. */}
       {outcome === "Request revision" && (
         <fieldset className="mt-5">
           <legend className="text-sm font-medium text-text-app">
@@ -251,6 +271,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
         </fieldset>
       )}
 
+      {/* Phê duyệt ghi thời điểm tài trợ từng khoản và lý do đối với khoản không được tài trợ. */}
       {outcome === "Approve" && lines.length > 0 && (
         <fieldset className="mt-5">
           <legend className="text-sm font-medium text-text-app">{t("eventReviews.approveAmounts")}</legend>
@@ -307,6 +328,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
         </fieldset>
       )}
 
+      {/* Điều kiện phê duyệt không bắt buộc, nhập mỗi dòng một điều kiện và chuẩn hóa khi gửi. */}
       {outcome === "Approve" && (
         <label className="mt-4 block text-sm font-medium text-text-app">
           {t("eventReviews.conditions")}
@@ -319,6 +341,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
         </label>
       )}
 
+      {/* Lý do quyết định là bắt buộc với mọi lựa chọn trừ phê duyệt. */}
       <label className="mt-4 block text-sm font-medium text-text-app">
         {t("eventReviews.reason")}{outcome !== "Approve" && <AppRequiredMark />}
         <AppTextarea
@@ -333,6 +356,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
       </label>
 
       <label className="mt-4 block text-sm font-medium text-text-app">
+        {/* Ghi chú xét duyệt bổ sung được gửi riêng với lý do quyết định. */}
         {t("eventReviews.reviewNote")}
         <AppTextarea
           className="mt-1.5 min-h-24 w-full font-normal"
@@ -343,6 +367,7 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
         />
       </label>
 
+      {/* Xác nhận trước khi ghi quyết định, chặn gửi trùng trong lúc chờ và hiển thị phản hồi từ API. */}
       <AppButton className="mt-6 w-full" disabled={isPending} onClick={() => void submitDecision()}>
         {isPending ? t("eventReviews.submitting") : t("eventReviews.submit")}
       </AppButton>

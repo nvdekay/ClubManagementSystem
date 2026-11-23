@@ -100,6 +100,7 @@ export interface FinanceDetail {
 }
 export type AccountabilityContext =
   { kind: "club"; clubId: string } | { kind: "admin" };
+// Gọi API /api/v1 và trả về trường data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await apiFetch(`/api/v1${path}`, {
     credentials: "same-origin",
@@ -113,22 +114,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return ((await res.json()) as { data: T }).data;
 }
+// Chọn đường dẫn gốc báo cáo sự kiện theo ngữ cảnh CLB hoặc admin
 function reportBase(context: AccountabilityContext) {
   return context.kind === "club"
     ? `/clubs/${encodeURIComponent(context.clubId)}/event-reports`
     : "/admin/event-reports";
 }
+// Chọn đường dẫn gốc ngân sách (CLB) hoặc đối soát (admin)
 function financeBase(context: AccountabilityContext, id?: string) {
   if (context.kind === "club")
     return `/clubs/${encodeURIComponent(context.clubId)}/budgets${id ? `/${encodeURIComponent(id)}` : ""}`;
   return `/admin/budgets/${encodeURIComponent(id ?? "")}/reconciliation`;
 }
+// GET danh sách nghĩa vụ báo cáo sau sự kiện của CLB hoặc admin
 export function fetchReportObligations(
   context: AccountabilityContext,
   signal: AbortSignal,
 ): Promise<(ReportObligation | ReportConfigurationIssue)[]> {
   return request(reportBase(context), { signal });
 }
+// GET chi tiết một báo cáo sau sự kiện
 export function fetchReportDetail(
   context: AccountabilityContext,
   id: string,
@@ -138,12 +143,14 @@ export function fetchReportDetail(
     signal,
   });
 }
+// GET danh sách ngân sách của CLB
 export function fetchClubFinances(
   clubId: string,
   signal: AbortSignal,
 ): Promise<FinanceDetail[]> {
   return request(financeBase({ kind: "club", clubId }), { signal });
 }
+// GET chi tiết ngân sách/đối soát tài chính
 export function fetchFinanceDetail(
   context: AccountabilityContext,
   id: string,
@@ -151,6 +158,7 @@ export function fetchFinanceDetail(
 ): Promise<FinanceDetail> {
   return request(financeBase(context, id), { signal });
 }
+// POST /actions: thực hiện thao tác (nộp, quyết định...) trên báo cáo sự kiện
 export function reportAction(
   context: AccountabilityContext,
   id: string,
@@ -163,6 +171,7 @@ export function reportAction(
     body: JSON.stringify(body),
   });
 }
+// POST thao tác (nộp, đối soát...) trên ngân sách/đối soát
 export function financeAction(
   context: AccountabilityContext,
   id: string,

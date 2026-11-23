@@ -7,7 +7,7 @@ import { cn } from "@/utils/cn";
 export interface DashboardTask {
   key: string;
   label: string;
-  /** `undefined` when the panel failed to load. */
+  /** `undefined` khi panel tải lỗi. */
   count?: number;
   href?: string;
 }
@@ -16,11 +16,12 @@ interface DashboardTaskListProps {
   title: string;
   description: string;
   tasks: DashboardTask[];
-  /** `neutral` lists plain totals that open their records; nothing in it is overdue. */
+  /** `neutral` liệt kê các tổng số thường, bấm vào mở danh sách bản ghi; không có mục nào quá hạn. */
   variant?: "attention" | "neutral";
 }
 
-/** Status rows for overdue or owed work: an icon and the count carry the state, never color alone. */
+// Danh sách việc cần xử lý trên dashboard, kèm số lượng từng việc
+/** Các dòng trạng thái cho việc quá hạn hoặc còn nợ: icon và con số thể hiện trạng thái, không chỉ dựa vào màu. */
 export function DashboardTaskList({ title, description, tasks, variant = "attention" }: DashboardTaskListProps) {
   const { t } = useTranslation();
   const neutral = variant === "neutral";

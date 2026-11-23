@@ -1,9 +1,9 @@
 import { mongoClubEventRepository } from "./mongo-club-event-repository.js";
 import type { ClubEventInput, EventProposalDocument } from "../../domain/club-event.js";
-// Clean, realistic demo data on top of `npm run seed`, so every implemented flow can be tried end to end.
-// Usage: npm run seed:demo -- --owner=<your Google email> [--owner-name="Your Name"]
-// Safe to re-run: each section skips what already exists. Writes go through the app's use cases and
-// repositories wherever a flow exists, so the data obeys the same rules as the UI.
+// Dữ liệu demo sạch, thực tế, đặt trên nền `npm run seed`, để thử trọn vẹn mọi flow đã làm.
+// Cách dùng: npm run seed:demo -- --owner=<email Google của bạn> [--owner-name="Tên của bạn"]
+// Chạy lại an toàn: mỗi phần bỏ qua những gì đã có. Ở đâu có flow thì ghi qua usecase và
+// repository của app, nên dữ liệu tuân theo cùng quy tắc như UI.
 import mongoose, { Types } from "mongoose";
 import { DomainError } from "../../domain/errors.js";
 import type { FounderRole } from "../../domain/club-application.js";
@@ -58,6 +58,7 @@ const config = loadConfig();
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const now = new Date();
+// Thời điểm lệch offset mili giây so với hiện tại
 function at(offset: number): Date {
   return new Date(now.getTime() + offset);
 }
@@ -72,7 +73,7 @@ if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ownerEmail)) {
   process.exit(1);
 }
 
-// Demo students; addresses come from studentEmail (FPT student format).
+// Sinh viên demo; địa chỉ lấy từ studentEmail (định dạng email sinh viên FPT).
 const students = [
   ["Trần Minh Anh", "minhanh"], ["Lê Hoàng Bảo", "hoangbao"], ["Phạm Thu Chi", "thuchi"],
   ["Nguyễn Đức Dũng", "ducdung"], ["Võ Ngọc Hà", "ngocha"], ["Đặng Quốc Huy", "quochuy"],
@@ -82,17 +83,20 @@ const students = [
   ["Mai Anh Tuấn", "anhtuan"],
 ] as const;
 
+// Tra CLB trong dữ liệu PDP theo mã, lỗi nếu chưa seed
 function club(code: string): { id: Types.ObjectId; name: string } {
   const found = pdpClubs.find((item) => item.code === code);
   if (!found) throw new Error(`PDP club ${code} missing — run npm run seed first`);
   return { id: new Types.ObjectId(found.id), name: found.name };
 }
 
+// Dựng actor Active từ id người dùng
 function actor(id: Types.ObjectId): AccessActor {
   return { id: id.toString(), accountState: "Active" };
 }
 
-/** Runs a step that may already have happened on a previous run (duplicate → conflict). */
+// Chạy một bước seed, bỏ qua lỗi conflict, ném lỗi khác kèm nhãn
+/** Chạy một bước có thể đã xảy ra ở lần chạy trước (trùng → conflict). */
 async function once(label: string, step: () => Promise<unknown>): Promise<void> {
   try {
     await step();
@@ -136,7 +140,8 @@ try {
     throw new Error("PDP clubs are missing — run npm run seed first");
   }
 
-  // ── Accounts ──────────────────────────────────────────────────────────────────────────────
+  // Lấy hoặc tạo người dùng theo email
+  // ── Tài khoản ──────────────────────────────────────────────────────────────────────────────
   async function user(email: string, displayName: string): Promise<Types.ObjectId> {
     const existing = await ucmsModels.users!.findOne({ email }).select({ _id: 1 }).lean();
     if (existing) return existing._id as Types.ObjectId;
@@ -157,9 +162,9 @@ try {
   // ── Policy (UC04) ─────────────────────────────────────────────────────────────────────────
   const policy = mongoPolicyRepository();
   if (!(await policy.findEffective(now))) {
-    // Effective from the first demo semester, so events that ended before the seed ran still
-    // resolve their post-event report deadline instead of reporting a missing historical policy.
-    // The PDP snapshot seeded by `npm run seed` holds events from before the calendar starts too.
+    // Có hiệu lực từ học kỳ demo đầu tiên, để các sự kiện đã kết thúc trước khi seed chạy vẫn
+    // xác định được hạn báo cáo sau sự kiện thay vì báo thiếu policy lịch sử.
+    // Snapshot PDP do `npm run seed` seed cũng chứa các sự kiện từ trước khi lịch bắt đầu.
     const earliestEvent = await ucmsModels.events!.findOne({}).sort({ endAt: 1 }).select({ endAt: 1 }).lean();
     const policyStart = new Date(Math.min(policySettings.academicCalendar[0]!.startAt.getTime(),
       earliestEvent ? (earliestEvent.endAt as Date).getTime() - 86_400_000 : Infinity));
@@ -213,7 +218,7 @@ try {
     endAt: new Date("2026-10-31T16:59:59Z") }, s[7]!, [{ code: "VICE", name: "Phó chủ nhiệm", user: s[3]! }],
     [{ user: s[12]! }, { user: s[13]! }]);
 
-  // UC22: one HEBE member has asked to leave (waiting for the leader in UC21).
+  // UC22: một thành viên HEBE đã xin rời (chờ leader xử lý ở UC21).
   const membershipRepo = mongoMembershipRepository();
   const leaving = await ucmsModels.clubMemberships!.findOne({ clubId: club("HEBE").id, userId: s[5] }).lean();
   if (leaving) {
@@ -222,10 +227,11 @@ try {
       requestedEffectiveDate: at(3 * DAY), now }));
   }
 
-  // ── Recruitment (UC16→UC18): HEBE campaign with applicants to review; EHC campaign to apply to ────────
+  // ── Tuyển thành viên (UC16→UC18): chiến dịch HEBE có ứng viên để xét duyệt; chiến dịch EHC để nộp đơn ──
   const access = mongoAccessRepository();
   const campaigns = mongoRecruitmentCampaignRepository();
   const recruitment = mongoRecruitmentApplicationRepository();
+  // Tạo và publish đợt tuyển của CLB demo
   async function campaign(code: string, leader: Types.ObjectId, title: string, positions: string[],
     criteria: string): Promise<string> {
     const { id: clubId } = club(code);
@@ -265,7 +271,7 @@ try {
       { position, answers: { intro, experience } }, now);
     await submitRecruitmentApplication(recruitment, student, application.id, now);
   }
-  // UC18→UC19: one HEBE applicant is already shortlisted with two evaluations (leader + vice) to compare.
+  // UC18→UC19: một ứng viên HEBE đã vào danh sách rút gọn với hai đánh giá (leader + vice) để so sánh.
   const shortlisted = await recruitment.findMineForCampaign(hebeCampaign, s[13]!.toString());
   if (shortlisted?.state === "Submitted") {
     const ids = { clubId: club("HEBE").id.toString(), campaignId: hebeCampaign };
@@ -280,12 +286,13 @@ try {
       scores: { attitude: 8, skill: 5 }, comment: "Nhiệt tình nhưng kỹ năng dựng video còn cơ bản." }, now);
   }
 
-  // ── Founding applications (UC07→UC08): two in the ICPDP review queue, one approved (club Active) ──
+  // ── Đơn thành lập (UC07→UC08): hai đơn trong hàng đợi duyệt của ICPDP, một đơn đã duyệt (CLB Active) ──
   const applications = mongoClubApplicationRepository();
   const reviews = mongoClubApplicationReviewRepository();
   const clubFields = mongoClubFieldRepository();
   const cloudinary = optionalCloudinaryConfig(config);
   const storage = cloudinary ? cloudinaryApplicationFiles(cloudinary) : null;
+  // Tạo và nộp hồ sơ thành lập CLB demo kèm logo và đề án
   async function application(founder: Types.ObjectId, cofounders: Types.ObjectId[], clubName: string,
     fieldName: string, summary: string, objectives: string,
     logoColor: [number, number, number]): Promise<string | null> {
@@ -331,13 +338,14 @@ try {
     }
   }
 
-  // ── Events (UC25–UC27 are not built yet, so events are published directly) ─────────────────
+  // ── Sự kiện (UC25–UC27 chưa làm, nên sự kiện được publish trực tiếp) ─────────────────
   const registrationForm = [
     { key: "phone", label: "Số điện thoại", type: "text", required: true },
     { key: "level", label: "Bạn đã từng tham gia hoạt động tương tự chưa?", type: "select", required: true,
       options: ["Chưa từng", "Đôi khi", "Thường xuyên"] },
     { key: "note", label: "Ghi chú cho ban tổ chức", type: "textarea", required: false },
   ];
+  // Tạo sự kiện demo của CLB ở trạng thái cho trước
   async function event(id: string, code: string, organizer: Types.ObjectId, input: {
     title: string; objective: string; startAt: Date; endAt: Date; venueText: string; capacity: number;
     waitlistEnabled: boolean; audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; state: "Upcoming" | "Ongoing" | "Completed" | "PUBLIC";
@@ -354,19 +362,21 @@ try {
       ...(input.checkInCode ? { checkInCode: input.checkInCode } : {}), currentRevisionNo: input.state === "PUBLIC" ? 0 : 1,
       publishedAt: at(-14 * DAY), registrationOpenAt: input.registrationOpenAt,
       registrationCloseAt: input.registrationCloseAt, attendanceFinalized: false, createdAt: at(-14 * DAY) });
-    // A published internal event (PUBLIC) never went through an ICPDP proposal revision.
+    // Sự kiện nội bộ đã publish (PUBLIC) chưa từng qua vòng sửa đề xuất của ICPDP.
     if (input.state !== "PUBLIC") await ucmsModels.eventProposalVersions!.create({ eventId, revisionNo: 1, payload: { registrationForm },
       submittedBy: organizer, submittedAt: at(-15 * DAY) });
     return eventId;
   }
   const registrations = mongoEventRegistrationRepository();
+  // Đăng ký danh sách sinh viên vào sự kiện
   async function register(eventId: Types.ObjectId, userIds: Types.ObjectId[]) {
     for (const userId of userIds) {
       await once("event registration", () => registerForEvent(registrations, policy, actor(userId), eventId.toString(),
         { phone: "0912345678", level: "Đôi khi" }, now));
     }
   }
-  /** Attendance for events whose registration window is already over (no UI path can create these now). */
+  // Ghi nhận danh sách sinh viên đã check-in sự kiện
+  /** Điểm danh cho các sự kiện đã hết hạn đăng ký (hiện không có đường UI nào tạo được). */
   async function attended(eventId: Types.ObjectId, clubCode: string, userIds: Types.ObjectId[], checkedInAt: Date) {
     const { id: clubId } = club(clubCode);
     for (const userId of userIds) {
@@ -448,14 +458,16 @@ try {
   await attended(ctfNight, "EHC", [s[5]!, s[13]!, s[15]!], at(-16 * DAY + 10 * 60_000));
 
 
-  // ── Event proposals waiting for ICPDP (UC26; UC25 is the club side, so proposals are inserted) ──
-  // Shape follows the UC25 data contract in .sdd/specs/feat-event-proposal-review/SPEC.md.
+  // ── Đề xuất sự kiện chờ ICPDP (UC26; UC25 là phía CLB nên đề xuất được chèn trực tiếp) ──
+  // Cấu trúc theo hợp đồng dữ liệu UC25 trong .sdd/specs/feat-event-proposal-review/SPEC.md.
   type BudgetLine = { category: string; amount: number; purpose: string; plannedItems?: string };
-  // Metadata only: the asset is not uploaded, so opening the demo file needs a real upload first.
+  // Dựng tài liệu đề án mẫu cho proposal sự kiện
+  // Chỉ có metadata: asset chưa được upload, nên muốn mở file demo thì phải upload thật trước.
   function demoProposalDocument(key: string, fileName: string, uploadedBy: Types.ObjectId, uploadedAt: Date): EventProposalDocument {
     return { id: `demo-proposal-${key}`, fileName, mimeType: "application/pdf", bytes: 48_000,
       assetId: `ucms/event-proposals/demo/${key}.pdf`, uploadedAt, uploadedBy: String(uploadedBy) };
   }
+  // Tạo proposal sự kiện demo ở trạng thái Pending Approval
   async function proposal(id: string, code: string, submittedBy: Types.ObjectId, input: {
     title: string; objective: string; plan: string; startAt: Date; hours: number; venueText: string; capacity: number;
     audienceScope?: "PUBLIC" | "MEMBERS_ONLY"; riskCategory: "LOW" | "MEDIUM" | "HIGH"; riskNote?: string;
@@ -544,7 +556,7 @@ try {
       { category: "Vật liệu", amount: 800_000, purpose: "Giấy, màu và dụng cụ thủ công" },
     ] }],
   });
-  // A budget the HEBE workshop already holds this semester, so the reviewer sees the club's running total.
+  // Ngân sách mà workshop HEBE đã có trong học kỳ này, để reviewer thấy tổng đang chạy của CLB.
   if (!(await ucmsModels.eventBudgets!.exists({ eventId: workshop }))) {
     await ucmsModels.eventBudgets!.create({ eventId: workshop, clubId: club("HEBE").id,
       lines: [{ category: "Hậu cần", requestedAmount: 2_000_000, approvedAmount: 1_500_000, reason: "Phòng đã có sẵn loa" }],
@@ -553,7 +565,7 @@ try {
       refundedTotal: Types.Decimal128.fromString("0"), isSettlementLate: false, state: "Approved",
       periodCode: "Fall 2026", createdAt: at(-14 * DAY) });
   }
-  // UC35: the K21 welcome night was approved 4M and ICPDP already advanced part of it.
+  // UC35: đêm chào tân sinh viên K21 được duyệt 4M và ICPDP đã ứng trước một phần.
   if (!(await ucmsModels.eventBudgets!.exists({ eventId: welcome }))) {
     const welcomeBudget = await ucmsModels.eventBudgets!.create({ eventId: welcome, clubId: club("HEBE").id,
       lines: [{ category: "Âm thanh ánh sáng", requestedAmount: 3_000_000, approvedAmount: 3_000_000 },
@@ -565,8 +577,8 @@ try {
     await mongoBudgetDisbursementRepository().record(String(welcomeBudget._id), String(owner), { kind: "Advance",
       amount: 3_000_000, disbursedAt: at(-12 * DAY), paymentReference: "UNC-2026-0915" }, now);
   }
-  // ── Periodic reports for Summer 2026 (UC39; UC38 is the club side, so the reports are inserted) ──
-  // Shape follows the UC38 data contract in .sdd/specs/feat-periodic-reports/SPEC.md. Clubs without a row are overdue.
+  // ── Báo cáo định kỳ Summer 2026 (UC39; UC38 là phía CLB nên các báo cáo được chèn trực tiếp) ──
+  // Cấu trúc theo hợp đồng dữ liệu UC38 trong .sdd/specs/feat-periodic-reports/SPEC.md. CLB không có dòng nào là quá hạn.
   if (!(await ucmsModels.periodicReports!.exists({ periodCode: "Summer 2026" }))) {
     const dueAt = new Date("2026-09-07T16:59:59Z");
     async function periodicReport(code: string, submittedBy: Types.ObjectId, input: { state: "Submitted" | "Accepted";
@@ -599,7 +611,7 @@ try {
       narrative: "Học kỳ hè CLB biên soạn tài liệu workshop Data Science 101.", nextPlan: "Mở workshop Python cho tân sinh viên." });
   }
 
-  // ── Compliance cases (UC40): one being investigated, one waiting for the club's explanation ──
+  // ── Ca vi phạm (UC40): một ca đang điều tra, một ca chờ CLB giải trình ──
   if (!(await ucmsModels.violations!.exists({}))) {
     const cases = mongoViolationRepository();
     await cases.open({ clubId: String(club("EHC").id), originType: "OVERDUE_REPORT", severity: "MINOR",
@@ -615,7 +627,7 @@ try {
       message: "Đề nghị CLB giải trình lý do huỷ phòng sát giờ và cam kết không tái diễn.", dueAt: at(2 * DAY) }, at(-5 * DAY));
   }
 
-  // ── School-wide events (UC53): one still collecting club replies, one already open to students ──
+  // ── Sự kiện toàn trường (UC53): một sự kiện còn đang thu phản hồi của CLB, một sự kiện đã mở cho sinh viên ──
   if (!(await ucmsModels.events!.exists({ organizerType: "ICPDP" }))) {
     const schoolEvents = mongoSchoolEventRepository();
     const fairStart = new Date(Math.floor(at(18 * DAY).getTime() / HOUR) * HOUR);
@@ -625,7 +637,7 @@ try {
       startAt: fairStart, endAt: new Date(fairStart.getTime() + 8 * HOUR), venueText: "Sân trung tâm, Đại học FPT Hà Nội",
       capacity: 1500, semesterCode: "Fall 2026",
       invitation: { clubIds: [], allActiveClubs: true, deadline: new Date(fairStart.getTime() - 4 * DAY) } }, String(owner), now);
-    // UC54 is the club side: HEBE has already accepted, as the club workspace would record it.
+    // UC54 là phía CLB: HEBE đã chấp nhận, như workspace CLB sẽ ghi nhận.
     await ucmsModels.eventInvitations!.updateOne({ eventId: new Types.ObjectId(fair.detail.id), clubId: club("HEBE").id },
       { $set: { status: "Accepted", respondedAt: now, respondedBy: owner, updatedAt: now,
         responseDetails: { representative: "Trưởng ban truyền thông HEBE", members: 5, booth: true, performance: "Nhảy K-pop 4 phút" } } });
@@ -639,16 +651,16 @@ try {
     await schoolEvents.publish(training.detail.id, String(owner), now);
   }
 
-  // ── Evaluation (UC41 → UC42): an active default scheme for Fall 2026, so drafts can be generated right away ──
+  // ── Đánh giá (UC41 → UC42): một scheme mặc định đang hoạt động cho Fall 2026, để tạo bản nháp ngay ──
   if (!(await ucmsModels.evaluationSchemes!.exists({ periodCode: "Fall 2026" }))) {
     const schemes = mongoEvaluationSchemeRepository();
     const draft = await schemes.createDraft("Fall 2026", DEFAULT_SCHEME_SETTINGS, String(owner), now);
     await schemes.activate(draft.id, String(owner), now);
   }
 
-  // ── Annual report (UC55 A2): Published evaluations and Accepted periodic reports across the 2026 academic year ──
+  // ── Báo cáo năm (UC55 A2): đánh giá Published và báo cáo định kỳ Accepted trong cả năm học 2026 ──
   // HEBE rises, FDS falls, EHC holds steady, Mây Mưa has no Spring evaluation. Inserted directly: UC42/UC43 would need
-  // the live activity of past semesters. HEBE's Fall report stays open so the UC38 demo still works.
+  // hoạt động thực của các học kỳ trước. Báo cáo Fall của HEBE vẫn để mở để demo UC38 còn chạy được.
   if (!(await ucmsModels.evaluations!.exists({ periodCode: "Spring 2026", state: "Published" }))) {
     const schemes = mongoEvaluationSchemeRepository();
     const schemeIds = new Map<string, Types.ObjectId>();
@@ -663,7 +675,7 @@ try {
     }
     const publishedAt: Record<string, Date> = { "Spring 2026": new Date("2026-05-10T03:00:00Z"),
       "Summer 2026": new Date("2026-09-12T03:00:00Z"), "Fall 2026": at(-1 * DAY) };
-    // Weighted sum of these offsets is 0 under the default weights, so the dimension scores add up to the total.
+    // Tổng có trọng số của các độ lệch này bằng 0 với trọng số mặc định, nên điểm các tiêu chí cộng lại đúng bằng tổng.
     const offsets = [5, -4, 2, -3, 4, -6, 1, -3];
     const plan: [string, string, number, { members: number; events: number; attendances: number; openCases: number }][] = [
       ["HEBE", "Spring 2026", 72, { members: 18, events: 2, attendances: 90, openCases: 0 }],
@@ -724,7 +736,7 @@ try {
     }
   }
 
-  // ── Complaints (UC50) waiting for ICPDP triage ───────────────────────────────────────────────
+  // ── Khiếu nại (UC50) chờ ICPDP phân loại ───────────────────────────────────────────────
   const complaintsRepo = mongoComplaintRepository();
   const hebe = club("HEBE").id.toString();
   const complaints: Array<[number, Parameters<typeof submitComplaint>[2]]> = [
@@ -740,7 +752,7 @@ try {
     await submitComplaint(complaintsRepo, actor(s[index]!), input, now);
   }
 
-  // ── Leadership transition waiting for ICPDP (UC13; UC12 is not built yet, so the plan is inserted) ──
+  // ── Chuyển giao lãnh đạo chờ ICPDP (UC13; UC12 chưa làm, nên kế hoạch được chèn trực tiếp) ──
   const fds = club("FDS").id;
   if (!(await ucmsModels.transitionPlans!.exists({ clubId: fds }))) {
     const fromTerm = await ucmsModels.clubTerms!.findOne({ clubId: fds, state: "Active" }).lean();
@@ -768,11 +780,11 @@ try {
       title: "Chuyển giao nhiệm kỳ — FPTU Data Science Club", state: "Open", openedAt: at(-1 * DAY) });
   }
 
-  // Campus room catalogue; ICPDP allocates these rooms to clubs per semester (UC58).
+  // Danh mục phòng trong campus; ICPDP phân bổ các phòng này cho CLB theo học kỳ (UC58).
   const properties = mongoPropertyRepository();
   const rooms = [];
   const catalog = await properties.list();
-  // Room numbers and capacities are illustrative demo data, not an official inventory.
+  // Số phòng và sức chứa chỉ là dữ liệu demo minh hoạ, không phải kiểm kê chính thức.
   const roomNames = ["DE312", "DE222", "DE223", ...["AL", "BE", "GA", "DE", "EP"].flatMap((prefix) =>
     ["101", "102", "201", "202", "301", "302"].map((number) => `${prefix}${number}`))].filter((name) =>
       !["DE101", "DE102", "DE302"].includes(name));
@@ -790,7 +802,7 @@ try {
     }
     rooms.push(room);
   }
-  // Facilities clubs request through UC45 (every type except ROOM); illustrative demo data, not an inventory.
+  // Cơ sở vật chất CLB yêu cầu qua UC45 (mọi loại trừ ROOM); dữ liệu demo minh hoạ, không phải kiểm kê.
   const facilityHours = Array.from({ length: 7 }, (_, day) => ({ day: day + 1, open: "07:00", close: "21:30" }));
   const facilities = [
     { type: "HALL" as const, name: "Hội trường Alpha", location: "Alpha building, ground floor", capacity: 500, equipment: ["Projector", "Sound system", "Stage lighting"] },
@@ -803,7 +815,7 @@ try {
       await createProperty(properties, auth, actor(owner), { type, ...details, blackouts: [], bookableHours: facilityHours }, now);
     }
   }
-  // Rooms are only allocated by ICPDP now (UC58): drop every earlier room booking and its review trail.
+  // Hiện chỉ ICPDP phân bổ phòng (UC58): xoá mọi booking phòng trước đó và lịch sử duyệt của chúng.
   const roomIds = await ucmsModels.properties!.distinct("_id", { type: "ROOM" });
   const legacyRoomBookings = await ucmsModels.propertyBookings!.distinct("_id", { propertyId: { $in: roomIds },
     purpose: { $ne: ROOM_ALLOCATION_PURPOSE } });
@@ -815,7 +827,7 @@ try {
     await ucmsModels.auditLogs!.deleteMany({ entityType: "PropertyBooking", entityId: { $in: legacyRoomBookings } });
     await ucmsModels.propertyBookings!.deleteMany({ _id: { $in: legacyRoomBookings } });
   }
-  // A few weekly allocations in the current (or next) semester; reruns keep what already exists.
+  // Một vài phân bổ hằng tuần trong học kỳ hiện tại (hoặc kế tiếp); chạy lại giữ nguyên những gì đã có.
   const allocationDeps = { repo: mongoRoomAllocationRepository(), properties, policy, auth, access };
   const allocationPolicy = await policy.findEffective(now);
   const allocationSemester = allocationPolicy?.academicCalendar.filter((item) => item.endAt > now)
@@ -838,7 +850,7 @@ try {
     }
   }
 
-  // Wave 3 fixtures only add new events; existing user-managed events are never reset.
+  // Fixture Wave 3 chỉ thêm sự kiện mới; sự kiện do user quản lý không bao giờ bị reset.
   const wave3 = mongoClubEventRepository({ proposalNoticeHours: 168, cancellationNoticeHours: 24 });
   const eventPolicy = await policy.findEffective(now);
   const demoStart = new Date(now.getTime() + 12 * DAY);
@@ -847,17 +859,10 @@ try {
     const examples = [
       { title: "Wave 3 demo: Workshop proposal", scope: "PUBLIC" as const, submit: false },
       { title: "Wave 3 demo: Public workshop", scope: "PUBLIC" as const, submit: true },
-      { title: "Wave 3 demo: Internal practice", scope: "MEMBERS_ONLY" as const, submit: true },
     ];
     for (const example of examples) {
       if (await ucmsModels.events!.exists({ clubId: club("HEBE").id, title: example.title })) continue;
-      if (example.scope === "MEMBERS_ONLY") {
-        // Self-funded members-only events use the internal flow: created and published in one step.
-        await wave3.createInternal(hebe, { title: example.title, objective: "Practice event management", plan: "Welcome participants, run the activity, and collect feedback.",
-          startAt: demoStart, endAt: demoEnd, venueText: "Campus activity space", capacity: 30, riskCategory: "LOW", bookingIds: [] }, "publish",
-        { registrationOpenAt: now, registrationCloseAt: demoStart, checkInOpenAt: demoStart, checkInCloseAt: demoEnd, allowWalkIn: true, waitlistEnabled: true }, String(owner), now);
-        continue;
-      }
+
       const input: ClubEventInput = { title: example.title, objective: "Practice event management", plan: "Welcome participants, run the activity, and collect feedback.",
         startAt: demoStart, endAt: demoEnd, venueText: "Campus activity space", audienceScope: example.scope, capacity: 30, riskCategory: "LOW", bookingIds: [],
         registrationForm: [{ key: "expectations", label: "What do you expect from this event?", type: "textarea", required: false }],

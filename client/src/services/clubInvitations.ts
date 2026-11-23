@@ -8,6 +8,7 @@ export interface ClubInvitation {
 export interface InvitationResponse {
   outcome: "Accepted" | "Declined"; responseNote?: string; responseDetails?: Record<string, string | number>;
 }
+// Gọi API /clubs/:clubId/invitations và trả về data, ném ApiError nếu lỗi
 async function request<T>(clubId: string, path: string, init: RequestInit): Promise<T> {
   const res = await apiFetch(`/api/v1/clubs/${encodeURIComponent(clubId)}/invitations${path}`, { credentials: "same-origin", ...init });
   if (!res.ok) {
@@ -16,9 +17,11 @@ async function request<T>(clubId: string, path: string, init: RequestInit): Prom
   }
   return (await res.json() as { data: T }).data;
 }
+// GET lời mời tham gia sự kiện trường gửi tới CLB
 export function fetchClubInvitations(clubId: string, signal: AbortSignal): Promise<ClubInvitation[]> {
   return request(clubId, "", { signal });
 }
+// POST /response: CLB phản hồi lời mời
 export function respondToInvitation(clubId: string, id: string, input: InvitationResponse, csrfToken: string): Promise<ClubInvitation> {
   return request(clubId, `/${encodeURIComponent(id)}/response`, { method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(input) });

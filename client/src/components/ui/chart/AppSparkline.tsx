@@ -2,12 +2,13 @@ import { cn } from "@/utils/cn";
 
 interface AppSparklineProps {
   values: number[];
-  /** Index drawn as a dot (e.g. the current month); defaults to the last value. */
+  /** Chỉ số được vẽ thành một chấm (ví dụ tháng hiện tại); mặc định là giá trị cuối. */
   highlight?: number;
   className?: string;
 }
 
-/** Decorative trend line inside a stat tile; the tile's number and hint carry the meaning in text. */
+// Đường xu hướng nhỏ trong ô số liệu
+/** Đường xu hướng mang tính trang trí trong ô số liệu; con số và ghi chú của ô mới truyền đạt ý nghĩa bằng chữ. */
 export function AppSparkline({ values, highlight = values.length - 1, className }: AppSparklineProps) {
   if (values.length < 2) return null;
   const max = Math.max(...values);

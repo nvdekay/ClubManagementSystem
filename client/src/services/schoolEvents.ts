@@ -79,6 +79,7 @@ export interface InviteInput {
   deadline?: string;
 }
 
+// Gọi API /admin/school-events và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/school-events${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -89,36 +90,44 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
 function post(csrfToken: string, body?: object): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
+// GET danh sách sự kiện do trường tổ chức
 export function fetchSchoolEvents(signal: AbortSignal): Promise<SchoolEventSummary[]> {
   return request("", { signal });
 }
 
+// GET chi tiết một sự kiện của trường
 export function fetchSchoolEvent(id: string, signal: AbortSignal): Promise<SchoolEventDetail> {
   return request(`/${encodeURIComponent(id)}`, { signal });
 }
 
+// GET /conflicts: kiểm tra xung đột lịch của cơ sở vật chất
 export function fetchScheduleConflicts(input: { propertyId: string; startAt: string; endAt: string },
   signal: AbortSignal): Promise<ScheduleConflict[]> {
   return request(`/conflicts?${new URLSearchParams(input).toString()}`, { signal });
 }
 
+// POST tạo sự kiện của trường
 export function createSchoolEvent(input: SchoolEventInput, csrfToken: string): Promise<{ detail: SchoolEventDetail; outcome: InvitationOutcome }> {
   return request("", post(csrfToken, input));
 }
 
+// POST /invitations: mời CLB tham gia sự kiện trường
 export function inviteClubs(id: string, input: InviteInput, csrfToken: string): Promise<{ detail: SchoolEventDetail; outcome: InvitationOutcome }> {
   return request(`/${encodeURIComponent(id)}/invitations`, post(csrfToken, input));
 }
 
+// POST /withdraw: thu hồi lời mời CLB
 export function withdrawInvitation(id: string, invitationId: string, csrfToken: string): Promise<SchoolEventDetail> {
   return request(`/${encodeURIComponent(id)}/invitations/${encodeURIComponent(invitationId)}/withdraw`, post(csrfToken));
 }
 
+// POST /publish: công khai sự kiện trường
 export function publishSchoolEvent(id: string, csrfToken: string): Promise<SchoolEventDetail> {
   return request(`/${encodeURIComponent(id)}/publish`, post(csrfToken));
 }

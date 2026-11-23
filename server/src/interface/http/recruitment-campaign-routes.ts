@@ -52,6 +52,7 @@ export const recruitmentCampaignBody = z.object({
 }));
 const confirmOverlapBody = z.object({ confirmOverlap: z.boolean().default(false) }).strict();
 
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: { safeParse(input: unknown):
   | { success: true; data: T }
   | { success: false; error: { issues: unknown } } }, input: unknown): T {
@@ -61,35 +62,42 @@ function parsed<T>(schema: { safeParse(input: unknown):
   return result.data;
 }
 
+// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
+// Mount các route đợt tuyển thành viên của CLB
 export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
+  // Liệt kê đợt tuyển thành viên của CLB
   router.get("/clubs/:clubId/recruitment/campaigns", authGuard(guard, false), async (req, res) => {
     ok(res, await listRecruitmentCampaigns(deps.repo, deps.accessRepo, actor(res),
       parsed(id, req.params.clubId)));
   });
+  // Tạo bản nháp đợt tuyển thành viên
   router.post("/clubs/:clubId/recruitment/campaigns", authGuard(guard), async (req, res) => {
     ok(res, await createRecruitmentCampaignDraft(deps.repo, deps.accessRepo, actor(res),
       parsed(id, req.params.clubId), parsed(recruitmentCampaignBody, req.body), new Date()), 201);
   });
+  // Xem chi tiết một đợt tuyển
   router.get("/clubs/:clubId/recruitment/campaigns/:campaignId", authGuard(guard, false),
     async (req, res) => {
       ok(res, await getRecruitmentCampaign(deps.repo, deps.accessRepo, actor(res),
         parsed(id, req.params.clubId), parsed(id, req.params.campaignId)));
     });
+  // Cập nhật bản nháp đợt tuyển
   router.patch("/clubs/:clubId/recruitment/campaigns/:campaignId", authGuard(guard),
     async (req, res) => {
       ok(res, await updateRecruitmentCampaignDraft(deps.repo, deps.accessRepo, actor(res),
         parsed(id, req.params.clubId), parsed(id, req.params.campaignId),
         parsed(recruitmentCampaignBody, req.body), new Date()));
     });
+  // Công bố đợt tuyển
   router.post("/clubs/:clubId/recruitment/campaigns/:campaignId/publish", authGuard(guard),
     async (req, res) => {
       const confirmation = parsed(confirmOverlapBody, req.body ?? {});
@@ -97,6 +105,7 @@ export function recruitmentCampaignRoutes(deps: RecruitmentCampaignRouteDeps): R
         actor(res), parsed(id, req.params.clubId), parsed(id, req.params.campaignId),
         confirmation.confirmOverlap ?? false, new Date()));
     });
+  // Huỷ đợt tuyển
   router.post("/clubs/:clubId/recruitment/campaigns/:campaignId/cancel", authGuard(guard),
     async (req, res) => {
       ok(res, await cancelRecruitmentCampaign(deps.repo, deps.accessRepo, actor(res),

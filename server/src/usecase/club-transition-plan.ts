@@ -2,11 +2,13 @@ import type { ClubAccessRepository } from "../domain/access.js";
 import { normalizeTransitionPlan, type ClubTransitionPlanRepository, type TransitionPlanInput } from "../domain/club-transition-plan.js";
 import { DomainError } from "../domain/errors.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
+// CLB xem ngữ cảnh kế hoạch bàn giao nhiệm kỳ
 export async function clubTransitionContext(repo: ClubTransitionPlanRepository, access: ClubAccessRepository,
   actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.transition.plan", now);
   return repo.context(clubId, now);
 }
+// CLB tạo, lưu hoặc nộp kế hoạch bàn giao nhiệm kỳ
 export async function writeClubTransition(repo: ClubTransitionPlanRepository, access: ClubAccessRepository,
   actor: AccessActor | null, clubId: string, action: { id?: string; revision?: number; input?: TransitionPlanInput }, now: Date) {
   await assertClubAccess(access, actor, clubId, "club.transition.plan", now);

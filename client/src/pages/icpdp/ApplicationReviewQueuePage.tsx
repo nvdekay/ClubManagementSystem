@@ -10,6 +10,7 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useApplicationReviewAction, useApplicationReviewQueue } from "@/hooks/useApplicationReviews";
 
+// Hàng đợi ICPDP các hồ sơ lập CLB chờ xét duyệt
 export function ApplicationReviewQueuePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ export function ApplicationReviewQueuePage() {
       .format(new Date(value));
   }
 
+  // Nhận hồ sơ (claim) rồi mở trang xét duyệt, hoặc mở chế độ chỉ xem
   async function openReview(applicationId: string, readOnly: boolean) {
     if (!auth.data) return;
     if (readOnly) {
@@ -35,7 +37,7 @@ export function ApplicationReviewQueuePage() {
         csrfToken: auth.data.csrfToken });
       navigate(`/workspace/reviews/${applicationId}`);
     } catch {
-      // Mutation error is rendered in context below.
+      // Lỗi của mutation được hiển thị ngay tại vị trí liên quan bên dưới.
     }
   }
 

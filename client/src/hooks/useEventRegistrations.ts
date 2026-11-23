@@ -10,23 +10,27 @@ import {
 
 const key = ["event-registrations"] as const;
 
-/** True when a registration/check-in request failed because the visitor is not signed in. */
+// Kiểm tra lỗi có phải do cần đăng nhập
+/** True khi yêu cầu đăng ký/điểm danh thất bại do khách chưa đăng nhập. */
 export function isSignInRequired(error: unknown): boolean {
   return error instanceof EventRegistrationError && error.status === 401;
 }
 
-/** Only runs for signed-in users; a disabled query stays pending, so callers branch on `enabled` first. */
+// Query điều kiện đăng ký của một sự kiện
+/** Chỉ chạy với người dùng đã đăng nhập; query bị tắt sẽ ở trạng thái pending, nên nơi gọi cần rẽ nhánh theo `enabled` trước. */
 export function useEventRegistrationContext(eventId: string, enabled: boolean) {
   return useQuery({ queryKey: [...key, "context", eventId],
     queryFn: ({ signal }) => fetchEventRegistrationContext(eventId, signal),
     enabled: enabled && Boolean(eventId), retry: false });
 }
 
+// Query đăng ký sự kiện của tôi
 export function useMyEventRegistrations(enabled: boolean) {
   return useQuery({ queryKey: [...key, "mine"],
     queryFn: ({ signal }) => fetchMyEventRegistrations(signal), enabled, retry: false });
 }
 
+// Mutation đăng ký hoặc huỷ đăng ký sự kiện, rồi làm mới cache
 export function useEventRegistrationAction() {
   const client = useQueryClient();
   return useMutation({

@@ -12,12 +12,14 @@ import { useMyRecruitmentApplications, useRecruitmentApplicationAction } from "@
 import type { RecruitmentApplication } from "@/services/recruitmentApplications";
 import { useConfirm } from "@/hooks/useConfirm";
 
+// Trang danh sách hồ sơ ứng tuyển CLB của sinh viên
 export function RecruitmentApplicationsPage() {
   const { t } = useTranslation();
   const askConfirm = useConfirm();
   const auth = useAuth();
   const applications = useMyRecruitmentApplications(Boolean(auth.data));
   const action = useRecruitmentApplicationAction();
+  // Nhãn đã dịch của trạng thái hồ sơ ứng tuyển
   function stateLabel(state: RecruitmentApplication["state"]): string {
     switch (state) {
       case "Draft": return t("recruitmentApplications.stateDraft");
@@ -33,6 +35,7 @@ export function RecruitmentApplicationsPage() {
     }
   }
 
+  // Xác nhận rồi rút hồ sơ ứng tuyển
   async function withdraw(applicationId: string) {
     if (!auth.data || !(await askConfirm(t("recruitmentApplications.withdrawConfirm")))) return;
     try {
@@ -41,6 +44,7 @@ export function RecruitmentApplicationsPage() {
     } catch { /* The mutation error is rendered in the page. */ }
   }
 
+  // Màu badge theo trạng thái hồ sơ ứng tuyển
   function stateTone(state: RecruitmentApplication["state"]): AppBadgeTone {
     if (state === "Accepted" || state === "Onboarded") return "success";
     if (state === "Rejected" || state === "Declined") return "danger";

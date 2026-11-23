@@ -117,6 +117,7 @@ const detail = z.object({
   versions: z.array(report),
   preview: snapshot,
 });
+// Bọc schema dữ liệu vào response 200 theo envelope chuẩn
 function responses(schema: z.ZodType) {
   return {
     "200": {

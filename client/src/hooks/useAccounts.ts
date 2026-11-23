@@ -5,7 +5,8 @@ import { applyAccountAction, fetchAdminUsers, type AccountAction } from "@/servi
 
 const accountsKeyRoot = ["accounts"] as const;
 
-/** One page of accounts (page starts at 1); the previous page stays on screen while the next loads. */
+// Query danh sách người dùng để ICPDP quản trị tài khoản
+/** Một trang tài khoản (trang bắt đầu từ 1); trang trước vẫn hiển thị trong khi trang kế tiếp đang tải. */
 export function useAccounts(search: string, page: number, pageSize: number, enabled: boolean) {
   return useQuery({
     queryKey: [...accountsKeyRoot, search, page, pageSize],
@@ -16,6 +17,7 @@ export function useAccounts(search: string, page: number, pageSize: number, enab
   });
 }
 
+// Mutation cấp/thu hồi role hoặc khoá/mở khoá tài khoản, rồi làm mới cache
 export function useAccountAction() {
   const queryClient = useQueryClient();
   return useMutation({

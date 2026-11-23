@@ -67,12 +67,14 @@ export const clubPeriodicDraftBody = clubPeriodicVersionBody.extend({
 
 const path = z.object({ clubId: id, id: id.optional() });
 
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
   if (!result.success) throw new DomainError("invalid periodic report request", "validation", result.error.issues);
   return result.data;
 }
 
+// Mount các route báo cáo định kỳ phía CLB
 export function clubPeriodicReportRoutes(deps: {
   repo: ClubPeriodicReportRepository;
   policy: PolicyRepository;
@@ -82,21 +84,25 @@ export function clubPeriodicReportRoutes(deps: {
 }): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
+  // Liệt kê báo cáo định kỳ của CLB
   router.get("/clubs/:clubId/periodic-reports", authGuard(guard, false), async (req, res) => {
     const { clubId } = parse(path, req.params);
     ok(res, await listClubPeriodicReports(deps.repo, deps.policy, deps.access, res.locals.actor as AccessActor, clubId, new Date()));
   });
+  // Tạo báo cáo định kỳ của CLB
   router.post("/clubs/:clubId/periodic-reports", authGuard(guard), async (req, res) => {
     const { clubId } = parse(path, req.params);
     ok(res, await createClubPeriodicReport(deps.repo, deps.policy, deps.access, res.locals.actor as AccessActor,
       clubId, parse(clubPeriodicCreateBody, req.body).periodCode, new Date()), 201);
   });
+  // Cập nhật nội dung báo cáo định kỳ
   router.put("/clubs/:clubId/periodic-reports/:id", authGuard(guard), async (req, res) => {
     const { clubId, id } = parse(path, req.params);
     const { revision, ...input } = parse(clubPeriodicDraftBody, req.body);
     ok(res, await changeClubPeriodicReport(deps.repo, deps.access, res.locals.actor as AccessActor,
       clubId, id!, revision, input, new Date()));
   });
+  // Nộp báo cáo định kỳ cho ICPDP
   router.post("/clubs/:clubId/periodic-reports/:id/submit", authGuard(guard), async (req, res) => {
     const { clubId, id } = parse(path, req.params);
     ok(res, await changeClubPeriodicReport(deps.repo, deps.access, res.locals.actor as AccessActor,

@@ -9,11 +9,13 @@ import type { AccessActor } from "./access.js";
 const objectId = /^[0-9a-f]{24}$/i;
 const formKey = /^[a-z][a-z0-9_]{0,49}$/;
 
+// Kiểm định dạng ObjectId của một định danh
 function id(value: string, label: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${label}`, "validation");
   return value;
 }
 
+// Cắt khoảng trắng chuỗi tùy chọn và kiểm độ dài tối đa
 function optionalText(value: string | undefined, max: number, field: string): string | undefined {
   const normalized = value?.trim();
   if (normalized && normalized.length > max) {
@@ -22,6 +24,7 @@ function optionalText(value: string | undefined, max: number, field: string): st
   return normalized || undefined;
 }
 
+// Chuẩn hóa và kiểm dữ liệu đợt tuyển (vị trí, thời gian, form, rubric)
 function normalizeInput(input: RecruitmentCampaignInput): RecruitmentCampaignInput {
   const title = input.title.trim();
   const positions = input.positions.map((position) => position.trim());
@@ -79,6 +82,7 @@ function normalizeInput(input: RecruitmentCampaignInput): RecruitmentCampaignInp
   };
 }
 
+// Kiểm CLB Active và quyền quản lý tuyển thành viên của actor
 async function actorForClub(access: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, now: Date) {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
@@ -99,12 +103,14 @@ async function actorForClub(access: ClubAccessRepository, actor: AccessActor | n
   return { clubId: parsedClubId, actorId: userId };
 }
 
+// CLB xem các đợt tuyển thành viên của mình
 export async function listRecruitmentCampaigns(repo: RecruitmentCampaignRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now = new Date()) {
   const ids = await actorForClub(access, actor, clubId, now);
   return repo.list(ids.clubId);
 }
 
+// CLB xem chi tiết một đợt tuyển thành viên
 export async function getRecruitmentCampaign(repo: RecruitmentCampaignRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, campaignId: string,
   now = new Date()) {
@@ -114,6 +120,7 @@ export async function getRecruitmentCampaign(repo: RecruitmentCampaignRepository
   return campaign;
 }
 
+// CLB tạo bản nháp đợt tuyển và báo các đợt trùng vị trí, thời gian
 export async function createRecruitmentCampaignDraft(repo: RecruitmentCampaignRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string,
   input: RecruitmentCampaignInput, now: Date) {
@@ -124,6 +131,7 @@ export async function createRecruitmentCampaignDraft(repo: RecruitmentCampaignRe
   return { campaign, overlaps };
 }
 
+// CLB sửa bản nháp đợt tuyển và báo các đợt trùng
 export async function updateRecruitmentCampaignDraft(repo: RecruitmentCampaignRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, campaignId: string,
   input: RecruitmentCampaignInput, now: Date) {
@@ -135,6 +143,7 @@ export async function updateRecruitmentCampaignDraft(repo: RecruitmentCampaignRe
   return { campaign, overlaps };
 }
 
+// CLB công bố đợt tuyển, yêu cầu nằm trong một học kỳ và xác nhận nếu trùng
 export async function publishRecruitmentCampaign(repo: RecruitmentCampaignRepository,
   access: ClubAccessRepository, policy: PolicyRepository, actor: AccessActor | null,
   clubId: string, campaignId: string, confirmOverlap: boolean, now: Date) {
@@ -161,6 +170,7 @@ export async function publishRecruitmentCampaign(repo: RecruitmentCampaignReposi
   return { campaign: await repo.publish(ids.clubId, campaign.id, ids.actorId, now), overlaps };
 }
 
+// CLB hủy một đợt tuyển thành viên
 export async function cancelRecruitmentCampaign(repo: RecruitmentCampaignRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, campaignId: string,
   now: Date) {

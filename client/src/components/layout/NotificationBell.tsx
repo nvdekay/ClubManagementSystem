@@ -18,11 +18,12 @@ import { notificationFamily, notificationLink, notificationSubject } from "@/uti
 interface NotificationBellProps {
   userId: string;
   csrfToken: string;
-  /** The current workspace; only its notifications are counted and listed. */
+  /** Workspace hiện tại; chỉ thông báo của workspace này được đếm và liệt kê. */
   scope: NotificationScope;
 }
 
-/** Bell with the unread count; opens the user's in-app inbox (NTF-04) for the current workspace. */
+// Chuông thông báo: số chưa đọc và hộp thư của workspace hiện tại
+/** Chuông kèm số chưa đọc; mở hộp thư trong ứng dụng (NTF-04) của người dùng cho workspace hiện tại. */
 export function NotificationBell({ userId, csrfToken, scope }: NotificationBellProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -36,10 +37,12 @@ export function NotificationBell({ userId, csrfToken, scope }: NotificationBellP
   const families = t("notifications.families", { returnObjects: true }) as Record<string, string>;
   const items = inbox.data?.pages.flatMap((page) => page.items) ?? [];
 
+  // Lấy tiêu đề hiển thị của một thông báo theo mã sự kiện
   function title(item: AppNotification): string {
     return codes[item.eventCode] ?? families[notificationFamily(item.eventCode)] ?? families.OTHER ?? item.eventCode;
   }
 
+  // Đánh dấu đã đọc và chuyển tới trang liên quan của thông báo
   function openItem(item: AppNotification) {
     if (!item.readAt) markRead.mutate({ id: item.id, csrfToken });
     const link = notificationLink(item);

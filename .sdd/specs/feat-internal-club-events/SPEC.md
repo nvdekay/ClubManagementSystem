@@ -11,6 +11,12 @@ Sự kiện nội bộ CLB tự túc (`MEMBERS_ONLY`, không xin ngân sách tr�
 
 ## Hành vi
 
+### Điều chỉnh giao diện ngày 2026-11-17
+Theo yêu cầu người dùng, phía CLB chỉ còn một lựa chọn tạo mới: "Tạo đề xuất sự kiện".
+Gỡ nút tạo nội bộ trong danh sách, liên kết tạo nội bộ trong form đề xuất và route
+`/club/:clubId/events/internal/new`. Hướng dẫn en/vi trong form không dẫn sang luồng đã gỡ.
+Thay đổi này giới hạn ở giao diện tạo mới; vẫn quản lý được sự kiện nội bộ đã có, giữ API và dữ liệu hiện tại.
+
 ### Hai luồng tách biệt
 - **Sự kiện nội bộ** (luồng mới): luôn `audienceScope = "MEMBERS_ONLY"`, không có `budgetLines`,
   không tạo `eventProposalVersions` / `approvalTasks` / `eventBudgets` / `eventDefenseSessions`,

@@ -4,8 +4,10 @@ import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
+// Ném lỗi conflict với thông báo cho trước
 function conflict(message: string): never { throw new DomainError(message, "conflict"); }
-/** All callers hold the event write lock before reading or changing attendance. */
+// Áp dụng thao tác điểm danh (check-in, sửa, chốt, mở khóa) cho sự kiện
+/** Mọi bên gọi đều giữ khoá ghi của sự kiện trước khi đọc hoặc đổi điểm danh. */
 export async function applyEventAttendanceAction(session: ClientSession, event: Doc, action: ClubEventAction,
   actorId: Types.ObjectId, now: Date, internalWithoutBudget: boolean, allowOutOfWindowCheckIn = true): Promise<void> {
   const eventId = event._id as Types.ObjectId;
@@ -14,7 +16,7 @@ export async function applyEventAttendanceAction(session: ClientSession, event: 
       conflict("submitted report history prevents attendance unlocking");
     }
     if (event.attendanceFinalized !== true || !["Completed", "Closed", "FINISH"].includes(String(event.state))) conflict("attendance is not finalized");
-    // Internal events end at FINISH and stay there; proposals reopen at Completed.
+    // Sự kiện nội bộ kết thúc ở FINISH và dừng ở đó; đề xuất thì mở lại ở Completed.
     await m.events!.updateOne({ _id: eventId }, { $set: { attendanceFinalized: false, state: event.state === "FINISH" ? "FINISH" : "Completed" } }, { session });
     await m.attendances!.updateMany({ eventId }, { $set: { finalized: false, unlockedBy: actorId, unlockReason: action.reason },
       $unset: { finalizedAt: "", finalizedBy: "" } }, { session });

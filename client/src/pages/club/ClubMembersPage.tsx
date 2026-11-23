@@ -32,7 +32,8 @@ const helper = createColumnHelper<AppTableFeatures, ClubRosterMember>();
 const ALL = "";
 const NO_ROLE = "__none__";
 
-/** UC21 A1 for members with club.member.manage: roster and leave requests (UC22) to execute. */
+// Trang quản lý thành viên CLB: danh sách, đổi trạng thái, rút khỏi CLB, xuất Excel
+/** UC21 A1 cho thành viên có club.member.manage: danh sách thành viên và các yêu cầu rời CLB (UC22) cần thực hiện. */
 export function ClubMembersPage() {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -52,7 +53,7 @@ export function ClubMembersPage() {
     return () => window.clearInterval(timer);
   }, []);
   const [doneId, setDoneId] = useState<string | null>(null);
-  // Banned members leave the roster, so the confirmation lives at page level.
+  // Thành viên bị cấm sẽ rời khỏi danh sách, nên hộp xác nhận đặt ở cấp trang.
   const [stateNotice, setStateNotice] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState(ALL);
@@ -66,7 +67,7 @@ export function ClubMembersPage() {
   const closeDialog = useCallback(() => setDialog(null), []);
 
   const roles = useMemo(() => [...new Set(roster.flatMap((member) => member.positions))], [roster]);
-  // Filtering happens before the table so the paginated, sorted model works on matches only.
+  // Lọc trước khi đưa vào bảng để mô hình phân trang và sắp xếp chỉ xử lý các dòng khớp.
   const filtered = useMemo(() => {
     const needle = search.toLocaleLowerCase();
     return roster.filter((member) => (!needle || (member.displayName ?? "").toLocaleLowerCase().includes(needle)
@@ -105,6 +106,7 @@ export function ClubMembersPage() {
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } } });
   const { pageIndex, pageSize } = table.state.pagination;
 
+  // Xác nhận rồi thực thi yêu cầu rút khỏi CLB đã đến ngày hiệu lực
   async function execute(request: WithdrawalRequest) {
     if (new Date(request.requestedEffectiveDate).getTime() > currentTime) return;
     if (!auth.data || !clubId || inFlight.current || !(await askConfirm(t("memberSpace.executeConfirm")))) return;
@@ -114,12 +116,13 @@ export function ClubMembersPage() {
       await action.mutateAsync({ kind: "execute", clubId, requestId: request.id, csrfToken: auth.data.csrfToken });
       setDoneId(request.id);
     } catch {
-      // action.isError renders below.
+      // action.isError được hiển thị bên dưới.
     } finally {
       inFlight.current = false;
     }
   }
 
+  // Xuất danh sách thành viên đang lọc ra file xlsx
   async function exportRows() {
     setExporting(true);
     setExportFailed(false);
@@ -137,7 +140,7 @@ export function ClubMembersPage() {
 
   if (auth.isPending) return <AppSkeleton className="h-48 w-full" />;
   if (!workspace || !clubId) return <AppNotice tone="danger">{t("memberSpace.rosterDenied")}</AppNotice>;
-  // A Club Member only reads the roster; Club Leaders manage it below.
+  // Club Member chỉ xem danh sách; Club Leader quản lý ở phần bên dưới.
   if (!canManage) return <ClubRosterReadOnly clubId={clubId} />;
   const error = members.error ?? withdrawals.error;
   return (
@@ -253,6 +256,7 @@ export function ClubMembersPage() {
   );
 }
 
+// Danh sách thành viên chỉ đọc cho người không có quyền quản lý
 function ClubRosterReadOnly({ clubId }: { clubId: string }) {
   const { t } = useTranslation();
   const space = useMemberSpace(clubId, true);

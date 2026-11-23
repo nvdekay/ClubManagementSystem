@@ -37,9 +37,9 @@ export interface ApplicationReviewQueueItem {
 export interface ApplicationReviewDetail extends ApplicationReviewQueueItem {
   versions: ClubApplicationVersion[];
   decisions: ApplicationReviewDecision[];
-  /** Founding members of the latest submitted version, so ICPDP sees names instead of ids. */
+  /** Thành viên sáng lập của phiên bản nộp mới nhất, để ICPDP thấy tên thay vì id. */
   founders: FounderProfile[];
-  /** UC07 E3: Active clubs already using the proposed name; ICPDP decides in UC08. */
+  /** UC07 E3: các CLB Active đã dùng tên được đề xuất; ICPDP quyết định ở UC08. */
   nameConflicts: Array<{ id: string; code: string; name: string }>;
 }
 
@@ -55,7 +55,7 @@ export interface ClubApplicationReviewRepository {
   listOpen(): Promise<ApplicationReviewQueueItem[]>;
   find(applicationId: string): Promise<ApplicationReviewDetail | null>;
   findDocument(applicationId: string, documentId: string): Promise<ApplicationDocument | null>;
-  /** Clubs in every state plus other pending applications, excluding this one and its created club. */
+  /** CLB ở mọi trạng thái cùng các hồ sơ đang chờ khác, trừ hồ sơ này và CLB do nó tạo ra. */
   similarityCandidates(applicationId: string): Promise<SimilarityCandidate[]>;
   claim(applicationId: string, officerId: string, now: Date): Promise<ApplicationReviewDetail>;
   decide(applicationId: string, officerId: string,

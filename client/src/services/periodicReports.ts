@@ -168,6 +168,7 @@ export interface PeriodicDecisionInput {
   resubmitDueAt?: string;
 }
 
+// Gọi API /admin/periodic-reports và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/periodic-reports${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -178,26 +179,32 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit POST/PUT có CSRF và body JSON
 function mutation(csrfToken: string, body: object, method: "POST" | "PUT" = "POST"): RequestInit {
   return { method, headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(body) };
 }
 
+// GET tổng quan báo cáo định kỳ theo kỳ
 export function fetchPeriodicOverview(period: string | undefined, signal: AbortSignal): Promise<PeriodicOverview> {
   return request(period ? `?period=${encodeURIComponent(period)}` : "", { signal });
 }
 
+// PUT /campaign: lưu đợt thu báo cáo định kỳ
 export function savePeriodicCampaign(input: PeriodicCampaignInput, csrfToken: string): Promise<PeriodicCampaign> {
   return request("/campaign", mutation(csrfToken, input, "PUT"));
 }
 
+// GET chi tiết một báo cáo định kỳ
 export function fetchPeriodicReport(id: string, signal: AbortSignal): Promise<PeriodicReportDetail> {
   return request(`/${encodeURIComponent(id)}`, { signal });
 }
 
+// POST /decision: ICPDP quyết định báo cáo định kỳ
 export function decidePeriodicReport(id: string, input: PeriodicDecisionInput, csrfToken: string): Promise<PeriodicReportDetail> {
   return request(`/${encodeURIComponent(id)}/decision`, mutation(csrfToken, input));
 }
 
+// POST /missing: ghi nhận CLB không nộp báo cáo
 export function recordMissingPeriodicReport(input: { clubId: string; periodCode: string; severity: Severity; note?: string },
   csrfToken: string): Promise<{ violationId: string }> {
   return request("/missing", mutation(csrfToken, input));

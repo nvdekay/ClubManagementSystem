@@ -29,7 +29,8 @@ interface EventRegistrationPanelProps {
   eventId: string;
 }
 
-/** UC29 call to action on the public event page: sign in, register (or waitlist), see status, cancel. */
+// Khu vực đăng ký sự kiện: yêu cầu đăng nhập rồi hiển thị trạng thái đăng ký
+/** UC29 trên trang sự kiện công khai: đăng nhập, đăng ký (hoặc vào danh sách chờ), xem trạng thái, huỷ. */
 export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -65,6 +66,7 @@ export function EventRegistrationPanel({ eventId }: EventRegistrationPanelProps)
   );
 }
 
+// Lời nhắc đăng nhập để đăng ký sự kiện
 function SignInPrompt({ to }: { to: string }) {
   const { t } = useTranslation();
   return (
@@ -77,6 +79,7 @@ function SignInPrompt({ to }: { to: string }) {
   );
 }
 
+// Nội dung đăng ký: form, sức chứa, đăng ký hiện tại và huỷ đăng ký
 function RegistrationBody({ context, csrfToken }: { context: EventRegistrationContext; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -95,7 +98,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
   const active = registration && registration.state !== "Cancelled" ? registration : null;
   const membersOnlyBlocked = event.audienceScope === "MEMBERS_ONLY" && !context.isActiveClubMember;
   const opensLater = event.registrationOpenAt ? new Date(event.registrationOpenAt) > now : false;
-  // Same presence rule the server applies to required answers (any non-blank value).
+  // Cùng quy tắc có mặt mà server áp dụng cho câu trả lời bắt buộc (mọi giá trị không rỗng).
   const validation = useFieldValidation(Object.fromEntries(context.formSchema.map((field) => {
     const answer = answers[field.key];
     const present = (Array.isArray(answer) ? answer : [answer ?? ""]).some((value) => value.trim());
@@ -103,6 +106,7 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
     return [field.key, field.required && !present ? t(choice ? "common.chooseRequired" : "common.fieldRequired") : null];
   })));
 
+  // Chạy thao tác đăng ký hoặc huỷ, chống gửi trùng và báo kết quả
   async function run(input: Parameters<typeof action.mutateAsync>[0], done: "registered" | "cancelled") {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -112,18 +116,20 @@ function RegistrationBody({ context, csrfToken }: { context: EventRegistrationCo
       setFeedback(done);
       if (done === "registered") { setAnswers({}); validation.reset(); }
     } catch {
-      // action.isError renders the message below.
+      // action.isError hiển thị thông báo lỗi bên dưới.
     } finally {
       inFlight.current = false;
     }
   }
 
+  // Kiểm tra hợp lệ rồi gửi đăng ký sự kiện
   function submit(formEvent: FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
     if (!validation.touchAll()) return;
     void run({ kind: "register", eventId: event.id, csrfToken, answers }, "registered");
   }
 
+  // Xin xác nhận rồi huỷ đăng ký hiện tại
   async function cancel() {
     if (!active || !(await askConfirm(t("eventRegistrations.cancelConfirm")))) return;
     void run({ kind: "cancel", registrationId: active.id, csrfToken }, "cancelled");
@@ -221,6 +227,7 @@ interface FormFieldProps {
   onChange: (value: EventRegistrationAnswer) => void;
 }
 
+// Hiển thị một trường của form đăng ký theo kiểu dữ liệu của trường
 function FormField({ field, value, error, onTouch, onChange }: FormFieldProps) {
   const { t } = useTranslation();
   const id = `registration-${field.key}`;

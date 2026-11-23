@@ -12,15 +12,18 @@ import { ucmsModels } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Ném DomainError loại conflict với thông điệp cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Ép giá trị đọc từ DB về Date, lỗi nếu không phải ngày hợp lệ
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid event registration date in database");
   return value;
 }
 
+// Lọc câu trả lời form đăng ký, chỉ giữ giá trị chuỗi hoặc mảng chuỗi
 function answers(value: unknown): Record<string, string | string[]> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string | string[]] =>
@@ -28,6 +31,7 @@ function answers(value: unknown): Record<string, string | string[]> {
       && entry[1].every((item) => typeof item === "string"))));
 }
 
+// Chuẩn hóa các trường form đăng ký sự kiện lấy từ proposal
 function formFields(value: unknown): EventRegistrationFormField[] {
   if (!Array.isArray(value)) return [];
   const types = new Set(["text", "textarea", "select", "radio", "checkbox"]);
@@ -43,6 +47,7 @@ function formFields(value: unknown): EventRegistrationFormField[] {
   });
 }
 
+// Repository đăng ký, huỷ đăng ký sự kiện của sinh viên trên MongoDB
 export function mongoEventRegistrationRepository(): EventRegistrationRepository {
   const events = ucmsModels.events!;
   const proposals = ucmsModels.eventProposalVersions!;
@@ -51,6 +56,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
   const notifications = ucmsModels.notifications!;
   const audits = ucmsModels.auditLogs!;
 
+  // Ánh xạ document đăng ký sang EventRegistration kèm thông tin sự kiện
   async function mapRegistration(registration: Doc,
     session?: ClientSession): Promise<EventRegistration | null> {
     const event = await events.findById(registration.eventId).session(session ?? null).lean();
@@ -69,6 +75,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
       ...(registration.cancelledAt instanceof Date ? { cancelledAt: registration.cancelledAt } : {}) };
   }
 
+  // Tìm đăng ký thuộc đúng sinh viên
   async function owned(registrationId: Types.ObjectId, studentId: Types.ObjectId,
     session?: ClientSession): Promise<EventRegistration | null> {
     const registration = await registrations.findOne({ _id: registrationId, studentId })
@@ -77,6 +84,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
   }
 
   return {
+    // Lấy sự kiện, form đăng ký, tư cách thành viên Active và đăng ký hiện có của sinh viên
     async context(eventId, studentId) {
       const eventObjectId = new Types.ObjectId(eventId);
       const studentObjectId = new Types.ObjectId(studentId);
@@ -103,6 +111,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
       registration: registration ? await mapRegistration(registration) : null };
     },
 
+    // Liệt kê đăng ký của sinh viên, mới nhất trước
     async listMine(studentId) {
       const docs = await registrations.find({ studentId: new Types.ObjectId(studentId) })
         .sort({ createdAt: -1, _id: -1 }).lean();
@@ -110,10 +119,12 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
         .filter((item): item is EventRegistration => Boolean(item));
     },
 
+    // Tìm một đăng ký theo id của chính sinh viên
     async findOwned(registrationId, studentId) {
       return owned(new Types.ObjectId(registrationId), new Types.ObjectId(studentId));
     },
 
+    // Đăng ký sự kiện trong transaction, hết chỗ thì vào danh sách chờ nếu sự kiện cho phép
     async register(input) {
       const eventId = new Types.ObjectId(input.eventId);
       const studentId = new Types.ObjectId(input.studentId);
@@ -178,6 +189,7 @@ export function mongoEventRegistrationRepository(): EventRegistrationRepository 
       return result;
     },
 
+    // Huỷ đăng ký Confirmed/Waitlisted, đẩy người chờ lên khi giải phóng chỗ
     async cancel(registrationId, studentId, now) {
       const id = new Types.ObjectId(registrationId);
       const userId = new Types.ObjectId(studentId);

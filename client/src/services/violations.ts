@@ -96,6 +96,7 @@ export type ViolationStep =
   | { type: "verifyAction"; actionId: string; outcome: "Verified" | "Failed"; note?: string }
   | { type: "resolve"; note?: string };
 
+// Gọi API /admin/violations và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/violations${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -106,27 +107,33 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit POST có CSRF và body JSON
 function post(csrfToken: string, body: object): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     body: JSON.stringify(body) };
 }
 
+// GET danh sách vi phạm của các CLB
 export function fetchViolations(signal: AbortSignal): Promise<ViolationSummary[]> {
   return request("", { signal });
 }
 
+// GET chi tiết một vi phạm
 export function fetchViolation(id: string, signal: AbortSignal): Promise<ViolationDetail> {
   return request(`/${encodeURIComponent(id)}`, { signal });
 }
 
+// GET /sources: nguồn dữ liệu để mở vi phạm cho một CLB
 export function fetchViolationSources(clubId: string, signal: AbortSignal): Promise<ViolationSources> {
   return request(`/sources/${encodeURIComponent(clubId)}`, { signal });
 }
 
+// POST mở hồ sơ vi phạm mới
 export function openViolation(input: OpenViolationInput, csrfToken: string): Promise<ViolationDetail> {
   return request("", post(csrfToken, input));
 }
 
+// POST /steps: thực hiện bước xử lý vi phạm
 export function applyViolationStep(id: string, step: ViolationStep, csrfToken: string): Promise<ViolationDetail> {
   return request(`/${encodeURIComponent(id)}/steps`, post(csrfToken, step));
 }

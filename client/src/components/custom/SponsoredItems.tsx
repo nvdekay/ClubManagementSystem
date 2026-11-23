@@ -8,6 +8,7 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { useInvoiceImage, useSponsoredItemAction, useSponsoredItems } from "@/hooks/useSponsoredItems";
 import type { ItemAction, SponsoredItem, SponsoredBudget } from "@/services/sponsoredItems";
 
+// Xem trước ảnh hoá đơn của một mục tài trợ
 function InvoicePreview({ budgetId, clubId, itemId, imageId, name }: {
   budgetId: string; clubId?: string; itemId: string; imageId: string; name: string;
 }) {
@@ -21,6 +22,7 @@ function InvoicePreview({ budgetId, clubId, itemId, imageId, name }: {
   </a>;
 }
 
+// Thẻ một mục hoá đơn tài trợ: sửa, tải ảnh, nộp và duyệt
 function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget; item: SponsoredItem; clubId?: string; csrfToken: string }) {
   const { t, i18n } = useTranslation();
   const confirm = useConfirm();
@@ -39,12 +41,15 @@ function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget
   const canSubmit = editable && item.fundingDecision !== "NOT_SPONSORED" && item.images.length > 0 && item.amount > 0
     && (item.fundingDecision === "BEFORE_EVENT" || now >= new Date(item.eventEndAt));
   const dirty = Number(amount) !== item.amount || description !== item.description;
+  // Định dạng số tiền VND theo ngôn ngữ hiện tại
   function money(value: number) { return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value); }
+  // Gửi thao tác lên mục tài trợ và báo lỗi nếu thất bại
   async function act(action: ItemAction) {
     setError("");
     try { await mutation.mutateAsync({ itemId: item.id, revision: budget.revision, action }); }
     catch { setError(t("sponsoredItems.error")); }
   }
+  // Kiểm tra số lượng, loại và dung lượng rồi tải ảnh hoá đơn lên
   async function upload(files: File[]) {
     if (!editable || mutation.isPending) return;
     setError("");
@@ -104,6 +109,7 @@ function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget
   </article>;
 }
 
+// Danh sách các mục hoá đơn tài trợ của một ngân sách
 export function SponsoredItems({ budgetId, clubId, csrfToken, fallback = null }: { budgetId: string; clubId?: string; csrfToken: string; fallback?: ReactNode }) {
   const { t, i18n } = useTranslation();
   const query = useSponsoredItems(budgetId, clubId);

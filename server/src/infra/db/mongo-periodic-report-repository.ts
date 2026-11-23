@@ -26,31 +26,36 @@ import { insertViolationCase } from "./violation-case.js";
 
 type Doc = Record<string, unknown>;
 const TASK_TYPE = "PERIODIC_REPORT";
-/** Clubs that owe a periodic report (UC38 precondition: Active, or Suspended/Dissolving with duties left). */
+/** Các CLB nợ báo cáo định kỳ (điều kiện UC38: Active, hoặc Suspended/Dissolving còn nghĩa vụ). */
 const owingStates = ["Active", "Suspended", "Dissolving"];
 const submittedStates = ["Submitted", "Accepted", "Returned for correction"];
 const heldEventStates = ["Completed", "Report Submitted", "Closed", "FINISH"];
 
+// Lấy chuỗi không rỗng, ngược lại undefined
 function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// Chuyển giá trị tiền thành số, mặc định 0
 function money(value: unknown): number {
   if (value === null || value === undefined) return 0;
   const parsed = Number(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+// Chuyển sang số hữu hạn, không hợp lệ thì undefined
 function optionalNumber(value: unknown): number | undefined {
   if (value === null || value === undefined) return undefined;
   const parsed = Number(String(value));
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+// Ném DomainError loại conflict với thông điệp cho trước
 function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Suy ra mã sinh viên từ email khi dữ liệu thiếu mã
 function fallbackStudentCode(email: string, index: number): string {
   const match = email.match(/([a-z]{2}\d{6})@/i);
   if (match?.[1]) return match[1].toUpperCase();
@@ -58,6 +63,7 @@ function fallbackStudentCode(email: string, index: number): string {
   return prefix ? prefix.slice(0, 12) : `SV${String(index + 1).padStart(4, "0")}`;
 }
 
+// Chuẩn hóa danh sách thành viên trong báo cáo định kỳ
 export function parseMembersList(raw: unknown): PeriodicMemberEntry[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return raw.map((item, idx) => {
@@ -74,6 +80,7 @@ export function parseMembersList(raw: unknown): PeriodicMemberEntry[] | undefine
   });
 }
 
+// Chuẩn hóa danh sách sự kiện trong báo cáo định kỳ
 export function parseEventsList(raw: unknown): PeriodicEventEntry[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return raw.map((item) => {
@@ -91,6 +98,7 @@ export function parseEventsList(raw: unknown): PeriodicEventEntry[] | undefined 
   });
 }
 
+// Chuẩn hóa danh sách thành tích trong báo cáo định kỳ
 export function parseAchievementsList(raw: unknown): PeriodicAchievementEntry[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return raw.map((item) => {
@@ -104,6 +112,7 @@ export function parseAchievementsList(raw: unknown): PeriodicAchievementEntry[] 
   });
 }
 
+// Chuẩn hóa câu trả lời cho các trường tuỳ chỉnh của báo cáo
 export function parseCustomAnswersList(raw: unknown): PeriodicCustomAnswer[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   return raw.map((item) => {
@@ -120,6 +129,7 @@ export function parseCustomAnswersList(raw: unknown): PeriodicCustomAnswer[] | u
   });
 }
 
+// Chuẩn hóa snapshot dữ liệu hệ thống của báo cáo
 function parseSystemSnapshot(raw: unknown): PeriodicSystemSnapshot | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const doc = raw as Doc;
@@ -129,6 +139,7 @@ function parseSystemSnapshot(raw: unknown): PeriodicSystemSnapshot | undefined {
   return { members: members ?? [], events: events ?? [] };
 }
 
+// Chuẩn hóa số liệu nạp sẵn (preloaded) của kỳ báo cáo
 function figuresFrom(raw: unknown): PeriodFigures {
   const doc = (raw && typeof raw === "object" ? raw : {}) as Doc;
   function part(key: string): Doc {
@@ -151,6 +162,7 @@ function figuresFrom(raw: unknown): PeriodFigures {
   };
 }
 
+// Tổng hợp snapshot thành viên và sự kiện của CLB trong kỳ từ dữ liệu hệ thống
 export async function periodicSystemData(
   clubId: Types.ObjectId,
   periodCode: string,
@@ -220,6 +232,7 @@ export async function periodicSystemData(
   return { members, events };
 }
 
+// Tổng hợp số liệu live thành viên và sự kiện của CLB trong kỳ
 export async function periodicLiveFigures(
   clubId: Types.ObjectId,
   periodCode: string,
@@ -246,6 +259,7 @@ export async function periodicLiveFigures(
   };
 }
 
+// Chuẩn hóa các trường tuỳ chỉnh của chiến dịch báo cáo
 function parseCustomFields(raw: unknown): PeriodicCustomField[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((item) => {
@@ -264,6 +278,7 @@ function parseCustomFields(raw: unknown): PeriodicCustomField[] {
   });
 }
 
+// Tìm cấu hình chiến dịch báo cáo của kỳ từ audit log mới nhất
 export async function findPeriodicCampaign(periodCode: string, session?: ClientSession): Promise<PeriodicCampaign | null> {
   const m = ucmsModels;
   const s = session ?? null;
@@ -287,10 +302,12 @@ export async function findPeriodicCampaign(periodCode: string, session?: ClientS
   return null;
 }
 
+// Repository báo cáo định kỳ của CLB và duyệt của ICPDP
 export function mongoPeriodicReportRepository(): PeriodicReportRepository {
   const m = ucmsModels;
   const reports = m.periodicReports!;
 
+  // Tra các vụ vi phạm "không nộp báo cáo" đã ghi theo CLB
   async function missingCases(clubIds: Types.ObjectId[], periodCode: string): Promise<Map<string, string>> {
     const audits = await m.auditLogs!.find({
       entityType: "Club",
@@ -301,6 +318,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
     return new Map(audits.map((item) => [String(item.entityId), String((item.after as Doc).violationId)]));
   }
 
+  // Dựng chi tiết báo cáo định kỳ kèm lịch sử, số liệu và quyết định
   async function detail(id: Types.ObjectId): Promise<PeriodicReportDetail | null> {
     const report = await reports.findById(id).lean();
     if (!report) return null;
@@ -317,7 +335,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       .select({ displayName: 1, email: 1 }).lean();
     const nameById = new Map(people.map((user) => [String(user._id), optionalText(user.displayName) ?? String(user.email)]));
     const outcome = optionalText(report.decisionOutcome) as PeriodicOutcome | undefined;
-    // The return comments live on the decision's audit entry; the report row keeps only the outcome (UC39 FR-02).
+    // Nhận xét trả lại nằm ở audit entry của quyết định; dòng báo cáo chỉ giữ kết quả (UC39 FR-02).
     const returned = outcome === "Return" ? audits.find((item) => item.action === "PERIODIC_REPORT_RETURNED") : undefined;
     const returnedAfter = (returned?.after as Doc | undefined) ?? {};
     const sections = ((returnedAfter.sections as string[] | undefined) ?? [])
@@ -426,6 +444,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
     };
   }
 
+  // Lấy chi tiết báo cáo định kỳ, không có thì báo not_found
   async function required(id: Types.ObjectId): Promise<PeriodicReportDetail> {
     const found = await detail(id);
     if (!found) throw new DomainError("periodic report not found", "not_found");
@@ -433,10 +452,12 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
   }
 
   return {
+    // Lấy cấu hình chiến dịch báo cáo của một kỳ
     async getCampaign(periodCode) {
       return findPeriodicCampaign(periodCode);
     },
 
+    // ICPDP lưu cấu hình chiến dịch báo cáo định kỳ của kỳ
     async saveCampaign(officerId, input, now) {
       const actorId = new Types.ObjectId(officerId);
       const entityId = new Types.ObjectId();
@@ -491,6 +512,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       return { ...input, updatedAt: now };
     },
 
+    // Tổng quan tình trạng nộp báo cáo của các CLB trong kỳ
     async overview(periodCode, dueAt, now) {
       const reportDocs = await reports.find({ periodCode }).lean();
       const clubs = await m.clubs!.find({
@@ -522,10 +544,12 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       });
     },
 
+    // Lấy chi tiết một báo cáo định kỳ
     async find(id) {
       return detail(new Types.ObjectId(id));
     },
 
+    // ICPDP chấp nhận hoặc trả lại báo cáo đã nộp
     async decide(reportId, officerId, input, now) {
       const id = new Types.ObjectId(reportId);
       const actorId = new Types.ObjectId(officerId);
@@ -593,6 +617,7 @@ export function mongoPeriodicReportRepository(): PeriodicReportRepository {
       return required(id);
     },
 
+    // Ghi nhận CLB không nộp báo cáo và mở vụ vi phạm
     async recordMissing(clubId, periodCode, dueAt, officerId, input, now) {
       const club = new Types.ObjectId(clubId);
       let violationId: Types.ObjectId | undefined;

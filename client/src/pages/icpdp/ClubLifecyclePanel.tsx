@@ -23,6 +23,7 @@ interface ClubLifecyclePanelProps {
   csrfToken: string;
 }
 
+// Panel ICPDP xem lịch sử và tạm ngưng, giải thể hoặc kích hoạt lại CLB
 export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProps) {
   const { t, i18n } = useTranslation();
   const detail = useClubLifecycle(clubId);
@@ -32,7 +33,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
   const [timed, setTimed] = useState(true);
   const [until, setUntil] = useState("");
   const [error, setError] = useState<string | null>(null);
-  // The end date is a whole day: reactivate at the start of that local day.
+  // Ngày kết thúc là một ngày trọn vẹn: kích hoạt lại vào đầu ngày đó theo giờ địa phương.
   const untilIso = decision === "suspend" && timed && until ? new Date(`${until}T00:00:00`).toISOString() : undefined;
   const field = useFieldValidation(decision ? {
     reason: reason.trim() ? null : t("clubLifecycle.reasonRequired"),
@@ -67,6 +68,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
     }
   }
 
+  // Chọn loại quyết định vòng đời và đặt lại form
   function choose(value: Decision) {
     setDecision(value);
     setReason("");
@@ -74,6 +76,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
     field.reset();
   }
 
+  // Xác nhận và gửi quyết định vòng đời CLB
   async function confirm() {
     if (!decision || !field.touchAll()) return;
     setError(null);
@@ -110,7 +113,7 @@ export function ClubLifecyclePanel({ clubId, csrfToken }: ClubLifecyclePanelProp
   const canReactivate = club.state === "Suspended";
   const canDissolve = ["Active", "Suspended"].includes(club.state) && !club.dissolution;
   const outstanding = club.dissolution?.outstanding;
-  // E1: warn while choosing to dissolve and for as long as the club is on its way out.
+  // E1: cảnh báo khi đang chọn giải thể và suốt thời gian CLB còn đang trong quá trình giải thể.
   const showUnreconciled = club.unreconciledBudgets.length > 0 && club.state !== "Dissolved"
     && (decision === "dissolve" || Boolean(club.dissolution));
 

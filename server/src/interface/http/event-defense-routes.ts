@@ -75,6 +75,7 @@ export const defenseNoteBody = z.object({
   content: z.string().max(50_000),
 }).strict();
 
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) {
@@ -83,16 +84,19 @@ function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   return result.data;
 }
 
+// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
+// Mount các route phiên bảo vệ đề xuất sự kiện của ICPDP và CLB
 export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
 
+  // Liệt kê phòng còn trống cho phiên bảo vệ
   router.get("/admin/event-defense/rooms", authGuard(guard, false), async (req, res) => {
     const query = parsed(defenseRoomsQuery, req.query);
     ok(
@@ -108,6 +112,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // ICPDP lên lịch phiên bảo vệ đề xuất sự kiện
   router.post("/admin/event-proposals/:id/defense/schedule", authGuard(guard), async (req, res) => {
     const body = parsed(defenseScheduleBody, req.body);
     ok(
@@ -129,6 +134,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // ICPDP huỷ phiên bảo vệ kèm lý do
   router.post("/admin/event-proposals/:id/defense/cancel", authGuard(guard), async (req, res) => {
     const body = parsed(defenseReasonBody, req.body);
     ok(
@@ -137,6 +143,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // ICPDP phản hồi yêu cầu dời lịch bảo vệ của CLB
   router.post("/admin/event-proposals/:id/defense/respond-reschedule", authGuard(guard), async (req, res) => {
     const body = parsed(defenseRespondRescheduleBody, req.body);
     ok(
@@ -159,6 +166,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // ICPDP bắt đầu phiên bảo vệ
   router.post("/admin/event-proposals/:id/defense/start", authGuard(guard), async (req, res) => {
     ok(
       res,
@@ -166,6 +174,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // Lấy trạng thái phiên bảo vệ đang diễn ra
   router.get("/admin/event-proposals/:id/defense/session", authGuard(guard, false), async (req, res) => {
     ok(
       res,
@@ -173,6 +182,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // Lưu ghi chú của phiên bảo vệ
   router.put("/admin/event-proposals/:id/defense/notes", authGuard(guard), async (req, res) => {
     const body = parsed(defenseNoteBody, req.body);
     ok(
@@ -181,6 +191,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // ICPDP kết thúc phiên bảo vệ
   router.post("/admin/event-proposals/:id/defense/end", authGuard(guard), async (req, res) => {
     ok(
       res,
@@ -188,6 +199,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // Đánh dấu CLB vắng mặt tại phiên bảo vệ
   router.post("/admin/event-proposals/:id/defense/no-show", authGuard(guard), async (req, res) => {
     const body = parsed(defenseOptionalReasonBody, req.body);
     ok(
@@ -196,6 +208,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // ICPDP ghi quyết định sau phiên bảo vệ
   router.post("/admin/event-proposals/:id/defense/decision", authGuard(guard), async (req, res) => {
     const body = parsed(eventReviewDecisionBody, req.body);
     ok(
@@ -215,6 +228,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // CLB xem lịch bảo vệ của sự kiện
   router.get("/clubs/:clubId/events/:id/defense", authGuard(guard, false), async (req, res) => {
     ok(
       res,
@@ -229,6 +243,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // CLB xác nhận tham dự phiên bảo vệ
   router.post("/clubs/:clubId/events/:id/defense/confirm", authGuard(guard), async (req, res) => {
     ok(
       res,
@@ -243,6 +258,7 @@ export function eventDefenseRoutes(deps: EventDefenseRouteDeps): Router {
     );
   });
 
+  // CLB yêu cầu dời lịch phiên bảo vệ
   router.post("/clubs/:clubId/events/:id/defense/reschedule-request", authGuard(guard), async (req, res) => {
     const body = parsed(defenseReasonBody, req.body);
     ok(

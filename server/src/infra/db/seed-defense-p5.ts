@@ -1,11 +1,11 @@
-// Defense demo data for presenter 5: flow 7 (UC35-UC37, sponsored item invoices and payment) and
-// flow 8 (UC38-UC39, UC41-UC43, periodic report and club evaluation) on "CLB Sáng tạo Công nghệ FPTU".
-// Additive and safe to run again: every part is keyed on the cast, the club and fixed titles.
-// The cast can point at real accounts (see seed-defense-cast.ts):
+// Dữ liệu demo bảo vệ cho người trình bày 5: flow 7 (UC35-UC37, hoá đơn hạng mục tài trợ và thanh toán) và
+// flow 8 (UC38-UC39, UC41-UC43, báo cáo định kỳ và đánh giá CLB) trên "CLB Sáng tạo Công nghệ FPTU".
+// Chỉ thêm dữ liệu, chạy lại an toàn: mỗi phần đều khoá theo dàn nhân vật, CLB và các tiêu đề cố định.
+// Dàn nhân vật có thể trỏ tới tài khoản thật (xem seed-defense-cast.ts):
 //   npm run seed:defense:p5 -- --leader=<email> --officer=<email> --member=<email>
-// Add --report-submitted to leave the club's report Submitted (waiting for UC39) instead of Draft.
-// No outside request: invoice images are stored as metadata only (Cloudinary is not used), so the
-// recorder serves their previews itself.
+// Thêm --report-submitted để báo cáo của CLB ở trạng thái Submitted (chờ UC39) thay vì Draft.
+// Không gọi request ra ngoài: ảnh hoá đơn chỉ lưu metadata (không dùng Cloudinary), nên
+// recorder tự phục vụ bản xem trước của chúng.
 import { createHash, randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DEFAULT_SCHEME_SETTINGS } from "../../domain/evaluation-scheme.js";
@@ -24,22 +24,24 @@ import { ucmsModels as m } from "./ucms-models.js";
 const CLUB_NAME = DEMO_CLUB_NAME;
 const DOMAIN = "fpt.edu.vn";
 const cast = defenseCast();
-/** Students from outside the club who attended the event (D1/D2 inputs). */
+/** Sinh viên ngoài CLB đã tham dự sự kiện (đầu vào D1/D2). */
 const guests = ["Đỗ Thu Hà", "Vũ Quang Huy", "Bùi Khánh Linh", "Ngô Đức Mạnh", "Dương Thanh Tâm", "Lý Gia Hân"]
   .map((name, index) => ({ email: `guest${index + 1}.p5demo@${DOMAIN}`, name, overridden: false }));
 const EVENT_TITLE = "Ngày hội Lập trình Sáng tạo FPTU 2026";
-/** Fixed invoice image ids: the recorder maps them to the preview it serves. */
+/** Id ảnh hoá đơn cố định: recorder ánh xạ chúng sang bản xem trước mà nó phục vụ. */
 const IMAGE_IDS = ["5e000000-0000-4000-8000-000000000001", "5e000000-0000-4000-8000-000000000002",
   "5e000000-0000-4000-8000-000000000003"];
 const DAY = 86_400_000;
 const now = new Date();
+// Thời điểm sau hiện tại ms mili giây
 function later(ms: number): Date {
   return new Date(now.getTime() + ms);
 }
 
 type Ids = Record<CastRole, Types.ObjectId>;
 
-/** A real (overridden) account must exist already and is never changed; a demo account is created when missing. */
+// Lấy hoặc tạo tài khoản cho một vai demo
+/** Tài khoản thật (bị ghi đè) phải tồn tại sẵn và không bao giờ bị sửa; tài khoản demo được tạo khi chưa có. */
 async function user(person: CastMember): Promise<Types.ObjectId> {
   const found = await m.users!.findOne({ email: person.email }).select("_id").lean();
   if (found) return found._id as Types.ObjectId;
@@ -49,6 +51,7 @@ async function user(person: CastMember): Promise<Types.ObjectId> {
   return created!._id as Types.ObjectId;
 }
 
+// Đảm bảo người dùng có vai trò ICPDP_OFFICER
 async function officerRole(officerId: Types.ObjectId): Promise<void> {
   if (cast.officer.overridden) {
     const roleIds = await m.roles!.find({ code: "ICPDP_OFFICER", scope: "system" }).distinct("_id");
@@ -66,7 +69,8 @@ async function officerRole(officerId: Types.ObjectId): Promise<void> {
   }
 }
 
-/** The cast leader must hold the club's leader seat; a club made by another seed is reused, never re-seated. */
+// Kiểm tra người dùng đang là Leader Active của CLB
+/** Leader của dàn nhân vật phải giữ ghế leader của CLB; CLB do seed khác tạo thì được dùng lại, không xếp ghế lại. */
 async function assertLeader(clubId: Types.ObjectId, leaderId: Types.ObjectId): Promise<void> {
   const membership = await m.clubMemberships!.findOne({ clubId, userId: leaderId, state: "Active" }).select("_id").lean();
   const positions = await m.clubPositions!.find({ clubId, isLeaderRole: true, isActive: true }).distinct("_id");
@@ -105,7 +109,8 @@ async function ensureClub(ids: Ids): Promise<Types.ObjectId> {
   return clubId;
 }
 
-/** The semester the demo runs in, from the effective policy (UC04). */
+// Lấy kỳ học hiện tại và ngưỡng người phản hồi tối thiểu từ policy
+/** Học kỳ mà demo chạy trong đó, lấy từ policy đang hiệu lực (UC04). */
 async function currentPeriod() {
   const policy = await mongoPolicyRepository().findEffective(now);
   const period = policy?.academicCalendar.find((item) => item.startAt <= now && now <= item.endAt);
@@ -113,7 +118,7 @@ async function currentPeriod() {
   return { period, minRespondents: policy!.feedbackMinRespondents ?? 1 };
 }
 
-// ── Flow 7: an event that ended two days ago, its sponsored budget, registrations and check-ins ──
+// ── Flow 7: sự kiện đã kết thúc hai ngày trước, ngân sách tài trợ, đăng ký và check-in của nó ──
 
 interface Line { category: string; decision: FundingDecision; amount: number; reason?: string }
 const lines: Line[] = [
@@ -123,13 +128,15 @@ const lines: Line[] = [
     reason: "Không thuộc danh mục được Nhà trường tài trợ" },
 ];
 
-/** Metadata of a seeded invoice image; the bytes are never stored anywhere. */
+// Dựng metadata ảnh hoá đơn mẫu
+/** Metadata của ảnh hoá đơn đã seed; nội dung byte không được lưu ở đâu cả. */
 function image(index: number, fileName: string, uploadedBy: Types.ObjectId) {
   return { id: IMAGE_IDS[index]!, assetId: `defense-demo-p5/invoice-${index + 1}`, fileName, mimeType: "image/png" as const,
     bytes: 182_000 + index * 7_000, digest: createHash("sha256").update(`defense-demo-p5:${fileName}`).digest("hex"),
     uploadedAt: now.toISOString(), uploadedBy: String(uploadedBy) };
 }
 
+// Đảm bảo có sự kiện đã kết thúc kèm ngân sách tài trợ, đăng ký, check-in
 async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: string): Promise<void> {
   if (await m.events!.exists({ clubId, title: EVENT_TITLE })) return;
   const endAt = new Date(now.getTime() - 2 * DAY);
@@ -164,26 +171,27 @@ async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: strin
     isSettlementLate: false, state: "Approved", periodCode, createdAt: approvedAt }]);
   const budgetId = String(budget!._id);
 
-  // Every item change goes through the real repository so expenses, audit logs and notifications exist.
+  // Mọi thay đổi hạng mục đều đi qua repository thật để có expense, audit log và thông báo.
   const repo = mongoSponsoredItemRepository();
   let detail = (await repo.find(budgetId))!;
   let tick = 0;
+  // Thực hiện một hành động trên hạng mục tài trợ thay mặt CLB hoặc ICPDP
   async function act(index: number, byClub: boolean, action: SponsoredItemAction) {
     tick += 1;
     detail = await repo.act(budgetId, detail.items[index]!.id, detail.revision, String(byClub ? ids.leader : ids.officer),
       byClub ? String(clubId) : undefined, action, later(tick));
   }
-  // Paid before the event (BEFORE_EVENT): the end state the live demo reaches for the other item.
+  // Đã thanh toán trước sự kiện (BEFORE_EVENT): trạng thái cuối mà demo trực tiếp đạt tới cho hạng mục còn lại.
   await act(0, true, { kind: "save", amount: 4_000_000, description: "Thuê dàn âm thanh, ánh sáng hội trường Alpha trong 1 ngày" });
   await act(0, true, { kind: "image", image: image(0, "hoa-don-am-thanh-anh-sang.png", ids.leader) });
   await act(0, true, { kind: "submit" });
   await act(0, false, { kind: "review", validAmount: 4_000_000, reason: "Hóa đơn hợp lệ, khớp hạng mục đã duyệt." });
   await act(0, true, { kind: "pay" });
-  // AFTER_EVENT item: invoice images already collected, amount and submission happen live.
+  // Hạng mục AFTER_EVENT: ảnh hoá đơn đã thu thập, số tiền và việc nộp được thực hiện trực tiếp khi demo.
   await act(1, true, { kind: "image", image: image(1, "hoa-don-in-banner.png", ids.leader) });
   await act(1, true, { kind: "image", image: image(2, "hoa-don-in-standee.png", ids.leader) });
 
-  // Registrations and check-ins: 4 members and 6 guests registered; 3 members and 5 guests checked in.
+  // Đăng ký và check-in: 4 thành viên và 6 khách đã đăng ký; 3 thành viên và 5 khách đã check-in.
   const members = [ids.leader, ids.vice, ids.member, ids.member2];
   const guestIds = await Promise.all(guests.map(user));
   const registered = [...members, ...guestIds];
@@ -196,8 +204,9 @@ async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: strin
     finalizedBy: ids.leader, finalizedAt: endAt })));
 }
 
-// ── Flow 8: report campaign and the club's draft (UC38), scheme (UC41), other clubs' evaluations (UC42) ──
+// ── Flow 8: chiến dịch báo cáo và bản nháp của CLB (UC38), scheme (UC41), đánh giá của các CLB khác (UC42) ──
 
+// Đảm bảo có chiến dịch báo cáo định kỳ của kỳ, trả về hạn nộp
 async function ensureCampaign(periodCode: string, officerId: Types.ObjectId): Promise<Date> {
   const existing = await findPeriodicCampaign(periodCode);
   if (existing) {
@@ -215,6 +224,7 @@ async function ensureCampaign(periodCode: string, officerId: Types.ObjectId): Pr
   return dueAt;
 }
 
+// Đảm bảo CLB có bản nháp báo cáo định kỳ
 async function ensureReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectId, periodCode: string, dueAt: Date): Promise<void> {
   if (await m.periodicReports!.exists({ clubId, periodCode })) return;
   const repo = mongoClubPeriodicReportRepository();
@@ -237,7 +247,8 @@ async function ensureReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectI
   }, String(leaderId), later(1));
 }
 
-/** UC38 through the real repository, so the report reaches ICPDP exactly as a leader's submission would. */
+// Điền nội dung và nộp bản nháp báo cáo định kỳ
+/** UC38 qua repository thật, để báo cáo đến ICPDP đúng như khi leader nộp. */
 async function submitReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectId, periodCode: string): Promise<void> {
   const draft = await m.periodicReports!.findOneAndUpdate({ clubId, periodCode, state: "Draft" },
     { $set: { "preloadedFigures.clubData.customAnswers": [{ fieldId: "next_plan", type: "text",
@@ -247,6 +258,7 @@ async function submitReportDraft(clubId: Types.ObjectId, leaderId: Types.ObjectI
   await mongoClubPeriodicReportRepository().submit(String(clubId), String(draft._id), Number(draft.__v ?? 0), String(leaderId), now);
 }
 
+// Đảm bảo có scheme đánh giá Active cho kỳ
 async function ensureScheme(periodCode: string, officerId: Types.ObjectId) {
   const schemes = mongoEvaluationSchemeRepository();
   const active = (await schemes.list()).find((scheme) => scheme.periodCode === periodCode && scheme.state === "Active");
@@ -255,9 +267,10 @@ async function ensureScheme(periodCode: string, officerId: Types.ObjectId) {
   return schemes.activate(draft.id, String(officerId), new Date(now.getTime() - 7 * DAY));
 }
 
+// Tạo báo cáo định kỳ đã Accepted cho các CLB còn lại
 /**
- * An Accepted report for every other club, so its Finalized evaluation rests on a reviewed report (UC39 before UC42).
- * Inserted directly: UC38 would need each club's own leader. A club that already has a report is left alone.
+ * Một báo cáo Accepted cho mọi CLB khác, để đánh giá Finalized của chúng dựa trên báo cáo đã được duyệt (UC39 trước UC42).
+ * Chèn trực tiếp: UC38 sẽ cần leader riêng của từng CLB. CLB đã có báo cáo thì để nguyên.
  */
 async function ensureOtherReports(clubIds: string[], periodCode: string, officerId: Types.ObjectId, dueAt: Date): Promise<void> {
   const submittedAt = new Date(now.getTime() - 2 * DAY);
@@ -272,7 +285,8 @@ async function ensureOtherReports(clubIds: string[], periodCode: string, officer
   }
 }
 
-/** Every other club is already Finalized, so the live demo only generates, finalizes and publishes its own club. */
+// Chốt đánh giá cho các CLB còn lại để demo chỉ phải tạo đánh giá của CLB chính
+/** Mọi CLB khác đã Finalized, nên demo trực tiếp chỉ tạo, finalize và publish CLB của mình. */
 async function ensureOtherEvaluations(clubId: Types.ObjectId, officerId: Types.ObjectId, dueAt: Date) {
   const { period, minRespondents } = await currentPeriod();
   const scheme = await ensureScheme(period.code, officerId);

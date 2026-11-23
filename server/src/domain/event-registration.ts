@@ -13,13 +13,13 @@ export interface EventRegistration {
   id: string;
   eventId: string;
   studentId: string;
-  /** Absent for a school-wide event organised by ICPDP (UC53). */
+  /** Không có với sự kiện toàn trường do ICPDP tổ chức (UC53). */
   clubId?: string;
   clubName: string;
   eventTitle: string;
   eventStartAt: Date;
   eventEndAt: Date;
-  /** UC31 window the student can check in during (event's configured window, else its start/end). */
+  /** Khoảng thời gian UC31 mà sinh viên được check-in (cửa sổ đã cấu hình của sự kiện, nếu không thì giờ bắt đầu/kết thúc). */
   checkInOpensAt: Date;
   checkInClosesAt: Date;
   state: EventRegistrationState;
@@ -60,6 +60,7 @@ export interface EventRegistrationRepository {
   cancel(registrationId: string, studentId: string, now: Date): Promise<EventRegistration>;
 }
 
+// Kiểm tra câu trả lời đăng ký sự kiện theo các trường của form
 export function validateEventRegistrationAnswers(
   fields: readonly EventRegistrationFormField[],
   answers: Readonly<Record<string, EventRegistrationAnswer>>,

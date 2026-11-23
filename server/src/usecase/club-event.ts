@@ -1,9 +1,14 @@
+/**
+ * Club event application actions. Proposal creation starts at createClubEvent;
+ * actOnClubEvent handles save/submit, and uploadEventProposalDocument attaches evidence.
+ * Access checks belong here; repositories enforce and persist workflow transitions.
+ */
 import { resolveClubPermissions } from "../domain/access.js";
 import type { ClubAccessRepository } from "../domain/access.js";
 import type { AuthRepository } from "../domain/auth.js";
 import { eventActionPermission, isInternalClubEventState, type ClubEventAction, type ClubEventInput, type ClubEventRepository,
-  type EventProposalDocument, type EventProposalFileStorage, type EventProposalTemplateInfo, type EventPublishInput,
-  type InternalClubEventInput, type InternalClubEventMode } from "../domain/club-event.js";
+  type EventProposalDocument, type EventProposalFileStorage, type EventProposalTemplateInfo,
+   } from "../domain/club-event.js";
 import { PROPOSAL_DOCUMENT_MIME_TYPES, PROPOSAL_TEMPLATE_MIME_TYPES, validateEventProposalFile } from "../domain/club-event-rules.js";
 import { DomainError } from "../domain/errors.js";
 import { assertClubAccess, type AccessActor } from "./access.js";
@@ -11,13 +16,15 @@ import { officer } from "./event-proposal-review.js";
 
 export interface ClubEventDeps {
   repo: ClubEventRepository; access: ClubAccessRepository; auth: Pick<AuthRepository, "systemRoleCodes">;
-  /** Null when file storage is not configured; the bundled default template still downloads. */
+  /** Optional storage; the bundled default template remains downloadable without it. */
   files?: EventProposalFileStorage | null;
 }
+// Kiểm định dạng id sự kiện hoặc CLB
 export function clubEventId(value: string): string {
   if (!/^[0-9a-f]{24}$/i.test(value)) throw new DomainError("invalid event or club id", "validation");
   return value;
 }
+// Liệt kê sự kiện của CLB, ẩn chi tiết với người chỉ có quyền điểm danh hoặc xem feedback
 export async function listClubEvents(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, now: Date) {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError("account locked", "locked");
@@ -31,22 +38,21 @@ export async function listClubEvents(deps: ClubEventDeps, actor: AccessActor | n
     objective: "", plan: "", budgetLines: [], bookingIds: [], registrationForm: [], riskNote: undefined,
     checkInCode: permissions.includes("club.attendance.manage") ? event.checkInCode : undefined }));
 }
+/** Read an event dossier only for a user with this club's event management permission. */
 export async function getClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, id: string, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   const found = await deps.repo.find(clubEventId(clubId), clubEventId(id));
   if (!found) throw new DomainError("event not found", "not_found");
   return found;
 }
+/** Create a proposal draft; attachment and submission are separate subsequent actions. */
 export async function createClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, input: ClubEventInput, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   return deps.repo.create(clubEventId(clubId), input, actor!.id, now);
 }
-export async function createInternalClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, input: InternalClubEventInput,
-  mode: InternalClubEventMode, publishInput: EventPublishInput | undefined, now: Date) {
-  if ((mode === "publish") !== Boolean(publishInput)) throw new DomainError("publish settings are required only when publishing", "validation");
-  await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
-  return deps.repo.createInternal(clubEventId(clubId), input, mode, publishInput, actor!.id, now);
-}
+// Tạo sự kiện nội bộ CLB, lưu nháp hoặc công bố ngay
+
+/** Authorize each action before persistence; proposal save/submit require club.event.manage. */
 export async function actOnClubEvent(deps: ClubEventDeps, actor: AccessActor | null, clubId: string,
   id: string, action: ClubEventAction, now: Date) {
   if (action.kind === "unlock") {
@@ -62,47 +68,54 @@ export async function actOnClubEvent(deps: ClubEventDeps, actor: AccessActor | n
     versions: [], decisions: [], bookings: [], budget: undefined };
 
 }
+// Xem danh sách người tham gia sự kiện để điểm danh
 export async function clubEventParticipants(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, id: string, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.attendance.manage", now);
   return deps.repo.participants(clubEventId(clubId), clubEventId(id));
 }
+// Xem feedback của một nhóm sự kiện (tối đa 20)
 export async function clubEventFeedback(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, ids: string[], now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.feedback.view", now);
   if (!ids.length || ids.length > 20) throw new DomainError("choose between one and twenty events", "validation");
   return deps.repo.feedback(clubEventId(clubId), [...new Set(ids.map(clubEventId))], now);
 }
 
+/** Load the club's available bookings and other event input choices. */
 export async function clubEventOptions(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
   return deps.repo.options(clubEventId(clubId));
 }
 
+// Fail explicitly when an operation requires unconfigured file storage.
 function fileStorage(deps: ClubEventDeps): EventProposalFileStorage {
   if (!deps.files) throw new DomainError("file storage is not configured", "unavailable");
   return deps.files;
 }
+// Shared authentication gate for proposal template reads.
 function signedIn(actor: AccessActor | null): AccessActor {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError("account locked", "locked");
   return actor;
 }
+/** Issue a temporary preview/download URL without exposing the storage asset directly. */
 async function documentAccess(deps: ClubEventDeps, document: EventProposalDocument | null | undefined, inline: boolean) {
   if (!document) throw new DomainError("event proposal document not found", "not_found");
   return { fileName: document.fileName, mimeType: document.mimeType, url: await fileStorage(deps).accessUrl(document.assetId, { inline }) };
 }
-/** Any signed-in user may read and download the active ICPDP proposal template. */
+/** Allow any signed-in user to inspect the active ICPDP proposal template metadata. */
 export async function eventProposalTemplateInfo(deps: ClubEventDeps, actor: AccessActor | null): Promise<EventProposalTemplateInfo> {
   signedIn(actor);
   const { fileName, mimeType, bytes, updatedAt, isSystemDefault } = await deps.repo.proposalTemplate();
   return { fileName, mimeType, bytes, updatedAt, isSystemDefault };
 }
+/** Stream the bundled template or redirect to temporary access for an uploaded template. */
 export async function downloadEventProposalTemplate(deps: ClubEventDeps, actor: AccessActor | null) {
   signedIn(actor);
   const template = await deps.repo.proposalTemplate();
   if (template.isSystemDefault) return { kind: "file" as const, fileName: template.fileName, mimeType: template.mimeType, content: template.content };
   return { kind: "redirect" as const, fileName: template.fileName, url: await fileStorage(deps).accessUrl(template.assetId, { inline: false }) };
 }
-/** UC25: attach or replace the proposal document of an editable ICPDP proposal; returns the detail with its bumped version. */
+/** UC25: attach evidence to an editable proposal and return its incremented event version. */
 export async function uploadEventProposalDocument(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, eventId: string,
   fileName: string, mimeType: string, bytes: Buffer, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
@@ -111,11 +124,12 @@ export async function uploadEventProposalDocument(deps: ClubEventDeps, actor: Ac
   const found = await deps.repo.find(clubEventId(clubId), clubEventId(eventId));
   if (!found) throw new DomainError("event not found", "not_found");
   if (isInternalClubEventState(found.event.state)) throw new DomainError("internal club events do not take a proposal document", "validation");
-  // Checked before uploading so a refused request leaves no orphan file; the repository re-checks in its transaction.
+  // Reject non-editable proposals before uploading; the repository rechecks transactionally.
   if (!["Draft", "Revision Requested"].includes(found.event.state)) throw new DomainError("event cannot be edited or submitted", "conflict");
   const document = await storage.uploadProposalDocument({ clubId, eventId, actorId: actor!.id, fileName: name, mimeType, bytes, now });
   return deps.repo.act(clubId, eventId, { kind: "attach-document", document }, actor!.id, now);
 }
+/** Resolve a draft/submitted document and verify club ownership before issuing access. */
 export async function clubEventProposalDocumentAccess(deps: ClubEventDeps, actor: AccessActor | null, clubId: string, eventId: string,
   revisionNo: number | undefined, inline: boolean, now: Date) {
   await assertClubAccess(deps.access, actor, clubId, "club.event.manage", now);
@@ -123,7 +137,7 @@ export async function clubEventProposalDocumentAccess(deps: ClubEventDeps, actor
   if (!found || found.clubId !== clubId) throw new DomainError("event not found", "not_found");
   return documentAccess(deps, found.document, inline);
 }
-/** UC26: an ICPDP officer replaces the active template; templates are never deleted. */
+/** UC26: authorize an officer, validate the upload, and make it the active template. */
 export async function uploadEventProposalTemplate(deps: ClubEventDeps, actor: AccessActor | null, fileName: string, mimeType: string,
   bytes: Buffer, now: Date): Promise<EventProposalTemplateInfo> {
   const officerId = await officer(deps.auth, actor);
@@ -132,7 +146,7 @@ export async function uploadEventProposalTemplate(deps: ClubEventDeps, actor: Ac
   const document = await storage.uploadTemplateDocument({ actorId: officerId, fileName: name, mimeType, bytes, now });
   return deps.repo.saveProposalTemplate(document, officerId, now);
 }
-/** UC26: the officer opens the document of the current or any earlier revision. */
+/** UC26: let an officer read evidence frozen into the latest or a specified revision. */
 export async function reviewEventProposalDocumentAccess(deps: ClubEventDeps, actor: AccessActor | null, eventId: string,
   revisionNo: number | undefined, inline: boolean) {
   await officer(deps.auth, actor);

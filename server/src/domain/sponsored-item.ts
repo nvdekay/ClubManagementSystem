@@ -55,7 +55,7 @@ export type SponsoredItemAction =
   | { kind: "submit" }
   | { kind: "return"; reason: string }
   | { kind: "review"; validAmount: number; reason: string }
-  /** The club confirms it received the money; the accountant who transfers it is outside the system. */
+  /** CLB xác nhận đã nhận tiền; kế toán chuyển tiền nằm ngoài hệ thống. */
   | { kind: "pay" };
 
 export interface SponsoredItemRepository {
@@ -65,11 +65,13 @@ export interface SponsoredItemRepository {
 }
 
 const CLUB_EDIT_ACTIONS = ["save", "image", "removeImage", "submit"];
-/** Actions the club performs; every other action belongs to the ICPDP officer. */
+// Kiểm tra thao tác có thuộc về CLB hay thuộc về ICPDP
+/** Các thao tác do CLB thực hiện; mọi thao tác còn lại thuộc về cán bộ ICPDP. */
 export function isClubAction(action: SponsoredItemAction): boolean {
   return action.kind === "pay" || CLUB_EDIT_ACTIONS.includes(action.kind);
 }
 
+// Áp dụng một thao tác lên khoản chi tài trợ và trả về trạng thái mới
 export function changeSponsoredItem(item: SponsoredItem, action: SponsoredItemAction, now: Date): SponsoredItem {
   const next = { ...item, images: [...item.images] };
   if (CLUB_EDIT_ACTIONS.includes(action.kind)) assertInvoiceEditable(item, now);
@@ -119,10 +121,12 @@ export function changeSponsoredItem(item: SponsoredItem, action: SponsoredItemAc
   return next;
 }
 
+// Tính hạn nộp hoá đơn sau khi sự kiện kết thúc
 export function invoiceDeadline(item: Pick<SponsoredItem, "eventEndAt">): Date {
   return new Date(new Date(item.eventEndAt).getTime() + 14 * 24 * 60 * 60 * 1000);
 }
 
+// Đảm bảo bộ hoá đơn còn được sửa (đúng trạng thái và chưa quá hạn)
 export function assertInvoiceEditable(item: SponsoredItem, now: Date): void {
   if (!["Draft", "Returned"].includes(item.status) || now > invoiceDeadline(item)) {
     throw new DomainError("invoice pack is locked or its deadline has passed", "conflict");
@@ -132,6 +136,7 @@ export function assertInvoiceEditable(item: SponsoredItem, now: Date): void {
   }
 }
 
+// Đảm bảo bộ hoá đơn có số tiền, ảnh hợp lệ và sự kiện đã kết thúc trước khi nộp
 export function assertInvoiceSubmission(item: SponsoredItem, now: Date): void {
   assertInvoiceEditable(item, now);
   if (item.fundingDecision === "NOT_SPONSORED") {
@@ -146,6 +151,7 @@ export function assertInvoiceSubmission(item: SponsoredItem, now: Date): void {
   }
 }
 
+// Tính số tiền được chi trả từ giá trị hoá đơn hợp lệ ICPDP chấp nhận
 export function invoicePayable(item: SponsoredItem, validAmount: number): number {
   if (item.status !== "Submitted" || item.fundingDecision === "NOT_SPONSORED") {
     throw new DomainError("a submitted sponsored item is required", "conflict");
@@ -156,6 +162,7 @@ export function invoicePayable(item: SponsoredItem, validAmount: number): number
   return Math.min(validAmount, item.approvedAmount);
 }
 
+// Kiểm tra ảnh hoá đơn tải lên là JPEG hoặc PNG đúng nội dung
 export function validateInvoiceImage(mimeType: string, bytes: Uint8Array): "image/jpeg" | "image/png" {
   const png = [137, 80, 78, 71, 13, 10, 26, 10];
   const valid = mimeType === "image/png"

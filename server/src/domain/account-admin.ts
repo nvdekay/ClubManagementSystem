@@ -3,7 +3,7 @@ import type { AuthUser } from "./auth.js";
 export const SYSTEM_ROLE_CODES = ["ICPDP_OFFICER", "ICPDP_HEAD", "ATTENDANCE_UNLOCK"] as const;
 export type SystemRoleCode = (typeof SYSTEM_ROLE_CODES)[number];
 
-/** UC03 step 2: a club the user belongs to, with the board seats they hold there. */
+/** UC03 bước 2: một CLB mà người dùng tham gia, kèm các ghế ban điều hành họ đang giữ ở CLB đó. */
 export interface AdminUserClub {
   clubId: string;
   clubName: string;
@@ -11,7 +11,7 @@ export interface AdminUserClub {
   positions: string[];
 }
 
-/** UC03 A1: the UC40 case an emergency lock was recorded under. */
+/** UC03 A1: hồ sơ UC40 mà việc khoá khẩn cấp được ghi nhận kèm theo. */
 export interface AdminLockCase {
   violationId: string;
   title: string;
@@ -26,7 +26,7 @@ export interface AdminUserPage {
 }
 
 export interface AccountAdminRepository {
-  /** One page of users matching the search, sorted by email; `page` starts at 1. */
+  /** Một trang người dùng khớp tìm kiếm, sắp xếp theo email; `page` bắt đầu từ 1. */
   listUsers(search: string, page: number, pageSize: number): Promise<AdminUserPage>;
   findUser(userId: string): Promise<AuthUser | null>;
   systemRoles(userId: string): Promise<string[]>;
@@ -43,7 +43,7 @@ export interface AccountAdminRepository {
     targetId: string;
     locked: boolean;
     reason: string;
-    /** UC03 A1: an open UC40 case that requires the lock; lock and case are linked both ways. */
+    /** UC03 A1: hồ sơ UC40 đang mở yêu cầu khoá; khoá và hồ sơ liên kết hai chiều với nhau. */
     violationId?: string;
     now: Date;
   }): Promise<void>;

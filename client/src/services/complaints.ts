@@ -39,7 +39,7 @@ export interface ComplaintForIcpdp extends Complaint {
   linkedComplaintIds: string[];
 }
 
-/** What a club receives: never the complainant (D5). */
+/** Nội dung CLB nhận được: không bao giờ kèm người khiếu nại (D5). */
 export interface ComplaintForClub {
   id: string;
   clubId: string;
@@ -69,6 +69,7 @@ export type ComplaintDecisionInput =
   | { kind: "escalate"; severity: Severity; reason: string }
   | { kind: "link"; targetId: string; reason: string };
 
+// Gọi API /api/v1 và trả về data, ném ApiError nếu lỗi
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -79,30 +80,38 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Gửi POST có CSRF và body JSON tuỳ chọn
 function post<T>(path: string, csrfToken: string, body?: unknown) {
   return request<T>(path, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     body: JSON.stringify(body ?? {}) });
 }
 
+// GET /complaints/mine: khiếu nại của tôi
 export function fetchMyComplaints(signal: AbortSignal) {
   return request<Complaint[]>("/complaints/mine", { signal });
 }
+// POST /complaints: gửi khiếu nại mới
 export function submitComplaint(input: ComplaintInput, csrfToken: string) {
   return post<Complaint>("/complaints", csrfToken, input);
 }
+// POST /withdraw: rút khiếu nại
 export function withdrawComplaint(id: string, csrfToken: string) {
   return post<Complaint>(`/complaints/${encodeURIComponent(id)}/withdraw`, csrfToken);
 }
+// GET /admin/complaints: hàng đợi khiếu nại của ICPDP, lọc theo trạng thái
 export function fetchComplaintQueue(state: ComplaintState | "", signal: AbortSignal) {
   return request<ComplaintForIcpdp[]>(`/admin/complaints${state ? `?state=${encodeURIComponent(state)}` : ""}`, { signal });
 }
+// POST /admin/complaints/:id: ICPDP mở hoặc ra quyết định khiếu nại
 export function decideComplaint(id: string, decision: ComplaintDecisionInput, csrfToken: string) {
   const { kind, ...body } = decision;
   return post<ComplaintForIcpdp>(`/admin/complaints/${encodeURIComponent(id)}/${kind}`, csrfToken, kind === "open" ? {} : body);
 }
+// GET khiếu nại liên quan tới CLB
 export function fetchClubComplaints(clubId: string, signal: AbortSignal) {
   return request<ComplaintForClub[]>(`/clubs/${encodeURIComponent(clubId)}/complaints`, { signal });
 }
+// POST /response: CLB phản hồi khiếu nại
 export function respondToComplaint(clubId: string, id: string, input: Omit<ComplaintClubResponse, "at">, csrfToken: string) {
   return post<ComplaintForClub>(`/clubs/${encodeURIComponent(clubId)}/complaints/${encodeURIComponent(id)}/response`, csrfToken, input);
 }

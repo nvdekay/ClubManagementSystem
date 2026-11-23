@@ -34,22 +34,26 @@ const ROOM_CONFLICT_KEYS: Record<string, RoomConflictKey> = {
   "Busy (Defense Session)": "eventDefense.conflict_defense",
 };
 
+// Ánh xạ lý do xung đột phòng sang key i18n
 function roomConflictKey(reason: string | undefined): RoomConflictKey {
   return (reason && ROOM_CONFLICT_KEYS[reason]) || "eventDefense.conflict_other";
 }
 
+// Giờ bắt đầu mặc định, 72 giờ sau tính theo giờ Việt Nam
 function defaultStartLocal(): string {
   const target = new Date(Date.now() + 72 * 3600_000);
   target.setMinutes(0, 0, 0);
   return new Date(target.getTime() + 7 * 3600_000).toISOString().slice(0, 16);
 }
 
+// Đổi giá trị datetime-local (giờ +07:00) sang ISO, undefined nếu sai
 function toIsoFromLocal(localValue: string): string | undefined {
   if (!localValue) return undefined;
   const parsed = new Date(`${localValue}:00+07:00`);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
+// Dialog đặt lịch hoặc đổi lịch buổi bảo vệ đề xuất sự kiện
 export function ScheduleDefenseDialog({
   open,
   mode,
@@ -81,6 +85,7 @@ export function ScheduleDefenseDialog({
     })),
   ];
 
+  // Kiểm tra giờ bắt đầu rồi đặt hoặc đổi lịch buổi bảo vệ
   async function submit(event: FormEvent) {
     event.preventDefault();
     setValidationError(null);

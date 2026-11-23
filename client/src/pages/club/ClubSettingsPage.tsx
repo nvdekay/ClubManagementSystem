@@ -26,6 +26,7 @@ import { AppFieldError } from "@/components/ui/field/AppFieldError";
 import { AppRequiredMark } from "@/components/ui/field/AppRequiredMark";
 import { isEmail, isHttpUrl } from "@/utils/validation";
 
+// Khóa i18n nhãn của từng trường hồ sơ CLB
 function profileLabelKey(field: ClubProfileFormField) {
   switch (field) {
     case "description": return "clubSettings.descriptionLabel" as const;
@@ -43,6 +44,7 @@ const emptyProfile: ClubProfileInput = {
 };
 const emptyDepartment: ClubDepartmentInput = { name: "", description: "", sortOrder: 10 };
 
+// Trang cài đặt CLB: hồ sơ, kênh liên lạc, ban/phòng
 export function ClubSettingsPage() {
   const { clubId } = useParams();
   const { t } = useTranslation();
@@ -73,7 +75,7 @@ export function ClubSettingsPage() {
   const profileErrors: Record<string, string | null> = {
     description: requiredFields?.description && !profile.description?.trim() ? fieldRequired : null,
     operatingScope: requiredFields?.operatingScope && !profile.operatingScope?.trim() ? fieldRequired : null,
-    // Contact email and charter link are only checked when the policy requires them.
+    // Email liên hệ và link điều lệ chỉ được kiểm tra khi chính sách yêu cầu.
     contactEmail: !requiredFields?.contactEmail ? null : !contactEmail ? fieldRequired
       : isEmail(contactEmail) ? null : t("common.invalidEmail"),
     contactPhone: requiredFields?.contactPhone && !profile.contactPhone?.trim() ? fieldRequired : null,
@@ -90,10 +92,12 @@ export function ClubSettingsPage() {
     name: department.name.trim() ? null : fieldRequired,
   });
 
+  // Cập nhật một trường trong bản nháp hồ sơ CLB
   function profileField<K extends keyof ClubProfileInput>(key: K, value: ClubProfileInput[K]) {
     setProfileDraft((current) => ({ ...(current ?? loadedProfile), [key]: value }));
   }
 
+  // Cập nhật một trường của kênh liên lạc theo vị trí
   function channelField(index: number, key: keyof ClubChannel, value: string) {
     setProfileDraft((current) => {
       const source = current ?? loadedProfile;
@@ -102,6 +106,7 @@ export function ClubSettingsPage() {
     });
   }
 
+  // Lưu hồ sơ CLB sau khi kiểm tra form
   async function saveProfile() {
     if (!auth.data || !clubId || !profileCheck.touchAll()) return;
     try {
@@ -109,16 +114,18 @@ export function ClubSettingsPage() {
         csrfToken: auth.data.csrfToken });
       setProfileDraft(null);
       profileCheck.reset();
-    } catch { /* Mutation error is rendered below. */ }
+    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
+  // Áp dụng mẫu cơ cấu ban mặc định cho CLB
   async function applyTemplate() {
     if (!auth.data || !clubId) return;
     try { await action.mutateAsync({ kind: "template", clubId,
       csrfToken: auth.data.csrfToken }); }
-    catch { /* Mutation error is rendered below. */ }
+    catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
+  // Nạp ban đã chọn vào form để chỉnh sửa
   function editDepartment(value: ClubDepartment) {
     setEditingId(value.id);
     setDepartment({ name: value.name, description: value.description ?? "",
@@ -126,12 +133,14 @@ export function ClubSettingsPage() {
     departmentCheck.reset();
   }
 
+  // Đưa form ban về trạng thái tạo mới
   function resetDepartment() {
     setEditingId(null);
     setDepartment(emptyDepartment);
     departmentCheck.reset();
   }
 
+  // Tạo mới hoặc cập nhật ban của CLB
   async function saveDepartment() {
     if (!auth.data || !clubId || !departmentCheck.touchAll()) return;
     try {
@@ -141,17 +150,18 @@ export function ClubSettingsPage() {
         : { kind: "createDepartment", clubId, input: department,
           csrfToken: auth.data.csrfToken });
       resetDepartment();
-    } catch { /* Mutation error is rendered below. */ }
+    } catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
+  // Xác nhận rồi ngưng hoạt động một ban
   async function deactivateDepartment(value: ClubDepartment) {
     if (!auth.data || !clubId || !(await askConfirm(t("clubSettings.deactivateConfirm")))) return;
     try { await action.mutateAsync({ kind: "deactivateDepartment", clubId,
       departmentId: value.id, csrfToken: auth.data.csrfToken }); }
-    catch { /* Mutation error is rendered below. */ }
+    catch { /* Lỗi của mutation được hiển thị bên dưới. */ }
   }
 
-  // A disabled query stays pending forever, so only wait for settings the user may load.
+  // Query bị tắt sẽ pending mãi, nên chỉ chờ phần cài đặt mà người dùng được phép tải.
   if (auth.isPending || (canManage && settings.isPending)) {
     return <div className="space-y-6">
       <AppSkeleton className="h-24 w-full" />
@@ -178,6 +188,7 @@ export function ClubSettingsPage() {
   const current = settings.data.profile;
   const required = settings.data.requiredProfileFields;
   const anyRequired = Object.values(required).some(Boolean);
+  // Nhãn đã dịch của trường hồ sơ
   function label(field: ClubProfileFormField) {
     return <>{t(profileLabelKey(field))}{required[field] && <AppRequiredMark />}</>;
   }

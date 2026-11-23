@@ -1,3 +1,4 @@
+/** Trang ICPDP quản lý mẫu đề xuất, nhận hồ sơ xử lý và mở chi tiết xét duyệt. */
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -15,10 +16,12 @@ import { useEventProposalAction, useEventProposalQueue, useUploadProposalTemplat
 import { EVENT_PROPOSAL_TEMPLATE_DOWNLOAD_URL } from "@/services/clubEvents";
 import { formatBytes, proposalFileType } from "@/utils/proposalFile";
 
+/** Chỉ tải danh sách chờ duyệt sau khi xác nhận người dùng có vai trò ICPDP. */
 export function EventProposalQueuePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const auth = useAuth();
+  // Chỉ ICPDP được tải danh sách và mẫu; các thao tác ghi theo dõi trạng thái chờ và lỗi riêng.
   const isOfficer = Boolean(auth.data?.systemRoles.includes("ICPDP_OFFICER"));
   const queue = useEventProposalQueue(isOfficer);
   const action = useEventProposalAction();
@@ -27,6 +30,7 @@ export function EventProposalQueuePage() {
   const templateInput = useRef<HTMLInputElement>(null);
   const [templateError, setTemplateError] = useState<string | null>(null);
 
+  /** Kiểm tra file mẫu được chọn rồi gọi API thay mẫu dùng chung. */
   async function uploadTemplate(file: File | undefined) {
     if (!file || !auth.data) return;
     replaceTemplate.reset();
@@ -37,30 +41,31 @@ export function EventProposalQueuePage() {
       await replaceTemplate.mutateAsync({ file, mimeType, csrfToken: auth.data.csrfToken });
       appToast.success(t("eventReviews.templateReplaced"));
     } catch {
-      // Mutation error is rendered in the template card.
+      // Lỗi thay mẫu được hiển thị trong thẻ thông tin mẫu.
     }
   }
 
+  /** Định dạng thời gian trong danh sách theo ngôn ngữ giao diện đang chọn. */
   function date(value: string) {
     return new Intl.DateTimeFormat(i18n.language, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
   }
 
-  function risk(value: string) {
-    return value === "HIGH" ? t("eventReviews.riskHIGH") : value === "MEDIUM" ? t("eventReviews.riskMEDIUM")
-      : value === "LOW" ? t("eventReviews.riskLOW") : value;
-  }
+  /** Dịch mức rủi ro đã biết; giữ nguyên giá trị khác do server trả về. */
 
+
+  /** Hiển thị kinh phí đề nghị theo tiền Việt Nam, không có phần thập phân. */
   function money(value: number) {
     return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
   }
 
+  /** Nhận hồ sơ còn trống trước khi mở chi tiết; hồ sơ đã giao người khác chỉ mở để xem. */
   async function open(eventId: string, takenElsewhere: boolean) {
     if (!auth.data) return;
     if (!takenElsewhere) {
       try {
         await action.mutateAsync({ kind: "claim", id: eventId, csrfToken: auth.data.csrfToken });
       } catch {
-        return; // The error is shown under the list.
+        return; // Giữ danh sách hiện tại để ICPDP đọc được lỗi nhận xử lý.
       }
     }
     navigate(`/workspace/event-proposals/${eventId}`);
@@ -73,6 +78,7 @@ export function EventProposalQueuePage() {
       <PageHeader title={t("eventReviews.title")} description={t("eventReviews.description")}
         actions={queue.data && <AppBadge tone="info">{t("eventReviews.openCount", { count: queue.data.length })}</AppBadge>} />
 
+      {/* Quản lý mẫu dùng chung: thông tin file, tải xuống, thay mẫu và lỗi tải lên. */}
       {isOfficer && (
         <section className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-app bg-bg-app p-5 text-sm shadow-xs">
           <div className="min-w-0 flex-1 basis-64">
@@ -106,6 +112,7 @@ export function EventProposalQueuePage() {
         </section>
       )}
 
+      {/* Xử lý trạng thái tải, đăng nhập, quyền và lỗi trước khi hiển thị danh sách hoặc trạng thái rỗng. */}
       {auth.isPending || (isOfficer && queue.isPending) ? loading : !auth.data ? (
         <AppNotice>
           <p>{t("eventReviews.signIn")}</p>
@@ -121,6 +128,7 @@ export function EventProposalQueuePage() {
       ) : queue.data?.length ? (
         <ul className="divide-y divide-border-app rounded-2xl border border-border-app bg-bg-app shadow-xs">
           {queue.data.map(({ task, event }) => {
+            // Người đang phụ trách quyết định việc mở hồ sơ có cần nhận xử lý trước hay không.
             const mine = task.assigneeId === auth.data?.user.id;
             const takenElsewhere = Boolean(task.assigneeId && !mine);
             return (
@@ -142,7 +150,6 @@ export function EventProposalQueuePage() {
                     {event.clubName} · {date(event.startAt)} · {t("eventReviews.revision", { number: event.currentRevisionNo })}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {event.riskCategory && <AppBadge tone={event.riskCategory === "HIGH" ? "danger" : event.riskCategory === "MEDIUM" ? "warning" : "success"}>{t("eventReviews.risk")}: {risk(event.riskCategory)}</AppBadge>}
                     <AppBadge tone={event.requestedBudgetTotal ? "info" : "neutral"}>
                       {event.requestedBudgetTotal ? t("eventReviews.requested", { amount: money(event.requestedBudgetTotal) }) : t("eventReviews.noBudget")}
                     </AppBadge>
@@ -161,6 +168,7 @@ export function EventProposalQueuePage() {
       ) : (
         <AppEmptyState variant="boxed" icon="sparkles" title={t("eventReviews.none")} message={t("eventReviews.noneHint")} />
       )}
+      {/* Nếu nhận xử lý thất bại, giữ danh sách và hiển thị lỗi xung đột từ server tại đây. */}
       {action.isError && <AppNotice tone="danger" role="alert" className="mt-4">{action.error.message}</AppNotice>}
     </>
   );

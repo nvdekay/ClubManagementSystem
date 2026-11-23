@@ -12,19 +12,21 @@ import { cn } from "@/utils/cn";
 
 interface ClubBoardHistoryProps {
   clubId: string;
-  /** Extra classes for the two section titles, so the block fits a page or a dialog. */
+  /** Class bổ sung cho hai tiêu đề mục, để khối này vừa với trang hoặc hộp thoại. */
   headingClassName?: string;
 }
 
+// Hiển thị lịch sử ban chủ nhiệm của CLB
 /**
- * BR56, FR-UC02-02/03: a club's role-structure versions and who held each board seat in every
- * term, with the step that confirmed the seat. Read-only for ICPDP and the club's Club Leader.
+ * BR56, FR-UC02-02/03: các phiên bản cơ cấu vai trò của CLB và người giữ từng ghế ban chủ nhiệm trong
+ * mỗi nhiệm kỳ, kèm bước xác nhận ghế. Chỉ đọc đối với ICPDP và Club Leader của CLB.
  */
 export function ClubBoardHistory({ clubId, headingClassName }: ClubBoardHistoryProps) {
   const { t, i18n } = useTranslation();
   const locale: Locale = i18n.language === "vi" ? "vi" : "en";
   const history = useClubBoardHistory(clubId, true);
 
+  // Dịch nguồn bổ nhiệm sang nhãn hiển thị
   function source(value: string): string {
     return t(`clubOversight.source_${value}` as "clubOversight.source_APPLICATION", { defaultValue: value });
   }

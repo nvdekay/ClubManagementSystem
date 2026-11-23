@@ -65,6 +65,7 @@ const ClubEventDefenseViewSchema = z.object({
   history: z.array(EventDefenseSessionSchema),
 });
 
+// Bọc schema dữ liệu vào response 200 theo envelope chuẩn
 function response(schema: z.ZodType) {
   return {
     "200": {

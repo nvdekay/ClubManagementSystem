@@ -2,9 +2,11 @@ import type { RecruitmentAttachmentStorage } from "../../domain/recruitment-appl
 import type { CloudinaryConfig } from "../config/index.js";
 import { cloudinaryApplicationFiles } from "./cloudinary-application-files.js";
 
+// Tạo kho file đính kèm đơn ứng tuyển, luôn ở chế độ private
 export function cloudinaryRecruitmentFiles(config: CloudinaryConfig): RecruitmentAttachmentStorage {
   const files = cloudinaryApplicationFiles(config);
   return {
+    // Upload file đính kèm ứng tuyển và trả metadata theo fieldKey
     async upload(input) {
       const document = await files.upload({ ...input, documentType: input.fieldKey,
         visibility: "private" });
@@ -14,6 +16,7 @@ export function cloudinaryRecruitmentFiles(config: CloudinaryConfig): Recruitmen
         bytes: document.bytes, assetId: document.assetId, uploadedAt: document.uploadedAt,
       };
     },
+    // Tạo URL tải có chữ ký cho file đính kèm ứng tuyển
     accessUrl(assetId) { return files.accessUrl(assetId); },
   };
 }

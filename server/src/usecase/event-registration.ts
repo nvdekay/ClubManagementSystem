@@ -10,6 +10,7 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm sinh viên đã đăng nhập, chưa bị khóa và trả id
 function student(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") throw new DomainError(actor.lockReason || "account locked", "locked");
@@ -17,11 +18,13 @@ function student(actor: AccessActor | null): string {
   return actor.id;
 }
 
+// Kiểm định dạng ObjectId của một định danh
 function id(value: string, label: string): string {
   if (!objectId.test(value)) throw new DomainError(`invalid ${label}`, "validation");
   return value;
 }
 
+// Kiểm sự kiện đang mở đăng ký và sinh viên thuộc đối tượng được tham gia
 function assertOpen(context: EventRegistrationContext, now: Date): void {
   const event = context.event;
   if (!["Upcoming", "PUBLIC"].includes(event.state) || !event.registrationOpenAt || !event.registrationCloseAt
@@ -33,6 +36,7 @@ function assertOpen(context: EventRegistrationContext, now: Date): void {
   }
 }
 
+// Lấy thông tin sự kiện, form đăng ký và trạng thái đăng ký của sinh viên
 export async function getEventRegistrationContext(repo: EventRegistrationRepository,
   actor: AccessActor | null, eventId: string, now: Date) {
   const result = await repo.context(id(eventId, "event id"), student(actor));
@@ -43,11 +47,13 @@ export async function getEventRegistrationContext(repo: EventRegistrationReposit
     && now < result.event.startAt };
 }
 
+// Sinh viên xem các đăng ký sự kiện của mình
 export async function listMyEventRegistrations(repo: EventRegistrationRepository,
   actor: AccessActor | null) {
   return repo.listMine(student(actor));
 }
 
+// Sinh viên đăng ký tham gia sự kiện sau khi kiểm câu trả lời form
 export async function registerForEvent(repo: EventRegistrationRepository, policy: PolicyRepository,
   actor: AccessActor | null, eventId: string,
   answers: Record<string, EventRegistrationAnswer>, now: Date) {
@@ -69,6 +75,7 @@ export async function registerForEvent(repo: EventRegistrationRepository, policy
     allowOverbooking: effectivePolicy?.allowOverbooking === true, now });
 }
 
+// Sinh viên hủy đăng ký sự kiện trước khi sự kiện bắt đầu
 export async function cancelEventRegistration(repo: EventRegistrationRepository,
   actor: AccessActor | null, registrationId: string, now: Date) {
   const studentId = student(actor);

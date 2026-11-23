@@ -55,18 +55,21 @@ export const periodicMissingBody = z.object({
   note: z.string().max(2_000).optional(),
 }).strict();
 
+// Kiểm tra dữ liệu vào bằng zod, sai thì ném DomainError validation
 function parsed<T>(schema: z.ZodType<T>, input: unknown): T {
   const result = schema.safeParse(input);
   if (!result.success) throw new DomainError("invalid periodic report request", "validation", result.error.issues);
   return result.data;
 }
 
+// Lấy actor đã xác thực từ res.locals, thiếu thì báo unauthorized
 function actor(res: Response): AccessActor {
   const value = res.locals.actor as AccessActor | undefined;
   if (!value) throw new DomainError("authentication required", "unauthorized");
   return value;
 }
 
+// Mount các route ICPDP quản lý báo cáo định kỳ
 export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
   const router = Router();
   const guard = { repo: deps.authRepo, sessions: deps.sessions };
@@ -74,18 +77,23 @@ export function periodicReportRoutes(deps: PeriodicReportRouteDeps): Router {
     ...(deps.evaluationRepo && deps.evaluationSchemeRepo ? { evaluation: { repo: deps.evaluationRepo,
       schemes: deps.evaluationSchemeRepo, policy: deps.policy, auth: deps.authRepo } } : {}) };
 
+  // Xem tổng quan đợt báo cáo định kỳ
   router.get("/admin/periodic-reports", authGuard(guard, false), async (req, res) => {
     ok(res, await periodicReportOverview(usecase, actor(res), parsed(periodicOverviewQuery, req.query).period, new Date()));
   });
+  // Lưu cấu hình đợt báo cáo định kỳ
   router.put("/admin/periodic-reports/campaign", authGuard(guard), async (req, res) => {
     ok(res, await savePeriodicCampaign(usecase, actor(res), parsed(periodicCampaignBody, req.body), new Date()));
   });
+  // Ghi nhận CLB không nộp báo cáo định kỳ
   router.post("/admin/periodic-reports/missing", authGuard(guard), async (req, res) => {
     ok(res, await recordMissingPeriodicReport(usecase, actor(res), parsed(periodicMissingBody, req.body), new Date()), 201);
   });
+  // Xem chi tiết một báo cáo định kỳ
   router.get("/admin/periodic-reports/:id", authGuard(guard, false), async (req, res) => {
     ok(res, await getPeriodicReport(usecase, actor(res), parsed(id, req.params.id)));
   });
+  // ICPDP ghi quyết định cho báo cáo định kỳ
   router.post("/admin/periodic-reports/:id/decision", authGuard(guard), async (req, res) => {
     ok(res, await decidePeriodicReport(usecase, actor(res), parsed(id, req.params.id),
       parsed(periodicDecisionBody, req.body), new Date()));

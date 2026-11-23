@@ -23,13 +23,15 @@ interface BlackoutDraft {
   reason: string;
 }
 
-/** `datetime-local` works in local time without a zone; convert at the boundary only. */
+// Đổi ISO sang giá trị datetime-local theo giờ địa phương
+/** `datetime-local` dùng giờ địa phương không kèm múi giờ; chỉ chuyển đổi ở ranh giới vào/ra. */
 function toLocalInput(iso: string): string {
   const date = new Date(iso);
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 16);
 }
 
+// Kiểm tra mọi ngày có chung giờ mở/đóng cửa không
 function sameHours(hours: BookableHours[]): boolean {
   return hours.every((window) => window.open === hours[0]?.open && window.close === hours[0]?.close);
 }
@@ -37,12 +39,13 @@ function sameHours(hours: BookableHours[]): boolean {
 interface PropertyEditorProps {
   property?: Property;
   pending: boolean;
-  /** Server-reported invalid field, shown next to the form. */
+  /** Trường không hợp lệ do server báo, hiển thị cạnh form. */
   error: string | null;
   onSubmit: (value: PropertyDetails & { type: PropertyType }) => void;
   onCancel: () => void;
 }
 
+// Form tạo hoặc sửa cơ sở vật chất: thông tin, giờ mở cửa, thẻ
 export function PropertyEditor({ property, pending, error, onSubmit, onCancel }: PropertyEditorProps) {
   const { t } = useTranslation();
   const initialHours = property?.bookableHours.length ? property.bookableHours
@@ -82,6 +85,7 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
     ])),
   });
 
+  // Thêm thẻ khi nhấn Enter hoặc dấu phẩy
   function addTag(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter" && event.key !== ",") return;
     event.preventDefault();
@@ -92,11 +96,13 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
     setTag("");
   }
 
+  // Bật/tắt một ngày trong tuần được phép booking
   function toggleDay(day: number) {
     setHours({ ...hours, [day]: hours[day] ? null : { ...shared } });
     field.touch("hours");
   }
 
+  // Kiểm tra form rồi gửi dữ liệu cơ sở vật chất
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!field.touchAll()) return;
@@ -136,7 +142,7 @@ export function PropertyEditor({ property, pending, error, onSubmit, onCancel }:
       </div>
 
       <div className="block text-sm font-medium text-text-app">{t("properties.equipment")}
-        {/* Tag box sized like AppInput; the inner field is borderless because the box is the visible control. */}
+        {/* Hộp tag có kích thước như AppInput; ô nhập bên trong không viền vì chính hộp là phần điều khiển nhìn thấy. */}
         <div className="mt-1.5 flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border border-border-app bg-bg-app px-2 py-0.5 shadow-xs transition-colors focus-within:border-ring-app focus-within:ring-3 focus-within:ring-ring-app/20 sm:min-h-9">
           {equipment.map((item) => <span key={item} className="flex items-center gap-1 rounded-md bg-surface-strong-app px-2 py-0.5 text-sm font-normal text-text-app">
             {item}

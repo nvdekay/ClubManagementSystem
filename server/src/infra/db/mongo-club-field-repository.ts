@@ -6,15 +6,18 @@ import {
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ánh xạ document thành ClubField
 function fieldFrom(doc: Record<string, unknown>): ClubField {
   return { id: String(doc._id), name: String(doc.name), sortOrder: Number(doc.sortOrder ?? 0),
     isActive: doc.isActive !== false };
 }
 
+// Kiểm tra lỗi trùng khóa duy nhất (mã 11000)
 function duplicate(error: unknown): boolean {
   return error instanceof mongoose.mongo.MongoServerError && error.code === 11000;
 }
 
+// Repository danh mục lĩnh vực hoạt động của CLB
 export function mongoClubFieldRepository(): ClubFieldRepository {
   const fields = ucmsModels.clubFields!;
   const clubs = ucmsModels.clubs!;
@@ -29,10 +32,12 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
   }
 
   return {
+    // Liệt kê lĩnh vực đang bật theo thứ tự hiển thị
     async listActive() {
       const docs = await fields.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean();
       return docs.map(fieldFrom);
     },
+    // Liệt kê mọi lĩnh vực kèm số CLB và hồ sơ đang dùng
     async listWithUsage() {
       const docs = await fields.find().sort({ isActive: -1, sortOrder: 1, name: 1 }).lean();
       const names = docs.map((doc) => String(doc.name));
@@ -48,10 +53,12 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
         clubCount: clubsByName.get(String(doc.name)) ?? 0,
         applicationCount: applicationsByName.get(String(doc.name)) ?? 0 }));
     },
+    // Tìm lĩnh vực theo id
     async find(id) {
       const doc = await fields.findById(new Types.ObjectId(id)).lean();
       return doc ? fieldFrom(doc) : null;
     },
+    // Tạo lĩnh vực mới, chặn trùng tên, ghi audit
     async create(input, actorId, now) {
       const normalizedName = normalizeClubFieldName(input.name);
       try {
@@ -77,6 +84,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
         throw error;
       }
     },
+    // Cập nhật lĩnh vực và ghi audit
     async update(id, input, actorId, now) {
       const objectId = new Types.ObjectId(id);
       try {
@@ -105,6 +113,7 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
         throw error;
       }
     },
+    // Xóa lĩnh vực (chỉ tắt nếu đang được dùng) và ghi audit
     async remove(id, actorId, now) {
       const objectId = new Types.ObjectId(id);
       return mongoose.connection.transaction(async (session) => {
@@ -128,9 +137,10 @@ export function mongoClubFieldRepository(): ClubFieldRepository {
   };
 }
 
+// Nạp danh mục lĩnh vực mặc định cho database mới
 /**
- * Seed the default catalog on a fresh database. Once ICPDP has edited the catalog (any ClubField
- * audit row) it is never re-seeded, so deleting every field stays deleted across restarts.
+ * Seed danh mục mặc định trên database mới. Khi ICPDP đã sửa danh mục (bất kỳ dòng audit ClubField
+ * nào) thì không seed lại nữa, nên xoá hết các lĩnh vực vẫn giữ nguyên là đã xoá sau các lần khởi động lại.
  */
 export async function ensureDefaultClubFields(now = new Date()): Promise<void> {
   const fields = ucmsModels.clubFields!;

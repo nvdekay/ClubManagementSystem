@@ -7,6 +7,7 @@ import { DomainError } from "../domain/errors.js";
 import type { GoogleIdentity } from "../domain/google-identity.js";
 import type { SessionService } from "../domain/session.js";
 
+// Hoàn tất đăng nhập Google: kiểm domain, khóa tài khoản, cấp phiên và ghi audit
 export async function completeGoogleLogin(
   repo: AuthRepository,
   sessions: SessionService,
@@ -36,6 +37,7 @@ export async function completeGoogleLogin(
   return { user, ...session };
 }
 
+// Lấy người dùng hiện tại cùng role hệ thống và danh sách workspace kèm permission
 export async function currentUser(
   repo: AuthRepository,
   accessRepo: ClubAccessRepository,

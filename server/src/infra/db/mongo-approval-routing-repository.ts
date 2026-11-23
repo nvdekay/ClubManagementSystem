@@ -1,24 +1,27 @@
 import { randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import type {
-  ApprovalRoutingRepository, RoutedRequestType, RoutingRule, RoutingRuleSet, RoutingSample, RiskCategory,
+  ApprovalRoutingRepository, RoutedRequestType, RoutingRule, RoutingRuleSet, RoutingSample,
 } from "../../domain/approval-routing.js";
 import { DomainError } from "../../domain/errors.js";
 import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Trả Date nếu giá trị là Date, ngược lại undefined
 function date(value: unknown): Date | undefined {
   return value instanceof Date ? value : undefined;
 }
 
-/** Rule sets saved while two-level approval existed still carry `requiredLevel`; it means nothing now. */
+// Bỏ trường requiredLevel cũ khỏi rule định tuyến
+/** Các bộ rule lưu từ thời còn duyệt hai cấp vẫn mang `requiredLevel`; hiện nay trường này vô nghĩa. */
 function withoutLegacyLevel(rule: Doc): RoutingRule {
   const copy = { ...rule };
   delete copy.requiredLevel;
   return copy as unknown as RoutingRule;
 }
 
+// Ánh xạ document thành RoutingRuleSet
 function ruleSetFrom(doc: Doc): RoutingRuleSet {
   return { id: String(doc._id), versionNo: Number(doc.versionNo), state: doc.state as RoutingRuleSet["state"],
     rules: (Array.isArray(doc.rules) ? doc.rules as Record<string, unknown>[] : []).map(withoutLegacyLevel), createdBy: String(doc.createdBy), createdAt: doc.createdAt as Date,
@@ -28,10 +31,12 @@ function ruleSetFrom(doc: Doc): RoutingRuleSet {
     ...(date(doc.supersededAt) ? { supersededAt: date(doc.supersededAt) } : {}) };
 }
 
+// Chuyển giá trị tiền sang number, mặc định 0
 function money(value: unknown): number {
   return typeof value === "number" ? value : Number(String(value ?? 0)) || 0;
 }
 
+// Repository quản lý bộ rule định tuyến duyệt và SLA (UC05)
 export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
   const sets = m.routingRuleSets!;
 
@@ -42,13 +47,16 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
   }
 
   return {
+    // Liệt kê các phiên bản rule set mới nhất
     async list() {
       return (await sets.find({}).sort({ versionNo: -1 }).limit(50).lean()).map((doc) => ruleSetFrom(doc as Doc));
     },
+    // Tìm rule set theo id
     async find(id) {
       const doc = await sets.findById(new Types.ObjectId(id)).lean();
       return doc ? ruleSetFrom(doc as Doc) : null;
     },
+    // Tạo rule set Draft mới với số phiên bản kế tiếp
     async createDraft(rules, actorId, now) {
       const id = new Types.ObjectId();
       try {
@@ -63,21 +71,23 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
       }
       return required(id);
     },
+    // Lưu chỉnh sửa rule set đang Draft
     async saveDraft(id, rules, _actorId, now) {
       const changed = await sets.updateOne({ _id: new Types.ObjectId(id), state: "Draft" }, { $set: { rules, updatedAt: now } });
       if (changed.matchedCount !== 1) throw new DomainError("only a draft rule set can be edited", "conflict");
       return required(new Types.ObjectId(id));
     },
+    // Kích hoạt rule set Draft và chuyển bộ đang Active sang Superseded
     async activate(id, actorId, now) {
       const target = new Types.ObjectId(id);
-      // One attempt, no automatic retry: a concurrent activation must surface as 409, not silently
-      // supersede the set the other head just activated.
+      // Chỉ thử một lần, không tự động retry: kích hoạt đồng thời phải báo 409, không được âm thầm
+      // thay thế bộ rule mà head kia vừa kích hoạt.
       const session = await mongoose.startSession();
       try {
         session.startTransaction();
         const draft = await sets.findOne({ _id: target, state: "Draft" }).session(session).lean();
         if (!draft) throw new DomainError("only a draft rule set can be activated", "conflict");
-        // Supersede first: the partial unique index uq_routing_active allows one Active set at any time.
+        // Thay thế bộ cũ trước: partial unique index uq_routing_active chỉ cho phép một bộ Active tại một thời điểm.
         const previous = await sets.findOneAndUpdate({ state: "Active" }, { $set: { state: "Superseded", supersededAt: now } },
           { session }).lean();
         await sets.updateOne({ _id: target, state: "Draft" },
@@ -99,6 +109,7 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
       }
       return required(target);
     },
+    // Lấy các task duyệt đã quyết định gần đây kèm tên CLB/sự kiện
     async recentDecided(limit) {
       const tasks = await m.approvalTasks!.find({ entityType: { $in: ["CLUB_APPLICATION", "EVENT_PROPOSAL", "PROPERTY_BOOKING"] },
         state: "Decided" }).sort({ closedAt: -1, _id: -1 }).limit(limit).lean();
@@ -114,24 +125,23 @@ export function mongoApprovalRoutingRepository(): ApprovalRoutingRepository {
       const properties = await m.properties!.find({ _id: { $in: bookings.map((row) => row.propertyId) } }).select({ type: 1 }).lean();
       const propertyType = new Map(properties.map((row) => [String(row._id), String(row.type)]));
       const bookingProperty = new Map(bookings.map((row) => [String(row._id), String(row.propertyId)]));
-      /** UC40 cases of the club that were open at `at` — the compliance history the router saw then. */
+      /** Các vụ việc UC40 của CLB đang mở tại thời điểm `at` — lịch sử tuân thủ mà router đã thấy khi đó. */
       function openAt(clubId: unknown, at: Date): number {
         return violations.filter((row) => String(row.clubId) === String(clubId) && (row.openedAt as Date) <= at
           && !(["Resolved", "Closed"].includes(String(row.state))
             && ((row.resolvedAt ?? row.decidedAt) as Date | undefined ?? at) <= at)).length;
       }
-      // Facts are read as the router saw them when the review opened: the revision submitted then and its risk.
+      // Dữ kiện được đọc đúng như router thấy khi review mở ra: revision được nộp lúc đó và mức rủi ro của nó.
       return tasks.map((task): RoutingSample => {
         const type = task.entityType as RoutedRequestType;
         const id = String(task.entityId);
         const opened = task.openedAt as Date;
         const version = versions.filter((row) => String(row.eventId) === id && (row.submittedAt as Date) <= opened)
           .sort((a, b) => Number(b.revisionNo) - Number(a.revisionNo))[0];
-        const risk = (version?.payload as Doc | undefined)?.riskCategory;
         return { entityType: type, entityId: id, title: String(task.title ?? ""), decidedAt: (task.closedAt ?? opened) as Date,
           facts: { requestType: type, openViolations: openAt(task.clubId, opened),
             ...(type === "EVENT_PROPOSAL" ? { amount: money(version?.requestedBudgetTotal),
-              ...(typeof risk === "string" ? { riskCategory: risk as RiskCategory } : {}) } : {}),
+               } : {}),
             ...(type === "PROPERTY_BOOKING" ? { propertyType: propertyType.get(bookingProperty.get(id) ?? "") } : {}) } };
       });
     },

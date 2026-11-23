@@ -21,12 +21,14 @@ const deadlineFields = [
   "dueDaysAfterPeriodEnd", "remindBeforeDays", "overdueAfterDays", "escalateAfterDays",
 ] as const;
 
+// Định dạng ngày giờ theo ngôn ngữ hiện tại
 function formatDate(value: string, language: string): string {
   return new Intl.DateTimeFormat(language === "vi" ? "vi-VN" : "en-US", {
     dateStyle: "medium", timeStyle: "short",
   }).format(new Date(value));
 }
 
+// Hiển thị chi tiết các quy định của một phiên bản chính sách
 function PolicyDetails({ version, language }: { version: PolicyVersion; language: string }) {
   const { t } = useTranslation();
   function booleanLabel(value: boolean): string {
@@ -106,6 +108,7 @@ function PolicyDetails({ version, language }: { version: PolicyVersion; language
   );
 }
 
+// Trang xem chính sách hiện hành và lịch sử các phiên bản
 export function PolicyPage() {
   const { t, i18n } = useTranslation();
   const auth = useAuth();

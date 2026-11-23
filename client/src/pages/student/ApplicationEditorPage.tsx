@@ -27,6 +27,7 @@ import { AppEmptyState } from "@/components/ui/empty-state/AppEmptyState";
 import { SimilarClubHints } from "@/components/custom/SimilarClubHints";
 import { isEmail, isHttpUrl } from "@/utils/validation";
 
+// Màu badge theo trạng thái đơn
 function stateTone(state: string): AppBadgeTone {
   if (state === "Approved") return "success";
   if (state === "Rejected" || state === "Expired") return "danger";
@@ -43,19 +44,21 @@ const fileRules: Record<ApplicationDocumentType, { accept: string; types: string
   LOGO: { accept: ".png,.jpg,.jpeg", maxBytes: 2 * 1024 * 1024, size: "2 MB",
     types: ["image/png", "image/jpeg"] },
 };
-/** Which step fixes each submission issue, so the review step can jump straight there. */
+/** Bước nào sửa được từng lỗi khi nộp, để bước xem lại có thể nhảy thẳng tới đó. */
 const issueStep: Record<FoundingIssue, number> = {
   clubName: 0, field: 0, fieldUnavailable: 0, summary: 0, objectives: 0, fanpageUrl: 0, contactEmail: 0,
   foundersTooFew: 1, applicantNotFounder: 1, duplicateFounder: 1, leaderCount: 1, viceLeaderCount: 1,
   leaderHoldsAnotherClub: 1, proposal: 2, logo: 2,
 };
 
+// Chuyển đơn đã lưu thành dữ liệu form nháp
 function inputFrom(draft: ApplicationDraft): DraftInput {
   return { clubName: draft.clubName, fieldId: draft.fieldId, summary: draft.summary,
     objectives: draft.objectives, fanpageUrl: draft.fanpageUrl, contactEmail: draft.contactEmail,
     founders: draft.founders };
 }
 
+// Trang nhiều bước soạn đơn thành lập CLB: thông tin, sáng lập viên, tài liệu
 export function ApplicationEditorPage() {
   const { t, i18n } = useTranslation();
   const askConfirm = useConfirm();
@@ -82,7 +85,7 @@ export function ApplicationEditorPage() {
   const state = application?.state;
   const editable = !id || state === "Draft" || state === "Revision Requested";
   const canWithdraw = state === "Submitted" || state === "Under Review" || state === "Revision Requested";
-  // The server preview lists what still blocks submission; only fetched on the review step.
+  // Bản xem trước từ server liệt kê những gì còn chặn việc nộp; chỉ tải ở bước xem lại.
   const preview = useApplicationPreview(id, editable && step === 3 && !action.isPending);
   const latestDecision = detail.data?.decisions.at(-1);
   const me = auth.data?.user;
@@ -96,7 +99,7 @@ export function ApplicationEditorPage() {
     fieldId: currentDraft.fieldId ? null : t("common.chooseRequired"),
     summary: requiredFields?.summary && !currentDraft.summary.trim() ? t("common.fieldRequired") : null,
     objectives: requiredFields?.objectives && !currentDraft.objectives.trim() ? t("common.fieldRequired") : null,
-    // Fanpage and contact email are only checked when the policy requires them.
+    // Fanpage và email liên hệ chỉ được kiểm tra khi chính sách yêu cầu.
     fanpageUrl: !requiredFields?.fanpageUrl ? null : !currentDraft.fanpageUrl.trim() ? t("common.fieldRequired")
       : isHttpUrl(currentDraft.fanpageUrl) ? null : t("common.invalidUrl"),
     contactEmail: !requiredFields?.contactEmail ? null : !currentDraft.contactEmail.trim() ? t("common.fieldRequired")
@@ -104,11 +107,12 @@ export function ApplicationEditorPage() {
   } : {});
   const steps = [t("applications.stepClub"), t("applications.stepFounders"),
     t("applications.stepFiles"), t("applications.stepReview")];
-  // Which step holds each part ICPDP can flag, so a revision request points at the steps to fix.
+  // Bước nào chứa từng phần ICPDP có thể đánh dấu, để yêu cầu chỉnh sửa chỉ ra đúng các bước cần sửa.
   const flaggedSteps = state === "Revision Requested" && latestDecision?.outcome === "Request revision"
     ? new Set(latestDecision.sections.flatMap((section) => section === "club-information" ? [0]
       : section === "founders" ? [1] : section === "documents" ? [2] : [])) : new Set<number>();
 
+  // Nhãn đã dịch của trạng thái đơn
   function stateLabel(value: string): string {
     switch (value) {
       case "Draft": return t("applications.statusDraft");
@@ -123,6 +127,7 @@ export function ApplicationEditorPage() {
     }
   }
 
+  // Nhãn mục đơn bị yêu cầu chỉnh sửa
   function sectionLabel(section: string): string {
     switch (section) {
       case "club-information": return t("reviews.sectionClub");
@@ -134,17 +139,20 @@ export function ApplicationEditorPage() {
     }
   }
 
+  // Lấy thông báo lỗi để hiển thị
   function errorText(error: unknown): string {
     return error instanceof Error ? error.message : t("applications.actionError");
   }
 
+  // Cập nhật một trường của đơn nháp
   function change<K extends keyof DraftInput>(key: K, value: DraftInput[K]) {
     setNotice(null);
     setSubmitIssues(null);
     setDraft((current) => ({ ...(current ?? currentDraft!), [key]: value }));
   }
 
-  /** Persist local edits (creating the draft on first save); resolves to the application id. */
+  // Lưu đơn nháp, tạo mới nếu chưa có, trả mã đơn
+  /** Lưu các chỉnh sửa cục bộ (tạo bản nháp ở lần lưu đầu); trả về id của hồ sơ. */
   async function persist(): Promise<string | null> {
     if (!currentDraft || !auth.data) return null;
     if (id && !draft) return id;
@@ -164,10 +172,11 @@ export function ApplicationEditorPage() {
     }
   }
 
+  // Chuyển sang bước khác, lưu nháp trước khi rời bước
   async function goTo(target: number) {
-    // Leaving step 1 reveals every club-information error; only name and field block a draft save.
+    // Rời bước 1 sẽ hiện mọi lỗi thông tin CLB; chỉ tên và lĩnh vực mới chặn việc lưu nháp.
     if (editable && step === 0 && target > 0) {
-      // Only flags the step-1 errors; the page may still move on, so it must not scroll back to them.
+      // Chỉ đánh dấu lỗi của bước 1; trang vẫn có thể đi tiếp nên không được cuộn ngược về các lỗi đó.
       field.touchAll(false);
       if (!currentDraft?.clubName.trim() || !currentDraft.fieldId) return;
     }
@@ -175,15 +184,18 @@ export function ApplicationEditorPage() {
     setStep(target);
   }
 
+  // Chỉ lưu nháp và báo thành công
   async function saveOnly() {
     if (await persist()) setNotice({ tone: "success", text: t("applications.success") });
   }
 
+  // Tra thông tin hiển thị của sáng lập viên theo mã người dùng
   function founderProfile(userId: string): FounderProfile | undefined {
     if (me && userId === me.id) return { id: me.id, displayName: me.displayName, email: me.email };
     return addedFounders[userId] ?? detail.data?.founders.find((item) => item.id === userId);
   }
 
+  // Thêm sáng lập viên theo email
   async function addFounder() {
     const email = founderEmail.trim();
     if (!email || !currentDraft) return;
@@ -205,7 +217,8 @@ export function ApplicationEditorPage() {
     }
   }
 
-  /** Only one president: choosing a new one hands the previous president the chosen person's old role. */
+  // Đổi vai trò của sáng lập viên
+  /** Chỉ có một chủ nhiệm: chọn người mới thì chủ nhiệm cũ nhận vai trò cũ của người được chọn. */
   function setRole(userId: string, role: FounderRole) {
     if (!currentDraft) return;
     const previous = currentDraft.founders.find((founder) => founder.userId === userId)?.role ?? "MEMBER";
@@ -216,6 +229,7 @@ export function ApplicationEditorPage() {
     }));
   }
 
+  // Tải tài liệu lên sau khi kiểm tra loại và dung lượng tệp
   async function upload(documentType: ApplicationDocumentType, file: File | undefined) {
     if (!file || !id || !auth.data) return;
     const rule = fileRules[documentType];
@@ -238,6 +252,7 @@ export function ApplicationEditorPage() {
     }
   }
 
+  // Xóa một tài liệu đã tải lên
   async function remove(documentId: string) {
     if (!id || !auth.data) return;
     setNotice(null);
@@ -245,6 +260,7 @@ export function ApplicationEditorPage() {
     catch (error) { setNotice({ tone: "danger", text: errorText(error) }); }
   }
 
+  // Tải tài liệu đã nộp qua URL có chữ ký
   async function download(documentId: string) {
     if (!id) return;
     setNotice(null);
@@ -256,6 +272,7 @@ export function ApplicationEditorPage() {
     }
   }
 
+  // Xác nhận rồi nộp đơn thành lập CLB
   async function submit() {
     if (!id || !auth.data || !(await askConfirm(t("applications.submitPrompt")))) return;
     setNotice(null);
@@ -273,6 +290,7 @@ export function ApplicationEditorPage() {
     }
   }
 
+  // Xác nhận rồi rút đơn
   async function withdraw() {
     if (!id || !auth.data || !(await askConfirm(t("applications.withdrawConfirm")))) return;
     setNotice(null);
@@ -301,7 +319,7 @@ export function ApplicationEditorPage() {
   const { requirements, maxViceLeaders } = config.data;
   const required = requirements.required;
   const fieldOptions = config.data.fields.map((field) => ({ value: field.id, label: field.name }));
-  // A field ICPDP hid after it was saved stays visible (flagged) until the student re-picks.
+  // Trường mà ICPDP ẩn sau khi đã lưu vẫn hiển thị (có đánh dấu) cho đến khi sinh viên chọn lại.
   if (currentDraft.fieldId && !fieldOptions.some((option) => option.value === currentDraft.fieldId)) {
     fieldOptions.push({ value: currentDraft.fieldId,
       label: t("applications.fieldHidden", { name: application?.draft.field || currentDraft.fieldId }) });
@@ -311,16 +329,19 @@ export function ApplicationEditorPage() {
   const rolesValid = leaders === 1 && viceLeaders >= 1 && viceLeaders <= maxViceLeaders;
   const missingFounders = Math.max(0, requirements.minFoundingMembers - currentDraft.founders.length);
   const issues = submitIssues ?? preview.data?.issues ?? [];
+  // Tìm tài liệu đã tải lên theo loại
   function uploaded(type: ApplicationDocumentType): ApplicationDocument | undefined {
     return documents.find((item) => item.documentType === type);
   }
 
+  // Nhãn trường kèm dấu bắt buộc hoặc ghi chú tùy chọn
   function label(text: string, requirement?: FoundingField | "always"): ReactNode {
     const isRequired = requirement === "always" || (requirement ? required[requirement] : false);
     return <span className="flex flex-wrap items-center gap-2"><span>{text}{isRequired && <AppRequiredMark />}</span>
       {!isRequired && <span className="text-xs font-normal text-muted-app">{t("applications.optional")}</span>}</span>;
   }
 
+  // Thẻ tải lên, xem và xóa một loại tài liệu
   function fileCard(type: ApplicationDocumentType, title: string, hint: string, field: FoundingField) {
     const current = uploaded(type);
     const rule = fileRules[type];
@@ -355,6 +376,7 @@ export function ApplicationEditorPage() {
     </section>;
   }
 
+  // Dòng hiển thị một sáng lập viên và vai trò
   function founderRow(userId: string, role: FounderRole, readOnly: boolean) {
     const profile = founderProfile(userId);
     const name = profile?.displayName ?? userId;
@@ -376,7 +398,8 @@ export function ApplicationEditorPage() {
     </li>;
   }
 
-  /** What was entered, shown on the review step and as the read-only view after submission. */
+  // Bảng tóm tắt thông tin đơn ở bước xem lại
+  /** Nội dung đã nhập, hiển thị ở bước xem lại và làm bản chỉ xem sau khi nộp. */
   function summary(value: DraftInput & { field?: string }) {
     const fieldName = config.data!.fields.find((field) => field.id === value.fieldId)?.name ?? value.field ?? "";
     const rows: [string, string][] = [[t("applications.clubName"), value.clubName], [t("applications.field"), fieldName],

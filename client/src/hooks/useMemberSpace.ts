@@ -16,34 +16,41 @@ import { onboardMember,
 
 const key = ["member-space"] as const;
 
-/** True when the caller is not (or no longer) a member, so the page should point to the public club page. */
+// Kiểm tra lỗi có phải do người dùng không phải thành viên CLB
+/** True khi người gọi không (hoặc không còn) là thành viên, nên trang cần dẫn tới trang CLB công khai. */
 export function isNotAMember(error: unknown): boolean {
   return error instanceof MemberSpaceError && error.status === 403;
 }
 
+// Query các CLB tôi đang tham gia
 export function useMyMemberships(enabled: boolean) {
   return useQuery({ queryKey: [...key, "mine"], queryFn: ({ signal }) => fetchMyMemberships(signal), enabled, retry: false });
 }
 
+// Query yêu cầu rời CLB của tôi
 export function useMyWithdrawals(enabled: boolean) {
   return useQuery({ queryKey: [...key, "withdrawals", "mine"], queryFn: ({ signal }) => fetchMyWithdrawals(signal), enabled, retry: false });
 }
 
+// Query không gian thành viên của một CLB
 export function useMemberSpace(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...key, "space", clubId], queryFn: ({ signal }) => fetchMemberSpace(clubId!, signal),
     enabled: enabled && Boolean(clubId), retry: false });
 }
 
+// Query danh sách thành viên của CLB
 export function useClubMembers(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...key, "club", clubId, "members"],
     queryFn: ({ signal }) => fetchClubMemberships(clubId!, signal), enabled: enabled && Boolean(clubId), retry: false });
 }
 
+// Query yêu cầu rời CLB gửi tới CLB
 export function useClubWithdrawals(clubId: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...key, "club", clubId, "withdrawals"],
     queryFn: ({ signal }) => fetchClubWithdrawals(clubId!, signal), enabled: enabled && Boolean(clubId), retry: false });
 }
 
+// Mutation xử lý thành viên và yêu cầu rời CLB, rồi làm mới cache
 export function useMembershipAction() {
   const client = useQueryClient();
   return useMutation({

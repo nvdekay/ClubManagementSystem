@@ -3,16 +3,17 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  /** ISO timestamp — Dates serialize to strings in JSON. */
+  /** Mốc thời gian ISO — Date được serialize thành chuỗi trong JSON. */
   createdAt: string;
 }
 
 export interface UserPage {
   items: User[];
-  /** Total matches across all pages — drives the table's page count. */
+  /** Tổng số kết quả khớp trên mọi trang — dùng để tính số trang của bảng. */
   total: number;
 }
 
+// GET /users: danh sách người dùng có tìm kiếm và phân trang
 export async function fetchUsers({
   search,
   limit,
@@ -35,6 +36,7 @@ export async function fetchUsers({
   return body.data;
 }
 
+// POST /users: tạo người dùng mới
 export async function createUser(input: { email: string; name: string }): Promise<User> {
   const res = await apiFetch("/api/v1/users", {
     method: "POST",
@@ -42,7 +44,7 @@ export async function createUser(input: { email: string; name: string }): Promis
     body: JSON.stringify(input),
   });
   if (!res.ok) {
-    // Error bodies aren't always JSON (proxy errors, HTML 404s) — don't let .json() throw.
+    // Nội dung lỗi không phải lúc nào cũng là JSON (lỗi proxy, trang 404 HTML) — đừng để .json() ném lỗi.
     const body = (await res.json().catch(() => null)) as { message?: string } | null;
     throw new ApiError(body?.message ?? "");
   }

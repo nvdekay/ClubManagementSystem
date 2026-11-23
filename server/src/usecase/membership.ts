@@ -5,6 +5,7 @@ import { assertClubAccess, type AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm người dùng đăng nhập, tài khoản Active và trả id
 function actorId(actor: AccessActor | null): string {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState !== "Active") throw new DomainError("account is not active", "locked");
@@ -12,11 +13,13 @@ function actorId(actor: AccessActor | null): string {
   return actor.id;
 }
 
+// Kiểm định dạng ObjectId của một định danh
 function validId(value: string, name: string) {
   if (!objectId.test(value)) throw new DomainError(`invalid ${name}`, "validation");
   return value;
 }
 
+// Kiểm quyền quản lý thành viên của CLB và trả id actor
 async function authorize(access: ClubAccessRepository, actor: AccessActor | null,
   clubId: string, now: Date) {
   const userId = actorId(actor);
@@ -25,17 +28,20 @@ async function authorize(access: ClubAccessRepository, actor: AccessActor | null
   return userId;
 }
 
+// Sinh viên xem các tư cách thành viên của mình
 export async function listMyMemberships(repo: MembershipRepository, actor: AccessActor | null) {
   return repo.listMine(actorId(actor));
 }
 
+// CLB xem danh sách thành viên của mình
 export async function listClubMemberships(repo: MembershipRepository, access: ClubAccessRepository,
   actor: AccessActor | null, clubId: string, now = new Date()) {
   await authorize(access, actor, clubId, now);
   return repo.listClub(clubId, now);
 }
 
-/** UC20 A1: a Club Leader adds a student who has signed in before, giving a reason (BR13). */
+// UC20 A1: Club Leader thêm thủ công một sinh viên vào CLB kèm lý do
+/** UC20 A1: Club Leader thêm một sinh viên từng đăng nhập, kèm lý do (BR13). */
 export async function onboardMemberManually(repo: MembershipRepository, access: ClubAccessRepository,
   actor: AccessActor | null, input: { clubId: string; email: string; reason: string }, now = new Date()) {
   const id = actorId(actor);
@@ -48,6 +54,7 @@ export async function onboardMemberManually(repo: MembershipRepository, access: 
   return repo.onboardManually({ clubId: input.clubId, email, reason, actorId: id, now });
 }
 
+// CLB đổi trạng thái thành viên (Active, Inactive, Banned) có hiệu lực hôm nay
 export async function changeMembershipState(repo: MembershipRepository,
   access: ClubAccessRepository, actor: AccessActor | null, input: {
     clubId: string; membershipId: string; state: "Active" | "Inactive" | "Banned";
@@ -67,6 +74,7 @@ export async function changeMembershipState(repo: MembershipRepository,
   return repo.changeState({ ...input, ...(reason ? { reason } : {}), actorId: id, now });
 }
 
+// Thành viên gửi yêu cầu rút khỏi CLB kèm lý do và ngày hiệu lực
 export async function requestMembershipWithdrawal(repo: MembershipRepository,
   actor: AccessActor | null, input: { membershipId: string; reason: string; requestedEffectiveDate: Date },
   now = new Date()) {
@@ -81,17 +89,20 @@ export async function requestMembershipWithdrawal(repo: MembershipRepository,
     requestedEffectiveDate: input.requestedEffectiveDate, now });
 }
 
+// Thành viên xem các yêu cầu rút khỏi CLB của mình
 export async function listMyMembershipWithdrawalRequests(repo: MembershipRepository,
   actor: AccessActor | null) {
   return repo.listMyWithdrawalRequests(actorId(actor));
 }
 
+// CLB xem các yêu cầu rút khỏi CLB của thành viên
 export async function listClubMembershipWithdrawalRequests(repo: MembershipRepository,
   access: ClubAccessRepository, actor: AccessActor | null, clubId: string, now = new Date()) {
   await authorize(access, actor, clubId, now);
   return repo.listClubWithdrawalRequests(clubId);
 }
 
+// CLB thực hiện yêu cầu rút khỏi CLB của thành viên
 export async function executeMembershipWithdrawal(repo: MembershipRepository,
   access: ClubAccessRepository, actor: AccessActor | null,
   input: { clubId: string; requestId: string }, now = new Date()) {
@@ -101,6 +112,7 @@ export async function executeMembershipWithdrawal(repo: MembershipRepository,
     actorId: id, now });
 }
 
+// Cho biết trạng thái thành viên có được yêu cầu rút khỏi CLB không
 export function canRequestWithdrawal(state: MembershipState): boolean {
   return state === "Active" || state === "Inactive";
 }

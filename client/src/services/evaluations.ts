@@ -63,13 +63,14 @@ export interface EvaluationDetail {
   thresholds: { excellent: number; good: number; fair: number };
 }
 
-/** Non-2xx response; `pendingReviewClubs` names the clubs whose periodic report still waits for UC39. */
+/** Response không phải 2xx; `pendingReviewClubs` nêu các CLB có báo cáo định kỳ còn chờ UC39. */
 export class EvaluationRequestError extends ApiError {
   constructor(message: string, readonly pendingReviewClubs: string[] = []) {
     super(message);
   }
 }
 
+// Gọi API /admin/evaluations và trả về data, ném lỗi nếu thất bại
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiFetch(`/api/v1/admin/evaluations${path}`, { credentials: "same-origin", ...init });
   if (!response.ok) {
@@ -83,23 +84,28 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data;
 }
 
+// Dựng RequestInit POST có CSRF và body JSON tuỳ chọn
 function post(csrfToken: string, body?: object): RequestInit {
   return { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
     ...(body ? { body: JSON.stringify(body) } : {}) };
 }
 
+// GET tổng quan đánh giá CLB theo kỳ
 export function fetchEvaluationOverview(period: string | undefined, signal: AbortSignal): Promise<EvaluationOverview> {
   return request(period ? `?period=${encodeURIComponent(period)}` : "", { signal });
 }
 
+// GET chi tiết đánh giá của một CLB
 export function fetchEvaluation(id: string, signal: AbortSignal): Promise<EvaluationDetail> {
   return request(`/${encodeURIComponent(id)}`, { signal });
 }
 
+// POST /generate: sinh bản đánh giá cho kỳ
 export function generateEvaluations(periodCode: string, csrfToken: string): Promise<EvaluationOverview> {
   return request("/generate", post(csrfToken, { periodCode }));
 }
 
+// POST /publish: công bố kết quả đánh giá của kỳ
 export function publishEvaluations(periodCode: string, csrfToken: string): Promise<EvaluationOverview> {
   return request("/publish", post(csrfToken, { periodCode }));
 }
@@ -108,6 +114,7 @@ export type EvaluationAction =
   | { kind: "regenerate" | "finalize" | "reopen" }
   | { kind: "manual"; dimensionCode: string; manual: { score: number; justification: string } | null };
 
+// POST tính lại, chốt, mở lại hoặc chấm tay một đánh giá
 export function runEvaluationAction(id: string, action: EvaluationAction, csrfToken: string): Promise<EvaluationDetail> {
   const path = `/${encodeURIComponent(id)}/${action.kind}`;
   return request(path, post(csrfToken, action.kind === "manual"

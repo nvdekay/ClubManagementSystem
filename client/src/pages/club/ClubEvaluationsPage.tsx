@@ -8,10 +8,12 @@ import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useClubEvaluations } from "@/hooks/useClubCompliance";
 import { evaluations } from "@/i18n/evaluations";
+// Trang xem kết quả đánh giá hoạt động của CLB
 export function ClubEvaluationsPage() {
   const { clubId = "" } = useParams(); const { t, i18n } = useTranslation(); const auth = useAuth();
   const allowed = Boolean(auth.data?.workspaces.some((w) => w.kind === "club" && w.clubId === clubId && w.permissions.includes("club.report.submit")));
   const query = useClubEvaluations(clubId, allowed);
+  // Nhãn đã dịch của chỉ số đánh giá, giữ mã gốc nếu chưa có bản dịch
   function metric(code: string) { const key = `metric_${code}`; return key in evaluations.en ? t(`evaluations.${key as keyof typeof evaluations.en}`) : code; }
   if (auth.isPending) return <AppSkeleton className="h-64 w-full" />;
   if (!allowed) return <AppNotice tone="danger">{t("clubCompliance.denied")}</AppNotice>;

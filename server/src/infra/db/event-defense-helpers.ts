@@ -24,28 +24,34 @@ import { ucmsModels as m } from "./ucms-models.js";
 
 type Doc = Record<string, unknown>;
 
+// Chuyển chuỗi id thành ObjectId
 export function oid(value: string): Types.ObjectId {
   return new Types.ObjectId(value);
 }
 
+// Ném lỗi conflict với thông báo cho trước
 export function conflict(message: string): never {
   throw new DomainError(message, "conflict");
 }
 
+// Chuyển giá trị tiền sang number, mặc định 0
 export function money(value: unknown): number {
   if (value === null || value === undefined) return 0;
   const parsed = Number(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+// Chuyển number thành Decimal128
 export function decimal(value: number) {
   return Types.Decimal128.fromString(String(value));
 }
 
+// Trả chuỗi không rỗng hoặc undefined
 export function optionalText(value: unknown): string | undefined {
   return typeof value === "string" && value ? value : undefined;
 }
 
+// Chuẩn hóa các dòng ngân sách CLB đề xuất
 export function requestedLines(raw: unknown): RequestedBudgetLine[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((item: unknown) => {
@@ -60,6 +66,7 @@ export function requestedLines(raw: unknown): RequestedBudgetLine[] {
   });
 }
 
+// Chuẩn hóa các dòng ngân sách đã được duyệt
 export function approvedLines(raw: unknown): ApprovedBudgetLine[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((item: Doc) => ({
@@ -70,6 +77,7 @@ export function approvedLines(raw: unknown): ApprovedBudgetLine[] {
   }));
 }
 
+// Ánh xạ ghi chú của officer trong phiên bảo vệ
 function mapNotes(raw: unknown): DefenseOfficerNote[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((entry: unknown) => {
@@ -84,6 +92,7 @@ function mapNotes(raw: unknown): DefenseOfficerNote[] {
   });
 }
 
+// Ánh xạ document phiên bảo vệ thành EventDefenseSession
 export function mapDefenseSession(doc: Doc): EventDefenseSession {
   return {
     id: String(doc._id),
@@ -112,6 +121,7 @@ export function mapDefenseSession(doc: Doc): EventDefenseSession {
   };
 }
 
+// Lấy user quản lý sự kiện của CLB (Club Leader, phó) để gửi thông báo
 export async function clubEventManagerRecipients(
   clubId: Types.ObjectId,
   fallbackUserId: unknown,
@@ -154,6 +164,7 @@ export async function clubEventManagerRecipients(
   return [...ids.values()];
 }
 
+// Ghi quyết định ICPDP cho đề xuất sự kiện và cập nhật trạng thái, ngân sách
 export async function applyProposalDecisionInSession(
   session: ClientSession,
   eventId: Types.ObjectId,

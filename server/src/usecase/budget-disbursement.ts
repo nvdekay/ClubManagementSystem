@@ -8,6 +8,7 @@ import type { AccessActor } from "./access.js";
 
 const objectId = /^[0-9a-f]{24}$/i;
 
+// Kiểm actor là ICPDP officer và trả id
 async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null): Promise<string> {
   if (!actor) throw new DomainError("authentication required", "unauthorized");
   if (actor.accountState === "Locked") {
@@ -20,11 +21,13 @@ async function officer(auth: Pick<AuthRepository, "systemRoleCodes">, actor: Acc
   return actor.id;
 }
 
+// Kiểm định dạng id ngân sách
 function budgetId(value: string): string {
   if (!objectId.test(value)) throw new DomainError("invalid budget id", "validation");
   return value;
 }
 
+// Chuẩn hóa và kiểm khoản giải ngân/hoàn trả (loại, số tiền, ngày, ghi chú)
 export function normalizedBudgetFlow(input: BudgetFlowInput, now: Date): NormalizedBudgetFlow {
   if (!BUDGET_FLOW_KINDS.includes(input.kind)) {
     throw new DomainError("invalid money flow kind", "validation", { field: "kind" });
@@ -44,12 +47,14 @@ export function normalizedBudgetFlow(input: BudgetFlowInput, now: Date): Normali
   return { kind: input.kind, amount: input.amount, disbursedAt, paymentReference, note };
 }
 
+// ICPDP xem danh sách ngân sách được duyệt của các CLB
 export async function listBudgets(repo: BudgetDisbursementRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null) {
   await officer(auth, actor);
   return repo.list();
 }
 
+// ICPDP xem chi tiết một ngân sách và các khoản đã ghi
 export async function getBudget(repo: BudgetDisbursementRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string) {
   await officer(auth, actor);
@@ -58,6 +63,7 @@ export async function getBudget(repo: BudgetDisbursementRepository,
   return detail;
 }
 
+// ICPDP ghi một khoản giải ngân hoặc hoàn trả cho ngân sách
 export async function recordBudgetFlow(repo: BudgetDisbursementRepository,
   auth: Pick<AuthRepository, "systemRoleCodes">, actor: AccessActor | null, id: string,
   input: BudgetFlowInput, now: Date) {
@@ -65,7 +71,7 @@ export async function recordBudgetFlow(repo: BudgetDisbursementRepository,
   const flow = normalizedBudgetFlow(input, now);
   const detail = await repo.find(budgetId(id));
   if (!detail) throw new DomainError("budget not found", "not_found");
-  // Fails fast with a field-level error; the repository re-checks inside its transaction.
+  // Fail fast với lỗi ở mức trường; repository kiểm tra lại bên trong transaction của nó.
   checkFlow(detail, flow);
   return repo.record(detail.id, officerId, flow, now);
 }

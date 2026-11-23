@@ -9,17 +9,20 @@ import {
 
 const key = ["leadership-transitions"] as const;
 
+// Query hàng đợi chuyển giao lãnh đạo cho ICPDP
 export function useLeadershipTransitionQueue(enabled: boolean) {
   return useQuery({ queryKey: [...key, "queue"],
     queryFn: ({ signal }) => fetchLeadershipTransitionQueue(signal), enabled, retry: false });
 }
 
+// Query chi tiết một yêu cầu chuyển giao lãnh đạo
 export function useLeadershipTransition(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...key, "detail", id],
     queryFn: ({ signal }) => fetchLeadershipTransition(id!, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
 
+// Mutation nhận xử lý hoặc quyết định chuyển giao, rồi làm mới cache
 export function useLeadershipTransitionAction() {
   const client = useQueryClient();
   return useMutation({

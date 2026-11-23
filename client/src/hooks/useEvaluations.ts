@@ -6,16 +6,19 @@ import {
 
 const evaluationKey = ["evaluations"] as const;
 
+// Query tổng quan đánh giá CLB theo kỳ
 export function useEvaluationOverview(period: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...evaluationKey, "overview", period ?? ""],
     queryFn: ({ signal }) => fetchEvaluationOverview(period, signal), enabled, retry: false });
 }
 
+// Query chi tiết đánh giá của một CLB
 export function useEvaluation(id: string | undefined, enabled: boolean) {
   return useQuery({ queryKey: [...evaluationKey, "detail", id], queryFn: ({ signal }) => fetchEvaluation(id!, signal),
     enabled: enabled && Boolean(id), retry: false });
 }
 
+// Mutation sinh hoặc công bố đánh giá của kỳ, rồi làm mới cache
 export function useEvaluationPeriodAction() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -29,6 +32,7 @@ export function useEvaluationPeriodAction() {
   });
 }
 
+// Mutation thao tác trên một đánh giá, rồi làm mới tổng quan
 export function useEvaluationAction() {
   const queryClient = useQueryClient();
   return useMutation({

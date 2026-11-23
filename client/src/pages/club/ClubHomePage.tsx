@@ -5,11 +5,13 @@ import { WorkspaceHome } from "@/components/custom/WorkspaceHome";
 import { RoleDashboard } from "@/components/custom/RoleDashboard";
 import { useAuth } from "@/hooks/useAuth";
 
+// Trang chủ workspace CLB, hiện lối tắt theo permission của người dùng
 export function ClubHomePage() {
   const { t } = useTranslation();
   const { clubId } = useParams();
   const auth = useAuth();
   const workspace = auth.data?.workspaces.find((item) => item.kind === "club" && item.clubId === clubId);
+  // Kiểm tra workspace CLB hiện tại có permission được hỏi hay không
   function can(permission: string) {
     return Boolean(workspace?.permissions.includes(permission));
   }

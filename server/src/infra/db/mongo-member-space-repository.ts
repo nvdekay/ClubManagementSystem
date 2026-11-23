@@ -4,14 +4,16 @@ import type { MemberSpaceRepository } from "../../domain/member-space.js";
 import type { MembershipState } from "../../domain/membership.js";
 import { ucmsModels } from "./ucms-models.js";
 
+// Ép giá trị đọc từ DB về Date, lỗi nếu không phải ngày hợp lệ
 function date(value: unknown): Date {
   if (!(value instanceof Date)) throw new Error("invalid member space date in database");
   return value;
 }
 
-/** UC24: published events of the club; internal events appear from PUBLIC, never as DRAFT or CREATED. */
-const shownEventStates = ["Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed", "PUBLIC", "ONGOING", "FINISH"];
+/** UC24: các sự kiện đã đăng của CLB; sự kiện nội bộ xuất hiện từ PUBLIC, không bao giờ ở DRAFT hay CREATED. */
+const shownEventStates = ["Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"];
 
+// Repository không gian thành viên của sinh viên trong CLB
 export function mongoMemberSpaceRepository(): MemberSpaceRepository {
   const clubs = ucmsModels.clubs!;
   const memberships = ucmsModels.clubMemberships!;
@@ -26,6 +28,7 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
   const feedbacks = ucmsModels.eventFeedbacks!;
 
   return {
+    // Lấy dữ liệu không gian thành viên của sinh viên trong một CLB
     async find(userId, clubId, now) {
       const clubObjectId = new Types.ObjectId(clubId);
       const userObjectId = new Types.ObjectId(userId);
@@ -35,8 +38,8 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
       ]);
       if (!club || !mine) return null;
 
-      // Current positions, by the same rule as permissions: in effect inside an Active term; board seats
-      // (and the leader seat) count only once ICPDP confirmed them, UC23 roles need no confirmation.
+      // Chức vụ hiện tại, theo cùng quy tắc với quyền: có hiệu lực trong nhiệm kỳ Active; ghế ban chủ nhiệm
+      // (và ghế leader) chỉ tính khi ICPDP đã xác nhận, role UC23 không cần xác nhận.
       const activeTerms = await terms.find({ clubId: clubObjectId, state: "Active", startAt: { $lte: now },
         endAt: { $gt: now } }).select({ _id: 1 }).lean();
       const [assignmentDocs, positionDocs, memberDocs] = await Promise.all([
@@ -73,7 +76,7 @@ export function mongoMemberSpaceRepository(): MemberSpaceRepository {
 
       const [pending, eventDocs, attendanceDocs, myMemberships] = await Promise.all([
         requests.findOne({ membershipId: mine._id, state: { $in: ["Pending", "Held"] } }).sort({ createdAt: -1 }).lean(),
-        events.find({ clubId: clubObjectId, state: { $in: shownEventStates }, publishedAt: { $exists: true, $ne: null },
+        events.find({ clubId: clubObjectId, audienceScope: "PUBLIC", state: { $in: shownEventStates }, publishedAt: { $exists: true, $ne: null },
           endAt: { $gt: now } }).sort({ startAt: 1 }).limit(20).lean(),
         attendances.find({ clubId: clubObjectId, studentId: userObjectId }).sort({ checkedInAt: -1 }).limit(50).lean(),
         memberships.find({ userId: userObjectId, state: { $in: ["Active", "Inactive"] }, clubId: { $ne: clubObjectId } }).lean(),

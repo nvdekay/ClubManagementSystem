@@ -22,7 +22,7 @@ export const CLUB_PROFILE_FORM_FIELDS = [
 ] as const;
 export type ClubProfileFormField = (typeof CLUB_PROFILE_FORM_FIELDS)[number];
 
-/** Which inputs of the fixed, system-owned forms ICPDP marks as required, per business flow. */
+/** Những trường nào của các form cố định do hệ thống sở hữu mà ICPDP đánh dấu là bắt buộc, theo từng luồng nghiệp vụ. */
 export interface FormRequirements {
   clubFounding: Readonly<Record<FoundingFormField, boolean>>;
   clubProfile: Readonly<Record<ClubProfileFormField, boolean>>;

@@ -23,6 +23,7 @@ const choiceClass = "inline-flex min-h-11 items-center rounded-md px-3 text-sm f
 const activeChoiceClass = "bg-segment-app text-text-app shadow-xs";
 const activeTypeClass = "border-brand-app bg-primary-soft-app ring-1 ring-brand-app";
 
+// Trang ICPDP chọn dữ liệu, xem trước số dòng và xuất file
 export function DataExportPage() {
   const { t } = useTranslation();
   const auth = useAuth();
@@ -43,39 +44,44 @@ export function DataExportPage() {
   const csrfToken = auth.data?.csrfToken ?? "";
   const data = options.data;
   const semesterCode = semester || data?.periods.at(-1)?.code || "";
-  // FR-UC55-12: several types go in one xlsx, and a status filter belongs to exactly one type.
+  // FR-UC55-12: nhiều loại dữ liệu gộp trong một file xlsx, và bộ lọc trạng thái chỉ thuộc về đúng một loại.
   const single = types.length === 1 ? types[0] : null;
   const fileFormat: ExportFormat = single ? format : "xlsx";
   const rowCount = result?.rowCount ?? null;
 
+  // Xoá kết quả và lỗi của lần xem trước/xuất trước
   function reset() {
     setResult(null);
     setError(null);
   }
 
+  // Chọn loại dữ liệu xuất, giữ đúng thứ tự danh mục
   function choose(next: ExportType[]) {
-    // Keep the catalogue order, so the sheets follow the order of the cards.
+    // Giữ thứ tự trong danh mục, để các sheet theo đúng thứ tự của các thẻ.
     setTypes(data ? data.types.map((item) => item.type).filter((value) => next.includes(value)) : next);
     setStatus("");
     reset();
   }
 
+  // Dựng bộ lọc xuất theo kỳ học hoặc khoảng ngày
   function filter(): ExportFilter {
     return {
       ...(mode === "semester" && semesterCode ? { periodCode: semesterCode } : {}),
-      // Whole days in local time: from the start of `from` to the end of `to`.
+      // Tính theo trọn ngày giờ địa phương: từ đầu ngày `from` đến cuối ngày `to`.
       ...(mode === "range" && from ? { from: new Date(`${from}T00:00:00`).toISOString() } : {}),
       ...(mode === "range" && to ? { to: new Date(`${to}T23:59:59`).toISOString() } : {}),
       ...(clubId ? { clubId } : {}), ...(single && status ? { status } : {}),
     };
   }
 
+  // Đếm số dòng sẽ xuất theo lựa chọn hiện tại
   async function count() {
     reset();
     try { setResult(await preview.mutateAsync({ types, filter: filter(), csrfToken })); }
     catch (failure) { setError(`${t("exports.failed")} ${(failure as Error).message}`); }
   }
 
+  // Tải file dữ liệu theo loại và bộ lọc đã chọn
   async function save() {
     reset();
     try {

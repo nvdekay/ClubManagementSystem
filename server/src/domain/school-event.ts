@@ -1,10 +1,10 @@
 import { DomainError } from "./errors.js";
 import type { AcademicSemester } from "./policy.js";
 
-/** BR59 default: clubs answer three days before the event starts (constant of the policy document). */
+/** Mặc định BR59: CLB phản hồi trước khi sự kiện bắt đầu ba ngày (hằng số của tài liệu chính sách). */
 export const INVITATION_DEADLINE_DAYS_BEFORE = 3;
 export const MAX_INVITED_CLUBS = 200;
-/** The organiser name stored on school-wide events, which have no club (DBML `events.clubName`). */
+/** Tên đơn vị tổ chức lưu trên sự kiện toàn trường vì không có CLB (DBML `events.clubName`). */
 export const SCHOOL_ORGANIZER_NAME = "ICPDP";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -90,45 +90,50 @@ export interface NormalizedInvitation {
 
 export interface InvitationOutcome {
   invited: string[];
-  /** Clubs skipped because they are not Active (BR59) or were already invited. */
+  /** CLB bị bỏ qua vì không Active (BR59) hoặc đã được mời rồi. */
   skipped: { clubId: string; reason: "notActive" | "alreadyInvited" }[];
 }
 
 export interface SchoolEventRepository {
   list(): Promise<SchoolEventSummary[]>;
   find(id: string): Promise<SchoolEventDetail | null>;
-  /** BR15: approved events and bookings on the same property that overlap the time window. */
+  /** BR15: sự kiện và booking đã duyệt trên cùng property có thời gian chồng lấn với khoảng này. */
   conflicts(propertyId: string | undefined, startAt: Date, endAt: Date, excludeEventId?: string): Promise<ScheduleConflict[]>;
   create(input: NormalizedSchoolEvent, officerId: string, now: Date): Promise<{ detail: SchoolEventDetail; outcome: InvitationOutcome }>;
   invite(id: string, invitation: NormalizedInvitation, officerId: string, now: Date): Promise<{ detail: SchoolEventDetail; outcome: InvitationOutcome }>;
   withdraw(id: string, invitationId: string, officerId: string, now: Date): Promise<SchoolEventDetail>;
   publish(id: string, officerId: string, now: Date): Promise<SchoolEventDetail>;
-  /** BR59: Pending invitations past their deadline become Expired. */
+  /** BR59: lời mời Pending quá hạn chuyển thành Expired. */
   expireInvitations(now: Date): Promise<number>;
 }
 
+// Ném lỗi validation cho trường sự kiện trường không hợp lệ
 function invalid(message: string, field: string): never {
   throw new DomainError(message, "validation", { field });
 }
 
+// Cắt khoảng trắng và kiểm tra độ dài trường văn bản của sự kiện trường
 function text(value: string | undefined, max: number, field: string): string | undefined {
   const trimmed = value?.trim();
   if (trimmed && trimmed.length > max) invalid(`${field} is too long`, field);
   return trimmed || undefined;
 }
 
-/** BR44: the semester that holds the whole event. */
+// BR44: tìm học kỳ chứa trọn sự kiện
+/** BR44: học kỳ chứa trọn sự kiện. */
 export function semesterOf(calendar: readonly AcademicSemester[], startAt: Date, endAt: Date): string {
   const found = calendar.find((semester) => semester.startAt <= startAt && endAt <= semester.endAt);
   if (!found) invalid("the event must start and end within one semester of the academic calendar", "startAt");
   return found.code;
 }
 
+// Tính hạn phản hồi lời mời mặc định trước ngày diễn ra sự kiện
 export function defaultInvitationDeadline(startAt: Date, now: Date): Date {
   const deadline = new Date(startAt.getTime() - INVITATION_DEADLINE_DAYS_BEFORE * DAY_MS);
   return deadline > now ? deadline : startAt;
 }
 
+// Chuẩn hoá danh sách CLB được mời và hạn phản hồi
 export function normalizedInvitation(input: { clubIds?: string[]; allActiveClubs?: boolean; deadline?: Date },
   startAt: Date, now: Date, requireClubs: boolean): NormalizedInvitation {
   const clubIds = [...new Set(input.clubIds ?? [])];
@@ -141,6 +146,7 @@ export function normalizedInvitation(input: { clubIds?: string[]; allActiveClubs
   return { clubIds, allActiveClubs: input.allActiveClubs === true, deadline };
 }
 
+// Kiểm tra và chuẩn hoá dữ liệu sự kiện do trường tổ chức
 export function normalizedSchoolEvent(input: SchoolEventInput, calendar: readonly AcademicSemester[], now: Date): NormalizedSchoolEvent {
   const title = text(input.title, 200, "title");
   if (!title) invalid("a title is required", "title");
@@ -158,7 +164,8 @@ export function normalizedSchoolEvent(input: SchoolEventInput, calendar: readonl
   };
 }
 
-/** A short code students type at the venue (UC31); ambiguous characters are left out. */
+// Sinh mã check-in ngắn cho sự kiện (UC31)
+/** Mã ngắn sinh viên nhập tại địa điểm (UC31); các ký tự dễ nhầm được loại bỏ. */
 export function checkInCode(random: () => number = Math.random): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from({ length: 6 }, () => alphabet[Math.floor(random() * alphabet.length)]).join("");
