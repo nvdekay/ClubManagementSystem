@@ -10,7 +10,12 @@ import { createHash, randomUUID } from "node:crypto";
 import mongoose, { Types } from "mongoose";
 import { DEFAULT_SCHEME_SETTINGS } from "../../domain/evaluation-scheme.js";
 import { scoreDimensions, totalOf } from "../../domain/evaluation.js";
-import type { FundingDecision, SponsoredItemAction } from "../../domain/sponsored-item.js";
+import {
+  initialPaymentChannel,
+  initialSponsoredItemStatus,
+  type FundingDecision,
+  type SponsoredItemAction,
+} from "../../domain/sponsored-item.js";
 import { loadConfig } from "../config/index.js";
 import { DEMO_CLUB_NAME, defenseCast, type CastMember, type CastRole } from "./seed-defense-cast.js";
 import { mongoClubPeriodicReportRepository } from "./mongo-club-periodic-report-repository.js";
@@ -161,10 +166,24 @@ async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: strin
   const [budget] = await m.eventBudgets!.create([{ eventId, clubId,
     lines: lines.map((line, index) => ({ category: line.category, requestedAmount: line.amount,
       approvedAmount: approved[index], fundingDecision: line.decision, ...(line.reason ? { reason: line.reason } : {}) })),
-    sponsoredItems: lines.map((line, index) => ({ id: randomUUID(), category: line.category,
-      requestedAmount: line.amount, approvedAmount: approved[index], fundingDecision: line.decision,
-      ...(line.reason ? { reason: line.reason } : {}), approvedAt: approvedAt.toISOString(),
-      eventEndAt: endAt.toISOString(), status: "Draft", amount: 0, description: "", images: [] })),
+    sponsoredItems: lines.map((line, index) => {
+      const paymentChannel = initialPaymentChannel(line.decision, approved[index]!);
+      return {
+        id: randomUUID(),
+        category: line.category,
+        requestedAmount: line.amount,
+        approvedAmount: approved[index],
+        fundingDecision: line.decision,
+        ...(paymentChannel ? { paymentChannel } : {}),
+        ...(line.reason ? { reason: line.reason } : {}),
+        approvedAt: approvedAt.toISOString(),
+        eventEndAt: endAt.toISOString(),
+        status: initialSponsoredItemStatus(line.decision),
+        amount: 0,
+        description: "",
+        images: [],
+      };
+    }),
     requestedTotal: decimal(lines.reduce((sum, line) => sum + line.amount, 0)),
     approvedTotal: decimal(approved.reduce((sum, value) => sum + value, 0)),
     approvedByDecisionId: new Types.ObjectId(), disbursedTotal: decimal(0), refundedTotal: decimal(0),
@@ -181,12 +200,13 @@ async function ensureFinance(clubId: Types.ObjectId, ids: Ids, periodCode: strin
     detail = await repo.act(budgetId, detail.items[index]!.id, detail.revision, String(byClub ? ids.leader : ids.officer),
       byClub ? String(clubId) : undefined, action, later(tick));
   }
-  // Đã thanh toán trước sự kiện (BEFORE_EVENT): trạng thái cuối mà demo trực tiếp đạt tới cho hạng mục còn lại.
+  // Đã giải ngân trước sự kiện (BEFORE_EVENT) và đối soát hóa đơn sau sự kiện.
+  await act(0, false, { kind: "recordAdvance" });
+  await act(0, true, { kind: "confirmAdvanceReceived" });
   await act(0, true, { kind: "save", amount: 4_000_000, description: "Thuê dàn âm thanh, ánh sáng hội trường Alpha trong 1 ngày" });
   await act(0, true, { kind: "image", image: image(0, "hoa-don-am-thanh-anh-sang.png", ids.leader) });
   await act(0, true, { kind: "submit" });
   await act(0, false, { kind: "review", validAmount: 4_000_000, reason: "Hóa đơn hợp lệ, khớp hạng mục đã duyệt." });
-  await act(0, true, { kind: "pay" });
   // Hạng mục AFTER_EVENT: ảnh hoá đơn đã thu thập, số tiền và việc nộp được thực hiện trực tiếp khi demo.
   await act(1, true, { kind: "image", image: image(1, "hoa-don-in-banner.png", ids.leader) });
   await act(1, true, { kind: "image", image: image(2, "hoa-don-in-standee.png", ids.leader) });

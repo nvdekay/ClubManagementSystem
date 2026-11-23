@@ -86,8 +86,8 @@ describe.skipIf(!uri)("Mongo event proposal review repository", () => {
         { category: "Hậu cần", requestedAmount: 3_000_000, approvedAmount: 3_000_000 }] });
     expect(await ucmsModels.eventBudgets!.countDocuments({ eventId: new Types.ObjectId(id) })).toBe(1);
     expect((await ucmsModels.eventBudgets!.findOne({ eventId: new Types.ObjectId(id) }).lean())?.sponsoredItems).toMatchObject([
-      { fundingDecision: "BEFORE_EVENT", approvedAmount: 2_000_000, status: "Draft", images: [], approvedAt: now.toISOString() },
-      { fundingDecision: "AFTER_EVENT", approvedAmount: 3_000_000, status: "Draft", images: [] },
+      { fundingDecision: "BEFORE_EVENT", paymentChannel: "VIA_OFFICER_ADVANCE", approvedAmount: 2_000_000, status: "AwaitingAdvance", images: [], approvedAt: now.toISOString() },
+      { fundingDecision: "AFTER_EVENT", paymentChannel: "VIA_OFFICER_REIMBURSE", approvedAmount: 3_000_000, status: "Draft", images: [] },
     ]);
     expect(await ucmsModels.notifications!.countDocuments({ recipientUserId: member, entityId: new Types.ObjectId(id) })).toBe(2);
     expect(await ucmsModels.auditLogs!.countDocuments({ entityId: new Types.ObjectId(id), action: "EVENT_PROPOSAL_APPROVED" })).toBe(1);

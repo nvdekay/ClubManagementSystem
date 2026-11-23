@@ -107,9 +107,20 @@ async function expense(
 describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
   it("submits an item without an advance, caps concurrent images and records one payment", async () => {
     const { budgetId } = await fixture(0);
-    const item: SponsoredItem = { id: "line-one", category: "Supplies", fundingDecision: "BEFORE_EVENT",
-      requestedAmount: 100, approvedAmount: 100, approvedAt: "2026-10-01T00:00:00Z", eventEndAt: now.toISOString(),
-      status: "Draft", amount: 80, description: "Invoice pack", images: [] };
+    const item: SponsoredItem = {
+      id: "line-one",
+      category: "Supplies",
+      fundingDecision: "AFTER_EVENT",
+      paymentChannel: "VIA_OFFICER_REIMBURSE",
+      requestedAmount: 100,
+      approvedAmount: 100,
+      approvedAt: "2026-10-01T00:00:00Z",
+      eventEndAt: now.toISOString(),
+      status: "Draft",
+      amount: 80,
+      description: "Invoice pack",
+      images: [],
+    };
     await m.eventBudgets!.updateOne({ _id: new Types.ObjectId(budgetId) }, { $set: { sponsoredItems: [item], state: "Approved" } });
     const repo = mongoSponsoredItemRepository();
     let detail = (await repo.find(budgetId, String(club)))!;
@@ -143,6 +154,122 @@ describe.skipIf(!uri)("Wave 4 Mongo accountability", () => {
     expect(Number(String(stored?.disbursedTotal))).toBe(80);
     expect(await m.auditLogs!.countDocuments({ entityId: new Types.ObjectId(budgetId), action: "SPONSORED_ITEM_PAY" })).toBe(1);
     expect(await m.notifications!.countDocuments({ eventCode: "SPONSORED_ITEM_SUBMITTED" })).toBeGreaterThan(0);
+  });
+  it("runs BEFORE_EVENT advance via officer and AFTER_EVENT >= 5M direct vendor payment end-to-end", async () => {
+    const { budgetId } = await fixture(0);
+    const items: SponsoredItem[] = [
+      {
+        id: "before-line",
+        category: "Printing",
+        fundingDecision: "BEFORE_EVENT",
+        paymentChannel: "VIA_OFFICER_ADVANCE",
+        requestedAmount: 2_000_000,
+        approvedAmount: 2_000_000,
+        approvedAt: "2026-10-01T00:00:00Z",
+        eventEndAt: now.toISOString(),
+        status: "AwaitingAdvance",
+        amount: 0,
+        description: "",
+        images: [],
+      },
+      {
+        id: "vendor-line",
+        category: "Sound System",
+        fundingDecision: "AFTER_EVENT",
+        paymentChannel: "DIRECT_VENDOR",
+        requestedAmount: 6_000_000,
+        approvedAmount: 6_000_000,
+        approvedAt: "2026-10-01T00:00:00Z",
+        eventEndAt: now.toISOString(),
+        status: "Draft",
+        amount: 0,
+        description: "",
+        images: [],
+      },
+    ];
+    await m.eventBudgets!.updateOne({ _id: new Types.ObjectId(budgetId) }, { $set: { sponsoredItems: items, state: "Approved" } });
+    const repo = mongoSponsoredItemRepository();
+    let detail = (await repo.find(budgetId))!;
+
+    // 1. BEFORE_EVENT: ICPDP sends advance without invoice, club confirms receipt -> disbursedTotal = 2M
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), undefined, { kind: "recordAdvance" }, now);
+    expect(detail.items[0]!.status).toBe("AdvanceSent");
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), String(club), { kind: "confirmAdvanceReceived" }, now);
+    expect(detail.items[0]!.status).toBe("Draft");
+    expect(Number(String((await m.eventBudgets!.findById(budgetId).lean())?.disbursedTotal))).toBe(2_000_000);
+
+    // Club submits post-event PDF invoice and ICPDP reconciles with variance
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), String(club), {
+      kind: "save",
+      amount: 1_800_000,
+      description: "Printing invoice",
+    }, now);
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), String(club), {
+      kind: "image",
+      image: {
+        id: "pdf-1",
+        assetId: "private-pdf-1",
+        digest: "digest-pdf-1",
+        fileName: "invoice.pdf",
+        mimeType: "application/pdf",
+        bytes: 2048,
+        uploadedAt: now.toISOString(),
+        uploadedBy: String(actor),
+      },
+    }, now);
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), String(club), { kind: "submit" }, now);
+    detail = await repo.act(budgetId, "before-line", detail.revision, String(actor), undefined, {
+      kind: "review",
+      validAmount: 1_800_000,
+      reason: "Valid 1.8M",
+    }, now);
+    expect(detail.items[0]).toMatchObject({ status: "Reconciled", payable: 1_800_000, reconciliationDelta: -200_000 });
+
+    // 2. AFTER_EVENT >= 5M: requires vendorBankInfo, only ICPDP confirms vendor paid
+    detail = await repo.act(budgetId, "vendor-line", detail.revision, String(actor), String(club), {
+      kind: "save",
+      amount: 5_500_000,
+      description: "Stage sound contract",
+      paymentChannel: "DIRECT_VENDOR",
+      vendorBankInfo: {
+        vendorName: "Alpha Audio JSC",
+        accountHolder: "ALPHA AUDIO JSC",
+        accountNumber: "19036888999",
+        bankName: "Techcombank",
+      },
+    }, now);
+    detail = await repo.act(budgetId, "vendor-line", detail.revision, String(actor), String(club), {
+      kind: "image",
+      image: {
+        id: "pdf-2",
+        assetId: "private-pdf-2",
+        digest: "digest-pdf-2",
+        fileName: "contract.pdf",
+        mimeType: "application/pdf",
+        bytes: 4096,
+        uploadedAt: now.toISOString(),
+        uploadedBy: String(actor),
+      },
+    }, now);
+    detail = await repo.act(budgetId, "vendor-line", detail.revision, String(actor), String(club), { kind: "submit" }, now);
+    detail = await repo.act(budgetId, "vendor-line", detail.revision, String(actor), undefined, {
+      kind: "review",
+      validAmount: 5_500_000,
+      reason: "Contract and bank details verified",
+    }, now);
+    expect(detail.items[1]).toMatchObject({ status: "Accepted", payable: 5_500_000 });
+
+    // Club cannot pay DIRECT_VENDOR
+    await expect(repo.act(budgetId, "vendor-line", detail.revision, String(actor), String(club), { kind: "pay" }, now))
+      .rejects.toMatchObject({ kind: "conflict" });
+
+    // ICPDP confirms school paid vendor -> budget closes with disbursedTotal = 2M + 5.5M = 7.5M
+    detail = await repo.act(budgetId, "vendor-line", detail.revision, String(actor), undefined, { kind: "confirmVendorPaid" }, now);
+    expect(detail.items[1]).toMatchObject({ status: "Paid", paidBy: String(actor) });
+    const closed = await m.eventBudgets!.findById(budgetId).lean();
+    expect(closed?.state).toBe("Closed");
+    expect(Number(String(closed?.disbursedTotal))).toBe(7_500_000);
+    expect(Number(String(closed?.acceptedTotal))).toBe(7_300_000);
   });
   beforeAll(async () => {
     await mongoose.connect(uri ?? "", {

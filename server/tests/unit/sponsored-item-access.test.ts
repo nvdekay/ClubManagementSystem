@@ -23,12 +23,22 @@ describe("private invoice access", () => {
     expect(find).not.toHaveBeenCalled();
     expect(sign).not.toHaveBeenCalled();
   });
-  it("binds the signed asset to the requested item and image", async () => {
+  it("binds the signed asset to the requested item and image for both preview and download", async () => {
     const { deps, sign } = fixture();
     await expect(invoiceImageUrl(deps, actor, id, undefined, "other", "image", new Date())).rejects.toMatchObject({ kind: "not_found" });
     expect(sign).not.toHaveBeenCalled();
-    await expect(invoiceImageUrl(deps, actor, id, undefined, "item", "image", new Date())).resolves.toEqual({ url: "https://storage.example/signed" });
+    await expect(invoiceImageUrl(deps, actor, id, undefined, "item", "image", new Date())).resolves.toEqual({
+      url: "https://storage.example/signed",
+      fileName: "invoice.png",
+      mimeType: "image/png",
+    });
     expect(sign).toHaveBeenCalledWith("private", { inline: true });
+    await expect(invoiceImageUrl(deps, actor, id, undefined, "item", "image", new Date(), false)).resolves.toEqual({
+      url: "https://storage.example/signed",
+      fileName: "invoice.png",
+      mimeType: "image/png",
+    });
+    expect(sign).toHaveBeenCalledWith("private", { inline: false });
   });
   it("denies a locked officer and a user without the officer role", async () => {
     const { deps, sign } = fixture();

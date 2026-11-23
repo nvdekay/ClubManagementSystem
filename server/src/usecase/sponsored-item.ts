@@ -55,12 +55,12 @@ export async function uploadInvoiceImage(deps: SponsoredItemDeps, actor: AccessA
   } }, now);
 }
 
-// Cấp URL tạm để xem ảnh hóa đơn của hạng mục
+// Cấp URL tạm để xem hoặc tải xuống tệp chứng từ của hạng mục
 export async function invoiceImageUrl(deps: SponsoredItemDeps, actor: AccessActor | null,
-  id: string, clubId: string | undefined, itemId: string, imageId: string, now: Date) {
+  id: string, clubId: string | undefined, itemId: string, imageId: string, now: Date, inline = true) {
   const budget = await getSponsoredBudget(deps, actor, id, clubId, now);
   const image = budget.items.find((item) => item.id === itemId)?.images.find((file) => file.id === imageId);
   if (!image) throw new DomainError("invoice image not found", "not_found");
   if (!deps.files) throw new DomainError("file storage unavailable", "unavailable");
-  return { url: await deps.files.accessUrl(image.assetId, { inline: true }) };
+  return { url: await deps.files.accessUrl(image.assetId, { inline }), fileName: image.fileName, mimeType: image.mimeType };
 }

@@ -18,6 +18,7 @@ import {
   type RequestedBudgetLine,
 } from "../../domain/event-proposal-review.js";
 import { notificationChannels } from "../../domain/notification.js";
+import { initialPaymentChannel, initialSponsoredItemStatus } from "../../domain/sponsored-item.js";
 import { cancelEventInSession } from "./event-cancellation.js";
 import { releaseFacilityBookingsInSession } from "./mongo-facility-booking-repository.js";
 import { ucmsModels as m } from "./ucms-models.js";
@@ -231,9 +232,20 @@ export async function applyProposalDecisionInSession(
     ? approvedBudget(requestedLines(version.budgetLines), input.budgetLines)
     : [];
   const sponsoredItems = lines.length && lines.every((line) => line.fundingDecision)
-    ? lines.map((line) => ({ ...line, id: randomUUID(), approvedAt: now.toISOString(),
-      eventEndAt: (event.endAt as Date).toISOString(), status: "Draft", amount: 0,
-      description: "", images: [] })) : undefined;
+    ? lines.map((line) => {
+      const paymentChannel = initialPaymentChannel(line.fundingDecision!, line.approvedAmount);
+      return {
+        ...line,
+        ...(paymentChannel ? { paymentChannel } : {}),
+        id: randomUUID(),
+        approvedAt: now.toISOString(),
+        eventEndAt: (event.endAt as Date).toISOString(),
+        status: initialSponsoredItemStatus(line.fundingDecision!),
+        amount: 0,
+        description: "",
+        images: [],
+      };
+    }) : undefined;
 
   const decisionId = new Types.ObjectId();
   await decisions.create([{

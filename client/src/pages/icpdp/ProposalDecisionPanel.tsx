@@ -19,7 +19,7 @@ import {
   type EventReviewSection,
 } from "@/services/eventProposalReviews";
 import { cn } from "@/utils/cn";
-import type { FundingDecision } from "@/services/sponsoredItems";
+import { DIRECT_VENDOR_THRESHOLD_VND, type FundingDecision } from "@/services/sponsoredItems";
 
 // Dùng thông báo phù hợp với thao tác nếu API chỉ trả về lỗi chung.
 function resolveDecisionError(error: Error | null | undefined, fallback: string): string {
@@ -292,6 +292,14 @@ export function ProposalDecisionPanel({ detail, csrfToken, postDefense = false, 
                     </select>
                     <AppFieldError message={field.error(`funding${index}`)} />
                   </label>
+                  {funding[index] === "BEFORE_EVENT" && (
+                    <p className="mb-2 text-xs text-muted-app">{t("sponsoredItems.decisionHintBefore")}</p>
+                  )}
+                  {funding[index] === "AFTER_EVENT" && (
+                    <p className="mb-2 text-xs text-muted-app">
+                      {t(line.amount >= DIRECT_VENDOR_THRESHOLD_VND ? "sponsoredItems.decisionHintAfterDirect" : "sponsoredItems.decisionHintAfterFlexible")}
+                    </p>
+                  )}
                   <label className="block text-sm font-medium text-text-app">
                     <span className="flex flex-wrap justify-between gap-2">
                       <span className="font-medium break-words">{line.category}</span>

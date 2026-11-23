@@ -1,131 +1,788 @@
 import { useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { AppButton } from "@/components/ui/button/AppButton";
+import { AppIcon } from "@/components/ui/icon/AppIcon";
+import { AppInput } from "@/components/ui/input/AppInput";
 import { AppMoneyInput } from "@/components/ui/money-input/AppMoneyInput";
-import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
+import { AppNotice } from "@/components/ui/notice/AppNotice";
 import { AppSkeleton } from "@/components/ui/skeleton/AppSkeleton";
+import { AppTextarea } from "@/components/ui/textarea/AppTextarea";
 import { useConfirm } from "@/hooks/useConfirm";
-import { useInvoiceImage, useSponsoredItemAction, useSponsoredItems } from "@/hooks/useSponsoredItems";
-import type { ItemAction, SponsoredItem, SponsoredBudget } from "@/services/sponsoredItems";
+import {
+  useDownloadInvoiceFile,
+  useInvoiceImage,
+  useSponsoredItemAction,
+  useSponsoredItems,
+} from "@/hooks/useSponsoredItems";
+import {
+  DIRECT_VENDOR_THRESHOLD_VND,
+  MAX_INVOICE_IMAGE_BYTES,
+  MAX_INVOICE_PDF_BYTES,
+  resolvePaymentChannel,
+  type InvoiceImage,
+  type ItemAction,
+  type SponsoredBudget,
+  type SponsoredItem,
+  type VendorBankInfo,
+} from "@/services/sponsoredItems";
+import { cn } from "@/utils/cn";
 
-// Xem trước ảnh hoá đơn của một mục tài trợ
-function InvoicePreview({ budgetId, clubId, itemId, imageId, name }: {
-  budgetId: string; clubId?: string; itemId: string; imageId: string; name: string;
-}) {
-  const { t } = useTranslation();
-  const image = useInvoiceImage(budgetId, clubId, itemId, imageId);
-  if (image.isPending) return <AppSkeleton className="h-28 w-full" />;
-  if (image.isError) return <p role="alert" className="text-sm text-danger-app">{t("sponsoredItems.imageError")}</p>;
-  return <a href={image.data?.url} target="_blank" rel="noreferrer" className="block rounded-lg border border-border-app p-2">
-    <img src={image.data?.url} alt={name} className="h-28 w-full object-contain" />
-    <span className="mt-1 block break-words text-xs text-primary-app">{t("sponsoredItems.view")}: {name}</span>
-  </a>;
+const EMPTY_VENDOR: VendorBankInfo = {
+  vendorName: "",
+  accountHolder: "",
+  accountNumber: "",
+  bankName: "",
+  bankBranch: "",
+  transferNote: "",
+};
+
+// Kích hoạt tải xuống tệp từ URL có chữ ký (attachment=true)
+function triggerUrlDownload(url: string, fileName: string): void {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.rel = "noopener noreferrer";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
-// Thẻ một mục hoá đơn tài trợ: sửa, tải ảnh, nộp và duyệt
-function ItemCard({ budget, item, clubId, csrfToken }: { budget: SponsoredBudget; item: SponsoredItem; clubId?: string; csrfToken: string }) {
+// Kiểm tra tệp chứng từ tải lên có hợp lệ về định dạng và dung lượng
+function isAllowedAttachment(file: File): boolean {
+  if (file.type === "application/pdf") return file.size > 0 && file.size <= MAX_INVOICE_PDF_BYTES;
+  if (file.type === "image/jpeg" || file.type === "image/png") return file.size > 0 && file.size <= MAX_INVOICE_IMAGE_BYTES;
+  return false;
+}
+
+// So sánh hai bản ghi thông tin chuyển khoản nhà cung cấp
+function sameVendorInfo(a: VendorBankInfo | undefined, b: VendorBankInfo): boolean {
+  return (a?.vendorName ?? "") === b.vendorName.trim()
+    && (a?.accountHolder ?? "") === b.accountHolder.trim()
+    && (a?.accountNumber ?? "") === b.accountNumber.trim()
+    && (a?.bankName ?? "") === b.bankName.trim()
+    && (a?.bankBranch ?? "") === (b.bankBranch?.trim() ?? "")
+    && (a?.transferNote ?? "") === (b.transferNote?.trim() ?? "");
+}
+
+// Kiểm tra thông tin chuyển khoản nhà cung cấp đã đủ các trường bắt buộc
+function isVendorInfoComplete(info: VendorBankInfo | undefined): boolean {
+  if (!info) return false;
+  return Boolean(
+    info.vendorName.trim()
+    && info.accountHolder.trim()
+    && info.accountNumber.trim()
+    && info.bankName.trim(),
+  );
+}
+
+// Xem trước và tải xuống một tệp chứng từ (ảnh JPG/PNG hoặc PDF)
+function AttachmentCard({
+  budgetId,
+  clubId,
+  itemId,
+  file,
+  editable,
+  busy,
+  onRemove,
+}: {
+  budgetId: string;
+  clubId?: string;
+  itemId: string;
+  file: InvoiceImage;
+  editable: boolean;
+  busy: boolean;
+  onRemove: () => void;
+}) {
+  const { t } = useTranslation();
+  const preview = useInvoiceImage(budgetId, clubId, itemId, file.id);
+  const download = useDownloadInvoiceFile(budgetId, clubId);
+  const isPdf = file.mimeType === "application/pdf";
+
+  async function saveToDisk() {
+    try {
+      const result = await download.mutateAsync({ itemId, imageId: file.id });
+      triggerUrlDownload(result.url, result.fileName ?? file.fileName);
+    } catch {
+      /* Lỗi tải xuống được hiển thị bên dưới thẻ tệp. */
+    }
+  }
+
+  return (
+    <div className="flex flex-col justify-between rounded-lg border border-border-app bg-surface-app/40 p-2.5">
+      <div>
+        {preview.isPending ? (
+          <AppSkeleton className="h-28 w-full" />
+        ) : preview.isError ? (
+          <p role="alert" className="text-sm text-danger-app">{t("sponsoredItems.imageError")}</p>
+        ) : isPdf ? (
+          <a
+            href={preview.data?.url}
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-28 flex-col items-center justify-center gap-2 rounded-md border border-border-app bg-bg-app p-3 text-center hover:bg-surface-app"
+          >
+            <AppIcon name="file" className="size-8 text-primary-app" />
+            <span className="text-xs font-medium text-muted-app">{t("sponsoredItems.pdfFile")}</span>
+          </a>
+        ) : (
+          <a href={preview.data?.url} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md bg-bg-app">
+            <img src={preview.data?.url} alt={file.fileName} className="h-28 w-full object-contain" />
+          </a>
+        )}
+        <p className="mt-2 break-words text-xs font-medium text-text-app">{file.fileName}</p>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {preview.data?.url && (
+          <a
+            href={preview.data.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-border-app bg-bg-app px-2.5 text-xs font-medium text-primary-app hover:bg-surface-app"
+          >
+            <AppIcon name="external" className="size-3.5" />
+            {t("sponsoredItems.view")}
+          </a>
+        )}
+        <AppButton
+          type="button"
+          variant="secondary"
+          disabled={download.isPending}
+          onClick={() => void saveToDisk()}
+          className="min-h-8 px-2.5 text-xs"
+        >
+          <AppIcon name="download" className="size-3.5" />
+          {download.isPending ? t("sponsoredItems.downloading") : t("sponsoredItems.download")}
+        </AppButton>
+        {editable && (
+          <AppButton
+            type="button"
+            variant="ghost"
+            disabled={busy}
+            onClick={onRemove}
+            className="min-h-8 px-2 text-xs"
+          >
+            {t("sponsoredItems.remove")}
+          </AppButton>
+        )}
+      </div>
+      {download.isError && <p role="alert" className="mt-1.5 text-xs text-danger-app">{t("sponsoredItems.downloadError")}</p>}
+    </div>
+  );
+}
+
+// Thẻ một hạng mục tài trợ: tạm ứng trước sự kiện, chọn kênh sau sự kiện, thông tin NCC, chứng từ và duyệt
+function ItemCard({
+  budget,
+  item,
+  clubId,
+  csrfToken,
+}: {
+  budget: SponsoredBudget;
+  item: SponsoredItem;
+  clubId?: string;
+  csrfToken: string;
+}) {
   const { t, i18n } = useTranslation();
   const confirm = useConfirm();
   const mutation = useSponsoredItemAction(budget.id, clubId, csrfToken);
+  const downloadFile = useDownloadInvoiceFile(budget.id, clubId);
+
+  const resolvedChannel = resolvePaymentChannel(item);
+  const [selectedChannel, setSelectedChannel] = useState<"VIA_OFFICER_REIMBURSE" | "DIRECT_VENDOR">(
+    resolvedChannel === "DIRECT_VENDOR" ? "DIRECT_VENDOR" : "VIA_OFFICER_REIMBURSE",
+  );
   const [amount, setAmount] = useState(String(item.amount));
   const [description, setDescription] = useState(item.description);
+  const [vendor, setVendor] = useState<VendorBankInfo>(() => ({
+    ...EMPTY_VENDOR,
+    ...(item.vendorBankInfo ?? {}),
+  }));
   const [valid, setValid] = useState(String(item.amount));
   const [reason, setReason] = useState("");
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const [error, setError] = useState("");
-  const deadline = new Date(new Date(item.eventEndAt).getTime() + 14 * 86400000);
+
+  const isClub = Boolean(clubId);
+  const isOfficer = !isClub;
+  const deadline = new Date(new Date(item.eventEndAt).getTime() + 14 * 86_400_000);
   const now = new Date();
   const active = ["Approved", "Upcoming", "Ongoing", "Completed", "Report Submitted", "Closed"].includes(budget.eventState);
-  const editable = Boolean(clubId) && active && ["Draft", "Returned"].includes(item.status) && now <= deadline;
+  const isBeforeEvent = item.fundingDecision === "BEFORE_EVENT";
+  const isAfterEvent = item.fundingDecision === "AFTER_EVENT";
+  const isNotSponsored = item.fundingDecision === "NOT_SPONSORED";
+  const requiresDirectVendor = isAfterEvent && item.approvedAmount >= DIRECT_VENDOR_THRESHOLD_VND;
+  const activeChannel = isBeforeEvent
+    ? "VIA_OFFICER_ADVANCE"
+    : isAfterEvent
+      ? (requiresDirectVendor ? "DIRECT_VENDOR" : selectedChannel)
+      : undefined;
+  const usesDirectVendor = activeChannel === "DIRECT_VENDOR";
+
+  const editable = isClub && active && ["Draft", "Returned"].includes(item.status) && now <= deadline;
   const expired = ["Draft", "Returned"].includes(item.status) && now > deadline;
-  const canSubmit = editable && item.fundingDecision !== "NOT_SPONSORED" && item.images.length > 0 && item.amount > 0
-    && (item.fundingDecision === "BEFORE_EVENT" || now >= new Date(item.eventEndAt));
-  const dirty = Number(amount) !== item.amount || description !== item.description;
-  // Định dạng số tiền VND theo ngôn ngữ hiện tại
-  function money(value: number) { return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value); }
-  // Gửi thao tác lên mục tài trợ và báo lỗi nếu thất bại
+  const showInvoiceSection = !isNotSponsored && (!isBeforeEvent || Boolean(item.advanceReceivedAt) || !["AwaitingAdvance", "AdvanceSent"].includes(item.status));
+
+  const vendorReady = !usesDirectVendor || isVendorInfoComplete(item.vendorBankInfo);
+  const canSubmit = editable
+    && !isNotSponsored
+    && (!isBeforeEvent || Boolean(item.advanceReceivedAt))
+    && now >= new Date(item.eventEndAt)
+    && item.images.length > 0
+    && item.amount > 0
+    && vendorReady;
+
+  const channelDirty = isAfterEvent && !requiresDirectVendor && selectedChannel !== (resolvedChannel ?? "VIA_OFFICER_REIMBURSE");
+  const vendorDirty = usesDirectVendor && !sameVendorInfo(item.vendorBankInfo, vendor);
+  const dirty = Number(amount) !== item.amount || description !== item.description || channelDirty || vendorDirty;
+
+  function money(value: number) {
+    return new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
+  }
+
+  function formatDateTime(value: string) {
+    return new Date(value).toLocaleString(i18n.language);
+  }
+
   async function act(action: ItemAction) {
     setError("");
-    try { await mutation.mutateAsync({ itemId: item.id, revision: budget.revision, action }); }
-    catch { setError(t("sponsoredItems.error")); }
+    try {
+      await mutation.mutateAsync({ itemId: item.id, revision: budget.revision, action });
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t("sponsoredItems.error"));
+    }
   }
-  // Kiểm tra số lượng, loại và dung lượng rồi tải ảnh hoá đơn lên
+
+  async function saveDraft() {
+    if (usesDirectVendor && !isVendorInfoComplete(vendor)) {
+      setError(t("sponsoredItems.vendorRequiredError"));
+      return;
+    }
+    const vendorPayload: VendorBankInfo | undefined = usesDirectVendor
+      ? {
+          vendorName: vendor.vendorName.trim(),
+          accountHolder: vendor.accountHolder.trim(),
+          accountNumber: vendor.accountNumber.trim(),
+          bankName: vendor.bankName.trim(),
+          ...(vendor.bankBranch?.trim() ? { bankBranch: vendor.bankBranch.trim() } : {}),
+          ...(vendor.transferNote?.trim() ? { transferNote: vendor.transferNote.trim() } : {}),
+        }
+      : undefined;
+    await act({
+      kind: "save",
+      amount: Number(amount),
+      description,
+      ...(isAfterEvent ? { paymentChannel: requiresDirectVendor ? "DIRECT_VENDOR" : selectedChannel } : {}),
+      ...(vendorPayload ? { vendorBankInfo: vendorPayload } : {}),
+    });
+  }
+
   async function upload(files: File[]) {
     if (!editable || mutation.isPending) return;
     setError("");
-    if (!files.length || item.images.length + files.length > 5
-      || files.some((file) => !["image/jpeg", "image/png"].includes(file.type) || file.size > 5 * 1024 * 1024)) {
-      setError(t("sponsoredItems.invalidImages")); return;
+    if (!files.length || item.images.length + files.length > 5 || files.some((file) => !isAllowedAttachment(file))) {
+      setError(t("sponsoredItems.invalidImages"));
+      return;
     }
     setProgress({ done: 0, total: files.length });
-    try { await mutation.mutateAsync({ itemId: item.id, revision: budget.revision, files,
-      onProgress: (done) => setProgress({ done, total: files.length }) }); }
-    catch { setError(t("sponsoredItems.error")); }
+    try {
+      await mutation.mutateAsync({
+        itemId: item.id,
+        revision: budget.revision,
+        files,
+        onProgress: (done) => setProgress({ done, total: files.length }),
+      });
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t("sponsoredItems.error"));
+    } finally {
+      setProgress({ done: 0, total: 0 });
+    }
   }
-  return <article className="rounded-xl border border-border-app bg-bg-app p-4 sm:p-5">
-    <header className="flex flex-wrap items-start justify-between gap-3">
-      <div><h4 className="font-semibold text-text-app">{item.category}</h4><p className="mt-1 text-sm text-primary-app">{t(`sponsoredItems.${item.fundingDecision}`)}</p></div>
-      <span className="rounded-full bg-primary-app/10 px-3 py-1 text-sm text-primary-app">{t(`sponsoredItems.${expired ? "Expired" : item.status}`)}</span>
-    </header>
-    <p className="mt-3 text-sm">{t("sponsoredItems.cap")}: <strong>{money(item.approvedAmount)}</strong></p>
-    {item.reason && <p className="mt-1 text-sm text-muted-app">{item.reason}</p>}
-    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-app">
-      <p>{t("sponsoredItems.opens")}: {new Date(item.fundingDecision === "AFTER_EVENT" ? item.eventEndAt : item.approvedAt).toLocaleString(i18n.language)}</p>
-      <p>{t("sponsoredItems.deadline")}: {deadline.toLocaleString(i18n.language)}</p>
-    </div>
-    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-      <label className="text-sm">{t("sponsoredItems.amount")}<AppMoneyInput value={amount} onValueChange={setAmount} disabled={!editable || mutation.isPending} className="mt-1 w-full" /></label>
-      <label className="text-sm">{t("sponsoredItems.description")}<AppTextarea value={description} onChange={(event) => setDescription(event.target.value)} disabled={!editable || mutation.isPending} maxLength={2000} className="mt-1 w-full" /></label>
-    </div>
-    {editable && <AppButton className="mt-3" disabled={mutation.isPending || !dirty || Number(amount) <= 0} onClick={() => void act({ kind: "save", amount: Number(amount), description })}>{t("sponsoredItems.save")}</AppButton>}
-    <div className="mt-5 rounded-xl border border-dashed border-border-app p-4" onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => { event.preventDefault(); void upload(Array.from(event.dataTransfer.files)); }}>
-      <p className="text-sm font-medium">{t("sponsoredItems.images")} · {item.images.length}/5</p>
-      <p className="mt-1 text-xs text-muted-app">{t("sponsoredItems.imageHint")}</p>
-      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        {item.images.map((image) => <div key={image.id}><InvoicePreview budgetId={budget.id} clubId={clubId} itemId={item.id} imageId={image.id} name={image.fileName} />
-          {editable && <AppButton variant="ghost" disabled={mutation.isPending} onClick={() => void act({ kind: "removeImage", imageId: image.id })}>{t("sponsoredItems.remove")}</AppButton>}
-        </div>)}
-      </div>
-      {editable && item.images.length < 5 && <label className="relative mt-3 inline-flex min-h-10 items-center rounded-lg border border-border-app bg-surface-app px-4 text-sm font-medium text-primary-app hover:bg-surface-strong-app focus-within:outline-2 focus-within:outline-ring-app">
-        {t("sponsoredItems.upload")}<input type="file" accept="image/jpeg,image/png" multiple disabled={mutation.isPending}
-          className="sr-only" onChange={(event) => { void upload(Array.from(event.target.files ?? [])); event.target.value = ""; }} /></label>}
-      {progress.total > 0 && <p role="status" className="mt-2 text-sm text-muted-app">{t("sponsoredItems.progress", progress)}</p>}
-    </div>
-    {clubId && <AppButton className="mt-4" disabled={!canSubmit || dirty || mutation.isPending}
-      onClick={async () => { if (await confirm(t("sponsoredItems.submitConfirm"))) await act({ kind: "submit" }); }}>{t("sponsoredItems.submit")}</AppButton>}
-    {item.reviewReason && <p className="mt-4 whitespace-pre-wrap text-sm">{item.reviewReason}</p>}
-    {item.payable !== undefined && <p className="mt-3 font-semibold">{t("sponsoredItems.payable")}: {money(item.payable)}</p>}
-    {!clubId && active && item.status === "Submitted" && <div className="mt-4 space-y-3">
-      <label className="block text-sm">{t("sponsoredItems.valid")}<AppMoneyInput value={valid} onValueChange={setValid} className="mt-1 w-full" /></label>
-      <label className="block text-sm">{t("sponsoredItems.reason")}<AppTextarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={2000} className="mt-1 w-full" /></label>
-      <div className="flex flex-wrap gap-2"><AppButton disabled={mutation.isPending || !reason.trim()} onClick={() => void act({ kind: "review", validAmount: Number(valid), reason })}>{t("sponsoredItems.review")}</AppButton>
-        <AppButton variant="ghost" disabled={mutation.isPending || !reason.trim() || now >= deadline} onClick={() => void act({ kind: "return", reason })}>{t("sponsoredItems.return")}</AppButton></div>
-    </div>}
-    {clubId && active && item.status === "Accepted" && <AppButton className="mt-4" disabled={mutation.isPending}
-      onClick={async () => { if (await confirm(t("sponsoredItems.payConfirm", { amount: money(item.payable!) }))) await act({ kind: "pay" }); }}>{t("sponsoredItems.pay")}</AppButton>}
-    {!active && <p className="mt-3 text-sm text-warning-app">{t("sponsoredItems.paused")}</p>}
-    {error && <p role="alert" className="mt-3 text-sm text-danger-app">{error}</p>}
-  </article>;
+
+  async function downloadAllFiles() {
+    if (downloadingAll || !item.images.length) return;
+    setError("");
+    setDownloadingAll(true);
+    try {
+      for (const file of item.images) {
+        const result = await downloadFile.mutateAsync({ itemId: item.id, imageId: file.id });
+        triggerUrlDownload(result.url, result.fileName ?? file.fileName);
+      }
+    } catch {
+      setError(t("sponsoredItems.downloadError"));
+    } finally {
+      setDownloadingAll(false);
+    }
+  }
+
+  return (
+    <article className="rounded-xl border border-border-app bg-bg-app p-4 sm:p-5">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h4 className="font-semibold text-text-app break-words">{item.category}</h4>
+          <p className="mt-1 text-sm text-primary-app">{t(`sponsoredItems.${item.fundingDecision}`)}</p>
+          {activeChannel && (
+            <p className="mt-0.5 text-xs text-muted-app">{t(`sponsoredItems.channel_${activeChannel}`)}</p>
+          )}
+        </div>
+        <span className="rounded-full bg-primary-app/10 px-3 py-1 text-sm font-medium text-primary-app">
+          {t(`sponsoredItems.${expired ? "Expired" : item.status}`)}
+        </span>
+      </header>
+
+      <p className="mt-3 text-sm">
+        {t("sponsoredItems.cap")}: <strong className="tabular-nums">{money(item.approvedAmount)}</strong>
+      </p>
+      {item.reason && <p className="mt-1 text-sm text-muted-app">{item.reason}</p>}
+
+      {!isNotSponsored && (
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-app">
+          <p>{t("sponsoredItems.opens")}: {formatDateTime(item.eventEndAt)}</p>
+          <p>{t("sponsoredItems.deadline")}: {deadline.toLocaleString(i18n.language)}</p>
+        </div>
+      )}
+
+      {/* Giai đoạn tạm ứng trước sự kiện cho BEFORE_EVENT (không cần hóa đơn trước) */}
+      {isBeforeEvent && item.status === "AwaitingAdvance" && (
+        <div className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app p-4">
+          <p className="text-sm text-text-app">{t("sponsoredItems.advancePendingOfficer")}</p>
+          {isOfficer && active && (
+            <AppButton
+              type="button"
+              disabled={mutation.isPending}
+              onClick={async () => {
+                if (await confirm(t("sponsoredItems.recordAdvanceConfirm", { amount: money(item.approvedAmount) }))) {
+                  await act({ kind: "recordAdvance" });
+                }
+              }}
+            >
+              {t("sponsoredItems.recordAdvance")}
+            </AppButton>
+          )}
+        </div>
+      )}
+
+      {isBeforeEvent && item.status === "AdvanceSent" && (
+        <div className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app p-4">
+          <p className="text-sm text-text-app">
+            {t(isClub ? "sponsoredItems.advanceSentNotice" : "sponsoredItems.advanceSentWaitingClub", {
+              amount: money(item.advanceAmount ?? item.approvedAmount),
+              date: item.advancedAt ? formatDateTime(item.advancedAt) : "",
+            })}
+          </p>
+          {isClub && active && (
+            <AppButton
+              type="button"
+              disabled={mutation.isPending}
+              onClick={async () => {
+                if (await confirm(t("sponsoredItems.confirmAdvanceReceivedConfirm", { amount: money(item.advanceAmount ?? item.approvedAmount) }))) {
+                  await act({ kind: "confirmAdvanceReceived" });
+                }
+              }}
+            >
+              {t("sponsoredItems.confirmAdvanceReceived")}
+            </AppButton>
+          )}
+        </div>
+      )}
+
+      {isBeforeEvent && item.advanceReceivedAt && (
+        <div className="mt-4">
+          <AppNotice>
+            {t("sponsoredItems.advanceReceivedSummary", {
+              amount: money(item.advanceAmount ?? item.approvedAmount),
+              date: formatDateTime(item.advanceReceivedAt),
+            })}
+          </AppNotice>
+        </div>
+      )}
+
+      {/* Quy định bắt buộc cho khoản trả sau từ 5 triệu trở lên */}
+      {requiresDirectVendor && (
+        <div className="mt-4">
+          <AppNotice tone="warning">{t("sponsoredItems.thresholdRequiredNotice")}</AppNotice>
+        </div>
+      )}
+
+      {/* Lựa chọn hình thức giải ngân cho khoản trả sau dưới 5 triệu */}
+      {isAfterEvent && !requiresDirectVendor && (
+        <fieldset className="mt-4 rounded-xl border border-border-app bg-surface-app/60 p-3.5">
+          <legend className="px-1 text-xs font-semibold text-text-app">{t("sponsoredItems.channelSelectLabel")}</legend>
+          <div className="mt-2 space-y-2 text-sm">
+            {(["VIA_OFFICER_REIMBURSE", "DIRECT_VENDOR"] as const).map((option) => (
+              <label
+                key={option}
+                className={cn("flex items-start gap-2.5 rounded-lg p-2", {
+                  "bg-bg-app": activeChannel === option,
+                  "opacity-75": !editable,
+                })}
+              >
+                <input
+                  type="radio"
+                  name={`channel-${item.id}`}
+                  value={option}
+                  checked={selectedChannel === option}
+                  disabled={!editable || mutation.isPending}
+                  onChange={() => setSelectedChannel(option)}
+                  className="mt-0.5 size-4 accent-primary-app"
+                />
+                <span className="text-text-app">
+                  {t(option === "VIA_OFFICER_REIMBURSE" ? "sponsoredItems.channelSelfPaidOption" : "sponsoredItems.channelDirectVendorOption")}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
+      {/* Khu vực chi phí, thông tin chuyển khoản nhà cung cấp và tệp chứng từ */}
+      {showInvoiceSection && (
+        <>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-medium text-text-app">
+              {t("sponsoredItems.amount")}
+              <AppMoneyInput
+                value={amount}
+                onValueChange={setAmount}
+                disabled={!editable || mutation.isPending}
+                className="mt-1 w-full font-normal"
+              />
+            </label>
+            <label className="text-sm font-medium text-text-app">
+              {t("sponsoredItems.description")}
+              <AppTextarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                disabled={!editable || mutation.isPending}
+                maxLength={2000}
+                className="mt-1 w-full font-normal"
+              />
+            </label>
+          </div>
+
+          {usesDirectVendor && (
+            <section className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app/50 p-4">
+              <div>
+                <h5 className="text-sm font-semibold text-text-app">{t("sponsoredItems.vendorSectionTitle")}</h5>
+                <p className="mt-0.5 text-xs text-muted-app">{t("sponsoredItems.vendorSectionHint")}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm text-text-app">
+                  {t("sponsoredItems.vendorName")}
+                  <AppInput
+                    value={vendor.vendorName}
+                    maxLength={200}
+                    disabled={!editable || mutation.isPending}
+                    onChange={(event) => setVendor((prev) => ({ ...prev, vendorName: event.target.value }))}
+                    className="mt-1 w-full"
+                  />
+                </label>
+                <label className="text-sm text-text-app">
+                  {t("sponsoredItems.accountHolder")}
+                  <AppInput
+                    value={vendor.accountHolder}
+                    maxLength={200}
+                    disabled={!editable || mutation.isPending}
+                    onChange={(event) => setVendor((prev) => ({ ...prev, accountHolder: event.target.value }))}
+                    className="mt-1 w-full"
+                  />
+                </label>
+                <label className="text-sm text-text-app">
+                  {t("sponsoredItems.accountNumber")}
+                  <AppInput
+                    value={vendor.accountNumber}
+                    maxLength={50}
+                    disabled={!editable || mutation.isPending}
+                    onChange={(event) => setVendor((prev) => ({ ...prev, accountNumber: event.target.value }))}
+                    className="mt-1 w-full tabular-nums"
+                  />
+                </label>
+                <label className="text-sm text-text-app">
+                  {t("sponsoredItems.bankName")}
+                  <AppInput
+                    value={vendor.bankName}
+                    maxLength={200}
+                    disabled={!editable || mutation.isPending}
+                    onChange={(event) => setVendor((prev) => ({ ...prev, bankName: event.target.value }))}
+                    className="mt-1 w-full"
+                  />
+                </label>
+                <label className="text-sm text-text-app">
+                  {t("sponsoredItems.bankBranch")}
+                  <AppInput
+                    value={vendor.bankBranch ?? ""}
+                    maxLength={200}
+                    disabled={!editable || mutation.isPending}
+                    onChange={(event) => setVendor((prev) => ({ ...prev, bankBranch: event.target.value }))}
+                    className="mt-1 w-full"
+                  />
+                </label>
+                <label className="text-sm text-text-app">
+                  {t("sponsoredItems.transferNote")}
+                  <AppInput
+                    value={vendor.transferNote ?? ""}
+                    maxLength={500}
+                    disabled={!editable || mutation.isPending}
+                    onChange={(event) => setVendor((prev) => ({ ...prev, transferNote: event.target.value }))}
+                    className="mt-1 w-full"
+                  />
+                </label>
+              </div>
+            </section>
+          )}
+
+          {editable && (
+            <AppButton
+              type="button"
+              className="mt-3"
+              disabled={mutation.isPending || !dirty || Number(amount) <= 0}
+              onClick={() => void saveDraft()}
+            >
+              {t("sponsoredItems.save")}
+            </AppButton>
+          )}
+
+          <div
+            className="mt-5 rounded-xl border border-dashed border-border-app p-4"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              void upload(Array.from(event.dataTransfer.files));
+            }}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium text-text-app">
+                  {t("sponsoredItems.images")} · {item.images.length}/5
+                </p>
+                <p className="mt-1 text-xs text-muted-app">{t("sponsoredItems.imageHint")}</p>
+              </div>
+              {isOfficer && item.images.length > 0 && (
+                <AppButton
+                  type="button"
+                  variant="secondary"
+                  disabled={downloadingAll}
+                  onClick={() => void downloadAllFiles()}
+                >
+                  <AppIcon name="download" className="size-4" />
+                  {downloadingAll ? t("sponsoredItems.downloading") : t("sponsoredItems.downloadAll")}
+                </AppButton>
+              )}
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+              {item.images.map((file) => (
+                <AttachmentCard
+                  key={file.id}
+                  budgetId={budget.id}
+                  clubId={clubId}
+                  itemId={item.id}
+                  file={file}
+                  editable={editable}
+                  busy={mutation.isPending}
+                  onRemove={() => void act({ kind: "removeImage", imageId: file.id })}
+                />
+              ))}
+            </div>
+            {editable && item.images.length < 5 && (
+              <label className="relative mt-3 inline-flex min-h-10 items-center rounded-lg border border-border-app bg-surface-app px-4 text-sm font-medium text-primary-app hover:bg-surface-strong-app focus-within:outline-2 focus-within:outline-ring-app">
+                {t("sponsoredItems.upload")}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  multiple
+                  disabled={mutation.isPending}
+                  className="sr-only"
+                  onChange={(event) => {
+                    void upload(Array.from(event.target.files ?? []));
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+            )}
+            {progress.total > 0 && (
+              <p role="status" className="mt-2 text-sm text-muted-app">
+                {t("sponsoredItems.progress", progress)}
+              </p>
+            )}
+          </div>
+
+          {isClub && (
+            <AppButton
+              type="button"
+              className="mt-4"
+              disabled={!canSubmit || dirty || mutation.isPending}
+              onClick={async () => {
+                if (await confirm(t("sponsoredItems.submitConfirm"))) await act({ kind: "submit" });
+              }}
+            >
+              {t("sponsoredItems.submit")}
+            </AppButton>
+          )}
+        </>
+      )}
+
+      {/* Kết quả đối soát của ICPDP */}
+      {item.reviewReason && <p className="mt-4 whitespace-pre-wrap text-sm text-text-app">{item.reviewReason}</p>}
+      {item.payable !== undefined && (
+        <div className="mt-3 space-y-1 text-sm">
+          <p className="font-semibold tabular-nums">
+            {t(isBeforeEvent ? "sponsoredItems.acceptedAfterAdvance" : "sponsoredItems.payable")}: {money(item.payable)}
+          </p>
+          {isBeforeEvent && item.reconciliationDelta !== undefined && (
+            <p className={cn("text-sm", { "text-warning-app": item.reconciliationDelta < 0, "text-success-app": item.reconciliationDelta >= 0 })}>
+              {item.reconciliationDelta < 0
+                ? t("sponsoredItems.reconciliationDeltaShort", { amount: money(Math.abs(item.reconciliationDelta)) })
+                : t("sponsoredItems.reconciliationDeltaExact")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Form đối soát của ICPDP khi hồ sơ ở trạng thái Submitted */}
+      {isOfficer && active && item.status === "Submitted" && (
+        <div className="mt-4 space-y-3 rounded-xl border border-border-app bg-surface-app/40 p-4">
+          <label className="block text-sm font-medium text-text-app">
+            {t("sponsoredItems.valid")}
+            <AppMoneyInput value={valid} onValueChange={setValid} className="mt-1 w-full font-normal" />
+          </label>
+          <label className="block text-sm font-medium text-text-app">
+            {t("sponsoredItems.reason")}
+            <AppTextarea
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              maxLength={2000}
+              className="mt-1 w-full font-normal"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <AppButton
+              type="button"
+              disabled={mutation.isPending || !reason.trim()}
+              onClick={() => void act({ kind: "review", validAmount: Number(valid), reason })}
+            >
+              {t("sponsoredItems.review")}
+            </AppButton>
+            <AppButton
+              type="button"
+              variant="ghost"
+              disabled={mutation.isPending || !reason.trim() || now >= deadline}
+              onClick={() => void act({ kind: "return", reason })}
+            >
+              {t("sponsoredItems.return")}
+            </AppButton>
+          </div>
+        </div>
+      )}
+
+      {/* Bước hoàn tất thanh toán sau đối soát (tách riêng theo kênh) */}
+      {active && item.status === "Accepted" && activeChannel === "VIA_OFFICER_REIMBURSE" && (
+        isClub ? (
+          <AppButton
+            type="button"
+            className="mt-4"
+            disabled={mutation.isPending}
+            onClick={async () => {
+              if (await confirm(t("sponsoredItems.payConfirm", { amount: money(item.payable!) }))) {
+                await act({ kind: "pay" });
+              }
+            }}
+          >
+            {t("sponsoredItems.pay")}
+          </AppButton>
+        ) : (
+          <div className="mt-4">
+            <AppNotice>{t("sponsoredItems.officerReimburseWaitingClub", { amount: money(item.payable ?? 0) })}</AppNotice>
+          </div>
+        )
+      )}
+
+      {active && item.status === "Accepted" && activeChannel === "DIRECT_VENDOR" && (
+        isOfficer ? (
+          <AppButton
+            type="button"
+            className="mt-4"
+            disabled={mutation.isPending}
+            onClick={async () => {
+              if (await confirm(t("sponsoredItems.confirmVendorPaidConfirm", {
+                amount: money(item.payable!),
+                vendor: item.vendorBankInfo?.vendorName ?? "",
+              }))) {
+                await act({ kind: "confirmVendorPaid" });
+              }
+            }}
+          >
+            {t("sponsoredItems.confirmVendorPaid")}
+          </AppButton>
+        ) : (
+          <div className="mt-4">
+            <AppNotice>{t("sponsoredItems.vendorWaitingSchool")}</AppNotice>
+          </div>
+        )
+      )}
+
+      {item.status === "Paid" && activeChannel === "DIRECT_VENDOR" && item.paidAt && (
+        <p className="mt-3 text-sm text-success-app">
+          {t("sponsoredItems.vendorPaidDone", {
+            amount: money(item.payable ?? 0),
+            date: formatDateTime(item.paidAt),
+          })}
+        </p>
+      )}
+
+      {!active && <p className="mt-3 text-sm text-warning-app">{t("sponsoredItems.paused")}</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-danger-app">{error}</p>}
+    </article>
+  );
 }
 
-// Danh sách các mục hoá đơn tài trợ của một ngân sách
-export function SponsoredItems({ budgetId, clubId, csrfToken, fallback = null }: { budgetId: string; clubId?: string; csrfToken: string; fallback?: ReactNode }) {
+// Danh sách các mục tài trợ của một ngân sách
+export function SponsoredItems({
+  budgetId,
+  clubId,
+  csrfToken,
+  fallback = null,
+}: {
+  budgetId: string;
+  clubId?: string;
+  csrfToken: string;
+  fallback?: ReactNode;
+}) {
   const { t, i18n } = useTranslation();
   const query = useSponsoredItems(budgetId, clubId);
   if (query.isPending) return <AppSkeleton className="mt-5 h-48" />;
   if (query.isError) return <p role="alert" className="mt-4 text-danger-app">{t("sponsoredItems.error")}</p>;
   if (!query.data) return <>{fallback}</>;
+
+  const disbursed = query.data.items.reduce((sum, item) => {
+    if (item.fundingDecision === "BEFORE_EVENT") {
+      return sum + (item.advanceReceivedAt ? (item.advanceAmount ?? item.approvedAmount) : 0);
+    }
+    return sum + (item.status === "Paid" ? item.payable ?? 0 : 0);
+  }, 0);
+
   const totals = [
     { label: t("budgets.approved"), amount: query.data.items.reduce((sum, item) => sum + item.approvedAmount, 0) },
     { label: t("accountability.recorded"), amount: query.data.items.reduce((sum, item) => sum + item.amount, 0) },
-    { label: t("budgets.transferred"), amount: query.data.items.reduce((sum, item) => sum + (item.status === "Paid" ? item.payable ?? 0 : 0), 0) },
+    { label: t("budgets.transferred"), amount: disbursed },
   ];
-  return <section className="mt-6 space-y-4"><h3 className="font-heading text-lg font-semibold">{t("sponsoredItems.title")}</h3>
-    <p className="text-sm text-muted-app">{t("sponsoredItems.hint")}</p>
-    <dl className="grid gap-3 sm:grid-cols-3">{totals.map((total) => <div key={total.label} className="rounded-xl border border-border-app bg-bg-app p-4">
-      <dt className="text-sm text-muted-app">{total.label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(total.amount)}</dd>
-    </div>)}</dl>
-    {query.data.items.map((item) => <ItemCard key={item.id} budget={query.data!} item={item} clubId={clubId} csrfToken={csrfToken} />)}
-  </section>;
+
+  return (
+    <section className="mt-6 space-y-4">
+      <h3 className="font-heading text-lg font-semibold">{t("sponsoredItems.title")}</h3>
+      <p className="text-sm text-muted-app">{t("sponsoredItems.hint")}</p>
+      <dl className="grid gap-3 sm:grid-cols-3">
+        {totals.map((total) => (
+          <div key={total.label} className="rounded-xl border border-border-app bg-bg-app p-4">
+            <dt className="text-sm text-muted-app">{total.label}</dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums">
+              {new Intl.NumberFormat(i18n.language, { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(total.amount)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      {query.data.items.map((item) => (
+        <ItemCard key={`${item.id}-${item.status}-${item.amount}`} budget={query.data!} item={item} clubId={clubId} csrfToken={csrfToken} />
+      ))}
+    </section>
+  );
 }
