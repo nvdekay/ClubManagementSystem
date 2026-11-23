@@ -286,3 +286,15 @@ hoạt động màu xanh, bước "chỉ khi cần" nét đứt, bước tự đ
 - Báo cáo định kỳ và đánh giá: mở kỳ và ghi nhận thiếu báo cáo là thao tác của ICPDP. Thêm violation `OVERDUE_REPORT`, quy tắc điểm 0 khi nộp trễ hoặc không nộp, và việc tự tạo bản đánh giá nháp khi Accept báo cáo.
 - Cơ sở vật chất: thêm lưu nháp, claim, kiểm tra lại xung đột khi duyệt (overbooking), CLB huỷ (cờ huỷ muộn dưới 24 giờ). Booking gắn với đề xuất được quyết định cùng đề xuất.
 - Khiếu nại, vi phạm, đình chỉ/giải thể, role CLB: sửa các bước đặt sai làn (quyết định close/escalate, trả ghế, kích hoạt bộ tiêu chí là của ICPDP). Thêm các nhánh rút khiếu nại, gộp trùng, job quá hạn phản hồi, ghi phản hồi thay CLB hoặc `NO_RESPONSE`, biện pháp Failed, tái kích hoạt thủ công và giải thể lỗi.
+
+## Đồng bộ sequence và class diagram với code (24/11/2026)
+
+`UCMS_Sequence_Diagrams.drawio` (22 trang) và `UCMS_Class_Diagrams.drawio` (17 trang use case + trang ký hiệu)
+được vẽ lại theo code trên `main` (`a916d9a`); tên và id trang giữ nguyên, ảnh trong `img/` đã xuất lại.
+Sequence dùng đúng tên lifeline thật (page client, route module, usecase, repository), toán tử UML `alt / opt / loop /
+break / par / critical` (vùng transaction Mongo là `critical`), mã HTTP, thông báo lỗi, audit và notification thật;
+số bước liên tục qua các trang của cùng một hình. Trang 09 (hoá đơn và thanh toán) được vẽ lại theo luồng sponsored item
+đã cài đặt. Có thêm ảnh `UCMS_Sequence_06_Proposal-template-and-document.png`.
+
+Hai trang `Slide 01` và `Slide 07a` trong `UCMS_Main_Workflow.drawio` là bản vẽ ngang một tầng (cùng nội dung với
+trang 01 và 07a) dùng cho slide thuyết trình.
