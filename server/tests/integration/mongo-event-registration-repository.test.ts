@@ -89,4 +89,23 @@ describe.skipIf(!uri)("Mongo event registration repository", () => {
     expect(await ucmsModels.eventRegistrations!.countDocuments({ eventId })).toBe(0);
     expect(await ucmsModels.events!.findById(eventId).lean()).toMatchObject({ nextWaitlistPosition: 1 });
   }, 60_000);
+
+  it("hides an unpublished event unless the student already has a registration", async () => {
+    const now = new Date("2026-10-09T12:00:00Z");
+    const clubId = new Types.ObjectId();
+    const eventId = new Types.ObjectId();
+    const studentId = new Types.ObjectId();
+    await ucmsModels.events!.create({ _id: eventId, organizerType: "CLUB", clubId,
+      clubName: "Draft Club", title: "Draft Event", startAt: new Date("2026-10-12T10:00:00Z"),
+      endAt: new Date("2026-10-12T12:00:00Z"), semesterCode: "FA26", audienceScope: "PUBLIC",
+      capacity: 10, confirmedRegistrationCount: 0, nextWaitlistPosition: 1, waitlistEnabled: false,
+      state: "Pending Approval", allowWalkIn: false, currentRevisionNo: 1,
+      attendanceFinalized: false, createdAt: now });
+
+    const repo = mongoEventRegistrationRepository();
+    expect(await repo.context(eventId.toString(), studentId.toString())).toBeNull();
+    await ucmsModels.eventRegistrations!.create({ eventId, studentId, clubId, state: "Cancelled",
+      answers: {}, createdAt: now, cancelledAt: now });
+    expect((await repo.context(eventId.toString(), studentId.toString()))?.event.title).toBe("Draft Event");
+  }, 60_000);
 });

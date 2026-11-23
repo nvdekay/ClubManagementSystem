@@ -51,6 +51,12 @@ function currentSemester(options: RoomAllocationOptions | undefined): string {
   const sorted = [...(options?.semesters ?? [])].sort((a, b) => a.startAt.localeCompare(b.startAt));
   return (sorted.find((item) => item.startAt <= now && now <= item.endAt) ?? sorted[0])?.code ?? "";
 }
+// Đợt phân còn giữ ô khi còn buổi Approved/In Use chưa kết thúc; cascade tạm ngừng huỷ buổi mà không đặt revokedAt
+function holdsCell(allocation: RoomAllocation): boolean {
+  const now = new Date().toISOString();
+  return !allocation.revokedAt && allocation.occurrences.some((value) =>
+    (value.state === "Approved" || value.state === "In Use") && value.endAt > now);
+}
 // Kiểm tra dữ liệu lỗi có phải danh sách xung đột phân bổ phòng
 function isConflictList(details: unknown): details is RoomAllocationConflict[] {
   return Array.isArray(details) && details.every((item) => typeof item === "object" && item !== null && "startAt" in item);
@@ -95,7 +101,7 @@ export function RoomAllocationsPage() {
     && (!building || item.location === building) && (!clubFilter || item.clubId === clubFilter))
     .sort((a, b) => a.clubName.localeCompare(b.clubName, "vi") || a.weekday - b.weekday || a.slot - b.slot),
   [allocations, status, building, clubFilter]);
-  const takenCells = useMemo(() => new Map(allocations.filter((item) => !item.revokedAt && item.propertyId === form.propertyId)
+  const takenCells = useMemo(() => new Map(allocations.filter((item) => holdsCell(item) && item.propertyId === form.propertyId)
     .map((item) => [`${item.weekday}-${item.slot}`, item.clubName])), [allocations, form.propertyId]);
   // UC58 A3/E1: ô bị sự kiện hoặc booking đã duyệt chặn ở bất kỳ ngày nào còn lại sẽ bị từ chối.
   const occupancy = useRoomOccupancy(creating ? semester : "", form.propertyId);

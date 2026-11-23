@@ -4,6 +4,7 @@ import { DomainError } from "../../domain/errors.js";
 import {
   ACTIVE_DEFENSE_STATES,
   assertCanConfirmDefense,
+  assertCanMarkNoShow,
   assertCanRequestReschedule,
   assertCanStartDefense,
   DEFENSE_CONFIRM_NOTICE_HOURS,
@@ -605,6 +606,7 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
         if (String(doc.leadOfficerId) !== String(actorId)) {
           throw new DomainError("only the assigned ICPDP officer can mark defense no-show", "forbidden");
         }
+        assertCanMarkNoShow(mapDefenseSession(doc), now);
         updatedId = doc._id as Types.ObjectId;
 
         await sessions.updateOne(
@@ -797,33 +799,45 @@ export function mongoEventDefenseRepository(reviewRepo: EventProposalReviewRepos
 
       let alerted = 0;
       for (const doc of unconfirmed) {
-        const alreadySent = await m.notifications!.exists({
-          entityType: "Event",
-          entityId: doc.eventId,
-          eventCode: "EVENT_DEFENSE_CONFIRM_OVERDUE",
-          "payload.defenseId": String(doc._id),
+        // Ghi khoá lên buổi bảo vệ để hai lượt job chạy song song không cùng gửi; khoá trùng theo giờ
+        // hiện tại vì dời lịch dùng lại cùng document và lịch mới cần được cảnh báo lại.
+        const sent = await mongoose.connection.transaction(async (session) => {
+          const locked = await sessions.findOneAndUpdate(
+            { _id: doc._id, state: "SCHEDULED", startAt: doc.startAt },
+            { $inc: { __v: 1 } },
+            { session },
+          ).lean();
+          if (!locked) return false;
+          const alreadySent = await m.notifications!.exists({
+            entityType: "Event",
+            entityId: doc.eventId,
+            eventCode: "EVENT_DEFENSE_CONFIRM_OVERDUE",
+            "payload.defenseId": String(doc._id),
+            "payload.startAt": doc.startAt,
+          }).session(session);
+          if (alreadySent) return false;
+          const event = await events.findById(doc.eventId).select({ title: 1, clubName: 1 }).session(session).lean();
+          await m.notifications!.create([{
+            recipientUserId: doc.leadOfficerId,
+            eventCode: "EVENT_DEFENSE_CONFIRM_OVERDUE",
+            entityType: "Event",
+            entityId: doc.eventId,
+            channels: notificationChannels("EVENT_DEFENSE_CONFIRM_OVERDUE"),
+            payload: {
+              defenseId: String(doc._id),
+              defenseTitle: doc.title,
+              eventTitle: event?.title,
+              clubName: event?.clubName,
+              startAt: doc.startAt,
+            },
+            state: "Queued",
+            dueAt: now,
+            attempts: 0,
+            createdAt: now,
+          }], { session });
+          return true;
         });
-        if (alreadySent) continue;
-        const event = await events.findById(doc.eventId).select({ title: 1, clubName: 1 }).lean();
-        await m.notifications!.create([{
-          recipientUserId: doc.leadOfficerId,
-          eventCode: "EVENT_DEFENSE_CONFIRM_OVERDUE",
-          entityType: "Event",
-          entityId: doc.eventId,
-          channels: notificationChannels("EVENT_DEFENSE_CONFIRM_OVERDUE"),
-          payload: {
-            defenseId: String(doc._id),
-            defenseTitle: doc.title,
-            eventTitle: event?.title,
-            clubName: event?.clubName,
-            startAt: doc.startAt,
-          },
-          state: "Queued",
-          dueAt: now,
-          attempts: 0,
-          createdAt: now,
-        }]);
-        alerted += 1;
+        if (sent) alerted += 1;
       }
       return alerted;
     },
