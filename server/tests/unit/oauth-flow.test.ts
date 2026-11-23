@@ -24,6 +24,7 @@ describe("OAuth state cookie", () => {
   it("rejects a signed protocol-relative redirect", () => {
     const service = createOAuthFlowService("secret".repeat(8));
     expect(service.unseal(service.seal({ ...flow, returnTo: "//evil.test" }, now), now)).toBeNull();
+    expect(service.unseal(service.seal({ ...flow, returnTo: "/\t/evil.test" }, now), now)).toBeNull();
   });
 
   it("returns a short-lived signed lock reason without exposing it in a redirect URL", () => {

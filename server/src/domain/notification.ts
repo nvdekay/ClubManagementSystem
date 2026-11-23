@@ -126,13 +126,15 @@ export const NOTIFICATION_CHANNEL_EMAIL = "EMAIL";
 
 /**
  * Các sự kiện được gửi thêm qua email, theo ma trận thông báo ở SRS §8.2: yêu cầu chỉnh sửa/quyết định
- * hồ sơ thành lập, quyết định đề xuất sự kiện, quyết định booking và hồ sơ vi phạm được mở/quyết định.
+ * hồ sơ thành lập, quyết định đề xuất sự kiện, quyết định booking, khiếu nại được gửi/chuyển xuống và hồ sơ
+ * vi phạm được mở/quyết định.
  */
 export const EMAIL_EVENT_CODES: ReadonlySet<string> = new Set([
   "CLUB_APPLICATION_REVISION_REQUESTED", "CLUB_APPLICATION_APPROVED", "CLUB_APPLICATION_REJECTED",
   "EVENT_PROPOSAL_APPROVED", "EVENT_PROPOSAL_REJECTED",
   "EVENT_DEFENSE_SCHEDULED", "EVENT_DEFENSE_CANCELLED", "EVENT_DEFENSE_RESCHEDULE_DECIDED", "EVENT_DEFENSE_NO_SHOW",
   "PROPERTY_BOOKING_STATUS",
+  "COMPLAINT_SUBMITTED", "COMPLAINT_FORWARDED",
   "VIOLATION_RESPONSE_REQUESTED", "VIOLATION_DECIDED", "VIOLATION_CLOSED_NO_VIOLATION",
 ]);
 

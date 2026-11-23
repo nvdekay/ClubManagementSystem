@@ -27,7 +27,7 @@ const PERMISSION_MODULES: Record<string, string> = {
 // Khởi tạo permission, role hệ thống và tài khoản ICPDP officer đầu tiên
 export async function ensureAuthBootstrap(config: AuthConfig): Promise<void> {
   const email = normalizeAllowedGoogleEmail(
-    config.BOOTSTRAP_ICPDP_EMAIL, true, [config.ALLOWED_DOMAIN],
+    config.BOOTSTRAP_ICPDP_EMAIL, true, config.ALLOWED_DOMAIN.split(","),
   );
   const roles = ucmsModels.roles!;
   const users = ucmsModels.users!;

@@ -99,7 +99,7 @@ export function mongoEventCheckInRepository(): EventCheckInRepository {
             }
           } else if (registration?.state !== "Confirmed") {
             if (!event.allowWalkIn) throw new DomainError("walk-ins are disabled", "conflict");
-            const policy = await ucmsModels.policyVersions!.findOne({ effectiveFrom: { $lte: input.now } }).sort({ effectiveFrom: -1 }).session(session).lean();
+            const policy = await ucmsModels.policyVersions!.findOne({ effectiveFrom: { $lte: input.now } }).sort({ effectiveFrom: -1, createdAt: -1, _id: -1 }).session(session).lean();
             if (Number(event.confirmedRegistrationCount) >= Number(event.capacity) && policy?.allowOverbooking !== true) {
               throw new DomainError("event capacity is full", "conflict");
             }
