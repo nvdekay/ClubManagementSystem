@@ -30,7 +30,7 @@ export function EventProposalQueuePage() {
   async function uploadTemplate(file: File | undefined) {
     if (!file || !auth.data) return;
     replaceTemplate.reset();
-    const mimeType = proposalFileType(file, ["docx", "pdf", "xlsx"]);
+    const mimeType = proposalFileType(file, ["docx", "pdf", "xlsx"], 10 * 1024 * 1024);
     setTemplateError(mimeType ? null : t("eventReviews.templateInvalid"));
     if (!mimeType) return;
     try {

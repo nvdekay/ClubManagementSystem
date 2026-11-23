@@ -127,7 +127,7 @@ export async function clubEventProposalDocumentAccess(deps: ClubEventDeps, actor
 export async function uploadEventProposalTemplate(deps: ClubEventDeps, actor: AccessActor | null, fileName: string, mimeType: string,
   bytes: Buffer, now: Date): Promise<EventProposalTemplateInfo> {
   const officerId = await officer(deps.auth, actor);
-  const name = validateEventProposalFile(fileName, mimeType, bytes, PROPOSAL_TEMPLATE_MIME_TYPES);
+  const name = validateEventProposalFile(fileName, mimeType, bytes, PROPOSAL_TEMPLATE_MIME_TYPES, 10 * 1024 * 1024);
   const storage = fileStorage(deps);
   const document = await storage.uploadTemplateDocument({ actorId: officerId, fileName: name, mimeType, bytes, now });
   return deps.repo.saveProposalTemplate(document, officerId, now);

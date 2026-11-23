@@ -48,7 +48,7 @@ export const clubEventOpenApiPaths: NonNullable<Parameters<typeof createDocument
   "/events/proposal-template/download": { get: { summary: "Download the active template: the system default as an attachment, or a redirect to a 60-second signed URL",
     responses: { "200": { description: "Template file", content: { "application/octet-stream": { schema: z.string() } } }, "302": { description: "Redirect to a signed URL" },
       "401": { description: "Authentication required" } } } },
-  [`${base}/{id}/proposal-document`]: { post: { summary: "Attach or replace the proposal document (PDF/DOCX <= 10MB, URI-encoded X-Filename) of a Draft or Revision Requested ICPDP proposal",
+  [`${base}/{id}/proposal-document`]: { post: { summary: "Attach or replace the proposal document (PDF/DOCX <= 20MB, URI-encoded X-Filename) of a Draft or Revision Requested ICPDP proposal",
     requestParams: { path: eventPath }, requestBody: rawFile, responses: response(Detail) } },
   [`${base}/{id}/proposal-document/access`]: { get: { summary: "60-second signed URL to the draft's proposal document or a submitted revision's",
     requestParams: { path: eventPath, query: proposalDocumentAccessQuery }, responses: response(DocumentAccess) } },
