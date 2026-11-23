@@ -62,8 +62,9 @@ export async function changeMembershipState(repo: MembershipRepository,
   }, now = new Date()) {
   const id = await authorize(access, actor, input.clubId, now);
   validId(input.membershipId, "membership id");
+  // So theo ngày lịch Việt Nam: đồng hồ máy client lệch vài giây vẫn là "hôm nay".
   if (Number.isNaN(input.effectiveDate.getTime()) || isBeforeToday(input.effectiveDate, now)
-    || input.effectiveDate > now) {
+    || isBeforeToday(now, input.effectiveDate)) {
     throw new DomainError("effective date must be today", "validation");
   }
   const reason = input.reason?.trim();
@@ -71,7 +72,9 @@ export async function changeMembershipState(repo: MembershipRepository,
     throw new DomainError("ban reason is required", "validation");
   }
   if (reason && reason.length > 2000) throw new DomainError("reason is too long", "validation");
-  return repo.changeState({ ...input, ...(reason ? { reason } : {}), actorId: id, now });
+  // Không để mốc hiệu lực vượt quá hiện tại: repository dùng nó để đóng các role đang giữ.
+  const effectiveDate = input.effectiveDate > now ? now : input.effectiveDate;
+  return repo.changeState({ ...input, effectiveDate, ...(reason ? { reason } : {}), actorId: id, now });
 }
 
 // Thành viên gửi yêu cầu rút khỏi CLB kèm lý do và ngày hiệu lực

@@ -39,11 +39,13 @@ describe.skipIf(!uri)("Mongo membership lifecycle repository", () => {
     ]);
     await ucmsModels.clubTerms.create({ _id: termId, clubId, name: "Term 2026", state: "Active",
       startAt: new Date("2026-09-01"), endAt: new Date("2027-09-01") });
-    await ucmsModels.clubPositions.create({ _id: positionId, clubId, code: "MEMBERSHIP_MANAGER",
-      name: "Membership Manager", isBoardSeat: false, isLeaderRole: false, isDefaultMemberRole: false,
-      isSingleHolder: false, permissionCodes: ["club.member.manage"], isActive: true });
+    // A confirmed Vice Leader seat carries no permissionCodes, yet holds club.member.manage (BR47).
+    await ucmsModels.clubPositions.create({ _id: positionId, clubId, code: "VICE_LEADER",
+      name: "Vice Leader", isBoardSeat: true, isLeaderRole: false, isDefaultMemberRole: false,
+      isSingleHolder: false, permissionCodes: [], isActive: true });
     await ucmsModels.clubPositionAssignments.create({ clubId, termId, positionId,
-      membershipId: managerMembershipId, effectiveFrom: new Date("2026-09-01"), assignedBy: managerId });
+      membershipId: managerMembershipId, effectiveFrom: new Date("2026-09-01"), assignedBy: managerId,
+      confirmedBy: managerId });
 
     // An unconfirmed Leader nomination is not a held role yet.
     const leaderPositionId = new Types.ObjectId();
@@ -58,7 +60,7 @@ describe.skipIf(!uri)("Mongo membership lifecycle repository", () => {
     expect(roster.map((member) => ({ email: member.email, positions: member.positions }))).toEqual(
       expect.arrayContaining([
         { email: `${studentId}@example.edu`, positions: [] },
-        { email: `${managerId}@example.edu`, positions: ["Membership Manager"] },
+        { email: `${managerId}@example.edu`, positions: ["Vice Leader"] },
       ]));
     const request = await repo.requestWithdrawal({ membershipId: studentMembershipId.toString(),
       userId: studentId.toString(), reason: "Moving away", requestedEffectiveDate: now, now });

@@ -84,7 +84,7 @@ export function recruitmentApplicationRoutes(deps: RecruitmentApplicationRouteDe
     authGuard(guard, false), async (req, res) => {
       const queryState = req.query.state;
       const state = typeof queryState === "string" ? parsed(z.enum([
-        "Draft", "Submitted", "Screening", "Shortlisted", "Accepted", "Rejected",
+        "Submitted", "Screening", "Shortlisted", "Accepted", "Rejected",
         "Waitlisted", "Onboarded", "Withdrawn", "Declined",
       ]), queryState) as RecruitmentApplicationState : undefined;
       ok(res, (await listRecruitmentApplicationsForReview(deps.repo, deps.accessRepo, actor(res),

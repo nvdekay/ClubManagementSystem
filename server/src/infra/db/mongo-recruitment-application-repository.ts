@@ -144,8 +144,7 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
     // Liệt kê đơn đã nộp của một đợt tuyển để duyệt
     async listForReview(clubId, campaignId, state) {
       const filter: Record<string, unknown> = { clubId: new Types.ObjectId(clubId),
-        campaignId: new Types.ObjectId(campaignId), state: { $ne: "Draft" } };
-      if (state) filter.state = state;
+        campaignId: new Types.ObjectId(campaignId), state: { $ne: "Draft", ...(state ? { $eq: state } : {}) } };
       const docs = await applications.find(filter).sort({ submittedAt: 1, _id: 1 }).lean();
       const usersForApps = await users.find({ _id: { $in: docs.map((doc) => doc.userId) } })
         .select("_id displayName").lean();
@@ -185,6 +184,8 @@ export function mongoRecruitmentApplicationRepository(): RecruitmentApplicationR
             : input.action === "close-withdrawn" ? "Withdrawn"
               : input.action === "promote" ? "Accepted" : input.outcome;
         if (outcome === "Accepted") {
+          // Ghi khoá lên đợt tuyển để hai lần nhận đơn đồng thời xung đột thay vì cùng vượt chỉ tiêu.
+          await campaigns.updateOne({ _id: campaignId }, { $inc: { __v: 1 } }, { session });
           const accepted = await applications.countDocuments({ campaignId, clubId,
             state: { $in: ["Accepted", "Onboarded"] }, _id: { $nin: ids } }).session(session);
           if (accepted + current.length > Number(campaign.capacity)) {
