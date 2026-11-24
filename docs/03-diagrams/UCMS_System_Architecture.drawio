@@ -5,16 +5,10 @@
 <mxCell id="title" value="UCMS — System Architecture" style="text;html=1;fontSize=24;fontStyle=1;align=left;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="20" y="20" width="600" height="40" as="geometry"/></mxCell>
 
 <!-- Actors -->
-<mxCell id="a_guest" value="Guest" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="50" y="170" width="40" height="70" as="geometry"/></mxCell>
-<mxCell id="a_student" value="Student" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="50" y="340" width="40" height="70" as="geometry"/></mxCell>
-<mxCell id="a_cmb" value="Club Leader /&lt;br&gt;Club Member" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="50" y="510" width="40" height="70" as="geometry"/></mxCell>
-<mxCell id="a_icpdp" value="ICPDP Officer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="50" y="680" width="40" height="70" as="geometry"/></mxCell>
+<mxCell id="a_user" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=14;" vertex="1" parent="1"><mxGeometry x="50" y="430" width="40" height="70" as="geometry"/></mxCell>
 
 <mxCell id="browser" value="&lt;b&gt;Web browser&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=14;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1"><mxGeometry x="190" y="430" width="130" height="70" as="geometry"/></mxCell>
-<mxCell id="e_a1" style="endArrow=block;endFill=1;html=1;" edge="1" parent="1" source="a_guest" target="browser"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="e_a2" style="endArrow=block;endFill=1;html=1;" edge="1" parent="1" source="a_student" target="browser"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="e_a3" style="endArrow=block;endFill=1;html=1;" edge="1" parent="1" source="a_cmb" target="browser"><mxGeometry relative="1" as="geometry"/></mxCell>
-<mxCell id="e_a4" style="endArrow=block;endFill=1;html=1;" edge="1" parent="1" source="a_icpdp" target="browser"><mxGeometry relative="1" as="geometry"/></mxCell>
+<mxCell id="e_a1" style="endArrow=block;endFill=1;html=1;" edge="1" parent="1" source="a_user" target="browser"><mxGeometry relative="1" as="geometry"/></mxCell>
 
 <!-- Client -->
 <mxCell id="client" value="&lt;b&gt;Client — UCMS SPA&lt;/b&gt;&lt;br&gt;React · Vite" style="rounded=0;whiteSpace=wrap;html=1;fontSize=14;verticalAlign=top;align=center;fillColor=#fafafa;strokeColor=#333333;dashed=0;" vertex="1" parent="1"><mxGeometry x="380" y="110" width="380" height="720" as="geometry"/></mxCell>
