@@ -34,12 +34,6 @@
         <mxCell id="db_585" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;verticalAlign=top;align=left;spacingLeft=6;spacingTop=-2;fontSize=13;fontStyle=1;fillColor=none;strokeColor=#666666;" value="M10 Workflow, Notification &amp; Audit" vertex="1">
           <mxGeometry height="600" width="300" x="153" y="491" as="geometry" />
         </mxCell>
-        <mxCell id="db_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" value="UCMS database schema — overview: keys and references of all 55 MongoDB collections (54 from the DBML + authSessions)" vertex="1">
-          <mxGeometry height="36" width="1400" x="20" y="10" as="geometry" />
-        </mxCell>
-        <mxCell id="db_2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" vertex="1">
-          <mxGeometry height="84" width="900" x="20" y="56" as="geometry" />
-        </mxCell>
         <mxCell id="db_t_approvalTasks" parent="1" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#eeeeee;strokeColor=#666666;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;" value="approvalTasks" vertex="1">
           <mxGeometry height="108" width="280" x="163" y="521" as="geometry" />
         </mxCell>
@@ -3311,12 +3305,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m01_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" value="UCMS database schema — M01 Identity, Access &amp; Configuration" vertex="1">
-          <mxGeometry height="36" width="1400" x="20" y="10" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m01_2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" vertex="1">
-          <mxGeometry height="84" width="900" x="20" y="56" as="geometry" />
-        </mxCell>
         <mxCell id="db-m01_t_users" parent="1" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#dae8fc;strokeColor=#6c8ebf;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;" value="users" vertex="1">
           <mxGeometry height="288" width="530" x="73" y="199" as="geometry" />
         </mxCell>
@@ -4088,12 +4076,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m02_1" value="UCMS database schema — M02 / M03 Club Lifecycle, Governance &amp; Term" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m02_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m02_t_users" value="users" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="253" width="240" height="48" as="geometry" />
         </mxCell>
@@ -5709,12 +5691,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m03_1" value="UCMS database schema — M04 Recruitment &amp; Membership" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m03_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m03_t_clubs" value="clubs" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="226" width="240" height="48" as="geometry" />
         </mxCell>
@@ -6568,12 +6544,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m04_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" value="UCMS database schema — M05 / M06 Event, Registration &amp; Attendance" vertex="1">
-          <mxGeometry height="36" width="1400" x="20" y="10" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m04_2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" vertex="1">
-          <mxGeometry height="84" width="900" x="20" y="56" as="geometry" />
-        </mxCell>
         <mxCell id="db-m04_t_clubs" parent="1" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" value="clubs" vertex="1">
           <mxGeometry height="48" width="240" x="60" y="244" as="geometry" />
         </mxCell>
@@ -7834,12 +7804,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m05_1" value="UCMS database schema — M07 Event Finance &amp; Budget" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m05_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m05_t_clubs" value="clubs" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="226" width="240" height="48" as="geometry" />
         </mxCell>
@@ -8603,12 +8567,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m06_1" value="UCMS database schema — M08 Reporting, Accountability &amp; Compliance" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m06_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m06_t_events" value="events" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="217" width="240" height="48" as="geometry" />
         </mxCell>
@@ -9352,12 +9310,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m07_1" value="UCMS database schema — M09 Performance Evaluation" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m07_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m07_t_clubs" value="clubs" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="217" width="240" height="48" as="geometry" />
         </mxCell>
@@ -9821,12 +9773,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m08_1" value="UCMS database schema — M10 Workflow, Notification &amp; Audit" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m08_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m08_t_routingRuleSets" value="routingRuleSets" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="199" width="240" height="48" as="geometry" />
         </mxCell>
@@ -10450,12 +10396,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m09_1" value="UCMS database schema — M11 Property &amp; Booking" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m09_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m09_t_clubs" value="clubs" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="217" width="240" height="48" as="geometry" />
         </mxCell>
@@ -10832,12 +10772,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-m10_1" value="UCMS database schema — M12 Feedback &amp; Complaint" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
-        <mxCell id="db-m10_2" value="&lt;b&gt;MongoDB physical schema, Crow&#39;s Foot notation.&lt;/b&gt; Columns: field name | BSON data type | constraints&lt;br&gt;Line ends: &lt;b&gt;||&lt;/b&gt; exactly one &amp;nbsp;&amp;nbsp; &lt;b&gt;o|&lt;/b&gt; zero or one &amp;nbsp;&amp;nbsp; &lt;b&gt;o&amp;lt;&lt;/b&gt; zero or many. A reference leaves its row on the left; the referenced &lt;i&gt;id&lt;/i&gt; is entered on the right.&lt;br&gt;&lt;b&gt;PK&lt;/b&gt; primary key (_id) &amp;nbsp; &lt;b&gt;FK&lt;/b&gt; ObjectId reference &amp;nbsp; &lt;b&gt;UQ&lt;/b&gt; unique index &amp;nbsp; &lt;b&gt;NN&lt;/b&gt; required &amp;nbsp; &lt;b&gt;= x&lt;/b&gt; default value &amp;nbsp; yellow row = compound unique index&lt;br&gt;&lt;i&gt;String · enum X&lt;/i&gt; = string limited to the values of X (see the Enums page) &amp;nbsp; dashed grey box = collection from another module" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;fontSize=12;fillColor=#fffbe6;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="20" y="56" width="900" height="84" as="geometry" />
-        </mxCell>
         <mxCell id="db-m10_t_events" value="events" style="swimlane;fontStyle=1;childLayout=none;horizontal=1;startSize=28;fillColor=#f5f5f5;strokeColor=#999999;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;dashed=1;" vertex="1" parent="1">
           <mxGeometry x="60" y="199" width="240" height="48" as="geometry" />
         </mxCell>
@@ -11250,9 +11184,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="db-enums_1" value="UCMS database schema — 28 enums (allowed values of String · enum fields)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="1400" height="36" as="geometry" />
-        </mxCell>
         <mxCell id="db-enums_2" value="accountState" style="swimlane;fontStyle=1;startSize=28;fillColor=#e1d5e7;strokeColor=#9673a6;swimlaneFillColor=#ffffff;fontSize=13;collapsible=0;html=1;" vertex="1" parent="1">
           <mxGeometry x="20" y="70" width="300" height="91" as="geometry" />
         </mxCell>
