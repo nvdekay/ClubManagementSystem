@@ -13,7 +13,7 @@ interface AppToasterProps {
 }
 
 // Vùng hiển thị toast, đồng bộ theme sáng/tối
-// Chỉ mount một lần, trong App.tsx. `theme` giữ toast đồng bộ với nút bật/tắt .dark;
+// Chỉ mount một lần, trong WorkspaceShell. `theme` giữ toast đồng bộ với nút bật/tắt .dark;
 // richColors cấp cho mỗi variant một cặp màu nền/chữ đủ tương phản ở cả hai theme.
 export function AppToaster({ theme }: AppToasterProps) {
   return <Toaster richColors closeButton position="top-right" theme={theme} />

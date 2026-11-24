@@ -10,6 +10,7 @@ import { common } from '@/i18n/common'
 import { AppSkeleton } from '@/components/ui/skeleton/AppSkeleton'
 import { useAuth, useLogout } from '@/hooks/useAuth'
 import { usePageTransition } from '@/hooks/usePageTransition'
+import { AppToaster } from '@/components/ui/toast/AppToast'
 import { useTheme } from '@/hooks/useTheme'
 import type { Workspace } from '@/services/auth'
 import { cn } from '@/utils/cn'
@@ -597,6 +598,7 @@ export function WorkspaceShell() {
             <NotificationBell userId={me.user.id} csrfToken={me.csrfToken} scope={context} />
           </div>
         </header>
+        <AppToaster theme={theme} />
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
           <div ref={pageRef} className="mx-auto w-full max-w-screen-2xl">
             {workspace ? (
