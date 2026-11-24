@@ -3231,9 +3231,6 @@
             <mxPoint x="-16" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="t1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" value="UCMS conceptual ERD (Chen notation): 34 entities, 224 attributes (34 keys underlined), 56 relationships" vertex="1">
-          <mxGeometry height="36" width="1500" x="60" y="-30" as="geometry" />
-        </mxCell>
         <mxCell id="lg1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#666666;strokeWidth=1.5;fontStyle=1;fontSize=12;" value="Entity" vertex="1">
           <mxGeometry height="36" width="110" x="60" y="26" as="geometry" />
         </mxCell>
@@ -3583,9 +3580,6 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="t1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" value="UCMS conceptual ERD (Crow&#39;s Foot notation): 34 entities + 2 associative entities, 195 attributes, 58 relationships" vertex="1">
-          <mxGeometry height="36" width="1500" x="12" y="-178" as="geometry" />
-        </mxCell>
         <mxCell id="lg1" parent="1" style="swimlane;rounded=0;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;align=center;fontSize=12;html=1;fillColor=#eeeeee;strokeColor=#666666;swimlaneFillColor=#ffffff;" value="Entity" vertex="1">
           <mxGeometry height="66" width="220" x="12" y="-122" as="geometry" />
         </mxCell>

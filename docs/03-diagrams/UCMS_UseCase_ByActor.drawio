@@ -4,9 +4,6 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p0title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of User" vertex="1">
-                    <mxGeometry height="30" width="700" x="40" as="geometry"/>
-                </mxCell>
                 <mxCell id="p0box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
                     <mxGeometry height="250" width="290" x="180" y="60" as="geometry"/>
                 </mxCell>
@@ -39,9 +36,6 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p1title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Student" vertex="1">
-                    <mxGeometry x="40" y="0" width="900" height="30" as="geometry"/>
-                </mxCell>
                 <mxCell id="p1box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
                     <mxGeometry x="260" y="50" width="1120" height="720" as="geometry"/>
                 </mxCell>
@@ -122,9 +116,6 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p4title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Member - Events &amp; bookings" vertex="1">
-                    <mxGeometry height="30" width="900" x="50" y="170" as="geometry"/>
-                </mxCell>
                 <mxCell id="p4box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
                     <mxGeometry height="560" width="710" x="260" y="240" as="geometry"/>
                 </mxCell>
@@ -195,9 +186,6 @@
 <root>
 <mxCell id="0"/>
 <mxCell id="1" parent="0"/>
-<mxCell id="p2title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader" vertex="1">
-    <mxGeometry x="40" y="0" width="900" height="30" as="geometry"/>
-</mxCell>
 <mxCell id="p2box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
     <mxGeometry x="260" y="50" width="710" height="420" as="geometry"/>
 </mxCell>
@@ -248,9 +236,6 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p3title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader - Club &amp;amp; recruitment" vertex="1">
-                    <mxGeometry height="30" width="900" x="40" y="210" as="geometry"/>
-                </mxCell>
                 <mxCell id="p3box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
                     <mxGeometry height="1110" width="710" x="260" y="270" as="geometry"/>
                 </mxCell>
@@ -349,9 +334,6 @@
 <root>
 <mxCell id="0"/>
 <mxCell id="1" parent="0"/>
-<mxCell id="p5title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of Club Leader - Events, bookings &amp;amp; finance" vertex="1">
-    <mxGeometry x="40" y="0" width="900" height="30" as="geometry"/>
-</mxCell>
 <mxCell id="p5box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
     <mxGeometry x="260" y="50" width="1060" height="1380" as="geometry"/>
 </mxCell>
@@ -504,9 +486,6 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="p6title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of ICPDP - Access &amp; club lifecycle" vertex="1">
-                    <mxGeometry x="40" y="0" width="900" height="30" as="geometry"/>
-                </mxCell>
                 <mxCell id="p6box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
                     <mxGeometry x="260" y="50" width="710" height="960" as="geometry"/>
                 </mxCell>
@@ -605,9 +584,6 @@
     <root>
       <mxCell id="0" />
       <mxCell id="1" parent="0" />
-      <mxCell id="p7title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of ICPDP - Events, bookings &amp; finance" vertex="1">
-        <mxGeometry x="40" y="0" width="900" height="30" as="geometry" />
-      </mxCell>
       <mxCell id="p7box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
         <mxGeometry x="260" y="50" width="1130" height="1980" as="geometry" />
       </mxCell>
@@ -814,9 +790,6 @@
 <root>
 <mxCell id="0"/>
 <mxCell id="1" parent="0"/>
-<mxCell id="p8title" parent="1" style="text;html=1;fontStyle=1;fontSize=16;align=left;" value="Use cases of ICPDP - Compliance &amp; evaluation" vertex="1">
-    <mxGeometry x="40" y="0" width="900" height="30" as="geometry"/>
-</mxCell>
 <mxCell id="p8box" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;verticalAlign=top;fontStyle=1;fontSize=14;" value="UCMS" vertex="1">
     <mxGeometry x="260" y="50" width="810" height="1410" as="geometry"/>
 </mxCell>

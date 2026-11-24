@@ -310,9 +310,6 @@
       <mxCell id="picker" value="Workspace picker" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#757575;fontSize=12;" vertex="1" parent="1">
         <mxGeometry x="874" y="162.0" width="180" height="44" as="geometry" />
       </mxCell>
-      <mxCell id="title" value="UCMS — Screen flow" style="text;html=1;fontStyle=1;fontSize=22;align=left;verticalAlign=middle;" vertex="1" parent="1">
-        <mxGeometry x="40" y="24" width="600" height="40" as="geometry" />
-      </mxCell>
       <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9E9E9E;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;fontSize=12;" vertex="1" parent="1">
         <mxGeometry x="1652" y="80" width="280" height="156" as="geometry" />
       </mxCell>

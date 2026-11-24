@@ -4,9 +4,6 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="fe-packages_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" value="UCMS — Front-end packages (client/src)" vertex="1">
-                    <mxGeometry height="36" width="900" x="20" y="10" as="geometry"/>
-                </mxCell>
                 <mxCell id="fe-packages_2" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" value="app&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;main.tsx (router, providers), App.tsx&lt;/span&gt;" vertex="1">
                     <mxGeometry height="80" width="300" x="480" y="70" as="geometry"/>
                 </mxCell>
@@ -102,9 +99,6 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="be-packages_1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;" value="UCMS — Back-end packages (server/src)" vertex="1">
-                    <mxGeometry height="36" width="900" x="20" y="10" as="geometry"/>
-                </mxCell>
                 <mxCell id="be-packages_2" parent="1" style="shape=folder;tabWidth=70;tabHeight=20;tabPosition=left;whiteSpace=wrap;html=1;fontStyle=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" value="main.ts&lt;br&gt;&lt;span style=&quot;font-weight:normal;font-size:11px&quot;&gt;composition root: wires repositories into use cases&lt;/span&gt;" vertex="1">
                     <mxGeometry height="100" width="250" x="60" y="250" as="geometry"/>
                 </mxCell>
