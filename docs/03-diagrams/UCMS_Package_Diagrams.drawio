@@ -94,12 +94,6 @@
                 <mxCell id="fe-packages_28" edge="1" parent="1" source="fe-packages_16" style="html=1;rounded=1;arcSize=8;fontSize=11;labelBackgroundColor=#ffffff;dashed=1;endArrow=open;endSize=10;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="fe-packages_17" value="HTTPS / JSON">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="fe-packages_29" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="pages also import hooks, services, i18n and utils directly; only the main dependencies are drawn. No package below imports a package above it." vertex="1">
-                    <mxGeometry height="56" width="520" x="150" y="860" as="geometry"/>
-                </mxCell>
-                <mxCell id="fe-packages_30" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;b&gt;Notation: UML package diagram&lt;/b&gt;&lt;br&gt;Folder = package (a source directory). Nested folder = sub-package.&lt;br&gt;Dashed arrow with open head = «import» dependency: the tail package imports the head package." vertex="1">
-                    <mxGeometry height="74" width="520" x="1180" y="70" as="geometry"/>
-                </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
@@ -180,12 +174,6 @@
                             <mxPoint x="185" y="786"/>
                         </Array>
                     </mxGeometry>
-                </mxCell>
-                <mxCell id="be-packages_20" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="Dependency rule: arrows point inward. domain imports nothing; usecase imports only domain; interface and infra never import each other. main.ts is the only place that knows both sides." vertex="1">
-                    <mxGeometry height="62" width="560" x="60" y="890" as="geometry"/>
-                </mxCell>
-                <mxCell id="be-packages_21" parent="1" style="shape=note;size=14;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" value="&lt;b&gt;Notation: UML package diagram&lt;/b&gt;&lt;br&gt;Folder = package (a source directory). Nested folder = sub-package.&lt;br&gt;Dashed arrow with open head = «import» dependency: the tail package imports the head package.&lt;br&gt;Dashed arrow with hollow triangle = realization: infra implements the repository and service ports declared in domain." vertex="1">
-                    <mxGeometry height="92" width="520" x="1180" y="70" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
