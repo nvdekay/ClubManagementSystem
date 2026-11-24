@@ -329,3 +329,4 @@ Mỗi hình thoi vẫn có đúng 1 cạnh vào và 2 cạnh ra.
 - **State diagram Event (2026-11-24):** gỡ khối vòng đời sự kiện nội bộ CLB (`DRAFT → CREATED → PUBLIC → ONGOING → FINISH`) vì tính năng đã bị gỡ khỏi code ngày 19/11/2026 (commit `5efb7fe`).
 - **Context diagram (2026-11-24):** bỏ luồng `Internal event records` (UCMS → ICPDP) và đổi nhãn `Event proposals & internal events` thành `Event proposals`, vì sự kiện nội bộ CLB đã gỡ khỏi code; còn 45 luồng.
 - **Organization structure (2026-11-24):** bỏ ô note vàng và các dòng mô tả phụ trong từng khối, chỉ giữ tên khối; nhãn mũi tên còn `recruitment`.
+- **Screen flow (2026-11-24):** bỏ hai màn `Internal events` / `Internal event` của ICPDP (tính năng đã gỡ ngày 19/11/2026), dồn các màn phía dưới lên.
