@@ -79,11 +79,8 @@ export function normalizedEventDecision(
   if (chosen.some((section) => !sections.has(section))) {
     throw new DomainError('invalid review section', 'validation', { field: 'sections' })
   }
-  // A revision request must tell the club both what to fix and when to resubmit.
+  // A revision request describes changes in the reason and requires a resubmission deadline.
   if (input.outcome === 'Request revision') {
-    if (!chosen.length) {
-      throw new DomainError('revision sections are required', 'validation', { field: 'sections' })
-    }
     if (!input.revisionDeadlineAt || input.revisionDeadlineAt <= now) {
       throw new DomainError('future revision deadline is required', 'validation', {
         field: 'revisionDeadlineAt',

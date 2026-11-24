@@ -137,19 +137,19 @@ describe('UC26 event proposal review use case', () => {
     ).rejects.toMatchObject({ kind: 'validation' })
   })
 
-  it('requires a reason, sections and a future deadline for a revision request', () => {
+  it('requires a reason and a future deadline but allows requests without sections', () => {
     expect(() =>
       normalizedEventDecision(
         { outcome: 'Request revision', sections: ['budget'], revisionDeadlineAt: tomorrow },
         now,
       ),
     ).toThrow('decision reason is required')
-    expect(() =>
+    expect(
       normalizedEventDecision(
-        { outcome: 'Request revision', reason: 'Giảm chi phí', revisionDeadlineAt: tomorrow },
+        { outcome: 'Request revision', reason: 'Reduce costs', revisionDeadlineAt: tomorrow },
         now,
       ),
-    ).toThrow('revision sections are required')
+    ).toMatchObject({ sections: [], reason: 'Reduce costs', revisionDeadlineAt: tomorrow })
     expect(() =>
       normalizedEventDecision(
         {

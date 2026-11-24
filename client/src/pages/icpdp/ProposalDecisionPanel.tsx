@@ -13,12 +13,7 @@ import { useEventDefenseActions } from '@/hooks/useEventDefense'
 import { useEventProposalAction } from '@/hooks/useEventProposalReviews'
 import { useFieldValidation } from '@/hooks/useFieldValidation'
 import { apiErrors } from '@/i18n/apiErrors'
-import {
-  EVENT_REVIEW_SECTIONS,
-  type EventProposalDetail,
-  type EventReviewOutcome,
-  type EventReviewSection,
-} from '@/services/eventProposalReviews'
+import { type EventProposalDetail, type EventReviewOutcome } from '@/services/eventProposalReviews'
 import { cn } from '@/utils/cn'
 import { DIRECT_VENDOR_THRESHOLD_VND, type FundingDecision } from '@/services/sponsoredItems'
 
@@ -79,7 +74,6 @@ export function ProposalDecisionPanel({
   const setReason = reasonDraft?.onChange ?? setLocalReason
   const [reviewNote, setReviewNote] = useState('')
   const [deadline, setDeadline] = useState('')
-  const [sections, setSections] = useState<EventReviewSection[]>([])
   const [conditions, setConditions] = useState('')
   const [amounts, setAmounts] = useState<Record<number, { reason?: string }>>({})
   const [funding, setFunding] = useState<Record<number, FundingDecision>>({})
@@ -114,10 +108,6 @@ export function ProposalDecisionPanel({
   // Chỉ kiểm tra các trường cần cho quyết định đang chọn, gồm lý do tài trợ theo từng dòng.
   const field = useFieldValidation<string>({
     reason: outcome !== 'Approve' && !reason.trim() ? t('eventReviews.reasonRequired') : null,
-    sections:
-      outcome === 'Request revision' && !sections.length
-        ? t('eventReviews.sectionsRequired')
-        : null,
     deadline:
       outcome === 'Request revision'
         ? !deadline
@@ -176,31 +166,6 @@ export function ProposalDecisionPanel({
     }
   }
 
-  /** Dịch mã mục cần sửa thành nhãn hiển thị cạnh ô chọn. */
-  function sectionLabel(value: string) {
-    switch (value) {
-      case 'schedule':
-        return t('eventReviews.sectionschedule')
-      case 'venue':
-        return t('eventReviews.sectionvenue')
-      case 'content':
-        return t('eventReviews.sectioncontent')
-      case 'risk':
-        return t('eventReviews.sectionrisk')
-      case 'budget':
-        return t('eventReviews.sectionbudget')
-      default:
-        return t('eventReviews.sectionother')
-    }
-  }
-
-  // Chọn hoặc bỏ chọn các mục CLB phải chỉnh sửa khi nộp lại.
-  function toggleSection(section: EventReviewSection) {
-    setSections((prev) =>
-      prev.includes(section) ? prev.filter((item) => item !== section) : [...prev, section],
-    )
-  }
-
   // Lưu giải thích của ICPDP cho dòng kinh phí không được tài trợ.
   function editLine(index: number, change: { reason?: string }) {
     setAmounts((prev) => ({ ...prev, [index]: { ...prev[index], ...change } }))
@@ -240,7 +205,7 @@ export function ProposalDecisionPanel({
       reason: reason.trim() || undefined,
       reviewNote: reviewNote.trim() || undefined,
       ...(outcome === 'Request revision'
-        ? { sections, revisionDeadlineAt: new Date(deadline).toISOString() }
+        ? { revisionDeadlineAt: new Date(deadline).toISOString() }
         : {}),
       ...(outcome === 'Approve'
         ? {
@@ -328,33 +293,9 @@ export function ProposalDecisionPanel({
         })}
       </div>
 
-      {/* Yêu cầu chỉnh sửa phải xác định các mục cần sửa và hạn nộp lại. */}
+      {/* Revision requests require a resubmission deadline. */}
       {outcome === 'Request revision' && (
         <fieldset className="mt-5">
-          <legend className="text-sm font-medium text-text-app">
-            {t('eventReviews.sections')}
-            <AppRequiredMark />
-          </legend>
-          <div className="mt-3 space-y-1">
-            {EVENT_REVIEW_SECTIONS.map((section) => (
-              <label
-                key={section}
-                className="flex min-h-10 items-center gap-3 rounded-lg px-2 text-sm hover:bg-surface-app"
-              >
-                <input
-                  type="checkbox"
-                  checked={sections.includes(section)}
-                  onChange={() => {
-                    toggleSection(section)
-                    field.touch('sections')
-                  }}
-                  className="size-4 accent-primary-app"
-                />
-                {sectionLabel(section)}
-              </label>
-            ))}
-          </div>
-          <AppFieldError message={field.error('sections')} />
           <label className="mt-4 block text-sm font-medium text-text-app">
             {t('eventReviews.deadline')}
             <AppRequiredMark />
